@@ -312,6 +312,7 @@ DM_EXPORT extern void dm_draw_rect(dm *dmp,
 /* scale.c */
 DM_EXPORT extern void dm_draw_scale(dm *dmp,
 				    fastf_t viewSize,
+				    const char *unit,
 				    int *lineColor,
 				    int *textColor);
 

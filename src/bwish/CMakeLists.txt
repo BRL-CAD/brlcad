@@ -25,18 +25,14 @@ endif (TARGET itcl_pkgIndex)
 # If we have Tk enabled, we want bwish too
 if(BRLCAD_ENABLE_TK)
 
-  set(bwish_libs libtclcad libbu ${TCL_LIBRARIES} ${ITCL_LIBRARIES} ${TK_LIBRARIES} ${ITK_LIBRARIES})
+  set(bwish_libs libtclcad libbu ${TCL_LIBRARIES} ${ITCL_LIBRARIES} ${TK_LIBRARIES} ${ITK_LIBRARIES} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
   if(TARGET libtermio)
     set(bwish_libs ${bwish_libs} libtermio)
   endif(TARGET libtermio)
 
-  if(CPP_DLL_DEFINES)
-    set(bwish_libs ${bwish_libs} imm32.lib comctl32.lib )
-  endif(CPP_DLL_DEFINES)
-
   BRLCAD_ADDEXEC(bwish "main.c;cmd.c;input.c" "${bwish_libs}" GUI)
-  set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
+  set_property(TARGET bwish APPEND PROPERTY COMPILE_DEFINITIONS "BWISH=1")
   set_target_properties(bwish PROPERTIES FOLDER "BRL-CAD Executables")
 
   if (TARGET itcl_pkgIndex)

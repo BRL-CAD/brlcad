@@ -15,9 +15,9 @@
 #  if defined(RPLY_DLL_EXPORTS) && defined(RPLY_DLL_IMPORTS)
 #    error "Only RPLY_DLL_EXPORTS or RPLY_DLL_IMPORTS can be defined, not both."
 #  elif defined(RPLY_DLL_EXPORTS)
-#    define RPLY_EXPORT __declspec(dllexport)
+#    define RPLY_EXPORT COMPILER_DLLEXPORT
 #  elif defined(RPLY_DLL_IMPORTS)
-#    define RPLY_EXPORT __declspec(dllimport)
+#    define RPLY_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define RPLY_EXPORT
 #  endif

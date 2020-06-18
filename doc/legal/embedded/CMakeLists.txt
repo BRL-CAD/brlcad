@@ -1,4 +1,5 @@
 set(embedded_licenses
+  alphanum.txt
   apple.txt
   art.txt
   ayam.txt
@@ -25,6 +26,7 @@ set(embedded_licenses
   hv3_snit.txt
   libtermlib.txt
   lseg_lseg.txt
+  lz4.txt
   marching_cubes.txt
   msinttypes.txt
   mt19937ar.txt

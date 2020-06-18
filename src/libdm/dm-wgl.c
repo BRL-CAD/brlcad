@@ -258,8 +258,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	else
 	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
-	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
     /* initialize dm specific variables */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
@@ -351,16 +349,16 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->dm_pathName));
+    if (bu_vls_strlen(&init_proc_vls) > 0) {
+	bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
-	bu_log("open_wgl: _init_dm failed\n");
-	bu_vls_free(&init_proc_vls);
-	bu_vls_free(&str);
-	(void)wgl_close(dmp);
-	return DM_NULL;
+	if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
+	    bu_log("open_wgl: _init_dm failed\n");
+	    bu_vls_free(&init_proc_vls);
+	    bu_vls_free(&str);
+	    (void)wgl_close(dmp);
+	    return DM_NULL;
+	}
     }
 
     bu_vls_free(&init_proc_vls);

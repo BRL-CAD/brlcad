@@ -239,14 +239,9 @@ else(NOT EXISTS ${BRLCAD_CNT_FILE})
 endif(NOT EXISTS ${BRLCAD_CNT_FILE})
 
 #---------------------------------------------------------------------
-# Check whether we need to add import/export lines to libraries
-if(MSVC)
-  set(CPP_DLL_DEFINES 1)
-endif(MSVC)
-
 # Define an option to use OBJECT libraries - when we build this
 # way, we also need position independent code.
-cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
 mark_as_advanced(USE_OBJECT_LIBS)
 if(USE_OBJECT_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
@@ -436,6 +431,12 @@ if(NOT COMMAND CONFIG_H_APPEND)
 endif(NOT COMMAND CONFIG_H_APPEND)
 
 CONFIG_H_APPEND(BRLCAD "/**** Define statements for CMake ****/\n")
+CONFIG_H_APPEND(BRLCAD "#if !defined(BRLCADBUILD)\n")
+CONFIG_H_APPEND(BRLCAD "  #  pragma message \"Warning: included brlcad_config.h (compile-time API) without BRLCADBUILD defined\"\n")
+CONFIG_H_APPEND(BRLCAD "#endif\n")
+CONFIG_H_APPEND(BRLCAD "#if !defined(HAVE_CONFIG_H)\n")
+CONFIG_H_APPEND(BRLCAD "  #  pragma message \"Warning: included brlcad_config.h (compile-time API) without HAVE_CONFIG_H defined\"\n")
+CONFIG_H_APPEND(BRLCAD "#endif\n")
 CONFIG_H_APPEND(BRLCAD "#ifndef __CONFIG_H__\n")
 CONFIG_H_APPEND(BRLCAD "#define __CONFIG_H__\n")
 
@@ -719,6 +720,23 @@ set(CMAKE_CXX_FLAGS "${CXX_STANDARD_FLAGS}")
 CHECK_C_FLAG(pipe)
 CHECK_CXX_FLAG(pipe)
 
+# Enable visibility restrictions.  We have to deal with this on Windows, so
+# enable it wherever we can to keep the code working across all platforms.
+CHECK_C_FLAG(fvisibility=hidden)
+CHECK_CXX_FLAG(fvisibility=hidden)
+# If we can, hide internal library symbols
+if(FVISIBILITY_HIDDEN_CXX_FLAG_FOUND)
+  set(HIDE_INTERNAL_SYMBOLS 1)
+endif(FVISIBILITY_HIDDEN_CXX_FLAG_FOUND)
+if(MSVC)
+  # On platforms other than MSVC, the hidden symbols are a convenience and may
+  # not be supported by system lib headers.  With Visual Studio, they are a
+  # necessity - define an extra flag so we know to always set them in that
+  # case in order to properly link against the system libs.
+  set(HIDE_INTERNAL_SYMBOLS 1)
+  set(HIDE_INTERNAL_SYMBOLS_EXT 1)
+endif(MSVC)
+
 # check for -fno-strict-aliasing
 # XXX - THIS FLAG IS REQUIRED if any level of optimization is
 # enabled with GCC as we do use aliasing and type-punning.
@@ -938,7 +956,6 @@ if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1\n")
 endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 
-
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
 # warnings about such arguments, and we don't really care.
@@ -1070,7 +1087,7 @@ if(NOT MSVC)
     # llvm-style USE
     if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
-        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\"")
+        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\" -Wno-profile-instr-out-of-date -Wno-profile-instr-unprofiled")
         set(CMAKE_REQUIRED_FLAGS "-${flags}")
         CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
         CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
@@ -1462,6 +1479,27 @@ if("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
 endif("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
 
+# Grumble... find_library doesn't find ws2_32.  Until we come up with
+# working tests for these, set them by hand
+if(MSVC)
+  set(COMCTL32_LIBRARY comctl32.lib)
+  set(IMM32_LIBRARY imm32.lib)
+  # TODO - mged and adrt call this specific OpenGL library out - why doesn't
+  # OPENGL_LIBRARIES do the trick?
+  set(OPENGL32_LIBRARY opengl32.lib)
+  set(PSAPI_LIB psapi.lib)
+  set(RPCRT_LIB rpcrt4.lib)
+  set(WINSOCK_LIB ws2_32.lib)
+  set(WS2_32_LIBRARY ws2_32)
+else(MSVC)
+  set(COMCTL32_LIBRARY "")
+  set(IMM32_LIBRARY "")
+  set(OPENGL32_LIBRARY "")
+  set(PSAPI_LIB "")
+  set(RPCRT_LIB "")
+  set(WINSOCK_LIB "")
+  set(WS2_32_LIBRARY "")
+endif(MSVC)
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
@@ -2039,12 +2077,7 @@ int main(void) {
     return 0;
 }
 ")
-# Grumble... find_library doesn't find ws2_32, so set it by hand.
-if(CPP_DLL_DEFINES)
-  set(WS2_32_LIBRARY ws2_32)
-else(CPP_DLL_DEFINES)
-  set(WS2_32_LIBRARY "")
-endif(CPP_DLL_DEFINES)
+
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c" "${report_hostname_src}")
 try_run(RH_RESULT RH_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"

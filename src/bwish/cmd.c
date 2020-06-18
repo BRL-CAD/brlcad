@@ -33,6 +33,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
+
 #ifdef BWISH
 #  include "tk.h"
 #else
@@ -43,6 +47,26 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "libtermio.h"
+
+struct bu_cmdhist {
+    struct bu_vls h_command;
+    struct timeval h_start;
+    struct timeval h_finish;
+    int h_status;
+};
+#define BU_CMDHIST_NULL (struct bu_cmdhist *)NULL
+
+struct bu_cmdhist_list {
+    size_t size, capacity;
+    size_t current;
+    struct bu_cmdhist *cmdhist;
+};
+
+struct bu_cmdhist_obj {
+    struct bu_vls cho_name;
+    struct bu_cmdhist_list cmdhist;
+};
+#define BU_CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
 #define BU_CMDHIST_LIST_INIT_CAPACITY 8
 

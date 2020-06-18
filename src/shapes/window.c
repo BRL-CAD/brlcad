@@ -24,6 +24,7 @@
  * cylinders.  The front of the window is centered at (0, 0, 0) and
  * extends in the negative x-direction the depth of the window.
  *
+ * Introduced in BRL-CAD release 4.4.
  */
 
 #include "common.h"

@@ -41,6 +41,7 @@
 
 #include "common.h"
 
+#include <cctype>
 #include <cstdio>
 #include <algorithm>
 #include <locale>
@@ -54,10 +55,12 @@
 #include <string>
 
 #include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/mapped_file.h"
+#include "bu/str.h"
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 206
+#define EXPECTED_PLATFORM_SYMBOLS 254
 
 class repo_info_t {
     public:
@@ -88,6 +91,9 @@ class repo_info_t {
 	std::map<std::string, std::vector<std::regex>> api_exemptions;
 	std::map<std::string, std::regex> api_func_filters;
 
+	/* do-not-use functions */
+	std::map<std::string, std::regex> dnu_filters;
+
 	/* platform symbols */
 	std::map<std::pair<std::string, std::string>, std::regex> platform_checks;
 	std::vector<std::regex> platform_file_filters;
@@ -100,6 +106,7 @@ class repo_info_t {
 	std::vector<std::string> bio_log;
 	std::vector<std::string> bnet_log;
 	std::vector<std::string> common_log;
+	std::vector<std::string> dnu_log;
 	std::vector<std::string> setprogname_log;
 	std::vector<std::string> symbol_inc_log;
 	std::vector<std::string> symbol_src_log;
@@ -117,8 +124,12 @@ regex_init(repo_info_t &r) {
     {
 	r.bio_regex = std::regex("#[[:space:]]*include[[:space:]]*\"bio.h\".*");
 	const char *bio_filter_strs[] {
-	    "stdio.h", "windows.h", "io.h", "unistd.h", "fcntl.h",
-	       	NULL
+	    "fcntl.h",
+	    "io.h",
+	    "stdio.h",
+	    "unistd.h",
+	    "windows.h",
+	    NULL
 	};
 	cnt = 0;
 	rf = bio_filter_strs[cnt];
@@ -134,8 +145,11 @@ regex_init(repo_info_t &r) {
     {
 	r.bnetwork_regex = std::regex("#[[:space:]]*include[[:space:]]*\"bnetwork.h\".*");
 	const char *bnetwork_filter_strs[] {
-	    "winsock2.h", "netinet/in.h", "netinet/tcp.h", "arpa/inet.h",
-	       	NULL
+	    "winsock2.h",
+	    "netinet/in.h",
+	    "netinet/tcp.h",
+	    "arpa/inet.h",
+	    NULL
 	};
 	cnt = 0;
 	rf = bnetwork_filter_strs[cnt];
@@ -151,14 +165,29 @@ regex_init(repo_info_t &r) {
     {
 	r.common_regex = std::regex("#[[:space:]]*include[[:space:]]*\"common.h\".*");
 	const char *common_exempt_filter_strs[] {
-	    "bio.h", "bnetwork.h", "config_win.h", "csg_parser.c",
-		"csg_scanner.h", "obj_grammar.c", "obj_grammar.cpp",
-		"obj_libgcv_grammar.cpp", "obj_obj-g_grammar.cpp",
-		"obj_parser.h", "obj_rules.cpp", "obj_rules.l",
-		"obj_scanner.h", "obj_util.h", "optionparser.h", "pinttypes.h",
-		"points_scan.c", "pstdint.h", "schema.h", "script.c", "ttcp.c",
-		"uce-dirent.h",
-		NULL
+	    "bio.h",
+	    "bnetwork.h",
+	    "config_win.h",
+	    "csg_parser.c",
+	    "csg_scanner.h",
+	    "obj_grammar.c",
+	    "obj_grammar.cpp",
+	    "obj_libgcv_grammar.cpp",
+	    "obj_obj-g_grammar.cpp",
+	    "obj_parser.h",
+	    "obj_rules.cpp",
+	    "obj_rules.l",
+	    "obj_scanner.h",
+	    "obj_util.h",
+	    "optionparser.h",
+	    "pinttypes.h",
+	    "points_scan.c",
+	    "pstdint.h",
+	    "schema.h",
+	    "script.c",
+	    "ttcp.c",
+	    "uce-dirent.h",
+	    NULL
 	};
 	cnt = 0;
 	rf = common_exempt_filter_strs[cnt];
@@ -176,9 +205,16 @@ regex_init(repo_info_t &r) {
 	r.main_regex = std::regex("(int)*[[:space:]]*main[[:space:]]*[(].*");
 	r.setprogname_regex = std::regex("[[:space:]]*bu_setprogname[[:space:]]*[(].*");
   	const char *setprogname_exempt_filter_strs[] {
-	    "mt19937ar.c", "stb_truetype.h", "misc/", "sha1.c",
-		"licenses_check.cpp", "fftc.c", "ifftc.c", "fftest.c", "ttcp.c",
-	       	NULL
+	    "fftc.c",
+	    "fftest.c",
+	    "ifftc.c",
+	    "licenses_check.cpp",
+	    "misc/",
+	    "mt19937ar.c",
+	    "sha1.c",
+	    "stb_truetype.h",
+	    "ttcp.c",
+	    NULL
 	};
 	cnt = 0;
 	rf = setprogname_exempt_filter_strs[cnt];
@@ -193,10 +229,14 @@ regex_init(repo_info_t &r) {
     /* API usage check regex */
     {
 	const char *api_file_exemption_strs[] {
-	    "CONFIG_CONTROL_DESIGN.*", "bu/log[.]h$", "bu/path[.]h$",
-		"bu/str[.]h$", "cursor[.]c$", "ttcp[.]c$",
-		"misc/CMake/compat/.*",
-		NULL
+	    "CONFIG_CONTROL_DESIGN.*",
+	    "bu/log[.]h$",
+	    "bu/path[.]h$",
+	    "bu/str[.]h$",
+	    "cursor[.]c$",
+	    "misc/CMake/compat/.*",
+	    "ttcp[.]c$",
+	    NULL
 	};
 	cnt = 0;
 	rf = api_file_exemption_strs[cnt];
@@ -208,11 +248,27 @@ regex_init(repo_info_t &r) {
 	}
 
 	const char *api_func_strs[] {
-	    "abort", "dirname", "fgets", "getopt", "qsort", "remove", "rmdir",
-		"strcasecmp", "strcat", "strcmp", "strcpy", "strdup",
-		"stricmp", "strlcat", "strlcpy", "strncasecmp", "strncat",
-		"strncmp", "strncpy", "unlink",
-		NULL
+	    "abort",
+	    "dirname",
+	    "fgets",
+	    "getopt",
+	    "qsort",
+	    "remove",
+	    "rmdir",
+	    "strcasecmp",
+	    "strcat",
+	    "strcmp",
+	    "strcpy",
+	    "strdup",
+	    "stricmp",
+	    "strlcat",
+	    "strlcpy",
+	    "strncasecmp",
+	    "strncat",
+	    "strncmp",
+	    "strncpy",
+	    "unlink",
+	    NULL
 	};
 	cnt = 0;
 	rf = api_func_strs[cnt];
@@ -240,13 +296,52 @@ regex_init(repo_info_t &r) {
 	r.api_exemptions[std::string("strncpy")].push_back(std::regex(".*/wfobj/obj_util[.]cpp$"));
     }
 
+    /* Do-not-use function check regex */
+    {
+	const char *dnu_func_strs[] {
+	    "std::system",
+	    NULL
+	};
+	cnt = 0;
+	rf = dnu_func_strs[cnt];
+	while (rf) {
+	    std::string rrf = std::string(".*") + std::string(rf) + std::string("[(].*");
+	    r.dnu_filters[std::string(rf)] = std::regex(rrf);
+	    cnt++;
+	    rf = dnu_func_strs[cnt];
+	}
+    }
+
     /* Platform symbol usage check regex */
     {
 	const char *platform_strs[] {
-	    "AIX", "APPLE", "CYGWIN", "DARWIN", "FREEBSD", "HAIKU", "HPUX",
-		"LINUX", "MINGW", "MSDOS", "QNX", "SGI", "SOLARIS", "SUN",
-		"SUNOS", "SVR4", "SYSV", "ULTRIX", "UNIX", "VMS", "WIN16",
-		"WIN32", "WIN64", "WINE", "WINNT", NULL
+	    "AIX",
+	    "APPLE",
+	    "CYGWIN",
+	    "DARWIN",
+	    "FREEBSD",
+	    "HAIKU",
+	    "HPUX",
+	    "LINUX",
+	    "MINGW",
+	    "MSDOS",
+	    "MSVC",
+	    "QNX",
+	    "SGI",
+	    "SOLARIS",
+	    "SUN",
+	    "SUNOS",
+	    "SVR4",
+	    "SYSV",
+	    "ULTRIX",
+	    "UNIX",
+	    "VMS",
+	    "WIN16",
+	    "WIN32",
+	    "WIN64",
+	    "WINE",
+	    "WINNT",
+	    NULL
 	};
 	cnt = 0;
 	rf = platform_strs[cnt];
@@ -262,9 +357,9 @@ regex_init(repo_info_t &r) {
 
 	const char *platform_exemption_strs[] {
 	    ".*/pstdint[.]h$",
-		".*/pinttypes[.]h$",
-		".*/uce-dirent[.]h$",
-		NULL
+	    ".*/pinttypes[.]h$",
+	    ".*/uce-dirent[.]h$",
+	    NULL
 	};
 	cnt = 0;
 	rf = platform_exemption_strs[cnt];
@@ -509,6 +604,7 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 
 
 	std::map<std::string, std::set<int>> instances;
+	std::map<std::string, std::set<int>> dnu_instances;
 
 	int lcnt = 0;
 	std::string sline;
@@ -538,6 +634,16 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 		    }
 		}
 	    }
+	    for (ff_it = r.dnu_filters.begin(); ff_it != r.dnu_filters.end(); ff_it++) {
+		if (!std::strstr(sline.c_str(), ff_it->first.c_str())) {
+		    // Only try the full regex if strstr says there is a chance
+		    continue;
+		}
+		if (std::regex_match(sline, ff_it->second)) {
+		    dnu_instances[ff_it->first].insert(lcnt);
+		    ret = 1;
+		}
+	    }
 	}
 
 	bu_close_mapped_file(ifile);
@@ -551,6 +657,15 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 	    r.api_log.push_back(lstr);
 	    }
 	}
+
+	for (i_it = dnu_instances.begin(); i_it != dnu_instances.end(); i_it++) {
+	    std::set<int>::iterator num_it;
+	    for (num_it = i_it->second.begin(); num_it != i_it->second.end(); num_it++) {
+		std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" uses ") + i_it->first + std::string(" on line ") + std::to_string(*num_it) + std::string("\n");
+		r.dnu_log.push_back(lstr);
+	    }
+	}
+
     }
 
     return ret;
@@ -701,12 +816,28 @@ platform_symbols(repo_info_t &r, std::vector<std::string> &log, std::vector<std:
 int
 main(int argc, const char *argv[])
 {
-    if (argc != 3) {
-	std::cerr << "Usage: repocheck file_list.txt source_dir\n";
+    int verbosity = 0;
+
+    if (argc < 3 || argc > 5) {
+	std::cerr << "Usage: repocheck [-v] file_list.txt source_dir\n";
 	return -1;
     }
 
+
     bu_setprogname(argv[0]);
+
+    if (argc == 4) {
+	if (BU_STR_EQUAL(argv[1], "-v")) {
+	    verbosity = 1;
+	    for (int i = 2; i < argc; i++) {
+		argv[i-1] = argv[i];
+	    }
+	    argc--;
+	} else {
+	    bu_exit(-1, "invalid option %s", argv[1]);
+	}
+    }
+
 
     repo_info_t repo_info;
     repo_info.path_root = std::string(argv[2]);
@@ -793,17 +924,20 @@ main(int argc, const char *argv[])
     int b_cnt = platform_symbols(repo_info, repo_info.symbol_bld_log, build_files);
     int psym_cnt = h_cnt + s_cnt + b_cnt;
     int expected_psym_cnt = EXPECTED_PLATFORM_SYMBOLS;
+    if (psym_cnt > expected_psym_cnt) {
+	ret = -1;
+    }
 
     if (psym_cnt < expected_psym_cnt) {
 	std::cout << "\n\nNote: need to update EXPECTED_PLATFORM_SYMBOLS - looking for " << expected_psym_cnt << ", but only found " << psym_cnt << "\n\n\n";
     }
 
-
-    if (ret) {
+    if (ret || verbosity) {
 	std::sort(repo_info.api_log.begin(), repo_info.api_log.end());
 	std::sort(repo_info.bio_log.begin(), repo_info.bio_log.end());
 	std::sort(repo_info.bnet_log.begin(), repo_info.bnet_log.end());
 	std::sort(repo_info.common_log.begin(), repo_info.common_log.end());
+	std::sort(repo_info.dnu_log.begin(), repo_info.dnu_log.end());
 	std::sort(repo_info.symbol_inc_log.begin(), repo_info.symbol_inc_log.end());
 	std::sort(repo_info.symbol_src_log.begin(), repo_info.symbol_src_log.end());
 	std::sort(repo_info.symbol_bld_log.begin(), repo_info.symbol_bld_log.end());
@@ -833,6 +967,13 @@ main(int argc, const char *argv[])
 	    }
 	}
 
+	if (repo_info.dnu_log.size()) {
+	    std::cout << "\nFAILURE: found " << repo_info.dnu_log.size() << " instances of proscribed function usage:\n";
+	    for (size_t i = 0; i < repo_info.dnu_log.size(); i++) {
+		std::cout << repo_info.dnu_log[i];
+	    }
+	}
+
 	if (repo_info.setprogname_log.size()) {
 	    std::cout << "\nFAILURE: found " << repo_info.setprogname_log.size() << " missing bu_setprogname calls:\n";
 	    for (size_t i = 0; i < repo_info.setprogname_log.size(); i++) {
@@ -845,7 +986,9 @@ main(int argc, const char *argv[])
 	    std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
 	    std::cout << "**************************************************************************\n";
 	    ret = 1;
+	}
 
+	if (psym_cnt > expected_psym_cnt || verbosity) {
 	    if (repo_info.symbol_inc_log.size()) {
 		std::cout << "\nFound " << repo_info.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
 		for (size_t i = 0; i < repo_info.symbol_inc_log.size(); i++) {

@@ -1,6 +1,7 @@
 set(man3_EN
   libfb.xml
   libplot3.xml
+  libpkg.xml
   librt.xml
   libwdb.xml
   redblack.xml

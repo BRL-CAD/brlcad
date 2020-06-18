@@ -12,7 +12,6 @@ set(other_licenses
   libvds.txt
   libz.txt
   linenoise.txt
-  lz4.txt
   OpenNURBS.txt
   openscenegraph.txt
   poly2tri.txt

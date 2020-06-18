@@ -38,7 +38,6 @@
 #include "./Sc.h"
 #include "./Mm.h"
 #include "./burst.h"
-#include "./trie.h"
 #include "./extern.h"
 #include "./ascii.h"
 

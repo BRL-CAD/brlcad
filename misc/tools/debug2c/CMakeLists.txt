@@ -44,7 +44,14 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
+
 add_executable(debug2c debug2c.cxx)
+if (O3_COMPILER_FLAG)
+  # If we have the O3 flag, use it
+  target_compile_options(debug2c PRIVATE "-O3")
+endif (O3_COMPILER_FLAG)
 
 # Local Variables:
 # tab-width: 8

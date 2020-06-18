@@ -26,9 +26,9 @@
 #  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
 #    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
 #  elif defined(DM_DLL_EXPORTS)
-#    define DM_EXPORT __declspec(dllexport)
+#    define DM_EXPORT COMPILER_DLLEXPORT
 #  elif defined(DM_DLL_IMPORTS)
-#    define DM_EXPORT __declspec(dllimport)
+#    define DM_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define DM_EXPORT
 #  endif

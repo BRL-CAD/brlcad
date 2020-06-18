@@ -9,11 +9,7 @@ BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
-set(archer_libs libtclcad libbu ${ITCL_LIBRARIES} ${ITK_LIBRARIES} ${TCL_LIBRARIES})
-
-if(CPP_DLL_DEFINES)
-  set(archer_libs ${archer_libs} imm32.lib comctl32.lib)
-endif(CPP_DLL_DEFINES)
+set(archer_libs libtclcad libbu ${ITCL_LIBRARIES} ${ITK_LIBRARY} ${TCL_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
 # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
 # currently works only in graphical mode - might as well behave "nicely" there.
@@ -59,6 +55,11 @@ BRLCAD_ADDDATA(plugins/Wizards/humanwizard/HumanWizard.tcl plugins/archer/Wizard
 BRLCAD_ADDDATA(plugins/Wizards/tankwizard/TankWizard.tcl plugins/archer/Wizards/tankwizard)
 BRLCAD_ADDDATA(plugins/Wizards/tankwizard/images/tank.png plugins/archer/Wizards/tankwizardIA/images)
 BRLCAD_ADDDATA(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/tirewizard)
+
+set(archer_txt
+  archer_ack.txt
+  )
+ADD_DOC(archer_txt ".")
 
 set(archer_ignore_files
   CMakeLists.txt

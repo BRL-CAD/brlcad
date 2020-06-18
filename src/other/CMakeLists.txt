@@ -201,47 +201,6 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
 endif (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
 
 ###############################################################################
-#                 LZ4 compression/decompression library
-###############################################################################
-
-set(lz4_DESCRIPTION "
-Option for enabling and disabling compilation of the lz4 data
-compression library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-")
-THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4 FLAGS NOSYS)
-
-if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
-
-  ExternalProject_Add(LZ4_BLD
-    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lz4"
-    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
-               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
-    )
-  ExternalProject_Target(lz4 LZ4_BLD
-    OUTPUT_FILE liblz4${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC_OUTPUT_FILE liblz4${CMAKE_STATIC_LIBRARY_SUFFIX}
-    RPATH
-    )
-
-  ExternalProject_ByProducts(LZ4_BLD ${INCLUDE_DIR}
-    lz4.h
-    lz4hc.h
-    lz4frame.h
-    )
-
-  set(LZ4_LIBRARIES lz4 CACHE STRING "Building bundled lz4" FORCE)
-  set(LZ4_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing lz4 headers." FORCE)
-
-  SetTargetFolder(LZ4_BLD "Third Party Libraries")
-  SetTargetFolder(lz4 "Third Party Libraries")
-
-endif (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
-
-###############################################################################
 #           netpbm library - support for pnm,ppm,pbm, etc. image files
 ###############################################################################
 

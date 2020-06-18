@@ -41,7 +41,7 @@ if(WIN32)
   add_definitions(
     -DIF_WGL
     )
-  set(LINKLIBS ${LINKLIBS} opengl32.lib ${TK_LIBRARIES})
+  set(LINKLIBS ${LINKLIBS} ${OPENGL32_LIBRARY} ${TK_LIBRARIES})
   set(fbwgl_srcs if_wgl.c)
   set_property(SOURCE if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(WIN32)

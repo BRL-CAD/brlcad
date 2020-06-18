@@ -63,13 +63,10 @@ set(MGED_SOURCES
   wdb_obj.c
   )
 
-set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY})
+set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY} ${WS2_32_LIBRARY} ${OPENGL32_LIBRARY})
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
 endif(TARGET libtermio)
-if(CPP_DLL_DEFINES)
-  set(mged_libs ${mged_libs} ws2_32.lib;opengl32.lib)
-endif(CPP_DLL_DEFINES)
 
 # Ideally we'd build as GUI for Windows to avoid the command window popping up,
 # but I'm not sure if that would be a problem for scripting with mged.exe on

@@ -1,57 +1,248 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<HTML>
-<HEAD>
-<title>Default Key Bindings</title>
-</HEAD>
-<BODY>
-<h1>Default Key Bindings</h1>
-<TABLE COLS=3 RULES=all BORDER=1 CELLPADDING=3>
-<TR><TH ALIGN=LEFT>Key<TH ALIGN=LEFT>Command<TH ALIGN=LEFT>Description
-<TR><TD ALIGN=LEFT>a <TD ALIGN=LEFT>adc <TD ALIGN=LEFT>toggle adc cursor
-<TR><TD ALIGN=LEFT>e <TD ALIGN=LEFT>set e_axes ! <TD ALIGN=LEFT>toggle edit axes
-<TR><TD ALIGN=LEFT>v <TD ALIGN=LEFT>set v_axes ! <TD ALIGN=LEFT>toggle view axes
-<TR><TD ALIGN=LEFT>w <TD ALIGN=LEFT>set w_axes ! <TD ALIGN=LEFT>toggle world axes
-<TR><TD ALIGN=LEFT>i <TD ALIGN=LEFT>aip f <TD ALIGN=LEFT>advance illumination pointer forward
-<TR><TD ALIGN=LEFT>I <TD ALIGN=LEFT>aip b <TD ALIGN=LEFT>advance illumination pointer backward
-<TR><TD ALIGN=LEFT>p <TD ALIGN=LEFT>M 1 0 0 <TD ALIGN=LEFT>simulate mouse click
-<TR><TD ALIGN=LEFT>3 <TD ALIGN=LEFT>press 35,25 <TD ALIGN=LEFT>set view azimuth/elevation to 35/25
-<TR><TD ALIGN=LEFT>4 <TD ALIGN=LEFT>press 45,45 <TD ALIGN=LEFT>set view azimuth/elevation to 45/45
-<TR><TD ALIGN=LEFT>f <TD ALIGN=LEFT>press front <TD ALIGN=LEFT>set view azimuth/elevation to 0/0
-<TR><TD ALIGN=LEFT>t <TD ALIGN=LEFT>press top <TD ALIGN=LEFT>set view azimuth/elevation to -90/90
-<TR><TD ALIGN=LEFT>b <TD ALIGN=LEFT>press bottom <TD ALIGN=LEFT>set view azimuth/elevation to -90/-90
-<TR><TD ALIGN=LEFT>l <TD ALIGN=LEFT>press left <TD ALIGN=LEFT>set view azimuth/elevation to 90/0
-<TR><TD ALIGN=LEFT>r <TD ALIGN=LEFT>press right <TD ALIGN=LEFT>set view azimuth/elevation to 270/0
-<TR><TD ALIGN=LEFT>R <TD ALIGN=LEFT>press rear <TD ALIGN=LEFT>set view azimuth/elevation to 180/0
-<TR><TD ALIGN=LEFT>s <TD ALIGN=LEFT>press sill <TD ALIGN=LEFT>solid illuminate
-<TR><TD ALIGN=LEFT>o <TD ALIGN=LEFT>press oill <TD ALIGN=LEFT>object illuminate
-<TR><TD ALIGN=LEFT>q <TD ALIGN=LEFT>press reject <TD ALIGN=LEFT>reject edit
-<TR><TD ALIGN=LEFT>u <TD ALIGN=LEFT>svb <TD ALIGN=LEFT>set view reference base
-<TR><TD ALIGN=LEFT>&lt;F1&gt; <TD ALIGN=LEFT>dm set depthcue ! <TD ALIGN=LEFT>toggle depth cue
-<TR><TD ALIGN=LEFT>&lt;F2&gt; <TD ALIGN=LEFT>dm set zclip ! <TD ALIGN=LEFT>toggle zclip
-<TR><TD ALIGN=LEFT>&lt;F3&gt; <TD ALIGN=LEFT>dm set perspective ! <TD ALIGN=LEFT>toggle perspective
-<TR><TD ALIGN=LEFT>&lt;F4&gt; <TD ALIGN=LEFT>dm set zbuffer ! <TD ALIGN=LEFT>toggle zbuffer
-<TR><TD ALIGN=LEFT>&lt;F5&gt; <TD ALIGN=LEFT>dm set lighting ! <TD ALIGN=LEFT>toggle lighting
-<TR><TD ALIGN=LEFT>&lt;F6&gt; <TD ALIGN=LEFT>dm set set_perspective !<TD ALIGN=LEFT>next perspective angle
-<TR><TD ALIGN=LEFT>&lt;F7&gt; <TD ALIGN=LEFT>set faceplate ! <TD ALIGN=LEFT>toggle faceplate
-<TR><TD ALIGN=LEFT>&lt;F8&gt; <TD ALIGN=LEFT>set orig_gui ! <TD ALIGN=LEFT>toggle menu
-<TR><TD ALIGN=LEFT>&lt;F9&gt; <TD ALIGN=LEFT>set send_key ! <TD ALIGN=LEFT>toggle send_key mode
-<TR><TD ALIGN=LEFT>&lt;F12&gt; <TD ALIGN=LEFT>knob zero <TD ALIGN=LEFT>zero knobs
-<TR><TD ALIGN=LEFT>&lt;Left&gt; <TD ALIGN=LEFT>knob -i ay -$mged_rotate_factor<TD ALIGN=LEFT>negative rotation about the y axis
-<TR><TD ALIGN=LEFT>&lt;Right&gt; <TD ALIGN=LEFT>knob -i ay $mged_rotate_factor<TD ALIGN=LEFT>positive rotation about the y axis
-<TR><TD ALIGN=LEFT>&lt;Down&gt; <TD ALIGN=LEFT>knob -i ax $mged_rotate_factor<TD ALIGN=LEFT>positive rotation about the x axis
-<TR><TD ALIGN=LEFT>&lt;Up&gt; <TD ALIGN=LEFT>knob -i ax -$mged_rotate_factor<TD ALIGN=LEFT>negative rotation about the x axis
-<TR><TD ALIGN=LEFT>&lt;Shift-Left&gt; <TD ALIGN=LEFT>knob -i aX $mged_tran_factor<TD ALIGN=LEFT>positive translation in X
-<TR><TD ALIGN=LEFT>&lt;Shift-Right&gt; <TD ALIGN=LEFT>knob -i aX -$mged_tran_factor<TD ALIGN=LEFT>negative translation in X
-<TR><TD ALIGN=LEFT>&lt;Shift-Down&gt; <TD ALIGN=LEFT>knob -i aZ -$mged_tran_factor<TD ALIGN=LEFT>negative translation in Z
-<TR><TD ALIGN=LEFT>&lt;Shift-Up&gt; <TD ALIGN=LEFT>knob -i aZ $mged_tran_factor<TD ALIGN=LEFT>positive translation in Z
-<TR><TD ALIGN=LEFT>&lt;Control-Shift-Left&gt; <TD ALIGN=LEFT>knob -i az $mged_rotate_factor<TD ALIGN=LEFT>positive rotation about the z axis
-<TR><TD ALIGN=LEFT>&lt;Control-Shift-Right&gt; <TD ALIGN=LEFT>knob -i az -$mged_rotate_factor<TD ALIGN=LEFT>negative rotation about the z axis
-<TR><TD ALIGN=LEFT>&lt;Control-Shift-Down&gt; <TD ALIGN=LEFT>knob -i aY $mged_rotate_factor<TD ALIGN=LEFT>positive translation in Y
-<TR><TD ALIGN=LEFT>&lt;Control-Shift-Up&gt; <TD ALIGN=LEFT>knob -i aY -$mged_rotate_factor<TD ALIGN=LEFT>negative translation in Y
-<TR><TD ALIGN=LEFT>&lt;Control-n&gt; <TD ALIGN=LEFT>set view 1 <TD ALIGN=LEFT>advance to next view
-<TR><TD ALIGN=LEFT>&lt;Control-p&gt; <TD ALIGN=LEFT>set view 0 <TD ALIGN=LEFT>advance to previous view
-<TR><TD ALIGN=LEFT>&lt;Control-v&gt; <TD ALIGN=LEFT>set view ! <TD ALIGN=LEFT>toggle between current view and previous view
-<TR><TD ALIGN=LEFT>&lt;Escape&gt; <TD ALIGN=LEFT>knob zero; press reject<TD ALIGN=LEFT>stop interactive rotation and reject any edits
-</TABLE>
-</BODY>
-</HTML>
+<html>
+<head>
+  <title>Default Key Bindings</title>
+</head>
+<body>
+  <h1>Default Key Bindings</h1>
+  <table cols="3" rules="all" border="1" cellpadding="3">
+    <tr>
+      <th align="left">Key</th>
+      <th align="left">Command</th>
+      <th align="left">Description</th>
+    </tr>
+    <tr>
+      <td align="left">a</td>
+      <td align="left">adc</td>
+      <td align="left">toggle adc cursor</td>
+    </tr>
+    <tr>
+      <td align="left">e</td>
+      <td align="left">set e_axes !</td>
+      <td align="left">toggle edit axes</td>
+    </tr>
+    <tr>
+      <td align="left">v</td>
+      <td align="left">set v_axes !</td>
+      <td align="left">toggle view axes</td>
+    </tr>
+    <tr>
+      <td align="left">w</td>
+      <td align="left">set w_axes !</td>
+      <td align="left">toggle world axes</td>
+    </tr>
+    <tr>
+      <td align="left">i</td>
+      <td align="left">aip f</td>
+      <td align="left">advance illumination pointer forward</td>
+    </tr>
+    <tr>
+      <td align="left">I</td>
+      <td align="left">aip b</td>
+      <td align="left">advance illumination pointer backward</td>
+    </tr>
+    <tr>
+      <td align="left">p</td>
+      <td align="left">M 1 0 0</td>
+      <td align="left">simulate mouse click</td>
+    </tr>
+    <tr>
+      <td align="left">3</td>
+      <td align="left">press 35,25</td>
+      <td align="left">set view azimuth/elevation to 35/25</td>
+    </tr>
+    <tr>
+      <td align="left">4</td>
+      <td align="left">press 45,45</td>
+      <td align="left">set view azimuth/elevation to 45/45</td>
+    </tr>
+    <tr>
+      <td align="left">f</td>
+      <td align="left">press front</td>
+      <td align="left">set view azimuth/elevation to 0/0</td>
+    </tr>
+    <tr>
+      <td align="left">t</td>
+      <td align="left">press top</td>
+      <td align="left">set view azimuth/elevation to -90/90</td>
+    </tr>
+    <tr>
+      <td align="left">b</td>
+      <td align="left">press bottom</td>
+      <td align="left">set view azimuth/elevation to -90/-90</td>
+    </tr>
+    <tr>
+      <td align="left">l</td>
+      <td align="left">press left</td>
+      <td align="left">set view azimuth/elevation to 90/0</td>
+    </tr>
+    <tr>
+      <td align="left">r</td>
+      <td align="left">press right</td>
+      <td align="left">set view azimuth/elevation to 270/0</td>
+    </tr>
+    <tr>
+      <td align="left">R</td>
+      <td align="left">press rear</td>
+      <td align="left">set view azimuth/elevation to 180/0</td>
+    </tr>
+    <tr>
+      <td align="left">s</td>
+      <td align="left">press sill</td>
+      <td align="left">solid illuminate</td>
+    </tr>
+    <tr>
+      <td align="left">o</td>
+      <td align="left">press oill</td>
+      <td align="left">object illuminate</td>
+    </tr>
+    <tr>
+      <td align="left">q</td>
+      <td align="left">press reject</td>
+      <td align="left">reject edit</td>
+    </tr>
+    <tr>
+      <td align="left">u</td>
+      <td align="left">svb</td>
+      <td align="left">set view reference base</td>
+    </tr>
+    <tr>
+      <td align="left">n</td>
+      <td align="left">nirt -b</td>
+      <td align="left">shoot NIRT ray at center of view</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F1&gt;</td>
+      <td align="left">dm set depthcue !</td>
+      <td align="left">toggle depth cue</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F2&gt;</td>
+      <td align="left">dm set zclip !</td>
+      <td align="left">toggle zclip</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F3&gt;</td>
+      <td align="left">dm set perspective !</td>
+      <td align="left">toggle perspective</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F4&gt;</td>
+      <td align="left">dm set zbuffer !</td>
+      <td align="left">toggle zbuffer</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F5&gt;</td>
+      <td align="left">dm set lighting !</td>
+      <td align="left">toggle lighting</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F6&gt;</td>
+      <td align="left">dm set set_perspective !</td>
+      <td align="left">next perspective angle</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F7&gt;</td>
+      <td align="left">set faceplate !</td>
+      <td align="left">toggle faceplate</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F8&gt;</td>
+      <td align="left">set orig_gui !</td>
+      <td align="left">toggle menu</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F9&gt;</td>
+      <td align="left">set send_key !</td>
+      <td align="left">toggle send_key mode</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;F12&gt;</td>
+      <td align="left">knob zero</td>
+      <td align="left">zero knobs</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Left&gt;</td>
+      <td align="left">knob -i ay -$mged_rotate_factor</td>
+      <td align="left">negative rotation about the y axis</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Right&gt;</td>
+      <td align="left">knob -i ay $mged_rotate_factor</td>
+      <td align="left">positive rotation about the y axis</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Down&gt;</td>
+      <td align="left">knob -i ax $mged_rotate_factor</td>
+      <td align="left">positive rotation about the x axis</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Up&gt;</td>
+      <td align="left">knob -i ax -$mged_rotate_factor</td>
+      <td align="left">negative rotation about the x axis</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Shift-Left&gt;</td>
+      <td align="left">knob -i aX $mged_tran_factor</td>
+      <td align="left">positive translation in X</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Shift-Right&gt;</td>
+      <td align="left">knob -i aX -$mged_tran_factor</td>
+      <td align="left">negative translation in X</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Shift-Down&gt;</td>
+      <td align="left">knob -i aZ -$mged_tran_factor</td>
+      <td align="left">negative translation in Z</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Shift-Up&gt;</td>
+      <td align="left">knob -i aZ $mged_tran_factor</td>
+      <td align="left">positive translation in Z</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Control-Shift-Left&gt;</td>
+      <td align="left">knob -i az $mged_rotate_factor</td>
+      <td align="left">positive rotation about the z axis</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Control-Shift-Right&gt;</td>
+      <td align="left">knob -i az -$mged_rotate_factor</td>
+      <td align="left">negative rotation about the z axis</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Control-Shift-Down&gt;</td>
+      <td align="left">knob -i aY $mged_rotate_factor</td>
+      <td align="left">positive translation in Y</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Control-Shift-Up&gt;</td>
+      <td align="left">knob -i aY -$mged_rotate_factor</td>
+      <td align="left">negative translation in Y</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Control-n&gt;</td>
+      <td align="left">set view 1</td>
+      <td align="left">advance to next view</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Control-p&gt;</td>
+      <td align="left">set view 0</td>
+      <td align="left">advance to previous view</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Control-v&gt;</td>
+      <td align="left">set view !</td>
+      <td align="left">toggle between current view and previous
+      view</td>
+    </tr>
+    <tr>
+      <td align="left">&lt;Escape&gt;</td>
+      <td align="left">knob zero; press reject</td>
+      <td align="left">stop interactive rotation and reject any
+      edits</td>
+    </tr>
+  </table>
+</body>
+</html>

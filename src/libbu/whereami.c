@@ -89,6 +89,54 @@ extern int dladdr(const void *, Dl_info *);
 #error unsupported compiler
 #endif
 
+/* LIBBU fallback implementation */
+static
+int _bu_getExecutablePath(char* out, int capacity, int* dirname_length)
+{
+    const char *pname = _bu_progname_raw();
+    struct bu_vls epath = BU_VLS_INIT_ZERO;
+
+    if (pname[0] == '.') {
+        char iwd[MAXPATHLEN];
+        char fullpath[MAXPATHLEN];
+        bu_getiwd(iwd, MAXPATHLEN);
+	// Use a VLS for this, since in principle there's nothing stopping the
+	// iwd and the bu_progname each individually from running right up to
+	// MAXPATHLEN, and if they do a MAXPATHLEN buffer won't hold both of
+	// them for realpath to try and digest down into something sane.
+        bu_vls_sprintf(&epath, "%s%c%s", iwd, BU_DIR_SEPARATOR, pname);
+        if (!bu_file_realpath(bu_vls_cstr(&epath), fullpath)) {
+            /* Unable to resolve initial path concatentation */
+	    bu_vls_free(&epath);
+	    return -1;
+        }
+	bu_vls_sprintf(&epath, "%s", fullpath);
+    } else {
+	bu_vls_sprintf(&epath, "%s", pname);
+    }
+
+    int length = bu_vls_strlen(&epath);
+    if (length <= capacity) {
+
+	memcpy(out, bu_vls_cstr(&epath), length);
+
+	if (dirname_length) {
+	    int i;
+	    for (i = length - 1; i >= 0; --i) {
+		if (out[i] == '/') {
+		    *dirname_length = i;
+		    break;
+		}
+	    }
+	}
+    }
+
+    bu_vls_free(&epath);
+
+    return length;
+}
+
+
 #if defined(_WIN32)
 
 #define WIN32_LEAN_AND_MEAN
@@ -258,6 +306,10 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
     }
 
     break;
+  }
+
+  if (length <= 0) {
+    return _bu_getExecutablePath(out, capacity, dirname_length);
   }
 
   return length;
@@ -452,6 +504,10 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
   if (path != buffer1)
     WAI_FREE(path);
 
+  if (length <= 0) {
+    return _bu_getExecutablePath(out, capacity, dirname_length);
+  }
+
   return length;
 }
 
@@ -557,6 +613,10 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
   }
 
   fclose(self_exe);
+
+  if (length <= 0) {
+    return _bu_getExecutablePath(out, capacity, dirname_length);
+  }
 
   return length;
 }
@@ -666,6 +726,10 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
   if (path != buffer1)
     WAI_FREE(path);
 
+  if (length <= 0) {
+    return _bu_getExecutablePath(out, capacity, dirname_length);
+  }
+
   return length;
 }
 
@@ -719,47 +783,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 WAI_FUNCSPEC
 int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 {
-    const char *pname = _bu_progname_raw();
-    struct bu_vls epath = BU_VLS_INIT_ZERO;
-
-    if (pname[0] == '.') {
-        char iwd[MAXPATHLEN];
-        char fullpath[MAXPATHLEN];
-        bu_getiwd(iwd, MAXPATHLEN);
-	// Use a VLS for this, since in principle there's nothing stopping the
-	// iwd and the bu_progname each individually from running right up to
-	// MAXPATHLEN, and if they do a MAXPATHLEN buffer won't hold both of
-	// them for realpath to try and digest down into something sane.
-        bu_vls_sprintf(&epath, "%s%c%s", iwd, BU_DIR_SEPARATOR, pname);
-        if (!bu_file_realpath(bu_vls_cstr(&epath), fullpath)) {
-            /* Unable to resolve initial path concatentation */
-	    bu_vls_free(&epath);
-	    return -1;
-        }
-	bu_vls_sprintf(&epath, "%s", fullpath);
-    } else {
-	bu_vls_sprintf(&epath, "%s", pname);
-    }
-
-    int length = bu_vls_strlen(&epath);
-    if (length <= capacity) {
-
-	memcpy(out, bu_vls_cstr(&epath), length);
-
-	if (dirname_length) {
-	    int i;
-	    for (i = length - 1; i >= 0; --i) {
-		if (out[i] == '/') {
-		    *dirname_length = i;
-		    break;
-		}
-	    }
-	}
-    }
-
-    bu_vls_free(&epath);
-
-    return length;
+    return _bu_getExecutablePath(out, capacity, dirname_length);
 }
 
 WAI_NOINLINE WAI_FUNCSPEC

@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* added units label to the Archer in-scene scale graphic - Cliff Yapp
+* improved output path sorting of search command - Cliff Yapp
 * added 3dm-g failure message about supported versions - Cliff Yapp
 * fixed bw-png writing corrupted png files on Windows - Sean Morrison
 

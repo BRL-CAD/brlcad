@@ -2,11 +2,7 @@ add_subdirectory(ref)
 
 include_directories(${BU_INCLUDE_DIRS})
 
-add_definitions(
-  -DHAVE_CONFIG_H
-  -DBRLCADBUILD
-  -DCONSOLE
-  )
+add_definitions(-DCONSOLE)
 
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
 set(BARK_SOURCES

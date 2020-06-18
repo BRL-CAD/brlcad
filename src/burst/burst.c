@@ -38,7 +38,6 @@
 #include "bu/vls.h"
 
 #include "./burst.h"
-#include "./trie.h"
 #include "./extern.h"
 #include "./ascii.h"
 
@@ -159,6 +158,7 @@ static const char usage[] =
 int
 main(int argc, const char *argv[])
 {
+    struct burst_state s;
     const char *bfile = NULL;
     int burst_opt; /* unused, for option compatibility */
     int plot_lines = 0;
@@ -174,6 +174,9 @@ main(int argc, const char *argv[])
     BU_OPT(d[1],  "P", "", "",  NULL,   &plot_lines,  "Plot lines");
     BU_OPT(d[2],  "b", "", "",  NULL,   &burst_opt,   "Batch mode");
     BU_OPT_NULL(d[3]);
+
+    burst_state_init(&s);
+
 
     /* Interactive mode is gone - until we strip all the leftovers out
      * of the code, let it know we're not in tty mode */
@@ -259,6 +262,123 @@ exitCleanly(int code)
     exit(code);
 }
 
+void
+burst_state_init(struct burst_state *s)
+{
+    //Colors colorids;
+    s->fbiop = NULL;
+    s->burstfp = NULL;
+    s->gridfp = NULL;
+    s->histfp = NULL;
+    s->outfp = NULL;
+    s->plotfp = NULL;
+    s->shotfp = NULL;
+    s->shotlnfp = NULL;
+    s->tmpfp = NULL;
+    s->mainhmenu = NULL;
+    //Ids airids;
+    //Ids armorids;
+    //Ids critids;
+    s->pixgrid = NULL;
+    VSET(s->pixaxis, 255,   0,   0);
+    VSET(s->pixbhit, 200, 255, 200);
+    VSET(s->pixbkgr, 150, 100, 255);
+    VSET(s->pixblack,  0,   0,   0);
+    VSET(s->pixcrit, 255, 200, 200);
+    VSET(s->pixghit, 255,   0, 255);
+    VSET(s->pixmiss, 200, 200, 200);
+    VSET(s->pixtarg, 255, 255, 255);
+    s->cmdtrie = NULL;
+    s->plotline = 0;
+    s->batchmode = 0;
+    s->cantwarhead = 0;
+    s->deflectcone = DFL_DEFLECT;
+    s->dithercells = DFL_DITHER;
+    s->fatalerror = 0;
+    s->groundburst = 0;
+    s->reportoverlaps = DFL_OVERLAPS;
+    s->reqburstair = 1;
+    s->shotburst = 0;
+    s->tty = 1;
+    s->userinterrupt = 0;
+    memset(s->airfile, 0, LNBUFSZ);
+    memset(s->armorfile, 0, LNBUFSZ);
+    memset(s->burstfile, 0, LNBUFSZ);
+    memset(s->cmdbuf, 0, LNBUFSZ);
+    memset(s->cmdname, 0, LNBUFSZ);
+    memset(s->colorfile, 0, LNBUFSZ);
+    memset(s->critfile, 0, LNBUFSZ);
+    memset(s->errfile, 0, LNBUFSZ);
+    memset(s->fbfile, 0, LNBUFSZ);
+    memset(s->gedfile, 0, LNBUFSZ);
+    memset(s->gridfile, 0, LNBUFSZ);
+    memset(s->histfile, 0, LNBUFSZ);
+    memset(s->objects, 0, LNBUFSZ);
+    memset(s->outfile, 0, LNBUFSZ);
+    memset(s->plotfile, 0, LNBUFSZ);
+    memset(s->scrbuf, 0, LNBUFSZ);
+    memset(s->scriptfile, 0, LNBUFSZ);
+    memset(s->shotfile, 0, LNBUFSZ);
+    memset(s->shotlnfile, 0, LNBUFSZ);
+    memset(s->title, 0, TITLE_LEN);
+    memset(s->timer, 0, TIMER_LEN);
+    memset(s->tmpfname, 0, TIMER_LEN);
+    s->cmdptr = NULL;
+    s->bdist = DFL_BDIST;
+    VSET(s->burstpoint, 0.0, 0.0, 0.0);
+    s->cellsz = DFL_CELLSIZE;
+    s->conehfangle = DFL_CONEANGLE;
+    VSET(s->fire, 0.0, 0.0, 0.0);
+    s->griddn = 0.0;
+    s->gridlf = 0.0;
+    s->gridrt = 0.0;
+    s->gridup = 0.0;
+    VSET(s->gridhor, 0.0, 0.0, 0.0);
+    VSET(s->gridsoff, 0.0, 0.0, 0.0);
+    VSET(s->gridver, 0.0, 0.0, 0.0);
+    s->grndbk = 0.0;
+    s->grndht = 0.0;
+    s->grndfr = 0.0;
+    s->grndlf = 0.0;
+    s->grndrt = 0.0;
+    VSET(s->modlcntr, 0.0, 0.0, 0.0);
+    s->modldn = 0.0;
+    s->modllf = 0.0;
+    s->modlrt = 0.0;
+    s->modlup = 0.0;
+    s->raysolidangle = 0.0;
+    s->standoff = 0.0;
+    s->unitconv = 1.0;
+    s->viewazim = DFL_AZIMUTH;
+    s->viewelev = DFL_ELEVATION;
+    s->pitch = 0.0;
+    s->yaw = 0.0;
+    VSET(s->xaxis, 1.0, 0.0, 0.0);
+    VSET(s->zaxis, 0.0, 0.0, 1.0);
+    VSET(s->negzaxis, 0.0, 0.0, -1.0);
+    co = 0;
+    devwid = 0;
+    devhgt = 0;
+    firemode = FM_DFLT;
+    gridsz = 512;
+    gridxfin = 0;
+    gridyfin = 0;
+    gridxorg = 0;
+    gridyorg = 0;
+    gridwidth = 0;
+    gridheight = 0;
+    li = 0;
+    nbarriers = DFL_BARRIERS;
+    noverlaps = 0;
+    nprocessors = 0;
+    nriplevels = DFL_RIPLEVELS;
+    s->nspallrays = DFL_NRAYS;
+    s->units = DFL_UNITS;
+    s->zoom = 1;
+    s->rtip = RTI_NULL;
+    s->norml_sig = NULL;	/* active during interactive operation */
+    s->abort_sig = NULL; /* active during ray tracing only */
+}
 
 /*
  * Local Variables:

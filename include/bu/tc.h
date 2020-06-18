@@ -34,6 +34,14 @@
 #define _BU_TCM_H
 
 #include "common.h"
+
+#if !defined(BRLCADBUILD)
+#  error "Warning: included bu/tc.h (compile-time API) without BRLCADBUILD defined"
+#endif
+#if !defined(HAVE_CONFIG_H)
+#  error "Warning: included bu/tc.h (compile-time API) without HAVE_CONFIG_H defined"
+#endif
+
 #include "bu/defines.h"
 
 #include "bio.h" /* For windows.h */

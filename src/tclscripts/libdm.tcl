@@ -18,13 +18,6 @@
 # information.
 #
 ###
-proc _init_dm { func w } {
-    $func $w
-    catch { init_dm $w }
-}
-
-proc bind_dm { w } {
-}
 
 ## - init_dm_obj
 #

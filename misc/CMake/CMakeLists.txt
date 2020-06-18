@@ -23,12 +23,10 @@ set(cmake_ignore_files
   FindBlosc.cmake
   FindBSON.cmake
   FindFontconfig.cmake
-  FindGDAL.cmake
   FindGECODE.cmake
   FindGL.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
-  FindLZ4.cmake
   FindNETPBM.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake

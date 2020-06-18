@@ -32,9 +32,9 @@
 #  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
 #    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
 #  elif defined(FB_DLL_EXPORTS)
-#    define FB_EXPORT __declspec(dllexport)
+#    define FB_EXPORT COMPILER_DLLEXPORT
 #  elif defined(FB_DLL_IMPORTS)
-#    define FB_EXPORT __declspec(dllimport)
+#    define FB_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define FB_EXPORT
 #  endif

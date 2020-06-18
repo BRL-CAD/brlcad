@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2019 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -202,9 +202,9 @@ dozoom(int which_eye)
     /* draw predictor vlist */
     if (mged_variables->mv_predictor) {
 	dm_set_fg(DMP,
-		  color_scheme->cs_predictor[0],
-		  color_scheme->cs_predictor[1],
-		  color_scheme->cs_predictor[2], 1, 1.0);
+		       color_scheme->cs_predictor[0],
+		       color_scheme->cs_predictor[1],
+		       color_scheme->cs_predictor[2], 1, 1.0);
 	dm_draw_vlist(DMP, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
     }
 
@@ -224,14 +224,14 @@ dozoom(int which_eye)
     dm_loadmatrix(DMP, mat, which_eye);
     inv_viewsize /= modelchanges[15];
     dm_set_fg(DMP,
-	      color_scheme->cs_geo_hl[0],
-	      color_scheme->cs_geo_hl[1],
-	      color_scheme->cs_geo_hl[2], 1, 1.0);
+		   color_scheme->cs_geo_hl[0],
+		   color_scheme->cs_geo_hl[1],
+		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
     ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
-				  r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
-				  geometry_default_color, 0, mged_variables->mv_dlist);
+	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
+	    geometry_default_color, 0, mged_variables->mv_dlist);
 
     curr_dm_list->dml_ndrawn += ndrawn;
 
@@ -276,8 +276,8 @@ createDListSolid(struct solid *sp)
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_mapped &&
-	    dm_get_displaylist(dlp->dml_dmp) &&
-	    dlp->dml_mged_variables->mv_dlist) {
+		dm_get_displaylist(dlp->dml_dmp) &&
+		dlp->dml_mged_variables->mv_dlist) {
 	    if (sp->s_dlist == 0)
 		sp->s_dlist = dm_gen_dlists(DMP, 1);
 
@@ -287,9 +287,9 @@ createDListSolid(struct solid *sp)
 		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_transparency);
 	    else
 		(void)dm_set_fg(DMP,
-				(unsigned char)sp->s_color[0],
-				(unsigned char)sp->s_color[1],
-				(unsigned char)sp->s_color[2], 0, sp->s_transparency);
+			(unsigned char)sp->s_color[0],
+			(unsigned char)sp->s_color[1],
+			(unsigned char)sp->s_color[2], 0, sp->s_transparency);
 	    (void)dm_draw_vlist(DMP, (struct bn_vlist *)&sp->s_vlist);
 	    (void)dm_end_dlist(DMP);
 	}

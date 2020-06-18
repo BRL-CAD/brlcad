@@ -9,11 +9,11 @@ set(GCV_INCLUDE_DIRS
   )
 BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
 
-if(CPP_DLL_DEFINES)
+if(MSVC)
   set(LIBGCV_PLUGINS_PATH "${BIN_DIR}")
-else(CPP_DLL_DEFINES)
+else(MSVC)
   set(LIBGCV_PLUGINS_PATH "${LIB_DIR}")
-endif(CPP_DLL_DEFINES)
+endif(MSVC)
 set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
 add_subdirectory(plugins)
 
@@ -35,9 +35,9 @@ set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGIN_SUF
 
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
-if(CPP_DLL_DEFINES)
+if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
+endif(HIDE_INTERNAL_SYMBOLS)
 add_test(NAME bottess_test COMMAND test_bottess)
 
 

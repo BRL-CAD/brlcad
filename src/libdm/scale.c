@@ -38,6 +38,7 @@
 void
 dm_draw_scale(dm *dmp,
 	      fastf_t   viewSize,
+	      const char *unit,
 	      int       *lineColor,
 	      int       *textColor)
 {
@@ -53,6 +54,9 @@ dm_draw_scale(dm *dmp,
     dm_set_line_attr(dmp, dmp->dm_lineWidth, 0);  /* solid lines */
 
     bu_vls_printf(&vls, "%g", viewSize*0.5);
+    if (unit) {
+	bu_vls_printf(&vls, "%s", unit);
+    }
     soffset = (int)(strlen(bu_vls_addr(&vls)) * 0.5);
 
     xpos1 = -0.5;
