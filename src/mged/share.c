@@ -184,11 +184,11 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
 			    save_dlp = curr_dm_list;
 
-			    curr_dm_list = dlp1;
+			    set_curr_dm(dlp1);
 			    createDLists(GEDP->ged_gdp->gd_headDisplay);
 
 			    /* restore */
-			    curr_dm_list = save_dlp;
+			    set_curr_dm(save_dlp);
 			}
 
 			dlp1->dml_dirty = 1;

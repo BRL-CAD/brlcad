@@ -125,6 +125,17 @@ struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list = (struct dm_list *)NULL;
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
+/* If we changed the active dm, need to update GEDP as well.. */
+void set_curr_dm(struct dm_list *nl)
+{
+    curr_dm_list = nl;
+    if (nl != DM_LIST_NULL) {
+	GEDP->ged_gvp = nl->dml_view_state->vs_gvp;
+	GEDP->ged_gvp->gv_grid = *nl->dml_grid_state; /* struct copy */
+    } else {
+	GEDP->ged_gvp = NULL;
+    }
+}
 
 #ifdef DM_OGL
 static int
@@ -347,7 +358,7 @@ release(char *name, int need_close)
 	    /* found it */
 	    if (p != curr_dm_list) {
 		save_dm_list = curr_dm_list;
-		curr_dm_list = p;
+		set_curr_dm(p);
 	    }
 	    break;
 	}
@@ -396,9 +407,9 @@ release(char *name, int need_close)
     bu_free((void *)curr_dm_list, "release: curr_dm_list");
 
     if (save_dm_list != DM_LIST_NULL)
-	curr_dm_list = save_dm_list;
+	set_curr_dm(save_dm_list);
     else
-	curr_dm_list = (struct dm_list *)head_dm_list.l.forw;
+	set_curr_dm((struct dm_list *)head_dm_list.l.forw);
 
     return TCL_OK;
 }
@@ -629,14 +640,14 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	if (dm_get_dname(tmp_dmp) && strlen(bu_vls_addr(dm_get_dname(tmp_dmp)))) {
 	    if (gui_setup(bu_vls_addr(dm_get_dname(tmp_dmp))) == TCL_ERROR) {
 		bu_free((void *)curr_dm_list, "f_attach: dm_list");
-		curr_dm_list = o_dm_list;
+		set_curr_dm(o_dm_list);
 		bu_vls_free(&tmp_vls);
 		dm_put(tmp_dmp);
 		return TCL_ERROR;
 	    }
 	} else if (gui_setup((char *)NULL) == TCL_ERROR) {
 	    bu_free((void *)curr_dm_list, "f_attach: dm_list");
-	    curr_dm_list = o_dm_list;
+	    set_curr_dm(o_dm_list);
 	    bu_vls_free(&tmp_vls);
 	    dm_put(tmp_dmp);
 	    return TCL_ERROR;
@@ -684,6 +695,9 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     (void)dm_make_current(DMP);
     (void)dm_set_win_bounds(DMP, windowbounds);
     mged_fb_open();
+
+    GEDP->ged_gvp = curr_dm_list->dml_view_state->vs_gvp;
+    GEDP->ged_gvp->gv_grid = *curr_dm_list->dml_grid_state; /* struct copy */
 
     return TCL_OK;
 

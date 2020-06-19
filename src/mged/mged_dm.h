@@ -438,6 +438,9 @@ struct dm_list {
     int			(*dml_eventHandler)();
 };
 
+/* If we're changing the active DM, use this function so
+ * libged also gets the word. */
+extern void set_curr_dm(struct dm_list *nl);
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define DMP curr_dm_list->dml_dmp

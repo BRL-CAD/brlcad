@@ -94,12 +94,12 @@ adc_set_scroll(void)
 
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
 	if (dmlp->dml_adc_state == adc_state) {
-	    curr_dm_list = dmlp;
+	    set_curr_dm(dmlp);
 	    set_scroll();
 	    dirty = 1;
 	}
 
-    curr_dm_list = save_dmlp;
+    set_curr_dm(save_dmlp);
 }
 
 

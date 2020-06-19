@@ -358,13 +358,13 @@ new_edit_mats(void)
 	if (!p->dml_owner)
 	    continue;
 
-	curr_dm_list = p;
+	set_curr_dm(p);
 	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, modelchanges);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
 	view_state->vs_flag = 1;
     }
 
-    curr_dm_list = save_dm_list;
+    set_curr_dm(save_dm_list);
 }
 
 
@@ -639,7 +639,7 @@ mged_process_char(char ch)
 	    if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 		curr_cmd_list = &head_cmd_list;
 		if (curr_cmd_list->cl_tie)
-		    curr_dm_list = curr_cmd_list->cl_tie;
+		    set_curr_dm(curr_cmd_list->cl_tie);
 
 		reset_Tty(fileno(stdin)); /* Backwards compatibility */
 		(void)signal(SIGINT, SIG_IGN);
@@ -1779,7 +1779,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
 	    if (curr_cmd_list->cl_tie)
-		curr_dm_list = curr_cmd_list->cl_tie;
+		set_curr_dm(curr_cmd_list->cl_tie);
 
 	    if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
 		/* Remove newline */
@@ -1983,7 +1983,7 @@ event_check(int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	curr_dm_list = edit_rate_mr_dm_list;
+	set_curr_dm(edit_rate_mr_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
@@ -2017,7 +2017,7 @@ event_check(int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	curr_dm_list = edit_rate_or_dm_list;
+	set_curr_dm(edit_rate_or_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'o';
 
@@ -2051,7 +2051,7 @@ event_check(int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	curr_dm_list = edit_rate_vr_dm_list;
+	set_curr_dm(edit_rate_vr_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
@@ -2085,7 +2085,7 @@ event_check(int non_blocking)
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	curr_dm_list = edit_rate_mt_dm_list;
+	set_curr_dm(edit_rate_mt_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
@@ -2118,7 +2118,7 @@ event_check(int non_blocking)
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	curr_dm_list = edit_rate_vt_dm_list;
+	set_curr_dm(edit_rate_vt_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
@@ -2176,7 +2176,7 @@ event_check(int non_blocking)
 	if (!p->dml_owner)
 	    continue;
 
-	curr_dm_list = p;
+	set_curr_dm(p);
 
 	if (view_state->vs_rateflag_model_rotate) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2238,7 +2238,7 @@ event_check(int non_blocking)
 	    bu_vls_free(&vls);
 	}
 
-	curr_dm_list = save_dm_list;
+	set_curr_dm(save_dm_list);
     }
 
     return non_blocking;
@@ -2293,7 +2293,7 @@ refresh(void)
 	 * if something has changed, then go update the display.
 	 * Otherwise, we are happy with the view we have
 	 */
-	curr_dm_list = p;
+	set_curr_dm(p);
 	if (mapped && dirty) {
 	    int restore_zbuffer = 0;
 
@@ -2427,7 +2427,7 @@ refresh(void)
 	}
     }
 
-    curr_dm_list = save_dm_list;
+    set_curr_dm(save_dm_list);
 
     bu_vls_free(&overlay_vls);
     bu_vls_free(&tmp_vls);
@@ -2463,7 +2463,7 @@ mged_finish(int exitcode)
 	    bu_free(p, "release: curr_dm_list");
 	}
 
-	curr_dm_list = DM_LIST_NULL;
+	set_curr_dm(DM_LIST_NULL);
     }
 
     for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {

@@ -126,7 +126,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 
     /* it's an event for a window that I'm not handling */
     if (curr_dm_list == DM_LIST_NULL) {
-	curr_dm_list = save_dm_list;
+	set_curr_dm(save_dm_list);
 	return TCL_OK;
     }
 
@@ -139,7 +139,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 
     /* no further processing of this event */
     if (status != TCL_OK) {
-	curr_dm_list = save_dm_list;
+	set_curr_dm(save_dm_list);
 	return status;
     }
 
@@ -195,7 +195,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     }
 #endif
 
-    curr_dm_list = save_dm_list;
+    set_curr_dm(save_dm_list);
     return status;
 }
 #else
