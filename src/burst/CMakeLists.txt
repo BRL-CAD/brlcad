@@ -1,5 +1,5 @@
 # Until the new code is proved out, keep the original around
-# as burst-old
+# as burst and name the new binary nburst
 add_subdirectory(old)
 
 set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise")
@@ -23,7 +23,7 @@ set(burst_SOURCES
   ${LDIR}/linenoise.c
   )
 
-BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt;libfb;libbu;${M_LIBRARY}")
+BRLCAD_ADDEXEC(nburst "${burst_SOURCES}" "librt;libfb;libbu;${M_LIBRARY}")
 
 set(burst_ignore
   CMakeLists.txt
