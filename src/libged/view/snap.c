@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/eye.c
+/** @file libged/snap.c
  *
- * The eye command.
+ * Logic for snapping points to visual elements.
  *
  */
 
@@ -40,17 +40,19 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int use_grid = 0;
     int use_lines = 0;
-    int use_objects = 0;
+    int use_object_keypoints = 0;
+    int use_object_lines = 0;
     point_t pt = VINIT_ZERO;
-    int pt_model = 0;
+    point_t view_pt = VINIT_ZERO;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "h", "help",      "",  NULL,  &print_help,   "Print help and exit");
-    BU_OPT(d[1], "g", "grid",      "",  NULL,  &use_grid,     "Snap to the view grid");
-    BU_OPT(d[2], "l",  "lines",    "",  NULL,  &use_lines,    "Snap to the view lines");
-    BU_OPT(d[3], "o",  "objs",     "",  NULL,  &use_objects,  "Snap to drawn object wireframes");
-    BU_OPT_NULL(d[4]);
+    struct bu_opt_desc d[6];
+    BU_OPT(d[0], "h", "help",      "",  NULL,  &print_help,           "Print help and exit");
+    BU_OPT(d[1], "g", "grid",      "",  NULL,  &use_grid,             "Snap to the view grid");
+    BU_OPT(d[2], "l", "lines",     "",  NULL,  &use_lines,            "Snap to the view lines");
+    BU_OPT(d[3], "o", "obj-keypt", "",  NULL,  &use_object_keypoints, "Snap to drawn object keypoints");
+    BU_OPT(d[4], "w", "obj-lines", "",  NULL,  &use_object_lines,     "Snap to drawn object lines");
+    BU_OPT_NULL(d[5]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
@@ -89,12 +91,14 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     /* If we've got ONLY X and Y, assume a view coordinate.  Otherwise, assume
      * the incoming point is 3D. */
     if (argc == 3) {
-	pt_model = 1;
 	if (bu_opt_fastf_t(&msg, 1, (const char **)&argv[2], (void *)&pt[Z]) == -1) {
 	    bu_vls_printf(gedp->ged_result_str, "problem reading Z value %s: %s\n", argv[2], bu_vls_cstr(&msg));
 	    bu_vls_free(&msg);
 	    return GED_ERROR;
 	}
+	MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, pt);
+    } else {
+	VMOVE(view_pt, pt);
     }
 
 
@@ -106,11 +110,13 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (pt_model) {
-	bu_vls_printf(gedp->ged_result_str, "%g %g %g", pt[X], pt[Y], pt[Z]);
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "%g %g", pt[X], pt[Y]);
+    if (use_grid) {
+	ged_snap_to_grid(gedp, &view_pt[X], &view_pt[Y]);
     }
+
+    MAT4X3PNT(pt, gedp->ged_gvp->gv_view2model, view_pt);
+
+    bu_vls_printf(gedp->ged_result_str, "%g %g %g", pt[X], pt[Y], pt[Z]);
 
     bu_vls_free(&msg);
     return GED_OK;
