@@ -133,7 +133,9 @@ void set_curr_dm(struct dm_list *nl)
 	GEDP->ged_gvp = nl->dml_view_state->vs_gvp;
 	GEDP->ged_gvp->gv_grid = *nl->dml_grid_state; /* struct copy */
     } else {
-	GEDP->ged_gvp = NULL;
+	if (GEDP) {
+	    GEDP->ged_gvp = NULL;
+	}
     }
 }
 
