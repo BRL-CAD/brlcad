@@ -1,4 +1,4 @@
-/*                         V I E W . C
+/*                         S N A P . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2020 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/view.c
+/** @file libged/eye.c
  *
- * The view command.
+ * The eye command.
  *
  */
 
@@ -31,11 +31,10 @@
 
 #include "../ged_private.h"
 
-
 int
-ged_view_func(struct ged *gedp, int argc, const char *argv[])
+ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "quat|ypr|aet|center|eye|size [args]";
+    static const char *usage = "[options] x y [z]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -44,47 +43,9 @@ ged_view_func(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
+    bu_vls_printf(gedp->ged_result_str, "view %s %s", argv[0], usage);
 
-    if (6 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[1], "quat")) {
-	return ged_quat(gedp, argc-1, argv+1);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "ypr")) {
-	return ged_ypr(gedp, argc-1, argv+1);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "aet")) {
-	return ged_aet(gedp, argc-1, argv+1);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "center")) {
-	return ged_center(gedp, argc-1, argv+1);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "eye")) {
-	return ged_eye(gedp, argc-1, argv+1);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "size")) {
-	return ged_size(gedp, argc-1, argv+1);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "snap")) {
-	return ged_view_snap(gedp, argc-1, argv+1);
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return GED_OK;
 }
 
 

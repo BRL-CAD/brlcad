@@ -341,13 +341,14 @@ set(LIBGED_SOURCES
   v2m_point.c
   vdraw.c
   version.c
-  view/view.c
   view/aet.c
   view/center.cpp
   view/eye.c
   view/quat.c
   view/size.c
+  view/snap.c
   view/ypr.c
+  view/view.c
   view2grid_lu.c
   view2model.c
   view2model_lu.c
