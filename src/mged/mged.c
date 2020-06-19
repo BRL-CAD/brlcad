@@ -109,7 +109,7 @@ extern struct _mged_variables default_mged_variables;
 extern struct _color_scheme default_color_scheme;
 
 /* defined in grid.c */
-extern struct _grid_state default_grid_state;
+extern struct bview_grid_state default_grid_state;
 
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
@@ -1291,7 +1291,7 @@ main(int argc, char *argv[])
     BU_ALLOC(color_scheme, struct _color_scheme);
     *color_scheme = default_color_scheme;	/* struct copy */
 
-    BU_ALLOC(grid_state, struct _grid_state);
+    BU_ALLOC(grid_state, struct bview_grid_state);
     *grid_state = default_grid_state;		/* struct copy */
 
     BU_ALLOC(axes_state, struct _axes_state);
@@ -2378,7 +2378,7 @@ refresh(void)
 		    if (rubber_band->rb_active || rubber_band->rb_draw)
 			draw_rect();
 
-		    if (grid_state->gr_draw)
+		    if (grid_state->draw)
 			draw_grid();
 
 		    /* Compute and display angle/distance cursor */

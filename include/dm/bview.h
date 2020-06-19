@@ -110,6 +110,7 @@ struct bview_data_axes_state {
 };
 
 struct bview_grid_state {
+    int       rc;
     int       draw;               /* draw grid */
     int       snap;               /* snap to grid */
     fastf_t   anchor[3];

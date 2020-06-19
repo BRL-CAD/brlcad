@@ -179,19 +179,6 @@ struct _dlist_state {
     int		dl_flag;
 };
 
-
-struct _grid_state {
-    int		gr_rc;
-    int		gr_draw;	/* draw grid */
-    int		gr_snap;	/* snap to grid */
-    fastf_t	gr_anchor[3];
-    fastf_t	gr_res_h;	/* grid resolution in h */
-    fastf_t	gr_res_v;	/* grid resolution in v */
-    int		gr_res_major_h;	/* major grid resolution in h */
-    int		gr_res_major_v;	/* major grid resolution in v */
-};
-
-
 struct _adc_state {
     int		adc_rc;
     int		adc_draw;
@@ -441,7 +428,7 @@ struct dm_list {
     struct _rubber_band	*dml_rubber_band;
     struct _mged_variables *dml_mged_variables;
     struct _color_scheme	*dml_color_scheme;
-    struct _grid_state	*dml_grid_state;
+    struct bview_grid_state *dml_grid_state;
     struct _axes_state	*dml_axes_state;
     struct _dlist_state	*dml_dlist_state;
 

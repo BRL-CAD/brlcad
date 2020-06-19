@@ -896,9 +896,9 @@ dm_var_init(struct dm_list *initial_dm_list)
 
     color_scheme->cs_rc = 1;
 
-    BU_ALLOC(grid_state, struct _grid_state);
+    BU_ALLOC(grid_state, struct bview_grid_state);
     *grid_state = *initial_dm_list->dml_grid_state;		/* struct copy */
-    grid_state->gr_rc = 1;
+    grid_state->rc = 1;
 
     BU_ALLOC(axes_state, struct _axes_state);
     *axes_state = *initial_dm_list->dml_axes_state;		/* struct copy */
