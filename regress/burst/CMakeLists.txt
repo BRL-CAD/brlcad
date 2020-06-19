@@ -6,7 +6,7 @@ set(BURST_INPUT_FILES
   ktank_colors.ids
   )
 
-BRLCAD_REGRESSION_TEST(regress-burst "burst;ktank.g" EXEC burst)
+BRLCAD_REGRESSION_TEST(regress-burst "nburst;ktank.g" EXEC burst)
 
 set(BURST_CLEAN_FILES
   ktank_burst.plot
