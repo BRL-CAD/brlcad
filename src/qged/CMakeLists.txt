@@ -20,7 +20,7 @@ endif(BRLCAD_ENABLE_QT)
 set(qged_srcs
   main.cxx
   main_window.cxx
-  cadaccordian.cxx
+  cadaccordion.cxx
   cadapp.cxx
   cadappexec.cxx
   cadattributes.cxx
@@ -41,7 +41,7 @@ set(qged_srcs
 
 set(moc_headers
   main_window.h
-  cadaccordian.h
+  cadaccordion.h
   cadapp.h
   cadappexec.h
   cadattributes.h
