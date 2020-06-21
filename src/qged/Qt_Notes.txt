@@ -1,0 +1,4 @@
+
+Qt is explicitly relocatable as of 5.14 (this is good news, as it is what we
+would want/need for a bundled Qt)
+https://www.qt.io/blog/qt-is-relocatable
