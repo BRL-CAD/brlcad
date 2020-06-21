@@ -3,7 +3,7 @@
 #include "cadtreemodel.h"
 #include "cadattributes.h"
 #include "QToolPalette.h"
-#include "QAccordianWidget.h"
+#include "QAccordionWidget.h"
 
 class CADViewControls : public QWidget
 {
@@ -52,37 +52,37 @@ class EditStateFilter : public QObject
 	bool eventFilter(QObject *target, QEvent *e);
 };
 
-class CADAccordian : public QAccordianWidget
+class CADAccordion : public QAccordionWidget
 {
     Q_OBJECT
     public:
-	CADAccordian(QWidget *pparent);
-	~CADAccordian();
+	CADAccordion(QWidget *pparent);
+	~CADAccordion();
 
-	void highlight_selected(QAccordianObject *);
+	void highlight_selected(QAccordionObject *);
 
 	CADViewControls *view_ctrls;
-	QAccordianObject *view_obj;
+	QAccordionObject *view_obj;
 	CADInstanceEdit *instance_ctrls;
-	QAccordianObject *instance_obj;
+	QAccordionObject *instance_obj;
 	CADPrimitiveEdit *primitive_ctrls;
-	QAccordianObject *primitive_obj;
+	QAccordionObject *primitive_obj;
 	CADAttributesModel *stdpropmodel;
 	CADAttributesView *stdpropview;
-	QAccordianObject *stdprop_obj;
+	QAccordionObject *stdprop_obj;
 	CADAttributesModel *userpropmodel;
 	CADAttributesView *userpropview;
-	QAccordianObject *userprop_obj;
+	QAccordionObject *userprop_obj;
 	// Need to create the following
 #if 0
 	CADAttributesModel *globalpropmodel;
 	CADAttributesView *globalpropview;
-	QAccordianObject *globalprop_obj;
+	QAccordionObject *globalprop_obj;
 
 	Tools Palette (measurement, nirt, raytracing(maybe), etc.)
 	Primitive and procedural object creation (would be cool if we could do a wireframe-follows-mouse thing where each click of the mouse inserted a copy of the primitive with the current values at the specified point...)
 #endif
-	QVector<QAccordianObject *> active_objects;
+	QVector<QAccordionObject *> active_objects;
 };
 
 #endif /* CADACCORDIAN_H */

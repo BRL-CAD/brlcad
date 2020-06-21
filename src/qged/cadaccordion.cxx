@@ -1,4 +1,4 @@
-#include "cadaccordian.h"
+#include "cadaccordion.h"
 #include "cadapp.h"
 #include <QPalette>
 #include <QColor>
@@ -95,19 +95,19 @@ CADPrimitiveEdit::~CADPrimitiveEdit()
 bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 {
     int interaction_mode = ((CADApp *)qApp)->interaction_mode;
-    CADAccordian *accordian = ((CADApp *)qApp)->cadaccordian;
+    CADAccordion *accordion = ((CADApp *)qApp)->cadaccordion;
     if (e->type() == QEvent::MouseButtonPress) {
 	QMouseEvent *me = (QMouseEvent *)e;
 	QWidget *target_widget = static_cast<QWidget *>(target);
-	QPoint mpos = target_widget->mapTo(accordian, me->pos());
+	QPoint mpos = target_widget->mapTo(accordion, me->pos());
 
-	for (int i = 0; i < accordian->active_objects.size(); i++) {
-	    int margin = accordian->splitter->handleWidth()/2;
-	    QPushButton *obj_toggle = accordian->active_objects.at(i)->toggle;
-	    QPoint obj_topleft = obj_toggle->mapTo(accordian, obj_toggle->geometry().topLeft());
+	for (int i = 0; i < accordion->active_objects.size(); i++) {
+	    int margin = accordion->splitter->handleWidth()/2;
+	    QPushButton *obj_toggle = accordion->active_objects.at(i)->toggle;
+	    QPoint obj_topleft = obj_toggle->mapTo(accordion, obj_toggle->geometry().topLeft());
 	    obj_topleft.setX(obj_topleft.x() - margin);
 	    obj_topleft.setY(obj_topleft.y() - margin);
-	    QPoint obj_bottomright = obj_toggle->mapTo(accordian, obj_toggle->geometry().bottomRight());
+	    QPoint obj_bottomright = obj_toggle->mapTo(accordion, obj_toggle->geometry().bottomRight());
 	    obj_bottomright.setX(obj_bottomright.x() + margin);
 	    obj_bottomright.setY(obj_bottomright.y() + margin);
 	    QRect obj_rect(obj_topleft, obj_bottomright);
@@ -116,48 +116,48 @@ bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 	    }
 	}
 
-	QPoint view_ctrls_topleft = accordian->view_ctrls->mapTo(accordian, accordian->view_ctrls->geometry().topLeft());
-	QPoint view_ctrls_bottomright = accordian->view_ctrls->mapTo(accordian, accordian->view_ctrls->geometry().bottomRight());
+	QPoint view_ctrls_topleft = accordion->view_ctrls->mapTo(accordion, accordion->view_ctrls->geometry().topLeft());
+	QPoint view_ctrls_bottomright = accordion->view_ctrls->mapTo(accordion, accordion->view_ctrls->geometry().bottomRight());
 	QRect view_ctrls_rect(view_ctrls_topleft, view_ctrls_bottomright);
 
-	QPoint instance_ctrls_topleft = accordian->instance_ctrls->mapTo(accordian, accordian->instance_ctrls->geometry().topLeft());
-	QPoint instance_ctrls_bottomright = accordian->instance_ctrls->mapTo(accordian, accordian->instance_ctrls->geometry().bottomRight());
+	QPoint instance_ctrls_topleft = accordion->instance_ctrls->mapTo(accordion, accordion->instance_ctrls->geometry().topLeft());
+	QPoint instance_ctrls_bottomright = accordion->instance_ctrls->mapTo(accordion, accordion->instance_ctrls->geometry().bottomRight());
 	QRect instance_ctrls_rect(instance_ctrls_topleft, instance_ctrls_bottomright);
 
-	QPoint primitive_ctrls_topleft = accordian->primitive_ctrls->mapTo(accordian, accordian->primitive_ctrls->geometry().topLeft());
-	QPoint primitive_ctrls_bottomright = accordian->primitive_ctrls->mapTo(accordian, accordian->primitive_ctrls->geometry().bottomRight());
+	QPoint primitive_ctrls_topleft = accordion->primitive_ctrls->mapTo(accordion, accordion->primitive_ctrls->geometry().topLeft());
+	QPoint primitive_ctrls_bottomright = accordion->primitive_ctrls->mapTo(accordion, accordion->primitive_ctrls->geometry().bottomRight());
 	QRect primitive_ctrls_rect(primitive_ctrls_topleft, primitive_ctrls_bottomright);
 
-	QPoint stdpropview_topleft = accordian->stdpropview->mapTo(accordian, accordian->stdpropview->geometry().topLeft());
-	QPoint stdpropview_bottomright = accordian->stdpropview->mapTo(accordian, accordian->stdpropview->geometry().bottomRight());
+	QPoint stdpropview_topleft = accordion->stdpropview->mapTo(accordion, accordion->stdpropview->geometry().topLeft());
+	QPoint stdpropview_bottomright = accordion->stdpropview->mapTo(accordion, accordion->stdpropview->geometry().bottomRight());
 	QRect stdpropview_rect(stdpropview_topleft, stdpropview_bottomright);
 
-	QPoint userpropview_topleft = accordian->userpropview->mapTo(accordian, accordian->userpropview->geometry().topLeft());
-	QPoint userpropview_bottomright = accordian->userpropview->mapTo(accordian, accordian->userpropview->geometry().bottomRight());
+	QPoint userpropview_topleft = accordion->userpropview->mapTo(accordion, accordion->userpropview->geometry().topLeft());
+	QPoint userpropview_bottomright = accordion->userpropview->mapTo(accordion, accordion->userpropview->geometry().bottomRight());
 	QRect userpropview_rect(userpropview_topleft, userpropview_bottomright);
 
 	if (view_ctrls_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 0;
-	    accordian->highlight_selected(accordian->view_obj);
+	    accordion->highlight_selected(accordion->view_obj);
 	}
 	if (instance_ctrls_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 1;
-	    accordian->highlight_selected(accordian->instance_obj);
+	    accordion->highlight_selected(accordion->instance_obj);
 	}
 
 	if (primitive_ctrls_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 2;
-	    accordian->highlight_selected(accordian->primitive_obj);
+	    accordion->highlight_selected(accordion->primitive_obj);
 	}
 
 	if (stdpropview_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 2;
-	    accordian->highlight_selected(accordian->stdprop_obj);
+	    accordion->highlight_selected(accordion->stdprop_obj);
 	}
 
 	if (userpropview_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 2;
-	    accordian->highlight_selected(accordian->userprop_obj);
+	    accordion->highlight_selected(accordion->userprop_obj);
 	}
 
 	CADTreeView *tview = (CADTreeView *)(((CADApp *)qApp)->cadtreeview);
@@ -172,8 +172,8 @@ bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 }
 
 
-CADAccordian::CADAccordian(QWidget *pparent)
-    : QAccordianWidget(pparent)
+CADAccordion::CADAccordion(QWidget *pparent)
+    : QAccordionWidget(pparent)
 {
     view_ctrls = new CADViewControls(this);
     instance_ctrls = new CADInstanceEdit(this);
@@ -187,19 +187,19 @@ CADAccordian::CADAccordian(QWidget *pparent)
     userpropview = new CADAttributesView(this, 0);
     userpropview->setModel(userpropmodel);
 
-    view_obj = new QAccordianObject(this, view_ctrls, "View Controls");
+    view_obj = new QAccordionObject(this, view_ctrls, "View Controls");
     this->addObject(view_obj);
     active_objects.push_back(view_obj);
-    instance_obj = new QAccordianObject(this, instance_ctrls, "Instance Editing");
+    instance_obj = new QAccordionObject(this, instance_ctrls, "Instance Editing");
     this->addObject(instance_obj);
     active_objects.push_back(instance_obj);
-    primitive_obj = new QAccordianObject(this, primitive_ctrls, "Object Editing");
+    primitive_obj = new QAccordionObject(this, primitive_ctrls, "Object Editing");
     this->addObject(primitive_obj);
     active_objects.push_back(primitive_obj);
-    stdprop_obj = new QAccordianObject(this, stdpropview, "Standard Attributes");
+    stdprop_obj = new QAccordionObject(this, stdpropview, "Standard Attributes");
     this->addObject(stdprop_obj);
     active_objects.push_back(stdprop_obj);
-    userprop_obj = new QAccordianObject(this, userpropview, "User Attributes");
+    userprop_obj = new QAccordionObject(this, userpropview, "User Attributes");
     this->addObject(userprop_obj);
     active_objects.push_back(userprop_obj);
 
@@ -213,7 +213,7 @@ CADAccordian::CADAccordian(QWidget *pparent)
 }
 
 void
-CADAccordian::highlight_selected(QAccordianObject *selected)
+CADAccordion::highlight_selected(QAccordionObject *selected)
 {
     QString highlight_style("background-color: rgb(10,10,200);");
     if (view_obj == selected) {
@@ -249,7 +249,7 @@ CADAccordian::highlight_selected(QAccordianObject *selected)
     userprop_obj->toggle->update();
 }
 
-CADAccordian::~CADAccordian()
+CADAccordion::~CADAccordion()
 {
     delete view_ctrls;
     delete instance_ctrls;

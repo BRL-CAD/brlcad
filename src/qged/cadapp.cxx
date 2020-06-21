@@ -25,7 +25,7 @@
 
 #include "cadapp.h"
 #include "cadappexec.h"
-#include "cadaccordian.h"
+#include "cadaccordion.h"
 #include <QFileInfo>
 #include <QFile>
 #include <QPlainTextEdit>
@@ -107,7 +107,7 @@ CADApp::opendb(QString filename)
     emit db_change();
 
     interaction_mode = 0;
-    cadaccordian->highlight_selected(cadaccordian->view_obj);
+    cadaccordion->highlight_selected(cadaccordion->view_obj);
 
     return 0;
 }

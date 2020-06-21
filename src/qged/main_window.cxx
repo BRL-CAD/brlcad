@@ -25,7 +25,7 @@
 
 #include "main_window.h"
 #include "cadapp.h"
-#include "cadaccordian.h"
+#include "cadaccordion.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
@@ -104,7 +104,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
     /* Edit panel */
-    panel = new CADAccordian(panel_dock);
+    panel = new CADAccordion(panel_dock);
     panel_dock->setWidget(panel);
 
     //stdpropview->setMinimumHeight(340);
@@ -112,7 +112,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
     //userpropview->setMinimumHeight(340);
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
-    ((CADApp *)qApp)->cadaccordian= (CADAccordian *)panel;
+    ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
     //panel->setUniqueVisibility(1);

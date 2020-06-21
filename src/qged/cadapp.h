@@ -41,7 +41,7 @@
 
 
 class CADApp;
-class CADAccordian;
+class CADAccordion;
 
 typedef int (*gui_cmd_ptr)(QString *command_string, CADApp *app);
 #define GUI_CMD_PTR_NULL ((gui_cmd_ptr)0)
@@ -69,7 +69,7 @@ class CADApp : public QApplication
 	struct rt_wdb *wdbp();
 
 	CADTreeView *cadtreeview;
-	CADAccordian *cadaccordian;
+	CADAccordion *cadaccordion;
 	QModelIndex current_idx;
 
     signals:

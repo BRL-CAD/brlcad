@@ -1,4 +1,4 @@
-/*            Q A C C O R D I A N W I D G E T . C X X
+/*            Q A C C O R D I O N W I D G E T . C X X
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QAccordianWidget.cxx
+/** @file QAccordionWidget.cxx
  *
- * Qt Accordian Widget implementation
+ * Qt Accordion Widget implementation
  *
  */
 
@@ -53,9 +53,9 @@
 #  pragma clang diagnostic pop
 #endif
 
-#include "QAccordianWidget.h"
+#include "QAccordionWidget.h"
 
-QAccordianObject::QAccordianObject(QWidget *pparent, QWidget *object, QString header_title) : QWidget(pparent)
+QAccordionObject::QAccordionObject(QWidget *pparent, QWidget *object, QString header_title) : QWidget(pparent)
 {
     visible = 1;
     title = header_title;
@@ -86,14 +86,14 @@ QAccordianObject::QAccordianObject(QWidget *pparent, QWidget *object, QString he
     QObject::connect(toggle, SIGNAL(clicked()), this, SLOT(toggleVisibility()));
 }
 
-QAccordianObject::~QAccordianObject()
+QAccordionObject::~QAccordionObject()
 {
     delete toggle;
     if (child_object) delete child_object;
 }
 
     void
-QAccordianObject::setWidget(QWidget *object)
+QAccordionObject::setWidget(QWidget *object)
 {
     if (child_object) {
 	objlayout->removeWidget(child_object);
@@ -104,14 +104,14 @@ QAccordianObject::setWidget(QWidget *object)
 }
 
 QWidget *
-QAccordianObject::getWidget()
+QAccordionObject::getWidget()
 {
     return child_object;
 }
 
 
     void
-QAccordianObject::setVisibility(int val)
+QAccordionObject::setVisibility(int val)
 {
     visible = val;
     if (!visible) {
@@ -137,13 +137,13 @@ QAccordianObject::setVisibility(int val)
 }
 
 void
-QAccordianObject::toggleVisibility()
+QAccordionObject::toggleVisibility()
 {
     setVisibility(!visible);
 }
 
 
-QAccordianWidget::QAccordianWidget(QWidget *pparent) : QWidget(pparent)
+QAccordionWidget::QAccordionWidget(QWidget *pparent) : QWidget(pparent)
 {
     unique_visibility = 0;
 
@@ -160,33 +160,33 @@ QAccordianWidget::QAccordianWidget(QWidget *pparent) : QWidget(pparent)
     this->setLayout(mlayout);
 }
 
-QAccordianWidget::~QAccordianWidget()
+QAccordionWidget::~QAccordionWidget()
 {
-    foreach(QAccordianObject *object, objects) {
+    foreach(QAccordionObject *object, objects) {
 	delete object;
     }
 }
 
 void
-QAccordianWidget::addObject(QAccordianObject *object)
+QAccordionWidget::addObject(QAccordionObject *object)
 {
     splitter->addWidget(object);
     object->idx = splitter->count() - 1;
     objects.insert(object);
-    QObject::connect(object, SIGNAL(made_visible(QAccordianObject *)), this, SLOT(stateUpdate(QAccordianObject *)));
-    QObject::connect(object, SIGNAL(made_hidden(QAccordianObject *)), this, SLOT(stateUpdate(QAccordianObject *)));
+    QObject::connect(object, SIGNAL(made_visible(QAccordionObject *)), this, SLOT(stateUpdate(QAccordionObject *)));
+    QObject::connect(object, SIGNAL(made_hidden(QAccordionObject *)), this, SLOT(stateUpdate(QAccordionObject *)));
     size_states.clear();
 }
 
 void
-QAccordianWidget::insertObject(int idx, QAccordianObject *object)
+QAccordionWidget::insertObject(int idx, QAccordionObject *object)
 {
     splitter->insertWidget(idx, object);
     object->idx = splitter->count() - 1;
     objects.insert(object);
-    QObject::connect(object, SIGNAL(made_visible(QAccordianObject *)), this, SLOT(stateUpdate(QAccordianObject *)));
-    QObject::connect(object, SIGNAL(made_hidden(QAccordianObject *)), this, SLOT(stateUpdate(QAccordianObject *)));
-    foreach(QAccordianObject *obj, objects) {
+    QObject::connect(object, SIGNAL(made_visible(QAccordionObject *)), this, SLOT(stateUpdate(QAccordionObject *)));
+    QObject::connect(object, SIGNAL(made_hidden(QAccordionObject *)), this, SLOT(stateUpdate(QAccordionObject *)));
+    foreach(QAccordionObject *obj, objects) {
 	if (obj->idx >= idx)
 	    obj->idx++;
     }
@@ -194,7 +194,7 @@ QAccordianWidget::insertObject(int idx, QAccordianObject *object)
 }
 
 void
-QAccordianWidget::deleteObject(QAccordianObject *object)
+QAccordionWidget::deleteObject(QAccordionObject *object)
 {
     objects.remove(object);
     size_states.clear();
@@ -202,7 +202,7 @@ QAccordianWidget::deleteObject(QAccordianObject *object)
 }
 
 void
-QAccordianWidget::setUniqueVisibility(int val)
+QAccordionWidget::setUniqueVisibility(int val)
 {
     unique_visibility = val;
     if (!objects.isEmpty()) {
@@ -215,10 +215,10 @@ QAccordianWidget::setUniqueVisibility(int val)
 }
 
 void
-QAccordianWidget::update_sizes(int, int) {
+QAccordionWidget::update_sizes(int, int) {
     QList<int> currentSizes = splitter->sizes();
     QString statekey;
-    foreach(QAccordianObject *obj, objects) {
+    foreach(QAccordionObject *obj, objects) {
 	if (obj->visible) {
 	    statekey.append("1");
 	} else {
@@ -229,18 +229,18 @@ QAccordianWidget::update_sizes(int, int) {
 }
 
 void
-QAccordianWidget::stateUpdate(QAccordianObject *new_obj)
+QAccordionWidget::stateUpdate(QAccordionObject *new_obj)
 {
     if (unique_visibility && new_obj) {
 	open_object = new_obj;
 	open_object->setVisibility(1);
-	foreach(QAccordianObject *obj, objects) {
+	foreach(QAccordionObject *obj, objects) {
 	    if (obj != open_object)
 		obj->setVisibility(0);
 	}
     }
     QString statekey;
-    foreach(QAccordianObject *obj, objects) {
+    foreach(QAccordionObject *obj, objects) {
 	if (obj->visible) {
 	    statekey.append("1");
 	} else {
@@ -259,7 +259,7 @@ QAccordianWidget::stateUpdate(QAccordianObject *new_obj)
 	int sheight = splitter->height();
 	int scount = splitter->count();
 	int found_hidden = splitter->count() + 1;
-	foreach(QAccordianObject *obj, objects) {
+	foreach(QAccordionObject *obj, objects) {
 	    if (!obj->visible) {
 		if (obj->idx < found_hidden) found_hidden = obj->idx;
 		sheight = sheight - obj->toggle->height();
@@ -271,7 +271,7 @@ QAccordianWidget::stateUpdate(QAccordianObject *new_obj)
 		}
 	    }
 	}
-	foreach(QAccordianObject *obj, objects) {
+	foreach(QAccordionObject *obj, objects) {
 	    if (obj->visible) {
 		if (obj->idx < found_hidden && obj->idx < new_obj->idx) {
 		    splitter->setStretchFactor(obj->idx, 0);

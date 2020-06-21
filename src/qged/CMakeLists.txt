@@ -66,6 +66,7 @@ if(BRLCAD_ENABLE_QT)
   add_executable(qged ${qged_srcs} ${moc_srcs} ${cad_qrc})
   qt5_use_modules(qged Widgets OpenGL)
   target_link_libraries(qged libbu librt libged ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
+  target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

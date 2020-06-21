@@ -1,4 +1,4 @@
-/*              Q A C C O R D I A N W I D G E T . H
+/*              Q A C C O R D I O N W I D G E T . H
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QAccordianWidget.h
+/** @file QAccordionWidget.h
  *
  * Provides a structured container into which tool panels or objects can be
  * added and then shown or hidden with a controlling button.  Can optionally
@@ -61,15 +61,15 @@
 #  pragma clang diagnostic pop
 #endif
 
-class QAccordianWidget;
+class QAccordionWidget;
 
-class QAccordianObject : public QWidget
+class QAccordionObject : public QWidget
 {
     Q_OBJECT
 
     public:
-	QAccordianObject(QWidget *pparent = 0, QWidget *object = 0, QString header_title = QString(""));
-	~QAccordianObject();
+	QAccordionObject(QWidget *pparent = 0, QWidget *object = 0, QString header_title = QString(""));
+	~QAccordionObject();
 	void setWidget(QWidget *object);
 	QWidget *getWidget();
 	void setVisibility(int val);
@@ -79,8 +79,8 @@ class QAccordianObject : public QWidget
 	int idx;
 
     signals:
-	void made_visible(QAccordianObject *);
-	void made_hidden(QAccordianObject *);
+	void made_visible(QAccordionObject *);
+	void made_hidden(QAccordionObject *);
 
     public slots:
 	void toggleVisibility();
@@ -90,31 +90,31 @@ class QAccordianObject : public QWidget
 	QWidget *child_object;
 };
 
-class QAccordianWidget : public QWidget
+class QAccordionWidget : public QWidget
 {
     Q_OBJECT
 
     public:
-	QAccordianWidget(QWidget *pparent = 0);
-	~QAccordianWidget();
-	void addObject(QAccordianObject *object);
-	void insertObject(int idx, QAccordianObject *object);
-	void deleteObject(QAccordianObject *object);
+	QAccordionWidget(QWidget *pparent = 0);
+	~QAccordionWidget();
+	void addObject(QAccordionObject *object);
+	void insertObject(int idx, QAccordionObject *object);
+	void deleteObject(QAccordionObject *object);
 
 	void setUniqueVisibility(int val);
 	int count();
 
     public slots:
 	void update_sizes(int, int);
-	void stateUpdate(QAccordianObject *);
+	void stateUpdate(QAccordionObject *);
 
     public:
 	int unique_visibility;
-	QAccordianObject *open_object;
+	QAccordionObject *open_object;
 	QSplitter *splitter;
 
     private:
-	QSet<QAccordianObject *> objects;
+	QSet<QAccordionObject *> objects;
 	QMap<QString, QList<int> > size_states;
 };
 
