@@ -34,7 +34,7 @@ set(qged_srcs
   cadview.cxx
   console.cxx
   pqConsoleWidget.cxx
-  QAccordianWidget.cxx
+  QAccordionWidget.cxx
   QToolPalette.cxx
   QFlowLayout.cxx
   )
@@ -54,7 +54,7 @@ set(moc_headers
   cadview.h
   console.h
   pqConsoleWidget.h
-  QAccordianWidget.h
+  QAccordionWidget.h
   QToolPalette.h
   QFlowLayout.h
   )
