@@ -1,6 +1,8 @@
 #include "cadcommands.h"
 #include "cadhelp.h"
 
+#include "bu.h"
+
 int null_gui_cmd(QString *args, CADApp *app)
 {
         Q_UNUSED(app);
@@ -20,7 +22,6 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("ae2dir"), ged_ae2dir);
     app->register_command(QString("analyze"), ged_analyze);    // cmd_ged_info_wrapper
     app->register_command(QString("annotate"), ged_annotate);
-    app->register_command(QString("cad::append_pipept"), ged_append_pipept);
     app->register_command(QString("arb"), ged_arb);
     app->register_command(QString("arced"), ged_arced);
     app->register_command(QString("arot"), ged_arot);          // to_view_func_plus
@@ -66,12 +67,9 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("debugbu"), ged_debugbu);
     app->register_command(QString("debugdir"), ged_debugdir);
     app->register_command(QString("debuglib"), ged_debuglib);
-    app->register_command(QString("debugmem"), ged_debugmem);
     app->register_command(QString("debugnmg"), ged_debugnmg);
     app->register_command(QString("decompose"), ged_decompose);
     app->register_command(QString("delay"), ged_delay);
-    app->register_command(QString("delete_metaballpt"), ged_delete_metaballpt);
-    app->register_command(QString("delete_pipept"), ged_delete_pipept);
     app->register_command(QString("dir2ae"), ged_dir2ae);
     app->register_command(QString("draw"), ged_draw); // to_autoview_func
     app->register_command(QString("dump"), ged_dump);
@@ -96,10 +94,6 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("facetize"), ged_facetize);
     app->register_command(QString("fb2pix"), ged_fb2pix); // to_view_func
     app->register_command(QString("fbclear"), ged_fbclear); // to_view_func
-    app->register_command(QString("find_arb_edge"), ged_find_arb_edge_nearest_pt); // to_view_func
-    app->register_command(QString("find_bot_edge"), ged_find_bot_edge_nearest_pt); // to_view_func
-    app->register_command(QString("find_botpt"), ged_find_botpt_nearest_pt); // to_view_func
-    app->register_command(QString("find_pipept"), ged_find_pipept_nearest_pt); // to_view_func
     app->register_command(QString("form"), ged_form);
     app->register_command(QString("fracture"), ged_fracture);
     app->register_command(QString("g"), ged_group);
@@ -150,20 +144,12 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("make_pnts"), ged_make_pnts); // cmd_ged_more_wrapper
     app->register_command(QString("match"), ged_match);
     app->register_command(QString("mater"), ged_mater);
-    app->register_command(QString("memprint"), ged_memprint);
     app->register_command(QString("mirror"), ged_mirror);  // libtclcad calls to_mirror??
     app->register_command(QString("model2grid_lu"), ged_model2grid_lu);
     app->register_command(QString("model2view"), ged_model2view);
     app->register_command(QString("model2view_lu"), ged_model2view_lu);
-    app->register_command(QString("mouse_add_metaballpt"), ged_add_metaballpt); //  to_mouse_append_pt_common
-    app->register_command(QString("mouse_append_pipept"), ged_append_pipept); // to_mouse_append_pt_common
-    app->register_command(QString("mouse_move_metaballpt"), ged_move_metaballpt); // to_mouse_move_pt_common
-    app->register_command(QString("mouse_move_pipept"), ged_move_pipept); // to_mouse_move_pt_common
-    app->register_command(QString("mouse_prepend_pipept"), ged_prepend_pipept); // to_mouse_append_pt_common
     app->register_command(QString("move_arb_edge"), ged_move_arb_edge);
     app->register_command(QString("move_arb_face"),   ged_move_arb_face);
-    app->register_command(QString("move_pipept"), ged_move_pipept); // to_move_pt_common
-    app->register_command(QString("move_metaballpt"), ged_move_metaballpt); // to_move_pt_common
     app->register_command(QString("mv"), ged_move);
     app->register_command(QString("mvall"), ged_move_all);
     app->register_command(QString("nirt"), ged_nirt);
@@ -187,7 +173,6 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("pov"), ged_pmat);
     app->register_command(QString("prcolor"), ged_prcolor);
     app->register_command(QString("prefix"), ged_prefix);
-    app->register_command(QString("prepend_pipept"), ged_prepend_pipept);
     app->register_command(QString("preview"), ged_preview); // cmd_ged_dm_wrapper
     app->register_command(QString("protate"), ged_protate);
     app->register_command(QString("ps"), ged_ps);

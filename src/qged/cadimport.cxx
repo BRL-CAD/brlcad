@@ -53,6 +53,9 @@
 
 #include "cadapp.h"
 #include "cadimport.h"
+
+#include "bu.h"
+
 #include "brlcad_config.h" // For EXECUTABLE_SUFFIX
 
 RhinoImportDialog::RhinoImportDialog(QString filename)

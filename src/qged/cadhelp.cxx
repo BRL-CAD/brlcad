@@ -3,6 +3,8 @@
 #include <iostream>
 #include <QFile>
 
+#include "bu.h"
+
 CADManViewer::CADManViewer(QWidget *pparent, QString *file) : QDialog(pparent)
 {
     QVBoxLayout *dlayout = new QVBoxLayout;
@@ -35,10 +37,13 @@ int cad_man_view(QString *args, CADApp *app)
 {
     Q_UNUSED(app);
     // TODO - a language setting in the application would be appropriate here so we can select language appropriate docs...
-    QString man_path_root("doc/html/mann/en/");
+    QString man_path_root("doc/html/mann/");
     man_path_root.append(args);
     man_path_root.append(".html");
-    QString man_file(bu_brlcad_data(man_path_root.toLocal8Bit(), 1));
+    const char *mroot = man_path_root.toLocal8Bit();
+    const char *mdir = bu_dir(NULL, 0, BU_DIR_DATA, mroot, NULL);
+    bu_log("mdir: %s\n", mdir);
+    QString man_file(mdir);
     CADManViewer *viewer = new CADManViewer(0, &man_file);
     viewer->show();
     return 0;
