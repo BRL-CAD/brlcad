@@ -18,3 +18,13 @@ https://github.com/podsvirov/osgqtquick (license?)
 https://github.com/jorgen/yat
 https://doc.qt.io/qt-5/qml-qtquick-controls-treeview.html
 http://doc.qt.io/qt-5/qml-qtwebview-webview.html
+
+
+
+
+Look into replacing current window docking system with:
+
+https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System
+
+which (if I'm reading this right) would give us toplevel windows
+when we undock, among other goodies.
