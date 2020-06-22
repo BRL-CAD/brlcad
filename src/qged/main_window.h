@@ -47,8 +47,6 @@
 #undef Success
 #include <QGLWidget>
 #undef Success
-#include <QDockWidget>  //TODO - this will need to be replaced with a customized version that makes detached windows full toplevel windows
-#undef Success
 #include <QMenu>
 #undef Success
 #include <QMenuBar>
@@ -71,6 +69,7 @@
 #  pragma clang diagnostic pop
 #endif
 
+#include "qtads/DockManager.h"
 #include "cadconsole.h"
 #include "cadtreemodel.h"
 #include "cadaccordion.h"
@@ -80,22 +79,28 @@ class BRLCAD_MainWindow : public QMainWindow
     Q_OBJECT
     public:
 	BRLCAD_MainWindow();
+	void restore_settings();
 
 	QGLWidget *canvas;
 
     private slots:
 	void open_file();
+	void save_settings();
 
     private:
 	QMenu *file_menu;
 	QAction *cad_open;
+	QAction *cad_save_settings;
+	QAction *cad_restore_settings;
 	QAction *cad_exit;
 	QMenu *view_menu;
 	QMenu *help_menu;
 
-	QDockWidget *console_dock;
-	QDockWidget *tree_dock;
-	QDockWidget *panel_dock;
+	ads::CDockManager *dock;
+	ads::CDockWidget *view_dock;
+	ads::CDockWidget *console_dock;
+	ads::CDockWidget *tree_dock;
+	ads::CDockWidget *panel_dock;
 
 	CADConsole *console;
 	CADTreeModel *treemodel;

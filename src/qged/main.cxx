@@ -93,7 +93,8 @@ int main(int argc, char *argv[])
     }
 
     // TODO - this needs to be a setting that is saved and restored
-    mainWin.resize(1100, 800);
+    //mainWin.resize(1100, 800);
+    mainWin.restore_settings();
 
     // Set up the command prompt's commands
     cad_register_commands(&app);
