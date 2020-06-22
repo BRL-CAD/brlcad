@@ -3719,13 +3719,14 @@ to_data_lines(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    /* shift the command name to argv[1] before calling ged_view_data_lines */
-    argc--;argv++;
+    /* turn the argv into a ged command */
+    argv[1] = argv[0];
+    argv[0] = "view";
 
     struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp->gdv_view;
 
-    ret = ged_view_data_lines(gedp, argc, argv);
+    ret = ged_view_func(gedp, argc, argv);
 
     gedp->ged_gvp = btmp;
 
