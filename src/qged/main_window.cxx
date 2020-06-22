@@ -57,6 +57,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
 
     // Define dock layout
+    ads::CDockManager::setConfigFlags(ads::CDockManager::HideSingleCentralWidgetTitleBar);
     dock = new ads::CDockManager(this);
 
     // TODO - set up our own with the proper values...
