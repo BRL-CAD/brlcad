@@ -3720,7 +3720,7 @@ to_data_lines(struct ged *gedp,
     }
 
     /* shift the command name to argv[1] before calling ged_view_data_lines */
-    argv[1] = argv[0];
+    argc--;argv++;
 
     struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp->gdv_view;
