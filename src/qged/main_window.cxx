@@ -62,11 +62,17 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     // TODO - set up our own with the proper values...
     dock->setStyleSheet("");
 
+
     // Set up OpenGL canvas
     view_dock = new ads::CDockWidget("Scene");
     view_menu->addAction(view_dock->toggleViewAction());
     canvas = new QGLWidget();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
-    view_dock->setWidget(canvas);
+    canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    canvas->setMinimumSize(512,512);
+    view_dock->setWidget(canvas, ads::CDockWidget::eInsertMode::ForceNoScrollArea);
+    view_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
+    view_dock->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    view_dock->setMinimumSize(512,512);
     dock->addDockWidget(ads::CenterDockWidgetArea, view_dock);
 
     /* Console */
@@ -74,6 +80,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     view_menu->addAction(console_dock->toggleViewAction());
     console = new CADConsole(console_dock);
     console_dock->setWidget(console);
+    console_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
     dock->addDockWidget(ads::BottomDockWidgetArea, console_dock);
 
    /* Geometry Tree */
@@ -82,6 +89,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treemodel = new CADTreeModel();
     treeview = new CADTreeView(tree_dock);
     tree_dock->setWidget(treeview);
+    tree_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
     treeview->setModel(treemodel);
     treeview->setItemDelegate(new GObjectDelegate());
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -102,6 +110,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     view_menu->addAction(panel_dock->toggleViewAction());
     panel = new CADAccordion(panel_dock);
     panel_dock->setWidget(panel);
+    panel_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
     dock->addDockWidget(ads::RightDockWidgetArea, panel_dock);
 
     /***** Create and add the widgets that inhabit the dock *****/
@@ -170,6 +179,8 @@ BRLCAD_MainWindow::restore_settings()
 	this->restoreGeometry(Settings.value("mainWindow/Geometry").toByteArray());
 	this->restoreState(Settings.value("mainWindow/State").toByteArray());
 	dock->restoreState(Settings.value("mainWindow/DockingState").toByteArray());
+    } else {
+	this->resize(1100, 800);
     }
 }
 
