@@ -59,6 +59,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     // Define dock layout
     dock = new ads::CDockManager(this);
 
+    // TODO - set up our own with the proper values...
+    dock->setStyleSheet("");
+
     // Set up OpenGL canvas
     view_dock = new ads::CDockWidget("Scene");
     view_menu->addAction(view_dock->toggleViewAction());
