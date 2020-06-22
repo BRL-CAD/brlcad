@@ -343,6 +343,7 @@ set(LIBGED_SOURCES
   version.c
   view/aet.c
   view/center.cpp
+  view/data_lines.c
   view/eye.c
   view/quat.c
   view/size.c

@@ -79,6 +79,10 @@ ged_view_func(struct ged *gedp, int argc, const char *argv[])
 	return ged_size(gedp, argc-1, argv+1);
     }
 
+    if (BU_STR_EQUAL(argv[1], "data_lines") || BU_STR_EQUAL(argv[1], "sdata_lines")) {
+	return ged_view_data_lines(gedp, argc-1, argv+1);
+    }
+
     if (BU_STR_EQUAL(argv[1], "snap")) {
 	return ged_view_snap(gedp, argc-1, argv+1);
     }
