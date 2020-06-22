@@ -46,19 +46,20 @@ _view_dlines_cmd_draw(void *bs, int argc, const char **argv)
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
     struct bview_data_line_state *gdlsp = vs->gdlsp;
-    if (argc == 2) {
+    if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	return GED_OK;
     }
 
-    if (argc == 3) {
+    if (argc == 2) {
 	int i;
 
-	if (bu_sscanf(argv[2], "%d", &i) != 1) return GED_ERROR;
+	if (bu_sscanf(argv[1], "%d", &i) != 1) return GED_ERROR;
 
 	gdlsp->gdls_draw = (i) ? 1 : 0;
 
-	gedp->ged_gvp->gv_refresh = 1;
+	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
+	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
 	return GED_OK;
     }
 
@@ -72,18 +73,18 @@ _view_dlines_cmd_color(void *bs, int argc, const char **argv)
     struct ged *gedp = vs->gedp;
     struct bview_data_line_state *gdlsp = vs->gdlsp;
 
-    if (argc == 2) {
+    if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdlsp->gdls_color));
 	return GED_OK;
     }
 
-    if (argc == 5) {
+    if (argc == 4) {
 	int r, g, b;
 
 	/* set background color */
-	if (bu_sscanf(argv[2], "%d", &r) != 1 ||
-		bu_sscanf(argv[3], "%d", &g) != 1 ||
-		bu_sscanf(argv[4], "%d", &b) != 1)
+	if (bu_sscanf(argv[1], "%d", &r) != 1 ||
+		bu_sscanf(argv[2], "%d", &g) != 1 ||
+		bu_sscanf(argv[3], "%d", &b) != 1)
 	    return GED_ERROR;
 
 	/* validate color */
@@ -94,7 +95,9 @@ _view_dlines_cmd_color(void *bs, int argc, const char **argv)
 
 	VSET(gdlsp->gdls_color, r, g, b);
 
-	gedp->ged_gvp->gv_refresh = 1;
+	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
+	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+
 	return GED_OK;
     }
 
@@ -108,20 +111,22 @@ _view_dlines_cmd_line_width(void *bs, int argc, const char **argv)
     struct ged *gedp = vs->gedp;
     struct bview_data_line_state *gdlsp = vs->gdlsp;
 
-    if (argc == 2) {
+    if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
 	return GED_OK;
     }
 
-    if (argc == 3) {
+    if (argc == 2) {
 	int line_width;
 
-	if (bu_sscanf(argv[2], "%d", &line_width) != 1)
+	if (bu_sscanf(argv[1], "%d", &line_width) != 1)
 	    return GED_ERROR;
 
 	gdlsp->gdls_line_width = line_width;
 
-	gedp->ged_gvp->gv_refresh = 1;
+	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
+	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+
 	return GED_OK;
     }
 
@@ -136,18 +141,18 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
     struct bview_data_line_state *gdlsp = vs->gdlsp;
     int i;
 
-    if (argc == 2) {
+    if (argc == 1) {
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ", V3ARGS(gdlsp->gdls_points[i]));
 	}
 	return GED_OK;
     }
 
-    if (argc == 3) {
+    if (argc == 2) {
 	int ac;
 	const char **av;
 
-	if (bu_argv_from_tcl_list(argv[2], &ac, &av)) {
+	if (bu_argv_from_tcl_list(argv[1], &ac, &av)) {
 	    bu_vls_printf(gedp->ged_result_str, "failed to parse list");
 	    return GED_ERROR;
 	}
@@ -165,7 +170,9 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
 
 	/* Clear out data points */
 	if (ac < 1) {
-	    gedp->ged_gvp->gv_refresh = 1;
+	    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
+		(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+
 	    bu_free((char *)av, "av");
 	    return GED_OK;
 	}
@@ -182,7 +189,9 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
 		gdlsp->gdls_points = (point_t *)0;
 		gdlsp->gdls_num_points = 0;
 
-		gedp->ged_gvp->gv_refresh = 1;
+		if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
+		    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+
 		bu_free((char *)av, "av");
 		return GED_ERROR;
 	    }
@@ -190,7 +199,8 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
 	    VMOVE(gdlsp->gdls_points[i], scan);
 	}
 
-	gedp->ged_gvp->gv_refresh = 1;
+	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
+	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
 	bu_free((char *)av, "av");
 	return GED_OK;
     }
@@ -234,7 +244,9 @@ ged_view_data_lines(struct ged *gedp, int argc, const char *argv[])
 	vs.gdlsp = &gedp->ged_gvp->gv_data_lines;
     }
 
-    if (bu_cmd_valid(_view_dline_cmds, argv[1]) != BRLCAD_OK) {
+    argc--;argv++;
+
+    if (bu_cmd_valid(_view_dline_cmds, argv[0]) != BRLCAD_OK) {
     	bu_vls_printf(gedp->ged_result_str, "invalid subcommand: %s", argv[1]);
 	return GED_ERROR;
     }

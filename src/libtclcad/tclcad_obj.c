@@ -3676,10 +3676,7 @@ go_data_lines(Tcl_Interp *UNUSED(interp),
 
     gedp->ged_gvp = btmp;
 
-    if (gdvp->gdv_view->gv_refresh) {
-	to_refresh_view(gdvp);
-	gdvp->gdv_view->gv_refresh = 0;
-    }
+    to_refresh_view(gdvp);
     if (ret == GED_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
@@ -3732,10 +3729,7 @@ to_data_lines(struct ged *gedp,
 
     gedp->ged_gvp = btmp;
 
-    if (gdvp->gdv_view->gv_refresh) {
-	to_refresh_view(gdvp);
-	gdvp->gdv_view->gv_refresh = 0;
-    }
+    to_refresh_view(gdvp);
 
     if (ret == GED_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
