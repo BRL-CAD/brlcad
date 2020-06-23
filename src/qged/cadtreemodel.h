@@ -41,6 +41,11 @@
 #if defined(__clang__)
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
+
+// Getting reports of conflict between MSVC math defines and qmath.h - try idea from
+// https://bugreports.qt.io/browse/QTBUG-45935
+#undef _USE_MATH_DEFINES
+
 #undef Success
 #include <QtCore>
 #undef Success
@@ -49,6 +54,7 @@
 #include <QObject>
 #undef Success
 #include <QHash>
+
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
