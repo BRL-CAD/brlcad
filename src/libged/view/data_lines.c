@@ -21,6 +21,28 @@
  *
  * Logic for drawing arbitary lines not associated with geometry.
  *
+ * TODO - at the moment this will only display in Archer - MGED
+ * doesn't appear to have the necessary drawing hooks to view
+ * the data structures populated by this command.  To exercise
+ * it in Archer:
+ *
+ * Archer> view sdata_lines points {{0 -1000 0} {0 1000 0}}
+ * Archer> view sdata_lines draw 1
+ * Archer> view sdata_lines line_width 100
+ * Archer> view sdata_lines color 255 0 0
+ *
+ * Note that gedp->ged_gvp must be set to the correct display
+ * manager before calling this command, to put the output in
+ * the correct display manager.  If the same line is to be shown
+ * in multiple display managers, the command must be run once
+ * per display manager:
+ *
+ * gedp->ged_gvp = dm1;
+ * ged_view(gedp, argc, argv);
+ * gedp->ged_gvp = dm2;
+ * ged_view(gedp, argc, argv);
+ *
+ * etc...
  */
 
 #include "common.h"
