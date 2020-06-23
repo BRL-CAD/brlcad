@@ -20,7 +20,6 @@
 //============================================================================
 //                                   INCLUDES
 //============================================================================
-#include "vmath.h"
 #include "DockOverlay.h"
 
 #include <QPointer>
@@ -41,6 +40,10 @@
 #include "DockAreaTitleBar.h"
 
 #include <iostream>
+
+#define SMALL_FASTF 1.0e-77
+#define NEAR_ZERO(val, epsilon) (((val) > -epsilon) && ((val) < epsilon))
+#define NEAR_EQUAL(_a, _b, _tol) NEAR_ZERO((_a) - (_b), (_tol))
 
 namespace ads
 {
