@@ -408,6 +408,7 @@ performance ray tracing pipeline.
 * removed "high resolution" options from all commands - Carl Moore
 * improved performance of archer loading large BoT models - Nick Reed
 * added evaluated shaded drawing preference mode and menu - Nick Reed
+* fixed .mgedrc creation corruption with closed database - Cliff Yapp
 * extensive improvements to NURBS Boolean evaluation - Nick Reed
 * added 'bot chull' for creating convex hull envelopes - Cliff Yapp
 * new manual page for the g-voxel exporter - Mandarj
