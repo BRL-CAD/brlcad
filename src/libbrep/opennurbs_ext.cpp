@@ -368,7 +368,7 @@ ON_NurbsCurve_ClosestPointToLineSegment(
 	double ndist;
 	if (t) {
 	    point_t c1i, l1i;
-	    ndist = bg_lseg_lseg_dist(&c1i, &l1i, C0, C1, L0, L1);
+	    ndist = sqrt(bg_lseg_lseg_dist_sq(&c1i, &l1i, C0, C1, L0, L1));
 	    double nt;
 	    ON_3dPoint tp(c1i[0], c1i[1], c1i[2]);
 	    if (!ON_NurbsCurve_GetClosestPoint(&nt, nc, tp, maximum_distance, &domain)) {
@@ -380,7 +380,7 @@ ON_NurbsCurve_ClosestPointToLineSegment(
 	    }
 	    (*t) = nt;
 	} else {
-	    ndist = bg_lseg_lseg_dist(NULL, NULL, C0, C1, L0, L1);
+	    ndist = sqrt(bg_lseg_lseg_dist_sq(NULL, NULL, C0, C1, L0, L1));
 	}
 	if (dist) {
 	    (*dist) = ndist;
