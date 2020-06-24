@@ -31,18 +31,34 @@
 
 #include "bu/opt.h"
 #include "bu/vls.h"
+#include "bn/plane.h"
 #include "../ged_private.h"
+
+int
+ged_snap_lines_2d(struct ged *gedp, point2d_t *p)
+{
+    if (!p || !gedp) return GED_ERROR;
+    return GED_ERROR;
+}
+
+int
+ged_snap_lines_3d(struct ged *gedp, point_t *p)
+{
+    if (!p || !gedp) return GED_ERROR;
+    return GED_ERROR;
+}
 
 int
 ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[options] x y [z]";
+    int in_dim = 0;
     int print_help = 0;
     int use_grid = 0;
     int use_lines = 0;
     int use_object_keypoints = 0;
     int use_object_lines = 0;
-    point_t pt = VINIT_ZERO;
+    point2d_t view_pt_2d = {0.0, 0.0};
     point_t view_pt = VINIT_ZERO;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
@@ -77,30 +93,43 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
         return GED_ERROR;
     }
 
-    /* We need at least X and Y regardless */
-    if (bu_opt_fastf_t(&msg, 1, (const char **)&argv[0], (void *)&pt[X]) == -1) {
-	bu_vls_printf(gedp->ged_result_str, "problem reading X value %s: %s\n", argv[0], bu_vls_cstr(&msg));
-	bu_vls_free(&msg);
-	return GED_ERROR;
-    }
-    if (bu_opt_fastf_t(&msg, 1, (const char **)&argv[1], (void *)&pt[Y]) == -1) {
-	bu_vls_printf(gedp->ged_result_str, "problem reading Y value %s: %s\n", argv[1], bu_vls_cstr(&msg));
-	bu_vls_free(&msg);
-	return GED_ERROR;
-    }
-    /* If we've got ONLY X and Y, assume a view coordinate.  Otherwise, assume
-     * the incoming point is 3D. */
-    if (argc == 3) {
-	if (bu_opt_fastf_t(&msg, 1, (const char **)&argv[2], (void *)&pt[Z]) == -1) {
-	    bu_vls_printf(gedp->ged_result_str, "problem reading Z value %s: %s\n", argv[2], bu_vls_cstr(&msg));
+    /* We may get a 2D screen point or a 3D model space point.  Either
+     * should work - whatever we get, set up both points so we have
+     * the necessary inputs for any of the options. */
+    if (argc == 2) {
+	point2d_t p2d = {0.0, 0.0};
+	point_t p = VINIT_ZERO;
+	point_t vp = VINIT_ZERO;
+	if (bu_opt_fastf_t(&msg, 1, (const char **)&argv[0], (void *)&p2d[X]) == -1) {
+	    bu_vls_printf(gedp->ged_result_str, "problem reading X value %s: %s\n", argv[0], bu_vls_cstr(&msg));
 	    bu_vls_free(&msg);
 	    return GED_ERROR;
 	}
-	MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, pt);
-    } else {
-	VMOVE(view_pt, pt);
+	if (bu_opt_fastf_t(&msg, 1, (const char **)&argv[1], (void *)&p2d[Y]) == -1) {
+	    bu_vls_printf(gedp->ged_result_str, "problem reading Y value %s: %s\n", argv[1], bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    return GED_ERROR;
+	}
+	V2MOVE(view_pt_2d, p2d);
+	VSET(vp, p[0], p[1], 0);
+	MAT4X3PNT(p, gedp->ged_gvp->gv_view2model, vp);
+	VMOVE(view_pt, p);
+	in_dim = 2;
     }
-
+    /* We may get a 3D point instead */
+    if (argc == 3) {
+	point_t p = VINIT_ZERO;
+	point_t vp = VINIT_ZERO;
+	if (bu_opt_vect_t(&msg, argc, argv, (void *)&p) <= 0) {
+	    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    return GED_ERROR;
+	}
+	MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, p);
+	V2SET(view_pt_2d, vp[0], vp[1]);
+	VMOVE(view_pt, p);
+	in_dim = 3;
+    }
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -111,12 +140,21 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (use_grid) {
-	ged_snap_to_grid(gedp, &view_pt[X], &view_pt[Y]);
+	// Grid operates on view space points
+	ged_snap_to_grid(gedp, &view_pt_2d[X], &view_pt_2d[Y]);
     }
 
-    MAT4X3PNT(pt, gedp->ged_gvp->gv_view2model, view_pt);
+    if (use_lines) {
+	if (in_dim == 2) {
+	    ged_snap_lines_2d(gedp, &view_pt_2d);
+	}
 
-    bu_vls_printf(gedp->ged_result_str, "%g %g %g", pt[X], pt[Y], pt[Z]);
+	if (in_dim == 3) {
+	    ged_snap_lines_3d(gedp, &view_pt);
+	}
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(view_pt));
 
     bu_vls_free(&msg);
     return GED_OK;
