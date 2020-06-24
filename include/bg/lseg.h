@@ -36,21 +36,12 @@
 
 __BEGIN_DECLS
 
-#if 0
-/* Compute the closest 2D point on the 2D line segment P0->P1 to point Q.
- * Returns the distance squared from Q to the closest point and the closest
- * point in question if c is non-NULL.
- */
-BG_EXPORT double
-bg_lseg2_pt2_dist_sq(point2d_t *c, const point2d_t P0, const point2d_t P1, const point2d_t Q);
-
 /* Compute the closest point on the line segment P0->P1 to point Q.  Returns
  * the distance squared from Q to the closest point and the closest point in
  * question if c is non-NULL.
  */
 BG_EXPORT double
 bg_lseg_pt_dist_sq(point_t *c, const point_t P0, const point_t P1, const point_t Q);
-#endif
 
 /* Compute the closest points on the line segments P0->P1 and Q0->Q1.  Returns
  * the distance squared between the closest points and (optionally) the closest

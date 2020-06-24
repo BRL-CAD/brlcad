@@ -26,6 +26,7 @@ set(embedded_licenses
   hv3_snit.txt
   libtermlib.txt
   lseg_lseg.txt
+  lseg_pt.txt
   lz4.txt
   marching_cubes.txt
   msinttypes.txt
