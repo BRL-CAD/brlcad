@@ -31,7 +31,7 @@
 
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bn/plane.h"
+#include "bg/lseg.h"
 #include "../ged_private.h"
 
 int
@@ -44,7 +44,44 @@ ged_snap_lines_2d(struct ged *gedp, point2d_t *p)
 int
 ged_snap_lines_3d(struct ged *gedp, point_t *p)
 {
+    struct bview_data_line_state *lines = NULL;
     if (!p || !gedp) return GED_ERROR;
+
+    bu_log("%g %g %g\n", V3ARGS(*p));
+
+    // There are some issues with line snapping that don't come up with grid
+    // snapping - in particular, when are we "close enough" to a line to snap,
+    // and how do we handle snapping when close enough to multiple lines?  We
+    // probably want to prefer intersections between lines to closest line
+    // point if we are close to multiple lines...
+
+    lines = &gedp->ged_gvp->gv_data_lines;
+
+    if (lines->gdls_num_points > 1) {
+	point_t P0, P1;
+	for (int i = 0; i < lines->gdls_num_points; i+=2) {
+	    point_t c;
+	    VMOVE(P0, lines->gdls_points[i]);
+	    VMOVE(P1, lines->gdls_points[i+1]);
+	    double dsq = bg_lseg_pt_dist_sq(&c, P0, P1, *p);
+	    bu_log("%g: %g %g %g\n", sqrt(dsq), V3ARGS(c));
+	}
+    }
+
+    lines = &gedp->ged_gvp->gv_sdata_lines;
+
+    if (lines->gdls_num_points > 1) {
+	point_t P0, P1;
+	for (int i = 0; i < lines->gdls_num_points; i+=2) {
+	    point_t c;
+	    VMOVE(P0, lines->gdls_points[i]);
+	    VMOVE(P1, lines->gdls_points[i+1]);
+	    double dsq = bg_lseg_pt_dist_sq(&c, P0, P1, *p);
+	    bu_log("%g: %g %g %g\n", sqrt(dsq), V3ARGS(c));
+	}
+    }
+
+
     return GED_ERROR;
 }
 
@@ -145,9 +182,11 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (use_lines) {
+#if 0
 	if (in_dim == 2) {
 	    ged_snap_lines_2d(gedp, &view_pt_2d);
 	}
+#endif
 
 	if (in_dim == 3) {
 	    ged_snap_lines_3d(gedp, &view_pt);

@@ -26,7 +26,7 @@
  * the data structures populated by this command.  To exercise
  * it in Archer:
  *
- * Archer> view sdata_lines points {{0 -1000 0} {0 1000 0}}
+ * Archer> view sdata_lines points {{0 -1000 0} {0 1000 0} {100 -1000 0} {100 1000 0} {-1000 10 0} {1000 10 0}}
  * Archer> view sdata_lines draw 1
  * Archer> view sdata_lines line_width 100
  * Archer> view sdata_lines color 255 0 0
