@@ -43,7 +43,7 @@
 #include "bu/units.h"
 
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "./burst.h"
 

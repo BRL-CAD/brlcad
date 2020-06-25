@@ -30,7 +30,7 @@
 #include <signal.h>
 
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 #include "raytrace.h"
 
 /* NSIG not always defined in <signal.h> */
@@ -524,7 +524,7 @@ extern Trie *cmd_trie;
 
 struct burst_state {
     Colors colorids;           /* ident range to color mappings for plots */
-    fb *fbiop;                 /* frame buffer specific access from libfb */
+    struct fb *fbiop;          /* frame buffer specific access from libfb */
     FILE *burstfp;             /* input stream for burst point locations */
     FILE *gridfp;              /* grid file output stream (2-d shots) */
     FILE *histfp;              /* histogram output stream (statistics) */

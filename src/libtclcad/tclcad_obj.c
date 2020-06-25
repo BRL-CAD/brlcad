@@ -69,6 +69,15 @@
 #include "icv/crop.h"
 #include "dm.h"
 
+#if defined(DM_OGL) || defined(DM_WGL)
+#  if defined(DM_WGL)
+#    include <tkwinport.h>
+#  endif
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+#endif
+
 /* For the moment call internal libged functions - a cleaner
  * solution will be needed eventually */
 #include "../libged/ged_private.h"
