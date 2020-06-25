@@ -420,6 +420,7 @@ BRLCAD_ADDEXEC(test_help help/test_help.c libged TEST)
 
 set(ged_ignore_files
   CMakeLists.txt
+  README
   TODO
   alphanum.h
   bot/ged_bot.h

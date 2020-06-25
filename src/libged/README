@@ -1,0 +1,40 @@
+BRL-CAD's Geometry Editing Command Library (LIBGED)
+===================================================
+
+By design, LIBGED is intended to be a simple command interface upon
+which GED-style applications, utilities, and scripting may be built.
+Commands may be invoked directly via C bindings or indirectly via
+scripting languages such as Python, Tcl, Shell, etc., that are bound
+to LIBGED.  The command interface is intentionally stateless, though
+applications can specify some information (e.g., objects and views)
+via a ged context structure that is passed to all commands.
+
+The longer-term but not-yet-realized goals of the library include
+modular self-documenting encapsulation, versioning, and transactions.
+
+LIBGED has a design objective to present fewer than 100 top-level
+commands using a consistent "{action} [args]" command pattern for all
+processing commands and "{obj_type} {action} [args]" for commands
+specific to an object type.
+
+For development, the following guidelines are recommended best
+practice for consistency and uniformity.
+
+1. Usability first.  Helps to develop UI before doing implementation.
+
+2. If something doesn't work well, deprecate, replace, and/or retire.
+
+3. Maintainable means high cohesion, low coupling, & quick to modify.
+
+4. All commands must be documented.  Docs help with scope and design.
+
+5. Take features to completion, not perfection.  Iterate on feedback.
+
+6. Coding solo can be satisfying, but often results in design poison.
+
+7. Reduce, Reuse, Refactor; leverage existing; push duplication down.
+
+Per ISO 9126-1, development priorities SHOULD typically be:
+Usability > Reliability > Maintainability > Functionality > Efficiency
+
+See TODO and include/ged.h for additional notes on LIBGED's design.
