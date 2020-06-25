@@ -101,6 +101,7 @@ CMAKEFILES(
   CMakeLists.txt
   mged.tcl
   regression_resources.tcl
+  regress-mged.cmake.in
   ${MGED_TESTS}
   )
 

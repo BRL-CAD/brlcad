@@ -135,6 +135,7 @@ CMAKEFILES(
   oslexec_pvt.h
   render_svc.h
   sh_osl.cpp
+  sh_tcl.c
   liboslrend.h
   constantpool.h
   render_svc.cpp

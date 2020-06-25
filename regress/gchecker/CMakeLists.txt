@@ -10,6 +10,7 @@ endif (BRLCAD_ENABLE_TCL)
 
 CMAKEFILES(
   CMakeLists.txt
+  regress-gchecker.cmake.in
   gchecker_test.g
   )
 

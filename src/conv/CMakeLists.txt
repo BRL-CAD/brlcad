@@ -54,6 +54,8 @@ BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}")
 if(BRLCAD_ENABLE_TCL)
   include_directories(${TCLCAD_INCLUDE_DIRS})
   BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
+else(BRLCAD_ENABLE_TCL)
+  CMAKEFILES(enf-g.c)
 endif(BRLCAD_ENABLE_TCL)
 
 BRLCAD_ADDEXEC(g-dot g-dot.c "libged;libbu")

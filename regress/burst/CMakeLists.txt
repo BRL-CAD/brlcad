@@ -33,6 +33,7 @@ endif (TARGET ktank.g)
 CMAKEFILES(
   CMakeLists.txt
   echo.b
+  regress-burst.cmake.in
   ${BURST_INPUT_FILES}
   )
 

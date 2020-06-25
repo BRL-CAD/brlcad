@@ -126,6 +126,7 @@ CMAKEFILES(
   m35_F_ref.pix
   m35_edge_only_color_ref.pix
   m35_edge_only_ref.pix
+  regress-rtwiz.cmake.in
   )
 
 # Local Variables:

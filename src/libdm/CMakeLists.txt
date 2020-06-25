@@ -109,33 +109,56 @@ set(libdm_ignore_files
   CMakeLists.txt
   README
   TODO
+  X/CMakeLists.txt
+  X/color.c
   X/dm-X.c
   X/dm-X.h
+  X/fb_X.h
   X/if_X24.c
-  include/private.h
+  glx/CMakeLists.txt
   glx/dm-glx.h
   glx/dm-ogl.c
   glx/dm-ogl.h
+  glx/fb_ogl.h
   glx/if_ogl.c
   if_TEMPLATE.c
   null/dm-Null.h
+  osgl/CMakeLists.txt
   osgl/dm-osgl.cpp
   osgl/dm-osgl.h
+  osgl/fb_osgl.h
+  osgl/fontstash/LICENSE.fontstash
+  osgl/fontstash/README.md
+  osgl/fontstash/fontstash.h
+  osgl/fontstash/glfontstash.h
+  osgl/fontstash/stb_truetype.h
   osgl/if_osgl.cpp
   osgl/osg-test.cpp
   osgl/osg_bob.cpp
   osgl/osg_fb_manipulator.h
+  plot/CMakeLists.txt
+  plot/dm-plot.c
   plot/dm-plot.h
+  postscript/CMakeLists.txt
+  postscript/dm-ps.c
   postscript/dm-ps.h
+  qt/CMakeLists.txt
   qt/dm-qt.cpp
   qt/dm-qt.h
+  qt/fb_qt.h
   qt/if_qt.cpp
+  tk/CMakeLists.txt
   tk/dm-tk.c
   tk/dm-tk.h
   tk/if_tk.c
+  txt/CMakeLists.txt
+  txt/dm-txt.c
+  wgl/CMakeLists.txt
   wgl/dm-wgl.c
   wgl/dm-wgl.h
+  wgl/fb_wgl.h
   wgl/if_wgl.c
+  include/private.h
   include/calltable.h
   )
 CMAKEFILES(${libdm_ignore_files})

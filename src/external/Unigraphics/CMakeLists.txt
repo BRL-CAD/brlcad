@@ -7,6 +7,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
+  set(ug_g_srcs ug-g.c ug_misc.c shim.cpp)
+
   if (BRLCAD_ENABLE_TCL)
 
     include_directories(
@@ -22,7 +24,6 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     CHECK_CXX_FLAG("Wno-uninitialized")
     CHECK_CXX_FLAG("Wno-maybe-uninitialized")
 
-    set(ug_g_srcs ug-g.c ug_misc.c shim.cpp)
     add_definitions(-DTEST_BUILD)
     add_library(ug-g ${ug_g_srcs})
     target_link_libraries(ug-g librt libwdb libbrep libbg libnmg libbn libbu)
