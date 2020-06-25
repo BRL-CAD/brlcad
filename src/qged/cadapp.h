@@ -58,6 +58,10 @@ class CADApp : public QApplication
 	int opendb(QString filename);
 	void closedb();
 
+	// TODO - need to update this to use the gsh dynamic lookup mechanism.
+	// Moreover, the command itself really needs to be able to tell the
+	// application whether it might update the database, view, etc. rather
+	// than hard-coding that in each GUI...
 	int register_command(QString cmdname, ged_func_ptr func, QString role = QString());
 	int register_gui_command(QString cmdname, gui_cmd_ptr func, QString role = QString());
 	int exec_command(QString *command, QString *result);
