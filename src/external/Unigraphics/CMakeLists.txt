@@ -17,6 +17,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
       "${ZLIB_INCLUDE_DIRS}"
       "${REGEX_INCLUDE_DIRS}"
+      "${TCL_INCLUDE_PATH}"
       )
 
     # The build shims aren't so great at mocking the initialization
@@ -26,7 +27,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
     add_definitions(-DTEST_BUILD)
     add_library(ug-g ${ug_g_srcs})
-    target_link_libraries(ug-g librt libwdb libbrep libbg libnmg libbn libbu)
+    target_link_libraries(ug-g librt libwdb libbrep libbg libnmg libbn libbu ${TCL_LIBRARY})
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
     set_target_properties(ug-g PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
     if(HIDE_INTERNAL_SYMBOLS)
