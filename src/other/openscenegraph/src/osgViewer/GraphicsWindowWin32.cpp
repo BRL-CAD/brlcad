@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * OpenSceneGraph Public License for more details.
  *
- * This file is Copyright (C) 2007 - André Garneau (andre@pixdev.com) and licensed under OSGPL.
+ * This file is Copyright (C) 2007 - Andre Garneau (andre@pixdev.com) and licensed under OSGPL.
  *
  * Some elements of GraphicsWindowWin32 have used the Producer implementation as a reference.
  * These elements are licensed under OSGPL as above, with Copyright (C) 2001-2004  Don Burns.
@@ -23,6 +23,7 @@
 #include <osg/GL>
 #include <osg/DeleteHandler>
 #include <osg/ApplicationUsage>
+#include <osg/os_utils>
 
 #include <vector>
 #include <map>
@@ -31,7 +32,8 @@
 
 #define MOUSEEVENTF_FROMTOUCH           0xFF515700
 
-#if(WINVER < 0x0601)
+// _MSC_VER 1500: VS 2008
+#if(WINVER < 0x0601 || (_MSC_VER <= 1500 && !__MINGW32__))
 // Provide Declarations for Multitouch
 
 #define WM_TOUCH                        0x0240
@@ -79,6 +81,37 @@ typedef TOUCHINPUT const * PCTOUCHINPUT;
 
 #endif
 
+
+// provide declaration for WM_POINTER* events
+// which handle both touch and pen events
+// for Windows 8 and above
+
+// _MSC_VER 1600: VS 2010
+#if(WINVER < 0x0602 || (_MSC_VER <= 1600 && !__MINGW32__))
+
+#define WM_POINTERUPDATE                0x0245
+#define WM_POINTERDOWN                  0x0246
+#define WM_POINTERUP                    0x0247
+
+// PointerInput enumeration
+enum tagPOINTER_INPUT_TYPE {
+   PT_POINTER = 0x00000001,   // Generic pointer
+   PT_TOUCH = 0x00000002,   // Touch
+   PT_PEN = 0x00000003,   // Pen
+   PT_MOUSE = 0x00000004,   // Mouse
+//#if(WINVER >= 0x0603)
+   PT_TOUCHPAD = 0x00000005,   // Touchpad
+//#endif /* WINVER >= 0x0603 */
+};
+typedef DWORD POINTER_INPUT_TYPE;
+
+
+// methods to extract pointer info
+#define GET_POINTERID_WPARAM(wParam)                (LOWORD(wParam))
+#endif
+
+
+
 typedef
 BOOL
 (WINAPI GetTouchInputInfoFunc)(
@@ -98,10 +131,44 @@ BOOL
     HWND hwnd,
     ULONG ulFlags));
 
+
+// used together with WM_POINTER* events
+typedef
+BOOL
+(WINAPI
+GetPointerTypeFunc(
+   UINT32 pointerId,
+   POINTER_INPUT_TYPE *pointerType));
+
+
 // Declared static in order to get Header File clean
 static RegisterTouchWindowFunc *registerTouchWindowFunc = NULL;
 static CloseTouchInputHandleFunc *closeTouchInputHandleFunc = NULL;
 static GetTouchInputInfoFunc *getTouchInputInfoFunc = NULL;
+static GetPointerTypeFunc *getPointerTypeFunc = NULL;
+
+// DPI Awareness
+// #if(WINVER >= 0x0603)
+
+#ifndef DPI_ENUMS_DECLARED
+
+typedef enum PROCESS_DPI_AWARENESS {
+	PROCESS_DPI_UNAWARE = 0,
+	PROCESS_SYSTEM_DPI_AWARE = 1,
+	PROCESS_PER_MONITOR_DPI_AWARE = 2
+} PROCESS_DPI_AWARENESS;
+
+#endif // DPI_ENUMS_DECLARED
+
+typedef
+BOOL
+(WINAPI	SetProcessDpiAwarenessFunc(
+	PROCESS_DPI_AWARENESS dpi_awareness));
+
+static SetProcessDpiAwarenessFunc *setProcessDpiAwareness = NULL;
+// #endif
+
+
 
 using namespace osgViewer;
 
@@ -318,13 +385,12 @@ class Win32WindowingSystem : public osg::GraphicsContext::WindowingSystemInterfa
     static std::string osgGraphicsWindowWithoutCursorClass; //!< Name of Win32 window class (without cursor) used by OSG graphics window instances
 
     Win32WindowingSystem();
-    ~Win32WindowingSystem();
 
     // Access the Win32 windowing system through this singleton class.
-    static Win32WindowingSystem* getInterface()
+    static osg::observer_ptr<Win32WindowingSystem>& getInterface()
     {
-        static Win32WindowingSystem* win32Interface = new Win32WindowingSystem;
-        return win32Interface;
+        static osg::observer_ptr<Win32WindowingSystem> s_win32Interface;
+        return s_win32Interface;
     }
 
     // Return the number of screens present in the system
@@ -368,6 +434,8 @@ class Win32WindowingSystem : public osg::GraphicsContext::WindowingSystemInterfa
 
   protected:
 
+    virtual ~Win32WindowingSystem();
+
     // Display devices present in the system
     typedef std::vector<DISPLAY_DEVICE> DisplayDevices;
 
@@ -400,6 +468,41 @@ class Win32WindowingSystem : public osg::GraphicsContext::WindowingSystemInterfa
      Win32WindowingSystem( const Win32WindowingSystem& );
      Win32WindowingSystem& operator=( const Win32WindowingSystem& );
 };
+
+///////////////////////////////////////////////////////////////////////////////
+//  Check if window dimensions have changed w.r.t stored values
+//////////////////////////////////////////////////////////////////////////////
+static bool areWindowDimensionsChanged(HWND hwnd, int screenOriginX, int screenOriginY, int& windowX, int& windowY, int& windowWidth, int& windowHeight)
+{
+    POINT origin;
+    origin.x = 0;
+    origin.y = 0;
+
+    ::ClientToScreen(hwnd, &origin);
+
+    int new_windowX = origin.x - screenOriginX;
+    int new_windowY = origin.y - screenOriginY;
+
+    RECT clientRect;
+    ::GetClientRect(hwnd, &clientRect);
+
+    int new_windowWidth = (clientRect.right == 0) ? 1 : clientRect.right;
+    int new_windowHeight = (clientRect.bottom == 0) ? 1 : clientRect.bottom;
+
+    if ((new_windowX != windowX) || (new_windowY != windowY) || (new_windowWidth != windowWidth) || (new_windowHeight != windowHeight))
+    {
+        windowX = new_windowX;
+        windowY = new_windowY;
+        windowWidth = new_windowWidth;
+        windowHeight = new_windowHeight;
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                             Error reporting
@@ -585,6 +688,16 @@ class Win32KeyboardMap
 static Win32KeyboardMap s_win32KeyboardMap;
 static int remapWin32Key(int key)
 {
+    bool numlockIsActive = static_cast<bool>(GetKeyState(VK_NUMLOCK) & 0x1);
+    if (numlockIsActive)
+    {
+        if (key >= VK_NUMPAD0 && key <= VK_NUMPAD9)
+            return key - VK_NUMPAD0 + osgGA::GUIEventAdapter::KEY_KP_0;
+
+        if (key == VK_DECIMAL)
+            return osgGA::GUIEventAdapter::KEY_KP_Decimal;
+    }
+
     return s_win32KeyboardMap.remapKey(key);
 }
 
@@ -664,13 +777,18 @@ std::string Win32WindowingSystem::osgGraphicsWindowWithoutCursorClass;
 Win32WindowingSystem::Win32WindowingSystem()
 : _windowClassesRegistered(false)
 {
-  // Detect presence of runtime support for multitouch
+    getInterface() = this;
+
+    // Detect presence of runtime support for multitouch
     HMODULE hModule = LoadLibrary("user32");
     if (hModule)
     {
         registerTouchWindowFunc = (RegisterTouchWindowFunc *) GetProcAddress( hModule, "RegisterTouchWindow");
         closeTouchInputHandleFunc = (CloseTouchInputHandleFunc *) GetProcAddress( hModule, "CloseTouchInputHandle");
         getTouchInputInfoFunc = (GetTouchInputInfoFunc *)  GetProcAddress( hModule, "GetTouchInputInfo");
+
+       // check if Win8 and later API is available
+       getPointerTypeFunc = (GetPointerTypeFunc*)GetProcAddress(hModule, "GetPointerType");
 
         if (!(registerTouchWindowFunc && closeTouchInputHandleFunc && getTouchInputInfoFunc))
         {
@@ -680,6 +798,21 @@ Win32WindowingSystem::Win32WindowingSystem()
             FreeLibrary( hModule);
         }
     }
+
+
+// #if(WINVER >= 0x0603)
+	// For Windows 8.1 and higher
+	//
+	// Per monitor DPI aware.This app checks for the DPI when it is created and adjusts the scale factor
+	// whenever the DPI changes.These applications are not automatically scaled by the system.
+	HMODULE hModuleShore = LoadLibrary("Shcore");
+	if (hModuleShore) {
+		setProcessDpiAwareness = (SetProcessDpiAwarenessFunc *) GetProcAddress(hModuleShore, "SetProcessDpiAwareness");
+		if (setProcessDpiAwareness) {
+			(*setProcessDpiAwareness)(PROCESS_DPI_AWARENESS::PROCESS_PER_MONITOR_DPI_AWARE);
+		}
+	}
+// #endif
 }
 
 Win32WindowingSystem::~Win32WindowingSystem()
@@ -934,7 +1067,7 @@ void Win32WindowingSystem::getScreenSettings( const osg::GraphicsContext::Screen
         if (resolution.refreshRate == 0 || resolution.refreshRate == 1) {
             // Windows specific: 0 and 1 represent the hhardware's default refresh rate.
             // If someone knows how to get this refresh rate (in Hz)...
-            OSG_NOTICE << "Win32WindowingSystem::getScreenSettings() is not fully implemented (cannot retreive the hardware's default refresh rate)."<<std::endl;
+            OSG_NOTICE << "Win32WindowingSystem::getScreenSettings() is not fully implemented (cannot retrieve the hardware's default refresh rate)."<<std::endl;
             resolution.refreshRate = 0;
         }
     } else
@@ -1176,7 +1309,7 @@ void GraphicsWindowWin32::init()
 
     // getEventQueue()->setCurrentEventState(osgGA::GUIEventAdapter::getAccumulatedEventState().get());
 
-    WindowData *windowData = _traits.get() ? dynamic_cast<WindowData*>(_traits->inheritedWindowData.get()) : 0;
+    WindowData *windowData = _traits.valid() ? dynamic_cast<WindowData*>(_traits->inheritedWindowData.get()) : 0;
     HWND windowHandle = windowData ? windowData->_hwnd : 0;
 
     _ownsWindow    = windowHandle==0;
@@ -1186,9 +1319,23 @@ void GraphicsWindowWin32::init()
 
     _initialized = _ownsWindow ? createWindow() : setWindow(windowHandle);
     _valid       = _initialized;
-    
+
+    int windowX = 0, windowY = 0, windowWidth = 0, windowHeight = 0;
+    if (_traits.valid())
+    {
+        windowX = _traits->x;
+        windowY = _traits->y;
+        windowWidth = _traits->width;
+        windowHeight = _traits->height;
+    }
+
+    if (areWindowDimensionsChanged(_hwnd, _screenOriginX, _screenOriginY, windowX, windowY, windowWidth, windowHeight))
+    {
+        resized(windowX, windowY, windowWidth, windowHeight);
+    }
+
     // make sure the event queue has the correct window rectangle size and input range
-    getEventQueue()->syncWindowRectangleWithGraphcisContext();
+    getEventQueue()->syncWindowRectangleWithGraphicsContext();
 
     // 2008/10/03
     // Few days ago NVidia released WHQL certified drivers ver 178.13.
@@ -1206,7 +1353,7 @@ void GraphicsWindowWin32::init()
     //
     // When using OpenGL in threaded app ( main thread sets up context / renderer thread draws using it )
     // first wglMakeCurrent seems to not work right and screw OpenGL context driver data:
-    // 1: succesive drawing shows a number of artifacts in TriangleStrips and TriangleFans
+    // 1: successive drawing shows a number of artifacts in TriangleStrips and TriangleFans
     // 2: weird behaviour of FramBufferObjects (glGenFramebuffer generates already generated ids ...)
     // Looks like repeating wglMakeCurrent call fixes all these issues
     // wglMakeCurrent call can impact performance so I try to minimize number of
@@ -1216,10 +1363,10 @@ void GraphicsWindowWin32::init()
     _applyWorkaroundForMultimonitorMultithreadNVidiaWin32Issues = true;
 #endif
 
-    const char* str = getenv("OSG_WIN32_NV_MULTIMON_MULTITHREAD_WORKAROUND");
-    if (str)
+    std::string str;
+    if (osg::getEnvVar("OSG_WIN32_NV_MULTIMON_MULTITHREAD_WORKAROUND", str))
     {
-        _applyWorkaroundForMultimonitorMultithreadNVidiaWin32Issues = (strcmp(str, "on")==0 || strcmp(str, "ON")==0 || strcmp(str, "On")==0 );
+        _applyWorkaroundForMultimonitorMultithreadNVidiaWin32Issues = (str=="on") || (str=="ON") || (str=="On");
     }
 }
 
@@ -1494,7 +1641,7 @@ bool GraphicsWindowWin32::determineWindowPositionAndStyle( unsigned int  screenN
     //
 
     osg::GraphicsContext::ScreenIdentifier screenId(screenNum);
-    Win32WindowingSystem* windowManager = Win32WindowingSystem::getInterface();
+    osg::ref_ptr<Win32WindowingSystem> windowManager = Win32WindowingSystem::getInterface();
 
     windowManager->getScreenPosition(screenId, _screenOriginX, _screenOriginY, _screenWidth, _screenHeight);
     if (_screenWidth==0 || _screenHeight==0) return false;
@@ -1622,20 +1769,20 @@ static int ChooseMatchingPixelFormat( HDC hdc, int screenNum, const WGLIntegerAt
             1,                     // version number
             PFD_DRAW_TO_WINDOW |   // support window
             PFD_SUPPORT_OPENGL |   // support OpenGL
-            (_traits->doubleBuffer ? PFD_DOUBLEBUFFER : NULL) |      // double buffered ?
-            (_traits->swapMethod ==  osg::DisplaySettings::SWAP_COPY ? PFD_SWAP_COPY : NULL) |
-            (_traits->swapMethod ==  osg::DisplaySettings::SWAP_EXCHANGE ? PFD_SWAP_EXCHANGE : NULL),
+            DWORD(_traits->doubleBuffer ? PFD_DOUBLEBUFFER : 0) |      // double buffered ?
+            DWORD(_traits->swapMethod ==  osg::DisplaySettings::SWAP_COPY ? PFD_SWAP_COPY : 0) |
+            DWORD(_traits->swapMethod ==  osg::DisplaySettings::SWAP_EXCHANGE ? PFD_SWAP_EXCHANGE : 0),
             PFD_TYPE_RGBA,         // RGBA type
-            _traits->red + _traits->green + _traits->blue,                // color depth
-            _traits->red ,0, _traits->green ,0, _traits->blue, 0,          // shift bits ignored
-            _traits->alpha,          // alpha buffer ?
+            BYTE(_traits->red + _traits->green + _traits->blue),                      // color depth
+            BYTE(_traits->red), 0, BYTE(_traits->green), 0, BYTE(_traits->blue), 0,   // shift bits ignored
+            BYTE(_traits->alpha),  // alpha buffer ?
             0,                     // shift bit ignored
             0,                     // no accumulation buffer
             0, 0, 0, 0,            // accum bits ignored
-            _traits->depth,          // 32 or 16 bit z-buffer ?
-            _traits->stencil,        // stencil buffer ?
+            BYTE(_traits->depth),      // 32 or 16 bit z-buffer ?
+            BYTE(_traits->stencil),    // stencil buffer ?
             0,                     // no auxiliary buffer
-            PFD_MAIN_PLANE,        // main layer
+            PFD_MAIN_PLANE,  // main layer
             0,                     // reserved
             0, 0, 0                // layer masks ignored
         };
@@ -1700,7 +1847,7 @@ bool GraphicsWindowWin32::setPixelFormat()
                                         << _traits->screenNum
                                         << std::endl;
 
-                _traits->red = bpp / 4; //integer devide, determine minimum number of bits we will accept
+                _traits->red = bpp / 4; //integer divide, determine minimum number of bits we will accept
                 _traits->green = bpp / 4;
                 _traits->blue = bpp / 4;
                 ::PreparePixelFormatSpecifications(*_traits, formatSpecs, true);// try again with WGL_SWAP_METHOD_ARB
@@ -1875,7 +2022,7 @@ bool GraphicsWindowWin32::setWindowDecorationImplementation( bool decorated )
     error  = ::GetLastError();
     if (result==0 && error)
     {
-        reportErrorForScreen("GraphicsWindowWin32::setWindowDecoration() - Unable to set window extented style", _traits->screenNum, error);
+        reportErrorForScreen("GraphicsWindowWin32::setWindowDecoration() - Unable to set window extended style", _traits->screenNum, error);
         return false;
     }
 
@@ -1992,7 +2139,7 @@ bool GraphicsWindowWin32::realizeImplementation()
     _realized = true;
 
     // make sure the event queue has the correct window rectangle size and input range
-    getEventQueue()->syncWindowRectangleWithGraphcisContext();
+    getEventQueue()->syncWindowRectangleWithGraphicsContext();
 
     return true;
 }
@@ -2078,7 +2225,7 @@ bool GraphicsWindowWin32::checkEvents()
         _destroyWindow = false;
         destroyWindow(false);
     }
-           
+
     return !(getEventQueue()->empty());
 }
 
@@ -2225,8 +2372,7 @@ void GraphicsWindowWin32::setCursorImpl( MouseCursor mouseCursor )
         _currentCursor = newCursor;
         _traits->useCursor = (_currentCursor != NULL) && (_mouseCursor != NoCursor);
 
-        if (_mouseCursor != InheritCursor)
-            ::SetCursor(_currentCursor);
+        PostMessage(_hwnd, WM_SETCURSOR, 0, 0);
     }
 }
 
@@ -2459,12 +2605,36 @@ void GraphicsWindowWin32::transformMouseXY( float& x, float& y )
 
 LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-    if ((GetMessageExtraInfo() & MOUSEEVENTF_FROMTOUCH) == MOUSEEVENTF_FROMTOUCH) return TRUE;
-
     //!@todo adapt windows event time to osgGA event queue time for better resolution
     double eventTime  = getEventQueue()->getTime();
-    double resizeTime = eventTime;
     _timeOfLastCheckEvents = eventTime;
+
+    if ((GetMessageExtraInfo() & MOUSEEVENTF_FROMTOUCH) == MOUSEEVENTF_FROMTOUCH)
+    {
+        switch(uMsg)
+        {
+            /////////////////
+            case WM_SYSCOMMAND:
+            /////////////////
+            {
+                UINT cmd = LOWORD(wParam);
+                if (cmd == SC_CLOSE)
+                    getEventQueue()->closeWindow(eventTime);
+                break;
+            }
+            /////////////////
+            case WM_NCLBUTTONUP:
+            /////////////////
+            {
+                UINT cmd = LOWORD(wParam);
+                if (cmd == HTCLOSE)
+                    getEventQueue()->closeWindow(eventTime);
+                break;
+            }
+            default: break;
+        }
+        return TRUE;
+    }
 
     switch(uMsg)
     {
@@ -2593,27 +2763,11 @@ LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, W
         /////////////////
 
             {
-                POINT origin;
-                origin.x = 0;
-                origin.y = 0;
-
-                ::ClientToScreen(hwnd, &origin);
-
-                int windowX = origin.x - _screenOriginX;
-                int windowY = origin.y - _screenOriginY;
-                resizeTime  = eventTime;
-
-                RECT clientRect;
-                ::GetClientRect(hwnd, &clientRect);
-
-                int windowWidth = (clientRect.right == 0) ? 1 : clientRect.right ;
-                int windowHeight = (clientRect.bottom == 0) ? 1 : clientRect.bottom;;
-
-                // send resize event if window position or size was changed
-                if (windowX!=_traits->x || windowY!=_traits->y || windowWidth!=_traits->width || windowHeight!=_traits->height)
+                int windowX=_traits->x, windowY=_traits->y, windowWidth=_traits->width, windowHeight=_traits->height;
+                if (areWindowDimensionsChanged(hwnd, _screenOriginX, _screenOriginY, windowX, windowY, windowWidth, windowHeight))
                 {
                     resized(windowX, windowY, windowWidth, windowHeight);
-                    getEventQueue()->windowResize(windowX, windowY, windowWidth, windowHeight, resizeTime);
+                    getEventQueue()->windowResize(windowX, windowY, windowWidth, windowHeight, eventTime);
 
                     // request redraw if window size was changed
                     if (windowWidth!=_traits->width || windowHeight!=_traits->height)
@@ -2681,7 +2835,7 @@ LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, W
             {
                 // Wojciech Lewandowski: 2011/09/12
                 // Skip CONTROL | MENU | SHIFT tests because we are polling exact left or right keys
-                // above return press for both right and left so we may end up with incosistent
+                // above return press for both right and left so we may end up with inconsistent
                 // modifier mask if we report left control & right control while only right was pressed
                 LONG rightSideCode = 0;
                 switch( i )
@@ -2702,8 +2856,8 @@ LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, W
                     UINT scanCode = ::MapVirtualKeyEx( i, 0, ::GetKeyboardLayout(0));
                     // Set Extended Key bit + Scan Code + 30 bit to indicate key was set before sending message
                     // See Windows SDK help on WM_KEYDOWN for explanation
-                    LONG lParam = rightSideCode | ( ( scanCode & 0xFF ) << 16 ) | (1 << 30);
-                    ::SendMessage(hwnd, WM_KEYDOWN, i, lParam );
+                    LONG lParamKey = rightSideCode | ( ( scanCode & 0xFF ) << 16 ) | (1 << 30);
+                    ::SendMessage(hwnd, WM_KEYDOWN, i, lParamKey);
                 }
             }
             break;
@@ -2806,35 +2960,39 @@ LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, W
             {
                 unsigned int numInputs = (unsigned int) wParam;
                 TOUCHINPUT* ti = new TOUCHINPUT[numInputs];
+                POINT pt;
                 osg::ref_ptr<osgGA::GUIEventAdapter> osg_event(NULL);
                 if(getTouchInputInfoFunc && (*getTouchInputInfoFunc)((HTOUCHINPUT)lParam, numInputs, ti, sizeof(TOUCHINPUT)))
                 {
                     // For each contact, dispatch the message to the appropriate message handler.
                     for(unsigned int i=0; i< numInputs; ++i)
                     {
+                        pt.x =TOUCH_COORD_TO_PIXEL(ti[i].x);
+                        pt.y =TOUCH_COORD_TO_PIXEL(ti[i].y);
+                        ScreenToClient(getHWND(), &pt);
                         if(ti[i].dwFlags & TOUCHEVENTF_DOWN)
                         {
                             if (!osg_event) {
-                                osg_event = getEventQueue()->touchBegan( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_BEGAN, ti[i].x / 100 , ti[i].y/100);
+                                osg_event = getEventQueue()->touchBegan( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_BEGAN, pt.x, pt.y);
                             } else {
-                                osg_event->addTouchPoint( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_BEGAN, ti[i].x / 100, ti[i].y/100);
-                            }
-                        }
-                        else if(ti[i].dwFlags & TOUCHEVENTF_MOVE)
-                        {
-                            if (!osg_event) {
-                                osg_event = getEventQueue()->touchMoved(  ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_MOVED, ti[i].x/ 100, ti[i].y/ 100);
-                            } else {
-                                osg_event->addTouchPoint( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_MOVED, ti[i].x / 100, ti[i].y/100);
+                                osg_event->addTouchPoint( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_BEGAN, pt.x, pt.y);
                             }
                         }
                         else if(ti[i].dwFlags & TOUCHEVENTF_UP)
                         {
                             // No double tap detection with RAW TOUCH Events, sorry.
                             if (!osg_event) {
-                                osg_event = getEventQueue()->touchEnded( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_ENDED, ti[i].x/ 100, ti[i].y/ 100, 1);
+                                osg_event = getEventQueue()->touchEnded( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_ENDED, pt.x, pt.y, 1);
                             } else {
-                                osg_event->addTouchPoint( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_ENDED, ti[i].x / 100, ti[i].y/100);
+                                osg_event->addTouchPoint( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_ENDED, pt.x, pt.y);
+                            }
+                        }
+                        else if(ti[i].dwFlags & TOUCHEVENTF_MOVE)
+                        {
+                            if (!osg_event) {
+                                osg_event = getEventQueue()->touchMoved(  ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_MOVED, pt.x, pt.y);
+                            } else {
+                                osg_event->addTouchPoint( ti[i].dwID, osgGA::GUIEventAdapter::TOUCH_MOVED, pt.x, pt.y);
                             }
                         }
                     }
@@ -2844,6 +3002,117 @@ LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, W
                 delete [] ti;
             }
             break;
+
+
+            /************************************************************************/
+            /*              TOUCH inputs for Win8 and later                         */
+            /************************************************************************/
+            // Note by Riccardo Corsi, 2017-03-16
+            // Currently only handle the PEN input which is not handled nicely by the
+            // WM_TOUCH framework.
+            // At the moment the PEN is mapped to the mouse, emulating LEFT button click.
+            // WM_POINTER* messages could entirely replace the WM_TOUCH framework,
+            // at the moment if the input doesn't come from a PEN, than the DefWindowProc()
+            // default implementation is invoked, which will generate the WM_TOUCH messages.
+
+
+            /////
+            case WM_POINTERDOWN:
+            /////
+            {
+                UINT32 pointerId = GET_POINTERID_WPARAM(wParam);
+                POINTER_INPUT_TYPE pointerType = PT_POINTER;
+
+                // check pointer type
+                if (getPointerTypeFunc)
+                {
+                    (getPointerTypeFunc)(pointerId, &pointerType);
+                    // handle PEN only
+                    if (pointerType == PT_PEN)
+                    {
+                        POINT pt;
+                        pt.x = GET_X_LPARAM(lParam);
+                        pt.y = GET_Y_LPARAM(lParam);
+                        ScreenToClient(hwnd, &pt);
+
+                        getEventQueue()->mouseButtonPress(pt.x, pt.y, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+                    }
+                    // call default implementation to fallback on WM_TOUCH
+                    else
+                    {
+                        if (_ownsWindow)
+                        return ::DefWindowProc(hwnd, uMsg, wParam, lParam);
+                    }
+                }
+            }
+
+            break;
+
+            /////
+            case WM_POINTERUPDATE:
+            /////
+            {
+                UINT32 pointerId = GET_POINTERID_WPARAM(wParam);
+                POINTER_INPUT_TYPE pointerType = PT_POINTER;
+
+                // check pointer type
+                if (getPointerTypeFunc)
+                {
+                    (getPointerTypeFunc)(pointerId, &pointerType);
+                    // handle PEN only
+                    if (pointerType == PT_PEN)
+                    {
+                        POINT pt;
+                        pt.x = GET_X_LPARAM(lParam);
+                        pt.y = GET_Y_LPARAM(lParam);
+                        ScreenToClient(hwnd, &pt);
+
+                        getEventQueue()->mouseMotion(pt.x, pt.y);
+                    }
+                    // call default implementation to fallback on WM_TOUCH
+                    else
+                    {
+                        if (_ownsWindow)
+                        return ::DefWindowProc(hwnd, uMsg, wParam, lParam);
+                    }
+                }
+            }
+
+            break;
+
+
+            /////
+            case WM_POINTERUP:
+            /////
+            {
+                UINT32 pointerId = GET_POINTERID_WPARAM(wParam);
+                POINTER_INPUT_TYPE pointerType = PT_POINTER;
+
+                // check pointer type
+                if (getPointerTypeFunc)
+                {
+                    (getPointerTypeFunc)(pointerId, &pointerType);
+                    // handle PEN only
+                    if (pointerType == PT_PEN)
+                    {
+                        POINT pt;
+                        pt.x = GET_X_LPARAM(lParam);
+                        pt.y = GET_Y_LPARAM(lParam);
+                        ScreenToClient(hwnd, &pt);
+
+                        getEventQueue()->mouseButtonRelease(pt.x, pt.y, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+                    }
+                    // call default implementation to fallback on WM_TOUCH
+                    else
+                    {
+                        if (_ownsWindow)
+                        return ::DefWindowProc(hwnd, uMsg, wParam, lParam);
+                    }
+                }
+            }
+
+            break;
+
 
         /////////////////
         default         :
@@ -2863,7 +3132,7 @@ LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, W
 //////////////////////////////////////////////////////////////////////////////
 //  Class responsible for registering the Win32 Windowing System interface
 //////////////////////////////////////////////////////////////////////////////
-
+#if 0
 struct RegisterWindowingSystemInterfaceProxy
 {
     RegisterWindowingSystemInterfaceProxy()
@@ -2884,16 +3153,13 @@ struct RegisterWindowingSystemInterfaceProxy
 };
 
 static RegisterWindowingSystemInterfaceProxy createWindowingSystemInterfaceProxy;
+#endif
 
 } // namespace OsgViewer
 
 
-// declare C entry point for static compilation.
-extern "C" void OSGVIEWER_EXPORT graphicswindow_Win32(void)
-{
-    osg::GraphicsContext::setWindowingSystemInterface(osgViewer::Win32WindowingSystem::getInterface());
-}
-
+extern "C" OSGVIEWER_EXPORT void graphicswindow_Win32(void) {}
+static osg::WindowingSystemInterfaceProxy<Win32WindowingSystem> s_proxy_Win32WindowingSystem("Win32");
 
 void GraphicsWindowWin32::raiseWindow()
 {

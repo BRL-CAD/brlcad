@@ -28,6 +28,67 @@
 namespace osgViewer
 {
 
+#if (!defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE))
+    #define GLSL_VERSION_STR "330 core"
+#else
+    #define GLSL_VERSION_STR "300 es"
+#endif
+
+static const char* gl3_StatsVertexShader = {
+    "#version " GLSL_VERSION_STR "\n"
+    "// gl3_StatsVertexShader\n"
+    "#ifdef GL_ES\n"
+    "    precision highp float;\n"
+    "#endif\n"
+    "in vec4 osg_Vertex;\n"
+    "in vec4 osg_Color;\n"
+    "uniform mat4 osg_ModelViewProjectionMatrix;\n"
+    "out vec4 vertexColor;\n"
+    "void main(void)\n"
+    "{\n"
+    "    gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
+    "    vertexColor = osg_Color; \n"
+    "}\n"
+};
+
+static const char* gl3_StatsFragmentShader = {
+    "#version " GLSL_VERSION_STR "\n"
+    "// gl3_StatsFragmentShader\n"
+    "#ifdef GL_ES\n"
+    "    precision highp float;\n"
+    "#endif\n"
+    "in vec4 vertexColor;\n"
+    "out vec4 color;\n"
+    "void main(void)\n"
+    "{\n"
+    "    color = vertexColor;\n"
+    "}\n"
+};
+
+static const char* gl2_StatsVertexShader = {
+    "// gl2_StatsVertexShader\n"
+    "#ifdef GL_ES\n"
+    "    precision highp float;\n"
+    "#endif\n"
+    "varying vec4 vertexColor;\n"
+    "void main(void)\n"
+    "{\n"
+    "    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+    "    vertexColor = gl_Color;\n"
+    "}\n"
+};
+
+static const char* gl2_StatsFragmentShader = {
+    "// gl2_StatsFragmentShader\n"
+    "#ifdef GL_ES\n"
+    "    precision highp float;\n"
+    "#endif\n"
+    "varying vec4 vertexColor;\n"
+    "void main(void)\n"
+    "{\n"
+    "    gl_FragColor = vertexColor;\n"
+    "}\n"
+};
 
 StatsHandler::StatsHandler():
     _keyEventTogglesOnScreenStats('s'),
@@ -49,9 +110,43 @@ StatsHandler::StatsHandler():
     _characterSize(20.0f),
     _lineHeight(1.5f)
 {
+    OSG_INFO<<"StatsHandler::StatsHandler()"<<std::endl;
+
     _camera = new osg::Camera;
+    _camera->getOrCreateStateSet()->setGlobalDefaults();
     _camera->setRenderer(new Renderer(_camera.get()));
     _camera->setProjectionResizePolicy(osg::Camera::FIXED);
+
+    osg::DisplaySettings::ShaderHint shaderHint = osg::DisplaySettings::instance()->getShaderHint();
+    if (shaderHint==osg::DisplaySettings::SHADER_GL3 || shaderHint==osg::DisplaySettings::SHADER_GLES3)
+    {
+
+        OSG_INFO<<"StatsHandler::StatsHandler() Setting up GL3 compatible shaders"<<std::endl;
+
+        osg::ref_ptr<osg::Program> program = new osg::Program;
+        program->addShader(new osg::Shader(osg::Shader::VERTEX, gl3_StatsVertexShader));
+        program->addShader(new osg::Shader(osg::Shader::FRAGMENT, gl3_StatsFragmentShader));
+        _camera->getOrCreateStateSet()->setAttributeAndModes(program.get());
+    }
+    else if (shaderHint==osg::DisplaySettings::SHADER_GL2 || shaderHint==osg::DisplaySettings::SHADER_GLES2)
+    {
+
+        OSG_INFO<<"StatsHandler::StatsHandler() Setting up GL2 compatible shaders"<<std::endl;
+
+        osg::ref_ptr<osg::Program> program = new osg::Program;
+        program->addShader(new osg::Shader(osg::Shader::VERTEX, gl2_StatsVertexShader));
+        program->addShader(new osg::Shader(osg::Shader::FRAGMENT, gl2_StatsFragmentShader));
+        _camera->getOrCreateStateSet()->setAttributeAndModes(program.get());
+    }
+    else
+    {
+        OSG_INFO<<"StatsHandler::StatsHandler() Fixed pipeline"<<std::endl;
+    }
+}
+
+void StatsHandler::collectWhichCamerasToRenderStatsFor(osgViewer::ViewerBase* viewer, osgViewer::ViewerBase::Cameras& cameras)
+{
+  if (viewer) viewer->getCameras(cameras);
 }
 
 bool StatsHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
@@ -76,7 +171,7 @@ bool StatsHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
         {
             if (ea.getKey()==_keyEventTogglesOnScreenStats)
             {
-                if (viewer->getViewerStats())
+                if (viewer && viewer->getViewerStats())
                 {
                     if (!_initialized)
                     {
@@ -89,7 +184,7 @@ bool StatsHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
                     if (_statsType==LAST) _statsType = NO_STATS;
 
                     osgViewer::ViewerBase::Cameras cameras;
-                    viewer->getCameras(cameras);
+                    collectWhichCamerasToRenderStatsFor(viewer, cameras);
 
                     switch(_statsType)
                     {
@@ -194,7 +289,7 @@ bool StatsHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
             }
             if (ea.getKey()==_keyEventPrintsOutStats)
             {
-                if (viewer->getViewerStats())
+                if (viewer && viewer->getViewerStats())
                 {
                     OSG_NOTICE<<std::endl<<"Stats report:"<<std::endl;
                     typedef std::vector<osg::Stats*> StatsList;
@@ -234,6 +329,7 @@ bool StatsHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
                 }
                 return true;
             }
+            break;
         }
         case(osgGA::GUIEventAdapter::RESIZE):
             setWindowSize(ea.getWindowWidth(), ea.getWindowHeight());
@@ -326,6 +422,7 @@ void StatsHandler::setUpHUDCamera(osgViewer::ViewerBase* viewer)
 
     // only clear the depth buffer
     _camera->setClearMask(0);
+    _camera->setAllowEventFocus(false);
 
     _camera->setRenderer(new Renderer(_camera.get()));
 
@@ -652,6 +749,7 @@ struct BlockDrawCallback : public virtual osg::Drawable::DrawCallback
 
         unsigned int vi = 0;
         double beginValue, endValue;
+        double minWidth = .0002;
         for(int i = startFrame; i <= endFrame; ++i)
         {
             if (_stats->getAttribute( i, _beginName, beginValue) &&
@@ -660,12 +758,14 @@ struct BlockDrawCallback : public virtual osg::Drawable::DrawCallback
                 (*vertices)[vi++].x() = _xPos + (beginValue - referenceTime) * _statsHandler->getBlockMultiplier();
                 (*vertices)[vi++].x() = _xPos + (beginValue - referenceTime) * _statsHandler->getBlockMultiplier();
                 (*vertices)[vi++].x() = _xPos + (endValue - referenceTime) * _statsHandler->getBlockMultiplier();
+
+
+                if (endValue - beginValue < minWidth) endValue = beginValue + minWidth;
                 (*vertices)[vi++].x() = _xPos + (endValue - referenceTime) * _statsHandler->getBlockMultiplier();
             }
         }
 
-        osg::DrawArrays* drawArrays = static_cast<osg::DrawArrays*>(geom->getPrimitiveSet(0));
-        drawArrays->setCount(vi);
+        vertices->dirty();
 
         drawable->drawImplementation(renderInfo);
     }
@@ -742,33 +842,41 @@ protected:
               const osg::Vec4& color, float max, const std::string& nameBegin, const std::string& nameEnd = "")
         {
             setUseDisplayList(false);
+            setDataVariance(osg::Object::DYNAMIC);
 
-            setVertexArray(new osg::Vec3Array);
+            osg::ref_ptr<osg::BufferObject> vbo = new osg::VertexBufferObject;
+            vbo->setUsage(GL_DYNAMIC_DRAW);
+            vbo->getProfile()._size = (width)*12;
+
+            osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array;
+            vertices->setBufferObject(vbo.get());
+            vertices->reserve(width);
+
+            setVertexArray(vertices.get());
 
             osg::Vec4Array* colors = new osg::Vec4Array;
             colors->push_back(color);
             setColorArray(colors, osg::Array::BIND_OVERALL);
 
-            setDrawCallback(new GraphUpdateCallback(pos, width, height, viewerStats, stats, max, nameBegin, nameEnd));
+            addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, 0, 0));
+
+            setDrawCallback(new GraphUpdateCallback(this, pos, width, height, viewerStats, stats, max, nameBegin, nameEnd));
         }
     };
 
     struct GraphUpdateCallback : public osg::Drawable::DrawCallback
     {
-        GraphUpdateCallback(const osg::Vec3& pos, float width, float height, osg::Stats* viewerStats, osg::Stats* stats,
+        GraphUpdateCallback(osg::Geometry* geometry, const osg::Vec3& pos, float width, float height, osg::Stats* viewerStats, osg::Stats* stats,
                             float max, const std::string& nameBegin, const std::string& nameEnd = "")
             : _pos(pos), _width((unsigned int)width), _height((unsigned int)height), _curX(0),
               _viewerStats(viewerStats), _stats(stats), _max(max), _nameBegin(nameBegin), _nameEnd(nameEnd)
         {
+            _vertices = dynamic_cast<osg::Vec3Array*>(geometry->getVertexArray());
+            _drawArrays = dynamic_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
         }
 
         virtual void drawImplementation(osg::RenderInfo& renderInfo,const osg::Drawable* drawable) const
         {
-            osg::Geometry* geometry = const_cast<osg::Geometry*>(drawable->asGeometry());
-            if (!geometry) return;
-            osg::Vec3Array* vertices = dynamic_cast<osg::Vec3Array*>(geometry->getVertexArray());
-            if (!vertices) return;
-
             unsigned int frameNumber = renderInfo.getState()->getFrameStamp()->getFrameNumber();
 
             // Get stats
@@ -796,24 +904,18 @@ protected:
 
             // Add new vertex for this frame.
             value = osg::clampTo(value, 0.0, double(_max));
-            vertices->push_back(osg::Vec3(float(_curX), float(_height) / _max * value, 0));
+            _vertices->push_back(osg::Vec3(float(_curX), float(_height) / _max * value, 0));
 
             // One vertex per pixel in X.
-            int excedent = vertices->size() - _width;
+            int excedent = _vertices->size() - _width;
             if (excedent > 0)
             {
-                vertices->erase(vertices->begin(), vertices->begin() + excedent);
+                _vertices->erase(_vertices->begin(), _vertices->begin() + excedent);
             }
 
-            // Create primitive set if none exists.
-            if (geometry->getNumPrimitiveSets() == 0)
-                geometry->addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, 0, 0));
-
             // Update primitive set.
-            osg::DrawArrays* drawArrays = dynamic_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
-            if (!drawArrays) return;
-            drawArrays->setFirst(0);
-            drawArrays->setCount(vertices->size());
+            _drawArrays->setFirst(0);
+            _drawArrays->setCount(_vertices->size());
 
             // Make the graph scroll when there is enough data.
             // Note: We check the frame number so that even if we have
@@ -824,24 +926,25 @@ protected:
             {
                 // We know the exact layout of this part of the scene
                 // graph, so this is OK...
-                osg::MatrixTransform* transform =
-                    geometry->getParent(0)->getParent(0)->asTransform()->asMatrixTransform();
+                osg::MatrixTransform* transform = const_cast<osg::MatrixTransform*>(drawable->getParent(0)->getParent(0)->asTransform()->asMatrixTransform());
                 if (transform)
                 {
                     //osg::Matrix matrix = transform->getMatrix();
                     //matrix.setTrans(-(*vertices)[0].x(), matrix.getTrans().y(), matrix.getTrans().z());
-                    transform->setMatrix(osg::Matrix::translate(_pos + osg::Vec3(-(*vertices)[0].x(), 0, 0)));
+                    transform->setMatrix(osg::Matrix::translate(_pos + osg::Vec3(-(*_vertices)[0].x(), 0, 0)));
                 }
             }
+
+            _vertices->dirty();
 
             _curX++;
             GraphUpdateCallback::_frameNumber = frameNumber;
 
-            geometry->dirtyBound();
-
             drawable->drawImplementation(renderInfo);
         }
 
+        osg::ref_ptr<osg::Vec3Array>    _vertices;
+        osg::ref_ptr<osg::DrawArrays>   _drawArrays;
         const osg::Vec3         _pos;
         const unsigned int      _width;
         const unsigned int      _height;
@@ -863,24 +966,34 @@ osg::Geometry* StatsHandler::createGeometry(const osg::Vec3& pos, float height, 
     osg::Geometry* geometry = new osg::Geometry;
 
     geometry->setUseDisplayList(false);
+    geometry->setDataVariance(osg::Object::DYNAMIC);
 
     osg::Vec3Array* vertices = new osg::Vec3Array;
     geometry->setVertexArray(vertices);
     vertices->reserve(numBlocks*4);
 
+    osg::DrawElementsUShort* primitives = new osg::DrawElementsUShort(GL_TRIANGLES);
     for(unsigned int i=0; i<numBlocks; ++i)
     {
+        unsigned int vi = vertices->size();
         vertices->push_back(pos+osg::Vec3(i*20, height, 0.0));
         vertices->push_back(pos+osg::Vec3(i*20, 0.0, 0.0));
         vertices->push_back(pos+osg::Vec3(i*20+10.0, 0.0, 0.0));
         vertices->push_back(pos+osg::Vec3(i*20+10.0, height, 0.0));
+
+        primitives->push_back(vi);
+        primitives->push_back(vi+1);
+        primitives->push_back(vi+2);
+        primitives->push_back(vi);
+        primitives->push_back(vi+2);
+        primitives->push_back(vi+3);
     }
 
     osg::Vec4Array* colours = new osg::Vec4Array;
     colours->push_back(colour);
     geometry->setColorArray(colours, osg::Array::BIND_OVERALL);
 
-    geometry->addPrimitiveSet(new osg::DrawArrays(GL_QUADS, 0, numBlocks*4));
+    geometry->addPrimitiveSet(primitives);
 
     return geometry;
 }
@@ -921,6 +1034,8 @@ struct FrameMarkerDrawCallback : public virtual osg::Drawable::DrawCallback
                 (*vertices)[vi++].x() = _xPos + (currentReferenceTime - referenceTime) * _statsHandler->getBlockMultiplier();
             }
         }
+
+        vertices->dirty();
 
         drawable->drawImplementation(renderInfo);
     }
@@ -1018,6 +1133,7 @@ osg::Geometry* StatsHandler::createFrameMarkers(const osg::Vec3& pos, float heig
     osg::Geometry* geometry = new osg::Geometry;
 
     geometry->setUseDisplayList(false);
+    geometry->setDataVariance(osg::Object::DYNAMIC);
 
     osg::Vec3Array* vertices = new osg::Vec3Array;
     geometry->setVertexArray(vertices);
@@ -1043,6 +1159,7 @@ osg::Geometry* StatsHandler::createTick(const osg::Vec3& pos, float height, cons
     osg::Geometry* geometry = new osg::Geometry;
 
     geometry->setUseDisplayList(false);
+    geometry->setDataVariance(osg::Object::DYNAMIC);
 
     osg::Vec3Array* vertices = new osg::Vec3Array;
     geometry->setVertexArray(vertices);
@@ -1080,7 +1197,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
 
     // collect all the relevant cameras
     ViewerBase::Cameras validCameras;
-    viewer->getCameras(validCameras);
+    collectWhichCamerasToRenderStatsFor(viewer, validCameras);
 
     ViewerBase::Cameras cameras;
     for(ViewerBase::Cameras::iterator itr = validCameras.begin();
@@ -1102,12 +1219,9 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
         if ((*citr)->getGraphicsContext())
         {
             const osg::State* state = (*citr)->getGraphicsContext()->getState();
-            unsigned int contextID = state->getContextID();
-            const osg::Drawable::Extensions* extensions = osg::Drawable::getExtensions(contextID, false);
+            const osg::GLExtensions* extensions = state->get<osg::GLExtensions>();
             if (extensions &&
-                (((extensions->isARBTimerQuerySupported()
-                  && state->getTimestampBits() > 0))
-                 || extensions->isTimerQuerySupported()))
+                (((extensions->isARBTimerQuerySupported && state->getTimestampBits() > 0)) || extensions->isTimerQuerySupported))
             {
                 ++numCamrasWithTimerQuerySupport;
             }
@@ -1147,9 +1261,15 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
         frameRateLabel->setFont(_font);
         frameRateLabel->setCharacterSize(_characterSize);
         frameRateLabel->setPosition(pos);
+#ifdef _DEBUG
+        osg::Vec4 colorDFR(1.0f, 0.0f, 0.0f, 1.0f);
+        frameRateLabel->setColor(colorDFR);
+        frameRateLabel->setText("DEBUG Frame Rate: ");
+#else
+        frameRateLabel->setColor(colorFR);
         frameRateLabel->setText("Frame Rate: ");
-
-        pos.x() = frameRateLabel->getBound().xMax();
+#endif
+        pos.x() = frameRateLabel->getBoundingBox().xMax();
 
         osg::ref_ptr<osgText::Text> frameRateValue = new osgText::Text;
         geode->addDrawable( frameRateValue.get() );
@@ -1159,6 +1279,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
         frameRateValue->setCharacterSize(_characterSize);
         frameRateValue->setPosition(pos);
         frameRateValue->setText("0.0");
+        frameRateValue->setDataVariance(osg::Object::DYNAMIC);
 
         frameRateValue->setDrawCallback(new AveragedValueTextDrawCallback(viewer->getViewerStats(),"Frame rate",-1, true, 1.0));
 
@@ -1347,7 +1468,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 averageLabel->setPosition(pos);
                 averageLabel->setText("DatabasePager time to merge new tiles - average: ");
 
-                pos.x() = averageLabel->getBound().xMax();
+                pos.x() = averageLabel->getBoundingBox().xMax();
 
                 osg::ref_ptr<osgText::Text> averageValue = new osgText::Text;
                 _statsGeode->addDrawable( averageValue.get() );
@@ -1357,8 +1478,9 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 averageValue->setCharacterSize(_characterSize);
                 averageValue->setPosition(pos);
                 averageValue->setText("1000");
+                averageValue->setDataVariance(osg::Object::DYNAMIC);
 
-                pos.x() = averageValue->getBound().xMax() + 2.0f*_characterSize;
+                pos.x() = averageValue->getBoundingBox().xMax() + 2.0f*_characterSize;
 
 
                 osg::ref_ptr<osgText::Text> minLabel = new osgText::Text;
@@ -1370,7 +1492,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 minLabel->setPosition(pos);
                 minLabel->setText("min: ");
 
-                pos.x() = minLabel->getBound().xMax();
+                pos.x() = minLabel->getBoundingBox().xMax();
 
                 osg::ref_ptr<osgText::Text> minValue = new osgText::Text;
                 _statsGeode->addDrawable( minValue.get() );
@@ -1380,8 +1502,9 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 minValue->setCharacterSize(_characterSize);
                 minValue->setPosition(pos);
                 minValue->setText("1000");
+                minValue->setDataVariance(osg::Object::DYNAMIC);
 
-                pos.x() = minValue->getBound().xMax() + 2.0f*_characterSize;
+                pos.x() = minValue->getBoundingBox().xMax() + 2.0f*_characterSize;
 
                 osg::ref_ptr<osgText::Text> maxLabel = new osgText::Text;
                 _statsGeode->addDrawable( maxLabel.get() );
@@ -1392,7 +1515,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 maxLabel->setPosition(pos);
                 maxLabel->setText("max: ");
 
-                pos.x() = maxLabel->getBound().xMax();
+                pos.x() = maxLabel->getBoundingBox().xMax();
 
                 osg::ref_ptr<osgText::Text> maxValue = new osgText::Text;
                 _statsGeode->addDrawable( maxValue.get() );
@@ -1402,8 +1525,10 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 maxValue->setCharacterSize(_characterSize);
                 maxValue->setPosition(pos);
                 maxValue->setText("1000");
+                maxValue->setDataVariance(osg::Object::DYNAMIC);
 
-                pos.x() = maxValue->getBound().xMax();
+
+                pos.x() = maxValue->getBoundingBox().xMax();
 
                 osg::ref_ptr<osgText::Text> requestsLabel = new osgText::Text;
                 _statsGeode->addDrawable( requestsLabel.get() );
@@ -1414,7 +1539,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 requestsLabel->setPosition(pos);
                 requestsLabel->setText("requests: ");
 
-                pos.x() = requestsLabel->getBound().xMax();
+                pos.x() = requestsLabel->getBoundingBox().xMax();
 
                 osg::ref_ptr<osgText::Text> requestList = new osgText::Text;
                 _statsGeode->addDrawable( requestList.get() );
@@ -1424,8 +1549,10 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 requestList->setCharacterSize(_characterSize);
                 requestList->setPosition(pos);
                 requestList->setText("0");
+                requestList->setDataVariance(osg::Object::DYNAMIC);
 
-                pos.x() = requestList->getBound().xMax() + 2.0f*_characterSize;;
+
+                pos.x() = requestList->getBoundingBox().xMax() + 2.0f*_characterSize;;
 
                 osg::ref_ptr<osgText::Text> compileLabel = new osgText::Text;
                 _statsGeode->addDrawable( compileLabel.get() );
@@ -1436,7 +1563,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 compileLabel->setPosition(pos);
                 compileLabel->setText("tocompile: ");
 
-                pos.x() = compileLabel->getBound().xMax();
+                pos.x() = compileLabel->getBoundingBox().xMax();
 
                 osg::ref_ptr<osgText::Text> compileList = new osgText::Text;
                 _statsGeode->addDrawable( compileList.get() );
@@ -1446,8 +1573,10 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
                 compileList->setCharacterSize(_characterSize);
                 compileList->setPosition(pos);
                 compileList->setText("0");
+                compileList->setDataVariance(osg::Object::DYNAMIC);
 
-                pos.x() = maxLabel->getBound().xMax();
+
+                pos.x() = maxLabel->getBoundingBox().xMax();
 
                 _statsGeode->setCullCallback(new PagerCallback(dp, minValue.get(), maxValue.get(), averageValue.get(), requestList.get(), compileList.get(), 1000.0));
             }
@@ -1530,6 +1659,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
             camStatsText->setCharacterSize(_characterSize);
             camStatsText->setPosition(pos);
             camStatsText->setText("");
+            camStatsText->setDataVariance(osg::Object::DYNAMIC);
             camStatsText->setDrawCallback(new CameraSceneStatsTextDrawCallback(*citr, cameraCounter));
 
             // Move camera block to the right
@@ -1603,6 +1733,7 @@ void StatsHandler::setUpScene(osgViewer::ViewerBase* viewer)
             text->setFont(_font);
             text->setCharacterSize(_characterSize);
             text->setPosition(pos);
+            text->setDataVariance(osg::Object::DYNAMIC);
             text->setDrawCallback(new ViewSceneStatsTextDrawCallback(*it, viewCounter));
 
             pos.x() += 10 * _characterSize + 2 * backgroundMargin + backgroundSpacing;
@@ -1626,7 +1757,7 @@ void StatsHandler::createTimeStatsLine(const std::string& lineLabel,
     label->setPosition(pos);
     label->setText(lineLabel + ": ");
 
-    pos.x() = label->getBound().xMax();
+    pos.x() = label->getBoundingBox().xMax();
 
     osg::ref_ptr<osgText::Text> value = new osgText::Text;
     _statsGeode->addDrawable( value.get() );
@@ -1636,6 +1767,7 @@ void StatsHandler::createTimeStatsLine(const std::string& lineLabel,
     value->setCharacterSize(_characterSize);
     value->setPosition(pos);
     value->setText("0.0");
+    value->setDataVariance(osg::Object::DYNAMIC);
 
     if (!timeTakenName.empty())
     {

@@ -49,57 +49,6 @@ static osg::ApplicationUsageProxy DatabasePager_e4(osg::ApplicationUsage::ENVIRO
 static osg::ApplicationUsageProxy DatabasePager_e11(osg::ApplicationUsage::ENVIRONMENTAL_VARIABLE,"OSG_MAX_PAGEDLOD <num>","Set the target maximum number of PagedLOD to maintain.");
 static osg::ApplicationUsageProxy DatabasePager_e12(osg::ApplicationUsage::ENVIRONMENTAL_VARIABLE,"OSG_ASSIGN_PBO_TO_IMAGES <ON/OFF>","Set whether PixelBufferObjects should be assigned to Images to aid download to the GPU.");
 
-// Convert function objects that take pointer args into functions that a
-// reference to an osg::ref_ptr. This is quite useful for doing STL
-// operations on lists of ref_ptr. This code assumes that a function
-// with an argument const Foo* should be composed into a function of
-// argument type ref_ptr<Foo>&, not ref_ptr<const Foo>&. Some support
-// for that should be added to make this more general.
-
-namespace
-{
-template <typename U>
-struct PointerTraits
-{
-    typedef class NullType {} PointeeType;
-};
-
-template <typename U>
-struct PointerTraits<U*>
-{
-    typedef U PointeeType;
-};
-
-template <typename U>
-struct PointerTraits<const U*>
-{
-    typedef U PointeeType;
-};
-
-template <typename FuncObj>
-class RefPtrAdapter
-    : public std::unary_function<const osg::ref_ptr<typename PointerTraits<typename FuncObj::argument_type>::PointeeType>,
-                                 typename FuncObj::result_type>
-{
-public:
-    typedef typename PointerTraits<typename FuncObj::argument_type>::PointeeType PointeeType;
-    typedef osg::ref_ptr<PointeeType> RefPtrType;
-    explicit RefPtrAdapter(const FuncObj& funcObj) : _func(funcObj) {}
-    typename FuncObj::result_type operator()(const RefPtrType& refPtr) const
-    {
-        return _func(refPtr.get());
-    }
-protected:
-        FuncObj _func;
-};
-
-template <typename FuncObj>
-RefPtrAdapter<FuncObj> refPtrAdapt(const FuncObj& func)
-{
-    return RefPtrAdapter<FuncObj>(func);
-}
-}
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -294,8 +243,8 @@ public:
 class DatabasePager::FindCompileableGLObjectsVisitor : public osgUtil::StateToCompile
 {
 public:
-    FindCompileableGLObjectsVisitor(const DatabasePager* pager):
-            osgUtil::StateToCompile(osgUtil::GLObjectsVisitor::COMPILE_DISPLAY_LISTS|osgUtil::GLObjectsVisitor::COMPILE_STATE_ATTRIBUTES),
+    FindCompileableGLObjectsVisitor(const DatabasePager* pager, osg::Object* markerObject):
+            osgUtil::StateToCompile(osgUtil::GLObjectsVisitor::COMPILE_DISPLAY_LISTS|osgUtil::GLObjectsVisitor::COMPILE_STATE_ATTRIBUTES, markerObject),
             _pager(pager),
             _changeAutoUnRef(false), _valueAutoUnRef(false),
             _changeAnisotropy(false), _valueAnisotropy(1.0)
@@ -340,29 +289,46 @@ public:
 
     bool requiresCompilation() const { return !empty(); }
 
-    virtual void apply(osg::Geode& geode)
+    virtual void apply(osg::Drawable& drawable)
     {
-        StateToCompile::apply(geode);
-
-        if (_kdTreeBuilder.valid())
+        if (_kdTreeBuilder.valid() && _markerObject.get()!=drawable.getUserData())
         {
-            geode.accept(*_kdTreeBuilder);
+            drawable.accept(*_kdTreeBuilder);
+        }
+
+        StateToCompile::apply(drawable);
+
+
+        if (drawable.getUserData()==0)
+        {
+            drawable.setUserData(_markerObject.get());
         }
     }
 
     void apply(osg::Texture& texture)
     {
+        // apply any changes if the texture is not static.
+        if (texture.getDataVariance()!=osg::Object::STATIC &&
+            _markerObject.get()!=texture.getUserData())
+        {
+            if (_changeAutoUnRef)
+            {
+                texture.setUnRefImageDataAfterApply(_valueAutoUnRef);
+            }
+
+            if ((_changeAnisotropy && texture.getMaxAnisotropy() != _valueAnisotropy))
+            {
+                texture.setMaxAnisotropy(_valueAnisotropy);
+            }
+        }
+
         StateToCompile::apply(texture);
 
-        if (_changeAutoUnRef)
+        if (texture.getUserData()==0)
         {
-            texture.setUnRefImageDataAfterApply(_valueAutoUnRef);
+            texture.setUserData(_markerObject.get());
         }
 
-        if ((_changeAnisotropy && texture.getMaxAnisotropy() != _valueAnisotropy))
-        {
-            texture.setMaxAnisotropy(_valueAnisotropy);
-        }
     }
 
     const DatabasePager*                    _pager;
@@ -404,6 +370,7 @@ void DatabasePager::DatabaseRequest::invalidate()
     _valid = false;
     _loadedModel = 0;
     _compileSet = 0;
+    _objectCache = 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -662,14 +629,7 @@ int DatabasePager::DatabaseThread::cancel()
                 break;
         }
 
-        // then wait for the the thread to stop running.
-        while(isRunning())
-        {
-            // commenting out debug info as it was cashing crash on exit, presumable
-            // due to OSG_NOTICE or std::cout destructing earlier than this destructor.
-            // OSG_INFO<<"Waiting for DatabasePager::DatabaseThread to cancel"<<std::endl;
-            OpenThreads::Thread::YieldCurrentThread();
-        }
+        join();
 
         // _startThreadCalled = false;
     }
@@ -751,30 +711,76 @@ void DatabasePager::DatabaseThread::run()
         osg::ref_ptr<Options> dr_loadOptions;
         std::string fileName;
         int frameNumberLastRequest = 0;
+        bool cacheNodes = false;
         if (databaseRequest.valid())
         {
             {
                 OpenThreads::ScopedLock<OpenThreads::Mutex> drLock(_pager->_dr_mutex);
-                dr_loadOptions = databaseRequest->_loadOptions;
+                dr_loadOptions = databaseRequest->_loadOptions.valid() ? databaseRequest->_loadOptions->cloneOptions() : new osgDB::Options;
+                dr_loadOptions->setTerrain(databaseRequest->_terrain);
+                dr_loadOptions->setParentGroup(databaseRequest->_group);
                 fileName = databaseRequest->_fileName;
                 frameNumberLastRequest = databaseRequest->_frameNumberLastRequest;
             }
-            if (dr_loadOptions.valid())
-            {
-                if (dr_loadOptions->getFileCache()) fileCache = dr_loadOptions->getFileCache();
-                if (dr_loadOptions->getFileLocationCallback()) fileLocationCallback = dr_loadOptions->getFileLocationCallback();
 
-                dr_loadOptions = dr_loadOptions->cloneOptions();
-            }
-            else
-            {
-                dr_loadOptions = new osgDB::Options;
-            }
 
-            dr_loadOptions->setTerrain(databaseRequest->_terrain);
+            if (dr_loadOptions->getFileCache()) fileCache = dr_loadOptions->getFileCache();
+            if (dr_loadOptions->getFileLocationCallback()) fileLocationCallback = dr_loadOptions->getFileLocationCallback();
 
             // disable the FileCache if the fileLocationCallback tells us that it isn't required for this request.
             if (fileLocationCallback.valid() && !fileLocationCallback->useFileCache()) fileCache = 0;
+
+
+            cacheNodes = (dr_loadOptions->getObjectCacheHint() & osgDB::Options::CACHE_NODES)!=0;
+            if (cacheNodes)
+            {
+                //OSG_NOTICE<<"Checking main ObjectCache"<<std::endl;
+                // check the object cache to see if the file we want has already been loaded.
+                osg::ref_ptr<osg::Object> objectFromCache = osgDB::Registry::instance()->getRefFromObjectCache(fileName);
+
+                // if no object with fileName in ObjectCache then try the filename appropriate for fileCache
+                if (!objectFromCache && (fileCache.valid() && fileCache->isFileAppropriateForFileCache(fileName)))
+                {
+                    if (fileCache->existsInCache(fileName))
+                    {
+                        objectFromCache = osgDB::Registry::instance()->getRefFromObjectCache(fileCache->createCacheFileName(fileName));
+                    }
+                }
+
+
+                osg::Node* modelFromCache = dynamic_cast<osg::Node*>(objectFromCache.get());
+                if (modelFromCache)
+                {
+                    //OSG_NOTICE<<"Found object in cache "<<fileName<<std::endl;
+
+                    // assign the cached model to the request
+                    {
+                        OpenThreads::ScopedLock<OpenThreads::Mutex> drLock(_pager->_dr_mutex);
+                        databaseRequest->_loadedModel = modelFromCache;
+                    }
+
+                    // move the request to the dataToMerge list so it can be merged during the update phase of the frame.
+                    {
+                        OpenThreads::ScopedLock<OpenThreads::Mutex> listLock( _pager->_dataToMergeList->_requestMutex);
+                        _pager->_dataToMergeList->addNoLock(databaseRequest.get());
+                        databaseRequest = 0;
+                    }
+
+                    // skip the rest of the do/while loop as we have done all the processing we need to do.
+                    continue;
+                }
+                else
+                {
+                    //OSG_NOTICE<<"Not Found object in cache "<<fileName<<std::endl;
+                }
+
+                // need to disable any attempt to use the cache when loading as we're handle this ourselves to avoid threading conflicts
+                {
+                    OpenThreads::ScopedLock<OpenThreads::Mutex> drLock(_pager->_dr_mutex);
+                    databaseRequest->_objectCache = new ObjectCache;
+                    dr_loadOptions->setObjectCache(databaseRequest->_objectCache.get());
+                }
+            }
 
 
             // check if databaseRequest is still relevant
@@ -855,8 +861,7 @@ void DatabasePager::DatabaseThread::run()
 
             osg::ref_ptr<osg::Node> loadedModel;
             if (rr.validNode()) loadedModel = rr.getNode();
-            if (rr.error()) OSG_WARN<<"Error in reading file "<<fileName<<" : "<<rr.message() << std::endl;
-            if (rr.notEnoughMemory()) OSG_INFO<<"Not enought memory to load file "<<fileName << std::endl;
+            if (!rr.success()) OSG_WARN<<"Error in reading file "<<fileName<<" : "<<rr.statusMessage() << std::endl;
 
             if (loadedModel.valid() &&
                 fileCache.valid() &&
@@ -881,26 +886,36 @@ void DatabasePager::DatabaseThread::run()
             {
                 loadedModel->getBound();
 
-                // find all the compileable rendering objects
-                DatabasePager::FindCompileableGLObjectsVisitor stateToCompile(_pager);
-                loadedModel->accept(stateToCompile);
-
-                bool loadedObjectsNeedToBeCompiled = _pager->_doPreCompile &&
-                                                     _pager->_incrementalCompileOperation.valid() &&
-                                                     _pager->_incrementalCompileOperation->requiresCompile(stateToCompile);
-
-                // move the databaseRequest from the front of the fileRequest to the end of
-                // dataToCompile or dataToMerge lists.
+                bool loadedObjectsNeedToBeCompiled = false;
                 osg::ref_ptr<osgUtil::IncrementalCompileOperation::CompileSet> compileSet = 0;
-                if (loadedObjectsNeedToBeCompiled)
+                if (!rr.loadedFromCache())
                 {
-                    // OSG_NOTICE<<"Using IncrementalCompileOperation"<<std::endl;
+                    // find all the compileable rendering objects
+                    DatabasePager::FindCompileableGLObjectsVisitor stateToCompile(_pager, _pager->getMarkerObject());
+                    loadedModel->accept(stateToCompile);
 
-                    compileSet = new osgUtil::IncrementalCompileOperation::CompileSet(loadedModel.get());
-                    compileSet->buildCompileMap(_pager->_incrementalCompileOperation->getContextSet(), stateToCompile);
-                    compileSet->_compileCompletedCallback = new DatabasePagerCompileCompletedCallback(_pager, databaseRequest.get());
-                    _pager->_incrementalCompileOperation->add(compileSet.get(), false);
+                    loadedObjectsNeedToBeCompiled = _pager->_doPreCompile &&
+                                                    _pager->_incrementalCompileOperation.valid() &&
+                                                    _pager->_incrementalCompileOperation->requiresCompile(stateToCompile);
+
+                    // move the databaseRequest from the front of the fileRequest to the end of
+                    // dataToCompile or dataToMerge lists.
+                    if (loadedObjectsNeedToBeCompiled)
+                    {
+                        // OSG_NOTICE<<"Using IncrementalCompileOperation"<<std::endl;
+
+                        compileSet = new osgUtil::IncrementalCompileOperation::CompileSet(loadedModel.get());
+                        compileSet->buildCompileMap(_pager->_incrementalCompileOperation->getContextSet(), stateToCompile);
+                        compileSet->_compileCompletedCallback = new DatabasePagerCompileCompletedCallback(_pager, databaseRequest.get());
+                        _pager->_incrementalCompileOperation->add(compileSet.get(), false);
+                    }
                 }
+                else
+                {
+                    OSG_NOTICE<<"Loaded from ObjectCache"<<std::endl;
+                }
+
+
                 {
                     OpenThreads::ScopedLock<OpenThreads::Mutex> drLock(_pager->_dr_mutex);
                     databaseRequest->_loadedModel = loadedModel;
@@ -1041,9 +1056,8 @@ DatabasePager::DatabasePager()
     _dataToCompileList = new RequestQueue(this);
     _dataToMergeList = new RequestQueue(this);
 
-    setUpThreads(
-        osg::DisplaySettings::instance()->getNumOfDatabaseThreadsHint(),
-        osg::DisplaySettings::instance()->getNumOfHttpDatabaseThreadsHint());
+    // test of setting the database threads affinity.
+    // _affinity = OpenThreads::Affinity(4,4);
 
     str = getenv("OSG_DATABASE_PAGER_PRIORITY");
     if (str)
@@ -1080,6 +1094,9 @@ DatabasePager::DatabasePager()
 DatabasePager::DatabasePager(const DatabasePager& rhs)
 {
     //OSG_INFO<<"Constructing DatabasePager(const DatabasePager& )"<<std::endl;
+
+    _markerObject = new osg::DummyObject;
+    _markerObject->setName("HasBeenByStateToCompileProcessedMarker");
 
     _startThreadCalled = false;
 
@@ -1118,6 +1135,8 @@ DatabasePager::DatabasePager(const DatabasePager& rhs)
         _databaseThreads.push_back(new DatabaseThread(**dt_itr,this));
     }
 
+    setProcessorAffinity(rhs.getProcessorAffinity());
+
     _activePagedLODList = rhs._activePagedLODList->clone();
 
 #if 1
@@ -1136,6 +1155,7 @@ DatabasePager::DatabasePager(const DatabasePager& rhs)
 void DatabasePager::setIncrementalCompileOperation(osgUtil::IncrementalCompileOperation* ico)
 {
     _incrementalCompileOperation = ico;
+    if (_incrementalCompileOperation.valid()) _markerObject = _incrementalCompileOperation->getMarkerObject();
 }
 
 DatabasePager::~DatabasePager()
@@ -1165,11 +1185,25 @@ osg::ref_ptr<DatabasePager>& DatabasePager::prototype()
     return s_DatabasePager;
 }
 
+OSG_INIT_SINGLETON_PROXY(ProxyInitDatabasePager, DatabasePager::prototype())
+
 DatabasePager* DatabasePager::create()
 {
     return DatabasePager::prototype().valid() ?
            DatabasePager::prototype()->clone() :
            new DatabasePager;
+}
+
+void DatabasePager::setProcessorAffinity(const OpenThreads::Affinity& affinity)
+{
+    _affinity = affinity;
+
+    for(DatabaseThreadList::iterator itr=_databaseThreads.begin();
+        itr != _databaseThreads.end();
+        ++itr)
+    {
+        (*itr)->setProcessorAffinity(_affinity);
+    }
 }
 
 void DatabasePager::setUpThreads(unsigned int totalNumThreads, unsigned int numHttpThreads)
@@ -1208,6 +1242,9 @@ unsigned int DatabasePager::addDatabaseThread(DatabaseThread::Mode mode, const s
     unsigned int pos = _databaseThreads.size();
 
     DatabaseThread* thread = new DatabaseThread(this, mode,name);
+
+    thread->setProcessorAffinity(_affinity);
+
     _databaseThreads.push_back(thread);
 
     if (_startThreadCalled)
@@ -1299,10 +1336,7 @@ bool DatabasePager::getRequestsInProgress() const
 {
     if (getFileRequestListSize()>0) return true;
 
-    if (getDataToCompileListSize()>0)
-    {
-        return true;
-    }
+    if (getDataToCompileListSize()>0) return true;
 
     if (getDataToMergeListSize()>0) return true;
 
@@ -1325,8 +1359,6 @@ void DatabasePager::requestNodeFile(const std::string& fileName, osg::NodePath& 
     if (!loadOptions)
     {
        loadOptions = Registry::instance()->getOptions();
-
-        // OSG_NOTICE<<"Using options from Registry "<<std::endl;
     }
     else
     {
@@ -1414,6 +1446,7 @@ void DatabasePager::requestNodeFile(const std::string& fileName, osg::NodePath& 
                     databaseRequest->_group = group;
                     databaseRequest->_terrain = terrain;
                     databaseRequest->_loadOptions = loadOptions;
+                    databaseRequest->_objectCache = 0;
                     requeue = true;
                 }
 
@@ -1446,6 +1479,7 @@ void DatabasePager::requestNodeFile(const std::string& fileName, osg::NodePath& 
             databaseRequest->_group = group;
             databaseRequest->_terrain = terrain;
             databaseRequest->_loadOptions = loadOptions;
+            databaseRequest->_objectCache = 0;
 
             _fileRequestQueue->addNoLock(databaseRequest.get());
         }
@@ -1457,8 +1491,6 @@ void DatabasePager::requestNodeFile(const std::string& fileName, osg::NodePath& 
 
         if (!_startThreadCalled)
         {
-            _startThreadCalled = true;
-            _done = false;
             OSG_INFO<<"DatabasePager::startThread()"<<std::endl;
 
             if (_databaseThreads.empty())
@@ -1467,6 +1499,9 @@ void DatabasePager::requestNodeFile(const std::string& fileName, osg::NodePath& 
                     osg::DisplaySettings::instance()->getNumOfDatabaseThreadsHint(),
                     osg::DisplaySettings::instance()->getNumOfHttpDatabaseThreadsHint());
             }
+
+            _startThreadCalled = true;
+            _done = false;
 
             for(DatabaseThreadList::const_iterator dt_itr = _databaseThreads.begin();
                 dt_itr != _databaseThreads.end();
@@ -1523,7 +1558,7 @@ void DatabasePager::setDatabasePagerThreadPause(bool pause)
 
 bool DatabasePager::requiresUpdateSceneGraph() const
 {
-    return !(_dataToMergeList->empty());
+    return (getDataToMergeListSize()>0);
 }
 
 void DatabasePager::updateSceneGraph(const osg::FrameStamp& frameStamp)
@@ -1564,6 +1599,10 @@ void DatabasePager::updateSceneGraph(const osg::FrameStamp& frameStamp)
 #endif
 }
 
+bool DatabasePager::requiresRedraw() const
+{
+    return (getDataToCompileListSize()>0);
+}
 
 void DatabasePager::addLoadedDataToSceneGraph(const osg::FrameStamp &frameStamp)
 {
@@ -1639,6 +1678,13 @@ void DatabasePager::addLoadedDataToSceneGraph(const osg::FrameStamp &frameStamp)
             OSG_INFO<<"DatabasePager::addLoadedDataToSceneGraph() node in parental chain deleted, discarding subgaph."<<std::endl;
         }
 
+
+        if (databaseRequest->_objectCache.valid() && osgDB::Registry::instance()->getObjectCache())
+        {
+            // insert loaded model into Registry ObjectCache
+            osgDB::Registry::instance()->getObjectCache()->addObjectCache( databaseRequest->_objectCache.get());
+            databaseRequest->_objectCache->clear();
+        }
         // reset the loadedModel pointer
         databaseRequest->_loadedModel = 0;
 

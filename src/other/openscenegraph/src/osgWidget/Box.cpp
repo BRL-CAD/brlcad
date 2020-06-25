@@ -22,7 +22,7 @@ _lastAdd (box._lastAdd) {
 // TODO: Here's something to consider! If we resize the box by 1 every time, only the
 // first resizable Widget will continue to get larger. This is really silly.
 void Box::_resizeImplementation(point_type w, point_type h) {
-    // Get the number of Widgets that agree to fill. Also perfom some casting to integers
+    // Get the number of Widgets that agree to fill. Also perform some casting to integers
     // in case we're being request to resize with pixel perfection.
     point_type numFill  = _getNumFill();
     int        iw       = static_cast<int>(w);
@@ -41,7 +41,7 @@ void Box::_resizeImplementation(point_type w, point_type h) {
     // If we have any widgets that agree to fill and there has been an honest resize
     // request, handle it here. The first case handles resizes where we have AT LEAST
     // as many pixels to fill as we have objects.
-    if(numFill > 0.0f && (w != 0.0f || h != 0.0f)) {
+    if(inumFill>0 && (w != 0.0f || h != 0.0f)) {
         unsigned int cur = 0;
 
         for(Iterator i = begin(); i != end(); i++) if(i->valid() && i->get()->canFill()) {
@@ -91,7 +91,7 @@ void Box::_resizeImplementation(point_type w, point_type h) {
     }
 
     // Get the width and height of our largest widgets; these values take
-    // into account the padding, and will be affected by any resizing that occured above.
+    // into account the padding, and will be affected by any resizing that occurred above.
     point_type maxWidth  = _getMaxWidgetWidthTotal();
     point_type maxHeight = _getMaxWidgetHeightTotal();
 

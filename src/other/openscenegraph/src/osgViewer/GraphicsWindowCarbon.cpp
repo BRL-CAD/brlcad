@@ -251,9 +251,9 @@ void GraphicsWindowCarbon::init()
     }
     _valid = (_pixelFormat != NULL);
     _initialized = true;
-    
+
     // make sure the event queue has the correct window rectangle size and input range
-    getEventQueue()->syncWindowRectangleWithGraphcisContext();
+    getEventQueue()->syncWindowRectangleWithGraphicsContext();
 }
 
 bool GraphicsWindowCarbon::setWindowDecorationImplementation(bool flag)
@@ -457,8 +457,8 @@ bool GraphicsWindowCarbon::realizeImplementation()
     _realized = true;
 
     // make sure the event queue has the correct window rectangle size and input range
-    getEventQueue()->syncWindowRectangleWithGraphcisContext();
-    
+    getEventQueue()->syncWindowRectangleWithGraphicsContext();
+
     return _realized;
 }
 
@@ -618,7 +618,7 @@ bool GraphicsWindowCarbon::handleMouseEvent(EventRef theEvent)
                 sizeof(TabletPointRec), NULL, (void *)&theTabletPointRecord))
         {
             int penRotation = (int)theTabletPointRecord.rotation * 9 / 575; //to get angle between 0 to 360 grad
-            penRotation = -(((penRotation + 180) % 360) - 180) ;          //for same range on all plattforms we need -180 to 180
+            penRotation = -(((penRotation + 180) % 360) - 180) ;          //for same range on all platforms we need -180 to 180
             getEventQueue()->penOrientation (
                     theTabletPointRecord.tiltX * 60 / 32767.0f,  //multiply with 60 to get angle between -60 to 60 grad
                     -theTabletPointRecord.tiltY * 60 / 32767.0f,  //multiply with 60 to get angle between -60 to 60 grad
@@ -1097,18 +1097,9 @@ public:
 
 };
 
+REGISTER_WINDOWINGSYSTEMINTERFACE(Carbon, CarbonWindowingSystemInterface)
 
 }
 
-#ifdef USE_DARWIN_CARBON_IMPLEMENTATION
-RegisterWindowingSystemInterfaceProxy<CarbonWindowingSystemInterface> createWindowingSystemInterfaceProxy;
 #endif
 
-
-// declare C entry point for static compilation.
-extern "C" void graphicswindow_Carbon(void)
-{
-    osg::GraphicsContext::setWindowingSystemInterface(new osgViewer::CarbonWindowingSystemInterface());
-}
-
-#endif

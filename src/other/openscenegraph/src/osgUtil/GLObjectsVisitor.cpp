@@ -28,7 +28,7 @@ GLObjectsVisitor::GLObjectsVisitor(Mode mode)
     setTraversalMode(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN);
 
     _mode = mode;
-
+    _checkGLErrors = osg::State::ONCE_PER_ATTRIBUTE;
 }
 
 void GLObjectsVisitor::apply(osg::Node& node)
@@ -42,44 +42,13 @@ void GLObjectsVisitor::apply(osg::Node& node)
 
     traverse(node);
 
-    bool programSetAfter = _renderInfo.getState()->getLastAppliedProgramObject()!=0;
+    bool programSetAfter = _renderInfo.getState()!=0 && _renderInfo.getState()->getLastAppliedProgramObject()!=0;
     if (programSetBefore && !programSetAfter)
     {
-        osg::GL2Extensions* extensions = osg::GL2Extensions::Get(_renderInfo.getState()->getContextID(), true);
+        osg::State* state = _renderInfo.getState();
+        osg::GLExtensions* extensions = state->get<osg::GLExtensions>();
         extensions->glUseProgram(0);
-        _renderInfo.getState()->setLastAppliedProgramObject(0);
-        _lastCompiledProgram = 0;
-    }
-}
-
-void GLObjectsVisitor::apply(osg::Geode& node)
-{
-    bool programSetBefore = _lastCompiledProgram.valid();
-
-    if (node.getStateSet())
-    {
-        apply(*(node.getStateSet()));
-    }
-
-    for(unsigned int i=0;i<node.getNumDrawables();++i)
-    {
-        osg::Drawable* drawable = node.getDrawable(i);
-        if (drawable)
-        {
-            apply(*drawable);
-            if (drawable->getStateSet())
-            {
-                apply(*(drawable->getStateSet()));
-            }
-        }
-    }
-
-    bool programSetAfter = _lastCompiledProgram.valid();
-    if (!programSetBefore && programSetAfter)
-    {
-        osg::GL2Extensions* extensions = osg::GL2Extensions::Get(_renderInfo.getState()->getContextID(), true);
-        extensions->glUseProgram(0);
-        _renderInfo.getState()->setLastAppliedProgramObject(0);
+        state->setLastAppliedProgramObject(0);
         _lastCompiledProgram = 0;
     }
 }
@@ -88,7 +57,14 @@ void GLObjectsVisitor::apply(osg::Drawable& drawable)
 {
     if (_drawablesAppliedSet.count(&drawable)!=0) return;
 
+    if (_checkGLErrors==osg::State::ONCE_PER_ATTRIBUTE) _renderInfo.getState()->checkGLErrors("start of GLObjectsVisitor::apply(osg::Drawable& drawable)");
+
     _drawablesAppliedSet.insert(&drawable);
+
+    if (drawable.getStateSet())
+    {
+        apply(*(drawable.getStateSet()));
+    }
 
     if (_mode&SWITCH_OFF_DISPLAY_LISTS)
     {
@@ -113,8 +89,12 @@ void GLObjectsVisitor::apply(osg::Drawable& drawable)
     if (_mode&COMPILE_DISPLAY_LISTS && _renderInfo.getState() &&
         (drawable.getUseDisplayList() || drawable.getUseVertexBufferObjects()))
     {
+
         drawable.compileGLObjects(_renderInfo);
+
+        if (_checkGLErrors==osg::State::ONCE_PER_ATTRIBUTE) _renderInfo.getState()->checkGLErrors("after drawable.compileGLObjects() call in GLObjectsVisitor::apply(osg::Drawable& drawable)  ");
     }
+
 
     if (_mode&RELEASE_DISPLAY_LISTS)
     {
@@ -126,11 +106,16 @@ void GLObjectsVisitor::apply(osg::StateSet& stateset)
 {
     if (_stateSetAppliedSet.count(&stateset)!=0) return;
 
+    if (_checkGLErrors==osg::State::ONCE_PER_ATTRIBUTE) _renderInfo.getState()->checkGLErrors("start of GLObjectsVisitor::apply(osg::StateSet& stateset)");
+
     _stateSetAppliedSet.insert(&stateset);
 
     if (_mode & COMPILE_STATE_ATTRIBUTES && _renderInfo.getState())
     {
+
         stateset.compileGLObjects(*_renderInfo.getState());
+
+        if (_checkGLErrors==osg::State::ONCE_PER_ATTRIBUTE) _renderInfo.getState()->checkGLErrors("after stateset.compileGLObjects in GLObjectsVisitor::apply(osg::StateSet& stateset)");
 
         osg::Program* program = dynamic_cast<osg::Program*>(stateset.getAttribute(osg::StateAttribute::PROGRAM));
         if (program) {
@@ -142,7 +127,7 @@ void GLObjectsVisitor::apply(osg::StateSet& stateset)
 
         if (_lastCompiledProgram.valid() && !stateset.getUniformList().empty())
         {
-            osg::Program::PerContextProgram* pcp = _lastCompiledProgram->getPCP(_renderInfo.getState()->getContextID());
+            osg::Program::PerContextProgram* pcp = _lastCompiledProgram->getPCP(*_renderInfo.getState());
             if (pcp)
             {
                 pcp->useProgram();
@@ -155,12 +140,15 @@ void GLObjectsVisitor::apply(osg::StateSet& stateset)
                     ++itr)
                 {
                     pcp->apply(*(itr->second.first));
+
+                    if (_checkGLErrors==osg::State::ONCE_PER_ATTRIBUTE) _renderInfo.getState()->checkGLErrors("after pcp->apply(Unfiorm&) in GLObjectsVisitor::apply(osg::StateSet& stateset), unifrom name: ", (itr->second.first->getName()).c_str());
                 }
             }
         }
-        else if(_renderInfo.getState()->getLastAppliedProgramObject()){
-
-            osg::GL2Extensions* extensions = osg::GL2Extensions::Get(_renderInfo.getState()->getContextID(), true);
+        else if(_renderInfo.getState()->getLastAppliedProgramObject())
+        {
+            osg::State* state = _renderInfo.getState();
+            osg::GLExtensions* extensions = state->get<osg::GLExtensions>();
             extensions->glUseProgram(0);
             _renderInfo.getState()->setLastAppliedProgramObject(0);
         }
@@ -176,7 +164,28 @@ void GLObjectsVisitor::apply(osg::StateSet& stateset)
     {
         stateset.checkValidityOfAssociatedModes(*_renderInfo.getState());
     }
+
+    if (_checkGLErrors==osg::State::ONCE_PER_ATTRIBUTE) _renderInfo.getState()->checkGLErrors("after GLObjectsVisitor::apply(osg::StateSet& stateset)");
 }
+
+void GLObjectsVisitor::compile(osg::Node& node)
+{
+    if (_renderInfo.getState())
+    {
+        node.accept(*this);
+
+        if (_lastCompiledProgram.valid())
+        {
+            osg::State* state = _renderInfo.getState();
+            osg::GLExtensions* extensions = state->get<osg::GLExtensions>();
+            extensions->glUseProgram(0);
+            _renderInfo.getState()->setLastAppliedProgramObject(0);
+        }
+
+        if (_checkGLErrors!=osg::State::NEVER_CHECK_GL_ERRORS) _renderInfo.getState()->checkGLErrors("after GLObjectsVisitor::compile(osg::Node& node)");
+    }
+}
+
 
 /////////////////////////////////////////////////////////////////
 //
@@ -184,12 +193,14 @@ void GLObjectsVisitor::apply(osg::StateSet& stateset)
 //
 
 GLObjectsOperation::GLObjectsOperation(GLObjectsVisitor::Mode mode):
+    osg::Referenced(true),
     osg::GraphicsOperation("GLObjectOperation",false),
     _mode(mode)
 {
 }
 
 GLObjectsOperation::GLObjectsOperation(osg::Node* subgraph, GLObjectsVisitor::Mode mode):
+    osg::Referenced(true),
     osg::GraphicsOperation("GLObjectOperation",false),
     _subgraph(subgraph),
     _mode(mode)
