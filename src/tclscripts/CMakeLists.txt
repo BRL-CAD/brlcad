@@ -23,46 +23,47 @@ if {![file exists \"$arg/pkgIndex.tcl\"]} {
 # tclIndex and pkgIndex.tcl files
 
 macro(general_tcl_index_BUILD cmd outfile targetdir)
-  # normalize so we can use it as a name
-  string(REGEX REPLACE "/" "_" name ${targetdir})
+  if (BRLCAD_ENABLE_TCL)
+    # normalize so we can use it as a name
+    string(REGEX REPLACE "/" "_" name ${targetdir})
 
-  # divert output to diff paths depending on whether debug or release
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(tclindex_outdir "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir}")
-  else(CMAKE_CONFIGURATION_TYPES)
-    set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
-  endif(CMAKE_CONFIGURATION_TYPES)
+    # divert output to diff paths depending on whether debug or release
+    if(CMAKE_CONFIGURATION_TYPES)
+      set(tclindex_outdir "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir}")
+    else(CMAKE_CONFIGURATION_TYPES)
+      set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
+    endif(CMAKE_CONFIGURATION_TYPES)
 
-  # get file copy target(s) so we can make tclindex.tcl depend on them
-  BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
+    # get file copy target(s) so we can make tclindex.tcl depend on them
+    BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
 
-  # We want to be out of date if any of the tcl files in the current directory
-  # change, since both pkgIndex and tclIndex are going to scan the directory
-  file(GLOB tcl_files "*.tcl")
+    # We want to be out of date if any of the tcl files in the current directory
+    # change, since both pkgIndex and tclIndex are going to scan the directory
+    file(GLOB tcl_files "*.tcl")
 
-  # command that builds the index when the dependency is resolved
-  add_custom_command(
-    OUTPUT ${tclindex_outdir}/${outfile}
-    COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir} >> ${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log 2>&1
-    DEPENDS btclsh ${data_target_list} ${tcl_files}
-    )
+    # command that builds the index when the dependency is resolved
+    add_custom_command(
+      OUTPUT ${tclindex_outdir}/${outfile}
+      COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir} >> ${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log 2>&1
+      DEPENDS btclsh ${data_target_list} ${tcl_files}
+      )
 
-  # put tclindex.tcl where it goes
-  install(FILES ${tclindex_outdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+    # put tclindex.tcl where it goes
+    install(FILES ${tclindex_outdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
 
-  # convenience target
-  add_custom_target(${name}_${cmd}.tcl ALL DEPENDS ${tclindex_outdir}/${outfile})
-  set_target_properties(${name}_${cmd}.tcl PROPERTIES FOLDER "BRL-CAD Tcl Scripts")
+    # convenience target
+    add_custom_target(${name}_${cmd}.tcl ALL DEPENDS ${tclindex_outdir}/${outfile})
+    set_target_properties(${name}_${cmd}.tcl PROPERTIES FOLDER "BRL-CAD Tcl Scripts")
 
-  # Maintain a list of all tclindex targets for dependency purposes
-  set(tclindex_target_list ${tclindex_target_list} ${name}_${cmd}.tcl)
-  list(REMOVE_DUPLICATES tclindex_target_list)
-  set(tclindex_target_list "${tclindex_target_list}" CACHE STRING "tclindex target list" FORCE)
+    # Maintain a list of all tclindex targets for dependency purposes
+    set(tclindex_target_list ${tclindex_target_list} ${name}_${cmd}.tcl)
+    list(REMOVE_DUPLICATES tclindex_target_list)
+    set(tclindex_target_list "${tclindex_target_list}" CACHE STRING "tclindex target list" FORCE)
 
-  set(LOG_FILES "${LOG_FILES};${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log")
+    set(LOG_FILES "${LOG_FILES};${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log")
 
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log)
-
+    DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log)
+  endif (BRLCAD_ENABLE_TCL)
 endmacro(general_tcl_index_BUILD name targetdir)
 mark_as_advanced(tclindex_target_list)
 

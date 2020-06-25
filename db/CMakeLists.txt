@@ -70,11 +70,13 @@ function(ADD_G_TARGET in_model folder)
   # The rest of the conversions follow the simpler/older pattern:
 
   if(${MODEL_TYPE} STREQUAL "asc")
-    add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      COMMAND asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}" ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      DEPENDS asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}"
-      )
+    if (BRLCAD_ENABLE_TCL)
+      add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
+	COMMAND asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}" ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
+	DEPENDS asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}"
+	)
+    endif (BRLCAD_ENABLE_TCL)
   endif(${MODEL_TYPE} STREQUAL "asc")
 
   if(${MODEL_TYPE} STREQUAL "comgeom")
@@ -102,17 +104,19 @@ function(ADD_G_TARGET in_model folder)
       )
   endif(${MODEL_TYPE} STREQUAL "stp")
 
-  add_custom_target(${in_model_root}.g ALL DEPENDS ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file})
-  set_target_properties(${in_model_root}.g PROPERTIES FOLDER "${folder}")
+  if(NOT ${MODEL_TYPE} STREQUAL "asc" OR BRLCAD_ENABLE_TCL)
+    add_custom_target(${in_model_root}.g ALL DEPENDS ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file})
+    set_target_properties(${in_model_root}.g PROPERTIES FOLDER "${folder}")
 
-  # Install logic
-  if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-    install(FILES ${CMAKE_CURRENT_BUILD_DIR_INSTALL}/${output_file} DESTINATION ${DATA_DIR}/${rel_dir})
-  endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
+    # Install logic
+    if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
+      install(FILES ${CMAKE_CURRENT_BUILD_DIR_INSTALL}/${output_file} DESTINATION ${DATA_DIR}/${rel_dir})
+    endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 
-  # Clean-up
-  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${log_file}")
-  DISTCLEAN("${log_file}")
+    # Clean-up
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${log_file}")
+    DISTCLEAN("${log_file}")
+  endif(NOT ${MODEL_TYPE} STREQUAL "asc" OR BRLCAD_ENABLE_TCL)
 
 endfunction(ADD_G_TARGET in_model folder)
 
@@ -179,34 +183,36 @@ if(SH_EXEC)
   set(conversion_g_files_fp)
   set(conversion_deps_list)
 
-  macro(Sh_Conversion_Test gfile depends_list)
-    add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
-    set_target_properties(convert-${gfile} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-    set_target_properties(convert-${gfile} PROPERTIES FOLDER "BRL-CAD Conversion Tests")
-    set(conversion_g_files ${conversion_g_files} ${gfile})
-    if(NOT "${depends_list}" STREQUAL "")
-      add_dependencies(convert-${gfile} ${depends_list})
-      set(conversion_deps_list ${conversion_deps_list} ${depends_list})
-    endif(NOT "${depends_list}" STREQUAL "")
-  endmacro(Sh_Conversion_Test)
+  if (BRLCAD_ENABLE_TCL)
+    macro(Sh_Conversion_Test gfile depends_list)
+      add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
+      set_target_properties(convert-${gfile} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+      set_target_properties(convert-${gfile} PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+      set(conversion_g_files ${conversion_g_files} ${gfile})
+      if(NOT "${depends_list}" STREQUAL "")
+	add_dependencies(convert-${gfile} ${depends_list})
+	set(conversion_deps_list ${conversion_deps_list} ${depends_list})
+      endif(NOT "${depends_list}" STREQUAL "")
+    endmacro(Sh_Conversion_Test)
 
-  foreach(g_input ${G_BENCHMARK_MODELS})
-    get_filename_component(GROOT "${g_input}" NAME_WE)
-    Sh_Conversion_Test(${GROOT}.g "mged")
-  endforeach(g_input ${G_BENCHMARK_MODELS})
-  foreach(g_input ${G_SAMPLE_MODELS})
-    get_filename_component(GROOT "${g_input}" NAME_WE)
-    Sh_Conversion_Test(${GROOT}.g "mged")
-  endforeach(g_input ${G_SAMPLE_MODELS})
+    foreach(g_input ${G_BENCHMARK_MODELS})
+      get_filename_component(GROOT "${g_input}" NAME_WE)
+      Sh_Conversion_Test(${GROOT}.g "mged")
+    endforeach(g_input ${G_BENCHMARK_MODELS})
+    foreach(g_input ${G_SAMPLE_MODELS})
+      get_filename_component(GROOT "${g_input}" NAME_WE)
+      Sh_Conversion_Test(${GROOT}.g "mged")
+    endforeach(g_input ${G_SAMPLE_MODELS})
 
-  list(REMOVE_DUPLICATES conversion_deps_list)
-  foreach(gfile ${conversion_g_files})
-    set(conversion_g_files_fp ${conversion_g_files_fp} "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile}")
-  endforeach(gfile ${conversion_g_files})
-  add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${conversion_g_files_fp})
-  set_target_properties(convert PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-  set_target_properties(convert PROPERTIES FOLDER "BRL-CAD Conversion Tests")
-  add_dependencies(convert ${conversion_deps_list})
+    list(REMOVE_DUPLICATES conversion_deps_list)
+    foreach(gfile ${conversion_g_files})
+      set(conversion_g_files_fp ${conversion_g_files_fp} "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile}")
+    endforeach(gfile ${conversion_g_files})
+    add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${conversion_g_files_fp})
+    set_target_properties(convert PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+    set_target_properties(convert PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+    add_dependencies(convert ${conversion_deps_list})
+  endif (BRLCAD_ENABLE_TCL)
 endif(SH_EXEC)
 
 CMAKEFILES(

@@ -15,8 +15,10 @@ set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
-add_subdirectory(plot)
-add_subdirectory(txt)
+if(BRLCAD_ENABLE_TCL)
+  add_subdirectory(plot)
+  add_subdirectory(txt)
+endif(BRLCAD_ENABLE_TCL)
 
 # We no longer use these in libdm, but MGED hasn't caught up yet...
 set(libdm_DEFINES "")

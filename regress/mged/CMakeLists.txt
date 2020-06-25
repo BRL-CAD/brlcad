@@ -81,19 +81,21 @@ set(MGED_TESTS
 
 set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-mged.cmake.in")
 
-foreach(testfile ${MGED_TESTS})
-  string(REGEX REPLACE "([0-9a-z_-]*).mged" "\\1" tname "${testfile}")
+if (TARGET mged)
+  foreach(testfile ${MGED_TESTS})
+    string(REGEX REPLACE "([0-9a-z_-]*).mged" "\\1" tname "${testfile}")
 
-  file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}" TEST_CONTENTS)
-  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}" "source ${CMAKE_CURRENT_SOURCE_DIR}/regression_resources.tcl\n\n${TEST_CONTENTS}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}" TEST_CONTENTS)
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}" "source ${CMAKE_CURRENT_SOURCE_DIR}/regression_resources.tcl\n\n${TEST_CONTENTS}")
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
 
-  set(TARGET_NAME ${tname})
-  set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-mged_${TNAME}.log")
+    set(TARGET_NAME ${tname})
+    set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-mged_${TNAME}.log")
 
-  BRLCAD_REGRESSION_TEST(regress-mged_${tname} "mged" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
-  DISTCLEAN("${LOG_FILE}")
-endforeach(testfile ${MGED_TESTS})
+    BRLCAD_REGRESSION_TEST(regress-mged_${tname} "mged" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
+    DISTCLEAN("${LOG_FILE}")
+  endforeach(testfile ${MGED_TESTS})
+endif (TARGET mged)
 
 CMAKEFILES(
   CMakeLists.txt

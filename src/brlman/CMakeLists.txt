@@ -1,3 +1,4 @@
+if (TARGET libtclcad)
 set(BRLMAN_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
@@ -24,7 +25,13 @@ add_dependencies(brlman brlman_tcl_cp)
 foreach(item ${tclindex_target_list})
   add_dependencies(brlman ${item})
 endforeach(item ${tclindex_target_list})
-CMAKEFILES(CMakeLists.txt)
+endif (TARGET libtclcad)
+
+CMAKEFILES(
+  CMakeLists.txt
+  brlman.c
+  brlman.tcl
+  )
 
 # Local Variables:
 # tab-width: 8

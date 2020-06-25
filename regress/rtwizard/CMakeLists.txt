@@ -1,5 +1,7 @@
 # Tests for image generation via rtwizard
 
+if (TARGET rtwizard)
+
 # Note: we have to set up test dependencies to avoid running multiple rtwizard
 # tests at once.  Correct solution is to fix the weaknesses of rtwizard that
 # prevent its being run in parallel, but that will be a lot of work and until then we
@@ -111,6 +113,8 @@ set_target_properties(regress-rtwiz_m35_edge_only_color PROPERTIES FOLDER "BRL-C
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 set_property(TEST regress-rtwiz_m35_edge_only_color APPEND PROPERTY DEPENDS regress-rtwiz_m35_edge_only)
 add_dependencies(regress-rtwiz_m35_edge_only_color regress-rtwiz_m35_edge_only)
+
+endif (TARGET rtwizard)
 
 CMAKEFILES(
   CMakeLists.txt
