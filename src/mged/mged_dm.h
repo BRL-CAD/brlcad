@@ -178,19 +178,6 @@ struct _dlist_state {
     int		dl_flag;
 };
 
-
-struct _grid_state {
-    int		gr_rc;
-    int		gr_draw;	/* draw grid */
-    int		gr_snap;	/* snap to grid */
-    fastf_t	gr_anchor[3];
-    fastf_t	gr_res_h;	/* grid resolution in h */
-    fastf_t	gr_res_v;	/* grid resolution in v */
-    int		gr_res_major_h;	/* major grid resolution in h */
-    int		gr_res_major_v;	/* major grid resolution in v */
-};
-
-
 struct _adc_state {
     int		adc_rc;
     int		adc_draw;
@@ -440,7 +427,7 @@ struct dm_list {
     struct _rubber_band	*dml_rubber_band;
     struct _mged_variables *dml_mged_variables;
     struct _color_scheme	*dml_color_scheme;
-    struct _grid_state	*dml_grid_state;
+    struct bview_grid_state *dml_grid_state;
     struct _axes_state	*dml_axes_state;
     struct _dlist_state	*dml_dlist_state;
 
@@ -450,6 +437,9 @@ struct dm_list {
     int			(*dml_eventHandler)();
 };
 
+/* If we're changing the active DM, use this function so
+ * libged also gets the word. */
+extern void set_curr_dm(struct dm_list *nl);
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define DMP curr_dm_list->dml_dmp

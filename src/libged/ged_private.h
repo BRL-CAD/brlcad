@@ -664,6 +664,11 @@ _ged_facetize_log_nmg(struct _ged_facetize_opts *o);
 void
 _ged_facetize_log_default(struct _ged_facetize_opts *o);
 
+
+
+extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
+
 __END_DECLS
 
 #endif /* LIBGED_GED_PRIVATE_H */

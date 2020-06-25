@@ -69,14 +69,9 @@
 #include "icv/crop.h"
 #include "dm.h"
 
-#if defined(DM_OGL) || defined(DM_WGL)
-#  if defined(DM_WGL)
-#    include <tkwinport.h>
-#  endif
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
-#endif
+/* For the moment call internal libged functions - a cleaner
+ * solution will be needed eventually */
+#include "../libged/ged_private.h"
 
 /* Private headers */
 #include "tclcad_private.h"
@@ -191,11 +186,6 @@ HIDDEN int to_data_lines(struct ged *gedp,
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-HIDDEN int to_data_lines_func(Tcl_Interp *interp,
-			      struct ged *gedp,
-			      struct ged_dm_view *gdvp,
-			      int argc,
-			      const char *argv[]);
 HIDDEN int to_data_polygons(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
@@ -3614,7 +3604,7 @@ bad:
 
 
 int
-go_data_lines(Tcl_Interp *interp,
+go_data_lines(Tcl_Interp *UNUSED(interp),
 	      struct ged *gedp,
 	      struct ged_dm_view *gdvp,
 	      int argc,
@@ -3641,7 +3631,15 @@ go_data_lines(Tcl_Interp *interp,
     if (current_top != NULL)
 	current_top->to_gop->go_refresh_on = 0;
 
-    ret = to_data_lines_func(interp, gedp, gdvp, argc, argv);
+
+    struct bview *btmp = gedp->ged_gvp;
+    gedp->ged_gvp = gdvp->gdv_view;
+
+    ret = ged_view_data_lines(gedp, argc, argv);
+
+    gedp->ged_gvp = btmp;
+
+    to_refresh_view(gdvp);
     if (ret == GED_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
@@ -3684,174 +3682,24 @@ to_data_lines(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    /* shift the command name to argv[1] before calling to_data_lines_func */
+    /* turn the argv into a ged command */
     argv[1] = argv[0];
-    ret = to_data_lines_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
+    argv[0] = "view";
+
+    struct bview *btmp = gedp->ged_gvp;
+    gedp->ged_gvp = gdvp->gdv_view;
+
+    ret = ged_view_func(gedp, argc, argv);
+
+    gedp->ged_gvp = btmp;
+
+    to_refresh_view(gdvp);
+
     if (ret == GED_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
 }
-
-
-HIDDEN int
-to_data_lines_func(Tcl_Interp *interp,
-		   struct ged *gedp,
-		   struct ged_dm_view *gdvp,
-		   int argc,
-		   const char *argv[])
-{
-    struct bview_data_line_state *gdlsp;
-
-    if (argv[0][0] == 's')
-	gdlsp = &gdvp->gdv_view->gv_sdata_lines;
-    else
-	gdlsp = &gdvp->gdv_view->gv_data_lines;
-
-    if (BU_STR_EQUAL(argv[1], "draw")) {
-	if (argc == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
-	    return GED_OK;
-	}
-
-	if (argc == 3) {
-	    int i;
-
-	    if (bu_sscanf(argv[2], "%d", &i) != 1)
-		goto bad;
-
-	    if (i)
-		gdlsp->gdls_draw = 1;
-	    else
-		gdlsp->gdls_draw = 0;
-
-	    to_refresh_view(gdvp);
-	    return GED_OK;
-	}
-
-	goto bad;
-    }
-
-    if (BU_STR_EQUAL(argv[1], "color")) {
-	if (argc == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gdlsp->gdls_color));
-	    return GED_OK;
-	}
-
-	if (argc == 5) {
-	    int r, g, b;
-
-	    /* set background color */
-	    if (bu_sscanf(argv[2], "%d", &r) != 1 ||
-		bu_sscanf(argv[3], "%d", &g) != 1 ||
-		bu_sscanf(argv[4], "%d", &b) != 1)
-		goto bad;
-
-	    /* validate color */
-	    if (r < 0 || 255 < r ||
-		g < 0 || 255 < g ||
-		b < 0 || 255 < b)
-		goto bad;
-
-	    VSET(gdlsp->gdls_color, r, g, b);
-
-	    to_refresh_view(gdvp);
-	    return GED_OK;
-	}
-
-	goto bad;
-    }
-
-    if (BU_STR_EQUAL(argv[1], "line_width")) {
-	if (argc == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
-	    return GED_OK;
-	}
-
-	if (argc == 3) {
-	    int line_width;
-
-	    if (bu_sscanf(argv[2], "%d", &line_width) != 1)
-		goto bad;
-
-	    gdlsp->gdls_line_width = line_width;
-
-	    to_refresh_view(gdvp);
-	    return GED_OK;
-	}
-
-	goto bad;
-    }
-
-    if (BU_STR_EQUAL(argv[1], "points")) {
-	register int i;
-
-	if (argc == 2) {
-	    for (i = 0; i < gdlsp->gdls_num_points; ++i) {
-		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
-			      V3ARGS(gdlsp->gdls_points[i]));
-	    }
-	    return GED_OK;
-	}
-
-	if (argc == 3) {
-	    int ac;
-	    const char **av;
-
-	    if (Tcl_SplitList(interp, argv[2], &ac, &av) != TCL_OK) {
-		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
-		return GED_ERROR;
-	    }
-
-	    if (ac % 2) {
-		bu_vls_printf(gedp->ged_result_str, "%s: must be an even number of points", argv[0]);
-		return GED_ERROR;
-	    }
-
-	    if (gdlsp->gdls_num_points) {
-		bu_free((void *)gdlsp->gdls_points, "data points");
-		gdlsp->gdls_points = (point_t *)0;
-		gdlsp->gdls_num_points = 0;
-	    }
-
-	    /* Clear out data points */
-	    if (ac < 1) {
-		to_refresh_view(gdvp);
-		Tcl_Free((char *)av);
-		return GED_OK;
-	    }
-
-	    gdlsp->gdls_num_points = ac;
-	    gdlsp->gdls_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
-	    for (i = 0; i < ac; ++i) {
-		double scan[3];
-
-		if (bu_sscanf(av[i], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
-
-		    bu_free((void *)gdlsp->gdls_points, "data points");
-		    gdlsp->gdls_points = (point_t *)0;
-		    gdlsp->gdls_num_points = 0;
-
-		    to_refresh_view(gdvp);
-		    Tcl_Free((char *)av);
-		    return GED_ERROR;
-		}
-		/* convert double to fastf_t */
-		VMOVE(gdlsp->gdls_points[i], scan);
-	    }
-
-	    to_refresh_view(gdvp);
-	    Tcl_Free((char *)av);
-	    return GED_OK;
-	}
-    }
-
-bad:
-    return GED_ERROR;
-}
-
 
 /* These functions should be macros */
 HIDDEN void

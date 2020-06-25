@@ -149,7 +149,7 @@ dozoom(int which_eye)
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
 	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-	if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
+	if (curr_dm_list != save_dm_list) set_curr_dm(save_dm_list);
 
 	curr_dm_list->dml_ndrawn += ndrawn;
 
@@ -174,7 +174,7 @@ dozoom(int which_eye)
     }
 
     /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-    if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
+    if (curr_dm_list != save_dm_list) set_curr_dm(save_dm_list);
 
     curr_dm_list->dml_ndrawn += ndrawn;
 
@@ -216,7 +216,7 @@ dozoom(int which_eye)
     curr_dm_list->dml_ndrawn += ndrawn;
 
     /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-    if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
+    if (curr_dm_list != save_dm_list) set_curr_dm(save_dm_list);
 }
 
 /*
@@ -277,7 +277,7 @@ createDListSolid(struct solid *sp)
 	dlp->dml_dirty = 1;
     }
 
-    curr_dm_list = save_dlp;
+    set_curr_dm(save_dlp);
 }
 
 /*

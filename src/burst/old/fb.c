@@ -30,7 +30,7 @@
 #include <signal.h>
 
 #include "bu/str.h"
-#include "dm.h"
+#include "fb.h"
 
 #include "./burst.h"
 #include "./ascii.h"

@@ -298,13 +298,13 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
 	if (dmlp->dml_color_scheme == color_scheme) {
 	    dmlp->dml_dirty = 1;
-	    curr_dm_list = dmlp;
+	    set_curr_dm(dmlp);
 	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	}
     }
 
     bu_vls_free(&vls);
-    curr_dm_list = save_curr_dmlp;
+    set_curr_dm(save_curr_dmlp);
 }
 
 

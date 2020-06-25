@@ -136,7 +136,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
     /* save */
     scdlp = curr_dm_list;
 
-    curr_dm_list = dlp;
+    set_curr_dm(dlp);
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
 	if (clients[i].c_fd == 0)
 	    continue;
@@ -165,7 +165,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
     }
 
     /* restore */
-    curr_dm_list = scdlp;
+    set_curr_dm(scdlp);
 }
 
 
@@ -221,13 +221,13 @@ fbserv_new_client_handler(ClientData clientData,
     /* save */
     scdlp = curr_dm_list;
 
-    curr_dm_list = dlp;
+    set_curr_dm(dlp);
 
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
 	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
 
     /* restore */
-    curr_dm_list = scdlp;
+    set_curr_dm(scdlp);
 }
 
 
@@ -399,11 +399,11 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
     /* save */
     scdlp = curr_dm_list;
 
-    curr_dm_list = dlp;
+    set_curr_dm(dlp);
     fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));
 
     /* restore */
-    curr_dm_list = scdlp;
+    set_curr_dm(scdlp);
 }
 
 

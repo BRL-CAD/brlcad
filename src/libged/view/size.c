@@ -1,4 +1,4 @@
-/*                         Q U A T . C
+/*                         S I Z E . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2020 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/quat.c
+/** @file libged/size.c
  *
- * The quat command.
+ * The size command.
  *
  */
 
@@ -29,15 +29,15 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int
-ged_quat(struct ged *gedp, int argc, const char *argv[])
+ged_size(struct ged *gedp, int argc, const char *argv[])
 {
-    quat_t quat;
-    double scan[4];
-    static const char *usage = "a b c d";
+    /* intentionally double for scan */
+    double size;
+    static const char *usage = "[s]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -46,34 +46,35 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* return Viewrot as a quaternion */
+    /* get view size */
     if (argc == 1) {
-	quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-	bu_vls_printf(gedp->ged_result_str, "%.12g %.12g %.12g %.12g", V4ARGS(quat));
+	bu_vls_printf(gedp->ged_result_str, "%g",
+		      gedp->ged_gvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local);
 	return GED_OK;
     }
 
-    if (argc != 5) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
-	return GED_ERROR;
+    /* set view size */
+    if (argc == 2) {
+	if (sscanf(argv[1], "%lf", &size) != 1
+	    || size <= 0
+	    || ZERO(size))
+	{
+	    bu_vls_printf(gedp->ged_result_str, "bad size - %s", argv[1]);
+	    return GED_ERROR;
+	}
+
+	gedp->ged_gvp->gv_size = gedp->ged_wdbp->dbip->dbi_local2base * size;
+	if (gedp->ged_gvp->gv_size < RT_MINVIEWSIZE)
+	    gedp->ged_gvp->gv_size = RT_MINVIEWSIZE;
+	gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
+	gedp->ged_gvp->gv_scale = 0.5 * gedp->ged_gvp->gv_size;
+	ged_view_update(gedp->ged_gvp);
+
+	return GED_OK;
     }
 
-    /* Set the view orientation given a quaternion */
-    if (sscanf(argv[1], "%lf", &scan[0]) != 1
-	|| sscanf(argv[2], "%lf", &scan[1]) != 1
-	|| sscanf(argv[3], "%lf", &scan[2]) != 1
-	|| sscanf(argv[4], "%lf", &scan[3]) != 1)
-    {
-	bu_vls_printf(gedp->ged_result_str, "view %s: bad value detected - %s %s %s %s",
-		      argv[0], argv[1], argv[2], argv[3], argv[4]);
-	return GED_ERROR;
-    }
-    HMOVE(quat, scan);
-
-    quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
-    ged_view_update(gedp->ged_gvp);
-
-    return GED_OK;
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return GED_ERROR;
 }
 
 

@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int
@@ -77,6 +77,14 @@ ged_view_func(struct ged *gedp, int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[1], "size")) {
 	return ged_size(gedp, argc-1, argv+1);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "data_lines") || BU_STR_EQUAL(argv[1], "sdata_lines")) {
+	return ged_view_data_lines(gedp, argc-1, argv+1);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "snap")) {
+	return ged_view_snap(gedp, argc-1, argv+1);
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

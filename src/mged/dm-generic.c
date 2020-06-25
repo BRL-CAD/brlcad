@@ -147,7 +147,7 @@ common_dm(int argc, const char *argv[])
 	    point_t view_pt;
 	    point_t model_pt;
 
-	    if (grid_state->gr_snap)
+	    if (grid_state->snap)
 		snap_to_grid(&fx, &fy);
 
 	    if (mged_variables->mv_perspective_mode)
@@ -167,7 +167,7 @@ common_dm(int argc, const char *argv[])
 		    mged_variables->mv_mouse_behavior == 'r' ||
 		    mged_variables->mv_mouse_behavior == 'z') && !stolen) {
 
-	    if (grid_state->gr_snap)
+	    if (grid_state->snap)
 		snap_to_grid(&fx, &fy);
 
 	    rubber_band->rb_active = 1;
@@ -196,14 +196,14 @@ common_dm(int argc, const char *argv[])
 	    point_t model_pt;
 	    point_t view_pt;
 
-	    if (grid_state->gr_snap)
+	    if (grid_state->snap)
 		snap_to_grid(&fx, &fy);
 
 	    VSET(view_pt, fx, fy, 1.0);
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->gr_snap && !stolen &&
+	} else if (grid_state->snap && !stolen &&
 		   SEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
 	    point_t model_pt;
@@ -215,7 +215,7 @@ common_dm(int argc, const char *argv[])
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->gr_snap && !stolen &&
+	} else if (grid_state->snap && !stolen &&
 		   OEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
 	    point_t model_pt;
@@ -227,7 +227,7 @@ common_dm(int argc, const char *argv[])
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->gr_snap && !stolen &&
+	} else if (grid_state->snap && !stolen &&
 		   STATE != ST_S_PICK && STATE != ST_O_PICK &&
 		   STATE != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
 	    point_t view_pt;
@@ -269,7 +269,7 @@ common_dm(int argc, const char *argv[])
 	    case 't':
 		am_mode = AMM_TRAN;
 
-		if (grid_state->gr_snap) {
+		if (grid_state->snap) {
 		    int save_edflag;
 
 		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
@@ -356,7 +356,7 @@ common_dm(int argc, const char *argv[])
 
 		    VSET(view_pt, dm_Xx2Normal(DMP, dml_omx), dm_Xy2Normal(DMP, dml_omy, 1), 0.0);
 
-		    if (grid_state->gr_snap)
+		    if (grid_state->snap)
 			snap_to_grid(&view_pt[X], &view_pt[Y]);
 
 		    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);

@@ -313,7 +313,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
 	if (dmlp->dml_mged_variables == save_dmlp->dml_mged_variables) {
-	    curr_dm_list = dmlp;
+	    set_curr_dm(dmlp);
 
 	    if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 		if (mged_variables->mv_sliders)	/* zero slider variables */
@@ -324,7 +324,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 	    }
 	}
 
-    curr_dm_list = save_dmlp;
+    set_curr_dm(save_dmlp);
 }
 
 
@@ -389,7 +389,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 
 	    if (dm_get_displaylist(dlp1->dml_dmp) &&
 		dlp1->dml_dlist_state->dl_active == 0) {
-		curr_dm_list = dlp1;
+		set_curr_dm(dlp1);
 		createDLists(GEDP->ged_gdp->gd_headDisplay);
 		dlp1->dml_dlist_state->dl_active = 1;
 		dlp1->dml_dirty = 1;
@@ -442,7 +442,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
     }
 
     /* restore current display manager */
-    curr_dm_list = save_dlp;
+    set_curr_dm(save_dlp);
 }
 
 

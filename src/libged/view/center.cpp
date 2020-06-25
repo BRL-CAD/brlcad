@@ -34,7 +34,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int

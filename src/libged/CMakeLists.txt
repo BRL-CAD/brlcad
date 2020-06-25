@@ -49,7 +49,6 @@ set(LIBGED_SOURCES
   adc.c
   adjust.c
   ae2dir.c
-  aet.c
   analyze.c
   annotate.c
   arb.c
@@ -71,8 +70,8 @@ set(LIBGED_SOURCES
   bot_dump.c
   bot_face_fuse.c
   bot_face_sort.c
-  bot_fuse.c
   bot_flip.c
+  bot_fuse.c
   bot_merge.c
   bot_smooth.c
   bot_split.c
@@ -89,7 +88,6 @@ set(LIBGED_SOURCES
   brep/valid.cpp
   cat.c
   cc.c
-  center.cpp
   check/check.c
   check/check_adj_air.c
   check/check_centroid.c
@@ -133,10 +131,10 @@ set(LIBGED_SOURCES
   dup.c
   eac.c
   echo.c
+  edarb.c
   edbot.c
   edcodes.c
   edcomb.c
-  edarb.c
   edit.c
   edit_metaball.c
   editit.c
@@ -146,16 +144,16 @@ set(LIBGED_SOURCES
   erase.c
   exists.c
   expand.c
-  eye.c
   eye_pos.c
   facedef.c
-  facetize_log.c
   facetize.cpp
+  facetize_log.c
   fb2pix.c
   fbclear.c
   find.c
   form.c
   fracture.c
+  gdiff.c
   gdiff.c
   ged.c
   ged_util.c
@@ -167,7 +165,6 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   get_type.c
   glob.c
-  gdiff.c
   gqa.c
   grid.c
   grid2model_lu.c
@@ -219,15 +216,15 @@ set(LIBGED_SOURCES
   mrot.c
   nirt.c
   nmg.c
-  nmg_make_v.c
-  nmg_mm.c
   nmg_cmface.c
   nmg_collapse.c
   nmg_fix_normals.c
-  nmg_simplify.c
-  nmg_kill_v.c
   nmg_kill_f.c
+  nmg_kill_v.c
+  nmg_make_v.c
+  nmg_mm.c
   nmg_move_v.c
+  nmg_simplify.c
   ocenter.c
   open.c
   orient.c
@@ -245,8 +242,8 @@ set(LIBGED_SOURCES
   pmodel2view.c
   png.c
   png2fb.c
-  pnts_util.c
   pnts.cpp
+  pnts_util.c
   polyclip.cpp
   prcolor.c
   prefix.c
@@ -263,7 +260,6 @@ set(LIBGED_SOURCES
   put_comb.c
   putmat.c
   qray.c
-  quat.c
   qvrot.c
   rcodes.c
   rect.c
@@ -322,7 +318,6 @@ set(LIBGED_SOURCES
   simulate/rt_motion_state.cpp
   simulate/simulation.cpp
   simulate/utility.cpp
-  size.c
   slew.c
   solid_report.c
   solids_on_ray.c
@@ -346,7 +341,15 @@ set(LIBGED_SOURCES
   v2m_point.c
   vdraw.c
   version.c
-  view.c
+  view/aet.c
+  view/center.cpp
+  view/data_lines.c
+  view/eye.c
+  view/quat.c
+  view/size.c
+  view/snap.c
+  view/ypr.c
+  view/view.c
   view2grid_lu.c
   view2model.c
   view2model_lu.c
@@ -363,7 +366,6 @@ set(LIBGED_SOURCES
   who.c
   wmater.c
   xpush.c
-  ypr.c
   zap.c
   zoom/zoom.c
   ${LIBGED_CMD_SRCS}

@@ -900,7 +900,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	}
 
 	if (curr_cmd_list->cl_tie) {
-	    curr_dm_list = curr_cmd_list->cl_tie;
+	    set_curr_dm(curr_cmd_list->cl_tie);
 
 	    if (GEDP != GED_NULL)
 		GEDP->ged_gvp = view_state->vs_gvp;
@@ -1463,7 +1463,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     av[0] = "release";
     av[1] = NULL;
     status = f_release(clientData, interpreter, 1, av);
-    curr_dm_list = dml;
+    set_curr_dm(dml);
     GEDP->ged_gvp = view_state->vs_gvp;
 
     return status;
@@ -1495,7 +1495,7 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
 	if (dm_get_pathname(p->dml_dmp) && BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
-	    curr_dm_list = p;
+	    set_curr_dm(p);
 
 	    if (curr_dm_list->dml_tie)
 		curr_cmd_list = curr_dm_list->dml_tie;
