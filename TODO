@@ -150,6 +150,12 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   set binary mode (setmode O_BINARY) when writing out files.  at quick
   glance, there are many (about 50) that still do not.
 
+* the osgl libdm backend has what appears to be an off-by-one-pixel
+  error in the x and y directions with respect to mouse placement.
+  Using kmag, can see tha putting the mouse cursor over the center
+  yellow dot and center clicking (which should be a no-op, and is
+  with ogl) results in the scene shifting slightly.
+
 * replace los references/terminology with span, len, dist, factor, etc
   accordingly since los is ambiguous and a source of user confusion.
 

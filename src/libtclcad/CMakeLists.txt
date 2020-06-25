@@ -32,9 +32,13 @@ set(LIBTCLCAD_SRCS
   tclcad_init.c
   tkImgFmtPIX.c
   cmdhist_obj.c
+  dm_obj.c
+  fb_obj.c
+  fbserv_obj.c
+  dm_tcl.c
   )
 set_property(SOURCE tclcad_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;libfb;libnmg;libbn;libbu;${TCL_LIBRARY};${TK_LIBRARY};${ITCL_LIBRARY};${ITK_LIBRARY};${TCLCAD_XLIBS}")
+BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;libdm;libnmg;libbn;libbu;${TCL_LIBRARY};${TK_LIBRARY};${ITCL_LIBRARY};${ITK_LIBRARY};${TCLCAD_XLIBS}")
 set_target_properties(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (TARGET itcl_pkgIndex)
   add_dependencies(libtclcad itcl_pkgIndex)

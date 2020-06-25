@@ -48,7 +48,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define LSB 0 /* Least Significant Byte */
@@ -129,7 +129,7 @@ main(int argc, char **argv)
     static int lace[4] = {8, 8, 4, 2};
     static int offs[4] = {0, 4, 2, 1};
 
-    fb *fbp;
+    struct fb *fbp;
     FILE *fp;
 
     bu_setprogname(argv[0]);

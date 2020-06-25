@@ -27,10 +27,6 @@
 #include "bu/malloc.h"
 #include "icv_private.h"
 
-/* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, size_t size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
-
 int
 bw_write(icv_image_t *bif, const char *filename)
 {
@@ -45,7 +41,7 @@ bw_write(icv_image_t *bif, const char *filename)
 	bu_log("bw_write : Color Space conflict");
 	return -1;
     }
-    data = data2uchar(bif);
+    data = icv_data2uchar(bif);
     size = bif->height*bif->width;
 
     if (filename == NULL) {
@@ -81,6 +77,7 @@ bw_read(const char *filename, size_t width, size_t height)
 
     if (filename==NULL) {
 	fp = stdin;
+	setmode(fileno(fp), O_BINARY);
     } else if ((fp = fopen(filename, "rb")) == NULL) {
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
 	return NULL;
@@ -131,7 +128,7 @@ bw_read(const char *filename, size_t width, size_t height)
     }
 
     if (size)
-	bif->data = uchar2double(data, size);
+	bif->data = icv_uchar2double(data, size);
     else {
 	/* zero sized image */
 	bu_free(bif, "icv container");

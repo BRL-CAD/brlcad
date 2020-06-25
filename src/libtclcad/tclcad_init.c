@@ -221,21 +221,14 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     }
     Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
 
-    /* Initialize libdm */
+    /* Initialize libstruct dm */
     if (Dm_Init(interp) == TCL_ERROR) {
 	if (tlog) bu_vls_printf(tlog, "Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	ret = TCL_ERROR;
 	Tcl_ResetResult(interp);
     }
     Tcl_StaticPackage(interp, "Dm", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
-
-    /* Initialize libfb */
-    if (Fb_Init(interp) == TCL_ERROR) {
-	if (tlog) bu_vls_printf(tlog, "Fb_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	ret = TCL_ERROR;
-	Tcl_ResetResult(interp);
-    }
-    Tcl_StaticPackage(interp, "Fb", Fb_Init, (Tcl_PackageInitProc *) NULL);
+    Tcl_StaticPackage(interp, "Fb", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
 
     /* Initialize libged */
     if (Go_Init(interp) == TCL_ERROR) {

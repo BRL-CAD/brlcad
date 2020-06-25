@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fb.h"
+#include "dm.h"
 
 #include "./burst.h"
 
@@ -111,7 +111,7 @@ extern void brst_log(const char *, ...);
 extern int roundToInt(fastf_t f);
 
 extern Colors colorids;
-extern fb *fbiop;
+extern struct fb *fbiop;
 extern FILE *burstfp;
 extern FILE *gridfp;
 extern FILE *histfp;

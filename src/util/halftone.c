@@ -75,7 +75,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #define	DLEVEL	1
 #define THRESHOLD	127

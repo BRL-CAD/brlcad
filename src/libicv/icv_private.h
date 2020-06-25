@@ -20,6 +20,7 @@
 
 #include "common.h"
 #include "bu/mime.h"
+#include "bio.h" /* for O_BINARY */
 #include "icv.h"
 
 #ifndef ICV_PRIVATE_H

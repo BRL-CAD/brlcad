@@ -35,7 +35,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "pkg.h"
 
@@ -111,7 +111,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    fb *fbp;
+    struct fb *fbp;
     int y;
 
     unsigned char *scanline;	/* 1 scanline pixel buffer */

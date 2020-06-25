@@ -37,7 +37,7 @@
 #  include <winsock.h>
 #endif
 
-#include "fb.h"
+#include "dm.h"
 #include "ged.h"
 
 
@@ -53,9 +53,20 @@ ged_fbclear(struct ged *gedp, int argc, const char *argv[])
     unsigned char clearColor[3] = {0.0, 0.0 ,0.0};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_FBSERV(gedp, GED_ERROR);
-    GED_CHECK_FBSERV_FBP(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    if (!gedp->ged_dmp) {
+	bu_vls_printf(gedp->ged_result_str, "no display manager currently active");
+	return GED_ERROR;
+    }
+
+    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    struct fb *fbp = dm_get_fb(dmp);
+
+    if (!fbp) {
+	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
+	return GED_ERROR;
+    }
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -77,10 +88,14 @@ ged_fbclear(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    ret = fb_clear(gedp->ged_fbsp->fbs_fbp, clearColor);
+    ret = fb_clear(fbp, clearColor);
 
     if (ret)
 	return GED_ERROR;
+
+    (void)dm_draw_begin(dmp);
+    fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
+    (void)dm_draw_end(dmp);
 
     return GED_OK;
 }

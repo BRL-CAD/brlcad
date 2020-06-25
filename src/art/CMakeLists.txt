@@ -12,7 +12,7 @@ set(RT_STD_LIBS
   ${CMAKE_THREAD_LIBS_INIT}
   librt
   libnmg
-  libfb
+  libdm
   liboptical
   libicv
   ${M_LIBRARY}

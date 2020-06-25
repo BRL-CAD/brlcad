@@ -59,7 +59,7 @@ struct cmdtab {
 #define APP_SCALE 180.0 / 512.0
 
 Tcl_Interp *INTERP;
-dm *dmp;
+struct dm *dmp;
 mat_t toViewcenter;
 mat_t Viewrot;
 mat_t model2view;
@@ -82,7 +82,9 @@ struct plot_list{
 
 struct plot_list HeadPlot;
 
-int dm_type = DM_TYPE_X;
+static const char *Xtype = "X";
+static const char *Otype = "ogl";
+const char *dm_type = "X";
 
 
 /*
@@ -135,12 +137,12 @@ get_args(int argc, char **argv)
 		switch (*bu_optarg) {
 		    case 'o':
 		    case 'O':
-			dm_type = DM_TYPE_OGL;
+			dm_type = Otype;
 			break;
 		    case 'x':
 		    case 'X':
 		    default:
-			dm_type = DM_TYPE_X;
+			dm_type = Xtype;
 			break;
 		}
 		break;
@@ -1047,12 +1049,12 @@ X_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(INTERP, DM_TYPE_X, 3, av)) == DM_NULL) {
+    if ((dmp = dm_open(INTERP, "X", 3, av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
+    Tk_CreateGenericHandler(X_doEvent, (ClientData)Xtype);
     dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
@@ -1073,12 +1075,12 @@ Ogl_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(INTERP, DM_TYPE_OGL, 3, (const char **)av)) == DM_NULL) {
+    if ((dmp = dm_open(INTERP, "ogl", 3, (const char **)av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_OGL);
+    Tk_CreateGenericHandler(X_doEvent, (ClientData)Otype);
     dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
@@ -1096,13 +1098,7 @@ appInit(Tcl_Interp *_interp)
     /* libdm uses interp */
     INTERP = _interp;
 
-    switch (dm_type) {
-	case DM_TYPE_OGL:
-	case DM_TYPE_X:
-	default:
-	    cmd_hook = X_dm;
-	    break;
-    }
+    cmd_hook = X_dm;
 
     /* Evaluates init.tcl */
     if (Tcl_Init(_interp) == TCL_ERROR)
@@ -1133,13 +1129,10 @@ appInit(Tcl_Interp *_interp)
     cmd_setup(_interp, cmdtab);
 
     /* open display manager */
-    switch (dm_type) {
-	case DM_TYPE_OGL:
-	    return Ogl_dmInit();
-	case DM_TYPE_X:
-	default:
-	    return X_dmInit();
+    if (BU_STR_EQUIV(dm_type, "ogl")) {
+	return Ogl_dmInit();
     }
+    return X_dmInit();
 }
 
 

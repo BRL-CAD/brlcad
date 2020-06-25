@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "fb.h"		/* Added because RGBpixel is now needed in do_pixel() */
+#include "dm.h"		/* Added because RGBpixel is now needed in do_pixel() */
 
 #include "./rtuif.h"
 #include "./ext.h"

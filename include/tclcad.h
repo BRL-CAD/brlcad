@@ -38,8 +38,6 @@
 #include "dm.h"
 #include "ged.h"
 
-#include "fb.h"
-
 __BEGIN_DECLS
 
 #ifndef TCLCAD_EXPORT
@@ -88,13 +86,60 @@ __BEGIN_DECLS
 #define TCLCAD_OBJ_FB_MODE_INTERLAY 2
 #define TCLCAD_OBJ_FB_MODE_OVERLAY  3
 
+/* Use fbserv */
+#define USE_FBSERV 1
+
+/* Framebuffer server object */
+
+#define NET_LONG_LEN 4 /**< @brief # bytes to network long */
+#define MAX_CLIENTS 32
+#define MAX_PORT_TRIES 100
+#define FBS_CALLBACK_NULL (void (*)())NULL
+#define FBSERV_OBJ_NULL (struct fbserv_obj *)NULL
+
+struct fbserv_listener {
+    int fbsl_fd;                        /**< @brief socket to listen for connections */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsl_chan;
+#endif
+    int fbsl_port;                      /**< @brief port number to listen on */
+    int fbsl_listen;                    /**< @brief !0 means listen for connections */
+    struct fbserv_obj *fbsl_fbsp;       /**< @brief points to its fbserv object */
+};
+
+
+struct fbserv_client {
+    int fbsc_fd;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsc_chan;
+    Tcl_FileProc *fbsc_handler;
+#endif
+    struct pkg_conn *fbsc_pkg;
+    struct fbserv_obj *fbsc_fbsp;       /**< @brief points to its fbserv object */
+};
+
+
+struct fbserv_obj {
+    struct fb *fbs_fbp;                        /**< @brief framebuffer pointer */
+    void *fbs_interp;             /**< @brief tcl interpreter */
+    struct fbserv_listener fbs_listener;                /**< @brief data for listening */
+    struct fbserv_client fbs_clients[MAX_CLIENTS];      /**< @brief connected clients */
+    void (*fbs_callback)(void *clientData);             /**< @brief callback function */
+    void *fbs_clientData;
+    int fbs_mode;                       /**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
+};
+
+DM_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
+DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
+
+
 struct ged_dm_view {
     struct bu_list		l;
     struct bu_vls		gdv_callback;
     struct bu_vls		gdv_edit_motion_delta_callback;
     struct bu_vls		gdv_name;
     struct bview		*gdv_view;
-    dm				*gdv_dmp;
+    struct dm			*gdv_dmp;
     struct fbserv_obj		gdv_fbs;
     struct ged_obj		*gdv_gop;
     int	   			gdv_hide_view;
@@ -482,6 +527,13 @@ tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, vo
  */
 TCLCAD_EXPORT void
 tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+
+
+/* dm_tcl.c */
+/* The presence of Tcl_Interp as an arg prevents giving arg list */
+TCLCAD_EXPORT extern void fb_tcl_setup(void);
+TCLCAD_EXPORT extern int Fb_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Dm_Init(void *interp);
 
 __END_DECLS
 

@@ -26,7 +26,7 @@ set(burst_old_SOURCES
   )
 
 
-BRLCAD_ADDEXEC(burst "${burst_old_SOURCES}" "librt;libfb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(burst "${burst_old_SOURCES}" "librt;libdm;${M_LIBRARY}")
 
 set(burst_old_noinst_HEADERS
   CMakeLists.txt

@@ -40,7 +40,7 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 /*
@@ -50,7 +50,7 @@
  */
 #define THRESH 20
 
-fb *fbp;
+struct fb *fbp;
 FILE *fp;
 
 long rxb[256][256], rxg[256][256], bxg[256][256];

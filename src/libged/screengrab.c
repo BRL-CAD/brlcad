@@ -28,41 +28,52 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-
 #include "icv.h"
+#include "dm.h"
 
 #include "./ged_private.h"
 
+static int
+image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
+{
+    int type_int;
+    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
 
-/* !!! FIXME: this command should not be directly utilizing LIBDM or
- * LIBFB as this breaks library encapsulation.  Generic functionality
- * should be moved out of LIBDM into LIBICV, or be handled by the
- * application logic calling this routine.
- */
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
+
+    type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
+    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
+    if (type == BU_MIME_IMAGE_UNKNOWN) {
+        if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
+        return -1;
+    }
+    if (set_type) (*set_type) = type;
+    return 1;
+}
+
 int
 ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 {
 
     int i;
-    int width = 0;
-    int height = 0;
+    int print_help = 0;
     int bytes_per_pixel = 0;
     int bytes_per_line = 0;
-    static const char *usage = "image_name.ext";
+    int grab_fb = 0;
     unsigned char **rows = NULL;
     unsigned char *idata = NULL;
     struct icv_image *bif = NULL;	/**< icv image container for saving images */
+    struct dm *dmp = NULL;
+    struct fb *fbp = NULL;
+    bu_mime_image_t type = BU_MIME_IMAGE_AUTO;
+    static char usage[] = "Usage: screengrab [-h] [-F] [--format fmt] [file.img]\n";
 
-    if (gedp->ged_dmp_is_null) {
-	bu_vls_printf(gedp->ged_result_str, "Bad display pointer.");
-	return GED_ERROR;
-    }
-
-    if (gedp->ged_dm_get_display_image == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Bad display function pointer.");
-	return GED_ERROR;
-    }
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help",           "",            NULL,      &print_help,       "Print help and exit");
+    BU_OPT(d[1], "F", "fb",             "",     NULL,             &grab_fb,          "screengrab framebuffer instead of scene display");
+    BU_OPT(d[2], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
+    BU_OPT_NULL(d[3]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -72,60 +83,79 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    if (!gedp->ged_dmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
+	return GED_ERROR;
+    }
+
+    dmp = (struct dm *)gedp->ged_dmp;
+
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_HELP;
     }
 
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+    argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
+
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_HELP;
     }
 
-    width = gedp->ged_dm_width;
-    height = gedp->ged_dm_height;
+    argc = opt_ret;
 
-    if (width <= 0 || height <= 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: invalid screen dimensions.", argv[1]);
-	return GED_ERROR;
+    if (grab_fb) {
+	fbp = dm_get_fb(dmp);
+	if (!fbp) {
+	    bu_vls_printf(gedp->ged_result_str, ": display manager does not have a framebuffer");
+	    return GED_ERROR;
+	}
     }
 
-    bytes_per_pixel = 3;
-    bytes_per_line = width * bytes_per_pixel;
+    /* must be wanting help */
+    if (!argc) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_HELP;
+    }
 
     /* create image file */
+    if (!grab_fb) {
 
-    if ((bif = icv_create(width, height, ICV_COLOR_SPACE_RGB)) == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: could not create icv_image write structure.", argv[1]);
-	return GED_ERROR;
-    }
+	bytes_per_pixel = 3;
+	bytes_per_line = dm_get_width(dmp) * bytes_per_pixel;
 
-    rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
-
-    gedp->ged_dm_get_display_image(gedp, &idata);
-
-    if (!idata) {
-	bu_vls_printf(gedp->ged_result_str, "%s: display manager did not return image data.", argv[1]);
-	if (bif != NULL) icv_destroy(bif);
+	dm_get_display_image(dmp, &idata);
+	if (!idata) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: display manager did not return image data.", argv[1]);
+	    return GED_ERROR;
+	}
+	bif = icv_create(dm_get_width(dmp), dm_get_height(dmp), ICV_COLOR_SPACE_RGB);
+	if (bif == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, ": could not create icv_image write structure.");
+	    return GED_ERROR;
+	}
+	rows = (unsigned char **)bu_calloc(dm_get_height(dmp), sizeof(unsigned char *), "rows");
+	for (i = 0; i < dm_get_height(dmp); ++i) {
+	    rows[i] = (unsigned char *)(idata + ((dm_get_height(dmp)-i-1)*bytes_per_line));
+	    /* TODO : Add double type data to maintain resolution */
+	    icv_writeline(bif, i, rows[i], ICV_DATA_UCHAR);
+	}
 	bu_free(rows, "rows");
-	return GED_ERROR;
+	bu_free(idata, "image data");
+
+    } else {
+	bif = fb_write_icv(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
+	if (bif == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, ": could not create icv_image from framebuffer.");
+	    return GED_ERROR;
+	}
     }
 
-    for (i = 0; i < height; ++i) {
-	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
-	/* TODO : Add double type data to maintain resolution */
-	icv_writeline(bif, i, rows[i], ICV_DATA_UCHAR);
-    }
-
-    if (bif != NULL) {
-	icv_write(bif, argv[1], BU_MIME_IMAGE_AUTO);
-	icv_destroy(bif);
-	bif = NULL;
-    }
-
-    bu_free(rows, "rows");
-    bu_free(idata, "image data");
+    icv_write(bif, argv[0], type);
+    icv_destroy(bif);
 
     return GED_OK;
 }

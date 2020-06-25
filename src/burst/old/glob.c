@@ -27,7 +27,7 @@
 #include <signal.h>
 
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 #include "raytrace.h"
 
 #include "./burst.h"
@@ -35,7 +35,7 @@
 
 
 Colors colorids;	/* ident range to color mappings for plots */
-fb *fbiop = NULL;	/* frame buffer specific access from libfb */
+struct fb *fbiop = NULL;/* frame buffer specific access from libfb */
 FILE *burstfp = NULL;	/* input stream for burst point locations */
 FILE *gridfp = NULL;	/* grid file output stream (2-d shots) */
 FILE *histfp = NULL;	/* histogram output stream (statistics) */

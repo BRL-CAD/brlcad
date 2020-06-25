@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn/plot3.h"
 
 #include "./ascii.h"

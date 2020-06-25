@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "./extern.h"
 

@@ -39,7 +39,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn/plot3.h"
 #include "scanline.h"
 
@@ -180,7 +180,7 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
  * heat graph based on time taken for each pixel.
  */
 void
-timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *fbp)
+timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct fb *fbp)
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
     fastf_t minTime = MAX_FASTF; 		/* The 1 value */

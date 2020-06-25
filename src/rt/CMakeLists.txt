@@ -35,7 +35,7 @@ if(MPI_C_LIBRARIES AND BRLCAD_ENABLE_MPI)
     ${MPI_C_LIBRARIES}
     librt
     libnmg
-    libfb
+    libdm
     liboptical
     libicv
     ${M_LIBRARY}
@@ -45,7 +45,7 @@ else()
     ${CMAKE_THREAD_LIBS_INIT}
     librt
     libnmg
-    libfb
+    libdm
     liboptical
     libicv
     ${M_LIBRARY}
@@ -54,13 +54,13 @@ endif(MPI_C_LIBRARIES AND BRLCAD_ENABLE_MPI)
 
 BRLCAD_ADDDATA(rtexample.c sample_applications)
 
-BRLCAD_ADDEXEC(rtexample "rtexample.c" "librt;libfb;liboptical;libicv" NO_INSTALL)
+BRLCAD_ADDEXEC(rtexample "rtexample.c" "librt;libdm;liboptical;libicv" NO_INSTALL)
 
-BRLCAD_ADDEXEC(reshoot "reshoot.c" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv")
+BRLCAD_ADDEXEC(reshoot "reshoot.c" "${CMAKE_THREAD_LIBS_INIT};librt;libdm;liboptical;libicv")
 
 BRLCAD_ADDEXEC(rtshot "rtshot.c" "${RT_STD_LIBS}")
 
-BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "${CMAKE_THREAD_LIBS_INIT};librt;libdm;liboptical;libicv;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${RT_STD_LIBS}")
 

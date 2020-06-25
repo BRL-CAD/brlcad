@@ -39,8 +39,6 @@
 #  include "tk.h"
 #endif
 
-#include "dm/dm_xvars.h"
-
 #include "vmath.h"
 #include "raytrace.h"
 #include "ged.h"
@@ -56,24 +54,6 @@ extern int scroll_select();		/* defined in scroll.c */
 extern int menu_select();		/* defined in menu.c */
 extern void rect_view2image();		/* defined in rect.c */
 extern void rb_set_dirty_flag();
-
-
-struct bu_structparse dm_xvars_vparse[] = {
-    {"%x",	1,	"dpy",			XVARS_MV_O(dpy),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"win",			XVARS_MV_O(win),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"top",			XVARS_MV_O(top),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"tkwin",		XVARS_MV_O(xtkwin),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1,	"depth",		XVARS_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"cmap",			XVARS_MV_O(cmap),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-#if defined(DM_X) || defined (DM_OGL) || defined (DM_WGL)
-    {"%x",	1,	"vip",			XVARS_MV_O(vip),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"fontstruct",		XVARS_MV_O(fontstruct),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-#endif
-    {"%d",	1,	"devmotionnotify",	XVARS_MV_O(devmotionnotify),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1,	"devbuttonpress",	XVARS_MV_O(devbuttonpress),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1,	"devbuttonrelease",	XVARS_MV_O(devbuttonrelease),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0,	(char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
 
 
 int
@@ -560,29 +540,18 @@ common_dm(int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
     if (BU_STR_EQUAL(argv[0], "getx")) {
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	if (argc == 1) {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
 	    /* Bare set command, print out current settings */
-	    if(dm_get_xvars(DMP) != NULL) {
-		bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
-			(const char *)dm_get_xvars(DMP));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    }
-	    bu_vls_free(&tmp_vls);
+	    dm_internal_var(&tmp_vls, DMP, NULL);
 	} else if (argc == 2) {
-	    if(dm_get_xvars(DMP) != NULL) {
-		bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dm_get_xvars(DMP), COMMA);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-	    }
-	    bu_vls_free(&vls);
+	    dm_internal_var(&tmp_vls, DMP, argv[1]);
 	}
-
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
 	return TCL_OK;
     }
-#endif
 
     if (BU_STR_EQUAL(argv[0], "bg")) {
 	int r, g, b;

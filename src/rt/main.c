@@ -57,7 +57,7 @@
 #include "bu/version.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 /* private */
@@ -72,7 +72,7 @@ extern const char title[];
 
 
 /***** Variables shared with viewing model *** */
-fb		*fbp = FB_NULL;	/* Framebuffer handle */
+struct fb	*fbp = FB_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
 struct icv_image *bif = NULL;
 mat_t		view2model;

@@ -33,7 +33,7 @@
 #endif
 
 #include "dm.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -118,15 +118,9 @@ Tclcad_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    /* Initialize libdm */
+    /* Initialize libstruct dm */
     if (Dm_Init(interp) == TCL_ERROR) {
 	bu_log("Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    /* Initialize libfb */
-    if (Fb_Init(interp) == TCL_ERROR) {
-	bu_log("Fb_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 

@@ -47,7 +47,7 @@
 #include "bu/exit.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 int skipbytes(int fd, b_off_t num);
@@ -76,7 +76,7 @@ static int blueflag  = 0;
 static char *framebuffer = NULL;
 static char *file_name;
 static int infd;
-static fb *fbp;
+static struct fb *fbp;
 
 static char usage[] = "\
 Usage: bw-fb [-a -i -c -z -R -G -B] [-F framebuffer]\n\

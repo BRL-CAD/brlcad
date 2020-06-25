@@ -36,7 +36,7 @@
 
 #include "vmath.h"
 #include "dm.h"
-#include "fb.h"
+#include "dm.h"
 #include "bu.h"
 #include "bn.h"
 #include "vmath.h"

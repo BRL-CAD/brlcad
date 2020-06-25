@@ -73,7 +73,7 @@ struct _mged_variables default_mged_variables = {
     /* mv_use_air */		0,
     /* mv_listen */		0,
     /* mv_port */		0,
-    /* mv_fb */			0,
+    /* mv_struct fb */			0,
     /* mv_fb_all */		1,
     /* mv_fb_overlay */		0,
     /* mv_mouse_behavior */	'd',

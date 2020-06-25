@@ -23,7 +23,7 @@ set(burst_SOURCES
   ${LDIR}/linenoise.c
   )
 
-BRLCAD_ADDEXEC(nburst "${burst_SOURCES}" "librt;libfb;libbu;${M_LIBRARY}")
+BRLCAD_ADDEXEC(nburst "${burst_SOURCES}" "librt;libdm;libbu;${M_LIBRARY}")
 
 set(burst_ignore
   CMakeLists.txt

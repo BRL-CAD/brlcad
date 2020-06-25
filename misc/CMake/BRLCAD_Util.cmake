@@ -155,6 +155,37 @@ function(IS_SUBPATH candidate_subpath full_path result_var)
 endfunction(IS_SUBPATH)
 
 #-----------------------------------------------------------------------------
+# Plugins for libraries need a specific override of their output directories
+# to put them in the correct relative location
+function(PLUGIN_SETUP plugin_targets subdir)
+  set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
+  foreach (target_name ${plugin_targets})
+    if (NOT CMAKE_CONFIGURATION_TYPES)
+      foreach(dt ${DIR_TYPES})
+	get_property(cd TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY)
+	set_property(TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY "${cd}/../${LIBEXEC_DIR}/${subdir}")
+      endforeach(dt ${DIR_TYPES})
+    else (NOT CMAKE_CONFIGURATION_TYPES)
+      foreach(ct ${CMAKE_CONFIGURATION_TYPES})
+	if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+	  set(CMAKE_BINARY_DIR ${CMAKE_BINARY_DIR}/${ct})
+	endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+	string(TOUPPER "${ct}" CTU)
+	foreach(dt ${DIR_TYPES})
+	  get_property(cd TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY_${CTU})
+	  set_property(TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY_${CTU} "${cd}/../${LIBEXEC_DIR}/${subdir}")
+	endforeach(dt ${DIR_TYPES})
+      endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
+    endif (NOT CMAKE_CONFIGURATION_TYPES)
+    set_target_properties(${target_name} PROPERTIES FOLDER "BRL-CAD Plugins/${subdir}")
+    install(TARGETS ${target_name}
+      RUNTIME DESTINATION ${LIBEXEC_DIR}/${subdir}
+      LIBRARY DESTINATION ${LIBEXEC_DIR}/${subdir}
+      ARCHIVE DESTINATION ${LIBEXEC_DIR}/${subdir})
+  endforeach (target_name${plugins})
+endfunction(PLUGIN_SETUP)
+
+#-----------------------------------------------------------------------------
 # Distcheck needs to know what files are "supposed" to be present in order to
 # make sure the source tree is clean prior to building a distribution tarball,
 #

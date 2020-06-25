@@ -82,37 +82,6 @@ Tk_Window tkwin = NULL;
  */
 static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
 
-static int
-mged_dm_width(struct ged *gedp)
-{
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dm_get_width(dmp);
-}
-
-
-static int
-mged_dm_height(struct ged *gedp)
-{
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dm_get_height(dmp);
-}
-
-
-static int
-mged_dmp_is_null(struct ged *gedp)
-{
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dmp == NULL;
-}
-
-
-static void
-mged_dm_get_display_image(struct ged *gedp, unsigned char **idata)
-{
-    dm *dmp = (dm *)gedp->ged_dmp;
-    dm_get_display_image(dmp, idata);
-}
-
 
 /**
  * Used as a hook for bu_log output.  Sends output to the Tcl
@@ -712,10 +681,6 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
     if (!GEDP->ged_gvp)
 	GEDP->ged_gvp = view_state->vs_gvp;
     GEDP->ged_dmp = (void *)curr_dm_list->dml_dmp;
-    GEDP->ged_dm_width = mged_dm_width(GEDP);
-    GEDP->ged_dm_height = mged_dm_height(GEDP);
-    GEDP->ged_dmp_is_null = mged_dmp_is_null(GEDP);
-    GEDP->ged_dm_get_display_image = mged_dm_get_display_image;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
