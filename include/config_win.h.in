@@ -311,7 +311,9 @@ typedef int mode_t;
 #define fork() -1
 #define getprogname() _pgmptr
 #define HAVE_SHARED_RINT_TEST 1
-#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
+#ifndef __cplusplus
+#  define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
+#endif
 
 #if !defined(__cplusplus) && !defined(inline)
 /*  Microsoft specific inline specifier */
