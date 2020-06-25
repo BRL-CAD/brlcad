@@ -1,11 +1,11 @@
 #include <iostream>
-#include "console.h"
 #include <QVBoxLayout>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QFontDatabase>
 #include <QFont>
 
+#include "console.h"
 #include "cadapp.h"
 #include "cadtreeview.h"
 

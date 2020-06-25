@@ -1,15 +1,14 @@
-#include "cadtreemodel.h"
-#include "cadtreeview.h"
-#include "cadtreenode.h"
-
 #include <iostream>
 #include <QPainter>
 #include <qmath.h>
-#include "raytrace.h"
-#include "cadapp.h"
-
 #include <QAction>
 #include <QMenu>
+
+#include "raytrace.h"
+#include "cadapp.h"
+#include "cadtreemodel.h"
+#include "cadtreeview.h"
+#include "cadtreenode.h"
 
 void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {

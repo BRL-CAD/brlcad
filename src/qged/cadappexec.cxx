@@ -23,11 +23,11 @@
  *
  */
 
-#include "cadappexec.h"
 #include <QFileInfo>
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
+#include "cadappexec.h"
 
 QDialog_App::QDialog_App(QWidget *pparent, QString executable, QStringList args, QString lfile) : QDialog(pparent)
 {

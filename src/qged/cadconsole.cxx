@@ -44,10 +44,10 @@ met:
   the U.S. Government retains certain rights in this software.
   -------------------------------------------------------------------------*/
 
-#include "console.h"
-#include "cadconsole.h"
 #include <QVBoxLayout>
 #include <QApplication>
+#include "console.h"
+#include "cadconsole.h"
 #include "cadapp.h"
 
 //=============================================================================

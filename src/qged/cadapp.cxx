@@ -23,13 +23,13 @@
  *
  */
 
-#include "cadapp.h"
-#include "cadappexec.h"
-#include "cadaccordion.h"
 #include <QFileInfo>
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
+#include "cadapp.h"
+#include "cadappexec.h"
+#include "cadaccordion.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 

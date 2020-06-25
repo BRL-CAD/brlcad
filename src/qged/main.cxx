@@ -23,9 +23,6 @@
  *
  */
 
-#include "bu/log.h"
-#include "brlcad_version.h"
-
 #include <iostream>
 
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
@@ -59,6 +56,9 @@
 #include "main_window.h"
 #include "cadapp.h"
 #include "cadcommands.h"
+
+#include "bu/log.h"
+#include "brlcad_version.h"
 
 int main(int argc, char *argv[])
 {
