@@ -163,6 +163,10 @@ ged_snap_lines_3d(struct ged *gedp, point_t *p)
 
     if (!p || !gedp) return GED_ERROR;
 
+    // TODO - investigate how gv_scale, gv_size and friends are used.  Somewhere
+    // in the view we should have enough information to get a pixel's physical
+    // size, and that should let us define a sane "close enough' based on the
+    // current active view.
 
 
     // There are some issues with line snapping that don't come up with grid
