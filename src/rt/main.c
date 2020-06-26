@@ -141,6 +141,7 @@ memory_summary(void)
     n_realloc = bu_n_realloc;
 }
 
+#ifndef RT_TXT_OUTPUT
 int fb_setup() {
     /* Framebuffer is desired */
     size_t xx, yy;
@@ -185,6 +186,7 @@ int fb_setup() {
 #endif
     return 0;
 }
+#endif
 
 
 int main(int argc, char *argv[])
@@ -524,6 +526,7 @@ int main(int argc, char *argv[])
     if (objv && !matflag) {
 	int frame_retval;
 
+#ifndef RT_TXT_OUTPUT
 	if (need_fb != 0 && !fbp)  {
 	    int fb_status = fb_setup();
 	    if (fb_status) {
@@ -533,6 +536,7 @@ int main(int argc, char *argv[])
 		return fb_status;
 	    }
 	}
+#endif
 
 	def_tree(rtip);		/* Load the default trees */
 	/* orientation command has not been used */
@@ -540,10 +544,12 @@ int main(int argc, char *argv[])
 	    do_ae(azimuth, elevation);
 	frame_retval = do_frame(curframe);
 	if (frame_retval != 0) {
+#ifndef RT_TXT_OUTPUT
 	    /* Release the framebuffer, if any */
 	    if (fbp != FB_NULL) {
 		fb_close(fbp);
 	    }
+#endif
 	    ret = 1;
 	    goto rt_cleanup;
 	}
@@ -577,6 +583,7 @@ int main(int argc, char *argv[])
 	     * the logic for processing stdin.  Postpone fb setup until we're
 	     * ready to render something to avoid backing up stdin's pipe. */
 	    if (!bu_strncmp(buf, "end", 3) || !bu_strncmp(buf, "multiview", 8)) {
+#ifndef RT_TXT_OUTPUT
 		if (need_fb != 0 && !fbp)  {
 		    int fb_status = fb_setup();
 		    if (fb_status) {
@@ -586,6 +593,7 @@ int main(int argc, char *argv[])
 			return fb_status;
 		    }
 		}
+#endif
 	    }
 
 	    nret = rt_do_cmd( rtip, buf, rt_cmdtab);
@@ -601,9 +609,11 @@ int main(int argc, char *argv[])
     }
 
     /* Release the framebuffer, if any */
+#ifndef RT_TXT_OUTPUT
     if (fbp != FB_NULL) {
 	fb_close(fbp);
     }
+#endif
 
 rt_cleanup:
     /* Clean up objv memory, if necessary */
