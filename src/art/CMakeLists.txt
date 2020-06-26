@@ -47,6 +47,7 @@ if(Appleseed_FOUND)
     )
 
   BRLCAD_ADDEXEC(art "${ART_SRCS}" "${RT_STD_LIBS};${Appleseed_LIBRARIES};${Appleseed_BOOST_SYSTEM_LIB};${Appleseed_OPENIMAGEIO_LIB}" TEST_USESDATA)
+  ADD_TARGET_DEPS(art dm-ogl dm-wgl)
 endif(Appleseed_FOUND)
 
 set(art_ignore_files
