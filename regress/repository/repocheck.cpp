@@ -273,7 +273,7 @@ regex_init(repo_info_t &r) {
 	cnt = 0;
 	rf = api_func_strs[cnt];
 	while (rf) {
-	    std::string rrf = std::string(".*[^a-zA-Z0-9_:]") + std::string(rf) + std::string("[(].*");
+	    std::string rrf = std::string(".*[^a-zA-Z0-9_:.]") + std::string(rf) + std::string("[(].*");
 	    r.api_func_filters[std::string(rf)] = std::regex(rrf);
 	    cnt++;
 	    rf = api_func_strs[cnt];
