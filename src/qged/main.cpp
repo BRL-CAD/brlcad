@@ -57,11 +57,14 @@
 #include "cadapp.h"
 #include "cadcommands.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "brlcad_version.h"
 
 int main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+
     CADApp app(argc, argv);
     BRLCAD_MainWindow mainWin;
 
