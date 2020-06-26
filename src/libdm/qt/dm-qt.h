@@ -79,13 +79,7 @@ struct qt_tk_bind {
     const char *name;
 };
 
-struct qt_xvars {
-    Display *dpy;
-    Window win;
-    Tk_Window top;
-    Tk_Window xtkwin;
-    int depth;
-    Colormap cmap;
+struct dm_qtvars {
     int devmotionnotify;
     int devbuttonpress;
     int devbuttonrelease;

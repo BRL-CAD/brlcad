@@ -27,6 +27,7 @@
 /** @} */
 
 #include "common.h"
+#include "./fb_qt.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +37,6 @@
 
 #include "dm.h"
 #include "private.h"
-#include "./fb_qt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/str.h"
@@ -166,15 +166,15 @@ qt_updstate(struct fb *ifp)
      * Set ?wp to the number of whole zoomed image pixels we could display
      * in the window.
      */
-    xwp = qi->qi_qwidth / ifp->if_xzoom;
-    ywp = qi->qi_qheight / ifp->if_yzoom;
+    xwp = qi->qi_qwidth / ifp->i->if_xzoom;
+    ywp = qi->qi_qheight / ifp->i->if_yzoom;
 
     /*
      * Set ?rp to the number of leftover pixels we have, after displaying
      * wp whole zoomed image pixels.
      */
-    xrp = qi->qi_qwidth % ifp->if_xzoom;
-    yrp = qi->qi_qheight % ifp->if_yzoom;
+    xrp = qi->qi_qwidth % ifp->i->if_xzoom;
+    yrp = qi->qi_qheight % ifp->i->if_yzoom;
 
     /*
      * Force ?wp to be the same as the window width (mod 2).  This
@@ -183,12 +183,12 @@ qt_updstate(struct fb *ifp)
      */
     if (xwp && (xwp ^ qi->qi_qwidth) & 1) {
 	xwp--;
-	xrp += ifp->if_xzoom;
+	xrp += ifp->i->if_xzoom;
     }
 
     if (ywp && (ywp ^ qi->qi_qheight) & 1) {
 	ywp--;
-	yrp += ifp->if_yzoom;
+	yrp += ifp->i->if_yzoom;
     }
 
     /*
@@ -200,13 +200,13 @@ qt_updstate(struct fb *ifp)
      */
     switch (xrp) {
 	case 0:
-	    lf_w = ifp->if_xzoom;
-	    rt_w = ifp->if_xzoom;
+	    lf_w = ifp->i->if_xzoom;
+	    rt_w = ifp->i->if_xzoom;
 	    break;
 
 	case 1:
 	    lf_w = 1;
-	    rt_w = ifp->if_xzoom;
+	    rt_w = ifp->i->if_xzoom;
 	    xwp += 1;
 	    break;
 
@@ -219,13 +219,13 @@ qt_updstate(struct fb *ifp)
 
     switch (yrp) {
 	case 0:
-	    tp_h = ifp->if_yzoom;
-	    bt_h = ifp->if_yzoom;
+	    tp_h = ifp->i->if_yzoom;
+	    bt_h = ifp->i->if_yzoom;
 	    break;
 
 	case 1:
 	    tp_h = 1;
-	    bt_h = ifp->if_yzoom;
+	    bt_h = ifp->i->if_yzoom;
 	    ywp += 1;
 	    break;
 
@@ -254,7 +254,7 @@ qt_updstate(struct fb *ifp)
      * pixels available on the left half.  We use this information to
      * calculate the remaining parameters as noted.
      */
-    want = ifp->if_xcenter;
+    want = ifp->i->if_xcenter;
     avail = xwp/2;
     if (want >= avail) {
 	/*
@@ -281,13 +281,13 @@ qt_updstate(struct fb *ifp)
 	 *  - the leftmost image pixel displayed will have a zero
 	 *    x coordinate.
 	 */
-	qi->qi_xlf = lf_w + (avail - want - 1) * ifp->if_xzoom;
-	qi->qi_ilf_w = ifp->if_xzoom;
+	qi->qi_xlf = lf_w + (avail - want - 1) * ifp->i->if_xzoom;
+	qi->qi_ilf_w = ifp->i->if_xzoom;
 	qi->qi_ilf = 0;
     }
 
     /* Calculation for bottom edge. */
-    want = ifp->if_ycenter;
+    want = ifp->i->if_ycenter;
     avail = ywp/2;
     if (want >= avail) {
 	/*
@@ -316,13 +316,13 @@ qt_updstate(struct fb *ifp)
 	 *    y coordinate.
 	 */
 	qi->qi_xbt = qi->qi_qheight - (bt_h + (avail - want - 1) *
-				       ifp->if_yzoom) - 1;
-	qi->qi_ibt_h = ifp->if_yzoom;
+				       ifp->i->if_yzoom) - 1;
+	qi->qi_ibt_h = ifp->i->if_yzoom;
 	qi->qi_ibt = 0;
     }
 
     /* Calculation for right edge. */
-    want = qi->qi_iwidth - ifp->if_xcenter;
+    want = qi->qi_iwidth - ifp->i->if_xcenter;
     avail =  xwp - xwp/2;
     if (want >= avail) {
 	/*
@@ -338,7 +338,7 @@ qt_updstate(struct fb *ifp)
 	 */
 	qi->qi_xrt = qi->qi_qwidth - 1;
 	qi->qi_irt_w = rt_w;
-	qi->qi_irt = ifp->if_xcenter + avail - 1;
+	qi->qi_irt = ifp->i->if_xcenter + avail - 1;
     } else {
 	/*
 	 * Not enough image pixels to fill the area.  We'll be
@@ -352,13 +352,13 @@ qt_updstate(struct fb *ifp)
 	 *    coordinate equal to the width of the image minus 1.
 	 */
 	qi->qi_xrt = qi->qi_qwidth - (rt_w + (avail - want - 1) *
-				      ifp->if_xzoom) - 1;
-	qi->qi_irt_w = ifp->if_xzoom;
+				      ifp->i->if_xzoom) - 1;
+	qi->qi_irt_w = ifp->i->if_xzoom;
 	qi->qi_irt = qi->qi_iwidth - 1;
     }
 
     /* Calculation for top edge. */
-    want = qi->qi_iheight - ifp->if_ycenter;
+    want = qi->qi_iheight - ifp->i->if_ycenter;
     avail = ywp - ywp/2;
     if (want >= avail) {
 	/*
@@ -373,7 +373,7 @@ qt_updstate(struct fb *ifp)
 	 */
 	qi->qi_xtp = 0;
 	qi->qi_itp_h = tp_h;
-	qi->qi_itp = ifp->if_ycenter + avail - 1;
+	qi->qi_itp = ifp->i->if_ycenter + avail - 1;
     } else {
 	/*
 	 * Not enough image pixels to fill the area.  We'll be
@@ -385,8 +385,8 @@ qt_updstate(struct fb *ifp)
 	 *  - the topmost image pixel displayed will have a y
 	 *    coordinate equal to the height of the image minus 1.
 	 */
-	qi->qi_xtp = tp_h + (avail - want - 1) * ifp->if_yzoom;
-	qi->qi_itp_h = ifp->if_yzoom;
+	qi->qi_xtp = tp_h + (avail - want - 1) * ifp->i->if_yzoom;
+	qi->qi_itp_h = ifp->i->if_yzoom;
 	qi->qi_itp = qi->qi_iheight - 1;
     }
 }
@@ -408,14 +408,14 @@ qt_configureWindow(struct fb *ifp, int width, int height)
 	return;
     }
 
-    ifp->if_width = width;
-    ifp->if_height = height;
+    ifp->i->if_width = width;
+    ifp->i->if_height = height;
 
     qi->qi_qwidth = qi->qi_iwidth = width;
     qi->qi_qheight = qi->qi_iheight = height;
 
-    ifp->if_xcenter = width/2;
-    ifp->if_ycenter = height/2;
+    ifp->i->if_xcenter = width/2;
+    ifp->i->if_ycenter = height/2;
 
     /* destroy old image struct and image buffers */
     delete qi->qi_image;
@@ -491,15 +491,15 @@ qt_update(struct fb *ifp, int x1, int y1, int w, int h)
     /*
      * Figure out sizes of outermost image pixels
      */
-    x1wd = (x1 == qi->qi_ilf) ? qi->qi_ilf_w : ifp->if_xzoom;
-    x2wd = (x2 == qi->qi_irt) ? qi->qi_irt_w : ifp->if_xzoom;
-    y1ht = (y1 == qi->qi_ibt) ? qi->qi_ibt_h : ifp->if_yzoom;
-    y2ht = (y2 == qi->qi_itp) ? qi->qi_itp_h : ifp->if_yzoom;
+    x1wd = (x1 == qi->qi_ilf) ? qi->qi_ilf_w : ifp->i->if_xzoom;
+    x2wd = (x2 == qi->qi_irt) ? qi->qi_irt_w : ifp->i->if_xzoom;
+    y1ht = (y1 == qi->qi_ibt) ? qi->qi_ibt_h : ifp->i->if_yzoom;
+    y2ht = (y2 == qi->qi_itp) ? qi->qi_itp_h : ifp->i->if_yzoom;
 
     /* Compute ox: offset from left edge of window to left pixel */
     xdel = x1 - qi->qi_ilf;
     if (xdel) {
-	ox = x1wd + ((xdel - 1) * ifp->if_xzoom) + qi->qi_xlf;
+	ox = x1wd + ((xdel - 1) * ifp->i->if_xzoom) + qi->qi_xlf;
     } else {
 	ox = qi->qi_xlf;
     }
@@ -507,7 +507,7 @@ qt_update(struct fb *ifp, int x1, int y1, int w, int h)
     /* Compute oy: offset from top edge of window to bottom pixel */
     ydel = y1 - qi->qi_ibt;
     if (ydel) {
-	oy = qi->qi_xbt - (y1ht + ((ydel - 1) * ifp->if_yzoom));
+	oy = qi->qi_xbt - (y1ht + ((ydel - 1) * ifp->i->if_yzoom));
     } else {
 	oy = qi->qi_xbt;
     }
@@ -515,13 +515,13 @@ qt_update(struct fb *ifp, int x1, int y1, int w, int h)
     if (x2 == x1) {
 	xwd = x1wd;
     } else {
-	xwd = x1wd + x2wd + ifp->if_xzoom * (x2 - x1 - 1);
+	xwd = x1wd + x2wd + ifp->i->if_xzoom * (x2 - x1 - 1);
     }
 
     if (y2 == y1) {
 	xht = y1ht;
     } else {
-	xht = y1ht + y2ht + ifp->if_yzoom * (y2 - y1 - 1);
+	xht = y1ht + y2ht + ifp->i->if_yzoom * (y2 - y1 - 1);
     }
 
     /*
@@ -551,7 +551,7 @@ qt_update(struct fb *ifp, int x1, int y1, int w, int h)
 	    } else if (x == x2) {
 		pxwd = x2wd;
 	    } else {
-		pxwd = ifp->if_xzoom;
+		pxwd = ifp->i->if_xzoom;
 	    }
 
 	    /*
@@ -738,7 +738,7 @@ qt_open(struct fb *ifp, const char *file, int width, int height)
 	int alpha;
 	struct modeflags *mfp;
 
-	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	if (bu_strncmp(file, ifp->i->if_name, strlen(ifp->i->if_name))) {
 	    mode = 0;
 	} else {
 	    alpha = 0;
@@ -769,21 +769,21 @@ qt_open(struct fb *ifp, const char *file, int width, int height)
     }
 
     if (width <= 0)
-	width = ifp->if_width;
+	width = ifp->i->if_width;
     if(height <= 0)
-	height = ifp->if_height;
-    if (width > ifp->if_max_width)
-	width = ifp->if_max_width;
-    if (height > ifp->if_max_height)
-	height = ifp->if_max_height;
+	height = ifp->i->if_height;
+    if (width > ifp->i->if_max_width)
+	width = ifp->i->if_max_width;
+    if (height > ifp->i->if_max_height)
+	height = ifp->i->if_max_height;
 
-    ifp->if_width = width;
-    ifp->if_height = height;
+    ifp->i->if_width = width;
+    ifp->i->if_height = height;
 
-    ifp->if_xzoom = 1;
-    ifp->if_yzoom = 1;
-    ifp->if_xcenter = width/2;
-    ifp->if_ycenter = height/2;
+    ifp->i->if_xzoom = 1;
+    ifp->i->if_yzoom = 1;
+    ifp->i->if_xcenter = width/2;
+    ifp->i->if_ycenter = height/2;
 
     if ((qi = (struct qtinfo *)calloc(1, sizeof(struct qtinfo))) ==
 	NULL) {
@@ -797,7 +797,7 @@ qt_open(struct fb *ifp, const char *file, int width, int height)
     qi->qi_iheight = height;
 
     /* allocate backing store */
-    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
+    size = ifp->i->if_max_height * ifp->i->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
     if ((mem = (unsigned char *)malloc(size)) == 0) {
 	fb_log("if_qt: Unable to allocate %zu bytes of backing \
 		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
@@ -870,21 +870,21 @@ _qt_open_existing(struct fb *ifp, int width, int height, void *qapp, void *qwin,
     mode = MODE1_LINGERING;
 
     if (width <= 0)
-	width = ifp->if_width;
+	width = ifp->i->if_width;
     if(height <= 0)
-	height = ifp->if_height;
-    if (width > ifp->if_max_width)
-	width = ifp->if_max_width;
-    if (height > ifp->if_max_height)
-	height = ifp->if_max_height;
+	height = ifp->i->if_height;
+    if (width > ifp->i->if_max_width)
+	width = ifp->i->if_max_width;
+    if (height > ifp->i->if_max_height)
+	height = ifp->i->if_max_height;
 
-    ifp->if_width = width;
-    ifp->if_height = height;
+    ifp->i->if_width = width;
+    ifp->i->if_height = height;
 
-    ifp->if_xzoom = 1;
-    ifp->if_yzoom = 1;
-    ifp->if_xcenter = width/2;
-    ifp->if_ycenter = height/2;
+    ifp->i->if_xzoom = 1;
+    ifp->i->if_yzoom = 1;
+    ifp->i->if_xcenter = width/2;
+    ifp->i->if_ycenter = height/2;
 
     if ((qi = (struct qtinfo *)calloc(1, sizeof(struct qtinfo))) ==
 	NULL) {
@@ -898,7 +898,7 @@ _qt_open_existing(struct fb *ifp, int width, int height, void *qapp, void *qwin,
     qi->qi_iheight = height;
 
     /* allocate backing store */
-    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
+    size = ifp->i->if_max_height * ifp->i->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
     if ((mem = (unsigned char *)malloc(size)) == 0) {
 	fb_log("if_qt: Unable to allocate %zu bytes of backing \
 		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
@@ -1084,8 +1084,8 @@ qt_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     FB_CK_FB(ifp->i);
 
     /* bypass if no change */
-    if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
-	&& ifp->if_xzoom == xcenter && ifp->if_yzoom == ycenter)
+    if (ifp->i->if_xcenter == xcenter && ifp->i->if_ycenter == ycenter
+	&& ifp->i->if_xzoom == xcenter && ifp->i->if_yzoom == ycenter)
 	return 0;
 
     /* check bounds */
@@ -1096,10 +1096,10 @@ qt_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	|| yzoom <= 0 || yzoom >= qi->qi_iheight/2)
 	return -1;
 
-    ifp->if_xcenter = xcenter;
-    ifp->if_ycenter = ycenter;
-    ifp->if_xzoom = xzoom;
-    ifp->if_yzoom = yzoom;
+    ifp->i->if_xcenter = xcenter;
+    ifp->i->if_ycenter = ycenter;
+    ifp->i->if_xzoom = xzoom;
+    ifp->i->if_yzoom = yzoom;
 
     qt_updstate(ifp);
     qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
@@ -1113,10 +1113,10 @@ qt_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp->i);
 
-    *xcenter = ifp->if_xcenter;
-    *ycenter = ifp->if_ycenter;
-    *xzoom = ifp->if_xzoom;
-    *yzoom = ifp->if_yzoom;
+    *xcenter = ifp->i->if_xcenter;
+    *ycenter = ifp->i->if_ycenter;
+    *xzoom = ifp->i->if_xzoom;
+    *yzoom = ifp->i->if_yzoom;
 
     return 0;
 }
@@ -1232,14 +1232,14 @@ qt_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const un
 HIDDEN int
 qt_help(struct fb *ifp)
 {
-    fb_log("Description: %s\n", qt_interface.if_type);
-    fb_log("Device: %s\n", ifp->if_name);
+    fb_log("Description: %s\n", qt_interface.i->if_type);
+    fb_log("Device: %s\n", ifp->i->if_name);
     fb_log("Max width/height: %d %d\n",
-	   qt_interface.if_max_width,
-	   qt_interface.if_max_height);
+	   qt_interface.i->if_max_width,
+	   qt_interface.i->if_max_height);
     fb_log("Default width/height: %d %d\n",
-	   qt_interface.if_width,
-	   qt_interface.if_height);
+	   qt_interface.i->if_width,
+	   qt_interface.i->if_height);
     fb_log("Useful for Benchmarking/Debugging\n");
     return 0;
 }
@@ -1279,12 +1279,12 @@ qt_handle_event(struct fb *ifp, QEvent *event)
 			    if (x < qi->qi_ilf_w)
 				ix = qi->qi_ilf;
 			    else
-				ix = qi->qi_ilf + (x - qi->qi_ilf_w + ifp->if_xzoom - 1) / ifp->if_xzoom;
+				ix = qi->qi_ilf + (x - qi->qi_ilf_w + ifp->i->if_xzoom - 1) / ifp->i->if_xzoom;
 
 			    if (sy < qi->qi_ibt_h)
 				isy = qi->qi_ibt;
 			    else
-				isy = qi->qi_ibt + (sy - qi->qi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
+				isy = qi->qi_ibt + (sy - qi->qi_ibt_h + ifp->i->if_yzoom - 1) / ifp->i->if_yzoom;
 
 			    if (ix >= qi->qi_iwidth || isy >= qi->qi_iheight) {
 				fb_log("No RGB (outside image) 2\n");

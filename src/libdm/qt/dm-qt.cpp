@@ -21,12 +21,15 @@
  *
  */
 #include "common.h"
+
+#include "./fb_qt.h"
+#include "./dm-qt.h"
+
 #include <locale.h>
 
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-
 #include "tcl.h"
 #include "tk.h"
 #include "bu/log.h"
@@ -34,9 +37,8 @@
 #include "bu/parse.h"
 #include "dm.h"
 #include "private.h"
-#include "dm-Null.h"
-#include "./fb_qt.h"
-#include "./dm-qt.h"
+#include "../null/dm-Null.h"
+
 
 #define DM_QT_DEFAULT_POINT_SIZE 1.0
 
@@ -268,11 +270,11 @@ bool QTkMainWindow::event(QEvent *ev)
     while (qt_bindings[index].name != NULL) {
 	char *tk_event = qt_bindings[index].bind_function(ev);
 	if (tk_event != NULL) {
-	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "event generate %s %s", bu_vls_addr(&((struct dm *)dmp)->dm_pathName), tk_event);
-	    if (Tcl_Eval(((struct dm *)dmp)->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
-		bu_log("error generate event %s\n", tk_event);
-	    }
+	    //struct bu_vls str = BU_VLS_INIT_ZERO;
+	    //bu_vls_printf(&str, "event generate %s %s", bu_vls_addr(&((struct dm *)dmp)->dm_pathName), tk_event);
+	    //if (Tcl_Eval(((struct dm *)dmp)->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	//	bu_log("error generate event %s\n", tk_event);
+	 //   }
 	    return true;
 	}
 	index++;
@@ -317,11 +319,11 @@ qt_sendRepaintEvent(struct dm *dmp)
  *
  */
 extern "C" struct dm *
-qt_open(void *vinterp, int argc, char **argv)
+qt_open(void *vinterp, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
     static int count = 0;
-    int make_square = -1;
+    //int make_square = -1;
     struct dm *dmp = (struct dm *)NULL;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -379,38 +381,36 @@ qt_open(void *vinterp, int argc, char **argv)
 
     if (dmp->i->dm_top) {
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-						  bu_vls_addr(&dmp->i->dm_pathName),
-						  bu_vls_addr(&dmp->i->dm_dName));
-	pubvars->top = pubvars->xtkwin;
+	//pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&dmp->i->dm_pathName), bu_vls_addr(&dmp->i->dm_dName));
+	//pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
 
 	cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), (int)'.');
 	if (cp == bu_vls_addr(&dmp->i->dm_pathName)) {
-	    pubvars->top = tkwin;
+	    //pubvars->top = tkwin;
 	} else {
 	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->i->dm_pathName), cp - bu_vls_addr(&dmp->i->dm_pathName));
 
-	    pubvars->top = Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+	    //pubvars->top = Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
 	}
 
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin =
-	    Tk_CreateWindow(interp, pubvars->top,
-			    cp + 1, (char *)NULL);
+	//pubvars->xtkwin =  Tk_CreateWindow(interp, pubvars->top,  cp + 1, (char *)NULL);
     }
 
+#if 0
     if (pubvars->xtkwin == NULL) {
 	bu_log("qt_open: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
-	(void)qt_close(dmp);
+	//(void)qt_close(dmp);
 	return DM_NULL;
     }
+#endif
 
-    bu_vls_printf(&dmp->i->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
+    //bu_vls_printf(&dmp->i->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
     if (bu_vls_strlen(&init_proc_vls) > 0) {
 	bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->i->dm_pathName));
@@ -419,7 +419,7 @@ qt_open(void *vinterp, int argc, char **argv)
 	    bu_log("qt_open: dm init failed\n");
 	    bu_vls_free(&init_proc_vls);
 	    bu_vls_free(&str);
-	    (void)qt_close(dmp);
+	    //(void)qt_close(dmp);
 	    return DM_NULL;
 	}
     }
@@ -427,8 +427,9 @@ qt_open(void *vinterp, int argc, char **argv)
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
-    pubvars->dpy = Tk_Display(pubvars->top);
+    //pubvars->dpy = Tk_Display(pubvars->top);
 
+#if 0
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
 	bu_log("qt_open: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->i->dm_pathName));
@@ -465,9 +466,11 @@ qt_open(void *vinterp, int argc, char **argv)
 
     Tk_SetWindowBackground(pubvars->xtkwin, 0);
     Tk_MapWindow(pubvars->xtkwin);
-    privars->qapp = new QApplication(argc, argv);
 
-    privars->parent = QWindow::fromWinId(pubvars->win);
+#endif
+    privars->qapp = new QApplication(argc, (char **)argv);
+
+    //privars->parent = QWindow::fromWinId(pubvars->win);
 
     privars->pix = new QPixmap(dmp->i->dm_width, dmp->i->dm_height);
 
@@ -478,10 +481,10 @@ qt_open(void *vinterp, int argc, char **argv)
     privars->font = NULL;
 
     privars->painter = new QPainter(privars->pix);
-    qt_setFGColor(dmp, 1, 0, 0, 0, 0);
-    qt_setBGColor(dmp, 0, 0, 0);
+    //qt_setFGColor(dmp, 1, 0, 0, 0, 0);
+    //qt_setBGColor(dmp, 0, 0, 0);
 
-    qt_configureWin(dmp, 1);
+    //qt_configureWin(dmp, 1);
 
     MAT_IDN(privars->mod_mat);
     MAT_IDN(privars->disp_mat);
@@ -490,12 +493,13 @@ qt_open(void *vinterp, int argc, char **argv)
     /* inputs and outputs assume POSIX/C locale settings */
     setlocale(LC_ALL, "POSIX");
 
+#if 0
     /* Make Tcl_DoOneEvent call QApplication::processEvents */
     Tcl_CreateEventSource(NULL, processQtEvents, NULL);
 
     /* Try to process Qt events when idle */
     Tcl_DoWhenIdle(IdleCall, NULL);
-
+#endif
     return dmp;
 }
 
@@ -505,7 +509,7 @@ qt_open(void *vinterp, int argc, char **argv)
 HIDDEN int
 qt_close(struct dm *dmp)
 {
-    struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
+    //struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel) {
@@ -519,7 +523,7 @@ qt_close(struct dm *dmp)
     delete privars->parent;
 
     privars->qapp->quit();
-    Tk_DestroyWindow(pubvars->xtkwin);
+    //Tk_DestroyWindow(pubvars->xtkwin);
 
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);
@@ -1023,11 +1027,11 @@ qt_reshape(struct dm *dmp, int width, int height)
 HIDDEN int
 qt_configureWin(struct dm *dmp, int force)
 {
-    struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
+    //struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    int width = Tk_Width(pubvars->xtkwin);
-    int height = Tk_Height(pubvars->xtkwin);
+    int width = 0;
+    int height = 0;
 
     if (!force &&
 	dmp->i->dm_height == height &&
@@ -1250,22 +1254,16 @@ struct bu_structparse Qt_vparse[] = {
 
 
 int
-qt_geometry_request(struct dm *dmp, int width, int height)
+qt_geometry_request(struct dm *dmp, int UNUSED(width), int UNUSED(height))
 {
     if (!dmp) return -1;
-    Tk_GeometryRequest(((struct dm_qtvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    //Tk_GeometryRequest(((struct dm_qtvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
     return 0;
 }
 
 #define QTVARS_MV_O(_m) offsetof(struct dm_qtvars, _m)
 
 struct bu_structparse dm_qtvars_vparse[] = {
-    {"%x",      1,      "dpy",                  QTVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "win",                  QTVARS_MV_O(win),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "top",                  QTVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "tkwin",                QTVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",      1,      "depth",                QTVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "cmap",                 QTVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",      1,      "devmotionnotify",      QTVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",      1,      "devbuttonpress",       QTVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",      1,      "devbuttonrelease",     QTVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -1279,7 +1277,7 @@ qt_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
     if (!key) {
         // Print all current vars
         bu_vls_struct_print2(result, "dm internal Qt variables", dm_qtvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
-        return;
+        return 0;
     }
     // Print specific var
     bu_vls_struct_item_named(result, dm_qtvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
@@ -1354,7 +1352,6 @@ struct dm_impl dm_qt_impl = {
     NULL,
     qt_geometry_request,
     qt_internal_var,
-    NULL,
     NULL,
     NULL,
     NULL,
