@@ -28,19 +28,13 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
 
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "bg/lseg.h"
 #include "dm.h"
 #include "../ged_private.h"
-
-int
-ged_snap_lines_2d(struct ged *gedp, point2d_t *p)
-{
-    if (!p || !gedp) return GED_ERROR;
-    return GED_ERROR;
-}
 
 struct ged_cp_info {
     double ctol_sq; // square of the distance that defines "close to a line"
@@ -96,7 +90,6 @@ _find_closest_point(struct ged_cp_info *s, point_t *p, struct bview_data_line_st
 	    s->dsq = dsq;
 	    s->c_l = i;
 	    s->c_lset = lines;
-	    printf("1st: %g: %g %g %g\n", sqrt(dsq), V3ARGS(c));
 	    ret = 1;
 	    continue;
 	}
@@ -106,7 +99,6 @@ _find_closest_point(struct ged_cp_info *s, point_t *p, struct bview_data_line_st
 	    s->dsq2 = dsq;
 	    s->c_l2 = i;
 	    s->c_lset2 = lines;
-	    printf("2nd: %g: %g %g %g\n", sqrt(dsq), V3ARGS(c));
 	    ret = 2;
 	    continue;
 	}
@@ -171,23 +163,16 @@ line_tol_sq(struct ged *gedp, struct bview_data_line_state *gdlsp)
     double lavg = (width + height) * 0.5;
     double lwidth = (gdlsp->gdls_line_width) ? gdlsp->gdls_line_width : 1;
     double lratio = lwidth/lavg;
-    // TODO - need a scale factor to allow user to adjust this,
-    // rather than hard-coding 10...
-    double lrsize = gedp->ged_gvp->gv_size * lratio * 10;
+    double lrsize = gedp->ged_gvp->gv_size * lratio * gedp->ged_gvp->gv_snap_tol_factor;
     return lrsize*lrsize;
 }
 
 int
-ged_snap_lines_3d(struct ged *gedp, point_t *p)
+ged_snap_lines(point_t *out_pt, struct ged *gedp, point_t *p)
 {
     struct ged_cp_info cpinfo = GED_CP_INFO_INIT;
 
     if (!p || !gedp) return GED_ERROR;
-
-    // TODO - investigate how gv_scale, gv_size and friends are used.  Somewhere
-    // in the view we should have enough information to get a pixel's physical
-    // size, and that should let us define a sane "close enough' based on the
-    // current active view.
 
     // There are some issues with line snapping that don't come up with grid
     // snapping - in particular, when are we "close enough" to a line to snap,
@@ -196,10 +181,8 @@ ged_snap_lines_3d(struct ged *gedp, point_t *p)
     // point if we are close to multiple lines...
     int ret = 0;
     cpinfo.ctol_sq = line_tol_sq(gedp, &gedp->ged_gvp->gv_data_lines);
-    bu_log("%g\n", cpinfo.ctol_sq);
     ret += _find_closest_point(&cpinfo, p, &gedp->ged_gvp->gv_data_lines);
     cpinfo.ctol_sq = line_tol_sq(gedp, &gedp->ged_gvp->gv_sdata_lines);
-    bu_log("%g\n", cpinfo.ctol_sq);
     ret += _find_closest_point(&cpinfo, p, &gedp->ged_gvp->gv_sdata_lines);
 
     // Check if we are close enough to two line segments to warrant using the
@@ -211,19 +194,51 @@ ged_snap_lines_3d(struct ged *gedp, point_t *p)
 
     // If we found something, we can snap
     if (ret) {
-	bu_log("%g %g %g\n", V3ARGS(cpinfo.cp));
-    } else {
-	bu_log("no lines close enough for snapping\n");
+	VMOVE(*out_pt, cpinfo.cp);
+	return GED_OK;
     }
 
-    return GED_OK;
+    return GED_ERROR;
+}
+
+int
+_ged_opt_tol(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    double *tol_set = (double *)set_var;
+
+    if (!argc) {
+	if (tol_set) (*tol_set) = -DBL_MAX;
+	return 0;
+    }
+
+    char *endptr = NULL;
+    errno = 0;
+    double d = strtod(argv[0], &endptr);
+
+    if (endptr != NULL && strlen(endptr) > 0) {
+        /* Had some invalid character in the input, fail */
+        if (msg) {
+            bu_vls_printf(msg, "Invalid string specifier for double: %s\n", argv[0]);
+        }
+        return -1;
+    }
+
+    if (errno == ERANGE) {
+        if (msg) {
+            bu_vls_printf(msg, "Invalid input for double (range error): %s\n", argv[0]);
+        }
+        return -1;
+    }
+
+    if (tol_set) (*tol_set) = d;
+    return 1;
 }
 
 int
 ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[options] x y [z]";
-    int in_dim = 0;
+    double stol = DBL_MAX;
     int print_help = 0;
     int use_grid = 0;
     int use_lines = 0;
@@ -233,13 +248,14 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     point_t view_pt = VINIT_ZERO;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc d[6];
+    struct bu_opt_desc d[7];
     BU_OPT(d[0], "h", "help",      "",  NULL,  &print_help,           "Print help and exit");
-    BU_OPT(d[1], "g", "grid",      "",  NULL,  &use_grid,             "Snap to the view grid");
-    BU_OPT(d[2], "l", "lines",     "",  NULL,  &use_lines,            "Snap to the view lines");
-    BU_OPT(d[3], "o", "obj-keypt", "",  NULL,  &use_object_keypoints, "Snap to drawn object keypoints");
-    BU_OPT(d[4], "w", "obj-lines", "",  NULL,  &use_object_lines,     "Snap to drawn object lines");
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[1], "t", "tol",    "[#]",  &_ged_opt_tol,  &stol,                 "Set or report tolerance scale factor for snapping.");
+    BU_OPT(d[2], "g", "grid",      "",  NULL,  &use_grid,             "Snap to the view grid");
+    BU_OPT(d[3], "l", "lines",     "",  NULL,  &use_lines,            "Snap to the view lines");
+    BU_OPT(d[4], "o", "obj-keypt", "",  NULL,  &use_object_keypoints, "Snap to drawn object keypoints");
+    BU_OPT(d[5], "w", "obj-lines", "",  NULL,  &use_object_lines,     "Snap to drawn object lines");
+    BU_OPT_NULL(d[6]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
@@ -255,6 +271,21 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
+    }
+
+    /* Handle tolerance */
+    if (stol < DBL_MAX || stol < -DBL_MAX + 1) {
+	if (stol > -DBL_MAX) {
+	    gedp->ged_gvp->gv_snap_tol_factor = stol;
+	    if (!opt_ret) {
+		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_snap_tol_factor);
+		return GED_OK;
+	    }
+	} else {
+	    // Report current tolerance
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_snap_tol_factor);
+	    return GED_OK;
+	}
     }
 
     /* adjust argc to match the leftovers of the options parsing */
@@ -285,7 +316,6 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	VSET(vp, p[0], p[1], 0);
 	MAT4X3PNT(p, gedp->ged_gvp->gv_view2model, vp);
 	VMOVE(view_pt, p);
-	in_dim = 2;
     }
     /* We may get a 3D point instead */
     if (argc == 3) {
@@ -299,7 +329,6 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, p);
 	V2SET(view_pt_2d, vp[0], vp[1]);
 	VMOVE(view_pt, p);
-	in_dim = 3;
     }
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -316,18 +345,23 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (use_lines) {
-#if 0
-	if (in_dim == 2) {
-	    ged_snap_lines_2d(gedp, &view_pt_2d);
-	}
-#endif
-
-	if (in_dim == 3) {
-	    ged_snap_lines_3d(gedp, &view_pt);
+	point_t out_pt = VINIT_ZERO;
+	point_t vp = VINIT_ZERO;
+	// It's OK if we have no lines close enough to snap to -
+	// in that case just pass back the view pt.  If we do
+	// have a snap, update the output
+	if (ged_snap_lines(&out_pt, gedp, &view_pt) == GED_OK) {
+	    MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
+	    V2SET(view_pt_2d, vp[0], vp[1]);
+	    VMOVE(view_pt, out_pt);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "no lines close enough for snapping");
+	    return GED_OK;
 	}
     }
 
-    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(view_pt));
+    bu_vls_printf(gedp->ged_result_str, "%g %g %g\n", V3ARGS(view_pt));
+    bu_vls_printf(gedp->ged_result_str, "%g %g\n", view_pt_2d[X], view_pt_2d[Y]);
 
     bu_vls_free(&msg);
     return GED_OK;

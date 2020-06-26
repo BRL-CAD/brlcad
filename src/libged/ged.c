@@ -376,6 +376,9 @@ ged_view_init(struct bview *gvp)
     /* FIXME: this causes the shaders.sh regression to fail */
     /* _ged_mat_aet(gvp); */
 
+    // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
+    gvp->gv_snap_tol_factor = 10;
+
     ged_view_update(gvp);
 }
 
