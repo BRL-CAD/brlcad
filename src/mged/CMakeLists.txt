@@ -74,6 +74,7 @@ if (BRLCAD_ENABLE_TCL)
   BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
 
   BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
+  ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm-ogl dm-wgl)
 
   # mged depends on the creation/installation of all the
   # tclscripts.
