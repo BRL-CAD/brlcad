@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 
-void
+int
 ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
 {
     int nh, nv;		/* whole grid units */
@@ -46,11 +46,11 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
     fastf_t inv_sf;
 
     if (gedp->ged_gvp == GED_VIEW_NULL)
-	return;
+	return 0;
 
     if (ZERO(gedp->ged_gvp->gv_grid.res_h) ||
 	ZERO(gedp->ged_gvp->gv_grid.res_v))
-	return;
+	return 0;
 
     sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;
     inv_sf = 1 / sf;
@@ -85,6 +85,8 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
 
     *vx *= inv_sf;
     *vy *= inv_sf;
+
+    return 1;
 }
 
 

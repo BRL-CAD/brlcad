@@ -235,6 +235,30 @@ _ged_opt_tol(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 }
 
 int
+ged_snap_to_lines(struct ged *gedp, fastf_t *vx, fastf_t *vy)
+{
+    if (!gedp || !vx || !vy) return 0;
+    if (!gedp->ged_gvp) return 0;
+
+    point2d_t p2d = {0.0, 0.0};
+    point_t p = VINIT_ZERO;
+    point_t vp = VINIT_ZERO;
+    point_t out_pt = VINIT_ZERO;
+
+    V2SET(p2d, *vx, *vy);
+    VSET(vp, p2d[0], p2d[1], 0);
+    MAT4X3PNT(p, gedp->ged_gvp->gv_view2model, vp);
+    if (ged_snap_lines(&out_pt, gedp, &p) == GED_OK) {
+	MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
+	(*vx) = p[0];
+	(*vy) = p[1];
+	return 1;
+    }
+
+    return 0;
+}
+
+int
 ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[options] x y [z]";
@@ -366,6 +390,8 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&msg);
     return GED_OK;
 }
+
+
 
 
 /*

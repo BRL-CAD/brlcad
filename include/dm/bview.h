@@ -253,6 +253,7 @@ struct bview {
     struct bview_data_axes_state        gv_sdata_axes;
     struct bview_data_label_state gv_sdata_labels;
     struct bview_data_line_state  gv_sdata_lines;
+    int                           gv_snap_lines;
     double 			  gv_snap_tol_factor;
     bview_data_polygon_state      gv_sdata_polygons;
     struct bview_grid_state     gv_grid;
