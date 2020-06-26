@@ -1,6 +1,7 @@
 set(embedded_licenses
   alphanum.txt
   apple.txt
+  appleseed.txt
   art.txt
   ayam.txt
   b64.txt
@@ -24,6 +25,7 @@ set(embedded_licenses
   hv3.txt
   hv3_combobox.txt
   hv3_snit.txt
+  Inconsolata.txt
   libtermlib.txt
   lseg_lseg.txt
   lseg_pt.txt
@@ -38,12 +40,15 @@ set(embedded_licenses
   OpenNURBS.txt
   osg.txt
   osl.txt
+  ParaView.txt
   pbrt.txt
   point_in_polygon.txt
   point_in_polyhedron.txt
   polygonizer.txt
   pstdint.txt
   qsort.txt
+  QFlowLayout.txt
+  QtADS.txt
   QuickHull.txt
   realpath.txt
   rply.txt

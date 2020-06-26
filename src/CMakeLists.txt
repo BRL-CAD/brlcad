@@ -71,6 +71,7 @@ set(level_3_dirs
   shapes
   sig
   util
+  qged
   external
   ${non_win32_dirs}
   # tclscripts must come before applications like
