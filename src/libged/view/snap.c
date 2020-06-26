@@ -32,6 +32,7 @@
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "bg/lseg.h"
+#include "dm.h"
 #include "../ged_private.h"
 
 int
@@ -78,6 +79,10 @@ _find_closest_point(struct ged_cp_info *s, point_t *p, struct bview_data_line_st
 	VMOVE(P0, lines->gdls_points[i]);
 	VMOVE(P1, lines->gdls_points[i+1]);
 	double dsq = bg_lseg_pt_dist_sq(&c, P0, P1, *p);
+	// If we're outside tolerance, continue
+	if (dsq > s->ctol_sq) {
+	    continue;
+	}
 	// If this is the closest we've seen, record it
 	if (s->dsq > dsq) {
 	    // Closest is now second closest
@@ -155,11 +160,27 @@ _find_close_isect(struct ged_cp_info *s, point_t *p)
     }
 }
 
+static double
+line_tol_sq(struct ged *gedp, struct bview_data_line_state *gdlsp)
+{
+    if (!gedp->ged_dmp) {
+	return 100*100;
+    }
+    double width = dm_get_width((struct dm *)gedp->ged_dmp);
+    double height = dm_get_height((struct dm *)gedp->ged_dmp);
+    double lavg = (width + height) * 0.5;
+    double lwidth = (gdlsp->gdls_line_width) ? gdlsp->gdls_line_width : 1;
+    double lratio = lwidth/lavg;
+    // TODO - need a scale factor to allow user to adjust this,
+    // rather than hard-coding 10...
+    double lrsize = gedp->ged_gvp->gv_size * lratio * 10;
+    return lrsize*lrsize;
+}
+
 int
 ged_snap_lines_3d(struct ged *gedp, point_t *p)
 {
     struct ged_cp_info cpinfo = GED_CP_INFO_INIT;
-    cpinfo.ctol_sq = 100*100;
 
     if (!p || !gedp) return GED_ERROR;
 
@@ -168,14 +189,17 @@ ged_snap_lines_3d(struct ged *gedp, point_t *p)
     // size, and that should let us define a sane "close enough' based on the
     // current active view.
 
-
     // There are some issues with line snapping that don't come up with grid
     // snapping - in particular, when are we "close enough" to a line to snap,
     // and how do we handle snapping when close enough to multiple lines?  We
     // probably want to prefer intersections between lines to closest line
     // point if we are close to multiple lines...
     int ret = 0;
+    cpinfo.ctol_sq = line_tol_sq(gedp, &gedp->ged_gvp->gv_data_lines);
+    bu_log("%g\n", cpinfo.ctol_sq);
     ret += _find_closest_point(&cpinfo, p, &gedp->ged_gvp->gv_data_lines);
+    cpinfo.ctol_sq = line_tol_sq(gedp, &gedp->ged_gvp->gv_sdata_lines);
+    bu_log("%g\n", cpinfo.ctol_sq);
     ret += _find_closest_point(&cpinfo, p, &gedp->ged_gvp->gv_sdata_lines);
 
     // Check if we are close enough to two line segments to warrant using the
