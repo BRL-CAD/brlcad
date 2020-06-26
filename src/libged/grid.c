@@ -183,6 +183,14 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
+    // TODO - need more sophisticated grid drawing - when zoomed out too far
+    // grid disappears.  Need to simply draw a coarse grid that aligns with the
+    // finer grid under it.
+    //
+    // TODO - when zoomed in so close the nearest grid points are not visible,
+    // should probably disable grid snapping automatically and assume the goal
+    // is free-form movement at that scale, since there are no visible snapping
+    // points to target...
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.draw);
