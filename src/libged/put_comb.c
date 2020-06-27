@@ -547,9 +547,9 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	new_name = new_name_v4;
 	if (dp == RT_DIR_NULL)
-	    NAMEMOVE(argv[1], new_name_v4);
+	    bu_strlcpy(new_name_v4, argv[1], NAMESIZE+1);
 	else
-	    NAMEMOVE(dp->d_namep, new_name_v4);
+	    bu_strlcpy(new_name_v4, dp->d_namep, NAMESIZE+1);
     } else {
 	if (dp == RT_DIR_NULL)
 	    new_name = (char *)argv[1];
