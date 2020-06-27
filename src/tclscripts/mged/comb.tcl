@@ -929,7 +929,7 @@ proc comb_apply { id } {
 	if {$comb_control($id,color) == ""} {
 	    set color ""
 	} else {
-	    set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
+	    set color [getRGB $top.colorMB $comb_control($id,color)]
 	}
 
 	# actually apply the edits to the combination on disk
@@ -965,7 +965,7 @@ proc comb_apply { id } {
     if {$comb_control($id,color) == ""} {
 	set color ""
     } else {
-	set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
+	set color [getRGB $top.colorMB $comb_control($id,color)]
     }
 
     # actually apply the edits to the combination on disk
