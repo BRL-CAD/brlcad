@@ -14348,6 +14348,10 @@ to_vslew(struct ged *gedp,
 	    ged_grid(gedp, 2, (const char **)av);
 	}
 
+	if (gedp->ged_gvp->gv_snap_lines) {
+	    ged_view_center_linesnap(gedp);
+	}
+
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
 	}

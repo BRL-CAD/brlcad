@@ -78,6 +78,7 @@ GED_EXPORT extern void ged_view_init(struct bview *gvp);
 
 /* defined in grid.c */
 GED_EXPORT extern int ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy);
+GED_EXPORT extern void ged_view_center_linesnap(struct ged *gedp);
 
 /**
  * Grid utility command.

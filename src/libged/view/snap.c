@@ -252,11 +252,25 @@ ged_snap_to_lines(struct ged *gedp, fastf_t *vx, fastf_t *vy)
 	MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
 	(*vx) = vp[0];
 	(*vy) = vp[1];
-	bu_log("x, y: %g, %g\n", *vx, *vy);
 	return 1;
     }
 
     return 0;
+}
+
+// TODO - this is another function that belongs in libdm...
+void
+ged_view_center_linesnap(struct ged *gedp)
+{
+    point_t view_pt;
+    point_t model_pt;
+
+    MAT_DELTAS_GET_NEG(model_pt, gedp->ged_gvp->gv_center);
+    MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
+    ged_snap_to_lines(gedp, &view_pt[X], &view_pt[Y]);
+    MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_pt);
+    ged_view_update(gedp->ged_gvp);
 }
 
 int
