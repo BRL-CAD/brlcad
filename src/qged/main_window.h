@@ -73,6 +73,7 @@
 #include "cadconsole.h"
 #include "cadtreemodel.h"
 #include "cadaccordion.h"
+#include <display/Display.h>
 
 class BRLCAD_MainWindow : public QMainWindow
 {
@@ -81,7 +82,7 @@ class BRLCAD_MainWindow : public QMainWindow
 	BRLCAD_MainWindow();
 	void restore_settings();
 
-	QGLWidget *canvas;
+	Display *canvas;
 
     private slots:
 	void open_file();

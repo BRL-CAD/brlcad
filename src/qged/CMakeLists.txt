@@ -19,6 +19,11 @@ add_subdirectory(qtads)
 # because most of BRL-CAD's targets are not Qt targets.  We don't
 # want to run the automatic moc logic for all of them.
 
+
+include_directories(
+        "display"
+        "display/glm/")
+
 set(qged_srcs
   main.cpp
   main_window.cpp
@@ -39,6 +44,13 @@ set(qged_srcs
   QAccordionWidget.cpp
   QToolPalette.cpp
   QFlowLayout.cpp
+  display/OrthographicCamera.cpp
+  display/Display.cpp
+  display/DisplayManager.cpp
+  display/GeometryRenderer.cpp
+  display/GeometryRenderer.h
+  display/AxesRenderer.cpp
+  display/AxesRenderer.h
   )
 
 set(moc_headers
@@ -59,6 +71,10 @@ set(moc_headers
   QAccordionWidget.h
   QToolPalette.h
   QFlowLayout.h
+  display/Camera.h
+  display/OrthographicCamera.h
+  display/Display.h
+  display/DisplayManager.h
   )
 
 if(BRLCAD_ENABLE_QT)
