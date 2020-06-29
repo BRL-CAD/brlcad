@@ -4331,7 +4331,6 @@ package provide cadwidgets::Ged 1.0
     # and gridSnap is active, apply snap to grid to the data point
     # currently being moved.
 
-    # TODO - need to handle lines snapping in some fashion here as well...
     if {$point == "" && $itk_option(-gridSnap)} {
 	# First, get the data point being moved.
 	if {$mLastDataType == "data_labels" || $mLastDataType == "sdata_labels"} {
@@ -4351,6 +4350,9 @@ package provide cadwidgets::Ged 1.0
 	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
 	lappend view $vZ
 	set point [pane_v2m_point $_pane $view]
+    }
+    if {$point == "" && !($itk_option(-gridSnap)) && $itk_option(-linesSnap)} {
+	puts "TODO: check for line snapping"
     }
 
     # Replace the mLastDataIndex point with this point
@@ -4381,7 +4383,6 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_poly_move {_pane} {
     refresh_off
 
-    # TODO - need to handle lines snapping in some fashion here as well...
     if {$itk_option(-gridSnap)} {
 	# First, get the data point being moved.
 	set point [eval $mGed data_polygons $itk_component($_pane) get_point $mLastDataIndex]
@@ -4397,6 +4398,9 @@ package provide cadwidgets::Ged 1.0
 
 	# Replace the mLastDataIndex point with this point
 	eval $mGed data_polygons $itk_component($_pane) replace_point $mLastDataIndex [list $point]
+    }
+    if {!($itk_option(-gridSnap)) && $itk_option(-linesSnap)} {
+	puts "TODO: check for line snapping"
     }
 
     if {[$mGed data_polygons $itk_component($_pane) moveall]} {
@@ -4463,11 +4467,14 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_poly_circ {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
-    # TODO - need to handle lines snapping in some fashion here as well...
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
 	eval $mGed mouse_poly_circ $itk_component($_pane) $mpos
     }
+    if {!($itk_option(-gridSnap)) && $itk_option(-linesSnap)} {
+	puts "TODO: check for line snapping"
+    }
+
 
     set plist [$mGed data_polygons $itk_component($_pane) polygons]
     set ti [$mGed data_polygons $itk_component($_pane) target_poly]
@@ -4487,12 +4494,15 @@ package provide cadwidgets::Ged 1.0
 
     set mpos [$mGed get_prev_mouse $itk_component($_pane)]
 
-    # TODO - need to handle lines snapping in some fashion here as well...
     if {$itk_option(-gridSnap)} {
 	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
 	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
 	set mpos [$mGed view2screen $itk_component($_pane) $view]
     }
+    if {!($itk_option(-gridSnap)) && $itk_option(-linesSnap)} {
+	puts "TODO: check for line snapping"
+    }
+
 
     eval $mGed poly_cont_build $itk_component($_pane) $mpos
     $mGed poly_cont_build_end $itk_component($_pane)
@@ -4513,11 +4523,14 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_poly_ell {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
-    # TODO - need to handle lines snapping in some fashion here as well...
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
 	eval $mGed mouse_poly_ell $itk_component($_pane) $mpos
     }
+    if {!($itk_option(-gridSnap)) && $itk_option(-linesSnap)} {
+	puts "TODO: check for line snapping"
+    }
+
 
     set plist [$mGed data_polygons $itk_component($_pane) polygons]
     set ti [$mGed data_polygons $itk_component($_pane) target_poly]
@@ -4535,11 +4548,14 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_poly_rect {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
-    # TODO - need to handle lines snapping in some fashion here as well...
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
 	eval $mGed mouse_poly_rect $itk_component($_pane) $mpos
     }
+    if {!($itk_option(-gridSnap)) && $itk_option(-linesSnap)} {
+	puts "TODO: check for line snapping"
+    }
+
 
     set plist [$mGed data_polygons $itk_component($_pane) polygons]
     set ti [$mGed data_polygons $itk_component($_pane) target_poly]
