@@ -855,15 +855,16 @@ main(int argc, const char *argv[])
     // Build a set of filters that will cull out files which would otherwise
     // be matches for items of interest
     const char *reject_filters[] {
-	"/bullet/",
-	"/doc/",
-	"/shapelib/",
 	".log",
 	".svn",
+	"/bullet/",
+	"/doc/",
+	"/qtads/",
+	"/shapelib/",
 	"misc/CMake/Find",
+	"misc/debian",
 	"misc/repoconv",
 	"misc/tools",
-	"misc/debian",
 	"pkg.h",
 	"src/libpkg",
 	"src/other/",
