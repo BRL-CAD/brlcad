@@ -250,8 +250,9 @@ ged_snap_to_lines(struct ged *gedp, fastf_t *vx, fastf_t *vy)
     MAT4X3PNT(p, gedp->ged_gvp->gv_view2model, vp);
     if (ged_snap_lines(&out_pt, gedp, &p) == GED_OK) {
 	MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
-	(*vx) = p[0];
-	(*vy) = p[1];
+	(*vx) = vp[0];
+	(*vy) = vp[1];
+	bu_log("x, y: %g, %g\n", *vx, *vy);
 	return 1;
     }
 

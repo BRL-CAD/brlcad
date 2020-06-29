@@ -13771,7 +13771,7 @@ to_snap_view(struct ged *gedp,
     fvy = vy;
 
     gedp->ged_gvp = gdvp->gdv_view;
-    if (!gedp->ged_gvp->gv_grid.snap) {
+    if (!gedp->ged_gvp->gv_snap_lines && !gedp->ged_gvp->gv_grid.snap) {
 	bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
 	return GED_OK;
     }
@@ -13780,7 +13780,7 @@ to_snap_view(struct ged *gedp,
     if (gedp->ged_gvp->gv_snap_lines) {
 	snapped = ged_snap_to_lines(gedp, &fvx, &fvy);
     }
-    if (!snapped) {
+    if (!snapped && gedp->ged_gvp->gv_grid.snap) {
 	ged_snap_to_grid(gedp, &fvx, &fvy);
     }
 

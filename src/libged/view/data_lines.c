@@ -31,6 +31,9 @@
  * Archer> view sdata_lines line_width 100
  * Archer> view sdata_lines color 255 0 0
  *
+ * in sph.s sph 0 0 0 10
+ * view sdata_lines points {{1.5 -10 0} {1.5 10 0}}; view sdata_lines color 255 0 0; view sdata_lines draw 1
+ *
  * Note that gedp->ged_gvp must be set to the correct display
  * manager before calling this command, to put the output in
  * the correct display manager.  If the same line is to be shown
@@ -82,6 +85,29 @@ _view_dlines_cmd_draw(void *bs, int argc, const char **argv)
 
 	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+}
+
+static int
+_view_dlines_cmd_snap(void *bs, int argc, const char **argv)
+{
+    struct view_dlines_state *vs = (struct view_dlines_state *)bs;
+    struct ged *gedp = vs->gedp;
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_snap_lines);
+	return GED_OK;
+    }
+
+    if (argc == 2) {
+	int i;
+
+	if (bu_sscanf(argv[1], "%d", &i) != 1) return GED_ERROR;
+
+	gedp->ged_gvp->gv_snap_lines = (i) ? 1 : 0;
+
 	return GED_OK;
     }
 
@@ -235,6 +261,7 @@ const struct bu_cmdtab _view_dline_cmds[] = {
     { "color",      _view_dlines_cmd_color},
     { "line_width", _view_dlines_cmd_line_width},
     { "points",     _view_dlines_cmd_points},
+    { "snap",       _view_dlines_cmd_snap},
     { (char *)NULL,      NULL}
 };
 
