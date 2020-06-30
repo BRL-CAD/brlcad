@@ -18,9 +18,6 @@
  * information.
  */
 /** @file AxesRenderer.h */
-//
-// Created by Sadeep on 28-Jun.
-//
 
 #ifndef BRLCAD_AXESRENDERER_H
 #define BRLCAD_AXESRENDERER_H

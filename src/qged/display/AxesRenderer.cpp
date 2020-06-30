@@ -18,9 +18,6 @@
  * information.
  */
 /** @file AxesRenderer.cpp */
-//
-// Created by Sadeep on 28-Jun.
-//
 
 #include "common.h"
 

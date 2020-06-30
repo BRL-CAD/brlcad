@@ -18,9 +18,7 @@
  * information.
  */
 /** @file OrthographicCamera.cpp */
-//
-// Created by Sadeep on 09-Jun.
-//
+
 
 #include "common.h"
 

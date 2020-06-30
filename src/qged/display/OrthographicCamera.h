@@ -18,9 +18,7 @@
  * information.
  */
 /** @file OrthographicCamera.h */
-//
-// Created by Sadeep on 09-Jun.
-//
+
 
 #ifndef RT3_OrthographicCAMERA_H
 #define RT3_OrthographicCAMERA_H

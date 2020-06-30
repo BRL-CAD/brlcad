@@ -18,9 +18,6 @@
  * information.
  */
 /** @file Camera.h */
-//
-// Created by Sadeep on 09-Jun.
-//
 
 #ifndef RT3_CAMERABK_H
 #define RT3_CAMERABK_H

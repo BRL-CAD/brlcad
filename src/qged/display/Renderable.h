@@ -18,9 +18,7 @@
  * information.
  */
 /** @file Renderable.h */
-//
-// Created by Sadeep on 29-Jun.
-//
+
 
 #ifndef BRLCAD_RENDERABLE_H
 #define BRLCAD_RENDERABLE_H
