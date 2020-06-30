@@ -18,9 +18,6 @@
  * information.
  */
 /** @file GeometryRenderer.h */
-//
-// Created by Sadeep on 28-Jun.
-//
 
 #ifndef BRLCAD_GEOMETRYRENDERER_H
 #define BRLCAD_GEOMETRYRENDERER_H
@@ -47,18 +44,21 @@ union tree;
 class GeometryRenderer:public Renderable {
 public:
     GeometryRenderer(rt_wdb *database, DisplayManager *displayManager);
-
     rt_wdb * getDatabase();
     void setDatabase(rt_wdb *database);
-
-    static tree *drawSolid(db_tree_state *tsp, const db_full_path *pathp, rt_db_internal *ip, void *clientData);
     void onDatabaseUpdated();
     void render();
 private:
     rt_wdb *database;
+    rt_i * r_database;
     DisplayManager *displayManager;
     float defaultWireColor[3] = {1,.1,.4};
     std::vector<int> solids; // contains the display list of each solid
+    bool immediateMode = false;
+    bool databaseUpdated = false;
+
+    static tree *drawSolid(db_tree_state *tsp, const db_full_path *pathp, rt_db_internal *ip, void *clientData);
+    void drawDatabase();
 };
 
 

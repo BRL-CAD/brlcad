@@ -18,9 +18,6 @@
  * information.
  */
 /** @file GeometryRenderer.cpp */
-//
-// Created by Sadeep on 28-Jun.
-//
 
 #include "common.h"
 #include "GeometryRenderer.h"
@@ -46,8 +43,18 @@ void GeometryRenderer::render() {
     if (database == NULL) return;
     displayManager->saveState();
     glEnable(GL_LIGHTING);
-    for (auto i:solids) {
-        displayManager->drawDList(i);
+
+    if(!immediateMode) {
+        if (databaseUpdated) {
+            drawDatabase();
+            databaseUpdated = false;
+        }
+        for (auto i:solids) {
+            displayManager->drawDList(i);
+        }
+    }
+    else{
+        drawDatabase();
     }
     displayManager->restoreState();
 }
@@ -56,12 +63,19 @@ void GeometryRenderer::render() {
  * Clears existing display lists, iterate through each solid and generates display lists by calling drawSolid on each
  */
 void GeometryRenderer::onDatabaseUpdated() {
-    rt_i * r_db = rt_new_rti(database->dbip);
+    r_database = rt_new_rti(database->dbip);
+    if (!immediateMode) {
+        databaseUpdated = true;
+    }
+    else {
 
+    }
+}
+void GeometryRenderer::drawDatabase() {
     db_tree_state initState;
-    db_init_db_tree_state(&initState, r_db->rti_dbip, database->wdb_resp);
-    initState.ts_ttol = &r_db->rti_ttol;
-    initState.ts_tol = &r_db->rti_tol;
+    db_init_db_tree_state(&initState, r_database->rti_dbip, database->wdb_resp);
+    initState.ts_ttol = &r_database->rti_ttol;
+    initState.ts_tol = &r_database->rti_tol;
 
     for (auto i: solids){
         displayManager->freeDLists(i,1);
@@ -73,11 +87,9 @@ void GeometryRenderer::onDatabaseUpdated() {
     if (path_cnt) {
         for (int i = 0; i < path_cnt; i++) {
             const char *topObjectName = dbObjects[i]->d_namep;
-            db_walk_tree(r_db->rti_dbip, 1, &topObjectName, 1, &initState, 0, 0, drawSolid, this);
+            db_walk_tree(r_database->rti_dbip, 1, &topObjectName, 1, &initState, 0, 0, drawSolid, this);
         }
     }
-
-    rt_free_rti(r_db);
 }
 
 
@@ -101,8 +113,12 @@ tree *GeometryRenderer::drawSolid(db_tree_state *tsp, const db_full_path *UNUSED
         }
     }
 
-    GLuint dlist = displayManager->genDLists(1);
-    displayManager->beginDList(dlist);  // begin display list --------------
+    GLuint dlist;
+    if (!geometryRenderer->immediateMode) {
+        dlist = displayManager->genDLists(1);
+        displayManager->beginDList(dlist);  // begin display list --------------
+        geometryRenderer->solids.push_back(dlist);
+    }
 
     if (tsp->ts_mater.ma_color_valid) {
         displayManager->setFGColor(tsp->ts_mater.ma_color[0], tsp->ts_mater.ma_color[1], tsp->ts_mater.ma_color[2], 1);
@@ -114,9 +130,10 @@ tree *GeometryRenderer::drawSolid(db_tree_state *tsp, const db_full_path *UNUSED
 
     displayManager->setLineStyle(tsp->ts_sofar & (TS_SOFAR_MINUS | TS_SOFAR_INTER));
     displayManager->drawVList(reinterpret_cast<bn_vlist *>(&vhead));
-    displayManager->endDList();     // end display list --------------
 
-    geometryRenderer->solids.push_back(dlist);
+    if (!geometryRenderer->immediateMode) {
+        displayManager->endDList();     // end display list --------------
+    }
 
     return ret;
 }
