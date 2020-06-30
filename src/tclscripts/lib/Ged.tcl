@@ -2211,7 +2211,8 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mat4x3pnt {args} {
-    uplevel \#0 mat4x3pnt $args
+    #uplevel \#0 mat4x3pnt $args
+    eval $mGed mat4x3pnt $args
 }
 
 ::itcl::body cadwidgets::Ged::mat_ae {args} {
