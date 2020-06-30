@@ -800,7 +800,7 @@ void CADTreeModel::fetchMore(const QModelIndex &idx)
     /* TODO - need to actually check whether the child list matches the current search results,
      * and clear/rebuild things if there has been a change - the below check works only for a
      * static tree */
-    if (cnt && !idx.child(cnt-1, 0).isValid()) {
+    if (cnt) { // TODO - .child is obsolete, need to revisit this test:  && !idx.child(cnt-1, 0).isValid()) {
 	beginInsertRows(idx, 0, cnt);
 	cad_add_children(comb->tree, OP_UNION, curr_node);
 	endInsertRows();
