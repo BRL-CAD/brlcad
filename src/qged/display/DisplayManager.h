@@ -18,9 +18,7 @@
  * information.
  */
 /** @file DisplayManager.h */
-//
-// Created by Sadeep on 12-Jun.
-//
+
 
 #ifndef RT3_DisplayManager_H
 #define RT3_DisplayManager_H
@@ -51,6 +49,7 @@ public:
     void endDList();
     void drawDList(unsigned int list);
     void freeDLists(unsigned int list, int range);
+    GLboolean isDListValid(unsigned int list);
     void saveState();
     void restoreState();
     void drawBegin();

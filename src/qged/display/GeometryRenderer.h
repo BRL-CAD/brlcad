@@ -43,22 +43,22 @@ union tree;
 
 class GeometryRenderer:public Renderable {
 public:
-    GeometryRenderer(rt_wdb *database, DisplayManager *displayManager);
+    explicit GeometryRenderer(DisplayManager *displayManager);
     rt_wdb * getDatabase();
     void setDatabase(rt_wdb *database);
     void onDatabaseUpdated();
-    void render();
+    void render() override;
 private:
-    rt_wdb *database;
-    rt_i * r_database;
+    rt_wdb *database = nullptr;
+    rt_i * r_database = nullptr;
     DisplayManager *displayManager;
     float defaultWireColor[3] = {1,.1,.4};
-    std::vector<int> solids; // contains the display list of each solid
     bool immediateMode = false;
     bool databaseUpdated = false;
 
     static tree *drawSolid(db_tree_state *tsp, const db_full_path *pathp, rt_db_internal *ip, void *clientData);
     void drawDatabase();
+    std::vector<int> solids; // contains the display list of each solid
 };
 
 

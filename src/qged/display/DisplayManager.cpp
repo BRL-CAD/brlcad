@@ -18,9 +18,7 @@
  * information.
  */
 /** @file DisplayManager.cpp */
-//
-// Created by Sadeep on 12-Jun.
-//
+
 #include <rt/db_internal.h>
 #include <rt/functab.h>
 #include <rt/db_io.h>
@@ -331,17 +329,18 @@ void DisplayManager::endDList()
     glEndList();
 }
 
+/*
+ * End of the display list initiated by beginDList.
+ */
+GLboolean DisplayManager::isDListValid(unsigned int list)
+{
+    return glIsList(list);
+}
+
 void DisplayManager::freeDLists(unsigned int list, int range)
 {
     glDeleteLists((GLuint)list, (GLsizei)range);
 }
-void DisplayManager::saveState(){
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-}
-void DisplayManager::restoreState(){
-    glPopAttrib();
-}
-
 void DisplayManager::drawBegin()
 {
     glClearColor(bgColor[0],bgColor[1],bgColor[2],1);
@@ -351,6 +350,13 @@ void DisplayManager::drawBegin()
 //    glMatrixMode(GL_MODELVIEW);
 //    glPopMatrix();
 
+}
+
+void DisplayManager::saveState(){
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+}
+void DisplayManager::restoreState(){
+    glPopAttrib();
 }
 
 void DisplayManager::loadMatrix(const GLfloat *m)

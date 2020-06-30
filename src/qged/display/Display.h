@@ -18,9 +18,7 @@
  * information.
  */
 /** @file Display.h */
-//
-// Created by Sadeep on 07-Jun.
-//
+
 
 #ifndef RT3_DISPLAY_H
 #define RT3_DISPLAY_H
@@ -39,7 +37,7 @@ class Display : public QOpenGLWidget{
 
 Q_OBJECT
 public:
-    Display(rt_wdb *_database);
+    Display();
 
     Camera *camera;
     void onDatabaseUpdated();
@@ -70,9 +68,8 @@ private:
     Qt::MouseButton moveCameraMouseButton = Qt::RightButton;
     Qt::KeyboardModifier rotateAroundThirdAxisModifier = Qt::ShiftModifier;
 
-
     DisplayManager *displayManager;
-    rt_wdb *database;
+    rt_wdb *database = nullptr;
     GeometryRenderer * geometryRenderer;
     AxesRenderer * axesRenderer;
     std::vector<Renderable*> renderers;

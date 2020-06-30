@@ -36,16 +36,18 @@
 #endif
 
 
-GeometryRenderer::GeometryRenderer(rt_wdb *database, DisplayManager *displayManager) : database(database),
-                                                                                       displayManager(displayManager) {}
+GeometryRenderer::GeometryRenderer(DisplayManager *displayManager) : displayManager(displayManager) {}
 
 void GeometryRenderer::render() {
-    if (database == NULL) return;
+    if (database == nullptr) return;
     displayManager->saveState();
     glEnable(GL_LIGHTING);
 
     if(!immediateMode) {
-        if (databaseUpdated) {
+        // If database has been updated we need to redraw.
+        // Also QOpenGLWidget sometimes looses saved display list after UI changes (dock / undock etc).
+        // Therefore we need to draw again if the dlists are not available
+        if (databaseUpdated || (!solids.empty() && !displayManager->isDListValid(solids[0]))) {
             drawDatabase();
             databaseUpdated = false;
         }
@@ -59,9 +61,6 @@ void GeometryRenderer::render() {
     displayManager->restoreState();
 }
 
-/*
- * Clears existing display lists, iterate through each solid and generates display lists by calling drawSolid on each
- */
 void GeometryRenderer::onDatabaseUpdated() {
     r_database = rt_new_rti(database->dbip);
     if (!immediateMode) {
@@ -71,6 +70,10 @@ void GeometryRenderer::onDatabaseUpdated() {
 
     }
 }
+
+/*
+ * Clears existing display lists, iterate through each solid and generates display lists by calling drawSolid on each
+ */
 void GeometryRenderer::drawDatabase() {
     db_tree_state initState;
     db_init_db_tree_state(&initState, r_database->rti_dbip, database->wdb_resp);

@@ -18,9 +18,7 @@
  * information.
  */
 /** @file Display.cpp */
-//
-// Created by Sadeep on 07-Jun.
-//
+
 
 #include "Display.h"
 #include <glm/gtc/type_ptr.hpp>
@@ -47,11 +45,10 @@
 using namespace std;
 
 
-Display::Display(rt_wdb *database) {
-    this->database = database;
+Display::Display() {
     camera = new OrthographicCamera();
     displayManager = new DisplayManager(this);
-    geometryRenderer = new GeometryRenderer(database,displayManager);
+    geometryRenderer = new GeometryRenderer(displayManager);
     axesRenderer = new AxesRenderer();
 
     renderers.push_back(geometryRenderer);
