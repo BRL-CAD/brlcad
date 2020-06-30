@@ -246,7 +246,7 @@ void CADAttributesModel::fetchMore(const QModelIndex &idx)
     CADAttributesNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return;
     int cnt = attr_children(curr_node->name.toLocal8Bit());
-    if (cnt && !idx.child(cnt-1, 0).isValid()) {
+    if (cnt) { // && !idx.child(cnt-1, 0).isValid()) {
 	beginInsertRows(idx, 0, cnt);
 	add_Children(curr_node->name.toLocal8Bit(),curr_node);
 	endInsertRows();
