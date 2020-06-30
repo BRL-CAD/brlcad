@@ -19,6 +19,15 @@ https://github.com/jorgen/yat
 https://doc.qt.io/qt-5/qml-qtquick-controls-treeview.html
 http://doc.qt.io/qt-5/qml-qtwebview-webview.html
 
+
+3rd party widgets of possible interest:
+
 The following might be of interest for scenarios where we were using tktable, if
 Qt's built ins aren't enough (one of the license options is LGPL 2.1):
 https://gitlab.com/ics-qicstable/qicstable
+
+QHexEdit2 might be useful for some low level debugging/inspection features...
+https://github.com/Simsys/qhexedit2
+
+Node editor:
+https://github.com/paceholder/nodeeditor
