@@ -19,3 +19,6 @@ https://github.com/jorgen/yat
 https://doc.qt.io/qt-5/qml-qtquick-controls-treeview.html
 http://doc.qt.io/qt-5/qml-qtwebview-webview.html
 
+The following might be of interest for scenarios where we were using tktable, if
+Qt's built ins aren't enough (one of the license options is LGPL 2.1):
+https://gitlab.com/ics-qicstable/qicstable
