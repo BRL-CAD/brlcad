@@ -1,61 +1,71 @@
+
+***************************************************************
+THIS IS NOT YET READY.  WILL REMOVE THIS COMMENT WHEN COMPLETE.
+***************************************************************
+
+x == no means to contact
++ == emailed, no response
+x+ == email rejected
+
 Abhi2011 Abhijit Nandy <abhijit.nandy@gmail.com>
 abhi2011 Abhijit Nandy <abhijit.nandy@gmail.com>
-adam Adam Ross <adam>
+adam Adam Ross <aross@ara.com>
 agkphysics Aaron Keesing <agkphysics@gmail.com>
-andrecastelo André Castelo <andrecastelo>
-anrgmrty Anurag Murty <anrgmrty>
-bharder Brad Harder <bharder>
+andrecastelo André Castelo <andrecastelo@gmail.com>
+anrgmrty Anurag Murty <anuragmurty@gmail.com>
+bharder Brad Harder <brad.harder@gmail.com>
 bhinesley Brandon Hinesley <bhinesley@gmail.com>
-bob1961 Robert Parker <bob1961>
-bparker Robert Parker <bob1961>
+bob1961 Robert Parker <unacknowledged@users.noreply.github.com>
+bparker Robert Parker <unacknowledged@users.noreply.github.com>
 brlcad Christopher Sean Morrison <brlcad@gmail.com>
 butler Lee Butler <iraytrace@users.noreply.github.com>
 caen23 Cezar El-Nazli <cezar.elnazli2@gmail.com>
-carlmoore Carl Moore <carlmoore>
-cjohnson Christopher Johnson <cjohnson@cyberpaladin.com>
-cnuzman Carl Nuzman <cnuzman>
-cprecup Cristina Precup <cprecup>
-crdueck Chris Dueck <crdueck>
+carlmoore Carl Moore <carlm0404@gmail.com>
+x cjohnson Christopher Johnson <cjohnson@cyberpaladin.com>
+cnuzman Carl Nuzman <carl.nuzman@nokia-bell-labs.com>
+cprecup Cristina Precup <cprecup@cisco.com>
+crdueck Chris Dueck <cdueck93@gmail.com>
 d_rossberg Daniel Rossberg <drossberg@users.noreply.github.com>
-davidloman David Loman <davidloman>
-ddreeves70 David Reeves <ddreeves70>
-dgodbey David Godbey <dgodbey>
-dhoward Doug Howard <dhoward>
-dpk Douglas Kingston <dpk>
-dtremenak Daniel Remenak <dtremenak>
-ebautu Elena Bautu <ebautu>
+davidloman David Loman <dloman77@gmail.com>
+x+ ddreeves70 David Reeves <ddreeves70@yahoo.com>
+dgodbey David Godbey <dgodbey@yahoo.com>
+dhoward Doug Howard <doug@survice.com>
+dpk Douglas Kingston <dpk@randomnotes.org>
+dtremenak Daniel Remenak <dtremenak@gmail.com>
+ebautu Elena Bautu <ebautu@gmail.com>
 ejno Jonathan Engbert <5529404+ejno@users.noreply.github.com>
-erikg Erik Greenwald <erik@elfga.com>
-erikgreenwald Erik Greenwald <erik@elfga.com>
+erikg Erik Greenwald <erik@brlcad.org>
+erikgreenwald Erik Greenwald <erik@brlcad.org>
 g2asc Charles Kennedy <kermit@brlcad.org>
 gabbar1947 Shubham Rathore <shubhamrathore1947@gmail.com>
-gdurf Glenn Durfee <gdurf>
-gwyn Douglas Gwyn <gwyn>
-hartley Robert Hartley <hartley@vt.edu>
-homovulgaris Dawn Thomas <homovulgaris>
-iiizzzaaakkk Isacc Kamga <iiizzzaaakkk>
-indianlarry Keith Boman <indianlarry>
-irpguardian Stephen Kennedy <irpguardian>
-jdoliner Joe Doliner <jdoliner>
-jebbly Jeffrey Liu <jebbly>
-jehunt Jim Hunt  <jhunt@ara.com>
-jgrosh John Grosh <jgrosh>
-jimhunt Jim Hunt  <jhunt@ara.com>
-jlowens Jason Owens <jlowens>
-jlowenz Jason Owens <jlowens>
-joevalleyfield Timothy Myers <joevalleyfield>
-johnranderson John Anderson <jra@arl.army.mil>
-jordisayol Jordi Sayol <jordisayol>
-jra John Anderson <jra@arl.army.mil>
-j-schulte Johannes Schulte <j-schulte>
-justin Justin Shumaker <twingy>
+gdurf Glenn Durfee <gdurfee@gmail.com>
++ gwyn Douglas Gwyn <gwyn>
++ hartley Robert Hartley <hartley@vt.edu>
+x+ homovulgaris Dawn Thomas <homovulgaris>
++ iiizzzaaakkk Isacc Kamga <iiizzzaaakkk>
++ indianlarry Keith Boman <indianlarry>
+irpguardian Stephen Kennedy <59673185+irpguardian@users.noreply.github.com>
+jdoliner Joe Doliner <jdoliner@gmail.com>
++ jehunt Jim Hunt  <jhunt@ara.com>
++ jimhunt Jim Hunt  <jhunt@ara.com>
++ jgrosh John Grosh <grosh1@llnl.gov>
++ jlowens Jason Owens <jlowenz@users.noreply.github.com>
++ jlowenz Jason Owens <jlowenz@users.noreply.github.com>
+joevalleyfield Timothy Myers <tim@jvsw.com>
+johnranderson John Anderson <daytonajra@gmail.com>
++ jordisayol Jordi Sayol <g.sayol@gmail.com>
+jra John Anderson <daytonajra@gmail.com>
+j-schulte Johannes Schulte <j_schulte@outlook.com>
++ justin Justin Shumaker <linkedin+facebook>
++ twingy Justin Shumaker <linkedin+facebook>
 kermit Charles Kennedy <kermit@brlcad.org>
-kunigami Guilherme Kunigami <kunigami>
+kunigami Guilherme Kunigami <kunigami@gmail.com>
 lbutler Lee Butler <iraytrace@users.noreply.github.com>
-louipc Loui Chang <louipc>
-mafm Manuel Montecelo <mafm>
+louipc Loui Chang <louipc@gmx.com>
++ mafm Manuel Montecelo <mafm>
 maths22 Jacob Burroughs <maths22@gmail.com>
-mccarty Cormac McCarty <mccarty>
+x mccarty Cormac McCarty <mccarty>
+
 mdtwenty Marco da Silva Domingues <mdtwenty>
 mendesr Roger Mendes <mendesr>
 merritt Don Merritt <merritt>
@@ -95,7 +105,6 @@ tbrowder2 Thomas Browder <tom.browder@gmail.com>
 tcs Terry Slattery <tcs>
 tossup tossup <tossup@brlcad.org>
 tranese TraNese Christy <tranese>
-twingy Justin Shumaker <twingy>
 vasco_costa Vasco Alexandre da Silva Costa <1638760+vcosta@users.noreply.github.com>
 vladbogo Vlad Bogolin <vladbogolin@gmail.com>
 wm William Mermagen <wm>
