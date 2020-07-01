@@ -380,7 +380,7 @@ ged_view_init(struct bview *gvp)
     gvp->gv_snap_tol_factor = 10;
     gvp->gv_snap_lines = 0;
 
-    ged_view_update(gvp);
+    bview_update(gvp);
 }
 
 

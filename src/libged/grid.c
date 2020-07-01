@@ -101,7 +101,7 @@ grid_vsnap(struct ged *gedp)
     ged_snap_to_grid(gedp, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_pt);
-    ged_view_update(gedp->ged_gvp);
+    bview_update(gedp->ged_gvp);
 }
 
 

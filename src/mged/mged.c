@@ -69,6 +69,7 @@
 #include "raytrace.h"
 #include "libtermio.h"
 #include "rt/db4.h"
+#include "dm/bview_util.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -392,7 +393,7 @@ mged_view_callback(struct bview *gvp,
 void
 new_mats(void)
 {
-    ged_view_update(view_state->vs_gvp);
+    bview_update(view_state->vs_gvp);
 }
 
 

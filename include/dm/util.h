@@ -27,7 +27,7 @@
 
 #include "vmath.h"
 
-#include "./dm/defines.h"
+#include "dm/defines.h"
 
 #ifndef DM_UTIL_H
 #define DM_UTIL_H

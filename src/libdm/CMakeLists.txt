@@ -58,6 +58,7 @@ set(LIBDM_SRCS
   adc.c
   asize.c
   axes.c
+  bview_util.c
   clip.c
   dm-generic.c
   dm_init.cpp

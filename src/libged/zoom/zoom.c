@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include "dm/bview_util.h"
 #include "ged.h"
 
 HIDDEN int
@@ -30,7 +31,7 @@ zoom(struct ged *gedp, double sf)
 	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    ged_view_update(gedp->ged_gvp);
+    bview_update(gedp->ged_gvp);
 
     return GED_OK;
 }
