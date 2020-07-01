@@ -27,6 +27,7 @@
 #define DM_BVIEW_UTIL_H
 
 #include "common.h"
+#include "bn/tol.h"
 #include "dm/defines.h"
 #include "dm/bview.h"
 
@@ -40,6 +41,7 @@ DM_EXPORT void bview_update(struct bview *gvp);
 
 
 DM_EXPORT fastf_t find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
+DM_EXPORT int polygons_overlap(bview_polygon *polyA, bview_polygon *polyB, matp_t model2view, struct bn_tol *tol, fastf_t iscale);
 
 
 __END_DECLS

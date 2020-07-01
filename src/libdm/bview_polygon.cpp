@@ -31,7 +31,9 @@
 #include "clipper.hpp"
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bn/mat.h"
+#include "bn/plane.h"
 #include "dm/defines.h"
 #include "dm/bview_util.h"
 
@@ -65,6 +67,375 @@ find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t s
 
     return (area * sf);
 }
+
+
+typedef struct {
+    size_t      pc_num_points;
+    point2d_t   *pc_point;
+} poly_contour_2d;
+
+typedef struct {
+    size_t              p_num_contours;
+    int                 *p_hole;
+    poly_contour_2d     *p_contour;
+} polygon_2d;
+
+int
+polygons_overlap(bview_polygon *polyA, bview_polygon *polyB, matp_t model2view, struct bn_tol *tol, fastf_t iscale)
+{
+    size_t i, j;
+    size_t beginA, endA, beginB, endB;
+    fastf_t tol_dist;
+    fastf_t tol_dist_sq;
+    fastf_t scale;
+    polygon_2d polyA_2d;
+    polygon_2d polyB_2d;
+    point2d_t pt_2d;
+    point_t A;
+    size_t winding = 0;
+    int ret = 0;
+
+    if (polyA->gp_num_contours < 1 || polyA->gp_contour[0].gpc_num_points < 1 ||
+	polyB->gp_num_contours < 1 || polyB->gp_contour[0].gpc_num_points < 1)
+	return 0;
+
+    tol_dist = (tol->dist > 0.0) ? tol->dist : BN_TOL_DIST;
+    tol_dist_sq = (tol->dist_sq > 0.0) ? tol->dist_sq : tol_dist * tol_dist;
+    scale = (iscale > (fastf_t)UINT16_MAX) ? iscale : (fastf_t)UINT16_MAX;
+
+    /* Project polyA and polyB onto the view plane */
+    polyA_2d.p_num_contours = polyA->gp_num_contours;
+    polyA_2d.p_hole = (int *)bu_calloc(polyA->gp_num_contours, sizeof(int), "p_hole");
+    polyA_2d.p_contour = (poly_contour_2d *)bu_calloc(polyA->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+
+    for (i = 0; i < polyA->gp_num_contours; ++i) {
+	polyA_2d.p_hole[i] = polyA->gp_hole[i];
+	polyA_2d.p_contour[i].pc_num_points = polyA->gp_contour[i].gpc_num_points;
+	polyA_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(polyA->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+
+	for (j = 0; j < polyA->gp_contour[i].gpc_num_points; ++j) {
+	    point_t vpoint;
+
+	    MAT4X3PNT(vpoint, model2view, polyA->gp_contour[i].gpc_point[j]);
+	    VSCALE(vpoint, vpoint, scale);
+	    V2MOVE(polyA_2d.p_contour[i].pc_point[j], vpoint);
+	}
+    }
+
+    polyB_2d.p_num_contours = polyB->gp_num_contours;
+    polyB_2d.p_hole = (int *)bu_calloc(polyB->gp_num_contours, sizeof(int), "p_hole");
+    polyB_2d.p_contour = (poly_contour_2d *)bu_calloc(polyB->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+
+    for (i = 0; i < polyB->gp_num_contours; ++i) {
+	polyB_2d.p_hole[i] = polyB->gp_hole[i];
+	polyB_2d.p_contour[i].pc_num_points = polyB->gp_contour[i].gpc_num_points;
+	polyB_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(polyB->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+
+	for (j = 0; j < polyB->gp_contour[i].gpc_num_points; ++j) {
+	    point_t vpoint;
+
+	    MAT4X3PNT(vpoint, model2view, polyB->gp_contour[i].gpc_point[j]);
+	    VSCALE(vpoint, vpoint, scale);
+	    V2MOVE(polyB_2d.p_contour[i].pc_point[j], vpoint);
+	}
+    }
+
+    /*
+     * Check every line segment of polyA against every line segment of polyB.
+     * If there are any intersecting line segments, there exists an overlap.
+     */
+    for (i = 0; i < polyA_2d.p_num_contours; ++i) {
+	for (beginA = 0; beginA < polyA_2d.p_contour[i].pc_num_points; ++beginA) {
+	    vect2d_t dirA;
+
+	    if (beginA == polyA_2d.p_contour[i].pc_num_points-1)
+		endA = 0;
+	    else
+		endA = beginA + 1;
+
+	    V2SUB2(dirA, polyA_2d.p_contour[i].pc_point[endA], polyA_2d.p_contour[i].pc_point[beginA]);
+
+	    for (j = 0; j < polyB_2d.p_num_contours; ++j) {
+		for (beginB = 0; beginB < polyB_2d.p_contour[j].pc_num_points; ++beginB) {
+		    vect2d_t distvec;
+		    vect2d_t dirB;
+
+		    if (beginB == polyB_2d.p_contour[j].pc_num_points-1)
+			endB = 0;
+		    else
+			endB = beginB + 1;
+
+		    V2SUB2(dirB, polyB_2d.p_contour[j].pc_point[endB], polyB_2d.p_contour[j].pc_point[beginB]);
+
+		    if (bn_isect_lseg2_lseg2(distvec,
+					     polyA_2d.p_contour[i].pc_point[beginA], dirA,
+					     polyB_2d.p_contour[j].pc_point[beginB], dirB,
+					     tol) == 1) {
+			/* Check to see if intersection is near an end point */
+			if (!NEAR_EQUAL(distvec[0], 0.0, tol_dist_sq) &&
+			    !NEAR_EQUAL(distvec[0], 1.0, tol_dist_sq) &&
+			    !NEAR_EQUAL(distvec[1], 0.0, tol_dist_sq) &&
+			    !NEAR_EQUAL(distvec[1], 1.0, tol_dist_sq)) {
+			    ret = 1;
+			    goto end;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    for (i = 0; i < polyB_2d.p_num_contours; ++i) {
+	size_t npts_on_contour = 0;
+	size_t npts_outside = 0;
+
+	/* Skip holes */
+	if (polyB_2d.p_hole[i])
+	    continue;
+
+	/* Check if all points in the current polygon B contour are inside A */
+	for (beginB = 0; beginB < polyB_2d.p_contour[i].pc_num_points; ++beginB) {
+	    winding = 0;
+	    V2MOVE(pt_2d, polyB_2d.p_contour[i].pc_point[beginB]);
+	    V2MOVE(A, pt_2d);
+	    A[2] = 0.0;
+
+	    for (j = 0; j < polyA_2d.p_num_contours; ++j) {
+		point_t B, C;
+		vect_t BmA, CmA;
+		vect_t vcross;
+
+		for (beginA = 0; beginA < polyA_2d.p_contour[j].pc_num_points; ++beginA) {
+		    fastf_t dot;
+
+		    if (beginA == polyA_2d.p_contour[j].pc_num_points-1)
+			endA = 0;
+		    else
+			endA = beginA + 1;
+
+		    if (V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[beginA], pt_2d, tol_dist_sq) ||
+			V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[endA], pt_2d, tol_dist_sq)) {
+			/* pt_2d is the same as one of the end points, so count it */
+			++npts_on_contour;
+
+			if (polyA_2d.p_hole[j])
+			    winding = 0;
+			else
+			    winding = 1;
+
+			goto endA;
+		    }
+
+		    if ((polyA_2d.p_contour[j].pc_point[beginA][1] <= pt_2d[1] &&
+			 polyA_2d.p_contour[j].pc_point[endA][1] > pt_2d[1])) {
+			V2MOVE(B, polyA_2d.p_contour[j].pc_point[endA]);
+			B[2] = 0.0;
+			V2MOVE(C, polyA_2d.p_contour[j].pc_point[beginA]);
+			C[2] = 0.0;
+		    } else if ((polyA_2d.p_contour[j].pc_point[endA][1] <= pt_2d[1] &&
+				polyA_2d.p_contour[j].pc_point[beginA][1] > pt_2d[1])) {
+			V2MOVE(B, polyA_2d.p_contour[j].pc_point[beginA]);
+			B[2] = 0.0;
+			V2MOVE(C, polyA_2d.p_contour[j].pc_point[endA]);
+			C[2] = 0.0;
+		    } else {
+			/* check if the point is on a horizontal edge */
+			if (NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[beginA][1],
+				       polyA_2d.p_contour[j].pc_point[endA][1], tol_dist_sq) &&
+			    NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[beginA][1], pt_2d[1], tol_dist_sq) &&
+			    ((polyA_2d.p_contour[j].pc_point[beginA][0] <= pt_2d[0] &&
+			      polyA_2d.p_contour[j].pc_point[endA][0] >= pt_2d[0]) ||
+			     (polyA_2d.p_contour[j].pc_point[endA][0] <= pt_2d[0] &&
+			      polyA_2d.p_contour[j].pc_point[beginA][0] >= pt_2d[0]))) {
+			    ++npts_on_contour;
+
+			    if (polyA_2d.p_hole[j])
+				winding = 0;
+			    else
+				winding = 1;
+
+			    goto endA;
+			}
+
+			continue;
+		    }
+
+		    VSUB2(BmA, B, A);
+		    VSUB2(CmA, C, A);
+		    VUNITIZE(BmA);
+		    VUNITIZE(CmA);
+		    dot = VDOT(BmA, CmA);
+
+		    if (NEAR_EQUAL(dot, -1.0, tol_dist_sq) || NEAR_EQUAL(dot, 1.0, tol_dist_sq)) {
+			++npts_on_contour;
+
+			if (polyA_2d.p_hole[j])
+			    winding = 0;
+			else
+			    winding = 0;
+
+			goto endA;
+		    }
+
+		    VCROSS(vcross, BmA, CmA);
+
+		    if (vcross[2] > 0)
+			++winding;
+		}
+	    }
+
+	endA:
+	    /* found a point on a polygon B contour that's outside of polygon A */
+	    if (!(winding%2)) {
+		++npts_outside;
+		if (npts_outside != npts_on_contour) {
+		    break;
+		}
+	    }
+	}
+
+	/* found a B polygon contour that's completely inside polygon A */
+	if (winding%2 || (npts_outside != 0 &&
+			  npts_outside != polyB_2d.p_contour[i].pc_num_points &&
+			  npts_outside == npts_on_contour)) {
+	    ret = 1;
+	    goto end;
+	}
+    }
+
+    for (i = 0; i < polyA_2d.p_num_contours; ++i) {
+	size_t npts_on_contour = 0;
+	size_t npts_outside = 0;
+
+	/* Skip holes */
+	if (polyA_2d.p_hole[i])
+	    continue;
+
+	/* Check if all points in the current polygon A contour are inside B */
+	for (beginA = 0; beginA < polyA_2d.p_contour[i].pc_num_points; ++beginA) {
+	    winding = 0;
+	    V2MOVE(pt_2d, polyA_2d.p_contour[i].pc_point[beginA]);
+	    V2MOVE(A, pt_2d);
+	    A[2] = 0.0;
+
+	    for (j = 0; j < polyB_2d.p_num_contours; ++j) {
+		point_t B, C;
+		vect_t BmA, CmA;
+		vect_t vcross;
+
+		for (beginB = 0; beginB < polyB_2d.p_contour[j].pc_num_points; ++beginB) {
+		    fastf_t dot;
+
+		    if (beginB == polyB_2d.p_contour[j].pc_num_points-1)
+			endB = 0;
+		    else
+			endB = beginB + 1;
+
+		    if (V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[beginB], pt_2d, tol_dist_sq) ||
+			V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[endB], pt_2d, tol_dist_sq)) {
+			/* pt_2d is the same as one of the end points, so count it */
+
+			if (polyB_2d.p_hole[j])
+			    winding = 0;
+			else
+			    winding = 1;
+
+			++npts_on_contour;
+			goto endB;
+		    }
+
+		    if ((polyB_2d.p_contour[j].pc_point[beginB][1] <= pt_2d[1] &&
+			 polyB_2d.p_contour[j].pc_point[endB][1] > pt_2d[1])) {
+			V2MOVE(B, polyB_2d.p_contour[j].pc_point[endB]);
+			B[2] = 0.0;
+			V2MOVE(C, polyB_2d.p_contour[j].pc_point[beginB]);
+			C[2] = 0.0;
+		    } else if ((polyB_2d.p_contour[j].pc_point[endB][1] <= pt_2d[1] &&
+				polyB_2d.p_contour[j].pc_point[beginB][1] > pt_2d[1])) {
+			V2MOVE(B, polyB_2d.p_contour[j].pc_point[beginB]);
+			B[2] = 0.0;
+			V2MOVE(C, polyB_2d.p_contour[j].pc_point[endB]);
+			C[2] = 0.0;
+		    } else {
+			/* check if the point is on a horizontal edge */
+			if (NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[beginB][1],
+				       polyB_2d.p_contour[j].pc_point[endB][1], tol_dist_sq) &&
+			    NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[beginB][1], pt_2d[1], tol_dist_sq) &&
+			    ((polyB_2d.p_contour[j].pc_point[beginB][0] <= pt_2d[0] &&
+			      polyB_2d.p_contour[j].pc_point[endB][0] >= pt_2d[0]) ||
+			     (polyB_2d.p_contour[j].pc_point[endB][0] <= pt_2d[0] &&
+			      polyB_2d.p_contour[j].pc_point[beginB][0] >= pt_2d[0]))) {
+			    if (polyB_2d.p_hole[j])
+				winding = 0;
+			    else
+				winding = 1;
+
+			    ++npts_on_contour;
+
+			    goto endB;
+			}
+
+			continue;
+		    }
+
+		    VSUB2(BmA, B, A);
+		    VSUB2(CmA, C, A);
+		    VUNITIZE(BmA);
+		    VUNITIZE(CmA);
+		    dot = VDOT(BmA, CmA);
+
+		    if (NEAR_EQUAL(dot, -1.0, tol_dist_sq) || NEAR_EQUAL(dot, 1.0, tol_dist_sq)) {
+			if (polyB_2d.p_hole[j])
+			    winding = 0;
+			else
+			    winding = 1;
+
+			++npts_on_contour;
+			goto endB;
+		    }
+
+		    VCROSS(vcross, BmA, CmA);
+
+		    if (vcross[2] > 0)
+			++winding;
+		}
+	    }
+
+	endB:
+	    /* found a point on a polygon A contour that's outside of polygon B */
+	    if (!(winding%2)) {
+		++npts_outside;
+		if (npts_outside != npts_on_contour) {
+		    break;
+		}
+	    }
+	}
+
+	/* found an A polygon contour that's completely inside polygon B */
+	if (winding%2 || (npts_outside != 0 &&
+			  npts_outside != polyA_2d.p_contour[i].pc_num_points &&
+			  npts_outside == npts_on_contour)) {
+	    ret = 1;
+	    break;
+	} else
+	    ret = 0;
+    }
+
+end:
+
+    for (i = 0; i < polyA->gp_num_contours; ++i)
+	bu_free((void *)polyA_2d.p_contour[i].pc_point, "pc_point");
+    for (i = 0; i < polyB->gp_num_contours; ++i)
+	bu_free((void *)polyB_2d.p_contour[i].pc_point, "pc_point");
+
+    bu_free((void *)polyA_2d.p_hole, "p_hole");
+    bu_free((void *)polyA_2d.p_contour, "p_contour");
+    bu_free((void *)polyB_2d.p_hole, "p_hole");
+    bu_free((void *)polyB_2d.p_contour, "p_contour");
+
+    return ret;
+}
+
 
 
 /*
