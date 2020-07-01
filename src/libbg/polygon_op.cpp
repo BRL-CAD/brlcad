@@ -1,4 +1,4 @@
-/*               B V I E W _ P O L Y G O N . C P P
+/*                 P O L Y G O N _ O P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020 United States Government as represented by
@@ -17,12 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bview_polygon.cpp
+/** @file polygon_op.cpp
  *
- * Routines for dealing with bview polygons.
- *
- * TODO - these data types and routines really should be pushed
- * down to libbg...
+ * Routines for operating on polygons.
  *
  */
 
@@ -35,11 +32,11 @@
 #include "bu/malloc.h"
 #include "bn/mat.h"
 #include "bn/plane.h"
-#include "dm/defines.h"
-#include "dm/bview_util.h"
+#include "bg/defines.h"
+#include "bg/polygon.h"
 
 fastf_t
-find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
+bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
 {
     size_t j, k, n;
     ClipperLib::Polygon poly;
@@ -48,14 +45,14 @@ find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t s
     if (NEAR_ZERO(sf, SMALL_FASTF))
         return 0.0;
 
-    for (j = 0; j < gpoly->gp_num_contours; ++j) {
-        n = gpoly->gp_contour[j].gpc_num_points;
+    for (j = 0; j < gpoly->num_contours; ++j) {
+        n = gpoly->contour[j].num_points;
         poly.resize(n);
         for (k = 0; k < n; k++) {
             point_t vpoint;
 
             /* Convert to view coordinates */
-            MAT4X3PNT(vpoint, model2view, gpoly->gp_contour[j].gpc_point[k]);
+            MAT4X3PNT(vpoint, model2view, gpoly->contour[j].point[k]);
 
             poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
             poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
@@ -82,7 +79,7 @@ typedef struct {
 } polygon_2d;
 
 int
-polygons_overlap(bview_polygon *polyA, bview_polygon *polyB, matp_t model2view, struct bn_tol *tol, fastf_t iscale)
+bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, matp_t model2view, struct bn_tol *tol, fastf_t iscale)
 {
     size_t i, j;
     size_t beginA, endA, beginB, endB;
@@ -96,8 +93,8 @@ polygons_overlap(bview_polygon *polyA, bview_polygon *polyB, matp_t model2view, 
     size_t winding = 0;
     int ret = 0;
 
-    if (polyA->gp_num_contours < 1 || polyA->gp_contour[0].gpc_num_points < 1 ||
-	polyB->gp_num_contours < 1 || polyB->gp_contour[0].gpc_num_points < 1)
+    if (polyA->num_contours < 1 || polyA->contour[0].num_points < 1 ||
+	polyB->num_contours < 1 || polyB->contour[0].num_points < 1)
 	return 0;
 
     tol_dist = (tol->dist > 0.0) ? tol->dist : BN_TOL_DIST;
@@ -105,37 +102,37 @@ polygons_overlap(bview_polygon *polyA, bview_polygon *polyB, matp_t model2view, 
     scale = (iscale > (fastf_t)UINT16_MAX) ? iscale : (fastf_t)UINT16_MAX;
 
     /* Project polyA and polyB onto the view plane */
-    polyA_2d.p_num_contours = polyA->gp_num_contours;
-    polyA_2d.p_hole = (int *)bu_calloc(polyA->gp_num_contours, sizeof(int), "p_hole");
-    polyA_2d.p_contour = (poly_contour_2d *)bu_calloc(polyA->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+    polyA_2d.p_num_contours = polyA->num_contours;
+    polyA_2d.p_hole = (int *)bu_calloc(polyA->num_contours, sizeof(int), "p_hole");
+    polyA_2d.p_contour = (poly_contour_2d *)bu_calloc(polyA->num_contours, sizeof(poly_contour_2d), "p_contour");
 
-    for (i = 0; i < polyA->gp_num_contours; ++i) {
-	polyA_2d.p_hole[i] = polyA->gp_hole[i];
-	polyA_2d.p_contour[i].pc_num_points = polyA->gp_contour[i].gpc_num_points;
-	polyA_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(polyA->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+    for (i = 0; i < polyA->num_contours; ++i) {
+	polyA_2d.p_hole[i] = polyA->hole[i];
+	polyA_2d.p_contour[i].pc_num_points = polyA->contour[i].num_points;
+	polyA_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(polyA->contour[i].num_points, sizeof(point2d_t), "pc_point");
 
-	for (j = 0; j < polyA->gp_contour[i].gpc_num_points; ++j) {
+	for (j = 0; j < polyA->contour[i].num_points; ++j) {
 	    point_t vpoint;
 
-	    MAT4X3PNT(vpoint, model2view, polyA->gp_contour[i].gpc_point[j]);
+	    MAT4X3PNT(vpoint, model2view, polyA->contour[i].point[j]);
 	    VSCALE(vpoint, vpoint, scale);
 	    V2MOVE(polyA_2d.p_contour[i].pc_point[j], vpoint);
 	}
     }
 
-    polyB_2d.p_num_contours = polyB->gp_num_contours;
-    polyB_2d.p_hole = (int *)bu_calloc(polyB->gp_num_contours, sizeof(int), "p_hole");
-    polyB_2d.p_contour = (poly_contour_2d *)bu_calloc(polyB->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+    polyB_2d.p_num_contours = polyB->num_contours;
+    polyB_2d.p_hole = (int *)bu_calloc(polyB->num_contours, sizeof(int), "p_hole");
+    polyB_2d.p_contour = (poly_contour_2d *)bu_calloc(polyB->num_contours, sizeof(poly_contour_2d), "p_contour");
 
-    for (i = 0; i < polyB->gp_num_contours; ++i) {
-	polyB_2d.p_hole[i] = polyB->gp_hole[i];
-	polyB_2d.p_contour[i].pc_num_points = polyB->gp_contour[i].gpc_num_points;
-	polyB_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(polyB->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+    for (i = 0; i < polyB->num_contours; ++i) {
+	polyB_2d.p_hole[i] = polyB->hole[i];
+	polyB_2d.p_contour[i].pc_num_points = polyB->contour[i].num_points;
+	polyB_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(polyB->contour[i].num_points, sizeof(point2d_t), "pc_point");
 
-	for (j = 0; j < polyB->gp_contour[i].gpc_num_points; ++j) {
+	for (j = 0; j < polyB->contour[i].num_points; ++j) {
 	    point_t vpoint;
 
-	    MAT4X3PNT(vpoint, model2view, polyB->gp_contour[i].gpc_point[j]);
+	    MAT4X3PNT(vpoint, model2view, polyB->contour[i].point[j]);
 	    VSCALE(vpoint, vpoint, scale);
 	    V2MOVE(polyB_2d.p_contour[i].pc_point[j], vpoint);
 	}
@@ -424,9 +421,9 @@ polygons_overlap(bview_polygon *polyA, bview_polygon *polyB, matp_t model2view, 
 
 end:
 
-    for (i = 0; i < polyA->gp_num_contours; ++i)
+    for (i = 0; i < polyA->num_contours; ++i)
 	bu_free((void *)polyA_2d.p_contour[i].pc_point, "pc_point");
-    for (i = 0; i < polyB->gp_num_contours; ++i)
+    for (i = 0; i < polyB->num_contours; ++i)
 	bu_free((void *)polyB_2d.p_contour[i].pc_point, "pc_point");
 
     bu_free((void *)polyA_2d.p_hole, "p_hole");
@@ -445,20 +442,20 @@ typedef struct {
 
 
 static fastf_t
-load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygon *gpoly, fastf_t sf, matp_t mat)
+load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg_polygon *gpoly, fastf_t sf, matp_t mat)
 {
     size_t j, k, n;
     ClipperLib::Polygon curr_poly;
     fastf_t vZ = 1.0;
 
-    for (j = 0; j < gpoly->gp_num_contours; ++j) {
-	n = gpoly->gp_contour[j].gpc_num_points;
+    for (j = 0; j < gpoly->num_contours; ++j) {
+	n = gpoly->contour[j].num_points;
 	curr_poly.resize(n);
 	for (k = 0; k < n; k++) {
 	    point_t vpoint;
 
 	    /* Convert to view coordinates */
-	    MAT4X3PNT(vpoint, mat, gpoly->gp_contour[j].gpc_point[k]);
+	    MAT4X3PNT(vpoint, mat, gpoly->contour[j].point[k]);
 	    vZ = vpoint[Z];
 
 	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
@@ -476,71 +473,71 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_pol
 }
 
 static fastf_t
-load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygons *subj, fastf_t sf, matp_t mat)
+load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg_polygons *subj, fastf_t sf, matp_t mat)
 {
     size_t i;
     fastf_t vZ = 1.0;
 
-    for (i = 0; i < subj->gp_num_polygons; ++i)
-	vZ = load_polygon(clipper, ptype, &subj->gp_polygon[i], sf, mat);
+    for (i = 0; i < subj->num_polygons; ++i)
+	vZ = load_polygon(clipper, ptype, &subj->polygon[i], sf, mat);
 
     return vZ;
 }
 
 /*
- * Process/extract the clipper_polys into a bview_polygon.
+ * Process/extract the clipper_polys into a struct bg_polygon.
  */
-static bview_polygon *
+static struct bg_polygon *
 extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t vZ)
 {
     size_t i, j, k, n;
     size_t num_contours = 0;
-    bview_polygon *result_poly;
+    struct bg_polygon *result_poly;
 
     /* Count up the number of contours. */
     for (i = 0; i < clipper_polys.size(); ++i)
 	/* Add the outer and the holes */
 	num_contours += clipper_polys[i].holes.size() + 1;
 
-    BU_ALLOC(result_poly, bview_polygon);
-    result_poly->gp_num_contours = num_contours;
+    BU_ALLOC(result_poly, struct bg_polygon);
+    result_poly->num_contours = num_contours;
 
     if (num_contours < 1)
 	return result_poly;
 
-    result_poly->gp_hole = (int *)bu_calloc(num_contours, sizeof(int), "gp_hole");
-    result_poly->gp_contour = (bview_poly_contour *)bu_calloc(num_contours, sizeof(bview_poly_contour), "gp_contour");
+    result_poly->hole = (int *)bu_calloc(num_contours, sizeof(int), "hole");
+    result_poly->contour = (struct bg_poly_contour *)bu_calloc(num_contours, sizeof(struct bg_poly_contour), "contour");
 
     n = 0;
     for (i = 0; i < clipper_polys.size(); ++i) {
 	point_t vpoint;
 
-	result_poly->gp_hole[n] = 0;
-	result_poly->gp_contour[n].gpc_num_points = clipper_polys[i].outer.size();
-	result_poly->gp_contour[n].gpc_point =
-	    (point_t *)bu_calloc(result_poly->gp_contour[n].gpc_num_points,
-				 sizeof(point_t), "gpc_point");
+	result_poly->hole[n] = 0;
+	result_poly->contour[n].num_points = clipper_polys[i].outer.size();
+	result_poly->contour[n].point =
+	    (point_t *)bu_calloc(result_poly->contour[n].num_points,
+				 sizeof(point_t), "point");
 
-	for (j = 0; j < result_poly->gp_contour[n].gpc_num_points; ++j) {
+	for (j = 0; j < result_poly->contour[n].num_points; ++j) {
 	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, vZ);
 
 	    /* Convert to model coordinates */
-	    MAT4X3PNT(result_poly->gp_contour[n].gpc_point[j], mat, vpoint);
+	    MAT4X3PNT(result_poly->contour[n].point[j], mat, vpoint);
 	}
 
 	++n;
 	for (j = 0; j < clipper_polys[i].holes.size(); ++j) {
-	    result_poly->gp_hole[n] = 1;
-	    result_poly->gp_contour[n].gpc_num_points = clipper_polys[i].holes[j].size();
-	    result_poly->gp_contour[n].gpc_point =
-		(point_t *)bu_calloc(result_poly->gp_contour[n].gpc_num_points,
-				     sizeof(point_t), "gpc_point");
+	    result_poly->hole[n] = 1;
+	    result_poly->contour[n].num_points = clipper_polys[i].holes[j].size();
+	    result_poly->contour[n].point =
+		(point_t *)bu_calloc(result_poly->contour[n].num_points,
+				     sizeof(point_t), "point");
 
-	    for (k = 0; k < result_poly->gp_contour[n].gpc_num_points; ++k) {
+	    for (k = 0; k < result_poly->contour[n].num_points; ++k) {
 		VSET(vpoint, (fastf_t)(clipper_polys[i].holes[j][k].X) * sf, (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf, vZ);
 
 		/* Convert to model coordinates */
-		MAT4X3PNT(result_poly->gp_contour[n].gpc_point[k], mat, vpoint);
+		MAT4X3PNT(result_poly->contour[n].point[k], mat, vpoint);
 	    }
 
 	    ++n;
@@ -551,8 +548,8 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t v
 }
 
 
-bview_polygon *
-clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+struct bg_polygon *
+bg_clip_polygon(bg_clip_t op, struct bg_polygon *subj, struct bg_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
     fastf_t inv_sf;
     fastf_t vZ;
@@ -572,13 +569,13 @@ clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, 
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
-    case gctIntersection:
+    case bg_Intersection:
 	ctOp = ClipperLib::ctIntersection;
 	break;
-    case gctUnion:
+    case bg_Union:
 	ctOp = ClipperLib::ctUnion;
 	break;
-    case gctDifference:
+    case bg_Difference:
 	ctOp = ClipperLib::ctDifference;
 	break;
     default:
@@ -594,8 +591,8 @@ clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, 
 }
 
 
-bview_polygon *
-clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+struct bg_polygon *
+bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
     fastf_t inv_sf;
     fastf_t vZ;
@@ -615,13 +612,13 @@ clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf_t s
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
-    case gctIntersection:
+    case bg_Intersection:
 	ctOp = ClipperLib::ctIntersection;
 	break;
-    case gctUnion:
+    case bg_Union:
 	ctOp = ClipperLib::ctUnion;
 	break;
-    case gctDifference:
+    case bg_Difference:
 	ctOp = ClipperLib::ctDifference;
 	break;
     default:

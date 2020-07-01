@@ -3713,55 +3713,55 @@ to_data_lines(struct ged *gedp,
 
 /* These functions should be macros */
 HIDDEN void
-to_polygon_free(bview_polygon *gpp)
+to_polygon_free(struct bg_polygon *gpp)
 {
     register size_t j;
 
-    if (gpp->gp_num_contours == 0)
+    if (gpp->num_contours == 0)
 	return;
 
-    for (j = 0; j < gpp->gp_num_contours; ++j)
-	if (gpp->gp_contour[j].gpc_num_points > 0)
-	    bu_free((void *)gpp->gp_contour[j].gpc_point, "gp_contour points");
+    for (j = 0; j < gpp->num_contours; ++j)
+	if (gpp->contour[j].num_points > 0)
+	    bu_free((void *)gpp->contour[j].point, "contour points");
 
-    bu_free((void *)gpp->gp_contour, "gp_contour");
-    bu_free((void *)gpp->gp_hole, "gp_hole");
-    gpp->gp_num_contours = 0;
+    bu_free((void *)gpp->contour, "contour");
+    bu_free((void *)gpp->hole, "hole");
+    gpp->num_contours = 0;
 }
 
 
 HIDDEN void
-to_polygons_free(bview_polygons *gpp)
+to_polygons_free(struct bg_polygons *gpp)
 {
     register size_t i;
 
-    if (gpp->gp_num_polygons == 0)
+    if (gpp->num_polygons == 0)
 	return;
 
-    for (i = 0; i < gpp->gp_num_polygons; ++i) {
-	to_polygon_free(&gpp->gp_polygon[i]);
+    for (i = 0; i < gpp->num_polygons; ++i) {
+	to_polygon_free(&gpp->polygon[i]);
     }
 
-    bu_free((void *)gpp->gp_polygon, "data polygons");
-    gpp->gp_polygon = (bview_polygon *)0;
-    gpp->gp_num_polygons = 0;
+    bu_free((void *)gpp->polygon, "data polygons");
+    gpp->polygon = (struct bg_polygon *)0;
+    gpp->num_polygons = 0;
 }
 
 
 HIDDEN int
-to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view *gdvp, bview_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
+to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view *gdvp, struct bg_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
 {
     register size_t j = 0, k = 0;
 
-    gpp->gp_num_contours = contour_ac;
-    gpp->gp_hole = NULL;
-    gpp->gp_contour = NULL;
+    gpp->num_contours = contour_ac;
+    gpp->hole = NULL;
+    gpp->contour = NULL;
 
     if (contour_ac == 0)
 	return GED_OK;
 
-    gpp->gp_hole = (int *)bu_calloc(contour_ac, sizeof(int), "gp_hole");
-    gpp->gp_contour = (bview_poly_contour *)bu_calloc(contour_ac, sizeof(bview_poly_contour), "gp_contour");
+    gpp->hole = (int *)bu_calloc(contour_ac, sizeof(int), "hole");
+    gpp->contour = (struct bg_poly_contour *)bu_calloc(contour_ac, sizeof(struct bg_poly_contour), "contour");
 
     for (j = 0; j < contour_ac; ++j) {
 	int ac;
@@ -3783,8 +3783,8 @@ to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view 
 	    return GED_ERROR;
 	}
 
-	gpp->gp_contour[j].gpc_num_points = point_ac - 1;
-	gpp->gp_contour[j].gpc_point = (point_t *)bu_calloc(point_ac, sizeof(point_t), "gpc_point");
+	gpp->contour[j].num_points = point_ac - 1;
+	gpp->contour[j].point = (point_t *)bu_calloc(point_ac, sizeof(point_t), "point");
 
 	if (bu_sscanf(point_av[0], "%d", &hole) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "contour %zu, point %zu: bad hole flag - %s\n",
@@ -3792,7 +3792,7 @@ to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view 
 	    Tcl_Free((char *)point_av);
 	    return GED_ERROR;
 	}
-	gpp->gp_hole[j] = hole;
+	gpp->hole[j] = hole;
 
 	for (k = 1; k < point_ac; ++k) {
 	    double pt[ELEMENTS_PER_POINT]; /* must be double for scanf */
@@ -3805,9 +3805,9 @@ to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view 
 	    }
 
 	    if (vflag) {
-		MAT4X3PNT(gpp->gp_contour[j].gpc_point[k-1], gdvp->gdv_view->gv_view2model, pt);
+		MAT4X3PNT(gpp->contour[j].point[k-1], gdvp->gdv_view->gv_view2model, pt);
 	    } else {
-		VMOVE(gpp->gp_contour[j].gpc_point[k-1], pt);
+		VMOVE(gpp->contour[j].point[k-1], pt);
 	    }
 
 	}
@@ -3825,8 +3825,11 @@ to_extract_polygons_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view 
     register size_t i;
     int ac;
 
-    gdpsp->gdps_polygons.gp_num_polygons = polygon_ac;
-    gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_calloc(polygon_ac, sizeof(bview_polygon), "data polygons");
+    gdpsp->gdps_polygons.num_polygons = polygon_ac;
+    gdpsp->gdps_polygons.polygon = (struct bg_polygon *)bu_calloc(polygon_ac, sizeof(struct bg_polygon), "data polygons");
+    for (i = 0; i < polygon_ac; ++i) {
+	// TODO - allocate properties containers for each polygon
+    }
 
     for (i = 0; i < polygon_ac; ++i) {
 	size_t contour_ac;
@@ -3839,12 +3842,12 @@ to_extract_polygons_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view 
 	}
 	contour_ac = ac;
 
-	if (to_extract_contours_av(interp, gedp, gdvp, &gdpsp->gdps_polygons.gp_polygon[i], contour_ac, contour_av, mode, vflag) != GED_OK) {
+	if (to_extract_contours_av(interp, gedp, gdvp, &gdpsp->gdps_polygons.polygon[i], contour_ac, contour_av, mode, vflag) != GED_OK) {
 	    Tcl_Free((char *)contour_av);
 	    return GED_ERROR;
 	}
 
-	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_color, gdpsp->gdps_color);
+	VMOVE(gdpsp->gdps_polygons.polygon[i].gp_color, gdpsp->gdps_color);
 	if (contour_ac)
 	    Tcl_Free((char *)contour_av);
     }
@@ -3965,7 +3968,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc == 3) {
 	    size_t i;
 
-	    if (bu_sscanf(argv[2], "%zu", &i) != 1 || i > gdpsp->gdps_polygons.gp_num_polygons)
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 || i > gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 
 	    gdpsp->gdps_target_polygon_i = i;
@@ -3985,10 +3988,10 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc == 3) {
 	    int op;
 
-	    if (bu_sscanf(argv[2], "%d", &op) != 1 || op > gctXor)
+	    if (bu_sscanf(argv[2], "%d", &op) != 1 || op > bg_Xor)
 		goto bad;
 
-	    gdpsp->gdps_clip_type = (ClipType)op;
+	    gdpsp->gdps_clip_type = (bg_clip_t)op;
 
 	    return GED_OK;
 	}
@@ -4054,11 +4057,11 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc == 3) {
 	    /* Get the color for polygon i */
 	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		i >= gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gdpsp->gdps_polygons.gp_polygon[i].gp_color));
+			  V3ARGS(gdpsp->gdps_polygons.polygon[i].gp_color));
 
 	    return GED_OK;
 	}
@@ -4068,7 +4071,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 
 
 	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		i >= gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 
 	    /* set background color */
@@ -4084,7 +4087,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 		goto bad;
 
 	    /* Set the color for polygon i */
-	    VSET(gdpsp->gdps_polygons.gp_polygon[i].gp_color, r, g, b);
+	    VSET(gdpsp->gdps_polygons.polygon[i].gp_color, r, g, b);
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -4123,8 +4126,8 @@ to_data_polygons_func(Tcl_Interp *interp,
 		goto bad;
 
 	    /* Set the color for all polygons */
-	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
-		VSET(gdpsp->gdps_polygons.gp_polygon[i].gp_color, r, g, b);
+	    for (i = 0; i < gdpsp->gdps_polygons.num_polygons; ++i) {
+		VSET(gdpsp->gdps_polygons.polygon[i].gp_color, r, g, b);
 	    }
 
 	    /* Set the default polygon color */
@@ -4147,10 +4150,10 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc == 3) {
 	    /* Get the line width for polygon i */
 	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		i >= gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 
-	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_polygons.gp_polygon[i].gp_line_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_polygons.polygon[i].gp_line_width);
 
 	    return GED_OK;
 	}
@@ -4159,7 +4162,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    int line_width;
 
 	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		i >= gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 
 	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
@@ -4168,7 +4171,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    if (line_width < 0)
 		line_width = 0;
 
-	    gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = line_width;
+	    gdpsp->gdps_polygons.polygon[i].gp_line_width = line_width;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -4199,8 +4202,8 @@ to_data_polygons_func(Tcl_Interp *interp,
 		line_width = 0;
 
 	    /* Set the line width for all polygons */
-	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
-		gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = line_width;
+	    for (i = 0; i < gdpsp->gdps_polygons.num_polygons; ++i) {
+		gdpsp->gdps_polygons.polygon[i].gp_line_width = line_width;
 	    }
 
 	    /* Set the default line width */
@@ -4223,10 +4226,10 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc == 3) {
 	    /* Get the line style for polygon i */
 	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		i >= gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 
-	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_polygons.gp_polygon[i].gp_line_style);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_polygons.polygon[i].gp_line_style);
 
 	    return GED_OK;
 	}
@@ -4235,7 +4238,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    int line_style;
 
 	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		i >= gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 
 	    if (bu_sscanf(argv[3], "%d", &line_style) != 1)
@@ -4243,9 +4246,9 @@ to_data_polygons_func(Tcl_Interp *interp,
 
 
 	    if (line_style <= 0)
-		gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = 0;
+		gdpsp->gdps_polygons.polygon[i].gp_line_style = 0;
 	    else
-		gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = 1;
+		gdpsp->gdps_polygons.polygon[i].gp_line_style = 1;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -4278,8 +4281,8 @@ to_data_polygons_func(Tcl_Interp *interp,
 		line_style = 1;
 
 	    /* Set the line width for all polygons */
-	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
-		gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = line_style;
+	    for (i = 0; i < gdpsp->gdps_polygons.num_polygons; ++i) {
+		gdpsp->gdps_polygons.polygon[i].gp_line_style = line_style;
 	    }
 
 	    /* Set the default line style */
@@ -4314,21 +4317,21 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    }
 	    contour_ac = ac;
 
-	    i = gdpsp->gdps_polygons.gp_num_polygons;
-	    ++gdpsp->gdps_polygons.gp_num_polygons;
-	    gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-									  gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
-									  "realloc gp_polygon");
+	    i = gdpsp->gdps_polygons.num_polygons;
+	    ++gdpsp->gdps_polygons.num_polygons;
+	    gdpsp->gdps_polygons.polygon = (struct bg_polygon *)bu_realloc(gdpsp->gdps_polygons.polygon,
+									  gdpsp->gdps_polygons.num_polygons * sizeof(struct bg_polygon),
+									  "realloc polygon");
 
-	    if (to_extract_contours_av(interp, gedp, gdvp, &gdpsp->gdps_polygons.gp_polygon[i],
+	    if (to_extract_contours_av(interp, gedp, gdvp, &gdpsp->gdps_polygons.polygon[i],
 				       contour_ac, contour_av, gdvp->gdv_view->gv_mode, 0) != GED_OK) {
 		Tcl_Free((char *)contour_av);
 		return GED_ERROR;
 	    }
 
-	    VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_color, gdpsp->gdps_color);
-	    gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = gdpsp->gdps_line_style;
-	    gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = gdpsp->gdps_line_width;
+	    VMOVE(gdpsp->gdps_polygons.polygon[i].gp_color, gdpsp->gdps_color);
+	    gdpsp->gdps_polygons.polygon[i].gp_line_style = gdpsp->gdps_line_style;
+	    gdpsp->gdps_polygons.polygon[i].gp_line_width = gdpsp->gdps_line_width;
 
 	    Tcl_Free((char *)contour_av);
 
@@ -4345,24 +4348,24 @@ to_data_polygons_func(Tcl_Interp *interp,
     if (BU_STR_EQUAL(argv[1], "clip")) {
 	size_t i, j;
 	int op;
-	bview_polygon *gpp;
+	struct bg_polygon *gpp;
 
 	if (argc > 5)
 	    goto bad;
 
 	if (argc > 2) {
 	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		i >= gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 	} else
 	    i = gdpsp->gdps_target_polygon_i;
 
 	if (argc > 3) {
 	    if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
-		j >= gdpsp->gdps_polygons.gp_num_polygons)
+		j >= gdpsp->gdps_polygons.num_polygons)
 		goto bad;
 	} else
-	    j = gdpsp->gdps_polygons.gp_num_polygons - 1; /* Default - use last polygon as the clip polygon */
+	    j = gdpsp->gdps_polygons.num_polygons - 1; /* Default - use last polygon as the clip polygon */
 
 	/* Nothing to do */
 	if (i == j)
@@ -4370,36 +4373,36 @@ to_data_polygons_func(Tcl_Interp *interp,
 
 	if (argc != 5)
 	    op = gdpsp->gdps_clip_type;
-	else if (bu_sscanf(argv[4], "%d", &op) != 1 || op > gctXor)
+	else if (bu_sscanf(argv[4], "%d", &op) != 1 || op > bg_Xor)
 	    goto bad;
 
-	gpp = clip_polygon((ClipType)op,
-			       &gdpsp->gdps_polygons.gp_polygon[i],
-			       &gdpsp->gdps_polygons.gp_polygon[j],
+	gpp = bg_clip_polygon((bg_clip_t)op,
+			       &gdpsp->gdps_polygons.polygon[i],
+			       &gdpsp->gdps_polygons.polygon[j],
 			       CLIPPER_MAX,
 			       gdpsp->gdps_model2view,
 			       gdpsp->gdps_view2model);
 
 	/* Free the target polygon */
-	to_polygon_free(&gdpsp->gdps_polygons.gp_polygon[i]);
+	to_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
 
 	/* When using defaults, the clip polygon is assumed to be temporary and is removed after clipping */
 	if (argc == 2) {
 	    /* Free the clip polygon */
-	    to_polygon_free(&gdpsp->gdps_polygons.gp_polygon[j]);
+	    to_polygon_free(&gdpsp->gdps_polygons.polygon[j]);
 
 	    /* No longer need space for the clip polygon */
-	    --gdpsp->gdps_polygons.gp_num_polygons;
-	    gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-									  gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
-									  "realloc gp_polygon");
+	    --gdpsp->gdps_polygons.num_polygons;
+	    gdpsp->gdps_polygons.polygon = (struct bg_polygon *)bu_realloc(gdpsp->gdps_polygons.polygon,
+									  gdpsp->gdps_polygons.num_polygons * sizeof(struct bg_polygon),
+									  "realloc polygon");
 	}
 
 	/* Replace the target polygon with the newly clipped polygon. */
 	/* Not doing a struct copy to avoid overwriting the color, line width and line style. */
-	gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours = gpp->gp_num_contours;
-	gdpsp->gdps_polygons.gp_polygon[i].gp_hole = gpp->gp_hole;
-	gdpsp->gdps_polygons.gp_polygon[i].gp_contour = gpp->gp_contour;
+	gdpsp->gdps_polygons.polygon[i].num_contours = gpp->num_contours;
+	gdpsp->gdps_polygons.polygon[i].hole = gpp->hole;
+	gdpsp->gdps_polygons.polygon[i].contour = gpp->contour;
 
 	/* Free the clipped polygon container */
 	bu_free((void *)gpp, "clip gpp");
@@ -4420,7 +4423,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
 	if ((ret = ged_export_polygon(gedp, gdpsp, i, argv[3])) != GED_OK)
@@ -4434,27 +4437,27 @@ to_data_polygons_func(Tcl_Interp *interp,
      * Import sketch_name and append
      */
     if (BU_STR_EQUAL(argv[1], "import")) {
-	bview_polygon *gpp;
+	struct bg_polygon *gpp;
 	size_t i;
 
 	if (argc != 3)
 	    goto bad;
 
-	if ((gpp = ged_import_polygon(gedp, argv[2])) == (bview_polygon *)0) {
+	if ((gpp = ged_import_polygon(gedp, argv[2])) == (struct bg_polygon *)0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to import sketch %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
-	i = gdpsp->gdps_polygons.gp_num_polygons;
-	++gdpsp->gdps_polygons.gp_num_polygons;
-	gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-								      gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
-								      "realloc gp_polygon");
+	i = gdpsp->gdps_polygons.num_polygons;
+	++gdpsp->gdps_polygons.num_polygons;
+	gdpsp->gdps_polygons.polygon = (struct bg_polygon *)bu_realloc(gdpsp->gdps_polygons.polygon,
+								      gdpsp->gdps_polygons.num_polygons * sizeof(struct bg_polygon),
+								      "realloc polygon");
 
-	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;  /* struct copy */
-	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_color, gdpsp->gdps_color);
-	gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = gdpsp->gdps_line_style;
-	gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = gdpsp->gdps_line_width;
+	gdpsp->gdps_polygons.polygon[i] = *gpp;  /* struct copy */
+	VMOVE(gdpsp->gdps_polygons.polygon[i].gp_color, gdpsp->gdps_color);
+	gdpsp->gdps_polygons.polygon[i].gp_line_style = gdpsp->gdps_line_style;
+	gdpsp->gdps_polygons.polygon[i].gp_line_width = gdpsp->gdps_line_width;
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -4469,7 +4472,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
 	if (bu_sscanf(argv[3], "%lf %lf", &vdir[X], &vdir[Y]) != 2) {
@@ -4482,7 +4485,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 	}
 
-	ged_polygon_fill_segments(gedp, &gdpsp->gdps_polygons.gp_polygon[i], vdir, vdelta);
+	ged_polygon_fill_segments(gedp, &gdpsp->gdps_polygons.polygon[i], vdir, vdelta);
 
 	return GED_OK;
     }
@@ -4499,10 +4502,10 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
-	area = find_polygon_area(&gdpsp->gdps_polygons.gp_polygon[i], CLIPPER_MAX,
+	area = bg_find_polygon_area(&gdpsp->gdps_polygons.polygon[i], CLIPPER_MAX,
 				     gdpsp->gdps_model2view, gdpsp->gdps_scale);
 	bu_vls_printf(gedp->ged_result_str, "%lf", area);
 
@@ -4521,14 +4524,14 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
 	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
-	    j >= gdpsp->gdps_polygons.gp_num_polygons)
+	    j >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
-	ret = ged_polygons_overlap(gedp, &gdpsp->gdps_polygons.gp_polygon[i], &gdpsp->gdps_polygons.gp_polygon[j]);
+	ret = ged_polygons_overlap(gedp, &gdpsp->gdps_polygons.polygon[i], &gdpsp->gdps_polygons.polygon[j]);
 	bu_vls_printf(gedp->ged_result_str, "%d", ret);
 
 	return GED_OK;
@@ -4549,19 +4552,19 @@ to_data_polygons_func(Tcl_Interp *interp,
 	else
 	    vflag = 1;
 	if (argc == 2) {
-	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
+	    for (i = 0; i < gdpsp->gdps_polygons.num_polygons; ++i) {
 		bu_vls_printf(gedp->ged_result_str, " {");
 
-		for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours; ++j) {
-		    bu_vls_printf(gedp->ged_result_str, " {%d ", gdpsp->gdps_polygons.gp_polygon[i].gp_hole[j]);
+		for (j = 0; j < gdpsp->gdps_polygons.polygon[i].num_contours; ++j) {
+		    bu_vls_printf(gedp->ged_result_str, " {%d ", gdpsp->gdps_polygons.polygon[i].hole[j]);
 
-		    for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points; ++k) {
+		    for (k = 0; k < gdpsp->gdps_polygons.polygon[i].contour[j].num_points; ++k) {
 			point_t pt;
 
 			if (vflag) {
-			    MAT4X3PNT(pt, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+			    MAT4X3PNT(pt, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
 			} else {
-			    VMOVE(pt, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+			    VMOVE(pt, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
 			}
 
 			bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ", V3ARGS(pt));
@@ -4615,13 +4618,13 @@ to_data_polygons_func(Tcl_Interp *interp,
 	int ac;
 	size_t contour_ac;
 	const char **contour_av;
-	bview_polygon gp;
+	struct bg_polygon gp;
 
 	if (argc != 4)
 	    goto bad;
 
 	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
 	/* Split the polygon in argv[3] into contours */
@@ -4637,12 +4640,12 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    return GED_ERROR;
 	}
 
-	to_polygon_free(&gdpsp->gdps_polygons.gp_polygon[i]);
+	to_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
 
 	/* Not doing a struct copy to avoid overwriting the color, line width and line style. */
-	gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours = gp.gp_num_contours;
-	gdpsp->gdps_polygons.gp_polygon[i].gp_hole = gp.gp_hole;
-	gdpsp->gdps_polygons.gp_polygon[i].gp_contour = gp.gp_contour;
+	gdpsp->gdps_polygons.polygon[i].num_contours = gp.num_contours;
+	gdpsp->gdps_polygons.polygon[i].hole = gp.hole;
+	gdpsp->gdps_polygons.polygon[i].contour = gp.contour;
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -4660,22 +4663,22 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
 	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
-	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
+	    j >= gdpsp->gdps_polygons.polygon[i].num_contours)
 	    goto bad;
 
 	if (bu_sscanf(argv[4], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
 	    goto bad;
 
-	k = gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points;
-	++gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points;
-	gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point = (point_t *)bu_realloc(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point,
-											   gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points * sizeof(point_t),
-											   "realloc gpc_point");
-	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], pt);
+	k = gdpsp->gdps_polygons.polygon[i].contour[j].num_points;
+	++gdpsp->gdps_polygons.polygon[i].contour[j].num_points;
+	gdpsp->gdps_polygons.polygon[i].contour[j].point = (point_t *)bu_realloc(gdpsp->gdps_polygons.polygon[i].contour[j].point,
+											   gdpsp->gdps_polygons.polygon[i].contour[j].num_points * sizeof(point_t),
+											   "realloc point");
+	VMOVE(gdpsp->gdps_polygons.polygon[i].contour[j].point[k], pt);
 	to_refresh_view(gdvp);
 	return GED_OK;
     }
@@ -4691,18 +4694,18 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
 	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
-	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
+	    j >= gdpsp->gdps_polygons.polygon[i].num_contours)
 	    goto bad;
 
 	if (bu_sscanf(argv[4], "%zu", &k) != 1 ||
-	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
+	    k >= gdpsp->gdps_polygons.polygon[i].contour[j].num_points)
 	    goto bad;
 
-	bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]));
+	bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(gdpsp->gdps_polygons.polygon[i].contour[j].point[k]));
 	return GED_OK;
     }
 
@@ -4718,21 +4721,21 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
 	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
-	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
+	    j >= gdpsp->gdps_polygons.polygon[i].num_contours)
 	    goto bad;
 
 	if (bu_sscanf(argv[4], "%zu", &k) != 1 ||
-	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
+	    k >= gdpsp->gdps_polygons.polygon[i].contour[j].num_points)
 	    goto bad;
 
 	if (bu_sscanf(argv[5], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
 	    goto bad;
 
-	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], pt);
+	VMOVE(gdpsp->gdps_polygons.polygon[i].contour[j].point[k], pt);
 	to_refresh_view(gdvp);
 	return GED_OK;
     }
@@ -4861,9 +4864,9 @@ to_data_move_func(struct ged *gedp,
 	    goto bad;
 
 	/* Silently ignore */
-	if (i >= gdpsp->gdps_polygons.gp_num_polygons ||
-	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours ||
-	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
+	if (i >= gdpsp->gdps_polygons.num_polygons ||
+	    j >= gdpsp->gdps_polygons.polygon[i].num_contours ||
+	    k >= gdpsp->gdps_polygons.polygon[i].contour[j].num_points)
 	    return GED_OK;
 
 	/* This section is for moving more than a single point on a contour */
@@ -4871,9 +4874,9 @@ to_data_move_func(struct ged *gedp,
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
 
-	    VMOVE(old_mpoint, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+	    VMOVE(old_mpoint, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
 
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
 	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
@@ -4882,29 +4885,29 @@ to_data_move_func(struct ged *gedp,
 	    /* Move all polygons and all their respective contours. */
 	    if (gdpsp->gdps_moveAll) {
 		size_t p, c;
-		for (p = 0; p < gdpsp->gdps_polygons.gp_num_polygons; ++p) {
-		    for (c = 0; c < gdpsp->gdps_polygons.gp_polygon[p].gp_num_contours; ++c) {
-			for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[p].gp_contour[c].gpc_num_points; ++k) {
-			    VADD2(gdpsp->gdps_polygons.gp_polygon[p].gp_contour[c].gpc_point[k],
-				  gdpsp->gdps_polygons.gp_polygon[p].gp_contour[c].gpc_point[k],
+		for (p = 0; p < gdpsp->gdps_polygons.num_polygons; ++p) {
+		    for (c = 0; c < gdpsp->gdps_polygons.polygon[p].num_contours; ++c) {
+			for (k = 0; k < gdpsp->gdps_polygons.polygon[p].contour[c].num_points; ++k) {
+			    VADD2(gdpsp->gdps_polygons.polygon[p].contour[c].point[k],
+				  gdpsp->gdps_polygons.polygon[p].contour[c].point[k],
 				  diff);
 			}
 		    }
 		}
 	    } else {
 		/* Move only the contour. */
-		for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points; ++k) {
-		    VADD2(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k],
-			  gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k],
+		for (k = 0; k < gdpsp->gdps_polygons.polygon[i].contour[j].num_points; ++k) {
+		    VADD2(gdpsp->gdps_polygons.polygon[i].contour[j].point[k],
+			  gdpsp->gdps_polygons.polygon[i].contour[j].point[k],
 			  diff);
 		}
 	    }
 	} else {
 	    /* This section is for moving a single point on a contour */
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(gdpsp->gdps_polygons.polygon[i].contour[j].point[k], gdvp->gdv_view->gv_view2model, vpoint);
 	}
 
 	to_refresh_view(gdvp);
@@ -5553,18 +5556,18 @@ to_data_pick_func(struct ged *gedp,
 
     /* check for polygon points */
     if (gdvp->gdv_view->gv_data_polygons.gdps_draw &&
-	gdvp->gdv_view->gv_data_polygons.gdps_polygons.gp_num_polygons) {
+	gdvp->gdv_view->gv_data_polygons.gdps_polygons.num_polygons) {
 	register size_t si, sj, sk;
 
 	bview_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-	for (si = 0; si < gdpsp->gdps_polygons.gp_num_polygons; ++si)
-	    for (sj = 0; sj < gdpsp->gdps_polygons.gp_polygon[si].gp_num_contours; ++sj)
-		for (sk = 0; sk < gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_num_points; ++sk) {
+	for (si = 0; si < gdpsp->gdps_polygons.num_polygons; ++si)
+	    for (sj = 0; sj < gdpsp->gdps_polygons.polygon[si].num_contours; ++sj)
+		for (sk = 0; sk < gdpsp->gdps_polygons.polygon[si].contour[sj].num_points; ++sk) {
 		    fastf_t minX, maxX;
 		    fastf_t minY, maxY;
 
-		    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_point[sk]);
+		    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.polygon[si].contour[sj].point[sk]);
 		    minX = vpoint[X] - tol;
 		    maxX = vpoint[X] + tol;
 		    minY = vpoint[Y] - tol;
@@ -5578,7 +5581,7 @@ to_data_pick_func(struct ged *gedp,
 			    top_i = si;
 			    top_j = sj;
 			    top_k = sk;
-			    VMOVE(top_point, gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_point[sk]);
+			    VMOVE(top_point, gdpsp->gdps_polygons.polygon[si].contour[sj].point[sk]);
 			    found_top = 1;
 			}
 		    }
@@ -12113,10 +12116,10 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
     av[2] = bu_vls_addr(&plist);
     av[3] = (char *)0;
 
-    if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
+    if (gdpsp->gdps_polygons.num_polygons == gdpsp->gdps_target_polygon_i)
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
-	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.num_polygons;
 
     (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
@@ -12257,10 +12260,10 @@ to_poly_cont_build_func(Tcl_Interp *interp,
 	struct bu_vls plist = BU_VLS_INIT_ZERO;
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
-	if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
+	if (gdpsp->gdps_polygons.num_polygons == gdpsp->gdps_target_polygon_i)
 	    gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
 	else
-	    gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
+	    gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.num_polygons;
 
 	gdpsp->gdps_cflag = 1;
 	gdpsp->gdps_curr_point_i = 1;
@@ -12544,10 +12547,10 @@ to_poly_ell_mode_func(Tcl_Interp *interp,
     av[2] = bu_vls_addr(&plist);
     av[3] = (char *)0;
 
-    if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
+    if (gdpsp->gdps_polygons.num_polygons == gdpsp->gdps_target_polygon_i)
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
-	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.num_polygons;
 
     (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
@@ -12715,10 +12718,10 @@ to_poly_rect_mode_func(Tcl_Interp *interp,
     av[2] = bu_vls_addr(&plist);
     av[3] = (char *)0;
 
-    if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
+    if (gdpsp->gdps_polygons.num_polygons == gdpsp->gdps_target_polygon_i)
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
-	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.num_polygons;
 
     (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
@@ -15323,35 +15326,35 @@ go_dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp)
 	\
 	/* set color */ \
 	(void)dm_set_fg((_dmp), \
-			(_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[0], \
-			(_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[1], \
-			(_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[2], \
+			(_gdpsp)->gdps_polygons.polygon[_i].gp_color[0], \
+			(_gdpsp)->gdps_polygons.polygon[_i].gp_color[1], \
+			(_gdpsp)->gdps_polygons.polygon[_i].gp_color[2], \
 			1, 1.0);					\
 	\
-	for (_j = 0; _j < (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_num_contours; ++_j) { \
-	    size_t _last = (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_num_points-1; \
+	for (_j = 0; _j < (_gdpsp)->gdps_polygons.polygon[_i].num_contours; ++_j) { \
+	    size_t _last = (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].num_points-1; \
 	    int _line_style; \
 	    \
 	    /* always draw holes using segmented lines */ \
-	    if ((_gdpsp)->gdps_polygons.gp_polygon[_i].gp_hole[_j]) { \
+	    if ((_gdpsp)->gdps_polygons.polygon[_i].hole[_j]) { \
 		_line_style = 1; \
 	    } else { \
-		_line_style = (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_line_style; \
+		_line_style = (_gdpsp)->gdps_polygons.polygon[_i].gp_line_style; \
 	    } \
 	    \
 	    /* set the linewidth and linestyle for polygon i, contour j */	\
 	    (void)dm_set_line_attr((_dmp), \
-				   (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_line_width, \
+				   (_gdpsp)->gdps_polygons.polygon[_i].gp_line_width, \
 				   _line_style); \
 	    \
 	    (void)dm_draw_lines_3d((_dmp),				\
-				   (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_num_points, \
-				   (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_point, 1); \
+				   (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].num_points, \
+				   (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point, 1); \
 	    \
 	    if (_mode != TCLCAD_POLY_CONTOUR_MODE || _i != _last_poly || (_gdpsp)->gdps_cflag == 0) { \
 		(void)dm_draw_line_3d((_dmp),				\
-				      (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_point[_last], \
-				      (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_point[0]); \
+				      (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point[_last], \
+				      (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point[0]); \
 	    } \
 	}}
 
@@ -15363,14 +15366,14 @@ go_dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
     int saveLineWidth;
     int saveLineStyle;
 
-    if (gdpsp->gdps_polygons.gp_num_polygons < 1)
+    if (gdpsp->gdps_polygons.num_polygons < 1)
 	return;
 
     saveLineWidth = dm_get_linewidth(dmp);
     saveLineStyle = dm_get_linestyle(dmp);
 
-    last_poly = gdpsp->gdps_polygons.gp_num_polygons - 1;
-    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
+    last_poly = gdpsp->gdps_polygons.num_polygons - 1;
+    for (i = 0; i < gdpsp->gdps_polygons.num_polygons; ++i) {
 	if (i == gdpsp->gdps_target_polygon_i)
 	    continue;
 

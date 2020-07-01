@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include "bu/sort.h"
+#include "bg/polygon.h"
 #include "dm/bview_util.h"
 #include "ged.h"
 
@@ -48,12 +49,12 @@ ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t pol
     GED_CHECK_EXISTS(gedp, sname, LOOKUP_QUIET, GED_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (polygon_i >= gdpsp->gdps_polygons.gp_num_polygons ||
-	gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_num_contours < 1)
+    if (polygon_i >= gdpsp->gdps_polygons.num_polygons ||
+	gdpsp->gdps_polygons.polygon[polygon_i].num_contours < 1)
 	return GED_ERROR;
 
-    for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_num_contours; ++j)
-	num_verts += gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_contour[j].gpc_num_points;
+    for (j = 0; j < gdpsp->gdps_polygons.polygon[polygon_i].num_contours; ++j)
+	num_verts += gdpsp->gdps_polygons.polygon[polygon_i].contour[j].num_points;
 
     if (num_verts < 3)
 	return GED_ERROR;
@@ -90,14 +91,14 @@ ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t pol
     MAT4X3PNT(sketch_ip->V, gdpsp->gdps_view2model, vorigin);
 
     n = 0;
-    for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_num_contours; ++j) {
+    for (j = 0; j < gdpsp->gdps_polygons.polygon[polygon_i].num_contours; ++j) {
 	size_t cstart = n;
 
-	for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_contour[j].gpc_num_points; ++k) {
+	for (k = 0; k < gdpsp->gdps_polygons.polygon[polygon_i].contour[j].num_points; ++k) {
 	    point_t vpt;
 	    vect_t vdiff;
 
-	    MAT4X3PNT(vpt, gdpsp->gdps_model2view, gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_contour[j].gpc_point[k]);
+	    MAT4X3PNT(vpt, gdpsp->gdps_model2view, gdpsp->gdps_polygons.polygon[polygon_i].contour[j].point[k]);
 	    VSUB2(vdiff, vpt, vorigin);
 	    VSCALE(vdiff, vdiff, gdpsp->gdps_scale);
 	    V2MOVE(sketch_ip->verts[n], vdiff);
@@ -143,7 +144,7 @@ struct contour_node {
     struct bu_list head;
 };
 
-bview_polygon *
+struct bg_polygon *
 ged_import_polygon(struct ged *gedp, const char *sname)
 {
     size_t j, n;
@@ -155,15 +156,15 @@ ged_import_polygon(struct ged *gedp, const char *sname)
     struct segment_node *all_segment_nodes;
     struct segment_node *curr_snode;
     struct contour_node *curr_cnode;
-    bview_polygon *gpp;
+    struct bg_polygon *gpp;
 
     if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) == GED_ERROR)
-	return (bview_polygon *)0;
+	return (struct bg_polygon *)0;
 
     sketch_ip = (rt_sketch_internal *)intern.idb_ptr;
     if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
 	rt_db_free_internal(&intern);
-	return (bview_polygon *)0;
+	return (struct bg_polygon *)0;
     }
 
     all_segment_nodes = (struct segment_node *)bu_calloc(sketch_ip->curve.count, sizeof(struct segment_node), "all_segment_nodes");
@@ -225,10 +226,10 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	}
     }
 
-    BU_ALLOC(gpp, bview_polygon);
-    gpp->gp_num_contours = ncontours;
-    gpp->gp_hole = (int *)bu_calloc(ncontours, sizeof(int), "gp_hole");
-    gpp->gp_contour = (bview_poly_contour *)bu_calloc(ncontours, sizeof(bview_poly_contour), "gp_contour");
+    BU_ALLOC(gpp, struct bg_polygon);
+    gpp->num_contours = ncontours;
+    gpp->hole = (int *)bu_calloc(ncontours, sizeof(int), "gp_hole");
+    gpp->contour = (struct bg_poly_contour *)bu_calloc(ncontours, sizeof(struct bg_poly_contour), "gp_contour");
 
     j = 0;
     while (BU_LIST_NON_EMPTY(&HeadContourNodes)) {
@@ -243,8 +244,8 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	for (BU_LIST_FOR(curr_snode, segment_node, &curr_cnode->head))
 	    ++npoints;
 
-	gpp->gp_contour[j].gpc_num_points = npoints;
-	gpp->gp_contour[j].gpc_point = (point_t *)bu_calloc(npoints, sizeof(point_t), "gpc_point");
+	gpp->contour[j].num_points = npoints;
+	gpp->contour[j].point = (point_t *)bu_calloc(npoints, sizeof(point_t), "gpc_point");
 
 	while (BU_LIST_NON_EMPTY(&curr_cnode->head)) {
 	    curr_snode = BU_LIST_FIRST(segment_node, &curr_cnode->head);
@@ -253,7 +254,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	    curr_lsg = (struct line_seg *)curr_snode->segment;
 
 	    /* Convert from UV space to model space */
-	    VJOIN2(gpp->gp_contour[j].gpc_point[k], sketch_ip->V,
+	    VJOIN2(gpp->contour[j].point[k], sketch_ip->V,
 		   sketch_ip->verts[curr_lsg->start][0], sketch_ip->u_vec,
 		   sketch_ip->verts[curr_lsg->start][1], sketch_ip->v_vec);
 	    ++k;
@@ -285,12 +286,12 @@ typedef struct {
 
 
 int
-ged_polygons_overlap(struct ged *gedp, bview_polygon *polyA, bview_polygon *polyB)
+ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB)
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
 
-    return polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &gedp->ged_wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
+    return bg_polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &gedp->ged_wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
 }
 
 HIDDEN int
@@ -312,7 +313,7 @@ sort_by_X(const void *p1, const void *p2, void *UNUSED(arg))
 
 
 void
-ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta)
+ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta)
 {
     size_t i, j;
     fastf_t vx, vy, vZ = 0.0;
@@ -334,7 +335,7 @@ ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilld
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (poly->gp_num_contours < 1 || poly->gp_contour[0].gpc_num_points < 3)
+    if (poly->num_contours < 1 || poly->contour[0].num_points < 3)
 	return;
 
     if (vfilldelta < 0)
@@ -344,19 +345,19 @@ ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilld
     final_isect2 = (point2d_t *)bu_calloc(isectSize, sizeof(point2d_t), "final_isect2");
 
     /* Project poly onto the view plane */
-    poly_2d.p_num_contours = poly->gp_num_contours;
-    poly_2d.p_hole = (int *)bu_calloc(poly->gp_num_contours, sizeof(int), "p_hole");
-    poly_2d.p_contour = (poly_contour_2d *)bu_calloc(poly->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+    poly_2d.p_num_contours = poly->num_contours;
+    poly_2d.p_hole = (int *)bu_calloc(poly->num_contours, sizeof(int), "p_hole");
+    poly_2d.p_contour = (poly_contour_2d *)bu_calloc(poly->num_contours, sizeof(poly_contour_2d), "p_contour");
 
-    for (i = 0; i < poly->gp_num_contours; ++i) {
-	poly_2d.p_hole[i] = poly->gp_hole[i];
-	poly_2d.p_contour[i].pc_num_points = poly->gp_contour[i].gpc_num_points;
-	poly_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(poly->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+    for (i = 0; i < poly->num_contours; ++i) {
+	poly_2d.p_hole[i] = poly->hole[i];
+	poly_2d.p_contour[i].pc_num_points = poly->contour[i].num_points;
+	poly_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(poly->contour[i].num_points, sizeof(point2d_t), "pc_point");
 
-	for (j = 0; j < poly->gp_contour[i].gpc_num_points; ++j) {
+	for (j = 0; j < poly->contour[i].num_points; ++j) {
 	    point_t vpoint;
 
-	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, poly->gp_contour[i].gpc_point[j]);
+	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, poly->contour[i].point[j]);
 	    V2MOVE(poly_2d.p_contour[i].pc_point[j], vpoint);
 	    vZ = vpoint[Z];
 	}
