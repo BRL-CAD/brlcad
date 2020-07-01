@@ -4373,7 +4373,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	else if (bu_sscanf(argv[4], "%d", &op) != 1 || op > gctXor)
 	    goto bad;
 
-	gpp = ged_clip_polygon((ClipType)op,
+	gpp = clip_polygon((ClipType)op,
 			       &gdpsp->gdps_polygons.gp_polygon[i],
 			       &gdpsp->gdps_polygons.gp_polygon[j],
 			       CLIPPER_MAX,

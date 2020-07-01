@@ -42,7 +42,10 @@ DM_EXPORT void bview_update(struct bview *gvp);
 
 DM_EXPORT fastf_t find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
 DM_EXPORT int polygons_overlap(bview_polygon *polyA, bview_polygon *polyB, matp_t model2view, struct bn_tol *tol, fastf_t iscale);
-
+DM_EXPORT bview_polygon *
+clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
+DM_EXPORT bview_polygon *
+clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);
 
 __END_DECLS
 

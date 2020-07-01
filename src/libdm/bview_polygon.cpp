@@ -31,6 +31,7 @@
 #include "clipper.hpp"
 
 #include "vmath.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn/mat.h"
 #include "bn/plane.h"
@@ -437,6 +438,203 @@ end:
 }
 
 
+typedef struct {
+    ClipperLib::long64 x;
+    ClipperLib::long64 y;
+} clipper_vertex;
+
+
+static fastf_t
+load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygon *gpoly, fastf_t sf, matp_t mat)
+{
+    size_t j, k, n;
+    ClipperLib::Polygon curr_poly;
+    fastf_t vZ = 1.0;
+
+    for (j = 0; j < gpoly->gp_num_contours; ++j) {
+	n = gpoly->gp_contour[j].gpc_num_points;
+	curr_poly.resize(n);
+	for (k = 0; k < n; k++) {
+	    point_t vpoint;
+
+	    /* Convert to view coordinates */
+	    MAT4X3PNT(vpoint, mat, gpoly->gp_contour[j].gpc_point[k]);
+	    vZ = vpoint[Z];
+
+	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
+	    curr_poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
+	}
+
+	try {
+	    clipper.AddPolygon(curr_poly, ptype);
+	} catch (...) {
+	    bu_log("Exception thrown by clipper\n");
+	}
+    }
+
+    return vZ;
+}
+
+static fastf_t
+load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygons *subj, fastf_t sf, matp_t mat)
+{
+    size_t i;
+    fastf_t vZ = 1.0;
+
+    for (i = 0; i < subj->gp_num_polygons; ++i)
+	vZ = load_polygon(clipper, ptype, &subj->gp_polygon[i], sf, mat);
+
+    return vZ;
+}
+
+/*
+ * Process/extract the clipper_polys into a bview_polygon.
+ */
+static bview_polygon *
+extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t vZ)
+{
+    size_t i, j, k, n;
+    size_t num_contours = 0;
+    bview_polygon *result_poly;
+
+    /* Count up the number of contours. */
+    for (i = 0; i < clipper_polys.size(); ++i)
+	/* Add the outer and the holes */
+	num_contours += clipper_polys[i].holes.size() + 1;
+
+    BU_ALLOC(result_poly, bview_polygon);
+    result_poly->gp_num_contours = num_contours;
+
+    if (num_contours < 1)
+	return result_poly;
+
+    result_poly->gp_hole = (int *)bu_calloc(num_contours, sizeof(int), "gp_hole");
+    result_poly->gp_contour = (bview_poly_contour *)bu_calloc(num_contours, sizeof(bview_poly_contour), "gp_contour");
+
+    n = 0;
+    for (i = 0; i < clipper_polys.size(); ++i) {
+	point_t vpoint;
+
+	result_poly->gp_hole[n] = 0;
+	result_poly->gp_contour[n].gpc_num_points = clipper_polys[i].outer.size();
+	result_poly->gp_contour[n].gpc_point =
+	    (point_t *)bu_calloc(result_poly->gp_contour[n].gpc_num_points,
+				 sizeof(point_t), "gpc_point");
+
+	for (j = 0; j < result_poly->gp_contour[n].gpc_num_points; ++j) {
+	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, vZ);
+
+	    /* Convert to model coordinates */
+	    MAT4X3PNT(result_poly->gp_contour[n].gpc_point[j], mat, vpoint);
+	}
+
+	++n;
+	for (j = 0; j < clipper_polys[i].holes.size(); ++j) {
+	    result_poly->gp_hole[n] = 1;
+	    result_poly->gp_contour[n].gpc_num_points = clipper_polys[i].holes[j].size();
+	    result_poly->gp_contour[n].gpc_point =
+		(point_t *)bu_calloc(result_poly->gp_contour[n].gpc_num_points,
+				     sizeof(point_t), "gpc_point");
+
+	    for (k = 0; k < result_poly->gp_contour[n].gpc_num_points; ++k) {
+		VSET(vpoint, (fastf_t)(clipper_polys[i].holes[j][k].X) * sf, (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf, vZ);
+
+		/* Convert to model coordinates */
+		MAT4X3PNT(result_poly->gp_contour[n].gpc_point[k], mat, vpoint);
+	    }
+
+	    ++n;
+	}
+    }
+
+    return result_poly;
+}
+
+
+bview_polygon *
+clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+{
+    fastf_t inv_sf;
+    fastf_t vZ;
+    ClipperLib::Clipper clipper;
+    ClipperLib::ExPolygons result_clipper_polys;
+    ClipperLib::ClipType ctOp;
+
+    /* need to scale the points up/down and then convert to/from long64 */
+    /* need a matrix to rotate into a plane */
+    /* need the inverse of the matrix above to put things back after clipping */
+
+    /* Load subject polygon into clipper */
+    load_polygon(clipper, ClipperLib::ptSubject, subj, sf, model2view);
+
+    /* Load clip polygon into clipper */
+    vZ = load_polygon(clipper, ClipperLib::ptClip, clip, sf, model2view);
+
+    /* Convert op from BRL-CAD to Clipper */
+    switch (op) {
+    case gctIntersection:
+	ctOp = ClipperLib::ctIntersection;
+	break;
+    case gctUnion:
+	ctOp = ClipperLib::ctUnion;
+	break;
+    case gctDifference:
+	ctOp = ClipperLib::ctDifference;
+	break;
+    default:
+	ctOp = ClipperLib::ctXor;
+	break;
+    }
+
+    /* Clip'em */
+    clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
+
+    inv_sf = 1.0/sf;
+    return extract(result_clipper_polys, inv_sf, view2model, vZ);
+}
+
+
+bview_polygon *
+clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+{
+    fastf_t inv_sf;
+    fastf_t vZ;
+    ClipperLib::Clipper clipper;
+    ClipperLib::ExPolygons result_clipper_polys;
+    ClipperLib::ClipType ctOp;
+
+    /* need to scale the points up/down and then convert to/from long64 */
+    /* need a matrix to rotate into a plane */
+    /* need the inverse of the matrix above to put things back after clipping */
+
+    /* Load subject polygons into clipper */
+    load_polygons(clipper, ClipperLib::ptSubject, subj, sf, model2view);
+
+    /* Load clip polygons into clipper */
+    vZ = load_polygons(clipper, ClipperLib::ptClip, clip, sf, model2view);
+
+    /* Convert op from BRL-CAD to Clipper */
+    switch (op) {
+    case gctIntersection:
+	ctOp = ClipperLib::ctIntersection;
+	break;
+    case gctUnion:
+	ctOp = ClipperLib::ctUnion;
+	break;
+    case gctDifference:
+	ctOp = ClipperLib::ctDifference;
+	break;
+    default:
+	ctOp = ClipperLib::ctXor;
+	break;
+    }
+
+    /* Clip'em */
+    clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
+
+    inv_sf = 1.0/sf;
+    return extract(result_clipper_polys, inv_sf, view2model, vZ);
+}
 
 /*
  * Local Variables:
