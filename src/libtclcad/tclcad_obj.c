@@ -62,7 +62,7 @@
 
 #include "rt/solid.h"
 #include "dm.h"
-#include "dm/bview.h"
+#include "dm/bview_util.h"
 
 #include "icv/io.h"
 #include "icv/ops.h"
@@ -4502,7 +4502,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	area = ged_find_polygon_area(&gdpsp->gdps_polygons.gp_polygon[i], CLIPPER_MAX,
+	area = find_polygon_area(&gdpsp->gdps_polygons.gp_polygon[i], CLIPPER_MAX,
 				     gdpsp->gdps_model2view, gdpsp->gdps_scale);
 	bu_vls_printf(gedp->ged_result_str, "%lf", area);
 

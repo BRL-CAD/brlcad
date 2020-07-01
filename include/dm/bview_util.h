@@ -37,6 +37,11 @@ __BEGIN_DECLS
 
 DM_EXPORT void bview_update(struct bview *gvp);
 
+
+
+DM_EXPORT fastf_t find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
+
+
 __END_DECLS
 
 /** @} */

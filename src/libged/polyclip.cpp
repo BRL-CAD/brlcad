@@ -31,6 +31,7 @@
 #include "clipper.hpp"
 
 #include "bu/sort.h"
+#include "dm/bview_util.h"
 #include "ged.h"
 
 
@@ -472,39 +473,6 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 
     return gpp;
 }
-
-
-fastf_t
-ged_find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
-{
-    size_t j, k, n;
-    ClipperLib::Polygon poly;
-    fastf_t area = 0.0;
-
-    if (NEAR_ZERO(sf, SMALL_FASTF))
-	return 0.0;
-
-    for (j = 0; j < gpoly->gp_num_contours; ++j) {
-	n = gpoly->gp_contour[j].gpc_num_points;
-	poly.resize(n);
-	for (k = 0; k < n; k++) {
-	    point_t vpoint;
-
-	    /* Convert to view coordinates */
-	    MAT4X3PNT(vpoint, model2view, gpoly->gp_contour[j].gpc_point[k]);
-
-	    poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
-	    poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
-	}
-
-	area += (fastf_t)ClipperLib::Area(poly);
-    }
-
-    sf = 1.0/(sf*sf) * size * size;
-
-    return (area * sf);
-}
-
 
 typedef struct {
     size_t	pc_num_points;

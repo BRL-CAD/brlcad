@@ -11,7 +11,10 @@ set(DM_INCLUDE_DIRS
   )
 
 # local includes
-set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+set(DM_LOCAL_INCLUDE_DIRS 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_SOURCE_DIR}/src/libbg
+  )
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
@@ -58,6 +61,7 @@ set(LIBDM_SRCS
   adc.c
   asize.c
   axes.c
+  bview_polygon.cpp
   bview_util.c
   clip.c
   dm-generic.c
