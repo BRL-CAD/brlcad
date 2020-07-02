@@ -1,12 +1,3 @@
-
-***************************************************************
-THIS IS NOT YET READY.  WILL REMOVE THIS COMMENT WHEN COMPLETE.
-***************************************************************
-
-x == no means to contact
-+ == emailed, no response
-x+ == email rejected
-
 Abhi2011 Abhijit Nandy <abhijit.nandy@gmail.com>
 abhi2011 Abhijit Nandy <abhijit.nandy@gmail.com>
 adam Adam Ross <aross@ara.com>
@@ -21,13 +12,13 @@ brlcad Christopher Sean Morrison <brlcad@gmail.com>
 butler Lee Butler <iraytrace@users.noreply.github.com>
 caen23 Cezar El-Nazli <cezar.elnazli2@gmail.com>
 carlmoore Carl Moore <carlm0404@gmail.com>
-x cjohnson Christopher Johnson <cjohnson@cyberpaladin.com>
+cjohnson Christopher Johnson <cjohnson@brlcad.org>
 cnuzman Carl Nuzman <carl.nuzman@nokia-bell-labs.com>
 cprecup Cristina Precup <cprecup@cisco.com>
 crdueck Chris Dueck <cdueck93@gmail.com>
 d_rossberg Daniel Rossberg <drossberg@users.noreply.github.com>
 davidloman David Loman <dloman77@gmail.com>
-x+ ddreeves70 David Reeves <ddreeves70@yahoo.com>
+ddreeves70 David Reeves <ddreeves70@brlcad.org>
 dgodbey David Godbey <dgodbey@yahoo.com>
 dhoward Doug Howard <doug@survice.com>
 dpk Douglas Kingston <dpk@randomnotes.org>
@@ -39,71 +30,71 @@ erikgreenwald Erik Greenwald <erik@brlcad.org>
 g2asc Charles Kennedy <kermit@brlcad.org>
 gabbar1947 Shubham Rathore <shubhamrathore1947@gmail.com>
 gdurf Glenn Durfee <gdurfee@gmail.com>
-+ gwyn Douglas Gwyn <gwyn>
-+ hartley Robert Hartley <hartley@vt.edu>
-x+ homovulgaris Dawn Thomas <homovulgaris>
-+ iiizzzaaakkk Isacc Kamga <iiizzzaaakkk>
-+ indianlarry Keith Boman <indianlarry>
+gwyn Douglas Gwyn <dagwyn@aol.com>
+hartley Robert Hartley <hartley@brlcad.org>
+homovulgaris Dawn Thomas <thedawnthomas@gmail.com>
+iiizzzaaakkk Isacc Kamga <u2isaac@gmail.com>
+indianlarry Keith Boman <indianlarry@verizon.net>
 irpguardian Stephen Kennedy <59673185+irpguardian@users.noreply.github.com>
 jdoliner Joe Doliner <jdoliner@gmail.com>
-+ jehunt Jim Hunt  <jhunt@ara.com>
-+ jimhunt Jim Hunt  <jhunt@ara.com>
+jehunt Jim Hunt  <jimhunt@brlcad.org>
+jimhunt Jim Hunt  <jimhunt@brlcad.org>
 + jgrosh John Grosh <grosh1@llnl.gov>
-+ jlowens Jason Owens <jlowenz@users.noreply.github.com>
-+ jlowenz Jason Owens <jlowenz@users.noreply.github.com>
+jlowens Jason Owens <jlowenz@brlcad.org>
+jlowenz Jason Owens <jlowenz@brlcad.org>
 joevalleyfield Timothy Myers <tim@jvsw.com>
 johnranderson John Anderson <daytonajra@gmail.com>
-+ jordisayol Jordi Sayol <g.sayol@gmail.com>
+jordisayol Jordi Sayol <g.sayol@gmail.com>
 jra John Anderson <daytonajra@gmail.com>
-j-schulte Johannes Schulte <j_schulte@outlook.com>
-+ justin Justin Shumaker <linkedin+facebook>
-+ twingy Justin Shumaker <linkedin+facebook>
+j-schulte Johannes Schulte <28735406+johannesschulte@users.noreply.github.com>
+justin Justin Shumaker <twingy@brlcad.org>
+twingy Justin Shumaker <twingy@brlcad.org>
 kermit Charles Kennedy <kermit@brlcad.org>
 kunigami Guilherme Kunigami <kunigami@gmail.com>
 lbutler Lee Butler <iraytrace@users.noreply.github.com>
 louipc Loui Chang <louipc@gmx.com>
-+ mafm Manuel Montecelo <mafm>
+mafm Manuel Montecelo <manuel.montezelo@gmail.com>
 maths22 Jacob Burroughs <maths22@gmail.com>
-x mccarty Cormac McCarty <mccarty>
-+ mdtwenty Marco da Silva Domingues <marcodomingues20@gmail.com>>
-x mendesr Roger Mendes <mendesr>
-x merritt Don Merritt <merritt>
-+ mgillich Michael Gillich <michael.j.gillich@gmail.com>
-+mjgillich Michael Gillich <Mike Gillich <michael.j.gillich@gmail.com>
+mccarty Cormac McCarty <mccarty@brlcad.org>
+mdtwenty Marco da Silva Domingues <marcodomingues20@gmail.com>
+mendesr Roger Mendes <mendesr@brlcad.org>
+merritt Don Merritt <merritt@brlcad.org>
+mgillich Michael Gillich <michael.j.gillich@gmail.com>
+mjgillich Michael Gillich <Mike Gillich <michael.j.gillich@gmail.com>
 mike Michael John Muuss <mike@brlcad.org>
-+ mm Michael Markowski <michael.j.markowski.civ@mail.mil>
-+ mmark Michael Markowski <michael.j.markowski.civ@mail.mil>
-+ mohitdaga Mohit Daga <mohitdaga.lnmiit@gmail.com>
-+ morrison Christopher Sean Morrison <brlcad@gmail.com>
+mm Michael Markowski <mmark@brlcad.org>
+mmark Michael Markowski <mmark@brlcad.org>
+mohitdaga Mohit Daga <mohitdaga.lnmiit@gmail.com>
+morrison Christopher Sean Morrison <brlcad@gmail.com>
 moss Gary Moss <garysmoss@gmail.com>
-+ n_reed Nicholas Reed <nreed1@umbc.edu>
-+ pacman87 Timothy Van Ruitenbeek <pacman87@gmail.com>
-+ peter-sa Peter Amidon <psamidon@gmail.com>
-+ phil Phillip Dykstra <phil+text>
-+ phoenixyjll Wu Jianbang <284281400@qq.com>
-+ pjt Paul Tanenbaum <pjt+linked>
-+ poolio Ben Poole <bpoolio@gmail.com>
-+ popescuandrei Andrei-Constantin Popescu <popescu.andrei1991@gmail.com>
-+ prasad_silva Prasad Prometheus Silva <prasad_silva>
-+ r_weiss Richard Weiss <r_weiss+fb>
-+ ralith Benjamin Saunders <ben.e.saunders@gmail.com>
-+ rbowers Ronald Bowers <ron1968@gmail.com>
-+ reschly Robert Reschly <robert.reschly@gmail.com>
-+ ronaldbowers Ronald Bowers <ron1968@gmail.com>
+n_reed Nicholas Reed <nreed1@umbc.edu>
+pacman87 Timothy Van Ruitenbeek <pacman87@brlcad.org>
+peter-sa Peter Amidon <peter@brlcad.org>
+phil Phillip Dykstra <phil@brlcad.org>
+phoenixyjll Wu Jianbang <284281400@qq.com>
+pjt Paul Tanenbaum <pjt@brlcad.org>
+poolio Ben Poole <bpoolio@gmail.com>
+popescuandrei Andrei-Constantin Popescu <popescu.andrei1991@gmail.com>
+prasad_silva Prasad Prometheus Silva <prasad.silva@gmail.com>
+r_weiss Richard Weiss <r_weiss@brlcad.org>
+ralith Benjamin Saunders <ben.e.saunders@gmail.com>
+rbowers Ronald Bowers <rbowers@brlcad.org>
+reschly Robert Reschly <robert.reschly@gmail.com>
+ronaldbowers Ronald Bowers <rbowers@brlcad.org>
 root root <mike@brlcad.org>
-+ sammy Samuel Hocevar <sam@hocevar.net>
-+ scoates Susan Coates <scoates>
+sammy Samuel Hocevar <sam@hocevar.net>
+scoates Susan Coates <scoates@brlcad.org>
 sharannyn Saran Narayan <sharan.nyn@gmail.com>
 starseeker Clifford Yapp <238416+starseeker@users.noreply.github.com>
-+ stay Paul Stay <stay+linkedin>
-+ stebich Armin Stebich <armin.stebich@gmail.com>
-+ stefanmirea Stefan Mirea <mireastefangabriel@gmail.com>
-x steveb Stephen Buckley <steveb>
-x sue Susanne Muuss <sue>
+stay Paul Stay <stay@brlcad.org>
+stebich Armin Stebich <lordofbikes@brlcad.org>
+stefanmirea Stefan Mirea <mireastefangabriel@gmail.com>
+steveb Stephen Buckley <steveb@brlcad.org>
+sue Susanne Muuss <sue@brlcad.org>
 tbrowder2 Thomas Browder <tom.browder@gmail.com>
-+ tcs Terry Slattery <tcs+linkedin>
-xxx tossup tossup <tossup@brlcad.org> TODO: identify this committer!
-x tranese TraNese Christy <skeeter@brlcad.org>
+tcs Terry Slattery <tcs@brlcad.org>
+tossup tossup <tossup@brlcad.org>
+tranese TraNese Christy <skeeter@brlcad.org>
 vasco_costa Vasco Alexandre da Silva Costa <1638760+vcosta@users.noreply.github.com>
 vladbogo Vlad Bogolin <vladbogolin@gmail.com>
 wm William Mermagen <bilmer1@comcast.net>
