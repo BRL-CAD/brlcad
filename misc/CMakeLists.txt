@@ -249,6 +249,7 @@ set(misc_ignore_files
   repoconv/svnfexport_svn.cxx
   repoconv/sync_commit.sh
   repoconv/sync_commit_trunk.sh
+  repoconv/tagmap.sh
   repoconv/terra.dsp
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def
