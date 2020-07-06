@@ -36514,7 +36514,7 @@ Use, modification and distribution are subject to the Boost Software License, Ve
 blob
 data 9656
 //
-// © Copyright Henrik Ravn 2004
+// ï¿½ Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -36804,7 +36804,7 @@ namespace DotZLib
 blob
 data 10894
 //
-// © Copyright Henrik Ravn 2004
+// ï¿½ Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37107,7 +37107,7 @@ namespace DotZLib
 blob
 data 3641
 //
-// © Copyright Henrik Ravn 2004
+// ï¿½ Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37214,7 +37214,7 @@ namespace DotZLib
 blob
 data 2168
 //
-// © Copyright Henrik Ravn 2004
+// ï¿½ Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37299,7 +37299,7 @@ namespace DotZLib
 blob
 data 7410
 //
-// © Copyright Henrik Ravn 2004
+// ï¿½ Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37634,7 +37634,7 @@ using System.Runtime.CompilerServices;
 blob
 data 6141
 //
-// © Copyright Henrik Ravn 2004
+// ï¿½ Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37834,7 +37834,7 @@ namespace DotZLib
 blob
 data 3900
 //
-// © Copyright Henrik Ravn 2004
+// ï¿½ Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37942,7 +37942,7 @@ namespace DotZLib
 blob
 data 7850
 //
-// © Copyright Henrik Ravn 2004
+// ï¿½ Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -40386,11 +40386,11 @@ Sync CVS repo contents for r29886 to match the SVN contents at that revision.
 from b66a14bfa338e674c95e0f641f030846c3d7bd9d
 M 100644 83b8558509908be85f9c61948c8d8d5ef18672b4 ".cvsignore"
 M 100644 aa08223bbc2674f1928bfeda5d917a4f40884c6f "misc/nsis/brlcad.nsi"
-M 100755 9b78dafe58ad2d62c0319b186a8493acf775e13e "misc/win32-msvc8/tclsh/library/installTree.tcl"
+M 100755 9cac74ad0e4037cc903df32f28bc7cdbec8b0e10 "misc/win32-msvc8/tclsh/library/installTree.tcl"
 M 100644 6ea53cf992bcc50e3a3ec0b90860a9515fdb794c "misc/win32-msvc/aPrep/aPrep.dsp"
 M 100644 948eb7f7696666489637ab3f4f3ea6fd8eff214d "misc/win32-msvc/brlcad.dsw"
 M 100644 9ecb6a2b8726a5d59e6c5909e3b893d0af2989fe "misc/win32-msvc/Dll/brlcad.dsp"
-M 100644 d93ccc8010b71b1b8a4beed3c449322bce392984 "misc/win32-msvc/Dll/brlcad.rc"
+M 100644 37c43ca69d9c21dc0d4c7c16c6e546cba300d8e7 "misc/win32-msvc/Dll/brlcad.rc"
 M 100644 38a05026ed404840009d8abe1fee090307c46457 "src/libpkg/libpkg.dsp"
 M 100644 3fe8816f655e0557fbf5dd8b0dec4766c15c4cc7 "src/libfb/libfb.dsp"
 M 100644 3f3a37f1b6506259193295aa92eaa17fc9628f4b "src/mged/mged.dsp"
@@ -40398,7 +40398,7 @@ M 100644 fd8450d3716c90f8947e5bee2eeb3b7205c36c5e "src/libwdb/libwdb.dsp"
 M 100644 f676df5d61d53ee78a621431d3f7bd273f4c16e8 "src/rt/rt.dsp"
 M 100644 1f3c8822bb11930d5103427ba357796e71a13e05 "src/libtermio/libtermio.dsp"
 M 100644 e67af967b9709a15c05110aa05b0aa38a7ab47d0 "src/nirt/nirt.dsp"
-M 100755 03ad9ee34cadefb9918b826185324b59f52c3c8d "src/tclscripts/archer/Archer.tcl"
+M 100755 6d18ca1607d8fca24681e2396ad7968e5e1d1a7f "src/tclscripts/archer/Archer.tcl"
 M 100644 d4452f58164f954e1ed24978165d4c215779bd76 "src/libdm/libdm.dsp"
 M 100644 2eef17b22da9efd4755a3e75b2f130589cc2bec3 "src/libbn/libbn.dsp"
 M 100644 abdaeb256da4bce614ec9dc016bb335ae4720df8 "src/librt/librt.dsp"
