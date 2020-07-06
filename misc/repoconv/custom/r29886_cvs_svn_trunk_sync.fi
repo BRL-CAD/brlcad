@@ -269,7 +269,7 @@ data 23969
 #                      I N S T A L L T R E E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2020 United States Government as represented by
+# Copyright (c) 2002-2007 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1479,7 +1479,7 @@ BEGIN
             VALUE "FileDescription", "BRL-CAD for Windows Dynamic-Link Library\0"
             VALUE "FileVersion", BRLCAD_DLL_RC_VERSION
             VALUE "InternalName", "brlcad\0"
-            VALUE "LegalCopyright", "Copyright (c) 1984-2020 United States Government as represented by the U.S. Army Research Laboratory. All Rights Reserved.\0"
+            VALUE "LegalCopyright", "Copyright (c) 1984-2007 United States Government as represented by the U.S. Army Research Laboratory. All Rights Reserved.\0"
             VALUE "LegalTrademarks", "The word mark ""BRL-CAD"" and the ""BRL-CAD Eagle"" image are registered trademarks of the Department of the Army, United States Government. All rights are reserved.\0"
             VALUE "OriginalFilename", "brlcad.dll\0"
             VALUE "ProductName", "BRL-CAD\0"
@@ -2845,7 +2845,7 @@ data 232010
 #                      A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2020 United States Government as represented by
+# Copyright (c) 2002-2007 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -36514,7 +36514,7 @@ Use, modification and distribution are subject to the Boost Software License, Ve
 blob
 data 9656
 //
-// ï¿½ Copyright Henrik Ravn 2004
+// © Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -36804,7 +36804,7 @@ namespace DotZLib
 blob
 data 10894
 //
-// ï¿½ Copyright Henrik Ravn 2004
+// © Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37107,7 +37107,7 @@ namespace DotZLib
 blob
 data 3641
 //
-// ï¿½ Copyright Henrik Ravn 2004
+// © Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37214,7 +37214,7 @@ namespace DotZLib
 blob
 data 2168
 //
-// ï¿½ Copyright Henrik Ravn 2004
+// © Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37299,7 +37299,7 @@ namespace DotZLib
 blob
 data 7410
 //
-// ï¿½ Copyright Henrik Ravn 2004
+// © Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37634,7 +37634,7 @@ using System.Runtime.CompilerServices;
 blob
 data 6141
 //
-// ï¿½ Copyright Henrik Ravn 2004
+// © Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37834,7 +37834,7 @@ namespace DotZLib
 blob
 data 3900
 //
-// ï¿½ Copyright Henrik Ravn 2004
+// © Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37942,7 +37942,7 @@ namespace DotZLib
 blob
 data 7850
 //
-// ï¿½ Copyright Henrik Ravn 2004
+// © Copyright Henrik Ravn 2004
 //
 // Use, modification and distribution are subject to the Boost Software License, Version 1.0. 
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
