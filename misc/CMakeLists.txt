@@ -209,6 +209,7 @@ set(misc_ignore_files
   repoconv/custom/r29886_tags.fi
   repoconv/cvs_authormap
   repoconv/cvs_repaired/sphflake.pix,v
+  repoconv/gitattributes
   repoconv/gitignore.tar.gz
   repoconv/manual_merge_info.tar.gz
   repoconv/md5.hpp
