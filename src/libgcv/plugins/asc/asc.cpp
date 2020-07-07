@@ -1,3 +1,28 @@
+/*                         A S C . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2020 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file asc.cpp
+ *
+ * Brief description
+ *
+ */
+
 #include "common.h"
 #include "vmath.h"
 
@@ -10,7 +35,10 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 
-HIDDEN int
+extern void asc_read_v4(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
+extern void asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
+
+static int
 asc_can_read(const char *data)
 {
     if (!data) return 0;
@@ -18,38 +46,7 @@ asc_can_read(const char *data)
     return 1;
 }
 
-HIDDEN int
-asc_read_v4(
-	struct gcv_context *UNUSED(c),
-       	const struct gcv_opts *UNUSED(o),
-	std::ifstream &fs
-	)
-{
-    std::string sline;
-    bu_log("Reading v4...\n");
-    while (std::getline(fs, sline)) {
-	std::cout << sline << "\n";
-    }
-    return 1;
-
-}
-
-HIDDEN int
-asc_read_v5(
-	struct gcv_context *UNUSED(c),
-       	const struct gcv_opts *UNUSED(o),
-	std::ifstream &fs
-	)
-{
-    std::string sline;
-    bu_log("Reading v5...\n");
-    while (std::getline(fs, sline)) {
-	std::cout << sline << "\n";
-    }	
-    return 1;
-}
-
-HIDDEN int
+static int
 asc_read(
 	struct gcv_context *c,
        	const struct gcv_opts *o,
@@ -113,6 +110,15 @@ asc_read(
     return 1;
 }
 
+static int
+asc_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
+	       const void *UNUSED(options_data), const char *dest_path)
+{
+    if (!context || !gcv_options || !dest_path) return 0;
+    bu_log("asc write\n");
+    return 1;
+}
+
 extern "C"
 {
     struct gcv_filter gcv_conv_asc_read =
@@ -126,7 +132,18 @@ extern "C"
 	asc_read
     };
 
-    static const struct gcv_filter * const filters[] = {&gcv_conv_asc_read, NULL};
+    struct gcv_filter gcv_conv_asc_write =
+    {
+	"ASC Writer",
+       	GCV_FILTER_WRITE,
+       	BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC,
+       	NULL,
+       	NULL,
+       	NULL,
+       	asc_write
+    };
+
+    static const struct gcv_filter * const filters[] = {&gcv_conv_asc_read, &gcv_conv_asc_write, NULL};
     const struct gcv_plugin gcv_plugin_info_s = { filters };
     COMPILER_DLLEXPORT const struct gcv_plugin *gcv_plugin_info(){return &gcv_plugin_info_s;}
 }

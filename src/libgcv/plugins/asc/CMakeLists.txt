@@ -1,6 +1,10 @@
-LIBGCV_ADD_PLUGIN(asc "asc_read.cpp" "librt;libbu")
+LIBGCV_ADD_PLUGIN(asc "asc.cpp;asc_v4.cpp;asc_v5.cpp" "librt;libbu")
 
-CMAKEFILES(asc_read.cpp)
+CMAKEFILES(
+  asc.cpp
+  asc_v4.cpp
+  asc_v5.cpp
+  )
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
