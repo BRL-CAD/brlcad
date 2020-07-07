@@ -119,7 +119,7 @@ extern "C"
     {
 	"ASC Reader",
 	GCV_FILTER_READ,
-	BU_MIME_MODEL_VND_BRLCAD_PLUS_TCL,
+	BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC,
 	asc_can_read,
 	NULL,
 	NULL,
