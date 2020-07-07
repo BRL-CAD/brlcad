@@ -19,7 +19,8 @@ set(embedded_licenses
   fontstash.txt
   gct.txt
   gecode.txt
-  gdal_gcv_plugin.txt
+  gdal_gcv_plugin1.txt
+  gdal_gcv_plugin2.txt
   halfedge.txt
   humanize.txt
   hv3.txt
