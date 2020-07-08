@@ -37,6 +37,7 @@
 
 extern void asc_read_v4(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
 extern void asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
+extern void asc_write_v5(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
 
 static int
 asc_can_read(const char *data)
@@ -111,11 +112,13 @@ asc_read(
 }
 
 static int
-asc_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
-	       const void *UNUSED(options_data), const char *dest_path)
+asc_write(struct gcv_context *c, const struct gcv_opts *o,
+	       const void *UNUSED(odata), const char *dest_path)
 {
-    if (!context || !gcv_options || !dest_path) return 0;
+    if (!c || !o || !dest_path) return 0;
     bu_log("asc write\n");
+    // TODO - check for version option
+    asc_write_v5(c, o, dest_path);
     return 1;
 }
 
