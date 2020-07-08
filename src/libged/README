@@ -1,21 +1,29 @@
-BRL-CAD's Geometry Editing Command Library (LIBGED)
-===================================================
+BRL-CAD's Geometry Editing Library (LIBGED)
+===========================================
 
-By design, LIBGED is intended to be a simple command interface upon
-which GED-style applications, utilities, and scripting may be built.
-Commands may be invoked directly via C bindings or indirectly via
-scripting languages such as Python, Tcl, Shell, etc., that are bound
-to LIBGED.  The command interface is intentionally stateless, though
-applications can specify some information (e.g., objects and views)
-via a ged context structure that is passed to all commands.
+LIBGED is a CLI library for working on BRL-CAD geometry.
 
-The longer-term but not-yet-realized goals of the library include
-modular self-documenting encapsulation, versioning, and transactions.
+LIBGED provides commands that may be invoked via C API or scripting
+languages bound to the API.  It supports the following features:
 
-LIBGED has a design objective to present fewer than 100 top-level
-commands using a consistent "{action} [args]" command pattern for all
-processing commands and "{obj_type} {action} [args]" for commands
-specific to an object type.
+* stateless command interface
+* stateful commands via context structure (e.g., for objects & views)
+* short and long versions of all flags
+* automatic help generation for commands and flags
+* TODO: automatic help flag recognition for -?, -h, and --help
+* TODO: automatic detailed help for "help [command]"
+* TODO: built-in globbing support
+* TODO: transactional changes (all or nothing)
+* TODO: built-in undo support
+* TODO: command versioning
+
+= Design =
+
+LIBGED's CLI uses a consistent "{action} [args]" (i.e., VERB NOUN)
+command pattern or "{obj_type} {action} [args]" for commands
+specific to an object type (e.g., "attr show myobj").
+
+LIBGED aims to present fewer than 100 top-level commands.
 
 For development, the following guidelines are recommended best
 practice for consistency and uniformity.
