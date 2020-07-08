@@ -117,6 +117,22 @@ the SVN record of the branch, use the following alias:
                 git log --all --show-notes --grep=\"svn:branch:$CURRBRANCH$\"; \
                 }; f"
 
+####################  Establishing identities  ###############################
+
+For users who want to set up brlcad git repositories to use their github
+username and email but not use those as their default commit ID for all
+repositorires on their machine, it is possible to set user name and email on a
+per-repository basis from the checkout directory:
+
+git config user.name "Jane Smith"
+git config user.email “jsmith@mail”
+
+For those who don't want to have to remember to set this every time they clone
+the repository, a feature introduced in Git 2.13 is worth exploring. It is now
+possible to use conditional includes to globally specifiy a specific
+username/email combination when working in directories that match patterns:
+
+https://stackoverflow.com/a/43654115
 
 ############  Other useful tips ##############
 
