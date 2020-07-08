@@ -2444,7 +2444,7 @@ DOCUMENTATION
 
 * document the new NURBS/BREP primitive, capabilities and limitations
 
-* add missing manual pages (tbrowder2 generated list 2013-08):
+* Low-hanging fruit, add missing manual pages:
 
     archer
     bombardier
@@ -2477,10 +2477,8 @@ DOCUMENTATION
     umod
     ustats
 
-* these are matured shape tools that get installed with simple
-  usability but should still have basic docs and better names.  plan
-  to absorb them into ged as external plugins, but they'll still need
-  docs:
+  Shape tools installed without docs.  may absorb into ged as plugins
+  or may rename, but still need docs:
 
     bolt
     fence
@@ -2492,23 +2490,57 @@ DOCUMENTATION
     window_frame
     wire
 
-* misc / 3rd party tools we control / bundle, but need docs if anyone
-  else is to use them or contribute:
+  User-facing commands reported by 'help' needing docs.  some are
+  implemented as Tcl, others to consolidate, but still need docs:
 
-    perplex
-    re2c
+    adjust
+    bot_smooth
+    cc
+    closedb
+    dbversion
+    dmtype
+    dsp
+    dump
+    e_id
+    form
+    joint
+    labelface
+    loadview
+    lod
+    match
+    mirror
+    nmg_fix_normals
+    png
+    put
+    relos
+    remat
+    reset
+    rmats
+    rt_gettrees
+    rtabort
+    rtedge
+    rtweight
+    savekey
+    shaded_mode
+    unhide
 
-* needs his own repo:
-
-    ttcp
-
-* need to revisit utility of spherical mapping, used by sh_spm and
+  Need to revisit utility of spherical mapping, used by sh_spm and
   sh_points, used for environment mapping (e.g., stars):
 
     pix-spm
     spm-fb
 
-* these eventually get put into gcv (hopefully not needing docs):
+  3rd party tools we control / bundle, but need docs if anyone else is
+  to use them or contribute:
+
+    perplex
+    re2c
+
+  Needs separate repo:
+
+    ttcp
+
+  Converters that belong in GCV:
 
     3dm-g
     g-dot
