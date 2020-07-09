@@ -274,7 +274,7 @@ count_nodes(struct ged *gedp, char *line)
 
 
 static int
-put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *old_name, const char *new_name, const char *imstr)
+put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *old_name, const char *new_name, const char *imstr)
 {
     int i;
     int done;
@@ -484,17 +484,19 @@ put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 int
 ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    char new_name_v4[NAMESIZE+1];
-    char *new_name;
-    int offset;
-    int save_comb_flag = 0;
-    static const char *usage = "comb_name is_Region id air material los color shader inherit boolean_expr";
+    static const char *usage = "comb_name is_region [ regionID airID materialID los% ] color shader inherit boolean_expr";
     static const char *noregionusage = "comb_name n color shader inherit boolean_expr";
-    static const char *regionusage = "comb_name y id air material los color shader inherit boolean_expr";
+    static const char *regionusage = "comb_name y regionID airID materialID los% color shader inherit boolean_expr";
+
     const char *saved_name = NULL;
+
+    char *new_name = NULL;
+    char new_name_v4[NAMESIZE+1] = {0};
+    int offset = 0;
+    int save_comb_flag = 0;
+    struct directory *dp = NULL;
+    struct rt_comb_internal *comb = NULL;
+    struct rt_db_internal intern;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -557,7 +559,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	    new_name = dp->d_namep;
     }
 
-    if (*argv[2] == 'y' || *argv[2] == 'Y')
+    if (bu_str_true(argv[2]))
 	comb->region_flag = 1;
     else
 	comb->region_flag = 0;
@@ -587,12 +589,12 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     put_rgb_into_comb(comb, argv[offset + 1]);
     bu_vls_strcpy(&comb->shader, argv[offset +2]);
 
-    if (*argv[offset + 3] == 'y' || *argv[offset + 3] == 'Y')
+    if (bu_str_true(argv[offset + 3]))
 	comb->inherit = 1;
     else
 	comb->inherit = 0;
 
-    if (put_tree_into_comb(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == GED_ERROR) {
+    if (put_tree_into_comb_and_export(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == GED_ERROR) {
 	if (comb && dp) {
 	    restore_comb(gedp, dp, saved_name);
 	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
