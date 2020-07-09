@@ -1602,6 +1602,24 @@ after_read:
     return 1;
 }
 
+
+/**************************************************************/
+
+// TODO - if I'm not mistaken, the v4 writing code requires
+// a db4 .g file?  It seems to be reading the file contents
+// and processing them, rather than loading the .g normally
+// and writing out data from in-memory structures.
+//
+// We definitely still need to read v4 - most of BRL-CAD's
+// default examples are in that format.  Do we still need
+// to write it?  If so, this pretty much needs a complete
+// rewrite, unless we do some weird contortions to only
+// allow callers to pair this with a db4 input (which really
+// isn't in the spirit of gcv...) - CY
+
+/**************************************************************/
+
+
 static int     combdump(void);
 static void    idendump(void), polyhead_asc(void), polydata_asc(void);
 static void    soldump(void), extrdump(void), sketchdump(void);
@@ -2488,6 +2506,9 @@ sketchdump(void)
     }
 }
 
+/*******************************************************************/
+/*                     Main asc V4 write entry point                */
+/*******************************************************************/
 int
 asc_write_v4(
 	    struct gcv_context *UNUSED(c),
