@@ -37,6 +37,99 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 
+#if 0
+
+// TODO:
+// This is the asc2g code that uses libtclcad
+// to read in v5 asc files as Tcl scripts.
+// It needs to be replaced with a non-Tcl based
+// parsing code that reads what g2asc writes.
+
+char *aliases[] = {
+    "attr",
+    "color",
+    "put",
+    "title",
+    "units",
+    "find",
+    "dbfind",
+    "rm",
+    (char *)0
+};
+
+Tcl_Interp *interp;
+Tcl_Interp *safe_interp;
+
+/* this is a Tcl script */
+
+rewind(ifp);
+bu_vls_trunc(&line, 0);
+BU_LIST_INIT(&RTG.rtg_headwdb.l);
+
+interp = Tcl_CreateInterp();
+Go_Init(interp);
+wdb_close(ofp);
+
+{
+    int ac = 4;
+    const char *av[5];
+
+    av[0] = "to_open";
+    av[1] = db_name;
+    av[2] = "db";
+    av[3] = argv[2];
+    av[4] = (char *)0;
+
+    if (to_open_tcl((ClientData)0, interp, ac, av) != TCL_OK) {
+	fclose(ifp);
+	bu_log("Failed to initialize tclcad_obj!\n");
+	Tcl_Exit(1);
+    }
+}
+
+/* Create the safe interpreter */
+if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
+    fclose(ifp);
+    bu_log("Failed to create safe interpreter");
+    Tcl_Exit(1);
+}
+
+/* Create aliases */
+{
+    int i;
+    int ac = 1;
+    const char *av[2];
+
+    av[1] = (char *)0;
+    for (i = 0; aliases[i] != (char *)0; ++i) {
+	av[0] = aliases[i];
+	Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
+    }
+    /* add "find" separately */
+    av[0] = "dbfind";
+    Tcl_CreateAlias(safe_interp, "find", interp, db_name, ac, av);
+}
+
+while ((gettclblock(&line, ifp)) >= 0) {
+    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
+	fclose(ifp);
+	bu_log("Failed to process input file (%s)!\n", argv[1]);
+	bu_log("%s\n", Tcl_GetStringResult(safe_interp));
+	Tcl_Exit(1);
+    }
+    bu_vls_trunc(&line, 0);
+}
+
+/* free up our resources */
+bu_vls_free(&line);
+bu_vls_free(&str_title);
+bu_vls_free(&str_put);
+
+fclose(ifp);
+
+Tcl_Exit(0);
+#endif	
+
 int
 asc_read_v5(
 	struct gcv_context *UNUSED(c),
