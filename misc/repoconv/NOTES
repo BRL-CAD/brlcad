@@ -218,3 +218,46 @@ https://gist.github.com/topheman/ec8cde7c54e24a785e52
 # To pull a backup, use --mirror (this seems to get the notes):
 git clone --mirror git@github.com:brlcad/brlcad.git
 
+
+################################################################################
+
+Unless our checks prove too heavy for the CI system, we should look into using
+the available Github built-in CI support for multiple platforms.  Starting
+points:
+
+https://github.com/actions/starter-workflows/pull/47
+https://github.com/cristianadam/HelloWorld/
+https://github.com/marketplace/actions/run-cmake
+https://github.com/jurplel/install-qt-action
+
+BRL-CAD's test will likely be quite heavy by normal testing standards,
+particularly across multiple platforms, if we're doing the full testing routine
+per commit (distcheck-full is virtually guaranteeded to be too much as one
+test...)
+
+To avoid straining the github infrastructure, we'll want to look into options
+to schedule when our tests are run, so we can get full coverage but not hammer
+the system too hard:
+
+https://docs.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events
+
+We'll need to start simple, with a cron scheduled basic distcheck across
+Linux, Windows and Mac, to demonstrate everything works.
+
+One idea is teach the CMake distcheck build setup to generate workflow files
+for each distcheck test and a master file to schedule it all, which we could
+then just copy into the repo's .github/workflows directory.  Could be managed
+the same way the INSTALL and configure files are managed - generated in build
+dir, but compile ultimately fails if they differ with the versions in the src
+tree.
+
+Longer term, current thought is to investigate building a minimal core subset
+(gsh/libged and deps, with some expensive options like GDAL/STEP/docs disable,
+for example) per commit, and cron job more expensive tests to run periodically.
+Could also look at the caching mechanism to store src/other deps to avoid
+rebuilding them, but that might be easier once we get a proper superbuild set
+up and can set up per-sub-project-based workflows.  (Need, for example, to
+invalidate the cache and rebuild openNURBS if we make a change to our bundled
+version, so what we really want is our own openNURBS project generating
+artifacts per-change that our main build workflow then grabs and installs as
+needed...)
