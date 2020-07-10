@@ -105,6 +105,10 @@ if(SH_EXEC)
 
     add_test(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/dsp.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
+
+    add_test(NAME regress-asc COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/asc.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-asc "asc2g;g2asc;gdiff;dbupgrade" TEST_DEFINED)
+
   endif (TARGET mged AND TARGET asc2g)
 
   add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
