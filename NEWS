@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* improved gdiff -F filtering option behavior - Cliff Yapp
 * improved gdiff command verbosity reporting options - Cliff Yapp
 * improved Combination Editor button behaviors in MGED - Sean Morrison
 * consistent usage taxonomy for ident-related commands - Sean Morrison
