@@ -1376,6 +1376,7 @@ namespace eval ArcherCore {
 }
 
 
+# e_flag_expands_globbing h_flag_unused s_flag_save_needed t_flag_tree_redraw_needed
 ::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
     if {!$mFreezeGUI} {
 	SetWaitCursor $this
