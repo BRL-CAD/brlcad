@@ -419,12 +419,15 @@ BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, size_t argc, const char **
  */
 BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
-// TODO - add a standard bu_opt_long_incr to increment the value held by a
-// long.  This is useful for situations where multiple specifications of
-// identical options are intended to change output, such as multiple -v options
-// to increase verbosity.
-
 /** @} */
+
+/**
+ * Process 0 arguments, incrementing the value held by a long.  This is
+ * useful for situations where multiple specifications of identical options are
+ * intended to change output, such as multiple -v options to increase
+ * verbosity.
+ */
+BU_EXPORT extern int bu_opt_incr_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 __END_DECLS
 

@@ -57,6 +57,10 @@
       </listitem>
     </varlistentry>
     <varlistentry>
+      <term><option>-q</option></term>
+      <listitem><para>Decrease the verbosity of the output.  Additional specifications will further decrease the output provided.  (Opposite effect of <option>v</option> option.) All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
+    </varlistentry>
+    <varlistentry>
       <term><option>-u</option></term>
       <listitem>
         <para>(two-way diff) Report objects that are identical in left_model.g and right_model.g</para>
@@ -64,8 +68,8 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-v #</option></term>
-      <listitem><para>Control the verbosity of the output.  Zero will suppress all reporting and only the return value of the program will contain information, one will provide categorized lists of objects but no details on what changed, two will list each changed object preceded by a modifier, three will print more details for changed objects, and four will print all available information.  All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
+      <term><option>-v</option></term>
+      <listitem><para>Increase the verbosity of the output.  Additional specifications will further increase the output provided.  (Opposite effect of <option>q</option> option.) All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
     </varlistentry>
     <varlistentry>
       <term><option>-t #</option></term>

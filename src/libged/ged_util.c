@@ -278,6 +278,7 @@ _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
+// TODO - replace with bu_opt_incr_long
 int
 _ged_vopt(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
