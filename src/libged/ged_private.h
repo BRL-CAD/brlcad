@@ -279,10 +279,6 @@ extern void _ged_eraseobj(struct ged *gedp,
 			  struct directory **dpp,
 			  int skip_first);
 
-/* defined in get_comb.c */
-extern void _ged_vls_print_matrix(struct bu_vls *vls,
-				  matp_t matrix);
-
 extern int _ged_get_obj_bounds2(struct ged *gedp,
 				int argc,
 				const char *argv[],

@@ -6386,7 +6386,7 @@ package provide cadwidgets::Ged 1.0
     $help add postscript	{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file} {creates a postscript file of the current view}}
     $help add push		{{object[s]} {pushes object's path transformations to solids}}
     $help add put		{{object data} {creates an object}}
-    $help add put_comb		{{comb_name is_Region id air material los color shader inherit boolean_expr} {create a combination}}
+    $help add put_comb		{{comb_name color shader inherit boolean_expr is_region regionID airID materialID los%} {create a combination}}
     $help add putmat		{{a/b I|m0 m1 ... m15} {put the specified matrix on a/b}}
     $help add qray		{{subcommand}	{get/set query_ray characteristics}}
     $help add quat		{{[a b c d]} {get/set the view orientation as a quaternion}}
@@ -6401,7 +6401,7 @@ package provide cadwidgets::Ged 1.0
     $help add quat_exp		{{quat} {}}
     $help add quat_log		{{quat} {}}
     $help add qvrot		{{x y z angle} {set the view given a direction vector and an angle of rotation}}
-    $help add r			{{region <operation solid>} {create or extend a Region combination}}
+    $help add r			{{region <operation solid>} {create or extend a region combination}}
     $help add rcodes		{{file} {read codes from file}}
     $help add red		{{comb} {edit comb}}
     $help add regdef		{{item air los mat} {get/set region defaults}}

@@ -471,9 +471,9 @@ put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 int
 ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "comb_name is_region [ regionID airID materialID los% ] color shader inherit boolean_expr";
-    static const char *noregionusage = "comb_name n color shader inherit boolean_expr";
-    static const char *regionusage = "comb_name y regionID airID materialID los% color shader inherit boolean_expr";
+    static const char *usage = "comb_name color shader inherit boolean_expr is_region [ regionID airID materialID los% ]";
+    static const char *noregionusage = "comb_name color shader inherit boolean_expr n";
+    static const char *regionusage = "comb_name color shader inherit boolean_expr y regionID airID materialID los%";
 
     const char *cmd_name = argv[0];
     const char *comb_name = argv[1];
@@ -485,7 +485,6 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     const char *inherit = NULL;
     const char *expression = NULL;
 
-    int offset = 0;
     int save_comb_flag = 0;
     struct directory *dp = NULL;
     struct rt_comb_internal *comb = NULL;
@@ -543,8 +542,13 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	RT_COMB_INTERNAL_INIT(comb);
     }
 
+    color = argv[2];
+    shader = argv[3];
+    inherit = argv[4];
+    expression = argv[5];
+
     /* if is_region */
-    if (bu_str_true(argv[2])) {
+    if (bu_str_true(argv[6])) {
 	if (argc != 11) {
 	    bu_vls_printf(gedp->ged_result_str, "region_flag is set, incorrect number of arguments supplied.\n");
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, regionusage);
@@ -552,12 +556,10 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	comb->region_flag = 1;
-	comb->region_id = atoi(argv[3]);
-	comb->aircode = atoi(argv[4]);
-	comb->GIFTmater = atoi(argv[5]);
-	comb->los = atoi(argv[6]);
-
-	offset = 6;
+	comb->region_id = atoi(argv[7]);
+	comb->aircode = atoi(argv[8]);
+	comb->GIFTmater = atoi(argv[9]);
+	comb->los = atoi(argv[10]);
     } else {
 	if (argc != 7) {
 	    bu_vls_printf(gedp->ged_result_str, "region_flag not set, incorrect number of arguments supplied.\n");
@@ -566,13 +568,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	comb->region_flag = 0;
-	offset = 2;
     }
-
-    color = argv[offset + 1];
-    shader = argv[offset + 2];
-    inherit = argv[offset + 3];
-    expression = argv[offset + 4];
 
     put_rgb_into_comb(comb, color);
     bu_vls_strcpy(&comb->shader, shader);

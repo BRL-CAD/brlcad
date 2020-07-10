@@ -890,6 +890,13 @@ proc comb_apply { id } {
 	}
     }
 
+    # get color
+    if {$comb_control($id,color) == ""} {
+	set color ""
+    } else {
+	set color [getRGB $top.colorMB $comb_control($id,color)]
+    }
+
     if {$comb_control($id,isRegion)} {
 
 	# this is a region
@@ -924,54 +931,14 @@ proc comb_apply { id } {
 		return 1
 	    }
 	}
-
-	# get color
-	if {$comb_control($id,color) == ""} {
-	    set color ""
-	} else {
-	    set color [getRGB $top.colorMB $comb_control($id,color)]
-	}
-
-	# actually apply the edits to the combination on disk
-	set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion) \
-			    $comb_control($id,id) $comb_control($id,air) $comb_control($id,material) \
-			    $comb_control($id,los) $color $comb_control($id,shader) \
-			    $comb_control($id,inherit) $comb_control($id,comb)} comb_error]
-
-	if {$ret} {
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-		"comb_apply: Error"\
-		$comb_error\
-		"" 0 OK
-	}
-
-	# set any attributes that we have saved
-	set ret [catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) } comb_error ]
-
-	if {$ret} {
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-		"comb_apply: Error"\
-		$comb_error\
-		"" 0 OK
-	}
-
-	return $ret
     }
-
-
-    # this is not a region
-
-    # get the color
-    if {$comb_control($id,color) == ""} {
-	set color ""
-    } else {
-	set color [getRGB $top.colorMB $comb_control($id,color)]
-    }
-
+    
     # actually apply the edits to the combination on disk
-    set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
-			$color $comb_control($id,shader) $comb_control($id,inherit)\
-			$comb_control($id,comb)} comb_error]
+    set ret [catch {put_comb $comb_control($id,name) $color $comb_control($id,shader) \
+			$comb_control($id,inherit) $comb_control($id,comb) $comb_control($id,isRegion) \
+			$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) $comb_control($id,los) \
+		    } comb_error]
+    }
 
     if {$ret} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
@@ -1065,37 +1032,28 @@ proc comb_reset { id } {
     # save the attributes
     set comb_control($id,attrs) $tmp_comb_attrs
 
-    set comb_control($id,isRegion) [lindex $comb_defs 1]
 
     # set all our data variables for the editor
+    set comb_control($id,color) [lindex $comb_defs 1]
+    set comb_control($id,shader) [lindex $comb_defs 2]
+    set comb_control($id,inherit) [lindex $comb_defs 3]
+    set comb_control($id,comb) [lindex $comb_defs 4]
+
+    set comb_control($id,isRegion) [lindex $comb_defs 5]
     if {$comb_control($id,isRegion) == "Yes"} {
 	if {$result == 2} {
 	    # get default values for ident, air, los, and material
 	    set defaults [regdef]
-	    set default_ident [lindex $defaults 1]
-	    set default_air [lindex $defaults 3]
-	    set default_los [lindex $defaults 5]
-	    set default_material [lindex $defaults 7]
-
-	    set comb_control($id,id) $default_ident
-	    set comb_control($id,air) $default_air
-	    set comb_control($id,material) $default_material
-	    set comb_control($id,los) $default_los
+	    set comb_control($id,id) [lindex $defaults 1]
+	    set comb_control($id,air) [lindex $defaults 3]
+	    set comb_control($id,material) [lindex $defaults 7]
+	    set comb_control($id,los) [lindex $defaults 5]
 	} else {
-	    set comb_control($id,id) [lindex $comb_defs 2]
-	    set comb_control($id,air) [lindex $comb_defs 3]
-	    set comb_control($id,material) [lindex $comb_defs 4]
-	    set comb_control($id,los) [lindex $comb_defs 5]
+	    set comb_control($id,id) [lindex $comb_defs 6]
+	    set comb_control($id,air) [lindex $comb_defs 7]
+	    set comb_control($id,material) [lindex $comb_defs 8]
+	    set comb_control($id,los) [lindex $comb_defs 9]
 	}
-	set comb_control($id,color) [lindex $comb_defs 6]
-	set comb_control($id,shader) [lindex $comb_defs 7]
-	set comb_control($id,inherit) [lindex $comb_defs 8]
-	set comb_control($id,comb) [lindex $comb_defs 9]
-    } else {
-	set comb_control($id,color) [lindex $comb_defs 2]
-	set comb_control($id,shader) [lindex $comb_defs 3]
-	set comb_control($id,inherit) [lindex $comb_defs 4]
-	set comb_control($id,comb) [lindex $comb_defs 5]
     }
 
     if {$comb_control($id,color) == ""} {
