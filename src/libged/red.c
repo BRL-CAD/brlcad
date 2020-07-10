@@ -40,7 +40,6 @@
 #include "./ged_private.h"
 
 
-/* also accessed by put_comb.c */
 char _ged_tmpfil[MAXPATHLEN] = {0};
 
 static const char combseparator[] = "---------- Combination Tree ----------\n";
