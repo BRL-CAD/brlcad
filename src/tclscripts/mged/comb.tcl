@@ -874,6 +874,14 @@ proc comb_apply { id } {
 
     set top .$id.comb
 
+    if {$comb_control($id,name) == ""} {
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
+	    "You must specify a region/combination name!"\
+	    "You must specify a region/combination name!"\
+	    "" 0 OK
+	return
+    }
+
     # get the Boolean expression from the text widget
     set comb_control($id,comb) [$top.combT get 0.0 end]
 
@@ -946,7 +954,7 @@ proc comb_apply { id } {
 	    "" 0 OK
     }
 
-    # set any attributes that we have saved
+    # set any attributes we had saved
     catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) }
 
     return $ret
@@ -1023,7 +1031,6 @@ proc comb_reset { id } {
 
     # save the attributes
     set comb_control($id,attrs) $tmp_comb_attrs
-
 
     # set all our data variables for the editor
     set comb_control($id,color) [lindex $comb_defs 1]
