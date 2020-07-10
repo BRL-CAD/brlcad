@@ -1603,79 +1603,92 @@ after_read:
 }
 
 
-/**************************************************************/
+/***************************************************************************/
+// v4 writing code requires a db4 .g file - the below code makes that
+// assumption, and has not been modernized to write v4 asc files from newer
+// data.  Under most circumstances v4 asc files should not be needed, and
+// the format does not support many newer BRL-CAD primitive types.
+/***************************************************************************/
 
-// TODO - if I'm not mistaken, the v4 writing code requires
-// a db4 .g file?  It seems to be reading the file contents
-// and processing them, rather than loading the .g normally
-// and writing out data from in-memory structures.
-//
-// We definitely still need to read v4 - most of BRL-CAD's
-// default examples are in that format.  Do we still need
-// to write it?  If so, this pretty much needs a complete
-// rewrite, unless we do some weird contortions to only
-// allow callers to pair this with a db4 input (which really
-// isn't in the spirit of gcv...) - CY
+struct ascv4_wstate {
+    mat_t        id_mat; /* identity matrix for pipes */
+    union record record; /* GED database record */
+    FILE	 *ifp;
+    FILE	 *ofp;
+};
 
-/**************************************************************/
+static struct ascv4_wstate *
+ascv4_wcreate()
+{
+    struct ascv4_wstate *s = NULL;
+    BU_GET(s, struct ascv4_wstate);
+    MAT_IDN(s->id_mat);
+    s->ifp = NULL;
+    s->ofp = NULL;
+
+    return s;
+}
+
+static void
+ascv4_wdestroy(struct ascv4_wstate *s)
+{
+    if (s->ofp) {
+	fclose(s->ifp);
+    }
+    BU_PUT(s, struct ascv4_wstate);
+}
 
 
-static int     combdump(void);
-static void    idendump(void), polyhead_asc(void), polydata_asc(void);
-static void    soldump(void), extrdump(void), sketchdump(void);
-static void    membdump(union record *rp), arsadump(void), arsbdump(void);
-static void    materdump(void), bspldump(void), bsurfdump(void);
-static void    pipe_dump(void), particle_dump(void), dump_pipe_segs(char *, struct bu_list *);
-static void    arbn_dump(void), cline_dump(void), bot_dump(void);
-static void    nmg_dump(void);
-static void    strsol_dump(void);
-static char *  strchop(char *str, size_t len);
-
-const mat_t id_mat = MAT_INIT_IDN; /* identity matrix for pipes */
+static int combdump(struct ascv4_wstate *);
+static void idendump(struct ascv4_wstate *), polyhead_asc(struct ascv4_wstate *), polydata_asc(struct ascv4_wstate *);
+static void soldump(struct ascv4_wstate *), extrdump(struct ascv4_wstate *), sketchdump(struct ascv4_wstate *);
+static void membdump(struct ascv4_wstate *, union record *rp), arsadump(struct ascv4_wstate *), arsbdump(struct ascv4_wstate *);
+static void materdump(struct ascv4_wstate *), bspldump(struct ascv4_wstate *), bsurfdump(struct ascv4_wstate *);
+static void pipe_dump(struct ascv4_wstate *), particle_dump(struct ascv4_wstate *), dump_pipe_segs(struct ascv4_wstate *, char *, struct bu_list *);
+static void arbn_dump(struct ascv4_wstate *), cline_dump(struct ascv4_wstate *), bot_dump(struct ascv4_wstate *);
+static void nmg_dump(struct ascv4_wstate *);
+static void strsol_dump(struct ascv4_wstate *);
+static char * strchop(char *str, size_t len);
 #define CH(x)	strchop(x, sizeof(x))
-union record	record;		/* GED database record */
-FILE	*ifp;
-FILE	*ofp;
 
 /*
  *  Take a database name and null-terminate it,
  *  converting unprintable characters to something printable.
  *  Here we deal with names not being null-terminated.
  */
-static char *
-encode_name(char *str)
+static void
+encode_name(struct bu_vls *ostr, char *str)
 {
-    static char buf[NAMESIZE+1];
     char *ip = str;
-    char *op = buf;
     int warn = 0;
 
-    while (op < &buf[NAMESIZE]) {
+    bu_vls_trunc(ostr, 0);
+
+    size_t cnt = 0;
+    while (cnt < strlen(str)) {
 	if (*ip == '\0')  break;
 	if (isprint((int)*ip) && !isspace((int)*ip)) {
-	    *op++ = *ip++;
+	    bu_vls_putc(ostr, *ip);
+	    ip++;
 	}  else  {
-	    *op++ = '@';
+	    bu_vls_putc(ostr, '@');
 	    ip++;
 	    warn = 1;
 	}
     }
-    *op = '\0';
+
     if (warn) {
 	fprintf(stderr,
-		      "g2asc: Illegal char in object name, converted to '%s'\n",
-		      buf);
+		      "ascv4 write: Illegal char(s) in object name, converted to '%s'\n",
+		      bu_vls_cstr(ostr));
     }
-    if (op == buf) {
+    if (!bu_vls_strlen(ostr)) {
 	/* Null input name */
 	fprintf(stderr,
-		      "g2asc:  NULL object name converted to -=NULL=-\n");
-	
-	// TODO
-	// return "-=NULL=-";
-	return NULL;
+		      "ascv4 write: NULL object name converted to -=NULL=-\n");
+
+	bu_vls_sprintf(ostr, "-=NULL=-");
     }
-    return buf;
 }
 
 
@@ -1685,7 +1698,7 @@ encode_name(char *str)
  *  the remainder are read from ifp.
  */
 static void
-get_ext(struct bu_external *ep, size_t ngran)
+get_ext(struct ascv4_wstate *s, struct bu_external *ep, size_t ngran)
 {
     size_t count;
 
@@ -1695,11 +1708,11 @@ get_ext(struct bu_external *ep, size_t ngran)
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "get_ext ext_buf");
 
     /* Copy the freebie (first) record into the array of records.  */
-    memcpy((char *)ep->ext_buf, (char *)&record, sizeof(union record));
+    memcpy((char *)ep->ext_buf, (char *)&s->record, sizeof(union record));
     if (ngran <= 1)  return;
 
     count = fread(((char *)ep->ext_buf)+sizeof(union record),
-		   sizeof(union record), ngran-1, ifp);
+		   sizeof(union record), ngran-1, s->ifp);
     if (count != (size_t)ngran-1) {
 	fprintf(stderr,
 		"g2asc: get_ext:  wanted to read %lu granules, got %lu\n",
@@ -1709,7 +1722,7 @@ get_ext(struct bu_external *ep, size_t ngran)
 }
 
 static void
-nmg_dump(void)
+nmg_dump(struct ascv4_wstate *s)
 {
     union record rec;
     long struct_count[26];
@@ -1724,29 +1737,29 @@ nmg_dump(void)
     }
 
     /* get number of granules needed for this NMG */
-    granules = ntohl(*(uint32_t *)record.nmg.N_count);
+    granules = ntohl(*(uint32_t *)s->record.nmg.N_count);
 
     /* get the array of structure counts */
     for (j = 0; j < 26; j++)
-	struct_count[j] = ntohl(*(uint32_t *)&record.nmg.N_structs[j*4]);
+	struct_count[j] = ntohl(*(uint32_t *)&s->record.nmg.N_structs[j*4]);
 
     /* output some header info */
-    fprintf(ofp,  "%c %d %.16s %lu\n",
-		  record.nmg.N_id,	/* N */
-		  record.nmg.N_version,	/* NMG version */
-		  record.nmg.N_name,	/* solid name */
+    fprintf(s->ofp,  "%c %d %.16s %lu\n",
+		  s->record.nmg.N_id,	/* N */
+		  s->record.nmg.N_version,	/* NMG version */
+		  s->record.nmg.N_name,	/* solid name */
 		  (unsigned long)granules);		/* number of additional granules */
 
     /* output the structure counts */
     for (j = 0; j < 26; j++)
-	fprintf(ofp,  " %ld", struct_count[j]);
-    (void)fputc('\n', ofp);
+	fprintf(s->ofp,  " %ld", struct_count[j]);
+    (void)fputc('\n', s->ofp);
 
     /* dump the reminder in hex format */
     for (i = 0; i < granules; i++) {
 	char *cp;
 	/* Read the record */
-	if (!fread((char *)&rec, sizeof record, 1, ifp)) {
+	if (!fread((char *)&rec, sizeof s->record, 1, s->ifp)) {
 	    fprintf(stderr, "Error reading nmg granules\n");
 	    bu_exit(-1, NULL);
 	}
@@ -1755,23 +1768,23 @@ nmg_dump(void)
 	/* 32 bytes per line */
 	for (k = 0; k < sizeof(union record)/32; k++) {
 	    for (j = 0; j < 32; j++)
-		fprintf(ofp,  "%02x", (0xff & (*cp++)));	 /* two hex digits per byte */
-	    fputc('\n', ofp);
+		fprintf(s->ofp,  "%02x", (0xff & (*cp++)));	 /* two hex digits per byte */
+	    fputc('\n', s->ofp);
 	}
     }
 }
 
 static void
-strsol_dump(void)	/* print out strsol solid info */
+strsol_dump(struct ascv4_wstate *s)	/* print out strsol solid info */
 {
     union record rec[DB_SS_NGRAN];
     char *cp;
 
     /* get all the strsol granules */
-    rec[0] = record;	/* struct copy the current record */
+    rec[0] = s->record;	/* struct copy the current record */
 
     /* read the rest from ifp */
-    if (!fread((char *)&rec[1], sizeof record, DB_SS_NGRAN-1, ifp))
+    if (!fread((char *)&rec[1], sizeof s->record, DB_SS_NGRAN-1, s->ifp))
     {
 	fprintf(stderr, "Error reading strsol granules\n");
 	bu_exit(-1, NULL);
@@ -1782,7 +1795,7 @@ strsol_dump(void)	/* print out strsol solid info */
     cp += (sizeof(union record) - 1);
     *cp = '\0';
 
-    fprintf(ofp,  "%c %.16s %.16s %s\n",
+    fprintf(s->ofp,  "%c %.16s %.16s %s\n",
 		  rec[0].ss.ss_id,	/* s */
 		  rec[0].ss.ss_keyword,	/* "ebm", "vol", or ??? */
 		  rec[0].ss.ss_name,	/* solid name */
@@ -1791,71 +1804,77 @@ strsol_dump(void)	/* print out strsol solid info */
 }
 
 static void
-idendump(void)	/* Print out Ident record information */
+idendump(struct ascv4_wstate *s)	/* Print out Ident record information */
 {
-    fprintf(ofp,  "%c %d %.6s\n",
-		  record.i.i_id,			/* I */
-		  record.i.i_units,		/* units */
-		  CH(record.i.i_version)		/* version */
+    fprintf(s->ofp,  "%c %d %.6s\n",
+		  s->record.i.i_id,			/* I */
+		  s->record.i.i_units,		/* units */
+		  CH(s->record.i.i_version)		/* version */
 	);
-    fprintf(ofp,  "%.72s\n",
-		  CH(record.i.i_title)	/* title or description */
+    fprintf(s->ofp,  "%.72s\n",
+		  CH(s->record.i.i_title)	/* title or description */
 	);
 
     /* Print a warning message on stderr if versions differ */
-    if (!BU_STR_EQUAL(record.i.i_version, ID_VERSION)) {
+    if (!BU_STR_EQUAL(s->record.i.i_version, ID_VERSION)) {
 	fprintf(stderr,
 		      "g2asc: File is version (%s), Program is version (%s)\n",
-		      record.i.i_version, ID_VERSION);
+		      s->record.i.i_version, ID_VERSION);
     }
 }
 
 static void
-polyhead_asc(void)	/* Print out Polyhead record information */
+polyhead_asc(struct ascv4_wstate *s)	/* Print out Polyhead record information */
 {
-    fprintf(ofp, "%c ", record.p.p_id);		/* P */
-    fprintf(ofp, "%.16s", encode_name(record.p.p_name));	/* unique name */
-    fprintf(ofp, "\n");			/* Terminate w/ a newline */
+    struct bu_vls ename = BU_VLS_INIT_ZERO;
+    encode_name(&ename, s->record.p.p_name);
+    fprintf(s->ofp, "%c ", s->record.p.p_id);		/* P */
+    fprintf(s->ofp, "%.16s", bu_vls_cstr(&ename));	/* unique name */
+    fprintf(s->ofp, "\n");			/* Terminate w/ a newline */
+    bu_vls_free(&ename);
 }
 
 static void
-polydata_asc(void)	/* Print out Polydata record information */
+polydata_asc(struct ascv4_wstate *s)	/* Print out Polydata record information */
 {
     int i, j;
 
-    fprintf(ofp, "%c ", record.q.q_id);		/* Q */
-    fprintf(ofp, "%d", record.q.q_count);		/* # of vertices <= 5 */
+    fprintf(s->ofp, "%c ", s->record.q.q_id);		/* Q */
+    fprintf(s->ofp, "%d", s->record.q.q_count);		/* # of vertices <= 5 */
     for (i = 0; i < 5; i++) {
 	/* [5][3] vertices */
 	for (j = 0; j < 3; j++) {
-	    fprintf(ofp, " %.12e", record.q.q_verts[i][j]);
+	    fprintf(s->ofp, " %.12e", s->record.q.q_verts[i][j]);
 	}
     }
     for (i = 0; i < 5; i++) {
 	/* [5][3] normals */
 	for (j = 0; j < 3; j++) {
-	    fprintf(ofp, " %.12e", record.q.q_norms[i][j]);
+	    fprintf(s->ofp, " %.12e", s->record.q.q_norms[i][j]);
 	}
     }
-    fprintf(ofp, "\n");			/* Terminate w/ a newline */
+    fprintf(s->ofp, "\n");			/* Terminate w/ a newline */
 }
 
 static void
-soldump(void)	/* Print out Solid record information */
+soldump(struct ascv4_wstate *s)	/* Print out Solid record information */
 {
     int i;
 
-    fprintf(ofp, "%c ", record.s.s_id);	/* S */
-    fprintf(ofp, "%d ", record.s.s_type);	/* GED primitive type */
-    fprintf(ofp, "%.16s ", encode_name(record.s.s_name));	/* unique name */
-    fprintf(ofp, "%d", record.s.s_cgtype);/* COMGEOM solid type */
+    fprintf(s->ofp, "%c ", s->record.s.s_id);	/* S */
+    fprintf(s->ofp, "%d ", s->record.s.s_type);	/* GED primitive type */
+    struct bu_vls ename = BU_VLS_INIT_ZERO;
+    encode_name(&ename, s->record.s.s_name);
+    fprintf(s->ofp, "%.16s ", bu_vls_cstr(&ename));	/* unique name */
+    bu_vls_free(&ename);
+    fprintf(s->ofp, "%d", s->record.s.s_cgtype);/* COMGEOM solid type */
     for (i = 0; i < 24; i++)
-	fprintf(ofp, " %.12e", record.s.s_values[i]); /* parameters */
-    fprintf(ofp, "\n");			/* Terminate w/ a newline */
+	fprintf(s->ofp, " %.12e", s->record.s.s_values[i]); /* parameters */
+    fprintf(s->ofp, "\n");			/* Terminate w/ a newline */
 }
 
 static void
-cline_dump(void)
+cline_dump(struct ascv4_wstate *s)
 {
     size_t ngranules;	/* number of granules, total */
     char *name;
@@ -1863,14 +1882,14 @@ cline_dump(void)
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    name = record.cli.cli_name;
+    name = s->record.cli.cli_name;
 
     ngranules = 1;
-    get_ext(&ext, ngranules);
+    get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_CLINE].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_CLINE].ft_import4(&intern, &ext, s->id_mat, DBI_NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: cline import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -1878,19 +1897,19 @@ cline_dump(void)
     cli = (struct rt_cline_internal *)intern.idb_ptr;
     RT_CLINE_CK_MAGIC(cli);
 
-    fprintf(ofp, "%c ", DBID_CLINE);	/* c */
-    fprintf(ofp, "%.16s ", name);	/* unique name */
-    fprintf(ofp, "%26.20e %26.20e %26.20e ", V3ARGS(cli->v));
-    fprintf(ofp, "%26.20e %26.20e %26.20e ", V3ARGS(cli->h));
-    fprintf(ofp, "%26.20e %26.20e", cli->radius, cli->thickness);
-    fprintf(ofp, "\n");			/* Terminate w/ a newline */
+    fprintf(s->ofp, "%c ", DBID_CLINE);	/* c */
+    fprintf(s->ofp, "%.16s ", name);	/* unique name */
+    fprintf(s->ofp, "%26.20e %26.20e %26.20e ", V3ARGS(cli->v));
+    fprintf(s->ofp, "%26.20e %26.20e %26.20e ", V3ARGS(cli->h));
+    fprintf(s->ofp, "%26.20e %26.20e", cli->radius, cli->thickness);
+    fprintf(s->ofp, "\n");			/* Terminate w/ a newline */
 
     rt_db_free_internal(&intern);
     bu_free_external(&ext);
 }
 
 static void
-bot_dump(void)
+bot_dump(struct ascv4_wstate *s)
 {
     size_t ngranules;
     char *name;
@@ -1899,13 +1918,13 @@ bot_dump(void)
     struct rt_db_internal intern;
     size_t i;
 
-    name = record.bot.bot_name;
-    ngranules = ntohl(*(uint32_t *)record.bot.bot_nrec) + 1;
-    get_ext(&ext, ngranules);
+    name = s->record.bot.bot_name;
+    ngranules = ntohl(*(uint32_t *)s->record.bot.bot_nrec) + 1;
+    get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_BOT].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_BOT].ft_import4(&intern, &ext, s->id_mat, DBI_NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: bot import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -1913,28 +1932,28 @@ bot_dump(void)
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    fprintf(ofp, "%c ", DBID_BOT);	/* t */
-    fprintf(ofp, "%.16s ", name);	/* unique name */
-    fprintf(ofp, "%d ", bot->mode);
-    fprintf(ofp, "%d ", bot->orientation);
-    fprintf(ofp, "%d ", 0);	/* was error_mode */
-    fprintf(ofp, "%lu ", (unsigned long)bot->num_vertices);
-    fprintf(ofp, "%lu", (unsigned long)bot->num_faces);
-    fprintf(ofp, "\n");
+    fprintf(s->ofp, "%c ", DBID_BOT);	/* t */
+    fprintf(s->ofp, "%.16s ", name);	/* unique name */
+    fprintf(s->ofp, "%d ", bot->mode);
+    fprintf(s->ofp, "%d ", bot->orientation);
+    fprintf(s->ofp, "%d ", 0);	/* was error_mode */
+    fprintf(s->ofp, "%lu ", (unsigned long)bot->num_vertices);
+    fprintf(s->ofp, "%lu", (unsigned long)bot->num_faces);
+    fprintf(s->ofp, "\n");
 
     for (i = 0; i < bot->num_vertices; i++)
-	fprintf(ofp,  "	%lu: %26.20e %26.20e %26.20e\n", (unsigned long)i, V3ARGS(&bot->vertices[i*3]));
+	fprintf(s->ofp,  "	%lu: %26.20e %26.20e %26.20e\n", (unsigned long)i, V3ARGS(&bot->vertices[i*3]));
     if (bot->mode == RT_BOT_PLATE) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	for (i = 0; i < bot->num_faces; i++)
-	    fprintf(ofp,  "	%lu: %d %d %d %26.20e\n", (unsigned long)i, V3ARGS(&bot->faces[i*3]), bot->thickness[i]);
+	    fprintf(s->ofp,  "	%lu: %d %d %d %26.20e\n", (unsigned long)i, V3ARGS(&bot->faces[i*3]), bot->thickness[i]);
 	bu_bitv_to_hex(&vls, bot->face_mode);
-	fprintf(ofp,  "	%s\n", bu_vls_addr(&vls));
+	fprintf(s->ofp,  "	%s\n", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     } else {
 	for (i = 0; i < bot->num_faces; i++)
-	    fprintf(ofp,  "	%lu: %d %d %d\n", (unsigned long)i, V3ARGS(&bot->faces[i*3]));
+	    fprintf(s->ofp,  "	%lu: %d %d %d\n", (unsigned long)i, V3ARGS(&bot->faces[i*3]));
     }
 
     rt_db_free_internal(&intern);
@@ -1942,7 +1961,7 @@ bot_dump(void)
 }
 
 static void
-pipe_dump(void)	/* Print out Pipe record information */
+pipe_dump(struct ascv4_wstate *s)	/* Print out Pipe record information */
 {
 
     size_t ngranules;	/* number of granules, total */
@@ -1951,14 +1970,14 @@ pipe_dump(void)	/* Print out Pipe record information */
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    ngranules = ntohl(*(uint32_t *)record.pwr.pwr_count) + 1;
-    name = record.pwr.pwr_name;
+    ngranules = ntohl(*(uint32_t *)s->record.pwr.pwr_count) + 1;
+    name = s->record.pwr.pwr_name;
 
-    get_ext(&ext, ngranules);
+    get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_PIPE].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_PIPE].ft_import4(&intern, &ext, s->id_mat, NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: pipe import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -1970,27 +1989,27 @@ pipe_dump(void)	/* Print out Pipe record information */
      * will print all the information.
      */
 
-    dump_pipe_segs(name, &pipeip->pipe_segs_head);
+    dump_pipe_segs(s, name, &pipeip->pipe_segs_head);
 
     rt_db_free_internal(&intern);
     bu_free_external(&ext);
 }
 
 static void
-dump_pipe_segs(char *name, struct bu_list *headp)
+dump_pipe_segs(struct ascv4_wstate *s, char *name, struct bu_list *headp)
 {
 
     struct wdb_pipe_pnt *sp;
 
-    fprintf(ofp, "%c %.16s\n", DBID_PIPE, name);
+    fprintf(s->ofp, "%c %.16s\n", DBID_PIPE, name);
 
     /* print parameters for each point: one point per line */
 
     for (BU_LIST_FOR(sp, wdb_pipe_pnt, headp)) {
-	fprintf(ofp,  "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
+	fprintf(s->ofp,  "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 		sp->pp_id, sp->pp_od, sp->pp_bendradius, V3ARGS(sp->pp_coord));
     }
-    fprintf(ofp,  "END_PIPE %s\n", name);
+    fprintf(s->ofp,  "END_PIPE %s\n", name);
 }
 
 /*
@@ -1998,17 +2017,17 @@ dump_pipe_segs(char *name, struct bu_list *headp)
  * Note that particles fit into one granule only.
  */
 static void
-particle_dump(void)
+particle_dump(struct ascv4_wstate *s)
 {
     struct rt_part_internal 	*part;	/* head for the structure */
     struct bu_external	ext;
     struct rt_db_internal	intern;
 
-    get_ext(&ext, 1);
+    get_ext(s, &ext, 1);
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_PARTICLE].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_PARTICLE].ft_import4(&intern, &ext, s->id_mat, NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: particle import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -2032,8 +2051,8 @@ particle_dump(void)
 	    bu_exit(-1, NULL);
     }
 
-    fprintf(ofp, "%c %.16s %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
-	    record.part.p_id, record.part.p_name,
+    fprintf(s->ofp, "%c %.16s %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
+	    s->record.part.p_id, s->record.part.p_name,
 	    part->part_V[X],
 	    part->part_V[Y],
 	    part->part_V[Z],
@@ -2049,7 +2068,7 @@ particle_dump(void)
  *
  */
 static void
-arbn_dump(void)
+arbn_dump(struct ascv4_wstate *s)
 {
     size_t ngranules;	/* number of granules to be read */
     size_t i;		/* a counter */
@@ -2058,14 +2077,14 @@ arbn_dump(void)
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    ngranules = ntohl(*(uint32_t *)record.n.n_grans) + 1;
-    name = record.n.n_name;
+    ngranules = ntohl(*(uint32_t *)s->record.n.n_grans) + 1;
+    name = s->record.n.n_name;
 
-    get_ext(&ext, ngranules);
+    get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_ARBN].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_ARBN].ft_import4(&intern, &ext, s->id_mat, NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: arbn import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -2073,9 +2092,9 @@ arbn_dump(void)
     arbn = (struct rt_arbn_internal *)intern.idb_ptr;
     RT_ARBN_CK_MAGIC(arbn);
 
-    fprintf(ofp, "%c %.16s %lu\n", 'n', name, (unsigned long)arbn->neqn);
+    fprintf(s->ofp, "%c %.16s %lu\n", 'n', name, (unsigned long)arbn->neqn);
     for (i = 0; i < arbn->neqn; i++) {
-	fprintf(ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
+	fprintf(s->ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
 		arbn->eqn[i][X], arbn->eqn[i][Y],
 		arbn->eqn[i][Z], arbn->eqn[i][3]);
     }
@@ -2095,7 +2114,7 @@ arbn_dump(void)
  *	1	converted OK, left next record in global "record" for reuse.
  */
 static int
-combdump(void)	/* Print out Combination record information */
+combdump(struct ascv4_wstate *s)	/* Print out Combination record information */
 {
     int	m1, m2;		/* material property flags */
     struct bu_list	head;
@@ -2115,8 +2134,8 @@ combdump(void)	/* Print out Combination record information */
     mcount = 0;
     while (1) {
 	BU_GET(mp, struct mchain);
-	if (fread((char *)&mp->r, sizeof(mp->r), 1, ifp) != 1
-	     || feof(ifp))
+	if (fread((char *)&mp->r, sizeof(mp->r), 1, s->ifp) != 1
+	     || feof(s->ifp))
 	    break;
 	if (mp->r.u_id != ID_MEMB) {
 	    ret_mp = mp;	/* Handle it later */
@@ -2129,73 +2148,76 @@ combdump(void)	/* Print out Combination record information */
     /*
      *  Output the combination
      */
-    fprintf(ofp, "%c ", record.c.c_id);		/* C */
-    switch (record.c.c_flags) {
+    fprintf(s->ofp, "%c ", s->record.c.c_id);		/* C */
+    switch (s->record.c.c_flags) {
 	case DBV4_REGION:
-	    fprintf(ofp, "Y ");			/* Y if `R' */
+	    fprintf(s->ofp, "Y ");			/* Y if `R' */
 	    break;
 	case DBV4_NON_REGION_NULL:
 	case DBV4_NON_REGION:
-	    fprintf(ofp, "N ");			/* N if ` ' or '\0' */
+	    fprintf(s->ofp, "N ");			/* N if ` ' or '\0' */
 	    break;
 	case DBV4_REGION_FASTGEN_PLATE:
-	    fprintf(ofp, "P ");
+	    fprintf(s->ofp, "P ");
 	    break;
 	case DBV4_REGION_FASTGEN_VOLUME:
-	    fprintf(ofp, "V ");
+	    fprintf(s->ofp, "V ");
 	    break;
     }
-    fprintf(ofp, "%.16s ", encode_name(record.c.c_name));	/* unique name */
-    fprintf(ofp, "%d ", record.c.c_regionid);	/* region ID code */
-    fprintf(ofp, "%d ", record.c.c_aircode);	/* air space code */
+    struct bu_vls ename = BU_VLS_INIT_ZERO;
+    encode_name(&ename, s->record.c.c_name);
+    fprintf(s->ofp, "%.16s ", bu_vls_cstr(&ename));	/* unique name */
+    bu_vls_free(&ename);
+    fprintf(s->ofp, "%d ", s->record.c.c_regionid);	/* region ID code */
+    fprintf(s->ofp, "%d ", s->record.c.c_aircode);	/* air space code */
 
     /* DEPRECATED: # of members */
-    fprintf(ofp, "%d ", mcount);
+    fprintf(s->ofp, "%d ", mcount);
 
     /* DEPRECATED: COMGEOM region # */
-    fprintf(ofp, "%d ", 0 /* was record.c.c_num */);
+    fprintf(s->ofp, "%d ", 0 /* was s->record.c.c_num */);
 
-    fprintf(ofp, "%d ", record.c.c_material);	/* material code */
-    fprintf(ofp, "%d ", record.c.c_los);		/* equiv. LOS est. */
-    fprintf(ofp, "%d %d %d %d ",
-		  record.c.c_override ? 1 : 0,
-		  record.c.c_rgb[0],
-		  record.c.c_rgb[1],
-		  record.c.c_rgb[2]);
+    fprintf(s->ofp, "%d ", s->record.c.c_material);	/* material code */
+    fprintf(s->ofp, "%d ", s->record.c.c_los);		/* equiv. LOS est. */
+    fprintf(s->ofp, "%d %d %d %d ",
+		  s->record.c.c_override ? 1 : 0,
+		  s->record.c.c_rgb[0],
+		  s->record.c.c_rgb[1],
+		  s->record.c.c_rgb[2]);
     m1 = m2 = 0;
-    if (isprint((int)record.c.c_matname[0])) {
+    if (isprint((int)s->record.c.c_matname[0])) {
 	m1 = 1;
-	if (record.c.c_matparm[0])
+	if (s->record.c.c_matparm[0])
 	    m2 = 1;
     }
-    fprintf(ofp, "%d %d", m1, m2);
-    switch (record.c.c_inherit) {
+    fprintf(s->ofp, "%d %d", m1, m2);
+    switch (s->record.c.c_inherit) {
 	case DB_INH_HIGHER:
-	    fprintf(ofp, " %d", DB_INH_HIGHER);
+	    fprintf(s->ofp, " %d", DB_INH_HIGHER);
 	    break;
 	default:
 	case DB_INH_LOWER:
-	    fprintf(ofp, " %d", DB_INH_LOWER);
+	    fprintf(s->ofp, " %d", DB_INH_LOWER);
 	    break;
     }
-    fprintf(ofp, "\n");			/* Terminate w/ a newline */
+    fprintf(s->ofp, "\n");			/* Terminate w/ a newline */
 
     if (m1)
-	fprintf(ofp, "%.32s\n", CH(record.c.c_matname));
+	fprintf(s->ofp, "%.32s\n", CH(s->record.c.c_matname));
     if (m2)
-	fprintf(ofp, "%.60s\n", CH(record.c.c_matparm));
+	fprintf(s->ofp, "%.60s\n", CH(s->record.c.c_matparm));
 
     /*
      *  Output the member records now
      */
     while (BU_LIST_WHILE(mp, mchain, &head)) {
-	membdump(&mp->r);
+	membdump(s, &mp->r);
 	BU_LIST_DEQUEUE(&mp->l);
 	BU_PUT(mp, struct mchain);
     }
 
     if (ret_mp) {
-	memcpy((char *)&record, (char *)&ret_mp->r, sizeof(record));
+	memcpy((char *)&s->record, (char *)&ret_mp->r, sizeof(record));
 	BU_PUT(ret_mp, struct mchain);
 	return 1;
     }
@@ -2207,109 +2229,121 @@ combdump(void)	/* Print out Combination record information */
  *  Intended to be called by combdump only.
  */
 static void
-membdump(union record *rp)
+membdump(struct ascv4_wstate *s, union record *rp)
 {
     int i;
 
-    fprintf(ofp, "%c ", rp->M.m_id);		/* M */
-    fprintf(ofp, "%c ", rp->M.m_relation);	/* Boolean oper. */
-    fprintf(ofp, "%.16s ", encode_name(rp->M.m_instname));	/* referred-to obj. */
+    fprintf(s->ofp, "%c ", rp->M.m_id);		/* M */
+    fprintf(s->ofp, "%c ", rp->M.m_relation);	/* Boolean oper. */
+
+    struct bu_vls ename = BU_VLS_INIT_ZERO;
+    encode_name(&ename, rp->M.m_instname);
+    fprintf(s->ofp, "%.16s ", bu_vls_cstr(&ename));/* referred-to obj. */
+    bu_vls_free(&ename);
     for (i = 0; i < 16; i++)			/* homogeneous transform matrix */
-	fprintf(ofp, "%.12e ", rp->M.m_mat[i]);
-    fprintf(ofp, "%d", 0);			/* was COMGEOM solid # */
-    fprintf(ofp, "\n");				/* Terminate w/ nl */
+	fprintf(s->ofp, "%.12e ", rp->M.m_mat[i]);
+    fprintf(s->ofp, "%d", 0);			/* was COMGEOM solid # */
+    fprintf(s->ofp, "\n");				/* Terminate w/ nl */
 }
 
 static void
-arsadump(void)	/* Print out ARS record information */
+arsadump(struct ascv4_wstate *s)	/* Print out ARS record information */
 {
     int i;
     int length;	/* Keep track of number of ARS B records */
 
-    fprintf(ofp, "%c ", record.a.a_id);	/* A */
-    fprintf(ofp, "%d ", record.a.a_type);	/* primitive type */
-    fprintf(ofp, "%.16s ", encode_name(record.a.a_name));	/* unique name */
-    fprintf(ofp, "%d ", record.a.a_m);	/* # of curves */
-    fprintf(ofp, "%d ", record.a.a_n);	/* # of points per curve */
-    fprintf(ofp, "%d ", record.a.a_curlen);/* # of granules per curve */
-    fprintf(ofp, "%d ", record.a.a_totlen);/* # of granules for ARS */
-    fprintf(ofp, "%.12e ", record.a.a_xmax);	/* max x coordinate */
-    fprintf(ofp, "%.12e ", record.a.a_xmin);	/* min x coordinate */
-    fprintf(ofp, "%.12e ", record.a.a_ymax);	/* max y coordinate */
-    fprintf(ofp, "%.12e ", record.a.a_ymin);	/* min y coordinate */
-    fprintf(ofp, "%.12e ", record.a.a_zmax);	/* max z coordinate */
-    fprintf(ofp, "%.12e", record.a.a_zmin);	/* min z coordinate */
-    fprintf(ofp, "\n");			/* Terminate w/ a newline */
+    fprintf(s->ofp, "%c ", s->record.a.a_id);	/* A */
+    fprintf(s->ofp, "%d ", s->record.a.a_type);	/* primitive type */
+    struct bu_vls ename = BU_VLS_INIT_ZERO;
+    encode_name(&ename, s->record.a.a_name);
+    fprintf(s->ofp, "%.16s ", bu_vls_cstr(&ename)); /* unique name */
+    bu_vls_free(&ename);
+    fprintf(s->ofp, "%d ", s->record.a.a_m);	/* # of curves */
+    fprintf(s->ofp, "%d ", s->record.a.a_n);	/* # of points per curve */
+    fprintf(s->ofp, "%d ", s->record.a.a_curlen);/* # of granules per curve */
+    fprintf(s->ofp, "%d ", s->record.a.a_totlen);/* # of granules for ARS */
+    fprintf(s->ofp, "%.12e ", s->record.a.a_xmax);	/* max x coordinate */
+    fprintf(s->ofp, "%.12e ", s->record.a.a_xmin);	/* min x coordinate */
+    fprintf(s->ofp, "%.12e ", s->record.a.a_ymax);	/* max y coordinate */
+    fprintf(s->ofp, "%.12e ", s->record.a.a_ymin);	/* min y coordinate */
+    fprintf(s->ofp, "%.12e ", s->record.a.a_zmax);	/* max z coordinate */
+    fprintf(s->ofp, "%.12e", s->record.a.a_zmin);	/* min z coordinate */
+    fprintf(s->ofp, "\n");			/* Terminate w/ a newline */
 
-    length = (int)record.a.a_totlen;	/* Get # of ARS B records */
+    length = (int)s->record.a.a_totlen;	/* Get # of ARS B records */
 
     for (i = 0; i < length; i++) {
-	arsbdump();
+	arsbdump(s);
     }
 }
 
 static void
-arsbdump(void)	/* Print out ARS B record information */
+arsbdump(struct ascv4_wstate *s)	/* Print out ARS B record information */
 {
     int i;
     size_t ret;
 
     /* Read in a member record for processing */
-    ret = fread((char *)&record, sizeof record, 1, ifp);
+    ret = fread((char *)&s->record, sizeof s->record, 1, s->ifp);
     if (ret != 1)
 	perror("fread");
-    fprintf(ofp, "%c ", record.b.b_id);		/* B */
-    fprintf(ofp, "%d ", record.b.b_type);		/* primitive type */
-    fprintf(ofp, "%d ", record.b.b_n);		/* current curve # */
-    fprintf(ofp, "%d", record.b.b_ngranule);	/* current granule */
+    fprintf(s->ofp, "%c ", s->record.b.b_id);		/* B */
+    fprintf(s->ofp, "%d ", s->record.b.b_type);		/* primitive type */
+    fprintf(s->ofp, "%d ", s->record.b.b_n);		/* current curve # */
+    fprintf(s->ofp, "%d", s->record.b.b_ngranule);	/* current granule */
     for (i = 0; i < 24; i++) {
 	/* [8*3] vectors */
-	fprintf(ofp, " %.12e", record.b.b_values[i]);
+	fprintf(s->ofp, " %.12e", s->record.b.b_values[i]);
     }
-    fprintf(ofp, "\n");			/* Terminate w/ a newline */
+    fprintf(s->ofp, "\n");			/* Terminate w/ a newline */
 }
 
 static void
-materdump(void)	/* Print out material description record information */
+materdump(struct ascv4_wstate *s)	/* Print out material description record information */
 {
-    fprintf(ofp,  "%c %d %d %d %d %d %d\n",
-		  record.md.md_id,			/* m */
-		  record.md.md_flags,			/* UNUSED */
-		  record.md.md_low,	/* low end of region IDs affected */
-		  record.md.md_hi,	/* high end of region IDs affected */
-		  record.md.md_r,
-		  record.md.md_g,		/* color of regions: 0..255 */
-		  record.md.md_b);
+    fprintf(s->ofp,  "%c %d %d %d %d %d %d\n",
+		  s->record.md.md_id,			/* m */
+		  s->record.md.md_flags,			/* UNUSED */
+		  s->record.md.md_low,	/* low end of region IDs affected */
+		  s->record.md.md_hi,	/* high end of region IDs affected */
+		  s->record.md.md_r,
+		  s->record.md.md_g,		/* color of regions: 0..255 */
+		  s->record.md.md_b);
 }
 
 static void
-bspldump(void)	/* Print out B-spline solid description record information */
+bspldump(struct ascv4_wstate *s)	/* Print out B-spline solid description record information */
 {
-    fprintf(ofp,  "%c %.16s %d\n",
-		  record.B.B_id,		/* b */
-		  encode_name(record.B.B_name),	/* unique name */
-		  record.B.B_nsurf);	/* # of surfaces in this solid */
+    struct bu_vls ename = BU_VLS_INIT_ZERO;
+    encode_name(&ename, s->record.B.B_name);
+ 
+    fprintf(s->ofp,  "%c %.16s %d\n",
+		  s->record.B.B_id,		/* b */
+		  bu_vls_cstr(&ename),	/* unique name */
+		  s->record.B.B_nsurf);	/* # of surfaces in this solid */
+    
+    bu_vls_free(&ename);
 }
 
 static void
-bsurfdump(void)	/* Print d-spline surface description record information */
+bsurfdump(struct ascv4_wstate *s)	/* Print d-spline surface description record information */
 {
     size_t i;
     float *vp;
     size_t nbytes, count;
     float *fp;
 
-    fprintf(ofp,  "%c %d %d %d %d %d %d %d %d %d\n",
-		  record.d.d_id,		/* D */
-		  record.d.d_order[0],	/* order of u and v directions */
-		  record.d.d_order[1],	/* order of u and v directions */
-		  record.d.d_kv_size[0],	/* knot vector size (u and v) */
-		  record.d.d_kv_size[1],	/* knot vector size (u and v) */
-		  record.d.d_ctl_size[0],	/* control mesh size (u and v) */
-		  record.d.d_ctl_size[1],	/* control mesh size (u and v) */
-		  record.d.d_geom_type,	/* geom type 3 or 4 */
-		  record.d.d_nknots,	/* # granules of knots */
-		  record.d.d_nctls);	/* # granules of ctls */
+    fprintf(s->ofp,  "%c %d %d %d %d %d %d %d %d %d\n",
+		  s->record.d.d_id,		/* D */
+		  s->record.d.d_order[0],	/* order of u and v directions */
+		  s->record.d.d_order[1],	/* order of u and v directions */
+		  s->record.d.d_kv_size[0],	/* knot vector size (u and v) */
+		  s->record.d.d_kv_size[1],	/* knot vector size (u and v) */
+		  s->record.d.d_ctl_size[0],	/* control mesh size (u and v) */
+		  s->record.d.d_ctl_size[1],	/* control mesh size (u and v) */
+		  s->record.d.d_geom_type,	/* geom type 3 or 4 */
+		  s->record.d.d_nknots,	/* # granules of knots */
+		  s->record.d.d_nctls);	/* # granules of ctls */
     /*
      * The b_surf_head record is followed by
      * d_nknots granules of knot vectors (first u, then v),
@@ -2327,36 +2361,36 @@ bsurfdump(void)	/* Print d-spline surface description record information */
      */
 
     /* Malloc and clear memory for the KNOT DATA and read it */
-    nbytes = record.d.d_nknots * sizeof(union record);
+    nbytes = s->record.d.d_nknots * sizeof(union record);
     vp = (float *)bu_calloc((unsigned int)nbytes, 1, "KNOT DATA");
     fp = vp;
-    count = fread((char *)fp, 1, nbytes, ifp);
+    count = fread((char *)fp, 1, nbytes, s->ifp);
     if (count != nbytes) {
 	fprintf(stderr, "g2asc: spline knot read failure\n");
 	bu_exit(1, NULL);
     }
     /* Print the knot vector information */
-    count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
+    count = s->record.d.d_kv_size[0] + s->record.d.d_kv_size[1];
     for (i = 0; i < count; i++) {
-	fprintf(ofp, "%.12e\n", *vp++);
+	fprintf(s->ofp, "%.12e\n", *vp++);
     }
     /* Free the knot data memory */
     (void)bu_free((char *)fp, "KNOT DATA");
 
     /* Malloc and clear memory for the CONTROL MESH data and read it */
-    nbytes = record.d.d_nctls * sizeof(union record);
+    nbytes = s->record.d.d_nctls * sizeof(union record);
     vp = (float *)bu_calloc((unsigned int)nbytes, 1, "CONTROL MESH");
     fp = vp;
-    count = fread((char *)fp, 1, nbytes, ifp);
+    count = fread((char *)fp, 1, nbytes, s->ifp);
     if (count != nbytes) {
 	fprintf(stderr, "g2asc: control mesh read failure\n");
 	bu_exit(1, NULL);
     }
     /* Print the control mesh information */
-    count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
-	record.d.d_geom_type;
+    count = s->record.d.d_ctl_size[0] * s->record.d.d_ctl_size[1] *
+	s->record.d.d_geom_type;
     for (i = 0; i < count; i++) {
-	fprintf(ofp, "%.12e\n", *vp++);
+	fprintf(s->ofp, "%.12e\n", *vp++);
     }
     /* Free the control mesh memory */
     (void)bu_free((char *)fp, "CONTROL MESH");
@@ -2406,7 +2440,7 @@ strchop(char *str, size_t len)
 }
 
 static void
-extrdump(void)
+extrdump(struct ascv4_wstate *s)
 {
     struct rt_extrude_internal	*extr;
     int				ngranules;
@@ -2414,13 +2448,13 @@ extrdump(void)
     struct bu_external		ext;
     struct rt_db_internal		intern;
 
-    myname = record.extr.ex_name;
-    ngranules = ntohl(*(uint32_t *)record.extr.ex_count) + 1;
-    get_ext(&ext, ngranules);
+    myname = s->record.extr.ex_name;
+    ngranules = ntohl(*(uint32_t *)s->record.extr.ex_count) + 1;
+    get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_EXTRUDE].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_EXTRUDE].ft_import4(&intern, &ext, s->id_mat, DBI_NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: extrusion import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -2428,18 +2462,21 @@ extrdump(void)
     extr = (struct rt_extrude_internal *)intern.idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extr);
 
-    fprintf(ofp, "%c ", DBID_EXTR);	/* e */
-    fprintf(ofp, "%.16s ", encode_name(myname));	/* unique name */
-    fprintf(ofp, "%.16s ", encode_name(extr->sketch_name));
-    fprintf(ofp, "%d ", extr->keypoint);
-    fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS(extr->V));
-    fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS(extr->h));
-    fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS(extr->u_vec));
-    fprintf(ofp, "%.12e %.12e %.12e\n", V3ARGS(extr->v_vec));
+    fprintf(s->ofp, "%c ", DBID_EXTR);	/* e */
+    struct bu_vls ename = BU_VLS_INIT_ZERO;
+    encode_name(&ename, myname);
+    fprintf(s->ofp, "%.16s ", bu_vls_cstr(&ename)); /* unique name */
+    encode_name(&ename, extr->sketch_name);
+    fprintf(s->ofp, "%.16s ", bu_vls_cstr(&ename));
+    fprintf(s->ofp, "%d ", extr->keypoint);
+    fprintf(s->ofp, "%.12e %.12e %.12e ", V3ARGS(extr->V));
+    fprintf(s->ofp, "%.12e %.12e %.12e ", V3ARGS(extr->h));
+    fprintf(s->ofp, "%.12e %.12e %.12e ", V3ARGS(extr->u_vec));
+    fprintf(s->ofp, "%.12e %.12e %.12e\n", V3ARGS(extr->v_vec));
 }
 
 static void
-sketchdump(void)
+sketchdump(struct ascv4_wstate *s)
 {
     struct rt_sketch_internal *skt;
     size_t ngranules;
@@ -2449,13 +2486,13 @@ sketchdump(void)
     size_t i, j;
     struct rt_curve *crv;
 
-    myname = record.skt.skt_name;
-    ngranules = ntohl(*(uint32_t *)record.skt.skt_count) + 1;
-    get_ext(&ext, ngranules);
+    myname = s->record.skt.skt_name;
+    ngranules = ntohl(*(uint32_t *)s->record.skt.skt_count) + 1;
+    get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_SKETCH].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_SKETCH].ft_import4(&intern, &ext, s->id_mat, DBI_NULL, &rt_uniresource)) != 0) {
 	fprintf(stderr, "g2asc: sketch import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -2463,15 +2500,18 @@ sketchdump(void)
     skt = (struct rt_sketch_internal *)intern.idb_ptr;
     RT_SKETCH_CK_MAGIC(skt);
     crv = &skt->curve;
-    fprintf(ofp, "%c ", DBID_SKETCH); /* d */
-    fprintf(ofp, "%.16s ", encode_name(myname));  /* unique name */
-    fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS(skt->V));
-    fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS(skt->u_vec));
-    fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS(skt->v_vec));
-    fprintf(ofp, "%lu %lu\n", (unsigned long)skt->vert_count, (unsigned long)crv->count);
+    fprintf(s->ofp, "%c ", DBID_SKETCH); /* d */
+    struct bu_vls ename = BU_VLS_INIT_ZERO;
+    encode_name(&ename, myname);
+    fprintf(s->ofp, "%.16s ", bu_vls_cstr(&ename));  /* unique name */
+    bu_vls_free(&ename);
+    fprintf(s->ofp, "%.12e %.12e %.12e ", V3ARGS(skt->V));
+    fprintf(s->ofp, "%.12e %.12e %.12e ", V3ARGS(skt->u_vec));
+    fprintf(s->ofp, "%.12e %.12e %.12e ", V3ARGS(skt->v_vec));
+    fprintf(s->ofp, "%lu %lu\n", (unsigned long)skt->vert_count, (unsigned long)crv->count);
     for (i = 0; i < skt->vert_count; i++)
-	fprintf(ofp, " %.12e %.12e", V2ARGS(skt->verts[i]));
-    fprintf(ofp, "\n");
+	fprintf(s->ofp, " %.12e %.12e", V2ARGS(skt->verts[i]));
+    fprintf(s->ofp, "\n");
 
     for (j = 0; j < crv->count; j++) {
 	long *lng;
@@ -2484,23 +2524,23 @@ sketchdump(void)
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		lsg = (struct line_seg *)lng;
-		fprintf(ofp, "  L %d %d %d\n", crv->reverse[j], lsg->start, lsg->end);
+		fprintf(s->ofp, "  L %d %d %d\n", crv->reverse[j], lsg->start, lsg->end);
 		break;
 	    case CURVE_CARC_MAGIC:
 		csg = (struct carc_seg *)lng;
-		fprintf(ofp, "  A %d %d %d %.12e %d %d\n", crv->reverse[j], csg->start, csg->end,
+		fprintf(s->ofp, "  A %d %d %d %.12e %d %d\n", crv->reverse[j], csg->start, csg->end,
 			      csg->radius, csg->center_is_left, csg->orientation);
 		break;
 	    case CURVE_NURB_MAGIC:
 		nsg = (struct nurb_seg *)lng;
-		fprintf(ofp, "  N %d %d %d %d %d\n   ", crv->reverse[j], nsg->order, nsg->pt_type,
+		fprintf(s->ofp, "  N %d %d %d %d %d\n   ", crv->reverse[j], nsg->order, nsg->pt_type,
 			      nsg->k.k_size, nsg->c_size);
 		for (k = 0; k < nsg->k.k_size; k++)
-		    fprintf(ofp, " %.12e", nsg->k.knots[k]);
-		fprintf(ofp, "\n   ");
+		    fprintf(s->ofp, " %.12e", nsg->k.knots[k]);
+		fprintf(s->ofp, "\n   ");
 		for (k = 0; k < nsg->c_size; k++)
-		    fprintf(ofp, " %d", nsg->ctl_points[k]);
-		fprintf(ofp, "\n");
+		    fprintf(s->ofp, " %d", nsg->ctl_points[k]);
+		fprintf(s->ofp, "\n");
 		break;
 	}
     }
@@ -2511,87 +2551,113 @@ sketchdump(void)
 /*******************************************************************/
 int
 asc_write_v4(
-	    struct gcv_context *UNUSED(c),
+	    struct gcv_context *c,
 	    const struct gcv_opts *UNUSED(o),
 	    const char *dest_path
 	    )
 {
     if (!dest_path) return 0;
 
+    // If we don't have a v4 dbip, this won't (currently) work.
+    // Need to downgrade the db first, or update this logic to
+    // work with in-mem data rather than the disk file...
+
+    if (db_version(c->dbip) < 5) {
+	bu_log("Attempting to write v4 asc output with a v5 database - unsupported\n");
+	return 0;
+    }
+
+    struct ascv4_wstate *s = ascv4_wcreate();
+
+    s->ifp = c->dbip->dbi_fp;
+
+    if (!s->ifp) {
+	bu_log("Could not open %s for reading.\n", c->dbip->dbi_filename);
+	ascv4_wdestroy(s);
+	return 0;
+    }
+    s->ofp = fopen(dest_path, "wb");
+    if (!s->ofp) {
+	bu_log("Could not open %s for writing.\n", dest_path);
+	ascv4_wdestroy(s);
+	return 0;
+    }
+
 top:
-do {
+    do {
 	/* A v4 record is already in the input buffer */
 	/* Check record type and skip deleted records */
-	switch (record.u_id) {
+	switch (s->record.u_id) {
 	    case ID_FREE:
 		continue;
 	    case ID_SOLID:
-		soldump();
+		soldump(s);
 		continue;
 	    case ID_COMB:
-		if (combdump() > 0)
+		if (combdump(s) > 0)
 		    goto top;
 		continue;
 	    case ID_MEMB:
 		fprintf(stderr, "g2asc: stray MEMB record, skipped\n");
 		continue;
 	    case ID_ARS_A:
-		arsadump();
+		arsadump(s);
 		continue;
 	    case ID_P_HEAD:
-		polyhead_asc();
+		polyhead_asc(s);
 		continue;
 	    case ID_P_DATA:
-		polydata_asc();
+		polydata_asc(s);
 		continue;
 	    case ID_IDENT:
-		idendump();
+		idendump(s);
 		continue;
 	    case ID_MATERIAL:
-		materdump();
+		materdump(s);
 		continue;
 	    case DBID_PIPE:
-		pipe_dump();
+		pipe_dump(s);
 		continue;
 	    case DBID_STRSOL:
-		strsol_dump();
+		strsol_dump(s);
 		continue;
 	    case DBID_NMG:
-		nmg_dump();
+		nmg_dump(s);
 		continue;
 	    case DBID_PARTICLE:
-		particle_dump();
+		particle_dump(s);
 		continue;
 	    case DBID_ARBN:
-		arbn_dump();
+		arbn_dump(s);
 		continue;
 	    case DBID_CLINE:
-		cline_dump();
+		cline_dump(s);
 		continue;
 	    case DBID_BOT:
-		bot_dump();
+		bot_dump(s);
 		continue;
 	    case ID_BSOLID:
-		bspldump();
+		bspldump(s);
 		continue;
 	    case ID_BSURF:
-		bsurfdump();
+		bsurfdump(s);
 		continue;
 	    case DBID_SKETCH:
-		sketchdump();
+		sketchdump(s);
 		continue;
 	    case DBID_EXTR:
-		extrdump();
+		extrdump(s);
 		continue;
 	    default:
 		fprintf(stderr,
-			      "g2asc: unable to convert record type '%c' (0%o), skipping\n",
-			      record.u_id, record.u_id);
+			"g2asc: unable to convert record type '%c' (0%o), skipping\n",
+			s->record.u_id, s->record.u_id);
 		continue;
 	}
-    }  while (fread((char *)&record, sizeof record, 1, ifp) == 1  &&
-	       !feof(ifp));
+    }  while (fread((char *)&s->record, sizeof s->record, 1, s->ifp) == 1  &&
+	    !feof(s->ifp));
 
+    ascv4_wdestroy(s);
     return 1;
 }
 
