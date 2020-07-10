@@ -947,14 +947,7 @@ proc comb_apply { id } {
     }
 
     # set any attributes that we have saved
-    set ret [catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) } comb_error ]
-
-    if {$ret} {
-	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-	    "comb_apply: Error"\
-	    $comb_error\
-	    "" 0 OK
-    }
+    catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) }
 
     return $ret
 }
