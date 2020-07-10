@@ -205,12 +205,6 @@ proc init_comb { id } {
     # name of our top level window
     set top .$id.comb
 
-    # if we already have such a window, just pop it up
-    if [winfo exists $top] {
-	raise $top
-	return
-    }
-
     # get default values for ident, air, los, and material
     set defaults [regdef]
     set default_ident [lindex $defaults 1]
@@ -223,17 +217,24 @@ proc init_comb { id } {
     set comb_control($id,pady) 2
 
     set comb_control($id,name) ""
+    set comb_control($id,color) ""
+    set comb_control($id,inherit) ""
+    set comb_control($id,comb) ""
     set comb_control($id,isRegion) "Yes"
     set comb_control($id,id) $default_ident
     set comb_control($id,air) $default_air
     set comb_control($id,material) $default_material
     set comb_control($id,los) $default_los
-    set comb_control($id,color) ""
-    set comb_control($id,inherit) ""
-    set comb_control($id,comb) ""
     set comb_control($id,shader) ""
     set comb_control($id,shader_gui) ""
     set comb_control($id,dirty_name) 1
+
+    # if we already have such a window, just pop it up after
+    # initializing / resetting the panel's values
+    if [winfo exists $top] {
+	raise $top
+	return
+    }
 
     # invoke a handler whenever the combination name is changed
     trace vdelete comb_control($id,name) w "comb_handle_trace $id"
@@ -856,6 +857,22 @@ from the combination." } }
 
 # called when "OK" is pressed
 proc comb_ok {id top} {
+    global comb_control
+
+    set top .$id.comb
+
+    # get the Boolean expression from the text widget
+    set comb_control($id,comb) [$top.combT get 0.0 end]
+
+    # normalize the name and comb expression fields
+    set comb_control($id,name) [string trim $comb_control($id,name)]
+    set comb_control($id,comb) [string trim $comb_control($id,comb)]
+
+    if {$comb_control($id,name) == "" && $comb_control($id,comb) == ""} {
+	# nothing to do
+	comb_dismiss $id $top
+	return
+    }
 
     # apply the parameters
     set ret [comb_apply $id]
@@ -863,6 +880,7 @@ proc comb_ok {id top} {
     if {$ret == 0} {
 	# destroy the window
 	comb_dismiss $id $top
+	return
     }
 }
 
@@ -874,16 +892,23 @@ proc comb_apply { id } {
 
     set top .$id.comb
 
-    if {$comb_control($id,name) == ""} {
+    # get the Boolean expression from the text widget
+    set comb_control($id,comb) [$top.combT get 0.0 end]
+
+    # normalize the name and comb expression fields
+    set comb_control($id,name) [string trim $comb_control($id,name)]
+    set comb_control($id,comb) [string trim $comb_control($id,comb)]
+    
+    if {$comb_control($id,name) == "" && $comb_control($id,comb) == ""} {
+	# nothing to apply
+	return
+    } elseif {$comb_control($id,name) == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 	    "You must specify a region/combination name!"\
 	    "You must specify a region/combination name!"\
 	    "" 0 OK
 	return
     }
-
-    # get the Boolean expression from the text widget
-    set comb_control($id,comb) [$top.combT get 0.0 end]
 
     # if someone has edited the combination name, take care about
     # overwriting an existing object
@@ -969,11 +994,10 @@ proc comb_reset { id } {
 
     set top .$id.comb
 
-    if {$comb_control($id,name) == ""} {
-	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-	    "You must specify a region/combination name!"\
-	    "You must specify a region/combination name!"\
-	    "" 0 OK
+    if {[string trim $comb_control($id,name)] == ""} {
+	# re-init the panel to default values
+	$top.combT delete 0.0 end
+	init_comb $id
 	return
     }
 
