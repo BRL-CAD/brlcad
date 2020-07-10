@@ -938,7 +938,6 @@ proc comb_apply { id } {
 			$comb_control($id,inherit) $comb_control($id,comb) $comb_control($id,isRegion) \
 			$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) $comb_control($id,los) \
 		    } comb_error]
-    }
 
     if {$ret} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
