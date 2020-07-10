@@ -509,6 +509,12 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    /* do not attempt to read/write empty-named combinations */
+    if (BU_STR_EMPTY(comb_name)) {
+	bu_vls_printf(gedp->ged_result_str, "%s: an empty combination name is not valid\n", cmd_name);
+	return GED_ERROR;
+    }
+
     comb = (struct rt_comb_internal *)NULL;
     dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
