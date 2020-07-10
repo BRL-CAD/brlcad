@@ -61,29 +61,16 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
     intern.idb_ptr = (void *)comb;
     comb->tree = final_tree;
 
-    if (!BU_STR_EQUAL(dir_name, comb_name)) {
-	int flags;
-
-	if (comb->region_flag)
-	    flags = RT_DIR_COMB | RT_DIR_REGION;
-	else
-	    flags = RT_DIR_COMB;
-
-	if (dp != RT_DIR_NULL) {
-	    if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
-		bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to delete directory entry for %s\n", comb_name);
-		intern.idb_meth->ft_ifree(&intern);
-		return GED_ERROR;
-	    }
-	}
-
-	dp = db_diradd(gedp->ged_wdbp->dbip, dir_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type);
-	if (dp == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", dir_name);
+    if (!BU_STR_EQUAL(dir_name, comb_name) && dp) {
+	if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to delete directory entry for %s\n", comb_name);
 	    intern.idb_meth->ft_ifree(&intern);
-	    return 1;
+	    return GED_ERROR;
 	}
-    } else if (dp == RT_DIR_NULL) {
+	dp = RT_DIR_NULL;
+    }
+
+    if (!dp) {
 	int flags;
 
 	if (comb->region_flag)
@@ -97,12 +84,12 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	    intern.idb_meth->ft_ifree(&intern);
 	    return GED_ERROR;
 	}
-    } else {
-	if (comb->region_flag)
-	    dp->d_flags |= RT_DIR_REGION;
-	else
-	    dp->d_flags &= ~RT_DIR_REGION;
     }
+
+    if (comb->region_flag)
+	dp->d_flags |= RT_DIR_REGION;
+    else
+	dp->d_flags &= ~RT_DIR_REGION;
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to write combination to database.\n");
@@ -273,7 +260,7 @@ count_nodes(struct ged *gedp, char *line)
 
 
 static int
-put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *comb_name, const char *dir_name, const char *imstr)
+put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *comb_name, const char *dir_name, const char *expression)
 {
     char *line;
     char *name;
@@ -291,13 +278,13 @@ put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, s
     struct rt_tree_array *rt_tree_array = NULL;
     union tree *tp;
 
-    if (imstr == (char *)NULL)
+    if (!expression)
 	return GED_ERROR;
 
     BU_LIST_INIT(&comb_lines.l);
 
-    /* duplicate the immutable str (from argv) for strtok style mutation */
-    str = bu_strdup(imstr);
+    /* duplicate the expression string (from argv) for parsing */
+    str = bu_strdup(expression);
 
     /* break str into lines */
     line = str;
@@ -488,11 +475,16 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     static const char *noregionusage = "comb_name n color shader inherit boolean_expr";
     static const char *regionusage = "comb_name y regionID airID materialID los% color shader inherit boolean_expr";
 
-    const char *saved_name = NULL;
+    const char *cmd_name = argv[0];
     const char *comb_name = argv[1];
     const char *dir_name = NULL;
+    const char *saved_name = NULL;
 
-    char new_name_v4[NAMESIZE+1] = {0};
+    const char *color = NULL;
+    const char *shader = NULL;
+    const char *inherit = NULL;
+    const char *expression = NULL;
+
     int offset = 0;
     int save_comb_flag = 0;
     struct directory *dp = NULL;
@@ -508,12 +500,12 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
     if (argc < 7 || 11 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_ERROR;
     }
 
@@ -521,12 +513,12 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", argv[0], comb_name);
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", cmd_name, comb_name);
 	    return GED_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", cmd_name);
 	    return GED_ERROR;
 	}
 
@@ -542,36 +534,18 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     } else {
 	/* make an empty combination structure */
 	BU_ALLOC(comb, struct rt_comb_internal);
-	if (comb == NULL)
-	    bu_bomb("Unable to allocate comb memory");
 	RT_COMB_INTERNAL_INIT(comb);
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
-	if (dp == RT_DIR_NULL)
-	    bu_strlcpy(new_name_v4, comb_name, NAMESIZE+1);
-	else
-	    bu_strlcpy(new_name_v4, dp->d_namep, NAMESIZE+1);
-	dir_name = new_name_v4;
-    } else {
-	if (dp == RT_DIR_NULL)
-	    dir_name = comb_name;
-	else
-	    dir_name = dp->d_namep;
-    }
-
-    if (bu_str_true(argv[2]))
-	comb->region_flag = 1;
-    else
-	comb->region_flag = 0;
-
-    if (comb->region_flag) {
+    /* if is_region */
+    if (bu_str_true(argv[2])) {
 	if (argc != 11) {
 	    bu_vls_printf(gedp->ged_result_str, "region_flag is set, incorrect number of arguments supplied.\n");
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], regionusage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, regionusage);
 	    return GED_ERROR;
 	}
 
+	comb->region_flag = 1;
 	comb->region_id = atoi(argv[3]);
 	comb->aircode = atoi(argv[4]);
 	comb->GIFTmater = atoi(argv[5]);
@@ -580,25 +554,37 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	offset = 6;
     } else {
 	if (argc != 7) {
-	    bu_vls_printf(gedp->ged_result_str, "region_flag is not set, incorrect number of arguments supplied.\n");
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], noregionusage);
+	    bu_vls_printf(gedp->ged_result_str, "region_flag not set, incorrect number of arguments supplied.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, noregionusage);
 	    return GED_ERROR;
 	}
+
+	comb->region_flag = 0;
 	offset = 2;
     }
 
-    put_rgb_into_comb(comb, argv[offset + 1]);
-    bu_vls_strcpy(&comb->shader, argv[offset +2]);
+    color = argv[offset + 1];
+    shader = argv[offset + 2];
+    inherit = argv[offset + 3];
+    expression = argv[offset + 4];
 
-    if (bu_str_true(argv[offset + 3]))
+    put_rgb_into_comb(comb, color);
+    bu_vls_strcpy(&comb->shader, shader);
+
+    if (bu_str_true(inherit))
 	comb->inherit = 1;
     else
 	comb->inherit = 0;
 
-    if (put_tree_into_comb_and_export(gedp, comb, dp, comb_name, dir_name, argv[offset + 4]) == GED_ERROR) {
-	if (comb && dp) {
+    if (dp)
+	dir_name = dp->d_namep;
+    else
+	dir_name = comb_name;
+
+    if (put_tree_into_comb_and_export(gedp, comb, dp, comb_name, dir_name, expression) == GED_ERROR) {
+	if (dp) {
 	    restore_comb(gedp, dp, saved_name);
-	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", cmd_name);
 	}
 	return GED_ERROR;
     } else if (save_comb_flag) {
