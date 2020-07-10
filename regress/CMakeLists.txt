@@ -125,6 +125,7 @@ endif(SH_EXEC)
 
 CMAKEFILES(
   analyze.asc
+  asc/poly.g
   asc2dsp.sh
   bots.sh
   comgeom.sh
