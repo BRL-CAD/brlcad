@@ -71,6 +71,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_superell_internal *superell_ip;
     struct rt_metaball_internal *metaball_ip;
     struct rt_pnts_internal *pnts_ip;
+    struct rt_cline_internal *cline_ip;
 
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
@@ -785,6 +786,20 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	superell_ip->n = 1.0;
 	superell_ip->e = 1.0;
 	fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
+
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
+
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_type = ID_CLINE;
+	internal.idb_meth = &OBJ[ID_CLINE];
+	BU_ALLOC(internal.idb_ptr, struct rt_cline_internal);
+	cline_ip = (struct rt_cline_internal *)internal.idb_ptr;
+	cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
+	VSET(cline_ip->v, origin[X], origin[Y], origin[Z]);
+	VSET(cline_ip->h, 0.0, 0.0, scale);
+	cline_ip->radius = .5 * scale;
+	cline_ip->thickness = .1 * scale;
+	fprintf(stdout, "cline being made with radius %f and thickness %f\n", cline_ip->radius, cline_ip->thickness);
 
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "hf")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
