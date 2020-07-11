@@ -167,8 +167,23 @@ STATUS=$?
 
 if [ $STATUS -gt 0 ] ; then
     log "-> asc.sh FAILED, see $LOGFILE"
+    exit $STATUS
 else
     log "-> asc.sh succeeded"
+fi
+
+# Run a test database with better object coverage through g2asc.
+# Unfortunately, at the moment it looks like this won't round
+# trip.
+#
+G2ASC1="$1/regress/asc/v4.g"
+log "$G2A $G2ASC1 v4.asc"
+$G2A $G2ASC1 v4.asc 2>&1 > $LOGFILE
+STATUS=$?
+# If something went wrong, bail.
+if [ $STATUS -gt 0 ] ; then
+    log "-> g2asc broad object coverage check FAILED, see $LOGFILE"
+    exit $STATUS
 fi
 
 exit $STATUS
