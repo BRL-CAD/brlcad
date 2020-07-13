@@ -22,7 +22,6 @@
 *.enc text
 *.f text
 *.h text
-*.h text
 *.hpp text
 *.htm text
 *.html text
@@ -50,8 +49,6 @@
 *.res text
 *.rt text
 *.s text
-*.sh text
-*.sh text
 *.spec text
 *.tcl text
 *.terms text
@@ -59,7 +56,6 @@
 *.tex text
 *.tk text
 *.tr text
-*.txt text
 *.txt text
 *.vbs text
 *.vcf text
@@ -79,6 +75,8 @@ TODO* text
 ### catch-all for files starting and ending in all caps with optional (e.g. READ.ME)
 [A-Z._][A-Z._]*[A-Z._] text
 
+# Declare files that will always have LF line endings on checkout.
+*.sh text eol=lf
 
 # Declare files that will always have CRLF line endings on checkout.
 *.bat text eol=crlf
