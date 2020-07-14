@@ -40,6 +40,13 @@ __BEGIN_DECLS
 extern struct tclcad_obj HeadTclcadObj;
 extern struct tclcad_obj *current_top;
 
+struct path_edit_params {
+    int edit_mode;
+    double dx;
+    double dy;
+    mat_t edit_mat;
+};
+
 /**
  * function returns truthfully whether the library has been
  * initialized.  calling this routine with setit true considers the
@@ -72,12 +79,14 @@ extern int Ged_Init(Tcl_Interp *interp);
 extern int Rt_Init(Tcl_Interp *interp);
 
 
+/* Tclcad view routines */
 extern int to_is_viewable(struct ged_dm_view *gdvp);
+extern void to_autoview_view(struct ged_dm_view *gdvp, const char *scale);
 extern void to_autoview_all_views(struct tclcad_obj *top);
 extern void to_refresh_all_views(struct tclcad_obj *top);
 extern void to_refresh_view(struct ged_dm_view *gdvp);
 
-/* Tcl obj wrapper routines */
+/* Tclcad obj wrapper routines */
 extern int to_autoview_func(struct ged *gedp,
 			    int argc,
 			    const char *argv[],

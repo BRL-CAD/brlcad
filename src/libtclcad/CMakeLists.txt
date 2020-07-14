@@ -8,6 +8,7 @@ set(LIBTCLCAD_SRCS
   tclcad_obj_wrapper.c
   tclcad_eval.c
   tclcad_init.c
+  tclcad_views.c
   tkImgFmtPIX.c
   cmdhist_obj.c
   dm_obj.c
