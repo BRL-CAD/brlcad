@@ -1630,7 +1630,7 @@ static void
 ascv4_wdestroy(struct ascv4_wstate *s)
 {
     if (s->ofp) {
-	fclose(s->ifp);
+	fclose(s->ofp);
     }
     BU_PUT(s, struct ascv4_wstate);
 }
@@ -2559,7 +2559,7 @@ asc_write_v4(
     // Need to downgrade the db first, or update this logic to
     // work with in-mem data rather than the disk file...
 
-    if (db_version(c->dbip) < 5) {
+    if (db_version(c->dbip) > 4) {
 	bu_log("Attempting to write v4 asc output with a v5 database - unsupported\n");
 	return 0;
     }

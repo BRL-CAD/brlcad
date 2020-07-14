@@ -32,11 +32,13 @@
 #include <sstream>
 #include <string>
 
+#include "rt/db_io.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 
 extern void asc_read_v4(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
 extern void asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
+extern void asc_write_v4(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
 extern void asc_write_v5(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
 
 static int
@@ -117,9 +119,11 @@ asc_write(struct gcv_context *c, const struct gcv_opts *o,
 	       const void *UNUSED(odata), const char *dest_path)
 {
     if (!c || !o || !dest_path) return 0;
-    bu_log("asc write\n");
-    // TODO - check for version option
-    asc_write_v5(c, o, dest_path);
+    if (db_version(c->dbip) < 5) {
+	asc_write_v4(c, o, dest_path);
+    } else {
+	asc_write_v5(c, o, dest_path);
+    }
     return 1;
 }
 
