@@ -138,8 +138,8 @@ Tclcad_Init(Tcl_Interp *interp)
     }
 
     /* Initialize the GED object */
-    if (Go_Init(interp) == TCL_ERROR) {
-	bu_log("Go_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+    if (Ged_Init(interp) == TCL_ERROR) {
+	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
@@ -354,7 +354,7 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     Tcl_StaticPackage(interp, "Fb", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
 
     /* Initialize libged */
-    if (Go_Init(interp) == TCL_ERROR) {
+    if (Ged_Init(interp) == TCL_ERROR) {
 	if (tlog) bu_vls_printf(tlog, "Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	ret = TCL_ERROR;
 	Tcl_ResetResult(interp);

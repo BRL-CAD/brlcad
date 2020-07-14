@@ -1501,7 +1501,7 @@ dm_list_tcl(ClientData UNUSED(clientData),
  *
  */
 int
-Go_Init(Tcl_Interp *interp)
+Ged_Init(Tcl_Interp *interp)
 {
 
     if (library_initialized(0))

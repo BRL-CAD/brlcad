@@ -60,7 +60,7 @@ extern int Cho_Init(Tcl_Interp *interp);
 extern int Dm_Init(Tcl_Interp *interp);
 extern int Dmo_Init(Tcl_Interp *interp);
 extern int Fbo_Init(Tcl_Interp *interp);
-extern int Go_Init(Tcl_Interp *interp);
+extern int Ged_Init(Tcl_Interp *interp);
 extern int Rt_Init(Tcl_Interp *interp);
 
 __END_DECLS

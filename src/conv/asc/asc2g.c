@@ -1580,7 +1580,7 @@ main(int argc, char *argv[])
 	BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
 	interp = Tcl_CreateInterp();
-	Go_Init(interp);
+	Tclcad_Init(interp);
 	wdb_close(ofp);
 
 	{
