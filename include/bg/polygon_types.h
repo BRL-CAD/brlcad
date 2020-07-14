@@ -57,6 +57,8 @@ struct bg_polygon {
     int                 gp_line_style;
 };
 
+#define BG_POLYGON_NULL {0, NULL, NULL, {0, 0, 0}, 0, 0}
+
 struct bg_polygons {
     size_t            num_polygons;
     struct bg_polygon *polygon;

@@ -60,6 +60,7 @@ bg_polygons_overlap(
 	fastf_t iscale
 	);
 
+/* model2view and view2model may be NULL, if the polygons are coplanar */
 BG_EXPORT struct bg_polygon *
 bg_clip_polygon(
 	bg_clip_t op,
@@ -70,6 +71,7 @@ bg_clip_polygon(
        	matp_t view2model
 	);
 
+/* model2view and view2model may be NULL, if the polygons are coplanar */
 BG_EXPORT struct bg_polygon *
 bg_clip_polygons(
 	bg_clip_t op,
@@ -284,6 +286,7 @@ BG_EXPORT extern int bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts,
 
 /* Debugging functions - do not use */
 BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b);
+BG_EXPORT extern void bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int g, int b);
 BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b);
 
 __END_DECLS
