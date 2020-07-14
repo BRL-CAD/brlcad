@@ -341,10 +341,7 @@ TCLCAD_EXPORT extern int tcl_list_to_fastf_array(Tcl_Interp *interp,
 						 int *array_len);
 
 
-TCLCAD_EXPORT extern int Tclcad_Init(Tcl_Interp *interp);
-
 /* defined in tclcad_obj.c */
-TCLCAD_EXPORT extern int Go_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 				     Tcl_Interp *interp,
 				     int argc,
