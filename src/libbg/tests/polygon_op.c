@@ -114,9 +114,50 @@ main(int argc, const char **argv)
     /* Calculate union and compare it with the expected result */
     struct bg_polygon *ur = bg_clip_polygon(bg_Union, &p1, &p2, 1.0, NULL, NULL);
     if (plot_files) {
-	bg_polygon_plot("pr.plot3", (const point_t *)ur->contour[0].point, ur->contour[0].num_points, 0, 0, 255);
+	bg_polygon_plot("ur.plot3", (const point_t *)ur->contour[0].point, ur->contour[0].num_points, 0, 0, 255);
     }
-    ret = _bg_polygon_diff(ur, &union_expected);
+    ret += _bg_polygon_diff(ur, &union_expected);
+
+
+    /* Difference expected result */
+    struct bg_polygon difference_expected = BG_POLYGON_NULL;
+    difference_expected.num_contours = 1;
+    difference_expected.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "c1 points");
+    difference_expected.contour[0].num_points = 6;
+    difference_expected.contour[0].point = (point_t *)bu_calloc(6, sizeof(point_t), "difference_expected.contour[0] points");
+    VSET(difference_expected.contour[0].point[0], -3,  3,  0);
+    VSET(difference_expected.contour[0].point[1], -3, -3,  0);
+    VSET(difference_expected.contour[0].point[2],  3, -3,  0);
+    VSET(difference_expected.contour[0].point[3],  3,  0,  0);
+    VSET(difference_expected.contour[0].point[4],  0,  0,  0);
+    VSET(difference_expected.contour[0].point[5],  0,  3,  0);
+
+    /* Calculate difference and compare it with the expected result */
+    struct bg_polygon *dr = bg_clip_polygon(bg_Difference, &p1, &p2, 1.0, NULL, NULL);
+    if (plot_files) {
+	bg_polygon_plot("dr.plot3", (const point_t *)dr->contour[0].point, dr->contour[0].num_points, 0, 0, 255);
+    }
+    ret += _bg_polygon_diff(dr, &difference_expected);
+
+    /* Intersection expected result */
+    struct bg_polygon intersection_expected = BG_POLYGON_NULL;
+    intersection_expected.num_contours = 1;
+    intersection_expected.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "c1 points");
+    intersection_expected.contour[0].num_points = 4;
+    intersection_expected.contour[0].point = (point_t *)bu_calloc(4, sizeof(point_t), "intersection_expected.contour[0] points");
+    VSET(intersection_expected.contour[0].point[0],  0,  3,  0);
+    VSET(intersection_expected.contour[0].point[1],  0,  0,  0);
+    VSET(intersection_expected.contour[0].point[2],  3,  0,  0);
+    VSET(intersection_expected.contour[0].point[3],  3,  3,  0);
+
+    /* Calculate intersection and compare it with the expected result */
+    struct bg_polygon *ir = bg_clip_polygon(bg_Intersection, &p1, &p2, 1.0, NULL, NULL);
+    if (plot_files) {
+	bg_polygon_plot("ir.plot3", (const point_t *)ir->contour[0].point, ir->contour[0].num_points, 0, 0, 255);
+    }
+    ret += _bg_polygon_diff(ir, &intersection_expected);
+
+    /* Note - clipper doesn't yet support Xor */
 
     return ret;
 }
