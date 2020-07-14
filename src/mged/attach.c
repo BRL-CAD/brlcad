@@ -562,7 +562,11 @@ gui_setup(const char *dstr)
     }
 
     /* Initialize libtclcad */
-    (void)Tclcad_Init(INTERP);
+#ifdef HAVE_TK
+    (void)tclcad_init(INTERP, 1, NULL);
+#else
+    (void)tclcad_init(INTERP, 0, NULL);
+#endif
 
 #ifdef HAVE_TK
     if ((tkwin = Tk_MainWindow(INTERP)) == NULL) {
