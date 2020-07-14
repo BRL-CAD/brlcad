@@ -1,7 +1,7 @@
 set(LIBTCLCAD_SRCS
   bu_funcs.c
   bn_funcs.c
-  libfuncs.c
+  rt_funcs.c
   tclcad.c
   tclcadAutoPath.c
   tclcad_obj.c
