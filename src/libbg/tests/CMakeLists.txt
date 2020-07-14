@@ -140,6 +140,14 @@ BRLCAD_ADDEXEC(bg_trimesh_pt_in trimesh_pt_in.c "libbg;libbn;libbu" TEST)
 
 add_test(NAME bg_trimesh_pt_in_basic   COMMAND bg_trimesh_pt_in 1)
 
+#  ************ polygon_op.cpp tests ***********
+
+BRLCAD_ADDEXEC(bg_polygon_op polygon_op.c "libbg;libbn;libbu" TEST)
+
+add_test(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
+
+
+
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
