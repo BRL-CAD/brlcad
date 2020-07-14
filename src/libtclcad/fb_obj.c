@@ -45,6 +45,7 @@
 #include "../libdm/include/private.h"
 #include "dm.h"
 #include "tclcad.h"
+#include "tclcad_private.h"
 
 /* defined in libfb/tcl.c */
 extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);

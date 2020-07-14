@@ -53,6 +53,16 @@ extern int tclcad_eval(Tcl_Interp *interp, const char *command, size_t num_args,
 extern int tclcad_eval_noresult(Tcl_Interp *interp, const char *command, size_t num_args, const char * const *args);
 
 
+/* Tcl initialization routines */
+extern int Bu_Init(Tcl_Interp *interp);
+extern int Bn_Init(Tcl_Interp *interp);
+extern int Cho_Init(Tcl_Interp *interp);
+extern int Dm_Init(Tcl_Interp *interp);
+extern int Dmo_Init(Tcl_Interp *interp);
+extern int Fbo_Init(Tcl_Interp *interp);
+extern int Go_Init(Tcl_Interp *interp);
+extern int Rt_Init(Tcl_Interp *interp);
+
 __END_DECLS
 
 #endif /* LIBTCLCAD_TCLCAD_PRIVATE_H */

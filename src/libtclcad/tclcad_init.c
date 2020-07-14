@@ -43,10 +43,6 @@
 #include "brlcad_version.h"
 #include "tclcad_private.h"
 
-/* defined in cmdhist_obj.c */
-extern int Cho_Init(Tcl_Interp *interp);
-
-
 int
 library_initialized(int setit)
 {

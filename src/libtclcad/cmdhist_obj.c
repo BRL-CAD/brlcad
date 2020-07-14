@@ -30,6 +30,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "tclcad.h"
+#include "tclcad_private.h"
 
 
 /* FIXME: this is apparently used by src/tclscripts/lib/Command.tcl so

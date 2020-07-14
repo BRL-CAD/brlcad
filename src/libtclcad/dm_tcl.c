@@ -45,15 +45,10 @@
 /* private headers */
 #include "../libdm/include/private.h"
 #include "brlcad_version.h"
+#include "tclcad_private.h"
 
 /* from libdm/query.c */
 extern int dm_validXType(const char *dpy_string, const char *name);
-
-/* from libdm/dm_obj.c */
-extern int Dmo_Init(Tcl_Interp *interp);
-
-/* from lib./fb_obj.c */
-extern int Fbo_Init(Tcl_Interp *interp);
 
 HIDDEN int
 dm_validXType_tcl(void *clientData, int argc, const char **argv)
@@ -166,10 +161,8 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 
 
 int
-Dm_Init(void *interpreter)
+Dm_Init(Tcl_Interp *interp)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)interpreter;
-
     static struct bu_cmdtab cmdtab[] = {
 	{"dm_validXType", dm_validXType_tcl},
 	{"dm_bestXType", dm_bestXType_tcl},

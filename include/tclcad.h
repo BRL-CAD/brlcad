@@ -172,9 +172,7 @@ struct tclcad_obj {
 TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Bu_Init(void *interp);
 TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_bn_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 
 
@@ -532,8 +530,6 @@ tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd,
 /* dm_tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 TCLCAD_EXPORT extern void fb_tcl_setup(void);
-TCLCAD_EXPORT extern int Fb_Init(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Dm_Init(void *interp);
 
 __END_DECLS
 

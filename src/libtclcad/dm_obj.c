@@ -46,6 +46,7 @@
 #include "dm.h"
 #include "../libdm/include/private.h"
 #include "tclcad.h"
+#include "tclcad_private.h"
 
 /**
  *@brief

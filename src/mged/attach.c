@@ -561,8 +561,8 @@ gui_setup(const char *dstr)
 	return TCL_ERROR;
     }
 
-    /* Initialize libdm */
-    (void)Dm_Init(INTERP);
+    /* Initialize libtclcad */
+    (void)Tclcad_Init(INTERP);
 
 #ifdef HAVE_TK
     if ((tkwin = Tk_MainWindow(INTERP)) == NULL) {

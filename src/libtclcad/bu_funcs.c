@@ -466,10 +466,8 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 
 
 int
-Bu_Init(void *p)
+Bu_Init(Tcl_Interp *interp)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)p;
-
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
 	{"bu_dir",		        tcl_bu_dir},
