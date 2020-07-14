@@ -2,7 +2,6 @@ set(LIBTCLCAD_SRCS
   bu_funcs.c
   bn_funcs.c
   rt_funcs.c
-  tclcad.c
   auto_path.c
   tclcad_obj.c
   tclcad_eval.c
