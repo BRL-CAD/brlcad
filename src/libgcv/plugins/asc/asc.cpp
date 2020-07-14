@@ -93,6 +93,7 @@ asc_read(
 	if (fmt) {
 	    switch (fmt) {
 		case 4:
+		    fs.seekg(0);
 		    asc_read_v4(c, o, fs);
 		    break;
 		case 5:

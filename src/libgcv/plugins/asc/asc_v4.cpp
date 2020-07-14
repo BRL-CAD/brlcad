@@ -80,9 +80,6 @@ ascv4_rcreate()
 static void
 ascv4_rdestroy(struct ascv4_rstate *s)
 {
-    if (s->ofp) {
-	wdb_close(s->ofp);
-    }
     bu_vls_free(s->buf);
     BU_PUT(s->buf, struct bu_vls);
     bu_vls_free(s->name);
