@@ -44,6 +44,22 @@ struct path_match_data {
 };
 
 
+fastf_t
+screen_to_view_x(struct dm *dmp, fastf_t x)
+{
+    int width = dm_get_width(dmp);
+    return x / (fastf_t)width * 2.0 - 1.0;
+}
+
+
+fastf_t
+screen_to_view_y(struct dm *dmp, fastf_t y)
+{
+    int height = dm_get_height(dmp);
+    return (y / (fastf_t)height * -2.0 + 1.0) / dm_get_aspect(dmp);
+}
+
+
 int
 to_is_viewable(struct ged_dm_view *gdvp)
 {

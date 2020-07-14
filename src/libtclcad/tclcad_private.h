@@ -79,7 +79,256 @@ extern int Ged_Init(Tcl_Interp *interp);
 extern int Rt_Init(Tcl_Interp *interp);
 
 
+extern int to_data_polygons_func(Tcl_Interp *interp,
+                                 struct ged *gedp,
+                                 struct ged_dm_view *gdvp,
+                                 int argc,
+                                 const char *argv[]);
+
+/* Utility functions */
+extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
+
+/* Tclcad mouse routines */
+extern int to_get_prev_mouse(struct ged *gedp,
+                            int argc,
+                            const char *argv[],
+                            ged_func_ptr func,
+                            const char *usage,
+                            int maxargs);
+extern int to_mouse_append_pnt_common(struct ged *gedp,
+                                     int argc,
+                                     const char *argv[],
+                                     ged_func_ptr func,
+                                     const char *usage,
+                                     int maxargs);
+extern int to_mouse_brep_selection_append(struct ged *gedp,
+                                         int argc,
+                                         const char *argv[],
+                                         ged_func_ptr func,
+                                         const char *usage,
+                                         int maxargs);
+extern int to_mouse_brep_selection_translate(struct ged *gedp,
+                                            int argc,
+                                            const char *argv[],
+                                            ged_func_ptr func,
+                                            const char *usage,
+                                            int maxargs);
+extern int to_mouse_constrain_rot(struct ged *gedp,
+                                 int argc,
+                                 const char *argv[],
+                                 ged_func_ptr func,
+                                 const char *usage,
+                                 int maxargs);
+extern int to_mouse_constrain_trans(struct ged *gedp,
+                                   int argc,
+                                   const char *argv[],
+                                   ged_func_ptr func,
+                                   const char *usage,
+                                   int maxargs);
+extern int to_mouse_find_arb_edge(struct ged *gedp,
+                                 int argc,
+                                 const char *argv[],
+                                 ged_func_ptr func,
+                                 const char *usage,
+                                 int maxargs);
+extern int to_mouse_find_bot_edge(struct ged *gedp,
+                                 int argc,
+                                 const char *argv[],
+                                 ged_func_ptr func,
+                                 const char *usage,
+                                 int maxargs);
+extern int to_mouse_find_bot_pnt(struct ged *gedp,
+                                int argc,
+                                const char *argv[],
+                                ged_func_ptr func,
+                                const char *usage,
+                                int maxargs);
+extern int to_mouse_find_metaball_pnt(struct ged *gedp,
+                                     int argc,
+                                     const char *argv[],
+                                     ged_func_ptr func,
+                                     const char *usage,
+                                     int maxargs);
+extern int to_mouse_find_pipe_pnt(struct ged *gedp,
+                                 int argc,
+                                 const char *argv[],
+                                 ged_func_ptr func,
+                                 const char *usage,
+                                 int maxargs);
+extern int to_mouse_joint_select(struct ged *gedp,
+                                int argc,
+                                const char *argv[],
+                                ged_func_ptr func,
+                                const char *usage,
+                                int maxargs);
+extern int to_mouse_joint_selection_translate(struct ged *gedp,
+                                             int argc,
+                                             const char *argv[],
+                                             ged_func_ptr func,
+                                             const char *usage,
+                                             int maxargs);
+extern int to_mouse_move_arb_edge(struct ged *gedp,
+                                 int argc,
+                                 const char *argv[],
+                                 ged_func_ptr func,
+                                 const char *usage,
+                                 int maxargs);
+extern int to_mouse_move_arb_face(struct ged *gedp,
+                                 int argc,
+                                 const char *argv[],
+                                 ged_func_ptr func,
+                                 const char *usage,
+                                 int maxargs);
+extern int to_mouse_move_bot_pnt(struct ged *gedp,
+                                int argc,
+                                const char *argv[],
+                                ged_func_ptr func,
+                                const char *usage,
+                                int maxargs);
+extern int to_mouse_move_bot_pnts(struct ged *gedp,
+                                 int argc,
+                                 const char *argv[],
+                                 ged_func_ptr func,
+                                 const char *usage,
+                                 int maxargs);
+extern int to_mouse_move_pnt_common(struct ged *gedp,
+                                   int argc,
+                                   const char *argv[],
+                                   ged_func_ptr func,
+                                   const char *usage,
+                                   int maxargs);
+extern int to_mouse_orotate(struct ged *gedp,
+                           int argc,
+                           const char *argv[],
+                           ged_func_ptr func,
+                           const char *usage,
+                           int maxargs);
+extern int to_mouse_oscale(struct ged *gedp,
+                          int argc,
+                          const char *argv[],
+                          ged_func_ptr func,
+                          const char *usage,
+                          int maxargs);
+extern int to_mouse_otranslate(struct ged *gedp,
+                              int argc,
+                              const char *argv[],
+                              ged_func_ptr func,
+                              const char *usage,
+                              int maxargs);
+extern int to_mouse_poly_circ(struct ged *gedp,
+                             int argc,
+                             const char *argv[],
+                             ged_func_ptr func,
+                             const char *usage,
+                             int maxargs);
+extern int to_mouse_poly_circ_func(Tcl_Interp *interp,
+                                  struct ged *gedp,
+                                  struct ged_dm_view *gdvp,
+                                  int argc,
+                                  const char *argv[],
+                                  const char *usage);
+extern int to_mouse_poly_cont(struct ged *gedp,
+                             int argc,
+                             const char *argv[],
+                             ged_func_ptr func,
+                             const char *usage,
+                             int maxargs);
+extern int to_mouse_poly_cont_func(Tcl_Interp *interp,
+                                  struct ged *gedp,
+                                  struct ged_dm_view *gdvp,
+                                  int argc,
+                                  const char *argv[],
+                                  const char *usage);
+extern int to_mouse_poly_ell(struct ged *gedp,
+                            int argc,
+                            const char *argv[],
+                            ged_func_ptr func,
+                            const char *usage,
+                            int maxargs);
+extern int to_mouse_poly_ell_func(Tcl_Interp *interp,
+                                 struct ged *gedp,
+                                 struct ged_dm_view *gdvp,
+                                 int argc,
+                                 const char *argv[],
+                                 const char *usage);
+extern int to_mouse_poly_rect(struct ged *gedp,
+                             int argc,
+                             const char *argv[],
+                             ged_func_ptr func,
+                             const char *usage,
+                             int maxargs);
+extern int to_mouse_poly_rect_func(Tcl_Interp *interp,
+                                  struct ged *gedp,
+                                  struct ged_dm_view *gdvp,
+                                  int argc,
+                                  const char *argv[],
+                                  const char *usage);
+extern int to_mouse_ray(struct ged *gedp,
+                       int argc,
+                       const char *argv[],
+                       ged_func_ptr func,
+                       const char *usage,
+                       int maxargs);
+extern int to_mouse_rect(struct ged *gedp,
+                        int argc,
+                        const char *argv[],
+                        ged_func_ptr func,
+                        const char *usage,
+                        int maxargs);
+extern int to_mouse_rot(struct ged *gedp,
+                       int argc,
+                       const char *argv[],
+                       ged_func_ptr func,
+                       const char *usage,
+                       int maxargs);
+extern int to_mouse_rotate_arb_face(struct ged *gedp,
+                                   int argc,
+                                   const char *argv[],
+                                   ged_func_ptr func,
+                                   const char *usage,
+                                   int maxargs);
+extern int to_mouse_data_scale(struct ged *gedp,
+                              int argc,
+                              const char *argv[],
+                              ged_func_ptr func,
+                              const char *usage,
+                              int maxargs);
+extern int to_mouse_scale(struct ged *gedp,
+                         int argc,
+                         const char *argv[],
+                         ged_func_ptr func,
+                         const char *usage,
+                         int maxargs);
+extern int to_mouse_protate(struct ged *gedp,
+                           int argc,
+                           const char *argv[],
+                           ged_func_ptr func,
+                           const char *usage,
+                           int maxargs);
+extern int to_mouse_pscale(struct ged *gedp,
+                          int argc,
+                          const char *argv[],
+                          ged_func_ptr func,
+                          const char *usage,
+                          int maxargs);
+extern int to_mouse_ptranslate(struct ged *gedp,
+                              int argc,
+                              const char *argv[],
+                              ged_func_ptr func,
+                              const char *usage,
+                              int maxargs);
+extern int to_mouse_trans(struct ged *gedp,
+                         int argc,
+                         const char *argv[],
+                         ged_func_ptr func,
+                         const char *usage,
+                         int maxargs);
+
+
+
 /* Tclcad view routines */
+extern fastf_t screen_to_view_x(struct dm *dmp, fastf_t x);
+extern fastf_t screen_to_view_y(struct dm *dmp, fastf_t y);
 extern int to_is_viewable(struct ged_dm_view *gdvp);
 extern void to_autoview_view(struct ged_dm_view *gdvp, const char *scale);
 extern void to_autoview_all_views(struct tclcad_obj *top);
