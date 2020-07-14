@@ -1,4 +1,4 @@
-/*                        L I B F U N C S . C
+/*                        R T _ F U N C S . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2020 United States Government as represented by
@@ -18,9 +18,9 @@
  * information.
  *
  */
-/** @file libtclcad/libfuncs.c
+/** @file libtclcad/rt_funcs.c
  *
- * BRL-CAD's Tcl wrappers for various libraries.
+ * BRL-CAD's Tcl wrappers for librt.
  *
  */
 
@@ -35,8 +35,6 @@
 #include "string.h" /* for strchr */
 
 #include "vmath.h"
-#include "dm.h"
-#include "dm.h"
 #include "bu.h"
 #include "bn.h"
 #include "vmath.h"
