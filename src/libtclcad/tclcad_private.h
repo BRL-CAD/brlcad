@@ -28,9 +28,17 @@
 
 #include "common.h"
 
+#include <string.h>
 #include <tcl.h>
 
+#include "ged/defines.h"
+
 __BEGIN_DECLS
+
+#define TO_UNLIMITED -1
+
+extern struct tclcad_obj HeadTclcadObj;
+extern struct tclcad_obj *current_top;
 
 /**
  * function returns truthfully whether the library has been
@@ -63,6 +71,70 @@ extern int Fbo_Init(Tcl_Interp *interp);
 extern int Ged_Init(Tcl_Interp *interp);
 extern int Rt_Init(Tcl_Interp *interp);
 
+
+extern int to_is_viewable(struct ged_dm_view *gdvp);
+extern void to_autoview_all_views(struct tclcad_obj *top);
+extern void to_refresh_all_views(struct tclcad_obj *top);
+extern void to_refresh_view(struct ged_dm_view *gdvp);
+
+/* Tcl obj wrapper routines */
+extern int to_autoview_func(struct ged *gedp,
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
+extern int to_pass_through_func(struct ged *gedp,
+				int argc,
+				const char *argv[],
+				ged_func_ptr func,
+				const char *usage,
+				int maxargs);
+extern int to_pass_through_and_refresh_func(struct ged *gedp,
+					    int argc,
+					    const char *argv[],
+					    ged_func_ptr func,
+					    const char *usage,
+					    int maxargs);
+extern int to_view_func(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
+extern int to_view_func_common(struct ged *gedp,
+			       int argc,
+			       const char *argv[],
+			       ged_func_ptr func,
+			       const char *usage,
+			       int maxargs,
+			       int cflag,
+			       int rflag);
+extern int to_view_func_less(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
+extern int to_view_func_plus(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
+extern int to_dm_func(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr func,
+		      const char *usage,
+		      int maxargs);
+
+extern int to_more_args_func(struct ged *gedp,
+                             int argc,
+                             const char *argv[],
+                             ged_func_ptr func,
+                             const char *usage,
+                             int maxargs);
 __END_DECLS
 
 #endif /* LIBTCLCAD_TCLCAD_PRIVATE_H */

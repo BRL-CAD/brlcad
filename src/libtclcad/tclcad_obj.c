@@ -88,8 +88,6 @@
 #include "brlcad_version.h"
 
 
-#define TO_UNLIMITED -1
-
 /*
  * Weird upper limit from clipper ---> sqrt(2^63 -1)/2
  * Probably should be sqrt(2^63 -1)
@@ -331,7 +329,6 @@ HIDDEN int to_idle_mode(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-HIDDEN int to_is_viewable(struct ged_dm_view *gdvp);
 HIDDEN int to_light(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
@@ -958,65 +955,6 @@ HIDDEN int to_zclip(struct ged *gedp,
 		    const char *usage,
 		    int maxargs);
 
-/* Wrapper Functions */
-
-HIDDEN int to_autoview_func(struct ged *gedp,
-			    int argc,
-			    const char *argv[],
-			    ged_func_ptr func,
-			    const char *usage,
-			    int maxargs);
-HIDDEN int to_more_args_func(struct ged *gedp,
-			     int argc,
-			     const char *argv[],
-			     ged_func_ptr func,
-			     const char *usage,
-			     int maxargs);
-HIDDEN int to_pass_through_func(struct ged *gedp,
-				int argc,
-				const char *argv[],
-				ged_func_ptr func,
-				const char *usage,
-				int maxargs);
-HIDDEN int to_pass_through_and_refresh_func(struct ged *gedp,
-					    int argc,
-					    const char *argv[],
-					    ged_func_ptr func,
-					    const char *usage,
-					    int maxargs);
-HIDDEN int to_view_func(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
-HIDDEN int to_view_func_common(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       ged_func_ptr func,
-			       const char *usage,
-			       int maxargs,
-			       int cflag,
-			       int rflag);
-HIDDEN int to_view_func_less(struct ged *gedp,
-			     int argc,
-			     const char *argv[],
-			     ged_func_ptr func,
-			     const char *usage,
-			     int maxargs);
-HIDDEN int to_view_func_plus(struct ged *gedp,
-			     int argc,
-			     const char *argv[],
-			     ged_func_ptr func,
-			     const char *usage,
-			     int maxargs);
-HIDDEN int to_dm_func(struct ged *gedp,
-		      int argc,
-		      const char *argv[],
-		      ged_func_ptr func,
-		      const char *usage,
-		      int maxargs);
-
 /* Utility Functions */
 HIDDEN int to_close_fbs(struct ged_dm_view *gdvp);
 HIDDEN void to_fbs_callback();
@@ -1025,11 +963,8 @@ HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
 HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
 HIDDEN void to_free_vlist_callback(unsigned int dlist, int range);
-HIDDEN void to_refresh_all_views(struct tclcad_obj *top);
-HIDDEN void to_refresh_view(struct ged_dm_view *gdvp);
 HIDDEN void to_refresh_handler(void *clientdata);
 HIDDEN void to_autoview_view(struct ged_dm_view *gdvp, const char *scale);
-HIDDEN void to_autoview_all_views(struct tclcad_obj *top);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
 HIDDEN void to_output_handler(struct ged *gedp, char *line);
@@ -1038,9 +973,6 @@ HIDDEN int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 
 typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define TO_WRAPPER_FUNC_PTR_NULL (to_wrapper_func_ptr)0
-
-static struct tclcad_obj HeadTclcadObj;
-static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
 
 struct path_edit_params {
     int edit_mode;
@@ -1459,6 +1391,99 @@ static struct to_cmdtab to_cmds[] = {
     {"zoom",	"sf", 3, to_view_func_plus, ged_zoom},
     {(char *)0,	(char *)0, 0, TO_WRAPPER_FUNC_PTR_NULL, GED_FUNC_PTR_NULL}
 };
+
+
+static int
+to_edit_redraw(struct ged *gedp,
+	       int argc,
+	       const char *argv[])
+{
+    size_t i;
+    register struct display_list *gdlp;
+    register struct display_list *next_gdlp;
+    struct db_full_path subpath;
+    int ret = GED_OK;
+
+    if (argc != 2)
+	return GED_ERROR;
+
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	gdlp->dl_wflag = 0;
+	gdlp = BU_LIST_PNEXT(display_list, gdlp);
+    }
+
+    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, argv[1]) == 0) {
+	for (i = 0; i < subpath.fp_len; ++i) {
+	    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+		register struct solid *curr_sp;
+
+		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+		if (gdlp->dl_wflag) {
+		    gdlp = next_gdlp;
+		    continue;
+		}
+
+		FOR_ALL_SOLIDS(curr_sp, &gdlp->dl_headSolid) {
+		    if (db_full_path_search(&curr_sp->s_fullpath, subpath.fp_names[i])) {
+			struct display_list *last_gdlp;
+			struct solid *sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
+			struct bu_vls mflag = BU_VLS_INIT_ZERO;
+			struct bu_vls xflag = BU_VLS_INIT_ZERO;
+			char *av[5] = {0};
+			int arg = 0;
+
+			av[arg++] = (char *)argv[0];
+			if (sp->s_hiddenLine) {
+			    av[arg++] = "-h";
+			} else {
+			    bu_vls_printf(&mflag, "-m%d", sp->s_dmode);
+			    bu_vls_printf(&xflag, "-x%f", sp->s_transparency);
+			    av[arg++] = bu_vls_addr(&mflag);
+			    av[arg++] = bu_vls_addr(&xflag);
+			}
+			av[arg] = bu_vls_strdup(&gdlp->dl_path);
+
+			ret = ged_draw(gedp, arg + 1, (const char **)av);
+
+			bu_free(av[arg], "to_edit_redraw");
+			bu_vls_free(&mflag);
+			bu_vls_free(&xflag);
+
+			/* The function call above causes gdlp to be
+			 * removed from the display list. A new one is
+			 * then created and appended to the end.  Here
+			 * we put it back where it belongs (i.e. as
+			 * specified by the user).  This also prevents
+			 * an infinite loop where the last and the
+			 * second to last list items play leap frog
+			 * with the end of list.
+			 */
+			last_gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
+			BU_LIST_DEQUEUE(&last_gdlp->l);
+			BU_LIST_INSERT(&next_gdlp->l, &last_gdlp->l);
+			last_gdlp->dl_wflag = 1;
+
+			goto end;
+		    }
+		}
+
+	    end:
+		gdlp = next_gdlp;
+	    }
+	}
+
+	db_free_full_path(&subpath);
+    }
+
+    to_refresh_all_views(current_top);
+
+    return ret;
+}
+
+
 
 
 static fastf_t
@@ -7013,7 +7038,7 @@ to_idle_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+int
 to_is_viewable(struct ged_dm_view *gdvp)
 {
     Tcl_Obj *our_result;
@@ -14486,481 +14511,6 @@ to_zclip(struct ged *gedp,
     return GED_OK;
 }
 
-
-/*************************** Wrapper Functions ***************************/
-HIDDEN int
-to_autoview_func(struct ged *gedp,
-		 int argc,
-		 const char *argv[],
-		 ged_func_ptr func,
-		 const char *UNUSED(usage),
-		 int UNUSED(maxargs))
-{
-    size_t i;
-    int ret;
-    char *av[2];
-    int aflag = 0;
-    int rflag = 0;
-    struct ged_dm_view *gdvp;
-
-    av[0] = "who";
-    av[1] = (char *)0;
-    ret = ged_who(gedp, 1, (const char **)av);
-
-    for (i = 1; i < (size_t)argc; ++i) {
-	if (argv[i][0] != '-') {
-	    break;
-	}
-
-	if (argv[i][1] == 'R' && argv[i][2] == '\0') {
-	    rflag = 1;
-	    break;
-	}
-    }
-
-    if (!rflag && ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
-	aflag = 1;
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (to_is_viewable(gdvp)) {
-	    gedp->ged_gvp->gv_x_samples = dm_get_width(gdvp->gdv_dmp);
-	    gedp->ged_gvp->gv_y_samples = dm_get_height(gdvp->gdv_dmp);
-	}
-    }
-
-    ret = (*func)(gedp, argc, (const char **)argv);
-
-    if (ret == GED_OK) {
-	if (aflag)
-	    to_autoview_all_views(current_top);
-	else
-	    to_refresh_all_views(current_top);
-    }
-
-    return ret;
-}
-
-
-HIDDEN int
-to_edit_redraw(struct ged *gedp,
-	       int argc,
-	       const char *argv[])
-{
-    size_t i;
-    register struct display_list *gdlp;
-    register struct display_list *next_gdlp;
-    struct db_full_path subpath;
-    int ret = GED_OK;
-
-    if (argc != 2)
-	return GED_ERROR;
-
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	gdlp->dl_wflag = 0;
-	gdlp = BU_LIST_PNEXT(display_list, gdlp);
-    }
-
-    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, argv[1]) == 0) {
-	for (i = 0; i < subpath.fp_len; ++i) {
-	    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-		register struct solid *curr_sp;
-
-		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-		if (gdlp->dl_wflag) {
-		    gdlp = next_gdlp;
-		    continue;
-		}
-
-		FOR_ALL_SOLIDS(curr_sp, &gdlp->dl_headSolid) {
-		    if (db_full_path_search(&curr_sp->s_fullpath, subpath.fp_names[i])) {
-			struct display_list *last_gdlp;
-			struct solid *sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
-			struct bu_vls mflag = BU_VLS_INIT_ZERO;
-			struct bu_vls xflag = BU_VLS_INIT_ZERO;
-			char *av[5] = {0};
-			int arg = 0;
-
-			av[arg++] = (char *)argv[0];
-			if (sp->s_hiddenLine) {
-			    av[arg++] = "-h";
-			} else {
-			    bu_vls_printf(&mflag, "-m%d", sp->s_dmode);
-			    bu_vls_printf(&xflag, "-x%f", sp->s_transparency);
-			    av[arg++] = bu_vls_addr(&mflag);
-			    av[arg++] = bu_vls_addr(&xflag);
-			}
-			av[arg] = bu_vls_strdup(&gdlp->dl_path);
-
-			ret = ged_draw(gedp, arg + 1, (const char **)av);
-
-			bu_free(av[arg], "to_edit_redraw");
-			bu_vls_free(&mflag);
-			bu_vls_free(&xflag);
-
-			/* The function call above causes gdlp to be
-			 * removed from the display list. A new one is
-			 * then created and appended to the end.  Here
-			 * we put it back where it belongs (i.e. as
-			 * specified by the user).  This also prevents
-			 * an infinite loop where the last and the
-			 * second to last list items play leap frog
-			 * with the end of list.
-			 */
-			last_gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
-			BU_LIST_DEQUEUE(&last_gdlp->l);
-			BU_LIST_INSERT(&next_gdlp->l, &last_gdlp->l);
-			last_gdlp->dl_wflag = 1;
-
-			goto end;
-		    }
-		}
-
-	    end:
-		gdlp = next_gdlp;
-	    }
-	}
-
-	db_free_full_path(&subpath);
-    }
-
-    to_refresh_all_views(current_top);
-
-    return ret;
-}
-
-
-HIDDEN int
-to_more_args_func(struct ged *gedp,
-		  int argc,
-		  const char *argv[],
-		  ged_func_ptr func,
-		  const char *UNUSED(usage),
-		  int UNUSED(maxargs))
-{
-    register int i;
-    int ac;
-    int total_ac;
-    size_t total_alloc;
-    size_t size_needed;
-    int ret;
-    char **av;
-    struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
-    struct bu_vls temp = BU_VLS_INIT_ZERO;
-
-    ac = argc;
-    total_ac = ac + 1;
-    total_alloc = total_ac * sizeof(char *);
-
-    /* allocate space for initial args */
-    av = (char **)bu_calloc(total_alloc, 1, "to_more_args_func");
-
-    /* copy all args */
-    for (i = 0; i < ac; ++i)
-	av[i] = bu_strdup((char *)argv[i]);
-    av[ac] = (char *)0;
-
-    while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
-	int ac_more;
-	const char **avmp;
-	const char **av_more = NULL;
-
-	if (0 < bu_vls_strlen(&current_top->to_gop->go_more_args_callback)) {
-	    bu_vls_trunc(&callback_cmd, 0);
-	    bu_vls_printf(&callback_cmd, "%s [string range {%s} 0 end]",
-			  bu_vls_addr(&current_top->to_gop->go_more_args_callback),
-			  bu_vls_addr(gedp->ged_result_str));
-
-	    if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd)) != TCL_OK) {
-		bu_vls_trunc(gedp->ged_result_str, 0);
-		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
-		Tcl_ResetResult(current_top->to_interp);
-		ret = GED_ERROR;
-		goto end;
-	    }
-
-	    bu_vls_trunc(&temp, 0);
-	    bu_vls_printf(&temp, "%s", Tcl_GetStringResult(current_top->to_interp));
-	    Tcl_ResetResult(current_top->to_interp);
-	} else {
-	    bu_log("\r%s", bu_vls_addr(gedp->ged_result_str));
-	    bu_vls_trunc(&temp, 0);
-	    if (bu_vls_gets(&temp, stdin) < 0) {
-		break;
-	    }
-	}
-
-	if (Tcl_SplitList(current_top->to_interp, bu_vls_addr(&temp), &ac_more, &av_more) != TCL_OK) {
-	    continue;
-	}
-
-	if (ac_more < 1) {
-	    /* space has still been allocated */
-	    Tcl_Free((char *)av_more);
-
-	    continue;
-	}
-
-	/* skip first element if empty */
-	avmp = av_more;
-	if (*avmp[0] == '\0') {
-	    --ac_more;
-	    ++avmp;
-	}
-
-	/* ignore last element if empty */
-	if (*avmp[ac_more-1] == '\0')
-	    --ac_more;
-
-	/* allocate space for additional args */
-	total_ac += ac_more;
-	size_needed = total_ac * sizeof(char *);
-	if (size_needed > total_alloc) {
-	    while (size_needed > total_alloc)
-		total_alloc *= 2;
-	    av = (char **)bu_realloc((void *)av, total_alloc, "to_more_args_func additional");
-	}
-
-	/* copy additional args */
-	for (i = 0; i < ac_more; ++i)
-	    av[ac++] = bu_strdup(avmp[i]);
-	av[ac] = (char *)0;
-
-	Tcl_Free((char *)av_more);
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "BUILT_BY_MORE_ARGS");
-    for (i = 0; i < ac; ++i) {
-	bu_vls_printf(gedp->ged_result_str, "%s ", av[i]);
-    }
-
-end:
-    for (i = 0; i < ac; ++i) {
-	bu_free((void *)av[i], "to_more_args_func");
-    }
-    bu_vls_free(&callback_cmd);
-    bu_vls_free(&temp);
-    bu_free((void *)av, "to_more_args_func");
-
-    return ret;
-}
-
-
-HIDDEN int
-to_pass_through_func(struct ged *gedp,
-		     int argc,
-		     const char *argv[],
-		     ged_func_ptr func,
-		     const char *UNUSED(usage),
-		     int UNUSED(maxargs))
-{
-    return (*func)(gedp, argc, argv);
-}
-
-
-HIDDEN int
-to_pass_through_and_refresh_func(struct ged *gedp,
-				 int argc,
-				 const char *argv[],
-				 ged_func_ptr func,
-				 const char *UNUSED(usage),
-				 int UNUSED(maxargs))
-{
-    int ret;
-
-    ret = (*func)(gedp, argc, argv);
-
-    if (ret == GED_OK)
-	to_refresh_all_views(current_top);
-
-    return ret;
-}
-
-
-HIDDEN int
-to_view_func(struct ged *gedp,
-	     int argc,
-	     const char *argv[],
-	     ged_func_ptr func,
-	     const char *usage,
-	     int maxargs)
-{
-    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 0, 1);
-}
-
-HIDDEN int
-to_view_func_common(struct ged *gedp,
-		    int argc,
-		    const char *argv[],
-		    ged_func_ptr func,
-		    const char *usage,
-		    int maxargs,
-		    int cflag,
-		    int rflag)
-{
-    register int i;
-    int ret;
-    int ac;
-    char **av;
-    struct ged_dm_view *gdvp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-    av = (char **)bu_calloc(argc+1, sizeof(char *), "alloc av copy");
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (maxargs != TO_UNLIMITED && maxargs < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    gedp->ged_dmp = gdvp->gdv_dmp;
-
-    /* Copy argv into av while skipping argv[1] (i.e. the view name) */
-    gedp->ged_gvp = gdvp->gdv_view;
-    gedp->ged_refresh_clientdata = (void *)gdvp;
-    av[0] = (char *)argv[0];
-    ac = argc-1;
-    for (i = 2; i < argc; ++i)
-	av[i-1] = (char *)argv[i];
-    av[i-1] = (char *)0;
-    ret = (*func)(gedp, ac, (const char **)av);
-
-    bu_free(av, "free av copy");
-
-    /* Keep the view's perspective in sync with its corresponding display manager */
-    dm_set_perspective(gdvp->gdv_dmp, gdvp->gdv_view->gv_perspective);
-
-    if (gdvp->gdv_view->gv_adaptive_plot &&
-	gdvp->gdv_view->gv_redraw_on_zoom)
-    {
-	char *gr_av[] = {"redraw", NULL};
-
-	ged_redraw(gedp, 1, (const char **)gr_av);
-
-	gdvp->gdv_view->gv_x_samples = dm_get_width(gdvp->gdv_dmp);
-	gdvp->gdv_view->gv_y_samples = dm_get_height(gdvp->gdv_dmp);
-    }
-
-    if (ret == GED_OK) {
-	if (cflag && 0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    struct bu_vls save_result = BU_VLS_INIT_ZERO;
-
-	    bu_vls_printf(&save_result, "%s", bu_vls_addr(gedp->ged_result_str));
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
-	    bu_vls_trunc(gedp->ged_result_str, 0);
-	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&save_result));
-	    bu_vls_free(&save_result);
-	}
-
-	if (rflag)
-	    to_refresh_view(gdvp);
-    }
-
-    return ret;
-}
-
-
-HIDDEN int
-to_view_func_less(struct ged *gedp,
-		  int argc,
-		  const char *argv[],
-		  ged_func_ptr func,
-		  const char *usage,
-		  int maxargs)
-{
-    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 1, 0);
-}
-
-
-HIDDEN int
-to_view_func_plus(struct ged *gedp,
-		  int argc,
-		  const char *argv[],
-		  ged_func_ptr func,
-		  const char *usage,
-		  int maxargs)
-{
-    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 1, 1);
-}
-
-
-HIDDEN int
-to_dm_func(struct ged *gedp,
-	   int argc,
-	   const char *argv[],
-	   ged_func_ptr func,
-	   const char *usage,
-	   int maxargs)
-{
-    register int i;
-    int ret;
-    int ac;
-    char **av;
-    struct ged_dm_view *gdvp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-    av = (char **)bu_calloc(argc+1, sizeof(char *), "alloc av copy");
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (maxargs != TO_UNLIMITED && maxargs < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    /* Copy argv into av while skipping argv[1] (i.e. the view name) */
-    gedp->ged_gvp = gdvp->gdv_view;
-    gedp->ged_dmp = (void *)gdvp->gdv_dmp;
-    gedp->ged_refresh_clientdata = (void *)gdvp;
-    av[0] = (char *)argv[0];
-    ac = argc-1;
-    for (i = 2; i < argc; ++i)
-	av[i-1] = (char *)argv[i];
-    av[i-1] = (char *)0;
-    ret = (*func)(gedp, ac, (const char **)av);
-
-    bu_free(av, "free av copy");
-
-    /* Keep the view's perspective in sync with its corresponding display manager */
-    dm_set_perspective(gdvp->gdv_dmp, gdvp->gdv_view->gv_perspective);
-
-    return ret;
-}
-
-
 /*************************** Local Utility Functions ***************************/
 
 
@@ -15078,7 +14628,7 @@ to_free_vlist_callback(unsigned int dlist, int range)
 }
 
 
-HIDDEN void
+void
 to_refresh_all_views(struct tclcad_obj *top)
 {
     struct ged_dm_view *gdvp;
@@ -15089,7 +14639,7 @@ to_refresh_all_views(struct tclcad_obj *top)
 }
 
 
-HIDDEN void
+void
 to_refresh_view(struct ged_dm_view *gdvp)
 {
     if (current_top == NULL || !current_top->to_gop->go_refresh_on)
@@ -15137,7 +14687,7 @@ to_autoview_view(struct ged_dm_view *gdvp, const char *scale)
 }
 
 
-HIDDEN void
+void
 to_autoview_all_views(struct tclcad_obj *top)
 {
     struct ged_dm_view *gdvp;
