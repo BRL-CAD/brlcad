@@ -79,12 +79,6 @@ extern int Ged_Init(Tcl_Interp *interp);
 extern int Rt_Init(Tcl_Interp *interp);
 
 
-extern int to_data_polygons_func(Tcl_Interp *interp,
-                                 struct ged *gedp,
-                                 struct ged_dm_view *gdvp,
-                                 int argc,
-                                 const char *argv[]);
-
 /* Utility functions */
 extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 
@@ -323,6 +317,71 @@ extern int to_mouse_trans(struct ged *gedp,
                          ged_func_ptr func,
                          const char *usage,
                          int maxargs);
+
+/* Tclcad polygon routines */
+extern int to_data_polygons_func(Tcl_Interp *interp,
+                                 struct ged *gedp,
+                                 struct ged_dm_view *gdvp,
+                                 int argc,
+                                 const char *argv[]);
+extern int to_data_polygons(struct ged *gedp,
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
+
+extern int to_poly_circ_mode(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
+extern int to_poly_circ_mode_func(Tcl_Interp *interp,
+				  struct ged *gedp,
+				  struct ged_dm_view *gdvp,
+				  int argc,
+				  const char *argv[],
+				  const char *usage);
+extern int to_poly_cont_build(struct ged *gedp,
+			      int argc,
+			      const char *argv[],
+			      ged_func_ptr func,
+			      const char *usage,
+			      int maxargs);
+extern int to_poly_cont_build_end(struct ged *gedp,
+				  int argc,
+				  const char *argv[],
+				  ged_func_ptr func,
+				  const char *usage,
+				  int maxargs);
+extern int to_poly_cont_build_end_func(struct ged_dm_view *gdvp,
+				       int argc,
+				       const char *argv[]);
+extern int to_poly_ell_mode(struct ged *gedp,
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
+extern int to_poly_ell_mode_func(Tcl_Interp *interp,
+				 struct ged *gedp,
+				 struct ged_dm_view *gdvp,
+				 int argc,
+				 const char *argv[],
+				 const char *usage);
+extern int to_poly_rect_mode(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
+extern int to_poly_rect_mode_func(Tcl_Interp *interp,
+				  struct ged *gedp,
+				  struct ged_dm_view *gdvp,
+				  int argc,
+				  const char *argv[],
+				  const char *usage);
 
 
 

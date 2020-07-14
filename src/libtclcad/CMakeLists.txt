@@ -9,6 +9,7 @@ set(LIBTCLCAD_SRCS
   tclcad_eval.c
   tclcad_init.c
   tclcad_mouse.c
+  tclcad_polygons.c
   tclcad_views.c
   tkImgFmtPIX.c
   cmdhist_obj.c
