@@ -447,6 +447,7 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg
     size_t j, k, n;
     ClipperLib::Polygon curr_poly;
     fastf_t vZ = 1.0;
+    mat_t idmat = MAT_INIT_IDN;
 
     for (j = 0; j < gpoly->num_contours; ++j) {
 	n = gpoly->contour[j].num_points;
@@ -455,7 +456,11 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg
 	    point_t vpoint;
 
 	    /* Convert to view coordinates */
-	    MAT4X3PNT(vpoint, mat, gpoly->contour[j].point[k]);
+	    if (mat) {
+		MAT4X3PNT(vpoint, mat, gpoly->contour[j].point[k]);
+	    } else {
+		MAT4X3PNT(vpoint, idmat, gpoly->contour[j].point[k]);
+	    }
 	    vZ = vpoint[Z];
 
 	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
@@ -493,6 +498,7 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t v
     size_t i, j, k, n;
     size_t num_contours = 0;
     struct bg_polygon *result_poly;
+    mat_t idmat = MAT_INIT_IDN;
 
     /* Count up the number of contours. */
     for (i = 0; i < clipper_polys.size(); ++i)
@@ -522,7 +528,11 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t v
 	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, vZ);
 
 	    /* Convert to model coordinates */
-	    MAT4X3PNT(result_poly->contour[n].point[j], mat, vpoint);
+	    if (mat) {
+		MAT4X3PNT(result_poly->contour[n].point[j], mat, vpoint);
+	    } else {
+		MAT4X3PNT(result_poly->contour[n].point[j], idmat, vpoint);
+	    }
 	}
 
 	++n;
