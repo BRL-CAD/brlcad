@@ -13,7 +13,6 @@ set(LIBTCLCAD_SRCS
   tclcad_views.c
   tkImgFmtPIX.c
   cmdhist_obj.c
-  dm_obj.c
   fb_obj.c
   fbserv_obj.c
   dm_tcl.c
