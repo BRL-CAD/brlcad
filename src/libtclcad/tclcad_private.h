@@ -95,7 +95,12 @@ extern int to_listen(struct ged *gedp,
 		     const char *usage,
 		     int maxargs);
 
-
+/* Dm functions */
+extern int
+dm_list_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    const char **argv);
 
 /* Tclcad mouse routines */
 extern int to_get_prev_mouse(struct ged *gedp,
@@ -398,12 +403,6 @@ extern int to_poly_rect_mode_func(Tcl_Interp *interp,
 				  const char *argv[],
 				  const char *usage);
 
-
-
-/* Tclcad view routines */
-extern fastf_t screen_to_view_x(struct dm *dmp, fastf_t x);
-extern fastf_t screen_to_view_y(struct dm *dmp, fastf_t y);
-extern int to_is_viewable(struct ged_dm_view *gdvp);
 
 /* Tclcad obj wrapper routines */
 extern int to_pass_through_func(struct ged *gedp,

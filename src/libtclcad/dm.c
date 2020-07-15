@@ -2918,6 +2918,26 @@ Dm_Init(Tcl_Interp *interp)
     return BRLCAD_OK;
 }
 
+/**
+ * @brief
+ * A TCL interface to dm_list_types()).
+ *
+ * @return a list of available dm types.
+ */
+int
+dm_list_tcl(ClientData UNUSED(clientData),
+	    Tcl_Interp *interp,
+	    int UNUSED(argc),
+	    const char **UNUSED(argv))
+{
+    struct bu_vls *list = dm_list_types(",");
+    Tcl_SetResult(interp, bu_vls_addr(list), TCL_VOLATILE);
+    bu_vls_free(list);
+    BU_PUT(list, struct bu_vls);
+    return TCL_OK;
+}
+
+
 /*
  * Local Variables:
  * mode: C

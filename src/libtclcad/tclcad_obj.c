@@ -89,12 +89,6 @@
 #include "brlcad_version.h"
 
 
-HIDDEN int to_autoview(struct ged *gedp,
-		       int argc,
-		       const char *argv[],
-		       ged_func_ptr func,
-		       const char *usage,
-		       int maxargs);
 HIDDEN int to_base2local(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -107,12 +101,6 @@ HIDDEN int to_bg(struct ged *gedp,
 		 ged_func_ptr func,
 		 const char *usage,
 		 int maxargs);
-HIDDEN int to_blast(struct ged *gedp,
-		    int argc,
-		    const char *argv[],
-		    ged_func_ptr func,
-		    const char *usage,
-		    int maxargs);
 HIDDEN int to_bounds(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
@@ -962,26 +950,6 @@ static struct to_cmdtab to_cmds[] = {
     {(char *)0,	(char *)0, 0, TO_WRAPPER_FUNC_PTR_NULL, GED_FUNC_PTR_NULL}
 };
 
-
-/**
- * @brief
- * A TCL interface to dm_list_types()).
- *
- * @return a list of available dm types.
- */
-int
-dm_list_tcl(ClientData UNUSED(clientData),
-	    Tcl_Interp *interp,
-	    int UNUSED(argc),
-	    const char **UNUSED(argv))
-{
-    struct bu_vls *list = dm_list_types(",");
-    Tcl_SetResult(interp, bu_vls_addr(list), TCL_VOLATILE);
-    bu_vls_free(list);
-    BU_PUT(list, struct bu_vls);
-    return TCL_OK;
-}
-
 /**
  * @brief create the Tcl command for to_open
  *
@@ -1317,42 +1285,6 @@ Usage: go_open\n\
 /*************************** Local Command Functions ***************************/
 
 HIDDEN int
-to_autoview(struct ged *gedp,
-	    int argc,
-	    const char *argv[],
-	    ged_func_ptr UNUSED(func),
-	    const char *usage,
-	    int UNUSED(maxargs))
-{
-    struct ged_dm_view *gdvp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc > 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s [scale]", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    if (argc > 2)
-	to_autoview_view(gdvp, argv[2]);
-    else
-	to_autoview_view(gdvp, NULL);
-
-    return GED_OK;
-}
-
-HIDDEN int
 to_base2local(struct ged *gedp,
 	      int UNUSED(argc),
 	      const char *UNUSED(argv[]),
@@ -1438,27 +1370,6 @@ to_bg(struct ged *gedp,
 bad_color:
     bu_vls_printf(gedp->ged_result_str, "%s: %s %s %s", argv[0], argv[2], argv[3], argv[4]);
     return GED_ERROR;
-}
-
-
-HIDDEN int
-to_blast(struct ged *gedp,
-	 int argc,
-	 const char *argv[],
-	 ged_func_ptr UNUSED(func),
-	 const char *UNUSED(usage),
-	 int UNUSED(maxargs))
-{
-    int ret;
-
-    ret = ged_blast(gedp, argc, argv);
-
-    if (ret != GED_OK)
-	return ret;
-
-    to_autoview_all_views(current_top);
-
-    return ret;
 }
 
 

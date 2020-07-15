@@ -58,6 +58,43 @@ to_autoview_view(struct ged_dm_view *gdvp, const char *scale)
     }
 }
 
+int
+to_autoview(struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    ged_func_ptr UNUSED(func),
+	    const char *usage,
+	    int UNUSED(maxargs))
+{
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc > 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s [scale]", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (argc > 2)
+	to_autoview_view(gdvp, argv[2]);
+    else
+	to_autoview_view(gdvp, NULL);
+
+    return GED_OK;
+}
+
+
 void
 to_autoview_all_views(struct tclcad_obj *top)
 {

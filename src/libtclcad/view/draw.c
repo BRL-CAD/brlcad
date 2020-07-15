@@ -445,6 +445,26 @@ to_redraw(struct ged *gedp,
     return to_edit_redraw(gedp, argc, argv);
 }
 
+int
+to_blast(struct ged *gedp,
+	 int argc,
+	 const char *argv[],
+	 ged_func_ptr UNUSED(func),
+	 const char *UNUSED(usage),
+	 int UNUSED(maxargs))
+{
+    int ret;
+
+    ret = ged_blast(gedp, argc, argv);
+
+    if (ret != GED_OK)
+	return ret;
+
+    to_autoview_all_views(current_top);
+
+    return ret;
+}
+
 
 
 /*

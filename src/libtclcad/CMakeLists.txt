@@ -14,7 +14,6 @@ set(LIBTCLCAD_SRCS
   tclcad_obj.c
   tclcad_obj_wrapper.c
   tclcad_polygons.c
-  view/tclcad_views.c
   view/arrows.c
   view/autoview.c
   view/axes.c
@@ -23,6 +22,7 @@ set(LIBTCLCAD_SRCS
   view/labels.c
   view/lines.c
   view/refresh.c
+  view/util.c
   tkImgFmtPIX.c
   )
 
