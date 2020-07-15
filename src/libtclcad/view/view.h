@@ -42,6 +42,17 @@ extern int to_data_arrows_func(Tcl_Interp *interp,
 			       int argc,
 			       const char *argv[]);
 
+/* Autoview */
+extern void to_autoview_view(struct ged_dm_view *gdvp, const char *scale);
+extern void to_autoview_all_views(struct tclcad_obj *top);
+extern int to_autoview_func(struct ged *gedp,
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
+
+
 /* Axes */
 extern int to_axes(struct ged *gedp,
 		   struct ged_dm_view *gdvp,
@@ -73,6 +84,40 @@ extern int to_view_axes(struct ged *gedp,
 			const char *usage,
 			int maxargs);
 
+
+/* Lines */
+void go_dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp);
+int to_data_lines(struct ged *gedp,
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr func,
+			 const char *usage,
+			 int maxargs);
+
+/* Refresh */
+extern void to_refresh_handler(void *clientdata);
+extern int to_handle_refresh(struct ged *gedp,
+			     const char *name);
+extern int to_refresh(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr func,
+		      const char *usage,
+		      int maxargs);
+extern int to_refresh_all(struct ged *gedp,
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr func,
+			  const char *usage,
+			  int maxargs);
+extern int to_refresh_on(struct ged *gedp,
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr func,
+			 const char *usage,
+			 int maxargs);
+extern void to_refresh_all_views(struct tclcad_obj *top);
+extern void to_refresh_view(struct ged_dm_view *gdvp);
 
 /*
  * Local Variables:

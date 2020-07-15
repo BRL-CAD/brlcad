@@ -407,18 +407,10 @@ extern int to_poly_rect_mode_func(Tcl_Interp *interp,
 extern fastf_t screen_to_view_x(struct dm *dmp, fastf_t x);
 extern fastf_t screen_to_view_y(struct dm *dmp, fastf_t y);
 extern int to_is_viewable(struct ged_dm_view *gdvp);
-extern void to_autoview_view(struct ged_dm_view *gdvp, const char *scale);
-extern void to_autoview_all_views(struct tclcad_obj *top);
-extern void to_refresh_all_views(struct tclcad_obj *top);
-extern void to_refresh_view(struct ged_dm_view *gdvp);
+extern void go_draw(struct ged_dm_view *gdvp);
+extern void go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp);
 
 /* Tclcad obj wrapper routines */
-extern int to_autoview_func(struct ged *gedp,
-			    int argc,
-			    const char *argv[],
-			    ged_func_ptr func,
-			    const char *usage,
-			    int maxargs);
 extern int to_pass_through_func(struct ged *gedp,
 				int argc,
 				const char *argv[],

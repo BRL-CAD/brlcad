@@ -338,7 +338,7 @@ go_draw_dlist(struct ged_dm_view *gdvp)
     return GED_OK;
 }
 
-static void
+void
 go_draw(struct ged_dm_view *gdvp)
 {
     (void)dm_loadmatrix(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
@@ -419,35 +419,6 @@ go_dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
 }
 
 static void
-go_dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp)
-{
-    int saveLineWidth;
-    int saveLineStyle;
-
-    if (gdlsp->gdls_num_points < 1)
-	return;
-
-    saveLineWidth = dm_get_linewidth(dmp);
-    saveLineStyle = dm_get_linestyle(dmp);
-
-    /* set color */
-    (void)dm_set_fg(dmp,
-		    gdlsp->gdls_color[0],
-		    gdlsp->gdls_color[1],
-		    gdlsp->gdls_color[2], 1, 1.0);
-
-    /* set linewidth */
-    (void)dm_set_line_attr(dmp, gdlsp->gdls_line_width, 0);  /* solid lines */
-
-    (void)dm_draw_lines_3d(dmp,
-			   gdlsp->gdls_num_points,
-			   gdlsp->gdls_points, 0);
-
-    /* Restore the line attributes */
-    (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
-}
-
-static void
 go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
 {
     register int i;
@@ -468,7 +439,7 @@ go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m
     }
 }
 
-static void
+void
 go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 {
     int width = dm_get_width(gdvp->gdv_dmp);
@@ -524,126 +495,6 @@ go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 			   gdvp->gdv_view->gv_prim_labels.gos_text_color,
 			   NULL, NULL);
 	}
-    }
-}
-
-void
-go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuffer)
-{
-    if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
-	if (gdvp->gdv_view->gv_rect.draw) {
-	    go_draw(gdvp);
-
-	    go_draw_other(gop, gdvp);
-
-	    /* disable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
-
-	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
-		       gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
-		       gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
-
-	    /* enable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
-
-	    if (gdvp->gdv_view->gv_rect.line_width)
-		dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
-	} else {
-	    /* disable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
-
-	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
-		       dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
-
-	    /* enable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
-	}
-
-	if (restore_zbuffer) {
-	    (void)dm_set_zbuffer(gdvp->gdv_dmp, 1);
-	}
-
-	return;
-    } else if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_INTERLAY) {
-	go_draw(gdvp);
-
-	/* disable write to depth buffer */
-	(void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
-
-	if (gdvp->gdv_view->gv_rect.draw) {
-	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
-		       gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
-		       gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
-	} else
-	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
-		       dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
-
-	/* enable write to depth buffer */
-	(void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
-
-	if (restore_zbuffer) {
-	    (void)dm_set_zbuffer(gdvp->gdv_dmp, 1);
-	}
-    } else {
-	if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_UNDERLAY) {
-	    /* disable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
-
-	    if (gdvp->gdv_view->gv_rect.draw) {
-		fb_refresh(gdvp->gdv_fbs.fbs_fbp,
-			   gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
-			   gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
-	    } else
-		fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
-			   dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
-
-	    /* enable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
-	}
-
-	if (restore_zbuffer) {
-	    (void)dm_set_zbuffer(gdvp->gdv_dmp, 1);
-	}
-
-	go_draw(gdvp);
-    }
-
-    go_draw_other(gop, gdvp);
-}
-
-void
-go_refresh(struct ged_obj *gop, struct ged_dm_view *gdvp)
-{
-    int restore_zbuffer = 0;
-
-    /* Turn off the zbuffer if the framebuffer is active AND the zbuffer is on. */
-    if (gdvp->gdv_fbs.fbs_mode != TCLCAD_OBJ_FB_MODE_OFF && dm_get_zbuffer(gdvp->gdv_dmp)) {
-	(void)dm_set_zbuffer(gdvp->gdv_dmp, 0);
-	restore_zbuffer = 1;
-    }
-
-    (void)dm_draw_begin(gdvp->gdv_dmp);
-    go_refresh_draw(gop, gdvp, restore_zbuffer);
-    (void)dm_draw_end(gdvp->gdv_dmp);
-}
-
-void
-to_refresh_view(struct ged_dm_view *gdvp)
-{
-    if (current_top == NULL || !current_top->to_gop->go_refresh_on)
-	return;
-
-    if (to_is_viewable(gdvp))
-	go_refresh(current_top->to_gop, gdvp);
-}
-
-void
-to_refresh_all_views(struct tclcad_obj *top)
-{
-    struct ged_dm_view *gdvp;
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
-	to_refresh_view(gdvp);
     }
 }
 

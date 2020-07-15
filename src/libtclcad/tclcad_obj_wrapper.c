@@ -31,6 +31,7 @@
 
 /* Private headers */
 #include "tclcad_private.h"
+#include "./view/view.h"
 
 int
 to_autoview_func(struct ged *gedp,

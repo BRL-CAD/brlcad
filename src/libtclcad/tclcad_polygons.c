@@ -35,6 +35,7 @@
 
 /* Private headers */
 #include "tclcad_private.h"
+#include "./view/view.h"
 
 /*
  * Weird upper limit from clipper ---> sqrt(2^63 -1)/2

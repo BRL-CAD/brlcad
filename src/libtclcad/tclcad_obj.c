@@ -154,12 +154,6 @@ HIDDEN int to_data_labels_func(Tcl_Interp *interp,
 			       struct ged_dm_view *gdvp,
 			       int argc,
 			       const char *argv[]);
-HIDDEN int to_data_lines(struct ged *gedp,
-			 int argc,
-			 const char *argv[],
-			 ged_func_ptr func,
-			 const char *usage,
-			 int maxargs);
 HIDDEN int to_data_move(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -265,8 +259,6 @@ HIDDEN int to_handle_expose(struct ged *gedp,
 			    ged_func_ptr func,
 			    const char *usage,
 			    int maxargs);
-HIDDEN int to_handle_refresh(struct ged *gedp,
-			     const char *name);
 HIDDEN int to_hide_view(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -443,24 +435,6 @@ HIDDEN int to_rect_mode(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-HIDDEN int to_refresh(struct ged *gedp,
-		      int argc,
-		      const char *argv[],
-		      ged_func_ptr func,
-		      const char *usage,
-		      int maxargs);
-HIDDEN int to_refresh_all(struct ged *gedp,
-			  int argc,
-			  const char *argv[],
-			  ged_func_ptr func,
-			  const char *usage,
-			  int maxargs);
-HIDDEN int to_refresh_on(struct ged *gedp,
-			 int argc,
-			 const char *argv[],
-			 ged_func_ptr func,
-			 const char *usage,
-			 int maxargs);
 HIDDEN int to_rotate_arb_face_mode(struct ged *gedp,
 				   int argc,
 				   const char *argv[],
@@ -599,7 +573,6 @@ HIDDEN int to_zclip(struct ged *gedp,
 HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
 HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
 HIDDEN void to_free_vlist_callback(unsigned int dlist, int range);
-HIDDEN void to_refresh_handler(void *clientdata);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
 HIDDEN void to_output_handler(struct ged *gedp, char *line);
@@ -2294,104 +2267,6 @@ bad:
     return GED_ERROR;
 }
 
-
-int
-go_data_lines(Tcl_Interp *UNUSED(interp),
-	      struct ged *gedp,
-	      struct ged_dm_view *gdvp,
-	      int argc,
-	      const char *argv[],
-	      const char *usage)
-{
-    int ret;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc < 2 || 5 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
-
-
-    struct bview *btmp = gedp->ged_gvp;
-    gedp->ged_gvp = gdvp->gdv_view;
-
-    ret = ged_view_data_lines(gedp, argc, argv);
-
-    gedp->ged_gvp = btmp;
-
-    to_refresh_view(gdvp);
-    if (ret == GED_ERROR)
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-
-    return ret;
-}
-
-
-HIDDEN int
-to_data_lines(struct ged *gedp,
-	      int argc,
-	      const char *argv[],
-	      ged_func_ptr UNUSED(func),
-	      const char *usage,
-	      int UNUSED(maxargs))
-{
-    struct ged_dm_view *gdvp;
-    int ret;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc < 3 || 6 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    /* turn the argv into a ged command */
-    argv[1] = argv[0];
-    argv[0] = "view";
-
-    struct bview *btmp = gedp->ged_gvp;
-    gedp->ged_gvp = gdvp->gdv_view;
-
-    ret = ged_view_func(gedp, argc, argv);
-
-    gedp->ged_gvp = btmp;
-
-    to_refresh_view(gdvp);
-
-    if (ret == GED_ERROR)
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-
-    return ret;
-}
 
 int
 go_data_move(Tcl_Interp *UNUSED(interp),
@@ -4270,28 +4145,6 @@ to_handle_expose(struct ged *gedp,
 
 
 HIDDEN int
-to_handle_refresh(struct ged *gedp,
-		  const char *name)
-{
-    struct ged_dm_view *gdvp;
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), name))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", name);
-	return GED_ERROR;
-    }
-
-    to_refresh_view(gdvp);
-
-    return GED_OK;
-}
-
-
-HIDDEN int
 to_hide_view(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -5983,86 +5836,6 @@ to_redraw(struct ged *gedp,
 }
 
 
-HIDDEN int
-to_refresh(struct ged *gedp,
-	   int argc,
-	   const char *argv[],
-	   ged_func_ptr UNUSED(func),
-	   const char *usage,
-	   int UNUSED(maxargs))
-{
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    return to_handle_refresh(gedp, argv[1]);
-}
-
-
-HIDDEN int
-to_refresh_all(struct ged *gedp,
-	       int argc,
-	       const char *argv[],
-	       ged_func_ptr UNUSED(func),
-	       const char *UNUSED(usage),
-	       int UNUSED(maxargs))
-{
-    if (argc != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
-    }
-
-    to_refresh_all_views(current_top);
-
-    return GED_OK;
-}
-
-
-HIDDEN int
-to_refresh_on(struct ged *gedp,
-	      int argc,
-	      const char *argv[],
-	      ged_func_ptr UNUSED(func),
-	      const char *UNUSED(usage),
-	      int UNUSED(maxargs))
-{
-    int on;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (2 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
-    }
-
-    /* Get refresh_on state */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", current_top->to_gop->go_refresh_on);
-	return GED_OK;
-    }
-
-    /* Set refresh_on state */
-    if (bu_sscanf(argv[1], "%d", &on) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
-    }
-
-    current_top->to_gop->go_refresh_on = on;
-
-    return GED_OK;
-}
-
 
 HIDDEN int
 to_rotate_arb_face_mode(struct ged *gedp,
@@ -7525,17 +7298,6 @@ to_free_vlist_callback(unsigned int dlist, int range)
 	    (void)dm_free_dlists(gdvp->gdv_dmp, dlist, range);
 	}
     }
-}
-
-
-HIDDEN void
-to_refresh_handler(void *clientdata)
-{
-    struct ged_dm_view *gdvp = (struct ged_dm_view *)clientdata;
-
-    /* Possibly do more here */
-
-    to_refresh_view(gdvp);
 }
 
 HIDDEN void
