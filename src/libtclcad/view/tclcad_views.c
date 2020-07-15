@@ -36,6 +36,7 @@
 
 /* Private headers */
 #include "../tclcad_private.h"
+#include "../view/view.h"
 
 
 struct path_match_data {
@@ -468,88 +469,6 @@ go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m
 }
 
 static void
-go_dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
-{
-    register int i;
-    int saveLineWidth;
-    int saveLineStyle;
-
-    if (gdasp->gdas_num_points < 1)
-	return;
-
-    saveLineWidth = dm_get_linewidth(dmp);
-    saveLineStyle = dm_get_linestyle(dmp);
-
-    /* set color */
-    (void)dm_set_fg(dmp,
-		    gdasp->gdas_color[0],
-		    gdasp->gdas_color[1],
-		    gdasp->gdas_color[2], 1, 1.0);
-
-    /* set linewidth */
-    (void)dm_set_line_attr(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
-
-    (void)dm_draw_lines_3d(dmp,
-			   gdasp->gdas_num_points,
-			   gdasp->gdas_points, 0);
-
-    for (i = 0; i < gdasp->gdas_num_points; i += 2) {
-	point_t points[16];
-	point_t A, B;
-	point_t BmA;
-	point_t offset;
-	point_t perp1, perp2;
-	point_t a_base;
-	point_t a_pt1, a_pt2, a_pt3, a_pt4;
-
-	VMOVE(A, gdasp->gdas_points[i]);
-	VMOVE(B, gdasp->gdas_points[i+1]);
-	VSUB2(BmA, B, A);
-
-	VUNITIZE(BmA);
-	VSCALE(offset, BmA, -gdasp->gdas_tip_length * sf);
-
-	bn_vec_perp(perp1, BmA);
-	VUNITIZE(perp1);
-
-	VCROSS(perp2, BmA, perp1);
-	VUNITIZE(perp2);
-
-	VSCALE(perp1, perp1, gdasp->gdas_tip_width * sf);
-	VSCALE(perp2, perp2, gdasp->gdas_tip_width * sf);
-
-	VADD2(a_base, B, offset);
-	VADD2(a_pt1, a_base, perp1);
-	VADD2(a_pt2, a_base, perp2);
-	VSUB2(a_pt3, a_base, perp1);
-	VSUB2(a_pt4, a_base, perp2);
-
-	VMOVE(points[0], B);
-	VMOVE(points[1], a_pt1);
-	VMOVE(points[2], B);
-	VMOVE(points[3], a_pt2);
-	VMOVE(points[4], B);
-	VMOVE(points[5], a_pt3);
-	VMOVE(points[6], B);
-	VMOVE(points[7], a_pt4);
-	VMOVE(points[8], a_pt1);
-	VMOVE(points[9], a_pt2);
-	VMOVE(points[10], a_pt2);
-	VMOVE(points[11], a_pt3);
-	VMOVE(points[12], a_pt3);
-	VMOVE(points[13], a_pt4);
-	VMOVE(points[14], a_pt4);
-	VMOVE(points[15], a_pt1);
-
-	(void)dm_draw_lines_3d(dmp, 16, points, 0);
-    }
-
-    /* Restore the line attributes */
-    (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
-}
-
-
-static void
 go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 {
     int width = dm_get_width(gdvp->gdv_dmp);
@@ -725,41 +644,6 @@ to_refresh_all_views(struct tclcad_obj *top)
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
 	to_refresh_view(gdvp);
-    }
-}
-
-void
-to_autoview_view(struct ged_dm_view *gdvp, const char *scale)
-{
-    int ret;
-    const char *av[3];
-
-    gdvp->gdv_gop->go_gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "autoview";
-    av[1] = scale;
-    av[2] = NULL;
-
-    if (scale)
-	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 2, (const char **)av);
-    else
-	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 1, (const char **)av);
-
-    if (ret == GED_OK) {
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
-	}
-
-	to_refresh_view(gdvp);
-    }
-}
-
-void
-to_autoview_all_views(struct tclcad_obj *top)
-{
-    struct ged_dm_view *gdvp;
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
-	to_autoview_view(gdvp, NULL);
     }
 }
 
