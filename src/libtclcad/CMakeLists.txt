@@ -1,21 +1,21 @@
 set(LIBTCLCAD_SRCS
-  bu_funcs.c
-  bn_funcs.c
-  rt_funcs.c
   auto_path.c
-  tclcad_global.c
-  tclcad_obj.c
-  tclcad_obj_wrapper.c
+  bn.c
+  bu.c
+  cmdhist.c
+  dm.c
+  fb.c
+  fbserv.c
+  rt.c
   tclcad_eval.c
+  tclcad_global.c
   tclcad_init.c
   tclcad_mouse.c
+  tclcad_obj.c
+  tclcad_obj_wrapper.c
   tclcad_polygons.c
   tclcad_views.c
   tkImgFmtPIX.c
-  cmdhist_obj.c
-  fb_obj.c
-  fbserv_obj.c
-  dm_tcl.c
   )
 
 if (BRLCAD_ENABLE_TCL)
@@ -45,7 +45,6 @@ if (BRLCAD_ENABLE_TCL)
     set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
   endif(BRLCAD_ENABLE_X11)
 
-  set_property(SOURCE tclcad_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
   BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;libdm;libnmg;libbn;libbu;${TCL_LIBRARY};${TK_LIBRARY};${ITCL_LIBRARY};${ITK_LIBRARY};${TCLCAD_XLIBS}")
   set_target_properties(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
   if (TARGET itcl_pkgIndex)
