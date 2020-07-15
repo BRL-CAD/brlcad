@@ -14,7 +14,7 @@ set(LIBTCLCAD_SRCS
   tclcad_obj.c
   tclcad_obj_wrapper.c
   tclcad_polygons.c
-  tclcad_views.c
+  view/tclcad_views.c
   tkImgFmtPIX.c
   )
 

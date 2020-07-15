@@ -35,7 +35,7 @@
 #include "tclcad.h"
 
 /* Private headers */
-#include "tclcad_private.h"
+#include "../tclcad_private.h"
 
 
 struct path_match_data {
