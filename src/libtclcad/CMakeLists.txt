@@ -18,6 +18,9 @@ set(LIBTCLCAD_SRCS
   view/arrows.c
   view/autoview.c
   view/axes.c
+  view/draw.c
+  view/faceplate.c
+  view/labels.c
   view/lines.c
   view/refresh.c
   tkImgFmtPIX.c

@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include "vmath.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -84,6 +85,46 @@ extern int to_view_axes(struct ged *gedp,
 			const char *usage,
 			int maxargs);
 
+/* Draw */
+extern void go_draw(struct ged_dm_view *gdvp);
+extern void go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp);
+extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
+extern int to_redraw(struct ged *gedp,
+		     int argc,
+		     const char *argv[],
+		     ged_func_ptr func,
+		     const char *usage,
+		     int maxargs);
+
+/* Faceplate */
+extern void go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp);
+extern int to_faceplate(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
+
+
+/* Labels */
+extern void go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);
+extern int to_data_labels(struct ged *gedp,
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr func,
+			  const char *usage,
+			  int maxargs);
+extern int to_data_labels_func(Tcl_Interp *interp,
+			       struct ged *gedp,
+			       struct ged_dm_view *gdvp,
+			       int argc,
+			       const char *argv[]);
+extern int to_prim_label(struct ged *gedp,
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr func,
+			 const char *usage,
+			 int maxargs);
 
 /* Lines */
 void go_dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp);

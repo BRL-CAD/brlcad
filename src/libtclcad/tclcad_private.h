@@ -97,9 +97,6 @@ extern int to_listen(struct ged *gedp,
 
 
 
-/* Utility functions */
-extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
-
 /* Tclcad mouse routines */
 extern int to_get_prev_mouse(struct ged *gedp,
                             int argc,
@@ -407,8 +404,6 @@ extern int to_poly_rect_mode_func(Tcl_Interp *interp,
 extern fastf_t screen_to_view_x(struct dm *dmp, fastf_t x);
 extern fastf_t screen_to_view_y(struct dm *dmp, fastf_t y);
 extern int to_is_viewable(struct ged_dm_view *gdvp);
-extern void go_draw(struct ged_dm_view *gdvp);
-extern void go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp);
 
 /* Tclcad obj wrapper routines */
 extern int to_pass_through_func(struct ged *gedp,
