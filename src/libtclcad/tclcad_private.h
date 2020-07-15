@@ -78,6 +78,24 @@ extern int Fbo_Init(Tcl_Interp *interp);
 extern int Ged_Init(Tcl_Interp *interp);
 extern int Rt_Init(Tcl_Interp *interp);
 
+/* Fb functions */
+extern int to_close_fbs(struct ged_dm_view *gdvp);
+extern void to_fbs_callback();
+extern int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
+extern int to_set_fb_mode(struct ged *gedp,
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr func,
+			  const char *usage,
+			  int maxargs);
+extern int to_listen(struct ged *gedp,
+		     int argc,
+		     const char *argv[],
+		     ged_func_ptr func,
+		     const char *usage,
+		     int maxargs);
+
+
 
 /* Utility functions */
 extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);

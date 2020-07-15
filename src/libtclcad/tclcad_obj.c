@@ -318,12 +318,6 @@ HIDDEN int to_list_views(struct ged *gedp,
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-HIDDEN int to_listen(struct ged *gedp,
-		     int argc,
-		     const char *argv[],
-		     ged_func_ptr func,
-		     const char *usage,
-		     int maxargs);
 HIDDEN int to_local2base(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -572,12 +566,6 @@ HIDDEN int to_set_coord(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-HIDDEN int to_set_fb_mode(struct ged *gedp,
-			  int argc,
-			  const char *argv[],
-			  ged_func_ptr func,
-			  const char *usage,
-			  int maxargs);
 HIDDEN int to_snap_view(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -646,9 +634,6 @@ HIDDEN int to_zclip(struct ged *gedp,
 		    int maxargs);
 
 /* Utility Functions */
-HIDDEN int to_close_fbs(struct ged_dm_view *gdvp);
-HIDDEN void to_fbs_callback();
-HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
 HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
 HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
@@ -5619,72 +5604,6 @@ to_list_views(struct ged *gedp,
 }
 
 
-HIDDEN int
-to_listen(struct ged *gedp,
-	  int argc,
-	  const char *argv[],
-	  ged_func_ptr UNUSED(func),
-	  const char *usage,
-	  int UNUSED(maxargs))
-{
-    struct ged_dm_view *gdvp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (3 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
-	return GED_ERROR;
-    }
-
-    /* return the port number */
-    if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
-	return GED_OK;
-    }
-
-    if (argc == 3) {
-	int port;
-
-	if (bu_sscanf(argv[2], "%d", &port) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "listen: bad value - %s\n", argv[2]);
-	    return GED_ERROR;
-	}
-
-	if (port >= 0)
-	    fbs_open(&gdvp->gdv_fbs, port);
-	else {
-	    fbs_close(&gdvp->gdv_fbs);
-	}
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
-	return GED_OK;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
-}
-
 
 HIDDEN int
 to_local2base(struct ged *gedp,
@@ -7875,65 +7794,6 @@ to_set_coord(struct ged *gedp,
 
 
 HIDDEN int
-to_set_fb_mode(struct ged *gedp,
-	       int argc,
-	       const char *argv[],
-	       ged_func_ptr UNUSED(func),
-	       const char *usage,
-	       int UNUSED(maxargs))
-{
-    int mode;
-    struct ged_dm_view *gdvp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (3 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    /* Get fb mode */
-    if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_mode);
-	return GED_OK;
-    }
-
-    /* Set fb mode */
-    if (bu_sscanf(argv[2], "%d", &mode) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "set_fb_mode: bad value - %s\n", argv[2]);
-	return GED_ERROR;
-    }
-
-    if (mode < 0)
-	mode = 0;
-    else if (TCLCAD_OBJ_FB_MODE_OVERLAY < mode)
-	mode = TCLCAD_OBJ_FB_MODE_OVERLAY;
-
-    gdvp->gdv_fbs.fbs_mode = mode;
-    to_refresh_view(gdvp);
-
-    return GED_OK;
-}
-
-
-HIDDEN int
 to_snap_view(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -8693,59 +8553,6 @@ to_zclip(struct ged *gedp,
 }
 
 /*************************** Local Utility Functions ***************************/
-
-
-HIDDEN void
-to_fbs_callback(void *clientData)
-{
-    struct ged_dm_view *gdvp = (struct ged_dm_view *)clientData;
-
-    to_refresh_view(gdvp);
-}
-
-
-HIDDEN int
-to_close_fbs(struct ged_dm_view *gdvp)
-{
-    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL)
-	return TCL_OK;
-
-    fb_flush(gdvp->gdv_fbs.fbs_fbp);
-    fb_close_existing(gdvp->gdv_fbs.fbs_fbp);
-    gdvp->gdv_fbs.fbs_fbp = FB_NULL;
-
-    return TCL_OK;
-}
-
-
-/*
- * Open/activate the display managers framebuffer.
- */
-HIDDEN int
-to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
-{
-    /* already open */
-    if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
-	return TCL_OK;
-
-    gdvp->gdv_fbs.fbs_fbp = dm_get_fb(gdvp->gdv_dmp);
-
-    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL) {
-	Tcl_Obj *obj;
-
-	obj = Tcl_GetObjResult(interp);
-	if (Tcl_IsShared(obj))
-	    obj = Tcl_DuplicateObj(obj);
-
-	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n", (char *)NULL);
-
-	Tcl_SetObjResult(interp, obj);
-	return TCL_ERROR;
-    }
-
-    return TCL_OK;
-}
-
 
 HIDDEN void
 to_create_vlist_callback_solid(struct solid *sp)
