@@ -243,6 +243,7 @@ set(misc_ignore_files
   repoconv/svn_date.cxx
   repoconv/svn_date.h
   repoconv/svn_de-rcs.cxx
+  repoconv/svn_git_diff.cxx
   repoconv/svn_map_commit_revs.cxx
   repoconv/svn_msgs.cxx
   repoconv/svnfexport.cxx
