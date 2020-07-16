@@ -33,6 +33,7 @@
 #include "tclcad_private.h"
 #include "./view/view.h"
 
+/* Wraps calls to commands like "draw" that need to reset the view */
 int
 to_autoview_func(struct ged *gedp,
 		 int argc,
@@ -87,6 +88,8 @@ to_autoview_func(struct ged *gedp,
 
 
 
+/* Wraps calls to commands that interactively request more arguments from the
+ * user (such as "in") */
 int
 to_more_args_func(struct ged *gedp,
 		  int argc,
@@ -214,7 +217,9 @@ to_pass_through_func(struct ged *gedp,
     return (*func)(gedp, argc, argv);
 }
 
-
+/* Used for commands that may change the scene but do not need
+ * to adjust the camera (such as "kill") - all views will need
+ * to be updated */
 int
 to_pass_through_and_refresh_func(struct ged *gedp,
 				 int argc,
@@ -231,18 +236,6 @@ to_pass_through_and_refresh_func(struct ged *gedp,
 	to_refresh_all_views(current_top);
 
     return ret;
-}
-
-
-int
-to_view_func(struct ged *gedp,
-	     int argc,
-	     const char *argv[],
-	     ged_func_ptr func,
-	     const char *usage,
-	     int maxargs)
-{
-    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 0, 1);
 }
 
 int
@@ -333,6 +326,18 @@ to_view_func_common(struct ged *gedp,
 }
 
 
+/* For commands that involve a single "current" view (such as "rt") */
+int
+to_view_func(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 0, 1);
+}
+
 int
 to_view_func_less(struct ged *gedp,
 		  int argc,
@@ -356,7 +361,8 @@ to_view_func_plus(struct ged *gedp,
     return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 1, 1);
 }
 
-
+/* For functions that need the gedp display manager pointer to be that of
+ * the current view before they are run. */
 int
 to_dm_func(struct ged *gedp,
 	   int argc,
