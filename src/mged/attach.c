@@ -897,6 +897,9 @@ dm_var_init(struct dm_list *initial_dm_list)
     BU_ALLOC(view_state, struct _view_state);
     *view_state = *initial_dm_list->dml_view_state;			/* struct copy */
     BU_ALLOC(view_state->vs_gvp, struct bview);
+    BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
+    bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bview callbacks");
+
     *view_state->vs_gvp = *initial_dm_list->dml_view_state->vs_gvp;	/* struct copy */
     view_state->vs_gvp->gv_clientData = (void *)view_state;
     view_state->vs_gvp->gv_adaptive_plot = 0;

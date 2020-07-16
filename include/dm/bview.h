@@ -36,6 +36,7 @@
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "bu/observer.h"
+#include "bu/ptbl.h"
 #include "bg/polygon_types.h"
 #include "vmath.h"
 
@@ -250,6 +251,7 @@ struct bview {
     fastf_t                     gv_curve_scale;
     fastf_t                     gv_data_vZ;
     size_t                      gv_bot_threshold;
+    struct bu_ptbl *callbacks;
 };
 
 

@@ -2894,6 +2894,8 @@ to_deleteViewProc(ClientData clientData)
     bu_vls_free(&gdvp->gdv_callback);
     bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
     (void)dm_close(gdvp->gdv_dmp);
+    bu_ptbl_free(gdvp->gdv_view->callbacks);
+    BU_PUT(gdvp->gdv_view->callbacks, struct bu_ptbl);
     bu_free((void *)gdvp->gdv_view, "ged_view");
     to_close_fbs(gdvp);
     bu_free((void *)gdvp, "ged_dm_view");
@@ -4504,6 +4506,8 @@ to_new_view(struct ged *gedp,
 
     BU_ALLOC(new_gdvp, struct ged_dm_view);
     BU_ALLOC(new_gdvp->gdv_view, struct bview);
+    BU_GET(new_gdvp->gdv_view->callbacks, struct bu_ptbl);
+    bu_ptbl_init(new_gdvp->gdv_view->callbacks, 8, "bview callbacks");
 
     {
 	int i;
@@ -4529,6 +4533,8 @@ to_new_view(struct ged *gedp,
 
 	new_gdvp->gdv_dmp = dm_open((void *)current_top->to_interp, type, ac, av);
 	if (new_gdvp->gdv_dmp == DM_NULL) {
+	    bu_ptbl_free(new_gdvp->gdv_view->callbacks);
+	    BU_PUT(new_gdvp->gdv_view->callbacks, struct bu_ptbl);
 	    bu_free((void *)new_gdvp->gdv_view, "ged_view");
 	    bu_free((void *)new_gdvp, "ged_dm_view");
 	    bu_free((void *)av, "to_new_view: av");

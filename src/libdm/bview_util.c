@@ -25,6 +25,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/log.h"
 #include "bn/mat.h"
 #include "dm/defines.h"
 #include "dm/bview_util.h"
@@ -69,8 +70,22 @@ bview_update(struct bview *gvp)
     /* apply the perspective angle to model2view */
     bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
 
-    if (gvp->gv_callback)
-        (*gvp->gv_callback)(gvp, gvp->gv_clientData);
+    if (gvp->gv_callback) {
+
+	if (gvp->callbacks) {
+	    if (bu_ptbl_locate(gvp->callbacks, (long *)(long)gvp->gv_callback) != -1) {
+		bu_log("Recursive callback (bview_update and gvp->gv_callback)");
+	    }
+	    bu_ptbl_ins_unique(gvp->callbacks, (long *)(long)gvp->gv_callback);
+	}
+
+	(*gvp->gv_callback)(gvp, gvp->gv_clientData);
+
+	if (gvp->callbacks) {
+	    bu_ptbl_rm(gvp->callbacks, (long *)(long)gvp->gv_callback);
+	}
+
+    }
 }
 
 
