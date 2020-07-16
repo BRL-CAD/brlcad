@@ -197,10 +197,16 @@ Uploading to github:
 
 After creating a new repository via the github website:
 
+# Note - the specific version of this line will be provided by github when the repository is created via the website.
 git remote add origin git@github.com:brlcad/brlcad.git
-git push -u origin master
+
+# push all branches
 git push --all
+
+# push all tags
 git push --tags
+
+# push notes
 git push origin refs/notes/commits
 
 # We then download it back from github:
