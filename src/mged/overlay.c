@@ -39,43 +39,25 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 {
     int ret;
     Tcl_DString ds;
-    int ac;
-    const char *av[5];
-    struct bu_vls char_size = BU_VLS_INIT_ZERO;
 
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
     Tcl_DStringInit(&ds);
 
-    if (argc == 1) {
-	Tcl_DStringAppend(&ds, "file.plot3 [name]", -1);
-	Tcl_DStringResult(interp, &ds);
-	return TCL_OK;
-    }
-
-    ac = argc + 1;
-
-    bu_vls_printf(&char_size, "%lf", view_state->vs_gvp->gv_scale * 0.01);
-    av[0] = argv[0];		/* command name */
-    av[1] = argv[1];		/* plotfile name */
-    av[2] = bu_vls_addr(&char_size);
-    if (argc == 3) {
-	av[3] = argv[2];	/* name */
-	av[4] = (char *)0;
-    } else
-	av[3] = (char *)0;
-
-    ret = ged_overlay(GEDP, ac, (const char **)av);
+    GEDP->ged_dmp = (void *)curr_dm_list->dml_dmp;
+    ret = ged_overlay(GEDP, argc, argv);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
+
+    if (ret == GED_HELP)
+	return TCL_OK;
 
     if (ret != GED_OK)
 	return TCL_ERROR;
 
     update_views = 1;
 
-    bu_vls_free(&char_size);
     return ret;
 }
 

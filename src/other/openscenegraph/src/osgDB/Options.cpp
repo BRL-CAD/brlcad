@@ -16,11 +16,32 @@
 
 using namespace osgDB;
 
+
+Options::Options():
+    osg::Object(true),
+    _objectCacheHint(CACHE_ARCHIVES),
+    _precisionHint(FLOAT_PRECISION_ALL),
+    _buildKdTreesHint(NO_PREFERENCE)
+{
+}
+
+Options::Options(const std::string& str):
+    osg::Object(true),
+    _str(str),
+    _objectCacheHint(CACHE_ARCHIVES),
+    _precisionHint(FLOAT_PRECISION_ALL),
+    _buildKdTreesHint(NO_PREFERENCE)
+{
+    parsePluginStringData(str);
+}
+
+
 Options::Options(const Options& options,const osg::CopyOp& copyop):
     osg::Object(options,copyop),
     _str(options._str),
     _databasePaths(options._databasePaths),
     _objectCacheHint(options._objectCacheHint),
+    _objectCache(options._objectCache),
     _precisionHint(options._precisionHint),
     _buildKdTreesHint(options._buildKdTreesHint),
     _pluginData(options._pluginData),
@@ -30,7 +51,14 @@ Options::Options(const Options& options,const osg::CopyOp& copyop):
     _writeFileCallback(options._writeFileCallback),
     _fileLocationCallback(options._fileLocationCallback),
     _fileCache(options._fileCache),
-    _terrain(options._terrain) {}
+    _terrain(options._terrain),
+    _parentGroup(options._parentGroup)
+{
+}
+
+Options::~Options()
+{
+}
 
 void Options::parsePluginStringData(const std::string& str, char separator1, char separator2)
 {
@@ -53,4 +81,18 @@ void Options::parsePluginStringData(const std::string& str, char separator1, cha
             keyAndValue.clear();
         }
     }
+}
+
+bool Options::operator <(const Options &rhs) const
+{
+    // TODO add better compare
+    //OSG_DEBUG << "comparing <'" << _str << "' with '" << rhs._str << "'" << std::endl;
+    return _str.compare(rhs._str) < 0;
+}
+
+bool Options::operator ==(const Options &rhs) const
+{
+    // TODO add better compare
+    //OSG_DEBUG << "comparing == '" << _str << "' with '" << rhs._str << "'" << std::endl;
+    return _str.compare(rhs._str) == 0;
 }

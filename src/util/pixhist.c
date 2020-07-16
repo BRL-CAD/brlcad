@@ -35,7 +35,7 @@
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/str.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define IBUFSIZE 3*2048		/* Max read size in rgb pixels */
@@ -46,7 +46,7 @@ long bin_g[256];
 long bin_b[256];
 int verbose = 0;
 
-fb *fbp;
+struct fb *fbp;
 
 static long max;
 static double scalefactor;

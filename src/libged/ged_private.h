@@ -37,6 +37,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "dm/bview_util.h"
 #include "ged.h"
 
 __BEGIN_DECLS
@@ -277,10 +278,6 @@ extern void _ged_eraseobjall(struct ged *gedp,
 extern void _ged_eraseobj(struct ged *gedp,
 			  struct directory **dpp,
 			  int skip_first);
-
-/* defined in get_comb.c */
-extern void _ged_vls_print_matrix(struct bu_vls *vls,
-				  matp_t matrix);
 
 extern int _ged_get_obj_bounds2(struct ged *gedp,
 				int argc,
@@ -663,6 +660,11 @@ void
 _ged_facetize_log_nmg(struct _ged_facetize_opts *o);
 void
 _ged_facetize_log_default(struct _ged_facetize_opts *o);
+
+
+
+extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
 __END_DECLS
 

@@ -36,7 +36,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define LINELEN 8192
@@ -114,7 +114,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    fb *fbp;
+    struct fb *fbp;
 
     int x, y;
     int xin, yin;		/* number of screen output lines */

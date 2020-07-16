@@ -82,37 +82,6 @@ Tk_Window tkwin = NULL;
  */
 static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
 
-static int
-mged_dm_width(struct ged *gedp)
-{
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dm_get_width(dmp);
-}
-
-
-static int
-mged_dm_height(struct ged *gedp)
-{
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dm_get_height(dmp);
-}
-
-
-static int
-mged_dmp_is_null(struct ged *gedp)
-{
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dmp == NULL;
-}
-
-
-static void
-mged_dm_get_display_image(struct ged *gedp, unsigned char **idata)
-{
-    dm *dmp = (dm *)gedp->ged_dmp;
-    dm_get_display_image(dmp, idata);
-}
-
 
 /**
  * Used as a hook for bu_log output.  Sends output to the Tcl
@@ -712,10 +681,6 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
     if (!GEDP->ged_gvp)
 	GEDP->ged_gvp = view_state->vs_gvp;
     GEDP->ged_dmp = (void *)curr_dm_list->dml_dmp;
-    GEDP->ged_dm_width = mged_dm_width(GEDP);
-    GEDP->ged_dm_height = mged_dm_height(GEDP);
-    GEDP->ged_dmp_is_null = mged_dmp_is_null(GEDP);
-    GEDP->ged_dm_get_display_image = mged_dm_get_display_image;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
@@ -935,7 +900,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	}
 
 	if (curr_cmd_list->cl_tie) {
-	    curr_dm_list = curr_cmd_list->cl_tie;
+	    set_curr_dm(curr_cmd_list->cl_tie);
 
 	    if (GEDP != GED_NULL)
 		GEDP->ged_gvp = view_state->vs_gvp;
@@ -1498,7 +1463,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     av[0] = "release";
     av[1] = NULL;
     status = f_release(clientData, interpreter, 1, av);
-    curr_dm_list = dml;
+    set_curr_dm(dml);
     GEDP->ged_gvp = view_state->vs_gvp;
 
     return status;
@@ -1530,7 +1495,7 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
 	if (dm_get_pathname(p->dml_dmp) && BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
-	    curr_dm_list = p;
+	    set_curr_dm(p);
 
 	    if (curr_dm_list->dml_tie)
 		curr_cmd_list = curr_dm_list->dml_tie;

@@ -124,7 +124,8 @@ ged_qray(struct ged *gedp,
 	 int argc,
 	 const char *argv[])
 {
-    if (!gedp || argc <= 0 || !argv) return GED_ERROR;
+    if (!gedp || argc <= 0 || !argv)
+	return GED_ERROR;
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -134,6 +135,22 @@ ged_qray(struct ged *gedp,
     if (argc == 1) {
 	usage(gedp, argv[0]);
 	return GED_HELP;
+    }
+
+    /* catch bug introduced pre 7.26.0 where .mgedrc ends up with qray
+     * lines containting "A database is not open!".  we detect to
+     * report a more meaningful error message.
+     */
+    if ((argc >= 4
+	 && BU_STR_EQUAL(argv[3], "A database is not open!"))
+	|| (argc == 7
+	    && BU_STR_EQUAL(argv[2], "A")
+	    && BU_STR_EQUAL(argv[3], "database")
+	    && BU_STR_EQUAL(argv[4], "is")
+	    && BU_STR_EQUAL(argv[5], "not")
+	    && BU_STR_EQUAL(argv[6], "open!"))) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: Corrupt qray line encountered.\n");
+	return GED_ERROR;
     }
 
     if (argc > 6) {

@@ -35,7 +35,7 @@
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */

@@ -1,6 +1,7 @@
 set(embedded_licenses
   alphanum.txt
   apple.txt
+  appleseed.txt
   art.txt
   ayam.txt
   b64.txt
@@ -18,14 +19,17 @@ set(embedded_licenses
   fontstash.txt
   gct.txt
   gecode.txt
-  gdal_gcv_plugin.txt
+  gdal_gcv_plugin1.txt
+  gdal_gcv_plugin2.txt
   halfedge.txt
   humanize.txt
   hv3.txt
   hv3_combobox.txt
   hv3_snit.txt
+  Inconsolata.txt
   libtermlib.txt
   lseg_lseg.txt
+  lseg_pt.txt
   lz4.txt
   marching_cubes.txt
   msinttypes.txt
@@ -37,12 +41,15 @@ set(embedded_licenses
   OpenNURBS.txt
   osg.txt
   osl.txt
+  ParaView.txt
   pbrt.txt
   point_in_polygon.txt
   point_in_polyhedron.txt
   polygonizer.txt
   pstdint.txt
   qsort.txt
+  QFlowLayout.txt
+  QtADS.txt
   QuickHull.txt
   realpath.txt
   rply.txt

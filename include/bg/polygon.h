@@ -32,9 +32,56 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bn/tol.h"
 #include "bg/defines.h"
+#include "bg/polygon_types.h"
 
 __BEGIN_DECLS
+
+/* TODO - the following are operations originally from libged - ultimately need
+ * to better integrate these and the other polygon routines.  For now, trying
+ * to get all the related logic in the same place so it is clearer what we do
+ * and don't have, and make what we do have easier to reuse. */
+
+BG_EXPORT fastf_t
+bg_find_polygon_area(
+	struct bg_polygon *gpoly,
+	fastf_t sf,
+	matp_t model2view,
+	fastf_t size
+	);
+
+BG_EXPORT int
+bg_polygons_overlap(
+	struct bg_polygon *polyA,
+	struct bg_polygon *polyB,
+	matp_t model2view,
+	struct bn_tol *tol,
+	fastf_t iscale
+	);
+
+/* model2view and view2model may be NULL, if the polygons are coplanar */
+BG_EXPORT struct bg_polygon *
+bg_clip_polygon(
+	bg_clip_t op,
+       	struct bg_polygon *subj,
+       	struct bg_polygon *clip,
+       	fastf_t sf,
+       	matp_t model2view,
+       	matp_t view2model
+	);
+
+/* model2view and view2model may be NULL, if the polygons are coplanar */
+BG_EXPORT struct bg_polygon *
+bg_clip_polygons(
+	bg_clip_t op,
+       	struct bg_polygons *subj,
+       	struct bg_polygons *clip,
+       	fastf_t sf,
+       	matp_t model2view,
+       	matp_t view2model
+	);
+
 
 /********************************
  * Operations on 2D point types *
@@ -239,6 +286,7 @@ BG_EXPORT extern int bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts,
 
 /* Debugging functions - do not use */
 BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b);
+BG_EXPORT extern void bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int g, int b);
 BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b);
 
 __END_DECLS

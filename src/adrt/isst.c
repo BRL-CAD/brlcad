@@ -49,7 +49,7 @@
 #include <string.h>
 #endif
 
-static dm *dmp;
+static struct dm *dmp;
 
 struct isst_s {
     struct tie_s *tie;
@@ -547,7 +547,7 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 {
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = dm_open(interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = dm_open((void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
 	printf("dm failed?\n");

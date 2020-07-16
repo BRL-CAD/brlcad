@@ -6,31 +6,34 @@ set(BURST_INPUT_FILES
   ktank_colors.ids
   )
 
-BRLCAD_REGRESSION_TEST(regress-burst "nburst;ktank.g" EXEC burst)
+if (TARGET ktank.g)
+  BRLCAD_REGRESSION_TEST(regress-burst "nburst;ktank.g" EXEC burst)
 
-set(BURST_CLEAN_FILES
-  ktank_burst.plot
-  ktank_burst.pix
-  ktank.burst
-  ktank.g
-  ktank_burst.shotlines
-  burst_ktank.log
-  )
-foreach(BCF ${BURST_CLEAN_FILES})
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${BCF}")
-endforeach(BCF ${BURST_CLEAN_FILES})
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress-burst.log")
-
-# If we copied the input files, clear them out as well
-if(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
-  foreach(BIF ${BURST_INPUT_FILES})
+  set(BURST_CLEAN_FILES
+    ktank_burst.plot
+    ktank_burst.pix
+    ktank.burst
+    ktank.g
+    ktank_burst.shotlines
+    burst_ktank.log
+    )
+  foreach(BCF ${BURST_CLEAN_FILES})
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${BCF}")
-  endforeach(BIF ${BURST_INPUT_FILES})
-endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
+  endforeach(BCF ${BURST_CLEAN_FILES})
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress-burst.log")
+
+  # If we copied the input files, clear them out as well
+  if(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
+    foreach(BIF ${BURST_INPUT_FILES})
+      DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${BCF}")
+    endforeach(BIF ${BURST_INPUT_FILES})
+  endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
+endif (TARGET ktank.g)
 
 CMAKEFILES(
   CMakeLists.txt
   echo.b
+  regress-burst.cmake.in
   ${BURST_INPUT_FILES}
   )
 

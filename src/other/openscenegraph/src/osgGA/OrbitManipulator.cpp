@@ -43,7 +43,8 @@ OrbitManipulator::OrbitManipulator( int flags )
 
 /// Constructor.
 OrbitManipulator::OrbitManipulator( const OrbitManipulator& om, const CopyOp& copyOp )
-   : osg::Object(om, copyOp),
+    : osg::Object(om, copyOp),
+     osg::Callback(om, copyOp),
      inherited( om, copyOp ),
      _center( om._center ),
      _rotation( om._rotation ),
@@ -355,7 +356,7 @@ bool OrbitManipulator::startAnimationByMousePointerIntersection(
         return false;
 
     OrbitAnimationData *ad = dynamic_cast< OrbitAnimationData*>( _animationData.get() );
-    assert( ad );
+    if (!ad) return false;
 
     // setup animation data and restore original transformation
     ad->start( osg::Vec3d(_center) - prevCenter, ea.getTime() );
@@ -379,12 +380,12 @@ void OrbitManipulator::OrbitAnimationData::start( const osg::Vec3d& movement, co
     Scale parameter is useful, for example, when manipulator is thrown.
     It scales the amount of rotation based, for example, on the current frame time.*/
 void OrbitManipulator::rotateTrackball( const float px0, const float py0,
-                                        const float px1, const float py1, const float /*scale*/ )
+                                        const float px1, const float py1, const float scale )
 {
     osg::Vec3d axis;
     float angle;
 
-    trackball( axis, angle, px1, py1, px0, py0 );
+    trackball( axis, angle, px0 + (px1-px0)*scale, py0 + (py1-py0)*scale, px0, py0 );
 
     Quat new_rotate;
     new_rotate.makeRotate( angle, axis );
@@ -450,9 +451,9 @@ void OrbitManipulator::zoomModel( const float dy, bool pushForwardIfNeeded )
         if( pushForwardIfNeeded )
         {
             // push the camera forward
-            float scale = -_distance;
+            float yscale = -_distance;
             Matrixd rotation_matrix( _rotation );
-            Vec3d dv = (Vec3d( 0.0f, 0.0f, -1.0f ) * rotation_matrix) * (dy * scale);
+            Vec3d dv = (Vec3d( 0.0f, 0.0f, -1.0f ) * rotation_matrix) * (dy * yscale);
             _center += dv;
         }
         else

@@ -49,7 +49,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "ged.h"
-#include "dm/dm_xvars.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -67,6 +66,10 @@ HIDDEN void motion_event_handler();
 
 #ifdef IR_KNOBS
 HIDDEN void dials_event_handler();
+#endif
+
+#ifdef IR_KNOBS
+#  define NOISE 16              /* Size of dead spot on knob */
 #endif
 
 #ifdef IR_BUTTONS
@@ -126,7 +129,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 
     /* it's an event for a window that I'm not handling */
     if (curr_dm_list == DM_LIST_NULL) {
-	curr_dm_list = save_dm_list;
+	set_curr_dm(save_dm_list);
 	return TCL_OK;
     }
 
@@ -139,7 +142,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 
     /* no further processing of this event */
     if (status != TCL_OK) {
-	curr_dm_list = save_dm_list;
+	set_curr_dm(save_dm_list);
 	return status;
     }
 
@@ -174,7 +177,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	status = TCL_RETURN;
     }
 #ifdef IR_KNOBS
-    else if (dm_get_xvars(DMP) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(DMP))->devmotionnotify) {
+    else if (dm_event_cmp(DMP, DM_MOTION_NOTIFY, eventPtr->type) == 1) {
 	dials_event_handler((XDeviceMotionEvent *)eventPtr);
 
 	/* no further processing of this event */
@@ -182,12 +185,12 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     }
 #endif
 #ifdef IR_BUTTONS
-    else if (dm_get_xvars(DMP) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(DMP))->devbuttonpress) {
+    else if (dm_event_cmp(DMP, DM_BUTTON_PRESS, eventPtr->type) == 1) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
-    } else if (dm_get_xvars(DMP) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(DMP))->devbuttonrelease) {
+    } else if (dm_event_cmp(DMP, DM_BUTTON_RELEASE, eventPtr->type) == 1) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 0);
 
 	/* no further processing of this event */
@@ -195,7 +198,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     }
 #endif
 
-    curr_dm_list = save_dm_list;
+    set_curr_dm(save_dm_list);
     return status;
 }
 #else
@@ -263,7 +266,7 @@ motion_event_handler(XMotionEvent *xmotion)
 		fastf_t x = dm_Xx2Normal(DMP, mx);
 		fastf_t y = dm_Xy2Normal(DMP, my, 1);
 
-		if (grid_state->gr_snap)
+		if (grid_state->snap)
 		    snap_to_grid(&x, &y);
 
 		rubber_band->rb_width = x - rubber_band->rb_x;
@@ -361,7 +364,7 @@ motion_event_handler(XMotionEvent *xmotion)
 
 		    if (mged_variables->mv_rateknobs)
 			bu_vls_printf(&cmd, "knob -i X %lf Y %lf\n", fx, fy);
-		    else if (grid_state->gr_snap) {
+		    else if (grid_state->snap) {
 			point_t view_pt;
 			point_t model_pt;
 			point_t vcenter, diff;
@@ -391,7 +394,7 @@ motion_event_handler(XMotionEvent *xmotion)
 		    if (mged_variables->mv_rateknobs)      /* otherwise, drag to translate the view */
 			bu_vls_printf(&cmd, "knob -i -v X %lf Y %lf\n", fx, fy);
 		    else {
-			if (grid_state->gr_snap) {
+			if (grid_state->snap) {
 			    /* accumulate distance mouse moved since starting to translate */
 			    dml_mouse_dx += dx;
 			    dml_mouse_dy += dy;
@@ -454,7 +457,7 @@ motion_event_handler(XMotionEvent *xmotion)
 
 		VSET(view_pt, dm_Xx2Normal(DMP, mx), dm_Xy2Normal(DMP, my, 1), 0.0);
 
-		if (grid_state->gr_snap)
+		if (grid_state->snap)
 		    snap_to_grid(&view_pt[X], &view_pt[Y]);
 
 		MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);

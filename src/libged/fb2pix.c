@@ -33,7 +33,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "pkg.h"
 #include "ged.h"
@@ -109,9 +109,20 @@ ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
 	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_FBSERV(gedp, GED_ERROR);
-    GED_CHECK_FBSERV_FBP(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    if (!gedp->ged_dmp) {
+	bu_vls_printf(gedp->ged_result_str, "no display manager currently active");
+	return GED_ERROR;
+    }
+
+    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    struct fb *fbp = dm_get_fb(dmp);
+
+    if (!fbp) {
+	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
+	return GED_ERROR;
+    }
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -131,15 +142,19 @@ ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
 
     setmode(fileno(stdout), O_BINARY);
 
-    ret = fb_write_fp(gedp->ged_fbsp->fbs_fbp, outfp,
+    ret = fb_write_fp(fbp, outfp,
 		      screen_width, screen_height,
 		      crunch, inverse, gedp->ged_result_str);
 
     if (outfp != stdout)
 	fclose(outfp);
 
-    if (ret == BRLCAD_OK)
+    if (ret == BRLCAD_OK) {
+	(void)dm_draw_begin(dmp);
+	fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
+	(void)dm_draw_end(dmp);
 	return GED_OK;
+    }
 
     return GED_ERROR;
 }

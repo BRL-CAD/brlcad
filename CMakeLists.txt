@@ -154,6 +154,27 @@ generate_sstamp()
 set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
 execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
 
+#------------------------------------------------------------------------------
+# The SuperBuild (https://blog.kitware.com/cmake-superbuilds-git-submodules/)
+# pattern requires a differentiation between the CMake installation prefix used
+# for the build and the specification of the ultimate installation location
+# used for the superbuild's install.  Any hard-coded knowledge of the final
+# path backed into BRL-CAD must use the superbuild's final destination, not the
+# intermediate build-directory installation used by the superbuild.
+#
+# For the moment we are not using superbuild, but we will ultimately need to
+# move to that approach to manage increasingly complex dependencies.  To allow
+# the code to work seamlessly with both variables, make them match unless both
+# are explicitly set in advance.
+if (DEFINED BRLCAD_INSTALL_PREFIX)
+  if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT DEFINED CMAKE_INSTALL_PREFIX)
+    set(CMAKE_INSTALL_PREFIX "${BRLCAD_INSTALL_PREFIX}")
+  endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT DEFINED CMAKE_INSTALL_PREFIX)
+endif (DEFINED BRLCAD_INSTALL_PREFIX)
+if (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED BRLCAD_INSTALL_PREFIX)
+  set(BRLCAD_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+endif (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED BRLCAD_INSTALL_PREFIX)
+
 #---------------------------------------------------------------------
 # Allow the BRLCAD_ROOT environment variable to set during build, but be noisy
 # about it unless we're specifically told this is intentional.  Having this
@@ -167,15 +188,15 @@ if(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
   endif(SLEEP_EXEC)
 endif(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
 
-# If CMAKE_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
+# If BRLCAD_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
 # this location is dangerous/destructive on some systems.
-if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
+if("${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
   message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
   if(SLEEP_EXEC)
     execute_process(COMMAND ${SLEEP_EXEC} 15)
   endif(SLEEP_EXEC)
   message(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ALLOW_INSTALL_TO_USR=1 for CMake")
-endif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
+endif("${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
@@ -237,12 +258,20 @@ include(Path_Setup)
 # To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
 # is available, BRLCAD_PREFIX is used to store the value in the cache.)
 
+if(BRLCAD_INSTALL_PREFIX)
+  if(NOT "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/local")
+    get_filename_component(PATH_NORMALIZED "${BRLCAD_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
+    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
+  endif(NOT "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/local")
+endif(BRLCAD_INSTALL_PREFIX)
+
 if(CMAKE_INSTALL_PREFIX)
   if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
     get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
     set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
   endif(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
 endif(CMAKE_INSTALL_PREFIX)
+
 if(BRLCAD_PREFIX)
   if(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
     get_filename_component(PATH_NORMALIZED "${BRLCAD_PREFIX}/${LIB_DIR}" ABSOLUTE)
@@ -790,59 +819,63 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # ExternalProject_Add approach first as well - that way unmodified install
 # commands in 3rd party CMake files will be moot.
 #
-# if (NOT CMAKE_INSTALL_PREFIX)
-# set(CMAKE_INSTALL_PREFIX "/usr/brlcad/")
+# if (NOT BRLCAD_INSTALL_PREFIX)
+# set(BRLCAD_INSTALL_PREFIX "/usr/brlcad/")
 #    if (NOT MSVC)
 #       set(gen_exp $<IF:$<CONFIG:Debug>,dev-${BRLCAD_VERSION}/,$<IF:$<CONFIG:Release>,rel-${BRLCAD_VERSION}/${BRLCAD_VERSION},>>)
 #    else (NOT MSVC)
 #       set(gen_exp)
 #        if(CMAKE_CL_64)
-#          set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
+#          set(BRLCAD_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
 #        else(CMAKE_CL_64)
-#          set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
+#          set(BRLCAD_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
 #        endif(CMAKE_CL_64)
 #    endif (NOT MSVC)
-# endif (NOT CMAKE_INSTALL_PREFIX)
+# endif (NOT BRLCAD_INSTALL_PREFIX)
 # install(TARGETS mged DESTINATION ${gen_exp}${BIN_DIR})
 #
 # Another (maybe better) option instead of generators might be to use the CONFIGURATIONS
 # option in our macros and the ExternalProject_Add management:
 # https://cmake.org/cmake/help/latest/command/install.html
 #
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT BRLCAD_INSTALL_PREFIX)
   if(NOT CMAKE_CONFIGURATION_TYPES)
     if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}")
+      set(BRLCAD_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}")
     else("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
+      set(BRLCAD_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
     endif("${CMAKE_BUILD_TYPE}" MATCHES "Release")
   else(NOT CMAKE_CONFIGURATION_TYPES)
     if(MSVC)
       if(CMAKE_CL_64)
-	set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
+	set(BRLCAD_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
       else(CMAKE_CL_64)
-	set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
+	set(BRLCAD_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
       endif(CMAKE_CL_64)
     else(MSVC)
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
+      set(BRLCAD_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
     endif(MSVC)
   endif(NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
-  set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
-endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
-set(BRLCAD_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "BRL-CAD install prefix")
+  set(BRLCAD_INSTALL_PREFIX ${BRLCAD_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
+  set(BRLCAD_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT BRLCAD_INSTALL_PREFIX)
+set(BRLCAD_PREFIX "${BRLCAD_INSTALL_PREFIX}" CACHE STRING "BRL-CAD install prefix")
 mark_as_advanced(BRLCAD_PREFIX)
+if (DEFINED BRLCAD_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
+  set(CMAKE_INSTALL_PREFIX "${BRLCAD_INSTALL_PREFIX}")
+endif (DEFINED BRLCAD_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
+
 
 # If we've a Release build with a Debug path or vice versa, warn about
 # it.  A "make install" of a Release build into a dev install
 # directory or vice versa is going to result in an install that
 # doesn't respect BRL-CAD standard naming conventions.
-if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-  message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/dev-${BRLCAD_VERSION}, but build type is set to Release!\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-  message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
+  message(FATAL_ERROR "\nInstallation directory (BRLCAD_INSTALL_PREFIX) is set to /usr/brlcad/dev-${BRLCAD_VERSION}, but build type is set to Release!\n")
+endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
+if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+  message(FATAL_ERROR "\nInstallation directory (BRLCAD_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
+endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
 
 #------------------------------------------------------------------------------
 # Now that we know the install prefix, generate the binary for calculating
@@ -992,8 +1025,10 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
 CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define SHARED_LIBRARY_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
 
-# Let bu_dir know what the target install directory is
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
+# Let bu_dir know what the target install directory is.  In a superbuild
+# configuration this will be the most import place to be sure that we get the
+# actual superbuild install path, not the local BRL-CAD subbuild install path.
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${BRLCAD_INSTALL_PREFIX}\"\n")
 
 # Define the various relative paths for bu_dir (be sure to have included
 # Path_Setup.cmake before this point, as that file defines these variables.)
@@ -1292,10 +1327,12 @@ if(BRLCAD_ENABLE_X11)
 endif(BRLCAD_ENABLE_X11)
 mark_as_advanced(OPENGL_USE_AQUA)
 
-# Enable/disable features requiring the Tk toolkit - usually this should
-# be on, as a lot of functionality in BRL-CAD depends on Tk
-option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON)
-mark_as_advanced(BRLCAD_ENABLE_TK)
+# Enable/disable features requiring the Tcl/Tk toolkit - usually this should
+# be on, as a lot of functionality in BRL-CAD depends on Tcl/Tk
+
+option(BRLCAD_ENABLE_TCL "Enable features requiring the Tcl toolkit" ON)
+cmake_dependent_option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON "BRLCAD_ENABLE_TCL" OFF)
+mark_as_advanced(BRLCAD_ENABLE_TCL BRLCAD_ENABLE_TK)
 if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
   set(BRLCAD_ENABLE_TK OFF)
 endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
@@ -2322,13 +2359,18 @@ if(NOT MSVC)
   endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
   if(BRLCAD_ENABLE_COVERAGE)
+    # TODO: These seem to GCC specific flags - should probably set up for clang
+    # as well if that's our compiler...
+    # https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
+    # If we need different settings for different tools, should
+    # encapsulate each tool's setup in a function
     CHECK_C_FLAG(ftest-coverage)
     CHECK_CXX_FLAG(ftest-coverage)
     if(FTEST_COVERAGE_C_FLAG_FOUND)
-      SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-      SET(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} --coverage -fprofile-arcs")
-      SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} --coverage -fprofile-arcs")
+      SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftest-coverage -fprofile-arcs")
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftest-coverage -fprofile-arcs")
+      SET(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} -lgcov -ftest-coverage -fprofile-arcs")
+      SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lgcov -ftest-coverage -fprofile-arcs")
     else(FTEST_COVERAGE_C_FLAG_FOUND)
       message(SEND_ERROR "Building with coverage is not supported by BRL-CAD on this platform.")
     endif(FTEST_COVERAGE_C_FLAG_FOUND)
@@ -3394,6 +3436,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 
+# TODO - the below logic will have to be rethought in a superbuild setup...
+
 # To set correct install paths for CMake at build time, rather than CMake
 # time, some rather special logic is necessary - a build target that needs
 # to be run when the current build type changes, and introspective scripting
@@ -3611,6 +3655,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   #
   # CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
   CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  CREATE_DISTCHECK(no_tcl "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TCL=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install" distcheck_no_tcl.cmake.in)
   CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(no_object "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")

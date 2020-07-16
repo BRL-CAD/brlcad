@@ -60,50 +60,56 @@ add_subdirectory(user)
 
 if(SH_EXEC)
 
-  add_test(NAME regress-moss COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/moss.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-moss "rt;asc2g;pixdiff;pix-png;png-pix" TEST_DEFINED)
+  if (TARGET mged AND TARGET asc2g)
+    add_test(NAME regress-moss COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/moss.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-moss "rt;asc2g;pixdiff;pix-png;png-pix" TEST_DEFINED)
 
-  add_test(NAME regress-lights COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/lights.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-lights "rt;asc2g;pixdiff" TEST_DEFINED)
+    add_test(NAME regress-lights COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/lights.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-lights "rt;asc2g;pixdiff" TEST_DEFINED)
 
-  add_test(NAME regress-solids COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/solids.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-solids "rt;mged;pixdiff;asc2pix;gencolor" TEST_DEFINED)
+    add_test(NAME regress-solids COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/solids.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-solids "rt;mged;pixdiff;asc2pix;gencolor" TEST_DEFINED)
 
-  add_test(NAME regress-shaders COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/shaders.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-shaders "rt;mged;pixdiff;gencolor" TEST_DEFINED)
+    add_test(NAME regress-shaders COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/shaders.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-shaders "rt;mged;pixdiff;gencolor" TEST_DEFINED)
 
-  add_test(NAME regress-spdi COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/spdi.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-spdi "rt;mged;pixdiff" TEST_DEFINED)
+    add_test(NAME regress-spdi COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/spdi.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-spdi "rt;mged;pixdiff" TEST_DEFINED)
 
-  add_test(NAME regress-rtedge COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/rtedge.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-rtedge "rt;rtedge;pixdiff;asc2g" TEST_DEFINED)
+    add_test(NAME regress-rtedge COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/rtedge.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-rtedge "rt;rtedge;pixdiff;asc2g" TEST_DEFINED)
 
-  add_test(NAME regress-iges COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/iges.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-iges "iges-g;g-iges;mged;asc2g" TEST_DEFINED)
+    add_test(NAME regress-iges COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/iges.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-iges "iges-g;g-iges;mged;asc2g" TEST_DEFINED)
 
-  add_test(NAME regress-weight COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/weight.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-weight "rtweight;mged" TEST_DEFINED)
+    add_test(NAME regress-weight COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/weight.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-weight "rtweight;mged" TEST_DEFINED)
 
-  add_test(NAME regress-gqa COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/gqa.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-gqa "gqa;mged" TEST_DEFINED)
+    add_test(NAME regress-gqa COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/gqa.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-gqa "gqa;mged" TEST_DEFINED)
 
-  add_test(NAME regress-bots COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/bots.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-bots "mged;pixdiff;rt" TEST_DEFINED)
+    add_test(NAME regress-bots COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/bots.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-bots "mged;pixdiff;rt" TEST_DEFINED)
 
-  add_test(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/mged.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-mged mged TEST_DEFINED)
+    add_test(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/mged.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-mged mged TEST_DEFINED)
 
-  add_test(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/red.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-red mged TEST_DEFINED)
+    add_test(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/red.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-red mged TEST_DEFINED)
 
-  add_test(NAME regress-nirt COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/nirt.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-nirt "mged;nirt" TEST_DEFINED)
+    add_test(NAME regress-nirt COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/nirt.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-nirt "mged;nirt" TEST_DEFINED)
 
-  add_test(NAME regress-comgeom COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/comgeom.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-comgeom "mged;asc2g;vdeck;comgeom-g" TEST_DEFINED)
+    add_test(NAME regress-comgeom COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/comgeom.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-comgeom "mged;asc2g;vdeck;comgeom-g" TEST_DEFINED)
 
-  add_test(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/dsp.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
+    add_test(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/dsp.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
+
+    add_test(NAME regress-asc COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/asc.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-asc "asc2g;g2asc;gdiff;dbupgrade" TEST_DEFINED)
+
+  endif (TARGET mged AND TARGET asc2g)
 
   add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
   BRLCAD_REGRESSION_TEST(regress-asc2dsp "cv;asc2pix;pix-bw;asc2dsp" TEST_DEFINED)
@@ -119,6 +125,7 @@ endif(SH_EXEC)
 
 CMAKEFILES(
   analyze.asc
+  asc/v4.g
   asc2dsp.sh
   bots.sh
   comgeom.sh

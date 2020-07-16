@@ -36,7 +36,7 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 #include "libtermio.h"
 
 #define COMMA ','
@@ -51,7 +51,7 @@ ColorMap old_map;
 ColorMap cm;
 
 static char *framebuffer = NULL;
-static fb *fbp;
+static struct fb *fbp;
 static int scr_height;
 static int scr_width;
 

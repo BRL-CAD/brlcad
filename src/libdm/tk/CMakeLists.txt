@@ -1,0 +1,37 @@
+find_package(TCL)
+
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  ${BU_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
+  )
+
+set(TK_SRCS
+  dm-tk.c
+  if_tk.c
+  )
+
+set_property(SOURCE dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+set_property(SOURCE if_tk24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+
+add_definitions(-DDM_PLUGIN)
+add_definitions(-DDM_TK -DIF_TK)
+
+add_library(dm-tk SHARED ${TK_SRCS})
+target_link_libraries(dm-tk libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY})
+set_property(TARGET dm-tk APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+VALIDATE_STYLE(dm-tk "${TK_SRCS}")
+
+PLUGIN_SETUP(dm-tk dm)
+
+CMAKEFILES(dm-tk.h)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

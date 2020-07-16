@@ -4,31 +4,26 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIRS} )
 
-if(APPLE)
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib")
-endif(APPLE)
+IF(APPLE)
+    IF(NOT OSG_BUILD_PLATFORM_IPHONE)
+        SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib")
+    ENDIF()
+ENDIF()
 
-set(OSG_FREETYPE_PLUGIN_SRCS
+SET(TARGET_SRC
     FreeTypeFont.cpp
     FreeTypeLibrary.cpp
     ReaderWriterFreeType.cpp
 )
 
-if(DYNAMIC_OPENSCENEGRAPH)
-  add_library(osgdb_freetype MODULE ${OSG_FREETYPE_PLUGIN_SRCS})
-else(DYNAMIC_OPENSCENEGRAPH)
-  add_library(osgdb_freetype STATIC ${OSG_FREETYPE_PLUGIN_SRCS})
-endif(DYNAMIC_OPENSCENEGRAPH)
+SET(TARGET_H
+    FreeTypeFont.h
+    FreeTypeLibrary.h
+)
 
-target_link_libraries(osgdb_freetype osgText osgDB osgUtil osg OpenThreads ${FREETYPE_LIBRARY})
-install(TARGETS osgdb_freetype
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+SET(TARGET_ADDED_LIBRARIES osgText )
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+SET(TARGET_EXTERNAL_LIBRARIES ${FREETYPE_LIBRARIES} )
+
+#### end var setup  ###
+SETUP_PLUGIN(freetype)

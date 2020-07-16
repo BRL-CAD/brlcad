@@ -32,14 +32,11 @@
 #include <osg/ColorMask>
 #include <osg/PolygonOffset>
 #include <osg/Depth>
+#include <osg/ContextData>
 #include <map>
 #include <vector>
 
 #include <OpenThreads/Thread>
-
-
-typedef osg::buffered_value< osg::ref_ptr< osg::Drawable::Extensions > > OcclusionQueryBufferedExtensions;
-static OcclusionQueryBufferedExtensions s_OQ_bufferedExtensions;
 
 //
 // Support classes, used by (and private to) OcclusionQueryNode.
@@ -50,6 +47,36 @@ static OcclusionQueryBufferedExtensions s_OQ_bufferedExtensions;
 
 namespace osg
 {
+
+QueryGeometry* createDefaultQueryGeometry( const std::string& name )
+{
+    GLushort indices[] = { 0, 1, 2, 3,  4, 5, 6, 7,
+        0, 3, 6, 5,  2, 1, 4, 7,
+        5, 4, 1, 0,  2, 7, 6, 3 };
+
+    ref_ptr<QueryGeometry> geom = new QueryGeometry( name );
+    geom->setDataVariance( Object::DYNAMIC );
+    geom->addPrimitiveSet( new DrawElementsUShort( PrimitiveSet::QUADS, 24, indices ) );
+
+    return geom.release();
+}
+
+Geometry* createDefaultDebugQueryGeometry()
+{
+    GLushort indices[] = { 0, 1, 2, 3,  4, 5, 6, 7,
+        0, 3, 6, 5,  2, 1, 4, 7,
+        5, 4, 1, 0,  2, 7, 6, 3 };
+
+    ref_ptr<Vec4Array> ca = new Vec4Array;
+    ca->push_back( Vec4( 1.f, 1.f, 1.f, 1.f ) );
+
+    ref_ptr<Geometry> geom = new Geometry;
+    geom->setDataVariance( Object::DYNAMIC );
+    geom->setColorArray( ca.get(), Array::BIND_OVERALL );
+    geom->addPrimitiveSet( new DrawElementsUShort( PrimitiveSet::QUADS, 24, indices ) );
+
+    return geom.release();
+}
 
 // Create and return a StateSet appropriate for performing an occlusion
 //   query test (disable lighting, texture mapping, etc). Probably some
@@ -101,15 +128,19 @@ StateSet* initOQDebugState()
 
 struct RetrieveQueriesCallback : public osg::Camera::DrawCallback
 {
-    typedef std::vector<osg::TestResult*> ResultsVector;
+    typedef std::vector<osg::ref_ptr<osg::TestResult> > ResultsVector;
     ResultsVector _results;
 
-    RetrieveQueriesCallback( osg::Drawable::Extensions* ext=NULL )
-      : _extensionsFallback( ext )
+    RetrieveQueriesCallback( osg::GLExtensions* ext=NULL )  :
+        _extensionsFallback( ext )
     {
     }
 
-    RetrieveQueriesCallback( const RetrieveQueriesCallback&, const osg::CopyOp& ) {}
+    RetrieveQueriesCallback( const RetrieveQueriesCallback& rqc, const osg::CopyOp& ) :
+        _extensionsFallback( rqc._extensionsFallback )
+    {
+    }
+
     META_Object( osgOQ, RetrieveQueriesCallback )
 
     virtual void operator() (const osg::Camera& camera) const
@@ -122,26 +153,24 @@ struct RetrieveQueriesCallback : public osg::Camera::DrawCallback
         double elapsedTime( 0. );
         int count( 0 );
 
-        osg::Drawable::Extensions* ext;
+        const osg::GLExtensions* ext=0;
         if (camera.getGraphicsContext())
         {
             // The typical path, for osgViewer-based applications or any
             //   app that has set up a valid GraphicsCOntext for the Camera.
-            unsigned int contextID = camera.getGraphicsContext()->getState()->getContextID();
-            RetrieveQueriesCallback* const_this = const_cast<RetrieveQueriesCallback*>( this );
-            ext = const_this->getExtensions( contextID, true );
+            ext = camera.getGraphicsContext()->getState()->get<osg::GLExtensions>();
         }
         else
         {
             // No valid GraphicsContext in the Camera. This might happen in
             //   SceneView-based apps. Rely on the creating code to have passed
-            //   in a valid Extensions pointer, and hope it's valid for any
+            //   in a valid GLExtensions pointer, and hope it's valid for any
             //   context that might be current.
-            OSG_DEBUG << "osgOQ: RQCB: Using fallback path to obtain Extensions pointer." << std::endl;
+            OSG_DEBUG << "osgOQ: RQCB: Using fallback path to obtain GLExtensions pointer." << std::endl;
             ext = _extensionsFallback;
             if (!ext)
             {
-                OSG_FATAL << "osgOQ: RQCB: Extensions pointer fallback is NULL." << std::endl;
+                OSG_FATAL << "osgOQ: RQCB: GLExtensions pointer fallback is NULL." << std::endl;
                 return;
             }
         }
@@ -149,7 +178,7 @@ struct RetrieveQueriesCallback : public osg::Camera::DrawCallback
         ResultsVector::const_iterator it = _results.begin();
         while (it != _results.end())
         {
-            osg::TestResult* tr = const_cast<osg::TestResult*>( *it );
+            osg::TestResult* tr = const_cast<osg::TestResult*>( (*it).get() );
 
             if (!tr->_active || !tr->_init)
             {
@@ -165,31 +194,20 @@ struct RetrieveQueriesCallback : public osg::Camera::DrawCallback
             OSG_DEBUG <<
                 "osgOQ: RQCB: Retrieving..." << std::endl;
 
-#ifdef FORCE_QUERY_RESULT_AVAILABLE_BEFORE_RETRIEVAL
-
-            // Should not need to do this, but is required on some platforms to
-            // work aroung issues in the device driver. For example, without this
-            // code, we've seen crashes on 64-bit Mac/Linux NVIDIA systems doing
-            // multithreaded, multipipe rendering (as in a CAVE).
-            // Tried with ATI and verified this workaround is not needed; the
-            //   problem is specific to NVIDIA.
-            GLint ready( 0 );
-            while( !ready )
+            GLint ready = 0;
+            ext->glGetQueryObjectiv( tr->_id, GL_QUERY_RESULT_AVAILABLE, &ready );
+            if (ready)
             {
-                // Apparently, must actually sleep here to avoid issues w/ NVIDIA Quadro.
-                OpenThreads::Thread::microSleep( 5 );
-                ext->glGetQueryObjectiv( tr->_id, GL_QUERY_RESULT_AVAILABLE, &ready );
-            };
-#endif
+                ext->glGetQueryObjectiv( tr->_id, GL_QUERY_RESULT, &(tr->_numPixels) );
+                if (tr->_numPixels < 0)
+                    OSG_WARN << "osgOQ: RQCB: " <<
+                    "glGetQueryObjectiv returned negative value (" << tr->_numPixels << ")." << std::endl;
 
-            ext->glGetQueryObjectiv( tr->_id, GL_QUERY_RESULT, &(tr->_numPixels) );
-            if (tr->_numPixels < 0)
-                OSG_WARN << "osgOQ: RQCB: " <<
-                "glGetQueryObjectiv returned negative value (" << tr->_numPixels << ")." << std::endl;
-
-            // Either retrieve last frame's results, or ignore it because the
-            //   camera is inside the view. In either case, _active is now false.
-            tr->_active = false;
+                // Either retrieve last frame's results, or ignore it because the
+                //   camera is inside the view. In either case, _active is now false.
+                tr->_active = false;
+            }
+            // else: query result not available yet, try again next frame
 
             it++;
             count++;
@@ -202,7 +220,13 @@ struct RetrieveQueriesCallback : public osg::Camera::DrawCallback
 
     void reset()
     {
-        _results.clear();
+        for (ResultsVector::iterator it = _results.begin(); it != _results.end();)
+        {
+            if (!(*it)->_active || !(*it)->_init) // remove results that have already been retrieved or their query objects deleted.
+                it = _results.erase(it);
+            else
+                ++it;
+        }
     }
 
     void add( osg::TestResult* tr )
@@ -210,15 +234,7 @@ struct RetrieveQueriesCallback : public osg::Camera::DrawCallback
         _results.push_back( tr );
     }
 
-    osg::Drawable::Extensions* getExtensions( unsigned int contextID, bool createIfNotInitalized )
-    {
-        if (!s_OQ_bufferedExtensions[ contextID ] && createIfNotInitalized)
-            s_OQ_bufferedExtensions[ contextID ] = new osg::Drawable::Extensions( contextID );
-        return s_OQ_bufferedExtensions[ contextID ].get();
-    }
-
-
-    osg::Drawable::Extensions* _extensionsFallback;
+    osg::GLExtensions* _extensionsFallback;
 };
 
 
@@ -227,7 +243,7 @@ struct RetrieveQueriesCallback : public osg::Camera::DrawCallback
 struct ClearQueriesCallback : public osg::Camera::DrawCallback
 {
     ClearQueriesCallback() : _rqcb( NULL ) {}
-    ClearQueriesCallback( const ClearQueriesCallback&, const osg::CopyOp& ) {}
+    ClearQueriesCallback( const ClearQueriesCallback& rhs, const osg::CopyOp& copyop) : osg::Camera::DrawCallback(rhs, copyop), _rqcb(rhs._rqcb) {}
     META_Object( osgOQ, ClearQueriesCallback )
 
     virtual void operator() (const osg::Camera&) const
@@ -244,17 +260,21 @@ struct ClearQueriesCallback : public osg::Camera::DrawCallback
 };
 
 
-// static cache of deleted query objects which can only
-// be completely deleted once the appropriate OpenGL context
-// is set.
-typedef std::list< GLuint > QueryObjectList;
-typedef osg::buffered_object< QueryObjectList > DeletedQueryObjectCache;
-
-static OpenThreads::Mutex s_mutex_deletedQueryObjectCache;
-static DeletedQueryObjectCache s_deletedQueryObjectCache;
 
 namespace osg
 {
+
+class QueryObjectManager : public GLObjectManager
+{
+public:
+    QueryObjectManager(unsigned int contextID) : GLObjectManager("QueryObjectManager", contextID) {}
+
+    virtual void deleteGLObject(GLuint globj)
+    {
+        const GLExtensions* extensions = GLExtensions::Get(_contextID,true);
+        if (extensions->isOcclusionQuerySupported || extensions->isARBOcclusionQuerySupported) extensions->glDeleteQueries( 1L, &globj );
+    }
+};
 
 
 QueryGeometry::QueryGeometry( const std::string& oqnName )
@@ -278,9 +298,9 @@ QueryGeometry::reset()
     ResultMap::iterator it = _results.begin();
     while (it != _results.end())
     {
-        TestResult& tr = it->second;
-        if (tr._init)
-            QueryGeometry::deleteQueryObject( tr._contextID, tr._id );
+        osg::ref_ptr<TestResult> tr = it->second;
+        if (tr->_init)
+            QueryGeometry::deleteQueryObject( tr->_contextID, tr->_id );
         it++;
     }
     _results.clear();
@@ -293,7 +313,11 @@ void
 QueryGeometry::drawImplementation( osg::RenderInfo& renderInfo ) const
 {
     unsigned int contextID = renderInfo.getState()->getContextID();
-    osg::Drawable::Extensions* ext = getExtensions( contextID, true );
+    osg::GLExtensions* ext = renderInfo.getState()->get<GLExtensions>();
+
+    if (!ext->isARBOcclusionQuerySupported && !ext->isOcclusionQuerySupported)
+        return;
+
     osg::Camera* cam = renderInfo.getCurrentCamera();
 
     // Add callbacks if necessary.
@@ -308,10 +332,30 @@ QueryGeometry::drawImplementation( osg::RenderInfo& renderInfo ) const
     }
 
     // Get TestResult from Camera map
-    TestResult* tr;
+    osg::ref_ptr<osg::TestResult> tr;
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock( _mapMutex );
-        tr = &( _results[ cam ] );
+        tr = ( _results[ cam ] );
+        if (!tr.valid())
+        {
+            tr = new osg::TestResult;
+            _results[ cam ] = tr;
+        }
+    }
+
+
+    // Issue query
+    if (!tr->_init)
+    {
+        ext->glGenQueries( 1, &(tr->_id) );
+        tr->_contextID = contextID;
+        tr->_init = true;
+    }
+
+    if (tr->_active)
+    {
+        // last query hasn't been retrieved yet
+        return;
     }
 
     // Add TestResult to RQCB.
@@ -322,16 +366,7 @@ QueryGeometry::drawImplementation( osg::RenderInfo& renderInfo ) const
         OSG_FATAL << "osgOQ: QG: Invalid RQCB." << std::endl;
         return;
     }
-    rqcb->add( tr );
-
-
-    // Issue query
-    if (!tr->_init)
-    {
-        ext->glGenQueries( 1, &(tr->_id) );
-        tr->_contextID = contextID;
-        tr->_init = true;
-    }
+    rqcb->add( tr.get() );
 
     OSG_DEBUG <<
         "osgOQ: QG: Querying for: " << _oqnName << std::endl;
@@ -359,22 +394,32 @@ QueryGeometry::drawImplementation( osg::RenderInfo& renderInfo ) const
 
 }
 
-
-unsigned int
-QueryGeometry::getNumPixels( const osg::Camera* cam )
+QueryGeometry::QueryResult QueryGeometry::getQueryResult( const osg::Camera* cam ) const
 {
-    TestResult tr;
+    osg::ref_ptr<osg::TestResult> tr;
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock( _mapMutex );
         tr =  _results[ cam ];
+        if (!tr.valid())
+        {
+            tr = new osg::TestResult;
+            _results[ cam ] = tr;
+        }
     }
-    return tr._numPixels;
+    return QueryResult((tr->_init && !tr->_active), tr->_numPixels);
 }
 
+unsigned int
+QueryGeometry::getNumPixels( const osg::Camera* cam ) const
+{
+    return getQueryResult(cam).numPixels;
+}
 
 void
 QueryGeometry::releaseGLObjects( osg::State* state ) const
 {
+    Geometry::releaseGLObjects(state);
+
     if (!state)
     {
         // delete all query IDs for all contexts.
@@ -389,11 +434,11 @@ QueryGeometry::releaseGLObjects( osg::State* state ) const
         ResultMap::iterator it = _results.begin();
         while (it != _results.end())
         {
-            TestResult& tr = it->second;
-            if (tr._contextID == contextID)
+            osg::ref_ptr<osg::TestResult> tr = it->second;
+            if (tr->_contextID == contextID)
             {
-                QueryGeometry::deleteQueryObject( contextID, tr._id );
-                tr._init = false;
+                osg::get<QueryObjectManager>(contextID)->scheduleGLObjectForDeletion(tr->_id );
+                tr->_init = false;
             }
             it++;
         }
@@ -403,52 +448,20 @@ QueryGeometry::releaseGLObjects( osg::State* state ) const
 void
 QueryGeometry::deleteQueryObject( unsigned int contextID, GLuint handle )
 {
-    if (handle!=0)
-    {
-        OpenThreads::ScopedLock< OpenThreads::Mutex > lock( s_mutex_deletedQueryObjectCache );
-
-        // insert the handle into the cache for the appropriate context.
-        s_deletedQueryObjectCache[contextID].push_back( handle );
-    }
+    osg::get<QueryObjectManager>(contextID)->scheduleGLObjectForDeletion(handle);
 }
 
 
 void
-QueryGeometry::flushDeletedQueryObjects( unsigned int contextID, double /*currentTime*/, double& availableTime )
+QueryGeometry::flushDeletedQueryObjects( unsigned int contextID, double currentTime, double& availableTime )
 {
-    // if no time available don't try to flush objects.
-    if (availableTime<=0.0) return;
-
-    const osg::Timer& timer = *osg::Timer::instance();
-    osg::Timer_t start_tick = timer.tick();
-    double elapsedTime = 0.0;
-
-    {
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex_deletedQueryObjectCache);
-
-        const osg::Drawable::Extensions* extensions = getExtensions( contextID, true );
-
-        QueryObjectList& qol = s_deletedQueryObjectCache[contextID];
-
-        for(QueryObjectList::iterator titr=qol.begin();
-            titr!=qol.end() && elapsedTime<availableTime;
-            )
-        {
-            extensions->glDeleteQueries( 1L, &(*titr ) );
-            titr = qol.erase(titr);
-            elapsedTime = timer.delta_s(start_tick,timer.tick());
-        }
-    }
-
-    availableTime -= elapsedTime;
+    osg::get<QueryObjectManager>(contextID)->flushDeletedGLObjects(currentTime, availableTime);
 }
 
 void
 QueryGeometry::discardDeletedQueryObjects( unsigned int contextID )
 {
-    OpenThreads::ScopedLock< OpenThreads::Mutex > lock( s_mutex_deletedQueryObjectCache );
-    QueryObjectList& qol = s_deletedQueryObjectCache[ contextID ];
-    qol.clear();
+    osg::get<QueryObjectManager>(contextID)->discardAllGLObjects();
 }
 
 // End support classes
@@ -459,6 +472,8 @@ QueryGeometry::discardDeletedQueryObjects( unsigned int contextID )
 
 OcclusionQueryNode::OcclusionQueryNode()
   : _enabled( true ),
+    _queryGeometryState( INVALID ),
+    _passed(false),
     _visThreshold( 500 ),
     _queryFrameCount( 5 ),
     _debugBB( false )
@@ -475,6 +490,7 @@ OcclusionQueryNode::~OcclusionQueryNode()
 
 OcclusionQueryNode::OcclusionQueryNode( const OcclusionQueryNode& oqn, const CopyOp& copyop )
   : Group( oqn, copyop ),
+    _queryGeometryState( INVALID ),
     _passed( false )
 {
     _enabled = oqn._enabled;
@@ -490,32 +506,53 @@ OcclusionQueryNode::OcclusionQueryNode( const OcclusionQueryNode& oqn, const Cop
 bool OcclusionQueryNode::getPassed( const Camera* camera, NodeVisitor& nv )
 {
     if ( !_enabled )
+    {
         // Queries are not enabled. The caller should be osgUtil::CullVisitor,
         //   return true to traverse the subgraphs.
-        return true;
+        _passed = true;
+        return _passed;
+    }
+
+    QueryGeometry* qg = static_cast< QueryGeometry* >( _queryGeode->getDrawable( 0 ) );
+
+    if ( !isQueryGeometryValid() )
+    {
+        // There're cases that the occlusion test result has been retrieved
+        // after the query geometry has been changed, it's the result of the
+        // geometry before the change.
+        qg->reset();
+
+        // The box of the query geometry is invalid, return false to not traverse
+        // the subgraphs.
+        _passed = false;
+        return _passed;
+    }
 
     {
         // Two situations where we want to simply do a regular traversal:
-        //  1) it's the first frame for this camers
+        //  1) it's the first frame for this camera
         //  2) we haven't rendered for an abnormally long time (probably because we're an out-of-range LOD child)
         // In these cases, assume we're visible to avoid blinking.
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock( _frameCountMutex );
         const unsigned int& lastQueryFrame( _frameCountMap[ camera ] );
         if( ( lastQueryFrame == 0 ) ||
             ( (nv.getTraversalNumber() - lastQueryFrame) >  (_queryFrameCount + 1) ) )
-            return true;
+        {
+            _passed = true;
+            return _passed;
+        }
     }
 
     if (_queryGeode->getDrawable( 0 ) == NULL)
     {
         OSG_FATAL << "osgOQ: OcclusionQueryNode: No QueryGeometry." << std::endl;
         // Something's broke. Return true so we at least render correctly.
-        return true;
+        _passed = true;
+        return _passed;
     }
-    QueryGeometry* qg = static_cast< QueryGeometry* >( _queryGeode->getDrawable( 0 ) );
 
     // Get the near plane for the upcoming distance calculation.
-    float nearPlane;
+    osg::Matrix::value_type nearPlane;
     const osg::Matrix& proj( camera->getProjectionMatrix() );
     if( ( proj(3,3) != 1. ) || ( proj(2,3) != 0. ) || ( proj(1,3) != 0. ) || ( proj(0,3) != 0.) )
         nearPlane = proj(3,2) / (proj(2,2)-1.);  // frustum / perspective
@@ -526,14 +563,22 @@ bool OcclusionQueryNode::getPassed( const Camera* camera, NodeVisitor& nv )
     //   the results. Otherwise (near plane inside the BS shell) we are considered
     //   to have passed and don't need to retrieve the query.
     const osg::BoundingSphere& bs = getBound();
-    float distanceToEyePoint = nv.getDistanceToEyePoint( bs._center, false );
+    osg::Matrix::value_type distanceToEyePoint = nv.getDistanceToEyePoint( bs._center, false );
 
-    float distance = distanceToEyePoint - nearPlane - bs._radius;
-    _passed = ( distance <= 0.f );
+    osg::Matrix::value_type distance = distanceToEyePoint - nearPlane - bs._radius;
+    _passed = ( distance <= 0.0 );
     if (!_passed)
     {
-        int result = qg->getNumPixels( camera );
-        _passed = ( (unsigned int)(result) > _visThreshold );
+        QueryGeometry::QueryResult result = qg->getQueryResult( camera );
+        if (!result.valid)
+        {
+           // The query hasn't finished yet and the result still
+           // isn't available, return true to traverse the subgraphs.
+           _passed = true;
+           return _passed;
+        }
+
+        _passed = ( result.numPixels > _visThreshold );
     }
 
     return _passed;
@@ -541,6 +586,9 @@ bool OcclusionQueryNode::getPassed( const Camera* camera, NodeVisitor& nv )
 
 void OcclusionQueryNode::traverseQuery( const Camera* camera, NodeVisitor& nv )
 {
+    if (!isQueryGeometryValid() || !_enabled)
+        return;
+
     bool issueQuery;
     {
         const int curFrame = nv.getTraversalNumber();
@@ -557,9 +605,11 @@ void OcclusionQueryNode::traverseQuery( const Camera* camera, NodeVisitor& nv )
 
 void OcclusionQueryNode::traverseDebug( NodeVisitor& nv )
 {
-    if (_debugBB)
+    if (_debugBB && _enabled)
+    {
         // If requested, display the debug geometry
         _debugGeode->accept( nv );
+    }
 }
 
 BoundingSphere OcclusionQueryNode::computeBound() const
@@ -570,31 +620,13 @@ BoundingSphere OcclusionQueryNode::computeBound() const
         //   an application thread or by a non-osgViewer application.
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock( _computeBoundMutex )  ;
 
-        // This is the logical place to put this code, but the method is const. Cast
-        //   away constness to compute the bounding box and modify the query geometry.
-        osg::OcclusionQueryNode* nonConstThis = const_cast<osg::OcclusionQueryNode*>( this );
-
-
-        ComputeBoundsVisitor cbv;
-        nonConstThis->accept( cbv );
-        BoundingBox bb = cbv.getBoundingBox();
-
-        osg::ref_ptr<Vec3Array> v = new Vec3Array;
-        v->resize( 8 );
-        (*v)[0] = Vec3( bb._min.x(), bb._min.y(), bb._min.z() );
-        (*v)[1] = Vec3( bb._max.x(), bb._min.y(), bb._min.z() );
-        (*v)[2] = Vec3( bb._max.x(), bb._min.y(), bb._max.z() );
-        (*v)[3] = Vec3( bb._min.x(), bb._min.y(), bb._max.z() );
-        (*v)[4] = Vec3( bb._max.x(), bb._max.y(), bb._min.z() );
-        (*v)[5] = Vec3( bb._min.x(), bb._max.y(), bb._min.z() );
-        (*v)[6] = Vec3( bb._min.x(), bb._max.y(), bb._max.z() );
-        (*v)[7] = Vec3( bb._max.x(), bb._max.y(), bb._max.z() );
-
-        Geometry* geom = static_cast< Geometry* >( nonConstThis->_queryGeode->getDrawable( 0 ) );
-        geom->setVertexArray( v.get() );
-
-        geom = static_cast< osg::Geometry* >( nonConstThis->_debugGeode->getDrawable( 0 ) );
-        geom->setVertexArray( v.get() );
+        if (_queryGeometryState != USER_DEFINED)
+        {
+            // This is the logical place to put this code, but the method is const. Cast
+            //   away constness to compute the bounding box and modify the query geometry.
+            osg::OcclusionQueryNode* nonConstThis = const_cast<osg::OcclusionQueryNode*>( this );
+            nonConstThis->updateDefaultQueryGeometry();
+        }
     }
 
     return Group::computeBound();
@@ -605,6 +637,12 @@ BoundingSphere OcclusionQueryNode::computeBound() const
 void OcclusionQueryNode::setQueriesEnabled( bool enable )
 {
     _enabled = enable;
+}
+
+void OcclusionQueryNode::resetQueries()
+{
+   OpenThreads::ScopedLock<OpenThreads::Mutex> lock( _frameCountMutex );
+   _frameCountMap.clear();
 }
 
 // Should only be called outside of cull/draw. No thread issues.
@@ -686,21 +724,12 @@ bool OcclusionQueryNode::getPassed() const
 
 void OcclusionQueryNode::createSupportNodes()
 {
-    GLushort indices[] = { 0, 1, 2, 3,  4, 5, 6, 7,
-        0, 3, 6, 5,  2, 1, 4, 7,
-        5, 4, 1, 0,  2, 7, 6, 3 };
-
     {
         // Add the test geometry Geode
         _queryGeode = new Geode;
         _queryGeode->setName( "OQTest" );
         _queryGeode->setDataVariance( Object::DYNAMIC );
-
-        ref_ptr< QueryGeometry > geom = new QueryGeometry( getName() );
-        geom->setDataVariance( Object::DYNAMIC );
-        geom->addPrimitiveSet( new DrawElementsUShort( PrimitiveSet::QUADS, 24, indices ) );
-
-        _queryGeode->addDrawable( geom.get() );
+        _queryGeode->addDrawable( createDefaultQueryGeometry( getName() ) );
     }
 
     {
@@ -709,17 +738,7 @@ void OcclusionQueryNode::createSupportNodes()
         _debugGeode = new Geode;
         _debugGeode->setName( "Debug" );
         _debugGeode->setDataVariance( Object::DYNAMIC );
-
-        ref_ptr<Geometry> geom = new Geometry;
-        geom->setDataVariance( Object::DYNAMIC );
-
-        ref_ptr<Vec4Array> ca = new Vec4Array;
-        ca->push_back( Vec4( 1.f, 1.f, 1.f, 1.f ) );
-        geom->setColorArray( ca.get(), Array::BIND_OVERALL );
-
-        geom->addPrimitiveSet( new DrawElementsUShort( PrimitiveSet::QUADS, 24, indices ) );
-
-        _debugGeode->addDrawable( geom.get() );
+        _debugGeode->addDrawable( createDefaultDebugQueryGeometry() );
     }
 
     // Creste state sets. Note that the osgOQ visitors (which place OQNs throughout
@@ -730,15 +749,75 @@ void OcclusionQueryNode::createSupportNodes()
 }
 
 
+void OcclusionQueryNode::setQueryGeometryInternal( QueryGeometry* queryGeom,
+                                                   Geometry* debugQueryGeom,
+                                                   QueryGeometryState state )
+{
+    if (!queryGeom || !debugQueryGeom)
+    {
+        OSG_FATAL << "osgOQ: OcclusionQueryNode: No QueryGeometry." << std::endl;
+        return;
+    }
+
+    _queryGeometryState = state;
+
+    _queryGeode->removeDrawables(0, _queryGeode->getNumDrawables());
+    _queryGeode->addDrawable(queryGeom);
+
+    _debugGeode->removeDrawables(0, _debugGeode->getNumDrawables());
+    _debugGeode->addDrawable(debugQueryGeom);
+}
+
+
+void OcclusionQueryNode::updateDefaultQueryGeometry()
+{
+    if (_queryGeometryState == USER_DEFINED)
+    {
+        OSG_FATAL << "osgOQ: OcclusionQueryNode: Unexpected QueryGeometryState=USER_DEFINED." << std::endl;
+        return;
+    }
+
+    ComputeBoundsVisitor cbv;
+    accept( cbv );
+
+    BoundingBox bb = cbv.getBoundingBox();
+    const bool bbValid = bb.valid();
+    _queryGeometryState = bbValid ? VALID : INVALID;
+
+    osg::ref_ptr<Vec3Array> v = new Vec3Array;
+    v->resize( 8 );
+
+    // Having (0,0,0) as vertices for the case of the invalid query geometry
+    // still isn't quite the right thing. But the query geometry is public
+    // accessible and therefore a user might expect eight vertices, so
+    // it seems safer to keep eight vertices in the geometry.
+
+    if (bbValid)
+    {
+        (*v)[0] = Vec3( bb._min.x(), bb._min.y(), bb._min.z() );
+        (*v)[1] = Vec3( bb._max.x(), bb._min.y(), bb._min.z() );
+        (*v)[2] = Vec3( bb._max.x(), bb._min.y(), bb._max.z() );
+        (*v)[3] = Vec3( bb._min.x(), bb._min.y(), bb._max.z() );
+        (*v)[4] = Vec3( bb._max.x(), bb._max.y(), bb._min.z() );
+        (*v)[5] = Vec3( bb._min.x(), bb._max.y(), bb._min.z() );
+        (*v)[6] = Vec3( bb._min.x(), bb._max.y(), bb._max.z() );
+        (*v)[7] = Vec3( bb._max.x(), bb._max.y(), bb._max.z() );
+    }
+
+    Geometry* geom = static_cast< Geometry* >( _queryGeode->getDrawable( 0 ) );
+    geom->setVertexArray( v.get() );
+
+    geom = static_cast< osg::Geometry* >( _debugGeode->getDrawable( 0 ) );
+    geom->setVertexArray( v.get() );
+}
+
+
 void OcclusionQueryNode::releaseGLObjects( State* state ) const
 {
-    if(_queryGeode->getDrawable( 0 ) != NULL)
-    {
-        // Query object discard and deletion is handled by QueryGeometry support class.
-        OcclusionQueryNode* nonConstThis = const_cast< OcclusionQueryNode* >( this );
-        QueryGeometry* qg = static_cast< QueryGeometry* >( nonConstThis->_queryGeode->getDrawable( 0 ) );
-        qg->releaseGLObjects( state );
-    }
+    if (_queryGeode.valid()) _queryGeode->releaseGLObjects(state);
+    if (_debugGeode.valid()) _debugGeode->releaseGLObjects(state);
+
+    osg::Group::releaseGLObjects(state);
 }
 
 void OcclusionQueryNode::flushDeletedQueryObjects( unsigned int contextID, double currentTime, double& availableTime )
@@ -753,14 +832,22 @@ void OcclusionQueryNode::discardDeletedQueryObjects( unsigned int contextID )
     QueryGeometry::discardDeletedQueryObjects( contextID );
 }
 
-osg::QueryGeometry* OcclusionQueryNode::getQueryGeometry()
+void OcclusionQueryNode::setQueryGeometry( QueryGeometry* geom )
 {
-    if (_queryGeode && _queryGeode->getDrawable( 0 ))
+    OpenThreads::ScopedLock<OpenThreads::Mutex> lock( _computeBoundMutex )  ;
+
+    if (geom)
     {
-        QueryGeometry* qg = static_cast< QueryGeometry* >( _queryGeode->getDrawable( 0 ) );
-        return qg;
+        setQueryGeometryInternal( geom, geom, USER_DEFINED );
     }
-    return 0;
+    else
+    {
+        setQueryGeometryInternal( createDefaultQueryGeometry( getName() ),
+                                  createDefaultDebugQueryGeometry(),
+                                  INVALID);
+
+        updateDefaultQueryGeometry();
+    }
 }
 
 const osg::QueryGeometry* OcclusionQueryNode::getQueryGeometry() const

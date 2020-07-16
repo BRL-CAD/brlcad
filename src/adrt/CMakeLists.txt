@@ -73,8 +73,7 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
   BRLCAD_ADDDATA(isst.tcl tclscripts/isst)
   BRLCAD_ADDEXEC(isst isst.c "${isst_libs}" GUI)
-  add_dependencies(isst isst_tcl_cp)
-
+  ADD_TARGET_DEPS(isst isst_tcl_cp dm-ogl dm-wgl)
   foreach(item ${tclindex_target_list})
     add_dependencies(isst ${item})
   endforeach(item ${tclindex_target_list})

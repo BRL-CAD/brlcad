@@ -35,7 +35,7 @@ class OSGVIEWER_EXPORT OpenGLQuerySupport : public osg::Referenced
         virtual void initialize(osg::State* state, osg::Timer_t startTick);
     protected:
 
-        const osg::Drawable::Extensions*            _extensions;
+        const osg::GLExtensions*            _extensions;
 };
 
 class OSGVIEWER_EXPORT Renderer : public osg::GraphicsOperation
@@ -59,6 +59,9 @@ class OSGVIEWER_EXPORT Renderer : public osg::GraphicsOperation
         virtual void cull_draw();
 
         virtual void compile();
+
+        virtual void resizeGLObjectBuffers(unsigned int maxSize);
+        virtual void releaseGLObjects(osg::State* = 0) const;
 
         void setCompileOnNextDraw(bool flag) { _compileOnNextDraw = flag; }
         bool getCompileOnNextDraw() const { return _compileOnNextDraw; }

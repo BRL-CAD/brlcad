@@ -157,18 +157,12 @@ int ImagePager::ImageThread::cancel()
         // release the frameBlock and _databasePagerThreadBlock in case its holding up thread cancellation.
         // _databasePagerThreadBlock->release();
 
-        // then wait for the the thread to stop running.
-        while(isRunning())
-        {
-            // commenting out debug info as it was cashing crash on exit, presumable
-            // due to osg::notify or std::cout destructing earlier than this destructor.
-            // OSG_DEBUG<<"Waiting for DatabasePager to cancel"<<std::endl;
-            OpenThreads::Thread::YieldCurrentThread();
-        }
+        // then wait for the thread to stop running.
+        join();
 
         // _startThreadCalled = false;
     }
-    //std::cout<<"DatabasePager::~DatabasePager() stopped running"<<std::endl;
+    //std::cout<<"ImagePager::cancel() thread stopped running"<<std::endl;
     return result;
 }
 
@@ -217,7 +211,7 @@ void ImagePager::ImageThread::run()
         if (imageRequest.valid())
         {
             // OSG_NOTICE<<"doing readImageFile("<<imageRequest->_fileName<<") index to assign = "<<imageRequest->_attachmentIndex<<std::endl;
-            osg::ref_ptr<osg::Image> image = osgDB::readImageFile(imageRequest->_fileName, imageRequest->_readOptions.get());
+            osg::ref_ptr<osg::Image> image = osgDB::readRefImageFile(imageRequest->_fileName, imageRequest->_readOptions.get());
             if (image.valid())
             {
                 // OSG_NOTICE<<"   successful readImageFile("<<imageRequest->_fileName<<") index to assign = "<<imageRequest->_attachmentIndex<<std::endl;
@@ -323,15 +317,14 @@ int ImagePager::cancel()
     return result;
 }
 
-osg::Image* ImagePager::readImageFile(const std::string& fileName, const osg::Referenced* options)
+osg::ref_ptr<osg::Image> ImagePager::readRefImageFile(const std::string& fileName, const osg::Referenced* options)
 {
     osgDB::Options* readOptions = dynamic_cast<osgDB::Options*>(const_cast<osg::Referenced*>(options));
-    return osgDB::readImageFile(fileName, readOptions);
+    return osgDB::readRefImageFile(fileName, readOptions);
 }
 
 void ImagePager::requestImageFile(const std::string& fileName, osg::Object* attachmentPoint, int attachmentIndex, double timeToMergeBy, const osg::FrameStamp* /*framestamp*/, osg::ref_ptr<osg::Referenced>& imageRequest, const osg::Referenced* options)
 {
-
     osgDB::Options* readOptions = dynamic_cast<osgDB::Options*>(const_cast<osg::Referenced*>(options));
     if (!readOptions)
     {

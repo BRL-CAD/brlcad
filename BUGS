@@ -15,9 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* dbupgrade -r produces an invalid rhc with the default v5 rhc produced
+  by MGED with  "make rhc rhc"
+
 * apparently all four BRL-CAD Tutorial Series volumes are missing from
   our bibliography...
-
 
 * Tessellating an ETO with a normal tolerance results in stack
   smashing due to bad logic in recursive algorithm: set norm 2;

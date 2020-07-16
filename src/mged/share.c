@@ -167,8 +167,8 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	case 'd':
 	case 'D':
 	    {
-		dm *dmp1;
-		dm *dmp2 = (dm *)NULL;
+		struct dm *dmp1;
+		struct dm *dmp2 = (struct dm *)NULL;
 
 		dmp1 = dlp1->dml_dmp;
 		if (dlp2 != (struct dm_list *)NULL)
@@ -184,11 +184,11 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
 			    save_dlp = curr_dm_list;
 
-			    curr_dm_list = dlp1;
+			    set_curr_dm(dlp1);
 			    createDLists(GEDP->ged_gdp->gd_headDisplay);
 
 			    /* restore */
-			    curr_dm_list = save_dlp;
+			    set_curr_dm(save_dlp);
 			}
 
 			dlp1->dml_dirty = 1;
@@ -200,7 +200,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	    break;
 	case 'g':
 	case 'G':
-	    SHARE_RESOURCE(uflag, _grid_state, dml_grid_state, gr_rc, dlp1, dlp2, vls, "share: grid_state");
+	    SHARE_RESOURCE(uflag, bview_grid_state, dml_grid_state, rc, dlp1, dlp2, vls, "share: grid_state");
 	    break;
 	case 'm':
 	case 'M':
@@ -382,7 +382,7 @@ usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
     dlp2->dml_rubber_band = (struct _rubber_band *)NULL;
     dlp2->dml_mged_variables = (struct _mged_variables *)NULL;
     dlp2->dml_color_scheme = (struct _color_scheme *)NULL;
-    dlp2->dml_grid_state = (struct _grid_state *)NULL;
+    dlp2->dml_grid_state = (struct bview_grid_state *)NULL;
     dlp2->dml_axes_state = (struct _axes_state *)NULL;
 
     /* it doesn't make sense to save display list info */
@@ -418,7 +418,7 @@ free_all_resources(struct dm_list *dlp)
     if (!--dlp->dml_color_scheme->cs_rc)
 	bu_free((void *)dlp->dml_color_scheme, "free_all_resources: color_scheme");
 
-    if (!--dlp->dml_grid_state->gr_rc)
+    if (!--dlp->dml_grid_state->rc)
 	bu_free((void *)dlp->dml_grid_state, "free_all_resources: grid_state");
 
     if (!--dlp->dml_axes_state->ax_rc)

@@ -53,10 +53,11 @@ static osg::ApplicationUsageProxy UCO_e3(osg::ApplicationUsage::ENVIRONMENTAL_VA
 //
 // CollectStateToCompile
 //
-StateToCompile::StateToCompile(GLObjectsVisitor::Mode mode):
+StateToCompile::StateToCompile(GLObjectsVisitor::Mode mode, osg::Object* markerObject):
     osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
     _mode(mode),
-    _assignPBOToImages(false)
+    _assignPBOToImages(false),
+    _markerObject(markerObject)
 {
 }
 
@@ -70,57 +71,50 @@ void StateToCompile::apply(osg::Node& node)
     traverse(node);
 }
 
-void StateToCompile::apply(osg::Geode& node)
-{
-    if (node.getStateSet())
-    {
-        apply(*(node.getStateSet()));
-    }
-
-    for(unsigned int i=0;i<node.getNumDrawables();++i)
-    {
-        osg::Drawable* drawable = node.getDrawable(i);
-        if (drawable)
-        {
-            apply(*drawable);
-            if (drawable->getStateSet())
-            {
-                apply(*(drawable->getStateSet()));
-            }
-        }
-    }
-}
-
 void StateToCompile::apply(osg::Drawable& drawable)
 {
     if (_drawablesHandled.count(&drawable)!=0) return;
 
     _drawablesHandled.insert(&drawable);
 
-    if (_mode&GLObjectsVisitor::SWITCH_OFF_DISPLAY_LISTS)
+    if (!_markerObject || _markerObject.get()!=drawable.getUserData())
     {
-        drawable.setUseDisplayList(false);
-    }
+        if (drawable.getDataVariance()!=osg::Object::STATIC)
+        {
+            if (_mode&GLObjectsVisitor::SWITCH_OFF_DISPLAY_LISTS)
+            {
+                drawable.setUseDisplayList(false);
+            }
 
-    if (_mode&GLObjectsVisitor::SWITCH_ON_DISPLAY_LISTS)
-    {
-        drawable.setUseDisplayList(true);
-    }
+            if (_mode&GLObjectsVisitor::SWITCH_ON_DISPLAY_LISTS)
+            {
+                drawable.setUseDisplayList(true);
+            }
 
-    if (_mode&GLObjectsVisitor::SWITCH_ON_VERTEX_BUFFER_OBJECTS)
-    {
-        drawable.setUseVertexBufferObjects(true);
-    }
+            if (_mode&GLObjectsVisitor::SWITCH_ON_VERTEX_BUFFER_OBJECTS)
+            {
+                drawable.setUseVertexBufferObjects(true);
+            }
 
-    if (_mode&GLObjectsVisitor::SWITCH_OFF_VERTEX_BUFFER_OBJECTS)
-    {
-        drawable.setUseVertexBufferObjects(false);
-    }
+            if (_mode&GLObjectsVisitor::SWITCH_OFF_VERTEX_BUFFER_OBJECTS)
+            {
+                drawable.setUseVertexBufferObjects(false);
+            }
+        }
 
-    if (_mode&GLObjectsVisitor::COMPILE_DISPLAY_LISTS &&
-        (drawable.getUseDisplayList() || drawable.getUseVertexBufferObjects()))
-    {
-        _drawables.insert(&drawable);
+        if (_mode&GLObjectsVisitor::COMPILE_DISPLAY_LISTS &&
+            (drawable.getUseDisplayList() || drawable.getUseVertexBufferObjects()))
+        {
+            _drawables.insert(&drawable);
+        }
+
+        if (drawable.getStateSet())
+        {
+            apply(*(drawable.getStateSet()));
+        }
+
+        // mark the drawable as visited
+        if (_markerObject.valid() && drawable.getUserData()==0) drawable.setUserData(_markerObject.get());
     }
 }
 
@@ -130,22 +124,20 @@ void StateToCompile::apply(osg::StateSet& stateset)
 
     _statesetsHandled.insert(&stateset);
 
-    if (_mode & GLObjectsVisitor::COMPILE_STATE_ATTRIBUTES)
+    if ((_mode & GLObjectsVisitor::COMPILE_STATE_ATTRIBUTES)!=0 &&
+        (!_markerObject || _markerObject.get()!=stateset.getUserData()))
     {
         osg::Program* program = dynamic_cast<osg::Program*>(stateset.getAttribute(osg::StateAttribute::PROGRAM));
-        if (program)
+        if (program && (!_markerObject || _markerObject.get()!=program->getUserData()))
         {
             _programs.insert(program);
+
+            // mark the stateset as visited
+            if (_markerObject.valid() && program->getUserData()==0) program->setUserData(_markerObject.get());
         }
 
         const osg::StateSet::TextureAttributeList& tal = stateset.getTextureAttributeList();
 
-#if 0
-        if (tal.size()>1)
-        {
-            tal.erase(tal.begin()+1,tal.end());
-        }
-#endif
         for(osg::StateSet::TextureAttributeList::const_iterator itr = tal.begin();
             itr != tal.end();
             ++itr)
@@ -165,11 +157,17 @@ void StateToCompile::apply(osg::StateSet& stateset)
                 }
             }
         }
+
+        // mark the stateset as visited
+        if (_markerObject.valid() && stateset.getUserData()==0) stateset.setUserData(_markerObject.get());
     }
 }
 
 void StateToCompile::apply(osg::Texture& texture)
 {
+    // don't make any changes if Texture already processed
+    if (_markerObject.valid() && _markerObject.get()==texture.getUserData()) return;
+
     if (_assignPBOToImages)
     {
         unsigned int numRequringPBO = 0;
@@ -214,6 +212,8 @@ void StateToCompile::apply(osg::Texture& texture)
             }
         }
     }
+
+    if (_markerObject.valid() && texture.getUserData()==0) texture.setUserData(_markerObject.get());
 
     _textures.insert(&texture);
 }
@@ -297,7 +297,7 @@ double IncrementalCompileOperation::CompileProgramOp::estimatedTimeForCompile(Co
 bool IncrementalCompileOperation::CompileProgramOp::compile(CompileInfo& compileInfo)
 {
     //OSG_NOTICE<<"CompileProgramOp::compile(..)"<<std::endl;
-    _program->apply(*compileInfo.getState());
+    _program->compileGLObjects(*compileInfo.getState());
     return true;
 }
 
@@ -332,7 +332,7 @@ double IncrementalCompileOperation::CompileList::estimatedTimeForCompile(Compile
 {
     double estimateTime = 0.0;
     for(CompileOps::const_iterator itr = _compileOps.begin();
-        itr != _compileOps.begin();
+        itr != _compileOps.end();
         ++itr)
     {
         estimateTime += (*itr)->estimatedTimeForCompile(compileInfo);
@@ -420,7 +420,8 @@ void IncrementalCompileOperation::CompileSet::buildCompileMap(ContextSet& contex
 {
     if (contexts.empty() || !_subgraphToCompile) return;
 
-    StateToCompile stc(mode);
+    StateToCompile stc(mode, _markerObject.get());
+
     _subgraphToCompile->accept(stc);
 
     buildCompileMap(contexts, stc);
@@ -445,12 +446,16 @@ bool IncrementalCompileOperation::CompileSet::compile(CompileInfo& compileInfo)
 // IncrementalCompileOperation
 //
 IncrementalCompileOperation::IncrementalCompileOperation():
+    osg::Referenced(true),
     osg::GraphicsOperation("IncrementalCompileOperation",true),
     _flushTimeRatio(0.5),
     _conservativeTimeRatio(0.5),
     _currentFrameNumber(0),
     _compileAllTillFrameNumber(0)
 {
+    _markerObject = new osg::DummyObject;
+    _markerObject->setName("HasBeenProcessedByStateToCompile");
+
     _targetFrameRate = 100.0;
     _minimumTimeAvailableForGLCompileAndDeletePerFrame = 0.001; // 1ms.
     _maximumNumOfObjectsToCompilePerFrame = 20;
@@ -575,6 +580,9 @@ void IncrementalCompileOperation::add(CompileSet* compileSet, bool callBuildComp
 {
     if (!compileSet) return;
 
+    // pass on the markerObject to the CompileSet
+    compileSet->_markerObject = _markerObject;
+
     if (compileSet->_subgraphToCompile.valid())
     {
         // force a compute of the bound of the subgraph to avoid the update traversal from having to do this work
@@ -672,9 +680,6 @@ void IncrementalCompileOperation::operator () (osg::GraphicsContext* context)
     OSG_NOTIFY(level)<<"IncrementalCompileOperation()"<<std::endl;
     OSG_NOTIFY(level)<<"    currentTime = "<<currentTime<<std::endl;
     OSG_NOTIFY(level)<<"    currentElapsedFrameTime = "<<currentElapsedFrameTime<<std::endl;
-
-    double _flushTimeRatio(0.5);
-    double _conservativeTimeRatio(0.5);
 
     double availableTime = std::max((targetFrameTime - currentElapsedFrameTime)*_conservativeTimeRatio,
                                     minimumTimeAvailableForGLCompileAndDeletePerFrame);

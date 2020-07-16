@@ -32,6 +32,31 @@
 #include "./ged_private.h"
 
 
+static void
+get_comb_print_matrix(struct bu_vls *vls, matp_t matrix)
+{
+    int k;
+    char buf[64];
+    fastf_t tmp;
+
+    if (!matrix)
+	return;
+
+    if (bn_mat_is_identity(matrix))
+	return;
+
+    for (k = 0; k < 16; k++) {
+	sprintf(buf, "%g", matrix[k]);
+	tmp = atof(buf);
+	if (ZERO(tmp - matrix[k]))
+	    bu_vls_printf(vls, " %g", matrix[k]);
+	else
+	    bu_vls_printf(vls, " %.12e", matrix[k]);
+	if ((k&3)==3) bu_vls_printf(vls, " ");
+    }
+}
+
+
 int
 ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 {
@@ -61,7 +86,6 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
-
 
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
@@ -104,12 +128,6 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
-	if (comb->region_flag) {
-	    bu_vls_printf(gedp->ged_result_str, " Yes %ld %ld %ld %ld",
-			  comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, " No");
-	}
 
 	if (comb->rgb_valid) {
 	    bu_vls_printf(gedp->ged_result_str, " {%d %d %d}", V3ARGS(comb->rgb));
@@ -144,14 +162,22 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    bu_vls_printf(gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-	    _ged_vls_print_matrix(gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
+	    get_comb_print_matrix(gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	    bu_vls_printf(gedp->ged_result_str, "\n");
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "}");
+
+    	if (comb->region_flag) {
+	    bu_vls_printf(gedp->ged_result_str, " Yes %ld %ld %ld %ld",
+			  comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, " No");
+	}
+
     } else {
-	bu_vls_printf(gedp->ged_result_str, "%s Yes %d %d %d %d {} {} No {}",
+	bu_vls_printf(gedp->ged_result_str, "%s {} {} No {} Yes %d %d %d %d",
 		      argv[1],
 		      gedp->ged_wdbp->wdb_item_default,
 		      gedp->ged_wdbp->wdb_air_default,
@@ -160,31 +186,6 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-
-void
-_ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)
-{
-    int k;
-    char buf[64];
-    fastf_t tmp;
-
-    if (!matrix)
-	return;
-
-    if (bn_mat_is_identity(matrix))
-	return;
-
-    for (k = 0; k < 16; k++) {
-	sprintf(buf, "%g", matrix[k]);
-	tmp = atof(buf);
-	if (ZERO(tmp - matrix[k]))
-	    bu_vls_printf(vls, " %g", matrix[k]);
-	else
-	    bu_vls_printf(vls, " %.12e", matrix[k]);
-	if ((k&3)==3) bu_vls_printf(vls, " ");
-    }
 }
 
 

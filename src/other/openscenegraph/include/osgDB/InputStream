@@ -27,6 +27,8 @@
 #include <osg/Vec4ui>
 #include <osg/Quat>
 #include <osg/Matrix>
+#include <osg/BoundingBox>
+#include <osg/BoundingSphere>
 #include <osg/Array>
 #include <osg/PrimitiveSet>
 #include <osgDB/ReaderWriter>
@@ -130,18 +132,17 @@ public:
     InputStream& operator>>( osg::Plane& p );
     InputStream& operator>>( osg::Matrixf& mat );
     InputStream& operator>>( osg::Matrixd& mat );
+    InputStream& operator>>( osg::BoundingBoxf& bb );
+    InputStream& operator>>( osg::BoundingBoxd& bb );
+    InputStream& operator>>( osg::BoundingSpheref& bs );
+    InputStream& operator>>( osg::BoundingSphered& bs );
 
-    InputStream& operator>>( osg::Array*& a ) { a = readArray(); return *this; }
-    InputStream& operator>>( osg::Image*& img ) { img = readImage(); return *this; }
-    InputStream& operator>>( osg::PrimitiveSet*& p ) { p = readPrimitiveSet(); return *this; }
-    InputStream& operator>>( osg::Object*& obj ) { obj = readObject(); return *this; }
-
-    InputStream& operator>>( osg::ref_ptr<osg::Array>& ptr ) { ptr = readArray(); return *this; }
     InputStream& operator>>( osg::ref_ptr<osg::Image>& ptr ) { ptr = readImage(); return *this; }
-    InputStream& operator>>( osg::ref_ptr<osg::PrimitiveSet>& ptr ) { ptr = readPrimitiveSet(); return *this; }
+    InputStream& operator>>( osg::ref_ptr<osg::Array>& ptr ) { if (_fileVersion>=112) ptr = readObjectOfType<osg::Array>(); else ptr = readArray(); return *this; }
+    InputStream& operator>>( osg::ref_ptr<osg::PrimitiveSet>& ptr ) { if (_fileVersion>=112) ptr = readObjectOfType<osg::PrimitiveSet>(); else ptr = readPrimitiveSet(); return *this; }
 
     template<typename T> InputStream& operator>>( osg::ref_ptr<T>& ptr )
-    { ptr = static_cast<T*>(readObject()); return *this; }
+    { ptr = readObjectOfType<T>(); return *this; }
 
     // Convenient methods for reading
     bool matchString( const std::string& str ) { return _in->matchString(str); }
@@ -154,16 +155,36 @@ public:
     unsigned int readSize() { unsigned int size; *this>>size; return size; }
 
     // Global reading functions
-    osg::Array* readArray();
-    osg::PrimitiveSet* readPrimitiveSet();
-    osg::Image* readImage(bool readFromExternal=true);
-    osg::Object* readObject( osg::Object* existingObj=0 );
-    osg::Object* readObjectFields( const std::string& className, unsigned int id, osg::Object* existingObj=0);
+    osg::ref_ptr<osg::Array> readArray();
+    osg::ref_ptr<osg::PrimitiveSet> readPrimitiveSet();
+    osg::ref_ptr<osg::Image> readImage(bool readFromExternal=true);
 
-    /// set an input iterator, used directly when not using InputStream with a traditional file releated stream.
+    template<typename T>
+    osg::ref_ptr<T> readObjectOfType()
+    {
+        osg::ref_ptr<osg::Object> obj = readObject();
+        T* ptr = dynamic_cast<T*>(obj.get());
+        if (ptr) { return ptr; }
+        else return 0;
+    }
+
+    osg::ref_ptr<osg::Object> readObject( osg::Object* existingObj=0 );
+
+    osg::ref_ptr<osg::Object> readObjectFields( const std::string& className, unsigned int id, osg::Object* existingObj=0);
+
+    template<typename T>
+    osg::ref_ptr<T> readObjectFieldsOfType( const std::string& className, unsigned int id, osg::Object* existingObj=0)
+    {
+        osg::ref_ptr<osg::Object> obj = readObjectFields(className, id, existingObj);
+        T* ptr = dynamic_cast<T*>(obj.get());
+        if (ptr) { return ptr; }
+        else return 0;
+    }
+
+    /// set an input iterator, used directly when not using InputStream with a traditional file related stream.
     void setInputIterator( InputIterator* ii ) { _in = ii; }
 
-    /// start reading from InputStream treating it as a traditional file releated stream, handles headers and versioning
+    /// start reading from InputStream treating it as a traditional file related stream, handles headers and versioning
     ReadType start( InputIterator* );
 
     void decompress();
@@ -200,6 +221,9 @@ protected:
     osg::ref_ptr<InputIterator> _in;
     osg::ref_ptr<InputException> _exception;
     osg::ref_ptr<const osgDB::Options> _options;
+
+    // object to used to read field properties that will be discarded.
+    osg::ref_ptr<osg::Object> _dummyReadObject;
 
     // store here to avoid a new and a leak in InputStream::decompress
     std::stringstream* _dataDecompress;

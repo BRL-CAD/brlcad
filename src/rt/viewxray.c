@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "icv.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -53,7 +53,7 @@
 #define	LGT_FLOAT	1
 
 
-extern	fb	*fbp;
+extern	struct fb *fbp;
 extern	FILE	*outfp;
 extern	fastf_t	viewsize;
 extern	int	lightmodel;

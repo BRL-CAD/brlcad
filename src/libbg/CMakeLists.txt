@@ -16,8 +16,10 @@ set(LIBBG_SOURCES
   chull3d.cpp
   clipper.cpp
   lseg_lseg.c
+  lseg_pt.c
   obr.c
   polygon.c
+  polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
   spsr.c

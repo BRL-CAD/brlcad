@@ -58,7 +58,7 @@
 #include "raytrace.h"
 #include "optical/debug.h"
 #include "pkg.h"
-#include "fb.h"
+#include "dm.h"
 #include "icv.h"
 
 #include "../rt/rtuif.h"
@@ -76,7 +76,7 @@ struct pkg_queue {
 
 
 /***** Variables shared with viewing model *** */
-fb *fbp = FB_NULL;	/* Framebuffer handle */
+struct fb *fbp = FB_NULL;	/* Framebuffer handle */
 FILE *outfp = NULL;	/* optional pixel output file */
 
 mat_t view2model;

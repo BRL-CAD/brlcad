@@ -22,6 +22,10 @@
 /** @file dm/defines.h
  *
  */
+
+#ifndef DM_DEFINES_H
+#define DM_DEFINES_H
+
 #ifndef DM_EXPORT
 #  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
 #    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
@@ -33,6 +37,40 @@
 #    define DM_EXPORT
 #  endif
 #endif
+
+#ifndef FB_EXPORT
+#  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
+#    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
+#  elif defined(FB_DLL_EXPORTS)
+#    define FB_EXPORT COMPILER_DLLEXPORT
+#  elif defined(FB_DLL_IMPORTS)
+#    define FB_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define FB_EXPORT
+#  endif
+#endif
+
+/* The internals of the dm structure are hidden using the PImpl pattern*/
+struct dm_impl;
+struct dm {
+    struct dm_impl *i;
+};
+
+struct dm_plugin {
+    const struct dm * const p;
+};
+
+/* The internals of the framebuffer structure are hidden using the PImpl pattern */
+struct fb_impl;
+struct fb {
+    struct fb_impl *i;
+};
+
+struct fb_plugin {
+    const struct fb * const p;
+};
+
+#endif /* DM_DEFINES_H */
 
 /** @} */
 /*

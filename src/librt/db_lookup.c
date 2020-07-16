@@ -244,7 +244,13 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 	       (void *)dbip, name, (intmax_t)laddr, len, flags, ptr);
     }
 
-    if ((tmp_ptr = strchr(name, '/')) != NULL) {
+    if (BU_STR_EMPTY(name)) {
+	bu_log("db_diradd() object with empty name is illegal, ignored\n");
+	return RT_DIR_NULL;
+    }
+
+    tmp_ptr = strchr(name, '/');
+    if (tmp_ptr != NULL) {
 	/* if this is a version 4 database and the offending char is beyond NAMESIZE
 	 * then it is not really a problem
 	 */

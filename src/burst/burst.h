@@ -30,7 +30,7 @@
 
 #include "bu/ptbl.h"
 #include "bu/vls.h"
-#include "fb.h"
+#include "dm.h"
 
 #define LNBUFSZ         1330    /* buffer for one-line messages */
 #define TITLE_LEN       72

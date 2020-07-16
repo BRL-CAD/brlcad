@@ -45,7 +45,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static long int file_width = 512L;

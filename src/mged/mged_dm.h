@@ -29,7 +29,6 @@
 #include "common.h"
 
 #include "dm.h"	/* struct dm */
-#include "dm/dm_xvars.h"
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
@@ -178,19 +177,6 @@ struct _dlist_state {
     int		dl_active;	/* 1 - actively using display lists */
     int		dl_flag;
 };
-
-
-struct _grid_state {
-    int		gr_rc;
-    int		gr_draw;	/* draw grid */
-    int		gr_snap;	/* snap to grid */
-    fastf_t	gr_anchor[3];
-    fastf_t	gr_res_h;	/* grid resolution in h */
-    fastf_t	gr_res_v;	/* grid resolution in v */
-    int		gr_res_major_h;	/* major grid resolution in h */
-    int		gr_res_major_v;	/* major grid resolution in v */
-};
-
 
 struct _adc_state {
     int		adc_rc;
@@ -393,8 +379,8 @@ struct _menu_state {
 
 struct dm_list {
     struct bu_list	l;
-    dm		*dml_dmp;
-    fb			*dml_fbp;
+    struct dm		*dml_dmp;
+    struct fb		*dml_fbp;
     int			dml_netfd;			/* socket used to listen for connections */
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_Channel		dml_netchan;
@@ -441,7 +427,7 @@ struct dm_list {
     struct _rubber_band	*dml_rubber_band;
     struct _mged_variables *dml_mged_variables;
     struct _color_scheme	*dml_color_scheme;
-    struct _grid_state	*dml_grid_state;
+    struct bview_grid_state *dml_grid_state;
     struct _axes_state	*dml_axes_state;
     struct _dlist_state	*dml_dlist_state;
 
@@ -451,6 +437,9 @@ struct dm_list {
     int			(*dml_eventHandler)();
 };
 
+/* If we're changing the active DM, use this function so
+ * libged also gets the word. */
+extern void set_curr_dm(struct dm_list *nl);
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define DMP curr_dm_list->dml_dmp
@@ -601,8 +590,7 @@ extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const
 extern void mged_rtCmdNotify();
 
 struct w_dm {
-    int	type;
-    char	*name;
+    char *name;
     int	(*doevent)();
 };
 extern struct w_dm which_dm[];  /* defined in attach.c */
@@ -612,7 +600,7 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 #define DM_PS_INDEX 1
 
 struct mged_view_hook_state {
-    dm *hs_dmp;
+    struct dm *hs_dmp;
     struct _view_state *vs;
     int *dirty_global;
 };

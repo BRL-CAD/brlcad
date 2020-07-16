@@ -273,7 +273,7 @@ regex_init(repo_info_t &r) {
 	cnt = 0;
 	rf = api_func_strs[cnt];
 	while (rf) {
-	    std::string rrf = std::string(".*[^a-zA-Z0-9_:]") + std::string(rf) + std::string("[(].*");
+	    std::string rrf = std::string(".*[^a-zA-Z0-9_:.]") + std::string(rf) + std::string("[(].*");
 	    r.api_func_filters[std::string(rf)] = std::regex(rrf);
 	    cnt++;
 	    rf = api_func_strs[cnt];
@@ -855,15 +855,16 @@ main(int argc, const char *argv[])
     // Build a set of filters that will cull out files which would otherwise
     // be matches for items of interest
     const char *reject_filters[] {
-	"/bullet/",
-	"/doc/",
-	"/shapelib/",
 	".log",
 	".svn",
+	"/bullet/",
+	"/doc/",
+	"/qtads/",
+	"/shapelib/",
 	"misc/CMake/Find",
+	"misc/debian",
 	"misc/repoconv",
 	"misc/tools",
-	"misc/debian",
 	"pkg.h",
 	"src/libpkg",
 	"src/other/",

@@ -85,6 +85,7 @@ set(cmake_ignore_files
   configure_prefix.sh
   configure_suffix.sh
   distcheck_in_src_dir.cmake.in
+  distcheck_no_tcl.cmake.in
   distcheck_repo_verify.cmake.in
   distcheck_target.cmake.in
   distclean.cmake.in

@@ -41,7 +41,6 @@ set(DOX_LIBS
   libgcv
   libanalyze
   libged
-  libfb
   libdm
   libtclcad
   libpkg
@@ -183,7 +182,7 @@ set(doxygen_ignore_files
   libbrep.dox
   libbu.dox
   libdm.dox
-  libfb.dox
+  libdm.dox
   libfft.dox
   libgcv.dox
   libged.dox

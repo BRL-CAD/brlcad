@@ -155,8 +155,7 @@ Make_new_name(struct db_i *dbip,
 	MAT_ZERO(use->xform);
 	use->used = 0;
 	if (db_version(dbip) < 5) {
-	    NAMEMOVE(dp->d_namep, name_v4);
-	    name_v4[NAMESIZE] = '\0';                /* ensure null termination */
+	    bu_strlcpy(name_v4, dp->d_namep, NAMESIZE+1);
 	}
 
 	/* Add an entry for the original at the end of the list

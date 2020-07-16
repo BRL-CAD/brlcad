@@ -68,7 +68,7 @@ ged_perspective(struct ged *gedp, int argc, const char *argv[])
 	    MAT_COPY(gedp->ged_gvp->gv_pmat, bn_mat_identity);
 	}
 
-	ged_view_update(gedp->ged_gvp);
+	bview_update(gedp->ged_gvp);
 
 	return GED_OK;
     }

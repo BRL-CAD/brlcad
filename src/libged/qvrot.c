@@ -113,7 +113,7 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
 
     bn_mat_angles(gedp->ged_gvp->gv_rotation, 270.0 + el * RAD2DEG, 0.0, 270.0 - az * RAD2DEG);
     usejoy(gedp, 0.0, 0.0, theta*DEG2RAD);
-    ged_view_update(gedp->ged_gvp);
+    bview_update(gedp->ged_gvp);
 
     return GED_OK;
 }

@@ -276,7 +276,6 @@ ged_init(struct ged *gedp)
 
     /* (in)sanity */
     gedp->ged_gvp = NULL;
-    gedp->ged_fbsp = NULL;
     gedp->ged_dmp = NULL;
     gedp->ged_refresh_clientdata = NULL;
     gedp->ged_refresh_handler = NULL;
@@ -377,7 +376,11 @@ ged_view_init(struct bview *gvp)
     /* FIXME: this causes the shaders.sh regression to fail */
     /* _ged_mat_aet(gvp); */
 
-    ged_view_update(gvp);
+    // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
+    gvp->gv_snap_tol_factor = 10;
+    gvp->gv_snap_lines = 0;
+
+    bview_update(gvp);
 }
 
 

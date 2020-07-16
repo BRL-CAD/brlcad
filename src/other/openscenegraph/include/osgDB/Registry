@@ -26,6 +26,7 @@
 #include <osgDB/DotOsgWrapper>
 #include <osgDB/ObjectWrapper>
 #include <osgDB/FileCache>
+#include <osgDB/ObjectCache>
 #include <osgDB/SharedStateManager>
 #include <osgDB/ImageProcessor>
 
@@ -62,7 +63,7 @@ class OSGDB_EXPORT Registry : public osg::Referenced
         void readCommandLine(osg::ArgumentParser& commandLine);
 
         /** register an .fileextension alias to mapExt toExt, the later
-          * should the the extension name of the readerwriter plugin library.
+          * should be the extension name of the readerwriter plugin library.
           * For example to map .tif files to the tiff loader, use
           * addExtAlias("tif","tiff") which will enable .tif to be read
           * by the libdb_tiff readerwriter plugin.*/
@@ -128,10 +129,10 @@ class OSGDB_EXPORT Registry : public osg::Referenced
 
         /** get const list of all registered ReaderWriters.*/
         const ReaderWriterList& getReaderWriterList() const { return _rwList; }
-        
+
         /** get a list of registered ReaderWriters which can handle given protocol */
         void getReaderWriterListForProtocol(const std::string& protocol, ReaderWriterList& results) const;
-        
+
         ReaderWriter* getReaderWriterForProtocolAndExtension(const std::string& protocol, const std::string& extension);
 
 
@@ -251,6 +252,14 @@ class OSGDB_EXPORT Registry : public osg::Referenced
         }
         ReaderWriter::ReadResult readShaderImplementation(const std::string& fileName,const Options* options);
 
+        ReaderWriter::ReadResult readScript(const std::string& fileName,const Options* options)
+        {
+            if (options && options->getReadFileCallback()) return options->getReadFileCallback()->readScript(fileName,options);
+            else if (_readFileCallback.valid()) return _readFileCallback->readScript(fileName,options);
+            else return readScriptImplementation(fileName,options);
+        }
+        ReaderWriter::ReadResult readScriptImplementation(const std::string& fileName,const Options* options);
+
 
         /** Set the Registry callback to use in place of the default writeFile calls.*/
         void setWriteFileCallback( WriteFileCallback* cb) { _writeFileCallback = cb; }
@@ -302,6 +311,13 @@ class OSGDB_EXPORT Registry : public osg::Referenced
         }
         ReaderWriter::WriteResult writeShaderImplementation(const osg::Shader& obj, const std::string& fileName,const Options* options);
 
+        ReaderWriter::WriteResult writeScript(const osg::Script& obj, const std::string& fileName,const Options* options)
+        {
+            if (options && options->getWriteFileCallback()) return options->getWriteFileCallback()->writeScript(obj,fileName,options);
+            else if (_writeFileCallback.valid()) return _writeFileCallback->writeScript(obj,fileName,options);
+            else return writeScriptImplementation(obj,fileName,options);
+        }
+        ReaderWriter::WriteResult writeScriptImplementation(const osg::Script& obj, const std::string& fileName,const Options* options);
 
         inline void _buildKdTreeIfRequired(ReaderWriter::ReadResult& result, const Options* options)
         {
@@ -349,6 +365,13 @@ class OSGDB_EXPORT Registry : public osg::Referenced
 
         /** Set the password map to be used by plugins when access files from secure locations.*/
         void setAuthenticationMap(AuthenticationMap* authenticationMap) { _authenticationMap = authenticationMap; }
+
+        /** Get the password map to be used by plugins when access files from secure locations. Create a AuthenticationMap if one isn't already assigned.*/
+        AuthenticationMap* getOrCreateAuthenticationMap()
+        {
+            if (!_authenticationMap) _authenticationMap = new AuthenticationMap;
+            return _authenticationMap.get();
+        }
 
         /** Get the password map to be used by plugins when access files from secure locations.*/
         AuthenticationMap* getAuthenticationMap() { return _authenticationMap.get(); }
@@ -402,6 +425,22 @@ class OSGDB_EXPORT Registry : public osg::Referenced
         /** get the const library file path which is used when search for library (dso/dll's) files.*/
         const FilePathList& getLibraryFilePathList() const { return _libraryFilePath; }
 
+
+
+        /** Set the ObjectCache that is used to manage local storage of files downloaded from the internet.*/
+        void setObjectCache(ObjectCache* objectCache) { _objectCache = objectCache; }
+
+        /** Get the ObjectCache that is used to manage local storage of files downloaded from the internet.*/
+        ObjectCache* getObjectCache() { return _objectCache.get(); }
+
+        /** Get the const ObjectCache that is used to manage local storage of files downloaded from the internet.*/
+        const ObjectCache* getObjectCache() const { return _objectCache.get(); }
+
+        /** set hint to viewer code calling removeExpiredObjectsInCache to specify how long it should give before expiring objects in Registry cache,*/
+        void setExpiryDelay(double expiryDelay) { _expiryDelay = expiryDelay; }
+
+        double getExpiryDelay() const { return _expiryDelay; }
+
         /** For each object in the cache which has an reference count greater than 1
           * (and therefore referenced by elsewhere in the application) set the time stamp
           * for that object in the cache to specified time.
@@ -416,26 +455,20 @@ class OSGDB_EXPORT Registry : public osg::Referenced
           * after the call to updateTimeStampOfObjectsInCacheWithExternalReferences(frameStamp).*/
         void removeExpiredObjectsInCache(const osg::FrameStamp& frameStamp);
 
-        /** set hint to viewer code calling removeExpiredObjectsInCache to specify how long it should give before expiring objects in Registry cache,*/
-        void setExpiryDelay(double expiryDelay) { _expiryDelay = expiryDelay; }
-
-        double getExpiryDelay() const { return _expiryDelay; }
-
-
         /** Remove all objects in the cache regardless of having external references or expiry times.*/
         void clearObjectCache();
 
         /** Add a filename,object,timestamp triple to the Registry::ObjectCache.*/
-        void addEntryToObjectCache(const std::string& filename, osg::Object* object, double timestamp = 0.0);
+        void addEntryToObjectCache(const std::string& filename, osg::Object* object, double timestamp = 0.0, Options *options = NULL);
 
         /** Remove Object from cache.*/
-        void removeFromObjectCache(const std::string& fileName);
+        void removeFromObjectCache(const std::string& fileName, Options *options =  NULL);
 
         /** Get an Object from the object cache*/
-        osg::Object* getFromObjectCache(const std::string& fileName);
+        osg::Object* getFromObjectCache(const std::string& fileName, Options *options = NULL);
 
         /** Get an ref_ptr<Object> from the object cache*/
-        osg::ref_ptr<osg::Object> getRefFromObjectCache(const std::string& fileName);
+        osg::ref_ptr<osg::Object> getRefFromObjectCache(const std::string& fileName, Options *options = NULL);
 
 
 
@@ -496,8 +529,6 @@ class OSGDB_EXPORT Registry : public osg::Referenced
         typedef std::vector< osg::ref_ptr<DynamicLibrary> >             DynamicLibraryList;
         typedef std::map< std::string, std::string>                     ExtensionAliasMap;
 
-        typedef std::pair<osg::ref_ptr<osg::Object>, double >           ObjectTimeStampPair;
-        typedef std::map<std::string, ObjectTimeStampPair >             ObjectCache;
         typedef std::map<std::string, osg::ref_ptr<osgDB::Archive> >    ArchiveCache;
 
         typedef std::set<std::string>                                   RegisteredProtocolsSet;
@@ -523,7 +554,7 @@ class OSGDB_EXPORT Registry : public osg::Referenced
 
     public:
         /** Functor used in internal implementations.*/
-        struct ReadFunctor
+        struct ReadFunctor : public osg::Referenced
         {
             ReadFunctor(const std::string& filename, const Options* options):
                 _filename(filename),
@@ -551,6 +582,7 @@ class OSGDB_EXPORT Registry : public osg::Referenced
         struct ReadNodeFunctor;
         struct ReadArchiveFunctor;
         struct ReadShaderFunctor;
+        struct ReadScriptFunctor;
 
         // make helper classes friends to get round VS6.0 "issues"
         friend struct ReadFunctor;
@@ -560,6 +592,7 @@ class OSGDB_EXPORT Registry : public osg::Referenced
         friend struct ReadNodeFunctor;
         friend struct ReadArchiveFunctor;
         friend struct ReadShaderFunctor;
+        friend struct ReadScriptFunctor;
 
         ReaderWriter::ReadResult read(const ReadFunctor& readFunctor);
         ReaderWriter::ReadResult readImplementation(const ReadFunctor& readFunctor,Options::CacheHintOptions cacheHint);
@@ -602,9 +635,9 @@ class OSGDB_EXPORT Registry : public osg::Referenced
         FilePathList                            _dataFilePath;
         FilePathList                            _libraryFilePath;
 
+        osg::ref_ptr<ObjectCache>               _objectCache;
+
         double                                  _expiryDelay;
-        ObjectCache                             _objectCache;
-        OpenThreads::Mutex                      _objectCacheMutex;
 
 
         ArchiveExtensionList                    _archiveExtList;

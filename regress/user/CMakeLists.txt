@@ -33,9 +33,11 @@ endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
 
 set_target_properties(cad_user PROPERTIES FOLDER "BRL-CAD Regression Tests/user")
 
+if (TARGET moss.g)
 set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-user.log")
 BRLCAD_REGRESSION_TEST(regress-user "cad_user;moss.g" EXEC cad_user)
 DISTCLEAN(${LOG_FILE})
+endif (TARGET moss.g)
 
 CMAKEFILES(
   CMakeLists.txt

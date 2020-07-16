@@ -12,10 +12,12 @@ include_directories(
   ${TCL_INCLUDE_PATH}
   )
 
-BRLCAD_ADDEXEC(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libfb")
+BRLCAD_ADDEXEC(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libdm")
+ADD_TARGET_DEPS(remrt dm-ogl dm-wgl)
 
-BRLCAD_ADDEXEC(rtsrv "../rt/usage.cpp;../rt/view.c;../rt/do.c;../rt/heatgraph.c;../rt/opt.c;../rt/scanline.c;../rt/worker.c;rtsrv.c" "libfb;liboptical;libpkg;libicv")
+BRLCAD_ADDEXEC(rtsrv "../rt/usage.cpp;../rt/view.c;../rt/do.c;../rt/heatgraph.c;../rt/opt.c;../rt/scanline.c;../rt/worker.c;rtsrv.c" "libdm;liboptical;libpkg;libicv")
 set_property(TARGET rtsrv APPEND PROPERTY COMPILE_DEFINITIONS "RTSRV")
+ADD_TARGET_DEPS(rtsrv dm-ogl dm-wgl)
 
 CMAKEFILES(ihost.h protocol.h)
 CMAKEFILES(CMakeLists.txt)

@@ -18,7 +18,7 @@
 #include <osg/ClampColor>
 #include <osg/Fog>
 #include <osg/FragmentProgram>
-#include <osg/GL2Extensions>
+#include <osg/GLExtensions>
 #include <osg/PointSprite>
 #include <osg/StateSet>
 #include <osg/StencilTwoSided>
@@ -53,7 +53,7 @@
     #define GL_PERSPECTIVE_CORRECTION_HINT      0x0C50
 #endif
 
-#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE)
+#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) || defined(OSG_GLES3_AVAILABLE)
     #define GL_POLYGON_SMOOTH_HINT              0x0C53
     #define GL_LINE_SMOOTH_HINT                 0x0C52
     #define GL_FRAGMENT_SHADER_DERIVATIVE_HINT  0x8B8B
@@ -80,31 +80,102 @@ void osgDB::split( const std::string& src, StringList& list, char separator )
     }
 }
 
+void ObjectWrapper::splitAssociates( const std::string& src, ObjectWrapper::RevisionAssociateList& list, char separator )
+{
+    std::string::size_type start = src.find_first_not_of(separator);
+    while ( start!=std::string::npos )
+    {
+        std::string::size_type end = src.find_first_of(separator, start);
+        if ( end!=std::string::npos )
+        {
+            list.push_back( ObjectWrapperAssociate(std::string(src, start, end-start)) );
+            start = src.find_first_not_of(separator, end);
+        }
+        else
+        {
+            list.push_back( ObjectWrapperAssociate(std::string(src, start, src.size()-start)) );
+            start = end;
+        }
+    }
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // ObjectWrapper
 //
-ObjectWrapper::ObjectWrapper( osg::Object* proto, const std::string& name,
+ObjectWrapper::ObjectWrapper( CreateInstanceFunc* createInstanceFunc, const std::string& name,
                               const std::string& associates )
 :   osg::Referenced(),
-    _proto(proto), _name(name), _version(0)
+    _createInstanceFunc(createInstanceFunc), _name(name), _version(0),_isAssociatesRevisionsInheritanceDone(false)
 {
-    split( associates, _associates );
+    splitAssociates( associates, _associates );
 }
 
-ObjectWrapper::ObjectWrapper( osg::Object* proto, const std::string& domain, const std::string& name,
+ObjectWrapper::ObjectWrapper( CreateInstanceFunc* createInstanceFunc, const std::string& domain, const std::string& name,
                               const std::string& associates )
 :   osg::Referenced(),
-    _proto(proto), _domain(domain), _name(name), _version(0)
+    _createInstanceFunc(createInstanceFunc), _domain(domain), _name(name), _version(0),_isAssociatesRevisionsInheritanceDone(false)
 {
-    split( associates, _associates );
+    splitAssociates( associates, _associates );
 }
 
+void ObjectWrapper::setupAssociatesRevisionsInheritanceIfRequired()
+{
+    if(!_isAssociatesRevisionsInheritanceDone)
+    {
+        ///for each associate wrapper
+        for ( ObjectWrapper::RevisionAssociateList::const_iterator itr=_associates.begin(); itr!=_associates.end(); ++itr )
+        {
+            ObjectWrapper* assocWrapper = Registry::instance()->getObjectWrapperManager()->findWrapper(itr->_name);
+            if ( assocWrapper && assocWrapper != this )
+            {
+                ///crawl association revisions in associates
+                for ( ObjectWrapper::RevisionAssociateList::const_iterator itr2=assocWrapper->getAssociates().begin(); itr2!=assocWrapper->getAssociates().end(); ++itr2 )
+                {
+                    for ( ObjectWrapper::RevisionAssociateList::iterator itr3=_associates.begin(); itr3!=_associates.end(); ++itr3 )
+                    {
+                        ///they share associates
+                        if(itr3->_name==itr2->_name)
+                        {
+                            itr3->_firstVersion=itr3->_firstVersion>itr2->_firstVersion? itr3->_firstVersion:itr2->_firstVersion;
+                            itr3->_lastVersion=itr3->_lastVersion<itr2->_lastVersion? itr3->_lastVersion:itr2->_lastVersion;
+                        }
+                    }
+                }
+            }
+        }
+        _isAssociatesRevisionsInheritanceDone=true;
+    }
+
+}
+void ObjectWrapper::markAssociateAsAdded(const std::string& name)
+{
+    for ( ObjectWrapper::RevisionAssociateList:: iterator itr=_associates.begin(); itr!=_associates.end(); ++itr )
+    {
+        if(itr->_name==name)
+        {
+            itr->_firstVersion=_version;
+            return;
+        }
+    }
+    OSG_NOTIFY(osg::WARN)<<"ObjectWrapper::associateAddedAtVersion: Associate class "<<name<<" not defined for wrapper "<<_name<<std::endl;
+}
+void ObjectWrapper::markAssociateAsRemoved(const std::string& name)
+{
+    for ( ObjectWrapper::RevisionAssociateList:: iterator itr=_associates.begin(); itr!=_associates.end(); ++itr )
+    {
+        if(itr->_name==name)
+        {
+            itr->_lastVersion = _version-1;
+            return;
+        }
+    }
+    OSG_NOTIFY(osg::WARN)<<"ObjectWrapper::associateRemovedAtVersion: Associate class "<<name<<" not defined for wrapper "<<_name<<std::endl;
+}
 void ObjectWrapper::addSerializer( BaseSerializer* s, BaseSerializer::Type t )
 {
     s->_firstVersion = _version;
     _serializers.push_back(s);
-    _typeList.push_back(static_cast<int>(t));
+    _typeList.push_back(t);
 }
 
 void ObjectWrapper::markSerializerAsRemoved( const std::string& name )
@@ -127,9 +198,9 @@ BaseSerializer* ObjectWrapper::getSerializer( const std::string& name )
             return itr->get();
     }
 
-    for ( StringList::const_iterator itr=_associates.begin(); itr!=_associates.end(); ++itr )
+    for ( RevisionAssociateList::const_iterator itr=_associates.begin(); itr!=_associates.end(); ++itr )
     {
-        const std::string& assocName = *itr;
+        const std::string& assocName = itr->_name;
         ObjectWrapper* assocWrapper = Registry::instance()->getObjectWrapperManager()->findWrapper(assocName);
         if ( !assocWrapper )
         {
@@ -148,6 +219,48 @@ BaseSerializer* ObjectWrapper::getSerializer( const std::string& name )
     return NULL;
 }
 
+BaseSerializer* ObjectWrapper::getSerializer( const std::string& name, BaseSerializer::Type& type)
+{
+
+    unsigned int i = 0;
+    for (SerializerList::iterator itr=_serializers.begin();
+         itr!=_serializers.end();
+         ++itr, ++i )
+    {
+        if ( (*itr)->getName()==name )
+        {
+            type = _typeList[i];
+            return itr->get();
+        }
+    }
+
+    for ( RevisionAssociateList::const_iterator itr=_associates.begin(); itr!=_associates.end(); ++itr )
+    {
+        const std::string& assocName = itr->_name;
+        ObjectWrapper* assocWrapper = Registry::instance()->getObjectWrapperManager()->findWrapper(assocName);
+        if ( !assocWrapper )
+        {
+            osg::notify(osg::WARN) << "ObjectWrapper::getSerializer(): Unsupported associated class "
+                                   << assocName << std::endl;
+            continue;
+        }
+
+        i = 0;
+        for ( SerializerList::iterator aitr=assocWrapper->_serializers.begin();
+              aitr!=assocWrapper->_serializers.end();
+              ++aitr, ++i )
+        {
+            if ( (*aitr)->getName()==name )
+            {
+                type = assocWrapper->_typeList[i];
+                return aitr->get();
+            }
+        }
+    }
+    type = BaseSerializer::RW_UNDEFINED;
+    return NULL;
+}
+
 bool ObjectWrapper::read( InputStream& is, osg::Object& obj )
 {
     bool readOK = true;
@@ -157,7 +270,8 @@ bool ObjectWrapper::read( InputStream& is, osg::Object& obj )
     {
         BaseSerializer* serializer = itr->get();
         if ( serializer->_firstVersion <= inputVersion &&
-             inputVersion <= serializer->_lastVersion )
+             inputVersion <= serializer->_lastVersion &&
+             serializer->supportsReadWrite())
         {
             if ( !serializer->read(is, obj) )
             {
@@ -191,7 +305,8 @@ bool ObjectWrapper::write( OutputStream& os, const osg::Object& obj )
     {
         BaseSerializer* serializer = itr->get();
         if ( serializer->_firstVersion <= outputVersion &&
-             outputVersion <= serializer->_lastVersion )
+             outputVersion <= serializer->_lastVersion  &&
+             serializer->supportsReadWrite())
         {
             if ( !serializer->write(os, obj) )
             {
@@ -208,7 +323,7 @@ bool ObjectWrapper::write( OutputStream& os, const osg::Object& obj )
     return writeOK;
 }
 
-bool ObjectWrapper::readSchema( const StringList& properties, const std::vector<int>& )
+bool ObjectWrapper::readSchema( const StringList& properties, const TypeList& )
 {
     // FIXME: At present, I didn't do anything to determine serializers from their types...
     if ( !_backupSerializers.size() )
@@ -251,29 +366,36 @@ bool ObjectWrapper::readSchema( const StringList& properties, const std::vector<
     return size==_serializers.size();
 }
 
-void ObjectWrapper::writeSchema( StringList& properties, std::vector<int>& types )
+void ObjectWrapper::writeSchema( StringList& properties, TypeList& types )
 {
-    for ( SerializerList::iterator itr=_serializers.begin();
-          itr!=_serializers.end(); ++itr )
+    SerializerList::iterator sitr = _serializers.begin();
+    TypeList::iterator titr = _typeList.begin();
+    while(sitr!=_serializers.end() && titr!=_typeList.end())
     {
-        properties.push_back( (*itr)->getName() );
-    }
-
-    for ( std::vector<int>::iterator itr=_typeList.begin();
-          itr!=_typeList.end(); ++itr )
-    {
-        types.push_back( (*itr) );
+        if ((*sitr)->supportsReadWrite())
+        {
+            properties.push_back( (*sitr)->getName() );
+            types.push_back( (*titr) );
+        }
+        ++sitr;
+        ++titr;
     }
 }
+
+void ObjectWrapper::addMethodObject(const std::string& methodName, MethodObject* mo)
+{
+    _methodObjectMap.insert(MethodObjectMap::value_type(methodName, mo));
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // RegisterWrapperProxy
 //
-RegisterWrapperProxy::RegisterWrapperProxy( osg::Object* proto, const std::string& name,
+RegisterWrapperProxy::RegisterWrapperProxy( ObjectWrapper::CreateInstanceFunc *createInstanceFunc, const std::string& name,
                         const std::string& associates, AddPropFunc func )
 {
-    _wrapper = new ObjectWrapper( proto, name, associates );
+    _wrapper = new ObjectWrapper( createInstanceFunc, name, associates );
     if ( func ) (*func)( _wrapper.get() );
 
     if (Registry::instance())
@@ -295,10 +417,10 @@ RegisterWrapperProxy::~RegisterWrapperProxy()
 // RegisterCustomWrapperProxy
 //
 RegisterCustomWrapperProxy::RegisterCustomWrapperProxy(
-        osg::Object* proto, const std::string& domain, const std::string& name,
+        ObjectWrapper::CreateInstanceFunc *createInstanceFunc, const std::string& domain, const std::string& name,
         const std::string& associates, AddPropFunc func )
 {
-    _wrapper = new ObjectWrapper( proto, domain, name, associates );
+    _wrapper = new ObjectWrapper( createInstanceFunc, domain, name, associates );
     if ( func ) (*func)( domain.c_str(), _wrapper.get() );
 
     if (Registry::instance())
@@ -452,6 +574,16 @@ ObjectWrapperManager::ObjectWrapperManager()
     glTable.add( "GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG",GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG );
     glTable.add( "GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG",GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG );
     glTable.add( "GL_ETC1_RGB8_OES",GL_ETC1_RGB8_OES );
+    glTable.add( "GL_COMPRESSED_RGB8_ETC2",GL_COMPRESSED_RGB8_ETC2 );
+    glTable.add( "GL_COMPRESSED_SRGB8_ETC2",GL_COMPRESSED_SRGB8_ETC2 );
+    glTable.add( "GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2",GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2 );
+    glTable.add( "GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2",GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2 );
+    glTable.add( "GL_COMPRESSED_RGBA8_ETC2_EAC",GL_COMPRESSED_RGBA8_ETC2_EAC );
+    glTable.add( "GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC",GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC );
+    glTable.add( "GL_COMPRESSED_R11_EAC",GL_COMPRESSED_R11_EAC );
+    glTable.add( "GL_COMPRESSED_SIGNED_R11_EAC",GL_COMPRESSED_SIGNED_R11_EAC );
+    glTable.add( "GL_COMPRESSED_RG11_EAC",GL_COMPRESSED_RG11_EAC );
+    glTable.add( "GL_COMPRESSED_SIGNED_RG11_EAC",GL_COMPRESSED_SIGNED_RG11_EAC );
 
     // Texture source types
     glTable.add( "GL_BYTE", GL_BYTE );
@@ -538,6 +670,13 @@ ObjectWrapperManager::ObjectWrapperManager()
     arrayTable.add( "Vec3dArray", ID_VEC3D_ARRAY );
     arrayTable.add( "Vec4dArray", ID_VEC4D_ARRAY );
 
+    arrayTable.add( "Vec2iArray", ID_VEC2I_ARRAY );
+    arrayTable.add( "Vec3iArray", ID_VEC3I_ARRAY );
+    arrayTable.add( "Vec4iArray", ID_VEC4I_ARRAY );
+    arrayTable.add( "Vec2uiArray", ID_VEC2UI_ARRAY );
+    arrayTable.add( "Vec3uiArray", ID_VEC3UI_ARRAY );
+    arrayTable.add( "Vec4uiArray", ID_VEC4UI_ARRAY );
+
     IntLookup& primitiveTable = _globalMap["PrimitiveType"];
 
     primitiveTable.add( "DrawArrays", ID_DRAWARRAYS );
@@ -556,10 +695,12 @@ ObjectWrapperManager::ObjectWrapperManager()
     primitiveTable.add( "GL_QUADS", GL_QUADS );
     primitiveTable.add( "GL_QUAD_STRIP", GL_QUAD_STRIP );
     primitiveTable.add( "GL_POLYGON", GL_POLYGON );
-    primitiveTable.add( "GL_LINES_ADJACENCY_EXT", GL_LINES_ADJACENCY_EXT );
-    primitiveTable.add( "GL_LINE_STRIP_ADJACENCY_EXT", GL_LINE_STRIP_ADJACENCY_EXT );
-    primitiveTable.add( "GL_TRIANGLES_ADJACENCY_EXT", GL_TRIANGLES_ADJACENCY_EXT );
-    primitiveTable.add( "GL_TRIANGLE_STRIP_ADJACENCY_EXT", GL_TRIANGLE_STRIP_ADJACENCY_EXT );
+
+    primitiveTable.add2("GL_LINES_ADJACENCY_EXT", "GL_LINES_ADJACENCY", GL_LINES_ADJACENCY );
+    primitiveTable.add2("GL_LINE_STRIP_ADJACENCY_EXT", "GL_LINE_STRIP_ADJACENCY", GL_LINE_STRIP_ADJACENCY );
+    primitiveTable.add2("GL_TRIANGLES_ADJACENCY_EXT", "GL_TRIANGLES_ADJACENCY", GL_TRIANGLES_ADJACENCY );
+    primitiveTable.add2("GL_TRIANGLE_STRIP_ADJACENCY_EXT", "GL_TRIANGLE_STRIP_ADJACENCY", GL_TRIANGLE_STRIP_ADJACENCY );
+
     primitiveTable.add( "GL_PATCHES", GL_PATCHES );
 }
 
@@ -571,6 +712,8 @@ ObjectWrapperManager::~ObjectWrapperManager()
 void ObjectWrapperManager::addWrapper( ObjectWrapper* wrapper )
 {
     if ( !wrapper ) return;
+
+    OpenThreads::ScopedLock<OpenThreads::ReentrantMutex> lock(_wrapperMutex);
 
     WrapperMap::iterator itr = _wrappers.find( wrapper->getName() );
     if ( itr!=_wrappers.end() )
@@ -585,12 +728,16 @@ void ObjectWrapperManager::removeWrapper( ObjectWrapper* wrapper )
 {
     if ( !wrapper ) return;
 
+    OpenThreads::ScopedLock<OpenThreads::ReentrantMutex> lock(_wrapperMutex);
+
     WrapperMap::iterator itr = _wrappers.find( wrapper->getName() );
     if ( itr!=_wrappers.end() ) _wrappers.erase( itr );
 }
 
 ObjectWrapper* ObjectWrapperManager::findWrapper( const std::string& name )
 {
+    OpenThreads::ScopedLock<OpenThreads::ReentrantMutex> lock(_wrapperMutex);
+
     WrapperMap::iterator itr = _wrappers.find( name );
     if ( itr!=_wrappers.end() ) return itr->second.get();
 
@@ -600,17 +747,22 @@ ObjectWrapper* ObjectWrapperManager::findWrapper( const std::string& name )
     {
         std::string libName = std::string( name, 0, posDoubleColon );
 
+        ObjectWrapper* found=0;
         std::string nodeKitLib = osgDB::Registry::instance()->createLibraryNameForNodeKit(libName);
         if ( osgDB::Registry::instance()->loadLibrary(nodeKitLib)==osgDB::Registry::LOADED )
-            return findWrapper(name);
+            found= findWrapper(name);
 
         std::string pluginLib = osgDB::Registry::instance()->createLibraryNameForExtension(std::string("serializers_")+libName);
         if ( osgDB::Registry::instance()->loadLibrary(pluginLib)==osgDB::Registry::LOADED )
-            return findWrapper(name);
+            found= findWrapper(name);
 
         pluginLib = osgDB::Registry::instance()->createLibraryNameForExtension(libName);
         if ( osgDB::Registry::instance()->loadLibrary(pluginLib)==osgDB::Registry::LOADED )
-            return findWrapper(name);
+            found= findWrapper(name);
+
+        if (found) found->setupAssociatesRevisionsInheritanceIfRequired();
+
+        return found;
     }
     return NULL;
 }
@@ -618,6 +770,8 @@ ObjectWrapper* ObjectWrapperManager::findWrapper( const std::string& name )
 void ObjectWrapperManager::addCompressor( BaseCompressor* compressor )
 {
     if ( !compressor ) return;
+
+    OpenThreads::ScopedLock<OpenThreads::ReentrantMutex> lock(_wrapperMutex);
 
     CompressorMap::iterator itr = _compressors.find( compressor->getName() );
     if ( itr!=_compressors.end() )
@@ -632,12 +786,16 @@ void ObjectWrapperManager::removeCompressor( BaseCompressor* compressor )
 {
     if ( !compressor ) return;
 
+    OpenThreads::ScopedLock<OpenThreads::ReentrantMutex> lock(_wrapperMutex);
+
     CompressorMap::iterator itr = _compressors.find( compressor->getName() );
     if ( itr!=_compressors.end() ) _compressors.erase( itr );
 }
 
 BaseCompressor* ObjectWrapperManager::findCompressor( const std::string& name )
 {
+    OpenThreads::ScopedLock<OpenThreads::ReentrantMutex> lock(_wrapperMutex);
+
     CompressorMap::iterator itr = _compressors.find( name );
     if ( itr!=_compressors.end() ) return itr->second.get();
 

@@ -47,7 +47,7 @@ extern "C" {
 #include "bu/units.h"
 #include "bu/vls.h"
 
-#include "fb.h"
+#include "dm.h"
 #include "raytrace.h"
 
 #include "./burst.h"

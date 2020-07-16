@@ -638,15 +638,15 @@ class OSGWIDGET_EXPORT Window:
         // This method is passed the additional values by which width and height should be
         // modified as calculed by the parent method, Window::resize. Keep in mind that these
         // values can be negative (indicating a potential "shrink" request) or positive (which
-        // would indicate a "grow" reqeust).
+        // would indicate a "grow" request).
         virtual void _resizeImplementation(point_type, point_type) = 0;
 
         // These are made into implementation functions since getting the width or height
         // of a window can potentially be an expensive operation, and we'll want to cache
-        // results if possible (which is handled transparently by the actualy Window::resize
+        // results if possible (which is handled transparently by the actual Window::resize
         // method). They return a Sizes struct which contains two members: cur (for current)
         // and min (minimum). It's important that the Window know it's minimum possible
-        // size so that it can ignore invaled requests to resize.
+        // size so that it can ignore invalid requests to resize.
         //
         // Default versions using BoundingBox calculations are provided, but some Windows
         // override this (Table, Box).

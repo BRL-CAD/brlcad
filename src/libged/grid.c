@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 
-void
+int
 ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
 {
     int nh, nv;		/* whole grid units */
@@ -46,11 +46,11 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
     fastf_t inv_sf;
 
     if (gedp->ged_gvp == GED_VIEW_NULL)
-	return;
+	return 0;
 
     if (ZERO(gedp->ged_gvp->gv_grid.res_h) ||
 	ZERO(gedp->ged_gvp->gv_grid.res_v))
-	return;
+	return 0;
 
     sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;
     inv_sf = 1 / sf;
@@ -85,6 +85,8 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
 
     *vx *= inv_sf;
     *vy *= inv_sf;
+
+    return 1;
 }
 
 
@@ -99,7 +101,7 @@ grid_vsnap(struct ged *gedp)
     ged_snap_to_grid(gedp, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_pt);
-    ged_view_update(gedp->ged_gvp);
+    bview_update(gedp->ged_gvp);
 }
 
 
@@ -181,6 +183,14 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
+    // TODO - need more sophisticated grid drawing - when zoomed out too far
+    // grid disappears.  Need to simply draw a coarse grid that aligns with the
+    // finer grid under it.
+    //
+    // TODO - when zoomed in so close the nearest grid points are not visible,
+    // should probably disable grid snapping automatically and assume the goal
+    // is free-form movement at that scale, since there are no visible snapping
+    // points to target...
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.draw);

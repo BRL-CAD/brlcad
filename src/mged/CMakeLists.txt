@@ -1,20 +1,3 @@
-set(MGED_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${TCLCAD_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  ${DM_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
-  ${TK_INCLUDE_PATH}
-  ${TCL_INCLUDE_PATH}
-  ${TERMIO_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
-
-BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
-
 set(MGED_SOURCES
   adc.c
   arbs.c
@@ -71,13 +54,46 @@ endif(TARGET libtermio)
 # Ideally we'd build as GUI for Windows to avoid the command window popping up,
 # but I'm not sure if that would be a problem for scripting with mged.exe on
 # Windows so leave it for now...
-BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
+if (BRLCAD_ENABLE_TCL)
 
-# mged depends on the creation/installation of all the
-# tclscripts.
-foreach(item ${tclindex_target_list})
-  ADD_DEPENDENCIES(mged ${item})
-endforeach(item ${tclindex_target_list})
+  set(MGED_INCLUDE_DIRS
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${TCLCAD_INCLUDE_DIRS}
+    ${GED_INCLUDE_DIRS}
+    ${WDB_INCLUDE_DIRS}
+    ${DM_INCLUDE_DIRS}
+    ${BU_INCLUDE_DIRS}
+    ${NMG_INCLUDE_DIRS}
+    ${TK_INCLUDE_PATH}
+    ${TCL_INCLUDE_PATH}
+    ${TERMIO_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+  BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
+
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
+  ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm-ogl dm-wgl)
+
+  # mged depends on the creation/installation of all the
+  # tclscripts.
+  foreach(item ${tclindex_target_list})
+    add_dependencies(mged ${item})
+  endforeach(item ${tclindex_target_list})
+
+else (BRLCAD_ENABLE_TCL)
+
+  CMAKEFILES(${MGED_SOURCES})
+
+endif (BRLCAD_ENABLE_TCL)
+
+if (NOT BRLCAD_ENABLE_TCL)
+  set(MGED_INCLUDE_DIRS
+    ${BU_INCLUDE_DIRS}
+    )
+  BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
+endif (NOT BRLCAD_ENABLE_TCL)
 
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 

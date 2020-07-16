@@ -47,7 +47,7 @@
 #include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "icv.h"
 
 #include "./rtuif.h"
@@ -597,11 +597,11 @@ extern double airdensity;
 static unsigned int clt_mode;           /* Active render buffers */
 static uint8_t clt_o[2];		/* Sub buffer offsets in bytes: {CLT_COLOR, MAX} */
 
-static fb *clt_fbp = FB_NULL;
+static struct fb *clt_fbp = FB_NULL;
 
 
 void
-clt_connect_fb(fb *fbp)
+clt_connect_fb(struct fb *fbp)
 {
     clt_fbp = fbp;
 }

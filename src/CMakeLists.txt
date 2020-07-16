@@ -35,7 +35,6 @@ set(level_1_dirs
 
 set(level_2_dirs
   libpkg
-  libfb
   libgcv
   libanalyze
   liboptical
@@ -72,6 +71,7 @@ set(level_3_dirs
   shapes
   sig
   util
+  qged
   external
   ${non_win32_dirs}
   # tclscripts must come before applications like

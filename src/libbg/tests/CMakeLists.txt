@@ -63,6 +63,16 @@ BRLCAD_ADDEXEC(bg_lseg_lseg_dist lseg_lseg.c "libbg;libbn;libbu" TEST)
 
 add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
 
+#  ************ lseg_lseg.c tests ***********
+
+BRLCAD_ADDEXEC(bg_lseg_pt_dist lseg_pt.c "libbg;libbn;libbu" TEST)
+add_test(NAME bg_lseg_pt_dist_case0  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,0,0 0,0,0 0)
+add_test(NAME bg_lseg_pt_dist_case1  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -5,-5,-5 -5,-5,-5, 0)
+add_test(NAME bg_lseg_pt_dist_case2  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,5,5 5,5,5, 0)
+add_test(NAME bg_lseg_pt_dist_case3  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -10,-5,-10 -5,-5,-5 7.07107 )
+add_test(NAME bg_lseg_pt_dist_case4  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,10,10 5,5,5 7.07107)
+add_test(NAME bg_lseg_pt_dist_case5  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,-5,-5 -3.33333,-3.33333,-3.33333 4.08248)
+
 #  ************ tri_ray.c tests ***********
 
 BRLCAD_ADDEXEC(bg_tri_ray_isect tri_ray_isect.cpp "libbg;libbn;libbu" TEST)
@@ -129,6 +139,14 @@ add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -
 BRLCAD_ADDEXEC(bg_trimesh_pt_in trimesh_pt_in.c "libbg;libbn;libbu" TEST)
 
 add_test(NAME bg_trimesh_pt_in_basic   COMMAND bg_trimesh_pt_in 1)
+
+#  ************ polygon_op.cpp tests ***********
+
+BRLCAD_ADDEXEC(bg_polygon_op polygon_op.c "libbg;libbn;libbu" TEST)
+
+add_test(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
+
+
 
 CMAKEFILES(CMakeLists.txt)
 

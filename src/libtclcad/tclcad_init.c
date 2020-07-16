@@ -19,17 +19,140 @@
  */
 /** @file tclcad_init.c
  *
- * Functions for initializing Tcl environments.
+ * Functions for initializing Tcl environments and BRL-CAD's libtclcad
+ * interface.
  *
  */
 
 
 #include "common.h"
+
+#define RESOURCE_INCLUDED 1
 #include <tcl.h>
 #ifdef HAVE_TK
 #  include <tk.h>
 #endif
+
+#include "vmath.h"
+#include "bn.h"
+#include "dm.h"
+#include "raytrace.h"
 #include "tclcad.h"
+
+/* Private headers */
+#include "brlcad_version.h"
+#include "tclcad_private.h"
+
+int
+library_initialized(int setit)
+{
+    static int initialized = 0;
+    if (setit)
+	initialized = 1;
+
+    return initialized;
+}
+
+
+static int
+wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;
+
+    return ctp->ct_func(interp, argc, argv);
+}
+
+
+void
+tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
+{
+    struct bu_cmdtab *ctp = NULL;
+
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, wrapper_func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+    }
+}
+
+
+int
+Tclcad_Init(Tcl_Interp *interp)
+{
+    if (library_initialized(0))
+	return TCL_OK;
+
+    if (Tcl_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+
+#ifdef HAVE_TK
+    if (Tk_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+#endif
+
+    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+    tclcad_auto_path(interp);
+
+    /* Initialize [incr Tcl] */
+    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+      bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+      return TCL_ERROR;
+    }
+
+#ifdef HAVE_TK
+    /* Initialize [incr Tk] */
+    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+      bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+      return TCL_ERROR;
+    }
+#endif
+
+    /* Initialize the Iwidgets package */
+    if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize libstruct dm */
+    if (Dm_Init(interp) == TCL_ERROR) {
+	bu_log("Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize libbu */
+    if (Bu_Init(interp) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize libbn */
+    if (Bn_Init(interp) == TCL_ERROR) {
+	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize librt */
+    if (Rt_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize the GED object */
+    if (Ged_Init(interp) == TCL_ERROR) {
+	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* initialize command history objects */
+    Cho_Init(interp);
+
+    Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
+
+    (void)library_initialized(1);
+
+    return TCL_OK;
+}
+
 
 /* avoid including itcl.h/itk.h due to their usage of internal headers */
 extern int Itcl_Init(Tcl_Interp *);
@@ -221,24 +344,17 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     }
     Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
 
-    /* Initialize libdm */
+    /* Initialize libstruct dm */
     if (Dm_Init(interp) == TCL_ERROR) {
 	if (tlog) bu_vls_printf(tlog, "Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	ret = TCL_ERROR;
 	Tcl_ResetResult(interp);
     }
     Tcl_StaticPackage(interp, "Dm", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
-
-    /* Initialize libfb */
-    if (Fb_Init(interp) == TCL_ERROR) {
-	if (tlog) bu_vls_printf(tlog, "Fb_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	ret = TCL_ERROR;
-	Tcl_ResetResult(interp);
-    }
-    Tcl_StaticPackage(interp, "Fb", Fb_Init, (Tcl_PackageInitProc *) NULL);
+    Tcl_StaticPackage(interp, "Fb", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
 
     /* Initialize libged */
-    if (Go_Init(interp) == TCL_ERROR) {
+    if (Ged_Init(interp) == TCL_ERROR) {
 	if (tlog) bu_vls_printf(tlog, "Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	ret = TCL_ERROR;
 	Tcl_ResetResult(interp);
