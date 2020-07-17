@@ -335,6 +335,16 @@ set(regress_outfiles
   lights.pix
   mged.g
   mged.log
+  asc.log
+  moss_v4.asc
+  moss_v4.g
+  moss_v4_asc_v4.g
+  moss_v4_asc_v4_v5.g
+  moss_v4_asc_v5.g
+  moss_v5.asc
+  moss_v5.g
+  moss_v5_basic.g
+  v4.asc
   moss.asc
   moss.g
   moss.log
