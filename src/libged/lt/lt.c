@@ -29,7 +29,7 @@
 
 #include "bu/getopt.h"
 #include "bu/cmd.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static int

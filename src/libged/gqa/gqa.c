@@ -48,7 +48,7 @@
 #include "bn/plot3.h"
 #include "analyze.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 struct analyze_densities *_gd_densities;
 char *_gd_densities_source;

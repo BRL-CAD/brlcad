@@ -801,7 +801,7 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 
 #else
 
-#include "ged_private.h"
+#include "../ged_private.h"
 
 /**
  * Dummy graph function in case no Adaptagrams library is found.

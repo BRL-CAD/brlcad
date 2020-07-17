@@ -35,7 +35,7 @@
 #include "raytrace.h"
 
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;

@@ -29,7 +29,7 @@
  */
 #include "common.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 extern int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);

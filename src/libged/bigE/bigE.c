@@ -40,7 +40,7 @@
 #include "raytrace.h"
 #include "rt/func.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 /* #define debug 1 */

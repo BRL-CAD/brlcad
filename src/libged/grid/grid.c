@@ -31,7 +31,7 @@
 
 #include "vmath.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int

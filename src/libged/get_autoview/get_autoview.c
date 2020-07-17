@@ -27,7 +27,7 @@
 #include "ged.h"
 
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 /*
  * Get the view size and center such that all displayed solids would be in view

@@ -32,7 +32,7 @@
 #include "rt/geom.h"
 #include "ged/objects.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static char *p_arb3pt[] = {

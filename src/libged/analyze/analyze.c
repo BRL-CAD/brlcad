@@ -38,7 +38,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 /**
  * TODO: primitives that still need implementing

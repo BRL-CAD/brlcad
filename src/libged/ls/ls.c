@@ -34,7 +34,7 @@
 #include "bu/sort.h"
 #include "bu/units.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 static void
 vls_long_dpp(struct ged *gedp,

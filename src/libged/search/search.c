@@ -39,8 +39,8 @@
 #include "bu/path.h"
 #include "bu/sort.h"
 
-#include "./alphanum.h"
-#include "./ged_private.h"
+#include "../alphanum.h"
+#include "../ged_private.h"
 
 static int
 dp_name_compare(const void *d1, const void *d2, void *arg)

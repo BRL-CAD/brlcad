@@ -27,7 +27,7 @@
 #include <stdlib.h>
 
 #include "ged.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 /*
  * Returns the solid table & vector list as a string

@@ -36,7 +36,7 @@
 #include "raytrace.h"
 
 #include "./joint.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 static unsigned int J_DEBUG = 0;
 #define DEBUG_J_MESH	0x00000001

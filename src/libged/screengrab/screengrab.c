@@ -31,7 +31,7 @@
 #include "icv.h"
 #include "dm.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 static int
 image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)

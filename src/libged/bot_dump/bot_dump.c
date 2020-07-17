@@ -49,7 +49,7 @@
 
 #include "dm/bview.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 #define V3ARGS_SCALE(_a) (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor

@@ -54,7 +54,7 @@
 
 #include "bu/cmd.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 #ifndef __arraycount
 #  define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))

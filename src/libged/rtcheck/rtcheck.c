@@ -35,7 +35,7 @@
 
 #include "bu/app.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 struct ged_rtcheck {
     struct ged_subprocess *rrtp;

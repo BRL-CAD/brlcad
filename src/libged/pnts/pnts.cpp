@@ -44,8 +44,8 @@ extern "C" {
 #include "rt/geom.h"
 #include "wdb.h"
 #include "analyze.h"
-#include "./ged_private.h"
-#include "./pnts_util.h"
+#include "../ged_private.h"
+#include "../pnts_util.h"
 }
 
 HIDDEN void

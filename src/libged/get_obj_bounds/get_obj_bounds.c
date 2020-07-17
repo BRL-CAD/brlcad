@@ -31,7 +31,7 @@
 #include "bu/str.h"
 #include "ged.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int

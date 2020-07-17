@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "bu/debug.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int

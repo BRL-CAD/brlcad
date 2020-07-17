@@ -33,7 +33,7 @@
 #include "bn.h"
 #include "bn/plot3.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 #if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN) && !defined(popen)
 extern FILE *popen(const char *command, const char *type);

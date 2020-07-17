@@ -48,8 +48,8 @@
 #include "bu/process.h"
 #include "vmath.h"
 
-#include "./qray.h"
-#include "./ged_private.h"
+#include "../qray.h"
+#include "../ged_private.h"
 
 /**
  * Invoke nirt with the current view & stuff

@@ -34,7 +34,7 @@
 #include "bn/plot3.h"
 
 #include "rt/solid.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 

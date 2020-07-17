@@ -30,7 +30,7 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 #define AV_STEP BU_PAGE_SIZE

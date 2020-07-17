@@ -32,7 +32,7 @@
 #include "bu/opt.h"
 #include "rt/geom.h"
 #include "wdb.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 /* FIXME - we want the DSP macro for convenience here - should this be in include/rt/dsp.h ? */
 #include "../librt/primitives/dsp/dsp.h"

@@ -107,7 +107,7 @@
 #include "raytrace.h"
 #include "nmg.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 #define REV_BU_LIST_FOR(p, structure, hp)	\

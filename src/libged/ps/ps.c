@@ -35,7 +35,7 @@
 #include "bn.h"
 
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static fastf_t ps_default_ppi = 72.0;

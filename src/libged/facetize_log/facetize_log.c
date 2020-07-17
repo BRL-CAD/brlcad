@@ -31,7 +31,7 @@
 
 #include "bu/hook.h"
 #include "bu/vls.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 static int
 _ged_facetize_bomb_hook(void *cdata, void *str)

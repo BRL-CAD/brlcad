@@ -29,7 +29,7 @@
 
 #include "bu/path.h"
 #include "bu/process.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 /*

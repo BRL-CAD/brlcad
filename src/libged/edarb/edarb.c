@@ -29,7 +29,7 @@
 
 #include "bu/cmd.h"
 #include "rt/arb_edit.h"
-#include "ged_private.h"
+#include "../ged_private.h"
 
 /*
  * An ARB edge is moved by finding the direction of the line

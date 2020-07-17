@@ -32,7 +32,7 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 #define PUSH_MAGIC_ID 0x50495323

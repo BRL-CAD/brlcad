@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "ged.h"
 
-#include "./qray.h"
+#include "../qray.h"
 
 
 static void qray_print_fmts(struct ged *gedp);

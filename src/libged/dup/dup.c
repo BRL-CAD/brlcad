@@ -29,7 +29,7 @@
 
 #include "bu/cmd.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 struct dir_check_stuff {

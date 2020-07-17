@@ -34,7 +34,7 @@
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/getopt.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int

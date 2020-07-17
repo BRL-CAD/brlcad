@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 int
 ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)

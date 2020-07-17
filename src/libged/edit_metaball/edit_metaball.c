@@ -33,7 +33,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 #define GED_METABALL_SCALE(_d, _scale) \

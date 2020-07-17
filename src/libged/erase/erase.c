@@ -30,7 +30,7 @@
 
 
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 /*
  * Erase objects from the display.

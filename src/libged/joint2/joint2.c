@@ -33,7 +33,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 static struct _ged_funtab joint_subcommand_table[] = {
     {"joint ", "",                        "Joint command table",                                NULL, 0, 0,                     FALSE},

@@ -31,7 +31,7 @@
 #include "bu/opt.h"
 #include "analyze.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 int
 ged_gdiff(struct ged *gedp, int argc, const char *argv[])

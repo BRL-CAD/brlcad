@@ -33,7 +33,7 @@
 #include "bu/getopt.h"
 #include "rt/geom.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 HIDDEN int
 move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new_name)

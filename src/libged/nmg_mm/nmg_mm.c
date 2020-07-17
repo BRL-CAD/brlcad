@@ -31,7 +31,7 @@
 #include "bu/cmd.h"
 #include "rt/geom.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 int
 ged_nmg_mm(struct ged *gedp, int argc, const char *argv[])

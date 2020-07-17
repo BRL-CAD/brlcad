@@ -34,7 +34,7 @@
 #include "wdb.h"
 #include "analyze.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 HIDDEN int
 region_flag_set(struct ged *gedp, struct directory *dp) {

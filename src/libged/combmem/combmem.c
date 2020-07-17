@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "bu/getopt.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 enum etypes {
     ETYPES_NULL = -1,

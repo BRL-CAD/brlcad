@@ -33,7 +33,7 @@
 #include "bu/getopt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 typedef enum {

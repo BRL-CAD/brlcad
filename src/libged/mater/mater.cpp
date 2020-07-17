@@ -35,7 +35,7 @@
 #include "bu/path.h"
 #include "analyze.h"
 #include "ged.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 #include <string.h>
 

@@ -30,7 +30,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int

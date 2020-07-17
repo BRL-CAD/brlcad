@@ -34,8 +34,8 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./ged_private.h"
-#include "./pnts_util.h"
+#include "../ged_private.h"
+#include "../pnts_util.h"
 
 static const char *p_half[] = {
     "Enter X, Y, Z of outward pointing normal vector: ",

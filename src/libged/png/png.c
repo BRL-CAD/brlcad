@@ -36,7 +36,7 @@
 #include "bn.h"
 
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static unsigned int size = 512;

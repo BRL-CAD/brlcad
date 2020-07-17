@@ -31,7 +31,7 @@
 
 #include "bu/path.h"
 #include "rt/geom.h"	/* for rt_bot_split (in raytrace.h) */
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int

@@ -34,7 +34,7 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static struct bn_vlblock *preview_vbp;

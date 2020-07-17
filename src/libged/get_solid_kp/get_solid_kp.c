@@ -29,7 +29,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 /*

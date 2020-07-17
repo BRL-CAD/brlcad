@@ -33,7 +33,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 extern int ged_nmg_mm(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_nmg_cmface(struct ged *gedp, int argc, const char *argv[]);

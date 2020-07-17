@@ -38,7 +38,7 @@
 #include "raytrace.h"
 #include "rt/db4.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static char *p_arb4[] = {

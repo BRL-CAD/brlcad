@@ -36,7 +36,7 @@
 #include "bu/app.h"
 #include "bu/process.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 struct _ged_rt_client_data {

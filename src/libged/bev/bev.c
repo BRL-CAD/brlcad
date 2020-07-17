@@ -33,7 +33,7 @@
 #include "bu/getopt.h"
 #include "rt/geom.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static union tree *bev_facetize_tree;

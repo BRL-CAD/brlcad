@@ -34,7 +34,7 @@
 #include "rt/geom.h"
 #include "bn/plot3.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static size_t

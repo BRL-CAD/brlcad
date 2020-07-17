@@ -47,7 +47,7 @@
 #include "raytrace.h"
 #include "analyze.h"
 #include "wdb.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 #define SOLID_OBJ_NAME 1
 #define COMB_OBJ_NAME 2

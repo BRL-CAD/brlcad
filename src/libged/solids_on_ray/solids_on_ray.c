@@ -33,7 +33,7 @@
 #include "bu/cmd.h"
 
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 /*

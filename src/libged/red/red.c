@@ -37,7 +37,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 char _ged_tmpfil[MAXPATHLEN] = {0};

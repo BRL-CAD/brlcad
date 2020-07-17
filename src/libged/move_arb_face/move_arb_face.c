@@ -31,7 +31,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 /* The arbX_faces arrays are used for relative face movement. */

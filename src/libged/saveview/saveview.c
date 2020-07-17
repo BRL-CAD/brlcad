@@ -34,7 +34,7 @@
 #include "bu/getopt.h"
 
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 /**

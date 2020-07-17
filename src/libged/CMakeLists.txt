@@ -23,6 +23,7 @@ if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
 endif(ADAPTAGRAMS_FOUND)
 
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/debug")
 set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
 
 add_custom_command(OUTPUT ${DEBUG_CMD_CPP}
@@ -30,9 +31,10 @@ add_custom_command(OUTPUT ${DEBUG_CMD_CPP}
   DEPENDS debug2c
   COMMENT "[DEBUG2C] Scanning for debugging variables"
   )
-set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
 DISTCLEAN(${DEBUG_CMD_CPP})
+set_source_files_properties(debug/debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
 
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/env")
 set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
 
 add_custom_command(OUTPUT ${ENV_CMD_C}
@@ -40,8 +42,8 @@ add_custom_command(OUTPUT ${ENV_CMD_C}
   DEPENDS env2c
   COMMENT "[ENV2C] Scanning for environment variable usage"
   )
-set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
 DISTCLEAN(${ENV_CMD_C})
+set_source_files_properties(env/env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
 
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
@@ -155,7 +157,7 @@ set(LIBGED_SOURCES
   fracture/fracture.c
   gdiff/gdiff.c
   gdiff/gdiff.c
-  ged/ged.c
+  ged.c
   ged_util/ged_util.c
   get/get.c
   get_autoview/get_autoview.c
@@ -243,7 +245,7 @@ set(LIBGED_SOURCES
   png/png.c
   png2fb/png2fb.c
   pnts/pnts.cpp
-  pnts_util/pnts_util.c
+  pnts_util.c
   polyclip/polyclip.cpp
   prcolor/prcolor.c
   prefix/prefix.c

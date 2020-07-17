@@ -30,7 +30,7 @@
 #include "bu/cmd.h"
 #include "rt/geom.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 void remove_vertex(const struct model* m, point_t rv)
 {

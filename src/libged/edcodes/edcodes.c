@@ -33,7 +33,7 @@
 #include "bu/file.h"
 #include "bu/getopt.h"
 #include "bu/sort.h"
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 #define EDCODES_OK GED_OK
