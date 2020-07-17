@@ -73,7 +73,7 @@ FAILED=0
 CASES='2 3'
 
 for i in $CASES ; do
-    run "$PATH_TO_THIS/dsp/run-dsp-case-set-$i.sh" "$1"
+    run "$PATH_TO_THIS/run-dsp-case-set-$i.sh" "$1"
     ret=$?
     if [ $ret -gt 0 ] ; then
 	FAILED="`expr $FAILED + 1`"

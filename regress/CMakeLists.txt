@@ -18,6 +18,9 @@ set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 # ASC file Conversion Tests
 add_subdirectory(asc)
 
+# DSP Regression Tests
+add_subdirectory(dsp)
+
 # Image Conversion Regression Tests
 add_subdirectory(icv)
 
@@ -26,6 +29,9 @@ add_subdirectory(ged)
 
 # Geometry Conversion Regression Tests
 add_subdirectory(gcv)
+
+# moss.g Regression Tests
+add_subdirectory(moss)
 
 # NURBS Regression Tests
 add_subdirectory(nurbs)
@@ -64,8 +70,6 @@ add_subdirectory(user)
 if(SH_EXEC)
 
   if (TARGET mged AND TARGET asc2g)
-    add_test(NAME regress-moss COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/moss.sh" ${CMAKE_SOURCE_DIR})
-    BRLCAD_REGRESSION_TEST(regress-moss "rt;asc2g;pixdiff;pix-png;png-pix" TEST_DEFINED)
 
     add_test(NAME regress-lights COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/lights.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-lights "rt;asc2g;pixdiff" TEST_DEFINED)
@@ -106,9 +110,6 @@ if(SH_EXEC)
     add_test(NAME regress-comgeom COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/comgeom.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-comgeom "mged;asc2g;vdeck;comgeom-g" TEST_DEFINED)
 
-    add_test(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/dsp.sh" ${CMAKE_SOURCE_DIR})
-    BRLCAD_REGRESSION_TEST(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
-
   endif (TARGET mged AND TARGET asc2g)
 
   add_test(NAME regress-usage COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/usage.sh" ${CMAKE_SOURCE_DIR})
@@ -123,29 +124,6 @@ endif(SH_EXEC)
 CMAKEFILES(
   bots.sh
   comgeom.sh
-  dsp.sh
-  dsp/asc2dsp-new.asc
-  dsp/asc2dsp-old.asc
-  dsp/dsp-1-1.asc
-  dsp/dsp-1-2.asc
-  dsp/dsp-2-1.asc
-  dsp/dsp-2-2.asc
-  dsp/dsp-2-3.asc
-  dsp/dsp-2-4.asc
-  dsp/dsp-2-5.asc
-  dsp/dsp-3-1.asc
-  dsp/dsp-3-2.asc
-  dsp/dsp-3-3.asc
-  dsp/dsp-3-4.asc
-  dsp/dsp-3-5.asc
-  dsp/dsp-3-6.asc
-  dsp/dsp-3-7.asc
-  dsp/dsp-3-8.asc
-  dsp/dsp-common.sh
-  dsp/run-dsp-case-set-0.sh
-  dsp/run-dsp-case-set-1.sh
-  dsp/run-dsp-case-set-2.sh
-  dsp/run-dsp-case-set-3.sh
   flawfinder.sh
   fuzz/CMakeLists.txt
   fuzz/fuzz_ged.cpp
@@ -161,8 +139,6 @@ CMAKEFILES(
   lights.sh
   mged.sh
   mged_test.sh
-  moss.ref.pix
-  moss.sh
   nirt.sh
   nirt/ovlps.g
   red.sh
@@ -217,85 +193,6 @@ set(regress_outfiles
   comgeom.t-v4.g
   comgeom.t-v5.g
   density_table.txt
-  dsp-2-1.bw
-  dsp-2-1.dsp
-  dsp-2-1.g
-  dsp-2-1.log
-  dsp-2-1.pix
-  dsp-2-1.rt.pix
-  dsp-2-2.bw
-  dsp-2-2.dsp
-  dsp-2-2.g
-  dsp-2-2.log
-  dsp-2-2.pix
-  dsp-2-2.rt.pix
-  dsp-2-3.bw
-  dsp-2-3.dsp
-  dsp-2-3.g
-  dsp-2-3.log
-  dsp-2-3.pix
-  dsp-2-3.rt.pix
-  dsp-2-4.bw
-  dsp-2-4.dsp
-  dsp-2-4.g
-  dsp-2-4.log
-  dsp-2-4.pix
-  dsp-2-4.rt.pix
-  dsp-2-5.bw
-  dsp-2-5.dsp
-  dsp-2-5.g
-  dsp-2-5.log
-  dsp-2-5.pix
-  dsp-2-5.rt.pix
-  dsp-3-1.bw
-  dsp-3-1.dsp
-  dsp-3-1.g
-  dsp-3-1.log
-  dsp-3-1.pix
-  dsp-3-1.rt.pix
-  dsp-3-2.bw
-  dsp-3-2.dsp
-  dsp-3-2.g
-  dsp-3-2.log
-  dsp-3-2.pix
-  dsp-3-2.rt.pix
-  dsp-3-3.bw
-  dsp-3-3.dsp
-  dsp-3-3.g
-  dsp-3-3.log
-  dsp-3-3.pix
-  dsp-3-3.rt.pix
-  dsp-3-4.bw
-  dsp-3-4.dsp
-  dsp-3-4.g
-  dsp-3-4.log
-  dsp-3-4.pix
-  dsp-3-4.rt.pix
-  dsp-3-5.bw
-  dsp-3-5.dsp
-  dsp-3-5.g
-  dsp-3-5.log
-  dsp-3-5.pix
-  dsp-3-5.rt.pix
-  dsp-3-6.bw
-  dsp-3-6.dsp
-  dsp-3-6.g
-  dsp-3-6.log
-  dsp-3-6.pix
-  dsp-3-6.rt.pix
-  dsp-3-7.bw
-  dsp-3-7.dsp
-  dsp-3-7.g
-  dsp-3-7.log
-  dsp-3-7.pix
-  dsp-3-7.rt.pix
-  dsp-3-8.bw
-  dsp-3-8.dsp
-  dsp-3-8.g
-  dsp-3-8.log
-  dsp-3-8.pix
-  dsp-3-8.rt.pix
-  dsp.log
   gqa.adj_air.plot3
   gqa.exp_air.plot3
   gqa.g
@@ -325,14 +222,6 @@ set(regress_outfiles
   mged.g
   mged.log
   asc.log
-  moss.asc
-  moss.g
-  moss.log
-  moss.pix
-  moss.pix.diff
-  moss.pix.png
-  moss.pix.png.pix
-  moss.roundtrip.diff
   nirt.g
   nirt.log
   nirt.mged
