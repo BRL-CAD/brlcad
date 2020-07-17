@@ -246,7 +246,7 @@ if test ! -f "$GZIP" ; then
 fi
 
 # make our starting database
-$GZIP -d -c "$PATH_TO_THIS/tgms/m35.asc.gz" > iges.m35.asc
+$GZIP -d -c "$PATH_TO_THIS/m35.asc.gz" > iges.m35.asc
 $ASC2G iges.m35.asc iges.m35.g
 
 # and test it (note it should work with the '-f' option, but fail

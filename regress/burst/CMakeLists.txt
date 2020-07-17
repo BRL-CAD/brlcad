@@ -7,7 +7,7 @@ set(BURST_INPUT_FILES
   )
 
 if (TARGET ktank.g)
-  BRLCAD_REGRESSION_TEST(regress-burst "nburst;ktank.g" EXEC burst)
+  BRLCAD_REGRESSION_TEST(regress-burst "nburst;ktank.g" EXEC nburst)
 
   set(BURST_CLEAN_FILES
     ktank_burst.plot
