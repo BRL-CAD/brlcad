@@ -427,7 +427,7 @@ set(ged_ignore_files
   brep/ged_brep.h
   check/check_private.h
   ged_private.h
-  joint.h
+  joint/joint.h
   osg.cpp
   pnts_util.h
   qray.h
