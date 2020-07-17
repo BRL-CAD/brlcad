@@ -67,6 +67,7 @@ endif (BRLCAD_ENABLE_TCL)
 set(tclcad_ignore_files
   ${LIBTCLCAD_SRCS}
   tclcad_private.h
+  view/view.h
   )
 CMAKEFILES(${tclcad_ignore_files})
 CMAKEFILES(CMakeLists.txt)
