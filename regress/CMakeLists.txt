@@ -51,6 +51,9 @@ add_subdirectory(rtwizard)
 # MGED command tests
 add_subdirectory(mged)
 
+# rtweight command tests
+add_subdirectory(weight)
+
 # Fuzz tests
 include(Fuzzer)
 brlcad_check_fuzzer()
@@ -91,9 +94,6 @@ if(SH_EXEC)
 
     add_test(NAME regress-iges COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/iges.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-iges "iges-g;g-iges;mged;asc2g" TEST_DEFINED)
-
-    add_test(NAME regress-weight COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/weight.sh" ${CMAKE_SOURCE_DIR})
-    BRLCAD_REGRESSION_TEST(regress-weight "rtweight;mged" TEST_DEFINED)
 
     add_test(NAME regress-gqa COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/gqa.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-gqa "gqa;mged" TEST_DEFINED)
@@ -165,13 +165,10 @@ CMAKEFILES(
   tgms/solids.mged
   tgms/solids.simple.mged
   usage.sh
-  weight.sh
   )
 
 # list of temporary files
 set(regress_outfiles
-  .density
-  .density.weight1
   bots.diff.log
   bots.diff.pix
   bots.g
@@ -274,19 +271,6 @@ set(regress_outfiles
   spdi.log
   spdi.mged
   spdi.pix
-  weight.g
-  weight.log
-  weight.mged
-  weight.out
-  weight.out_ns
-  weight.ref
-  weight.ref_ns
-  weight.test2.g
-  weight.test2.mged
-  weight.test2.out
-  weight.test2.out_ns
-  weight.test2.ref
-  weight.test2.ref_ns
   )
 
 foreach(outfile ${regress_outfiles})
