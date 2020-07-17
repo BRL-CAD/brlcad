@@ -15,6 +15,9 @@ endif (CMAKE_CONFIGURATION_TYPES)
 set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
+# ASC file Conversion Tests
+add_subdirectory(asc)
+
 # Image Conversion Regression Tests
 add_subdirectory(icv)
 
@@ -106,13 +109,7 @@ if(SH_EXEC)
     add_test(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/dsp.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
 
-    add_test(NAME regress-asc COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/asc.sh" ${CMAKE_SOURCE_DIR})
-    BRLCAD_REGRESSION_TEST(regress-asc "asc2g;g2asc;gdiff;dbupgrade" TEST_DEFINED)
-
   endif (TARGET mged AND TARGET asc2g)
-
-  add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-asc2dsp "cv;asc2pix;pix-bw;asc2dsp" TEST_DEFINED)
 
   add_test(NAME regress-usage COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/usage.sh" ${CMAKE_SOURCE_DIR})
   BRLCAD_REGRESSION_TEST(regress-usage "rt" STAND_ALONE TEST_DEFINED)
@@ -124,9 +121,6 @@ if(SH_EXEC)
 endif(SH_EXEC)
 
 CMAKEFILES(
-  asc.sh
-  asc/v4.g
-  asc2dsp.sh
   bots.sh
   comgeom.sh
   dsp.sh
@@ -203,10 +197,6 @@ CMAKEFILES(
 set(regress_outfiles
   .density
   .density.weight1
-  asc2dsp.log
-  asc2dsp.new.dsp
-  asc2dsp.old.bw
-  asc2dsp.old.dsp
   bots.diff.log
   bots.diff.pix
   bots.g
@@ -335,15 +325,6 @@ set(regress_outfiles
   mged.g
   mged.log
   asc.log
-  moss_v4.asc
-  moss_v4.g
-  moss_v4_asc_v4.g
-  moss_v4_asc_v4_v5.g
-  moss_v4_asc_v5.g
-  moss_v5.asc
-  moss_v5.g
-  moss_v5_basic.g
-  v4.asc
   moss.asc
   moss.g
   moss.log
