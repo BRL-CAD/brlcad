@@ -34,7 +34,6 @@ set(NHIT_ARGS "box.s 0 0 0 270 90")
 BRLCAD_REGRESSION_TEST(regress-nurbs_${NHIT_NAME} "analyze_nhit" TEST_SCRIPT "${TSCRIPT}" EXEC analyze_nhit)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/regress-nurbs_${NHIT_NAME}.log)
 
-
 CMAKEFILES(
   brep-3dm.tar.bz2
   sph.g

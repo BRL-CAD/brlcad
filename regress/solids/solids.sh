@@ -80,7 +80,7 @@ fi
 # generate TGM from script
 log "... running mged to create simple solids (solids.simple.g)"
 rm -f solids.simple.g solids.simple.rt
-$MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/tgms/solids.simple.mged"
+$MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/solids.simple.mged"
 
 if [ ! -f solids.simple.rt ] ; then
     log "ERROR: mged failed to create solids.simple.rt script"
@@ -133,9 +133,9 @@ if [ ! -f solids.ebm.bw ] ; then
 fi
 
 # generate required pix file
-log "... running $A2P < $PATH_TO_THIS/tgms/solids.dsp.dat > solids.dsp.pix"
+log "... running $A2P < $PATH_TO_THIS/solids.dsp.dat > solids.dsp.pix"
 rm -f solids.dsp.pix
-$A2P < "$PATH_TO_THIS/tgms/solids.dsp.dat" > solids.dsp.pix
+$A2P < "$PATH_TO_THIS/solids.dsp.dat" > solids.dsp.pix
 if [ ! -f solids.dsp.pix ] ; then
     log "ERROR: Failed to generate file 'solids.dsp.pix'"
     log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
@@ -145,7 +145,7 @@ fi
 # generate TGM from script
 log "... generating solids geometry file (solids.g)"
 rm -f solids.g solids.rt
-$MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/tgms/solids.mged"
+$MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/solids.mged"
 
 if [ ! -f solids.rt ] ; then
     log "ERROR: mged failed to create solids.rt script"

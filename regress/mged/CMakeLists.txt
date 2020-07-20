@@ -95,7 +95,28 @@ if (TARGET mged)
     BRLCAD_REGRESSION_TEST(regress-mged_${tname} "mged" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
     DISTCLEAN("${LOG_FILE}")
   endforeach(testfile ${MGED_TESTS})
+
+  # Original shell based test
+  if (SH_EXEC)
+    add_test(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/mged.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-mged mged TEST_DEFINED)
+  endif (SH_EXEC)
+
 endif (TARGET mged)
+
+CMAKEFILES(
+  mged.sh
+  mged_test.sh
+  )
+
+# list of temporary files
+set(mged_outfiles
+  mged.g
+  mged.log
+  )
+
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${mged_outfiles}")
+DISTCLEAN(${mged_outfiles})
 
 CMAKEFILES(
   CMakeLists.txt

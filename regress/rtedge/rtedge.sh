@@ -78,7 +78,7 @@ FAILURES=0
 rm -f rtedge.havoc.g
 
 log "... running rtedge.havoc.g gzip decompress"
-$GZIP -d -c "$PATH_TO_THIS/tgms/havoc.g.gz" > rtedge.havoc.g
+$GZIP -d -c "$PATH_TO_THIS/havoc.g.gz" > rtedge.havoc.g
 
 # get our references
 rm -f rtedge.ref.pix
