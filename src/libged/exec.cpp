@@ -51,7 +51,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
 
     int cret = (*cmd->i->cmd)(gedp, argc, argv);
 
-    if (cmd->i->update_view) {
+    if (cmd->i->opts & GED_CMD_UPDATE_VIEW) {
 	// Do update view callback
     }
 

@@ -67,12 +67,13 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
+//struct ged_cmd_impl zoom_cmd_impl = {"zoom", ged_zoom, GED_CMD_UPDATE_VIEW};
 struct ged_cmd_impl zoom_cmd_impl = {
     "zoom",
     ged_zoom,
-    1,
-    0
+    GED_CMD_UPDATE_VIEW | GED_CMD_ALL_VIEWS
 };
+
 struct ged_cmd zoom_cmd = { &zoom_cmd_impl };
 
 static const struct ged_plugin pinfo = { &zoom_cmd };
