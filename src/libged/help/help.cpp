@@ -27,9 +27,6 @@
 #include "bu/file.h"
 #include "ged.h"
 
-
-HIDDEN struct bu_list *help_cmd(void);
-
 /**
  * get a list of all the files under a given 'dir' filepath,
  * dynamically allocated.  returns the number of files found in an
@@ -269,100 +266,6 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
 
     return 0;
 }
-
-
-HIDDEN int
-help_load(struct ged *gedp)
-{
-    int ret = 0;
-    struct bu_list *hp = help_cmd();
-    struct ged_cmd *cmd;
-
-    for (BU_LIST_FOR(cmd, ged_cmd, hp)) {
-	ret += gedp->add(gedp, cmd);
-    }
-
-    BU_PUT(hp, struct bu_list);
-
-    return ret;
-}
-
-
-HIDDEN void
-help_unload(struct ged *gedp)
-{
-    gedp->del(gedp, "help");
-    gedp->del(gedp, "apropos");
-    gedp->del(gedp, "info");
-    gedp->del(gedp, "man");
-    gedp->del(gedp, "?");
-}
-
-
-HIDDEN struct bu_list *
-help_cmd(void)
-{
-    struct bu_list *hp;
-
-    static struct ged_cmd cmd[6] = {
-	{
-	    BU_LIST_INIT_ZERO, "help",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "apropos",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "info",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "man",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "?",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, NULL, {0}, NULL, NULL, NULL, NULL
-	}
-    };
-
-    BU_GET(hp, struct bu_list);
-    BU_LIST_INIT(hp);
-
-    BU_LIST_PUSH(hp, &(cmd[0].l));
-    BU_LIST_PUSH(hp, &(cmd[1].l));
-    BU_LIST_PUSH(hp, &(cmd[2].l));
-    BU_LIST_PUSH(hp, &(cmd[3].l));
-    BU_LIST_PUSH(hp, &(cmd[4].l));
-
-    return hp;
-}
-
-
-#ifdef STANDALONE
-int main(int ac, char *av[])
-{
-    struct ged ged = {0};
-
-    bu_setprogname(av[0]);
-
-    GED_INIT(&ged, NULL);
-    help_load(&ged);
-    ged_help(&ged, ac, (const char **)av);
-    help_unload(&ged);
-
-    return 0;
-}
-#endif
 
 /*
  * Local Variables:

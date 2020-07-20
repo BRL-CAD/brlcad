@@ -65,39 +65,24 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
     return zoom(gedp, sf);
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl zoom_cmd_impl = {
+    "zoom",
+    ged_zoom,
+    1,
+    0
+};
+struct ged_cmd zoom_cmd = { &zoom_cmd_impl };
 
-HIDDEN int
-zoom_load(struct ged *gedp)
+static const struct ged_plugin pinfo = { &zoom_cmd };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
-    extern const struct ged_cmd *zoom_cmd(void);
-
-    const struct ged_cmd *cmd = zoom_cmd();
-    return gedp->add(gedp, cmd);
+    return &pinfo;
 }
+#endif /* GED_PLUGIN */
 
-
-HIDDEN void
-zoom_unload(struct ged *gedp)
-{
-    gedp->del(gedp, "zoom");
-}
-
-
-const struct ged_cmd *
-zoom_cmd(void)
-{
-    static struct ged_cmd cmd = {
-	BU_LIST_INIT_ZERO,
-	"zoom",
-	"zoom view by specified scale factor",
-	"zoom",
-	&zoom_load,
-	&zoom_unload,
-	&ged_zoom
-    };
-    BU_LIST_MAGIC_SET(&(cmd.l), GED_CMD_MAGIC);
-    return &cmd;
-}
 
 /*
  * Local Variables:
