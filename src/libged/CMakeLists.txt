@@ -47,6 +47,8 @@ set_source_files_properties(env/env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
 
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
+  exec.cpp
+  ged_init.cpp
   3ptarb/3ptarb.c
   adc/adc.c
   adjust/adjust.c
@@ -373,6 +375,8 @@ set(LIBGED_SOURCES
   ${LIBGED_CMD_SRCS}
   )
 
+set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
+
 # Include directories needed by libged users
 set(GED_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
@@ -441,8 +445,13 @@ set(ged_ignore_files
   simulate/rt_motion_state.hpp
   simulate/simulation.hpp
   simulate/utility.hpp
+  include/plugin.h
   )
 CMAKEFILES(${ged_ignore_files})
+
+# Plugin test
+add_subdirectory(help)
+add_subdirectory(zoom)
 
 # Local Variables:
 # tab-width: 8
