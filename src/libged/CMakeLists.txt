@@ -234,15 +234,15 @@ set(LIBGED_SOURCES
   mrot/mrot.c
   nirt/nirt.c
   nmg/nmg.c
-  nmg_cmface/nmg_cmface.c
-  nmg_collapse/nmg_collapse.c
-  nmg_fix_normals/nmg_fix_normals.c
-  nmg_kill_f/nmg_kill_f.c
-  nmg_kill_v/nmg_kill_v.c
-  nmg_make_v/nmg_make_v.c
-  nmg_mm/nmg_mm.c
-  nmg_move_v/nmg_move_v.c
-  nmg_simplify/nmg_simplify.c
+  nmg/nmg_cmface.c
+  nmg/nmg_collapse.c
+  nmg/nmg_fix_normals.c
+  nmg/nmg_kill_f.c
+  nmg/nmg_kill_v.c
+  nmg/nmg_make_v.c
+  nmg/nmg_mm.c
+  nmg/nmg_move_v.c
+  nmg/nmg_simplify.c
   ocenter/ocenter.c
   open/open.c
   orient/orient.c
@@ -588,15 +588,6 @@ add_subdirectory(move_arb_face)
 add_subdirectory(mrot)
 add_subdirectory(nirt)
 add_subdirectory(nmg)
-add_subdirectory(nmg_cmface)
-add_subdirectory(nmg_collapse)
-add_subdirectory(nmg_fix_normals)
-add_subdirectory(nmg_kill_f)
-add_subdirectory(nmg_kill_v)
-add_subdirectory(nmg_make_v)
-add_subdirectory(nmg_mm)
-add_subdirectory(nmg_move_v)
-add_subdirectory(nmg_simplify)
 add_subdirectory(ocenter)
 add_subdirectory(open)
 add_subdirectory(orient)

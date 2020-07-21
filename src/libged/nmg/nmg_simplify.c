@@ -297,26 +297,6 @@ out3:
     return ret;
 }
 
-
-#ifdef GED_PLUGIN
-#include "../include/plugin.h"
-struct ged_cmd_impl nmg_simplify_cmd_impl = {
-    "nmg_simplify",
-    ged_nmg_simplify,
-    GED_CMD_DEFAULT
-};
-
-const struct ged_cmd nmg_simplify_cmd = { &nmg_simplify_cmd_impl };
-const struct ged_cmd *nmg_simplify_cmds[] = { &nmg_simplify_cmd, NULL };
-
-static const struct ged_plugin pinfo = { nmg_simplify_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-
 /*
  * Local Variables:
  * mode: C
