@@ -36,6 +36,14 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
     if (!gedp || !argc || !argv) {
 	return GED_ERROR;
     }
+
+    // TODO - right now this is the map from the libged load - should probably
+    // use this to initialize a struct ged copy when ged_init is called, so
+    // client codes can add their own commands to their gedp...
+    //
+    // The ged_cmds map should always reflect the original, vanilla state of
+    // libged's command set so we have a clean fallback available if we ever
+    // need it to fall back on/recover with.
     std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
     std::string key(argv[0]);
     std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(key);
@@ -51,8 +59,16 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
 
     int cret = (*cmd->i->cmd)(gedp, argc, argv);
 
+    // TODO - for the moment these are the hardcoded default opts.  Eventually
+    // an opts var should be added to struct ged, and each exec call will set
+    // the gedp->opts value to the command defaults.  Then the command option handling
+    // will be able to alter the flags if desired (for example, a flag to suppress
+    // autoview behavior will simply remove the flag from gedp->opts.
     if (cmd->i->opts & GED_CMD_UPDATE_VIEW) {
 	// Do update view callback
+	if (gedp->ged_refresh_handler) {
+	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	}
     }
 
     return cret;
