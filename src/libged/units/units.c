@@ -34,7 +34,7 @@
 
 
 int
-ged_units(struct ged *gedp, int argc, const char *argv[])
+ged_units_core(struct ged *gedp, int argc, const char *argv[])
 {
     double loc2mm;
     const char *str;
@@ -63,7 +63,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 
 	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(vlsp));
 	    bu_vls_free(vlsp);
-	    bu_free(vlsp, "ged_units: vlsp");
+	    bu_free(vlsp, "ged_units_core: vlsp");
 
 	    return GED_OK;
 	}
@@ -112,7 +112,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl units_cmd_impl = {
     "units",
-    ged_units,
+    ged_units_core,
     GED_CMD_DEFAULT
 };
 

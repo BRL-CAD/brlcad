@@ -33,7 +33,7 @@
 
 
 int
-ged_rmat(struct ged *gedp, int argc, const char *argv[])
+ged_rmat_core(struct ged *gedp, int argc, const char *argv[])
 {
     mat_t rotation;
 
@@ -68,7 +68,7 @@ ged_rmat(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rmat_cmd_impl = {
     "rmat",
-    ged_rmat,
+    ged_rmat_core,
     GED_CMD_DEFAULT
 };
 

@@ -1278,7 +1278,7 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
 
 int
-ged_analyze(struct ged *gedp, int argc, const char *argv[])
+ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *ndp;
     int i;
@@ -1317,7 +1317,7 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl analyze_cmd_impl = {
     "analyze",
-    ged_analyze,
+    ged_analyze_core,
     GED_CMD_DEFAULT
 };
 

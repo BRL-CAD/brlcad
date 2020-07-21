@@ -1979,7 +1979,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 
 int
-ged_E(struct ged *gedp, int argc, const char *argv[])
+ged_E_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int c;
@@ -2132,7 +2132,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl bigE_cmd_impl = {
     "E",
-    ged_E,
+    ged_E_core,
     GED_CMD_DEFAULT
 };
 

@@ -39,7 +39,7 @@
  *
  */
 int
-ged_shaded_mode(struct ged *gedp, int argc, const char *argv[])
+ged_shaded_mode_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[0|1|2]";
 
@@ -85,7 +85,7 @@ bad:
 #include "../include/plugin.h"
 struct ged_cmd_impl shaded_mode_cmd_impl = {
     "shaded_mode",
-    ged_shaded_mode,
+    ged_shaded_mode_core,
     GED_CMD_DEFAULT
 };
 

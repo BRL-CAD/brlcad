@@ -117,7 +117,7 @@ draw_png(struct ged *gedp, FILE *fp)
 
 
 int
-ged_png(struct ged *gedp, int argc, const char *argv[])
+ged_png_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     int k;
@@ -212,7 +212,7 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl png_cmd_impl = {
     "png",
-    ged_png,
+    ged_png_core,
     GED_CMD_DEFAULT
 };
 

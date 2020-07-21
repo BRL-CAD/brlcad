@@ -174,7 +174,7 @@ fail:
  *
  */
 int
-ged_putmat(struct ged *gedp, int argc, const char *argv[])
+ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
 {
     int result = GED_OK;	/* Return code */
     char *newargv[20+2];
@@ -252,7 +252,7 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl putmat_cmd_impl = {
     "putmat",
-    ged_putmat,
+    ged_putmat_core,
     GED_CMD_DEFAULT
 };
 

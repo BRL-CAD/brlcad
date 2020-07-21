@@ -33,7 +33,7 @@
 
 
 int
-ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
+ged_dir2ae_core(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t az, el;
     vect_t dir;
@@ -88,7 +88,7 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl dir2ae_cmd_impl = {
     "dir2ae",
-    ged_dir2ae,
+    ged_dir2ae_core,
     GED_CMD_DEFAULT
 };
 

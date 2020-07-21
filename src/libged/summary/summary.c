@@ -89,7 +89,7 @@ summary_dir(struct ged *gedp,
 
 
 int
-ged_summary(struct ged *gedp, int argc, const char *argv[])
+ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *cp;
     int flags = 0;
@@ -138,7 +138,7 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl summary_cmd_impl = {
     "summary",
-    ged_summary,
+    ged_summary_core,
     GED_CMD_DEFAULT
 };
 

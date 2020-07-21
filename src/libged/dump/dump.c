@@ -33,7 +33,7 @@
 
 
 int
-ged_dump(struct ged *gedp, int argc, const char *argv[])
+ged_dump_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_wdb *op;
     int ret;
@@ -77,7 +77,7 @@ ged_dump(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl dump_cmd_impl = {
     "dump",
-    ged_dump,
+    ged_dump_core,
     GED_CMD_DEFAULT
 };
 

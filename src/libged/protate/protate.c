@@ -34,7 +34,7 @@
 
 
 int
-ged_protate(struct ged *gedp, int argc, const char *argv[])
+ged_protate_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     mat_t rmat;
@@ -131,7 +131,7 @@ ged_protate(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl protate_cmd_impl = {
     "protate",
-    ged_protate,
+    ged_protate_core,
     GED_CMD_DEFAULT
 };
 

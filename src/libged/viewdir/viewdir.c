@@ -33,7 +33,7 @@
 
 
 int
-ged_viewdir(struct ged *gedp, int argc, const char *argv[])
+ged_viewdir_core(struct ged *gedp, int argc, const char *argv[])
 {
     vect_t view;
     vect_t dir;
@@ -78,7 +78,7 @@ ged_viewdir(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl viewdir_cmd_impl = {
     "viewdir",
-    ged_viewdir,
+    ged_viewdir_core,
     GED_CMD_DEFAULT
 };
 

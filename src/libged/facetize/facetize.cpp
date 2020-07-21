@@ -2812,7 +2812,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 
 
 extern "C" int
-ged_facetize(struct ged *gedp, int argc, const char *argv[])
+ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = GED_OK;
     static const char *usage = "Usage: facetize [ -nmhT | [--NMG] [--CM] [--SPSR] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
@@ -2978,7 +2978,7 @@ ged_facetize_memfree:
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl facetize_cmd_impl = { "facetize", ged_facetize, GED_CMD_DEFAULT };
+    struct ged_cmd_impl facetize_cmd_impl = { "facetize", ged_facetize_core, GED_CMD_DEFAULT };
     const struct ged_cmd facetize_cmd = { &facetize_cmd_impl };
     const struct ged_cmd *facetize_cmds[] = { &facetize_cmd,  NULL };
 

@@ -43,7 +43,7 @@ extern int ged_nmg_move_v(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_nmg_make_v(struct ged *gedp, int argc, const char *argv[]);
 
 int
-ged_nmg(struct ged *gedp, int argc, const char *argv[])
+ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "nmg object subcommand [V|F|R|S] [suffix]";
     const char *subcmd = argv[2];
@@ -126,7 +126,7 @@ ged_nmg(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl nmg_cmd_impl = {"nmg", ged_nmg, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_cmd_impl = {"nmg", ged_nmg_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_cmd = { &nmg_cmd_impl };
 
 struct ged_cmd_impl nmg_cmface_cmd_impl = {"nmg_cmface", ged_nmg_cmface, GED_CMD_DEFAULT};

@@ -469,7 +469,7 @@ _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int 
 }
 
 extern "C" int
-ged_lint(struct ged *gedp, int argc, const char *argv[])
+ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t pc;
     int ret = GED_OK;
@@ -607,7 +607,7 @@ ged_lint_memfree:
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint, GED_CMD_DEFAULT };
+    struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint_core, GED_CMD_DEFAULT };
     const struct ged_cmd lint_cmd = { &lint_cmd_impl };
     const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
 

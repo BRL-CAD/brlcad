@@ -36,7 +36,7 @@
  *
  */
 int
-ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
+ged_set_uplotOutputMode_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[binary|text]";
 
@@ -82,7 +82,7 @@ ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl set_uplotOutputMode_cmd_impl = {
     "set_uplotOutputMode",
-    ged_set_uplotOutputMode,
+    ged_set_uplotOutputMode_core,
     GED_CMD_DEFAULT
 };
 

@@ -408,7 +408,7 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 
 
 int
-ged_coil(struct ged *gedp, int argc, const char *argv[])
+ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 {
 
     struct bu_vls name;
@@ -561,7 +561,7 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl coil_cmd_impl = {
     "coil",
-    ged_coil,
+    ged_coil_core,
     GED_CMD_DEFAULT
 };
 

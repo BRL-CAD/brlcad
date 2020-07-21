@@ -291,7 +291,7 @@ constraint_help(void *datap, int argc, const char *argv[])
 
 
 int
-ged_constraint(struct ged *gedp, int argc, const char *argv[])
+ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
 {
     /* Potential constraint attributes:
      *
@@ -360,7 +360,7 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl constraint_cmd_impl = {
     "constraint",
-    ged_constraint,
+    ged_constraint_core,
     GED_CMD_DEFAULT
 };
 

@@ -175,7 +175,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
 
 
 int
-ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
+ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
 {
     char **solids_on_ray_cmd_vec = NULL;
     int solids_on_ray_cmd_vec_len = 0;
@@ -297,7 +297,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl solids_on_ray_cmd_impl = {
     "solids_on_ray",
-    ged_solids_on_ray,
+    ged_solids_on_ray_core,
     GED_CMD_DEFAULT
 };
 

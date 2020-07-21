@@ -105,7 +105,7 @@ adc_usage(struct bu_vls *vp, const char *name)
  * that multiple attributes can be set with a single command call.
  */
 int
-ged_adc(struct ged *gedp,
+ged_adc_core(struct ged *gedp,
 	int argc,
 	const char *argv[])
 {
@@ -702,7 +702,7 @@ ged_calc_adc_dst(struct bview *gvp)
 #include "../include/plugin.h"
 struct ged_cmd_impl adc_cmd_impl = {
     "adc",
-    ged_adc,
+    ged_adc_core,
     GED_CMD_DEFAULT
 };
 

@@ -33,7 +33,7 @@
 
 
 int
-ged_form(struct ged *gedp, int argc, const char *argv[])
+ged_form_core(struct ged *gedp, int argc, const char *argv[])
 {
     const struct rt_functab *ftp;
     static const char *usage = "type";
@@ -72,7 +72,7 @@ ged_form(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl form_cmd_impl = {
     "form",
-    ged_form,
+    ged_form_core,
     GED_CMD_DEFAULT
 };
 

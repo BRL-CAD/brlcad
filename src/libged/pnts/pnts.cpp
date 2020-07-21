@@ -1152,7 +1152,7 @@ _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
 }
 
 extern "C" int
-ged_pnts(struct ged *gedp, int argc, const char *argv[])
+ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *cmd = argv[0];
     size_t len;
@@ -1353,7 +1353,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts, GED_CMD_DEFAULT };
+    struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
     const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
     const struct ged_cmd *pnts_cmds[] = { &pnts_cmd,  NULL };
 

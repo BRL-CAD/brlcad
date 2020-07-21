@@ -139,7 +139,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
 
 
 int
-ged_edcodes(struct ged *gedp, int argc, const char *argv[])
+ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int nflag = 0;
@@ -216,7 +216,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     if (!fp)
 	return GED_ERROR;
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "ged_edcodes av");
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "ged_edcodes_core av");
     av[0] = "wcodes";
     av[1] = tmpfil;
     for (i = 2; i < argc + 1; ++i)
@@ -228,7 +228,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
 	bu_file_delete(tmpfil);
-	bu_free((void *)av, "ged_edcodes av");
+	bu_free((void *)av, "ged_edcodes_core av");
 	return GED_ERROR;
     }
 
@@ -272,9 +272,9 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	rewind(f_srt);
 	for (j = 0; j < line_count; j++) {
 	    fprintf(f_srt, "%s", line_array[j]);
-	    bu_free(line_array[j], "ged_edcodes line array element");
+	    bu_free(line_array[j], "ged_edcodes_core line array element");
 	}
-	bu_free((char *)line_array, "ged_edcodes line array");
+	bu_free((char *)line_array, "ged_edcodes_core line array");
 	fclose(f_srt);
     }
 
@@ -286,7 +286,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	status = GED_ERROR;
 
     bu_file_delete(tmpfil);
-    bu_free((void *)av, "ged_edcodes av");
+    bu_free((void *)av, "ged_edcodes_core av");
     return status;
 }
 
@@ -295,7 +295,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl edcodes_cmd_impl = {
     "edcodes",
-    ged_edcodes,
+    ged_edcodes_core,
     GED_CMD_DEFAULT
 };
 

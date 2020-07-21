@@ -39,7 +39,7 @@
 #include "./debug_cmd.cpp"
 
 extern "C" int
-ged_debug(struct ged *gedp, int argc, const char **argv)
+ged_debug_core(struct ged *gedp, int argc, const char **argv)
 {
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -54,7 +54,7 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl debug_cmd_impl = { "debug", ged_debug, GED_CMD_DEFAULT };
+    struct ged_cmd_impl debug_cmd_impl = { "debug", ged_debug_core, GED_CMD_DEFAULT };
     const struct ged_cmd debug_pcmd = { &debug_cmd_impl };
     const struct ged_cmd *debug_cmds[] = { &debug_pcmd,  NULL };
 

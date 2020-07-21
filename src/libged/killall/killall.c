@@ -33,7 +33,7 @@
 
 
 int
-ged_killall(struct ged *gedp, int argc, const char *argv[])
+ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 {
     int nflag;
     int ret;
@@ -91,7 +91,7 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl killall_cmd_impl = {
     "killall",
-    ged_killall,
+    ged_killall_core,
     GED_CMD_DEFAULT
 };
 

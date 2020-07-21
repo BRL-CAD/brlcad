@@ -42,7 +42,7 @@ static fastf_t ps_default_ppi = 72.0;
 static fastf_t ps_default_scale = 4.5 * 72.0 / 4096.0;
 
 int
-ged_ps(struct ged *gedp, int argc, const char *argv[])
+ged_ps_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     struct bu_vls creator = BU_VLS_INIT_ZERO;
@@ -201,7 +201,7 @@ bad:
 #include "../include/plugin.h"
 struct ged_cmd_impl ps_cmd_impl = {
     "ps",
-    ged_ps,
+    ged_ps_core,
     GED_CMD_DEFAULT
 };
 

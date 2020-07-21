@@ -33,7 +33,7 @@
 
 
 int
-ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
+ged_eye_pos_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t eye_pos;
     double scan[3];
@@ -98,7 +98,7 @@ ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl eye_pos_cmd_impl = {
     "eye_pos",
-    ged_eye_pos,
+    ged_eye_pos_core,
     GED_CMD_DEFAULT
 };
 

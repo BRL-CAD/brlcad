@@ -33,7 +33,7 @@
  * Scale obj about the keypoint by sf.
  */
 int
-ged_oscale(struct ged *gedp, int argc, const char *argv[])
+ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct _ged_trace_data gtd;
@@ -134,7 +134,7 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl oscale_cmd_impl = {
     "oscale",
-    ged_oscale,
+    ged_oscale_core,
     GED_CMD_DEFAULT
 };
 

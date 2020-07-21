@@ -27,7 +27,7 @@
 
 
 int
-ged_shader(struct ged *gedp, int argc, const char *argv[])
+ged_shader_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -83,7 +83,7 @@ ged_shader(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl shader_cmd_impl = {
     "shader",
-    ged_shader,
+    ged_shader_core,
     GED_CMD_DEFAULT
 };
 

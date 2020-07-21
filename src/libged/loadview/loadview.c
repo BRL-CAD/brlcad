@@ -89,7 +89,7 @@ struct command_tab ged_loadview_cmdtab[] = {
 
 
 int
-ged_loadview(struct ged *gedp, int argc, const char *argv[])
+ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     int failed = 0;
@@ -411,7 +411,7 @@ _ged_cm_end(const int argc, const char **argv)
 #include "../include/plugin.h"
 struct ged_cmd_impl loadview_cmd_impl = {
     "loadview",
-    ged_loadview,
+    ged_loadview_core,
     GED_CMD_DEFAULT
 };
 

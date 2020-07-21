@@ -33,7 +33,7 @@
 
 
 int
-ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
+ged_debugnmg_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[hex_code]";
 
@@ -71,7 +71,7 @@ ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl debugnmg_cmd_impl = {
     "debugnmg",
-    ged_debugnmg,
+    ged_debugnmg_core,
     GED_CMD_DEFAULT
 };
 

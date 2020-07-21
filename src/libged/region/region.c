@@ -34,7 +34,7 @@
 
 
 int
-ged_region(struct ged *gedp, int argc, const char *argv[])
+ged_region_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
@@ -117,7 +117,7 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl region_cmd_impl = {
     "region",
-    ged_region,
+    ged_region_core,
     GED_CMD_DEFAULT
 };
 

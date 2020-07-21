@@ -35,7 +35,7 @@
 
 
 int
-ged_copy(struct ged *gedp, int argc, const char *argv[])
+ged_copy_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *from_dp;
     struct bu_external external;
@@ -81,87 +81,11 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-
-int
-ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to, int fflag)
-{
-    struct directory *from_dp;
-    struct bu_external external;
-
-    GED_CHECK_DATABASE_OPEN(from_gedp, GED_ERROR);
-    GED_CHECK_DATABASE_OPEN(to_gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(to_gedp, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(from_gedp->ged_result_str, 0);
-    bu_vls_trunc(to_gedp->ged_result_str, 0);
-
-    GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-
-    if (!fflag && db_lookup(to_gedp->ged_wdbp->dbip, to, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(from_gedp->ged_result_str, "%s already exists.", to);
-	return GED_ERROR;
-    }
-
-    if (db_get_external(&external, from_dp, from_gedp->ged_wdbp->dbip)) {
-	bu_vls_printf(from_gedp->ged_result_str, "Database read error, aborting\n");
-	return GED_ERROR;
-    }
-
-    if (wdb_export_external(to_gedp->ged_wdbp, &external, to,
-			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
-	bu_free_external(&external);
-	bu_vls_printf(from_gedp->ged_result_str,
-		      "Failed to write new object (%s) to database - aborting!!\n",
-		      to);
-	return GED_ERROR;
-    }
-
-    bu_free_external(&external);
-
-    /* Need to do something extra for _GLOBAL */
-    if (db_version(to_gedp->ged_wdbp->dbip) > 4 && BU_STR_EQUAL(to, DB5_GLOBAL_OBJECT_NAME)) {
-	struct directory *to_dp;
-	struct bu_attribute_value_set avs;
-	const char *val;
-
-	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-
-	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(to_gedp->ged_wdbp->dbip, &avs, to_dp)) {
-	    bu_vls_printf(from_gedp->ged_result_str, "Cannot get attributes for object %s\n", to_dp->d_namep);
-	    return GED_ERROR;
-	}
-
-	if ((val = bu_avs_get(&avs, "title")) != NULL)
-	    to_gedp->ged_wdbp->dbip->dbi_title = bu_strdup(val);
-
-	if ((val = bu_avs_get(&avs, "units")) != NULL) {
-	    double loc2mm;
-
-	    if ((loc2mm = bu_mm_value(val)) > 0) {
-		to_gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
-		to_gedp->ged_wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
-	    }
-	}
-
-	if ((val = bu_avs_get(&avs, "regionid_colortable")) != NULL) {
-	    rt_color_free();
-	    db5_import_color_table((char *)val);
-	}
-
-	bu_avs_free(&avs);
-    }
-
-    return GED_OK;
-}
-
-
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl copy_cmd_impl = {
     "copy",
-    ged_copy,
+    ged_copy_core,
     GED_CMD_DEFAULT
 };
 

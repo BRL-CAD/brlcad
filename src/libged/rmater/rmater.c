@@ -77,7 +77,7 @@ extract_mater_from_line(char *line,
 
 
 int
-ged_rmater(struct ged *gedp, int argc, const char *argv[])
+ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 {
 #ifndef LINELEN
 #define LINELEN 256
@@ -164,7 +164,7 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rmater_cmd_impl = {
     "rmater",
-    ged_rmater,
+    ged_rmater_core,
     GED_CMD_DEFAULT
 };
 

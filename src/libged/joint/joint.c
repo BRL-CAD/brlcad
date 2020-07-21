@@ -3519,7 +3519,7 @@ joint_cmd(struct ged *gedp,
 
 
 int
-ged_joint(struct ged *gedp, int argc, const char *argv[])
+ged_joint_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
 
@@ -3580,7 +3580,7 @@ struct funtab joint_tab[] = {
 #include "../include/plugin.h"
 struct ged_cmd_impl joint_cmd_impl = {
     "joint",
-    ged_joint,
+    ged_joint_core,
     GED_CMD_DEFAULT
 };
 

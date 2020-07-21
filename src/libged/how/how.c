@@ -42,7 +42,7 @@
  *
  */
 int
-ged_how(struct ged *gedp, int argc, const char *argv[])
+ged_how_core(struct ged *gedp, int argc, const char *argv[])
 {
     int good;
     struct directory **dpp;
@@ -86,7 +86,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 good_label:
     if (dpp != (struct directory **)NULL)
-	bu_free((void *)dpp, "ged_how: directory pointers");
+	bu_free((void *)dpp, "ged_how_core: directory pointers");
 
     return GED_OK;
 }
@@ -171,7 +171,7 @@ _ged_build_dpp(struct ged *gedp,
 #include "../include/plugin.h"
 struct ged_cmd_impl how_cmd_impl = {
     "how",
-    ged_how,
+    ged_how_core,
     GED_CMD_DEFAULT
 };
 

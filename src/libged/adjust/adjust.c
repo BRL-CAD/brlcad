@@ -33,7 +33,7 @@
 
 
 int
-ged_adjust(struct ged *gedp, int argc, const char *argv[])
+ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
     struct directory *dp;
@@ -89,7 +89,7 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl adjust_cmd_impl = {
     "adjust",
-    ged_adjust,
+    ged_adjust_core,
     GED_CMD_DEFAULT
 };
 

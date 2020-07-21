@@ -146,7 +146,7 @@ dup_dir_check(struct db_i *input_dbip, const char *name, b_off_t UNUSED(laddr), 
 
 
 int
-ged_dup(struct ged *gedp, int argc, const char *argv[])
+ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct db_i *newdbp = DBI_NULL;
     struct directory **dirp0 = (struct directory **)NULL;
@@ -241,7 +241,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl dup_cmd_impl = {
     "dup",
-    ged_dup,
+    ged_dup_core,
     GED_CMD_DEFAULT
 };
 

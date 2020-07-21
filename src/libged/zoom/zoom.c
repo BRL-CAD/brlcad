@@ -38,7 +38,7 @@ zoom(struct ged *gedp, double sf)
 
 
 int
-ged_zoom(struct ged *gedp, int argc, const char *argv[])
+ged_zoom_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     double sf = 1.0;
@@ -69,7 +69,7 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl zoom_cmd_impl = {
     "zoom",
-    ged_zoom,
+    ged_zoom_core,
     GED_CMD_VIEW_CALLBACK | GED_CMD_UPDATE_VIEW
 };
 

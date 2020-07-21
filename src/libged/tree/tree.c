@@ -44,7 +44,7 @@
  *
  */
 int
-ged_tree(struct ged *gedp, int argc, const char *argv[])
+ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int j;
@@ -150,7 +150,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl tree_cmd_impl = {
     "tree",
-    ged_tree,
+    ged_tree_core,
     GED_CMD_DEFAULT
 };
 

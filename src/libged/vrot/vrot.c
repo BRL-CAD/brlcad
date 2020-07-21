@@ -33,7 +33,7 @@
 
 
 int
-ged_vrot(struct ged *gedp, int argc, const char *argv[])
+ged_vrot_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int ac;
@@ -73,7 +73,7 @@ ged_vrot(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl vrot_cmd_impl = {
     "vrot",
-    ged_vrot,
+    ged_vrot_core,
     GED_CMD_DEFAULT
 };
 

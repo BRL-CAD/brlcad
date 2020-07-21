@@ -170,7 +170,7 @@ joint_selection(
 }
 
 int
-ged_joint2(struct ged *gedp, int argc, const char *argv[])
+ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *ndp;
     struct rt_db_internal intern;
@@ -234,7 +234,7 @@ ged_joint2(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl joint2_cmd_impl = {
     "joint2",
-    ged_joint2,
+    ged_joint2_core,
     GED_CMD_DEFAULT
 };
 

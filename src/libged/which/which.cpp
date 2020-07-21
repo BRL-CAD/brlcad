@@ -42,7 +42,7 @@ bool alphanum_cmp(const std::string& a, const std::string& b) {
 }
 
 extern "C" int
-ged_which(struct ged *gedp, int argc, const char *argv[])
+ged_which_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -293,7 +293,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl which_cmd_impl = { "which", ged_which, GED_CMD_DEFAULT };
+    struct ged_cmd_impl which_cmd_impl = { "which", ged_which_core, GED_CMD_DEFAULT };
     const struct ged_cmd which_cmd = { &which_cmd_impl };
     const struct ged_cmd *which_cmds[] = { &which_cmd,  NULL };
 

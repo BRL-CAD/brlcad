@@ -39,7 +39,7 @@
  *
  */
 int
-ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
+ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory **dpp;
 
@@ -79,7 +79,7 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     dl_set_transparency(gedp->ged_gdp->gd_headDisplay, dpp, transparency, gedp->ged_create_vlist_callback);
 
     if (dpp != (struct directory **)NULL)
-	bu_free((void *)dpp, "ged_set_transparency: directory pointers");
+	bu_free((void *)dpp, "ged_set_transparency_core: directory pointers");
 
     return GED_OK;
 }
@@ -89,7 +89,7 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl set_transparency_cmd_impl = {
     "set_transparency",
-    ged_set_transparency,
+    ged_set_transparency_core,
     GED_CMD_DEFAULT
 };
 

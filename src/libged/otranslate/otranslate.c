@@ -30,7 +30,7 @@
 
 
 int
-ged_otranslate(struct ged *gedp, int argc, const char *argv[])
+ged_otranslate_cmd(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct _ged_trace_data gtd;
@@ -107,7 +107,7 @@ ged_otranslate(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl otranslate_cmd_impl = {
     "otranslate",
-    ged_otranslate,
+    ged_otranslate_cmd,
     GED_CMD_DEFAULT
 };
 

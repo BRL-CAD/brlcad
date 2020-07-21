@@ -27,7 +27,7 @@
 
 
 int
-ged_wmater(struct ged *gedp, int argc, const char *argv[])
+ged_wmater_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int status = GED_OK;
@@ -97,7 +97,7 @@ ged_wmater(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl wmater_cmd_impl = {
     "wmater",
-    ged_wmater,
+    ged_wmater_core,
     GED_CMD_DEFAULT
 };
 

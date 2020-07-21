@@ -34,7 +34,7 @@
 
 
 int
-ged_kill(struct ged *gedp, int argc, const char *argv[])
+ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
@@ -128,7 +128,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl kill_cmd_impl = {
     "kill",
-    ged_kill,
+    ged_kill_core,
     GED_CMD_DEFAULT
 };
 

@@ -489,7 +489,7 @@ print_verbose_debug(struct check_parameters *options)
 }
 
 
-int ged_check(struct ged *gedp, int argc, const char *argv[])
+int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int opt_argc, arg_count;
@@ -684,7 +684,7 @@ freemem:
 #include "../include/plugin.h"
 struct ged_cmd_impl check_cmd_impl = {
     "check",
-    ged_check,
+    ged_check_core,
     GED_CMD_DEFAULT
 };
 

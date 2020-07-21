@@ -33,7 +33,7 @@
 
 
 int
-ged_get_type(struct ged *gedp, int argc, const char *argv[])
+ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     int type;
@@ -214,7 +214,7 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl get_type_cmd_impl = {
     "get_type",
-    ged_get_type,
+    ged_get_type_core,
     GED_CMD_DEFAULT
 };
 

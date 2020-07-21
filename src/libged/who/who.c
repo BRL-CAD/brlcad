@@ -26,65 +26,6 @@
 #include "ged.h"
 
 
-size_t
-ged_who_argc(struct ged *gedp)
-{
-    struct display_list *gdlp = NULL;
-    size_t visibleCount = 0;
-
-    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
-	return 0;
-
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	visibleCount++;
-    }
-
-    return visibleCount;
-}
-
-
-/**
- * Build a command line vector of the tops of all objects in view.
- *
- * Returns the number of items displayed.
- *
- * FIXME: crazy inefficient for massive object lists.  needs to work
- * with preallocated memory.
- */
-int
-ged_who_argv(struct ged *gedp, char **start, const char **end)
-{
-    struct display_list *gdlp;
-    char **vp = start;
-
-    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
-	return 0;
-
-    if (UNLIKELY(!start || !end)) {
-	bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() called with NULL args\n");
-	return 0;
-    }
-
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;
-
-	if ((vp != NULL) && ((const char **)vp < end)) {
-	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
-	    break;
-	}
-    }
-
-    if ((vp != NULL) && ((const char **)vp < end)) {
-	*vp = (char *) 0;
-    }
-
-    return vp-start;
-}
-
-
 /*
  * List the objects currently prepped for drawing
  *
@@ -93,7 +34,7 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
  *
  */
 int
-ged_who(struct ged *gedp, int argc, const char *argv[])
+ged_who_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct display_list *gdlp;
     int skip_real, skip_phony;
@@ -128,7 +69,7 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
 		skip_phony = 1;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "ged_who: argument not understood\n");
+		bu_vls_printf(gedp->ged_result_str, "ged_who_core: argument not understood\n");
 		return GED_ERROR;
 	}
     }
@@ -151,7 +92,7 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl who_cmd_impl = {
     "who",
-    ged_who,
+    ged_who_core,
     GED_CMD_DEFAULT
 };
 

@@ -37,7 +37,7 @@
  * List constraint objects in this database
  */
 int
-ged_cc(struct ged *gedp, int argc, const char *argv[])
+ged_cc_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "name constraint_expression";
 
@@ -84,7 +84,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl cc_cmd_impl = {
     "cc",
-    ged_cc,
+    ged_cc_core,
     GED_CMD_DEFAULT
 };
 

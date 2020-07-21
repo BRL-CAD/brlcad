@@ -45,7 +45,7 @@
     (((_v) > (_a)) ? ((_v) < (_b) ? (_v) : (_b)) : (_a))
 
 int
-ged_fbclear(struct ged *gedp, int argc, const char *argv[])
+ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char usage[] = "\nUsage: fbclear [rgb]";
 
@@ -105,7 +105,7 @@ ged_fbclear(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl fbclear_cmd_impl = {
     "fbclear",
-    ged_fbclear,
+    ged_fbclear_core,
     GED_CMD_DEFAULT
 };
 

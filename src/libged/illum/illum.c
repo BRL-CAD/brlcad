@@ -38,7 +38,7 @@
  *
  */
 int
-ged_illum(struct ged *gedp, int argc, const char *argv[])
+ged_illum_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -99,7 +99,7 @@ bad:
 #include "../include/plugin.h"
 struct ged_cmd_impl illum_cmd_impl = {
     "illum",
-    ged_illum,
+    ged_illum_core,
     GED_CMD_DEFAULT
 };
 

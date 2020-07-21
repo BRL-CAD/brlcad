@@ -32,7 +32,7 @@
 #include "../ged_private.h"
 
 int
-ged_decompose(struct ged *gedp, int argc, const char *argv[])
+ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 {
     int count;
     struct bu_vls solid_name = BU_VLS_INIT_ZERO;
@@ -204,7 +204,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl decompose_cmd_impl = {
     "decompose",
-    ged_decompose,
+    ged_decompose_core,
     GED_CMD_DEFAULT
 };
 

@@ -33,7 +33,7 @@
 
 
 int
-ged_put(struct ged *gedp, int argc, const char *argv[])
+ged_put_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     const struct rt_functab *ftp;
@@ -110,7 +110,7 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl put_cmd_impl = {
     "put",
-    ged_put,
+    ged_put_core,
     GED_CMD_DEFAULT
 };
 

@@ -30,7 +30,7 @@
 
 
 int
-ged_orotate(struct ged *gedp, int argc, const char *argv[])
+ged_orotate_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct _ged_trace_data gtd;
@@ -144,7 +144,7 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl orotate_cmd_impl = {
     "orotate",
-    ged_orotate,
+    ged_orotate_core,
     GED_CMD_DEFAULT
 };
 

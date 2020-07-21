@@ -100,7 +100,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 
 
 int
-ged_list(struct ged *gedp, int argc, const char *argv[])
+ged_list_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int arg;
@@ -204,7 +204,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl list_cmd_impl = {
     "list",
-    ged_list,
+    ged_list_core,
     GED_CMD_DEFAULT
 };
 

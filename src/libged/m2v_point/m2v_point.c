@@ -32,7 +32,7 @@
 
 
 int
-ged_m2v_point(struct ged *gedp, int argc, const char *argv[])
+ged_m2v_point_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t model;
     point_t view;
@@ -64,17 +64,17 @@ ged_m2v_point(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad X value - %s\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad X value - %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad Y value - %s\n", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad Y value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad Z value - %s\n", argv[3]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad Z value - %s\n", argv[3]);
 	    return GED_ERROR;
 	}
 
@@ -94,7 +94,7 @@ ged_m2v_point(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl m2v_point_cmd_impl = {
     "m2v_point",
-    ged_m2v_point,
+    ged_m2v_point_core,
     GED_CMD_DEFAULT
 };
 

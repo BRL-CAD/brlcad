@@ -34,7 +34,7 @@
  * model2view matrix is displayed.
  */
 int
-ged_model2view(struct ged *gedp, int argc, const char *argv[])
+ged_model2view_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t view_pt;
     double model_pt[3]; /* intentionally double for scan */
@@ -73,7 +73,7 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl model2view_cmd_impl = {
     "model2view",
-    ged_model2view,
+    ged_model2view_core,
     GED_CMD_DEFAULT
 };
 

@@ -33,7 +33,7 @@
 
 
 int
-ged_mrot(struct ged *gedp, int argc, const char *argv[])
+ged_mrot_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int ac;
@@ -73,7 +73,7 @@ ged_mrot(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl mrot_cmd_impl = {
     "mrot",
-    ged_mrot,
+    ged_mrot_core,
     GED_CMD_DEFAULT
 };
 

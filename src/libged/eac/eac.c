@@ -33,7 +33,7 @@
 
 
 int
-ged_eac(struct ged *gedp, int argc, const char *argv[])
+ged_eac_core(struct ged *gedp, int argc, const char *argv[])
 {
     int j;
     int item;
@@ -96,10 +96,10 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 	int retval;
 	char **new_argv;
 
-	new_argv = (char **)bu_calloc(lim+1, sizeof(char *), "ged_eac: new_argv");
+	new_argv = (char **)bu_calloc(lim+1, sizeof(char *), "ged_eac_core: new_argv");
 	new_argc = bu_argv_from_string(new_argv, lim, bu_vls_addr(&v));
 	retval = ged_draw(gedp, new_argc, (const char **)new_argv);
-	bu_free((void *)new_argv, "ged_eac: new_argv");
+	bu_free((void *)new_argv, "ged_eac_core: new_argv");
 	bu_vls_free(&v);
 	return retval;
     }
@@ -113,7 +113,7 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl eac_cmd_impl = {
     "eac",
-    ged_eac,
+    ged_eac_core,
     GED_CMD_DEFAULT
 };
 

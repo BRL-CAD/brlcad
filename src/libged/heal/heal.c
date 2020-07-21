@@ -37,7 +37,7 @@
 
 
 int
-ged_heal(struct ged *gedp, int argc, const char *argv[])
+ged_heal_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *bot_dp;
     struct rt_db_internal intern;
@@ -84,7 +84,7 @@ ged_heal(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl heal_cmd_impl = {
     "heal",
-    ged_heal,
+    ged_heal_core,
     GED_CMD_DEFAULT
 };
 

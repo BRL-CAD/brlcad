@@ -33,7 +33,7 @@
 
 
 int
-ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
+ged_view2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
 {
     /* intentionally double for scan */
     double view_pt[3];
@@ -78,7 +78,7 @@ bad:
 #include "../include/plugin.h"
 struct ged_cmd_impl view2grid_lu_cmd_impl = {
     "view2grid_lu",
-    ged_view2grid_lu,
+    ged_view2grid_lu_core,
     GED_CMD_DEFAULT
 };
 

@@ -33,7 +33,7 @@
 
 
 int
-ged_rot_point(struct ged *gedp, int argc, const char *argv[])
+ged_rot_point_core(struct ged *gedp, int argc, const char *argv[])
 {
     mat_t invRot;
     point_t point;
@@ -98,7 +98,7 @@ ged_rot_point(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rot_point_cmd_impl = {
     "rot_point",
-    ged_rot_point,
+    ged_rot_point_core,
     GED_CMD_DEFAULT
 };
 

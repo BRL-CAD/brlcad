@@ -35,7 +35,7 @@
 
 
 int
-ged_move(struct ged *gedp, int argc, const char *argv[])
+ged_move_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct display_list *gdlp;
     struct directory *dp;
@@ -126,7 +126,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl move_cmd_impl = {
     "move",
-    ged_move,
+    ged_move_core,
     GED_CMD_DEFAULT
 };
 

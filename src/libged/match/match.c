@@ -34,7 +34,7 @@
 
 
 int
-ged_match(struct ged *gedp, int argc, const char *argv[])
+ged_match_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "expression";
 
@@ -80,7 +80,7 @@ ged_match(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl match_cmd_impl = {
     "match",
-    ged_match,
+    ged_match_core,
     GED_CMD_DEFAULT
 };
 

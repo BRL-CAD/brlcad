@@ -769,7 +769,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_vdraw(struct ged *gedp, int argc, const char *argv[])
+ged_vdraw_core(struct ged *gedp, int argc, const char *argv[])
 {
     return vdraw_cmd(gedp, argc, argv);
 }
@@ -779,7 +779,7 @@ ged_vdraw(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl vdraw_cmd_impl = {
     "vdraw",
-    ged_vdraw,
+    ged_vdraw_core,
     GED_CMD_DEFAULT
 };
 

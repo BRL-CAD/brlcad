@@ -53,7 +53,7 @@ image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 }
 
 int
-ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
+ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 {
 
     int i;
@@ -164,7 +164,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl screengrab_cmd_impl = {
     "screengrab",
-    ged_screen_grab,
+    ged_screen_grab_core,
     GED_CMD_DEFAULT
 };
 

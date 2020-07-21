@@ -1962,7 +1962,7 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
  * more specific, validation is performed by edit().
  */
 int
-ged_edit(struct ged *gedp, int argc, const char *argv[])
+ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *const cmd_name = argv[0];
     union edit_cmd subcmd;
@@ -2424,7 +2424,7 @@ err_missing_arg:
 #include "../include/plugin.h"
 struct ged_cmd_impl edit_cmd_impl = {
     "edit",
-    ged_edit,
+    ged_edit_core,
     GED_CMD_DEFAULT
 };
 

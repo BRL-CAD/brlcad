@@ -66,7 +66,7 @@ static const int ARB7_MAX_FACE_INDEX = (int)(sizeof(arb7_faces_first_vertex) - 1
 static const int ARB8_MAX_FACE_INDEX = (int)(sizeof(arb8_faces_first_vertex) - 1);
 
 int
-ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
+ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
@@ -246,7 +246,7 @@ if (face_idx > max_idx) { \
 #include "../include/plugin.h"
 struct ged_cmd_impl move_arb_face_cmd_impl = {
     "move_arb_face",
-    ged_move_arb_face,
+    ged_move_arb_face_core,
     GED_CMD_DEFAULT
 };
 

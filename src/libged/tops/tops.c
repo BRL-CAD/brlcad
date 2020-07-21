@@ -34,7 +34,7 @@
 
 
 int
-ged_tops(struct ged *gedp, int argc, const char *argv[])
+ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
@@ -167,7 +167,7 @@ _ged_dir_getspace(struct db_i *dbip,
 #include "../include/plugin.h"
 struct ged_cmd_impl tops_cmd_impl = {
     "tops",
-    ged_tops,
+    ged_tops_core,
     GED_CMD_DEFAULT
 };
 

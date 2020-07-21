@@ -199,7 +199,7 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
 }
 
 int
-ged_glob(struct ged *gedp, int argc, const char *argv[])
+ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "expression";
     int flags = 0;
@@ -242,8 +242,8 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl glob_cmd_impl = {
-    "glob",
-    ged_glob,
+    "db_glob",
+    ged_glob_core,
     GED_CMD_DEFAULT
 };
 

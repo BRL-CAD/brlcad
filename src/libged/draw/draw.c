@@ -1258,7 +1258,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
 
 int
-ged_draw(struct ged *gedp, int argc, const char *argv[])
+ged_draw_core(struct ged *gedp, int argc, const char *argv[])
 {
     return ged_draw_guts(gedp, argc, argv, _GED_DRAW_WIREFRAME);
 }
@@ -1351,7 +1351,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl draw_cmd_impl = {
     "draw",
-    ged_draw,
+    ged_draw_core,
     GED_CMD_DEFAULT
 };
 

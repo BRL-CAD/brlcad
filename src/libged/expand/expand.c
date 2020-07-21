@@ -55,7 +55,7 @@ expand_scrape_escapes(struct bu_vls *result, const char *str)
 
 
 int
-ged_expand(struct ged *gedp, int argc, const char *argv[])
+ged_expand_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *pattern;
     struct directory *dp;
@@ -136,7 +136,7 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl expand_cmd_impl = {
     "expand",
-    ged_expand,
+    ged_expand_core,
     GED_CMD_DEFAULT
 };
 

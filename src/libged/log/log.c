@@ -50,7 +50,7 @@ log_hook(void *clientdata,
 
 
 int
-ged_log(struct ged *gedp, int argc, const char *argv[])
+ged_log_core(struct ged *gedp, int argc, const char *argv[])
 {
     static char *usage = "get|start|stop";
 
@@ -96,7 +96,7 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl log_cmd_impl = {
     "log",
-    ged_log,
+    ged_log_core,
     GED_CMD_DEFAULT
 };
 

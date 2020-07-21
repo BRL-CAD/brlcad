@@ -33,7 +33,7 @@
 
 
 int
-ged_echo(struct ged *gedp, int argc, const char *argv[])
+ged_echo_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
 
@@ -57,7 +57,7 @@ ged_echo(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl echo_cmd_impl = {
     "echo",
-    ged_echo,
+    ged_echo_core,
     GED_CMD_DEFAULT
 };
 

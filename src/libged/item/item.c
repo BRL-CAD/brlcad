@@ -28,7 +28,7 @@
 #include "ged.h"
 
 int
-ged_item(struct ged *gedp, int argc, const char *argv[])
+ged_item_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status = GED_OK;
     struct directory *dp;
@@ -108,7 +108,7 @@ ged_item(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl item_cmd_impl = {
     "item",
-    ged_item,
+    ged_item_core,
     GED_CMD_DEFAULT
 };
 

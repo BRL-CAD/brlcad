@@ -33,7 +33,7 @@
 
 
 int
-ged_dbip(struct ged *gedp, int argc, const char *argv[])
+ged_dbip_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -60,8 +60,8 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl dbip_cmd_impl = {
-    "dbip",
-    ged_dbip,
+    "get_dbip",
+    ged_dbip_core,
     GED_CMD_DEFAULT
 };
 

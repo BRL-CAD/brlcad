@@ -35,6 +35,7 @@
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/str.h"
+#include "bu/units.h"
 #include "bu/vls.h"
 
 #include "ged.h"
@@ -502,6 +503,429 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
     }
 
     return GED_ERROR;
+}
+
+int
+ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to, int fflag)
+{
+    struct directory *from_dp;
+    struct bu_external external;
+
+    GED_CHECK_DATABASE_OPEN(from_gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(to_gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(to_gedp, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(from_gedp->ged_result_str, 0);
+    bu_vls_trunc(to_gedp->ged_result_str, 0);
+
+    GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+
+    if (!fflag && db_lookup(to_gedp->ged_wdbp->dbip, to, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(from_gedp->ged_result_str, "%s already exists.", to);
+	return GED_ERROR;
+    }
+
+    if (db_get_external(&external, from_dp, from_gedp->ged_wdbp->dbip)) {
+	bu_vls_printf(from_gedp->ged_result_str, "Database read error, aborting\n");
+	return GED_ERROR;
+    }
+
+    if (wdb_export_external(to_gedp->ged_wdbp, &external, to,
+			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
+	bu_free_external(&external);
+	bu_vls_printf(from_gedp->ged_result_str,
+		      "Failed to write new object (%s) to database - aborting!!\n",
+		      to);
+	return GED_ERROR;
+    }
+
+    bu_free_external(&external);
+
+    /* Need to do something extra for _GLOBAL */
+    if (db_version(to_gedp->ged_wdbp->dbip) > 4 && BU_STR_EQUAL(to, DB5_GLOBAL_OBJECT_NAME)) {
+	struct directory *to_dp;
+	struct bu_attribute_value_set avs;
+	const char *val;
+
+	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(to_gedp->ged_wdbp->dbip, &avs, to_dp)) {
+	    bu_vls_printf(from_gedp->ged_result_str, "Cannot get attributes for object %s\n", to_dp->d_namep);
+	    return GED_ERROR;
+	}
+
+	if ((val = bu_avs_get(&avs, "title")) != NULL)
+	    to_gedp->ged_wdbp->dbip->dbi_title = bu_strdup(val);
+
+	if ((val = bu_avs_get(&avs, "units")) != NULL) {
+	    double loc2mm;
+
+	    if ((loc2mm = bu_mm_value(val)) > 0) {
+		to_gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
+		to_gedp->ged_wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+	    }
+	}
+
+	if ((val = bu_avs_get(&avs, "regionid_colortable")) != NULL) {
+	    rt_color_free();
+	    db5_import_color_table((char *)val);
+	}
+
+	bu_avs_free(&avs);
+    }
+
+    return GED_OK;
+}
+
+int
+ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
+{
+    int nh, nv;		/* whole grid units */
+    point_t view_pt;
+    point_t view_grid_anchor;
+    fastf_t grid_units_h;		/* eventually holds only fractional horizontal grid units */
+    fastf_t grid_units_v;		/* eventually holds only fractional vertical grid units */
+    fastf_t sf;
+    fastf_t inv_sf;
+
+    if (gedp->ged_gvp == GED_VIEW_NULL)
+	return 0;
+
+    if (ZERO(gedp->ged_gvp->gv_grid.res_h) ||
+	ZERO(gedp->ged_gvp->gv_grid.res_v))
+	return 0;
+
+    sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;
+    inv_sf = 1 / sf;
+
+    VSET(view_pt, *vx, *vy, 0.0);
+    VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
+
+    MAT4X3PNT(view_grid_anchor, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_grid.anchor);
+    VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
+
+    grid_units_h = (view_grid_anchor[X] - view_pt[X]) / (gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+    grid_units_v = (view_grid_anchor[Y] - view_pt[Y]) / (gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+    nh = grid_units_h;
+    nv = grid_units_v;
+
+    grid_units_h -= nh;		/* now contains only the fraction part */
+    grid_units_v -= nv;		/* now contains only the fraction part */
+
+    if (grid_units_h <= -0.5)
+	*vx = view_grid_anchor[X] - ((nh - 1) * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+    else if (0.5 <= grid_units_h)
+	*vx = view_grid_anchor[X] - ((nh + 1) * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+    else
+	*vx = view_grid_anchor[X] - (nh * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+
+    if (grid_units_v <= -0.5)
+	*vy = view_grid_anchor[Y] - ((nv - 1) * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+    else if (0.5 <= grid_units_v)
+	*vy = view_grid_anchor[Y] - ((nv + 1) * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+    else
+	*vy = view_grid_anchor[Y] - (nv * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+
+    *vx *= inv_sf;
+    *vy *= inv_sf;
+
+    return 1;
+}
+
+int
+ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t rmat)
+{
+    vect_t rvec;
+    static const char *usage = "[-m|-v] x y z";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    /* process possible coord flag */
+    if (argv[1][0] == '-' && (argv[1][1] == 'v' || argv[1][1] == 'm') && argv[1][2] == '\0') {
+	*coord = argv[1][1];
+	--argc;
+	++argv;
+    } else
+	*coord = gedp->ged_gvp->gv_coord;
+
+    if (argc != 2 && argc != 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if (argc == 2) {
+	if (bn_decode_vect(rvec, argv[1]) != 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return GED_ERROR;
+	}
+    } else {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
+	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad X value %s\n", argv[1]);
+	    return GED_ERROR;
+	}
+
+	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
+	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Y value %s\n", argv[2]);
+	    return GED_ERROR;
+	}
+
+	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
+	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Z value %s\n", argv[3]);
+	    return GED_ERROR;
+	}
+
+	/* convert from double to fastf_t */
+	VMOVE(rvec, scan);
+    }
+
+    VSCALE(rvec, rvec, -1.0);
+    bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
+
+    return GED_OK;
+}
+
+int
+ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
+{
+    point_t pt = VINIT_ZERO;
+    vect_t axisv;
+    double axis[3]; /* not fastf_t due to sscanf */
+    double angle; /* not fastf_t due to sscanf */
+    static const char *usage = "x y z angle";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 5) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad X value - %s\n", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad Y value - %s\n", argv[0], argv[2]);
+	return GED_ERROR;
+    }
+
+    if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad Z value - %s\n", argv[0], argv[3]);
+	return GED_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf", &angle) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[4]);
+	return GED_ERROR;
+    }
+
+    VUNITIZE(axis);
+    VMOVE(axisv, axis);
+    bn_mat_arb_rot(rmat, pt, axisv, angle*DEG2RAD);
+
+    return GED_OK;
+}
+
+int
+ged_tra_args(struct ged *gedp, int argc, const char *argv[], char *coord, vect_t tvec)
+{
+    static const char *usage = "[-m|-v] x y z";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    /* process possible coord flag */
+    if (argv[1][0] == '-' && (argv[1][1] == 'v' || argv[1][1] == 'm') && argv[1][2] == '\0') {
+	*coord = argv[1][1];
+	--argc;
+	++argv;
+    } else
+	*coord = gedp->ged_gvp->gv_coord;
+
+    if (argc != 2 && argc != 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if (argc == 2) {
+	if (bn_decode_vect(tvec, argv[1]) != 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return GED_ERROR;
+	}
+    } else {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad X value %s\n", argv[0], argv[1]);
+	    return GED_ERROR;
+	}
+
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad Y value %s\n", argv[0], argv[2]);
+	    return GED_ERROR;
+	}
+
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad Z value %s\n", argv[0], argv[3]);
+	    return GED_ERROR;
+	}
+
+	/* convert from double to fastf_t */
+	VMOVE(tvec, scan);
+    }
+
+    return GED_OK;
+}
+
+int
+ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fastf_t *sf2, fastf_t *sf3)
+{
+    static const char *usage = "sf (or) sfx sfy sfz";
+    int ret = GED_OK, args_read;
+    double scan;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 2 && argc != 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if (argc == 2) {
+	if (!sf1 || sscanf(argv[1], "%lf", &scan) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
+	    return GED_ERROR;
+	}
+	*sf1 = scan;
+    } else {
+	args_read = sscanf(argv[1], "%lf", &scan);
+	if (!sf1 || args_read != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
+	    ret = GED_ERROR;
+	}
+	*sf1 = scan;
+
+	args_read = sscanf(argv[2], "%lf", &scan);
+	if (!sf2 || args_read != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
+	    ret = GED_ERROR;
+	}
+	*sf2 = scan;
+
+	args_read = sscanf(argv[3], "%lf", &scan);
+	if (!sf3 || args_read != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
+	    ret = GED_ERROR;
+	}
+	*sf3 = scan;
+    }
+    return ret;
+}
+
+size_t
+ged_who_argc(struct ged *gedp)
+{
+    struct display_list *gdlp = NULL;
+    size_t visibleCount = 0;
+
+    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
+	return 0;
+
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+	visibleCount++;
+    }
+
+    return visibleCount;
+}
+
+
+/**
+ * Build a command line vector of the tops of all objects in view.
+ *
+ * Returns the number of items displayed.
+ *
+ * FIXME: crazy inefficient for massive object lists.  needs to work
+ * with preallocated memory.
+ */
+int
+ged_who_argv(struct ged *gedp, char **start, const char **end)
+{
+    struct display_list *gdlp;
+    char **vp = start;
+
+    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
+	return 0;
+
+    if (UNLIKELY(!start || !end)) {
+	bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() called with NULL args\n");
+	return 0;
+    }
+
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
+	    continue;
+
+	if ((vp != NULL) && ((const char **)vp < end)) {
+	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
+	    break;
+	}
+    }
+
+    if ((vp != NULL) && ((const char **)vp < end)) {
+	*vp = (char *) 0;
+    }
+
+    return vp-start;
 }
 
 

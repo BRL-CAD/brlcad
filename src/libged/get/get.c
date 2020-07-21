@@ -33,7 +33,7 @@
 
 
 int
-ged_get(struct ged *gedp, int argc, const char *argv[])
+ged_get_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
     struct rt_db_internal intern;
@@ -81,7 +81,7 @@ ged_get(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl get_cmd_impl = {
     "get",
-    ged_get,
+    ged_get_core,
     GED_CMD_DEFAULT
 };
 

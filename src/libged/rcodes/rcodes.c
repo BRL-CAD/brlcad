@@ -33,7 +33,7 @@
 
 
 int
-ged_rcodes(struct ged *gedp, int argc, const char *argv[])
+ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 {
     int item, air, mat, los;
     size_t g_changed = 0;
@@ -159,7 +159,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rcodes_cmd_impl = {
     "rcodes",
-    ged_rcodes,
+    ged_rcodes_core,
     GED_CMD_DEFAULT
 };
 

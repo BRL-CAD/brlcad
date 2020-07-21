@@ -35,7 +35,7 @@
 extern int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 
 int
-ged_importFg4Section(struct ged *gedp, int argc, const char *argv[])
+ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "obj section";
 
@@ -65,7 +65,7 @@ ged_importFg4Section(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl importFg4Section_cmd_impl = {
     "importFg4Section",
-    ged_importFg4Section,
+    ged_importFg4Section_core,
     GED_CMD_DEFAULT
 };
 

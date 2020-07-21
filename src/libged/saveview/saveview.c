@@ -70,7 +70,7 @@ basename_without_suffix(const char *p1, const char *suff)
 
 
 int
-ged_saveview(struct ged *gedp, int argc, const char *argv[])
+ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -197,7 +197,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl saveview_cmd_impl = {
     "saveview",
-    ged_saveview,
+    ged_saveview_core,
     GED_CMD_DEFAULT
 };
 

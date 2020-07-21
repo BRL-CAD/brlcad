@@ -33,7 +33,7 @@
 
 
 int
-ged_whatid(struct ged *gedp, int argc, const char *argv[])
+ged_whatid_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -81,7 +81,7 @@ ged_whatid(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl whatid_cmd_impl = {
     "whatid",
-    ged_whatid,
+    ged_whatid_core,
     GED_CMD_DEFAULT
 };
 

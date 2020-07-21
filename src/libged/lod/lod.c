@@ -35,7 +35,7 @@
 
 
 int
-ged_lod(struct ged *gedp, int argc, const char *argv[])
+ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct bview *gvp;
     int printUsage = 0;
@@ -136,7 +136,7 @@ ged_lod(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl lod_cmd_impl = {
     "lod",
-    ged_lod,
+    ged_lod_core,
     GED_CMD_DEFAULT
 };
 

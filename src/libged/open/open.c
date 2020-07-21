@@ -33,7 +33,7 @@
 
 
 int
-ged_reopen(struct ged *gedp, int argc, const char *argv[])
+ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct db_i *new_dbip;
     static const char *usage = "[filename]";
@@ -63,7 +63,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 	    /* Restore RT's material head */
 	    rt_new_material_head(old_materp);
 
-	    bu_vls_printf(gedp->ged_result_str, "ged_reopen: failed to open %s\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_reopen_core: failed to open %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
@@ -95,7 +95,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl open_cmd_impl = {
     "open",
-    ged_reopen,
+    ged_reopen_core,
     GED_CMD_DEFAULT
 };
 

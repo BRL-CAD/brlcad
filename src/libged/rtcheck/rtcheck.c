@@ -201,7 +201,7 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
  *
  */
 int
-ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
+ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp;
     int i;
@@ -318,7 +318,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rtcheck_cmd_impl = {
     "rtcheck",
-    ged_rtcheck,
+    ged_rtcheck_core,
     GED_CMD_DEFAULT
 };
 

@@ -41,7 +41,7 @@
  *
  */
 int
-ged_select(struct ged *gedp, int argc, const char *argv[])
+ged_select_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     double vx, vy, vw, vh, vr;
@@ -311,7 +311,7 @@ ged_get_selection_set(struct ged *gedp, const char *object_name, const char *sel
 #include "../include/plugin.h"
 struct ged_cmd_impl select_cmd_impl = {
     "select",
-    ged_select,
+    ged_select_core,
     GED_CMD_DEFAULT
 };
 

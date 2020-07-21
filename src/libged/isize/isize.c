@@ -33,7 +33,7 @@
 
 
 int
-ged_isize(struct ged *gedp, int argc, const char *argv[])
+ged_isize_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -58,7 +58,7 @@ ged_isize(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl isize_cmd_impl = {
     "isize",
-    ged_isize,
+    ged_isize_core,
     GED_CMD_DEFAULT
 };
 

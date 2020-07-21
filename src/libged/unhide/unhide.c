@@ -33,7 +33,7 @@
 
 
 int
-ged_unhide(struct ged *gedp, int argc, const char *argv[])
+ged_unhide_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct db_i *dbip;
@@ -112,7 +112,7 @@ ged_unhide(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl unhide_cmd_impl = {
     "unhide",
-    ged_unhide,
+    ged_unhide_core,
     GED_CMD_DEFAULT
 };
 

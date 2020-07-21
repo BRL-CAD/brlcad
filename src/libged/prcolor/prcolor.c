@@ -93,7 +93,7 @@ pr_mater(struct ged *gedp,
 
 
 int
-ged_prcolor(struct ged *gedp, int argc, const char *argv[])
+ged_prcolor_core(struct ged *gedp, int argc, const char *argv[])
 {
     const struct mater *mp;
     int col_count = 0;
@@ -127,7 +127,7 @@ ged_prcolor(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl prcolor_cmd_impl = {
     "prcolor",
-    ged_prcolor,
+    ged_prcolor_core,
     GED_CMD_DEFAULT
 };
 

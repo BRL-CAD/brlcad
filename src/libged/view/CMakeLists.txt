@@ -7,15 +7,15 @@ include_directories(
   )
 
 set(VIEW_SRCS
-	aet.c
-	data_lines.c
-	eye.c
-	quat.c
-	size.c
-	snap.c
-	view.c
-	ypr.c
-	)
+  aet.c
+  #data_lines.c
+  eye.c
+  quat.c
+  size.c
+  snap.c
+  view.c
+  ypr.c
+  )
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-view SHARED ${VIEW_SRCS})

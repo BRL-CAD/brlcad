@@ -33,7 +33,7 @@
 
 
 int
-ged_hide(struct ged *gedp, int argc, const char *argv[])
+ged_hide_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct db_i *dbip;
@@ -112,7 +112,7 @@ ged_hide(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl hide_cmd_impl = {
     "hide",
-    ged_hide,
+    ged_hide_core,
     GED_CMD_DEFAULT
 };
 

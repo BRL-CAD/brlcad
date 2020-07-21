@@ -33,7 +33,7 @@
 
 
 int
-ged_copymat(struct ged *gedp, int argc, const char *argv[])
+ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *child = NULL;
     char *parent = NULL;
@@ -160,7 +160,7 @@ wrapup:
 #include "../include/plugin.h"
 struct ged_cmd_impl copymat_cmd_impl = {
     "copymat",
-    ged_copymat,
+    ged_copymat_core,
     GED_CMD_DEFAULT
 };
 

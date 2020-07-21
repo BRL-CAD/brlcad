@@ -259,7 +259,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 
 
 int
-ged_rt(struct ged *gedp, int argc, const char *argv[])
+ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp;
     int i;
@@ -331,7 +331,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rt_cmd_impl = {
     "rt",
-    ged_rt,
+    ged_rt_core,
     GED_CMD_DEFAULT
 };
 

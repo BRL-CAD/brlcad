@@ -78,7 +78,7 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 
 
 int
-ged_bev(struct ged *gedp, int argc, const char *argv[])
+ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[-t] new_obj obj1 op obj2 op obj3 ...";
 
@@ -312,7 +312,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl bev_cmd_impl = {
     "bev",
-    ged_bev,
+    ged_bev_core,
     GED_CMD_DEFAULT
 };
 

@@ -35,7 +35,7 @@
 
 
 int
-ged_arb(struct ged *gedp, int argc, const char *argv[])
+ged_arb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal internal;
@@ -133,7 +133,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl arb_cmd_impl = {
     "arb",
-    ged_arb,
+    ged_arb_core,
     GED_CMD_DEFAULT
 };
 

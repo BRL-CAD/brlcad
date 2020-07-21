@@ -34,7 +34,7 @@
 #include "./pscale.h"
 
 int
-ged_pscale(struct ged *gedp, int argc, const char *argv[])
+ged_pscale_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     int rflag;
@@ -173,7 +173,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl pscale_cmd_impl = {
     "pscale",
-    ged_pscale,
+    ged_pscale_core,
     GED_CMD_DEFAULT
 };
 

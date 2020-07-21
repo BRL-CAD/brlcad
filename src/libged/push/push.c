@@ -180,7 +180,7 @@ push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UN
 
 
 int
-ged_push(struct ged *gedp, int argc, const char *argv[])
+ged_push_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct push_data *gpdp;
     struct push_id *gpip;
@@ -230,7 +230,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case '?':
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "ged_push: usage push [-P processors] [-d] root [root2 ...]\n");
+		bu_vls_printf(gedp->ged_result_str, "ged_push_core: usage push [-P processors] [-d] root [root2 ...]\n");
 		break;
 	}
     }
@@ -264,7 +264,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	}
 	rt_debug = old_debug;
 	BU_PUT(gpdp, struct push_data);
-	bu_vls_printf(gedp->ged_result_str, "ged_push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
+	bu_vls_printf(gedp->ged_result_str, "ged_push_core:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
 	return GED_ERROR;
     }
 /*
@@ -273,14 +273,14 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
  */
     FOR_ALL_PUSH_SOLIDS(gpip, gpdp->pi_head) {
 	if (rt_db_get_internal(&es_int, gpip->pi_dir, gedp->ged_wdbp->dbip, gpip->pi_mat, &rt_uniresource) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_push: Read error fetching '%s'\n", gpip->pi_dir->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "ged_push_core: Read error fetching '%s'\n", gpip->pi_dir->d_namep);
 	    gpdp->push_error = -1;
 	    continue;
 	}
 	RT_CK_DB_INTERNAL(&es_int);
 
 	if (rt_db_put_internal(gpip->pi_dir, gedp->ged_wdbp->dbip, &es_int, &rt_uniresource) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_push(%s): solid export failure\n", gpip->pi_dir->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "ged_push_core(%s): solid export failure\n", gpip->pi_dir->d_namep);
 	}
 	rt_db_free_internal(&es_int);
     }
@@ -345,7 +345,7 @@ do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 #include "../include/plugin.h"
 struct ged_cmd_impl push_cmd_impl = {
     "push",
-    ged_push,
+    ged_push_core,
     GED_CMD_DEFAULT
 };
 

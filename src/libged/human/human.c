@@ -2176,12 +2176,12 @@ verbIn(struct human_data_t *dude)
 
 
 /**
- * ged_human is the function which is called from an outside function
+ * ged_human_core is the function which is called from an outside function
  * in the /shapes directory. It's essentially a main function without
  * main.
  */
 int
-ged_human(struct ged *gedp, int ac, const char *av[])
+ged_human_core(struct ged *gedp, int ac, const char *av[])
 {
     struct wmember human;
     struct wmember boxes;
@@ -2495,7 +2495,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 #include "../include/plugin.h"
 struct ged_cmd_impl human_cmd_impl = {
     "human",
-    ged_human,
+    ged_human_core,
     GED_CMD_DEFAULT
 };
 

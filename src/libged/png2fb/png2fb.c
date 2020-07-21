@@ -132,7 +132,7 @@ get_args(int argc, char **argv)
 
 
 int
-ged_png2fb(struct ged *gedp, int argc, const char *argv[])
+ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
 
@@ -192,7 +192,7 @@ ged_png2fb(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl png2fb_cmd_impl = {
-    "png2fb",
+    "png2fb_core",
     ged_png2fb,
     GED_CMD_DEFAULT
 };

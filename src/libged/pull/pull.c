@@ -208,7 +208,7 @@ pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
 
 
 int
-ged_pull(struct ged *gedp, int argc, const char *argv[])
+ged_pull_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     mat_t mat;
@@ -252,7 +252,7 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
 		break;
 	  case '?':
 	  default:
-		bu_vls_printf(gedp->ged_result_str, "ged_pull: usage pull [-d] root \n");
+		bu_vls_printf(gedp->ged_result_str, "ged_pull_core: usage pull [-d] root \n");
 		break;
 	}
     }
@@ -274,7 +274,7 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl pull_cmd_impl = {
     "pull",
-    ged_pull,
+    ged_pull_core,
     GED_CMD_DEFAULT
 };
 

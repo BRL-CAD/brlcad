@@ -48,6 +48,7 @@ set_source_files_properties(env/env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
   exec.cpp
+  exec_mapping.cpp
   ged_init.cpp
   libfuncs/libfuncs.c
   columns.c
@@ -61,19 +62,29 @@ set(LIBGED_SOURCES
   ged_util.c
   get_obj_bounds.c
   get_solid_kp.c
+  inside.c
   path.c
   polyclip.cpp
+  qray.c
   rotate_about.c
   rotate_arb_face.c
   rotate_eto.c
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
+  snap.c
   trace.c
+  track.c
   translate_extrude.c
   translate_tgc.c
   vutil.c
+  view/data_lines.c
+  wdb_importFg4Section.c
+  )
 
+if(0)
+set(LIBGED_SOURCES
+  ${LIBGED_SOURCES}
   3ptarb/3ptarb.c
   adc/adc.c
   adjust/adjust.c
@@ -195,7 +206,6 @@ set(LIBGED_SOURCES
   human/human.c
   illum/illum.c
   importFg4Section/importFg4Section.c
-  importFg4Section/wdb_importFg4Section.c
   inside/inside.c
   instance/instance.c
   isize/isize.c
@@ -340,7 +350,6 @@ set(LIBGED_SOURCES
   tol/tol.c
   tops/tops.c
   tra/tra.c
-  track/track.c
   tree/tree.c
   typein/typein.c
   unhide/unhide.c
@@ -350,7 +359,6 @@ set(LIBGED_SOURCES
   version/version.c
   view/aet.c
   view/center.cpp
-  view/data_lines.c
   view/eye.c
   view/quat.c
   view/size.c
@@ -373,8 +381,8 @@ set(LIBGED_SOURCES
   xpush/xpush.c
   zap/zap.c
   zoom/zoom.c
-  ${LIBGED_CMD_SRCS}
   )
+endif(0)
 
 set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 

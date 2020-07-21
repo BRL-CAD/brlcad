@@ -38,7 +38,7 @@
 
 
 int
-ged_bb(struct ged *gedp, int argc, const char *argv[])
+ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t rpp_min, rpp_max;
     point_t obj_min, obj_max;
@@ -312,7 +312,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl bb_cmd_impl = {
     "bb",
-    ged_bb,
+    ged_bb_core,
     GED_CMD_DEFAULT
 };
 

@@ -34,7 +34,7 @@
 
 
 int
-ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
+ged_ptranslate_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *cmd_name = argv[0];
     int ret;
@@ -136,7 +136,7 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl ptranslate_cmd_impl = {
     "ptranslate",
-    ged_ptranslate,
+    ged_ptranslate_core,
     GED_CMD_DEFAULT
 };
 

@@ -34,7 +34,7 @@
 
 
 int
-ged_group(struct ged *gedp, int argc, const char *argv[])
+ged_group_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "gname object(s)";
 
@@ -64,7 +64,7 @@ ged_group(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl group_cmd_impl = {
     "group",
-    ged_group,
+    ged_group_core,
     GED_CMD_DEFAULT
 };
 

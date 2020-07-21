@@ -33,7 +33,7 @@
 
 
 int
-ged_remove(struct ged *gedp, int argc, const char *argv[])
+ged_remove_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
@@ -109,7 +109,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl remove_cmd_impl = {
     "remove",
-    ged_remove,
+    ged_remove_core,
     GED_CMD_DEFAULT
 };
 

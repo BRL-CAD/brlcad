@@ -725,7 +725,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 
 
 int
-ged_red(struct ged *gedp, int argc, const char **argv)
+ged_red_core(struct ged *gedp, int argc, const char **argv)
 {
     FILE *fp;
     int c, counter;
@@ -995,7 +995,7 @@ cleanup:
 #include "../include/plugin.h"
 struct ged_cmd_impl red_cmd_impl = {
     "red",
-    ged_red,
+    ged_red_core,
     GED_CMD_DEFAULT
 };
 

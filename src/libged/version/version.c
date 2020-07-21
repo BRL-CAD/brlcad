@@ -33,7 +33,7 @@
 
 
 int
-ged_version(struct ged *gedp, int argc, const char *argv[])
+ged_version_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -56,7 +56,7 @@ ged_version(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl version_cmd_impl = {
     "version",
-    ged_version,
+    ged_version_core,
     GED_CMD_DEFAULT
 };
 

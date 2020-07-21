@@ -33,7 +33,7 @@
 
 
 int
-ged_title(struct ged *gedp, int argc, const char *argv[])
+ged_title_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls title = BU_VLS_INIT_ZERO;
 
@@ -69,7 +69,7 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl title_cmd_impl = {
     "title",
-    ged_title,
+    ged_title_core,
     GED_CMD_DEFAULT
 };
 

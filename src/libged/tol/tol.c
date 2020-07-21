@@ -33,7 +33,7 @@
 
 
 int
-ged_tol(struct ged *gedp, int argc, const char *argv[])
+ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 {
     double f;
     static const char *usage = "([abs|rel|norm|dist|perp] [tolerance]) ...";
@@ -386,7 +386,7 @@ ged_tol(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl tol_cmd_impl = {
     "tol",
-    ged_tol,
+    ged_tol_core,
     GED_CMD_DEFAULT
 };
 

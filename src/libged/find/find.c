@@ -61,7 +61,7 @@ find_ref(struct db_i *dbip,
 
 
 int
-ged_find(struct ged *gedp, int argc, const char *argv[])
+ged_find_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i, k;
     struct directory *dp;
@@ -136,7 +136,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl find_cmd_impl = {
     "find",
-    ged_find,
+    ged_find_core,
     GED_CMD_DEFAULT
 };
 

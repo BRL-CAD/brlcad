@@ -27,7 +27,7 @@
 
 
 int
-ged_edcomb(struct ged *gedp, int argc, const char *argv[])
+ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int regionid, air, mat, los;
@@ -96,7 +96,7 @@ ged_edcomb(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl edcomb_cmd_impl = {
     "edcomb",
-    ged_edcomb,
+    ged_edcomb_core,
     GED_CMD_DEFAULT
 };
 

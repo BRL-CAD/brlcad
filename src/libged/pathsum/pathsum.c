@@ -33,7 +33,7 @@
 
 
 int
-ged_pathsum(struct ged *gedp, int argc, const char *argv[])
+ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i, pos_in;
     int verbose;
@@ -138,7 +138,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl pathsum_cmd_impl = {
     "pathsum",
-    ged_pathsum,
+    ged_pathsum_core,
     GED_CMD_DEFAULT
 };
 

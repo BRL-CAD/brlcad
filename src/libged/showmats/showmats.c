@@ -151,7 +151,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 
 
 int
-ged_showmats(struct ged *gedp, int argc, const char *argv[])
+ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
 {
     int aflag = 0;
     static const char *usage = "path";
@@ -184,7 +184,7 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl showmats_cmd_impl = {
     "showmats",
-    ged_showmats,
+    ged_showmats_core,
     GED_CMD_DEFAULT
 };
 

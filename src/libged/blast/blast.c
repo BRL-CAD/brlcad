@@ -33,7 +33,7 @@
  *
  */
 int
-ged_blast(struct ged *gedp, int argc, const char *argv[])
+ged_blast_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "object(s)";
 
@@ -68,7 +68,7 @@ ged_blast(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl blast_cmd_impl = {
     "blast",
-    ged_blast,
+    ged_blast_core,
     GED_CMD_DEFAULT
 };
 

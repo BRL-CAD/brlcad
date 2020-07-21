@@ -35,7 +35,7 @@
 
 
 int
-ged_delay(struct ged *gedp, int argc, const char *argv[])
+ged_delay_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct timeval tv;
     static const char *usage = "sec usec";
@@ -69,7 +69,7 @@ ged_delay(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl delay_cmd_impl = {
     "delay",
-    ged_delay,
+    ged_delay_core,
     GED_CMD_DEFAULT
 };
 

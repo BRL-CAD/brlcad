@@ -295,7 +295,7 @@ copy_object(struct ged *gedp,
 
 
 extern "C" int
-ged_concat(struct ged *gedp, int argc, const char *argv[])
+ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct db_i *newdbp;
     struct directory *dp;
@@ -528,7 +528,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat, GED_CMD_DEFAULT };
+    struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat_core, GED_CMD_DEFAULT };
     const struct ged_cmd concat_cmd = { &concat_cmd_impl };
     const struct ged_cmd *concat_cmds[] = { &concat_cmd,  NULL };
 

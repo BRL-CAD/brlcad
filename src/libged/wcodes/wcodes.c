@@ -125,7 +125,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 
 
 int
-ged_wcodes(struct ged *gedp, int argc, const char *argv[])
+ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int status;
@@ -180,7 +180,7 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl wcodes_cmd_impl = {
     "wcodes",
-    ged_wcodes,
+    ged_wcodes_core,
     GED_CMD_DEFAULT
 };
 

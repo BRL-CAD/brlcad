@@ -3125,7 +3125,7 @@ script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_interna
 
 
 int
-ged_in(struct ged *gedp, int argc, const char *argv[])
+ged_in_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     char *name;
@@ -3491,7 +3491,7 @@ do_new_update:
 #include "../include/plugin.h"
 struct ged_cmd_impl typein_cmd_impl = {
     "in",
-    ged_in,
+    ged_in_core,
     GED_CMD_DEFAULT
 };
 

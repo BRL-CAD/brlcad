@@ -33,7 +33,7 @@
 
 
 int
-ged_cat(struct ged *gedp, int argc, const char *argv[])
+ged_cat_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int arg;
@@ -66,7 +66,7 @@ ged_cat(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl cat_cmd_impl = {
     "cat",
-    ged_cat,
+    ged_cat_core,
     GED_CMD_DEFAULT
 };
 

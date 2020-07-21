@@ -58,7 +58,7 @@ get_comb_print_matrix(struct bu_vls *vls, matp_t matrix)
 
 
 int
-ged_get_comb(struct ged *gedp, int argc, const char *argv[])
+ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -193,7 +193,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl get_comb_cmd_impl = {
     "get_comb",
-    ged_get_comb,
+    ged_get_comb_core,
     GED_CMD_DEFAULT
 };
 

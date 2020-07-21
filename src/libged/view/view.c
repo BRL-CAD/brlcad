@@ -33,7 +33,7 @@
 
 
 int
-ged_view_func(struct ged *gedp, int argc, const char *argv[])
+ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "quat|ypr|aet|center|eye|size [args]";
 
@@ -96,7 +96,7 @@ ged_view_func(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl view_cmd_impl = {
     "view",
-    ged_view_func,
+    ged_view_func_core,
     GED_CMD_DEFAULT
 };
 

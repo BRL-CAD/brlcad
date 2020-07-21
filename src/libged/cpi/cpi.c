@@ -35,7 +35,7 @@
 
 
 int
-ged_cpi(struct ged *gedp, int argc, const char *argv[])
+ged_cpi_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *proto;
     struct directory *dp;
@@ -106,7 +106,7 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl cpi_cmd_impl = {
     "cpi",
-    ged_cpi,
+    ged_cpi_core,
     GED_CMD_DEFAULT
 };
 

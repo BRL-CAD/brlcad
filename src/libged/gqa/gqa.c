@@ -2243,7 +2243,7 @@ summary_reports(struct cstate *state)
 
 
 int
-ged_gqa(struct ged *gedp, int argc, const char *argv[])
+ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 {
     int arg_count;
     struct rt_i *rtip;
@@ -2549,7 +2549,7 @@ aborted:
 #include "../include/plugin.h"
 struct ged_cmd_impl gqa_cmd_impl = {
     "gqa",
-    ged_gqa,
+    ged_gqa_core,
     GED_CMD_DEFAULT
 };
 

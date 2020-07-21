@@ -35,7 +35,7 @@
  *
  */
 int
-ged_autoview(struct ged *gedp, int argc, const char *argv[])
+ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 {
     int is_empty = 1;
     vect_t min, max;
@@ -114,7 +114,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl autoview_cmd_impl = {
     "autoview",
-    ged_autoview,
+    ged_autoview_core,
     GED_CMD_DEFAULT
 };
 

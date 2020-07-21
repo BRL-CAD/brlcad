@@ -977,7 +977,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
  * Set/get a combinations members.
  */
 int
-ged_combmem(struct ged *gedp, int argc, const char *argv[])
+ged_combmem_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     enum etypes iflag = ETYPES_ABS;
@@ -1083,7 +1083,7 @@ bad:
 #include "../include/plugin.h"
 struct ged_cmd_impl combmem_cmd_impl = {
     "combmem",
-    ged_combmem,
+    ged_combmem_core,
     GED_CMD_DEFAULT
 };
 

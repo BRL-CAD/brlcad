@@ -33,7 +33,7 @@
 
 
 int
-ged_pmat(struct ged *gedp, int argc, const char *argv[])
+ged_pmat_core(struct ged *gedp, int argc, const char *argv[])
 {
     mat_t pmat;
 
@@ -68,7 +68,7 @@ ged_pmat(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl pmat_cmd_impl = {
     "pmat",
-    ged_pmat,
+    ged_pmat_core,
     GED_CMD_DEFAULT
 };
 

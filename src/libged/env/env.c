@@ -42,7 +42,7 @@
  * Reports on and manipulates environment variables relevant to BRL-CAD.
  */
 int
-ged_env(struct ged *gedp, int argc, const char *argv[])
+ged_env_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = GED_OK;
 
@@ -65,7 +65,7 @@ ged_env(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl env_cmd_impl = {
     "env",
-    ged_env,
+    ged_env_core,
     GED_CMD_DEFAULT
 };
 

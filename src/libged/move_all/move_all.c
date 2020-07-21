@@ -246,7 +246,7 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
 
 
 int
-ged_move_all(struct ged *gedp, int argc, const char *argv[])
+ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     int fflag = 0;
@@ -316,7 +316,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl move_all_cmd_impl = {
     "move_all",
-    ged_move_all,
+    ged_move_all_core,
     GED_CMD_DEFAULT
 };
 

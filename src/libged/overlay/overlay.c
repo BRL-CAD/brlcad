@@ -53,7 +53,7 @@ image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 }
 
 int
-ged_overlay(struct ged *gedp, int argc, const char *argv[])
+ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 {
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
     double size = 0.0;
@@ -170,13 +170,13 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 	    char **files = NULL;
 	    size_t count = bu_file_list(".", argv[1], &files);
 	    if (count <= 0) {
-		bu_vls_printf(gedp->ged_result_str, "ged_overlay: failed to open file - %s\n", argv[1]);
+		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[1]);
 		return GED_ERROR;
 	    }
 	    vbp = rt_vlblock_init();
 	    for (size_t i = 0; i < count; i++) {
 		if ((fp = fopen(files[i], "rb")) == NULL) {
-		    bu_vls_printf(gedp->ged_result_str, "ged_overlay: failed to open file - %s\n", files[i]);
+		    bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", files[i]);
 		    bu_argv_free(count, files);
 		    return GED_ERROR;
 		}
@@ -276,7 +276,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl overlay_cmd_impl = {
     "overlay",
-    ged_overlay,
+    ged_overlay_core,
     GED_CMD_DEFAULT
 };
 

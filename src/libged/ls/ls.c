@@ -352,7 +352,7 @@ _ged_ls_data_init(struct _ged_ls_data *d)
  * List objects in this database
  */
 int
-ged_ls(struct ged *gedp, int argc, const char *argv[])
+ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int ret_ac = 0;
@@ -481,7 +481,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl ls_cmd_impl = {
     "ls",
-    ged_ls,
+    ged_ls_core,
     GED_CMD_DEFAULT
 };
 

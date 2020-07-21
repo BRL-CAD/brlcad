@@ -37,7 +37,7 @@
  *
  */
 int
-ged_solid_report(struct ged *gedp, int argc, const char *argv[])
+ged_solid_report_core(struct ged *gedp, int argc, const char *argv[])
 {
     int lvl = 0;
     static const char *usage = "lvl";
@@ -75,7 +75,7 @@ ged_solid_report(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl solid_report_cmd_impl = {
     "solid_report",
-    ged_solid_report,
+    ged_solid_report_core,
     GED_CMD_DEFAULT
 };
 

@@ -49,7 +49,7 @@ extern int pclose(FILE *stream);
  * grid, 3d w/color, |filter, infinite Z
  */
 int
-ged_plot(struct ged *gedp, int argc, const char *argv[])
+ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     int Three_D;			/* 0=2-D -vs- 1=3-D */
@@ -147,7 +147,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl plot_cmd_impl = {
     "plot",
-    ged_plot,
+    ged_plot_core,
     GED_CMD_DEFAULT
 };
 

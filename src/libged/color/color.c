@@ -266,7 +266,7 @@ ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_color(struct ged *gedp, int argc, const char *argv[])
+ged_color_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct mater *newp;
     struct mater *mp;
@@ -362,7 +362,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl color_cmd_impl = {
     "color",
-    ged_color,
+    ged_color_core,
     GED_CMD_DEFAULT
 };
 

@@ -84,7 +84,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 
 
 int
-ged_fracture(struct ged *gedp, int argc, const char *argv[])
+ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     struct directory *old_dp;
@@ -212,7 +212,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl fracture_cmd_impl = {
     "fracture",
-    ged_fracture,
+    ged_fracture_core,
     GED_CMD_DEFAULT
 };
 

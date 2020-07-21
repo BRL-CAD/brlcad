@@ -37,7 +37,7 @@
  *
  */
 int
-ged_erase(struct ged *gedp, int argc, const char *argv[])
+ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
     int flag_A_attr=0;
@@ -119,7 +119,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	bu_avs_init(&avs, (argc - last_opt)/2, "ged_erase avs");
+	bu_avs_init(&avs, (argc - last_opt)/2, "ged_erase_core avs");
 	i = 0;
 	while (i < (size_t)argc) {
 	    if (*argv[i] == '-') {
@@ -158,8 +158,8 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
 	max_count = BU_PTBL_LEN(tbl) + last_opt + 1;
 	bu_ptbl_free(tbl);
-	bu_free((char *)tbl, "ged_erase ptbl");
-	new_argv = (char **)bu_calloc(max_count+1, sizeof(char *), "ged_erase new_argv");
+	bu_free((char *)tbl, "ged_erase_core ptbl");
+	new_argv = (char **)bu_calloc(max_count+1, sizeof(char *), "ged_erase_core new_argv");
 	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
 
 	for (i = 0; i < (size_t)new_argc; ++i) {
@@ -183,7 +183,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl erase_cmd_impl = {
     "erase",
-    ged_erase,
+    ged_erase_core,
     GED_CMD_DEFAULT
 };
 

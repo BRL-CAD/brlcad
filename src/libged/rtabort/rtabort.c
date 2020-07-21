@@ -40,7 +40,7 @@
  *
  */
 int
-ged_rtabort(struct ged *gedp, int argc, const char *argv[])
+ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_subprocess *rrp;
     struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
@@ -80,7 +80,7 @@ ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rtabort_cmd_impl = {
     "rtabort",
-    ged_rtabort,
+    ged_rtabort_core,
     GED_CMD_DEFAULT
 };
 

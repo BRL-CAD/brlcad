@@ -39,7 +39,7 @@
  *
  */
 int
-ged_zap(struct ged *gedp, int argc, const char *argv[])
+ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -63,7 +63,7 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl zap_cmd_impl = {
     "zap",
-    ged_zap,
+    ged_zap_core,
     GED_CMD_DEFAULT
 };
 

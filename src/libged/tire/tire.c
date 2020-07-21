@@ -1828,7 +1828,7 @@ _tire_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
 }
 
 int
-ged_tire(struct ged *gedp, int argc, const char *argv[])
+ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t dytred, dztred, dyside1, ztire, dyhub, zhub, d1;
     fastf_t ratio, wheeldiam;
@@ -2019,7 +2019,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl tire_cmd_impl = {
     "tire",
-    ged_tire,
+    ged_tire_core,
     GED_CMD_DEFAULT
 };
 

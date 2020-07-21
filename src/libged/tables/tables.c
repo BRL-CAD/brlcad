@@ -440,7 +440,7 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
 }
 
 int
-ged_tables(struct ged *gedp, int argc, const char *argv[])
+ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
@@ -600,7 +600,7 @@ end:
 #include "../include/plugin.h"
 struct ged_cmd_impl tables_cmd_impl = {
     "tables",
-    ged_tables,
+    ged_tables_core,
     GED_CMD_DEFAULT
 };
 

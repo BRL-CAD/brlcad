@@ -33,7 +33,7 @@
 
 
 int
-ged_slew(struct ged *gedp, int argc, const char *argv[])
+ged_slew_core(struct ged *gedp, int argc, const char *argv[])
 {
     vect_t svec;
     static const char *usage = "x y [z]";
@@ -102,7 +102,7 @@ ged_slew(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl slew_cmd_impl = {
     "slew",
-    ged_slew,
+    ged_slew_core,
     GED_CMD_DEFAULT
 };
 

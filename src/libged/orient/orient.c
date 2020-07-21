@@ -33,7 +33,7 @@
 
 
 int
-ged_orient(struct ged *gedp, int argc, const char *argv[])
+ged_orient_core(struct ged *gedp, int argc, const char *argv[])
 {
     quat_t quat;
     static const char *usage = "quat";
@@ -68,7 +68,7 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
 	for (i = 1; i < 5; ++i) {
 	    double scan;
 	    if (sscanf(argv[i], "%lf", &scan) != 1) {
-		bu_vls_printf(gedp->ged_result_str, "ged_orient: bad value - %s\n", argv[i-1]);
+		bu_vls_printf(gedp->ged_result_str, "ged_orient_core: bad value - %s\n", argv[i-1]);
 		return GED_ERROR;
 	    }
 	    /* convert from double to fastf_t */
@@ -87,7 +87,7 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl orient_cmd_impl = {
     "orient",
-    ged_orient,
+    ged_orient_core,
     GED_CMD_DEFAULT
 };
 

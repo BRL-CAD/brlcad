@@ -1345,7 +1345,7 @@ _ged_brep_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *se
 }
 
 extern "C" int
-ged_brep(struct ged *gedp, int argc, const char *argv[])
+ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
     struct _ged_brep_info gb;
@@ -1477,7 +1477,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep, GED_CMD_DEFAULT };
+    struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
     const struct ged_cmd brep_cmd = { &brep_cmd_impl };
     const struct ged_cmd *brep_cmds[] = { &brep_cmd,  NULL };
 

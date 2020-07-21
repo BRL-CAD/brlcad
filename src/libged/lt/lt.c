@@ -116,7 +116,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
 
 
 int
-ged_lt(struct ged *gedp, int argc, const char *argv[])
+ged_lt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "[-c sep_char] object";
@@ -169,7 +169,7 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl lt_cmd_impl = {
     "lt",
-    ged_lt,
+    ged_lt_core,
     GED_CMD_DEFAULT
 };
 

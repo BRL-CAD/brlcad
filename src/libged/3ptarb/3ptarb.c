@@ -49,7 +49,7 @@ static char *p_arb3pt[] = {
 
 
 int
-ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
+ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i, solve;
     vect_t vec1;
@@ -259,7 +259,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl threeptarb_cmd_impl = {
     "3ptarb",
-    ged_3ptarb,
+    ged_3ptarb_core,
     GED_CMD_DEFAULT
 };
 

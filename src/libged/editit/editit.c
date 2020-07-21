@@ -256,7 +256,7 @@ _ged_editit(const char *editstring, const char *filename)
 
 
 int
-ged_editit(struct ged *gedp, int argc, const char *argv[])
+ged_editit_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = 0;
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -281,7 +281,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl editit_cmd_impl = {
     "editit",
-    ged_editit,
+    ged_editit_core,
     GED_CMD_DEFAULT
 };
 

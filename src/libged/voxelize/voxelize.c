@@ -90,7 +90,7 @@ create_boxes(void *callBackData, int x, int y, int z, const char *a, fastf_t fil
 }
 
 int
-ged_voxelize(struct ged *gedp, int argc, const char *argv[])
+ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_i *rtip;
     static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]";
@@ -223,7 +223,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl voxelize_cmd_impl = {
     "voxelize",
-    ged_voxelize,
+    ged_voxelize_core,
     GED_CMD_DEFAULT
 };
 

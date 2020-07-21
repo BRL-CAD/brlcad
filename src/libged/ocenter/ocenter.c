@@ -30,7 +30,7 @@
 
 
 int
-ged_ocenter(struct ged *gedp, int argc, const char *argv[])
+ged_ocenter_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct _ged_trace_data gtd;
@@ -126,7 +126,7 @@ ged_ocenter(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl ocenter_cmd_impl = {
     "ocenter",
-    ged_ocenter,
+    ged_ocenter_core,
     GED_CMD_DEFAULT
 };
 

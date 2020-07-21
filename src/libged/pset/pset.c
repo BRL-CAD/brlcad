@@ -34,7 +34,7 @@
 
 
 int
-ged_pset(struct ged *gedp, int argc, const char *argv[])
+ged_pset_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     struct rt_db_internal intern;
@@ -119,7 +119,7 @@ ged_pset(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl pset_cmd_impl = {
     "pset",
-    ged_pset,
+    ged_pset_core,
     GED_CMD_DEFAULT
 };
 

@@ -134,7 +134,7 @@ get_attr(const struct bu_attribute_value_set *avp, const char *attribute)
 
 
 int
-ged_lc(struct ged *gedp, int argc, const char *argv[])
+ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *file_name = NULL;
     int file_name_flag_cnt = 0;
@@ -277,7 +277,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	bu_vls_printf(gedp->ged_result_str, "Output filename: %s\n", norm_name);
-	bu_free(norm_name, "ged_lc");
+	bu_free(norm_name, "ged_lc_core");
 	output = bu_vls_vlsinit();
     } else {
 	output = gedp->ged_result_str;
@@ -292,14 +292,14 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     group_name = argv[1];
 
     /* The 7 is for the "-name" and '\0' */
-    plan = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 7), "ged_lc");
+    plan = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 7), "ged_lc_core");
     sprintf(plan, "-name %s", group_name);
     matches = db_search(&results1, DB_SEARCH_TREE, plan, 0, NULL, gedp->ged_wdbp->dbip, NULL);
     if (matches < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Error: Group '%s' does not exist.\n", group_name);
 	return GED_ERROR;
     }
-    bu_free(plan, "ged_lc");
+    bu_free(plan, "ged_lc_core");
     db_search_free(&results1);
 
     if (skip_subtracted_regions_flag) {
@@ -307,13 +307,13 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     } else {
 	plan = "-type region";
     }
-    path = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 2), "ged_lc");
+    path = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 2), "ged_lc_core");
     sprintf(path, "/%s", group_name);
     db_string_to_path(&root, gedp->ged_wdbp->dbip, path);
     matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->ged_wdbp->dbip, NULL);
-    bu_free(path, "ged_lc");
+    bu_free(path, "ged_lc_core");
     if (matches < 1) { return GED_ERROR; }
-    regions = (struct region_record *) bu_malloc(sizeof(struct region_record) * BU_PTBL_LEN(&results2), "ged_lc");
+    regions = (struct region_record *) bu_malloc(sizeof(struct region_record) * BU_PTBL_LEN(&results2), "ged_lc_core");
     for (i = 0; i < BU_PTBL_LEN(&results2); i++) {
 	struct db_full_path *entry = (struct db_full_path *)BU_PTBL_GET(&results2, i);
 	struct directory *dp_curr_dir = DB_FULL_PATH_CUR_DIR(entry);
@@ -419,7 +419,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    bu_vls_printf(gedp->ged_result_str, "No duplicate region_id\n");
 	    bu_vls_printf(gedp->ged_result_str, "Done.");
-	    bu_free(regions, "ged_lc");
+	    bu_free(regions, "ged_lc_core");
 	    return GED_ERROR;
 	} else {
 	    goto print_results;
@@ -464,7 +464,7 @@ print_results:
 	fclose(outfile);
     }
 
-    bu_free(regions, "ged_lc");
+    bu_free(regions, "ged_lc_core");
 
     return GED_OK;
 }
@@ -473,7 +473,7 @@ print_results:
 #include "../include/plugin.h"
 struct ged_cmd_impl lc_cmd_impl = {
     "lc",
-    ged_lc,
+    ged_lc_core,
     GED_CMD_DEFAULT
 };
 

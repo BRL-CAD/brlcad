@@ -33,7 +33,7 @@
 
 
 int
-ged_view2model_vec(struct ged *gedp, int argc, const char *argv[])
+ged_view2model_core_vec(struct ged *gedp, int argc, const char *argv[])
 {
     point_t model_vec;
     point_t view_vec;
@@ -75,7 +75,7 @@ bad:
 #include "../include/plugin.h"
 struct ged_cmd_impl view2model_vec_cmd_impl = {
     "view2model_vec",
-    ged_view2model_vec,
+    ged_view2model_core_vec,
     GED_CMD_DEFAULT
 };
 

@@ -33,7 +33,7 @@
 
 
 int
-ged_rmap(struct ged *gedp, int argc, const char *argv[])
+ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     struct directory *dp;
@@ -144,7 +144,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rmap_cmd_impl = {
     "rmap",
-    ged_rmap,
+    ged_rmap_core,
     GED_CMD_DEFAULT
 };
 

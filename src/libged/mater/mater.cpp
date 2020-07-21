@@ -1674,7 +1674,7 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
 
 
 extern "C" int
-ged_mater(struct ged *gedp, int argc, const char *argv[])
+ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -1713,7 +1713,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl mater_cmd_impl = { "mater", ged_mater, GED_CMD_DEFAULT };
+    struct ged_cmd_impl mater_cmd_impl = { "mater", ged_mater_core, GED_CMD_DEFAULT };
     const struct ged_cmd mater_cmd = { &mater_cmd_impl };
     const struct ged_cmd *mater_cmds[] = { &mater_cmd,  NULL };
 

@@ -34,7 +34,7 @@
 
 
 int
-ged_rrt(struct ged *gedp, int argc, const char *argv[])
+ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp;
     int i;
@@ -72,7 +72,7 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rrt_cmd_impl = {
     "rrt",
-    ged_rrt,
+    ged_rrt_core,
     GED_CMD_DEFAULT
 };
 

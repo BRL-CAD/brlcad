@@ -33,7 +33,7 @@
 
 
 int
-ged_killrefs(struct ged *gedp, int argc, const char *argv[])
+ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 {
     int k;
     struct directory *dp;
@@ -123,7 +123,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl killrefs_cmd_impl = {
     "killrefs",
-    ged_killrefs,
+    ged_killrefs_core,
     GED_CMD_DEFAULT
 };
 

@@ -986,7 +986,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 
 
 int
-ged_clone(struct ged *gedp, int argc, const char *argv[])
+ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_clone_state state;
     struct directory *copy;
@@ -1024,7 +1024,7 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl clone_cmd_impl = {
     "clone",
-    ged_clone,
+    ged_clone_core,
     GED_CMD_DEFAULT
 };
 

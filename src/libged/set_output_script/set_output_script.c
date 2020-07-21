@@ -35,7 +35,7 @@
  *
  */
 int
-ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
+ged_set_output_script_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[script]";
 
@@ -59,7 +59,7 @@ ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
     /* We're now going to set the output handler script */
     /* First, we zap any previous script */
     if (gedp->ged_output_script != NULL) {
-	bu_free((void *)gedp->ged_output_script, "ged_set_output_script: zap");
+	bu_free((void *)gedp->ged_output_script, "ged_set_output_script_core: zap");
 	gedp->ged_output_script = NULL;
     }
 
@@ -74,7 +74,7 @@ ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl set_output_script_cmd_impl = {
     "set_output_script",
-    ged_set_output_script,
+    ged_set_output_script_core,
     GED_CMD_DEFAULT
 };
 

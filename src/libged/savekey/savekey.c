@@ -57,7 +57,7 @@ savekey_rt_oldwrite(struct ged *gedp, FILE *fp, fastf_t *eye_model)
 
 
 int
-ged_savekey(struct ged *gedp, int argc, const char *argv[])
+ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     fastf_t timearg;
@@ -107,7 +107,7 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl savekey_cmd_impl = {
     "savekey",
-    ged_savekey,
+    ged_savekey_core,
     GED_CMD_DEFAULT
 };
 

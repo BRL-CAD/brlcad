@@ -282,7 +282,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
  * However, as a bonus, the eye path is left behind as a vector plot.
  */
 int
-ged_preview(struct ged *gedp, int argc, const char *argv[])
+ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[-v] [-e] [-o image_name.ext]  [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
 
@@ -446,7 +446,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl preview_cmd_impl = {
     "preview",
-    ged_preview,
+    ged_preview_core,
     GED_CMD_DEFAULT
 };
 

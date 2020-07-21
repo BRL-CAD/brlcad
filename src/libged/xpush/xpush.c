@@ -420,7 +420,7 @@ static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union 
 
 
 int
-ged_xpush(struct ged *gedp, int argc, const char *argv[])
+ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *old_dp;
     struct rt_db_internal intern;
@@ -575,7 +575,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl xpush_cmd_impl = {
     "xpush",
-    ged_xpush,
+    ged_xpush_core,
     GED_CMD_DEFAULT
 };
 

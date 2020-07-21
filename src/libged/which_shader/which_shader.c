@@ -33,7 +33,7 @@
 
 
 int
-ged_which_shader(struct ged *gedp, int argc, const char *argv[])
+ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 {
     int j;
     struct directory *dp;
@@ -105,7 +105,7 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl which_shader_cmd_impl = {
     "which_shader",
-    ged_which_shader,
+    ged_which_core_shader,
     GED_CMD_DEFAULT
 };
 

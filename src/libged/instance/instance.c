@@ -34,7 +34,7 @@
 
 
 int
-ged_instance(struct ged *gedp, int argc, const char *argv[])
+ged_instance_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     db_op_t oper;
@@ -81,7 +81,7 @@ ged_instance(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl instance_cmd_impl = {
     "instance",
-    ged_instance,
+    ged_instance_core,
     GED_CMD_DEFAULT
 };
 

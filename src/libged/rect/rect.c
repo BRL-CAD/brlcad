@@ -279,7 +279,7 @@ rect_zoom(struct ged *gedp)
  * that multiple attributes can be set with a single command call.
  */
 int
-ged_rect(struct ged *gedp,
+ged_rect_core(struct ged *gedp,
 	 int argc,
 	 const char *argv[])
 {
@@ -507,7 +507,7 @@ ged_rect(struct ged *gedp,
 #include "../include/plugin.h"
 struct ged_cmd_impl rect_cmd_impl = {
     "rect",
-    ged_rect,
+    ged_rect_core,
     GED_CMD_DEFAULT
 };
 

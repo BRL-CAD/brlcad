@@ -38,7 +38,7 @@
 
 
 int
-ged_edmater(struct ged *gedp, int argc, const char *argv[])
+ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     int i, c;
@@ -106,7 +106,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_file_delete(tmpfil);
-    bu_free((void *)av, "ged_edmater: av");
+    bu_free((void *)av, "ged_edmater_core: av");
 
     return status;
 }
@@ -116,7 +116,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl edmater_cmd_impl = {
     "edmater",
-    ged_edmater,
+    ged_edmater_core,
     GED_CMD_DEFAULT
 };
 

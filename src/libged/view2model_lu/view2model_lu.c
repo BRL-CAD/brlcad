@@ -33,7 +33,7 @@
 
 
 int
-ged_view2model_lu(struct ged *gedp, int argc, const char *argv[])
+ged_view2model_core_lu(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t sf;
     point_t view_pt;
@@ -77,7 +77,7 @@ bad:
 #include "../include/plugin.h"
 struct ged_cmd_impl view2model_lu_cmd_impl = {
     "view2model_lu",
-    ged_view2model_lu,
+    ged_view2model_core_lu,
     GED_CMD_DEFAULT
 };
 

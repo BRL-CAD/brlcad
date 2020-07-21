@@ -34,7 +34,7 @@
 #include "../ged_private.h"
 
 int
-ged_gdiff(struct ged *gedp, int argc, const char *argv[])
+ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
     struct analyze_raydiff_results *results;
@@ -234,7 +234,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl gdiff_cmd_impl = {
     "gdiff",
-    ged_gdiff,
+    ged_gdiff_core,
     GED_CMD_DEFAULT
 };
 

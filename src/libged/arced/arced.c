@@ -31,7 +31,7 @@
 
 
 int
-ged_arced(struct ged *gedp, int argc, const char *argv[])
+ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct animate *anp;
     struct directory *dp;
@@ -137,7 +137,7 @@ fail:
 #include "../include/plugin.h"
 struct ged_cmd_impl arced_cmd_impl = {
     "arced",
-    ged_arced,
+    ged_arced_core,
     GED_CMD_DEFAULT
 };
 

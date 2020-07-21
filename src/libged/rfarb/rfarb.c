@@ -34,7 +34,7 @@
 
 
 int
-ged_rfarb(struct ged *gedp, int argc, const char *argv[])
+ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal internal;
@@ -244,7 +244,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl rfarb_cmd_impl = {
     "rfarb",
-    ged_rfarb,
+    ged_rfarb_core,
     GED_CMD_DEFAULT
 };
 

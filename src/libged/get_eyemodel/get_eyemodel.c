@@ -37,7 +37,7 @@
  *
  */
 int
-ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[])
+ged_get_eyemodel_core(struct ged *gedp, int argc, const char *argv[])
 {
     quat_t quat;
     vect_t eye_model;
@@ -72,7 +72,7 @@ ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl get_eyemodel_cmd_impl = {
     "get_eyemodel",
-    ged_get_eyemodel,
+    ged_get_eyemodel_core,
     GED_CMD_DEFAULT
 };
 

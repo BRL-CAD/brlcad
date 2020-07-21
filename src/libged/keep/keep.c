@@ -106,7 +106,7 @@ node_write(struct db_i *dbip, struct directory *dp, void *ptr)
 
 
 int
-ged_keep(struct ged *gedp, int argc, const char *argv[])
+ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     struct keep_node_data knd;
@@ -231,7 +231,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl keep_cmd_impl = {
     "keep",
-    ged_keep,
+    ged_keep_core,
     GED_CMD_DEFAULT
 };
 

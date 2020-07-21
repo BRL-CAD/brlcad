@@ -325,7 +325,7 @@ edarb_permute(void *data, int argc, const char *argv[])
 
 
 int
-ged_edarb(struct ged *gedp, int argc, const char *argv[])
+ged_edarb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     static struct bu_cmdtab arb_cmds[] = {
@@ -365,7 +365,7 @@ ged_edarb(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl edarb_cmd_impl = {
     "edarb",
-    ged_edarb,
+    ged_edarb_core,
     GED_CMD_DEFAULT
 };
 

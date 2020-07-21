@@ -34,7 +34,7 @@
 
 
 int
-ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
+ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp, *sphdp;
     point_t obj_min, obj_max;
@@ -112,7 +112,7 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl sphgroup_cmd_impl = {
     "sphgroup",
-    ged_sphgroup,
+    ged_sphgroup_core,
     GED_CMD_DEFAULT
 };
 

@@ -34,7 +34,7 @@
 
 
 extern "C" int
-ged_simulate(ged * const gedp, const int argc, const char ** const argv)
+ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -93,7 +93,7 @@ get_debug_mode(const std::string &debug_mode_string)
 
 
 extern "C" int
-ged_simulate(ged * const gedp, const int argc, const char ** const argv)
+ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -150,7 +150,7 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl simulate_cmd_impl = { "simulate", ged_simulate, GED_CMD_DEFAULT };
+    struct ged_cmd_impl simulate_cmd_impl = { "simulate", ged_simulate_core, GED_CMD_DEFAULT };
     const struct ged_cmd simulate_cmd = { &simulate_cmd_impl };
     const struct ged_cmd *simulate_cmds[] = { &simulate_cmd,  NULL };
 

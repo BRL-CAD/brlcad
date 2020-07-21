@@ -33,7 +33,7 @@
 
 
 int
-ged_lookat(struct ged *gedp, int argc, const char *argv[])
+ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t look;
     point_t eye;
@@ -69,17 +69,17 @@ ged_lookat(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_lookat: bad X value - %s\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_lookat_core: bad X value - %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_lookat: bad Y value - %s\n", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_lookat_core: bad Y value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_lookat: bad Z value - %s\n", argv[3]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_lookat_core: bad Z value - %s\n", argv[3]);
 	    return GED_ERROR;
 	}
 
@@ -112,7 +112,7 @@ ged_lookat(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl lookat_cmd_impl = {
     "lookat",
-    ged_lookat,
+    ged_lookat_core,
     GED_CMD_DEFAULT
 };
 

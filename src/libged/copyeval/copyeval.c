@@ -33,7 +33,7 @@
 
 
 int
-ged_copyeval(struct ged *gedp, int argc, const char *argv[])
+ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "path_to_old_prim new_prim";
     struct _ged_trace_data gtd;
@@ -174,7 +174,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl copyeval_cmd_impl = {
     "copyeval",
-    ged_copyeval,
+    ged_copyeval_core,
     GED_CMD_DEFAULT
 };
 

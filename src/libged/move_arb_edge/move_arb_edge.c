@@ -36,7 +36,7 @@
 
 
 int
-ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
+ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
@@ -301,7 +301,7 @@ ged_find_arb_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl move_arb_edge_cmd_impl = {
     "move_arb_edge",
-    ged_move_arb_edge,
+    ged_move_arb_edge_core,
     GED_CMD_DEFAULT
 };
 

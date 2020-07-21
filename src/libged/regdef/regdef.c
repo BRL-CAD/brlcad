@@ -28,7 +28,7 @@
 #include "ged.h"
 
 int
-ged_regdef(struct ged *gedp, int argc, const char *argv[])
+ged_regdef_core(struct ged *gedp, int argc, const char *argv[])
 {
     int item, air, los, mat;
     static const char *usage = "item air los mat";
@@ -100,7 +100,7 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl regdef_cmd_impl = {
     "regdef",
-    ged_regdef,
+    ged_regdef_core,
     GED_CMD_DEFAULT
 };
 

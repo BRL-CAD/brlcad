@@ -33,7 +33,7 @@
 
 
 int
-ged_shells(struct ged *gedp, int argc, const char *argv[])
+ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *old_dp, *new_dp;
     struct rt_db_internal old_intern, new_intern;
@@ -136,7 +136,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl shells_cmd_impl = {
     "shells",
-    ged_shells,
+    ged_shells_core,
     GED_CMD_DEFAULT
 };
 

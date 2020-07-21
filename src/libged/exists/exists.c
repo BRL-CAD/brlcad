@@ -441,7 +441,7 @@ int db_object_exists_and_non_null(struct exists_data *ed)
  * Checks for the existence of a specified object.
  */
 int
-ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
+ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
     /* struct directory *dp;*/
     static const char *usage = "object";
@@ -492,7 +492,7 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 #include "../include/plugin.h"
 struct ged_cmd_impl exists_cmd_impl = {
     "exists",
-    ged_exists,
+    ged_exists_core,
     GED_CMD_DEFAULT
 };
 

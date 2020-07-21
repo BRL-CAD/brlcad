@@ -550,7 +550,7 @@ comb_decimate_memfree:
 }
 
 int
-ged_comb(struct ged *gedp, int argc, const char *argv[])
+ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     const char *cmd_name;
@@ -974,7 +974,7 @@ addmembers:
 #include "../include/plugin.h"
 struct ged_cmd_impl comb_cmd_impl = {
     "comb",
-    ged_comb,
+    ged_comb_core,
     GED_CMD_DEFAULT
 };
 

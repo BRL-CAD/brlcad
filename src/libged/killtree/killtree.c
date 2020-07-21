@@ -142,7 +142,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, void *ptr)
 
 
 int
-ged_killtree(struct ged *gedp, int argc, const char *argv[])
+ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
@@ -262,7 +262,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl killtree_cmd_impl = {
     "killtree",
-    ged_killtree,
+    ged_killtree_core,
     GED_CMD_DEFAULT
 };
 

@@ -102,7 +102,7 @@ get_args(int argc, char **argv)
 
 
 int
-ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
+ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     char usage[] = "Usage: fb-pix [-h -i -c] \n\
@@ -164,7 +164,7 @@ ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl fb2pix_cmd_impl = {
     "fb2pix",
-    ged_fb2pix,
+    ged_fb2pix_core,
     GED_CMD_DEFAULT
 };
 

@@ -430,7 +430,7 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
 
 
 int
-ged_comb_std(struct ged *gedp, int argc, const char *argv[])
+ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *comb_name;
     int ch;
@@ -658,7 +658,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl comb_std_cmd_impl = {
     "comb_std",
-    ged_comb_std,
+    ged_comb_std_core,
     GED_CMD_DEFAULT
 };
 

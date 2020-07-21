@@ -35,7 +35,7 @@
 
 
 int
-ged_bo(struct ged *gedp, int argc, const char *argv[])
+ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     unsigned int minor_type=0;
@@ -242,7 +242,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl bo_cmd_impl = {
     "bo",
-    ged_bo,
+    ged_bo_core,
     GED_CMD_DEFAULT
 };
 

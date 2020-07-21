@@ -34,7 +34,7 @@
 
 
 int
-ged_debuglib(struct ged *gedp, int argc, const char *argv[])
+ged_debuglib_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[hex_code]";
 
@@ -72,7 +72,7 @@ ged_debuglib(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl debuglib_cmd_impl = {
     "debuglib",
-    ged_debuglib,
+    ged_debuglib_core,
     GED_CMD_DEFAULT
 };
 

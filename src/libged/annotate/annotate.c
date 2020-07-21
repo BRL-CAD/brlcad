@@ -119,7 +119,7 @@ annotate_help(struct bu_vls *result, const char *cmd)
 
 
 int
-ged_annotate(struct ged *gedp, int argc, const char *argv[])
+ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
 {
     char **object_argv;
     const char *argv0 = argv[0];
@@ -163,7 +163,7 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&objects);
-    bu_free((void *)object_argv, "ged_annotate");
+    bu_free((void *)object_argv, "ged_annotate_core");
 
     return GED_OK;
 }
@@ -173,7 +173,7 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 struct ged_cmd_impl annotate_cmd_impl = {
     "annotate",
-    ged_annotate,
+    ged_annotate_core,
     GED_CMD_DEFAULT
 };
 
