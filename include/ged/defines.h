@@ -241,6 +241,22 @@ typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
 typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
 typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 
+
+/**
+ * describes a command plugin
+ */
+struct ged_cmd {
+    struct bu_list l;
+
+    const char *name;
+    const char description[80];
+    const char *manpage;
+
+    int (*load)(struct ged *);
+    void (*unload)(struct ged *);
+    int (*exec)(struct ged *, int, const char *[]);
+};
+
 /* accessor functions for ged_results - calling
  * applications should not work directly with the
  * internals of ged_results, which are not guaranteed
@@ -278,14 +294,6 @@ GED_EXPORT extern struct ged *ged_open(const char *dbtype,
     }
 
 
-struct ged_cmd_impl;
-struct ged_cmd {
-    struct ged_cmd_impl *i;
-};
-
-struct ged_plugin {
-    const struct ged_cmd * const p;
-};
 
 __END_DECLS
 

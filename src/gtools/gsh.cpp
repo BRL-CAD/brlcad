@@ -169,6 +169,7 @@ main(int argc, const char **argv)
 
     /* Start the interactive loop */
     while ((line = linenoise(gpmpt)) != NULL) {
+	int (*func)(struct ged *, int, char *[]);
 
 	bu_vls_sprintf(&iline, "%s", line);
 	free(line);
@@ -191,8 +192,7 @@ main(int argc, const char **argv)
 
 	/* OK, try a GED command - make an argv array from the input line */
 	struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
-	//bu_vls_sprintf(&ged_prefixed, "ged_%s", bu_vls_addr(&iline));
-	bu_vls_sprintf(&ged_prefixed, "%s", bu_vls_addr(&iline));
+	bu_vls_sprintf(&ged_prefixed, "ged_%s", bu_vls_addr(&iline));
 	char *input = bu_strdup(bu_vls_addr(&ged_prefixed));
 	bu_vls_free(&ged_prefixed);
 	char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
@@ -201,7 +201,7 @@ main(int argc, const char **argv)
 	/* The "open" and close commands require a bit of
 	 * awareness at this level, since the gedp pointer
 	 * must respond to them. */
-	if (BU_STR_EQUAL(av[0], "open")) {
+	if (BU_STR_EQUAL(av[0], "ged_open")) {
 	    if (ac > 1) {
 		if (gedp) ged_close(gedp);
 		gedp = ged_open("db", av[1], 0);
@@ -232,7 +232,7 @@ main(int argc, const char **argv)
 	}
 
 
-	if (BU_STR_EQUAL(av[0], "close")) {
+	if (BU_STR_EQUAL(av[0], "ged_close")) {
 	    ged_close(gedp);
 	    gedp = NULL;
 	    printf("closed database %s\n", bu_vls_addr(&open_gfile));
@@ -245,11 +245,6 @@ main(int argc, const char **argv)
 
 	/* If we're not opening or closing, and we have an active gedp,
 	 * make a standard libged call */
-	ged_exec(gedp, ac, (const char **)av);
-	printf("%s\n", bu_vls_cstr(gedp->ged_result_str));
-	bu_vls_trunc(gedp->ged_result_str, 0);
-#if 0
-	int (*func)(struct ged *, int, char *[]);
 	*(void **)(&func) = bu_dlsym(libged, av[0]);
 	if (!func) {
 	    printf("unrecognzied command: %s\n", av[0]);
@@ -257,7 +252,6 @@ main(int argc, const char **argv)
 	    (void)func(gedp, ac, av);
 	    printf("%s\n", bu_vls_addr(gedp->ged_result_str));
 	}
-#endif
 
 	bu_free(input, "input copy");
 	bu_free(av, "input argv");
