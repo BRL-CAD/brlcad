@@ -73,7 +73,6 @@ set(LIBGED_SOURCES
   translate_extrude.c
   translate_tgc.c
   vutil.c
-  wdb_importFg4Section.c
 
   3ptarb/3ptarb.c
   adc/adc.c
@@ -196,6 +195,7 @@ set(LIBGED_SOURCES
   human/human.c
   illum/illum.c
   importFg4Section/importFg4Section.c
+  importFg4Section/wdb_importFg4Section.c
   inside/inside.c
   instance/instance.c
   isize/isize.c
