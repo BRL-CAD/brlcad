@@ -31,10 +31,9 @@
 
 #include "../ged_private.h"
 
-
+/* TODO:  ew - globals.  Make them go away...  */
 vect_t _ged_eye_model;
 mat_t _ged_viewrot;
-struct ged *_ged_current_gedp;
 
 /**
  * here we define a minimal table of commands that are supported by the
