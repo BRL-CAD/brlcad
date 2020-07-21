@@ -34,9 +34,7 @@
 #include "bn/plot3.h"
 
 #include "rt/solid.h"
-#include "../ged_private.h"
-
-
+#include "./ged_private.h"
 
 /* defined in draw_calc.cpp */
 extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);

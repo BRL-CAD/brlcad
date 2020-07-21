@@ -33,7 +33,7 @@
 
 #include "../ged_private.h"
 
-int
+GED_EXPORT int
 ged_nmg_mm(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal internal;

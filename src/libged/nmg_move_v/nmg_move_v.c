@@ -257,7 +257,7 @@ void move_vertex(const struct model* m, point_t v_old, point_t v_new)
     }
 }
 
-int
+GED_EXPORT int
 ged_nmg_move_v(struct ged* gedp, int argc, const char* argv[])
 {
     struct rt_db_internal internal;

@@ -33,7 +33,7 @@
 #include "../ged_private.h"
 
 
-int
+GED_EXPORT int
 ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;

@@ -39,6 +39,7 @@
 #include "bu/file.h"
 #include "bu/path.h"
 #include "ged.h"
+#include "../ged_private.h"
 
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"

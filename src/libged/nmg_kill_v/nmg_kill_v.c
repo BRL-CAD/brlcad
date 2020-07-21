@@ -254,7 +254,7 @@ void remove_vertex(const struct model* m, point_t rv)
     }
 }
 
-int
+GED_EXPORT int
 ged_nmg_kill_v(struct ged* gedp, int argc, const char* argv[])
 {
     struct rt_db_internal internal;

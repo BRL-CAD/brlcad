@@ -39,7 +39,7 @@ struct tmp_v {
     struct vertex *v;
 };
 
-int
+GED_EXPORT int
 ged_nmg_cmface(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal internal;

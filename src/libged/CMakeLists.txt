@@ -50,8 +50,8 @@ set(LIBGED_SOURCES
   exec.cpp
   ged_init.cpp
   libfuncs/libfuncs.c
-  columns/columns.c
-  display_list/display_list.c
+  columns.c
+  display_list.c
   draw_calc.cpp
   edbot/edbot.c
   edit_metaball/edit_metaball.c

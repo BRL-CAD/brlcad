@@ -72,7 +72,7 @@ void remove_face(const struct model* m, long int fid)
     }
 }
 
-int
+GED_EXPORT int
 ged_nmg_kill_f(struct ged* gedp, int argc, const char* argv[])
 {
     struct rt_db_internal internal;

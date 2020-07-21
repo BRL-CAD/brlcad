@@ -32,6 +32,7 @@
 #include "ged.h"
 #include "wdb.h"
 
+#include "../ged_private.h"
 
 int
 ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])

@@ -34,7 +34,7 @@
 #include "../ged_private.h"
 
 
-int
+GED_EXPORT int
 ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;

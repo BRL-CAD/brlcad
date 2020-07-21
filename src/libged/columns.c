@@ -34,6 +34,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/db4.h"
+#include "./ged_private.h"
 
 
 static int col_count;		/* names listed on current line */

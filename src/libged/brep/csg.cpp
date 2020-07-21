@@ -748,27 +748,28 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
     return 0;
 }
 
-extern "C" int
-_ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
-{
-    struct bu_attribute_value_set ito = BU_AVS_INIT_ZERO; /* islands to objects */
-    int ret = 0;
-    struct bu_vls log = BU_VLS_INIT_ZERO;
-    struct rt_wdb *wdbp = gedp->ged_wdbp;
-    struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) return GED_ERROR;
+extern "C" {
+    GED_EXPORT int
+	_ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
+	{
+	    struct bu_attribute_value_set ito = BU_AVS_INIT_ZERO; /* islands to objects */
+	    int ret = 0;
+	    struct bu_vls log = BU_VLS_INIT_ZERO;
+	    struct rt_wdb *wdbp = gedp->ged_wdbp;
+	    struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) return GED_ERROR;
 
-    if (dp->d_flags & RT_DIR_COMB) {
-	ret = comb_to_csg(gedp, &log, &ito, dp, verify) ? GED_ERROR : GED_OK;
-    } else {
-	ret = _obj_brep_to_csg(gedp, &log, &ito, dp, verify, NULL) ? GED_ERROR : GED_OK;
-    }
+	    if (dp->d_flags & RT_DIR_COMB) {
+		ret = comb_to_csg(gedp, &log, &ito, dp, verify) ? GED_ERROR : GED_OK;
+	    } else {
+		ret = _obj_brep_to_csg(gedp, &log, &ito, dp, verify, NULL) ? GED_ERROR : GED_OK;
+	    }
 
-    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&log));
-    bu_vls_free(&log);
-    return ret;
+	    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&log));
+	    bu_vls_free(&log);
+	    return ret;
+	}
 }
-
 // Local Variables:
 // tab-width: 8
 // mode: C++
