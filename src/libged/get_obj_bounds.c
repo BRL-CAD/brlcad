@@ -19,7 +19,12 @@
  */
 /** @file libged/get_obj_bounds.c
  *
- * The orot command.
+ * Calculate object bounds.
+ *
+ * TODO - why are there two versions of this?
+ *
+ * TODO - this belongs at the librt level, and probably
+ * lower than that once libg is split out...
  *
  */
 
