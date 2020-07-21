@@ -603,11 +603,29 @@ ged_lint_memfree:
     return ret;
 }
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint, GED_CMD_DEFAULT };
+    const struct ged_cmd lint_cmd = { &lint_cmd_impl };
+    const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
+
+    static const struct ged_plugin pinfo = { lint_cmds, 1 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
+#endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

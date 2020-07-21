@@ -376,7 +376,6 @@ Enter form of new face definition: ");
     return GED_OK;
 }
 
-
 /*
  * Local Variables:
  * mode: C

@@ -270,6 +270,25 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
 
 
 /** @} */
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl pull_cmd_impl = {
+    "pull",
+    ged_pull,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd pull_cmd = { &pull_cmd_impl };
+const struct ged_cmd *pull_cmds[] = { &pull_cmd, NULL };
+
+static const struct ged_plugin pinfo = { pull_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

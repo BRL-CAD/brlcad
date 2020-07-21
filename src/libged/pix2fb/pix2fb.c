@@ -232,6 +232,25 @@ ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl pix2fb_cmd_impl = {
+    "pix2fb",
+    ged_pix2fb,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd pix2fb_cmd = { &pix2fb_cmd_impl };
+const struct ged_cmd *pix2fb_cmds[] = { &pix2fb_cmd, NULL };
+
+static const struct ged_plugin pinfo = { pix2fb_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

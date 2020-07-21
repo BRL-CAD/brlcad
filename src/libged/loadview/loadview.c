@@ -408,10 +408,29 @@ _ged_cm_end(const int argc, const char **argv)
     return 0;
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl loadview_cmd_impl = {
+    "loadview",
+    ged_loadview,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd loadview_cmd = { &loadview_cmd_impl };
+const struct ged_cmd *loadview_cmds[] = { &loadview_cmd, NULL };
+
+static const struct ged_plugin pinfo = { loadview_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

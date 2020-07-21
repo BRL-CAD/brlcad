@@ -341,10 +341,29 @@ do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl push_cmd_impl = {
+    "push",
+    ged_push,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd push_cmd = { &push_cmd_impl };
+const struct ged_cmd *push_cmds[] = { &push_cmd, NULL };
+
+static const struct ged_plugin pinfo = { push_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

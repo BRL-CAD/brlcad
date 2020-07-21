@@ -91,10 +91,29 @@ ged_keypoint(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl keypoint_cmd_impl = {
+    "keypoint",
+    ged_keypoint,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd keypoint_cmd = { &keypoint_cmd_impl };
+const struct ged_cmd *keypoint_cmds[] = { &keypoint_cmd, NULL };
+
+static const struct ged_plugin pinfo = { keypoint_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

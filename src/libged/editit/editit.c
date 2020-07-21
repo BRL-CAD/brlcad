@@ -48,7 +48,7 @@
 #define VI_EDITOR "vi"
 
 int
-_ged_editit(char *editstring, const char *filename)
+_ged_editit(const char *editstring, const char *filename)
 {
 #ifdef HAVE_UNISTD_H
     int xpid = 0;
@@ -72,11 +72,14 @@ _ged_editit(char *editstring, const char *filename)
 	return 0;
     }
 
+    char *editstring_cpy = NULL;
+
     /* convert the edit string into pieces suitable for arguments to execlp */
 
     if (editstring != NULL) {
+	editstring_cpy = bu_strdup(editstring);
 	avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
-	bu_argv_from_string(avtmp, 4, editstring);
+	bu_argv_from_string(avtmp, 4, editstring_cpy);
 
 	if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
 	    terminal = avtmp[0];
@@ -242,8 +245,10 @@ _ged_editit(char *editstring, const char *filename)
     (void)signal(SIGQUIT, s3);
 #endif
 
-    if (editstring != NULL)
+    if (editstring != NULL) {
 	bu_free((void *)avtmp, "ged_editit: avtmp");
+	bu_free(editstring_cpy, "editstring copy");
+    }
 
     return 1;
 }
@@ -271,10 +276,29 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl editit_cmd_impl = {
+    "editit",
+    ged_editit,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd editit_cmd = { &editit_cmd_impl };
+const struct ged_cmd *editit_cmds[] = { &editit_cmd, NULL };
+
+static const struct ged_plugin pinfo = { editit_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

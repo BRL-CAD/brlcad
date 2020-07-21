@@ -537,6 +537,25 @@ qray_data_to_vlist(struct ged *gedp,
 
 
 /** @} */
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl qray_cmd_impl = {
+    "qray",
+    ged_qray,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd qray_cmd = { &qray_cmd_impl };
+const struct ged_cmd *qray_cmds[] = { &qray_cmd, NULL };
+
+static const struct ged_plugin pinfo = { qray_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

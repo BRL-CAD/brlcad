@@ -38,7 +38,7 @@
 #include "bu/vls.h"
 
 #include "ged.h"
-#include "../ged_private.h"
+#include "./ged_private.h"
 
 int
 _ged_results_init(struct ged_results *results)

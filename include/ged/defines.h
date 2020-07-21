@@ -288,6 +288,8 @@ struct ged_plugin {
     int cmd_cnt;
 };
 
+GED_EXPORT const char * ged_init_msgs();
+
 __END_DECLS
 
 #endif /* GED_DEFINES_H */

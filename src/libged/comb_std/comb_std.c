@@ -654,6 +654,25 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl comb_std_cmd_impl = {
+    "comb_std",
+    ged_comb_std,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd comb_std_cmd = { &comb_std_cmd_impl };
+const struct ged_cmd *comb_std_cmds[] = { &comb_std_cmd, NULL };
+
+static const struct ged_plugin pinfo = { comb_std_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

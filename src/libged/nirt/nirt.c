@@ -499,6 +499,25 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl nirt_cmd_impl = {
+    "nirt",
+    ged_nirt,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd nirt_cmd = { &nirt_cmd_impl };
+const struct ged_cmd *nirt_cmds[] = { &nirt_cmd, NULL };
+
+static const struct ged_plugin pinfo = { nirt_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

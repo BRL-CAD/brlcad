@@ -227,10 +227,29 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl keep_cmd_impl = {
+    "keep",
+    ged_keep,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd keep_cmd = { &keep_cmd_impl };
+const struct ged_cmd *keep_cmds[] = { &keep_cmd, NULL };
+
+static const struct ged_plugin pinfo = { keep_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

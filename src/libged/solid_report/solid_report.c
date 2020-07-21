@@ -71,10 +71,29 @@ ged_solid_report(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl solid_report_cmd_impl = {
+    "solid_report",
+    ged_solid_report,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd solid_report_cmd = { &solid_report_cmd_impl };
+const struct ged_cmd *solid_report_cmds[] = { &solid_report_cmd, NULL };
+
+static const struct ged_plugin pinfo = { solid_report_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

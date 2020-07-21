@@ -1221,6 +1221,25 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     return ged_track2(gedp->ged_result_str, gedp->ged_wdbp, argv);
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl track_cmd_impl = {
+    "track",
+    ged_track,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd track_cmd = { &track_cmd_impl };
+const struct ged_cmd *track_cmds[] = { &track_cmd, NULL };
+
+static const struct ged_plugin pinfo = { track_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

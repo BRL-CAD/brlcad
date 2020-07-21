@@ -680,6 +680,25 @@ freemem:
     if (options.debug) bu_vls_free(options.debug_str);
     return (error) ? GED_ERROR : GED_OK;
 }
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl check_cmd_impl = {
+    "check",
+    ged_check,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd check_cmd = { &check_cmd_impl };
+const struct ged_cmd *check_cmds[] = { &check_cmd, NULL };
+
+static const struct ged_plugin pinfo = { check_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

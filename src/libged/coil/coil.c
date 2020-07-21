@@ -557,6 +557,25 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl coil_cmd_impl = {
+    "coil",
+    ged_coil,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd coil_cmd = { &coil_cmd_impl };
+const struct ged_cmd *coil_cmds[] = { &coil_cmd, NULL };
+
+static const struct ged_plugin pinfo = { coil_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

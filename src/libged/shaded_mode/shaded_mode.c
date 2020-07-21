@@ -81,10 +81,29 @@ bad:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl shaded_mode_cmd_impl = {
+    "shaded_mode",
+    ged_shaded_mode,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd shaded_mode_cmd = { &shaded_mode_cmd_impl };
+const struct ged_cmd *shaded_mode_cmds[] = { &shaded_mode_cmd, NULL };
+
+static const struct ged_plugin pinfo = { shaded_mode_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

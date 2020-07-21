@@ -434,11 +434,29 @@ bot_cleanup:
     return ret;
 }
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl bot_cmd_impl = { "bot", ged_bot, GED_CMD_DEFAULT };
+    const struct ged_cmd bot_cmd = { &bot_cmd_impl };
+    const struct ged_cmd *bot_cmds[] = { &bot_cmd,  NULL };
+
+    static const struct ged_plugin pinfo = { bot_cmds, 1 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
+#endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

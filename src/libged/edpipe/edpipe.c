@@ -966,7 +966,6 @@ ged_pipe_prepend_pnt(struct ged *gedp, int argc, const char *argv[])
     return _ged_pipe_append_pnt_common(gedp, argc, argv, _ged_pipe_ins_pnt);
 }
 
-
 /*
  * Local Variables:
  * mode: C

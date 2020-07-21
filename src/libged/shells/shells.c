@@ -132,10 +132,29 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl shells_cmd_impl = {
+    "shells",
+    ged_shells,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd shells_cmd = { &shells_cmd_impl };
+const struct ged_cmd *shells_cmds[] = { &shells_cmd, NULL };
+
+static const struct ged_plugin pinfo = { shells_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

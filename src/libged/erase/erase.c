@@ -179,10 +179,29 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl erase_cmd_impl = {
+    "erase",
+    ged_erase,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd erase_cmd = { &erase_cmd_impl };
+const struct ged_cmd *erase_cmds[] = { &erase_cmd, NULL };
+
+static const struct ged_plugin pinfo = { erase_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

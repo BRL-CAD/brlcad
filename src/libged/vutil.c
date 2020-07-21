@@ -26,7 +26,7 @@
 #include "common.h"
 
 
-#include "../ged_private.h"
+#include "./ged_private.h"
 
 /**
  * FIXME: this routine is suspect and needs investigating.  if run

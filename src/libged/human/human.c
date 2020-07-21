@@ -2491,6 +2491,25 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl human_cmd_impl = {
+    "human",
+    ged_human,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd human_cmd = { &human_cmd_impl };
+const struct ged_cmd *human_cmds[] = { &human_cmd, NULL };
+
+static const struct ged_plugin pinfo = { human_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

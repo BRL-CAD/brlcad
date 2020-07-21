@@ -52,10 +52,29 @@ ged_debugdir(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl debugdir_cmd_impl = {
+    "debugdir",
+    ged_debugdir,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd debugdir_cmd = { &debugdir_cmd_impl };
+const struct ged_cmd *debugdir_cmds[] = { &debugdir_cmd, NULL };
+
+static const struct ged_plugin pinfo = { debugdir_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

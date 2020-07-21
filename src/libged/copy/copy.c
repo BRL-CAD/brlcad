@@ -157,10 +157,29 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl copy_cmd_impl = {
+    "copy",
+    ged_copy,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd copy_cmd = { &copy_cmd_impl };
+const struct ged_cmd *copy_cmds[] = { &copy_cmd, NULL };
+
+static const struct ged_plugin pinfo = { copy_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

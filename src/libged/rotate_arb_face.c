@@ -30,7 +30,7 @@
 #include "bu/cmd.h"
 #include "rt/geom.h"
 
-#include "../ged_private.h"
+#include "./ged_private.h"
 
 
 static const short int arb_vertices[5][24] = {

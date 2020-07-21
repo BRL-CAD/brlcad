@@ -105,10 +105,29 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl remove_cmd_impl = {
+    "remove",
+    ged_remove,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd remove_cmd = { &remove_cmd_impl };
+const struct ged_cmd *remove_cmds[] = { &remove_cmd, NULL };
+
+static const struct ged_plugin pinfo = { remove_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

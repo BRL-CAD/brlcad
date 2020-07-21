@@ -112,10 +112,29 @@ ged_rot(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl rot_cmd_impl = {
+    "rot",
+    ged_rot,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd rot_cmd = { &rot_cmd_impl };
+const struct ged_cmd *rot_cmds[] = { &rot_cmd, NULL };
+
+static const struct ged_plugin pinfo = { rot_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

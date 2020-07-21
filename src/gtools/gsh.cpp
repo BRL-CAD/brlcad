@@ -80,11 +80,15 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-
     /* If we can't load libged there's not point in continuing */
     if (!libged) {
 	bu_vls_free(&msg);
 	bu_exit(EXIT_FAILURE, "ERROR, could not load libged: %s\n", bu_dlerror());
+    }
+
+    const char *ged_init_str = ged_init_msgs();
+    if (strlen(ged_init_str)) {
+	fprintf(stderr, "%s", ged_init_str);
     }
 
     /* FIXME: To draw, we need to init this LIBRT global */

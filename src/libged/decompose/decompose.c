@@ -200,10 +200,29 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl decompose_cmd_impl = {
+    "decompose",
+    ged_decompose,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd decompose_cmd = { &decompose_cmd_impl };
+const struct ged_cmd *decompose_cmds[] = { &decompose_cmd, NULL };
+
+static const struct ged_plugin pinfo = { decompose_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

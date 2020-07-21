@@ -651,11 +651,10 @@ ged_metaball_move_pnt(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

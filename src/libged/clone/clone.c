@@ -1020,10 +1020,29 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl clone_cmd_impl = {
+    "clone",
+    ged_clone,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd clone_cmd = { &clone_cmd_impl };
+const struct ged_cmd *clone_cmds[] = { &clone_cmd, NULL };
+
+static const struct ged_plugin pinfo = { clone_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -78,7 +78,6 @@ vls_col_eol(struct bu_vls *str)
     col_len = 0;
 }
 
-
 /*
  * Local Variables:
  * mode: C

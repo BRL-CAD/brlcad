@@ -108,10 +108,29 @@ ged_tra(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl tra_cmd_impl = {
+    "tra",
+    ged_tra,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd tra_cmd = { &tra_cmd_impl };
+const struct ged_cmd *tra_cmds[] = { &tra_cmd, NULL };
+
+static const struct ged_plugin pinfo = { tra_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
