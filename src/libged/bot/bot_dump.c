@@ -86,6 +86,13 @@ int curr_obj_green;
 int curr_obj_blue;
 fastf_t curr_obj_alpha;
 
+enum otype {
+    OTYPE_DXF = 1,
+    OTYPE_OBJ,
+    OTYPE_SAT,
+    OTYPE_STL
+};
+
 static enum otype output_type;
 static int binary;
 static int normals;
@@ -1326,6 +1333,56 @@ data_dump(struct ged *gedp, FILE *fp)
 
     return GED_OK;
 }
+
+static void
+dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int out_type, int *red, int *green, int *blue, fastf_t *alpha)
+{
+    int ret;
+    mat_t mat;
+    struct display_list *gdlp;
+
+    MAT_IDN(mat);
+
+    for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
+	struct solid *sp;
+
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    struct directory *dp;
+	    struct rt_db_internal intern;
+	    struct rt_bot_internal *bot;
+
+	    dp = sp->s_fullpath.fp_names[sp->s_fullpath.fp_len-1];
+
+	    /* get the internal form */
+	    ret=rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
+
+	    if (ret < 0) {
+		bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);
+		continue;
+	    }
+
+	    if (ret != ID_BOT) {
+		bu_log("%s is not a bot (ignored)\n", dp->d_namep);
+		rt_db_free_internal(&intern);
+		continue;
+	    }
+
+	    /* Write out object color */
+	    if (out_type == OTYPE_OBJ) {
+		(*red) = sp->s_color[0];
+		(*green) = sp->s_color[1];
+		(*blue) = sp->s_color[2];
+		(*alpha) = sp->s_transparency;
+	    }
+
+	    bot = (struct rt_bot_internal *)intern.idb_ptr;
+	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, dbip->dbi_filename);
+	    rt_db_free_internal(&intern);
+	}
+    }
+
+}
+
 
 
 int

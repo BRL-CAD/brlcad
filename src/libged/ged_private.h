@@ -224,16 +224,6 @@ GED_EXPORT int dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *
 GED_EXPORT int dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
 GED_EXPORT void dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transparency, void (*callback)(struct display_list *));
 
-enum otype {
-    OTYPE_DXF = 1,
-    OTYPE_OBJ,
-    OTYPE_SAT,
-    OTYPE_STL
-};
-void _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
-GED_EXPORT void dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int output_type, int *red, int *green, int *blue, fastf_t *alpha);
-
-
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,
