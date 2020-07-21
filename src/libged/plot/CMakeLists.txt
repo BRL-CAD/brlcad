@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-plot SHARED plot.c)
-target_link_libraries(ged-plot libged libbu)
+target_link_libraries(ged-plot libged libdm libbu)
 set_property(TARGET ged-plot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-plot plot.c)
 PLUGIN_SETUP(ged-plot ged)

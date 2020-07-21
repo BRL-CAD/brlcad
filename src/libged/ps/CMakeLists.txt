@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-ps SHARED ps.c)
-target_link_libraries(ged-ps libged libbu)
+target_link_libraries(ged-ps libged libdm libbu)
 set_property(TARGET ged-ps APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-ps ps.c)
 PLUGIN_SETUP(ged-ps ged)

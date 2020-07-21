@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-zap SHARED zap.c)
-target_link_libraries(ged-zap libged libbu)
+target_link_libraries(ged-zap libged libdm libbu)
 set_property(TARGET ged-zap APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-zap zap.c)
 PLUGIN_SETUP(ged-zap ged)
