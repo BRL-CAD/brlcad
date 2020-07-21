@@ -440,9 +440,61 @@ bot_cleanup:
 extern "C" {
     struct ged_cmd_impl bot_cmd_impl = { "bot", ged_bot, GED_CMD_DEFAULT };
     const struct ged_cmd bot_cmd = { &bot_cmd_impl };
-    const struct ged_cmd *bot_cmds[] = { &bot_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { bot_cmds, 1 };
+    struct ged_cmd_impl bot_condense_cmd_impl = {"bot_condense", ged_bot_condense, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_condense_cmd = { &bot_condense_cmd_impl };
+
+    struct ged_cmd_impl bot_decimate_cmd_impl = {"bot_decimate", ged_bot_decimate, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_decimate_cmd = { &bot_decimate_cmd_impl };
+
+    struct ged_cmd_impl bot_dump_cmd_impl = {"bot_dump", ged_bot_dump, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_dump_cmd = { &bot_dump_cmd_impl };
+
+    struct ged_cmd_impl bot_face_fuse_cmd_impl = {"bot_face_fuse", ged_bot_face_fuse, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_face_fuse_cmd = { &bot_face_fuse_cmd_impl };
+
+    struct ged_cmd_impl bot_face_sort_cmd_impl = {"bot_face_sort", ged_bot_face_sort, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_face_sort_cmd = { &bot_face_sort_cmd_impl };
+
+    struct ged_cmd_impl bot_flip_cmd_impl = {"bot_flip", ged_bot_flip, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_flip_cmd = { &bot_flip_cmd_impl };
+
+    struct ged_cmd_impl bot_fuse_cmd_impl = {"bot_fuse", ged_bot_fuse, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_fuse_cmd = { &bot_fuse_cmd_impl };
+
+    struct ged_cmd_impl bot_merge_cmd_impl = {"bot_merge", ged_bot_merge, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_merge_cmd = { &bot_merge_cmd_impl };
+
+    struct ged_cmd_impl bot_smooth_cmd_impl = {"bot_smooth", ged_bot_smooth, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_smooth_cmd = { &bot_smooth_cmd_impl };
+
+    struct ged_cmd_impl bot_split_cmd_impl = {"bot_split", ged_bot_split, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_split_cmd = { &bot_split_cmd_impl };
+
+    struct ged_cmd_impl bot_sync_cmd_impl = {"bot_sync", ged_bot_sync, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_sync_cmd = { &bot_sync_cmd_impl };
+
+    struct ged_cmd_impl bot_vertex_fuse_cmd_impl = {"bot_vertex_fuse", ged_bot_vertex_fuse, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_vertex_fuse_cmd = { &bot_vertex_fuse_cmd_impl };
+
+    const struct ged_cmd *bot_cmds[] = {
+       	&bot_cmd,
+	&bot_condense_cmd,
+	&bot_decimate_cmd,
+	&bot_dump_cmd,
+	&bot_face_fuse_cmd,
+	&bot_face_sort_cmd,
+	&bot_flip_cmd,
+	&bot_fuse_cmd,
+	&bot_merge_cmd,
+	&bot_smooth_cmd,
+	&bot_split_cmd,
+	&bot_sync_cmd,
+	&bot_vertex_fuse_cmd,
+      	NULL
+    };
+
+    static const struct ged_plugin pinfo = { bot_cmds, 13 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

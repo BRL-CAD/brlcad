@@ -95,18 +95,18 @@ set(LIBGED_SOURCES
   bot/check.cpp
   bot/extrude.cpp
   bot/remesh.cpp
-  bot_condense/bot_condense.c
-  bot_decimate/bot_decimate.c
-  bot_dump/bot_dump.c
-  bot_face_fuse/bot_face_fuse.c
-  bot_face_sort/bot_face_sort.c
-  bot_flip/bot_flip.c
-  bot_fuse/bot_fuse.c
-  bot_merge/bot_merge.c
-  bot_smooth/bot_smooth.c
-  bot_split/bot_split.c
-  bot_sync/bot_sync.c
-  bot_vertex_fuse/bot_vertex_fuse.c
+  bot/bot_condense.c
+  bot/bot_decimate.c
+  bot/bot_dump.c
+  bot/bot_face_fuse.c
+  bot/bot_face_sort.c
+  bot/bot_flip.c
+  bot/bot_fuse.c
+  bot/bot_merge.c
+  bot/bot_smooth.c
+  bot/bot_split.c
+  bot/bot_sync.c
+  bot/bot_vertex_fuse.c
   brep/brep.cpp
   brep/conversion.cpp
   brep/csg.cpp
@@ -469,18 +469,6 @@ add_subdirectory(bigE)
 add_subdirectory(blast)
 add_subdirectory(bo)
 add_subdirectory(bot)
-add_subdirectory(bot_condense)
-add_subdirectory(bot_decimate)
-add_subdirectory(bot_dump)
-add_subdirectory(bot_face_fuse)
-add_subdirectory(bot_face_sort)
-add_subdirectory(bot_flip)
-add_subdirectory(bot_fuse)
-add_subdirectory(bot_merge)
-add_subdirectory(bot_smooth)
-add_subdirectory(bot_split)
-add_subdirectory(bot_sync)
-add_subdirectory(bot_vertex_fuse)
 add_subdirectory(brep)
 add_subdirectory(cat)
 add_subdirectory(cc)

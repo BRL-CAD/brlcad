@@ -312,25 +312,6 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
 }
 
 
-#ifdef GED_PLUGIN
-#include "../include/plugin.h"
-struct ged_cmd_impl bot_fuse_cmd_impl = {
-    "bot_fuse",
-    ged_bot_fuse,
-    GED_CMD_DEFAULT
-};
-
-const struct ged_cmd bot_fuse_cmd = { &bot_fuse_cmd_impl };
-const struct ged_cmd *bot_fuse_cmds[] = { &bot_fuse_cmd, NULL };
-
-static const struct ged_plugin pinfo = { bot_fuse_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-
 /*
  * Local Variables:
  * mode: C
