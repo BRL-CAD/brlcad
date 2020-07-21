@@ -6,11 +6,27 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
+set(PSCALE_SRCS
+	pscale.c
+	scale_ehy.c
+	scale_ell.c
+	scale_epa.c
+	scale_eto.c
+	scale_extrude.c
+	scale_hyp.c
+	scale_part.c
+	scale_rhc.c
+	scale_rpc.c
+	scale_superell.c
+	scale_tgc.c
+	scale_tor.c
+	)
+
 add_definitions(-DGED_PLUGIN)
-add_library(ged-pscale SHARED pscale.c)
+add_library(ged-pscale SHARED ${PSCALE_SRCS})
 target_link_libraries(ged-pscale libged libbu)
 set_property(TARGET ged-pscale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-pscale pscale.c)
+VALIDATE_STYLE(ged-pscale ${PSCALE_SRCS})
 PLUGIN_SETUP(ged-pscale ged)
 
 # Local Variables:
@@ -19,3 +35,4 @@ PLUGIN_SETUP(ged-pscale ged)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+

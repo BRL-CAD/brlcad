@@ -69,18 +69,6 @@ set(LIBGED_SOURCES
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
-  scale_ehy.c
-  scale_ell.c
-  scale_epa.c
-  scale_eto.c
-  scale_extrude.c
-  scale_hyp.c
-  scale_part.c
-  scale_rhc.c
-  scale_rpc.c
-  scale_superell.c
-  scale_tgc.c
-  scale_tor.c
   trace.c
   translate_extrude.c
   translate_tgc.c
@@ -280,6 +268,18 @@ set(LIBGED_SOURCES
   protate/protate.c
   ps/ps.c
   pscale/pscale.c
+  pscale/scale_ehy.c
+  pscale/scale_ell.c
+  pscale/scale_epa.c
+  pscale/scale_eto.c
+  pscale/scale_extrude.c
+  pscale/scale_hyp.c
+  pscale/scale_part.c
+  pscale/scale_rhc.c
+  pscale/scale_rpc.c
+  pscale/scale_superell.c
+  pscale/scale_tgc.c
+  pscale/scale_tor.c
   pset/pset.c
   ptranslate/ptranslate.c
   pull/pull.c
@@ -436,6 +436,7 @@ set(ged_ignore_files
   ged_private.h
   joint/joint.h
   osg.cpp
+  pscale/pscale.h
   pnts_util.h
   qray.h
   simulate/NOTES

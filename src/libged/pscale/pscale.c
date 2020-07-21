@@ -31,7 +31,7 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
-
+#include "./pscale.h"
 
 int
 ged_pscale(struct ged *gedp, int argc, const char *argv[])

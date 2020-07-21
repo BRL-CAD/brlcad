@@ -30,7 +30,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 int
 _ged_scale_rhc(struct ged *gedp, struct rt_rhc_internal *rhc, const char *attribute, fastf_t sf, int rflag)
