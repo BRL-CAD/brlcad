@@ -255,6 +255,26 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl threeptarb_cmd_impl = {
+    "3ptarb",
+    ged_3ptarb,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd threeptarb_cmd = { &threeptarb_cmd_impl };
+const struct ged_cmd *threeptarb_cmds[] = { &threeptarb_cmd, NULL };
+
+static const struct ged_plugin pinfo = { threeptarb_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
+
 
 /*
  * Local Variables:

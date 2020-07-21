@@ -698,6 +698,24 @@ ged_calc_adc_dst(struct bview *gvp)
 	gvp->gv_adc.dst = (gvp->gv_adc.dv_dist * INV_GED + 1.0) * M_SQRT1_2;
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl adc_cmd_impl = {
+    "adc",
+    ged_adc,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd adc_cmd = { &adc_cmd_impl };
+const struct ged_cmd *adc_cmds[] = { &adc_cmd, NULL };
+
+static const struct ged_plugin pinfo = { adc_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

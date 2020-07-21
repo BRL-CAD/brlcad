@@ -450,6 +450,8 @@ set(ged_ignore_files
 CMAKEFILES(${ged_ignore_files})
 
 # Plugin test
+add_subdirectory(3ptarb)
+add_subdirectory(adc)
 add_subdirectory(help)
 add_subdirectory(zoom)
 
