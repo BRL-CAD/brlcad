@@ -24,6 +24,7 @@
  */
 
 #include "bu/getopt.h"
+#include "dm.h"
 #include "ged.h"
 
 

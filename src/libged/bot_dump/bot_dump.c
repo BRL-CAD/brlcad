@@ -48,6 +48,7 @@
 #include "raytrace.h"
 
 #include "dm/bview.h"
+#include "dm.h"
 
 #include "../ged_private.h"
 

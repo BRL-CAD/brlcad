@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-bot_dump SHARED bot_dump.c)
-target_link_libraries(ged-bot_dump libged libdm libbu)
+target_link_libraries(ged-bot_dump libged libbu)
 set_property(TARGET ged-bot_dump APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-bot_dump bot_dump.c)
 PLUGIN_SETUP(ged-bot_dump ged)

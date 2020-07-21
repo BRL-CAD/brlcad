@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-remove SHARED remove.c)
-target_link_libraries(ged-remove libged libdm libbu)
+target_link_libraries(ged-remove libged libbu)
 set_property(TARGET ged-remove APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-remove remove.c)
 PLUGIN_SETUP(ged-remove ged)

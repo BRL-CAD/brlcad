@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-erase SHARED erase.c)
-target_link_libraries(ged-erase libged libdm libbu)
+target_link_libraries(ged-erase libged libbu)
 set_property(TARGET ged-erase APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-erase erase.c)
 PLUGIN_SETUP(ged-erase ged)

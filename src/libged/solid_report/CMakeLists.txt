@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-solid_report SHARED solid_report.c)
-target_link_libraries(ged-solid_report libged libdm libbu)
+target_link_libraries(ged-solid_report libged libbu)
 set_property(TARGET ged-solid_report APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-solid_report solid_report.c)
 PLUGIN_SETUP(ged-solid_report ged)

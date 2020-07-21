@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-illum SHARED illum.c)
-target_link_libraries(ged-illum libged libdm libbu)
+target_link_libraries(ged-illum libged libbu)
 set_property(TARGET ged-illum APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-illum illum.c)
 PLUGIN_SETUP(ged-illum ged)

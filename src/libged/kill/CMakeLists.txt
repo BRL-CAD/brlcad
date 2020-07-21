@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-kill SHARED kill.c)
-target_link_libraries(ged-kill libged libdm libbu)
+target_link_libraries(ged-kill libged libbu)
 set_property(TARGET ged-kill APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-kill kill.c)
 PLUGIN_SETUP(ged-kill ged)
