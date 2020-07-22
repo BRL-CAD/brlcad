@@ -36,10 +36,10 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 
-extern void asc_read_v4(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
-extern void asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
-extern void asc_write_v4(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
-extern void asc_write_v5(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
+extern int asc_read_v4(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
+extern int asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
+extern int asc_write_v4(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
+extern int asc_write_v5(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
 
 static int
 asc_can_read(const char *data)
