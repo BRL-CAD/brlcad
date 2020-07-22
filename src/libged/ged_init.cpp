@@ -48,6 +48,13 @@ static size_t cmd_list_len = 0;
 static char **cmd_list = NULL;
 void *ged_cmds;
 
+// TODO - when defining commands, should note (when we know) that
+// some commands are aliases for others.  Initial application is
+// to validate ged_* function call argv0 strings for correctness
+// to the function name, not just general ged_exec validity, but
+// there may be other uses...
+static std::map<std::string, std::set<std::string>> ged_validity;
+
 static std::set<void *> ged_handles;
 struct bu_vls *ged_init_msg_str;
 
