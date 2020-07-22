@@ -290,6 +290,12 @@ struct ged_plugin {
 
 GED_EXPORT const char * ged_init_msgs();
 
+/* LIBGED maintains this list - callers should regard it as read only.  This
+ * list will change (size and pointers to individual command strings if
+ * commands are added or removed - caller is responsible for performing a new
+ * call to get an updated list and size if commands are altered.  */
+GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
+
 __END_DECLS
 
 #endif /* GED_DEFINES_H */

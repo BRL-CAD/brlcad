@@ -37,12 +37,15 @@
 #include "bu/app.h"
 #include "bu/dylib.h"
 #include "bu/file.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 #include "ged.h"
 
 #include "./include/plugin.h"
 
 static std::map<std::string, const struct ged_cmd *> ged_cmd_map;
+static size_t cmd_list_len = 0;
+static char **cmd_list = NULL;
 void *ged_cmds;
 
 static std::set<void *> ged_handles;
@@ -54,6 +57,23 @@ ged_init_msgs()
     return bu_vls_cstr(ged_init_msg_str);
 }
 
+size_t
+ged_cmd_list(const char * const **cl)
+{
+    if (!cmd_list) {
+	bu_argv_free(cmd_list_len, (char **)cmd_list);
+	cmd_list_len = 0;
+    }
+    cmd_list = (char **)bu_calloc(ged_cmd_map.size(), sizeof(char *), "ged cmd argv");
+    std::map<std::string, const struct ged_cmd *>::iterator m_it;
+    for (m_it = ged_cmd_map.begin(); m_it != ged_cmd_map.end(); m_it++) {
+	const char *str = m_it->first.c_str();
+	cmd_list[cmd_list_len] = bu_strdup(str);
+	cmd_list_len++;
+    }
+    (*cl) = (const char * const *)cmd_list;
+    return cmd_list_len;
+}
 
 static void
 libged_init(void)
