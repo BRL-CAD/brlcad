@@ -19,9 +19,12 @@
  */
 /** @file exec_wrapping.cpp
  *
- * Provide compile time wrappers that pass specific libged function
- * calls through to the plugin system.
+ * Provide compile time wrappers that pass specific libged function calls
+ * through to the plugin system.
  *
+ * Some validation is also performed to ensure the argv[0] string value makes
+ * sense - unlike raw function calls, correct argv[0] values are important with
+ * ged_exec to ensure the expected functionality is invoked.
  */
 
 #include "common.h"
@@ -36,6 +39,7 @@
 	    int ret = ged_cmd_valid(argv[0], fname); \
 	    if (ret) { \
 		bu_log("Error(%d): LIBGED command \"ged_" #x "\" called with an unexpected argv[0] value: %s\n", ret, argv[0]); \
+		return GED_UNKNOWN; \
 	    }\
 	    ret = ged_exec(gedp, argc, argv); \
 	    return ret; \
