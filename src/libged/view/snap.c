@@ -35,6 +35,7 @@
 #include "bg/lseg.h"
 #include "dm.h"
 #include "../ged_private.h"
+#include "./ged_view.h"
 
 static int
 _ged_opt_tol(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)

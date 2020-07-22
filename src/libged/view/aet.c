@@ -30,10 +30,10 @@
 #include <string.h>
 
 #include "../ged_private.h"
-
+#include "./ged_view.h"
 
 int
-ged_aet(struct ged *gedp, int argc, const char *argv[])
+ged_aet_core(struct ged *gedp, int argc, const char *argv[])
 {
     vect_t aet;
     int iflag = 0;

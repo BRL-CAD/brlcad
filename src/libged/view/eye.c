@@ -30,10 +30,11 @@
 #include <string.h>
 
 #include "../ged_private.h"
+#include "./ged_view.h"
 
 
 int
-ged_eye(struct ged *gedp, int argc, const char *argv[])
+ged_eye_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t eye_model;
     double scan[3];

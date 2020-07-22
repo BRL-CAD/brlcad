@@ -29,10 +29,11 @@
 #include <ctype.h>
 #include <string.h>
 #include "../ged_private.h"
+#include "./ged_view.h"
 
 
 int
-ged_ypr(struct ged *gedp, int argc, const char *argv[])
+ged_ypr_core(struct ged *gedp, int argc, const char *argv[])
 {
     vect_t ypr;
     mat_t mat;
