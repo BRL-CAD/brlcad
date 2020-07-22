@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-3ptarb SHARED 3ptarb.c)
+ged_plugin_library(ged-3ptarb SHARED 3ptarb.c)
 target_link_libraries(ged-3ptarb libged libbu)
 set_property(TARGET ged-3ptarb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-3ptarb 3ptarb.c)

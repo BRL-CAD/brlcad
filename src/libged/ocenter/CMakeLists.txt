@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-ocenter SHARED ocenter.c)
+ged_plugin_library(ged-ocenter SHARED ocenter.c)
 target_link_libraries(ged-ocenter libged libbu)
 set_property(TARGET ged-ocenter APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-ocenter ocenter.c)

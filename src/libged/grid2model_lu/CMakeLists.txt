@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-grid2model_lu SHARED grid2model_lu.c)
+ged_plugin_library(ged-grid2model_lu SHARED grid2model_lu.c)
 target_link_libraries(ged-grid2model_lu libged libbu)
 set_property(TARGET ged-grid2model_lu APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-grid2model_lu grid2model_lu.c)

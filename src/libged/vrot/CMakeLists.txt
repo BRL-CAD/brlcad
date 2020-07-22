@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-vrot SHARED vrot.c)
+ged_plugin_library(ged-vrot SHARED vrot.c)
 target_link_libraries(ged-vrot libged libbu)
 set_property(TARGET ged-vrot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-vrot vrot.c)

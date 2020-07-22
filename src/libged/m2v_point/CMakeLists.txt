@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-m2v_point SHARED m2v_point.c)
+ged_plugin_library(ged-m2v_point SHARED m2v_point.c)
 target_link_libraries(ged-m2v_point libged libbu)
 set_property(TARGET ged-m2v_point APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-m2v_point m2v_point.c)

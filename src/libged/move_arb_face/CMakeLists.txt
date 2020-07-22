@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-move_arb_face SHARED move_arb_face.c)
+ged_plugin_library(ged-move_arb_face SHARED move_arb_face.c)
 target_link_libraries(ged-move_arb_face libged libbu)
 set_property(TARGET ged-move_arb_face APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-move_arb_face move_arb_face.c)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-ptranslate SHARED ptranslate.c)
+ged_plugin_library(ged-ptranslate SHARED ptranslate.c)
 target_link_libraries(ged-ptranslate libged libbu)
 set_property(TARGET ged-ptranslate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-ptranslate ptranslate.c)

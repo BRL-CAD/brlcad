@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-qvrot SHARED qvrot.c)
+ged_plugin_library(ged-qvrot SHARED qvrot.c)
 target_link_libraries(ged-qvrot libged libbu)
 set_property(TARGET ged-qvrot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-qvrot qvrot.c)

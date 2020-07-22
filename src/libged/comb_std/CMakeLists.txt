@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-comb_std SHARED comb_std.c)
+ged_plugin_library(ged-comb_std SHARED comb_std.c)
 target_link_libraries(ged-comb_std libged libbu)
 set_property(TARGET ged-comb_std APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-comb_std comb_std.c)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-echo SHARED echo.c)
+ged_plugin_library(ged-echo SHARED echo.c)
 target_link_libraries(ged-echo libged libbu)
 set_property(TARGET ged-echo APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-echo echo.c)

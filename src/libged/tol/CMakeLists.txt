@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-tol SHARED tol.c)
+ged_plugin_library(ged-tol SHARED tol.c)
 target_link_libraries(ged-tol libged libbu)
 set_property(TARGET ged-tol APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-tol tol.c)

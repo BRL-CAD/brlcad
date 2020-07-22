@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 
-add_library(ged-zoom SHARED zoom.c)
+ged_plugin_library(ged-zoom SHARED zoom.c)
 target_link_libraries(ged-zoom libged libbu)
 set_property(TARGET ged-zoom APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-zoom zoom.c)

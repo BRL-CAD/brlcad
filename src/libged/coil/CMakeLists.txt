@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-coil SHARED coil.c)
+ged_plugin_library(ged-coil SHARED coil.c)
 target_link_libraries(ged-coil libged libbu)
 set_property(TARGET ged-coil APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-coil coil.c)

@@ -20,7 +20,7 @@ set(NMG_SRCS
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-nmg SHARED ${NMG_SRCS})
+ged_plugin_library(ged-nmg SHARED ${NMG_SRCS})
 target_link_libraries(ged-nmg libged libbu)
 set_property(TARGET ged-nmg APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-nmg ${NMG_SRCS})

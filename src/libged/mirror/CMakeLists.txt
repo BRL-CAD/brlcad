@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-mirror SHARED mirror.c)
+ged_plugin_library(ged-mirror SHARED mirror.c)
 target_link_libraries(ged-mirror libged libbu)
 set_property(TARGET ged-mirror APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-mirror mirror.c)

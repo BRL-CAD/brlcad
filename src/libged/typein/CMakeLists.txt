@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-typein SHARED typein.c)
+ged_plugin_library(ged-typein SHARED typein.c)
 target_link_libraries(ged-typein libged libbu)
 set_property(TARGET ged-typein APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-typein typein.c)

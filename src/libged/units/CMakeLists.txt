@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-units SHARED units.c)
+ged_plugin_library(ged-units SHARED units.c)
 target_link_libraries(ged-units libged libbu)
 set_property(TARGET ged-units APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-units units.c)

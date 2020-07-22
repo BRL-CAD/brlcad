@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-rtcheck SHARED rtcheck.c)
+ged_plugin_library(ged-rtcheck SHARED rtcheck.c)
 target_link_libraries(ged-rtcheck libged libbu)
 set_property(TARGET ged-rtcheck APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-rtcheck rtcheck.c)

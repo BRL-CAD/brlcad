@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-heal SHARED heal.c)
+ged_plugin_library(ged-heal SHARED heal.c)
 target_link_libraries(ged-heal libged libbu)
 set_property(TARGET ged-heal APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-heal heal.c)

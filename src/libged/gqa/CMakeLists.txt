@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-gqa SHARED gqa.c)
+ged_plugin_library(ged-gqa SHARED gqa.c)
 target_link_libraries(ged-gqa libged libbu)
 set_property(TARGET ged-gqa APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-gqa gqa.c)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-wcodes SHARED wcodes.c)
+ged_plugin_library(ged-wcodes SHARED wcodes.c)
 target_link_libraries(ged-wcodes libged libbu)
 set_property(TARGET ged-wcodes APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-wcodes wcodes.c)

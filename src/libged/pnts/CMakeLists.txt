@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-pnts SHARED pnts.cpp)
+ged_plugin_library(ged-pnts SHARED pnts.cpp)
 target_link_libraries(ged-pnts libged libbu)
 set_property(TARGET ged-pnts APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-pnts pnts.cpp)

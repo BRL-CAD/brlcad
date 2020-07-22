@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-dbip SHARED dbip.c)
+ged_plugin_library(ged-dbip SHARED dbip.c)
 target_link_libraries(ged-dbip libged libbu)
 set_property(TARGET ged-dbip APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-dbip dbip.c)

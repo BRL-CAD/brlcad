@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-who SHARED who.c)
+ged_plugin_library(ged-who SHARED who.c)
 target_link_libraries(ged-who libged libbu)
 set_property(TARGET ged-who APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-who who.c)

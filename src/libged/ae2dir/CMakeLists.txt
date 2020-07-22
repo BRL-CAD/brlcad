@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-ae2dir SHARED ae2dir.c)
+ged_plugin_library(ged-ae2dir SHARED ae2dir.c)
 target_link_libraries(ged-ae2dir libged libbu)
 set_property(TARGET ged-ae2dir APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-ae2dir ae2dir.c)

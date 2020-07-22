@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-eac SHARED eac.c)
+ged_plugin_library(ged-eac SHARED eac.c)
 target_link_libraries(ged-eac libged libbu)
 set_property(TARGET ged-eac APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-eac eac.c)

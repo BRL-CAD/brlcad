@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-set_transparency SHARED set_transparency.c)
+ged_plugin_library(ged-set_transparency SHARED set_transparency.c)
 target_link_libraries(ged-set_transparency libged libbu)
 set_property(TARGET ged-set_transparency APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-set_transparency set_transparency.c)

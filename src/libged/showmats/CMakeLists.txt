@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-showmats SHARED showmats.c)
+ged_plugin_library(ged-showmats SHARED showmats.c)
 target_link_libraries(ged-showmats libged libbu)
 set_property(TARGET ged-showmats APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-showmats showmats.c)

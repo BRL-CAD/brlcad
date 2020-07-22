@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-eye_pos SHARED eye_pos.c)
+ged_plugin_library(ged-eye_pos SHARED eye_pos.c)
 target_link_libraries(ged-eye_pos libged libbu)
 set_property(TARGET ged-eye_pos APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-eye_pos eye_pos.c)

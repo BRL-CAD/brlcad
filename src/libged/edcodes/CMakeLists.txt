@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-edcodes SHARED edcodes.c)
+ged_plugin_library(ged-edcodes SHARED edcodes.c)
 target_link_libraries(ged-edcodes libged libbu)
 set_property(TARGET ged-edcodes APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-edcodes edcodes.c)

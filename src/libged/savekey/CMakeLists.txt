@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-savekey SHARED savekey.c)
+ged_plugin_library(ged-savekey SHARED savekey.c)
 target_link_libraries(ged-savekey libged libbu)
 set_property(TARGET ged-savekey APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-savekey savekey.c)

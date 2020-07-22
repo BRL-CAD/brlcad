@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-analyze SHARED analyze.c)
+ged_plugin_library(ged-analyze SHARED analyze.c)
 target_link_libraries(ged-analyze libged libbu)
 set_property(TARGET ged-analyze APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-analyze analyze.c)

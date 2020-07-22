@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-how SHARED how.c)
+ged_plugin_library(ged-how SHARED how.c)
 target_link_libraries(ged-how libged libbu)
 set_property(TARGET ged-how APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-how how.c)

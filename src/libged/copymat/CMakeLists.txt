@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-copymat SHARED copymat.c)
+ged_plugin_library(ged-copymat SHARED copymat.c)
 target_link_libraries(ged-copymat libged libbu)
 set_property(TARGET ged-copymat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-copymat copymat.c)

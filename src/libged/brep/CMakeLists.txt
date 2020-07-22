@@ -19,7 +19,7 @@ set(BREP_SRCS
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-brep SHARED ${BREP_SRCS})
+ged_plugin_library(ged-brep SHARED ${BREP_SRCS})
 target_link_libraries(ged-brep libged libbu)
 set_property(TARGET ged-brep APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-brep ${BREP_SRCS})

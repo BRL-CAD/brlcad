@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-fb2pix SHARED fb2pix.c)
+ged_plugin_library(ged-fb2pix SHARED fb2pix.c)
 target_link_libraries(ged-fb2pix libged libbu)
 set_property(TARGET ged-fb2pix APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-fb2pix fb2pix.c)

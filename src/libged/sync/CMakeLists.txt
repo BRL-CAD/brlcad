@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-sync SHARED sync.c)
+ged_plugin_library(ged-sync SHARED sync.c)
 target_link_libraries(ged-sync libged libbu)
 set_property(TARGET ged-sync APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-sync sync.c)

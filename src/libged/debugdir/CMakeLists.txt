@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-debugdir SHARED debugdir.c)
+ged_plugin_library(ged-debugdir SHARED debugdir.c)
 target_link_libraries(ged-debugdir libged libbu)
 set_property(TARGET ged-debugdir APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-debugdir debugdir.c)

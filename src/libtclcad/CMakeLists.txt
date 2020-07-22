@@ -62,6 +62,9 @@ if (BRLCAD_ENABLE_TCL)
     add_dependencies(libtclcad itk_pkgIndex)
   endif (TARGET itk_pkgIndex)
 
+  # For anyone to do anything with tclcad, we need the libged plugins
+  add_dependencies(libtclcad ged_plugins)
+
 endif (BRLCAD_ENABLE_TCL)
 
 set(tclcad_ignore_files

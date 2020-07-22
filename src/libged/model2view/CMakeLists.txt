@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-model2view SHARED model2view.c)
+ged_plugin_library(ged-model2view SHARED model2view.c)
 target_link_libraries(ged-model2view libged libbu)
 set_property(TARGET ged-model2view APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-model2view model2view.c)

@@ -21,7 +21,7 @@ set(CHECK_SRCS
 	)
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-check SHARED ${CHECK_SRCS})
+ged_plugin_library(ged-check SHARED ${CHECK_SRCS})
 target_link_libraries(ged-check libged libbu)
 set_property(TARGET ged-check APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-check ${CHECK_SRCS})

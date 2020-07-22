@@ -19,7 +19,7 @@ set(VIEW_SRCS
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-view SHARED ${VIEW_SRCS})
+ged_plugin_library(ged-view SHARED ${VIEW_SRCS})
 target_link_libraries(ged-view libged libbu)
 set_property(TARGET ged-view APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-view ${VIEW_SRCS})

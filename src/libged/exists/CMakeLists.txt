@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-exists SHARED exists.c)
+ged_plugin_library(ged-exists SHARED exists.c)
 target_link_libraries(ged-exists libged libbu)
 set_property(TARGET ged-exists APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-exists exists.c)

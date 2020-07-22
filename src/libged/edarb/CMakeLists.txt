@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-edarb SHARED edarb.c)
+ged_plugin_library(ged-edarb SHARED edarb.c)
 target_link_libraries(ged-edarb libged libbu)
 set_property(TARGET ged-edarb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-edarb edarb.c)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-pmat SHARED pmat.c)
+ged_plugin_library(ged-pmat SHARED pmat.c)
 target_link_libraries(ged-pmat libged libbu)
 set_property(TARGET ged-pmat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-pmat pmat.c)

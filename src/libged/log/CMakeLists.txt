@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-log SHARED log.c)
+ged_plugin_library(ged-log SHARED log.c)
 target_link_libraries(ged-log libged libbu)
 set_property(TARGET ged-log APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-log log.c)

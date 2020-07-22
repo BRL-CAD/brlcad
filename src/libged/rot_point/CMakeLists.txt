@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-rot_point SHARED rot_point.c)
+ged_plugin_library(ged-rot_point SHARED rot_point.c)
 target_link_libraries(ged-rot_point libged libbu)
 set_property(TARGET ged-rot_point APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-rot_point rot_point.c)

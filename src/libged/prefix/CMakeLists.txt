@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-prefix SHARED prefix.c)
+ged_plugin_library(ged-prefix SHARED prefix.c)
 target_link_libraries(ged-prefix libged libbu)
 set_property(TARGET ged-prefix APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-prefix prefix.c)

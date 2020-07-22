@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-screengrab SHARED screengrab.c)
+ged_plugin_library(ged-screengrab SHARED screengrab.c)
 target_link_libraries(ged-screengrab libged libbu)
 set_property(TARGET ged-screengrab APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-screengrab screengrab.c)

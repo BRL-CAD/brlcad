@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-rmat SHARED rmat.c)
+ged_plugin_library(ged-rmat SHARED rmat.c)
 target_link_libraries(ged-rmat libged libbu)
 set_property(TARGET ged-rmat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-rmat rmat.c)

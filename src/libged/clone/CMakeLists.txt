@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-clone SHARED clone.c)
+ged_plugin_library(ged-clone SHARED clone.c)
 target_link_libraries(ged-clone libged libbu)
 set_property(TARGET ged-clone APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-clone clone.c)

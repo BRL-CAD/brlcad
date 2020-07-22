@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-tables SHARED tables.c)
+ged_plugin_library(ged-tables SHARED tables.c)
 target_link_libraries(ged-tables libged libbu)
 set_property(TARGET ged-tables APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-tables tables.c)

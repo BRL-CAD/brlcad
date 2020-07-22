@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-bev SHARED bev.c)
+ged_plugin_library(ged-bev SHARED bev.c)
 target_link_libraries(ged-bev libged libbu)
 set_property(TARGET ged-bev APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-bev bev.c)

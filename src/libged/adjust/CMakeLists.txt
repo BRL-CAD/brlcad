@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-adjust SHARED adjust.c)
+ged_plugin_library(ged-adjust SHARED adjust.c)
 target_link_libraries(ged-adjust libged libbu)
 set_property(TARGET ged-adjust APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-adjust adjust.c)

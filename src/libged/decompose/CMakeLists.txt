@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-decompose SHARED decompose.c)
+ged_plugin_library(ged-decompose SHARED decompose.c)
 target_link_libraries(ged-decompose libged libbu)
 set_property(TARGET ged-decompose APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-decompose decompose.c)

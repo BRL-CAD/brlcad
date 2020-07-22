@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-putmat SHARED putmat.c)
+ged_plugin_library(ged-putmat SHARED putmat.c)
 target_link_libraries(ged-putmat libged libbu)
 set_property(TARGET ged-putmat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-putmat putmat.c)

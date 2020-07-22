@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-make SHARED make.c)
+ged_plugin_library(ged-make SHARED make.c)
 target_link_libraries(ged-make libged libbu)
 set_property(TARGET ged-make APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-make make.c)

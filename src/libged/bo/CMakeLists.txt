@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-bo SHARED bo.c)
+ged_plugin_library(ged-bo SHARED bo.c)
 target_link_libraries(ged-bo libged libbu)
 set_property(TARGET ged-bo APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-bo bo.c)

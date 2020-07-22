@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-comb_color SHARED comb_color.c)
+ged_plugin_library(ged-comb_color SHARED comb_color.c)
 target_link_libraries(ged-comb_color libged libbu)
 set_property(TARGET ged-comb_color APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-comb_color comb_color.c)

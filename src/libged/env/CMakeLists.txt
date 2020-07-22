@@ -17,7 +17,7 @@ DISTCLEAN(${ENV_CMD_C})
 set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-env SHARED env.c)
+ged_plugin_library(ged-env SHARED env.c)
 target_link_libraries(ged-env libged libbu)
 set_property(TARGET ged-env APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-env env.c)

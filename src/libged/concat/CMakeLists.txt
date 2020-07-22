@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-concat SHARED concat.cpp)
+ged_plugin_library(ged-concat SHARED concat.cpp)
 target_link_libraries(ged-concat libged libbu)
 set_property(TARGET ged-concat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-concat concat.cpp)

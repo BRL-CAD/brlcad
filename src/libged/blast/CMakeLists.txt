@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-blast SHARED blast.c)
+ged_plugin_library(ged-blast SHARED blast.c)
 target_link_libraries(ged-blast libged libbu)
 set_property(TARGET ged-blast APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-blast blast.c)

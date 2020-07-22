@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-pathlist SHARED pathlist.c)
+ged_plugin_library(ged-pathlist SHARED pathlist.c)
 target_link_libraries(ged-pathlist libged libbu)
 set_property(TARGET ged-pathlist APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-pathlist pathlist.c)

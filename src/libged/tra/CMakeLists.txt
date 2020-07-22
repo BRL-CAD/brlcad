@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-tra SHARED tra.c)
+ged_plugin_library(ged-tra SHARED tra.c)
 target_link_libraries(ged-tra libged libbu)
 set_property(TARGET ged-tra APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-tra tra.c)

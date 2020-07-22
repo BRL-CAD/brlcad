@@ -8,7 +8,7 @@ include_directories(
 
 add_definitions(-DGED_PLUGIN)
 
-add_library(ged-help SHARED help.cpp)
+ged_plugin_library(ged-help SHARED help.cpp)
 target_link_libraries(ged-help libged libbu)
 set_property(TARGET ged-help APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-help help.cpp)

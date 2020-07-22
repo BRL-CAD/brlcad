@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-lookat SHARED lookat.c)
+ged_plugin_library(ged-lookat SHARED lookat.c)
 target_link_libraries(ged-lookat libged libbu)
 set_property(TARGET ged-lookat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-lookat lookat.c)

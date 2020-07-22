@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-human SHARED human.c)
+ged_plugin_library(ged-human SHARED human.c)
 target_link_libraries(ged-human libged libbu)
 set_property(TARGET ged-human APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-human human.c)

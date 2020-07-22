@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-track SHARED track.c)
+ged_plugin_library(ged-track SHARED track.c)
 target_link_libraries(ged-track libged libbu)
 set_property(TARGET ged-track APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-track track.c)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-gdiff SHARED gdiff.c)
+ged_plugin_library(ged-gdiff SHARED gdiff.c)
 target_link_libraries(ged-gdiff libged libbu)
 set_property(TARGET ged-gdiff APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-gdiff gdiff.c)

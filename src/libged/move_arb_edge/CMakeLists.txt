@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-move_arb_edge SHARED move_arb_edge.c)
+ged_plugin_library(ged-move_arb_edge SHARED move_arb_edge.c)
 target_link_libraries(ged-move_arb_edge libged libbu)
 set_property(TARGET ged-move_arb_edge APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-move_arb_edge move_arb_edge.c)

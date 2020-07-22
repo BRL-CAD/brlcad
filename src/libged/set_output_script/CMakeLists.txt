@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-set_output_script SHARED set_output_script.c)
+ged_plugin_library(ged-set_output_script SHARED set_output_script.c)
 target_link_libraries(ged-set_output_script libged libbu)
 set_property(TARGET ged-set_output_script APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-set_output_script set_output_script.c)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-which_shader SHARED which_shader.c)
+ged_plugin_library(ged-which_shader SHARED which_shader.c)
 target_link_libraries(ged-which_shader libged libbu)
 set_property(TARGET ged-which_shader APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-which_shader which_shader.c)

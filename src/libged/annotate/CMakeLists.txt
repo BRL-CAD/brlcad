@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-annotate SHARED annotate.c)
+ged_plugin_library(ged-annotate SHARED annotate.c)
 target_link_libraries(ged-annotate libged libbu)
 set_property(TARGET ged-annotate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-annotate annotate.c)

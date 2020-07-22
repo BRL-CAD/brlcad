@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-bigE SHARED bigE.c)
+ged_plugin_library(ged-bigE SHARED bigE.c)
 target_link_libraries(ged-bigE libged libbu)
 set_property(TARGET ged-bigE APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-bigE bigE.c)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-move_all SHARED move_all.c)
+ged_plugin_library(ged-move_all SHARED move_all.c)
 target_link_libraries(ged-move_all libged libbu)
 set_property(TARGET ged-move_all APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-move_all move_all.c)

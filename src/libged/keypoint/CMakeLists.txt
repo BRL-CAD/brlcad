@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-keypoint SHARED keypoint.c)
+ged_plugin_library(ged-keypoint SHARED keypoint.c)
 target_link_libraries(ged-keypoint libged libbu)
 set_property(TARGET ged-keypoint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-keypoint keypoint.c)

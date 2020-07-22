@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-orotate SHARED orotate.c)
+ged_plugin_library(ged-orotate SHARED orotate.c)
 target_link_libraries(ged-orotate libged libbu)
 set_property(TARGET ged-orotate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-orotate orotate.c)

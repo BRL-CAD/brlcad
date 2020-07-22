@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-combmem SHARED combmem.c)
+ged_plugin_library(ged-combmem SHARED combmem.c)
 target_link_libraries(ged-combmem libged libbu)
 set_property(TARGET ged-combmem APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-combmem combmem.c)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-cpi SHARED cpi.c)
+ged_plugin_library(ged-cpi SHARED cpi.c)
 target_link_libraries(ged-cpi libged libbu)
 set_property(TARGET ged-cpi APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-cpi cpi.c)

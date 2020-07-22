@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-constraint SHARED constraint.c)
+ged_plugin_library(ged-constraint SHARED constraint.c)
 target_link_libraries(ged-constraint libged libbu)
 set_property(TARGET ged-constraint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-constraint constraint.c)

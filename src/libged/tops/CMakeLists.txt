@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-tops SHARED tops.c)
+ged_plugin_library(ged-tops SHARED tops.c)
 target_link_libraries(ged-tops libged libbu)
 set_property(TARGET ged-tops APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-tops tops.c)

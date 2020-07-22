@@ -1,52 +1,25 @@
+# LIBGED is set up based on a plugin architecture, with common functionality
+# defined in a core library.
 
-# if GED command stuff is pushed into the actual subdirs, the autoconf vs cmake
-# verification (sh/cmakecheck.sh) will fail on dist-hook.  For now, just
-# handle it as part of libged
-if(BRLCAD_ENABLE_BULLET)
-  add_definitions(-DHAVE_BULLET=1)
-  set(LIBGED_CMD_INCLUDE_DIRS
-    ${LIBGED_CMD_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate
-    )
-  include_directories(SYSTEM
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/bullet
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/LinearMath
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletCollision
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletDynamics
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletSoftBody
-    )
-endif(BRLCAD_ENABLE_BULLET)
-include(simulate/bullet/CMakeLists.txt)
-
-if(ADAPTAGRAMS_FOUND)
-  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPTAGRAMS_LIBRARIES})
-  set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
-endif(ADAPTAGRAMS_FOUND)
-
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/debug")
-set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
-
-add_custom_command(OUTPUT ${DEBUG_CMD_CPP}
-  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
-  DEPENDS debug2c
-  COMMENT "[DEBUG2C] Scanning for debugging variables"
+add_custom_command(
+  OUTPUT "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
+  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
   )
-DISTCLEAN(${DEBUG_CMD_CPP})
-set_source_files_properties(debug/debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
-
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/env")
-set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
-
-add_custom_command(OUTPUT ${ENV_CMD_C}
-  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_CMD_C}
-  DEPENDS env2c
-  COMMENT "[ENV2C] Scanning for environment variable usage"
+add_custom_target(ged_plugins_sentinel
+  DEPENDS ${CMAKE_BINARY_DIR}/ged_plugins.sentinel
   )
-DISTCLEAN(${ENV_CMD_C})
-set_source_files_properties(env/env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
+function(ged_plugin_library name)
+  add_library(${name} ${ARGN})
+  add_dependencies(ged_plugins_sentinel ${name})
+endfunction(ged_plugin_library name)
+
+# This target is supplied so applications wanting to run libged
+# commands at build time can depend on the plugins being built as well as
+# libged itself (otherwise LIBGED commands might fail due to their plugins not
+# yet having been built.)
+add_custom_target(ged_plugins ALL DEPENDS ged_plugins_sentinel)
 
 set(LIBGED_SOURCES
-  ${LIBGED_SOURCES}
   exec.cpp
   exec_mapping.cpp
   ged_init.cpp

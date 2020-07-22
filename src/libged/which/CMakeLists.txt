@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-which SHARED which.cpp)
+ged_plugin_library(ged-which SHARED which.cpp)
 target_link_libraries(ged-which libged libbu)
 set_property(TARGET ged-which APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-which which.cpp)

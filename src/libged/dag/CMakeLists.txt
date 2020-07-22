@@ -12,7 +12,7 @@ if(ADAPTAGRAMS_FOUND)
 endif(ADAPTAGRAMS_FOUND)
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-dag SHARED dag.cpp)
+ged_plugin_library(ged-dag SHARED dag.cpp)
 target_link_libraries(ged-dag libged libbu)
 set_property(TARGET ged-dag APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-dag dag.cpp)

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-protate SHARED protate.c)
+ged_plugin_library(ged-protate SHARED protate.c)
 target_link_libraries(ged-protate libged libbu)
 set_property(TARGET ged-protate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-protate protate.c)

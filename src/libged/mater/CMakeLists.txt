@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-mater SHARED mater.cpp)
+ged_plugin_library(ged-mater SHARED mater.cpp)
 target_link_libraries(ged-mater libged libbu)
 set_property(TARGET ged-mater APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-mater mater.cpp)

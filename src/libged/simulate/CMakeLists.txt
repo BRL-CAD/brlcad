@@ -27,7 +27,7 @@ include(bullet/CMakeLists.txt)
 
 if(0)
 add_definitions(-DGED_PLUGIN)
-add_library(ged-simulate SHARED simulate.c)
+ged_plugin_library(ged-simulate SHARED simulate.c)
 target_link_libraries(ged-simulate libged libbu)
 set_property(TARGET ged-simulate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-simulate simulate.c)

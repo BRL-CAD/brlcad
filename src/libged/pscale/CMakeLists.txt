@@ -23,7 +23,7 @@ set(PSCALE_SRCS
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-pscale SHARED ${PSCALE_SRCS})
+ged_plugin_library(ged-pscale SHARED ${PSCALE_SRCS})
 target_link_libraries(ged-pscale libged libbu)
 set_property(TARGET ged-pscale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-pscale ${PSCALE_SRCS})

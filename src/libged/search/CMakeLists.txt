@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-add_library(ged-search SHARED search.c)
+ged_plugin_library(ged-search SHARED search.c)
 target_link_libraries(ged-search libged libbu)
 set_property(TARGET ged-search APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-search search.c)
