@@ -206,8 +206,6 @@ main(int ac, char *av[]) {
 	    "mat_scale_about_pnt",
 	    "metaball_delete_pnt",
 	    "metaball_move_pnt",
-	    "mged_update",
-	    "mged_wait",
 	    "mirror",
 	    "model2grid_lu",
 	    "model2view",
