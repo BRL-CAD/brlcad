@@ -28,1026 +28,270 @@
 
 #include "ged.h"
 
-int ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_E(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_adc(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_adjust(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_aet(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_analyze(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_annotate(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_arb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_arced(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_arot(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_attr(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_autoview(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bev(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_blast(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bo(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_condense(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_face_fuse(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_face_sort(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_fuse(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_split(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_brep(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_cat(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_cc(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_center(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_check(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_clone(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_coil(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_color(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_comb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_comb_color(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_comb_std(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_combmem(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_concat(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_constraint(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_copy(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_copyeval(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_copymat(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_cpi(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_dbip(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_debug(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_debugbu(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_debugdir(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_debuglib(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_decompose(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_delay(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_draw(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_dsp(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_dump(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_dup(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_eac(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_echo(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_edarb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_edcodes(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_edcolor(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_edcomb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_edit(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_editit(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_edmater(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_env(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_erase(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_ev(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_exists(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_expand(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_eye(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_facetize(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_fbclear(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_find(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_find_arb_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_form(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_fracture(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_gdiff(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_get(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_get_comb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_get_type(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_glob(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_gqa(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_graph(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_grid(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_grid2model_lu(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_grid2view_lu(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_group(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_heal(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_help(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_hide(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_how(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_human(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_illum(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_importFg4Section(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_in(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_inside(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_instance(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_isize(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_item(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_joint(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_joint2(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_keep(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_keypoint(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_kill(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_killall(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_killrefs(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_killtree(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_lc(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_lint(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_list(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_loadview(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_lod(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_log(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_lookat(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_ls(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_lt(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_m2v_point(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_make(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_make_name(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_match(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_mater(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_mirror(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_model2grid_lu(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_model2view(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_model2view_lu(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_move(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_move_all(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_mrot(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_nirt(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_nmg(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_ocenter(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_orient(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_orotate(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_oscale(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_otranslate(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_overlay(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pathlist(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pathsum(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_perspective(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_plot(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pmat(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pmodel2view(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_png(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_png2fb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pnts(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_prcolor(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_prefix(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_preview(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_process(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_protate(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_ps(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pscale(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pset(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_pull(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_push(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_put(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_put_comb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_putmat(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_qray(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_quat(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_qvrot(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rcodes(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rect(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_red(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_redraw(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_regdef(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_region(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_remove(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_reopen(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rfarb(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rmap(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rmat(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rmater(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rot(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rot_point(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rrt(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rselect(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rt(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rtabort(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_savekey(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_saveview(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_scale(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_search(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_select(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_setview(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_shaded_mode(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_shader(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_shells(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_showmats(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_simulate(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_size(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_slew(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_solid_report(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_summary(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_sync(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_tables(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_tire(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_title(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_tol(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_tops(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_tra(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_track(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_tracker(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_tree(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_unhide(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_units(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_v2m_point(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_vdraw(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_version(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_view2model(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_view2model_lu(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_view2model_vec(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_view_func(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_viewdir(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_vnirt(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_voxelize(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_vrot(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_wcodes(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_whatid(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_which(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_which_shader(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_who(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_wmater(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_xpush(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_ypr(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_zap(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
-int ged_zoom(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_exec(gedp, argc, argv);
-}
+#define GED_CMD_HELPER1(x, y) x##y
+#define GED_CMD(x) \
+	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
+	{ \
+	    const char *av0 = #x; \
+	    argv[0] = av0; \
+	    return ged_exec(gedp, argc, argv); \
+	} \
+
+GED_CMD(3ptarb)
+GED_CMD(E)
+GED_CMD(adc)
+GED_CMD(adjust)
+GED_CMD(ae2dir)
+GED_CMD(aet)
+GED_CMD(analyze)
+GED_CMD(annotate)
+GED_CMD(arb)
+GED_CMD(arced)
+GED_CMD(arot)
+GED_CMD(attr)
+GED_CMD(autoview)
+GED_CMD(bb)
+GED_CMD(bev)
+GED_CMD(blast)
+GED_CMD(bo)
+GED_CMD(bot)
+GED_CMD(bot_condense)
+GED_CMD(bot_decimate)
+GED_CMD(bot_dump)
+GED_CMD(bot_face_fuse)
+GED_CMD(bot_face_sort)
+GED_CMD(bot_flip)
+GED_CMD(bot_fuse)
+GED_CMD(bot_merge)
+GED_CMD(bot_smooth)
+GED_CMD(bot_split)
+GED_CMD(bot_sync)
+GED_CMD(bot_vertex_fuse)
+GED_CMD(brep)
+GED_CMD(cat)
+GED_CMD(cc)
+GED_CMD(center)
+GED_CMD(check)
+GED_CMD(clone)
+GED_CMD(coil)
+GED_CMD(color)
+GED_CMD(comb)
+GED_CMD(comb_color)
+GED_CMD(comb_std)
+GED_CMD(combmem)
+GED_CMD(concat)
+GED_CMD(constraint)
+GED_CMD(copy)
+GED_CMD(copyeval)
+GED_CMD(copymat)
+GED_CMD(cpi)
+GED_CMD(dbip)
+GED_CMD(dbot_dump)
+GED_CMD(debug)
+GED_CMD(debugbu)
+GED_CMD(debugdir)
+GED_CMD(debuglib)
+GED_CMD(debugnmg)
+GED_CMD(decompose)
+GED_CMD(delay)
+GED_CMD(dir2ae)
+GED_CMD(draw)
+GED_CMD(dsp)
+GED_CMD(dump)
+GED_CMD(dup)
+GED_CMD(eac)
+GED_CMD(echo)
+GED_CMD(edarb)
+GED_CMD(edcodes)
+GED_CMD(edcolor)
+GED_CMD(edcomb)
+GED_CMD(edit)
+GED_CMD(editit)
+GED_CMD(edmater)
+GED_CMD(env)
+GED_CMD(erase)
+GED_CMD(ev)
+GED_CMD(exists)
+GED_CMD(expand)
+GED_CMD(eye)
+GED_CMD(eye_pos)
+GED_CMD(facetize)
+GED_CMD(fb2pix)
+GED_CMD(fbclear)
+GED_CMD(find)
+GED_CMD(find_arb_edge_nearest_pnt)
+GED_CMD(form)
+GED_CMD(fracture)
+GED_CMD(gdiff)
+GED_CMD(get)
+GED_CMD(get_autoview)
+GED_CMD(get_comb)
+GED_CMD(get_eyemodel)
+GED_CMD(get_type)
+GED_CMD(glob)
+GED_CMD(gqa)
+GED_CMD(graph)
+GED_CMD(grid)
+GED_CMD(grid2model_lu)
+GED_CMD(grid2view_lu)
+GED_CMD(group)
+GED_CMD(heal)
+GED_CMD(help)
+GED_CMD(hide)
+GED_CMD(how)
+GED_CMD(human)
+GED_CMD(illum)
+GED_CMD(importFg4Section)
+GED_CMD(in)
+GED_CMD(inside)
+GED_CMD(instance)
+GED_CMD(isize)
+GED_CMD(item)
+GED_CMD(joint)
+GED_CMD(joint2)
+GED_CMD(keep)
+GED_CMD(keypoint)
+GED_CMD(kill)
+GED_CMD(killall)
+GED_CMD(killrefs)
+GED_CMD(killtree)
+GED_CMD(lc)
+GED_CMD(lint)
+GED_CMD(list)
+GED_CMD(loadview)
+GED_CMD(lod)
+GED_CMD(log)
+GED_CMD(lookat)
+GED_CMD(ls)
+GED_CMD(lt)
+GED_CMD(m2v_point)
+GED_CMD(make)
+GED_CMD(make_name)
+GED_CMD(make_pnts)
+GED_CMD(match)
+GED_CMD(mater)
+GED_CMD(mirror)
+GED_CMD(model2grid_lu)
+GED_CMD(model2view)
+GED_CMD(model2view_lu)
+GED_CMD(move)
+GED_CMD(move_all)
+GED_CMD(move_arb_edge)
+GED_CMD(move_arb_face)
+GED_CMD(mrot)
+GED_CMD(nirt)
+GED_CMD(nmg)
+GED_CMD(nmg_collapse)
+GED_CMD(nmg_fix_normals)
+GED_CMD(nmg_simplify)
+GED_CMD(ocenter)
+GED_CMD(orient)
+GED_CMD(orotate)
+GED_CMD(oscale)
+GED_CMD(otranslate)
+GED_CMD(overlay)
+GED_CMD(pathlist)
+GED_CMD(pathsum)
+GED_CMD(perspective)
+GED_CMD(pix2fb)
+GED_CMD(plot)
+GED_CMD(pmat)
+GED_CMD(pmodel2view)
+GED_CMD(png)
+GED_CMD(png2fb)
+GED_CMD(pnts)
+GED_CMD(prcolor)
+GED_CMD(prefix)
+GED_CMD(preview)
+GED_CMD(process)
+GED_CMD(protate)
+GED_CMD(ps)
+GED_CMD(pscale)
+GED_CMD(pset)
+GED_CMD(ptranslate)
+GED_CMD(pull)
+GED_CMD(push)
+GED_CMD(put)
+GED_CMD(put_comb)
+GED_CMD(putmat)
+GED_CMD(qray)
+GED_CMD(quat)
+GED_CMD(qvrot)
+GED_CMD(rcodes)
+GED_CMD(rect)
+GED_CMD(red)
+GED_CMD(redraw)
+GED_CMD(regdef)
+GED_CMD(region)
+GED_CMD(remove)
+GED_CMD(reopen)
+GED_CMD(rfarb)
+GED_CMD(rmap)
+GED_CMD(rmat)
+GED_CMD(rmater)
+GED_CMD(rot)
+GED_CMD(rot_point)
+GED_CMD(rrt)
+GED_CMD(rselect)
+GED_CMD(rt)
+GED_CMD(rtabort)
+GED_CMD(rtcheck)
+GED_CMD(rtwizard)
+GED_CMD(savekey)
+GED_CMD(saveview)
+GED_CMD(scale)
+GED_CMD(screen_grab)
+GED_CMD(search)
+GED_CMD(select)
+GED_CMD(set_output_script)
+GED_CMD(set_transparency)
+GED_CMD(set_uplotOutputMode)
+GED_CMD(setview)
+GED_CMD(shaded_mode)
+GED_CMD(shader)
+GED_CMD(shells)
+GED_CMD(showmats)
+GED_CMD(simulate)
+GED_CMD(size)
+GED_CMD(slew)
+GED_CMD(solid_report)
+GED_CMD(solids_on_ray)
+GED_CMD(sphgroup)
+GED_CMD(summary)
+GED_CMD(sync)
+GED_CMD(tables)
+GED_CMD(tire)
+GED_CMD(title)
+GED_CMD(tol)
+GED_CMD(tops)
+GED_CMD(tra)
+GED_CMD(track)
+GED_CMD(tracker)
+GED_CMD(tree)
+GED_CMD(unhide)
+GED_CMD(units)
+GED_CMD(v2m_point)
+GED_CMD(vdraw)
+GED_CMD(version)
+GED_CMD(view2grid_lu)
+GED_CMD(view2model)
+GED_CMD(view2model_lu)
+GED_CMD(view2model_vec)
+GED_CMD(view_func)
+GED_CMD(viewdir)
+GED_CMD(vnirt)
+GED_CMD(voxelize)
+GED_CMD(vrot)
+GED_CMD(wcodes)
+GED_CMD(whatid)
+GED_CMD(which)
+GED_CMD(which_shader)
+GED_CMD(who)
+GED_CMD(wmater)
+GED_CMD(xpush)
+GED_CMD(ypr)
+GED_CMD(zap)
+GED_CMD(zoom)
 
 // Local Variables:
 // tab-width: 8
