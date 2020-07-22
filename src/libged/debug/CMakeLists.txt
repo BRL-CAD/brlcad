@@ -1,10 +1,21 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
   )
+
+set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
+
+add_custom_command(OUTPUT ${DEBUG_CMD_CPP}
+  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
+  DEPENDS debug2c
+  COMMENT "[DEBUG2C] Scanning for debugging variables"
+  )
+DISTCLEAN(${DEBUG_CMD_CPP})
+set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
 
 add_definitions(-DGED_PLUGIN)
 add_library(ged-debug SHARED debug.cpp)
