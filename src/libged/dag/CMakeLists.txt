@@ -6,6 +6,11 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
+if(ADAPTAGRAMS_FOUND)
+  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPTAGRAMS_LIBRARIES})
+  set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
+endif(ADAPTAGRAMS_FOUND)
+
 add_definitions(-DGED_PLUGIN)
 add_library(ged-dag SHARED dag.cpp)
 target_link_libraries(ged-dag libged libbu)
