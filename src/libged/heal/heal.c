@@ -54,6 +54,11 @@ ged_heal_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    if(argc == 1) {
+    	bu_vls_printf(gedp->ged_result_str, "Usage: %s <bot_solid>", argv[0]);
+	return GED_HELP;
+    }
+
     primitive = argv[1];
 
     if(argc > 2)
