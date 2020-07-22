@@ -235,7 +235,7 @@ help_tokenize(size_t count, const char **files)
 
 
 int
-ged_help(struct ged *gedp, int argc, const char *argv[])
+ged_help_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *dir = NULL;
     char **entries = NULL;
@@ -271,19 +271,19 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl help_cmd_impl     = { "help",    ged_help, GED_CMD_DEFAULT };
+    struct ged_cmd_impl help_cmd_impl     = { "help",    ged_help_core, GED_CMD_DEFAULT };
     const struct ged_cmd help_cmd = { &help_cmd_impl };
 
-    struct ged_cmd_impl apropos_cmd_impl  = { "apropos", ged_help, GED_CMD_DEFAULT };
+    struct ged_cmd_impl apropos_cmd_impl  = { "apropos", ged_help_core, GED_CMD_DEFAULT };
     const struct ged_cmd apropos_cmd = { &apropos_cmd_impl };
 
-    struct ged_cmd_impl info_cmd_impl     = { "info",    ged_help, GED_CMD_DEFAULT };
+    struct ged_cmd_impl info_cmd_impl     = { "info",    ged_help_core, GED_CMD_DEFAULT };
     const struct ged_cmd info_cmd = { &info_cmd_impl };
 
-    struct ged_cmd_impl man_cmd_impl      = { "man",     ged_help, GED_CMD_DEFAULT };
+    struct ged_cmd_impl man_cmd_impl      = { "man",     ged_help_core, GED_CMD_DEFAULT };
     const struct ged_cmd man_cmd = { &man_cmd_impl };
 
-    struct ged_cmd_impl question_cmd_impl = { "?",       ged_help, GED_CMD_DEFAULT };
+    struct ged_cmd_impl question_cmd_impl = { "?",       ged_help_core, GED_CMD_DEFAULT };
     const struct ged_cmd question_cmd = { &question_cmd_impl };
 
     const struct ged_cmd *help_cmds[] = { &help_cmd,  &apropos_cmd,  &info_cmd,  &man_cmd,  &question_cmd, NULL };

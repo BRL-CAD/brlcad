@@ -48,6 +48,11 @@ main(int ac, char *av[]) {
 	bu_log("%s\n", ged_cmds[i]);
     }
 
+    for (size_t i = 0; i < ged_cmd_cnt; i++) {
+	bu_log("ged_execing %s\n", ged_cmds[i]);
+	ged_exec(gbp, 1, (const char **)&ged_cmds[i]);
+    }
+
     ged_close(gbp);
     BU_PUT(gbp, struct ged);
     return 0;
