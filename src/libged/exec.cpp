@@ -28,6 +28,7 @@
 #include <map>
 #include <string>
 
+#include "bu/time.h"
 #include "ged.h"
 #include "./include/plugin.h"
 
@@ -35,6 +36,12 @@ extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[]) {
     if (!gedp || !argc || !argv) {
 	return GED_ERROR;
+    }
+
+    double start;
+    const char *tstr = getenv("GED_EXEC_TIME");
+    if (tstr) {
+	start = bu_gettime();
     }
 
     // TODO - right now this is the map from the libged load - should probably
@@ -58,6 +65,10 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
     // unless we have the necessary callbacks defined in gedp
 
     int cret = (*cmd->i->cmd)(gedp, argc, argv);
+
+    if (tstr) {
+	bu_log("%s time: %g\n", argv[0], (bu_gettime() - start)/1e6);
+    }
 
     // TODO - for the moment these are the hardcoded default opts.  Eventually
     // an opts var should be added to struct ged, and each exec call will set
