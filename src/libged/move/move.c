@@ -124,16 +124,16 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl move_cmd_impl = {
-    "move",
-    ged_move_core,
-    GED_CMD_DEFAULT
-};
 
+struct ged_cmd_impl move_cmd_impl = {"move", ged_move_core, GED_CMD_DEFAULT};
 const struct ged_cmd move_cmd = { &move_cmd_impl };
-const struct ged_cmd *move_cmds[] = { &move_cmd, NULL };
 
-static const struct ged_plugin pinfo = { move_cmds, 1 };
+struct ged_cmd_impl mv_cmd_impl = {"mv", ged_move_core, GED_CMD_DEFAULT};
+const struct ged_cmd mv_cmd = { &mv_cmd_impl };
+
+const struct ged_cmd *move_cmds[] = { &move_cmd, &mv_cmd, NULL };
+
+static const struct ged_plugin pinfo = { move_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -83,16 +83,15 @@ ged_copy_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl copy_cmd_impl = {
-    "copy",
-    ged_copy_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl copy_cmd_impl = {"copy", ged_copy_core, GED_CMD_DEFAULT};
 const struct ged_cmd copy_cmd = { &copy_cmd_impl };
-const struct ged_cmd *copy_cmds[] = { &copy_cmd, NULL };
 
-static const struct ged_plugin pinfo = { copy_cmds, 1 };
+struct ged_cmd_impl cp_cmd_impl = {"cp", ged_copy_core, GED_CMD_DEFAULT};
+const struct ged_cmd cp_cmd = { &cp_cmd_impl };
+
+const struct ged_cmd *copy_cmds[] = { &copy_cmd, &cp_cmd, NULL };
+
+static const struct ged_plugin pinfo = { copy_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

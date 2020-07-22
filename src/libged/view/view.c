@@ -107,6 +107,9 @@ const struct ged_cmd ypr_cmd = { &ypr_cmd_impl };
 struct ged_cmd_impl aet_cmd_impl = {"aet", ged_aet_core, GED_CMD_DEFAULT};
 const struct ged_cmd aet_cmd = { &aet_cmd_impl };
 
+struct ged_cmd_impl ae_cmd_impl = {"ae", ged_aet_core, GED_CMD_DEFAULT};
+const struct ged_cmd ae_cmd = { &ae_cmd_impl };
+
 struct ged_cmd_impl center_cmd_impl = {"center", ged_center_core, GED_CMD_DEFAULT};
 const struct ged_cmd center_cmd = { &center_cmd_impl };
 
@@ -127,6 +130,7 @@ const struct ged_cmd *view_cmds[] = {
     &quat_cmd,
     &ypr_cmd,
     &aet_cmd,
+    &ae_cmd,
     &center_cmd,
     &eye_cmd,
     &size_cmd,
@@ -135,7 +139,7 @@ const struct ged_cmd *view_cmds[] = {
     NULL
 };
 
-static const struct ged_plugin pinfo = { view_cmds, 9 };
+static const struct ged_plugin pinfo = { view_cmds, 10 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
