@@ -20,6 +20,9 @@
 
 #include "common.h"
 
+#include <set>
+#include <map>
+
 #include <stdio.h>
 #include <bu.h>
 #include <ged.h>
@@ -346,17 +349,20 @@ main(int ac, char *av[]) {
 	    "zoom",
 	    NULL
     };
-    int app_cmd_cnt = 0;
-    const char *ccmd = app_cmds[app_cmd_cnt];
-    while (ccmd) {
-	bu_log("\nTest %d: ged_execing app command %s\n", app_cmd_cnt, ccmd);
-	int ret = ged_exec(gbp, 1, (const char **)&ccmd);
-	if (ret != GED_OK && ret != GED_HELP) {
-	    bu_log("%s\n", bu_vls_cstr(gbp->ged_result_str));
+
+    {
+	int app_cmd_cnt = 0;
+	const char *ccmd = app_cmds[app_cmd_cnt];
+	while (ccmd) {
+	    bu_log("\nTest %d: ged_execing app command %s\n", app_cmd_cnt, ccmd);
+	    int ret = ged_exec(gbp, 1, (const char **)&ccmd);
+	    if (ret != GED_OK && ret != GED_HELP) {
+		bu_log("%s\n", bu_vls_cstr(gbp->ged_result_str));
+	    }
+	    bu_vls_trunc(gbp->ged_result_str, 0);
+	    app_cmd_cnt++;
+	    ccmd = app_cmds[app_cmd_cnt];
 	}
-	bu_vls_trunc(gbp->ged_result_str, 0);
-	app_cmd_cnt++;
-	ccmd = app_cmds[app_cmd_cnt];
     }
 
     /* Deliberately call a ged function with invalid argv[0] */
@@ -379,6 +385,47 @@ main(int ac, char *av[]) {
 	    bu_log("\nged_ls called with command name \"%s\" reported expected error\n", wav1);
 	} else {
 	    bu_log("\nged_ls called with command name \"%s\" did not report the expected error\n", wav1);
+	}
+    }
+
+    /* Find functions sets that are aliases */
+    {
+	std::set<std::string> cmd_set;
+	int app_cmd_cnt = 0;
+	const char *ccmd = app_cmds[app_cmd_cnt];
+	while (ccmd) {
+	    cmd_set.insert(std::string(ccmd));
+	    app_cmd_cnt++;
+	    ccmd = app_cmds[app_cmd_cnt];
+	}
+	std::set<std::string>::iterator cs_it;
+	std::map<std::string, std::set<std::string>> alias_sets;
+	while (cmd_set.size()) {
+	    std::string cmd = *cmd_set.begin();
+	    cmd_set.erase(cmd);
+	    std::set<std::string> cdone;
+	    for (cs_it = cmd_set.begin(); cs_it != cmd_set.end(); cs_it++) {
+		std::string cs = *cs_it;
+		int cval = ged_cmd_valid(cmd.c_str(), cs.c_str());
+		if (cval == 0) {
+		    // Aliases - use cmd as the key
+		    alias_sets[cmd].insert(cmd);
+		    alias_sets[cmd].insert(cs);
+		    cdone.insert(cs);
+		}
+	    }
+	    for (cs_it = cdone.begin(); cs_it != cdone.end(); cs_it++) {
+		cmd_set.erase(*cs_it);
+	    }
+	}
+	std::map<std::string, std::set<std::string>>::iterator a_it;
+	for (a_it = alias_sets.begin(); a_it != alias_sets.end(); a_it++) {
+	    std::set<std::string>::iterator s_it;
+	    bu_log("Found set: ");
+	    for (s_it = a_it->second.begin(); s_it != a_it->second.end(); s_it++) {
+		bu_log("%s ", s_it->c_str());
+	    }
+	    bu_log("\n");
 	}
     }
 
