@@ -359,6 +359,15 @@ main(int ac, char *av[]) {
 	ccmd = app_cmds[app_cmd_cnt];
     }
 
+    /* Deliberately call a ged function with wrong argv[0] */
+    const char *wav0 = "wrong_name";
+    int ret = ged_ls(gbp, 1, &wav0);
+    if (ret & GED_UNKNOWN) {
+	bu_log("\nged_ls called with command name \"%s\" reported expected error\n", wav0);
+    } else {
+	bu_log("\nged_ls called with command name \"%s\" did not report the expected error\n", wav0);
+    }
+
     ged_close(gbp);
     BU_PUT(gbp, struct ged);
     return 0;

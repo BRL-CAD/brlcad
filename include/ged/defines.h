@@ -61,6 +61,7 @@ __BEGIN_DECLS
 #define GED_HELP  0x0002 /**< invalid specification, result contains usage */
 #define GED_MORE  0x0004 /**< incomplete specification, can specify again interactively */
 #define GED_QUIET 0x0008 /**< don't set or modify the result string */
+#define GED_UNKNOWN 0x0010 /**< argv[0] was not a known command */
 
 #define GED_VMIN -2048.0
 #define GED_VMAX 2047.0

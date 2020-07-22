@@ -32,7 +32,11 @@
 #define GED_CMD(x) \
 	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
 	{ \
-	    return ged_exec(gedp, argc, argv); \
+	    int ret = ged_exec(gedp, argc, argv); \
+	    if (ret & GED_UNKNOWN) { \
+		bu_log("Error: LIBGED command \"ged_" #x "\" called with an unexpected argv[0] value: %s\n", argv[0]); \
+	    }\
+	    return ret; \
 	} \
 
 GED_CMD(3ptarb)

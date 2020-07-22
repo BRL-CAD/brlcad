@@ -49,7 +49,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
     std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(key);
     if (c_it == cmap->end()) {
 	bu_vls_printf(gedp->ged_result_str, "unknown command: %s", argv[0]);
-	return GED_ERROR;
+	return (GED_ERROR | GED_UNKNOWN);
     }
 
     const struct ged_cmd *cmd = c_it->second;
