@@ -359,13 +359,27 @@ main(int ac, char *av[]) {
 	ccmd = app_cmds[app_cmd_cnt];
     }
 
-    /* Deliberately call a ged function with wrong argv[0] */
-    const char *wav0 = "wrong_name";
-    int ret = ged_ls(gbp, 1, &wav0);
-    if (ret & GED_UNKNOWN) {
-	bu_log("\nged_ls called with command name \"%s\" reported expected error\n", wav0);
-    } else {
-	bu_log("\nged_ls called with command name \"%s\" did not report the expected error\n", wav0);
+    /* Deliberately call a ged function with invalid argv[0] */
+    {
+	const char *wav0 = "wrong_name";
+	int ret = ged_ls(gbp, 1, &wav0);
+	if (ret & GED_UNKNOWN) {
+	    bu_log("\nged_ls called with command name \"%s\" reported expected error\n", wav0);
+	} else {
+	    bu_log("\nged_ls called with command name \"%s\" did not report the expected error\n", wav0);
+	}
+    }
+
+    /* Deliberately call a ged function with wrong argv[0] (which is a valid
+     * command, just not one matching the function) */
+    {
+	const char *wav1 = "search";
+	int ret = ged_ls(gbp, 1, &wav1);
+	if (ret & GED_UNKNOWN) {
+	    bu_log("\nged_ls called with command name \"%s\" reported expected error\n", wav1);
+	} else {
+	    bu_log("\nged_ls called with command name \"%s\" did not report the expected error\n", wav1);
+	}
     }
 
     ged_close(gbp);

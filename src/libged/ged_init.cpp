@@ -48,13 +48,6 @@ static size_t cmd_list_len = 0;
 static char **cmd_list = NULL;
 void *ged_cmds;
 
-// TODO - when defining commands, should note (when we know) that
-// some commands are aliases for others.  Initial application is
-// to validate ged_* function call argv0 strings for correctness
-// to the function name, not just general ged_exec validity, but
-// there may be other uses...
-static std::map<std::string, std::set<std::string>> ged_validity;
-
 static std::set<void *> ged_handles;
 struct bu_vls *ged_init_msg_str;
 
@@ -62,6 +55,38 @@ const char *
 ged_init_msgs()
 {
     return bu_vls_cstr(ged_init_msg_str);
+}
+
+/* If func is NULL, just see if the string has a ged_cmd_map entry.
+ * If func is defined, see if a) func and cmd have ged_cmd_map entries and
+ * b) if they both do, whether they map to the same function. */
+int
+ged_cmd_valid(const char *cmd, const char *func)
+{
+    if (!cmd) {
+	return 1;
+    }
+    int cmd_invalid = 1;
+    std::string scmd(cmd);
+    std::map<std::string, const struct ged_cmd *>::iterator cmd_it = ged_cmd_map.find(scmd);
+    if (cmd_it != ged_cmd_map.end()) {
+	cmd_invalid = 0;
+    }
+    if (cmd_invalid) {
+	return cmd_invalid;
+    }
+    ged_func_ptr c1 = cmd_it->second->i->cmd;
+    std::map<std::string, const struct ged_cmd *>::iterator func_it = ged_cmd_map.find(std::string(func));
+    if (func_it == ged_cmd_map.end()) {
+	// func not in table, nothing to validate against - return invalid
+	return 1;
+    }
+    ged_func_ptr c2 = func_it->second->i->cmd;
+    int mismatched_functions = 2;
+    if (c1 == c2) {
+	mismatched_functions = 0;
+    }
+    return mismatched_functions;
 }
 
 size_t

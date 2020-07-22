@@ -289,6 +289,8 @@ struct ged_plugin {
     int cmd_cnt;
 };
 
+/* Report any messages from libged when plugins were initially loaded.
+ * Can be important when diagnosing command errors. */
 GED_EXPORT const char * ged_init_msgs();
 
 /* LIBGED maintains this list - callers should regard it as read only.  This
@@ -296,6 +298,21 @@ GED_EXPORT const char * ged_init_msgs();
  * commands are added or removed - caller is responsible for performing a new
  * call to get an updated list and size if commands are altered.  */
 GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
+
+/* Report whether a string identifies a valid LIBGED command.  If func is
+ * non-NULL, check that cmd and func both refer to the same function pointer
+ * (i.e., they are aliases for the same command.)
+ *
+ * If func is NULL, a 0 return indicates an valid GED command and non-zero
+ * indicates a valid command.
+ *
+ * If func is non-null:
+ * 0 indicates both cmd and func strings invoke the same LIBGED function
+ * 1 indicates that either or both of cmd and func were invalid GED commands
+ * 2 indicates that both were valid commands, but they did not match.
+ */
+GED_EXPORT int ged_cmd_valid(const char *cmd, const char *func);
+
 
 __END_DECLS
 
