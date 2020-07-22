@@ -137,16 +137,15 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl list_cmd_impl = {
-    "list",
-    ged_list_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl list_cmd_impl = {"list", ged_list_core, GED_CMD_DEFAULT};
 const struct ged_cmd list_cmd = { &list_cmd_impl };
-const struct ged_cmd *list_cmds[] = { &list_cmd, NULL };
 
-static const struct ged_plugin pinfo = { list_cmds, 1 };
+struct ged_cmd_impl l_cmd_impl = {"l", ged_list_core, GED_CMD_DEFAULT};
+const struct ged_cmd l_cmd = { &l_cmd_impl };
+
+const struct ged_cmd *list_cmds[] = { &list_cmd, &l_cmd, NULL };
+
+static const struct ged_plugin pinfo = { list_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
