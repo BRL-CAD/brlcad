@@ -35,7 +35,7 @@
 
 
 int
-ged_bot_face_fuse(struct ged *gedp, int argc, const char *argv[])
+ged_bot_face_fuse_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *old_dp, *new_dp;
     struct rt_db_internal intern;

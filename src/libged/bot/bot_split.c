@@ -35,7 +35,7 @@
 
 
 int
-ged_bot_split(struct ged *gedp, int argc, const char *argv[])
+ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "bot [bot2 bot3 ...]";
 

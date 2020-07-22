@@ -68,6 +68,20 @@ int _bot_obj_setup(struct _ged_bot_info *gb, const char *name);
 
 int _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 
+
+GED_EXPORT extern int ged_bot_condense_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_decimate_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_dump_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_face_fuse_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_face_sort_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_flip_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_merge_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_smooth_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_split_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_sync_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char **argv);
+
 GED_EXPORT extern int _bot_cmd_extrude(void *bs, int argc, const char **argv);
 
 GED_EXPORT extern int _bot_cmd_check(void *bs, int argc, const char **argv);

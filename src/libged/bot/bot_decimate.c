@@ -35,7 +35,7 @@
 
 
 int
-ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
+ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     struct rt_db_internal intern;

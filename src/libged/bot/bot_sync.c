@@ -36,7 +36,7 @@
 
 
 int
-ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
+ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     struct directory *dp;

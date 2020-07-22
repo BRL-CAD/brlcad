@@ -35,7 +35,7 @@
 
 
 int
-ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
+ged_bot_merge_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp, *new_dp;
     struct rt_db_internal intern;

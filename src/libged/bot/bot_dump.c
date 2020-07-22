@@ -862,7 +862,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
+ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     struct rt_db_internal intern;

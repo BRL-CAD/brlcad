@@ -36,7 +36,7 @@
 
 
 int
-ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
+ged_bot_flip_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     struct directory *dp;

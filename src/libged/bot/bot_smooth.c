@@ -35,7 +35,7 @@
 
 
 int
-ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
+ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *new_bot_name, *old_bot_name;
     struct directory *dp_old, *dp_new;

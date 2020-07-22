@@ -34,7 +34,7 @@
 
 
 int
-ged_bot_face_sort(struct ged *gedp, int argc, const char *argv[])
+ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int tris_per_piece=0;
