@@ -13,6 +13,11 @@ set_property(TARGET ged-png APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-png png.c)
 PLUGIN_SETUP(ged-png ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  png.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

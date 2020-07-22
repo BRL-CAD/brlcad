@@ -13,6 +13,11 @@ set_property(TARGET ged-isize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-isize isize.c)
 PLUGIN_SETUP(ged-isize ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  isize.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-solids_on_ray APPEND PROPERTY COMPILE_DEFINITIONS BRLCAD
 VALIDATE_STYLE(ged-solids_on_ray solids_on_ray.c)
 PLUGIN_SETUP(ged-solids_on_ray ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  solids_on_ray.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

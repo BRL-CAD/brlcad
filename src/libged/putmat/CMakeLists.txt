@@ -13,6 +13,11 @@ set_property(TARGET ged-putmat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-putmat putmat.c)
 PLUGIN_SETUP(ged-putmat ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  putmat.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

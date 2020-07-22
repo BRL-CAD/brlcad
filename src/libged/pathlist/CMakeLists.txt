@@ -13,6 +13,11 @@ set_property(TARGET ged-pathlist APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-pathlist pathlist.c)
 PLUGIN_SETUP(ged-pathlist ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  pathlist.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-joint2 APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-joint2 joint2.c)
 PLUGIN_SETUP(ged-joint2 ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  joint2.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

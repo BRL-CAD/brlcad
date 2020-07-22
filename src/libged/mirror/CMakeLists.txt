@@ -13,6 +13,11 @@ set_property(TARGET ged-mirror APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-mirror mirror.c)
 PLUGIN_SETUP(ged-mirror ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  mirror.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

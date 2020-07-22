@@ -13,6 +13,11 @@ set_property(TARGET ged-rmat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-rmat rmat.c)
 PLUGIN_SETUP(ged-rmat ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  rmat.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

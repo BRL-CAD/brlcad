@@ -13,6 +13,11 @@ set_property(TARGET ged-combmem APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-combmem combmem.c)
 PLUGIN_SETUP(ged-combmem ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  combmem.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

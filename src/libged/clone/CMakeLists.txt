@@ -13,6 +13,11 @@ set_property(TARGET ged-clone APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-clone clone.c)
 PLUGIN_SETUP(ged-clone ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  clone.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

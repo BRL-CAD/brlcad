@@ -13,6 +13,11 @@ set_property(TARGET ged-orient APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-orient orient.c)
 PLUGIN_SETUP(ged-orient ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  orient.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

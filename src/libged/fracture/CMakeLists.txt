@@ -13,6 +13,11 @@ set_property(TARGET ged-fracture APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-fracture fracture.c)
 PLUGIN_SETUP(ged-fracture ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  fracture.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

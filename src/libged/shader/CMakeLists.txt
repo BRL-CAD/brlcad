@@ -13,6 +13,11 @@ set_property(TARGET ged-shader APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-shader shader.c)
 PLUGIN_SETUP(ged-shader ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  shader.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

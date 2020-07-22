@@ -13,6 +13,11 @@ set_property(TARGET ged-voxelize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-voxelize voxelize.c)
 PLUGIN_SETUP(ged-voxelize ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  voxelize.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

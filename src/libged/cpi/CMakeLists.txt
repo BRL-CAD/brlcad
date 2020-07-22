@@ -13,6 +13,11 @@ set_property(TARGET ged-cpi APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-cpi cpi.c)
 PLUGIN_SETUP(ged-cpi ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  cpi.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-arb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-arb arb.c)
 PLUGIN_SETUP(ged-arb ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  arb.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

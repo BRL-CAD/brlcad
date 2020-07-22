@@ -13,6 +13,11 @@ set_property(TARGET ged-search APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-search search.c)
 PLUGIN_SETUP(ged-search ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  search.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

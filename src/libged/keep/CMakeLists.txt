@@ -13,6 +13,11 @@ set_property(TARGET ged-keep APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-keep keep.c)
 PLUGIN_SETUP(ged-keep ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  keep.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

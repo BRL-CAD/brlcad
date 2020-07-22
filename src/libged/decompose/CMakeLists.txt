@@ -13,6 +13,11 @@ set_property(TARGET ged-decompose APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUIL
 VALIDATE_STYLE(ged-decompose decompose.c)
 PLUGIN_SETUP(ged-decompose ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  decompose.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

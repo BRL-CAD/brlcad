@@ -13,6 +13,11 @@ set_property(TARGET ged-lookat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-lookat lookat.c)
 PLUGIN_SETUP(ged-lookat ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  lookat.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

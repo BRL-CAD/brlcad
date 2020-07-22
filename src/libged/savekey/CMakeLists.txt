@@ -13,6 +13,11 @@ set_property(TARGET ged-savekey APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-savekey savekey.c)
 PLUGIN_SETUP(ged-savekey ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  savekey.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

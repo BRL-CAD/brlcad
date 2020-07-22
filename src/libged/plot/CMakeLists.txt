@@ -13,6 +13,11 @@ set_property(TARGET ged-plot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-plot plot.c)
 PLUGIN_SETUP(ged-plot ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  plot.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

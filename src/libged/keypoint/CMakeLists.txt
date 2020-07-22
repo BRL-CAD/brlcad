@@ -13,6 +13,11 @@ set_property(TARGET ged-keypoint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-keypoint keypoint.c)
 PLUGIN_SETUP(ged-keypoint ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  keypoint.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

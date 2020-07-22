@@ -13,6 +13,11 @@ set_property(TARGET ged-find APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-find find.c)
 PLUGIN_SETUP(ged-find ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  find.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

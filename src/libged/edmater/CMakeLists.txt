@@ -13,6 +13,11 @@ set_property(TARGET ged-edmater APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-edmater edmater.c)
 PLUGIN_SETUP(ged-edmater ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  edmater.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-heal APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-heal heal.c)
 PLUGIN_SETUP(ged-heal ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  heal.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

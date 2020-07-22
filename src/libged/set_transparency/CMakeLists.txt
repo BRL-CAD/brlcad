@@ -13,6 +13,11 @@ set_property(TARGET ged-set_transparency APPEND PROPERTY COMPILE_DEFINITIONS BRL
 VALIDATE_STYLE(ged-set_transparency set_transparency.c)
 PLUGIN_SETUP(ged-set_transparency ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  set_transparency.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

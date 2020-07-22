@@ -13,6 +13,11 @@ set_property(TARGET ged-importFg4Section APPEND PROPERTY COMPILE_DEFINITIONS BRL
 VALIDATE_STYLE(ged-importFg4Section importFg4Section.c)
 PLUGIN_SETUP(ged-importFg4Section ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  importFg4Section.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

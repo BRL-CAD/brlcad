@@ -13,6 +13,11 @@ set_property(TARGET ged-overlay APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-overlay overlay.c)
 PLUGIN_SETUP(ged-overlay ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  overlay.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

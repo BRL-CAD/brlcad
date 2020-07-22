@@ -13,6 +13,11 @@ set_property(TARGET ged-track APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-track track.c)
 PLUGIN_SETUP(ged-track ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  track.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

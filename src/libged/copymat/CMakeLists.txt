@@ -13,6 +13,11 @@ set_property(TARGET ged-copymat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-copymat copymat.c)
 PLUGIN_SETUP(ged-copymat ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  copymat.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

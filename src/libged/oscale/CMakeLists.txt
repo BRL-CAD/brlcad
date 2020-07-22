@@ -13,6 +13,11 @@ set_property(TARGET ged-oscale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-oscale oscale.c)
 PLUGIN_SETUP(ged-oscale ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  oscale.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

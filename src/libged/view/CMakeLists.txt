@@ -25,6 +25,12 @@ set_property(TARGET ged-view APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-view ${VIEW_SRCS})
 PLUGIN_SETUP(ged-view ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  ${VIEW_SRCS}
+  ged_view.h
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

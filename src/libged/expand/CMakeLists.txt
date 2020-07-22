@@ -13,6 +13,11 @@ set_property(TARGET ged-expand APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-expand expand.c)
 PLUGIN_SETUP(ged-expand ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  expand.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

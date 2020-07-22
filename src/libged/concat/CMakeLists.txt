@@ -13,6 +13,11 @@ set_property(TARGET ged-concat APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-concat concat.cpp)
 PLUGIN_SETUP(ged-concat ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  concat.cpp
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

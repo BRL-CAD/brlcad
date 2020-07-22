@@ -13,6 +13,11 @@ set_property(TARGET ged-inside APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-inside inside.c)
 PLUGIN_SETUP(ged-inside ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  inside.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-screengrab APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUI
 VALIDATE_STYLE(ged-screengrab screengrab.c)
 PLUGIN_SETUP(ged-screengrab ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  screengrab.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

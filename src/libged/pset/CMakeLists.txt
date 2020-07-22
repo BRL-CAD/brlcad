@@ -13,6 +13,11 @@ set_property(TARGET ged-pset APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-pset pset.c)
 PLUGIN_SETUP(ged-pset ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  pset.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

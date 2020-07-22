@@ -13,6 +13,11 @@ set_property(TARGET ged-copyeval APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-copyeval copyeval.c)
 PLUGIN_SETUP(ged-copyeval ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  copyeval.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

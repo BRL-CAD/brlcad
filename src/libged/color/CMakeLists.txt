@@ -13,6 +13,11 @@ set_property(TARGET ged-color APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-color color.c)
 PLUGIN_SETUP(ged-color ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  color.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-illum APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-illum illum.c)
 PLUGIN_SETUP(ged-illum ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  illum.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

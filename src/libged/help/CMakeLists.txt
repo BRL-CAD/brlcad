@@ -6,18 +6,19 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
-set(HELP_SRCS
-  help.cpp
-  )
-
 add_definitions(-DGED_PLUGIN)
 
-add_library(ged-help SHARED ${HELP_SRCS})
+add_library(ged-help SHARED help.cpp)
 target_link_libraries(ged-help libged libbu)
 set_property(TARGET ged-help APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-help "${ZOOM_SRCS}")
+VALIDATE_STYLE(ged-help help.cpp)
 
 PLUGIN_SETUP(ged-help ged)
+
+CMAKEFILES(
+  CMakeLists.txt
+  help.cpp
+  )
 
 # Local Variables:
 # tab-width: 8

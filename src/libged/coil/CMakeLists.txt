@@ -13,6 +13,11 @@ set_property(TARGET ged-coil APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-coil coil.c)
 PLUGIN_SETUP(ged-coil ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  coil.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

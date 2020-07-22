@@ -13,6 +13,11 @@ set_property(TARGET ged-human APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-human human.c)
 PLUGIN_SETUP(ged-human ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  human.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

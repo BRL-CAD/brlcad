@@ -13,6 +13,11 @@ set_property(TARGET ged-tire APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-tire tire.c)
 PLUGIN_SETUP(ged-tire ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  tire.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

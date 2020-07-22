@@ -13,6 +13,11 @@ set_property(TARGET ged-edcomb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-edcomb edcomb.c)
 PLUGIN_SETUP(ged-edcomb ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  edcomb.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

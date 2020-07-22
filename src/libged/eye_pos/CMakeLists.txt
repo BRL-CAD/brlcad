@@ -13,6 +13,11 @@ set_property(TARGET ged-eye_pos APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-eye_pos eye_pos.c)
 PLUGIN_SETUP(ged-eye_pos ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  eye_pos.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

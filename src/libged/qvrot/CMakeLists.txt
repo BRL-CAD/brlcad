@@ -13,6 +13,11 @@ set_property(TARGET ged-qvrot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-qvrot qvrot.c)
 PLUGIN_SETUP(ged-qvrot ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  qvrot.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

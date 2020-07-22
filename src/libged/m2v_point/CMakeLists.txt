@@ -13,6 +13,11 @@ set_property(TARGET ged-m2v_point APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUIL
 VALIDATE_STYLE(ged-m2v_point m2v_point.c)
 PLUGIN_SETUP(ged-m2v_point ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  m2v_point.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

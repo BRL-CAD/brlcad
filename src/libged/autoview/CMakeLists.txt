@@ -13,6 +13,11 @@ set_property(TARGET ged-autoview APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-autoview autoview.c)
 PLUGIN_SETUP(ged-autoview ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  autoview.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

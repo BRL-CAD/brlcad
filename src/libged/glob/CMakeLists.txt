@@ -13,6 +13,11 @@ set_property(TARGET ged-glob APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-glob glob.c)
 PLUGIN_SETUP(ged-glob ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  glob.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

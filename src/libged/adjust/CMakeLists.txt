@@ -13,6 +13,11 @@ set_property(TARGET ged-adjust APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-adjust adjust.c)
 PLUGIN_SETUP(ged-adjust ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  adjust.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

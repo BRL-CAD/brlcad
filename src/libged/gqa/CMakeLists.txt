@@ -13,6 +13,11 @@ set_property(TARGET ged-gqa APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-gqa gqa.c)
 PLUGIN_SETUP(ged-gqa ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  gqa.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

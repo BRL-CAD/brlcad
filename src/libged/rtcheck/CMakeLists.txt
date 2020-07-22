@@ -13,6 +13,11 @@ set_property(TARGET ged-rtcheck APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-rtcheck rtcheck.c)
 PLUGIN_SETUP(ged-rtcheck ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  rtcheck.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -39,7 +39,7 @@
 #include "ged.h"
 #include "wdb.h"
 
-#include "../ged_private.h"
+#include "./ged_private.h"
 
 /*
  * Returns the index for the pipe segment matching ps.

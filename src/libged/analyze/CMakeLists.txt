@@ -13,6 +13,11 @@ set_property(TARGET ged-analyze APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-analyze analyze.c)
 PLUGIN_SETUP(ged-analyze ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  analyze.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

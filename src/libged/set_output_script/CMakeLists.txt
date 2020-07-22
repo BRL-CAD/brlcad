@@ -13,6 +13,11 @@ set_property(TARGET ged-set_output_script APPEND PROPERTY COMPILE_DEFINITIONS BR
 VALIDATE_STYLE(ged-set_output_script set_output_script.c)
 PLUGIN_SETUP(ged-set_output_script ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  set_output_script.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

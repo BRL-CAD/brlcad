@@ -13,6 +13,12 @@ set_property(TARGET ged-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-facetize facetize.cpp)
 PLUGIN_SETUP(ged-facetize ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  facetize.cpp
+  facetize_log.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

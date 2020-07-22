@@ -13,6 +13,11 @@ set_property(TARGET ged-rmater APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-rmater rmater.c)
 PLUGIN_SETUP(ged-rmater ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  rmater.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-constraint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUI
 VALIDATE_STYLE(ged-constraint constraint.c)
 PLUGIN_SETUP(ged-constraint ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  constraint.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-match APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-match match.c)
 PLUGIN_SETUP(ged-match ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  match.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

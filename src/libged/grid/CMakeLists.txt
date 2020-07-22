@@ -13,6 +13,11 @@ set_property(TARGET ged-grid APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-grid grid.c)
 PLUGIN_SETUP(ged-grid ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  grid.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

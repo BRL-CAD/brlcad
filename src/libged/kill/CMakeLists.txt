@@ -13,6 +13,11 @@ set_property(TARGET ged-kill APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-kill kill.c)
 PLUGIN_SETUP(ged-kill ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  kill.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

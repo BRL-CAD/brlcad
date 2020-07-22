@@ -13,6 +13,11 @@ set_property(TARGET ged-vrot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-vrot vrot.c)
 PLUGIN_SETUP(ged-vrot ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  vrot.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

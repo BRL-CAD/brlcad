@@ -27,6 +27,11 @@ set_property(TARGET ged-check APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-check ${CHECK_SRCS})
 PLUGIN_SETUP(ged-check ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  ${CHECK_SRCS}
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

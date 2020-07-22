@@ -13,6 +13,11 @@ set_property(TARGET ged-slew APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-slew slew.c)
 PLUGIN_SETUP(ged-slew ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  slew.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

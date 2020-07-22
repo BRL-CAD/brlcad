@@ -13,6 +13,11 @@ set_property(TARGET ged-summary APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-summary summary.c)
 PLUGIN_SETUP(ged-summary ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  summary.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

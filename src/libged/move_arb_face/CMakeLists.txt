@@ -13,6 +13,11 @@ set_property(TARGET ged-move_arb_face APPEND PROPERTY COMPILE_DEFINITIONS BRLCAD
 VALIDATE_STYLE(ged-move_arb_face move_arb_face.c)
 PLUGIN_SETUP(ged-move_arb_face ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  move_arb_face.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

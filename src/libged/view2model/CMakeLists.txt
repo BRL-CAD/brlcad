@@ -13,6 +13,11 @@ set_property(TARGET ged-view2model APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUI
 VALIDATE_STYLE(ged-view2model view2model.c)
 PLUGIN_SETUP(ged-view2model ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  view2model.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

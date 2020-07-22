@@ -13,6 +13,11 @@ set_property(TARGET ged-setview APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-setview setview.c)
 PLUGIN_SETUP(ged-setview ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  setview.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

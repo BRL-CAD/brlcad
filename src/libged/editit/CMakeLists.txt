@@ -13,6 +13,11 @@ set_property(TARGET ged-editit APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-editit editit.c)
 PLUGIN_SETUP(ged-editit ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  editit.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

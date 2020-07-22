@@ -13,6 +13,11 @@ set_property(TARGET ged-perspective APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBU
 VALIDATE_STYLE(ged-perspective perspective.c)
 PLUGIN_SETUP(ged-perspective ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  perspective.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

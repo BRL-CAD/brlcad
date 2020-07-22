@@ -13,6 +13,11 @@ set_property(TARGET ged-arced APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-arced arced.c)
 PLUGIN_SETUP(ged-arced ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  arced.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

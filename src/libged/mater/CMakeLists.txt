@@ -13,6 +13,11 @@ set_property(TARGET ged-mater APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-mater mater.cpp)
 PLUGIN_SETUP(ged-mater ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  mater.cpp
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

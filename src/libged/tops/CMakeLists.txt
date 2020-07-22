@@ -13,6 +13,11 @@ set_property(TARGET ged-tops APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-tops tops.c)
 PLUGIN_SETUP(ged-tops ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  tops.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

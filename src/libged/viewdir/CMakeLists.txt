@@ -13,6 +13,11 @@ set_property(TARGET ged-viewdir APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-viewdir viewdir.c)
 PLUGIN_SETUP(ged-viewdir ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  viewdir.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

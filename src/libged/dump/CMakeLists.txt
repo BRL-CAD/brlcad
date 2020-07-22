@@ -13,6 +13,11 @@ set_property(TARGET ged-dump APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-dump dump.c)
 PLUGIN_SETUP(ged-dump ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  dump.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

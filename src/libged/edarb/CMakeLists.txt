@@ -13,6 +13,11 @@ set_property(TARGET ged-edarb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-edarb edarb.c)
 PLUGIN_SETUP(ged-edarb ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  edarb.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

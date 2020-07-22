@@ -13,6 +13,11 @@ set_property(TARGET ged-comb_color APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUI
 VALIDATE_STYLE(ged-comb_color comb_color.c)
 PLUGIN_SETUP(ged-comb_color ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  comb_color.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-attr APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-attr attr.cpp)
 PLUGIN_SETUP(ged-attr ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  attr.cpp
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

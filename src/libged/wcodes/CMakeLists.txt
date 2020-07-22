@@ -13,6 +13,11 @@ set_property(TARGET ged-wcodes APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-wcodes wcodes.c)
 PLUGIN_SETUP(ged-wcodes ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  wcodes.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

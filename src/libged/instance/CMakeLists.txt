@@ -13,6 +13,11 @@ set_property(TARGET ged-instance APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-instance instance.c)
 PLUGIN_SETUP(ged-instance ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  instance.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

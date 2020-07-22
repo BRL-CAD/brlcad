@@ -13,6 +13,11 @@ set_property(TARGET ged-prefix APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-prefix prefix.c)
 PLUGIN_SETUP(ged-prefix ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  prefix.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

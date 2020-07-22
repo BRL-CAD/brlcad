@@ -13,6 +13,11 @@ set_property(TARGET ged-move APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-move move.c)
 PLUGIN_SETUP(ged-move ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  move.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

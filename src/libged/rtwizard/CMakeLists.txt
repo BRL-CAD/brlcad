@@ -13,6 +13,11 @@ set_property(TARGET ged-rtwizard APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-rtwizard rtwizard.c)
 PLUGIN_SETUP(ged-rtwizard ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  rtwizard.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

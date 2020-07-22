@@ -13,6 +13,11 @@ set_property(TARGET ged-grid2view_lu APPEND PROPERTY COMPILE_DEFINITIONS BRLCADB
 VALIDATE_STYLE(ged-grid2view_lu grid2view_lu.c)
 PLUGIN_SETUP(ged-grid2view_lu ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  grid2view_lu.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

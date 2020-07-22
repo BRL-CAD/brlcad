@@ -13,6 +13,11 @@ set_property(TARGET ged-scale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-scale scale.c)
 PLUGIN_SETUP(ged-scale ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  scale.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

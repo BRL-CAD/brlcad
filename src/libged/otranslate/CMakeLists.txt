@@ -13,6 +13,11 @@ set_property(TARGET ged-otranslate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUI
 VALIDATE_STYLE(ged-otranslate otranslate.c)
 PLUGIN_SETUP(ged-otranslate ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  otranslate.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

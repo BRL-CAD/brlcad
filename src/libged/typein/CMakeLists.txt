@@ -13,6 +13,11 @@ set_property(TARGET ged-typein APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-typein typein.c)
 PLUGIN_SETUP(ged-typein ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  typein.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

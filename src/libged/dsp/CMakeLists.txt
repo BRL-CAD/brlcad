@@ -13,6 +13,11 @@ set_property(TARGET ged-dsp APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-dsp dsp.c)
 PLUGIN_SETUP(ged-dsp ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  dsp.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

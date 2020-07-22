@@ -13,6 +13,11 @@ set_property(TARGET ged-fbclear APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-fbclear fbclear.c)
 PLUGIN_SETUP(ged-fbclear ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  fbclear.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

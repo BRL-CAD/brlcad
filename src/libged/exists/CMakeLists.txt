@@ -13,6 +13,11 @@ set_property(TARGET ged-exists APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-exists exists.c)
 PLUGIN_SETUP(ged-exists ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  exists.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

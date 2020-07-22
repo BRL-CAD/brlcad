@@ -13,6 +13,11 @@ set_property(TARGET ged-set_uplotOutputMode APPEND PROPERTY COMPILE_DEFINITIONS 
 VALIDATE_STYLE(ged-set_uplotOutputMode set_uplotOutputMode.c)
 PLUGIN_SETUP(ged-set_uplotOutputMode ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  set_uplotOutputMode.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

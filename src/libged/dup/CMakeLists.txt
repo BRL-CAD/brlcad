@@ -13,6 +13,11 @@ set_property(TARGET ged-dup APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-dup dup.c)
 PLUGIN_SETUP(ged-dup ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  dup.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

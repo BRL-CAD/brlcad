@@ -13,6 +13,11 @@ set_property(TARGET ged-tra APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-tra tra.c)
 PLUGIN_SETUP(ged-tra ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  tra.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-who APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-who who.c)
 PLUGIN_SETUP(ged-who ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  who.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

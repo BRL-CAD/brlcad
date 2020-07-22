@@ -13,6 +13,11 @@ set_property(TARGET ged-solid_report APPEND PROPERTY COMPILE_DEFINITIONS BRLCADB
 VALIDATE_STYLE(ged-solid_report solid_report.c)
 PLUGIN_SETUP(ged-solid_report ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  solid_report.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

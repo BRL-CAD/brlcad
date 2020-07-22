@@ -13,6 +13,11 @@ set_property(TARGET ged-edcodes APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-edcodes edcodes.c)
 PLUGIN_SETUP(ged-edcodes ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  edcodes.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

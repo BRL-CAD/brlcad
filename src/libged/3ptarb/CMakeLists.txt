@@ -13,6 +13,11 @@ set_property(TARGET ged-3ptarb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-3ptarb 3ptarb.c)
 PLUGIN_SETUP(ged-3ptarb ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  3ptarb.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

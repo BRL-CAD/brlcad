@@ -13,6 +13,11 @@ set_property(TARGET ged-view2model_vec APPEND PROPERTY COMPILE_DEFINITIONS BRLCA
 VALIDATE_STYLE(ged-view2model_vec view2model_vec.c)
 PLUGIN_SETUP(ged-view2model_vec ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  view2model_vec.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

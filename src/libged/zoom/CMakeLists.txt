@@ -6,18 +6,19 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
-set(ZOOM_SRCS
-  zoom.c
-  )
-
 add_definitions(-DGED_PLUGIN)
 
-add_library(ged-zoom SHARED ${ZOOM_SRCS})
+add_library(ged-zoom SHARED zoom.c)
 target_link_libraries(ged-zoom libged libbu)
 set_property(TARGET ged-zoom APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-zoom "${ZOOM_SRCS}")
+VALIDATE_STYLE(ged-zoom zoom.c)
 
 PLUGIN_SETUP(ged-zoom ged)
+
+CMAKEFILES(
+  CMakeLists.txt
+  zoom.c
+  )
 
 # Local Variables:
 # tab-width: 8

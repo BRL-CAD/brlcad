@@ -13,6 +13,11 @@ set_property(TARGET ged-tree APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-tree tree.c)
 PLUGIN_SETUP(ged-tree ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  tree.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

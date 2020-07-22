@@ -13,6 +13,11 @@ set_property(TARGET ged-bigE APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-bigE bigE.c)
 PLUGIN_SETUP(ged-bigE ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  bigE.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

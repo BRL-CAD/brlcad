@@ -13,6 +13,11 @@ set_property(TARGET ged-annotate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-annotate annotate.c)
 PLUGIN_SETUP(ged-annotate ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  annotate.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

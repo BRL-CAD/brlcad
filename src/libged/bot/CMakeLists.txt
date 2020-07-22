@@ -32,6 +32,11 @@ set_property(TARGET ged-bot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-bot ${BOT_SRCS})
 PLUGIN_SETUP(ged-bot ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  ${BOT_SRCS}
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

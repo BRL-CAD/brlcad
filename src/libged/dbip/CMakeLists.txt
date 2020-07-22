@@ -13,6 +13,11 @@ set_property(TARGET ged-dbip APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-dbip dbip.c)
 PLUGIN_SETUP(ged-dbip ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  dbip.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

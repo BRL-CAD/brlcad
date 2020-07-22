@@ -13,6 +13,11 @@ set_property(TARGET ged-sphgroup APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-sphgroup sphgroup.c)
 PLUGIN_SETUP(ged-sphgroup ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  sphgroup.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

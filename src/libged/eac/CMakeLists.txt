@@ -13,6 +13,11 @@ set_property(TARGET ged-eac APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-eac eac.c)
 PLUGIN_SETUP(ged-eac ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  eac.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

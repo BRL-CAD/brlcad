@@ -13,6 +13,11 @@ set_property(TARGET ged-erase APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-erase erase.c)
 PLUGIN_SETUP(ged-erase ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  erase.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

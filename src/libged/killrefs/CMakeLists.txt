@@ -13,6 +13,11 @@ set_property(TARGET ged-killrefs APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-killrefs killrefs.c)
 PLUGIN_SETUP(ged-killrefs ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  killrefs.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

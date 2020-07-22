@@ -13,6 +13,11 @@ set_property(TARGET ged-pull APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-pull pull.c)
 PLUGIN_SETUP(ged-pull ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  pull.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

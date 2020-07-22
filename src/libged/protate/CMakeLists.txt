@@ -13,6 +13,11 @@ set_property(TARGET ged-protate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-protate protate.c)
 PLUGIN_SETUP(ged-protate ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  protate.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

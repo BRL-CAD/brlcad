@@ -13,6 +13,11 @@ set_property(TARGET ged-ocenter APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-ocenter ocenter.c)
 PLUGIN_SETUP(ged-ocenter ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  ocenter.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-edit APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-edit edit.c)
 PLUGIN_SETUP(ged-edit ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  edit.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

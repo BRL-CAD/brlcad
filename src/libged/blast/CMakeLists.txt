@@ -13,6 +13,11 @@ set_property(TARGET ged-blast APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-blast blast.c)
 PLUGIN_SETUP(ged-blast ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  blast.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

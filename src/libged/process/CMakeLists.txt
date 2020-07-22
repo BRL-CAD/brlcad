@@ -13,6 +13,11 @@ set_property(TARGET ged-process APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-process process.c)
 PLUGIN_SETUP(ged-process ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  process.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

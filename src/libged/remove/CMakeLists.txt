@@ -13,6 +13,11 @@ set_property(TARGET ged-remove APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-remove remove.c)
 PLUGIN_SETUP(ged-remove ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  remove.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

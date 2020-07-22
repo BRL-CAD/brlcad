@@ -13,6 +13,11 @@ set_property(TARGET ged-showmats APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-showmats showmats.c)
 PLUGIN_SETUP(ged-showmats ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  showmats.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

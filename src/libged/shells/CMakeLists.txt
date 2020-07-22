@@ -13,6 +13,11 @@ set_property(TARGET ged-shells APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-shells shells.c)
 PLUGIN_SETUP(ged-shells ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  shells.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

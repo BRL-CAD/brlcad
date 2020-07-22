@@ -13,6 +13,11 @@ set_property(TARGET ged-rtabort APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-rtabort rtabort.c)
 PLUGIN_SETUP(ged-rtabort ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  rtabort.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

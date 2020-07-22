@@ -13,6 +13,11 @@ set_property(TARGET ged-label APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-label label.c)
 PLUGIN_SETUP(ged-label ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  label.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-orotate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-orotate orotate.c)
 PLUGIN_SETUP(ged-orotate ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  orotate.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-arot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-arot arot.c)
 PLUGIN_SETUP(ged-arot ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  arot.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

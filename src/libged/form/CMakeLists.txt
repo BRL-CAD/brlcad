@@ -13,6 +13,11 @@ set_property(TARGET ged-form APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-form form.c)
 PLUGIN_SETUP(ged-form ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  form.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-get_eyemodel APPEND PROPERTY COMPILE_DEFINITIONS BRLCADB
 VALIDATE_STYLE(ged-get_eyemodel get_eyemodel.c)
 PLUGIN_SETUP(ged-get_eyemodel ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  get_eyemodel.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

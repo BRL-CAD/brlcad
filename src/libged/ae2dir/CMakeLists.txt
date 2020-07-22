@@ -13,6 +13,11 @@ set_property(TARGET ged-ae2dir APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-ae2dir ae2dir.c)
 PLUGIN_SETUP(ged-ae2dir ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  ae2dir.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

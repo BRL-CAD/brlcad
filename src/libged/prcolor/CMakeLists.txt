@@ -13,6 +13,11 @@ set_property(TARGET ged-prcolor APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-prcolor prcolor.c)
 PLUGIN_SETUP(ged-prcolor ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  prcolor.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

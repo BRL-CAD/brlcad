@@ -13,6 +13,11 @@ set_property(TARGET ged-region APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-region region.c)
 PLUGIN_SETUP(ged-region ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  region.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

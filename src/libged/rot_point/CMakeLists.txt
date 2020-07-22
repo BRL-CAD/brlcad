@@ -13,6 +13,11 @@ set_property(TARGET ged-rot_point APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUIL
 VALIDATE_STYLE(ged-rot_point rot_point.c)
 PLUGIN_SETUP(ged-rot_point ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  rot_point.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

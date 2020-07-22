@@ -13,6 +13,11 @@ set_property(TARGET ged-pathsum APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD 
 VALIDATE_STYLE(ged-pathsum pathsum.c)
 PLUGIN_SETUP(ged-pathsum ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  pathsum.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

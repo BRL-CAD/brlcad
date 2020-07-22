@@ -13,6 +13,11 @@ set_property(TARGET ged-unhide APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-unhide unhide.c)
 PLUGIN_SETUP(ged-unhide ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  unhide.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-debug APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-debug debug.cpp)
 PLUGIN_SETUP(ged-debug ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  debug.cpp
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

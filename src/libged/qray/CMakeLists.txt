@@ -13,6 +13,11 @@ set_property(TARGET ged-qray APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-qray qray.c)
 PLUGIN_SETUP(ged-qray ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  qray.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

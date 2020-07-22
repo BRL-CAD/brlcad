@@ -13,6 +13,11 @@ set_property(TARGET ged-gdiff APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-gdiff gdiff.c)
 PLUGIN_SETUP(ged-gdiff ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  gdiff.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

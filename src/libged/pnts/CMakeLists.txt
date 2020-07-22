@@ -13,6 +13,11 @@ set_property(TARGET ged-pnts APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-pnts pnts.cpp)
 PLUGIN_SETUP(ged-pnts ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  pnts.cpp
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

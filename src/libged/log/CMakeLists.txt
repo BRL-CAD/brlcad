@@ -13,6 +13,11 @@ set_property(TARGET ged-log APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-log log.c)
 PLUGIN_SETUP(ged-log ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  log.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

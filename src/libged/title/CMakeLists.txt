@@ -13,6 +13,11 @@ set_property(TARGET ged-title APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-title title.c)
 PLUGIN_SETUP(ged-title ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  title.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

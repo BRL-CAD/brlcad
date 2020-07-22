@@ -13,6 +13,11 @@ set_property(TARGET ged-which APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-which which.cpp)
 PLUGIN_SETUP(ged-which ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  which.cpp
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

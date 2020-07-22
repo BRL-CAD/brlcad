@@ -54,10 +54,10 @@ set(LIBGED_SOURCES
   columns.c
   display_list.c
   draw_calc.cpp
-  edbot/edbot.c
-  edit_metaball/edit_metaball.c
-  edpipe/edpipe.c
-  facedef/facedef.c
+  edbot.c
+  edit_metaball.c
+  edpipe.c
+  facedef.c
   ged.c
   ged_util.c
   get_obj_bounds.c

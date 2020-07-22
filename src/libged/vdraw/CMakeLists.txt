@@ -13,6 +13,11 @@ set_property(TARGET ged-vdraw APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-vdraw vdraw.c)
 PLUGIN_SETUP(ged-vdraw ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  vdraw.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

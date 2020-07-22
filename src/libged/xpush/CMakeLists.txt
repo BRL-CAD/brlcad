@@ -13,6 +13,11 @@ set_property(TARGET ged-xpush APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-xpush xpush.c)
 PLUGIN_SETUP(ged-xpush ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  xpush.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

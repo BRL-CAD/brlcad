@@ -13,6 +13,11 @@ set_property(TARGET ged-put_comb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-put_comb put_comb.c)
 PLUGIN_SETUP(ged-put_comb ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  put_comb.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

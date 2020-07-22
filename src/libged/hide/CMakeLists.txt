@@ -13,6 +13,11 @@ set_property(TARGET ged-hide APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-hide hide.c)
 PLUGIN_SETUP(ged-hide ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  hide.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

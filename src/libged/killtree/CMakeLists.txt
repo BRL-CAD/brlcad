@@ -13,6 +13,11 @@ set_property(TARGET ged-killtree APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-killtree killtree.c)
 PLUGIN_SETUP(ged-killtree ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  killtree.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-nirt APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-nirt nirt.c)
 PLUGIN_SETUP(ged-nirt ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  nirt.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

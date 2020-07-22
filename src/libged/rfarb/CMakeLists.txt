@@ -13,6 +13,11 @@ set_property(TARGET ged-rfarb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HA
 VALIDATE_STYLE(ged-rfarb rfarb.c)
 PLUGIN_SETUP(ged-rfarb ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  rfarb.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -19,6 +19,11 @@ set_property(TARGET ged-draw APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-draw ${DRAW_SRCS})
 PLUGIN_SETUP(ged-draw ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  ${DRAW_SRCS}
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

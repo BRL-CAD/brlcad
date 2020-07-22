@@ -13,6 +13,11 @@ set_property(TARGET ged-shaded_mode APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBU
 VALIDATE_STYLE(ged-shaded_mode shaded_mode.c)
 PLUGIN_SETUP(ged-shaded_mode ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  shaded_mode.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

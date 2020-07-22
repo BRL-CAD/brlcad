@@ -13,6 +13,11 @@ set_property(TARGET ged-sync APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-sync sync.c)
 PLUGIN_SETUP(ged-sync ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  sync.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

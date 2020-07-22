@@ -13,6 +13,11 @@ set_property(TARGET ged-pix2fb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-pix2fb pix2fb.c)
 PLUGIN_SETUP(ged-pix2fb ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  pix2fb.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

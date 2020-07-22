@@ -13,6 +13,11 @@ set_property(TARGET ged-rmap APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-rmap rmap.c)
 PLUGIN_SETUP(ged-rmap ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  rmap.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -13,6 +13,11 @@ set_property(TARGET ged-zap APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-zap zap.c)
 PLUGIN_SETUP(ged-zap ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  zap.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

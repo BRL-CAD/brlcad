@@ -13,6 +13,11 @@ set_property(TARGET ged-dag APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE
 VALIDATE_STYLE(ged-dag dag.cpp)
 PLUGIN_SETUP(ged-dag ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  dag.cpp
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

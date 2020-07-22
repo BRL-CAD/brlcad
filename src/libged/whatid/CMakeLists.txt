@@ -13,6 +13,11 @@ set_property(TARGET ged-whatid APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD H
 VALIDATE_STYLE(ged-whatid whatid.c)
 PLUGIN_SETUP(ged-whatid ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  whatid.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

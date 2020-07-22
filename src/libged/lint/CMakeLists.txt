@@ -13,6 +13,11 @@ set_property(TARGET ged-lint APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-lint lint.cpp)
 PLUGIN_SETUP(ged-lint ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  lint.cpp
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

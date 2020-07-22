@@ -13,6 +13,11 @@ set_property(TARGET ged-ptranslate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUI
 VALIDATE_STYLE(ged-ptranslate ptranslate.c)
 PLUGIN_SETUP(ged-ptranslate ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  ptranslate.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

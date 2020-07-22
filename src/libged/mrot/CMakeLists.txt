@@ -13,6 +13,11 @@ set_property(TARGET ged-mrot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAV
 VALIDATE_STYLE(ged-mrot mrot.c)
 PLUGIN_SETUP(ged-mrot ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  mrot.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

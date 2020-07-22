@@ -13,6 +13,11 @@ set_property(TARGET ged-get_type APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD
 VALIDATE_STYLE(ged-get_type get_type.c)
 PLUGIN_SETUP(ged-get_type ged)
 
+CMAKEFILES(
+  CMakeLists.txt
+  get_type.c
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
