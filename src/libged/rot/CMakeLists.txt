@@ -6,16 +6,21 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
+set(rot_srcs
+  rot.c
+  rotate_about.c
+  )
+
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-rot SHARED rot.c)
+ged_plugin_library(ged-rot SHARED ${rot_srcs})
 target_link_libraries(ged-rot libged libbu)
 set_property(TARGET ged-rot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-rot rot.c)
+VALIDATE_STYLE(ged-rot ${rot_srcs})
 PLUGIN_SETUP(ged-rot ged)
 
 CMAKEFILES(
   CMakeLists.txt
-  rot.c
+  ${rot_srcs}
   )
 
 # Local Variables:

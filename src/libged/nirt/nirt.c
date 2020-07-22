@@ -501,16 +501,15 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl nirt_cmd_impl = {
-    "nirt",
-    ged_nirt_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl nirt_cmd_impl = {"nirt", ged_nirt_core, GED_CMD_DEFAULT};
 const struct ged_cmd nirt_cmd = { &nirt_cmd_impl };
-const struct ged_cmd *nirt_cmds[] = { &nirt_cmd, NULL };
 
-static const struct ged_plugin pinfo = { nirt_cmds, 1 };
+struct ged_cmd_impl vnirt_cmd_impl = {"vnirt", ged_vnirt_core, GED_CMD_DEFAULT};
+const struct ged_cmd vnirt_cmd = { &vnirt_cmd_impl };
+
+const struct ged_cmd *nirt_cmds[] = { &nirt_cmd, &vnirt_cmd, NULL };
+
+static const struct ged_plugin pinfo = { nirt_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

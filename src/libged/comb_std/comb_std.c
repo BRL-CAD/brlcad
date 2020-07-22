@@ -656,16 +656,15 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl comb_std_cmd_impl = {
-    "comb_std",
-    ged_comb_std_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl comb_std_cmd_impl = {"comb_std", ged_comb_std_core, GED_CMD_DEFAULT};
 const struct ged_cmd comb_std_cmd = { &comb_std_cmd_impl };
-const struct ged_cmd *comb_std_cmds[] = { &comb_std_cmd, NULL };
 
-static const struct ged_plugin pinfo = { comb_std_cmds, 1 };
+struct ged_cmd_impl c_std_cmd_impl = {"c", ged_comb_std_core, GED_CMD_DEFAULT};
+const struct ged_cmd c_std_cmd = { &c_std_cmd_impl };
+
+const struct ged_cmd *comb_std_cmds[] = { &comb_std_cmd, &c_std_cmd, NULL };
+
+static const struct ged_plugin pinfo = { comb_std_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

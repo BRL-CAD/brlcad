@@ -29,11 +29,11 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 int
-ged_rotate_about(struct ged *gedp, int argc, const char *argv[])
+ged_rotate_about_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[e|k|m|v]";
 

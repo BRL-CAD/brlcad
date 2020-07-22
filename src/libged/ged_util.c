@@ -1828,6 +1828,182 @@ _ged_dir_getspace(struct db_i *dbip,
     return dir_basep;
 }
 
+int
+_ged_set_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf)
+{
+    RT_METABALL_CK_MAGIC(mbip);
+
+    switch (attribute[0]) {
+	case 'm':
+	case 'M':
+	    if (sf <= METABALL_METABALL)
+		mbip->method = METABALL_METABALL;
+	    else if (sf >= METABALL_BLOB)
+		mbip->method = METABALL_BLOB;
+	    else
+		mbip->method = (int)sf;
+
+	    break;
+	case 't':
+	case 'T':
+	    if (sf < 0)
+		mbip->threshold = -sf;
+	    else
+		mbip->threshold = sf;
+
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
+	    return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, double vy, double vwidth, double vheight, double vminz, int rflag)
+{
+    size_t i;
+    fastf_t vr = 0.0;
+    fastf_t vmin_x = 0.0;
+    fastf_t vmin_y = 0.0;
+    fastf_t vmax_x = 0.0;
+    fastf_t vmax_y = 0.0;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+
+    if (rflag) {
+	vr = vwidth;
+    } else {
+	vmin_x = vx;
+	vmin_y = vy;
+
+	if (vwidth > 0)
+	    vmax_x = vx + vwidth;
+	else {
+	    vmin_x = vx + vwidth;
+	    vmax_x = vx;
+	}
+
+	if (vheight > 0)
+	    vmax_y = vy + vheight;
+	else {
+	    vmin_y = vy + vheight;
+	    vmax_y = vy;
+	}
+    }
+
+    if (rflag) {
+	for (i = 0; i < botip->num_vertices; i++) {
+	    point_t vloc;
+	    point_t vpt;
+	    vect_t diff;
+	    fastf_t mag;
+
+	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
+
+	    if (vpt[Z] < vminz)
+		continue;
+
+	    VSET(vloc, vx, vy, vpt[Z]);
+	    VSUB2(diff, vpt, vloc);
+	    mag = MAGNITUDE(diff);
+
+	    if (mag > vr)
+		continue;
+
+	    bu_vls_printf(gedp->ged_result_str, "%zu ", i);
+	}
+    } else {
+	for (i = 0; i < botip->num_vertices; i++) {
+	    point_t vpt;
+
+	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
+
+	    if (vpt[Z] < vminz)
+		continue;
+
+	    if (vmin_x <= vpt[X] && vpt[X] <= vmax_x &&
+		vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
+		bu_vls_printf(gedp->ged_result_str, "%zu ", i);
+	    }
+	}
+    }
+
+    return GED_OK;
+}
+
+/*
+ * Returns point mbp_i.
+ */
+struct wdb_metaball_pnt *
+_ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i)
+{
+    int i = 0;
+    struct wdb_metaball_pnt *curr_mbpp;
+
+    for (BU_LIST_FOR(curr_mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
+	if (i == mbp_i)
+	    return curr_mbpp;
+
+	++i;
+    }
+
+    return (struct wdb_metaball_pnt *)NULL;
+}
+
+
+#define GED_METABALL_SCALE(_d, _scale) \
+    if ((_scale) < 0.0) \
+	(_d) = -(_scale); \
+    else		  \
+	(_d) *= (_scale);
+
+int
+_ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf, int rflag)
+{
+    int mbp_i;
+    struct wdb_metaball_pnt *mbpp;
+
+    RT_METABALL_CK_MAGIC(mbip);
+
+    if (!rflag && sf > 0)
+	sf = -sf;
+
+    switch (attribute[0]) {
+	case 'f':
+	case 'F':
+	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
+		mbp_i = 0;
+
+	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
+		return GED_ERROR;
+
+	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
+	    GED_METABALL_SCALE(mbpp->fldstr, sf);
+
+	    break;
+	case 's':
+	case 'S':
+	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
+		mbp_i = 0;
+
+	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
+		return GED_ERROR;
+
+	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
+	    GED_METABALL_SCALE(mbpp->sweat, sf);
+
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
+	    return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
 
 
 /*

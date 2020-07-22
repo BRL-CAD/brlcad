@@ -30,7 +30,7 @@
 #include "bu/cmd.h"
 #include "rt/geom.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 
 static const short int arb_vertices[5][24] = {
@@ -43,7 +43,7 @@ static const short int arb_vertices[5][24] = {
 
 
 int
-ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
+ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;

@@ -33,15 +33,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "./ged_private.h"
-
-
-#define GED_METABALL_SCALE(_d, _scale) \
-    if ((_scale) < 0.0) \
-	(_d) = -(_scale); \
-    else		  \
-	(_d) *= (_scale);
-
+#include "../ged_private.h"
 
 /*
  * Returns the index for the metaball point matching mbpp.
@@ -60,104 +52,6 @@ _ged_get_metaball_i_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_p
     }
 
     return -1;
-}
-
-
-/*
- * Returns point mbp_i.
- */
-struct wdb_metaball_pnt *
-_ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i)
-{
-    int i = 0;
-    struct wdb_metaball_pnt *curr_mbpp;
-
-    for (BU_LIST_FOR(curr_mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
-	if (i == mbp_i)
-	    return curr_mbpp;
-
-	++i;
-    }
-
-    return (struct wdb_metaball_pnt *)NULL;
-}
-
-
-int
-_ged_set_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf)
-{
-    RT_METABALL_CK_MAGIC(mbip);
-
-    switch (attribute[0]) {
-	case 'm':
-	case 'M':
-	    if (sf <= METABALL_METABALL)
-		mbip->method = METABALL_METABALL;
-	    else if (sf >= METABALL_BLOB)
-		mbip->method = METABALL_BLOB;
-	    else
-		mbip->method = (int)sf;
-
-	    break;
-	case 't':
-	case 'T':
-	    if (sf < 0)
-		mbip->threshold = -sf;
-	    else
-		mbip->threshold = sf;
-
-	    break;
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
-	    return GED_ERROR;
-    }
-
-    return GED_OK;
-}
-
-
-int
-_ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf, int rflag)
-{
-    int mbp_i;
-    struct wdb_metaball_pnt *mbpp;
-
-    RT_METABALL_CK_MAGIC(mbip);
-
-    if (!rflag && sf > 0)
-	sf = -sf;
-
-    switch (attribute[0]) {
-	case 'f':
-	case 'F':
-	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
-		mbp_i = 0;
-
-	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
-		return GED_ERROR;
-
-	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-	    GED_METABALL_SCALE(mbpp->fldstr, sf);
-
-	    break;
-	case 's':
-	case 'S':
-	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
-		mbp_i = 0;
-
-	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
-		return GED_ERROR;
-
-	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-	    GED_METABALL_SCALE(mbpp->sweat, sf);
-
-	    break;
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
-	    return GED_ERROR;
-    }
-
-    return GED_OK;
 }
 
 
@@ -319,7 +213,7 @@ _ged_metaball_add_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt
 
 
 int
-ged_metaball_add_pnt(struct ged *gedp, int argc, const char *argv[])
+ged_metaball_add_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "metaball pt";
@@ -458,7 +352,7 @@ _ged_metaball_delete_pnt(struct wdb_metaball_pnt *mbp)
 
 
 int
-ged_metaball_delete_pnt(struct ged *gedp, int argc, const char *argv[])
+ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "metaball pt_i";
@@ -540,7 +434,7 @@ ged_metaball_delete_pnt(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_metaball_move_pnt(struct ged *gedp, int argc, const char *argv[])
+ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "[-r] metaball seg_i pt";
@@ -651,6 +545,30 @@ ged_metaball_move_pnt(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl metaball_delete_pnt_cmd_impl = {"metaball_delete_pnt", ged_metaball_delete_pnt_core, GED_CMD_DEFAULT};
+const struct ged_cmd metaball_delete_pnt_cmd = { &metaball_delete_pnt_cmd_impl };
+
+struct ged_cmd_impl metaball_move_pnt_cmd_impl = {"metaball_move_pnt", ged_metaball_move_pnt_core, GED_CMD_DEFAULT};
+const struct ged_cmd metaball_move_pnt_cmd = { &metaball_move_pnt_cmd_impl };
+
+struct ged_cmd_impl metaball_mouse_move_pnt_cmd_impl = {"mouse_move_metaball_pnt", ged_metaball_move_pnt_core, GED_CMD_DEFAULT};
+const struct ged_cmd metaball_mouse_move_pnt_cmd = { &metaball_mouse_move_pnt_cmd_impl };
+
+struct ged_cmd_impl metaball_add_pnt_cmd_impl = {"mouse_add_metaball_pnt", ged_metaball_add_pnt_core, GED_CMD_DEFAULT};
+const struct ged_cmd metaball_add_pnt_cmd = { &metaball_add_pnt_cmd_impl };
+
+const struct ged_cmd *metaball_cmds[] = { &metaball_delete_pnt_cmd, &metaball_mouse_move_pnt_cmd, &metaball_move_pnt_cmd, &metaball_add_pnt_cmd, NULL };
+
+static const struct ged_plugin pinfo = { metaball_cmds, 4 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C
@@ -660,3 +578,4 @@ ged_metaball_move_pnt(struct ged *gedp, int argc, const char *argv[])
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

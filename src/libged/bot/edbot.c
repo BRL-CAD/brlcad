@@ -32,7 +32,7 @@
 #include "ged.h"
 #include "wdb.h"
 
-#include "./ged_private.h"
+#include "../ged_private.h"
 
 int
 ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
@@ -289,128 +289,8 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-
 int
-ged_find_bot_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
-{
-    static const char *usage = "bot view_xyz";
-    struct rt_db_internal intern;
-    struct rt_bot_internal *botip;
-    mat_t mat;
-    int vi1, vi2;
-    vect_t view;
-
-    /* must be double for scanf */
-    double scan[ELEMENTS_PER_VECT];
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
-	return GED_ERROR;
-    }
-    VMOVE(view, scan); /* convert double to fastf_t */
-
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(gedp->ged_result_str, "Object is not a BOT");
-	rt_db_free_internal(&intern);
-
-	return GED_ERROR;
-    }
-
-    botip = (struct rt_bot_internal *)intern.idb_ptr;
-    (void)rt_bot_find_e_nearest_pt2(&vi1, &vi2, botip, view, gedp->ged_gvp->gv_model2view);
-    bu_vls_printf(gedp->ged_result_str, "%d %d", vi1, vi2);
-
-    rt_db_free_internal(&intern);
-    return GED_OK;
-}
-
-
-int
-ged_find_bot_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
-{
-    static const char *usage = "bot view_xyz";
-    struct rt_db_internal intern;
-    struct rt_bot_internal *botip;
-    mat_t mat;
-    int nearest_pt;
-    vect_t view;
-
-    /* must be double for scanf */
-    double scan[ELEMENTS_PER_VECT];
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
-	return GED_ERROR;
-    }
-
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(gedp->ged_result_str, "Object is not a BOT");
-	rt_db_free_internal(&intern);
-
-	return GED_ERROR;
-    }
-
-    botip = (struct rt_bot_internal *)intern.idb_ptr;
-    VMOVE(view, scan); /* convert double to fastf_t */
-
-    nearest_pt = rt_bot_find_v_nearest_pt2(botip, view, gedp->ged_gvp->gv_model2view);
-    bu_vls_printf(gedp->ged_result_str, "%d", nearest_pt);
-
-    rt_db_free_internal(&intern);
-    return GED_OK;
-}
-
-
-int
-ged_get_bot_edges(struct ged *gedp, int argc, const char *argv[])
+ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "bot";
     struct rt_db_internal intern;
@@ -685,78 +565,122 @@ ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-_ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, double vy, double vwidth, double vheight, double vminz, int rflag)
+ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
-    size_t i;
-    fastf_t vr = 0.0;
-    fastf_t vmin_x = 0.0;
-    fastf_t vmin_y = 0.0;
-    fastf_t vmax_x = 0.0;
-    fastf_t vmax_y = 0.0;
+    static const char *usage = "bot view_xyz";
+    struct rt_db_internal intern;
+    struct rt_bot_internal *botip;
+    mat_t mat;
+    int vi1, vi2;
+    vect_t view;
+
+    /* must be double for scanf */
+    double scan[ELEMENTS_PER_VECT];
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    if (rflag) {
-	vr = vwidth;
-    } else {
-	vmin_x = vx;
-	vmin_y = vy;
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
-	if (vwidth > 0)
-	    vmax_x = vx + vwidth;
-	else {
-	    vmin_x = vx + vwidth;
-	    vmax_x = vx;
-	}
-
-	if (vheight > 0)
-	    vmax_y = vy + vheight;
-	else {
-	    vmin_y = vy + vheight;
-	    vmax_y = vy;
-	}
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
     }
 
-    if (rflag) {
-	for (i = 0; i < botip->num_vertices; i++) {
-	    point_t vloc;
-	    point_t vpt;
-	    vect_t diff;
-	    fastf_t mag;
-
-	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
-
-	    if (vpt[Z] < vminz)
-		continue;
-
-	    VSET(vloc, vx, vy, vpt[Z]);
-	    VSUB2(diff, vpt, vloc);
-	    mag = MAGNITUDE(diff);
-
-	    if (mag > vr)
-		continue;
-
-	    bu_vls_printf(gedp->ged_result_str, "%zu ", i);
-	}
-    } else {
-	for (i = 0; i < botip->num_vertices; i++) {
-	    point_t vpt;
-
-	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
-
-	    if (vpt[Z] < vminz)
-		continue;
-
-	    if (vmin_x <= vpt[X] && vpt[X] <= vmax_x &&
-		vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
-		bu_vls_printf(gedp->ged_result_str, "%zu ", i);
-	    }
-	}
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
+    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
+	return GED_ERROR;
+    }
+    VMOVE(view, scan); /* convert double to fastf_t */
+
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(gedp->ged_result_str, "Object is not a BOT");
+	rt_db_free_internal(&intern);
+
+	return GED_ERROR;
+    }
+
+    botip = (struct rt_bot_internal *)intern.idb_ptr;
+    (void)rt_bot_find_e_nearest_pt2(&vi1, &vi2, botip, view, gedp->ged_gvp->gv_model2view);
+    bu_vls_printf(gedp->ged_result_str, "%d %d", vi1, vi2);
+
+    rt_db_free_internal(&intern);
     return GED_OK;
 }
+
+int
+ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[])
+{
+    static const char *usage = "bot view_xyz";
+    struct rt_db_internal intern;
+    struct rt_bot_internal *botip;
+    mat_t mat;
+    int nearest_pt;
+    vect_t view;
+
+    /* must be double for scanf */
+    double scan[ELEMENTS_PER_VECT];
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
+	return GED_ERROR;
+    }
+
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(gedp->ged_result_str, "Object is not a BOT");
+	rt_db_free_internal(&intern);
+
+	return GED_ERROR;
+    }
+
+    botip = (struct rt_bot_internal *)intern.idb_ptr;
+    VMOVE(view, scan); /* convert double to fastf_t */
+
+    nearest_pt = rt_bot_find_v_nearest_pt2(botip, view, gedp->ged_gvp->gv_model2view);
+    bu_vls_printf(gedp->ged_result_str, "%d", nearest_pt);
+
+    rt_db_free_internal(&intern);
+    return GED_OK;
+}
+
 
 /*
  * Local Variables:

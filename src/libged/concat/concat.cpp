@@ -530,9 +530,14 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 extern "C" {
     struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat_core, GED_CMD_DEFAULT };
     const struct ged_cmd concat_cmd = { &concat_cmd_impl };
-    const struct ged_cmd *concat_cmds[] = { &concat_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { concat_cmds, 1 };
+    struct ged_cmd_impl dbconcat_cmd_impl = { "dbconcat", ged_concat_core, GED_CMD_DEFAULT };
+    const struct ged_cmd dbconcat_cmd = { &dbconcat_cmd_impl };
+
+
+    const struct ged_cmd *concat_cmds[] = { &concat_cmd,  &dbconcat_cmd, NULL };
+
+    static const struct ged_plugin pinfo = { concat_cmds, 2 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

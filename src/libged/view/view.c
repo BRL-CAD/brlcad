@@ -116,6 +116,9 @@ const struct ged_cmd center_cmd = { &center_cmd_impl };
 struct ged_cmd_impl eye_cmd_impl = {"eye", ged_eye_core, GED_CMD_DEFAULT};
 const struct ged_cmd eye_cmd = { &eye_cmd_impl };
 
+struct ged_cmd_impl eye_pt_cmd_impl = {"eye_pt", ged_eye_core, GED_CMD_DEFAULT};
+const struct ged_cmd eye_pt_cmd = { &eye_pt_cmd_impl };
+
 struct ged_cmd_impl size_cmd_impl = {"size", ged_size_core, GED_CMD_DEFAULT};
 const struct ged_cmd size_cmd = { &size_cmd_impl };
 
@@ -133,13 +136,14 @@ const struct ged_cmd *view_cmds[] = {
     &ae_cmd,
     &center_cmd,
     &eye_cmd,
+    &eye_pt_cmd,
     &size_cmd,
     &data_lines_cmd,
     &sdata_lines_cmd,
     NULL
 };
 
-static const struct ged_plugin pinfo = { view_cmds, 10 };
+static const struct ged_plugin pinfo = { view_cmds, 11 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -295,9 +295,17 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 extern "C" {
     struct ged_cmd_impl which_cmd_impl = { "which", ged_which_core, GED_CMD_DEFAULT };
     const struct ged_cmd which_cmd = { &which_cmd_impl };
-    const struct ged_cmd *which_cmds[] = { &which_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { which_cmds, 1 };
+    struct ged_cmd_impl whichair_cmd_impl = { "whichair", ged_which_core, GED_CMD_DEFAULT };
+    const struct ged_cmd whichair_cmd = { &whichair_cmd_impl };
+
+    struct ged_cmd_impl whichid_cmd_impl = { "whichid", ged_which_core, GED_CMD_DEFAULT };
+    const struct ged_cmd whichid_cmd = { &whichid_cmd_impl };
+
+
+    const struct ged_cmd *which_cmds[] = { &which_cmd,  &whichair_cmd, &whichid_cmd, NULL };
+
+    static const struct ged_plugin pinfo = { which_cmds, 3 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

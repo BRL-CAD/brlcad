@@ -247,7 +247,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_edcolor(struct ged *gedp, int argc, const char *argv[])
+ged_edcolor_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -360,16 +360,15 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl color_cmd_impl = {
-    "color",
-    ged_color_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl color_cmd_impl = {"color", ged_color_core, GED_CMD_DEFAULT};
 const struct ged_cmd color_cmd = { &color_cmd_impl };
-const struct ged_cmd *color_cmds[] = { &color_cmd, NULL };
 
-static const struct ged_plugin pinfo = { color_cmds, 1 };
+struct ged_cmd_impl edcolor_cmd_impl = {"edcolor", ged_edcolor_core, GED_CMD_DEFAULT};
+const struct ged_cmd edcolor_cmd = { &edcolor_cmd_impl };
+
+const struct ged_cmd *color_cmds[] = { &color_cmd, &edcolor_cmd, NULL };
+
+static const struct ged_plugin pinfo = { color_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

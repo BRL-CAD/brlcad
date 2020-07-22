@@ -6,21 +6,16 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
-set(arb_srcs
-  arb.c
-  rotate_arb_face.c
-  )
-
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-arb SHARED ${arb_srcs})
-target_link_libraries(ged-arb libged libbu)
-set_property(TARGET ged-arb APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-arb ${arb_srcs})
-PLUGIN_SETUP(ged-arb ged)
+ged_plugin_library(ged-pipe SHARED pipe.c)
+target_link_libraries(ged-pipe libged libbu)
+set_property(TARGET ged-pipe APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+VALIDATE_STYLE(ged-pipe pipe.c)
+PLUGIN_SETUP(ged-pipe ged)
 
 CMAKEFILES(
   CMakeLists.txt
-  ${arb_srcs}
+  pipe.c
   )
 
 # Local Variables:

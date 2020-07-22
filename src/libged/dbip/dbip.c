@@ -59,16 +59,15 @@ ged_dbip_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl dbip_cmd_impl = {
-    "get_dbip",
-    ged_dbip_core,
-    GED_CMD_DEFAULT
-};
+struct ged_cmd_impl get_dbip_cmd_impl = {"get_dbip", ged_dbip_core, GED_CMD_DEFAULT};
+const struct ged_cmd get_dbip_cmd = { &get_dbip_cmd_impl };
 
+struct ged_cmd_impl dbip_cmd_impl = {"dbip", ged_dbip_core, GED_CMD_DEFAULT};
 const struct ged_cmd dbip_cmd = { &dbip_cmd_impl };
-const struct ged_cmd *dbip_cmds[] = { &dbip_cmd, NULL };
 
-static const struct ged_plugin pinfo = { dbip_cmds, 1 };
+const struct ged_cmd *dbip_cmds[] = { &get_dbip_cmd, &dbip_cmd, NULL };
+
+static const struct ged_plugin pinfo = { dbip_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

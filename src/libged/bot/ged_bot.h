@@ -81,6 +81,11 @@ GED_EXPORT extern int ged_bot_smooth_core(struct ged *gedp, int argc, const char
 GED_EXPORT extern int ged_bot_split_core(struct ged *gedp, int argc, const char **argv);
 GED_EXPORT extern int ged_bot_sync_core(struct ged *gedp, int argc, const char **argv);
 GED_EXPORT extern int ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_dbot_dump_core(struct ged *gedp, int argc, const char **argv);
+
 
 GED_EXPORT extern int _bot_cmd_extrude(void *bs, int argc, const char **argv);
 

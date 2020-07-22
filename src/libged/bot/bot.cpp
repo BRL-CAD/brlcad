@@ -477,6 +477,24 @@ extern "C" {
     struct ged_cmd_impl bot_vertex_fuse_cmd_impl = {"bot_vertex_fuse", ged_bot_vertex_fuse_core, GED_CMD_DEFAULT};
     const struct ged_cmd bot_vertex_fuse_cmd = { &bot_vertex_fuse_cmd_impl };
 
+    struct ged_cmd_impl dbot_dump_cmd_impl = {"dbot_dump", ged_dbot_dump_core, GED_CMD_DEFAULT};
+    const struct ged_cmd dbot_dump_cmd = { &dbot_dump_cmd_impl };
+
+    struct ged_cmd_impl find_bot_edge_cmd_impl = {"find_bot_edge", ged_find_bot_edge_nearest_pnt_core, GED_CMD_DEFAULT};
+    const struct ged_cmd find_bot_edge_cmd = { &find_bot_edge_cmd_impl };
+
+    struct ged_cmd_impl find_bot_pnt_cmd_impl = {"find_bot_pnt", ged_find_bot_pnt_nearest_pnt_core, GED_CMD_DEFAULT};
+    const struct ged_cmd find_bot_pnt_cmd = { &find_bot_pnt_cmd_impl };
+
+    struct ged_cmd_impl get_bot_edges_cmd_impl = {"get_bot_edges", ged_get_bot_edges_core, GED_CMD_DEFAULT};
+    const struct ged_cmd get_bot_edges_cmd = { &get_bot_edges_cmd_impl };
+
+    /*
+       struct ged_cmd_impl _cmd_impl = {"", , GED_CMD_DEFAULT};
+       const struct ged_cmd _cmd = { &_cmd_impl };
+       */
+
+
     const struct ged_cmd *bot_cmds[] = {
        	&bot_cmd,
 	&bot_condense_cmd,
@@ -491,10 +509,14 @@ extern "C" {
 	&bot_split_cmd,
 	&bot_sync_cmd,
 	&bot_vertex_fuse_cmd,
-      	NULL
+	&dbot_dump_cmd,
+	&find_bot_edge_cmd,
+	&find_bot_pnt_cmd,
+	&get_bot_edges_cmd,
+	NULL
     };
 
-    static const struct ged_plugin pinfo = { bot_cmds, 13 };
+    static const struct ged_plugin pinfo = { bot_cmds, 17 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

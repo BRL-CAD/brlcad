@@ -25,33 +25,34 @@ if(BRLCAD_ENABLE_BULLET)
 endif(BRLCAD_ENABLE_BULLET)
 include(bullet/CMakeLists.txt)
 
-if(0)
+set(bullet_srcs
+  ged_command.cpp
+  rt_collision_algorithm.cpp
+  rt_collision_shape.cpp
+  rt_debug_draw.cpp
+  rt_instance.cpp
+  rt_motion_state.cpp
+  simulation.cpp
+  utility.cpp
+  )
+
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-simulate SHARED simulate.c)
+ged_plugin_library(ged-simulate SHARED ${bullet_srcs})
 target_link_libraries(ged-simulate libged libbu)
 set_property(TARGET ged-simulate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-simulate simulate.c)
+VALIDATE_STYLE(ged-simulate ${bullet_srcs})
 PLUGIN_SETUP(ged-simulate ged)
-endif(0)
 
 CMAKEFILES(
   CMakeLists.txt
-  ged_command.cpp
-  rt_collision_algorithm.cpp
   rt_collision_algorithm.hpp
-  rt_collision_shape.cpp
   rt_collision_shape.hpp
-  rt_debug_draw.cpp
   rt_debug_draw.hpp
-  rt_instance.cpp
   rt_instance.hpp
-  rt_motion_state.cpp
   rt_motion_state.hpp
-  simulation.cpp
   simulation.hpp
   tests/CMakeLists.txt
   tests/simulate_test.cpp
-  utility.cpp
   utility.hpp
   )
 

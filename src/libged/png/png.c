@@ -210,16 +210,15 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl png_cmd_impl = {
-    "png",
-    ged_png_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl png_cmd_impl = {"png", ged_png_core, GED_CMD_DEFAULT};
 const struct ged_cmd png_cmd = { &png_cmd_impl };
-const struct ged_cmd *png_cmds[] = { &png_cmd, NULL };
 
-static const struct ged_plugin pinfo = { png_cmds, 1 };
+struct ged_cmd_impl pngwf_cmd_impl = {"pngwf", ged_png_core, GED_CMD_DEFAULT};
+const struct ged_cmd pngwf_cmd = { &pngwf_cmd_impl };
+
+const struct ged_cmd *png_cmds[] = { &png_cmd, &pngwf_cmd, NULL };
+
+static const struct ged_plugin pinfo = { png_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

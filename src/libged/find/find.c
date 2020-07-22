@@ -139,11 +139,18 @@ struct ged_cmd_impl find_cmd_impl = {
     ged_find_core,
     GED_CMD_DEFAULT
 };
-
 const struct ged_cmd find_cmd = { &find_cmd_impl };
-const struct ged_cmd *find_cmds[] = { &find_cmd, NULL };
 
-static const struct ged_plugin pinfo = { find_cmds, 1 };
+struct ged_cmd_impl dbfind_cmd_impl = {
+    "dbfind",
+    ged_find_core,
+    GED_CMD_DEFAULT
+};
+const struct ged_cmd dbfind_cmd = { &dbfind_cmd_impl };
+
+const struct ged_cmd *find_cmds[] = { &find_cmd, &dbfind_cmd, NULL };
+
+static const struct ged_plugin pinfo = { find_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

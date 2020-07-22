@@ -85,16 +85,17 @@ ged_orient_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl orient_cmd_impl = {
-    "orient",
-    ged_orient_core,
-    GED_CMD_DEFAULT
-};
 
+struct ged_cmd_impl orient_cmd_impl = {"orient", ged_orient_core, GED_CMD_DEFAULT};
 const struct ged_cmd orient_cmd = { &orient_cmd_impl };
-const struct ged_cmd *orient_cmds[] = { &orient_cmd, NULL };
 
-static const struct ged_plugin pinfo = { orient_cmds, 1 };
+struct ged_cmd_impl orientation_cmd_impl = {"orientation", ged_orient_core, GED_CMD_DEFAULT};
+const struct ged_cmd orientation_cmd = { &orientation_cmd_impl };
+
+
+const struct ged_cmd *orient_cmds[] = { &orient_cmd, &orientation_cmd, NULL };
+
+static const struct ged_plugin pinfo = { orient_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

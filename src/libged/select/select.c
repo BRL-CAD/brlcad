@@ -171,7 +171,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
  *
  */
 int
-ged_rselect(struct ged *gedp, int argc, const char *argv[])
+ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     static const char *usage = "[-b bot] [-p] [-z vminz]";
@@ -276,16 +276,15 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl select_cmd_impl = {
-    "select",
-    ged_select_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl select_cmd_impl = {"select", ged_select_core, GED_CMD_DEFAULT};
 const struct ged_cmd select_cmd = { &select_cmd_impl };
-const struct ged_cmd *select_cmds[] = { &select_cmd, NULL };
 
-static const struct ged_plugin pinfo = { select_cmds, 1 };
+struct ged_cmd_impl rselect_cmd_impl = {"rselect", ged_rselect_core, GED_CMD_DEFAULT};
+const struct ged_cmd rselect_cmd = { &rselect_cmd_impl };
+
+const struct ged_cmd *select_cmds[] = { &select_cmd, &rselect_cmd, NULL };
+
+static const struct ged_plugin pinfo = { select_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

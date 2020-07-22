@@ -33,14 +33,19 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
+#include "ged.h"
 #include "../ged_private.h"
 
-extern int ged_nmg_mm(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_cmface(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_kill_v(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_kill_f(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_move_v(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_make_v(struct ged *gedp, int argc, const char *argv[]);
+
+extern int ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_kill_f_core(struct ged* gedp, int argc, const char* argv[]);
+extern int ged_nmg_kill_v_core(struct ged* gedp, int argc, const char* argv[]);
+extern int ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_mm_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_move_v_core(struct ged* gedp, int argc, const char* argv[]);
+extern int ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[]);
 
 int
 ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
@@ -90,29 +95,29 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
     ++argv;
 
     if( BU_STR_EQUAL( "mm", subcmd ) ) {
-        ged_nmg_mm(gedp, argc, argv);
+        ged_nmg_mm_core(gedp, argc, argv);
     }
     else if( BU_STR_EQUAL( "cmface", subcmd ) ) {
-        ged_nmg_cmface(gedp, argc, argv);
+        ged_nmg_cmface_core(gedp, argc, argv);
     }
     else if( BU_STR_EQUAL( "kill", subcmd ) ) {
         const char* opt = argv[2];
         if ( BU_STR_EQUAL( "V", opt ) ) {
-            ged_nmg_kill_v(gedp, argc, argv);
+            ged_nmg_kill_v_core(gedp, argc, argv);
         } else if ( BU_STR_EQUAL( "F", opt ) ) {
-            ged_nmg_kill_f(gedp, argc, argv);
+            ged_nmg_kill_f_core(gedp, argc, argv);
         }
     }
     else if( BU_STR_EQUAL( "move", subcmd ) ) {
         const char* opt = argv[2];
         if ( BU_STR_EQUAL( "V", opt ) ) {
-            ged_nmg_move_v(gedp, argc, argv);
+            ged_nmg_move_v_core(gedp, argc, argv);
         }
     }
     else if( BU_STR_EQUAL( "make", subcmd ) ) {
         const char* opt = argv[2];
         if ( BU_STR_EQUAL( "V", opt ) ) {
-            ged_nmg_make_v(gedp, argc, argv);
+            ged_nmg_make_v_core(gedp, argc, argv);
         }
     }
     else {
@@ -126,16 +131,6 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-
-extern int ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_kill_f_core(struct ged* gedp, int argc, const char* argv[]);
-extern int ged_nmg_kill_v_core(struct ged* gedp, int argc, const char* argv[]);
-extern int ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_mm_core(struct ged *gedp, int argc, const char *argv[]);
-extern int ged_nmg_move_v_core(struct ged* gedp, int argc, const char* argv[]);
-extern int ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[]);
 
 struct ged_cmd_impl nmg_cmd_impl = {"nmg", ged_nmg_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_cmd = { &nmg_cmd_impl };

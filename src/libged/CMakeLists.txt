@@ -23,13 +23,9 @@ set(LIBGED_SOURCES
   exec.cpp
   exec_mapping.cpp
   ged_init.cpp
-  libfuncs/libfuncs.c
   columns.c
   display_list.c
   draw_calc.cpp
-  edbot.c
-  edit_metaball.c
-  edpipe.c
   facedef.c
   ged.c
   ged_util.c
@@ -37,11 +33,10 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   inside.c
   path.c
+  pipe.c
   pnts_util.c
   polyclip.cpp
   qray.c
-  rotate_about.c
-  rotate_arb_face.c
   rotate_eto.c
   rotate_extrude.c
   rotate_hyp.c
@@ -232,6 +227,7 @@ add_subdirectory(killrefs)
 add_subdirectory(killtree)
 add_subdirectory(label)
 add_subdirectory(lc)
+add_subdirectory(libfuncs)
 add_subdirectory(lint)
 add_subdirectory(list)
 add_subdirectory(lod)
@@ -244,6 +240,7 @@ add_subdirectory(make)
 add_subdirectory(make_name)
 add_subdirectory(match)
 add_subdirectory(mater)
+add_subdirectory(metaball)
 add_subdirectory(mirror)
 add_subdirectory(model2grid_lu)
 add_subdirectory(model2view)
@@ -265,6 +262,7 @@ add_subdirectory(overlay)
 add_subdirectory(pathlist)
 add_subdirectory(pathsum)
 add_subdirectory(perspective)
+add_subdirectory(pipe)
 add_subdirectory(pix2fb)
 add_subdirectory(plot)
 add_subdirectory(pmat)

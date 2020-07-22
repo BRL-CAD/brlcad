@@ -380,6 +380,8 @@ GED_EXPORT extern int _ged_set_metaball(struct ged *gedp,
 			     struct rt_metaball_internal *mbip,
 			     const char *attribute,
 			     fastf_t sf);
+GED_EXPORT extern struct wdb_metaball_pnt *
+_ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i);
 
 /* defined in scale_part.c */
 GED_EXPORT extern int _ged_scale_part(struct ged *gedp,
@@ -394,6 +396,16 @@ GED_EXPORT extern int _ged_scale_pipe(struct ged *gedp,
 			   const char *attribute,
 			   fastf_t sf,
 			   int rflag);
+
+GED_EXPORT extern int _ged_get_pipe_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps);
+GED_EXPORT extern int _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t));
+GED_EXPORT extern int _ged_pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt);
+GED_EXPORT extern struct wdb_pipe_pnt *_ged_get_pipe_seg_i(struct rt_pipe_internal *pipeip, int seg_i);
+GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt);
+GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_delete_pnt(struct wdb_pipe_pnt *ps);
+GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt);
+GED_EXPORT extern struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t model_pt, matp_t view2model);
+
 
 /* defined in scale_rhc.c */
 GED_EXPORT extern int _ged_scale_rhc(struct ged *gedp,
