@@ -192,8 +192,8 @@ ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl png2fb_cmd_impl = {
-    "png2fb_core",
-    ged_png2fb,
+    "png2fb",
+    ged_png2fb_core,
     GED_CMD_DEFAULT
 };
 

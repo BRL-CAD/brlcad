@@ -126,34 +126,45 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
+
+extern int ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_kill_f_core(struct ged* gedp, int argc, const char* argv[]);
+extern int ged_nmg_kill_v_core(struct ged* gedp, int argc, const char* argv[]);
+extern int ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_mm_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_move_v_core(struct ged* gedp, int argc, const char* argv[]);
+extern int ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[]);
+
 struct ged_cmd_impl nmg_cmd_impl = {"nmg", ged_nmg_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_cmd = { &nmg_cmd_impl };
 
-struct ged_cmd_impl nmg_cmface_cmd_impl = {"nmg_cmface", ged_nmg_cmface, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_cmface_cmd_impl = {"nmg_cmface", ged_nmg_cmface_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_cmface_cmd = { &nmg_cmface_cmd_impl };
 
-struct ged_cmd_impl nmg_collapse_cmd_impl = {"nmg_collapse", ged_nmg_collapse, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_collapse_cmd_impl = {"nmg_collapse", ged_nmg_collapse_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_collapse_cmd = { &nmg_collapse_cmd_impl };
 
-struct ged_cmd_impl nmg_fix_normals_cmd_impl = {"nmg_fix_normals", ged_nmg_fix_normals, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_fix_normals_cmd_impl = {"nmg_fix_normals", ged_nmg_fix_normals_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_fix_normals_cmd = { &nmg_fix_normals_cmd_impl };
 
-struct ged_cmd_impl nmg_kill_f_cmd_impl = {"nmg_kill_f", ged_nmg_kill_f, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_kill_f_cmd_impl = {"nmg_kill_f", ged_nmg_kill_f_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_kill_f_cmd = { &nmg_kill_f_cmd_impl };
 
-struct ged_cmd_impl nmg_kill_v_cmd_impl = {"nmg_kill_v", ged_nmg_kill_v, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_kill_v_cmd_impl = {"nmg_kill_v", ged_nmg_kill_v_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_kill_v_cmd = { &nmg_kill_v_cmd_impl };
 
-struct ged_cmd_impl nmg_make_v_cmd_impl = {"nmg_make_v", ged_nmg_make_v, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_make_v_cmd_impl = {"nmg_make_v", ged_nmg_make_v_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_make_v_cmd = { &nmg_make_v_cmd_impl };
 
-struct ged_cmd_impl nmg_mm_cmd_impl = {"nmg_mm", ged_nmg_mm, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_mm_cmd_impl = {"nmg_mm", ged_nmg_mm_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_mm_cmd = { &nmg_mm_cmd_impl };
 
-struct ged_cmd_impl nmg_move_v_cmd_impl = {"nmg_move_v", ged_nmg_move_v, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_move_v_cmd_impl = {"nmg_move_v", ged_nmg_move_v_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_move_v_cmd = { &nmg_move_v_cmd_impl };
 
-struct ged_cmd_impl nmg_simplify_cmd_impl = {"nmg_simplify", ged_nmg_simplify, GED_CMD_DEFAULT};
+struct ged_cmd_impl nmg_simplify_cmd_impl = {"nmg_simplify", ged_nmg_simplify_core, GED_CMD_DEFAULT};
 const struct ged_cmd nmg_simplify_cmd = { &nmg_simplify_cmd_impl };
 
 const struct ged_cmd *nmg_cmds[] = {

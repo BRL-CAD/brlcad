@@ -33,8 +33,8 @@
 #include "../ged_private.h"
 
 
-GED_EXPORT int
-ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
+int
+ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal nmg_intern;

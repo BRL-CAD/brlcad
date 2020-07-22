@@ -39,8 +39,8 @@ struct tmp_v {
     struct vertex *v;
 };
 
-GED_EXPORT int
-ged_nmg_make_v(struct ged *gedp, int argc, const char *argv[])
+int
+ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal internal;
     struct directory *dp;

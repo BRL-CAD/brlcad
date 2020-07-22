@@ -33,8 +33,8 @@
 #include "../ged_private.h"
 
 
-GED_EXPORT int
-ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
+int
+ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *new_name;
     struct model *m;
