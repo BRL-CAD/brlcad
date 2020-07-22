@@ -32,8 +32,6 @@
 #define GED_CMD(x) \
 	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
 	{ \
-	    const char *av0 = #x; \
-	    argv[0] = av0; \
 	    return ged_exec(gedp, argc, argv); \
 	} \
 
