@@ -95,6 +95,10 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
+
+struct ged_cmd_impl view_func_cmd_impl = {"view_func", ged_view_func_core, GED_CMD_DEFAULT};
+const struct ged_cmd view_func_cmd = { &view_func_cmd_impl };
+
 struct ged_cmd_impl view_cmd_impl = {"view", ged_view_func_core, GED_CMD_DEFAULT};
 const struct ged_cmd view_cmd = { &view_cmd_impl };
 
@@ -129,6 +133,7 @@ struct ged_cmd_impl sdata_lines_cmd_impl = {"sdata_lines", ged_view_data_lines, 
 const struct ged_cmd sdata_lines_cmd = { &sdata_lines_cmd_impl };
 
 const struct ged_cmd *view_cmds[] = {
+    &view_func_cmd,
     &view_cmd,
     &quat_cmd,
     &ypr_cmd,
@@ -143,7 +148,7 @@ const struct ged_cmd *view_cmds[] = {
     NULL
 };
 
-static const struct ged_plugin pinfo = { view_cmds, 11 };
+static const struct ged_plugin pinfo = { view_cmds, 12 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

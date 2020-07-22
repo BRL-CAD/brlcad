@@ -504,12 +504,18 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 struct ged_cmd_impl nirt_cmd_impl = {"nirt", ged_nirt_core, GED_CMD_DEFAULT};
 const struct ged_cmd nirt_cmd = { &nirt_cmd_impl };
 
+struct ged_cmd_impl query_ray_cmd_impl = {"query_ray", ged_nirt_core, GED_CMD_DEFAULT};
+const struct ged_cmd query_ray_cmd = { &query_ray_cmd_impl };
+
 struct ged_cmd_impl vnirt_cmd_impl = {"vnirt", ged_vnirt_core, GED_CMD_DEFAULT};
 const struct ged_cmd vnirt_cmd = { &vnirt_cmd_impl };
 
-const struct ged_cmd *nirt_cmds[] = { &nirt_cmd, &vnirt_cmd, NULL };
+struct ged_cmd_impl vquery_ray_cmd_impl = {"vquery_ray", ged_vnirt_core, GED_CMD_DEFAULT};
+const struct ged_cmd vquery_ray_cmd = { &vquery_ray_cmd_impl };
 
-static const struct ged_plugin pinfo = { nirt_cmds, 2 };
+const struct ged_cmd *nirt_cmds[] = { &nirt_cmd, &vnirt_cmd, &query_ray_cmd, &vquery_ray_cmd, NULL };
+
+static const struct ged_plugin pinfo = { nirt_cmds, 4 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
