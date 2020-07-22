@@ -391,6 +391,7 @@ main(int ac, char *av[]) {
     /* Find functions sets that are aliases */
     {
 	std::set<std::string> cmd_set;
+	// Start with the app commands
 	int app_cmd_cnt = 0;
 	const char *ccmd = app_cmds[app_cmd_cnt];
 	while (ccmd) {
@@ -398,6 +399,12 @@ main(int ac, char *av[]) {
 	    app_cmd_cnt++;
 	    ccmd = app_cmds[app_cmd_cnt];
 	}
+	// Also add libged's list in case there are any
+	// we missed calling out explicitly above...
+	for (size_t i = 0; i < ged_cmd_cnt; i++) {
+	    cmd_set.insert(std::string(ged_cmds[i]));
+	}
+
 	std::set<std::string>::iterator cs_it;
 	std::map<std::string, std::set<std::string>> alias_sets;
 	while (cmd_set.size()) {
