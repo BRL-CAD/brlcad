@@ -9,6 +9,7 @@ include_directories(
 set(VIEW_SRCS
   aet.c
   #data_lines.c
+  center.cpp
   eye.c
   quat.c
   size.c

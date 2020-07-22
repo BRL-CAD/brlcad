@@ -31,7 +31,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+
+#include "bio.h"
+#include "bresource.h"
+
+
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/str.h"
@@ -927,6 +936,898 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 
     return vp-start;
 }
+
+void
+_ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
+{
+    int id;
+    struct rt_db_internal intern;
+
+    RT_CK_DBI(gedp->ged_wdbp->dbip);
+
+    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	/* this is the _GLOBAL object */
+	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_pair *avp;
+
+	bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
+	bu_vls_strcat(gedp->ged_result_str, ": global attributes object\n");
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for %s\n", dp->d_namep);
+	    return;
+	}
+/* !!! left off here*/
+	for (BU_AVS_FOR(avp, &avs)) {
+	    if (BU_STR_EQUAL(avp->name, "units")) {
+		double conv;
+		const char *str;
+
+		conv = atof(avp->value);
+		bu_vls_strcat(gedp->ged_result_str, "\tunits: ");
+		if ((str=bu_units_string(conv)) == NULL) {
+		    bu_vls_strcat(gedp->ged_result_str, "Unrecognized units\n");
+		} else {
+		    bu_vls_strcat(gedp->ged_result_str, str);
+		    bu_vls_putc(gedp->ged_result_str, '\n');
+		}
+	    } else {
+		bu_vls_putc(gedp->ged_result_str, '\t');
+		bu_vls_strcat(gedp->ged_result_str, avp->name);
+		bu_vls_strcat(gedp->ged_result_str, ": ");
+		bu_vls_strcat(gedp->ged_result_str, avp->value);
+		bu_vls_putc(gedp->ged_result_str, '\n');
+	    }
+	}
+    } else {
+
+	if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
+				     (fastf_t *)NULL, &rt_uniresource)) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
+	    rt_db_free_internal(&intern);
+	    return;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "%s:  ", dp->d_namep);
+
+	if (!OBJ[id].ft_describe ||
+	    OBJ[id].ft_describe(gedp->ged_result_str,
+				&intern,
+				verbose,
+				gedp->ged_wdbp->dbip->dbi_base2local) < 0)
+	    bu_vls_printf(gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
+	rt_db_free_internal(&intern);
+    }
+}
+
+/**
+ * Once the vlist has been created, perform the common tasks
+ * in handling the drawn solid.
+ *
+ * This routine must be prepared to run in parallel.
+ */
+void
+_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp)
+{
+
+    if (dgcdp->wireframe_color_override) {
+	unsigned char wcolor[3];
+
+	wcolor[0] = (unsigned char)dgcdp->wireframe_color[0];
+	wcolor[1] = (unsigned char)dgcdp->wireframe_color[1];
+	wcolor[2] = (unsigned char)dgcdp->wireframe_color[2];
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, wcolor, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
+    } else {
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, NULL, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
+    }
+}
+
+void
+_ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char *name, int copy)
+{
+    size_t i;
+    char shortname[32] = {0};
+    char namebuf[64] = {0};
+
+    bu_strlcpy(shortname, name, sizeof(shortname));
+
+    for (i = 0; i < vbp->nused; i++) {
+	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
+	    continue;
+	snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
+	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_solid_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, gedp->freesolid, 0);
+    }
+}
+
+#define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
+#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
+#define EMACS_EDITOR "emacs"
+#define NANO_EDITOR "nano"
+#define VIM_EDITOR "vim"
+#define VI_EDITOR "vi"
+
+int
+_ged_editit(const char *editstring, const char *filename)
+{
+#ifdef HAVE_UNISTD_H
+    int xpid = 0;
+    int status = 0;
+#endif
+    int pid = 0;
+    char **avtmp = (char **)NULL;
+    const char *terminal = (char *)NULL;
+    const char *terminal_opt = (char *)NULL;
+    const char *editor = (char *)NULL;
+    const char *editor_opt = (char *)NULL;
+    const char *file = (const char *)filename;
+
+#if defined(SIGINT) && defined(SIGQUIT)
+    void (*s2)();
+    void (*s3)();
+#endif
+
+    if (!file) {
+	bu_log("INTERNAL ERROR: editit filename missing\n");
+	return 0;
+    }
+
+    char *editstring_cpy = NULL;
+
+    /* convert the edit string into pieces suitable for arguments to execlp */
+
+    if (editstring != NULL) {
+	editstring_cpy = bu_strdup(editstring);
+	avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
+	bu_argv_from_string(avtmp, 4, editstring_cpy);
+
+	if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
+	    terminal = avtmp[0];
+	if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
+	    terminal_opt = avtmp[1];
+	if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
+	    editor = avtmp[2];
+	if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
+	    editor_opt = avtmp[3];
+    } else {
+	editor = getenv("EDITOR");
+
+	/* still unset? try windows */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(WIN_EDITOR, NULL)) {
+		editor = WIN_EDITOR;
+	    }
+	}
+
+	/* still unset? try mac os x */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(MAC_EDITOR, NULL)) {
+		editor = MAC_EDITOR;
+	    }
+	}
+
+	/* still unset? try emacs */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(EMACS_EDITOR);
+	}
+
+	/* still unset? try nano */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(NANO_EDITOR);
+	}
+
+	/* still unset? try vim */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(VIM_EDITOR);
+	}
+
+	/* still unset? As a last resort, go with vi -
+	 * vi is part of the POSIX standard, which is as
+	 * close as we can get currently to an editor
+	 * that should always be present:
+	 * http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(VI_EDITOR);
+	}
+    }
+
+    if (!editor) {
+	bu_log("INTERNAL ERROR: editit editor missing\n");
+	return 0;
+    }
+
+    /* print a message to let the user know they need to quit their
+     * editor before the application will come back to life.
+     */
+    {
+	int length;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	struct bu_vls sep = BU_VLS_INIT_ZERO;
+	char *editor_basename;
+
+	if (terminal && editor_opt) {
+	    bu_log("Invoking [%s %s %s] via %s\n\n", editor, editor_opt, file, terminal);
+	} else if (terminal) {
+	    bu_log("Invoking [%s %s] via %s\n\n", editor, file, terminal);
+	} else if (editor_opt) {
+	    bu_log("Invoking [%s %s %s]\n\n", editor, editor_opt, file);
+	} else {
+	    bu_log("Invoking [%s %s]\n\n", editor, file);
+	}
+	editor_basename = bu_path_basename(editor, NULL);
+	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
+	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
+	    bu_vls_putc(&sep, '*');
+	}
+	bu_log("%s%s%s\n\n", bu_vls_addr(&sep), bu_vls_addr(&str), bu_vls_addr(&sep));
+	bu_vls_free(&str);
+	bu_vls_free(&sep);
+	bu_free(editor_basename, "editor_basename free");
+    }
+
+#if defined(SIGINT) && defined(SIGQUIT)
+    s2 = signal(SIGINT, SIG_IGN);
+    s3 = signal(SIGQUIT, SIG_IGN);
+#endif
+
+#ifdef HAVE_UNISTD_H
+    if ((pid = fork()) < 0) {
+	perror("fork");
+	return 0;
+    }
+#endif
+
+    if (pid == 0) {
+	/* Don't call bu_log() here in the child! */
+
+#if defined(SIGINT) && defined(SIGQUIT)
+	/* deja vu */
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGQUIT, SIG_DFL);
+#endif
+
+	{
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    char buffer[RT_MAXLINE + 1] = {0};
+	    STARTUPINFO si = {0};
+	    PROCESS_INFORMATION pi = {0};
+	    si.cb = sizeof(STARTUPINFO);
+	    si.lpReserved = NULL;
+	    si.lpReserved2 = NULL;
+	    si.cbReserved2 = 0;
+	    si.lpDesktop = NULL;
+	    si.dwFlags = 0;
+
+	    snprintf(buffer, RT_MAXLINE, "%s %s", editor, file);
+
+	    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	    WaitForSingleObject(pi.hProcess, INFINITE);
+	    return 1;
+#else
+	    char *editor_basename = bu_path_basename(editor, NULL);
+	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
+		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
+		close(fileno(stdout));
+		close(fileno(stderr));
+	    }
+	    bu_free(editor_basename, "editor_basename free");
+
+	    if (!terminal && !editor_opt) {
+		(void)execlp(editor, editor, file, NULL);
+	    } else if (!terminal) {
+		(void)execlp(editor, editor, editor_opt, file, NULL);
+	    } else if (terminal && !terminal_opt) {
+		(void)execlp(terminal, terminal, editor, file, NULL);
+	    } else if (terminal && !editor_opt) {
+		(void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
+	    } else {
+		(void)execlp(terminal, terminal, terminal_opt, editor, editor_opt, file, NULL);
+	    }
+#endif
+	    /* should not reach */
+	    perror(editor);
+	    bu_exit(1, NULL);
+	}
+    }
+
+#ifdef HAVE_UNISTD_H
+    /* wait for the editor to terminate */
+    while ((xpid = wait(&status)) >= 0) {
+	if (xpid == pid) {
+	    break;
+	}
+    }
+#endif
+
+#if defined(SIGINT) && defined(SIGQUIT)
+    (void)signal(SIGINT, s2);
+    (void)signal(SIGQUIT, s3);
+#endif
+
+    if (editstring != NULL) {
+	bu_free((void *)avtmp, "ged_editit: avtmp");
+	bu_free(editstring_cpy, "editstring copy");
+    }
+
+    return 1;
+}
+
+void
+_ged_rt_set_eye_model(struct ged *gedp,
+		      vect_t eye_model)
+{
+    if (gedp->ged_gvp->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {
+	vect_t temp;
+
+	VSET(temp, 0.0, 0.0, 1.0);
+	MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
+    } else {
+	/* not doing zclipping, so back out of geometry */
+	int i;
+	vect_t direction;
+	vect_t extremum[2];
+	double t_in;
+	vect_t diag1;
+	vect_t diag2;
+	point_t ecenter;
+
+	VSET(eye_model, -gedp->ged_gvp->gv_center[MDX],
+	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
+
+	for (i = 0; i < 3; ++i) {
+	    extremum[0][i] = INFINITY;
+	    extremum[1][i] = -INFINITY;
+	}
+
+	(void)dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
+
+	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
+	for (i = 0; i < 3; ++i)
+	    if (NEAR_ZERO(direction[i], 1e-10))
+		direction[i] = 0.0;
+
+	VSUB2(diag1, extremum[1], extremum[0]);
+	VADD2(ecenter, extremum[1], extremum[0]);
+	VSCALE(ecenter, ecenter, 0.5);
+	VSUB2(diag2, ecenter, eye_model);
+	t_in = MAGNITUDE(diag1) + MAGNITUDE(diag2);
+	VJOIN1(eye_model, eye_model, t_in, direction);
+    }
+}
+
+struct _ged_rt_client_data {
+    struct ged_subprocess *rrtp;
+    struct ged *gedp;
+};
+
+void
+_ged_rt_output_handler(void *clientData, int UNUSED(mask))
+{
+    struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
+    struct ged_subprocess *run_rtp;
+    int count = 0;
+    int retcode = 0;
+    int read_failed = 0;
+    char line[RT_MAXLINE+1] = {0};
+
+    if (drcdp == (struct _ged_rt_client_data *)NULL ||
+	drcdp->gedp == (struct ged *)NULL ||
+	drcdp->rrtp == (struct ged_subprocess *)NULL)
+	return;
+
+    run_rtp = drcdp->rrtp;
+
+    /* Get data from rt */
+    if (bu_process_read((char *)line, &count, run_rtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+	read_failed = 1;
+    }
+
+    if (read_failed) {
+	int aborted;
+
+	/* Done watching for output, undo subprocess I/O hooks. */
+	if (drcdp->gedp->ged_delete_io_handler) {
+	    (*drcdp->gedp->ged_delete_io_handler)(drcdp->gedp->ged_interp, run_rtp->chan,
+		    run_rtp->p, BU_PROCESS_STDERR, (void *)drcdp,
+		    _ged_rt_output_handler);
+	}
+	/* Either EOF has been sent or there was a read error.
+	 * there is no need to block indefinitely */
+	retcode = bu_process_wait(&aborted, run_rtp->p, 120);
+
+	if (aborted)
+	    bu_log("Raytrace aborted.\n");
+	else if (retcode)
+	    bu_log("Raytrace failed.\n");
+	else
+	    bu_log("Raytrace complete.\n");
+
+	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
+
+	/* free run_rtp */
+	BU_LIST_DEQUEUE(&run_rtp->l);
+	BU_PUT(run_rtp, struct ged_subprocess);
+	BU_PUT(drcdp, struct _ged_rt_client_data);
+
+	return;
+    }
+
+    /* for feelgoodedness */
+    line[count] = '\0';
+
+    /* handle (i.e., probably log to stderr) the resulting line */
+    if (drcdp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
+	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
+    else
+	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
+}
+
+void
+_ged_rt_write(struct ged *gedp,
+	      FILE *fp,
+	      vect_t eye_model,
+	      int argc,
+	      const char **argv)
+{
+    quat_t quat;
+
+    /* Double-precision IEEE floating point only guarantees 15-17
+     * digits of precision; single-precision only 6-9 significant
+     * decimal digits.  Using a %.15e precision specifier makes our
+     * printed value dip into unreliable territory (1+15 digits).
+     * Looking through our history, %.14e seems to be safe as the
+     * value prior to printing quaternions was %.9e, although anything
+     * from 9->14 "should" be safe as it's above our calculation
+     * tolerance and above single-precision capability.
+     */
+    fprintf(fp, "viewsize %.14e;\n", gedp->ged_gvp->gv_size);
+    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
+    fprintf(fp, "orientation %.14e %.14e %.14e %.14e;\n", V4ARGS(quat));
+    fprintf(fp, "eye_pt %.14e %.14e %.14e;\n",
+		  eye_model[X], eye_model[Y], eye_model[Z]);
+
+    fprintf(fp, "start 0; clean;\n");
+
+    /* If no objects were specified, activate all objects currently displayed.
+     * Otherwise, simply draw the specified objects. If the caller passed
+     * -1 in argc it means the objects are specified on the command line.
+     * (TODO - we shouldn't be doing that anywhere for this; long command
+     * strings make Windows unhappy.  Once all the callers have been
+     * adjusted to pass the object lists for itemization via pipes below,
+     * remove the -1 case.) */
+    if (argc >= 0) {
+	if (!argc) {
+	    struct display_list *gdlp;
+	    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+		if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
+		    continue;
+		fprintf(fp, "draw %s;\n", bu_vls_addr(&gdlp->dl_path));
+	    }
+	} else {
+	    int i = 0;
+	    while (i < argc) {
+		fprintf(fp, "draw %s;\n", argv[i++]);
+	    }
+	}
+
+	fprintf(fp, "prep;\n");
+    }
+
+    dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
+
+    dl_write_animate(gedp->ged_gdp->gd_headDisplay, fp);
+
+    dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
+
+    fprintf(fp, "end;\n");
+}
+
+int
+_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv)
+{
+    FILE *fp_in;
+    vect_t eye_model;
+    struct ged_subprocess *run_rtp;
+    struct _ged_rt_client_data *drcdp;
+    struct bu_process *p = NULL;
+
+    bu_process_exec(&p, gd_rt_cmd[0], cmd_len, gd_rt_cmd, 0, 0);
+    fp_in = bu_process_open(p, BU_PROCESS_STDIN);
+
+    if (bu_process_pid(p) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
+	for (int i = 0; i < cmd_len; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
+	return GED_ERROR;
+    }
+
+    _ged_rt_set_eye_model(gedp, eye_model);
+    _ged_rt_write(gedp, fp_in, eye_model, argc, argv);
+
+    bu_process_close(p, BU_PROCESS_STDIN);
+
+    BU_GET(run_rtp, struct ged_subprocess);
+    BU_LIST_INIT(&run_rtp->l);
+    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
+
+    run_rtp->p = p;
+    run_rtp->aborted = 0;
+
+    BU_GET(drcdp, struct _ged_rt_client_data);
+    drcdp->gedp = gedp;
+    drcdp->rrtp = run_rtp;
+
+    /* If we know how, set up hooks so the parent process knows to watch for output. */
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
+    }
+    return GED_OK;
+}
+
+struct rt_object_selections *
+ged_get_object_selections(struct ged *gedp, const char *object_name)
+{
+    struct rt_object_selections *obj_selections;
+
+    obj_selections = (struct rt_object_selections *)bu_hash_get(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name));
+
+    if (!obj_selections) {
+	BU_ALLOC(obj_selections, struct rt_object_selections);
+	obj_selections->sets = bu_hash_create(0);
+	(void)bu_hash_set(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name), (void *)obj_selections);
+    }
+
+    return obj_selections;
+}
+
+
+struct rt_selection_set *
+ged_get_selection_set(struct ged *gedp, const char *object_name, const char *selection_name)
+{
+    struct rt_object_selections *obj_selections;
+    struct rt_selection_set *set;
+
+    obj_selections = ged_get_object_selections(gedp, object_name);
+    set = (struct rt_selection_set *)bu_hash_get(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name));
+    if (!set) {
+	BU_ALLOC(set, struct rt_selection_set);
+	BU_PTBL_INIT(&set->selections);
+	bu_hash_set(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name), (void *)set);
+    }
+
+    return set;
+}
+
+/*
+ * Add an instance of object 'objp' to combination 'name'.
+ * If the combination does not exist, it is created.
+ * region_flag is 1 (region), or 0 (group).
+ *
+ * Preserves the GIFT semantics.
+ */
+struct directory *
+_ged_combadd(struct ged *gedp,
+	     struct directory *objp,
+	     char *combname,
+	     int region_flag,	/* true if adding region */
+	     db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
+	     int ident,		/* "Region ID" */
+	     int air		/* Air code */)
+{
+    int ac = 1;
+    const char *av[2];
+
+    av[0] = objp->d_namep;
+    av[1] = NULL;
+
+    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, NULL, 1) == GED_ERROR)
+	return RT_DIR_NULL;
+
+    /* Done changing stuff - update nref. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
+    return db_lookup(gedp->ged_wdbp->dbip, combname, LOOKUP_QUIET);
+}
+
+
+/*
+ * Add an instance of object 'objp' to combination 'name'.
+ * If the combination does not exist, it is created.
+ * region_flag is 1 (region), or 0 (group).
+ *
+ * Preserves the GIFT semantics.
+ */
+int
+_ged_combadd2(struct ged *gedp,
+	      char *combname,
+	      int argc,
+	      const char *argv[],
+	      int region_flag,	/* true if adding region */
+	      db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
+	      int ident,	/* "Region ID" */
+	      int air,		/* Air code */
+	      matp_t m,         /* Matrix */
+	      int validate      /* 1 to check if new members exist, 0 to just add them */)
+{
+    struct directory *dp;
+    struct directory *objp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    union tree *tp;
+    struct rt_tree_array *tree_list;
+    size_t node_count;
+    size_t actual_count;
+    size_t curr_count;
+    int i;
+
+    if (argc < 1)
+	return GED_ERROR;
+
+    /*
+     * Check to see if we have to create a new combination
+     */
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  combname, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	int flags;
+
+	if (region_flag)
+	    flags = RT_DIR_REGION | RT_DIR_COMB;
+	else
+	    flags = RT_DIR_COMB;
+
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_COMBINATION;
+	intern.idb_meth = &OBJ[ID_COMBINATION];
+
+	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (void *)&intern.idb_type, 0);
+
+	BU_ALLOC(comb, struct rt_comb_internal);
+	RT_COMB_INTERNAL_INIT(comb);
+
+	intern.idb_ptr = (void *)comb;
+
+	if (region_flag) {
+	    comb->region_flag = 1;
+	    comb->region_id = ident;
+	    comb->aircode = air;
+	    comb->los = gedp->ged_wdbp->wdb_los_default;
+	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
+	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%d, ", ident);
+	    if (air)
+		bu_vls_printf(gedp->ged_result_str, "air=%d, ", air);
+	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
+			  gedp->ged_wdbp->wdb_los_default,
+			  gedp->ged_wdbp->wdb_mat_default);
+	} else {
+	    comb->region_flag = 0;
+	}
+
+	goto addmembers;
+    } else if (!(dp->d_flags & RT_DIR_COMB)) {
+	bu_vls_printf(gedp->ged_result_str, "%s exists, but is not a combination\n", dp->d_namep);
+	return GED_ERROR;
+    }
+
+    /* combination exists, add a new member */
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, 0);
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+
+    if (region_flag && !comb->region_flag) {
+	bu_vls_printf(gedp->ged_result_str, "%s: not a region\n", dp->d_namep);
+	return GED_ERROR;
+    }
+
+addmembers:
+    if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+	db_non_union_push(comb->tree, &rt_uniresource);
+	if (db_ck_v4gift_tree(comb->tree) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
+	    rt_db_free_internal(&intern);
+	    return GED_ERROR;
+	}
+    }
+
+    /* make space for an extra leaf */
+    curr_count = db_tree_nleaves(comb->tree);
+    node_count = curr_count + argc;
+    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+
+    /* flatten tree */
+    if (comb->tree) {
+	actual_count = argc + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
+	BU_ASSERT(actual_count == node_count);
+	comb->tree = TREE_NULL;
+    }
+
+    for (i = 0; i < argc; ++i) {
+	if (validate) {
+	    if ((objp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "skip member %s\n", argv[i]);
+		continue;
+	    }
+	}
+
+	/* insert new member at end */
+	switch (relation) {
+	case DB_OP_INTERSECT:
+	    tree_list[curr_count].tl_op = OP_INTERSECT;
+	    break;
+	case DB_OP_SUBTRACT:
+	    tree_list[curr_count].tl_op = OP_SUBTRACT;
+	    break;
+	default:
+	    if (relation != DB_OP_UNION) {
+		bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
+	    }
+	    tree_list[curr_count].tl_op = OP_UNION;
+	    break;
+	}
+
+	/* make new leaf node, and insert at end of list */
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
+	tree_list[curr_count].tl_tree = tp;
+	tp->tr_l.tl_op = OP_DB_LEAF;
+	tp->tr_l.tl_name = bu_strdup(argv[i]);
+	if (m) {
+	    tp->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "mat copy");
+	    MAT_COPY(tp->tr_l.tl_mat, m);
+	} else {
+	    tp->tr_l.tl_mat = (matp_t)NULL;
+	}
+
+	++curr_count;
+    }
+
+    /* rebuild the tree */
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
+
+    /* and finally, write it out */
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
+
+    bu_free((char *)tree_list, "combadd: tree_list");
+
+    /* Done changing stuff - update nref. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
+    return GED_OK;
+}
+
+void
+_ged_wait_status(struct bu_vls *logstr,
+		 int status)
+{
+    int sig = status & 0x7f;
+    int core = status & 0x80;
+    int ret = status >> 8;
+
+    if (status == 0) {
+	bu_vls_printf(logstr, "Normal exit\n");
+	return;
+    }
+
+    bu_vls_printf(logstr, "Abnormal exit x%x", status);
+
+    if (core)
+	bu_vls_printf(logstr, ", core dumped");
+
+    if (sig)
+	bu_vls_printf(logstr, ", terminating signal = %d", sig);
+    else
+	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
+}
+
+struct directory **
+_ged_build_dpp(struct ged *gedp,
+	       const char *path) {
+    struct directory *dp;
+    struct directory **dpp;
+    int i;
+    char *begin;
+    char *end;
+    char *newstr;
+    char *list;
+    int ac;
+    const char **av;
+    const char **av_orig = NULL;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+    /*
+     * First, build an array of the object's path components.
+     * We store the list in av_orig below.
+     */
+    newstr = bu_strdup(path);
+    begin = newstr;
+    while ((end = strchr(begin, '/')) != NULL) {
+	*end = '\0';
+	bu_vls_printf(&vls, "%s ", begin);
+	begin = end + 1;
+    }
+    bu_vls_printf(&vls, "%s ", begin);
+    free((void *)newstr);
+
+    list = bu_vls_addr(&vls);
+
+    if (bu_argv_from_tcl_list(list, &ac, &av_orig) != 0) {
+	bu_vls_printf(gedp->ged_result_str, "-1");
+	bu_vls_free(&vls);
+	return (struct directory **)NULL;
+    }
+
+    /* skip first element if empty */
+    av = av_orig;
+    if (*av[0] == '\0') {
+	--ac;
+	++av;
+    }
+
+    /* ignore last element if empty */
+    if (*av[ac-1] == '\0')
+	--ac;
+
+    /*
+     * Next, we build an array of directory pointers that
+     * correspond to the object's path.
+     */
+    dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
+    for (i = 0; i < ac; ++i) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[i], 0)) != RT_DIR_NULL)
+	    dpp[i] = dp;
+	else {
+	    /* object is not currently being displayed */
+	    bu_vls_printf(gedp->ged_result_str, "-1");
+
+	    bu_free((void *)dpp, "_ged_build_dpp: directory pointers");
+	    bu_free((char *)av_orig, "free av_orig");
+	    bu_vls_free(&vls);
+	    return (struct directory **)NULL;
+	}
+    }
+
+    dpp[i] = RT_DIR_NULL;
+
+    bu_free((char *)av_orig, "free av_orig");
+    bu_vls_free(&vls);
+    return dpp;
+}
+
+/*
+ * This routine walks through the directory entry list and mallocs enough
+ * space for pointers to hold:
+ * a) all of the entries if called with an argument of 0, or
+ * b) the number of entries specified by the argument if > 0.
+ */
+struct directory **
+_ged_dir_getspace(struct db_i *dbip,
+		  int num_entries)
+{
+    struct directory *dp;
+    int i;
+    struct directory **dir_basep;
+
+    if (num_entries < 0) {
+	bu_log("dir_getspace: was passed %d, used 0\n",
+	       num_entries);
+	num_entries = 0;
+    }
+    if (num_entries == 0) {
+	/* Set num_entries to the number of entries */
+	for (i = 0; i < RT_DBNHASH; i++)
+	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
+		num_entries++;
+    }
+
+    /* Allocate and cast num_entries worth of pointers */
+    dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
+						"dir_getspace *dir[]");
+    return dir_basep;
+}
+
 
 
 /*

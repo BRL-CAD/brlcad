@@ -64,6 +64,7 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   inside.c
   path.c
+  pnts_util.c
   polyclip.cpp
   qray.c
   rotate_about.c
@@ -270,7 +271,6 @@ set(LIBGED_SOURCES
   png/png.c
   png2fb/png2fb.c
   pnts/pnts.cpp
-  pnts_util.c
   prcolor/prcolor.c
   prefix/prefix.c
   preview/preview.c
@@ -562,7 +562,6 @@ add_subdirectory(label)
 add_subdirectory(lc)
 add_subdirectory(lint)
 add_subdirectory(list)
-add_subdirectory(loadview)
 add_subdirectory(lod)
 add_subdirectory(log)
 add_subdirectory(lookat)
@@ -603,7 +602,6 @@ add_subdirectory(png2fb)
 add_subdirectory(pnts)
 add_subdirectory(prcolor)
 add_subdirectory(prefix)
-add_subdirectory(preview)
 add_subdirectory(process)
 add_subdirectory(protate)
 add_subdirectory(ps)

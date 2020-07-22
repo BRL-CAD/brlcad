@@ -50,30 +50,6 @@ struct ged_rtcheck {
     int draw_read_failed;
 };
 
-void
-_ged_wait_status(struct bu_vls *logstr,
-		 int status)
-{
-    int sig = status & 0x7f;
-    int core = status & 0x80;
-    int ret = status >> 8;
-
-    if (status == 0) {
-	bu_vls_printf(logstr, "Normal exit\n");
-	return;
-    }
-
-    bu_vls_printf(logstr, "Abnormal exit x%x", status);
-
-    if (core)
-	bu_vls_printf(logstr, ", core dumped");
-
-    if (sig)
-	bu_vls_printf(logstr, ", terminating signal = %d", sig);
-    else
-	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
-}
-
 static void rtcheck_output_handler(void *clientData, int mask);
 static void rtcheck_vector_handler(void *clientData, int mask);
 

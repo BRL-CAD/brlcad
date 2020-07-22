@@ -31,10 +31,6 @@
 
 #include "../ged_private.h"
 
-/* TODO:  ew - globals.  Make them go away...  */
-vect_t _ged_eye_model;
-mat_t _ged_viewrot;
-
 /**
  * here we define a minimal table of commands that are supported by the
  * loadview command.  unsupported commands are those that have no bearing on
@@ -406,25 +402,6 @@ _ged_cm_end(const int argc, const char **argv)
 
     return 0;
 }
-
-#ifdef GED_PLUGIN
-#include "../include/plugin.h"
-struct ged_cmd_impl loadview_cmd_impl = {
-    "loadview",
-    ged_loadview_core,
-    GED_CMD_DEFAULT
-};
-
-const struct ged_cmd loadview_cmd = { &loadview_cmd_impl };
-const struct ged_cmd *loadview_cmds[] = { &loadview_cmd, NULL };
-
-static const struct ged_plugin pinfo = { loadview_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

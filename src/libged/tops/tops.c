@@ -130,38 +130,6 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-/*
- * This routine walks through the directory entry list and mallocs enough
- * space for pointers to hold:
- * a) all of the entries if called with an argument of 0, or
- * b) the number of entries specified by the argument if > 0.
- */
-struct directory **
-_ged_dir_getspace(struct db_i *dbip,
-		  int num_entries)
-{
-    struct directory *dp;
-    int i;
-    struct directory **dir_basep;
-
-    if (num_entries < 0) {
-	bu_log("dir_getspace: was passed %d, used 0\n",
-	       num_entries);
-	num_entries = 0;
-    }
-    if (num_entries == 0) {
-	/* Set num_entries to the number of entries */
-	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
-		num_entries++;
-    }
-
-    /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
-						"dir_getspace *dir[]");
-    return dir_basep;
-}
-
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"

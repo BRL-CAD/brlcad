@@ -6,11 +6,17 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
+set(DRAW_SRCS
+  draw.c
+  loadview.c
+  preview.c
+  )
+
 add_definitions(-DGED_PLUGIN)
-add_library(ged-draw SHARED draw.c)
+add_library(ged-draw SHARED ${DRAW_SRCS})
 target_link_libraries(ged-draw libged libbu)
 set_property(TARGET ged-draw APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-draw draw.c)
+VALIDATE_STYLE(ged-draw ${DRAW_SRCS})
 PLUGIN_SETUP(ged-draw ged)
 
 # Local Variables:

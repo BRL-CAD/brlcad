@@ -68,11 +68,11 @@ int _bot_obj_setup(struct _ged_bot_info *gb, const char *name);
 
 int _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 
-GED_EXPORT int _bot_cmd_extrude(void *bs, int argc, const char **argv);
+GED_EXPORT extern int _bot_cmd_extrude(void *bs, int argc, const char **argv);
 
-GED_EXPORT int _bot_cmd_check(void *bs, int argc, const char **argv);
+GED_EXPORT extern int _bot_cmd_check(void *bs, int argc, const char **argv);
 
-GED_EXPORT int _bot_cmd_remesh(void *bs, int argc, const char **argv);
+GED_EXPORT extern int _bot_cmd_remesh(void *bs, int argc, const char **argv);
 
 __END_DECLS
 

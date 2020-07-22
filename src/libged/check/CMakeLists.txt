@@ -6,11 +6,25 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
+set(CHECK_SRCS
+	check_adj_air.c
+	check.c
+	check_centroid.c
+	check_exp_air.c
+	check_gap.c
+	check_mass.c
+	check_moments.c
+	check_overlaps.c
+	check_surf_area.c
+	check_unconf_air.c
+	check_volume.c
+	)
+
 add_definitions(-DGED_PLUGIN)
-add_library(ged-check SHARED check.c)
+add_library(ged-check SHARED ${CHECK_SRCS})
 target_link_libraries(ged-check libged libbu)
 set_property(TARGET ged-check APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-check check.c)
+VALIDATE_STYLE(ged-check ${CHECK_SRCS})
 PLUGIN_SETUP(ged-check ged)
 
 # Local Variables:
@@ -19,3 +33,4 @@ PLUGIN_SETUP(ged-check ged)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+

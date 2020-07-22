@@ -29,8 +29,6 @@
 #include <string.h>
 #include <assert.h>
 
-
-
 #include "vmath.h"
 #include "bn.h"
 #include "bg/polygon.h"

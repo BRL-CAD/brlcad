@@ -51,9 +51,10 @@
 #include "./ged_private.h"
 #include "./qray.h"
 
-/* TODO
- * Ew.  Make this go away... */
+/* TODO:  Ew.  Globals. Make this go away... */
 struct ged *_ged_current_gedp;
+vect_t _ged_eye_model;
+mat_t _ged_viewrot;
 
 /* FIXME: this function should not exist.  passing pointers as strings
  * indicates a failure in design and lazy coding.
