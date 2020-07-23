@@ -58,12 +58,6 @@ struct _ged_bot_info {
     struct bu_opt_desc *gopts = NULL;
 };
 
-/* defined in draw.c */
-extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
-				       struct bn_vlblock *vbp,
-				       const char *name,
-				       int copy);
-
 int _bot_obj_setup(struct _ged_bot_info *gb, const char *name);
 
 int _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
