@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 * added 3dm-g failure message about supported versions - Cliff Yapp
 * fixed MGED "in" command support for datums - Sean Morrison
+* fixed bw-png writing corrupted png files on Windows - Sean Morrison
 
 
 ----------------------------------------------------------------------
