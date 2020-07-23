@@ -253,6 +253,18 @@ set(misc_ignore_files
   repoconv/sync_commit_trunk.sh
   repoconv/tagmap.sh
   repoconv/terra.dsp
+  repowork/COPYING
+  repowork/README
+  repowork/blob.cpp
+  repowork/TextFlow.hpp
+  repowork/repowork.cpp
+  repowork/reset.cpp
+  repowork/misc_cmds.cpp
+  repowork/cxxopts.hpp
+  repowork/tag.cpp
+  repowork/repowork.h
+  repowork/commit.cpp
+  repowork/CMakeLists.txt
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def
   win32-msvc/Dll/BrlcadCore.rc

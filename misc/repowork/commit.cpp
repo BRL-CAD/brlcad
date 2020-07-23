@@ -1,0 +1,495 @@
+/*                      C O M M I T . C P P
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file commit.cpp
+ *
+ * The majority of the work is in processing
+ * Git commits.
+ *
+ */
+
+#include "TextFlow.hpp"
+#include "repowork.h"
+
+typedef int (*commitcmd_t)(git_commit_data *, std::ifstream &);
+
+commitcmd_t
+commit_find_cmd(std::string &line, std::map<std::string, commitcmd_t> &cmdmap)
+{
+    commitcmd_t cc = NULL;
+    std::map<std::string, commitcmd_t>::iterator c_it;
+    for (c_it = cmdmap.begin(); c_it != cmdmap.end(); c_it++) {
+	if (!ficmp(line, c_it->first)) {
+	    cc = c_it->second;
+	    break;
+	}
+    }
+    return cc;
+}
+
+int
+commit_parse_author(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 7); // Remove "author " prefix
+    size_t spos = line.find_first_of(">");
+    if (spos == std::string::npos) {
+	std::cerr << "Invalid author entry! " << line << "\n";
+	exit(EXIT_FAILURE);
+    }
+    cd->author = line.substr(0, spos+1);
+    cd->author_timestamp = line.substr(spos+2, std::string::npos);
+    return 0;
+}
+
+int
+commit_parse_committer(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 10); // Remove "committer " prefix
+    size_t spos = line.find_first_of(">");
+    if (spos == std::string::npos) {
+	std::cerr << "Invalid committer entry! " << line << "\n";
+	exit(EXIT_FAILURE);
+    }
+    cd->committer = line.substr(0, spos+1);
+    cd->committer_timestamp = line.substr(spos+2, std::string::npos);
+    //std::cout << "Committer: " << cd->committer << "\n";
+    //std::cout << "Committer timestamp: " << cd->committer_timestamp << "\n";
+    return 0;
+}
+
+int
+commit_parse_commit(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 7);  // Remove "commit " prefix
+    if (!ficmp(line, std::string("refs/notes/"))) {
+	// Notes commit - flag accordingly
+	cd->notes_commit = 1;
+	return 0;
+    }
+    size_t spos = line.find_last_of("/");
+    line.erase(0, spos+1); // Remove "refs/..." prefix
+    cd->branch = line;
+    //std::cout << "Branch: " << cd->branch << "\n";
+    return 0;
+}
+
+int
+commit_parse_data(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 5); // Remove "data " prefix
+    size_t data_len = std::stoi(line);
+    // This is the commit message - read it in
+    char *cbuffer = new char [data_len+1];
+    cbuffer[data_len] = '\0';
+    infile.read(cbuffer, data_len);
+    cd->commit_msg = std::string(cbuffer);
+    delete[] cbuffer;
+    //std::cout << "Commit message:\n" << cd->commit_msg << "\n";
+    return 0;
+}
+
+int
+commit_parse_encoding(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    std::cerr << "TODO - support encoding\n";
+    exit(EXIT_FAILURE);
+    return 0;
+}
+
+int
+commit_parse_from(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 5); // Remove "from " prefix
+    //std::cout << "from line: " << line << "\n";
+    int ret = git_parse_commitish(cd->from, cd->s, line);
+    if (!ret) {
+	return 0;
+    }
+    std::cerr << "TODO - unsupported \"from\" specifier: " << line << "\n";
+    exit(EXIT_FAILURE);
+}
+
+int
+commit_parse_mark(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    //std::cout << "mark line: " << line << "\n";
+    line.erase(0, 5); // Remove "mark " prefix
+    //std::cout << "mark line: " << line << "\n";
+    if (line.c_str()[0] != ':') {
+	std::cerr << "Mark without \":\" character??: " <<  line << "\n";
+	return -1;
+    }
+    line.erase(0, 1); // Remove ":" prefix
+    cd->id.mark = cd->s->next_mark(std::stol(line));
+    //std::cout << "Mark id :" << line << " -> " << cd->id.mark << "\n";
+    return 0;
+}
+
+int
+commit_parse_merge(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 6); // Remove "merge " prefix
+    //std::cout << "merge line: " << line << "\n";
+    git_commitish merge_id;
+    int ret = git_parse_commitish(merge_id, cd->s, line);
+    if (!ret) {
+	cd->merges.push_back(merge_id);
+	return 0;
+    }
+    std::cerr << "TODO - unsupported \"merge\" specifier: " << line << "\n";
+    ret = git_parse_commitish(merge_id, cd->s, line);
+    exit(EXIT_FAILURE);
+}
+
+int
+commit_parse_original_oid(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 13);  // Remove "original-oid " prefix
+    cd->id.sha1 = line;
+    return 0;
+}
+
+int
+commit_parse_filecopy(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 2); // Remove "C " prefix
+    size_t spos = line.find_first_of(" ");
+    if (spos == std::string::npos) {
+    	std::cerr << "Invalid copy specifier: " << line << "\n";
+	return -1;
+    }
+    size_t qpos = line.find_first_of("\"");
+    if (spos != std::string::npos) {
+    	std::cerr << "quoted path specifiers currently unsupported:" << line << "\n";
+	exit(EXIT_FAILURE);
+    }
+    git_op op;
+    op.type = filecopy;
+    op.path = line.substr(0, spos);
+    op.dest_path = line.substr(spos+1, std::string::npos);
+    //std::cout << "filecopy: " << op.path << " -> " << op.dest_path << "\n";
+    cd->fileops.push_back(op);
+    return 0;
+}
+
+int
+commit_parse_filedelete(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 2); // Remove "D " prefix
+    git_op op;
+    op.type = filedelete;
+    op.path = line;
+    cd->fileops.push_back(op);
+    //std::cout << "filedelete: " << line << "\n";
+    return 0;
+}
+
+int
+commit_parse_filemodify(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 2); // Remove "M " prefix
+    std::regex fmod("([0-9]+) ([:A-Za-z0-9]+) (.*)");
+    std::smatch fmodvar;
+    if (!std::regex_search(line, fmodvar, fmod)) {
+	std::cerr << "Invalid modification specifier: " << line << "\n";
+	return -1;
+    }
+    git_op op;
+    op.type = filemodify;
+    op.mode = std::string(fmodvar[1]);
+    std::string dataref = std::string(fmodvar[2]);
+    if (dataref == std::string("inline")) {
+	std::cerr << "inline data unsupported\n";
+	exit(EXIT_FAILURE);
+    }
+    int ret = git_parse_commitish(op.dataref, cd->s, dataref);
+    if (ret || (op.dataref.mark == -1 && !op.dataref.sha1.length())) {
+	std::cerr << "Invalid data ref!: " << dataref << "\n";
+    }
+    op.path = std::string(fmodvar[3]);
+
+    //std::cout << "filemodify: " << op.mode << "," << op.dataref.index << "," << op.path << "\n";
+
+    cd->fileops.push_back(op);
+
+    return 0;
+}
+
+int
+commit_parse_notemodify(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    std::cerr << "notemodify currently unsupported:" << line << "\n";
+    exit(EXIT_FAILURE);
+}
+
+int
+commit_parse_filerename(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    line.erase(0, 2); // Remove "R " prefix
+    size_t spos = line.find_first_of(" ");
+    if (spos == std::string::npos) {
+    	std::cerr << "Invalid copy specifier: " << line << "\n";
+	return -1;
+    }
+    size_t qpos = line.find_first_of("\"");
+    if (spos != std::string::npos) {
+    	std::cerr << "quoted path specifiers currently unsupported:" << line << "\n";
+	exit(EXIT_FAILURE);
+    }
+    git_op op;
+    op.type = filerename;
+    op.path = line.substr(0, spos);
+    op.dest_path = line.substr(spos+1, std::string::npos);
+    //std::cout << "filerename: " << op.path << " -> " << op.dest_path << "\n"; 
+    cd->fileops.push_back(op);
+    return 0;
+}
+
+int
+commit_parse_deleteall(git_commit_data *cd, std::ifstream &infile)
+{
+    std::string line;
+    std::getline(infile, line);
+    if (line != std::string("deleteall")) {
+    	std::cerr << "warning - invalid deleteall specifier:" << line << "\n";
+    }
+    git_op op;
+    op.type = filedeleteall;
+    cd->fileops.push_back(op);
+    return 0;
+}
+
+int
+parse_commit(git_fi_data *fi_data, std::ifstream &infile)
+{
+    //std::cout << "Found command: commit\n";
+
+    git_commit_data gcd;
+    gcd.s = fi_data;
+
+    // Tell the commit where it will be in the vector - this
+    // uniquely identifies this specific commit, regardless of
+    // its sha1.
+    gcd.id.index = fi_data->commits.size();
+
+    std::map<std::string, commitcmd_t> cmdmap;
+    // Commit info modification commands
+    cmdmap[std::string("author")] = commit_parse_author;
+    cmdmap[std::string("commit ")] = commit_parse_commit; // Note - need space after commit to avoid matching committer!
+    cmdmap[std::string("committer")] = commit_parse_committer;
+    cmdmap[std::string("data")] = commit_parse_data;
+    cmdmap[std::string("encoding")] = commit_parse_encoding;
+    cmdmap[std::string("from")] = commit_parse_from;
+    cmdmap[std::string("mark")] = commit_parse_mark;
+    cmdmap[std::string("merge")] = commit_parse_merge;
+    cmdmap[std::string("original-oid")] = commit_parse_original_oid;
+
+    // tree modification commands
+    cmdmap[std::string("C ")] = commit_parse_filecopy;
+    cmdmap[std::string("D ")] = commit_parse_filedelete;
+    cmdmap[std::string("M ")] = commit_parse_filemodify;
+    cmdmap[std::string("N ")] = commit_parse_notemodify;
+    cmdmap[std::string("R ")] = commit_parse_filerename;
+    cmdmap[std::string("deleteall")] = commit_parse_deleteall;
+
+    std::string line;
+    size_t offset = infile.tellg();
+    int commit_done = 0;
+    while (!commit_done && std::getline(infile, line)) {
+
+	commitcmd_t cc = commit_find_cmd(line, cmdmap);
+
+	// If we found a command, process it.  Otherwise, we are done
+	// with the commit and need to clean up.
+	if (cc) {
+	    //std::cout << "commit line: " << line << "\n";
+	    infile.seekg(offset);
+	    (*cc)(&gcd, infile);
+	    offset = infile.tellg();
+	} else {
+	    // Whatever was on that line, it's not a commit input.
+	    // Reset input to allow the parent routine to deal with
+	    // it, and return.
+	    infile.seekg(offset);
+	    commit_done = 1;
+	}
+    }
+
+    gcd.id.mark = fi_data->next_mark(gcd.id.mark);
+    fi_data->mark_to_index[gcd.id.mark] = gcd.id.index;
+
+    // If we have a sha1 and this is not a notes commit, we need to map it to
+    // this commit's mark
+    if (!gcd.notes_commit && gcd.id.sha1.length()) {
+	fi_data->sha1_to_mark[gcd.id.sha1] = gcd.id.mark;
+    }
+
+    //std::cout << "commit new mark: " << gcd.id.mark << "\n";
+
+    // Add the commit to the data
+    fi_data->commits.push_back(gcd);
+
+    return 0;
+}
+
+void
+write_op(std::ofstream &outfile, git_op *o)
+{
+    switch (o->type) {
+	case filemodify:
+	    outfile << "M " << o->mode << " :" << o->dataref.mark << " " << o->path << "\n";
+	    break;
+	case filedelete:
+	    outfile << "D " << o->path << "\n";
+	    break;
+	case filecopy:
+	    outfile << "C " << o->path << " " << o->dest_path << "\n";
+	    break;
+	case filerename:
+	    outfile << "R " << o->path << " " << o->dest_path << "\n";
+	    break;
+	case filedeleteall:
+	    outfile << "deleteall\n";
+	    break;
+	case notemodify:
+	    std::cerr << "TODO - write notemodify\n";
+	    break;
+    }
+}
+
+// trim from end (in place) - https://stackoverflow.com/a/217605
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !(std::isspace(ch) || ch == '\n' || ch == '\r');
+    }).base(), s.end());
+}
+
+int
+write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
+{
+    if (!infile.good()) {
+        return -1;
+    }
+
+    // If this is a reset commit, it's handled quite differently
+    if (c->reset_commit) {
+	outfile << "reset " << c->branch << "\n";
+	if (c->from.mark != -1) {
+	    outfile << "from :" << c->from.mark << "\n";
+	}
+	outfile << "\n";
+	return 0;
+    }
+
+    // Header
+    if (c->notes_commit) {
+	// Don't output notes commits - we're handling things differently.
+ 	return 0;
+    } else {
+	outfile << "commit refs/heads/" << c->branch << "\n";
+    }
+    outfile << "mark :" << c->id.mark << "\n";
+#if 0
+    if (c->id.sha1.length()) {
+	outfile << "original-oid " << c->id.sha1 << "\n";
+    }
+#endif
+    if (c->author.length()) {
+	outfile << "author " << c->author << " " << c->author_timestamp << "\n";
+    } else {
+	outfile << "author " << c->committer << " " << c->committer_timestamp << "\n";
+    }
+    outfile << "committer " << c->committer << " " << c->committer_timestamp << "\n";
+
+    if (c->s->trim_whitespace) {
+	rtrim(c->commit_msg);
+    }
+    if (c->s->wrap_commit_lines) {
+	// Wrap the commit messages - gitk doesn't like long one liners by
+	// default.  Don't know why the line wrap ISN'T on by default, but we
+	// might as well deal with it while we're here...
+	//
+	// TODO - the width could easily be a parameter, and probably should
+	// be...
+	size_t spos = c->commit_msg.find_first_of('\n');
+	if (spos == std::string::npos) {
+	    std::string wmsg = TextFlow::Column(c->commit_msg).width(72).toString();
+	    c->commit_msg = wmsg;
+	}
+    }
+    std::string nmsg;
+    if (c->notes_string.length()) {
+	std::string nstr = c->notes_string;
+	if (c->s->trim_whitespace) rtrim(nstr);
+	if (c->s->wrap_commit_lines) {
+	    size_t spos = nstr.find_first_of('\n');
+	    if (spos == std::string::npos) {
+		std::string wmsg = TextFlow::Column(nstr).width(72).toString();
+		nstr = wmsg;
+	    }
+	}
+	nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n");
+    } else {
+	if (c->s->trim_whitespace) {
+	    nmsg = c->commit_msg + std::string("\n");
+	} else {
+	    nmsg = c->commit_msg;
+	}
+    }
+    outfile << "data " << nmsg.length() << "\n";
+    outfile << nmsg;
+
+    if (c->from.mark != -1) {
+	outfile << "from :" << c->from.mark << "\n";
+    }
+    for (size_t i = 0; i < c->merges.size(); i++) {
+	outfile << "merge :" << c->merges[i].mark << "\n";
+    }
+    for (size_t i = 0; i < c->fileops.size(); i++) {
+	write_op(outfile, &c->fileops[i]);
+    }
+    outfile << "\n";
+    return 0;
+}
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
