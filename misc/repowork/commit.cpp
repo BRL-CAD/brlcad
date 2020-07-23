@@ -399,8 +399,7 @@ static inline void rtrim(std::string &s) {
 std::string
 commit_msg(git_commit_data *c)
 {
-    // TODO - the width could easily be user option, and probably should be...
-    int cwidth = 72;
+    int cwidth = c->s->wrap_width;
     std::string nmsg;
 
     // Any whitespace at the end of the message, just trim it

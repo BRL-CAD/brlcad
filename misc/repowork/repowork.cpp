@@ -269,6 +269,7 @@ main(int argc, char *argv[])
     std::string repo_path;
     std::string email_map;
     std::string svn_map;
+    int cwidth = 72;
 
     // TODO - might be good do have a "validate" option that does the fast import and then
     // checks every commit saved from the old repo in the new one...
@@ -283,6 +284,7 @@ main(int argc, char *argv[])
 	    ("s,svn-map", "Specify svn rev -> author map (one mapping per line, format is commit-rev authorname)", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("t,trim-whitespace", "Trim extra spaces and end-of-line characters from the end of commit messages", cxxopts::value<bool>(trim_whitespace))
 	    ("w,wrap-commit-lines", "Wrap long commit lines to 72 cols (won't wrap messages already having multiple non-empty lines)", cxxopts::value<bool>(wrap_commit_lines))
+	    ("width", "Column wrapping width (if enabled)", cxxopts::value<int>(), "N")
 	    ("h,help", "Print help")
 	    ;
 
@@ -310,6 +312,11 @@ main(int argc, char *argv[])
 	{
 	    auto& ff = result["s"].as<std::vector<std::string>>();
 	    svn_map = ff[0];
+	}
+
+	if (result.count("width"))
+	{
+	    cwidth = result["width"].as<int>();
 	}
 
     }
@@ -362,6 +369,7 @@ main(int argc, char *argv[])
 	git_map_svn_authors(&fi_data, svn_map);
     }
 
+    fi_data.wrap_width = cwidth;
     fi_data.wrap_commit_lines = wrap_commit_lines;
     fi_data.trim_whitespace = trim_whitespace;
 
