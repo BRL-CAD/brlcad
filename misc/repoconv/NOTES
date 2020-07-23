@@ -299,7 +299,7 @@ gem install bigdecimal -v 1.4.2
 ###############################################################################
 SVN ids to revision numbers can be captured as follows to a file:
 
-svn log file:///home/user/brlcad_code | grep "|" | grep "^r[0-9][0-9 ]" | grep -v \(no\ author\) | awk -F "|" '{print $1 $2}' > rev_map
+svn log file:///home/user/brlcad_code | grep "|" | grep "^r[0-9][0-9 ]" | grep -v \(no\ author\) | awk -F "|" '{print $1 $2}' | sed -e 's/r//' | sed -e 's/ $//' | sed -e 's/  / /' > rev_map
 
 This may be enough information pre-notes-merge in repowork to allow us to
 assign one additional property - the cvs/svn commit author name.
