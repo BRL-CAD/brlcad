@@ -149,6 +149,7 @@ main(int argc, const char *argv[])
     std::regex t_regex(".*[\\/]misc/tools[\\/].*");
     std::regex c_regex(".*[\\/]misc/CMake[\\/].*");
     std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
+    std::regex rw_regex(".*[\\/]misc/repowork[\\/].*");
     std::regex d_regex(".*[\\/]doc[\\/].*");
     std::regex l_regex(".*[\\/]licenses_check.cpp");
     std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
@@ -217,7 +218,8 @@ main(int argc, const char *argv[])
     while (std::getline(src_file_stream, sfile)) {
 	if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex)
 	       	|| std::regex_match(sfile, r_regex) || std::regex_match(sfile, c_regex)
-		 || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)) {
+		 || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)
+		 || std::regex_match(sfile, rw_regex)) {
 	    continue;
 	}
 	if (!std::regex_match(std::string(sfile), srcfile_regex)) {
