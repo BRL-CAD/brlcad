@@ -10,6 +10,13 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2020-07-2X  Release 7.30.10                                    ---
+----------------------------------------------------------------------
+
+* fixed MGED "in" command support for datums - Sean Morrison
+
+
+----------------------------------------------------------------------
 --- 2020-05-08  Release 7.30.8                                     ---
 ----------------------------------------------------------------------
 
