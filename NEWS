@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-07-2X  Release 7.30.10                                    ---
 ----------------------------------------------------------------------
 
+* added 3dm-g failure message about supported versions - Cliff Yapp
 * fixed MGED "in" command support for datums - Sean Morrison
 
 
