@@ -76,6 +76,17 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 	// Write the message to the commit's string;
 	s->commits[i].notes_string = note;
 
+	// SPECIAL PURPOSE CODE - should go away eventually.
+	// For BRL-CAD specifically, this information contains
+	// the SVN id associated with the commit.  We want to
+	// use this info, so parse it out and store it.
+	std::regex svnid("svn:revision:([0-9]+).*");
+	std::smatch svnidvar;
+	if (std::regex_search(note, svnidvar, svnid)) {
+	    s->commits[i].svn_id = std::string(svnidvar[1]);
+	    std::cout << "Identified revision " << s->commits[i].svn_id << "\n";
+	}
+
 	n.close();
     }
 
@@ -133,6 +144,54 @@ git_map_emails(git_fi_data *s, std::string &email_map)
 
     return 0;
 }
+
+int
+git_map_svn_authors(git_fi_data *s, std::string &svn_map)
+{
+    // read map
+    std::ifstream infile(svn_map, std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open svn_map file: " << svn_map << "\n";
+	exit(-1);
+    }
+
+    // Create mapping of ids to svn authors
+    std::map<std::string, std::string> svn_author_map;
+    std::string line;
+    while (std::getline(infile, line)) {
+	// Skip empty lines
+	if (!line.length()) {
+	    continue;
+	}
+
+	size_t spos = line.find_first_of(" ");
+	if (spos == std::string::npos) {
+	    std::cerr << "Invalid svn map line!: " << line << "\n";
+	    exit(-1);
+	}
+
+	std::string id = line.substr(0, spos);
+	std::string author = line.substr(spos+1, std::string::npos);
+
+	svn_author_map[id] = author;
+    }
+
+    // Iterate over the commits and assign authors.
+    for (size_t i = 0; i < s->commits.size(); i++) {
+	git_commit_data *c = &(s->commits[i]);
+	if (!c->svn_id.length()) {
+	    continue;
+	}
+	if (svn_author_map.find(c->svn_id) != svn_author_map.end()) {
+	    std::string svnauth = svn_author_map[c->svn_id];
+	    //std::cerr << "Found SVN commit \"" << c->svn_id << "\" with author \"" << svnauth << "\"\n";
+	    c->svn_author = svnauth;
+	}
+    }
+
+    return 0;
+}
+
 
 
 
@@ -209,6 +268,7 @@ main(int argc, char *argv[])
     bool trim_whitespace = false;
     std::string repo_path;
     std::string email_map;
+    std::string svn_map;
 
     // TODO - might be good do have a "validate" option that does the fast import and then
     // checks every commit saved from the old repo in the new one...
@@ -217,9 +277,10 @@ main(int argc, char *argv[])
 	cxxopts::Options options(argv[0], " - process git fast-import files");
 
 	options.add_options()
-	    ("e,email-map", "Specify replacement username+email mappings (one map per line, format is commit-id-1;commit-id-2)", cxxopts::value<std::vector<std::string>>(), "path to map file")
+	    ("e,email-map", "Specify replacement username+email mappings (one map per line, format is commit-id-1;commit-id-2)", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
-	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "relative path to Git repository")
+	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "path to repo")
+	    ("s,svn-map", "Specify svn rev -> author map (one mapping per line, format is commit-rev authorname)", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("t,trim-whitespace", "Trim extra spaces and end-of-line characters from the end of commit messages", cxxopts::value<bool>(trim_whitespace))
 	    ("w,wrap-commit-lines", "Wrap long commit lines to 72 cols (won't wrap messages already having multiple non-empty lines)", cxxopts::value<bool>(wrap_commit_lines))
 	    ("h,help", "Print help")
@@ -243,6 +304,12 @@ main(int argc, char *argv[])
 	{
 	    auto& ff = result["e"].as<std::vector<std::string>>();
 	    email_map = ff[0];
+	}
+
+	if (result.count("s"))
+	{
+	    auto& ff = result["s"].as<std::vector<std::string>>();
+	    svn_map = ff[0];
 	}
 
     }
@@ -290,6 +357,11 @@ main(int argc, char *argv[])
 	git_map_emails(&fi_data, email_map);
     }
 
+    if (svn_map.length()) {
+	// Handle the svn authors
+	git_map_svn_authors(&fi_data, svn_map);
+    }
+
     fi_data.wrap_commit_lines = wrap_commit_lines;
     fi_data.trim_whitespace = trim_whitespace;
 
@@ -297,15 +369,25 @@ main(int argc, char *argv[])
 
     std::ifstream ifile(argv[1], std::ifstream::binary);
     std::ofstream ofile(argv[2], std::ios::out | std::ios::binary);
+    ofile << "progress Writing blobs...\n";
     for (size_t i = 0; i < fi_data.blobs.size(); i++) {
 	write_blob(ofile, &fi_data.blobs[i], ifile);
+	if ( !(i % 1000) ) {
+	    ofile << "progress blob " << i << " of " << fi_data.blobs.size() << "\n";
+	}
     }
+    ofile << "progress Writing commits...\n";
     for (size_t i = 0; i < fi_data.commits.size(); i++) {
 	write_commit(ofile, &fi_data.commits[i], ifile);
+	if ( !(i % 1000) ) {
+	    ofile << "progress commit " << i << " of " << fi_data.commits.size() << "\n";
+	}
     }
+    ofile << "progress Writing tags...\n";
     for (size_t i = 0; i < fi_data.tags.size(); i++) {
 	write_tag(ofile, &fi_data.tags[i], ifile);
     }
+    ofile << "progress Done.\n";
 
     ifile.close();
     ofile.close();

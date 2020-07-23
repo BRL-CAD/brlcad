@@ -396,6 +396,100 @@ static inline void rtrim(std::string &s) {
     }).base(), s.end());
 }
 
+std::string
+commit_msg(git_commit_data *c)
+{
+    // TODO - the width could easily be user option, and probably should be...
+    int cwidth = 72;
+    std::string nmsg;
+
+    // Any whitespace at the end of the message, just trim it
+    if (c->s->trim_whitespace) {
+	rtrim(c->commit_msg);
+    }
+
+    if (c->s->wrap_commit_lines) {
+	// Wrap the commit messages - gitk doesn't like long one liners by
+	// default.  Don't know why the line wrap ISN'T on by default, but we
+	// might as well deal with it while we're here...
+	size_t pdelim = c->commit_msg.find("\n\n");
+	if (pdelim == std::string::npos) {
+	    size_t spos = c->commit_msg.find_first_of('\n');
+	    if (spos == std::string::npos) {
+		std::string wmsg = TextFlow::Column(c->commit_msg).width(cwidth).toString();
+		c->commit_msg = wmsg;
+	    }
+	} else {
+	    // Multiple paragraphs - separate them for individual consideration.
+	    std::vector<std::string> paragraphs;
+	    std::string paragraphs_str = c->commit_msg;
+	    while (paragraphs_str.length()) {
+		std::string para = paragraphs_str.substr(0, pdelim);
+		std::string remainder = paragraphs_str.substr(pdelim+2, std::string::npos);
+		paragraphs_str = remainder;
+		paragraphs.push_back(para);
+		pdelim = paragraphs_str.find("\n\n");
+		if (pdelim == std::string::npos) {
+		    // That's it - last line
+		    paragraphs.push_back(paragraphs_str);
+		    paragraphs_str = std::string("");
+		}
+	    }
+	    bool can_wrap = true;
+	    // If any of the paragraphs delimited by two returns has returns inside of it, we can't
+	    // do anything - the message already has some sort of formatting.
+	    for (size_t i = 0; i < paragraphs.size(); i++) {
+		size_t spos = paragraphs[i].find_first_of('\n');
+		if (spos != std::string::npos) {
+		    can_wrap = false;
+		    break;
+		}
+	    }
+	    if (can_wrap) {
+		// Wrap each paragraph individually
+		for (size_t i = 0; i < paragraphs.size(); i++) {
+		    std::string newpara = TextFlow::Column(paragraphs[i]).width(cwidth).toString();
+		    paragraphs[i] = newpara;
+		}
+		std::string newcommitmsg;
+		// Reassemble
+		for (size_t i = 0; i < paragraphs.size(); i++) {
+		    newcommitmsg.append(paragraphs[i]);
+		    newcommitmsg.append("\n\n");
+		}
+		rtrim(newcommitmsg);
+		c->commit_msg = newcommitmsg;
+	    }
+	}
+    }
+
+    if (c->notes_string.length()) {
+	std::string nstr = c->notes_string;
+	if (c->s->trim_whitespace) rtrim(nstr);
+	if (c->s->wrap_commit_lines) {
+	    size_t spos = nstr.find_first_of('\n');
+	    if (spos == std::string::npos) {
+		std::string wmsg = TextFlow::Column(nstr).width(cwidth).toString();
+		nstr = wmsg;
+	    }
+	}
+	if (c->svn_author.length()) {
+	    std::string authstr = std::string("svn:author:") + c->svn_author;
+	    nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n") + authstr + std::string("\n");
+	} else {
+	    nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n");
+	}
+    } else {
+	if (c->s->trim_whitespace) {
+	    nmsg = c->commit_msg + std::string("\n");
+	} else {
+	    nmsg = c->commit_msg;
+	}
+    }
+
+    return nmsg;
+}
+
 int
 write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 {
@@ -433,41 +527,7 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
     }
     outfile << "committer " << c->committer << " " << c->committer_timestamp << "\n";
 
-    if (c->s->trim_whitespace) {
-	rtrim(c->commit_msg);
-    }
-    if (c->s->wrap_commit_lines) {
-	// Wrap the commit messages - gitk doesn't like long one liners by
-	// default.  Don't know why the line wrap ISN'T on by default, but we
-	// might as well deal with it while we're here...
-	//
-	// TODO - the width could easily be a parameter, and probably should
-	// be...
-	size_t spos = c->commit_msg.find_first_of('\n');
-	if (spos == std::string::npos) {
-	    std::string wmsg = TextFlow::Column(c->commit_msg).width(72).toString();
-	    c->commit_msg = wmsg;
-	}
-    }
-    std::string nmsg;
-    if (c->notes_string.length()) {
-	std::string nstr = c->notes_string;
-	if (c->s->trim_whitespace) rtrim(nstr);
-	if (c->s->wrap_commit_lines) {
-	    size_t spos = nstr.find_first_of('\n');
-	    if (spos == std::string::npos) {
-		std::string wmsg = TextFlow::Column(nstr).width(72).toString();
-		nstr = wmsg;
-	    }
-	}
-	nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n");
-    } else {
-	if (c->s->trim_whitespace) {
-	    nmsg = c->commit_msg + std::string("\n");
-	} else {
-	    nmsg = c->commit_msg;
-	}
-    }
+    std::string nmsg = commit_msg(c);
     outfile << "data " << nmsg.length() << "\n";
     outfile << nmsg;
 

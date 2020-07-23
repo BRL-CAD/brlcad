@@ -94,6 +94,11 @@ class git_commit_data {
 	// Resets are order dependent - treat them as pseudo-commits for
 	// storage purpose, but they are written differently
 	int reset_commit = 0;
+
+	// Special purpose entries for assigning an additional line
+	// to the existing notes-based info to id SVN usernames
+	std::string svn_id;
+	std::string svn_author;
 };
 
 class git_tag_data {
