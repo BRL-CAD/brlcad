@@ -38,7 +38,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
 	return GED_ERROR;
     }
 
-    double start;
+    double start = 0.0;
     const char *tstr = getenv("GED_EXEC_TIME");
     if (tstr) {
 	start = bu_gettime();
