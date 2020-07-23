@@ -47,6 +47,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
+#include "../ged_private.h"
 #include "./ged_brep.h"
 
 /* FIXME: how should we set up brep functionality without introducing

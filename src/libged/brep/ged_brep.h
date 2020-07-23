@@ -93,13 +93,6 @@ struct _ged_brep_info {
 int
 _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv);
 
-/* defined in draw.c */
-extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
-				       struct bn_vlblock *vbp,
-				       const char *name,
-				       int copy);
-
-
 GED_EXPORT extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
 GED_EXPORT extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
