@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bio.h"
+
 #include "bu/exit.h"
 #include "bu/getopt.h"
 #include "fb.h"

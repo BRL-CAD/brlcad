@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+/* system headers */
+#include <stdio.h> /* for FILE */
+
 /* interface headers */
 #include "vmath.h"
 #include "bu/vls.h"
@@ -33,9 +36,6 @@
 #include "rt/defines.h"
 #include "rt/mater.h"
 #include "rt/db_fullpath.h"
-
-/* system headers */
-#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

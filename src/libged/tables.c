@@ -35,6 +35,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bio.h"
+
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "./ged_private.h"
@@ -111,7 +113,7 @@ tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
     MAT_COPY(idbuf1.i_mat, matrix);
 
     for (i = 0; i < (ssize_t)*numsol; i++) {
-	(void)lseek(rd_idfd, i*sizeof(identt), 0);
+	(void)bu_lseek(rd_idfd, i*sizeof(identt), 0);
 	readval = read(rd_idfd, &idbuf2, sizeof identt);
 
 	if (readval < 0) {
@@ -128,7 +130,7 @@ tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
     (*numsol)++;
     idbuf1.i_index = *numsol;
 
-    (void)lseek(idfd, 0, 2);
+    (void)bu_lseek(idfd, 0, 2);
     i = write(idfd, &idbuf1, sizeof identt);
     if (i < 0)
 	perror("write");

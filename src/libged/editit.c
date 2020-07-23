@@ -32,6 +32,7 @@
 #  include <sys/types.h>
 #endif
 
+#include "bio.h"
 #include "bresource.h"
 
 #include "bu/app.h"

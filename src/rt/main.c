@@ -42,6 +42,8 @@
 #  include <mpi.h>
 #endif
 
+#include "bio.h"
+
 #include "bu/endian.h"
 #include "bu/getopt.h"
 #include "bu/bitv.h"

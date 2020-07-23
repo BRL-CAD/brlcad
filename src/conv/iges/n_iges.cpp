@@ -206,7 +206,7 @@ Record::calcRecsize(FILE* in)
     if (k == (-1))	/* We didn't encounter an early EOF */
 	k = NRECS;
 
-    if (fseek(in, 0, SEEK_SET)) {
+    if (bu_fseek(in, 0, SEEK_SET)) {
 	/* rewind file */
 	perror("Recsize");
 	bu_exit(-1, "Cannot rewind file\n");
@@ -228,16 +228,16 @@ Record::calcRecsize(FILE* in)
 
 Record::Record(FILE* in) : _fp(in) {
     if (_reclen < 0) calcRecsize(in); // FIXME: ...
-    _start = ftell(in);
+    _start = bu_ftell(in);
     _read();
 }
 
 
 Record::Record(FILE* in, int paramStart, int record) : _fp(in) {
     if (_reclen < 0) calcRecsize(in);
-    _start = ftell(in);
+    _start = bu_ftell(in);
     int pos = (record-1)*_reclen;
-    fseek(_fp, paramStart + pos, SEEK_SET);
+    bu_fseek(_fp, paramStart + pos, SEEK_SET);
     _read();
 }
 
@@ -262,7 +262,7 @@ Record::_readLine() {
 
 void
 Record::_undoRead(int numLines) {
-    fseek(_fp, -(numLines * _reclen), SEEK_CUR);
+    bu_fseek(_fp, -(numLines * _reclen), SEEK_CUR);
 }
 
 

@@ -68,6 +68,8 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "bio.h"
+
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"

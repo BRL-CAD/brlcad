@@ -42,6 +42,8 @@
 #include <sys/stat.h>
 #include <math.h>
 
+#include "bio.h"
+
 #include "vmath.h"
 #include "bu/color.h"
 #include "bu/getopt.h"

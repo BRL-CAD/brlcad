@@ -35,6 +35,7 @@
 #include <string.h>
 #include <tcl.h>
 #include <tk.h>
+#include "bio.h"
 #include "bnetwork.h"
 
 #include "bu/color.h"

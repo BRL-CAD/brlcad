@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stddef.h> /* for size_t */
-#include "bio.h" /* for b_off_t */
 
 #include "bu/defines.h"
 #include "bu/magic.h"
