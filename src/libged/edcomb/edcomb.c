@@ -27,7 +27,7 @@
 
 
 int
-ged_edcomb(struct ged *gedp, int argc, const char *argv[])
+ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int regionid, air, mat, los;
@@ -92,10 +92,29 @@ ged_edcomb(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl edcomb_cmd_impl = {
+    "edcomb",
+    ged_edcomb_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd edcomb_cmd = { &edcomb_cmd_impl };
+const struct ged_cmd *edcomb_cmds[] = { &edcomb_cmd, NULL };
+
+static const struct ged_plugin pinfo = { edcomb_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

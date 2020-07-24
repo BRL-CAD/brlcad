@@ -34,7 +34,7 @@
 
 
 int
-ged_rfarb(struct ged *gedp, int argc, const char *argv[])
+ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal internal;
@@ -240,10 +240,29 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl rfarb_cmd_impl = {
+    "rfarb",
+    ged_rfarb_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd rfarb_cmd = { &rfarb_cmd_impl };
+const struct ged_cmd *rfarb_cmds[] = { &rfarb_cmd, NULL };
+
+static const struct ged_plugin pinfo = { rfarb_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

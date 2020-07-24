@@ -1979,7 +1979,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 
 int
-ged_E(struct ged *gedp, int argc, const char *argv[])
+ged_E_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int c;
@@ -2127,6 +2127,25 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl bigE_cmd_impl = {
+    "E",
+    ged_E_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd bigE_cmd = { &bigE_cmd_impl };
+const struct ged_cmd *bigE_cmds[] = { &bigE_cmd, NULL };
+
+static const struct ged_plugin pinfo = { bigE_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

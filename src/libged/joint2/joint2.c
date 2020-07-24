@@ -170,7 +170,7 @@ joint_selection(
 }
 
 int
-ged_joint2(struct ged *gedp, int argc, const char *argv[])
+ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *ndp;
     struct rt_db_internal intern;
@@ -230,10 +230,29 @@ ged_joint2(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl joint2_cmd_impl = {
+    "joint2",
+    ged_joint2_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd joint2_cmd = { &joint2_cmd_impl };
+const struct ged_cmd *joint2_cmds[] = { &joint2_cmd, NULL };
+
+static const struct ged_plugin pinfo = { joint2_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

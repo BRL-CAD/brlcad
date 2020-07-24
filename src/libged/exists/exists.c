@@ -441,7 +441,7 @@ int db_object_exists_and_non_null(struct exists_data *ed)
  * Checks for the existence of a specified object.
  */
 int
-ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
+ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
     /* struct directory *dp;*/
     static const char *usage = "object";
@@ -488,10 +488,29 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl exists_cmd_impl = {
+    "exists",
+    ged_exists_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd exists_cmd = { &exists_cmd_impl };
+const struct ged_cmd *exists_cmds[] = { &exists_cmd, NULL };
+
+static const struct ged_plugin pinfo = { exists_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

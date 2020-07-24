@@ -35,7 +35,7 @@
  *
  */
 int
-ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
+ged_set_output_script_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[script]";
 
@@ -59,7 +59,7 @@ ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
     /* We're now going to set the output handler script */
     /* First, we zap any previous script */
     if (gedp->ged_output_script != NULL) {
-	bu_free((void *)gedp->ged_output_script, "ged_set_output_script: zap");
+	bu_free((void *)gedp->ged_output_script, "ged_set_output_script_core: zap");
 	gedp->ged_output_script = NULL;
     }
 
@@ -70,10 +70,29 @@ ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl set_output_script_cmd_impl = {
+    "set_output_script",
+    ged_set_output_script_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd set_output_script_cmd = { &set_output_script_cmd_impl };
+const struct ged_cmd *set_output_script_cmds[] = { &set_output_script_cmd, NULL };
+
+static const struct ged_plugin pinfo = { set_output_script_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

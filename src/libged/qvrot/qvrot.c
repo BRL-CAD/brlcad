@@ -54,7 +54,7 @@ usejoy(struct ged *gedp, double xangle, double yangle, double zangle)
 
 
 int
-ged_qvrot(struct ged *gedp, int argc, const char *argv[])
+ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
 {
     double dx, dy, dz;
     double az;
@@ -119,10 +119,29 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl qvrot_cmd_impl = {
+    "qvrot",
+    ged_qvrot_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd qvrot_cmd = { &qvrot_cmd_impl };
+const struct ged_cmd *qvrot_cmds[] = { &qvrot_cmd, NULL };
+
+static const struct ged_plugin pinfo = { qvrot_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

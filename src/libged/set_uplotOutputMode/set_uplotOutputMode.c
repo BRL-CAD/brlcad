@@ -36,7 +36,7 @@
  *
  */
 int
-ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
+ged_set_uplotOutputMode_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[binary|text]";
 
@@ -78,10 +78,29 @@ ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl set_uplotOutputMode_cmd_impl = {
+    "set_uplotOutputMode",
+    ged_set_uplotOutputMode_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd set_uplotOutputMode_cmd = { &set_uplotOutputMode_cmd_impl };
+const struct ged_cmd *set_uplotOutputMode_cmds[] = { &set_uplotOutputMode_cmd, NULL };
+
+static const struct ged_plugin pinfo = { set_uplotOutputMode_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

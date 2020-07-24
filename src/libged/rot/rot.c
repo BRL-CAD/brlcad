@@ -32,74 +32,9 @@
 #include "../ged_private.h"
 
 
-int
-ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t rmat)
-{
-    vect_t rvec;
-    static const char *usage = "[-m|-v] x y z";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    /* process possible coord flag */
-    if (argv[1][0] == '-' && (argv[1][1] == 'v' || argv[1][1] == 'm') && argv[1][2] == '\0') {
-	*coord = argv[1][1];
-	--argc;
-	++argv;
-    } else
-	*coord = gedp->ged_gvp->gv_coord;
-
-    if (argc != 2 && argc != 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if (argc == 2) {
-	if (bn_decode_vect(rvec, argv[1]) != 3) {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
-	}
-    } else {
-	double scan[3];
-
-	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad X value %s\n", argv[1]);
-	    return GED_ERROR;
-	}
-
-	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Y value %s\n", argv[2]);
-	    return GED_ERROR;
-	}
-
-	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Z value %s\n", argv[3]);
-	    return GED_ERROR;
-	}
-
-	/* convert from double to fastf_t */
-	VMOVE(rvec, scan);
-    }
-
-    VSCALE(rvec, rvec, -1.0);
-    bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
-
-    return GED_OK;
-}
-
 
 int
-ged_rot(struct ged *gedp, int argc, const char *argv[])
+ged_rot_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     char coord;
@@ -112,10 +47,29 @@ ged_rot(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl rot_cmd_impl = {"rot", ged_rot_core, GED_CMD_DEFAULT};
+const struct ged_cmd rot_cmd = { &rot_cmd_impl };
+
+extern int ged_rotate_about_core(struct ged *gedp, int argc, const char *argv[]);
+struct ged_cmd_impl rotate_about_cmd_impl = {"rot_about", ged_rotate_about_core, GED_CMD_DEFAULT};
+const struct ged_cmd rotate_about_cmd = { &rotate_about_cmd_impl };
+
+const struct ged_cmd *rot_cmds[] = { &rot_cmd, &rotate_about_cmd, NULL };
+
+static const struct ged_plugin pinfo = { rot_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

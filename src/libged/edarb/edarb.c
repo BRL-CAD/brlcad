@@ -325,7 +325,7 @@ edarb_permute(void *data, int argc, const char *argv[])
 
 
 int
-ged_edarb(struct ged *gedp, int argc, const char *argv[])
+ged_edarb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     static struct bu_cmdtab arb_cmds[] = {
@@ -360,6 +360,25 @@ ged_edarb(struct ged *gedp, int argc, const char *argv[])
     return GED_ERROR;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl edarb_cmd_impl = {
+    "edarb",
+    ged_edarb_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd edarb_cmd = { &edarb_cmd_impl };
+const struct ged_cmd *edarb_cmds[] = { &edarb_cmd, NULL };
+
+static const struct ged_plugin pinfo = { edarb_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

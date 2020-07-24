@@ -91,6 +91,9 @@ add_subdirectory(user)
 # solids Regression Tests
 add_subdirectory(solids)
 
+# spdi Regression Tests
+add_subdirectory(spdi)
+
 # shaders Regression Tests
 add_subdirectory(shaders)
 

@@ -352,7 +352,7 @@ _ged_ls_data_init(struct _ged_ls_data *d)
  * List objects in this database
  */
 int
-ged_ls(struct ged *gedp, int argc, const char *argv[])
+ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int ret_ac = 0;
@@ -477,10 +477,28 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl ls_cmd_impl = {"ls", ged_ls_core, GED_CMD_DEFAULT};
+const struct ged_cmd ls_cmd = { &ls_cmd_impl };
+
+struct ged_cmd_impl t_cmd_impl = {"t", ged_ls_core, GED_CMD_DEFAULT};
+const struct ged_cmd t_cmd = { &t_cmd_impl };
+
+const struct ged_cmd *ls_cmds[] = { &ls_cmd, &t_cmd, NULL };
+
+static const struct ged_plugin pinfo = { ls_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

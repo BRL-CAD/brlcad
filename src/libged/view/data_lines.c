@@ -59,6 +59,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "../ged_private.h"
+#include "./ged_view.h"
 
 struct view_dlines_state {
     struct ged *gedp;

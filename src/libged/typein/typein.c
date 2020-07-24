@@ -3129,7 +3129,7 @@ script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_interna
 
 
 int
-ged_in(struct ged *gedp, int argc, const char *argv[])
+ged_in_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     char *name;
@@ -3490,6 +3490,25 @@ do_new_update:
     return GED_OK;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl typein_cmd_impl = {
+    "in",
+    ged_in_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd typein_cmd = { &typein_cmd_impl };
+const struct ged_cmd *typein_cmds[] = { &typein_cmd, NULL };
+
+static const struct ged_plugin pinfo = { typein_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

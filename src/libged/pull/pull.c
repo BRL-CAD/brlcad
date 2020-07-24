@@ -208,7 +208,7 @@ pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
 
 
 int
-ged_pull(struct ged *gedp, int argc, const char *argv[])
+ged_pull_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     mat_t mat;
@@ -252,7 +252,7 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
 		break;
 	  case '?':
 	  default:
-		bu_vls_printf(gedp->ged_result_str, "ged_pull: usage pull [-d] root \n");
+		bu_vls_printf(gedp->ged_result_str, "ged_pull_core: usage pull [-d] root \n");
 		break;
 	}
     }
@@ -270,6 +270,25 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
 
 
 /** @} */
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl pull_cmd_impl = {
+    "pull",
+    ged_pull_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd pull_cmd = { &pull_cmd_impl };
+const struct ged_cmd *pull_cmds[] = { &pull_cmd, NULL };
+
+static const struct ged_plugin pinfo = { pull_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
  * mode: C

@@ -750,7 +750,7 @@ _ged_graph_show(struct ged *gedp)
  * The libged graph function.
  * This function constructs the graph structure corresponding to the given database.
  */
-int
+extern "C" int
 ged_graph(struct ged *gedp, int argc, const char *argv[])
 {
     const char *cmd = argv[0];
@@ -806,8 +806,8 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 /**
  * Dummy graph function in case no Adaptagrams library is found.
  */
-int
-ged_graph(struct ged *gedp, int argc, const char *argv[])
+extern "C" int
+ged_graph_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -823,11 +823,29 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 
 #endif
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl dag_cmd_impl = { "graph", ged_graph_core, GED_CMD_DEFAULT };
+    const struct ged_cmd dag_cmd = { &dag_cmd_impl };
+    const struct ged_cmd *dag_cmds[] = { &dag_cmd,  NULL };
+
+    static const struct ged_plugin pinfo = { dag_cmds, 1 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
+#endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

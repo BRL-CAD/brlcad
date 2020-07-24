@@ -24,8 +24,7 @@
  */
 
 #include "common.h"
-
-
+#include "dm.h"
 #include "../ged_private.h"
 
 /*
@@ -36,7 +35,7 @@
  *
  */
 int
-ged_autoview(struct ged *gedp, int argc, const char *argv[])
+ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 {
     int is_empty = 1;
     vect_t min, max;
@@ -111,10 +110,29 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl autoview_cmd_impl = {
+    "autoview",
+    ged_autoview_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd autoview_cmd = { &autoview_cmd_impl };
+const struct ged_cmd *autoview_cmds[] = { &autoview_cmd, NULL };
+
+static const struct ged_plugin pinfo = { autoview_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

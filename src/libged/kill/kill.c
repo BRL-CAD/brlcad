@@ -34,7 +34,7 @@
 
 
 int
-ged_kill(struct ged *gedp, int argc, const char *argv[])
+ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
@@ -124,10 +124,29 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl kill_cmd_impl = {
+    "kill",
+    ged_kill_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd kill_cmd = { &kill_cmd_impl };
+const struct ged_cmd *kill_cmds[] = { &kill_cmd, NULL };
+
+static const struct ged_plugin pinfo = { kill_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -199,7 +199,7 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
 }
 
 int
-ged_glob(struct ged *gedp, int argc, const char *argv[])
+ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "expression";
     int flags = 0;
@@ -239,10 +239,28 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl glob_cmd_impl = {"glob", ged_glob_core, GED_CMD_DEFAULT};
+const struct ged_cmd glob_cmd = { &glob_cmd_impl };
+
+struct ged_cmd_impl db_glob_cmd_impl = {"db_glob", ged_glob_core, GED_CMD_DEFAULT};
+const struct ged_cmd db_glob_cmd = { &db_glob_cmd_impl };
+
+const struct ged_cmd *glob_cmds[] = { &glob_cmd, &db_glob_cmd, NULL };
+
+static const struct ged_plugin pinfo = { glob_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

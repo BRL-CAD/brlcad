@@ -39,7 +39,7 @@
  *
  */
 int
-ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
+ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory **dpp;
 
@@ -79,16 +79,35 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     dl_set_transparency(gedp->ged_gdp->gd_headDisplay, dpp, transparency, gedp->ged_create_vlist_callback);
 
     if (dpp != (struct directory **)NULL)
-	bu_free((void *)dpp, "ged_set_transparency: directory pointers");
+	bu_free((void *)dpp, "ged_set_transparency_core: directory pointers");
 
     return GED_OK;
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl set_transparency_cmd_impl = {
+    "set_transparency",
+    ged_set_transparency_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd set_transparency_cmd = { &set_transparency_cmd_impl };
+const struct ged_cmd *set_transparency_cmds[] = { &set_transparency_cmd, NULL };
+
+static const struct ged_plugin pinfo = { set_transparency_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

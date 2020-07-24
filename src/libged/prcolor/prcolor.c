@@ -93,7 +93,7 @@ pr_mater(struct ged *gedp,
 
 
 int
-ged_prcolor(struct ged *gedp, int argc, const char *argv[])
+ged_prcolor_core(struct ged *gedp, int argc, const char *argv[])
 {
     const struct mater *mp;
     int col_count = 0;
@@ -123,10 +123,29 @@ ged_prcolor(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl prcolor_cmd_impl = {
+    "prcolor",
+    ged_prcolor_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd prcolor_cmd = { &prcolor_cmd_impl };
+const struct ged_cmd *prcolor_cmds[] = { &prcolor_cmd, NULL };
+
+static const struct ged_plugin pinfo = { prcolor_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

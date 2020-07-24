@@ -28,7 +28,7 @@
 #include "ged.h"
 
 int
-ged_regdef(struct ged *gedp, int argc, const char *argv[])
+ged_regdef_core(struct ged *gedp, int argc, const char *argv[])
 {
     int item, air, los, mat;
     static const char *usage = "item air los mat";
@@ -96,10 +96,29 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl regdef_cmd_impl = {
+    "regdef",
+    ged_regdef_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd regdef_cmd = { &regdef_cmd_impl };
+const struct ged_cmd *regdef_cmds[] = { &regdef_cmd, NULL };
+
+static const struct ged_plugin pinfo = { regdef_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

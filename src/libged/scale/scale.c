@@ -33,64 +33,7 @@
 
 
 int
-ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fastf_t *sf2, fastf_t *sf3)
-{
-    static const char *usage = "sf (or) sfx sfy sfz";
-    int ret = GED_OK, args_read;
-    double scan;
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 2 && argc != 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if (argc == 2) {
-	if (!sf1 || sscanf(argv[1], "%lf", &scan) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
-	    return GED_ERROR;
-	}
-	*sf1 = scan;
-    } else {
-	args_read = sscanf(argv[1], "%lf", &scan);
-	if (!sf1 || args_read != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
-	    ret = GED_ERROR;
-	}
-	*sf1 = scan;
-
-	args_read = sscanf(argv[2], "%lf", &scan);
-	if (!sf2 || args_read != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
-	    ret = GED_ERROR;
-	}
-	*sf2 = scan;
-
-	args_read = sscanf(argv[3], "%lf", &scan);
-	if (!sf3 || args_read != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
-	    ret = GED_ERROR;
-	}
-	*sf3 = scan;
-    }
-    return ret;
-}
-
-
-int
-ged_scale(struct ged *gedp, int argc, const char *argv[])
+ged_scale_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     fastf_t sf1;
@@ -121,10 +64,28 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl scale_cmd_impl = {"scale", ged_scale_core, GED_CMD_DEFAULT};
+const struct ged_cmd scale_cmd = { &scale_cmd_impl };
+
+struct ged_cmd_impl sca_cmd_impl = {"sca", ged_scale_core, GED_CMD_DEFAULT};
+const struct ged_cmd sca_cmd = { &sca_cmd_impl };
+
+const struct ged_cmd *scale_cmds[] = { &scale_cmd, &sca_cmd, NULL };
+
+static const struct ged_plugin pinfo = { scale_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

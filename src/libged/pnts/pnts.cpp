@@ -1151,8 +1151,8 @@ _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
-int
-ged_pnts(struct ged *gedp, int argc, const char *argv[])
+extern "C" int
+ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *cmd = argv[0];
     size_t len;
@@ -1248,7 +1248,7 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
  * argv[5] default size of each point
  */
 int
-ged_make_pnts(struct ged *gedp, int argc, const char *argv[]) 
+ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[]) 
 {
     double conv_factor = -1.0;
     double psize = -1.0;
@@ -1349,11 +1349,33 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 }
 
 // Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
+    const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
+
+    struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
+    const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
+
+    const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
+
+    static const struct ged_plugin pinfo = { pnts_cmds, 2 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
+#endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

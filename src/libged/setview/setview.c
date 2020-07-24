@@ -33,7 +33,7 @@
 
 
 int
-ged_setview(struct ged *gedp, int argc, const char *argv[])
+ged_setview_core(struct ged *gedp, int argc, const char *argv[])
 {
     vect_t rvec;
     static const char *usage = "x y z";
@@ -66,17 +66,17 @@ ged_setview(struct ged *gedp, int argc, const char *argv[])
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_setview: bad X value - %s\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_setview_core: bad X value - %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_setview: bad Y value - %s\n", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_setview_core: bad Y value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_setview: bad Z value - %s\n", argv[3]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_setview_core: bad Z value - %s\n", argv[3]);
 	    return GED_ERROR;
 	}
 
@@ -91,10 +91,29 @@ ged_setview(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl setview_cmd_impl = {
+    "setview",
+    ged_setview_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd setview_cmd = { &setview_cmd_impl };
+const struct ged_cmd *setview_cmds[] = { &setview_cmd, NULL };
+
+static const struct ged_plugin pinfo = { setview_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

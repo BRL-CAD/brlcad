@@ -748,8 +748,8 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
     return 0;
 }
 
-extern "C" int
-_ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
+extern "C"
+int _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
 {
     struct bu_attribute_value_set ito = BU_AVS_INIT_ZERO; /* islands to objects */
     int ret = 0;
@@ -768,7 +768,6 @@ _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
     bu_vls_free(&log);
     return ret;
 }
-
 // Local Variables:
 // tab-width: 8
 // mode: C++

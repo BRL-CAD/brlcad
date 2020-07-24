@@ -33,7 +33,7 @@
 
 
 int
-ged_pmodel2view(struct ged *gedp, int argc, const char *argv[])
+ged_pmodel2view_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -53,10 +53,29 @@ ged_pmodel2view(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl pmodel2view_cmd_impl = {
+    "pmodel2view",
+    ged_pmodel2view_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd pmodel2view_cmd = { &pmodel2view_cmd_impl };
+const struct ged_cmd *pmodel2view_cmds[] = { &pmodel2view_cmd, NULL };
+
+static const struct ged_plugin pinfo = { pmodel2view_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

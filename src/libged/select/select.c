@@ -41,7 +41,7 @@
  *
  */
 int
-ged_select(struct ged *gedp, int argc, const char *argv[])
+ged_select_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     double vx, vy, vw, vh, vr;
@@ -171,7 +171,7 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
  *
  */
 int
-ged_rselect(struct ged *gedp, int argc, const char *argv[])
+ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     static const char *usage = "[-b bot] [-p] [-z vminz]";
@@ -274,43 +274,28 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
     }
 }
 
-struct rt_object_selections *
-ged_get_object_selections(struct ged *gedp, const char *object_name)
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl select_cmd_impl = {"select", ged_select_core, GED_CMD_DEFAULT};
+const struct ged_cmd select_cmd = { &select_cmd_impl };
+
+struct ged_cmd_impl rselect_cmd_impl = {"rselect", ged_rselect_core, GED_CMD_DEFAULT};
+const struct ged_cmd rselect_cmd = { &rselect_cmd_impl };
+
+const struct ged_cmd *select_cmds[] = { &select_cmd, &rselect_cmd, NULL };
+
+static const struct ged_plugin pinfo = { select_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
-    struct rt_object_selections *obj_selections;
-
-    obj_selections = (struct rt_object_selections *)bu_hash_get(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name));
-
-    if (!obj_selections) {
-	BU_ALLOC(obj_selections, struct rt_object_selections);
-	obj_selections->sets = bu_hash_create(0);
-	(void)bu_hash_set(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name), (void *)obj_selections);
-    }
-
-    return obj_selections;
+    return &pinfo;
 }
-
-struct rt_selection_set *
-ged_get_selection_set(struct ged *gedp, const char *object_name, const char *selection_name)
-{
-    struct rt_object_selections *obj_selections;
-    struct rt_selection_set *set;
-
-    obj_selections = ged_get_object_selections(gedp, object_name);
-    set = (struct rt_selection_set *)bu_hash_get(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name));
-    if (!set) {
-	BU_ALLOC(set, struct rt_selection_set);
-	BU_PTBL_INIT(&set->selections);
-	bu_hash_set(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name), (void *)set);
-    }
-
-    return set;
-}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

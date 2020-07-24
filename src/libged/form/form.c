@@ -33,7 +33,7 @@
 
 
 int
-ged_form(struct ged *gedp, int argc, const char *argv[])
+ged_form_core(struct ged *gedp, int argc, const char *argv[])
 {
     const struct rt_functab *ftp;
     static const char *usage = "type";
@@ -68,10 +68,29 @@ ged_form(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl form_cmd_impl = {
+    "form",
+    ged_form_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd form_cmd = { &form_cmd_impl };
+const struct ged_cmd *form_cmds[] = { &form_cmd, NULL };
+
+static const struct ged_plugin pinfo = { form_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

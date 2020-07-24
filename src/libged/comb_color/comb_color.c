@@ -27,7 +27,7 @@
 
 
 int
-ged_comb_color(struct ged *gedp, int argc, const char *argv[])
+ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int val;
@@ -77,10 +77,29 @@ ged_comb_color(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl comb_color_cmd_impl = {
+    "comb_color",
+    ged_comb_color_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd comb_color_cmd = { &comb_color_cmd_impl };
+const struct ged_cmd *comb_color_cmds[] = { &comb_color_cmd, NULL };
+
+static const struct ged_plugin pinfo = { comb_color_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

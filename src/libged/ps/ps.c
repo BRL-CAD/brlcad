@@ -42,7 +42,7 @@ static fastf_t ps_default_ppi = 72.0;
 static fastf_t ps_default_scale = 4.5 * 72.0 / 4096.0;
 
 int
-ged_ps(struct ged *gedp, int argc, const char *argv[])
+ged_ps_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     struct bu_vls creator = BU_VLS_INIT_ZERO;
@@ -197,10 +197,28 @@ bad:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl ps_cmd_impl = {"ps", ged_ps_core, GED_CMD_DEFAULT};
+const struct ged_cmd ps_cmd = { &ps_cmd_impl };
+
+struct ged_cmd_impl postscript_cmd_impl = {"postscript", ged_ps_core, GED_CMD_DEFAULT};
+const struct ged_cmd postscript_cmd = { &postscript_cmd_impl };
+
+const struct ged_cmd *ps_cmds[] = { &ps_cmd, &postscript_cmd, NULL };
+
+static const struct ged_plugin pinfo = { ps_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

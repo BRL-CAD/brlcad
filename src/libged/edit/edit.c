@@ -1962,7 +1962,7 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
  * more specific, validation is performed by edit().
  */
 int
-ged_edit(struct ged *gedp, int argc, const char *argv[])
+ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *const cmd_name = argv[0];
     union edit_cmd subcmd;
@@ -2420,10 +2420,29 @@ err_missing_arg:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl edit_cmd_impl = {
+    "edit",
+    ged_edit_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd edit_cmd = { &edit_cmd_impl };
+const struct ged_cmd *edit_pcmds[] = { &edit_cmd, NULL };
+
+static const struct ged_plugin pinfo = { edit_pcmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

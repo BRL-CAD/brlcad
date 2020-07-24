@@ -440,7 +440,7 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
 }
 
 int
-ged_tables(struct ged *gedp, int argc, const char *argv[])
+ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
@@ -596,10 +596,35 @@ end:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+
+struct ged_cmd_impl tables_cmd_impl = {"tables", ged_tables_core, GED_CMD_DEFAULT};
+const struct ged_cmd tables_cmd = { &tables_cmd_impl };
+
+struct ged_cmd_impl idents_cmd_impl = {"idents", ged_tables_core, GED_CMD_DEFAULT};
+const struct ged_cmd idents_cmd = { &idents_cmd_impl };
+
+struct ged_cmd_impl regions_cmd_impl = {"regions", ged_tables_core, GED_CMD_DEFAULT};
+const struct ged_cmd regions_cmd = { &regions_cmd_impl };
+
+struct ged_cmd_impl solids_cmd_impl = {"solids", ged_tables_core, GED_CMD_DEFAULT};
+const struct ged_cmd solids_cmd = { &solids_cmd_impl };
+
+const struct ged_cmd *tables_cmds[] = { &tables_cmd, &idents_cmd, &regions_cmd, &solids_cmd, NULL };
+
+static const struct ged_plugin pinfo = { tables_cmds, 4 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -30,7 +30,7 @@
 
 
 int
-ged_orotate(struct ged *gedp, int argc, const char *argv[])
+ged_orotate_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct _ged_trace_data gtd;
@@ -140,10 +140,29 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl orotate_cmd_impl = {
+    "orotate",
+    ged_orotate_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd orotate_cmd = { &orotate_cmd_impl };
+const struct ged_cmd *orotate_cmds[] = { &orotate_cmd, NULL };
+
+static const struct ged_plugin pinfo = { orotate_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

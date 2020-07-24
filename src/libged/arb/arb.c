@@ -35,7 +35,7 @@
 
 
 int
-ged_arb(struct ged *gedp, int argc, const char *argv[])
+ged_arb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal internal;
@@ -129,10 +129,29 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl arb_cmd_impl = {"arb", ged_arb_core, GED_CMD_DEFAULT};
+const struct ged_cmd arb_cmd = { &arb_cmd_impl };
+
+extern int ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[]);
+struct ged_cmd_impl rotate_arb_face_cmd_impl = {"rotate_arb_face", ged_rotate_arb_face_core, GED_CMD_DEFAULT};
+const struct ged_cmd rotate_arb_face_cmd = { &rotate_arb_face_cmd_impl };
+
+const struct ged_cmd *arb_cmds[] = { &arb_cmd, &rotate_arb_face_cmd, NULL };
+
+static const struct ged_plugin pinfo = { arb_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

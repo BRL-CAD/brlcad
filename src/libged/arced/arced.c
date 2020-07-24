@@ -31,7 +31,7 @@
 
 
 int
-ged_arced(struct ged *gedp, int argc, const char *argv[])
+ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct animate *anp;
     struct directory *dp;
@@ -133,10 +133,29 @@ fail:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl arced_cmd_impl = {
+    "arced",
+    ged_arced_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd arced_cmd = { &arced_cmd_impl };
+const struct ged_cmd *arced_cmds[] = { &arced_cmd, NULL };
+
+static const struct ged_plugin pinfo = { arced_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -30,10 +30,11 @@
 #include <string.h>
 
 #include "../ged_private.h"
+#include "./ged_view.h"
 
 
 int
-ged_size(struct ged *gedp, int argc, const char *argv[])
+ged_size_core(struct ged *gedp, int argc, const char *argv[])
 {
     /* intentionally double for scan */
     double size;

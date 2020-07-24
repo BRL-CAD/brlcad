@@ -35,10 +35,10 @@
 #include <string.h>
 
 #include "../ged_private.h"
-
+#include "./ged_view.h"
 
 int
-ged_center(struct ged *gedp, int argc, const char *argv[])
+ged_center_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t center;
     static const char *usage = "[-v] | [x y z]";

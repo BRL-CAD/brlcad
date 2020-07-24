@@ -34,7 +34,7 @@
 
 
 int
-ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
+ged_ptranslate_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *cmd_name = argv[0];
     int ret;
@@ -132,10 +132,29 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl ptranslate_cmd_impl = {
+    "ptranslate",
+    ged_ptranslate_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd ptranslate_cmd = { &ptranslate_cmd_impl };
+const struct ged_cmd *ptranslate_cmds[] = { &ptranslate_cmd, NULL };
+
+static const struct ged_plugin pinfo = { ptranslate_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -31,63 +31,9 @@
 
 #include "../ged_private.h"
 
-int
-ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
-{
-    point_t pt = VINIT_ZERO;
-    vect_t axisv;
-    double axis[3]; /* not fastf_t due to sscanf */
-    double angle; /* not fastf_t due to sscanf */
-    static const char *usage = "x y z angle";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 5) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad X value - %s\n", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad Y value - %s\n", argv[0], argv[2]);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad Z value - %s\n", argv[0], argv[3]);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[4], "%lf", &angle) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[4]);
-	return GED_ERROR;
-    }
-
-    VUNITIZE(axis);
-    VMOVE(axisv, axis);
-    bn_mat_arb_rot(rmat, pt, axisv, angle*DEG2RAD);
-
-    return GED_OK;
-}
-
 
 int
-ged_arot(struct ged *gedp, int argc, const char *argv[])
+ged_arot_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     mat_t rmat;
@@ -99,10 +45,29 @@ ged_arot(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl arot_cmd_impl = {
+    "arot",
+    ged_arot_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd arot_cmd = { &arot_cmd_impl };
+const struct ged_cmd *arot_cmds[] = { &arot_cmd, NULL };
+
+static const struct ged_plugin pinfo = { arot_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

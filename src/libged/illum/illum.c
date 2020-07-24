@@ -38,7 +38,7 @@
  *
  */
 int
-ged_illum(struct ged *gedp, int argc, const char *argv[])
+ged_illum_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -95,10 +95,29 @@ bad:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl illum_cmd_impl = {
+    "illum",
+    ged_illum_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd illum_cmd = { &illum_cmd_impl };
+const struct ged_cmd *illum_cmds[] = { &illum_cmd, NULL };
+
+static const struct ged_plugin pinfo = { illum_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

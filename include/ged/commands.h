@@ -34,6 +34,8 @@
 
 __BEGIN_DECLS
 
+/* Execute plugin based command */
+GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Adjust object's attribute(s)

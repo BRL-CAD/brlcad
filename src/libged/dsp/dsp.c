@@ -38,7 +38,7 @@
 #include "../librt/primitives/dsp/dsp.h"
 
 int
-ged_dsp(struct ged *gedp, int argc, const char *argv[])
+ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dsp_dp;
     struct rt_db_internal intern;
@@ -149,10 +149,29 @@ ged_dsp(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl dsp_cmd_impl = {
+    "dsp",
+    ged_dsp_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd dsp_cmd = { &dsp_cmd_impl };
+const struct ged_cmd *dsp_cmds[] = { &dsp_cmd, NULL };
+
+static const struct ged_plugin pinfo = { dsp_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -38,7 +38,7 @@
 
 
 int
-ged_make(struct ged *gedp, int argc, const char *argv[])
+ged_make_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
     int k;
@@ -677,7 +677,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	av[5] = extrude_ip->sketch_name;
 	av[6] = "sketch";
 	av[7] = (char *)0;
-	ged_make(gedp, 7, (const char **)av);
+	ged_make_core(gedp, 7, (const char **)av);
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "sketch")) {
 	const char *make_default = NULL;
 
@@ -926,10 +926,29 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl make_cmd_impl = {
+    "make",
+    ged_make_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd make_cmd = { &make_cmd_impl };
+const struct ged_cmd *make_cmds[] = { &make_cmd, NULL };
+
+static const struct ged_plugin pinfo = { make_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

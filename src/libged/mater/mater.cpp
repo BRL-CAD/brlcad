@@ -1673,8 +1673,8 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
 }
 
 
-int
-ged_mater(struct ged *gedp, int argc, const char *argv[])
+extern "C" int
+ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -1709,11 +1709,29 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 
 
 // Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl mater_cmd_impl = { "mater", ged_mater_core, GED_CMD_DEFAULT };
+    const struct ged_cmd mater_cmd = { &mater_cmd_impl };
+    const struct ged_cmd *mater_cmds[] = { &mater_cmd,  NULL };
+
+    static const struct ged_plugin pinfo = { mater_cmds, 1 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
+#endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

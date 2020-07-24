@@ -33,8 +33,8 @@
 #include "ged.h"
 
 
-int
-ged_simulate(ged * const gedp, const int argc, const char ** const argv)
+extern "C" int
+ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -92,8 +92,8 @@ get_debug_mode(const std::string &debug_mode_string)
 }
 
 
-int
-ged_simulate(ged * const gedp, const int argc, const char ** const argv)
+extern "C" int
+ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -145,15 +145,31 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
     return GED_OK;
 }
 
+#endif
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl simulate_cmd_impl = { "simulate", ged_simulate_core, GED_CMD_DEFAULT };
+    const struct ged_cmd simulate_cmd = { &simulate_cmd_impl };
+    const struct ged_cmd *simulate_cmds[] = { &simulate_cmd,  NULL };
+
+    static const struct ged_plugin pinfo = { simulate_cmds, 1 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
 #endif
 
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

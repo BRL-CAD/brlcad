@@ -40,7 +40,7 @@
  *
  */
 int
-ged_rtabort(struct ged *gedp, int argc, const char *argv[])
+ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_subprocess *rrp;
     struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
@@ -76,10 +76,29 @@ ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl rtabort_cmd_impl = {
+    "rtabort",
+    ged_rtabort_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd rtabort_cmd = { &rtabort_cmd_impl };
+const struct ged_cmd *rtabort_cmds[] = { &rtabort_cmd, NULL };
+
+static const struct ged_plugin pinfo = { rtabort_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

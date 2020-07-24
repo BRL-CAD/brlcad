@@ -33,7 +33,7 @@
 
 
 int
-ged_mrot(struct ged *gedp, int argc, const char *argv[])
+ged_mrot_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int ac;
@@ -69,10 +69,29 @@ ged_mrot(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl mrot_cmd_impl = {
+    "mrot",
+    ged_mrot_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd mrot_cmd = { &mrot_cmd_impl };
+const struct ged_cmd *mrot_cmds[] = { &mrot_cmd, NULL };
+
+static const struct ged_plugin pinfo = { mrot_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

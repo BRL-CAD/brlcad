@@ -61,6 +61,7 @@ __BEGIN_DECLS
 #define GED_HELP  0x0002 /**< invalid specification, result contains usage */
 #define GED_MORE  0x0004 /**< incomplete specification, can specify again interactively */
 #define GED_QUIET 0x0008 /**< don't set or modify the result string */
+#define GED_UNKNOWN 0x0010 /**< argv[0] was not a known command */
 
 #define GED_VMIN -2048.0
 #define GED_VMAX 2047.0
@@ -241,22 +242,6 @@ typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
 typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
 typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 
-
-/**
- * describes a command plugin
- */
-struct ged_cmd {
-    struct bu_list l;
-
-    const char *name;
-    const char description[80];
-    const char *manpage;
-
-    int (*load)(struct ged *);
-    void (*unload)(struct ged *);
-    int (*exec)(struct ged *, int, const char *[]);
-};
-
 /* accessor functions for ged_results - calling
  * applications should not work directly with the
  * internals of ged_results, which are not guaranteed
@@ -293,6 +278,40 @@ GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 	return (_flags); \
     }
 
+
+struct ged_cmd_impl;
+struct ged_cmd {
+    struct ged_cmd_impl *i;
+};
+
+struct ged_plugin {
+    const struct ged_cmd ** const cmds;
+    int cmd_cnt;
+};
+
+/* Report any messages from libged when plugins were initially loaded.
+ * Can be important when diagnosing command errors. */
+GED_EXPORT const char * ged_init_msgs();
+
+/* LIBGED maintains this list - callers should regard it as read only.  This
+ * list will change (size and pointers to individual command strings if
+ * commands are added or removed - caller is responsible for performing a new
+ * call to get an updated list and size if commands are altered.  */
+GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
+
+/* Report whether a string identifies a valid LIBGED command.  If func is
+ * non-NULL, check that cmd and func both refer to the same function pointer
+ * (i.e., they are aliases for the same command.)
+ *
+ * If func is NULL, a 0 return indicates an valid GED command and non-zero
+ * indicates a valid command.
+ *
+ * If func is non-null:
+ * 0 indicates both cmd and func strings invoke the same LIBGED function
+ * 1 indicates that either or both of cmd and func were invalid GED commands
+ * 2 indicates that both were valid commands, but they did not match.
+ */
+GED_EXPORT int ged_cmd_valid(const char *cmd, const char *func);
 
 
 __END_DECLS
