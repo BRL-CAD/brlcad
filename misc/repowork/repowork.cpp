@@ -58,6 +58,11 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 	    continue;
 	}
 
+	if (!s->commits[i].id.sha1.length()) {
+	    std::cerr << "Fatal - notes unpacking requested, but don't have original sha1 ids - redo fast-export with the --show-original-ids option.\n";
+	    exit(1);
+	}
+
 	// This is cheap and clunky, but I've not yet found a document
 	// describing how to reliably unpack git notes...
 	std::string git_notes_cmd = std::string("cd ") + repo_path + std::string(" && git log -1 ") + s->commits[i].id.sha1 + std::string(" --pretty=format:\"%N\" > ../sha1.txt && cd ..");
