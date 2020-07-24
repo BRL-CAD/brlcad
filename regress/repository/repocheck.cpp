@@ -864,6 +864,7 @@ main(int argc, const char *argv[])
 	"misc/CMake/Find",
 	"misc/debian",
 	"misc/repoconv",
+	"misc/repowork",
 	"misc/tools",
 	"pkg.h",
 	"src/libpkg",
