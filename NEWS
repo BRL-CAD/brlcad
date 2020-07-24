@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2020-07-2X  Release 7.30.10                                    ---
+--- 2020-07-24  Release 7.30.10                                    ---
 ----------------------------------------------------------------------
 
 * added 3dm-g failure message about supported versions - Cliff Yapp
