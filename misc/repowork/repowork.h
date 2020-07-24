@@ -98,7 +98,7 @@ class git_commit_data {
 	// Special purpose entries for assigning an additional line
 	// to the existing notes-based info to id SVN usernames
 	std::string svn_id;
-	std::string svn_author;
+	std::string svn_committer;
 };
 
 class git_tag_data {

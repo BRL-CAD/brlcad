@@ -473,9 +473,9 @@ commit_msg(git_commit_data *c)
 		nstr = wmsg;
 	    }
 	}
-	if (c->svn_author.length()) {
-	    std::string authstr = std::string("svn:author:") + c->svn_author;
-	    nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n") + authstr + std::string("\n");
+	if (c->svn_committer.length()) {
+	    std::string committerstr = std::string("svn:committer:") + c->svn_committer;
+	    nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n") + committerstr + std::string("\n");
 	} else {
 	    nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n");
 	}

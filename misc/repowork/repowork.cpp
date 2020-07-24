@@ -156,7 +156,7 @@ git_map_emails(git_fi_data *s, std::string &email_map)
 }
 
 int
-git_map_svn_authors(git_fi_data *s, std::string &svn_map)
+git_map_svn_committers(git_fi_data *s, std::string &svn_map)
 {
     // read map
     std::ifstream infile(svn_map, std::ifstream::binary);
@@ -165,8 +165,8 @@ git_map_svn_authors(git_fi_data *s, std::string &svn_map)
 	exit(-1);
     }
 
-    // Create mapping of ids to svn authors
-    std::map<std::string, std::string> svn_author_map;
+    // Create mapping of ids to svn committers 
+    std::map<std::string, std::string> svn_committer_map;
     std::string line;
     while (std::getline(infile, line)) {
 	// Skip empty lines
@@ -181,21 +181,21 @@ git_map_svn_authors(git_fi_data *s, std::string &svn_map)
 	}
 
 	std::string id = line.substr(0, spos);
-	std::string author = line.substr(spos+1, std::string::npos);
+	std::string committer = line.substr(spos+1, std::string::npos);
 
-	svn_author_map[id] = author;
+	svn_committer_map[id] = committer;
     }
 
-    // Iterate over the commits and assign authors.
+    // Iterate over the commits and assign committers.
     for (size_t i = 0; i < s->commits.size(); i++) {
 	git_commit_data *c = &(s->commits[i]);
 	if (!c->svn_id.length()) {
 	    continue;
 	}
-	if (svn_author_map.find(c->svn_id) != svn_author_map.end()) {
-	    std::string svnauth = svn_author_map[c->svn_id];
-	    //std::cerr << "Found SVN commit \"" << c->svn_id << "\" with author \"" << svnauth << "\"\n";
-	    c->svn_author = svnauth;
+	if (svn_committer_map.find(c->svn_id) != svn_committer_map.end()) {
+	    std::string svncommitter = svn_committer_map[c->svn_id];
+	    //std::cerr << "Found SVN commit \"" << c->svn_id << "\" with committer \"" << svncommitter << "\"\n";
+	    c->svn_committer = svncommitter;
 	}
     }
 
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
 	    ("e,email-map", "Specify replacement username+email mappings (one map per line, format is commit-id-1;commit-id-2)", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
 	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "path to repo")
-	    ("s,svn-map", "Specify svn rev -> author map (one mapping per line, format is commit-rev authorname)", cxxopts::value<std::vector<std::string>>(), "map file")
+	    ("s,svn-map", "Specify svn rev -> committer map (one mapping per line, format is commit-rev name)", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("t,trim-whitespace", "Trim extra spaces and end-of-line characters from the end of commit messages", cxxopts::value<bool>(trim_whitespace))
 	    ("w,wrap-commit-lines", "Wrap long commit lines to 72 cols (won't wrap messages already having multiple non-empty lines)", cxxopts::value<bool>(wrap_commit_lines))
 	    ("width", "Column wrapping width (if enabled)", cxxopts::value<int>(), "N")
@@ -375,8 +375,8 @@ main(int argc, char *argv[])
     }
 
     if (svn_map.length()) {
-	// Handle the svn authors
-	git_map_svn_authors(&fi_data, svn_map);
+	// Handle the svn committers
+	git_map_svn_committers(&fi_data, svn_map);
     }
 
     fi_data.wrap_width = cwidth;
