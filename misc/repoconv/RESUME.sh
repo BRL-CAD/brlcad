@@ -26,7 +26,7 @@ g++ -O3 -o svnfexport svnfexport.cxx
 
 echo "Start main conversion"
 REPODERCSDIR="$PWD/repo_dercs"
-./svnfexport ./brlcad_full_dercs.dump account-map $REPODERCSDIR
+./svnfexport ./brlcad_full_dercs.dump account-map_svnfexport.txt $REPODERCSDIR
 
 # Clear previous "final" conversion
 rm -rf brlcad_final.git brlcad_final.tar.gz
@@ -38,7 +38,7 @@ svn log file://$REPODIR | grep "|" | grep "^r[0-9][0-9 ]" | grep -v \(no\ author
 # original ids if we're going to process the git notes down into
 # the commit messages.
 cd cvs_git && git fast-export --show-original-ids --all > ../brlcad_raw.fi && cd ..
-repowork -t -w -e brlcad_map -n -r cvs_git -s rev_map ~/brlcad_raw.fi brlcad_final.fi
+repowork -t -w -e email_fixups.txt -n -r cvs_git -s rev_map ~/brlcad_raw.fi brlcad_final.fi
 
 mkdir brlcad_final.git && cd brlcad_final.git && git init
 cat ../brlcad_final.fi | git fast-import

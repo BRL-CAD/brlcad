@@ -115,7 +115,6 @@ set(misc_ignore_files
   repoconv/CONVERT.sh
   repoconv/NOTES
   repoconv/RESUME.sh
-  repoconv/account-map
   repoconv/audit_merges/audit_merges.cxx
   repoconv/audit_merges/commit_list.txt
   repoconv/checkout_dercs.sh
@@ -207,7 +206,11 @@ set(misc_ignore_files
   repoconv/custom/r29886_cvs_svn_rel-5-1-branch_sync.fi
   repoconv/custom/r29886_cvs_svn_trunk_sync.fi
   repoconv/custom/r29886_tags.fi
+  repoconv/account-map
+  repoconv/account-map_svnfexport.txt
   repoconv/cvs_authormap
+  repoconv/cvs_authormap_svnfexport.txt
+  repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
   repoconv/gitattributes
   repoconv/gitignore.tar.gz

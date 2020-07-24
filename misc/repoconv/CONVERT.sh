@@ -56,7 +56,7 @@ sed -i 's/$Author:[^$;"]*/$Author/' sh/Attic/cvs2cl.pl,v
 sed -i 's/$Locker:[^$;"]*/$Locker/' src/other/URToolkit/tools/mallocNd.c,v
 
 echo "Running cvs-fast-export $PWD"
-find . | ../../cvs-fast-export/cvs-fast-export -A ../../cvs_authormap > ../../brlcad_cvs_git.fi
+find . | ../../cvs-fast-export/cvs-fast-export -A ../../cvs_authormap_svnfexport.txt > ../../brlcad_cvs_git.fi
 cd ../
 ../cvs-fast-export/cvsconvert -n brlcad 2> ../cvs_git_info/cvs_all_fast_export_audit.txt
 cd ../
@@ -144,7 +144,7 @@ g++ -O3 -o svnfexport svnfexport.cxx
 
 echo "Start main conversion"
 REPODERCSDIR="$PWD/repo_dercs"
-./svnfexport ./brlcad_full_dercs.dump account-map $REPODERCSDIR
+./svnfexport ./brlcad_full_dercs.dump account-map_svnfexport.txt $REPODERCSDIR
 
 # Create an svn revision to author map
 svn log file://$REPODIR | grep "|" | grep "^r[0-9][0-9 ]" | grep -v \(no\ author\) | awk -F "|" '{print $1 $2}' | sed -e 's/r//' | sed -e 's/ $//' | sed -e 's/  / /' > rev_map
@@ -153,7 +153,7 @@ svn log file://$REPODIR | grep "|" | grep "^r[0-9][0-9 ]" | grep -v \(no\ author
 # original ids if we're going to process the git notes down into
 # the commit messages.
 cd cvs_git && git fast-export --show-original-ids --all > ../brlcad_raw.fi && cd ..
-repowork -t -w -e brlcad_map -n -r cvs_git -s rev_map ~/brlcad_raw.fi brlcad_final.fi
+repowork -t -w -e email_fixups.txt -n -r cvs_git -s rev_map ~/brlcad_raw.fi brlcad_final.fi
 
 mkdir brlcad_final.git && cd brlcad_final.git && git init
 cat ../brlcad_final.fi | git fast-import
