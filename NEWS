@@ -13,7 +13,9 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed 'in' making joint, superell, & script objects - Sean Morrison
 * Creo converter always writes out CREO_NAME attribute - Sean Morrison
+* fixed MGED 'in' making datum w/ wrong major type bug - Sean Morrison
 * improved gdiff -F filtering option behavior - Cliff Yapp
 * improved gdiff command verbosity reporting options - Cliff Yapp
 * improved Combination Editor button behaviors in MGED - Sean Morrison
