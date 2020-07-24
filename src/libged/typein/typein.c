@@ -2441,6 +2441,7 @@ superell_in(struct ged *gedp, const char *cmd_argvs[], struct rt_db_internal *in
 
     n = 14;                             /* SUPERELL has 12 (same as ELL) + 2 (for <n, e>) params */
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SUPERELL;
     intern->idb_meth = &OBJ[ID_SUPERELL];
     BU_ALLOC(intern->idb_ptr, struct rt_superell_internal);
@@ -2865,6 +2866,7 @@ joint_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern
     struct rt_joint_internal *jip;
     n = 10;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_JOINT;
     intern->idb_meth = &OBJ[ID_JOINT];
     intern->idb_ptr = bu_malloc(sizeof(struct rt_joint_internal), "rt_joint_internal");
@@ -3035,10 +3037,10 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 	prev = datum;
     }
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_DATUM;
     intern->idb_ptr = datums;
     intern->idb_meth = &OBJ[ID_DATUM];
-    intern->idb_type = ID_DATUM;
-    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 
     /* Set a default color for datum objects */
     bu_avs_add(&intern->idb_avs, "color", "255/255/0");
@@ -3112,6 +3114,7 @@ script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_interna
 {
     struct rt_script_internal *script_ip;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SCRIPT;
     intern->idb_meth = &OBJ[ID_SCRIPT];
     BU_ALLOC(intern->idb_ptr, struct rt_script_internal);
