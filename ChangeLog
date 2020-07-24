@@ -1,247 +1,87 @@
-2020-05-05 18:39  starseeker
+2020-07-24 20:14  starseeker
 
-	* [r75697] src/other/libregex/regex.h:
-	  libregex doesn't appear to use lseek and it's making VS2019
-	  unhappy to redefine it.
-
-2020-05-04 17:35  starseeker
-
-	* [r75687] include/bu/vls.h:
-	  don't need stdio.h here
-
-2020-05-04 16:11  starseeker
-
-	* [r75685] misc/attributes/gen-attributes-file.cpp:
-	  ditto gen-attributes-file.cpp - needs off_t update
-
-2020-05-04 16:09  starseeker
-
-	* [r75684] src/other/stepcode/src/clstepcore/complexSupport.h:
-	  stepcode needs the same off_t bit
-
-2020-05-04 15:52  starseeker
-
-	* [r75682] src/libpkg/pkg.c:
-	  Use bio.h here
-
-2020-05-04 15:45  starseeker
-
-	* [r75681] src/other/libregex/regex.h:
-	  ws
-
-2020-05-04 15:44  starseeker
-
-	* [r75680] src/other/libregex/regex.h:
-	  Update our bundled regex.h to use the same type of off_t
-	  definition as bio.h
-
-2020-05-04 15:23  starseeker
-
-	* [r75679] ., include/bu/glob.h, include/bu/vls.h:
-	  Cherrypick r75678
-
-2020-05-04 14:08  starseeker
-
-	* [r75677] ., include/bio.h, include/config_win.h.in,
-	  src/conv/intaval/tgf-g.cpp, src/conv/k-g.cpp,
-	  src/conv/raw/raw-g.cpp, src/libanalyze/nirt.cpp,
-	  src/libgcv/plugins/fastgen4/fastgen4_write.cpp,
-	  src/libgcv/plugins/vrml/vrml_read/file_util.cpp,
-	  src/nirt/main.cpp:
-	  Cherrypick r75077, r75078 and r75084 - off_t fixes
-
-2020-05-04 13:34  starseeker
-
-	* [r75676] ., src/gtools/gchecker.cpp:
-	  Cherrypick r75675
-
-2020-05-04 13:07  starseeker
-
-	* [r75674] ., bench/pixcmp.c, include/bio.h, include/bu/file.h,
-	  include/bu/ptbl.h, include/bu/time.h, include/common.h,
-	  include/rt/db_fullpath.h, include/rt/db_instance.h,
-	  include/rt/db_io.h, include/rt/directory.h, include/rt/mater.h,
-	  include/rt/mem.h, src/conv/asc/asc2g.c, src/conv/conv-vg2g.c,
-	  src/conv/dxf/dxf-g.c, src/conv/fast4-g.c, src/conv/g-acad.c,
-	  src/conv/g-obj.c, src/conv/iges/findp.c, src/conv/iges/g-iges.c,
-	  src/conv/iges/readrec.c, src/conv/iges/recsize.c,
-	  src/conv/intaval/tgf-g.cpp, src/conv/k-g.cpp,
-	  src/conv/nastran-g.c, src/conv/raw/raw-g.cpp,
-	  src/conv/vdeck/vdeck.c, src/conv/vdeck/vextern.h, src/fb/bw-fb.c,
-	  src/fb/pix-fb.c, src/fb/tests/fbthreadtest.c,
-	  src/gtools/gdiff/gdiff.c, src/libanalyze/nirt.cpp, src/libbu,
-	  src/libbu/file.c, src/libbu/mappedfile.c, src/libbu/vfont.c,
-	  src/libbu/vfont.h, src/libbu/vls.c, src/libfb/fb_generic.c,
-	  src/libfb/if_X24.c, src/libfb/if_disk.c,
-	  src/libgcv/plugins/fastgen4/fastgen4_read.c,
-	  src/libgcv/plugins/fastgen4/fastgen4_write.cpp,
-	  src/libgcv/plugins/obj/obj_write.c,
-	  src/libgcv/plugins/vrml/vrml_read/file_util.cpp,
-	  src/libged/dup.c, src/libged/ged.c, src/libged/tables.c,
-	  src/libicv/rot.c, src/liboptical/oslexec_pvt.h,
-	  src/librt/db5_alloc.c, src/librt/db5_scan.c,
-	  src/librt/db_alloc.c, src/librt/db_corrupt.c,
-	  src/librt/db_fullpath.c, src/librt/db_inmem.c, src/librt/db_io.c,
-	  src/librt/db_lookup.c, src/librt/db_open.c, src/librt/db_scan.c,
-	  src/librt/librt_private.h, src/librt/mater.c,
-	  src/librt/memalloc.c, src/librt/primitives/primitive_util.c,
-	  src/mged/edsol.c, src/mged/wdb_obj.c, src/nirt/main.cpp,
-	  src/rt/do.c, src/rt/view.c, src/util/ap-pix.c, src/util/bwcrop.c,
-	  src/util/bwhisteq.c, src/util/bwrot.c, src/util/bwscale.c,
-	  src/util/pixbustup.c, src/util/pixcrop.c, src/util/pixrot.c,
-	  src/util/pixscale.c, src/util/plot3rot.c:
-	  Cherrypick r75063 - switch to b_off_t for newer MSVC 64 bit
-	  offsets.
-
-2020-05-04 12:59  starseeker
-
-	* [r75673] ., regress/gchecker/CMakeLists.txt:
-	  Cherrypick r75672 - dependencies for regress-gchecker
-
-2020-05-04 12:52  starseeker
-
-	* [r75671] ., NEWS, regress/CMakeLists.txt, regress/gchecker,
-	  src/gtools/CMakeLists.txt, src/gtools/gchecker.cpp:
-	  Cherrypick cross-platform generator of overlap outputs from trunk
-
-2020-05-04 12:50  starseeker
-
-	* [r75670] src/libbu, src/libbu/dir.c:
-	  Cherrypick r75000 from trunk - bu_dir fix for ext and libext
-
-2020-04-22 20:02  starseeker
-
-	* [r75551] ChangeLog:
-	  update changelog
-
-
-2020-04-22 20:01  starseeker
-
-	* [r75550] ., src/libged/draw.c, src/libged/vdraw.c,
-	  src/mged/dodraw.c:
-	  Cherrypick r75549 - fix for nirt, rtcheck, etc. vlist drawing
-	  behavior
-
-2020-04-22 15:53  starseeker
-
-	* [r75541] regress/CMakeLists.txt:
-	  Add dsp products to the regression cleaning list
-
-2020-04-22 14:25  starseeker
-
-	* [r75532] ChangeLog:
-	  update changelog
-
-
-2020-04-22 14:25  starseeker
-
-	* [r75531] NEWS:
-	  Update release date
-
-2020-04-21 16:59  starseeker
-
-	* [r75497] ., src/tclscripts/checker/check.tcl:
-	  Cherrypick r75495 - Add a checkbutton to the overlap checker to
-	  toggle fullpath display
-
-2020-04-21 16:58  starseeker
-
-	* [r75496] ., src/tclscripts/checker/check.tcl:
-	  Cherrypick r75492 - restore overlap checker using full paths for
-	  drawing, subtraction and marks
-
-2020-04-21 11:00  starseeker
-
-	* [r75486] ChangeLog:
-	  Update ChangeLog
-
-2020-04-21 10:58  starseeker
-
-	* [r75485] NEWS:
-	  Note overlap checker improvements in NEWS file
-
-2020-04-21 10:57  starseeker
-
-	* [r75484] ., src/tclscripts/checker/menu.tcl:
-	  Cherrypick r75477 - overlap checker layout improvements
-
-2020-04-21 10:56  starseeker
-
-	* [r75483] ., src/tclscripts/checker/check.tcl:
-	  Cherrypick r75472 - Have overlap checker display only region
-	  names, with fullpath copy to clipboard available via right-click
-	  menu
-
-2020-04-21 10:55  starseeker
-
-	* [r75482] ., src/tclscripts/checker/menu.tcl:
-	  Cherrypick r75471 - Fix truncation of overlap checker columns
-	  when path names are long.
-
-2020-04-21 10:53  starseeker
-
-	* [r75481] NEWS:
-	  Update news entry for solid wireframes
-
-2020-04-21 10:53  starseeker
-
-	* [r75480] ., src/libdm/dm-generic.c, src/mged/dozoom.c:
-	  Cherrypick r75470 - fix for transparency issue with awareness of
-	  solid editing wireframes
-
-2020-04-14 14:51  starseeker
-
-	* [r75393] ChangeLog:
-	  Update changelog
-
-
-2020-04-14 14:50  starseeker
-
-	* [r75392] ., NEWS, src/tclscripts/checker/menu.tcl:
-	  Cherrypick r74991 - fix for initial dimensions of overlap checker
-	  window
-
-2020-04-14 12:03  starseeker
-
-	* [r75388] ., src/librt/primitives/brep/brep.cpp:
-	  Cherrypick r75387 - disable logging messages during brep prep.
-
-2020-04-13 17:36  starseeker
-
-	* [r75382] NEWS, README, include/conf/PATCH, misc/debian/changelog,
+	* [r76471] README, include/conf/PATCH, misc/debian/changelog,
 	  misc/macosx/Resources/ReadMe.rtfd/TXT.rtf,
 	  misc/macosx/Resources/Welcome.rtfd/TXT.rtf:
-	  Bump the patch release number in the RELEASE branch
+	  Bump version number
 
-2020-04-13 16:38  starseeker
+2020-07-24 15:59  starseeker
 
-	* [r75380] ., NEWS, doc/docbook/system/mann/lint.xml,
-	  src/libged/lint.cpp:
-	  Cherrypick r75377 - search style filtering for lint command
+	* [r76469] misc/CMake/FindGDAL.cmake:
+	  Older version of FindGDAL isn't properly detecting - try newer
+	  one.
 
-2020-04-13 16:33  starseeker
+2020-07-23 23:07  starseeker
 
-	* [r75379] ., NEWS, src/rt/viewedge.c:
-	  Cherrypick r75378 - fix of rtedge line color with -W option
+	* [r76458] ., include/bio.h, include/brep/defines.h,
+	  include/bu/cmd.h, include/bu/file.h, include/bu/glob.h,
+	  include/bu/ptbl.h, include/bu/tc.h, include/bu/time.h,
+	  include/bu/vls.h, include/common.h, include/fb.h,
+	  include/fb/fb_osgl.h, include/fb/fb_wgl.h, include/ged/defines.h,
+	  include/nmg.h, include/rt/anim.h, include/rt/calc.h,
+	  include/rt/cmd.h, include/rt/db_fullpath.h,
+	  include/rt/db_instance.h, include/rt/db_internal.h,
+	  include/rt/db_io.h, include/rt/directory.h, include/rt/mater.h,
+	  include/rt/mem.h, include/rt/vlist.h, src/burst/ui.c,
+	  src/conv/asc/asc2g.c, src/conv/conv-vg2g.c, src/conv/dxf/dxf-g.c,
+	  src/conv/fast4-g.c, src/conv/g-acad.c, src/conv/iges/findp.c,
+	  src/conv/iges/g-iges.c, src/conv/iges/n_iges.cpp,
+	  src/conv/iges/n_iges.hpp, src/conv/iges/readrec.c,
+	  src/conv/iges/recsize.c, src/conv/nastran-g.c,
+	  src/conv/shp/shapelib/shpopen.c, src/conv/stl/g-stl.c,
+	  src/conv/vdeck/vdeck.c, src/fb/bw-fb.c, src/fb/fb-bw.c,
+	  src/fb/fb-pix.c, src/fb/fb-png.c, src/fb/fbcbars.c,
+	  src/fb/fbcmap.c, src/fb/fbcolor.c, src/fb/fbfade.c,
+	  src/fb/fbframe.c, src/fb/fbgrid.c, src/fb/fbpoint.c,
+	  src/fb/fbstretch.c, src/fb/fbzoom.c, src/fb/gif-fb.c,
+	  src/fb/gif2fb.c, src/fb/pix-fb.c, src/fb/plot3-fb.c,
+	  src/fb/png-fb.c, src/fb/spm-fb.c, src/gtools/ganalyze.cpp,
+	  src/halftone/main.c, src/libbu, src/libbu/file.c,
+	  src/libbu/vfont.c, src/libfb/fb_generic.c,
+	  src/libfb/fbserv_obj.c, src/libfb/if_X24.c, src/libfb/if_disk.c,
+	  src/libfb/if_tk.c, src/libgcv/plugins/fastgen4/fastgen4_read.c,
+	  src/libgcv/plugins/stl/stl_write.c, src/libged/bot_dump.c,
+	  src/libged/editit.c, src/libged/facetize_log.c,
+	  src/libged/fb2pix.c, src/libged/ged_util.c, src/libged/pix2fb.c,
+	  src/libged/tables.c, src/libicv/rot.c, src/librt/cache.c,
+	  src/librt/db5_scan.c, src/librt/db_corrupt.c, src/librt/db_io.c,
+	  src/librt/db_scan.c, src/librt/primitives/primitive_util.c,
+	  src/libtclcad/tclcad_obj.c, src/mged/cmd.c, src/mged/fbserv.c,
+	  src/mged/mged.c, src/mged/plot.c, src/remrt/remrt.c,
+	  src/remrt/rtsrv.c, src/rt/do.c, src/rt/main.c, src/rt/view.c,
+	  src/sig/ddisp.c, src/util/ap-pix.c, src/util/bw-a.c,
+	  src/util/bw-png.c, src/util/bwcrop.c, src/util/bwhist.c,
+	  src/util/bwhisteq.c, src/util/bwrot.c, src/util/bwscale.c,
+	  src/util/double-asc.c, src/util/dpix-pix.c, src/util/pix-png.c,
+	  src/util/pix-ppm.c, src/util/pixbgstrip.c, src/util/pixborder.c,
+	  src/util/pixbustup.c, src/util/pixcrop.c, src/util/pixelswap.c,
+	  src/util/pixhalve.c, src/util/pixhist.c, src/util/pixhist3d.c,
+	  src/util/pixmorph.c, src/util/pixrot.c, src/util/pixscale.c,
+	  src/util/plot3rot.c, src/util/wavelet.c:
+	  Cherrypick trunk commit r75729 to try and resolve the *seek*
+	  function issues on Windows.
 
-2020-04-13 14:01  starseeker
+2020-07-23 22:15  starseeker
 
-	* [r75376] ., NEWS, src/tclscripts/mged/bindings.tcl:
-	  Cherrypick r75375 - mouse wheel scrolling in MGED
+	* [r76455] ., src/libged/CMakeLists.txt, src/libged/facetize.cpp,
+	  src/libged/facetize_log.c, src/libged/ged_private.h:
+	  Cherrypick r75053 - avoid mixing open and C++ for Windows
 
-2020-04-13 13:28  starseeker
+2020-07-23 20:04  starseeker
 
-	* [r75374] ., misc/CMake/BRLCAD_Util.cmake:
-	  Cherrypick r74981 - support for newer CMake message types
+	* [r76451] ., NEWS, TODO, src/util/bw-png.c:
+	  Cherrypick r75565 and r75566 - fix for bw-png on Windows
 
-2020-04-13 13:27  starseeker
+2020-07-23 19:58  starseeker
 
-	* [r75373] ., NEWS, src/libgcv/plugins/rhino/rhino_read.cpp:
-	  Cherrypick r75056 - Add .r suffixes to regions in 3dm-g import
+	* [r76450] ., NEWS, src/libgcv/plugins/rhino/rhino_read.cpp:
+	  Cherrypick r75811 improving the failure message of the 3dm-g
+	  converter.
 
-2020-04-13 13:08  starseeker
+2020-07-23 19:45  starseeker
 
-	* [r75372] ., NEWS, src/libdm/dm-generic.c, src/mged/dozoom.c:
-	  Cherrypick r75325 to fix MGED solid editing (disables
-	  transparency)
+	* [r76449] NEWS, src/libged/typein.c:
+	  Backport trunk fix r76443 for missing idb_major_type assignment
+	  in "in" command for datums - fixes inability to generate datums
+	  that manfiested in r71953 (post 7.26 series releases).
 

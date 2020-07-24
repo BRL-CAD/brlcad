@@ -77,6 +77,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "bio.h"
+
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"

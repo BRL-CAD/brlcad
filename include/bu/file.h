@@ -164,6 +164,16 @@ BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char
  */
 BU_EXPORT extern char *bu_file_realpath(const char *path, char *resolved_path);
 
+/**
+ * Windows corecrt_io.h defines an lseek and an _lseeki64, with different function
+ * signatures, that cause trouble when we try to simply #define lseek _lseeki64.
+ *
+ * Similarly, _ftelli64 has a problematic signature.
+ */
+BU_EXPORT int bu_fseek(FILE *stream, b_off_t offset, int origin);
+BU_EXPORT b_off_t bu_lseek(int fd, b_off_t offset, int whence);
+BU_EXPORT b_off_t bu_ftell(FILE *stream);
+
 /** @} */
 
 __END_DECLS

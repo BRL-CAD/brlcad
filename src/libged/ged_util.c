@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bio.h"
+
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/sort.h"

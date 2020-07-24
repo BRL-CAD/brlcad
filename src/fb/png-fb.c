@@ -27,7 +27,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <png.h>
+
+#include "bio.h"
+
+#include "png.h"
 
 #include "bu/getopt.h"
 #include "bu/log.h"

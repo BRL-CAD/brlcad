@@ -29,6 +29,8 @@
 #include <math.h>
 #include <png.h>
 
+#include "bio.h"
+
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -112,6 +114,7 @@ main(int argc, char **argv)
     unsigned char **rows;
     png_structp png_p;
     png_infop info_p;
+    FILE *outfp = stdout;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -127,6 +130,13 @@ main(int argc, char **argv)
 	} else {
 	    fprintf(stderr, "bw-png: unable to autosize\n");
 	}
+    }
+
+    setmode(fileno(outfp), O_BINARY);
+
+    if (isatty(fileno(outfp))) {
+	fprintf(stderr, "cv: trying to send binary output to terminal\n");
+	return 5;
     }
 
     png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -149,7 +159,7 @@ main(int argc, char **argv)
     if (fread(scanbuf, SIZE, 1, infp) != 1)
 	bu_exit(EXIT_FAILURE, "bw-png: Short read\n");
 
-    png_init_io(png_p, stdout);
+    png_init_io(png_p, outfp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
     png_set_compression_level(png_p, 9);
     png_set_IHDR(png_p, info_p, file_width, file_height, 8,
@@ -159,6 +169,10 @@ main(int argc, char **argv)
     png_write_info(png_p, info_p);
     png_write_image(png_p, rows);
     png_write_end(png_p, NULL);
+
+    if (outfp != stdout)
+	fclose(outfp);
+
     return 0;
 }
 

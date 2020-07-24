@@ -150,55 +150,6 @@ _ged_facetize_attempted(struct ged *gedp, const char *oname, int method)
     return ret;
 }
 
-struct _ged_facetize_opts {
-
-    int quiet;
-    int verbosity;
-    int regions;
-    int resume;
-    int retry;
-    int in_place;
-    fastf_t feature_size;
-    fastf_t feature_scale;
-    fastf_t d_feature_size;
-    int max_time;
-    struct bg_tess_tol *tol;
-    struct bu_vls *faceted_suffix;
-
-    /* NMG specific options */
-    int triangulate;
-    int make_nmg;
-    int nmgbool;
-    int screened_poisson;
-    int continuation;
-    int method_flags;
-    int nmg_use_tnurbs;
-
-    /* Poisson specific options */
-    int max_pnts;
-    struct bg_3d_spsr_opts s_opts;
-
-    /* Brep specific options */
-    double nonovlp_threshold;
-
-    /* internal */
-    struct bu_attribute_value_set *c_map;
-    struct bu_attribute_value_set *s_map;
-    struct bu_hook_list *saved_bomb_hooks;
-    struct bu_hook_list *saved_log_hooks;
-    struct bu_vls *nmg_log;
-    struct bu_vls *nmg_log_header;
-    int nmg_log_print_header;
-    int stderr_stashed;
-    int serr;
-    int fnull;
-
-    struct bu_vls *froot;
-    struct bu_vls *nmg_comb;
-    struct bu_vls *continuation_comb;
-    struct bu_vls *spsr_comb;
-};
-
 struct _ged_facetize_opts * _ged_facetize_opts_create()
 {
     struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
@@ -356,86 +307,6 @@ _pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
     for (i = 0; i < pnt_cnt; i++) {
 	VMINMAX(rpp_min, rpp_max, pnts[i]);
     }
-}
-
-
-static int
-_ged_facetize_bomb_hook(void *cdata, void *str)
-{
-    struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)cdata;
-    if (o->nmg_log_print_header) {
-	bu_vls_printf(o->nmg_log, "%s\n", bu_vls_addr(o->nmg_log_header));
-	o->nmg_log_print_header = 0;
-    }
-    bu_vls_printf(o->nmg_log, "%s\n", (const char *)str);
-    return 0;
-}
-
-static int
-_ged_facetize_nmg_logging_hook(void *data, void *str)
-{
-    struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)data;
-    if (o->nmg_log_print_header) {
-	bu_vls_printf(o->nmg_log, "%s\n", bu_vls_addr(o->nmg_log_header));
-	o->nmg_log_print_header = 0;
-    }
-    bu_vls_printf(o->nmg_log, "%s\n", (const char *)str);
-    return 0;
-}
-
-static void
-_ged_facetize_log_nmg(struct _ged_facetize_opts *o)
-{
-    if (fileno(stderr) < 0)
-	return;
-
-    /* Seriously, bu_bomb, we don't want you blathering
-     * to stderr... shut down stderr temporarily, assuming
-     * we can find /dev/null or something similar */
-    o->fnull = open("/dev/null", O_WRONLY);
-    if (o->fnull == -1) {
-	/* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
-	o->fnull = open("nul", O_WRONLY);
-    }
-    if (o->fnull != -1) {
-	o->serr = fileno(stderr);
-	o->stderr_stashed = dup(o->serr);
-	dup2(o->fnull, o->serr);
-	close(o->fnull);
-    }
-
-    /* Set bu_log logging to capture in nmg_log, rather than the
-     * application defaults */
-    bu_log_hook_delete_all();
-    bu_log_add_hook(_ged_facetize_nmg_logging_hook, (void *)o);
-
-    /* Also engage the nmg bomb hooks */
-    bu_bomb_delete_all_hooks();
-    bu_bomb_add_hook(_ged_facetize_bomb_hook, (void *)o);
-}
-
-
-static void
-_ged_facetize_log_default(struct _ged_facetize_opts *o)
-{
-    if (fileno(stderr) < 0)
-	return;
-
-    /* Put stderr back */
-    if (o->fnull != -1) {
-	fflush(stderr);
-	dup2(o->stderr_stashed, o->serr);
-	close(o->stderr_stashed);
-	o->fnull = -1;
-    }
-
-    /* Restore bu_bomb hooks to the application defaults */
-    bu_bomb_delete_all_hooks();
-    bu_bomb_restore_hooks(o->saved_bomb_hooks);
-
-    /* Restore bu_log hooks to the application defaults */
-    bu_log_hook_delete_all();
-    bu_log_hook_restore_all(o->saved_log_hooks);
 }
 
 static void
@@ -3102,12 +2973,12 @@ ged_facetize_memfree:
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

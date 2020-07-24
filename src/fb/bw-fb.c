@@ -36,6 +36,9 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+
+#include "bio.h"
+
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -339,7 +342,7 @@ skipbytes(int fd, b_off_t num)
     int n, tries;
 
     if (fileinput) {
-	(void)lseek(fd, num, 1);
+	(void)bu_lseek(fd, num, 1);
 	return 0;
     }
 

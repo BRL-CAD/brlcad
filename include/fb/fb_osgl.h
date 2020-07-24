@@ -54,8 +54,6 @@
 #  include <sys/wait.h>
 #endif
 
-#include "bio.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

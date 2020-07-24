@@ -30,7 +30,10 @@
 
 #include <time.h>
 
+#include "bu/avs.h"
 #include "bu/opt.h"
+#include "bg/spsr.h"
+#include "bg/trimesh.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -611,6 +614,63 @@ extern void
 _ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback);
 extern void
 _ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback);
+
+
+
+/* Ideally all of this could be in facetize.cpp, but the open() calls
+ * used by the logging routines are problematic in C++ with Visual C++. */
+struct _ged_facetize_opts {
+    int quiet;
+    int verbosity;
+    int regions;
+    int resume;
+    int retry;
+    int in_place;
+    fastf_t feature_size;
+    fastf_t feature_scale;
+    fastf_t d_feature_size;
+    int max_time;
+    struct bg_tess_tol *tol;
+    struct bu_vls *faceted_suffix;
+
+    /* NMG specific options */
+    int triangulate;
+    int make_nmg;
+    int nmgbool;
+    int screened_poisson;
+    int continuation;
+    int method_flags;
+    int nmg_use_tnurbs;
+
+    /* Poisson specific options */
+    int max_pnts;
+    struct bg_3d_spsr_opts s_opts;
+
+    /* Brep specific options */
+    double nonovlp_threshold;
+
+    /* internal */
+    struct bu_attribute_value_set *c_map;
+    struct bu_attribute_value_set *s_map;
+    struct bu_hook_list *saved_bomb_hooks;
+    struct bu_hook_list *saved_log_hooks;
+    struct bu_vls *nmg_log;
+    struct bu_vls *nmg_log_header;
+    int nmg_log_print_header;
+    int stderr_stashed;
+    int serr;
+    int fnull;
+
+    struct bu_vls *froot;
+    struct bu_vls *nmg_comb;
+    struct bu_vls *continuation_comb;
+    struct bu_vls *spsr_comb;
+};
+
+void
+_ged_facetize_log_nmg(struct _ged_facetize_opts *o);
+void
+_ged_facetize_log_default(struct _ged_facetize_opts *o);
 
 __END_DECLS
 
