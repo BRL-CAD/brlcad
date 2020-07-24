@@ -168,6 +168,7 @@ commit_parse_original_oid(git_commit_data *cd, std::ifstream &infile)
     std::getline(infile, line);
     line.erase(0, 13);  // Remove "original-oid " prefix
     cd->id.sha1 = line;
+    cd->s->have_sha1s = true;
     return 0;
 }
 

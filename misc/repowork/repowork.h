@@ -127,6 +127,7 @@ class git_blob_data {
 class git_fi_data {
 
     public:
+	bool have_sha1s = false;
 	bool write_notes = true;
 	int  wrap_width = 72;
 	bool wrap_commit_lines = false;

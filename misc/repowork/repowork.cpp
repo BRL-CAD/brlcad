@@ -58,9 +58,14 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 	    continue;
 	}
 
-	if (!s->commits[i].id.sha1.length()) {
+	if (!s->have_sha1s) {
 	    std::cerr << "Fatal - notes unpacking requested, but don't have original sha1 ids - redo fast-export with the --show-original-ids option.\n";
 	    exit(1);
+	}
+
+	if (!s->commits[i].id.sha1.length()) {
+	    std::cerr << "Warning - commit " << s->commits[i].id.mark << " has no sha1 info, skipping notes lookup\n";
+	    continue;
 	}
 
 	// This is cheap and clunky, but I've not yet found a document
