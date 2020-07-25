@@ -83,8 +83,12 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 	}
 	std::string note((std::istreambuf_iterator<char>(n)), std::istreambuf_iterator<char>());
 
+	// Replace git style branch name for master with SVN style name
+	std::regex mstr_regex("svn:branch:master");
+	std::string note_fixed = std::regex_replace(note, mstr_regex, "svn:branch:trunk");
+
 	// Write the message to the commit's string;
-	s->commits[i].notes_string = note;
+	s->commits[i].notes_string = note_fixed;
 
 	// SPECIAL PURPOSE CODE - should go away eventually.
 	// For BRL-CAD specifically, this information contains
