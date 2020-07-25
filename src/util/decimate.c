@@ -34,6 +34,8 @@
 
 #include "common.h"
 
+#include "bio.h" /* for setmode */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h> /* for INT_MAX */
