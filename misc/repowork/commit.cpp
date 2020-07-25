@@ -474,7 +474,7 @@ commit_msg(git_commit_data *c)
 	    }
 	}
 	if (c->svn_committer.length()) {
-	    std::string committerstr = std::string("svn:committer:") + c->svn_committer;
+	    std::string committerstr = std::string("svn:account:") + c->svn_committer;
 	    nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n") + committerstr + std::string("\n");
 	} else {
 	    nmsg = c->commit_msg + std::string("\n\n") + nstr + std::string("\n");
