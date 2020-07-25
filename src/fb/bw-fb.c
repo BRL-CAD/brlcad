@@ -159,7 +159,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
 	infd = 0;
-	setmode(fileno(stdin), O_RDONLY|O_BINARY);
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
