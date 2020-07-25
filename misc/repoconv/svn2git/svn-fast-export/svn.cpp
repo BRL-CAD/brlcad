@@ -343,6 +343,7 @@ public:
     int revnum;
 
     // must call fetchRevProps first:
+    QByteArray svnauthor;
     QByteArray authorident;
     QByteArray log;
     uint epoch;
@@ -517,7 +518,7 @@ int SvnRevision::fetchRevProps()
 
     apr_hash_t *revprops;
     SVN_ERR(svn_fs_revision_proplist(&revprops, fs, revnum, pool));
-    svn_string_t *svnauthor = (svn_string_t*)apr_hash_get(revprops, "svn:author", APR_HASH_KEY_STRING);
+    svn_string_t *lsvnauthor = (svn_string_t*)apr_hash_get(revprops, "svn:author", APR_HASH_KEY_STRING);
     svn_string_t *svndate = (svn_string_t*)apr_hash_get(revprops, "svn:date", APR_HASH_KEY_STRING);
     svn_string_t *svnlog = (svn_string_t*)apr_hash_get(revprops, "svn:log", APR_HASH_KEY_STRING);
 
@@ -525,13 +526,14 @@ int SvnRevision::fetchRevProps()
         log = svnlog->data;
     else
         log.clear();
-    authorident = svnauthor ? identities.value(svnauthor->data) : QByteArray();
+    authorident = lsvnauthor ? identities.value(lsvnauthor->data) : QByteArray();
+    svnauthor = lsvnauthor ? QByteArray(lsvnauthor->data) : QByteArray();
     epoch = svndate ? get_epoch(svndate->data) : 0;
     if (authorident.isEmpty()) {
-        if (!svnauthor || svn_string_isempty(svnauthor))
+        if (!lsvnauthor || svn_string_isempty(lsvnauthor))
             authorident = "nobody <nobody@localhost>";
         else
-            authorident = svnauthor->data + QByteArray(" <") + svnauthor->data +
+            authorident = lsvnauthor->data + QByteArray(" <") + lsvnauthor->data +
                 QByteArray("@") + userdomain.toUtf8() + QByteArray(">");
     }
     propsFetched = true;
@@ -548,6 +550,7 @@ int SvnRevision::commit()
     }
 
     foreach (Repository::Transaction *txn, transactions) {
+        txn->setSVNAuthor(svnauthor);
         txn->setAuthor(authorident);
         txn->setDateTime(epoch);
         txn->setLog(log);
@@ -830,7 +833,7 @@ int SvnRevision::exportInternal(const char *key, const svn_fs_path_change2_t *ch
             if (rule.annotate) {
                 // create an annotated tag
                 fetchRevProps();
-                repo->createAnnotatedTag(branch, svnprefix, revnum, authorident,
+                repo->createAnnotatedTag(branch, svnprefix, revnum, svnauthor, authorident,
                                          epoch, log);
             }
             return EXIT_SUCCESS;
@@ -940,7 +943,7 @@ int SvnRevision::exportInternal(const char *key, const svn_fs_path_change2_t *ch
     if (rule.annotate) {
         // create an annotated tag
         fetchRevProps();
-        repo->createAnnotatedTag(branch, svnprefix, revnum, authorident,
+        repo->createAnnotatedTag(branch, svnprefix, revnum, svnauthor, authorident,
                                  epoch, log);
     }
 

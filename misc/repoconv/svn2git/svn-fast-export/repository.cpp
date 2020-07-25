@@ -37,6 +37,7 @@ public:
     {
         QString supportingRef;
         QByteArray svnprefix;
+        QByteArray svnauthor;
         QByteArray author;
         QByteArray log;
         uint dt;
@@ -50,6 +51,7 @@ public:
         FastImportRepository *repository;
         QByteArray branch;
         QByteArray svnprefix;
+        QByteArray svnauthor;
         QByteArray author;
         QByteArray log;
         uint datetime;
@@ -65,6 +67,7 @@ public:
         ~Transaction();
         int commit();
 
+        void setSVNAuthor(const QByteArray &author);
         void setAuthor(const QByteArray &author);
         void setDateTime(uint dt);
         void setLog(const QByteArray &log);
@@ -91,7 +94,7 @@ public:
     Repository::Transaction *newTransaction(const QString &branch, const QString &svnprefix, int revnum);
 
     void createAnnotatedTag(const QString &name, const QString &svnprefix, int revnum,
-                            const QByteArray &author, uint dt,
+                            const QByteArray &svnauthor, const QByteArray &author, uint dt,
                             const QByteArray &log);
     void finalizeTags();
     void saveBranchNotes();
@@ -168,6 +171,7 @@ public:
         ~Transaction() { delete txn; }
         int commit() { return txn->commit(); }
 
+        void setSVNAuthor(const QByteArray &svnauthor) { txn->setSVNAuthor(svnauthor); }
         void setAuthor(const QByteArray &author) { txn->setAuthor(author); }
         void setDateTime(uint dt) { txn->setDateTime(dt); }
         void setLog(const QByteArray &log) { txn->setLog(log); }
@@ -206,9 +210,9 @@ public:
     }
 
     void createAnnotatedTag(const QString &name, const QString &svnprefix, int revnum,
-                            const QByteArray &author, uint dt,
+                            const QByteArray &svnauthor, const QByteArray &author, uint dt,
                             const QByteArray &log)
-    { repo->createAnnotatedTag(name, svnprefix, revnum, author, dt, log); }
+    { repo->createAnnotatedTag(name, svnprefix, revnum, svnauthor, author, dt, log); }
     void finalizeTags() { /* loop that called this will invoke it on 'repo' too */ }
     void saveBranchNotes() { /* loop that called this will invoke it on 'repo' too */ }
     void commit() { repo->commit(); }
@@ -754,7 +758,7 @@ void FastImportRepository::forgetTransaction(Transaction *)
 }
 
 void FastImportRepository::createAnnotatedTag(const QString &ref, const QString &svnprefix,
-                                              int revnum,
+                                              int revnum, const QByteArray &svnauthor,
                                               const QByteArray &author, uint dt,
                                               const QByteArray &log)
 {
@@ -771,6 +775,7 @@ void FastImportRepository::createAnnotatedTag(const QString &ref, const QString 
     tag.supportingRef = ref;
     tag.svnprefix = svnprefix.toUtf8();
     tag.revnum = revnum;
+    tag.svnauthor = svnauthor;
     tag.author = author;
     tag.log = log;
     tag.dt = dt;
@@ -799,7 +804,7 @@ void FastImportRepository::finalizeTags()
         if (!message.endsWith('\n'))
             message += '\n';
         if (CommandLineParser::instance()->contains("add-metadata"))
-            message += "\n" + formatMetadataMessage(tag.svnprefix, tag.revnum, tagName.toUtf8());
+            message += "\n" + formatMetadataMessage(tag.svnauthor, tag.revnum, tagName.toUtf8());
 
         {
             QByteArray branchRef = tag.supportingRef.toUtf8();
@@ -823,9 +828,10 @@ void FastImportRepository::finalizeTags()
         // easy way to attach a note to the tag itself with fast-import.
         if (CommandLineParser::instance()->contains("add-metadata-notes")) {
             Repository::Transaction *txn = newTransaction(tag.supportingRef, tag.svnprefix, tag.revnum);
+            txn->setSVNAuthor(tag.svnauthor);
             txn->setAuthor(tag.author);
             txn->setDateTime(tag.dt);
-            bool written = txn->commitNote(formatMetadataMessage(tag.svnprefix, tag.revnum, tagName.toUtf8()), true);
+            bool written = txn->commitNote(formatMetadataMessage(tag.svnauthor, tag.revnum, tagName.toUtf8()), true);
             delete txn;
 
             if (written && !fastImport.waitForBytesWritten(-1))
@@ -906,11 +912,9 @@ void FastImportRepository::startFastImport()
     }
 }
 
-QByteArray Repository::formatMetadataMessage(const QByteArray &svnprefix, int revnum, const QByteArray &tag)
+QByteArray Repository::formatMetadataMessage(const QByteArray &author, int revnum, const QByteArray &tag)
 {
-    QByteArray msg = "svn path=" + svnprefix + "; revision=" + QByteArray::number(revnum);
-    if (!tag.isEmpty())
-        msg += "; tag=" + tag;
+    QByteArray msg = "svn:account:" + author + "\nsvn:revision:" + QByteArray::number(revnum);
     msg += "\n";
     return msg;
 }
@@ -949,6 +953,11 @@ Repository *FastImportRepository::getEffectiveRepository()
 FastImportRepository::Transaction::~Transaction()
 {
     repository->forgetTransaction(this);
+}
+
+void FastImportRepository::Transaction::setSVNAuthor(const QByteArray &a)
+{
+    svnauthor = a;
 }
 
 void FastImportRepository::Transaction::setAuthor(const QByteArray &a)
@@ -1112,7 +1121,7 @@ int FastImportRepository::Transaction::commit()
     if (!message.endsWith('\n'))
         message += '\n';
     if (CommandLineParser::instance()->contains("add-metadata"))
-        message += "\n" + Repository::formatMetadataMessage(svnprefix, revnum);
+        message += "\n" + Repository::formatMetadataMessage(svnauthor, revnum);
 
     // Call external message filter if provided
     message = repository->msgFilter(message);
@@ -1197,7 +1206,7 @@ int FastImportRepository::Transaction::commit()
 
     // Commit metadata note if requested
     if (CommandLineParser::instance()->contains("add-metadata-notes"))
-        commitNote(Repository::formatMetadataMessage(svnprefix, revnum), false);
+        commitNote(Repository::formatMetadataMessage(svnauthor, revnum), false);
 
     while (repository->fastImport.bytesToWrite())
         if (!repository->fastImport.waitForBytesWritten(-1))

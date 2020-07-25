@@ -16,6 +16,7 @@ include_directories(
   )
 
 add_definitions(-fPIC)
+add_definitions(-g)
 
 include(CheckFunctionExists)
 set(CMAKE_REQUIRED_INCLUDES ${SUBVERSION_INCLUDE_DIRS})

@@ -103,6 +103,7 @@ public:
         virtual ~Transaction() {}
         virtual int commit() = 0;
 
+        virtual void setSVNAuthor(const QByteArray &author) = 0;
         virtual void setAuthor(const QByteArray &author) = 0;
         virtual void setDateTime(uint dt) = 0;
         virtual void setLog(const QByteArray &log) = 0;
@@ -128,7 +129,7 @@ public:
     virtual Repository::Transaction *newTransaction(const QString &branch, const QString &svnprefix, int revnum) = 0;
 
     virtual void createAnnotatedTag(const QString &name, const QString &svnprefix, int revnum,
-                                    const QByteArray &author, uint dt,
+                                    const QByteArray &svnauthor, const QByteArray &author, uint dt,
                                     const QByteArray &log) = 0;
     virtual void finalizeTags() = 0;
     virtual void saveBranchNotes() = 0;
