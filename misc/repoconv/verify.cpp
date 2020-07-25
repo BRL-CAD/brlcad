@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <regex>
+#include "cxxopts.hpp"
 
 int verify_repos(std::string rev, std::string branch_svn, std::string sha1, std::string git_repo, std::string svn_repo)
 {
@@ -67,13 +68,46 @@ int verify_repos(std::string rev, std::string branch_svn, std::string sha1, std:
     return 0;
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
     int ret;
+    int start_rev = 100000;
+
+    try
+    {
+	cxxopts::Options options(argv[0], " - verify svn->git conversion");
+
+	options.add_options()
+	    ("s,start-rev", "Skip any revision higher than this number", cxxopts::value<int>(), "#")
+	    ("h,help", "Print help")
+	    ;
+
+	auto result = options.parse(argc, argv);
+
+	if (result.count("help"))
+	{
+	    std::cout << options.help({""}) << std::endl;
+	    return 0;
+	}
+
+	if (result.count("s"))
+	{
+	    start_rev = result["s"].as<int>();
+	}
+
+    }
+    catch (const cxxopts::OptionException& e)
+    {
+	std::cerr << "error parsing options: " << e.what() << std::endl;
+	return -1;
+    }
+
+
     if (argc != 3) {
 	std::cerr << "Usage: verify <git_repo_full_path> <svn_repo_full_path>\n";
 	return -1;
     }
+
     std::string svn_repo(argv[2]);
     std::string git_repo(argv[1]);
     std::string list_sha1 = std::string("cd ") + git_repo + std::string(" && git log --all --pretty=format:\"%H\" > ../commits.txt && cd ..");
@@ -124,6 +158,19 @@ int main(int argc, const char *argv[])
 	    continue;
 	}
 	std::string rev = std::string(rmatch[1]);
+
+	if (std::stol(rev) > start_rev) {
+	    continue;
+	}
+
+	// svn branch deletes can't be verified by checkout, skip those
+	std::regex bdelete_regex(".*svn branch delete.*");
+	std::smatch bd_match;
+	if (std::regex_search(msg, bd_match, bdelete_regex)) {
+	    std::cerr << "branch delete commit, skipping verification\n";
+	    continue;
+	}
+
 
 	std::string branch("trunk");
 	std::regex branch_regex(".*svn:branch:([a-zA-Z0-9_-]+).*");
