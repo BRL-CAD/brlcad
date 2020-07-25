@@ -80,8 +80,6 @@ TODO* text
 
 # Declare files that will always have CRLF line endings on checkout.
 *.bat text eol=crlf
-*.dsp text eol=crlf
-*.dsp text eol=crlf
 *.dsw text eol=crlf
 *.dsw text eol=crlf
 *.rc text eol=crlf
@@ -100,6 +98,10 @@ TODO* text
 *.chm binary
 *.cur binary
 *.doc binary
+# NOTE!  .dsp is normally CRLF, but we also use it for displacement map files
+# such as db/terra.dsp.  That file has been accidentally changed by other .dsp
+# filters in the past, so know for our repository this extension must be binay.
+*.dsp binary
 *.dylib binary
 *.eps binary
 *.g binary
