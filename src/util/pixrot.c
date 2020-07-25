@@ -126,7 +126,7 @@ get_args(int argc, char **argv)
 	ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((ifp = fopen(file_name, "r")) == NULL) {
+	if ((ifp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}

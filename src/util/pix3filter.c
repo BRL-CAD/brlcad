@@ -161,7 +161,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	working_name = (char *)bu_malloc(strlen(file_name)+5, "working_name");
 
-	if ((curfp = fopen(file_name, "r")) == NULL) {
+	if ((curfp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    file_name);
@@ -191,7 +191,7 @@ get_args(int argc, char **argv)
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }
-	    if ((oldfp = fopen(file_name, "r")) == NULL) {
+	    if ((oldfp = fopen(file_name, "rb")) == NULL) {
 		fprintf(stderr,
 			"pix3filter: cannot open \"%s\" for reading.\n",
 			file_name);

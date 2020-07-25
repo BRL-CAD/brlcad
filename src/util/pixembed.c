@@ -103,7 +103,7 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pixembed: cannot open \"%s\" for reading\n",
 		    file_name);

@@ -356,7 +356,7 @@ get_args(int argc, char **argv)
     /* XXX - backward compatibility hack */
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("bwscale: cannot open \"%s\" for reading\n",file_name);
 	    return 0;
 	}
@@ -377,7 +377,7 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("bwscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}

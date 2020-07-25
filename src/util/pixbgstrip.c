@@ -98,7 +98,7 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
 		    "pixbgstrip: cannot open \"%s\" for reading\n",
