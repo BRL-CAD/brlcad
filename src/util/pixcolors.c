@@ -128,6 +128,9 @@ int main(int ac, char **av)
 
     progname = *av;
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     /* Get # of options & turn all the option flags off
      */
 

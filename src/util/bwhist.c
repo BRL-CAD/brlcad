@@ -58,6 +58,8 @@ main(int argc, char **argv)
     FILE *fp;
 
     bu_setprogname(argv[0]);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(1, "%s", Usage);
@@ -76,9 +78,9 @@ main(int argc, char **argv)
 	}
 	argv++;
 	argc--;
-    } else
+    } else {
 	fp = stdin;
-
+    }
     /* check usage */
     if (argc > 1 || isatty(fileno(fp)))
 	bu_exit(1, "%s", Usage);

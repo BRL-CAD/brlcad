@@ -170,6 +170,9 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (!iflg && !rflg) {
 	/* Default action: interpolate by 50% */
 	iflg = 1;

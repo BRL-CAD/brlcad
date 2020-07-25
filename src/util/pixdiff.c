@@ -72,6 +72,9 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: pixdiff f1.pix f2.pix >file.pix\n");
     }

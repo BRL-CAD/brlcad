@@ -186,6 +186,8 @@ int main(int ac, char **av)
 	usage();
 
     /* process stdin */
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /* get buffer for image */
     size = width * height;

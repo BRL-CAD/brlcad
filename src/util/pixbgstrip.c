@@ -134,6 +134,9 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     /* autosize input? */
     if (fileinput && autosize) {
 	size_t w, h;

@@ -483,6 +483,9 @@ main (int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     VSETALL(border_rgb,     1);
     rgb_to_hsv(border_rgb, border_hsv);
     VSETALL(exterior_rgb,   1);

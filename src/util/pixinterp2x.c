@@ -97,6 +97,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     infp = stdin;
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

@@ -83,6 +83,10 @@ main (int argc, char **argv)
     if (argc > 3) {
 	printusage();
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     fp[0] = stdin;
     fp[1] = stdout;
     for (i = 0; (i < 2) && (--argc > 0); ++i) {

@@ -168,6 +168,9 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     /* important to store these before calling get_args().  they're
      * also not necessarily constants so have to set here instead of
      * with the declaration.
