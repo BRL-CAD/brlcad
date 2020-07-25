@@ -78,13 +78,13 @@ main(int argc, char **argv)
     if (argc != 2)
 	usage(argv0);
 
-    magfp = fopen(argv[1], "r");
+    magfp = fopen(argv[1], "rb");
     if (magfp == NULL) {
 	bu_exit(2, "%s: can't open \"%s\"\n", argv0, argv[1]);
     }
-    yelfp = fopen(argv[1], "r");
+    yelfp = fopen(argv[1], "rb");
     bu_fseek(yelfp, 50*sizeof(yelline), 0);
-    cyafp = fopen(argv[1], "r");
+    cyafp = fopen(argv[1], "rb");
     bu_fseek(cyafp, 100*sizeof(cyaline), 0);
 
     line = 0;

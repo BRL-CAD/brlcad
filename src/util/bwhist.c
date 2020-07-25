@@ -71,7 +71,7 @@ main(int argc, char **argv)
 
     /* look for optional input file */
     if (argc > 1) {
-	if ((fp = fopen(argv[1], "r")) == 0) {
+	if ((fp = fopen(argv[1], "rb")) == 0) {
 	    bu_exit(1, "bwhist: can't open '%s'\n", argv[1]);
 	}
 	argv++;

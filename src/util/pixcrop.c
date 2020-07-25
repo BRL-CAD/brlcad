@@ -128,7 +128,7 @@ main(int argc, char **argv)
     if (argc < 3) {
 	bu_exit(1, "%s", usage);
     }
-    if ((ifp = fopen(argv[1], "r")) == NULL) {
+    if ((ifp = fopen(argv[1], "rb")) == NULL) {
 	bu_exit(2, "bwcrop: can't open %s for reading\n", argv[1]);
     }
     if ((ofp = fopen(argv[2], "w")) == NULL) {

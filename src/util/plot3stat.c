@@ -157,7 +157,7 @@ main(int argc, char **argv)
 	argv++;
     }
     if (argc == 2) {
-	if ((fp = fopen(argv[1], "r")) == NULL) {
+	if ((fp = fopen(argv[1], "rb")) == NULL) {
 	    perror("plot3stat");
 	    bu_exit (1, NULL);
 	}
