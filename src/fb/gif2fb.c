@@ -158,6 +158,7 @@ main(int argc, char **argv)
 	}
 	file_name = "-";
 	fp = stdin;
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((fp = fopen(file_name, "rb")) == NULL) {

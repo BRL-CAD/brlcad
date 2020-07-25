@@ -586,6 +586,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	filename = "-";
 	pfin = stdin;
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	/* open file */
 	filename = argv[bu_optind];

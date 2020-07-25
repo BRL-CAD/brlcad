@@ -158,7 +158,7 @@ get_args(int argc, char **argv)
 	if (isatty(fileno(stdin)))
 	    return 0;
 	file_name = "-";
-	infd = 0;
+	infd = fileno(stdin);
 	setmode(fileno(stdin), O_BINARY);
     } else {
 	char *ifname;

@@ -519,8 +519,10 @@ main(int argc, char **argv)
 
 	if ((gfp = fopen(gif_file = argv[bu_optind], "rb")) == NULL)
 	    Fatal(fbp, "Couldn't open GIF file \"%s\"", gif_file);
-    } else
+    } else {
 	gfp = stdin;
+	setmode(fileno(stdin), O_BINARY);
+    }
 
     /* Process GIF signature. */
 
