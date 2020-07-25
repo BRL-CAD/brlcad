@@ -99,7 +99,22 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 	if (std::regex_search(note, svnidvar, svnid)) {
 	    s->commits[i].svn_id = std::string(svnidvar[1]);
 	    std::cout << "Identified revision " << s->commits[i].svn_id << "\n";
+
+	    // We wrote the wrong SVN branch name for older dmtogl branches -
+	    // names were deliberately collapsed in git conversion, but we
+	    // should reflect the original SVN history in the metadata.  Undo
+	    // the mapping for the label based on revision number.
+	    long revnum = std::stol(s->commits[i].svn_id);
+	    if (revnum < 36472) {
+		std::regex bstr_regex("svn:branch:dmtogl");
+		std::smatch bmatch;
+		if (std::regex_search(s->commits[i].notes_string, bmatch, bstr_regex)) {
+		    std::string branch_fixed = std::regex_replace(s->commits[i].notes_string, bstr_regex, "svn:branch:dmtogl-branch");
+		    s->commits[i].notes_string = branch_fixed;
+		}
+	    }
 	}
+
 
 	n.close();
     }
