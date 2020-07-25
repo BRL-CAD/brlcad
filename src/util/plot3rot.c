@@ -342,7 +342,7 @@ main(int argc, char **argv)
 		fclose(fp);
 	    if (BU_STR_EQUAL(argv[bu_optind], "-"))
 		fp = stdin;
-	    else if ((fp = fopen(argv[bu_optind], "r")) == NULL) {
+	    else if ((fp = fopen(argv[bu_optind], "rb")) == NULL) {
 		bu_log("plot3rot: can't open \"%s\"\n", argv[bu_optind]);
 		continue;
 	    }

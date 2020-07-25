@@ -65,7 +65,7 @@ main (int argc, char **argv)
     char *bp;
     char buf[BUF_LEN];
     char sarg[BUF_LEN];
-    static char *fm[] = { "r", "w" };
+    static char *fm[] = { "rb", "wb" };
     double darg[6] = {0.0};
     static FILE *fp[2];
     int i;

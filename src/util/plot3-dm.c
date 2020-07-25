@@ -589,7 +589,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	char *bnp;
 
 	file = argv[i];
-	if ((fp = fopen(file, "r")) == NULL) {
+	if ((fp = fopen(file, "rb")) == NULL) {
 	    bu_log("%s: can't open \"%s\"\n", argv[0], file);
 	    continue;
 	}

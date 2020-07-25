@@ -73,7 +73,7 @@ get_args(int argc, char **argv)
 	}
     }
     if (argv[bu_optind] != NULL) {
-	if ((infp = fopen(argv[bu_optind], "r")) == NULL) {
+	if ((infp = fopen(argv[bu_optind], "rb")) == NULL) {
 	    perror(argv[bu_optind]);
 	    return 0;
 	}

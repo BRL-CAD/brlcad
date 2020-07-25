@@ -147,7 +147,7 @@ int main(int ac, char **av)
 	usage();
     if (bu_optind == ac-1) {
 	FILE *fd;
-	if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
+	if ((fd=fopen(av[bu_optind], "rb")) == (FILE *)NULL) {
 	    perror(av[bu_optind]);
 	    bu_exit (1, NULL);
 	}

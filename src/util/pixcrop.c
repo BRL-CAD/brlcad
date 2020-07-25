@@ -131,7 +131,7 @@ main(int argc, char **argv)
     if ((ifp = fopen(argv[1], "rb")) == NULL) {
 	bu_exit(2, "bwcrop: can't open %s for reading\n", argv[1]);
     }
-    if ((ofp = fopen(argv[2], "w")) == NULL) {
+    if ((ofp = fopen(argv[2], "wb")) == NULL) {
 	bu_exit(3, "bwcrop: can't open %s for writing\n", argv[2]);
     }
 

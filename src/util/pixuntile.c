@@ -148,7 +148,7 @@ main(int argc, char **argv)
 		} else {
 		    snprintf(name, sizeof(name), "%s.%d", base_name, framenumber);
 		}
-		if ((f[i] = fopen(name, "w")) == NULL) {
+		if ((f[i] = fopen(name, "wb")) == NULL) {
 		    perror(name);
 		    goto done;
 		}

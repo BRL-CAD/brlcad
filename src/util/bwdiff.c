@@ -61,8 +61,8 @@ open_file(FILE **fp, char *name)
     if (BU_STR_EQUAL(name, "-"))
 	*fp = stdin;
     else if (BU_STR_EQUAL(name, "."))
-	*fp = fopen("/dev/null", "r");
-    else if ((*fp = fopen(name, "r")) == NULL)
+	*fp = fopen("/dev/null", "rb");
+    else if ((*fp = fopen(name, "rb")) == NULL)
 	bu_exit(2, "bwdiff: Can't open \"%s\"\n", name);
 }
 

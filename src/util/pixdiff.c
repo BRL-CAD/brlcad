@@ -84,7 +84,7 @@ main(int argc, char *argv[])
     }
     if (BU_STR_EQUAL(argv[2], "-"))
 	f2 = stdin;
-    else if ((f2 = fopen(argv[2], "r")) == NULL) {
+    else if ((f2 = fopen(argv[2], "rb")) == NULL) {
 	perror(argv[2]);
 	return 1;
     }

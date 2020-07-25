@@ -77,7 +77,7 @@ get_args(int argc, char *argv[], long *width, long *height)
 		autosize = 0;
 		break;
 	    case 'o': {
-		outfp = fopen(bu_optarg, "w+");
+		outfp = fopen(bu_optarg, "wb+");
 		if (outfp == (FILE *)NULL) {
 		    bu_exit(1, "%s: cannot open \"%s\" for writing\n", bu_getprogname(), bu_optarg);
 		}
