@@ -91,22 +91,24 @@ main(int argc, char **argv)
     }
 
     if (argc == 5) {
-	if ((outfp = fopen(argv[4], "w")) == NULL) {
+	if ((outfp = fopen(argv[4], "wb")) == NULL) {
 	    perror(argv[4]);
 	    return 2;
 	}
     } else {
 	outfp = stdout;
     }
+    setmode(outfp, O_BINARY);
 
     if (argc >= 4) {
-	if ((infp = fopen(argv[3], "r")) == NULL) {
+	if ((infp = fopen(argv[3], "rb")) == NULL) {
 	    perror(argv[3]);
 	    return 3;
 	}
     } else {
 	infp = stdin;
     }
+    setmode(infp, O_BINARY);
 
     if (isatty(fileno(outfp))) {
 	fprintf(stderr, "cv: trying to send binary output to terminal\n");
