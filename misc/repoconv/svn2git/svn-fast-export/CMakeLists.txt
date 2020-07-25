@@ -53,7 +53,7 @@ set(SVN2GIT_SRCS
   CommandLineParser.cpp
   )
 
-add_definitions(-DVER="brlcad-svn2git-20140907")
+add_definitions(-DVER="brlcad-svn2git-20200725")
 
 add_executable(svn-all-fast-export ${SVN2GIT_SRCS})
 target_link_libraries(svn-all-fast-export ${SUBVERSION_LIBRARIES} ${Qt5Core_LIBRARIES})
