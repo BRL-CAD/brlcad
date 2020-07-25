@@ -6,7 +6,14 @@
 #include <regex>
 #include "cxxopts.hpp"
 
-int verify_repos(std::string rev, std::string branch_svn, std::string sha1, std::string git_repo, std::string svn_repo)
+class cmp_info {
+    public:
+	std::string rev;
+	std::string branch_svn;
+	std::string sha1;
+};
+
+int verify_repos(cmp_info &info, std::string git_repo, std::string svn_repo)
 {
     int ret = 0;
     std::string git_fi;
@@ -16,18 +23,18 @@ int verify_repos(std::string rev, std::string branch_svn, std::string sha1, std:
     branch_mappings[std::string("trunk")] = std::string("master");
     branch_mappings[std::string("dmtogl-branch")] = std::string("dmtogl");
 
-    if (branch_mappings.find(branch_svn) != branch_mappings.end()) {
-	branch_git = branch_mappings[branch_svn];
+    if (branch_mappings.find(info.branch_svn) != branch_mappings.end()) {
+	branch_git = branch_mappings[info.branch_svn];
     }
 
-    std::cout << "Verifying r" << rev << ", branch " << branch_svn << "\n";
+    std::cout << "Verifying r" << info.rev << ", branch " << info.branch_svn << "\n";
 
     // First, check out the correct SVN tree
     std::string svn_cmd;
-    if (branch_svn == std::string("trunk")) {
-	svn_cmd = std::string("svn co -q -r") + rev + std::string(" file://") + svn_repo + std::string("/brlcad/trunk brlcad_svn_checkout");
+    if (info.branch_svn == std::string("trunk")) {
+	svn_cmd = std::string("svn co -q -r") + info.rev + std::string(" file://") + svn_repo + std::string("/brlcad/trunk brlcad_svn_checkout");
     } else {
-	svn_cmd = std::string("svn co -q file://") + svn_repo + std::string("/brlcad/branches/") + branch_svn + std::string("@") + rev + std::string(" brlcad_svn_checkout");
+	svn_cmd = std::string("svn co -q file://") + svn_repo + std::string("/brlcad/branches/") + info.branch_svn + std::string("@") + info.rev + std::string(" brlcad_svn_checkout");
     }
 
     std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout");
@@ -51,7 +58,7 @@ int verify_repos(std::string rev, std::string branch_svn, std::string sha1, std:
     }
 
     // Have SVN, get Git
-    std::string git_checkout = std::string("cd ") + git_repo + std::string(" && git checkout ") + sha1 + std::string(" && cd ..");
+    std::string git_checkout = std::string("cd ") + git_repo + std::string(" && git checkout ") + info.sha1 + std::string(" && cd ..");
     if (std::system(git_checkout.c_str())) {
 	std::cerr << "git checkout failed!\n";
 	exit(1);
@@ -61,7 +68,7 @@ int verify_repos(std::string rev, std::string branch_svn, std::string sha1, std:
     std::string repo_diff = std::string("diff --no-dereference -qrw -I '\\$Id' -I '\\$Revision' -I'\\$Header' -I'$Source' -I'$Date' -I'$Log' -I'$Locker' --exclude \".cvsignore\" --exclude \".gitignore\" --exclude \"terra.dsp\" --exclude \".git\" --exclude \".svn\" --exclude \"saxon65.jar\" --exclude \"xalan27.jar\" brlcad_svn_checkout ") + git_repo;
     int diff_ret = std::system(repo_diff.c_str());
     if (diff_ret) {
-        std::cout << "diff test failed, r" << rev << ", branch " << branch_svn << "\n";
+        std::cout << "diff test failed, r" << info.rev << ", branch " << info.branch_svn << "\n";
         exit(1);
     }
 
@@ -127,12 +134,18 @@ int main(int argc, char *argv[])
         std::cerr << "Could not open sha1 file: commits.txt\n";
         exit(-1);
     }
+
+
+    std::map<int, cmp_info> rev_to_cmp;
+
     std::string sha1;
+    std::cout << "Building test pairing information...\n";
     while (std::getline(infile, sha1)) {
         // Skip empty lines
         if (!sha1.length()) {
             continue;
         }
+
 	// Get commit msg
 	std::string get_msg = std::string("cd ") + git_repo + std::string(" && git log -1 " + sha1 + " --pretty=format:\"%B\" > ../msg.txt && cd ..");
 	ret = std::system(get_msg.c_str());
@@ -167,10 +180,9 @@ int main(int argc, char *argv[])
 	std::regex bdelete_regex(".*svn branch delete.*");
 	std::smatch bd_match;
 	if (std::regex_search(msg, bd_match, bdelete_regex)) {
-	    std::cerr << "branch delete commit, skipping verification\n";
+	    std::cerr << rev << " is a branch delete commit, skipping verification\n";
 	    continue;
 	}
-
 
 	std::string branch("trunk");
 	std::regex branch_regex(".*svn:branch:([a-zA-Z0-9_-]+).*");
@@ -179,14 +191,26 @@ int main(int argc, char *argv[])
 	    branch = std::string(bmatch[1]);
 	}
 
-	std::cout << "Branch " << branch << ", rev: " << rev << "\n";
-	if (std::stol(rev) < 29866) {
-	    std::cout << "Revisions from the CVS era are problematic, skipping " << rev << "\n";
-	    continue;
-	}
-	verify_repos(rev, branch, sha1, git_repo, svn_repo);
+	cmp_info info;
+	info.rev = rev;
+	info.branch_svn = branch;
+	info.sha1 = sha1;
+	rev_to_cmp[std::stol(rev)] = info;
+
     }
 
+    std::cerr << "Starting verifications...\n";
+
+    std::map<int, cmp_info>::reverse_iterator r_it;
+    for(r_it = rev_to_cmp.rbegin(); r_it != rev_to_cmp.rend(); r_it++) {
+
+	if (std::stol(r_it->second.rev) < 29866) {
+	    std::cout << "Revisions from the CVS era are problematic, stopping here.\n";
+	    exit(0);
+	}
+
+	verify_repos(r_it->second, git_repo, svn_repo);
+    }
 }
 
 // Local Variables:
