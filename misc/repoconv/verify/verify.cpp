@@ -40,6 +40,186 @@ class cmp_info {
 	std::string svn_check_cmds;
 };
 
+/* Assuming a tree checked out, build a tree based on the contents */
+
+class filemodify {
+    public:
+	std::string hash;
+	std::string path;
+};
+
+void run_cmd(std::string &cmd)
+{
+    if (std::system(cmd.c_str())) {
+	std::cerr << "cmd \"" << cmd << "\" failed!\n";
+	exit(1);
+    }
+}
+
+void
+get_exec_paths(std::vector<filemodify> &m)
+{
+    std::string exec_cmd = std::string("cd brlcad && find . -type f ! -path \\*/CVS/\\* -executable | sed -e 's/.\\///' > ../exec.txt && cd ..");
+    run_cmd(exec_cmd);
+    std::ifstream infile("exec.txt", std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open file: exec.txt\n";
+	exit(-1);
+    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+	filemodify nm;
+	nm.path = std::string("\"") + line + std::string("\"");
+	m.push_back(nm);
+    }
+    infile.close();
+}
+
+void
+get_exec_hashes(std::vector<filemodify> &m)
+{
+    std::string exec_hash = std::string("cd brlcad && cat ../exec.txt |xargs git hash-object > ../exec_hashes.txt && cd ..");
+    run_cmd(exec_hash);
+    std::ifstream infile("exec_hashes.txt", std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open file: exec_hashes.txt\n";
+	exit(-1);
+    }
+    int cnt = 0;
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+	filemodify *nm = &m[cnt];
+	nm->hash = line;
+	cnt++;
+    }
+    infile.close();
+}
+
+void
+get_noexec_paths(std::vector<filemodify> &m)
+{
+    std::string noexec_cmd = std::string("cd brlcad && find . -type f ! -path \\*/CVS/\\* ! -executable | sed -e 's/.\\///' > ../noexec.txt && cd ..");
+    run_cmd(noexec_cmd);
+    std::ifstream infile("noexec.txt", std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open file: noexec.txt\n";
+	exit(-1);
+    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+	filemodify nm;
+	nm.path = std::string("\"") + line + std::string("\"");
+	m.push_back(nm);
+    }
+    infile.close();
+}
+
+void
+get_noexec_hashes(std::vector<filemodify> &m)
+{
+    std::string noexec_hash = std::string("cd brlcad && cat ../noexec.txt |xargs git hash-object > ../noexec_hashes.txt && cd ..");
+    run_cmd(noexec_hash);
+    std::ifstream infile("noexec_hashes.txt", std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open file: noexec_hashes.txt\n";
+	exit(-1);
+    }
+    int cnt = 0;
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+	filemodify *nm = &m[cnt];
+	nm->hash = line;
+	cnt++;
+    }
+    infile.close();
+}
+
+void
+build_blobs(std::string &sha1)
+{
+    std::vector<std::string> paths;
+    std::ifstream exec_file("exec.txt", std::ifstream::binary);
+    if (!exec_file.good()) {
+	std::cerr << "Could not open file: exec.txt\n";
+	exit(-1);
+    }
+    std::string line;
+    while (std::getline(exec_file, line)) {
+	paths.push_back(line);
+    }
+    exec_file.close();
+
+    std::ifstream noexec_file("noexec.txt", std::ifstream::binary);
+    if (!noexec_file.good()) {
+	std::cerr << "Could not open file: noexec.txt\n";
+	exit(-1);
+    }
+    while (std::getline(noexec_file, line)) {
+	paths.push_back(line);
+    }
+    noexec_file.close();
+
+    std::string sha1file = sha1 + std::string("-blob.fi");
+    std::ofstream outfile(sha1file.c_str(), std::ifstream::binary);
+    if (!outfile.good()) {
+	std::cerr << "Could not open file: " << sha1file << "\n";
+	exit(-1);
+    }
+
+    for (size_t i = 0; i < paths.size(); i++) {
+	std::string path = std::string("brlcad/") + paths[i];
+	std::ifstream file(path, std::ios::binary | std::ios::ate);
+	std::streamsize size = file.tellg();
+	file.seekg(0, std::ios::beg);
+	std::vector<char> buffer(size);
+	if (file.read(buffer.data(), size))
+	{
+	    outfile << "blob\n";
+	    outfile << "data " << size << "\n";
+	    outfile.write(reinterpret_cast<char*>(buffer.data()), size);
+	}
+	file.close();
+    }
+
+    outfile.close();
+}
+
+int
+build_cvs_tree(std::string sha1)
+{
+    std::vector<filemodify> exec_mods;
+    std::vector<filemodify> noexec_mods;
+    get_exec_paths(exec_mods);
+    get_exec_hashes(exec_mods);
+    get_noexec_paths(noexec_mods);
+    get_noexec_hashes(noexec_mods);
+    build_blobs(sha1);
+
+    std::string sha1file = sha1 + std::string("-tree.fi");
+    std::ofstream outfile(sha1file.c_str(), std::ifstream::binary);
+    if (!outfile.good()) {
+	std::cerr << "Could not open file: " << sha1file << "\n";
+	exit(-1);
+    }
+
+    for (size_t i = 0; i < exec_mods.size(); i++) {
+	outfile << "M 100755 " << exec_mods[i].hash << " " << exec_mods[i].path << "\n";
+    }
+
+    for (size_t i = 0; i < noexec_mods.size(); i++) {
+	outfile << "M 100644 " << noexec_mods[i].hash << " " << noexec_mods[i].path << "\n";
+    }
+
+
+    std::string cleanup("rm exec.txt noexec.txt exec_hashes.txt noexec_hashes.txt");
+    run_cmd(cleanup);
+    return 0;
+}
+
 int verify_repos_cvs(cmp_info &info, std::string git_repo, std::string cvs_repo) {
     std::string cvs_cmd;
     if (info.branch_svn == std::string("trunk")) {
@@ -74,7 +254,8 @@ int verify_repos_cvs(cmp_info &info, std::string git_repo, std::string cvs_repo)
     int diff_ret = std::system(repo_diff.c_str());
     if (diff_ret) {
         std::cerr << "CVS vs Git: diff test failed, r" << info.rev << ", branch " << info.branch_svn << "\n";
-        return 1;
+	build_cvs_tree(info.sha1);
+	return 1;
     }
 
     return 0;
