@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
     std::set<std::pair<long, size_t>>::reverse_iterator r_it;
     for(r_it = timestamp_to_cmp.rbegin(); r_it != timestamp_to_cmp.rend(); r_it++) {
 	int cvs_err = 0;
-	int svn_err = 1;
+	int svn_err = 0;
 	cmp_info &info = cmp_infos[r_it->second];
 
 	if (info.rev.length()) {
@@ -365,7 +365,7 @@ int main(int argc, char *argv[])
 
 	// If we have a revision, check the SVN repository
 	if (info.rev.length()) {
-	svn_err = verify_repos_svn(info, git_repo, svn_repo);
+	    svn_err = verify_repos_svn(info, git_repo, svn_repo);
 	}
 
 	// If we saw any errors, report the commands that prompted them:
