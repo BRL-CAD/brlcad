@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
 
 	// If we saw any errors, report the commands that prompted them:
 	if (cvs_err || svn_err) {
-	    std::cerr << "Differences found:\n";
+	    std::cerr << "Differences found (" << info.sha1 << "):\n";
 	    std::cerr << "Git checkout command:\n\t" << info.git_check_cmds << "\n";
 	    if (cvs_err) {
 		std::cerr << "CVS check cmds:\n\t" << info.cvs_check_cmds << "\n";
