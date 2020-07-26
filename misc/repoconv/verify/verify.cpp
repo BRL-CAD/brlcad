@@ -220,7 +220,7 @@ build_cvs_tree(std::string sha1)
     return 0;
 }
 
-int verify_repos_cvs(cmp_info &info, std::string git_repo, std::string cvs_repo) {
+int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::string git_repo, std::string cvs_repo) {
     std::string cvs_cmd;
     if (info.branch_svn == std::string("trunk")) {
 	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -P brlcad");
@@ -255,6 +255,8 @@ int verify_repos_cvs(cmp_info &info, std::string git_repo, std::string cvs_repo)
     if (diff_ret) {
         std::cerr << "CVS vs Git: diff test failed, r" << info.rev << ", branch " << info.branch_svn << "\n";
 	build_cvs_tree(info.sha1);
+	cvs_problem_sha1s << info.sha1 << "\n";
+	cvs_problem_sha1s.flush();
 	return 1;
     }
 
@@ -411,6 +413,8 @@ int main(int argc, char *argv[])
     long max_rev = LONG_MAX;
     long min_rev = 0;
 
+    std::ofstream cvs_problem_sha1s("cvs_problem_sha1.txt", std::ifstream::binary);
+
     try
     {
 	cxxopts::Options options(argv[0], " - verify svn->git conversion");
@@ -564,7 +568,7 @@ int main(int argc, char *argv[])
 
 	// If we're old enough and have the cvs repository, check it
 	if (cvs_repo.length() && info.timestamp < cvs_maxtime) {
-	    cvs_err = verify_repos_cvs(info, git_repo, cvs_repo);
+	    cvs_err = verify_repos_cvs(cvs_problem_sha1s, info, git_repo, cvs_repo);
 	}
 
 	// If we have the SVN repo and a revision, check SVN
@@ -592,6 +596,8 @@ int main(int argc, char *argv[])
 	    }
 	}
     }
+
+    cvs_problem_sha1s.close();
 }
 
 // Local Variables:
