@@ -16,6 +16,7 @@
 #include <iostream>
 #include <map>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <string>
 #include "cxxopts.hpp"
@@ -138,8 +139,11 @@ int verify_repos_svn(cmp_info &info, std::string git_repo, std::string svn_repo)
 int main(int argc, char *argv[])
 {
     int ret;
-    int start_rev = INT_MAX;
+    int max_rev = INT_MAX;
+    int min_rev = 0;
     std::string cvs_repo = std::string();
+    long cvs_maxtime = 1199132714;
+    long min_timestamp = 0;
 
     try
     {
@@ -147,7 +151,8 @@ int main(int argc, char *argv[])
 
 	options.add_options()
 	    ("cvs-repo", "Use the specified CVS repository for checks", cxxopts::value<std::vector<std::string>>(), "path to repo")
-	    ("s,start-rev", "Skip any revision higher than this number", cxxopts::value<int>(), "#")
+	    ("max-rev", "Skip any revision higher than this number", cxxopts::value<int>(), "#")
+	    ("min-rev", "Skip any revision lower than this number", cxxopts::value<int>(), "#")
 	    ("h,help", "Print help")
 	    ;
 
@@ -165,9 +170,14 @@ int main(int argc, char *argv[])
 	    cvs_repo = ff[0];
 	}
 
-	if (result.count("s"))
+	if (result.count("max-rev"))
 	{
-	    start_rev = result["s"].as<int>();
+	    max_rev = result["max-rev"].as<int>();
+	}
+
+	if (result.count("min-rev"))
+	{
+	    min_rev = result["min-rev"].as<int>();
 	}
 
     }
@@ -204,7 +214,8 @@ int main(int argc, char *argv[])
     }
 
 
-    std::map<int, cmp_info> rev_to_cmp;
+    std::vector<cmp_info> cmp_infos;
+    std::set<std::pair<long, size_t>> timestamp_to_cmp;
 
     std::string sha1;
     std::cout << "Building test pairing information...\n";
@@ -221,7 +232,6 @@ int main(int argc, char *argv[])
 	    std::cerr << "getting git commit message failed!\n";
 	    return -1;
 	}
-
 	std::ifstream msg_infile("msg.txt");
 	if (!msg_infile.good()) {
 	    std::cerr << "Could not open msg.txt file\n";
@@ -232,16 +242,44 @@ int main(int argc, char *argv[])
 	msg_infile.close();
 
 
+	// Get commit timestamp
+	std::string get_timestamp = std::string("cd ") + git_repo + std::string(" && git log -1 " + sha1 + " --pretty=format:\"%ct\" > ../timestamp.txt && cd ..");
+	ret = std::system(get_timestamp.c_str());
+	if (ret) {
+	    std::cerr << "getting git commit timestamp failed!\n";
+	    return -1;
+	}
+	std::ifstream timestamp_infile("timestamp.txt");
+	if (!timestamp_infile.good()) {
+	    std::cerr << "Could not open timestamp.txt file\n";
+	    exit(-1);
+	}
+	std::string timestamp_str((std::istreambuf_iterator<char>(timestamp_infile)), std::istreambuf_iterator<char>());
+	timestamp_infile.close();
+	long timestamp = std::stol(timestamp_str);
+
+
 	std::regex revnum_regex(".*svn:revision:([0-9]+).*");
 	std::smatch rmatch;
-	if (!std::regex_search(msg, rmatch, revnum_regex)) {
+	std::string rev;
+	if (!std::regex_search(msg, rmatch, revnum_regex) && timestamp > 1199132714) {
 	    std::cerr << "No svn id found for " << sha1 << ", skipping verification\n";
 	    continue;
+	} else {
+	    rev = std::string(rmatch[1]);
 	}
-	std::string rev = std::string(rmatch[1]);
+	if (rev.length()) {
+	    if (std::stol(rev) > max_rev) {
+		continue;
+	    }
 
-	if (std::stol(rev) > start_rev) {
-	    continue;
+	    if (std::stol(rev) < min_rev) {
+		continue;
+	    }
+
+	    if (std::stol(rev) == min_rev) {
+		min_timestamp = timestamp;
+	    }
 	}
 
 	// svn branch deletes can't be verified by checkout, skip those
@@ -249,6 +287,11 @@ int main(int argc, char *argv[])
 	std::smatch bd_match;
 	if (std::regex_search(msg, bd_match, bdelete_regex)) {
 	    std::cerr << rev << " is a branch delete commit, skipping verification\n";
+	    continue;
+	}
+
+	// If we know to skip based on time, do so
+	if (min_timestamp && timestamp < min_timestamp) {
 	    continue;
 	}
 
@@ -265,7 +308,7 @@ int main(int argc, char *argv[])
 	info.sha1 = sha1;
 
 	// If old enough and we have a CVS repo to check against, get CVS compatible date
-	if (std::stol(rev) < 29866 && cvs_repo.length()) {
+	if (timestamp < 1199132714 && cvs_repo.length()) {
 	    std::string get_date = std::string("cd ") + git_repo + std::string(" && git log -1 " + sha1 + " --pretty=format:\"%ci\" > ../date.txt && cd ..");
 	    ret = std::system(get_date.c_str());
 	    if (ret) {
@@ -288,18 +331,23 @@ int main(int argc, char *argv[])
 	    info.cvs_date = std::string();
 	}
 
-	rev_to_cmp[std::stol(rev)] = info;
+	cmp_infos.push_back(info);
+	timestamp_to_cmp.insert(std::make_pair(timestamp, cmp_infos.size()-1));
     }
 
     std::cerr << "Starting verifications...\n";
 
-    std::map<int, cmp_info>::reverse_iterator r_it;
-    for(r_it = rev_to_cmp.rbegin(); r_it != rev_to_cmp.rend(); r_it++) {
+    std::set<std::pair<long, size_t>>::reverse_iterator r_it;
+    for(r_it = timestamp_to_cmp.rbegin(); r_it != timestamp_to_cmp.rend(); r_it++) {
 	int cvs_err = 0;
 	int svn_err = 1;
-	cmp_info &info = r_it->second;
+	cmp_info &info = cmp_infos[r_it->second];
 
-	std::cout << "Check SVN revision " << info.rev << "\n";
+	if (info.rev.length()) {
+	    std::cout << "Check SVN revision " << info.rev << "\n";
+	} else {
+	    std::cout << "Check non-SVN commit, timestamp " << r_it->first << "\n";
+	}
 
 	// Git checkout
 	std::string git_checkout = std::string("cd ") + git_repo + std::string(" && git checkout --quiet ") + info.sha1 + std::string(" && cd ..");
@@ -315,8 +363,10 @@ int main(int argc, char *argv[])
 	    cvs_err = verify_repos_cvs(info, git_repo, cvs_repo);
 	}
 
-	// Always check the SVN repository
+	// If we have a revision, check the SVN repository
+	if (info.rev.length()) {
 	svn_err = verify_repos_svn(info, git_repo, svn_repo);
+	}
 
 	// If we saw any errors, report the commands that prompted them:
 	if (cvs_err || svn_err) {
