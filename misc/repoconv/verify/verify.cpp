@@ -29,7 +29,7 @@ class cmp_info {
 	long timestamp = 0;
 	std::string rev;
 	long svn_rev = 0;
-	
+
 	std::string branch_svn = "trunk";
 	std::string cvs_date;
 
@@ -158,6 +158,8 @@ parse_git_info(std::vector<cmp_info> &commits, const char *fname)
     std::regex revnum_regex(".*svn:revision:([0-9]+).*");
     std::regex branch_regex(".*svn:branch:([a-zA-Z0-9_-]+).*");
     std::regex bdelete_regex(".*svn branch delete.*");
+    std::regex note_regex(".*Note SVN revision and branch*");
+    std::regex note_regex2(".*Note SVN revision [0-9]+.*");
 
     std::string line;
     while (std::getline(infile, line)) {
@@ -168,6 +170,7 @@ parse_git_info(std::vector<cmp_info> &commits, const char *fname)
 	    std::getline(infile, ncommit.timestamp_str);
 	    ncommit.timestamp = std::stol(ncommit.timestamp_str);
 	    std::getline(infile, ncommit.cvs_date);
+	    bool note_commit = false;
 
 	    while (line != estr) {
 		std::getline(infile, line);
@@ -188,6 +191,18 @@ parse_git_info(std::vector<cmp_info> &commits, const char *fname)
 		if (std::regex_search(line, bd_match, bdelete_regex)) {
 		    ncommit.branch_delete = true;
 		}
+		std::smatch note_match;
+		if (std::regex_search(line, note_match, note_regex)) {
+		    note_commit = true;
+		}
+		std::smatch note_match2;
+		if (std::regex_search(line, note_match2, note_regex2)) {
+		    note_commit = true;
+		}
+	    }
+
+	    if (note_commit) {
+		continue;
 	    }
 
 	    commits.push_back(ncommit);
@@ -211,7 +226,7 @@ int main(int argc, char *argv[])
     std::string svn_repo = std::string();
     long cvs_maxtime = 1199132714;
     long min_timestamp = 0;
-    long max_timestamp = 0;
+    long max_timestamp = LONG_MAX;
     long max_rev = LONG_MAX;
     long min_rev = 0;
 
@@ -288,6 +303,12 @@ int main(int argc, char *argv[])
     std::vector<cmp_info> commits;
     parse_git_info(commits, "commits.txt");
 
+    // If we're doing a CVS only check, there's no point in working
+    // with newer commits
+    if (!svn_repo.length() && cvs_repo.length()) {
+	max_timestamp = cvs_maxtime;
+    }
+
     // Figure out min/max timestamps from the min/max revs, if we have them
     std::map<long, long> rev_to_timestamp;
     for (size_t i = 0; i < commits.size(); i++) {
@@ -331,9 +352,9 @@ int main(int argc, char *argv[])
 
 	timestamp_to_cmp.insert(std::make_pair(commits[i].timestamp, i));
 	if (commits[i].svn_rev) {
-	    std::cout << "Checking revision " << commits[i].rev << "\n";
+	    std::cout << "Queueing revision " << commits[i].rev << "\n";
 	} else {
-	    std::cout << "Checking " << commits[i].sha1 << ", timestamp " << commits[i].timestamp << "\n";
+	    std::cout << "Queueing " << commits[i].sha1 << ", timestamp " << commits[i].timestamp << "\n";
 	}
     }
 
@@ -384,7 +405,7 @@ int main(int argc, char *argv[])
 	    if (svn_err) {
 		std::cerr << "SVN check cmds:\n\t" << info.svn_check_cmds << "\n";
 	    } else {
-		if (cvs_repo.length() && info.rev.length()) {
+		if (svn_repo.length() && info.rev.length()) {
 		    std::cerr << "SVN check: OK\n";
 		}
 	    }
