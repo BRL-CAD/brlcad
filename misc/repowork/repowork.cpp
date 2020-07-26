@@ -100,6 +100,11 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 	    s->commits[i].svn_id = std::string(svnidvar[1]);
 	    std::cout << "Identified revision " << s->commits[i].svn_id << "\n";
 
+	    // Store the id->sha1 relationship for potential later use
+	    if (s->commits[i].id.sha1.length()) {
+		s->rev_to_sha1[s->commits[i].svn_id] = s->commits[i].id.sha1;
+	    }
+
 	    // We wrote the wrong SVN branch name for older dmtogl branches -
 	    // names were deliberately collapsed in git conversion, but we
 	    // should reflect the original SVN history in the metadata.  Undo
@@ -221,7 +226,103 @@ git_map_svn_committers(git_fi_data *s, std::string &svn_map)
     return 0;
 }
 
+int
+git_id_cvs_commits(git_fi_data *s, std::string &cvs_id_file, std::string &child_commits_file)
+{
+    {
+	// read children
+	std::ifstream cfile(child_commits_file, std::ifstream::binary);
+	if (!cfile.good()) {
+	    std::cerr << "Could not open child_commits_file file: " << child_commits_file << "\n";
+	    exit(-1);
+	}
 
+	std::string rline;
+	while (std::getline(cfile, rline)) {
+	    // Skip empty lines
+	    if (!rline.length()) {
+		continue;
+	    }
+
+	    // First 40 characters are the key
+	    std::string key = rline.substr(0, 40);
+	    rline.erase(0,41); // Remove key and space
+	    std::set<std::string> vals;
+	    while (rline.length() >= 40) {
+		std::string val = rline.substr(0, 40);
+		vals.insert(val);
+		rline.erase(0,41);
+	    }
+	    if (vals.size()) {
+		s->children[key] = vals;
+	    }
+	}
+    }
+
+    {
+	// read cvs ids
+	std::ifstream infile(cvs_id_file, std::ifstream::binary);
+	if (!infile.good()) {
+	    std::cerr << "Could not open cvs_id_file file: " << cvs_id_file << "\n";
+	    exit(-1);
+	}
+
+	std::set<std::string> cvs_ids;
+
+	std::string line;
+	while (std::getline(infile, line)) {
+	    // Skip empty lines
+	    if (!line.length()) {
+		continue;
+	    }
+
+	    std::string sha1;
+	    if (line.length() < 40) {
+		// Given an svn revision - translate it to a sha1
+		if (s->rev_to_sha1.find(line) == s->rev_to_sha1.end()) {
+		    std::cerr << "SVN revision " << line << " could not be mapped to SHA1.  May need to re-export fast import file with --show-original-ids.\n";
+		    exit(1);
+		}
+		sha1 = s->rev_to_sha1[line];
+	    } else {
+		sha1 = line;
+	    }
+
+	    s->rebuild_commits.insert(sha1);
+	    std::cout << "rebuild commit: " << line << " -> " << sha1 << "\n";
+	}
+    }
+
+    // Children of the rebuilt commits will need to fully define their
+    // contents, unless they are also being rebuilt (in which case their
+    // children will need to reset themselves.)
+    std::set<std::string> rbc = s->rebuild_commits;
+    while (rbc.size()) {
+	std::string rb = *rbc.begin();
+	rbc.erase(rb);
+	std::cout << "Finding reset commit(s) for: " << rb << "\n";
+	if (s->children.find(rb) == s->children.end()) {
+	    // No child commits - no further work needed.
+	    std::cout << "Leaf commit: " << rb << "\n";
+	    continue;
+	}
+	std::set<std::string>::iterator c_it;
+	std::set<std::string> rc = s->children[rb];
+	while (rc.size()) {
+	    std::string rcs = *rc.begin();
+	    rc.erase(rcs);
+	    if (s->rebuild_commits.find(rcs) == s->rebuild_commits.end()) {
+		std::cout << "found reset commit: " << rcs << "\n";
+		s->reset_commits.insert(rcs);
+	    } else {
+		if (s->children.find(rcs) != s->children.end()) {
+		    rc.insert(s->children[rcs].begin(), s->children[rcs].end());
+		}
+	    }
+	}
+    }
+    return 0;
+}
 
 
 typedef int (*gitcmd_t)(git_fi_data *, std::ifstream &);
@@ -298,6 +399,9 @@ main(int argc, char *argv[])
     std::string repo_path;
     std::string email_map;
     std::string svn_map;
+    std::string children_file;
+    std::string cvs_id_file;
+    std::string cvs_repo_path;
     int cwidth = 72;
 
     // TODO - might be good do have a "validate" option that does the fast import and then
@@ -308,12 +412,19 @@ main(int argc, char *argv[])
 
 	options.add_options()
 	    ("e,email-map", "Specify replacement username+email mappings (one map per line, format is commit-id-1;commit-id-2)", cxxopts::value<std::vector<std::string>>(), "map file")
-	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
-	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "path to repo")
 	    ("s,svn-map", "Specify svn rev -> committer map (one mapping per line, format is commit-rev name)", cxxopts::value<std::vector<std::string>>(), "map file")
+
 	    ("t,trim-whitespace", "Trim extra spaces and end-of-line characters from the end of commit messages", cxxopts::value<bool>(trim_whitespace))
 	    ("w,wrap-commit-lines", "Wrap long commit lines to 72 cols (won't wrap messages already having multiple non-empty lines)", cxxopts::value<bool>(wrap_commit_lines))
 	    ("width", "Column wrapping width (if enabled)", cxxopts::value<int>(), "N")
+
+	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "path")
+	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
+	   
+	    ("children", "File with output of \"git rev-list --children --all\"", cxxopts::value<std::vector<std::string>>(), "file")
+	    ("cvs-ids", "Specify CVS era commits (revision number or SHA1) to rebuild.  Requires cvs-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
+	    ("cvs-repo", "CVS repository path", cxxopts::value<std::vector<std::string>>(), "path")
+
 	    ("h,help", "Print help")
 	    ;
 
@@ -343,6 +454,24 @@ main(int argc, char *argv[])
 	    svn_map = ff[0];
 	}
 
+	if (result.count("children"))
+	{
+	    auto& ff = result["children"].as<std::vector<std::string>>();
+	    children_file = ff[0];
+	}
+
+	if (result.count("cvs-ids"))
+	{
+	    auto& ff = result["cvs-ids"].as<std::vector<std::string>>();
+	    cvs_id_file = ff[0];
+	}
+
+	if (result.count("cvs-repo"))
+	{
+	    auto& ff = result["cvs-repo"].as<std::vector<std::string>>();
+	    cvs_repo_path = ff[0];
+	}
+
 	if (result.count("width"))
 	{
 	    cwidth = result["width"].as<int>();
@@ -357,6 +486,11 @@ main(int argc, char *argv[])
 
     if (collapse_notes && !repo_path.length()) {
 	std::cerr << "Cannot collapse notes into commit messages without knowing the path\nto the repository - aborting.  (It is necessary to run git log to\ncapture the message information, and for that we need the original\nrepository in addition to the fast-import file.)\n\nTo specify a repo folder, use the -r option.  Currently the folder must be in the working directory.\n";
+	return -1;
+    }
+
+    if ((cvs_id_file.length() && !cvs_repo_path.length()) || (!cvs_id_file.length() && cvs_repo_path.length())) {
+	std::cerr << "Need both CVS id list and CVS repository path for processing!\n";
 	return -1;
     }
 
@@ -396,6 +530,11 @@ main(int argc, char *argv[])
     if (svn_map.length()) {
 	// Handle the svn committers
 	git_map_svn_committers(&fi_data, svn_map);
+    }
+
+    if (cvs_id_file.length()) {
+	// Handle CVS rebuild info
+	git_id_cvs_commits(&fi_data, cvs_id_file, children_file);
     }
 
     fi_data.wrap_width = cwidth;

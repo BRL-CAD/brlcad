@@ -162,6 +162,24 @@ class git_fi_data {
 	    return mark;
 	};
 
+	// For CVS rebuild, we need to store a) which commits must be rebuilt
+	// from the CVS checkout and b) which commits that are "good" in git
+	// immediately follow the rebuilt commits in their respective branches.
+	// The former need new trees and blobs based on the CVS checkout, and
+	// the latter need a full tree deleteall + rebuild commit based on the
+	// git contents (a diff tree in the commit may no longer make the
+	// necessary changes given the previous commit will have changed.)
+	//
+	// If a commit that would otherwise have been a reset commit is a
+	// rebuild commit, it is promoted to rebuild and the next commit
+	// becomes the reset commit.
+	std::set<std::string> rebuild_commits;
+	std::set<std::string> reset_commits;
+	std::map<std::string, std::set<std::string>> children;
+
+	// We also need to be able to translate SVN revs into sha1s
+	std::map<std::string, std::string> rev_to_sha1;
+
     private:
 	long mark = -1;
 };
