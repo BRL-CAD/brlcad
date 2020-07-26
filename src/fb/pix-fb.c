@@ -160,12 +160,13 @@ get_args(int argc, char **argv)
 	if (isatty(fileno(stdin)))
 	    return 0;
 	file_name = "-";
-	infd = 0;
+	infd = fileno(stdin);
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
 	ifname = bu_file_realpath(file_name, NULL);
-	if ((infd = open(ifname, 0)) < 0) {
+	if ((infd = open(ifname, O_RDONLY|O_BINARY)) < 0) {
 	    perror(ifname);
 	    fprintf(stderr,
 		    "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
@@ -174,7 +175,6 @@ get_args(int argc, char **argv)
 	    bu_exit(1, NULL);
 	}
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
-	setmode(infd, O_BINARY);
 	fileinput++;
     }
 

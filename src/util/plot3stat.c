@@ -147,6 +147,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
@@ -157,7 +160,7 @@ main(int argc, char **argv)
 	argv++;
     }
     if (argc == 2) {
-	if ((fp = fopen(argv[1], "r")) == NULL) {
+	if ((fp = fopen(argv[1], "rb")) == NULL) {
 	    perror("plot3stat");
 	    bu_exit (1, NULL);
 	}

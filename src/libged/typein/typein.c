@@ -2441,6 +2441,7 @@ superell_in(struct ged *gedp, const char *cmd_argvs[], struct rt_db_internal *in
 
     n = 14;                             /* SUPERELL has 12 (same as ELL) + 2 (for <n, e>) params */
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SUPERELL;
     intern->idb_meth = &OBJ[ID_SUPERELL];
     BU_ALLOC(intern->idb_ptr, struct rt_superell_internal);
@@ -2865,6 +2866,7 @@ joint_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern
     struct rt_joint_internal *jip;
     n = 10;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_JOINT;
     intern->idb_meth = &OBJ[ID_JOINT];
     intern->idb_ptr = bu_malloc(sizeof(struct rt_joint_internal), "rt_joint_internal");
@@ -2891,7 +2893,7 @@ joint_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern
 
 /*
  * reads datum parameters from keyboard
- *
+n *
  * returns 0 if successfully read
  * 1 if unsuccessfully read
  */
@@ -3035,9 +3037,10 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 	prev = datum;
     }
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_DATUM;
     intern->idb_ptr = datums;
     intern->idb_meth = &OBJ[ID_DATUM];
-    intern->idb_type = ID_DATUM;
 
     /* Set a default color for datum objects */
     bu_avs_add(&intern->idb_avs, "color", "255/255/0");
@@ -3111,6 +3114,7 @@ script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_interna
 {
     struct rt_script_internal *script_ip;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SCRIPT;
     intern->idb_meth = &OBJ[ID_SCRIPT];
     BU_ALLOC(intern->idb_ptr, struct rt_script_internal);
@@ -3125,7 +3129,7 @@ script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_interna
 
 
 int
-ged_in(struct ged *gedp, int argc, const char *argv[])
+ged_in_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     char *name;
@@ -3486,6 +3490,25 @@ do_new_update:
     return GED_OK;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl typein_cmd_impl = {
+    "in",
+    ged_in_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd typein_cmd = { &typein_cmd_impl };
+const struct ged_cmd *typein_cmds[] = { &typein_cmd, NULL };
+
+static const struct ged_plugin pinfo = { typein_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

@@ -67,6 +67,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (argc != 2)
 	printusage ();
     if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )

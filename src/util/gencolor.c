@@ -122,6 +122,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     get_args(argc, argv);
     argc = argc - bu_optind + 1;
     argv = argv + bu_optind - 1;

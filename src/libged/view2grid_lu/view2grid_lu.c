@@ -33,7 +33,7 @@
 
 
 int
-ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
+ged_view2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
 {
     /* intentionally double for scan */
     double view_pt[3];
@@ -74,10 +74,29 @@ bad:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl view2grid_lu_cmd_impl = {
+    "view2grid_lu",
+    ged_view2grid_lu_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd view2grid_lu_cmd = { &view2grid_lu_cmd_impl };
+const struct ged_cmd *view2grid_lu_cmds[] = { &view2grid_lu_cmd, NULL };
+
+static const struct ged_plugin pinfo = { view2grid_lu_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

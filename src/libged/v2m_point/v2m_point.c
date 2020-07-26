@@ -33,7 +33,7 @@
 
 
 int
-ged_v2m_point(struct ged *gedp, int argc, const char *argv[])
+ged_v2m_point_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t view;
     point_t model;
@@ -66,17 +66,17 @@ ged_v2m_point(struct ged *gedp, int argc, const char *argv[])
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad X value - %s\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad X value - %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad Y value - %s\n", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad Y value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad Z value - %s\n", argv[3]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad Z value - %s\n", argv[3]);
 	    return GED_ERROR;
 	}
 
@@ -92,10 +92,29 @@ ged_v2m_point(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl v2m_point_cmd_impl = {
+    "v2m_point",
+    ged_v2m_point_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd v2m_point_cmd = { &v2m_point_cmd_impl };
+const struct ged_cmd *v2m_point_cmds[] = { &v2m_point_cmd, NULL };
+
+static const struct ged_plugin pinfo = { v2m_point_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

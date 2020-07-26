@@ -34,7 +34,7 @@
 
 
 int
-ged_instance(struct ged *gedp, int argc, const char *argv[])
+ged_instance_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     db_op_t oper;
@@ -77,10 +77,29 @@ ged_instance(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl instance_cmd_impl = {"instance", ged_instance_core, GED_CMD_DEFAULT};
+const struct ged_cmd instance_cmd = { &instance_cmd_impl };
+
+struct ged_cmd_impl i_cmd_impl = {"i", ged_instance_core, GED_CMD_DEFAULT};
+const struct ged_cmd i_cmd = { &i_cmd_impl };
+
+
+const struct ged_cmd *instance_cmds[] = { &instance_cmd, &i_cmd, NULL };
+
+static const struct ged_plugin pinfo = { instance_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

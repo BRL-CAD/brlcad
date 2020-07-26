@@ -73,7 +73,7 @@ get_args(int argc, char **argv)
 	}
     }
     if (argv[bu_optind] != NULL) {
-	if ((infp = fopen(argv[bu_optind], "r")) == NULL) {
+	if ((infp = fopen(argv[bu_optind], "rb")) == NULL) {
 	    perror(argv[bu_optind]);
 	    return 0;
 	}
@@ -96,6 +96,9 @@ main(int argc, char **argv)
     size_t ret;
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     infp = stdin;
     if (!get_args(argc, argv)) {

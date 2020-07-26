@@ -51,6 +51,10 @@
 #include "./ged_private.h"
 #include "./qray.h"
 
+/* TODO:  Ew.  Globals. Make this go away... */
+struct ged *_ged_current_gedp;
+vect_t _ged_eye_model;
+mat_t _ged_viewrot;
 
 /* FIXME: this function should not exist.  passing pointers as strings
  * indicates a failure in design and lazy coding.
@@ -191,49 +195,6 @@ ged_free(struct ged *gedp)
 
 }
 
-
-HIDDEN int
-cmds_add(struct ged *gedp, const struct ged_cmd *cmd)
-{
-    struct ged_cmd *copy;
-    BU_GET(copy, struct ged_cmd);
-    memcpy(copy, cmd, sizeof(struct ged_cmd));
-    BU_LIST_INIT_MAGIC(&(copy->l), GED_CMD_MAGIC);
-    BU_LIST_PUSH(&(gedp->cmds->l), copy);
-    return 0;
-}
-
-
-HIDDEN int
-cmds_del(struct ged *gedp, const char *name)
-{
-    struct ged_cmd *cmd;
-    for (BU_LIST_FOR(cmd, ged_cmd, &(gedp->cmds->l))) {
-	if (BU_STR_EQUIV(cmd->name, name)) {
-	    BU_LIST_POP(ged_cmd, &(gedp->cmds->l), cmd);
-	    BU_PUT(cmd, struct ged_cmd);
-	    break;
-	}
-    }
-
-    return 0;
-}
-
-
-HIDDEN int
-cmds_run(struct ged *gedp, int ac, char *av[])
-{
-    struct ged_cmd *cmd;
-    for (BU_LIST_FOR(cmd, ged_cmd, &(gedp->cmds->l))) {
-	if (BU_STR_EQUIV(cmd->name, av[0])) {
-	    return cmd->exec(gedp, ac, (const char **)av);
-	}
-    }
-
-    return 0;
-}
-
-
 void
 ged_init(struct ged *gedp)
 {
@@ -282,13 +243,6 @@ ged_init(struct ged *gedp)
     gedp->ged_output_handler = NULL;
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
-
-    /* set up our command registration container */
-    BU_GET(gedp->cmds, struct ged_cmd);
-    BU_LIST_INIT(&(gedp->cmds->l));
-    gedp->add = &cmds_add;
-    gedp->del = &cmds_del;
-    gedp->run = &cmds_run;
 }
 
 
@@ -699,7 +653,6 @@ _ged_print_node(struct ged *gedp,
     }
     rt_db_free_internal(&intern);
 }
-
 
 /*
  * Local Variables:

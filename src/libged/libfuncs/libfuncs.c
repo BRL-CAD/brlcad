@@ -29,7 +29,7 @@
 #include "ged.h"
 
 int
-ged_mat_ae(struct ged *gedp,
+ged_mat_ae_core(struct ged *gedp,
 	   int argc,
 	   const char *argv[])
 {
@@ -58,7 +58,7 @@ ged_mat_ae(struct ged *gedp,
 
 
 int
-ged_mat_mul(struct ged *gedp,
+ged_mat_mul_core(struct ged *gedp,
 	    int argc,
 	    const char *argv[])
 {
@@ -84,7 +84,7 @@ ged_mat_mul(struct ged *gedp,
 
 
 int
-ged_mat4x3pnt(struct ged *gedp,
+ged_mat4x3pnt_core(struct ged *gedp,
 	      int argc,
 	      const char *argv[])
 {
@@ -112,7 +112,7 @@ ged_mat4x3pnt(struct ged *gedp,
 
 
 int
-ged_mat_scale_about_pnt(struct ged *gedp,
+ged_mat_scale_about_pnt_core(struct ged *gedp,
 		       int argc,
 		       const char *argv[])
 {
@@ -142,3 +142,39 @@ ged_mat_scale_about_pnt(struct ged *gedp,
 
     return GED_OK;
 }
+
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+
+struct ged_cmd_impl mat4x3pnt_cmd_impl = {"mat4x3pnt", ged_mat4x3pnt_core, GED_CMD_DEFAULT};
+const struct ged_cmd mat4x3pnt_cmd = { &mat4x3pnt_cmd_impl };
+
+struct ged_cmd_impl mat_ae_cmd_impl = {"mat_ae", ged_mat_ae_core, GED_CMD_DEFAULT};
+const struct ged_cmd mat_ae_cmd = { &mat_ae_cmd_impl };
+
+struct ged_cmd_impl mat_mul_cmd_impl = {"mat_mul", ged_mat_mul_core, GED_CMD_DEFAULT};
+const struct ged_cmd mat_mul_cmd = { &mat_mul_cmd_impl };
+
+struct ged_cmd_impl mat_scale_about_pnt_cmd_impl = {"mat_scale_about_pnt", ged_mat_scale_about_pnt_core, GED_CMD_DEFAULT};
+const struct ged_cmd mat_scale_about_pnt_cmd = { &mat_scale_about_pnt_cmd_impl };
+
+const struct ged_cmd *mat4x3pnt_cmds[] = { &mat4x3pnt_cmd, &mat_ae_cmd, &mat_mul_cmd, &mat_scale_about_pnt_cmd, NULL };
+
+static const struct ged_plugin pinfo = { mat4x3pnt_cmds, 4 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

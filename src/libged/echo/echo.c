@@ -33,7 +33,7 @@
 
 
 int
-ged_echo(struct ged *gedp, int argc, const char *argv[])
+ged_echo_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
 
@@ -53,10 +53,29 @@ ged_echo(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl echo_cmd_impl = {
+    "echo",
+    ged_echo_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd echo_cmd = { &echo_cmd_impl };
+const struct ged_cmd *echo_cmds[] = { &echo_cmd, NULL };
+
+static const struct ged_plugin pinfo = { echo_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -58,7 +58,7 @@
  *       rays in order to get partition and overlap information.
  */
 int
-ged_nirt(struct ged *gedp, int argc, const char *argv[])
+ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp = NULL;
     FILE *fp_in = NULL;
@@ -417,7 +417,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_vnirt(struct ged *gedp, int argc, const char *argv[])
+ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int status;
@@ -487,17 +487,41 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     av[i++] = bu_vls_addr(&z_vls);
     av[i] = (char *)NULL;
 
-    status = ged_nirt(gedp, argc + 3, (const char **)av);
+    status = ged_nirt_core(gedp, argc + 3, (const char **)av);
 
     bu_vls_free(&x_vls);
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
-    bu_free((void *)av, "ged_vnirt: av");
+    bu_free((void *)av, "ged_vnirt_core: av");
     av = NULL;
 
     return status;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl nirt_cmd_impl = {"nirt", ged_nirt_core, GED_CMD_DEFAULT};
+const struct ged_cmd nirt_cmd = { &nirt_cmd_impl };
+
+struct ged_cmd_impl query_ray_cmd_impl = {"query_ray", ged_nirt_core, GED_CMD_DEFAULT};
+const struct ged_cmd query_ray_cmd = { &query_ray_cmd_impl };
+
+struct ged_cmd_impl vnirt_cmd_impl = {"vnirt", ged_vnirt_core, GED_CMD_DEFAULT};
+const struct ged_cmd vnirt_cmd = { &vnirt_cmd_impl };
+
+struct ged_cmd_impl vquery_ray_cmd_impl = {"vquery_ray", ged_vnirt_core, GED_CMD_DEFAULT};
+const struct ged_cmd vquery_ray_cmd = { &vquery_ray_cmd_impl };
+
+const struct ged_cmd *nirt_cmds[] = { &nirt_cmd, &vnirt_cmd, &query_ray_cmd, &vquery_ray_cmd, NULL };
+
+static const struct ged_plugin pinfo = { nirt_cmds, 4 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

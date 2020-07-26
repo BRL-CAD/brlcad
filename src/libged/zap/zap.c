@@ -39,7 +39,7 @@
  *
  */
 int
-ged_zap(struct ged *gedp, int argc, const char *argv[])
+ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -59,10 +59,31 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl clear_cmd_impl = {"clear", ged_zap_core, GED_CMD_DEFAULT};
+const struct ged_cmd clear_cmd = { &clear_cmd_impl };
+
+struct ged_cmd_impl zap_cmd_impl = {"zap", ged_zap_core, GED_CMD_DEFAULT};
+const struct ged_cmd zap_cmd = { &zap_cmd_impl };
+
+struct ged_cmd_impl Z_cmd_impl = {"Z", ged_zap_core, GED_CMD_DEFAULT};
+const struct ged_cmd Z_cmd = { &Z_cmd_impl };
+
+const struct ged_cmd *zap_cmds[] = { &clear_cmd, &zap_cmd, &Z_cmd, NULL };
+
+static const struct ged_plugin pinfo = { zap_cmds, 3 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

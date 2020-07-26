@@ -245,6 +245,9 @@ int main(int ac, char **av)
 
     bu_setprogname(av[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     (void)parse_args(ac, av);
     if (isatty(fileno(stdin)))
 	usage();

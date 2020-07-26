@@ -34,7 +34,7 @@
 
 
 int
-ged_units(struct ged *gedp, int argc, const char *argv[])
+ged_units_core(struct ged *gedp, int argc, const char *argv[])
 {
     double loc2mm;
     const char *str;
@@ -63,7 +63,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 
 	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(vlsp));
 	    bu_vls_free(vlsp);
-	    bu_free(vlsp, "ged_units: vlsp");
+	    bu_free(vlsp, "ged_units_core: vlsp");
 
 	    return GED_OK;
 	}
@@ -108,10 +108,29 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl units_cmd_impl = {
+    "units",
+    ged_units_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd units_cmd = { &units_cmd_impl };
+const struct ged_cmd *units_cmds[] = { &units_cmd, NULL };
+
+static const struct ged_plugin pinfo = { units_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

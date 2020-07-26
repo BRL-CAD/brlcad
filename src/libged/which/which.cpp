@@ -41,8 +41,8 @@ bool alphanum_cmp(const std::string& a, const std::string& b) {
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
 
-int
-ged_which(struct ged *gedp, int argc, const char *argv[])
+extern "C" int
+ged_which_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -289,6 +289,30 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl which_cmd_impl = { "which", ged_which_core, GED_CMD_DEFAULT };
+    const struct ged_cmd which_cmd = { &which_cmd_impl };
+
+    struct ged_cmd_impl whichair_cmd_impl = { "whichair", ged_which_core, GED_CMD_DEFAULT };
+    const struct ged_cmd whichair_cmd = { &whichair_cmd_impl };
+
+    struct ged_cmd_impl whichid_cmd_impl = { "whichid", ged_which_core, GED_CMD_DEFAULT };
+    const struct ged_cmd whichid_cmd = { &whichid_cmd_impl };
+
+
+    const struct ged_cmd *which_cmds[] = { &which_cmd,  &whichair_cmd, &whichid_cmd, NULL };
+
+    static const struct ged_plugin pinfo = { which_cmds, 3 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
+#endif
 
 /*
  * Local Variables:

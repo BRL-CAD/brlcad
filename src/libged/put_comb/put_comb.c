@@ -469,7 +469,7 @@ put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 
 
 int
-ged_put_comb(struct ged *gedp, int argc, const char *argv[])
+ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "comb_name color shader inherit boolean_expr is_region [ regionID airID materialID los% ]";
     static const char *noregionusage = "comb_name color shader inherit boolean_expr n";
@@ -603,10 +603,29 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl put_comb_cmd_impl = {
+    "put_comb",
+    ged_put_comb_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd put_comb_cmd = { &put_comb_cmd_impl };
+const struct ged_cmd *put_comb_cmds[] = { &put_comb_cmd, NULL };
+
+static const struct ged_plugin pinfo = { put_comb_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

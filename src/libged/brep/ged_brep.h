@@ -93,30 +93,23 @@ struct _ged_brep_info {
 int
 _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv);
 
-/* defined in draw.c */
-extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
-				       struct bn_vlblock *vbp,
-				       const char *name,
-				       int copy);
+GED_EXPORT extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
+GED_EXPORT extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
+GED_EXPORT extern int brep_pick(struct _ged_brep_info *gb, int argc, const char **argv);
+GED_EXPORT extern int brep_plot(struct _ged_brep_info *gb, int argc, const char **argv);
+GED_EXPORT extern int brep_tikz(struct _ged_brep_info *gb, const char *outfile);
+GED_EXPORT extern int brep_valid(struct bu_vls *vls, struct rt_db_internal *intern, int argc, const char **argv);
 
-extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
+GED_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
+GED_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 
-extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
-extern int brep_pick(struct _ged_brep_info *gb, int argc, const char **argv);
-extern int brep_plot(struct _ged_brep_info *gb, int argc, const char **argv);
-extern int brep_tikz(struct _ged_brep_info *gb, const char *outfile);
-extern int brep_valid(struct bu_vls *vls, struct rt_db_internal *intern, int argc, const char **argv);
-
-extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
-extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
-
-extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
-extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
-extern int brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
-extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
-extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
-extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
+GED_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+GED_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+GED_EXPORT extern int brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+GED_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+GED_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+GED_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 
 using namespace brlcad;
 void

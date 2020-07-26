@@ -34,73 +34,8 @@
 
 #include "../ged_private.h"
 
-
-void
-_ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
-{
-    int id;
-    struct rt_db_internal intern;
-
-    RT_CK_DBI(gedp->ged_wdbp->dbip);
-
-    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-	/* this is the _GLOBAL object */
-	struct bu_attribute_value_set avs;
-	struct bu_attribute_value_pair *avp;
-
-	bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
-	bu_vls_strcat(gedp->ged_result_str, ": global attributes object\n");
-	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for %s\n", dp->d_namep);
-	    return;
-	}
-/* !!! left off here*/
-	for (BU_AVS_FOR(avp, &avs)) {
-	    if (BU_STR_EQUAL(avp->name, "units")) {
-		double conv;
-		const char *str;
-
-		conv = atof(avp->value);
-		bu_vls_strcat(gedp->ged_result_str, "\tunits: ");
-		if ((str=bu_units_string(conv)) == NULL) {
-		    bu_vls_strcat(gedp->ged_result_str, "Unrecognized units\n");
-		} else {
-		    bu_vls_strcat(gedp->ged_result_str, str);
-		    bu_vls_putc(gedp->ged_result_str, '\n');
-		}
-	    } else {
-		bu_vls_putc(gedp->ged_result_str, '\t');
-		bu_vls_strcat(gedp->ged_result_str, avp->name);
-		bu_vls_strcat(gedp->ged_result_str, ": ");
-		bu_vls_strcat(gedp->ged_result_str, avp->value);
-		bu_vls_putc(gedp->ged_result_str, '\n');
-	    }
-	}
-    } else {
-
-	if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
-				     (fastf_t *)NULL, &rt_uniresource)) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
-	    rt_db_free_internal(&intern);
-	    return;
-	}
-
-	bu_vls_printf(gedp->ged_result_str, "%s:  ", dp->d_namep);
-
-	if (!OBJ[id].ft_describe ||
-	    OBJ[id].ft_describe(gedp->ged_result_str,
-				&intern,
-				verbose,
-				gedp->ged_wdbp->dbip->dbi_base2local) < 0)
-	    bu_vls_printf(gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
-	rt_db_free_internal(&intern);
-    }
-}
-
-
 int
-ged_list(struct ged *gedp, int argc, const char *argv[])
+ged_list_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int arg;
@@ -200,10 +135,28 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl list_cmd_impl = {"list", ged_list_core, GED_CMD_DEFAULT};
+const struct ged_cmd list_cmd = { &list_cmd_impl };
+
+struct ged_cmd_impl l_cmd_impl = {"l", ged_list_core, GED_CMD_DEFAULT};
+const struct ged_cmd l_cmd = { &l_cmd_impl };
+
+const struct ged_cmd *list_cmds[] = { &list_cmd, &l_cmd, NULL };
+
+static const struct ged_plugin pinfo = { list_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

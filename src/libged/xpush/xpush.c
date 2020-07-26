@@ -420,7 +420,7 @@ static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union 
 
 
 int
-ged_xpush(struct ged *gedp, int argc, const char *argv[])
+ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *old_dp;
     struct rt_db_internal intern;
@@ -571,10 +571,29 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl xpush_cmd_impl = {
+    "xpush",
+    ged_xpush_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd xpush_cmd = { &xpush_cmd_impl };
+const struct ged_cmd *xpush_cmds[] = { &xpush_cmd, NULL };
+
+static const struct ged_plugin pinfo = { xpush_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

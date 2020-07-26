@@ -33,7 +33,7 @@
 
 
 int
-ged_adjust(struct ged *gedp, int argc, const char *argv[])
+ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
     struct directory *dp;
@@ -85,10 +85,29 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl adjust_cmd_impl = {
+    "adjust",
+    ged_adjust_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd adjust_cmd = { &adjust_cmd_impl };
+const struct ged_cmd *adjust_cmds[] = { &adjust_cmd, NULL };
+
+static const struct ged_plugin pinfo = { adjust_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

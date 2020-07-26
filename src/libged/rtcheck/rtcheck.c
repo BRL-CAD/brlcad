@@ -50,30 +50,6 @@ struct ged_rtcheck {
     int draw_read_failed;
 };
 
-void
-_ged_wait_status(struct bu_vls *logstr,
-		 int status)
-{
-    int sig = status & 0x7f;
-    int core = status & 0x80;
-    int ret = status >> 8;
-
-    if (status == 0) {
-	bu_vls_printf(logstr, "Normal exit\n");
-	return;
-    }
-
-    bu_vls_printf(logstr, "Abnormal exit x%x", status);
-
-    if (core)
-	bu_vls_printf(logstr, ", core dumped");
-
-    if (sig)
-	bu_vls_printf(logstr, ", terminating signal = %d", sig);
-    else
-	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
-}
-
 static void rtcheck_output_handler(void *clientData, int mask);
 static void rtcheck_vector_handler(void *clientData, int mask);
 
@@ -201,7 +177,7 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
  *
  */
 int
-ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
+ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp;
     int i;
@@ -314,10 +290,29 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl rtcheck_cmd_impl = {
+    "rtcheck",
+    ged_rtcheck_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd rtcheck_cmd = { &rtcheck_cmd_impl };
+const struct ged_cmd *rtcheck_cmds[] = { &rtcheck_cmd, NULL };
+
+static const struct ged_plugin pinfo = { rtcheck_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

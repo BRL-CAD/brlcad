@@ -33,7 +33,7 @@
 
 
 int
-ged_vrot(struct ged *gedp, int argc, const char *argv[])
+ged_vrot_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int ac;
@@ -69,10 +69,29 @@ ged_vrot(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl vrot_cmd_impl = {
+    "vrot",
+    ged_vrot_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd vrot_cmd = { &vrot_cmd_impl };
+const struct ged_cmd *vrot_cmds[] = { &vrot_cmd, NULL };
+
+static const struct ged_plugin pinfo = { vrot_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -30,7 +30,7 @@
 
 
 int
-ged_otranslate(struct ged *gedp, int argc, const char *argv[])
+ged_otranslate_cmd(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct _ged_trace_data gtd;
@@ -103,10 +103,29 @@ ged_otranslate(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl otranslate_cmd_impl = {
+    "otranslate",
+    ged_otranslate_cmd,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd otranslate_cmd = { &otranslate_cmd_impl };
+const struct ged_cmd *otranslate_cmds[] = { &otranslate_cmd, NULL };
+
+static const struct ged_plugin pinfo = { otranslate_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

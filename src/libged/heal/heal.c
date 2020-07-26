@@ -37,7 +37,7 @@
 
 
 int
-ged_heal(struct ged *gedp, int argc, const char *argv[])
+ged_heal_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *bot_dp;
     struct rt_db_internal intern;
@@ -53,6 +53,11 @@ ged_heal(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if(argc == 1) {
+    	bu_vls_printf(gedp->ged_result_str, "Usage: %s <bot_solid>", argv[0]);
+	return GED_HELP;
+    }
 
     primitive = argv[1];
 
@@ -79,6 +84,25 @@ ged_heal(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl heal_cmd_impl = {
+    "heal",
+    ged_heal_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd heal_cmd = { &heal_cmd_impl };
+const struct ged_cmd *heal_cmds[] = { &heal_cmd, NULL };
+
+static const struct ged_plugin pinfo = { heal_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

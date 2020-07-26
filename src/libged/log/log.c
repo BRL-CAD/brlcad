@@ -50,7 +50,7 @@ log_hook(void *clientdata,
 
 
 int
-ged_log(struct ged *gedp, int argc, const char *argv[])
+ged_log_core(struct ged *gedp, int argc, const char *argv[])
 {
     static char *usage = "get|start|stop";
 
@@ -92,10 +92,29 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl log_cmd_impl = {
+    "log",
+    ged_log_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd log_cmd = { &log_cmd_impl };
+const struct ged_cmd *log_cmds[] = { &log_cmd, NULL };
+
+static const struct ged_plugin pinfo = { log_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

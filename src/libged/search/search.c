@@ -234,7 +234,7 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
 
 
 int
-ged_search(struct ged *gedp, int argc, const char *argv_orig[])
+ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
     int i, c, optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
@@ -544,10 +544,29 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl search_cmd_impl = {
+    "search",
+    ged_search_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd search_cmd = { &search_cmd_impl };
+const struct ged_cmd *search_cmds[] = { &search_cmd, NULL };
+
+static const struct ged_plugin pinfo = { search_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

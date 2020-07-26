@@ -725,7 +725,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 
 
 int
-ged_red(struct ged *gedp, int argc, const char **argv)
+ged_red_core(struct ged *gedp, int argc, const char **argv)
 {
     FILE *fp;
     int c, counter;
@@ -991,10 +991,29 @@ cleanup:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl red_cmd_impl = {
+    "red",
+    ged_red_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd red_cmd = { &red_cmd_impl };
+const struct ged_cmd *red_cmds[] = { &red_cmd, NULL };
+
+static const struct ged_plugin pinfo = { red_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

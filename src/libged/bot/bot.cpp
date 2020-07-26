@@ -326,7 +326,7 @@ _ged_bot_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set
 }
 
 extern "C" int
-ged_bot(struct ged *gedp, int argc, const char *argv[])
+ged_bot_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
     struct _ged_bot_info gb;
@@ -434,11 +434,103 @@ bot_cleanup:
     return ret;
 }
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl bot_cmd_impl = { "bot", ged_bot_core, GED_CMD_DEFAULT };
+    const struct ged_cmd bot_cmd = { &bot_cmd_impl };
+
+    struct ged_cmd_impl bot_condense_cmd_impl = {"bot_condense", ged_bot_condense_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_condense_cmd = { &bot_condense_cmd_impl };
+
+    struct ged_cmd_impl bot_decimate_cmd_impl = {"bot_decimate", ged_bot_decimate_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_decimate_cmd = { &bot_decimate_cmd_impl };
+
+    struct ged_cmd_impl bot_dump_cmd_impl = {"bot_dump", ged_bot_dump_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_dump_cmd = { &bot_dump_cmd_impl };
+
+    struct ged_cmd_impl bot_face_fuse_cmd_impl = {"bot_face_fuse", ged_bot_face_fuse_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_face_fuse_cmd = { &bot_face_fuse_cmd_impl };
+
+    struct ged_cmd_impl bot_face_sort_cmd_impl = {"bot_face_sort", ged_bot_face_sort_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_face_sort_cmd = { &bot_face_sort_cmd_impl };
+
+    struct ged_cmd_impl bot_flip_cmd_impl = {"bot_flip", ged_bot_flip_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_flip_cmd = { &bot_flip_cmd_impl };
+
+    struct ged_cmd_impl bot_fuse_cmd_impl = {"bot_fuse", ged_bot_fuse_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_fuse_cmd = { &bot_fuse_cmd_impl };
+
+    struct ged_cmd_impl bot_merge_cmd_impl = {"bot_merge", ged_bot_merge_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_merge_cmd = { &bot_merge_cmd_impl };
+
+    struct ged_cmd_impl bot_smooth_cmd_impl = {"bot_smooth", ged_bot_smooth_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_smooth_cmd = { &bot_smooth_cmd_impl };
+
+    struct ged_cmd_impl bot_split_cmd_impl = {"bot_split", ged_bot_split_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_split_cmd = { &bot_split_cmd_impl };
+
+    struct ged_cmd_impl bot_sync_cmd_impl = {"bot_sync", ged_bot_sync_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_sync_cmd = { &bot_sync_cmd_impl };
+
+    struct ged_cmd_impl bot_vertex_fuse_cmd_impl = {"bot_vertex_fuse", ged_bot_vertex_fuse_core, GED_CMD_DEFAULT};
+    const struct ged_cmd bot_vertex_fuse_cmd = { &bot_vertex_fuse_cmd_impl };
+
+    struct ged_cmd_impl dbot_dump_cmd_impl = {"dbot_dump", ged_dbot_dump_core, GED_CMD_DEFAULT};
+    const struct ged_cmd dbot_dump_cmd = { &dbot_dump_cmd_impl };
+
+    struct ged_cmd_impl find_bot_edge_cmd_impl = {"find_bot_edge", ged_find_bot_edge_nearest_pnt_core, GED_CMD_DEFAULT};
+    const struct ged_cmd find_bot_edge_cmd = { &find_bot_edge_cmd_impl };
+
+    struct ged_cmd_impl find_bot_pnt_cmd_impl = {"find_bot_pnt", ged_find_bot_pnt_nearest_pnt_core, GED_CMD_DEFAULT};
+    const struct ged_cmd find_bot_pnt_cmd = { &find_bot_pnt_cmd_impl };
+
+    struct ged_cmd_impl get_bot_edges_cmd_impl = {"get_bot_edges", ged_get_bot_edges_core, GED_CMD_DEFAULT};
+    const struct ged_cmd get_bot_edges_cmd = { &get_bot_edges_cmd_impl };
+
+    /*
+       struct ged_cmd_impl _cmd_impl = {"", , GED_CMD_DEFAULT};
+       const struct ged_cmd _cmd = { &_cmd_impl };
+       */
+
+
+    const struct ged_cmd *bot_cmds[] = {
+       	&bot_cmd,
+	&bot_condense_cmd,
+	&bot_decimate_cmd,
+	&bot_dump_cmd,
+	&bot_face_fuse_cmd,
+	&bot_face_sort_cmd,
+	&bot_flip_cmd,
+	&bot_fuse_cmd,
+	&bot_merge_cmd,
+	&bot_smooth_cmd,
+	&bot_split_cmd,
+	&bot_sync_cmd,
+	&bot_vertex_fuse_cmd,
+	&dbot_dump_cmd,
+	&find_bot_edge_cmd,
+	&find_bot_pnt_cmd,
+	&get_bot_edges_cmd,
+	NULL
+    };
+
+    static const struct ged_plugin pinfo = { bot_cmds, 17 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
+#endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

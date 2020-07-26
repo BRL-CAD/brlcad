@@ -279,7 +279,7 @@ rect_zoom(struct ged *gedp)
  * that multiple attributes can be set with a single command call.
  */
 int
-ged_rect(struct ged *gedp,
+ged_rect_core(struct ged *gedp,
 	 int argc,
 	 const char *argv[])
 {
@@ -502,6 +502,25 @@ ged_rect(struct ged *gedp,
     return GED_ERROR;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl rect_cmd_impl = {
+    "rect",
+    ged_rect_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd rect_cmd = { &rect_cmd_impl };
+const struct ged_cmd *rect_cmds[] = { &rect_cmd, NULL };
+
+static const struct ged_plugin pinfo = { rect_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

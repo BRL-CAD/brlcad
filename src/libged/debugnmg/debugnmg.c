@@ -33,7 +33,7 @@
 
 
 int
-ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
+ged_debugnmg_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[hex_code]";
 
@@ -67,10 +67,29 @@ ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl debugnmg_cmd_impl = {
+    "debugnmg",
+    ged_debugnmg_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd debugnmg_cmd = { &debugnmg_cmd_impl };
+const struct ged_cmd *debugnmg_cmds[] = { &debugnmg_cmd, NULL };
+
+static const struct ged_plugin pinfo = { debugnmg_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

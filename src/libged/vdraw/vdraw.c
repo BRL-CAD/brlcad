@@ -769,11 +769,30 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_vdraw(struct ged *gedp, int argc, const char *argv[])
+ged_vdraw_core(struct ged *gedp, int argc, const char *argv[])
 {
     return vdraw_cmd(gedp, argc, argv);
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl vdraw_cmd_impl = {
+    "vdraw",
+    ged_vdraw_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd vdraw_pcmd = { &vdraw_cmd_impl };
+const struct ged_cmd *vdraw_cmds[] = { &vdraw_pcmd, NULL };
+
+static const struct ged_plugin pinfo = { vdraw_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

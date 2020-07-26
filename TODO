@@ -146,9 +146,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* audit/fix all of the src/util and src/fb utilities to ensure they
-  set binary mode (setmode O_BINARY) when writing out files.  at quick
-  glance, there are many (about 50) that still do not.
+
+* verify all of the src/util utilities behave correctly on Windows
+  with respect to mode (i.e. correctly using setmode/O_BINARY when
+  performing file I/O.)
 
 * the osgl libdm backend has what appears to be an off-by-one-pixel
   error in the x and y directions with respect to mouse placement.

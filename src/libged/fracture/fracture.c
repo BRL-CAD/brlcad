@@ -84,7 +84,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 
 
 int
-ged_fracture(struct ged *gedp, int argc, const char *argv[])
+ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     struct directory *old_dp;
@@ -208,10 +208,29 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl fracture_cmd_impl = {
+    "fracture",
+    ged_fracture_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd fracture_cmd = { &fracture_cmd_impl };
+const struct ged_cmd *fracture_cmds[] = { &fracture_cmd, NULL };
+
+static const struct ged_plugin pinfo = { fracture_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

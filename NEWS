@@ -13,6 +13,10 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed fb tools w/ redirected files and cv on Windows - Sean Morrison
+* expanded 'bo' command docs with a DSP input example - Sean Morrison
+* fixed 'in' making joint, superell, & script objects - Sean Morrison
+* Creo converter always writes out CREO_NAME attribute - Sean Morrison
 * improved gdiff -F filtering option behavior - Cliff Yapp
 * improved gdiff command verbosity reporting options - Cliff Yapp
 * improved Combination Editor button behaviors in MGED - Sean Morrison
@@ -20,6 +24,15 @@ changes made.  See document footer for additional details.
 * added units label to the Archer in-scene scale graphic - Cliff Yapp
 * improved output path sorting of search command - Cliff Yapp
 * added 3dm-g failure message about supported versions - Cliff Yapp
+* fixed bw-png writing corrupted png files on Windows - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2020-07-2X  Release 7.30.10                                    ---
+----------------------------------------------------------------------
+
+* added 3dm-g failure message about supported versions - Cliff Yapp
+* fixed MGED "in" command support for datums - Sean Morrison
 * fixed bw-png writing corrupted png files on Windows - Sean Morrison
 
 

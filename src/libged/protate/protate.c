@@ -34,7 +34,7 @@
 
 
 int
-ged_protate(struct ged *gedp, int argc, const char *argv[])
+ged_protate_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     mat_t rmat;
@@ -127,10 +127,29 @@ ged_protate(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl protate_cmd_impl = {
+    "protate",
+    ged_protate_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd protate_cmd = { &protate_cmd_impl };
+const struct ged_cmd *protate_cmds[] = { &protate_cmd, NULL };
+
+static const struct ged_plugin pinfo = { protate_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

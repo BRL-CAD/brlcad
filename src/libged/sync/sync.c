@@ -33,7 +33,7 @@
 
 
 int
-ged_sync(struct ged *gedp, int argc, const char *argv[])
+ged_sync_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -52,10 +52,29 @@ ged_sync(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl sync_cmd_impl = {
+    "sync",
+    ged_sync_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd sync_cmd = { &sync_cmd_impl };
+const struct ged_cmd *sync_cmds[] = { &sync_cmd, NULL };
+
+static const struct ged_plugin pinfo = { sync_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

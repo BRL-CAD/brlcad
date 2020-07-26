@@ -35,7 +35,7 @@
 
 
 int
-ged_delay(struct ged *gedp, int argc, const char *argv[])
+ged_delay_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct timeval tv;
     static const char *usage = "sec usec";
@@ -65,10 +65,29 @@ ged_delay(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl delay_cmd_impl = {
+    "delay",
+    ged_delay_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd delay_cmd = { &delay_cmd_impl };
+const struct ged_cmd *delay_cmds[] = { &delay_cmd, NULL };
+
+static const struct ged_plugin pinfo = { delay_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

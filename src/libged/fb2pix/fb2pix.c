@@ -102,7 +102,7 @@ get_args(int argc, char **argv)
 
 
 int
-ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
+ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     char usage[] = "Usage: fb-pix [-h -i -c] \n\
@@ -159,6 +159,25 @@ ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
     return GED_ERROR;
 }
 
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl fb2pix_cmd_impl = {
+    "fb2pix",
+    ged_fb2pix_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd fb2pix_cmd = { &fb2pix_cmd_impl };
+const struct ged_cmd *fb2pix_cmds[] = { &fb2pix_cmd, NULL };
+
+static const struct ged_plugin pinfo = { fb2pix_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

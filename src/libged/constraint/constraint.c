@@ -291,7 +291,7 @@ constraint_help(void *datap, int argc, const char *argv[])
 
 
 int
-ged_constraint(struct ged *gedp, int argc, const char *argv[])
+ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
 {
     /* Potential constraint attributes:
      *
@@ -356,10 +356,29 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl constraint_cmd_impl = {
+    "constraint",
+    ged_constraint_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd constraint_cmd = { &constraint_cmd_impl };
+const struct ged_cmd *constraint_cmds[] = { &constraint_cmd, NULL };
+
+static const struct ged_plugin pinfo = { constraint_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

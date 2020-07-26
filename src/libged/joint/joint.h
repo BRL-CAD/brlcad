@@ -181,10 +181,6 @@ struct funtab {
     int tcl_converted;
 };
 
-
-void vls_col_item(struct bu_vls *str, const char *cp);
-void vls_col_eol(struct bu_vls *str);
-
 #endif /* LIBGED_JOINT_H */
 
 /*

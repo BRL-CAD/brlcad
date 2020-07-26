@@ -30,10 +30,11 @@
 #include <string.h>
 
 #include "../ged_private.h"
+#include "./ged_view.h"
 
 
 int
-ged_quat(struct ged *gedp, int argc, const char *argv[])
+ged_quat_core(struct ged *gedp, int argc, const char *argv[])
 {
     quat_t quat;
     double scan[4];

@@ -159,28 +159,6 @@ draw_check_leaf(struct db_tree_state *tsp,
     return curtree;
 }
 
-/**
- * Once the vlist has been created, perform the common tasks
- * in handling the drawn solid.
- *
- * This routine must be prepared to run in parallel.
- */
-void
-_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp)
-{
-
-    if (dgcdp->wireframe_color_override) {
-	unsigned char wcolor[3];
-
-	wcolor[0] = (unsigned char)dgcdp->wireframe_color[0];
-	wcolor[1] = (unsigned char)dgcdp->wireframe_color[1];
-	wcolor[2] = (unsigned char)dgcdp->wireframe_color[2];
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, wcolor, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
-    } else {
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, NULL, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
-    }
-}
-
 static int
 get_path_and_state(
     struct db_tree_state *tsp,
@@ -562,25 +540,6 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     /* Return tree -- it needs to be freed (by caller) */
     return curtree;
 }
-
-
-void
-_ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char *name, int copy)
-{
-    size_t i;
-    char shortname[32] = {0};
-    char namebuf[64] = {0};
-
-    bu_strlcpy(shortname, name, sizeof(shortname));
-
-    for (i = 0; i < vbp->nused; i++) {
-	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
-	    continue;
-	snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
-	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_solid_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, gedp->freesolid, 0);
-    }
-}
-
 
 /*
  * This routine is the drawable geometry object's analog of rt_gettrees().
@@ -1258,14 +1217,14 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
 
 int
-ged_draw(struct ged *gedp, int argc, const char *argv[])
+ged_draw_core(struct ged *gedp, int argc, const char *argv[])
 {
     return ged_draw_guts(gedp, argc, argv, _GED_DRAW_WIREFRAME);
 }
 
 
 int
-ged_ev(struct ged *gedp, int argc, const char *argv[])
+ged_ev_core(struct ged *gedp, int argc, const char *argv[])
 {
     return ged_draw_guts(gedp, argc, argv, _GED_DRAW_NMG_POLY);
 }
@@ -1347,10 +1306,40 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+
+struct ged_cmd_impl draw_cmd_impl = {"draw", ged_draw_core, GED_CMD_DEFAULT};
+const struct ged_cmd draw_cmd = { &draw_cmd_impl };
+
+struct ged_cmd_impl e_cmd_impl = {"e", ged_draw_core, GED_CMD_DEFAULT};
+const struct ged_cmd e_cmd = { &e_cmd_impl };
+
+struct ged_cmd_impl ev_cmd_impl = {"ev", ged_ev_core, GED_CMD_DEFAULT};
+const struct ged_cmd ev_cmd = { &ev_cmd_impl };
+
+extern int ged_loadview_core(struct ged *gedp, int argc, const char *argv[]);
+struct ged_cmd_impl loadview_cmd_impl = {"loadview", ged_loadview_core, GED_CMD_DEFAULT};
+const struct ged_cmd loadview_cmd = { &loadview_cmd_impl };
+
+extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
+struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
+const struct ged_cmd preview_cmd = { &preview_cmd_impl };
+
+const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &loadview_cmd, &preview_cmd, NULL };
+
+static const struct ged_plugin pinfo = { draw_cmds, 5 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

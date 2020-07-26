@@ -78,7 +78,7 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 
 
 int
-ged_bev(struct ged *gedp, int argc, const char *argv[])
+ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[-t] new_obj obj1 op obj2 op obj3 ...";
 
@@ -308,10 +308,29 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl bev_cmd_impl = {
+    "bev",
+    ged_bev_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd bev_cmd = { &bev_cmd_impl };
+const struct ged_cmd *bev_cmds[] = { &bev_cmd, NULL };
+
+static const struct ged_plugin pinfo = { bev_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -44,7 +44,7 @@
  *
  */
 int
-ged_tree(struct ged *gedp, int argc, const char *argv[])
+ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int j;
@@ -146,10 +146,29 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl tree_cmd_impl = {
+    "tree",
+    ged_tree_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd tree_cmd = { &tree_cmd_impl };
+const struct ged_cmd *tree_cmds[] = { &tree_cmd, NULL };
+
+static const struct ged_plugin pinfo = { tree_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

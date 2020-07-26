@@ -427,17 +427,17 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    picA = fopen(picAname, "r");
+    picA = fopen(picAname, "rb");
     if (picA == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", picAname);
 	return 1;
     }
-    picB = fopen(picBname, "r");
+    picB = fopen(picBname, "rb");
     if (picB == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", picBname);
 	return 1;
     }
-    linesfile = fopen(linesfilename, "r");
+    linesfile = fopen(linesfilename, "rb");
     if (linesfile == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", linesfilename);
 	return 1;

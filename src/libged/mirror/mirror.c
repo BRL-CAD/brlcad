@@ -29,7 +29,7 @@
 
 
 int
-ged_mirror(struct ged *gedp, int argc, const char *argv[])
+ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 {
     /* trailing x|y|z intentionally not documented */
     static const char *usage = "[-h] [-p \"point\"] [-d \"dir\"] [-x|-y|-z] [-o offset] old new";
@@ -217,10 +217,29 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl mirror_cmd_impl = {
+    "mirror",
+    ged_mirror_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd mirror_cmd = { &mirror_cmd_impl };
+const struct ged_cmd *mirror_cmds[] = { &mirror_cmd, NULL };
+
+static const struct ged_plugin pinfo = { mirror_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

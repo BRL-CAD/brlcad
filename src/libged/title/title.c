@@ -33,7 +33,7 @@
 
 
 int
-ged_title(struct ged *gedp, int argc, const char *argv[])
+ged_title_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls title = BU_VLS_INIT_ZERO;
 
@@ -65,10 +65,29 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl title_cmd_impl = {
+    "title",
+    ged_title_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd title_cmd = { &title_cmd_impl };
+const struct ged_cmd *title_cmds[] = { &title_cmd, NULL };
+
+static const struct ged_plugin pinfo = { title_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

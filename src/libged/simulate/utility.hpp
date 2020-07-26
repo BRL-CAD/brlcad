@@ -37,7 +37,7 @@
 #include "bu/malloc.h"
 #include "rt/db_instance.h"
 
-#include <btBulletDynamicsCommon.h>
+#include "btBulletDynamicsCommon.h"
 
 
 namespace simulate

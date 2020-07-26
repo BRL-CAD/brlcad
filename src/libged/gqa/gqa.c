@@ -2243,7 +2243,7 @@ summary_reports(struct cstate *state)
 
 
 int
-ged_gqa(struct ged *gedp, int argc, const char *argv[])
+ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 {
     int arg_count;
     struct rt_i *rtip;
@@ -2545,10 +2545,29 @@ aborted:
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl gqa_cmd_impl = {
+    "gqa",
+    ged_gqa_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
+const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
+
+static const struct ged_plugin pinfo = { gqa_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

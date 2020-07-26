@@ -33,7 +33,7 @@
 
 
 int
-ged_get(struct ged *gedp, int argc, const char *argv[])
+ged_get_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
     struct rt_db_internal intern;
@@ -77,10 +77,29 @@ ged_get(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl get_cmd_impl = {
+    "get",
+    ged_get_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd get_cmd = { &get_cmd_impl };
+const struct ged_cmd *get_cmds[] = { &get_cmd, NULL };
+
+static const struct ged_plugin pinfo = { get_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -115,7 +115,6 @@ set(misc_ignore_files
   repoconv/CONVERT.sh
   repoconv/NOTES
   repoconv/RESUME.sh
-  repoconv/account-map
   repoconv/audit_merges/audit_merges.cxx
   repoconv/audit_merges/commit_list.txt
   repoconv/checkout_dercs.sh
@@ -207,7 +206,11 @@ set(misc_ignore_files
   repoconv/custom/r29886_cvs_svn_rel-5-1-branch_sync.fi
   repoconv/custom/r29886_cvs_svn_trunk_sync.fi
   repoconv/custom/r29886_tags.fi
+  repoconv/account-map
+  repoconv/account-map_svnfexport.txt
   repoconv/cvs_authormap
+  repoconv/cvs_authormap_svnfexport.txt
+  repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
   repoconv/gitattributes
   repoconv/gitignore.tar.gz
@@ -215,7 +218,6 @@ set(misc_ignore_files
   repoconv/md5.hpp
   repoconv/sha1.hpp
   repoconv/svn2git/README
-  repoconv/svn2git/account-map
   repoconv/svn2git/archive_branches.sh
   repoconv/svn2git/rules
   repoconv/svn2git/rules-geomcore
@@ -253,6 +255,20 @@ set(misc_ignore_files
   repoconv/sync_commit_trunk.sh
   repoconv/tagmap.sh
   repoconv/terra.dsp
+  repoconv/verify/cxxopts.hpp
+  repoconv/verify/verify.cpp
+  repowork/COPYING
+  repowork/README
+  repowork/blob.cpp
+  repowork/TextFlow.hpp
+  repowork/repowork.cpp
+  repowork/reset.cpp
+  repowork/misc_cmds.cpp
+  repowork/cxxopts.hpp
+  repowork/tag.cpp
+  repowork/repowork.h
+  repowork/commit.cpp
+  repowork/CMakeLists.txt
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def
   win32-msvc/Dll/BrlcadCore.rc

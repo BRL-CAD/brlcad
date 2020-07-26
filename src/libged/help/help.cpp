@@ -28,8 +28,6 @@
 #include "ged.h"
 
 
-HIDDEN struct bu_list *help_cmd(void);
-
 /**
  * get a list of all the files under a given 'dir' filepath,
  * dynamically allocated.  returns the number of files found in an
@@ -237,7 +235,7 @@ help_tokenize(size_t count, const char **files)
 
 
 int
-ged_help(struct ged *gedp, int argc, const char *argv[])
+ged_help_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *dir = NULL;
     char **entries = NULL;
@@ -270,83 +268,34 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl help_cmd_impl     = { "help",    ged_help_core, GED_CMD_DEFAULT };
+    const struct ged_cmd help_cmd = { &help_cmd_impl };
 
-HIDDEN int
-help_load(struct ged *gedp)
-{
-    int ret = 0;
-    struct bu_list *hp = help_cmd();
-    struct ged_cmd *cmd;
+    struct ged_cmd_impl apropos_cmd_impl  = { "apropos", ged_help_core, GED_CMD_DEFAULT };
+    const struct ged_cmd apropos_cmd = { &apropos_cmd_impl };
 
-    for (BU_LIST_FOR(cmd, ged_cmd, hp)) {
-	ret += gedp->add(gedp, cmd);
+    struct ged_cmd_impl info_cmd_impl     = { "info",    ged_help_core, GED_CMD_DEFAULT };
+    const struct ged_cmd info_cmd = { &info_cmd_impl };
+
+    struct ged_cmd_impl man_cmd_impl      = { "man",     ged_help_core, GED_CMD_DEFAULT };
+    const struct ged_cmd man_cmd = { &man_cmd_impl };
+
+    struct ged_cmd_impl question_cmd_impl = { "?",       ged_help_core, GED_CMD_DEFAULT };
+    const struct ged_cmd question_cmd = { &question_cmd_impl };
+
+    const struct ged_cmd *help_cmds[] = { &help_cmd,  &apropos_cmd,  &info_cmd,  &man_cmd,  &question_cmd, NULL };
+
+    static const struct ged_plugin pinfo = { help_cmds, 5 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
     }
-
-    BU_PUT(hp, struct bu_list);
-
-    return ret;
 }
-
-
-HIDDEN void
-help_unload(struct ged *gedp)
-{
-    gedp->del(gedp, "help");
-    gedp->del(gedp, "apropos");
-    gedp->del(gedp, "info");
-    gedp->del(gedp, "man");
-    gedp->del(gedp, "?");
-}
-
-
-HIDDEN struct bu_list *
-help_cmd(void)
-{
-    struct bu_list *hp;
-
-    static struct ged_cmd cmd[6] = {
-	{
-	    BU_LIST_INIT_ZERO, "help",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "apropos",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "info",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "man",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "?",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, NULL, {0}, NULL, NULL, NULL, NULL
-	}
-    };
-
-    BU_GET(hp, struct bu_list);
-    BU_LIST_INIT(hp);
-
-    BU_LIST_PUSH(hp, &(cmd[0].l));
-    BU_LIST_PUSH(hp, &(cmd[1].l));
-    BU_LIST_PUSH(hp, &(cmd[2].l));
-    BU_LIST_PUSH(hp, &(cmd[3].l));
-    BU_LIST_PUSH(hp, &(cmd[4].l));
-
-    return hp;
-}
-
+#endif
 
 #ifdef STANDALONE
 int main(int ac, char *av[])
@@ -356,9 +305,7 @@ int main(int ac, char *av[])
     bu_setprogname(av[0]);
 
     GED_INIT(&ged, NULL);
-    help_load(&ged);
-    ged_help(&ged, ac, (const char **)av);
-    help_unload(&ged);
+    ged_exec(&ged, ac, (const char **)av);
 
     return 0;
 }

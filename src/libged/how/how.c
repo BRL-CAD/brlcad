@@ -30,7 +30,7 @@
 
 #include "bu/cmd.h"
 #include "bu/str.h"
-
+#include "dm.h"
 #include "../ged_private.h"
 
 
@@ -42,7 +42,7 @@
  *
  */
 int
-ged_how(struct ged *gedp, int argc, const char *argv[])
+ged_how_core(struct ged *gedp, int argc, const char *argv[])
 {
     int good;
     struct directory **dpp;
@@ -86,91 +86,36 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 good_label:
     if (dpp != (struct directory **)NULL)
-	bu_free((void *)dpp, "ged_how: directory pointers");
+	bu_free((void *)dpp, "ged_how_core: directory pointers");
 
     return GED_OK;
 }
 
 
-struct directory **
-_ged_build_dpp(struct ged *gedp,
-	       const char *path) {
-    struct directory *dp;
-    struct directory **dpp;
-    int i;
-    char *begin;
-    char *end;
-    char *newstr;
-    char *list;
-    int ac;
-    const char **av;
-    const char **av_orig = NULL;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    /*
-     * First, build an array of the object's path components.
-     * We store the list in av_orig below.
-     */
-    newstr = bu_strdup(path);
-    begin = newstr;
-    while ((end = strchr(begin, '/')) != NULL) {
-	*end = '\0';
-	bu_vls_printf(&vls, "%s ", begin);
-	begin = end + 1;
-    }
-    bu_vls_printf(&vls, "%s ", begin);
-    free((void *)newstr);
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl how_cmd_impl = {
+    "how",
+    ged_how_core,
+    GED_CMD_DEFAULT
+};
 
-    list = bu_vls_addr(&vls);
+const struct ged_cmd how_cmd = { &how_cmd_impl };
+const struct ged_cmd *how_cmds[] = { &how_cmd, NULL };
 
-    if (bu_argv_from_tcl_list(list, &ac, &av_orig) != 0) {
-	bu_vls_printf(gedp->ged_result_str, "-1");
-	bu_vls_free(&vls);
-	return (struct directory **)NULL;
-    }
+static const struct ged_plugin pinfo = { how_cmds, 1 };
 
-    /* skip first element if empty */
-    av = av_orig;
-    if (*av[0] == '\0') {
-	--ac;
-	++av;
-    }
-
-    /* ignore last element if empty */
-    if (*av[ac-1] == '\0')
-	--ac;
-
-    /*
-     * Next, we build an array of directory pointers that
-     * correspond to the object's path.
-     */
-    dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
-    for (i = 0; i < ac; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[i], 0)) != RT_DIR_NULL)
-	    dpp[i] = dp;
-	else {
-	    /* object is not currently being displayed */
-	    bu_vls_printf(gedp->ged_result_str, "-1");
-
-	    bu_free((void *)dpp, "_ged_build_dpp: directory pointers");
-	    bu_free((char *)av_orig, "free av_orig");
-	    bu_vls_free(&vls);
-	    return (struct directory **)NULL;
-	}
-    }
-
-    dpp[i] = RT_DIR_NULL;
-
-    bu_free((char *)av_orig, "free av_orig");
-    bu_vls_free(&vls);
-    return dpp;
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
 }
-
+#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

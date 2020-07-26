@@ -922,22 +922,26 @@ main(int argc, char **argv)
     size_t ret;
 
     bu_setprogname(argv[0]);
-/*
- *	parameter processing.
- */
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
+    /*
+     *	parameter processing.
+     */
     setup(argc, argv);
-/*
- *	Get a tone map.  Map is the result.  1.0 is slope, 0.0 is
- *	the Y intercept (y=mx+b). 0 is the address of a function to
- *	do a x to y mapping, 0 means use the default function.
- */
+    /*
+     *	Get a tone map.  Map is the result.  1.0 is slope, 0.0 is
+     *	the Y intercept (y=mx+b). 0 is the address of a function to
+     *	do a x to y mapping, 0 means use the default function.
+     */
     (void) tonescale(Map, 1.0, 0.0, 0);
 
-/*
- * Currently the halftone file is scaled from 0 to 255 on output to
- * ease display via bw-fb.  In the future there might be flag to
- * set Scale to 1 to get a unscaled output.
- */
+    /*
+     * Currently the halftone file is scaled from 0 to 255 on output to
+     * ease display via bw-fb.  In the future there might be flag to
+     * set Scale to 1 to get a unscaled output.
+     */
     Scale = 255/Levels;
 
     if (Debug) {
@@ -951,33 +955,33 @@ main(int argc, char **argv)
 
     Line = (unsigned char *) bu_malloc(width, "Line");
     Out = (unsigned char *) bu_malloc(width, "Out");
-/*
- * should be a test here to make sure we got the memory requested.
- */
+    /*
+     * should be a test here to make sure we got the memory requested.
+     */
 
-/*
- *	Currently only the Floyd-Steinberg method uses the surpent flag
- *	so we make things easy with in the 'y' loop by resetting surpent
- *	for all other methods to "No Surpent".
- */
+    /*
+     *	Currently only the Floyd-Steinberg method uses the surpent flag
+     *	so we make things easy with in the 'y' loop by resetting surpent
+     *	for all other methods to "No Surpent".
+     */
     if (Method != M_FLOYD) Surpent = 0;
 
     for (y=0; y<height; y++) {
 	int NextX;
-/*
- * 		A few of the methods benefit by knowing when a new line is
- *		started.
- */
+	/*
+	 * 		A few of the methods benefit by knowing when a new line is
+	 *		started.
+	 */
 	NewFlag = 1;
 	(void) sharpen(Line, 1, width, stdin, Map);
-/*
- *		Only M_FLOYD will have Surpent != 0.
- */
+	/*
+	 *		Only M_FLOYD will have Surpent != 0.
+	 */
 	if (Surpent && y % 2) {
 	    for (x=width-1; x>=0; x--) {
 		pixel = Line[x];
 		Out[x] = Scale*tone_floyd(pixel, x, y, x-1,
-					  y+1, NewFlag);
+			y+1, NewFlag);
 		NewFlag = 0;
 	    }
 	} else {
@@ -987,19 +991,19 @@ main(int argc, char **argv)
 		switch (Method) {
 		    case M_FOLLY:
 			Out[x] = Scale*tone_folly(pixel, x, y,
-						  NextX, y+1, NewFlag);
+				NextX, y+1, NewFlag);
 			break;
 		    case M_FLOYD:
 			Out[x] = Scale*tone_floyd(pixel, x, y,
-						  NextX, y+1, NewFlag);
+				NextX, y+1, NewFlag);
 			break;
 		    case M_THRESH:
 			Out[x]=Scale*tone_simple(pixel, x, y,
-						 NextX, y+1, NewFlag);
+				NextX, y+1, NewFlag);
 			break;
 		    case M_CLASSIC:
 			Out[x]=Scale*tone_classic(pixel, x, y,
-						  NextX, y+1, NewFlag);
+				NextX, y+1, NewFlag);
 			break;
 		}
 		NewFlag=0;

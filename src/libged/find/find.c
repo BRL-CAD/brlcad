@@ -61,7 +61,7 @@ find_ref(struct db_i *dbip,
 
 
 int
-ged_find(struct ged *gedp, int argc, const char *argv[])
+ged_find_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i, k;
     struct directory *dp;
@@ -132,10 +132,36 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl find_cmd_impl = {
+    "find",
+    ged_find_core,
+    GED_CMD_DEFAULT
+};
+const struct ged_cmd find_cmd = { &find_cmd_impl };
+
+struct ged_cmd_impl dbfind_cmd_impl = {
+    "dbfind",
+    ged_find_core,
+    GED_CMD_DEFAULT
+};
+const struct ged_cmd dbfind_cmd = { &dbfind_cmd_impl };
+
+const struct ged_cmd *find_cmds[] = { &find_cmd, &dbfind_cmd, NULL };
+
+static const struct ged_plugin pinfo = { find_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -36,7 +36,7 @@
 
 
 int
-ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
+ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
@@ -233,7 +233,7 @@ bad_edge:
 
 
 int
-ged_find_arb_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
+ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "arb view_xyz ptol";
     struct rt_db_internal intern;
@@ -297,10 +297,36 @@ ged_find_arb_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl move_arb_edge_cmd_impl = {
+    "move_arb_edge",
+    ged_move_arb_edge_core,
+    GED_CMD_DEFAULT
+};
+const struct ged_cmd move_arb_edge_cmd = { &move_arb_edge_cmd_impl };
+
+struct ged_cmd_impl find_arb_edge_cmd_impl = {
+    "find_arb_edge",
+    ged_find_arb_edge_nearest_pnt_core,
+    GED_CMD_DEFAULT
+};
+const struct ged_cmd find_arb_edge_cmd = { &find_arb_edge_cmd_impl };
+
+const struct ged_cmd *move_arb_edge_cmds[] = { &move_arb_edge_cmd, &find_arb_edge_cmd, NULL };
+
+static const struct ged_plugin pinfo = { move_arb_edge_cmds, 2 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

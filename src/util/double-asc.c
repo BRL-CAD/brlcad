@@ -163,6 +163,9 @@ main (int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));
 
