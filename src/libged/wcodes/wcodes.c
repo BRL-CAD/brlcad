@@ -59,7 +59,8 @@ wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+    nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY);
+    if (nextdp == RT_DIR_NULL)
 	return;
 
     fp = (FILE *)user_ptr1;
@@ -83,7 +84,8 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     if (!(dp->d_flags & RT_DIR_COMB))
 	return GED_OK;
 
-    if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
+    id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource);
+    if (id < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
 	return GED_ERROR;
     }

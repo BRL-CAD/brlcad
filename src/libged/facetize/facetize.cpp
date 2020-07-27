@@ -704,7 +704,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, stru
     intern.idb_meth = &OBJ[ID_BOT];
     intern.idb_ptr = (void *)bot;
 
-    dp=db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	if (opts->verbosity) {
 	    bu_log("Cannot add %s to directory\n", name);
@@ -737,7 +737,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
     intern.idb_meth = &OBJ[ID_NMG];
     intern.idb_ptr = (void *)nmg_model;
 
-    dp=db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	if (opts->verbosity) {
 	    bu_log("Cannot add %s to directory\n", name);

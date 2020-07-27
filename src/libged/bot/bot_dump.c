@@ -779,7 +779,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     MAT_IDN(mat);
 
     /* get the internal form */
-    ret=rt_db_get_internal(&intern, dp, gbdcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+    ret = rt_db_get_internal(&intern, dp, gbdcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
 
     if (ret < 0) {
 	bu_log("ged_bot_leaf: rt_get_internal failure %d on %s\n", ret, dp->d_namep);
@@ -1359,7 +1359,7 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
 	    dp = sp->s_fullpath.fp_names[sp->s_fullpath.fp_len-1];
 
 	    /* get the internal form */
-	    ret=rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
+	    ret = rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
 
 	    if (ret < 0) {
 		bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);

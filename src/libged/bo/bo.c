@@ -182,7 +182,8 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
 	obj_name = (char *)*argv;
 
-	if ((dp=db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	dp = db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY);
+	if (dp == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
 	if (!(dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK)) {

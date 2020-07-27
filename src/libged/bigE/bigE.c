@@ -182,7 +182,7 @@ add_solid(const struct directory *dp,
 
 	    if (solid_is_plate_mode_bot
 		|| !eptr->l.m
-		|| (bot=nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
+		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &OBJ[id];
@@ -251,7 +251,8 @@ build_etree(union tree *tp,
 	    BU_LIST_INIT(&eptr->l.seghead);
 	    break;
 	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dgcdp->gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    dp = db_lookup(dgcdp->gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
+	    if (dp == RT_DIR_NULL) {
 	      break;
 	    }
 	    eptr = add_solid(dp, tp->tr_l.tl_mat, dgcdp);

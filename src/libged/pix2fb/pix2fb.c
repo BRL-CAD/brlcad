@@ -136,7 +136,7 @@ get_args(int argc, char **argv)
 		scr_height = atoi(bu_optarg);
 		break;
 	    case 'p':
-		pause_sec=atoi(bu_optarg);
+		pause_sec = atoi(bu_optarg);
 		break;
 
 	    default:		/* 'h' '?' */

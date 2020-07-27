@@ -1344,7 +1344,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     char *str = bu_strdup(name);
     char *p;
 
-    p=strchr(str, '/');
+    p = strchr(str, '/');
     if (p) {
 	*p = '\0';
     }

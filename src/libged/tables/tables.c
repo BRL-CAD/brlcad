@@ -302,7 +302,8 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    break;
 	    }
 
-	    if ((sol_dp=db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	    sol_dp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET);
+	    if (sol_dp != RT_DIR_NULL) {
 		if (sol_dp->d_flags & RT_DIR_COMB) {
 		    bu_vls_printf(tobj->tree, "   RG %c %s\n", op, sol_dp->d_namep);
 		    continue;
