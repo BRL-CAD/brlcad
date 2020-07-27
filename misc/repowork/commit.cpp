@@ -507,6 +507,25 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 	return 0;
     }
 
+    // If this is a rebuild, write the blobs first
+    if (c->id.sha1.length()) {
+	if (c->s->rebuild_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) {
+	    std::cout << "rebuild commit!\n";
+	    std::string sha1blobs = c->id.sha1 + std::string("-blob.fi");
+	    std::ifstream s1b(sha1blobs, std::ifstream::binary | std::ios::ate);
+	    std::streamsize size = s1b.tellg();
+	    s1b.seekg(0, std::ios::beg);
+	    std::vector<char> buffer(size);
+	    if (s1b.read(buffer.data(), size)) {
+		outfile.write(reinterpret_cast<char*>(buffer.data()), size);
+	    } else {
+		std::cerr << "Failed to open rebuild file " << sha1blobs << "\n";
+		exit(1);
+	    }
+	    s1b.close();
+	}
+    }
+
     // Header
     if (c->notes_commit) {
 	// Don't output notes commits - we're handling things differently.
@@ -537,8 +556,35 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
     for (size_t i = 0; i < c->merges.size(); i++) {
 	outfile << "merge :" << c->merges[i].mark << "\n";
     }
-    for (size_t i = 0; i < c->fileops.size(); i++) {
-	write_op(outfile, &c->fileops[i]);
+
+    bool write_ops = true;
+    if (c->id.sha1.length()) {
+	if (c->s->rebuild_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) {
+	    write_ops = false;
+	    if (c->s->reset_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) {
+		std::cout << "reset commit!\n";
+	    }
+	    std::string sha1tree = c->id.sha1 + std::string("-tree.fi");
+	    std::ifstream s1t(sha1tree, std::ifstream::binary | std::ios::ate);
+	    std::streamsize size = s1t.tellg();
+	    s1t.seekg(0, std::ios::beg);
+	    std::vector<char> buffer(size);
+	    if (s1t.read(buffer.data(), size)) {
+		outfile.write(reinterpret_cast<char*>(buffer.data()), size);
+	    } else {
+		std::cerr << "Failed to open rebuild file " << sha1tree << "\n";
+		exit(1);
+	    }
+	    s1t.close();
+	}
+	if (c->s->reset_commits.find(c->id.sha1) != c->s->reset_commits.end()) {
+	    std::cout << "TODO - reset commit\n";
+	}
+    }
+    if (write_ops) {
+	for (size_t i = 0; i < c->fileops.size(); i++) {
+	    write_op(outfile, &c->fileops[i]);
+	}
     }
     outfile << "\n";
     return 0;

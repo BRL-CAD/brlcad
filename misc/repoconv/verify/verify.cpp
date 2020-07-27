@@ -59,7 +59,7 @@ void run_cmd(std::string &cmd)
 void
 get_exec_paths(std::vector<filemodify> &m)
 {
-    std::string exec_cmd = std::string("cd brlcad && find . -type f ! -path \\*/CVS/\\* -executable | sed -e 's/.\\///' > ../exec.txt && cd ..");
+    std::string exec_cmd = std::string("cd brlcad && find . -type f ! -name .cvsignore ! -path \\*/CVS/\\* -executable | sed -e 's/.\\///' > ../exec.txt && cd ..");
     run_cmd(exec_cmd);
     std::ifstream infile("exec.txt", std::ifstream::binary);
     if (!infile.good()) {
@@ -100,7 +100,7 @@ get_exec_hashes(std::vector<filemodify> &m)
 void
 get_noexec_paths(std::vector<filemodify> &m)
 {
-    std::string noexec_cmd = std::string("cd brlcad && find . -type f ! -path \\*/CVS/\\* ! -executable | sed -e 's/.\\///' > ../noexec.txt && cd ..");
+    std::string noexec_cmd = std::string("cd brlcad && find . -type f ! -name .cvsignore ! -path \\*/CVS/\\* ! -executable | sed -e 's/.\\///' > ../noexec.txt && cd ..");
     run_cmd(noexec_cmd);
     std::ifstream infile("noexec.txt", std::ifstream::binary);
     if (!infile.good()) {
