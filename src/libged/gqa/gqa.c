@@ -642,7 +642,9 @@ parse_args(int ac, char *av[])
 		break;
 	    case 'P':
 		/* cannot ask for more cpu's than the machine has */
-		if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus) ncpu = c;
+		c = atoi(bu_optarg);
+		if (c > 0 && c <= max_cpus)
+		    ncpu = c;
 		break;
 	    case 'q':
 		quiet_missed_report = 1;
