@@ -187,6 +187,10 @@ build_cvs_tree(std::string sha1)
     get_noexec_paths(mods);
     process_blobs(mods, sha1);
 
+    if (!mods.size()) {
+	return -1;
+    }
+
     std::string sha1file = sha1 + std::string("-tree.fi");
     std::ofstream outfile(sha1file.c_str(), std::ifstream::binary);
     if (!outfile.good()) {
@@ -236,8 +240,12 @@ int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::stri
 
     int diff_ret = std::system(repo_diff.c_str());
     if (diff_ret) {
-        std::cerr << "CVS vs Git: diff test failed, r" << info.rev << ", branch " << branch << "\n";
-	build_cvs_tree(info.sha1);
+        std::cerr << "CVS vs Git: diff test failed, SHA1" << info.sha1 << ", branch " << branch << "\n";
+	if (build_cvs_tree(info.sha1)) {
+	    std::cerr << "CVS tree empty - probably not what is intended, skipping\n";
+	    return 0;
+
+	}
 	cvs_problem_sha1s << info.sha1 << "\n";
 	cvs_problem_sha1s.flush();
 	return 1;
@@ -637,11 +645,12 @@ int main(int argc, char *argv[])
 		    if (!check_err) {
 			info.branch_svn = cbranch;
 		    }
+		    check_cnt++;
 		    err_cnt += check_err;
 		}
 		if (err_cnt) {
 		    if (err_cnt != check_cnt) {
-			std::cout << "Git checkout agreed with some CVS branches, but not all???\n";
+			std::cout << "Git checkout agreed with some CVS branches, but not all??? skipping\n";
 		    } else {
 			// Didn't agree with any branches, pick one and generate a tree
 			info.branch_svn = *info.branches.begin();
