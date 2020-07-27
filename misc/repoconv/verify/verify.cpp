@@ -360,10 +360,18 @@ parse_git_info(std::vector<cmp_info> &commits, const char *fname)
     infile.close();
 }
 
+// trim whitespace - https://stackoverflow.com/a/49253841
+static inline void wtrim(std::string &s) {
+    if (s.empty()) return;
+    while (s.find(" ") == 0) {s.erase(0, 1);}
+    size_t len = s.size();
+    while (s.rfind(" ") == --len) { s.erase(len, len + 1); }
+}
+
 void
 get_branches(std::set<std::string> &branches, std::string &sha1, std::string &git_repo)
 {
-    std::string get_branch = std::string("cd ") + git_repo + std::string(" && git branch -a --contains ") + sha1 + std::string(" |sed -e 's/ /\\n/g' > ../branches.txt && cd ..");
+    std::string get_branch = std::string("cd ") + git_repo + std::string(" && git branch -a --contains ") + sha1 + std::string(" > ../branches.txt && cd ..");
     run_cmd(get_branch);
     std::ifstream infile("branches.txt", std::ifstream::binary);
     if (!infile.good()) {
@@ -374,8 +382,11 @@ get_branches(std::set<std::string> &branches, std::string &sha1, std::string &gi
     std::string branch;
     int cnt = 0;
     std::set<std::string> b;
+    std::regex dregex(".*detached.*");
     while (std::getline(infile, line)) {
         if (!line.length()) continue;
+	if (std::regex_match(line, dregex)) continue;
+	wtrim(line);
 	b.insert(line);
 	cnt++;
     }
