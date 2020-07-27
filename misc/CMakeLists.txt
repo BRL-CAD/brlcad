@@ -256,6 +256,7 @@ set(misc_ignore_files
   repoconv/tagmap.sh
   repoconv/terra.dsp
   repoconv/verify/cvs.sh
+  repoconv/verify/cvs_repaired/sphflake.pix,v
   repoconv/verify/cxxopts.hpp
   repoconv/verify/md5.hpp
   repoconv/verify/sha1.hpp
