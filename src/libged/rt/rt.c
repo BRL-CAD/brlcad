@@ -39,7 +39,6 @@
 #include "../ged_private.h"
 
 
-
 int
 ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 {

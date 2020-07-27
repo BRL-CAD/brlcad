@@ -47,8 +47,8 @@ ged_nmg_mm_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     if (argc != 2) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-        return GED_HELP;
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
     }
 
     /* attempt to resolve and verify */
@@ -68,8 +68,7 @@ ged_nmg_mm_core(struct ged *gedp, int argc, const char *argv[])
     (void)signal(SIGINT, SIG_IGN);
 
     /* add model to database */
-    GED_DB_DIRADD(gedp, dp, name, RT_DIR_PHONY_ADDR, 0,
-            RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;

@@ -1389,7 +1389,6 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
 }
 
 
-
 int
 ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 {

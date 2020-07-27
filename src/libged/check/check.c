@@ -169,7 +169,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		analyze_set_elevation(state, options->elevation_deg);
 		options->getfromview = 0;
 		break;
-	
+
 	    case 'f':
 		options->densityFileName = bu_optarg;
 		analyze_set_densityfile(state, options->densityFileName);

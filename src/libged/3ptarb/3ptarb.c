@@ -275,7 +275,6 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 #endif /* GED_PLUGIN */
 
 
-
 /*
  * Local Variables:
  * tab-width: 8

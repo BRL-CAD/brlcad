@@ -325,7 +325,7 @@ ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
     if (BU_STR_EQUIV(argv[1], "help")) {
-        constraint_help(gedp, argc, argv);
+	constraint_help(gedp, argc, argv);
 	return GED_OK;
     }
 

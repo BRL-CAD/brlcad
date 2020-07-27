@@ -45,29 +45,29 @@ void remove_face(const struct model* m, long int fid)
        NMG_CK_REGION(r);
 
        if (r->ra_p) {
-           NMG_CK_REGION_A(r->ra_p);
+	   NMG_CK_REGION_A(r->ra_p);
        }
 
        for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-           NMG_CK_SHELL(s);
+	   NMG_CK_SHELL(s);
 
-           if (s->sa_p) {
-               NMG_CK_SHELL_A(s->sa_p);
-           }
+	   if (s->sa_p) {
+	       NMG_CK_SHELL_A(s->sa_p);
+	   }
 
-           /* Faces in shell */
-           for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-               NMG_CK_FACEUSE(fu);
-               f = fu->f_p;
-               NMG_CK_FACE(f);
+	   /* Faces in shell */
+	   for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	       NMG_CK_FACEUSE(fu);
+	       f = fu->f_p;
+	       NMG_CK_FACE(f);
 
-               if ( fid == f->index ) {
-                   /* this kills both facesuses using the face,
-                    * and the face itself.
-                    */
-                   nmg_kfu(fu);
-               }
-           }
+	       if ( fid == f->index ) {
+		   /* this kills both facesuses using the face,
+		    * and the face itself.
+		    */
+		   nmg_kfu(fu);
+	       }
+	   }
        }
     }
 }
@@ -93,29 +93,28 @@ ged_nmg_kill_f_core(struct ged* gedp, int argc, const char* argv[])
 
     /* must be wanting help */
     if (argc < 4) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-        return GED_HELP;
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
     }
 
     /* attempt to resolve and verify */
     name = argv[0];
 
-    if ( (dp=db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET))
-        == RT_DIR_NULL ) {
-        bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", name);
-        return GED_ERROR;
+    dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", name);
+	return GED_ERROR;
     }
 
-    if (rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip,
-        bn_mat_identity, &rt_uniresource) < 0) {
-        bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
-        return GED_ERROR;
+    if (rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip,	bn_mat_identity, &rt_uniresource) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
+	return GED_ERROR;
     }
 
     if (internal.idb_type != ID_NMG) {
-        bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", name);
-        rt_db_free_internal(&internal);
-        return GED_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", name);
+	rt_db_free_internal(&internal);
+	return GED_ERROR;
     }
 
     /* get face index from command line */
@@ -127,9 +126,9 @@ ged_nmg_kill_f_core(struct ged* gedp, int argc, const char* argv[])
     remove_face(m, fid);
 
     if ( wdb_put_internal(gedp->ged_wdbp, name, &internal, 1.0) < 0 ) {
-        bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
-        rt_db_free_internal(&internal);
-        return GED_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
+	rt_db_free_internal(&internal);
+	return GED_ERROR;
     }
 
     rt_db_free_internal(&internal);

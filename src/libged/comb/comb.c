@@ -772,7 +772,6 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl comb_cmd_impl = {

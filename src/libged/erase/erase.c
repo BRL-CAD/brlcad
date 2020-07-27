@@ -29,7 +29,6 @@
 #include <string.h>
 
 
-
 #include "../ged_private.h"
 
 /*
@@ -176,7 +175,6 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
-
 
 
 #ifdef GED_PLUGIN

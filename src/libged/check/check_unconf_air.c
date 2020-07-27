@@ -33,7 +33,7 @@ struct unconf_air_context {
     double tolerance;
 };
 
-HIDDEN void 
+HIDDEN void
 unconf_air(const struct xray *ray,
 	   const struct partition *ipart,
 	   const struct partition *opart,
@@ -52,7 +52,7 @@ unconf_air(const struct xray *ray,
     }
 
     bu_semaphore_acquire(BU_SEM_GENERAL);
-    
+
     add_to_list(context->unconfAirList,
 		ipart->pt_regionp->reg_name,
 		opart->pt_regionp->reg_name,

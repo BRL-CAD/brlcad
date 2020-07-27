@@ -42,7 +42,6 @@
 #include "../ged_private.h"
 
 
-
 #define ABORTED		-99
 #define OLDSOLID	0
 #define NEWSOLID	1

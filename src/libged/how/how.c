@@ -92,7 +92,6 @@ good_label:
 }
 
 
-
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl how_cmd_impl = {

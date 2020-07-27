@@ -76,7 +76,7 @@ int check_volume(struct current_state *state,
     if (plot_volume){
 	fclose(plot_volume);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
-    } 
+    }
 
     return 0;
 }

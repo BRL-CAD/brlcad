@@ -359,7 +359,8 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     argc -= bu_optind-1;
     argv += bu_optind-1;
 
-    if ((fp = fopen(argv[1], "r")) == NULL) {
+    fp = fopen(argv[1], "r");
+    if (fp == NULL) {
 	perror(argv[1]);
 	return GED_ERROR;
     }

@@ -26,8 +26,6 @@
 #include "common.h"
 
 
-
-
 #include "../ged_private.h"
 
 
