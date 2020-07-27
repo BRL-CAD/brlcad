@@ -20,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include "cxxopts.hpp"
+#include "./sha1.hpp"
 
 class cmp_info {
     public:
@@ -44,6 +45,7 @@ class cmp_info {
 
 class filemodify {
     public:
+	std::string mode;
 	std::string hash;
 	std::string path;
 };
@@ -70,29 +72,9 @@ get_exec_paths(std::vector<filemodify> &m)
     while (std::getline(infile, line)) {
         if (!line.length()) continue;
 	filemodify nm;
-	nm.path = std::string("\"") + line + std::string("\"");
+	nm.mode = std::string("100755");
+	nm.path = line;
 	m.push_back(nm);
-    }
-    infile.close();
-}
-
-void
-get_exec_hashes(std::vector<filemodify> &m)
-{
-    std::string exec_hash = std::string("cd brlcad && cat ../exec.txt |xargs git hash-object > ../exec_hashes.txt && cd ..");
-    run_cmd(exec_hash);
-    std::ifstream infile("exec_hashes.txt", std::ifstream::binary);
-    if (!infile.good()) {
-	std::cerr << "Could not open file: exec_hashes.txt\n";
-	exit(-1);
-    }
-    int cnt = 0;
-    std::string line;
-    while (std::getline(infile, line)) {
-        if (!line.length()) continue;
-	filemodify *nm = &m[cnt];
-	nm->hash = line;
-	cnt++;
     }
     infile.close();
 }
@@ -111,58 +93,28 @@ get_noexec_paths(std::vector<filemodify> &m)
     while (std::getline(infile, line)) {
         if (!line.length()) continue;
 	filemodify nm;
-	nm.path = std::string("\"") + line + std::string("\"");
+	nm.mode = std::string("100644");
+	nm.path = line;
 	m.push_back(nm);
     }
     infile.close();
 }
 
-void
-get_noexec_hashes(std::vector<filemodify> &m)
+std::string
+git_sha1(const char *b, size_t size)
 {
-    std::string noexec_hash = std::string("cd brlcad && cat ../noexec.txt |xargs git hash-object > ../noexec_hashes.txt && cd ..");
-    run_cmd(noexec_hash);
-    std::ifstream infile("noexec_hashes.txt", std::ifstream::binary);
-    if (!infile.good()) {
-	std::cerr << "Could not open file: noexec_hashes.txt\n";
-	exit(-1);
-    }
-    int cnt = 0;
-    std::string line;
-    while (std::getline(infile, line)) {
-        if (!line.length()) continue;
-	filemodify *nm = &m[cnt];
-	nm->hash = line;
-	cnt++;
-    }
-    infile.close();
+    std::string go_buff;
+    go_buff.append("blob ");
+    go_buff.append(std::to_string(size));
+    go_buff.append(1, '\0');
+    go_buff.append(b, size);
+    std::string git_sha1 = sha1_hash_hex(go_buff.c_str(), go_buff.length());
+    return git_sha1;
 }
 
 void
-build_blobs(std::string &sha1)
+build_blobs(std::vector<filemodify> &mods, std::string &sha1)
 {
-    std::vector<std::string> paths;
-    std::ifstream exec_file("exec.txt", std::ifstream::binary);
-    if (!exec_file.good()) {
-	std::cerr << "Could not open file: exec.txt\n";
-	exit(-1);
-    }
-    std::string line;
-    while (std::getline(exec_file, line)) {
-	paths.push_back(line);
-    }
-    exec_file.close();
-
-    std::ifstream noexec_file("noexec.txt", std::ifstream::binary);
-    if (!noexec_file.good()) {
-	std::cerr << "Could not open file: noexec.txt\n";
-	exit(-1);
-    }
-    while (std::getline(noexec_file, line)) {
-	paths.push_back(line);
-    }
-    noexec_file.close();
-
     std::string sha1file = sha1 + std::string("-blob.fi");
     std::ofstream outfile(sha1file.c_str(), std::ifstream::binary);
     if (!outfile.good()) {
@@ -170,14 +122,22 @@ build_blobs(std::string &sha1)
 	exit(-1);
     }
 
-    for (size_t i = 0; i < paths.size(); i++) {
-	std::string path = std::string("brlcad/") + paths[i];
+    for (size_t i = 0; i < mods.size(); i++) {
+	std::string path = std::string("brlcad/") + mods[i].path;
 	std::ifstream file(path, std::ios::binary | std::ios::ate);
+	if (!file.good()) {
+	    std::cerr << "Could not open file: " << path << "\n";
+	    exit(-1);
+	}
 	std::streamsize size = file.tellg();
 	file.seekg(0, std::ios::beg);
 	std::vector<char> buffer(size);
 	if (file.read(buffer.data(), size))
 	{
+
+	    const char *b = reinterpret_cast<char*>(buffer.data());
+	    mods[i].hash = git_sha1(b, size);
+
 	    outfile << "blob\n";
 	    outfile << "data " << size << "\n";
 	    outfile.write(reinterpret_cast<char*>(buffer.data()), size);
@@ -191,13 +151,10 @@ build_blobs(std::string &sha1)
 int
 build_cvs_tree(std::string sha1)
 {
-    std::vector<filemodify> exec_mods;
-    std::vector<filemodify> noexec_mods;
-    get_exec_paths(exec_mods);
-    get_exec_hashes(exec_mods);
-    get_noexec_paths(noexec_mods);
-    get_noexec_hashes(noexec_mods);
-    build_blobs(sha1);
+    std::vector<filemodify> mods;
+    get_exec_paths(mods);
+    get_noexec_paths(mods);
+    build_blobs(mods, sha1);
 
     std::string sha1file = sha1 + std::string("-tree.fi");
     std::ofstream outfile(sha1file.c_str(), std::ifstream::binary);
@@ -206,16 +163,11 @@ build_cvs_tree(std::string sha1)
 	exit(-1);
     }
 
-    for (size_t i = 0; i < exec_mods.size(); i++) {
-	outfile << "M 100755 " << exec_mods[i].hash << " " << exec_mods[i].path << "\n";
+    for (size_t i = 0; i < mods.size(); i++) {
+	outfile << "M " << mods[i].mode << " " << mods[i].hash << " \"" << mods[i].path << "\"\n";
     }
 
-    for (size_t i = 0; i < noexec_mods.size(); i++) {
-	outfile << "M 100644 " << noexec_mods[i].hash << " " << noexec_mods[i].path << "\n";
-    }
-
-
-    std::string cleanup("rm exec.txt noexec.txt exec_hashes.txt noexec_hashes.txt");
+    std::string cleanup("rm exec.txt noexec.txt");
     run_cmd(cleanup);
     return 0;
 }
