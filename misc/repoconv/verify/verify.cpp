@@ -32,6 +32,7 @@ class cmp_info {
 	long svn_rev = 0;
 
 	std::string branch_svn = "trunk";
+	std::set<std::string> branches;
 	std::string cvs_date;
 
 	bool branch_delete = false;
@@ -185,12 +186,12 @@ build_cvs_tree(std::string sha1)
     return 0;
 }
 
-int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::string git_repo, std::string cvs_repo) {
+int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::string &branch, std::string git_repo, std::string cvs_repo) {
     std::string cvs_cmd;
-    if (info.branch_svn == std::string("trunk")) {
+    if (branch == std::string("trunk") || branch == std::string("master")) {
 	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -P brlcad");
     } else {
-	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -r ") + info.branch_svn + std::string(" -P brlcad");
+	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -r ") + branch + std::string(" -P brlcad");
     }
 
     info.cvs_check_cmds.append(cvs_cmd);
@@ -218,7 +219,7 @@ int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::stri
 
     int diff_ret = std::system(repo_diff.c_str());
     if (diff_ret) {
-        std::cerr << "CVS vs Git: diff test failed, r" << info.rev << ", branch " << info.branch_svn << "\n";
+        std::cerr << "CVS vs Git: diff test failed, r" << info.rev << ", branch " << branch << "\n";
 	build_cvs_tree(info.sha1);
 	cvs_problem_sha1s << info.sha1 << "\n";
 	cvs_problem_sha1s.flush();
@@ -354,18 +355,41 @@ parse_git_info(std::vector<cmp_info> &commits, const char *fname)
 	    }
 
 	    commits.push_back(ncommit);
-	    if (ncommit.svn_rev) {
-		if (!(ncommit.svn_rev % 100)) {
-		    std::cout << "Adding SVN commit " << ncommit.svn_rev << "\n";
-		}
-	    } else {
-		std::cout << "Adding non-SVN commit " << ncommit.sha1 << "\n";
-	    }
 	}
     }
     infile.close();
 }
 
+void
+get_branches(std::set<std::string> &branches, std::string &sha1, std::string &git_repo)
+{
+    std::string get_branch = std::string("cd ") + git_repo + std::string(" && git branch -a --contains ") + sha1 + std::string(" |sed -e 's/ /\\n/g' > ../branches.txt && cd ..");
+    run_cmd(get_branch);
+    std::ifstream infile("branches.txt", std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open file: branches.txt\n";
+	exit(-1);
+    }
+    std::string line;
+    std::string branch;
+    int cnt = 0;
+    std::set<std::string> b;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+	b.insert(line);
+	cnt++;
+    }
+    if (b.find(std::string("master")) != b.end()) {
+	branches.insert(std::string("master"));
+    } else {
+	branches.insert(b.begin(), b.end());
+	std::set<std::string>::iterator s_it;
+	for (s_it = b.begin(); s_it != b.end(); s_it++) {
+	    std::cout << sha1 << " branch: " << *s_it << "\n";
+	}
+    }
+    infile.close();
+}
 
 int main(int argc, char *argv[])
 {
@@ -500,6 +524,15 @@ int main(int argc, char *argv[])
 	    continue;
 	}
 
+	if (commits[i].timestamp < cvs_maxtime) {
+	    get_branches(commits[i].branches, commits[i].sha1, git_repo);
+	    if (!commits[i].branches.size()) {
+		std::cout << "Couldn't identify branches, skipping verification of " << commits[i].sha1 << "\n";
+		continue;
+	    }
+	}
+
+
 	timestamp_to_cmp.insert(std::make_pair(commits[i].timestamp, i));
 	if (commits[i].svn_rev) {
 	    std::cout << "Queueing revision " << commits[i].rev << "\n";
@@ -533,7 +566,32 @@ int main(int argc, char *argv[])
 
 	// If we're old enough and have the cvs repository, check it
 	if (cvs_repo.length() && info.timestamp < cvs_maxtime) {
-	    cvs_err = verify_repos_cvs(cvs_problem_sha1s, info, git_repo, cvs_repo);
+	    if (info.branches.size() == 1) {
+		info.branch_svn = *info.branches.begin();
+		cvs_err = verify_repos_cvs(cvs_problem_sha1s, info, info.branch_svn, git_repo, cvs_repo);
+	    } else {
+		int err_cnt = 0;
+		int check_cnt = 0;
+		std::set<std::string>::iterator s_it;
+		for (s_it = info.branches.begin(); s_it != info.branches.end(); s_it++) {
+		    std::string cbranch = *s_it;
+		    int check_err = verify_repos_cvs(cvs_problem_sha1s, info, cbranch, git_repo, cvs_repo);
+		    if (!check_err) {
+			info.branch_svn = cbranch;
+		    }
+		    err_cnt += check_err;
+		}
+		if (err_cnt) {
+		    if (err_cnt != check_cnt) {
+			std::cout << "Git checkout agreed with some CVS branches, but not all???\n";
+		    } else {
+			// Didn't agree with any branches, pick one and generate a tree
+			info.branch_svn = *info.branches.begin();
+			std::cout << "Git checkout didn't agree with any CVS branches, generating tree for " << info.branch_svn << "\n";
+			cvs_err = verify_repos_cvs(cvs_problem_sha1s, info, info.branch_svn, git_repo, cvs_repo);
+		    }
+		}
+	    }
 	}
 
 	// If we have the SVN repo and a revision, check SVN
