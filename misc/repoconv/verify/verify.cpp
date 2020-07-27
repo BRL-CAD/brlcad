@@ -60,6 +60,23 @@ void run_cmd(std::string &cmd)
 }
 
 void
+get_done_sha1s(std::set<std::string> &done, std::string &done_file)
+{
+    std::ifstream infile(done_file, std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open file: " << done_file << "\n";
+	exit(-1);
+    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+	done.insert(line);
+    }
+    infile.close();
+}
+
+
+void
 get_exec_paths(std::vector<filemodify> &m)
 {
     std::string exec_cmd = std::string("cd brlcad && find . -type f ! -name .cvsignore ! -path \\*/CVS/\\* -executable | sed -e 's/.\\///' > ../exec.txt && cd ..");
@@ -407,6 +424,7 @@ int main(int argc, char *argv[])
     int ret;
     std::string cvs_repo = std::string();
     std::string svn_repo = std::string();
+    std::string done_list = std::string();
     long cvs_maxtime = 1199132714;
     long min_timestamp = 0;
     long max_timestamp = LONG_MAX;
@@ -420,10 +438,11 @@ int main(int argc, char *argv[])
 	cxxopts::Options options(argv[0], " - verify svn->git conversion");
 
 	options.add_options()
-	    ("cvs-repo", "Use the specified CVS repository for checks", cxxopts::value<std::vector<std::string>>(), "path to repo")
-	    ("svn-repo", "Use the specified SVN repository for checks", cxxopts::value<std::vector<std::string>>(), "path to repo")
+	    ("cvs-repo", "Use the specified CVS repository for checks", cxxopts::value<std::vector<std::string>>(), "repo")
+	    ("svn-repo", "Use the specified SVN repository for checks", cxxopts::value<std::vector<std::string>>(), "repo")
 	    ("max-rev", "Skip any revision higher than this number", cxxopts::value<int>(), "#")
 	    ("min-rev", "Skip any revision lower than this number", cxxopts::value<int>(), "#")
+	    ("done", "File with SHA1 identifiers (1/line) which have already been checked", cxxopts::value<int>(), "file")
 	    ("h,help", "Print help")
 	    ;
 
@@ -445,6 +464,12 @@ int main(int argc, char *argv[])
 	{
 	    auto& ff = result["svn-repo"].as<std::vector<std::string>>();
 	    svn_repo = ff[0];
+	}
+
+	if (result.count("done"))
+	{
+	    auto& ff = result["done"].as<std::vector<std::string>>();
+	    done_list = ff[0];
 	}
 
 	if (result.count("max-rev"))
@@ -524,8 +549,16 @@ int main(int argc, char *argv[])
 	}
     }
 
+    std::set<std::string> done_sha1;
+    get_done_sha1s(done_sha1, done_list);
+
     std::set<std::pair<long, size_t>> timestamp_to_cmp;
     for (size_t i = 0; i < commits.size(); i++) {
+
+	// Skip any commits we've already checked
+	if (done_sha1.find(commits[i].sha1) != done_sha1.end()) {
+	    continue;
+	}
 
 	// Skip any commits that don't meet the criteria
 	if (min_timestamp && commits[i].timestamp < min_timestamp) {
@@ -553,6 +586,18 @@ int main(int argc, char *argv[])
     }
 
     std::cerr << "Starting verifications...\n";
+
+    std::string dfout;
+    if (done_list.length()) {
+	dfout = done_list;
+    } else {
+	dfout = std::string("done_sha1.txt");
+    }
+    std::ofstream ofile(dfout, std::ios_base::app);
+    if (!ofile.good()) {
+	std::cerr << "Couldn't open " << dfout << " for writing.\n";
+	exit(1);
+    }
 
     std::set<std::pair<long, size_t>>::reverse_iterator r_it;
     for(r_it = timestamp_to_cmp.rbegin(); r_it != timestamp_to_cmp.rend(); r_it++) {
@@ -629,7 +674,12 @@ int main(int argc, char *argv[])
 		}
 	    }
 	}
+
+	ofile << info.sha1 << "\n";
+	ofile.flush();
+
     }
+    ofile.close();
 
     cvs_problem_sha1s.close();
 }
