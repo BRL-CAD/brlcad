@@ -226,8 +226,38 @@ git_map_svn_committers(git_fi_data *s, std::string &svn_map)
     return 0;
 }
 
+void
+process_ls_tree(std::string &sha1)
+{
+    // read children
+    std::ifstream tfile("tree.txt", std::ifstream::binary);
+    if (!tfile.good()) {
+	std::cerr << "Could not open tree file tree.txt\n";
+	exit(-1);
+    }
+    std::string sha1tree = sha1 + std::string("-tree.fi");
+    std::ofstream ofile(sha1tree, std::ios::out | std::ios::binary);
+    ofile << "deleteall\n";
+
+    std::string tline;
+    while (std::getline(tfile, tline)) {
+	std::string ltree = tline;
+	std::regex bregex(" blob ");
+	std::string ltree2 = std::regex_replace(ltree, bregex, " ");
+	std::regex sregex("^");
+	ltree = std::regex_replace(ltree2, sregex , "M ");
+	std::regex tregex("\t");
+	ltree2 = std::regex_replace(ltree, tregex , " \"");
+	ofile << ltree2 << "\"\n";
+    }
+
+    ofile.close();
+
+    std::remove("tree.txt");
+}
+
 int
-git_id_cvs_commits(git_fi_data *s, std::string &cvs_id_file, std::string &child_commits_file)
+git_id_cvs_commits(git_fi_data *s, std::string &cvs_id_file, std::string &repo_path, std::string &child_commits_file)
 {
     {
 	// read children
@@ -321,6 +351,20 @@ git_id_cvs_commits(git_fi_data *s, std::string &cvs_id_file, std::string &child_
 	    }
 	}
     }
+
+    // Now that we know what the reset commits are, generate the trees that will
+    // achieve this.
+    std::set<std::string>::iterator s_it;
+    for (s_it = s->reset_commits.begin(); s_it != s->reset_commits.end(); s_it++) {
+	std::string sha1 = *s_it;
+	std::string git_ls_tree_cmd = std::string("cd ") + repo_path + std::string(" && git ls-tree --full-tree -r ") + sha1 + std::string(" > ../tree.txt && cd ..");
+	if (std::system(git_ls_tree_cmd.c_str())) {
+	    std::cout << "git_ls_tree_cmd \"" << git_ls_tree_cmd << "\" failed\n";
+	    exit(-1);
+	}
+	process_ls_tree(sha1);
+    }
+
     return 0;
 }
 
@@ -401,7 +445,6 @@ main(int argc, char *argv[])
     std::string svn_map;
     std::string children_file;
     std::string cvs_id_file;
-    std::string cvs_repo_path;
     int cwidth = 72;
 
     // TODO - might be good do have a "validate" option that does the fast import and then
@@ -422,8 +465,7 @@ main(int argc, char *argv[])
 	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
 	   
 	    ("children", "File with output of \"git rev-list --children --all\"", cxxopts::value<std::vector<std::string>>(), "file")
-	    ("cvs-ids", "Specify CVS era commits (revision number or SHA1) to rebuild.  Requires cvs-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
-	    ("cvs-repo", "CVS repository path", cxxopts::value<std::vector<std::string>>(), "path")
+	    ("cvs-ids", "Specify CVS era commits (revision number or SHA1) to rebuild.  Requires git-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
 
 	    ("h,help", "Print help")
 	    ;
@@ -466,12 +508,6 @@ main(int argc, char *argv[])
 	    cvs_id_file = ff[0];
 	}
 
-	if (result.count("cvs-repo"))
-	{
-	    auto& ff = result["cvs-repo"].as<std::vector<std::string>>();
-	    cvs_repo_path = ff[0];
-	}
-
 	if (result.count("width"))
 	{
 	    cwidth = result["width"].as<int>();
@@ -489,8 +525,8 @@ main(int argc, char *argv[])
 	return -1;
     }
 
-    if ((cvs_id_file.length() && !cvs_repo_path.length()) || (!cvs_id_file.length() && cvs_repo_path.length())) {
-	std::cerr << "Need both CVS id list and CVS repository path for processing!\n";
+    if (cvs_id_file.length() && !repo_path.length()) {
+	std::cerr << "Need Git repository path for CVS id list processing!\n";
 	return -1;
     }
 
@@ -534,7 +570,7 @@ main(int argc, char *argv[])
 
     if (cvs_id_file.length()) {
 	// Handle CVS rebuild info
-	git_id_cvs_commits(&fi_data, cvs_id_file, children_file);
+	git_id_cvs_commits(&fi_data, cvs_id_file, repo_path, children_file);
     }
 
     fi_data.wrap_width = cwidth;

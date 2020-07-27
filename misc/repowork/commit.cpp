@@ -559,11 +559,9 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 
     bool write_ops = true;
     if (c->id.sha1.length()) {
-	if (c->s->rebuild_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) {
+	if ((c->s->rebuild_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) ||
+		(c->s->reset_commits.find(c->id.sha1) != c->s->reset_commits.end())) {
 	    write_ops = false;
-	    if (c->s->reset_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) {
-		std::cout << "reset commit!\n";
-	    }
 	    std::string sha1tree = c->id.sha1 + std::string("-tree.fi");
 	    std::ifstream s1t(sha1tree, std::ifstream::binary | std::ios::ate);
 	    std::streamsize size = s1t.tellg();
@@ -576,9 +574,6 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 		exit(1);
 	    }
 	    s1t.close();
-	}
-	if (c->s->reset_commits.find(c->id.sha1) != c->s->reset_commits.end()) {
-	    std::cout << "TODO - reset commit\n";
 	}
     }
     if (write_ops) {
