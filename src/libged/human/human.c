@@ -1537,10 +1537,10 @@ show_help(const char *name, const char *optstr)
     bu_log("\t-N\t\tSet number to make (input will be squared by the program)\n");
     bu_log("\t-s\t\tSet stance to take; 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n");
     bu_log("\t-p\t\tSet percentile (not implemented yet) 1-99\n");
-    bu_log("\t-t\t\tSave bounding box information to file Stats.txt\n");
-    bu_log("\t-T\t\tRead bounding box information from file Stats.txt\n");
-    bu_log("\t-v\t\tSave verbose output of all data used to build human model, to file Verbose.txt\n");
-    bu_log("\t-V\t\tRead verbose input of all data used to build human model, from file Verbose.txt\n");
+    bu_log("\t-t\t\tSave bounding box information to file [stats.txt]\n");
+    bu_log("\t-T\t\tRead bounding box information from file [stats.txt]\n");
+    bu_log("\t-v\t\tSave verbose output of all data used to build human model, to file [verbose.txt]\n");
+    bu_log("\t-V\t\tRead verbose input of all data used to build human model, from file [verbose.txt]\n");
     bu_log("\t 1 - 9, 0, =, and succeeding characters are used for wizard purposes, ignore them.\n");
     bu_log("\t Last word on command line is also top level object. No argument needed!\n");
 
