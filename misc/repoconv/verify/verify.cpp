@@ -550,7 +550,9 @@ int main(int argc, char *argv[])
     }
 
     std::set<std::string> done_sha1;
-    get_done_sha1s(done_sha1, done_list);
+    if (done_list.length()) {
+	get_done_sha1s(done_sha1, done_list);
+    }
 
     std::set<std::pair<long, size_t>> timestamp_to_cmp;
     for (size_t i = 0; i < commits.size(); i++) {
