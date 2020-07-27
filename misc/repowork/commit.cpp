@@ -507,6 +507,7 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 	return 0;
     }
 
+#if 0
     // If this is a rebuild, write the blobs first
     if (c->id.sha1.length()) {
 	if (c->s->rebuild_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) {
@@ -525,6 +526,7 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 	    s1b.close();
 	}
     }
+#endif
 
     // Header
     if (c->notes_commit) {

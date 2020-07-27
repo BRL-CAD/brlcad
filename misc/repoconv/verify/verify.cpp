@@ -112,15 +112,24 @@ git_sha1(const char *b, size_t size)
     return git_sha1;
 }
 
+/* Even if writing out the blobs is disabled, we still need to calculate the
+ * sha1 hashes for the tree output. */
 void
-build_blobs(std::vector<filemodify> &mods, std::string &sha1)
+process_blobs(std::vector<filemodify> &mods, std::string &sha1)
 {
+    // The -blob.fi file is prepared in case the tree incorporates a blob that
+    // was never preserved in the original conversion.  blob.fi files take a
+    // significant amount of space and slow subsequent fast-imports, so they
+    // should be enabled only if that situation is discovered.
+//#define WRITE_BLOBS
+#ifdef WRITE_BLOBS
     std::string sha1file = sha1 + std::string("-blob.fi");
     std::ofstream outfile(sha1file.c_str(), std::ifstream::binary);
     if (!outfile.good()) {
 	std::cerr << "Could not open file: " << sha1file << "\n";
 	exit(-1);
     }
+#endif
 
     for (size_t i = 0; i < mods.size(); i++) {
 	std::string path = std::string("brlcad/") + mods[i].path;
@@ -138,14 +147,18 @@ build_blobs(std::vector<filemodify> &mods, std::string &sha1)
 	    const char *b = reinterpret_cast<char*>(buffer.data());
 	    mods[i].hash = git_sha1(b, size);
 
+#ifdef WRITE_BLOBS
 	    outfile << "blob\n";
 	    outfile << "data " << size << "\n";
 	    outfile.write(reinterpret_cast<char*>(buffer.data()), size);
+#endif
 	}
 	file.close();
     }
 
+#ifdef WRITE_BLOBS
     outfile.close();
+#endif
 }
 
 int
@@ -154,7 +167,7 @@ build_cvs_tree(std::string sha1)
     std::vector<filemodify> mods;
     get_exec_paths(mods);
     get_noexec_paths(mods);
-    build_blobs(mods, sha1);
+    process_blobs(mods, sha1);
 
     std::string sha1file = sha1 + std::string("-tree.fi");
     std::ofstream outfile(sha1file.c_str(), std::ifstream::binary);
