@@ -124,7 +124,8 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&str);
 	is_pipe = 1;
     } else {
-	if ((fp = fopen(argv[1], "wb")) == NULL) {
+	fp = fopen(argv[1], "wb");
+	if (fp == NULL) {
 	    perror(argv[1]);
 	    return GED_ERROR;
 	}

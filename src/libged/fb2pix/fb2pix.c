@@ -85,7 +85,8 @@ get_args(int argc, char **argv)
 	outfp = stdout;
     } else {
 	file_name = argv[bu_optind];
-	if ((outfp = fopen(file_name, "wb")) == NULL) {
+	outfp = fopen(file_name, "wb");
+	if (outfp == NULL) {
 	    fprintf(stderr,
 			  "fb-pix: cannot open \"%s\" for writing\n",
 			  file_name);

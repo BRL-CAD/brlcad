@@ -71,7 +71,8 @@ int check_gap(struct current_state *state,
     BU_LIST_INIT(&(gapList.l));
 
     if (options->plot_files) {
-	if ((plot_gaps=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_gaps = fopen(name, "wb");
+	if (plot_gaps == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }

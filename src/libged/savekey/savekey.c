@@ -83,7 +83,8 @@ ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((fp = fopen(argv[1], "a")) == NULL) {
+    fp = fopen(argv[1], "a");
+    if (fp == NULL) {
 	perror(argv[1]);
 	return GED_ERROR;
     }

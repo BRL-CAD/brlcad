@@ -239,7 +239,8 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	int line_count=0;
 	int j;
 
-	if ((f_srt=fopen(tmpfil, "r+")) == NULL) {
+	f_srt = fopen(tmpfil, "r+");
+	if (f_srt == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
 	    bu_file_delete(tmpfil);
 	    return GED_ERROR;

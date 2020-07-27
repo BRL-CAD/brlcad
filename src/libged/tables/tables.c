@@ -498,7 +498,8 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the file */
-    if ((test_f=fopen(argv[1], "w+")) == NULL) {
+    test_f = fopen(argv[1], "w+");
+    if (test_f == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;
@@ -561,7 +562,8 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&tabvls, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
     }
 
-    if ((ftabvls=fopen(argv[1], "w+")) == NULL) {
+    ftabvls = fopen(argv[1], "w+");
+    if (ftabvls == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;

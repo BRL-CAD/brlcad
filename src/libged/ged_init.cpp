@@ -123,7 +123,8 @@ libged_init(void)
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "ged", filenames[i], NULL);
 	void *dl_handle;
-	if (!(dl_handle = bu_dlopen(pfile, BU_RTLD_NOW))) {
+	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
+	if (!dl_handle) {
 	    const char * const error_msg = bu_dlerror();
 	    if (error_msg)
 		bu_vls_printf(ged_init_msg_str, "%s\n", error_msg);

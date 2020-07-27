@@ -73,7 +73,8 @@ int check_exp_air(struct current_state *state,
     BU_LIST_INIT(&(exposedAirList.l));
 
     if (options->plot_files) {
-	if ((plot_exp_air=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_exp_air = fopen(name, "wb");
+	if (plot_exp_air == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }

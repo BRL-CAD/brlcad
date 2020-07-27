@@ -731,7 +731,8 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    if ((fp=fopen(filename, "rb")) == NULL) {
+    fp = fopen(filename, "rb");
+    if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Could not open file '%s'.\n", filename);
 	bu_vls_free(&unit);
 	bu_vls_free(&fmt);
@@ -890,7 +891,8 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     }
 
     /* Write points */
-    if ((fp=fopen(filename, "wb+")) == NULL) {
+    fp = fopen(filename, "wb+");
+    if (fp == NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: cannot open file %s for writing\n", filename);
 	return GED_ERROR;
     }

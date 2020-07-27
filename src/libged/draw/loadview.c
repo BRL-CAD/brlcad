@@ -121,7 +121,8 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the file for reading */
-    if ((fp = fopen(argv[1], "r")) == NULL) {
+    fp = fopen(argv[1], "r");
+    if (fp == NULL) {
 	perror(argv[1]);
 	return GED_ERROR;
     }

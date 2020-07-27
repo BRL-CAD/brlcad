@@ -56,7 +56,8 @@ ged_wmater_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((fp = fopen(argv[1], "a")) == NULL) {
+    fp = fopen(argv[1], "a");
+    if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Failed to open file - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }

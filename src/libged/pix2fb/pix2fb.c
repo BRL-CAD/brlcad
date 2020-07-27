@@ -152,7 +152,8 @@ get_args(int argc, char **argv)
 	setmode(infd, O_BINARY);
     } else {
 	file_name = argv[bu_optind];
-	if ((infd = open(file_name, 0)) < 0) {
+	infd = open(file_name, 0);
+	if (infd < 0) {
 	    perror(file_name);
 	    fprintf(stderr,
 			  "pix-fb: cannot open \"%s\" for reading\n",
