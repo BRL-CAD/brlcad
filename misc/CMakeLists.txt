@@ -255,8 +255,14 @@ set(misc_ignore_files
   repoconv/sync_commit_trunk.sh
   repoconv/tagmap.sh
   repoconv/terra.dsp
+  repoconv/verify/cvs.sh
   repoconv/verify/cxxopts.hpp
+  repoconv/verify/md5.hpp
+  repoconv/verify/sha1.hpp
+  repoconv/verify/svn.sh
+  repoconv/verify/svn_de-rcs.cxx
   repoconv/verify/verify.cpp
+  repoconv/verify/verify.sh
   repowork/COPYING
   repowork/README
   repowork/blob.cpp
