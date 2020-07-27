@@ -1884,7 +1884,7 @@ text(struct human_data_t *dude)
 
     bu_log("Outputting text file\n");
 
-    dump = fopen("Stats.txt", "w+");
+    dump = fopen("stats.txt", "w+");
 
     fprintf(dump, "Name, X, Y, Z, all in millimeters\n");
 
@@ -2008,7 +2008,7 @@ verbose(struct human_data_t *dude)
     FILE *dump;
 
     bu_log("Verbose Text Dump\n");
-    dump = fopen("Verbose.txt", "w+");
+    dump = fopen("verbose.txt", "w+");
     fprintf(dump, "#All Sizes are in mm\n");
 
     fprintf(dump, "headSize\t%f\n", dude->head.headSize);
@@ -2057,7 +2057,7 @@ getText(struct human_data_t *UNUSED(dude))
 
     bu_log("Reading Textfile for Input\n");
 
-    input = fopen("Stats.txt", "r");
+    input = fopen("stats.txt", "r");
 
     if (input == NULL) {
 	bu_log("Non-existent input file.\n");
@@ -2087,7 +2087,7 @@ verbIn(struct human_data_t *dude)
 
     bu_log("Reading textfile for all measurements\n");
 
-    input = fopen("Verbose.txt", "r");
+    input = fopen("verbose.txt", "r");
     if (input == NULL) {
 	bu_log("Non-existent input file\n");
     } else {
