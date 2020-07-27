@@ -628,7 +628,8 @@ _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_
 	    char buf[81];	/* need exactly 80 chars for header */
 	    unsigned char tot_buffer[4];
 
-	    if ((fd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
+	    fd = open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+	    if (fd < 0) {
 		perror(bu_vls_addr(&file_name));
 		bu_log("Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
 		bu_vls_free(&file_name);
@@ -665,7 +666,8 @@ _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_
 
 	    close(fd);
 	} else {
-	    if ((fp=fopen(bu_vls_addr(&file_name), "wb+")) == NULL) {
+	    fp = fopen(bu_vls_addr(&file_name), "wb+");
+	    if (fp == NULL) {
 		perror(bu_vls_addr(&file_name));
 		bu_log("Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
 		bu_vls_free(&file_name);
@@ -918,7 +920,8 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    char buf[81];	/* need exactly 80 chars for header */
 
 	    /* Open binary output file */
-	    if ((fd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
+	    fd = open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+	    if (fd < 0) {
 		perror(argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
 		return GED_ERROR;
@@ -940,7 +943,8 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	} else {
 	    /* Open ASCII output file */
-	    if ((fp=fopen(output_file, "wb+")) == NULL) {
+	    fp = fopen(output_file, "wb+");
+	    if (fp == NULL) {
 		perror(argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
 		return GED_ERROR;
@@ -1306,7 +1310,8 @@ data_dump(struct ged *gedp, FILE *fp)
 
 		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
 
-		if ((data_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
+		data_fp = fopen(bu_vls_addr(&filepath), "wb+");
+		if (data_fp == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "data_dump: failed to open %s\n", bu_vls_addr(&filepath));
 		    bu_vls_free(&filepath);
 		    return GED_ERROR;
@@ -1439,7 +1444,8 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    char buf[81];	/* need exactly 80 chars for header */
 
 	    /* Open binary output file */
-	    if ((fd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
+	    fd = open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+	    if (fd < 0) {
 		perror(argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
 		return GED_ERROR;
@@ -1461,7 +1467,8 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	} else {
 	    /* Open ASCII output file */
-	    if ((fp=fopen(output_file, "wb+")) == NULL) {
+	    fp = fopen(output_file, "wb+");
+	    if (fp == NULL) {
 		perror(argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
 		return GED_ERROR;
@@ -1516,7 +1523,9 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 		    bu_vls_printf(&filepath, "%s/%s", output_directory, bu_vls_addr(&obj_materials_file));
 
-		    if ((obj_materials_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
+
+		    obj_materials_fp = fopen(bu_vls_addr(&filepath), "wb+");
+		    if (obj_materials_fp == NULL) {
 			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&filepath));
 			bu_vls_free(&obj_materials_file);
 			bu_vls_free(&filepath);
@@ -1554,7 +1563,8 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 	BU_LIST_INIT(&HeadObjMaterials);
 
-	if ((obj_materials_fp=fopen(bu_vls_addr(&obj_materials_file), "wb+")) == NULL) {
+	obj_materials_fp = fopen(bu_vls_addr(&obj_materials_file), "wb+");
+	if (obj_materials_fp == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&obj_materials_file));
 	    bu_vls_free(&obj_materials_file);
 	    fclose(fp);
