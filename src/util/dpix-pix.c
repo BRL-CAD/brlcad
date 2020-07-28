@@ -139,7 +139,7 @@ main(int argc, char **argv)
 	    *cp++ = mm * (*dp++) + bb;
 	}
 
-	got = write(stdout, (char *)&cha[0], count*sizeof(cha[0]));
+	got = write(fileno(stdout), (char *)&cha[0], count*sizeof(cha[0]));
 	if (got < 0 || (size_t)got != count*sizeof(cha[0])) {
 	    perror("write");
 	    exit(2);
