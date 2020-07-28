@@ -124,12 +124,13 @@ get_args(int argc, char **argv)
     switch (argc - bu_optind) {
 	case 0:
 	    file_name = "stdin";
-	    infd = 0;
+	    infd = fileno(stdin);
+	    setmode(fileno(stdin), O_BINARY);
 	    break;
 	case 1:
 	    file_name = argv[bu_optind++];
 	    ifname = bu_file_realpath(file_name, NULL);
-	    if ((infd = open(ifname, O_RDONLY)) == -1) {
+	    if ((infd = open(ifname, O_RDONLY|O_BINARY)) == -1) {
 		bu_free(ifname, "ifname alloc from bu_file_realpath");
 		bu_exit (1, "Cannot open file '%s'\n", file_name);
 	    }
@@ -162,9 +163,6 @@ main (int argc, char **argv)
     int row, col;	/* coords within input stream */
 
     bu_setprogname(argv[0]);
-
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));
