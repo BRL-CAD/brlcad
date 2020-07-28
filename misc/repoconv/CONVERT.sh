@@ -149,11 +149,23 @@ REPODERCSDIR="$PWD/repo_dercs"
 # Create an svn revision to author map
 svn log file://$REPODIR | grep "|" | grep "^r[0-9][0-9 ]" | grep -v \(no\ author\) | awk -F "|" '{print $1 $2}' | sed -e 's/r//' | sed -e 's/ $//' | sed -e 's/  / /' > rev_map
 
+# MANUAL: Generate mapping files with the cvs_info.sh script
+#
+# the domap.sh script is in the comments at the bottom of cvs_info.sh
+# cd cvs_git && ./domap.sh && mv msgtime_sha1_map ../  && rm domap.sh && rm sha1.txt
+
+
+# MANUAL: Run verify on the CVS conversion and stage any differences found for incorporation
+# mkdir cvs_info && cp cvs_info.sh cvs_info/ && cd cvs_info && ./cvs_info.sh
+#
+# If we need to do this, need the children map from git:
+# cd cvs_git && git rev-list --children --all > ../children && cd ..
+
 # Create a fast export file of the conversion.  IMPORTANT - need
 # original ids if we're going to process the git notes down into
 # the commit messages.
-cd cvs_git && git fast-export --show-original-ids --all > ../brlcad_raw.fi && cd ..
-repowork -t -w -e email_fixups.txt -n -r cvs_git -s rev_map ~/brlcad_raw.fi brlcad_final.fi
+cd cvs_git && git checkout master && git fast-export --show-original-ids --all > ../brlcad_raw.fi && cd ..
+repowork -t -e email_fixups.txt -n -r cvs_git -s rev_map --cvs-rebuild-ids cvs_problem_sha1.txt --children children --keymap msgtime_sha1_map --cvs-auth-map key_authormap --cvs-branch-map key_branchmap ~/brlcad_raw.fi brlcad_final.fi
 
 mkdir brlcad_final.git && cd brlcad_final.git && git init
 cat ../brlcad_final.fi | git fast-import
