@@ -303,3 +303,13 @@ svn log file:///home/user/brlcad_code | grep "|" | grep "^r[0-9][0-9 ]" | grep -
 
 This may be enough information pre-notes-merge in repowork to allow us to
 assign one additional property - the cvs/svn commit author name.
+
+#############################################################################
+A note when running git fast-export - you want to make sure and checkout master
+before doing the export - I accidentally did so while in a detached HEAD
+state, and ended up with a HEAD branch in the conversion (which completely
+messed up gitk).
+
+cd brlcad && git checkout master
+git fast-export --all --show-original-ids > ../brlcad.fi
+
