@@ -210,6 +210,7 @@ set(misc_ignore_files
   repoconv/account-map_svnfexport.txt
   repoconv/cvs_authormap
   repoconv/cvs_authormap_svnfexport.txt
+  repoconv/cvs_info.sh
   repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
   repoconv/gitattributes
