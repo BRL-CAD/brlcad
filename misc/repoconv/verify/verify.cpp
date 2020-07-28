@@ -215,6 +215,11 @@ int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::stri
 	std::cout << "Branch name contains invalid char, cannot be checked out by CVS, skipping\n";
 	return 0;
     }
+    std::regex muregex(".*master-UNNAMED-BRANCH.*");
+    if (std::regex_match(branch, muregex)) {
+	std::cout << "Branch is master-UNNAMED-BRANCH, cannot be checked out by CVS, skipping\n";
+	return 0;
+    }
 
     if (branch == std::string("trunk") || branch == std::string("master")) {
 	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -P brlcad");
