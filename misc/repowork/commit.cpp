@@ -169,6 +169,9 @@ commit_parse_original_oid(git_commit_data *cd, std::ifstream &infile)
     line.erase(0, 13);  // Remove "original-oid " prefix
     cd->id.sha1 = line;
     cd->s->have_sha1s = true;
+    if (cd->s->sha12key.find(cd->id.sha1) != cd->s->sha12key.end()) {
+	std::cout << "Have CVS info for commit " << cd->id.sha1 << "\n";
+    }
     return 0;
 }
 
@@ -485,6 +488,25 @@ commit_msg(git_commit_data *c)
 	} else {
 	    nmsg = c->commit_msg;
 	}
+    }
+
+    // Check for CVS information to add
+    if (c->s->sha12key.find(c->id.sha1) != c->s->sha12key.end()) {
+	std::string cvsmsg = nmsg;
+	std::string key = c->s->sha12key[c->id.sha1];
+	if (c->s->key2cvsbranch.find(key) != c->s->key2cvsbranch.end()) {
+	    //std::cout << "Found branch: " << c->s->key2cvsbranch[key] << "\n";
+	    cvsmsg.append("cvs:branch:");
+	    cvsmsg.append(c->s->key2cvsbranch[key]);
+	    cvsmsg.append("\n");
+	}
+	if (c->s->key2cvsauthor.find(key) != c->s->key2cvsauthor.end()) {
+	    //std::cout << "Found author: " << c->s->key2cvsauthor[key] << "\n";
+	    cvsmsg.append("cvs:account:");
+	    cvsmsg.append(c->s->key2cvsauthor[key]);
+	    cvsmsg.append("\n");
+	}
+	nmsg = cvsmsg;
     }
 
     return nmsg;

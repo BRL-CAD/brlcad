@@ -227,6 +227,84 @@ git_map_svn_committers(git_fi_data *s, std::string &svn_map)
 }
 
 void
+read_key_sha1_map(git_fi_data *s, std::string &keysha1file)
+{
+    std::ifstream infile(keysha1file, std::ifstream::binary);
+    if (!infile.good()) {
+        std::cerr << "Could not open file: " << keysha1file << "\n";
+        exit(-1);
+    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+        size_t cpos = line.find_first_of(":");
+        std::string key = line.substr(0, cpos);
+        std::string sha1 = line.substr(cpos+1, std::string::npos);
+	s->sha12key[sha1] = key;
+	s->key2sha1[key] = sha1;
+    }
+    infile.close();
+}
+
+void
+read_key_cvsbranch_map(
+	git_fi_data *s,
+        std::string &branchfile)
+{
+    std::map<std::string, std::string> key2branch;
+    std::ifstream infile(branchfile, std::ifstream::binary);
+    if (!infile.good()) {
+        std::cerr << "Could not open file: " << branchfile << "\n";
+        exit(-1);
+    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+        size_t cpos = line.find_first_of(":");
+        std::string key = line.substr(0, cpos);
+        std::string branch = line.substr(cpos+1, std::string::npos);
+        if (key2branch.find(key) != key2branch.end()) {
+            std::string oldbranch = key2branch[key];
+            if (oldbranch != branch) {
+                std::cout << "WARNING: non-unique key maps to both branch " << oldbranch << " and branch "  << branch << ", overriding\n";
+            }
+        }
+	if (s->key2sha1.find(key) != s->key2sha1.end()) {
+	    s->key2cvsbranch[key] = branch;
+	}
+    }
+    infile.close();
+}
+
+void
+read_key_cvsauthor_map(	git_fi_data *s, std::string &authorfile)
+{
+    std::map<std::string, std::string> key2author;
+    std::ifstream infile(authorfile, std::ifstream::binary);
+    if (!infile.good()) {
+        std::cerr << "Could not open file: " << authorfile << "\n";
+        exit(-1);
+    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+        size_t cpos = line.find_first_of(":");
+        std::string key = line.substr(0, cpos);
+        std::string author = line.substr(cpos+1, std::string::npos);
+        if (key2author.find(key) != key2author.end()) {
+            std::string oldauthor = key2author[key];
+            if (oldauthor != author) {
+                std::cout << "WARNING: non-unique key maps to both author " << oldauthor << " and author "  << author << ", overriding\n";
+            }
+        }
+	if (s->key2sha1.find(key) != s->key2sha1.end()) {
+	    s->key2cvsauthor[key] = author;
+	}
+    }
+    infile.close();
+}
+
+void
 process_ls_tree(std::string &sha1)
 {
     // read children
@@ -443,6 +521,9 @@ main(int argc, char *argv[])
     std::string repo_path;
     std::string email_map;
     std::string svn_map;
+    std::string cvs_auth_map;
+    std::string cvs_branch_map;
+    std::string keymap;
     std::string children_file;
     std::string cvs_id_file;
     int cwidth = 72;
@@ -457,15 +538,19 @@ main(int argc, char *argv[])
 	    ("e,email-map", "Specify replacement username+email mappings (one map per line, format is commit-id-1;commit-id-2)", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("s,svn-map", "Specify svn rev -> committer map (one mapping per line, format is commit-rev name)", cxxopts::value<std::vector<std::string>>(), "map file")
 
+	    ("cvs-auth-map", "msg&time -> cvs author map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
+	    ("cvs-branch-map", "msg&time -> cvs branch map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
+	    ("keymap", "sha1 -> msg&time map (needs original-oid tags)", cxxopts::value<std::vector<std::string>>(), "file")
+
 	    ("t,trim-whitespace", "Trim extra spaces and end-of-line characters from the end of commit messages", cxxopts::value<bool>(trim_whitespace))
 	    ("w,wrap-commit-lines", "Wrap long commit lines to 72 cols (won't wrap messages already having multiple non-empty lines)", cxxopts::value<bool>(wrap_commit_lines))
 	    ("width", "Column wrapping width (if enabled)", cxxopts::value<int>(), "N")
 
 	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "path")
 	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
-	   
+
 	    ("children", "File with output of \"git rev-list --children --all\"", cxxopts::value<std::vector<std::string>>(), "file")
-	    ("cvs-ids", "Specify CVS era commits (revision number or SHA1) to rebuild.  Requires git-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
+	    ("cvs-rebuild-ids", "Specify CVS era commits (revision number or SHA1) to rebuild.  Requires git-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
 
 	    ("h,help", "Print help")
 	    ;
@@ -502,10 +587,28 @@ main(int argc, char *argv[])
 	    children_file = ff[0];
 	}
 
-	if (result.count("cvs-ids"))
+	if (result.count("cvs-rebuild-ids"))
 	{
-	    auto& ff = result["cvs-ids"].as<std::vector<std::string>>();
+	    auto& ff = result["cvs-rebuild-ids"].as<std::vector<std::string>>();
 	    cvs_id_file = ff[0];
+	}
+
+	if (result.count("cvs-auth-map"))
+	{
+	    auto& ff = result["cvs-auth-map"].as<std::vector<std::string>>();
+	    cvs_auth_map = ff[0];
+	}
+
+	if (result.count("cvs-branch-map"))
+	{
+	    auto& ff = result["cvs-branch-map"].as<std::vector<std::string>>();
+	    cvs_branch_map = ff[0];
+	}
+
+	if (result.count("keymap"))
+	{
+	    auto& ff = result["keymap"].as<std::vector<std::string>>();
+	    keymap = ff[0];
 	}
 
 	if (result.count("width"))
@@ -552,6 +655,26 @@ main(int argc, char *argv[])
 
 	// Handle the notes
 	git_unpack_notes(&fi_data, infile, repo_path);
+    }
+
+    if (keymap.length()) {
+	read_key_sha1_map(&fi_data, keymap);
+    }
+
+    if (cvs_auth_map.length()) {
+	if (!keymap.length()) {
+	    std::cerr << "CVS author map specified without key map\n";
+	    return -1;
+	}
+	read_key_cvsauthor_map(&fi_data, cvs_auth_map);
+    }
+
+    if (cvs_branch_map.length()) {
+	if (!keymap.length()) {
+	    std::cerr << "CVS branch map specified without key map\n";
+	    return -1;
+	}
+	read_key_cvsbranch_map(&fi_data, cvs_branch_map);
     }
 
     if (email_map.length()) {

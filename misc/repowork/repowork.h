@@ -99,6 +99,9 @@ class git_commit_data {
 	// to the existing notes-based info to id SVN usernames
 	std::string svn_id;
 	std::string svn_committer;
+
+	std::string cvs_id;
+	std::string cvs_branch;
 };
 
 class git_tag_data {
@@ -179,6 +182,13 @@ class git_fi_data {
 
 	// We also need to be able to translate SVN revs into sha1s
 	std::map<std::string, std::string> rev_to_sha1;
+
+
+	// Containers holding information specific to CVS
+	std::map<std::string, std::string> sha12key;
+	std::map<std::string, std::string> key2sha1;
+	std::map<std::string, std::string> key2cvsauthor;
+	std::map<std::string, std::string> key2cvsbranch;
 
     private:
 	long mark = -1;
