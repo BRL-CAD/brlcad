@@ -146,7 +146,7 @@ cd ..
 
 # mv master branches_uniq/ - Note: shouldn't need master explicitly, it's assumed
 
-rm -f branchmap authormap
+rm -f key_branchmap sha1_branchmap key_authormap sha1_authormap
 cd brlcad_cvs_git
 for f in ../branches_uniq/*;
 do
@@ -157,8 +157,10 @@ do
 		MSGSHA1=$(git log -n1 --pretty=format:"%B" $p | sha1sum | head -c 40)
 		CDATE=$(git log -n1 --pretty=format:"%ct" $p)
 		AUTHORNAME=$(git log -n1 --pretty=format:"%an" $p)
-		echo $MSGSHA1$CDATE:$branch >> ../branchmap
-		echo $MSGSHA1$CDATE:$AUTHORNAME>> ../authormap
+		echo $p:$branch >> ../sha1_branchmap
+		echo $p:$AUTHORNAME >> ../sha1_authormap
+		echo $MSGSHA1$CDATE:$branch >> ../key_branchmap
+		echo $MSGSHA1$CDATE:$AUTHORNAME>> ../key_authormap
 	done < $f
 done
 
