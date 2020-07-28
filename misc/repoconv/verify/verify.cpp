@@ -224,7 +224,7 @@ int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::stri
 	exit(1);
     }
     if (std::system(cvs_cmd.c_str())) {
-	std::cerr << "cvs checkout failed!\n";
+	std::cerr << "cvs checkout failed: " << cvs_cmd << "\n";
 	if (std::system(cleanup_cmd.c_str())) {
 	    std::cerr << "verify cleanup failed!\n";
 	}
@@ -408,9 +408,15 @@ get_branches(std::set<std::string> &branches, std::string &sha1, std::string &gi
     int cnt = 0;
     std::set<std::string> b;
     std::regex dregex(".*detached.*");
+    std::regex mregex(".*master$");
     while (std::getline(infile, line)) {
         if (!line.length()) continue;
 	if (std::regex_match(line, dregex)) continue;
+	if (std::regex_match(line, dregex)) {
+	    b.insert(std::string("master"));
+	    cnt++;
+	    continue;
+	}
 	wtrim(line);
 	b.insert(line);
 	cnt++;
@@ -578,14 +584,6 @@ int main(int argc, char *argv[])
 	    continue;
 	}
 
-	if (commits[i].timestamp < cvs_maxtime) {
-	    get_branches(commits[i].branches, commits[i].sha1, git_repo);
-	    if (!commits[i].branches.size()) {
-		std::cout << "Couldn't identify branches, skipping verification of " << commits[i].sha1 << "\n";
-		continue;
-	    }
-	}
-
 
 	timestamp_to_cmp.insert(std::make_pair(commits[i].timestamp, i));
 	if (commits[i].svn_rev) {
@@ -619,6 +617,14 @@ int main(int argc, char *argv[])
 	    std::cout << "Checking SVN revision " << info.rev << "\n";
 	} else {
 	    std::cout << "Checking non-SVN commit, timestamp " << r_it->first << "\n";
+	}
+
+	if (info.timestamp < cvs_maxtime) {
+	    get_branches(info.branches, info.sha1, git_repo);
+	    if (!info.branches.size()) {
+		std::cout << "Couldn't identify branches, skipping verification of " << info.sha1 << "\n";
+		continue;
+	    }
 	}
 
 	// Git checkout
