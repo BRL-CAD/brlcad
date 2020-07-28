@@ -86,7 +86,7 @@ read_branch_sha1_map(
 	if (key2branch.find(key) != key2branch.end()) {
 	    std::string oldbranch = key2branch[key];
 	    if (oldbranch != branch) {
-		std::cout << "non-unique key: maps to both " << oldbranch << " and "  << branch << "\n";
+		std::cout << "WARNING: non-unique key maps to both " << oldbranch << " and "  << branch << "\n";
 	    }
 	} else {
 	    key2branch[key] = branch;
@@ -271,24 +271,24 @@ build_cvs_tree(std::string sha1)
     return 0;
 }
 
-int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::string &branch, std::string git_repo, std::string cvs_repo) {
+int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::string git_repo, std::string cvs_repo) {
     std::string cvs_cmd;
 
     std::regex tag_invalid(".*[$,.:;@].*");
-    if (std::regex_match(branch, tag_invalid)) {
+    if (std::regex_match(info.branch_svn, tag_invalid)) {
 	std::cout << "Branch name contains invalid char, cannot be checked out by CVS, skipping\n";
 	return 0;
     }
     std::regex muregex(".*master-UNNAMED-BRANCH.*");
-    if (std::regex_match(branch, muregex)) {
+    if (std::regex_match(info.branch_svn, muregex)) {
 	std::cout << "Branch is master-UNNAMED-BRANCH, cannot be checked out by CVS, skipping\n";
 	return 0;
     }
 
-    if (branch == std::string("trunk") || branch == std::string("master")) {
+    if (info.branch_svn == std::string("trunk") || info.branch_svn == std::string("master")) {
 	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -P brlcad");
     } else {
-	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -r ") + branch + std::string(" -P brlcad");
+	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -r ") + info.branch_svn + std::string(" -P brlcad");
     }
 
     info.cvs_check_cmds.append(cvs_cmd);
@@ -316,7 +316,7 @@ int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::stri
 
     int diff_ret = std::system(repo_diff.c_str());
     if (diff_ret) {
-        std::cerr << "CVS vs Git: diff test failed, SHA1" << info.sha1 << ", branch " << branch << "\n";
+        std::cerr << "CVS vs Git: diff test failed, SHA1" << info.sha1 << ", branch " << info.branch_svn << "\n";
 	if (build_cvs_tree(info.sha1)) {
 	    std::cerr << "CVS tree empty - probably not what is intended, skipping\n";
 	    return 0;
@@ -467,46 +467,6 @@ static inline void wtrim(std::string &s) {
     while (s.find(" ") == 0) {s.erase(0, 1);}
     size_t len = s.size();
     while (s.rfind(" ") == --len) { s.erase(len, len + 1); }
-}
-
-void
-get_branches(std::set<std::string> &branches, std::string &sha1, std::string &git_repo)
-{
-    std::string get_branch = std::string("cd ") + git_repo + std::string(" && git branch -a --contains ") + sha1 + std::string(" > ../branches.txt && cd ..");
-    run_cmd(get_branch);
-    std::ifstream infile("branches.txt", std::ifstream::binary);
-    if (!infile.good()) {
-	std::cerr << "Could not open file: branches.txt\n";
-	exit(-1);
-    }
-    std::string line;
-    std::string branch;
-    int cnt = 0;
-    std::set<std::string> b;
-    std::regex dregex(".*detached.*");
-    std::regex mregex(".*master$");
-    while (std::getline(infile, line)) {
-        if (!line.length()) continue;
-	if (std::regex_match(line, dregex)) continue;
-	if (std::regex_match(line, dregex)) {
-	    b.insert(std::string("master"));
-	    cnt++;
-	    continue;
-	}
-	wtrim(line);
-	b.insert(line);
-	cnt++;
-    }
-    if (b.find(std::string("master")) != b.end()) {
-	branches.insert(std::string("master"));
-    } else {
-	branches.insert(b.begin(), b.end());
-	std::set<std::string>::iterator s_it;
-	for (s_it = b.begin(); s_it != b.end(); s_it++) {
-	    std::cout << sha1 << " branch: " << *s_it << "\n";
-	}
-    }
-    infile.close();
 }
 
 int main(int argc, char *argv[])
@@ -722,10 +682,9 @@ int main(int argc, char *argv[])
 	}
 
 	if (info.timestamp < cvs_maxtime) {
-	    get_branches(info.branches, info.sha1, git_repo);
-	    if (!info.branches.size()) {
-		std::cout << "Couldn't identify branches, skipping verification of " << info.sha1 << "\n";
-		continue;
+	    info.branch_svn = sha12branch[info.sha1];
+	    if (!info.branch_svn.length()) {
+		info.branch_svn = std::string("master");
 	    }
 	}
 
@@ -740,33 +699,7 @@ int main(int argc, char *argv[])
 
 	// If we're old enough and have the cvs repository, check it
 	if (cvs_repo.length() && info.timestamp < cvs_maxtime) {
-	    if (info.branches.size() == 1) {
-		info.branch_svn = *info.branches.begin();
-		cvs_err = verify_repos_cvs(cvs_problem_sha1s, info, info.branch_svn, git_repo, cvs_repo);
-	    } else {
-		int err_cnt = 0;
-		int check_cnt = 0;
-		std::set<std::string>::iterator s_it;
-		for (s_it = info.branches.begin(); s_it != info.branches.end(); s_it++) {
-		    std::string cbranch = *s_it;
-		    int check_err = verify_repos_cvs(cvs_problem_sha1s, info, cbranch, git_repo, cvs_repo);
-		    if (!check_err) {
-			info.branch_svn = cbranch;
-		    }
-		    check_cnt++;
-		    err_cnt += check_err;
-		}
-		if (err_cnt) {
-		    if (err_cnt != check_cnt) {
-			std::cout << "Git checkout agreed with some CVS branches, but not all??? skipping\n";
-		    } else {
-			// Didn't agree with any branches, pick one and generate a tree
-			info.branch_svn = *info.branches.begin();
-			std::cout << "Git checkout didn't agree with any CVS branches, generating tree for " << info.branch_svn << "\n";
-			cvs_err = verify_repos_cvs(cvs_problem_sha1s, info, info.branch_svn, git_repo, cvs_repo);
-		    }
-		}
-	    }
+	    cvs_err = verify_repos_cvs(cvs_problem_sha1s, info, git_repo, cvs_repo);
 	}
 
 	// If we have the SVN repo and a revision, check SVN
