@@ -42,6 +42,70 @@ class cmp_info {
 	std::string svn_check_cmds;
 };
 
+void
+read_key_sha1_map(std::map<std::string, std::string> &key2sha1, std::string &keysha1file)
+{
+    std::ifstream infile(keysha1file, std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open file: " << keysha1file << "\n";
+	exit(-1);
+    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+	size_t cpos = line.find_first_of(":");
+	std::string key = line.substr(0, cpos);
+	std::string sha1 = line.substr(cpos+1, std::string::npos);
+	if (key2sha1.find(key) != key2sha1.end()) {
+	    //std::cout << "non-unique key: " << line << "\n";
+	} else {
+	    key2sha1[key] = sha1;
+	}
+    }
+    infile.close();
+}
+
+void
+read_branch_sha1_map(
+	std::map<std::string, std::string> &sha12branch,
+	std::map<std::string, std::string> &key2sha1,
+       	std::string &branchfile)
+{
+    std::map<std::string, std::string> key2branch;
+    std::ifstream infile(branchfile, std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open file: " << branchfile << "\n";
+	exit(-1);
+    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (!line.length()) continue;
+	size_t cpos = line.find_first_of(":");
+	std::string key = line.substr(0, cpos);
+	std::string branch = line.substr(cpos+1, std::string::npos);
+	if (key2branch.find(key) != key2branch.end()) {
+	    std::string oldbranch = key2branch[key];
+	    if (oldbranch != branch) {
+		std::cout << "non-unique key: maps to both " << oldbranch << " and "  << branch << "\n";
+	    }
+	} else {
+	    key2branch[key] = branch;
+	}
+    }
+    infile.close();
+
+    std::map<std::string, std::string>::iterator k2s_it;
+    for (k2s_it = key2sha1.begin(); k2s_it != key2sha1.end(); k2s_it++) {
+	std::string key = k2s_it->first;
+	std::string sha1 = k2s_it->second;
+	if (key2branch.find(key) == key2branch.end()) {
+	    continue;
+	}
+	sha12branch[sha1] = key2branch[key];
+	std::cout << sha1 << " -> " << key2branch[key] << "\n";
+    }
+}
+
 /* Assuming a tree checked out, build a tree based on the contents */
 
 class filemodify {
@@ -448,6 +512,8 @@ get_branches(std::set<std::string> &branches, std::string &sha1, std::string &gi
 int main(int argc, char *argv[])
 {
     int ret;
+    std::string keymap = std::string();
+    std::string branchmap = std::string();
     std::string cvs_repo = std::string();
     std::string svn_repo = std::string();
     std::string done_list = std::string();
@@ -465,6 +531,8 @@ int main(int argc, char *argv[])
 
 	options.add_options()
 	    ("cvs-repo", "Use the specified CVS repository for checks", cxxopts::value<std::vector<std::string>>(), "repo")
+	    ("keymap", "msgtim key to SHA1 lookup map", cxxopts::value<std::vector<std::string>>(), "file")
+	    ("branchmap", "msgtim key to CVS branch lookup map", cxxopts::value<std::vector<std::string>>(), "file")
 	    ("svn-repo", "Use the specified SVN repository for checks", cxxopts::value<std::vector<std::string>>(), "repo")
 	    ("max-rev", "Skip any revision higher than this number", cxxopts::value<int>(), "#")
 	    ("min-rev", "Skip any revision lower than this number", cxxopts::value<int>(), "#")
@@ -484,6 +552,18 @@ int main(int argc, char *argv[])
 	{
 	    auto& ff = result["cvs-repo"].as<std::vector<std::string>>();
 	    cvs_repo = ff[0];
+	}
+
+	if (result.count("keymap"))
+	{
+	    auto& ff = result["keymap"].as<std::vector<std::string>>();
+	    keymap = ff[0];
+	}
+
+	if (result.count("branchmap"))
+	{
+	    auto& ff = result["branchmap"].as<std::vector<std::string>>();
+	    branchmap = ff[0];
 	}
 
 	if (result.count("svn-repo"))
@@ -521,9 +601,24 @@ int main(int argc, char *argv[])
 	return -1;
     }
 
-    std::string git_repo(argv[1]);
+
+    std::set<std::string> done_sha1;
+    if (done_list.length()) {
+	get_done_sha1s(done_sha1, done_list);
+    }
+
+    std::map<std::string, std::string> sha12branch;
+    if (keymap.length()) {
+	std::map<std::string, std::string> key2sha1;
+	read_key_sha1_map(key2sha1, keymap);
+	if (branchmap.length()) {
+	    read_branch_sha1_map(sha12branch, key2sha1, branchmap);
+	}
+    }
+
 
     // Set up working git repo
+    std::string git_repo(argv[1]);
     std::string git_working("git_working");
     std::string git_init = std::string("git clone ") + git_repo + std::string(" ") + git_working;
 
@@ -573,11 +668,6 @@ int main(int argc, char *argv[])
 	    }
 	    mrev--;
 	}
-    }
-
-    std::set<std::string> done_sha1;
-    if (done_list.length()) {
-	get_done_sha1s(done_sha1, done_list);
     }
 
     std::set<std::pair<long, size_t>> timestamp_to_cmp;
