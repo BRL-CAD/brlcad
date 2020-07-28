@@ -209,6 +209,13 @@ build_cvs_tree(std::string sha1)
 
 int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::string &branch, std::string git_repo, std::string cvs_repo) {
     std::string cvs_cmd;
+
+    std::regex tag_invalid(".*[$,.:;@].*");
+    if (std::regex_match(branch, tag_invalid)) {
+	std::cout << "Branch name contains invalid char, cannot be checked out by CVS, skipping\n";
+	return 0;
+    }
+
     if (branch == std::string("trunk") || branch == std::string("master")) {
 	cvs_cmd = std::string("cvs -d ") + cvs_repo + std::string(" -Q co -ko -D \"") + info.cvs_date + std::string("\" -P brlcad");
     } else {
