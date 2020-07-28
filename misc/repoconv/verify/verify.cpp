@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
 	    ("svn-repo", "Use the specified SVN repository for checks", cxxopts::value<std::vector<std::string>>(), "repo")
 	    ("max-rev", "Skip any revision higher than this number", cxxopts::value<int>(), "#")
 	    ("min-rev", "Skip any revision lower than this number", cxxopts::value<int>(), "#")
-	    ("done", "File with SHA1 identifiers (1/line) which have already been checked", cxxopts::value<int>(), "file")
+	    ("done", "File with SHA1 identifiers (1/line) which have already been checked", cxxopts::value<std::vector<std::string>>(), "repo")
 	    ("h,help", "Print help")
 	    ;
 
