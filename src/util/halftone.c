@@ -894,7 +894,7 @@ setup(int argc, char **argv)
 	}
     } else {
 	char *ifname = bu_file_realpath(argv[bu_optind], NULL);
-	if (freopen(ifname, "r", stdin) == NULL ) {
+	if (freopen(ifname, "rb", stdin) == NULL ) {
 	    bu_free(ifname,"ifname alloc from bu_file_realpath");
 	    bu_exit(1, "halftone: cannot open \"%s\" for reading.\n", argv[bu_optind]);
 	}
