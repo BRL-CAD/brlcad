@@ -75,3 +75,17 @@ do
 done
 
 cd ..
+
+
+# To generate a map between the above keys and sha1 values, run the
+# following script from within the repository you wish to map to:
+
+# git log --all --pretty=format:"%H" > sha1s.txt
+#
+# while IFS="" read -r p || [ -n "$p" ]
+# do
+# 	MSGSHA1=$(git log -n1 --pretty=format:"%B" $p | sha1sum | head -c 40)
+# 	CDATE=$(git log -n1 --pretty=format:"%ct" $p)
+# 	echo $MSGSHA1$CDATE:$p >> msgtime_sha1_map
+# done < sha1s.txt
+
