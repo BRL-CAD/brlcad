@@ -259,7 +259,7 @@ struct bview {
 };
 
 
-struct bview_client_data {
+struct bview_solid_data {
     struct display_list *gdlp;
     int draw_solid_lines_only;
     int wireframe_color_override;
