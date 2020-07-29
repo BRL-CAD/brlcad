@@ -47,18 +47,21 @@ extern void *ged_cmds;
  * flags &= &( flag2 | flag3 );
  */
 
+/* Unsigned long long (which we get from C99) must be at least 64 bits, so we
+ * may define up to 64 flags here. (although we probably don't want that many,
+ * using that type for future proofing...) */
 #define GED_CMD_DEFAULT       0
-#define GED_CMD_INTERACTIVE   1 << 0
-#define GED_CMD_UPDATE_SCENE  1 << 1
-#define GED_CMD_UPDATE_VIEW   1 << 2
-#define GED_CMD_AUTOVIEW      1 << 3
-#define GED_CMD_ALL_VIEWS     1 << 4
-#define GED_CMD_VIEW_CALLBACK 1 << 5
+#define GED_CMD_INTERACTIVE   1ULL << 0
+#define GED_CMD_UPDATE_SCENE  1ULL << 1
+#define GED_CMD_UPDATE_VIEW   1ULL << 2
+#define GED_CMD_AUTOVIEW      1ULL << 3
+#define GED_CMD_ALL_VIEWS     1ULL << 4
+#define GED_CMD_VIEW_CALLBACK 1ULL << 5
 
 struct ged_cmd_impl {
     const char *cname;
     ged_func_ptr cmd;
-    int64_t opts;
+    unsigned long long opts;
 };
 
 
