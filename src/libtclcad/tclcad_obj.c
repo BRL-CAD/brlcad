@@ -4558,13 +4558,13 @@ to_new_view(struct ged *gedp,
 
     }
 
-    new_gdvp->gdv_gop = current_top->to_gop;
     bu_vls_init(&new_gdvp->gdv_view->gv_name);
 
     struct tclcad_view_data *tvd;
     BU_GET(tvd, struct tclcad_view_data);
     bu_vls_init(&tvd->gdv_edit_motion_delta_callback);
     bu_vls_init(&tvd->gdv_callback);
+    tvd->gdv_gop = current_top->to_gop;
     new_gdvp->gdv_data = (void *)tvd;
 
     bu_vls_printf(&new_gdvp->gdv_view->gv_name, "%s", argv[name_index]);

@@ -39,18 +39,18 @@ to_autoview_view(struct ged_dm_view *gdvp, const char *scale)
     int ret;
     const char *av[3];
 
-    gdvp->gdv_gop->go_gedp->ged_gvp = gdvp->gdv_view;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    tvd->gdv_gop->go_gedp->ged_gvp = gdvp->gdv_view;
     av[0] = "autoview";
     av[1] = scale;
     av[2] = NULL;
 
     if (scale)
-	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 2, (const char **)av);
+	ret = ged_autoview(tvd->gdv_gop->go_gedp, 2, (const char **)av);
     else
-	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 1, (const char **)av);
+	ret = ged_autoview(tvd->gdv_gop->go_gedp, 1, (const char **)av);
 
     if (ret == GED_OK) {
-	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	}

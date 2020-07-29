@@ -70,7 +70,8 @@ key_matches_paths(struct bu_hash_tbl *t, void *udata)
 static void
 go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
 {
-    struct ged_obj *gop = gdvp->gdv_gop;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    struct ged_obj *gop = tvd->gdv_gop;
     struct dm *dmp = gdvp->gdv_dmp;
     struct bu_hash_entry *entry;
     struct path_edit_params *params = NULL;
@@ -121,7 +122,8 @@ go_draw_dlist(struct ged_dm_view *gdvp)
     struct solid *sp;
     int line_style = -1;
     struct dm *dmp = gdvp->gdv_dmp;
-    struct bu_list *hdlp = gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    struct bu_list *hdlp = tvd->gdv_gop->go_gedp->ged_gdp->gd_headDisplay;
 
     if (dm_get_transparency(dmp)) {
 	/* First, draw opaque stuff */

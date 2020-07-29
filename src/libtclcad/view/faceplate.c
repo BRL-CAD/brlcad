@@ -319,8 +319,10 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	dm_draw_adc(gdvp->gdv_dmp, &(gdvp->gdv_view->gv_adc), gdvp->gdv_view->gv_view2model, gdvp->gdv_view->gv_model2view);
 
     /* Draw grid */
-    if (gdvp->gdv_view->gv_grid.draw)
-	dm_draw_grid(gdvp->gdv_dmp, &gdvp->gdv_view->gv_grid, gdvp->gdv_view->gv_scale, gdvp->gdv_view->gv_model2view, gdvp->gdv_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+    if (gdvp->gdv_view->gv_grid.draw) {
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	dm_draw_grid(gdvp->gdv_dmp, &gdvp->gdv_view->gv_grid, gdvp->gdv_view->gv_scale, gdvp->gdv_view->gv_model2view, tvd->gdv_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+    }
 
     /* Draw rect */
     if (gdvp->gdv_view->gv_rect.draw && gdvp->gdv_view->gv_rect.line_width)

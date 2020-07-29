@@ -136,13 +136,13 @@ struct tclcad_view_data {
     struct bu_vls		gdv_edit_motion_delta_callback;
     struct bu_vls		gdv_callback;
     struct fbserv_obj		gdv_fbs;
+    struct ged_obj		*gdv_gop;
 };
 
 struct ged_dm_view {
     struct bu_list		l;
     struct bview		*gdv_view;
     struct dm			*gdv_dmp;
-    struct ged_obj		*gdv_gop;
     void                        *gdv_data;
 };
 
