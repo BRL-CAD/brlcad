@@ -253,6 +253,8 @@ struct bview {
     fastf_t                     gv_data_vZ;
     size_t                      gv_bot_threshold;
     int			        gv_hidden;
+    void                        *dmp;  /* Display manager pointer, if one is associated with this view */
+    void                        *u_data; /* Caller data associated with this view */
     struct bu_ptbl *callbacks;
 };
 

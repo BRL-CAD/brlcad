@@ -34,40 +34,40 @@
 #include "../view/view.h"
 
 void
-go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuffer)
+go_refresh_draw(struct ged_obj *gop, struct bview *gdvp, int restore_zbuffer)
 {
-    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
-	if (gdvp->gdv_view->gv_rect.draw) {
+	if (gdvp->gv_rect.draw) {
 	    go_draw(gdvp);
 
 	    go_draw_other(gop, gdvp);
 
 	    /* disable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
+	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp,
-		       gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
-		       gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
+		       gdvp->gv_rect.pos[X], gdvp->gv_rect.pos[Y],
+		       gdvp->gv_rect.dim[X], gdvp->gv_rect.dim[Y]);
 
 	    /* enable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
+	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 1);
 
-	    if (gdvp->gdv_view->gv_rect.line_width)
-		dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
+	    if (gdvp->gv_rect.line_width)
+		dm_draw_rect((struct dm *)gdvp->dmp, &gdvp->gv_rect);
 	} else {
 	    /* disable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
+	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
-		       dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
+		       dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));
 
 	    /* enable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
+	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 1);
 	}
 
 	if (restore_zbuffer) {
-	    (void)dm_set_zbuffer(gdvp->gdv_dmp, 1);
+	    (void)dm_set_zbuffer((struct dm *)gdvp->dmp, 1);
 	}
 
 	return;
@@ -75,41 +75,41 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	go_draw(gdvp);
 
 	/* disable write to depth buffer */
-	(void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
+	(void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
-	if (gdvp->gdv_view->gv_rect.draw) {
+	if (gdvp->gv_rect.draw) {
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp,
-		       gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
-		       gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
+		       gdvp->gv_rect.pos[X], gdvp->gv_rect.pos[Y],
+		       gdvp->gv_rect.dim[X], gdvp->gv_rect.dim[Y]);
 	} else
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
-		       dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
+		       dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));
 
 	/* enable write to depth buffer */
-	(void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
+	(void)dm_set_depth_mask((struct dm *)gdvp->dmp, 1);
 
 	if (restore_zbuffer) {
-	    (void)dm_set_zbuffer(gdvp->gdv_dmp, 1);
+	    (void)dm_set_zbuffer((struct dm *)gdvp->dmp, 1);
 	}
     } else {
 	if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_UNDERLAY) {
 	    /* disable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
+	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
-	    if (gdvp->gdv_view->gv_rect.draw) {
+	    if (gdvp->gv_rect.draw) {
 		fb_refresh(tvd->gdv_fbs.fbs_fbp,
-			   gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
-			   gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
+			   gdvp->gv_rect.pos[X], gdvp->gv_rect.pos[Y],
+			   gdvp->gv_rect.dim[X], gdvp->gv_rect.dim[Y]);
 	    } else
 		fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
-			   dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
+			   dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));
 
 	    /* enable write to depth buffer */
-	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
+	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 1);
 	}
 
 	if (restore_zbuffer) {
-	    (void)dm_set_zbuffer(gdvp->gdv_dmp, 1);
+	    (void)dm_set_zbuffer((struct dm *)gdvp->dmp, 1);
 	}
 
 	go_draw(gdvp);
@@ -119,24 +119,24 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 }
 
 void
-go_refresh(struct ged_obj *gop, struct ged_dm_view *gdvp)
+go_refresh(struct ged_obj *gop, struct bview *gdvp)
 {
     int restore_zbuffer = 0;
 
     /* Turn off the zbuffer if the framebuffer is active AND the zbuffer is on. */
-    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
-    if (tvd->gdv_fbs.fbs_mode != TCLCAD_OBJ_FB_MODE_OFF && dm_get_zbuffer(gdvp->gdv_dmp)) {
-	(void)dm_set_zbuffer(gdvp->gdv_dmp, 0);
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    if (tvd->gdv_fbs.fbs_mode != TCLCAD_OBJ_FB_MODE_OFF && dm_get_zbuffer((struct dm *)gdvp->dmp)) {
+	(void)dm_set_zbuffer((struct dm *)gdvp->dmp, 0);
 	restore_zbuffer = 1;
     }
 
-    (void)dm_draw_begin(gdvp->gdv_dmp);
+    (void)dm_draw_begin((struct dm *)gdvp->dmp);
     go_refresh_draw(gop, gdvp, restore_zbuffer);
-    (void)dm_draw_end(gdvp->gdv_dmp);
+    (void)dm_draw_end((struct dm *)gdvp->dmp);
 }
 
 void
-to_refresh_view(struct ged_dm_view *gdvp)
+to_refresh_view(struct bview *gdvp)
 {
     if (current_top == NULL || !current_top->to_gop->go_refresh_on)
 	return;
@@ -148,9 +148,9 @@ to_refresh_view(struct ged_dm_view *gdvp)
 void
 to_refresh_all_views(struct tclcad_obj *top)
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &top->to_gop->go_head_views.l)) {
 	to_refresh_view(gdvp);
     }
 }
@@ -239,10 +239,10 @@ int
 to_handle_refresh(struct ged *gedp,
 		  const char *name)
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), name))
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), name))
 	    break;
     }
 
@@ -260,7 +260,7 @@ to_handle_refresh(struct ged *gedp,
 void
 to_refresh_handler(void *clientdata)
 {
-    struct ged_dm_view *gdvp = (struct ged_dm_view *)clientdata;
+    struct bview *gdvp = (struct bview *)clientdata;
 
     /* Possibly do more here */
 

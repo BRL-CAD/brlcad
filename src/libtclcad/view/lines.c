@@ -66,7 +66,7 @@ go_dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp)
 int
 go_data_lines(Tcl_Interp *UNUSED(interp),
 	      struct ged *gedp,
-	      struct ged_dm_view *gdvp,
+	      struct bview *gdvp,
 	      int argc,
 	      const char *argv[],
 	      const char *usage)
@@ -93,7 +93,7 @@ go_data_lines(Tcl_Interp *UNUSED(interp),
 
 
     struct bview *btmp = gedp->ged_gvp;
-    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_gvp = gdvp;
 
     ret = ged_view_data_lines(gedp, argc, argv);
 
@@ -115,7 +115,7 @@ to_data_lines(struct ged *gedp,
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -132,8 +132,8 @@ to_data_lines(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
@@ -147,7 +147,7 @@ to_data_lines(struct ged *gedp,
     argv[0] = "view";
 
     struct bview *btmp = gedp->ged_gvp;
-    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_gvp = gdvp;
 
     ret = ged_view_func(gedp, argc, argv);
 

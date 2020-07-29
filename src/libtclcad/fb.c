@@ -908,16 +908,16 @@ Fbo_Init(Tcl_Interp *interp)
 void
 to_fbs_callback(void *clientData)
 {
-    struct ged_dm_view *gdvp = (struct ged_dm_view *)clientData;
+    struct bview *gdvp = (struct bview *)clientData;
 
     to_refresh_view(gdvp);
 }
 
 
 int
-to_close_fbs(struct ged_dm_view *gdvp)
+to_close_fbs(struct bview *gdvp)
 {
-    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     if (tvd->gdv_fbs.fbs_fbp == FB_NULL)
 	return TCL_OK;
 
@@ -933,14 +933,14 @@ to_close_fbs(struct ged_dm_view *gdvp)
  * Open/activate the display managers framebuffer.
  */
 int
-to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
+to_open_fbs(struct bview *gdvp, Tcl_Interp *interp)
 {
     /* already open */
-    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     if (tvd->gdv_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
-    tvd->gdv_fbs.fbs_fbp = dm_get_fb(gdvp->gdv_dmp);
+    tvd->gdv_fbs.fbs_fbp = dm_get_fb((struct dm *)gdvp->dmp);
 
     if (tvd->gdv_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
@@ -969,7 +969,7 @@ to_set_fb_mode(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     int mode;
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -985,8 +985,8 @@ to_set_fb_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
@@ -997,7 +997,7 @@ to_set_fb_mode(struct ged *gedp,
 
     /* Get fb mode */
     if (argc == 2) {
-	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_mode);
 	return GED_OK;
     }
@@ -1014,7 +1014,7 @@ to_set_fb_mode(struct ged *gedp,
 	mode = TCLCAD_OBJ_FB_MODE_OVERLAY;
 
     {
-	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	tvd->gdv_fbs.fbs_mode = mode;
     }
     to_refresh_view(gdvp);
@@ -1031,7 +1031,7 @@ to_listen(struct ged *gedp,
 	  const char *usage,
 	  int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1047,8 +1047,8 @@ to_listen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
@@ -1057,7 +1057,7 @@ to_listen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     if (tvd->gdv_fbs.fbs_fbp == FB_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
 	return GED_ERROR;

@@ -74,7 +74,6 @@ __BEGIN_DECLS
 #define GED_DISPLAY_LIST_NULL ((struct display_list *)0)
 #define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
 #define GED_VIEW_NULL ((struct bview *)0)
-#define GED_DM_VIEW_NULL ((struct ged_dm_view *)0)
 
 #define GED_RESULT_NULL ((void *)0)
 
@@ -253,7 +252,7 @@ struct ged {
     void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
 
     // Other callbacks...
-    // ged_dm_view: gdv_callback, gdv_edit_motion_delta_callback
+    // Tcl command strings: gdv_callback, gdv_edit_motion_delta_callback
     // ged_obj: go_more_args_callback, go_rt_end_callback
     // fbserv_obj: fbs_callback
     // bview.h gv_callback, vo_callback
