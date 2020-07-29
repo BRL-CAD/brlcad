@@ -494,8 +494,13 @@ commit_msg(git_commit_data *c)
     if (c->s->sha12key.find(c->id.sha1) != c->s->sha12key.end()) {
 	std::string cvsmsg = nmsg;
 	std::string key = c->s->sha12key[c->id.sha1];
+	int have_ret = (c->svn_id.length()) ? 1 : 0;
 	if (c->s->key2cvsbranch.find(key) != c->s->key2cvsbranch.end()) {
 	    //std::cout << "Found branch: " << c->s->key2cvsbranch[key] << "\n";
+	    if (!have_ret) {
+		cvsmsg.append("\n");
+		have_ret = 1;
+	    }
 	    std::string cb = c->s->key2cvsbranch[key];
 	    cvsmsg.append("cvs:branch:");
 	    if (cb == std::string("master")) {
@@ -507,6 +512,10 @@ commit_msg(git_commit_data *c)
 	}
 	if (c->s->key2cvsauthor.find(key) != c->s->key2cvsauthor.end()) {
 	    //std::cout << "Found author: " << c->s->key2cvsauthor[key] << "\n";
+	    if (!have_ret) {
+		cvsmsg.append("\n");
+		have_ret = 1;
+	    }
 	    std::string svnname = std::string("svn:account:") + c->s->key2cvsauthor[key];
 	    std::string cvsaccount = std::string("cvs:account:") + c->s->key2cvsauthor[key];
 	    size_t index = cvsmsg.find(svnname);
