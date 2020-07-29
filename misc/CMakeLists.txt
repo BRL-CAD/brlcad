@@ -211,6 +211,7 @@ set(misc_ignore_files
   repoconv/cvs_authormap
   repoconv/cvs_authormap_svnfexport.txt
   repoconv/cvs_info.sh
+  repoconv/domap.sh
   repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
   repoconv/gitattributes
