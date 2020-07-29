@@ -313,7 +313,7 @@ process_ls_tree(std::string &sha1)
 	std::cerr << "Could not open tree file tree.txt\n";
 	exit(-1);
     }
-    std::string sha1tree = sha1 + std::string("-tree.fi");
+    std::string sha1tree = std::string("trees/") + sha1 + std::string("-tree.fi");
     std::ofstream ofile(sha1tree, std::ios::out | std::ios::binary);
     ofile << "deleteall\n";
 

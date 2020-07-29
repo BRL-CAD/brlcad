@@ -496,15 +496,27 @@ commit_msg(git_commit_data *c)
 	std::string key = c->s->sha12key[c->id.sha1];
 	if (c->s->key2cvsbranch.find(key) != c->s->key2cvsbranch.end()) {
 	    //std::cout << "Found branch: " << c->s->key2cvsbranch[key] << "\n";
+	    std::string cb = c->s->key2cvsbranch[key];
 	    cvsmsg.append("cvs:branch:");
-	    cvsmsg.append(c->s->key2cvsbranch[key]);
+	    if (cb == std::string("master")) {
+		cvsmsg.append("trunk");
+	    } else {
+		cvsmsg.append(cb);
+	    }
 	    cvsmsg.append("\n");
 	}
 	if (c->s->key2cvsauthor.find(key) != c->s->key2cvsauthor.end()) {
 	    //std::cout << "Found author: " << c->s->key2cvsauthor[key] << "\n";
-	    cvsmsg.append("cvs:account:");
-	    cvsmsg.append(c->s->key2cvsauthor[key]);
-	    cvsmsg.append("\n");
+	    std::string svnname = std::string("svn:account:") + c->s->key2cvsauthor[key];
+	    std::string cvsaccount = std::string("cvs:account:") + c->s->key2cvsauthor[key];
+	    size_t index = cvsmsg.find(svnname);
+	    if (index != std::string::npos) {
+		std::cout << "Replacing svn:account\n";
+		cvsmsg.replace(index, cvsaccount.length(), cvsaccount);
+	    } else {
+		cvsmsg.append(cvsaccount);
+		cvsmsg.append("\n");
+	    }
 	}
 	nmsg = cvsmsg;
     }
@@ -586,7 +598,7 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 	if ((c->s->rebuild_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) ||
 		(c->s->reset_commits.find(c->id.sha1) != c->s->reset_commits.end())) {
 	    write_ops = false;
-	    std::string sha1tree = c->id.sha1 + std::string("-tree.fi");
+	    std::string sha1tree = std::string("trees/") + c->id.sha1 + std::string("-tree.fi");
 	    std::ifstream s1t(sha1tree, std::ifstream::binary | std::ios::ate);
 	    std::streamsize size = s1t.tellg();
 	    s1t.seekg(0, std::ios::beg);
