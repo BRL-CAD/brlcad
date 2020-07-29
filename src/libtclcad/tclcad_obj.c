@@ -2902,7 +2902,6 @@ to_deleteViewProc(ClientData clientData)
     (void)dm_close((struct dm *)gdvp->dmp);
     bu_ptbl_free(gdvp->callbacks);
     BU_PUT(gdvp->callbacks, struct bu_ptbl);
-    bu_free((void *)gdvp, "ged_view");
     to_close_fbs(gdvp);
     bu_free((void *)gdvp, "bview");
 }
@@ -4515,7 +4514,6 @@ to_new_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    BU_ALLOC(new_gdvp, struct bview);
     BU_ALLOC(new_gdvp, struct bview);
     BU_GET(new_gdvp->callbacks, struct bu_ptbl);
     bu_ptbl_init(new_gdvp->callbacks, 8, "bview callbacks");
