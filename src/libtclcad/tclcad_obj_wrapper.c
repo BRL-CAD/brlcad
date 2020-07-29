@@ -308,11 +308,12 @@ to_view_func_common(struct ged *gedp,
     }
 
     if (ret == GED_OK) {
-	if (cflag && 0 < bu_vls_strlen(&gdvp->gdv_callback)) {
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (cflag && 0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    struct bu_vls save_result = BU_VLS_INIT_ZERO;
 
 	    bu_vls_printf(&save_result, "%s", bu_vls_addr(gedp->ged_result_str));
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&save_result));
 	    bu_vls_free(&save_result);

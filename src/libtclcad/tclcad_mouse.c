@@ -459,8 +459,9 @@ to_mouse_constrain_rot(struct ged *gedp,
     bu_vls_free(&rot_vls);
 
     if (ret == GED_OK) {
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback), 0, NULL);
 	}
 
 	to_refresh_view(gdvp);
@@ -574,8 +575,9 @@ to_mouse_constrain_trans(struct ged *gedp,
     bu_vls_free(&tran_vls);
 
     if (ret == GED_OK) {
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback), 0, NULL);
 	}
 
 	to_refresh_view(gdvp);
@@ -2971,8 +2973,9 @@ to_mouse_rot(struct ged *gedp,
     bu_vls_free(&rot_vls);
 
     if (ret == GED_OK) {
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	}
 
 	to_refresh_view(gdvp);
@@ -3287,8 +3290,9 @@ to_mouse_scale(struct ged *gedp,
     bu_vls_free(&zoom_vls);
 
     if (ret == GED_OK) {
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	}
 
 	to_refresh_view(gdvp);
@@ -3676,8 +3680,9 @@ to_mouse_trans(struct ged *gedp,
     bu_vls_free(&trans_vls);
 
     if (ret == GED_OK) {
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	}
 
 	to_refresh_view(gdvp);

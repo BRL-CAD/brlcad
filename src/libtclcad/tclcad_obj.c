@@ -2895,8 +2895,8 @@ to_deleteViewProc(ClientData clientData)
 
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
     bu_vls_free(&tvd->gdv_edit_motion_delta_callback);
+    bu_vls_free(&tvd->gdv_callback);
     BU_PUT(tvd, struct tclcad_view_data);
-    bu_vls_free(&gdvp->gdv_callback);
 
     (void)dm_close(gdvp->gdv_dmp);
     bu_ptbl_free(gdvp->gdv_view->callbacks);
@@ -3543,6 +3543,7 @@ struct redraw_edited_path_data {
 };
 
 
+
 HIDDEN void
 redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 {
@@ -3697,8 +3698,9 @@ to_idle_mode(struct ged *gedp,
 	av[2] = NULL;
 	ged_grid(gedp, 2, (const char **)av);
 
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback), 0, NULL);
 	}
 
 	need_refresh = 1;
@@ -4561,8 +4563,8 @@ to_new_view(struct ged *gedp,
     struct tclcad_view_data *tvd;
     BU_GET(tvd, struct tclcad_view_data);
     bu_vls_init(&tvd->gdv_edit_motion_delta_callback);
+    bu_vls_init(&tvd->gdv_callback);
     new_gdvp->gdv_data = (void *)tvd;
-    bu_vls_init(&new_gdvp->gdv_callback);
 
     bu_vls_printf(&new_gdvp->gdv_view->gv_name, "%s", argv[name_index]);
     ged_view_init(new_gdvp->gdv_view);
@@ -6113,15 +6115,17 @@ to_view_callback(struct ged *gedp,
 
     /* get the callback string */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tvd->gdv_callback));
 
 	return GED_OK;
     }
 
     /* set the callback string */
-    bu_vls_trunc(&gdvp->gdv_callback, 0);
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    bu_vls_trunc(&tvd->gdv_callback, 0);
     for (i = 2; i < argc; ++i)
-	bu_vls_printf(&gdvp->gdv_callback, "%s ", argv[i]);
+	bu_vls_printf(&tvd->gdv_callback, "%s ", argv[i]);
 
     return GED_OK;
 }
@@ -6398,8 +6402,9 @@ to_vslew(struct ged *gedp,
 	    ged_view_center_linesnap(gedp);
 	}
 
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	}
 
 	to_refresh_view(gdvp);

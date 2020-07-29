@@ -50,8 +50,9 @@ to_autoview_view(struct ged_dm_view *gdvp, const char *scale)
 	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 1, (const char **)av);
 
     if (ret == GED_OK) {
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	}
 
 	to_refresh_view(gdvp);
