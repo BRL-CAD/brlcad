@@ -36,7 +36,8 @@
 void
 go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuffer)
 {
-    if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
 	if (gdvp->gdv_view->gv_rect.draw) {
 	    go_draw(gdvp);
 
@@ -45,7 +46,7 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
-	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
+	    fb_refresh(tvd->gdv_fbs.fbs_fbp,
 		       gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
 		       gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
 
@@ -58,7 +59,7 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
-	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
+	    fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
 		       dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
 
 	    /* enable write to depth buffer */
@@ -70,18 +71,18 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	}
 
 	return;
-    } else if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_INTERLAY) {
+    } else if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_INTERLAY) {
 	go_draw(gdvp);
 
 	/* disable write to depth buffer */
 	(void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
 	if (gdvp->gdv_view->gv_rect.draw) {
-	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
+	    fb_refresh(tvd->gdv_fbs.fbs_fbp,
 		       gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
 		       gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
 	} else
-	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
+	    fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
 		       dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
 
 	/* enable write to depth buffer */
@@ -91,16 +92,16 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	    (void)dm_set_zbuffer(gdvp->gdv_dmp, 1);
 	}
     } else {
-	if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_UNDERLAY) {
+	if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_UNDERLAY) {
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
 	    if (gdvp->gdv_view->gv_rect.draw) {
-		fb_refresh(gdvp->gdv_fbs.fbs_fbp,
+		fb_refresh(tvd->gdv_fbs.fbs_fbp,
 			   gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
 			   gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
 	    } else
-		fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
+		fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
 			   dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
 
 	    /* enable write to depth buffer */
@@ -123,7 +124,8 @@ go_refresh(struct ged_obj *gop, struct ged_dm_view *gdvp)
     int restore_zbuffer = 0;
 
     /* Turn off the zbuffer if the framebuffer is active AND the zbuffer is on. */
-    if (gdvp->gdv_fbs.fbs_mode != TCLCAD_OBJ_FB_MODE_OFF && dm_get_zbuffer(gdvp->gdv_dmp)) {
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (tvd->gdv_fbs.fbs_mode != TCLCAD_OBJ_FB_MODE_OFF && dm_get_zbuffer(gdvp->gdv_dmp)) {
 	(void)dm_set_zbuffer(gdvp->gdv_dmp, 0);
 	restore_zbuffer = 1;
     }

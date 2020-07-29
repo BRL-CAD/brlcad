@@ -1508,8 +1508,9 @@ to_configure(struct ged *gedp,
     status = dm_configure_win(gdvp->gdv_dmp, 0);
 
     /* configure the framebuffer window */
-    if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
-	(void)fb_configure_window(gdvp->gdv_fbs.fbs_fbp, dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (tvd->gdv_fbs.fbs_fbp != FB_NULL)
+	(void)fb_configure_window(tvd->gdv_fbs.fbs_fbp, dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
 
     {
 	char cdimX[32];
@@ -4573,13 +4574,13 @@ to_new_view(struct ged *gedp,
     new_gdvp->gdv_view->gv_point_scale = 1.0;
     new_gdvp->gdv_view->gv_curve_scale = 1.0;
 
-    new_gdvp->gdv_fbs.fbs_listener.fbsl_fbsp = &new_gdvp->gdv_fbs;
-    new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
-    new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;
-    new_gdvp->gdv_fbs.fbs_fbp = FB_NULL;
-    new_gdvp->gdv_fbs.fbs_callback = (void (*)(void *clientData))to_fbs_callback;
-    new_gdvp->gdv_fbs.fbs_clientData = new_gdvp;
-    new_gdvp->gdv_fbs.fbs_interp = current_top->to_interp;
+    tvd->gdv_fbs.fbs_listener.fbsl_fbsp = &tvd->gdv_fbs;
+    tvd->gdv_fbs.fbs_listener.fbsl_fd = -1;
+    tvd->gdv_fbs.fbs_listener.fbsl_port = -1;
+    tvd->gdv_fbs.fbs_fbp = FB_NULL;
+    tvd->gdv_fbs.fbs_callback = (void (*)(void *clientData))to_fbs_callback;
+    tvd->gdv_fbs.fbs_clientData = new_gdvp;
+    tvd->gdv_fbs.fbs_interp = current_top->to_interp;
 
     /* open the framebuffer */
     to_open_fbs(new_gdvp, current_top->to_interp);
@@ -4831,7 +4832,8 @@ to_paint_rect_area(struct ged *gedp,
 
     (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
-    (void)fb_refresh(gdvp->gdv_fbs.fbs_fbp, gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    (void)fb_refresh(tvd->gdv_fbs.fbs_fbp, gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
 		     gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
 
     (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);

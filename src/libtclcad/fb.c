@@ -917,12 +917,13 @@ to_fbs_callback(void *clientData)
 int
 to_close_fbs(struct ged_dm_view *gdvp)
 {
-    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL)
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (tvd->gdv_fbs.fbs_fbp == FB_NULL)
 	return TCL_OK;
 
-    fb_flush(gdvp->gdv_fbs.fbs_fbp);
-    fb_close_existing(gdvp->gdv_fbs.fbs_fbp);
-    gdvp->gdv_fbs.fbs_fbp = FB_NULL;
+    fb_flush(tvd->gdv_fbs.fbs_fbp);
+    fb_close_existing(tvd->gdv_fbs.fbs_fbp);
+    tvd->gdv_fbs.fbs_fbp = FB_NULL;
 
     return TCL_OK;
 }
@@ -935,12 +936,13 @@ int
 to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 {
     /* already open */
-    if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (tvd->gdv_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
-    gdvp->gdv_fbs.fbs_fbp = dm_get_fb(gdvp->gdv_dmp);
+    tvd->gdv_fbs.fbs_fbp = dm_get_fb(gdvp->gdv_dmp);
 
-    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL) {
+    if (tvd->gdv_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
@@ -995,7 +997,8 @@ to_set_fb_mode(struct ged *gedp,
 
     /* Get fb mode */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_mode);
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_mode);
 	return GED_OK;
     }
 
@@ -1010,7 +1013,10 @@ to_set_fb_mode(struct ged *gedp,
     else if (TCLCAD_OBJ_FB_MODE_OVERLAY < mode)
 	mode = TCLCAD_OBJ_FB_MODE_OVERLAY;
 
-    gdvp->gdv_fbs.fbs_mode = mode;
+    {
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	tvd->gdv_fbs.fbs_mode = mode;
+    }
     to_refresh_view(gdvp);
 
     return GED_OK;
@@ -1051,14 +1057,15 @@ to_listen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL) {
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (tvd->gdv_fbs.fbs_fbp == FB_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
 	return GED_ERROR;
     }
 
     /* return the port number */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
+	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
 	return GED_OK;
     }
 
@@ -1071,11 +1078,11 @@ to_listen(struct ged *gedp,
 	}
 
 	if (port >= 0)
-	    fbs_open(&gdvp->gdv_fbs, port);
+	    fbs_open(&tvd->gdv_fbs, port);
 	else {
-	    fbs_close(&gdvp->gdv_fbs);
+	    fbs_close(&tvd->gdv_fbs);
 	}
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
+	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
 	return GED_OK;
     }
 
