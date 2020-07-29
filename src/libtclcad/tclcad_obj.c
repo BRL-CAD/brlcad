@@ -3518,7 +3518,7 @@ to_hide_view(struct ged *gedp,
 
     /* return the hide view setting */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_hide_view);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_hidden);
 	return GED_OK;
     }
 

@@ -251,6 +251,7 @@ struct bview {
     fastf_t                     gv_curve_scale;
     fastf_t                     gv_data_vZ;
     size_t                      gv_bot_threshold;
+    int			        gv_hidden;
     struct bu_ptbl *callbacks;
 };
 
