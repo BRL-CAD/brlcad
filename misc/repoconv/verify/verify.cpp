@@ -301,10 +301,11 @@ int verify_repos_cvs(std::ofstream &cvs_problem_sha1s, cmp_info &info, std::stri
     }
     if (std::system(cvs_cmd.c_str())) {
 	std::cerr << "cvs checkout failed: " << cvs_cmd << "\n";
+	std::cerr << "skipping " << info.sha1 << "\n";
 	if (std::system(cleanup_cmd.c_str())) {
 	    std::cerr << "verify cleanup failed!\n";
 	}
-	exit(1);
+	return 0;
     }
 
     // Have both, do diff
