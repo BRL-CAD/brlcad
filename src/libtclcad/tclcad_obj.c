@@ -2891,8 +2891,13 @@ to_deleteViewProc(ClientData clientData)
 
     BU_LIST_DEQUEUE(&(gdvp->l));
     bu_vls_free(&gdvp->gdv_view->gv_name);
+
+
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    bu_vls_free(&tvd->gdv_edit_motion_delta_callback);
+    BU_PUT(tvd, struct tclcad_view_data);
     bu_vls_free(&gdvp->gdv_callback);
-    bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
+
     (void)dm_close(gdvp->gdv_dmp);
     bu_ptbl_free(gdvp->gdv_view->callbacks);
     BU_PUT(gdvp->gdv_view->callbacks, struct bu_ptbl);
@@ -3573,8 +3578,9 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 	    bu_vls_printf(&tran_z_vls, "%lf", dvec[Z]);
 	    MAT_IDN(params->edit_mat);
 
+	    struct tclcad_view_data *tvd = (struct tclcad_view_data *)data->gdvp->gdv_data;
 	    bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
-			  bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
+			  bu_vls_addr(&tvd->gdv_edit_motion_delta_callback),
 			  bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
 			  bu_vls_addr(&tran_z_vls));
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
@@ -3923,15 +3929,17 @@ to_edit_motion_delta_callback(struct ged *gedp,
 
     /* get the callback string */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tvd->gdv_edit_motion_delta_callback));
 
 	return GED_OK;
     }
 
     /* set the callback string */
-    bu_vls_trunc(&gdvp->gdv_edit_motion_delta_callback, 0);
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    bu_vls_trunc(&tvd->gdv_edit_motion_delta_callback, 0);
     for (i = 2; i < argc; ++i)
-	bu_vls_printf(&gdvp->gdv_edit_motion_delta_callback, "%s ", argv[i]);
+	bu_vls_printf(&tvd->gdv_edit_motion_delta_callback, "%s ", argv[i]);
 
     return GED_OK;
 }
@@ -4549,8 +4557,13 @@ to_new_view(struct ged *gedp,
 
     new_gdvp->gdv_gop = current_top->to_gop;
     bu_vls_init(&new_gdvp->gdv_view->gv_name);
+
+    struct tclcad_view_data *tvd;
+    BU_GET(tvd, struct tclcad_view_data);
+    bu_vls_init(&tvd->gdv_edit_motion_delta_callback);
+    new_gdvp->gdv_data = (void *)tvd;
     bu_vls_init(&new_gdvp->gdv_callback);
-    bu_vls_init(&new_gdvp->gdv_edit_motion_delta_callback);
+
     bu_vls_printf(&new_gdvp->gdv_view->gv_name, "%s", argv[name_index]);
     ged_view_init(new_gdvp->gdv_view);
     BU_LIST_INSERT(&current_top->to_gop->go_head_views.l, &new_gdvp->l);

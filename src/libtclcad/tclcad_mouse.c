@@ -1852,8 +1852,9 @@ to_mouse_orotate(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
-	const char *command = bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback);
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (0 < bu_vls_strlen(&tvd->gdv_edit_motion_delta_callback)) {
+	const char *command = bu_vls_addr(&tvd->gdv_edit_motion_delta_callback);
 	const char *args[4];
 	args[0] = "orotate";
 	args[1] = bu_vls_addr(&rot_x_vls);
@@ -1964,11 +1965,12 @@ to_mouse_oscale(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (0 < bu_vls_strlen(&tvd->gdv_edit_motion_delta_callback)) {
 	struct bu_vls tcl_cmd;
 
 	bu_vls_init(&tcl_cmd);
-	bu_vls_printf(&tcl_cmd, "%s oscale %s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), bu_vls_addr(&sf_vls));
+	bu_vls_printf(&tcl_cmd, "%s oscale %s", bu_vls_addr(&tvd->gdv_edit_motion_delta_callback), bu_vls_addr(&sf_vls));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
 	bu_vls_free(&tcl_cmd);
     } else {
@@ -2074,7 +2076,8 @@ to_mouse_otranslate(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->gdv_data;
+    if (0 < bu_vls_strlen(&tvd->gdv_edit_motion_delta_callback)) {
 	const char *path_string = argv[2];
 	vect_t dvec;
 	struct path_edit_params *params = (struct path_edit_params *)bu_hash_get(current_top->to_gop->go_edited_paths,
