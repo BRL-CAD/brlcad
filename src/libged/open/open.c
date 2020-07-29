@@ -93,16 +93,16 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl open_cmd_impl = {
-    "open",
-    ged_reopen_core,
-    GED_CMD_DEFAULT
-};
+struct ged_cmd_impl reopen_cmd_impl = {"reopen", ged_reopen_core, GED_CMD_DEFAULT};
+const struct ged_cmd reopen_cmd = { &reopen_cmd_impl };
 
+struct ged_cmd_impl open_cmd_impl = {"open", ged_reopen_core, GED_CMD_DEFAULT};
 const struct ged_cmd open_cmd = { &open_cmd_impl };
-const struct ged_cmd *open_cmds[] = { &open_cmd, NULL };
 
-static const struct ged_plugin pinfo = { open_cmds, 1 };
+
+const struct ged_cmd *open_cmds[] = { &reopen_cmd, &open_cmd, NULL };
+
+static const struct ged_plugin pinfo = { open_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
