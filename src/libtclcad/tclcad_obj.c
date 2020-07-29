@@ -1351,7 +1351,7 @@ to_bg(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1426,7 +1426,7 @@ to_bounds(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1495,7 +1495,7 @@ to_configure(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1567,7 +1567,7 @@ to_constrain_rmode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1597,7 +1597,7 @@ to_constrain_rmode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_rot %s %s %%x %%y}; break",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -1636,7 +1636,7 @@ to_constrain_tmode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1666,7 +1666,7 @@ to_constrain_tmode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_trans %s %s %%x %%y}; break",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -1860,7 +1860,7 @@ to_data_move(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2264,7 +2264,7 @@ to_data_move_object_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2360,7 +2360,7 @@ to_data_move_point_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2455,7 +2455,7 @@ to_data_pick(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2857,7 +2857,7 @@ to_data_vZ(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2890,7 +2890,7 @@ to_deleteViewProc(ClientData clientData)
     struct ged_dm_view *gdvp = (struct ged_dm_view *)clientData;
 
     BU_LIST_DEQUEUE(&(gdvp->l));
-    bu_vls_free(&gdvp->gdv_name);
+    bu_vls_free(&gdvp->gdv_view->gv_name);
     bu_vls_free(&gdvp->gdv_callback);
     bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
     (void)dm_close(gdvp->gdv_dmp);
@@ -2911,255 +2911,255 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 	bu_vls_printf(&bindings, "bind %s <Configure> {%s configure %s; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Enter> {focus %s; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 	bu_vls_printf(&bindings, "bind %s <Expose> {%s handle_expose %s %%c; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "catch {wm protocol %s WM_DELETE_WINDOW {%s delete_view %s; break}}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 
 	/* Mouse Bindings */
 	bu_vls_printf(&bindings, "bind %s <2> {%s vslew %s %%x %%y; focus %s; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 	bu_vls_printf(&bindings, "bind %s <1> {%s zoom %s 0.5; focus %s; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 	bu_vls_printf(&bindings, "bind %s <3> {%s zoom %s 2.0; focus %s;  break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 #ifdef DM_X
 	bu_vls_printf(&bindings, "bind %s <4> {%s zoom %s 1.1; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <5> {%s zoom %s 0.9; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 #endif
 #ifdef DM_WGL
 	bu_vls_printf(&bindings, "bind %s <MouseWheel> {if {%%D < 0} {%s zoom %s 0.9} else {%s zoom %s 1.1}; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 #endif
 
 	/* Idle Mode */
 	bu_vls_printf(&bindings, "bind %s <ButtonRelease> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_L> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_R> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_L> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_R> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Alt_L> {%s idle_mode %s; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Alt_R> {%s idle_mode %s; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 
 	/* Rotate Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonRelease-1> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-1> {%s rotate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-2> {%s rotate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-3> {%s rotate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 
 	/* Translate Mode */
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonRelease-1> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-1> {%s translate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-2> {%s translate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-3> {%s translate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 
 	/* Scale Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonRelease-1> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-1> {%s scale_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-2> {%s scale_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-3> {%s scale_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 
 	/* Constrained Rotate Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonRelease-1> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-1> {%s constrain_rmode %s x %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-2> {%s constrain_rmode %s y %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-3> {%s constrain_rmode %s z %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 
 	/* Constrained Translate Mode */
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonRelease-1> {%s idle_mode %s; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-1> {%s constrain_tmode %s x %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-2> {%s constrain_tmode %s y %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-3> {%s constrain_tmode %s z %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 
 	/* Key Bindings */
 	bu_vls_printf(&bindings, "bind %s 3 {%s aet %s 35 25; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s 4 {%s aet %s 45 45; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s f {%s aet %s 0 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s F {%s aet %s 0 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s R {%s aet %s 180 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s r {%s aet %s 270 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s l {%s aet %s 90 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s L {%s aet %s 90 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s t {%s aet %s 270 90; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s T {%s aet %s 270 90; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s b {%s aet %s 270 -90; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s B {%s aet %s 270 -90; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s + {%s zoom %s 2.0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s = {%s zoom %s 2.0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s _ {%s zoom %s 0.5; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s - {%s zoom %s 0.5; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Left> {%s rot %s -v 0 1 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Right> {%s rot %s -v 0 -1 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Up> {%s rot %s -v 1 0 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Down> {%s rot %s -v -1 0 0; break}; ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 
 
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -3230,7 +3230,7 @@ to_fontsize(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3393,7 +3393,7 @@ to_init_view_bindings(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3433,7 +3433,7 @@ to_delete_view(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3507,7 +3507,7 @@ to_hide_view(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3644,7 +3644,7 @@ to_idle_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3748,7 +3748,7 @@ to_light(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3799,7 +3799,7 @@ to_list_views(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l))
-	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdvp->gdv_name));
+	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdvp->gdv_view->gv_name));
 
     return GED_OK;
 }
@@ -3912,7 +3912,7 @@ to_edit_motion_delta_callback(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4005,7 +4005,7 @@ to_move_arb_edge_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4028,7 +4028,7 @@ to_move_arb_edge_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_edge %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4068,7 +4068,7 @@ to_move_arb_face_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4091,7 +4091,7 @@ to_move_arb_face_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_face %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4187,7 +4187,7 @@ to_bot_move_pnt_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4210,7 +4210,7 @@ to_bot_move_pnt_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnt -r %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4251,7 +4251,7 @@ to_bot_move_pnts_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4274,7 +4274,7 @@ to_bot_move_pnts_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnts %s %%x %%y %s ",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[4]);
     }
     for (i = 5; i < argc; ++i)
@@ -4317,7 +4317,7 @@ to_metaball_move_pnt_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4340,7 +4340,7 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_metaball_move_pnt %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4380,7 +4380,7 @@ to_pipe_move_pnt_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4403,7 +4403,7 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pipe_move_pnt %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4548,10 +4548,10 @@ to_new_view(struct ged *gedp,
     }
 
     new_gdvp->gdv_gop = current_top->to_gop;
-    bu_vls_init(&new_gdvp->gdv_name);
+    bu_vls_init(&new_gdvp->gdv_view->gv_name);
     bu_vls_init(&new_gdvp->gdv_callback);
     bu_vls_init(&new_gdvp->gdv_edit_motion_delta_callback);
-    bu_vls_printf(&new_gdvp->gdv_name, "%s", argv[name_index]);
+    bu_vls_printf(&new_gdvp->gdv_view->gv_name, "%s", argv[name_index]);
     ged_view_init(new_gdvp->gdv_view);
     BU_LIST_INSERT(&current_top->to_gop->go_head_views.l, &new_gdvp->l);
 
@@ -4576,7 +4576,7 @@ to_new_view(struct ged *gedp,
 	bu_vls_printf(&event_vls, "event generate %s <Configure>; %s autoview %s",
 		      bu_vls_addr(dm_get_pathname(new_gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&new_gdvp->gdv_name));
+		      bu_vls_addr(&new_gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&event_vls));
     }
     bu_vls_free(&event_vls);
@@ -4589,7 +4589,7 @@ to_new_view(struct ged *gedp,
 				to_deleteViewProc);
     }
 
-    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gdv_name));
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gdv_view->gv_name));
     return GED_OK;
 }
 
@@ -4623,7 +4623,7 @@ to_orotate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4646,7 +4646,7 @@ to_orotate_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_orotate %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -4685,7 +4685,7 @@ to_oscale_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4708,7 +4708,7 @@ to_oscale_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_oscale %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -4748,7 +4748,7 @@ to_otranslate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4771,7 +4771,7 @@ to_otranslate_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_otranslate %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -4805,7 +4805,7 @@ to_paint_rect_area(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4859,7 +4859,7 @@ to_pix(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -4949,7 +4949,7 @@ to_png(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5055,7 +5055,7 @@ to_rect_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5104,7 +5104,7 @@ to_rect_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rect %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -5144,7 +5144,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5167,7 +5167,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rotate_arb_face %s %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3],
 		      argv[4]);
@@ -5208,7 +5208,7 @@ to_rotate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5231,7 +5231,7 @@ to_rotate_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rot %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -5374,7 +5374,7 @@ to_protate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5397,7 +5397,7 @@ to_protate_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_protate %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -5437,7 +5437,7 @@ to_pscale_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5460,7 +5460,7 @@ to_pscale_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pscale %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -5500,7 +5500,7 @@ to_ptranslate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5523,7 +5523,7 @@ to_ptranslate_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_ptranslate %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -5563,7 +5563,7 @@ to_data_scale_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5586,7 +5586,7 @@ to_data_scale_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_data_scale %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -5624,7 +5624,7 @@ to_scale_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5647,7 +5647,7 @@ to_scale_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_scale %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -5686,7 +5686,7 @@ to_screen2model(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5741,7 +5741,7 @@ to_screen2view(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5791,7 +5791,7 @@ to_set_coord(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5847,7 +5847,7 @@ to_snap_view(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -5978,7 +5978,7 @@ to_translate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -6001,7 +6001,7 @@ to_translate_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_trans %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -6036,7 +6036,7 @@ to_transparency(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -6089,7 +6089,7 @@ to_view_callback(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -6140,7 +6140,7 @@ to_view_win_size(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -6210,7 +6210,7 @@ to_view2screen(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -6261,7 +6261,7 @@ to_vmake(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -6339,7 +6339,7 @@ to_vslew(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -6422,7 +6422,7 @@ to_zbuffer(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -6482,7 +6482,7 @@ to_zclip(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 

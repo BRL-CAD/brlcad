@@ -58,7 +58,7 @@ to_get_prev_mouse(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -104,7 +104,7 @@ to_mouse_append_pnt_common(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -180,7 +180,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -253,7 +253,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
 		      "%s brep %s plot SCV}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      brep_name,
 		      bu_vls_addr(&current_top->to_gop->go_name),
 		      brep_name);
@@ -290,7 +290,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -393,7 +393,7 @@ to_mouse_constrain_rot(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -506,7 +506,7 @@ to_mouse_constrain_trans(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -616,7 +616,7 @@ to_mouse_find_arb_edge(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -682,7 +682,7 @@ to_mouse_find_bot_edge(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -747,7 +747,7 @@ to_mouse_find_bot_pnt(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -813,7 +813,7 @@ to_mouse_find_metaball_pnt(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -880,7 +880,7 @@ to_mouse_find_pipe_pnt(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -942,7 +942,7 @@ to_mouse_joint_select(
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1014,7 +1014,7 @@ to_mouse_joint_select(
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&gdvp->gdv_view->gv_name),
 		      joint_name);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -1050,7 +1050,7 @@ to_mouse_joint_selection_translate(
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1205,7 +1205,7 @@ to_mouse_move_arb_edge(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1306,7 +1306,7 @@ to_mouse_move_arb_face(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1423,7 +1423,7 @@ to_mouse_move_bot_pnt(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1594,7 +1594,7 @@ to_mouse_move_bot_pnts(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1709,7 +1709,7 @@ to_mouse_move_pnt_common(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1808,7 +1808,7 @@ to_mouse_orotate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1919,7 +1919,7 @@ to_mouse_oscale(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2030,7 +2030,7 @@ to_mouse_otranslate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2184,7 +2184,7 @@ to_mouse_poly_circ(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2361,7 +2361,7 @@ to_mouse_poly_cont(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2504,7 +2504,7 @@ to_mouse_poly_ell(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2689,7 +2689,7 @@ to_mouse_poly_rect(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2849,7 +2849,7 @@ to_mouse_rect(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -2921,7 +2921,7 @@ to_mouse_rot(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3014,7 +3014,7 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3100,7 +3100,7 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 	} \
  \
 	for (BU_LIST_FOR((_gdvp), ged_dm_view, &current_top->to_gop->go_head_views.l)) { \
-	    if (BU_STR_EQUAL(bu_vls_addr(&(_gdvp)->gdv_name), (_argv)[1])) \
+	    if (BU_STR_EQUAL(bu_vls_addr(&(_gdvp)->gdv_view->gv_name), (_argv)[1])) \
 		break; \
 	} \
  \
@@ -3175,7 +3175,7 @@ to_data_scale(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3330,7 +3330,7 @@ to_mouse_protate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3425,7 +3425,7 @@ to_mouse_pscale(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3526,7 +3526,7 @@ to_mouse_ptranslate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -3624,7 +3624,7 @@ to_mouse_trans(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 

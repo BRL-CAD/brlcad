@@ -95,7 +95,7 @@ to_data_arrows(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 

@@ -1059,7 +1059,7 @@ to_data_polygons(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1137,7 +1137,7 @@ to_poly_circ_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1154,7 +1154,7 @@ to_poly_circ_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_circ %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -1316,7 +1316,7 @@ to_poly_cont_build_func(Tcl_Interp *interp,
 	    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_cont %s %%x %%y}",
 			  bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 			  bu_vls_addr(&current_top->to_gop->go_name),
-			  bu_vls_addr(&gdvp->gdv_name));
+			  bu_vls_addr(&gdvp->gdv_view->gv_name));
 	    Tcl_Eval(interp, bu_vls_addr(&bindings));
 	}
 	bu_vls_free(&bindings);
@@ -1409,7 +1409,7 @@ to_poly_cont_build(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1479,7 +1479,7 @@ to_poly_cont_build_end(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1568,7 +1568,7 @@ to_poly_ell_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1585,7 +1585,7 @@ to_poly_ell_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_ell %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -1726,7 +1726,7 @@ to_poly_rect_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), argv[1]))
 	    break;
     }
 
@@ -1743,7 +1743,7 @@ to_poly_rect_mode(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_rect %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(&gdvp->gdv_view->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);

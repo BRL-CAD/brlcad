@@ -240,7 +240,7 @@ to_handle_refresh(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), name))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_view->gv_name), name))
 	    break;
     }
 
