@@ -35,6 +35,7 @@
 #include "bu/vls.h"
 #include "dm/bview.h"
 #include "rt/search.h"
+#include "rt/solid.h"
 
 __BEGIN_DECLS
 
@@ -77,16 +78,22 @@ __BEGIN_DECLS
 
 #define GED_RESULT_NULL ((void *)0)
 
+/* Forward declaration */
+struct ged;
+
+typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
 
-
 /* Callback related definitions */
+typedef void (*ged_io_handler_callback_t)(void *, int);
+typedef void (*ged_refresh_callback_ptr)(void *);
+typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
+typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
+typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 #define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
 #define GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL ((ged_create_vlist_solid_callback_ptr)0)
 #define GED_CREATE_VLIST_CALLBACK_PTR_NULL ((ged_create_vlist_callback_ptr)0)
 #define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
-typedef void (*ged_io_handler_callback_t)(void *, int);
-
 
 /**
  * Definition of global parallel-processing semaphores.
@@ -224,9 +231,6 @@ struct ged {
 
     struct ged_subprocess	gd_headSubprocess; /**< @brief  head of forked processes */
 
-    void *ged_interp; /* Temporary - do not rely on when designing new functionality */
-    db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
-
     /* Interface to LIBDM */
     void *ged_dmp;
 
@@ -240,17 +244,21 @@ struct ged {
     void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
+    void *ged_interp; /* Temporary - do not rely on when designing new functionality */
+    db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
+
     /* Handler functions for I/O communication with asynchronous subprocess commands */
     int io_mode;
     void (*ged_create_io_handler)(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
     void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
-};
 
-typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
-typedef void (*ged_refresh_callback_ptr)(void *);
-typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
-typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
-typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
+    // Other callbacks...
+    // ged_dm_view: gdv_callback, gdv_edit_motion_delta_callback
+    // ged_obj: go_more_args_callback, go_rt_end_callback
+    // fbserv_obj: fbs_callback
+    // bview.h gv_callback, vo_callback
+    // db_search_callback_t
+};
 
 /* accessor functions for ged_results - calling
  * applications should not work directly with the
