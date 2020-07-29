@@ -335,7 +335,7 @@ process_ls_tree(std::string &sha1)
 }
 
 int
-git_id_cvs_commits(git_fi_data *s, std::string &cvs_id_file, std::string &repo_path, std::string &child_commits_file)
+git_id_rebuild_commits(git_fi_data *s, std::string &id_file, std::string &repo_path, std::string &child_commits_file)
 {
     {
 	// read children
@@ -368,14 +368,12 @@ git_id_cvs_commits(git_fi_data *s, std::string &cvs_id_file, std::string &repo_p
     }
 
     {
-	// read cvs ids
-	std::ifstream infile(cvs_id_file, std::ifstream::binary);
+	// read ids
+	std::ifstream infile(id_file, std::ifstream::binary);
 	if (!infile.good()) {
-	    std::cerr << "Could not open cvs_id_file file: " << cvs_id_file << "\n";
+	    std::cerr << "Could not open id_file file: " << id_file << "\n";
 	    exit(-1);
 	}
-
-	std::set<std::string> cvs_ids;
 
 	std::string line;
 	while (std::getline(infile, line)) {
@@ -525,7 +523,7 @@ main(int argc, char *argv[])
     std::string cvs_branch_map;
     std::string keymap;
     std::string children_file;
-    std::string cvs_id_file;
+    std::string id_file;
     int cwidth = 72;
 
     // TODO - might be good do have a "validate" option that does the fast import and then
@@ -549,8 +547,8 @@ main(int argc, char *argv[])
 	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "path")
 	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
 
-	    ("children", "File with output of \"git rev-list --children --all\"", cxxopts::value<std::vector<std::string>>(), "file")
-	    ("cvs-rebuild-ids", "Specify CVS era commits (revision number or SHA1) to rebuild.  Requires git-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
+	    ("rebuild-ids", "Specify commits (revision number or SHA1) to rebuild.  Requires git-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
+	    ("rebuild-ids-children", "File with output of \"git rev-list --children --all\" - needed for processing rebuild-ids", cxxopts::value<std::vector<std::string>>(), "file")
 
 	    ("h,help", "Print help")
 	    ;
@@ -581,16 +579,16 @@ main(int argc, char *argv[])
 	    svn_map = ff[0];
 	}
 
-	if (result.count("children"))
+	if (result.count("rebuild-ids"))
 	{
-	    auto& ff = result["children"].as<std::vector<std::string>>();
-	    children_file = ff[0];
+	    auto& ff = result["rebuild-ids"].as<std::vector<std::string>>();
+	    id_file = ff[0];
 	}
 
-	if (result.count("cvs-rebuild-ids"))
+	if (result.count("rebuild-ids-children"))
 	{
-	    auto& ff = result["cvs-rebuild-ids"].as<std::vector<std::string>>();
-	    cvs_id_file = ff[0];
+	    auto& ff = result["rebuild-ids-children"].as<std::vector<std::string>>();
+	    children_file = ff[0];
 	}
 
 	if (result.count("cvs-auth-map"))
@@ -628,7 +626,7 @@ main(int argc, char *argv[])
 	return -1;
     }
 
-    if (cvs_id_file.length() && !repo_path.length()) {
+    if (id_file.length() && !repo_path.length()) {
 	std::cerr << "Need Git repository path for CVS id list processing!\n";
 	return -1;
     }
@@ -691,9 +689,9 @@ main(int argc, char *argv[])
 	git_map_svn_committers(&fi_data, svn_map);
     }
 
-    if (cvs_id_file.length()) {
-	// Handle CVS rebuild info
-	git_id_cvs_commits(&fi_data, cvs_id_file, repo_path, children_file);
+    if (id_file.length()) {
+	// Handle rebuild info
+	git_id_rebuild_commits(&fi_data, id_file, repo_path, children_file);
     }
 
     fi_data.wrap_width = cwidth;
