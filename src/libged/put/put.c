@@ -89,7 +89,7 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
 	rt_generic_make(ftp, &intern);
     }
 
-    if (!ftp->ft_adjust || ftp->ft_adjust(gedp->ged_result_str, &intern, argc-3, argv+3) == GED_ERROR) {
+    if (!ftp->ft_adjust || ftp->ft_adjust(gedp->ged_result_str, &intern, argc-3, argv+3) & GED_ERROR) {
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }

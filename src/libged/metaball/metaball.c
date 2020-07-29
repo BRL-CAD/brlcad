@@ -149,7 +149,7 @@ ged_find_metaball_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]
     /* convert from double to fastf_t */
     VMOVE(model_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & GED_ERROR)
 	return GED_ERROR;
 
     nearest = find_metaball_pnt_nearest_pnt(&((struct rt_metaball_internal *)intern.idb_ptr)->metaball_ctrl_head,

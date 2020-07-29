@@ -100,7 +100,7 @@ go_data_lines(Tcl_Interp *UNUSED(interp),
     gedp->ged_gvp = btmp;
 
     to_refresh_view(gdvp);
-    if (ret == GED_ERROR)
+    if (ret & GED_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;

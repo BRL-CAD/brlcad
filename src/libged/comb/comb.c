@@ -169,7 +169,7 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
 	bu_vls_free(&orig_name);
 	return GED_ERROR;
     }
-    if (region_flag_clear(gedp, new_dp) == GED_ERROR) {
+    if (region_flag_clear(gedp, new_dp) & GED_ERROR) {
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
 	return GED_ERROR;

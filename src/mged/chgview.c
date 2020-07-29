@@ -394,12 +394,12 @@ edit_com(int argc,
 
 	ret = ged_draw(GEDP, new_argc, (const char **)new_argv);
 
-	if (ret == GED_ERROR) {
+	if (ret & GED_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(GEDP->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
-	} else if (ret == GED_HELP) {
+	} else if (ret & GED_HELP) {
 	    bu_log("%s\n", bu_vls_addr(GEDP->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");

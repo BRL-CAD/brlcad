@@ -91,7 +91,7 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_wmater(gedp, argc, av) == GED_ERROR) {
+    if (ged_wmater(gedp, argc, av) & GED_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "f_edmater: av");
 	return GED_ERROR;

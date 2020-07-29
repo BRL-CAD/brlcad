@@ -1026,7 +1026,7 @@ go_data_polygons(Tcl_Interp *interp,
 	current_top->to_gop->go_refresh_on = 0;
 
     ret = to_data_polygons_func(interp, gedp, gdvp, argc, argv);
-    if (ret == GED_ERROR)
+    if (ret & GED_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;

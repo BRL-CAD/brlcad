@@ -89,7 +89,7 @@ ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, last, gedp->ged_wdbp, mat) == GED_ERROR) {
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, last, gedp->ged_wdbp, mat) & GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
     }

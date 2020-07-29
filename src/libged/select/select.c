@@ -72,7 +72,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) == GED_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) & GED_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
 		return GED_ERROR;
 	    }

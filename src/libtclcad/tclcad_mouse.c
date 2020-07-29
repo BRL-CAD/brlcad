@@ -1485,7 +1485,7 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[2], gedp->ged_wdbp, mat) == GED_ERROR) {
+	if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[2], gedp->ged_wdbp, mat) & GED_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, argv[2]);
 	    return GED_ERROR;
 	}

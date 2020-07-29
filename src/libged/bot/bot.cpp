@@ -115,7 +115,7 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    if (_bot_obj_setup(gb, argv[1]) == GED_ERROR) {
+    if (_bot_obj_setup(gb, argv[1]) & GED_ERROR) {
 	return GED_ERROR;
     }
 

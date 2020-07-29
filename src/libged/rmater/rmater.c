@@ -121,7 +121,7 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 
     while (bu_fgets(line, LINELEN, fp) != NULL) {
 	if ((extract_mater_from_line(line, name, shader,
-				     &r, &g, &b, &override, &inherit)) == GED_ERROR)
+				     &r, &g, &b, &override, &inherit)) & GED_ERROR)
 	    continue;
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL) {

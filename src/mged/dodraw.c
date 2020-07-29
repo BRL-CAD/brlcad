@@ -294,7 +294,7 @@ redraw_visible_objects(void)
     av[0] = "redraw";
     ret = ged_redraw(GEDP, ac, (const char **)av);
 
-    if (ret == GED_ERROR) {
+    if (ret & GED_ERROR) {
 	return TCL_ERROR;
     }
 

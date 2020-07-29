@@ -1525,7 +1525,7 @@ _ged_combadd(struct ged *gedp,
     av[0] = objp->d_namep;
     av[1] = NULL;
 
-    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, NULL, 1) == GED_ERROR)
+    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, NULL, 1) & GED_ERROR)
 	return RT_DIR_NULL;
 
     /* Done changing stuff - update nref. */

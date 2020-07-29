@@ -227,7 +227,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
+    if (ged_wcodes(gedp, argc + 1, (const char **)av) & GED_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "ged_edcodes_core av");
 	return GED_ERROR;
