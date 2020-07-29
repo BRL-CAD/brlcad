@@ -77,7 +77,7 @@ log "... convert asc file to v5 .g format"
 ASC1="$1/db/moss.asc"
 G1="moss_v5.g"
 rm -f $G1
-$A2G $ASC1 $G1 2>&1 > $LOGFILE
+$A2G "$ASC1" $G1 2>&1 > $LOGFILE
 
 # Next convert v5 .g file to a v5 asc file
 log "convert v5 .g file to v5 asc format"
@@ -91,7 +91,7 @@ log "convert v5 asc file to v5 .g format (simple round trip)"
 GRT="moss_v5_basic.g"
 rm -f $GRT
 log "$A2G $ASC2 $GRT"
-$A2G $ASC2 $GRT 2>&1 > $LOGFILE
+$A2G "$ASC2" $GRT 2>&1 > $LOGFILE
 
 # the original v5 .g file and the round-tripped v5 .g file
 # should be identical (apparently except for the color table)
@@ -178,7 +178,7 @@ fi
 #
 G2ASC1="$1/regress/asc/v4.g"
 log "$G2A $G2ASC1 v4.asc"
-$G2A $G2ASC1 v4.asc 2>&1 > $LOGFILE
+$G2A "$G2ASC1" v4.asc 2>&1 > $LOGFILE
 STATUS=$?
 # If something went wrong, bail.
 if [ $STATUS -gt 0 ] ; then
