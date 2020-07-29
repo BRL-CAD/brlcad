@@ -33,7 +33,7 @@ struct unconf_air_context {
     double tolerance;
 };
 
-HIDDEN void 
+HIDDEN void
 unconf_air(const struct xray *ray,
 	   const struct partition *ipart,
 	   const struct partition *opart,
@@ -52,7 +52,7 @@ unconf_air(const struct xray *ray,
     }
 
     bu_semaphore_acquire(BU_SEM_GENERAL);
-    
+
     add_to_list(context->unconfAirList,
 		ipart->pt_regionp->reg_name,
 		opart->pt_regionp->reg_name,
@@ -84,7 +84,8 @@ int check_unconf_air(struct current_state *state,
     BU_LIST_INIT(&(unconfAirList.l));
 
     if (options->plot_files) {
-	if ((plot_unconf_air=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_unconf_air = fopen(name, "wb");
+	if (plot_unconf_air == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }

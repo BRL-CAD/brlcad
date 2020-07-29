@@ -32,7 +32,7 @@ struct exp_air_context {
     int expAir_color[3];
 };
 
-HIDDEN void 
+HIDDEN void
 exposed_air(const struct partition *pp,
 	    point_t last_out_point,
 	    point_t pt,
@@ -73,7 +73,8 @@ int check_exp_air(struct current_state *state,
     BU_LIST_INIT(&(exposedAirList.l));
 
     if (options->plot_files) {
-	if ((plot_exp_air=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_exp_air = fopen(name, "wb");
+	if (plot_exp_air == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }

@@ -93,7 +93,7 @@ sort_regions(const void *a, const void *b, void *arg)
 	    temp2=atoi(r2->los);
 continue_run:
 	    if ( temp1 > temp2 )
-    		return 1;
+		return 1;
 	    if ( temp1 == temp2 )
 		return 0;
 	    return -1;
@@ -251,7 +251,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Error: Group name not specified.\n");
 	}
-        error_cnt++;
+	error_cnt++;
     } else if (argc + unrecognized_flag_cnt > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Error: More than one group name was specified.\n");
 	error_cnt++;
@@ -319,7 +319,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp_curr_dir = DB_FULL_PATH_CUR_DIR(entry);
 	struct bu_attribute_value_set avs;
 
-    	j = BU_PTBL_LEN(&results2) - i - 1 ;
+	j = BU_PTBL_LEN(&results2) - i - 1;
 	regions[j].ignore = 0;
 
 	bu_avs_init_empty(&avs);

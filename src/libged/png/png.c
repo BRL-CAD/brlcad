@@ -196,7 +196,8 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((fp = fopen(argv[bu_optind], "wb")) == NULL) {
+    fp = fopen(argv[bu_optind], "wb");
+    if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[bu_optind]);
 	return GED_ERROR;
     }

@@ -72,7 +72,8 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 
-	if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY);
+	if (dp == RT_DIR_NULL) {
 	    continue;
 	}
 

@@ -140,7 +140,8 @@ _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree 
 	    _ged_cyclic_search_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, client_data);
 	    break;
 	case OP_DB_LEAF:
-	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    dp = db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
 		return;
 	    } else {
 		/* See if we've got a cyclic path */

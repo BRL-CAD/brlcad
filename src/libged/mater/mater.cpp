@@ -1173,8 +1173,8 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     /* add this (phony until written) object to the directory */
-    if ((dp=db_diradd5(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, RT_DIR_PHONY_ADDR, intern.idb_major_type,
-		       intern.idb_minor_type, 0, 0, NULL)) == RT_DIR_NULL) {
+    dp = db_diradd5(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, RT_DIR_PHONY_ADDR, intern.idb_major_type, intern.idb_minor_type, 0, 0, NULL);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to add new name (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
 	return GED_ERROR;

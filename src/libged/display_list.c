@@ -2209,8 +2209,7 @@ dl_write_animate(struct bu_list *hdlp, FILE *fp)
             for (i = 0; i < sp->s_fullpath.fp_len; i++) {
                 if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
                     struct animate *anp;
-                    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
-                         anp=anp->an_forw) {
+                    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp; anp=anp->an_forw) {
                         db_write_anim(fp, anp);
                     }
                     DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;

@@ -42,7 +42,6 @@
 #include "../ged_private.h"
 
 
-
 #define ABORTED		-99
 #define OLDSOLID	0
 #define NEWSOLID	1
@@ -303,7 +302,8 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    break;
 	    }
 
-	    if ((sol_dp=db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	    sol_dp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET);
+	    if (sol_dp != RT_DIR_NULL) {
 		if (sol_dp->d_flags & RT_DIR_COMB) {
 		    bu_vls_printf(tobj->tree, "   RG %c %s\n", op, sol_dp->d_namep);
 		    continue;
@@ -498,7 +498,8 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the file */
-    if ((test_f=fopen(argv[1], "w+")) == NULL) {
+    test_f = fopen(argv[1], "w+");
+    if (test_f == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;
@@ -561,7 +562,8 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&tabvls, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
     }
 
-    if ((ftabvls=fopen(argv[1], "w+")) == NULL) {
+    ftabvls = fopen(argv[1], "w+");
+    if (ftabvls == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;

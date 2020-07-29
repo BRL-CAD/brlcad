@@ -107,7 +107,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    new_intern.idb_meth = &OBJ[ID_NMG];
 	    new_intern.idb_ptr = (void *)m_tmp;
 
-	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
+	    new_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 	    if (new_dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.\n");
 		return GED_ERROR;

@@ -130,7 +130,6 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl tops_cmd_impl = {

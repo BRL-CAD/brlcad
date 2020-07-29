@@ -220,7 +220,8 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
     FILE *fp;
     char line[512];
 
-    if ((fp=fopen(file, "r")) == NULL) {
+    fp = fopen(file, "r");
+    if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "cannot open %s\n", file);
 	return GED_ERROR;
     }

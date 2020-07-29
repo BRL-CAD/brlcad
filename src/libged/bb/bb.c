@@ -189,7 +189,8 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    new_intern.idb_meth = &OBJ[ID_ARB8];
 	    new_intern.idb_ptr = (void *)arb;
 
-	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type)) == RT_DIR_NULL) {
+	    dp = db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
+	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
 		return GED_ERROR;
 	    }
@@ -214,7 +215,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    db_free_full_path(&path);
 	    return GED_ERROR;
 	}
-	if ((obj_dp=db_lookup(gedp->ged_wdbp->dbip, DB_FULL_PATH_CUR_DIR(&path)->d_namep, LOOKUP_QUIET)) == RT_DIR_NULL) {
+
+	obj_dp = db_lookup(gedp->ged_wdbp->dbip, DB_FULL_PATH_CUR_DIR(&path)->d_namep, LOOKUP_QUIET);
+	if (obj_dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "db_lookup failed for %s\n", DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 	    db_free_full_path(&path);
 	    return GED_ERROR;
@@ -289,7 +292,8 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&new_intern);
 	} else {
 
-	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type)) == RT_DIR_NULL) {
+	    dp = db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
+	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
 		return GED_ERROR;
 	    }

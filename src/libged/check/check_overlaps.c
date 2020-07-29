@@ -294,7 +294,8 @@ int check_overlaps(struct current_state *state,
     overlapList.maxdepth = 0;
 
     if (options->plot_files) {
-	if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_overlaps = fopen(name, "wb");
+	if (plot_overlaps == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	    return GED_ERROR;
 	}

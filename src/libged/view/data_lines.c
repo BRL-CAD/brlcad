@@ -297,13 +297,13 @@ ged_view_data_lines(struct ged *gedp, int argc, const char *argv[])
     argc--;argv++;
 
     if (bu_cmd_valid(_view_dline_cmds, argv[0]) != BRLCAD_OK) {
-    	bu_vls_printf(gedp->ged_result_str, "invalid subcommand: %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "invalid subcommand: %s", argv[1]);
 	return GED_ERROR;
     }
 
     int ret;
     if (bu_cmd(_view_dline_cmds, argc, argv, 0, (void *)&vs, &ret) == BRLCAD_OK) {
-        return GED_OK;
+	return GED_OK;
     }
 
     return GED_ERROR;

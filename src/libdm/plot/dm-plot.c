@@ -153,7 +153,7 @@ plot_open(void *vinterp, int argc, const char *argv[])
     }
 
     if (privars->is_pipe) {
-	if ((privars->up_fp = popen(bu_vls_addr(&privars->vls), "w")) == NULL) {
+	if ((privars->up_fp = popen(bu_vls_addr(&privars->vls), "wb")) == NULL) {
 	    perror(bu_vls_addr(&privars->vls));
 	    (void)plot_close(dmp);
 	    Tcl_SetObjResult(interp, obj);

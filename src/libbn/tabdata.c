@@ -928,7 +928,7 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
     len = num * nbytes;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    fd = open(filename, 0);
+    fd = open(filename, O_RDONLY|O_BINARY);
     bu_semaphore_release(BU_SEM_SYSCALL);
     if (fd <= 0)  {
 	perror(filename);

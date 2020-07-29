@@ -155,7 +155,7 @@ parse_args(int ac, char **av)
     }
     if (bu_optind < ac) {
 	char *ifname = bu_file_realpath(av[bu_optind], NULL);
-	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
+	if (freopen(ifname, "rb", stdin) == (FILE *)NULL) {
 	    perror(ifname);
 	    bu_exit (-1, NULL);
 	} else

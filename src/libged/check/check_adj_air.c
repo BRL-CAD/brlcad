@@ -72,7 +72,8 @@ int check_adj_air(struct current_state *state,
     BU_LIST_INIT(&(adjAirList.l));
 
     if (options->plot_files) {
-	if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_adjair = fopen(name, "wb");
+	if (plot_adjair == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }

@@ -57,8 +57,8 @@ ged_whatid_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    if (dp == RT_DIR_NULL)
 	return GED_ERROR;
 
     if (!(dp->d_flags & RT_DIR_REGION)) {

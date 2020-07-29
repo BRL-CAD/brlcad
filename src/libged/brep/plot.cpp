@@ -715,7 +715,7 @@ brep_plot_file(const char *pname = NULL)
     if (pname == NULL) {
 	pname = "out.plot3";
     }
-    plot = fopen(pname, "w");
+    plot = fopen(pname, "wb");
     point_t min, max;
     VSET(min, -2048, -2048, -2048);
     VSET(max, 2048, 2048, 2048);

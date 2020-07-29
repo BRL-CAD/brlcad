@@ -56,7 +56,8 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((op = wdb_fopen(argv[1])) == RT_WDB_NULL) {
+    op = wdb_fopen(argv[1]);
+    if (op == RT_WDB_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "dump: %s: cannot create", argv[1]);
 	return GED_ERROR;
     }

@@ -121,7 +121,8 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the file for reading */
-    if ((fp = fopen(argv[1], "r")) == NULL) {
+    fp = fopen(argv[1], "r");
+    if (fp == NULL) {
 	perror(argv[1]);
 	return GED_ERROR;
     }
@@ -184,7 +185,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 		dbName++;
 		memset(dbName + strlen(dbName)-1, 0, 1);
 	    }
-    
+
 	    if (!bu_file_same(gedp->ged_wdbp->dbip->dbi_filename, dbName)) {
 		/* warn here if they are not the same file, otherwise,
 		 * proceed as expected, and try to load the objects.

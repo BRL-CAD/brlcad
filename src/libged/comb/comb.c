@@ -137,7 +137,8 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
     bu_vls_sprintf(&comb_child_name, "%s.c", dp->d_namep);
 
     /* First, make sure the target comb name for wrapping doesn't already exist */
-    if ((new_dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
+    new_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET);
+    if (new_dp != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists in the database, cannot wrap %s", bu_vls_addr(&comb_child_name), dp->d_namep);
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
@@ -161,7 +162,8 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
     bu_free_external(&external);
 
     /* Load new obj.c comb and clear its region flag, if any */
-    if ((new_dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
+    new_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET);
+    if (new_dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Wrapping %s: creation of %s failed!", dp->d_namep, bu_vls_addr(&comb_child_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
@@ -185,7 +187,8 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
 	bu_vls_free(&orig_name);
 	return GED_ERROR;
     }
-    if ((orig_dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&orig_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
+    orig_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&orig_name), LOOKUP_QUIET);
+    if (orig_dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", bu_vls_addr(&orig_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
@@ -713,7 +716,8 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	if (comb_wrap(gedp, dp) == GED_ERROR) {
 	    return GED_ERROR;
 	} else {
-	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: wrap of %s failed", comb_name);
 		return GED_ERROR;
 	    }
@@ -728,7 +732,8 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	if (comb_flatten(gedp, dp) == GED_ERROR) {
 	    return GED_ERROR;
 	} else {
-	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: flattening of %s failed", comb_name);
 		return GED_ERROR;
 	    }
@@ -743,7 +748,8 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	if (comb_lift_region(gedp, dp) == GED_ERROR) {
 	    return GED_ERROR;
 	} else {
-	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: region lift to %s failed", comb_name);
 		return GED_ERROR;
 	    }
@@ -770,7 +776,6 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
-
 
 
 #ifdef GED_PLUGIN

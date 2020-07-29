@@ -32,7 +32,6 @@
 #include "../ged_private.h"
 
 
-
 int
 ged_rot_core(struct ged *gedp, int argc, const char *argv[])
 {

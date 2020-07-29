@@ -597,7 +597,8 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	RT_CK_COMB(comb);
 
     /* open the file */
-    if ((fp=fopen(_ged_tmpfil, "w")) == NULL) {
+    fp = fopen(_ged_tmpfil, "w");
+    if (fp == NULL) {
 	perror("fopen");
 	bu_vls_printf(gedp->ged_result_str, "ERROR: Cannot open temporary file [%s] for writing\n", _ged_tmpfil);
 	bu_vls_free(&spacer);

@@ -965,7 +965,9 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 
 		conv = atof(avp->value);
 		bu_vls_strcat(gedp->ged_result_str, "\tunits: ");
-		if ((str=bu_units_string(conv)) == NULL) {
+
+		str = bu_units_string(conv);
+		if (str == NULL) {
 		    bu_vls_strcat(gedp->ged_result_str, "Unrecognized units\n");
 		} else {
 		    bu_vls_strcat(gedp->ged_result_str, str);

@@ -172,7 +172,8 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	if ((keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) == NULL) {
+	keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK);
+	if (keepfp == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
 	    return GED_ERROR;
 	} else {

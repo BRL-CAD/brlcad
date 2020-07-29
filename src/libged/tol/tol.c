@@ -122,8 +122,6 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 
-
-
 	return GED_OK;
     }
 

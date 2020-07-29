@@ -166,7 +166,8 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Read file and process it */
-    if ((fp = fopen(tmpfil, "r")) == NULL) {
+    fp = fopen(tmpfil, "r");
+    if (fp == NULL) {
 	perror(tmpfil);
 	return GED_ERROR;
     }

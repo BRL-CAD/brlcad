@@ -79,7 +79,8 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 	prefix = def_prefix;
     }
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_solid_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+    dp = db_lookup(gedp->ged_wdbp->dbip, nmg_solid_name, LOOKUP_NOISY);
+    if (dp == RT_DIR_NULL)
 	return GED_ERROR;
 
     if (rt_db_get_internal(&nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
@@ -172,7 +173,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 		new_intern.idb_meth = &OBJ[ID_NMG];
 		new_intern.idb_ptr = (void *)new_m;
 
-		new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&solid_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
+		new_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&solid_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 		if (new_dp == RT_DIR_NULL) {
 		    bu_vls_free(&solid_name);
 		    bu_vls_printf(gedp->ged_result_str, "%s: Database alloc error, aborting", argv[0]);

@@ -169,7 +169,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		analyze_set_elevation(state, options->elevation_deg);
 		options->getfromview = 0;
 		break;
-	
+
 	    case 'f':
 		options->densityFileName = bu_optarg;
 		analyze_set_densityfile(state, options->densityFileName);
@@ -276,7 +276,9 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		break;
 	    case 'P':
 		/* cannot ask for more cpu's than the machine has */
-		if ((c=atoi(bu_optarg)) > 0 && c <= (int) bu_avail_cpus()) options->ncpu = c;
+		c = atoi(bu_optarg);
+		if (c > 0 && c <= (int) bu_avail_cpus())
+		    options->ncpu = c;
 		analyze_set_ncpu(state, options->ncpu);
 		break;
 	    case 'q':

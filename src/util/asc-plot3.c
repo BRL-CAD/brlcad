@@ -98,7 +98,7 @@ main (int argc, char **argv)
 	}
     }
     if (isatty(fileno(fp[FP_OUT]))) {
-	bu_log("asc-plot3: Will not write to a TTY\n");
+	bu_log("%s: Will not write to a TTY\n", argv[0]);
 	printusage();
 	return 1;
     }

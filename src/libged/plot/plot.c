@@ -114,7 +114,8 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_strcat(&str, " ");
 	    bu_vls_strcat(&str, argv[1]);
 	}
-	if ((fp = popen(bu_vls_addr(&str), "w")) == NULL) {
+	fp = popen(bu_vls_addr(&str), "wb");
+	if (fp == NULL) {
 	    perror(bu_vls_addr(&str));
 	    return GED_ERROR;
 	}
@@ -123,7 +124,8 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&str);
 	is_pipe = 1;
     } else {
-	if ((fp = fopen(argv[1], "w")) == NULL) {
+	fp = fopen(argv[1], "wb");
+	if (fp == NULL) {
 	    perror(argv[1]);
 	    return GED_ERROR;
 	}

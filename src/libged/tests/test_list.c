@@ -39,7 +39,7 @@ main(int ac, char *av[]) {
     }
 
     if (ac > 1) {
-        size_t invocations = 0;
+	size_t invocations = 0;
 	seconds = atoi(av[1]);
 	start = bu_gettime();
 

@@ -52,18 +52,18 @@ _ged_opt_tol(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     double d = strtod(argv[0], &endptr);
 
     if (endptr != NULL && strlen(endptr) > 0) {
-        /* Had some invalid character in the input, fail */
-        if (msg) {
-            bu_vls_printf(msg, "Invalid string specifier for double: %s\n", argv[0]);
-        }
-        return -1;
+	/* Had some invalid character in the input, fail */
+	if (msg) {
+	    bu_vls_printf(msg, "Invalid string specifier for double: %s\n", argv[0]);
+	}
+	return -1;
     }
 
     if (errno == ERANGE) {
-        if (msg) {
-            bu_vls_printf(msg, "Invalid input for double (range error): %s\n", argv[0]);
-        }
-        return -1;
+	if (msg) {
+	    bu_vls_printf(msg, "Invalid input for double (range error): %s\n", argv[0]);
+	}
+	return -1;
     }
 
     if (tol_set) (*tol_set) = d;
@@ -128,8 +128,8 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     /* adjust argc to match the leftovers of the options parsing */
     argc = opt_ret;
     if (argc != 2 && argc != 3) {
-        _ged_cmd_help(gedp, usage, d);
-        return GED_ERROR;
+	_ged_cmd_help(gedp, usage, d);
+	return GED_ERROR;
     }
 
     /* We may get a 2D screen point or a 3D model space point.  Either
@@ -203,8 +203,6 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&msg);
     return GED_OK;
 }
-
-
 
 
 /*

@@ -29,7 +29,6 @@
 #include <string.h>
 
 
-
 #include "../ged_private.h"
 
 /*
@@ -83,7 +82,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	if (ptr_A)
 	    flag_A_attr = 1;
 
-	ptr_o=strchr(argv[i], 'o');
+	ptr_o = strchr(argv[i], 'o');
 	if (ptr_o)
 	    flag_o_nonunique = 2;
 
@@ -176,7 +175,6 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
-
 
 
 #ifdef GED_PLUGIN

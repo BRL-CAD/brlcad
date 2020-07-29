@@ -45,10 +45,14 @@ image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
     type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
     type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
     if (type == BU_MIME_IMAGE_UNKNOWN) {
-        if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
-        return -1;
+	if (msg) {
+	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
+	}
+	return -1;
     }
-    if (set_type) (*set_type) = type;
+    if (set_type) {
+	(*set_type) = type;
+    }
     return 1;
 }
 

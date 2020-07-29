@@ -169,6 +169,9 @@ commit_parse_original_oid(git_commit_data *cd, std::ifstream &infile)
     line.erase(0, 13);  // Remove "original-oid " prefix
     cd->id.sha1 = line;
     cd->s->have_sha1s = true;
+    if (cd->s->sha12key.find(cd->id.sha1) != cd->s->sha12key.end()) {
+	std::cout << "Have CVS info for commit " << cd->id.sha1 << "\n";
+    }
     return 0;
 }
 
@@ -487,6 +490,46 @@ commit_msg(git_commit_data *c)
 	}
     }
 
+    // Check for CVS information to add
+    if (c->s->sha12key.find(c->id.sha1) != c->s->sha12key.end()) {
+	std::string cvsmsg = nmsg;
+	std::string key = c->s->sha12key[c->id.sha1];
+	int have_ret = (c->svn_id.length()) ? 1 : 0;
+	if (c->s->key2cvsbranch.find(key) != c->s->key2cvsbranch.end()) {
+	    //std::cout << "Found branch: " << c->s->key2cvsbranch[key] << "\n";
+	    if (!have_ret) {
+		cvsmsg.append("\n");
+		have_ret = 1;
+	    }
+	    std::string cb = c->s->key2cvsbranch[key];
+	    cvsmsg.append("cvs:branch:");
+	    if (cb == std::string("master")) {
+		cvsmsg.append("trunk");
+	    } else {
+		cvsmsg.append(cb);
+	    }
+	    cvsmsg.append("\n");
+	}
+	if (c->s->key2cvsauthor.find(key) != c->s->key2cvsauthor.end()) {
+	    //std::cout << "Found author: " << c->s->key2cvsauthor[key] << "\n";
+	    if (!have_ret) {
+		cvsmsg.append("\n");
+		have_ret = 1;
+	    }
+	    std::string svnname = std::string("svn:account:") + c->s->key2cvsauthor[key];
+	    std::string cvsaccount = std::string("cvs:account:") + c->s->key2cvsauthor[key];
+	    size_t index = cvsmsg.find(svnname);
+	    if (index != std::string::npos) {
+		std::cout << "Replacing svn:account\n";
+		cvsmsg.replace(index, cvsaccount.length(), cvsaccount);
+	    } else {
+		cvsmsg.append(cvsaccount);
+		cvsmsg.append("\n");
+	    }
+	}
+	nmsg = cvsmsg;
+    }
+
     return nmsg;
 }
 
@@ -506,6 +549,27 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 	outfile << "\n";
 	return 0;
     }
+
+#if 0
+    // If this is a rebuild, write the blobs first
+    if (c->id.sha1.length()) {
+	if (c->s->rebuild_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) {
+	    std::cout << "rebuild commit!\n";
+	    std::string sha1blobs = c->id.sha1 + std::string("-blob.fi");
+	    std::ifstream s1b(sha1blobs, std::ifstream::binary | std::ios::ate);
+	    std::streamsize size = s1b.tellg();
+	    s1b.seekg(0, std::ios::beg);
+	    std::vector<char> buffer(size);
+	    if (s1b.read(buffer.data(), size)) {
+		outfile.write(reinterpret_cast<char*>(buffer.data()), size);
+	    } else {
+		std::cerr << "Failed to open rebuild file " << sha1blobs << "\n";
+		exit(1);
+	    }
+	    s1b.close();
+	}
+    }
+#endif
 
     // Header
     if (c->notes_commit) {
@@ -537,8 +601,30 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
     for (size_t i = 0; i < c->merges.size(); i++) {
 	outfile << "merge :" << c->merges[i].mark << "\n";
     }
-    for (size_t i = 0; i < c->fileops.size(); i++) {
-	write_op(outfile, &c->fileops[i]);
+
+    bool write_ops = true;
+    if (c->id.sha1.length()) {
+	if ((c->s->rebuild_commits.find(c->id.sha1) != c->s->rebuild_commits.end()) ||
+		(c->s->reset_commits.find(c->id.sha1) != c->s->reset_commits.end())) {
+	    write_ops = false;
+	    std::string sha1tree = std::string("trees/") + c->id.sha1 + std::string("-tree.fi");
+	    std::ifstream s1t(sha1tree, std::ifstream::binary | std::ios::ate);
+	    std::streamsize size = s1t.tellg();
+	    s1t.seekg(0, std::ios::beg);
+	    std::vector<char> buffer(size);
+	    if (s1t.read(buffer.data(), size)) {
+		outfile.write(reinterpret_cast<char*>(buffer.data()), size);
+	    } else {
+		std::cerr << "Failed to open rebuild file " << sha1tree << "\n";
+		exit(1);
+	    }
+	    s1t.close();
+	}
+    }
+    if (write_ops) {
+	for (size_t i = 0; i < c->fileops.size(); i++) {
+	    write_op(outfile, &c->fileops[i]);
+	}
     }
     outfile << "\n";
     return 0;

@@ -115,7 +115,8 @@ get_args(int argc, char **argv)
 	setmode(fileno(fp_in), O_BINARY);
     } else {
 	file_name = argv[bu_optind];
-	if ((fp_in = fopen(file_name, "rb")) == NULL) {
+	fp_in = fopen(file_name, "rb");
+	if (fp_in == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
 		    "png-fb: cannot open \"%s\" for reading\n",

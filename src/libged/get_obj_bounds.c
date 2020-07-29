@@ -53,7 +53,8 @@ ged_get_obj_bounds(struct ged *gedp,
     struct region *regp;
 
     /* Make a new rt_i instance from the existing db_i structure */
-    if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
+    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    if (rtip == RTI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }
@@ -251,7 +252,8 @@ _ged_get_obj_bounds2(struct ged *gedp,
     GED_DB_GET_INTERNAL(gedp, &intern, dp, gtdp->gtd_xform, &rt_uniresource, GED_ERROR);
 
     /* Make a new rt_i instance from the existing db_i structure */
-    if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
+    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    if (rtip == RTI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }

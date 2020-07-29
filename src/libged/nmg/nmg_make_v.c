@@ -69,8 +69,8 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
     /* attempt to resolve and verify */
     name = argv[0];
 
-    if ( (dp=db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET))
-         == RT_DIR_NULL ) {
+    dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
        bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", name);
        return GED_ERROR;
     }
@@ -91,29 +91,28 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
     NMG_CK_MODEL(m);
 
     if (BU_LIST_IS_EMPTY(&m->r_hd)) {
-        r = nmg_mrsv(m);
-        s = BU_LIST_FIRST(shell, &r->s_hd);
+	r = nmg_mrsv(m);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
     } else {
-        r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-        s = BU_LIST_FIRST(shell, &r->s_hd);
+	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
     }
 
     NMG_CK_REGION(r);
     NMG_CK_SHELL(s);
 
     verts = (struct tmp_v *)NULL;
-    verts = (struct tmp_v *)bu_calloc(num_verts,
-            sizeof(struct tmp_v), "verts");
+    verts = (struct tmp_v *)bu_calloc(num_verts, sizeof(struct tmp_v), "verts");
 
     for (idx=0; idx < num_verts; idx++){
-        struct shell* ns = nmg_msv(r);
-        NMG_CK_SHELL(ns);
+	struct shell* ns = nmg_msv(r);
+	NMG_CK_SHELL(ns);
 
-        verts[idx].pt[0] = (fastf_t)atof(argv[idx*3+3]);
-        verts[idx].pt[1] = (fastf_t)atof(argv[idx*3+4]);
-        verts[idx].pt[2] = (fastf_t)atof(argv[idx*3+5]);
+	verts[idx].pt[0] = (fastf_t)atof(argv[idx*3+3]);
+	verts[idx].pt[1] = (fastf_t)atof(argv[idx*3+4]);
+	verts[idx].pt[2] = (fastf_t)atof(argv[idx*3+5]);
 
-        nmg_vertex_gv( ns->vu_p->v_p, verts[idx].pt);
+	nmg_vertex_gv( ns->vu_p->v_p, verts[idx].pt);
     }
 
     tol.magic = BN_TOL_MAGIC;
@@ -125,9 +124,9 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
     nmg_rebound(m, &tol);
 
     if ( wdb_put_internal(gedp->ged_wdbp, name, &internal, 1.0) < 0 ) {
-        bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
-        rt_db_free_internal(&internal);
-        return GED_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
+	rt_db_free_internal(&internal);
+	return GED_ERROR;
     }
 
     rt_db_free_internal(&internal);

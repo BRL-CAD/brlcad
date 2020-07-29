@@ -578,4 +578,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

@@ -210,6 +210,8 @@ set(misc_ignore_files
   repoconv/account-map_svnfexport.txt
   repoconv/cvs_authormap
   repoconv/cvs_authormap_svnfexport.txt
+  repoconv/cvs_info.sh
+  repoconv/domap.sh
   repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
   repoconv/gitattributes
@@ -255,8 +257,15 @@ set(misc_ignore_files
   repoconv/sync_commit_trunk.sh
   repoconv/tagmap.sh
   repoconv/terra.dsp
+  repoconv/verify/cvs.sh
+  repoconv/verify/cvs_repaired/sphflake.pix,v
   repoconv/verify/cxxopts.hpp
+  repoconv/verify/md5.hpp
+  repoconv/verify/sha1.hpp
+  repoconv/verify/svn.sh
+  repoconv/verify/svn_de-rcs.cxx
   repoconv/verify/verify.cpp
+  repoconv/verify/verify.sh
   repowork/COPYING
   repowork/README
   repowork/blob.cpp

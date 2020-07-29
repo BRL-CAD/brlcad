@@ -77,7 +77,8 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    if (dp == RT_DIR_NULL)
 	return GED_ERROR;
 
     if (dp->d_flags & RT_DIR_COMB) {
@@ -132,7 +133,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 
     count = (size_t)nmg_edge_collapse(m, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
 
-    dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    dp = db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	rt_db_free_internal(&intern);

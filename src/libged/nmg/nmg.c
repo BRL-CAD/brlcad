@@ -59,35 +59,41 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
     if (argc < 3) {
     bu_vls_printf(gedp->ged_result_str, "Usage: %s\n\t%s\n", argv[0], usage);
     bu_vls_printf(gedp->ged_result_str, "commands:\n");
-    bu_vls_printf(gedp->ged_result_str, "\tmm             -  creates a new "
-            "NMG model structure and fills the appropriate fields. The result "
-            "is an empty model.\n");
-    bu_vls_printf(gedp->ged_result_str, "\tcmface         -  creates a "
-                "manifold face in the first encountered shell of the NMG "
-                "object. Vertices are listed as the suffix and define the "
-                "winding-order of the face.\n");
-    bu_vls_printf(gedp->ged_result_str, "\tkill V         -  removes the "
-            "vertexuse and vertex geometry of the selected vertex (via its "
-            "coordinates) and higher-order topology containing the vertex. "
-            "When specifying vertex to be removed, user generally will display "
-            "vertex coordinates in object via the MGED command labelvert.\n");
-    bu_vls_printf(gedp->ged_result_str, "\tkill F         -  removes the "
-                "faceuse and face geometry of the selected face (via its "
-                "index). When specifying the face to be removed, user generally "
-                "will display face indices in object via the MGED command "
-                "labelface.\n");
-    bu_vls_printf(gedp->ged_result_str, "\tmove V         -  moves an existing "
-                "vertex specified by the coordinates x_initial y_initial "
-                "z_initial to the position with coordinates x_final y_final "
-                "z_final.\n");
-    bu_vls_printf(gedp->ged_result_str, "\tmake V         -  creates a new "
-                "vertex in the nmg object.\n");
+    bu_vls_printf(gedp->ged_result_str,
+		  "\tmm             -  creates a new "
+		  "NMG model structure and fills the appropriate fields. The result "
+		  "is an empty model.\n");
+    bu_vls_printf(gedp->ged_result_str,
+		  "\tcmface         -  creates a "
+		  "manifold face in the first encountered shell of the NMG "
+		  "object. Vertices are listed as the suffix and define the "
+		  "winding-order of the face.\n");
+    bu_vls_printf(gedp->ged_result_str,
+		  "\tkill V         -  removes the "
+		  "vertexuse and vertex geometry of the selected vertex (via its "
+		  "coordinates) and higher-order topology containing the vertex. "
+		  "When specifying vertex to be removed, user generally will display "
+		  "vertex coordinates in object via the MGED command labelvert.\n");
+    bu_vls_printf(gedp->ged_result_str,
+		  "\tkill F         -  removes the "
+		  "faceuse and face geometry of the selected face (via its "
+		  "index). When specifying the face to be removed, user generally "
+		  "will display face indices in object via the MGED command "
+		  "labelface.\n");
+    bu_vls_printf(gedp->ged_result_str,
+		  "\tmove V         -  moves an existing "
+		  "vertex specified by the coordinates x_initial y_initial "
+		  "z_initial to the position with coordinates x_final y_final "
+		  "z_final.\n");
+    bu_vls_printf(gedp->ged_result_str,
+		  "\tmake V         -  creates a new "
+		  "vertex in the nmg object.\n");
     return GED_HELP;
     }
 
     if (argc < 3) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-        return GED_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
     /* advance CLI arguments for subcommands */
@@ -95,34 +101,34 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
     ++argv;
 
     if( BU_STR_EQUAL( "mm", subcmd ) ) {
-        ged_nmg_mm_core(gedp, argc, argv);
+	ged_nmg_mm_core(gedp, argc, argv);
     }
     else if( BU_STR_EQUAL( "cmface", subcmd ) ) {
-        ged_nmg_cmface_core(gedp, argc, argv);
+	ged_nmg_cmface_core(gedp, argc, argv);
     }
     else if( BU_STR_EQUAL( "kill", subcmd ) ) {
-        const char* opt = argv[2];
-        if ( BU_STR_EQUAL( "V", opt ) ) {
-            ged_nmg_kill_v_core(gedp, argc, argv);
-        } else if ( BU_STR_EQUAL( "F", opt ) ) {
-            ged_nmg_kill_f_core(gedp, argc, argv);
-        }
+	const char* opt = argv[2];
+	if ( BU_STR_EQUAL( "V", opt ) ) {
+	    ged_nmg_kill_v_core(gedp, argc, argv);
+	} else if ( BU_STR_EQUAL( "F", opt ) ) {
+	    ged_nmg_kill_f_core(gedp, argc, argv);
+	}
     }
     else if( BU_STR_EQUAL( "move", subcmd ) ) {
-        const char* opt = argv[2];
-        if ( BU_STR_EQUAL( "V", opt ) ) {
-            ged_nmg_move_v_core(gedp, argc, argv);
-        }
+	const char* opt = argv[2];
+	if ( BU_STR_EQUAL( "V", opt ) ) {
+	    ged_nmg_move_v_core(gedp, argc, argv);
+	}
     }
     else if( BU_STR_EQUAL( "make", subcmd ) ) {
-        const char* opt = argv[2];
-        if ( BU_STR_EQUAL( "V", opt ) ) {
-            ged_nmg_make_v_core(gedp, argc, argv);
-        }
+	const char* opt = argv[2];
+	if ( BU_STR_EQUAL( "V", opt ) ) {
+	    ged_nmg_make_v_core(gedp, argc, argv);
+	}
     }
     else {
-        bu_vls_printf(gedp->ged_result_str, "%s is not a subcommand.", subcmd );
-        return GED_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "%s is not a subcommand.", subcmd );
+	return GED_ERROR;
     }
 
     return GED_OK;

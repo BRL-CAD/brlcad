@@ -642,7 +642,9 @@ parse_args(int ac, char *av[])
 		break;
 	    case 'P':
 		/* cannot ask for more cpu's than the machine has */
-		if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus) ncpu = c;
+		c = atoi(bu_optarg);
+		if (c > 0 && c <= max_cpus)
+		    ncpu = c;
 		break;
 	    case 'q':
 		quiet_missed_report = 1;
@@ -1342,7 +1344,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     char *str = bu_strdup(name);
     char *p;
 
-    p=strchr(str, '/');
+    p = strchr(str, '/');
     if (p) {
 	*p = '\0';
     }
@@ -1538,7 +1540,8 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	    struct bu_vls vp = BU_VLS_INIT_ZERO;
 	    bu_vls_printf(&vp, "%svolume.plot3", plot_prefix);
 	    bu_log("Plotting volumes to %s\n", bu_vls_cstr(&vp));
-	    if ((plot_volume = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+	    plot_volume = fopen(bu_vls_cstr(&vp), "wb");
+	    if (plot_volume == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
 		/* not a critical failure */
 	    }
@@ -1566,7 +1569,8 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	    struct bu_vls vp = BU_VLS_INIT_ZERO;
 	    bu_vls_printf(&vp, "%sgaps.plot3", plot_prefix);
 	    bu_log("Plotting gaps to %s\n", bu_vls_cstr(&vp));
-	    if ((plot_gaps = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+	    plot_gaps = fopen(bu_vls_cstr(&vp), "wb");
+	    if (plot_gaps == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
 		/* not a critical failure */
 	    }
@@ -1580,7 +1584,8 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	    struct bu_vls vp = BU_VLS_INIT_ZERO;
 	    bu_vls_printf(&vp, "%soverlaps.plot3", plot_prefix);
 	    bu_log("Plotting overlaps to %s\n", bu_vls_cstr(&vp));
-	    if ((plot_overlaps = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+	    plot_overlaps = fopen(bu_vls_cstr(&vp), "wb");
+	    if (plot_overlaps == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
 		/* not a critical failure */
 	    }
@@ -1597,7 +1602,8 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	    struct bu_vls vp = BU_VLS_INIT_ZERO;
 	    bu_vls_printf(&vp, "%sadj_air.plot3", plot_prefix);
 	    bu_log("Plotting adjacent air to %s\n", bu_vls_cstr(&vp));
-	    if ((plot_adjair = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+	    plot_adjair = fopen(bu_vls_cstr(&vp), "wb");
+	    if (plot_adjair == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
 		/* not a critical failure */
 	    }
@@ -1609,7 +1615,8 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	    struct bu_vls vp = BU_VLS_INIT_ZERO;
 	    bu_vls_printf(&vp, "%sexp_air.plot3", plot_prefix);
 	    bu_log("Plotting exposed air to %s\n", bu_vls_cstr(&vp));
-	    if ((plot_expair = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+	    plot_expair = fopen(bu_vls_cstr(&vp), "wb");
+	    if (plot_expair == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
 		/* not a critical failure */
 	    }

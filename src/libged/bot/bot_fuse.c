@@ -104,7 +104,8 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 			    } else if (out_type == 2) {
 				if (!plotfp) {
 				    bu_vls_sprintf(&plot_file_name, "%s.%p.pl", name, (void *)magic_p);
-				    if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
+				    plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
+				    if (plotfp == (FILE *)NULL) {
 					bu_vls_free(&plot_file_name);
 					bu_log("Error, unable to create plot file (%s), open edge test failed.\n",
 					       bu_vls_addr(&plot_file_name));

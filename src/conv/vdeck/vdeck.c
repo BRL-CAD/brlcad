@@ -1676,6 +1676,7 @@ getarg(char *str, size_t maxchars)
     for (i = 0; i < maxchars; ++i) {
 	c = getchar();
 	switch (c) {
+	case '\r':
 	case '\n':
 	case EOF:
 	    /* end of input */

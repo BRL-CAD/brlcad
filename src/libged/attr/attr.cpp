@@ -438,7 +438,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		}
 	    } else {
 		const char *val;
-		int do_separators=argc-4; /* if more than one attribute */
+		int do_separators = argc-4; /* if more than one attribute */
 
 		for (i = 3; i < (size_t)argc; i++) {
 		    val = bu_avs_get(&avs, argv[i]);
@@ -495,7 +495,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		    }
 		} else {
 		    const char *val;
-		    int do_separators=argc-4; /* if more than one attribute */
+		    int do_separators = argc-4; /* if more than one attribute */
 
 		    for (j = 3; j < (size_t)argc; j++) {
 			val = bu_avs_get(&avs, argv[j]);

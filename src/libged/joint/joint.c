@@ -2192,7 +2192,7 @@ joint_adjust(struct ged *gedp, struct joint *jp)
     /*
      * If no animate structure, cons one up.
      */
-    anp=jp->anim;
+    anp = jp->anim;
     if (!anp || anp->magic != ANIMATE_MAGIC) {
 	char *sofar;
 	struct directory *dp = NULL;
@@ -2207,7 +2207,7 @@ joint_adjust(struct ged *gedp, struct joint *jp)
 	    }
 	    db_add_node_to_full_path(&anp->an_path, dp);
 	}
-	jp->anim=anp;
+	jp->anim = anp;
 	db_add_anim(gedp->ged_wdbp->dbip, anp, 0);
 
 	if (J_DEBUG & DEBUG_J_MOVE) {
@@ -2697,7 +2697,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		hold=(struct jointH *)jh->l.back;
 		BU_LIST_DEQUEUE(&jh->l);
 		jh->p->uses--;
-		jh=hold;
+		jh = hold;
 	    }
 	}
     }
@@ -2734,20 +2734,20 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	     * bx-limits-0.001 or lower and cx = bx+limits+0.001 or
 	     * upper.
 	     */
-	    ax=bx-limits-EPSI;
+	    ax = bx-limits-EPSI;
 	    if (ax < jp->rots[i].lower)
-		ax=jp->rots[i].lower;
-	    cx=bx+limits+EPSI;
+		ax = jp->rots[i].lower;
+	    cx = bx+limits+EPSI;
 	    if (cx > jp->rots[i].upper)
-		cx=jp->rots[i].upper;
-	    x0=ax;
-	    x3=cx;
+		cx = jp->rots[i].upper;
+	    x0 = ax;
+	    x3 = cx;
 	    if (fabs(cx-bx) > fabs(bx-ax)) {
-		x1=bx;
-		x2=bx+C*(cx-bx);
+		x1 = bx;
+		x2 = bx+C*(cx-bx);
 	    } else {
-		x2=bx;
-		x1=bx-C*(bx-ax);
+		x2 = bx;
+		x1 = bx-C*(bx-ax);
 	    }
 	    jp->rots[i].current = x1;
 	    joint_adjust(gedp, jp);
