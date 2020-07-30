@@ -255,7 +255,7 @@ struct ged {
     // Tcl command strings: gdv_callback, gdv_edit_motion_delta_callback
     // ged_obj: go_more_args_callback, go_rt_end_callback
     // fbserv_obj: fbs_callback
-    // bview.h gv_callback, vo_callback
+    // bview.h gv_callback
     // db_search_callback_t
 };
 
