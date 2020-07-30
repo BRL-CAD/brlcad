@@ -106,7 +106,7 @@ extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern char	*framebuffer;		/* desired framebuffer */
 
-extern struct command_tab	rt_cmdtab[];
+extern struct command_tab	rt_do_tab[];
 
 int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
 
@@ -596,7 +596,7 @@ int main(int argc, char *argv[])
 #endif
 	    }
 
-	    nret = rt_do_cmd( rtip, buf, rt_cmdtab);
+	    nret = rt_do_cmd( rtip, buf, rt_do_tab);
 	    bu_free( buf, "rt_read_cmd command buffer");
 	    if (nret < 0)
 		break;

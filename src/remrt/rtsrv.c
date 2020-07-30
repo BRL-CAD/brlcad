@@ -583,7 +583,7 @@ process_cmd(char *buf)
     char *sp;
     char *ep;
     int len;
-    extern struct command_tab rt_cmdtab[];	/* from do.c */
+    extern struct command_tab rt_do_tab[];	/* from do.c */
 
     /* Parse the string */
     len = strlen(buf);
@@ -597,7 +597,7 @@ process_cmd(char *buf)
 	/* Process this command */
 	if (debug)
 	    bu_log("process_cmd '%s'\n", sp);
-	if (rt_do_cmd(APP.a_rt_i, sp, rt_cmdtab) < 0)
+	if (rt_do_cmd(APP.a_rt_i, sp, rt_do_tab) < 0)
 	    bu_exit(1, "process_cmd: error on '%s'\n", sp);
 	sp = cp;
     }

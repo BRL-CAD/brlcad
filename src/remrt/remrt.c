@@ -153,7 +153,7 @@ extern int gettimeofday(struct timeval *, void *);
 /* NOTE: satisfies linkage with do.c command parsing.  possibly wrong
  * to stub empty... might hinder remrt's ability to read rt commands.
  */
-struct command_tab rt_cmdtab[] = {{NULL, NULL, NULL, 0, 0, 0}};
+struct command_tab rt_do_tab[] = {{NULL, NULL, NULL, 0, 0, 0}};
 
 struct frame {
     struct frame *fr_forw;

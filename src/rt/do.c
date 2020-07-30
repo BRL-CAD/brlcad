@@ -1267,7 +1267,7 @@ res_pr(void)
 /**
  * Command table for RT control script language
  */
-struct command_tab rt_cmdtab[] = {
+struct command_tab rt_do_tab[] = {
     {"start", "frame number", "start a new frame",
      cm_start,	2, 2},
     {"viewsize", "size in mm", "set view size",
