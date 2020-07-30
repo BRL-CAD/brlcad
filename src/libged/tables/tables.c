@@ -53,31 +53,34 @@ static int idfd = 0;
 static int rd_idfd = 0;
 
 
-/* TODO - this approach to tables_sol_number assignment is pretty ugly, and
- * arguably even wrong in that it is hiding an exact floating point comparison
- * of matrices behind the (char *) case of the identt structure.
+/* TODO - this approach to tables_sol_number assignment is pretty
+ * ugly, and arguably even wrong in that it is hiding an exact
+ * floating point comparison of matrices behind the (char *) case of
+ * the identt structure.
  *
  * That said, this logic is doing something interesting in that it is
- * attempting to move the definition of a unique solid beyond just the object
- * to the object instance - e.g. it incorporates the matrix in the parent comb
- * in its uniqueness test.
+ * attempting to move the definition of a unique solid beyond just the
+ * object to the object instance - e.g. it incorporates the matrix in
+ * the parent comb in its uniqueness test.
  *
- * Need to think about what it actually means to be a unique instance in the
- * database and do something more intelligent.  For example, if we have two
- * paths:
+ * Need to think about what it actually means to be a unique instance
+ * in the database and do something more intelligent.  For example, if
+ * we have two paths:
  *
  * a/b/c.s  and  d/e/c.s
  *
- * do they describe the same instance in space if their matrices are all identity
- * and their booleans all unions?  Their path structure is different, but the
- * volume in space they are denoting as occupied is not.
+ * do they describe the same instance in space if their matrices are
+ * all identity and their booleans all unions?  Their path structure
+ * is different, but the volume in space they are denoting as occupied
+ * is not.
  *
- * One possible approach to this would be to enhance full path data structures
- * to incorporate matrix awareness, define an API to compare two such paths
- * including a check for solid uniqueness (e.g. return same if the two paths
- * define the same solid, even if the paths themselves differ), and then
- * construct the set of paths for the tables input object trees and use that
- * set to test for the uniqueness of a given path.
+ * One possible approach to this would be to enhance full path data
+ * structures to incorporate matrix awareness, define an API to
+ * compare two such paths including a check for solid uniqueness
+ * (e.g. return same if the two paths define the same solid, even if
+ * the paths themselves differ), and then construct the set of paths
+ * for the tables input object trees and use that set to test for the
+ * uniqueness of a given path.
  */
 
 
@@ -88,16 +91,22 @@ struct identt {
     mat_t i_mat;
 };
 
+
 HIDDEN int
 tables_check(char *a, char *b)
 {
 
     int c= sizeof(struct identt);
 
-    while (c--) if (*a++ != *b++) return 0;	/* no match */
+    while (c--) {
+	if (*a++ != *b++) {
+	    return 0;	/* no match */
+	}
+    }
     return 1;	/* match */
 
 }
+
 
 HIDDEN size_t
 tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
@@ -138,12 +147,14 @@ tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
     return idbuf1.i_index;
 }
 
+
 /* Build up sortable entities */
 
 struct tree_obj {
     struct bu_vls *tree;
     struct bu_vls *describe;
 };
+
 
 struct table_obj {
     int numreg;
@@ -155,15 +166,21 @@ struct table_obj {
     struct bu_ptbl *tree_objs;
 };
 
+
 static int
 sort_table_objs(const void *a, const void *b, void *UNUSED(arg))
 {
     struct table_obj *ao = *(struct table_obj **)a;
     struct table_obj *bo = *(struct table_obj **)b;
-    if (ao->region_id > bo->region_id) return 1;
-    if (ao->region_id < bo->region_id) return -1;
-    if (ao->numreg > bo->numreg) return 1;
-    if (ao->numreg < bo->numreg) return -1;
+
+    if (ao->region_id > bo->region_id)
+	return 1;
+    if (ao->region_id < bo->region_id)
+	return -1;
+    if (ao->numreg > bo->numreg)
+	return 1;
+    if (ao->numreg < bo->numreg)
+	return -1;
     return 0;
 }
 
@@ -176,7 +193,7 @@ tables_objs_print(struct bu_vls *tabvls, struct bu_ptbl *tabptr, int type)
     for (i = 0; i < BU_PTBL_LEN(tabptr); i++) {
 	o = (struct table_obj *)BU_PTBL_GET(tabptr, i);
 	bu_vls_printf(tabvls, " %-4d %4d %4d %4d %4d  ",
-		o->numreg, o->region_id, o->aircode, o->GIFTmater, o->los);
+		      o->numreg, o->region_id, o->aircode, o->GIFTmater, o->los);
 
 	bu_vls_printf(tabvls, "%s", bu_vls_addr(o->path));
 	if (type != ID_TABLE) {
@@ -362,11 +379,14 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 	    struct directory *nextdp;
 	    mat_t new_mat;
 
-	    /* For the 'idents' command skip over non-union combinations above the region level,
-	     * these members of a combination don't add positively to the defined regions of space
-	     * and their region ID's will not show up along a shotline unless positively added
-	     * elsewhere in the hierarchy. This is causing headaches for users generating an
-	     * association table from our 'idents' listing.
+	    /* For the 'idents' command skip over non-union
+	     * combinations above the region level, these members of a
+	     * combination don't add positively to the defined regions
+	     * of space and their region ID's will not show up along a
+	     * shotline unless positively added elsewhere in the
+	     * hierarchy. This is causing headaches for users
+	     * generating an association table from our 'idents'
+	     * listing.
 	     */
 	    if (flag == ID_TABLE) {
 		switch (tree_list[i].tl_op) {
@@ -408,6 +428,7 @@ out:
     return;
 }
 
+
 HIDDEN void
 tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *gedp, char *timep)
 {
@@ -438,6 +459,7 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
     }
     bu_vls_printf(tabvls, "\n\n");
 }
+
 
 int
 ged_tables_core(struct ged *gedp, int argc, const char *argv[])
