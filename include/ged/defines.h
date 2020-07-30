@@ -193,6 +193,7 @@ struct ged_results;
 struct ged {
     struct bu_list		l;
     struct rt_wdb		*ged_wdbp;
+    void                        *u_data; /**< @brief User data associated with this ged instance */
 
     /** for catching log messages */
     struct bu_vls		*ged_log;
@@ -217,6 +218,9 @@ struct ged {
     struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
+
+
+
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
