@@ -107,6 +107,7 @@ to_more_args_func(struct ged *gedp,
     char **av;
     struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
     ac = argc;
     total_ac = ac + 1;
@@ -125,10 +126,10 @@ to_more_args_func(struct ged *gedp,
 	const char **avmp;
 	const char **av_more = NULL;
 
-	if (0 < bu_vls_strlen(&current_top->to_gop->go_more_args_callback)) {
+	if (0 < bu_vls_strlen(&tgd->go_more_args_callback)) {
 	    bu_vls_trunc(&callback_cmd, 0);
 	    bu_vls_printf(&callback_cmd, "%s [string range {%s} 0 end]",
-			  bu_vls_addr(&current_top->to_gop->go_more_args_callback),
+			  bu_vls_addr(&tgd->go_more_args_callback),
 			  bu_vls_addr(gedp->ged_result_str));
 
 	    if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd)) != TCL_OK) {

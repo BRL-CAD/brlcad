@@ -1105,6 +1105,7 @@ to_deleteProc(ClientData clientData)
 	if (top->to_gop->go_gedp->u_data) {
 	    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gop->go_gedp;
 	    bu_vls_free(&tgd->go_rt_end_callback);
+	    bu_vls_free(&tgd->go_more_args_callback);
 	    BU_PUT(tgd, struct tclcad_ged_data);
 	    top->to_gop->go_gedp->u_data = NULL;
 	}
@@ -1301,12 +1302,12 @@ Usage: go_open\n\
     struct tclcad_ged_data *tgd;
     BU_GET(tgd, struct tclcad_ged_data);
     bu_vls_init(&tgd->go_rt_end_callback);
+    bu_vls_init(&tgd->go_more_args_callback);
     tgd->gdv_gop = top->to_gop;
     gedp->u_data = (void *)tgd;
 
     bu_vls_init(&top->to_gop->go_name);
     bu_vls_strcpy(&top->to_gop->go_name, argv[1]);
-    bu_vls_init(&top->to_gop->go_more_args_callback);
     top->to_gop->go_refresh_on = 1;
     top->to_gop->go_edited_paths = bu_hash_create(0);
 
@@ -3969,21 +3970,22 @@ to_more_args_callback(struct ged *gedp,
 		      int UNUSED(maxargs))
 {
     register int i;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the callback string */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_more_args_callback));
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tgd->go_more_args_callback));
 
 	return GED_OK;
     }
 
     /* set the callback string */
-    bu_vls_trunc(&current_top->to_gop->go_more_args_callback, 0);
+    bu_vls_trunc(&tgd->go_more_args_callback, 0);
     for (i = 1; i < argc; ++i)
-	bu_vls_printf(&current_top->to_gop->go_more_args_callback, "%s ", argv[i]);
+	bu_vls_printf(&tgd->go_more_args_callback, "%s ", argv[i]);
 
     return GED_OK;
 }
