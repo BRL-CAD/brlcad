@@ -134,16 +134,23 @@ DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 
 struct tclcad_ged_data {
     struct ged_obj		*gdv_gop;
-    struct bu_vls	go_rt_end_callback;
     struct bu_vls	go_more_args_callback;
+
+    // These are view related, but appear to be intended as global across all
+    // views associated with the gedp - that is why they are here and not in
+    // tclcad_view_data.
+    struct bu_hash_tbl	*go_edited_paths;
+    struct bu_vls	go_rt_end_callback;
+    int			go_dlist_on;
 
     // TODO - these really shouldn't be libtclcad specific... we don't want to
     // depend on Tcl for label primitives...
     struct bu_vls	*go_prim_label_list;
     int			go_prim_label_list_size;
-    struct bu_hash_tbl	*go_edited_paths;
 };
 
+// Data specific to an individual view rather than the geometry database
+// instance.
 struct tclcad_view_data {
     struct ged_obj	*gdv_gop;
     struct bu_vls	gdv_edit_motion_delta_callback;
@@ -155,7 +162,6 @@ struct ged_obj {
     struct ged		*go_gedp;
     struct bview	go_head_views;
     int			go_refresh_on;
-    int			go_dlist_on;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
 

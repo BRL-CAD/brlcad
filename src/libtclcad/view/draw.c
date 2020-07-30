@@ -92,7 +92,7 @@ go_draw_solid(struct bview *gdvp, struct solid *sp)
 	dm_loadmatrix(dmp, edit_model2view, 0);
     }
 
-    if (gop->go_dlist_on) {
+    if (tgd->go_dlist_on) {
 	dm_draw_dlist(dmp, sp->s_dlist);
     } else {
 	if (sp->s_iflag == UP)

@@ -3193,6 +3193,7 @@ to_dlist_on(struct ged *gedp,
 	    const char *UNUSED(usage),
 	    int UNUSED(maxargs))
 {
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
     int on;
 
     /* initialize result */
@@ -3205,7 +3206,7 @@ to_dlist_on(struct ged *gedp,
 
     /* Get dlist_on state */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", current_top->to_gop->go_dlist_on);
+	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dlist_on);
 	return GED_OK;
     }
 
@@ -3215,7 +3216,7 @@ to_dlist_on(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    current_top->to_gop->go_dlist_on = on;
+    tgd->go_dlist_on = on;
 
     return GED_OK;
 }
@@ -6555,9 +6556,10 @@ to_create_vlist_callback_solid(struct solid *sp)
 {
     struct bview *gdvp;
     register int first = 1;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
     for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
-	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
+	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 
@@ -6602,9 +6604,10 @@ HIDDEN void
 to_free_vlist_callback(unsigned int dlist, int range)
 {
     struct bview *gdvp;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
     for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
-	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
+	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 	    (void)dm_free_dlists((struct dm *)gdvp->dmp, dlist, range);
 	}
