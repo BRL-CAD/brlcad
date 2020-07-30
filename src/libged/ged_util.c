@@ -1018,9 +1018,9 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	wcolor[0] = (unsigned char)dgcdp->wireframe_color[0];
 	wcolor[1] = (unsigned char)dgcdp->wireframe_color[1];
 	wcolor[2] = (unsigned char)dgcdp->wireframe_color[2];
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, wcolor, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
+	dl_add_path(dashflag, vhead, pathp, tsp, wcolor, dgcdp);
     } else {
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, NULL, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
+	dl_add_path(dashflag, vhead, pathp, tsp, NULL, dgcdp);
     }
 }
 

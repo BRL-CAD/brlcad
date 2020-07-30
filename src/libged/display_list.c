@@ -668,10 +668,10 @@ solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 void
-dl_add_path(struct display_list *gdlp, int dashflag, fastf_t transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *sp), struct solid *freesolid)
+dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
 {
     struct solid *sp;
-    GET_SOLID(sp, &freesolid->l);
+    GET_SOLID(sp, &dgcdp->freesolid->l);
 
     solid_append_vlist(sp, (struct bn_vlist *)vhead);
 
@@ -691,22 +691,20 @@ dl_add_path(struct display_list *gdlp, int dashflag, fastf_t transparency, int d
     solid_set_color_info(sp, wireframe_color_override, tsp);
 
     sp->s_dlist = 0;
-    sp->s_transparency = transparency;
-    sp->s_dmode = dmode;
-    sp->s_hiddenLine = hiddenLine;
+    sp->s_transparency = dgcdp->transparency;
+    sp->s_dmode = dgcdp->dmode;
+    sp->s_hiddenLine = dgcdp->hiddenLine;
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
-    BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
+    BU_LIST_APPEND(dgcdp->gdlp->dl_headSolid.back, &sp->l);
     bu_semaphore_release(RT_SEM_MODEL);
 
-    if (callback != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL) {
-	(*callback)(sp);
+    if (dgcdp->gedp->ged_create_vlist_solid_callback != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL) {
+	(*dgcdp->gedp->ged_create_vlist_solid_callback)(sp);
     }
 
 }
-
-
 
 static fastf_t
 view_avg_size(struct bview *gvp)
