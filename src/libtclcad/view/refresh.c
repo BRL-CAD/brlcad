@@ -138,7 +138,12 @@ go_refresh(struct ged_obj *gop, struct bview *gdvp)
 void
 to_refresh_view(struct bview *gdvp)
 {
-    if (current_top == NULL || !current_top->to_gop->go_refresh_on)
+
+    if (current_top == NULL)
+	return;
+
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+    if (!tgd->go_refresh_on)
 	return;
 
     if (to_is_viewable(gdvp))
@@ -209,6 +214,7 @@ to_refresh_on(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     int on;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -220,7 +226,7 @@ to_refresh_on(struct ged *gedp,
 
     /* Get refresh_on state */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", current_top->to_gop->go_refresh_on);
+	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_refresh_on);
 	return GED_OK;
     }
 
@@ -230,7 +236,7 @@ to_refresh_on(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    current_top->to_gop->go_refresh_on = on;
+    tgd->go_refresh_on = on;
 
     return GED_OK;
 }

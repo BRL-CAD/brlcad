@@ -58,8 +58,10 @@ go_data_labels(Tcl_Interp *interp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     ret = to_data_labels_func(interp, gedp, gdvp, argc, argv);
     if (ret & GED_ERROR)

@@ -88,8 +88,10 @@ go_data_lines(Tcl_Interp *UNUSED(interp),
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
 
     struct bview *btmp = gedp->ged_gvp;

@@ -1022,8 +1022,10 @@ go_data_polygons(Tcl_Interp *interp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     ret = to_data_polygons_func(interp, gedp, gdvp, argc, argv);
     if (ret & GED_ERROR)
@@ -1103,8 +1105,10 @@ go_poly_circ_mode(Tcl_Interp *interp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_poly_circ_mode_func(interp, gedp, gdvp, argc, argv, usage);
 }
@@ -1376,8 +1380,10 @@ go_poly_cont_build(Tcl_Interp *interp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_poly_cont_build_func(interp, gedp, gdvp, argc, argv, usage, 0);
 }
@@ -1446,8 +1452,10 @@ go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_poly_cont_build_end_func(gdvp, argc, argv);
 }
@@ -1534,8 +1542,10 @@ go_poly_ell_mode(Tcl_Interp *interp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_poly_ell_mode_func(interp, gedp, gdvp, argc, argv, usage);
 }
@@ -1692,8 +1702,10 @@ go_poly_rect_mode(Tcl_Interp *interp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_poly_rect_mode_func(interp, gedp, gdvp, argc, argv, usage);
 }

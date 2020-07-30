@@ -1304,10 +1304,10 @@ Usage: go_open\n\
     bu_vls_init(&tgd->go_more_args_callback);
     tgd->go_edited_paths = bu_hash_create(0);
     tgd->gdv_gop = top->to_gop;
+    tgd->go_refresh_on = 1;
     gedp->u_data = (void *)tgd;
 
     bu_vls_strcpy(&top->to_gop->go_gedp->go_name, argv[1]);
-    top->to_gop->go_refresh_on = 1;
 
     BU_LIST_INIT(&top->to_gop->go_head_views.l);
 
@@ -1838,8 +1838,10 @@ go_data_move(Tcl_Interp *UNUSED(interp),
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_data_move_func(gedp, gdvp, argc, argv, usage);
 }
@@ -2245,8 +2247,10 @@ go_data_move_object_mode(Tcl_Interp *UNUSED(interp),
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_data_move_object_mode_func(gedp, gdvp, argc, argv, usage);
 }
@@ -2341,8 +2345,10 @@ go_data_move_point_mode(Tcl_Interp *UNUSED(interp),
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_data_move_point_mode_func(gedp, gdvp, argc, argv, usage);
 }
@@ -2436,8 +2442,10 @@ go_data_pick(struct ged *gedp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_data_pick_func(gedp, gdvp, argc, argv, usage);
 }

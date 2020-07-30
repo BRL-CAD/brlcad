@@ -142,6 +142,7 @@ struct tclcad_ged_data {
     struct bu_hash_tbl	*go_edited_paths;
     struct bu_vls	go_rt_end_callback;
     int			go_dlist_on;
+    int			go_refresh_on;
 
     // TODO - these really shouldn't be libtclcad specific... we don't want to
     // depend on Tcl for label primitives...
@@ -161,7 +162,6 @@ struct tclcad_view_data {
 struct ged_obj {
     struct ged		*go_gedp;
     struct bview	go_head_views;
-    int			go_refresh_on;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
 
