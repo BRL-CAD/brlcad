@@ -89,10 +89,7 @@ typedef void (*ged_refresh_callback_ptr)(void *);
 typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
 typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
 typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
-#define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
-#define GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL ((ged_create_vlist_solid_callback_ptr)0)
-#define GED_CREATE_VLIST_CALLBACK_PTR_NULL ((ged_create_vlist_callback_ptr)0)
-#define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
+struct ged_callback_state;
 
 /**
  * Definition of global parallel-processing semaphores.
@@ -244,28 +241,31 @@ struct ged {
 
 
     /* Callbacks */
+    struct ged_callback_state    *ged_cbs;
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
-
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     void			(*ged_create_vlist_solid_callback)(struct solid *);	/**< @brief  function to call after creating a vlist to create display list for solid */
     void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
-    void *ged_interp; /* Temporary - do not rely on when designing new functionality */
-    db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
-
     /* Handler functions for I/O communication with asynchronous subprocess commands */
     int io_mode;
     void (*ged_create_io_handler)(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
     void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+    int				ged_io_handler_callback_cnt;
 
     // Other callbacks...
-    // Tcl command strings: gdv_callback, gdv_edit_motion_delta_callback
-    // ged_obj: go_more_args_callback, go_rt_end_callback
+    // Tcl command strings - these are libtclcad level callbacks that execute user supplied Tcl commands if set:
+    // gdv_callback, gdv_edit_motion_delta_callback, go_more_args_callback, go_rt_end_callback
+    //
     // fbserv_obj: fbs_callback
-    // bview.h gv_callback
+    // bview.h gv_callback (only used by MGED?)
     // db_search_callback_t
+
+    void *ged_interp; /* Temporary - do not rely on when designing new functionality */
+    db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
+
 };
 
 /* accessor functions for ged_results - calling

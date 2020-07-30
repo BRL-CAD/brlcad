@@ -1360,7 +1360,7 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 
     /* handle (i.e., probably log to stderr) the resulting line */
     if (drcdp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
-	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
+	ged_output_handler_cb(drcdp->gedp, line);
     else
 	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
 }

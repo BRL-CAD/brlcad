@@ -82,6 +82,38 @@ __BEGIN_DECLS
 /* Default libged column width assumption */
 #define GED_TERMINAL_WIDTH 80
 
+
+
+/* Callback management related structures */
+#define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
+#define GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL ((ged_create_vlist_solid_callback_ptr)0)
+#define GED_CREATE_VLIST_CALLBACK_PTR_NULL ((ged_create_vlist_callback_ptr)0)
+#define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
+
+// Private bookkeeping structure used by callback handlers
+struct ged_callback_state {
+    int ged_refresh_handler_cnt;
+    int ged_output_handler_cnt;
+    int ged_create_vlist_solid_callback_cnt;
+    int ged_create_vlist_callback_cnt;
+    int ged_free_vlist_callback_cnt;
+    int ged_io_handler_callback_cnt;
+};
+
+/* These are wrapper functions, that should be called by libged code instead of
+ * the callback pointers supplied by the client (if any).  They will do the boilerplate
+ * bookkeeping and validation required by callbacks.
+ */
+GED_EXPORT extern void ged_refresh_cb(struct ged *);
+GED_EXPORT extern void ged_output_handler_cb(struct ged *, char *);
+GED_EXPORT extern void ged_create_vlist_solid_cb(struct ged *, struct solid *);
+GED_EXPORT extern void ged_create_vlist_cb(struct ged *, struct display_list *);
+GED_EXPORT extern void ged_free_vlist_cb(struct ged *, unsigned int, int);
+GED_EXPORT extern void ged_io_handler_cb(struct ged *, void *, int);
+
+
+
+
 struct _ged_funtab {
     char *ft_name;
     char *ft_parms;

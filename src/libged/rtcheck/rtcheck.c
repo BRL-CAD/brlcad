@@ -163,7 +163,7 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
 
     line[count] = '\0';
     if (rtcp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0) {
-	rtcp->gedp->ged_output_handler(rtcp->gedp, line);
+	ged_output_handler_cb(rtcp->gedp, line);
     }	else {
 	bu_vls_printf(rtcp->gedp->ged_result_str, "%s", line);
     }
