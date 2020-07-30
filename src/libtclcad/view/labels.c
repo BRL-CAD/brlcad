@@ -345,28 +345,29 @@ to_prim_label(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     register int i;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Free the previous list of primitives scheduled for labeling */
-    if (current_top->to_gop->go_prim_label_list_size) {
-	for (i = 0; i < current_top->to_gop->go_prim_label_list_size; ++i)
-	    bu_vls_free(&current_top->to_gop->go_prim_label_list[i]);
-	bu_free((void *)current_top->to_gop->go_prim_label_list, "prim_label");
-	current_top->to_gop->go_prim_label_list = (struct bu_vls *)0;
+    if (tgd->go_prim_label_list_size) {
+	for (i = 0; i < tgd->go_prim_label_list_size; ++i)
+	    bu_vls_free(&tgd->go_prim_label_list[i]);
+	bu_free((void *)tgd->go_prim_label_list, "prim_label");
+	tgd->go_prim_label_list = (struct bu_vls *)0;
     }
 
     /* Set the list of primitives scheduled for labeling */
-    current_top->to_gop->go_prim_label_list_size = argc - 1;
-    if (current_top->to_gop->go_prim_label_list_size < 1)
+    tgd->go_prim_label_list_size = argc - 1;
+    if (tgd->go_prim_label_list_size < 1)
 	return GED_OK;
 
-    current_top->to_gop->go_prim_label_list = (struct bu_vls *)bu_calloc(current_top->to_gop->go_prim_label_list_size,
+    tgd->go_prim_label_list = (struct bu_vls *)bu_calloc(tgd->go_prim_label_list_size,
 									 sizeof(struct bu_vls), "prim_label");
-    for (i = 0; i < current_top->to_gop->go_prim_label_list_size; ++i) {
-	bu_vls_init(&current_top->to_gop->go_prim_label_list[i]);
-	bu_vls_printf(&current_top->to_gop->go_prim_label_list[i], "%s", argv[i+1]);
+    for (i = 0; i < tgd->go_prim_label_list_size; ++i) {
+	bu_vls_init(&tgd->go_prim_label_list[i]);
+	bu_vls_printf(&tgd->go_prim_label_list[i], "%s", argv[i+1]);
     }
 
     return GED_OK;

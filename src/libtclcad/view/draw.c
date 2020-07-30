@@ -276,6 +276,8 @@ go_dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
 void
 go_draw_other(struct ged_obj *gop, struct bview *gdvp)
 {
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)gop->go_gedp->u_data;
+
     int width = dm_get_width((struct dm *)gdvp->dmp);
     fastf_t sf = (fastf_t)(gdvp->gv_size) / (fastf_t)width;
 
@@ -321,10 +323,10 @@ go_draw_other(struct ged_obj *gop, struct bview *gdvp)
     if (gdvp->gv_prim_labels.gos_draw) {
 	register int i;
 
-	for (i = 0; i < gop->go_prim_label_list_size; ++i) {
+	for (i = 0; i < tgd->go_prim_label_list_size; ++i) {
 	    dm_draw_labels((struct dm *)gdvp->dmp,
 			   gop->go_gedp->ged_wdbp,
-			   bu_vls_addr(&gop->go_prim_label_list[i]),
+			   bu_vls_addr(&tgd->go_prim_label_list[i]),
 			   gdvp->gv_model2view,
 			   gdvp->gv_prim_labels.gos_text_color,
 			   NULL, NULL);

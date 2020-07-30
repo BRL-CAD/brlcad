@@ -136,6 +136,11 @@ struct tclcad_ged_data {
     struct ged_obj		*gdv_gop;
     struct bu_vls	go_rt_end_callback;
     struct bu_vls	go_more_args_callback;
+
+    // TODO - these really shouldn't be libtclcad specific... we don't want to
+    // depend on Tcl for label primitives...
+    struct bu_vls	*go_prim_label_list;
+    int			go_prim_label_list_size;
 };
 
 struct tclcad_view_data {
@@ -148,9 +153,6 @@ struct tclcad_view_data {
 struct ged_obj {
     struct ged		*go_gedp;
     struct bview	go_head_views;
-    //struct bu_vls	go_name;
-    struct bu_vls	*go_prim_label_list;
-    int			go_prim_label_list_size;
     int			go_refresh_on;
     int			go_dlist_on;
     Tcl_Interp		*interp;
