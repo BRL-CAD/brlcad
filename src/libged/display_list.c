@@ -34,6 +34,7 @@
 #include "bn/plot3.h"
 
 #include "rt/solid.h"
+#include "ged.h"
 #include "./ged_private.h"
 
 /* defined in draw_calc.cpp */
@@ -700,9 +701,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     BU_LIST_APPEND(dgcdp->gdlp->dl_headSolid.back, &sp->l);
     bu_semaphore_release(RT_SEM_MODEL);
 
-    if (dgcdp->gedp->ged_create_vlist_solid_callback != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL) {
-	(*dgcdp->gedp->ged_create_vlist_solid_callback)(sp);
-    }
+    ged_create_vlist_solid_cb(dgcdp->gedp, sp);
 
 }
 
@@ -1122,11 +1121,12 @@ solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
     sp->s_vlen = bn_vlist_cmd_cnt((struct bn_vlist *)(&(sp->s_vlist)));
 }
 
-int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
-       	void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int),
-       	char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode,
-       	struct solid *freesolid, int csoltab)
+int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy,
+       	fastf_t transparency, int dmode, int csoltab)
 {
+    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct solid *freesolid = gedp->freesolid;
     struct directory *dp;
     struct solid *sp;
     struct display_list *gdlp;
@@ -1145,7 +1145,7 @@ int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
 	 * Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	dl_erasePathFromDisplay(hdlp, dbip, callback_free, name, 0, freesolid);
+	dl_erasePathFromDisplay(hdlp, dbip, gedp->ged_free_vlist_callback, name, 0, freesolid);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
@@ -1189,8 +1189,7 @@ int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
     if (csoltab)
 	color_soltab(sp);
 
-    if (callback_create != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL)
-	(*callback_create)(sp);
+    ged_create_vlist_solid_cb(gedp, sp);
 
     return 0;           /* OK */
 

@@ -72,7 +72,7 @@ GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
 					       struct solid *freesolid);
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
 
-GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid, int csoltab);
+GED_EXPORT extern int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, int csoltab);
 
 /* defined in ged.c */
 GED_EXPORT extern void ged_view_init(struct bview *gvp);
