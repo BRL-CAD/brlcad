@@ -156,7 +156,6 @@ struct ged_obj {
     struct bview	go_head_views;
     int			go_refresh_on;
     int			go_dlist_on;
-    Tcl_Interp		*interp;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
 
