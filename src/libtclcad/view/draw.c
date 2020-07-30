@@ -72,6 +72,7 @@ go_draw_solid(struct bview *gdvp, struct solid *sp)
 {
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     struct ged_obj *gop = tvd->gdv_gop;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)gop->go_gedp->u_data;
     struct dm *dmp = (struct dm *)gdvp->dmp;
     struct bu_hash_entry *entry;
     struct path_edit_params *params = NULL;
@@ -80,7 +81,7 @@ go_draw_solid(struct bview *gdvp, struct solid *sp)
 
     data.s_fpath = &sp->s_fullpath;
     data.dbip = gop->go_gedp->ged_wdbp->dbip;
-    entry = key_matches_paths(gop->go_edited_paths, &data);
+    entry = key_matches_paths(tgd->go_edited_paths, &data);
 
     if (entry != NULL) {
 	params = (struct path_edit_params *)bu_hash_value(entry, NULL);

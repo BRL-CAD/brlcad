@@ -1093,6 +1093,7 @@ void
 to_deleteProc(ClientData clientData)
 {
     struct tclcad_obj *top = (struct tclcad_obj *)clientData;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gop->go_gedp;
     struct bview *gdvp;
 
     if (current_top == top)
@@ -1102,7 +1103,6 @@ to_deleteProc(ClientData clientData)
     ged_close(top->to_gop->go_gedp);
     if (top->to_gop->go_gedp) {
 	if (top->to_gop->go_gedp->u_data) {
-	    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gop->go_gedp;
 	    bu_vls_free(&tgd->go_rt_end_callback);
 	    bu_vls_free(&tgd->go_more_args_callback);
 	    BU_PUT(tgd, struct tclcad_ged_data);
@@ -1111,8 +1111,8 @@ to_deleteProc(ClientData clientData)
 	BU_PUT(top->to_gop->go_gedp, struct ged);
     }
 
-    free_path_edit_params(top->to_gop->go_edited_paths);
-    bu_hash_destroy(top->to_gop->go_edited_paths);
+    free_path_edit_params(tgd->go_edited_paths);
+    bu_hash_destroy(tgd->go_edited_paths);
 
     while (BU_LIST_WHILE(gdvp, bview, &top->to_gop->go_head_views.l)) {
 	/* This removes the view related command and results in a call
@@ -1302,12 +1302,12 @@ Usage: go_open\n\
     BU_GET(tgd, struct tclcad_ged_data);
     bu_vls_init(&tgd->go_rt_end_callback);
     bu_vls_init(&tgd->go_more_args_callback);
+    tgd->go_edited_paths = bu_hash_create(0);
     tgd->gdv_gop = top->to_gop;
     gedp->u_data = (void *)tgd;
 
     bu_vls_strcpy(&top->to_gop->go_gedp->go_name, argv[1]);
     top->to_gop->go_refresh_on = 1;
-    top->to_gop->go_edited_paths = bu_hash_create(0);
 
     BU_LIST_INIT(&top->to_gop->go_head_views.l);
 
@@ -3647,6 +3647,7 @@ to_idle_mode(struct ged *gedp,
     struct bview *gdvp;
     int mode, need_refresh = 0;
     struct redraw_edited_path_data data;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3724,11 +3725,11 @@ to_idle_mode(struct ged *gedp,
     data.gdvp = gdvp;
     data.need_refresh = &need_refresh;
 
-    redraw_edited_paths(current_top->to_gop->go_edited_paths, &data);
+    redraw_edited_paths(tgd->go_edited_paths, &data);
 
-    free_path_edit_params(current_top->to_gop->go_edited_paths);
-    bu_hash_destroy(current_top->to_gop->go_edited_paths);
-    current_top->to_gop->go_edited_paths = bu_hash_create(0);
+    free_path_edit_params(tgd->go_edited_paths);
+    bu_hash_destroy(tgd->go_edited_paths);
+    tgd->go_edited_paths = bu_hash_create(0);
     Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {

@@ -2079,10 +2079,11 @@ to_mouse_otranslate(struct ged *gedp,
     gedp->ged_gvp = gdvp;
 
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
     if (0 < bu_vls_strlen(&tvd->gdv_edit_motion_delta_callback)) {
 	const char *path_string = argv[2];
 	vect_t dvec;
-	struct path_edit_params *params = (struct path_edit_params *)bu_hash_get(current_top->to_gop->go_edited_paths,
+	struct path_edit_params *params = (struct path_edit_params *)bu_hash_get(tgd->go_edited_paths,
 										 (uint8_t *)path_string,
 										 sizeof(char) * strlen(path_string) + 1);
 
@@ -2090,7 +2091,7 @@ to_mouse_otranslate(struct ged *gedp,
 	    BU_GET(params, struct path_edit_params);
 	    params->edit_mode = gdvp->gv_mode;
 	    params->dx = params->dy = 0.0;
-	    (void)bu_hash_set(current_top->to_gop->go_edited_paths,
+	    (void)bu_hash_set(tgd->go_edited_paths,
 			      (uint8_t *)path_string,
 			      sizeof(char) * strlen(path_string) + 1, (void *)params);
 	}

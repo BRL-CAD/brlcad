@@ -141,13 +141,14 @@ struct tclcad_ged_data {
     // depend on Tcl for label primitives...
     struct bu_vls	*go_prim_label_list;
     int			go_prim_label_list_size;
+    struct bu_hash_tbl	*go_edited_paths;
 };
 
 struct tclcad_view_data {
-    struct ged_obj		*gdv_gop;
-    struct bu_vls		gdv_edit_motion_delta_callback;
-    struct bu_vls		gdv_callback;
-    struct fbserv_obj		gdv_fbs;
+    struct ged_obj	*gdv_gop;
+    struct bu_vls	gdv_edit_motion_delta_callback;
+    struct bu_vls	gdv_callback;
+    struct fbserv_obj	gdv_fbs;
 };
 
 struct ged_obj {
@@ -156,7 +157,6 @@ struct ged_obj {
     int			go_refresh_on;
     int			go_dlist_on;
     Tcl_Interp		*interp;
-    struct bu_hash_tbl	*go_edited_paths;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
 
