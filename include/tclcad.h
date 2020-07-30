@@ -132,11 +132,16 @@ struct fbserv_obj {
 DM_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
 DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 
+struct tclcad_ged_data {
+    struct ged_obj		*gdv_gop;
+    struct bu_vls	go_rt_end_callback;
+};
+
 struct tclcad_view_data {
+    struct ged_obj		*gdv_gop;
     struct bu_vls		gdv_edit_motion_delta_callback;
     struct bu_vls		gdv_callback;
     struct fbserv_obj		gdv_fbs;
-    struct ged_obj		*gdv_gop;
 };
 
 struct ged_obj {
@@ -144,7 +149,6 @@ struct ged_obj {
     struct bview	go_head_views;
     struct bu_vls	go_name;
     struct bu_vls	go_more_args_callback;
-    struct bu_vls	go_rt_end_callback;
     struct bu_vls	*go_prim_label_list;
     int			go_prim_label_list_size;
     int			go_refresh_on;

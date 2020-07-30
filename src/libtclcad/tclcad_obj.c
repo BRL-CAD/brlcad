@@ -1101,8 +1101,15 @@ to_deleteProc(ClientData clientData)
     BU_LIST_DEQUEUE(&top->l);
     bu_vls_free(&top->to_gop->go_name);
     ged_close(top->to_gop->go_gedp);
-    if (top->to_gop->go_gedp)
+    if (top->to_gop->go_gedp) {
+	if (top->to_gop->go_gedp->u_data) {
+	    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gop->go_gedp;
+	    bu_vls_free(&tgd->go_rt_end_callback);
+	    BU_PUT(tgd, struct tclcad_ged_data);
+	    top->to_gop->go_gedp->u_data = NULL;
+	}
 	BU_PUT(top->to_gop->go_gedp, struct ged);
+    }
 
     free_path_edit_params(top->to_gop->go_edited_paths);
     bu_hash_destroy(top->to_gop->go_edited_paths);
@@ -1290,10 +1297,16 @@ Usage: go_open\n\
     BU_ASSERT(gedp->ged_gdp != NULL);
     top->to_gop->go_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
 
+    // Initialize libtclcad GED data container
+    struct tclcad_ged_data *tgd;
+    BU_GET(tgd, struct tclcad_ged_data);
+    bu_vls_init(&tgd->go_rt_end_callback);
+    tgd->gdv_gop = top->to_gop;
+    gedp->u_data = (void *)tgd;
+
     bu_vls_init(&top->to_gop->go_name);
     bu_vls_strcpy(&top->to_gop->go_name, argv[1]);
     bu_vls_init(&top->to_gop->go_more_args_callback);
-    bu_vls_init(&top->to_gop->go_rt_end_callback);
     top->to_gop->go_refresh_on = 1;
     top->to_gop->go_edited_paths = bu_hash_create(0);
 
@@ -5284,21 +5297,22 @@ to_rt_end_callback(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     register int i;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the callback string */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_rt_end_callback));
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tgd->go_rt_end_callback));
 
 	return GED_OK;
     }
 
     /* set the callback string */
-    bu_vls_trunc(&current_top->to_gop->go_rt_end_callback, 0);
+    bu_vls_trunc(&tgd->go_rt_end_callback, 0);
     for (i = 1; i < argc; ++i)
-	bu_vls_printf(&current_top->to_gop->go_rt_end_callback, "%s ", argv[i]);
+	bu_vls_printf(&tgd->go_rt_end_callback, "%s ", argv[i]);
 
     return GED_OK;
 }
@@ -6599,12 +6613,12 @@ to_free_vlist_callback(unsigned int dlist, int range)
 HIDDEN void
 to_rt_end_callback_internal(int aborted)
 {
-    if (0 < bu_vls_strlen(&current_top->to_gop->go_rt_end_callback)) {
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+    if (0 < bu_vls_strlen(&tgd->go_rt_end_callback)) {
 	struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&callback_cmd, "%s %d",
-		      bu_vls_addr(&current_top->to_gop->go_rt_end_callback),
-		      aborted);
+		      bu_vls_addr(&tgd->go_rt_end_callback), aborted);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd));
     }
 }
