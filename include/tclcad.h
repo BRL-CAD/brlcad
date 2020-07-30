@@ -135,12 +135,14 @@ DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 struct tclcad_ged_data {
     struct ged		*gedp;
     struct bu_vls	go_more_args_callback;
+    int			go_more_args_callback_cnt;
 
     // These are view related, but appear to be intended as global across all
     // views associated with the gedp - that is why they are here and not in
     // tclcad_view_data.
     struct bu_hash_tbl	*go_edited_paths;
     struct bu_vls	go_rt_end_callback;
+    int                 go_rt_end_callback_cnt;
     int			go_dlist_on;
     int			go_refresh_on;
 
@@ -155,7 +157,9 @@ struct tclcad_ged_data {
 struct tclcad_view_data {
     struct ged		*gedp;
     struct bu_vls	gdv_edit_motion_delta_callback;
+    int                 gdv_edit_motion_delta_callback_cnt;
     struct bu_vls	gdv_callback;
+    int			gdv_callback_cnt;
     struct fbserv_obj	gdv_fbs;
 };
 

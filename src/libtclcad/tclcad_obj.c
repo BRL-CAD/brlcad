@@ -1319,7 +1319,9 @@ Usage: go_open\n\
     struct tclcad_ged_data *tgd;
     BU_GET(tgd, struct tclcad_ged_data);
     bu_vls_init(&tgd->go_rt_end_callback);
+    tgd->go_rt_end_callback_cnt = 0;
     bu_vls_init(&tgd->go_more_args_callback);
+    tgd->go_more_args_callback_cnt = 0;
     tgd->go_edited_paths = bu_hash_create(0);
     tgd->gedp = top->to_gedp;
     tgd->go_refresh_on = 1;
@@ -3597,8 +3599,13 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 			  bu_vls_addr(&tvd->gdv_edit_motion_delta_callback),
 			  bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
 			  bu_vls_addr(&tran_z_vls));
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	    tvd->gdv_edit_motion_delta_callback_cnt++;
+	    if (tvd->gdv_edit_motion_delta_callback_cnt > 1) {
+		bu_log("Warning - recursive gdv_edit_motion_delta_callback call\n");
+	    }
 
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	    tvd->gdv_edit_motion_delta_callback_cnt++;
 	    bu_vls_free(&tcl_cmd);
 	    bu_vls_free(&tran_x_vls);
 	    bu_vls_free(&tran_y_vls);
@@ -3714,7 +3721,12 @@ to_idle_mode(struct ged *gedp,
 
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    tvd->gdv_callback_cnt++;
+	    if (tvd->gdv_callback_cnt > 1) {
+		bu_log("Warning - recursive gvd_callback call\n");
+	    }
 	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback), 0, NULL);
+	    tvd->gdv_callback_cnt--;
 	}
 
 	need_refresh = 1;
@@ -4576,7 +4588,9 @@ to_new_view(struct ged *gedp,
     struct tclcad_view_data *tvd;
     BU_GET(tvd, struct tclcad_view_data);
     bu_vls_init(&tvd->gdv_edit_motion_delta_callback);
+    tvd->gdv_edit_motion_delta_callback_cnt = 0;
     bu_vls_init(&tvd->gdv_callback);
+    tvd->gdv_callback_cnt = 0;
     tvd->gedp = current_top->to_gedp;
     new_gdvp->u_data = (void *)tvd;
 
@@ -6420,7 +6434,12 @@ to_vslew(struct ged *gedp,
 
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    tvd->gdv_callback_cnt++;
+	    if (tvd->gdv_callback_cnt > 1) {
+		bu_log("Warning - recursive gvd_callback call\n");
+	    }
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
+	    tvd->gdv_callback_cnt--;
 	}
 
 	to_refresh_view(gdvp);
@@ -6620,10 +6639,14 @@ to_rt_end_callback_internal(int aborted)
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
     if (0 < bu_vls_strlen(&tgd->go_rt_end_callback)) {
 	struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
-
+	tgd->go_rt_end_callback_cnt++;
+	if (tgd->go_rt_end_callback_cnt > 1) {
+	    bu_log("Warning - recursive go_rt_end_callback call\n");
+	}
 	bu_vls_printf(&callback_cmd, "%s %d",
 		      bu_vls_addr(&tgd->go_rt_end_callback), aborted);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd));
+	tgd->go_rt_end_callback_cnt--;
     }
 }
 
