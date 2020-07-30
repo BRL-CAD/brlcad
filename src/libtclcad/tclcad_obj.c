@@ -1084,7 +1084,6 @@ free_path_edit_params(struct bu_hash_tbl *t)
     }
 }
 
-
 /**
  * @brief
  * Called by Tcl when the object is destroyed.
@@ -1093,32 +1092,54 @@ void
 to_deleteProc(ClientData clientData)
 {
     struct tclcad_obj *top = (struct tclcad_obj *)clientData;
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gop->go_gedp;
-    struct bview *gdvp;
+    BU_LIST_DEQUEUE(&top->l);
 
     if (current_top == top)
 	current_top = TCLCAD_OBJ_NULL;
 
-    BU_LIST_DEQUEUE(&top->l);
-    ged_close(top->to_gop->go_gedp);
     if (top->to_gop->go_gedp) {
+
+	// Clean up the libtclcad view data.
+	struct bview *gdvp = NULL;
+	for (BU_LIST_FOR(gdvp, bview, &top->to_gop->go_gedp->go_head_views.l)) {
+
+	    // There is a top level command created in the Tcl interp that is the name
+	    // of the dm.  Clear that command.
+	    const char *dm_tcl_cmd = bu_vls_cstr(dm_get_pathname((struct dm *)gdvp->dmp));
+	    Tcl_DeleteCommand(top->to_interp, dm_tcl_cmd);
+
+	    // Close the dm.  This is not done by libged because libged only manages the
+	    // data bview knows about.  From bview's perspective, dmp is just a pointer
+	    // to an opaque data structure it knows nothing about.
+	    (void)dm_close((struct dm *)gdvp->dmp);
+
+	    // Delete libtclcad specific parts of data - ged_free (called by
+	    // ged_close) will handle freeing the primary bview list entries.
+	    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+	    if (tvd) {
+		bu_vls_free(&tvd->gdv_edit_motion_delta_callback);
+		bu_vls_free(&tvd->gdv_callback);
+		BU_PUT(tvd, struct tclcad_view_data);
+		gdvp->u_data = NULL;
+	    }
+
+	}
+
+	// Clean up the other libtclcad data
 	if (top->to_gop->go_gedp->u_data) {
+	    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gop->go_gedp->u_data;
 	    bu_vls_free(&tgd->go_rt_end_callback);
 	    bu_vls_free(&tgd->go_more_args_callback);
+	    free_path_edit_params(tgd->go_edited_paths);
+	    bu_hash_destroy(tgd->go_edited_paths);
 	    BU_PUT(tgd, struct tclcad_ged_data);
 	    top->to_gop->go_gedp->u_data = NULL;
 	}
+
+	// Got the libtclcad cleanup done, have libged do its up.
+	ged_close(top->to_gop->go_gedp);
+
 	BU_PUT(top->to_gop->go_gedp, struct ged);
-    }
-
-    free_path_edit_params(tgd->go_edited_paths);
-    bu_hash_destroy(tgd->go_edited_paths);
-
-    while (BU_LIST_WHILE(gdvp, bview, &top->to_gop->go_head_views.l)) {
-	/* This removes the view related command and results in a call
-	 * to to_deleteViewProc to release resources.
-	 */
-	Tcl_DeleteCommand(top->to_interp, bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
     }
 
     bu_free((void *)top, "struct ged_obj");
@@ -1309,8 +1330,6 @@ Usage: go_open\n\
 
     bu_vls_strcpy(&top->to_gop->go_gedp->go_name, argv[1]);
 
-    BU_LIST_INIT(&top->to_gop->go_head_views.l);
-
     /* append to list of tclcad_obj */
     BU_LIST_APPEND(&HeadTclcadObj.l, &top->l);
 
@@ -1362,12 +1381,12 @@ to_bg(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1437,12 +1456,12 @@ to_bounds(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1506,12 +1525,12 @@ to_configure(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1579,12 +1598,12 @@ to_constrain_rmode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1648,12 +1667,12 @@ to_constrain_tmode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1874,12 +1893,12 @@ to_data_move(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2280,12 +2299,12 @@ to_data_move_object_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2378,12 +2397,12 @@ to_data_move_point_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2475,12 +2494,12 @@ to_data_pick(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2877,12 +2896,12 @@ to_data_vZ(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2902,28 +2921,6 @@ to_data_vZ(struct ged *gedp,
     gdvp->gv_data_vZ = vZ;
 
     return GED_OK;
-}
-
-
-HIDDEN void
-to_deleteViewProc(ClientData clientData)
-{
-    struct bview *gdvp = (struct bview *)clientData;
-
-    BU_LIST_DEQUEUE(&(gdvp->l));
-    bu_vls_free(&gdvp->gv_name);
-
-
-    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
-    bu_vls_free(&tvd->gdv_edit_motion_delta_callback);
-    bu_vls_free(&tvd->gdv_callback);
-    BU_PUT(tvd, struct tclcad_view_data);
-
-    (void)dm_close((struct dm *)gdvp->dmp);
-    bu_ptbl_free(gdvp->callbacks);
-    BU_PUT(gdvp->callbacks, struct bu_ptbl);
-    to_close_fbs(gdvp);
-    bu_free((void *)gdvp, "bview");
 }
 
 
@@ -3255,12 +3252,12 @@ to_fontsize(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3418,12 +3415,12 @@ to_init_view_bindings(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3458,17 +3455,15 @@ to_delete_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
-
-    to_deleteViewProc(gdvp);
 
     return GED_OK;
 }
@@ -3532,12 +3527,12 @@ to_hide_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3672,12 +3667,12 @@ to_idle_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3777,12 +3772,12 @@ to_light(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3828,7 +3823,7 @@ to_list_views(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l))
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l))
 	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdvp->gv_name));
 
     return GED_OK;
@@ -3863,7 +3858,7 @@ to_lod(struct ged *gedp,
 {
     struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	gedp->ged_gvp = gdvp;
 	(*func)(gedp, argc, (const char **)argv);
     }
@@ -3941,12 +3936,12 @@ to_edit_motion_delta_callback(struct ged *gedp,
 	return GED_HELP;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4037,12 +4032,12 @@ to_move_arb_edge_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4100,12 +4095,12 @@ to_move_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4219,12 +4214,12 @@ to_bot_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -4283,12 +4278,12 @@ to_bot_move_pnts_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -4349,12 +4344,12 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4412,12 +4407,12 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4590,7 +4585,7 @@ to_new_view(struct ged *gedp,
 
     bu_vls_printf(&new_gdvp->gv_name, "%s", argv[name_index]);
     ged_view_init(new_gdvp);
-    BU_LIST_INSERT(&current_top->to_gop->go_head_views.l, &new_gdvp->l);
+    BU_LIST_INSERT(&current_top->to_gop->go_gedp->go_head_views.l, &new_gdvp->l);
 
     new_gdvp->gv_point_scale = 1.0;
     new_gdvp->gv_curve_scale = 1.0;
@@ -4623,7 +4618,7 @@ to_new_view(struct ged *gedp,
 				bu_vls_addr(dm_get_pathname((struct dm *)new_gdvp->dmp)),
 				(Tcl_CmdProc *)to_view_cmd,
 				(ClientData)new_gdvp,
-				to_deleteViewProc);
+				NULL);
     }
 
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gv_name));
@@ -4659,12 +4654,12 @@ to_orotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4721,12 +4716,12 @@ to_oscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4784,12 +4779,12 @@ to_otranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4841,12 +4836,12 @@ to_paint_rect_area(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4896,12 +4891,12 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4986,12 +4981,12 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5092,12 +5087,12 @@ to_rect_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5181,12 +5176,12 @@ to_rotate_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5245,12 +5240,12 @@ to_rotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5412,12 +5407,12 @@ to_protate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5475,12 +5470,12 @@ to_pscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5538,12 +5533,12 @@ to_ptranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5601,12 +5596,12 @@ to_data_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5662,12 +5657,12 @@ to_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5724,12 +5719,12 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5779,12 +5774,12 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5829,12 +5824,12 @@ to_set_coord(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5885,12 +5880,12 @@ to_snap_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6016,12 +6011,12 @@ to_translate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6074,12 +6069,12 @@ to_transparency(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6127,12 +6122,12 @@ to_view_callback(struct ged *gedp,
 	return GED_HELP;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6180,12 +6175,12 @@ to_view_win_size(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6250,12 +6245,12 @@ to_view2screen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6301,12 +6296,12 @@ to_vmake(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6379,12 +6374,12 @@ to_vslew(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6463,12 +6458,12 @@ to_zbuffer(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6523,12 +6518,12 @@ to_zclip(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6566,7 +6561,7 @@ to_create_vlist_callback_solid(struct solid *sp)
     register int first = 1;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
@@ -6614,7 +6609,7 @@ to_free_vlist_callback(unsigned int dlist, int range)
     struct bview *gdvp;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
 	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 	    (void)dm_free_dlists((struct dm *)gdvp->dmp, dlist, range);

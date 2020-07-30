@@ -156,6 +156,20 @@ ged_free(struct ged *gedp)
 
     bu_vls_free(&gedp->go_name);
 
+    // Note - it is the caller's responsibility to have freed any data
+    // associated with the ged or its views in the u_data pointers.
+    //
+    // Since libged does not link libdm, it's also the responsibility of the
+    // caller to close any display managers associated with the view.
+    struct bview *gdvp;
+    while (BU_LIST_WHILE(gdvp, bview, &gedp->go_head_views.l)) {
+	BU_LIST_DEQUEUE(&(gdvp->l));
+	bu_vls_free(&gdvp->gv_name);
+	bu_ptbl_free(gdvp->callbacks);
+	BU_PUT(gdvp->callbacks, struct bu_ptbl);
+	bu_free((void *)gdvp, "bview");
+    }
+
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 	if (gedp->ged_gdp->gd_headDisplay)
 	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
@@ -210,6 +224,9 @@ ged_init(struct ged *gedp)
 
     // TODO - rename to ged_name
     bu_vls_init(&gedp->go_name);
+
+    // TODO - rename to ged_views
+    BU_LIST_INIT(&gedp->go_head_views.l);
 
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);

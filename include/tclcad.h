@@ -161,7 +161,6 @@ struct tclcad_view_data {
 
 struct ged_obj {
     struct ged		*go_gedp;
-    struct bview	go_head_views;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
 
