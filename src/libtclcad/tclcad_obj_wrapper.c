@@ -67,7 +67,7 @@ to_autoview_func(struct ged *gedp,
     if (!rflag && ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
 	if (to_is_viewable(gdvp)) {
 	    gedp->ged_gvp->gv_x_samples = dm_get_width((struct dm *)gdvp->dmp);
 	    gedp->ged_gvp->gv_y_samples = dm_get_height((struct dm *)gdvp->dmp);
@@ -107,7 +107,7 @@ to_more_args_func(struct ged *gedp,
     char **av;
     struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     ac = argc;
     total_ac = ac + 1;
@@ -270,12 +270,12 @@ to_view_func_common(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -394,12 +394,12 @@ to_dm_func(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }

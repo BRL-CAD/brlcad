@@ -34,14 +34,14 @@
 #include "../view/view.h"
 
 void
-go_refresh_draw(struct ged_obj *gop, struct bview *gdvp, int restore_zbuffer)
+go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 {
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
 	if (gdvp->gv_rect.draw) {
 	    go_draw(gdvp);
 
-	    go_draw_other(gop, gdvp);
+	    go_draw_other(gedp, gdvp);
 
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
@@ -115,11 +115,11 @@ go_refresh_draw(struct ged_obj *gop, struct bview *gdvp, int restore_zbuffer)
 	go_draw(gdvp);
     }
 
-    go_draw_other(gop, gdvp);
+    go_draw_other(gedp, gdvp);
 }
 
 void
-go_refresh(struct ged_obj *gop, struct bview *gdvp)
+go_refresh(struct ged *gedp, struct bview *gdvp)
 {
     int restore_zbuffer = 0;
 
@@ -131,7 +131,7 @@ go_refresh(struct ged_obj *gop, struct bview *gdvp)
     }
 
     (void)dm_draw_begin((struct dm *)gdvp->dmp);
-    go_refresh_draw(gop, gdvp, restore_zbuffer);
+    go_refresh_draw(gedp, gdvp, restore_zbuffer);
     (void)dm_draw_end((struct dm *)gdvp->dmp);
 }
 
@@ -142,12 +142,12 @@ to_refresh_view(struct bview *gdvp)
     if (current_top == NULL)
 	return;
 
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
     if (!tgd->go_refresh_on)
 	return;
 
     if (to_is_viewable(gdvp))
-	go_refresh(current_top->to_gop, gdvp);
+	go_refresh(current_top->to_gedp, gdvp);
 }
 
 void
@@ -155,7 +155,7 @@ to_refresh_all_views(struct tclcad_obj *top)
 {
     struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, bview, &top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &top->to_gedp->go_head_views.l)) {
 	to_refresh_view(gdvp);
     }
 }
@@ -214,7 +214,7 @@ to_refresh_on(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     int on;
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -247,12 +247,12 @@ to_handle_refresh(struct ged *gedp,
 {
     struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), name))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", name);
 	return GED_ERROR;
     }

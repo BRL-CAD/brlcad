@@ -133,7 +133,7 @@ DM_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
 DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 
 struct tclcad_ged_data {
-    struct ged_obj		*gdv_gop;
+    struct ged		*gedp;
     struct bu_vls	go_more_args_callback;
 
     // These are view related, but appear to be intended as global across all
@@ -153,21 +153,15 @@ struct tclcad_ged_data {
 // Data specific to an individual view rather than the geometry database
 // instance.
 struct tclcad_view_data {
-    struct ged_obj	*gdv_gop;
+    struct ged		*gedp;
     struct bu_vls	gdv_edit_motion_delta_callback;
     struct bu_vls	gdv_callback;
     struct fbserv_obj	gdv_fbs;
 };
 
-struct ged_obj {
-    struct ged		*go_gedp;
-};
-#define GED_OBJ_NULL ((struct ged_obj *)0)
-
-
 struct tclcad_obj {
     struct bu_list	l;
-    struct ged_obj	*to_gop;
+    struct ged		*to_gedp;
     Tcl_Interp		*to_interp;
 };
 
@@ -353,12 +347,12 @@ TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *gedp,
 								    int argc,
 								    const char *argv[]);
-TCLCAD_EXPORT extern void go_refresh(struct ged_obj *gop,
+TCLCAD_EXPORT extern void go_refresh(struct ged *gedp,
 				     struct bview *gdvp);
-TCLCAD_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
+TCLCAD_EXPORT extern void go_refresh_draw(struct ged *gedp,
 					  struct bview *gdvp,
 					  int restore_zbuffer);
-TCLCAD_EXPORT extern int go_view_axes(struct ged_obj *gop,
+TCLCAD_EXPORT extern int go_view_axes(struct ged *gedp,
 				      struct bview *gdvp,
 				      int argc,
 				      const char *argv[],

@@ -467,7 +467,7 @@ go_data_axes(Tcl_Interp *interp,
 
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
-	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gop->go_gedp->u_data;
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 	tgd->go_refresh_on = 0;
     }
 
@@ -503,12 +503,12 @@ to_data_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -720,12 +720,12 @@ to_model_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -734,27 +734,27 @@ to_model_axes(struct ged *gedp,
 }
 
 int
-go_view_axes(struct ged_obj *gop,
+go_view_axes(struct ged *gedp,
 	     struct bview *gdvp,
 	     int argc,
 	     const char *argv[],
 	     const char *usage)
 {
     /* initialize result */
-    bu_vls_trunc(gop->go_gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gop->go_gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(gop->go_gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    return to_axes(gop->go_gedp, gdvp, &gdvp->gv_view_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_view_axes, argc, argv, usage);
 }
 
 
@@ -782,12 +782,12 @@ to_view_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }

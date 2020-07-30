@@ -71,8 +71,8 @@ static void
 go_draw_solid(struct bview *gdvp, struct solid *sp)
 {
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
-    struct ged_obj *gop = tvd->gdv_gop;
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)gop->go_gedp->u_data;
+    struct ged *gedp = tvd->gedp;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)gedp->u_data;
     struct dm *dmp = (struct dm *)gdvp->dmp;
     struct bu_hash_entry *entry;
     struct path_edit_params *params = NULL;
@@ -80,7 +80,7 @@ go_draw_solid(struct bview *gdvp, struct solid *sp)
     struct path_match_data data;
 
     data.s_fpath = &sp->s_fullpath;
-    data.dbip = gop->go_gedp->ged_wdbp->dbip;
+    data.dbip = gedp->ged_wdbp->dbip;
     entry = key_matches_paths(tgd->go_edited_paths, &data);
 
     if (entry != NULL) {
@@ -124,7 +124,7 @@ go_draw_dlist(struct bview *gdvp)
     int line_style = -1;
     struct dm *dmp = (struct dm *)gdvp->dmp;
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
-    struct bu_list *hdlp = tvd->gdv_gop->go_gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = tvd->gedp->ged_gdp->gd_headDisplay;
 
     if (dm_get_transparency(dmp)) {
 	/* First, draw opaque stuff */
@@ -275,9 +275,9 @@ go_dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
 }
 
 void
-go_draw_other(struct ged_obj *gop, struct bview *gdvp)
+go_draw_other(struct ged *gedp, struct bview *gdvp)
 {
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)gop->go_gedp->u_data;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)gedp->u_data;
 
     int width = dm_get_width((struct dm *)gdvp->dmp);
     fastf_t sf = (fastf_t)(gdvp->gv_size) / (fastf_t)width;
@@ -312,7 +312,7 @@ go_draw_other(struct ged_obj *gop, struct bview *gdvp)
 
     /* Restore to non-rotated, full brightness */
     (void)dm_normal((struct dm *)gdvp->dmp);
-    go_draw_faceplate(gop, gdvp);
+    go_draw_faceplate(gedp, gdvp);
 
     if (gdvp->gv_data_labels.gdls_draw)
 	go_dm_draw_labels((struct dm *)gdvp->dmp, &gdvp->gv_data_labels, gdvp->gv_model2view);
@@ -326,7 +326,7 @@ go_draw_other(struct ged_obj *gop, struct bview *gdvp)
 
 	for (i = 0; i < tgd->go_prim_label_list_size; ++i) {
 	    dm_draw_labels((struct dm *)gdvp->dmp,
-			   gop->go_gedp->ged_wdbp,
+			   gedp->ged_wdbp,
 			   bu_vls_addr(&tgd->go_prim_label_list[i]),
 			   gdvp->gv_model2view,
 			   gdvp->gv_prim_labels.gos_text_color,

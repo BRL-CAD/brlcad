@@ -56,12 +56,12 @@ to_faceplate(struct ged *gedp,
     if (argc < 4 || 7 < argc)
 	goto bad;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_gedp->go_head_views.l)) {
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -233,7 +233,7 @@ bad:
 
 
 void
-go_draw_faceplate(struct ged_obj *gop, struct bview *gdvp)
+go_draw_faceplate(struct ged *gedp, struct bview *gdvp)
 {
     /* Center dot */
     if (gdvp->gv_center_dot.gos_draw) {
@@ -251,7 +251,7 @@ go_draw_faceplate(struct ged_obj *gop, struct bview *gdvp)
 	point_t save_map;
 
 	VMOVE(save_map, gdvp->gv_model_axes.axes_pos);
-	VSCALE(map, gdvp->gv_model_axes.axes_pos, gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
+	VSCALE(map, gdvp->gv_model_axes.axes_pos, gedp->ged_wdbp->dbip->dbi_local2base);
 	MAT4X3PNT(gdvp->gv_model_axes.axes_pos, gdvp->gv_model2view, map);
 
 	dm_draw_axes((struct dm *)gdvp->dmp,
@@ -285,8 +285,8 @@ go_draw_faceplate(struct ged_obj *gop, struct bview *gdvp)
     /* View scale */
     if (gdvp->gv_view_scale.gos_draw)
 	dm_draw_scale((struct dm *)gdvp->dmp,
-		      gdvp->gv_size*gop->go_gedp->ged_wdbp->dbip->dbi_base2local,
-		      bu_units_string(1/gop->go_gedp->ged_wdbp->dbip->dbi_base2local),
+		      gdvp->gv_size*gedp->ged_wdbp->dbip->dbi_base2local,
+		      bu_units_string(1/gedp->ged_wdbp->dbip->dbi_base2local),
 		      gdvp->gv_view_scale.gos_line_color,
 		      gdvp->gv_view_params.gos_text_color);
 
@@ -297,12 +297,12 @@ go_draw_faceplate(struct ged_obj *gop, struct bview *gdvp)
 	char *ustr;
 
 	MAT_DELTAS_GET_NEG(center, gdvp->gv_center);
-	VSCALE(center, center, gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
 
-	ustr = (char *)bu_units_string(gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
+	ustr = (char *)bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
 	bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f",
 		      ustr,
-		      gdvp->gv_size * gop->go_gedp->ged_wdbp->dbip->dbi_base2local,
+		      gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local,
 		      V3ARGS(center),
 		      V3ARGS(gdvp->gv_aet));
 	(void)dm_set_fg((struct dm *)gdvp->dmp,
@@ -321,7 +321,7 @@ go_draw_faceplate(struct ged_obj *gop, struct bview *gdvp)
     /* Draw grid */
     if (gdvp->gv_grid.draw) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
-	dm_draw_grid((struct dm *)gdvp->dmp, &gdvp->gv_grid, gdvp->gv_scale, gdvp->gv_model2view, tvd->gdv_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+	dm_draw_grid((struct dm *)gdvp->dmp, &gdvp->gv_grid, gdvp->gv_scale, gdvp->gv_model2view, tvd->gedp->ged_wdbp->dbip->dbi_base2local);
     }
 
     /* Draw rect */

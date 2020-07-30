@@ -93,7 +93,7 @@ extern int to_view_axes(struct ged *gedp,
 
 /* Draw */
 extern void go_draw(struct bview *gdvp);
-extern void go_draw_other(struct ged_obj *gop, struct bview *gdvp);
+extern void go_draw_other(struct ged *gedp, struct bview *gdvp);
 extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 extern int to_redraw(struct ged *gedp,
 		     int argc,
@@ -109,7 +109,7 @@ extern int to_blast(struct ged *gedp,
 		    int maxargs);
 
 /* Faceplate */
-extern void go_draw_faceplate(struct ged_obj *gop, struct bview *gdvp);
+extern void go_draw_faceplate(struct ged *gedp, struct bview *gdvp);
 extern int to_faceplate(struct ged *gedp,
 			int argc,
 			const char *argv[],
