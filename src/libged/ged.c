@@ -154,6 +154,8 @@ ged_free(struct ged *gedp)
 
     gedp->ged_wdbp = RT_WDB_NULL;
 
+    bu_vls_free(&gedp->go_name);
+
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 	if (gedp->ged_gdp->gd_headDisplay)
 	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
@@ -205,6 +207,9 @@ ged_init(struct ged *gedp)
 
     BU_LIST_INIT(&gedp->l);
     gedp->ged_wdbp = RT_WDB_NULL;
+
+    // TODO - rename to ged_name
+    bu_vls_init(&gedp->go_name);
 
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);

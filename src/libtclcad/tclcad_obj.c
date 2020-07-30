@@ -1099,7 +1099,6 @@ to_deleteProc(ClientData clientData)
 	current_top = TCLCAD_OBJ_NULL;
 
     BU_LIST_DEQUEUE(&top->l);
-    bu_vls_free(&top->to_gop->go_name);
     ged_close(top->to_gop->go_gedp);
     if (top->to_gop->go_gedp) {
 	if (top->to_gop->go_gedp->u_data) {
@@ -1233,7 +1232,7 @@ to_open_tcl(ClientData UNUSED(clientData),
     if (argc == 1) {
 	/* get list of database objects */
 	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l))
-	    Tcl_AppendResult(interp, bu_vls_addr(&top->to_gop->go_name), " ", (char *)NULL);
+	    Tcl_AppendResult(interp, bu_vls_addr(&top->to_gop->go_gedp->go_name), " ", (char *)NULL);
 
 	return TCL_OK;
     }
@@ -1306,8 +1305,7 @@ Usage: go_open\n\
     tgd->gdv_gop = top->to_gop;
     gedp->u_data = (void *)tgd;
 
-    bu_vls_init(&top->to_gop->go_name);
-    bu_vls_strcpy(&top->to_gop->go_name, argv[1]);
+    bu_vls_strcpy(&top->to_gop->go_gedp->go_name, argv[1]);
     top->to_gop->go_refresh_on = 1;
     top->to_gop->go_edited_paths = bu_hash_create(0);
 
@@ -1611,7 +1609,7 @@ to_constrain_rmode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_rot %s %s %%x %%y}; break",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -1680,7 +1678,7 @@ to_constrain_tmode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_trans %s %s %%x %%y}; break",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -1743,7 +1741,7 @@ to_copy(struct ged *gedp,
 	bu_vls_strcpy(&from_vls, cp+1);
 
 	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l)) {
-	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gop->go_name), bu_vls_addr(&db_vls))) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gop->go_gedp->go_name), bu_vls_addr(&db_vls))) {
 		from_gedp = top->to_gop->go_gedp;
 		break;
 	    }
@@ -1768,7 +1766,7 @@ to_copy(struct ged *gedp,
 	bu_vls_strcpy(&to_vls, cp+1);
 
 	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l)) {
-	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gop->go_name), bu_vls_addr(&db_vls))) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gop->go_gedp->go_name), bu_vls_addr(&db_vls))) {
 		to_gedp = top->to_gop->go_gedp;
 		break;
 	    }
@@ -2929,255 +2927,255 @@ to_init_default_bindings(struct bview *gdvp)
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Configure> {%s configure %s; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Enter> {focus %s; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 	bu_vls_printf(&bindings, "bind %s <Expose> {%s handle_expose %s %%c; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "catch {wm protocol %s WM_DELETE_WINDOW {%s delete_view %s; break}}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Mouse Bindings */
 	bu_vls_printf(&bindings, "bind %s <2> {%s vslew %s %%x %%y; focus %s; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 	bu_vls_printf(&bindings, "bind %s <1> {%s zoom %s 0.5; focus %s; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 	bu_vls_printf(&bindings, "bind %s <3> {%s zoom %s 2.0; focus %s;  break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 #ifdef DM_X
 	bu_vls_printf(&bindings, "bind %s <4> {%s zoom %s 1.1; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <5> {%s zoom %s 0.9; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 #endif
 #ifdef DM_WGL
 	bu_vls_printf(&bindings, "bind %s <MouseWheel> {if {%%D < 0} {%s zoom %s 0.9} else {%s zoom %s 1.1}; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 #endif
 
 	/* Idle Mode */
 	bu_vls_printf(&bindings, "bind %s <ButtonRelease> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_L> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_R> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_L> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_R> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Alt_L> {%s idle_mode %s; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Alt_R> {%s idle_mode %s; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Rotate Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonRelease-1> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-1> {%s rotate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-2> {%s rotate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-3> {%s rotate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Translate Mode */
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonRelease-1> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-1> {%s translate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-2> {%s translate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-3> {%s translate_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Scale Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonRelease-1> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-1> {%s scale_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-2> {%s scale_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-3> {%s scale_mode %s %%x %%y}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Constrained Rotate Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonRelease-1> {%s idle_mode %s}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-1> {%s constrain_rmode %s x %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-2> {%s constrain_rmode %s y %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-3> {%s constrain_rmode %s z %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Constrained Translate Mode */
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonRelease-1> {%s idle_mode %s; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-1> {%s constrain_tmode %s x %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-2> {%s constrain_tmode %s y %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-3> {%s constrain_tmode %s z %%x %%y; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Key Bindings */
 	bu_vls_printf(&bindings, "bind %s 3 {%s aet %s 35 25; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s 4 {%s aet %s 45 45; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s f {%s aet %s 0 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s F {%s aet %s 0 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s R {%s aet %s 180 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s r {%s aet %s 270 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s l {%s aet %s 90 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s L {%s aet %s 90 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s t {%s aet %s 270 90; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s T {%s aet %s 270 90; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s b {%s aet %s 270 -90; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s B {%s aet %s 270 -90; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s + {%s zoom %s 2.0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s = {%s zoom %s 2.0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s _ {%s zoom %s 0.5; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s - {%s zoom %s 0.5; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Left> {%s rot %s -v 0 1 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Right> {%s rot %s -v 0 -1 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Up> {%s rot %s -v 1 0 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Down> {%s rot %s -v -1 0 0; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 
 
@@ -4052,7 +4050,7 @@ to_move_arb_edge_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_edge %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
@@ -4115,7 +4113,7 @@ to_move_arb_face_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_face %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
@@ -4234,7 +4232,7 @@ to_bot_move_pnt_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnt -r %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
@@ -4298,7 +4296,7 @@ to_bot_move_pnts_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnts %s %%x %%y %s ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[4]);
     }
@@ -4364,7 +4362,7 @@ to_metaball_move_pnt_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_metaball_move_pnt %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
@@ -4427,7 +4425,7 @@ to_pipe_move_pnt_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pipe_move_pnt %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
@@ -4604,7 +4602,7 @@ to_new_view(struct ged *gedp,
     if (dm_get_pathname((struct dm *)new_gdvp->dmp)) {
 	bu_vls_printf(&event_vls, "event generate %s <Configure>; %s autoview %s",
 		      bu_vls_addr(dm_get_pathname((struct dm *)new_gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&new_gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&event_vls));
     }
@@ -4674,7 +4672,7 @@ to_orotate_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_orotate %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4736,7 +4734,7 @@ to_oscale_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_oscale %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4799,7 +4797,7 @@ to_otranslate_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_otranslate %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -5133,7 +5131,7 @@ to_rect_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rect %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -5196,7 +5194,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rotate_arb_face %s %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3],
@@ -5260,7 +5258,7 @@ to_rotate_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rot %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -5427,7 +5425,7 @@ to_protate_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_protate %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
@@ -5490,7 +5488,7 @@ to_pscale_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pscale %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
@@ -5553,7 +5551,7 @@ to_ptranslate_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_ptranslate %s %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
@@ -5616,7 +5614,7 @@ to_data_scale_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_data_scale %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -5677,7 +5675,7 @@ to_scale_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_scale %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -6031,7 +6029,7 @@ to_translate_mode(struct ged *gedp,
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_trans %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }

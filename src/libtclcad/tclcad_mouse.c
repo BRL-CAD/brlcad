@@ -252,10 +252,10 @@ to_mouse_brep_selection_append(struct ged *gedp,
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_brep_selection_translate %s %s %%x %%y; "
 		      "%s brep %s plot SCV}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      brep_name,
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      brep_name);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -1015,7 +1015,7 @@ to_mouse_joint_select(
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y}",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&current_top->to_gop->go_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      joint_name);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));

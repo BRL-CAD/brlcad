@@ -148,7 +148,7 @@ struct tclcad_view_data {
 struct ged_obj {
     struct ged		*go_gedp;
     struct bview	go_head_views;
-    struct bu_vls	go_name;
+    //struct bu_vls	go_name;
     struct bu_vls	*go_prim_label_list;
     int			go_prim_label_list_size;
     int			go_refresh_on;
