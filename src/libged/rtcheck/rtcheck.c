@@ -50,9 +50,6 @@ struct ged_rtcheck {
     int draw_read_failed;
 };
 
-static void rtcheck_output_handler(void *clientData, int mask);
-static void rtcheck_vector_handler(void *clientData, int mask);
-
 static void
 rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 {
@@ -60,9 +57,9 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 
     if (rtcp->gedp->ged_delete_io_handler) {
 	(*rtcp->gedp->ged_delete_io_handler)(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
-		rtcp->rrtp->p, BU_PROCESS_STDOUT, rtcheck_vector_handler);
+		rtcp->rrtp->p, BU_PROCESS_STDOUT);
 	(*rtcp->gedp->ged_delete_io_handler)(rtcp->gedp->ged_interp, rtcp->chan,
-		rtcp->p, BU_PROCESS_STDERR, rtcheck_output_handler);
+		rtcp->p, BU_PROCESS_STDERR);
     }
 
     bu_process_close(rtcp->rrtp->p, BU_PROCESS_STDOUT);

@@ -1329,8 +1329,7 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (drcdp->gedp->ged_delete_io_handler) {
-	    (*drcdp->gedp->ged_delete_io_handler)(drcdp->gedp->ged_interp, run_rtp->chan,
-		    run_rtp->p, BU_PROCESS_STDERR, _ged_rt_output_handler);
+	    (*drcdp->gedp->ged_delete_io_handler)(drcdp->gedp->ged_interp, run_rtp->chan, run_rtp->p, BU_PROCESS_STDERR);
 	}
 
 
