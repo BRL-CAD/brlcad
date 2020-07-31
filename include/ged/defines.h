@@ -154,7 +154,6 @@ struct vd_curve {
 
 /* FIXME: should be private */
 struct ged_drawable {
-    struct bu_list		l;
     struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
     struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
