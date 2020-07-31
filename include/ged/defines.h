@@ -128,6 +128,7 @@ struct ged_subprocess {
     struct bu_process *p;
     void *chan;
     int aborted;
+    struct ged *gedp;
 };
 
 /* FIXME: should be private */
@@ -250,10 +251,10 @@ struct ged {
     void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
     /* Handler functions for I/O communication with asynchronous subprocess commands */
+    void *ged_io_data;  /**< brief caller supplied data */
     int io_mode;
     void (*ged_create_io_handler)(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
     void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd);
-    int				ged_io_handler_callback_cnt;
 
     // Other callbacks...
     // Tcl command strings - these are libtclcad level callbacks that execute user supplied Tcl commands if set:

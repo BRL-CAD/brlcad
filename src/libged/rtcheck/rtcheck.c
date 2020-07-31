@@ -268,6 +268,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     BU_GET(rtcp->rrtp, struct ged_subprocess);
     rtcp->rrtp->p = p;
     rtcp->rrtp->aborted = 0;
+    rtcp->rrtp->gedp = gedp;
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, gedp->io_mode, (void *)rtcp, rtcheck_vector_handler);
     }

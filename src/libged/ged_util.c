@@ -1299,28 +1299,28 @@ _ged_rt_set_eye_model(struct ged *gedp,
 
 struct _ged_rt_client_data {
     struct ged_subprocess *rrtp;
-    struct ged *gedp;
+    void *u_data;
 };
 
 void
 _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
-    struct ged_subprocess *run_rtp;
     int count = 0;
     int retcode = 0;
     int read_failed = 0;
     char line[RT_MAXLINE+1] = {0};
 
-    if (drcdp == (struct _ged_rt_client_data *)NULL ||
-	drcdp->gedp == (struct ged *)NULL ||
-	drcdp->rrtp == (struct ged_subprocess *)NULL)
+    if ((drcdp == (struct _ged_rt_client_data *)NULL) ||
+	(drcdp->rrtp == (struct ged_subprocess *)NULL) ||
+	(drcdp->rrtp->gedp == (struct ged *)NULL))
 	return;
 
-    run_rtp = drcdp->rrtp;
+    struct ged *gedp = drcdp->rrtp->gedp;
+    struct ged_subprocess *rrtp = drcdp->rrtp;
 
     /* Get data from rt */
-    if (bu_process_read((char *)line, &count, run_rtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+    if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
 	read_failed = 1;
     }
 
@@ -1328,14 +1328,14 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	int aborted;
 
 	/* Done watching for output, undo subprocess I/O hooks. */
-	if (drcdp->gedp->ged_delete_io_handler) {
-	    (*drcdp->gedp->ged_delete_io_handler)(drcdp->gedp->ged_interp, run_rtp->chan, run_rtp->p, BU_PROCESS_STDERR);
+	if (gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(gedp->ged_interp, rrtp->chan, rrtp->p, BU_PROCESS_STDERR);
 	}
 
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait(&aborted, run_rtp->p, 120);
+	retcode = bu_process_wait(&aborted, rrtp->p, 120);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");
@@ -1344,12 +1344,12 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
+	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
-	/* free run_rtp */
-	BU_LIST_DEQUEUE(&run_rtp->l);
-	BU_PUT(run_rtp, struct ged_subprocess);
+	/* free rrtp */
+	BU_LIST_DEQUEUE(&rrtp->l);
+	BU_PUT(rrtp, struct ged_subprocess);
 	BU_PUT(drcdp, struct _ged_rt_client_data);
 
 	return;
@@ -1359,10 +1359,10 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
     line[count] = '\0';
 
     /* handle (i.e., probably log to stderr) the resulting line */
-    if (drcdp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
-	ged_output_handler_cb(drcdp->gedp, line);
+    if (gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
+	ged_output_handler_cb(gedp, line);
     else
-	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
+	bu_vls_printf(gedp->ged_result_str, "%s", line);
 
 }
 
@@ -1458,10 +1458,11 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 
     run_rtp->p = p;
     run_rtp->aborted = 0;
+    run_rtp->gedp = gedp;
 
     BU_GET(drcdp, struct _ged_rt_client_data);
-    drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
+    drcdp->u_data = gedp->ged_io_data;
 
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {

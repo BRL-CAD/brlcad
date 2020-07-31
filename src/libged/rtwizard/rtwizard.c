@@ -40,7 +40,7 @@
 
 struct _ged_rt_client_data {
     struct ged_subprocess *rrtp;
-    struct ged *gedp;
+    void *u_data;
 };
 
 
@@ -67,11 +67,13 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
     BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
 
     run_rtp->p = p;
+    run_rtp->aborted = 0;
+    run_rtp->gedp = gedp;
 
     /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
-    drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
+    drcdp->u_data = gedp->ged_io_data;
 
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
