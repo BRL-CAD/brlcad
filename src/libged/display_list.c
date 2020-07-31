@@ -264,8 +264,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 		nsp = BU_LIST_PNEXT(solid, sp);
 
 		if (db_full_path_match_top(&subpath, &sp->s_fullpath)) {
-		    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
-			ged_free_vlist_cb(gedp, sp->s_dlist, 1);
+		    ged_free_vlist_cb(gedp, sp->s_dlist, 1);
 
 		    BU_LIST_DEQUEUE(&sp->l);
 		    FREE_SOLID(sp, &freesolid->l);
@@ -409,8 +408,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 	    int ret;
 	    int full_len = sp->s_fullpath.fp_len;
 
-	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
-		ged_free_vlist_cb(gedp, sp->s_dlist, 1);
+	    ged_free_vlist_cb(gedp, sp->s_dlist, 1);
 
 	    sp->s_fullpath.fp_len = full_len - 1;
 	    db_dup_full_path(&dup_path, &sp->s_fullpath);
@@ -1290,7 +1288,7 @@ dl_zap(struct ged *gedp, struct solid *freesolid)
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
 
-	if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL && BU_LIST_NON_EMPTY(&gdlp->dl_headSolid))
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid))
 	    ged_free_vlist_cb(gedp, BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
 		    BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
 		    BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
@@ -2453,8 +2451,9 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 
 
 void
-dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transparency, void (*callback)(struct display_list *))
+dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparency)
 {
+    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct solid *sp;
@@ -2481,8 +2480,7 @@ dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transpa
 
 	}
 
-	if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	    (*callback)(gdlp);
+	ged_create_vlist_cb(gedp, gdlp);
 
         gdlp = next_gdlp;
     }
