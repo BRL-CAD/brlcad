@@ -1185,7 +1185,7 @@ tclcad_create_io_handler(void **UNUSED(chan), struct bu_process *p, int fd, int 
 }
 
 void
-tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, int fd, void *UNUSED(data), ged_io_handler_callback_t UNUSED(callback))
+tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, int fd, ged_io_handler_callback_t UNUSED(callback))
 {
     int *fdp;
     if (!p) return;
@@ -1206,14 +1206,14 @@ tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, vo
 }
 
 void
-tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback)
+tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, ged_io_handler_callback_t callback)
 {
     HANDLE *fdp;
     Tcl_Interp *tcl_interp;
     if (!chan || !p) return;
     tcl_interp = (Tcl_Interp *)interp;
     fdp = (HANDLE *)bu_process_fd(p, fd);
-    Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)data);
+    Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)NULL);
     Tcl_Close(tcl_interp, (Tcl_Channel)chan);
 }
 #endif

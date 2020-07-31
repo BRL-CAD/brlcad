@@ -1330,9 +1330,10 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (drcdp->gedp->ged_delete_io_handler) {
 	    (*drcdp->gedp->ged_delete_io_handler)(drcdp->gedp->ged_interp, run_rtp->chan,
-		    run_rtp->p, BU_PROCESS_STDERR, (void *)drcdp,
-		    _ged_rt_output_handler);
+		    run_rtp->p, BU_PROCESS_STDERR, _ged_rt_output_handler);
 	}
+
+
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
 	retcode = bu_process_wait(&aborted, run_rtp->p, 120);
@@ -1363,6 +1364,7 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	ged_output_handler_cb(drcdp->gedp, line);
     else
 	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
+
 }
 
 void

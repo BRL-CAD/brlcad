@@ -523,7 +523,7 @@ tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, vo
  * Delete Tcl specific I/O handlers
  */
 TCLCAD_EXPORT void
-tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, ged_io_handler_callback_t callback);
 
 
 /* dm_tcl.c */
