@@ -2491,6 +2491,8 @@ mged_finish(int exitcode)
     Tcl_Release((ClientData)INTERP);
 
     ged_close(GEDP);
+    if (GEDP->ged_io_data)
+	BU_GET(GEDP->ged_io_data, struct tclcad_io_data);
     if (GEDP)
 	BU_PUT(GEDP, struct ged);
 
@@ -2920,6 +2922,8 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
+    if (GEDP->ged_io_data)
+	BU_GET(GEDP->ged_io_data, struct tclcad_io_data);
     ged_close(GEDP);
     BU_PUT(GEDP, struct ged);
 
