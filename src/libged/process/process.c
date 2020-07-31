@@ -57,7 +57,8 @@ _ged_process_list(struct ged *gedp)
     unsigned int longest_pid = 0;
 
     /* Find the largest pid we'll have to print */
-    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	int pid = bu_process_pid(rrp->p);
 	bu_vls_sprintf(&pid_str, "%d", pid);
 	longest_pid = (bu_vls_strlen(&pid_str) > longest_pid) ? bu_vls_strlen(&pid_str) : longest_pid;
@@ -65,7 +66,8 @@ _ged_process_list(struct ged *gedp)
     bu_vls_free(&pid_str);
 
     /* For each process print a line */
-    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	struct bu_vls pline = BU_VLS_INIT_ZERO;
 	struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
 	const char * const *argv;
@@ -73,8 +75,8 @@ _ged_process_list(struct ged *gedp)
 	int pid = bu_process_pid(rrp->p);
 	(void)bu_path_component(&cmdroot, argv[0], BU_PATH_BASENAME_EXTLESS);
 	bu_vls_sprintf(&pline, "%*d %s", longest_pid, pid, bu_vls_cstr(&cmdroot));
-	for (int i = 1; i < argc; i++) {
-	    bu_vls_printf(&pline, " %s", argv[i]);
+	for (int j = 1; j < argc; j++) {
+	    bu_vls_printf(&pline, " %s", argv[j]);
 	}
 	/* TODO - this should be intelligent based on current MGED/console terminal width... */
 	bu_vls_trunc(&pline, 80);
@@ -104,12 +106,13 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
      * more than once.  There may be more efficient ways to do this, but
      * it shouldn't matter unless the subprocess and/or argv lists get
      * extremely long. */
-    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	int ppid = bu_process_pid(rrp->p);
-	for (int i = 0; i < argc; i++) {
+	for (int j = 0; j < argc; j++) {
 	    int pid;
-	    if (bu_opt_int(NULL, 1, (const char **)&argv[i], (void *)&pid) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "PID argument %s is not a valid process id.", argv[i]);
+	    if (bu_opt_int(NULL, 1, (const char **)&argv[j], (void *)&pid) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "PID argument %s is not a valid process id.", argv[j]);
 		return GED_ERROR;
 	    }
 	    if (ppid == pid) {
@@ -133,13 +136,14 @@ _ged_process_gabort(struct ged *gedp, int argc, const char **argv)
      * to double-terminate a process if someone provides args that would
      * otherwise resolve that way - with this arrangement, each process
      * can get terminated at most once. */
-    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	const char *cmd;
 	int argcnt = bu_process_args(&cmd, NULL, rrp->p);
 	bu_vls_trunc(&cmdroot, 0);
 	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
-	    for (int i = 0; i < argc; i++) {
-		if (!bu_path_match(argv[i], bu_vls_cstr(&cmdroot), 0)) {
+	    for (int j = 0; j < argc; j++) {
+		if (!bu_path_match(argv[j], bu_vls_cstr(&cmdroot), 0)) {
 		    bu_terminate(bu_process_pid(rrp->p));
 		    rrp->aborted = 1;
 		    /* terminated it, no need to check other args for

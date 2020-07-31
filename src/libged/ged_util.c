@@ -1340,7 +1340,7 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	/* free rrtp */
-	BU_LIST_DEQUEUE(&rrtp->l);
+	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
 	BU_PUT(rrtp, struct ged_subprocess);
 
 	return;
@@ -1443,8 +1443,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     bu_process_close(p, BU_PROCESS_STDIN);
 
     BU_GET(run_rtp, struct ged_subprocess);
-    BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
+    bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;
     run_rtp->aborted = 0;

@@ -86,13 +86,16 @@ ged_close(struct ged *gedp)
 
     /* Terminate any ged subprocesses */
     if (gedp != GED_NULL) {
-	struct ged_subprocess *rrp;
-	for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	    struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	    if (!rrp->aborted) {
 		bu_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 	    }
+	    bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
+	    BU_PUT(rrp, struct ged_subprocess);
 	}
+	bu_ptbl_reset(&gedp->ged_subp);
     }
 
     ged_free(gedp);
@@ -210,6 +213,8 @@ ged_free(struct ged *gedp)
     bu_hash_destroy(gedp->ged_selections);
 
     BU_PUT(gedp->ged_cbs, struct ged_callback_state);
+
+    bu_ptbl_free(&gedp->ged_subp);
 }
 
 void
@@ -235,7 +240,7 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_results, struct ged_results);
     (void)_ged_results_init(gedp->ged_results);
 
-    BU_LIST_INIT(&gedp->gd_headSubprocess.l);
+    BU_PTBL_INIT(&gedp->ged_subp);
 
     /* For now, we're keeping the string... will go once no one uses it */
     BU_GET(gedp->ged_result_str, struct bu_vls);

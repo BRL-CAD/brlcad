@@ -68,7 +68,7 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 	_ged_wait_status(gedp->ged_result_str, retcode);
     }
 
-    BU_LIST_DEQUEUE(&rrtp->l);
+    bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
     BU_PUT(rrtp, struct ged_subprocess);
     BU_PUT(rtcp, struct ged_rtcheck);
 }
@@ -272,8 +272,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(rtcp->rrtp, BU_PROCESS_STDOUT, rtcheck_vector_handler, (void *)rtcp);
     }
-    BU_LIST_INIT(&rtcp->rrtp->l);
-    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &rtcp->rrtp->l);
+    bu_ptbl_ins(&gedp->ged_subp, (long *)rtcp->rrtp);
 
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(rtcp->rrtp, BU_PROCESS_STDERR, rtcheck_output_handler, (void *)rtcp);

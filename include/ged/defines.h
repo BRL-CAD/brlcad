@@ -124,7 +124,6 @@ struct ged_callback_state;
 
 
 struct ged_subprocess {
-    struct bu_list l;
     struct bu_process *p;
     void *chan;
     int aborted;
@@ -235,7 +234,7 @@ struct ged {
     int (*del)(struct ged *gedp, const char *name);
     int (*run)(struct ged *gedp, int ac, char *av[]);
 
-    struct ged_subprocess	gd_headSubprocess; /**< @brief  head of forked processes */
+    struct bu_ptbl		ged_subp; /**< @brief  forked sub-processes */
 
     /* Interface to LIBDM */
     void *ged_dmp;
