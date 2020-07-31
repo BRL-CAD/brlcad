@@ -124,6 +124,7 @@ struct ged_callback_state;
 
 
 struct ged_subprocess {
+    uint32_t magic;         /**< @brief magic number */
     struct bu_process *p;
     void *chan;
     int aborted;

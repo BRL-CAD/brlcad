@@ -79,6 +79,7 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
     int value = 0;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
     struct ged_subprocess *rrtp = rtcp->rrtp;
+    BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
     struct ged *gedp = rrtp->gedp;
 
     /* Get vector output from rtcheck */
@@ -142,6 +143,7 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
     char line[RT_MAXLINE] = {0};
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
     struct ged_subprocess *rrtp = rtcp->rrtp;
+    BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
     struct ged *gedp = rrtp->gedp;
 
     /* Get textual output from rtcheck */
@@ -266,6 +268,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 
     /* create the ged_subprocess container */
     BU_GET(rtcp->rrtp, struct ged_subprocess);
+    rtcp->rrtp->magic = GED_CMD_MAGIC;
     rtcp->rrtp->p = p;
     rtcp->rrtp->aborted = 0;
     rtcp->rrtp->gedp = gedp;

@@ -1309,6 +1309,8 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
     if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
 	return;
 
+    BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
+
     struct ged *gedp = rrtp->gedp;
 
     /* Get data from rt */
@@ -1443,6 +1445,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     bu_process_close(p, BU_PROCESS_STDIN);
 
     BU_GET(run_rtp, struct ged_subprocess);
+    run_rtp->magic = GED_CMD_MAGIC;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;
