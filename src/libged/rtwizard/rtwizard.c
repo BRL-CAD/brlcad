@@ -38,17 +38,10 @@
 
 #include "../ged_private.h"
 
-struct _ged_rt_client_data {
-    struct ged_subprocess *rrtp;
-    void *u_data;
-};
-
-
 int
 _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 {
     struct ged_subprocess *run_rtp;
-    struct _ged_rt_client_data *drcdp;
     struct bu_process *p;
 
     bu_process_exec(&p, gd_rt_cmd[0], cmd_len, (const char **)gd_rt_cmd, 0, 0);
@@ -70,13 +63,8 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
     run_rtp->aborted = 0;
     run_rtp->gedp = gedp;
 
-    /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(drcdp, struct _ged_rt_client_data);
-    drcdp->rrtp = run_rtp;
-    drcdp->u_data = gedp->ged_io_data;
-
     if (gedp->ged_create_io_handler) {
-	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
+	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
     }
 
     return GED_OK;

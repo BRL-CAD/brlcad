@@ -1135,6 +1135,10 @@ to_deleteProc(ClientData clientData)
 	    BU_PUT(tgd, struct tclcad_ged_data);
 	    top->to_gedp->u_data = NULL;
 	}
+	if (top->to_gedp->ged_io_data) {
+	    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)top->to_gedp->ged_io_data;
+	    BU_PUT(t_iod, struct tclcad_io_data);
+	}
 
 	// Got the libtclcad cleanup done, have libged do its up.
 	ged_close(top->to_gedp);
@@ -1176,45 +1180,42 @@ to_create_cmd(Tcl_Interp *interp,
 /* Wrappers for setting up/tearing down IO handler */
 #ifndef _WIN32
 void
-tclcad_create_io_handler(void **UNUSED(chan), struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback)
+tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_handler_callback_t callback, void *data)
 {
-    int *fdp;
-    if (!p) return;
-    fdp = (int *)bu_process_fd(p, fd);
-    Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data) return;
+    int *fdp = (int *)bu_process_fd(p->p, fd);
+    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+    Tcl_CreateFileHandler(*fdp, t_iod->io_mode, callback, (ClientData)data);
 }
 
 void
-tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, int fd)
+tclcad_delete_io_handler(struct ged_subprocess *p, int fd)
 {
-    int *fdp;
     if (!p) return;
-    fdp = (int *)bu_process_fd(p, fd);
+    int *fdp = (int *)bu_process_fd(p->p, fd);
     Tcl_DeleteFileHandler(*fdp);
     close(*fdp);
 }
 
 #else
 void
-tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback)
+tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_handler_callback_t callback, void *data)
 {
-    HANDLE *fdp;
-    if (!chan || !p) return;
-    fdp = (HANDLE *)bu_process_fd(p, fd);
-    (*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
-    Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data) return;
+    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+    HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, fd);
+    (*t_iod->chan) = (void *)Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+    Tcl_CreateChannelHandler(*t_iod->chan, t_iod->io_mode, callback, (ClientData)data);
 }
 
 void
-tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd)
+tclcad_delete_io_handler(struct ged_subprocess *p, int fd)
 {
-    HANDLE *fdp;
-    Tcl_Interp *tcl_interp;
-    if (!chan || !p) return;
-    tcl_interp = (Tcl_Interp *)interp;
-    fdp = (HANDLE *)bu_process_fd(p, fd);
-    Tcl_DeleteChannelHandler((Tcl_Channel)chan, NULL, (ClientData)NULL);
-    Tcl_Close(tcl_interp, (Tcl_Channel)chan);
+    if (!p || !p->p || !p->p->gedp || !p->p->gedp->ged_io_data) return;
+    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+    HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, fd);
+    Tcl_DeleteChannelHandler(t_oid->chan, NULL, (ClientData)NULL);
+    Tcl_Close(t_oid->interp, t_oid->chan);
 }
 #endif
 
@@ -1295,9 +1296,13 @@ Usage: go_open\n\
     gedp->ged_interp = (void *)interp;
 
     /* Set the Tcl specific I/O handlers for asynchronous subprocess I/O */
+    struct tclcad_io_data *t_iod;
+    BU_GET(t_iod, struct tclcad_io_data);
+    t_iod->io_mode  = TCL_READABLE;
+    t_iod->interp = interp;
+    gedp->ged_io_data = (void *)t_iod;
     gedp->ged_create_io_handler = &tclcad_create_io_handler;
     gedp->ged_delete_io_handler = &tclcad_delete_io_handler;
-    gedp->io_mode = TCL_READABLE;
 
     /* initialize tclcad_obj */
     BU_ALLOC(top, struct tclcad_obj);

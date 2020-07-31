@@ -1297,27 +1297,19 @@ _ged_rt_set_eye_model(struct ged *gedp,
     }
 }
 
-struct _ged_rt_client_data {
-    struct ged_subprocess *rrtp;
-    void *u_data;
-};
-
 void
 _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 {
-    struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
+    struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
     int count = 0;
     int retcode = 0;
     int read_failed = 0;
     char line[RT_MAXLINE+1] = {0};
 
-    if ((drcdp == (struct _ged_rt_client_data *)NULL) ||
-	(drcdp->rrtp == (struct ged_subprocess *)NULL) ||
-	(drcdp->rrtp->gedp == (struct ged *)NULL))
+    if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
 	return;
 
-    struct ged *gedp = drcdp->rrtp->gedp;
-    struct ged_subprocess *rrtp = drcdp->rrtp;
+    struct ged *gedp = rrtp->gedp;
 
     /* Get data from rt */
     if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
@@ -1329,7 +1321,7 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (gedp->ged_delete_io_handler) {
-	    (*gedp->ged_delete_io_handler)(gedp->ged_interp, rrtp->chan, rrtp->p, BU_PROCESS_STDERR);
+	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
 	}
 
 
@@ -1350,7 +1342,6 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	/* free rrtp */
 	BU_LIST_DEQUEUE(&rrtp->l);
 	BU_PUT(rrtp, struct ged_subprocess);
-	BU_PUT(drcdp, struct _ged_rt_client_data);
 
 	return;
     }
@@ -1432,7 +1423,6 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     FILE *fp_in;
     vect_t eye_model;
     struct ged_subprocess *run_rtp;
-    struct _ged_rt_client_data *drcdp;
     struct bu_process *p = NULL;
 
     bu_process_exec(&p, gd_rt_cmd[0], cmd_len, gd_rt_cmd, 0, 0);
@@ -1460,13 +1450,9 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     run_rtp->aborted = 0;
     run_rtp->gedp = gedp;
 
-    BU_GET(drcdp, struct _ged_rt_client_data);
-    drcdp->rrtp = run_rtp;
-    drcdp->u_data = gedp->ged_io_data;
-
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {
-	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
+	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
     }
     return GED_OK;
 }

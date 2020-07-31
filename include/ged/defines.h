@@ -250,11 +250,21 @@ struct ged {
     void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
-    /* Handler functions for I/O communication with asynchronous subprocess commands */
+    /* Handler functions for I/O communication with asynchronous subprocess commands.  There
+     * are two opaque data structures at play here, with different scopes.  One is the "data"
+     * pointer passed to ged_create_io_handler, which is used to store command-specific
+     * information internal to the library (the simplest thing to do is pass ged_subprocess
+     * in as the data pointer, but if that's not enough - see for example rtcheck - this
+     * mechanism allows for more elaborate measures.
+     *
+     * The second is ged_io_data, which is set in gedp by the calling application.  This is where
+     * information specific to the parent's I/O environment (which by definition the library
+     * can't know about as it is application specific) lives.  It should be assigned in the
+     * applications gedp before any calls to ged_create_io_handler are made.
+     * */
+    void (*ged_create_io_handler)(struct ged_subprocess *gp, int fd, ged_io_handler_callback_t callback, void *data);
+    void (*ged_delete_io_handler)(struct ged_subprocess *gp, int fd);
     void *ged_io_data;  /**< brief caller supplied data */
-    int io_mode;
-    void (*ged_create_io_handler)(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
-    void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd);
 
     // Other callbacks...
     // Tcl command strings - these are libtclcad level callbacks that execute user supplied Tcl commands if set:

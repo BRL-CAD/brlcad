@@ -476,10 +476,15 @@ mged_setup(Tcl_Interp **interpreter)
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
     GEDP->ged_interp = (void *)*interpreter;
+    GEDP->ged_interp_eval = &mged_db_search_callback;
+
+    struct tclcad_io_data *t_iod;
+    BU_GET(t_iod, struct tclcad_io_data);
+    t_iod->io_mode = TCL_READABLE;
+    t_iod->interp = *interpreter;
+    GEDP->ged_io_data = t_iod;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
-    GEDP->io_mode = TCL_READABLE;
-    GEDP->ged_interp_eval = &mged_db_search_callback;
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
