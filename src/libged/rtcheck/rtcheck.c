@@ -118,8 +118,7 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 	    const char *sname_obj = "OVERLAPSffff00";
 	    struct directory *dp;
 	    if ((dp = db_lookup(rtcp->gedp->ged_wdbp->dbip, sname_obj, LOOKUP_QUIET)) != RT_DIR_NULL) {
-		dl_erasePathFromDisplay(rtcp->gedp->ged_gdp->gd_headDisplay, rtcp->gedp->ged_wdbp->dbip,
-			rtcp->gedp->ged_free_vlist_callback, sname_obj, 0, rtcp->gedp->freesolid);
+		dl_erasePathFromDisplay(rtcp->gedp, sname_obj, 0);
 	    }
 	}
 

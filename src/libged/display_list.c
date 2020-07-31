@@ -204,10 +204,12 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag)
  *
  */
 void
-dl_erasePathFromDisplay(struct bu_list *hdlp,
-	struct db_i *dbip, void (*callback)(unsigned int, int),
-       	const char *path, int allow_split, struct solid *freesolid)
+dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 {
+    ged_free_vlist_callback_ptr callback = gedp->ged_free_vlist_callback;
+    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct solid *freesolid = gedp->freesolid;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct display_list *last_gdlp;
@@ -364,7 +366,7 @@ _dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip
 	    }
 
 	    if (BU_STR_EQUAL(tok, name)) {
-		_dl_freeDisplayListItem(dbip, gedp->ged_free_vlist_callback, gdlp, freesolid);
+		_dl_freeDisplayListItem(gedp, gdlp);
 		found = 1;
 
 		break;
@@ -441,15 +443,15 @@ _dl_eraseFirstSubpath(struct bu_list *hdlp, struct db_i *dbip,
  * Erase/remove display list item from headDisplay if path is a subset of item's path.
  */
 void
-_dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
-       	                      void (*callback)(unsigned int, int),
-			      const char *path,
-			      const int skip_first,
-			      struct solid *freesolid)
+_dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct db_full_path fullpath, subpath;
+    ged_free_vlist_callback_ptr callback = gedp->ged_free_vlist_callback;
+    struct solid *freesolid = gedp->freesolid;
+    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
 
     if (db_string_to_path(&subpath, dbip, path) == 0) {
 	gdlp = BU_LIST_NEXT(display_list, hdlp);
@@ -473,7 +475,7 @@ _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 
 	    if (db_string_to_path(&fullpath, dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
 		if (db_full_path_subset(&fullpath, &subpath, skip_first)) {
-		    _dl_freeDisplayListItem(dbip, callback, gdlp, freesolid);
+		    _dl_freeDisplayListItem(gedp, gdlp);
 		} else if (_dl_eraseFirstSubpath(hdlp, dbip, callback, gdlp, &subpath, skip_first, freesolid)) {
 		    gdlp = BU_LIST_NEXT(display_list, hdlp);
 		    db_free_full_path(&fullpath);
@@ -492,10 +494,11 @@ _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 
 
 void
-_dl_freeDisplayListItem (struct db_i *dbip,
-       	void (*callback)(unsigned int, int),
-	struct display_list *gdlp, struct solid *freesolid)
+_dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 {
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct solid *freesolid = gedp->freesolid;
+    ged_free_vlist_callback_ptr callback = gedp->ged_free_vlist_callback;
     struct solid *sp;
     struct directory *dp;
 
@@ -1149,7 +1152,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 	 * Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	dl_erasePathFromDisplay(hdlp, dbip, gedp->ged_free_vlist_callback, name, 0, freesolid);
+	dl_erasePathFromDisplay(gedp, name, 0);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
@@ -1280,8 +1283,11 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 }
 
 void
-dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int), struct solid *freesolid)
+dl_zap(struct ged *gedp, struct solid *freesolid)
 {
+    ged_free_vlist_callback_ptr callback = gedp->ged_free_vlist_callback;
+    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct solid *sp = SOLID_NULL;
     struct display_list *gdlp = NULL;
     struct bu_ptbl dls = BU_PTBL_INIT_ZERO;

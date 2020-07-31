@@ -213,16 +213,9 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 			 int validate);
 
 /* defined in display_list.c */
-GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp,
-					  const char *name,
-					  const int skip_first);
-GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
-					  const char *path,
-					  const int skip_first, struct solid *freesolid);
-extern void _dl_freeDisplayListItem(struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
-				     struct display_list *gdlp, struct solid *freesolid);
+GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char *name, const int skip_first);
+GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
+extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
 extern int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 /* Returns a bu_ptbl of all solids referenced by the display list */
@@ -235,7 +228,7 @@ GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state
 GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
 GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
-GED_EXPORT void dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int), struct solid *freesolid);
+GED_EXPORT void dl_zap(struct ged *gedp, struct solid *freesolid);
 GED_EXPORT int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 GED_EXPORT void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 GED_EXPORT void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
