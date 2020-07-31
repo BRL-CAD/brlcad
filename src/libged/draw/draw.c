@@ -903,7 +903,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, dgcdp.draw_non_subtract_only);
+		    ret = dl_redraw(gdlp, gedp, dgcdp.draw_non_subtract_only);
 		    if (ret < 0) {
 			/* restore view bot threshold */
 			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = threshold_cached;
@@ -1246,7 +1246,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	/* redraw everything */
 	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	{
-	    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, 0);
+	    ret = dl_redraw(gdlp, gedp, 0);
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: redraw failure\n", argv[0]);
 		return GED_ERROR;
@@ -1282,7 +1282,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		    found_path = 1;
 		    db_free_full_path(&dl_path);
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, 0);
+		    ret = dl_redraw(gdlp, gedp, 0);
 		    if (ret < 0) {
 			bu_vls_printf(gedp->ged_result_str,
 				"%s: %s redraw failure\n", argv[0], argv[i]);

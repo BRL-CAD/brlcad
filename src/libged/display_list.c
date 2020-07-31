@@ -334,9 +334,11 @@ eraseAllSubpathsFromSolidList(struct display_list *gdlp,
  *
  */
 void
-_dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
-       	void (*callback)(unsigned int, int), const char *name, const int skip_first, struct solid *freesolid)
+_dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip_first)
 {
+    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct solid *freesolid = gedp->freesolid;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
 
@@ -362,7 +364,7 @@ _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 	    }
 
 	    if (BU_STR_EQUAL(tok, name)) {
-		_dl_freeDisplayListItem(dbip, callback, gdlp, freesolid);
+		_dl_freeDisplayListItem(dbip, gedp->ged_free_vlist_callback, gdlp, freesolid);
 		found = 1;
 
 		break;
@@ -376,7 +378,7 @@ _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 	    struct db_full_path subpath;
 
 	    if (db_string_to_path(&subpath, dbip, name) == 0) {
-		eraseAllSubpathsFromSolidList(gdlp, &subpath, callback, skip_first, freesolid);
+		eraseAllSubpathsFromSolidList(gdlp, &subpath, gedp->ged_free_vlist_callback, skip_first, freesolid);
 		db_free_full_path(&subpath);
 	    }
 	}
@@ -929,8 +931,11 @@ redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, str
 
 
 int
-dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *), int skip_subtractions)
+dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
 {
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
+    struct bview *gvp = gedp->ged_gvp;
     int ret = 0;
     struct solid *sp;
     for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
@@ -938,8 +943,7 @@ dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *ts
 	    ret += redraw_solid(sp, dbip, tsp, gvp);
 	}
     }
-    if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	(*callback)(gdlp);
+    ged_create_vlist_cb(gedp, gdlp);
     return ret;
 }
 

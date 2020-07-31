@@ -61,7 +61,6 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
 
 	snprintf(namebuf, sizeof(namebuf), "%s%lx",	shortname, vbp->rgb[i]);
-	//mged_invent_solid(GEDP->ged_gdp->gd_headDisplay, DBIP, createDListSolid, GEDP->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, GEDP->freesolid, 0);
 	invent_solid(GEDP, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, 0);
     }
 }

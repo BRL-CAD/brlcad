@@ -213,10 +213,9 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 			 int validate);
 
 /* defined in display_list.c */
-GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
+GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp,
 					  const char *name,
-					  const int skip_first, struct solid *freesolid);
+					  const int skip_first);
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 	        void (*callback)(unsigned int, int),
 					  const char *path,
@@ -231,7 +230,7 @@ extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
 GED_EXPORT extern void dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp);
 
-GED_EXPORT extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *), int skip_subtractions);
+GED_EXPORT extern int dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions);
 GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
 GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
