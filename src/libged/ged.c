@@ -175,6 +175,20 @@ ged_free(struct ged *gedp)
     bu_ptbl_free(&gedp->ged_views);
 
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
+
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
+	    // TODO - FREE_SOLID macro is stashing on the freesolid list, not
+	    // BU_PUT-ing the solid objects themselves - is that what we expect
+	    // when doing ged_free?  I.e., is ownership of the free solid list
+	    // with the struct ged or with the application as a whole?  We're
+	    // BU_PUT-ing gedp->freesolid - above why just that one?
+#if 0
+	    struct solid *sp = (struct solid *)BU_PTBL_GET(&gedp->free_solids, i);
+	    RT_FREE_VLIST(&(sp->s_vlist));
+#endif
+	}
+	bu_ptbl_free(&gedp->free_solids);
+
 	if (gedp->ged_gdp->gd_headDisplay)
 	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
 	if (gedp->ged_gdp->gd_headVDraw)
@@ -198,6 +212,7 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
+    // TODO - replace freesolid with free_solids ptbl
     {
 	struct solid *nsp;
 	sp = BU_LIST_NEXT(solid, &gedp->freesolid->l);
@@ -221,8 +236,6 @@ ged_free(struct ged *gedp)
 void
 ged_init(struct ged *gedp)
 {
-    struct solid *freesolid;
-
     if (gedp == GED_NULL)
 	return;
 
@@ -257,10 +270,16 @@ ged_init(struct ged *gedp)
     gedp->ged_selections = bu_hash_create(32);
 
     /* init the solid list */
+    struct solid *freesolid;
     BU_GET(freesolid, struct solid);
     BU_LIST_INIT(&freesolid->l);
     gedp->freesolid = freesolid;
-    gedp->ged_gdp->gd_freeSolids = freesolid;
+
+    /* TODO: If we're init-ing the list here, does that mean the gedp has
+     * ownership of all solid objects created and stored here, and should we
+     * then free them when ged_free is called? (don't appear to be currently,
+     * just calling FREE_SOLID which doesn't de-allocate... */
+    BU_PTBL_INIT(&gedp->free_solids);
 
     /* Initialize callbacks */
     BU_GET(gedp->ged_cbs, struct ged_callback_state);

@@ -154,10 +154,9 @@ struct vd_curve {
 
 /* FIXME: should be private */
 struct ged_drawable {
-    struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
+    struct bu_list		*gd_headDisplay;	/**< @brief  head of display list */
     struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
-    struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
 
     char			**gd_rt_cmd;    /* DEPRECATED - will be removed, do not use */
     int				gd_rt_cmd_len;  /* DEPRECATED - will be removed, do not use */
@@ -200,6 +199,7 @@ struct ged {
     struct bu_vls		*ged_log;
 
     struct solid                *freesolid;  /* For now this is a struct solid, but longer term that may not always be true */
+    struct bu_ptbl              free_solids; /**< @brief  solid structures available for reuse */
 
     /* @todo: add support for returning an array of objects, not just a
      * simple string.
