@@ -156,6 +156,8 @@ to_refresh_all_views(struct tclcad_obj *top)
     struct bview *gdvp;
 
     for (BU_LIST_FOR(gdvp, bview, &top->to_gedp->go_head_views.l)) {
+//    for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
+//	gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
 	to_refresh_view(gdvp);
     }
 }
@@ -247,12 +249,8 @@ to_handle_refresh(struct ged *gedp,
 {
     struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), name))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    gdvp = ged_find_view(gedp, name);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", name);
 	return GED_ERROR;
     }

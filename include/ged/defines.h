@@ -192,7 +192,8 @@ struct ged {
     struct bu_vls               go_name;
     struct rt_wdb		*ged_wdbp;
 
-    // The full set of views associated with this ged object
+    // The full set of bviews associated with this ged object
+    //struct bu_ptbl              ged_views;
     struct bview                go_head_views;
 
     void                        *u_data; /**< @brief User data associated with this ged instance */

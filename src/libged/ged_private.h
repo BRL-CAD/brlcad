@@ -649,6 +649,7 @@ GED_EXPORT extern int ged_snap_lines(point_t *out_pt, struct ged *gedp, point_t 
 GED_EXPORT extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
+
 __END_DECLS
 
 #endif /* LIBGED_GED_PRIVATE_H */

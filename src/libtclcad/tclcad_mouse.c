@@ -41,8 +41,6 @@ to_get_prev_mouse(struct ged *gedp,
 		  const char *usage,
 		  int UNUSED(maxargs))
 {
-    struct bview *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -57,12 +55,8 @@ to_get_prev_mouse(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -84,7 +78,6 @@ to_mouse_append_pnt_common(struct ged *gedp,
     char *av[4];
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -103,12 +96,8 @@ to_mouse_append_pnt_common(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -164,7 +153,6 @@ to_mouse_brep_selection_append(struct ged *gedp,
 {
     const char *cmd_argv[11] = {"brep", NULL, "selection", "append", "active"};
     int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
-    struct bview *gdvp;
     char *brep_name;
     char *end;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -179,9 +167,11 @@ to_mouse_brep_selection_append(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
+
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
     }
 
     /* parse args */
@@ -277,7 +267,6 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 {
     const char *cmd_argv[8] = {"brep", NULL, "selection", "translate", "active"};
     int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
-    struct bview *gdvp;
     char *brep_name;
     char *end;
     point_t screen_end, view_start, view_end, model_start, model_end;
@@ -289,9 +278,10 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
     }
 
     brep_name = bu_path_basename(argv[2], NULL);
@@ -373,7 +363,6 @@ to_mouse_constrain_rot(struct ged *gedp,
     fastf_t dx, dy;
     fastf_t sf;
     struct bu_vls rot_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -392,15 +381,12 @@ to_mouse_constrain_rot(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
+
 
     if ((argv[2][0] != 'x' && argv[2][0] != 'y' && argv[2][0] != 'z') || argv[2][1] != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
@@ -487,7 +473,6 @@ to_mouse_constrain_trans(struct ged *gedp,
     fastf_t sf;
     fastf_t inv_width;
     struct bu_vls tran_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -506,12 +491,8 @@ to_mouse_constrain_trans(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -598,7 +579,6 @@ to_mouse_find_arb_edge(struct ged *gedp,
     char *av[6];
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -617,12 +597,8 @@ to_mouse_find_arb_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -664,7 +640,6 @@ to_mouse_find_bot_edge(struct ged *gedp,
     char *av[6];
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -683,12 +658,8 @@ to_mouse_find_bot_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -729,7 +700,6 @@ to_mouse_find_bot_pnt(struct ged *gedp,
     char *av[6];
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -748,12 +718,8 @@ to_mouse_find_bot_pnt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -795,7 +761,6 @@ to_mouse_find_metaball_pnt(struct ged *gedp,
     point_t model;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -814,12 +779,8 @@ to_mouse_find_metaball_pnt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -862,7 +823,6 @@ to_mouse_find_pipe_pnt(struct ged *gedp,
     point_t model;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -881,12 +841,8 @@ to_mouse_find_pipe_pnt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -928,7 +884,6 @@ to_mouse_joint_select(
 {
     const char *cmd_argv[11] = {"joint2", NULL, "selection", "replace", "active"};
     int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
-    struct bview *gdvp;
     char *joint_name;
     char *end;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -943,9 +898,10 @@ to_mouse_joint_select(
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
     }
 
     /* parse args */
@@ -1039,7 +995,6 @@ to_mouse_joint_selection_translate(
 {
     const char *cmd_argv[8] = {"joint2", NULL, "selection", "translate", "active"};
     int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
-    struct bview *gdvp;
     char *joint_name;
     char *end;
     point_t screen_end, view_start, view_end, model_start, model_end;
@@ -1051,9 +1006,10 @@ to_mouse_joint_selection_translate(
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
     }
 
     joint_name = bu_path_basename(argv[2], NULL);
@@ -1187,7 +1143,6 @@ to_mouse_move_arb_edge(struct ged *gedp,
     point_t view;
     mat_t inv_rot;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1206,12 +1161,8 @@ to_mouse_move_arb_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1288,7 +1239,6 @@ to_mouse_move_arb_face(struct ged *gedp,
     point_t view;
     mat_t inv_rot;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1307,12 +1257,8 @@ to_mouse_move_arb_face(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1391,7 +1337,6 @@ to_mouse_move_bot_pnt(struct ged *gedp,
     point_t view;
     mat_t v2m_mat;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1424,13 +1369,9 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", cmd, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -1574,7 +1515,6 @@ to_mouse_move_bot_pnts(struct ged *gedp,
     point_t view;
     mat_t v2m_mat;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1595,13 +1535,9 @@ to_mouse_move_bot_pnts(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", cmd, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -1691,7 +1627,6 @@ to_mouse_move_pnt_common(struct ged *gedp,
     point_t view;
     mat_t inv_rot;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1710,12 +1645,8 @@ to_mouse_move_pnt_common(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1790,7 +1721,6 @@ to_mouse_orotate(struct ged *gedp,
     struct bu_vls rot_x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls rot_y_vls = BU_VLS_INIT_ZERO;
     struct bu_vls rot_z_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1809,12 +1739,8 @@ to_mouse_orotate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1902,7 +1828,6 @@ to_mouse_oscale(struct ged *gedp,
     fastf_t sf;
     fastf_t inv_width;
     struct bu_vls sf_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1921,12 +1846,8 @@ to_mouse_oscale(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2014,7 +1935,6 @@ to_mouse_otranslate(struct ged *gedp,
     struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tran_z_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -2033,12 +1953,8 @@ to_mouse_otranslate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2174,7 +2090,6 @@ to_mouse_poly_circ(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -2191,12 +2106,8 @@ to_mouse_poly_circ(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2353,7 +2264,6 @@ to_mouse_poly_cont(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -2370,12 +2280,8 @@ to_mouse_poly_cont(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2498,7 +2404,6 @@ to_mouse_poly_ell(struct ged *gedp,
 		  const char *usage,
 		  int UNUSED(maxargs))
 {
-    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -2515,12 +2420,8 @@ to_mouse_poly_ell(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2685,7 +2586,6 @@ to_mouse_poly_rect(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -2702,12 +2602,8 @@ to_mouse_poly_rect(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2846,7 +2742,6 @@ to_mouse_rect(struct ged *gedp,
     int dx, dy;
     struct bu_vls dx_vls = BU_VLS_INIT_ZERO;
     struct bu_vls dy_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2862,12 +2757,8 @@ to_mouse_rect(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2915,7 +2806,6 @@ to_mouse_rot(struct ged *gedp,
     char *av[4];
     fastf_t dx, dy;
     struct bu_vls rot_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -2934,12 +2824,8 @@ to_mouse_rot(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3009,7 +2895,6 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     point_t view;
     mat_t inv_rot;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -3028,12 +2913,8 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3114,12 +2995,8 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 	    return GED_ERROR; \
 	} \
  \
-	for (BU_LIST_FOR((_gdvp), bview, &current_top->to_gedp->go_head_views.l)) { \
-	    if (BU_STR_EQUAL(bu_vls_addr(&(_gdvp)->gv_name), (_argv)[1])) \
-		break; \
-	} \
- \
-	if (BU_LIST_IS_HEAD(&(_gdvp)->l, &current_top->to_gedp->go_head_views.l)) { \
+        gdvp = ged_find_view(gedp, argv[1]); \
+        if (!gdvp) { \
 	    bu_vls_printf(gedp->ged_result_str, "View not found - %s", (_argv)[1]); \
 	    return GED_ERROR; \
 	} \
@@ -3171,7 +3048,6 @@ to_data_scale(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     register int i;
-    struct bview *gdvp;
     fastf_t sf;
 
     /* initialize result */
@@ -3189,12 +3065,8 @@ to_data_scale(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3326,7 +3198,6 @@ to_mouse_protate(struct ged *gedp,
     point_t view;
     mat_t inv_rot;
     struct bu_vls mrot_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -3345,12 +3216,8 @@ to_mouse_protate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3421,7 +3288,6 @@ to_mouse_pscale(struct ged *gedp,
     fastf_t sf;
     fastf_t inv_width;
     struct bu_vls sf_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -3440,12 +3306,8 @@ to_mouse_pscale(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3522,7 +3384,6 @@ to_mouse_ptranslate(struct ged *gedp,
     fastf_t inv_width;
     mat_t inv_rot;
     struct bu_vls tvec_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -3541,12 +3402,8 @@ to_mouse_ptranslate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3620,7 +3477,6 @@ to_mouse_trans(struct ged *gedp,
     fastf_t dx, dy;
     fastf_t inv_width;
     struct bu_vls trans_vls = BU_VLS_INIT_ZERO;
-    struct bview *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -3639,12 +3495,8 @@ to_mouse_trans(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gedp->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }

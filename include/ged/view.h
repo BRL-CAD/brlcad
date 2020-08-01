@@ -149,6 +149,8 @@ GED_EXPORT extern struct bg_polygon *ged_import_polygon(struct ged *gedp, const 
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB);
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
 
+GED_EXPORT extern struct bview * ged_find_view(struct ged *gedp, const char *key);
+
 // TODO - this (and probably the grid logic too) belong at the libdm level - they're operating
 // on the bview, rather than the ged level data...
 GED_EXPORT extern int ged_snap_to_lines(struct ged *gedp, fastf_t *vx, fastf_t *vy);

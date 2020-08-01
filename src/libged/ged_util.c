@@ -50,6 +50,31 @@
 #include "ged.h"
 #include "./ged_private.h"
 
+struct bview *
+ged_find_view(struct ged *gedp, const char *key)
+{
+    struct bview *gdvp = NULL;
+#if 0
+    // TODO - use this when we replace with bu_ptbl
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), key))
+	    break;
+	gdvp = NULL;
+    }
+#endif
+
+    for (BU_LIST_FOR(gdvp, bview, &gedp->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), key))
+	    break;
+    }
+    if (BU_LIST_IS_HEAD(&gdvp->l, &gedp->go_head_views.l)) {
+	gdvp = NULL;
+    }
+
+    return gdvp;
+}
+
 int
 _ged_results_init(struct ged_results *results)
 {
