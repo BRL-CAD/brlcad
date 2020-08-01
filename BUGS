@@ -15,11 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* the 'idents' command on a system-installed BRL-CAD apparently fails
-  catastrophically on Windows with the default user working directory.
-  when the user specifies a pathless idents file, it ends up bombing
-  inside bu_ptbl_free with a NULL ptbl pointer.  reported by users.
-
 * dbupgrade -r produces an invalid rhc with the default v5 rhc produced
   by MGED with  "make rhc rhc"
 
