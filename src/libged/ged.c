@@ -271,14 +271,9 @@ ged_init(struct ged *gedp)
     gedp->ged_create_vlist_solid_callback = NULL;
     gedp->ged_create_vlist_callback = NULL;
     gedp->ged_free_vlist_callback = NULL;
-    /* NOTE - MGED is already setting these
-     * before calling ged_init.  Doesn't
-     * feel right... */
-#if 0
     gedp->ged_create_io_handler = NULL;
     gedp->ged_delete_io_handler = NULL;
     gedp->ged_io_data = NULL;
-#endif
 
     /* Out of the gate we don't have display managers or views */
     gedp->ged_gvp = NULL;
