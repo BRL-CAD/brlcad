@@ -2492,7 +2492,7 @@ mged_finish(int exitcode)
 
     ged_close(GEDP);
     if (GEDP->ged_io_data)
-	BU_GET(GEDP->ged_io_data, struct tclcad_io_data);
+	BU_PUT(GEDP->ged_io_data, struct tclcad_io_data);
     if (GEDP)
 	BU_PUT(GEDP, struct ged);
 
@@ -2923,7 +2923,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 
     /* close the geometry instance */
     if (GEDP->ged_io_data)
-	BU_GET(GEDP->ged_io_data, struct tclcad_io_data);
+	BU_PUT(GEDP->ged_io_data, struct tclcad_io_data);
     ged_close(GEDP);
     BU_PUT(GEDP, struct ged);
 
