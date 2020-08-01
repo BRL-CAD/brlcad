@@ -196,7 +196,6 @@ struct bview_other_state {
 };
 
 struct bview {
-    struct bu_list              l;
     struct bu_vls               gv_name;
     fastf_t                     gv_scale;
     fastf_t                     gv_size;                /**< @brief  2.0 * scale */

@@ -167,7 +167,6 @@ ged_free(struct ged *gedp)
     struct bview *gdvp;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-	BU_LIST_DEQUEUE(&(gdvp->l));
 	bu_vls_free(&gdvp->gv_name);
 	bu_ptbl_free(gdvp->callbacks);
 	BU_PUT(gdvp->callbacks, struct bu_ptbl);
