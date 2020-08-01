@@ -694,13 +694,13 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 int
 cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    void (*tmp_callback)(unsigned int, int) = GEDP->ged_free_vlist_callback;
+    void (*tmp_callback)(unsigned int, int) = GEDP->ged_destroy_vlist_callback;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
 
     update_views = 1;
-    GEDP->ged_free_vlist_callback = freeDListsAll;
+    GEDP->ged_destroy_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
     if (STATE != ST_VIEW) {
@@ -712,7 +712,7 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
     (void)chg_state(STATE, STATE, "zap");
     solid_list_callback();
 
-    GEDP->ged_free_vlist_callback = tmp_callback;
+    GEDP->ged_destroy_vlist_callback = tmp_callback;
 
     return TCL_OK;
 }

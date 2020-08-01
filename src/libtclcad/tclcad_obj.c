@@ -531,7 +531,7 @@ HIDDEN int to_zclip(struct ged *gedp,
 
 HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
 HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
-HIDDEN void to_free_vlist_callback(unsigned int dlist, int range);
+HIDDEN void to_destroy_vlist_callback(unsigned int dlist, int range);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
 HIDDEN void to_output_handler(struct ged *gedp, char *line);
@@ -1180,7 +1180,7 @@ to_create_cmd(Tcl_Interp *interp,
 /* Wrappers for setting up/tearing down IO handler */
 #ifndef _WIN32
 void
-tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_handler_callback_t callback, void *data)
+tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_func_t callback, void *data)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data) return;
     int *fdp = (int *)bu_process_fd(p->p, fd);
@@ -1314,8 +1314,8 @@ Usage: go_open\n\
     top->to_gedp->ged_output_handler = to_output_handler;
     top->to_gedp->ged_refresh_handler = to_refresh_handler;
     top->to_gedp->ged_create_vlist_solid_callback = to_create_vlist_callback_solid;
-    top->to_gedp->ged_create_vlist_callback = to_create_vlist_callback;
-    top->to_gedp->ged_free_vlist_callback = to_free_vlist_callback;
+    top->to_gedp->ged_create_vlist_display_list_callback = to_create_vlist_callback;
+    top->to_gedp->ged_destroy_vlist_callback = to_destroy_vlist_callback;
 
     BU_ASSERT(gedp->ged_gdp != NULL);
     top->to_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
@@ -6625,7 +6625,7 @@ to_create_vlist_callback(struct display_list *gdlp)
 
 
 HIDDEN void
-to_free_vlist_callback(unsigned int dlist, int range)
+to_destroy_vlist_callback(unsigned int dlist, int range)
 {
     struct bview *gdvp;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;

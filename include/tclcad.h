@@ -522,7 +522,7 @@ struct tclcad_io_data {
     int io_mode;
 };
 TCLCAD_EXPORT void
-tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_handler_callback_t callback, void *data);
+tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_func_t callback, void *data);
 TCLCAD_EXPORT void
 tclcad_delete_io_handler(struct ged_subprocess *p, int fd);
 

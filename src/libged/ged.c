@@ -269,8 +269,8 @@ ged_init(struct ged *gedp)
     gedp->ged_refresh_clientdata = NULL;
     gedp->ged_output_handler = NULL;
     gedp->ged_create_vlist_solid_callback = NULL;
-    gedp->ged_create_vlist_callback = NULL;
-    gedp->ged_free_vlist_callback = NULL;
+    gedp->ged_create_vlist_display_list_callback = NULL;
+    gedp->ged_destroy_vlist_callback = NULL;
     gedp->ged_create_io_handler = NULL;
     gedp->ged_delete_io_handler = NULL;
     gedp->ged_io_data = NULL;
@@ -699,7 +699,7 @@ _ged_print_node(struct ged *gedp,
 void
 ged_refresh_cb(struct ged *gedp)
 {
-    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL) {
+    if (gedp->ged_refresh_handler != GED_REFRESH_FUNC_NULL) {
 	gedp->ged_cbs->ged_refresh_handler_cnt++;
 	if (gedp->ged_cbs->ged_refresh_handler_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_refresh_handler!\n");
@@ -725,7 +725,7 @@ ged_output_handler_cb(struct ged *gedp, char *str)
 void
 ged_create_vlist_solid_cb(struct ged *gedp, struct solid *s)
 {
-    if (gedp->ged_create_vlist_solid_callback != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL) {
+    if (gedp->ged_create_vlist_solid_callback != GED_CREATE_VLIST_SOLID_FUNC_NULL) {
 	gedp->ged_cbs->ged_create_vlist_solid_callback_cnt++;
 	if (gedp->ged_cbs->ged_create_vlist_solid_callback_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_create_vlist_solid_callback!\n");
@@ -736,28 +736,28 @@ ged_create_vlist_solid_cb(struct ged *gedp, struct solid *s)
 }
 
 void
-ged_create_vlist_cb(struct ged *gedp, struct display_list *dl)
+ged_create_vlist_display_list_cb(struct ged *gedp, struct display_list *dl)
 {
-    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	gedp->ged_cbs->ged_create_vlist_callback_cnt++;
-	if (gedp->ged_cbs->ged_create_vlist_callback_cnt > 1) {
+    if (gedp->ged_create_vlist_display_list_callback != GED_CREATE_VLIST_DISPLAY_LIST_FUNC_NULL) {
+	gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt++;
+	if (gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_create_vlist_callback!\n");
 	}
-	(*gedp->ged_create_vlist_callback)(dl);
-	gedp->ged_cbs->ged_create_vlist_callback_cnt--;
+	(*gedp->ged_create_vlist_display_list_callback)(dl);
+	gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt--;
     }
 }
 
 void
-ged_free_vlist_cb(struct ged *gedp, unsigned int i, int j)
+ged_destroy_vlist_cb(struct ged *gedp, unsigned int i, int j)
 {
-    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL) {
-	gedp->ged_cbs->ged_free_vlist_callback_cnt++;
-	if (gedp->ged_cbs->ged_free_vlist_callback_cnt > 1) {
-	    bu_log("Warning - recursive call of gedp->ged_free_vlist_callback!\n");
+    if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
+	gedp->ged_cbs->ged_destroy_vlist_callback_cnt++;
+	if (gedp->ged_cbs->ged_destroy_vlist_callback_cnt > 1) {
+	    bu_log("Warning - recursive call of gedp->ged_destroy_vlist_callback!\n");
 	}
-	(*gedp->ged_free_vlist_callback)(i, j);
-	gedp->ged_cbs->ged_free_vlist_callback_cnt--;
+	(*gedp->ged_destroy_vlist_callback)(i, j);
+	gedp->ged_cbs->ged_destroy_vlist_callback_cnt--;
     }
 }
 

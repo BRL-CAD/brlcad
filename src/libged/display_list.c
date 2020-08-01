@@ -228,11 +228,11 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_STR_EQUAL(path, bu_vls_addr(&gdlp->dl_path))) {
-	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL) {
+	    if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
 
 		/* We can't assume the display lists are contiguous */
 		FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-		    ged_free_vlist_cb(gedp, BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist, 1);
+		    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist, 1);
 		}
 	    }
 
@@ -264,7 +264,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 		nsp = BU_LIST_PNEXT(solid, sp);
 
 		if (db_full_path_match_top(&subpath, &sp->s_fullpath)) {
-		    ged_free_vlist_cb(gedp, sp->s_dlist, 1);
+		    ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 
 		    BU_LIST_DEQUEUE(&sp->l);
 		    FREE_SOLID(sp, &freesolid->l);
@@ -315,7 +315,7 @@ eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
     while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
-	    ged_free_vlist_cb(gedp, sp->s_dlist, 1);
+	    ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &freesolid->l);
 	}
@@ -408,7 +408,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 	    int ret;
 	    int full_len = sp->s_fullpath.fp_len;
 
-	    ged_free_vlist_cb(gedp, sp->s_dlist, 1);
+	    ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 
 	    sp->s_fullpath.fp_len = full_len - 1;
 	    db_dup_full_path(&dup_path, &sp->s_fullpath);
@@ -495,11 +495,11 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
     struct solid *sp;
     struct directory *dp;
 
-    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL) {
+    if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
 
 	/* We can't assume the display lists are contiguous */
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    ged_free_vlist_cb(gedp, BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist, 1);
+	    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist, 1);
 	}
     }
 
@@ -939,7 +939,7 @@ dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
 	    ret += redraw_solid(sp, dbip, tsp, gvp);
 	}
     }
-    ged_create_vlist_cb(gedp, gdlp);
+    ged_create_vlist_display_list_cb(gedp, gdlp);
     return ret;
 }
 
@@ -1289,7 +1289,7 @@ dl_zap(struct ged *gedp, struct solid *freesolid)
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid))
-	    ged_free_vlist_cb(gedp, BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
+	    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
 		    BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
 		    BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
 
@@ -2480,7 +2480,7 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
 
 	}
 
-	ged_create_vlist_cb(gedp, gdlp);
+	ged_create_vlist_display_list_cb(gedp, gdlp);
 
         gdlp = next_gdlp;
     }

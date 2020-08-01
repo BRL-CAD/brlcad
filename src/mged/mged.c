@@ -2778,8 +2778,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
     GEDP->ged_create_vlist_solid_callback = createDListSolid;
-    GEDP->ged_create_vlist_callback = createDListAll;
-    GEDP->ged_free_vlist_callback = freeDListsAll;
+    GEDP->ged_create_vlist_display_list_callback = createDListAll;
+    GEDP->ged_destroy_vlist_callback = freeDListsAll;
 
     /* increment use count for gedp db instance */
     (void)db_clone_dbi(DBIP, NULL);

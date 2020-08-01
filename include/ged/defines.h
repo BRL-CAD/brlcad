@@ -84,11 +84,11 @@ typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
 
 /* Callback related definitions */
-typedef void (*ged_io_handler_callback_t)(void *, int);
-typedef void (*ged_refresh_callback_ptr)(void *);
-typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
-typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
-typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
+typedef void (*ged_io_func_t)(void *, int);
+typedef void (*ged_refresh_func_t)(void *);
+typedef void (*ged_create_vlist_solid_func_t)(struct solid *);
+typedef void (*ged_create_vlist_display_list_func_t)(struct display_list *);
+typedef void (*ged_destroy_vlist_func_t)(unsigned int, int);
 struct ged_callback_state;
 
 /**
@@ -246,8 +246,8 @@ struct ged {
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     void			(*ged_create_vlist_solid_callback)(struct solid *);	/**< @brief  function to call after creating a vlist to create display list for solid */
-    void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
-    void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
+    void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
+    void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
     /* Handler functions for I/O communication with asynchronous subprocess commands.  There
      * are two opaque data structures at play here, with different scopes.  One is the "data"
@@ -261,7 +261,7 @@ struct ged {
      * can't know about as it is application specific) lives.  It should be assigned in the
      * applications gedp before any calls to ged_create_io_handler are made.
      * */
-    void (*ged_create_io_handler)(struct ged_subprocess *gp, int fd, ged_io_handler_callback_t callback, void *data);
+    void (*ged_create_io_handler)(struct ged_subprocess *gp, int fd, ged_io_func_t callback, void *data);
     void (*ged_delete_io_handler)(struct ged_subprocess *gp, int fd);
     void *ged_io_data;  /**< brief caller supplied data */
 
