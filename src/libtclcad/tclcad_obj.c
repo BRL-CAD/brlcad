@@ -1188,7 +1188,6 @@ tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd,
     Tcl_Interp *tcl_interp;
     if (!chan || !p) return;
     tcl_interp = (Tcl_Interp *)interp;
-    fdp = (HANDLE *)bu_process_fd(p, fd);
     Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)data);
     Tcl_Close(tcl_interp, (Tcl_Channel)chan);
 }
