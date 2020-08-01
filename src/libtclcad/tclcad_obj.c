@@ -1153,7 +1153,8 @@ tclcad_create_io_handler(void **UNUSED(chan), struct bu_process *p, int fd, int 
     int *fdp;
     if (!p) return;
     fdp = (int *)bu_process_fd(p, fd);
-    Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
+    if (fdp)
+	Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
 }
 
 void
@@ -1162,7 +1163,8 @@ tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_pro
     int *fdp;
     if (!p) return;
     fdp = (int *)bu_process_fd(p, fd);
-    Tcl_DeleteFileHandler(*fdp);
+    if (fdp)
+	Tcl_DeleteFileHandler(*fdp);
     close(*fdp);
 }
 
@@ -1173,8 +1175,10 @@ tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, vo
     HANDLE *fdp;
     if (!chan || !p) return;
     fdp = (HANDLE *)bu_process_fd(p, fd);
-    (*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
-    Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
+    if (fdp) {
+	(*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
+	Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
+    }
 }
 
 void
