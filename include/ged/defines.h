@@ -188,7 +188,6 @@ struct ged_cmd;
 struct ged_results;
 
 struct ged {
-    struct bu_list		l;
     struct bu_vls               go_name;
     struct rt_wdb		*ged_wdbp;
 

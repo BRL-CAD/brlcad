@@ -226,7 +226,6 @@ ged_init(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    BU_LIST_INIT(&gedp->l);
     gedp->ged_wdbp = RT_WDB_NULL;
 
     // TODO - rename to ged_name
