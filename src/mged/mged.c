@@ -2780,6 +2780,13 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GEDP->ged_create_vlist_solid_callback = createDListSolid;
     GEDP->ged_create_vlist_display_list_callback = createDListAll;
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
+    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
+    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    struct tclcad_io_data *t_iod;
+    BU_GET(t_iod, struct tclcad_io_data);
+    t_iod->io_mode = TCL_READABLE;
+    t_iod->interp = interpreter;
+    GEDP->ged_io_data = t_iod;
 
     /* increment use count for gedp db instance */
     (void)db_clone_dbi(DBIP, NULL);
