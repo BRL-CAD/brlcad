@@ -222,11 +222,18 @@ struct ged {
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
 
 
-
-
-    /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
+    /* FIXME -- this ugly hack needs to die.  the result string should
+     * be stored before the call.
+     */
     int 			ged_internal_call;
 
+
+    /* TODO: hide all callback related symbols, callback typedefs
+     * (above), and eventually most if not all of the remaining fields
+     * into an _impl structure so callers are not tightly coupled to
+     * the ged structure.  access via public functions that have been
+     * given design consideration.
+     */
 
     /* FOR LIBGED INTERNAL USE */
     struct ged_cmd *cmds;
@@ -241,6 +248,7 @@ struct ged {
 
 
     /* Callbacks */
+
     struct ged_callback_state    *ged_cbs;
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
