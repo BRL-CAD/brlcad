@@ -196,6 +196,7 @@ struct bview_other_state {
 };
 
 struct bview {
+    uint32_t			magic;         /**< @brief magic number */
     struct bu_vls               gv_name;
     fastf_t                     gv_scale;
     fastf_t                     gv_size;                /**< @brief  2.0 * scale */

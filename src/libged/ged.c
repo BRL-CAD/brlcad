@@ -292,6 +292,8 @@ ged_view_init(struct bview *gvp)
     if (gvp == GED_VIEW_NULL)
 	return;
 
+    gvp->magic = BVIEW_MAGIC;
+
     gvp->gv_scale = 500.0;
     gvp->gv_size = 2.0 * gvp->gv_scale;
     gvp->gv_isize = 1.0 / gvp->gv_size;
