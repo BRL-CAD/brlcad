@@ -78,21 +78,26 @@ struct bu_process {
 void
 bu_process_close(struct bu_process *pinfo, int fd)
 {
-    if (!pinfo) return;
+    if (!pinfo)
+	return;
+
     if (fd == fileno(stdin)) {
-	if (!pinfo->fp_in) return;
+	if (!pinfo->fp_in)
+	    return;
 	(void)fclose(pinfo->fp_in);
 	pinfo->fp_in = NULL;
 	return;
     }
     if (fd == fileno(stdout)) {
-	if (!pinfo->fp_out) return;
+	if (!pinfo->fp_out)
+	    return;
 	(void)fclose(pinfo->fp_out);
 	pinfo->fp_out = NULL;
 	return;
     }
     if (fd == fileno(stderr)) {
-	if (!pinfo->fp_err) return;
+	if (!pinfo->fp_err)
+	    return;
 	(void)fclose(pinfo->fp_err);
 	pinfo->fp_err = NULL;
 	return;
@@ -103,7 +108,8 @@ bu_process_close(struct bu_process *pinfo, int fd)
 FILE *
 bu_process_open(struct bu_process *pinfo, int fd)
 {
-    if (!pinfo) return NULL;
+    if (!pinfo)
+	return NULL;
 
     bu_process_close(pinfo, fd);
 
@@ -139,16 +145,16 @@ bu_process_open(struct bu_process *pinfo, int fd)
 void *
 bu_process_fd(struct bu_process *pinfo, int fd)
 {
-    if (!pinfo || fd < 0) return NULL;
-    if (fd == fileno(stdin)) {
+    if (!pinfo || fd < 0)
+	return NULL;
+
+    if (fd == fileno(stdin))
 	return (void *)(&(pinfo->fd_in));
-    }
-    if (fd == fileno(stdout)) {
+    if (fd == fileno(stdout))
 	return (void *)(&(pinfo->fd_out));
-    }
-    if (fd == fileno(stderr)) {
+    if (fd == fileno(stderr))
 	return (void *)(&(pinfo->fd_err));
-    }
+
     return NULL;
 }
 
@@ -156,7 +162,8 @@ bu_process_fd(struct bu_process *pinfo, int fd)
 int
 bu_process_pid(struct bu_process *pinfo)
 {
-    if (!pinfo) return -1;
+    if (!pinfo)
+	return -1;
     return (int)pinfo->pid;
 }
 
@@ -164,13 +171,14 @@ bu_process_pid(struct bu_process *pinfo)
 int
 bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo)
 {
-    if (!pinfo) return 0;
-    if (cmd) {
+    if (!pinfo)
+	return 0;
+
+    if (cmd)
 	*cmd = pinfo->cmd;
-    }
-    if (argv) {
+    if (argv)
 	*argv = (const char * const *)(pinfo->argv);
-    }
+
     return pinfo->argc;
 }
 
@@ -179,7 +187,9 @@ int
 bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 {
     int ret = 1;
-    if (!pinfo || !buff || !n || !count || fd < 1) return -1;
+    if (!pinfo || !buff || !n || !count || fd < 1)
+	return -1;
+
     if (fd == fileno(stdout)) {
 #ifndef _WIN32
 	(*count) = read((int)pinfo->fd_out, buff, n);
@@ -210,6 +220,7 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 	(*count) = (int)dcount;
 #endif
     }
+
     /* sanity clamping */
     if ((*count) < 0) {
 	perror("READ ERROR");
@@ -240,9 +251,9 @@ bu_process_exec(
     int pipe_out[2];
     int pipe_err[2];
     const char **av = NULL;
-    if (!p || !cmd) {
+
+    if (!p || !cmd)
 	return;
-    }
 
     BU_GET(*p, struct bu_process);
     (*p)->fp_in = NULL;
@@ -352,9 +363,9 @@ bu_process_exec(
     STARTUPINFO si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa = {0};
-    if (!cmd || !argc || !argv) {
+
+    if (!cmd || !argc || !argv)
 	return;
-    }
 
     BU_GET(*p, struct bu_process);
     (*p)->fp_in = NULL;
@@ -472,17 +483,23 @@ bu_process_wait(
 #ifndef _WIN32
     int rpid;
     int retcode = 0;
-    if (!pinfo) return -1;
+
+    if (!pinfo)
+	return -1;
+
     close(pinfo->fd_out);
     close(pinfo->fd_err);
-    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1);
+
+    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1) {
+    }
     rc = retcode;
     if (rc) {
 	pinfo->aborted = 1;
     }
 #else
     DWORD retcode = 0;
-    if (!pinfo) return -1;
+    if (!pinfo)
+	return -1;
 
     /* wait for the forked process */
     if (wtime > 0) {
