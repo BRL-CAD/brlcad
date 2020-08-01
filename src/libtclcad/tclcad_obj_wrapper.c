@@ -67,9 +67,8 @@ to_autoview_func(struct ged *gedp,
     if (!rflag && ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-//    for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-//	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+    for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (to_is_viewable(gdvp)) {
 	    gedp->ged_gvp->gv_x_samples = dm_get_width((struct dm *)gdvp->dmp);
 	    gedp->ged_gvp->gv_y_samples = dm_get_height((struct dm *)gdvp->dmp);

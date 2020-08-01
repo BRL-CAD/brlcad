@@ -1101,9 +1101,8 @@ to_deleteProc(ClientData clientData)
 
 	// Clean up the libtclcad view data.
 	struct bview *gdvp = NULL;
-	for (BU_LIST_FOR(gdvp, bview, &top->to_gedp->go_head_views.l)) {
-//	for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
-//	    gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
+	    gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
 
 	    // There is a top level command created in the Tcl interp that is the name
 	    // of the dm.  Clear that command.
@@ -3752,9 +3751,8 @@ to_list_views(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-//    for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
-//	gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdvp->gv_name));
     }
 
@@ -3790,9 +3788,8 @@ to_lod(struct ged *gedp,
 {
     struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
-//    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-//	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	gedp->ged_gvp = gdvp;
 	(*func)(gedp, argc, (const char **)argv);
     }
@@ -4486,8 +4483,7 @@ to_new_view(struct ged *gedp,
 
     bu_vls_printf(&new_gdvp->gv_name, "%s", argv[name_index]);
     ged_view_init(new_gdvp);
-    BU_LIST_INSERT(&current_top->to_gedp->go_head_views.l, &new_gdvp->l);
-    //bu_ptbl_ins(&current_top->to_gedp->ged_views, (long *)new_gdvp);
+    bu_ptbl_ins(&current_top->to_gedp->ged_views, (long *)new_gdvp);
 
     new_gdvp->gv_point_scale = 1.0;
     new_gdvp->gv_curve_scale = 1.0;
@@ -6332,9 +6328,8 @@ to_create_vlist_callback_solid(struct solid *sp)
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
 
-//    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-//	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
@@ -6382,9 +6377,8 @@ to_destroy_vlist_callback(unsigned int dlist, int range)
     struct bview *gdvp;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
-//    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-//	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
-    for (BU_LIST_FOR(gdvp, bview, &current_top->to_gedp->go_head_views.l)) {
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 	    (void)dm_free_dlists((struct dm *)gdvp->dmp, dlist, range);
