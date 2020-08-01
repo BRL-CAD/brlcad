@@ -464,22 +464,22 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
 int
 ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-    struct bu_vls tabvls = BU_VLS_INIT_ZERO;
-    FILE *test_f = NULL;
+    static const char *usage = "file object(s)";
+
     FILE *ftabvls = NULL;
-    struct bu_ptbl cur_path;
+    FILE *test_f = NULL;
+    char *timep;
     int flag;
     int status;
-    char *timep;
-    time_t now;
     size_t i, j;
-    const char *usage = "file object(s)";
-    struct bu_ptbl *tabobjs = NULL;
-
     size_t numreg = 0;
     size_t numsol = 0;
+    struct bu_ptbl tabobjs;
+    struct bu_ptbl cur_path;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls tabvls = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+    time_t now;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -499,6 +499,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
+    bu_ptbl_init(&tabobjs, 8, "f_tables: objects");
 
     status = GED_OK;
 
@@ -522,7 +523,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     /* open the file */
     test_f = fopen(argv[1], "w+");
     if (test_f == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open file [%s]\n\tMake sure the directory and file are writable.\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;
     }
@@ -545,8 +546,6 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 
     tables_header(&tabvls, argc, argv, gedp, timep);
 
-    BU_GET(tabobjs, struct bu_ptbl);
-    bu_ptbl_init(tabobjs, 8, "f_tables: objects");
 
     /* make the tables */
     for (i = 2; i < (size_t)argc; i++) {
@@ -554,14 +553,14 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 
 	bu_ptbl_reset(&cur_path);
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
-	    tables_new(gedp, tabobjs, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
+	    tables_new(gedp, &tabobjs, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
 	else
 	    bu_vls_printf(gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
     }
 
-    tables_objs_print(&tabvls, tabobjs, flag);
+    tables_objs_print(&tabvls, &tabobjs, flag);
 
-    bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
+    bu_vls_printf(gedp->ged_result_str, "Summary written to: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
 	bu_vls_printf(&tabvls, "\n\nNumber Primitives = %zu  Number Regions = %zu\n",
@@ -577,16 +576,16 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Processed %lu Regions\n", numreg);
 
 	/* make ordered idents and re-print */
-	bu_sort(BU_PTBL_BASEADDR(tabobjs), BU_PTBL_LEN(tabobjs), sizeof(struct table_obj *), sort_table_objs, NULL);
+	bu_sort(BU_PTBL_BASEADDR(&tabobjs), BU_PTBL_LEN(&tabobjs), sizeof(struct table_obj *), sort_table_objs, NULL);
 
-	tables_objs_print(&tabvls, tabobjs, flag);
+	tables_objs_print(&tabvls, &tabobjs, flag);
 
 	bu_vls_printf(&tabvls, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
     }
 
     ftabvls = fopen(argv[1], "w+");
     if (ftabvls == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open file [%s]\n\tMake sure the directory and file are still writable.\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;
     }
@@ -599,8 +598,8 @@ end:
     bu_vls_free(&tabvls);
     bu_ptbl_free(&cur_path);
 
-    for (i = 0; i < BU_PTBL_LEN(tabobjs); i++) {
-	struct table_obj *o = (struct table_obj *)BU_PTBL_GET(tabobjs, i);
+    for (i = 0; i < BU_PTBL_LEN(&tabobjs); i++) {
+	struct table_obj *o = (struct table_obj *)BU_PTBL_GET(&tabobjs, i);
 	for (j = 0; j < BU_PTBL_LEN(o->tree_objs); j++) {
 	    struct tree_obj *t = (struct tree_obj *)BU_PTBL_GET(o->tree_objs, j);
 	    bu_vls_free(t->tree);
@@ -613,8 +612,7 @@ end:
 	BU_PUT(o->path, struct bu_vls);
 	BU_PUT(o, struct table_obj);
     }
-    bu_ptbl_free(tabobjs);
-    BU_PUT(tabobjs, struct bu_ptbl);
+    bu_ptbl_free(&tabobjs);
 
     return status;
 }
