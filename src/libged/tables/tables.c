@@ -53,31 +53,34 @@ static int idfd = 0;
 static int rd_idfd = 0;
 
 
-/* TODO - this approach to tables_sol_number assignment is pretty ugly, and
- * arguably even wrong in that it is hiding an exact floating point comparison
- * of matrices behind the (char *) case of the identt structure.
+/* TODO - this approach to tables_sol_number assignment is pretty
+ * ugly, and arguably even wrong in that it is hiding an exact
+ * floating point comparison of matrices behind the (char *) case of
+ * the identt structure.
  *
  * That said, this logic is doing something interesting in that it is
- * attempting to move the definition of a unique solid beyond just the object
- * to the object instance - e.g. it incorporates the matrix in the parent comb
- * in its uniqueness test.
+ * attempting to move the definition of a unique solid beyond just the
+ * object to the object instance - e.g. it incorporates the matrix in
+ * the parent comb in its uniqueness test.
  *
- * Need to think about what it actually means to be a unique instance in the
- * database and do something more intelligent.  For example, if we have two
- * paths:
+ * Need to think about what it actually means to be a unique instance
+ * in the database and do something more intelligent.  For example, if
+ * we have two paths:
  *
  * a/b/c.s  and  d/e/c.s
  *
- * do they describe the same instance in space if their matrices are all identity
- * and their booleans all unions?  Their path structure is different, but the
- * volume in space they are denoting as occupied is not.
+ * do they describe the same instance in space if their matrices are
+ * all identity and their booleans all unions?  Their path structure
+ * is different, but the volume in space they are denoting as occupied
+ * is not.
  *
- * One possible approach to this would be to enhance full path data structures
- * to incorporate matrix awareness, define an API to compare two such paths
- * including a check for solid uniqueness (e.g. return same if the two paths
- * define the same solid, even if the paths themselves differ), and then
- * construct the set of paths for the tables input object trees and use that
- * set to test for the uniqueness of a given path.
+ * One possible approach to this would be to enhance full path data
+ * structures to incorporate matrix awareness, define an API to
+ * compare two such paths including a check for solid uniqueness
+ * (e.g. return same if the two paths define the same solid, even if
+ * the paths themselves differ), and then construct the set of paths
+ * for the tables input object trees and use that set to test for the
+ * uniqueness of a given path.
  */
 
 
@@ -88,16 +91,22 @@ struct identt {
     mat_t i_mat;
 };
 
+
 HIDDEN int
 tables_check(char *a, char *b)
 {
 
     int c= sizeof(struct identt);
 
-    while (c--) if (*a++ != *b++) return 0;	/* no match */
+    while (c--) {
+	if (*a++ != *b++) {
+	    return 0;	/* no match */
+	}
+    }
     return 1;	/* match */
 
 }
+
 
 HIDDEN size_t
 tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
@@ -138,12 +147,14 @@ tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
     return idbuf1.i_index;
 }
 
+
 /* Build up sortable entities */
 
 struct tree_obj {
     struct bu_vls *tree;
     struct bu_vls *describe;
 };
+
 
 struct table_obj {
     int numreg;
@@ -155,15 +166,21 @@ struct table_obj {
     struct bu_ptbl *tree_objs;
 };
 
+
 static int
 sort_table_objs(const void *a, const void *b, void *UNUSED(arg))
 {
     struct table_obj *ao = *(struct table_obj **)a;
     struct table_obj *bo = *(struct table_obj **)b;
-    if (ao->region_id > bo->region_id) return 1;
-    if (ao->region_id < bo->region_id) return -1;
-    if (ao->numreg > bo->numreg) return 1;
-    if (ao->numreg < bo->numreg) return -1;
+
+    if (ao->region_id > bo->region_id)
+	return 1;
+    if (ao->region_id < bo->region_id)
+	return -1;
+    if (ao->numreg > bo->numreg)
+	return 1;
+    if (ao->numreg < bo->numreg)
+	return -1;
     return 0;
 }
 
@@ -176,7 +193,7 @@ tables_objs_print(struct bu_vls *tabvls, struct bu_ptbl *tabptr, int type)
     for (i = 0; i < BU_PTBL_LEN(tabptr); i++) {
 	o = (struct table_obj *)BU_PTBL_GET(tabptr, i);
 	bu_vls_printf(tabvls, " %-4d %4d %4d %4d %4d  ",
-		o->numreg, o->region_id, o->aircode, o->GIFTmater, o->los);
+		      o->numreg, o->region_id, o->aircode, o->GIFTmater, o->los);
 
 	bu_vls_printf(tabvls, "%s", bu_vls_addr(o->path));
 	if (type != ID_TABLE) {
@@ -362,11 +379,14 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 	    struct directory *nextdp;
 	    mat_t new_mat;
 
-	    /* For the 'idents' command skip over non-union combinations above the region level,
-	     * these members of a combination don't add positively to the defined regions of space
-	     * and their region ID's will not show up along a shotline unless positively added
-	     * elsewhere in the hierarchy. This is causing headaches for users generating an
-	     * association table from our 'idents' listing.
+	    /* For the 'idents' command skip over non-union
+	     * combinations above the region level, these members of a
+	     * combination don't add positively to the defined regions
+	     * of space and their region ID's will not show up along a
+	     * shotline unless positively added elsewhere in the
+	     * hierarchy. This is causing headaches for users
+	     * generating an association table from our 'idents'
+	     * listing.
 	     */
 	    if (flag == ID_TABLE) {
 		switch (tree_list[i].tl_op) {
@@ -408,6 +428,7 @@ out:
     return;
 }
 
+
 HIDDEN void
 tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *gedp, char *timep)
 {
@@ -439,25 +460,26 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
     bu_vls_printf(tabvls, "\n\n");
 }
 
+
 int
 ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-    struct bu_vls tabvls = BU_VLS_INIT_ZERO;
-    FILE *test_f = NULL;
+    static const char *usage = "file object(s)";
+
     FILE *ftabvls = NULL;
-    struct bu_ptbl cur_path;
+    FILE *test_f = NULL;
+    char *timep;
     int flag;
     int status;
-    char *timep;
-    time_t now;
     size_t i, j;
-    const char *usage = "file object(s)";
-    struct bu_ptbl *tabobjs = NULL;
-
     size_t numreg = 0;
     size_t numsol = 0;
+    struct bu_ptbl tabobjs;
+    struct bu_ptbl cur_path;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls tabvls = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+    time_t now;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -477,6 +499,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
+    bu_ptbl_init(&tabobjs, 8, "f_tables: objects");
 
     status = GED_OK;
 
@@ -500,7 +523,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     /* open the file */
     test_f = fopen(argv[1], "w+");
     if (test_f == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open file [%s]\n\tMake sure the directory and file are writable.\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;
     }
@@ -523,8 +546,6 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 
     tables_header(&tabvls, argc, argv, gedp, timep);
 
-    BU_GET(tabobjs, struct bu_ptbl);
-    bu_ptbl_init(tabobjs, 8, "f_tables: objects");
 
     /* make the tables */
     for (i = 2; i < (size_t)argc; i++) {
@@ -532,14 +553,14 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 
 	bu_ptbl_reset(&cur_path);
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
-	    tables_new(gedp, tabobjs, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
+	    tables_new(gedp, &tabobjs, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
 	else
 	    bu_vls_printf(gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
     }
 
-    tables_objs_print(&tabvls, tabobjs, flag);
+    tables_objs_print(&tabvls, &tabobjs, flag);
 
-    bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
+    bu_vls_printf(gedp->ged_result_str, "Summary written to: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
 	bu_vls_printf(&tabvls, "\n\nNumber Primitives = %zu  Number Regions = %zu\n",
@@ -555,16 +576,16 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Processed %lu Regions\n", numreg);
 
 	/* make ordered idents and re-print */
-	bu_sort(BU_PTBL_BASEADDR(tabobjs), BU_PTBL_LEN(tabobjs), sizeof(struct table_obj *), sort_table_objs, NULL);
+	bu_sort(BU_PTBL_BASEADDR(&tabobjs), BU_PTBL_LEN(&tabobjs), sizeof(struct table_obj *), sort_table_objs, NULL);
 
-	tables_objs_print(&tabvls, tabobjs, flag);
+	tables_objs_print(&tabvls, &tabobjs, flag);
 
 	bu_vls_printf(&tabvls, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
     }
 
     ftabvls = fopen(argv[1], "w+");
     if (ftabvls == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open file [%s]\n\tMake sure the directory and file are still writable.\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;
     }
@@ -577,8 +598,8 @@ end:
     bu_vls_free(&tabvls);
     bu_ptbl_free(&cur_path);
 
-    for (i = 0; i < BU_PTBL_LEN(tabobjs); i++) {
-	struct table_obj *o = (struct table_obj *)BU_PTBL_GET(tabobjs, i);
+    for (i = 0; i < BU_PTBL_LEN(&tabobjs); i++) {
+	struct table_obj *o = (struct table_obj *)BU_PTBL_GET(&tabobjs, i);
 	for (j = 0; j < BU_PTBL_LEN(o->tree_objs); j++) {
 	    struct tree_obj *t = (struct tree_obj *)BU_PTBL_GET(o->tree_objs, j);
 	    bu_vls_free(t->tree);
@@ -591,8 +612,7 @@ end:
 	BU_PUT(o->path, struct bu_vls);
 	BU_PUT(o, struct table_obj);
     }
-    bu_ptbl_free(tabobjs);
-    BU_PUT(tabobjs, struct bu_ptbl);
+    bu_ptbl_free(&tabobjs);
 
     return status;
 }

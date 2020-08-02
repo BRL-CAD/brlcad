@@ -26,7 +26,7 @@ for i in $CASES ; do
   LOG=$BASE2.log
   TGM=$BASE2.g
 
-  TRASH="$TGM $LOG $BASE2.rt.pix $BASE2.asc $BASE2.pix $BASE2.bw $BASE2.dsp"
+  TRASH="$TGM $LOG $BASE2.rt.pix $BASE2.pix $BASE2.bw $BASE2.dsp"
   rm -f $TRASH
 
   # convert dsp data file in asc format to pix format

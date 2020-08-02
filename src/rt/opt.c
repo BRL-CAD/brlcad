@@ -172,7 +172,8 @@ int space_partition = RT_PART_NUBSPT;
 
 #define MAX_WIDTH (32*1024)
 
-extern struct command_tab rt_cmdtab[];
+
+extern struct command_tab rt_do_tab[];
 
 
 /* this helper function is used to increase a bit variable through
@@ -288,7 +289,7 @@ get_args(int argc, const char *argv[])
 		space_partition = atoi(bu_optarg);
 		break;
 	    case 'c':
-		(void)rt_do_cmd((struct rt_i *)0, bu_optarg, rt_cmdtab);
+		(void)rt_do_cmd((struct rt_i *)0, bu_optarg, rt_do_tab);
 		break;
 	    case 'd':
 		densityfile = bu_optarg;
@@ -303,7 +304,7 @@ get_args(int argc, const char *argv[])
 		    {
 			char buf[128] = {0};
 			sprintf(buf, "set background=%f/%f/%f", color.buc_rgb[RED], color.buc_rgb[GRN], color.buc_rgb[BLU]);
-			(void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
+			(void)rt_do_cmd((struct rt_i *)0, buf, rt_do_tab);
 		    }
 		}
 		break;
@@ -415,7 +416,7 @@ get_args(int argc, const char *argv[])
 		    height = i;
 		break;
 	    case 'W':
-		(void)rt_do_cmd((struct rt_i *)0, "set background=1.0/1.0/1.0", rt_cmdtab);
+		(void)rt_do_cmd((struct rt_i *)0, "set background=1.0/1.0/1.0", rt_do_tab);
 		default_background = 0;
 		break;
 	    case 'w':
