@@ -714,7 +714,6 @@ Rt_Init(Tcl_Interp *interp)
     if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
 	/* initialize RT's global state */
 	BU_LIST_INIT(&RTG.rtg_vlfree);
-	BU_LIST_INIT(&RTG.rtg_headwdb.l);
 	if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
 	    rt_init_resource(&rt_uniresource, 0, NULL);
 	}

@@ -88,6 +88,11 @@
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
 
+/* MGED is the only user of rtg_headwdb, and it's sole purpose appears to be to
+ * keep a list of open database objects so wdb_open_tcl may report the list.
+ * Relocated from a LIBRT library global to an MGED application global. */
+struct rt_wdb rtg_headwdb = RT_WDB_INIT_ZERO;
+
 extern void draw_e_axes(void);
 extern void draw_m_axes(void);
 extern void draw_v_axes(void);
@@ -1054,6 +1059,8 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
+    BU_LIST_INIT(&rtg_headwdb.l);
+
     /* Do not run any commands before here.
      * Do not use bu_log() or bu_malloc() before here.
      */
@@ -1250,7 +1257,6 @@ main(int argc, char *argv[])
 
     /* Set up linked lists */
     BU_LIST_INIT(&RTG.rtg_vlfree);
-    BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);
@@ -2811,7 +2817,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     WDBP->wdb_interp = interpreter;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &WDBP->l);
+    BU_LIST_APPEND(&rtg_headwdb.l, &WDBP->l);
 
     /* This creates a "db" command object */
 

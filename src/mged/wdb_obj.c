@@ -55,6 +55,8 @@
 #include "raytrace.h"
 #include "tclcad.h"
 
+extern struct rt_wdb rtg_headwdb;
+
 #define WDB_TCL_READ_ERR { \
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting.\n", (char *)NULL); \
     }
@@ -10440,7 +10442,7 @@ wdb_init_obj(Tcl_Interp *interp,
     wdbp->wdb_interp = (void *)interp;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
+    BU_LIST_APPEND(&rtg_headwdb.l, &wdbp->l);
 
     return TCL_OK;
 }
@@ -10478,9 +10480,8 @@ wdb_open_tcl(ClientData UNUSED(clientData),
 
     if (argc == 1) {
 	/* get list of database objects */
-	for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l))
+	for (BU_LIST_FOR (wdbp, rt_wdb, &rtg_headwdb.l))
 	    Tcl_AppendResult(interp, bu_vls_addr(&wdbp->wdb_name), " ", (char *)NULL);
-
 	return TCL_OK;
     }
 

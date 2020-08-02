@@ -38,9 +38,8 @@ __BEGIN_DECLS
  */
 struct rt_g {
     struct bu_list      rtg_vlfree;     /**< @brief  head of bn_vlist freelist */
-    struct rt_wdb       rtg_headwdb;    /**< @brief  head of database object list */
 };
-#define RT_G_INIT_ZERO { BU_LIST_INIT_ZERO, RT_WDB_INIT_ZERO }
+#define RT_G_INIT_ZERO { BU_LIST_INIT_ZERO }
 
 /**
  * global ray-trace geometry state
