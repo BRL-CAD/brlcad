@@ -123,6 +123,8 @@ main(int argc, char *argv[])
     const char *currp;
     char path[MAXPATHLEN] = {0};
 
+    bu_setprogname(argv[0]);
+
     /* explicit init to proof against enum reordering */
     enum2str[BU_DIR_CURR] = CPP_STR(BU_DIR_CURR);
     enum2str[BU_DIR_INIT] = CPP_STR(BU_DIR_INIT);

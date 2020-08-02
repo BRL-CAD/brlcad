@@ -47,6 +47,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
+#include "../ged_private.h"
 #include "./ged_brep.h"
 
 /* FIXME: how should we set up brep functionality without introducing
@@ -1284,8 +1285,12 @@ _brep_cmd_help(void *bs, int argc, const char **argv)
 	int ret;
 	const char *helpflag[2];
 	helpflag[1] = PURPOSEFLAG;
+	size_t maxcmdlen = 0;
 	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "  %s\t\t", ctp->ct_name);
+	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
+	}
+	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) + 2, " ");
 	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
 		helpflag[0] = ctp->ct_name;
 		bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
@@ -1340,8 +1345,8 @@ _ged_brep_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *se
     return bu_opt_color(msg, argc, argv, (void *)(*set_color));
 }
 
-int
-ged_brep(struct ged *gedp, int argc, const char *argv[])
+extern "C" int
+ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
     struct _ged_brep_info gb;
@@ -1469,11 +1474,29 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     return GED_ERROR;
 }
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+    struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
+    const struct ged_cmd brep_cmd = { &brep_cmd_impl };
+    const struct ged_cmd *brep_cmds[] = { &brep_cmd,  NULL };
+
+    static const struct ged_plugin pinfo = { brep_cmds, 1 };
+
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
+}
+#endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

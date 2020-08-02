@@ -32,12 +32,13 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define ACHROMATIC -1.0
@@ -444,7 +445,7 @@ get_args (int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	infp = fopen(file_name, "r");
+	infp = fopen(file_name, "rb");
 	if (infp == NULL) {
 	    perror(file_name);
 	    (void) fprintf(stderr, "Cannot open file '%s'\n", file_name);
@@ -479,6 +480,11 @@ main (int argc, char **argv)
     ssize_t this_row;
     size_t col_nm;
     size_t row_nm;
+
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     VSETALL(border_rgb,     1);
     rgb_to_hsv(border_rgb, border_hsv);

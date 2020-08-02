@@ -32,11 +32,12 @@
 
 #include "png.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 
@@ -141,6 +142,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
 	fp_in = stdin;
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((fp_in = fopen(file_name, "rb")) == NULL) {
@@ -164,7 +166,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    fb *fbp;
+    struct fb *fbp;
     int i;
     int xout, yout, m, xstart;
     png_structp png_p;
@@ -176,6 +178,8 @@ main(int argc, char **argv)
     double gammaval=1.0;
     int file_width, file_height;
     unsigned char *image;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

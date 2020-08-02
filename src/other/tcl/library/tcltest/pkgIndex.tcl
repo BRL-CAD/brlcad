@@ -8,5 +8,5 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
-if {![package vsatisfies [package provide Tcl] 8.5]} {return}
-package ifneeded tcltest 2.3.8 [list source [file join $dir tcltest.tcl]]
+if {![package vsatisfies [package provide Tcl] 8.5-]} {return}
+package ifneeded tcltest 2.5.1 [list source [file join $dir tcltest.tcl]]

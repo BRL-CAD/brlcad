@@ -41,6 +41,7 @@ extern "C" b_off_t ftello(FILE *);
 
 #include "RegionList.h"
 
+#include "bu/app.h"
 
 static std::vector<std::string> readLine(std::istream& is)
 {
@@ -88,6 +89,9 @@ int main(int   argc,
 	 char* argv[])
 {
     int        ret = 0;
+
+    bu_setprogname(argv[0]);
+
     RegionList regions;
 
     if (argc < 3) {

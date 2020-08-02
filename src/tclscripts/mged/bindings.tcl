@@ -112,12 +112,17 @@ proc default_key_bindings { w } {
     bind $w i "winset $w; aip f; break"
     bind $w I "winset $w; aip b; break"
     bind $w p "winset $w; M 1 0 0; break"
+    bind $w 2 "winset $w; ae 35 -25; break"
     bind $w 3 "winset $w; press 35,25; break"
     bind $w 4 "winset $w; press 45,45; break"
+    bind $w 5 "winset $w; ae 145 25; break"
+    bind $w 6 "winset $w; ae 215 25; break"
+    bind $w 7 "winset $w; ae 325 25; break"
     bind $w f "winset $w; press front; break"
     bind $w t "winset $w; press top; break"
     bind $w b "winset $w; press bottom; break"
     bind $w l "winset $w; press left; break"
+    bind $w n "winset $w; puts \[nirt -b\]; break"
     bind $w r "winset $w; press right; break"
     bind $w R "winset $w; press rear; break"
     bind $w s "winset $w; press sill; break"
@@ -217,8 +222,12 @@ proc forward_key_bindings { w } {
     bind $w i {}
     bind $w I {}
     bind $w p {}
+    bind $w 2 {}
     bind $w 3 {}
     bind $w 4 {}
+    bind $w 5 {}
+    bind $w 6 {}
+    bind $w 7 {}
     bind $w f {}
     bind $w t {}
     bind $w b {}
@@ -261,7 +270,7 @@ proc forward_key_bindings { w } {
     bind $w <Control-t> {}
 
     bind $w <Escape> {}
-    
+
     # The focus commands in the binding below are necessary to insure
     # that .$id.t gets the event.
     bind $w <KeyPress> "\

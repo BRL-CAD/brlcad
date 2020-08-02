@@ -1,0 +1,10 @@
+Table data acquired from Paul Borke's page at
+http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
+
+Asserts it's from Cory Gene Bloyde, who has provided "public domain" code
+including the tables. http://www.siafoo.net/snippet/100
+
+Grid definition matches SIGGRAPH 1987 p 164 (original presentation of technique)
+
+file:/src/librt/primitives/nmg/nmg_tri_mc.c
+

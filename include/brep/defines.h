@@ -29,27 +29,11 @@
 
 #include "common.h"
 
-/* We need to include windows.h with protections,
- * rather than having opennurbs.h do it */
-#ifdef HAVE_WINDOWS_H
-#  ifdef WIN32_LEAN_AND_MEAN
-#    undef WIN32_LEAN_AND_MEAN
-#  endif
-#  define WIN32_LEAN_AND_MEAN 434144 /* don't want winsock.h */
-
-#  ifdef NOMINMAX
-#    undef NOMINMAX
-#  endif
-#  define NOMINMAX 434144 /* don't break std::min and std::max */
-
-#  include <windows.h>
-
-#  undef WIN32_LEAN_AND_MEAN /* unset to not interfere with calling apps */
-#  undef NOMINMAX
-#endif
+/* We need a guarded windows.h inclusion, so use bio.h to get it before
+ * opennurbs.h pulls it in */
+#include "bio.h"
 
 #ifdef __cplusplus
-
 
 /* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
  * do, use cond to hide the opennurbs header from Doxygen. */
@@ -83,9 +67,9 @@ extern "C++" {
 #  if defined(BREP_DLL_EXPORTS) && defined(BREP_DLL_IMPORTS)
 #    error "Only BREP_DLL_EXPORTS or BREP_DLL_IMPORTS can be defined, not both."
 #  elif defined(BREP_DLL_EXPORTS)
-#    define BREP_EXPORT __declspec(dllexport)
+#    define BREP_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BREP_DLL_IMPORTS)
-#    define BREP_EXPORT __declspec(dllimport)
+#    define BREP_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BREP_EXPORT
 #  endif

@@ -37,6 +37,8 @@ main(int argc, char **argv)
     point_t V2 = VINIT_ZERO;
     point_t TP = VINIT_ZERO;
 
+    bu_setprogname(argv[0]);
+
     if (argc != 6)
 	bu_exit(1, "ERROR: [%s] input format is TPx,TPy,TPz V0x,V0y,V0z V1x,V1y,V1z V2x,V2y,V2z expected_result\n", argv[0]);
 

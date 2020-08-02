@@ -42,9 +42,9 @@ __BEGIN_DECLS
 #  if defined(GED_DLL_EXPORTS) && defined(GED_DLL_IMPORTS)
 #    error "Only GED_DLL_EXPORTS or GED_DLL_IMPORTS can be defined, not both."
 #  elif defined(GED_DLL_EXPORTS)
-#    define GED_EXPORT __declspec(dllexport)
+#    define GED_EXPORT COMPILER_DLLEXPORT
 #  elif defined(GED_DLL_IMPORTS)
-#    define GED_EXPORT __declspec(dllimport)
+#    define GED_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define GED_EXPORT
 #  endif
@@ -61,6 +61,7 @@ __BEGIN_DECLS
 #define GED_HELP  0x0002 /**< invalid specification, result contains usage */
 #define GED_MORE  0x0004 /**< incomplete specification, can specify again interactively */
 #define GED_QUIET 0x0008 /**< don't set or modify the result string */
+#define GED_UNKNOWN 0x0010 /**< argv[0] was not a known command */
 
 #define GED_VMIN -2048.0
 #define GED_VMAX 2047.0
@@ -170,6 +171,9 @@ struct ged_drawable {
     int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
 };
 
+
+typedef void (*ged_io_handler_callback_t)(void *, int);
+
 struct ged_cmd;
 
 /* struct details are private - use accessor functions to manipulate */
@@ -199,10 +203,8 @@ struct ged {
 
     struct ged_drawable		*ged_gdp;
     struct bview		*ged_gvp;
-    struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
     struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
-    void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
@@ -213,6 +215,11 @@ struct ged {
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
+
+    /* Handler functions for I/O communication with asynchronous subprocess commands */
+    int io_mode;
+    void (*ged_create_io_handler)(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
+    void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
 
     /* FOR LIBGED INTERNAL USE */
     struct ged_cmd *cmds;
@@ -225,13 +232,8 @@ struct ged {
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
-
     /* Interface to LIBDM */
-    int ged_dm_width;
-    int ged_dm_height;
-    int ged_dmp_is_null;
-    void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
-
+    void *ged_dmp;
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
@@ -239,22 +241,6 @@ typedef void (*ged_refresh_callback_ptr)(void *);
 typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
 typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
 typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
-
-
-/**
- * describes a command plugin
- */
-struct ged_cmd {
-    struct bu_list l;
-
-    const char *name;
-    const char description[80];
-    const char *manpage;
-
-    int (*load)(struct ged *);
-    void (*unload)(struct ged *);
-    int (*exec)(struct ged *, int, const char *[]);
-};
 
 /* accessor functions for ged_results - calling
  * applications should not work directly with the
@@ -292,6 +278,40 @@ GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 	return (_flags); \
     }
 
+
+struct ged_cmd_impl;
+struct ged_cmd {
+    struct ged_cmd_impl *i;
+};
+
+struct ged_plugin {
+    const struct ged_cmd ** const cmds;
+    int cmd_cnt;
+};
+
+/* Report any messages from libged when plugins were initially loaded.
+ * Can be important when diagnosing command errors. */
+GED_EXPORT const char * ged_init_msgs();
+
+/* LIBGED maintains this list - callers should regard it as read only.  This
+ * list will change (size and pointers to individual command strings if
+ * commands are added or removed - caller is responsible for performing a new
+ * call to get an updated list and size if commands are altered.  */
+GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
+
+/* Report whether a string identifies a valid LIBGED command.  If func is
+ * non-NULL, check that cmd and func both refer to the same function pointer
+ * (i.e., they are aliases for the same command.)
+ *
+ * If func is NULL, a 0 return indicates an valid GED command and non-zero
+ * indicates a valid command.
+ *
+ * If func is non-null:
+ * 0 indicates both cmd and func strings invoke the same LIBGED function
+ * 1 indicates that either or both of cmd and func were invalid GED commands
+ * 2 indicates that both were valid commands, but they did not match.
+ */
+GED_EXPORT int ged_cmd_valid(const char *cmd, const char *func);
 
 
 __END_DECLS

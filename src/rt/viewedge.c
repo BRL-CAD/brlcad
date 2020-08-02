@@ -91,7 +91,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "bu/parse.h"
 #include "bu/parallel.h"
 #include "bu/log.h"
@@ -112,7 +112,7 @@
 #endif
 
 
-extern fb *fbp;	/* Framebuffer handle */
+extern struct fb *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
 extern size_t width, height;
@@ -425,7 +425,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 
 	bu_log("rtedge: loading occlusion geometry from %s.\n", file);
 
-	if (bu_argv_from_tcl_list(bu_vls_addr(&occlusion_objects), &split_argc, &objs) == TCL_ERROR) {
+	if (bu_argv_from_tcl_list(bu_vls_addr(&occlusion_objects), &split_argc, &objs) == 1) {
 	    bu_log("rtedge: occlusion list = %s\n",
 		   bu_vls_addr(&occlusion_objects));
 	    bu_exit(EXIT_FAILURE, "rtedge: could not parse occlusion objects list.\n");

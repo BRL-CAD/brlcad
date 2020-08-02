@@ -44,6 +44,19 @@ unset(CMAKE_CXX_STANDARD_REQUIRED)
 unset(CMAKE_CXX_STANDARD)
 
 ###############################################################################
+# We never want our build products to be identified by searches here - we
+# either want system installed versions or nothing.  Set CMAKE_IGNORE_PATH
+# values accordingly.  NOTE: we must specify EXPLICITY all directories to
+# ignore as CMAKE_IGNORE_PATH does not automatically ignore subdirectories:
+# https://cmake.org/cmake/help/latest/variable/CMAKE_IGNORE_PATH.html#variable:CMAKE_IGNORE_PATH
+set(CMAKE_IGNORE_PATH
+  ${CMAKE_BINARY_DIR}/${BIN_DIR}
+  ${CMAKE_BINARY_DIR}/${LIB_DIR}
+  ${CMAKE_INSTALL_PREFIX}/${BIN_DIR}
+  ${CMAKE_INSTALL_PREFIX}/${LIB_DIR}
+  )
+
+###############################################################################
 # Unlike the misc/tools directory components built in src/other are part of
 # the distribution, not just the compilation.  Hence we need to make sure of
 # some basic compatibility between the build settings.
@@ -87,6 +100,14 @@ foreach(ITEM ${dlists})
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
 
+# If the option is available (and in a number of cases we make sure it is)
+# don't install the headers as part of the BRL-CAD package.  We compile
+# against these, but we may have adjusted them compared to system versions
+# and we don't want them mixing with the system version for an external
+# code via it including our version of the header
+set(SKIP_INSTALL_HEADERS TRUE CACHE  BOOL "Don't install src/other headers" FORCE)
+mark_as_advanced(SKIP_INSTALL_HEADERS)
+
 # libregex library -  often needed by tools, so do this one first.
 set(regex_DESCRIPTION "
 Option for enabling and disabling compilation of the Regular
@@ -95,43 +116,15 @@ Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
 and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
+set(REGEX_PREFIX_STR "brl_")
 THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 SetTargetFolder(regex "Third Party Libraries")
 SetTargetFolder(regex-static "Third Party Libraries")
-if(BRLCAD_REGEX_BUILD)
-  BRLCAD_MANAGE_FILES(libregex/regex.h ${INCLUDE_DIR})
-endif(BRLCAD_REGEX_BUILD)
-
-CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
-if(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
-  # Our tests indicate that the system libc defines regex symbols, but
-  # we're still building with our local libregex.
-  #
-  # Platform differences in default linker behavior make it difficult
-  # to guarantee that our libregex symbols will override libc. We'll
-  # avoid the issue by renaming our libregex symbols to be
-  # incompatible with libc.
-
-  # First we add definitions to our config file to rename all of the
-  # regex function calls in our first-party code.
-  CONFIG_H_APPEND(BRLCAD "#define regcomp  libregex_regcomp\n")
-  CONFIG_H_APPEND(BRLCAD "#define regerror libregex_regerror\n")
-  CONFIG_H_APPEND(BRLCAD "#define regexec  libregex_regexec\n")
-  CONFIG_H_APPEND(BRLCAD "#define regfree  libregex_regfree\n")
-
-  # Second, we add the same definitions to libregex to rename the
-  # function declarations and definitions to match the calls.
-  #
-  # Note that this is necessary despite the fact that libregex/regex.h
-  # includes common.h. Our config file is intentionally omitted from
-  # common.h until after the third party dirs are processed, so the
-  # above definitions don't affect libregex.
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regcomp=libregex_regcomp)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regerror=libregex_regerror)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regexec=libregex_regexec)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regfree=libregex_regfree)
-endif(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
+if (NOT BRLCAD_REGEX_BUILD)
+  set(REGEX_LIBRARIES ${REGEX_LIBRARY} CACHE STRING "REGEX_LIBRARIES" FORCE)
+  set(REGEX_INCLUDE_DIRS "${REGEX_INCLUDE_DIR}" CACHE STRING "REGEX include directory" FORCE)
+endif (NOT BRLCAD_REGEX_BUILD)
 
 # Same deal for zlib Library - common requirement, deal with it up front
 set(zlib_DESCRIPTION "
@@ -140,123 +133,23 @@ provided with BRL-CAD's source distribution.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ENABLE_ZLIB ENABLE_LIBZ FIND_NAME BRLCADZLIB)
+set(Z_PREFIX_STR "brl_")
+THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ENABLE_ZLIB ENABLE_LIBZ)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake")
 SetTargetFolder(zlib "Third Party Libraries")
 SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
 if(BRLCAD_ZLIB_BUILD)
-  BRLCAD_MANAGE_FILES(libz/zlib.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libz/zconf.h ${INCLUDE_DIR})
+  add_definitions(-DZ_PREFIX)
+  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
+  set(Z_PREFIX_STR "${Z_PREFIX_STR}" CACHE STRING "prefix for zlib functions" FORCE)
+else(BRLCAD_ZLIB_BUILD)
+  set(Z_PREFIX_STR "" CACHE STRING "clear prefix for zlib functions" FORCE)
+  set(Z_PREFIX_STR)
+  set(ZLIB_LIBRARIES ${ZLIB_LIBRARY_RELEASE} CACHE STRING "ZLIB_LIBRARIES" FORCE)
+  set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}" CACHE STRING "ZLIB include directory" FORCE)
 endif(BRLCAD_ZLIB_BUILD)
-
-# LZ4 compression/decompression library
-set(lz4_DESCRIPTION "
-Option for enabling and disabling compilation of the lz4 data
-compression library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-")
-THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4 FLAGS NOSYS)
-if(BRLCAD_LZ4_BUILD)
-  set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
-  mark_as_advanced(LIBLZ4_INCLUDE_DIR)
-  SetTargetFolder(lz4 "Third Party Libraries")
-  SetTargetFolder(lz4-static "Third Party Libraries")
-  BRLCAD_MANAGE_FILES(lz4/lz4.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(lz4/lz4frame.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(lz4/lz4hc.h ${INCLUDE_DIR})
-endif(BRLCAD_LZ4_BUILD)
-
-
-# FreeType Libraries
-set(freetype_DESCRIPTION "
-Option for enabling and disabling compilation of the FreeType
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-# We don't want the Freetype distribution build targets
-set(FREETYPE_NO_DIST 1)
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FREETYPE REQUIRED_VARS "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" FIND_NAME Freetype)
-if(BRLCAD_FREETYPE_BUILD)
-  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_INCLUDE_DIR_freetype2
-    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-    CACHE STRING "FreeType freetype2 include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIR_ft2build
-    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-    CACHE STRING "FreeType ft2build include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIRS
-    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
-    CACHE STRING "Directories containing FreeType headers." FORCE)
-  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-  SetTargetFolder(freetype "Third Party Libraries")
-
-  # If we enable XFT support Tk when building our own freetype, XFT often pulls
-  # in conflicting system libs anyway, which causes conflicts.  Make sure, if
-  # we do have to build Tk, that we don't try enabling XFT.
-  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
-  mark_as_advanced(TK_DISABLE_XFT)
-endif(BRLCAD_FREETYPE_BUILD)
-if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
-endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
-mark_as_advanced(FREETYPE_INCLUDE_DIRS)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-mark_as_advanced(FREETYPE_LIBRARIES)
-
-# --------------------------------------------------------------------
-# libtermlib Library Only on WIN32 will the combination of the build
-# search tests and libtermlib fail to find a valid term, so set
-# variables accordingly
-if(WIN32)
-  set(HAVE_TERMLIB OFF CACHE BOOL "Have some termlib" FORCE)
-else(WIN32)
-  set(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
-endif(WIN32)
-mark_as_advanced(HAVE_TERMLIB)
-
-set(termlib_DESCRIPTION "
-Option for enabling and disabling compilation of the termlib library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO. (Except when building with Visual Studio, where it is
-disabled. Windows does not support the termlib API.)
-")
-THIRD_PARTY(libtermlib TERMLIB termlib termlib_DESCRIPTION REQUIRED_VARS HAVE_TERMLIB
-  BRLCAD_LEVEL2 ALIASES ENABLE_TERMLIB)
-if(BRLCAD_TERMLIB_BUILD)
-  set(HAVE_TERMCAP_H ON CACHE BOOL "src/other termlib is on" FORCE)
-  mark_as_advanced(HAVE_TERMCAP_H)
-endif(BRLCAD_TERMLIB_BUILD)
-
-# libnetpbm Library support for pnm,ppm,pbm, etc. image files
-set(netpbm_DESCRIPTION "
-Option for enabling and disabling compilation of the netpbm library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_NETPBM)
-if(BRLCAD_NETPBM_BUILD)
-  SetTargetFolder(libnetpbm "Third Party Libraries")
-  SetTargetFolder(libnetpbm-static "Third Party Libraries")
-endif(BRLCAD_NETPBM_BUILD)
-SetTargetFolder(netpbm "Third Party Libraries")
-SetTargetFolder(netpbm-static "Third Party Libraries")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
 
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER
 # zlib to set the variables if using a local copy of zlib.  If not
@@ -280,6 +173,8 @@ set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" 
 mark_as_advanced(PNG_MAN_DIR)
 set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
 mark_as_advanced(PNG_TESTS)
+set(PNG_PREFIX "brl_" CACHE STRING "BRL-CAD prefix for libpng" FORCE)
+mark_as_advanced(PNG_PREFIX)
 set(ld-version-script OFF CACHE STRING "Disable linker script" FORCE)
 mark_as_advanced(ld-version-script)
 mark_as_advanced(PNG_PREFIX)
@@ -287,6 +182,7 @@ mark_as_advanced(PNG_FRAMEWORK)
 mark_as_advanced(DFA_XTRA)
 mark_as_advanced(AWK)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
+set(PNG_LIB_NAME png_brl)
 set(png_DESCRIPTION "
 Option for enabling and disabling compilation of the Portable Network
 Graphics library provided with BRL-CAD's source distribution.  Default
@@ -302,8 +198,11 @@ THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES E
 if(BRLCAD_PNG_BUILD)
 
   set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
+  set(PNG_LIBRARIES png CACHE STRING "PNG_LIBRARIES" FORCE)
   set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libpng;${CMAKE_CURRENT_SOURCE_DIR}/libpng" CACHE STRING "PNG include directory" FORCE)
   mark_as_advanced(PNG_PNG_INCLUDE_DIR)
+  set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
+  set(PNG_INCLUDE_DIRS ${PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -312,47 +211,19 @@ if(BRLCAD_PNG_BUILD)
     unset(M_LIBRARY CACHE)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
 
-  # If we enable XFT support Tk when building our own libpng, the linking of
-  # freetype and fontconfig often pulls in the system libpng anyway, which
-  # causes conflicts.  Make sure, if we do have to build Tk, that we don't try
-  # enabling XFT.
-  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
-  mark_as_advanced(TK_DISABLE_XFT)
-
   SetTargetFolder(png "Third Party Libraries")
-  SetTargetFolder(png-static "Third Party Libraries")
+  SetTargetFolder(png_static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
-
-  # The actual install directory has these in both libpng16 and the toplevel
-  # include directory.  Just put them in the top level include directory - we
-  # don't guarantee libpng16, so an include directory with that version may or
-  # may not be there anyway.
-  BRLCAD_MANAGE_FILES(libpng/png.h ${INCLUDE_DIR} FOLDER libpng)
-  BRLCAD_MANAGE_FILES(libpng/pngconf.h ${INCLUDE_DIR} FOLDER libpng)
-  add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h
-    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel"
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h
-    )
-  add_custom_target(pnglibconf_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel")
-  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" pnglibconf_cp)
-  set_target_properties(pnglibconf_cp PROPERTIES FOLDER "BRL-CAD File Setup/libpng")
-  add_dependencies(pnglibconf_cp genfiles)
-  add_dependencies(png pnglibconf_cp)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h")
-
+else(BRLCAD_PNG_BUILD)
+  set(PNG_LIBRARIES ${PNG_LIBRARY_RELEASE} CACHE STRING "PNG_LIBRARIES" FORCE)
+  set(PNG_INCLUDE_DIRS "${PNG_PNG_INCLUDE_DIR}" CACHE STRING "PNG include directory" FORCE)
 endif(BRLCAD_PNG_BUILD)
-set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
+
 # Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
 unset(SKIP_INSTALL_FILES CACHE)
 unset(SKIP_INSTALL_FILES)
 unset(SKIP_INSTALL_EXECUTABLES CACHE)
 unset(SKIP_INSTALL_EXECUTABLES)
-
-# Make sure this value is in the cache, regardless of
-# BRLCAD_PNG_BUILD, so it can be referenced unconditionally elsewhere.
-set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
 
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc")
@@ -370,6 +241,23 @@ mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
 mark_as_advanced(uname_executable)
 
+# libnetpbm Library support for pnm,ppm,pbm, etc. image files
+set(netpbm_DESCRIPTION "
+Option for enabling and disabling compilation of the netpbm library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_NETPBM)
+if(BRLCAD_NETPBM_BUILD)
+  mark_as_advanced(NETPBM_INCLUDE_DIRS)
+  mark_as_advanced(NETPBM_LIBRARIES)
+  SetTargetFolder(netpbm "Third Party Libraries")
+  SetTargetFolder(netpbm-static "Third Party Libraries")
+endif(BRLCAD_NETPBM_BUILD)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
 
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
 # and the include directory for utahrle are different, so override the
@@ -390,41 +278,46 @@ if(BRLCAD_UTAHRLE_BUILD)
   set(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
-
-  # manage installed headers
-  get_directory_property(libutahrle_headers_orig DIRECTORY libutahrle DEFINITION LIBUTAHRLE_PUBLIC_HDRS)
-  set(libutahrle_headers)
-  foreach(utahh ${libutahrle_headers_orig})
-    get_filename_component(utahhf ${utahh} NAME)
-    set(libutahrle_headers ${libutahrle_headers} libutahrle/include/${utahhf})
-  endforeach(utahh ${libutahrle_headers_orig})
-  BRLCAD_MANAGE_FILES(libutahrle_headers ${INCLUDE_DIR})
 endif(BRLCAD_UTAHRLE_BUILD)
 
-# Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
-# BRL-CAD requires far more knowledge of the details of a Tcl/Tk
-# installation than most programs, which unfortunately means the
-# standard FindTCL.cmake is not sufficient. We have our own FindTCL
-# routine which handles Tcl/Tk and its stubs, so trigger this using
-# the THIRD_PARTY macro for TCL.
+####################################################################
+#                Tcl/Tk and related extensions
+####################################################################
 
-include("${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake")
+function(TCL_RESET_VARS)
+  unset(TCL_LIBRARY CACHE)
+  unset(TCL_STUB_LIBRARY CACHE)
+  unset(TCL_FOUND CACHE)
+  unset(TCLSH_FOUND CACHE)
+  unset(TCL_LIBRARY CACHE)
+  unset(TCL_INCLUDE_PATH CACHE)
+  unset(TCL_TCLSH CACHE)
+  unset(TCL_STUB_LIBRARY CACHE)
+endfunction(TCL_RESET_VARS)
 
-# Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
-set(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
-set(TCL_MIN_VERSION "8.5" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)
+function(TK_RESET_VARS)
+  unset(TK_LIBRARY CACHE)
+  unset(TK_STUB_LIBRARY CACHE)
+  unset(TK_FOUND CACHE)
+  unset(TCLTK_FOUND CACHE)
+  unset(TK_LIBRARY CACHE)
+  unset(TK_INCLUDE_PATH CACHE)
+  unset(TK_WISH CACHE)
+  unset(TK_STUB_LIBRARY CACHE)
+  unset(TTK_STUB_LIBRARY CACHE)
+endfunction(TK_RESET_VARS)
 
-if(BRLCAD_ENABLE_TK)
-  OPTION(TCL_REQUIRE_TK "Look for Tk installation, not just Tcl." ON)
-else(BRLCAD_ENABLE_TK)
-  OPTION(TCL_REQUIRE_TK "Look for Tk installation, not just Tcl." OFF)
-endif(BRLCAD_ENABLE_TK)
 
-# Turn off the man pages
-set(TCL_DISABLE_MANPAGES ON CACHE BOOL "disable Tcl man page generation" FORCE)
-mark_as_advanced(TCL_DISABLE_MANPAGES)
-set(TK_DISABLE_MANPAGES ON CACHE BOOL "disable Tk man page generation" FORCE)
-mark_as_advanced(TK_DISABLE_MANPAGES)
+# Set the expected graphics system (if known) before any find_package
+# calls related to Tcl
+if(BRLCAD_ENABLE_AQUA)
+  set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
+  set(TCL_TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics type" FORCE)
+endif(BRLCAD_ENABLE_AQUA)
+
+# Make sure we actually look for these each time...
+TCL_RESET_VARS()
+TK_RESET_VARS()
 
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
@@ -433,81 +326,70 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME BRLCADTCL REQUIRED_VARS BRLCAD_LEVEL2)
+THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME TCL REQUIRED_VARS "BRLCAD_ENABLE_TCL;BRLCAD_LEVEL2")
 
 if(BRLCAD_TCL_BUILD)
 
+  # Let the BRL-CAD compilation know we have Tcl
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
+
+  # There is no system init.tcl that we need to provide a path for
+  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
+
+  # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
+  set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
+  set(TCL_STUB_LIBRARY tclstub CACHE STRING "TCL_LIBRARY" FORCE)
+  set(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
+  set(TCL_VERSION_MAJOR "8" CACHE STRING "Tcl MAJOR version" FORCE)
+  set(TCL_VERSION_MINOR "6" CACHE STRING "Tcl MINOR version" FORCE)
+
+  # For the include path, use the TCL_INCLUDE_PATH set in the tcl build itself;
+  # we are not installing headers, so we have to look in the source tree
+  get_directory_property(TCL_INCLUDE_PATH DIRECTORY tcl DEFINITION TCL_INCLUDE_PATH)
+  set(TCL_INCLUDE_PATH "${TCL_INCLUDE_PATH}" CACHE STRING "Tcl include path" FORCE)
+
+  # Let Distclean know it will have work to do
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tcl8")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tcl8.6")
+
+  # Group the targets in Visual Studio project files
   SetTargetFolder(tclsh "Third Party Executables")
   SetTargetFolder(tcl "Third Party Libraries")
   SetTargetFolder(tclstub "Third Party Libraries")
-  # Set the variables ourselves since FindTCL.cmake doesn't know about our build
-  set(TCL_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/tcl")
-  set(TCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-  set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_LIBRARIES tcl CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_CONF_PREFIX "NONE-CMake" CACHE STRING "TCL_CONF_PREFIX" FORCE)
-  set(TCL_STUB_LIBRARY tclstub CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_STUB_LIBRARIES tclstub CACHE STRING "TCL_LIBRARY" FORCE)
-  get_directory_property(TCL_INCLUDE_DIRS DIRECTORY tcl DEFINITION TCL_INCLUDE_DIRS)
-  set(TCL_INCLUDE_DIRS "${TCL_INCLUDE_DIRS}" CACHE STRING "Tcl include paths" FORCE)
-  set(TCL_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic" CACHE STRING "Tcl include path" FORCE)
-  set(TCL_TCLSH_EXECUTABLE tclsh CACHE STRING "Tcl shell" FORCE)
-  set(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
-  get_directory_property(TCL_VERSION_MAJOR DIRECTORY tcl DEFINITION TCL_VERSION_MAJOR)
-  set(TCL_VERSION_MAJOR "${TCL_VERSION_MAJOR}" CACHE STRING "Tcl MAJOR version" FORCE)
-  get_directory_property(TCL_VERSION_MINOR DIRECTORY tcl DEFINITION TCL_VERSION_MINOR)
-  set(TCL_VERSION_MINOR "${TCL_VERSION_MINOR}" CACHE STRING "Tcl MINOR version" FORCE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
-  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/Makefile")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man1")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man3")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/mann")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/library/Makefile")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.5")
 
-  # manage installed headers
-  get_directory_property(tcl_headers_orig DIRECTORY tcl DEFINITION TCL_HDRS)
-  set(tcl_headers)
-  foreach(tclh ${tcl_headers_orig})
-    get_filename_component(tclhf ${tclh} NAME)
-    set(tcl_headers ${tcl_headers} tcl/generic/${tclhf})
-  endforeach(tclh ${tcl_headers_orig})
-  BRLCAD_MANAGE_FILES(tcl_headers ${INCLUDE_DIR})
+elseif(BRLCAD_ENABLE_TCL)
+  # We're using the system Tcl, but need some extra information.  FindTCL.cmake
+  # doesn't give us a stub library location, so we need to go find it ourselves.
+  get_filename_component(TCL_LIB_PATH "${TCL_LIBRARY}" DIRECTORY)
+  find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6 PATHS ${TCL_LIB_PATH})
 
-ELSE(BRLCAD_TCL_BUILD)
-  if(${TCL_TCLSH_EXECUTABLE})
-    BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
-    # We're going to need the path to the system init.tcl for btclsh and bwish
-    set(inittcl_script "
+  # Make sure we've got the header file
+  BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
+
+  # We're going to need the path to the system init.tcl for btclsh and bwish -
+  # extract it from the system Tcl
+  set(inittcl_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
 set fileID [open $filename \"w\"]
 puts $fileID $auto_path
 close $fileID
 exit
-")
-    set(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
-    file(WRITE ${inittcl_scriptfile} ${inittcl_script})
-    EXEC_PROGRAM(${TCL_TCLSH_EXECUTABLE} ARGS ${inittcl_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-    file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl" tcl_inittcl_raw)
-    STRING(REGEX REPLACE "\n" "" tcl_inittcl_paths_1 ${tcl_inittcl_raw})
-    STRING(REGEX REPLACE " " ";" tcl_inittcl_paths ${tcl_inittcl_paths_1})
-    FIND_PATH(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
-    mark_as_advanced(tcl_inittcl)
-    CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
-  endif(${TCL_TCLSH_EXECUTABLE})
+  ")
+  set(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
+  file(WRITE ${inittcl_scriptfile} ${inittcl_script})
+  execute_process(COMMAND ${TCL_TCLSH} ${inittcl_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+  file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl" tcl_inittcl_raw)
+  string(REGEX REPLACE "\n" "" tcl_inittcl_paths_1 ${tcl_inittcl_raw})
+  string(REGEX REPLACE " " ";" tcl_inittcl_paths ${tcl_inittcl_paths_1})
+  find_path(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
+  mark_as_advanced(tcl_inittcl)
+  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
 endif(BRLCAD_TCL_BUILD)
-mark_as_advanced(TCL_COMPILE_DEBUG)
+mark_as_advanced(TCL_COMPILATION_TRACING)
 mark_as_advanced(TCL_COMPILE_STATS)
-mark_as_advanced(TCL_DEBUG)
 mark_as_advanced(TCL_ENABLE_64BIT)
-mark_as_advanced(TCL_ENABLE_DLL_UNLOADING)
-mark_as_advanced(TCL_ENABLE_LANGINFO)
-mark_as_advanced(TCL_ENABLE_LOAD)
-mark_as_advanced(TCL_OPTIMIZED)
-mark_as_advanced(TCL_THREADS)
 mark_as_advanced(TCL_TIMEZONE_DATA)
+mark_as_advanced(TCL_STUB_LIBRARY)
 mark_as_advanced(M_LIBRARY)
 
 # Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
@@ -530,76 +412,71 @@ BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is set to BUNDLED,
 local copy is built even if a system version is present.  This option
 also depends on BRLCAD_ENABLE_TK being ON.
 ")
-if(BRLCAD_ENABLE_AQUA)
-  set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
-endif(BRLCAD_ENABLE_AQUA)
-THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
+
+THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
+
 if(BRLCAD_TK_BUILD)
-  SetTargetFolder(wish "Third Party Executables")
-  SetTargetFolder(tk "Third Party Libraries") 
-  SetTargetFolder(tkstub "Third Party Libraries") 
-  # Set the variables ourselves since FindTCL.cmake doesn't know about our build
-  set(TCL_TK_LIBRARY tk CACHE STRING "TCL_TK_LIBRARY" FORCE)
-  set(TCL_TK_CONF_PREFIX "NONE-CMake" CACHE STRING "TCL_TK_CONF_PREFIX" FORCE)
-  set(TCL_LIBRARIES ${TCL_LIBRARIES} tk CACHE STRING "TCL_LIBRARIES" FORCE)
-  set(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
-  set(TCL_STUB_LIBRARIES tkstub ${TCL_STUB_LIBRARIES} CACHE STRING "TCL_TK_STUBLIBRARIES" FORCE)
-  set(TCL_TK_STUB_LIBRARY tkstub CACHE STRING "TCL_TK_STUB_LIBRARY" FORCE)
-  set(TK_STUB_LIBRARY tkstub CACHE STRING "TK_STUB_LIBRARY" FORCE)
-  set(TK_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
-  set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TK_INCLUDE_PATH} CACHE STRING "Tcl include paths" FORCE)
-  if(WIN32)
-    set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/tk/win" "${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib" CACHE STRING "Tcl include paths" FORCE)
-  endif(WIN32)
-  set(TCL_WISH_EXECUTABLE wish CACHE STRING "Tk shell" FORCE)
-  set(TK_WISH wish CACHE STRING "Tk shell" FORCE)
-  if(WIN32)
-    set(TK_SYSTEM_GRAPHICS "win32" CACHE STRING "Tk system graphics" FORCE)
-  elseif(APPLE)
-    if(OPENGL_USE_AQUA)
-      set(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics" FORCE)
-    ELSE(OPENGL_USE_AQUA)
-      set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
-    endif(OPENGL_USE_AQUA)
-  elseif(UNIX)
-    set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
-  endif(WIN32)
-  # If we're building our own libpng, that tends to conflict with fontconfig,
-  # which is needed for Tk's freefype enabled build.  So when we do build
-  # libpng we need to disable the Tk freetype support to allow reliable
-  # building, at least until we can provide our own fontconfig as well as
-  # our own freetype...
+
+  # Let the BRL-CAD compilation know we have Tcl
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
-  mark_as_advanced(TK-ENABLE_FREETYPE)
+
+  # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
+  set(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_STUB_LIBRARY tkstub CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_WISH wish CACHE STRING "TK_WISH" FORCE)
+
+  # For the include path, use the TK_INCLUDE_PATH set in the tk build itself;
+  # we are not installing headers, so we have to look in the source tree
+  get_directory_property(TK_INCLUDE_PATH DIRECTORY tk DEFINITION TK_INCLUDE_PATH)
+  set(TK_INCLUDE_PATH "${TK_INCLUDE_PATH}" CACHE STRING "Tk include path" FORCE)
+
+  get_directory_property(TK_SYSTEM_GRAPHICS DIRECTORY tk DEFINITION TK_SYSTEM_GRAPHICS)
+  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
+
+  # Let Distclean know it will have work to do both here and in
+  # the lib directory
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man1")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man3")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/mann")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/library/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5.19")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tk8.6")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tk8.6.10")
 
-  # manage installed headers
-  get_directory_property(tk_headers_orig DIRECTORY tk DEFINITION TK_HDRS)
-  set(tk_headers)
-  foreach(tkh ${tk_headers_orig})
-    get_filename_component(tkhf ${tkh} NAME)
-    set(tk_headers ${tk_headers} tk/generic/${tkhf})
-  endforeach(tkh ${tk_headers_orig})
-  BRLCAD_MANAGE_FILES(tk_headers ${INCLUDE_DIR})
+  # Group the targets in Visual Studio project files
+  SetTargetFolder(wish "Third Party Executables")
+  SetTargetFolder(tk "Third Party Libraries")
+  SetTargetFolder(tkstub "Third Party Libraries")
 
-ELSE(BRLCAD_TK_BUILD)
-  if(BRLCAD_ENABLE_TK)
-    BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
-  endif(BRLCAD_ENABLE_TK)
+elseif(BRLCAD_ENABLE_TK)
+
+  set(HAVE_TK_H 1)
+
+  # Packages probably still need to know the system graphics package
+  if (BRLCAD_ENABLE_AQUA)
+    set(TK_SYSTEM_GRAPHICS aqua)
+  elseif (BRLCAD_ENABLE_X11)
+    set(TK_SYSTEM_GRAPHICS x11)
+  elseif (WIN32)
+    set(TK_SYSTEM_GRAPHICS win32)
+  endif ()
+  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
+
+else(BRLCAD_TK_BUILD)
+
+  # If we're not using Tk, make sure the variables are empty - CMake won't be
+  # happy if they're set to NOTFOUND and used, and FindTCL.cmake may have set
+  # them.
+  TK_RESET_VARS()
+  unset(TK_SYSTEM_GRAPHICS CACHE)
+
 endif(BRLCAD_TK_BUILD)
 mark_as_advanced(TK_INCLUDE_PATH)
 mark_as_advanced(TK_LIBRARY)
 mark_as_advanced(TK_STUB_LIBRARY)
 mark_as_advanced(TK_SYSTEM_GRAPHICS)
 mark_as_advanced(TK_WISH)
-mark_as_advanced(TK_ENABLE_XFT)
 
 # Now that Tcl/Tk is settled, define the HAVE_TK flag for the config.h
 # file
@@ -607,68 +484,26 @@ mark_as_advanced(TK_ENABLE_XFT)
 if(BRLCAD_ENABLE_TK)
   set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
   CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
-ELSE(BRLCAD_ENABLE_TK)
+else(BRLCAD_ENABLE_TK)
   set(HAVE_TK 0 CACHE STRING "C level Tk flag" FORCE)
 endif(BRLCAD_ENABLE_TK)
 mark_as_advanced(HAVE_TK)
 
-# Tcl/Tk extensions need a variety of settings provided for them -
-# take care of those here.  Because system Tcl/Tk installations are
-# not guaranteed to have what is needed in the way of headers, go
-# ahead and assign includedir settings based on the local sources even
-# if system versions are enabled.  Ugly, but an unfortunate
-# consequence of current Tcl/Tk coding styles
+# NOTE: Itcl/Itk 4 has a known behavior change that will cause an
+# issue with Archer:
+#
+# http://core.tcl.tk/itcl/tktview/61952ca33e9e58df9e0519a0b4583a144e8ec77b
+#
+# Consequently we need to provide the older v3
+set(ITCL_DIR itcl3)
+set(ITCL_VER "3.4")
+include("${CMAKE_CURRENT_SOURCE_DIR}/itcl3.dist")
+CMAKEFILES_IN_DIR(itcl3_ignore_files itcl3)
+set(ITK_DIR itk3)
+set(ITK_VER "3.4")
+include("${CMAKE_CURRENT_SOURCE_DIR}/itk3.dist")
+CMAKEFILES_IN_DIR(itk3_ignore_files itk3)
 
-set(TCL_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/tcl")
-set(TK_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/tk")
-set(ITCL_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/incrTcl/itcl")
-if(WIN32)
-  set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic" "${CMAKE_CURRENT_SOURCE_DIR}/tcl/win" "${CMAKE_CURRENT_SOURCE_DIR}/tcl/libtommath")
-  set(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" "${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib" "${CMAKE_CURRENT_SOURCE_DIR}/tk/win" "${CMAKE_CURRENT_SOURCE_DIR}/tk/bitmaps")
-ELSE(WIN32)
-  set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic" "${CMAKE_CURRENT_SOURCE_DIR}/tcl/unix" "${CMAKE_CURRENT_SOURCE_DIR}/tcl/libtommath")
-  set(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" "${CMAKE_CURRENT_SOURCE_DIR}/tk/unix" "${CMAKE_CURRENT_SOURCE_DIR}/tk/bitmaps")
-endif(WIN32)
-set(ITCL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/incrTcl/itcl/generic")
-if(BRLCAD_TCL_BUILD)
-  set(TCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-ELSE(BRLCAD_TCL_BUILD)
-  if (NOT "${TCL_LIBRARY}" STREQUAL "")
-    get_filename_component(TCL_BIN_PREFIX ${TCL_LIBRARY} PATH)
-  endif (NOT "${TCL_LIBRARY}" STREQUAL "")
-endif(BRLCAD_TCL_BUILD)
-if(BRLCAD_ENABLE_TK)
-  if(BRLCAD_TK_BUILD)
-    set(TK_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-    get_directory_property(TK_X11_INCLUDE_DIRS DIRECTORY tk DEFINITION TK_X11_INCLUDE_DIRS)
-  ELSE(BRLCAD_TK_BUILD)
-    if(TCL_TK_LIBRARY)
-      get_filename_component(TK_BIN_PREFIX ${TCL_TK_LIBRARY} PATH)
-    endif(TCL_TK_LIBRARY)
-    if(X11_INCLUDE_DIR)
-      set(TK_X11_INCLUDE_DIRS ${X11_INCLUDE_DIR})
-    endif(X11_INCLUDE_DIR)
-    if(X11_Xft_INCLUDE_PATH)
-      set(TK_X11_INCLUDE_DIRS ${TK_X11_INCLUDE_DIRS}
-	${X11_Xft_INCLUDE_PATH})
-    endif(X11_Xft_INCLUDE_PATH)
-    if(X11_Xrender_INCLUDE_PATH)
-      set(TK_X11_INCLUDE_DIRS ${TK_X11_INCLUDE_DIRS}
-	${X11_Xrender_INCLUDE_PATH})
-    endif(X11_Xrender_INCLUDE_PATH)
-    if(X11_Xscreensaver_INCLUDE_PATH)
-      set(TK_X11_INCLUDE_DIRS ${TK_X11_INCLUDE_DIRS}
-	${X11_Xscreensaver_INCLUDE_PATH})
-    endif(X11_Xscreensaver_INCLUDE_PATH)
-  endif(BRLCAD_TK_BUILD)
-endif(BRLCAD_ENABLE_TK)
-
-# Ignore the toplevel incrTcl files that aren't used by either itcl
-# or itk
-include(${CMAKE_CURRENT_SOURCE_DIR}/incrTcl.dist)
-CMAKEFILES_IN_DIR(incrTcl_ignore_files incrTcl)
-
-# First up, look for incrTcl's Itcl.
 set(itcl_ALIASES ENABLE_ITCL)
 set(itcl_DESCRIPTION "
 Option for enabling and disabling compilation of the IncrTcl package
@@ -678,40 +513,23 @@ testing first for a system version if BRLCAD_TCL is set to AUTO or
 SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
 a system version is present.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_LEVEL2" "itcl" itcl_ALIASES itcl_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itcl ${ITCL_DIR} "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TCL;BRLCAD_LEVEL2" "" itcl_ALIASES itcl_DESCRIPTION)
 if(BRLCAD_ITCL_BUILD)
   set(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
   set(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
-  get_directory_property(ITCL_INCLUDE_DIRS DIRECTORY incrTcl/itcl DEFINITION ITCL_INCLUDE_DIRS)
-  set(ITCL_INCLUDE_DIRS "${ITCL_INCLUDE_DIRS}" CACHE STRING "Itcl include paths" FORCE)
-  set(ITCL_VERSION "3.4" CACHE STRING "ITCL_VERSION" FORCE)
-  set(ITCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itcl/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl3.4")
+  set(ITCL_VERSION "${ITCL_VER}" CACHE STRING "ITCL_VERSION" FORCE)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VER}")
   SetTargetFolder(itcl "Third Party Libraries")
   SetTargetFolder(itclstub "Third Party Libraries")
-
-  # manage installed headers
-  get_directory_property(itcl_headers_orig DIRECTORY incrTcl/itcl DEFINITION ITCL_HDRS)
-  set(itcl_headers)
-  foreach(itclh ${itcl_headers_orig})
-    get_filename_component(itclhf ${itclh} NAME)
-    set(itcl_headers ${itcl_headers} incrTcl/itcl/generic/${itclhf})
-  endforeach(itclh ${itcl_headers_orig})
-  BRLCAD_MANAGE_FILES(itcl_headers ${INCLUDE_DIR})
-
-ELSE(BRLCAD_ITCL_BUILD)
+  SetTargetFolder(itcl_pkgIndex "Third Party Libraries")
+else(BRLCAD_ITCL_BUILD)
   # We have Itcl package AND Itcl library - we're good.
   set(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
   set(ITCL_LIBRARY ${ITCL_LIBRARY} CACHE STRING "ITCL_LIBRARY" FORCE)
-  if(ITCL_LIBRARY)
-    get_filename_component(ITCL_BIN_PREFIX ${ITCL_LIBRARY} PATH)
-  endif(ITCL_LIBRARY)
 endif(BRLCAD_ITCL_BUILD)
 CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION	\"${ITCL_VERSION}\"\n")
 mark_as_advanced(ITCL_LIBRARY)
 mark_as_advanced(ITCL_STUB_LIBRARY)
-mark_as_advanced(ITCL_INCLUDE_DIRS)
 mark_as_advanced(ITCL_VERSION)
 
 # Look for IncrTcl's Itk.
@@ -725,26 +543,16 @@ AUTO or SYSTEM.  If BRLCAD_ITK is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "itk" itk_ALIASES itk_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itk ${ITK_DIR} "${TK_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" itk_ALIASES itk_DESCRIPTION)
 if(BRLCAD_ITK_BUILD)
   SetTargetFolder(itk "Third Party Libraries")
   SetTargetFolder(itkstub "Third Party Libraries")
+  SetTargetFolder(itk_pkgIndex "Third Party Libraries")
   # does not handle C library settings.
   set(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
-  set(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itk/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itk3.4")
-
-  # manage installed headers
-  get_directory_property(itk_headers_orig DIRECTORY incrTcl/itk DEFINITION ITK_HDRS)
-  set(itk_headers)
-  foreach(itkh ${itk_headers_orig})
-    get_filename_component(itkhf ${itkh} NAME)
-    set(itk_headers ${itk_headers} incrTcl/itk/generic/${itkhf})
-  endforeach(itkh ${itk_headers_orig})
-  BRLCAD_MANAGE_FILES(itk_headers ${INCLUDE_DIR})
-
-ELSE(BRLCAD_ITK_BUILD)
+  set(ITK_VERSION "3.4" CACHE STRING "ITK_VERSION" FORCE)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itk${ITK_VER}")
+else(BRLCAD_ITK_BUILD)
   # We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
   set(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
   set(ITK_LIBRARY ${ITK_LIBRARY} CACHE STRING "ITK_LIBRARY" FORCE)
@@ -765,11 +573,12 @@ SYSTEM.  If BRLCAD_IWIDGETS is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
+set(IWIDGETS_VER "4.1.1")
+THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TK_WISH}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
 if(BRLCAD_IWIDGETS_BUILD)
-  set(IWIDGETS_VERSION "4.0.1" CACHE STRING "IWIDGETS_VERSION" FORCE)
+  set(IWIDGETS_VERSION "${IWIDGETS_VER}" CACHE STRING "IWIDGETS_VERSION" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/iwidgets/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Iwidgets4.0.1")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Iwidgets${IWIDGETS_VER}")
 ELSE(BRLCAD_IWIDGETS_BUILD)
   set(IWIDGETS_VERSION "${IWIDGETS_PACKAGE_VERSION}" CACHE STRING "IWIDGETS_VERSION" FORCE)
 endif(BRLCAD_IWIDGETS_BUILD)
@@ -787,26 +596,11 @@ SYSTEM.  If BRLCAD_TKHTML is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TK_WISH}" "tcl;tk" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
 DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
 SetTargetFolder(Tkhtml "Third Party Libraries")
 SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
-
-set(tkpng_ALIASES ENABLE_TKPNG)
-set(tkpng_DESCRIPTION "
-Option for enabling and disabling compilation of the tkpng PNG image
-viewing package provided with BRL-CAD's source distribution.  Default
-is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
-testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_TKPNG is set to BUNDLED, local copy is built even if
-a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-")
-THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkpng_ALIASES tkpng_DESCRIPTION)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkpng/pkgIndex.tcl")
-DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tkpng0.8")
-SetTargetFolder(tkpng "Third Party Libraries")
 
 set(tktable_ALIASES ENABLE_TKTABLE)
 set(tktable_DESCRIPTION "
@@ -818,7 +612,7 @@ AUTO or SYSTEM.  If BRLCAD_TKTABLE is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktable_ALIASES tktable_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TK_WISH}" "tcl;tk" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktable_ALIASES tktable_DESCRIPTION)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
 DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
@@ -835,8 +629,8 @@ SetTargetFolder(tktable_header_gen "Compilation Utilities")
 #even if a system version is present.  This package will be disabled if
 #BRLCAD_ENABLE_TK is OFF.
 #")
-#THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TCL_WISH_EXECUTABLE}" "tcl;tk"
-#  "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
+#THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TK_WISH}" "tcl;tk"
+#  "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/pkgIndex.tcl")
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h")
 #DISTCLEAN("${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4")
@@ -854,8 +648,8 @@ SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
 SetTargetFolder(openNURBS-obj "Third Party Libraries")
 if(BRLCAD_OPENNURBS_BUILD)
-  set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIR}" CACHE STRING "Require opennurbs header includes" FORCE)
-  set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARY}" CACHE STRING "Require opennurbs libraries" FORCE)
+  set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIRS}" CACHE STRING "Require opennurbs header includes" FORCE)
+  set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARIES}" CACHE STRING "Require opennurbs libraries" FORCE)
   mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
   mark_as_advanced(OPENNURBS_LIBRARIES)
   get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
@@ -873,13 +667,13 @@ Surface Reconstruction library provided with BRL-CAD's source code.
 Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
 and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES
+THIRD_PARTY(libspsr SPSR SPSR spsr_DESCRIPTION ALIASES
   ENABLE_SPSR FLAGS NOSYS)
 if(BRLCAD_SPSR_BUILD)
   SetTargetFolder(PoissonRecon "Third Party Executables")
   SetTargetFolder(SurfaceTrimmer "Third Party Executables")
-  SetTargetFolder(libSPSR "Third Party Libraries")
-  SetTargetFolder(libSPSR-static "Third Party Libraries")
+  SetTargetFolder(SPSR "Third Party Libraries")
+  SetTargetFolder(SPSR-static "Third Party Libraries")
 endif(BRLCAD_SPSR_BUILD)
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
@@ -917,25 +711,6 @@ set(INCLUDE_INSTALL_DIR ${INCLUDE_DIR})
 set(BIN_INSTALL_DIR ${BIN_DIR})
 set(LIB_INSTALL_DIR ${LIB_DIR})
 
-function(SC_MANAGE_HDRS src_dir src_var target_dir)
-  get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
-  set(sc_headers)
-  foreach(scfile ${sc_headers_orig})
-    get_filename_component(scf ${scfile} NAME)
-    set(sc_headers ${sc_headers} ${src_dir}/${scf})
-  endforeach(scfile ${sc_headers_orig})
-  BRLCAD_MANAGE_FILES("${sc_headers}" "${target_dir}" FOLDER stepcode)
-endfunction(SC_MANAGE_HDRS)
-
-function(SC_MANAGE_HDRS2 src_dir src_var target_dir)
-  get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
-  set(sc_headers)
-  foreach(scfile ${sc_headers_orig})
-    set(sc_headers ${sc_headers} ${src_dir}/${scfile})
-  endforeach(scfile ${sc_headers_orig})
-  BRLCAD_MANAGE_FILES("${sc_headers}" "${target_dir}" FOLDER stepcode)
-endfunction(SC_MANAGE_HDRS2)
-
 set(sc_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 set(sc_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
@@ -959,34 +734,6 @@ if(BRLCAD_SC_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/ExpParser_expparse/expparse.y")
-
-  # stepcode has a lot of installed headers...
-  SC_MANAGE_HDRS(stepcode/src/base SC_BASE_HDRS ${INCLUDE_DIR}/stepcode/base)
-  SC_MANAGE_HDRS(stepcode/src/cldai SC_CLDAI_HDRS ${INCLUDE_DIR}/stepcode/cldai)
-  SC_MANAGE_HDRS(stepcode/src/cleditor SC_CLEDITOR_HDRS ${INCLUDE_DIR}/stepcode/cleditor)
-  SC_MANAGE_HDRS(stepcode/src/clstepcore SC_CLSTEPCORE_HDRS ${INCLUDE_DIR}/stepcode/clstepcore)
-  SC_MANAGE_HDRS(stepcode/src/clutils SC_CLUTILS_HDRS ${INCLUDE_DIR}/stepcode/clutils)
-  SC_MANAGE_HDRS2(stepcode/include express_HDRS ${INCLUDE_DIR}/stepcode/express)
-  SC_MANAGE_HDRS2(stepcode/include exppp_HDRS ${INCLUDE_DIR}/stepcode/exppp)
-  BRLCAD_MANAGE_FILES(stepcode/include/ordered_attrs.h ${INCLUDE_DIR}/stepcode)
-  BRLCAD_MANAGE_FILES(stepcode/include/sc_export.h ${INCLUDE_DIR}/stepcode)
-  BRLCAD_MANAGE_FILES(stepcode/include/sc_stdbool.h ${INCLUDE_DIR}/stepcode)
-  get_directory_property(scbdir DIRECTORY stepcode/include DEFINITION SC_BINARY_DIR)
-  get_directory_property(sciidir DIRECTORY stepcode/include DEFINITION INCLUDE_INSTALL_DIR)
-  add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${scbdir}/${sciidir}/sc_cf.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_cf.h
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${scbdir}/${sciidir}/sc_version_string.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_version_string.h
-    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel"
-    DEPENDS ${scbdir}/${sciidir}/sc_cf.h
-    )
-  add_custom_target(sc_gen_hdrs_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel")
-  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" sc_gen_hdrs_cp)
-  set_target_properties(sc_gen_hdrs_cp PROPERTIES FOLDER "BRL-CAD File Setup/stepcode")
-  add_dependencies(express sc_gen_hdrs_cp)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_cf.h")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_version_string.h")
-
 endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SC_BUILD_TYPE)
@@ -1048,13 +795,11 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
+THIRD_PARTY(libvds VDS vds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 mark_as_advanced(LIBVDS_INCLUDE_DIR)
-SetTargetFolder(libvds "Third Party Libraries")
-SetTargetFolder(libvds-static "Third Party Libraries")
-SetTargetFolder(stdvds "Third Party Libraries")
-SetTargetFolder(stdvds-static "Third Party Libraries")
+SetTargetFolder(vds "Third Party Libraries")
+SetTargetFolder(vds-static "Third Party Libraries")
 
 
 # OpenSceneGraph Libraries
@@ -1104,18 +849,20 @@ else(BRLCAD_OSG_BUILD)
 endif(BRLCAD_OSG_BUILD)
 
 # gdiam
-set(libgdiam_DESCRIPTION "
+set(gdiam_DESCRIPTION "
 Option for enabling and disabling compilation of the libgdiam approximate
 tight bounding box library provided with BRL-CAD's source code.  Default
 is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
+THIRD_PARTY(libgdiam GDIAM gdiam gdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
 set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
 mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
-SetTargetFolder(libgdiam "Third Party Libraries")
-SetTargetFolder(libgdiam-static "Third Party Libraries")
+SetTargetFolder(gdiam "Third Party Libraries")
+SetTargetFolder(gdiam-static "Third Party Libraries")
+mark_as_advanced(GDIAM_LIBRARIES)
+mark_as_advanced(GDIAM_INCLUDE_DIRS)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code
@@ -1138,32 +885,15 @@ add_subdirectory(poly2tri)
 include("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist")
 CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
 DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile")
-set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
+set(P2T_LIBRARY "poly2tri" CACHE STRING "Poly2Tri library" FORCE)
 set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
-get_directory_property(poly2tri_headers DIRECTORY poly2tri DEFINITION LIBP2T_PUBLIC_HDRS)
-foreach(phfile ${poly2tri_headers})
-  get_filename_component(phfile_dir ${phfile} DIRECTORY)
-  BRLCAD_MANAGE_FILES(poly2tri/${phfile} ${INCLUDE_DIR}/${phfile_dir})
-endforeach(phfile ${poly2tri_headers})
-SetTargetFolder(p2t "Third Party Libraries")
-SetTargetFolder(p2t-static "Third Party Libraries")
+SetTargetFolder(poly2tri "Third Party Libraries")
+SetTargetFolder(poly2tri-static "Third Party Libraries")
 mark_as_advanced(P2T_LIBRARY)
 mark_as_advanced(P2T_INCLUDE_DIR)
 mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
-
-# RPLY I/O library
-add_subdirectory(rply)
-include("${CMAKE_CURRENT_SOURCE_DIR}/rply.dist")
-CMAKEFILES_IN_DIR(rply_ignore_files rply)
-DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/rply/Makefile")
-set(RPLY_LIBRARIES "rply" CACHE STRING "RPLY library" FORCE)
-set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/rply" CACHE STRING "Directory containing rply header" FORCE)
-SetTargetFolder(rply "Third Party Libraries")
-SetTargetFolder(rply-static "Third Party Libraries")
-mark_as_advanced(RPLY_LIBRARIES)
-mark_as_advanced(RPLY_INCLUDE_DIRS)
 
 # PROJ.4 library - used by GDAL
 set(proj4_DESCRIPTION "
@@ -1176,9 +906,14 @@ AUTO.
 THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BRLCAD_LEVEL2" ALIASES ENABLE_PROJ4)
 if(BRLCAD_PROJ4_BUILD)
   set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
+  set(PROJ4_LIBRARIES proj CACHE STRING "libproj" FORCE)
   set(PROJ4_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
+  set(PROJ4_INCLUDE_DIRS "${PROJ4_INCLUDE_DIR}")
+  set(PROJ4_VERSION "4.9.3")
+  set(PROJ4_FOUND ON)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/proj-4/proj_config.h")
   SetTargetFolder(proj "Third Party Libraries/GDAL")
+  SetTargetFolder(proj-static "Third Party Libraries/GDAL")
   # Need data files in order for PROJ-4 to work...
   get_directory_property(PROJ_DICTIONARY DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/proj-4/nad DEFINITION PROJ_DICTIONARY)
   set(proj_dict)
@@ -1215,10 +950,14 @@ if(BRLCAD_GDAL_BUILD)
     )
   set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "libgdal includes" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/gdal/cpl_config.h")
+  SetTargetFolder(gdal "Third Party Libraries/GDAL")
+  SetTargetFolder(gdal-static "Third Party Libraries/GDAL")
 endif(BRLCAD_GDAL_BUILD)
 mark_as_advanced(GDAL_CONFIG)
 mark_as_advanced(GDAL_INCLUDE_DIR)
 mark_as_advanced(GDAL_LIBRARY)
+mark_as_advanced(GDAL_INCLUDE_DIRS)
+mark_as_advanced(GDAL_LIBRARIES)
 
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)

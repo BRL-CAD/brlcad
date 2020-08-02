@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/getopt.h"
@@ -118,6 +119,11 @@ main(int argc, char **argv)
     int i, len, times, bytes_in_buf, copies_per_buf;
     int remainder = 0;
     unsigned char *bp;
+
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     get_args(argc, argv);
     argc = argc - bu_optind + 1;

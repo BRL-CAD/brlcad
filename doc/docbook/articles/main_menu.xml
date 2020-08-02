@@ -3737,12 +3737,7 @@
         <link xlink:href="../xxxxx.php">Man 3</link>
       </para>
   <itemizedlist>
-        <listitem>
-      <para>
-        <link xlink:href="../../man3/en/libcursor.php">Libcursor</link>
-      </para>
-    </listitem>
-        <listitem>
+      <listitem>
       <para>
         <link xlink:href="../../man3/en/libfb.php">Lib fb</link>
       </para>

@@ -725,6 +725,8 @@ main(int argc, char *argv[])
 	printf("Warning: %s takes no arguments.\n", argv[0]);
     }
 
+    bu_setprogname(argv[0]);
+
     printf("bu_sscanf: running tests\n");
 
     doNumericTests();

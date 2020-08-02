@@ -28,9 +28,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <png.h>
+#include "png.h"
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -72,6 +73,11 @@ main(int argc, char **argv)
     int in, out;
     double value;
     size_t ret;
+
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     while (argc > 1 && argv[1][0] == '-') {
 	if (BU_STR_EQUAL(argv[1], "-v"))

@@ -5,24 +5,11 @@ DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calcul
 
 # Minimal directories required for any BRL-CAD functionality
 
-# Define some common definitions here that are used
-# in most BRL-CAD directories
-
-add_definitions(
-  -DHAVE_CONFIG_H
-  -DBRLCADBUILD=1
-  )
-
 if(MSVC)
   add_definitions(
     -D_CRT_SECURE_NO_WARNINGS
     )
-  # FIXME: these should be proper library checks, not based on MSVC "platform"
-  set(WINSOCK_LIB ws2_32.lib)
-  set(PSAPI_LIB psapi.lib)
-  set(RPCRT_LIB rpcrt4.lib)
 endif(MSVC)
-
 
 # We need to define a number of "components" to allow for easy building of
 # subsets of BRL-CAD.  We will control this process with an advanced
@@ -48,12 +35,10 @@ set(level_1_dirs
 
 set(level_2_dirs
   libpkg
-  libfb
   libgcv
   libanalyze
   liboptical
   libged
-  libcursor
   libdm
   libfft
   libicv
@@ -79,7 +64,6 @@ set(level_3_dirs
   fb
   fbserv
   gtools
-  halftone
   nirt
   proc-db
   rt
@@ -87,6 +71,7 @@ set(level_3_dirs
   shapes
   sig
   util
+  qged
   external
   ${non_win32_dirs}
   # tclscripts must come before applications like

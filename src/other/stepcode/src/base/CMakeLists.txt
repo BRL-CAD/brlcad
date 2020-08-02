@@ -40,5 +40,7 @@ if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/judy/src" )
     message( "Judy array source code extracted." )
 endif(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/judy/src" )
 
-install(FILES ${SC_BASE_HDRS}
-        DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/base)
+if (NOT SKIP_INSTALL_HEADERS)
+	install(FILES ${SC_BASE_HDRS}
+		DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/base)
+endif (NOT SKIP_INSTALL_HEADERS)

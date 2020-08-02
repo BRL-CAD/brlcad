@@ -67,35 +67,35 @@
 extern double drand48(void);
 #  endif
 
-#if !defined(__cplusplus) || defined(HAVE_SHARED_RINT_TEST)
+# if !defined(__cplusplus) || defined(HAVE_SHARED_RINT_TEST)
 /* make sure lrint() is provided */
-#  if !defined(lrint)
-#    if !defined(HAVE_LRINT)
-#      define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
-#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_LRINT)
+#   if !defined(lrint)
+#     if !defined(HAVE_LRINT)
+#       define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
+#     elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_LRINT)
 long int lrint(double x);
-#      define HAVE_DECL_LRINT 1
-#    endif
-#  endif
+#       define HAVE_DECL_LRINT 1
+#     endif
+#   endif
 
-#  if !defined(HAVE_LRINT)
-#    define HAVE_LRINT 1
-#  endif
+#   if !defined(HAVE_LRINT)
+#     define HAVE_LRINT 1
+#   endif
 
 /* make sure rint() is provided */
-#  if !defined(rint)
-#    if !defined(HAVE_RINT)
-#      define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
-#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_RINT)
+#   if !defined(rint)
+#     if !defined(HAVE_RINT)
+#       define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
+#     elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_RINT)
 double rint(double x);
-#      define HAVE_DECL_RINT 1
-#    endif
-#  endif
+#       define HAVE_DECL_RINT 1
+#     endif
+#   endif
 
-#  if !defined(HAVE_RINT)
-#    define HAVE_RINT 1
-#  endif
-#endif
+#   if !defined(HAVE_RINT)
+#     define HAVE_RINT 1
+#   endif
+# endif
 
 /* strict c89 doesn't declare snprintf() */
 # if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(snprintf) && !defined(__cplusplus)
@@ -151,12 +151,14 @@ extern int snprintf(char *str, size_t size, const char *format, ...);
 #endif
 
 /* make sure the old bsd types are defined for portability */
-#if !defined(HAVE_U_TYPES)
+#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
+# if !defined(HAVE_U_TYPES)
 typedef unsigned char u_char;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
 typedef unsigned short u_short;
-#  define HAVE_U_TYPES 1
+#   define HAVE_U_TYPES 1
+# endif
 #endif
 
 /* We want 64 bit (large file) I/O capabilities whenever they are available.
@@ -170,16 +172,18 @@ typedef unsigned short u_short;
  * regardless, we use it so make sure it's declared by using the
  * similar POSIX ptrdiff_t type.
  */
-#ifndef HAVE_SSIZE_T
-#  ifdef HAVE_SYS_TYPES_H
-#    include <sys/types.h>
-#  endif
-#  include <limits.h>
-#  include <stddef.h>
-#  ifndef SSIZE_MAX
+#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
+# ifndef HAVE_SSIZE_T
+#   ifdef HAVE_SYS_TYPES_H
+#     include <sys/types.h>
+#   endif
+#   include <limits.h>
+#   include <stddef.h>
+#   ifndef SSIZE_MAX
 typedef ptrdiff_t ssize_t;
-#    define HAVE_SSIZE_T 1
-#  endif
+#     define HAVE_SSIZE_T 1
+#   endif
+# endif
 #endif
 
 /* make sure most of the C99 stdint types are provided including the
@@ -524,6 +528,21 @@ typedef _TCHAR TCHAR;
 #  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
 #endif
 
+/**
+ * If we've not already defined COMPILER_DLLEXPORT and COMPILER_DLLIMPORT,
+ * define them away so code including the *_EXPORT header logic won't
+ * fail.
+ */
+#if defined(_MSC_VER)
+#  define COMPILER_DLLEXPORT __declspec(dllexport)
+#  define COMPILER_DLLIMPORT __declspec(dllimport)
+#elif defined(__GNUC__) || defined(__clang__)
+#  define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+#  define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#else
+#  define COMPILER_DLLEXPORT
+#  define COMPILER_DLLIMPORT
+#endif
 
 #endif  /* COMMON_H */
 

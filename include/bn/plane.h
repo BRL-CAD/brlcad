@@ -24,6 +24,10 @@
  * @brief
  * Plane structures (from src/librt/plane.h) and plane/line/point calculations
  *
+ * TODO - this API needs to be migrated to libbg as a geometry related API, and
+ * perhaps simplified.  A lot of the closest point calculations, for example,
+ * should probably just concern themselves with the calculation itself and
+ * leave any tolerance based questions to a separate step.
  */
 /** @{ */
 /* @file plane.h */

@@ -1,10 +1,8 @@
 /* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
 /*
- *  Main authors:
- *     Vincent Barichard <Vincent.Barichard@univ-angers.fr>
+ *  Main authors: Vincent Barichard <Vincent.Barichard@univ-angers.fr>
  *
- *  Copyright:
- *     Vincent Barichard, 2012
+ *  Copyright (c) 2012 Vincent Barichard
  *
  *  Last modified:
  *     $Date$ by $Author$
@@ -41,6 +39,8 @@
 
 #include <gecode/minimodel.hh>
 #include <gecode/float.hh>
+
+#include "bu/app.h"
 
 using namespace Gecode;
 
@@ -112,6 +112,7 @@ public:
  *  \relates CartesianHeart
  */
 int main(int argc, char* argv[]) {
+  bu_setprogname(argv[0]);
   Options opt("CartesianHeart");
   opt.parse(argc,argv);
   opt.solutions(0);

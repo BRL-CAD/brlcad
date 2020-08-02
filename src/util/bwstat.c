@@ -39,6 +39,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -80,6 +81,11 @@ main(int argc, char **argv)
     double mean, var = 0.0 , skew = 0.0 ;
     FILE *fp;
 
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(1, "%s", Usage);
 
@@ -92,7 +98,7 @@ main(int argc, char **argv)
 
     /* check for optional input file */
     if (argc > 1) {
-	if ((fp = fopen(argv[1], "r")) == 0) {
+	if ((fp = fopen(argv[1], "rb")) == 0) {
 	    bu_exit(1, "bwstat: can't open \"%s\"\n", argv[1]);
 	}
 	argv++;

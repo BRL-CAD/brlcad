@@ -296,6 +296,8 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
+    bu_setprogname(av[0]);
+
     std::map<std::string, std::string> sem_defs;
     std::map<std::string, std::string> sem_files;
 

@@ -79,45 +79,50 @@ set(MGED_TESTS
   zoom.mged
   )
 
-foreach(testfile ${MGED_TESTS})
-  file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}" TEST_CONTENTS)
-  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}" "source ${CMAKE_CURRENT_SOURCE_DIR}/regression_resources.tcl\n\n${TEST_CONTENTS}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
-endforeach(testfile ${MGED_TESTS})
+set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-mged.cmake.in")
 
-set(G_FILENAME "regress_mged_cmd_functionality.g")
-set(MGED_TEST_LIST "")
+if (TARGET mged)
+  foreach(testfile ${MGED_TESTS})
+    string(REGEX REPLACE "([0-9a-z_-]*).mged" "\\1" tname "${testfile}")
 
-add_custom_command(
-  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME}"
-  COMMAND "${CMAKE_COMMAND}" -E remove -f "${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME}"
-  COMMAND "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mged" -c "${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME}" ls
-  DEPENDS mged ${MGED_TESTS}
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}" TEST_CONTENTS)
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}" "source ${CMAKE_CURRENT_SOURCE_DIR}/regression_resources.tcl\n\n${TEST_CONTENTS}")
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
+
+    set(TARGET_NAME ${tname})
+    set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-mged_${TNAME}.log")
+
+    BRLCAD_REGRESSION_TEST(regress-mged_${tname} "mged" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
+    DISTCLEAN("${LOG_FILE}")
+  endforeach(testfile ${MGED_TESTS})
+
+  # Original shell based test
+  if (SH_EXEC)
+    add_test(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/mged.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-mged mged TEST_DEFINED)
+  endif (SH_EXEC)
+
+endif (TARGET mged)
+
+CMAKEFILES(
+  mged.sh
+  mged_test.sh
   )
 
-set(test_prev "")
-foreach(testfile ${MGED_TESTS})
-  string(REGEX REPLACE "([0-9a-z_-]*).mged" "\\1" cmd_root "${testfile}")
-  add_custom_target(regress-mged-${cmd_root}
-	 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mged" -c "${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME}" < "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}"
-    DEPENDS mged ${CMAKE_CURRENT_BINARY_DIR}/${G_FILENAME} ${test_prev}
-    )
-  set_target_properties(regress-mged-${cmd_root} PROPERTIES FOLDER "BRL-CAD Regression Tests")
-  set_target_properties(regress-mged-${cmd_root} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-  set(MGED_TEST_LIST ${MGED_TEST_LIST} regress-mged-${cmd_root})
-  set(test_prev regress-mged-${cmd_root})
-endforeach(testfile ${MGED_TESTS})
+# list of temporary files
+set(mged_outfiles
+  mged.g
+  mged.log
+  )
 
-list(SORT MGED_TEST_LIST)
-add_custom_target(regress-mged-cmds DEPENDS ${MGED_TEST_LIST})
-set_target_properties(regress-mged-cmds PROPERTIES FOLDER "BRL-CAD Regression Tests")
-set_target_properties(regress-mged-cmds PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${mged_outfiles}")
+DISTCLEAN(${mged_outfiles})
 
 CMAKEFILES(
   CMakeLists.txt
   mged.tcl
   regression_resources.tcl
-  run_test
+  regress-mged.cmake.in
   ${MGED_TESTS}
   )
 

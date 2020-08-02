@@ -269,7 +269,7 @@ data 23969
 #                      I N S T A L L T R E E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2020 United States Government as represented by
+# Copyright (c) 2002-2007 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1479,7 +1479,7 @@ BEGIN
             VALUE "FileDescription", "BRL-CAD for Windows Dynamic-Link Library\0"
             VALUE "FileVersion", BRLCAD_DLL_RC_VERSION
             VALUE "InternalName", "brlcad\0"
-            VALUE "LegalCopyright", "Copyright (c) 1984-2020 United States Government as represented by the U.S. Army Research Laboratory. All Rights Reserved.\0"
+            VALUE "LegalCopyright", "Copyright (c) 1984-2007 United States Government as represented by the U.S. Army Research Laboratory. All Rights Reserved.\0"
             VALUE "LegalTrademarks", "The word mark ""BRL-CAD"" and the ""BRL-CAD Eagle"" image are registered trademarks of the Department of the Army, United States Government. All rights are reserved.\0"
             VALUE "OriginalFilename", "brlcad.dll\0"
             VALUE "ProductName", "BRL-CAD\0"
@@ -2845,7 +2845,7 @@ data 232010
 #                      A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2020 United States Government as represented by
+# Copyright (c) 2002-2007 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -40383,7 +40383,7 @@ mark :1111129886
 committer CVS SVN Sync <cvs_svn_sync> 1199132714 +0000
 data 77
 Sync CVS repo contents for r29886 to match the SVN contents at that revision.
-from 5c05c018bc844875038bfa929e1769d68b69c005
+from b66a14bfa338e674c95e0f641f030846c3d7bd9d
 M 100644 83b8558509908be85f9c61948c8d8d5ef18672b4 ".cvsignore"
 M 100644 aa08223bbc2674f1928bfeda5d917a4f40884c6f "misc/nsis/brlcad.nsi"
 M 100755 9cac74ad0e4037cc903df32f28bc7cdbec8b0e10 "misc/win32-msvc8/tclsh/library/installTree.tcl"

@@ -16,8 +16,10 @@ set(LIBBG_SOURCES
   chull3d.cpp
   clipper.cpp
   lseg_lseg.c
+  lseg_pt.c
   obr.c
   polygon.c
+  polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
   spsr.c
@@ -30,12 +32,20 @@ set(LIBBG_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;libSPSR;${P2T_LIBRARY}")
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;SPSR;${P2T_LIBRARY}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
-if(CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "SPSR_DLL_IMPORTS")
-  set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
+  if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
+    set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_IMPORTS")
+  endif (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
+  if (TARGET libbg-obj)
+    set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "SPSR_DLL_IMPORTS")
+    if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
+      set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_IMPORTS")
+    endif (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
+  endif (TARGET libbg-obj)
+endif (HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)
 

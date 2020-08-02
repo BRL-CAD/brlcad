@@ -29,6 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -62,6 +63,8 @@ main(int argc, const char *argv[])			/* "cad_parea" entry point */
     point first = {0.0, 0.0}; /* saved first point */
     int saved; /* "`first' valid" flag */
     double sum; /* accumulator */
+
+    bu_setprogname(argv[0]);
 
     if (!GetArgs(argc, argv)) {
 	/* process command arguments */

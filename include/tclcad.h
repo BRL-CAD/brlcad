@@ -38,17 +38,15 @@
 #include "dm.h"
 #include "ged.h"
 
-#include "fb.h"
-
 __BEGIN_DECLS
 
 #ifndef TCLCAD_EXPORT
 #  if defined(TCLCAD_DLL_EXPORTS) && defined(TCLCAD_DLL_IMPORTS)
 #    error "Only TCLCAD_DLL_EXPORTS or TCLCAD_DLL_IMPORTS can be defined, not both."
 #  elif defined(TCLCAD_DLL_EXPORTS)
-#    define TCLCAD_EXPORT __declspec(dllexport)
+#    define TCLCAD_EXPORT COMPILER_DLLEXPORT
 #  elif defined(TCLCAD_DLL_IMPORTS)
-#    define TCLCAD_EXPORT __declspec(dllimport)
+#    define TCLCAD_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define TCLCAD_EXPORT
 #  endif
@@ -88,13 +86,60 @@ __BEGIN_DECLS
 #define TCLCAD_OBJ_FB_MODE_INTERLAY 2
 #define TCLCAD_OBJ_FB_MODE_OVERLAY  3
 
+/* Use fbserv */
+#define USE_FBSERV 1
+
+/* Framebuffer server object */
+
+#define NET_LONG_LEN 4 /**< @brief # bytes to network long */
+#define MAX_CLIENTS 32
+#define MAX_PORT_TRIES 100
+#define FBS_CALLBACK_NULL (void (*)())NULL
+#define FBSERV_OBJ_NULL (struct fbserv_obj *)NULL
+
+struct fbserv_listener {
+    int fbsl_fd;                        /**< @brief socket to listen for connections */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsl_chan;
+#endif
+    int fbsl_port;                      /**< @brief port number to listen on */
+    int fbsl_listen;                    /**< @brief !0 means listen for connections */
+    struct fbserv_obj *fbsl_fbsp;       /**< @brief points to its fbserv object */
+};
+
+
+struct fbserv_client {
+    int fbsc_fd;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsc_chan;
+    Tcl_FileProc *fbsc_handler;
+#endif
+    struct pkg_conn *fbsc_pkg;
+    struct fbserv_obj *fbsc_fbsp;       /**< @brief points to its fbserv object */
+};
+
+
+struct fbserv_obj {
+    struct fb *fbs_fbp;                        /**< @brief framebuffer pointer */
+    void *fbs_interp;             /**< @brief tcl interpreter */
+    struct fbserv_listener fbs_listener;                /**< @brief data for listening */
+    struct fbserv_client fbs_clients[MAX_CLIENTS];      /**< @brief connected clients */
+    void (*fbs_callback)(void *clientData);             /**< @brief callback function */
+    void *fbs_clientData;
+    int fbs_mode;                       /**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
+};
+
+DM_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
+DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
+
+
 struct ged_dm_view {
     struct bu_list		l;
     struct bu_vls		gdv_callback;
     struct bu_vls		gdv_edit_motion_delta_callback;
     struct bu_vls		gdv_name;
     struct bview		*gdv_view;
-    dm				*gdv_dmp;
+    struct dm			*gdv_dmp;
     struct fbserv_obj		gdv_fbs;
     struct ged_obj		*gdv_gop;
     int	   			gdv_hide_view;
@@ -127,9 +172,7 @@ struct tclcad_obj {
 TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Bu_Init(void *interp);
 TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_bn_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 
 
@@ -298,10 +341,7 @@ TCLCAD_EXPORT extern int tcl_list_to_fastf_array(Tcl_Interp *interp,
 						 int *array_len);
 
 
-TCLCAD_EXPORT extern int Tclcad_Init(Tcl_Interp *interp);
-
 /* defined in tclcad_obj.c */
-TCLCAD_EXPORT extern int Go_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 				     Tcl_Interp *interp,
 				     int argc,
@@ -471,6 +511,22 @@ TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const ch
  */
 TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog);
 
+/**
+ * Create Tcl specific I/O handlers
+ */
+TCLCAD_EXPORT void
+tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
+
+/**
+ * Delete Tcl specific I/O handlers
+ */
+TCLCAD_EXPORT void
+tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+
+
+/* dm_tcl.c */
+/* The presence of Tcl_Interp as an arg prevents giving arg list */
+TCLCAD_EXPORT extern void fb_tcl_setup(void);
 
 __END_DECLS
 

@@ -32,6 +32,7 @@
 
 #include "vmath.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -166,7 +167,7 @@ get_args(int argc, char **argv)
 	fp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((fp = fopen(file_name, "r")) == NULL) {
+	if ((fp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "sun-pix: cannot open \"%s\" for reading\n",
 		    file_name);
@@ -264,6 +265,11 @@ main(int argc, char **argv)
     int width;			/* line width in bits */
     int scanbytes;		/* bytes/line (padded to 16 bits) */
     unsigned char c, cmap_idx, buf[BU_PAGE_SIZE];
+
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     fp = stdin;
     if (!get_args(argc, argv) || (isatty(fileno(stdout)) && (hflag == 0))) {

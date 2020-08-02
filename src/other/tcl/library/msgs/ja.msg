@@ -40,5 +40,5 @@ namespace eval ::tcl::clock {
     ::msgcat::mcset ja LOCALE_DATE_FORMAT "%EY\u5e74%m\u6708%d\u65e5"
     ::msgcat::mcset ja LOCALE_TIME_FORMAT "%H\u6642%M\u5206%S\u79d2"
     ::msgcat::mcset ja LOCALE_DATE_TIME_FORMAT "%EY\u5e74%m\u6708%d\u65e5 (%a) %H\u6642%M\u5206%S\u79d2 %z"
-    ::msgcat::mcset ja LOCALE_ERAS "\u007b-9223372036854775808 \u897f\u66a6 0\u007d \u007b-3061011600 \u660e\u6cbb 1867\u007d \u007b-1812186000 \u5927\u6b63 1911\u007d \u007b-1357635600 \u662d\u548c 1925\u007d \u007b600220800 \u5e73\u6210 1988\u007d"
+    ::msgcat::mcset ja LOCALE_ERAS "{-9223372036854775808 \u897f\u66a6 0} {-3061011600 \u660e\u6cbb 1867} {-1812186000 \u5927\u6b63 1911} {-1357635600 \u662d\u548c 1925} {600220800 \u5e73\u6210 1988} {1556668800 \u4ee4\u548c 2018}"
 }

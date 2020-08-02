@@ -132,6 +132,8 @@ compare_bu_to_system_basename(const char *UNUSED(input))
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
 	compare_bu_to_system_basename(NULL);

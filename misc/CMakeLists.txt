@@ -45,10 +45,13 @@ set(density_DATAFILES
   )
 BRLCAD_ADDDATA(density_DATAFILES data)
 
+add_subdirectory(nirt)
+
 BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
 
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
+
 
 add_subdirectory(doxygen)
 add_subdirectory(CMake)
@@ -112,7 +115,6 @@ set(misc_ignore_files
   repoconv/CONVERT.sh
   repoconv/NOTES
   repoconv/RESUME.sh
-  repoconv/account-map
   repoconv/audit_merges/audit_merges.cxx
   repoconv/audit_merges/commit_list.txt
   repoconv/checkout_dercs.sh
@@ -204,14 +206,20 @@ set(misc_ignore_files
   repoconv/custom/r29886_cvs_svn_rel-5-1-branch_sync.fi
   repoconv/custom/r29886_cvs_svn_trunk_sync.fi
   repoconv/custom/r29886_tags.fi
+  repoconv/account-map
+  repoconv/account-map_svnfexport.txt
   repoconv/cvs_authormap
+  repoconv/cvs_authormap_svnfexport.txt
+  repoconv/cvs_info.sh
+  repoconv/domap.sh
+  repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
+  repoconv/gitattributes
   repoconv/gitignore.tar.gz
   repoconv/manual_merge_info.tar.gz
   repoconv/md5.hpp
   repoconv/sha1.hpp
   repoconv/svn2git/README
-  repoconv/svn2git/account-map
   repoconv/svn2git/archive_branches.sh
   repoconv/svn2git/rules
   repoconv/svn2git/rules-geomcore
@@ -239,6 +247,7 @@ set(misc_ignore_files
   repoconv/svn_date.cxx
   repoconv/svn_date.h
   repoconv/svn_de-rcs.cxx
+  repoconv/svn_git_diff.cxx
   repoconv/svn_map_commit_revs.cxx
   repoconv/svn_msgs.cxx
   repoconv/svnfexport.cxx
@@ -246,7 +255,29 @@ set(misc_ignore_files
   repoconv/svnfexport_svn.cxx
   repoconv/sync_commit.sh
   repoconv/sync_commit_trunk.sh
+  repoconv/tagmap.sh
   repoconv/terra.dsp
+  repoconv/verify/cvs.sh
+  repoconv/verify/cvs_repaired/sphflake.pix,v
+  repoconv/verify/cxxopts.hpp
+  repoconv/verify/md5.hpp
+  repoconv/verify/sha1.hpp
+  repoconv/verify/svn.sh
+  repoconv/verify/svn_de-rcs.cxx
+  repoconv/verify/verify.cpp
+  repoconv/verify/verify.sh
+  repowork/COPYING
+  repowork/README
+  repowork/blob.cpp
+  repowork/TextFlow.hpp
+  repowork/repowork.cpp
+  repowork/reset.cpp
+  repowork/misc_cmds.cpp
+  repowork/cxxopts.hpp
+  repowork/tag.cpp
+  repowork/repowork.h
+  repowork/commit.cpp
+  repowork/CMakeLists.txt
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def
   win32-msvc/Dll/BrlcadCore.rc

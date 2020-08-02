@@ -21,6 +21,7 @@
 #include <osg/FrameBufferObject>
 #include <osg/TextureRectangle>
 #include <osg/Texture1D>
+#include <osg/ContextData>
 
 #include <OpenThreads/ScopedLock>
 #include <OpenThreads/Mutex>
@@ -47,6 +48,10 @@
 #define GL_STORAGE_SHARED_APPLE           0x85BF
 #endif
 
+#ifndef GL_RGB565
+#define GL_RGB565                         0x8D62
+#endif
+
 #if 0
     #define CHECK_CONSISTENCY checkConsistency();
 #else
@@ -56,10 +61,185 @@
 namespace osg {
 
 ApplicationUsageProxy Texture_e0(ApplicationUsage::ENVIRONMENTAL_VARIABLE,"OSG_MAX_TEXTURE_SIZE","Set the maximum size of textures.");
+ApplicationUsageProxy Texture_e1(ApplicationUsage::ENVIRONMENTAL_VARIABLE,"OSG_GL_TEXTURE_STORAGE","ON|OFF or ENABLE|DISABLE, Enables/disables usage of glTexStorage for textures where supported, default is ENABLED.");
 
-typedef buffered_value< ref_ptr<Texture::Extensions> > BufferedExtensions;
-static BufferedExtensions s_extensions;
+struct InternalPixelRelations
+{
+    GLenum sizedInternalFormat;
+    GLint internalFormat;
+    GLenum type;
+};
 
+
+InternalPixelRelations sizedInternalFormats[] = {
+
+      { GL_R8UI                                , GL_RED_INTEGER_EXT  , GL_UNSIGNED_BYTE                             }
+    , { GL_R8I                                 , GL_RED_INTEGER_EXT  , GL_BYTE                                      }
+    , { GL_R16UI                               , GL_RED_INTEGER_EXT  , GL_UNSIGNED_SHORT                            }
+    , { GL_R16I                                , GL_RED_INTEGER_EXT  , GL_SHORT                                     }
+    , { GL_R32UI                               , GL_RED_INTEGER_EXT  , GL_UNSIGNED_INT                              }
+    , { GL_R32I                                , GL_RED_INTEGER_EXT  , GL_INT                                       }
+
+    , { GL_RG8UI                               , GL_RG_INTEGER       , GL_UNSIGNED_BYTE                             }
+    , { GL_RG8I                                , GL_RG_INTEGER       , GL_BYTE                                      }
+    , { GL_RG16UI                              , GL_RG_INTEGER       , GL_UNSIGNED_SHORT                            }
+    , { GL_RG16I                               , GL_RG_INTEGER       , GL_SHORT                                     }
+    , { GL_RG32UI                              , GL_RG_INTEGER       , GL_UNSIGNED_INT                              }
+    , { GL_RG32I                               , GL_RG_INTEGER       , GL_INT                                       }
+
+    , { GL_RGB8UI_EXT                          , GL_RGB_INTEGER_EXT  , GL_UNSIGNED_BYTE                             }
+    , { GL_RGB8I_EXT                           , GL_RGB_INTEGER_EXT  , GL_BYTE                                      }
+    , { GL_RGB16UI_EXT                         , GL_RGB_INTEGER_EXT  , GL_UNSIGNED_SHORT                            }
+    , { GL_RGB16I_EXT                          , GL_RGB_INTEGER_EXT  , GL_SHORT                                     }
+    , { GL_RGB32UI_EXT                         , GL_RGB_INTEGER_EXT  , GL_UNSIGNED_INT                              }
+    , { GL_RGB32I_EXT                          , GL_RGB_INTEGER_EXT  , GL_INT                                       }
+
+    , { GL_RGBA8UI_EXT                         , GL_RGBA_INTEGER_EXT , GL_UNSIGNED_BYTE                             }
+    , { GL_RGBA8I_EXT                          , GL_RGBA_INTEGER_EXT , GL_BYTE                                      }
+ // , { GL_RGB10_A2UI_EXT                      , GL_RGBA_INTEGER_EXT , GL_UNSIGNED_INT_2_10_10_10_REV               }
+    , { GL_RGBA16UI_EXT                        , GL_RGBA_INTEGER_EXT , GL_UNSIGNED_SHORT                            }
+    , { GL_RGBA16I_EXT                         , GL_RGBA_INTEGER_EXT , GL_SHORT                                     }
+    , { GL_RGBA32I_EXT                         , GL_RGBA_INTEGER_EXT , GL_INT                                       }
+    , { GL_RGBA32UI_EXT                        , GL_RGBA_INTEGER_EXT , GL_UNSIGNED_INT                              }
+
+    , { GL_R8                                  , GL_RED              , GL_UNSIGNED_BYTE                             }
+    , { GL_R16F                                , GL_RED              , GL_HALF_FLOAT                                }
+    , { GL_R32F                                , GL_RED              , GL_FLOAT                                     }
+    , { GL_R16F                                , GL_RED              , GL_FLOAT                                     }
+    , { GL_RG8                                 , GL_RG               , GL_UNSIGNED_BYTE                             }
+    , { GL_RG16F                               , GL_RG               , GL_HALF_FLOAT                                }
+    , { GL_RG16F                               , GL_RG               , GL_FLOAT                                     }
+    , { GL_RG32F                               , GL_RG               , GL_FLOAT                                     }
+ // , ( GL_RGBA2                               , GL_RGB              , UNKNOWN                                      )
+    , { GL_R3_G3_B2                            , GL_RGB              , GL_UNSIGNED_BYTE_3_3_2                       }
+    , { GL_R3_G3_B2                            , GL_RGB              , GL_UNSIGNED_BYTE_2_3_3_REV                   }
+    , { GL_RGB4                                , GL_RGB              , GL_UNSIGNED_SHORT_4_4_4_4                    }
+    , { GL_RGB4                                , GL_RGB              , GL_UNSIGNED_SHORT_4_4_4_4_REV                }
+    , { GL_RGB5                                , GL_RGB              , GL_UNSIGNED_SHORT_5_5_5_1                    }
+    , { GL_RGB5                                , GL_RGB              , GL_UNSIGNED_SHORT_1_5_5_5_REV                }
+    , { GL_RGB8                                , GL_RGB              , GL_UNSIGNED_BYTE                             }
+    , { GL_RGB565                              , GL_RGB              , GL_UNSIGNED_BYTE                             }
+    , { GL_RGB565                              , GL_RGB              , GL_UNSIGNED_SHORT_5_6_5                      }
+    , { GL_RGB565                              , GL_RGB              , GL_UNSIGNED_SHORT_5_6_5_REV                  }
+ // , { GL_RGB9_E5                             , GL_RGB              , GL_UNSIGNED_INT_9_9_9_5,                     }
+ // , { GL_RGB9_E5                             , GL_RGB              , GL_UNSIGNED_INT_5_9_9_9_REV,                 }
+ // , { GL_RGB9_E5                             , GL_RGB              , GL_HALF_FLOAT                                }
+ // , { GL_RGB9_E5                             , GL_RGB              , GL_FLOAT                                     }
+ // , { GL_R11F_G11F_B10F                      , GL_RGB              , GL_UNSIGNED_INT_10F_11F_11F_REV              }
+ // , { GL_R11F_G11F_B10F                      , GL_RGB              , GL_HALF_FLOAT                                }
+ // , { GL_R11F_G11F_B10F                      , GL_RGB              , GL_FLOAT                                     }
+    , { GL_RGB10                               , GL_RGB              , GL_UNSIGNED_INT_2_10_10_10_REV               }
+    , { GL_RGB10                               , GL_RGB              , GL_UNSIGNED_INT_10_10_10_2                   }
+    , { GL_RGB12                               , GL_RGB              , GL_UNSIGNED_SHORT                            }
+    , { GL_RGB16F_ARB                          , GL_RGB              , GL_HALF_FLOAT                                }
+    , { GL_RGB32F_ARB                          , GL_RGB              , GL_FLOAT                                     }
+    , { GL_RGB16F_ARB                          , GL_RGB              , GL_FLOAT                                     }
+
+
+    , { GL_RGBA8                               , GL_RGBA             , GL_UNSIGNED_BYTE                             }
+    , { GL_RGBA16                              , GL_RGBA             , GL_UNSIGNED_SHORT                            }
+    , { GL_RGB10_A2                            , GL_RGBA             , GL_UNSIGNED_INT_10_10_10_2                   }
+    , { GL_RGB10_A2                            , GL_RGBA             , GL_UNSIGNED_INT_2_10_10_10_REV               }
+    , { GL_RGBA12                              , GL_RGBA             , GL_UNSIGNED_SHORT                            }
+    , { GL_RGBA4                               , GL_RGBA             , GL_UNSIGNED_BYTE                             }
+    , { GL_RGBA4                               , GL_RGBA             , GL_UNSIGNED_SHORT_4_4_4_4                    }
+    , { GL_RGBA4                               , GL_RGBA             , GL_UNSIGNED_SHORT_4_4_4_4_REV                }
+    , { GL_RGB5_A1                             , GL_RGBA             , GL_UNSIGNED_BYTE                             }
+    , { GL_RGB5_A1                             , GL_RGBA             , GL_UNSIGNED_SHORT_5_5_5_1                    }
+    , { GL_RGB5_A1                             , GL_RGBA             , GL_UNSIGNED_SHORT_1_5_5_5_REV                }
+    , { GL_RGB5_A1                             , GL_RGBA             , GL_UNSIGNED_INT_10_10_10_2                   }
+    , { GL_RGB5_A1                             , GL_RGBA             , GL_UNSIGNED_INT_2_10_10_10_REV               }
+ // , { GL_RGBA16F                             , GL_RGBA             , GL_HALF_FLOAT                                }
+    , { GL_RGBA16F_ARB                         , GL_RGBA             , GL_FLOAT                                     }
+    , { GL_RGBA32F_ARB                         , GL_RGBA             , GL_FLOAT                                     }
+
+    , { GL_SRGB8                               , GL_RGB              , GL_UNSIGNED_BYTE                             }
+    , { GL_SRGB8_ALPHA8                        , GL_RGBA             , GL_UNSIGNED_BYTE                             }
+
+    , { GL_R8_SNORM                            , GL_RED              , GL_BYTE                                      }
+    , { GL_R16_SNORM                           , GL_RED              , GL_SHORT                                     }
+    , { GL_RG8_SNORM                           , GL_RG               , GL_BYTE                                      }
+    , { GL_RG16_SNORM                          , GL_RG               , GL_SHORT                                     }
+    , { GL_RGB8_SNORM                          , GL_RGB              , GL_BYTE                                      }
+    , { GL_RGB16_SNORM                         , GL_RGB              , GL_SHORT                                     }
+    , { GL_RGBA8_SNORM                         , GL_RGBA             , GL_BYTE                                      }
+};
+
+InternalPixelRelations sizedDepthAndStencilInternalFormats[] = {
+      { GL_DEPTH_COMPONENT16                   , GL_DEPTH_COMPONENT  , GL_UNSIGNED_SHORT                            }
+    , { GL_DEPTH_COMPONENT16                   , GL_DEPTH_COMPONENT  , GL_UNSIGNED_INT                              }
+    , { GL_DEPTH_COMPONENT24                   , GL_DEPTH_COMPONENT  , GL_UNSIGNED_INT                              }
+    , { GL_DEPTH_COMPONENT32                   , GL_DEPTH_COMPONENT  , GL_UNSIGNED_INT                              }
+    , { GL_DEPTH_COMPONENT32F                  , GL_DEPTH_COMPONENT  , GL_FLOAT                                     }
+ // , { GL_DEPTH24_STENCIL8                    , GL_DEPTH_STENCIL    , GL_UNSIGNED_INT_24_8                         }
+ // , { GL_DEPTH32F_STENCIL8                   , GL_DEPTH_STENCIL    , GL_FLOAT_32_UNSIGNED_INT_24_8_REV            }
+};
+
+InternalPixelRelations compressedInternalFormats[] = {
+ // , { GL_COMPRESSED_RED                      , GL_RED              , GL_COMPRESSED_RED                            }
+ // , { GL_COMPRESSED_RG                       , GL_RG               , GL_COMPRESSED_RG                             }
+      { GL_COMPRESSED_RGB                      , GL_RGB              , GL_COMPRESSED_RGB                            }
+    , { GL_COMPRESSED_RGBA                     , GL_RGBA             , GL_COMPRESSED_RGBA                           }
+    , { GL_COMPRESSED_SRGB                     , GL_RGB              , GL_COMPRESSED_SRGB                           }
+    , { GL_COMPRESSED_SRGB_ALPHA               , GL_RGBA             , GL_COMPRESSED_SRGB_ALPHA                     }
+    , { GL_COMPRESSED_RED_RGTC1_EXT            , GL_RED              , GL_COMPRESSED_RED_RGTC1_EXT                  }
+    , { GL_COMPRESSED_SIGNED_RED_RGTC1_EXT     , GL_RED              , GL_COMPRESSED_SIGNED_RED_RGTC1_EXT           }
+ // , { GL_COMPRESSED_RG_RGTC2                 , GL_RG               , GL_COMPRESSED_RG_RGTC2                       }
+ // , { GL_COMPRESSED_SIGNED_RG_RGTC2          , GL_RG               , GL_COMPRESSED_SIGNED_RG_RGTC2                }
+ // , { GL_COMPRESSED_RGBA_BPTC_UNORM          , GL_RGBA             , GL_COMPRESSED_RGBA_BPTC_UNORM                }
+ // , { GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM    , GL_RGBA             , GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM          }
+ // , { GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT    , GL_RGB              , GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT          }
+ // , { GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT  , GL_RGB              , GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT        }
+
+    , { GL_COMPRESSED_RGB_S3TC_DXT1_EXT        , GL_RGB              , GL_COMPRESSED_RGB_S3TC_DXT1_EXT              }
+    , { GL_COMPRESSED_RGBA_S3TC_DXT1_EXT       , GL_RGBA             , GL_COMPRESSED_RGBA_S3TC_DXT1_EXT             }
+    , { GL_COMPRESSED_RGBA_S3TC_DXT3_EXT       , GL_RGBA             , GL_COMPRESSED_RGBA_S3TC_DXT3_EXT             }
+    , { GL_COMPRESSED_RGBA_S3TC_DXT5_EXT       , GL_RGBA             , GL_COMPRESSED_RGBA_S3TC_DXT5_EXT             }
+
+ // , { GL_COMPRESSED_SRGB_S3TC_DXT1_EXT       , GL_RGB              , GL_COMPRESSED_SRGB_S3TC_DXT1_EXT             }
+ // , { GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT , GL_RGBA             , GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT       }
+ // , { GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT , GL_RGBA             , GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT       }
+ // , { GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT , GL_RGBA             , GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT       }
+};
+
+bool isSizedInternalFormat(GLint internalFormat)
+{
+    const size_t formatsCount = sizeof(sizedInternalFormats) / sizeof(sizedInternalFormats[0]);
+
+    for (size_t i=0; i < formatsCount; ++i)
+    {
+        if((GLenum)internalFormat == sizedInternalFormats[i].sizedInternalFormat)
+            return true;
+    }
+
+    return false;
+}
+
+GLenum assumeSizedInternalFormat(GLint internalFormat, GLenum type)
+{
+    const size_t formatsCount = sizeof(sizedInternalFormats) / sizeof(sizedInternalFormats[0]);
+
+    for (size_t i=0; i < formatsCount; ++i)
+    {
+        if(internalFormat == sizedInternalFormats[i].internalFormat && type == sizedInternalFormats[i].type)
+            return sizedInternalFormats[i].sizedInternalFormat;
+    }
+
+    return 0;
+}
+
+bool isCompressedInternalFormatSupportedByTexStorage(GLint internalFormat)
+{
+    const size_t formatsCount = sizeof(compressedInternalFormats) / sizeof(compressedInternalFormats[0]);
+
+    for (size_t i=0; i < formatsCount; ++i)
+    {
+        if((GLenum)internalFormat == compressedInternalFormats[i].sizedInternalFormat)
+            return true;
+    }
+
+    return false;
+}
 
 Texture::TextureObject::~TextureObject()
 {
@@ -70,6 +250,11 @@ void Texture::TextureObject::bind()
 {
     glBindTexture( _profile._target, _id);
     if (_set) _set->moveToBack(this);
+}
+
+void Texture::TextureObject::release()
+{
+    if (_set) _set->orphan(this);
 }
 
 void Texture::TextureObject::setAllocated(GLint     numMipmapLevels,
@@ -140,6 +325,17 @@ void Texture::TextureProfile::computeSize()
         case(GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG): numBitsPerTexel = 4; break;
 
         case(GL_ETC1_RGB8_OES):                       numBitsPerTexel = 4; break;
+
+        case(GL_COMPRESSED_RGB8_ETC2):                      numBitsPerTexel = 4; break;
+        case(GL_COMPRESSED_SRGB8_ETC2):                     numBitsPerTexel = 4; break;
+        case(GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2):  numBitsPerTexel = 8; break;
+        case(GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2): numBitsPerTexel = 8; break;
+        case(GL_COMPRESSED_RGBA8_ETC2_EAC):                 numBitsPerTexel = 8; break;
+        case(GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC):          numBitsPerTexel = 8; break;
+        case(GL_COMPRESSED_R11_EAC):                        numBitsPerTexel = 4; break;
+        case(GL_COMPRESSED_SIGNED_R11_EAC):                 numBitsPerTexel = 4; break;
+        case(GL_COMPRESSED_RG11_EAC):                       numBitsPerTexel = 8; break;
+        case(GL_COMPRESSED_SIGNED_RG11_EAC):                numBitsPerTexel = 8; break;
     }
 
     _size = (unsigned int)(ceil(double(_width * _height * _depth * numBitsPerTexel)/8.0));
@@ -161,7 +357,7 @@ void Texture::TextureProfile::computeSize()
 //
 //  New texture object manager
 //
-Texture::TextureObjectSet::TextureObjectSet(TextureObjectManager* parent, const TextureProfile& profile):
+TextureObjectSet::TextureObjectSet(TextureObjectManager* parent, const Texture::TextureProfile& profile):
     _parent(parent),
     _contextID(parent->getContextID()),
     _profile(profile),
@@ -171,7 +367,7 @@ Texture::TextureObjectSet::TextureObjectSet(TextureObjectManager* parent, const 
 {
 }
 
-Texture::TextureObjectSet::~TextureObjectSet()
+TextureObjectSet::~TextureObjectSet()
 {
 #if 0
     OSG_NOTICE<<"TextureObjectSet::~TextureObjectSet(), _numOfTextureObjects="<<_numOfTextureObjects<<std::endl;
@@ -181,7 +377,7 @@ Texture::TextureObjectSet::~TextureObjectSet()
 #endif
 }
 
-bool Texture::TextureObjectSet::checkConsistency() const
+bool TextureObjectSet::checkConsistency() const
 {
     OSG_NOTICE<<"TextureObjectSet::checkConsistency()"<<std::endl;
     // check consistency of linked list.
@@ -195,7 +391,7 @@ bool Texture::TextureObjectSet::checkConsistency() const
         {
             if ((to->_next)->_previous != to)
             {
-                OSG_NOTICE<<"Texture::TextureObjectSet::checkConsistency() : Error (to->_next)->_previous != to "<<std::endl;
+                OSG_NOTICE<<"TextureObjectSet::checkConsistency() : Error (to->_next)->_previous != to "<<std::endl;
                 return false;
             }
         }
@@ -203,7 +399,7 @@ bool Texture::TextureObjectSet::checkConsistency() const
         {
             if (_tail != to)
             {
-                OSG_NOTICE<<"Texture::TextureObjectSet::checkConsistency() : Error _tail != to"<<std::endl;
+                OSG_NOTICE<<"TextureObjectSet::checkConsistency() : Error _tail != to"<<std::endl;
                 return false;
             }
         }
@@ -227,7 +423,7 @@ bool Texture::TextureObjectSet::checkConsistency() const
     return true;
 }
 
-void Texture::TextureObjectSet::handlePendingOrphandedTextureObjects()
+void TextureObjectSet::handlePendingOrphandedTextureObjects()
 {
     // OSG_NOTICE<<"handlePendingOrphandedTextureObjects()"<<_pendingOrphanedTextureObjects.size()<<std::endl;
 
@@ -235,11 +431,11 @@ void Texture::TextureObjectSet::handlePendingOrphandedTextureObjects()
 
     unsigned int numOrphaned = _pendingOrphanedTextureObjects.size();
 
-    for(TextureObjectList::iterator itr = _pendingOrphanedTextureObjects.begin();
+    for(Texture::TextureObjectList::iterator itr = _pendingOrphanedTextureObjects.begin();
         itr != _pendingOrphanedTextureObjects.end();
         ++itr)
     {
-        TextureObject* to = itr->get();
+        Texture::TextureObject* to = itr->get();
 
         _orphanedTextureObjects.push_back(to);
 
@@ -257,15 +453,15 @@ void Texture::TextureObjectSet::handlePendingOrphandedTextureObjects()
 }
 
 
-void Texture::TextureObjectSet::deleteAllTextureObjects()
+void TextureObjectSet::deleteAllTextureObjects()
 {
-    // OSG_NOTICE<<"Texture::TextureObjectSet::deleteAllTextureObjects()"<<std::endl;
+    // OSG_NOTICE<<"TextureObjectSet::deleteAllTextureObjects()"<<std::endl;
 
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         if (!_pendingOrphanedTextureObjects.empty())
         {
-            // OSG_NOTICE<<"Texture::TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
+            // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
             handlePendingOrphandedTextureObjects();
         }
     }
@@ -274,10 +470,10 @@ void Texture::TextureObjectSet::deleteAllTextureObjects()
 
     // detect all the active texture objects from their Textures
     unsigned int numOrphaned = 0;
-    TextureObject* to = _head;
+    Texture::TextureObject* to = _head;
     while(to!=0)
     {
-        ref_ptr<TextureObject> glto = to;
+        ref_ptr<Texture::TextureObject> glto = to;
 
         to = to->_next;
 
@@ -303,14 +499,14 @@ void Texture::TextureObjectSet::deleteAllTextureObjects()
     // OSG_NOTICE<<"done GLBufferObjectSet::deleteAllGLBufferObjects()"<<std::endl;
 }
 
-void Texture::TextureObjectSet::discardAllTextureObjects()
+void TextureObjectSet::discardAllTextureObjects()
 {
-    // OSG_NOTICE<<"Texture::TextureObjectSet::discardAllTextureObjects()."<<std::endl;
+    // OSG_NOTICE<<"TextureObjectSet::discardAllTextureObjects()."<<std::endl;
 
-    TextureObject* to = _head;
+    Texture::TextureObject* to = _head;
     while(to!=0)
     {
-        ref_ptr<TextureObject> glto = to;
+        ref_ptr<Texture::TextureObject> glto = to;
 
         to = to->_next;
 
@@ -338,19 +534,19 @@ void Texture::TextureObjectSet::discardAllTextureObjects()
     _parent->getNumberDeleted() += numDeleted;
 }
 
-void Texture::TextureObjectSet::flushAllDeletedTextureObjects()
+void TextureObjectSet::flushAllDeletedTextureObjects()
 {
-    // OSG_NOTICE<<"Texture::TextureObjectSet::flushAllDeletedTextureObjects()"<<std::endl;
+    // OSG_NOTICE<<"TextureObjectSet::flushAllDeletedTextureObjects()"<<std::endl;
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         if (!_pendingOrphanedTextureObjects.empty())
         {
-            // OSG_NOTICE<<"Texture::TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
+            // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
             handlePendingOrphandedTextureObjects();
         }
     }
 
-    for(TextureObjectList::iterator itr = _orphanedTextureObjects.begin();
+    for(Texture::TextureObjectList::iterator itr = _orphanedTextureObjects.begin();
         itr != _orphanedTextureObjects.end();
         ++itr)
     {
@@ -372,16 +568,16 @@ void Texture::TextureObjectSet::flushAllDeletedTextureObjects()
     _orphanedTextureObjects.clear();
 }
 
-void Texture::TextureObjectSet::discardAllDeletedTextureObjects()
+void TextureObjectSet::discardAllDeletedTextureObjects()
 {
-    // OSG_NOTICE<<"Texture::TextureObjectSet::discardAllDeletedTextureObjects()"<<std::endl;
+    // OSG_NOTICE<<"TextureObjectSet::discardAllDeletedTextureObjects()"<<std::endl;
 
     // clean up the pending orphans.
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         if (!_pendingOrphanedTextureObjects.empty())
         {
-            // OSG_NOTICE<<"Texture::TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
+            // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
             handlePendingOrphandedTextureObjects();
         }
     }
@@ -393,7 +589,7 @@ void Texture::TextureObjectSet::discardAllDeletedTextureObjects()
     // update the TextureObjectManager's running total of current pool size
     _parent->getCurrTexturePoolSize() -= numDiscarded*_profile._size;
 
-    // update the number of active and orphaned TextureOjects
+    // update the number of active and orphaned TextureObjects
     _parent->getNumberOrphanedTextureObjects() -= numDiscarded;
     _parent->getNumberDeleted() += numDiscarded;
 
@@ -401,15 +597,15 @@ void Texture::TextureObjectSet::discardAllDeletedTextureObjects()
     _orphanedTextureObjects.clear();
 }
 
-void Texture::TextureObjectSet::flushDeletedTextureObjects(double /*currentTime*/, double& availableTime)
+void TextureObjectSet::flushDeletedTextureObjects(double /*currentTime*/, double& availableTime)
 {
-    // OSG_NOTICE<<"Texture::TextureObjectSet::flushDeletedTextureObjects(..)"<<std::endl;
+    // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..)"<<std::endl;
 
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         if (!_pendingOrphanedTextureObjects.empty())
         {
-            // OSG_NOTICE<<"Texture::TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
+            // OSG_NOTICE<<"TextureObjectSet::flushDeletedTextureObjects(..) handling orphans"<<std::endl;
             handlePendingOrphandedTextureObjects();
         }
     }
@@ -437,11 +633,11 @@ void Texture::TextureObjectSet::flushDeletedTextureObjects(double /*currentTime*
         _orphanedTextureObjects.size();
 
     OSG_INFO<<"_parent->getCurrTexturePoolSize()="<<_parent->getCurrTexturePoolSize() <<" _parent->getMaxTexturePoolSize()="<< _parent->getMaxTexturePoolSize()<<std::endl;
-    OSG_INFO<<"Looking to reclaim "<<sizeRequired<<", going to look to remove "<<maxNumObjectsToDelete<<" from "<<_orphanedTextureObjects.size()<<" orhpans"<<std::endl;
+    OSG_INFO<<"Looking to reclaim "<<sizeRequired<<", going to look to remove "<<maxNumObjectsToDelete<<" from "<<_orphanedTextureObjects.size()<<" orphans"<<std::endl;
 
     ElapsedTime timer;
 
-    TextureObjectList::iterator itr = _orphanedTextureObjects.begin();
+    Texture::TextureObjectList::iterator itr = _orphanedTextureObjects.begin();
     for(;
         itr != _orphanedTextureObjects.end() && timer.elapsedTime()<availableTime && numDeleted<maxNumObjectsToDelete;
         ++itr)
@@ -464,20 +660,20 @@ void Texture::TextureObjectSet::flushDeletedTextureObjects(double /*currentTime*
 
     _parent->getCurrTexturePoolSize() -= numDeleted*_profile._size;
 
-    // update the number of active and orphaned TextureOjects
+    // update the number of active and orphaned TextureObjects
     _parent->getNumberOrphanedTextureObjects() -= numDeleted;
     _parent->getNumberDeleted() += numDeleted;
 
     availableTime -= timer.elapsedTime();
 }
 
-bool Texture::TextureObjectSet::makeSpace(unsigned int& size)
+bool TextureObjectSet::makeSpace(unsigned int& size)
 {
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         if (!_pendingOrphanedTextureObjects.empty())
         {
-            // OSG_NOTICE<<"Texture::TextureObjectSet::Texture::TextureObjectSet::makeSpace(..) handling orphans"<<std::endl;
+            // OSG_NOTICE<<"TextureObjectSet::TextureObjectSet::makeSpace(..) handling orphans"<<std::endl;
             handlePendingOrphandedTextureObjects();
         }
     }
@@ -494,10 +690,10 @@ bool Texture::TextureObjectSet::makeSpace(unsigned int& size)
     return size==0;
 }
 
-Texture::TextureObject* Texture::TextureObjectSet::takeFromOrphans(Texture* texture)
+osg::ref_ptr<Texture::TextureObject> TextureObjectSet::takeFromOrphans(Texture* texture)
 {
     // take front of orphaned list.
-    ref_ptr<TextureObject> to = _orphanedTextureObjects.front();
+    ref_ptr<Texture::TextureObject> to = _orphanedTextureObjects.front();
 
     // remove from orphan list.
     _orphanedTextureObjects.pop_front();
@@ -505,7 +701,7 @@ Texture::TextureObject* Texture::TextureObjectSet::takeFromOrphans(Texture* text
     // assign to new texture
     to->setTexture(texture);
 
-    // update the number of active and orphaned TextureOjects
+    // update the number of active and orphaned TextureObjects
     _parent->getNumberOrphanedTextureObjects() -= 1;
     _parent->getNumberActiveTextureObjects() += 1;
 
@@ -514,13 +710,13 @@ Texture::TextureObject* Texture::TextureObjectSet::takeFromOrphans(Texture* text
 
     OSG_INFO<<"Reusing orphaned TextureObject, _numOfTextureObjects="<<_numOfTextureObjects<<std::endl;
 
-    return to.release();
+    return to;
 }
 
 
-Texture::TextureObject* Texture::TextureObjectSet::takeOrGenerate(Texture* texture)
+osg::ref_ptr<Texture::TextureObject> TextureObjectSet::takeOrGenerate(Texture* texture)
 {
-    // see if we can recyle TextureObject from the orphan list
+    // see if we can recycle TextureObject from the orphan list
     {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         if (!_pendingOrphanedTextureObjects.empty())
@@ -547,7 +743,7 @@ Texture::TextureObject* Texture::TextureObjectSet::takeOrGenerate(Texture* textu
 
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
 
-        ref_ptr<TextureObject> to = _head;
+        ref_ptr<Texture::TextureObject> to = _head;
 
         ref_ptr<Texture> original_texture = to->getTexture();
 
@@ -566,7 +762,7 @@ Texture::TextureObject* Texture::TextureObjectSet::takeOrGenerate(Texture* textu
         // assign to new texture
         to->setTexture(texture);
 
-        return to.release();
+        return to;
     }
 
     //
@@ -575,7 +771,7 @@ Texture::TextureObject* Texture::TextureObjectSet::takeOrGenerate(Texture* textu
     GLuint id;
     glGenTextures( 1L, &id );
 
-    TextureObject* to = new Texture::TextureObject(const_cast<Texture*>(texture),id,_profile);
+    osg::ref_ptr<Texture::TextureObject> to = new Texture::TextureObject(const_cast<Texture*>(texture),id,_profile);
     to->_set = this;
     ++_numOfTextureObjects;
 
@@ -583,14 +779,14 @@ Texture::TextureObject* Texture::TextureObjectSet::takeOrGenerate(Texture* textu
     _parent->getCurrTexturePoolSize() += _profile._size;
     _parent->getNumberActiveTextureObjects() += 1;
 
-    addToBack(to);
+    addToBack(to.get());
 
     OSG_INFO<<"Created new " << this << " TextureObject, _numOfTextureObjects "<<_numOfTextureObjects<<std::endl;
 
     return to;
 }
 
-void Texture::TextureObjectSet::moveToBack(Texture::TextureObject* to)
+void TextureObjectSet::moveToBack(Texture::TextureObject* to)
 {
 #if 0
     OSG_NOTICE<<"TextureObjectSet::moveToBack("<<to<<")"<<std::endl;
@@ -652,7 +848,7 @@ void Texture::TextureObjectSet::moveToBack(Texture::TextureObject* to)
     CHECK_CONSISTENCY
 }
 
-void Texture::TextureObjectSet::addToBack(Texture::TextureObject* to)
+void TextureObjectSet::addToBack(Texture::TextureObject* to)
 {
 #if 0
     OSG_NOTICE<<"TextureObjectSet::addToBack("<<to<<")"<<std::endl;
@@ -685,7 +881,7 @@ void Texture::TextureObjectSet::addToBack(Texture::TextureObject* to)
     CHECK_CONSISTENCY
 }
 
-void Texture::TextureObjectSet::orphan(Texture::TextureObject* to)
+void TextureObjectSet::orphan(Texture::TextureObject* to)
 {
     // OSG_NOTICE<<"TextureObjectSet::orphan("<<to<<")"<<std::endl;
 
@@ -707,7 +903,7 @@ void Texture::TextureObjectSet::orphan(Texture::TextureObject* to)
 #endif
 }
 
-void Texture::TextureObjectSet::remove(Texture::TextureObject* to)
+void TextureObjectSet::remove(Texture::TextureObject* to)
 {
     if (to->_previous!=0)
     {
@@ -734,7 +930,7 @@ void Texture::TextureObjectSet::remove(Texture::TextureObject* to)
     to->_previous = 0;
 }
 
-void Texture::TextureObjectSet::moveToSet(TextureObject* to, TextureObjectSet* set)
+void TextureObjectSet::moveToSet(Texture::TextureObject* to, TextureObjectSet* set)
 {
     if (set==this) return;
     if (!set) return;
@@ -749,10 +945,10 @@ void Texture::TextureObjectSet::moveToSet(TextureObject* to, TextureObjectSet* s
     set->addToBack(to);
 }
 
-unsigned int Texture::TextureObjectSet::computeNumTextureObjectsInList() const
+unsigned int TextureObjectSet::computeNumTextureObjectsInList() const
 {
     unsigned int num=0;
-    TextureObject* obj = _head;
+    Texture::TextureObject* obj = _head;
     while(obj!=NULL)
     {
         ++num;
@@ -762,8 +958,8 @@ unsigned int Texture::TextureObjectSet::computeNumTextureObjectsInList() const
 }
 
 
-Texture::TextureObjectManager::TextureObjectManager(unsigned int contextID):
-    _contextID(contextID),
+TextureObjectManager::TextureObjectManager(unsigned int contextID):
+    GraphicsObjectManager("TextureObjectManager", contextID),
     _numActiveTextureObjects(0),
     _numOrphanedTextureObjects(0),
     _currTexturePoolSize(0),
@@ -773,13 +969,16 @@ Texture::TextureObjectManager::TextureObjectManager(unsigned int contextID):
     _numDeleted(0),
     _deleteTime(0.0),
     _numGenerated(0),
-    _generateTime(0.0),
-    _numApplied(0),
-    _applyTime(0.0)
+    _generateTime(0.0)
 {
 }
 
-void Texture::TextureObjectManager::setMaxTexturePoolSize(unsigned int size)
+TextureObjectManager::~TextureObjectManager()
+{
+}
+
+
+void TextureObjectManager::setMaxTexturePoolSize(unsigned int size)
 {
     if (_maxTexturePoolSize == size) return;
 
@@ -791,7 +990,7 @@ void Texture::TextureObjectManager::setMaxTexturePoolSize(unsigned int size)
     _maxTexturePoolSize = size;
 }
 
-bool Texture::TextureObjectManager::makeSpace(unsigned int size)
+bool TextureObjectManager::makeSpace(unsigned int size)
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
         itr != _textureSetMap.end() && size>0;
@@ -804,12 +1003,12 @@ bool Texture::TextureObjectManager::makeSpace(unsigned int size)
 }
 
 
-Texture::TextureObject* Texture::TextureObjectManager::generateTextureObject(const Texture* texture, GLenum target)
+osg::ref_ptr<Texture::TextureObject> TextureObjectManager::generateTextureObject(const Texture* texture, GLenum target)
 {
     return generateTextureObject(texture, target, 0, 0, 0, 0, 0, 0);
 }
 
-Texture::TextureObject* Texture::TextureObjectManager::generateTextureObject(const Texture* texture,
+osg::ref_ptr<Texture::TextureObject> TextureObjectManager::generateTextureObject(const Texture* texture,
                                              GLenum    target,
                                              GLint     numMipmapLevels,
                                              GLenum    internalFormat,
@@ -826,14 +1025,34 @@ Texture::TextureObject* Texture::TextureObjectManager::generateTextureObject(con
     return tos->takeOrGenerate(const_cast<Texture*>(texture));
 }
 
-Texture::TextureObjectSet* Texture::TextureObjectManager::getTextureObjectSet(const TextureProfile& profile)
+Texture::TextureObject* Texture::generateAndAssignTextureObject(unsigned int contextID, GLenum target) const
 {
-    osg::ref_ptr<Texture::TextureObjectSet>& tos = _textureSetMap[profile];
-    if (!tos) tos = new Texture::TextureObjectSet(this, profile);
+    _textureObjectBuffer[contextID] = generateTextureObject(this, contextID, target);
+    return _textureObjectBuffer[contextID].get();
+}
+
+Texture::TextureObject* Texture::generateAndAssignTextureObject(
+                                             unsigned int contextID,
+                                             GLenum    target,
+                                             GLint     numMipmapLevels,
+                                             GLenum    internalFormat,
+                                             GLsizei   width,
+                                             GLsizei   height,
+                                             GLsizei   depth,
+                                             GLint     border) const
+{
+    _textureObjectBuffer[contextID] = generateTextureObject(this, contextID, target, numMipmapLevels, internalFormat, width, height, depth, border);
+    return _textureObjectBuffer[contextID].get();
+}
+
+TextureObjectSet* TextureObjectManager::getTextureObjectSet(const Texture::TextureProfile& profile)
+{
+    osg::ref_ptr<TextureObjectSet>& tos = _textureSetMap[profile];
+    if (!tos) tos = new TextureObjectSet(this, profile);
     return tos.get();
 }
 
-void Texture::TextureObjectManager::handlePendingOrphandedTextureObjects()
+void TextureObjectManager::handlePendingOrphandedTextureObjects()
 {
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
         itr != _textureSetMap.end();
@@ -843,12 +1062,8 @@ void Texture::TextureObjectManager::handlePendingOrphandedTextureObjects()
     }
 }
 
-void Texture::TextureObjectManager::deleteAllTextureObjects()
+void TextureObjectManager::deleteAllGLObjects()
 {
-    // OSG_NOTICE<<"Texture::TextureObjectManager::deleteAllTextureObjects() _contextID="<<_contextID<<std::endl;
-
-    ElapsedTime elapsedTime(&(getDeleteTime()));
-
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
         itr != _textureSetMap.end();
         ++itr)
@@ -857,10 +1072,8 @@ void Texture::TextureObjectManager::deleteAllTextureObjects()
     }
 }
 
-void Texture::TextureObjectManager::discardAllTextureObjects()
+void TextureObjectManager::discardAllGLObjects()
 {
-    // OSG_NOTICE<<"Texture::TextureObjectManager::discardAllTextureObjects() _contextID="<<_contextID<<" _numActiveTextureObjects="<<_numActiveTextureObjects<<std::endl;
-
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
         itr != _textureSetMap.end();
         ++itr)
@@ -869,12 +1082,8 @@ void Texture::TextureObjectManager::discardAllTextureObjects()
     }
 }
 
-void Texture::TextureObjectManager::flushAllDeletedTextureObjects()
+void TextureObjectManager::flushAllDeletedGLObjects()
 {
-    // OSG_NOTICE<<"Texture::TextureObjectManager::flushAllDeletedTextureObjects() _contextID="<<_contextID<<std::endl;
-
-    ElapsedTime elapsedTime(&(getDeleteTime()));
-
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
         itr != _textureSetMap.end();
         ++itr)
@@ -883,10 +1092,8 @@ void Texture::TextureObjectManager::flushAllDeletedTextureObjects()
     }
 }
 
-void Texture::TextureObjectManager::discardAllDeletedTextureObjects()
+void TextureObjectManager::discardAllDeletedGLObjects()
 {
-    // OSG_NOTICE<<"Texture::TextureObjectManager::discardAllDeletedTextureObjects() _contextID="<<_contextID<<" _numActiveTextureObjects="<<_numActiveTextureObjects<<std::endl;
-
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
         itr != _textureSetMap.end();
         ++itr)
@@ -895,10 +1102,8 @@ void Texture::TextureObjectManager::discardAllDeletedTextureObjects()
     }
 }
 
-void Texture::TextureObjectManager::flushDeletedTextureObjects(double currentTime, double& availableTime)
+void TextureObjectManager::flushDeletedGLObjects(double currentTime, double& availableTime)
 {
-    ElapsedTime elapsedTime(&(getDeleteTime()));
-
     for(TextureSetMap::iterator itr = _textureSetMap.begin();
         (itr != _textureSetMap.end()) && (availableTime > 0.0);
         ++itr)
@@ -907,14 +1112,7 @@ void Texture::TextureObjectManager::flushDeletedTextureObjects(double currentTim
     }
 }
 
-void Texture::TextureObjectManager::releaseTextureObject(Texture::TextureObject* to)
-{
-    if (to->_set) to->_set->orphan(to);
-    else OSG_NOTICE<<"TextureObjectManager::releaseTextureObject(Texture::TextureObject* to) Not implemented yet"<<std::endl;
-}
-
-
-void Texture::TextureObjectManager::newFrame(osg::FrameStamp* fs)
+void TextureObjectManager::newFrame(osg::FrameStamp* fs)
 {
     if (fs) _frameNumber = fs->getFrameNumber();
     else ++_frameNumber;
@@ -922,19 +1120,18 @@ void Texture::TextureObjectManager::newFrame(osg::FrameStamp* fs)
     ++_numFrames;
 }
 
-void Texture::TextureObjectManager::reportStats(std::ostream& out)
+void TextureObjectManager::reportStats(std::ostream& out)
 {
     double numFrames(_numFrames==0 ? 1.0 : _numFrames);
     out<<"TextureObjectMananger::reportStats()"<<std::endl;
     out<<"   total _numOfTextureObjects="<<_numActiveTextureObjects<<", _numOrphanedTextureObjects="<<_numOrphanedTextureObjects<<" _currTexturePoolSize="<<_currTexturePoolSize<<std::endl;
     out<<"   total _numGenerated="<<_numGenerated<<", _generateTime="<<_generateTime<<", averagePerFrame="<<_generateTime/numFrames*1000.0<<"ms"<<std::endl;
     out<<"   total _numDeleted="<<_numDeleted<<", _deleteTime="<<_deleteTime<<", averagePerFrame="<<_deleteTime/numFrames*1000.0<<"ms"<<std::endl;
-    out<<"   total _numApplied="<<_numApplied<<", _applyTime="<<_applyTime<<", averagePerFrame="<<_applyTime/numFrames*1000.0<<"ms"<<std::endl;
     out<<"   getMaxTexturePoolSize()="<<getMaxTexturePoolSize()<<" current/max size = "<<double(_currTexturePoolSize)/double(getMaxTexturePoolSize())<<std::endl;
     recomputeStats(out);
 }
 
-void Texture::TextureObjectManager::resetStats()
+void TextureObjectManager::resetStats()
 {
     _numFrames = 0;
     _numDeleted = 0;
@@ -942,15 +1139,12 @@ void Texture::TextureObjectManager::resetStats()
 
     _numGenerated = 0;
     _generateTime = 0;
-
-    _numApplied = 0;
-    _applyTime = 0;
 }
 
 
-void Texture::TextureObjectManager::recomputeStats(std::ostream& out) const
+void TextureObjectManager::recomputeStats(std::ostream& out) const
 {
-    out<<"Texture::TextureObjectManager::recomputeStats()"<<std::endl;
+    out<<"TextureObjectManager::recomputeStats()"<<std::endl;
     unsigned int numObjectsInLists = 0;
     unsigned int numActive = 0;
     unsigned int numOrphans = 0;
@@ -978,7 +1172,7 @@ void Texture::TextureObjectManager::recomputeStats(std::ostream& out) const
     if (currentSize != _currTexturePoolSize) out<<"   WARNING: _currTexturePoolSize("<<_currTexturePoolSize<<") != currentSize, delta = "<<int(_currTexturePoolSize)-int(currentSize)<<std::endl;
 }
 
-bool Texture::TextureObjectManager::checkConsistency() const
+bool TextureObjectManager::checkConsistency() const
 {
     unsigned int numObjectsInLists = 0;
     unsigned int numActive = 0;
@@ -1001,28 +1195,18 @@ bool Texture::TextureObjectManager::checkConsistency() const
     {
         recomputeStats(osg::notify(osg::NOTICE));
 
-        throw "Texture::TextureObjectManager::checkConsistency()  sizes inconsistent";
+        throw "TextureObjectManager::checkConsistency()  sizes inconsistent";
         return false;
     }
     return true;
 }
 
-
-osg::ref_ptr<Texture::TextureObjectManager>& Texture::getTextureObjectManager(unsigned int contextID)
+osg::ref_ptr<Texture::TextureObject> Texture::generateTextureObject(const Texture* texture, unsigned int contextID, GLenum target)
 {
-    typedef osg::buffered_object< ref_ptr<Texture::TextureObjectManager> > TextureObjectManagerBuffer;
-    static TextureObjectManagerBuffer s_TextureObjectManager;
-    if (!s_TextureObjectManager[contextID]) s_TextureObjectManager[contextID] = new Texture::TextureObjectManager(contextID);
-    return s_TextureObjectManager[contextID];
+    return osg::get<TextureObjectManager>(contextID)->generateTextureObject(texture, target);
 }
 
-
-Texture::TextureObject* Texture::generateTextureObject(const Texture* texture, unsigned int contextID, GLenum target)
-{
-    return getTextureObjectManager(contextID)->generateTextureObject(texture, target);
-}
-
-Texture::TextureObject* Texture::generateTextureObject(const Texture* texture, unsigned int contextID,
+osg::ref_ptr<Texture::TextureObject> Texture::generateTextureObject(const Texture* texture, unsigned int contextID,
                                              GLenum    target,
                                              GLint     numMipmapLevels,
                                              GLenum    internalFormat,
@@ -1031,37 +1215,7 @@ Texture::TextureObject* Texture::generateTextureObject(const Texture* texture, u
                                              GLsizei   depth,
                                              GLint     border)
 {
-    return getTextureObjectManager(contextID)->generateTextureObject(texture,target,numMipmapLevels,internalFormat,width,height,depth,border);
-}
-
-void Texture::deleteAllTextureObjects(unsigned int contextID)
-{
-    getTextureObjectManager(contextID)->deleteAllTextureObjects();
-}
-
-void Texture::discardAllTextureObjects(unsigned int contextID)
-{
-    getTextureObjectManager(contextID)->discardAllTextureObjects();
-}
-
-void Texture::flushAllDeletedTextureObjects(unsigned int contextID)
-{
-    getTextureObjectManager(contextID)->flushAllDeletedTextureObjects();
-}
-
-void Texture::discardAllDeletedTextureObjects(unsigned int contextID)
-{
-    getTextureObjectManager(contextID)->discardAllDeletedTextureObjects();
-}
-
-void Texture::flushDeletedTextureObjects(unsigned int contextID,double currentTime, double& availbleTime)
-{
-    getTextureObjectManager(contextID)->flushDeletedTextureObjects(currentTime, availbleTime);
-}
-
-void Texture::releaseTextureObject(unsigned int contextID, Texture::TextureObject* to)
-{
-    getTextureObjectManager(contextID)->releaseTextureObject(to);
+    return osg::get<TextureObjectManager>(contextID)->generateTextureObject(texture,target,numMipmapLevels,internalFormat,width,height,depth,border);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1075,6 +1229,9 @@ Texture::Texture():
             _min_filter(LINEAR_MIPMAP_LINEAR), // trilinear
             _mag_filter(LINEAR),
             _maxAnisotropy(1.0f),
+            _minlod(0.0f),
+            _maxlod(-1.0f),
+            _lodbias(0.0f),
             _swizzle(GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA),
             _useHardwareMipMapGeneration(true),
             _unrefImageDataAfterApply(false),
@@ -1102,6 +1259,9 @@ Texture::Texture(const Texture& text,const CopyOp& copyop):
             _min_filter(text._min_filter),
             _mag_filter(text._mag_filter),
             _maxAnisotropy(text._maxAnisotropy),
+            _minlod(text._minlod),
+            _maxlod(text._maxlod),
+            _lodbias(text._lodbias),
             _swizzle(text._swizzle),
             _useHardwareMipMapGeneration(text._useHardwareMipMapGeneration),
             _unrefImageDataAfterApply(text._unrefImageDataAfterApply),
@@ -1135,11 +1295,14 @@ int Texture::compareTexture(const Texture& rhs) const
     COMPARE_StateAttribute_Parameter(_min_filter)
     COMPARE_StateAttribute_Parameter(_mag_filter)
     COMPARE_StateAttribute_Parameter(_maxAnisotropy)
+    COMPARE_StateAttribute_Parameter(_minlod)
+    COMPARE_StateAttribute_Parameter(_maxlod)
+    COMPARE_StateAttribute_Parameter(_lodbias)
     COMPARE_StateAttribute_Parameter(_swizzle)
     COMPARE_StateAttribute_Parameter(_useHardwareMipMapGeneration)
     COMPARE_StateAttribute_Parameter(_internalFormatMode)
 
-    // only compare _internalFomat is it has alrady been set in both lhs, and rhs
+    // only compare _internalFomat is it has already been set in both lhs, and rhs
     if (_internalFormat!=0 && rhs._internalFormat!=0)
     {
         COMPARE_StateAttribute_Parameter(_internalFormat)
@@ -1183,7 +1346,6 @@ void Texture::setWrap(WrapParameter which, WrapMode wrap)
         case WRAP_R : _wrap_r = wrap; dirtyTextureParameters(); break;
         default : OSG_WARN<<"Error: invalid 'which' passed Texture::setWrap("<<(unsigned int)which<<","<<(unsigned int)wrap<<")"<<std::endl; break;
     }
-
 }
 
 
@@ -1229,15 +1391,31 @@ void Texture::setMaxAnisotropy(float anis)
     }
 }
 
-void Texture::bindToImageUnit(unsigned int unit, GLenum access, GLenum format, int level, bool layered, int layer)
+void Texture::setMinLOD(float anis)
 {
-    _imageAttachment.unit = unit;
-    _imageAttachment.level = level;
-    _imageAttachment.layered = layered ? GL_TRUE : GL_FALSE;
-    _imageAttachment.layer = layer;
-    _imageAttachment.access = access;
-    _imageAttachment.format = format;
-    dirtyTextureParameters();
+    if (_minlod!=anis)
+    {
+        _minlod = anis;
+        dirtyTextureParameters();
+    }
+}
+
+void Texture::setMaxLOD(float anis)
+{
+    if (_maxlod!=anis)
+    {
+        _maxlod = anis;
+        dirtyTextureParameters();
+    }
+}
+
+void Texture::setLODBias(float anis)
+{
+    if (_lodbias!=anis)
+    {
+        _lodbias = anis;
+        dirtyTextureParameters();
+    }
 }
 
 /** Force a recompile on next apply() of associated OpenGL texture objects.*/
@@ -1247,7 +1425,7 @@ void Texture::dirtyTextureObject()
     {
         if (_textureObjectBuffer[i].valid())
         {
-            Texture::releaseTextureObject(i, _textureObjectBuffer[i].get());
+            _textureObjectBuffer[i]->release();
             _textureObjectBuffer[i] = 0;
         }
     }
@@ -1279,12 +1457,12 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
     {
 
         const unsigned int contextID = 0; // state.getContextID();  // set to 0 right now, assume same parameters for each graphics context...
-        const Extensions* extensions = getExtensions(contextID,true);
+        const GLExtensions* extensions = GLExtensions::Get(contextID,true);
 
         switch(_internalFormatMode)
         {
         case(USE_ARB_COMPRESSION):
-            if (extensions->isTextureCompressionARBSupported())
+            if (extensions->isTextureCompressionARBSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1303,7 +1481,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_S3TC_DXT1_COMPRESSION):
-            if (extensions->isTextureCompressionS3TCSupported())
+            if (extensions->isTextureCompressionS3TCSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1317,7 +1495,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_S3TC_DXT1c_COMPRESSION):
-            if (extensions->isTextureCompressionS3TCSupported())
+            if (extensions->isTextureCompressionS3TCSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1331,7 +1509,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_S3TC_DXT1a_COMPRESSION):
-            if (extensions->isTextureCompressionS3TCSupported())
+            if (extensions->isTextureCompressionS3TCSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1345,7 +1523,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_S3TC_DXT3_COMPRESSION):
-            if (extensions->isTextureCompressionS3TCSupported())
+            if (extensions->isTextureCompressionS3TCSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1359,7 +1537,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_S3TC_DXT5_COMPRESSION):
-            if (extensions->isTextureCompressionS3TCSupported())
+            if (extensions->isTextureCompressionS3TCSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1373,7 +1551,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_PVRTC_2BPP_COMPRESSION):
-            if (extensions->isTextureCompressionPVRTC2BPPSupported())
+            if (extensions->isTextureCompressionPVRTC2BPPSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1387,7 +1565,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_PVRTC_4BPP_COMPRESSION):
-            if (extensions->isTextureCompressionPVRTC4BPPSupported())
+            if (extensions->isTextureCompressionPVRTC4BPPSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1401,7 +1579,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_ETC_COMPRESSION):
-            if (extensions->isTextureCompressionETCSupported())
+            if (extensions->isTextureCompressionETCSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1412,8 +1590,26 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             }
             break;
 
+        case(USE_ETC2_COMPRESSION):
+            if (extensions->isTextureCompressionETC2Supported)
+            {
+                switch(image.getPixelFormat())
+                {
+                    case(1):
+                    case(GL_RED):   internalFormat = GL_COMPRESSED_R11_EAC; break;
+                    case(2):
+                    case(GL_RG):   internalFormat = GL_COMPRESSED_RG11_EAC; break;
+                    case(3):
+                    case(GL_RGB):   internalFormat = GL_COMPRESSED_RGB8_ETC2; break;
+                    case(4):
+                    case(GL_RGBA):  internalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC; break;
+                    default:        internalFormat = image.getInternalTextureFormat(); break;
+                }
+            }
+            break;
+
         case(USE_RGTC1_COMPRESSION):
-            if (extensions->isTextureCompressionRGTCSupported())
+            if (extensions->isTextureCompressionRGTCSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1427,7 +1623,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
             break;
 
         case(USE_RGTC2_COMPRESSION):
-            if (extensions->isTextureCompressionRGTCSupported())
+            if (extensions->isTextureCompressionRGTCSupported)
             {
                 switch(image.getPixelFormat())
                 {
@@ -1445,7 +1641,7 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
         }
     }
 
-#if defined (OSG_GLES1_AVAILABLE) || defined (OSG_GLES2_AVAILABLE)
+#if defined (OSG_GLES1_AVAILABLE) || defined (OSG_GLES2_AVAILABLE) || defined (OSG_GLES3_AVAILABLE)
     // GLES doesn't cope with internal formats of 1,2,3 and 4 and glTexImage doesn't
     // handle the _OES pixel formats so map them to the appropriate equivilants.
     switch(internalFormat)
@@ -1456,6 +1652,18 @@ void Texture::computeInternalFormatWithImage(const osg::Image& image) const
         case(4) : internalFormat = GL_RGBA; break;
         case(GL_RGB8_OES) : internalFormat = GL_RGB; break;
         case(GL_RGBA8_OES) : internalFormat = GL_RGBA; break;
+        default: break;
+    }
+#elif defined(OSG_GL3_AVAILABLE)
+    switch(internalFormat)
+    {
+        case(GL_INTENSITY) : internalFormat = GL_RED; break; // should it be swizzled to match RGBA(INTENSITY, INTENSITY, INTENSITY, INTENSITY)?
+        case(GL_LUMINANCE) : internalFormat = GL_RED; break; // should it be swizzled to match RGBA(LUMINANCE, LUMINANCE, LUMINANCE, 1.0)?
+        case(1) : internalFormat = GL_RED; break; // or should this be GL_ALPHA?
+        case(2) : internalFormat = GL_RG; break; // should we assume GL_LUMINANCE_ALPHA?
+        case(GL_LUMINANCE_ALPHA) : internalFormat = GL_RG; break; // should it be swizlled to match RGAB(LUMUNIANCE, LUMINANCE, LUMINANCE, ALPHA)?
+        case(3) : internalFormat = GL_RGB; break;
+        case(4) : internalFormat = GL_RGBA; break;
         default: break;
     }
 #endif
@@ -1486,6 +1694,14 @@ void Texture::computeInternalFormatType() const
         case GL_RGB16UI_EXT:
         case GL_RGB8UI_EXT:
 
+        case GL_RG32UI:
+        case GL_RG16UI:
+        case GL_RG8UI:
+
+        case GL_R32UI:
+        case GL_R16UI:
+        case GL_R8UI:
+
         case GL_LUMINANCE32UI_EXT:
         case GL_LUMINANCE16UI_EXT:
         case GL_LUMINANCE8UI_EXT:
@@ -1508,6 +1724,14 @@ void Texture::computeInternalFormatType() const
         case GL_RGB16I_EXT:
         case GL_RGB8I_EXT:
 
+        case GL_RG32I:
+        case GL_RG16I:
+        case GL_RG8I:
+
+        case GL_R32I:
+        case GL_R16I:
+        case GL_R8I:
+
         case GL_LUMINANCE32I_EXT:
         case GL_LUMINANCE16I_EXT:
         case GL_LUMINANCE8I_EXT:
@@ -1527,6 +1751,12 @@ void Texture::computeInternalFormatType() const
 
         case GL_RGB32F_ARB:
         case GL_RGB16F_ARB:
+
+        case GL_RG32F:
+        case GL_RG16F:
+
+        case GL_R32F:
+        case GL_R16F:
 
         case GL_LUMINANCE32F_ARB:
         case GL_LUMINANCE16F_ARB:
@@ -1569,6 +1799,16 @@ bool Texture::isCompressedInternalFormat(GLint internalFormat)
         case(GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT):
         case(GL_COMPRESSED_RED_GREEN_RGTC2_EXT):
         case(GL_ETC1_RGB8_OES):
+        case(GL_COMPRESSED_RGB8_ETC2):
+        case(GL_COMPRESSED_SRGB8_ETC2):
+        case(GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2):
+        case(GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2):
+        case(GL_COMPRESSED_RGBA8_ETC2_EAC):
+        case(GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC):
+        case(GL_COMPRESSED_R11_EAC):
+        case(GL_COMPRESSED_SIGNED_R11_EAC):
+        case(GL_COMPRESSED_RG11_EAC):
+        case(GL_COMPRESSED_SIGNED_RG11_EAC):
         case(GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG):
         case(GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG):
         case(GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG):
@@ -1587,6 +1827,16 @@ void Texture::getCompressedSize(GLenum internalFormat, GLint width, GLint height
         blockSize = 16;
     else if (internalFormat == GL_ETC1_RGB8_OES)
         blockSize = 8;
+    else if (internalFormat == GL_COMPRESSED_RGB8_ETC2 || internalFormat == GL_COMPRESSED_SRGB8_ETC2)
+        blockSize = 8;
+    else if (internalFormat == GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2 || internalFormat == GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2)
+        blockSize = 8;
+    else if (internalFormat == GL_COMPRESSED_RGBA8_ETC2_EAC || internalFormat == GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC)
+        blockSize = 16;
+    else if (internalFormat == GL_COMPRESSED_R11_EAC || internalFormat == GL_COMPRESSED_SIGNED_R11_EAC)
+        blockSize = 8;
+    else if (internalFormat == GL_COMPRESSED_RG11_EAC || internalFormat == GL_COMPRESSED_SIGNED_RG11_EAC)
+        blockSize = 16;
     else if (internalFormat == GL_COMPRESSED_RED_RGTC1_EXT || internalFormat == GL_COMPRESSED_SIGNED_RED_RGTC1_EXT)
         blockSize = 8;
     else if (internalFormat == GL_COMPRESSED_RED_GREEN_RGTC2_EXT || internalFormat == GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT)
@@ -1637,12 +1887,19 @@ void Texture::applyTexParameters(GLenum target, State& state) const
     // get the contextID (user defined ID of 0 upwards) for the
     // current OpenGL context.
     const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
+    const GLExtensions* extensions = state.get<GLExtensions>();
+
+    TextureObject* to = getTextureObject(contextID);
+    if (to)
+    {
+        extensions->debugObjectLabel(GL_TEXTURE, to->id(), getName());
+    }
+
 
     WrapMode ws = _wrap_s, wt = _wrap_t, wr = _wrap_r;
 
     // GL_IBM_texture_mirrored_repeat, fall-back REPEAT
-    if (!extensions->isTextureMirroredRepeatSupported())
+    if (!extensions->isTextureMirroredRepeatSupported)
     {
         if (ws == MIRROR)
             ws = REPEAT;
@@ -1653,7 +1910,7 @@ void Texture::applyTexParameters(GLenum target, State& state) const
     }
 
     // GL_EXT_texture_edge_clamp, fall-back CLAMP
-    if (!extensions->isTextureEdgeClampSupported())
+    if (!extensions->isTextureEdgeClampSupported)
     {
         if (ws == CLAMP_TO_EDGE)
             ws = CLAMP;
@@ -1663,7 +1920,7 @@ void Texture::applyTexParameters(GLenum target, State& state) const
             wr = CLAMP;
     }
 
-    if(!extensions->isTextureBorderClampSupported())
+    if(!extensions->isTextureBorderClampSupported)
     {
         if(ws == CLAMP_TO_BORDER)
             ws = CLAMP;
@@ -1673,7 +1930,7 @@ void Texture::applyTexParameters(GLenum target, State& state) const
             wr = CLAMP;
     }
 
-    #if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE)
+    #if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) || defined(OSG_GLES3_AVAILABLE) || defined(OSG_GL3_AVAILABLE)
         if (ws == CLAMP) ws = CLAMP_TO_EDGE;
         if (wt == CLAMP) wt = CLAMP_TO_EDGE;
         if (wr == CLAMP) wr = CLAMP_TO_EDGE;
@@ -1682,7 +1939,7 @@ void Texture::applyTexParameters(GLenum target, State& state) const
     const Image * image = getImage(0);
     if( image &&
         image->isMipmap() &&
-        extensions->isTextureMaxLevelSupported() &&
+        extensions->isTextureMaxLevelSupported &&
         int( image->getNumMipmapLevels() ) <
             Image::computeNumberOfMipmapLevels( image->s(), image->t(), image->r() ) )
             glTexParameteri( target, GL_TEXTURE_MAX_LEVEL, image->getNumMipmapLevels() - 1 );
@@ -1699,7 +1956,7 @@ void Texture::applyTexParameters(GLenum target, State& state) const
     glTexParameteri( target, GL_TEXTURE_MAG_FILTER, _mag_filter);
 
     // Art: I think anisotropic filtering is not supported by the integer textures
-    if (extensions->isTextureFilterAnisotropicSupported() &&
+    if (extensions->isTextureFilterAnisotropicSupported &&
         _internalFormatType != SIGNED_INTEGER && _internalFormatType != UNSIGNED_INTEGER)
     {
         // note, GL_TEXTURE_MAX_ANISOTROPY_EXT will either be defined
@@ -1707,14 +1964,14 @@ void Texture::applyTexParameters(GLenum target, State& state) const
         glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, _maxAnisotropy);
     }
 
-    if (extensions->isTextureSwizzleSupported())
+    if (extensions->isTextureSwizzleSupported)
     {
         // note, GL_TEXTURE_SWIZZLE_RGBA will either be defined
         // by gl.h (or via glext.h) or by include/osg/Texture.
         glTexParameteriv(target, GL_TEXTURE_SWIZZLE_RGBA, _swizzle.ptr());
     }
 
-    if (extensions->isTextureBorderClampSupported())
+    if (extensions->isTextureBorderClampSupported)
     {
 
         #ifndef GL_TEXTURE_BORDER_COLOR
@@ -1738,19 +1995,21 @@ void Texture::applyTexParameters(GLenum target, State& state) const
 
     // integer textures are not supported by the shadow
     // GL_TEXTURE_1D_ARRAY_EXT could be included in the check below but its not yet implemented in OSG
-    if (extensions->isShadowSupported() &&
-        (target == GL_TEXTURE_2D || target == GL_TEXTURE_1D || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D_ARRAY_EXT ) &&
+    if (extensions->isShadowSupported &&
+        (target == GL_TEXTURE_2D || target == GL_TEXTURE_1D || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D_ARRAY ) &&
         _internalFormatType != SIGNED_INTEGER && _internalFormatType != UNSIGNED_INTEGER)
     {
         if (_use_shadow_comparison)
         {
             glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
             glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC_ARB, _shadow_compare_func);
-            glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, _shadow_texture_mode);
+            #if defined(OSG_GL1_AVAILABLE) || defined(OSG_GL2_AVAILABLE)
+                glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, _shadow_texture_mode);
+            #endif
 
             // if ambient value is 0 - it is default behaviour of GL_ARB_shadow
             // no need for GL_ARB_shadow_ambient in this case
-            if (extensions->isShadowAmbientSupported() && _shadow_ambient > 0)
+            if (extensions->isShadowAmbientSupported && _shadow_ambient > 0)
             {
                 glTexParameterf(target, TEXTURE_COMPARE_FAIL_VALUE_ARB, _shadow_ambient);
             }
@@ -1760,19 +2019,14 @@ void Texture::applyTexParameters(GLenum target, State& state) const
             glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
         }
     }
-
-    // Apply image load/store attributes
-    if (extensions->isBindImageTextureSupported() && _imageAttachment.access!=0)
+    // if range is valid
+    if( _maxlod - _minlod >= 0)
     {
-        TextureObject* tobj = getTextureObject(contextID);
-        if (tobj)
-        {
-            extensions->glBindImageTexture(
-                _imageAttachment.unit, tobj->id(), _imageAttachment.level,
-                _imageAttachment.layered, _imageAttachment.layer, _imageAttachment.access,
-                _imageAttachment.format!=0 ? _imageAttachment.format : _internalFormat);
-        }
+        glTexParameterf(target, GL_TEXTURE_MIN_LOD, _minlod);
+        glTexParameterf(target, GL_TEXTURE_MAX_LOD, _maxlod);
     }
+
+    glTexParameterf(target, GL_TEXTURE_LOD_BIAS, _lodbias);
 
     getTextureParameterDirty(state.getContextID()) = false;
 
@@ -1780,8 +2034,7 @@ void Texture::applyTexParameters(GLenum target, State& state) const
 
 void Texture::computeRequiredTextureDimensions(State& state, const osg::Image& image,GLsizei& inwidth, GLsizei& inheight,GLsizei& numMipmapLevels) const
 {
-    const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
     int width,height;
 
@@ -1797,8 +2050,8 @@ void Texture::computeRequiredTextureDimensions(State& state, const osg::Image& i
     }
 
     // cap the size to what the graphics hardware can handle.
-    if (width>extensions->maxTextureSize()) width = extensions->maxTextureSize();
-    if (height>extensions->maxTextureSize()) height = extensions->maxTextureSize();
+    if (width>extensions->maxTextureSize) width = extensions->maxTextureSize;
+    if (height>extensions->maxTextureSize) height = extensions->maxTextureSize;
 
     inwidth = width;
     inheight = height;
@@ -1830,6 +2083,43 @@ bool Texture::areAllTextureObjectsLoaded() const
     return true;
 }
 
+GLenum Texture::selectSizedInternalFormat(const osg::Image* image) const
+{
+    if (image)
+    {
+        bool compressed_image = isCompressedInternalFormat((GLenum)image->getPixelFormat());
+
+        //calculate sized internal format
+        if(compressed_image)
+        {
+            if(isCompressedInternalFormatSupportedByTexStorage(_internalFormat))
+            {
+                return _internalFormat;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            if(isSizedInternalFormat(_internalFormat))
+            {
+                return _internalFormat;
+            }
+            else
+            {
+                return assumeSizedInternalFormat((GLenum)image->getInternalTextureFormat(), (GLenum)image->getDataType());
+            }
+        }
+    }
+    else
+    {
+        if (isSizedInternalFormat(_internalFormat)) return _internalFormat;
+
+        return assumeSizedInternalFormat(_internalFormat, (_sourceType!=0) ? _sourceType : GL_UNSIGNED_BYTE);
+    }
+}
 
 void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* image, GLsizei inwidth, GLsizei inheight,GLsizei numMipmapLevels) const
 {
@@ -1842,10 +2132,8 @@ void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* ima
     OSG_NOTICE<<"glTexImage2D pixelFormat = "<<std::hex<<image->getPixelFormat()<<std::dec<<std::endl;
 #endif
 
-    // get the contextID (user defined ID of 0 upwards) for the
-    // current OpenGL context.
-    const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
+    // get extensions object
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
     // select the internalFormat required for the texture.
     bool compressed_image = isCompressedInternalFormat((GLenum)image->getPixelFormat());
@@ -1866,33 +2154,43 @@ void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* ima
             case GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:
             case GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG:
             case GL_ETC1_RGB8_OES:
+            case(GL_COMPRESSED_RGB8_ETC2):
+            case(GL_COMPRESSED_SRGB8_ETC2):
             case GL_COMPRESSED_RGB: _internalFormat = GL_RGB; break;
             case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
             case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
             case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
             case GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG:
             case GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG:
+            case(GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2):
+            case(GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2):
+            case(GL_COMPRESSED_RGBA8_ETC2_EAC):
+            case(GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC):
             case GL_COMPRESSED_RGBA: _internalFormat = GL_RGBA; break;
             case GL_COMPRESSED_ALPHA: _internalFormat = GL_ALPHA; break;
             case GL_COMPRESSED_LUMINANCE: _internalFormat = GL_LUMINANCE; break;
             case GL_COMPRESSED_LUMINANCE_ALPHA: _internalFormat = GL_LUMINANCE_ALPHA; break;
             case GL_COMPRESSED_INTENSITY: _internalFormat = GL_INTENSITY; break;
+            case(GL_COMPRESSED_R11_EAC):
+            case(GL_COMPRESSED_SIGNED_R11_EAC):
             case GL_COMPRESSED_SIGNED_RED_RGTC1_EXT:
             case GL_COMPRESSED_RED_RGTC1_EXT: _internalFormat = GL_RED; break;
+            case(GL_COMPRESSED_RG11_EAC):
+            case(GL_COMPRESSED_SIGNED_RG11_EAC):
             case GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT:
-            case GL_COMPRESSED_RED_GREEN_RGTC2_EXT: _internalFormat = GL_LUMINANCE_ALPHA; break;
+            case GL_COMPRESSED_RED_GREEN_RGTC2_EXT: _internalFormat = GL_RG; break;
         }
     }
 
     glPixelStorei(GL_UNPACK_ALIGNMENT,image->getPacking());
     unsigned int rowLength = image->getRowLength();
 
-    bool useClientStorage = extensions->isClientStorageSupported() && getClientStorageHint();
+    bool useClientStorage = extensions->isClientStorageSupported && getClientStorageHint();
     if (useClientStorage)
     {
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE,GL_TRUE);
 
-        #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GL3_AVAILABLE)
+        #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE) && !defined(OSG_GL3_AVAILABLE)
             glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_PRIORITY,0.0f);
         #endif
 
@@ -1951,7 +2249,7 @@ void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* ima
     bool useHardwareMipMapGeneration = mipmappingRequired && (!image->isMipmap() && isHardwareMipmapGenerationEnabled(state));
     bool useGluBuildMipMaps = mipmappingRequired && (!useHardwareMipMapGeneration && !image->isMipmap());
 
-    GLBufferObject* pbo = image->getOrCreateGLBufferObject(contextID);
+    GLBufferObject* pbo = image->getOrCreateGLBufferObject(state.getContextID());
     if (pbo && !needImageRescale && !useGluBuildMipMaps)
     {
         state.bindPixelBufferObject(pbo);
@@ -1965,7 +2263,7 @@ void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* ima
     {
         pbo = 0;
     }
-#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
     glPixelStorei(GL_UNPACK_ROW_LENGTH,rowLength);
 #endif
     if( !mipmappingRequired || useHardwareMipMapGeneration)
@@ -2012,45 +2310,114 @@ void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* ima
             int width  = inwidth;
             int height = inheight;
 
-            if( !compressed_image )
+            GLenum texStoragesizedInternalFormat = extensions->isTextureStorageEnabled && extensions->isTexStorage2DSupported() && (_borderWidth==0) ? selectSizedInternalFormat(image) : 0;
+
+            if (texStoragesizedInternalFormat!=0)
             {
-                for( GLsizei k = 0 ; k < numMipmapLevels  && (width || height) ;k++)
+                if (getTextureTarget()==GL_TEXTURE_CUBE_MAP)
                 {
+                    if (target==GL_TEXTURE_CUBE_MAP_POSITIVE_X)
+                    {
+                        // only allocate on first face image
+                        extensions->glTexStorage2D(GL_TEXTURE_CUBE_MAP, numMipmapLevels, texStoragesizedInternalFormat, width, height);
+                    }
+                }
+                else
+                {
+                    extensions->glTexStorage2D(target, numMipmapLevels, texStoragesizedInternalFormat, width, height);
+                }
 
-                    if (width == 0)
-                        width = 1;
-                    if (height == 0)
-                        height = 1;
+                if( !compressed_image )
+                {
+                    for( GLsizei k = 0 ; k < numMipmapLevels  && (width || height) ;k++)
+                    {
 
-                    glTexImage2D( target, k, _internalFormat,
-                         width, height, _borderWidth,
-                        (GLenum)image->getPixelFormat(),
-                        (GLenum)image->getDataType(),
-                        dataPtr + image->getMipmapOffset(k));
+                        if (width == 0)
+                            width = 1;
+                        if (height == 0)
+                            height = 1;
 
-                    width >>= 1;
-                    height >>= 1;
+                        glTexSubImage2D( target, k,
+                            0, 0,
+                            width, height,
+                            (GLenum)image->getPixelFormat(),
+                            (GLenum)image->getDataType(),
+                            dataPtr + image->getMipmapOffset(k));
+
+                        width >>= 1;
+                        height >>= 1;
+                    }
+                }
+                else if (extensions->isCompressedTexImage2DSupported())
+                {
+                    GLint blockSize,size;
+                    for( GLsizei k = 0 ; k < numMipmapLevels  && (width || height) ;k++)
+                    {
+                        if (width == 0)
+                            width = 1;
+                        if (height == 0)
+                            height = 1;
+
+                        getCompressedSize(image->getInternalTextureFormat(), width, height, 1, blockSize,size);
+
+                        //state.checkGLErrors("before extensions->glCompressedTexSubImage2D(");
+
+                        extensions->glCompressedTexSubImage2D(target, k,
+                            0, 0,
+                            width, height,
+                            (GLenum)image->getPixelFormat(),
+                            size,
+                            dataPtr + image->getMipmapOffset(k));
+
+                        //state.checkGLErrors("after extensions->glCompressedTexSubImage2D(");
+
+                        width >>= 1;
+                        height >>= 1;
+                    }
                 }
             }
-            else if (extensions->isCompressedTexImage2DSupported())
+            else
             {
-                GLint blockSize, size;
-
-                for( GLsizei k = 0 ; k < numMipmapLevels  && (width || height) ;k++)
+                if( !compressed_image )
                 {
-                    if (width == 0)
-                        width = 1;
-                    if (height == 0)
-                        height = 1;
+                    for( GLsizei k = 0 ; k < numMipmapLevels  && (width || height) ;k++)
+                    {
 
-                    getCompressedSize(_internalFormat, width, height, 1, blockSize,size);
+                        if (width == 0)
+                            width = 1;
+                        if (height == 0)
+                            height = 1;
 
-                    extensions->glCompressedTexImage2D(target, k, _internalFormat,
-                                                       width, height, _borderWidth,
-                                                       size, dataPtr + image->getMipmapOffset(k));
+                        glTexImage2D( target, k, _internalFormat,
+                             width, height, _borderWidth,
+                            (GLenum)image->getPixelFormat(),
+                            (GLenum)image->getDataType(),
+                            dataPtr + image->getMipmapOffset(k));
 
-                    width >>= 1;
-                    height >>= 1;
+                        width >>= 1;
+                        height >>= 1;
+                    }
+                }
+                else if (extensions->isCompressedTexImage2DSupported())
+                {
+                    GLint blockSize, size;
+
+                    for( GLsizei k = 0 ; k < numMipmapLevels  && (width || height) ;k++)
+                    {
+                        if (width == 0)
+                            width = 1;
+                        if (height == 0)
+                            height = 1;
+
+                        getCompressedSize(_internalFormat, width, height, 1, blockSize,size);
+
+                        extensions->glCompressedTexImage2D(target, k, _internalFormat,
+                                                           width, height, _borderWidth,
+                                                           size, dataPtr + image->getMipmapOffset(k));
+
+                        width >>= 1;
+                        height >>= 1;
+                    }
                 }
             }
         }
@@ -2155,7 +2522,7 @@ void Texture::applyTexImage2D_subload(State& state, GLenum target, const Image* 
     // get the contextID (user defined ID of 0 upwards) for the
     // current OpenGL context.
     const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
     // select the internalFormat required for the texture.
     bool compressed_image = isCompressedInternalFormat((GLenum)image->getPixelFormat());
@@ -2224,7 +2591,7 @@ void Texture::applyTexImage2D_subload(State& state, GLenum target, const Image* 
     {
         pbo = 0;
     }
-#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
     glPixelStorei(GL_UNPACK_ROW_LENGTH,rowLength);
 #endif
     if( !mipmappingRequired || useHardwareMipMapGeneration)
@@ -2341,17 +2708,14 @@ bool Texture::isHardwareMipmapGenerationEnabled(const State& state) const
 {
     if (_useHardwareMipMapGeneration)
     {
-        unsigned int contextID = state.getContextID();
-        const Extensions* extensions = getExtensions(contextID,true);
-
-        if (extensions->isGenerateMipMapSupported())
+        const GLExtensions* extensions = state.get<GLExtensions>();
+        if (extensions->isGenerateMipMapSupported)
         {
             return true;
         }
 
-        const FBOExtensions* fbo_ext = FBOExtensions::instance(contextID,true);
-
-        if (fbo_ext->isSupported() && fbo_ext->glGenerateMipmap)
+        // FrameBufferObjects are required for glGenerateMipmap
+        if (extensions->isFrameBufferObjectSupported && extensions->glGenerateMipmap)
         {
             return true;
         }
@@ -2364,16 +2728,16 @@ Texture::GenerateMipmapMode Texture::mipmapBeforeTexImage(const State& state, bo
 {
     if (hardwareMipmapOn)
     {
-#if defined( OSG_GLES2_AVAILABLE ) || defined( OSG_GL3_AVAILABLE )
+#if defined( OSG_GLES2_AVAILABLE ) || defined( OSG_GLES3_AVAILABLE ) || defined( OSG_GL3_AVAILABLE )
         return GENERATE_MIPMAP;
 #else
 
-        FBOExtensions* fbo_ext = FBOExtensions::instance(state.getContextID(),true);
-        bool useGenerateMipMap = fbo_ext->isSupported() && fbo_ext->glGenerateMipmap;
+        const GLExtensions* extensions = state.get<GLExtensions>();
+        bool useGenerateMipMap = extensions->isFrameBufferObjectSupported && extensions->glGenerateMipmap;
 
         if (useGenerateMipMap)
         {
-            if (Texture::getExtensions(state.getContextID(),true)->getPreferGenerateMipmapSGISForPowerOfTwo())
+            if (extensions->preferGenerateMipmapSGISForPowerOfTwo)
             {
                 int width = getTextureWidth();
                 int height = getTextureHeight();
@@ -2388,7 +2752,7 @@ Texture::GenerateMipmapMode Texture::mipmapBeforeTexImage(const State& state, bo
             if (useGenerateMipMap) return GENERATE_MIPMAP;
         }
 
-        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+        glTexParameteri(getTextureTarget(), GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
         return GENERATE_MIPMAP_TEX_PARAMETER;
 #endif
     }
@@ -2405,13 +2769,13 @@ void Texture::mipmapAfterTexImage(State& state, GenerateMipmapMode beforeResult)
             TextureObject* textureObject = getTextureObject(contextID);
             if (textureObject)
             {
-                osg::FBOExtensions* fbo_ext = osg::FBOExtensions::instance(contextID, true);
-                fbo_ext->glGenerateMipmap(textureObject->target());
+                osg::GLExtensions* ext = state.get<GLExtensions>();
+                ext->glGenerateMipmap(textureObject->target());
             }
             break;
         }
         case GENERATE_MIPMAP_TEX_PARAMETER:
-            glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
+            glTexParameteri(getTextureTarget(), GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
             break;
         case GENERATE_MIPMAP_NONE:
             break;
@@ -2438,13 +2802,13 @@ void Texture::generateMipmap(State& state) const
     }
 
     // get fbo extension which provides us with the glGenerateMipmapEXT function
-    osg::FBOExtensions* fbo_ext = osg::FBOExtensions::instance(state.getContextID(), true);
+    osg::GLExtensions* ext = state.get<GLExtensions>();
 
-    // check if the function is supported
-    if (fbo_ext->isSupported() && fbo_ext->glGenerateMipmap)
+    // FrameBufferObjects are required for glGenerateMipmap
+    if (ext->isFrameBufferObjectSupported && ext->glGenerateMipmap)
     {
         textureObject->bind();
-        fbo_ext->glGenerateMipmap(textureObject->target());
+        ext->glGenerateMipmap(textureObject->target());
 
         // inform state that this texture is the current one bound.
         state.haveAppliedTextureAttribute(state.getActiveTextureUnit(), this);
@@ -2480,160 +2844,11 @@ void Texture::releaseGLObjects(State* state) const
         unsigned int contextID = state->getContextID();
         if (_textureObjectBuffer[contextID].valid())
         {
-            Texture::releaseTextureObject(contextID, _textureObjectBuffer[contextID].get());
+            _textureObjectBuffer[contextID]->release();
 
             _textureObjectBuffer[contextID] = 0;
         }
     }
 }
-
-Texture::Extensions* Texture::getExtensions(unsigned int contextID,bool createIfNotInitalized)
-{
-    if (!s_extensions[contextID] && createIfNotInitalized) s_extensions[contextID] = new Extensions(contextID);
-    return s_extensions[contextID].get();
-}
-
-void Texture::setExtensions(unsigned int contextID,Extensions* extensions)
-{
-    s_extensions[contextID] = extensions;
-}
-
-Texture::Extensions::Extensions(unsigned int contextID)
-{
-    const char* version = (const char*) glGetString( GL_VERSION );
-    if (!version)
-    {
-        OSG_FATAL<<"Error: In Texture::Extensions::setupGLExtensions(..) OpenGL version test failed, requires valid graphics context."<<std::endl;
-        return;
-    }
-
-    const char* renderer = (const char*) glGetString(GL_RENDERER);
-    std::string rendererString(renderer ? renderer : "");
-
-    bool radeonHardwareDetected = (rendererString.find("Radeon")!=std::string::npos || rendererString.find("RADEON")!=std::string::npos);
-    bool fireGLHardwareDetected = (rendererString.find("FireGL")!=std::string::npos || rendererString.find("FIREGL")!=std::string::npos);
-
-    bool builtInSupport = OSG_GLES2_FEATURES || OSG_GL3_FEATURES;
-
-    _isMultiTexturingSupported = builtInSupport || OSG_GLES1_FEATURES ||
-                                 isGLExtensionOrVersionSupported( contextID,"GL_ARB_multitexture", 1.3f) ||
-                                 isGLExtensionOrVersionSupported(contextID,"GL_EXT_multitexture", 1.3f);
-
-    _isTextureFilterAnisotropicSupported = isGLExtensionSupported(contextID,"GL_EXT_texture_filter_anisotropic");
-
-    _isTextureSwizzleSupported = isGLExtensionSupported(contextID,"GL_ARB_texture_swizzle");
-
-    _isTextureCompressionARBSupported = builtInSupport || isGLExtensionOrVersionSupported(contextID,"GL_ARB_texture_compression", 1.3f);
-
-    _isTextureCompressionS3TCSupported = isGLExtensionSupported(contextID,"GL_EXT_texture_compression_s3tc");
-
-    _isTextureCompressionPVRTC2BPPSupported = isGLExtensionSupported(contextID,"GL_IMG_texture_compression_pvrtc");
-
-    _isTextureCompressionPVRTC4BPPSupported = _isTextureCompressionPVRTC2BPPSupported;//covered by same extension
-
-    _isTextureCompressionETCSupported = isGLExtensionSupported(contextID,"GL_OES_compressed_ETC1_RGB8_texture");
-
-
-    _isTextureCompressionRGTCSupported = isGLExtensionSupported(contextID,"GL_EXT_texture_compression_rgtc");
-
-    _isTextureCompressionPVRTCSupported = isGLExtensionSupported(contextID,"GL_IMG_texture_compression_pvrtc");
-
-    _isTextureMirroredRepeatSupported = builtInSupport ||
-                                        isGLExtensionOrVersionSupported(contextID,"GL_IBM_texture_mirrored_repeat", 1.4f) ||
-                                        isGLExtensionOrVersionSupported(contextID,"GL_ARB_texture_mirrored_repeat", 1.4f);
-
-    _isTextureEdgeClampSupported = builtInSupport ||
-                                   isGLExtensionOrVersionSupported(contextID,"GL_EXT_texture_edge_clamp", 1.2f) ||
-                                   isGLExtensionOrVersionSupported(contextID,"GL_SGIS_texture_edge_clamp", 1.2f);
-
-
-    _isTextureBorderClampSupported = OSG_GL3_FEATURES ||
-                                     ((OSG_GL1_FEATURES || OSG_GL2_FEATURES) && isGLExtensionOrVersionSupported(contextID,"GL_ARB_texture_border_clamp", 1.3f));
-
-    _isGenerateMipMapSupported = builtInSupport || isGLExtensionOrVersionSupported(contextID,"GL_SGIS_generate_mipmap", 1.4f);
-
-    _preferGenerateMipmapSGISForPowerOfTwo = (radeonHardwareDetected||fireGLHardwareDetected) ? false : true;
-
-    _isTextureMultisampledSupported = isGLExtensionSupported(contextID,"GL_ARB_texture_multisample");
-
-    _isShadowSupported = OSG_GL3_FEATURES || isGLExtensionSupported(contextID,"GL_ARB_shadow");
-
-    _isShadowAmbientSupported = isGLExtensionSupported(contextID,"GL_ARB_shadow_ambient");
-
-    _isClientStorageSupported = isGLExtensionSupported(contextID,"GL_APPLE_client_storage");
-
-    _isNonPowerOfTwoTextureNonMipMappedSupported = builtInSupport || isGLExtensionOrVersionSupported(contextID,"GL_ARB_texture_non_power_of_two", 2.0) || isGLExtensionSupported(contextID,"GL_APPLE_texture_2D_limited_npot");
-
-    _isNonPowerOfTwoTextureMipMappedSupported = builtInSupport || _isNonPowerOfTwoTextureNonMipMappedSupported;
-
-    _isTextureIntegerEXTSupported = OSG_GL3_FEATURES || isGLExtensionSupported(contextID, "GL_EXT_texture_integer");
-
-    #if 0
-    if (rendererString.find("Radeon")!=std::string::npos || rendererString.find("RADEON")!=std::string::npos)
-    {
-        _isNonPowerOfTwoTextureMipMappedSupported = false;
-        OSG_INFO<<"Disabling _isNonPowerOfTwoTextureMipMappedSupported for ATI hardware."<<std::endl;
-    }
-    #endif
-
-    if (rendererString.find("GeForce FX")!=std::string::npos)
-    {
-        _isNonPowerOfTwoTextureMipMappedSupported = false;
-        OSG_INFO<<"Disabling _isNonPowerOfTwoTextureMipMappedSupported for GeForce FX hardware."<<std::endl;
-    }
-
-    _maxTextureSize=0;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE,&_maxTextureSize);
-
-    char *ptr;
-    if( (ptr = getenv("OSG_MAX_TEXTURE_SIZE")) != 0)
-    {
-        GLint osg_max_size = atoi(ptr);
-
-        if (osg_max_size<_maxTextureSize)
-        {
-
-            _maxTextureSize = osg_max_size;
-        }
-    }
-
-    if( _isMultiTexturingSupported )
-    {
-       _numTextureUnits = 0;
-       #if defined(OSG_GLES2_AVAILABLE) || defined(OSG_GL3_AVAILABLE)
-           glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,&_numTextureUnits);
-       #else
-           if (osg::asciiToFloat(version)>=2.0)
-           {
-               glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,&_numTextureUnits);
-           }
-           else
-           {
-               glGetIntegerv(GL_MAX_TEXTURE_UNITS,&_numTextureUnits);
-           }
-       #endif
-    }
-    else
-    {
-       _numTextureUnits = 1;
-    }
-
-    setGLExtensionFuncPtr(_glCompressedTexImage2D,"glCompressedTexImage2D","glCompressedTexImage2DARB");
-    setGLExtensionFuncPtr(_glCompressedTexSubImage2D,"glCompressedTexSubImage2D","glCompressedTexSubImage2DARB");
-    setGLExtensionFuncPtr(_glGetCompressedTexImage,"glGetCompressedTexImage","glGetCompressedTexImageARB");;
-    setGLExtensionFuncPtr(_glTexImage2DMultisample, "glTexImage2DMultisample", "glTexImage2DMultisampleARB");
-
-    setGLExtensionFuncPtr(_glTexParameterIiv, "glTexParameterIiv", "glTexParameterIivARB");
-    setGLExtensionFuncPtr(_glTexParameterIuiv, "glTexParameterIuiv", "glTexParameterIuivARB");
-
-
-    if (_glTexParameterIiv == NULL) setGLExtensionFuncPtr(_glTexParameterIiv, "glTexParameterIivEXT");
-    if (_glTexParameterIuiv == NULL) setGLExtensionFuncPtr(_glTexParameterIuiv, "glTexParameterIuivEXT");
-
-    setGLExtensionFuncPtr(_glBindImageTexture, "glBindImageTexture", "glBindImageTextureARB");
-
-    _isTextureMaxLevelSupported = ( getGLVersionNumber() >= 1.2f );
-}
-
 
 }

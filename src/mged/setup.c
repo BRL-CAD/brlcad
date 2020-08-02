@@ -453,6 +453,8 @@ mged_setup(Tcl_Interp **interpreter)
     bu_vls_free(&tlog);
 
     BU_ALLOC(view_state->vs_gvp, struct bview);
+    BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
+    bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bview callbacks");
     ged_view_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
@@ -474,6 +476,9 @@ mged_setup(Tcl_Interp **interpreter)
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
     GEDP->ged_interp = (void *)*interpreter;
+    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
+    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    GEDP->io_mode = TCL_READABLE;
     GEDP->ged_interp_eval = &mged_db_search_callback;
 
     /* Tcl needs to write nulls onto subscripted variable names */

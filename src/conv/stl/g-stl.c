@@ -38,6 +38,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/cv.h"
 #include "vmath.h"
@@ -314,6 +315,7 @@ main(int argc, char *argv[])
     int mutex;
     int missingg;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */

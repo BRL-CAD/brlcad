@@ -36,6 +36,8 @@ main(int ac, char *av[])
     const char *res;
     char *tbasename;
 
+    bu_setprogname(av[0]);
+
     if (ac > 1) {
 	fprintf(stderr, "Usage: %s\n", av[0]);
 	return 1;

@@ -36,6 +36,8 @@
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "bu/observer.h"
+#include "bu/ptbl.h"
+#include "bg/polygon_types.h"
 #include "vmath.h"
 
 /** @{ */
@@ -110,6 +112,7 @@ struct bview_data_axes_state {
 };
 
 struct bview_grid_state {
+    int       rc;
     int       draw;               /* draw grid */
     int       snap;               /* snap to grid */
     fastf_t   anchor[3];
@@ -165,27 +168,6 @@ struct bview_data_line_state {
     point_t   *gdls_points;             /* in model coordinates */
 };
 
-typedef enum { gctUnion, gctDifference, gctIntersection, gctXor } ClipType;
-
-typedef struct {
-    size_t    gpc_num_points;
-    point_t   *gpc_point;               /* in model coordinates */
-} bview_poly_contour;
-
-typedef struct {
-    size_t              gp_num_contours;
-    int                 gp_color[3];
-    int                 gp_line_width;          /* in pixels */
-    int                 gp_line_style;
-    int                 *gp_hole;
-    bview_poly_contour    *gp_contour;
-} bview_polygon;
-
-typedef struct {
-    size_t      gp_num_polygons;
-    bview_polygon *gp_polygon;
-} bview_polygons;
-
 typedef struct {
     int                 gdps_draw;
     int                 gdps_moveAll;
@@ -197,13 +179,13 @@ typedef struct {
     size_t              gdps_curr_polygon_i;
     size_t              gdps_curr_point_i;
     point_t             gdps_prev_point;
-    ClipType            gdps_clip_type;
+    bg_clip_t           gdps_clip_type;
     fastf_t             gdps_scale;
     point_t             gdps_origin;
     mat_t               gdps_rotation;
     mat_t               gdps_view2model;
     mat_t               gdps_model2view;
-    bview_polygons      gdps_polygons;
+    struct bg_polygons  gdps_polygons;
     fastf_t             gdps_data_vZ;
 } bview_data_polygon_state;
 
@@ -252,6 +234,8 @@ struct bview {
     struct bview_data_axes_state        gv_sdata_axes;
     struct bview_data_label_state gv_sdata_labels;
     struct bview_data_line_state  gv_sdata_lines;
+    int                           gv_snap_lines;
+    double 			  gv_snap_tol_factor;
     bview_data_polygon_state      gv_sdata_polygons;
     struct bview_grid_state     gv_grid;
     struct bview_other_state      gv_center_dot;
@@ -267,6 +251,7 @@ struct bview {
     fastf_t                     gv_curve_scale;
     fastf_t                     gv_data_vZ;
     size_t                      gv_bot_threshold;
+    struct bu_ptbl *callbacks;
 };
 
 

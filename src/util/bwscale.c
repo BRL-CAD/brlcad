@@ -37,6 +37,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
@@ -355,7 +356,7 @@ get_args(int argc, char **argv)
     /* XXX - backward compatibility hack */
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("bwscale: cannot open \"%s\" for reading\n",file_name);
 	    return 0;
 	}
@@ -376,7 +377,7 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("bwscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
@@ -392,6 +393,11 @@ int
 main(int argc, char **argv)
 {
     int i;
+
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);

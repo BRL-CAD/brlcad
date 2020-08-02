@@ -6,8 +6,7 @@
  *
  */
 
-#include <tcl.h>
-#include <tkInt.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 
 /*----------------------------------------------------------------------
@@ -183,10 +182,10 @@ static void TextDraw(TextElement *text, Tk_Window tkwin, Drawable d, Ttk_Box b)
 
     if (clipRegion != NULL) {
 #ifdef HAVE_XFT
-	TkUnixSetXftClipRegion(None);
+	TkUnixSetXftClipRegion(NULL);
 #endif
-	XSetClipMask(Tk_Display(tkwin), gc1, TkNone);
-	XSetClipMask(Tk_Display(tkwin), gc2, TkNone);
+	XSetClipMask(Tk_Display(tkwin), gc1, None);
+	XSetClipMask(Tk_Display(tkwin), gc2, None);
 	TkDestroyRegion(clipRegion);
     }
     Tk_FreeGC(Tk_Display(tkwin), gc1);
@@ -305,7 +304,7 @@ static void StippleOver(
     Pixmap stipple = Tk_AllocBitmapFromObj(NULL, tkwin, image->stippleObj);
     XColor *color = Tk_GetColorFromObj(tkwin, image->backgroundObj);
 
-    if (stipple != TkNone) {
+    if (stipple != None) {
 	unsigned long mask = GCFillStyle | GCStipple | GCForeground;
 	XGCValues gcvalues;
 	GC gc;

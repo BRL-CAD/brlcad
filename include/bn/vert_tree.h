@@ -38,6 +38,9 @@
 #define BN_VERT_TREE_H
 
 #include "common.h"
+
+#include "vmath.h"
+
 #include "bn/defines.h"
 #include "bu/magic.h"
 

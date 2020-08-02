@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/process.h"
 #include "bu/str.h"
@@ -64,6 +65,7 @@ main (int argc, char **argv)
     double entryp[3] = VINIT_ZERO;	/* Ray's entry into current region */
     double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
+    bu_setprogname(argv[0]);
     pid = bu_process_id();
 
     *rayname = '\0';

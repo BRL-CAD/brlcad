@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -109,6 +110,11 @@ main(int argc, char **argv)
     FILE *f[8] = {NULL};
     size_t ret;
 
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
@@ -145,7 +151,7 @@ main(int argc, char **argv)
 		} else {
 		    snprintf(name, sizeof(name), "%s.%d", base_name, framenumber);
 		}
-		if ((f[i] = fopen(name, "w")) == NULL) {
+		if ((f[i] = fopen(name, "wb")) == NULL) {
 		    perror(name);
 		    goto done;
 		}

@@ -32,6 +32,7 @@
 
 #include "vmath.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -111,7 +112,7 @@ static void fill_table (char *f_name)
     unsigned char rgb[3];
     struct bu_vls v = BU_VLS_INIT_ZERO;
 
-    if ((fp = fopen(f_name, "r")) == NULL)
+    if ((fp = fopen(f_name, "rb")) == NULL)
 	bu_exit(1, "Cannot open color file '%s'\n", bu_optarg);
 
     for (line_nm = 1; bu_vls_gets(&v, fp) != -1;
@@ -174,6 +175,11 @@ main (int argc, char **argv)
     int best_diff;	/* error in best match */
     int this_diff;	/* pixel-color_tbl difference */
 
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     /*
      * Initialize the color table
      */
@@ -227,11 +233,11 @@ main (int argc, char **argv)
      */
     if (infp == NULL) {
 	inf_name = argv[bu_optind];
-	if ((infp = fopen(inf_name, "r")) == NULL)
+	if ((infp = fopen(inf_name, "rb")) == NULL)
 	    bu_exit(1, "Cannot open input file '%s'\n", inf_name);
 	if (outfp == NULL) {
 	    outf_name = argv[++bu_optind];
-	    if ((outfp = fopen(outf_name, "w")) == NULL)
+	    if ((outfp = fopen(outf_name, "wb")) == NULL)
 		bu_exit(1, "Cannot open output file '%s'\n", outf_name);
 	}
     }

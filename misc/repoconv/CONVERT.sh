@@ -7,7 +7,9 @@ rm -f current_rev.txt git.log nsha1.txt rev_gsha1s.txt svn_msgs.txt branches.txt
 REPODIR="$PWD/brlcad_repo"
 
 if [ ! -e "cvs-fast-export" ]; then
-        git clone https://gitlab.com/esr/cvs-fast-export.git
+        curl -o cvs-fast-export.tar.gz https://gitlab.com/esr/cvs-fast-export/-/archive/1.48/cvs-fast-export-1.48.tar.gz
+	tar -xvf cvs-fast-export.tar.gz
+	mv cvs-fast-export-1.48 cvs-fast-export
 fi
 cd cvs-fast-export && make cvs-fast-export && cd ..
 
@@ -54,7 +56,7 @@ sed -i 's/$Author:[^$;"]*/$Author/' sh/Attic/cvs2cl.pl,v
 sed -i 's/$Locker:[^$;"]*/$Locker/' src/other/URToolkit/tools/mallocNd.c,v
 
 echo "Running cvs-fast-export $PWD"
-find . | ../../cvs-fast-export/cvs-fast-export -A ../../cvs_authormap > ../../brlcad_cvs_git.fi
+find . | ../../cvs-fast-export/cvs-fast-export -A ../../cvs_authormap_svnfexport.txt > ../../brlcad_cvs_git.fi
 cd ../
 ../cvs-fast-export/cvsconvert -n brlcad 2> ../cvs_git_info/cvs_all_fast_export_audit.txt
 cd ../
@@ -96,7 +98,7 @@ rm -rf brlcad_svn-r29886/.svn
 diff -qrw -I '\$Id' -I '\$Revision' -I'\$Header' -I'$Source' -I'$Date' -I'$Log' -I'$Locker' --exclude "terra.dsp" brlcad_cvs-r29886 brlcad_svn-r29886
 
 # cleanup
-rm -rf brlcad_cvs
+#rm -rf brlcad_cvs
 rm -rf brlcad_cvs-r29886
 rm -rf brlcad_svn-r29886
 rm brlcad_cvs-r29886.tar.gz
@@ -142,26 +144,89 @@ g++ -O3 -o svnfexport svnfexport.cxx
 
 echo "Start main conversion"
 REPODERCSDIR="$PWD/repo_dercs"
-./svnfexport ./brlcad_full_dercs.dump account-map $REPODERCSDIR
+./svnfexport ./brlcad_full_dercs.dump account-map_svnfexport.txt $REPODERCSDIR
 
-# Clone the repo via a mirror (gets us a copy without internal git conversion
-# logs taking up space)
-echo "Mirroring to brlcad_git directory"
-mkdir brlcad_git && cd brlcad_git
-git clone --mirror file://$PWD/cvs_git .git
-git init
-git remote rm origin
+# Create an svn revision to author map
+svn log file://$REPODIR | grep "|" | grep "^r[0-9][0-9 ]" | grep -v \(no\ author\) | awk -F "|" '{print $1 $2}' | sed -e 's/r//' | sed -e 's/ $//' | sed -e 's/  / /' > rev_map
 
-echo "Do a file git gc --aggressive"
+# MANUAL: Generate mapping files with the cvs_info.sh script.  Need
+# two maps - one from the archival repo's msg+time key to the data
+# we need, and the other a map from that same key to the SHA1 commits
+# of the new repository.  The "key" is a SHA1 hash of just the commit
+# message, with the Unix time appended to the string produced.  It is
+# not guaranteed to be universally unique as a key, but it should be
+# for anything we care about (unless we've got two commits with the
+# same message and same timestamp in the history, and even then that
+# would be a practical problem only if those commits had different
+# CVS branches or authors.)
+rm -rf cvs_info && mkdir cvs_info && cp cvs_info.sh cvs_info/ && cd cvs_info
+./cvs_info.sh
+mv key_authormap .. && mv key_branchmap ..
+cd ..
+
+# With the basic maps generated from a basic (no authormap) cvs-fast-export
+# conversion of the CVS repository, generate the map for our target repo
+# (the output of the svnfexport process.  This will produce the msgtime_sha1_map
+# file used later in the process
+cd cvs_git && ../domap.sh && cd ..
+
+# MANUAL: Run verify on the CVS conversion and stage any differences found for
+# incorporation - not sure if we're going to do this yet...  Here's how to kick
+# off the process with just a CVS check.
+#mkdir verify && cd verify
+#g++ -O3 -o verify ../verify.cpp
+#cp -r ../brlcad_cvs .
+#cp -r ../cvs_git .
+#./verify --keymap ../msgtime_sha1_map --branchmap ../key_branchmap --cvs-repo /home/user/verify/brlcad_cvs cvs_git
+# mkdir ../trees && cp *.fi ../trees/
+#cd ..
+# If we need to do this, will also need the children map from git:
+# cd cvs_git && git rev-list --children --all > ../children && cd ..
+
+# Create a fast export file of the conversion.  IMPORTANT - need
+# original ids if we're going to process the git notes down into
+# the commit messages.
+cd cvs_git && git checkout master && git fast-export --show-original-ids --all > ../brlcad_raw.fi && cd ..
+
+# Build the repowork processing tool
+cd ../repowork && mkdir build && cd build && cmake .. && make -j5 && cd ../../repoconv
+
+# With the preliminaries complete, we use the repowork tool to finalize the conversion:
+
+../repowork/build/repowork -t \
+	-e email_fixups.txt \
+       	-n -r cvs_git \
+       	-s rev_map \
+        --keymap msgtime_sha1_map --cvs-auth-map key_authormap --cvs-branch-map key_branchmap \
+	~/brlcad_raw.fi brlcad_final.fi
+
+# If we do rebuild CVS commits, the command becomes:
+#../repowork/build/repowork -t \
+#       -e email_fixups.txt \
+#      	-n -r cvs_git \
+#      	-s rev_map \
+#       --cvs-rebuild-ids cvs_problem_sha1.txt --children children \
+#       --keymap msgtime_sha1_map --cvs-auth-map key_authormap --cvs-branch-map key_branchmap \
+#       ~/brlcad_raw.fi brlcad_final.fi
+
+mkdir brlcad_final.git && cd brlcad_final.git && git init
+cat ../brlcad_final.fi | git fast-import
+
+# Compress the fast-import - by default, it is unoptimized
 git gc --aggressive
-
-echo "Clean up the one commit from CVS that never made it to the svn history"
 git reflog expire --expire-unreachable=now --all
 git gc --prune=now
+cd ..
 
-echo "Make the final tar.gz file (NOTE!!! we can't use git bundle for this, it drops all the notes with the svn rev info)"
-mv .git brlcad-git
-tar -czf ../brlcad-git.tar.gz brlcad-git
-mv brlcad-git .git
+# Package up the conversion
+tar -czf brlcad_final.tar.gz brlcad_final.git
 
-echo "Be aware that by default a checkout of the repo won't get the notes - it requires an extra step, see https://stackoverflow.com/questions/37941650/fetch-git-notes-when-cloning"
+# If uploading to github, it will look something like the following once the
+# repository has been created through the github website.  Note, in particular,
+# that UNLIKE the github instructions we push everything, not just master:
+#
+# cd brlcad_final.git
+# git remote add origin git@github.com:BRL-CAD/BRL-CAD.git
+# git push --all -u origin
+
+

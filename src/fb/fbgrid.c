@@ -28,14 +28,15 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static unsigned char *white_line, *grey_line, *dark_line;
-static fb *fbp;
+static struct fb *fbp;
 static char *framebuffer = NULL;
 
 #define OLD 0
@@ -47,7 +48,7 @@ static int fbheight = 0;
 static int flavor = DECIMAL;
 static int clear = 0;
 
-void grid(fb *fbiop, unsigned char *line, int spacing), oldflavor(void);
+void grid(struct fb *fbiop, unsigned char *line, int spacing), oldflavor(void);
 
 static char usage[] = "\
 Usage: fbgrid [-c] [-b | -d | -o] [-F framebuffer]\n\
@@ -109,6 +110,8 @@ main(int argc, char **argv)
 {
     int i;
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
@@ -159,7 +162,7 @@ main(int argc, char **argv)
 
 
 void
-grid(fb *fbiop, unsigned char *line, int spacing)
+grid(struct fb *fbiop, unsigned char *line, int spacing)
 {
     int x, y;
 
@@ -174,7 +177,7 @@ grid(fb *fbiop, unsigned char *line, int spacing)
 void
 oldflavor(void)
 {
-    fb *fbiop;
+    struct fb *fbiop;
     int x, y;
     int middle;
     int mask;

@@ -8,7 +8,6 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
-package require Ttk
 
 set w .ttkmenu
 catch {destroy $w}

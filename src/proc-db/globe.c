@@ -30,6 +30,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -64,6 +65,8 @@ main(int ac, char *av[])
     char prevSolid[256]="";
     char shaderparams[256]="";
     char *progname = *av;
+
+    bu_setprogname(av[0]);
 
     if (ac < 2)
 	usage(progname);

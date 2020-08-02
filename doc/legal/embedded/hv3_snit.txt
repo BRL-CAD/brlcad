@@ -43,3 +43,5 @@ Government shall have only "Restricted Rights" as defined in Clause
 authors grant the U.S. Government and others acting in its behalf
 permission to use and distribute the software in accordance with the
 terms specified in this license.
+
+file:/src/tclscripts/hv3/snit.tcl

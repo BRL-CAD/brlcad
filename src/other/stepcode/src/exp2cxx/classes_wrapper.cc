@@ -65,9 +65,17 @@ void print_file_header( Express express, FILES * files ) {
     fprintf( files->incall, "# if defined(SC_%s_DLL_EXPORTS) && defined(SC_%s_DLL_IMPORTS)\n", "SCHEMA", "SCHEMA" );
     fprintf( files->incall, "#  error \"SC_%s_DLL_EXPORTS or SC_%s_DLL_IMPORTS can be defined, not both.\"\n", "SCHEMA", "SCHEMA" );
     fprintf( files->incall, "# elif defined(SC_%s_DLL_EXPORTS)\n", "SCHEMA" );
+#ifdef _WIN32
     fprintf( files->incall, "#  define SC_%s_EXPORT __declspec(dllexport)\n", "SCHEMA" );
+#else
+    fprintf( files->incall, "#  define SC_%s_EXPORT __attribute__ ((visibility (\"default\")))\n", "SCHEMA" );
+#endif
     fprintf( files->incall, "# elif defined(SC_%s_DLL_IMPORTS)\n", "SCHEMA" );
+#ifdef _WIN32
     fprintf( files->incall, "#  define SC_%s_EXPORT __declspec(dllimport)\n", "SCHEMA" );
+#else
+    fprintf( files->incall, "#  define SC_%s_EXPORT __attribute__ ((visibility (\"default\")))\n", "SCHEMA" );
+#endif
     fprintf( files->incall, "# else\n" );
     fprintf( files->incall, "#  define SC_%s_EXPORT\n", "SCHEMA" );
     fprintf( files->incall, "# endif\n" );

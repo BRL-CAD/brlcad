@@ -44,25 +44,21 @@
 #include "vmath.h"
 #include "bu/env.h"
 #include "ged.h"
+#include "tclcad.h"
 
 #include "./mged.h"
 #include "./titles.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-#define NEED_GUI(_type) (\
-	IS_DM_TYPE_WGL(_type) || \
-	IS_DM_TYPE_OGL(_type) || \
-	IS_DM_TYPE_OSG(_type) || \
-	IS_DM_TYPE_RTGL(_type) || \
-	IS_DM_TYPE_GLX(_type) || \
-	IS_DM_TYPE_PEX(_type) || \
-	IS_DM_TYPE_TK(_type) || \
-	IS_DM_TYPE_X(_type) || \
-	IS_DM_TYPE_TXT(_type) || \
-	IS_DM_TYPE_OSGL(_type) || \
-	IS_DM_TYPE_QT(_type))
-
+#define NEED_GUI(_name) (\
+	BU_STR_EQUIV(_name, "wgl") || \
+	BU_STR_EQUIV(_name, "ogl") || \
+	BU_STR_EQUIV(_name, "osgl") || \
+	BU_STR_EQUIV(_name, "tk") || \
+	BU_STR_EQUIV(_name, "X") || \
+	BU_STR_EQUIV(_name, "txt") || \
+	BU_STR_EQUIV(_name, "qt"))
 
 /* All systems can compile these! */
 extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
@@ -94,17 +90,9 @@ extern int Ogl_dm_init();
 extern int Osg_dm_init();
 #endif /* DM_OSG */
 
-#ifdef DM_RTGL
-extern int Rtgl_dm_init();
-#endif /* DM_RTGL */
-
 #ifdef DM_GLX
 extern int Glx_dm_init();
 #endif /* DM_GLX */
-
-#ifdef DM_PEX
-extern int Pex_dm_init();
-#endif /* DM_PEX */
 
 #ifdef DM_QT
 extern int Qt_dm_init();
@@ -125,6 +113,19 @@ struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list = (struct dm_list *)NULL;
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
+/* If we changed the active dm, need to update GEDP as well.. */
+void set_curr_dm(struct dm_list *nl)
+{
+    curr_dm_list = nl;
+    if (nl != DM_LIST_NULL) {
+	GEDP->ged_gvp = nl->dml_view_state->vs_gvp;
+	GEDP->ged_gvp->gv_grid = *nl->dml_grid_state; /* struct copy */
+    } else {
+	if (GEDP) {
+	    GEDP->ged_gvp = NULL;
+	}
+    }
+}
 
 #ifdef DM_OGL
 static int
@@ -204,48 +205,39 @@ x_doevent(void *UNUSED(vclientData), void *veventPtr)
 typedef int (*eventfptr)();
 
 struct w_dm which_dm[] = {
-    { DM_TYPE_PLOT, "plot", NULL},  /* DM_PLOT_INDEX defined in mged_dm.h */
-    { DM_TYPE_PS, "ps", NULL},      /* DM_PS_INDEX defined in mged_dm.h */
-    { DM_TYPE_TXT, "txt", NULL},
+    { "plot", NULL},  /* DM_PLOT_INDEX defined in mged_dm.h */
+    { "ps", NULL},      /* DM_PS_INDEX defined in mged_dm.h */
+    { "txt", NULL},
 #ifdef DM_X
-    { DM_TYPE_X, "X", x_doevent },
+    { "X", x_doevent },
 #endif /* DM_X */
 #ifdef DM_TK
-    { DM_TYPE_TK, "tk", NULL},
+    { "tk", NULL},
 #endif /* DM_TK */
 #ifdef DM_WGL
-    { DM_TYPE_WGL, "wgl", wgl_doevent },
+    { "wgl", wgl_doevent },
 #endif /* DM_WGL */
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
-    { DM_TYPE_OGL, "ogl", ogl_doevent },
+    { "ogl", ogl_doevent },
 #  endif
 #endif /* DM_OGL */
-#ifdef DM_OSG
-    { DM_TYPE_OSG, "osg", NULL},
-#endif /* DM_OSG */
 #ifdef DM_OSGL
 #  if defined(HAVE_TK)
-    { DM_TYPE_OSGL, "osgl", osgl_doevent },
+    { "osgl", osgl_doevent },
 #  endif
 #endif /* DM_OSGL */
-#ifdef DM_RTGL
-    { DM_TYPE_RTGL, "rtgl", ogl_doevent },
-#endif /* DM_RTGL */
-#ifdef DM_PEX
-    { DM_TYPE_PEX, "pex", NULL},
-#endif /* DM_PEX */
 #ifdef DM_QT
-    { DM_TYPE_QT, "qt", x_doevent },
+    { "qt", x_doevent },
 #endif /* DM_QT */
-    { -1, (char *)NULL, (int (*)())NULL}
+    { (char *)NULL, (int (*)())NULL}
 };
 
 static eventfptr
-dm_doevent(int dm_type) {
+dm_doevent(const char *dm_type) {
     int i = 0;
-    while (which_dm[i].type != -1) {
-	if (dm_type == which_dm[i].type) {
+    while (which_dm[i].name != NULL) {
+	if (dm_type == which_dm[i].name) {
 	    return which_dm[i].doevent;
 	}
 	i++;
@@ -255,7 +247,7 @@ dm_doevent(int dm_type) {
 
 int
 mged_dm_init(struct dm_list *o_dm_list,
-	int dm_type,
+	const char *dm_type,
 	int argc,
 	const char *argv[])
 {
@@ -270,7 +262,7 @@ mged_dm_init(struct dm_list *o_dm_list,
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    if ((DMP = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    if ((DMP = dm_open((void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
@@ -347,7 +339,7 @@ release(char *name, int need_close)
 	    /* found it */
 	    if (p != curr_dm_list) {
 		save_dm_list = curr_dm_list;
-		curr_dm_list = p;
+		set_curr_dm(p);
 	    }
 	    break;
 	}
@@ -369,7 +361,7 @@ release(char *name, int need_close)
 
 	/* release framebuffer resources */
 	fb_close_existing(fbp);
-	fbp = (fb *)NULL;
+	fbp = (struct fb *)NULL;
     }
 
     /*
@@ -396,9 +388,9 @@ release(char *name, int need_close)
     bu_free((void *)curr_dm_list, "release: curr_dm_list");
 
     if (save_dm_list != DM_LIST_NULL)
-	curr_dm_list = save_dm_list;
+	set_curr_dm(save_dm_list);
     else
-	curr_dm_list = (struct dm_list *)head_dm_list.l.forw;
+	set_curr_dm((struct dm_list *)head_dm_list.l.forw);
 
     return TCL_OK;
 }
@@ -465,10 +457,6 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "osgl  ", (char *)NULL);
     i++;
 #endif /* DM_OSGL*/
-#ifdef DM_RTGL
-    Tcl_AppendResult(interpreter, "rtgl  ", (char *)NULL);
-    i++;
-#endif /* DM_RTGL */
 #ifdef DM_GLX
     Tcl_AppendResult(interpreter, "glx", (char *)NULL);
     i++;
@@ -506,11 +494,11 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     }
 
     /* Look at last argument, skipping over any options which precede it */
-    for (wp = &which_dm[2]; wp->type != -1; wp++)
+    for (wp = &which_dm[2]; wp->name != NULL; wp++)
 	if (BU_STR_EQUAL(argv[argc - 1], wp->name))
 	    break;
 
-    if (wp->type == -1) {
+    if (wp->name == NULL) {
 	Tcl_AppendResult(interpreter, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 	print_valid_dm(interpreter);
 	return TCL_ERROR;
@@ -573,11 +561,12 @@ gui_setup(const char *dstr)
 	return TCL_ERROR;
     }
 
-    /* Initialize libdm */
-    (void)Dm_Init(INTERP);
-
-    /* Initialize libfb */
-    (void)Fb_Init(INTERP);
+    /* Initialize libtclcad */
+#ifdef HAVE_TK
+    (void)tclcad_init(INTERP, 1, NULL);
+#else
+    (void)tclcad_init(INTERP, 0, NULL);
+#endif
 
 #ifdef HAVE_TK
     if ((tkwin = Tk_MainWindow(INTERP)) == NULL) {
@@ -614,8 +603,8 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     predictor_init();
 
     /* Only need to do this once */
-    if (tkwin == NULL && NEED_GUI(wp->type)) {
-	dm *tmp_dmp;
+    if (tkwin == NULL && NEED_GUI(wp->name)) {
+	struct dm *tmp_dmp;
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	/* look for "-d display_string" and use it if provided */
@@ -623,20 +612,20 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 
 	opt_argc = argc - 1;
 	opt_argv = bu_argv_dup(opt_argc, argv + 1);
-	dm_processOptions(tmp_dmp, &tmp_vls, opt_argc, opt_argv);
+	dm_processOptions(tmp_dmp, &tmp_vls, opt_argc, (const char **)opt_argv);
 	bu_argv_free(opt_argc, opt_argv);
 
 	if (dm_get_dname(tmp_dmp) && strlen(bu_vls_addr(dm_get_dname(tmp_dmp)))) {
 	    if (gui_setup(bu_vls_addr(dm_get_dname(tmp_dmp))) == TCL_ERROR) {
 		bu_free((void *)curr_dm_list, "f_attach: dm_list");
-		curr_dm_list = o_dm_list;
+		set_curr_dm(o_dm_list);
 		bu_vls_free(&tmp_vls);
 		dm_put(tmp_dmp);
 		return TCL_ERROR;
 	    }
 	} else if (gui_setup((char *)NULL) == TCL_ERROR) {
 	    bu_free((void *)curr_dm_list, "f_attach: dm_list");
-	    curr_dm_list = o_dm_list;
+	    set_curr_dm(o_dm_list);
 	    bu_vls_free(&tmp_vls);
 	    dm_put(tmp_dmp);
 	    return TCL_ERROR;
@@ -652,7 +641,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (mged_dm_init(o_dm_list, wp->type, argc, argv) == TCL_ERROR) {
+    if (mged_dm_init(o_dm_list, wp->name, argc, argv) == TCL_ERROR) {
 	goto Bad;
     }
 
@@ -685,12 +674,15 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     (void)dm_set_win_bounds(DMP, windowbounds);
     mged_fb_open();
 
+    GEDP->ged_gvp = curr_dm_list->dml_view_state->vs_gvp;
+    GEDP->ged_gvp->gv_grid = *curr_dm_list->dml_grid_state; /* struct copy */
+
     return TCL_OK;
 
  Bad:
     Tcl_AppendResult(INTERP, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
-    if (DMP != (dm *)0)
+    if (DMP != (struct dm *)0)
 	release((char *)NULL, 1);  /* release() will call dm_close */
     else
 	release((char *)NULL, 0);  /* release() will not call dm_close */
@@ -715,7 +707,7 @@ get_attached(void)
 
 	/* print all the available display manager types, skipping plot and ps */
 	wp = &which_dm[2];
-	for (; wp->type != -1; wp++) {
+	for (; wp->name != NULL; wp++) {
 	    bu_log("|%s", wp->name);
 	}
 	bu_log(")[nu]? ");
@@ -737,13 +729,13 @@ get_attached(void)
 	/* trim whitespace before comparisons (but not before checking empty) */
 	bu_vls_trimspace(&type);
 
-	for (wp = &which_dm[2]; wp->type != -1; wp++) {
+	for (wp = &which_dm[2]; wp->name != NULL; wp++) {
 	    if (BU_STR_EQUAL(bu_vls_addr(&type), wp->name)) {
 		break;
 	    }
 	}
 
-	if (wp->type != -1) {
+	if (wp->name != NULL) {
 	    break;
 	}
 
@@ -822,11 +814,6 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    Tcl_AppendResult(interpreter, "osgl", (char *)NULL);
 	}
 #endif /* DM_OSGL*/
-#ifdef DM_RTGL
-	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
-	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);
-	}
-#endif /* DM_RTGL */
 #ifdef DM_GLX
 	if (BU_STR_EQUAL(argv[argc-1], "glx")) {
 	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
@@ -896,9 +883,9 @@ dm_var_init(struct dm_list *initial_dm_list)
 
     color_scheme->cs_rc = 1;
 
-    BU_ALLOC(grid_state, struct _grid_state);
+    BU_ALLOC(grid_state, struct bview_grid_state);
     *grid_state = *initial_dm_list->dml_grid_state;		/* struct copy */
-    grid_state->gr_rc = 1;
+    grid_state->rc = 1;
 
     BU_ALLOC(axes_state, struct _axes_state);
     *axes_state = *initial_dm_list->dml_axes_state;		/* struct copy */
@@ -910,6 +897,9 @@ dm_var_init(struct dm_list *initial_dm_list)
     BU_ALLOC(view_state, struct _view_state);
     *view_state = *initial_dm_list->dml_view_state;			/* struct copy */
     BU_ALLOC(view_state->vs_gvp, struct bview);
+    BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
+    bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bview callbacks");
+
     *view_state->vs_gvp = *initial_dm_list->dml_view_state->vs_gvp;	/* struct copy */
     view_state->vs_gvp->gv_clientData = (void *)view_state;
     view_state->vs_gvp->gv_adaptive_plot = 0;

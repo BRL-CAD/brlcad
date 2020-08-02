@@ -109,7 +109,7 @@ pack $w.string.button -side left -pady 5 -padx 10
 bind $w.string.entry <Return> "textSearch $w.text \$searchString search"
 
 text $w.text -yscrollcommand "$w.scroll set" -setgrid true
-scrollbar $w.scroll -command "$w.text yview"
+ttk::scrollbar $w.scroll -command "$w.text yview"
 pack $w.file $w.string -side top -fill x
 pack $w.scroll -side right -fill y
 pack $w.text -expand yes -fill both

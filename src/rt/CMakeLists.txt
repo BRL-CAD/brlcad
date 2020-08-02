@@ -29,13 +29,12 @@ if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
 endif(BRLCAD_ENABLE_OPENCL)
 
-if(MPI_C_LIBRARIES)
+if(MPI_C_LIBRARIES AND BRLCAD_ENABLE_MPI)
   set(RT_STD_LIBS
     ${CMAKE_THREAD_LIBS_INIT}
     ${MPI_C_LIBRARIES}
     librt
     libnmg
-    libfb
     liboptical
     libicv
     ${M_LIBRARY}
@@ -45,24 +44,26 @@ else()
     ${CMAKE_THREAD_LIBS_INIT}
     librt
     libnmg
-    libfb
     liboptical
     libicv
     ${M_LIBRARY}
     )
-endif(MPI_C_LIBRARIES)
+endif(MPI_C_LIBRARIES AND BRLCAD_ENABLE_MPI)
 
 BRLCAD_ADDDATA(rtexample.c sample_applications)
 
-BRLCAD_ADDEXEC(rtexample "rtexample.c" "librt;libfb;liboptical;libicv" NO_INSTALL)
+BRLCAD_ADDEXEC(rtexample "rtexample.c" "librt;libdm;liboptical;libicv" NO_INSTALL)
 
-BRLCAD_ADDEXEC(reshoot "reshoot.c" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv")
+BRLCAD_ADDEXEC(reshoot "reshoot.c" "${CMAKE_THREAD_LIBS_INIT};librt;libdm;liboptical;libicv")
 
-BRLCAD_ADDEXEC(rtshot "rtshot.c" "${RT_STD_LIBS}")
+BRLCAD_ADDEXEC(rtshot "rtshot.c" "${RT_STD_LIBS};libdm")
+ADD_TARGET_DEPS(rtshot dm-ogl dm-wgl)
 
-BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "${CMAKE_THREAD_LIBS_INIT};librt;libdm;liboptical;libicv;${M_LIBRARY}")
+ADD_TARGET_DEPS(rtscale dm-ogl dm-wgl)
 
-BRLCAD_ADDEXEC(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${RT_STD_LIBS}")
+BRLCAD_ADDEXEC(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${RT_STD_LIBS};libdm")
+ADD_TARGET_DEPS(rt dm-ogl dm-wgl)
 
 BRLCAD_ADDEXEC(rtarea "${LIBRTUIF_SOURCES};viewarea.c" "${RT_STD_LIBS}")
 set_property(TARGET rtarea APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
@@ -70,7 +71,8 @@ set_property(TARGET rtarea APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 BRLCAD_ADDEXEC(rtcheck "${LIBRTUIF_SOURCES};viewcheck.c" "${RT_STD_LIBS}")
 set_property(TARGET rtcheck APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtedge "${LIBRTUIF_SOURCES};viewedge.c" "${RT_STD_LIBS}")
+BRLCAD_ADDEXEC(rtedge "${LIBRTUIF_SOURCES};viewedge.c" "${RT_STD_LIBS};libdm")
+ADD_TARGET_DEPS(rtedge dm-ogl dm-wgl)
 
 BRLCAD_ADDEXEC(rtg3 "${LIBRTUIF_SOURCES};viewg3.c" "${RT_STD_LIBS}")
 set_property(TARGET rtg3 APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
@@ -78,12 +80,14 @@ set_property(TARGET rtg3 APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 BRLCAD_ADDEXEC(rthide "${LIBRTUIF_SOURCES};viewhide.c" "${RT_STD_LIBS}")
 set_property(TARGET rthide APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtsil "${LIBRTUIF_SOURCES};viewsil.c" "${RT_STD_LIBS}")
+BRLCAD_ADDEXEC(rtsil "${LIBRTUIF_SOURCES};viewsil.c" "${RT_STD_LIBS};libdm")
+ADD_TARGET_DEPS(rtxray dm-ogl dm-wgl)
 
 BRLCAD_ADDEXEC(rtweight "${LIBRTUIF_SOURCES};viewweight.c" "libanalyze;${RT_STD_LIBS}")
 set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${RT_STD_LIBS}")
+BRLCAD_ADDEXEC(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${RT_STD_LIBS};libdm")
+ADD_TARGET_DEPS(rtxray dm-ogl dm-wgl)
 
 set(rt_ignore_files
   CMakeLists.txt

@@ -71,6 +71,7 @@ struct TkWindowPrivate {
 				 * gone. */
     struct TkWindowPrivate *toplevel;
 				/* Pointer to the toplevel datastruct. */
+    CGFloat fillRGBA[4];        /* Background used by the ttk FillElement */
     int flags;			/* Various state see defines below. */
 };
 typedef struct TkWindowPrivate MacDrawable;
@@ -83,10 +84,11 @@ typedef struct TkWindowPrivate MacDrawable;
 #define TK_CLIP_INVALID		0x02
 #define TK_HOST_EXISTS		0x04
 #define TK_DRAWN_UNDER_MENU	0x08
-#define TK_FOCUSED_VIEW		0x10
-#define TK_IS_PIXMAP		0x20
-#define TK_IS_BW_PIXMAP		0x40
-#define TK_DO_NOT_DRAW          0x80
+#define TK_IS_PIXMAP		0x10
+#define TK_IS_BW_PIXMAP		0x20
+#define TK_DO_NOT_DRAW          0x40
+#define TTK_HAS_CONTRASTING_BG  0x80
+
 /*
  * I am reserving TK_EMBEDDED = 0x100 in the MacDrawable flags
  * This is defined in tk.h. We need to duplicate the TK_EMBEDDED flag in the
@@ -198,6 +200,11 @@ MODULE_SCOPE void TkpClipDrawableToRect(Display *display, Drawable d, int x,
 MODULE_SCOPE void TkpRetainRegion(TkRegion r);
 MODULE_SCOPE void TkpReleaseRegion(TkRegion r);
 MODULE_SCOPE void TkpShiftButton(NSButton *button, NSPoint delta);
+MODULE_SCOPE Bool TkpAppIsDrawing(void);
+MODULE_SCOPE void TkpDisplayWindow(Tk_Window tkwin);
+MODULE_SCOPE Bool TkTestLogDisplay(void);
+MODULE_SCOPE Bool TkMacOSXInDarkMode(Tk_Window tkwin);
+
 /*
  * Include the stubbed internal platform-specific API.
  */
@@ -205,3 +212,12 @@ MODULE_SCOPE void TkpShiftButton(NSButton *button, NSPoint delta);
 #include "tkIntPlatDecls.h"
 
 #endif /* _TKMACINT */
+
+/*
+ * Local Variables:
+ * mode: objc
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

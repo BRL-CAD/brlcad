@@ -71,36 +71,57 @@ TclSetupEnv(
     Tcl_Interp *interp)		/* Interpreter whose "env" array is to be
 				 * managed. */
 {
+    Var *varPtr, *arrayPtr;
+    Tcl_Obj *varNamePtr;
     Tcl_DString envString;
-    char *p1, *p2;
-    int i;
+    Tcl_HashTable namesHash;
+    Tcl_HashEntry *hPtr;
+    Tcl_HashSearch search;
 
     /*
      * Synchronize the values in the environ array with the contents of the
      * Tcl "env" variable. To do this:
-     *    1) Remove the trace that fires when the "env" var is unset.
-     *    2) Unset the "env" variable.
-     *    3) If there are no environ variables, create an empty "env" array.
-     *	     Otherwise populate the array with current values.
-     *    4) Add a trace that synchronizes the "env" array.
+     *    1) Remove the trace that fires when the "env" var is updated.
+     *    2) Find the existing contents of the "env", storing in a hash table.
+     *    3) Create/update elements for each environ variable, removing
+     *	     elements from the hash table as we go.
+     *    4) Remove the elements for each remaining entry in the hash table,
+     *	     which must have existed before yet have no analog in the environ
+     *	     variable.
+     *    5) Add a trace that synchronizes the "env" array.
      */
 
     Tcl_UntraceVar2(interp, "env", NULL,
 	    TCL_GLOBAL_ONLY | TCL_TRACE_WRITES | TCL_TRACE_UNSETS |
 	    TCL_TRACE_READS | TCL_TRACE_ARRAY, EnvTraceProc, NULL);
 
-    Tcl_UnsetVar2(interp, "env", NULL, TCL_GLOBAL_ONLY);
+    /*
+     * Find out what elements are currently in the global env array.
+     */
 
-    if (environ[0] == NULL) {
-	Tcl_Obj *varNamePtr;
+    TclNewLiteralStringObj(varNamePtr, "env");
+    Tcl_IncrRefCount(varNamePtr);
+    Tcl_InitObjHashTable(&namesHash);
+    varPtr = TclObjLookupVarEx(interp, varNamePtr, NULL, TCL_GLOBAL_ONLY,
+	    /*msg*/ 0, /*createPart1*/ 0, /*createPart2*/ 0, &arrayPtr);
+    TclFindArrayPtrElements(varPtr, &namesHash);
 
-	TclNewLiteralStringObj(varNamePtr, "env");
-	Tcl_IncrRefCount(varNamePtr);
-	TclArraySet(interp, varNamePtr, NULL);
-	Tcl_DecrRefCount(varNamePtr);
-    } else {
+    /*
+     * Go through the environment array and transfer its values into Tcl. At
+     * the same time, remove those elements we add/update from the hash table
+     * of existing elements, so that after this part processes, that table
+     * will hold just the parts to remove.
+     */
+
+    if (environ[0] != NULL) {
+	int i;
+
 	Tcl_MutexLock(&envMutex);
 	for (i = 0; environ[i] != NULL; i++) {
+	    Tcl_Obj *obj1, *obj2;
+	    const char *p1;
+	    char *p2;
+
 	    p1 = Tcl_ExternalToUtfDString(NULL, environ[i], -1, &envString);
 	    p2 = strchr(p1, '=');
 	    if (p2 == NULL) {
@@ -110,15 +131,57 @@ TclSetupEnv(
 		 * '='; ignore the entry.
 		 */
 
+		Tcl_DStringFree(&envString);
 		continue;
 	    }
 	    p2++;
 	    p2[-1] = '\0';
-	    Tcl_SetVar2(interp, "env", p1, p2, TCL_GLOBAL_ONLY);
+#if defined(_WIN32)
+	    /*
+	     * Enforce PATH and COMSPEC to be all uppercase. This eliminates
+	     * additional trace logic otherwise required in init.tcl.
+	     */
+
+	    if (strcasecmp(p1, "PATH") == 0) {
+		p1 = "PATH";
+	    } else if (strcasecmp(p1, "COMSPEC") == 0) {
+		p1 = "COMSPEC";
+	    }
+#endif
+	    obj1 = Tcl_NewStringObj(p1, -1);
+	    obj2 = Tcl_NewStringObj(p2, -1);
 	    Tcl_DStringFree(&envString);
+
+	    Tcl_IncrRefCount(obj1);
+	    Tcl_IncrRefCount(obj2);
+	    Tcl_ObjSetVar2(interp, varNamePtr, obj1, obj2, TCL_GLOBAL_ONLY);
+	    hPtr = Tcl_FindHashEntry(&namesHash, obj1);
+	    if (hPtr != NULL) {
+		Tcl_DeleteHashEntry(hPtr);
+	    }
+	    Tcl_DecrRefCount(obj1);
+	    Tcl_DecrRefCount(obj2);
 	}
 	Tcl_MutexUnlock(&envMutex);
     }
+
+    /*
+     * Delete those elements that existed in the array but which had no
+     * counterparts in the environment array.
+     */
+
+    for (hPtr=Tcl_FirstHashEntry(&namesHash, &search); hPtr!=NULL;
+	    hPtr=Tcl_NextHashEntry(&search)) {
+	Tcl_Obj *elemName = Tcl_GetHashValue(hPtr);
+
+	TclObjUnsetVar2(interp, varNamePtr, elemName, TCL_GLOBAL_ONLY);
+    }
+    Tcl_DeleteHashTable(&namesHash);
+    Tcl_DecrRefCount(varNamePtr);
+
+    /*
+     * Re-establish the trace.
+     */
 
     Tcl_TraceVar2(interp, "env", NULL,
 	    TCL_GLOBAL_ONLY | TCL_TRACE_WRITES | TCL_TRACE_UNSETS |
@@ -153,7 +216,8 @@ TclSetEnv(
     const char *value)		/* New value for variable (UTF-8). */
 {
     Tcl_DString envString;
-    int index, length, nameLength;
+    unsigned nameLength, valueLength;
+    int index, length;
     char *p, *oldValue;
     const char *p2;
 
@@ -175,12 +239,11 @@ TclSetEnv(
 	 */
 
 	if ((env.ourEnviron != environ) || (length+2 > env.ourEnvironSize)) {
-	    char **newEnviron = (char **)
-		    ckalloc(((unsigned) length + 5) * sizeof(char *));
+	    char **newEnviron = ckalloc((length + 5) * sizeof(char *));
 
 	    memcpy(newEnviron, environ, length * sizeof(char *));
 	    if ((env.ourEnvironSize != 0) && (env.ourEnviron != NULL)) {
-		ckfree((char *) env.ourEnviron);
+		ckfree(env.ourEnviron);
 	    }
 	    environ = env.ourEnviron = newEnviron;
 	    env.ourEnvironSize = length + 5;
@@ -210,7 +273,7 @@ TclSetEnv(
 	Tcl_DStringFree(&envString);
 
 	oldValue = environ[index];
-	nameLength = length;
+	nameLength = (unsigned) length;
     }
 
     /*
@@ -219,18 +282,19 @@ TclSetEnv(
      * and set the environ array value.
      */
 
-    p = ckalloc((unsigned) nameLength + strlen(value) + 2);
-    strcpy(p, name);
+    valueLength = strlen(value);
+    p = ckalloc(nameLength + valueLength + 2);
+    memcpy(p, name, nameLength);
     p[nameLength] = '=';
-    strcpy(p+nameLength+1, value);
+    memcpy(p+nameLength+1, value, valueLength+1);
     p2 = Tcl_UtfToExternalDString(NULL, p, -1, &envString);
 
     /*
      * Copy the native string to heap memory.
      */
 
-    p = ckrealloc(p, strlen(p2) + 1);
-    strcpy(p, p2);
+    p = ckrealloc(p, Tcl_DStringLength(&envString) + 1);
+    memcpy(p, p2, (unsigned) Tcl_DStringLength(&envString) + 1);
     Tcl_DStringFree(&envString);
 
 #ifdef USE_PUTENV
@@ -389,20 +453,21 @@ TclUnsetEnv(
      * that no = should be included, and Windows requires it.
      */
 
-#if defined(__WIN32__)
-    string = ckalloc((unsigned) length+2);
+#if defined(_WIN32)
+    string = ckalloc(length + 2);
     memcpy(string, name, (size_t) length);
     string[length] = '=';
     string[length+1] = '\0';
 #else
-    string = ckalloc((unsigned) length+1);
+    string = ckalloc(length + 1);
     memcpy(string, name, (size_t) length);
     string[length] = '\0';
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
     Tcl_UtfToExternalDString(NULL, string, -1, &envString);
-    string = ckrealloc(string, (unsigned) Tcl_DStringLength(&envString)+1);
-    strcpy(string, Tcl_DStringValue(&envString));
+    string = ckrealloc(string, Tcl_DStringLength(&envString) + 1);
+    memcpy(string, Tcl_DStringValue(&envString),
+	    (unsigned) Tcl_DStringLength(&envString)+1);
     Tcl_DStringFree(&envString);
 
     putenv(string);
@@ -500,7 +565,8 @@ TclGetEnv(
  *	array.
  *
  * Results:
- *	Always returns NULL to indicate success.
+ *	Returns NULL to indicate success, or an error-message if the array
+ *	element being handled doesn't exist.
  *
  * Side effects:
  *	Environment variable changes get propagated. If the whole "env" array
@@ -558,7 +624,7 @@ EnvTraceProc(
 	const char *value = TclGetEnv(name2, &valueString);
 
 	if (value == NULL) {
-	    return "no such variable";
+	    return (char *) "no such variable";
 	}
 	Tcl_SetVar2(interp, name1, name2, value, 0);
 	Tcl_DStringFree(&valueString);
@@ -635,11 +701,11 @@ ReplaceString(
 
 	const int growth = 5;
 
-	env.cache = (char **) ckrealloc((char *) env.cache,
+	env.cache = ckrealloc(env.cache,
 		(env.cacheSize + growth) * sizeof(char *));
 	env.cache[env.cacheSize] = newStr;
-	(void) memset(env.cache+env.cacheSize+1, (int) 0,
-		(size_t) (growth-1) * sizeof(char*));
+	(void) memset(env.cache+env.cacheSize+1, 0,
+		(size_t) (growth-1) * sizeof(char *));
 	env.cacheSize += growth;
     }
 }
@@ -670,14 +736,25 @@ TclFinalizeEnvironment(void)
      * strings. This may leak more memory that strictly necessary, since some
      * of the strings may no longer be in the environment. However,
      * determining which ones are ok to delete is n-squared, and is pretty
-     * unlikely, so we don't bother.
+     * unlikely, so we don't bother.  However, in the case of DPURIFY, just
+     * free all strings in the cache.
      */
 
     if (env.cache) {
-	ckfree((char *) env.cache);
+#ifdef PURIFY
+	int i;
+	for (i = 0; i < env.cacheSize; i++) {
+	    ckfree(env.cache[i]);
+	}
+#endif
+	ckfree(env.cache);
 	env.cache = NULL;
 	env.cacheSize = 0;
 #ifndef USE_PUTENV
+	if ((env.ourEnviron != NULL)) {
+	    ckfree(env.ourEnviron);
+	    env.ourEnviron = NULL;
+	}
 	env.ourEnvironSize = 0;
 #endif
     }

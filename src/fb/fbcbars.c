@@ -64,10 +64,11 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define MAX_LINE (8*1024)	/* Max pixels/line */
@@ -219,7 +220,9 @@ int
 main(int argc, char **argv)
 {
     int x, y;
-    fb *fbp;
+    struct fb *fbp;
+
+    bu_setprogname(argv[0]);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	printusage();

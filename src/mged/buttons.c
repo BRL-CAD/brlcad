@@ -954,12 +954,12 @@ chg_state(int from, int to, char *str)
 
     save_dm_list = curr_dm_list;
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	curr_dm_list = p;
+	set_curr_dm(p);
 
 	new_mats();
     }
 
-    curr_dm_list = save_dm_list;
+    set_curr_dm(save_dm_list);
 
     bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
     Tcl_SetVar(INTERP, bu_vls_addr(&vls), state_str[STATE], TCL_GLOBAL_ONLY);

@@ -35,6 +35,7 @@
 
 #include "./fence.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 
 /* command-line options are described in the parseArguments function
@@ -1768,6 +1769,8 @@ int main(int argc, char **argv)
     char *verboseinput;
     int colorinput[3];
     double scan[3] = VINIT_ZERO;
+
+    bu_setprogname(argv[0]);
 
     verboseinput = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH * 3, sizeof(char), "verboseinput");
 

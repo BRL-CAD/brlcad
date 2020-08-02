@@ -9,6 +9,7 @@
 # Copyright (c) 1998-2000 by Ajuba Solutions.
 # Copyright (c) 2007 by ActiveState Software Inc.
 # Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
+# Copyright (c) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
 
 namespace eval ::tk::dialog::error {
     namespace import -force ::tk::msgcat::*
@@ -20,19 +21,20 @@ namespace eval ::tk::dialog::error {
     if {[tk windowingsystem] eq "aqua"} {
 	option add *ErrorDialog*background systemAlertBackgroundActive \
 		widgetDefault
-	option add *ErrorDialog*info.text.background white widgetDefault
+	option add *ErrorDialog*info.text.background \
+	        systemTextBackgroundColor widgetDefault
 	option add *ErrorDialog*Button.highlightBackground \
 		systemAlertBackgroundActive widgetDefault
     }
 }
 
-proc ::tk::dialog::error::Return {} {
+proc ::tk::dialog::error::Return {which code} {
     variable button
 
-    .bgerrorDialog.ok configure -state active -relief sunken
+    .bgerrorDialog.$which state {active selected focus}
     update idletasks
     after 100
-    set button 0
+    set button $code
 }
 
 proc ::tk::dialog::error::Details {} {
@@ -53,19 +55,19 @@ proc ::tk::dialog::error::SaveToLog {text} {
     } else {
 	set allFiles *
     }
-    set types [list	\
-	    [list [mc "Log Files"] .log]	\
-	    [list [mc "Text Files"] .txt]	\
+    set types [list \
+	    [list [mc "Log Files"] .log]      \
+	    [list [mc "Text Files"] .txt]     \
 	    [list [mc "All Files"] $allFiles] \
 	    ]
     set filename [tk_getSaveFile -title [mc "Select Log File"] \
 	    -filetypes $types -defaultextension .log -parent .bgerrorDialog]
-    if {![string length $filename]} {
-	return
+    if {$filename ne {}} {
+        set f [open $filename w]
+        puts -nonewline $f $text
+        close $f
     }
-    set f [open $filename w]
-    puts -nonewline $f $text
-    close $f
+    return
 }
 
 proc ::tk::dialog::error::Destroy {w} {
@@ -75,16 +77,29 @@ proc ::tk::dialog::error::Destroy {w} {
     }
 }
 
-# ::tk::dialog::error::bgerror --
-# This is the default version of bgerror.
-# It tries to execute tkerror, if that fails it posts a dialog box containing
-# the error message and gives the user a chance to ask to see a stack
-# trace.
-# Arguments:
-# err -			The error message.
+proc ::tk::dialog::error::DeleteByProtocol {} {
+    variable button
+    set button 1
+}
 
-proc ::tk::dialog::error::bgerror err {
-    global errorInfo tcl_platform
+proc ::tk::dialog::error::ReturnInDetails w {
+    bind $w <Return> {}; # Remove this binding
+    $w invoke
+    return -code break
+}
+
+# ::tk::dialog::error::bgerror --
+#
+#	This is the default version of bgerror.
+#	It tries to execute tkerror, if that fails it posts a dialog box
+#	containing the error message and gives the user a chance to ask
+#	to see a stack trace.
+#
+# Arguments:
+#	err - The error message.
+#
+proc ::tk::dialog::error::bgerror {err {flag 1}} {
+    global errorInfo
     variable button
 
     set info $errorInfo
@@ -92,15 +107,21 @@ proc ::tk::dialog::error::bgerror err {
     set ret [catch {::tkerror $err} msg];
     if {$ret != 1} {return -code $ret $msg}
 
-    # Ok the application's tkerror either failed or was not found
-    # we use the default dialog then :
+    # The application's tkerror either failed or was not found
+    # so we use the default dialog.  But on Aqua we cannot display
+    # the dialog if the background error occurs in an idle task
+    # being processed inside of [NSView drawRect].  In that case
+    # we post the dialog as an after task instead.
     set windowingsystem [tk windowingsystem]
     if {$windowingsystem eq "aqua"} {
-	set ok [mc Ok]
-    } else {
-	set ok [mc OK]
+	if $flag {
+	    set errorInfo $info
+	    after 500 [list bgerror "$err" 0]
+	    return
+	}
     }
 
+    set ok [mc OK]
     # Truncate the message if it is too wide (>maxLine characters) or
     # too tall (>4 lines).  Truncation occurs at the first point at
     # which one of those conditions is met.
@@ -130,12 +151,13 @@ proc ::tk::dialog::error::bgerror err {
     # and bottom parts.
 
     set dlg .bgerrorDialog
+    set bg [ttk::style lookup . -background]
     destroy $dlg
-    toplevel $dlg -class ErrorDialog
+    toplevel $dlg -class ErrorDialog -background $bg
     wm withdraw $dlg
     wm title $dlg $title
     wm iconname $dlg ErrorDialog
-    wm protocol $dlg WM_DELETE_WINDOW { }
+    wm protocol $dlg WM_DELETE_WINDOW [namespace code DeleteByProtocol]
 
     if {$windowingsystem eq "aqua"} {
 	::tk::unsupported::MacWindowStyle style $dlg moveableAlert {}
@@ -143,23 +165,19 @@ proc ::tk::dialog::error::bgerror err {
 	wm attributes $dlg -type dialog
     }
 
-    frame $dlg.bot
-    frame $dlg.top
-    if {$windowingsystem eq "x11"} {
-	$dlg.bot configure -relief raised -bd 1
-	$dlg.top configure -relief raised -bd 1
-    }
+    ttk::frame $dlg.bot
+    ttk::frame $dlg.top
     pack $dlg.bot -side bottom -fill both
     pack $dlg.top -side top -fill both -expand 1
 
-    set W [frame $dlg.top.info]
+    set W [ttk::frame $dlg.top.info]
     text $W.text -setgrid true -height 10 -wrap char \
 	-yscrollcommand [list $W.scroll set]
     if {$windowingsystem ne "aqua"} {
 	$W.text configure -width 40
     }
 
-    scrollbar $W.scroll -command [list $W.text yview]
+    ttk::scrollbar $W.scroll -command [list $W.text yview]
     pack $W.scroll -side right -fill y
     pack $W.text -side left -expand yes -fill both
     $W.text insert 0.0 "$err\n$info"
@@ -174,18 +192,11 @@ proc ::tk::dialog::error::bgerror err {
     # ...minus the width of the icon, padding and a fudge factor for
     # the window manager decorations and aesthetics.
     set wrapwidth [expr {$wrapwidth-60-[winfo pixels $dlg 9m]}]
-    label $dlg.msg -justify left -text $text -wraplength $wrapwidth
-    if {$windowingsystem eq "aqua"} {
-	# On the Macintosh, use the stop bitmap
-	label $dlg.bitmap -bitmap stop
-    } else {
-	# On other platforms, make the error icon
-	canvas $dlg.bitmap -width 32 -height 32 -highlightthickness 0
-	$dlg.bitmap create oval 0 0 31 31 -fill red -outline black
-	$dlg.bitmap create line 9 9 23 23 -fill white -width 4
-	$dlg.bitmap create line 9 23 23 9 -fill white -width 4
-    }
+    ttk::label $dlg.msg -justify left -text $text -wraplength $wrapwidth
+    ttk::label $dlg.bitmap -image ::tk::icons::error
+
     grid $dlg.bitmap $dlg.msg -in $dlg.top -row 0 -padx 3m -pady 3m
+    grid configure       $dlg.bitmap -sticky ne
     grid configure	 $dlg.msg -sticky nsw -padx {0 3m}
     grid rowconfigure	 $dlg.top 1 -weight 1
     grid columnconfigure $dlg.top 1 -weight 1
@@ -194,7 +205,7 @@ proc ::tk::dialog::error::bgerror err {
 
     set i 0
     foreach {name caption} $buttons {
-	button $dlg.$name -text $caption -default normal \
+	ttk::button $dlg.$name -text $caption -default normal \
 	    -command [namespace code [list set button $i]]
 	grid $dlg.$name -in $dlg.bot -column $i -row 0 -sticky ew -padx 10
 	grid columnconfigure $dlg.bot $i -weight 1
@@ -210,8 +221,10 @@ proc ::tk::dialog::error::bgerror err {
     # The "OK" button is the default for this dialog.
     $dlg.ok configure -default active
 
-    bind $dlg <Return>	[namespace code Return]
-    bind $dlg <Destroy>	[namespace code [list Destroy %W]]
+    bind $dlg <Return>	[namespace code {Return ok 0}]
+    bind $dlg <Escape>	[namespace code {Return dismiss 1}]
+    bind $dlg <Destroy>	[namespace code {Destroy %W}]
+    bind $dlg.function <Return>	[namespace code {ReturnInDetails %W}]
     $dlg.function configure -command [namespace code Details]
 
     # 6. Withdraw the window, then update all the geometry information
@@ -220,7 +233,11 @@ proc ::tk::dialog::error::bgerror err {
 
     ::tk::PlaceWindow $dlg
 
-    # 7. Ensure that we are topmost.
+    # 7. Set a grab and claim the focus too.
+
+    ::tk::SetFocusGrab $dlg $dlg.ok
+
+    # 8. Ensure that we are topmost.
 
     raise $dlg
     if {[tk windowingsystem] eq "win32"} {
@@ -228,12 +245,8 @@ proc ::tk::dialog::error::bgerror err {
 	# order to ensure that it's seen
 	if {[lindex [wm stackorder .] end] ne "$dlg"} {
 	    wm attributes $dlg -topmost 1
-	}
+        }
     }
-
-    # 8. Set a grab and claim the focus too.
-
-    ::tk::SetFocusGrab $dlg $dlg.ok
 
     # 9. Wait for the user to respond, then restore the focus and
     # return the index of the selected button.  Restore the focus

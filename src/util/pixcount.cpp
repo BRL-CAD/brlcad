@@ -29,6 +29,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -173,6 +174,10 @@ main(int argc, char **argv)
     bu_rb_cmp_t farray[1];
     farray[0] = &compare_pixels;
 
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /*
      * Process the command line
@@ -206,11 +211,11 @@ main(int argc, char **argv)
      */
     if (infp == NULL) {
 	inf_name = argv[bu_optind];
-	if ((infp = fopen(inf_name, "r")) == NULL)
+	if ((infp = fopen(inf_name, "rb")) == NULL)
 	    bu_exit(1, "Cannot open input file '%s'\n", inf_name);
 	if (outfp == NULL) {
 	    outf_name = argv[++bu_optind];
-	    if ((outfp = fopen(outf_name, "w")) == NULL)
+	    if ((outfp = fopen(outf_name, "wb")) == NULL)
 		bu_exit(1, "Cannot open output file '%s'\n", outf_name);
 	}
     }

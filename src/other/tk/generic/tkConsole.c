@@ -11,7 +11,7 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "tk.h"
+#include "tkInt.h"
 
 /*
  * Each console is associated with an instance of the ConsoleInfo struct.
@@ -46,25 +46,25 @@ typedef struct ChannelData {
 static int	ConsoleClose(ClientData instanceData, Tcl_Interp *interp);
 static void	ConsoleDeleteProc(ClientData clientData);
 static void	ConsoleEventProc(ClientData clientData, XEvent *eventPtr);
-static int	ConsoleHandle(ClientData instanceData,
-		    int direction, ClientData *handlePtr);
-static int	ConsoleInput(ClientData instanceData,
-		    char *buf, int toRead, int *errorCode);
+static int	ConsoleHandle(ClientData instanceData, int direction,
+		    ClientData *handlePtr);
+static int	ConsoleInput(ClientData instanceData, char *buf, int toRead,
+		    int *errorCode);
 static int	ConsoleObjCmd(ClientData clientData, Tcl_Interp *interp,
-		    int objc, Tcl_Obj *CONST objv[]);
-static int	ConsoleOutput(ClientData instanceData,
-		    CONST char *buf, int toWrite, int *errorCode);
+		    int objc, Tcl_Obj *const objv[]);
+static int	ConsoleOutput(ClientData instanceData, const char *buf,
+		    int toWrite, int *errorCode);
 static void	ConsoleWatch(ClientData instanceData, int mask);
 static void	DeleteConsoleInterp(ClientData clientData);
 static void	InterpDeleteProc(ClientData clientData, Tcl_Interp *interp);
 static int	InterpreterObjCmd(ClientData clientData, Tcl_Interp *interp,
-		    int objc, Tcl_Obj *CONST objv[]);
+		    int objc, Tcl_Obj *const objv[]);
 
 /*
  * This structure describes the channel type structure for file based IO:
  */
 
-static Tcl_ChannelType consoleChannelType = {
+static const Tcl_ChannelType consoleChannelType = {
     "console",			/* Type name. */
     TCL_CHANNEL_VERSION_4,	/* v4 channel */
     ConsoleClose,		/* Close proc. */
@@ -84,7 +84,7 @@ static Tcl_ChannelType consoleChannelType = {
     NULL
 };
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #include <windows.h>
 
 /*
@@ -166,7 +166,7 @@ ShouldUseConsoleChannel(
      */
 
     if (fileType == FILE_TYPE_CHAR) {
-	dcb.DCBlength = sizeof( DCB ) ;
+	dcb.DCBlength = sizeof(DCB);
 	if (!GetConsoleMode(handle, &consoleParams) &&
 		!GetCommState(handle, &dcb)) {
 	    /*
@@ -223,13 +223,16 @@ Tk_InitConsoleChannels(
      * Ensure that we are getting a compatible version of Tcl.
      */
 
-    if (Tcl_InitStubs(interp, "8.5.0", 0) == NULL) {
+    if (Tcl_InitStubs(interp, "8.6", 0) == NULL) {
         return;
     }
 
-    consoleInitPtr = Tcl_GetThreadData(&consoleInitKey, (int)sizeof(int));
+    consoleInitPtr = Tcl_GetThreadData(&consoleInitKey, (int) sizeof(int));
     if (*consoleInitPtr) {
-	/* We've already initialized console channels in this thread. */
+	/*
+	 * We've already initialized console channels in this thread.
+	 */
+
 	return;
     }
     *consoleInitPtr = 1;
@@ -240,74 +243,69 @@ Tk_InitConsoleChannels(
 
     if (!(doIn || doOut || doErr)) {
 	/*
-	 * No std channels should be tied to the console;
-	 * Thus, no need to create the console
+	 * No std channels should be tied to the console; thus, no need to
+	 * create the console.
 	 */
+
 	return;
     }
 
     /*
-     * At least one std channel wants to be tied to the console,
-     * so create the interp for it to live in.
+     * At least one std channel wants to be tied to the console, so create the
+     * interp for it to live in.
      */
 
-    info = (ConsoleInfo *) ckalloc(sizeof(ConsoleInfo));
+    info = ckalloc(sizeof(ConsoleInfo));
     info->consoleInterp = NULL;
     info->interp = NULL;
     info->refCount = 0;
 
     if (doIn) {
-	ChannelData *data = (ChannelData *) ckalloc(sizeof(ChannelData));
+	ChannelData *data = ckalloc(sizeof(ChannelData));
+
 	data->info = info;
 	data->info->refCount++;
 	data->type = TCL_STDIN;
 	consoleChannel = Tcl_CreateChannel(&consoleChannelType, "console0",
-		(ClientData) data, TCL_READABLE);
+		data, TCL_READABLE);
 	if (consoleChannel != NULL) {
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-translation", "lf");
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-buffering", "none");
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-encoding", "utf-8");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-translation", "lf");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-buffering", "none");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-encoding", "utf-8");
 	}
 	Tcl_SetStdChannel(consoleChannel, TCL_STDIN);
 	Tcl_RegisterChannel(NULL, consoleChannel);
     }
 
     if (doOut) {
-	ChannelData *data = (ChannelData *) ckalloc(sizeof(ChannelData));
+	ChannelData *data = ckalloc(sizeof(ChannelData));
+
 	data->info = info;
 	data->info->refCount++;
 	data->type = TCL_STDOUT;
 	consoleChannel = Tcl_CreateChannel(&consoleChannelType, "console1",
-		(ClientData) data, TCL_WRITABLE);
+		data, TCL_WRITABLE);
 	if (consoleChannel != NULL) {
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-translation", "lf");
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-buffering", "none");
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-encoding", "utf-8");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-translation", "lf");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-buffering", "none");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-encoding", "utf-8");
 	}
 	Tcl_SetStdChannel(consoleChannel, TCL_STDOUT);
 	Tcl_RegisterChannel(NULL, consoleChannel);
     }
 
     if (doErr) {
-	ChannelData *data = (ChannelData *) ckalloc(sizeof(ChannelData));
+	ChannelData *data = ckalloc(sizeof(ChannelData));
+
 	data->info = info;
 	data->info->refCount++;
 	data->type = TCL_STDERR;
 	consoleChannel = Tcl_CreateChannel(&consoleChannelType, "console2",
-		(ClientData) data, TCL_WRITABLE);
+		data, TCL_WRITABLE);
 	if (consoleChannel != NULL) {
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-translation", "lf");
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-buffering", "none");
-	    Tcl_SetChannelOption(NULL, consoleChannel,
-		    "-encoding", "utf-8");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-translation", "lf");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-buffering", "none");
+	    Tcl_SetChannelOption(NULL, consoleChannel, "-encoding", "utf-8");
 	}
 	Tcl_SetStdChannel(consoleChannel, TCL_STDERR);
 	Tcl_RegisterChannel(NULL, consoleChannel);
@@ -320,7 +318,7 @@ Tk_InitConsoleChannels(
  * Tk_CreateConsoleWindow --
  *
  *	Initialize the console. This code actually creates a new application
- *	and associated interpreter. This effectivly hides the implementation
+ *	and associated interpreter. This effectively hides the implementation
  *	from the main application.
  *
  * Results:
@@ -346,9 +344,13 @@ Tk_CreateConsoleWindow(
     /* Init an interp with Tcl and Tk */
     Tcl_Interp *consoleInterp = Tcl_CreateInterp();
     if (Tcl_Init(consoleInterp) != TCL_OK) {
+	Tcl_Obj *result_obj = Tcl_GetObjResult(consoleInterp);
+	Tcl_SetObjResult(interp, result_obj);
 	goto error;
     }
     if (Tk_Init(consoleInterp) != TCL_OK) {
+	Tcl_Obj *result_obj = Tcl_GetObjResult(consoleInterp);
+	Tcl_SetObjResult(interp, result_obj);
 	goto error;
     }
 
@@ -368,55 +370,60 @@ Tk_CreateConsoleWindow(
     }
 
     if (haveConsoleChannel) {
-	ChannelData *data = (ChannelData *)Tcl_GetChannelInstanceData(chan);
+	ChannelData *data = (ChannelData *) Tcl_GetChannelInstanceData(chan);
 	info = data->info;
 	if (info->consoleInterp) {
-	    /* New ConsoleInfo for a new console window */
-	    info = (ConsoleInfo *) ckalloc(sizeof(ConsoleInfo));
+	    /*
+	     * New ConsoleInfo for a new console window.
+	     */
+
+	    info = ckalloc(sizeof(ConsoleInfo));
 	    info->refCount = 0;
 
-	    /* Update any console channels to make use of the new console */
+	    /*
+	     * Update any console channels to make use of the new console.
+	     */
+
 	    if (Tcl_GetChannelType(chan = Tcl_GetStdChannel(TCL_STDIN))
 		    == &consoleChannelType) {
-		data = (ChannelData *)Tcl_GetChannelInstanceData(chan);
+		data = (ChannelData *) Tcl_GetChannelInstanceData(chan);
 		data->info->refCount--;
 		data->info = info;
 		data->info->refCount++;
 	    }
 	    if (Tcl_GetChannelType(chan = Tcl_GetStdChannel(TCL_STDOUT))
 		    == &consoleChannelType) {
-		data = (ChannelData *)Tcl_GetChannelInstanceData(chan);
+		data = (ChannelData *) Tcl_GetChannelInstanceData(chan);
 		data->info->refCount--;
 		data->info = info;
 		data->info->refCount++;
 	    }
 	    if (Tcl_GetChannelType(chan = Tcl_GetStdChannel(TCL_STDERR))
 		    == &consoleChannelType) {
-		data = (ChannelData *)Tcl_GetChannelInstanceData(chan);
+		data = (ChannelData *) Tcl_GetChannelInstanceData(chan);
 		data->info->refCount--;
 		data->info = info;
 		data->info->refCount++;
 	    }
 	}
     } else {
-	info = (ConsoleInfo *) ckalloc(sizeof(ConsoleInfo));
+	info = ckalloc(sizeof(ConsoleInfo));
 	info->refCount = 0;
     }
 
     info->consoleInterp = consoleInterp;
     info->interp = interp;
 
-    Tcl_CallWhenDeleted(consoleInterp, InterpDeleteProc, (ClientData) info);
+    Tcl_CallWhenDeleted(consoleInterp, InterpDeleteProc, info);
     info->refCount++;
-    Tcl_CreateThreadExitHandler(DeleteConsoleInterp,
-	    (ClientData) consoleInterp);
+    Tcl_CreateThreadExitHandler(DeleteConsoleInterp, consoleInterp);
 
     /*
      * Add console commands to the interp
      */
 
-    token = Tcl_CreateObjCommand(interp, "console", ConsoleObjCmd,
-	    (ClientData) info, ConsoleDeleteProc);
+    token = Tcl_CreateObjCommand(interp, "console", ConsoleObjCmd, info,
+	    ConsoleDeleteProc);
     info->refCount++;
 
     /*
@@ -425,16 +432,16 @@ Tk_CreateConsoleWindow(
      * handler takes care of us.
      */
     Tcl_CreateObjCommand(consoleInterp, "consoleinterp", InterpreterObjCmd,
-	    (ClientData) info, NULL);
+	    info, NULL);
 
     mainWindow = Tk_MainWindow(interp);
     if (mainWindow) {
 	Tk_CreateEventHandler(mainWindow, StructureNotifyMask,
-		ConsoleEventProc, (ClientData) info);
+		ConsoleEventProc, info);
 	info->refCount++;
     }
 
-    Tcl_Preserve((ClientData) consoleInterp);
+    Tcl_Preserve(consoleInterp);
     result = Tcl_EvalEx(consoleInterp, "source $tk_library/console.tcl",
 	    -1, TCL_EVAL_GLOBAL);
     if (result == TCL_ERROR) {
@@ -442,22 +449,22 @@ Tk_CreateConsoleWindow(
 		Tcl_GetReturnOptions(consoleInterp, result));
 	Tcl_SetObjResult(interp, Tcl_GetObjResult(consoleInterp));
     }
-    Tcl_Release((ClientData) consoleInterp);
+    Tcl_Release(consoleInterp);
     if (result == TCL_ERROR) {
 	Tcl_DeleteCommandFromToken(interp, token);
 	mainWindow = Tk_MainWindow(interp);
 	if (mainWindow) {
 	    Tk_DeleteEventHandler(mainWindow, StructureNotifyMask,
-		    ConsoleEventProc, (ClientData) info);
+		    ConsoleEventProc, info);
 	    if (--info->refCount <= 0) {
-		ckfree((char *) info);
+		ckfree(info);
 	    }
 	}
 	goto error;
     }
     return TCL_OK;
 
-    error:
+  error:
     Tcl_AddErrorInfo(interp, "\n    (creating console window)");
     if (!Tcl_InterpDeleted(consoleInterp)) {
 	Tcl_DeleteInterp(consoleInterp);
@@ -486,11 +493,11 @@ Tk_CreateConsoleWindow(
 static int
 ConsoleOutput(
     ClientData instanceData,	/* Indicates which device to use. */
-    CONST char *buf,		/* The data buffer. */
+    const char *buf,		/* The data buffer. */
     int toWrite,		/* How many bytes to write? */
     int *errorCode)		/* Where to store error code. */
 {
-    ChannelData *data = (ChannelData *)instanceData;
+    ChannelData *data = instanceData;
     ConsoleInfo *info = data->info;
 
     *errorCode = 0;
@@ -509,7 +516,7 @@ ConsoleOutput(
 	     * Assumption is utf-8 Tcl_Encoding is reliably present.
 	     */
 
-	    CONST char *bytes
+	    const char *bytes
 		    = Tcl_ExternalToUtfDString(utf8, buf, toWrite, &ds);
 	    int numBytes = Tcl_DStringLength(&ds);
 	    Tcl_Obj *cmd = Tcl_NewStringObj("tk::ConsoleOutput", -1);
@@ -585,16 +592,19 @@ ConsoleClose(
     ClientData instanceData,	/* Unused. */
     Tcl_Interp *interp)		/* Unused. */
 {
-    ChannelData *data = (ChannelData *)instanceData;
+    ChannelData *data = instanceData;
     ConsoleInfo *info = data->info;
 
     if (info) {
 	if (--info->refCount <= 0) {
-	    /* Assuming the Tcl_Interp * fields must already be NULL */
-	    ckfree((char *) info);
+	    /*
+	     * Assuming the Tcl_Interp * fields must already be NULL.
+	     */
+
+	    ckfree(info);
 	}
     }
-    ckfree((char *) data);
+    ckfree(data);
     return 0;
 }
 
@@ -677,21 +687,22 @@ ConsoleObjCmd(
     ClientData clientData,	/* Access to the console interp */
     Tcl_Interp *interp,		/* Current interpreter */
     int objc,			/* Number of arguments */
-    Tcl_Obj *CONST objv[])	/* Argument objects */
+    Tcl_Obj *const objv[])	/* Argument objects */
 {
     int index, result;
-    static CONST char *options[] = {"eval", "hide", "show", "title", NULL};
+    static const char *const options[] = {
+	"eval", "hide", "show", "title", NULL};
     enum option {CON_EVAL, CON_HIDE, CON_SHOW, CON_TITLE};
     Tcl_Obj *cmd = NULL;
-    ConsoleInfo *info = (ConsoleInfo *) clientData;
+    ConsoleInfo *info = clientData;
     Tcl_Interp *consoleInterp = info->consoleInterp;
 
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg?");
 	return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[1], options, "option", 0, &index)
-	    != TCL_OK) {
+    if (Tcl_GetIndexFromObjStruct(interp, objv[1], options,
+	    sizeof(char *), "option", 0, &index) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -727,18 +738,22 @@ ConsoleObjCmd(
 	    Tcl_ListObjAppendElement(NULL, cmd, objv[2]);
 	}
 	break;
+    default:
+	CLANG_ASSERT(0);
     }
 
     Tcl_IncrRefCount(cmd);
     if (consoleInterp && !Tcl_InterpDeleted(consoleInterp)) {
-	Tcl_Preserve((ClientData) consoleInterp);
+	Tcl_Preserve(consoleInterp);
 	result = Tcl_EvalObjEx(consoleInterp, cmd, TCL_EVAL_GLOBAL);
 	Tcl_SetReturnOptions(interp,
 		Tcl_GetReturnOptions(consoleInterp, result));
 	Tcl_SetObjResult(interp, Tcl_GetObjResult(consoleInterp));
-	Tcl_Release((ClientData) consoleInterp);
+	Tcl_Release(consoleInterp);
     } else {
-	Tcl_AppendResult(interp, "no active console interp", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"no active console interp", -1));
+	Tcl_SetErrorCode(interp, "TK", "CONSOLE", "NONE", NULL);
 	result = TCL_ERROR;
     }
     Tcl_DecrRefCount(cmd);
@@ -764,20 +779,20 @@ InterpreterObjCmd(
     ClientData clientData,	/* */
     Tcl_Interp *interp,		/* Current interpreter */
     int objc,			/* Number of arguments */
-    Tcl_Obj *CONST objv[])	/* Argument objects */
+    Tcl_Obj *const objv[])	/* Argument objects */
 {
     int index, result = TCL_OK;
-    static CONST char *options[] = {"eval", "record", NULL};
+    static const char *const options[] = {"eval", "record", NULL};
     enum option {OTHER_EVAL, OTHER_RECORD};
-    ConsoleInfo *info = (ConsoleInfo *) clientData;
+    ConsoleInfo *info = clientData;
     Tcl_Interp *otherInterp = info->interp;
 
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "option arg");
 	return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[1], options, "option", 0, &index)
-	    != TCL_OK) {
+    if (Tcl_GetIndexFromObjStruct(interp, objv[1], options,
+	    sizeof(char *), "option", 0, &index) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -787,32 +802,38 @@ InterpreterObjCmd(
     }
 
     if ((otherInterp == NULL) || Tcl_InterpDeleted(otherInterp)) {
-	Tcl_AppendResult(interp, "no active master interp", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"no active master interp", -1));
+	Tcl_SetErrorCode(interp, "TK", "CONSOLE", "NO_INTERP", NULL);
 	return TCL_ERROR;
     }
 
-    Tcl_Preserve((ClientData) otherInterp);
+    Tcl_Preserve(otherInterp);
     switch ((enum option) index) {
     case OTHER_EVAL:
    	result = Tcl_EvalObjEx(otherInterp, objv[2], TCL_EVAL_GLOBAL);
+
 	/*
 	 * TODO: Should exceptions be filtered here?
 	 */
+
 	Tcl_SetReturnOptions(interp,
 		Tcl_GetReturnOptions(otherInterp, result));
 	Tcl_SetObjResult(interp, Tcl_GetObjResult(otherInterp));
 	break;
     case OTHER_RECORD:
    	Tcl_RecordAndEvalObj(otherInterp, objv[2], TCL_EVAL_GLOBAL);
+
 	/*
-	 * By not setting result, we discard any exceptions or errors here
-	 * and always return TCL_OK.  All the caller wants is the
-	 * interp result to display, whether that's result or error message.
+	 * By not setting result, we discard any exceptions or errors here and
+	 * always return TCL_OK. All the caller wants is the interp result to
+	 * display, whether that's result or error message.
 	 */
+
 	Tcl_SetObjResult(interp, Tcl_GetObjResult(otherInterp));
 	break;
     }
-    Tcl_Release((ClientData) otherInterp);
+    Tcl_Release(otherInterp);
     return result;
 }
 
@@ -821,8 +842,8 @@ InterpreterObjCmd(
  *
  * DeleteConsoleInterp --
  *
- *	Thread exit handler to destroy a console interp when the
- *	thread it lives in gets torn down.
+ *	Thread exit handler to destroy a console interp when the thread it
+ *	lives in gets torn down.
  *
  *----------------------------------------------------------------------
  */
@@ -831,7 +852,8 @@ static void
 DeleteConsoleInterp(
     ClientData clientData)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
+    Tcl_Interp *interp = clientData;
+
     Tcl_DeleteInterp(interp);
 }
 
@@ -840,8 +862,8 @@ DeleteConsoleInterp(
  *
  * InterpDeleteProc --
  *
- *	React when the interp in which the console is displayed is deleted
- *	for any reason.
+ *	React when the interp in which the console is displayed is deleted for
+ *	any reason.
  *
  * Results:
  *	None.
@@ -857,15 +879,14 @@ InterpDeleteProc(
     ClientData clientData,
     Tcl_Interp *interp)
 {
-    ConsoleInfo *info = (ConsoleInfo *) clientData;
+    ConsoleInfo *info = clientData;
 
     if (info->consoleInterp == interp) {
-	Tcl_DeleteThreadExitHandler(DeleteConsoleInterp,
-		(ClientData) info->consoleInterp);
+	Tcl_DeleteThreadExitHandler(DeleteConsoleInterp, info->consoleInterp);
 	info->consoleInterp = NULL;
     }
     if (--info->refCount <= 0) {
-	ckfree((char *) info);
+	ckfree(info);
     }
 }
 
@@ -890,13 +911,13 @@ static void
 ConsoleDeleteProc(
     ClientData clientData)
 {
-    ConsoleInfo *info = (ConsoleInfo *) clientData;
+    ConsoleInfo *info = clientData;
 
     if (info->consoleInterp) {
 	Tcl_DeleteInterp(info->consoleInterp);
     }
     if (--info->refCount <= 0) {
-	ckfree((char *) info);
+	ckfree(info);
     }
 }
 
@@ -925,7 +946,7 @@ ConsoleEventProc(
     XEvent *eventPtr)
 {
     if (eventPtr->type == DestroyNotify) {
-	ConsoleInfo *info = (ConsoleInfo *) clientData;
+	ConsoleInfo *info = clientData;
 	Tcl_Interp *consoleInterp = info->consoleInterp;
 
 	if (consoleInterp && !Tcl_InterpDeleted(consoleInterp)) {
@@ -933,7 +954,7 @@ ConsoleEventProc(
 	}
 
 	if (--info->refCount <= 0) {
-	    ckfree((char *) info);
+	    ckfree(info);
 	}
     }
 }

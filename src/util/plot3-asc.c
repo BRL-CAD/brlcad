@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/cv.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -129,6 +130,11 @@ main(int argc, char **argv)
     struct uplot *up;
     int i;
 
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
@@ -139,7 +145,7 @@ main(int argc, char **argv)
 	argv++;
     }
     if (argc == 2) {
-	if ((fp = fopen(argv[1], "r")) == NULL) {
+	if ((fp = fopen(argv[1], "rb")) == NULL) {
 	    perror("plot3-asc");
 	    return 1;
 	}

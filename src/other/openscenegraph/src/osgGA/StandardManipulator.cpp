@@ -47,19 +47,20 @@ StandardManipulator::StandardManipulator( int flags )
 
 
 /// Constructor.
-StandardManipulator::StandardManipulator( const StandardManipulator& uim, const CopyOp& copyOp )
-    : osg::Object(uim, copyOp),
-     inherited( uim, copyOp ),
-     _thrown( uim._thrown ),
-     _allowThrow( uim._allowThrow ),
-     _mouseCenterX(0.0f), _mouseCenterY(0.0f),
-     _ga_t1( dynamic_cast< GUIEventAdapter* >( copyOp( uim._ga_t1.get() ) ) ),
-     _ga_t0( dynamic_cast< GUIEventAdapter* >( copyOp( uim._ga_t0.get() ) ) ),
-     _delta_frame_time(0.01), _last_frame_time(0.0),
-     _modelSize( uim._modelSize ),
-     _verticalAxisFixed( uim._verticalAxisFixed ),
-     _flags( uim._flags ),
-     _relativeFlags( uim._relativeFlags )
+StandardManipulator::StandardManipulator( const StandardManipulator& uim, const CopyOp& copyOp ):
+      osg::Object(uim,copyOp),
+      osg::Callback(uim,copyOp),
+      inherited( uim, copyOp ),
+      _thrown( uim._thrown ),
+      _allowThrow( uim._allowThrow ),
+      _mouseCenterX(0.0f), _mouseCenterY(0.0f),
+      _ga_t1( dynamic_cast< GUIEventAdapter* >( copyOp( uim._ga_t1.get() ) ) ),
+      _ga_t0( dynamic_cast< GUIEventAdapter* >( copyOp( uim._ga_t0.get() ) ) ),
+      _delta_frame_time(0.01), _last_frame_time(0.0),
+      _modelSize( uim._modelSize ),
+      _verticalAxisFixed( uim._verticalAxisFixed ),
+      _flags( uim._flags ),
+      _relativeFlags( uim._relativeFlags )
 {
 }
 
@@ -154,6 +155,8 @@ bool StandardManipulator::isAnimating() const
 /// Finishes the animation by performing a step that moves it to its final position.
 void StandardManipulator::finishAnimation()
 {
+    _thrown = false;
+
     if( !isAnimating() )
         return;
 
@@ -435,12 +438,14 @@ bool StandardManipulator::performMovement()
 
     // call appropriate methods
     unsigned int buttonMask = _ga_t1->getButtonMask();
+    unsigned int modKeyMask = _ga_t1->getModKeyMask();
     if( buttonMask == GUIEventAdapter::LEFT_MOUSE_BUTTON )
     {
         return performMovementLeftMouseButton( eventTimeDelta, dx, dy );
     }
-    else if( buttonMask == GUIEventAdapter::MIDDLE_MOUSE_BUTTON ||
-            buttonMask == (GUIEventAdapter::LEFT_MOUSE_BUTTON | GUIEventAdapter::RIGHT_MOUSE_BUTTON) )
+    else if( ( buttonMask == GUIEventAdapter::MIDDLE_MOUSE_BUTTON ) ||
+             ( buttonMask == GUIEventAdapter::RIGHT_MOUSE_BUTTON && modKeyMask & GUIEventAdapter::MODKEY_CTRL ) ||
+             ( buttonMask == (GUIEventAdapter::LEFT_MOUSE_BUTTON | GUIEventAdapter::RIGHT_MOUSE_BUTTON) ) )
     {
         return performMovementMiddleMouseButton( eventTimeDelta, dx, dy );
     }
@@ -586,7 +591,12 @@ void StandardManipulator::setAllowThrow( bool allowThrow )
     events that started the animation.*/
 float StandardManipulator::getThrowScale( const double eventTimeDelta ) const
 {
-    if( _thrown )  return float( _delta_frame_time / eventTimeDelta );
+    if( _thrown )
+    {
+        if (eventTimeDelta == 0.f)
+            return 0.f;
+        return float( _delta_frame_time / eventTimeDelta );
+    }
     else  return 1.f;
 }
 
@@ -821,8 +831,8 @@ bool StandardManipulator::setCenterByMousePointerIntersection( const GUIEventAda
 }
 
 
-/** Makes mouse pointer intersection test with the geometry bellow the pointer
-    and starts animation to center camera to look at the closest hit bellow the mouse pointer.
+/** Makes mouse pointer intersection test with the geometry below the pointer
+    and starts animation to center camera to look at the closest hit below the mouse pointer.
 
     If there is a hit, animation is started and true is returned.
     Otherwise, the method returns false.*/
@@ -833,8 +843,11 @@ bool StandardManipulator::startAnimationByMousePointerIntersection(
 }
 
 
-StandardManipulator::AnimationData::AnimationData()
-    :_isAnimating( false )
+StandardManipulator::AnimationData::AnimationData():
+    _animationTime(0.0),
+    _isAnimating(false),
+    _startTime(0.0),
+    _phase(0.0)
 {
 }
 

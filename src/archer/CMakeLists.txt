@@ -1,19 +1,15 @@
 set(ARCHER_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
-  ${TCL_INCLUDE_DIRS}
-  ${TK_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
   )
 list(REMOVE_DUPLICATES ARCHER_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
-set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARIES})
-
-if(CPP_DLL_DEFINES)
-  set(archer_libs ${archer_libs} imm32.lib comctl32.lib)
-endif(CPP_DLL_DEFINES)
+set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
 # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
 # currently works only in graphical mode - might as well behave "nicely" there.
@@ -23,7 +19,7 @@ if(BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(archer archer.c "${archer_libs}" GUI)
   add_dependencies(archer archer_launch_tcl_cp)
   add_dependencies(archer rtwizard)
-  ADD_TARGET_DEPS(archer Tkhtml tkpng Tktable)
+  ADD_TARGET_DEPS(archer Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm-ogl dm-wgl)
 
   foreach(item ${tclindex_target_list})
     add_dependencies(archer ${item})
@@ -59,6 +55,11 @@ BRLCAD_ADDDATA(plugins/Wizards/humanwizard/HumanWizard.tcl plugins/archer/Wizard
 BRLCAD_ADDDATA(plugins/Wizards/tankwizard/TankWizard.tcl plugins/archer/Wizards/tankwizard)
 BRLCAD_ADDDATA(plugins/Wizards/tankwizard/images/tank.png plugins/archer/Wizards/tankwizardIA/images)
 BRLCAD_ADDDATA(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/tirewizard)
+
+set(archer_txt
+  archer_ack.txt
+  )
+ADD_DOC(archer_txt ".")
 
 set(archer_ignore_files
   CMakeLists.txt

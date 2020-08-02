@@ -1,66 +1,65 @@
-# Minimum required version of CMake
-cmake_minimum_required(VERSION 3.1.3)
-
-# set CMake project name
-project(OPENTHREADS)
-
-set(OPENTHREADS_CMAKE_DIR "${OPENTHREADS_SOURCE_DIR}/CMake")
-
 # This is mainly for Windows declspec, but other platforms know
 # what to do with it.
-add_definitions(-DOPENTHREADS_EXPORTS)
+ADD_DEFINITIONS(-DOPENTHREADS_EXPORTS)
 
 SET(OPENTHREADS_MAJOR_VERSION 3)
-SET(OPENTHREADS_MINOR_VERSION 2)
+SET(OPENTHREADS_MINOR_VERSION 3)
 SET(OPENTHREADS_PATCH_VERSION 1)
-SET(OPENTHREADS_SOVERSION 20)
+SET(OPENTHREADS_SOVERSION 21)
 
-set(OPENTHREADS_VERSION ${OPENTHREADS_MAJOR_VERSION}.${OPENTHREADS_MINOR_VERSION}.${OPENTHREADS_PATCH_VERSION})
+SET(OPENTHREADS_VERSION ${OPENTHREADS_MAJOR_VERSION}.${OPENTHREADS_MINOR_VERSION}.${OPENTHREADS_PATCH_VERSION})
 
-if(NOT ANDROID)
-  include(${OPENTHREADS_CMAKE_DIR}/CheckAtomicOps.cmake)
-endif()
+IF(NOT ANDROID)
+    INCLUDE(CheckAtomicOps)
+ENDIF()
 
 # User Options
-option(DYNAMIC_OPENTHREADS "Set to ON to build OpenThreads for dynamic linking.  Use OFF for static." ON)
-if(DYNAMIC_OPENTHREADS)
-  set(OPENTHREADS_USER_DEFINED_DYNAMIC_OR_STATIC "SHARED")
-else()
-  set(OPENTHREADS_USER_DEFINED_DYNAMIC_OR_STATIC "STATIC")
-  set(OT_LIBRARY_STATIC 1)
-endif()
+OPTION(DYNAMIC_OPENTHREADS "Set to ON to build OpenThreads for dynamic linking.  Use OFF for static." ON)
+IF(DYNAMIC_OPENTHREADS)
+    SET(OPENTHREADS_USER_DEFINED_DYNAMIC_OR_STATIC "SHARED")
+ELSE()
+    SET(OPENTHREADS_USER_DEFINED_DYNAMIC_OR_STATIC "STATIC")
+    SET(OT_LIBRARY_STATIC 1)
+ENDIF()
 
 ################################################################################
 # Set Config file
 
-set(OPENTHREADS_CONFIG_HEADER "${OPENTHREADS_BINARY_DIR}/include/OpenThreads/Config")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/common/Config.in"
+SET(OPENTHREADS_CONFIG_HEADER "${PROJECT_BINARY_DIR}/include/OpenThreads/Config")
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/common/Config.in"
                "${OPENTHREADS_CONFIG_HEADER}")
 
-set(OPENTHREADS_VERSION_HEADER "${OPENTHREADS_SOURCE_DIR}/include/OpenThreads/Version")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/common/Version.in"
+SET(OPENTHREADS_VERSION_HEADER "${PROJECT_BINARY_DIR}/include/OpenThreads/Version")
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/common/Version.in"
                "${OPENTHREADS_VERSION_HEADER}")
 
 
 ################################################################################
 # Set Version Info resource file
 
-if(MSVC)
-  set(OPENTHREADS_VERSIONINFO_RC "${OPENTHREADS_BINARY_DIR}/PlatformSpecifics/Windows/OpenThreadsVersionInfo.rc")
-  configure_file("${OPENTHREADS_SOURCE_DIR}/PlatformSpecifics/Windows/OpenThreadsVersionInfo.rc.in"
+IF(MSVC)
+    SET(OPENTHREADS_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenThreadsVersionInfo.rc")
+    CONFIGURE_FILE("${PROJECT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenThreadsVersionInfo.rc.in"
                    "${OPENTHREADS_VERSIONINFO_RC}")
-endif()
+ENDIF()
+
+
+################################################################################
+## Quieten warnings that a due to optional code paths
+
+IF(CMAKE_COMPILER_IS_GNUCXX)
+    # Remove -Wextra flag as it barfs on ffmoeg headers
+   STRING(REGEX REPLACE "-Wextra" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+ENDIF()
+
+# INSTALL_FILES(/include/OpenThreads/ FILES "${OPENTHREADS_CONFIG_HEADER}")
 
 ################################################################################
 
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  )
-
-set(HEADER_PATH "${OPENTHREADS_SOURCE_DIR}/include/OpenThreads")
-set(OpenThreads_PUBLIC_HEADERS
+SET(HEADER_PATH ${OpenThreads_SOURCE_DIR}/include/OpenThreads)
+SET(OpenThreads_PUBLIC_HEADERS
     ${HEADER_PATH}/Atomic
+    ${HEADER_PATH}/Affinity
     ${HEADER_PATH}/Barrier
     ${HEADER_PATH}/Block
     ${HEADER_PATH}/Condition
@@ -70,58 +69,40 @@ set(OpenThreads_PUBLIC_HEADERS
     ${HEADER_PATH}/ReentrantMutex
     ${HEADER_PATH}/ScopedLock
     ${HEADER_PATH}/Thread
-    ${HEADER_PATH}/Version
+    ${OPENTHREADS_VERSION_HEADER}
     ${OPENTHREADS_CONFIG_HEADER}
 )
 
-if(NOT ANDROID)
+IF(NOT ANDROID)
 # Use our modified version of FindThreads.cmake which has Sproc hacks.
-  find_package(Threads)
-endif()
-# Do we have sproc?
-if(CMAKE_SYSTEM MATCHES IRIX)
-  if(CMAKE_USE_SPROC_INIT)
-        # In this case, only Sproc exists, so no option.
-    set(OPENTHREADS_USE_SPROC_INSTEAD_OF_PTHREADS 1)
-  else()
-    if(CMAKE_HAVE_SPROC_H)
-            OPTION(OPENTHREADS_USE_SPROC_INSTEAD_OF_PTHREADS "Set to ON to build OpenThreads against sproc instead of pthreads" OFF)
-    endif()
-  endif()
-endif(CMAKE_SYSTEM MATCHES IRIX)
+    FIND_PACKAGE(Threads)
+ENDIF()
 
 # Add support for using Qt threads
-if(QT4_FOUND OR Qt5Widgets_FOUND)
+IF(QT4_FOUND OR Qt5Widgets_FOUND)
     OPTION(BUILD_OPENTHREADS_WITH_QT "Build OpenThreads with Qt threading support." OFF)
-endif()
+ENDIF()
 
 # Maybe we should be using the FindThreads.cmake module?
-if(ANDROID)
-  add_subdirectory(pthreads)
-elseif((QT4_FOUND OR Qt5Widgets_FOUND) AND BUILD_OPENTHREADS_WITH_QT)
-  add_subdirectory(qt)
-elseif(WIN32)
+IF(ANDROID)
+    SUBDIRS(pthreads)
+ELSEIF(WIN32)
     # So I think Cygwin wants to use pthreads
-  if(CYGWIN)
-    add_subdirectory(pthreads)
-  else()
+    IF(CYGWIN)
+        SUBDIRS(pthreads)
+    ELSE()
         # Everybody else including Msys should probably go here
-    add_subdirectory(win32)
+        SUBDIRS(win32)
         # examples)
-  endif()
-elseif(UNIX)
-  if(OPENTHREADS_USE_SPROC_INSTEAD_OF_PTHREADS)
-    add_subdirectory(sproc)
-  else()
-    add_subdirectory(pthreads)
-  endif()
-else()
-  message("Sorry, OpenThreads may not support your platform")
-endif()
+    ENDIF()
+ELSE()
+    IF(UNIX)
+        SUBDIRS(pthreads)
+    ELSE()
+        MESSAGE("Sorry, OpenThreads may not support your platform")
+    ENDIF()
+ENDIF()
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+# Make sure everyone can find Config
+INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include)
+

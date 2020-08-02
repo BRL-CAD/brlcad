@@ -1,4 +1,11 @@
-/*
+/*               L I S T _ E L E M E N T S . C P P
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file list_elements.cpp
  * list_elements.cpp
  *
  * List elements and their attributes based on the compiled-in schema.
@@ -20,6 +27,8 @@
 #include "schema.h"
 
 #include "ap_schema.h"
+
+#include "bu/app.h"
 
 class SEarrIterator
 {
@@ -107,8 +116,10 @@ void PrintEntity(STEPentity * ent)
 }
 
 
-int main()
+int main(int UNUSED(argc), const char *argv[])
 {
+
+    bu_setprogname(argv[0]);
 
     // This has to be done before anything else.  This initializes
     // all of the registry information for the schema you are using.

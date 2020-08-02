@@ -30,6 +30,7 @@
 #include "bio.h"
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "nmg.h"		/* BRL-CAD Vector macros */
 #include "raytrace.h"
@@ -75,6 +76,8 @@ main(int argc, char **argv)
     struct rt_wdb *outfp;
     fastf_t grid[10][10][3];
     struct face_g_snurb **surfaces;
+
+    bu_setprogname(argv[0]);
 
     hscale = 2.5;
 

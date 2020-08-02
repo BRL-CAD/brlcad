@@ -9,11 +9,7 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include <stdlib.h>
-#include <tk.h>
-
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
+#include "tkInt.h"
 
 /*
  *----------------------------------------------------------------------
@@ -68,12 +64,13 @@ XGetVisualInfo(
     XVisualInfo *vinfo_template,
     int *nitems_return)
 {
-    XVisualInfo *info = (XVisualInfo *) ckalloc(sizeof(XVisualInfo));
+    XVisualInfo *info = ckalloc(sizeof(XVisualInfo));
+
     info->visual = DefaultVisual(display, 0);
     info->visualid = info->visual->visualid;
     info->screen = 0;
     info->depth = info->visual->bits_per_rgb;
-    info->class = info->visual->class;
+    info->c_class = info->visual->c_class;
     info->colormap_size = info->visual->map_entries;
     info->bits_per_rgb = info->visual->bits_per_rgb;
     info->red_mask = info->visual->red_mask;
@@ -87,7 +84,7 @@ XGetVisualInfo(
 	    || ((vinfo_mask & VisualDepthMask)
 		    && (vinfo_template->depth != info->depth))
 	    || ((vinfo_mask & VisualClassMask)
-		    && (vinfo_template->class != info->class))
+		    && (vinfo_template->c_class != info->c_class))
 	    || ((vinfo_mask & VisualColormapSizeMask)
 		    && (vinfo_template->colormap_size != info->colormap_size))
 	    || ((vinfo_mask & VisualBitsPerRGBMask)
@@ -99,7 +96,7 @@ XGetVisualInfo(
 	    || ((vinfo_mask & VisualBlueMaskMask)
 		    && (vinfo_template->blue_mask != info->blue_mask))
 	) {
-	ckfree((char *) info);
+	ckfree(info);
 	return NULL;
     }
 

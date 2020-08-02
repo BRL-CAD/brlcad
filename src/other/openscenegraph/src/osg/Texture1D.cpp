@@ -129,14 +129,10 @@ void Texture1D::setImage(Image* image)
 
 void Texture1D::apply(State& state) const
 {
-#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
     // get the contextID (user defined ID of 0 upwards) for the
     // current OpenGL context.
     const unsigned int contextID = state.getContextID();
-
-    Texture::TextureObjectManager* tom = Texture::getTextureObjectManager(contextID).get();
-    ElapsedTime elapsedTime(&(tom->getApplyTime()));
-    tom->getNumberApplied()++;
 
     // get the texture object for the current contextID.
     TextureObject* textureObject = getTextureObject(contextID);
@@ -153,7 +149,7 @@ void Texture1D::apply(State& state) const
 
             if (!textureObject->match(GL_TEXTURE_1D, new_numMipmapLevels, _internalFormat, new_width, 1, 1, _borderWidth))
             {
-                Texture::releaseTextureObject(contextID, _textureObjectBuffer[contextID].get());
+                _textureObjectBuffer[contextID]->release();
                 _textureObjectBuffer[contextID] = 0;
                 textureObject = 0;
             }
@@ -164,26 +160,31 @@ void Texture1D::apply(State& state) const
     {
         textureObject->bind();
 
-        if (getTextureParameterDirty(state.getContextID())) applyTexParameters(GL_TEXTURE_1D,state);
-
         if (_subloadCallback.valid())
         {
+            applyTexParameters(GL_TEXTURE_1D,state);
+
             _subloadCallback->subload(*this,state);
         }
         else if (_image.valid() && getModifiedCount(contextID) != _image->getModifiedCount())
         {
-            applyTexImage1D(GL_TEXTURE_1D,_image.get(),state, _textureWidth, _numMipmapLevels);
-
-            // update the modified count to show that it is upto date.
+            // update the modified count to show that it is up to date.
             getModifiedCount(contextID) = _image->getModifiedCount();
+
+            applyTexParameters(GL_TEXTURE_1D,state);
+
+            applyTexImage1D(GL_TEXTURE_1D,_image.get(),state, _textureWidth, _numMipmapLevels);
         }
+
+        if (getTextureParameterDirty(state.getContextID()))
+            applyTexParameters(GL_TEXTURE_1D,state);
 
     }
     else if (_subloadCallback.valid())
     {
 
         // we don't have a applyTexImage1D_subload yet so can't reuse.. so just generate a new texture object.
-        _textureObjectBuffer[contextID] = textureObject = generateTextureObject(this, contextID, GL_TEXTURE_1D);
+        textureObject = generateAndAssignTextureObject(contextID, GL_TEXTURE_1D);
 
         textureObject->bind();
 
@@ -204,18 +205,18 @@ void Texture1D::apply(State& state) const
     {
 
         // we don't have a applyTexImage1D_subload yet so can't reuse.. so just generate a new texture object.
-        textureObject = generateTextureObject(this, contextID,GL_TEXTURE_1D);
+        textureObject = generateAndAssignTextureObject(contextID,GL_TEXTURE_1D);
 
         textureObject->bind();
 
         applyTexParameters(GL_TEXTURE_1D,state);
 
+        // update the modified count to show that it is up to date.
+        getModifiedCount(contextID) = _image->getModifiedCount();
+
         applyTexImage1D(GL_TEXTURE_1D,_image.get(),state, _textureWidth, _numMipmapLevels);
 
         textureObject->setAllocated(_numMipmapLevels,_internalFormat,_textureWidth,1,1,0);
-
-        // update the modified count to show that it is upto date.
-        getModifiedCount(contextID) = _image->getModifiedCount();
 
         _textureObjectBuffer[contextID] = textureObject;
 
@@ -229,19 +230,30 @@ void Texture1D::apply(State& state) const
     }
     else if ( (_textureWidth!=0) && (_internalFormat!=0) )
     {
-        _textureObjectBuffer[contextID] = textureObject = generateTextureObject(
-                this,contextID,GL_TEXTURE_1D,_numMipmapLevels,_internalFormat,_textureWidth,1,1,0);
+        // no image present, but dimensions at set so lets create the texture
+        GLExtensions * extensions = state.get<GLExtensions>();
+        GLenum texStorageSizedInternalFormat = extensions->isTextureStorageEnabled ? selectSizedInternalFormat() : 0;
+        if (texStorageSizedInternalFormat!=0)
+        {
+            textureObject = generateAndAssignTextureObject(contextID, GL_TEXTURE_1D, _numMipmapLevels, texStorageSizedInternalFormat, _textureWidth, 1, 1, 0);
+            textureObject->bind();
+            applyTexParameters(GL_TEXTURE_1D, state);
 
-        textureObject->bind();
+            extensions->glTexStorage1D( GL_TEXTURE_1D, osg::maximum(_numMipmapLevels,1), texStorageSizedInternalFormat, _textureWidth);
+        }
+        else
+        {
+            GLenum internalFormat = _sourceFormat ? _sourceFormat : _internalFormat;
+            textureObject = generateAndAssignTextureObject(contextID, GL_TEXTURE_1D, _numMipmapLevels, internalFormat, _textureWidth, 1, 1, 0);
+            textureObject->bind();
+            applyTexParameters(GL_TEXTURE_1D, state);
 
-        applyTexParameters(GL_TEXTURE_1D,state);
-
-        // no image present, but dimensions are set so lets create the texture
-        glTexImage1D( GL_TEXTURE_1D, 0, _internalFormat,
+            glTexImage1D( GL_TEXTURE_1D, 0, _internalFormat,
                      _textureWidth, _borderWidth,
-                     _sourceFormat ? _sourceFormat : _internalFormat,
+                     internalFormat,
                      _sourceType ? _sourceType : GL_UNSIGNED_BYTE,
                      0);
+        }
 
         if (_readPBuffer.valid())
         {
@@ -272,16 +284,13 @@ void Texture1D::computeInternalFormat() const
 
 void Texture1D::applyTexImage1D(GLenum target, Image* image, State& state, GLsizei& inwidth, GLsizei& numMipmapLevels) const
 {
-#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
     // if we don't have a valid image we can't create a texture!
     if (!image || !image->data())
         return;
 
-    // get the contextID (user defined ID of 0 upwards) for the
-    // current OpenGL context.
-    const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
-
+    // get extension object
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
     // compute the internal texture format, this set the _internalFormat to an appropriate value.
     computeInternalFormat();
@@ -290,10 +299,10 @@ void Texture1D::applyTexImage1D(GLenum target, Image* image, State& state, GLsiz
     bool compressed = isCompressedInternalFormat(_internalFormat);
 
     //Rescale if resize hint is set or NPOT not supported or dimension exceeds max size
-    if( _resizeNonPowerOfTwoHint || !extensions->isNonPowerOfTwoTextureSupported(_min_filter) || inwidth > extensions->maxTextureSize() )
+    if( _resizeNonPowerOfTwoHint || !extensions->isNonPowerOfTwoTextureSupported(_min_filter) || inwidth > extensions->maxTextureSize )
     {
         // this is not thread safe... should really create local image data and rescale to that as per Texture2D.
-        image->ensureValidSizeForTexturing(extensions->maxTextureSize());
+        image->ensureValidSizeForTexturing(extensions->maxTextureSize);
     }
 
     glPixelStorei(GL_UNPACK_ALIGNMENT,image->getPacking());
@@ -386,7 +395,7 @@ void Texture1D::applyTexImage1D(GLenum target, Image* image, State& state, GLsiz
 
 void Texture1D::copyTexImage1D(State& state, int x, int y, int width)
 {
-#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
     const unsigned int contextID = state.getContextID();
 
     // get the texture object for the current contextID.
@@ -403,7 +412,7 @@ void Texture1D::copyTexImage1D(State& state, int x, int y, int width)
             copyTexSubImage1D(state,0 ,x, y, width);
             return;
         }
-        // the relevent texture object is not of the right size so
+        // the relevant texture object is not of the right size so
         // needs to been deleted
         // remove previously bound textures.
         dirtyTextureObject();
@@ -421,7 +430,7 @@ void Texture1D::copyTexImage1D(State& state, int x, int y, int width)
     _min_filter = LINEAR;
     _mag_filter = LINEAR;
 
-    _textureObjectBuffer[contextID] = textureObject = generateTextureObject(this, contextID,GL_TEXTURE_1D);
+    textureObject = generateAndAssignTextureObject(contextID, GL_TEXTURE_1D);
 
     textureObject->bind();
 
@@ -443,7 +452,7 @@ void Texture1D::copyTexImage1D(State& state, int x, int y, int width)
 
 void Texture1D::copyTexSubImage1D(State& state, int xoffset, int x, int y, int width)
 {
-#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
     const unsigned int contextID = state.getContextID();
 
     // get the texture object for the current contextID.
@@ -475,7 +484,7 @@ void Texture1D::copyTexSubImage1D(State& state, int xoffset, int x, int y, int w
 
 void Texture1D::allocateMipmap(State& state) const
 {
-#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
     const unsigned int contextID = state.getContextID();
 
     // get the texture object for the current contextID.
@@ -493,11 +502,8 @@ void Texture1D::allocateMipmap(State& state) const
         // we do not reallocate the level 0, since it was already allocated
         width >>= 1;
 
-        for( GLsizei k = 1; k < numMipmapLevels  && width; k++)
+        for( GLsizei k = 1; k < numMipmapLevels && width; k++)
         {
-            if (width == 0)
-                width = 1;
-
             glTexImage1D( GL_TEXTURE_1D, k, _internalFormat,
                      width, _borderWidth,
                      _sourceFormat ? _sourceFormat : _internalFormat,

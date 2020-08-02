@@ -150,7 +150,7 @@ proc ::tk::MenuDup {src dst type} {
 
     set tags [bindtags $src]
     set srcLen [string length $src]
- 
+
     # Copy tags to x, replacing each substring of src with dst.
 
     while {[set index [string first $src $tags]] != -1} {

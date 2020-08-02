@@ -670,7 +670,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_stl_read, &gcv_con
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
-GCV_EXPORT const struct gcv_plugin *
+COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*

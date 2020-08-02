@@ -11,35 +11,93 @@
 #include <osg/DeleteHandler>
 #include "DarwinUtils.h"
 #include <Cocoa/Cocoa.h>
+#include <limits>
 
 @interface MenubarToggler : NSObject {
 
+    osg::ref_ptr<osg::DisplaySettings> _displaySettings;
+    osg::DisplaySettings::OSXMenubarBehavior _menubarBehavior;
 }
 
--(void) show: (id) data;
--(void) hide: (id) data;
+-(void) show;
+-(void) hide;
+-(void) setDisplaySettings: (osg::DisplaySettings*) display_settings;
 
 @end
 
 @implementation MenubarToggler
 
-
-
--(void) hide:(id) data 
+-(id) init
 {
-    OSErr error = SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
-    if (error) {
-        OSG_DEBUG << "MenubarToggler::hide failed with " << error << std::endl;
-    }
+    self = [super init];
+    _menubarBehavior = osg::DisplaySettings::MENUBAR_AUTO_HIDE;
+    _displaySettings = NULL;
+    return self;
+}
+
+-(void) setDisplaySettings: (osg::DisplaySettings*) display_settings
+{
+    _displaySettings = display_settings;
+}
+
+-(void) hide
+{
+    if(_displaySettings.valid()) _menubarBehavior = _displaySettings->getOSXMenubarBehavior();
+    
+    if (_menubarBehavior == osg::DisplaySettings::MENUBAR_FORCE_SHOW)
+        return;
+    
+    #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+        NSApplicationPresentationOptions options;
+        switch(_menubarBehavior) {
+            case osg::DisplaySettings::MENUBAR_AUTO_HIDE:
+                options = NSApplicationPresentationAutoHideMenuBar | NSApplicationPresentationAutoHideDock;
+                break;
+            
+            case osg::DisplaySettings::MENUBAR_FORCE_HIDE:
+                options = NSApplicationPresentationHideMenuBar | NSApplicationPresentationHideDock;
+                break;
+            
+            default:
+                options = NSApplicationPresentationDefault;
+                
+        }
+    
+        [[NSApplication sharedApplication] setPresentationOptions: options];
+    #else
+        SystemUIMode mode = kUIModeAllHidden;
+        SystemUIOptions options = 0;
+        switch(_menubarBehavior) {
+            case osg::DisplaySettings::MENUBAR_AUTO_HIDE:
+                options = kUIOptionAutoShowMenuBar;
+                break;
+            
+            case osg::DisplaySettings::MENUBAR_FORCE_HIDE:
+                break;
+            
+            default:
+                mode = kUIModeNormal;
+                
+        }
+    
+        OSErr error = SetSystemUIMode(mode, options);
+        if (error) {
+            OSG_DEBUG << "MenubarToggler::hide failed with " << error << std::endl;
+        }
+    #endif
 }
 
 
--(void) show:(id) data 
+-(void) show
 {
-    OSErr error = SetSystemUIMode(kUIModeNormal, 0);
-    if (error) {
-        OSG_DEBUG << "MenubarToggler::show failed with " << error << std::endl;
-    }
+    #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+        [[NSApplication sharedApplication] setPresentationOptions: NSApplicationPresentationDefault];
+    #else
+        OSErr error = SetSystemUIMode(kUIModeNormal, 0);
+        if (error) {
+            OSG_DEBUG << "MenubarToggler::show failed with " << error << std::endl;
+        }
+    #endif
 }
 
 
@@ -47,21 +105,9 @@
 
 namespace osgDarwin {
 
-//
-// Lion replacement for CGDisplayBitsPerPixel(CGDirectDisplayID displayId)
-//
-size_t displayBitsPerPixel( CGDirectDisplayID displayId )
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+size_t displayBitsPerPixelForMode(CGDisplayModeRef mode)
 {
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
-    return CGDisplayBitsPerPixel(displayId);
-#else
-    CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displayId);
-    if (!mode)
-    {
-        OSG_WARN << "CGDisplayCopyDisplayMode returned NULL" << std::endl;
-        return 0;
-    }
-
     CFStringRef pixEnc = CGDisplayModeCopyPixelEncoding(mode);
     if (!pixEnc)
     {
@@ -87,13 +133,87 @@ size_t displayBitsPerPixel( CGDirectDisplayID displayId )
     {
         OSG_WARN << "Unable to match pixel encoding '" << CFStringGetCStringPtr(pixEnc, kCFStringEncodingUTF8) << "'" << std::endl;
     }
-
-    CGDisplayModeRelease(mode);
     CFRelease(pixEnc);
+    
+    return depth;
+}
+
+#endif
+
+size_t displayBitsPerPixel( CGDirectDisplayID displayId )
+{
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+    return CGDisplayBitsPerPixel(displayId);
+#else
+    CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displayId);
+    if (!mode)
+    {
+        OSG_WARN << "CGDisplayCopyDisplayMode returned NULL" << std::endl;
+        return 0;
+    }
+
+    unsigned int depth = displayBitsPerPixelForMode(mode);
+    CGDisplayModeRelease(mode);
 
     return depth;
 #endif
 }
+
+
+static bool findBestDisplayModeFor(const CGDirectDisplayID& displayid,  int desired_width,  int desired_height, unsigned int desired_color_depth, double desired_refresh_rate) {
+    
+    CFArrayRef availableModes = CGDisplayCopyAllDisplayModes(displayid, NULL);
+    unsigned int numberOfAvailableModes = CFArrayGetCount(availableModes);
+    
+    CGDisplayModeRef best_match(NULL);
+    
+    int best_dx = std::numeric_limits<int>::max();
+    int best_dy = std::numeric_limits<int>::max();
+    
+    
+    for (unsigned int i=0; i<numberOfAvailableModes; ++i)
+    {
+        CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(availableModes, i);
+        osg::GraphicsContext::ScreenSettings tmpSR;
+
+        int w = CGDisplayModeGetWidth(mode);
+        int h = CGDisplayModeGetHeight(mode);
+        unsigned int color_depth = displayBitsPerPixelForMode(mode);
+
+        double rate = CGDisplayModeGetRefreshRate(mode);
+        
+        int dx(w - desired_width);
+        int dy(h - desired_height);
+        
+        if ((dx > 0) && (dx <= best_dx) && (dy > 0) && (dy <= best_dy) && (color_depth >= desired_color_depth) && (rate >= desired_refresh_rate)) {
+            best_match = mode;
+            best_dx = dx;
+            best_dy = dy;
+        }
+    }
+    bool result = false;
+    if(best_match)
+    {
+        result = CGDisplaySetDisplayMode(displayid, best_match, NULL) != kCGErrorSuccess;
+    }
+    else if (desired_refresh_rate > 0)
+    {
+        // try again with a lower refresh-rate
+        result = findBestDisplayModeFor(displayid, desired_width, desired_height, desired_color_depth, 0);
+    }
+    else if (desired_color_depth > 0)
+    {
+        // try again with a lower color_depth
+        result = findBestDisplayModeFor(displayid, desired_width, desired_height, 0, 0);
+    }
+    
+    CFRelease(availableModes);
+
+    return result;
+}
+
+
+
 
 static inline CGRect toCGRect(NSRect nsRect)
 {
@@ -111,7 +231,7 @@ static inline CGRect toCGRect(NSRect nsRect)
 MenubarController::MenubarController()
 :    osg::Referenced(), 
     _list(), 
-    _menubarShown(false),
+    _menubarShown(true),
     _mutex() 
 {
     // the following code will query the system for the available rect on the main-display (typically the displaying showing the menubar + the dock
@@ -126,12 +246,21 @@ MenubarController::MenubarController()
     // NSRect 0/0 is bottom/left, _mainScreenBounds 0/0 is top/left
     _availRect.origin.y = _mainScreenBounds.size.height - _availRect.size.height - _availRect.origin.y;
     
-        
-    // hide the menubar initially
-    SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
+    _toggler = [[MenubarToggler alloc] init];
+    update();
+}
+
+MenubarController::~MenubarController()
+{
+    [_toggler release];
 }
 
 
+void MenubarController::setDisplaySettings(osg::DisplaySettings* display_settings)
+{
+    [_toggler setDisplaySettings:display_settings];
+    update();
+}
 
 
 MenubarController* MenubarController::instance() 
@@ -207,16 +336,12 @@ void MenubarController::update()
         {
             
             //error = SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
-            MenubarToggler* toggler = [[MenubarToggler alloc] init];
-            [toggler performSelectorOnMainThread: @selector(hide:) withObject:NULL waitUntilDone: YES];
-            [toggler autorelease];
+            [_toggler performSelectorOnMainThread: @selector(hide) withObject:NULL waitUntilDone: YES];
         }
         if (!windowsCoveringMenubarArea && !_menubarShown) 
         {
             //error = SetSystemUIMode(kUIModeNormal, 0);
-            MenubarToggler* toggler = [[MenubarToggler alloc] init];
-            [toggler performSelectorOnMainThread: @selector(show:) withObject:NULL waitUntilDone: YES];
-            [toggler autorelease];
+            [_toggler performSelectorOnMainThread: @selector(show) withObject:NULL waitUntilDone: YES];
         }
         [pool release];
     
@@ -224,7 +349,7 @@ void MenubarController::update()
     
         OSErr error;
         
-          // see http://developer.apple.com/technotes/tn2002/tn2062.html for hiding the dock+menubar
+        // see http://developer.apple.com/technotes/tn2002/tn2062.html for hiding the dock+menubar
         if (windowsCoveringMenubarArea && _menubarShown) 
         {
             error = SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
@@ -241,17 +366,18 @@ void MenubarController::update()
 
 
 /** Helper method to get a double value out of a CFDictionary */
-static double getDictDouble (CFDictionaryRef refDict, CFStringRef key)
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060)
+	static double getDictDouble (CFDictionaryRef refDict, CFStringRef key)
 {
     double value;
     CFNumberRef number_value = (CFNumberRef) CFDictionaryGetValue(refDict, key);
     if (!number_value) // if can't get a number for the dictionary
         return -1;  // fail
-    if (!CFNumberGetValue(number_value, kCFNumberDoubleType, &value)) // or if cant convert it
+    if (!CFNumberGetValue(number_value, kCFNumberDoubleType, &value)) // or if can't convert it
         return -1; // fail
     return value; // otherwise return the long value
 }
-
+	
 /** Helper method to get a long value out of a CFDictionary */
 static long getDictLong(CFDictionaryRef refDict, CFStringRef key)        // const void* key?
 {
@@ -259,11 +385,11 @@ static long getDictLong(CFDictionaryRef refDict, CFStringRef key)        // cons
     CFNumberRef number_value = (CFNumberRef)CFDictionaryGetValue(refDict, key); 
     if (!number_value) // if can't get a number for the dictionary
         return -1;  // fail
-    if (!CFNumberGetValue(number_value, kCFNumberLongType, &value)) // or if cant convert it
+    if (!CFNumberGetValue(number_value, kCFNumberLongType, &value)) // or if can't convert it
         return -1; // fail
     return value;
 }
-
+#endif
 
 
 /** ctor, get a list of all attached displays */
@@ -356,12 +482,25 @@ void DarwinWindowingSystemInterface::getScreenSettings(const osg::GraphicsContex
         resolution.refreshRate = 0;
         return;
     }
-
+    
     CGDirectDisplayID id = getDisplayID(si);
-    resolution.width = CGDisplayPixelsWide(id);
-    resolution.height = CGDisplayPixelsHigh(id);
-    resolution.colorDepth = displayBitsPerPixel(id);
-    resolution.refreshRate = getDictDouble (CGDisplayCurrentMode(id), kCGDisplayRefreshRate);        // Not tested
+    #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+    
+        CGDisplayModeRef display_mode_ref = CGDisplayCopyDisplayMode(id);
+        resolution.width = CGDisplayModeGetWidth(display_mode_ref);
+        resolution.height = CGDisplayModeGetHeight(display_mode_ref);
+        resolution.colorDepth = displayBitsPerPixelForMode(display_mode_ref);
+        resolution.refreshRate = CGDisplayModeGetRefreshRate(display_mode_ref);
+    
+        CGDisplayModeRelease(display_mode_ref);
+    
+    #else
+        resolution.width = CGDisplayPixelsWide(id);
+        resolution.height = CGDisplayPixelsHigh(id);
+        resolution.colorDepth = displayBitsPerPixel(id);
+        
+        resolution.refreshRate = getDictDouble (CGDisplayCurrentMode(id), kCGDisplayRefreshRate);        // Not tested
+    #endif
     if (resolution.refreshRate<0) resolution.refreshRate = 0;
 }
 
@@ -379,6 +518,27 @@ void DarwinWindowingSystemInterface::enumerateScreenSettings(const osg::Graphics
     }
 
     CGDirectDisplayID displayid = getDisplayID(screenIdentifier);
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+    
+    CFArrayRef availableModes = CGDisplayCopyAllDisplayModes(displayid, NULL);
+    unsigned int numberOfAvailableModes = CFArrayGetCount(availableModes);
+    for (unsigned int i=0; i<numberOfAvailableModes; ++i)
+    {
+        CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(availableModes, i);
+        osg::GraphicsContext::ScreenSettings tmpSR;
+
+        tmpSR.width = CGDisplayModeGetWidth(mode);
+        tmpSR.height = CGDisplayModeGetHeight(mode);
+        tmpSR.colorDepth = displayBitsPerPixelForMode(mode);
+        tmpSR.refreshRate = CGDisplayModeGetRefreshRate(mode);
+
+        resolutionList.push_back(tmpSR);
+    }
+
+    CFRelease(availableModes);
+
+#else
+    
     CFArrayRef availableModes = CGDisplayAvailableModes(displayid);
     unsigned int numberOfAvailableModes = CFArrayGetCount(availableModes);
     for (unsigned int i=0; i<numberOfAvailableModes; ++i) {
@@ -397,6 +557,7 @@ void DarwinWindowingSystemInterface::enumerateScreenSettings(const osg::Graphics
 
         resolutionList.push_back(tmpSR);
     }
+#endif
 }
 
 /** return the top left coord of a specific screen in global screen space */
@@ -421,75 +582,31 @@ void DarwinWindowingSystemInterface::getScreenTopLeft(const osg::GraphicsContext
 
 bool DarwinWindowingSystemInterface::setScreenSettings(const osg::GraphicsContext::ScreenIdentifier &si, const osg::GraphicsContext::ScreenSettings & settings)
 {
-    bool result = setScreenResolutionImpl(si, settings.width, settings.height);
-    if (result)
-    {
-        setScreenRefreshRateImpl(si, settings.refreshRate);
-    }
+    CGDirectDisplayID displayid = getDisplayID(si);
 
-    return result;
+    #if (MAC_OS_X_VERSION_MAX_ALLOWED >= 1060)
+    
+        return findBestDisplayModeFor(displayid, settings.width, settings.height, settings.colorDepth, settings.refreshRate);
+    
+    #else
+        // add next line and on following line replace hard coded depth and refresh rate
+        CGRefreshRate refresh =  getDictDouble (CGDisplayCurrentMode(displayid), kCGDisplayRefreshRate);  
+        CFDictionaryRef display_mode_values =
+            CGDisplayBestModeForParametersAndRefreshRate(
+                            displayid, 
+                            settings.colorDepth,
+                            settings.width, settings.height,
+                            settings.refreshRate,
+                            NULL);
+
+                                          
+        return CGDisplaySwitchToMode(displayid, display_mode_values) != kCGErrorSuccess;
+    #endif
+    
+    return false;
 }
 
 
-
-/** implementation of setScreenResolution */
-bool DarwinWindowingSystemInterface::setScreenResolutionImpl(const osg::GraphicsContext::ScreenIdentifier& screenIdentifier, unsigned int width, unsigned int height) 
-{ 
-    _init();
-
-    if (_displayCount==0)
-    {
-        return false;
-    }
-
-    CGDirectDisplayID displayid = getDisplayID(screenIdentifier);
-    
-    // add next line and on following line replace hard coded depth and refresh rate
-    CGRefreshRate refresh =  getDictDouble (CGDisplayCurrentMode(displayid), kCGDisplayRefreshRate);  
-    CFDictionaryRef display_mode_values =
-        CGDisplayBestModeForParametersAndRefreshRate(
-                        displayid, 
-                        displayBitsPerPixel(displayid), 
-                        width, height,  
-                        refresh,  
-                        NULL);
-
-                                      
-    CGDisplaySwitchToMode(displayid, display_mode_values);    
-    return true; 
-}
-
-/** implementation of setScreenRefreshRate */
-bool DarwinWindowingSystemInterface::setScreenRefreshRateImpl(const osg::GraphicsContext::ScreenIdentifier& screenIdentifier, double refreshRate)
-{ 
-    _init();
-
-    if (_displayCount==0)
-    {
-        return false;
-    }
-
-    boolean_t  success(false);
-    unsigned width, height;
-    getScreenResolution(screenIdentifier, width, height);
-    
-    CGDirectDisplayID displayid = getDisplayID(screenIdentifier);
-    
-    // add next line and on following line replace hard coded depth and refresh rate
-    CFDictionaryRef display_mode_values =
-        CGDisplayBestModeForParametersAndRefreshRate(
-                        displayid, 
-                        displayBitsPerPixel(displayid), 
-                        width, height,  
-                        refreshRate,  
-                        &success);
-
-                                      
-    if (success)
-        CGDisplaySwitchToMode(displayid, display_mode_values);    
-        
-    return (success != 0);
-}
 
 
 unsigned int DarwinWindowingSystemInterface::getScreenContaining(int x, int y, int w, int h)

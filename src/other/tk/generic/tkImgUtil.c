@@ -55,7 +55,7 @@ TkAlignImageData(
 	dataWidth += (alignment - (dataWidth % alignment));
     }
 
-    data = ckalloc((unsigned) dataWidth * image->height);
+    data = ckalloc(dataWidth * image->height);
 
     destPtr = data;
     for (i = 0; i < image->height; i++) {

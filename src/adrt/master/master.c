@@ -38,11 +38,12 @@
 #if 0
 #include <tinycthread.h>
 #endif
-#include <zlib.h>
+#include "zlib.h"
 
 #include "bnetwork.h"
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/debug.h"
@@ -650,6 +651,8 @@ int main(int argc, char **argv) {
     int port = 0, obs_port = 0, c = 0;
     char exec[64], list[64], comp_host[64];
     int verbose = 0;
+
+    bu_setprogname(argv[0]);
 
     signal(SIGINT, finish);
 

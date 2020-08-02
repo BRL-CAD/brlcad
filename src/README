@@ -35,7 +35,6 @@ libbg - a computational geometry routines library
 libbn - the BRL-CAD numerics library
 libbrep - the BRL-CAD NURBS B-Rep library
 libbu - the BRL-CAD utility library
-libcursor - a 2D cursor manipulation library
 libdm - a 3D display manager library
 libfb - a 2D framebuffer library
 libfft - a fast Fourier transform library

@@ -34,6 +34,7 @@
 #include <limits.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -122,7 +123,13 @@ void usage(void)
 int main(int ac, char **av)
 {
     int c, isatty(int);
+
+    bu_setprogname(av[0]);
+
     progname = *av;
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /* Get # of options & turn all the option flags off
      */
@@ -143,7 +150,7 @@ int main(int ac, char **av)
 	usage();
     if (bu_optind == ac-1) {
 	FILE *fd;
-	if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
+	if ((fd=fopen(av[bu_optind], "rb")) == (FILE *)NULL) {
 	    perror(av[bu_optind]);
 	    bu_exit (1, NULL);
 	}

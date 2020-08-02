@@ -199,13 +199,9 @@ void TextureCubeMap::apply(State& state) const
     // current OpenGL context.
     const unsigned int contextID = state.getContextID();
 
-    Texture::TextureObjectManager* tom = Texture::getTextureObjectManager(contextID).get();
-    ElapsedTime elapsedTime(&(tom->getApplyTime()));
-    tom->getNumberApplied()++;
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
-    const Extensions* extensions = getExtensions(contextID,true);
-
-    if (!extensions->isCubeMapSupported())
+    if (!extensions->isCubeMapSupported)
         return;
 
     // get the texture object for the current contextID.
@@ -226,7 +222,7 @@ void TextureCubeMap::apply(State& state) const
 
             if (!textureObject->match(GL_TEXTURE_CUBE_MAP, new_numMipmapLevels, _internalFormat, new_width, new_height, 1, _borderWidth))
             {
-                Texture::releaseTextureObject(contextID, _textureObjectBuffer[contextID].get());
+                _textureObjectBuffer[contextID]->release();
                 _textureObjectBuffer[contextID] = 0;
                 textureObject = 0;
             }
@@ -237,29 +233,37 @@ void TextureCubeMap::apply(State& state) const
     {
         textureObject->bind();
 
-        if (getTextureParameterDirty(state.getContextID())) applyTexParameters(GL_TEXTURE_CUBE_MAP,state);
-
         if (_subloadCallback.valid())
         {
+            applyTexParameters(GL_TEXTURE_CUBE_MAP,state);
+
             _subloadCallback->subload(*this,state);
         }
         else
         {
+            bool applyParameters = true;
             for (int n=0; n<6; n++)
             {
                 const osg::Image* image = _images[n].get();
                 if (image && getModifiedCount((Face)n,contextID) != image->getModifiedCount())
                 {
-                    applyTexImage2D_subload( state, faceTarget[n], _images[n].get(), _textureWidth, _textureHeight, _internalFormat, _numMipmapLevels);
                     getModifiedCount((Face)n,contextID) = image->getModifiedCount();
+                    if (applyParameters)
+                    {
+                        applyTexParameters(GL_TEXTURE_CUBE_MAP,state);
+                        applyParameters = false;
+                    }
+                    applyTexImage2D_subload( state, faceTarget[n], _images[n].get(), _textureWidth, _textureHeight, _internalFormat, _numMipmapLevels);
                 }
             }
         }
+        if (getTextureParameterDirty(state.getContextID()))
+            applyTexParameters(GL_TEXTURE_CUBE_MAP,state);
 
     }
     else if (_subloadCallback.valid())
     {
-        _textureObjectBuffer[contextID] = textureObject = generateTextureObject(this, contextID,GL_TEXTURE_CUBE_MAP);
+        textureObject = generateAndAssignTextureObject(contextID,GL_TEXTURE_CUBE_MAP);
 
         textureObject->bind();
 
@@ -289,8 +293,12 @@ void TextureCubeMap::apply(State& state) const
             _textureWidth = _textureHeight = minimum( _textureWidth , _textureHeight );
         }
 
-        textureObject = generateTextureObject(
-                this, contextID,GL_TEXTURE_CUBE_MAP,_numMipmapLevels,_internalFormat,_textureWidth,_textureHeight,1,0);
+        GLenum texStorageSizedInternalFormat = extensions->isTextureStorageEnabled && (_borderWidth==0) ? selectSizedInternalFormat(_images[0].get()) : 0;
+
+        textureObject = generateAndAssignTextureObject(
+                contextID, GL_TEXTURE_CUBE_MAP, _numMipmapLevels,
+                texStorageSizedInternalFormat!=0 ? texStorageSizedInternalFormat : _internalFormat,
+                _textureWidth, _textureHeight, 1, 0);
 
         textureObject->bind();
 
@@ -301,6 +309,7 @@ void TextureCubeMap::apply(State& state) const
             const osg::Image* image = _images[n].get();
             if (image)
             {
+                getModifiedCount((Face)n,contextID) = image->getModifiedCount();
                 if (textureObject->isAllocated())
                 {
                     applyTexImage2D_subload( state, faceTarget[n], image, _textureWidth, _textureHeight, _internalFormat, _numMipmapLevels);
@@ -309,13 +318,10 @@ void TextureCubeMap::apply(State& state) const
                 {
                     applyTexImage2D_load( state, faceTarget[n], image, _textureWidth, _textureHeight, _numMipmapLevels);
                 }
-                getModifiedCount((Face)n,contextID) = image->getModifiedCount();
             }
 
 
         }
-
-        _textureObjectBuffer[contextID] = textureObject;
 
         // unref image data?
         if (isSafeToUnrefImageData(state))
@@ -333,22 +339,33 @@ void TextureCubeMap::apply(State& state) const
     }
     else if ( (_textureWidth!=0) && (_textureHeight!=0) && (_internalFormat!=0) )
     {
-        _textureObjectBuffer[contextID] = textureObject = generateTextureObject(
-                this, contextID,GL_TEXTURE_CUBE_MAP,_numMipmapLevels,_internalFormat,_textureWidth,_textureHeight,1,0);
+
+        GLenum texStorageSizedInternalFormat = extensions->isTextureStorageEnabled && (_borderWidth==0) ? selectSizedInternalFormat() : 0;
+
+        textureObject = generateAndAssignTextureObject(
+                contextID, GL_TEXTURE_CUBE_MAP, _numMipmapLevels,
+                texStorageSizedInternalFormat!=0 ? texStorageSizedInternalFormat : _internalFormat,
+                _textureWidth, _textureHeight, 1, 0);
 
         textureObject->bind();
 
         applyTexParameters(GL_TEXTURE_CUBE_MAP,state);
 
-        for (int n=0; n<6; n++)
+        if(texStorageSizedInternalFormat!=0)
         {
-            // no image present, but dimensions at set so less create the texture
-            glTexImage2D( faceTarget[n], 0, _internalFormat,
-                         _textureWidth, _textureHeight, _borderWidth,
-                         _sourceFormat ? _sourceFormat : _internalFormat,
-                         _sourceType ? _sourceType : GL_UNSIGNED_BYTE,
-                         0);
+            extensions->glTexStorage2D(GL_TEXTURE_CUBE_MAP, osg::maximum(_numMipmapLevels,1), texStorageSizedInternalFormat, _textureWidth, _textureHeight);
+
         }
+        else
+            for (int n=0; n<6; n++)
+            {
+                // no image present, but dimensions at set so less create the texture
+                glTexImage2D( faceTarget[n], 0, _internalFormat,
+                             _textureWidth, _textureHeight, _borderWidth,
+                             _sourceFormat ? _sourceFormat : _internalFormat,
+                             _sourceType ? _sourceType : GL_UNSIGNED_BYTE,
+                             0);
+            }
 
     }
     else
@@ -366,9 +383,9 @@ void TextureCubeMap::apply(State& state) const
 void TextureCubeMap::copyTexSubImageCubeMap(State& state, int face, int xoffset, int yoffset, int x, int y, int width, int height )
 {
     const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
-    if (!extensions->isCubeMapSupported())
+    if (!extensions->isCubeMapSupported)
         return;
 
     if (_internalFormat==0) _internalFormat=GL_RGBA;
@@ -390,7 +407,7 @@ void TextureCubeMap::copyTexSubImageCubeMap(State& state, int face, int xoffset,
         if (!textureObject)
         {
             // failed to create texture object
-            OSG_NOTICE<<"Warning : failed to create TextureCubeMap texture obeject, copyTexSubImageCubeMap abondoned."<<std::endl;
+            OSG_NOTICE<<"Warning : failed to create TextureCubeMap texture obeject, copyTexSubImageCubeMap abandoned."<<std::endl;
             return;
         }
 
@@ -475,42 +492,4 @@ void TextureCubeMap::allocateMipmap(State& state) const
         // inform state that this texture is the current one bound.
         state.haveAppliedTextureAttribute(state.getActiveTextureUnit(), this);
     }
-}
-
-typedef buffered_value< ref_ptr<TextureCubeMap::Extensions> > BufferedExtensions;
-static BufferedExtensions s_extensions;
-
-TextureCubeMap::Extensions* TextureCubeMap::getExtensions(unsigned int contextID,bool createIfNotInitalized)
-{
-    if (!s_extensions[contextID] && createIfNotInitalized) s_extensions[contextID] = new Extensions(contextID);
-    return s_extensions[contextID].get();
-}
-
-void TextureCubeMap::setExtensions(unsigned int contextID,Extensions* extensions)
-{
-    s_extensions[contextID] = extensions;
-}
-
-TextureCubeMap::Extensions::Extensions(unsigned int contextID)
-{
-    setupGLExtensions(contextID);
-}
-
-TextureCubeMap::Extensions::Extensions(const Extensions& rhs):
-    Referenced()
-{
-    _isCubeMapSupported = rhs._isCubeMapSupported;
-}
-
-void TextureCubeMap::Extensions::lowestCommonDenominator(const Extensions& rhs)
-{
-    if (!rhs._isCubeMapSupported) _isCubeMapSupported = false;
-}
-
-void TextureCubeMap::Extensions::setupGLExtensions(unsigned int contextID)
-{
-    _isCubeMapSupported = OSG_GLES2_FEATURES || OSG_GL3_FEATURES ||
-                          isGLExtensionSupported(contextID,"GL_ARB_texture_cube_map") ||
-                          isGLExtensionSupported(contextID,"GL_EXT_texture_cube_map") ||
-                          strncmp((const char*)glGetString(GL_VERSION),"1.3",3)>=0;;
 }

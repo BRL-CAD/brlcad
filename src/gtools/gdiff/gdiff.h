@@ -45,7 +45,8 @@ struct diff_state {
     int return_unchanged;
     int return_conflicts;
     int have_search_filter;
-    int verbosity;
+    long verbosity;
+    long quiet;
     int output_mode;
     int merge;
     struct bn_tol *diff_tol;

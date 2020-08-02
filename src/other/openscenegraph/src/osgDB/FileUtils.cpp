@@ -34,7 +34,10 @@ typedef char TCHAR;
     #include <direct.h> // for _mkdir
 
     #define mkdir(x,y) _mkdir((x))
+
+#if !defined(__MINGW32__)
     #define stat64 _stati64
+#endif
 
     // set up for windows so acts just like unix access().
 #ifndef F_OK
@@ -51,6 +54,7 @@ typedef char TCHAR;
     //>OSG_IOS
     //IOS includes
     #include "TargetConditionals.h"
+    #include <sys/cdefs.h>
 
     #if (TARGET_OS_IPHONE)
         #include <Availability.h>
@@ -85,6 +89,14 @@ typedef char TCHAR;
     #include <unistd.h>
     #include <sys/types.h>
     #include <sys/stat.h>
+
+    #if defined(_DARWIN_FEATURE_64_BIT_INODE)
+        #define stat64 stat
+    #endif
+#endif
+
+#if defined(__ANDROID__)
+    #define stat64 stat
 #endif
 
     // set up _S_ISDIR()
@@ -163,13 +175,11 @@ bool osgDB::makeDirectory( const std::string &path )
         }
     }
 
-    std::string dir = path;
     std::stack<std::string> paths;
-    while( true )
+    for(std::string dir = path;
+        !dir.empty();
+        dir = getFilePath(dir))
     {
-        if( dir.empty() )
-            break;
-
 #ifdef OSG_USE_UTF8_FILENAME
         if( _wstat64( OSGDB_STRING_TO_FILENAME(dir).c_str(), &stbuf ) < 0 )
 #else
@@ -188,7 +198,6 @@ bool osgDB::makeDirectory( const std::string &path )
                     return false;
             }
         }
-        dir = getFilePath(std::string(dir));
     }
 
     while( !paths.empty() )
@@ -333,6 +342,11 @@ std::string osgDB::findFileInPath(const std::string& filename, const FilePathLis
         OSG_DEBUG << "itr='" <<*itr<< "'\n";
         std::string path = itr->empty() ? filename : concatPaths(*itr, filename);
 
+#ifdef WIN32
+        // if combined file path exceeds MAX_PATH then ignore as it's not a legal path otherwise subsequent IO calls with this path may result in undefined behavior
+        if (path.length()>MAX_PATH) continue;
+#endif
+
         path = getRealPath(path);
 
         OSG_DEBUG << "FindFileInPath() : trying " << path << " ...\n";
@@ -413,7 +427,19 @@ std::string osgDB::findFileInDirectory(const std::string& fileName,const std::st
         realFileName = getSimpleFileName(fileName);
     }
 
-    OSG_DEBUG << "findFileInDirectory() : looking for " << realFileName << " in " << realDirName << "...\n";
+
+    if (realDirName.size()>2)
+    {
+        char lastCharacter = realDirName[realDirName.size()-1];
+        bool trimLastCharacter = lastCharacter=='/' ||  lastCharacter=='\\';
+        if (trimLastCharacter)
+        {
+            realDirName.erase(realDirName.size()-1, 1);
+            OSG_DEBUG << "findFileInDirectory() Trimming last character of filepath, now realDirName="<<realDirName<<std::endl;
+        }
+    }
+
+    OSG_DEBUG << "findFileInDirectory() : looking for " << realFileName << " in " << realDirName << std::endl;
 
     if (realDirName.empty())
     {
@@ -505,7 +531,7 @@ static void appendInstallationLibraryFilePaths(osgDB::FilePathList& filepath)
 #ifdef OSG_DEFAULT_LIBRARY_PATH
 
     // Append the install prefix path to the library search path if configured
-    filepath.push_back(ADDQUOTES(OSG_DEFAULT_LIBRARY_PATH));
+    filepath.push_back(OSG_DEFAULT_LIBRARY_PATH);
 #endif
 }
 
@@ -596,26 +622,26 @@ osgDB::DirectoryContents osgDB::expandWildcardsInFilename(const std::string& fil
     return contents;
 }
 
-osgDB::FileOpResult::Value osgDB::copyFile(const std::string & source, const std::string & destination)
+osgDB::CopyFileResult osgDB::copyFile(const std::string & source, const std::string & destination)
 {
     if (source.empty() || destination.empty())
     {
         OSG_INFO << "copyFile(): Empty file name." << std::endl;
-        return FileOpResult::BAD_ARGUMENT;
+        return COPY_FILE_BAD_ARGUMENT;
     }
 
     // Check if source and destination are the same
     if (source == destination || osgDB::getRealPath(source) == osgDB::getRealPath(destination))
     {
         OSG_INFO << "copyFile(): Source and destination point to the same file: source=" << source << ", destination=" << destination << std::endl;
-        return FileOpResult::SOURCE_EQUALS_DESTINATION;
+        return COPY_FILE_SOURCE_EQUALS_DESTINATION;
     }
 
     // Check if source file exists
     if (!osgDB::fileExists(source))
     {
         OSG_INFO << "copyFile(): Source file does not exist: " << source << std::endl;
-        return FileOpResult::SOURCE_MISSING;
+        return COPY_FILE_SOURCE_MISSING;
     }
 
     // Open source file
@@ -623,7 +649,7 @@ osgDB::FileOpResult::Value osgDB::copyFile(const std::string & source, const std
     if (!fin)
     {
         OSG_NOTICE << "copyFile(): Can't read source file: " << source << std::endl;
-        return FileOpResult::SOURCE_NOT_OPENED;        // Return success since it's not an output error.
+        return COPY_FILE_SOURCE_NOT_OPENED;        // Return success since it's not an output error.
     }
 
     // Ensure the directory exists or else the FBX SDK will fail
@@ -637,7 +663,7 @@ osgDB::FileOpResult::Value osgDB::copyFile(const std::string & source, const std
     if (!fout)
     {
         OSG_NOTICE << "copyFile(): Can't write destination file: " << destination << std::endl;
-        return FileOpResult::DESTINATION_NOT_OPENED;
+        return COPY_FILE_DESTINATION_NOT_OPENED;
     }
 
     // Copy file
@@ -652,16 +678,16 @@ osgDB::FileOpResult::Value osgDB::copyFile(const std::string & source, const std
     if (!fout.good())
     {
         OSG_NOTICE << "copyFile(): Error writing destination file: " << destination << std::endl;
-        return FileOpResult::WRITE_ERROR;
+        return COPY_FILE_WRITE_ERROR;
     }
 
     if (!fin.eof())
     {
         OSG_NOTICE << "copyFile(): Error reading source file: " << source << std::endl;
-        return FileOpResult::READ_ERROR;
+        return COPY_FILE_READ_ERROR;
     }
 
-    return FileOpResult::OK;
+    return COPY_FILE_OK;
 }
 
 
@@ -873,7 +899,7 @@ bool osgDB::containsCurrentWorkingDirectoryReference(const FilePathList& paths)
     }
 
 #elif defined(__APPLE__)
-#if (TARGET_OS_IPHONE)
+#if (TARGET_OS_IPHONE) || (MAC_OS_X_VERSION_MIN_REQUIRED >= 1080)
     #define COMPILE_COCOA_VERSION
 #else
      #define COMPILE_CARBON_VERSION
@@ -959,7 +985,7 @@ bool osgDB::containsCurrentWorkingDirectoryReference(const FilePathList& paths)
     }
 
     // The Cocoa version is about 10 lines of code.
-    // The Carbon version is noticably longer.
+    // The Carbon version is noticeably longer.
     // Unfortunately, the Cocoa version requires -lobjc to be
     // linked in when creating an executable.
     // Rumor is that this will be done autmatically in gcc 3.5/Tiger,
@@ -1021,29 +1047,28 @@ bool osgDB::containsCurrentWorkingDirectoryReference(const FilePathList& paths)
         NSAutoreleasePool* mypool = [[NSAutoreleasePool alloc] init];
 
         NSString* myBundlePlugInPath;
-        NSString* userSupportDir;
 
         // This will grab the "official" bundle plug in path.
         // It will be YourProgram.app/Contents/PlugIns (for App bundles)
         // or YourProgram/PlugIns (for Unix executables)
         myBundlePlugInPath = [[NSBundle mainBundle] builtInPlugInsPath];
 
-        // Now setup the other search paths
-        // Cocoa has a nice method for tilde expansion.
-        // There's probably a better way of getting this directory, but I
-        // can't find the call.
-        userSupportDir = [@"~/Library/Application Support/OpenSceneGraph/PlugIns" stringByExpandingTildeInPath];
-
-        // Can setup the remaining directories directly in C++
-
         // Since Obj-C and C++ objects don't understand each other,
         // the Obj-C strings must be converted down to C strings so
         // C++ can make them into C++ strings.
         filepath.push_back( [myBundlePlugInPath UTF8String] );
-        filepath.push_back( [userSupportDir UTF8String] );
 
-        filepath.push_back( "/Library/Application Support/OpenSceneGraph/PlugIns" );
-        filepath.push_back( "/Network/Library/Application Support/OpenSceneGraph/PlugIns" );
+        // add all application-support-folders
+        NSArray *systemSearchPaths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSAllDomainsMask, YES);
+
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+
+        for (NSString *systemPath in systemSearchPaths) {
+            NSString *systemPluginsPath = [systemPath stringByAppendingPathComponent:@"OpenSceneGraph/PlugIns"];
+            if ([fileManager fileExistsAtPath:systemPluginsPath]) {
+                filepath.push_back( [systemPluginsPath UTF8String] );
+            }
+        }
 
         // Clean up the autorelease pool
         [mypool release];
@@ -1090,7 +1115,7 @@ bool osgDB::containsCurrentWorkingDirectoryReference(const FilePathList& paths)
         FSRef     f;
         OSErr    errCode;
 
-        // Start with the the Bundle PlugIns directory.
+        // Start with the Bundle PlugIns directory.
 
         // Get the main bundle first. No need to retain or release it since
         //  we are not keeping a reference
@@ -1112,71 +1137,29 @@ bool osgDB::containsCurrentWorkingDirectoryReference(const FilePathList& paths)
         }
 
         // Next, check the User's Application Support folder
-        errCode = FSFindFolder( kUserDomain, kApplicationSupportFolderType, kDontCreateFolder, &f );
-        if(noErr == errCode)
+        int domains[3] = { kUserDomain, kLocalDomain, kNetworkDomain };
+
+        for(unsigned int domain_ndx = 0; domain_ndx < 3; ++domain_ndx)
         {
-            // Get the URL
-            url = CFURLCreateFromFSRef( 0, &f );
-            if(url)
+            errCode = FSFindFolder( domains[domain_ndx], kApplicationSupportFolderType, kDontCreateFolder, &f );
+            if(noErr == errCode)
             {
-                filepath.push_back(GetPathFromCFURLRef(url) + OSG_PLUGIN_PATH);
-                CFRelease( url );
+                // Get the URL
+                url = CFURLCreateFromFSRef( 0, &f );
+                if(url)
+                {
+                    filepath.push_back(GetPathFromCFURLRef(url) + OSG_PLUGIN_PATH);
+                    CFRelease( url );
+                }
+                else
+                    OSG_NOTIFY( osg::DEBUG_INFO ) << "Couldn't create CFURLRef for application support Path at ndx " << domain_ndx << std::endl;
+
+                url = NULL;
             }
             else
-                OSG_NOTIFY( osg::DEBUG_INFO ) << "Couldn't create CFURLRef for User's application support Path" << std::endl;
-
-            url = NULL;
-        }
-        else
-        {
-            OSG_NOTIFY( osg::DEBUG_INFO ) << "Couldn't find the User's Application Support Path" << std::endl;
-        }
-
-        // Next, check the Local System's Application Support Folder
-        errCode = FSFindFolder( kLocalDomain, kApplicationSupportFolderType, kDontCreateFolder, &f );
-        if(noErr == errCode)
-        {
-            // Get the URL
-            url = CFURLCreateFromFSRef( 0, &f );
-
-            if(url)
             {
-                filepath.push_back(GetPathFromCFURLRef(url) + OSG_PLUGIN_PATH);
-                CFRelease( url );
+                OSG_NOTIFY( osg::DEBUG_INFO ) << "Couldn't find the User's Application Support Path at ndx "  << domain_ndx << std::endl;
             }
-            else
-                OSG_NOTIFY( osg::DEBUG_INFO ) << "Couldn't create CFURLRef for local System's ApplicationSupport Path" << std::endl;
-
-            url = NULL;
-        }
-        else
-        {
-            OSG_NOTIFY( osg::DEBUG_INFO ) << "Couldn't find the Local System's Application Support Path" << std::endl;
-        }
-
-        // Finally, check the Network Application Support Folder
-        // This one has a likely chance of not existing so an error
-        // may be returned. Don't panic.
-        errCode = FSFindFolder( kNetworkDomain, kApplicationSupportFolderType, kDontCreateFolder, &f );
-        if(noErr == errCode)
-        {
-            // Get the URL
-            url = CFURLCreateFromFSRef( 0, &f );
-
-            if(url)
-            {
-                filepath.push_back(GetPathFromCFURLRef(url) + OSG_PLUGIN_PATH);
-                CFRelease( url );
-            }
-            else
-                OSG_NOTIFY( osg::DEBUG_INFO ) << "Couldn't create CFURLRef for network Application Support Path" << std::endl;
-
-            url = NULL;
-        }
-        else
-        {
-        // had to comment out as it segfauls the OSX app otherwise
-            // OSG_NOTIFY( osg::DEBUG_INFO ) << "Couldn't find the Network Application Support Path" << std::endl;
         }
     }
     #else

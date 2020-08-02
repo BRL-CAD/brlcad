@@ -263,10 +263,6 @@ routines needed for the manipulation and analysis of Non-Uniform
 Rational BSpline based boundary representations.
 	Depends on: libbg libbn libbu OpenNURBS
 
-libcursor: The cursor library is a lightweight cursor manipulation
-library similar to curses but with less overhead.
-	Depends on: termlib
-
 libdm: The display manager library contains the logic for generalizing
 a drawable context.  This includes the ability to output
 drawing/plotting instructions to a variety of devices such as X11,
@@ -422,9 +418,11 @@ public library APIs should expose only C function calls and data
 except in very specific cases (should be discussed with the
 development team ahead of time to get consensus on the necessity.)
 
-There is currently no C++ interface to the core BRL-CAD libraries. If
-such an interface is eventually developed, it will be done separately
-rather than mixing C++ semantics into existing APIs.
+There is a C++ interface to the core BRL-CAD libraries called MOOSE
+that is maintained in a separate repository.  It is developed with
+separation in order to avoid mixing C++ semantics into existing APIs
+and to ensure clean separation of responsibilities and modularity.
+
 
 CODING STYLE & STANDARDS
 ------------------------
@@ -833,19 +831,16 @@ it better?" and add documentation accordingly.
 
 All public library functions and most private or application functions
 should be appropriately documented using Doxygen/Javadoc style
-comments.  Without getting into the advanced details, this minimally
-means that you need to add an additional asterisk to a comment that
-precedes your functions:
+comments.  This minimally means that you need to add an additional
+asterisk to a comment that precedes your functions.  Public functions
+must be exported and imported using per-library macros that precede
+public symbol declarations (e.g., BU_EXPORT int func();).  Example:
 
 /**
  * Computes the answer to the meaning of life, the universe, and
  * everything.
  */
-int
-the_answer(void)
-{
-    return 42;
-}
+MYLIB_EXPORT int mylib_function();
 
 
 TESTING & DEBUGGING

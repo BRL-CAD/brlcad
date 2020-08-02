@@ -76,14 +76,13 @@
 #include "bsocket.h"
 #include "bio.h"
 
-#include "../libfb/fb_private.h" /* for _fb_disk_enable */
-
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "bu/snooze.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 
@@ -109,7 +108,7 @@ int verbose = 0;
 
 /* from server.c */
 extern const struct pkg_switch fb_server_pkg_switch[];
-extern fb *fb_server_fbp;
+extern struct fb *fb_server_fbp;
 extern fd_set *fb_server_select_list;
 extern int *fb_server_max_fd;
 extern int fb_server_got_fb_free;       /* !0 => we have received an fb_free */
@@ -387,6 +386,8 @@ init_syslog(void)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
 #define PORTSZ 32
     char portname[PORTSZ];
 

@@ -22,6 +22,7 @@
  * This is a program to create wiring or fuel lines.  The user Enters
  * only the coordinates of the endpoints and the radius of the lines.
  *
+ * Introduced in BRL-CAD release 4.4
  */
 
 #include "common.h"
@@ -33,6 +34,7 @@
 
 #include "rt/db4.h"
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -77,6 +79,8 @@ main(int argc, char *argv[])
     char temp[NAME_LEN+1];		/* Temporary char string. */
     char temp1[NAME_LEN+1];		/* Temporary char string. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     bu_log(usage);
     if (argc > 1 && argv)

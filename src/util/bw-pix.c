@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/opt.h"
@@ -46,8 +47,8 @@ open_file(FILE **fp, const char *name)
     if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
     } else if (BU_STR_EQUAL(name, ".")) {
-	*fp = fopen("/dev/null", "r");
-    } else if ((*fp = fopen(name, "r")) == NULL) {
+	*fp = fopen("/dev/null", "rb");
+    } else if ((*fp = fopen(name, "rb")) == NULL) {
 	bu_exit(2, "bw3-pix: Can't open \"%s\"\n", name);
     }
 }
@@ -67,6 +68,8 @@ main(int argc, char **argv)
     const char *gfile = NULL;
     const char *bfile = NULL;
     char usage[] = "Usage: bw-pix [-o out_file.pix] [file.bw] [file_green.bw file_blue.bw] [ > out_file.pix]\n";
+
+    bu_setprogname(argv[0]);
 
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help and exit");

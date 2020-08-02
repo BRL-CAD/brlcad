@@ -39,12 +39,15 @@ cmake_minimum_required(VERSION 3.1.3)
 # set CMake project name
 project(NETPBM)
 
-if(NOT BIN_DIR)
+if (NOT BIN_DIR)
   set(BIN_DIR bin)
-endif(NOT BIN_DIR)
-if(NOT LIB_DIR)
+endif (NOT BIN_DIR)
+if (NOT LIB_DIR)
   set(LIB_DIR lib)
-endif(NOT LIB_DIR)
+endif (NOT LIB_DIR)
+if (NOT INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif (NOT INCLUDE_DIR)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -63,18 +66,18 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BI
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/compile_new.h)
 
 include(CheckIncludeFiles)
-CHECK_INCLUDE_FILES(inttypes.h HAVE_INTTYPES_H)
-CHECK_INCLUDE_FILES(stdint.h HAVE_STDINT_H)
-CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
-CHECK_INCLUDE_FILES(fcntl.h HAVE_FCNTL_H)
-CHECK_INCLUDE_FILES(sys/stat.h HAVE_SYS_STAT_H)
-CHECK_INCLUDE_FILES(sys/types.h HAVE_SYS_STAT_H)
+check_include_files(inttypes.h HAVE_INTTYPES_H)
+check_include_files(stdint.h HAVE_STDINT_H)
+check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files(fcntl.h HAVE_FCNTL_H)
+check_include_files(sys/stat.h HAVE_SYS_STAT_H)
+check_include_files(sys/types.h HAVE_SYS_STAT_H)
 
 include(CheckTypeSize)
-CHECK_TYPE_SIZE(ssize_t HAVE_SSIZE_T)
-CHECK_TYPE_SIZE(int64_t HAVE_INT64)
-CHECK_TYPE_SIZE(long LONG_SIZE)
-CHECK_TYPE_SIZE(int INT_SIZE)
+check_type_size(ssize_t HAVE_SSIZE_T)
+check_type_size(int64_t HAVE_INT64)
+check_type_size(long LONG_SIZE)
+check_type_size(int INT_SIZE)
 if(${INT_SIZE} GREATER ${LONG_SIZE})
   math(EXPR BITS_PER_WORD "${INT_SIZE} * 8")
 else(${INT_SIZE} GREATER ${LONG_SIZE})
@@ -134,17 +137,22 @@ set(NETPBM_HEADERS
   ppmfloyd.h
   )
 
-if(NOT DEFINED BUILD_SHARED_LIBS)
-  set(BUILD_SHARED_LIBS ON)
-endif(NOT DEFINED BUILD_SHARED_LIBS)
+if (NOT SKIP_INSTALL_HEADERS)
+  install (FILES ${NETPBM_HEADERS} DESTINATION ${INCLUDE_DIR}/netpbm)
+endif (NOT SKIP_INSTALL_HEADERS)
 
-if(BUILD_SHARED_LIBS)
+
+if (NOT DEFINED BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif (NOT DEFINED BUILD_SHARED_LIBS)
+
+if (BUILD_SHARED_LIBS)
   add_library(netpbm SHARED ${NETPBM_SRCS})
   install(TARGETS netpbm
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-endif(BUILD_SHARED_LIBS)
+endif (BUILD_SHARED_LIBS)
 
 if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
@@ -153,19 +161,19 @@ if(MSVC)
   set_property(TARGET netpbm APPEND PROPERTY COMPILE_DEFINITIONS "NETPBM_DLL_EXPORTS")
 endif(MSVC)
 
-if(BUILD_STATIC_LIBS)
+if (BUILD_STATIC_LIBS)
   add_library(netpbm-static STATIC ${NETPBM_SRCS})
-  if(MSVC)
+  if (MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(netpbm-static PROPERTIES PREFIX "lib")
-  else(MSVC)
+  else (MSVC)
     set_target_properties(netpbm-static PROPERTIES OUTPUT_NAME "netpbm")
-  endif(MSVC)
+  endif (MSVC)
   install(TARGETS netpbm-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-endif(BUILD_STATIC_LIBS)
+endif (BUILD_STATIC_LIBS)
 
 
 # Local Variables:

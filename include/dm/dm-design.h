@@ -28,6 +28,11 @@
 #ifndef DM_DM_DESIGN_H
 #define DM_DM_DESIGN_H
 
+#include "common.h"
+#include "vmath.h"
+#include "icv.h"
+#include "dm/defines.h"
+
 /* Display Manager Types */
 #define DM_TYPE_BAD     -1
 #define DM_TYPE_NULL	0
@@ -129,7 +134,7 @@ const char *dm_obj_common_reserved_settings[] = {
 };
 
 /* Structure of dm will (hopefully) be internal to libdm, so use a typedef for the functions */
-typdef struct dm dm_s;
+typedef struct dm dm_s;
 
 /* Generic functions for all display managers */
 DM_EXPORT extern void		dm_set_handle(dm_s *dmp, const char *handle);

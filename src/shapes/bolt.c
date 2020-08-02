@@ -21,6 +21,16 @@
  *
  * Program to make a bolt using libwdb.  The objects will be in mm.
  *
+ * Introduced in BRL-CAD release 4.4.  Original notes:
+ * This program creates an mged data base of bolts.  There are four types of
+ * bolts that can be created but only one type can be in the data base at a
+ * time.  The four types of bolts that may be created are listed below:
+ *
+ *      bolt head
+ *      bolt head and washer
+ *      bolt head, washer, and bolt stem
+ *      bolt head and bolt stem
+ *
  */
 
 #include "common.h"
@@ -31,6 +41,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -74,6 +85,8 @@ main(int argc, char **argv)
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {

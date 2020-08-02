@@ -68,7 +68,6 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 {
     int c;
 
-    bu_setprogname(av[0]);
     /* handle options */
     bu_opterr = 0;
     bu_optind = 0;
@@ -124,6 +123,7 @@ int main(int argc, char *argv[]) {
     int  ac;
     struct db_i *source_db;
 
+    bu_setprogname(argv[0]);
 
     ac = parse_args(argc, argv, &opts);
     if (argc - ac != 3)

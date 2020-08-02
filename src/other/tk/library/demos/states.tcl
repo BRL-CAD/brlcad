@@ -19,6 +19,17 @@ positionWindow $w
 label $w.msg -font $font -wraplength 4i -justify left -text "A listbox containing the 50 states is displayed below, along with a scrollbar.  You can scan the list either using the scrollbar or by scanning.  To scan, press button 2 in the widget and drag up or down."
 pack $w.msg -side top
 
+labelframe $w.justif -text Justification
+foreach c {Left Center Right} {
+    set lower [string tolower $c]
+    radiobutton $w.justif.$lower -text $c -variable just \
+        -relief flat -value $lower -anchor w \
+        -command "$w.frame.list configure -justify \$just" \
+        -tristatevalue "multi"
+    pack $w.justif.$lower -side left -pady 2 -fill x
+}
+pack $w.justif
+
 ## See Code / Dismiss buttons
 set btns [addSeeDismiss $w.buttons $w]
 pack $btns -side bottom -fill x
@@ -26,7 +37,7 @@ pack $btns -side bottom -fill x
 frame $w.frame -borderwidth .5c
 pack $w.frame -side top -expand yes -fill y
 
-scrollbar $w.frame.scroll -command "$w.frame.list yview"
+ttk::scrollbar $w.frame.scroll -command "$w.frame.list yview"
 listbox $w.frame.list -yscroll "$w.frame.scroll set" -setgrid 1 -height 12
 pack $w.frame.scroll -side right -fill y
 pack $w.frame.list -side left -expand 1 -fill both

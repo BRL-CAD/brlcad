@@ -7,7 +7,6 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
-package require Ttk
 
 set w .ttkpane
 catch {destroy $w}
@@ -51,7 +50,7 @@ proc every {delay script} {
     uplevel #0 $script
     after $delay [list every $delay $script]
 }
-set zones {
+set testzones {
     :Europe/Berlin
     :America/Argentina/Buenos_Aires
     :Africa/Johannesburg
@@ -65,7 +64,13 @@ set zones {
 }
 # Force a pre-load of all the timezones needed; otherwise can end up
 # poor-looking synch problems!
-foreach zone $zones {clock format 0 -timezone $zone}
+set zones {}
+foreach zone $testzones {
+    if {![catch {clock format 0 -timezone $zone}]} {
+        lappend zones $zone
+    }
+}
+if {[llength $zones] < 2} { lappend zones -0200 :GMT :UTC +0200 }
 foreach zone $zones {
     set city [string map {_ " "} [regexp -inline {[^/]+$} $zone]]
     if {$i} {
@@ -99,7 +104,7 @@ if {[tk windowingsystem] ne "aqua"} {
     pack $w.outer -fill both -expand 1
 } else {
     text $w.txt -wrap word -yscroll "$w.sb set" -width 30 -borderwidth 0
-    scrollbar $w.sb -orient vertical -command "$w.txt yview"
+    ttk::scrollbar $w.sb -orient vertical -command "$w.txt yview"
     pack $w.sb -side right -fill y -in $w.outer.inRight.bot
     pack $w.txt -fill both -expand 1 -in $w.outer.inRight.bot
     pack $w.outer -fill both -expand 1 -padx 10 -pady {6 10}

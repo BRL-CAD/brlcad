@@ -184,6 +184,7 @@ set(mann_EN
   rtcheck.xml
   saveview.xml
   sca.xml
+  screengrab.xml
   search.xml
   sed.xml
   setview.xml

@@ -182,6 +182,8 @@ main(int UNUSED(argc), char *UNUSED(argv[]))
     int result;
     size_t size = 0;
 
+    bu_setprogname(av[0]);
+
     if (argc > 2) {
 	fprintf(stderr, "Usage: %s [file]\n", argv[0]);
 	return 1;

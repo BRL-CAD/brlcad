@@ -1,9 +1,0 @@
-# ----------------------------------------------------------------------
-#  DEMO: fileselectionbox in [incr Widgets]
-# ----------------------------------------------------------------------
-package require Iwidgets 4.0
-
-option add *textBackground seashell
-
-iwidgets::fileselectionbox .fsb -width 4i -height 4i
-pack .fsb

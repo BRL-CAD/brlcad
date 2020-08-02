@@ -71,7 +71,6 @@ set(manuals_mged_HTML
   manuals/mged/brlcad_solids.html
   manuals/mged/build_def_index.sh
   manuals/mged/cmd_line_ed.html
-  manuals/mged/concl.html
   manuals/mged/contents.html
   manuals/mged/coord-axes.gif
   manuals/mged/cup.g
@@ -95,7 +94,6 @@ set(manuals_mged_HTML
   manuals/mged/handle.jpg
   manuals/mged/index.html
   manuals/mged/mged.html
-  manuals/mged/mged1.html
   manuals/mged/mged2.html
   manuals/mged/mged3.html
   manuals/mged/mged_callbacks.html
@@ -110,8 +108,6 @@ set(manuals_mged_HTML
   manuals/mged/mug_camo.jpg
   manuals/mged/mug_green.gif
   manuals/mged/mug_green.jpg
-  manuals/mged/notes.html
-  manuals/mged/outline
   manuals/mged/peewee.gif
   manuals/mged/peewee.jpg
   manuals/mged/preface.html
@@ -119,7 +115,6 @@ set(manuals_mged_HTML
   manuals/mged/rim.gif
   manuals/mged/rim.jpg
   manuals/mged/shaders.html
-  manuals/mged/skipped
   manuals/mged/tex-html.tcl
   )
 ADD_DOC(manuals_mged_HTML html/manuals/mged)

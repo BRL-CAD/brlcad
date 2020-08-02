@@ -51,7 +51,7 @@ declare 7 {
     int TclCopyAndCollapse(int count, const char *src, char *dst)
 }
 declare 8 {
-    int TclCopyChannel(Tcl_Interp *interp, Tcl_Channel inChan,
+    int TclCopyChannelOld(Tcl_Interp *interp, Tcl_Channel inChan,
 	    Tcl_Channel outChan, int toRead, Tcl_Obj *cmdPtr)
 }
 
@@ -160,11 +160,12 @@ declare 34 {
 #    Tcl_Obj *TclGetIndexedScalar(Tcl_Interp *interp, int localIndex,
 #	    int flags)
 #}
-declare 36 {
-    int TclGetLong(Tcl_Interp *interp, const char *str, long *longPtr)
-}
+# Removed in 8.6a2
+#declare 36 {
+#    int TclGetLong(Tcl_Interp *interp, const char *str, long *longPtr)
+#}
 declare 37 {
-    int TclGetLoadedPackages(Tcl_Interp *interp, char *targetName)
+    int TclGetLoadedPackages(Tcl_Interp *interp, const char *targetName)
 }
 declare 38 {
     int TclGetNamespaceForQualName(Tcl_Interp *interp, const char *qualName,
@@ -182,7 +183,7 @@ declare 41 {
     Tcl_Command TclGetOriginalCommand(Tcl_Command command)
 }
 declare 42 {
-    char *TclpGetUserHome(const char *name, Tcl_DString *bufferPtr)
+    CONST86 char *TclpGetUserHome(const char *name, Tcl_DString *bufferPtr)
 }
 # Removed in Tcl 8.5a2
 #declare 43 {
@@ -317,9 +318,10 @@ declare 76 {
 declare 77 {
     void TclpGetTime(Tcl_Time *time)
 }
-declare 78 {
-    int TclpGetTimeZone(unsigned long time)
-}
+# Removed in 8.6:
+#declare 78 {
+#    int TclpGetTimeZone(unsigned long time)
+#}
 # Replaced by Tcl_FSListVolumes in 8.4:
 #declare 79 {
 #    int TclpListVolumes(Tcl_Interp *interp)
@@ -408,7 +410,7 @@ declare 98 {
 #	    Tcl_Obj *objPtr, int flags)
 #}
 declare 101 {
-    char *TclSetPreInitScript(char *string)
+    CONST86 char *TclSetPreInitScript(const char *string)
 }
 declare 102 {
     void TclSetupEnv(Tcl_Interp *interp)
@@ -575,7 +577,7 @@ declare 144 {
 	    int index)
 }
 declare 145 {
-    struct AuxDataType *TclGetAuxDataType(char *typeName)
+    const struct AuxDataType *TclGetAuxDataType(const char *typeName)
 }
 declare 146 {
     TclHandle TclHandleCreate(void *ptr)
@@ -623,11 +625,13 @@ declare 156 {
 declare 157 {
     Var *TclVarTraceExists(Tcl_Interp *interp, const char *varName)
 }
+# REMOVED (except from stub table) - use public Tcl_SetStartupScript()
 declare 158 {
     void TclSetStartupScriptFileName(const char *filename)
 }
+# REMOVED (except from stub table) - use public Tcl_GetStartupScript()
 declare 159 {
-    CONST84_RETURN char *TclGetStartupScriptFileName(void)
+    const char *TclGetStartupScriptFileName(void)
 }
 #declare 160 {
 #    int TclpMatchFilesTypes(Tcl_Interp *interp, char *separators,
@@ -650,7 +654,7 @@ declare 162 {
 # correct type when calling this procedure.
 
 declare 163 {
-    void *TclGetInstructionTable(void)
+    const void *TclGetInstructionTable(void)
 }
 
 # ALERT: The argument of 'TclExpandCodeArray' is actually a
@@ -673,9 +677,11 @@ declare 166 {
 }
 
 # VFS-aware versions of Tcl*StartupScriptFileName (158 and 159 above)
+# REMOVED (except from stub table) - use public Tcl_SetStartupScript()
 declare 167 {
     void TclSetStartupScriptPath(Tcl_Obj *pathPtr)
 }
+# REMOVED (except from stub table) - use public Tcl_GetStartupScript()
 declare 168 {
     Tcl_Obj *TclGetStartupScriptPath(void)
 }
@@ -724,6 +730,7 @@ declare 177 {
     void TclVarErrMsg(Tcl_Interp *interp, const char *part1, const char *part2,
 	    const char *operation, const char *reason)
 }
+# TIP 338 made these public - now declared in tcl.h too
 declare 178 {
     void Tcl_SetStartupScript(Tcl_Obj *pathPtr, const char *encodingName)
 }
@@ -893,10 +900,12 @@ declare 227 {
     void TclSetNsPath(Namespace *nsPtr, int pathLength,
             Tcl_Namespace *pathAry[])
 }
-declare 228 {
-    int TclObjInterpProcCore(register Tcl_Interp *interp, Tcl_Obj *procNameObj,
-             int skip, ProcErrorProc errorProc)
-}
+#  Used to be needed for TclOO-extension; unneeded now that TclOO is in the
+#  core and NRE-enabled
+#  declare 228 {
+#      int TclObjInterpProcCore(register Tcl_Interp *interp, Tcl_Obj *procNameObj,
+#             int skip, ProcErrorProc *errorProc)
+#  }
 declare 229 {
     int	TclPtrMakeUpvar(Tcl_Interp *interp, Var *otherP1Ptr,
 	    const char *myName, int myFlags, int index)
@@ -935,14 +944,101 @@ declare 236 {
     void TclBackgroundException(Tcl_Interp *interp, int code)
 }
 
+# TIP #285: Script cancellation support.
+declare 237 {
+    int TclResetCancellation(Tcl_Interp *interp, int force)
+}
+
+# NRE functions for "rogue" extensions to exploit NRE; they will need to
+# include NRE.h too.
+declare 238 {
+    int TclNRInterpProc(ClientData clientData, Tcl_Interp *interp,
+	    int objc, Tcl_Obj *const objv[])
+}
+declare 239 {
+    int TclNRInterpProcCore(Tcl_Interp *interp, Tcl_Obj *procNameObj,
+			    int skip, ProcErrorProc *errorProc)
+}
+declare 240 {
+    int TclNRRunCallbacks(Tcl_Interp *interp, int result,
+	      struct NRE_callback *rootPtr)
+}
+declare 241 {
+    int TclNREvalObjEx(Tcl_Interp *interp, Tcl_Obj *objPtr, int flags,
+	    const CmdFrame *invoker, int word)
+}
+declare 242 {
+    int TclNREvalObjv(Tcl_Interp *interp, int objc,
+	      Tcl_Obj *const objv[], int flags, Command *cmdPtr)
+}
+
 # Tcl_Obj leak detection support.
 declare 243 {
     void TclDbDumpActiveObjects(FILE *outFile)
 }
 
+# Functions to make things better for itcl
+declare 244 {
+    Tcl_HashTable *TclGetNamespaceChildTable(Tcl_Namespace *nsPtr)
+}
+declare 245 {
+    Tcl_HashTable *TclGetNamespaceCommandTable(Tcl_Namespace *nsPtr)
+}
+declare 246 {
+    int TclInitRewriteEnsemble(Tcl_Interp *interp, int numRemoved,
+	    int numInserted, Tcl_Obj *const *objv)
+}
+declare 247 {
+    void TclResetRewriteEnsemble(Tcl_Interp *interp, int isRootEnsemble)
+}
+
+declare 248 {
+    int TclCopyChannel(Tcl_Interp *interp, Tcl_Channel inChan,
+	    Tcl_Channel outChan, Tcl_WideInt toRead, Tcl_Obj *cmdPtr)
+}
+
 declare 249 {
     char *TclDoubleDigits(double dv, int ndigits, int flags,
 			  int *decpt, int *signum, char **endPtr)
+}
+# TIP #285: Script cancellation support.
+declare 250 {
+    void TclSetSlaveCancelFlags(Tcl_Interp *interp, int flags, int force)
+}
+
+# Allow extensions for optimization
+declare 251 {
+    int TclRegisterLiteral(void *envPtr,
+	    char *bytes, int length, int flags)
+}
+
+# Exporting of the internal API to variables.
+
+declare 252 {
+    Tcl_Obj *TclPtrGetVar(Tcl_Interp *interp, Tcl_Var varPtr,
+	    Tcl_Var arrayPtr, Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr,
+	    const int flags)
+}
+declare 253 {
+    Tcl_Obj *TclPtrSetVar(Tcl_Interp *interp, Tcl_Var varPtr,
+	    Tcl_Var arrayPtr, Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr,
+	    Tcl_Obj *newValuePtr, const int flags)
+}
+declare 254 {
+    Tcl_Obj *TclPtrIncrObjVar(Tcl_Interp *interp, Tcl_Var varPtr,
+	    Tcl_Var arrayPtr, Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr,
+	    Tcl_Obj *incrPtr, const int flags)
+}
+declare 255 {
+    int	TclPtrObjMakeUpvar(Tcl_Interp *interp, Tcl_Var otherPtr,
+	    Tcl_Obj *myNamePtr, int myFlags)
+}
+declare 256 {
+    int	TclPtrUnsetVar(Tcl_Interp *interp, Tcl_Var varPtr, Tcl_Var arrayPtr,
+	    Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr, const int flags)
+}
+declare 258 {
+    void TclUnusedStubEntry(void)
 }
 
 ##############################################################################
@@ -995,7 +1091,7 @@ declare 9 win {
 }
 # new for 8.4.20+/8.5.12+ Cygwin only
 declare 10 win {
-    Tcl_DirEntry *TclpReaddir(DIR *dir)
+    Tcl_DirEntry *TclpReaddir(TclDIR *dir)
 }
 # Removed in 8.3.1 (for Win32s only)
 #declare 10 win {
@@ -1060,9 +1156,10 @@ declare 21 win {
 declare 22 win {
     TclFile TclpCreateTempFile(const char *contents)
 }
-declare 23 win {
-    char *TclpGetTZName(int isdst)
-}
+# Removed in 8.6:
+#declare 23 win {
+#    char *TclpGetTZName(int isdst)
+#}
 declare 24 win {
     char *TclWinNoBackslash(char *path)
 }
@@ -1084,9 +1181,6 @@ declare 27 win {
 
 declare 28 win {
     void TclWinResetInterfaces(void)
-}
-declare 29 win {
-    int TclWinCPUID(unsigned int index, unsigned int *regs)
 }
 
 ################################
@@ -1135,7 +1229,7 @@ declare 9 unix {
 # Added in 8.4:
 
 declare 10 unix {
-    Tcl_DirEntry *TclpReaddir(DIR *dir)
+    Tcl_DirEntry *TclpReaddir(TclDIR *dir)
 }
 # Slots 11 and 12 are forwarders for functions that were promoted to
 # generic Stubs
@@ -1179,9 +1273,17 @@ declare 18 macosx {
 declare 19 macosx {
     void TclMacOSXNotifierAddRunLoopMode(const void *runLoopMode)
 }
-declare 29 unix {
+
+declare 29 {win unix} {
     int TclWinCPUID(unsigned int index, unsigned int *regs)
 }
+# Added in 8.6; core of TclpOpenTemporaryFile
+declare 30 {win unix} {
+    int TclUnixOpenTemporaryFile(Tcl_Obj *dirObj, Tcl_Obj *basenameObj,
+	    Tcl_Obj *extensionObj, Tcl_Obj *resultingNameObj)
+}
+
+
 
 # Local Variables:
 # mode: tcl

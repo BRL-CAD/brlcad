@@ -14,9 +14,23 @@
 #ifndef _TCLWINPORT
 #define _TCLWINPORT
 
-#ifndef _WIN64
+
+#if !defined(_WIN64) && !defined(__MINGW_USE_VC2005_COMPAT)
 /* See [Bug 3354324]: file mtime sets wrong time */
-#   define _USE_32BIT_TIME_T
+#   define __MINGW_USE_VC2005_COMPAT
+#endif
+
+/*
+ * We must specify the lower version we intend to support.
+ *
+ * WINVER = 0x0500 means Windows 2000 and above
+ */
+
+#ifndef WINVER
+#   define WINVER 0x0501
+#endif
+#ifndef _WIN32_WINNT
+#   define _WIN32_WINNT 0x0501
 #endif
 
 #define WIN32_LEAN_AND_MEAN
@@ -34,15 +48,33 @@ typedef DWORD_PTR * PDWORD_PTR;
  */
 #define INCL_WINSOCK_API_TYPEDEFS   1
 #include <winsock2.h>
+#include <ws2tcpip.h>
+#ifdef HAVE_WSPIAPI_H
+#   include <wspiapi.h>
+#endif
 
 #ifdef CHECK_UNICODE_CALLS
 #   define _UNICODE
-#   define UNICODE
+#   define TCL_UNICODE
 #   define __TCHAR_DEFINED
     typedef float *_TCHAR;
 #   define _TCHAR_DEFINED
     typedef float *TCHAR;
 #endif /* CHECK_UNICODE_CALLS */
+
+/*
+ *  Pull in the typedef of TCHAR for windows.
+ */
+#include <tchar.h>
+#ifndef _TCHAR_DEFINED
+    /* Borland seems to forget to set this. */
+    typedef _TCHAR TCHAR;
+#   define _TCHAR_DEFINED
+#endif
+#if defined(_MSC_VER) && defined(__STDC__)
+    /* VS2005 SP1 misses this. See [Bug #3110161] */
+    typedef _TCHAR TCHAR;
+#endif
 
 /*
  *---------------------------------------------------------------------------
@@ -52,16 +84,17 @@ typedef DWORD_PTR * PDWORD_PTR;
  */
 
 #include <time.h>
+#include <wchar.h>
 #include <io.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <float.h>
 #include <malloc.h>
 #include <process.h>
 #include <signal.h>
-#include <string.h>
+#if HAVE_INTTYPES_H
+#   include <inttypes.h>
+#endif
 #include <limits.h>
 
 #ifndef __GNUC__
@@ -85,108 +118,166 @@ typedef DWORD_PTR * PDWORD_PTR;
 #endif /* __MWERKS__ */
 
 /*
- * Define EINPROGRESS in terms of WSAEINPROGRESS.
- */
-
-#undef	EINPROGRESS
-#define EINPROGRESS	WSAEINPROGRESS
-
-/*
- * Define ENOTSUP to a value that will never occur.
- */
-
-#undef ENOTSUP
-#define ENOTSUP	-1030507
-
-/* Those codes, from Visual Studio 2010, conflict with other values */
-#undef ENODATA
-#undef ENOMSG
-#undef ENOSR
-#undef ENOSTR
-#undef EPROTO
-
-/*
  * The following defines redefine the Windows Socket errors as
  * BSD errors so Tcl_PosixError can do the right thing.
  */
 
-#undef EWOULDBLOCK
-#define EWOULDBLOCK	EAGAIN
-#undef EALREADY
-#define EALREADY	149	/* operation already in progress */
-#undef ENOTSOCK
-#define ENOTSOCK	95	/* Socket operation on non-socket */
-#undef EDESTADDRREQ
-#define EDESTADDRREQ	96	/* Destination address required */
-#undef EMSGSIZE
-#define EMSGSIZE	97	/* Message too long */
-#undef EPROTOTYPE
-#define EPROTOTYPE	98	/* Protocol wrong type for socket */
-#undef ENOPROTOOPT
-#define ENOPROTOOPT	99	/* Protocol not available */
-#undef EPROTONOSUPPORT
-#define EPROTONOSUPPORT 120	/* Protocol not supported */
-#undef ESOCKTNOSUPPORT
-#define ESOCKTNOSUPPORT 121	/* Socket type not supported */
-#undef EOPNOTSUPP
-#define EOPNOTSUPP	122	/* Operation not supported on socket */
-#undef EPFNOSUPPORT
-#define EPFNOSUPPORT	123	/* Protocol family not supported */
-#undef EAFNOSUPPORT
-#define EAFNOSUPPORT	124	/* Address family not supported */
-#undef EADDRINUSE
-#define EADDRINUSE	125	/* Address already in use */
-#undef EADDRNOTAVAIL
-#define EADDRNOTAVAIL 126	/* Can't assign requested address */
-#undef ENETDOWN
-#define ENETDOWN	127	/* Network is down */
-#undef ENETUNREACH
-#define ENETUNREACH	128	/* Network is unreachable */
-#undef ENETRESET
-#define ENETRESET	129	/* Network dropped connection on reset */
-#undef ECONNABORTED
-#define ECONNABORTED	130	/* Software caused connection abort */
-#undef ECONNRESET
-#define ECONNRESET	131	/* Connection reset by peer */
-#undef ENOBUFS
-#define ENOBUFS	132	/* No buffer space available */
-#undef EISCONN
-#define EISCONN	133	/* Socket is already connected */
-#undef ENOTCONN
-#define ENOTCONN	134	/* Socket is not connected */
-#undef ESHUTDOWN
-#define ESHUTDOWN	143	/* Can't send after socket shutdown */
-#undef ETOOMANYREFS
-#define ETOOMANYREFS	144	/* Too many references: can't splice */
-#undef ETIMEDOUT
-#define ETIMEDOUT	145	/* Connection timed out */
-#undef ECONNREFUSED
-#define ECONNREFUSED	146	/* Connection refused */
-#undef ELOOP
-#define ELOOP	90	/* Symbolic link loop */
-#undef EHOSTDOWN
-#define EHOSTDOWN	147	/* Host is down */
-#undef EHOSTUNREACH
-#define EHOSTUNREACH	148	/* No route to host */
-#undef ENOTEMPTY
-#define ENOTEMPTY 	93	/* directory not empty */
-#undef EUSERS
-#define EUSERS	94	/* Too many users (for UFS) */
-#undef EDQUOT
-#define EDQUOT	69	/* Disc quota exceeded */
-#undef ESTALE
-#define ESTALE	151	/* Stale NFS file handle */
-#undef EREMOTE
-#define EREMOTE	66	/* The object is remote */
+#ifndef ENOTEMPTY
+#   define ENOTEMPTY 	41	/* Directory not empty */
+#endif
+#ifndef EREMOTE
+#   define EREMOTE	66	/* The object is remote */
+#endif
+#ifndef EPFNOSUPPORT
+#   define EPFNOSUPPORT	96	/* Protocol family not supported */
+#endif
+#ifndef EADDRINUSE
+#   define EADDRINUSE	100	/* Address already in use */
+#endif
+#ifndef EADDRNOTAVAIL
+#   define EADDRNOTAVAIL 101	/* Can't assign requested address */
+#endif
+#ifndef EAFNOSUPPORT
+#   define EAFNOSUPPORT	102	/* Address family not supported */
+#endif
+#ifndef EALREADY
+#   define EALREADY	103	/* Operation already in progress */
+#endif
+#ifndef EBADMSG
+#   define EBADMSG	104	/* Not a data message */
+#endif
+#ifndef ECANCELED
+#   define ECANCELED	105	/* Canceled */
+#endif
+#ifndef ECONNABORTED
+#   define ECONNABORTED	106	/* Software caused connection abort */
+#endif
+#ifndef ECONNREFUSED
+#   define ECONNREFUSED	107	/* Connection refused */
+#endif
+#ifndef ECONNRESET
+#   define ECONNRESET	108	/* Connection reset by peer */
+#endif
+#ifndef EDESTADDRREQ
+#   define EDESTADDRREQ	109	/* Destination address required */
+#endif
+#ifndef EHOSTUNREACH
+#   define EHOSTUNREACH	110	/* No route to host */
+#endif
+#ifndef EIDRM
+#   define EIDRM	111	/* Identifier removed */
+#endif
+#ifndef EINPROGRESS
+#   define EINPROGRESS	112	/* Operation now in progress */
+#endif
+#ifndef EISCONN
+#   define EISCONN	113	/* Socket is already connected */
+#endif
+#ifndef ELOOP
+#   define ELOOP	114	/* Symbolic link loop */
+#endif
+#ifndef EMSGSIZE
+#   define EMSGSIZE	115	/* Message too long */
+#endif
+#ifndef ENETDOWN
+#   define ENETDOWN	116	/* Network is down */
+#endif
+#ifndef ENETRESET
+#   define ENETRESET	117	/* Network dropped connection on reset */
+#endif
+#ifndef ENETUNREACH
+#   define ENETUNREACH	118	/* Network is unreachable */
+#endif
+#ifndef ENOBUFS
+#   define ENOBUFS	119	/* No buffer space available */
+#endif
+#ifndef ENODATA
+#   define ENODATA	120	/* No data available */
+#endif
+#ifndef ENOLINK
+#   define ENOLINK	121	/* Link has be severed */
+#endif
+#ifndef ENOMSG
+#   define ENOMSG	122	/* No message of desired type */
+#endif
+#ifndef ENOPROTOOPT
+#   define ENOPROTOOPT	123	/* Protocol not available */
+#endif
+#ifndef ENOSR
+#   define ENOSR	124	/* Out of stream resources */
+#endif
+#ifndef ENOSTR
+#   define ENOSTR	125	/* Not a stream device */
+#endif
+#ifndef ENOTCONN
+#   define ENOTCONN	126	/* Socket is not connected */
+#endif
+#ifndef ENOTRECOVERABLE
+#   define ENOTRECOVERABLE	127	/* Not recoverable */
+#endif
+#ifndef ENOTSOCK
+#   define ENOTSOCK	128	/* Socket operation on non-socket */
+#endif
+#ifndef ENOTSUP
+#   define ENOTSUP	129	/* Operation not supported */
+#endif
+#ifndef EOPNOTSUPP
+#   define EOPNOTSUPP	130	/* Operation not supported on socket */
+#endif
+#ifndef EOTHER
+#   define EOTHER	131	/* Other error */
+#endif
+#ifndef EOVERFLOW
+#   define EOVERFLOW	132	/* File too big */
+#endif
+#ifndef EOWNERDEAD
+#   define EOWNERDEAD	133	/* Owner dead */
+#endif
+#ifndef EPROTO
+#   define EPROTO	134	/* Protocol error */
+#endif
+#ifndef EPROTONOSUPPORT
+#   define EPROTONOSUPPORT 135	/* Protocol not supported */
+#endif
+#ifndef EPROTOTYPE
+#   define EPROTOTYPE	136	/* Protocol wrong type for socket */
+#endif
+#ifndef ETIME
+#   define ETIME	137	/* Timer expired */
+#endif
+#ifndef ETIMEDOUT
+#   define ETIMEDOUT	138	/* Connection timed out */
+#endif
+#ifndef ETXTBSY
+#   define ETXTBSY	139	/* Text file or pseudo-device busy */
+#endif
+#ifndef EWOULDBLOCK
+#   define EWOULDBLOCK	140	/* Operation would block */
+#endif
 
-/*
- * It is very hard to determine how Windows reacts to attempting to
- * set a file pointer outside the input datatype's representable
- * region.  So we fake the error code ourselves.
- */
 
-#undef EOVERFLOW
-#define EOVERFLOW	EFBIG	/* The object couldn't fit in the datatype */
+/* Visual Studio doesn't have these, so just choose some high numbers */
+#ifndef ESOCKTNOSUPPORT
+#   define ESOCKTNOSUPPORT 240	/* Socket type not supported */
+#endif
+#ifndef ESHUTDOWN
+#   define ESHUTDOWN	241	/* Can't send after socket shutdown */
+#endif
+#ifndef ETOOMANYREFS
+#   define ETOOMANYREFS	242	/* Too many references: can't splice */
+#endif
+#ifndef EHOSTDOWN
+#   define EHOSTDOWN	243	/* Host is down */
+#endif
+#ifndef EUSERS
+#   define EUSERS	244	/* Too many users (for UFS) */
+#endif
+#ifndef EDQUOT
+#   define EDQUOT	245	/* Disc quota exceeded */
+#endif
+#ifndef ESTALE
+#   define ESTALE	246	/* Stale NFS file handle */
+#endif
 
 /*
  * Signals not known to the standard ANSI signal.h.  These are used
@@ -271,6 +362,20 @@ typedef DWORD_PTR * PDWORD_PTR;
 
 #ifndef S_IFLNK
 #   define S_IFLNK        0120000  /* Symbolic Link */
+#endif
+
+/*
+ * Windows compilers do not define S_IFBLK. However, Tcl uses it in
+ * GetTypeFromMode to identify blockSpecial devices based on the
+ * value in the statsbuf st_mode field. We have no other way to pass this
+ * from NativeStat on Windows so are forced to define it here.
+ * The definition here is essentially what is seen on Linux and MingW.
+ * XXX - the root problem is Tcl using Unix definitions instead of
+ * abstracting the structure into a platform independent one. Sigh - perhaps
+ * Tcl 9
+ */
+#ifndef S_IFBLK
+#   define S_IFBLK (S_IFDIR | S_IFCHR)
 #endif
 
 #ifndef S_ISREG
@@ -379,18 +484,13 @@ typedef DWORD_PTR * PDWORD_PTR;
  * including the *printf family and others. Tell it to shut up.
  * (_MSC_VER is 1200 for VC6, 1300 or 1310 for vc7.net, 1400 for 8.0)
  */
-#if defined(_MSC_VER) && (_MSC_VER >= 1400)
+#if defined(_MSC_VER)
 #   pragma warning(disable:4244)
-#   pragma warning(disable:4267)
-#   pragma warning(disable:4996)
+#   if _MSC_VER >= 1400
+#	pragma warning(disable:4267)
+#	pragma warning(disable:4996)
+#   endif
 #endif
-
-
-/*
- * There is no platform-specific panic routine for Windows in the Tcl internals.
- */
-
-#define TclpPanic ((Tcl_PanicProc *) NULL)
 
 /*
  *---------------------------------------------------------------------------
@@ -473,5 +573,8 @@ typedef DWORD_PTR * PDWORD_PTR;
 #ifndef LABEL_SECURITY_INFORMATION
 #   define LABEL_SECURITY_INFORMATION (0x00000010L)
 #endif
+
+#define Tcl_DirEntry void
+#define TclDIR void
 
 #endif /* _TCLWINPORT */

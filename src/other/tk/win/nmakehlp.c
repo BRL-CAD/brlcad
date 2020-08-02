@@ -39,7 +39,6 @@
 #endif
 
 
-
 /* protos */
 
 static int CheckForCompilerFeature(const char *option);
@@ -47,6 +46,7 @@ static int CheckForLinkerFeature(const char **options, int count);
 static int IsIn(const char *string, const char *substring);
 static int SubstituteFile(const char *substs, const char *filename);
 static int QualifyPath(const char *path);
+static int LocateDependency(const char *keyfile);
 static const char *GetVersionFromFile(const char *filename, const char *match, int numdots);
 static DWORD WINAPI ReadFromPipe(LPVOID args);
 
@@ -172,6 +172,18 @@ main(
 		return 2;
 	    }
 	    return QualifyPath(argv[2]);
+
+	case 'L':
+	    if (argc != 3) {
+		chars = snprintf(msg, sizeof(msg) - 1,
+		    "usage: %s -L keypath\n"
+		    "Emit the fully qualified path of directory containing keypath\n"
+		    "exitcodes: 0 == success, 1 == not found, 2 == error\n", argv[0]);
+		WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, chars,
+		    &dwWritten, NULL);
+		return 2;
+	    }
+	    return LocateDependency(argv[2]);
 	}
     }
     chars = snprintf(msg, sizeof(msg) - 1,
@@ -699,6 +711,97 @@ QualifyPath(
     printf("%s\n", szCwd);
     return 0;
 }
+
+/*
+ * Implements LocateDependency for a single directory. See that command
+ * for an explanation.
+ * Returns 0 if found after printing the directory.
+ * Returns 1 if not found but no errors.
+ * Returns 2 on any kind of error
+ * Basically, these are used as exit codes for the process.
+ */
+static int LocateDependencyHelper(const char *dir, const char *keypath)
+{
+    HANDLE hSearch;
+    char path[MAX_PATH+1];
+    int dirlen, keylen, ret;
+    WIN32_FIND_DATA finfo;
+
+    if (dir == NULL || keypath == NULL)
+	return 2; /* Have no real error reporting mechanism into nmake */
+    dirlen = strlen(dir);
+    if ((dirlen + 3) > sizeof(path))
+	return 2;
+    strncpy(path, dir, dirlen);
+    strncpy(path+dirlen, "\\*", 3);	/* Including terminating \0 */
+    keylen = strlen(keypath);
+
+#if 0 /* This function is not available in Visual C++ 6 */
+    /*
+     * Use numerics 0 -> FindExInfoStandard,
+     * 1 -> FindExSearchLimitToDirectories,
+     * as these are not defined in Visual C++ 6
+     */
+    hSearch = FindFirstFileEx(path, 0, &finfo, 1, NULL, 0);
+#else
+    hSearch = FindFirstFile(path, &finfo);
+#endif
+    if (hSearch == INVALID_HANDLE_VALUE)
+	return 1; /* Not found */
+
+    /* Loop through all subdirs checking if the keypath is under there */
+    ret = 1; /* Assume not found */
+    do {
+	int sublen;
+	/*
+	 * We need to check it is a directory despite the
+	 * FindExSearchLimitToDirectories in the above call. See SDK docs
+	 */
+	if ((finfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+	    continue;
+	sublen = strlen(finfo.cFileName);
+	if ((dirlen+1+sublen+1+keylen+1) > sizeof(path))
+	    continue;		/* Path does not fit, assume not matched */
+	strncpy(path+dirlen+1, finfo.cFileName, sublen);
+	path[dirlen+1+sublen] = '\\';
+	strncpy(path+dirlen+1+sublen+1, keypath, keylen+1);
+	if (PathFileExists(path)) {
+	    /* Found a match, print to stdout */
+	    path[dirlen+1+sublen] = '\0';
+	    QualifyPath(path);
+	    ret = 0;
+	    break;
+	}
+    } while (FindNextFile(hSearch, &finfo));
+    FindClose(hSearch);
+    return ret;
+}
+
+/*
+ * LocateDependency --
+ *
+ *	Locates a dependency for a package.
+ *        keypath - a relative path within the package directory
+ *          that is used to confirm it is the correct directory.
+ *	The search path for the package directory is currently only
+ *      the parent and grandparent of the current working directory.
+ *      If found, the command prints
+ *         name_DIRPATH=<full path of located directory>
+ *      and returns 0. If not found, does not print anything and returns 1.
+ */
+static int LocateDependency(const char *keypath)
+{
+    int i, ret;
+    static char *paths[] = {"..", "..\\..", "..\\..\\.."};
+
+    for (i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i) {
+	ret = LocateDependencyHelper(paths[i], keypath);
+	if (ret == 0)
+	    return ret;
+    }
+    return ret;
+}
+
 
 /*
  * Local variables:

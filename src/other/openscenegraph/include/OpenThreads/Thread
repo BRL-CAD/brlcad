@@ -23,24 +23,23 @@
 #include <sys/types.h>
 
 #include <OpenThreads/Mutex>
+#include <OpenThreads/Affinity>
 
 namespace OpenThreads {
 
 /**
  *  Get the number of processors.
  *
- *  Note, systems where no support exists for querrying the number of processors, 1 is returned.
+ *  Note, systems where no support exists for querying the number of processors, 1 is returned.
  *
  */
 extern OPENTHREAD_EXPORT_DIRECTIVE int GetNumberOfProcessors();
 
 /**
  *  Set the processor affinity of current thread.
- *
- *  Note, systems where no support exists no affinity will be set, and -1 will be returned.
- *
  */
-extern OPENTHREAD_EXPORT_DIRECTIVE int SetProcessorAffinityOfCurrentThread(unsigned int cpunum);
+extern OPENTHREAD_EXPORT_DIRECTIVE int SetProcessorAffinityOfCurrentThread(const Affinity& affinity);
+
 
 /**
  *  @class Thread
@@ -77,12 +76,12 @@ public:
      */
     enum ThreadPriority {
 
-	THREAD_PRIORITY_MAX,      /**< The maximum possible priority  */
-	THREAD_PRIORITY_HIGH,     /**< A high (but not max) setting   */
-	THREAD_PRIORITY_NOMINAL,  /**< An average priority            */
-	THREAD_PRIORITY_LOW,      /**< A low (but not min) setting    */
-	THREAD_PRIORITY_MIN,      /**< The miniumum possible priority */
-	THREAD_PRIORITY_DEFAULT   /**< Priority scheduling default    */
+        THREAD_PRIORITY_MAX,      /**< The maximum possible priority  */
+        THREAD_PRIORITY_HIGH,     /**< A high (but not max) setting   */
+        THREAD_PRIORITY_NOMINAL,  /**< An average priority            */
+        THREAD_PRIORITY_LOW,      /**< A low (but not min) setting    */
+        THREAD_PRIORITY_MIN,      /**< The miniumum possible priority */
+        THREAD_PRIORITY_DEFAULT   /**< Priority scheduling default    */
 
     };
 
@@ -91,10 +90,10 @@ public:
      */
     enum ThreadPolicy {
 
-	THREAD_SCHEDULE_FIFO,        /**< First in, First out scheduling         */
-	THREAD_SCHEDULE_ROUND_ROBIN, /**< Round-robin scheduling (LINUX_DEFAULT) */
-	THREAD_SCHEDULE_TIME_SHARE,  /**< Time-share scheduling (IRIX DEFAULT)   */
-	THREAD_SCHEDULE_DEFAULT      /**< Default scheduling                     */
+        THREAD_SCHEDULE_FIFO,        /**< First in, First out scheduling         */
+        THREAD_SCHEDULE_ROUND_ROBIN, /**< Round-robin scheduling (LINUX_DEFAULT) */
+        THREAD_SCHEDULE_TIME_SHARE,  /**< Time-share scheduling (IRIX DEFAULT)   */
+        THREAD_SCHEDULE_DEFAULT      /**< Default scheduling                     */
 
     };
 
@@ -110,9 +109,14 @@ public:
 
 
     /**
-     *  Return a pointer to the current running thread
+     *  Return a pointer to the current running thread, returns NULL for a non OpenThreads thread.
      */
     static Thread *CurrentThread();
+
+    /**
+     *  Return the id of the current thread
+     */
+    static size_t CurrentThreadId();
 
 
     /**
@@ -148,7 +152,7 @@ public:
      *
      *  @return a unique thread identifier
      */
-    int getThreadId();
+    size_t getThreadId();
 
     /**
      *  Get the thread's process id.  This is the pthread_t or pid_t value
@@ -191,19 +195,19 @@ public:
     /**
      *  Set the thread's schedule priority.  This is a complex method.
      *  Beware of thread priorities when using a many-to-many kernel
-     *  entity implemenation (such as IRIX pthreads).  If one is not carefull
+     *  entity implementation (such as IRIX pthreads).  If one is not careful
      *  to manage the thread priorities, a priority inversion deadlock can
      *  easily occur (Although the OpenThreads::Mutex & OpenThreads::Barrier
-     *  constructs have been designed with this senario in mind).  Unless
-     *  you have explicit need to set the schedule pirorites for a given
+     *  constructs have been designed with this scenario in mind).  Unless
+     *  you have explicit need to set the schedule priorities for a given
      *  task, it is best to leave them alone.
      *
      *  @note some implementations (notably LinuxThreads and IRIX Sprocs)
-     *  only alow you to decrease thread priorities dynamically.  Thus,
+     *  only allow you to decrease thread priorities dynamically.  Thus,
      *  a lower priority thread will not allow it's priority to be raised
      *  on the fly.
      *
-     *  @note seting the environment variable OUTPUT_THREADLIB_SCHEDULING_INFO
+     *  @note setting the environment variable OUTPUT_THREADLIB_SCHEDULING_INFO
      *  will output scheduling information for each thread to stdout.
      *
      *  @return 0 if normal, -1 if errno set, errno code otherwise.
@@ -213,7 +217,7 @@ public:
     /**
      *  Get the thread's schedule priority (if able)
      *
-     *  @note seting the environment variable OUTPUT_THREADLIB_SCHEDULING_INFO
+     *  @note setting the environment variable OUTPUT_THREADLIB_SCHEDULING_INFO
      *  will output scheduling information for each thread to stdout.
      *
      *  @return 0 if normal, -1 if errno set, errno code otherwise.
@@ -229,7 +233,7 @@ public:
      *  the danger of deadlocking the machine when used as super-user.
      *  In such cases, the command is a no-op.
      *
-     *  @note seting the environment variable OUTPUT_THREADLIB_SCHEDULING_INFO
+     *  @note setting the environment variable OUTPUT_THREADLIB_SCHEDULING_INFO
      *  will output scheduling information for each thread to stdout.
      *
      *  @return 0 if normal, -1 if errno set, errno code otherwise.
@@ -239,7 +243,7 @@ public:
     /**
      *  Get the thread's policy (if able)
      *
-     *  @note seting the environment variable OUTPUT_THREADLIB_SCHEDULING_INFO
+     *  @note setting the environment variable OUTPUT_THREADLIB_SCHEDULING_INFO
      *  will output scheduling information for each thread to stdout.
      *
      *  @return policy if normal, -1 if errno set, errno code otherwise.
@@ -287,14 +291,14 @@ public:
     int join();
 
     /**
-     *  Disable thread cancelation altogether. Thread::cancel() has no effect.
+     *  Disable thread cancellation altogether. Thread::cancel() has no effect.
      *
      *  @return 0 if normal, -1 if errno set, errno code otherwise.
      */
     int setCancelModeDisable();
 
     /**
-     *  Mark the thread to cancel aysncronously on Thread::cancel().
+     *  Mark the thread to cancel asynchronously on Thread::cancel().
      *  (May not be available with process-level implementations).
      *
      *  @return 0 if normal, -1 if errno set, errno code otherwise.
@@ -324,7 +328,7 @@ public:
 
     /**
      *  Thread's cancel cleanup routine, called upon cancel(), after the
-     *  cancelation has taken place, but before the thread exits completely.
+     *  cancellation has taken place, but before the thread exits completely.
      *  This method should be used to repair parts of the thread's data
      *  that may have been damaged by a pre-mature cancel.  No-op by default.
      */
@@ -332,21 +336,20 @@ public:
 
     void* getImplementation(){ return _prvData;	};
 
-    /** Thread's processor affinity method.  This binds a thread to a
-      * processor whenever possible.   This call must be made before
+    /** Set the Thread's processor affinity to all, a single CPU or multiple CPU's
+      * This call must be made before
       * start() or startThread() and has no effect after the thread
-      * has been running.  In the pthreads implementation, this is only
-      * implemented on sgi, through a pthread extension.  On other pthread
-      * platforms this is ignored.  Returns 0 on success, implementation's
+      * has been running. Returns 0 on success, implementation's
       * error on failure, or -1 if ignored.
       */
-    int setProcessorAffinity( unsigned int cpunum );
+    int setProcessorAffinity( const Affinity& affinity);
 
-    /** microSleep method, equivilant to the posix usleep(microsec).
+
+    /** microSleep method, equivalent to the posix usleep(microsec).
       *  This is not strictly thread API but is used
       * so often with threads. It's basically UNIX usleep. Parameter is
       * number of microseconds we current thread to sleep. Returns 0 on
-      * succes, non-zero on failure (UNIX errno or GetLastError() will give
+      * success, non-zero on failure (UNIX errno or GetLastError() will give
       * detailed description.
       */
     static int microSleep( unsigned int microsec);

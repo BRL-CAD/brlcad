@@ -7,7 +7,6 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
-package require Ttk
 
 set w .combo
 catch {destroy $w}

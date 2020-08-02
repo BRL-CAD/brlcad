@@ -54,7 +54,7 @@ static RenderBinPrototypeList* renderBinPrototypeList()
     return s_renderBinPrototypeList.get();
 }
 
-// Use a proxy to force the initialization of the the RenderBinPrototypeListSingleton during static initialization
+// Use a proxy to force the initialization of the RenderBinPrototypeListSingleton during static initialization
 OSG_INIT_SINGLETON_PROXY(RenderBinSingletonProxy, renderBinPrototypeList())
 
 
@@ -334,7 +334,7 @@ struct TraversalOrderFunctor
 {
     bool operator() (const RenderLeaf* lhs,const RenderLeaf* rhs) const
     {
-        return (lhs->_traversalNumber<rhs->_traversalNumber);
+        return (lhs->_traversalOrderNumber<rhs->_traversalOrderNumber);
     }
 };
 
@@ -421,11 +421,15 @@ RenderBin* RenderBin::find_or_insert(int binNum,const std::string& binName)
 
 void RenderBin::draw(osg::RenderInfo& renderInfo,RenderLeaf*& previous)
 {
+    renderInfo.pushRenderBin(this);
+
     if (_drawCallback.valid())
     {
         _drawCallback->drawImplementation(this,renderInfo,previous);
     }
     else drawImplementation(renderInfo,previous);
+
+    renderInfo.popRenderBin();
 }
 
 void RenderBin::drawImplementation(osg::RenderInfo& renderInfo,RenderLeaf*& previous)
@@ -551,11 +555,9 @@ bool RenderBin::getStats(Statistics& stats) const
             stats.addMatrix(); // number of matrices
         }
 
-        if (dw)
-        {
-              // then tot up the primitive types and no vertices.
-              dw->accept(stats); // use sub-class to find the stats for each drawable
-        }
+        // then tot up the primitive types and no vertices.
+        dw->accept(stats); // use sub-class to find the stats for each drawable
+
         statsCollected = true;
     }
     stats.addStateGraphs(_stateGraphList.size());
@@ -569,7 +571,7 @@ bool RenderBin::getStats(Statistics& stats) const
             ++dw_itr)
         {
             const RenderLeaf* rl = dw_itr->get();
-            const Drawable* dw= rl->getDrawable();
+            const Drawable* dw = rl->getDrawable();
             stats.addDrawable(); // number of geosets
 
             const Geometry* geom = dw->asGeometry();
@@ -579,11 +581,9 @@ bool RenderBin::getStats(Statistics& stats) const
             }
 
             if (rl->_modelview.get()) stats.addMatrix(); // number of matrices
-            if (dw)
-            {
-                // then tot up the primitive types and no vertices.
-                dw->accept(stats); // use sub-class to find the stats for each drawable
-            }
+
+            // then tot up the primitive types and no vertices.
+            dw->accept(stats); // use sub-class to find the stats for each drawable
         }
         statsCollected = true;
     }

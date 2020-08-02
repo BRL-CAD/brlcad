@@ -1,45 +1,78 @@
-if(DYNAMIC_OPENSCENEGRAPH)
-  add_definitions(-DOSGWIDGET_LIBRARY)
-else()
-  add_definitions(-DOSG_LIBRARY_STATIC)
-endif()
+IF(DYNAMIC_OPENSCENEGRAPH)
+    ADD_DEFINITIONS(-DOSGWIDGET_LIBRARY)
+ELSE()
+    ADD_DEFINITIONS(-DOSG_LIBRARY_STATIC)
+ENDIF()
+
+################################################################################
+## Quieten warnings that a due to optional code paths
+
+IF(CMAKE_COMPILER_IS_GNUCXX)
+    # Remove -Wextra flag as it barfs on ffmoeg headers
+   STRING(REGEX REPLACE "-Wextra" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+ENDIF()
+
+SET(LIB_NAME osgWidget)
+SET(HEADER_PATH ${OpenSceneGraph_SOURCE_DIR}/include/${LIB_NAME})
+SET(TARGET_H
+    ${HEADER_PATH}/Export
+    ${HEADER_PATH}/Box
+    ${HEADER_PATH}/Browser
+    ${HEADER_PATH}/PdfReader
+    ${HEADER_PATH}/VncClient
+    ${HEADER_PATH}/Canvas
+    ${HEADER_PATH}/EventInterface
+    ${HEADER_PATH}/Frame
+    ${HEADER_PATH}/Input
+    ${HEADER_PATH}/Label
+    ${HEADER_PATH}/Lua
+    ${HEADER_PATH}/Python
+    ${HEADER_PATH}/ScriptEngine
+    ${HEADER_PATH}/StyleInterface
+    ${HEADER_PATH}/StyleManager
+    ${HEADER_PATH}/Table
+    ${HEADER_PATH}/Types
+    ${HEADER_PATH}/UIObjectParent
+    ${HEADER_PATH}/Util
+    ${HEADER_PATH}/Version
+    ${HEADER_PATH}/ViewerEventHandlers
+    ${HEADER_PATH}/Widget
+    ${HEADER_PATH}/Window
+    ${HEADER_PATH}/WindowManager
+)
 
 # FIXME: For OS X, need flag for Framework or dylib
-SET(OSGWIDGET_SRCS
-  Box.cpp
-  Browser.cpp
-  PdfReader.cpp
-  VncClient.cpp
-  Canvas.cpp
-  CMakeLists.txt
-  Frame.cpp
-  Input.cpp
-  Label.cpp
-  Lua.cpp
-  Python.cpp
-  StyleManager.cpp
-  Table.cpp
-  Util.cpp
-  Version.cpp
-  ViewerEventHandlers.cpp
-  Widget.cpp
-  Window.cpp
-  WindowManager.cpp
-  ${OPENSCENEGRAPH_VERSIONINFO_RC}
-  )
+SET(TARGET_SRC
+    Box.cpp
+    Browser.cpp
+    PdfReader.cpp
+    VncClient.cpp
+    Canvas.cpp
+    Frame.cpp
+    Input.cpp
+    Label.cpp
+    Lua.cpp
+    Python.cpp
+    StyleManager.cpp
+    Table.cpp
+    Util.cpp
+    Version.cpp
+    ViewerEventHandlers.cpp
+    Widget.cpp
+    Window.cpp
+    WindowManager.cpp
+    ${OPENSCENEGRAPH_VERSIONINFO_RC}
+)
 
-add_library(osgWidget ${OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC} ${OSGWIDGET_SRCS})
-target_link_libraries(osgWidget osgText osgViewer osgDB osg OpenThreads osgGA
-  ${CMAKE_THREAD_LIBS_INIT} ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY})
-install(TARGETS osgWidget
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+SET(TARGET_LIBRARIES
+    osgText
+    osgViewer
+    osgDB
+    osg
+    OpenThreads
+    osgGA
+)
+
+SETUP_LIBRARY(${LIB_NAME})
 

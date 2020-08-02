@@ -51,6 +51,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/mime.h"
@@ -153,6 +154,9 @@ int
 main(int argc, char **argv)
 {
     icv_image_t *img;
+
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv)) {
         bu_log("%s", usage);
         return 1;

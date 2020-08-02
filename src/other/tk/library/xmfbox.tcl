@@ -27,7 +27,7 @@ namespace eval ::tk::dialog::file {}
 #	When -multiple is set to 0, this returns the absolute pathname
 #	of the selected file. (NOTE: This is not the same as a single
 #	element list.)
-# 
+#
 #	When -multiple is set to > 0, this returns a Tcl list of absolute
 #       pathnames. The argument for -multiple is ignored, but for consistency
 #       with Windows it defines the maximum amount of memory to allocate for
@@ -156,16 +156,16 @@ proc ::tk::MotifFDialog_FileTypes {w} {
     # The filetypes radiobuttons
     # set data(fileType) $data(-defaulttype)
     # Default type to first entry
-    set initialTypeName [lindex $data(-filetypes) 0 0]
+    set initialTypeName [lindex $data(origfiletypes) 0 0]
     if {$data(-typevariable) ne ""} {
 	upvar #0 $data(-typevariable) typeVariable
-	if {[info exist typeVariable]} {
+	if {[info exists typeVariable]} {
 	    set initialTypeName $typeVariable
 	}
     }
     set ix 0
     set data(fileType) 0
-    foreach fltr $data(-filetypes) {
+    foreach fltr $data(origfiletypes) {
 	set fname [lindex $fltr 0]
 	if {[string first $initialTypeName $fname] == 0} {
 	    set data(fileType) $ix
@@ -185,7 +185,7 @@ proc ::tk::MotifFDialog_FileTypes {w} {
     set cnt 0
     if {$data(-filetypes) ne {}} {
 	foreach type $data(-filetypes) {
-	    set title  [lindex [lindex $type 0] 0]
+	    set title  [lindex $type 0]
 	    set filter [lindex $type 1]
 	    radiobutton $f.b$cnt \
 		-text $title \
@@ -299,13 +299,15 @@ proc ::tk::MotifFDialog_Config {dataName type argList} {
     #    file dialog, but we check for validity of the value to make sure
     #    the application code also runs fine with the TK file dialog.
     #
+    set data(origfiletypes) $data(-filetypes)
     set data(-filetypes) [::tk::FDGetFileTypes $data(-filetypes)]
 
     if {![info exists data(filter)]} {
 	set data(filter) *
     }
     if {![winfo exists $data(-parent)]} {
-	error "bad window path name \"$data(-parent)\""
+	return -code error -errorcode [list TK LOOKUP WINDOW $data(-parent)] \
+	    "bad window path name \"$data(-parent)\""
     }
 }
 
@@ -504,7 +506,7 @@ proc ::tk::MotifFDialog_InterpFilter {w} {
     if {[file pathtype $text] eq "relative"} {
 	set relative 1
     } elseif {$badTilde} {
-	set relative 1	
+	set relative 1
     }
 
     if {$relative} {
@@ -551,7 +553,7 @@ proc ::tk::MotifFDialog_Update {w} {
     $data(sEnt) delete 0 end
     $data(sEnt) insert 0 [::tk::dialog::file::JoinFile $data(selectPath) \
 	    $data(selectFile)]
- 
+
     MotifFDialog_LoadFiles $w
 }
 
@@ -625,7 +627,7 @@ proc ::tk::MotifFDialog_LoadFiles {w} {
 # 	w		The pathname of the dialog box.
 #
 # Results:
-#	None.	
+#	None.
 
 proc ::tk::MotifFDialog_BrowseDList {w} {
     upvar ::tk::dialog::file::[winfo name $w] data
@@ -671,7 +673,7 @@ proc ::tk::MotifFDialog_BrowseDList {w} {
 # 	w		The pathname of the dialog box.
 #
 # Results:
-#	None.	
+#	None.
 
 proc ::tk::MotifFDialog_ActivateDList {w} {
     upvar ::tk::dialog::file::[winfo name $w] data
@@ -719,7 +721,7 @@ proc ::tk::MotifFDialog_ActivateDList {w} {
 # 	w		The pathname of the dialog box.
 #
 # Results:
-#	None.	
+#	None.
 
 proc ::tk::MotifFDialog_BrowseFList {w} {
     upvar ::tk::dialog::file::[winfo name $w] data
@@ -739,9 +741,9 @@ proc ::tk::MotifFDialog_BrowseFList {w} {
     $data(fEnt) insert 0 [::tk::dialog::file::JoinFile $data(selectPath) \
 	    $data(filter)]
     $data(fEnt) xview end
- 
-    # if it's a multiple selection box, just put in the filenames 
-    # otherwise put in the full path as usual 
+
+    # if it's a multiple selection box, just put in the filenames
+    # otherwise put in the full path as usual
     $data(sEnt) delete 0 end
     if {$data(-multiple) != 0} {
 	$data(sEnt) insert 0 $data(selectFile)
@@ -761,7 +763,7 @@ proc ::tk::MotifFDialog_BrowseFList {w} {
 # 	w		The pathname of the dialog box.
 #
 # Results:
-#	None.	
+#	None.
 
 proc ::tk::MotifFDialog_ActivateFList {w} {
     upvar ::tk::dialog::file::[winfo name $w] data
@@ -787,7 +789,7 @@ proc ::tk::MotifFDialog_ActivateFList {w} {
 # 	w		The pathname of the dialog box.
 #
 # Results:
-#	None.	
+#	None.
 
 proc ::tk::MotifFDialog_ActivateFEnt {w} {
     upvar ::tk::dialog::file::[winfo name $w] data
@@ -802,7 +804,7 @@ proc ::tk::MotifFDialog_ActivateFEnt {w} {
 # ::tk::MotifFDialog_ActivateSEnt --
 #
 #	This procedure is called when the user presses Return inside
-#	the "selection" entry. It sets the ::tk::Priv(selectFilePath) 
+#	the "selection" entry. It sets the ::tk::Priv(selectFilePath)
 #	variable so that the vwait loop in tk::MotifFDialog will be
 #	terminated.
 #
@@ -810,7 +812,7 @@ proc ::tk::MotifFDialog_ActivateFEnt {w} {
 # 	w		The pathname of the dialog box.
 #
 # Results:
-#	None.	
+#	None.
 
 proc ::tk::MotifFDialog_ActivateSEnt {w} {
     variable ::tk::Priv
@@ -869,7 +871,7 @@ proc ::tk::MotifFDialog_ActivateSEnt {w} {
     if {[info exists data(-typevariable)] && $data(-typevariable) ne ""
 	    && [info exists data(-filetypes)] && $data(-filetypes) ne ""} {
 	upvar #0 $data(-typevariable) typeVariable
-	set typeVariable [lindex $data(-filetypes) $data(fileType) 0]
+	set typeVariable [lindex $data(origfiletypes) $data(fileType) 0]
     }
 
     if {$data(-multiple) != 0} {
@@ -929,7 +931,7 @@ proc ::tk::ListBoxKeyAccel_Unset {w} {
 #	key		The key which the user just pressed.
 #
 # Results:
-#	None.	
+#	None.
 
 proc ::tk::ListBoxKeyAccel_Key {w key} {
     variable ::tk::Priv

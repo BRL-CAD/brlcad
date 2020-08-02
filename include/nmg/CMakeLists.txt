@@ -2,6 +2,7 @@ set(nmg_headers
   debug.h
   )
 BRLCAD_MANAGE_FILES(nmg_headers ${INCLUDE_DIR}/brlcad/nmg)
+
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

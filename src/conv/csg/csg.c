@@ -41,6 +41,8 @@ main(int argc, char *argv[])
     token_t *tokenData;
     app_data_t appData;
 
+    bu_setprogname(argv[0]);
+
     if (argc != 3) {
 	fprintf(stderr, "Usage: %s input output", argv[0]);
 	exit(1);

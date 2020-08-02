@@ -5747,6 +5747,8 @@ proc title_node_handler {node} {
 		-helpstr "Toggle display of the grid."
 	    checkbutton sgrid -label "Snap Grid" \
 		-helpstr "Toggle grid snapping."
+	    checkbutton slines -label "Snap to Lines" \
+		-helpstr "Toggle line snapping."
 	    checkbutton adc -label "Angle/Distance Cursor" \
 		-helpstr "Toggle display of the angle distance cursor."
 	}
@@ -5882,6 +5884,12 @@ proc title_node_handler {node} {
 	-onvalue 1 \
 	-variable [::itcl::scope mSnapGrid] \
 	-command [::itcl::code $this snapGrid] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.slines \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mSnapLines] \
+	-command [::itcl::code $this snapLines] \
 	-state disabled
     $itk_component(menubar) menuconfigure .modes.adc \
 	-offvalue 0 \
@@ -6190,6 +6198,13 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this snapGrid] \
 	-state disabled
     $itk_component(${_prefix}modesmenu) add checkbutton \
+	-label "Snap to Lines" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mSnapLines] \
+	-command [::itcl::code $this snapLines] \
+	-state disabled
+    $itk_component(${_prefix}modesmenu) add checkbutton \
 	-label "Angle/Distance Cursor" \
 	-offvalue 0 \
 	-onvalue 1 \
@@ -6230,6 +6245,7 @@ proc title_node_handler {node} {
 		$itk_component(${prefix}modesmenu) entryconfigure "Lighting" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Grid" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Snap Grid" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Snap to Lines" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Angle/Distance Cursor" -state normal
 
 		$itk_component(${prefix}raytracemenu) entryconfigure "check overlaps" -state normal
@@ -6261,6 +6277,7 @@ proc title_node_handler {node} {
 	    $itk_component(menubar) menuconfigure .modes.light -state normal
 	    $itk_component(menubar) menuconfigure .modes.grid -state normal
 	    $itk_component(menubar) menuconfigure .modes.sgrid -state normal
+	    $itk_component(menubar) menuconfigure .modes.slines -state normal
 	    $itk_component(menubar) menuconfigure .modes.adc -state normal
 
 	    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps -state normal
@@ -9364,6 +9381,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mLighting $mLighting"
     puts $_pfile "set mShowGrid $mShowGrid"
     puts $_pfile "set mSnapGrid $mSnapGrid"
+    puts $_pfile "set mSnapLines $mSnapLines"
     puts $_pfile "set mShowADC $mShowADC"
 
     puts $_pfile "set GeometryEditFrame::mHighlightPoints $GeometryEditFrame::mHighlightPoints"

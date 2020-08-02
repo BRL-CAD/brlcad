@@ -34,9 +34,9 @@
 #  elif defined(STATIC_BUILD)
 #    define WFOBJ_EXPORT
 #  elif defined(WFOBJ_DLL_EXPORTS)
-#    define WFOBJ_EXPORT __declspec(dllexport)
+#    define WFOBJ_EXPORT COMPILER_DLLEXPORT
 #  elif defined(WFOBJ_DLL_IMPORTS)
-#    define WFOBJ_EXPORT __declspec(dllimport)
+#    define WFOBJ_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define WFOBJ_EXPORT
 #  endif

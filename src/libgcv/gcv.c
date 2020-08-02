@@ -65,13 +65,19 @@ _gcv_brlcad_read(struct gcv_context *context,
 	return 0;
     }
 
-    if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
-	bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
-	db_close(in_dbip);
-	return 0;
-    }
+    if (db_version(in_dbip) > 4) {
+	if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
+	    bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
+	    db_close(in_dbip);
+	    return 0;
+	}
 
-    db_close(in_dbip);
+	db_close(in_dbip);
+    } else {
+	// For v4 .g files, use the original rather than an inmem (which is v5)
+	db_close(context->dbip);
+	context->dbip = in_dbip;
+    }
     return 1;
 }
 

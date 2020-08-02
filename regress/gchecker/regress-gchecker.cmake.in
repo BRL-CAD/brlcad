@@ -1,51 +1,41 @@
+# Values set at CMake configure time
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
-set(DDIR "@DATA_DIR@")
-set(GCHECKER_CF "@GCHECKER_CLEAN_FILES@")
+set(GCHECKER_CF "@GCHECKER_CLEAN_FILE@")
+set(LOGFILE "@LOG_FILE@")
 
-set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
-set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
-set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
-# Use the mechanism created to allow multiconfig builds to
-# know what the current build type is.
-if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BDIR "${RBDIR}")
-  set(test_suffix "-Release")
-elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
-  set(BDIR "${DBDIR}")
-  set(test_suffix "-Debug")
-else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BDIR "${SBDIR}")
-  set(test_suffix)
-endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+file(WRITE "${LOGFILE}" "Starting gchecker test run\n")
 
-get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
-set(GCHECKER "${BDIR}/gchecker${EXE}")
+# The executable locations aren't know at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" GCHECKER "${EXEC}")
+if (NOT EXISTS "${GCHECKER}")
+  file(WRITE "${LOGFILE}" "regress_gchecker not found at location \"${GCHECKER}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find regress_gchecker, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${GCHECKER}")
 
 # Clean up in case we've run before
-foreach(GCF ${GCHECKER_CF})
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${CBDIR}/${GCF}")
-endforeach(GCF ${GCHECKER_CF})
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${GCHECKER_CF}")
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove_directory "${CBDIR}/gchecker_test.g.ck")
 
-file(WRITE "${CBDIR}/gchecker.log" "Running gchecker:\n${GCHECKER} ${CSDIR}/gchecker_test.g\n")
+file(APPEND "${LOGFILE}" "Running gchecker:\n${GCHECKER} ${CSDIR}/gchecker_test.g\n")
 
 execute_process(
-  COMMAND "${GCHECKER}" "${CSDIR}/gchecker_test.g" RESULT_VARIABLE gchecker_result
-  OUTPUT_VARIABLE gchecker_log ERROR_VARIABLE gchecker_log
+  COMMAND "${GCHECKER}" "${CSDIR}/gchecker_test.g"
+  RESULT_VARIABLE gchecker_result OUTPUT_VARIABLE gchecker_log ERROR_VARIABLE gchecker_log
   WORKING_DIRECTORY ${CBDIR}
   )
-file(APPEND "${CBDIR}/gchecker.log" "${gchecker_log}")
+file(APPEND "${LOGFILE}" "${gchecker_log}")
 set(gchecker_log)
 if(NOT EXISTS "${CBDIR}/gchecker_test.g.ck/ck.gchecker_test.g.overlaps")
+  file(APPEND "${LOGFILE}" "\n\nError: return code ${gchecker_result}")
   message(FATAL_ERROR "${GCHECKER} failed to process gchecker_test.g, aborting.\nSee ${CBDIR}/gchecker.log for more details.")
 endif(NOT EXISTS "${CBDIR}/gchecker_test.g.ck/ck.gchecker_test.g.overlaps")
 
 if(gchecker_result)
-  file(APPEND "${CBDIR}/gchecker.log" "\n\nError: return code ${gchecker_result}")
-  message(FATAL_ERROR "[gchecker] Failure, see ${CBDIR}/gchecker.log for more info.\n")
-else(gchecker_result)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/gchecker${test_suffix}.done")
+  file(APPEND "${LOGFILE}" "\n\nError: return code ${gchecker_result}")
+  message(FATAL_ERROR "[gchecker] Failure, see ${LOGFILE} for more info.\n")
 endif(gchecker_result)
 
 # Local Variables:

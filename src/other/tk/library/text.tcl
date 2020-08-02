@@ -38,6 +38,8 @@
 # The code below creates the default class bindings for text widgets.
 #-------------------------------------------------------------------------
 
+
+
 # Standard Motif bindings:
 
 bind Text <1> {
@@ -83,6 +85,7 @@ bind Text <B1-Enter> {
 bind Text <ButtonRelease-1> {
     tk::CancelRepeat
 }
+
 bind Text <Control-1> {
     %W mark set insert @%x,%y
     # An operation that moves the insert mark without making it
@@ -95,52 +98,52 @@ bind Text <Control-1> {
 bind Text <Double-Control-1> { # nothing }
 # stop an accidental movement triggering <B1-Motion>
 bind Text <Control-B1-Motion> { # nothing }
-bind Text <Left> {
+bind Text <<PrevChar>> {
     tk::TextSetCursor %W insert-1displayindices
 }
-bind Text <Right> {
+bind Text <<NextChar>> {
     tk::TextSetCursor %W insert+1displayindices
 }
-bind Text <Up> {
+bind Text <<PrevLine>> {
     tk::TextSetCursor %W [tk::TextUpDownLine %W -1]
 }
-bind Text <Down> {
+bind Text <<NextLine>> {
     tk::TextSetCursor %W [tk::TextUpDownLine %W 1]
 }
-bind Text <Shift-Left> {
+bind Text <<SelectPrevChar>> {
     tk::TextKeySelect %W [%W index {insert - 1displayindices}]
 }
-bind Text <Shift-Right> {
+bind Text <<SelectNextChar>> {
     tk::TextKeySelect %W [%W index {insert + 1displayindices}]
 }
-bind Text <Shift-Up> {
+bind Text <<SelectPrevLine>> {
     tk::TextKeySelect %W [tk::TextUpDownLine %W -1]
 }
-bind Text <Shift-Down> {
+bind Text <<SelectNextLine>> {
     tk::TextKeySelect %W [tk::TextUpDownLine %W 1]
 }
-bind Text <Control-Left> {
+bind Text <<PrevWord>> {
     tk::TextSetCursor %W [tk::TextPrevPos %W insert tcl_startOfPreviousWord]
 }
-bind Text <Control-Right> {
+bind Text <<NextWord>> {
     tk::TextSetCursor %W [tk::TextNextWord %W insert]
 }
-bind Text <Control-Up> {
+bind Text <<PrevPara>> {
     tk::TextSetCursor %W [tk::TextPrevPara %W insert]
 }
-bind Text <Control-Down> {
+bind Text <<NextPara>> {
     tk::TextSetCursor %W [tk::TextNextPara %W insert]
 }
-bind Text <Shift-Control-Left> {
+bind Text <<SelectPrevWord>> {
     tk::TextKeySelect %W [tk::TextPrevPos %W insert tcl_startOfPreviousWord]
 }
-bind Text <Shift-Control-Right> {
+bind Text <<SelectNextWord>> {
     tk::TextKeySelect %W [tk::TextNextWord %W insert]
 }
-bind Text <Shift-Control-Up> {
+bind Text <<SelectPrevPara>> {
     tk::TextKeySelect %W [tk::TextPrevPara %W insert]
 }
-bind Text <Shift-Control-Down> {
+bind Text <<SelectNextPara>> {
     tk::TextKeySelect %W [tk::TextNextPara %W insert]
 }
 bind Text <Prior> {
@@ -162,16 +165,16 @@ bind Text <Control-Next> {
     %W xview scroll 1 page
 }
 
-bind Text <Home> {
+bind Text <<LineStart>> {
     tk::TextSetCursor %W {insert display linestart}
 }
-bind Text <Shift-Home> {
+bind Text <<SelectLineStart>> {
     tk::TextKeySelect %W {insert display linestart}
 }
-bind Text <End> {
+bind Text <<LineEnd>> {
     tk::TextSetCursor %W {insert display lineend}
 }
-bind Text <Shift-End> {
+bind Text <<SelectLineEnd>> {
     tk::TextKeySelect %W {insert display lineend}
 }
 bind Text <Control-Home> {
@@ -217,18 +220,22 @@ bind Text <Return> {
 bind Text <Delete> {
     if {[tk::TextCursorInSelection %W]} {
 	%W delete sel.first sel.last
-    } elseif {[%W compare end != insert+1c]} {
-	%W delete insert
+    } else {
+	if {[%W compare end != insert+1c]} {
+	    %W delete insert
+	}
+	%W see insert
     }
-    %W see insert
 }
 bind Text <BackSpace> {
     if {[tk::TextCursorInSelection %W]} {
 	%W delete sel.first sel.last
-    } elseif {[%W compare insert != 1.0]} {
-	%W delete insert-1c
+    } else {
+	if {[%W compare insert != 1.0]} {
+	    %W delete insert-1c
+	}
+	%W see insert
     }
-    %W see insert
 }
 
 bind Text <Control-space> {
@@ -245,10 +252,10 @@ bind Text <Shift-Select> {
     set tk::Priv(selectMode) char
     tk::TextKeyExtend %W insert
 }
-bind Text <Control-slash> {
+bind Text <<SelectAll>> {
     %W tag add sel 1.0 end
 }
-bind Text <Control-backslash> {
+bind Text <<SelectNone>> {
     %W tag remove sel 1.0 end
     # An operation that clears the selection must insert an autoseparator,
     # because the selection operation may have moved the insert mark
@@ -305,29 +312,9 @@ if {[tk windowingsystem] eq "aqua"} {
 
 # Additional emacs-like bindings:
 
-bind Text <Control-a> {
-    if {!$tk_strictMotif} {
-	tk::TextSetCursor %W {insert display linestart}
-    }
-}
-bind Text <Control-b> {
-    if {!$tk_strictMotif} {
-	tk::TextSetCursor %W insert-1displayindices
-    }
-}
 bind Text <Control-d> {
     if {!$tk_strictMotif && [%W compare end != insert+1c]} {
 	%W delete insert
-    }
-}
-bind Text <Control-e> {
-    if {!$tk_strictMotif} {
-	tk::TextSetCursor %W {insert display lineend}
-    }
-}
-bind Text <Control-f> {
-    if {!$tk_strictMotif} {
-	tk::TextSetCursor %W insert+1displayindices
     }
 }
 bind Text <Control-k> {
@@ -339,20 +326,10 @@ bind Text <Control-k> {
 	}
     }
 }
-bind Text <Control-n> {
-    if {!$tk_strictMotif} {
-	tk::TextSetCursor %W [tk::TextUpDownLine %W 1]
-    }
-}
 bind Text <Control-o> {
     if {!$tk_strictMotif} {
 	%W insert insert \n
 	%W mark set insert insert-1c
-    }
-}
-bind Text <Control-p> {
-    if {!$tk_strictMotif} {
-	tk::TextSetCursor %W [tk::TextUpDownLine %W -1]
     }
 }
 bind Text <Control-t> {
@@ -414,33 +391,29 @@ bind Text <Meta-Delete> {
     }
 }
 
+# Bindings for IME text input.
+
+bind Text <<TkStartIMEMarkedText>> {
+    dict set ::tk::Priv(IMETextMark) "%W" [%W index insert]
+}
+bind Text <<TkEndIMEMarkedText>> {
+    if { [catch {dict get $::tk::Priv(IMETextMark) "%W"} mark] } {
+	bell
+    } else {
+	%W tag add IMEmarkedtext $mark insert
+	%W tag configure IMEmarkedtext -underline on
+    }
+}
+bind Text <<TkClearIMEMarkedText>> {
+    %W delete IMEmarkedtext.first IMEmarkedtext.last
+}
+bind Text <<TkAccentBackspace>> {
+    %W delete insert-1c
+}
+
 # Macintosh only bindings:
 
 if {[tk windowingsystem] eq "aqua"} {
-bind Text <Option-Left> {
-    tk::TextSetCursor %W [tk::TextPrevPos %W insert tcl_startOfPreviousWord]
-}
-bind Text <Option-Right> {
-    tk::TextSetCursor %W [tk::TextNextWord %W insert]
-}
-bind Text <Option-Up> {
-    tk::TextSetCursor %W [tk::TextPrevPara %W insert]
-}
-bind Text <Option-Down> {
-    tk::TextSetCursor %W [tk::TextNextPara %W insert]
-}
-bind Text <Shift-Option-Left> {
-    tk::TextKeySelect %W [tk::TextPrevPos %W insert tcl_startOfPreviousWord]
-}
-bind Text <Shift-Option-Right> {
-    tk::TextKeySelect %W [tk::TextNextWord %W insert]
-}
-bind Text <Shift-Option-Up> {
-    tk::TextKeySelect %W [tk::TextPrevPara %W insert]
-}
-bind Text <Shift-Option-Down> {
-    tk::TextKeySelect %W [tk::TextNextPara %W insert]
-}
 bind Text <Control-v> {
     tk::TextScrollPages %W 1
 }
@@ -500,13 +473,20 @@ if {[tk windowingsystem] eq "aqua"} {
 	    %W yview scroll [expr {(2-%D)/3}] pixels
 	}
     }
+    bind Text <Shift-MouseWheel> {
+	if {%D >= 0} {
+	    %W xview scroll [expr {-%D/3}] pixels
+	} else {
+	    %W xview scroll [expr {(2-%D)/3}] pixels
+	}
+    }
 }
 
-if {"x11" eq [tk windowingsystem]} {
+if {[tk windowingsystem] eq "x11"} {
     # Support for mousewheels on Linux/Unix commonly comes through mapping
     # the wheel to the extended buttons.  If you have a mousewheel, find
     # Linux configuration info at:
-    #	http://www.inria.fr/koala/colas/mouse-wheel-scroll/
+    #	http://linuxreviews.org/howtos/xfree/mouse/
     bind Text <4> {
 	if {!$tk_strictMotif} {
 	    %W yview scroll -50 pixels
@@ -515,6 +495,16 @@ if {"x11" eq [tk windowingsystem]} {
     bind Text <5> {
 	if {!$tk_strictMotif} {
 	    %W yview scroll 50 pixels
+	}
+    }
+    bind Text <Shift-4> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll -50 pixels
+	}
+    }
+    bind Text <Shift-5> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll 50 pixels
 	}
     }
 }
@@ -607,7 +597,6 @@ proc ::tk::TextAnchor {w} {
 }
 
 proc ::tk::TextSelectTo {w x y {extend 0}} {
-    global tcl_platform
     variable ::tk::Priv
 
     set anchorname [tk::TextAnchor $w]
@@ -802,6 +791,9 @@ proc ::tk::TextKeySelect {w new} {
 	}
 	$w mark set $anchorname insert
     } else {
+        if {[catch {$w index $anchorname}]} {
+            $w mark set $anchorname insert
+        }
 	if {[$w compare $new < $anchorname]} {
 	    set first $new
 	    set last $anchorname
@@ -904,16 +896,17 @@ proc ::tk::TextInsert {w s} {
     }
     set compound 0
     if {[TextCursorInSelection $w]} {
-	set compound [$w cget -autoseparators]
-	if {$compound} {
+	set oldSeparator [$w cget -autoseparators]
+	if {$oldSeparator} {
 	    $w configure -autoseparators 0
 	    $w edit separator
+	    set compound 1
 	}
 	$w delete sel.first sel.last
     }
     $w insert insert $s
     $w see insert
-    if {$compound} {
+    if {$compound && $oldSeparator} {
 	$w edit separator
 	$w configure -autoseparators 1
     }
@@ -921,11 +914,10 @@ proc ::tk::TextInsert {w s} {
 
 # ::tk::TextUpDownLine --
 # Returns the index of the character one display line above or below the
-# insertion cursor.  There are two tricky things here.  First, we want to
-# maintain the original x position across repeated operations, even though
-# some lines that will get passed through don't have enough characters to
-# cover the original column.  Second, don't try to scroll past the
-# beginning or end of the text.
+# insertion cursor.  There is a tricky thing here: we want to maintain the
+# original x position across repeated operations, even though some lines
+# that will get passed through don't have enough characters to cover the
+# original column.
 #
 # Arguments:
 # w -		The text window in which the cursor is to move.
@@ -942,11 +934,11 @@ proc ::tk::TextUpDownLine {w n} {
     set lines [$w count -displaylines $Priv(textPosOrig) $i]
     set new [$w index \
 	    "$Priv(textPosOrig) + [expr {$lines + $n}] displaylines"]
-    if {[$w compare $new == end] \
-	    || [$w compare $new == "insert display linestart"]} {
-	set new $i
-    }
     set Priv(prevPos) $new
+    if {[$w compare $new == "end display lineend"] \
+            || [$w compare $new == "insert display linestart"]} {
+        set Priv(textPosOrig) $new
+    }
     return $new
 }
 
@@ -1088,13 +1080,13 @@ proc ::tk_textCut w {
         # make <<Cut>> an atomic operation on the Undo stack,
         # i.e. separate it from other delete operations on either side
 	set oldSeparator [$w cget -autoseparators]
-	if {$oldSeparator} {
+	if {([$w cget -state] eq "normal") && $oldSeparator} {
 	    $w edit separator
 	}
 	clipboard clear -displayof $w
 	clipboard append -displayof $w $data
 	$w delete sel.first sel.last
-	if {$oldSeparator} {
+	if {([$w cget -state] eq "normal") && $oldSeparator} {
 	    $w edit separator
 	}
     }
@@ -1108,7 +1100,6 @@ proc ::tk_textCut w {
 # w -		Name of a text widget.
 
 proc ::tk_textPaste w {
-    global tcl_platform
     if {![catch {::tk::GetSelection $w CLIPBOARD} sel]} {
 	set oldSeparator [$w cget -autoseparators]
 	if {$oldSeparator} {

@@ -47,11 +47,12 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define CHAR	1
@@ -171,6 +172,9 @@ wlt_decompose_1d(void)
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
@@ -393,6 +397,7 @@ wlt_reconstruct_2d(void)
 int
 main(int ac, char **av)
 {
+    bu_setprogname(av[0]);
 
     /* parse command flags, and make sure there are arguments
      * left over for processing.

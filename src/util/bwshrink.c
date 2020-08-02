@@ -32,6 +32,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
@@ -154,7 +155,7 @@ parse_args(int ac, char **av)
     }
     if (bu_optind < ac) {
 	char *ifname = bu_file_realpath(av[bu_optind], NULL);
-	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
+	if (freopen(ifname, "rb", stdin) == (FILE *)NULL) {
 	    perror(ifname);
 	    bu_exit (-1, NULL);
 	} else
@@ -178,11 +179,15 @@ int main(int ac, char **av)
     int c = 0;
     int t;
 
+    bu_setprogname(av[0]);
+
     (void)parse_args(ac, av);
     if (isatty(fileno(stdin)))
 	usage();
 
     /* process stdin */
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /* get buffer for image */
     size = width * height;

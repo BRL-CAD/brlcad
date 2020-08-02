@@ -60,6 +60,7 @@
 #include <string.h>
 #include <math.h>
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -265,6 +266,8 @@ main(int ac, char *av[])
     struct bu_vls name = BU_VLS_INIT_ZERO;
     int lens_1side_2side = 2;
     fastf_t ref_ind, thickness, diameter, focal_length;
+
+    bu_setprogname(av[0]);
 
     bu_vls_trunc(&lens_type, 0);
     bu_vls_trunc(&name, 0);

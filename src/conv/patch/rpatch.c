@@ -34,6 +34,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -188,6 +189,8 @@ main(int argc, char **argv)
     int i;
     int type3_is_donut=0;
     int c;
+
+    bu_setprogname(argv[0]);
 
     fast3 = 0;
     if (argc > 2) {

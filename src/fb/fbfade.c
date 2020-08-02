@@ -61,9 +61,10 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"
-#include "fb.h"			/* BRL-CAD package libfb.a interface */
+#include "dm.h"			/* BRL-CAD package libfb.a interface */
 #include "pkg.h"
 
 
@@ -77,7 +78,7 @@ typedef int bool_t;
 static bool_t hires = 0;		/* set for 1024x1024; clear for 512x512 */
 static char *in_fb_file = NULL;		/* input image name */
 static char *out_fb_file = NULL;	/* output frame buffer name */
-static fb *fbp = FB_NULL;		/* libfb input/output handle */
+static struct fb *fbp = FB_NULL;		/* libfb input/output handle */
 static int src_width = 0;		/* input image width */
 static int src_height = 0;		/* input image height */
 static int dst_width = 0;		/* output frame buffer size */
@@ -87,7 +88,7 @@ static RGBpixel bg = { 0, 0, 0 };	/* background */
 
 /* in ioutil.c */
 extern void Message(const char *format, ...);
-extern void Fatal(fb *fbiop, const char *format, ...);
+extern void Fatal(struct fb *fbiop, const char *format, ...);
 
 
 static void
@@ -103,6 +104,8 @@ Sig_Catcher(int sig)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     /* Plant signal catcher. */
     {
 	/* signals to catch */

@@ -36,8 +36,6 @@
 #include "rt/solid.h"
 #include "./ged_private.h"
 
-
-
 /* defined in draw_calc.cpp */
 extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
 extern void createDListSolid(struct solid *sp);
@@ -2211,8 +2209,7 @@ dl_write_animate(struct bu_list *hdlp, FILE *fp)
             for (i = 0; i < sp->s_fullpath.fp_len; i++) {
                 if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
                     struct animate *anp;
-                    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
-                         anp=anp->an_forw) {
+                    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp; anp=anp->an_forw) {
                         db_write_anim(fp, anp);
                     }
                     DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
@@ -2491,60 +2488,10 @@ dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transpa
 
 }
 
-void
-dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int output_type, int *red, int *green, int *blue, fastf_t *alpha)
-{
-    int ret;
-    mat_t mat;
-    struct display_list *gdlp;
-
-    MAT_IDN(mat);
-
-    for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
-	struct solid *sp;
-
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    struct directory *dp;
-	    struct rt_db_internal intern;
-	    struct rt_bot_internal *bot;
-
-	    dp = sp->s_fullpath.fp_names[sp->s_fullpath.fp_len-1];
-
-	    /* get the internal form */
-	    ret=rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
-
-	    if (ret < 0) {
-		bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);
-		continue;
-	    }
-
-	    if (ret != ID_BOT) {
-		bu_log("%s is not a bot (ignored)\n", dp->d_namep);
-		rt_db_free_internal(&intern);
-		continue;
-	    }
-
-	    /* Write out object color */
-	    if (output_type == OTYPE_OBJ) {
-		(*red) = sp->s_color[0];
-		(*green) = sp->s_color[1];
-		(*blue) = sp->s_color[2];
-		(*alpha) = sp->s_transparency;
-	    }
-
-	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, dbip->dbi_filename);
-	    rt_db_free_internal(&intern);
-	}
-    }
-
-}
-
-
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

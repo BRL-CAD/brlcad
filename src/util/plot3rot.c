@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "bio.h"   /* for isatty */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/log.h"
@@ -322,6 +323,11 @@ main(int argc, char **argv)
    -v             Verbose\n\
    -S#            Space: takes a quoted string of six floats\n";
 
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (!get_args(argc, argv)) {
 	fputs("Usage: plot3rot [options] [file1 ... fileN] > file.plot3\n", stderr);
 
@@ -339,7 +345,7 @@ main(int argc, char **argv)
 		fclose(fp);
 	    if (BU_STR_EQUAL(argv[bu_optind], "-"))
 		fp = stdin;
-	    else if ((fp = fopen(argv[bu_optind], "r")) == NULL) {
+	    else if ((fp = fopen(argv[bu_optind], "rb")) == NULL) {
 		bu_log("plot3rot: can't open \"%s\"\n", argv[bu_optind]);
 		continue;
 	    }

@@ -43,7 +43,7 @@ typedef struct {
 TkBorder *
 TkpGetBorder(void)
 {
-    WinBorder *borderPtr = (WinBorder *) ckalloc(sizeof(WinBorder));
+    WinBorder *borderPtr = ckalloc(sizeof(WinBorder));
 
     borderPtr->light2ColorPtr = NULL;
     borderPtr->dark2ColorPtr = NULL;
@@ -127,7 +127,7 @@ Tk_3DVerticalBevel(
     HDC dc = TkWinGetDrawableDC(display, drawable, &state);
     int half;
 
-    if ((borderPtr->lightGC == TkNone) && (relief != TK_RELIEF_FLAT)) {
+    if ((borderPtr->lightGC == NULL) && (relief != TK_RELIEF_FLAT)) {
 	TkpGetShadows(borderPtr, tkwin);
     }
 
@@ -222,7 +222,7 @@ Tk_3DHorizontalBevel(
     HDC dc = TkWinGetDrawableDC(display, drawable, &state);
     int topColor, bottomColor;
 
-    if ((borderPtr->lightGC == TkNone) && (relief != TK_RELIEF_FLAT)) {
+    if ((borderPtr->lightGC == NULL) && (relief != TK_RELIEF_FLAT)) {
 	TkpGetShadows(borderPtr, tkwin);
     }
 
@@ -339,7 +339,7 @@ TkpGetShadows(
     int r, g, b;
     XGCValues gcValues;
 
-    if (borderPtr->lightGC != TkNone) {
+    if (borderPtr->lightGC != NULL) {
 	return;
     }
 
@@ -465,10 +465,10 @@ TkpGetShadows(
 	return;
     }
 
-    if (borderPtr->shadow == TkNone) {
+    if (borderPtr->shadow == None) {
 	borderPtr->shadow = Tk_GetBitmap((Tcl_Interp *) NULL, tkwin,
 		Tk_GetUid("gray50"));
-	if (borderPtr->shadow == TkNone) {
+	if (borderPtr->shadow == None) {
 	    Tcl_Panic("TkpGetShadows couldn't allocate bitmap for border");
 	}
     }
@@ -540,7 +540,7 @@ TkWinGetBorderPixels(
 {
     WinBorder *borderPtr = (WinBorder *) border;
 
-    if (borderPtr->info.lightGC == TkNone) {
+    if (borderPtr->info.lightGC == NULL) {
 	TkpGetShadows(&borderPtr->info, tkwin);
     }
     switch (which) {

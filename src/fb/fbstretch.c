@@ -79,12 +79,13 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/str.h"
-#include "fb.h"			/* BRL-CAD package libfb.a interface */
+#include "dm.h"			/* BRL-CAD package libfb.a interface */
 
 
 #define USAGE1 "fbstretch [ -s size ] [ -w width ] [ -n height ]"
@@ -102,9 +103,9 @@ static float y_scale = -1.0;		/* vertical scaling factor */
 static bool_t x_compress;		/* set if compressing horizontally */
 static bool_t y_compress;		/* set if compressing vertically */
 static char *src_file = NULL;		/* source frame buffer name */
-static fb *src_fbp = FB_NULL;	/* source frame buffer handle */
+static struct fb *src_fbp = FB_NULL;	/* source frame buffer handle */
 static char *dst_file = NULL;		/* destination frame buffer name */
-static fb *dst_fbp = FB_NULL;	/* destination frame buffer handle */
+static struct fb *dst_fbp = FB_NULL;	/* destination frame buffer handle */
 static int src_width = 512;
 static int src_height = 512;		/* source image size */
 static int dst_width = 0;
@@ -114,7 +115,7 @@ static unsigned char *dst_buf;		/* calloc()ed output scan line buffer */
 
 /* in ioutil.c */
 extern void Message(const char *format, ...);
-extern void Fatal(fb *fbiop, const char *format, ...);
+extern void Fatal(struct fb *fbiop, const char *format, ...);
 
 
 static void
@@ -147,6 +148,8 @@ Sig_Catcher(int sig)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     /* Plant signal catcher. */
     {
 	static int getsigs[] = {
@@ -190,11 +193,11 @@ main(int argc, char **argv)
 		    sample = 1;
 		    break;
 
-		case 'f':	/* -f in_fb */
+		case 'f':	/* -f in_struct fb */
 		    src_file = bu_optarg;
 		    break;
 
-		case 'F':	/* -F out_fb */
+		case 'F':	/* -F out_struct fb */
 		    dst_file = bu_optarg;
 		    break;
 

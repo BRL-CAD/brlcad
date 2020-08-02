@@ -41,6 +41,8 @@ main(int ac, char *av[])
 
   struct db_i *dbip;
 
+  bu_setprogname(av[0]);
+
   if (ac < 2) {
     printf(USAGE, av[0]);
     return 1;

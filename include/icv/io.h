@@ -146,6 +146,35 @@ ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA ty
  */
 ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
 
+/**
+ * Converts double data of icv_image to unsigned char data.
+ * This function also does gamma correction using the gamma_corr
+ * parameter of the image structure.
+ *
+ * Gamma correction prevents bad color aliasing.
+ *
+ * @param bif ICV struct where data is to be read from
+ * @return array of unsigned char converted data, or NULL on failure
+ */
+ICV_EXPORT unsigned char *icv_data2uchar(const icv_image_t *bif);
+
+/**
+ * Converts unsigned char array to double array.
+ * This function returns array of double data.
+ *
+ * Used to convert data from pix, bw, ppm type images for icv_image
+ * struct.
+ *
+ * This does not free the char data.
+ *
+ * @param data pointer to the array to be converted.
+ * @param size Size of the array.
+ * @return double array.
+ *
+ */
+ICV_EXPORT double *icv_uchar2double(unsigned char *data, size_t size);
+
+
 /** @} */
 
 __END_DECLS

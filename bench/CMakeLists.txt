@@ -2,11 +2,7 @@ add_subdirectory(ref)
 
 include_directories(${BU_INCLUDE_DIRS})
 
-add_definitions(
-  -DHAVE_CONFIG_H
-  -DBRLCADBUILD
-  -DCONSOLE
-  )
+add_definitions(-DCONSOLE)
 
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
 set(BARK_SOURCES
@@ -40,7 +36,7 @@ CMAKEFILES(
   viewdiff.sh
   )
 
-if(SH_EXEC)
+if(SH_EXEC AND TARGET m35.g)
   # CTest enabled short run of the benchmark suite
   add_test(NAME benchmark COMMAND ${SH_EXEC} "${CMAKE_BINARY_DIR}/bin/benchmark" run TIMEFRAME=1)
   set_tests_properties(benchmark PROPERTIES LABELS "Benchmark")
@@ -68,7 +64,7 @@ if(SH_EXEC)
   add_custom_target(benchmark-clobber
     ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clobber
     )
-endif(SH_EXEC)
+endif(SH_EXEC AND TARGET m35.g)
 
 # Local Variables:
 # tab-width: 8

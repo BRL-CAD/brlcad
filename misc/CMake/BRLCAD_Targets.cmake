@@ -149,7 +149,7 @@ endfunction(FILE_LANG)
 # Assemble the targets and compilation flags needed by the target
 function(GET_FLAGS_AND_DEFINITIONS targetname target_libs)
 
-  cmake_parse_arguments(G "" "CFLAGS;CXXFLAGS;DEFINES;DLL_DEFINES" "" ${ARGN})
+  cmake_parse_arguments(G "" "CFLAGS;CXXFLAGS;DEFINES" "" ${ARGN})
 
   #####################################################################
   # Compile flags - note that targets may have separate C and C++ flags
@@ -216,36 +216,6 @@ function(GET_FLAGS_AND_DEFINITIONS targetname target_libs)
 
   endif(G_DEFINES)
 
-  # DLL defines (needed for Visual Studio import/export)
-  if(G_DLL_DEFINES)
-
-    get_property(T_DLL_DEFINES GLOBAL PROPERTY ${targetname}_DLL_DEFINES)
-    foreach(libitem ${target_libs})
-      get_property(${libitem}_DLL_DEFINES GLOBAL PROPERTY ${libitem}_DLL_DEFINES)
-      list(APPEND T_DLL_DEFINES ${${libitem}_DLL_DEFINES})
-    endforeach(libitem ${target_libs})
-
-    # In case of re-running cmake, make sure the DLL_IMPORTS define for this
-    # specific target is removed if the target looks like a library, since for
-    # the actual library target we need to export, not import. (Don't want to
-    # do this willy-nilly, since (for example) the rt exec target and the librt
-    # library will both map to the same "UPPER_CORE" name...)
-    if(T_DLL_DEFINES AND ${targetname} MATCHES "^lib*")
-      string(REPLACE "lib" "" LOWERCORE "${targetname}")
-      string(TOUPPER ${LOWERCORE} UPPER_CORE)
-      list(REMOVE_ITEM T_DLL_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
-    endif(T_DLL_DEFINES AND ${targetname} MATCHES "^lib*")
-
-    # No duplicate definitions needed
-    if(T_DLL_DEFINES)
-      list(REMOVE_DUPLICATES T_DLL_DEFINES)
-    endif(T_DLL_DEFINES)
-
-    # Send the finalized list back to the parent
-    set(${G_DLL_DEFINES} ${T_DLL_DEFINES} PARENT_SCOPE)
-
-  endif(G_DLL_DEFINES)
-
 endfunction(GET_FLAGS_AND_DEFINITIONS)
 
 # Determine the language for a target
@@ -254,7 +224,7 @@ endfunction(GET_FLAGS_AND_DEFINITIONS)
 # than build targets (less logic, simplifies dealing with OBJECT libraries.)
 function(SET_FLAGS_AND_DEFINITIONS srcslist)
 
-  cmake_parse_arguments(S "NO_STRICT_CXX" "TARGET" "CFLAGS;CXXFLAGS;DEFINES;DLL_DEFINES" ${ARGN})
+  cmake_parse_arguments(S "NO_STRICT_CXX" "TARGET" "CFLAGS;CXXFLAGS;DEFINES" ${ARGN})
 
   foreach(srcfile ${srcslist})
 
@@ -331,18 +301,6 @@ function(SET_FLAGS_AND_DEFINITIONS srcslist)
 
   endforeach(srcfile ${srcslist})
 
-  # If we have been supplied a target name, set the appropriate properties.
-  if(S_TARGET)
-    set_property(GLOBAL PROPERTY ${S_TARGET}_DEFINES "${S_DEFINES}")
-    if(S_DLL_DEFINES)
-      # Make sure we append here, since the target will probably already have this property set.
-      set_property(GLOBAL APPEND PROPERTY ${S_TARGET}_DLL_DEFINES "${S_DLL_DEFINES}")
-      foreach(tdef ${S_DLL_DEFINES})
-	set_property(TARGET ${S_TARGET} APPEND PROPERTY COMPILE_DEFINITIONS "${tdef}")
-      endforeach(tdef ${S_DLL_DEFINES})
-    endif(S_DLL_DEFINES)
-  endif(S_TARGET)
-
 endfunction(SET_FLAGS_AND_DEFINITIONS)
 
 
@@ -364,6 +322,9 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
     add_executable(${execname} ${srcslist})
   endif(E_GUI)
 
+  # Set the standard build definitions for all BRL-CAD targets
+  target_compile_definitions(${execname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
   # Let CMAKEFILES know what's going on
   CMAKEFILES(${srcslist})
 
@@ -372,10 +333,10 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Use the list of libraries to be linked into this target to
   # accumulate the necessary definitions and compilation flags.
-  GET_FLAGS_AND_DEFINITIONS(${execname} "${libslist}" CFLAGS E_C_FLAGS CXXFLAGS E_CXX_FLAGS DEFINES E_DEFINES DLL_DEFINES E_DLL_DEFINES)
+  GET_FLAGS_AND_DEFINITIONS(${execname} "${libslist}" CFLAGS E_C_FLAGS CXXFLAGS E_CXX_FLAGS DEFINES E_DEFINES)
 
   # Having built up the necessary sets, apply them
-  SET_FLAGS_AND_DEFINITIONS("${srcslist}" TARGET ${execname} CFLAGS "${E_C_FLAGS}" CXXFLAGS "${E_CXX_FLAGS}" DEFINES "${E_DEFINES}" DLL_DEFINES "${E_DLL_DEFINES}")
+  SET_FLAGS_AND_DEFINITIONS("${srcslist}" TARGET ${execname} CFLAGS "${E_C_FLAGS}" CXXFLAGS "${E_CXX_FLAGS}" DEFINES "${E_DEFINES}")
 
   # If we have libraries to link, link them.
   if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
@@ -437,6 +398,11 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
+  # The naming convention used for variables is the upper case of the library
+  # name, without the lib prefix.
+  string(REPLACE "lib" "" LOWERCORE "${libname}")
+  string(TOUPPER ${LOWERCORE} UPPER_CORE)
+
   # Let CMAKEFILES know what's going on
   CMAKEFILES(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
 
@@ -448,7 +414,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     CFLAGS L_C_FLAGS
     CXXFLAGS L_CXX_FLAGS
     DEFINES L_DEFINES
-    DLL_DEFINES L_DLL_DEFINES
     )
 
   # Local copy of srcslist in case manipulation is needed
@@ -464,16 +429,38 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     add_library(${libname}-obj OBJECT ${lsrcslist})
     set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
+
+    # Set the standard build definitions for all BRL-CAD targets
+    target_compile_definitions(${libname}-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    if(HIDE_INTERNAL_SYMBOLS)
+
+      set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+    endif(HIDE_INTERNAL_SYMBOLS)
+
+    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+      foreach(ll ${libslist})
+	if (TARGET ${ll})
+	  add_dependencies(${libname}-obj ${ll})
+	endif (TARGET ${ll})
+      endforeach(ll ${libslist})
+    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+
   endif(USE_OBJECT_LIBS)
 
+  # Handle the shared library
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
-    if(CPP_DLL_DEFINES)
-      string(REPLACE "lib" "" LOWERCORE "${libname}")
-      string(TOUPPER ${LOWERCORE} UPPER_CORE)
+
+    # Set the standard build definitions for all BRL-CAD targets
+    target_compile_definitions(${libname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    if(HIDE_INTERNAL_SYMBOLS)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
-      set_property(GLOBAL APPEND PROPERTY ${libname}_DLL_DEFINES "${UPPER_CORE}_DLL_IMPORTS")
-    endif(CPP_DLL_DEFINES)
+      set_property(TARGET ${libname} APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS  "${UPPER_CORE}_DLL_IMPORTS")
+    endif(HIDE_INTERNAL_SYMBOLS)
+
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
@@ -483,9 +470,13 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set(libstatic ${libname}-static)
     endif(L_STATIC)
     add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
-    if(NOT CPP_DLL_DEFINES)
+
+    # Set the standard build definitions for all BRL-CAD targets
+    target_compile_definitions(${libstatic} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
+    if(NOT MSVC)
       set_target_properties(${libstatic} PROPERTIES OUTPUT_NAME "${libname}")
-    endif(NOT CPP_DLL_DEFINES)
+    endif(NOT MSVC)
   endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
 
   # Make sure we don't end up with outputs named liblib...
@@ -502,7 +493,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     CFLAGS "${L_C_FLAGS}"
     CXXFLAGS "${L_CXX_FLAGS}"
     DEFINES "${L_DEFINES}"
-    DLL_DEFINES "${L_DLL_DEFINES}"
     )
 
   # Extra static lib specific work
@@ -568,7 +558,11 @@ endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   if(${DIR_LIST})
     set(ORDERED_ELEMENTS "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${BRLCAD_BINARY_DIR}/include" "${BRLCAD_SOURCE_DIR}/include")
+    set(LAST_ELEMENTS "/usr/local/include" "/usr/include")
+
     set(NEW_DIR_LIST "")
+    set(LAST_DIR_LIST "")
+
     foreach(element ${ORDERED_ELEMENTS})
       set(DEF_EXISTS "-1")
       list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
@@ -596,8 +590,19 @@ function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
       endif("${SUBPATH_TEST}" STREQUAL "1")
     endforeach(inc_path ${${DIR_LIST}})
 
+    # Pull out include paths that are definitely system paths (and
+    # hence need to come after ours
+    foreach(element ${LAST_ELEMENTS})
+      set(DEF_EXISTS "-1")
+      list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
+      if(NOT "${DEF_EXISTS}" STREQUAL "-1")
+	set(LAST_DIR_LIST ${LAST_DIR_LIST} ${element})
+	list(REMOVE_ITEM ${DIR_LIST} ${element})
+      endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
+    endforeach(element ${LAST_ELEMENTS})
+
     # add anything that might be left
-    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}})
+    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}} ${LAST_DIR_LIST})
 
     # remove any duplicates
     list(REMOVE_DUPLICATES NEW_DIR_LIST)
@@ -612,6 +617,14 @@ endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 # SYSTEM option to the include_directories command, as well as calling the
 # sort function.
 function(BRLCAD_INCLUDE_DIRS DIR_LIST)
+
+  # TODO - We don't want parent directories values augmenting DIR_LIST for
+  # subsequent targets - if we're calling this, we're taking full control of
+  # all inclusions for all targets in this and subsequent directories.  We
+  # should probably use the target level INCLUDE_DIRECTORIES property and
+  # stop setting include_directories on entire directories all together
+  # for maximal precision and minimum surprises...
+  #set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 
   set(INCLUDE_DIRS ${${DIR_LIST}})
   if(INCLUDE_DIRS)
@@ -636,7 +649,11 @@ function(BRLCAD_INCLUDE_DIRS DIR_LIST)
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
       endif(APPLE)
-      include_directories(AFTER SYSTEM ${inc_dir})
+      if("${inc_dir}" MATCHES "other")
+	include_directories(SYSTEM ${inc_dir})
+      else("${inc_dir}" MATCHES "other")
+	include_directories(AFTER SYSTEM ${inc_dir})
+      endif("${inc_dir}" MATCHES "other")
     else("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
       include_directories(BEFORE ${inc_dir})
     endif("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
@@ -684,6 +701,11 @@ endfunction(BRLCAD_LIB_INCLUDE_DIRS)
 # the file copying custom commands.
 
 function(BRLCAD_MANAGE_FILES inputdata targetdir)
+
+  if (NOT TARGET managed_files)
+    add_custom_target(managed_files ALL)
+    set_target_properties(managed_files PROPERTIES FOLDER "BRL-CAD File Copying")
+  endif (NOT TARGET managed_files)
 
   string(RANDOM LENGTH 10 ALPHABET 0123456789 VAR_PREFIX)
   if(${ARGC} GREATER 2)
@@ -799,6 +821,10 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   set_target_properties(${targetname}_cp PROPERTIES FOLDER "BRL-CAD File Copying")
   BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" ${targetname}_cp)
 
+  # Because the target name for managed files is likely cryptic, we add a dependency to the managed_files target
+  # so this poriton of the logic can be referenced
+  add_dependencies(managed_files ${targetname}_cp)
+
   # Set the FOLDER property.  If the target has supplied a folder, use
   # that as a subfolder
   if("${${VAR_PREFIX}_FOLDER}" STREQUAL "")
@@ -848,6 +874,123 @@ function(ADD_MAN_PAGES num inmanlist)
   set(man_target_dir ${MAN_DIR}/man${num})
   BRLCAD_MANAGE_FILES(${inmanlist} ${man_target_dir})
 endfunction(ADD_MAN_PAGES)
+
+
+
+#-----------------------------------------------------------------------------
+# The default operational mode of Regression tests is to be executed by a
+# parent CMake script, which captures the I/O from the test and stores it in an
+# individual log file named after the test.  By default, a custom command and
+# CTest add_test command are set up to run a configured script.  If TEST_SCRIPT
+# is provided specifying a particular script file that is used, otherwise the
+# convention of ${testname}.cmake.in in the current source directory is assumed
+# to specify the input test script.
+#
+# Particularly when configuration dependent builds are in play, a test
+# executable's location needs special handling to ensure the scripts run the
+# correct version of a program.  The standard mechanism is to specify the CMake
+# target name of the executable by supplying it via the EXEC option and then
+# pass the output of $<TARGET_FILE:${${testname}_EXEC}> to the running CMake
+# script. (Note that the script must in turn post-process this value to unquote
+# it in case of special characters in pathnames.)
+#
+# To allow for more customized test execution, the option TEST_DEFINED may be
+# passed to the function to instruct it to skip all setup for add_test and
+# custom command definitions.  It is the callers responsibility to define an
+# appropriately named test with add_test - BRLCAD_REGRESSION_TEST in this mode
+# will then perform only the specific build target definition and subsequent
+# steps for wiring the test into the higher level commands.
+#
+# Standard actions for all regression targets:
+#
+# 1.  A custom build target with the pattern regress-${testname} is defined
+#     to allow for individual execution of the regression test with
+#     "make ${testname}"
+#
+# 2.  A label is added identifying the test as a regression test so the top
+#     level commands "make check" and "make regress" know this particular
+#     tests is one of the tests they are supposed to execute.
+#
+# 3.  Any dependencies in ${depends_list} are added as build requirements to
+#     the regress and check targets.  This ensures that (unlike "make test"
+#     and CTest itself) when those targets are built the dependencies of the
+#     tests are built first.  (A default CTest run prior to building will
+#     result in all tests failing.)
+#
+# 4.  If the keyword "STAND_ALONE" is passed in, a ${testname} target
+#     is defined but no other connections are made between that target and the
+#     agglomeration targets.
+#
+# 5.  If a TIMEOUT argument is passed, a specific timeout tiem is set on the
+#     test. Otherwise, a default is assigned to ensure no test runs
+#     indefinitely.
+
+function(BRLCAD_REGRESSION_TEST testname depends_list)
+
+  cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC" "" ${ARGN})
+
+  if (NOT ${testname}_TEST_DEFINED)
+
+    # Test isn't yet defined - do the add_test setup
+    if (${testname}_TEST_SCRIPT)
+      configure_file("${${testname}_TEST_SCRIPT}" "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake" @ONLY)
+    else (${testname}_TEST_SCRIPT)
+      configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${testname}.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake" @ONLY)
+    endif (${testname}_TEST_SCRIPT)
+
+    if (TARGET ${${testname}_EXEC})
+      add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+    else (TARGET ${${testname}_EXEC})
+      add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+    endif (TARGET ${${testname}_EXEC})
+
+  endif (NOT ${testname}_TEST_DEFINED)
+
+
+  # Every regression test gets a build target
+  if (CMAKE_CONFIGURATION_TYPES)
+    add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^${testname} --output-on-failure)
+  else (CMAKE_CONFIGURATION_TYPES)
+    add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname} --output-on-failure)
+  endif (CMAKE_CONFIGURATION_TYPES)
+  if (depends_list)
+    add_dependencies(${testname} ${depends_list})
+  endif (depends_list)
+
+  # Make sure we at least get this into the regression test folder - local
+  # subdirectories may override this if they have more specific locations
+  # they want to use.
+  if (${testname}_STAND_ALONE)
+    set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
+  else (${testname}_STAND_ALONE)
+    set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/regress")
+  endif (${testname}_STAND_ALONE)
+
+  # In Visual Studio, none of the regress build targets are added to the default build.
+  set_target_properties(${testname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+
+  # Group any test not excluded by the STAND_ALONE flag with the other regression tests by
+  # assigning a standard label
+  if (NOT ${testname}_STAND_ALONE)
+    set_tests_properties(${testname} PROPERTIES LABELS "Regression")
+  else (NOT ${testname}_STAND_ALONE)
+    set_tests_properties(${testname} PROPERTIES LABELS "STAND_ALONE")
+  endif (NOT ${testname}_STAND_ALONE)
+
+  # Set up dependencies for both regress and check
+  if (NOT "${depends_list}" STREQUAL "")
+    add_dependencies(regress ${depends_list})
+    add_dependencies(check   ${depends_list})
+  endif (NOT "${depends_list}" STREQUAL "")
+
+  # Set either the standard timeout or a specified custom timeout
+  if (${testname}_TIMEOUT)
+    set_tests_properties(${testname} PROPERTIES TIMEOUT ${${testname}_TIMEOUT})
+  else (${testname}_TIMEOUT)
+    set_tests_properties(${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
+  endif (${testname}_TIMEOUT)
+
+endfunction(BRLCAD_REGRESSION_TEST)
 
 # Local Variables:
 # tab-width: 8
