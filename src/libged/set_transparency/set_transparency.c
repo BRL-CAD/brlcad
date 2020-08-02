@@ -74,7 +74,7 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    dl_set_transparency(gedp->ged_gdp->gd_headDisplay, dpp, transparency, gedp->ged_create_vlist_callback);
+    dl_set_transparency(gedp, dpp, transparency);
 
     if (dpp != (struct directory **)NULL)
 	bu_free((void *)dpp, "ged_set_transparency_core: directory pointers");

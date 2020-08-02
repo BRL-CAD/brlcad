@@ -583,7 +583,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     else
 	dir_name = comb_name;
 
-    if (put_tree_into_comb_and_export(gedp, comb, dp, comb_name, dir_name, expression) == GED_ERROR) {
+    if (put_tree_into_comb_and_export(gedp, comb, dp, comb_name, dir_name, expression) & GED_ERROR) {
 	if (dp) {
 	    restore_comb(gedp, dp, saved_name);
 	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", cmd_name);

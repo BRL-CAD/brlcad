@@ -53,7 +53,7 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    dl_zap(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, gedp->freesolid);
+    dl_zap(gedp, gedp->freesolid);
 
     return GED_OK;
 }

@@ -158,7 +158,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
     struct contour_node *curr_cnode;
     struct bg_polygon *gpp;
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) == GED_ERROR)
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) & GED_ERROR)
 	return (struct bg_polygon *)0;
 
     sketch_ip = (rt_sketch_internal *)intern.idb_ptr;

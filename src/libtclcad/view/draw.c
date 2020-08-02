@@ -68,29 +68,31 @@ key_matches_paths(struct bu_hash_tbl *t, void *udata)
 }
 
 static void
-go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
+go_draw_solid(struct bview *gdvp, struct solid *sp)
 {
-    struct ged_obj *gop = gdvp->gdv_gop;
-    struct dm *dmp = gdvp->gdv_dmp;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    struct ged *gedp = tvd->gedp;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)gedp->u_data;
+    struct dm *dmp = (struct dm *)gdvp->dmp;
     struct bu_hash_entry *entry;
     struct path_edit_params *params = NULL;
     mat_t save_mat, edit_model2view;
     struct path_match_data data;
 
     data.s_fpath = &sp->s_fullpath;
-    data.dbip = gop->go_gedp->ged_wdbp->dbip;
-    entry = key_matches_paths(gop->go_edited_paths, &data);
+    data.dbip = gedp->ged_wdbp->dbip;
+    entry = key_matches_paths(tgd->go_edited_paths, &data);
 
     if (entry != NULL) {
 	params = (struct path_edit_params *)bu_hash_value(entry, NULL);
     }
     if (params) {
-	MAT_COPY(save_mat, gdvp->gdv_view->gv_model2view);
-	bn_mat_mul(edit_model2view, gdvp->gdv_view->gv_model2view, params->edit_mat);
+	MAT_COPY(save_mat, gdvp->gv_model2view);
+	bn_mat_mul(edit_model2view, gdvp->gv_model2view, params->edit_mat);
 	dm_loadmatrix(dmp, edit_model2view, 0);
     }
 
-    if (gop->go_dlist_on) {
+    if (tgd->go_dlist_on) {
 	dm_draw_dlist(dmp, sp->s_dlist);
     } else {
 	if (sp->s_iflag == UP)
@@ -114,14 +116,15 @@ go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
 
 /* Draw all display lists */
 static int
-go_draw_dlist(struct ged_dm_view *gdvp)
+go_draw_dlist(struct bview *gdvp)
 {
     register struct display_list *gdlp;
     register struct display_list *next_gdlp;
     struct solid *sp;
     int line_style = -1;
-    struct dm *dmp = gdvp->gdv_dmp;
-    struct bu_list *hdlp = gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay;
+    struct dm *dmp = (struct dm *)gdvp->dmp;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    struct bu_list *hdlp = tvd->gedp->ged_gdp->gd_headDisplay;
 
     if (dm_get_transparency(dmp)) {
 	/* First, draw opaque stuff */
@@ -192,14 +195,14 @@ go_draw_dlist(struct ged_dm_view *gdvp)
 }
 
 void
-go_draw(struct ged_dm_view *gdvp)
+go_draw(struct bview *gdvp)
 {
-    (void)dm_loadmatrix(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
+    (void)dm_loadmatrix((struct dm *)gdvp->dmp, gdvp->gv_model2view, 0);
 
-    if (SMALL_FASTF < gdvp->gdv_view->gv_perspective)
-	(void)dm_loadpmatrix(gdvp->gdv_dmp, gdvp->gdv_view->gv_pmat);
+    if (SMALL_FASTF < gdvp->gv_perspective)
+	(void)dm_loadpmatrix((struct dm *)gdvp->dmp, gdvp->gv_pmat);
     else
-	(void)dm_loadpmatrix(gdvp->gdv_dmp, (fastf_t *)NULL);
+	(void)dm_loadpmatrix((struct dm *)gdvp->dmp, (fastf_t *)NULL);
 
     go_draw_dlist(gdvp);
 }
@@ -272,59 +275,61 @@ go_dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
 }
 
 void
-go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
+go_draw_other(struct ged *gedp, struct bview *gdvp)
 {
-    int width = dm_get_width(gdvp->gdv_dmp);
-    fastf_t sf = (fastf_t)(gdvp->gdv_view->gv_size) / (fastf_t)width;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)gedp->u_data;
 
-    if (gdvp->gdv_view->gv_data_arrows.gdas_draw)
-	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_arrows, sf);
+    int width = dm_get_width((struct dm *)gdvp->dmp);
+    fastf_t sf = (fastf_t)(gdvp->gv_size) / (fastf_t)width;
 
-    if (gdvp->gdv_view->gv_sdata_arrows.gdas_draw)
-	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_arrows, sf);
+    if (gdvp->gv_data_arrows.gdas_draw)
+	go_dm_draw_arrows((struct dm *)gdvp->dmp, &gdvp->gv_data_arrows, sf);
 
-    if (gdvp->gdv_view->gv_data_axes.draw)
-	dm_draw_data_axes(gdvp->gdv_dmp,
+    if (gdvp->gv_sdata_arrows.gdas_draw)
+	go_dm_draw_arrows((struct dm *)gdvp->dmp, &gdvp->gv_sdata_arrows, sf);
+
+    if (gdvp->gv_data_axes.draw)
+	dm_draw_data_axes((struct dm *)gdvp->dmp,
 			  sf,
-			  &gdvp->gdv_view->gv_data_axes);
+			  &gdvp->gv_data_axes);
 
-    if (gdvp->gdv_view->gv_sdata_axes.draw)
-	dm_draw_data_axes(gdvp->gdv_dmp,
+    if (gdvp->gv_sdata_axes.draw)
+	dm_draw_data_axes((struct dm *)gdvp->dmp,
 			  sf,
-			  &gdvp->gdv_view->gv_sdata_axes);
+			  &gdvp->gv_sdata_axes);
 
-    if (gdvp->gdv_view->gv_data_lines.gdls_draw)
-	go_dm_draw_lines(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_lines);
+    if (gdvp->gv_data_lines.gdls_draw)
+	go_dm_draw_lines((struct dm *)gdvp->dmp, &gdvp->gv_data_lines);
 
-    if (gdvp->gdv_view->gv_sdata_lines.gdls_draw)
-	go_dm_draw_lines(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_lines);
+    if (gdvp->gv_sdata_lines.gdls_draw)
+	go_dm_draw_lines((struct dm *)gdvp->dmp, &gdvp->gv_sdata_lines);
 
-    if (gdvp->gdv_view->gv_data_polygons.gdps_draw)
-	go_dm_draw_polys(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_polygons, gdvp->gdv_view->gv_mode);
+    if (gdvp->gv_data_polygons.gdps_draw)
+	go_dm_draw_polys((struct dm *)gdvp->dmp, &gdvp->gv_data_polygons, gdvp->gv_mode);
 
-    if (gdvp->gdv_view->gv_sdata_polygons.gdps_draw)
-	go_dm_draw_polys(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_polygons, gdvp->gdv_view->gv_mode);
+    if (gdvp->gv_sdata_polygons.gdps_draw)
+	go_dm_draw_polys((struct dm *)gdvp->dmp, &gdvp->gv_sdata_polygons, gdvp->gv_mode);
 
     /* Restore to non-rotated, full brightness */
-    (void)dm_normal(gdvp->gdv_dmp);
-    go_draw_faceplate(gop, gdvp);
+    (void)dm_normal((struct dm *)gdvp->dmp);
+    go_draw_faceplate(gedp, gdvp);
 
-    if (gdvp->gdv_view->gv_data_labels.gdls_draw)
-	go_dm_draw_labels(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_labels, gdvp->gdv_view->gv_model2view);
+    if (gdvp->gv_data_labels.gdls_draw)
+	go_dm_draw_labels((struct dm *)gdvp->dmp, &gdvp->gv_data_labels, gdvp->gv_model2view);
 
-    if (gdvp->gdv_view->gv_sdata_labels.gdls_draw)
-	go_dm_draw_labels(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_labels, gdvp->gdv_view->gv_model2view);
+    if (gdvp->gv_sdata_labels.gdls_draw)
+	go_dm_draw_labels((struct dm *)gdvp->dmp, &gdvp->gv_sdata_labels, gdvp->gv_model2view);
 
     /* Draw labels */
-    if (gdvp->gdv_view->gv_prim_labels.gos_draw) {
+    if (gdvp->gv_prim_labels.gos_draw) {
 	register int i;
 
-	for (i = 0; i < gop->go_prim_label_list_size; ++i) {
-	    dm_draw_labels(gdvp->gdv_dmp,
-			   gop->go_gedp->ged_wdbp,
-			   bu_vls_addr(&gop->go_prim_label_list[i]),
-			   gdvp->gdv_view->gv_model2view,
-			   gdvp->gdv_view->gv_prim_labels.gos_text_color,
+	for (i = 0; i < tgd->go_prim_label_list_size; ++i) {
+	    dm_draw_labels((struct dm *)gdvp->dmp,
+			   gedp->ged_wdbp,
+			   bu_vls_addr(&tgd->go_prim_label_list[i]),
+			   gdvp->gv_model2view,
+			   gdvp->gv_prim_labels.gos_text_color,
 			   NULL, NULL);
 	}
     }

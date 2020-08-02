@@ -67,7 +67,7 @@ main(int ac, char *av[])
     flag = ged_coil(&ged, ac, (const char**)av);
     /* Close database */
     wdb_close(db_fp);
-    if (flag == GED_ERROR)
+    if (flag & GED_ERROR)
 	/* Creation failed - remove file */
 	bu_file_delete(DEFAULT_COIL_FILENAME);
     bu_log("%s\n", bu_vls_addr(ged.ged_result_str));

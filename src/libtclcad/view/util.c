@@ -56,12 +56,12 @@ screen_to_view_y(struct dm *dmp, fastf_t y)
 
 
 int
-to_is_viewable(struct ged_dm_view *gdvp)
+to_is_viewable(struct bview *gdvp)
 {
     Tcl_Obj *our_result;
     Tcl_Obj *saved_result;
     int result_int;
-    const char *pathname = bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp));
+    const char *pathname = bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp));
 
     /* stash any existing result so we can inspect our own */
     saved_result = Tcl_GetObjResult(current_top->to_interp);

@@ -150,7 +150,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 wrapup:
 
     bu_vls_free(&pvls);
-    if (status == GED_ERROR)
+    if (status & GED_ERROR)
 	rt_db_free_internal(&intern);
     return status;
 }

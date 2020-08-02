@@ -1006,7 +1006,7 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* validate user options */
-    if (get_args(gedp, argc, (char **)argv, &state) == GED_ERROR)
+    if (get_args(gedp, argc, (char **)argv, &state) & GED_ERROR)
 	return GED_ERROR;
 
     bu_vls_init(&state.olist);

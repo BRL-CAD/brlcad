@@ -86,13 +86,16 @@ ged_close(struct ged *gedp)
 
     /* Terminate any ged subprocesses */
     if (gedp != GED_NULL) {
-	struct ged_subprocess *rrp;
-	for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	    struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	    if (!rrp->aborted) {
 		bu_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 	    }
+	    bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
+	    BU_PUT(rrp, struct ged_subprocess);
 	}
+	bu_ptbl_reset(&gedp->ged_subp);
     }
 
     ged_free(gedp);
@@ -154,7 +157,38 @@ ged_free(struct ged *gedp)
 
     gedp->ged_wdbp = RT_WDB_NULL;
 
+    bu_vls_free(&gedp->go_name);
+
+    // Note - it is the caller's responsibility to have freed any data
+    // associated with the ged or its views in the u_data pointers.
+    //
+    // Since libged does not link libdm, it's also the responsibility of the
+    // caller to close any display managers associated with the view.
+    struct bview *gdvp;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	bu_vls_free(&gdvp->gv_name);
+	bu_ptbl_free(gdvp->callbacks);
+	BU_PUT(gdvp->callbacks, struct bu_ptbl);
+	bu_free((void *)gdvp, "bview");
+    }
+    bu_ptbl_free(&gedp->ged_views);
+
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
+
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
+	    // TODO - FREE_SOLID macro is stashing on the freesolid list, not
+	    // BU_PUT-ing the solid objects themselves - is that what we expect
+	    // when doing ged_free?  I.e., is ownership of the free solid list
+	    // with the struct ged or with the application as a whole?  We're
+	    // BU_PUT-ing gedp->freesolid - above why just that one?
+#if 0
+	    struct solid *sp = (struct solid *)BU_PTBL_GET(&gedp->free_solids, i);
+	    RT_FREE_VLIST(&(sp->s_vlist));
+#endif
+	}
+	bu_ptbl_free(&gedp->free_solids);
+
 	if (gedp->ged_gdp->gd_headDisplay)
 	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
 	if (gedp->ged_gdp->gd_headVDraw)
@@ -178,6 +212,7 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
+    // TODO - replace freesolid with free_solids ptbl
     {
 	struct solid *nsp;
 	sp = BU_LIST_NEXT(solid, &gedp->freesolid->l);
@@ -193,18 +228,23 @@ ged_free(struct ged *gedp)
     free_object_selections(gedp->ged_selections);
     bu_hash_destroy(gedp->ged_selections);
 
+    BU_PUT(gedp->ged_cbs, struct ged_callback_state);
+
+    bu_ptbl_free(&gedp->ged_subp);
 }
 
 void
 ged_init(struct ged *gedp)
 {
-    struct solid *freesolid;
-
     if (gedp == GED_NULL)
 	return;
 
-    BU_LIST_INIT(&gedp->l);
     gedp->ged_wdbp = RT_WDB_NULL;
+
+    // TODO - rename to ged_name
+    bu_vls_init(&gedp->go_name);
+
+    BU_PTBL_INIT(&gedp->ged_views);
 
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
@@ -212,7 +252,7 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_results, struct ged_results);
     (void)_ged_results_init(gedp->ged_results);
 
-    BU_LIST_INIT(&gedp->gd_headSubprocess.l);
+    BU_PTBL_INIT(&gedp->ged_subp);
 
     /* For now, we're keeping the string... will go once no one uses it */
     BU_GET(gedp->ged_result_str, struct bu_vls);
@@ -230,19 +270,37 @@ ged_init(struct ged *gedp)
     gedp->ged_selections = bu_hash_create(32);
 
     /* init the solid list */
+    struct solid *freesolid;
     BU_GET(freesolid, struct solid);
     BU_LIST_INIT(&freesolid->l);
     gedp->freesolid = freesolid;
-    gedp->ged_gdp->gd_freeSolids = freesolid;
 
-    /* (in)sanity */
+    /* TODO: If we're init-ing the list here, does that mean the gedp has
+     * ownership of all solid objects created and stored here, and should we
+     * then free them when ged_free is called? (don't appear to be currently,
+     * just calling FREE_SOLID which doesn't de-allocate... */
+    BU_PTBL_INIT(&gedp->free_solids);
+
+    /* Initialize callbacks */
+    BU_GET(gedp->ged_cbs, struct ged_callback_state);
+    gedp->ged_refresh_handler = NULL;
+    gedp->ged_refresh_clientdata = NULL;
+    gedp->ged_output_handler = NULL;
+    gedp->ged_create_vlist_solid_callback = NULL;
+    gedp->ged_create_vlist_display_list_callback = NULL;
+    gedp->ged_destroy_vlist_callback = NULL;
+    gedp->ged_create_io_handler = NULL;
+    gedp->ged_delete_io_handler = NULL;
+    gedp->ged_io_data = NULL;
+
+    /* Out of the gate we don't have display managers or views */
     gedp->ged_gvp = NULL;
     gedp->ged_dmp = NULL;
-    gedp->ged_refresh_clientdata = NULL;
-    gedp->ged_refresh_handler = NULL;
-    gedp->ged_output_handler = NULL;
+
+    /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
+
 }
 
 
@@ -251,6 +309,8 @@ ged_view_init(struct bview *gvp)
 {
     if (gvp == GED_VIEW_NULL)
 	return;
+
+    gvp->magic = BVIEW_MAGIC;
 
     gvp->gv_scale = 500.0;
     gvp->gv_size = 2.0 * gvp->gv_scale;
@@ -653,6 +713,81 @@ _ged_print_node(struct ged *gedp,
     }
     rt_db_free_internal(&intern);
 }
+
+/* Callback wrapper functions */
+
+void
+ged_refresh_cb(struct ged *gedp)
+{
+    if (gedp->ged_refresh_handler != GED_REFRESH_FUNC_NULL) {
+	gedp->ged_cbs->ged_refresh_handler_cnt++;
+	if (gedp->ged_cbs->ged_refresh_handler_cnt > 1) {
+	    bu_log("Warning - recursive call of gedp->ged_refresh_handler!\n");
+	}
+	(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	gedp->ged_cbs->ged_refresh_handler_cnt--;
+    }
+}
+
+void
+ged_output_handler_cb(struct ged *gedp, char *str)
+{
+    if (gedp->ged_output_handler != (void (*)(struct ged *, char *))0) {
+	gedp->ged_cbs->ged_output_handler_cnt++;
+	if (gedp->ged_cbs->ged_output_handler_cnt > 1) {
+	    bu_log("Warning - recursive call of gedp->ged_output_handler!\n");
+	}
+	(*gedp->ged_output_handler)(gedp, str);
+	gedp->ged_cbs->ged_output_handler_cnt--;
+    }
+}
+
+void
+ged_create_vlist_solid_cb(struct ged *gedp, struct solid *s)
+{
+    if (gedp->ged_create_vlist_solid_callback != GED_CREATE_VLIST_SOLID_FUNC_NULL) {
+	gedp->ged_cbs->ged_create_vlist_solid_callback_cnt++;
+	if (gedp->ged_cbs->ged_create_vlist_solid_callback_cnt > 1) {
+	    bu_log("Warning - recursive call of gedp->ged_create_vlist_solid_callback!\n");
+	}
+	(*gedp->ged_create_vlist_solid_callback)(s);
+	gedp->ged_cbs->ged_create_vlist_solid_callback_cnt--;
+    }
+}
+
+void
+ged_create_vlist_display_list_cb(struct ged *gedp, struct display_list *dl)
+{
+    if (gedp->ged_create_vlist_display_list_callback != GED_CREATE_VLIST_DISPLAY_LIST_FUNC_NULL) {
+	gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt++;
+	if (gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt > 1) {
+	    bu_log("Warning - recursive call of gedp->ged_create_vlist_callback!\n");
+	}
+	(*gedp->ged_create_vlist_display_list_callback)(dl);
+	gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt--;
+    }
+}
+
+void
+ged_destroy_vlist_cb(struct ged *gedp, unsigned int i, int j)
+{
+    if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
+	gedp->ged_cbs->ged_destroy_vlist_callback_cnt++;
+	if (gedp->ged_cbs->ged_destroy_vlist_callback_cnt > 1) {
+	    bu_log("Warning - recursive call of gedp->ged_destroy_vlist_callback!\n");
+	}
+	(*gedp->ged_destroy_vlist_callback)(i, j);
+	gedp->ged_cbs->ged_destroy_vlist_callback_cnt--;
+    }
+}
+
+#if 0
+int
+ged_io_handler_cb(struct ged *, ged_io_handler_callback_t *cb, void *, int)
+{
+    if (
+}
+#endif
 
 /*
  * Local Variables:

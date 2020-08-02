@@ -64,15 +64,10 @@ __BEGIN_DECLS
 /* defined in display_list.c */
 GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
 GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
-GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
-					       struct db_i *dbip,
-					       void (*callback)(unsigned int, int),
-					       const char *path,
-					       int allow_split,
-					       struct solid *freesolid);
+GED_EXPORT extern void dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split);
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
 
-GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid, int csoltab);
+GED_EXPORT extern int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, int csoltab);
 
 /* defined in ged.c */
 GED_EXPORT extern void ged_view_init(struct bview *gvp);
@@ -153,6 +148,8 @@ GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bview_data_polygon_st
 GED_EXPORT extern struct bg_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB);
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
+
+GED_EXPORT extern struct bview * ged_find_view(struct ged *gedp, const char *key);
 
 // TODO - this (and probably the grid logic too) belong at the libdm level - they're operating
 // on the bview, rather than the ged level data...

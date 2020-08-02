@@ -84,8 +84,8 @@ _view_dlines_cmd_draw(void *bs, int argc, const char **argv)
 
 	gdlsp->gdls_draw = (i) ? 1 : 0;
 
-	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	ged_refresh_cb(gedp);
+
 	return GED_OK;
     }
 
@@ -144,8 +144,7 @@ _view_dlines_cmd_color(void *bs, int argc, const char **argv)
 
 	VSET(gdlsp->gdls_color, r, g, b);
 
-	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	ged_refresh_cb(gedp);
 
 	return GED_OK;
     }
@@ -173,8 +172,7 @@ _view_dlines_cmd_line_width(void *bs, int argc, const char **argv)
 
 	gdlsp->gdls_line_width = line_width;
 
-	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	ged_refresh_cb(gedp);
 
 	return GED_OK;
     }
@@ -219,8 +217,7 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
 
 	/* Clear out data points */
 	if (ac < 1) {
-	    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-		(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	    ged_refresh_cb(gedp);
 
 	    bu_free((char *)av, "av");
 	    return GED_OK;
@@ -238,8 +235,7 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
 		gdlsp->gdls_points = (point_t *)0;
 		gdlsp->gdls_num_points = 0;
 
-		if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-		    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+		ged_refresh_cb(gedp);
 
 		bu_free((char *)av, "av");
 		return GED_ERROR;
@@ -248,8 +244,7 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
 	    VMOVE(gdlsp->gdls_points[i], scan);
 	}
 
-	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	ged_refresh_cb(gedp);
 	bu_free((char *)av, "av");
 	return GED_OK;
     }

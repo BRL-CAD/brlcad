@@ -50,6 +50,42 @@
 #include "ged.h"
 #include "./ged_private.h"
 
+struct bview *
+ged_find_view(struct ged *gedp, const char *key)
+{
+    struct bview *gdvp = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), key))
+	    break;
+	gdvp = NULL;
+    }
+
+    return gdvp;
+}
+
+void
+ged_push_solid(struct ged *gedp, struct solid *sp)
+{
+    RT_FREE_VLIST(&(sp->s_vlist));
+    sp->s_fullpath.fp_len = 0; // Don't free memory, but implicitly clear contents
+    bu_ptbl_ins(&gedp->free_solids, (long *)sp);
+}
+
+struct solid *
+ged_pop_solid(struct ged *gedp)
+{
+    struct solid *sp = NULL;
+    if (BU_PTBL_LEN(&gedp->free_solids)) {
+	sp = (struct solid *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
+	bu_ptbl_rm(&gedp->free_solids, (long *)sp);
+    } else {
+	BU_ALLOC(sp, struct solid); // from GET_SOLID in rt/solid.h
+	db_full_path_init(&(sp)->s_fullpath);
+    }
+    return sp;
+}
+
 int
 _ged_results_init(struct ged_results *results)
 {
@@ -1018,9 +1054,9 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	wcolor[0] = (unsigned char)dgcdp->wireframe_color[0];
 	wcolor[1] = (unsigned char)dgcdp->wireframe_color[1];
 	wcolor[2] = (unsigned char)dgcdp->wireframe_color[2];
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, wcolor, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
+	dl_add_path(dashflag, vhead, pathp, tsp, wcolor, dgcdp);
     } else {
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, NULL, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
+	dl_add_path(dashflag, vhead, pathp, tsp, NULL, dgcdp);
     }
 }
 
@@ -1037,7 +1073,7 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char 
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
 	snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
-	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_solid_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, gedp->freesolid, 0);
+	invent_solid(gedp, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, 0);
     }
 }
 
@@ -1297,30 +1333,24 @@ _ged_rt_set_eye_model(struct ged *gedp,
     }
 }
 
-struct _ged_rt_client_data {
-    struct ged_subprocess *rrtp;
-    struct ged *gedp;
-};
-
 void
 _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 {
-    struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
-    struct ged_subprocess *run_rtp;
+    struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
     int count = 0;
     int retcode = 0;
     int read_failed = 0;
     char line[RT_MAXLINE+1] = {0};
 
-    if (drcdp == (struct _ged_rt_client_data *)NULL ||
-	drcdp->gedp == (struct ged *)NULL ||
-	drcdp->rrtp == (struct ged_subprocess *)NULL)
+    if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
 	return;
 
-    run_rtp = drcdp->rrtp;
+    BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
+
+    struct ged *gedp = rrtp->gedp;
 
     /* Get data from rt */
-    if (bu_process_read((char *)line, &count, run_rtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+    if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
 	read_failed = 1;
     }
 
@@ -1328,14 +1358,14 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	int aborted;
 
 	/* Done watching for output, undo subprocess I/O hooks. */
-	if (drcdp->gedp->ged_delete_io_handler) {
-	    (*drcdp->gedp->ged_delete_io_handler)(drcdp->gedp->ged_interp, run_rtp->chan,
-		    run_rtp->p, BU_PROCESS_STDERR, (void *)drcdp,
-		    _ged_rt_output_handler);
+	if (gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
 	}
+
+
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
-	retcode = bu_process_wait(&aborted, run_rtp->p, 120);
+	retcode = bu_process_wait(&aborted, rrtp->p, 120);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");
@@ -1344,13 +1374,12 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
+	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
-	/* free run_rtp */
-	BU_LIST_DEQUEUE(&run_rtp->l);
-	BU_PUT(run_rtp, struct ged_subprocess);
-	BU_PUT(drcdp, struct _ged_rt_client_data);
+	/* free rrtp */
+	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
+	BU_PUT(rrtp, struct ged_subprocess);
 
 	return;
     }
@@ -1359,10 +1388,11 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
     line[count] = '\0';
 
     /* handle (i.e., probably log to stderr) the resulting line */
-    if (drcdp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
-	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
+    if (gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
+	ged_output_handler_cb(gedp, line);
     else
-	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
+	bu_vls_printf(gedp->ged_result_str, "%s", line);
+
 }
 
 void
@@ -1431,7 +1461,6 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     FILE *fp_in;
     vect_t eye_model;
     struct ged_subprocess *run_rtp;
-    struct _ged_rt_client_data *drcdp;
     struct bu_process *p = NULL;
 
     bu_process_exec(&p, gd_rt_cmd[0], cmd_len, gd_rt_cmd, 0, 0);
@@ -1452,19 +1481,16 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     bu_process_close(p, BU_PROCESS_STDIN);
 
     BU_GET(run_rtp, struct ged_subprocess);
-    BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
+    run_rtp->magic = GED_CMD_MAGIC;
+    bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;
     run_rtp->aborted = 0;
-
-    BU_GET(drcdp, struct _ged_rt_client_data);
-    drcdp->gedp = gedp;
-    drcdp->rrtp = run_rtp;
+    run_rtp->gedp = gedp;
 
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {
-	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
+	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
     }
     return GED_OK;
 }
@@ -1525,7 +1551,7 @@ _ged_combadd(struct ged *gedp,
     av[0] = objp->d_namep;
     av[1] = NULL;
 
-    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, NULL, 1) == GED_ERROR)
+    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, NULL, 1) & GED_ERROR)
 	return RT_DIR_NULL;
 
     /* Done changing stuff - update nref. */

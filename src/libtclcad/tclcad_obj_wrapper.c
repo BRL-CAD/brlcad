@@ -47,7 +47,7 @@ to_autoview_func(struct ged *gedp,
     char *av[2];
     int aflag = 0;
     int rflag = 0;
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     av[0] = "who";
     av[1] = (char *)0;
@@ -67,10 +67,11 @@ to_autoview_func(struct ged *gedp,
     if (!rflag && ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+    for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (to_is_viewable(gdvp)) {
-	    gedp->ged_gvp->gv_x_samples = dm_get_width(gdvp->gdv_dmp);
-	    gedp->ged_gvp->gv_y_samples = dm_get_height(gdvp->gdv_dmp);
+	    gedp->ged_gvp->gv_x_samples = dm_get_width((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->gv_y_samples = dm_get_height((struct dm *)gdvp->dmp);
 	}
     }
 
@@ -107,6 +108,7 @@ to_more_args_func(struct ged *gedp,
     char **av;
     struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     ac = argc;
     total_ac = ac + 1;
@@ -125,10 +127,10 @@ to_more_args_func(struct ged *gedp,
 	const char **avmp;
 	const char **av_more = NULL;
 
-	if (0 < bu_vls_strlen(&current_top->to_gop->go_more_args_callback)) {
+	if (0 < bu_vls_strlen(&tgd->go_more_args_callback)) {
 	    bu_vls_trunc(&callback_cmd, 0);
 	    bu_vls_printf(&callback_cmd, "%s [string range {%s} 0 end]",
-			  bu_vls_addr(&current_top->to_gop->go_more_args_callback),
+			  bu_vls_addr(&tgd->go_more_args_callback),
 			  bu_vls_addr(gedp->ged_result_str));
 
 	    if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd)) != TCL_OK) {
@@ -252,7 +254,7 @@ to_view_func_common(struct ged *gedp,
     int ret;
     int ac;
     char **av;
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -269,20 +271,16 @@ to_view_func_common(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
-    gedp->ged_dmp = gdvp->gdv_dmp;
+    gedp->ged_dmp = (struct dm *)gdvp->dmp;
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
-    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_gvp = gdvp;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;
@@ -294,25 +292,26 @@ to_view_func_common(struct ged *gedp,
     bu_free(av, "free av copy");
 
     /* Keep the view's perspective in sync with its corresponding display manager */
-    dm_set_perspective(gdvp->gdv_dmp, gdvp->gdv_view->gv_perspective);
+    dm_set_perspective((struct dm *)gdvp->dmp, gdvp->gv_perspective);
 
-    if (gdvp->gdv_view->gv_adaptive_plot &&
-	gdvp->gdv_view->gv_redraw_on_zoom)
+    if (gdvp->gv_adaptive_plot &&
+	gdvp->gv_redraw_on_zoom)
     {
 	char *gr_av[] = {"redraw", NULL};
 
 	ged_redraw(gedp, 1, (const char **)gr_av);
 
-	gdvp->gdv_view->gv_x_samples = dm_get_width(gdvp->gdv_dmp);
-	gdvp->gdv_view->gv_y_samples = dm_get_height(gdvp->gdv_dmp);
+	gdvp->gv_x_samples = dm_get_width((struct dm *)gdvp->dmp);
+	gdvp->gv_y_samples = dm_get_height((struct dm *)gdvp->dmp);
     }
 
     if (ret == GED_OK) {
-	if (cflag && 0 < bu_vls_strlen(&gdvp->gdv_callback)) {
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+	if (cflag && 0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    struct bu_vls save_result = BU_VLS_INIT_ZERO;
 
 	    bu_vls_printf(&save_result, "%s", bu_vls_addr(gedp->ged_result_str));
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&save_result));
 	    bu_vls_free(&save_result);
@@ -375,7 +374,7 @@ to_dm_func(struct ged *gedp,
     int ret;
     int ac;
     char **av;
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -392,19 +391,15 @@ to_dm_func(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
-    gedp->ged_gvp = gdvp->gdv_view;
-    gedp->ged_dmp = (void *)gdvp->gdv_dmp;
+    gedp->ged_gvp = gdvp;
+    gedp->ged_dmp = (void *)gdvp->dmp;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;
@@ -416,7 +411,7 @@ to_dm_func(struct ged *gedp,
     bu_free(av, "free av copy");
 
     /* Keep the view's perspective in sync with its corresponding display manager */
-    dm_set_perspective(gdvp->gdv_dmp, gdvp->gdv_view->gv_perspective);
+    dm_set_perspective((struct dm *)gdvp->dmp, gdvp->gv_perspective);
 
     return ret;
 }

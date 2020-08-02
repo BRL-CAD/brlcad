@@ -34,24 +34,25 @@
 #include "../view/view.h"
 
 void
-to_autoview_view(struct ged_dm_view *gdvp, const char *scale)
+to_autoview_view(struct bview *gdvp, const char *scale)
 {
     int ret;
     const char *av[3];
 
-    gdvp->gdv_gop->go_gedp->ged_gvp = gdvp->gdv_view;
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    tvd->gedp->ged_gvp = gdvp;
     av[0] = "autoview";
     av[1] = scale;
     av[2] = NULL;
 
     if (scale)
-	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 2, (const char **)av);
+	ret = ged_autoview(tvd->gedp, 2, (const char **)av);
     else
-	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 1, (const char **)av);
+	ret = ged_autoview(tvd->gedp, 1, (const char **)av);
 
     if (ret == GED_OK) {
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	}
 
 	to_refresh_view(gdvp);
@@ -66,7 +67,7 @@ to_autoview(struct ged *gedp,
 	    const char *usage,
 	    int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -76,12 +77,8 @@ to_autoview(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -98,9 +95,10 @@ to_autoview(struct ged *gedp,
 void
 to_autoview_all_views(struct tclcad_obj *top)
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
+    for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
 	to_autoview_view(gdvp, NULL);
     }
 }

@@ -476,9 +476,6 @@ mged_setup(Tcl_Interp **interpreter)
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
     GEDP->ged_interp = (void *)*interpreter;
-    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
-    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
-    GEDP->io_mode = TCL_READABLE;
     GEDP->ged_interp_eval = &mged_db_search_callback;
 
     /* Tcl needs to write nulls onto subscripted variable names */

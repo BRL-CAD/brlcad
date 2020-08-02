@@ -35,7 +35,7 @@
 
 int
 to_axes(struct ged *gedp,
-	struct ged_dm_view *gdvp,
+	struct bview *gdvp,
 	struct bview_axes_state *gasp,
 	int argc,
 	const char *argv[],
@@ -444,7 +444,7 @@ bad:
 int
 go_data_axes(Tcl_Interp *interp,
 	     struct ged *gedp,
-	     struct ged_dm_view *gdvp,
+	     struct bview *gdvp,
 	     int argc,
 	     const char *argv[],
 	     const char *usage)
@@ -466,11 +466,13 @@ go_data_axes(Tcl_Interp *interp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     ret = to_data_axes_func(interp, gedp, gdvp, argc, argv);
-    if (ret == GED_ERROR)
+    if (ret & GED_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -484,7 +486,7 @@ to_data_axes(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -501,12 +503,8 @@ to_data_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -523,16 +521,16 @@ to_data_axes(struct ged *gedp,
 int
 to_data_axes_func(Tcl_Interp *interp,
 		  struct ged *gedp,
-		  struct ged_dm_view *gdvp,
+		  struct bview *gdvp,
 		  int argc,
 		  const char *argv[])
 {
     struct bview_data_axes_state *gdasp;
 
     if (argv[0][0] == 's')
-	gdasp = &gdvp->gdv_view->gv_sdata_axes;
+	gdasp = &gdvp->gv_sdata_axes;
     else
-	gdasp = &gdvp->gdv_view->gv_data_axes;
+	gdasp = &gdvp->gv_data_axes;
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {
@@ -702,7 +700,7 @@ to_model_axes(struct ged *gedp,
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -718,41 +716,37 @@ to_model_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
+    gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+        bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+        return GED_ERROR;
     }
 
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    return to_axes(gedp, gdvp, &gdvp->gdv_view->gv_model_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_model_axes, argc, argv, usage);
 }
 
 int
-go_view_axes(struct ged_obj *gop,
-	     struct ged_dm_view *gdvp,
+go_view_axes(struct ged *gedp,
+	     struct bview *gdvp,
 	     int argc,
 	     const char *argv[],
 	     const char *usage)
 {
     /* initialize result */
-    bu_vls_trunc(gop->go_gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gop->go_gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(gop->go_gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    return to_axes(gop->go_gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_view_axes, argc, argv, usage);
 }
 
 
@@ -764,7 +758,7 @@ to_view_axes(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -780,17 +774,13 @@ to_view_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
-    return to_axes(gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_view_axes, argc, argv, usage);
 }
 
 

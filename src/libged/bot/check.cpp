@@ -711,7 +711,7 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    if (_bot_obj_setup(gb, argv[argc-1]) == GED_ERROR) {
+    if (_bot_obj_setup(gb, argv[argc-1]) & GED_ERROR) {
 	return GED_ERROR;
     }
     argc--;

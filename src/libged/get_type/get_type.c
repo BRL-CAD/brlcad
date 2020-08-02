@@ -56,7 +56,7 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) == GED_ERROR)
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) & GED_ERROR)
 	return GED_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {

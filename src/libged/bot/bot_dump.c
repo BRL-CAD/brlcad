@@ -891,7 +891,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
     using_dbot_dump = 0;
 
-    if (bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
+    if (bot_dump_get_args(gedp, argc, argv) & GED_ERROR)
 	return GED_ERROR;
 
     if (bu_optind > argc) {

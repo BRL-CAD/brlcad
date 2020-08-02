@@ -196,7 +196,8 @@ struct bview_other_state {
 };
 
 struct bview {
-    struct bu_list              l;
+    uint32_t			magic;         /**< @brief magic number */
+    struct bu_vls               gv_name;
     fastf_t                     gv_scale;
     fastf_t                     gv_size;                /**< @brief  2.0 * scale */
     fastf_t                     gv_isize;               /**< @brief  1.0 / size */
@@ -251,11 +252,14 @@ struct bview {
     fastf_t                     gv_curve_scale;
     fastf_t                     gv_data_vZ;
     size_t                      gv_bot_threshold;
+    int			        gv_hidden;
+    void                        *dmp;  /* Display manager pointer, if one is associated with this view */
+    void                        *u_data; /* Caller data associated with this view */
     struct bu_ptbl *callbacks;
 };
 
 
-struct bview_client_data {
+struct bview_solid_data {
     struct display_list *gdlp;
     int draw_solid_lines_only;
     int wireframe_color_override;
@@ -265,37 +269,6 @@ struct bview_client_data {
     int hiddenLine;
     void *freesolid;
 };
-
-/**
- * A view object maintains state for controlling a view.
- */
-struct view_obj {
-    struct bu_list      l;
-    struct bu_vls       vo_name;                /**< @brief  view object name/cmd */
-    fastf_t             vo_scale;
-    fastf_t             vo_size;                /**< @brief  2.0 * scale */
-    fastf_t             vo_invSize;             /**< @brief  1.0 / size */
-    fastf_t             vo_perspective;         /**< @brief  perspective angle */
-    fastf_t             vo_local2base;          /**< @brief  scale local units to base units (i.e. mm) */
-    fastf_t             vo_base2local;          /**< @brief  scale base units (i.e. mm) to local units */
-    vect_t              vo_aet;
-    vect_t              vo_eye_pos;             /**< @brief  eye position */
-    vect_t              vo_keypoint;
-    char                vo_coord;               /**< @brief  coordinate system */
-    char                vo_rotate_about;        /**< @brief  indicates what point rotations are about */
-    mat_t               vo_rotation;
-    mat_t               vo_center;
-    mat_t               vo_model2view;
-    mat_t               vo_pmodel2view;
-    mat_t               vo_view2model;
-    mat_t               vo_pmat;                /**< @brief  perspective matrix */
-    struct bu_observer_list  vo_observers;
-    void                (*vo_callback)();       /**< @brief  called in vo_update with vo_clientData and vop */
-    void *              vo_clientData;          /**< @brief  passed to vo_callback */
-    int                 vo_zclip;
-    void		*interp;
-};
-#define VIEW_OBJ_NULL ((struct view_obj *)0)
 
 #endif /* DM_BVIEW_H */
 

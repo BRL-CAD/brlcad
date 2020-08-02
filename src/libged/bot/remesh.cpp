@@ -179,7 +179,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
-    if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
+    if (_bot_obj_setup(gb, argv[0]) & GED_ERROR) {
 	return GED_ERROR;
     }
 
