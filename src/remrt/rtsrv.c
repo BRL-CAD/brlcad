@@ -316,13 +316,7 @@ main(int argc, char **argv)
 
     avail_cpus = bu_avail_cpus();
 
-    /* Need to set rtg_parallel non_zero here for RES_INIT to work */
     npsw = avail_cpus;
-    if (npsw > 1) {
-	RTG.rtg_parallel = 1;
-    } else {
-	RTG.rtg_parallel = 0;
-    }
 
     bu_log("using %zu of %d cpus\n",
 	   npsw, avail_cpus);
@@ -558,12 +552,6 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
     if (rt_gettrees(rtip, argc, (const char **)argv, npsw) < 0)
 	fprintf(stderr, "rt_gettrees(%s) FAILED\n", argv[0]);
     bu_free(argv, "free argv");
-
-    /* In case it changed from startup time via an OPT command */
-    if (npsw > 1) {
-	RTG.rtg_parallel = 1;
-    } else
-	RTG.rtg_parallel = 0;
 
     seen_gettrees = 1;
     (void)free(buf);

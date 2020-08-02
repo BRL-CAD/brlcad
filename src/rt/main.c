@@ -353,11 +353,8 @@ int main(int argc, char *argv[])
     }
 
     if (npsw > 1) {
-	RTG.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
 	    fprintf(stderr, "Planning to run with %lu processors\n", (unsigned long)npsw );
-    } else {
-	RTG.rtg_parallel = 0;
     }
 
     /*

@@ -733,7 +733,7 @@ do_run(int a, int b)
     int p[2] = {0, 0};
     struct resource *tmp_res;
 
-    if (RTG.rtg_parallel) {
+    if (npsw > 1) {
 	buffer = bu_calloc(npsw, sizeof(resource[0]), "buffer");
 	if (pipe(p) == -1) {
 	    perror("pipe failed");
@@ -744,7 +744,7 @@ do_run(int a, int b)
     cur_pixel = a;
     last_pixel = b;
 
-    if (!RTG.rtg_parallel) {
+    if (npsw < 2) {
 	/*
 	 * SERIAL case -- one CPU does all the work.
 	 */
@@ -809,7 +809,7 @@ do_run(int a, int b)
     } /* end parallel case */
 
 #ifdef USE_FORKED_THREADS
-    if (RTG.rtg_parallel) {
+    if (npsw > 1) {
 	tmp_res = (struct resource *)buffer;
     } else {
 	tmp_res = resource;

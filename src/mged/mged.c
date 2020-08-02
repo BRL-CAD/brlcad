@@ -1054,13 +1054,9 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
-    /* If multiple processors might be used, initialize for it.
-     * Do not run any commands before here.
+    /* Do not run any commands before here.
      * Do not use bu_log() or bu_malloc() before here.
      */
-    if (bu_avail_cpus() > 1) {
-	RTG.rtg_parallel = 1;
-    }
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
