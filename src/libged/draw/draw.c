@@ -401,7 +401,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol, tsp->ts_resp);
+	result = nmg_boolean(curtree, *tsp->ts_m, &rtg_vlfree, tsp->ts_tol, tsp->ts_resp);
 
     } else {
 	/* catch */
@@ -425,7 +425,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
     if (!BU_SETJUMP) {
 	/* try */
 
-	nmg_triangulate_model(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	nmg_triangulate_model(*tsp->ts_m, &rtg_vlfree, tsp->ts_tol);
 	result = 0;
 
     } else {
@@ -525,12 +525,12 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	if (dgcdp->draw_no_surfaces) {
 	    style |= NMG_VLIST_STYLE_NO_SURFACES;
 	}
-	nmg_r_to_vlist(&vhead, r, style, &RTG.rtg_vlfree);
+	nmg_r_to_vlist(&vhead, r, style, &rtg_vlfree);
 
 	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 
 	if (dgcdp->draw_edge_uses) {
-	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, &RTG.rtg_vlfree);
+	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, &rtg_vlfree);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
 	db_free_tree(curtree, tsp->ts_resp);

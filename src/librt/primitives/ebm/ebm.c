@@ -1740,7 +1740,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* all faces should merge into one */
-    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 1, &rtg_vlfree);
 
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     NMG_CK_FACEUSE(fu);
@@ -1748,11 +1748,11 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VSET(h, 0.0, 0.0, eip->tallness);
     MAT4X3VEC(height, eip->mat, h);
 
-    nmg_extrude_face(fu, height, &RTG.rtg_vlfree,tol);
+    nmg_extrude_face(fu, height, &rtg_vlfree,tol);
 
     nmg_region_a(*r, tol);
 
-    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&s->l.magic, &rtg_vlfree);
 
     bu_free((char *)vertp, "rt_ebm_tess: vertp");
     bu_free((char *)loop_verts, "rt_ebm_tess: loop_verts");

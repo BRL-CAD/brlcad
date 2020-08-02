@@ -1386,10 +1386,10 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     rd.magic = NMG_RAY_DATA_MAGIC;
 
     /* intersect the ray with the geometry (sets surfno) */
-    nmg_isect_ray_model((struct nmg_ray_data *)&rd,&RTG.rtg_vlfree);
+    nmg_isect_ray_model((struct nmg_ray_data *)&rd,&rtg_vlfree);
 
     /* build the sebgent lists */
-    status = nmg_ray_segs(&rd,&RTG.rtg_vlfree);
+    status = nmg_ray_segs(&rd,&rtg_vlfree);
 
     /* free the hitmiss table */
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
@@ -1473,7 +1473,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
-    nmg_m_to_vlist(vhead, m, 0, &RTG.rtg_vlfree);
+    nmg_m_to_vlist(vhead, m, 0, &rtg_vlfree);
 
     return 0;
 }
@@ -3959,7 +3959,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "nmg");
 	bu_ptbl_init(&verts, 256, "nmg verts");
-	nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
+	nmg_vertex_tabulate(&verts, &m->magic, &rtg_vlfree);
 
 	/* first list all the vertices */
 	bu_vls_strcat(logstr, " V {");
@@ -4025,7 +4025,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	/* list of vertices */
 
 	bu_ptbl_init(&verts, 256, "nmg verts");
-	nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
+	nmg_vertex_tabulate(&verts, &m->magic, &rtg_vlfree);
 	for (i=0; i<BU_PTBL_LEN(&verts); i++) {
 	    v = (struct vertex *) BU_PTBL_GET(&verts, i);
 	    NMG_CK_VERTEX(v);
@@ -4181,7 +4181,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
 	    if (fu->orientation != OT_SAME)
 		continue;
-	    nmg_calc_face_g(fu,&RTG.rtg_vlfree);
+	    nmg_calc_face_g(fu,&rtg_vlfree);
 	}
     }
 
@@ -4241,7 +4241,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
     size_t *npts;
     point_t **tmp_pts;
     plane_t *eqs;
-    nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
+    nmg_face_tabulate(&nmg_faces, &s->l.magic, &rtg_vlfree);
     num_faces = BU_PTBL_LEN(&nmg_faces);
     tmp_pts = (point_t **)bu_calloc(num_faces, sizeof(point_t *), "rt_nmg_faces_area: tmp_pts");
     npts = (size_t *)bu_calloc(num_faces, sizeof(size_t), "rt_nmg_faces_area: npts");
@@ -4284,7 +4284,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    struct poly_face *faces;
 
 	    /*get faces of this shell*/
-	    nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
+	    nmg_face_tabulate(&nmg_faces, &s->l.magic, &rtg_vlfree);
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
 	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_surf_area: faces");
 
@@ -4325,7 +4325,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     /*get faces*/
-    nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
+    nmg_face_tabulate(&nmg_faces, &s->l.magic, &rtg_vlfree);
     num_faces = BU_PTBL_LEN(&nmg_faces);
     faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_centroid: faces");
 
@@ -4385,7 +4385,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    struct poly_face *faces;
 
 	    /*get faces of this shell*/
-	    nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
+	    nmg_face_tabulate(&nmg_faces, &s->l.magic, &rtg_vlfree);
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
 	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_volume: faces");
 
@@ -5213,7 +5213,7 @@ nmg_to_arb(const struct model *m, struct rt_arb_internal *arb_int)
     if (BU_LIST_NEXT_NOT_HEAD(&s->l, &r->s_hd))
 	return 0;
 
-    switch (Shell_is_arb(s, &tab, &RTG.rtg_vlfree)) {
+    switch (Shell_is_arb(s, &tab, &rtg_vlfree)) {
 	case 0:
 	    ret_val = 0;
 	    break;

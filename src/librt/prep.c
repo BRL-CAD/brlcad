@@ -75,7 +75,7 @@ rt_new_rti(struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     /* XXX Move to rt_global_init() ? */
-    if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0) {
+    if (BU_LIST_FIRST(bu_list, &rtg_vlfree) == 0) {
 	char *debug_flags;
 	debug_flags = getenv("LIBRT_DEBUG");
 	if (debug_flags) {
@@ -86,7 +86,7 @@ rt_new_rti(struct db_i *dbip)
 	    }
 	}
 
-	BU_LIST_INIT(&RTG.rtg_vlfree);
+	BU_LIST_INIT(&rtg_vlfree);
     }
 
     BU_ALLOC(rtip, struct rt_i);

@@ -711,9 +711,9 @@ int
 Rt_Init(Tcl_Interp *interp)
 {
     /*XXX how much will this break? */
-    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
+    if (!BU_LIST_IS_INITIALIZED(&rtg_vlfree)) {
 	/* initialize RT's global state */
-	BU_LIST_INIT(&RTG.rtg_vlfree);
+	BU_LIST_INIT(&rtg_vlfree);
 	if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
 	    rt_init_resource(&rt_uniresource, 0, NULL);
 	}

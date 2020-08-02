@@ -39,26 +39,26 @@
 struct bn_vlblock *
 rt_vlblock_init(void)
 {
-    return bn_vlblock_init(&RTG.rtg_vlfree, 32);
+    return bn_vlblock_init(&rtg_vlfree, 32);
 }
 
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
-    bn_vlist_copy(&RTG.rtg_vlfree, dest, src);
+    bn_vlist_copy(&rtg_vlfree, dest, src);
 }
 
 
 void
 rt_vlist_cleanup(void)
 {
-    bn_vlist_cleanup(&RTG.rtg_vlfree);
+    bn_vlist_cleanup(&rtg_vlfree);
 }
 
 void
 rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
 {
-    bn_vlist_import(&RTG.rtg_vlfree, hp, namevls, buf);
+    bn_vlist_import(&rtg_vlfree, hp, namevls, buf);
 }
 
 #define TBAD	0 /* no such command */

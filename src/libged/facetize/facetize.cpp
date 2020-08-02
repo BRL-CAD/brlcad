@@ -570,7 +570,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, &rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -603,7 +603,7 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_face
 
     if (!BU_SETJUMP) {
 	/* try */
-	nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
+	nmg_triangulate_model(nmg_model, &rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -622,7 +622,7 @@ _try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_
     _ged_facetize_log_nmg(o);
     if (!BU_SETJUMP) {
 	/* try */
-	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
+	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;

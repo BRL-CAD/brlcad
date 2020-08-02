@@ -554,7 +554,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		ASSOC_GEOM(0, 0, 0);
 		ASSOC_GEOM(1, 0, 1);
 		ASSOC_GEOM(2, 1, 1);
-		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		    bu_log("Degenerate face created, will kill it later\n");
 		    bu_ptbl_ins(&kill_fus, (long *)fu);
 		}
@@ -585,7 +585,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		ASSOC_GEOM(0, 1, 0);
 		ASSOC_GEOM(1, 0, 0);
 		ASSOC_GEOM(2, 1, 1);
-		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		    bu_log("Degenerate face created, will kill it later\n");
 		    bu_ptbl_ins(&kill_fus, (long *)fu);
 		}
@@ -605,16 +605,16 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* ARS solids are often built with incorrect face normals.  Don't
      * depend on them to be correct.
      */
-    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
+    nmg_fix_normals(s, &rtg_vlfree, tol);
 
     /* set edge's is_real flag */
-    nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    nmg_mark_edges_real(&s->l.magic, &rtg_vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
-    nmg_shell_coplanar_face_merge(s, tol, 0, &RTG.rtg_vlfree);
-    nmg_simplify_shell(s,&RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 0, &rtg_vlfree);
+    nmg_simplify_shell(s,&rtg_vlfree);
 
     return 0;
 }
@@ -688,7 +688,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     s = BU_LIST_FIRST(shell, &r->s_hd);
-    bot = nmg_bot(s, &RTG.rtg_vlfree, &rtip->rti_tol);
+    bot = nmg_bot(s, &rtg_vlfree, &rtip->rti_tol);
 
     if (!bot) {
 	bu_log("Failed to convert ARS to BOT (%s)\n", stp->st_dp->d_namep);

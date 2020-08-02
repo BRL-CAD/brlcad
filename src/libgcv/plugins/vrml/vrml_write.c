@@ -789,14 +789,14 @@ nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, con
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, &RTG.rtg_vlfree, tol2);
+	nmg_triangulate_model(m, &rtg_vlfree, tol2);
 	fprintf(pstate->fp_out, "\t\t\t}\n");
 	fprintf(pstate->fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(pstate->fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &m->magic, &rtg_vlfree);
     if (!is_light) {
 	fprintf(pstate->fp_out, "\t\t\t\t\tpoint [");
     } else {
@@ -1055,7 +1055,7 @@ vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree,
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &rtg_vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -1255,7 +1255,7 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
 	nmg_eue_dist = 2.0;
     }
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&rtg_vlfree);	/* for vlist macros */
 
     fprintf(state.fp_out, "#VRML V2.0 utf8\n");
     fprintf(state.fp_out, "#Units are %s\n", vrml_write_make_units_str(gcv_options->scale_factor));

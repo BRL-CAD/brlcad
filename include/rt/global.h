@@ -32,46 +32,35 @@
 __BEGIN_DECLS
 
 
-/**
- * Definitions for librt.a which are global to the library regardless
- * of how many different models are being worked on
- */
-struct rt_g {
-    struct bu_list      rtg_vlfree;     /**< @brief  head of bn_vlist freelist */
-};
-#define RT_G_INIT_ZERO { BU_LIST_INIT_ZERO }
-
-/**
- * global ray-trace geometry state
- */
-RT_EXPORT extern struct rt_g RTG;
+/* head of LIBRT global bn_vlist freelist */
+RT_EXPORT extern  struct bu_list  rtg_vlfree;     /**< @brief  head of bn_vlist freelist */
 
 /**
  * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
  * are required to execute this macro once, first:
  *
- * BU_LIST_INIT(&RTG.rtg_vlfree);
+ * BU_LIST_INIT(&rtg_vlfree);
  *
  * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
  */
-#define RT_GET_VLIST(p) BN_GET_VLIST(&RTG.rtg_vlfree, p)
+#define RT_GET_VLIST(p) BN_GET_VLIST(&rtg_vlfree, p)
 
 /** Place an entire chain of bn_vlist structs on the freelist */
-#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&RTG.rtg_vlfree, hd)
+#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&rtg_vlfree, hd)
 
-#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
+#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&rtg_vlfree, hd, pnt, draw)
 
 /** set the transformation matrix to display matrix */
-#define RT_VLIST_SET_DISP_MAT(_dest_hd, _ref_pt) BN_VLIST_SET_DISP_MAT(&RTG.rtg_vlfree, _dest_hd, _ref_pt)
+#define RT_VLIST_SET_DISP_MAT(_dest_hd, _ref_pt) BN_VLIST_SET_DISP_MAT(&rtg_vlfree, _dest_hd, _ref_pt)
 
 /** set the transformation matrix to model matrix */
-#define RT_VLIST_SET_MODEL_MAT(_dest_hd) BN_VLIST_SET_MODEL_MAT(&RTG.rtg_vlfree, _dest_hd)
+#define RT_VLIST_SET_MODEL_MAT(_dest_hd) BN_VLIST_SET_MODEL_MAT(&rtg_vlfree, _dest_hd)
 
 /** Set a point size to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
+#define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&rtg_vlfree, hd, size)
 
 /** Set a line width to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
+#define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&rtg_vlfree, hd, width)
 
 
 __END_DECLS

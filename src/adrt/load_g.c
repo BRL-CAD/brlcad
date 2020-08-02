@@ -219,7 +219,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, &rtg_vlfree, &tol);
 
     /* FIXME: where is this released? */
     BU_ALLOC(mesh, struct adrt_mesh_s);
@@ -272,7 +272,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&rtg_vlfree);	/* for vlist macros */
 
     /*
      * these should probably encode so the result can be passed back to client

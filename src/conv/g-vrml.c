@@ -626,7 +626,7 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:h?")) != -1) {
@@ -1026,14 +1026,14 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, &RTG.rtg_vlfree, tol2);
+	nmg_triangulate_model(m, &rtg_vlfree, tol2);
 	fprintf(fp_out, "\t\t\t}\n");
 	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &m->magic, &rtg_vlfree);
     if (!is_light) {
 	fprintf(fp_out, "\t\t\t\t\tpoint [");
     } else {
@@ -1286,7 +1286,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &rtg_vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);

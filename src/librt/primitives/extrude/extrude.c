@@ -2199,8 +2199,8 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     BU_LIST_INIT(&vhead);
-    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
-	BU_LIST_INIT(&RTG.rtg_vlfree);
+    if (!BU_LIST_IS_INITIALIZED(&rtg_vlfree)) {
+	BU_LIST_INIT(&rtg_vlfree);
     }
     for (i = 0; outer_loop && i<(size_t)BU_PTBL_LEN(outer_loop); i++) {
 	void *seg;
@@ -2238,11 +2238,11 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	    }
 	}
     }
-    BN_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
+    BN_FREE_VLIST(&rtg_vlfree, &vhead);
 
     /* make sure face normal is in correct direction */
     bu_free((char *)verts, "verts");
-    if (nmg_calc_face_plane(fu, pl, &RTG.rtg_vlfree)) {
+    if (nmg_calc_face_plane(fu, pl, &rtg_vlfree)) {
 	bu_log("Failed to calculate face plane for extrusion\n");
 	return -1;
     }
@@ -2330,7 +2330,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     /* extrude this face */
-    if (nmg_extrude_face(fu, extrude_ip->h, &RTG.rtg_vlfree, tol)) {
+    if (nmg_extrude_face(fu, extrude_ip->h, &rtg_vlfree, tol)) {
 	bu_log("Failed to extrude face sketch\n");
 	return -1;
     }

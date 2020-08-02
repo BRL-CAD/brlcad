@@ -2491,7 +2491,7 @@ tesselate_pipe_start(
 	nmg_vertex_gv(vu->v_p, pipe_pnt->pp_coord);
     }
 
-    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 	bu_bomb("tesselate_pipe_start: nmg_calc_face_g failed\n");
     }
 
@@ -2587,7 +2587,7 @@ tesselate_pipe_linear(
 
 	    if (fu_prev) {
 		nmg_vertex_gv(new_outer_loop[i], pt);
-		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu_prev,&rtg_vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		} else {
@@ -2645,7 +2645,7 @@ tesselate_pipe_linear(
 		nmg_vertex_gv(new_outer_loop[i], pt);
 	    }
 
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2698,7 +2698,7 @@ tesselate_pipe_linear(
 		continue;
 	    }
 	    if (i == arc_segs - 1) {
-		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu_prev,&rtg_vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		}
@@ -2737,7 +2737,7 @@ tesselate_pipe_linear(
 		VUNITIZE(norms[j]);
 	    }
 
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2825,7 +2825,7 @@ tesselate_pipe_linear(
 	    if (!new_outer_loop[j]->vg_p) {
 		nmg_vertex_gv(new_outer_loop[j], pt_next);
 	    }
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2899,7 +2899,7 @@ tesselate_pipe_linear(
 
 	    if (fu_prev) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
-		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu_prev,&rtg_vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		} else {
@@ -2957,7 +2957,7 @@ tesselate_pipe_linear(
 		nmg_vertex_gv(new_inner_loop[i], pt);
 	    }
 
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3015,7 +3015,7 @@ tesselate_pipe_linear(
 		continue;
 	    }
 	    if (i == arc_segs - 1) {
-		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu_prev,&rtg_vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		}
@@ -3057,7 +3057,7 @@ tesselate_pipe_linear(
 		VREVERSE(norms[j], norms[j]);
 	    }
 
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3145,7 +3145,7 @@ tesselate_pipe_linear(
 	    if (!new_inner_loop[j]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[j], pt_next);
 	    }
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3338,7 +3338,7 @@ tesselate_pipe_bend(
 		if (!new_outer_loop[i]->vg_p) {
 		    nmg_vertex_gv(new_outer_loop[i], pt);
 		}
-		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		    bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu);
 		} else {
@@ -3407,7 +3407,7 @@ tesselate_pipe_bend(
 		if (!(*verts[2])->vg_p) {
 		    nmg_vertex_gv(*verts[2], pt);
 		}
-		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		    bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu);
 		} else {
@@ -3517,7 +3517,7 @@ tesselate_pipe_bend(
 	    if (!new_inner_loop[i]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
 	    }
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3577,7 +3577,7 @@ tesselate_pipe_bend(
 	    if (!(*verts[2])->vg_p) {
 		nmg_vertex_gv(*verts[2], pt);
 	    }
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 		bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3659,7 +3659,7 @@ tesselate_pipe_end(
 	return;
     }
     fu = fu->fumate_p;
-    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+    if (nmg_calc_face_g(fu,&rtg_vlfree)) {
 	bu_log("tesselate_pipe_end: nmg_calc_face_g failed\n");
 	nmg_kfu(fu);
 	return;
@@ -3896,7 +3896,7 @@ rt_pipe_tess(
     bu_free((char *)inner_loop, "rt_pipe_tess: inner_loop");
 
     nmg_rebound(m, tol);
-    nmg_edge_fuse(&s->l.magic, &RTG.rtg_vlfree, tol);
+    nmg_edge_fuse(&s->l.magic, &rtg_vlfree, tol);
 
     return 0;
 }

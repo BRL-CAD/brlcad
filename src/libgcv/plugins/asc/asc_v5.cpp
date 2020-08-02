@@ -64,7 +64,7 @@ Tcl_Interp *safe_interp;
 
 rewind(ifp);
 bu_vls_trunc(&line, 0);
-BU_LIST_INIT(&RTG.rtg_headwdb.l);
+BU_LIST_INIT(&rtg_headwdb.l);
 
 interp = Tcl_CreateInterp();
 Go_Init(interp);

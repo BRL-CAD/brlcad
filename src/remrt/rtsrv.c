@@ -785,7 +785,7 @@ ph_loglvl(struct pkg_conn *UNUSED(pc), char *buf)
 
 
 /**** Other replacement routines from libbu/log.c ****/
-int bu_log_indent_cur_level = 0; /* formerly RTG.rtg_logindent */
+int bu_log_indent_cur_level = 0; /* formerly rtg_logindent */
 /*
  * Change indent level by indicated number of characters.  Call with a
  * large negative number to cancel all indentation.

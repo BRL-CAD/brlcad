@@ -949,7 +949,7 @@ get_cquad4(void)
 	nmg_vertex_gv(g_pts[gin2].v[pid_index], pt2);
     if (!g_pts[gin3].v[pid_index]->vg_p)
 	nmg_vertex_gv(g_pts[gin3].v[pid_index], pt3);
-    nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+    nmg_calc_face_g(fu, &rtg_vlfree);
 
     v[0] = &g_pts[gin1].v[pid_index];
     v[1] = &g_pts[gin3].v[pid_index];
@@ -959,7 +959,7 @@ get_cquad4(void)
 
     if (!g_pts[gin4].v[pid_index]->vg_p)
 	nmg_vertex_gv(g_pts[gin4].v[pid_index], pt4);
-    nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+    nmg_calc_face_g(fu, &rtg_vlfree);
 }
 
 
@@ -1047,7 +1047,7 @@ get_ctria3(void)
     if (!g_pts[gin3].v[pid_index]->vg_p)
 	nmg_vertex_gv(g_pts[gin3].v[pid_index], pt3);
 
-    nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+    nmg_calc_face_g(fu, &rtg_vlfree);
 }
 
 
@@ -1336,10 +1336,10 @@ main(int argc, char **argv)
 
 	m = nmg_find_model(&psh->s->l.magic);
 	nmg_rebound(m, &tol);
-	nmg_fix_normals(psh->s, &RTG.rtg_vlfree, &tol);
+	nmg_fix_normals(psh->s, &rtg_vlfree, &tol);
 	if (psh->thick > tol.dist) {
-	    nmg_model_face_fuse(m, &RTG.rtg_vlfree, &tol);
-	    nmg_hollow_shell(psh->s, psh->thick*conv[units], 1, &RTG.rtg_vlfree, &tol);
+	    nmg_model_face_fuse(m, &rtg_vlfree, &tol);
+	    nmg_hollow_shell(psh->s, psh->thick*conv[units], 1, &rtg_vlfree, &tol);
 	}
 	sprintf(name, "pshell.%d", psh->pid);
 	if (polysolids)

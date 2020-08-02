@@ -614,7 +614,7 @@ int main( int argc, char **argv )
     }
 
     /* Need to initialize this for rt_obj_plot, which may call RT_ADD_VLIST */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rtg_vlfree);
 
     add_path_to_scene(&(osg_nodes), &path, dbip);
 

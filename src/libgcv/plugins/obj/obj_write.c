@@ -89,17 +89,17 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
+    nmg_triangulate_model(m, &rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, &rtg_vlfree);
 
     /* Get number of vertices */
     numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
     if (pstate->obj_write_options->do_normals)
-	nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, &RTG.rtg_vlfree);
+	nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, &rtg_vlfree);
 
     /* BEGIN CHECK SECTION */
     /* Check vertices */
@@ -332,8 +332,8 @@ obj_write_process_boolean(const struct conversion_state *pstate, union tree *cur
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &rtg_vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, &rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -527,7 +527,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     tree_state.ts_m = &the_model;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&rtg_vlfree);	/* for vlist macros */
 
     /* Write out header */
     if (NEAR_EQUAL(state.gcv_options->scale_factor, 1.0 / 25.4, RT_LEN_TOL))

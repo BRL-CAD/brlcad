@@ -1256,7 +1256,7 @@ main(int argc, char *argv[])
 #endif /* HAVE_PIPE */
 
     /* Set up linked lists */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rtg_vlfree);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);

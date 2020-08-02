@@ -182,7 +182,7 @@ add_solid(const struct directory *dp,
 
 	    if (solid_is_plate_mode_bot
 		|| !eptr->l.m
-		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
+		|| (bot = nmg_bot(s, &rtg_vlfree, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &OBJ[id];
@@ -1330,7 +1330,7 @@ Eplot(union E_tree *eptr,
 	}
 
 	if (leaf_ptr->l.m)
-	    nmg_edge_tabulate(&leaf_ptr->l.edge_list, &leaf_ptr->l.m->magic, &RTG.rtg_vlfree);
+	    nmg_edge_tabulate(&leaf_ptr->l.edge_list, &leaf_ptr->l.m->magic, &rtg_vlfree);
 	else
 	    bu_ptbl_init(&leaf_ptr->l.edge_list, 1, "edge_list");
     }
@@ -1775,7 +1775,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	nmg_vertex_g(v[1], max[X], max[Y], min[Z]);
 	nmg_vertex_g(v[2], max[X], max[Y], max[Z]);
 	nmg_vertex_g(v[3], max[X], min[Y], max[Z]);
-	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+	nmg_calc_face_g(fu, &rtg_vlfree);
 
 	vp[0] = &v[4];
 	vp[1] = &v[5];
@@ -1786,35 +1786,35 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	nmg_vertex_g(v[5], min[X], min[Y], max[Z]);
 	nmg_vertex_g(v[6], min[X], max[Y], max[Z]);
 	nmg_vertex_g(v[7], min[X], max[Y], min[Z]);
-	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+	nmg_calc_face_g(fu, &rtg_vlfree);
 
 	vp[0] = &v[0];
 	vp[1] = &v[3];
 	vp[2] = &v[5];
 	vp[3] = &v[4];
 	fu = nmg_cmface(s, vp, 4);
-	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+	nmg_calc_face_g(fu, &rtg_vlfree);
 
 	vp[0] = &v[1];
 	vp[1] = &v[7];
 	vp[2] = &v[6];
 	vp[3] = &v[2];
 	fu = nmg_cmface(s, vp, 4);
-	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+	nmg_calc_face_g(fu, &rtg_vlfree);
 
 	vp[0] = &v[3];
 	vp[1] = &v[2];
 	vp[2] = &v[6];
 	vp[3] = &v[5];
 	fu = nmg_cmface(s, vp, 4);
-	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+	nmg_calc_face_g(fu, &rtg_vlfree);
 
 	vp[0] = &v[1];
 	vp[1] = &v[0];
 	vp[2] = &v[4];
 	vp[3] = &v[7];
 	fu = nmg_cmface(s, vp, 4);
-	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+	nmg_calc_face_g(fu, &rtg_vlfree);
 
 	nmg_region_a(r, tol);
 
@@ -1872,7 +1872,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    vcut[1] = new_eu->vu_p;
 	    nmg_vertex_gv(vcut[1]->v_p, pt[1]);
 
-	    new_lu = nmg_cut_loop(vcut[0], vcut[1], &RTG.rtg_vlfree);
+	    new_lu = nmg_cut_loop(vcut[0], vcut[1], &rtg_vlfree);
 	    nmg_lu_reorient(lu);
 	    nmg_lu_reorient(new_lu);
 
@@ -1944,13 +1944,13 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	}
 
 	nmg_rebound(tp->l.m, tol);
-	nmg_model_fuse(tp->l.m, &RTG.rtg_vlfree, tol);
-	nmg_close_shell(s, &RTG.rtg_vlfree, tol);
+	nmg_model_fuse(tp->l.m, &rtg_vlfree, tol);
+	nmg_close_shell(s, &rtg_vlfree, tol);
 	nmg_rebound(tp->l.m, tol);
 
 	BU_ALLOC(pg, struct rt_pg_internal);
 
-	if (!nmg_to_poly(tp->l.m, pg, &RTG.rtg_vlfree, tol)) {
+	if (!nmg_to_poly(tp->l.m, pg, &rtg_vlfree, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
 	    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", tp->l.stp->st_dp->d_namep);
 	} else {

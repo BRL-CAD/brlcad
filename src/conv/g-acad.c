@@ -102,11 +102,11 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, &rtg_vlfree, &tol);
 
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, &rtg_vlfree);
 
     /* Get number of vertices */
 
@@ -280,7 +280,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 
 	printf("Attempting to process region %s\n", db_path_to_string(pathp));
 	fflush(stdout);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 	if (ret_tree != curtree) {
 	    db_free_tree(curtree, &rt_uniresource);
 	}
@@ -506,7 +506,7 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:ih?")) != -1) {

@@ -193,7 +193,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
  triangulate:
     if (do_triangulate) {
 	/* triangulate model */
-	nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+	nmg_triangulate_model(m, &rtg_vlfree, &tol);
 
 	/* Count triangles */
 	tri_count = 0;
@@ -216,7 +216,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
     }
 
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, &rtg_vlfree);
 
     color_num = find_closest_color(color);
 
@@ -410,7 +410,7 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:ih?")) != -1) {

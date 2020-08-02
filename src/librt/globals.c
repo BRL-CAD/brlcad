@@ -38,7 +38,7 @@
 
 unsigned int rt_debug = 0;
 
-struct rt_g RTG = RT_G_INIT_ZERO;
+struct bu_list rtg_vlfree = BU_LIST_INIT_ZERO;
 
 struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;
 

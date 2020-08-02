@@ -55,19 +55,19 @@ BrlcadTreeWalker::BrlcadTreeWalker(struct db_i* dbip,
     }
 
   // XXX This dreck is necessary because the ft_plot() functions expect RTG to be initialized
-  if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0)
+  if (BU_LIST_FIRST(bu_list, &rtg_vlfree) == 0)
     {
       char *envflags;
       envflags = getenv("LIBRT_DEBUG");
       if (envflags)
 	{
-	  if (RTG.debug)
+	  if (debug)
 	    bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application specified flags\n");
 	  else
-	    RTG.debug = strtol(envflags, NULL, 0x10);
+	    debug = strtol(envflags, NULL, 0x10);
         }
 
-      BU_LIST_INIT(&RTG.rtg_vlfree);
+      BU_LIST_INIT(&rtg_vlfree);
     }
 }
 

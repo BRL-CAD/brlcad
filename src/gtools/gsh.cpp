@@ -92,7 +92,7 @@ main(int argc, const char **argv)
     }
 
     /* FIXME: To draw, we need to init this LIBRT global */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rtg_vlfree);
 
     /* Need a view for commands that expect a view */
     struct bview *gsh_view;

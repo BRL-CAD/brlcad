@@ -2459,7 +2459,7 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
 
     std::set<int>::iterator e_it;
     for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 0, -1);
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &rtg_vlfree, *e_it, 0, -1);
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2503,7 +2503,7 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
 
     std::set<int>::iterator e_it;
     for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 2, -1);
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &rtg_vlfree, *e_it, 2, -1);
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2547,7 +2547,7 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
 
     std::set<int>::iterator e_it;
     for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 3, -1);
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &rtg_vlfree, *e_it, 3, -1);
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2591,7 +2591,7 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
 
     std::set<int>::iterator e_it;
     for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 4, -1);
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &rtg_vlfree, *e_it, 4, -1);
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2635,7 +2635,7 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
 
     std::set<int>::iterator e_it;
     for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 1, -1);
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &rtg_vlfree, *e_it, 1, -1);
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2696,7 +2696,7 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
 	ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
     }
 
-    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
+    ON_Brep_CDT_VList(vbp, &rtg_vlfree, &c, 0, s_cdt);
     ON_Brep_CDT_Destroy(s_cdt);
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2755,7 +2755,7 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
     ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
 
     ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
-    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 2, s_cdt);
+    ON_Brep_CDT_VList(vbp, &rtg_vlfree, &c, 2, s_cdt);
     ON_Brep_CDT_Destroy(s_cdt);
     bu_free(faces, "free face array");
 
@@ -2815,7 +2815,7 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
 
     ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
-    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 1, s_cdt);
+    ON_Brep_CDT_VList(vbp, &rtg_vlfree, &c, 1, s_cdt);
     ON_Brep_CDT_Destroy(s_cdt);
     bu_free(faces, "free face array");
 

@@ -39,7 +39,7 @@ CADApp::initialize()
     ged_pointer = GED_NULL;
     current_idx = QModelIndex();
     interaction_mode = 0;
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rtg_vlfree);
 }
 
 struct db_i *

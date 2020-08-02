@@ -103,7 +103,7 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &rtg_vlfree );	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:dn:p:r:vx:P:X:h?")) != -1) {
@@ -212,8 +212,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if ( !BU_SETJUMP ) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &rtg_vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, &rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
 	/* catch */
@@ -359,7 +359,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[1] * 255),
 			  (int)(tsp->ts_mater.ma_color[2] * 255) );
 		BU_LIST_INIT( &vhead );
-		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
+		nmg_r_to_vlist(&vhead, r, 0, &rtg_vlfree);
 		bn_vlist_to_uplot( fp, &vhead );
 		fclose(fp);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
@@ -404,7 +404,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int), "Jack vert map");
 
     /* Built list of vertex structs */
-    nmg_vertex_tabulate( &vtab, &r->l.magic, &RTG.rtg_vlfree );
+    nmg_vertex_tabulate( &vtab, &r->l.magic, &rtg_vlfree );
 
     /* FIXME: What to do if 0 vertices?  */
 

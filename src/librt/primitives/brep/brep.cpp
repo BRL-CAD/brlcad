@@ -2925,7 +2925,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 
     ON_Brep* brep = bi->brep;
 
-    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, &RTG.rtg_vlfree, -1, 0, -1)) {
+    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, &rtg_vlfree, -1, 0, -1)) {
 	return -1;
     }
     return 0;

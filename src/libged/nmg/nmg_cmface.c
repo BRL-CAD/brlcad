@@ -132,7 +132,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
 	    if (fu->orientation != OT_SAME) {
 		continue;
 	    }
-	    nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+	    nmg_calc_face_g(fu, &rtg_vlfree);
 	}
     }
 
