@@ -1163,9 +1163,10 @@ tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_pro
     int *fdp;
     if (!p) return;
     fdp = (int *)bu_process_fd(p, fd);
-    if (fdp)
+    if (fdp) {
 	Tcl_DeleteFileHandler(*fdp);
-    close(*fdp);
+	close(*fdp);
+    }
 }
 
 #else
