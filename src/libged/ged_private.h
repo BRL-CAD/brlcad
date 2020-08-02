@@ -650,6 +650,9 @@ GED_EXPORT extern int ged_view_snap(struct ged *gedp, int argc, const char *argv
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
 
+GED_EXPORT extern void ged_push_solid(struct ged *gedp, struct solid *sp);
+GED_EXPORT extern struct solid *ged_pop_solid(struct ged *gedp);
+
 __END_DECLS
 
 #endif /* LIBGED_GED_PRIVATE_H */
