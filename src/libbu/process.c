@@ -76,26 +76,26 @@ struct bu_process {
 
 
 void
-bu_process_close(struct bu_process *pinfo, int fd)
+bu_process_close(struct bu_process *pinfo, bu_process_io_t d)
 {
     if (!pinfo)
 	return;
 
-    if (fd == fileno(stdin)) {
+    if (d == BU_PROCESS_STDIN) {
 	if (!pinfo->fp_in)
 	    return;
 	(void)fclose(pinfo->fp_in);
 	pinfo->fp_in = NULL;
 	return;
     }
-    if (fd == fileno(stdout)) {
+    if (d == BU_PROCESS_STDOUT) {
 	if (!pinfo->fp_out)
 	    return;
 	(void)fclose(pinfo->fp_out);
 	pinfo->fp_out = NULL;
 	return;
     }
-    if (fd == fileno(stderr)) {
+    if (d == BU_PROCESS_STDERR) {
 	if (!pinfo->fp_err)
 	    return;
 	(void)fclose(pinfo->fp_err);
@@ -106,14 +106,14 @@ bu_process_close(struct bu_process *pinfo, int fd)
 
 
 FILE *
-bu_process_open(struct bu_process *pinfo, int fd)
+bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
 {
     if (!pinfo)
 	return NULL;
 
-    bu_process_close(pinfo, fd);
+    bu_process_close(pinfo, d);
 
-    if (fd == fileno(stdin)) {
+    if (d == BU_PROCESS_STDIN) {
 #ifndef _WIN32
 	pinfo->fp_in = fdopen(pinfo->fd_in, "wb");
 #else
@@ -121,7 +121,7 @@ bu_process_open(struct bu_process *pinfo, int fd)
 #endif
 	return pinfo->fp_in;
     }
-    if (fd == fileno(stdout)) {
+    if (d == BU_PROCESS_STDOUT) {
 #ifndef _WIN32
 	pinfo->fp_out = fdopen(pinfo->fd_out, "rb");
 #else
@@ -129,7 +129,7 @@ bu_process_open(struct bu_process *pinfo, int fd)
 #endif
 	return pinfo->fp_out;
     }
-    if (fd == fileno(stderr)) {
+    if (d == BU_PROCESS_STDERR) {
 #ifndef _WIN32
 	pinfo->fp_err = fdopen(pinfo->fd_err, "rb");
 #else
@@ -143,16 +143,16 @@ bu_process_open(struct bu_process *pinfo, int fd)
 
 
 void *
-bu_process_fd(struct bu_process *pinfo, int fd)
+bu_process_fd(struct bu_process *pinfo, bu_process_io_t d)
 {
-    if (!pinfo || fd < 0)
+    if (!pinfo)
 	return NULL;
 
-    if (fd == fileno(stdin))
+    if (d == BU_PROCESS_STDIN)
 	return (void *)(&(pinfo->fd_in));
-    if (fd == fileno(stdout))
+    if (d == BU_PROCESS_STDOUT)
 	return (void *)(&(pinfo->fd_out));
-    if (fd == fileno(stderr))
+    if (d == BU_PROCESS_STDERR)
 	return (void *)(&(pinfo->fd_err));
 
     return NULL;
@@ -184,13 +184,13 @@ bu_process_args(const char **cmd, const char * const **argv, struct bu_process *
 
 
 int
-bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
+bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n)
 {
     int ret = 1;
-    if (!pinfo || !buff || !n || !count || fd < 1)
+    if (!pinfo || !buff || !n || !count)
 	return -1;
 
-    if (fd == fileno(stdout)) {
+    if (d == BU_PROCESS_STDOUT) {
 #ifndef _WIN32
 	(*count) = read((int)pinfo->fd_out, buff, n);
 	if ((*count) <= 0) {
@@ -205,7 +205,7 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 	(*count) = (int)dcount;
 #endif
     }
-    if (fd == fileno(stderr)) {
+    if (d == BU_PROCESS_STDERR) {
 #ifndef _WIN32
 	(*count) = read((int)pinfo->fd_err, buff, n);
 	if ((*count) <= 0) {
@@ -308,17 +308,17 @@ bu_process_exec(
 	setpgid(0, 0);
 
 	/* Redirect stdin and stderr */
-	(void)close(fileno(stdin));
+	(void)close(BU_PROCESS_STDIN);
 	pret = dup(pipe_in[0]);
 	if (pret < 0) {
 	    perror("dup");
 	}
-	(void)close(fileno(stdout));
+	(void)close(BU_PROCESS_STDOUT);
 	pret = dup(pipe_out[1]);
 	if (pret < 0) {
 	    perror("dup");
 	}
-	(void)close(fileno(stderr));
+	(void)close(BU_PROCESS_STDERR);
 	pret = dup(pipe_err[1]);
 	if (pret < 0) {
 	    perror("dup");
@@ -522,8 +522,8 @@ bu_process_wait(
     }
 
     /* Clean up */
-    bu_process_close(pinfo, fileno(stdout));
-    bu_process_close(pinfo, fileno(stderr));
+    bu_process_close(pinfo, BU_PROCESS_STDOUT);
+    bu_process_close(pinfo, BU_PROCESS_STDERR);
 
     /* Free copy of exec args */
     if (pinfo->cmd) {

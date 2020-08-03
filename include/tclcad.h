@@ -34,6 +34,7 @@
 
 #include "common.h"
 #include "bu/cmd.h"
+#include "bu/process.h"
 #include "tcl.h"
 #include "dm.h"
 #include "ged.h"
@@ -522,9 +523,9 @@ struct tclcad_io_data {
     int io_mode;
 };
 TCLCAD_EXPORT void
-tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_func_t callback, void *data);
+tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data);
 TCLCAD_EXPORT void
-tclcad_delete_io_handler(struct ged_subprocess *p, int fd);
+tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d);
 
 
 /* dm_tcl.c */

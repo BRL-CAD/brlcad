@@ -48,10 +48,11 @@ BU_EXPORT extern int bu_terminate(int process);
 /* Wrappers for using subprocess execution */
 struct bu_process;
 
-#define BU_PROCESS_STDIN 0
-#define BU_PROCESS_STDOUT 1
-#define BU_PROCESS_STDERR 2
-
+typedef enum {
+    BU_PROCESS_STDIN,
+    BU_PROCESS_STDOUT,
+    BU_PROCESS_STDERR
+} bu_process_io_t;
 
 /**
  * Open and return a FILE pointer associated with the specified file
@@ -66,7 +67,7 @@ struct bu_process;
  * FIXME: misnomer, this does not open a process.  Probably doesn't
  * need to exist; just call fdopen().
  */
-BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, int fd);
+BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
@@ -75,19 +76,20 @@ BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, int fd);
  * FIXME: misnomer, this does not close a process.  Probably doesn't
  * need to exist; just call fclose().
  */
-BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, int fd);
+BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
- * Retrieve the pointer to the input (0), output (1), or error (2) file
- * descriptor associated with the process.  To use this in calling code, the
- * caller must cast the supplied pointer to the file handle type of the
- * calling code's specific platform.
+ * Retrieve the pointer to the input (BU_PROCESS_STDIN), output
+ * (BU_PROCESS_STDOUT), or error (BU_PROCESS_STDERR) file descriptor associated
+ * with the process.  To use this in calling code, the caller must cast the
+ * supplied pointer to the file handle type of the calling code's specific
+ * platform.
  *
  * FIXME: void pointer casting is bad.  this function probably
  * shouldn't exist.
  */
-BU_EXPORT void *bu_process_fd(struct bu_process *pinfo, int fd);
+BU_EXPORT void *bu_process_fd(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
@@ -127,7 +129,7 @@ BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struc
  * FIXME: arg ordering and input/output grouping is wrong.  partially
  * redundant with bu_process_fd() and/or bu_process_open().
  */
-BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n);
+BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
 
 
 /**
