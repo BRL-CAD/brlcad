@@ -11,6 +11,7 @@ set(bg_headers
   tri_ray.h
   tri_tri.h
   trimesh.h
+  vlist.h
   )
 BRLCAD_MANAGE_FILES(bg_headers ${INCLUDE_DIR}/brlcad/bg)
 
