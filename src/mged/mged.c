@@ -2936,6 +2936,23 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     ged_close(GEDP);
     BU_PUT(GEDP, struct ged);
 
+    // initialize a new blank ged structure
+    BU_GET(GEDP, struct ged);
+    ged_init(GEDP);
+    GEDP->ged_output_handler = mged_output_handler;
+    GEDP->ged_refresh_handler = mged_refresh_handler;
+    GEDP->ged_create_vlist_solid_callback = createDListSolid;
+    GEDP->ged_create_vlist_display_list_callback = createDListAll;
+    GEDP->ged_destroy_vlist_callback = freeDListsAll;
+    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
+    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    struct tclcad_io_data *t_iod;
+    BU_GET(t_iod, struct tclcad_io_data);
+    t_iod->io_mode = TCL_READABLE;
+    t_iod->interp = interpreter;
+    GEDP->ged_io_data = t_iod;
+
+
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;
 

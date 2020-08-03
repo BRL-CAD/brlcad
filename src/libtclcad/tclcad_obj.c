@@ -51,6 +51,7 @@
 #include "bn.h"
 #include "bu/cmd.h"
 #include "bu/path.h"
+#include "bu/process.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -1205,26 +1206,26 @@ tclcad_delete_io_handler(struct ged_subprocess *p, int fd)
 
 #else
 void
-tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_handler_callback_t callback, void *data)
+tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_func_t callback, void *data)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
        	return;
     struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
     HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, fd);
     if (fdp) {
-	(*t_iod->chan) = (void *)Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-	Tcl_CreateChannelHandler(*t_iod->chan, t_iod->io_mode, callback, (ClientData)data);
+	t_iod->chan = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+	Tcl_CreateChannelHandler(t_iod->chan, t_iod->io_mode, callback, (ClientData)data);
     }
 }
 
 void
 tclcad_delete_io_handler(struct ged_subprocess *p, int fd)
 {
-    if (!p || !p->p || !p->p->gedp || !p->p->gedp->ged_io_data)
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
        	return;
     struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
-    Tcl_DeleteChannelHandler(t_oid->chan, NULL, (ClientData)NULL);
-    Tcl_Close(t_oid->interp, t_oid->chan);
+    Tcl_DeleteChannelHandler(t_iod->chan, NULL, (ClientData)NULL);
+    Tcl_Close(t_iod->interp, t_iod->chan);
 }
 #endif
 
