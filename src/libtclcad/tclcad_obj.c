@@ -1182,11 +1182,11 @@ to_create_cmd(Tcl_Interp *interp,
 /* Wrappers for setting up/tearing down IO handler */
 #ifndef _WIN32
 void
-tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_func_t callback, void *data)
+tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
        	return;
-    int *fdp = (int *)bu_process_fd(p->p, fd);
+    int *fdp = (int *)bu_process_fd(p->p, d);
     if (fdp) {
 	struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
 	Tcl_CreateFileHandler(*fdp, t_iod->io_mode, callback, (ClientData)data);
@@ -1194,10 +1194,10 @@ tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_func_t callbac
 }
 
 void
-tclcad_delete_io_handler(struct ged_subprocess *p, int fd)
+tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 {
     if (!p) return;
-    int *fdp = (int *)bu_process_fd(p->p, fd);
+    int *fdp = (int *)bu_process_fd(p->p, d);
     if (fdp) {
 	Tcl_DeleteFileHandler(*fdp);
 	close(*fdp);
@@ -1206,12 +1206,12 @@ tclcad_delete_io_handler(struct ged_subprocess *p, int fd)
 
 #else
 void
-tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_func_t callback, void *data)
+tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
        	return;
     struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, fd);
+    HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, d);
     if (fdp) {
 	t_iod->chan = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
 	Tcl_CreateChannelHandler(t_iod->chan, t_iod->io_mode, callback, (ClientData)data);
@@ -1219,7 +1219,7 @@ tclcad_create_io_handler(struct ged_subprocess *p, int fd, ged_io_func_t callbac
 }
 
 void
-tclcad_delete_io_handler(struct ged_subprocess *p, int fd)
+tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
        	return;

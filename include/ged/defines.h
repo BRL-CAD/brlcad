@@ -268,8 +268,8 @@ struct ged {
      * can't know about as it is application specific) lives.  It should be assigned in the
      * applications gedp before any calls to ged_create_io_handler are made.
      * */
-    void (*ged_create_io_handler)(struct ged_subprocess *gp, int fd, ged_io_func_t callback, void *data);
-    void (*ged_delete_io_handler)(struct ged_subprocess *gp, int fd);
+    void (*ged_create_io_handler)(struct ged_subprocess *gp, bu_process_io_t d, ged_io_func_t callback, void *data);
+    void (*ged_delete_io_handler)(struct ged_subprocess *gp, bu_process_io_t fd);
     void *ged_io_data;  /**< brief caller supplied data */
 
     // Other callbacks...
