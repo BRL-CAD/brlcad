@@ -1148,21 +1148,21 @@ to_create_cmd(Tcl_Interp *interp,
 /* Wrappers for setting up/tearing down IO handler */
 #ifndef _WIN32
 void
-tclcad_create_io_handler(void **UNUSED(chan), struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback)
+tclcad_create_io_handler(void **UNUSED(chan), struct bu_process *p, bu_process_io_t d, int mode, void *data, ged_io_handler_callback_t callback)
 {
     int *fdp;
     if (!p) return;
-    fdp = (int *)bu_process_fd(p, fd);
+    fdp = (int *)bu_process_fd(p, d);
     if (fdp)
 	Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
 }
 
 void
-tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, int fd, void *UNUSED(data), ged_io_handler_callback_t UNUSED(callback))
+tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, bu_process_io_t d, void *UNUSED(data), ged_io_handler_callback_t UNUSED(callback))
 {
     int *fdp;
     if (!p) return;
-    fdp = (int *)bu_process_fd(p, fd);
+    fdp = (int *)bu_process_fd(p, d);
     if (fdp) {
 	Tcl_DeleteFileHandler(*fdp);
 	close(*fdp);
@@ -1171,11 +1171,11 @@ tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_pro
 
 #else
 void
-tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback)
+tclcad_create_io_handler(void **chan, struct bu_process *p, bu_process_io_t d, int mode, void *data, ged_io_handler_callback_t callback)
 {
     HANDLE *fdp;
     if (!chan || !p) return;
-    fdp = (HANDLE *)bu_process_fd(p, fd);
+    fdp = (HANDLE *)bu_process_fd(p, d);
     if (fdp) {
 	(*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
 	Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
@@ -1183,7 +1183,7 @@ tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, vo
 }
 
 void
-tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback)
+tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, bu_process_io_t d, void *data, ged_io_handler_callback_t callback)
 {
     HANDLE *fdp;
     Tcl_Interp *tcl_interp;

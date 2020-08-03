@@ -218,8 +218,8 @@ struct ged {
 
     /* Handler functions for I/O communication with asynchronous subprocess commands */
     int io_mode;
-    void (*ged_create_io_handler)(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
-    void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+    void (*ged_create_io_handler)(void **chan, struct bu_process *p, bu_process_io_t d, int mode, void *data, ged_io_handler_callback_t callback);
+    void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, bu_process_io_t d, void *data, ged_io_handler_callback_t callback);
 
     /* FOR LIBGED INTERNAL USE */
     struct ged_cmd *cmds;

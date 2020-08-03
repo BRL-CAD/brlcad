@@ -34,6 +34,7 @@
 
 #include "common.h"
 #include "bu/cmd.h"
+#include "bu/process.h"
 #include "tcl.h"
 #include "dm.h"
 #include "ged.h"
@@ -515,13 +516,13 @@ TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu
  * Create Tcl specific I/O handlers
  */
 TCLCAD_EXPORT void
-tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
+tclcad_create_io_handler(void **chan, struct bu_process *p, bu_process_io_t d, int mode, void *data, ged_io_handler_callback_t callback);
 
 /**
  * Delete Tcl specific I/O handlers
  */
 TCLCAD_EXPORT void
-tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, bu_process_io_t d, void *data, ged_io_handler_callback_t callback);
 
 
 /* dm_tcl.c */
