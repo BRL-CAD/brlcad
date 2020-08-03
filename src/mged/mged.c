@@ -2923,6 +2923,15 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     ged_close(GEDP);
     BU_PUT(GEDP, struct ged);
 
+    // initialize a new blank ged structure
+    BU_GET(GEDP, struct ged);
+    ged_init(GEDP);
+    GEDP->ged_output_handler = mged_output_handler;
+    GEDP->ged_refresh_handler = mged_refresh_handler;
+    GEDP->ged_create_vlist_solid_callback = createDListSolid;
+    GEDP->ged_create_vlist_callback = createDListAll;
+    GEDP->ged_free_vlist_callback = freeDListsAll;
+
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;
 
