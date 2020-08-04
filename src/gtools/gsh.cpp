@@ -42,12 +42,6 @@ extern "C" {
 
 #define DEFAULT_GSH_PROMPT "g> "
 
-struct gsh_subdata {
-    int done;
-    ged_io_func_t callback;
-    void *data;
-};
-
 void
 collect_io(struct ged_subprocess *p, ged_io_func_t callback, void *data)
 {
