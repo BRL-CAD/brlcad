@@ -26,7 +26,9 @@
 
 #include "common.h"
 
-#include "bio.h"
+#include <chrono>
+#include <thread>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,10 +36,56 @@ extern "C" {
 #include "linenoise.h"
 }
 
+#include "bio.h"
 #include "bu.h"
 #include "ged.h"
 
 #define DEFAULT_GSH_PROMPT "g> "
+
+struct gsh_subdata {
+    int done;
+    ged_io_func_t callback;
+    void *data;
+};
+
+void
+collect_io(struct ged_subprocess *p, ged_io_func_t callback, void *data)
+{
+    std::string pstr(bu_vls_cstr(p->gedp->ged_result_str));
+    while (!p->done) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        (*callback)(data, 0);
+	std::string nstr;
+	std::string cstr = std::string(bu_vls_cstr(p->gedp->ged_result_str));
+	if (cstr.length()) {
+	    if (pstr.length()) {
+		nstr = cstr.substr(pstr.length()-1, std::string::npos);
+	    } else {
+		nstr = std::string(bu_vls_cstr(p->gedp->ged_result_str));
+	    }
+	    printf("%s", nstr.c_str());
+	    pstr = cstr;
+	}
+    }
+}
+
+void gsh_create_io_handler(struct ged_subprocess *p, bu_process_io_t UNUSED(d), ged_io_func_t callback, void *data) {
+    if (!callback) {
+	bu_log("no callback specified\n");
+	return;
+    }
+    p->done = 0;
+    void *ddata = (!data) ? (void *)p : data;
+    std::thread t(collect_io, p, callback, ddata);
+    t.detach();
+}
+
+void gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t UNUSED(d))
+{
+    p->done = 1;
+    bu_vls_trunc(p->gedp->ged_result_str, 0);
+}
+
 
 int
 main(int argc, const char **argv)
@@ -107,6 +155,8 @@ main(int argc, const char **argv)
 	    bu_exit(EXIT_FAILURE, "File %s does not exist, expecting .g file\n", argv[0]) ;
 	}
 	gedp = ged_open("db", argv[0], 1);
+	gedp->ged_create_io_handler = &gsh_create_io_handler;
+	gedp->ged_delete_io_handler = &gsh_delete_io_handler;
 	if (!gedp) {
 	    bu_vls_free(&msg);
 	    bu_dlclose(libged);
