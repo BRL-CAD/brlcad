@@ -51,19 +51,12 @@ struct gsh_subdata {
 void
 collect_io(struct ged_subprocess *p, ged_io_func_t callback, void *data)
 {
-    std::string pstr(bu_vls_cstr(p->gedp->ged_result_str));
     while (p && !p->done) {
         (*callback)(data, 0);
-	std::string nstr;
-	std::string cstr = std::string(bu_vls_cstr(p->gedp->ged_result_str));
-	if (cstr.length()) {
-	    if (pstr.length()) {
-		nstr = cstr.substr(pstr.length()-1, std::string::npos);
-	    } else {
-		nstr = std::string(bu_vls_cstr(p->gedp->ged_result_str));
-	    }
-	    printf("%s", nstr.c_str());
-	    pstr = cstr;
+	long nlen = bu_vls_strlen(p->gedp->ged_result_str);
+	if (nlen) {
+	    printf("%s", bu_vls_cstr(p->gedp->ged_result_str));
+	    bu_vls_trunc(p->gedp->ged_result_str, 0);
 	}
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -83,7 +76,6 @@ void gsh_create_io_handler(struct ged_subprocess *p, bu_process_io_t UNUSED(d), 
 void gsh_delete_io_handler(struct ged_subprocess *p, bu_process_io_t UNUSED(d))
 {
     p->done = 1;
-    bu_vls_trunc(p->gedp->ged_result_str, 0);
 }
 
 
