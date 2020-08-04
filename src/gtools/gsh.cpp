@@ -52,8 +52,7 @@ void
 collect_io(struct ged_subprocess *p, ged_io_func_t callback, void *data)
 {
     std::string pstr(bu_vls_cstr(p->gedp->ged_result_str));
-    while (!p->done) {
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while (p && !p->done) {
         (*callback)(data, 0);
 	std::string nstr;
 	std::string cstr = std::string(bu_vls_cstr(p->gedp->ged_result_str));
@@ -66,6 +65,7 @@ collect_io(struct ged_subprocess *p, ged_io_func_t callback, void *data)
 	    printf("%s", nstr.c_str());
 	    pstr = cstr;
 	}
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
