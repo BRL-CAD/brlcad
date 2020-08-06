@@ -3058,6 +3058,7 @@ struct dm_impl dm_ogl_impl = {
     ogl_fogHint,
     ogl_share_dlist,
     0,
+    1,				/* is graphical */
     1,				/* has displaylist */
     0,                          /* no stereo by default */
     1.0,			/* zoom-in limit */

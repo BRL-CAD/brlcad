@@ -717,6 +717,7 @@ struct dm_impl dm_plot_impl = {
     NULL,
     NULL,
     0,
+    0,				/* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
     PLOTBOUND,			/* zoom-in limit */

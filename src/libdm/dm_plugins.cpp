@@ -61,6 +61,23 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     return dmp;
 }
 
+extern "C" int 
+dm_have_graphics()
+{
+    int ret = 0;
+    std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
+    std::map<std::string, const struct dm *>::iterator d_it;
+    for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
+	std::string key = d_it->first;
+	const struct dm *d = d_it->second;
+	if (dm_graphical(d)) {
+	    ret = 1;
+	    break;
+	}
+    }
+    return ret;
+}
+
 extern "C" void
 dm_list_types(struct bu_vls *list, const char *separator)
 {

@@ -219,6 +219,12 @@ dm_set_height(struct dm *dmp, int height)
     dmp->i->dm_height = height;
 }
 
+int
+dm_graphical(const struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_graphical;
+}
 
 const char *
 dm_get_type(struct dm *dmp)

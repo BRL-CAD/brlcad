@@ -1360,6 +1360,7 @@ struct dm_impl dm_qt_impl = {
     NULL,
     NULL,
     0,
+    1,				/* is graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
     0.0,			/* zoom-in limit */

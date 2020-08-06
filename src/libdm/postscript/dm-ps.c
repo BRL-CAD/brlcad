@@ -786,8 +786,9 @@ struct dm_impl dm_ps_impl = {
     NULL,
     NULL,
     0,
+    0,				/* not graphical */
     0,				/* no displaylist */
-    0,                            /* no stereo */
+    0,                          /* no stereo */
     PLOTBOUND,			/* zoom-in limit */
     1,				/* bound flag */
     "ps",

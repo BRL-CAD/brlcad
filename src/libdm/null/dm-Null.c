@@ -359,6 +359,7 @@ struct dm_impl dm_null_impl = {
     NULL,
     NULL,
     0,
+    0,				/* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
     0.0,			/* zoom-in limit */

@@ -2120,8 +2120,9 @@ struct dm_impl dm_X_impl = {
     NULL,
     NULL,
     0,
+    1,				/* is graphical */
     0,				/* no displaylist */
-    0,                            /* no stereo */
+    0,                          /* no stereo */
     PLOTBOUND,			/* zoom-in limit */
     1,				/* bound flag */
     "X",

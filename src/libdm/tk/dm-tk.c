@@ -1159,6 +1159,7 @@ struct dm_impl dm_tk_impl = {
     NULL,
     NULL,
     0,
+    1,				/* is graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
     PLOTBOUND,			/* zoom-in limit */

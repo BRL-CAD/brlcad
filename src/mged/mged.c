@@ -145,15 +145,7 @@ void (*cur_sigint)();	/* Current SIGINT status */
 int interactive = 1;	/* >0 means interactive */
 int cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
-# if defined(HAVE_TK)
-int classic_mged=0;
-#  else
 int classic_mged=1;
-#  endif
-#else
-int classic_mged=1;
-#endif
 
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
@@ -1061,6 +1053,12 @@ main(int argc, char *argv[])
     if (bu_avail_cpus() > 1) {
 	RTG.rtg_parallel = 1;
     }
+
+#if defined(HAVE_TK)
+    if (dm_have_graphics()) {
+	classic_mged = 0;
+    }
+#endif
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {

@@ -587,48 +587,9 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
-#ifdef DM_X
-	if (BU_STR_EQUAL(argv[argc-1], "X")) {
-	    Tcl_AppendResult(interpreter, "X", (char *)NULL);
+	if (dm_valid_type(argv[argc-1], NULL)) {
+	    Tcl_AppendResult(interpreter, argv[argc-1], (char *)NULL);
 	}
-#endif /* DM_X */
-#if 0
-#ifdef DM_TK
-	if (BU_STR_EQUAL(argv[argc-1], "tk")) {
-	    Tcl_AppendResult(interpreter, "tk", (char *)NULL);
-	}
-#endif /* DM_TK */
-#endif
-#ifdef DM_WGL
-	if (BU_STR_EQUAL(argv[argc-1], "wgl")) {
-	    Tcl_AppendResult(interpreter, "wgl", (char *)NULL);
-	}
-#endif /* DM_WGL */
-#ifdef DM_OGL
-	if (BU_STR_EQUAL(argv[argc-1], "ogl")) {
-	    Tcl_AppendResult(interpreter, "ogl", (char *)NULL);
-	}
-#endif /* DM_OGL */
-#ifdef DM_OSG
-	if (BU_STR_EQUAL(argv[argc-1], "osg")) {
-	    Tcl_AppendResult(interpreter, "osg", (char *)NULL);
-	}
-#endif /* DM_OSG*/
-#ifdef DM_OSGL
-	if (BU_STR_EQUAL(argv[argc-1], "osgl")) {
-	    Tcl_AppendResult(interpreter, "osgl", (char *)NULL);
-	}
-#endif /* DM_OSGL*/
-#ifdef DM_GLX
-	if (BU_STR_EQUAL(argv[argc-1], "glx")) {
-	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
-	}
-#endif /* DM_GLX */
-#ifdef DM_QT
-	if (BU_STR_EQUAL(argv[argc-1], "qt")) {
-	    Tcl_AppendResult(interpreter, "qt", (char *)NULL);
-	}
-#endif /* DM_QT */
 	return TCL_OK;
     }
 

@@ -109,6 +109,7 @@ struct dm_impl {
     void (*dm_fogHint)(struct dm *dmp, int fastfog);
     int (*dm_share_dlist)(struct dm *dmp1, struct dm *dmp2);
     unsigned long dm_id;          /**< @brief window id */
+    int dm_graphical;		/**< @brief !0 means device supports interactive graphics */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
     double dm_bound;		/**< @brief zoom-in limit */

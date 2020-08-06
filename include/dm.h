@@ -173,7 +173,7 @@ DM_EXPORT extern struct dm *dm_open(void *interp,
 			     const char *argv[]);
 DM_EXPORT extern void dm_list_types(struct bu_vls *list, const char *separator);
 DM_EXPORT const char *dm_bestXType(const char *dpy_string);
-
+DM_EXPORT extern int dm_have_graphics();
 
 /* functions to make a dm struct hideable - will need to
  * sort these out later */
@@ -190,6 +190,7 @@ DM_EXPORT extern void dm_set_height(struct dm *dmp, int height);
 DM_EXPORT extern void dm_geometry_request(struct dm *dmp, int width, int height);
 DM_EXPORT extern void dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key); // ick
 DM_EXPORT extern fastf_t dm_get_aspect(struct dm *dmp);
+DM_EXPORT extern int dm_graphical(const struct dm *dmp);
 DM_EXPORT extern const char *dm_get_type(struct dm *dmp);
 DM_EXPORT extern unsigned long dm_get_id(struct dm *dmp);
 DM_EXPORT extern void dm_set_id(struct dm *dmp, unsigned long new_id);
