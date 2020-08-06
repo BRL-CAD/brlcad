@@ -2919,7 +2919,6 @@ to_init_default_bindings(struct bview *gdvp)
 		      bu_vls_addr(&current_top->to_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
-#ifdef DM_X
 	bu_vls_printf(&bindings, "bind %s <4> {%s zoom %s 1.1; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
 		      bu_vls_addr(&current_top->to_gedp->go_name),
@@ -2928,15 +2927,12 @@ to_init_default_bindings(struct bview *gdvp)
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
 		      bu_vls_addr(&current_top->to_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
-#endif
-#ifdef DM_WGL
 	bu_vls_printf(&bindings, "bind %s <MouseWheel> {if {%%D < 0} {%s zoom %s 0.9} else {%s zoom %s 1.1}; break}; ",
 		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
 		      bu_vls_addr(&current_top->to_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name),
 		      bu_vls_addr(&current_top->to_gedp->go_name),
 		      bu_vls_addr(&gdvp->gv_name));
-#endif
 
 	/* Idle Mode */
 	bu_vls_printf(&bindings, "bind %s <ButtonRelease> {%s idle_mode %s}; ",
