@@ -23,36 +23,29 @@ if(BRLCAD_ENABLE_TCL)
   add_subdirectory(txt)
 endif(BRLCAD_ENABLE_TCL)
 
-# We no longer use these in libdm, but MGED hasn't caught up yet...
-set(libdm_DEFINES "")
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-  add_subdirectory(glx)
-  list(APPEND libdm_DEFINES DM_OGL IF_OGL)
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   add_subdirectory(X)
-  list(APPEND libdm_DEFINES DM_X IF_X)
+  if(BRLCAD_ENABLE_OPENGL)
+    add_subdirectory(glx)
+  endif(BRLCAD_ENABLE_OPENGL)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+
 if(WIN32 AND BRLCAD_ENABLE_OPENGL)
   add_subdirectory(wgl)
-  list(APPEND libdm_DEFINES DM_WGL IF_WGL)
 endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
-if(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_DM_TK)
-  add_subdirectory(tk)
-  list(APPEND libdm_DEFINES DM_TK IF_TK)
-endif(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_DM_TK)
-if(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
-  add_subdirectory(osgl)
-  list(APPEND libdm_DEFINES DM_OSGL IF_OSGL)
-endif(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
+
+if(BRLCAD_ENABLE_TK)
+  if(BRLCAD_ENABLE_DM_TK)
+    add_subdirectory(tk)
+  endif(BRLCAD_ENABLE_DM_TK)
+  if(BRLCAD_ENABLE_OSG)
+    add_subdirectory(osgl)
+  endif(BRLCAD_ENABLE_OSG)
+endif(BRLCAD_ENABLE_TK)
+
 if(BRLCAD_ENABLE_QT)
   add_subdirectory(qt)
-  list(APPEND libdm_DEFINES DM_QT IF_QT)
 endif(BRLCAD_ENABLE_QT)
-
-# put the defines where MGED's build can find them...
-set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 set(LIBDM_SRCS
   null/dm-Null.c
