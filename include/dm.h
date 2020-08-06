@@ -171,7 +171,7 @@ DM_EXPORT extern struct dm *dm_open(void *interp,
 			     const char *type,
 			     int argc,
 			     const char *argv[]);
-DM_EXPORT extern struct bu_vls *dm_list_types(const char *separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
+DM_EXPORT extern void dm_list_types(struct bu_vls *list, const char *separator);
 DM_EXPORT const char *dm_bestXType(const char *dpy_string);
 
 

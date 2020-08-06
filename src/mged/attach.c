@@ -264,45 +264,16 @@ f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 static void
 print_valid_dm(Tcl_Interp *interpreter)
 {
-    int i = 0;
     Tcl_AppendResult(interpreter, "\tThe following display manager types are valid: ", (char *)NULL);
-#ifdef DM_X
-    Tcl_AppendResult(interpreter, "X  ", (char *)NULL);
-    i++;
-#endif /* DM_X */
-#if 0
-#ifdef DM_TK
-    Tcl_AppendResult(interpreter, "tk  ", (char *)NULL);
-    i++;
-#endif /* DM_TK */
-#endif
-#ifdef DM_WGL
-    Tcl_AppendResult(interpreter, "wgl  ", (char *)NULL);
-    i++;
-#endif /* DM_WGL */
-#ifdef DM_OGL
-    Tcl_AppendResult(interpreter, "ogl  ", (char *)NULL);
-    i++;
-#endif /* DM_OGL */
-#ifdef DM_OSG
-    Tcl_AppendResult(interpreter, "osg  ", (char *)NULL);
-    i++;
-#endif /* DM_OSG*/
-#ifdef DM_OSGL
-    Tcl_AppendResult(interpreter, "osgl  ", (char *)NULL);
-    i++;
-#endif /* DM_OSGL*/
-#ifdef DM_GLX
-    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
-    i++;
-#endif /* DM_GLX */
-#ifdef DM_QT
-    Tcl_AppendResult(interpreter, "qt", (char *)NULL);
-    i++;
-#endif /* DM_QT */
-    if (i == 0) {
+    struct bu_vls dm_types = BU_VLS_INIT_ZERO;
+    dm_list_types(&dm_types, " ");
+
+    if (bu_vls_strlen(&dm_types)) {
+	Tcl_AppendResult(interpreter, bu_vls_cstr(&dm_types), (char *)NULL);
+    } else {
 	Tcl_AppendResult(interpreter, "NONE AVAILABLE", (char *)NULL);
     }
+    bu_vls_free(&dm_types);
     Tcl_AppendResult(interpreter, "\n", (char *)NULL);
 }
 
@@ -527,9 +498,10 @@ get_attached(void)
     struct bu_vls type = BU_VLS_INIT_ZERO;
 
     struct bu_vls type_msg = BU_VLS_INIT_ZERO;
-    struct bu_vls *dm_types = dm_list_types(" ");
-    char **dms = (char **)bu_calloc(bu_vls_strlen(dm_types), sizeof(char *), "dm name array");
-    int nargc = bu_argv_from_string(dms, bu_vls_strlen(dm_types), bu_vls_addr(dm_types));
+    struct bu_vls dm_types = BU_VLS_INIT_ZERO;
+    dm_list_types(&dm_types, " ");
+    char **dms = (char **)bu_calloc(bu_vls_strlen(&dm_types), sizeof(char *), "dm name array");
+    int nargc = bu_argv_from_string(dms, bu_vls_strlen(&dm_types), bu_vls_addr(&dm_types));
 
     bu_vls_sprintf(&type_msg, "attach (nu");
     for (int i = 0; i < nargc; i++) {
@@ -543,7 +515,7 @@ get_attached(void)
     }
     bu_vls_printf(&type_msg, ")[nu]? ");
     bu_free(dms, "array");
-    bu_vls_free(dm_types);
+    bu_vls_free(&dm_types);
 
     while (inflimit > 0) {
 	bu_log("%s", bu_vls_cstr(&type_msg));

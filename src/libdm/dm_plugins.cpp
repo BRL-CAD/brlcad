@@ -61,13 +61,12 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     return dmp;
 }
 
-extern "C" struct bu_vls *
-dm_list_types(const char *separator)
+extern "C" void
+dm_list_types(struct bu_vls *list, const char *separator)
 {
-    struct bu_vls *list;
-    BU_GET(list, struct bu_vls);
-    bu_vls_init(list);
-    bu_vls_trunc(list, 0);
+    if (!list) {
+	return;
+    }
 
     // We've got something, and may need a separator
     struct bu_vls sep = BU_VLS_INIT_ZERO;
@@ -118,7 +117,6 @@ dm_list_types(const char *separator)
 	b = priority_list[i];
     }
 #endif
-    return list;
 }
 
 extern "C" int
