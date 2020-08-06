@@ -78,6 +78,24 @@ dm_have_graphics()
     return ret;
 }
 
+extern "C" const char *
+dm_graphics_system(const char *dmtype)
+{
+    const char *ret = NULL;
+    std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
+    std::map<std::string, const struct dm *>::iterator d_it;
+    for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
+	std::string key = d_it->first;
+	const struct dm *d = d_it->second;
+	const char *dname = dm_get_dm_name(d);
+	if (BU_STR_EQUIV(dmtype, dname)) {
+	    ret = dm_get_graphics_system(d);
+	    break;
+	}
+    }
+    return ret;
+}
+
 extern "C" void
 dm_list_types(struct bu_vls *list, const char *separator)
 {

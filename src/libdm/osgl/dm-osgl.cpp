@@ -2709,6 +2709,7 @@ struct dm_impl dm_osgl_impl = {
     NULL,
     0,
     1,				/* is graphical */
+    "Tk",                       /* uses Tk graphics system */
     1,				/* has displaylist */
     0,                          /* no stereo by default */
     1.0,			/* zoom-in limit */

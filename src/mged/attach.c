@@ -51,15 +51,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-#define NEED_GUI(_name) (\
-	BU_STR_EQUIV(_name, "wgl") || \
-	BU_STR_EQUIV(_name, "ogl") || \
-	BU_STR_EQUIV(_name, "osgl") || \
-	BU_STR_EQUIV(_name, "tk") || \
-	BU_STR_EQUIV(_name, "X") || \
-	BU_STR_EQUIV(_name, "txt") || \
-	BU_STR_EQUIV(_name, "qt"))
-
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 
 extern struct _color_scheme default_color_scheme;
@@ -402,7 +393,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     predictor_init();
 
     /* Only need to do this once */
-    if (tkwin == NULL && NEED_GUI(wp_name)) {
+    if (tkwin == NULL && BU_STR_EQUIV(dm_graphics_system(wp_name), "Tk")) {
 	struct dm *tmp_dmp;
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 

@@ -411,6 +411,7 @@ struct dm_impl dm_txt_impl = {
     NULL,
     0,
     0,				/* not graphical */
+    NULL,                       /* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
     0.0,			/* zoom-in limit */

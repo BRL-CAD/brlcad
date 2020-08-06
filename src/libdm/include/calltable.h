@@ -110,6 +110,7 @@ struct dm_impl {
     int (*dm_share_dlist)(struct dm *dmp1, struct dm *dmp2);
     unsigned long dm_id;          /**< @brief window id */
     int dm_graphical;		/**< @brief !0 means device supports interactive graphics */
+    const char *graphics_system; /**< @brief String identifying the drawing layer assumed */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
     double dm_bound;		/**< @brief zoom-in limit */

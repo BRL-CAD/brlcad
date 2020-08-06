@@ -178,7 +178,7 @@ dm_get_fb(struct dm *dmp)
 }
 
 const char *
-dm_get_dm_name(struct dm *dmp)
+dm_get_dm_name(const struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
     return dmp->i->dm_name;
@@ -399,6 +399,13 @@ dm_get_dname(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
     return &(dmp->i->dm_dName);
+}
+
+const char *
+dm_get_graphics_system(const struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+    return dmp->i->graphics_system;
 }
 
 struct bu_vls *
