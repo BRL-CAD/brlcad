@@ -19,7 +19,6 @@ set_property(SOURCE dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL
 set_property(SOURCE if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
 add_definitions(-DDM_PLUGIN)
-add_definitions(-DDM_WGL -DIF_WGL)
 
 add_library(dm-wgl SHARED ${WGL_SRCS})
 target_link_libraries(dm-wgl libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${OPENGL32_LIBRARY} ${OPENGL_LIBRARIES})

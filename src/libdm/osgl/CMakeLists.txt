@@ -39,7 +39,6 @@ set_property(SOURCE dm-osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTER
 set_property(SOURCE if_osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
 add_definitions(-DDM_PLUGIN)
-add_definitions(-DDM_OSGL -DIF_OSGL)
 
 add_library(dm-osgl SHARED ${OSGL_SRCS})
 target_link_libraries(dm-osgl libdm librt libbu ${OSGL_LIBRARIES})

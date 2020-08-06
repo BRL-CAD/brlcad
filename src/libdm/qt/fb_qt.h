@@ -30,7 +30,6 @@
 /** @} */
 
 #ifdef FB_USE_INTERNAL_API
-#ifdef IF_QT
 #include "common.h"
 #include <QApplication>
 #include <QPainter>
@@ -46,7 +45,6 @@ struct qt_fb_info {
     void *draw;
     void **qimg;
 };
-#endif /* IF_QT */
 #endif /* FB_USE_INTERNAL_API */
 
 /*

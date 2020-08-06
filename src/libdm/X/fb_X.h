@@ -30,7 +30,6 @@
 /** @} */
 
 #ifdef FB_USE_INTERNAL_API
-#ifdef IF_X
 #include "common.h"
 #include <X11/X.h>
 
@@ -42,7 +41,6 @@ struct X24_fb_info {
     XVisualInfo *vip;
     GC gc;
 };
-#endif /* IF_X */
 #endif /* FB_USE_INTERNAL_API */
 
 /*

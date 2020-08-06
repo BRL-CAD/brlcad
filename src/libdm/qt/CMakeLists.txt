@@ -31,7 +31,6 @@ set_property(SOURCE dm-qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNA
 set_property(SOURCE if_qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
 add_definitions(-DDM_PLUGIN)
-add_definitions(-DDM_QT -DIF_QT)
 
 add_library(dm-qt SHARED ${QT_SRCS})
 target_link_libraries(dm-qt libdm libbu ${QT_LIBRARIES})

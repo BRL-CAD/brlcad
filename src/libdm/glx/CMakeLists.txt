@@ -23,7 +23,6 @@ set_property(SOURCE dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL
 set_property(SOURCE if_ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
 add_definitions(-DDM_PLUGIN)
-add_definitions(-DDM_OGL -DIF_OGL)
 
 add_library(dm-ogl SHARED ${OGL_SRCS})
 target_link_libraries(dm-ogl libdm libbu ${X11_LIBRARIES} ${OPENGL_LIBRARIES} ${TCL_LIBRARY} ${TK_LIBRARY})

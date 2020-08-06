@@ -18,7 +18,6 @@ set_property(SOURCE dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_
 set_property(SOURCE if_tk24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
 add_definitions(-DDM_PLUGIN)
-add_definitions(-DDM_TK -DIF_TK)
 
 add_library(dm-tk SHARED ${TK_SRCS})
 target_link_libraries(dm-tk libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY})

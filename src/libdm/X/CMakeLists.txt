@@ -21,7 +21,6 @@ set_property(SOURCE dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_A
 set_property(SOURCE if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
 add_definitions(-DDM_PLUGIN)
-add_definitions(-DDM_X -DIF_X)
 
 add_library(dm-X SHARED ${X_SRCS})
 target_link_libraries(dm-X libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
