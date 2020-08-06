@@ -60,50 +60,6 @@
 	BU_STR_EQUIV(_name, "txt") || \
 	BU_STR_EQUIV(_name, "qt"))
 
-/* All systems can compile these! */
-extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
-extern int PS_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
-extern int Txt_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
-
-#ifdef DM_X
-extern int X_dm_init();
-#endif /* DM_X */
-
-#if 0
-/* Turn this off until we get it working properly... */
-#ifdef DM_TK
-extern int tk_dm_init();
-#endif /* DM_TK */
-#endif
-
-#ifdef DM_WGL
-extern int Wgl_dm_init();
-#endif /* DM_WGL */
-
-#ifdef DM_OGL
-# if defined(HAVE_TK)
-extern int Ogl_dm_init();
-# endif
-#endif /* DM_OGL */
-
-#ifdef DM_OSG
-extern int Osg_dm_init();
-#endif /* DM_OSG */
-
-#ifdef DM_GLX
-extern int Glx_dm_init();
-#endif /* DM_GLX */
-
-#ifdef DM_QT
-extern int Qt_dm_init();
-#endif /* DM_QT */
-
-#ifdef DM_OSGL
-# if defined(HAVE_TK)
-extern int Osgl_dm_init();
-# endif
-#endif /* DM_OSGL */
-
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 
 extern struct _color_scheme default_color_scheme;
