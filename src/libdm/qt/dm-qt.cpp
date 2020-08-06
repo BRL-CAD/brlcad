@@ -1347,6 +1347,7 @@ struct dm_impl dm_qt_impl = {
     qt_getDisplayImage,
     qt_reshape,
     null_makeCurrent,
+    null_doevent,
     qt_openFb,
     NULL,
     NULL,
@@ -1368,6 +1369,7 @@ struct dm_impl dm_qt_impl = {
     1,
     0,/* width */
     0,/* height */
+    0,/* dirty */
     0,/* bytes per pixel */
     0,/* bits per channel */
     0,

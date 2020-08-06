@@ -305,6 +305,19 @@ osgl_makeCurrent(struct dm *dmp)
     return TCL_OK;
 }
 
+HIDDEN int
+osgl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
+{
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+        (void)dm_make_current(dmp);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        dm_set_dirty(dmp, 1);
+        return TCL_OK;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
 
 HIDDEN int
 osgl_configureWin(struct dm *dmp, int force)
@@ -2682,6 +2695,7 @@ struct dm_impl dm_osgl_impl = {
     osgl_getDisplayImage, /* display to image function */
     osgl_reshape,
     osgl_makeCurrent,
+    osgl_doevent,
     osgl_openFb,
     osgl_get_internal,
     osgl_put_internal,
@@ -2700,9 +2714,10 @@ struct dm_impl dm_osgl_impl = {
     1,				/* bound flag */
     "osgl",
     "OpenGL graphics via OpenSceneGraph",
-    1,
-    0,
-    0,
+    1, /* top */
+    0, /* width */
+    0, /* height */
+    0, /* dirty */
     0, /* bytes per pixel */
     0, /* bits per channel */
     0,

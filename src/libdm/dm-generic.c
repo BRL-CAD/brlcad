@@ -304,6 +304,27 @@ dm_make_current(struct dm *dmp)
     return dmp->i->dm_makeCurrent(dmp);
 }
 
+int
+dm_doevent(struct dm *dmp, void *clientData, void *eventPtr)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_doevent(dmp, clientData, eventPtr);
+}
+
+int
+dm_get_dirty(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_dirty;
+}
+
+void
+dm_set_dirty(struct dm *dmp, int i)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_dirty = i;
+}
+
 vect_t *
 dm_get_clipmin(struct dm *dmp)
 {

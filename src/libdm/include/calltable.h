@@ -96,6 +96,7 @@ struct dm_impl {
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);  /**< @brief (0,0) is upper left pixel */
     int (*dm_reshape)(struct dm *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm *dmp);
+    int (*dm_doevent)(struct dm *dmp, void *clientData, void *eventPtr);
     int (*dm_openFb)(struct dm *dmp);
     int (*dm_get_internal)(struct dm *dmp);
     int (*dm_put_internal)(struct dm *dmp);
@@ -117,6 +118,7 @@ struct dm_impl {
     int dm_top;                   /**< @brief !0 means toplevel window */
     int dm_width;
     int dm_height;
+    int dm_dirty;
     int dm_bytes_per_pixel;
     int dm_bits_per_channel;  /* bits per color channel */
     int dm_lineWidth;

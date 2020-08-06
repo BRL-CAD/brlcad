@@ -1786,6 +1786,25 @@ wgl_makeCurrent(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+HIDDEN int
+wgl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
+{
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (!dm_make_current(dmp))
+        /* allow further processing of this event */
+        return TCL_OK;
+
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        dm_set_dirty(dmp, 1);
+        /* no further processing for this event */
+        return TCL_RETURN;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
+
 
 HIDDEN int
 wgl_configureWin(struct dm *dmp, int force)
@@ -2312,6 +2331,7 @@ struct dm_impl dm_wgl_impl = {
     wgl_getDisplayImage,	/* display to image function */
     wgl_reshape,
     wgl_makeCurrent,
+    wgl_doevent,
     wgl_openFb,
     wgl_get_internal,
     wgl_put_internal,
@@ -2330,9 +2350,10 @@ struct dm_impl dm_wgl_impl = {
     1,				/* bound flag */
     "wgl",
     "Windows with OpenGL graphics",
-    1,
-    0,
-    0,
+    1, /* top */
+    0, /* width */
+    0, /* height */
+    0, /* dirty */
     0, /* bytes per pixel */
     0, /* bits per channel */
     1,
