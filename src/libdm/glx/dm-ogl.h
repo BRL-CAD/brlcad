@@ -66,6 +66,8 @@
         }                                               \
     }
 
+extern struct dm dm_ogl;
+
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
 struct modifiable_ogl_vars {

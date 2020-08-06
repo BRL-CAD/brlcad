@@ -59,6 +59,8 @@
         }                                               \
     }
 
+extern struct dm dm_X;
+
 struct x_vars {
     GC gc;
     Pixmap pix;

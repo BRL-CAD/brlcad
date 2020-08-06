@@ -74,18 +74,7 @@ struct dm_hook_data {
     void *dmh_data;
 };
 
-/* TODO - after plugins are established, these should be movable to
- * the private subheaders */
 DM_EXPORT extern struct dm dm_null;
-DM_EXPORT extern struct dm dm_ogl;
-DM_EXPORT extern struct dm dm_plot;
-DM_EXPORT extern struct dm dm_ps;
-DM_EXPORT extern struct dm dm_tk;
-DM_EXPORT extern struct dm dm_wgl;
-DM_EXPORT extern struct dm dm_X;
-DM_EXPORT extern struct dm dm_txt;
-DM_EXPORT extern struct dm dm_qt;
-DM_EXPORT extern struct dm dm_osgl;
 
 DM_EXPORT extern void *dm_interp(struct dm *dmp);
 DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,

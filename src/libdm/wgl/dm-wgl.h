@@ -46,6 +46,8 @@ __BEGIN_DECLS
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
+extern struct dm dm_wgl;
+
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
 struct modifiable_ogl_vars {
