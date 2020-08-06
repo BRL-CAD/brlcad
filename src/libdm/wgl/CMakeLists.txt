@@ -1,34 +1,41 @@
-find_package(GL)
-find_package(TCL)
-
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${OPENGL_INCLUDE_DIR_GL}
-  ${TCL_INCLUDE_PATH}
-  ${TK_INCLUDE_PATH}
-  )
-
 set(WGL_SRCS
   dm-wgl.c
   if_wgl.c
   )
 
-set_property(SOURCE dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-set_property(SOURCE if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+if(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
-add_definitions(-DDM_PLUGIN)
-add_definitions(-DDM_WGL -DIF_WGL)
+  find_package(GL)
+  find_package(TCL)
 
-add_library(dm-wgl SHARED ${WGL_SRCS})
-target_link_libraries(dm-wgl libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${OPENGL32_LIBRARY} ${OPENGL_LIBRARIES})
-set_property(TARGET dm-wgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(dm-wgl "${WGL_SRCS}")
+  include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${OPENGL_INCLUDE_DIR_GL}
+    ${TCL_INCLUDE_PATH}
+    ${TK_INCLUDE_PATH}
+    )
 
-PLUGIN_SETUP(dm-wgl dm)
+  set_property(SOURCE dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
-CMAKEFILES(dm-wgl.h)
+  add_definitions(-DDM_PLUGIN)
+
+  add_library(dm-wgl SHARED ${WGL_SRCS})
+  target_link_libraries(dm-wgl libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${OPENGL32_LIBRARY} ${OPENGL_LIBRARIES})
+  set_property(TARGET dm-wgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+  VALIDATE_STYLE(dm-wgl "${WGL_SRCS}")
+
+  PLUGIN_SETUP(dm-wgl dm)
+
+endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
+
+CMAKEFILES(
+  CMakeLists.txt
+  ${WGL_SRCS}
+  dm-wgl.h
+  )
 
 # Local Variables:
 # tab-width: 8

@@ -589,12 +589,6 @@ extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const
 /* defined in setup.c */
 extern void mged_rtCmdNotify();
 
-struct w_dm {
-    char *name;
-    int	(*doevent)();
-};
-extern struct w_dm which_dm[];  /* defined in attach.c */
-
 /* indices into which_dm[] */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1

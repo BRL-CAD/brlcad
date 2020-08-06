@@ -32,6 +32,8 @@
 #include "dm.h"
 #include "../include/private.h"
 
+extern struct dm dm_txt;
+
 struct dm *
 txt_open(void *interp, int argc, const char **argv)
 {
@@ -341,6 +343,13 @@ txt_makeCurrent(struct dm *UNUSED(dmp))
 
 
 HIDDEN int
+txt_doevent(struct dm *UNUSED(dmp), void *UNUSED(vclientData), void *UNUSED(veventPtr))
+{
+    bu_log("doevent called\n");
+    return 0;
+}
+
+HIDDEN int
 txt_openFb(struct dm *UNUSED(dmp))
 {
     bu_log("openFb called\n");
@@ -388,6 +397,7 @@ struct dm_impl dm_txt_impl = {
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,
+    txt_doevent,
     txt_openFb,
     NULL,
     NULL,
@@ -400,6 +410,7 @@ struct dm_impl dm_txt_impl = {
     NULL,
     NULL,
     0,
+    0,				/* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
     0.0,			/* zoom-in limit */
@@ -409,6 +420,7 @@ struct dm_impl dm_txt_impl = {
     0,/* top */
     0,/* width */
     0,/* height */
+    0,/* dirty */
     0,/* bytes per pixel */
     0,/* bits per channel */
     0,

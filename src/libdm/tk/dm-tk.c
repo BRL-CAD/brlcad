@@ -1146,6 +1146,7 @@ struct dm_impl dm_tk_impl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_doevent,
     null_openFb,
     NULL,
     NULL,
@@ -1158,15 +1159,17 @@ struct dm_impl dm_tk_impl = {
     NULL,
     NULL,
     0,
+    1,				/* is graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
     PLOTBOUND,			/* zoom-in limit */
     1,				/* bound flag */
     "Tk",
     "Tcl/Tk Abstraction Layer",
-    1,
-    0,
-    0,
+    1, /* top */
+    0, /* width */
+    0, /* height */
+    0, /* dirty */
     0, /* bytes per pixel */
     0, /* bits per channel */
     0,

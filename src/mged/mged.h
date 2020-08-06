@@ -76,12 +76,10 @@
 /* Needed to define struct menu_item */
 #include "./menu.h"
 
-/* Needed to define struct w_dm */
-#include "./mged_dm.h"
-
 /* Needed to define struct solid */
 #include "rt/solid.h"
 
+#include "./mged_dm.h" /* _view_state */
 
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
@@ -449,7 +447,7 @@ extern struct run_rt head_run_rt;
 
 /* attach.c */
 int is_dm_null(void);
-int mged_attach(struct w_dm *wp, int argc, const char *argv[]);
+int mged_attach(const char *wp_name, int argc, const char *argv[]);
 void mged_link_vars(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
 int gui_setup(const char *dstr);

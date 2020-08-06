@@ -61,13 +61,29 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     return dmp;
 }
 
-extern "C" struct bu_vls *
-dm_list_types(const char *separator)
+extern "C" int 
+dm_have_graphics()
 {
-    struct bu_vls *list;
-    BU_GET(list, struct bu_vls);
-    bu_vls_init(list);
-    bu_vls_trunc(list, 0);
+    int ret = 0;
+    std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
+    std::map<std::string, const struct dm *>::iterator d_it;
+    for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
+	std::string key = d_it->first;
+	const struct dm *d = d_it->second;
+	if (dm_graphical(d)) {
+	    ret = 1;
+	    break;
+	}
+    }
+    return ret;
+}
+
+extern "C" void
+dm_list_types(struct bu_vls *list, const char *separator)
+{
+    if (!list) {
+	return;
+    }
 
     // We've got something, and may need a separator
     struct bu_vls sep = BU_VLS_INIT_ZERO;
@@ -118,7 +134,6 @@ dm_list_types(const char *separator)
 	b = priority_list[i];
     }
 #endif
-    return list;
 }
 
 extern "C" int

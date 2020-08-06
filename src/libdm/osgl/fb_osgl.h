@@ -30,7 +30,6 @@
 /** @} */
 
 #ifdef FB_USE_INTERNAL_API
-#ifdef IF_OSGL
 #include "common.h"
 
 #ifdef HAVE_SIGNAL_H
@@ -120,7 +119,6 @@ struct osgl_fb_info {
     int double_buffer;
     int soft_cmap;
 };
-#endif /* IF_OSGL */
 
 #endif /* FB_USE_INTERNAL_API */
 

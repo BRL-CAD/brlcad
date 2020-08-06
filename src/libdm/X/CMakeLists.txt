@@ -1,36 +1,42 @@
-
-find_package(X11)
-find_package(TCL)
-
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${X11_INCLUDE_DIR}
-  ${TCL_INCLUDE_PATH}
-  ${TK_INCLUDE_PATH}
-  )
-
 set(X_SRCS
   dm-X.c
   color.c
   if_X24.c
   )
 
-set_property(SOURCE dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-set_property(SOURCE if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
-add_definitions(-DDM_PLUGIN)
-add_definitions(-DDM_X -DIF_X)
+  find_package(X11)
+  find_package(TCL)
 
-add_library(dm-X SHARED ${X_SRCS})
-target_link_libraries(dm-X libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
-set_property(TARGET dm-X APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(dm-X "${X_SRCS}")
+  include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${X11_INCLUDE_DIR}
+    ${TCL_INCLUDE_PATH}
+    ${TK_INCLUDE_PATH}
+    )
 
-PLUGIN_SETUP(dm-X dm)
+  set_property(SOURCE dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
-CMAKEFILES(dm-X.h)
+  add_definitions(-DDM_PLUGIN)
+
+  add_library(dm-X SHARED ${X_SRCS})
+  target_link_libraries(dm-X libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
+  set_property(TARGET dm-X APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+  VALIDATE_STYLE(dm-X "${X_SRCS}")
+
+  PLUGIN_SETUP(dm-X dm)
+
+endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+
+CMAKEFILES(
+  CMakeLists.txt
+  ${X_SRCS}
+  dm-X.h
+  )
 
 # Local Variables:
 # tab-width: 8
