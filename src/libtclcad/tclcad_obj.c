@@ -70,13 +70,11 @@
 #include "icv/crop.h"
 #include "dm.h"
 
-#if defined(DM_OGL) || defined(DM_WGL)
-#  if defined(DM_WGL)
-#    include <tkwinport.h>
-#  endif
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
+#if defined(HAVE_WINDOWS_H)
+#  include <tkwinport.h>
+#endif
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
 #endif
 
 /* For the moment call internal libged functions - a cleaner
@@ -375,7 +373,7 @@ HIDDEN int to_paint_rect_area(struct ged *gedp,
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-#if defined(DM_OGL) || defined(DM_WGL)
+#ifdef HAVE_GL_GL_H
 HIDDEN int to_pix(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
@@ -910,7 +908,7 @@ static struct to_cmdtab to_cmds[] = {
     {"oscale_mode",	"obj x y", TO_UNLIMITED, to_oscale_mode, GED_FUNC_PTR_NULL},
     {"otranslate_mode",	"obj x y", TO_UNLIMITED, to_otranslate_mode, GED_FUNC_PTR_NULL},
     {"paint_rect_area",	"vname", TO_UNLIMITED, to_paint_rect_area, GED_FUNC_PTR_NULL},
-#if defined(DM_OGL) || defined(DM_WGL)
+#ifdef HAVE_GL_GL_H
     {"pix",	"file", TO_UNLIMITED, to_pix, GED_FUNC_PTR_NULL},
     {"png",	"file", TO_UNLIMITED, to_png, GED_FUNC_PTR_NULL},
 #endif
@@ -4745,7 +4743,7 @@ to_paint_rect_area(struct ged *gedp,
 }
 
 
-#if defined(DM_OGL) || defined(DM_WGL)
+#ifdef HAVE_GL_GL_H
 HIDDEN int
 to_pix(struct ged *gedp,
        int argc,
