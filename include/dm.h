@@ -164,14 +164,19 @@ DM_EXPORT extern void dm_list_types(struct bu_vls *list, const char *separator);
 DM_EXPORT const char *dm_bestXType(const char *dpy_string);
 DM_EXPORT extern int dm_have_graphics();
 
+/* This reports the graphics system associated with the specified dm type (returned values
+ * right now would be NULL, Tk or Qt - another eventual possibility is GLFW...) */
+DM_EXPORT extern const char *dm_graphics_system(const char *dmtype);
+
 /* functions to make a dm struct hideable - will need to
  * sort these out later */
 
 DM_EXPORT extern struct dm *dm_get();
 DM_EXPORT extern void dm_put(struct dm *dmp);
 DM_EXPORT extern void dm_set_null(struct dm *dmp); /* TODO - HACK, need general set mechanism */
-DM_EXPORT extern const char *dm_get_dm_name(struct dm *dmp);
+DM_EXPORT extern const char *dm_get_dm_name(const struct dm *dmp);
 DM_EXPORT extern const char *dm_get_dm_lname(struct dm *dmp);
+DM_EXPORT extern const char *dm_get_graphics_system(const struct dm *dmp);
 DM_EXPORT extern int dm_get_width(struct dm *dmp);
 DM_EXPORT extern int dm_get_height(struct dm *dmp);
 DM_EXPORT extern void dm_set_width(struct dm *dmp, int width);
