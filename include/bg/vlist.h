@@ -119,23 +119,32 @@ typedef enum {
  * size is set via command, it applies to the points/segments defined after that
  * command is introduced. */
 
-BG_EXPORT extern long
+BG_EXPORT extern size_t 
 bg_vlist_npts(struct bg_vlist *v);
 
-BG_EXPORT extern long
+BG_EXPORT extern size_t
 bg_vlist_ncmds(struct bg_vlist *v);
 
 BG_EXPORT extern long
-bg_vlist_add(struct bg_vlist *v, long i, bg_vlist_cmd_t cmd, point_t *p);
+bg_vlist_append(struct bg_vlist *v, bg_vlist_cmd_t cmd, point_t *p);
+
+BG_EXPORT extern long
+bg_vlist_insert(struct bg_vlist *v, size_t i, bg_vlist_cmd_t cmd, point_t *p);
 
 BG_EXPORT extern bg_vlist_cmd_t
-bg_vlist_get(point_t *op, struct bg_vlist *v, long i, point_t *p, bg_vlist_cmd_t cmd);
+bg_vlist_get(point_t *op, struct bg_vlist *v, size_t i);
+
+BG_EXPORT extern int
+bg_vlist_set(struct bg_vlist *v, size_t i, point_t *op, bg_vlist_cmd_t cmd);
+
+BG_EXPORT extern size_t
+bg_vlist_find(struct bg_vlist *v, size_t start_ind, bg_vlist_cmd_t cmd, point_t *p);
 
 BG_EXPORT extern long
-bg_vlist_rm(struct bg_vlist *v, bg_vlist_cmd_t cmd, point_t *p, long i);
+bg_vlist_rm(struct bg_vlist *v, size_t i);
 
 BG_EXPORT extern long
-bg_vlist_get_pnt_size(struct bg_vlist *v, size_t i, point_t *p);
+bg_vlist_get_pnt_size(struct bg_vlist *v, size_t i);
 
 /* Analytic functions */
 

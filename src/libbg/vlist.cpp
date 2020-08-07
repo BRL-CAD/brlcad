@@ -92,25 +92,86 @@ bg_vlist_destroy(struct bg_vlist *v)
 
 
 
-#if 0
 size_t
 bg_vlist_npnts(struct bg_vlist *v)
 {
-    size_t num_commands;
-    struct bn_vlist *vp;
+    size_t cnt = 0;
 
-    if (UNLIKELY(vlist == NULL)) {
-	return 0;
+    for (size_t i = 0; i < v->i->v.size(); i++) {
+	bg_vlist_cmd_t cmd = bg_vlist_get(NULL, v, i);
+	switch (cmd) {
+	    case BG_VLIST_POINT_DRAW:
+	    case BG_VLIST_TRI_MOVE:
+	    case BG_VLIST_TRI_DRAW:
+	    case BG_VLIST_POLY_MOVE:
+	    case BG_VLIST_POLY_DRAW:
+		cnt++;
+		break;
+	    default:
+		// Note:  not counting normal data as points
+		continue;
+	}
     }
 
-    num_commands = 0;
-    for (BU_LIST_FOR(vp, bn_vlist, &(vlist->l))) {
-	num_commands += vp->nused;
-    }
-
-    return num_commands;
+    return cnt;
 }
 
+size_t
+bg_vlist_ncmds(struct bg_vlist *v)
+{
+    size_t cnt = 0;
+
+    for (size_t i = 0; i < v->i->v.size(); i++) {
+	bg_vlist_cmd_t cmd = bg_vlist_get(NULL, v, i);
+	if (cmd == BG_VLIST_NULL) {
+	    continue;
+	}
+	cnt++;
+    }
+
+    return cnt;
+}
+
+bg_vlist_cmd_t
+bg_vlist_get(point_t *op, struct bg_vlist *v, size_t i)
+{
+    if (i > v->i->v.size() - 1) {
+	return BG_VLIST_NULL;
+    }
+
+    // Actual node info is either in the queue or the local vector
+    vobj &cv = (v->i->q) ? v->i->q->i->objs[v->i->v[i]] : v->i->vlocal[v->i->v[i]];
+    if (op) {
+	VMOVE(*op, cv.p);
+    }
+    return cv.cmd;
+}
+
+size_t
+bg_vlist_find(struct bg_vlist *v, size_t start_ind, bg_vlist_cmd_t cmd, point_t *p)
+{
+    for (size_t i = 0; i < v->i->v.size(); i++) {
+	if (i < start_ind) {
+	    continue;
+	}
+	// Actual node info is either in the queue or the local vector
+	vobj &cv = (v->i->q) ? v->i->q->i->objs[v->i->v[i]] : v->i->vlocal[v->i->v[i]];
+	if (cmd != BG_VLIST_NULL && cv.cmd != cmd) {
+	    // If we have a non-NULL command, filter on it
+	    continue;
+	}
+	if (p && DIST_PNT_PNT_SQ(*p, cv.p) > VUNITIZE_TOL) {
+	    // If we have a non-NULL point, distance filter using it
+	    continue;
+	}
+
+	// If we pass all the filters, we have a match
+	return i;
+    }
+    return BG_VLIST_NULL;
+}
+
+#if 0
 static int
 bn_vlist_bbox_internal(struct bn_vlist *vp, point_t *bmin, point_t *bmax, int *disp_mode)
 {
