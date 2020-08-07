@@ -119,16 +119,16 @@ typedef enum {
  * size is set via command, it applies to the points/segments defined after that
  * command is introduced. */
 
-BG_EXPORT extern size_t 
+BG_EXPORT extern size_t
 bg_vlist_npts(struct bg_vlist *v);
 
 BG_EXPORT extern size_t
 bg_vlist_ncmds(struct bg_vlist *v);
 
-BG_EXPORT extern long
+BG_EXPORT extern int
 bg_vlist_append(struct bg_vlist *v, bg_vlist_cmd_t cmd, point_t *p);
 
-BG_EXPORT extern long
+BG_EXPORT extern int
 bg_vlist_insert(struct bg_vlist *v, size_t i, bg_vlist_cmd_t cmd, point_t *p);
 
 BG_EXPORT extern bg_vlist_cmd_t

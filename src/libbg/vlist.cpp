@@ -86,6 +86,16 @@ bg_vlist_create(struct bg_vlist_queue *q)
 void
 bg_vlist_destroy(struct bg_vlist *v)
 {
+    if (v->i->q) {
+	// If we're using a queue, all of the objects
+	// in this vlist will be available for reuse
+	for (size_t i = 0; i < v->i->v.size(); i++) {
+	    vobj &nv = v->i->q->i->objs[v->i->v[i]];
+	    VSET(nv.p, 0, 0, 0);
+	    nv.cmd = BG_VLIST_NULL;
+	    v->i->q->i->free_objs.push(v->i->v[i]);
+	}
+    }
     delete[] v->i;
     BU_PUT(v, struct bg_vlist);
 }
@@ -132,6 +142,64 @@ bg_vlist_ncmds(struct bg_vlist *v)
     return cnt;
 }
 
+int
+bg_vlist_append(struct bg_vlist *v, bg_vlist_cmd_t cmd, point_t *p)
+{
+    if (!v) {
+	return -1;
+    }
+    if (v->i->q) {
+	size_t nobj = v->i->q->i->free_objs.front();
+	v->i->q->i->free_objs.pop();
+	vobj &nv = v->i->q->i->objs[nobj];
+	nv.cmd = cmd;
+	if (p) {
+	    VMOVE(nv.p, *p);
+	}
+	v->i->v.push_back(nobj);
+    } else {
+	vobj nv;
+	nv.cmd = cmd;
+	if (p) {
+	    VMOVE(nv.p, *p);
+	}
+	v->i->vlocal.push_back(nv);
+	v->i->v.push_back(v->i->vlocal.size() - 1);
+    }
+
+    return 0;
+}
+
+int
+bg_vlist_insert(struct bg_vlist *v, size_t i, bg_vlist_cmd_t cmd, point_t *p)
+{
+    if (!v) {
+	return -1;
+    }
+    if (v->i->q) {
+	size_t nobj = v->i->q->i->free_objs.front();
+	v->i->q->i->free_objs.pop();
+	vobj &nv = v->i->q->i->objs[nobj];
+	nv.cmd = cmd;
+	if (p) {
+	    VMOVE(nv.p, *p);
+	}
+	std::vector<size_t>::iterator v_it = v->i->v.begin()+i;
+	v->i->v.insert(v_it, nobj);
+    } else {
+	vobj nv;
+	nv.cmd = cmd;
+	if (p) {
+	    VMOVE(nv.p, *p);
+	}
+	v->i->vlocal.push_back(nv);
+	std::vector<size_t>::iterator v_it = v->i->v.begin()+i;
+	v->i->v.insert(v_it, v->i->vlocal.size() - 1);
+    }
+
+    return 0;
+}
+
 bg_vlist_cmd_t
 bg_vlist_get(point_t *op, struct bg_vlist *v, size_t i)
 {
@@ -146,6 +214,27 @@ bg_vlist_get(point_t *op, struct bg_vlist *v, size_t i)
     }
     return cv.cmd;
 }
+
+
+int
+bg_vlist_set(struct bg_vlist *v, size_t i, point_t *p, bg_vlist_cmd_t cmd)
+{
+    if (i > v->i->v.size() - 1) {
+	return -1;
+    }
+
+    // Actual node info is either in the queue or the local vector
+    vobj &cv = (v->i->q) ? v->i->q->i->objs[v->i->v[i]] : v->i->vlocal[v->i->v[i]];
+    if (p) {
+	VMOVE(cv.p, *p);
+    }
+    if (cmd != BG_VLIST_NULL) {
+	cv.cmd = cmd;
+    }
+
+    return 0;
+}
+
 
 size_t
 bg_vlist_find(struct bg_vlist *v, size_t start_ind, bg_vlist_cmd_t cmd, point_t *p)
