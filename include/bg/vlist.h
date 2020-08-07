@@ -75,7 +75,6 @@ bg_vlist_queue_destroy(struct bg_vlist_queue *);
 struct bg_vlist_impl;
 struct bg_vlist {
     struct bg_vlist_impl *i;
-    struct bg_vlist_queue *q;
 };
 
 /* q is where to get/put free vlist entries - if NULL, all memory is managed
