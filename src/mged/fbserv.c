@@ -40,22 +40,21 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
-#include "./fbserv.h"
-
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
+extern const struct pkg_switch pkg_switch[];
 
 /*
  * Communication error.  An error occurred on the PKG link.
  */
-HIDDEN void
+static void
 communications_error(const char *str)
 {
     bu_log("%s", str);
 }
 
 
-HIDDEN void
+static void
 fbserv_setup_socket(int fd)
 {
     int on = 1;
@@ -89,7 +88,7 @@ fbserv_setup_socket(int fd)
 }
 
 
-HIDDEN void
+static void
 fbserv_drop_client(int sub)
 {
     if (clients[sub].c_pkg != PKC_NULL) {
@@ -115,7 +114,7 @@ fbserv_drop_client(int sub)
 /*
  * Process arrivals from existing clients.
  */
-HIDDEN void
+static void
 fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
     int i;
@@ -170,9 +169,9 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
+static struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
 
-HIDDEN void
+static void
 fbserv_new_client(struct pkg_conn *pcp,
 		  Tcl_Channel chan)
 
@@ -205,7 +204,7 @@ fbserv_new_client(struct pkg_conn *pcp,
 }
 
 
-HIDDEN void
+static void
 fbserv_new_client_handler(ClientData clientData,
 			  Tcl_Channel chan,
 			  char *host,
@@ -309,7 +308,7 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 }
 
 
-HIDDEN struct pkg_conn *
+static struct pkg_conn *
 fbserv_makeconn(int fd,
 		const struct pkg_switch *switchp)
 {
@@ -350,7 +349,7 @@ fbserv_makeconn(int fd,
 #else /* defined(_WIN32) && !defined(__CYGWIN__) */
 
 
-HIDDEN void
+static void
 fbserv_new_client(struct pkg_conn *pcp)
 {
     int i;
@@ -381,7 +380,7 @@ fbserv_new_client(struct pkg_conn *pcp)
 /*
  * Accept any new client connections.
  */
-HIDDEN void
+static void
 fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 {
     uintptr_t datafd = (uintptr_t)clientData;
@@ -1061,6 +1060,39 @@ rfbhelp(struct pkg_conn *pcp, char *buf)
     (void)free(buf);
 }
 
+const struct pkg_switch pkg_switch[] = {
+    { MSG_FBOPEN,                       rfbopen,        "Open Framebuffer", NULL },
+    { MSG_FBCLOSE,                      rfbclose,       "Close Framebuffer", NULL },
+    { MSG_FBCLEAR,                      rfbclear,       "Clear Framebuffer", NULL },
+    { MSG_FBREAD,                       rfbread,        "Read Pixels", NULL },
+    { MSG_FBWRITE,                      rfbwrite,       "Write Pixels", NULL },
+    { MSG_FBWRITE + MSG_NORETURN,       rfbwrite,       "Asynch write", NULL },
+    { MSG_FBCURSOR,                     rfbcursor,      "Cursor", NULL },
+    { MSG_FBGETCURSOR,                  rfbgetcursor,   "Get Cursor", NULL },      /*NEW*/
+    { MSG_FBSCURSOR,                    rfbscursor,     "Screen Cursor", NULL }, /*OLD*/
+    { MSG_FBWINDOW,                     rfbwindow,      "Window", NULL },          /*OLD*/
+    { MSG_FBZOOM,                       rfbzoom,        "Zoom", NULL },    /*OLD*/
+    { MSG_FBVIEW,                       rfbview,        "View", NULL },    /*NEW*/
+    { MSG_FBGETVIEW,                    rfbgetview,     "Get View", NULL },        /*NEW*/
+    { MSG_FBRMAP,                       rfbrmap,        "R Map", NULL },
+    { MSG_FBWMAP,                       rfbwmap,        "W Map", NULL },
+    { MSG_FBHELP,                       rfbhelp,        "Help Request", NULL },
+    { MSG_ERROR,                        rfbunknown,     "Error Message", NULL },
+    { MSG_CLOSE,                        rfbunknown,     "Close Connection", NULL },
+    { MSG_FBREADRECT,                   rfbreadrect,    "Read Rectangle", NULL },
+    { MSG_FBWRITERECT,                  rfbwriterect,   "Write Rectangle", NULL },
+    { MSG_FBWRITERECT + MSG_NORETURN,   rfbwriterect,   "Write Rectangle", NULL },
+    { MSG_FBBWREADRECT,                 rfbbwreadrect,  "Read BW Rectangle", NULL },
+    { MSG_FBBWWRITERECT,                rfbbwwriterect, "Write BW Rectangle", NULL },
+    { MSG_FBBWWRITERECT + MSG_NORETURN, rfbbwwriterect, "Write BW Rectangle", NULL },
+    { MSG_FBFLUSH,                      rfbflush,       "Flush Output", NULL },
+    { MSG_FBFLUSH + MSG_NORETURN,       rfbflush,       "Flush Output", NULL },
+    { MSG_FBFREE,                       rfbfree,        "Free Resources", NULL },
+    { MSG_FBPOLL,                       rfbpoll,        "Handle Events", NULL },
+    { MSG_FBSETCURSOR,                  rfbsetcursor,   "Set Cursor Shape", NULL },
+    { MSG_FBSETCURSOR + MSG_NORETURN,   rfbsetcursor,   "Set Cursor Shape", NULL },
+    { 0,                                NULL,           NULL, NULL }
+};
 
 /*
  * Local Variables:
