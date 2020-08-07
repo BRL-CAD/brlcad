@@ -30,6 +30,7 @@ set(LIBBG_SOURCES
   trimesh_isect.cpp
   trimesh_pt_in.c
   util.c
+  vlist.cpp
   )
 
 BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;SPSR;${P2T_LIBRARY}")

@@ -76,7 +76,7 @@ struct bg_vlist_impl;
 struct bg_vlist {
     struct bg_vlist_impl *i;
     struct bg_vlist_queue *q;
-}
+};
 
 /* q is where to get/put free vlist entries - if NULL, all memory is managed
  * locally in this specific vlist */
@@ -91,21 +91,26 @@ bg_vlist_destroy(struct bg_vlist *l);
 
 /* Values for cmd[] */
 typedef enum {
+    /* Points */
     BG_VLIST_POINT_DRAW,	/**< @brief Draw a single point */
     BG_VLIST_POINT_SIZE,	/**< @brief specify point pixel size */
+    /* Wireframes */
     BG_VLIST_LINE_MOVE,		/**< @brief specify new line */
     BG_VLIST_LINE_DRAW,		/**< @brief subsequent line vertex */
     BG_VLIST_LINE_WIDTH,	/**< @brief specify line pixel width */
+    /* Triangles */
     BG_VLIST_TRI_START,		/**< @brief pt[] has surface normal */
     BG_VLIST_TRI_MOVE,		/**< @brief move to first triangle vertex */
     BG_VLIST_TRI_DRAW,		/**< @brief subsequent triangle vertex */
     BG_VLIST_TRI_END,		/**< @brief last vert (repeats 1st), draw poly */
     BG_VLIST_TRI_VERTNORM,	/**< @brief per-vertex normal, for interpolation */
+    /* Polygons */
     BG_VLIST_POLY_START,	/**< @brief pt[] has surface normal */
     BG_VLIST_POLY_MOVE,		/**< @brief move to first poly vertex */
     BG_VLIST_POLY_DRAW,		/**< @brief subsequent poly vertex */
     BG_VLIST_POLY_END,		/**< @brief last vert (repeats 1st), draw poly */
     BG_VLIST_POLY_VERTNORM,	/**< @brief per-vertex normal, for interpolation */
+    /* Display Modes */
     BG_VLIST_DISPLAY_MAT,	/**< @brief specify the model matrix */
     BG_VLIST_MODEL_MAT,		/**< @brief specify the display matrix */
     BG_VLIST_NULL 		/**< @brief no-op command */
@@ -228,7 +233,7 @@ bg_vlist_2string(
 /**
  * Returns string description of a vlist cmd.
  */
-BG_EXPORT extern const char const *
+BG_EXPORT extern const char *
 bg_vlist_cmd_str(bg_vlist_cmd_t cmd);
 
 /**
@@ -270,7 +275,7 @@ bg_vlist_export(
  */
 BG_EXPORT extern void
 bg_vlist_import(
-	struct bg_vlist *vout
+	struct bg_vlist *vout,
 	struct bg_vlist_queue *q,
 	struct bu_vls *input
 	);
