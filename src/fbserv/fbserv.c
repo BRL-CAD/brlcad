@@ -109,7 +109,7 @@ struct pkg_conn *clients[MAX_CLIENTS];
 int verbose = 0;
 
 /* from server.c */
-extern const struct pkg_switch fb_server_pkg_switch[];
+extern const struct pkg_switch pkg_switch[];
 extern struct fb *fb_server_fbp;
 extern fd_set *fb_server_select_list;
 extern int *fb_server_max_fd;
@@ -337,7 +337,7 @@ main_loop(void)
 
 	/* Accept any new client connections */
 	if (netfd > 0 && FD_ISSET(netfd, &infds)) {
-	    fbserv_new_client(pkg_getclient(netfd, fb_server_pkg_switch, communications_error, 0));
+	    fbserv_new_client(pkg_getclient(netfd, pkg_switch, communications_error, 0));
 	    nopens++;
 	}
 
@@ -416,7 +416,7 @@ main(int argc, char **argv)
     netfd = 0;
     if (is_socket(netfd)) {
 	init_syslog();
-	fbserv_new_client(pkg_transerver(fb_server_pkg_switch, communications_error));
+	fbserv_new_client(pkg_transerver(pkg_switch, communications_error));
 	max_fd = 8;
 	once_only = 1;
 	main_loop();
@@ -486,7 +486,7 @@ main(int argc, char **argv)
 	int fbstat;
 	struct pkg_conn *pcp;
 
-	pcp = pkg_getclient(netfd, fb_server_pkg_switch, communications_error, 0);
+	pcp = pkg_getclient(netfd, pkg_switch, communications_error, 0);
 	if (pcp == PKC_ERROR)
 	    break;		/* continue is unlikely to work */
 
