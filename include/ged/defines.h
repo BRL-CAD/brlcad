@@ -128,6 +128,7 @@ struct ged_subprocess {
     struct bu_process *p;
     void *chan;
     int aborted;
+    int done;
     struct ged *gedp;
 };
 
