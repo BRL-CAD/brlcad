@@ -1315,6 +1315,9 @@ const struct ged_cmd draw_cmd = { &draw_cmd_impl };
 struct ged_cmd_impl e_cmd_impl = {"e", ged_draw_core, GED_CMD_DEFAULT};
 const struct ged_cmd e_cmd = { &e_cmd_impl };
 
+struct ged_cmd_impl B_cmd_impl = {"B", ged_draw_core, GED_CMD_DEFAULT};
+const struct ged_cmd B_cmd = { &B_cmd_impl };
+
 struct ged_cmd_impl ev_cmd_impl = {"ev", ged_ev_core, GED_CMD_DEFAULT};
 const struct ged_cmd ev_cmd = { &ev_cmd_impl };
 
@@ -1326,9 +1329,9 @@ extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
 struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
 const struct ged_cmd preview_cmd = { &preview_cmd_impl };
 
-const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &loadview_cmd, &preview_cmd, NULL };
+const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &B_cmd, &ev_cmd, &loadview_cmd, &preview_cmd, NULL };
 
-static const struct ged_plugin pinfo = { draw_cmds, 5 };
+static const struct ged_plugin pinfo = { draw_cmds, 6 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
