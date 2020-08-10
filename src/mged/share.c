@@ -98,6 +98,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
     struct dm_list *dlp1 = (struct dm_list *)NULL;
     struct dm_list *dlp2 = (struct dm_list *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     if (argc != 4) {
 	bu_vls_printf(&vls, "helpdevel share");
@@ -185,7 +186,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 			    save_dlp = curr_dm_list;
 
 			    set_curr_dm(dlp1);
-			    createDLists(GEDP->ged_gdp->gd_headDisplay);
+			    createDLists(hdlp);
 
 			    /* restore */
 			    set_curr_dm(save_dlp);

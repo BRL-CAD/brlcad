@@ -1435,7 +1435,7 @@ main(int argc, char *argv[])
 
     if (DBIP != DBI_NULL) {
 	setview(0.0, 0.0, 0.0);
-	GEDP->ged_gdp->gd_rtCmdNotify = mged_notify;
+	GEDP->ged_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */

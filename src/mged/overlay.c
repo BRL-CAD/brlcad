@@ -73,6 +73,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     struct directory *dp;
     mat_t mat;
     fastf_t scale;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     CHECK_DBI_NULL;
 
@@ -95,8 +96,8 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	if ((dp = db_lookup(DBIP, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(s, &gdlp->dl_headSolid) {
@@ -186,6 +187,7 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     struct model* m;
     const char* name;
     struct bu_list f_list;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     BU_LIST_INIT( &f_list );
 
@@ -235,8 +237,8 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
             continue;
 
         /* Find uses of this solid in the solid table */
-        gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-        while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+        gdlp = BU_LIST_NEXT(display_list, hdlp);
+        while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
             next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
             FOR_ALL_SOLIDS(s, &gdlp->dl_headSolid) {
                 if (db_full_path_search(&s->s_fullpath, dp)) {

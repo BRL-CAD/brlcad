@@ -182,6 +182,7 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     /* static due to setjmp */
     static int mode = 0;
     static struct solid *sp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     CHECK_DBI_NULL;
 
@@ -214,8 +215,8 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		break;
 	    }
 
-	    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	    gdlp = BU_LIST_NEXT(display_list, hdlp);
+	    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 		FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {

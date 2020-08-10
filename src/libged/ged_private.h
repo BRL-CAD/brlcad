@@ -645,6 +645,32 @@ void
 _ged_facetize_log_default(struct _ged_facetize_opts *o);
 
 
+struct ged_drawable {
+    struct bu_list              *gd_headDisplay;        /**< @brief  head of display list */
+    struct bu_list              *gd_headVDraw;          /**< @brief  head of vdraw list */
+    struct vd_curve             *gd_currVHead;          /**< @brief  current vdraw head */
+
+    char                        **gd_rt_cmd;    /* DEPRECATED - will be removed, do not use */
+    int                         gd_rt_cmd_len;  /* DEPRECATED - will be removed, do not use */
+
+    void                        (*gd_rtCmdNotify)(int aborted); /**< @brief  function called when rt command completes */
+
+    int                         gd_uplotOutputMode;     /**< @brief  output mode for unix plots */
+
+    /* qray state */
+    struct bu_vls               gd_qray_basename;       /**< @brief  basename of query ray vlist */
+    struct bu_vls               gd_qray_script;         /**< @brief  query ray script */
+    char                        gd_qray_effects;        /**< @brief  t for text, g for graphics or b for both */
+    int                         gd_qray_cmd_echo;       /**< @brief  0 - don't echo command, 1 - echo command */
+    struct ged_qray_fmt         *gd_qray_fmts;
+    struct ged_qray_color       gd_qray_odd_color;
+    struct ged_qray_color       gd_qray_even_color;
+    struct ged_qray_color       gd_qray_void_color;
+    struct ged_qray_color       gd_qray_overlap_color;
+    int                         gd_shaded_mode;         /**< @brief  1 - draw bots shaded by default */
+};
+
+
 GED_EXPORT extern int ged_snap_lines(point_t *out_pt, struct ged *gedp, point_t *p);
 GED_EXPORT extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);

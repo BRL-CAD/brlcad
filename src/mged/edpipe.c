@@ -23,7 +23,7 @@
  *
  * pipe_split_pnt - split a pipe segment at a given point
  *
- * find_pipe_pnt_nearest_pnt - find which segment of a pipe is nearest
+ * mged_find_pipe_pnt_nearest_pnt - find which segment of a pipe is nearest
  * the ray from "pt" in the viewing direction (for segment selection
  * in MGED)
  */
@@ -279,7 +279,7 @@ pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
 
 
 struct wdb_pipe_pnt *
-find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t pt)
+mged_find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t pt)
 {
     struct wdb_pipe_pnt *ps;
     struct wdb_pipe_pnt *nearest=(struct wdb_pipe_pnt *)NULL;

@@ -109,6 +109,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 {
     struct display_list *gdlp;
     struct solid *sp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     if (!existing_sp) {
 	/* Handling a new solid */
@@ -163,7 +164,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_PREV(display_list, hdlp);
 	BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);

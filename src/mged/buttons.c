@@ -511,10 +511,11 @@ ill_common(void) {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     int is_empty = 1;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -705,6 +706,7 @@ int
 be_accept()
 {
     struct dm_list *dmlp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     if (STATE == ST_S_EDIT) {
 	/* Accept a solid edit */
@@ -715,7 +717,7 @@ be_accept()
 	mmenu_set_all(MENU_L1, MENU_NULL);
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
-	dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
+	dl_set_iflag(hdlp, DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
@@ -759,6 +761,7 @@ int
 be_reject()
 {
     struct dm_list *dmlp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     update_views = 1;
 
@@ -799,7 +802,7 @@ be_reject()
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_iflag(hdlp, DOWN);
 
     mged_color_soltab();
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");

@@ -2032,7 +2032,13 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
     return GED_OK;
 }
 
-
+struct bu_list *
+ged_drawable_head_dl(struct ged *gedp)
+{
+    if (!gedp || !gedp->ged_gdp)
+	return NULL;
+    return gedp->ged_gdp->gd_headDisplay;
+}
 
 /*
  * Local Variables:

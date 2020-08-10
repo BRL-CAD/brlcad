@@ -49,7 +49,8 @@
 void
 mged_color_soltab(void)
 {
-    dl_color_soltab(GEDP->ged_gdp->gd_headDisplay);
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
+    dl_color_soltab(hdlp);
     update_views = 1;		/* re-write control list with new colors */
 }
 

@@ -58,6 +58,7 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+#include "../libged/ged_private.h" /*for gd_rt_cmd */
 
 extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */

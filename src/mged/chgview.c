@@ -263,9 +263,11 @@ edit_com(int argc,
     CHECK_DBI_NULL;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -457,9 +459,9 @@ edit_com(int argc,
 
 	GEDP->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
 
-	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -867,6 +869,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     char **orig_nargv;
     struct bu_vls vlsargv = BU_VLS_INIT_ZERO;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     CHECK_DBI_NULL;
 
@@ -977,9 +980,9 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	goto bail_out;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
 
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -1100,6 +1103,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     int is_empty = 1;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
@@ -1119,9 +1123,9 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
 
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {

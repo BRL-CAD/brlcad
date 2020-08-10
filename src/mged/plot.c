@@ -53,6 +53,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     char result[RT_MAXLINE] = {0};
     char tol_str[32] = {0};
     int is_empty = 1;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
 #ifndef _WIN32
     struct display_list *gdlp;
@@ -86,8 +87,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     if (not_state(ST_VIEW, "Presented Area Calculation") == TCL_ERROR)
 	return TCL_ERROR;
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -103,8 +104,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	return TCL_ERROR;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -194,8 +195,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
      * Write out rotated but unclipped, untranslated,
      * and unscaled vectors
      */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {

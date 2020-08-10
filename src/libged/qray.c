@@ -32,6 +32,7 @@
 
 #include "vmath.h"
 #include "ged.h"
+#include "./ged_private.h"
 
 #include "./qray.h"
 

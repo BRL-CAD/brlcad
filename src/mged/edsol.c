@@ -44,7 +44,7 @@
 #include "./mged_dm.h"
 
 
-extern struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
+extern struct wdb_pipe_pnt *mged_find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
 extern void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
 extern struct wdb_pipe_pnt *pipe_del_pnt(struct wdb_pipe_pnt *);
 extern struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
@@ -2664,6 +2664,7 @@ replot_editing_solid(void)
     mat_t mat;
     struct solid *sp;
     struct directory *illdp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     if (!illump) {
 	return;
@@ -2671,8 +2672,8 @@ replot_editing_solid(void)
 
     illdp = LAST_SOLID(illump);
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -5796,7 +5797,7 @@ sedit(void)
 		} else if (!es_mvalid && !inpara)
 		    break;
 
-		es_pipe_pnt = find_pipe_pnt_nearest_pnt(&pipeip->pipe_segs_head, new_pt);
+		es_pipe_pnt = mged_find_pipe_pnt_nearest_pnt(&pipeip->pipe_segs_head, new_pt);
 		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(INTERP, "No PIPE segment selected\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
@@ -7474,6 +7475,7 @@ oedit_apply(int continue_editing)
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct solid *sp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
      */
@@ -7520,8 +7522,8 @@ oedit_apply(int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -7545,6 +7547,7 @@ oedit_accept(void)
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct solid *sp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     if (DBIP == DBI_NULL)
 	return;
@@ -7552,8 +7555,8 @@ oedit_accept(void)
     if (DBIP->dbi_read_only) {
 	oedit_reject();
 
-	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -7772,6 +7775,7 @@ sedit_accept(void)
 void
 sedit_reject(void)
 {
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
     if (not_state(ST_S_EDIT, "Solid edit reject") || !illump) {
 	return;
     }
@@ -7801,8 +7805,8 @@ sedit_reject(void)
 	struct display_list *next_gdlp;
 	struct solid *sp;
 
-	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {

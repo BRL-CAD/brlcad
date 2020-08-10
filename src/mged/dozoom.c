@@ -56,6 +56,7 @@ dozoom(int which_eye)
     short r = -1;
     short g = -1;
     short b = -1;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     /*
      * The vectorThreshold stuff in libdm may turn the
@@ -144,7 +145,7 @@ dozoom(int which_eye)
     if (dm_get_transparency(DMP)) {
 	/* First, draw opaque stuff */
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_display_list(DMP, hdlp, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -158,7 +159,7 @@ dozoom(int which_eye)
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+	ndrawn = dm_draw_display_list(DMP, hdlp, 0.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -167,7 +168,7 @@ dozoom(int which_eye)
 
     } else {
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_display_list(DMP, hdlp, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -209,7 +210,7 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+    ndrawn = dm_draw_display_list(DMP, hdlp, 1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 

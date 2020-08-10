@@ -380,6 +380,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     int opt_argc;
     char **opt_argv;
     struct dm_list *o_dm_list;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     if (!wp_name) {
 	return TCL_ERROR;
@@ -456,7 +457,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     share_dlist(curr_dm_list);
 
     if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(GEDP->ged_gdp->gd_headDisplay);
+	createDLists(hdlp);
 	dlist_state->dl_active = 1;
     }
 

@@ -139,11 +139,12 @@ find_solid_with_path(struct db_full_path *pathp)
     struct solid *sp;
     int count = 0;
     struct solid *ret = (struct solid *)NULL;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -191,6 +192,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     const char *new_argv[4];
     char number[32];
     int is_empty = 1;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     CHECK_DBI_NULL;
 
@@ -208,8 +210,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {

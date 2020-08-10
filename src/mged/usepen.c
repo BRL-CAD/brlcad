@@ -53,6 +53,7 @@ illuminate(int y) {
     struct display_list *next_gdlp;
     int count;
     struct solid *sp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     /*
      * Divide the mouse into 'curr_dm_list->dml_ndrawn' VERTICAL
@@ -61,8 +62,8 @@ illuminate(int y) {
      */
     count = ((fastf_t)y + GED_MAX) * curr_dm_list->dml_ndrawn / GED_RANGE;
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -94,6 +95,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 {
     struct display_list *gdlp;
     struct solid *sp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -130,8 +132,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	if (argc == 1 || *argv[1] == 'f') {
 	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_NEXT_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+		if (BU_LIST_NEXT_IS_HEAD(gdlp, hdlp))
+		    gdlp = BU_LIST_NEXT(display_list, hdlp);
 		else
 		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
@@ -142,8 +144,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	} else if (*argv[1] == 'b') {
 	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_PREV_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
+		if (BU_LIST_PREV_IS_HEAD(gdlp, hdlp))
+		    gdlp = BU_LIST_PREV(display_list, hdlp);
 		else
 		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
@@ -223,6 +225,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     size_t j;
     int illum_only = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     CHECK_DBI_NULL;
 
@@ -275,8 +278,8 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
  got:
     /* Include all solids with same tree top */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {

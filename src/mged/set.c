@@ -374,6 +374,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
     struct dm_list *dlp1;
     struct dm_list *dlp2;
     struct dm_list *save_dlp;
+    struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
 
     /* save current display manager */
     save_dlp = curr_dm_list;
@@ -390,7 +391,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	    if (dm_get_displaylist(dlp1->dml_dmp) &&
 		dlp1->dml_dlist_state->dl_active == 0) {
 		set_curr_dm(dlp1);
-		createDLists(GEDP->ged_gdp->gd_headDisplay);
+		createDLists(hdlp);
 		dlp1->dml_dlist_state->dl_active = 1;
 		dlp1->dml_dirty = 1;
 	    }
@@ -424,8 +425,8 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 
 		    dlp1->dml_dlist_state->dl_active = 0;
 
-		    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-		    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+		    gdlp = BU_LIST_NEXT(display_list, hdlp);
+		    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 			next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 			(void)dm_make_current(dlp1->dml_dmp);

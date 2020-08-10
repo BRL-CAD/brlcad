@@ -643,7 +643,7 @@ void pipe_seg_scale_od(struct wdb_pipe_pnt *, fastf_t);
 void pipe_seg_scale_id(struct wdb_pipe_pnt *, fastf_t);
 void pipe_seg_scale_radius(struct wdb_pipe_pnt *, fastf_t);
 void pipe_scale_radius(struct rt_db_internal *, fastf_t);
-struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
+struct wdb_pipe_pnt *mged_find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
 struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 void pipe_ins_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 struct wdb_pipe_pnt *pipe_del_pnt(struct wdb_pipe_pnt *);
