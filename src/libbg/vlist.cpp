@@ -35,6 +35,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bn/plot3.h"
+#include "bg/lseg.h"
 #include "bg/vlist.h"
 
 class vobj {
@@ -259,6 +260,206 @@ bg_vlist_find(struct bg_vlist *v, size_t start_ind, bg_vlist_cmd_t cmd, point_t 
     }
     return BG_VLIST_NULL;
 }
+
+int
+bg_vlist_rm(struct bg_vlist *v, size_t i)
+{
+    if (i > v->i->v.size() - 1) {
+	return -1;
+    }
+
+    // Actual node info is either in the queue or the local vector
+    size_t vind = v->i->v[i];
+    v->i->v.erase(v->i->v.begin() + i);
+    vobj &cv = (v->i->q) ? v->i->q->i->objs[vind] : v->i->vlocal[vind];
+    cv.cmd = BG_VLIST_NULL;
+    VSET(cv.p, LONG_MAX, LONG_MAX, LONG_MAX);
+    if (v->i->q) {
+	v->i->q->i->free_objs.push(vind);
+    }
+    return 0;
+}
+
+// TODO - if we want to make these routines really efficient, we
+// should back vlists with an RTree...
+int long
+bg_vlist_closest_pt(point_t *cp, struct bg_vlist *v, point_t *tp)
+{
+    if (!v)
+	return -1;
+
+    point_t p1 = VINIT_ZERO;
+    point_t p2 = VINIT_ZERO;
+    long cind = -1;
+    point_t cpnt, closest_seg_pt;
+    double cdist, cseg;
+    double seg_dist_sq = DBL_MAX;
+    double pdist_min_sq = DBL_MAX;
+    bool have_seg = false;
+    for (size_t i = 0; i < v->i->v.size(); i++) {
+	VMOVE(p1, p2);
+	point_t *np = &p2;
+	bg_vlist_cmd_t cmd = bg_vlist_get(np, v, i);
+	switch (cmd) {
+	    case BG_VLIST_POINT_DRAW:
+		// An individual point may be the closest point on its own, but
+		// it does not contribute to a line seg.
+		cdist = DIST_PNT_PNT_SQ(*tp, *np);
+		if (pdist_min_sq > cdist) {
+		    pdist_min_sq = cdist;
+		    VMOVE(cpnt, *np);
+		    cind = i;
+		}
+		break;
+	    case BG_VLIST_LINE_MOVE:
+	    case BG_VLIST_TRI_MOVE:
+	    case BG_VLIST_POLY_MOVE:
+		// Move points indicate the start of a segment.
+		have_seg = true;
+		cdist = DIST_PNT_PNT_SQ(*tp, *np);
+		if (pdist_min_sq > cdist) {
+		    pdist_min_sq = cdist;
+		    VMOVE(cpnt, *np);
+		    cind = i;
+		}
+		break;
+	    case BG_VLIST_LINE_DRAW:
+	    case BG_VLIST_TRI_DRAW:
+	    case BG_VLIST_POLY_DRAW:
+		// Draw commands indicate we have a new segment which is not
+		// the last segment.
+		if (!have_seg) {
+		    bu_log("Error: DRAW cmd in vlist with no previous MOVE cmd!\n");
+		}
+		cdist = DIST_PNT_PNT_SQ(*tp, *np);
+		if (pdist_min_sq > cdist) {
+		    pdist_min_sq = cdist;
+		    VMOVE(cpnt, *np);
+		    cind = i;
+		}
+		cseg = bg_lseg_pt_dist_sq(&cpnt, p1, p2, *tp);
+		if (cseg < seg_dist_sq) {
+		    VMOVE(closest_seg_pt, cpnt);
+		    seg_dist_sq = cseg;
+		}
+		break;
+	    case BG_VLIST_TRI_END:
+	    case BG_VLIST_POLY_END:
+		// Draw commands indicate we have a last segment and the point
+		// we are heading to we have already seen.
+		cseg = bg_lseg_pt_dist_sq(&cpnt, p1, p2, *tp);
+		if (cseg < seg_dist_sq) {
+		    VMOVE(closest_seg_pt, cpnt);
+		    seg_dist_sq = cseg;
+		}
+		// The segment is ended - if there is more data we will need to
+		// initialize another segment.
+		have_seg = false;
+		break;
+	    default:
+		// Anything else doesn't contribute to either of these
+		// calculations
+		continue;
+	}
+    }
+
+    // If we need to return the closest point, sort out whether it's from an lseg
+    // or an individual point:
+    if (cp) {
+	if (pdist_min_sq < seg_dist_sq) {
+	    bg_vlist_get(cp, v, cind);
+	} else {
+	    VMOVE(*cp, closest_seg_pt);
+	}
+    }
+
+    return cind;
+}
+
+int
+bg_vlist_bbox(point_t *obmin, point_t *obmax, double *poly_length, struct bg_vlist *v)
+{
+    if (!v)
+	return -1;
+
+    double plength = 0.0;
+    bool have_seg = false;
+    point_t p1 = VINIT_ZERO;
+    point_t p2 = VINIT_ZERO;
+    point_t bmin, bmax;
+    VSETALL(bmin, DBL_MAX);
+    VSETALL(bmax, -DBL_MAX);
+    for (size_t i = 0; i < v->i->v.size(); i++) {
+	VMOVE(p1, p2);
+	point_t *np = &p2;
+	bg_vlist_cmd_t cmd = bg_vlist_get(np, v, i);
+	switch (cmd) {
+	    case BG_VLIST_POINT_DRAW:
+		// Individual points contribute to the bbox but not to the
+		// length.
+		have_seg = false;
+		V_MIN(bmin[X], (*np)[X]);
+		V_MAX(bmax[X], (*np)[X]);
+		V_MIN(bmin[Y], (*np)[Y]);
+		V_MAX(bmax[Y], (*np)[Y]);
+		V_MIN(bmin[Z], (*np)[Z]);
+		V_MAX(bmax[Z], (*np)[Z]);
+		break;
+	    case BG_VLIST_LINE_MOVE:
+	    case BG_VLIST_TRI_MOVE:
+	    case BG_VLIST_POLY_MOVE:
+		// Move points indicate the start of a segment.
+		have_seg = true;
+		V_MIN(bmin[X], (*np)[X]);
+		V_MAX(bmax[X], (*np)[X]);
+		V_MIN(bmin[Y], (*np)[Y]);
+		V_MAX(bmax[Y], (*np)[Y]);
+		V_MIN(bmin[Z], (*np)[Z]);
+		V_MAX(bmax[Z], (*np)[Z]);
+		break;
+	    case BG_VLIST_LINE_DRAW:
+	    case BG_VLIST_TRI_DRAW:
+	    case BG_VLIST_POLY_DRAW:
+		// Draw commands indicate we have a new segment which is not
+		// the last segment.
+		if (!have_seg) {
+		    bu_log("Error: DRAW cmd in vlist with no previous MOVE cmd!\n");
+		}
+		V_MIN(bmin[X], (*np)[X]);
+		V_MAX(bmax[X], (*np)[X]);
+		V_MIN(bmin[Y], (*np)[Y]);
+		V_MAX(bmax[Y], (*np)[Y]);
+		V_MIN(bmin[Z], (*np)[Z]);
+		V_MAX(bmax[Z], (*np)[Z]);
+		plength += DIST_PNT_PNT(p1, p2);
+		break;
+	    case BG_VLIST_TRI_END:
+	    case BG_VLIST_POLY_END:
+		// Draw commands indicate we have a last segment and the point
+		// we are heading to we have already seen.
+		plength += DIST_PNT_PNT(p1, p2);
+		// The segment is ended - if there is more data we will need to
+		// initialize another segment.
+		have_seg = false;
+		break;
+	    default:
+		// Anything else doesn't contribute to either of these
+		// calculations
+		continue;
+	}
+    }
+
+    if (poly_length) {
+	*poly_length = plength;
+    }
+    if (obmin && obmax) {
+	VMOVE(*obmin, bmin);
+	VMOVE(*obmax, bmax);
+    }
+
+    return 0;
+}
+
 
 #if 0
 static int

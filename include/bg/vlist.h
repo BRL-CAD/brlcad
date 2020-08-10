@@ -98,13 +98,13 @@ typedef enum {
     BG_VLIST_LINE_DRAW,		/**< @brief subsequent line vertex */
     BG_VLIST_LINE_WIDTH,	/**< @brief specify line pixel width */
     /* Triangles */
-    BG_VLIST_TRI_START,		/**< @brief pt[] has surface normal */
+    BG_VLIST_TRI_NORM,		/**< @brief pt[] has surface normal */
     BG_VLIST_TRI_MOVE,		/**< @brief move to first triangle vertex */
     BG_VLIST_TRI_DRAW,		/**< @brief subsequent triangle vertex */
     BG_VLIST_TRI_END,		/**< @brief last vert (repeats 1st), draw poly */
     BG_VLIST_TRI_VERTNORM,	/**< @brief per-vertex normal, for interpolation */
     /* Polygons */
-    BG_VLIST_POLY_START,	/**< @brief pt[] has surface normal */
+    BG_VLIST_POLY_NORM,		/**< @brief pt[] has surface normal */
     BG_VLIST_POLY_MOVE,		/**< @brief move to first poly vertex */
     BG_VLIST_POLY_DRAW,		/**< @brief subsequent poly vertex */
     BG_VLIST_POLY_END,		/**< @brief last vert (repeats 1st), draw poly */
@@ -140,11 +140,8 @@ bg_vlist_set(struct bg_vlist *v, size_t i, point_t *op, bg_vlist_cmd_t cmd);
 BG_EXPORT extern size_t
 bg_vlist_find(struct bg_vlist *v, size_t start_ind, bg_vlist_cmd_t cmd, point_t *p);
 
-BG_EXPORT extern long
+BG_EXPORT extern int
 bg_vlist_rm(struct bg_vlist *v, size_t i);
-
-BG_EXPORT extern long
-bg_vlist_get_pnt_size(struct bg_vlist *v, size_t i);
 
 /* Analytic functions */
 
@@ -152,11 +149,11 @@ bg_vlist_get_pnt_size(struct bg_vlist *v, size_t i);
  * cp is not NULL, also calculates and returns the closest point on the vlist
  * polylines. */
 BG_EXPORT extern long
-bg_vlist_closest_pnt(point_t *cp, struct bg_vlist *v, point_t *tp);
+bg_vlist_closest_pt(point_t *cp, struct bg_vlist *v, point_t *tp);
 
 /* Calculate and return the bounding box and polyline length of the vlist */
 BG_EXPORT extern int
-bg_vlist_bbox(point_t *bmin, point_t *bmax, int *poly_length, struct bg_vlist *v);
+bg_vlist_bbox(point_t *bmin, point_t *bmax, double *poly_length, struct bg_vlist *v);
 
 /* vlblocks associate colors with vlists */
 struct bg_vlblock_impl;
