@@ -126,20 +126,6 @@ struct ged_subprocess {
     struct ged *gedp;
 };
 
-/* FIXME: should be private */
-struct ged_qray_color {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-};
-
-/* FIXME: should be private */
-struct ged_qray_fmt {
-    char type;
-    struct bu_vls fmt;
-};
-
-
 struct ged_drawable;
 GED_EXPORT struct bu_list *ged_drawable_head_dl(struct ged *gedp);
 

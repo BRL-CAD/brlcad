@@ -644,6 +644,17 @@ _ged_facetize_log_nmg(struct _ged_facetize_opts *o);
 void
 _ged_facetize_log_default(struct _ged_facetize_opts *o);
 
+struct ged_qray_color {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
+
+struct ged_qray_fmt {
+    char type;
+    struct bu_vls fmt;
+};
+
 /* FIXME: leftovers from dg.h */
 #define RT_VDRW_PREFIX          "_VDRW"
 #define RT_VDRW_PREFIX_LEN      6
