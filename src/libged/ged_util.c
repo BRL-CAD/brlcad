@@ -1374,8 +1374,8 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
+	if (gedp->ged_rtCmdNotify != (void (*)(int))0)
+	    gedp->ged_rtCmdNotify(aborted);
 
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);

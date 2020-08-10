@@ -653,8 +653,6 @@ struct ged_drawable {
     char                        **gd_rt_cmd;    /* DEPRECATED - will be removed, do not use */
     int                         gd_rt_cmd_len;  /* DEPRECATED - will be removed, do not use */
 
-    void                        (*gd_rtCmdNotify)(int aborted); /**< @brief  function called when rt command completes */
-
     int                         gd_uplotOutputMode;     /**< @brief  output mode for unix plots */
 
     /* qray state */

@@ -149,8 +149,8 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
     /* Get textual output from rtcheck */
     if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
 	rtcp->read_failed = 1;
-	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->ged_gdp->gd_rtCmdNotify(0);
+	if (gedp->ged_rtCmdNotify != (void (*)(int))0)
+	    gedp->ged_rtCmdNotify(0);
     }
 
 
