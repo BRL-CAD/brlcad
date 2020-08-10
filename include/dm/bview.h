@@ -33,6 +33,7 @@
 #define DM_BVIEW_H
 
 #include "common.h"
+#include "bu/color.h"
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "bu/observer.h"
@@ -254,6 +255,7 @@ struct bview {
     size_t                      gv_bot_threshold;
     int			        gv_hidden;
     void                        *dmp;  /* Display manager pointer, if one is associated with this view */
+    void 			*objs;  /* Stub - intended eventually to point to an RTree with the bview_objs associated with the view */
     void                        *u_data; /* Caller data associated with this view */
     struct bu_ptbl *callbacks;
 };
@@ -268,6 +270,28 @@ struct bview_solid_data {
     int dmode;
     int hiddenLine;
     void *freesolid;
+};
+
+
+/* Conceptually this is intended to eventually replace parts of struct solid,
+ * bview_solid_data and bn_vlblock. */
+#define BVIEW_OBJ_DEFAULT      0
+#define BVIEW_OBJ_DISABLE      1ULL << 0
+#define BVIEW_OBJ_ILLUM        1ULL << 1
+#define BVIEW_OBJ_DASHED       1ULL << 2
+#define BVIEW_OBJ_WIREFRAME    1ULL << 3
+#define BVIEW_OBJ_SHADED       1ULL << 4
+#define BVIEW_OBJ_HIDDEN_LINE  1ULL << 5
+#define BVIEW_OBJ_TRANSP       1ULL << 6
+
+struct bview_obj {
+    struct bu_vls name;         /**< @brief  Unique object name */
+    void *shape_data;		/**< @brief  Associated shape data (usually vlist) */
+    struct bu_color c;          /**< @brief  Color used for drawing */
+    unsigned long long flags;   /**< @brief  Visualization related flags */
+    double transparency;        /**< @brief  holds a transparency value in the range [0.0, 1.0] */
+    struct bview *bv;           /**< @brief  Associated bview (if any) */
+    void *u_data;               /**< @brief  User data associated with this object */
 };
 
 #endif /* DM_BVIEW_H */

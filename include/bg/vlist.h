@@ -155,39 +155,6 @@ bg_vlist_closest_pt(point_t *cp, struct bg_vlist *v, point_t *tp);
 BG_EXPORT extern int
 bg_vlist_bbox(point_t *bmin, point_t *bmax, double *poly_length, struct bg_vlist *v);
 
-/* vlblocks associate colors with vlists */
-struct bg_vlblock_impl;
-struct bg_vlblock {
-    struct bg_vlblock_impl *i;
-};
-
-/* Create an empty bg_vlblock */
-BG_EXPORT extern struct bg_vlblock *
-bg_vlblock_create();
-
-/* Destroy a bg_vlblock.  Does not destroy vlists in the block or
- * their associated queues - to fully clean up bg_vlblock:
- *
- * 1. Find and destroy all vlists in the block.
- * 2. Destroy the bg_vlblock
- * 3. Destroy the bg_vlist_queue(s) in use by the app.
- */
-BG_EXPORT extern void
-bg_vlblock_destroy(struct bg_vlblock *b);
-
-BG_EXPORT extern int
-bg_vlist_set_color(struct bg_vlblock *vb, struct bg_vlist *v, struct bu_color *c);
-
-BG_EXPORT extern struct bu_color *
-bg_vlist_get_color(struct bg_vlblock *vb, struct bg_vlist *v);
-
-BG_EXPORT extern int
-bg_vlblock_list_colors(struct bu_color **c, struct bg_vlblock *vb);
-
-BG_EXPORT extern int
-bg_vlblock_find(struct bg_vlist **, struct bg_vlblock *vb, struct bu_color *c);
-
-
 /**
  * Convert a string to a vlist.
  *

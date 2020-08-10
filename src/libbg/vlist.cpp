@@ -38,6 +38,8 @@
 #include "bg/lseg.h"
 #include "bg/vlist.h"
 
+/* Internal implementation structures */
+
 class vobj {
     public:
 	point_t p = VINIT_ZERO;
@@ -49,6 +51,16 @@ struct bg_vlist_queue_impl {
     std::vector<vobj> objs;
 };
 
+struct bg_vlist_impl {
+    std::vector<size_t> v;
+    struct bg_vlist_queue *q;
+    // If a vlist is not using a queue, the vobjs are
+    // stored locally with the list
+    std::vector<vobj> vlocal;
+};
+
+
+/* vlist queue functions */
 
 struct bg_vlist_queue *
 bg_vlist_queue_create()
@@ -66,13 +78,8 @@ bg_vlist_queue_delete(struct bg_vlist_queue *q)
     BU_PUT(q, struct bg_vlist_queue);
 }
 
-struct bg_vlist_impl {
-    std::vector<size_t> v;
-    struct bg_vlist_queue *q;
-    // If a vlist is not using a queue, the vobjs are
-    // stored locally with the list
-    std::vector<vobj> vlocal;
-};
+
+/* vlist functions */
 
 struct bg_vlist *
 bg_vlist_create(struct bg_vlist_queue *q)
@@ -100,8 +107,6 @@ bg_vlist_destroy(struct bg_vlist *v)
     delete[] v->i;
     BU_PUT(v, struct bg_vlist);
 }
-
-
 
 size_t
 bg_vlist_npnts(struct bg_vlist *v)
