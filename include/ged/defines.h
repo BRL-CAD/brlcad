@@ -116,12 +116,6 @@ struct ged_callback_state;
 #define INV_GED 0.00048828125
 #define INV_4096 0.000244140625
 
-/* FIXME: leftovers from dg.h */
-#define RT_VDRW_PREFIX          "_VDRW"
-#define RT_VDRW_PREFIX_LEN      6
-#define RT_VDRW_MAXNAME         31
-#define RT_VDRW_DEF_COLOR       0xffff00
-
 
 struct ged_subprocess {
     uint32_t magic;         /**< @brief magic number */
@@ -145,15 +139,7 @@ struct ged_qray_fmt {
     struct bu_vls fmt;
 };
 
-struct vd_curve {
-    struct bu_list      l;
-    char                vdc_name[RT_VDRW_MAXNAME+1];    /**< @brief name array */
-    long                vdc_rgb;        /**< @brief color */
-    struct bu_list      vdc_vhd;        /**< @brief head of list of vertices */
-};
-#define VD_CURVE_NULL   ((struct vd_curve *)NULL)
 
-/* FIXME: should be private */
 struct ged_drawable;
 GED_EXPORT struct bu_list *ged_drawable_head_dl(struct ged *gedp);
 

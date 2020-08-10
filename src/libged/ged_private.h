@@ -644,6 +644,20 @@ _ged_facetize_log_nmg(struct _ged_facetize_opts *o);
 void
 _ged_facetize_log_default(struct _ged_facetize_opts *o);
 
+/* FIXME: leftovers from dg.h */
+#define RT_VDRW_PREFIX          "_VDRW"
+#define RT_VDRW_PREFIX_LEN      6
+#define RT_VDRW_MAXNAME         31
+#define RT_VDRW_DEF_COLOR       0xffff00
+
+struct vd_curve {
+    struct bu_list      l;
+    char                vdc_name[RT_VDRW_MAXNAME+1];    /**< @brief name array */
+    long                vdc_rgb;        /**< @brief color */
+    struct bu_list      vdc_vhd;        /**< @brief head of list of vertices */
+};
+#define VD_CURVE_NULL   ((struct vd_curve *)NULL)
+
 
 struct ged_drawable {
     struct bu_list              *gd_headDisplay;        /**< @brief  head of display list */
