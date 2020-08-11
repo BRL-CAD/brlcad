@@ -32,8 +32,8 @@
 #include "../ged_private.h"
 
 
-int
-ged_getmat(struct ged *gedp, int argc, const char *argv[])
+static int
+_getmat(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -196,7 +196,7 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 2)
-	return ged_getmat(gedp, argc, argv);
+	return _getmat(gedp, argc, argv);
 
     if (argc < 3 || 18 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

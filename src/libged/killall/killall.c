@@ -67,6 +67,7 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 	nflag = 0;
 
     gedp->ged_internal_call = 1;
+    argv[0] = "killrefs";
     if ((ret = ged_killrefs(gedp, argc, argv)) != GED_OK) {
 	gedp->ged_internal_call = 0;
 	bu_vls_printf(gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
