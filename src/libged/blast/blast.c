@@ -60,22 +60,23 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Draw the new object(s) */
+    argv[0] = "draw";
     return ged_draw(gedp, argc, argv);
 }
 
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl blast_cmd_impl = {
-    "blast",
-    ged_blast_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl blast_cmd_impl = {"blast", ged_blast_core, GED_CMD_DEFAULT};
 const struct ged_cmd blast_cmd = { &blast_cmd_impl };
-const struct ged_cmd *blast_cmds[] = { &blast_cmd, NULL };
 
-static const struct ged_plugin pinfo = { blast_cmds, 1 };
+struct ged_cmd_impl B_cmd_impl = {"B", ged_blast_core, GED_CMD_DEFAULT};
+const struct ged_cmd B_cmd = { &B_cmd_impl };
+
+
+const struct ged_cmd *blast_cmds[] = { &blast_cmd, &B_cmd, NULL };
+
+static const struct ged_plugin pinfo = { blast_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

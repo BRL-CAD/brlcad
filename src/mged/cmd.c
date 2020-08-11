@@ -1807,29 +1807,75 @@ cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 extern int edit_com(int argc, const char *argv[], int kind);
 
 /**
- * ZAP the display -- then edit anew
+ * Run ged_blast, then update the views
  * Format: B object
  */
 int
 cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
-    const char *av[2];
     int ret;
 
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    av[0] = "Z";
-    av[1] = (char *)0;
-
-    ret = ged_zap(GEDP, 1, av);
+    ret = ged_blast(GEDP, argc, argv);
     if (ret)
 	return TCL_ERROR;
 
-    if (argc == 1) /* "B" alone is same as "Z" */
-	return TCL_OK;
+    /* update and resize the views */
+    struct dm_list *save_dmlp = curr_dm_list;
+    struct cmd_list *save_cmd_list = curr_cmd_list;
+    struct dm_list *dmlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+	int non_empty = 0; /* start out empty */
 
-    return edit_com(argc, argv, 1);
+	set_curr_dm(dmlp);
+
+	if (curr_dm_list->dml_tie) {
+	    curr_cmd_list = curr_dm_list->dml_tie;
+	} else {
+	    curr_cmd_list = &head_cmd_list;
+	}
+
+	GEDP->ged_gvp = view_state->vs_gvp;
+
+	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+
+	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+		non_empty = 1;
+		break;
+	    }
+
+	    gdlp = next_gdlp;
+	}
+
+	if (mged_variables->mv_autosize && non_empty) {
+	    struct view_ring *vrp;
+	    char *av[2];
+
+	    av[0] = "autoview";
+	    av[1] = (char *)0;
+	    ged_autoview(GEDP, 1, (const char **)av);
+
+	    (void)mged_svbase();
+
+	    for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l)) {
+		vrp->vr_scale = view_state->vs_gvp->gv_scale;
+	    }
+	}
+    }
+
+    set_curr_dm(save_dmlp);
+    curr_cmd_list = save_cmd_list;
+    GEDP->ged_gvp = view_state->vs_gvp;
+
+
+    return TCL_OK;
 }
 
 
