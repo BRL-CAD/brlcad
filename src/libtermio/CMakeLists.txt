@@ -27,6 +27,7 @@ CMAKEFILES(
   ${TERMIO_SRCS}
   CMakeLists.txt
   termcap.h
+  termcap
   )
 
 # Local Variables:
