@@ -237,8 +237,8 @@ struct command_tab ged_preview_cmdtab[] = {
 };
 
 
-int
-ged_loadframe(struct ged *gedp, FILE *fp)
+static int
+_loadframe(struct ged *gedp, FILE *fp)
 {
     char *cmd;
 
@@ -402,7 +402,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_strcpy(&name, image_name);
 	}
     }
-    while (ged_loadframe(gedp, fp) == GED_OK) {
+    while (_loadframe(gedp, fp) == GED_OK) {
 	if (image_name) {
 	    struct bu_vls fullname = BU_VLS_INIT_ZERO;
 	    const char *screengrab_args[3];
@@ -414,7 +414,6 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 			   preview_currentframe, bu_vls_addr(&extension));
 	    screengrab_args[screengrab_argc++] = bu_vls_addr(&fullname);
 
-	    /* ged_png(gedp, screengrab_argc, screengrab_args); */
 	    ged_screen_grab(gedp, screengrab_argc, screengrab_args);
 
 	    bu_vls_free(&fullname);

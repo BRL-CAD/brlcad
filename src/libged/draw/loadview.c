@@ -199,7 +199,8 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	     * TODO: should only zap if the objects to be displayed
 	     * all exist.
 	     */
-	    (void)ged_zap(gedp, 1, NULL);
+	    const char *Z_cmd = "Z";
+	    (void)ged_zap(gedp, 1, &Z_cmd);
 
 	    /* now get the objects listed */
 	    ret = fscanf(fp, "%10000s", objects);
