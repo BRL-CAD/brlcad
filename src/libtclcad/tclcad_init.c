@@ -286,8 +286,8 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 #ifdef HAVE_TK
     /* If we're doing Tk, make sure we have a window */
     if (init_gui) {
-	Tk_MainWindow(interp);
-	return TCL_ERROR;
+	Tk_Window tkwin = Tk_MainWindow(interp);
+	if (!tkwin) return TCL_ERROR;
     }
 #endif
 
