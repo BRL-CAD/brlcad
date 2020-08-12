@@ -161,7 +161,11 @@ extern int Itk_Init(Tcl_Interp *);
 #endif
 
 int
+#ifdef HAVE_TK
 tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
+#else
+tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
+#endif
 {
     if (library_initialized(0))
 	return TCL_OK;
