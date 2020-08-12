@@ -171,6 +171,10 @@ libged_init(void)
 		    continue;
 		}
 		ged_cmd_map[key] = cmd;
+
+		// MGED calls many of these commands with an _mged_ prefix - allow for that
+		std::string mged_key = std::string("_mged_") + key;
+		ged_cmd_map[mged_key] = cmd;
 	    }
 	    ged_handles.insert(dl_handle);
 	}
