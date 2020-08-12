@@ -79,6 +79,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   add_custom_target(distcheck-source_archives
     COMMAND ${CMAKE_COMMAND} -E echo "*** Create source tgz, tbz2 and zip archives from toplevel archive ***"
     COMMAND ${CPACK_EXEC} --config "${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/source_archive_contents"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/_CPack_Packages"
     COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
     DEPENDS distcheck-source_archive_dir)
   set_target_properties(distcheck-source_archives PROPERTIES FOLDER "BRL-CAD Distribution Checking")
