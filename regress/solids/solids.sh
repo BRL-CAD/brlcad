@@ -85,6 +85,7 @@ $MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/solids.simple.mged"
 if [ ! -f solids.simple.rt ] ; then
     log "ERROR: mged failed to create solids.simple.rt script"
     log "-> solids.sh FAILED (test 1 of 2), see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 mv solids.simple.rt solids.simple.orig.rt
@@ -98,6 +99,7 @@ log '... rendering solids'
 ./solids.simple.rt >> $LOGFILE 2>&1
 if [ ! -f solids.simple.rt.pix ] ; then
 	log "ERROR: raytrace failed, see $LOGFILE"
+	cat $LOGFILE
 	exit 1
 fi
 if [ ! -f "$PATH_TO_THIS/solids.simple.ref.pix" ] ; then
@@ -116,6 +118,7 @@ if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> solids.sh succeeded (test 1 of 2)"
 else
     log "-> solids.sh FAILED (test 1 of 2), see $LOGFILE"
+    cat $LOGFILE
 fi
 
 
@@ -129,6 +132,7 @@ $GENCOLOR -r205 0 16 32 64 128 | dd of=solids.ebm.bw bs=1024 count=1 > $LOGFILE 
 if [ ! -f solids.ebm.bw ] ; then
     log "ERROR: Failed to create file 'solids.ebm.bw'"
     log "-> solids.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -139,6 +143,7 @@ $A2P < "$PATH_TO_THIS/solids.dsp.dat" > solids.dsp.pix
 if [ ! -f solids.dsp.pix ] ; then
     log "ERROR: Failed to generate file 'solids.dsp.pix'"
     log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -150,6 +155,7 @@ $MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/solids.mged"
 if [ ! -f solids.rt ] ; then
     log "ERROR: mged failed to create solids.rt script"
     log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 run mv solids.rt solids.orig.rt
@@ -162,6 +168,7 @@ rm -f solids.rt.pix solids.rt.log
 run ./solids.rt
 if [ ! -f solids.rt.pix ] ; then
 	log "ERROR: solids raytrace failed, see $LOGFILE"
+	cat $LOGFILE
 	exit 1
 fi
 if [ ! -f "$PATH_TO_THIS/solids.ref.pix" ] ; then
@@ -182,6 +189,7 @@ if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> solids.sh succeeded (test 2 of 2)"
 else
     log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $NUMBER_WRONG

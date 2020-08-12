@@ -78,6 +78,7 @@ if [ X$STATUS = X0 ] ; then
     log "-> g-dot.sh succeeded"
 else
     log "-> g-dot.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $STATUS

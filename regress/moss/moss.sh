@@ -161,6 +161,7 @@ if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> moss.sh succeeded"
 else
     log "-> moss.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $NUMBER_WRONG

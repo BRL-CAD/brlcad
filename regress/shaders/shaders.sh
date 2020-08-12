@@ -220,6 +220,7 @@ EOF
 if [ ! -f shaders.rt ] ; then
     log "ERROR: mged failed to create shaders.rt"
     log "-> shaders.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -249,6 +250,7 @@ NUMBER_WRONG=1
 if [ ! -f shaders.rt.pix ] ; then
     log "ERROR: shaders raytrace failed to create shaders.rt.pix"
     log "-> shaders.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -268,6 +270,7 @@ if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> shaders.sh succeeded"
 else
     log "-> shaders.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $NUMBER_WRONG

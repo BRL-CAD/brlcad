@@ -171,6 +171,7 @@ if [ $STATUS = 0 ] ; then
     log "-> gqa.sh succeeded"
 else
     log "-> gqa.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $STATUS

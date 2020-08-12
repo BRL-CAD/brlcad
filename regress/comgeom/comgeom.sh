@@ -158,6 +158,7 @@ if test $FAILURES -eq 0 ; then
     log "-> vdeck/comgeom-g check succeeded"
 else
     log "-> vdeck/comgeom-g check FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $FAILED

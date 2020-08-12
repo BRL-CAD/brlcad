@@ -133,6 +133,7 @@ if [ "X$NUMBER_WRONG" = "X0" ] ; then
     log "-> spdi.sh succeeded"
 else
     log "-> spdi.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $NUMBER_WRONG

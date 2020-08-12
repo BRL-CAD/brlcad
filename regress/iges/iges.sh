@@ -87,6 +87,7 @@ EOF
 if [ ! -f "$output" ] ; then
     log "ERROR: mged failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -99,6 +100,7 @@ run $GIGES -o "$output" iges.g box.nmg
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -110,6 +112,7 @@ $GIGES iges.g box.nmg > $output 2>> "$LOGFILE"
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -129,6 +132,7 @@ run $IGESG -o "$output" iges.export.iges
 if [ ! -f "$output" ] ; then
     log "ERROR: iges-g failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -139,6 +143,7 @@ run $IGESG -o "$output" -p iges.export.iges
 if [ ! -f "$output" ] ; then
     log "ERROR: iges-g failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -149,6 +154,7 @@ run $IGESG -o "$output" -p -N box.nmg iges.export.iges
 if [ ! -f "$output" ] ; then
     log "ERROR: iges-g failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -183,6 +189,7 @@ run $GIGES -o "$output" iges.import.g box.nmg
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -193,6 +200,7 @@ run $GIGES -o "$output" iges.import2.g box.nmg
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -203,6 +211,7 @@ run $GIGES -o "$output" iges.import3.g box.nmg
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit 1
 fi
 
@@ -268,6 +277,7 @@ if [ X$STATUS = X0 ] ; then
     log "-> iges.sh succeeded"
 else
     log "-> iges.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $STATUS
