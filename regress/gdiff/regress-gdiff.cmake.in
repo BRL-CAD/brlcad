@@ -102,6 +102,22 @@ execute_process(
   )
 GDIFF_CHECK_RESULT(gdiff_result)
 
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -t 10 moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -t 10 "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -t 100 moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -t 100 "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
 GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -F \"-type region\" moss_1.g moss_2.g\n")
 execute_process(
   COMMAND "${GDIFF}" -F "-type region" "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
