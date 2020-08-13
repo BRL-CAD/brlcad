@@ -949,9 +949,15 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   # Every regression test gets a build target
   if (CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^${testname} --output-on-failure)
+    add_custom_target(${testname}
+      COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R^${testname}$ --output-on-failure
+      VERBATIM
+      )
   else (CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname} --output-on-failure)
+    add_custom_target(${testname}
+      COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname}$ --output-on-failure
+      VERBATIM
+      )
   endif (CMAKE_CONFIGURATION_TYPES)
   if (depends_list)
     add_dependencies(${testname} ${depends_list})
