@@ -160,7 +160,7 @@ if [ ! -f bots.rh.pix ] ; then
 fi
 # compare
 rm -f bots.diff.pix
-$PIXDIFF bots.sph.pix bots.rh.pix > bots.diff.pix 2>> bots.diff.log
+run $PIXDIFF bots.sph.pix bots.rh.pix > bots.diff.pix 2>> bots.diff.log
 NUMBER_WRONG=`tail -n 1 bots.diff.log | tr , '\012' | awk '/many/ {print $1}'`
 if [ $NUMBER_WRONG -eq 0 ] ; then
     # we expect implicit and BoT sphere to be different

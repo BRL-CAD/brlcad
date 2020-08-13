@@ -107,8 +107,7 @@ fi
 # test G -> IGES via stdout (can't use 'run')
 output="iges.export.stdout.iges"
 rm -f "$output"
-log "... running $GIGES iges.g box.nmg > $output"
-$GIGES iges.g box.nmg > $output 2>> "$LOGFILE"
+run $GIGES iges.g box.nmg > $output 2>> "$LOGFILE"
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
@@ -256,7 +255,7 @@ fi
 
 # make our starting database
 $GZIP -d -c "$PATH_TO_THIS/m35.asc.gz" > iges.m35.asc
-$ASC2G iges.m35.asc iges.m35.g
+run $ASC2G iges.m35.asc iges.m35.g
 
 # and test it (note it should work with the '-f' option, but fail
 # without any options)

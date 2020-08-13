@@ -108,7 +108,7 @@ if [ ! -f "$PATH_TO_THIS/solids.simple.ref.pix" ] ; then
 fi
 
 rm -f solids.simple.pix.diff
-$PIXDIFF solids.simple.rt.pix "$PATH_TO_THIS/solids.simple.ref.pix" > solids.simple.pix.diff 2>> $LOGFILE
+run $PIXDIFF solids.simple.rt.pix "$PATH_TO_THIS/solids.simple.ref.pix" > solids.simple.pix.diff 2>> $LOGFILE
 
 log "... running tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'"
 NUMBER_WRONG=`tail -n1 "$LOGFILE" | tr , '\012' | awk '/many/ {print $1}'`
@@ -126,9 +126,8 @@ fi
 # then check a complex TGM
 
 # Trim 1025 byte sequence down to exactly 1024.
-log "... running $GENCOLOR -r205 0 16 32 64 128 | dd of=solids.ebm.bw bs=1024 count=1"
 rm -f solids.ebm.bw
-$GENCOLOR -r205 0 16 32 64 128 | dd of=solids.ebm.bw bs=1024 count=1 > $LOGFILE 2>&1
+run $GENCOLOR -r205 0 16 32 64 128 | dd of=solids.ebm.bw bs=1024 count=1 > $LOGFILE 2>&1
 if [ ! -f solids.ebm.bw ] ; then
     log "ERROR: Failed to create file 'solids.ebm.bw'"
     log "-> solids.sh FAILED, see $LOGFILE"
@@ -137,9 +136,8 @@ if [ ! -f solids.ebm.bw ] ; then
 fi
 
 # generate required pix file
-log "... running $A2P < $PATH_TO_THIS/solids.dsp.dat > solids.dsp.pix"
 rm -f solids.dsp.pix
-$A2P < "$PATH_TO_THIS/solids.dsp.dat" > solids.dsp.pix
+run $A2P < "$PATH_TO_THIS/solids.dsp.dat" > solids.dsp.pix
 if [ ! -f solids.dsp.pix ] ; then
     log "ERROR: Failed to generate file 'solids.dsp.pix'"
     log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
@@ -176,9 +174,8 @@ if [ ! -f "$PATH_TO_THIS/solids.ref.pix" ] ; then
 	exit 1
 fi
 
-log "... running $PIXDIFF solids.rt.pix $PATH_TO_THIS/solids.ref.pix > solids.pix.diff"
 rm -f solids.pix.diff
-$PIXDIFF solids.rt.pix "$PATH_TO_THIS/solids.ref.pix" > solids.pix.diff 2> $LOGFILE
+run $PIXDIFF solids.rt.pix "$PATH_TO_THIS/solids.ref.pix" > solids.pix.diff 2> $LOGFILE
 
 tail -n1 "$LOGFILE" | tr , '\012' | awk '/many/ {print $0}'
 NUMBER_WRONG=`tail -n1 "$LOGFILE" | tr , '\012' | awk '/many/ {print $1}'`
