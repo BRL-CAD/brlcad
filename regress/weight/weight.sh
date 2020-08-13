@@ -156,8 +156,8 @@ run $RTWEIGHT -a 25 -e 35 -s128 -o weight.test2.out weight.test2.g boxes
 
 # eliminate the time stamp lines which are obviously different and
 # the file path which is not germane to the test
-tr -d ' \t' < "$PATH_TO_THIS/weight.test2.ref" | grep -v DensityTableUsed | grep -v TimeStamp > weight.test2.ref_ns
-tr -d ' \t' < weight.test2.out | grep -v DensityTableUsed | grep -v TimeStamp > weight.test2.out_ns
+tr -d ' \t\r' < "$PATH_TO_THIS/weight.test2.ref" | grep -v DensityTableUsed | grep -v TimeStamp > weight.test2.ref_ns
+tr -d ' \t\r' < weight.test2.out | grep -v DensityTableUsed | grep -v TimeStamp > weight.test2.out_ns
 
 run cmp weight.test2.ref_ns weight.test2.out_ns
 STATUS=$?
