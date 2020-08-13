@@ -78,7 +78,7 @@ FAILURES=0
 # make our starting database
 rm -f comgeom.m35.asc
 log "... running gzip decompress"
-run $GZIP -d -c "$PATH_TO_THIS/../iges/m35.asc.gz" > comgeom.m35.asc
+$GZIP -d -c "$PATH_TO_THIS/../iges/m35.asc.gz" > comgeom.m35.asc
 rm -f comgeom.m35.g
 run $ASC2G comgeom.m35.asc comgeom.m35.g
 
@@ -87,7 +87,7 @@ run $ASC2G comgeom.m35.asc comgeom.m35.g
 #(following example in red.sh and mged test)
 rm -f solids regions region_ids
 log "... running $VDECK comgeom.m35.g"
-run $VDECK comgeom.m35.g >> $LOGFILE 2>&1 <<EOF
+$VDECK comgeom.m35.g >> $LOGFILE 2>&1 <<EOF
 i all.g
 d
 q
@@ -102,7 +102,7 @@ cat region_ids >> comgeom.m35.cg
 # get test version
 rm -f comgeom.m35-baseline.cg
 log "... running gzip decompress"
-run $GZIP -d -c "$PATH_TO_THIS/m35.cg.gz" > comgeom.m35-baseline.cg
+$GZIP -d -c "$PATH_TO_THIS/m35.cg.gz" > comgeom.m35-baseline.cg
 
 cmp comgeom.m35.cg comgeom.m35-baseline.cg
 STATUS=$?

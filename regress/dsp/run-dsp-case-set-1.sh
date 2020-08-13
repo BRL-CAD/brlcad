@@ -29,14 +29,17 @@ for i in $CASES ; do
 
   # convert dsp data file in asc format to pix format
   DSPASC=$1/regress/dsp/$BASE2.asc
-  run $A2P < $DSPASC > $BASE2.pix
+  echo "$A2P < $DSPASC > $BASE2.pix"
+  $A2P < $DSPASC > $BASE2.pix
 
   # convert pix to bw format
   # take the blue pixel only
-  run $P2B -B1.0 $BASE2.pix > $BASE2.bw
+  echo "$P2B -B1.0 $BASE2.pix > $BASE2.bw"
+  $P2B -B1.0 $BASE2.pix > $BASE2.bw
 
   # convert pix to dsp format
-  run $CV huc nu16 $BASE2.bw $BASE2.dsp
+  echo "$CV huc nu16 $BASE2.bw $BASE2.dsp"
+  $CV huc nu16 $BASE2.bw $BASE2.dsp
 
   # build a TGM
   $MGED -c > $LOG 2>&1 <<EOF
@@ -47,7 +50,7 @@ quit
 EOF
 
   # and raytrace it
-  run $RT -a45 -e45 -o $BASE2.rt.pix $TGM $BASE2.r 1>> $LOG 2>> $LOG
+  $RT -a45 -e45 -o $BASE2.rt.pix $TGM $BASE2.r 1>> $LOG 2>> $LOG
   STATUS=$?
   if [ $STATUS -gt 0 ] ; then
     FAILED="`expr $FAILED + 1`"
