@@ -78,7 +78,8 @@ rm -f shaders.ebm.bw
 $GENCOLOR -r205 0 16 32 64 128 | dd of=shaders.ebm.bw bs=1024 count=1 2>> $LOGFILE
 
 
-EAGLECAD=$PATH_TO_THIS/shaders.eagleCAD-512x438.pix
+EAGLECAD=shaders.eagleCAD-working.pix
+cp "$PATH_TO_THIS/shaders.eagleCAD-512x438.pix" $EAGLECAD
 
 log "... creating shader geometry file (shaders.g)"
 rm -f shaders.mged shaders.g shaders.rt shaders.half.prj shaders.ell_2.prj
@@ -92,7 +93,7 @@ puts "glob_compat_mode \$glob_compat_mode "
 
 in half.s half 0 0 1 -1
 r half.r u half.s
-prj_add shaders.half.prj $EAGLECAD 512 438
+prj_add shaders.half.prj "$EAGLECAD" 512 438
 mater half.r "stack prj shaders.half.prj;plastic di=.8 sp=.3" 76 158 113 0
 
 g all.g half.r
@@ -190,7 +191,7 @@ press top
 center -640 -1280 100
 size 300
 press top
-prj_add shaders.ell_2.prj $EAGLECAD 512 438
+prj_add shaders.ell_2.prj "$EAGLECAD" 512 438
 mater ell_2.r "stack prj shaders.ell_2.prj;plastic di=.9" 200 200 200 0
 
 #
@@ -220,6 +221,7 @@ EOF
 if [ ! -f shaders.rt ] ; then
     log "ERROR: mged failed to create shaders.rt"
     log "-> shaders.sh FAILED, see $LOGFILE"
+    rm -f $EAGLECAD
     cat $LOGFILE
     exit 1
 fi
@@ -250,7 +252,8 @@ NUMBER_WRONG=1
 if [ ! -f shaders.rt.pix ] ; then
     log "ERROR: shaders raytrace failed to create shaders.rt.pix"
     log "-> shaders.sh FAILED, see $LOGFILE"
-    cat $LOGFILE
+    rm -f $EAGLECAD
+    cat "$LOGFILE"
     exit 1
 fi
 
@@ -259,9 +262,9 @@ if [ ! -f "$PATH_TO_THIS/shaders.ref.pix" ] ; then
 else
     log "... running $PIXDIFF shaders.rt.pix $PATH_TO_THIS/shaders.ref.pix > shaders.rt.diff.pix"
     rm -f shaders.rt.diff.pix
-    $PIXDIFF shaders.rt.pix $PATH_TO_THIS/shaders.ref.pix > shaders.rt.diff.pix 2>> $LOGFILE
+    $PIXDIFF shaders.rt.pix "$PATH_TO_THIS/shaders.ref.pix" > shaders.rt.diff.pix 2>> $LOGFILE
 
-    NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}' | tail -${TAIL_N}1`
+    NUMBER_WRONG=`tail -n1 "$LOGFILE" | tr , '\012' | awk '/many/ {print $1}' | tail -${TAIL_N}1`
     log "shaders.rt.pix $NUMBER_WRONG off by many"
 fi
 
@@ -270,9 +273,10 @@ if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> shaders.sh succeeded"
 else
     log "-> shaders.sh FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
+rm -f $EAGLECAD
 exit $NUMBER_WRONG
 
 # Local Variables:

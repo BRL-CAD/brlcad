@@ -134,8 +134,8 @@ else
     else
 	log "... running $PIXDIFF moss.pix $PATH_TO_THIS/moss.ref.pix > moss.pix.diff"
 	rm -f moss.pix.diff
-	$PIXDIFF moss.pix $PATH_TO_THIS/moss.ref.pix > moss.pix.diff 2>> $LOGFILE
-	different="`tail -n1 $LOGFILE | tr , '\012' | grep many`"
+	$PIXDIFF moss.pix "$PATH_TO_THIS/moss.ref.pix" > moss.pix.diff 2>> $LOGFILE
+	different="`tail -n1 "$LOGFILE" | tr , '\012' | grep many`"
 	log "moss.pix vs $PATH_TO_THIS/moss.ref.pix differences:"
 	log "$different"
     fi
@@ -152,7 +152,7 @@ else
     rm -f moss.roundtrip.diff
     $PIXDIFF moss.pix moss.pix.png.pix > moss.roundtrip.diff 2>> $LOGFILE
 
-    NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
+    NUMBER_WRONG=`tail -n1 "$LOGFILE" | tr , '\012' | awk '/many/ {print $1}'`
     log "moss.pix $NUMBER_WRONG off by many"
 fi
 

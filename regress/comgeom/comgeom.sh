@@ -78,7 +78,7 @@ FAILURES=0
 # make our starting database
 rm -f comgeom.m35.asc
 log "... running gzip decompress"
-$GZIP -d -c "$PATH_TO_THIS/m35.asc.gz" > comgeom.m35.asc
+$GZIP -d -c "$PATH_TO_THIS/../iges/m35.asc.gz" > comgeom.m35.asc
 rm -f comgeom.m35.g
 run $ASC2G comgeom.m35.asc comgeom.m35.g
 
