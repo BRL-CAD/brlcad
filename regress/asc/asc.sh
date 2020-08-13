@@ -77,19 +77,21 @@ log "... convert asc file to v5 .g format"
 ASC1="$1/db/moss.asc"
 G1="moss_v5.g"
 rm -f $G1
-run $A2G "$ASC1" $G1 2>&1 > $LOGFILE
+$A2G "$ASC1" $G1 2>&1 > $LOGFILE
 
 # Next convert v5 .g file to a v5 asc file
 log "convert v5 .g file to v5 asc format"
 ASC2="moss_v5.asc"
 rm -f $ASC2
-run $G2A $G1 $ASC2 2>&1 > $LOGFILE
+log "$G2A $G1 $ASC2"
+$G2A $G1 $ASC2 2>&1 > $LOGFILE
 
 # convert v5 .g file to a v5 .g file
 log "convert v5 asc file to v5 .g format (simple round trip)"
 GRT="moss_v5_basic.g"
 rm -f $GRT
-run $A2G "$ASC2" $GRT 2>&1 > $LOGFILE
+log "$A2G $ASC2 $GRT"
+$A2G "$ASC2" $GRT 2>&1 > $LOGFILE
 
 # the original v5 .g file and the round-tripped v5 .g file
 # should be identical (apparently except for the color table)
@@ -114,28 +116,33 @@ fi
 log "convert v5 .g file to v4 .g format"
 G2="moss_v4.g"
 rm -f $G2
-run $DU -r $G1 $G2 2>&1 > $LOGFILE
+log "$DU -r $G1 $G2"
+$DU -r $G1 $G2 2>&1 > $LOGFILE
 
 # convert v4 .g file to a v4 asc file
 log "convert v4 .g file to v4 asc format"
 ASC3="moss_v4.asc"
 rm -f $ASC3
-run $G2A $G2 $ASC3 2>&1 > $LOGFILE
+log "$G2A $G2 $ASC3"
+$G2A $G2 $ASC3 2>&1 > $LOGFILE
 
 # convert v4 asc to v5 .g file
 
 log "convert v4 asc file to v5 g format"
 G3="moss_v4_asc_v5.g"
 rm -f $G3
-run $A2G $ASC3 $G3 2>&1 > $LOGFILE
+log "$A2G $ASC3 $G3"
+$A2G $ASC3 $G3 2>&1 > $LOGFILE
 
 # Next, do the downgrade/upgrade cycle on the .g file to test dbupgrade's
 # behavior on a binary v4 .g.
 G4="moss_v4_asc_v4.g"
 G5="moss_v4_asc_v4_v5.g"
 rm -f $G4 $G5
-run $DU -r $G3 $G4 2>&1 > $LOGFILE
-run $DU $G4 $G5 2>&1 > $LOGFILE
+log "$DU -r $G3 $G4"
+$DU -r $G3 $G4 2>&1 > $LOGFILE
+log "$DU $G4 $G5"
+$DU $G4 $G5 2>&1 > $LOGFILE
 
 # Rather surprisingly, all.g doesn't pass this comparison... not sure
 # why yet...
@@ -156,7 +163,8 @@ run $DU $G4 $G5 2>&1 > $LOGFILE
 # (Well, unchanged sans a region color table, region_id=-1 on all.g and
 # numerical differences anyway... Accomidate data changes with gdiff
 # filtering.)
-run $GD -v -t 0.0001 -F "! -name _GLOBAL ! -attr region_id=-1" $G1 $G5 2>&1 > $LOGFILE
+log "$GD -v -t 0.0001 -F \"! -name _GLOBAL ! -attr region_id=-1\" $G1 $G5"
+$GD -v -t 0.0001 -F "! -name _GLOBAL ! -attr region_id=-1" $G1 $G5 2>&1 > $LOGFILE
 STATUS=$?
 
 if [ $STATUS -gt 0 ] ; then
@@ -172,7 +180,8 @@ fi
 # trip.
 #
 G2ASC1="$1/regress/asc/v4.g"
-run $G2A "$G2ASC1" v4.asc 2>&1 > $LOGFILE
+log "$G2A $G2ASC1 v4.asc"
+$G2A "$G2ASC1" v4.asc 2>&1 > $LOGFILE
 STATUS=$?
 # If something went wrong, bail.
 if [ $STATUS -gt 0 ] ; then

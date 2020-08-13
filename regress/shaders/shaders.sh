@@ -73,8 +73,9 @@ if test ! -f "$GENCOLOR" ; then
 fi
 
 
+log "... running $GENCOLOR -r205 0 16 32 64 128 | dd of=shaders.ebm.bw bs=1024 count=1"
 rm -f shaders.ebm.bw
-run $GENCOLOR -r205 0 16 32 64 128 | dd of=shaders.ebm.bw bs=1024 count=1 2>> $LOGFILE
+$GENCOLOR -r205 0 16 32 64 128 | dd of=shaders.ebm.bw bs=1024 count=1 2>> $LOGFILE
 
 
 EAGLECAD=shaders.eagleCAD-working.pix
