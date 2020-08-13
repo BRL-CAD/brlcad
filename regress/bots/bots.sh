@@ -178,7 +178,7 @@ if [ ! -f bots.lh.pix ] ; then
 fi
 # compare
 rm -f bots.rl.diff.pix
-$PIXDIFF bots.rh.pix bots.lh.pix > bots.rl.diff.pix 2>> bots.diff.log
+run $PIXDIFF bots.rh.pix bots.lh.pix > bots.rl.diff.pix 2>> bots.diff.log
 NUMBER_WRONG=`tail -n 1 bots.diff.log | tr , '\012' | awk '/many/ {print $1}'`
 if [ $NUMBER_WRONG -eq 0 ] ; then
     tail -n 1 bots.diff.log
@@ -197,7 +197,7 @@ if [ ! -f bots.no.pix ] ; then
 fi
 # compare
 rm -f bots.rn.diff.pix
-$PIXDIFF bots.rh.pix bots.no.pix > bots.rn.diff.pix 2>> bots.diff.log
+run $PIXDIFF bots.rh.pix bots.no.pix > bots.rn.diff.pix 2>> bots.diff.log
 NUMBER_WRONG=`tail -n 1 bots.diff.log | tr , '\012' | awk '/many/ {print $1}'`
 if [ $NUMBER_WRONG -eq 0 ] ; then
     tail -n 1 bots.diff.log
@@ -216,7 +216,7 @@ if [ ! -f bots.sync.pix ] ; then
 fi
 # compare
 rm -f bots.rs.diff.pix
-$PIXDIFF bots.rh.pix bots.sync.pix > bots.rs.diff.pix 2>> bots.diff.log
+run $PIXDIFF bots.rh.pix bots.sync.pix > bots.rs.diff.pix 2>> bots.diff.log
 NUMBER_WRONG=`tail -n 1 bots.diff.log | tr , '\012' | awk '/many/ {print $1}'`
 if [ $NUMBER_WRONG -eq 0 ] ; then
     log `tail -n 1 bots.diff.log`

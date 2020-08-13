@@ -82,12 +82,12 @@ BASE2=asc2dsp-new
 log "... convert dsp data file in asc hex format to pix format"
 ASC1="$1/regress/dsp/$BASE1.asc"
 rm -f $BASE1.pix
-$A2P < $ASC1 > $BASE1.pix 2>>$LOGFILE
+run $A2P < $ASC1 > $BASE1.pix 2>>$LOGFILE
 
 log "convert pix to bw format"
 rm -f $BASE1.bw
 # take the blue pixel only
-$P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOGFILE
+run $P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOGFILE
 
 log "convert pix to dsp format"
 rm -f $BASE1.dsp
