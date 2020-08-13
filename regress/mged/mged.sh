@@ -185,6 +185,7 @@ if test $FAILED -eq 0 ; then
     log "-> mged check succeeded"
 else
     log "-> mged check FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $FAILED

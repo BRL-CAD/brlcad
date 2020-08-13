@@ -63,7 +63,7 @@ BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "${CMAKE_THREAD_LIBS_INIT};librt
 ADD_TARGET_DEPS(rtscale dm-ogl dm-wgl)
 
 BRLCAD_ADDEXEC(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${RT_STD_LIBS};libdm")
-ADD_TARGET_DEPS(rt dm-ogl dm-wgl)
+ADD_TARGET_DEPS(rt dm-ogl dm-wgl dm-txt)
 
 BRLCAD_ADDEXEC(rtarea "${LIBRTUIF_SOURCES};viewarea.c" "${RT_STD_LIBS}")
 set_property(TARGET rtarea APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")

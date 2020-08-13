@@ -147,6 +147,8 @@ BRLCAD_ADDEXEC(terrain terrain.c "libbn;libbu;${M_LIBRARY}")
 #maintained and ported
 if(NOT WIN32)
   BRLCAD_ADDEXEC(ttcp ttcp.c "${SOCKET_LIBRARY};${NSL_LIBRARY};${NETWORK_LIBRARY}")
+else(NOT WIN32)
+  CMAKEFILES(ttcp.c)
 endif(NOT WIN32)
 BRLCAD_ADDEXEC(wavelet wavelet.c "libdm;libbn;libbu")
 ADD_TARGET_DEPS(wavelet dm-ogl dm-wgl)

@@ -102,6 +102,7 @@ STATUS=$?
 # If that didn't work, don't bother going further - we've got a problem.
 if [ $STATUS -gt 0 ] ; then
     log "-> basic v5 asc.sh round-trip FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit $STATUS
 fi
 
@@ -152,6 +153,7 @@ $DU $G4 $G5 2>&1 > $LOGFILE
 # binary dbupdate should't have significantly altered the file.
 #if [ $STATUS -gt 0 ] ; then
 #    log "-> dbupgrade cycle FAILED, see $LOGFILE"
+#    cat $LOGFILE
 #    exit $STATUS
 #fi
 
@@ -167,6 +169,7 @@ STATUS=$?
 
 if [ $STATUS -gt 0 ] ; then
     log "-> asc.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit $STATUS
 else
     log "-> asc.sh succeeded"
@@ -183,6 +186,7 @@ STATUS=$?
 # If something went wrong, bail.
 if [ $STATUS -gt 0 ] ; then
     log "-> g2asc broad object coverage check FAILED, see $LOGFILE"
+    cat $LOGFILE
     exit $STATUS
 fi
 

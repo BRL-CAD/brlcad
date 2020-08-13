@@ -207,7 +207,11 @@ files_match ( ) {
 # script's location
 ensearch ( ) {
     ensearch_file="$1"
-    ensearch_dirs="$ARG1/bin ../bin ../../bin ./bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "
+    ensearch_dirs="\
+	$ARG1/bin ../bin ../../bin ./bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" \
+	$ARG1/Release/bin ../Release/bin ../../Release/bin ./Release/bin \"$PATH_TO_THIS/../Release/bin\" \
+	$ARG1/Debug/bin ../Debug/bin ../../Debug/bin ./Debug/bin \"$PATH_TO_THIS/../Debug/bin\" \
+       	"
 
     if test "x$ensearch_file" = "x" ; then
 	# nothing to do

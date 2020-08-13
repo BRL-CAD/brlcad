@@ -85,6 +85,7 @@ if [ X$STATUS = X0 ] ; then
     log "-> g-nff.sh succeeded"
 else
     log "-> g-nff.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $STATUS

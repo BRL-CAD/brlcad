@@ -260,6 +260,7 @@ if [ X$STATUS = X0 ] ; then
     log "-> weight.sh succeeded (2 of 2)"
 else
     log "-> weight.sh FAILED (2 of 2), see $LOGFILE"
+    cat $LOGFILE
 fi
 
 exit $STATUS

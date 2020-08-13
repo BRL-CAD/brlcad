@@ -73,8 +73,8 @@ if test ! -f "$P2B" ; then
 fi
 
 
-BASE1=asc2dsp.old
-BASE2=asc2dsp.new
+BASE1=asc2dsp-old
+BASE2=asc2dsp-new
 
 
 # we generate one dsp file the old way and one the new way--they should be identical
@@ -105,6 +105,7 @@ STATUS=$?
 
 if [ $STATUS -gt 0 ] ; then
     log "-> asc2dsp.sh FAILED, see $LOGFILE"
+    cat $LOGFILE
 else
     log "-> asc2dsp.sh succeeded"
 fi

@@ -14,7 +14,8 @@ file(WRITE "${LOGFILE}" "Starting rtwizard run\n")
 string(REPLACE "\\" "" RTWIZ "${EXEC}")
 if (NOT EXISTS "${RTWIZ}")
   file(WRITE "${LOGFILE}" "rtwizard not found at location \"${RTWIZ}\" - aborting\n")
-  message(FATAL_ERROR "Unable to find rtwizard, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find rtwizard, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif (NOT EXISTS "${RTWIZ}")
 
 # Apparently CMAKE_EXECUTABLE_SUFFIX is not reliably defined in cmake -P - get
@@ -28,7 +29,8 @@ get_filename_component(BDIR "${RTWIZ}" DIRECTORY)
 set(PIXCMP_EXEC "${BDIR}/pixcmp${EXE_SUFFIX}")
 if (NOT EXISTS "${PIXCMP_EXEC}")
   file(WRITE "${LOGFILE}" "pixcmp not found at location \"${PIXCMP_EXEC}\" - aborting\n")
-  message(FATAL_ERROR "Unable to find pixcmp, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find pixcmp, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif (NOT EXISTS "${PIXCMP_EXEC}")
 
 # Reconstruct the tree root from the EXEC path, and identify the input file location
@@ -48,7 +50,8 @@ file(APPEND "${LOGFILE}" "${rtwiz_log}")
 set(rtwiz_log)
 if(NOT EXISTS "${TGTIMG}")
   file(APPEND "${LOGFILE}" "Failure: ${rtwiz_result}")
-  message(FATAL_ERROR "Unable to generate ${TGTIMG} with ${RTWIZ}, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to generate ${TGTIMG} with ${RTWIZ}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif(NOT EXISTS "${TGTIMG}")
 
 # pixcmp the results with the control image to make sure rtwiz got it right
@@ -61,7 +64,8 @@ file(APPEND "${LOGFILE}" "${rtwiz_log}")
 
 if(pixcmp_result)
   file(APPEND "${LOGFILE}" "Failure: ${pixcmp_result}")
-  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP_EXEC}, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP_EXEC}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif(pixcmp_result)
 
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${TGTIMG})

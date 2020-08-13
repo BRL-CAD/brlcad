@@ -161,13 +161,14 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
     set(GIT_TREE_MODIFIED 0)
 
     # Get the file list
-    set(GIT_FILES "")
+    unset(GIT_FILES)
     execute_process(COMMAND ${GIT_EXEC} ls-tree --full-tree -r --name-only HEAD
       WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@"
       OUTPUT_VARIABLE GIT_STDOUT
       ERROR_VARIABLE GIT_STDERR
       RESULT_VARIABLE RETVAL)
     string(REGEX REPLACE "\r?\n" ";" GIT_FILES "${GIT_STDOUT}")
+    string(REGEX REPLACE ";$" "" GIT_FILES "${GIT_FILES}")
     if (RETVAL)
       message("")
       message("WARNING: Git does not seem to be working correctly.")
