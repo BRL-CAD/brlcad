@@ -34,6 +34,9 @@ add_subdirectory(dsp)
 # Fuzz tests (if supported by the compiler)
 add_subdirectory(fuzz)
 
+# Geometry difference reporting
+add_subdirectory(gdiff)
+
 # Image Conversion Regression Tests
 add_subdirectory(icv)
 

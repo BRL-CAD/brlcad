@@ -1,0 +1,156 @@
+Starting gdiff test run...
+
+Test 0: gdiff moss_1.g moss_2.g
+M cone.r
+D box.r
+M all.g
+D tor
+A box2.r
+A tor.s
+
+Test 1: gdiff moss_1.g moss_3.g
+M ellipse.r
+M cone.s
+M tor
+
+Test 2: gdiff moss_2.g moss_3.g
+M ellipse.r
+M cone.s
+M cone.r
+D box2.r
+D tor.s
+M all.g
+A box.r
+A tor
+
+Test 3: gdiff -v moss_1.g moss_2.g
+- "cone.r" id(p): 3000
++ "cone.r" id(p): 0
+D "cone.r" region_id(a): 3000
+D box.r
+- "all.g" tree(p): u {u {u {l platform.r} {l box.r {1 0 0 -23.69892883301  0 1 0 13.40998744965  0 0 1 8.023991584778  0 0 0 1}}} {u {l cone.r {1 0 0 22.0492401123  0 1 0 12.23486709595  0 0 1 2.111249841619e-07  0 0 0 1}} {l ellipse.r {1 0 0 14.67929267883  0 1 0 -41.60771179199  0 0 1 38.79878234863  0 0 0 1}}}} {u {l tor.r} {l light.r}}
++ "all.g" tree(p): u {u {u {l platform.r} {l box2.r {1 0 0 -23.69892883301  0 1 0 13.40998744965  0 0 1 8.023991584778  0 0 0 1}}} {u {l cone.r {1 0 0 22.0492401123  0 1 0 12.23486709595  0 0 1 2.111249841619e-07  0 0 0 1}} {l ellipse.r {1 0 0 14.67929267883  0 1 0 -41.60771179199  0 0 1 38.79878234863  0 0 0 1}}}} {u {l tor.r} {l light.r}}
+D tor
+A box2.r
+A tor.s
+
+Test 4: gdiff -vv moss_1.g moss_2.g
+- "cone.r" id(p): 3000
++ "cone.r" id(p): 0
+D "cone.r" region_id(a): 3000
+D "box.r" tree(p): l box.s
+D "box.r" rgb(p): 100 190 190
+D "box.r" id(p): 2000
+D "box.r" region(p): yes
+D "box.r" DB5_MINORTYPE(p): comb
+D "box.r" color(a): 100/190/190
+D "box.r" region(a): R
+D "box.r" region_id(a): 2000
+- "all.g" tree(p): u {u {u {l platform.r} {l box.r {1 0 0 -23.69892883301  0 1 0 13.40998744965  0 0 1 8.023991584778  0 0 0 1}}} {u {l cone.r {1 0 0 22.0492401123  0 1 0 12.23486709595  0 0 1 2.111249841619e-07  0 0 0 1}} {l ellipse.r {1 0 0 14.67929267883  0 1 0 -41.60771179199  0 0 1 38.79878234863  0 0 0 1}}}} {u {l tor.r} {l light.r}}
++ "all.g" tree(p): u {u {u {l platform.r} {l box2.r {1 0 0 -23.69892883301  0 1 0 13.40998744965  0 0 1 8.023991584778  0 0 0 1}}} {u {l cone.r {1 0 0 22.0492401123  0 1 0 12.23486709595  0 0 1 2.111249841619e-07  0 0 0 1}} {l ellipse.r {1 0 0 14.67929267883  0 1 0 -41.60771179199  0 0 1 38.79878234863  0 0 0 1}}}} {u {l tor.r} {l light.r}}
+D "tor" r_h(p): 5.079999923705999620437979
+D "tor" r_a(p): 25.39999718822056706812873
+D "tor" H(p): 0 1 0
+D "tor" V(p): 4.91623592376700013772961 -32.8022308349599995835888 31.71177673340000069401867
+D "tor" DB5_MINORTYPE(p): tor
+A "box2.r" tree(p): l box.s
+A "box2.r" rgb(p): 100 190 190
+A "box2.r" id(p): 2000
+A "box2.r" region(p): yes
+A "box2.r" DB5_MINORTYPE(p): comb
+A "box2.r" color(a): 100/190/190
+A "box2.r" region(a): R
+A "box2.r" region_id(a): 2000
+A "tor.s" r_h(p): 5.079999923705999620437979
+A "tor.s" r_a(p): 25.39999718822056706812873
+A "tor.s" H(p): 0 1 0
+A "tor.s" V(p): 4.91623592376700013772961 -32.8022308349599995835888 31.71177673340000069401867
+A "tor.s" DB5_MINORTYPE(p): tor
+
+Test 5: gdiff -a -d moss_1.g moss_2.g
+
+Test 6: gdiff -m moss_1.g moss_2.g
+M ellipse.r
+M cone.s
+M tor
+
+Test 7: gdiff -u moss_1.g moss_3.g
+  platform.r
+  light.r
+  cone.r
+  tor.r
+  box.r
+
+Test 8: gdiff -F "-type region" moss_1.g moss_2.g
+M cone.r
+D box.r
+A box2.r
+
+Test 9: gdiff -F "-type region" -a -d moss_1.g moss_2.g
+D box.r
+A box2.r
+
+Test 10: gdiff -F "! -attr region_id" -a -d moss_1.g moss_2.g
+M all.g
+D tor
+A tor.s
+
+Test 11: gdiff moss_2.g moss_1.g moss_3.g
+M ellipse.r
+M cone.s
+M cone.r
+D(L) box.r
+M all.g
+C tor
+A(L) box2.r
+A(L) tor.s
+
+Test 12: gdiff -v moss_2.g moss_1.g moss_3.g
+A(R) "ellipse.r" prop1(p): 1
+M(R) "cone.s" D(p): 4.997601260198356598607461 4.997601260198356598607461 0
+M(R) "cone.s" C(p): 4.997601260198356598607461 -4.997601260198356598607461 0
+M(R) "cone.s" V(p): 19.38951648775079661390919 -42.80785935392668761778623 -10.87609632321004937693942
+M(L) "cone.r" id(p): 0
+D(L) "cone.r" region_id(p): 3000
+D(L) box.r
+M(L) "all.g" tree(p): u {u {u {l platform.r} {l box2.r {1 0 0 -23.69892883301  0 1 0 13.40998744965  0 0 1 8.023991584778  0 0 0 1}}} {u {l cone.r {1 0 0 22.0492401123  0 1 0 12.23486709595  0 0 1 2.111249841619e-07  0 0 0 1}} {l ellipse.r {1 0 0 14.67929267883  0 1 0 -41.60771179199  0 0 1 38.79878234863  0 0 0 1}}}} {u {l tor.r} {l light.r}}
+C(LD,RM) tor
+A(L) box2.r
+A(L) tor.s
+
+Test 13: gdiff -vv moss_2.g moss_1.g moss_3.g
+A(R) "ellipse.r" prop1(p): 1
+M(R) "cone.s" D(p): 4.997601260198356598607461 4.997601260198356598607461 0
+M(R) "cone.s" C(p): 4.997601260198356598607461 -4.997601260198356598607461 0
+M(R) "cone.s" V(p): 19.38951648775079661390919 -42.80785935392668761778623 -10.87609632321004937693942
+M(L) "cone.r" id(p): 0
+D(L) "cone.r" region_id(p): 3000
+D(L) "box.r" tree(p): l box.s
+D(L) "box.r" rgb(p): 100 190 190
+D(L) "box.r" id(p): 2000
+D(L) "box.r" region(p): yes
+D(L) "box.r" DB5_MINORTYPE(p): comb
+D(L) "box.r" color(p): 100/190/190
+D(L) "box.r" region(p): R
+D(L) "box.r" region_id(p): 2000
+M(L) "all.g" tree(p): u {u {u {l platform.r} {l box2.r {1 0 0 -23.69892883301  0 1 0 13.40998744965  0 0 1 8.023991584778  0 0 0 1}}} {u {l cone.r {1 0 0 22.0492401123  0 1 0 12.23486709595  0 0 1 2.111249841619e-07  0 0 0 1}} {l ellipse.r {1 0 0 14.67929267883  0 1 0 -41.60771179199  0 0 1 38.79878234863  0 0 0 1}}}} {u {l tor.r} {l light.r}}
+C(RM) "tor" r_h(p): 6.191849347007689630117966
+C(L-) "tor" r_h(p): 5.079999923705999620437979
+C(RM) "tor" r_a(p): 30.95924377281203021539113
+C(L-) "tor" r_a(p): 25.39999718822056706812873
+D(L) "tor" H(p): 0 1 0
+D(L) "tor" V(p): 4.91623592376700013772961 -32.8022308349599995835888 31.71177673340000069401867
+D(L) "tor" DB5_MINORTYPE(p): tor
+A(L) "box2.r" tree(p): l box.s
+A(L) "box2.r" rgb(p): 100 190 190
+A(L) "box2.r" id(p): 2000
+A(L) "box2.r" region(p): yes
+A(L) "box2.r" DB5_MINORTYPE(p): comb
+A(L) "box2.r" color(p): 100/190/190
+A(L) "box2.r" region(p): R
+A(L) "box2.r" region_id(p): 2000
+A(L) "tor.s" r_h(p): 5.079999923705999620437979
+A(L) "tor.s" r_a(p): 25.39999718822056706812873
+A(L) "tor.s" H(p): 0 1 0
+A(L) "tor.s" V(p): 4.91623592376700013772961 -32.8022308349599995835888 31.71177673340000069401867
+A(L) "tor.s" DB5_MINORTYPE(p): tor
