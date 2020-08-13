@@ -55,9 +55,17 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	BU_PTBL_INIT(&results_filtered);
 	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
 	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
+	    // Default to pass - if an object doesn't exist on one side, we want to pass/fail
+	    // based on the object we have.
+	    int lpass = 1;
+	    int rpass = 1;
 	    // If both sides pass the filters, it's in - otherwise it's out
-	    int lpass = (dr->dp_left  != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered,  (long *)dr->dp_left ) != -1));
-	    int rpass = (dr->dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dr->dp_right) != -1));
+	    if (dr->dp_left != RT_DIR_NULL) {
+		lpass = (bu_ptbl_locate(&left_dbip_filtered,  (long *)dr->dp_left ) != -1);
+	    }
+	    if (dr->dp_right != RT_DIR_NULL) {
+		rpass = (bu_ptbl_locate(&right_dbip_filtered, (long *)dr->dp_right) != -1);
+	    }
 	    if (lpass && rpass) {
 		bu_ptbl_ins(&results_filtered, (long *)dr);
 		filtered_diff_state |= dr->param_state;
