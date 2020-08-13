@@ -62,6 +62,14 @@ execute_process(
   )
 GDIFF_CHECK_RESULT(gdiff_result)
 
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -q moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -q "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
 GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -v moss_1.g moss_2.g\n")
 execute_process(
   COMMAND "${GDIFF}" -v "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
