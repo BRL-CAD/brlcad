@@ -222,7 +222,7 @@ if [ ! -f shaders.rt ] ; then
     log "ERROR: mged failed to create shaders.rt"
     log "-> shaders.sh FAILED, see $LOGFILE"
     rm -f $EAGLECAD
-    cat $LOGFILE
+    cat "$LOGFILE"
     exit 1
 fi
 

@@ -105,7 +105,7 @@ STATUS=$?
 
 if [ $STATUS -gt 0 ] ; then
     log "-> asc2dsp.sh FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 else
     log "-> asc2dsp.sh succeeded"
 fi

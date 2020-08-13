@@ -70,7 +70,7 @@ if test "x$NUMBER_WRONG" = "x0" ; then
     log "-> flawfinder.sh succeeded"
 else
     log "-> flawfinder.sh FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
 exit $NUMBER_WRONG

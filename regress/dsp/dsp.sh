@@ -87,7 +87,7 @@ if [ $FAILED = 0 ] ; then
     log "-> dsp.sh succeeded"
 else
     log "-> dsp.sh FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
 exit $FAILED

@@ -117,7 +117,7 @@ g all t.r
 quit
 EOF
 if test ! -f mged.g ; then
-    cat $LOGFILE
+    cat "$LOGFILE"
     log "ERROR: Test file 'mged.g' is missing. Unable to run mged, aborting"
     exit 1
 fi
@@ -185,7 +185,7 @@ if test $FAILED -eq 0 ; then
     log "-> mged check succeeded"
 else
     log "-> mged check FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
 exit $FAILED
