@@ -22,9 +22,10 @@ CMAKEFILES(
 set(asc_outfiles
   asc.log
   asc2dsp.log
-  asc2dsp.new.dsp
-  asc2dsp.old.bw
-  asc2dsp.old.dsp
+  asc2dsp-new.dsp
+  asc2dsp-old.bw
+  asc2dsp-old.dsp
+  asc2dsp-old.pix
   moss_v4.asc
   moss_v4.g
   moss_v4_asc_v4.g
