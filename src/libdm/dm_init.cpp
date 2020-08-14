@@ -106,6 +106,10 @@ libdm_init(void)
 
 	    const struct dm *d = plugin->p;
 	    const char *dname = dm_get_name(d);
+	    if (!dname) {
+		bu_vls_printf(dm_init_msg_str, "Warning - file '%s' does not provide a display manager name (?), skipping\n", pfile);
+		continue;
+	    }
 	    std::string key(dname);
 	    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
 	    if (dm_map.find(key) != dm_map.end()) {
