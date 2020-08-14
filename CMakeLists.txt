@@ -3737,25 +3737,12 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file("${BRLCAD_CMAKE_DIR}/distclean.cmake.in" "${BRLCAD_BINARY_DIR}/distclean.cmake" @ONLY)
-if("${CMAKE_GENERATOR}" MATCHES "Make")
-  add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
-    COMMAND ${CMAKE_COMMAND} -E chdir "${BRLCAD_BINARY_DIR}" $(MAKE) clean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean... done."
-    COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
-    )
-elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
-  add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
-    COMMAND ${CMAKE_COMMAND} -E chdir "${BRLCAD_BINARY_DIR}" ninja -t clean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean... done."
-    COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
-    )
-else("${CMAKE_GENERATOR}" MATCHES "Make")
-  add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Not implemented for generator ${CMAKE_GENERATOR}"
-    )
-endif("${CMAKE_GENERATOR}" MATCHES "Make")
+add_custom_target(distclean
+  COMMAND ${CMAKE_COMMAND} -E echo "Running clean target..."
+  COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR} --target clean
+  COMMAND ${CMAKE_COMMAND} -E echo "Running clean target... done."
+  COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
+  )
 if(TARGET distclean)
   set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
 endif(TARGET distclean)
