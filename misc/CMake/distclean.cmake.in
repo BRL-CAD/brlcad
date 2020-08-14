@@ -53,6 +53,13 @@ if(EXISTS "@BRLCAD_BINARY_DIR@/source_archive_contents")
 endif(EXISTS "@BRLCAD_BINARY_DIR@/source_archive_contents")
 message("Removing CMake-generated files... done.")
 
+# Visual Studio generators don't have a clean target, so we need to do
+# this manually - remove all files
+if(EXISTS "@BRLCAD_BINARY_DIR@/BRLCAD.sln")
+  file(GLOB_RECURSE VSFILES LIST_DIRECTORIES TRUE RELATIVE "@BRLCAD_BINARY_DIR@" "*")
+  file(REMOVE_RECURSE ${VSFILES})
+endif(EXISTS "@BRLCAD_BINARY_DIR@/BRLCAD.sln")
+
 # Need to recursively go down the directories to get a full list.
 # Easier to use a function, so maintain the directory list in
 # a global property
