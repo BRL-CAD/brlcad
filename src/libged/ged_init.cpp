@@ -48,6 +48,8 @@ static size_t cmd_list_len = 0;
 static char **cmd_list = NULL;
 void *ged_cmds;
 
+extern "C" void libged_init(void);
+
 static std::set<void *> ged_handles;
 struct bu_vls *ged_init_msg_str;
 
@@ -67,6 +69,17 @@ ged_cmd_valid(const char *cmd, const char *func)
 	return 1;
     }
     int cmd_invalid = 1;
+
+    // On OpenBSD, if the executable was launched in a way that requires
+    // bu_setprogname to find the BRL-CAD root directory the iniital libged
+    // initialization would have failed.  If we have no ged_cmds at all this is
+    // probably what happened, so call libged_init again here.  By the time we
+    // are calling ged_cmd_valid bu_setprogname should be set and we should be
+    // ready to actually find the commands.
+    if (!ged_cmd_map.size()) {
+	libged_init();
+    }
+
     std::string scmd(cmd);
     std::map<std::string, const struct ged_cmd *>::iterator cmd_it = ged_cmd_map.find(scmd);
     if (cmd_it != ged_cmd_map.end()) {
@@ -107,7 +120,7 @@ ged_cmd_list(const char * const **cl)
     return cmd_list_len;
 }
 
-static void
+extern "C" void
 libged_init(void)
 {
 
