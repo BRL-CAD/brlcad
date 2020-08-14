@@ -32,6 +32,8 @@
 #include "ged.h"
 #include "./include/plugin.h"
 
+extern "C" void libged_init(void);
+
 extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[]) {
     if (!gedp || !argc || !argv) {
@@ -52,6 +54,17 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
     // libged's command set so we have a clean fallback available if we ever
     // need it to fall back on/recover with.
     std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
+
+    // On OpenBSD, if the executable was launched in a way that requires
+    // bu_setprogname to find the BRL-CAD root directory the iniital libged
+    // initialization would have failed.  If we have no ged_cmds at all this is
+    // probably what happened, so call libged_init again here.  By the time we
+    // are calling ged_exec bu_setprogname should be set and we should be ready
+    // to actually find the commands.
+    if (!cmap->size()) {
+	libged_init();
+    }
+
     std::string key(argv[0]);
     std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(key);
     if (c_it == cmap->end()) {

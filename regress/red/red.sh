@@ -492,7 +492,7 @@ if test $STATUS -eq 0 ; then
     log "-> mged 'red' check succeeded"
 else
     log "-> mged 'red' check FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
 exit $STATUS

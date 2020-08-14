@@ -7,8 +7,8 @@ if(SH_EXEC)
 
   endif (TARGET asc2g)
 
-  add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-asc2dsp "cv;asc2pix;pix-bw;asc2dsp" TEST_DEFINED)
+  #add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
+  #BRLCAD_REGRESSION_TEST(regress-asc2dsp "cv;asc2pix;pix-bw;asc2dsp" TEST_DEFINED)
 
 endif(SH_EXEC)
 
@@ -40,7 +40,10 @@ set(asc_outfiles
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${asc_outfiles}")
 DISTCLEAN(${asc_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  asc2dsp.sh
+  )
 
 # Local Variables:
 # tab-width: 8

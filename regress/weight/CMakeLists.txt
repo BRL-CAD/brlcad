@@ -8,6 +8,8 @@ endif (SH_EXEC AND TARGET mged)
 
 CMAKEFILES(
   weight.sh
+  weight.ref
+  weight.test2.ref
   )
 
 # list of temporary files
@@ -19,13 +21,11 @@ set(weight_outfiles
   weight.mged
   weight.out
   weight.out_ns
-  weight.ref
   weight.ref_ns
   weight.test2.g
   weight.test2.mged
   weight.test2.out
   weight.test2.out_ns
-  weight.test2.ref
   weight.test2.ref_ns
   )
 

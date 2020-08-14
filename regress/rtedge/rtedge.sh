@@ -238,7 +238,7 @@ if test $FAILURES -eq 0 ; then
     log "-> rtcheck check succeeded"
 else
     log "-> rtcheck check FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
 exit $FAILURES

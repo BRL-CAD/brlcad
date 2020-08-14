@@ -209,7 +209,7 @@ if test $LONG -lt `expr $NEED_FIXING + 1` ; then
     log "-> usage check succeeded"
 else
     log "-> usage check FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
 exit 0

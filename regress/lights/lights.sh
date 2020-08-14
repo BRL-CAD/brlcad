@@ -109,7 +109,7 @@ if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> lights.sh succeeded"
 else
     log "-> lights.sh FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
 exit $NUMBER_WRONG

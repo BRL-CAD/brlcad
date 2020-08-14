@@ -569,7 +569,7 @@ if [ X$STATUS = X0 ] ; then
     log "-> nirt.sh succeeded"
 else
     log "-> nirt.sh FAILED, see $LOGFILE"
-    cat $LOGFILE
+    cat "$LOGFILE"
 fi
 
 exit $STATUS

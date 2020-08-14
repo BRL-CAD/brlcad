@@ -317,6 +317,10 @@ main(int argc, const char **argv)
 
     state->verbosity = state->verbosity - state->quiet;
 
+    if (state->verbosity > 4) {
+	state->verbosity = 4;
+    }
+
     state->return_conflicts = 1;
 
     if (state->return_added == -1 && state->return_removed == -1 && state->return_changed == -1 && state->return_unchanged == 0) {
@@ -327,34 +331,34 @@ main(int argc, const char **argv)
 
     if (argc != 2 && argc != 3) {
 	bu_log("Error - please specify either two or three .g files\n");
-	bu_exit(EXIT_FAILURE, NULL);
+	bu_exit(-1, NULL);
     }
 
     if (!bu_file_exists(argv[0], NULL)) {
-	bu_exit(1, "Cannot stat file %s\n", argv[0]);
+	bu_exit(-1, "Cannot stat file %s\n", argv[0]);
     }
 
     if (!bu_file_exists(argv[1], NULL)) {
-	bu_exit(1, "Cannot stat file %s\n", argv[1]);
+	bu_exit(-1, "Cannot stat file %s\n", argv[1]);
     }
 
     if (argc == 3 && !bu_file_exists(argv[2], NULL)) {
-	bu_exit(1, "Cannot stat file %s\n", argv[2]);
+	bu_exit(-1, "Cannot stat file %s\n", argv[2]);
     }
 
     if (state->merge && bu_file_exists(bu_vls_addr(state->merge_file), NULL)) {
-	bu_exit(1, "File %s already exists.\n", bu_vls_addr(state->merge_file));
+	bu_exit(-1, "File %s already exists.\n", bu_vls_addr(state->merge_file));
     }
 
     /* diff case */
     if (argc == 2) {
 
 	if (bu_file_same(argv[0], argv[1])) {
-	    bu_exit(1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
+	    bu_exit(-1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
 	}
 
 	if ((left_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[0]);
 	}
 	RT_CK_DBI(left_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -363,12 +367,12 @@ main(int argc, const char **argv)
 	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(left_dbip) < 0) {
 	    db_close(left_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
 	}
 	db_update_nref(left_dbip, &rt_uniresource);
 
 	if ((right_dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[1]);
 	}
 	RT_CK_DBI(right_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -378,7 +382,7 @@ main(int argc, const char **argv)
 	if (db_dirbuild(right_dbip) < 0) {
 	    db_close(ancestor_dbip);
 	    db_close(right_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
 	}
 	db_update_nref(right_dbip, &rt_uniresource);
 
@@ -389,27 +393,27 @@ main(int argc, const char **argv)
     if (argc == 3) {
 
 	if (bu_file_same(argv[0], argv[1]) && bu_file_same(argv[2], argv[1])) {
-	    bu_exit(1, "Same database file specified for all three inputs: %s\n", argv[0]);
+	    bu_exit(-1, "Same database file specified for all three inputs: %s\n", argv[0]);
 	}
 
 	if (bu_file_same(argv[0], argv[1])) {
-	    bu_exit(1, "Same database file specified as both ancestor and left diff inputs: %s\n", argv[0]);
+	    bu_exit(-1, "Same database file specified as both ancestor and left diff inputs: %s\n", argv[0]);
 	}
 
 	if (bu_file_same(argv[1], argv[2])) {
-	    bu_exit(1, "Same database file specified as both ancestor and right diff inputs: %s\n", argv[1]);
+	    bu_exit(-1, "Same database file specified as both ancestor and right diff inputs: %s\n", argv[1]);
 	}
 
 	if (bu_file_same(argv[0], argv[2])) {
-	    bu_exit(1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
+	    bu_exit(-1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
 	}
 
 	if (!bu_file_exists(argv[2], NULL)) {
-	    bu_exit(1, "Cannot stat file %s\n", argv[2]);
+	    bu_exit(-1, "Cannot stat file %s\n", argv[2]);
 	}
 
 	if ((left_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[0]);
 	}
 	RT_CK_DBI(left_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -418,12 +422,12 @@ main(int argc, const char **argv)
 	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(left_dbip) < 0) {
 	    db_close(left_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
 	}
 	db_update_nref(left_dbip, &rt_uniresource);
 
 	if ((ancestor_dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[1]);
 	}
 	RT_CK_DBI(ancestor_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -433,12 +437,12 @@ main(int argc, const char **argv)
 	if (db_dirbuild(ancestor_dbip) < 0) {
 	    db_close(left_dbip);
 	    db_close(ancestor_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
 	}
 	db_update_nref(ancestor_dbip, &rt_uniresource);
 
 	if ((right_dbip = db_open(argv[2], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[2]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[2]);
 	}
 	RT_CK_DBI(right_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -448,7 +452,7 @@ main(int argc, const char **argv)
 	if (db_dirbuild(right_dbip) < 0) {
 	    db_close(ancestor_dbip);
 	    db_close(left_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[2]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[2]);
 	}
 	db_update_nref(right_dbip, &rt_uniresource);
 
