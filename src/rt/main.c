@@ -432,14 +432,14 @@ int main(int argc, char *argv[])
 	    bu_vls_strcat(&str, " ...");
 	else
 	    bu_vls_putc(&str, ';');
-	fprintf(stderr, "%s\n", bu_vls_addr(&str));
+	bu_log("%s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
     }
 
     /* Build directory of GED database */
     rt_prep_timer();
     if ((rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
-	fprintf(stderr, "rt:  rt_dirbuild(%s) failure\n", title_file);
+	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
 #ifdef MPI_ENABLED
 	MPI_Finalize();
 #endif
@@ -448,9 +448,9 @@ int main(int argc, char *argv[])
     APP.a_rt_i = rtip;
     (void)rt_get_timer(&times, NULL);
     if (rt_verbosity & VERBOSE_MODELTITLE)
-	fprintf(stderr, "db title:  %s\n", idbuf);
+	bu_log("db title:  %s\n", idbuf);
     if (rt_verbosity & VERBOSE_STATS)
-	fprintf(stderr, "DIRBUILD: %s\n", bu_vls_addr(&times));
+	bu_log("DIRBUILD: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
     memory_summary();
 
@@ -513,7 +513,7 @@ int main(int argc, char *argv[])
     if (matflag && !isatty(fileno(stdin))) {
 	int oret = old_way(stdin);
 	if (oret < 0) {
-	    fprintf(stderr, "%s: no objects specified -- raytrace aborted\n", argv[0]);
+	    bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 	    usage(argv[0], 0);
 	    ret = 1;
 	}
