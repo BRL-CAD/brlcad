@@ -3737,12 +3737,18 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file("${BRLCAD_CMAKE_DIR}/distclean.cmake.in" "${BRLCAD_BINARY_DIR}/distclean.cmake" @ONLY)
-add_custom_target(distclean
-  COMMAND ${CMAKE_COMMAND} -E echo "Running clean target..."
-  COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR} --target clean
-  COMMAND ${CMAKE_COMMAND} -E echo "Running clean target... done."
-  COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
-  )
+if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
+  add_custom_target(distclean
+    COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
+    )
+else ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
+  add_custom_target(distclean
+    COMMAND ${CMAKE_COMMAND} -E echo "Running clean target..."
+    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR} --target clean
+    COMMAND ${CMAKE_COMMAND} -E echo "Running clean target... done."
+    COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
+    )
+endif ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 if(TARGET distclean)
   set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
 endif(TARGET distclean)
