@@ -294,7 +294,7 @@ ged_init(struct ged *gedp)
     gedp->ged_io_data = NULL;
 
     /* Out of the gate we don't have display managers or views */
-    gedp->ged_gvp = NULL;
+    gedp->ged_gvp = GED_VIEW_NULL;
     gedp->ged_dmp = NULL;
 
     /* ? */
