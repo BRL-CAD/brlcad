@@ -43,6 +43,7 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 
+
 struct cvt_tab {
     double val;
     char name[32];
@@ -52,6 +53,10 @@ struct conv_table {
     struct cvt_tab *cvttab;
 };
 
+
+/* Keep table sorted sorted small-to-large.  Algorithms below may rely
+ * on the ordering.
+ */
 static struct cvt_tab bu_units_length_tab[] = {
     {0.0,		"none"},
     {1.0e-21,		"ym"},
@@ -134,6 +139,9 @@ static struct cvt_tab bu_units_length_tab[] = {
 };
 #define BU_UNITS_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
 
+/* Keep table sorted sorted small-to-large.  Algorithms below may rely
+ * on the ordering.
+ */
 static struct cvt_tab bu_units_volume_tab[] = {
     {0.0,		"none"},
     {1.0,		"mm^3"},		/* default */
@@ -156,6 +164,9 @@ static struct cvt_tab bu_units_volume_tab[] = {
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
+/* Keep table sorted sorted small-to-large.  Algorithms below may rely
+ * on the ordering.
+ */
 static struct cvt_tab bu_units_mass_tab[] = {
     {0.0,		"none"},
     {1.0,		"grams"},		/* default */
