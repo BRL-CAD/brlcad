@@ -10,9 +10,11 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 20XX-XX-XX  Release 7.3X.X                                     ---
+--- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* dynamic LIBGED command loading in MGED & Archer - Cliff Yapp
+* dynamic LIBDM display manager loading in MGED & Archer - Cliff Yapp
 * fixed 'idents' crash when running in a read-only dir - Sean Morrison
 * fixed fb tools w/ redirected files and cv on Windows - Sean Morrison
 * expanded 'bo' command docs with a DSP input example - Sean Morrison
