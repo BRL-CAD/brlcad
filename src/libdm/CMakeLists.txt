@@ -20,6 +20,7 @@ BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
 if(BRLCAD_ENABLE_TCL)
   add_subdirectory(plot)
+  add_subdirectory(postscript)
   add_subdirectory(txt)
 endif(BRLCAD_ENABLE_TCL)
 
