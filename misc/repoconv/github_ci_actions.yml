@@ -135,7 +135,8 @@ jobs:
 
         if ("${{ runner.os }}" STREQUAL "Windows")
            execute_process(
-             COMMAND cmake --build build --config Release --target distcheck-enableall_release
+             COMMAND cmake --build build --config Release --target ALL_BUILD
+             COMMAND cmake --build build --config Release --target check
              RESULT_VARIABLE result
            )
         else ("${{ runner.os }}" STREQUAL "Windows")
