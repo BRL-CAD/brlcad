@@ -243,15 +243,11 @@ bu_units_conversion(const char *str)
 {
     register const struct cvt_tab *tp;
     register const struct conv_table *cvtab;
-    char ubuf[256];
-
-    /* Copy the given string */
-    bu_strlcpy(ubuf, str, sizeof(ubuf));
 
     /* Search for this string in the table */
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
-	    if (!units_name_matches(ubuf, tp->name))
+	    if (!units_name_matches(str, tp->name))
 		continue;
 	    return tp->val;
 	}
