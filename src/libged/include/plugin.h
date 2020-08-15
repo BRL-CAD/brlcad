@@ -26,7 +26,7 @@
 #include "../ged_private.h"
 #include "brlcad_version.h"
 
-#define GED_API ((BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
+#define GED_API (2*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
 
 extern void *ged_cmds;
 
