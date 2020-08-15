@@ -938,7 +938,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    bu_vls_printf(&tmpname, "-0");
 	    bu_vls_incr(&tmpname, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	}
-	if (_write_bot(gedp, tbot, bu_vls_addr(&tmpname), opts) == GED_ERROR) {
+	if (_write_bot(gedp, tbot, bu_vls_addr(&tmpname), opts) & GED_ERROR) {
 	    bu_log("SPSR: could not write BoT to temporary name %s\n", bu_vls_addr(&tmpname));
 	    bu_vls_free(&tmpname);
 	    ret = GED_FACETIZE_FAILURE;

@@ -30,7 +30,6 @@
 /** @} */
 
 #ifdef FB_USE_INTERNAL_API
-#ifdef IF_WGL
 #  include "common.h"
 
 #  include "bio.h"
@@ -52,7 +51,6 @@ struct wgl_fb_info {
     int double_buffer;
     int soft_cmap;
 };
-#endif /* IF_WGL */
 #endif /* FB_USE_INTERNAL_API */
 
 /*

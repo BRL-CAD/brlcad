@@ -107,54 +107,6 @@ extern void *fb_backends;
 	(_dr) == (_sr) &&\
 	(_dg) == (_sg) &&\
 	(_db) == (_sb))
-#if defined(DM_X) || defined(DM_OGL)
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
-	_shift = 24 - _shift;				\
-	switch (_shift) {				\
-	    case 0:					\
-		_mask >>= 24;				\
-		break;					\
-	    case 8:					\
-		_mask >>= 8;				\
-		break;					\
-	    case 16:					\
-		_mask <<= 8;				\
-		break;					\
-	    case 24:					\
-		_mask <<= 24;				\
-		break;					\
-	}						\
-    }
-#else
-/* Do nothing */
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
-#endif
-
-
-
-#if defined(DM_OGL) || defined(DM_WGL)
-#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
-
-struct modifiable_ogl_vars {
-    struct dm *this_dm;
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-#endif
-
 
 __BEGIN_DECLS
 

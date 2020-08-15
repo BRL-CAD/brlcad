@@ -39,7 +39,7 @@ extern int to_data_arrows(struct ged *gedp,
 			  int maxargs);
 extern int to_data_arrows_func(Tcl_Interp *interp,
 			       struct ged *gedp,
-			       struct ged_dm_view *gdvp,
+			       struct bview *gdvp,
 			       int argc,
 			       const char *argv[]);
 
@@ -50,7 +50,7 @@ extern int to_autoview(struct ged *gedp,
 		       ged_func_ptr func,
 		       const char *usage,
 		       int maxargs);
-extern void to_autoview_view(struct ged_dm_view *gdvp, const char *scale);
+extern void to_autoview_view(struct bview *gdvp, const char *scale);
 extern void to_autoview_all_views(struct tclcad_obj *top);
 extern int to_autoview_func(struct ged *gedp,
 			    int argc,
@@ -62,7 +62,7 @@ extern int to_autoview_func(struct ged *gedp,
 
 /* Axes */
 extern int to_axes(struct ged *gedp,
-		   struct ged_dm_view *gdvp,
+		   struct bview *gdvp,
 		   struct bview_axes_state *gasp,
 		   int argc,
 		   const char *argv[],
@@ -75,7 +75,7 @@ extern int to_data_axes(struct ged *gedp,
 			int maxargs);
 extern int to_data_axes_func(Tcl_Interp *interp,
 			     struct ged *gedp,
-			     struct ged_dm_view *gdvp,
+			     struct bview *gdvp,
 			     int argc,
 			     const char *argv[]);
 extern int to_model_axes(struct ged *gedp,
@@ -92,8 +92,8 @@ extern int to_view_axes(struct ged *gedp,
 			int maxargs);
 
 /* Draw */
-extern void go_draw(struct ged_dm_view *gdvp);
-extern void go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp);
+extern void go_draw(struct bview *gdvp);
+extern void go_draw_other(struct ged *gedp, struct bview *gdvp);
 extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 extern int to_redraw(struct ged *gedp,
 		     int argc,
@@ -109,7 +109,7 @@ extern int to_blast(struct ged *gedp,
 		    int maxargs);
 
 /* Faceplate */
-extern void go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp);
+extern void go_draw_faceplate(struct ged *gedp, struct bview *gdvp);
 extern int to_faceplate(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -128,7 +128,7 @@ extern int to_data_labels(struct ged *gedp,
 			  int maxargs);
 extern int to_data_labels_func(Tcl_Interp *interp,
 			       struct ged *gedp,
-			       struct ged_dm_view *gdvp,
+			       struct bview *gdvp,
 			       int argc,
 			       const char *argv[]);
 extern int to_prim_label(struct ged *gedp,
@@ -170,12 +170,12 @@ extern int to_refresh_on(struct ged *gedp,
 			 const char *usage,
 			 int maxargs);
 extern void to_refresh_all_views(struct tclcad_obj *top);
-extern void to_refresh_view(struct ged_dm_view *gdvp);
+extern void to_refresh_view(struct bview *gdvp);
 
 /* Util */
 extern fastf_t screen_to_view_x(struct dm *dmp, fastf_t x);
 extern fastf_t screen_to_view_y(struct dm *dmp, fastf_t y);
-extern int to_is_viewable(struct ged_dm_view *gdvp);
+extern int to_is_viewable(struct bview *gdvp);
 
 /*
  * Local Variables:

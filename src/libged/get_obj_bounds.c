@@ -245,7 +245,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
     VSETALL(rpp_min, MAX_FASTF);
     VREVERSE(rpp_max, rpp_min);
 
-    if (get_objpath_mat(gedp, argc, argv, gtdp) == GED_ERROR)
+    if (get_objpath_mat(gedp, argc, argv, gtdp) & GED_ERROR)
 	return GED_ERROR;
 
     dp = gtdp->gtd_obj[gtdp->gtd_objpos-1];

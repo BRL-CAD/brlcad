@@ -74,18 +74,7 @@ struct dm_hook_data {
     void *dmh_data;
 };
 
-/* TODO - after plugins are established, these should be movable to
- * the private subheaders */
 DM_EXPORT extern struct dm dm_null;
-DM_EXPORT extern struct dm dm_ogl;
-DM_EXPORT extern struct dm dm_plot;
-DM_EXPORT extern struct dm dm_ps;
-DM_EXPORT extern struct dm dm_tk;
-DM_EXPORT extern struct dm dm_wgl;
-DM_EXPORT extern struct dm dm_X;
-DM_EXPORT extern struct dm dm_txt;
-DM_EXPORT extern struct dm dm_qt;
-DM_EXPORT extern struct dm dm_osgl;
 
 DM_EXPORT extern void *dm_interp(struct dm *dmp);
 DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,
@@ -171,9 +160,13 @@ DM_EXPORT extern struct dm *dm_open(void *interp,
 			     const char *type,
 			     int argc,
 			     const char *argv[]);
-DM_EXPORT extern struct bu_vls *dm_list_types(const char *separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
+DM_EXPORT extern void dm_list_types(struct bu_vls *list, const char *separator);
 DM_EXPORT const char *dm_bestXType(const char *dpy_string);
+DM_EXPORT extern int dm_have_graphics();
 
+/* This reports the graphics system associated with the specified dm type (returned values
+ * right now would be NULL, Tk or Qt - another eventual possibility is GLFW...) */
+DM_EXPORT extern const char *dm_graphics_system(const char *dmtype);
 
 /* functions to make a dm struct hideable - will need to
  * sort these out later */
@@ -181,8 +174,9 @@ DM_EXPORT const char *dm_bestXType(const char *dpy_string);
 DM_EXPORT extern struct dm *dm_get();
 DM_EXPORT extern void dm_put(struct dm *dmp);
 DM_EXPORT extern void dm_set_null(struct dm *dmp); /* TODO - HACK, need general set mechanism */
-DM_EXPORT extern const char *dm_get_dm_name(struct dm *dmp);
+DM_EXPORT extern const char *dm_get_dm_name(const struct dm *dmp);
 DM_EXPORT extern const char *dm_get_dm_lname(struct dm *dmp);
+DM_EXPORT extern const char *dm_get_graphics_system(const struct dm *dmp);
 DM_EXPORT extern int dm_get_width(struct dm *dmp);
 DM_EXPORT extern int dm_get_height(struct dm *dmp);
 DM_EXPORT extern void dm_set_width(struct dm *dmp, int width);
@@ -190,6 +184,7 @@ DM_EXPORT extern void dm_set_height(struct dm *dmp, int height);
 DM_EXPORT extern void dm_geometry_request(struct dm *dmp, int width, int height);
 DM_EXPORT extern void dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key); // ick
 DM_EXPORT extern fastf_t dm_get_aspect(struct dm *dmp);
+DM_EXPORT extern int dm_graphical(const struct dm *dmp);
 DM_EXPORT extern const char *dm_get_type(struct dm *dmp);
 DM_EXPORT extern unsigned long dm_get_id(struct dm *dmp);
 DM_EXPORT extern void dm_set_id(struct dm *dmp, unsigned long new_id);
@@ -201,6 +196,9 @@ DM_EXPORT extern unsigned char *dm_get_fg(struct dm *dmp);
 DM_EXPORT extern int dm_set_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 DM_EXPORT extern int dm_reshape(struct dm *dmp, int width, int height);
 DM_EXPORT extern int dm_make_current(struct dm *dmp);
+DM_EXPORT extern int dm_doevent(struct dm *dmp, void *clientData, void *eventPtr);
+DM_EXPORT extern int dm_get_dirty(struct dm *dmp);
+DM_EXPORT extern void dm_set_dirty(struct dm *dmp, int i);
 DM_EXPORT extern vect_t *dm_get_clipmin(struct dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmax(struct dm *dmp);
 DM_EXPORT extern int dm_get_bound_flag(struct dm *dmp);

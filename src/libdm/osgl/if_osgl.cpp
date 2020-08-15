@@ -35,8 +35,6 @@
 /** @} */
 
 
-#ifdef IF_OSGL
-
 #include "common.h"
 
 #include <osg/GLExtensions>
@@ -1527,13 +1525,6 @@ COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
  * of class for the benefit of avoiding C++ name
  * collisions until the end of this file */
 #undef class
-
-#else
-
-/* quell empty-compilation unit warnings */
-static const int unused = 0;
-
-#endif /* IF_OSGL */
 
 /*
  * Local Variables:

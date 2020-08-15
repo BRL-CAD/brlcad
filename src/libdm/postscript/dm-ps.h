@@ -34,6 +34,8 @@
  */
 #define	GED_TO_PS(x)	((int)((x)+2048))
 
+extern struct dm dm_ps;
+
 struct ps_vars {
     struct bu_list l;
     FILE *ps_fp;

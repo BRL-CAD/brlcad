@@ -177,11 +177,11 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 
 	    /* Clear any previous diff drawing */
 	    if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
-		dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, "diff_visualff", 1, gedp->freesolid);
+		dl_erasePathFromDisplay(gedp, "diff_visualff", 1);
 	    if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualff0000", LOOKUP_QUIET) != RT_DIR_NULL)
-		dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, "diff_visualff0000", 1, gedp->freesolid);
+		dl_erasePathFromDisplay(gedp, "diff_visualff0000", 1);
 	    if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualffffff", LOOKUP_QUIET) != RT_DIR_NULL)
-		dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, "diff_visualffffff", 1, gedp->freesolid);
+		dl_erasePathFromDisplay(gedp, "diff_visualffffff", 1);
 
 	    /* Draw left-only lines */
 	    if (view_left) {

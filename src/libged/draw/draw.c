@@ -848,7 +848,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
-		    struct bview_client_data bview_data;
+		    struct bview_solid_data bview_data;
 		    bview_data.draw_solid_lines_only = dgcdp.draw_solid_lines_only;
 		    bview_data.wireframe_color_override = dgcdp.wireframe_color_override;
 		    bview_data.wireframe_color[0]= dgcdp.wireframe_color[0];
@@ -903,7 +903,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, dgcdp.draw_non_subtract_only);
+		    ret = dl_redraw(gdlp, gedp, dgcdp.draw_non_subtract_only);
 		    if (ret < 0) {
 			/* restore view bot threshold */
 			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = threshold_cached;
@@ -1134,7 +1134,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 		continue;
 	    }
 
-	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, new_argv[i], 0, gedp->freesolid);
+	    dl_erasePathFromDisplay(gedp, new_argv[i], 0);
 	}
 
 	drawtrees_retval = _ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
@@ -1168,7 +1168,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 		continue;
 	    }
 
-	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0, gedp->freesolid);
+	    dl_erasePathFromDisplay(gedp, argv[i], 0);
 	}
 
 	/* if our display is non-empty add -R to keep current view */
@@ -1246,7 +1246,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	/* redraw everything */
 	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	{
-	    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, 0);
+	    ret = dl_redraw(gdlp, gedp, 0);
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: redraw failure\n", argv[0]);
 		return GED_ERROR;
@@ -1282,7 +1282,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		    found_path = 1;
 		    db_free_full_path(&dl_path);
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, 0);
+		    ret = dl_redraw(gdlp, gedp, 0);
 		    if (ret < 0) {
 			bu_vls_printf(gedp->ged_result_str,
 				"%s: %s redraw failure\n", argv[0], argv[i]);

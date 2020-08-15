@@ -293,6 +293,11 @@ null_makeCurrent(struct dm *UNUSED(dmp))
     return 0;
 }
 
+int
+null_doevent(struct dm *UNUSED(dmp), void *UNUSED(clientData), void *UNUSED(eventPtr))
+{
+    return 0;
+}
 
 int
 null_openFb(struct dm *UNUSED(dmp))
@@ -341,6 +346,7 @@ struct dm_impl dm_null_impl = {
     null_getDisplayImage,
     null_reshape,
     null_makeCurrent,
+    null_doevent,
     null_openFb,
     NULL,
     NULL,
@@ -353,6 +359,8 @@ struct dm_impl dm_null_impl = {
     NULL,
     NULL,
     0,
+    0,				/* not graphical */
+    NULL,                       /* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
     0.0,			/* zoom-in limit */
@@ -362,6 +370,7 @@ struct dm_impl dm_null_impl = {
     0,/* top */
     0,/* width */
     0,/* height */
+    0,/* dirty */
     0,/* bytes per pixel */
     0,/* bits per channel */
     0,

@@ -36,6 +36,8 @@
 
 #define INIT_XCOLOR(c) memset((c), 0, sizeof(XColor))
 
+extern struct dm dm_tk;
+
 struct tk_vars {
     GC gc;
     Pixmap pix;

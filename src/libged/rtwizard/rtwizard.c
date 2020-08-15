@@ -38,17 +38,10 @@
 
 #include "../ged_private.h"
 
-struct _ged_rt_client_data {
-    struct ged_subprocess *rrtp;
-    struct ged *gedp;
-};
-
-
 int
 _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 {
     struct ged_subprocess *run_rtp;
-    struct _ged_rt_client_data *drcdp;
     struct bu_process *p;
 
     bu_process_exec(&p, gd_rt_cmd[0], cmd_len, (const char **)gd_rt_cmd, 0, 0);
@@ -63,18 +56,15 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
     }
 
     BU_GET(run_rtp, struct ged_subprocess);
-    BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
+    run_rtp->magic = GED_CMD_MAGIC;
+    bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;
-
-    /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(drcdp, struct _ged_rt_client_data);
-    drcdp->gedp = gedp;
-    drcdp->rrtp = run_rtp;
+    run_rtp->aborted = 0;
+    run_rtp->gedp = gedp;
 
     if (gedp->ged_create_io_handler) {
-	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
+	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
     }
 
     return GED_OK;

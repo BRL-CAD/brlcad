@@ -163,7 +163,7 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    status = wcodes_printcodes(gedp, fp, dp, 0);
 
-	    if (status == GED_ERROR) {
+	    if (status & GED_ERROR) {
 		(void)fclose(fp);
 		return GED_ERROR;
 	    }

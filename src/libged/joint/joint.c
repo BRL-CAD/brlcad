@@ -3231,8 +3231,7 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 		    if (domesh) {
 			joint_mesh(gedp, 0, 0);
 			/* refreshing the screen */
-			if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-			    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+			ged_refresh_cb(gedp);
 		    }
 		    joint_clear();
 		}
@@ -3292,8 +3291,7 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 	    joint_mesh(gedp, 0, 0);
 
 	    /* refreshing the screen */
-	    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-		(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	    ged_refresh_cb(gedp);
 	}
     }
     if (count < loops) {
@@ -3325,8 +3323,7 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 		joint_mesh(gedp, 0, 0);
 
 		/* refreshing the screen */
-		if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-		    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+		ged_refresh_cb(gedp);
 	    }
 	}
     }
@@ -3342,8 +3339,7 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 	joint_mesh(gedp, 0, 0);
 
 	/* refreshing the screen */
-	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+	ged_refresh_cb(gedp);
     }
     return GED_OK;
 }
@@ -3462,8 +3458,7 @@ joint_move(struct ged *gedp, int argc, const char *argv[])
     joint_mesh(gedp, 0, 0);
 
     /* refreshing the screen */
-    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-	(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+    ged_refresh_cb(gedp);
 
     return GED_OK;
 }

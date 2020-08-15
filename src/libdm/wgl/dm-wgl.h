@@ -46,6 +46,29 @@ __BEGIN_DECLS
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
+extern struct dm dm_wgl;
+
+#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
+
+struct modifiable_ogl_vars {
+    struct dm *this_dm;
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int transparency_on;
+    int fastfog;
+    double fogdensity;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int depth;
+    int debug;
+    struct bu_vls log;
+    double bound;
+    int boundFlag;
+};
+
 struct dm_wglvars {
     Display *dpy;
     Window win;

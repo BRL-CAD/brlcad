@@ -35,6 +35,7 @@
 #include "bu/vls.h"
 #include "dm/bview.h"
 #include "rt/search.h"
+#include "rt/solid.h"
 
 __BEGIN_DECLS
 
@@ -73,15 +74,22 @@ __BEGIN_DECLS
 #define GED_DISPLAY_LIST_NULL ((struct display_list *)0)
 #define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
 #define GED_VIEW_NULL ((struct bview *)0)
-#define GED_DM_VIEW_NULL ((struct ged_dm_view *)0)
 
 #define GED_RESULT_NULL ((void *)0)
 
+/* Forward declaration */
+struct ged;
+
+typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
-#define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
-#define GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL ((ged_create_vlist_solid_callback_ptr)0)
-#define GED_CREATE_VLIST_CALLBACK_PTR_NULL ((ged_create_vlist_callback_ptr)0)
-#define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
+
+/* Callback related definitions */
+typedef void (*ged_io_func_t)(void *, int);
+typedef void (*ged_refresh_func_t)(void *);
+typedef void (*ged_create_vlist_solid_func_t)(struct solid *);
+typedef void (*ged_create_vlist_display_list_func_t)(struct display_list *);
+typedef void (*ged_destroy_vlist_func_t)(unsigned int, int);
+struct ged_callback_state;
 
 /**
  * Definition of global parallel-processing semaphores.
@@ -116,10 +124,11 @@ __BEGIN_DECLS
 
 
 struct ged_subprocess {
-    struct bu_list l;
+    uint32_t magic;         /**< @brief magic number */
     struct bu_process *p;
     void *chan;
     int aborted;
+    struct ged *gedp;
 };
 
 /* FIXME: should be private */
@@ -145,11 +154,9 @@ struct vd_curve {
 
 /* FIXME: should be private */
 struct ged_drawable {
-    struct bu_list		l;
-    struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
+    struct bu_list		*gd_headDisplay;	/**< @brief  head of display list */
     struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
-    struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
 
     char			**gd_rt_cmd;    /* DEPRECATED - will be removed, do not use */
     int				gd_rt_cmd_len;  /* DEPRECATED - will be removed, do not use */
@@ -172,7 +179,7 @@ struct ged_drawable {
 };
 
 
-typedef void (*ged_io_handler_callback_t)(void *, int);
+
 
 struct ged_cmd;
 
@@ -180,13 +187,19 @@ struct ged_cmd;
 struct ged_results;
 
 struct ged {
-    struct bu_list		l;
+    struct bu_vls               go_name;
     struct rt_wdb		*ged_wdbp;
+
+    // The full set of bviews associated with this ged object
+    struct bu_ptbl              ged_views;
+
+    void                        *u_data; /**< @brief User data associated with this ged instance */
 
     /** for catching log messages */
     struct bu_vls		*ged_log;
 
     struct solid                *freesolid;  /* For now this is a struct solid, but longer term that may not always be true */
+    struct bu_ptbl              free_solids; /**< @brief  solid structures available for reuse */
 
     /* @todo: add support for returning an array of objects, not just a
      * simple string.
@@ -205,21 +218,21 @@ struct ged {
     struct bview		*ged_gvp;
     struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
-    void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
-    void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
-    void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-    void			(*ged_create_vlist_solid_callback)(struct solid *);	/**< @brief  function to call after creating a vlist to create display list for solid */
-    void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
-    void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
-    /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
+
+    /* FIXME -- this ugly hack needs to die.  the result string should
+     * be stored before the call.
+     */
     int 			ged_internal_call;
 
-    /* Handler functions for I/O communication with asynchronous subprocess commands */
-    int io_mode;
-    void (*ged_create_io_handler)(void **chan, struct bu_process *p, bu_process_io_t d, int mode, void *data, ged_io_handler_callback_t callback);
-    void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, bu_process_io_t d, void *data, ged_io_handler_callback_t callback);
+
+    /* TODO: hide all callback related symbols, callback typedefs
+     * (above), and eventually most if not all of the remaining fields
+     * into an _impl structure so callers are not tightly coupled to
+     * the ged structure.  access via public functions that have been
+     * given design consideration.
+     */
 
     /* FOR LIBGED INTERNAL USE */
     struct ged_cmd *cmds;
@@ -227,20 +240,50 @@ struct ged {
     int (*del)(struct ged *gedp, const char *name);
     int (*run)(struct ged *gedp, int ac, char *av[]);
 
-    struct ged_subprocess	gd_headSubprocess; /**< @brief  head of forked processes */
+    struct bu_ptbl		ged_subp; /**< @brief  forked sub-processes */
+
+    /* Interface to LIBDM */
+    void *ged_dmp;
+
+
+    /* Callbacks */
+
+    struct ged_callback_state    *ged_cbs;
+    void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
+    void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
+    void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
+    void			(*ged_create_vlist_solid_callback)(struct solid *);	/**< @brief  function to call after creating a vlist to create display list for solid */
+    void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
+    void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
+
+    /* Handler functions for I/O communication with asynchronous subprocess commands.  There
+     * are two opaque data structures at play here, with different scopes.  One is the "data"
+     * pointer passed to ged_create_io_handler, which is used to store command-specific
+     * information internal to the library (the simplest thing to do is pass ged_subprocess
+     * in as the data pointer, but if that's not enough - see for example rtcheck - this
+     * mechanism allows for more elaborate measures.
+     *
+     * The second is ged_io_data, which is set in gedp by the calling application.  This is where
+     * information specific to the parent's I/O environment (which by definition the library
+     * can't know about as it is application specific) lives.  It should be assigned in the
+     * applications gedp before any calls to ged_create_io_handler are made.
+     * */
+    void (*ged_create_io_handler)(struct ged_subprocess *gp, bu_process_io_t d, ged_io_func_t callback, void *data);
+    void (*ged_delete_io_handler)(struct ged_subprocess *gp, bu_process_io_t fd);
+    void *ged_io_data;  /**< brief caller supplied data */
+
+    // Other callbacks...
+    // Tcl command strings - these are libtclcad level callbacks that execute user supplied Tcl commands if set:
+    // gdv_callback, gdv_edit_motion_delta_callback, go_more_args_callback, go_rt_end_callback
+    //
+    // fbserv_obj: fbs_callback
+    // bview.h gv_callback (only used by MGED?)
+    // db_search_callback_t
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
-    /* Interface to LIBDM */
-    void *ged_dmp;
 };
-
-typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
-typedef void (*ged_refresh_callback_ptr)(void *);
-typedef void (*ged_create_vlist_solid_callback_ptr)(struct solid *);
-typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
-typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 
 /* accessor functions for ged_results - calling
  * applications should not work directly with the

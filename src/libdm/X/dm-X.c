@@ -157,6 +157,18 @@ X_reshape(struct dm *dmp, int width, int height)
     return 0;
 }
 
+HIDDEN int
+X_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
+{
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+        dm_set_dirty(dmp, 1);
+        /* no further processing for this event */
+        return TCL_RETURN;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
 
 HIDDEN int
 X_configureWin_guts(struct dm *dmp, int force)
@@ -2095,6 +2107,7 @@ struct dm_impl dm_X_impl = {
     X_getDisplayImage, /* display to image function */
     X_reshape,
     null_makeCurrent,
+    X_doevent,
     X_openFb,
     NULL,
     NULL,
@@ -2107,15 +2120,18 @@ struct dm_impl dm_X_impl = {
     NULL,
     NULL,
     0,
+    1,				/* is graphical */
+    "Tk",                       /* uses Tk graphics system */
     0,				/* no displaylist */
-    0,                            /* no stereo */
+    0,                          /* no stereo */
     PLOTBOUND,			/* zoom-in limit */
     1,				/* bound flag */
     "X",
     "X Window System (X11)",
-    1,
-    0,
-    0,
+    1, /* top */
+    0, /* width */
+    0, /* height */
+    0, /* dirty */
     0, /* bytes per pixel */
     0, /* bits per channel */
     0,

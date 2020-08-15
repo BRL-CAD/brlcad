@@ -6,7 +6,6 @@ set(dm_headers
   )
 BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm)
 
-CMAKEFILES(dm-design.h)
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

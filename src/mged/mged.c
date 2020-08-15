@@ -145,15 +145,7 @@ void (*cur_sigint)();	/* Current SIGINT status */
 int interactive = 1;	/* >0 means interactive */
 int cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
-# if defined(HAVE_TK)
-int classic_mged=0;
-#  else
 int classic_mged=1;
-#  endif
-#else
-int classic_mged=1;
-#endif
 
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
@@ -1061,6 +1053,12 @@ main(int argc, char *argv[])
     if (bu_avail_cpus() > 1) {
 	RTG.rtg_parallel = 1;
     }
+
+#if defined(HAVE_TK)
+    if (dm_have_graphics()) {
+	classic_mged = 0;
+    }
+#endif
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
@@ -2491,6 +2489,8 @@ mged_finish(int exitcode)
     Tcl_Release((ClientData)INTERP);
 
     ged_close(GEDP);
+    if (GEDP->ged_io_data)
+	BU_PUT(GEDP->ged_io_data, struct tclcad_io_data);
     if (GEDP)
 	BU_PUT(GEDP, struct ged);
 
@@ -2776,8 +2776,15 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
     GEDP->ged_create_vlist_solid_callback = createDListSolid;
-    GEDP->ged_create_vlist_callback = createDListAll;
-    GEDP->ged_free_vlist_callback = freeDListsAll;
+    GEDP->ged_create_vlist_display_list_callback = createDListAll;
+    GEDP->ged_destroy_vlist_callback = freeDListsAll;
+    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
+    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    struct tclcad_io_data *t_iod;
+    BU_GET(t_iod, struct tclcad_io_data);
+    t_iod->io_mode = TCL_READABLE;
+    t_iod->interp = interpreter;
+    GEDP->ged_io_data = t_iod;
 
     /* increment use count for gedp db instance */
     (void)db_clone_dbi(DBIP, NULL);
@@ -2920,6 +2927,8 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
+    if (GEDP->ged_io_data)
+	BU_PUT(GEDP->ged_io_data, struct tclcad_io_data);
     ged_close(GEDP);
     BU_PUT(GEDP, struct ged);
 
@@ -2929,8 +2938,16 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
     GEDP->ged_create_vlist_solid_callback = createDListSolid;
-    GEDP->ged_create_vlist_callback = createDListAll;
-    GEDP->ged_free_vlist_callback = freeDListsAll;
+    GEDP->ged_create_vlist_display_list_callback = createDListAll;
+    GEDP->ged_destroy_vlist_callback = freeDListsAll;
+    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
+    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    struct tclcad_io_data *t_iod;
+    BU_GET(t_iod, struct tclcad_io_data);
+    t_iod->io_mode = TCL_READABLE;
+    t_iod->interp = interpreter;
+    GEDP->ged_io_data = t_iod;
+
 
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;

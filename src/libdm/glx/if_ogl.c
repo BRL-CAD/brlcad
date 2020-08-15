@@ -36,8 +36,6 @@
 
 #include "common.h"
 
-#ifdef IF_OGL
-
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -2362,13 +2360,6 @@ COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
  * of class for the benefit of avoiding C++ name
  * collisions until the end of this file */
 #undef class
-
-#else
-
-/* quell empty-compilation unit warnings */
-static const int unused = 0;
-
-#endif /* IF_OGL */
 
 /*
  * Local Variables:

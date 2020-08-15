@@ -57,7 +57,8 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	const char *cmd;
 	int argcnt = bu_process_args(&cmd, NULL, rrp->p);
 	bu_vls_trunc(&cmdroot, 0);

@@ -133,12 +133,9 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	return TCL_OK;
     }
 
-    /* XXX - windows fix, for now */
-    if (eventHandler == NULL)
-	return TCL_CONTINUE;
-
     /* calling the display manager specific event handler */
-    status = eventHandler(clientData, eventPtr);
+    status = dm_doevent(DMP, clientData, eventPtr);
+    dirty = dm_get_dirty(DMP);
 
     /* no further processing of this event */
     if (status != TCL_OK) {
@@ -203,11 +200,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 }
 #else
 int
-#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
 doEvent(ClientData UNUSED(clientData), void *UNUSED(eventPtr)) {
-#else
-doEvent(ClientData clientData, void *eventPtr) {
-#endif
     return TCL_OK;
 }
 #endif /* HAVE_X11_XLIB_H */

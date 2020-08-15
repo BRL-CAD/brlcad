@@ -2930,10 +2930,10 @@ dm_list_tcl(ClientData UNUSED(clientData),
 	    int UNUSED(argc),
 	    const char **UNUSED(argv))
 {
-    struct bu_vls *list = dm_list_types(",");
-    Tcl_SetResult(interp, bu_vls_addr(list), TCL_VOLATILE);
-    bu_vls_free(list);
-    BU_PUT(list, struct bu_vls);
+    struct bu_vls list = BU_VLS_INIT_ZERO;
+    dm_list_types(&list, ",");
+    Tcl_SetResult(interp, bu_vls_addr(&list), TCL_VOLATILE);
+    bu_vls_free(&list);
     return TCL_OK;
 }
 

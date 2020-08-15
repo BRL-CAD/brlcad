@@ -416,6 +416,19 @@ ogl_makeCurrent(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+HIDDEN int
+ogl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
+{
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	(void)dm_make_current(dmp);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	dm_set_dirty(dmp, 1);
+	return TCL_OK;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
 
 HIDDEN int
 ogl_configureWin(struct dm *dmp, int force)
@@ -3032,6 +3045,7 @@ struct dm_impl dm_ogl_impl = {
     ogl_getDisplayImage, /* display to image function */
     ogl_reshape,
     ogl_makeCurrent,
+    ogl_doevent,
     ogl_openFb,
     ogl_get_internal,
     ogl_put_internal,
@@ -3044,15 +3058,18 @@ struct dm_impl dm_ogl_impl = {
     ogl_fogHint,
     ogl_share_dlist,
     0,
+    1,				/* is graphical */
+    "Tk",                       /* uses Tk graphics system */
     1,				/* has displaylist */
     0,                          /* no stereo by default */
     1.0,			/* zoom-in limit */
     1,				/* bound flag */
     "ogl",
     "X Windows with OpenGL graphics",
-    1,
-    0,
-    0,
+    1, /* top */
+    0, /* width */
+    0, /* height */
+    0, /* dirty */
     0, /* bytes per pixel */
     0, /* bits per channel */
     0,

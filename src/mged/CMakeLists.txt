@@ -106,7 +106,6 @@ set(mged_ignore_files
   comb_bool.h
   comb_bool_parse.y
   comb_bool_scan.l
-  fbserv.h
   htmlLibraryUi.h
   menu.h
   mged.h

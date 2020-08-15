@@ -51,6 +51,7 @@
 #include "bn.h"
 #include "bu/cmd.h"
 #include "bu/path.h"
+#include "bu/process.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -69,13 +70,11 @@
 #include "icv/crop.h"
 #include "dm.h"
 
-#if defined(DM_OGL) || defined(DM_WGL)
-#  if defined(DM_WGL)
-#    include <tkwinport.h>
-#  endif
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
+#if defined(HAVE_WINDOWS_H)
+#  include <tkwinport.h>
+#endif
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
 #endif
 
 /* For the moment call internal libged functions - a cleaner
@@ -138,7 +137,7 @@ HIDDEN int to_data_move(struct ged *gedp,
 			const char *usage,
 			int maxargs);
 HIDDEN int to_data_move_func(struct ged *gedp,
-			     struct ged_dm_view *gdvp,
+			     struct bview *gdvp,
 			     int argc,
 			     const char *argv[],
 			     const char *usage);
@@ -149,7 +148,7 @@ HIDDEN int to_data_move_object_mode(struct ged *gedp,
 				    const char *usage,
 				    int maxargs);
 HIDDEN int to_data_move_object_mode_func(struct ged *gedp,
-					 struct ged_dm_view *gdvp,
+					 struct bview *gdvp,
 					 int argc,
 					 const char *argv[],
 					 const char *usage);
@@ -160,7 +159,7 @@ HIDDEN int to_data_move_point_mode(struct ged *gedp,
 				   const char *usage,
 				   int maxargs);
 HIDDEN int to_data_move_point_mode_func(struct ged *gedp,
-					struct ged_dm_view *gdvp,
+					struct bview *gdvp,
 					int argc,
 					const char *argv[],
 					const char *usage);
@@ -172,7 +171,7 @@ HIDDEN int to_data_pick(struct ged *gedp,
 			int maxargs);
 HIDDEN int
 to_data_pick_func(struct ged *gedp,
-		  struct ged_dm_view *gdvp,
+		  struct bview *gdvp,
 		  int argc,
 		  const char *argv[],
 		  const char *usage);
@@ -374,7 +373,7 @@ HIDDEN int to_paint_rect_area(struct ged *gedp,
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-#if defined(DM_OGL) || defined(DM_WGL)
+#ifdef HAVE_GL_GL_H
 HIDDEN int to_pix(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
@@ -531,7 +530,7 @@ HIDDEN int to_zclip(struct ged *gedp,
 
 HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
 HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
-HIDDEN void to_free_vlist_callback(unsigned int dlist, int range);
+HIDDEN void to_destroy_vlist_callback(unsigned int dlist, int range);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
 HIDDEN void to_output_handler(struct ged *gedp, char *line);
@@ -909,7 +908,7 @@ static struct to_cmdtab to_cmds[] = {
     {"oscale_mode",	"obj x y", TO_UNLIMITED, to_oscale_mode, GED_FUNC_PTR_NULL},
     {"otranslate_mode",	"obj x y", TO_UNLIMITED, to_otranslate_mode, GED_FUNC_PTR_NULL},
     {"paint_rect_area",	"vname", TO_UNLIMITED, to_paint_rect_area, GED_FUNC_PTR_NULL},
-#if defined(DM_OGL) || defined(DM_WGL)
+#ifdef HAVE_GL_GL_H
     {"pix",	"file", TO_UNLIMITED, to_pix, GED_FUNC_PTR_NULL},
     {"png",	"file", TO_UNLIMITED, to_png, GED_FUNC_PTR_NULL},
 #endif
@@ -1026,7 +1025,7 @@ to_cmd(ClientData clientData,
 
     for (ctp = to_cmds; ctp->to_name != (char *)0; ctp++) {
 	if (BU_STR_EQUAL(ctp->to_name, argv[1])) {
-	    struct ged *gedp = top->to_gop->go_gedp;
+	    struct ged *gedp = top->to_gedp;
 	    ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
 	    break;
 	}
@@ -1034,7 +1033,7 @@ to_cmd(ClientData clientData,
     if (ctp->to_name == (char *)0) {
 	for (ctp = ged_cmds; ctp->to_name != (char *)0; ctp++) {
 	    if (BU_STR_EQUAL(ctp->to_name, argv[1])) {
-		struct ged *gedp = top->to_gop->go_gedp;
+		struct ged *gedp = top->to_gedp;
 		ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
 		break;
 	    }
@@ -1063,7 +1062,7 @@ to_cmd(ClientData clientData,
 	return TCL_ERROR;
     }
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(top->to_gop->go_gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(top->to_gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret & GED_ERROR)
@@ -1084,7 +1083,6 @@ free_path_edit_params(struct bu_hash_tbl *t)
     }
 }
 
-
 /**
  * @brief
  * Called by Tcl when the object is destroyed.
@@ -1093,25 +1091,59 @@ void
 to_deleteProc(ClientData clientData)
 {
     struct tclcad_obj *top = (struct tclcad_obj *)clientData;
-    struct ged_dm_view *gdvp;
+    BU_LIST_DEQUEUE(&top->l);
 
     if (current_top == top)
 	current_top = TCLCAD_OBJ_NULL;
 
-    BU_LIST_DEQUEUE(&top->l);
-    bu_vls_free(&top->to_gop->go_name);
-    ged_close(top->to_gop->go_gedp);
-    if (top->to_gop->go_gedp)
-	BU_PUT(top->to_gop->go_gedp, struct ged);
+    if (top->to_gedp) {
 
-    free_path_edit_params(top->to_gop->go_edited_paths);
-    bu_hash_destroy(top->to_gop->go_edited_paths);
+	// Clean up the libtclcad view data.
+	struct bview *gdvp = NULL;
+	for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
+	    gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
 
-    while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
-	/* This removes the view related command and results in a call
-	 * to to_deleteViewProc to release resources.
-	 */
-	Tcl_DeleteCommand(top->to_interp, bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+	    // There is a top level command created in the Tcl interp that is the name
+	    // of the dm.  Clear that command.
+	    const char *dm_tcl_cmd = bu_vls_cstr(dm_get_pathname((struct dm *)gdvp->dmp));
+	    Tcl_DeleteCommand(top->to_interp, dm_tcl_cmd);
+
+	    // Close the dm.  This is not done by libged because libged only manages the
+	    // data bview knows about.  From bview's perspective, dmp is just a pointer
+	    // to an opaque data structure it knows nothing about.
+	    (void)dm_close((struct dm *)gdvp->dmp);
+
+	    // Delete libtclcad specific parts of data - ged_free (called by
+	    // ged_close) will handle freeing the primary bview list entries.
+	    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+	    if (tvd) {
+		bu_vls_free(&tvd->gdv_edit_motion_delta_callback);
+		bu_vls_free(&tvd->gdv_callback);
+		BU_PUT(tvd, struct tclcad_view_data);
+		gdvp->u_data = NULL;
+	    }
+
+	}
+
+	// Clean up the other libtclcad data
+	if (top->to_gedp->u_data) {
+	    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gedp->u_data;
+	    bu_vls_free(&tgd->go_rt_end_callback);
+	    bu_vls_free(&tgd->go_more_args_callback);
+	    free_path_edit_params(tgd->go_edited_paths);
+	    bu_hash_destroy(tgd->go_edited_paths);
+	    BU_PUT(tgd, struct tclcad_ged_data);
+	    top->to_gedp->u_data = NULL;
+	}
+	if (top->to_gedp->ged_io_data) {
+	    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)top->to_gedp->ged_io_data;
+	    BU_PUT(t_iod, struct tclcad_io_data);
+	}
+
+	// Got the libtclcad cleanup done, have libged do its up.
+	ged_close(top->to_gedp);
+
+	BU_PUT(top->to_gedp, struct ged);
     }
 
     bu_free((void *)top, "struct ged_obj");
@@ -1148,21 +1180,22 @@ to_create_cmd(Tcl_Interp *interp,
 /* Wrappers for setting up/tearing down IO handler */
 #ifndef _WIN32
 void
-tclcad_create_io_handler(void **UNUSED(chan), struct bu_process *p, bu_process_io_t d, int mode, void *data, ged_io_handler_callback_t callback)
+tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data)
 {
-    int *fdp;
-    if (!p) return;
-    fdp = (int *)bu_process_fd(p, d);
-    if (fdp)
-	Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
+       	return;
+    int *fdp = (int *)bu_process_fd(p->p, d);
+    if (fdp) {
+	struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+	Tcl_CreateFileHandler(*fdp, t_iod->io_mode, callback, (ClientData)data);
+    }
 }
 
 void
-tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, bu_process_io_t d, void *UNUSED(data), ged_io_handler_callback_t UNUSED(callback))
+tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 {
-    int *fdp;
     if (!p) return;
-    fdp = (int *)bu_process_fd(p, d);
+    int *fdp = (int *)bu_process_fd(p->p, d);
     if (fdp) {
 	Tcl_DeleteFileHandler(*fdp);
 	close(*fdp);
@@ -1171,26 +1204,26 @@ tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_pro
 
 #else
 void
-tclcad_create_io_handler(void **chan, struct bu_process *p, bu_process_io_t d, int mode, void *data, ged_io_handler_callback_t callback)
+tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data)
 {
-    HANDLE *fdp;
-    if (!chan || !p) return;
-    fdp = (HANDLE *)bu_process_fd(p, d);
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
+       	return;
+    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+    HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, d);
     if (fdp) {
-	(*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
-	Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
+	t_iod->chan = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+	Tcl_CreateChannelHandler(t_iod->chan, t_iod->io_mode, callback, (ClientData)data);
     }
 }
 
 void
-tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, bu_process_io_t d, void *data, ged_io_handler_callback_t callback)
+tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 {
-    HANDLE *fdp;
-    Tcl_Interp *tcl_interp;
-    if (!chan || !p) return;
-    tcl_interp = (Tcl_Interp *)interp;
-    Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)data);
-    Tcl_Close(tcl_interp, (Tcl_Channel)chan);
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
+       	return;
+    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+    Tcl_DeleteChannelHandler(t_iod->chan, NULL, (ClientData)NULL);
+    Tcl_Close(t_iod->interp, t_iod->chan);
 }
 #endif
 
@@ -1229,7 +1262,7 @@ to_open_tcl(ClientData UNUSED(clientData),
     if (argc == 1) {
 	/* get list of database objects */
 	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l))
-	    Tcl_AppendResult(interp, bu_vls_addr(&top->to_gop->go_name), " ", (char *)NULL);
+	    Tcl_AppendResult(interp, bu_vls_addr(&top->to_gedp->go_name), " ", (char *)NULL);
 
 	return TCL_OK;
     }
@@ -1271,37 +1304,43 @@ Usage: go_open\n\
     gedp->ged_interp = (void *)interp;
 
     /* Set the Tcl specific I/O handlers for asynchronous subprocess I/O */
+    struct tclcad_io_data *t_iod;
+    BU_GET(t_iod, struct tclcad_io_data);
+    t_iod->io_mode  = TCL_READABLE;
+    t_iod->interp = interp;
+    gedp->ged_io_data = (void *)t_iod;
     gedp->ged_create_io_handler = &tclcad_create_io_handler;
     gedp->ged_delete_io_handler = &tclcad_delete_io_handler;
-    gedp->io_mode = TCL_READABLE;
 
     /* initialize tclcad_obj */
     BU_ALLOC(top, struct tclcad_obj);
     top->to_interp = interp;
 
-    /* initialize ged_obj */
-    BU_ALLOC(top->to_gop, struct ged_obj);
-
     BU_ASSERT(gedp != NULL);
-    top->to_gop->go_gedp = gedp;
+    top->to_gedp = gedp;
 
-    top->to_gop->go_gedp->ged_output_handler = to_output_handler;
-    top->to_gop->go_gedp->ged_refresh_handler = to_refresh_handler;
-    top->to_gop->go_gedp->ged_create_vlist_solid_callback = to_create_vlist_callback_solid;
-    top->to_gop->go_gedp->ged_create_vlist_callback = to_create_vlist_callback;
-    top->to_gop->go_gedp->ged_free_vlist_callback = to_free_vlist_callback;
+    top->to_gedp->ged_output_handler = to_output_handler;
+    top->to_gedp->ged_refresh_handler = to_refresh_handler;
+    top->to_gedp->ged_create_vlist_solid_callback = to_create_vlist_callback_solid;
+    top->to_gedp->ged_create_vlist_display_list_callback = to_create_vlist_callback;
+    top->to_gedp->ged_destroy_vlist_callback = to_destroy_vlist_callback;
 
     BU_ASSERT(gedp->ged_gdp != NULL);
-    top->to_gop->go_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
+    top->to_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
 
-    bu_vls_init(&top->to_gop->go_name);
-    bu_vls_strcpy(&top->to_gop->go_name, argv[1]);
-    bu_vls_init(&top->to_gop->go_more_args_callback);
-    bu_vls_init(&top->to_gop->go_rt_end_callback);
-    top->to_gop->go_refresh_on = 1;
-    top->to_gop->go_edited_paths = bu_hash_create(0);
+    // Initialize libtclcad GED data container
+    struct tclcad_ged_data *tgd;
+    BU_GET(tgd, struct tclcad_ged_data);
+    bu_vls_init(&tgd->go_rt_end_callback);
+    tgd->go_rt_end_callback_cnt = 0;
+    bu_vls_init(&tgd->go_more_args_callback);
+    tgd->go_more_args_callback_cnt = 0;
+    tgd->go_edited_paths = bu_hash_create(0);
+    tgd->gedp = top->to_gedp;
+    tgd->go_refresh_on = 1;
+    gedp->u_data = (void *)tgd;
 
-    BU_LIST_INIT(&top->to_gop->go_head_views.l);
+    bu_vls_strcpy(&top->to_gedp->go_name, argv[1]);
 
     /* append to list of tclcad_obj */
     BU_LIST_APPEND(&HeadTclcadObj.l, &top->l);
@@ -1323,7 +1362,7 @@ to_base2local(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gedp->ged_wdbp->dbip->dbi_base2local);
 
     return GED_OK;
 }
@@ -1338,7 +1377,6 @@ to_bg(struct ged *gedp,
       int UNUSED(maxargs))
 {
     int r, g, b;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1354,19 +1392,15 @@ to_bg(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get background color */
     if (argc == 2) {
-	unsigned char *dm_bg = dm_get_bg(gdvp->gdv_dmp);
+	unsigned char *dm_bg = dm_get_bg((struct dm *)gdvp->dmp);
 	if (dm_bg) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  dm_bg[0],
@@ -1388,8 +1422,8 @@ to_bg(struct ged *gedp,
 	b < 0 || 255 < b)
 	goto bad_color;
 
-    (void)dm_make_current(gdvp->gdv_dmp);
-    (void)dm_set_bg(gdvp->gdv_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b);
+    (void)dm_make_current((struct dm *)gdvp->dmp);
+    (void)dm_set_bg((struct dm *)gdvp->dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b);
 
     to_refresh_view(gdvp);
 
@@ -1409,7 +1443,6 @@ to_bounds(struct ged *gedp,
 	  const char *usage,
 	  int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
     fastf_t bounds[6];
 
     /* must be double for scanf */
@@ -1429,20 +1462,16 @@ to_bounds(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get window bounds */
     if (argc == 2) {
-	vect_t *cmin = dm_get_clipmin(gdvp->gdv_dmp);
-	vect_t *cmax = dm_get_clipmax(gdvp->gdv_dmp);
+	vect_t *cmin = dm_get_clipmin((struct dm *)gdvp->dmp);
+	vect_t *cmax = dm_get_clipmax((struct dm *)gdvp->dmp);
 	if (cmin && cmax) {
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g %g %g %g",
 			  (*cmin)[X], (*cmax)[X], (*cmin)[Y], (*cmax)[Y], (*cmin)[Z], (*cmax)[Z]);
@@ -1467,13 +1496,13 @@ to_bounds(struct ged *gedp,
      * use it for controlling the location of the zclipping plane in
      * dm-ogl.c. dm-X.c uses dm_clipmin and dm_clipmax.
      */
-    if (dm_get_clipmax(gdvp->gdv_dmp) && (*dm_get_clipmax(gdvp->gdv_dmp))[2] <= GED_MAX)
-	dm_set_bound(gdvp->gdv_dmp, 1.0);
+    if (dm_get_clipmax((struct dm *)gdvp->dmp) && (*dm_get_clipmax((struct dm *)gdvp->dmp))[2] <= GED_MAX)
+	dm_set_bound((struct dm *)gdvp->dmp, 1.0);
     else
-	dm_set_bound(gdvp->gdv_dmp, GED_MAX/((*dm_get_clipmax(gdvp->gdv_dmp))[2]));
+	dm_set_bound((struct dm *)gdvp->dmp, GED_MAX/((*dm_get_clipmax((struct dm *)gdvp->dmp))[2]));
 
-    (void)dm_make_current(gdvp->gdv_dmp);
-    (void)dm_set_win_bounds(gdvp->gdv_dmp, bounds);
+    (void)dm_make_current((struct dm *)gdvp->dmp);
+    (void)dm_set_win_bounds((struct dm *)gdvp->dmp, bounds);
 
     return GED_OK;
 }
@@ -1487,7 +1516,6 @@ to_configure(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
     int status;
 
     /* initialize result */
@@ -1498,30 +1526,27 @@ to_configure(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* configure the display manager window */
-    status = dm_configure_win(gdvp->gdv_dmp, 0);
+    status = dm_configure_win((struct dm *)gdvp->dmp, 0);
 
     /* configure the framebuffer window */
-    if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
-	(void)fb_configure_window(gdvp->gdv_fbs.fbs_fbp, dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    if (tvd->gdv_fbs.fbs_fbp != FB_NULL)
+	(void)fb_configure_window(tvd->gdv_fbs.fbs_fbp, dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));
 
     {
 	char cdimX[32];
 	char cdimY[32];
 	char *av[5];
 
-	snprintf(cdimX, 32, "%d", dm_get_width(gdvp->gdv_dmp));
-	snprintf(cdimY, 32, "%d", dm_get_height(gdvp->gdv_dmp));
+	snprintf(cdimX, 32, "%d", dm_get_width((struct dm *)gdvp->dmp));
+	snprintf(cdimY, 32, "%d", dm_get_height((struct dm *)gdvp->dmp));
 
 	av[0] = "rect";
 	av[1] = "cdim";
@@ -1529,7 +1554,7 @@ to_configure(struct ged *gedp,
 	av[3] = cdimY;
 	av[4] = NULL;
 
-	gedp->ged_gvp = gdvp->gdv_view;
+	gedp->ged_gvp = gdvp;
 	(void)ged_rect(gedp, 4, (const char **)av);
     }
 
@@ -1551,7 +1576,6 @@ to_constrain_rmode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1570,12 +1594,8 @@ to_constrain_rmode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1593,15 +1613,15 @@ to_constrain_rmode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_rot %s %s %%x %%y}; break",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -1620,7 +1640,6 @@ to_constrain_tmode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -1639,12 +1658,8 @@ to_constrain_tmode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1662,15 +1677,15 @@ to_constrain_tmode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_CONSTRAINED_TRANSLATE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_CONSTRAINED_TRANSLATE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_trans %s %s %%x %%y}; break",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -1732,8 +1747,8 @@ to_copy(struct ged *gedp,
 	bu_vls_strcpy(&from_vls, cp+1);
 
 	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l)) {
-	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gop->go_name), bu_vls_addr(&db_vls))) {
-		from_gedp = top->to_gop->go_gedp;
+	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gedp->go_name), bu_vls_addr(&db_vls))) {
+		from_gedp = top->to_gedp;
 		break;
 	    }
 	}
@@ -1757,8 +1772,8 @@ to_copy(struct ged *gedp,
 	bu_vls_strcpy(&to_vls, cp+1);
 
 	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l)) {
-	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gop->go_name), bu_vls_addr(&db_vls))) {
-		to_gedp = top->to_gop->go_gedp;
+	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gedp->go_name), bu_vls_addr(&db_vls))) {
+		to_gedp = top->to_gedp;
 		break;
 	    }
 	}
@@ -1809,7 +1824,7 @@ to_copy(struct ged *gedp,
 int
 go_data_move(Tcl_Interp *UNUSED(interp),
 	     struct ged *gedp,
-	     struct ged_dm_view *gdvp,
+	     struct bview *gdvp,
 	     int argc,
 	     const char *argv[],
 	     const char *usage)
@@ -1829,8 +1844,10 @@ go_data_move(Tcl_Interp *UNUSED(interp),
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_data_move_func(gedp, gdvp, argc, argv, usage);
 }
@@ -1847,8 +1864,6 @@ to_data_move(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -1863,12 +1878,8 @@ to_data_move(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -1881,7 +1892,7 @@ to_data_move(struct ged *gedp,
 
 HIDDEN int
 to_data_move_func(struct ged *gedp,
-		  struct ged_dm_view *gdvp,
+		  struct bview *gdvp,
 		  int argc,
 		  const char *argv[],
 		  const char *usage)
@@ -1908,9 +1919,9 @@ to_data_move_func(struct ged *gedp,
 	    goto bad;
     }
 
-    width = dm_get_width(gdvp->gdv_dmp);
+    width = dm_get_width((struct dm *)gdvp->dmp);
     cx = 0.5 * (fastf_t)width;
-    height = dm_get_height(gdvp->gdv_dmp);
+    height = dm_get_height((struct dm *)gdvp->dmp);
     cy = 0.5 * (fastf_t)height;
     sf = 2.0 / width;
     vx = (mx - cx) * sf;
@@ -1918,7 +1929,7 @@ to_data_move_func(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[1], "data_polygons")) {
 	size_t i, j, k;
-	bview_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
+	bview_data_polygon_state *gdpsp = &gdvp->gv_data_polygons;
 
 	if (bu_sscanf(argv[2], "%zu %zu %zu", &i, &j, &k) != 3)
 	    goto bad;
@@ -1930,16 +1941,16 @@ to_data_move_func(struct ged *gedp,
 	    return GED_OK;
 
 	/* This section is for moving more than a single point on a contour */
-	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
 
 	    VMOVE(old_mpoint, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
 
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(new_mpoint, gdvp->gv_view2model, vpoint);
 	    VSUB2(diff, new_mpoint, old_mpoint);
 
 	    /* Move all polygons and all their respective contours. */
@@ -1964,10 +1975,10 @@ to_data_move_func(struct ged *gedp,
 	    }
 	} else {
 	    /* This section is for moving a single point on a contour */
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdpsp->gdps_polygons.polygon[i].contour[j].point[k]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(gdpsp->gdps_polygons.polygon[i].contour[j].point[k], gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(gdpsp->gdps_polygons.polygon[i].contour[j].point[k], gdvp->gv_view2model, vpoint);
 	}
 
 	to_refresh_view(gdvp);
@@ -1975,14 +1986,14 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_arrows")) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_data_arrows;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_data_arrows.gdas_num_points)
+	if (dindex >= gdvp->gv_data_arrows.gdas_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire arrow */
-	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -1995,19 +2006,19 @@ to_data_move_func(struct ged *gedp,
 
 	    VMOVE(old_mpoint, gdasp->gdas_points[dindexA]);
 
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindexA]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->gdas_points[dindexA]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(new_mpoint, gdvp->gv_view2model, vpoint);
 	    VSUB2(diff, new_mpoint, old_mpoint);
 
 	    VMOVE(gdasp->gdas_points[dindexA], new_mpoint);
 	    VADD2(gdasp->gdas_points[dindexB], gdasp->gdas_points[dindexB], diff);
 	} else {
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->gdas_points[dindex]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(mpoint, gdvp->gv_view2model, vpoint);
 	    VMOVE(gdasp->gdas_points[dindex], mpoint);
 	}
 
@@ -2016,14 +2027,14 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_arrows")) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_sdata_arrows;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_sdata_arrows.gdas_num_points)
+	if (dindex >= gdvp->gv_sdata_arrows.gdas_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire arrow */
-	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2036,19 +2047,19 @@ to_data_move_func(struct ged *gedp,
 
 	    VMOVE(old_mpoint, gdasp->gdas_points[dindexA]);
 
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindexA]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->gdas_points[dindexA]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(new_mpoint, gdvp->gv_view2model, vpoint);
 	    VSUB2(diff, new_mpoint, old_mpoint);
 
 	    VMOVE(gdasp->gdas_points[dindexA], new_mpoint);
 	    VADD2(gdasp->gdas_points[dindexB], gdasp->gdas_points[dindexB], diff);
 	} else {
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->gdas_points[dindex]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(mpoint, gdvp->gv_view2model, vpoint);
 	    VMOVE(gdasp->gdas_points[dindex], mpoint);
 	}
 
@@ -2057,16 +2068,16 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_axes")) {
-	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gv_data_axes;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_data_axes.num_points)
+	if (dindex >= gdvp->gv_data_axes.num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->points[dindex]);
+	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->points[dindex]);
 	vpoint[X] = vx;
 	vpoint[Y] = vy;
-	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	MAT4X3PNT(mpoint, gdvp->gv_view2model, vpoint);
 	VMOVE(gdasp->points[dindex], mpoint);
 
 	to_refresh_view(gdvp);
@@ -2074,16 +2085,16 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_axes")) {
-	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gv_sdata_axes;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_sdata_axes.num_points)
+	if (dindex >= gdvp->gv_sdata_axes.num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->points[dindex]);
+	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->points[dindex]);
 	vpoint[X] = vx;
 	vpoint[Y] = vy;
-	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	MAT4X3PNT(mpoint, gdvp->gv_view2model, vpoint);
 	VMOVE(gdasp->points[dindex], mpoint);
 
 	to_refresh_view(gdvp);
@@ -2092,16 +2103,16 @@ to_data_move_func(struct ged *gedp,
 
 
     if (BU_STR_EQUAL(argv[1], "data_labels")) {
-	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gv_data_labels;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_data_labels.gdls_num_labels)
+	if (dindex >= gdvp->gv_data_labels.gdls_num_labels)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindex]);
 	vpoint[X] = vx;
 	vpoint[Y] = vy;
-	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	MAT4X3PNT(mpoint, gdvp->gv_view2model, vpoint);
 	VMOVE(gdlsp->gdls_points[dindex], mpoint);
 
 	to_refresh_view(gdvp);
@@ -2109,16 +2120,16 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_labels")) {
-	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gv_sdata_labels;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_sdata_labels.gdls_num_labels)
+	if (dindex >= gdvp->gv_sdata_labels.gdls_num_labels)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindex]);
 	vpoint[X] = vx;
 	vpoint[Y] = vy;
-	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	MAT4X3PNT(mpoint, gdvp->gv_view2model, vpoint);
 	VMOVE(gdlsp->gdls_points[dindex], mpoint);
 
 	to_refresh_view(gdvp);
@@ -2126,14 +2137,14 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_lines")) {
-	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gv_data_lines;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_data_lines.gdls_num_points)
+	if (dindex >= gdvp->gv_data_lines.gdls_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire line */
-	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2146,19 +2157,19 @@ to_data_move_func(struct ged *gedp,
 
 	    VMOVE(old_mpoint, gdlsp->gdls_points[dindexA]);
 
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindexA]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindexA]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(new_mpoint, gdvp->gv_view2model, vpoint);
 	    VSUB2(diff, new_mpoint, old_mpoint);
 
 	    VMOVE(gdlsp->gdls_points[dindexA], new_mpoint);
 	    VADD2(gdlsp->gdls_points[dindexB], gdlsp->gdls_points[dindexB], diff);
 	} else {
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindex]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(mpoint, gdvp->gv_view2model, vpoint);
 	    VMOVE(gdlsp->gdls_points[dindex], mpoint);
 	}
 
@@ -2167,14 +2178,14 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_lines")) {
-	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gv_sdata_lines;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_sdata_lines.gdls_num_points)
+	if (dindex >= gdvp->gv_sdata_lines.gdls_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire line */
-	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2187,19 +2198,19 @@ to_data_move_func(struct ged *gedp,
 
 	    VMOVE(old_mpoint, gdlsp->gdls_points[dindexA]);
 
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindexA]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindexA]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(new_mpoint, gdvp->gv_view2model, vpoint);
 	    VSUB2(diff, new_mpoint, old_mpoint);
 
 	    VMOVE(gdlsp->gdls_points[dindexA], new_mpoint);
 	    VADD2(gdlsp->gdls_points[dindexB], gdlsp->gdls_points[dindexB], diff);
 	} else {
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindex]);
 	    vpoint[X] = vx;
 	    vpoint[Y] = vy;
-	    MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    MAT4X3PNT(mpoint, gdvp->gv_view2model, vpoint);
 	    VMOVE(gdlsp->gdls_points[dindex], mpoint);
 	}
 
@@ -2216,7 +2227,7 @@ bad:
 int
 go_data_move_object_mode(Tcl_Interp *UNUSED(interp),
 			 struct ged *gedp,
-			 struct ged_dm_view *gdvp,
+			 struct bview *gdvp,
 			 int argc,
 			 const char *argv[],
 			 const char *usage)
@@ -2236,8 +2247,10 @@ go_data_move_object_mode(Tcl_Interp *UNUSED(interp),
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_data_move_object_mode_func(gedp, gdvp, argc, argv, usage);
 }
@@ -2251,8 +2264,6 @@ to_data_move_object_mode(struct ged *gedp,
 			 const char *usage,
 			 int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -2267,12 +2278,8 @@ to_data_move_object_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2285,14 +2292,14 @@ to_data_move_object_mode(struct ged *gedp,
 
 HIDDEN int
 to_data_move_object_mode_func(struct ged *gedp,
-			      struct ged_dm_view *gdvp,
+			      struct bview *gdvp,
 			      int UNUSED(argc),
 			      const char *argv[],
 			      const char *usage)
 {
     int x, y;
 
-    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_gvp = gdvp;
 
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
@@ -2301,9 +2308,9 @@ to_data_move_object_mode_func(struct ged *gedp,
     }
 
     /* At the moment, only gv_mode is being used. */
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_DATA_MOVE_OBJECT_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_DATA_MOVE_OBJECT_MODE;
 
     return GED_OK;
 }
@@ -2312,7 +2319,7 @@ to_data_move_object_mode_func(struct ged *gedp,
 int
 go_data_move_point_mode(Tcl_Interp *UNUSED(interp),
 			struct ged *gedp,
-			struct ged_dm_view *gdvp,
+			struct bview *gdvp,
 			int argc,
 			const char *argv[],
 			const char *usage)
@@ -2332,8 +2339,10 @@ go_data_move_point_mode(Tcl_Interp *UNUSED(interp),
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_data_move_point_mode_func(gedp, gdvp, argc, argv, usage);
 }
@@ -2347,8 +2356,6 @@ to_data_move_point_mode(struct ged *gedp,
 			const char *usage,
 			int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -2363,12 +2370,8 @@ to_data_move_point_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2381,14 +2384,14 @@ to_data_move_point_mode(struct ged *gedp,
 
 HIDDEN int
 to_data_move_point_mode_func(struct ged *gedp,
-			     struct ged_dm_view *gdvp,
+			     struct bview *gdvp,
 			     int UNUSED(argc),
 			     const char *argv[],
 			     const char *usage)
 {
     int x, y;
 
-    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_gvp = gdvp;
 
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
@@ -2397,9 +2400,9 @@ to_data_move_point_mode_func(struct ged *gedp,
     }
 
     /* At the moment, only gv_mode is being used. */
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_DATA_MOVE_POINT_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_DATA_MOVE_POINT_MODE;
 
     return GED_OK;
 }
@@ -2407,7 +2410,7 @@ to_data_move_point_mode_func(struct ged *gedp,
 
 int
 go_data_pick(struct ged *gedp,
-	     struct ged_dm_view *gdvp,
+	     struct bview *gdvp,
 	     int argc,
 	     const char *argv[],
 	     const char *usage)
@@ -2427,8 +2430,10 @@ go_data_pick(struct ged *gedp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     return to_data_pick_func(gedp, gdvp, argc, argv, usage);
 }
@@ -2442,8 +2447,6 @@ to_data_pick(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -2458,12 +2461,8 @@ to_data_pick(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -2476,7 +2475,7 @@ to_data_pick(struct ged *gedp,
 
 HIDDEN int
 to_data_pick_func(struct ged *gedp,
-		  struct ged_dm_view *gdvp,
+		  struct bview *gdvp,
 		  int argc,
 		  const char *argv[],
 		  const char *usage)
@@ -2517,20 +2516,20 @@ to_data_pick_func(struct ged *gedp,
 	    goto bad;
     }
 
-    width = dm_get_width(gdvp->gdv_dmp);
+    width = dm_get_width((struct dm *)gdvp->dmp);
     cx = 0.5 * (fastf_t)width;
-    height = dm_get_height(gdvp->gdv_dmp);
+    height = dm_get_height((struct dm *)gdvp->dmp);
     cy = 0.5 * (fastf_t)height;
     sf = 2.0 / width;
     vx = (mx - cx) * sf;
     vy = (cy - my) * sf;
 
     /* check for polygon points */
-    if (gdvp->gdv_view->gv_data_polygons.gdps_draw &&
-	gdvp->gdv_view->gv_data_polygons.gdps_polygons.num_polygons) {
+    if (gdvp->gv_data_polygons.gdps_draw &&
+	gdvp->gv_data_polygons.gdps_polygons.num_polygons) {
 	register size_t si, sj, sk;
 
-	bview_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
+	bview_data_polygon_state *gdpsp = &gdvp->gv_data_polygons;
 
 	for (si = 0; si < gdpsp->gdps_polygons.num_polygons; ++si)
 	    for (sj = 0; sj < gdpsp->gdps_polygons.polygon[si].num_contours; ++sj)
@@ -2538,7 +2537,7 @@ to_data_pick_func(struct ged *gedp,
 		    fastf_t minX, maxX;
 		    fastf_t minY, maxY;
 
-		    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.polygon[si].contour[sj].point[sk]);
+		    MAT4X3PNT(vpoint, gdvp->gv_model2view, gdpsp->gdps_polygons.polygon[si].contour[sj].point[sk]);
 		    minX = vpoint[X] - tol;
 		    maxX = vpoint[X] + tol;
 		    minY = vpoint[Y] - tol;
@@ -2566,16 +2565,16 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for label points */
-    if (gdvp->gdv_view->gv_data_labels.gdls_draw &&
-	gdvp->gdv_view->gv_data_labels.gdls_num_labels) {
-	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
+    if (gdvp->gv_data_labels.gdls_draw &&
+	gdvp->gv_data_labels.gdls_num_labels) {
+	struct bview_data_label_state *gdlsp = &gdvp->gv_data_labels;
 
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
 	    VMOVE(dpoint, gdlsp->gdls_points[i]);
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, dpoint);
 
 	    minX = vpoint[X];
 	    maxX = vpoint[X] + (2 * tol);
@@ -2597,16 +2596,16 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected label points */
-    if (gdvp->gdv_view->gv_sdata_labels.gdls_draw &&
-	gdvp->gdv_view->gv_sdata_labels.gdls_num_labels) {
-	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
+    if (gdvp->gv_sdata_labels.gdls_draw &&
+	gdvp->gv_sdata_labels.gdls_num_labels) {
+	struct bview_data_label_state *gdlsp = &gdvp->gv_sdata_labels;
 
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
 	    VMOVE(dpoint, gdlsp->gdls_points[i]);
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, dpoint);
 
 	    minX = vpoint[X];
 	    maxX = vpoint[X] + (2 * tol);
@@ -2634,16 +2633,16 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for line points */
-    if (gdvp->gdv_view->gv_data_lines.gdls_draw &&
-	gdvp->gdv_view->gv_data_lines.gdls_num_points) {
-	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
+    if (gdvp->gv_data_lines.gdls_draw &&
+	gdvp->gv_data_lines.gdls_num_points) {
+	struct bview_data_line_state *gdlsp = &gdvp->gv_data_lines;
 
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
 	    VMOVE(dpoint, gdlsp->gdls_points[i]);
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, dpoint);
 
 	    minX = vpoint[X] - tol;
 	    maxX = vpoint[X] + tol;
@@ -2665,16 +2664,16 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected line points */
-    if (gdvp->gdv_view->gv_sdata_lines.gdls_draw &&
-	gdvp->gdv_view->gv_sdata_lines.gdls_num_points) {
-	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
+    if (gdvp->gv_sdata_lines.gdls_draw &&
+	gdvp->gv_sdata_lines.gdls_num_points) {
+	struct bview_data_line_state *gdlsp = &gdvp->gv_sdata_lines;
 
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
 	    VMOVE(dpoint, gdlsp->gdls_points[i]);
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, dpoint);
 
 	    minX = vpoint[X] - tol;
 	    maxX = vpoint[X] + tol;
@@ -2700,16 +2699,16 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for arrow points */
-    if (gdvp->gdv_view->gv_data_arrows.gdas_draw &&
-	gdvp->gdv_view->gv_data_arrows.gdas_num_points) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
+    if (gdvp->gv_data_arrows.gdas_draw &&
+	gdvp->gv_data_arrows.gdas_num_points) {
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_data_arrows;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
 	    VMOVE(dpoint, gdasp->gdas_points[i]);
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, dpoint);
 
 	    minX = vpoint[X] - tol;
 	    maxX = vpoint[X] + tol;
@@ -2729,16 +2728,16 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected arrow points */
-    if (gdvp->gdv_view->gv_sdata_arrows.gdas_draw &&
-	gdvp->gdv_view->gv_sdata_arrows.gdas_num_points) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
+    if (gdvp->gv_sdata_arrows.gdas_draw &&
+	gdvp->gv_sdata_arrows.gdas_num_points) {
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_sdata_arrows;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
 	    VMOVE(dpoint, gdasp->gdas_points[i]);
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, dpoint);
 
 	    minX = vpoint[X] - tol;
 	    maxX = vpoint[X] + tol;
@@ -2764,16 +2763,16 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for axes points */
-    if (gdvp->gdv_view->gv_data_axes.draw &&
-	gdvp->gdv_view->gv_data_axes.num_points) {
-	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
+    if (gdvp->gv_data_axes.draw &&
+	gdvp->gv_data_axes.num_points) {
+	struct bview_data_axes_state *gdasp = &gdvp->gv_data_axes;
 
 	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
 	    VMOVE(dpoint, gdasp->points[i]);
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, dpoint);
 
 	    minX = vpoint[X] - tol;
 	    maxX = vpoint[X] + tol;
@@ -2793,16 +2792,16 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected axes points */
-    if (gdvp->gdv_view->gv_sdata_axes.draw &&
-	gdvp->gdv_view->gv_sdata_axes.num_points) {
-	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
+    if (gdvp->gv_sdata_axes.draw &&
+	gdvp->gv_sdata_axes.num_points) {
+	struct bview_data_axes_state *gdasp = &gdvp->gv_sdata_axes;
 
 	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
 	    VMOVE(dpoint, gdasp->points[i]);
-	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+	    MAT4X3PNT(vpoint, gdvp->gv_model2view, dpoint);
 
 	    minX = vpoint[X] - tol;
 	    maxX = vpoint[X] + tol;
@@ -2841,8 +2840,6 @@ to_data_vZ(struct ged *gedp,
 	   const char *usage,
 	   int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* must be double for scanf */
     double vZ;
 
@@ -2860,19 +2857,15 @@ to_data_vZ(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* Get the data vZ */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gdv_view->gv_data_vZ);
+	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gv_data_vZ);
 	return GED_OK;
     }
 
@@ -2882,288 +2875,266 @@ to_data_vZ(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_data_vZ = vZ;
+    gdvp->gv_data_vZ = vZ;
 
     return GED_OK;
 }
 
 
 HIDDEN void
-to_deleteViewProc(ClientData clientData)
-{
-    struct ged_dm_view *gdvp = (struct ged_dm_view *)clientData;
-
-    BU_LIST_DEQUEUE(&(gdvp->l));
-    bu_vls_free(&gdvp->gdv_name);
-    bu_vls_free(&gdvp->gdv_callback);
-    bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
-    (void)dm_close(gdvp->gdv_dmp);
-    bu_ptbl_free(gdvp->gdv_view->callbacks);
-    BU_PUT(gdvp->gdv_view->callbacks, struct bu_ptbl);
-    bu_free((void *)gdvp->gdv_view, "ged_view");
-    to_close_fbs(gdvp);
-    bu_free((void *)gdvp, "ged_dm_view");
-}
-
-
-HIDDEN void
-to_init_default_bindings(struct ged_dm_view *gdvp)
+to_init_default_bindings(struct bview *gdvp)
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Configure> {%s configure %s; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Enter> {focus %s; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 	bu_vls_printf(&bindings, "bind %s <Expose> {%s handle_expose %s %%c; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "catch {wm protocol %s WM_DELETE_WINDOW {%s delete_view %s; break}}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Mouse Bindings */
 	bu_vls_printf(&bindings, "bind %s <2> {%s vslew %s %%x %%y; focus %s; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 	bu_vls_printf(&bindings, "bind %s <1> {%s zoom %s 0.5; focus %s; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 	bu_vls_printf(&bindings, "bind %s <3> {%s zoom %s 2.0; focus %s;  break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
-#ifdef DM_X
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 	bu_vls_printf(&bindings, "bind %s <4> {%s zoom %s 1.1; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <5> {%s zoom %s 0.9; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
-#endif
-#ifdef DM_WGL
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <MouseWheel> {if {%%D < 0} {%s zoom %s 0.9} else {%s zoom %s 1.1}; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
-#endif
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Idle Mode */
 	bu_vls_printf(&bindings, "bind %s <ButtonRelease> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_L> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_R> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_L> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_R> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Alt_L> {%s idle_mode %s; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Alt_R> {%s idle_mode %s; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Rotate Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonRelease-1> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-1> {%s rotate_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-2> {%s rotate_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-3> {%s rotate_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Translate Mode */
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonRelease-1> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-1> {%s translate_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-2> {%s translate_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-3> {%s translate_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Scale Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonRelease-1> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-1> {%s scale_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-2> {%s scale_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-3> {%s scale_mode %s %%x %%y}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Constrained Rotate Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonRelease-1> {%s idle_mode %s}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-1> {%s constrain_rmode %s x %%x %%y; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-2> {%s constrain_rmode %s y %%x %%y; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-3> {%s constrain_rmode %s z %%x %%y; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Constrained Translate Mode */
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonRelease-1> {%s idle_mode %s; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-1> {%s constrain_tmode %s x %%x %%y; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-2> {%s constrain_tmode %s y %%x %%y; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-3> {%s constrain_tmode %s z %%x %%y; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 	/* Key Bindings */
 	bu_vls_printf(&bindings, "bind %s 3 {%s aet %s 35 25; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s 4 {%s aet %s 45 45; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s f {%s aet %s 0 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s F {%s aet %s 0 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s R {%s aet %s 180 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s r {%s aet %s 270 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s l {%s aet %s 90 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s L {%s aet %s 90 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s t {%s aet %s 270 90; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s T {%s aet %s 270 90; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s b {%s aet %s 270 -90; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s B {%s aet %s 270 -90; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s + {%s zoom %s 2.0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s = {%s zoom %s 2.0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s _ {%s zoom %s 0.5; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s - {%s zoom %s 0.5; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Left> {%s rot %s -v 0 1 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Right> {%s rot %s -v 0 -1 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Up> {%s rot %s -v 1 0 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Down> {%s rot %s -v -1 0 0; break}; ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 
 
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -3180,6 +3151,7 @@ to_dlist_on(struct ged *gedp,
 	    const char *UNUSED(usage),
 	    int UNUSED(maxargs))
 {
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
     int on;
 
     /* initialize result */
@@ -3192,7 +3164,7 @@ to_dlist_on(struct ged *gedp,
 
     /* Get dlist_on state */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", current_top->to_gop->go_dlist_on);
+	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dlist_on);
 	return GED_OK;
     }
 
@@ -3202,7 +3174,7 @@ to_dlist_on(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    current_top->to_gop->go_dlist_on = on;
+    tgd->go_dlist_on = on;
 
     return GED_OK;
 }
@@ -3217,7 +3189,6 @@ to_fontsize(struct ged *gedp,
 	    int UNUSED(maxargs))
 {
     int fontsize;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3233,19 +3204,15 @@ to_fontsize(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get the font size */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_fontsize(gdvp->gdv_dmp));
+	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_fontsize((struct dm *)gdvp->dmp));
 	return GED_OK;
     }
 
@@ -3254,8 +3221,8 @@ to_fontsize(struct ged *gedp,
 	goto bad_fontsize;
 
     if (DM_VALID_FONT_SIZE(fontsize) || fontsize == 0) {
-	dm_set_fontsize(gdvp->gdv_dmp, fontsize);
-	(void)dm_configure_win(gdvp->gdv_dmp, 1);
+	dm_set_fontsize((struct dm *)gdvp->dmp, fontsize);
+	(void)dm_configure_win((struct dm *)gdvp->dmp, 1);
 	to_refresh_view(gdvp);
 	return GED_OK;
     }
@@ -3380,8 +3347,6 @@ to_init_view_bindings(struct ged *gedp,
 		      const char *usage,
 		      int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -3396,12 +3361,8 @@ to_init_view_bindings(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -3420,8 +3381,6 @@ to_delete_view(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -3436,17 +3395,11 @@ to_delete_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
-
-    to_deleteViewProc(gdvp);
 
     return GED_OK;
 }
@@ -3493,7 +3446,6 @@ to_hide_view(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
     int hide_view;
 
     /* initialize result */
@@ -3510,19 +3462,15 @@ to_hide_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* return the hide view setting */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_hide_view);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_hidden);
 	return GED_OK;
     }
 
@@ -3537,9 +3485,10 @@ to_hide_view(struct ged *gedp,
 
 struct redraw_edited_path_data {
     struct ged *gedp;
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
     int *need_refresh;
 };
+
 
 
 HIDDEN void
@@ -3577,12 +3526,18 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 	    bu_vls_printf(&tran_z_vls, "%lf", dvec[Z]);
 	    MAT_IDN(params->edit_mat);
 
+	    struct tclcad_view_data *tvd = (struct tclcad_view_data *)data->gdvp->u_data;
 	    bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
-			  bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
+			  bu_vls_addr(&tvd->gdv_edit_motion_delta_callback),
 			  bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
 			  bu_vls_addr(&tran_z_vls));
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	    tvd->gdv_edit_motion_delta_callback_cnt++;
+	    if (tvd->gdv_edit_motion_delta_callback_cnt > 1) {
+		bu_log("Warning - recursive gdv_edit_motion_delta_callback call\n");
+	    }
 
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	    tvd->gdv_edit_motion_delta_callback_cnt++;
 	    bu_vls_free(&tcl_cmd);
 	    bu_vls_free(&tran_x_vls);
 	    bu_vls_free(&tran_y_vls);
@@ -3629,9 +3584,9 @@ to_idle_mode(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
     int mode, need_refresh = 0;
     struct redraw_edited_path_data data;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3647,20 +3602,16 @@ to_idle_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
-    mode = gdvp->gdv_view->gv_mode;
+    mode = gdvp->gv_mode;
 
-    if (gdvp->gdv_view->gv_adaptive_plot &&
-	gdvp->gdv_view->gv_redraw_on_zoom &&
+    if (gdvp->gv_adaptive_plot &&
+	gdvp->gv_redraw_on_zoom &&
 	mode == TCLCAD_SCALE_MODE)
     {
 	char *av[] = {"redraw", NULL};
@@ -3671,32 +3622,38 @@ to_idle_mode(struct ged *gedp,
     }
 
     if (mode != TCLCAD_POLY_CONTOUR_MODE ||
-	gdvp->gdv_view->gv_data_polygons.gdps_cflag == 0)
+	gdvp->gv_data_polygons.gdps_cflag == 0)
     {
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
-	if (dm_get_pathname(gdvp->gdv_dmp)) {
+	if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	    bu_vls_printf(&bindings, "bind %s <Motion> {}",
-			  bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+			  bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
 	}
 	bu_vls_free(&bindings);
     }
 
-    if (gdvp->gdv_view->gv_grid.snap &&
+    if (gdvp->gv_grid.snap &&
 	(mode == TCLCAD_TRANSLATE_MODE ||
 	 mode == TCLCAD_CONSTRAINED_TRANSLATE_MODE))
     {
 	char *av[3];
 
-	gedp->ged_gvp = gdvp->gdv_view;
+	gedp->ged_gvp = gdvp;
 	av[0] = "grid";
 	av[1] = "vsnap";
 	av[2] = NULL;
 	ged_grid(gedp, 2, (const char **)av);
 
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    tvd->gdv_callback_cnt++;
+	    if (tvd->gdv_callback_cnt > 1) {
+		bu_log("Warning - recursive gvd_callback call\n");
+	    }
+	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback), 0, NULL);
+	    tvd->gdv_callback_cnt--;
 	}
 
 	need_refresh = 1;
@@ -3708,19 +3665,19 @@ to_idle_mode(struct ged *gedp,
     data.gdvp = gdvp;
     data.need_refresh = &need_refresh;
 
-    redraw_edited_paths(current_top->to_gop->go_edited_paths, &data);
+    redraw_edited_paths(tgd->go_edited_paths, &data);
 
-    free_path_edit_params(current_top->to_gop->go_edited_paths);
-    bu_hash_destroy(current_top->to_gop->go_edited_paths);
-    current_top->to_gop->go_edited_paths = bu_hash_create(0);
+    free_path_edit_params(tgd->go_edited_paths);
+    bu_hash_destroy(tgd->go_edited_paths);
+    tgd->go_edited_paths = bu_hash_create(0);
     Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {
 	to_refresh_all_views(current_top);
     }
 
-    gdvp->gdv_view->gv_mode = TCLCAD_IDLE_MODE;
-    gdvp->gdv_view->gv_sdata_polygons.gdps_cflag = 0;
+    gdvp->gv_mode = TCLCAD_IDLE_MODE;
+    gdvp->gv_sdata_polygons.gdps_cflag = 0;
 
     return GED_OK;
 }
@@ -3735,7 +3692,6 @@ to_light(struct ged *gedp,
 	 int UNUSED(maxargs))
 {
     int light;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3751,19 +3707,15 @@ to_light(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get light flag */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_light(gdvp->gdv_dmp));
+	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_light((struct dm *)gdvp->dmp));
 	return GED_OK;
     }
 
@@ -3776,8 +3728,8 @@ to_light(struct ged *gedp,
     if (light < 0)
 	light = 0;
 
-    (void)dm_make_current(gdvp->gdv_dmp);
-    (void)dm_set_light(gdvp->gdv_dmp, light);
+    (void)dm_make_current((struct dm *)gdvp->dmp);
+    (void)dm_set_light((struct dm *)gdvp->dmp, light);
     to_refresh_view(gdvp);
 
     return GED_OK;
@@ -3792,7 +3744,7 @@ to_list_views(struct ged *gedp,
 	      const char *UNUSED(usage),
 	      int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3802,8 +3754,10 @@ to_list_views(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l))
-	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdvp->gdv_name));
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdvp->gv_name));
+    }
 
     return GED_OK;
 }
@@ -3821,7 +3775,7 @@ to_local2base(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
+    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gedp->ged_wdbp->dbip->dbi_local2base);
 
     return GED_OK;
 }
@@ -3835,10 +3789,11 @@ to_lod(struct ged *gedp,
        const char *UNUSED(usage),
        int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	gedp->ged_gvp = gdvp->gdv_view;
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	gedp->ged_gvp = gdvp;
 	(*func)(gedp, argc, (const char **)argv);
     }
 
@@ -3904,7 +3859,6 @@ to_edit_motion_delta_callback(struct ged *gedp,
 			      int UNUSED(maxargs))
 {
     register int i;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3915,27 +3869,25 @@ to_edit_motion_delta_callback(struct ged *gedp,
 	return GED_HELP;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get the callback string */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tvd->gdv_edit_motion_delta_callback));
 
 	return GED_OK;
     }
 
     /* set the callback string */
-    bu_vls_trunc(&gdvp->gdv_edit_motion_delta_callback, 0);
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    bu_vls_trunc(&tvd->gdv_edit_motion_delta_callback, 0);
     for (i = 2; i < argc; ++i)
-	bu_vls_printf(&gdvp->gdv_edit_motion_delta_callback, "%s ", argv[i]);
+	bu_vls_printf(&tvd->gdv_edit_motion_delta_callback, "%s ", argv[i]);
 
     return GED_OK;
 }
@@ -3950,21 +3902,22 @@ to_more_args_callback(struct ged *gedp,
 		      int UNUSED(maxargs))
 {
     register int i;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the callback string */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_more_args_callback));
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tgd->go_more_args_callback));
 
 	return GED_OK;
     }
 
     /* set the callback string */
-    bu_vls_trunc(&current_top->to_gop->go_more_args_callback, 0);
+    bu_vls_trunc(&tgd->go_more_args_callback, 0);
     for (i = 1; i < argc; ++i)
-	bu_vls_printf(&current_top->to_gop->go_more_args_callback, "%s ", argv[i]);
+	bu_vls_printf(&tgd->go_more_args_callback, "%s ", argv[i]);
 
     return GED_OK;
 }
@@ -3989,7 +3942,6 @@ to_move_arb_edge_mode(struct ged *gedp,
 		      int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4008,12 +3960,8 @@ to_move_arb_edge_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4024,15 +3972,15 @@ to_move_arb_edge_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_edge %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4052,7 +4000,6 @@ to_move_arb_face_mode(struct ged *gedp,
 		      int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4071,12 +4018,8 @@ to_move_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4087,15 +4030,15 @@ to_move_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_ARB_FACE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_MOVE_ARB_FACE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_face %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4171,7 +4114,6 @@ to_bot_move_pnt_mode(struct ged *gedp,
 		     int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4190,13 +4132,9 @@ to_bot_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", argv[0], argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -4206,15 +4144,15 @@ to_bot_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_BOT_POINT_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_MOVE_BOT_POINT_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnt -r %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4235,7 +4173,6 @@ to_bot_move_pnts_mode(struct ged *gedp,
 {
     register int i;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4254,13 +4191,9 @@ to_bot_move_pnts_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", argv[0], argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -4270,15 +4203,15 @@ to_bot_move_pnts_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnts %s %%x %%y %s ",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[4]);
     }
     for (i = 5; i < argc; ++i)
@@ -4301,7 +4234,6 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 			  int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4320,12 +4252,8 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4336,15 +4264,15 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_METABALL_POINT_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_MOVE_METABALL_POINT_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_metaball_move_pnt %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4364,7 +4292,6 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 		      int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4383,12 +4310,8 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4399,15 +4322,15 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pipe_move_pnt %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -4457,7 +4380,7 @@ to_new_view(struct ged *gedp,
 	    const char *usage,
 	    int UNUSED(maxargs))
 {
-    struct ged_dm_view *new_gdvp;
+    struct bview *new_gdvp;
     HIDDEN const int name_index = 1;
     const char *type = NULL;
     struct bu_vls event_vls = BU_VLS_INIT_ZERO;
@@ -4508,10 +4431,9 @@ to_new_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    BU_ALLOC(new_gdvp, struct ged_dm_view);
-    BU_ALLOC(new_gdvp->gdv_view, struct bview);
-    BU_GET(new_gdvp->gdv_view->callbacks, struct bu_ptbl);
-    bu_ptbl_init(new_gdvp->gdv_view->callbacks, 8, "bview callbacks");
+    BU_ALLOC(new_gdvp, struct bview);
+    BU_GET(new_gdvp->callbacks, struct bu_ptbl);
+    bu_ptbl_init(new_gdvp->callbacks, 8, "bview callbacks");
 
     {
 	int i;
@@ -4535,12 +4457,12 @@ to_new_view(struct ged *gedp,
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	new_gdvp->gdv_dmp = dm_open((void *)current_top->to_interp, type, ac, av);
-	if (new_gdvp->gdv_dmp == DM_NULL) {
-	    bu_ptbl_free(new_gdvp->gdv_view->callbacks);
-	    BU_PUT(new_gdvp->gdv_view->callbacks, struct bu_ptbl);
-	    bu_free((void *)new_gdvp->gdv_view, "ged_view");
-	    bu_free((void *)new_gdvp, "ged_dm_view");
+	new_gdvp->dmp = (void *)dm_open((void *)current_top->to_interp, type, ac, av);
+	if ((struct dm *)new_gdvp->dmp == DM_NULL) {
+	    bu_ptbl_free(new_gdvp->callbacks);
+	    BU_PUT(new_gdvp->callbacks, struct bu_ptbl);
+	    bu_free((void *)new_gdvp, "ged_view");
+	    bu_free((void *)new_gdvp, "bview");
 	    bu_free((void *)av, "to_new_view: av");
 
 	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", argv[1]);
@@ -4551,24 +4473,31 @@ to_new_view(struct ged *gedp,
 
     }
 
-    new_gdvp->gdv_gop = current_top->to_gop;
-    bu_vls_init(&new_gdvp->gdv_name);
-    bu_vls_init(&new_gdvp->gdv_callback);
-    bu_vls_init(&new_gdvp->gdv_edit_motion_delta_callback);
-    bu_vls_printf(&new_gdvp->gdv_name, "%s", argv[name_index]);
-    ged_view_init(new_gdvp->gdv_view);
-    BU_LIST_INSERT(&current_top->to_gop->go_head_views.l, &new_gdvp->l);
+    bu_vls_init(&new_gdvp->gv_name);
 
-    new_gdvp->gdv_view->gv_point_scale = 1.0;
-    new_gdvp->gdv_view->gv_curve_scale = 1.0;
+    struct tclcad_view_data *tvd;
+    BU_GET(tvd, struct tclcad_view_data);
+    bu_vls_init(&tvd->gdv_edit_motion_delta_callback);
+    tvd->gdv_edit_motion_delta_callback_cnt = 0;
+    bu_vls_init(&tvd->gdv_callback);
+    tvd->gdv_callback_cnt = 0;
+    tvd->gedp = current_top->to_gedp;
+    new_gdvp->u_data = (void *)tvd;
 
-    new_gdvp->gdv_fbs.fbs_listener.fbsl_fbsp = &new_gdvp->gdv_fbs;
-    new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
-    new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;
-    new_gdvp->gdv_fbs.fbs_fbp = FB_NULL;
-    new_gdvp->gdv_fbs.fbs_callback = (void (*)(void *clientData))to_fbs_callback;
-    new_gdvp->gdv_fbs.fbs_clientData = new_gdvp;
-    new_gdvp->gdv_fbs.fbs_interp = current_top->to_interp;
+    bu_vls_printf(&new_gdvp->gv_name, "%s", argv[name_index]);
+    ged_view_init(new_gdvp);
+    bu_ptbl_ins(&current_top->to_gedp->ged_views, (long *)new_gdvp);
+
+    new_gdvp->gv_point_scale = 1.0;
+    new_gdvp->gv_curve_scale = 1.0;
+
+    tvd->gdv_fbs.fbs_listener.fbsl_fbsp = &tvd->gdv_fbs;
+    tvd->gdv_fbs.fbs_listener.fbsl_fd = -1;
+    tvd->gdv_fbs.fbs_listener.fbsl_port = -1;
+    tvd->gdv_fbs.fbs_fbp = FB_NULL;
+    tvd->gdv_fbs.fbs_callback = (void (*)(void *clientData))to_fbs_callback;
+    tvd->gdv_fbs.fbs_clientData = new_gdvp;
+    tvd->gdv_fbs.fbs_interp = current_top->to_interp;
 
     /* open the framebuffer */
     to_open_fbs(new_gdvp, current_top->to_interp);
@@ -4576,24 +4505,24 @@ to_new_view(struct ged *gedp,
     /* Set default bindings */
     to_init_default_bindings(new_gdvp);
 
-    if (dm_get_pathname(new_gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)new_gdvp->dmp)) {
 	bu_vls_printf(&event_vls, "event generate %s <Configure>; %s autoview %s",
-		      bu_vls_addr(dm_get_pathname(new_gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&new_gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)new_gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&new_gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&event_vls));
     }
     bu_vls_free(&event_vls);
 
-    if (dm_get_pathname(new_gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)new_gdvp->dmp)) {
 	(void)Tcl_CreateCommand(current_top->to_interp,
-				bu_vls_addr(dm_get_pathname(new_gdvp->gdv_dmp)),
+				bu_vls_addr(dm_get_pathname((struct dm *)new_gdvp->dmp)),
 				(Tcl_CmdProc *)to_view_cmd,
 				(ClientData)new_gdvp,
-				to_deleteViewProc);
+				NULL);
     }
 
-    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gdv_name));
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gv_name));
     return GED_OK;
 }
 
@@ -4607,7 +4536,6 @@ to_orotate_mode(struct ged *gedp,
 		int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4626,12 +4554,8 @@ to_orotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4642,15 +4566,15 @@ to_orotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_OROTATE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_OROTATE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_orotate %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -4669,7 +4593,6 @@ to_oscale_mode(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4688,12 +4611,8 @@ to_oscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4704,15 +4623,15 @@ to_oscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_OSCALE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_OSCALE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_oscale %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -4732,7 +4651,6 @@ to_otranslate_mode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -4751,12 +4669,8 @@ to_otranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -4767,15 +4681,15 @@ to_otranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_OTRANSLATE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_OTRANSLATE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_otranslate %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
@@ -4793,7 +4707,6 @@ to_paint_rect_area(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -4808,28 +4721,25 @@ to_paint_rect_area(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
-    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
+    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
-    (void)fb_refresh(gdvp->gdv_fbs.fbs_fbp, gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
-		     gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    (void)fb_refresh(tvd->gdv_fbs.fbs_fbp, gdvp->gv_rect.pos[X], gdvp->gv_rect.pos[Y],
+		     gdvp->gv_rect.dim[X], gdvp->gv_rect.dim[Y]);
 
-    (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
+    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 1);
 
     return GED_OK;
 }
 
 
-#if defined(DM_OGL) || defined(DM_WGL)
+#ifdef HAVE_GL_GL_H
 HIDDEN int
 to_pix(struct ged *gedp,
        int argc,
@@ -4838,7 +4748,6 @@ to_pix(struct ged *gedp,
        const char *usage,
        int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp = NULL;
     FILE *fp = NULL;
     unsigned char *scanline;
     unsigned char *pixels;
@@ -4862,22 +4771,18 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
-    if (!BU_STR_EQUIV(dm_get_type(gdvp->gdv_dmp), "wgl") && !BU_STR_EQUIV(dm_get_type(gdvp->gdv_dmp), "ogl")) {
+    if (!BU_STR_EQUIV(dm_get_type((struct dm *)gdvp->dmp), "wgl") && !BU_STR_EQUIV(dm_get_type((struct dm *)gdvp->dmp), "ogl")) {
 	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGL based)", argv[0]);
 	return GED_OK;
     }
 
-    bytes_per_line = dm_get_width(gdvp->gdv_dmp) * bytes_per_pixel;
+    bytes_per_line = dm_get_width((struct dm *)gdvp->dmp) * bytes_per_pixel;
 
     if ((fp = fopen(argv[2], "wb")) == NULL) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -4886,10 +4791,10 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    width = dm_get_width(gdvp->gdv_dmp);
-    height = dm_get_height(gdvp->gdv_dmp);
+    width = dm_get_width((struct dm *)gdvp->dmp);
+    height = dm_get_height((struct dm *)gdvp->dmp);
 
-    make_ret = dm_make_current(gdvp->gdv_dmp);
+    make_ret = dm_make_current((struct dm *)gdvp->dmp);
     if (!make_ret) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
 	fclose(fp);
@@ -4927,7 +4832,6 @@ to_png(struct ged *gedp,
 {
     png_structp png_p;
     png_infop info_p;
-    struct ged_dm_view *gdvp = NULL;
     FILE *fp = NULL;
     unsigned char **rows = NULL;
     unsigned char *pixels;
@@ -4952,22 +4856,18 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
-    if (!BU_STR_EQUIV(dm_get_type(gdvp->gdv_dmp), "wgl") && !BU_STR_EQUIV(dm_get_type(gdvp->gdv_dmp), "ogl")) {
+    if (!BU_STR_EQUIV(dm_get_type((struct dm *)gdvp->dmp), "wgl") && !BU_STR_EQUIV(dm_get_type((struct dm *)gdvp->dmp), "ogl")) {
 	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGL based)", argv[0]);
 	return GED_OK;
     }
 
-    bytes_per_line = dm_get_width(gdvp->gdv_dmp) * bytes_per_pixel;
+    bytes_per_line = dm_get_width((struct dm *)gdvp->dmp) * bytes_per_pixel;
 
     if ((fp = fopen(argv[2], "wb")) == NULL) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -4990,9 +4890,9 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    width = dm_get_width(gdvp->gdv_dmp);
-    height = dm_get_height(gdvp->gdv_dmp);
-    make_ret = dm_make_current(gdvp->gdv_dmp);
+    width = dm_get_width((struct dm *)gdvp->dmp);
+    height = dm_get_height((struct dm *)gdvp->dmp);
+    make_ret = dm_make_current((struct dm *)gdvp->dmp);
     if (make_ret) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
 	fclose(fp);
@@ -5042,7 +4942,6 @@ to_rect_mode(struct ged *gedp,
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct bu_vls x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls y_vls = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -5058,17 +4957,13 @@ to_rect_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
-    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_gvp = gdvp;
 
     if (bu_sscanf(argv[2], "%d", &x) != 1 ||
 	bu_sscanf(argv[3], "%d", &y) != 1) {
@@ -5076,9 +4971,9 @@ to_rect_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = dm_get_height(gdvp->gdv_dmp) - y;
-    gdvp->gdv_view->gv_mode = TCLCAD_RECTANGLE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = dm_get_height((struct dm *)gdvp->dmp) - y;
+    gdvp->gv_mode = TCLCAD_RECTANGLE_MODE;
 
     ac = 4;
     av[0] = "rect";
@@ -5088,8 +4983,8 @@ to_rect_mode(struct ged *gedp,
     av[4] = (char *)0;
     (void)ged_rect(gedp, ac, (const char **)av);
 
-    bu_vls_printf(&x_vls, "%d", (int)gdvp->gdv_view->gv_prevMouseX);
-    bu_vls_printf(&y_vls, "%d", (int)gdvp->gdv_view->gv_prevMouseY);
+    bu_vls_printf(&x_vls, "%d", (int)gdvp->gv_prevMouseX);
+    bu_vls_printf(&y_vls, "%d", (int)gdvp->gv_prevMouseY);
     av[1] = "pos";
     av[2] = bu_vls_addr(&x_vls);
     av[3] = bu_vls_addr(&y_vls);
@@ -5104,11 +4999,11 @@ to_rect_mode(struct ged *gedp,
     av[3] = (char *)0;
     (void)ged_rect(gedp, ac, (const char **)av);
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rect %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -5128,7 +5023,6 @@ to_rotate_arb_face_mode(struct ged *gedp,
 			int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5147,12 +5041,8 @@ to_rotate_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5163,15 +5053,15 @@ to_rotate_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rotate_arb_face %s %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3],
 		      argv[4]);
@@ -5192,7 +5082,6 @@ to_rotate_mode(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5211,12 +5100,8 @@ to_rotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5227,15 +5112,15 @@ to_rotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_ROTATE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_ROTATE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rot %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -5273,21 +5158,22 @@ to_rt_end_callback(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     register int i;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the callback string */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_rt_end_callback));
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tgd->go_rt_end_callback));
 
 	return GED_OK;
     }
 
     /* set the callback string */
-    bu_vls_trunc(&current_top->to_gop->go_rt_end_callback, 0);
+    bu_vls_trunc(&tgd->go_rt_end_callback, 0);
     for (i = 1; i < argc; ++i)
-	bu_vls_printf(&current_top->to_gop->go_rt_end_callback, "%s ", argv[i]);
+	bu_vls_printf(&tgd->go_rt_end_callback, "%s ", argv[i]);
 
     return GED_OK;
 }
@@ -5358,7 +5244,6 @@ to_protate_mode(struct ged *gedp,
 		int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5377,12 +5262,8 @@ to_protate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5393,15 +5274,15 @@ to_protate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_PROTATE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_PROTATE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_protate %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -5421,7 +5302,6 @@ to_pscale_mode(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5440,12 +5320,8 @@ to_pscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5456,15 +5332,15 @@ to_pscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_PSCALE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_PSCALE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pscale %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -5484,7 +5360,6 @@ to_ptranslate_mode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5503,12 +5378,8 @@ to_ptranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5519,15 +5390,15 @@ to_ptranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_PTRANSLATE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_PTRANSLATE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_ptranslate %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -5547,7 +5418,6 @@ to_data_scale_mode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5566,12 +5436,8 @@ to_data_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5582,15 +5448,15 @@ to_data_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_DATA_SCALE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_DATA_SCALE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_data_scale %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -5608,7 +5474,6 @@ to_scale_mode(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5627,12 +5492,8 @@ to_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5643,15 +5504,15 @@ to_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_SCALE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_SCALE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_scale %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -5670,7 +5531,6 @@ to_screen2model(struct ged *gedp,
 {
     point_t view;
     point_t model;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5689,12 +5549,8 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5705,10 +5561,10 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
+    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
     VSET(view, x, y, 0.0);
-    MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
+    MAT4X3PNT(model, gdvp->gv_view2model, view);
 
     bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(model));
 
@@ -5725,7 +5581,6 @@ to_screen2view(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     point_t view;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5744,12 +5599,8 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5760,8 +5611,8 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
+    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(view));
@@ -5778,8 +5629,6 @@ to_set_coord(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -5794,19 +5643,15 @@ to_set_coord(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* Get coord */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%c", gdvp->gdv_view->gv_coord);
+	bu_vls_printf(gedp->ged_result_str, "%c", gdvp->gv_coord);
 	return GED_OK;
     }
 
@@ -5816,7 +5661,7 @@ to_set_coord(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_coord = argv[2][0];
+    gdvp->gv_coord = argv[2][0];
 
     return GED_OK;
 }
@@ -5830,7 +5675,6 @@ to_snap_view(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
     fastf_t fvx, fvy;
 
     /* must be double for scanf */
@@ -5850,12 +5694,8 @@ to_snap_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5869,7 +5709,7 @@ to_snap_view(struct ged *gedp,
     fvx = vx;
     fvy = vy;
 
-    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_gvp = gdvp;
     if (!gedp->ged_gvp->gv_snap_lines && !gedp->ged_gvp->gv_grid.snap) {
 	bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
 	return GED_OK;
@@ -5962,7 +5802,6 @@ to_translate_mode(struct ged *gedp,
 		  int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double x, y;
@@ -5981,12 +5820,8 @@ to_translate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -5997,15 +5832,15 @@ to_translate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_TRANSLATE_MODE;
+    gdvp->gv_prevMouseX = x;
+    gdvp->gv_prevMouseY = y;
+    gdvp->gv_mode = TCLCAD_TRANSLATE_MODE;
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
+    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_trans %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		      bu_vls_addr(&current_top->to_gop->go_name),
-		      bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
+		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_addr(&gdvp->gv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -6023,7 +5858,6 @@ to_transparency(struct ged *gedp,
 		int UNUSED(maxargs))
 {
     int transparency;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6039,19 +5873,15 @@ to_transparency(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get transparency flag */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_transparency(gdvp->gdv_dmp));
+	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_transparency((struct dm *)gdvp->dmp));
 	return GED_OK;
     }
 
@@ -6062,8 +5892,8 @@ to_transparency(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	(void)dm_make_current(gdvp->gdv_dmp);
-	(void)dm_set_transparency(gdvp->gdv_dmp, transparency);
+	(void)dm_make_current((struct dm *)gdvp->dmp);
+	(void)dm_set_transparency((struct dm *)gdvp->dmp, transparency);
 	return GED_OK;
     }
 
@@ -6081,7 +5911,6 @@ to_view_callback(struct ged *gedp,
 		 int UNUSED(maxargs))
 {
     register int i;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6092,27 +5921,25 @@ to_view_callback(struct ged *gedp,
 	return GED_HELP;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get the callback string */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tvd->gdv_callback));
 
 	return GED_OK;
     }
 
     /* set the callback string */
-    bu_vls_trunc(&gdvp->gdv_callback, 0);
+    struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+    bu_vls_trunc(&tvd->gdv_callback, 0);
     for (i = 2; i < argc; ++i)
-	bu_vls_printf(&gdvp->gdv_callback, "%s ", argv[i]);
+	bu_vls_printf(&tvd->gdv_callback, "%s ", argv[i]);
 
     return GED_OK;
 }
@@ -6126,7 +5953,6 @@ to_view_win_size(struct ged *gedp,
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
     int width, height;
 
     /* initialize result */
@@ -6143,18 +5969,14 @@ to_view_win_size(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d %d", dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
+	bu_vls_printf(gedp->ged_result_str, "%d %d", dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));
 	return GED_OK;
     }
 
@@ -6177,7 +5999,7 @@ to_view_win_size(struct ged *gedp,
 	}
     }
 
-    dm_geometry_request(gdvp->gdv_dmp, width, height);
+    dm_geometry_request((struct dm *)gdvp->dmp, width, height);
 
     return GED_OK;
 }
@@ -6194,7 +6016,6 @@ to_view2screen(struct ged *gedp,
     int width, height;
     fastf_t x, y;
     fastf_t aspect;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double view[ELEMENTS_PER_POINT];
@@ -6213,12 +6034,8 @@ to_view2screen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6228,8 +6045,8 @@ to_view2screen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    width = dm_get_width(gdvp->gdv_dmp);
-    height = dm_get_height(gdvp->gdv_dmp);
+    width = dm_get_width((struct dm *)gdvp->dmp);
+    height = dm_get_height((struct dm *)gdvp->dmp);
     aspect = (fastf_t)width/(fastf_t)height;
     x = (view[X] + 1.0) * 0.5 * (fastf_t)width;
     y = (view[Y] * aspect - 1.0) * -0.5 * (fastf_t)height;
@@ -6248,8 +6065,6 @@ to_vmake(struct ged *gedp,
 	 const char *usage,
 	 int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -6264,12 +6079,8 @@ to_vmake(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6281,10 +6092,10 @@ to_vmake(struct ged *gedp,
 	char scale[128];
 
 	sprintf(center, "%f %f %f",
-		-gdvp->gdv_view->gv_center[MDX],
-		-gdvp->gdv_view->gv_center[MDY],
-		-gdvp->gdv_view->gv_center[MDZ]);
-	sprintf(scale, "%f", gdvp->gdv_view->gv_scale * 2.0);
+		-gdvp->gv_center[MDX],
+		-gdvp->gv_center[MDY],
+		-gdvp->gv_center[MDZ]);
+	sprintf(scale, "%f", gdvp->gv_scale * 2.0);
 
 	av[0] = (char *)argv[0];
 	av[1] = "-o";
@@ -6323,7 +6134,6 @@ to_vslew(struct ged *gedp,
     fastf_t xpos2, ypos2;
     fastf_t sf;
     struct bu_vls slew_vec = BU_VLS_INIT_ZERO;
-    struct ged_dm_view *gdvp;
 
     /* must be double for scanf */
     double xpos1, ypos1;
@@ -6342,12 +6152,8 @@ to_vslew(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -6358,15 +6164,15 @@ to_vslew(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    width = dm_get_width(gdvp->gdv_dmp);
+    width = dm_get_width((struct dm *)gdvp->dmp);
     xpos2 = 0.5 * (fastf_t)width;
-    height = dm_get_height(gdvp->gdv_dmp);
+    height = dm_get_height((struct dm *)gdvp->dmp);
     ypos2 = 0.5 * (fastf_t)height;
     sf = 2.0 / width;
 
     bu_vls_printf(&slew_vec, "%lf %lf", (xpos1 - xpos2) * sf, (ypos2 - ypos1) * sf);
 
-    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_gvp = gdvp;
     ac = 2;
     av[0] = (char *)argv[0];
     av[1] = bu_vls_addr(&slew_vec);
@@ -6376,9 +6182,9 @@ to_vslew(struct ged *gedp,
     bu_vls_free(&slew_vec);
 
     if (ret == GED_OK) {
-	if (gdvp->gdv_view->gv_grid.snap) {
+	if (gdvp->gv_grid.snap) {
 
-	    gedp->ged_gvp = gdvp->gdv_view;
+	    gedp->ged_gvp = gdvp;
 	    av[0] = "grid";
 	    av[1] = "vsnap";
 	    av[2] = NULL;
@@ -6389,8 +6195,14 @@ to_vslew(struct ged *gedp,
 	    ged_view_center_linesnap(gedp);
 	}
 
-	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
+	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
+	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
+	    tvd->gdv_callback_cnt++;
+	    if (tvd->gdv_callback_cnt > 1) {
+		bu_log("Warning - recursive gvd_callback call\n");
+	    }
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
+	    tvd->gdv_callback_cnt--;
 	}
 
 	to_refresh_view(gdvp);
@@ -6409,7 +6221,6 @@ to_zbuffer(struct ged *gedp,
 	   int UNUSED(maxargs))
 {
     int zbuffer;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6425,19 +6236,15 @@ to_zbuffer(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get zbuffer flag */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_zbuffer(gdvp->gdv_dmp));
+	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_zbuffer((struct dm *)gdvp->dmp));
 	return GED_OK;
     }
 
@@ -6452,8 +6259,8 @@ to_zbuffer(struct ged *gedp,
     else if (1 < zbuffer)
 	zbuffer = 1;
 
-    (void)dm_make_current(gdvp->gdv_dmp);
-    (void)dm_set_zbuffer(gdvp->gdv_dmp, zbuffer);
+    (void)dm_make_current((struct dm *)gdvp->dmp);
+    (void)dm_set_zbuffer((struct dm *)gdvp->dmp, zbuffer);
     to_refresh_view(gdvp);
 
     return GED_OK;
@@ -6469,7 +6276,6 @@ to_zclip(struct ged *gedp,
 	 int UNUSED(maxargs))
 {
     int zclip;
-    struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6485,19 +6291,15 @@ to_zclip(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get zclip flag */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_zclip);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_zclip);
 	return GED_OK;
     }
 
@@ -6512,8 +6314,8 @@ to_zclip(struct ged *gedp,
     else if (1 < zclip)
 	zclip = 1;
 
-    gdvp->gdv_view->gv_zclip = zclip;
-    dm_set_zclip(gdvp->gdv_dmp, zclip);
+    gdvp->gv_zclip = zclip;
+    dm_set_zclip((struct dm *)gdvp->dmp, zclip);
     to_refresh_view(gdvp);
 
     return GED_OK;
@@ -6524,36 +6326,39 @@ to_zclip(struct ged *gedp,
 HIDDEN void
 to_create_vlist_callback_solid(struct solid *sp)
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
     register int first = 1;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
 
-	    (void)dm_make_current(gdvp->gdv_dmp);
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
+
+	    (void)dm_make_current((struct dm *)gdvp->dmp);
 
 	    if (first) {
-		sp->s_dlist = dm_gen_dlists(gdvp->gdv_dmp, 1);
+		sp->s_dlist = dm_gen_dlists((struct dm *)gdvp->dmp, 1);
 		first = 0;
 	    }
 
-	    (void)dm_begin_dlist(gdvp->gdv_dmp, sp->s_dlist);
+	    (void)dm_begin_dlist((struct dm *)gdvp->dmp, sp->s_dlist);
 
 	    if (sp->s_iflag == UP)
-		(void)dm_set_fg(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
+		(void)dm_set_fg((struct dm *)gdvp->dmp, 255, 255, 255, 0, sp->s_transparency);
 	    else
-		(void)dm_set_fg(gdvp->gdv_dmp,
+		(void)dm_set_fg((struct dm *)gdvp->dmp,
 				(unsigned char)sp->s_color[0],
 				(unsigned char)sp->s_color[1],
 				(unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
 	    if (sp->s_hiddenLine) {
-		(void)dm_draw_vlist_hidden_line(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+		(void)dm_draw_vlist_hidden_line((struct dm *)gdvp->dmp, (struct bn_vlist *)&sp->s_vlist);
 	    } else {
-		(void)dm_draw_vlist(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+		(void)dm_draw_vlist((struct dm *)gdvp->dmp, (struct bn_vlist *)&sp->s_vlist);
 	    }
 
-	    (void)dm_end_dlist(gdvp->gdv_dmp);
+	    (void)dm_end_dlist((struct dm *)gdvp->dmp);
 	}
     }
 }
@@ -6570,14 +6375,16 @@ to_create_vlist_callback(struct display_list *gdlp)
 
 
 HIDDEN void
-to_free_vlist_callback(unsigned int dlist, int range)
+to_destroy_vlist_callback(unsigned int dlist, int range)
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
-	    (void)dm_make_current(gdvp->gdv_dmp);
-	    (void)dm_free_dlists(gdvp->gdv_dmp, dlist, range);
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
+	    (void)dm_make_current((struct dm *)gdvp->dmp);
+	    (void)dm_free_dlists((struct dm *)gdvp->dmp, dlist, range);
 	}
     }
 }
@@ -6585,13 +6392,17 @@ to_free_vlist_callback(unsigned int dlist, int range)
 HIDDEN void
 to_rt_end_callback_internal(int aborted)
 {
-    if (0 < bu_vls_strlen(&current_top->to_gop->go_rt_end_callback)) {
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+    if (0 < bu_vls_strlen(&tgd->go_rt_end_callback)) {
 	struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
-
+	tgd->go_rt_end_callback_cnt++;
+	if (tgd->go_rt_end_callback_cnt > 1) {
+	    bu_log("Warning - recursive go_rt_end_callback call\n");
+	}
 	bu_vls_printf(&callback_cmd, "%s %d",
-		      bu_vls_addr(&current_top->to_gop->go_rt_end_callback),
-		      aborted);
+		      bu_vls_addr(&tgd->go_rt_end_callback), aborted);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd));
+	tgd->go_rt_end_callback_cnt--;
     }
 }
 

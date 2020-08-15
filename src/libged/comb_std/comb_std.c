@@ -561,7 +561,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (last_tok == TOK_RPAREN) {
 		/* next token MUST be an operator */
-		if (add_operator(gedp, &tok_hd.l, ptr, &last_tok) == GED_ERROR) {
+		if (add_operator(gedp, &tok_hd.l, ptr, &last_tok) & GED_ERROR) {
 		    free_tokens(&tok_hd.l);
 		    return GED_ERROR;
 		}

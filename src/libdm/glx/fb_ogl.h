@@ -30,7 +30,6 @@
 /** @} */
 
 #ifdef FB_USE_INTERNAL_API
-#ifdef IF_OGL
 #include "common.h"
 #  ifdef HAVE_X11_XLIB_H
 #    include <X11/Xlib.h>
@@ -68,7 +67,6 @@ struct ogl_fb_info {
     int double_buffer;
     int soft_cmap;
 };
-#endif /* IF_OGL */
 #endif /* FB_USE_INTERNAL_API */
 
 /*

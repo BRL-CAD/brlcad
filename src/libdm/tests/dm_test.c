@@ -36,10 +36,10 @@ main(int UNUSED(argc), const char **argv)
 
     bu_log("load msgs: %s\n", dm_init_msgs());
 
-    struct bu_vls *blist = dm_list_types("\n	");
-    bu_log("Available types:\n	%s\n", bu_vls_cstr(blist));
-    bu_vls_free(blist);
-    BU_PUT(blist, struct bu_vls);
+    struct bu_vls blist = BU_VLS_INIT_ZERO;
+    dm_list_types(&blist, "\n	");
+    bu_log("Available types:\n	%s\n", bu_vls_cstr(&blist));
+    bu_vls_free(&blist);
 
     int vtype;
     vtype = dm_valid_type("nu", NULL);

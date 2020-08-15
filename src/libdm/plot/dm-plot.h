@@ -37,6 +37,8 @@
 #define	GED_TO_PLOT(x)	(x)
 #define PLOT_TO_GED(x)	(x)
 
+extern struct dm dm_plot;
+
 struct plot_vars {
     struct bu_list l;
     FILE *up_fp;

@@ -51,59 +51,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-#define NEED_GUI(_name) (\
-	BU_STR_EQUIV(_name, "wgl") || \
-	BU_STR_EQUIV(_name, "ogl") || \
-	BU_STR_EQUIV(_name, "osgl") || \
-	BU_STR_EQUIV(_name, "tk") || \
-	BU_STR_EQUIV(_name, "X") || \
-	BU_STR_EQUIV(_name, "txt") || \
-	BU_STR_EQUIV(_name, "qt"))
-
-/* All systems can compile these! */
-extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
-extern int PS_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
-extern int Txt_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
-
-#ifdef DM_X
-extern int X_dm_init();
-#endif /* DM_X */
-
-#if 0
-/* Turn this off until we get it working properly... */
-#ifdef DM_TK
-extern int tk_dm_init();
-#endif /* DM_TK */
-#endif
-
-#ifdef DM_WGL
-extern int Wgl_dm_init();
-#endif /* DM_WGL */
-
-#ifdef DM_OGL
-# if defined(HAVE_TK)
-extern int Ogl_dm_init();
-# endif
-#endif /* DM_OGL */
-
-#ifdef DM_OSG
-extern int Osg_dm_init();
-#endif /* DM_OSG */
-
-#ifdef DM_GLX
-extern int Glx_dm_init();
-#endif /* DM_GLX */
-
-#ifdef DM_QT
-extern int Qt_dm_init();
-#endif /* DM_QT */
-
-#ifdef DM_OSGL
-# if defined(HAVE_TK)
-extern int Osgl_dm_init();
-# endif
-#endif /* DM_OSGL */
-
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 
 extern struct _color_scheme default_color_scheme;
@@ -125,124 +72,6 @@ void set_curr_dm(struct dm_list *nl)
 	    GEDP->ged_gvp = NULL;
 	}
     }
-}
-
-#ifdef DM_OGL
-static int
-ogl_doevent(void *UNUSED(vclientData), void *veventPtr)
-{
-    /*ClientData clientData = (ClientData)vclientData;*/
-    XEvent *eventPtr= (XEvent *)veventPtr;
-    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	(void)dm_make_current(DMP);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	dirty = 1;
-	return TCL_OK;
-    }
-    /* allow further processing of this event */
-    return TCL_OK;
-}
-#endif
-
-#ifdef DM_OSGL
-static int
-osgl_doevent(void *UNUSED(vclientData), void *veventPtr)
-{
-    /*ClientData clientData = (ClientData)vclientData;*/
-    XEvent *eventPtr= (XEvent *)veventPtr;
-    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	(void)dm_make_current(DMP);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	dirty = 1;
-	return TCL_OK;
-    }
-    /* allow further processing of this event */
-    return TCL_OK;
-}
-#endif
-
-#ifdef DM_WGL
-/* TODO - is there a reason the dm_make_current is outside the
- * if clause on Windows but not elsewhere? */
-static int
-wgl_doevent(void *UNUSED(vclientData), void *veventPtr)
-{
-    /*ClientData clientData = (ClientData)vclientData;*/
-    XEvent *eventPtr= (XEvent *)veventPtr;
-    if (!dm_make_current(DMP))
-	/* allow further processing of this event */
-	return TCL_OK;
-
-    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	dirty = 1;
-	/* no further processing for this event */
-	return TCL_RETURN;
-    }
-    /* allow further processing of this event */
-    return TCL_OK;
-}
-#endif
-
-#if defined(HAVE_TK)
-static int
-x_doevent(void *UNUSED(vclientData), void *veventPtr)
-{
-    /*ClientData clientData = (ClientData)vclientData;*/
-    XEvent *eventPtr= (XEvent *)veventPtr;
-    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-
-	dirty = 1;
-	/* no further processing for this event */
-	return TCL_RETURN;
-    }
-    /* allow further processing of this event */
-    return TCL_OK;
-}
-#endif
-
-typedef int (*eventfptr)();
-
-struct w_dm which_dm[] = {
-    { "plot", NULL},  /* DM_PLOT_INDEX defined in mged_dm.h */
-    { "ps", NULL},      /* DM_PS_INDEX defined in mged_dm.h */
-    { "txt", NULL},
-#ifdef DM_X
-    { "X", x_doevent },
-#endif /* DM_X */
-#ifdef DM_TK
-    { "tk", NULL},
-#endif /* DM_TK */
-#ifdef DM_WGL
-    { "wgl", wgl_doevent },
-#endif /* DM_WGL */
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-    { "ogl", ogl_doevent },
-#  endif
-#endif /* DM_OGL */
-#ifdef DM_OSGL
-#  if defined(HAVE_TK)
-    { "osgl", osgl_doevent },
-#  endif
-#endif /* DM_OSGL */
-#ifdef DM_QT
-    { "qt", x_doevent },
-#endif /* DM_QT */
-    { (char *)NULL, (int (*)())NULL}
-};
-
-static eventfptr
-dm_doevent(const char *dm_type) {
-    int i = 0;
-    while (which_dm[i].name != NULL) {
-	if (dm_type == which_dm[i].name) {
-	    return which_dm[i].doevent;
-	}
-	i++;
-    }
-    return NULL;
 }
 
 int
@@ -268,9 +97,6 @@ mged_dm_init(struct dm_list *o_dm_list,
     /*XXXX this eventually needs to move into Ogl's private structure */
     dm_set_vp(DMP, &view_state->vs_gvp->gv_scale);
     dm_set_perspective(DMP, mged_variables->mv_perspective_mode);
-
-    /* TODO - look up event handler based on dm_type */
-    eventHandler = dm_doevent(dm_type);
 
 #ifdef HAVE_TK
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
@@ -429,45 +255,16 @@ f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 static void
 print_valid_dm(Tcl_Interp *interpreter)
 {
-    int i = 0;
     Tcl_AppendResult(interpreter, "\tThe following display manager types are valid: ", (char *)NULL);
-#ifdef DM_X
-    Tcl_AppendResult(interpreter, "X  ", (char *)NULL);
-    i++;
-#endif /* DM_X */
-#if 0
-#ifdef DM_TK
-    Tcl_AppendResult(interpreter, "tk  ", (char *)NULL);
-    i++;
-#endif /* DM_TK */
-#endif
-#ifdef DM_WGL
-    Tcl_AppendResult(interpreter, "wgl  ", (char *)NULL);
-    i++;
-#endif /* DM_WGL */
-#ifdef DM_OGL
-    Tcl_AppendResult(interpreter, "ogl  ", (char *)NULL);
-    i++;
-#endif /* DM_OGL */
-#ifdef DM_OSG
-    Tcl_AppendResult(interpreter, "osg  ", (char *)NULL);
-    i++;
-#endif /* DM_OSG*/
-#ifdef DM_OSGL
-    Tcl_AppendResult(interpreter, "osgl  ", (char *)NULL);
-    i++;
-#endif /* DM_OSGL*/
-#ifdef DM_GLX
-    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
-    i++;
-#endif /* DM_GLX */
-#ifdef DM_QT
-    Tcl_AppendResult(interpreter, "qt", (char *)NULL);
-    i++;
-#endif /* DM_QT */
-    if (i == 0) {
+    struct bu_vls dm_types = BU_VLS_INIT_ZERO;
+    dm_list_types(&dm_types, " ");
+
+    if (bu_vls_strlen(&dm_types)) {
+	Tcl_AppendResult(interpreter, bu_vls_cstr(&dm_types), (char *)NULL);
+    } else {
 	Tcl_AppendResult(interpreter, "NONE AVAILABLE", (char *)NULL);
     }
+    bu_vls_free(&dm_types);
     Tcl_AppendResult(interpreter, "\n", (char *)NULL);
 }
 
@@ -475,8 +272,6 @@ print_valid_dm(Tcl_Interp *interpreter)
 int
 f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct w_dm *wp;
-
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -493,18 +288,13 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 	return TCL_OK;
     }
 
-    /* Look at last argument, skipping over any options which precede it */
-    for (wp = &which_dm[2]; wp->name != NULL; wp++)
-	if (BU_STR_EQUAL(argv[argc - 1], wp->name))
-	    break;
-
-    if (wp->name == NULL) {
+    if (!dm_valid_type(argv[argc-1], NULL)) {
 	Tcl_AppendResult(interpreter, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 	print_valid_dm(interpreter);
 	return TCL_ERROR;
     }
 
-    return mged_attach(wp, argc, argv);
+    return mged_attach(argv[argc - 1], argc, argv);
 }
 
 
@@ -585,13 +375,13 @@ gui_setup(const char *dstr)
 
 
 int
-mged_attach(struct w_dm *wp, int argc, const char *argv[])
+mged_attach(const char *wp_name, int argc, const char *argv[])
 {
     int opt_argc;
     char **opt_argv;
     struct dm_list *o_dm_list;
 
-    if (!wp) {
+    if (!wp_name) {
 	return TCL_ERROR;
     }
 
@@ -603,7 +393,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     predictor_init();
 
     /* Only need to do this once */
-    if (tkwin == NULL && NEED_GUI(wp->name)) {
+    if (tkwin == NULL && BU_STR_EQUIV(dm_graphics_system(wp_name), "Tk")) {
 	struct dm *tmp_dmp;
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
@@ -637,11 +427,11 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 
     BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
 
-    if (!wp->name) {
+    if (!wp_name) {
 	return TCL_ERROR;
     }
 
-    if (mged_dm_init(o_dm_list, wp->name, argc, argv) == TCL_ERROR) {
+    if (mged_dm_init(o_dm_list, wp_name, argc, argv) == TCL_ERROR) {
 	goto Bad;
     }
 
@@ -694,23 +484,32 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 void
 get_attached(void)
 {
-    int argc;
-    const char *argv[3];
-    struct w_dm *wp = (struct w_dm *)NULL;
     int inflimit = 1000;
     int ret;
     struct bu_vls type = BU_VLS_INIT_ZERO;
 
-    while (inflimit > 0) {
-	bu_vls_trunc(&type, 0);
-	bu_log("attach (nu");
+    struct bu_vls type_msg = BU_VLS_INIT_ZERO;
+    struct bu_vls dm_types = BU_VLS_INIT_ZERO;
+    dm_list_types(&dm_types, " ");
+    char **dms = (char **)bu_calloc(bu_vls_strlen(&dm_types), sizeof(char *), "dm name array");
+    int nargc = bu_argv_from_string(dms, bu_vls_strlen(&dm_types), bu_vls_addr(&dm_types));
 
-	/* print all the available display manager types, skipping plot and ps */
-	wp = &which_dm[2];
-	for (; wp->name != NULL; wp++) {
-	    bu_log("|%s", wp->name);
-	}
-	bu_log(")[nu]? ");
+    bu_vls_sprintf(&type_msg, "attach (nu");
+    for (int i = 0; i < nargc; i++) {
+	if (BU_STR_EQUAL(dms[i], "nu"))
+	    continue;
+	if (BU_STR_EQUAL(dms[i], "plot"))
+	    continue;
+	if (BU_STR_EQUAL(dms[i], "postscript"))
+	    continue;
+	bu_vls_printf(&type_msg, " %s", dms[i]);
+    }
+    bu_vls_printf(&type_msg, ")[nu]? ");
+    bu_free(dms, "array");
+    bu_vls_free(&dm_types);
+
+    while (inflimit > 0) {
+	bu_log("%s", bu_vls_cstr(&type_msg));
 
 	ret = bu_vls_gets(&type, stdin);
 	if (ret < 0) {
@@ -729,13 +528,7 @@ get_attached(void)
 	/* trim whitespace before comparisons (but not before checking empty) */
 	bu_vls_trimspace(&type);
 
-	for (wp = &which_dm[2]; wp->name != NULL; wp++) {
-	    if (BU_STR_EQUAL(bu_vls_addr(&type), wp->name)) {
-		break;
-	    }
-	}
-
-	if (wp->name != NULL) {
+	if (dm_valid_type(bu_vls_cstr(&type), NULL)) {
 	    break;
 	}
 
@@ -743,20 +536,23 @@ get_attached(void)
 	inflimit--;
     }
 
-    bu_vls_free(&type);
+    bu_vls_free(&type_msg);
 
     if (inflimit <= 0) {
 	bu_log("\nInfinite loop protection, attach aborted!\n");
+	bu_vls_free(&type);
 	return;
     }
 
-    bu_log("Starting an %s display manager\n", wp->name);
+    bu_log("Starting an %s display manager\n", bu_vls_cstr(&type));
 
-    argc = 2;
+    int argc = 1;
+    const char *argv[3];
     argv[0] = "";
     argv[1] = "";
     argv[2] = (char *)NULL;
-    (void)mged_attach(wp, argc, argv);
+    (void)mged_attach(bu_vls_cstr(&type), argc, argv);
+    bu_vls_free(&type);
 }
 
 
@@ -782,48 +578,9 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
-#ifdef DM_X
-	if (BU_STR_EQUAL(argv[argc-1], "X")) {
-	    Tcl_AppendResult(interpreter, "X", (char *)NULL);
+	if (dm_valid_type(argv[argc-1], NULL)) {
+	    Tcl_AppendResult(interpreter, argv[argc-1], (char *)NULL);
 	}
-#endif /* DM_X */
-#if 0
-#ifdef DM_TK
-	if (BU_STR_EQUAL(argv[argc-1], "tk")) {
-	    Tcl_AppendResult(interpreter, "tk", (char *)NULL);
-	}
-#endif /* DM_TK */
-#endif
-#ifdef DM_WGL
-	if (BU_STR_EQUAL(argv[argc-1], "wgl")) {
-	    Tcl_AppendResult(interpreter, "wgl", (char *)NULL);
-	}
-#endif /* DM_WGL */
-#ifdef DM_OGL
-	if (BU_STR_EQUAL(argv[argc-1], "ogl")) {
-	    Tcl_AppendResult(interpreter, "ogl", (char *)NULL);
-	}
-#endif /* DM_OGL */
-#ifdef DM_OSG
-	if (BU_STR_EQUAL(argv[argc-1], "osg")) {
-	    Tcl_AppendResult(interpreter, "osg", (char *)NULL);
-	}
-#endif /* DM_OSG*/
-#ifdef DM_OSGL
-	if (BU_STR_EQUAL(argv[argc-1], "osgl")) {
-	    Tcl_AppendResult(interpreter, "osgl", (char *)NULL);
-	}
-#endif /* DM_OSGL*/
-#ifdef DM_GLX
-	if (BU_STR_EQUAL(argv[argc-1], "glx")) {
-	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
-	}
-#endif /* DM_GLX */
-#ifdef DM_QT
-	if (BU_STR_EQUAL(argv[argc-1], "qt")) {
-	    Tcl_AppendResult(interpreter, "qt", (char *)NULL);
-	}
-#endif /* DM_QT */
 	return TCL_OK;
     }
 

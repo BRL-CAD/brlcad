@@ -36,7 +36,7 @@
 int
 go_data_arrows(Tcl_Interp *interp,
 	       struct ged *gedp,
-	       struct ged_dm_view *gdvp,
+	       struct bview *gdvp,
 	       int argc,
 	       const char *argv[],
 	       const char *usage)
@@ -58,11 +58,13 @@ go_data_arrows(Tcl_Interp *interp,
     }
 
     /* Don't allow go_refresh() to be called */
-    if (current_top != NULL)
-	current_top->to_gop->go_refresh_on = 0;
+    if (current_top != NULL) {
+	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+	tgd->go_refresh_on = 0;
+    }
 
     ret = to_data_arrows_func(interp, gedp, gdvp, argc, argv);
-    if (ret == GED_ERROR)
+    if (ret & GED_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -77,7 +79,7 @@ to_data_arrows(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    struct ged_dm_view *gdvp;
+    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -94,12 +96,8 @@ to_data_arrows(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+    gdvp = ged_find_view(gedp, argv[1]);
+    if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
@@ -117,16 +115,16 @@ to_data_arrows(struct ged *gedp,
 int
 to_data_arrows_func(Tcl_Interp *interp,
 		    struct ged *gedp,
-		    struct ged_dm_view *gdvp,
+		    struct bview *gdvp,
 		    int argc,
 		    const char *argv[])
 {
     struct bview_data_arrow_state *gdasp;
 
     if (argv[0][0] == 's')
-	gdasp = &gdvp->gdv_view->gv_sdata_arrows;
+	gdasp = &gdvp->gv_sdata_arrows;
     else
-	gdasp = &gdvp->gdv_view->gv_data_arrows;
+	gdasp = &gdvp->gv_data_arrows;
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {

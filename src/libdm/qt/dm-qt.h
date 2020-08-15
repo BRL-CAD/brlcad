@@ -85,6 +85,8 @@ struct dm_qtvars {
     int devbuttonrelease;
 };
 
+extern struct dm dm_qt;
+
 #endif /* DM_QT_H */
 
 /** @} */

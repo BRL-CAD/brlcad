@@ -83,18 +83,6 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
 	bu_log("%s time: %g\n", argv[0], (bu_gettime() - start)/1e6);
     }
 
-    // TODO - for the moment these are the hardcoded default opts.  Eventually
-    // an opts var should be added to struct ged, and each exec call will set
-    // the gedp->opts value to the command defaults.  Then the command option handling
-    // will be able to alter the flags if desired (for example, a flag to suppress
-    // autoview behavior will simply remove the flag from gedp->opts.
-    if (cmd->i->opts & GED_CMD_UPDATE_VIEW) {
-	// Do update view callback
-	if (gedp->ged_refresh_handler) {
-	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
-	}
-    }
-
     return cret;
 }
 

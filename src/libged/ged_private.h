@@ -82,6 +82,37 @@ __BEGIN_DECLS
 /* Default libged column width assumption */
 #define GED_TERMINAL_WIDTH 80
 
+
+/* Callback management related structures */
+#define GED_REFRESH_FUNC_NULL ((ged_refresh_func_t)0)
+#define GED_CREATE_VLIST_SOLID_FUNC_NULL ((ged_create_vlist_solid_func_t)0)
+#define GED_CREATE_VLIST_DISPLAY_LIST_FUNC_NULL ((ged_create_vlist_display_list_func_t)0)
+#define GED_DESTROY_VLIST_FUNC_NULL ((ged_destroy_vlist_func_t)0)
+
+// Private bookkeeping structure used by callback handlers
+struct ged_callback_state {
+    int ged_refresh_handler_cnt;
+    int ged_output_handler_cnt;
+    int ged_create_vlist_solid_callback_cnt;
+    int ged_create_vlist_display_list_callback_cnt;
+    int ged_destroy_vlist_callback_cnt;
+    int ged_io_handler_callback_cnt;
+};
+
+/* These are wrapper functions, that should be called by libged code instead of
+ * the callback pointers supplied by the client (if any).  They will do the boilerplate
+ * bookkeeping and validation required by callbacks.
+ */
+GED_EXPORT extern void ged_refresh_cb(struct ged *);
+GED_EXPORT extern void ged_output_handler_cb(struct ged *, char *);
+GED_EXPORT extern void ged_create_vlist_solid_cb(struct ged *, struct solid *);
+GED_EXPORT extern void ged_create_vlist_display_list_cb(struct ged *, struct display_list *);
+GED_EXPORT extern void ged_destroy_vlist_cb(struct ged *, unsigned int, int);
+GED_EXPORT extern void ged_io_handler_cb(struct ged *, void *, int);
+
+
+
+
 struct _ged_funtab {
     char *ft_name;
     char *ft_parms;
@@ -181,30 +212,22 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 			 int validate);
 
 /* defined in display_list.c */
-GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
-					  const char *name,
-					  const int skip_first, struct solid *freesolid);
-GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
-					  const char *path,
-					  const int skip_first, struct solid *freesolid);
-extern void _dl_freeDisplayListItem(struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
-				     struct display_list *gdlp, struct solid *freesolid);
+GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char *name, const int skip_first);
+GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
+extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
 extern int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 /* Returns a bu_ptbl of all solids referenced by the display list */
 extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
-GED_EXPORT extern void dl_add_path(struct display_list *gdlp, int dashflag, fastf_t transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *), struct solid *freesolid);
+GED_EXPORT extern void dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp);
 
-GED_EXPORT extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *), int skip_subtractions);
+GED_EXPORT extern int dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions);
 GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
 GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
 GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
-GED_EXPORT void dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int), struct solid *freesolid);
+GED_EXPORT void dl_zap(struct ged *gedp, struct solid *freesolid);
 GED_EXPORT int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 GED_EXPORT void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 GED_EXPORT void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
@@ -222,7 +245,7 @@ GED_EXPORT void dl_write_animate(struct bu_list *hdlp, FILE *fp);
 
 GED_EXPORT int dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
 GED_EXPORT int dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
-GED_EXPORT void dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transparency, void (*callback)(struct display_list *));
+GED_EXPORT void dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparency);
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
@@ -625,6 +648,10 @@ _ged_facetize_log_default(struct _ged_facetize_opts *o);
 GED_EXPORT extern int ged_snap_lines(point_t *out_pt, struct ged *gedp, point_t *p);
 GED_EXPORT extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
+
+
+GED_EXPORT extern void ged_push_solid(struct ged *gedp, struct solid *sp);
+GED_EXPORT extern struct solid *ged_pop_solid(struct ged *gedp);
 
 __END_DECLS
 

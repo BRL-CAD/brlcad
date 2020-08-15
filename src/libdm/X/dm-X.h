@@ -41,6 +41,26 @@
 
 #define INIT_XCOLOR(c) memset((c), 0, sizeof(XColor))
 
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {    \
+        _shift = 24 - _shift;                           \
+        switch (_shift) {                               \
+            case 0:                                     \
+                _mask >>= 24;                           \
+                break;                                  \
+            case 8:                                     \
+                _mask >>= 8;                            \
+                break;                                  \
+            case 16:                                    \
+                _mask <<= 8;                            \
+                break;                                  \
+            case 24:                                    \
+                _mask <<= 24;                           \
+                break;                                  \
+        }                                               \
+    }
+
+extern struct dm dm_X;
+
 struct x_vars {
     GC gc;
     Pixmap pix;

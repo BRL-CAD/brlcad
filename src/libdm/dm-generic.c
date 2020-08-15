@@ -178,7 +178,7 @@ dm_get_fb(struct dm *dmp)
 }
 
 const char *
-dm_get_dm_name(struct dm *dmp)
+dm_get_dm_name(const struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
     return dmp->i->dm_name;
@@ -219,6 +219,12 @@ dm_set_height(struct dm *dmp, int height)
     dmp->i->dm_height = height;
 }
 
+int
+dm_graphical(const struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_graphical;
+}
 
 const char *
 dm_get_type(struct dm *dmp)
@@ -304,6 +310,27 @@ dm_make_current(struct dm *dmp)
     return dmp->i->dm_makeCurrent(dmp);
 }
 
+int
+dm_doevent(struct dm *dmp, void *clientData, void *eventPtr)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_doevent(dmp, clientData, eventPtr);
+}
+
+int
+dm_get_dirty(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_dirty;
+}
+
+void
+dm_set_dirty(struct dm *dmp, int i)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_dirty = i;
+}
+
 vect_t *
 dm_get_clipmin(struct dm *dmp)
 {
@@ -372,6 +399,13 @@ dm_get_dname(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
     return &(dmp->i->dm_dName);
+}
+
+const char *
+dm_get_graphics_system(const struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+    return dmp->i->graphics_system;
 }
 
 struct bu_vls *

@@ -390,7 +390,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     // As a first cut, do a fault intolerant read - if there are any problems we want to know
-    if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 0) == GED_ERROR) {
+    if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 0) & GED_ERROR) {
 	a = NULL;
     }
 

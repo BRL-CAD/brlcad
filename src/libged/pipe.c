@@ -628,7 +628,7 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
     /* convert from double to fastf_t */
     VMOVE(view_ps_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & GED_ERROR)
 	return GED_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||

@@ -85,7 +85,7 @@ ged_orotate_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 5) {
 	/* Use the object's center as the keypoint. */
 
-	if (_ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == GED_ERROR)
+	if (_ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) & GED_ERROR)
 	    return GED_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];

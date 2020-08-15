@@ -146,8 +146,7 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
     }
 
-    if (_ged_current_gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
-	(*_ged_current_gedp->ged_refresh_handler)(_ged_current_gedp->ged_refresh_clientdata);
+    ged_refresh_cb(_ged_current_gedp);
 
     if (preview_delay > 0) {
 	struct timeval tv;
