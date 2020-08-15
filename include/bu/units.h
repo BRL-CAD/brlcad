@@ -37,10 +37,15 @@ __BEGIN_DECLS
 /** @file bu/units.h */
 
 /**
- * Given a string representation of a unit of distance (e.g., "feet"),
- * return the multiplier which will convert that unit into the default
- * unit for the dimension (millimeters for length, mm^3 for volume,
- * and grams for mass.)
+ * Convert the provided string into a units conversion factor.
+ *
+ * Given a string for a unit of length (e.g., "feet", "yd"), volume
+ * (e.g., "cm^3", "cu yards"), or mass (e.g., "kg", "grain", or "oz")
+ * return the multiplier (aka conversion factor) that converts the
+ * unit into the default (millimeters for length, mm^3 for volume, and
+ * grams for mass.)  Values may be optionally specified with the unit
+ * (e.g., "5ft") to get the conversion factor for a particular
+ * quantity.
  *
  * Returns 0.0 on error and >0.0 on success
  */
@@ -50,8 +55,7 @@ BU_EXPORT extern double bu_units_conversion(const char *str);
  * Given a conversion factor to mm, search the table to find what unit
  * this represents.
  *
- * To accommodate floating point fuzz, a "near miss" is allowed.  The
- * algorithm depends on the table being sorted small-to-large.
+ * To accommodate floating point fuzz, a "near miss" is allowed.
  *
  * Returns -
  * char* units string
