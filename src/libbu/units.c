@@ -241,15 +241,27 @@ units_name_matches(const char *input, const char *name)
 double
 bu_units_conversion(const char *str)
 {
-    register const struct cvt_tab *tp;
-    register const struct conv_table *cvtab;
+    const struct cvt_tab *tp;
+    const struct conv_table *cvtab;
+    double factor = 1.0;
 
-    /* Search for this string in the table */
+    /* Search for the units string in the table matching by name. */
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
-	    if (!units_name_matches(str, tp->name))
-		continue;
-	    return tp->val;
+	    if (units_name_matches(str, tp->name)) {
+		return tp->val;
+	    }
+	}
+    }
+    /* couldn't find it by name, check by value */
+    factor = bu_mm_value(str);
+    if (!EQUAL(factor, 1.0)) {
+	for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
+	    for (tp=cvtab->cvttab; tp->name[0]; tp++) {
+		if (EQUAL(factor, tp->val)) {
+		    return tp->val;
+		}
+	    }
 	}
     }
     return 0.0;		/* Unable to find it */
@@ -357,6 +369,8 @@ bu_nearest_units_string(register const double mm)
 
 double
 bu_mm_value(const char *s)
+
+
 {
     double v;
     char *ptr;
