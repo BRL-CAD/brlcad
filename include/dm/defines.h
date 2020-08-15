@@ -59,7 +59,7 @@ struct dm {
 };
 
 struct dm_plugin {
-    uint32_t api_version;
+    uint32_t api_version; /* must be first in struct */
     const struct dm * const p;
 };
 
