@@ -3087,7 +3087,7 @@ struct dm_impl dm_ogl_impl = {
 struct dm dm_ogl = { &dm_ogl_impl };
 
 #ifdef DM_PLUGIN
-static const struct dm_plugin pinfo = { &dm_ogl };
+static const struct dm_plugin pinfo = { DM_API, &dm_ogl };
 
 COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {

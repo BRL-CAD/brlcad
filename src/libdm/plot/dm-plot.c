@@ -759,7 +759,7 @@ struct dm_impl dm_plot_impl = {
 struct dm dm_plot = { &dm_plot_impl };
 
 #ifdef DM_PLUGIN
-const struct dm_plugin pinfo = { &dm_plot };
+const struct dm_plugin pinfo = { DM_API, &dm_plot };
 
 COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {

@@ -2739,7 +2739,7 @@ extern "C" {
     struct dm dm_osgl = { &dm_osgl_impl };
 
 #ifdef DM_PLUGIN
-    static const struct dm_plugin pinfo = { &dm_osgl };
+    static const struct dm_plugin pinfo = { DM_API, &dm_osgl };
 
     COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
     {

@@ -98,7 +98,19 @@ libdm_init(void)
 
 	    const struct dm_plugin *plugin = plugin_info();
 
-	    if (!plugin || !plugin->p) {
+	    if (!plugin) {
+		bu_vls_printf(dm_init_msg_str, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    if (((uintptr_t)(plugin) & (sizeof((uintptr_t)(plugin))-1)) || *((const uint32_t *)(plugin)) != (uint32_t)(DM_API)) {
+		bu_vls_printf(dm_init_msg_str, "Plugin version %d of '%s' differs from %d (skipping)\n", *((const uint32_t *)(plugin)), pfile, DM_API);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    if (!plugin->p) {
 		bu_vls_printf(dm_init_msg_str, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
 		bu_dlclose(dl_handle);
 		continue;
@@ -106,6 +118,10 @@ libdm_init(void)
 
 	    const struct dm *d = plugin->p;
 	    const char *dname = dm_get_name(d);
+	    if (!dname) {
+		bu_vls_printf(dm_init_msg_str, "Warning - file '%s' does not provide a display manager name (?), skipping\n", pfile);
+		continue;
+	    }
 	    std::string key(dname);
 	    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
 	    if (dm_map.find(key) != dm_map.end()) {
