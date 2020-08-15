@@ -5,8 +5,6 @@ set(PLOT_SRCS
 
 if(BRLCAD_ENABLE_TCL)
 
-  find_package(TCL)
-
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BRLCAD_BINARY_DIR}/include

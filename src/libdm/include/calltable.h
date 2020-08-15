@@ -39,8 +39,11 @@
 #include "bu/parse.h"
 #include "bu/vls.h"
 #include "dm.h"
+#include "brlcad_version.h"
 
 __BEGIN_DECLS
+
+#define DM_API ((BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
 
 struct dm_vars {
     void *pub_vars;

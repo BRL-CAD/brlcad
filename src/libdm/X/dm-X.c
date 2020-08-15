@@ -2166,7 +2166,7 @@ struct dm_impl dm_X_impl = {
 struct dm dm_X = { &dm_X_impl };
 
 #ifdef DM_PLUGIN
-static const struct dm_plugin pinfo = { &dm_X };
+static const struct dm_plugin pinfo = { DM_API, &dm_X };
 
 COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {

@@ -26,6 +26,8 @@
 #ifndef DM_DEFINES_H
 #define DM_DEFINES_H
 
+#include "common.h"
+
 #ifndef DM_EXPORT
 #  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
 #    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
@@ -57,6 +59,7 @@ struct dm {
 };
 
 struct dm_plugin {
+    uint32_t api_version;
     const struct dm * const p;
 };
 
