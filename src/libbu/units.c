@@ -49,6 +49,7 @@ struct cvt_tab {
     char name[32];
 };
 
+
 struct conv_table {
     struct cvt_tab *cvttab;
 };
@@ -164,6 +165,7 @@ static struct cvt_tab bu_units_volume_tab[] = {
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
+
 /* Keep table sorted sorted small-to-large.  Algorithms below may rely
  * on the ordering.
  */
@@ -180,6 +182,7 @@ static struct cvt_tab bu_units_mass_tab[] = {
     {28.35,		"ounce"},
     {0.0,               ""}                     /* LAST ENTRY */
 };
+
 
 static const struct conv_table unit_lists[4] = {
     {bu_units_length_tab}, {bu_units_volume_tab}, {bu_units_mass_tab}, {NULL}
@@ -314,6 +317,7 @@ bu_units_string(register const double mm)
     return (const char *)NULL;
 }
 
+
 struct bu_vls *
 bu_units_strings_vls()
 {
@@ -431,6 +435,7 @@ bu_mm_cvt(const struct bu_structparse *sdp,
     /* reconvert with optional units */
     *p = bu_mm_value(value);
 }
+
 
 /*
  * Local Variables:
