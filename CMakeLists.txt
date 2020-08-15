@@ -3628,7 +3628,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # this should be a fixed list, but until we go live with the Git repo
   # use file(GLOB_RECURSE) instead
   file(GLOB_RECURSE GITHUB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ".github/*")
-  message("GITHUB_FILES: ${GITHUB_FILES}")
   CMAKEFILES(${GITHUB_FILES})
 
   # Handle some toplevel distclean listings
