@@ -26,6 +26,7 @@ endif(BRLCAD_ENABLE_TCL)
 
 CMAKEFILES(
   ${PLOT_SRCS}
+  CMakeLists.txt
   dm-plot.h
   )
 

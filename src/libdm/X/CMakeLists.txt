@@ -36,6 +36,7 @@ CMAKEFILES(
   CMakeLists.txt
   ${X_SRCS}
   dm-X.h
+  fb_X.h
   )
 
 # Local Variables:

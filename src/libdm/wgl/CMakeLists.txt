@@ -35,6 +35,7 @@ CMAKEFILES(
   CMakeLists.txt
   ${WGL_SRCS}
   dm-wgl.h
+  fb_wgl.h
   )
 
 # Local Variables:

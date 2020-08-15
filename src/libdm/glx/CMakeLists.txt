@@ -39,7 +39,9 @@ endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
 CMAKEFILES(
   CMakeLists.txt
   ${OGL_SRCS}
+  dm-glx.h
   dm-ogl.h
+  fb_ogl.h
   )
 
 # Local Variables:
