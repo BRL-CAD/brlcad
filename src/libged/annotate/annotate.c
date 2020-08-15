@@ -180,7 +180,7 @@ struct ged_cmd_impl annotate_cmd_impl = {
 const struct ged_cmd annotate_cmd = { &annotate_cmd_impl };
 const struct ged_cmd *annotate_cmds[] = { &annotate_cmd, NULL };
 
-static const struct ged_plugin pinfo = { annotate_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  annotate_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

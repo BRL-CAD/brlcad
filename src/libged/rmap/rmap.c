@@ -151,7 +151,7 @@ struct ged_cmd_impl rmap_cmd_impl = {
 const struct ged_cmd rmap_cmd = { &rmap_cmd_impl };
 const struct ged_cmd *rmap_cmds[] = { &rmap_cmd, NULL };
 
-static const struct ged_plugin pinfo = { rmap_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  rmap_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

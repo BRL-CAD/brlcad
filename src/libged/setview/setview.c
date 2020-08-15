@@ -102,7 +102,7 @@ struct ged_cmd_impl setview_cmd_impl = {
 const struct ged_cmd setview_cmd = { &setview_cmd_impl };
 const struct ged_cmd *setview_cmds[] = { &setview_cmd, NULL };
 
-static const struct ged_plugin pinfo = { setview_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  setview_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

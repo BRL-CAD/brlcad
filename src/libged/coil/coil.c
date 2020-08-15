@@ -568,7 +568,7 @@ struct ged_cmd_impl coil_cmd_impl = {
 const struct ged_cmd coil_cmd = { &coil_cmd_impl };
 const struct ged_cmd *coil_cmds[] = { &coil_cmd, NULL };
 
-static const struct ged_plugin pinfo = { coil_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  coil_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

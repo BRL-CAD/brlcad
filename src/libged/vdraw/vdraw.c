@@ -786,7 +786,7 @@ struct ged_cmd_impl vdraw_cmd_impl = {
 const struct ged_cmd vdraw_pcmd = { &vdraw_cmd_impl };
 const struct ged_cmd *vdraw_cmds[] = { &vdraw_pcmd, NULL };
 
-static const struct ged_plugin pinfo = { vdraw_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  vdraw_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

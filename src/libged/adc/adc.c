@@ -709,7 +709,7 @@ struct ged_cmd_impl adc_cmd_impl = {
 const struct ged_cmd adc_cmd = { &adc_cmd_impl };
 const struct ged_cmd *adc_cmds[] = { &adc_cmd, NULL };
 
-static const struct ged_plugin pinfo = { adc_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  adc_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

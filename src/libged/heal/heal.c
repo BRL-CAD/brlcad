@@ -96,7 +96,7 @@ struct ged_cmd_impl heal_cmd_impl = {
 const struct ged_cmd heal_cmd = { &heal_cmd_impl };
 const struct ged_cmd *heal_cmds[] = { &heal_cmd, NULL };
 
-static const struct ged_plugin pinfo = { heal_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  heal_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -182,7 +182,7 @@ const struct ged_cmd *nmg_cmds[] = {
     NULL
 };
 
-static const struct ged_plugin pinfo = { nmg_cmds, 10 };
+static const struct ged_plugin pinfo = { GED_API,  nmg_cmds, 10 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

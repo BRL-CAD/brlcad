@@ -241,7 +241,7 @@ struct ged_cmd_impl joint2_cmd_impl = {
 const struct ged_cmd joint2_cmd = { &joint2_cmd_impl };
 const struct ged_cmd *joint2_cmds[] = { &joint2_cmd, NULL };
 
-static const struct ged_plugin pinfo = { joint2_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  joint2_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

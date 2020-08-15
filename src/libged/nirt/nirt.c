@@ -515,7 +515,7 @@ const struct ged_cmd vquery_ray_cmd = { &vquery_ray_cmd_impl };
 
 const struct ged_cmd *nirt_cmds[] = { &nirt_cmd, &vnirt_cmd, &query_ray_cmd, &vquery_ray_cmd, NULL };
 
-static const struct ged_plugin pinfo = { nirt_cmds, 4 };
+static const struct ged_plugin pinfo = { GED_API,  nirt_cmds, 4 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

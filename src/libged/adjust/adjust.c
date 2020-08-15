@@ -96,7 +96,7 @@ struct ged_cmd_impl adjust_cmd_impl = {
 const struct ged_cmd adjust_cmd = { &adjust_cmd_impl };
 const struct ged_cmd *adjust_cmds[] = { &adjust_cmd, NULL };
 
-static const struct ged_plugin pinfo = { adjust_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  adjust_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

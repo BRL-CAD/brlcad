@@ -119,7 +119,7 @@ struct ged_cmd_impl lookat_cmd_impl = {
 const struct ged_cmd lookat_cmd = { &lookat_cmd_impl };
 const struct ged_cmd *lookat_cmds[] = { &lookat_cmd, NULL };
 
-static const struct ged_plugin pinfo = { lookat_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  lookat_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

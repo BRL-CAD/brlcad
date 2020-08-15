@@ -114,7 +114,7 @@ struct ged_cmd_impl otranslate_cmd_impl = {
 const struct ged_cmd otranslate_cmd = { &otranslate_cmd_impl };
 const struct ged_cmd *otranslate_cmds[] = { &otranslate_cmd, NULL };
 
-static const struct ged_plugin pinfo = { otranslate_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  otranslate_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -143,7 +143,7 @@ struct ged_cmd_impl lod_cmd_impl = {
 const struct ged_cmd lod_cmd = { &lod_cmd_impl };
 const struct ged_cmd *lod_cmds[] = { &lod_cmd, NULL };
 
-static const struct ged_plugin pinfo = { lod_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  lod_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

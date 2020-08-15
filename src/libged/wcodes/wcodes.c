@@ -190,7 +190,7 @@ struct ged_cmd_impl wcodes_cmd_impl = {
 const struct ged_cmd wcodes_cmd = { &wcodes_cmd_impl };
 const struct ged_cmd *wcodes_cmds[] = { &wcodes_cmd, NULL };
 
-static const struct ged_plugin pinfo = { wcodes_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  wcodes_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

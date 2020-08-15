@@ -103,7 +103,7 @@ struct ged_cmd_impl edcomb_cmd_impl = {
 const struct ged_cmd edcomb_cmd = { &edcomb_cmd_impl };
 const struct ged_cmd *edcomb_cmds[] = { &edcomb_cmd, NULL };
 
-static const struct ged_plugin pinfo = { edcomb_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  edcomb_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

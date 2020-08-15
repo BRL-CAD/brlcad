@@ -126,7 +126,7 @@ struct ged_cmd_impl pset_cmd_impl = {
 const struct ged_cmd pset_cmd = { &pset_cmd_impl };
 const struct ged_cmd *pset_cmds[] = { &pset_cmd, NULL };
 
-static const struct ged_plugin pinfo = { pset_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  pset_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

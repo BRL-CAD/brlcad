@@ -56,7 +56,7 @@ struct ged_cmd_impl arot_cmd_impl = {
 const struct ged_cmd arot_cmd = { &arot_cmd_impl };
 const struct ged_cmd *arot_cmds[] = { &arot_cmd, NULL };
 
-static const struct ged_plugin pinfo = { arot_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  arot_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

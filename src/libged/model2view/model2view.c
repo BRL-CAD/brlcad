@@ -80,7 +80,7 @@ struct ged_cmd_impl model2view_cmd_impl = {
 const struct ged_cmd model2view_cmd = { &model2view_cmd_impl };
 const struct ged_cmd *model2view_cmds[] = { &model2view_cmd, NULL };
 
-static const struct ged_plugin pinfo = { model2view_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  model2view_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

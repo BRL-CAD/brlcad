@@ -76,7 +76,7 @@ struct ged_cmd_impl zoom_cmd_impl = {
 const struct ged_cmd zoom_cmd = { &zoom_cmd_impl };
 const struct ged_cmd *zoom_cmds[] = { &zoom_cmd, NULL };
 
-static const struct ged_plugin pinfo = { zoom_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  zoom_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -561,7 +561,7 @@ const struct ged_cmd metaball_add_pnt_cmd = { &metaball_add_pnt_cmd_impl };
 
 const struct ged_cmd *metaball_cmds[] = { &metaball_delete_pnt_cmd, &metaball_mouse_move_pnt_cmd, &metaball_move_pnt_cmd, &metaball_add_pnt_cmd, NULL };
 
-static const struct ged_plugin pinfo = { metaball_cmds, 4 };
+static const struct ged_plugin pinfo = { GED_API,  metaball_cmds, 4 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

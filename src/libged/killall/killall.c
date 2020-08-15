@@ -99,7 +99,7 @@ struct ged_cmd_impl killall_cmd_impl = {
 const struct ged_cmd killall_cmd = { &killall_cmd_impl };
 const struct ged_cmd *killall_cmds[] = { &killall_cmd, NULL };
 
-static const struct ged_plugin pinfo = { killall_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  killall_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

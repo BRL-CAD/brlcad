@@ -119,7 +119,7 @@ struct ged_cmd_impl sphgroup_cmd_impl = {
 const struct ged_cmd sphgroup_cmd = { &sphgroup_cmd_impl };
 const struct ged_cmd *sphgroup_cmds[] = { &sphgroup_cmd, NULL };
 
-static const struct ged_plugin pinfo = { sphgroup_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  sphgroup_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

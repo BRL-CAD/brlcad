@@ -253,7 +253,7 @@ struct ged_cmd_impl move_arb_face_cmd_impl = {
 const struct ged_cmd move_arb_face_cmd = { &move_arb_face_cmd_impl };
 const struct ged_cmd *move_arb_face_cmds[] = { &move_arb_face_cmd, NULL };
 
-static const struct ged_plugin pinfo = { move_arb_face_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  move_arb_face_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

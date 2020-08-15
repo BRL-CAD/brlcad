@@ -57,7 +57,7 @@ const struct ged_cmd rotate_about_cmd = { &rotate_about_cmd_impl };
 
 const struct ged_cmd *rot_cmds[] = { &rot_cmd, &rotate_about_cmd, NULL };
 
-static const struct ged_plugin pinfo = { rot_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  rot_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

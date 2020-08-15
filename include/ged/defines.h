@@ -328,6 +328,7 @@ struct ged_cmd {
 };
 
 struct ged_plugin {
+    uint32_t api_version;
     const struct ged_cmd ** const cmds;
     int cmd_cnt;
 };

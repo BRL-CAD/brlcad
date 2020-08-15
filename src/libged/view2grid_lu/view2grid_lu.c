@@ -85,7 +85,7 @@ struct ged_cmd_impl view2grid_lu_cmd_impl = {
 const struct ged_cmd view2grid_lu_cmd = { &view2grid_lu_cmd_impl };
 const struct ged_cmd *view2grid_lu_cmds[] = { &view2grid_lu_cmd, NULL };
 
-static const struct ged_plugin pinfo = { view2grid_lu_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  view2grid_lu_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

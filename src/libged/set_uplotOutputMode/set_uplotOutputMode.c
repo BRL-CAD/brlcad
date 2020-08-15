@@ -89,7 +89,7 @@ struct ged_cmd_impl set_uplotOutputMode_cmd_impl = {
 const struct ged_cmd set_uplotOutputMode_cmd = { &set_uplotOutputMode_cmd_impl };
 const struct ged_cmd *set_uplotOutputMode_cmds[] = { &set_uplotOutputMode_cmd, NULL };
 
-static const struct ged_plugin pinfo = { set_uplotOutputMode_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  set_uplotOutputMode_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

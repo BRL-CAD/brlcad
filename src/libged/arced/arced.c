@@ -144,7 +144,7 @@ struct ged_cmd_impl arced_cmd_impl = {
 const struct ged_cmd arced_cmd = { &arced_cmd_impl };
 const struct ged_cmd *arced_cmds[] = { &arced_cmd, NULL };
 
-static const struct ged_plugin pinfo = { arced_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  arced_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

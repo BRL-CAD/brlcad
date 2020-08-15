@@ -180,7 +180,7 @@ struct ged_cmd_impl pscale_cmd_impl = {
 const struct ged_cmd pscale_cmd = { &pscale_cmd_impl };
 const struct ged_cmd *pscale_cmds[] = { &pscale_cmd, NULL };
 
-static const struct ged_plugin pinfo = { pscale_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  pscale_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

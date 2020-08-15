@@ -73,7 +73,7 @@ struct ged_cmd_impl cat_cmd_impl = {
 const struct ged_cmd cat_cmd = { &cat_cmd_impl };
 const struct ged_cmd *cat_cmds[] = { &cat_cmd, NULL };
 
-static const struct ged_plugin pinfo = { cat_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  cat_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

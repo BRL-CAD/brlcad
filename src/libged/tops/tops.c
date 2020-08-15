@@ -141,7 +141,7 @@ struct ged_cmd_impl tops_cmd_impl = {
 const struct ged_cmd tops_cmd = { &tops_cmd_impl };
 const struct ged_cmd *tops_cmds[] = { &tops_cmd, NULL };
 
-static const struct ged_plugin pinfo = { tops_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  tops_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

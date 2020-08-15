@@ -284,7 +284,7 @@ const struct ged_cmd rselect_cmd = { &rselect_cmd_impl };
 
 const struct ged_cmd *select_cmds[] = { &select_cmd, &rselect_cmd, NULL };
 
-static const struct ged_plugin pinfo = { select_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  select_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

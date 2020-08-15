@@ -120,7 +120,7 @@ struct ged_cmd_impl eac_cmd_impl = {
 const struct ged_cmd eac_cmd = { &eac_cmd_impl };
 const struct ged_cmd *eac_cmds[] = { &eac_cmd, NULL };
 
-static const struct ged_plugin pinfo = { eac_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  eac_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

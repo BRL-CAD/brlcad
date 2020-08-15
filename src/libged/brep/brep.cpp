@@ -1482,7 +1482,7 @@ extern "C" {
     const struct ged_cmd brep_cmd = { &brep_cmd_impl };
     const struct ged_cmd *brep_cmds[] = { &brep_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { brep_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 1 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

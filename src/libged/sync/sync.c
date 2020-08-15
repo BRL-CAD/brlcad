@@ -63,7 +63,7 @@ struct ged_cmd_impl sync_cmd_impl = {
 const struct ged_cmd sync_cmd = { &sync_cmd_impl };
 const struct ged_cmd *sync_cmds[] = { &sync_cmd, NULL };
 
-static const struct ged_plugin pinfo = { sync_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  sync_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

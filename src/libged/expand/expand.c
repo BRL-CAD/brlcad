@@ -143,7 +143,7 @@ struct ged_cmd_impl expand_cmd_impl = {
 const struct ged_cmd expand_cmd = { &expand_cmd_impl };
 const struct ged_cmd *expand_cmds[] = { &expand_cmd, NULL };
 
-static const struct ged_plugin pinfo = { expand_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  expand_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

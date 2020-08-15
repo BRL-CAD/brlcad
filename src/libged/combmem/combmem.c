@@ -1090,7 +1090,7 @@ struct ged_cmd_impl combmem_cmd_impl = {
 const struct ged_cmd combmem_cmd = { &combmem_cmd_impl };
 const struct ged_cmd *combmem_cmds[] = { &combmem_cmd, NULL };
 
-static const struct ged_plugin pinfo = { combmem_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  combmem_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -119,7 +119,7 @@ struct ged_cmd_impl hide_cmd_impl = {
 const struct ged_cmd hide_cmd = { &hide_cmd_impl };
 const struct ged_cmd *hide_cmds[] = { &hide_cmd, NULL };
 
-static const struct ged_plugin pinfo = { hide_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  hide_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

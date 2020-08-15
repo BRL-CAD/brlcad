@@ -370,7 +370,7 @@ const struct ged_cmd *pipe_cmds[] = {
     &mouse_pipe_prepend_pnt_cmd,
     NULL };
 
-static const struct ged_plugin pinfo = { pipe_cmds, 8 };
+static const struct ged_plugin pinfo = { GED_API,  pipe_cmds, 8 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

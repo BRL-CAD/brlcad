@@ -391,7 +391,7 @@ struct ged_cmd_impl tol_cmd_impl = {
 const struct ged_cmd tol_cmd = { &tol_cmd_impl };
 const struct ged_cmd *tol_cmds[] = { &tol_cmd, NULL };
 
-static const struct ged_plugin pinfo = { tol_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  tol_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

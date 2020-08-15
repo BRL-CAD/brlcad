@@ -57,7 +57,7 @@ struct ged_cmd_impl tra_cmd_impl = {
 const struct ged_cmd tra_cmd = { &tra_cmd_impl };
 const struct ged_cmd *tra_cmds[] = { &tra_cmd, NULL };
 
-static const struct ged_plugin pinfo = { tra_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  tra_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

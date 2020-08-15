@@ -105,7 +105,7 @@ struct ged_cmd_impl eye_pos_cmd_impl = {
 const struct ged_cmd eye_pos_cmd = { &eye_pos_cmd_impl };
 const struct ged_cmd *eye_pos_cmds[] = { &eye_pos_cmd, NULL };
 
-static const struct ged_plugin pinfo = { eye_pos_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  eye_pos_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

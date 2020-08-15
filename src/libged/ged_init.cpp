@@ -163,8 +163,20 @@ libged_init(void)
 
 	    const struct ged_plugin *plugin = plugin_info();
 
-	    if (!plugin || !plugin->cmds) {
-		bu_vls_printf(ged_init_msg_str, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
+	    if (!plugin) {
+		bu_vls_printf(ged_init_msg_str, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    if (((uintptr_t)(plugin) & (sizeof((uintptr_t)(plugin))-1)) || *((const uint32_t *)(plugin)) != (uint32_t)  (GED_API)) {
+		bu_vls_printf(ged_init_msg_str, "Plugin version %d of '%s' differs from %d (skipping)\n", *((const uint32_t *)(plugin)), pfile, GED_API);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    if (!plugin->cmds) {
+		bu_vls_printf(ged_init_msg_str, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
 		bu_dlclose(dl_handle);
 		continue;
 	    }

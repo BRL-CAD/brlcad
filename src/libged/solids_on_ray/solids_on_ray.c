@@ -304,7 +304,7 @@ struct ged_cmd_impl solids_on_ray_cmd_impl = {
 const struct ged_cmd solids_on_ray_cmd = { &solids_on_ray_cmd_impl };
 const struct ged_cmd *solids_on_ray_cmds[] = { &solids_on_ray_cmd, NULL };
 
-static const struct ged_plugin pinfo = { solids_on_ray_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  solids_on_ray_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
