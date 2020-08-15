@@ -88,7 +88,7 @@ const struct ged_cmd i_cmd = { &i_cmd_impl };
 
 const struct ged_cmd *instance_cmds[] = { &instance_cmd, &i_cmd, NULL };
 
-static const struct ged_plugin pinfo = { instance_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  instance_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

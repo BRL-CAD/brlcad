@@ -94,7 +94,7 @@ struct ged_cmd_impl ae2dir_cmd_impl = {
 const struct ged_cmd ae2dir_cmd = { &ae2dir_cmd_impl };
 const struct ged_cmd *ae2dir_cmds[] = { &ae2dir_cmd, NULL };
 
-static const struct ged_plugin pinfo = { ae2dir_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  ae2dir_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

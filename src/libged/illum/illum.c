@@ -106,7 +106,7 @@ struct ged_cmd_impl illum_cmd_impl = {
 const struct ged_cmd illum_cmd = { &illum_cmd_impl };
 const struct ged_cmd *illum_cmds[] = { &illum_cmd, NULL };
 
-static const struct ged_plugin pinfo = { illum_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  illum_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

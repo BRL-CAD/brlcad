@@ -115,7 +115,7 @@ struct ged_cmd_impl savekey_cmd_impl = {
 const struct ged_cmd savekey_cmd = { &savekey_cmd_impl };
 const struct ged_cmd *savekey_cmds[] = { &savekey_cmd, NULL };
 
-static const struct ged_plugin pinfo = { savekey_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  savekey_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

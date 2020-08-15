@@ -87,7 +87,7 @@ struct ged_cmd_impl match_cmd_impl = {
 const struct ged_cmd match_cmd = { &match_cmd_impl };
 const struct ged_cmd *match_cmds[] = { &match_cmd, NULL };
 
-static const struct ged_plugin pinfo = { match_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  match_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

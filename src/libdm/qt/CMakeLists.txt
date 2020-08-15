@@ -46,6 +46,7 @@ endif(BRLCAD_ENABLE_QT)
 CMAKEFILES(
   CMakeLists.txt
   ${QT_SRCS}
+  dm-qt.h
   fb_qt.h
   )
 

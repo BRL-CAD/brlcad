@@ -664,7 +664,7 @@ const struct ged_cmd c_std_cmd = { &c_std_cmd_impl };
 
 const struct ged_cmd *comb_std_cmds[] = { &comb_std_cmd, &c_std_cmd, NULL };
 
-static const struct ged_plugin pinfo = { comb_std_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  comb_std_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

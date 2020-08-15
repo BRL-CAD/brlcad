@@ -112,7 +112,7 @@ struct ged_cmd_impl get_autoview_cmd_impl = {
 const struct ged_cmd get_autoview_cmd = { &get_autoview_cmd_impl };
 const struct ged_cmd *get_autoview_cmds[] = { &get_autoview_cmd, NULL };
 
-static const struct ged_plugin pinfo = { get_autoview_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  get_autoview_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

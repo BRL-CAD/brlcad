@@ -487,7 +487,7 @@ const struct ged_cmd t_cmd = { &t_cmd_impl };
 
 const struct ged_cmd *ls_cmds[] = { &ls_cmd, &t_cmd, NULL };
 
-static const struct ged_plugin pinfo = { ls_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  ls_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

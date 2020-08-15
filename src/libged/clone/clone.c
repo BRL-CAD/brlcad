@@ -1032,7 +1032,7 @@ struct ged_cmd_impl clone_cmd_impl = {
 const struct ged_cmd clone_cmd = { &clone_cmd_impl };
 const struct ged_cmd *clone_cmds[] = { &clone_cmd, NULL };
 
-static const struct ged_plugin pinfo = { clone_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  clone_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

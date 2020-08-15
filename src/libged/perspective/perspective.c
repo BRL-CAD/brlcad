@@ -89,7 +89,7 @@ struct ged_cmd_impl perspective_cmd_impl = {
 const struct ged_cmd perspective_cmd = { &perspective_cmd_impl };
 const struct ged_cmd *perspective_cmds[] = { &perspective_cmd, NULL };
 
-static const struct ged_plugin pinfo = { perspective_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  perspective_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

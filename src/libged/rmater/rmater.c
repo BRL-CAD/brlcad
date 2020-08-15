@@ -172,7 +172,7 @@ struct ged_cmd_impl rmater_cmd_impl = {
 const struct ged_cmd rmater_cmd = { &rmater_cmd_impl };
 const struct ged_cmd *rmater_cmds[] = { &rmater_cmd, NULL };
 
-static const struct ged_plugin pinfo = { rmater_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  rmater_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

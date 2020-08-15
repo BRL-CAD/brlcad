@@ -2563,7 +2563,7 @@ struct ged_cmd_impl gqa_cmd_impl = {
 const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
 const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
 
-static const struct ged_plugin pinfo = { gqa_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  gqa_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

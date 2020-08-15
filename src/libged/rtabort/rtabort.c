@@ -88,7 +88,7 @@ struct ged_cmd_impl rtabort_cmd_impl = {
 const struct ged_cmd rtabort_cmd = { &rtabort_cmd_impl };
 const struct ged_cmd *rtabort_cmds[] = { &rtabort_cmd, NULL };
 
-static const struct ged_plugin pinfo = { rtabort_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  rtabort_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

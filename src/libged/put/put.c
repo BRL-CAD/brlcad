@@ -117,7 +117,7 @@ struct ged_cmd_impl put_cmd_impl = {
 const struct ged_cmd put_cmd = { &put_cmd_impl };
 const struct ged_cmd *put_cmds[] = { &put_cmd, NULL };
 
-static const struct ged_plugin pinfo = { put_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  put_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

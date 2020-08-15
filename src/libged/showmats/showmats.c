@@ -191,7 +191,7 @@ struct ged_cmd_impl showmats_cmd_impl = {
 const struct ged_cmd showmats_cmd = { &showmats_cmd_impl };
 const struct ged_cmd *showmats_cmds[] = { &showmats_cmd, NULL };
 
-static const struct ged_plugin pinfo = { showmats_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  showmats_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

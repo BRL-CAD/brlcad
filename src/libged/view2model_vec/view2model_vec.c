@@ -82,7 +82,7 @@ struct ged_cmd_impl view2model_vec_cmd_impl = {
 const struct ged_cmd view2model_vec_cmd = { &view2model_vec_cmd_impl };
 const struct ged_cmd *view2model_vec_cmds[] = { &view2model_vec_cmd, NULL };
 
-static const struct ged_plugin pinfo = { view2model_vec_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  view2model_vec_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

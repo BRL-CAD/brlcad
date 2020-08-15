@@ -305,7 +305,7 @@ extern "C" {
 
     const struct ged_cmd *which_cmds[] = { &which_cmd,  &whichair_cmd, &whichid_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { which_cmds, 3 };
+    static const struct ged_plugin pinfo = { GED_API,  which_cmds, 3 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

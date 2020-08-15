@@ -143,7 +143,7 @@ struct ged_cmd_impl shells_cmd_impl = {
 const struct ged_cmd shells_cmd = { &shells_cmd_impl };
 const struct ged_cmd *shells_cmds[] = { &shells_cmd, NULL };
 
-static const struct ged_plugin pinfo = { shells_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  shells_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

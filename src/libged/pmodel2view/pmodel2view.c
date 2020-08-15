@@ -64,7 +64,7 @@ struct ged_cmd_impl pmodel2view_cmd_impl = {
 const struct ged_cmd pmodel2view_cmd = { &pmodel2view_cmd_impl };
 const struct ged_cmd *pmodel2view_cmds[] = { &pmodel2view_cmd, NULL };
 
-static const struct ged_plugin pinfo = { pmodel2view_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  pmodel2view_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

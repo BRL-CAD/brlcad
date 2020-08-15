@@ -133,7 +133,7 @@ const struct ged_cmd mv_cmd = { &mv_cmd_impl };
 
 const struct ged_cmd *move_cmds[] = { &move_cmd, &mv_cmd, NULL };
 
-static const struct ged_plugin pinfo = { move_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  move_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

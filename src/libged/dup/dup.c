@@ -248,7 +248,7 @@ struct ged_cmd_impl dup_cmd_impl = {
 const struct ged_cmd dup_cmd = { &dup_cmd_impl };
 const struct ged_cmd *dup_cmds[] = { &dup_cmd, NULL };
 
-static const struct ged_plugin pinfo = { dup_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  dup_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

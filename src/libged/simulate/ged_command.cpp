@@ -154,7 +154,7 @@ extern "C" {
     const struct ged_cmd simulate_cmd = { &simulate_cmd_impl };
     const struct ged_cmd *simulate_cmds[] = { &simulate_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { simulate_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  simulate_cmds, 1 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

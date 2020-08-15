@@ -295,6 +295,13 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
 		  color_scheme->cs_bg[1],
 		  color_scheme->cs_bg[2]);
 
+    // set_curr_dm will update ged_gvp, but we don't
+    // want that here - stash the current ged_gvp
+    // state.  Need to rethink how we're managing
+    // the notion of the "current" dm in situations
+    // where we act on all dm instances.  set_curr_dm
+    // should probably be replaced with get_next_dm
+    struct bview *cbv = GEDP->ged_gvp;
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
 	if (dmlp->dml_color_scheme == color_scheme) {
 	    dmlp->dml_dirty = 1;
@@ -305,6 +312,7 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
 
     bu_vls_free(&vls);
     set_curr_dm(save_curr_dmlp);
+    GEDP->ged_gvp = cbv;
 }
 
 

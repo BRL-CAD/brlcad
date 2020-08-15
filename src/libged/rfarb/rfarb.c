@@ -251,7 +251,7 @@ struct ged_cmd_impl rfarb_cmd_impl = {
 const struct ged_cmd rfarb_cmd = { &rfarb_cmd_impl };
 const struct ged_cmd *rfarb_cmds[] = { &rfarb_cmd, NULL };
 
-static const struct ged_plugin pinfo = { rfarb_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  rfarb_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

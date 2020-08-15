@@ -281,7 +281,7 @@ struct ged_cmd_impl pull_cmd_impl = {
 const struct ged_cmd pull_cmd = { &pull_cmd_impl };
 const struct ged_cmd *pull_cmds[] = { &pull_cmd, NULL };
 
-static const struct ged_plugin pinfo = { pull_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  pull_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

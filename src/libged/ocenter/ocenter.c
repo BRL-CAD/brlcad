@@ -133,7 +133,7 @@ struct ged_cmd_impl ocenter_cmd_impl = {
 const struct ged_cmd ocenter_cmd = { &ocenter_cmd_impl };
 const struct ged_cmd *ocenter_cmds[] = { &ocenter_cmd, NULL };
 
-static const struct ged_plugin pinfo = { ocenter_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  ocenter_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

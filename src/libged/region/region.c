@@ -123,7 +123,7 @@ const struct ged_cmd r_cmd = { &r_cmd_impl };
 
 const struct ged_cmd *region_cmds[] = { &region_cmd, &r_cmd, NULL };
 
-static const struct ged_plugin pinfo = { region_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  region_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

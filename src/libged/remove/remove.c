@@ -115,7 +115,7 @@ const struct ged_cmd rm_cmd = { &rm_cmd_impl };
 
 const struct ged_cmd *remove_cmds[] = { &remove_cmd, &rm_cmd, NULL };
 
-static const struct ged_plugin pinfo = { remove_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  remove_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

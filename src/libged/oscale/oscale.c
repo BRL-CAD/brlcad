@@ -141,7 +141,7 @@ struct ged_cmd_impl oscale_cmd_impl = {
 const struct ged_cmd oscale_cmd = { &oscale_cmd_impl };
 const struct ged_cmd *oscale_cmds[] = { &oscale_cmd, NULL };
 
-static const struct ged_plugin pinfo = { oscale_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  oscale_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

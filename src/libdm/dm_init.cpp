@@ -104,7 +104,7 @@ libdm_init(void)
 		continue;
 	    }
 
-	    if (((uintptr_t)(plugin) & (sizeof((uintptr_t)(plugin))-1)) || *((const uint32_t *)(plugin)) != (uint32_t)(DM_API)) {
+	    if (*((const uint32_t *)(plugin)) != (uint32_t)(DM_API)) {
 		bu_vls_printf(dm_init_msg_str, "Plugin version %d of '%s' differs from %d (skipping)\n", *((const uint32_t *)(plugin)), pfile, DM_API);
 		bu_dlclose(dl_handle);
 		continue;

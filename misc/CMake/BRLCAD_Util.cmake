@@ -270,6 +270,9 @@ function(CMAKEFILES)
     # CMake flags to add_library/add_executable aren't going to be valid filenames - just
     # yank them up front.
     set(ITEMS ${ARGN})
+    if (NOT ITEMS)
+      return()
+    endif (NOT ITEMS)
     list(REMOVE_ITEM ITEMS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE INTERFACE EXCLUDE_FROM_ALL)
     # TODO - once we require a new enough CMake version, replace the foreach below with list(FILTER ...)
     foreach(ITEM ${ITEMS})

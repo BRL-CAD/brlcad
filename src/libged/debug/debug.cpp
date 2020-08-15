@@ -58,7 +58,7 @@ extern "C" {
     const struct ged_cmd debug_pcmd = { &debug_cmd_impl };
     const struct ged_cmd *debug_cmds[] = { &debug_pcmd,  NULL };
 
-    static const struct ged_plugin pinfo = { debug_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  debug_cmds, 1 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

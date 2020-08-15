@@ -148,7 +148,7 @@ const struct ged_cmd *view_cmds[] = {
     NULL
 };
 
-static const struct ged_plugin pinfo = { view_cmds, 12 };
+static const struct ged_plugin pinfo = { GED_API,  view_cmds, 12 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

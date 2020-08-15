@@ -76,7 +76,7 @@ struct ged_cmd_impl delay_cmd_impl = {
 const struct ged_cmd delay_cmd = { &delay_cmd_impl };
 const struct ged_cmd *delay_cmds[] = { &delay_cmd, NULL };
 
-static const struct ged_plugin pinfo = { delay_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  delay_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

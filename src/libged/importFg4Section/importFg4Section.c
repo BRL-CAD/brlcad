@@ -72,7 +72,7 @@ struct ged_cmd_impl importFg4Section_cmd_impl = {
 const struct ged_cmd importFg4Section_cmd = { &importFg4Section_cmd_impl };
 const struct ged_cmd *importFg4Section_cmds[] = { &importFg4Section_cmd, NULL };
 
-static const struct ged_plugin pinfo = { importFg4Section_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  importFg4Section_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

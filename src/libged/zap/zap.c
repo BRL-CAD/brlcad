@@ -72,7 +72,7 @@ const struct ged_cmd Z_cmd = { &Z_cmd_impl };
 
 const struct ged_cmd *zap_cmds[] = { &clear_cmd, &zap_cmd, &Z_cmd, NULL };
 
-static const struct ged_plugin pinfo = { zap_cmds, 3 };
+static const struct ged_plugin pinfo = { GED_API,  zap_cmds, 3 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

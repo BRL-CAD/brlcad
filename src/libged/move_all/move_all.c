@@ -323,7 +323,7 @@ const struct ged_cmd mvall_cmd = { &mvall_cmd_impl };
 
 const struct ged_cmd *move_all_cmds[] = { &move_all_cmd, &mvall_cmd, NULL };
 
-static const struct ged_plugin pinfo = { move_all_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  move_all_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

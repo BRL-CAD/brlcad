@@ -157,7 +157,7 @@ struct ged_cmd_impl tree_cmd_impl = {
 const struct ged_cmd tree_cmd = { &tree_cmd_impl };
 const struct ged_cmd *tree_cmds[] = { &tree_cmd, NULL };
 
-static const struct ged_plugin pinfo = { tree_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  tree_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

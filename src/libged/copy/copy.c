@@ -91,7 +91,7 @@ const struct ged_cmd cp_cmd = { &cp_cmd_impl };
 
 const struct ged_cmd *copy_cmds[] = { &copy_cmd, &cp_cmd, NULL };
 
-static const struct ged_plugin pinfo = { copy_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  copy_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

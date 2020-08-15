@@ -175,7 +175,7 @@ const struct ged_cmd screengrab_cmd = { &screengrab_cmd_impl };
 
 const struct ged_cmd *screengrab_cmds[] = { &screen_grab_cmd, &screengrab_cmd, NULL };
 
-static const struct ged_plugin pinfo = { screengrab_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  screengrab_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

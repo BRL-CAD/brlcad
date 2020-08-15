@@ -112,7 +112,7 @@ struct ged_cmd_impl fbclear_cmd_impl = {
 const struct ged_cmd fbclear_cmd = { &fbclear_cmd_impl };
 const struct ged_cmd *fbclear_cmds[] = { &fbclear_cmd, NULL };
 
-static const struct ged_plugin pinfo = { fbclear_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  fbclear_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

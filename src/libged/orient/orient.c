@@ -95,7 +95,7 @@ const struct ged_cmd orientation_cmd = { &orientation_cmd_impl };
 
 const struct ged_cmd *orient_cmds[] = { &orient_cmd, &orientation_cmd, NULL };
 
-static const struct ged_plugin pinfo = { orient_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  orient_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

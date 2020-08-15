@@ -103,7 +103,7 @@ struct ged_cmd_impl how_cmd_impl = {
 const struct ged_cmd how_cmd = { &how_cmd_impl };
 const struct ged_cmd *how_cmds[] = { &how_cmd, NULL };
 
-static const struct ged_plugin pinfo = { how_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  how_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

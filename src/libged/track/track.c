@@ -88,7 +88,7 @@ struct ged_cmd_impl track_cmd_impl = {
 const struct ged_cmd track_cmd = { &track_cmd_impl };
 const struct ged_cmd *track_cmds[] = { &track_cmd, NULL };
 
-static const struct ged_plugin pinfo = { track_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  track_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

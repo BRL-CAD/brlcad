@@ -63,7 +63,7 @@ struct ged_cmd_impl debugdir_cmd_impl = {
 const struct ged_cmd debugdir_cmd = { &debugdir_cmd_impl };
 const struct ged_cmd *debugdir_cmds[] = { &debugdir_cmd, NULL };
 
-static const struct ged_plugin pinfo = { debugdir_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  debugdir_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

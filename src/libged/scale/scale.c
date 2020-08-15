@@ -74,7 +74,7 @@ const struct ged_cmd sca_cmd = { &sca_cmd_impl };
 
 const struct ged_cmd *scale_cmds[] = { &scale_cmd, &sca_cmd, NULL };
 
-static const struct ged_plugin pinfo = { scale_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  scale_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

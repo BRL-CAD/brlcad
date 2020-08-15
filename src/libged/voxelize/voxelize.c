@@ -230,7 +230,7 @@ struct ged_cmd_impl voxelize_cmd_impl = {
 const struct ged_cmd voxelize_cmd = { &voxelize_cmd_impl };
 const struct ged_cmd *voxelize_cmds[] = { &voxelize_cmd, NULL };
 
-static const struct ged_plugin pinfo = { voxelize_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  voxelize_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

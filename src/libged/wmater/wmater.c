@@ -105,7 +105,7 @@ struct ged_cmd_impl wmater_cmd_impl = {
 const struct ged_cmd wmater_cmd = { &wmater_cmd_impl };
 const struct ged_cmd *wmater_cmds[] = { &wmater_cmd, NULL };
 
-static const struct ged_plugin pinfo = { wmater_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  wmater_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

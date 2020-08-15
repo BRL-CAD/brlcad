@@ -3624,6 +3624,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
     CMAKEFILES(.gitignore)
   endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
 
+  # List any files which may exist for CI testing for distcheck.  TODO -
+  # this should be a fixed list, but until we go live with the Git repo
+  # use file(GLOB_RECURSE) instead
+  file(GLOB_RECURSE GITHUB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ".github/*")
+  CMAKEFILES(${GITHUB_FILES})
+
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmakefiles.cmake")

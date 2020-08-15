@@ -62,7 +62,7 @@ const struct ged_cmd dbversion_cmd = { &dbversion_cmd_impl };
 
 const struct ged_cmd *version_cmds[] = { &version_cmd, &dbversion_cmd, NULL };
 
-static const struct ged_plugin pinfo = { version_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  version_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
