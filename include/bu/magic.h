@@ -241,7 +241,8 @@ __BEGIN_DECLS
 #  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) do { \
-    if (UNLIKELY(( ((uintptr_t)(_ptr) == 0) /* non-zero pointer */ \
+    if (UNLIKELY(( ((uintptr_t)(_ptr) == (uintptr_t)NULL) /* non-NULL pointer */ \
+		   || ((uintptr_t)(_ptr) == 0) /* non-zero pointer */ \
 		   || ((uintptr_t)(_ptr) & (sizeof((uintptr_t)(_ptr))-1)) /* aligned ptr */ \
 		   || (*((const uint32_t *)(_ptr)) != (uint32_t)(_magic)) /* matches value */ \
 		     ))) { \
