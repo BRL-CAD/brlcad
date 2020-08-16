@@ -1237,7 +1237,6 @@ set(TCL_NOTIFY_SRCS
   unix/tclUnixNotfy.c
   )
 
-
 set(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_OO_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS})
 if (WIN32)
   set(TCL_SRCS ${TCL_SRCS} ${TCL_WIN_SRCS})
@@ -1251,8 +1250,15 @@ else (WIN32)
   endif (NOT APPLE)
 endif (WIN32)
 
+if (WIN32)
+  set(TCLSH_SRCS win/tclAppInit.c)
+else (WIN32)
+  set(TCLSH_SRCS unix/tclAppInit.c)
+endif (WIN32)
+
 TCL_WIN_FLAGS(TCL_SRCS)
 TCL_WIN_FLAGS(TCL_STUB_SRCS)
+TCL_WIN_FLAGS(TCLSH_SRCS)
 
 set_property(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIBRARY="${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 set_property(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
@@ -1311,7 +1317,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/macosx/Tclsh-Info.plist.in ${TCL_BINARY_DIR}/Tclsh-Info.plist)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
-
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
 target_link_libraries(tclstub ${TCL_LINK_LIBS})
 if (FPIC_COMPILER_FLAG)
@@ -1321,15 +1326,6 @@ install(TARGETS tclstub
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
-
-
-if (WIN32)
-  set(TCLSH_SRCS win/tclAppInit.c)
-else (WIN32)
-  set(TCLSH_SRCS unix/tclAppInit.c)
-endif (WIN32)
-
-TCL_WIN_FLAGS(TCLSH_SRCS)
 
 if (MSVC)
   set(TCLSH_SRCS ${TCLSH_SRCS} win/tclsh.rc)
