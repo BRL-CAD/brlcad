@@ -98,9 +98,18 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 #----------------------------------------------------------------------------
 # Define some platform specific flags
 
-if (MSVC)
-  add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
-endif (MSVC)
+
+# Windows specific flags
+function(TCL_WIN_FLAGS srcfiles)
+  if (MSVC)
+    foreach(srcfile ${${srcfiles}})
+      message("Applying to ${srcfile}")
+      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP")
+      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-Ot -Oi -fp:strict -Gs -GS -GL -MD")
+      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1")
+    endforeach(srcfile ${${srcfiles}})
+  endif (MSVC)
+endfunction(TCL_WIN_FLAGS)
 
 if (MINGW)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
@@ -585,7 +594,6 @@ set(TK_WIN_SRCS
   xlib/ximage.c
   xlib/xutil.c
   win/stubs.c
-  win/rc/tk.rc
   generic/tkFileFilter.c
   generic/tkMacWinMenu.c
   generic/tkPointer.c
@@ -637,6 +645,8 @@ else (WIN32)
   endif (TK_ENABLE_AQUA)
 endif (WIN32)
 
+TCL_WIN_FLAGS(TK_SRCS)
+
 set(TK_INCLUDE_PATH ${TK_SOURCE_DIR}/generic ${TK_SOURCE_DIR}/bitmaps ${TK_BINARY_DIR}/include)
 if (WIN32)
   set(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_SOURCE_DIR}/win ${TK_SOURCE_DIR}/xlib ${TK_SOURCE_DIR}/xlib/X11)
@@ -657,6 +667,10 @@ if (NOT WIN32)
 else (NOT WIN32)
   set(WISH_SRCS win/winMain.c)# win/rc/wish.rc)
 endif (NOT WIN32)
+
+if (MSVC)
+  set(TK_SRCS ${TK_SRCS} win/rc/tk.rc)
+endif (MSVC)
 
 if (X11_INCLUDE_DIR)
   set(TK_X11_INCLUDE_DIRS ${TK_X11_INCLUDE_DIRS} ${X11_INCLUDE_DIR})
