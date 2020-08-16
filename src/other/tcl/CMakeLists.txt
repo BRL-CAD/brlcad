@@ -1260,6 +1260,7 @@ else (WIN32)
 endif (WIN32)
 
 TCL_WIN_FLAGS(TCL_SRCS)
+TCL_WIN_FLAGS(TCL_STUB_SRCS)
 
 set(TCL_INCLUDE_PATH ${TCL_SOURCE_DIR}/generic ${TCL_SOURCE_DIR}/libtommath ${TCL_BINARY_DIR}/include)
 if (WIN32)
@@ -1327,6 +1328,8 @@ if (WIN32)
 else (WIN32)
   set(TCLSH_SRCS unix/tclAppInit.c)
 endif (WIN32)
+
+TCL_WIN_FLAGS(TCLSH_SRCS)
 
 set_property(SOURCE win/tclAppInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_UNICODE)
 add_executable(tclsh ${TCLSH_SRCS})

@@ -645,6 +645,7 @@ else (WIN32)
 endif (WIN32)
 
 TCL_WIN_FLAGS(TK_SRCS)
+TCL_WIN_FLAGS(TK_STUB_SRCS)
 
 set(TK_INCLUDE_PATH ${TK_SOURCE_DIR}/generic ${TK_SOURCE_DIR}/bitmaps ${TK_BINARY_DIR}/include)
 if (WIN32)
@@ -775,6 +776,7 @@ foreach(hdrfile ${TK_HDRS})
 endforeach(hdrfile ${LIBRARY_FILES})
 
 if (WIN32)
+  TCL_WIN_FLAGS(WISH_SRCS)
   add_executable(wish WIN32 ${WISH_SRCS})
   target_link_libraries(wish tcl tk imm32.lib comctl32.lib)
 else (WIN32)
