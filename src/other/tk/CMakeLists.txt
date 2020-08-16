@@ -100,12 +100,13 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 
 # Windows specific flags
+if (MSVC)
+  add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
+endif (MSVC)
 function(TCL_WIN_FLAGS srcfiles)
   if (MSVC)
     foreach(srcfile ${${srcfiles}})
-      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP")
       set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-Ot -Oi -fp:strict -Gs -GS -GL -MD")
-      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1")
     endforeach(srcfile ${${srcfiles}})
   endif (MSVC)
 endfunction(TCL_WIN_FLAGS)

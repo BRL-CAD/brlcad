@@ -104,13 +104,15 @@ add_definitions(-DMP_NO_STDINT)
 # of these, but until then just do what's needed.
 
 # Windows specific flags
+if (MSVC)
+  add_definitions(-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
+  add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
+  add_definitions(-Dinline=__inline)
+endif (MSVC)
 function(TCL_WIN_FLAGS srcfiles)
   if (MSVC)
     foreach(srcfile ${${srcfiles}})
-      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP")
       set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-Ot -Oi -fp:strict -Gs -GS -GL -MD")
-      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS -DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
-      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-Dinline=__inline")
     endforeach(srcfile ${${srcfiles}})
   endif (MSVC)
 endfunction(TCL_WIN_FLAGS)
