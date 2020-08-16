@@ -31,6 +31,11 @@ jobs:
     #  Define a matrix of the operating system and compiler combinations
     #  we want to build against.
     #
+    #  Note that for Windows the vcvars64.bat script is important - that
+    #  is what sets up environment variables to make sure we get the 64
+    #  bit version of the compiler and libraries.  See:
+    #  https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
+    #
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
