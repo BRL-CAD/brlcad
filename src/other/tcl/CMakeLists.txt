@@ -1324,12 +1324,16 @@ install(TARGETS tclstub
 
 
 if (WIN32)
-  set(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
+  set(TCLSH_SRCS win/tclAppInit.c)
 else (WIN32)
   set(TCLSH_SRCS unix/tclAppInit.c)
 endif (WIN32)
 
 TCL_WIN_FLAGS(TCLSH_SRCS)
+
+if (MSVC)
+  set(TCLSH_SRCS ${TCLSH_SRCS} win/tclsh.rc)
+endif (MSVC)
 
 set_property(SOURCE win/tclAppInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_UNICODE)
 add_executable(tclsh ${TCLSH_SRCS})
