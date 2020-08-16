@@ -104,11 +104,14 @@ add_definitions(-DMP_NO_STDINT)
 # of these, but until then just do what's needed.
 
 # Windows specific flags
-if (MSVC)
-  add_definitions(-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
-  add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
-  add_definitions(-Dinline=__inline)
-endif (MSVC)
+function(TCL_WIN_FLAGS srcfiles)
+  if (MSVC)
+    set_property(SOURCE ${srcfiles} APPEND_STRING "-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP")
+    set_property(SOURCE ${srcfiles} APPEND_STRING "-Ot -Oi -fp:strict -Gs -GS -GL -MD")
+    set_property(SOURCE ${srcfiles} APPEND_STRING -DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
+    set_property(SOURCE ${srcfiles} APPEND_STRING "-Dinline=__inline")
+  endif (MSVC)
+endfunction(TCL_WIN_FLAGS)
 
 if (MINGW)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
@@ -1192,7 +1195,6 @@ set(TCL_OSX_SRCS
   )
 
 set(TCL_WIN_SRCS
-  win/tcl.rc
   win/tclAppInit.c
   win/tclWin32Dll.c
   win/tclWinChan.c
@@ -1255,6 +1257,8 @@ else (WIN32)
   endif (NOT APPLE)
 endif (WIN32)
 
+TCL_WIN_FLAGS(${TCL_SRCS})
+
 set(TCL_INCLUDE_PATH ${TCL_SOURCE_DIR}/generic ${TCL_SOURCE_DIR}/libtommath ${TCL_BINARY_DIR}/include)
 if (WIN32)
   set(TCL_INCLUDE_PATH ${TCL_SOURCE_DIR}/win ${TCL_INCLUDE_PATH})
@@ -1274,6 +1278,10 @@ endif (MINGW)
 if (WIN32)
   set(TCL_WIN_LIBS ${TCL_WIN_LIBS} Netapi32)
 endif (WIN32)
+
+if (MSVC)
+  set(TCL_SRCS ${TCL_SRCS} win/tcl.rc)
+endif (MSVC)
 
 set(TCL_LINK_LIBS
   ${CoreFoundation_LIBRARIES}
