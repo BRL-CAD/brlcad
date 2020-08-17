@@ -60,6 +60,10 @@ in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(s
 	(*ret) = -1;
     }
 
+    if (NEAR_ZERO(part->pt_inhit->hit_dist, VUNITIZE_TOL)) {
+	(*ret) = 1;
+    }
+
     return 0;
 }
 
@@ -70,7 +74,7 @@ in_out_miss(struct application *UNUSED(ap))
 }
 
 int
-analyze_pnt_in_vol(point_t *p, struct application *ap)
+analyze_pnt_in_vol(point_t *p, struct application *ap, int on_is_in)
 {
     int i;
     int fret = 1;
@@ -126,7 +130,13 @@ analyze_pnt_in_vol(point_t *p, struct application *ap)
     (void)rt_shootray(ap);
 
     for (i = 0; i < 6; i++) {
-	if (dir_results[i] < 0) fret = -1;
+	if (on_is_in) {
+	    if (dir_results[i] != 0)
+	       	fret = -1;
+	} else {
+	    if (dir_results[i] < 0)
+	       	fret = -1;
+	}
     }
 
     /* restore application */

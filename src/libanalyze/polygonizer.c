@@ -631,7 +631,7 @@ static int
 pnt_in_out(point_t *p, void *d)
 {
     struct application *ap = (struct application *)d;
-    return analyze_pnt_in_vol(p, ap);
+    return analyze_pnt_in_vol(p, ap, 0);
 }
 
 /**** An Implicit Surface Polygonizer ****/

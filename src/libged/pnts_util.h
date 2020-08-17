@@ -60,6 +60,8 @@ GED_EXPORT extern void * _ged_pnts_new_pnt(rt_pnt_type t);
 
 GED_EXPORT extern void _ged_pnts_add(struct rt_pnts_internal *pnts, void *point);
 
+GED_EXPORT extern void * _ged_pnts_dup(void *point, rt_pnt_type t);
+
 __END_DECLS
 
 #endif //LIBGED_PNT_GED_PRIVATE_H

@@ -70,7 +70,7 @@ ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, double *a
  * Given an application structure and a test point, use ray sampling to determine
  * if the point is inside (on or within) or outside the volume described.
  */
-ANALYZE_EXPORT int analyze_pnt_in_vol(point_t *p, struct application *ap);
+ANALYZE_EXPORT int analyze_pnt_in_vol(point_t *p, struct application *ap, int on_is_in);
 
 __END_DECLS
 
