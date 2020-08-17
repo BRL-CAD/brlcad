@@ -36,7 +36,7 @@
 
 #include "gdal.h"
 #ifdef INTERNAL_LIBTIFF
-#  include "../gtiff/libtiff/tiffio.h"
+#  include "../libtiff/tiffio.h"
 #else
 #  include "tiffio.h"
 #endif

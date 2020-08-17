@@ -1,9 +1,7 @@
 add_subdirectory(mdreader)
 
 include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}/../frmts/gtiff
-	${CMAKE_CURRENT_SOURCE_DIR}/../frmts/mem
-	${CMAKE_CURRENT_SOURCE_DIR}/../frmts/vrt
+	${CMAKE_CURRENT_SOURCE_DIR}/../frmts
 	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/ogrsf_frmts/generic
 	${CMAKE_CURRENT_SOURCE_DIR}/../gnm/gnm_frmts
 	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/ogrsf_frmts/geojson/libjson

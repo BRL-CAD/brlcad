@@ -47,7 +47,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
-#include "../raw/rawdataset.h"
+#include "./rawdataset.h"
 
 CPL_CVSID("$Id$");
 

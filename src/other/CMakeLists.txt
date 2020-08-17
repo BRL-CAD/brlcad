@@ -946,7 +946,7 @@ if(BRLCAD_GDAL_BUILD)
     "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr/ogrsf_frmts"
     "${BRLCAD_SOURCE_DIR}/src/other/gdal/gnm"
     "${BRLCAD_SOURCE_DIR}/src/other/gdal/apps"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts/vrt"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts"
     )
   set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "libgdal includes" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/gdal/cpl_config.h")

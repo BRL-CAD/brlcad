@@ -1,6 +1,6 @@
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/../../../frmts/iso8211
+	${CMAKE_CURRENT_SOURCE_DIR}/../../../frmts
 	)
 
 set(s57_srcs

@@ -27,7 +27,7 @@
 #include <gdal.h>
 #include <gdal_priv.h>
 #include <gdal_proxy.h>
-#include "../vrt/vrtdataset.h"
+#include "./vrtdataset.h"
 
 enum ph_format
 {

@@ -99,7 +99,7 @@
 #include "tiff.h"
 #ifdef INTERNAL_LIBTIFF
 #  include "tiffiop.h"
-#  include "../gtiff/libtiff/tiffio.h"
+#  include "./libtiff/tiffio.h"
 #else
 #  include "tiffio.h"
 #endif
@@ -8020,7 +8020,7 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
                          ++i )
                     {
                         asCompressionJobs[i].pszTmpFilename =
-                            CPLStrdup(CPLSPrintf("/vsimem/gtiff/thread/job/%p",
+                            CPLStrdup(CPLSPrintf("/vsim./thread/job/%p",
                                                  &asCompressionJobs[i]));
                         asCompressionJobs[i].nStripOrTile = -1;
                     }

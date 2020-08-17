@@ -341,7 +341,7 @@ set(gdal_srcs
   $<TARGET_OBJECTS:gdal_mdreader_obj>
   $<TARGET_OBJECTS:gdal_gcore_obj>
   $<TARGET_OBJECTS:gdal_alg_obj>
-  $<TARGET_OBJECTS:gdal_allreg_obj>
+  $<TARGET_OBJECTS:gdal_frmts_obj>
   $<TARGET_OBJECTS:libtiff_obj>
   $<TARGET_OBJECTS:libgeotiff_obj>
   $<TARGET_OBJECTS:json_obj>
@@ -349,10 +349,6 @@ set(gdal_srcs
   $<TARGET_OBJECTS:gdal_gnm_obj>
   $<TARGET_OBJECTS:gdal_apps_obj>
   )
-foreach(frmt ${GDAL_FORMATS})
-  set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:frmt_${frmt}>)
-  set_target_properties(frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
-endforeach(frmt ${GDAL_FORMATS})
 foreach(frmt ${OGR_FORMATS})
   set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:ogr_frmt_${frmt}>)
   set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")

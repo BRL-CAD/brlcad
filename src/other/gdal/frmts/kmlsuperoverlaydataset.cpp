@@ -43,8 +43,8 @@
 #include "cpl_vsi.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
-#include "../vrt/gdal_vrt.h"
-#include "../vrt/vrtdataset.h"
+#include "./gdal_vrt.h"
+#include "./vrtdataset.h"
 
 CPL_CVSID("$Id$");
 

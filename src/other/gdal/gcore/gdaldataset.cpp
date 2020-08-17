@@ -65,7 +65,7 @@
 #include "ogrunionlayer.h"
 #include "swq.h"
 
-#include "../frmts/derived/derivedlist.h"
+#include "../frmts/derivedlist.h"
 
 #ifdef SQLITE_ENABLED
 #include "../sqlite/ogrsqliteexecutesql.h"

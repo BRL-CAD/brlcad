@@ -34,7 +34,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
 #include "gdaljp2metadata.h"
-#include "../vrt/vrtdataset.h"
+#include "./vrtdataset.h"
 
 #include <algorithm>
 #include <map>

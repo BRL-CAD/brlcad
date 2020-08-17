@@ -25,7 +25,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
-#include "../vrt/vrtdataset.h"
+#include "./vrtdataset.h"
 #include "gdal_pam.h"
 #include "gdal_proxy.h"
 #include "derivedlist.h"
