@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 #include "ogr_attrind.h"
-#include "mitab/mitab_priv.h"
+#include "mitab_priv.h"
 #include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");

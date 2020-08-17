@@ -33,7 +33,7 @@
 
 #include "cpl_port.h"
 #include <ogrsf_frmts.h>
-#include "../mem/ogr_mem.h"
+#include "./ogr_mem.h"
 
 #include <cstdio>
 #include <vector>  // Used by OGRGeoJSONLayer.

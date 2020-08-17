@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
-#include "ogr_mem.h"
+#include "./ogr_mem.h"
 #include "ogr_p.h"
 
 #include <algorithm>

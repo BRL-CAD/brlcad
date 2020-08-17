@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_openfilegdb.h"
-#include "ogr_mem.h"
+#include "./ogr_mem.h"
 #include <map>
 
 CPL_CVSID("$Id$");

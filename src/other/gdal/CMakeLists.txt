@@ -341,17 +341,9 @@ set(gdal_srcs
   $<TARGET_OBJECTS:gdal_mdreader_obj>
   $<TARGET_OBJECTS:gdal_gcore_obj>
   $<TARGET_OBJECTS:gdal_alg_obj>
-  $<TARGET_OBJECTS:libtiff_obj>
-  $<TARGET_OBJECTS:libgeotiff_obj>
-  $<TARGET_OBJECTS:json_obj>
-  $<TARGET_OBJECTS:gdal_ogr_obj>
   $<TARGET_OBJECTS:gdal_gnm_obj>
   $<TARGET_OBJECTS:gdal_apps_obj>
   )
-foreach(frmt ${OGR_FORMATS})
-  set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:ogr_frmt_${frmt}>)
-  set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
-endforeach(frmt ${OGR_FORMATS})
 
 set(gdal_libs ${PROJ4_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 set(lib_list M DL ICONV)
@@ -365,7 +357,7 @@ if(MSVC)
 endif(MSVC)
 
 add_library(gdal SHARED ${gdal_srcs})
-target_link_libraries(gdal gdal_frmts ${gdal_libs})
+target_link_libraries(gdal gdal_frmts gdal_ogr ${gdal_libs})
 install(TARGETS gdal
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}

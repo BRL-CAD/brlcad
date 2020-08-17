@@ -55,7 +55,7 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
-#include "ogrsf_frmts/xplane/ogr_xplane_geo_utils.h"
+#include "./ogr_xplane_geo_utils.h"
 
 CPL_CVSID("$Id$");
 

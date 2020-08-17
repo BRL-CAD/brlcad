@@ -2,12 +2,10 @@ add_subdirectory(mdreader)
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../frmts
-	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/ogrsf_frmts/generic
+	${CMAKE_CURRENT_SOURCE_DIR}/../ogr
 	${CMAKE_CURRENT_SOURCE_DIR}/../gnm/gnm_frmts
-	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/ogrsf_frmts/geojson/libjson
-	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/ogrsf_frmts/geojson
+	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/libjson
 )
-
 
 set(gcore_srcs
 	gdalopeninfo.cpp

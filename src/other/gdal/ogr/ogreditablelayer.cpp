@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 #include "ogreditablelayer.h"
-#include "../mem/ogr_mem.h"
+#include "../ogr_mem.h"
 
 CPL_CVSID("$Id$");
 
