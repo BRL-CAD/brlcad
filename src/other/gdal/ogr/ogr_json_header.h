@@ -33,6 +33,6 @@
 #pragma GCC system_header
 #endif
 
-#include "./libjson/json.h"
+#include <json.h>
 
 #endif /* OGR_JSON_HEADER_H */

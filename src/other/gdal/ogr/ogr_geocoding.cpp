@@ -42,7 +42,7 @@
 #include "ogr_core.h"
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
-#include "./ogr_mem.h"
+#include "ogr_mem.h"
 #include "ogrsf_frmts.h"
 
 

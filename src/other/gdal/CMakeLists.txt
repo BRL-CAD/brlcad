@@ -341,9 +341,22 @@ set(gdal_srcs
   $<TARGET_OBJECTS:gdal_mdreader_obj>
   $<TARGET_OBJECTS:gdal_gcore_obj>
   $<TARGET_OBJECTS:gdal_alg_obj>
+  $<TARGET_OBJECTS:gdal_allreg_obj>
+  $<TARGET_OBJECTS:libtiff_obj>
+  $<TARGET_OBJECTS:libgeotiff_obj>
+  $<TARGET_OBJECTS:json_obj>
+  $<TARGET_OBJECTS:gdal_ogr_obj>
   $<TARGET_OBJECTS:gdal_gnm_obj>
   $<TARGET_OBJECTS:gdal_apps_obj>
   )
+foreach(frmt ${GDAL_FORMATS})
+  set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:frmt_${frmt}>)
+  set_target_properties(frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
+endforeach(frmt ${GDAL_FORMATS})
+foreach(frmt ${OGR_FORMATS})
+  set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:ogr_frmt_${frmt}>)
+  set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
+endforeach(frmt ${OGR_FORMATS})
 
 set(gdal_libs ${PROJ4_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 set(lib_list M DL ICONV)
@@ -356,14 +369,34 @@ if(MSVC)
   set(gdal_libs ${gdal_libs} ws2_32.lib kernel32.lib psapi.lib)
 endif(MSVC)
 
-add_library(gdal SHARED ${gdal_srcs})
-target_link_libraries(gdal gdal_frmts gdal_ogr ${gdal_libs})
-install(TARGETS gdal
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+if (BUILD_SHARED_LIBS)
+  add_library(gdal SHARED ${gdal_srcs})
+  if(gdal_libs)
+    target_link_libraries(gdal ${gdal_libs})
+  endif(gdal_libs)
+  install(TARGETS gdal
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_SHARED_LIBS)
 
-add_subdirectory(progs)
+if (BUILD_STATIC_LIBS)
+  add_library(gdal-static STATIC ${gdal_srcs})
+  if (MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(gdal-static PROPERTIES PREFIX "lib")
+  else (MSVC)
+    set_target_properties(gdal-static PROPERTIES OUTPUT_NAME "gdal")
+  endif (MSVC)
+  install(TARGETS gdal-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_STATIC_LIBS)
+
+if (BUILD_SHARED_LIBS)
+  add_subdirectory(progs)
+endif (BUILD_SHARED_LIBS)
 
 # Handle Data files
 install(FILES LICENSE.TXT DESTINATION ${DATA_DIR}/gdal)

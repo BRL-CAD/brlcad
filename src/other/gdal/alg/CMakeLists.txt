@@ -1,6 +1,6 @@
 
 include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}/../frmts
+	${CMAKE_CURRENT_SOURCE_DIR}/../frmts/vrt
 	)
 
 add_definitions(-DINTERNAL_QHULL)
