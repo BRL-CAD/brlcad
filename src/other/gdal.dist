@@ -181,7 +181,6 @@ data/vdv452.xml
 data/vdv452.xsd
 data/vertcs.csv
 data/vertcs.override.csv
-frmts/.CMakeLists.txt.swp
 frmts/CMakeLists.txt
 frmts/EnvisatFile.c
 frmts/EnvisatFile.h
