@@ -341,7 +341,6 @@ set(gdal_srcs
   $<TARGET_OBJECTS:gdal_mdreader_obj>
   $<TARGET_OBJECTS:gdal_gcore_obj>
   $<TARGET_OBJECTS:gdal_alg_obj>
-  $<TARGET_OBJECTS:gdal_frmts_obj>
   $<TARGET_OBJECTS:libtiff_obj>
   $<TARGET_OBJECTS:libgeotiff_obj>
   $<TARGET_OBJECTS:json_obj>
@@ -365,34 +364,14 @@ if(MSVC)
   set(gdal_libs ${gdal_libs} ws2_32.lib kernel32.lib psapi.lib)
 endif(MSVC)
 
-if (BUILD_SHARED_LIBS)
-  add_library(gdal SHARED ${gdal_srcs})
-  if(gdal_libs)
-    target_link_libraries(gdal ${gdal_libs})
-  endif(gdal_libs)
-  install(TARGETS gdal
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
-endif (BUILD_SHARED_LIBS)
+add_library(gdal SHARED ${gdal_srcs})
+target_link_libraries(gdal gdal_frmts ${gdal_libs})
+install(TARGETS gdal
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
-if (BUILD_STATIC_LIBS)
-  add_library(gdal-static STATIC ${gdal_srcs})
-  if (MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(gdal-static PROPERTIES PREFIX "lib")
-  else (MSVC)
-    set_target_properties(gdal-static PROPERTIES OUTPUT_NAME "gdal")
-  endif (MSVC)
-  install(TARGETS gdal-static
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
-endif (BUILD_STATIC_LIBS)
-
-if (BUILD_SHARED_LIBS)
-  add_subdirectory(progs)
-endif (BUILD_SHARED_LIBS)
+add_subdirectory(progs)
 
 # Handle Data files
 install(FILES LICENSE.TXT DESTINATION ${DATA_DIR}/gdal)

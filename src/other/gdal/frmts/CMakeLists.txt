@@ -175,11 +175,15 @@ set(gdal_frmt_srcs
   zmapdataset.cpp
   )
 
-add_library(gdal_frmts_obj OBJECT ${gdal_frmt_srcs})
-set_target_properties(gdal_frmts_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
+add_library(gdal_frmts SHARED ${gdal_frmt_srcs} $<TARGET_OBJECTS:libtiff_obj> $<TARGET_OBJECTS:libgeotiff_obj>)
+set_target_properties(gdal_frmts PROPERTIES FOLDER "Third Party Libraries/GDAL")
+install(TARGETS gdal_frmts
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
 
 if (TARGET png)
-  add_dependencies(gdal_frmts_obj png)
+  add_dependencies(gdal_frmts png)
 endif (TARGET png)
 
 
