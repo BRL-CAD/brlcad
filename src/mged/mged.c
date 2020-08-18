@@ -1574,6 +1574,8 @@ main(int argc, char *argv[])
 	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
 	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
 	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
+	    // Limit CPU burn in case of long running subcommands
+	    Tcl_Sleep(1); 
 	}
 	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
 
