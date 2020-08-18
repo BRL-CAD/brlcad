@@ -65,6 +65,13 @@ __BEGIN_DECLS
 ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, double *avg_thickness, struct db_i *dbip,
 				       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity);
 
+
+/**
+ * Given an application structure and a test point, use ray sampling to determine
+ * if the point is inside (on or within) or outside the volume described.
+ */
+ANALYZE_EXPORT int analyze_pnt_in_vol(point_t *p, struct application *ap, int on_is_in);
+
 __END_DECLS
 
 #endif /* ANALYZE_PNTS_H */
