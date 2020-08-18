@@ -38,7 +38,6 @@
 	    const char *fname = #x ; \
 	    int vret = ged_cmd_valid(argv[0], fname); \
 	    if (vret) { \
-		bu_log("Warning(%d): LIBGED command \"ged_" #x "\" called with argv[0] value \"%s\" which is not a known version of this command - overriding argv[0] with \"%s\"\n", vret, argv[0], fname); \
 		argv[0] = fname; \
 	    }\
 	    int ret = ged_exec(gedp, argc, argv); \
