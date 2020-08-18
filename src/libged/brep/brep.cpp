@@ -55,7 +55,7 @@
  * directly and export what we need from brep_debug.cpp which sucks.
  */
 extern "C" {
-RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
+    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 }
 
 // Indices are specified for info and plot commands - parsing logic is common to both
@@ -1378,7 +1378,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     gb.gopts = d;
 
     if (!argc) {
-    	_brep_cmd_help(&gb, 0, NULL);
+	_brep_cmd_help(&gb, 0, NULL);
 	return GED_OK;
     }
 
@@ -1491,12 +1491,12 @@ extern "C" {
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+
