@@ -370,9 +370,9 @@ main(int ac, char *av[]) {
 	const char *wav0 = "wrong_name";
 	int ret = ged_ls(gbp, 1, &wav0);
 	if (ret & GED_UNKNOWN) {
-	    bu_log("\nged_ls called with command name \"%s\" reported expected error\n", wav0);
+	    bu_log("\nged_ls called with command name \"%s\" correctly returned with GED_UNKNOWN set\n", wav0);
 	} else {
-	    bu_log("\nged_ls called with command name \"%s\" did not report the expected error\n", wav0);
+	    bu_log("\nged_ls called with command name \"%s\" did not return with GED_UNKNOWN set\n", wav0);
 	}
     }
 
