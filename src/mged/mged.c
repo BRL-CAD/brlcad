@@ -1556,11 +1556,6 @@ main(int argc, char *argv[])
 
     /* If this is an argv[] invocation, do it now */
     if (argc > 1) {
-	const char *av[2];
-
-	av[0] = "q";
-	av[1] = NULL;
-
 	/* Call cmdline instead of calling mged_cmd directly so that
 	 * access to Tcl/Tk is possible.
 	 */
@@ -1570,6 +1565,21 @@ main(int argc, char *argv[])
 	cmdline(&input_str, TRUE);
 	bu_vls_free(&input_str);
 
+	// If we launched subcommands, we need to process their
+	// output before quitting.  Do one up front to catch
+	// anything produced by a process that already exited,
+	// loop while libged still reports running processes,
+	// and then a final call before quitting to get the
+	// last output from the last command.
+	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
+	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
+	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
+	}
+	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
+
+	const char *av[2];
+	av[0] = "q";
+	av[1] = NULL;
 	f_quit((ClientData)NULL, INTERP, 1, av);
 	/* NOTREACHED */
     }
