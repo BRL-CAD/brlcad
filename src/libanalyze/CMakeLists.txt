@@ -45,7 +45,6 @@ set(LIBANALYZE_SOURCES
   nirt/diff.cpp
   obj_to_pnts.cpp
   overlaps.c
-  pnt_inside.c
   polygonizer.c
   raydiff.c
   #find_subtracted_shapes.cpp

@@ -1163,7 +1163,7 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = 0;
     int opt_argc = argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"gen", "inside", "read", "tri", "wn", "write", NULL};
+    const char * const pnt_subcommands[] = {"gen", "read", "tri", "wn", "write", NULL};
     const char * const *subcmd;
 
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
@@ -1221,7 +1221,6 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     len = strlen(argv[0]);
-
     if (bu_strncmp(argv[0], "tri", len) == 0) return _pnts_to_bot(gedp, argc, argv);
 
     if (bu_strncmp(argv[0], "gen", len) == 0) return _obj_to_pnts(gedp, argc, argv);
