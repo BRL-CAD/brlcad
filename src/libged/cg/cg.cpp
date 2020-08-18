@@ -37,6 +37,7 @@ extern "C" {
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "../ged_private.h"
+#include "./ged_cg.h"
 }
 
 #define HELPFLAG "--print-help"
@@ -65,6 +66,98 @@ _cg_cmd_msgs(void *cs, int argc, const char **argv, const char *us, const char *
     return 0;
 }
 
+static int
+_cg_eval(struct ged *gedp, const char *expr, const char *outname)
+{
+    if (!gedp || !expr || !outname)
+	return GED_ERROR;
+    if (!strlen(expr)) {
+	bu_vls_printf(gedp->ged_result_str, "Empty expression supplied for evaluation\n");
+	return GED_ERROR;
+    }
+    if (!strlen(outname)) {
+	bu_vls_printf(gedp->ged_result_str, "Empty string supplied for output name\n");
+	return GED_ERROR;
+    }
+
+    // Eventually we need more sophisticated parsing - for a first cut, just chop into argv
+    // and assume an infix expression with one op and two objects
+    struct bu_vls expr_vls = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&expr_vls, "%s", expr);
+    char **eav = (char **)bu_calloc(bu_vls_strlen(&expr_vls), sizeof(char *), "expression argv");
+    int eac = bu_argv_from_string(eav, bu_vls_strlen(&expr_vls), bu_vls_addr(&expr_vls));
+
+    if (eac != 3) {
+	bu_free(eav, "argv array");
+	bu_vls_free(&expr_vls);
+	bu_vls_printf(gedp->ged_result_str, "TODO: currently unsupported expression \"%s\"\n", expr);
+	return GED_ERROR;
+    }
+
+    db_op_t op = db_str2op(eav[1]);
+    if (op == DB_OP_NULL || op == DB_OP_UNION) {
+    	bu_free(eav, "argv array");
+	bu_vls_free(&expr_vls);
+	bu_vls_printf(gedp->ged_result_str, "TODO: currently unsupported expression \"%s\"\n", expr);
+	return GED_ERROR;
+    }
+
+    struct directory *ldp = db_lookup(gedp->ged_wdbp->dbip, eav[0], LOOKUP_QUIET);
+    if (ldp == RT_DIR_NULL) {
+	bu_free(eav, "argv array");
+	bu_vls_free(&expr_vls);
+	bu_vls_printf(gedp->ged_result_str, "could not find object \"%s\"\n", eav[0]);
+	return GED_ERROR;
+    }
+
+    struct directory *rdp = db_lookup(gedp->ged_wdbp->dbip, eav[2], LOOKUP_QUIET);
+    if (rdp == RT_DIR_NULL) {
+	bu_free(eav, "argv array");
+	bu_vls_free(&expr_vls);
+	bu_vls_printf(gedp->ged_result_str, "could not find object \"%s\"\n", eav[2]);
+	return GED_ERROR;
+    }
+
+    struct rt_db_internal tpnts_intern;
+    GED_DB_GET_INTERNAL(gedp, &tpnts_intern, ldp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    struct rt_db_internal v_intern;
+    GED_DB_GET_INTERNAL(gedp, &v_intern, rdp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+    if (tpnts_intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || v_intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
+	bu_vls_printf(gedp->ged_result_str, "One or more unsupported objects specified in expression");
+	bu_free(eav, "argv array");
+	bu_vls_free(&expr_vls);
+	rt_db_free_internal(&tpnts_intern);
+	return GED_ERROR;
+    }
+
+    /* Currently the lefthand object must be a pnts object */
+    if (tpnts_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
+    	bu_vls_printf(gedp->ged_result_str, "TODO: left hand object %s is not a pnts object, currently unsupported", eav[0]);
+	bu_free(eav, "argv array");
+	bu_vls_free(&expr_vls);
+	rt_db_free_internal(&tpnts_intern);
+	return GED_ERROR;
+    }
+
+    /* For the righthand object, we need to raytrace it */
+    if (v_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS) {
+	bu_vls_printf(gedp->ged_result_str, "TODO: right hand object %s is a pnts object, currently unsupported", eav[2]);
+	bu_free(eav, "argv array");
+	bu_vls_free(&expr_vls);
+	rt_db_free_internal(&tpnts_intern);
+	return GED_ERROR;
+    }
+
+    int ret = pnts_eval_op(gedp, op, &tpnts_intern, eav[2], outname);
+
+    bu_free(eav, "argv array");
+    bu_vls_free(&expr_vls);
+    rt_db_free_internal(&tpnts_intern);
+
+    return ret;
+
+}
 
 extern "C" int
 _cg_cmd_eval(void *bs, int argc, const char **argv)
@@ -75,13 +168,19 @@ _cg_cmd_eval(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-#if 0
     struct _ged_cg_info *gc = (struct _ged_cg_info *)bs;
-    struct ged *gedp = gc->gedp;
 
     argc--; argv++;
-#endif
-    return GED_OK;
+    if (argc != 2) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    // Make sure the second argument doesn't exist as a database object already
+    struct ged *gedp = gc->gedp;
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
+
+    return _cg_eval(gedp, argv[0], argv[1]);
 }
 
 extern "C" int

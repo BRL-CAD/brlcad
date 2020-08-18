@@ -6,16 +6,22 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
+set(cg_srcs
+  cg.cpp
+  eval_pnts.cpp
+  )
+
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-cg SHARED cg.cpp)
+ged_plugin_library(ged-cg SHARED ${cg_srcs})
 target_link_libraries(ged-cg libged libbu)
 set_property(TARGET ged-cg APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-cg cg.cpp)
 PLUGIN_SETUP(ged-cg ged)
 
 CMAKEFILES(
+  ${cg_srcs}
   CMakeLists.txt
-  cg.cpp
+  ged_cg.h
   )
 
 # Local Variables:
