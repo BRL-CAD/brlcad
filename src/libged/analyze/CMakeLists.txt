@@ -14,6 +14,7 @@ set(analyze_srcs
   superell.cpp
   sketch.cpp
   util.cpp
+  op_pnts_vol.cpp
   )
 
 add_definitions(-DGED_PLUGIN)

@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "rt/op.h"
 #include "./ged/defines.h"
 
 __BEGIN_DECLS
@@ -110,6 +111,35 @@ analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip);
 
 GED_EXPORT extern void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip);
+
+
+
+/**
+ * Functions for performing union/intersection/subtraction analysis operations
+ * on various type combinations.
+ *
+ * output_obj is optional.  If non-NULL, it is the name used to produce a new
+ * geometry database object with the results of the operation (if any).
+ *
+ * The trivial case would be an op_vol_vol that takes two csg solids or combs
+ * and returns a new implicit comb with them unioned (always), intersected (if
+ * there is overlap) or subtracted (if there is overlap).
+ *
+ * More interesting are cases like op_pnts_vol that will produce new pnts
+ * objects based on boolean set operation analysis.
+ */
+
+typedef long (*op_func_ptr)(const char *, struct ged *, db_op_t, const char *, const char *);
+
+GED_EXPORT extern long
+op_pnts_vol(
+	const char *output_obj,
+	struct ged *gedp,
+	db_op_t op,
+	const char *pnt_obj,
+	const char *vol_obj
+	);
+
 
 __END_DECLS
 

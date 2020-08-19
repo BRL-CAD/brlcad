@@ -40,6 +40,10 @@ extern "C" {
 #include "./ged_analyze.h"
 }
 
+#define DB_SOLID INT_MAX
+#define DB_NON_SOLID INT_MAX - 1
+
+
 #define HELPFLAG "--print-help"
 #define PURPOSEFLAG "--print-purpose"
 
@@ -48,8 +52,137 @@ struct _ged_analyze_info {
     const struct bu_cmdtab *cmds = NULL;
     struct bu_opt_desc *gopts = NULL;
     int verbosity = 0;
+    std::map<std::pair<int, int>, op_func_ptr> *union_map;
+    std::map<std::pair<int, int>, op_func_ptr> *isect_map;
+    std::map<std::pair<int, int>, op_func_ptr> *subtr_map;
 };
 
+
+static struct _ged_analyze_info *
+_analyze_info_create()
+{
+    struct _ged_analyze_info *gc = new struct _ged_analyze_info;
+    gc->verbosity = 0;
+    gc->union_map = new std::map<std::pair<int, int>, op_func_ptr>;
+    gc->isect_map = new std::map<std::pair<int, int>, op_func_ptr>;
+    gc->subtr_map = new std::map<std::pair<int, int>, op_func_ptr>;
+
+
+    // Populate the maps with known pair analysis functions
+    (*gc->union_map)[std::make_pair(DB5_MINORTYPE_BRLCAD_PNTS, DB_SOLID)] = op_pnts_vol;
+    (*gc->isect_map)[std::make_pair(DB5_MINORTYPE_BRLCAD_PNTS, DB_SOLID)] = op_pnts_vol;
+    (*gc->subtr_map)[std::make_pair(DB5_MINORTYPE_BRLCAD_PNTS, DB_SOLID)] = op_pnts_vol;
+
+    return gc;
+}
+
+static void
+_analyze_info_destroy(struct _ged_analyze_info *s)
+{
+    delete[] s->union_map;
+    delete[] s->isect_map;
+    delete[] s->subtr_map;
+    delete[] s;
+}
+
+static bool
+db_solid_type(int type)
+{
+    switch (type) {
+	case DB5_MINORTYPE_BRLCAD_ARB8:
+	case DB5_MINORTYPE_BRLCAD_ARBN:
+	case DB5_MINORTYPE_BRLCAD_ARS:
+	case DB5_MINORTYPE_BRLCAD_BOT:
+	case DB5_MINORTYPE_BRLCAD_BREP:
+	case DB5_MINORTYPE_BRLCAD_BSPLINE:
+	case DB5_MINORTYPE_BRLCAD_CLINE:
+	case DB5_MINORTYPE_BRLCAD_COMBINATION:
+	case DB5_MINORTYPE_BRLCAD_DSP:
+	case DB5_MINORTYPE_BRLCAD_EBM:
+	case DB5_MINORTYPE_BRLCAD_EHY:
+	case DB5_MINORTYPE_BRLCAD_ELL:
+	case DB5_MINORTYPE_BRLCAD_EPA:
+	case DB5_MINORTYPE_BRLCAD_ETO:
+	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+	case DB5_MINORTYPE_BRLCAD_HALF:
+	case DB5_MINORTYPE_BRLCAD_HF:
+	case DB5_MINORTYPE_BRLCAD_HRT:
+	case DB5_MINORTYPE_BRLCAD_HYP:
+	case DB5_MINORTYPE_BRLCAD_METABALL:
+	case DB5_MINORTYPE_BRLCAD_NMG:
+	case DB5_MINORTYPE_BRLCAD_PARTICLE:
+	case DB5_MINORTYPE_BRLCAD_PIPE:
+	case DB5_MINORTYPE_BRLCAD_POLY:
+	case DB5_MINORTYPE_BRLCAD_REC:
+	case DB5_MINORTYPE_BRLCAD_REVOLVE:
+	case DB5_MINORTYPE_BRLCAD_RHC:
+	case DB5_MINORTYPE_BRLCAD_RPC:
+	case DB5_MINORTYPE_BRLCAD_SKETCH:
+	case DB5_MINORTYPE_BRLCAD_SPH:
+	case DB5_MINORTYPE_BRLCAD_SUBMODEL:
+	case DB5_MINORTYPE_BRLCAD_SUPERELL:
+	case DB5_MINORTYPE_BRLCAD_TGC:
+	case DB5_MINORTYPE_BRLCAD_TOR:
+	case DB5_MINORTYPE_BRLCAD_VOL:
+	    return true;
+	case DB5_MINORTYPE_BRLCAD_ANNOT:
+	case DB5_MINORTYPE_BRLCAD_CONSTRAINT:
+	case DB5_MINORTYPE_BRLCAD_DATUM:
+	case DB5_MINORTYPE_BRLCAD_GRIP:
+	case DB5_MINORTYPE_BRLCAD_JOINT:
+	case DB5_MINORTYPE_BRLCAD_PNTS:
+	case DB5_MINORTYPE_BRLCAD_SCRIPT:
+	default:
+	    return false;
+    };
+}
+
+static op_func_ptr
+_analyze_find_processor(struct _ged_analyze_info *s, db_op_t op, int t1, int t2)
+{
+    int type1 = t1;
+    int type2 = t2;
+    std::map<std::pair<int, int>, op_func_ptr> *omap;
+    switch (op) {
+	case DB_OP_UNION:
+	    omap = s->union_map;
+	    break;
+	case DB_OP_INTERSECT:
+	    omap = s->isect_map;
+	    break;
+	case DB_OP_SUBTRACT:
+	    omap = s->subtr_map;
+	    break;
+	default:
+	    return NULL;
+    }
+
+    if (omap->find(std::make_pair(type1, type2)) != omap->end()) {
+	return (*omap)[std::make_pair(t1, t2)];
+    }
+
+    // If there isn't a specific type, see if there's a generic match for t2
+    type2 = (db_solid_type(t2)) ? DB_SOLID : DB_NON_SOLID;
+    if (omap->find(std::make_pair(type1, type2)) != omap->end()) {
+	return (*omap)[std::make_pair(t1, t2)];
+    }
+
+    // If there isn't a specific type, see if there's a generic match for t1
+    type1 = (db_solid_type(t1)) ? DB_SOLID : DB_NON_SOLID;
+    type2 = t2;
+    if (omap->find(std::make_pair(type1, type2)) != omap->end()) {
+	return (*omap)[std::make_pair(t1, t2)];
+    }
+    // If there isn't a match, see if there's a generic match for t1 and t2
+    type1 = (db_solid_type(t1)) ? DB_SOLID : DB_NON_SOLID;
+    type2 = (db_solid_type(t2)) ? DB_SOLID : DB_NON_SOLID;
+    if (omap->find(std::make_pair(type1, type2)) != omap->end()) {
+	return (*omap)[std::make_pair(t1, t2)];
+    }
+
+    // Nope, nothing
+    return NULL;
+}
 
 static int
 _analyze_cmd_msgs(void *cs, int argc, const char **argv, const char *us, const char *ps)
@@ -202,6 +335,123 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+
+extern "C" int
+_analyze_cmd_intersect(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "analyze [options] intersect [-o out_obj] obj1 obj2 <...>";
+    const char *purpose_string = "Intersect obj1 with obj2 and any subsequent objs";
+    if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
+    struct ged *gedp = gc->gedp;
+
+    argc--; argv++;
+    if (!argc) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    // See if we are going to output an object
+    int help = 0;
+    struct bu_vls oname = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",    "",      NULL,        &help,  "Print help");
+    BU_OPT(d[1], "o", "output",  "name",  &bu_opt_vls, &oname, "Specify output object");
+    BU_OPT_NULL(d[2]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    if (help) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_HELP;
+    }
+    if (ac < 2) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_HELP;
+    }
+
+    long ret = 0;
+    const char *n1 = NULL;
+    const char *n2 = NULL;
+    const char *r1 = NULL;
+    const char *o1 = NULL;
+    const char *t1 = "tmp1";
+    const char *t2 = "tmp2";
+    /* use the names that were input */
+    for (int i = 1; i < argc; i++) {
+	struct rt_db_internal i1, i2;
+	if (i == 1) {
+	    n1 = argv[0];
+	    n2 = argv[i];
+	    o1 = t1;
+	    r1 = t2;
+	} else {
+	    {
+		const char *av[3];
+		av[0] = "kill";
+		av[1] = "-f";
+		av[2] = r1;
+		ged_kill(gc->gedp, 3, (const char **)av);
+	    }
+	    const char *tmp = r1;
+	    r1 = o1;
+	    o1 = tmp;
+	    n1 = o1;
+	    n2 = argv[i];
+	}
+
+	struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, n1, LOOKUP_NOISY);
+	struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
+	GED_DB_GET_INTERNAL(gedp, &i1, dp1, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &i2, dp2, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	op_func_ptr of = _analyze_find_processor(gc, DB_OP_INTERSECT, i1.idb_minor_type, i2.idb_minor_type);
+
+	if (of) {
+	    ret = (*of)(o1, gc->gedp,  DB_OP_INTERSECT, n1, n2);
+	    if (ret == -1) {
+		{
+		    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&tmpstr, "%s", bu_vls_cstr(gedp->ged_result_str));
+		    const char *av[3];
+		    av[0] = "kill";
+		    av[1] = "-f";
+		    av[2] = o1;
+		    ged_kill(gc->gedp, 3, (const char **)av);
+		    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
+		}
+		return GED_ERROR;
+	    }
+	}
+    }
+
+    if (bu_vls_strlen(&oname)) {
+	const char *av[3];
+	av[0] = "mv";
+	av[1] = o1;
+	av[2] = bu_vls_cstr(&oname);
+	ged_move(gc->gedp, 3, (const char **)av);
+    } else {
+	const char *av[3];
+	av[0] = "kill";
+	av[1] = "-f";
+	av[2] = o1;
+	ged_kill(gc->gedp, 3, (const char **)av);
+    }
+
+    bu_vls_sprintf(gedp->ged_result_str, "%ld", ret);
+
+    return GED_OK;
+}
+
+
 extern "C" int
 _analyze_cmd_help(void *bs, int argc, const char **argv)
 {
@@ -252,6 +502,7 @@ _analyze_cmd_help(void *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _analyze_cmds[] = {
       { "summarize",            _analyze_cmd_summarize},
+      { "intersect",            _analyze_cmd_intersect},
       { (char *)NULL,      NULL}
   };
 
@@ -260,13 +511,13 @@ extern "C" int
 ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
-    struct _ged_analyze_info gc;
-    gc.gedp = gedp;
-    gc.cmds = _analyze_cmds;
-    gc.verbosity = 0;
+    struct _ged_analyze_info *gc = _analyze_info_create();
+    gc->gedp = gedp;
+    gc->cmds = _analyze_cmds;
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
+	_analyze_info_destroy(gc);
 	return GED_ERROR;
     }
 
@@ -275,14 +526,15 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 
     // See if we have any high level options set
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",    "",      NULL,                 &help,         "Print help");
-    BU_OPT(d[1], "v", "verbose", "",      NULL,                 &gc.verbosity, "Verbose output");
+    BU_OPT(d[0], "h", "help",    "",  NULL, &help,          "Print help");
+    BU_OPT(d[1], "v", "verbose", "",  NULL, &gc->verbosity, "Verbose output");
     BU_OPT_NULL(d[2]);
 
-    gc.gopts = d;
+    gc->gopts = d;
 
     if (argc == 1) {
 	_analyze_cmd_help(&gc, 0, NULL);
+	_analyze_info_destroy(gc);
 	return GED_OK;
     }
 
@@ -307,8 +559,10 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    _analyze_cmd_help(&gc, 0, NULL);
 	}
+	_analyze_info_destroy(gc);
 	return GED_OK;
     }
+
 
     // Jump the processing past any options specified. If we don't have a
     // subcommand, assume all args are geometry objects and the command mode is
@@ -325,11 +579,13 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 
     int ret;
     if (bu_cmd(_analyze_cmds, argc, argv, 0, (void *)&gc, &ret) == BRLCAD_OK) {
+	_analyze_info_destroy(gc);
 	return ret;
     } else {
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
+    _analyze_info_destroy(gc);
     return GED_ERROR;
 }
 
