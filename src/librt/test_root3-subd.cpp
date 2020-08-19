@@ -30,7 +30,8 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "plot3.h"
+#include "bu/app.h"
+#include "bn/plot3.h"
 #include "opennurbs.h"
 
 
@@ -523,14 +524,14 @@ main(int argc, char *argv[])
     }
     RT_BOT_CK_MAGIC(bot_ip);
 
-    for (size_t i_cnt = 1; i_cnt < 3; i_cnt++) {
+    for (size_t i_cnt = 1; i_cnt < 7; i_cnt++) {
 	mesh = iterate(bot_ip, prev_mesh);
 	prev_mesh = mesh;
 
 	// Plot results
 	struct bu_vls fname;
 	bu_vls_init(&fname);
-	bu_vls_printf(&fname, "root3_%d.pl", i_cnt);
+	bu_vls_printf(&fname, "root3_%zd.pl", i_cnt);
 	FILE* plot_file = fopen(bu_vls_addr(&fname), "w");
 	std::map<size_t, std::vector<size_t> >::iterator f_it;
 	std::vector<size_t>::iterator l_it;
