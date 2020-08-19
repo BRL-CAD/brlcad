@@ -85,7 +85,6 @@ extern char *outputfile;     	/* name of base of output file */
 extern char *densityfile;     	/* name of density file */
 extern int output_is_binary;	/* !0 means output is binary */
 
-static int mass_undef = 0;
 
 static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
@@ -122,18 +121,24 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	dp->next = (struct datapoint *)addp;
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	/* if we don't have a valid material density to work with, use a default material */
-	if (density_factor < 0) {
-	    if (!mass_undef) {
-		bu_log("Material type %d used, but has no density file entry.\n", reg->reg_gmater);
-		bu_log("  (region %s)\n", reg->reg_name);
-		bu_log("  Mass is undefined.\n");
-		mass_undef = 1;
+	/* no density factor means we use a default (zero) */
+	{
+	    /* keep track of the first few only */
+	    #define MAX_MASS_TRACKED 256
+	    static int mass_undef[MAX_MASS_TRACKED] = {0};
+
+	    if (density_factor < 0) {
+		if (material_id > 0 && material_id < MAX_MASS_TRACKED && !mass_undef[material_id]) {
+		    bu_log("WARNING: Material ID %ld has no density file entry.\n", material_id);
+		    bu_log("         Mass is undefined, only reporting volume.\n");
+		    bu_log("       ( Encountered on region %s )\n", reg->reg_name);
+		    mass_undef[material_id] = 1;
+		}
+		density_factor = analyze_densities_density(density, 0);
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		reg->reg_gmater = 0;
+		bu_semaphore_release(BU_SEM_SYSCALL);
 	    }
-	    density_factor = analyze_densities_density(density, 0);
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    reg->reg_gmater = 0;
-	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
 	{
