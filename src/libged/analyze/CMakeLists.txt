@@ -8,6 +8,11 @@ include_directories(
 
 set(analyze_srcs
   analyze.cpp
+  arb8.cpp
+  arbn.cpp
+  ars.cpp
+  superell.cpp
+  sketch.cpp
   util.cpp
   )
 
@@ -22,7 +27,6 @@ CMAKEFILES(
   CMakeLists.txt
   ${analyze_srcs}
   ged_analyze.h
-  analyze.c
   )
 
 # Local Variables:

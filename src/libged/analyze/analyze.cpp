@@ -66,6 +66,101 @@ _analyze_cmd_msgs(void *cs, int argc, const char **argv, const char *us, const c
     return 0;
 }
 
+/* Analyze solid in internal form.
+ * TODO - this switch table probably indicates this should
+ * be a functab callback... */
+/**
+ * TODO: primitives that still need implementing
+ * ehy
+ * metaball
+ * nmg
+ */
+static void
+analyze_do_summary(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    /* XXX Could give solid name, and current units, here */
+
+    switch (ip->idb_type) {
+
+	case ID_ARB8:
+	    analyze_arb8(gedp, ip);
+	    break;
+
+	case ID_BOT:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_ARBN:
+	    analyze_arbn(gedp, ip);
+	    break;
+
+	case ID_ARS:
+	    analyze_ars(gedp, ip);
+	    break;
+
+	case ID_TGC:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_ELL:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_TOR:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_RPC:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_ETO:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_EPA:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_PARTICLE:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_SUPERELL:
+	    analyze_superell(gedp, ip);
+	    break;
+
+	case ID_SKETCH:
+	    analyze_sketch(gedp, ip);
+	    break;
+
+	case ID_HYP:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_PIPE:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_VOL:
+	    analyze_general(gedp, ip);
+	    break;
+
+	 case ID_EXTRUDE:
+	    analyze_general(gedp, ip);
+	    break;
+
+	 case ID_RHC:
+	    analyze_general(gedp, ip);
+	    break;
+
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
+			  OBJ[ip->idb_type].ft_name);
+	    break;
+    }
+}
+
 extern "C" int
 _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 {
@@ -76,11 +171,32 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
     }
 
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
+    struct ged *gedp = gc->gedp;
+    struct rt_db_internal intern;
 
     argc--; argv++;
-    if (argc != 2) {
+    if (!argc) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
 	return GED_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* use the names that were input */
+    for (int i = 0; i < argc; i++) {
+	struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY);
+	if (ndp == RT_DIR_NULL)
+	    continue;
+
+	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+	_ged_do_list(gedp, ndp, 1);
+	analyze_do_summary(gedp, &intern);
+	rt_db_free_internal(&intern);
     }
 
     return GED_OK;
@@ -157,9 +273,6 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     // Clear results
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    // We know we're the brep command - start processing args
-    argc--; argv++;
-
     // See if we have any high level options set
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",    "",      NULL,                 &help,         "Print help");
@@ -168,14 +281,14 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 
     gc.gopts = d;
 
-    if (!argc) {
+    if (argc == 1) {
 	_analyze_cmd_help(&gc, 0, NULL);
 	return GED_OK;
     }
 
     // High level options are only defined prior to the subcommand
     int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
 	if (bu_cmd_valid(_analyze_cmds, argv[i]) == BRLCAD_OK) {
 	    cmd_pos = i;
 	    break;
@@ -197,17 +310,18 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    // Must have a subcommand
-    if (cmd_pos == -1) {
-	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
-	_analyze_cmd_help(&gc, 0, NULL);
-	return GED_ERROR;
+    // Jump the processing past any options specified. If we don't have a
+    // subcommand, assume all args are geometry objects and the command mode is
+    // summarize. This will get us the old behavior, except in the case where
+    // we happen to have an object with a name that matches a subcommand of
+    // analyze.  In that case, the full "analyze summarize objname" is needed.
+    const char *scmd = "summarize";
+    if (cmd_pos != -1) {
+	argc = argc - cmd_pos;
+	argv = &argv[cmd_pos];
+    } else {
+	argv[0] = scmd;
     }
-
-
-    // Jump the processing past any options specified
-    argc = argc - cmd_pos;
-    argv = &argv[cmd_pos];
 
     int ret;
     if (bu_cmd(_analyze_cmds, argc, argv, 0, (void *)&gc, &ret) == BRLCAD_OK) {
