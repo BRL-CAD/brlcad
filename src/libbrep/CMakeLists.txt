@@ -46,7 +46,6 @@ set(LIBBREP_SOURCES
   shape_recognition/util.cpp
   ssx_event.cpp
   tools/util.cpp
-  #opennurbs_fit.cpp
   )
 
 set(libbrep_ignored_files
@@ -55,12 +54,9 @@ set(libbrep_ignored_files
   cdt/cdt.h
   cdt/mesh.h
   cdt/RTree.h
-  opennurbs_fit.h
-  opennurbs_fit.cpp
   PullbackCurve.h
   shape_recognition/shape_recognition.h
   shape_recognition/torus.cpp
-  surface_tree_queue_tests.patch
   )
 CMAKEFILES(${libbrep_ignored_files})
 

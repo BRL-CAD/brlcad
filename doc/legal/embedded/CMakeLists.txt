@@ -37,7 +37,6 @@ set(embedded_licenses
   mt19937ar.txt
   naca.txt
   normalize.txt
-  nurbs_fit.txt
   obr.txt
   OpenNURBS.txt
   osg.txt
