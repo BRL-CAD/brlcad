@@ -129,9 +129,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 
 	    if (density_factor < 0) {
 		if (material_id > 0 && material_id < MAX_MASS_TRACKED && !mass_undef[material_id]) {
-		    bu_log("WARNING: Material ID %ld has no density file entry.\n", material_id);
-		    bu_log("         Mass is undefined, only reporting volume.\n");
-		    bu_log("       ( Encountered on region %s )\n", reg->reg_name);
+		    bu_log("WARNING: Material ID %ld has no density file entry.\n"
+			   "         Mass is undefined, only reporting volume.\n"
+			   "       ( Encountered on region %s )\n", material_id, reg->reg_name);
 		    mass_undef[material_id] = 1;
 		}
 		density_factor = analyze_densities_density(density, 0);
