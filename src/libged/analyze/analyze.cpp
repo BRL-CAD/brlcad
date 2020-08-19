@@ -79,10 +79,10 @@ _analyze_info_create()
 static void
 _analyze_info_destroy(struct _ged_analyze_info *s)
 {
-    delete[] s->union_map;
-    delete[] s->isect_map;
-    delete[] s->subtr_map;
-    delete[] s;
+    delete s->union_map;
+    delete s->isect_map;
+    delete s->subtr_map;
+    delete s;
 }
 
 static bool
@@ -164,20 +164,20 @@ _analyze_find_processor(struct _ged_analyze_info *s, db_op_t op, int t1, int t2)
     // If there isn't a specific type, see if there's a generic match for t2
     type2 = (db_solid_type(t2)) ? DB_SOLID : DB_NON_SOLID;
     if (omap->find(std::make_pair(type1, type2)) != omap->end()) {
-	return (*omap)[std::make_pair(t1, t2)];
+	return (*omap)[std::make_pair(type1, type2)];
     }
 
     // If there isn't a specific type, see if there's a generic match for t1
     type1 = (db_solid_type(t1)) ? DB_SOLID : DB_NON_SOLID;
     type2 = t2;
     if (omap->find(std::make_pair(type1, type2)) != omap->end()) {
-	return (*omap)[std::make_pair(t1, t2)];
+	return (*omap)[std::make_pair(type1, type2)];
     }
     // If there isn't a match, see if there's a generic match for t1 and t2
     type1 = (db_solid_type(t1)) ? DB_SOLID : DB_NON_SOLID;
     type2 = (db_solid_type(t2)) ? DB_SOLID : DB_NON_SOLID;
     if (omap->find(std::make_pair(type1, type2)) != omap->end()) {
-	return (*omap)[std::make_pair(t1, t2)];
+	return (*omap)[std::make_pair(type1, type2)];
     }
 
     // Nope, nothing
@@ -335,6 +335,16 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+static void
+clear_obj(struct ged *gedp, const char *name)
+{
+    const char *av[4];
+    av[0] = "kill";
+    av[1] = "-f";
+    av[2] = "-q";
+    av[3] = name;
+    ged_kill(gedp, 4, (const char **)av);
+}
 
 extern "C" int
 _analyze_cmd_intersect(void *bs, int argc, const char **argv)
@@ -377,6 +387,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
 	return GED_HELP;
     }
+    argc = ac;
 
     long ret = 0;
     const char *n1 = NULL;
@@ -394,13 +405,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	    o1 = t1;
 	    r1 = t2;
 	} else {
-	    {
-		const char *av[3];
-		av[0] = "kill";
-		av[1] = "-f";
-		av[2] = r1;
-		ged_kill(gc->gedp, 3, (const char **)av);
-	    }
+	    clear_obj(gc->gedp, r1);
 	    const char *tmp = r1;
 	    r1 = o1;
 	    o1 = tmp;
@@ -414,17 +419,19 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	GED_DB_GET_INTERNAL(gedp, &i2, dp2, bn_mat_identity, &rt_uniresource, GED_ERROR);
 	op_func_ptr of = _analyze_find_processor(gc, DB_OP_INTERSECT, i1.idb_minor_type, i2.idb_minor_type);
 
+	if (!of) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Unsupported type paring\n");
+	    clear_obj(gc->gedp, o1);
+	    return GED_ERROR;
+	}
+
 	if (of) {
 	    ret = (*of)(o1, gc->gedp,  DB_OP_INTERSECT, n1, n2);
 	    if (ret == -1) {
 		{
 		    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 		    bu_vls_sprintf(&tmpstr, "%s", bu_vls_cstr(gedp->ged_result_str));
-		    const char *av[3];
-		    av[0] = "kill";
-		    av[1] = "-f";
-		    av[2] = o1;
-		    ged_kill(gc->gedp, 3, (const char **)av);
+		    clear_obj(gc->gedp, o1);
 		    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 		}
 		return GED_ERROR;
@@ -439,11 +446,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	av[2] = bu_vls_cstr(&oname);
 	ged_move(gc->gedp, 3, (const char **)av);
     } else {
-	const char *av[3];
-	av[0] = "kill";
-	av[1] = "-f";
-	av[2] = o1;
-	ged_kill(gc->gedp, 3, (const char **)av);
+	clear_obj(gc->gedp, o1);
     }
 
     bu_vls_sprintf(gedp->ged_result_str, "%ld", ret);
@@ -578,7 +581,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     int ret;
-    if (bu_cmd(_analyze_cmds, argc, argv, 0, (void *)&gc, &ret) == BRLCAD_OK) {
+    if (bu_cmd(_analyze_cmds, argc, argv, 0, (void *)gc, &ret) == BRLCAD_OK) {
 	_analyze_info_destroy(gc);
 	return ret;
     } else {

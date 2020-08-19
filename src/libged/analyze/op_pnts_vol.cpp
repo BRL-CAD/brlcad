@@ -152,7 +152,7 @@ op_pnts_vol(
     // If we're supposed to make an output object, don't do anything
     // until we're sure the way is clear.
     if (output_pnts_obj) {
-	struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, pnts_obj, LOOKUP_QUIET);
+	struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, output_pnts_obj, LOOKUP_QUIET);
 	if (odp != RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s already exists, aborting", output_pnts_obj);
 	    return -1;
@@ -197,7 +197,7 @@ op_pnts_vol(
     /* Verify the object supplied as the volume object has
      * non non-volumetric object types in its hierarchy.  If
      * there is such an object, abandon the test.  */
-    const char *tfilter = "! -type solid";
+    const char *tfilter = "! -type shape";
     if (db_search(NULL, DB_SEARCH_QUIET, tfilter, 1, &dp, gedp->ged_wdbp->dbip, NULL) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "Non-solid object found in %s, aborting\n", vol_obj);
 	rt_db_free_internal(&tpnts_intern);
