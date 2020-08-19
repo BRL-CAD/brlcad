@@ -1568,16 +1568,13 @@ main(int argc, char *argv[])
 	// If we launched subcommands, we need to process their
 	// output before quitting.  Do one up front to catch
 	// anything produced by a process that already exited,
-	// loop while libged still reports running processes,
-	// and then a final call before quitting to get the
-	// last output from the last command.
-	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
+	// and loop while libged still reports running processes.
+	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
-	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
+	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	    // Limit CPU burn in case of long running subcommands
-	    Tcl_Sleep(1); 
+	    Tcl_Sleep(1);
 	}
-	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
 
 	const char *av[2];
 	av[0] = "q";

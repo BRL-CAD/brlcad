@@ -487,6 +487,7 @@ bu_process_wait(
     if (!pinfo)
 	return -1;
 
+    close(pinfo->fd_in);
     close(pinfo->fd_out);
     close(pinfo->fd_err);
 
