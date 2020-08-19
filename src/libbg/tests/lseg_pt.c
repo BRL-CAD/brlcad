@@ -46,7 +46,7 @@ main(int argc, char **argv)
     sscanf(argv[4], "%lf,%lf,%lf", &E[X], &E[Y], &E[Z]);
     sscanf(argv[5], "%lf", &edist);
 
-    cdist = sqrt(bg_lseg_pt_dist_sq(&C, P0, P1, Q));
+    cdist = sqrt(bg_distsq_lseg3_pt(&C, P0, P1, Q));
 
     if (!NEAR_EQUAL(edist, cdist, DCHECK_TOL)) {
 	bu_log("expected %g, got %g\n", edist, cdist);

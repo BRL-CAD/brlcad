@@ -41,14 +41,14 @@ __BEGIN_DECLS
  * question if c is non-NULL.
  */
 BG_EXPORT double
-bg_lseg_pt_dist_sq(point_t *c, const point_t P0, const point_t P1, const point_t Q);
+bg_distsq_lseg3_pt(point_t *c, const point_t P0, const point_t P1, const point_t Q);
 
 /* Compute the closest points on the line segments P0->P1 and Q0->Q1.  Returns
  * the distance squared between the closest points and (optionally) the closest
  * points in question (c1 is the point on P0->P1, c2 is the point on Q0->Q1).
  */
 BG_EXPORT double
-bg_lseg_lseg_dist_sq(point_t *c1, point_t *c2,
+bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
 	const point_t P0, const point_t P1, const point_t Q0, const point_t Q1);
 
 __END_DECLS
