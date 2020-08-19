@@ -132,11 +132,6 @@ BRLCAD_ADDEXEC(bg_tri_closest_pt tri_closest_pt.c "libbg;libbn;libbu" TEST)
 add_test(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_closest_pt  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
 add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
 
-#  ************ trimesh_pt_in.cpp tests ***********
-
-BRLCAD_ADDEXEC(bg_trimesh_pt_in trimesh_pt_in.c "libbg;libbn;libbu" TEST)
-
-add_test(NAME bg_trimesh_pt_in_basic   COMMAND bg_trimesh_pt_in 1)
 
 #  ************ polygon_op.cpp tests ***********
 

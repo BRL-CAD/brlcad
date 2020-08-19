@@ -28,7 +28,6 @@ set(LIBBG_SOURCES
   tri_tri.c
   trimesh.cpp
   trimesh_isect.cpp
-  trimesh_pt_in.c
   util.c
   )
 
