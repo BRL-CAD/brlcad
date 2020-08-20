@@ -338,12 +338,30 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 static void
 clear_obj(struct ged *gedp, const char *name)
 {
+    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&tmpstr, "%s", bu_vls_cstr(gedp->ged_result_str));
     const char *av[4];
     av[0] = "kill";
     av[1] = "-f";
     av[2] = "-q";
     av[3] = name;
     ged_kill(gedp, 4, (const char **)av);
+    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
+}
+
+
+static void
+mv_obj(struct ged *gedp, const char *n1, const char *n2)
+{
+    clear_obj(gedp, n2);
+    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&tmpstr, "%s", bu_vls_cstr(gedp->ged_result_str));
+    const char *av[3];
+    av[0] = "mv";
+    av[1] = n1;
+    av[2] = n2;
+    ged_move(gedp, 3, (const char **)av);
+    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 
 extern "C" int
@@ -389,67 +407,67 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     }
     argc = ac;
 
-    long ret = 0;
-    const char *n1 = NULL;
-    const char *n2 = NULL;
-    const char *r1 = NULL;
-    const char *o1 = NULL;
-    const char *t1 = "tmp1";
-    const char *t2 = "tmp2";
-    /* use the names that were input */
-    for (int i = 1; i < argc; i++) {
-	struct rt_db_internal i1, i2;
-	if (i == 1) {
-	    n1 = argv[0];
-	    n2 = argv[i];
-	    o1 = t1;
-	    r1 = t2;
-	} else {
-	    clear_obj(gc->gedp, r1);
-	    const char *tmp = r1;
-	    r1 = o1;
-	    o1 = tmp;
-	    n1 = o1;
-	    n2 = argv[i];
-	}
-
-	struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, n1, LOOKUP_NOISY);
-	struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
-	GED_DB_GET_INTERNAL(gedp, &i1, dp1, bn_mat_identity, &rt_uniresource, GED_ERROR);
-	GED_DB_GET_INTERNAL(gedp, &i2, dp2, bn_mat_identity, &rt_uniresource, GED_ERROR);
-	op_func_ptr of = _analyze_find_processor(gc, DB_OP_INTERSECT, i1.idb_minor_type, i2.idb_minor_type);
-
-	if (!of) {
-	    bu_vls_sprintf(gedp->ged_result_str, "Unsupported type paring\n");
-	    clear_obj(gc->gedp, o1);
+    if (bu_vls_strlen(&oname)) {
+	struct directory *dp_out = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
+	if (dp_out != RT_DIR_NULL) {
+	    bu_vls_sprintf(gedp->ged_result_str, "specified output object %s already exists.\n", bu_vls_cstr(&oname));
+	    bu_vls_free(&oname);
 	    return GED_ERROR;
 	}
+    }
 
-	if (of) {
-	    ret = (*of)(o1, gc->gedp,  DB_OP_INTERSECT, n1, n2);
+    long ret = 0;
+    const char *tmpname = "___analyze_cmd_intersect_tmp_obj__";
+    struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    op_func_ptr of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
+    if (!of) {
+	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type paring\n");
+	bu_vls_free(&oname);
+	return GED_ERROR;
+    }
+    clear_obj(gc->gedp, tmpname);
+    ret = (*of)(tmpname, gc->gedp,  DB_OP_INTERSECT, argv[0], argv[1]);
+    if (ret == -1) {
+	clear_obj(gc->gedp, tmpname);
+	bu_vls_free(&oname);
+	return GED_ERROR;
+    }
+
+    if (argc > 2) {
+	const char *tmpname2 = "___analyze_cmd_intersect_tmp_obj_2__";
+	for (int i = 2; i < argc; i++) {
+	    const char *n1 = tmpname;
+	    const char *n2 = argv[i];
+	    dp1 = db_lookup(gedp->ged_wdbp->dbip, n1, LOOKUP_NOISY);
+	    dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
+	    of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
+	    if (!of) {
+		bu_vls_sprintf(gedp->ged_result_str, "Unsupported type paring\n");
+		clear_obj(gc->gedp, tmpname);
+		clear_obj(gc->gedp, tmpname2);
+		bu_vls_free(&oname);
+		return GED_ERROR;
+	    }
+	    ret = (*of)(tmpname2, gc->gedp,  DB_OP_INTERSECT, n1, n2);
+	    mv_obj(gc->gedp, tmpname2, tmpname);
 	    if (ret == -1) {
-		{
-		    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
-		    bu_vls_sprintf(&tmpstr, "%s", bu_vls_cstr(gedp->ged_result_str));
-		    clear_obj(gc->gedp, o1);
-		    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
-		}
+		clear_obj(gc->gedp, tmpname);
+		clear_obj(gc->gedp, tmpname2);
+		bu_vls_free(&oname);
 		return GED_ERROR;
 	    }
 	}
     }
 
     if (bu_vls_strlen(&oname)) {
-	const char *av[3];
-	av[0] = "mv";
-	av[1] = o1;
-	av[2] = bu_vls_cstr(&oname);
-	ged_move(gc->gedp, 3, (const char **)av);
+	mv_obj(gc->gedp, tmpname, bu_vls_cstr(&oname));
     }
-    clear_obj(gc->gedp, t1);
-    clear_obj(gc->gedp, t2);
+
+    clear_obj(gc->gedp, tmpname);
 
     bu_vls_sprintf(gedp->ged_result_str, "%ld\n", ret);
+    bu_vls_free(&oname);
 
     return GED_OK;
 }
