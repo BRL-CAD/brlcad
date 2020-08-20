@@ -85,7 +85,7 @@ struct ged_cmd_impl viewdir_cmd_impl = {
 const struct ged_cmd viewdir_cmd = { &viewdir_cmd_impl };
 const struct ged_cmd *viewdir_cmds[] = { &viewdir_cmd, NULL };
 
-static const struct ged_plugin pinfo = { viewdir_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  viewdir_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

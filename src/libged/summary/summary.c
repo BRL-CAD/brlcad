@@ -145,7 +145,7 @@ struct ged_cmd_impl summary_cmd_impl = {
 const struct ged_cmd summary_cmd = { &summary_cmd_impl };
 const struct ged_cmd *summary_cmds[] = { &summary_cmd, NULL };
 
-static const struct ged_plugin pinfo = { summary_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  summary_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

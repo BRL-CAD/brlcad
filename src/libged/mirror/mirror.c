@@ -228,7 +228,7 @@ struct ged_cmd_impl mirror_cmd_impl = {
 const struct ged_cmd mirror_cmd = { &mirror_cmd_impl };
 const struct ged_cmd *mirror_cmds[] = { &mirror_cmd, NULL };
 
-static const struct ged_plugin pinfo = { mirror_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  mirror_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

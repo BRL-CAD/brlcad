@@ -105,7 +105,7 @@ struct ged_cmd_impl rot_point_cmd_impl = {
 const struct ged_cmd rot_point_cmd = { &rot_point_cmd_impl };
 const struct ged_cmd *rot_point_cmds[] = { &rot_point_cmd, NULL };
 
-static const struct ged_plugin pinfo = { rot_point_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  rot_point_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

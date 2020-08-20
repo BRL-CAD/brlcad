@@ -161,7 +161,7 @@ const struct ged_cmd mat_scale_about_pnt_cmd = { &mat_scale_about_pnt_cmd_impl }
 
 const struct ged_cmd *mat4x3pnt_cmds[] = { &mat4x3pnt_cmd, &mat_ae_cmd, &mat_mul_cmd, &mat_scale_about_pnt_cmd, NULL };
 
-static const struct ged_plugin pinfo = { mat4x3pnt_cmds, 4 };
+static const struct ged_plugin pinfo = { GED_API,  mat4x3pnt_cmds, 4 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

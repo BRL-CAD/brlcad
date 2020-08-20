@@ -124,7 +124,7 @@ const struct ged_cmd rtweight_cmd = { &rtweight_cmd_impl };
 
 const struct ged_cmd *rt_cmds[] = { &rt_cmd, &rtarea_cmd, &rtedge_cmd, &rtweight_cmd, NULL };
 
-static const struct ged_plugin pinfo = { rt_cmds, 4 };
+static const struct ged_plugin pinfo = { GED_API,  rt_cmds, 4 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

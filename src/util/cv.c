@@ -97,8 +97,8 @@ main(int argc, char **argv)
 	}
     } else {
 	outfp = stdout;
+	setmode(outfp, O_BINARY);
     }
-    setmode(outfp, O_BINARY);
 
     if (argc >= 4) {
 	if ((infp = fopen(argv[3], "rb")) == NULL) {
@@ -107,8 +107,8 @@ main(int argc, char **argv)
 	}
     } else {
 	infp = stdin;
+	setmode(infp, O_BINARY);
     }
-    setmode(infp, O_BINARY);
 
     if (isatty(fileno(outfp))) {
 	fprintf(stderr, "cv: trying to send binary output to terminal\n");

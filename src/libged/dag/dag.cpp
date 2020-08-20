@@ -831,7 +831,7 @@ extern "C" {
     const struct ged_cmd dag_cmd = { &dag_cmd_impl };
     const struct ged_cmd *dag_cmds[] = { &dag_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { dag_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  dag_cmds, 1 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

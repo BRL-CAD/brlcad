@@ -90,7 +90,7 @@ struct ged_cmd_impl shader_cmd_impl = {
 const struct ged_cmd shader_cmd = { &shader_cmd_impl };
 const struct ged_cmd *shader_cmds[] = { &shader_cmd, NULL };
 
-static const struct ged_plugin pinfo = { shader_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  shader_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

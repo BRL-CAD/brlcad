@@ -151,7 +151,7 @@ struct ged_cmd_impl orotate_cmd_impl = {
 const struct ged_cmd orotate_cmd = { &orotate_cmd_impl };
 const struct ged_cmd *orotate_cmds[] = { &orotate_cmd, NULL };
 
-static const struct ged_plugin pinfo = { orotate_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  orotate_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

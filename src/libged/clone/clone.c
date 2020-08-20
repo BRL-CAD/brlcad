@@ -420,7 +420,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* actually copy the primitive to the new name */
-	argv[0] = "clone_copy";
+	argv[0] = "copy";
 	argv[1] = proto->d_namep;
 	argv[2] = bu_vls_addr(name);
 	argv[3] = (char *)0;
@@ -1032,7 +1032,7 @@ struct ged_cmd_impl clone_cmd_impl = {
 const struct ged_cmd clone_cmd = { &clone_cmd_impl };
 const struct ged_cmd *clone_cmds[] = { &clone_cmd, NULL };
 
-static const struct ged_plugin pinfo = { clone_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  clone_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

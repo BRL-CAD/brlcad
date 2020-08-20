@@ -60,7 +60,7 @@
 #include "bu/str.h"
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 254
+#define EXPECTED_PLATFORM_SYMBOLS 257
 
 class repo_info_t {
     public:

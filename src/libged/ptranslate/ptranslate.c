@@ -143,7 +143,7 @@ struct ged_cmd_impl ptranslate_cmd_impl = {
 const struct ged_cmd ptranslate_cmd = { &ptranslate_cmd_impl };
 const struct ged_cmd *ptranslate_cmds[] = { &ptranslate_cmd, NULL };
 
-static const struct ged_plugin pinfo = { ptranslate_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  ptranslate_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

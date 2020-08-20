@@ -354,7 +354,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   # If we *are* installing, do so to the binary directory (BIN_DIR)
   if(E_NO_INSTALL OR E_TEST)
     # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
-    if(NOT WIN32)
+    if(NOT WIN32 AND NOT E_TEST_USESDATA)
       if(NOT CMAKE_CONFIGURATION_TYPES)
 	set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
       else(NOT CMAKE_CONFIGURATION_TYPES)
@@ -363,7 +363,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 	  set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}")
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
-    endif(NOT WIN32)
+    endif(NOT WIN32 AND NOT E_TEST_USESDATA)
   else(E_NO_INSTALL OR E_TEST)
     if (NOT E_TEST_USESDATA)
       install(TARGETS ${execname} DESTINATION ${BIN_DIR})
@@ -949,9 +949,15 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   # Every regression test gets a build target
   if (CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^${testname} --output-on-failure)
+    add_custom_target(${testname}
+      COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R^${testname}$ --output-on-failure
+      VERBATIM
+      )
   else (CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname} --output-on-failure)
+    add_custom_target(${testname}
+      COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname}$ --output-on-failure
+      VERBATIM
+      )
   endif (CMAKE_CONFIGURATION_TYPES)
   if (depends_list)
     add_dependencies(${testname} ${depends_list})

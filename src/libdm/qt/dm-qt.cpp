@@ -1408,7 +1408,7 @@ extern "C" {
     struct dm dm_qt = { &dm_qt_impl };
 
 #ifdef DM_PLUGIN
-    static const struct dm_plugin pinfo = { &dm_qt };
+    static const struct dm_plugin pinfo = { DM_API, &dm_qt };
 
     COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
     {

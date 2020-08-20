@@ -612,7 +612,7 @@ extern "C" {
     const struct ged_cmd lint_cmd = { &lint_cmd_impl };
     const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { lint_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  lint_cmds, 1 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

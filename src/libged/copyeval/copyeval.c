@@ -181,7 +181,7 @@ struct ged_cmd_impl copyeval_cmd_impl = {
 const struct ged_cmd copyeval_cmd = { &copyeval_cmd_impl };
 const struct ged_cmd *copyeval_cmds[] = { &copyeval_cmd, NULL };
 
-static const struct ged_plugin pinfo = { copyeval_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  copyeval_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

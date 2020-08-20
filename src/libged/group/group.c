@@ -70,7 +70,7 @@ const struct ged_cmd g_cmd = { &g_cmd_impl };
 
 const struct ged_cmd *group_cmds[] = { &group_cmd, &g_cmd, NULL };
 
-static const struct ged_plugin pinfo = { group_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  group_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

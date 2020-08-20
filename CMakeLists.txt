@@ -3624,6 +3624,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
     CMAKEFILES(.gitignore)
   endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
 
+  # List any files which may exist for CI testing for distcheck.  TODO -
+  # this should be a fixed list, but until we go live with the Git repo
+  # use file(GLOB_RECURSE) instead
+  file(GLOB_RECURSE GITHUB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ".github/*")
+  CMAKEFILES(${GITHUB_FILES})
+
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmakefiles.cmake")
@@ -3699,7 +3705,7 @@ function(DIFF_FILE filename)
   string(REGEX REPLACE "\r?\n" "" NEW_STR "${BIN_STR}")
   if(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
     set(CONFIG_FATAL_ERROR 1 PARENT_SCOPE)
-    message("\n\"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\"\n")
+    message("\nERROR: \"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\" or find the source of the difference.\n")
   endif(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
 endfunction(DIFF_FILE filename)
 
@@ -3725,7 +3731,7 @@ file(APPEND "${CMAKE_BINARY_DIR}/configure.new" "${CONFIG_SUFFIX}")
 DIFF_FILE(configure)
 
 if(CONFIG_FATAL_ERROR)
-  message(FATAL_ERROR "Configure haulted.")
+  message(FATAL_ERROR "Configure haulted because INSTALL and/or configure script are out of date.")
 endif(CONFIG_FATAL_ERROR)
 
 
@@ -3737,25 +3743,18 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file("${BRLCAD_CMAKE_DIR}/distclean.cmake.in" "${BRLCAD_BINARY_DIR}/distclean.cmake" @ONLY)
-if("${CMAKE_GENERATOR}" MATCHES "Make")
+if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
-    COMMAND ${CMAKE_COMMAND} -E chdir "${BRLCAD_BINARY_DIR}" $(MAKE) clean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean... done."
     COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
     )
-elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
+else ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
-    COMMAND ${CMAKE_COMMAND} -E chdir "${BRLCAD_BINARY_DIR}" ninja -t clean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean... done."
+    COMMAND ${CMAKE_COMMAND} -E echo "Running clean target..."
+    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR} --target clean
+    COMMAND ${CMAKE_COMMAND} -E echo "Running clean target... done."
     COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
     )
-else("${CMAKE_GENERATOR}" MATCHES "Make")
-  add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Not implemented for generator ${CMAKE_GENERATOR}"
-    )
-endif("${CMAKE_GENERATOR}" MATCHES "Make")
+endif ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 if(TARGET distclean)
   set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
 endif(TARGET distclean)

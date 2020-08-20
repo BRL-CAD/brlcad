@@ -514,7 +514,7 @@ struct ged_cmd_impl rect_cmd_impl = {
 const struct ged_cmd rect_cmd = { &rect_cmd_impl };
 const struct ged_cmd *rect_cmds[] = { &rect_cmd, NULL };
 
-static const struct ged_plugin pinfo = { rect_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  rect_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

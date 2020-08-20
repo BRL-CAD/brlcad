@@ -16,17 +16,13 @@ if (TARGET ktank.g)
     ktank.g
     ktank_burst.shotlines
     burst_ktank.log
+    regress-burst.log
     )
-  foreach(BCF ${BURST_CLEAN_FILES})
-    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${BCF}")
-  endforeach(BCF ${BURST_CLEAN_FILES})
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress-burst.log")
+  DISTCLEAN(${BURST_CLEAN_FILES})
 
   # If we copied the input files, clear them out as well
   if(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
-    foreach(BIF ${BURST_INPUT_FILES})
-      DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${BCF}")
-    endforeach(BIF ${BURST_INPUT_FILES})
+    DISTCLEAN(${BURST_INPUT_FILES})
   endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
 endif (TARGET ktank.g)
 

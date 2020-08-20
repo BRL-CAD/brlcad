@@ -208,7 +208,7 @@ const struct ged_cmd postscript_cmd = { &postscript_cmd_impl };
 
 const struct ged_cmd *ps_cmds[] = { &ps_cmd, &postscript_cmd, NULL };
 
-static const struct ged_plugin pinfo = { ps_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  ps_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

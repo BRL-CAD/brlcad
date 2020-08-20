@@ -43,15 +43,21 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 
+
 struct cvt_tab {
     double val;
     char name[32];
 };
 
+
 struct conv_table {
     struct cvt_tab *cvttab;
 };
 
+
+/* Keep table sorted sorted small-to-large.  Algorithms below may rely
+ * on the ordering.
+ */
 static struct cvt_tab bu_units_length_tab[] = {
     {0.0,		"none"},
     {1.0e-21,		"ym"},
@@ -134,6 +140,9 @@ static struct cvt_tab bu_units_length_tab[] = {
 };
 #define BU_UNITS_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
 
+/* Keep table sorted sorted small-to-large.  Algorithms below may rely
+ * on the ordering.
+ */
 static struct cvt_tab bu_units_volume_tab[] = {
     {0.0,		"none"},
     {1.0,		"mm^3"},		/* default */
@@ -156,6 +165,10 @@ static struct cvt_tab bu_units_volume_tab[] = {
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
+
+/* Keep table sorted sorted small-to-large.  Algorithms below may rely
+ * on the ordering.
+ */
 static struct cvt_tab bu_units_mass_tab[] = {
     {0.0,		"none"},
     {1.0,		"grams"},		/* default */
@@ -169,6 +182,7 @@ static struct cvt_tab bu_units_mass_tab[] = {
     {28.35,		"ounce"},
     {0.0,               ""}                     /* LAST ENTRY */
 };
+
 
 static const struct conv_table unit_lists[4] = {
     {bu_units_length_tab}, {bu_units_volume_tab}, {bu_units_mass_tab}, {NULL}
@@ -241,19 +255,27 @@ units_name_matches(const char *input, const char *name)
 double
 bu_units_conversion(const char *str)
 {
-    register const struct cvt_tab *tp;
-    register const struct conv_table *cvtab;
-    char ubuf[256];
+    const struct cvt_tab *tp;
+    const struct conv_table *cvtab;
+    double factor = 1.0;
 
-    /* Copy the given string */
-    bu_strlcpy(ubuf, str, sizeof(ubuf));
-
-    /* Search for this string in the table */
+    /* Search for the units string in the table matching by name. */
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
-	    if (!units_name_matches(ubuf, tp->name))
-		continue;
-	    return tp->val;
+	    if (units_name_matches(str, tp->name)) {
+		return tp->val;
+	    }
+	}
+    }
+    /* couldn't find it by name, check by value */
+    factor = bu_mm_value(str);
+    if (!EQUAL(factor, 1.0)) {
+	for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
+	    for (tp=cvtab->cvttab; tp->name[0]; tp++) {
+		if (EQUAL(factor, tp->val)) {
+		    return tp->val;
+		}
+	    }
 	}
     }
     return 0.0;		/* Unable to find it */
@@ -294,6 +316,7 @@ bu_units_string(register const double mm)
     }
     return (const char *)NULL;
 }
+
 
 struct bu_vls *
 bu_units_strings_vls()
@@ -361,6 +384,8 @@ bu_nearest_units_string(register const double mm)
 
 double
 bu_mm_value(const char *s)
+
+
 {
     double v;
     char *ptr;
@@ -410,6 +435,7 @@ bu_mm_cvt(const struct bu_structparse *sdp,
     /* reconvert with optional units */
     *p = bu_mm_value(value);
 }
+
 
 /*
  * Local Variables:

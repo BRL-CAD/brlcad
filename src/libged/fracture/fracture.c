@@ -219,7 +219,7 @@ struct ged_cmd_impl fracture_cmd_impl = {
 const struct ged_cmd fracture_cmd = { &fracture_cmd_impl };
 const struct ged_cmd *fracture_cmds[] = { &fracture_cmd, NULL };
 
-static const struct ged_plugin pinfo = { fracture_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  fracture_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

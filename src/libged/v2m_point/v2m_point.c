@@ -103,7 +103,7 @@ struct ged_cmd_impl v2m_point_cmd_impl = {
 const struct ged_cmd v2m_point_cmd = { &v2m_point_cmd_impl };
 const struct ged_cmd *v2m_point_cmds[] = { &v2m_point_cmd, NULL };
 
-static const struct ged_plugin pinfo = { v2m_point_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  v2m_point_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -241,7 +241,7 @@ struct ged_cmd_impl gdiff_cmd_impl = {
 const struct ged_cmd gdiff_cmd = { &gdiff_cmd_impl };
 const struct ged_cmd *gdiff_cmds[] = { &gdiff_cmd, NULL };
 
-static const struct ged_plugin pinfo = { gdiff_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  gdiff_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

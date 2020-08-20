@@ -81,7 +81,7 @@ struct ged_cmd_impl set_output_script_cmd_impl = {
 const struct ged_cmd set_output_script_cmd = { &set_output_script_cmd_impl };
 const struct ged_cmd *set_output_script_cmds[] = { &set_output_script_cmd, NULL };
 
-static const struct ged_plugin pinfo = { set_output_script_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  set_output_script_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -2140,7 +2140,7 @@ struct ged_cmd_impl bigE_cmd_impl = {
 const struct ged_cmd bigE_cmd = { &bigE_cmd_impl };
 const struct ged_cmd *bigE_cmds[] = { &bigE_cmd, NULL };
 
-static const struct ged_plugin pinfo = { bigE_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  bigE_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

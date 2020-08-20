@@ -3504,7 +3504,7 @@ struct ged_cmd_impl typein_cmd_impl = {
 const struct ged_cmd typein_cmd = { &typein_cmd_impl };
 const struct ged_cmd *typein_cmds[] = { &typein_cmd, NULL };
 
-static const struct ged_plugin pinfo = { typein_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  typein_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

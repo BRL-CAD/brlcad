@@ -516,7 +516,7 @@ extern "C" {
 	NULL
     };
 
-    static const struct ged_plugin pinfo = { bot_cmds, 17 };
+    static const struct ged_plugin pinfo = { GED_API,  bot_cmds, 17 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

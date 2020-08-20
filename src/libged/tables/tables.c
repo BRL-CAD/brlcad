@@ -635,7 +635,7 @@ const struct ged_cmd solids_cmd = { &solids_cmd_impl };
 
 const struct ged_cmd *tables_cmds[] = { &tables_cmd, &idents_cmd, &regions_cmd, &solids_cmd, NULL };
 
-static const struct ged_plugin pinfo = { tables_cmds, 4 };
+static const struct ged_plugin pinfo = { GED_API,  tables_cmds, 4 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

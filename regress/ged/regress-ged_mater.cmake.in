@@ -19,7 +19,8 @@ file(WRITE "${LOGFILE}" "Starting mater test run\n")
 string(REPLACE "\\" "" MATER_EXEC "${EXEC}")
 if (NOT EXISTS "${MATER_EXEC}")
   file(WRITE "${LOGFILE}" "mater test program not found at location \"${MATER_EXEC}\" - aborting\n")
-  message(FATAL_ERROR "Unable to find mater test program, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find mater test program, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif (NOT EXISTS "${MATER_EXEC}")
 
 # Clean up in case we've run before unsuccessfully
@@ -37,7 +38,8 @@ execute_process(
 file(APPEND "${LOGFILE}" "${ged_mater_log}")
 set(get_mater_log)
 if(ged_mater_result)
-  message(FATAL_ERROR "[regress-ged_mater] Failure: ${ged_mater_result}. See ${LOGFILE} for more info.\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_mater] Failure: ${ged_mater_result}. See ${LOGFILE} for more info.\n${LOG}")
 endif(ged_mater_result)
 
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${CBDIR}/ged_mater_test.g")
@@ -52,7 +54,8 @@ execute_process(
 file(APPEND "${LOGFILE}" "${ged_mater_log}")
 set(get_mater_log)
 if(ged_mater_result)
-  message(FATAL_ERROR "[regress-ged_mater] Failure: ${ged_mater_result}. See ${LOGFILE} for more info.\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_mater] Failure: ${ged_mater_result}. See ${LOGFILE} for more info.\n${LOG}")
 endif(ged_mater_result)
 
 # Clean up

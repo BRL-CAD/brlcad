@@ -50,12 +50,6 @@ set(level_2_dirs
 # Level 3 directories contain BRL-CAD's executables.  Setting
 # the BRLCAD_ENABLE_TARGETS level to 3 will enable all programs.
 
-# FIXME: Ideally these should all be in the below list,
-# need to fix them on Windows.
-if(NOT WIN32)
-  set(non_win32_dirs remrt)
-endif(NOT WIN32)
-
 set(level_3_dirs
   brlman
   burst
@@ -73,7 +67,7 @@ set(level_3_dirs
   util
   qged
   external
-  ${non_win32_dirs}
+  remrt
   # tclscripts must come before applications like
   # mged and archer that need the scripts in place to
   # run. The script target lists are defined when the tclscripts

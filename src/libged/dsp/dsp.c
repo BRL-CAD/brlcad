@@ -160,7 +160,7 @@ struct ged_cmd_impl dsp_cmd_impl = {
 const struct ged_cmd dsp_cmd = { &dsp_cmd_impl };
 const struct ged_cmd *dsp_cmds[] = { &dsp_cmd, NULL };
 
-static const struct ged_plugin pinfo = { dsp_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  dsp_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -234,6 +234,7 @@ points:
 https://github.com/actions/starter-workflows/pull/47
 https://github.com/cristianadam/HelloWorld/
 https://github.com/marketplace/actions/run-cmake
+https://github.com/marketplace/actions/makensis
 https://github.com/jurplel/install-qt-action
 
 BRL-CAD's test will likely be quite heavy by normal testing standards,

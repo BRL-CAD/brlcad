@@ -1328,7 +1328,7 @@ const struct ged_cmd preview_cmd = { &preview_cmd_impl };
 
 const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &loadview_cmd, &preview_cmd, NULL };
 
-static const struct ged_plugin pinfo = { draw_cmds, 5 };
+static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 5 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

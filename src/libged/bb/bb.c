@@ -323,7 +323,7 @@ struct ged_cmd_impl bb_cmd_impl = {
 const struct ged_cmd bb_cmd = { &bb_cmd_impl };
 const struct ged_cmd *bb_cmds[] = { &bb_cmd, NULL };
 
-static const struct ged_plugin pinfo = { bb_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  bb_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

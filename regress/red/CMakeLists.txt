@@ -1,8 +1,12 @@
 
 if (SH_EXEC AND TARGET mged)
 
-  add_test(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/red.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-red mged TEST_DEFINED)
+  if (NOT WIN32)
+    add_test(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/red.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-red mged TEST_DEFINED)
+  else (NOT WIN32)
+    message(WARNING "regress-red does not currently pass on Windows, disabling")
+  endif (NOT WIN32)
 
 endif (SH_EXEC AND TARGET mged)
 

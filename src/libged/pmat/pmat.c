@@ -75,7 +75,7 @@ struct ged_cmd_impl pmat_cmd_impl = {
 const struct ged_cmd pmat_cmd = { &pmat_cmd_impl };
 const struct ged_cmd *pmat_cmds[] = { &pmat_cmd, NULL };
 
-static const struct ged_plugin pinfo = { pmat_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  pmat_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

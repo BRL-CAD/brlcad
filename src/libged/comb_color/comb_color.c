@@ -88,7 +88,7 @@ struct ged_cmd_impl comb_color_cmd_impl = {
 const struct ged_cmd comb_color_cmd = { &comb_color_cmd_impl };
 const struct ged_cmd *comb_color_cmds[] = { &comb_color_cmd, NULL };
 
-static const struct ged_plugin pinfo = { comb_color_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  comb_color_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

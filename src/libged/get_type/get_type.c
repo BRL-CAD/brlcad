@@ -221,7 +221,7 @@ struct ged_cmd_impl get_type_cmd_impl = {
 const struct ged_cmd get_type_cmd = { &get_type_cmd_impl };
 const struct ged_cmd *get_type_cmds[] = { &get_type_cmd, NULL };
 
-static const struct ged_plugin pinfo = { get_type_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  get_type_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

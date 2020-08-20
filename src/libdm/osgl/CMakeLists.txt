@@ -67,6 +67,7 @@ endif(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OSG)
 
 CMAKEFILES(
   ${OSGL_SRCS}
+  CMakeLists.txt
   dm-osgl.h
   fb_osgl.h
   osg-test.cpp

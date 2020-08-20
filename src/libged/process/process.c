@@ -211,7 +211,7 @@ struct ged_cmd_impl process_cmd_impl = {
 const struct ged_cmd process_cmd = { &process_cmd_impl };
 const struct ged_cmd *process_cmds[] = { &process_cmd, NULL };
 
-static const struct ged_plugin pinfo = { process_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  process_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

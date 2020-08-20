@@ -185,7 +185,7 @@ struct ged_cmd_impl prefix_cmd_impl = {
 const struct ged_cmd prefix_cmd = { &prefix_cmd_impl };
 const struct ged_cmd *prefix_cmds[] = { &prefix_cmd, NULL };
 
-static const struct ged_plugin pinfo = { prefix_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  prefix_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

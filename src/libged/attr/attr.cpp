@@ -753,7 +753,7 @@ extern "C" {
     const struct ged_cmd attr_pcmd = { &attr_cmd_impl };
     const struct ged_cmd *attr_cmds[] = { &attr_pcmd,  NULL };
 
-    static const struct ged_plugin pinfo = { attr_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  attr_cmds, 1 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

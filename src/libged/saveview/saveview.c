@@ -205,7 +205,7 @@ struct ged_cmd_impl saveview_cmd_impl = {
 const struct ged_cmd saveview_cmd = { &saveview_cmd_impl };
 const struct ged_cmd *saveview_cmds[] = { &saveview_cmd, NULL };
 
-static const struct ged_plugin pinfo = { saveview_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  saveview_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

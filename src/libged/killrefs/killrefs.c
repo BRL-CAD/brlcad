@@ -130,7 +130,7 @@ struct ged_cmd_impl killrefs_cmd_impl = {
 const struct ged_cmd killrefs_cmd = { &killrefs_cmd_impl };
 const struct ged_cmd *killrefs_cmds[] = { &killrefs_cmd, NULL };
 
-static const struct ged_plugin pinfo = { killrefs_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  killrefs_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -80,7 +80,7 @@ struct ged_cmd_impl vrot_cmd_impl = {
 const struct ged_cmd vrot_cmd = { &vrot_cmd_impl };
 const struct ged_cmd *vrot_cmds[] = { &vrot_cmd, NULL };
 
-static const struct ged_plugin pinfo = { vrot_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  vrot_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

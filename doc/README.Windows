@@ -65,7 +65,9 @@ make the variable CMAKE_SYSTEM_VERSION as a string type, and assign the
 value of 10.0.15063.0.)
 
 Note that for this to work the SDK version in question must be
-installed on the system.
+installed on the system.  To see what versions are installed,
+look for Windows SDK installs in the "Apps & Features" Setup
+interface.
 
 ===========================================
 

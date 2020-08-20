@@ -127,6 +127,16 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.32
+----
+include/bg/chull.h
+        All functions returning point arrays instead of index arrays.
+        Will be replaced by similarly named functions returning
+        indexes into provided points array, to allow the caller
+        to decide if new arrays are needed. [deprecated 7.32]
+        bg_polyline_2d_chull, bg_2d_chull, bg_3d_coplanar_chull,
+        bg_3d_chull
+
 7.30
 ----
 ~/.density

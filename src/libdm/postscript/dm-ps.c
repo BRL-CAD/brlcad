@@ -833,7 +833,7 @@ struct dm_impl dm_ps_impl = {
 struct dm dm_ps = { &dm_ps_impl };
 
 #ifdef DM_PLUGIN
-const struct dm_plugin pinfo = { &dm_ps };
+const struct dm_plugin pinfo = { DM_API, &dm_ps };
 
 COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {

@@ -249,7 +249,7 @@ const struct ged_cmd db_glob_cmd = { &db_glob_cmd_impl };
 
 const struct ged_cmd *glob_cmds[] = { &glob_cmd, &db_glob_cmd, NULL };
 
-static const struct ged_plugin pinfo = { glob_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  glob_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

@@ -79,7 +79,7 @@ struct ged_cmd_impl form_cmd_impl = {
 const struct ged_cmd form_cmd = { &form_cmd_impl };
 const struct ged_cmd *form_cmds[] = { &form_cmd, NULL };
 
-static const struct ged_plugin pinfo = { form_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  form_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

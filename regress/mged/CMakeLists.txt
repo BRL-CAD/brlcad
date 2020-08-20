@@ -92,14 +92,14 @@ if (TARGET mged)
     set(TARGET_NAME ${tname})
     set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-mged_${TNAME}.log")
 
-    BRLCAD_REGRESSION_TEST(regress-mged_${tname} "mged" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
+    BRLCAD_REGRESSION_TEST(regress-mged_${tname} "mged;rtarea;rt;rtcheck" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
     DISTCLEAN("${LOG_FILE}")
   endforeach(testfile ${MGED_TESTS})
 
   # Original shell based test
   if (SH_EXEC)
     add_test(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/mged.sh" ${CMAKE_SOURCE_DIR})
-    BRLCAD_REGRESSION_TEST(regress-mged mged TEST_DEFINED)
+    BRLCAD_REGRESSION_TEST(regress-mged "mged;rtarea;rt;rtcheck" TEST_DEFINED)
   endif (SH_EXEC)
 
 endif (TARGET mged)

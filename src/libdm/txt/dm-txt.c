@@ -456,7 +456,7 @@ struct dm_impl dm_txt_impl = {
 struct dm dm_txt = { &dm_txt_impl };
 
 #ifdef DM_PLUGIN
-const struct dm_plugin pinfo = { &dm_txt };
+const struct dm_plugin pinfo = { DM_API, &dm_txt };
 
 COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {

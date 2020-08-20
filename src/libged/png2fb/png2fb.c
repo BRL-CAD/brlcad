@@ -201,7 +201,7 @@ struct ged_cmd_impl png2fb_cmd_impl = {
 const struct ged_cmd png2fb_cmd = { &png2fb_cmd_impl };
 const struct ged_cmd *png2fb_cmds[] = { &png2fb_cmd, NULL };
 
-static const struct ged_plugin pinfo = { png2fb_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  png2fb_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

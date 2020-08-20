@@ -1351,7 +1351,9 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 
     /* Get data from rt */
     if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
-	read_failed = 1;
+	if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
+	    read_failed = 1;
+	}
     }
 
     if (read_failed) {
@@ -1360,6 +1362,7 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (gedp->ged_delete_io_handler) {
 	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
+	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
 	}
 
 
@@ -1491,6 +1494,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
+	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDOUT, _ged_rt_output_handler, (void *)run_rtp);
     }
     return GED_OK;
 }

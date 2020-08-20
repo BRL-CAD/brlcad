@@ -215,6 +215,7 @@ set(misc_ignore_files
   repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
   repoconv/gitattributes
+  repoconv/github_ci_actions.yml
   repoconv/gitignore.tar.gz
   repoconv/manual_merge_info.tar.gz
   repoconv/md5.hpp
