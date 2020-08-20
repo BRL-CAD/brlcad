@@ -422,7 +422,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
     op_func_ptr of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
     if (!of) {
-	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type paring\n");
+	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
 	bu_vls_free(&oname);
 	return GED_ERROR;
     }
@@ -443,7 +443,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	    dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
 	    of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
 	    if (!of) {
-		bu_vls_sprintf(gedp->ged_result_str, "Unsupported type paring\n");
+		bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
 		clear_obj(gc->gedp, tmpname);
 		clear_obj(gc->gedp, tmpname2);
 		bu_vls_free(&oname);
@@ -472,6 +472,113 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+extern "C" int
+_analyze_cmd_subtract(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "analyze [options] subtract [-o out_obj] obj1 obj2 <...>";
+    const char *purpose_string = "Intersect obj1 with obj2 and any subsequent objs";
+    if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
+    struct ged *gedp = gc->gedp;
+
+    argc--; argv++;
+    if (!argc) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    // See if we are going to output an object
+    int help = 0;
+    struct bu_vls oname = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",    "",      NULL,        &help,  "Print help");
+    BU_OPT(d[1], "o", "output",  "name",  &bu_opt_vls, &oname, "Specify output object");
+    BU_OPT_NULL(d[2]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    if (help) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_HELP;
+    }
+    if (ac < 2) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_HELP;
+    }
+    argc = ac;
+
+    if (bu_vls_strlen(&oname)) {
+	struct directory *dp_out = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
+	if (dp_out != RT_DIR_NULL) {
+	    bu_vls_sprintf(gedp->ged_result_str, "specified output object %s already exists.\n", bu_vls_cstr(&oname));
+	    bu_vls_free(&oname);
+	    return GED_ERROR;
+	}
+    }
+
+    long ret = 0;
+    const char *tmpname = "___analyze_cmd_subtract_tmp_obj__";
+    struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    op_func_ptr of = _analyze_find_processor(gc, DB_OP_SUBTRACT, dp1->d_minor_type, dp2->d_minor_type);
+    if (!of) {
+	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
+	bu_vls_free(&oname);
+	return GED_ERROR;
+    }
+    clear_obj(gc->gedp, tmpname);
+    ret = (*of)(tmpname, gc->gedp,  DB_OP_SUBTRACT, argv[0], argv[1]);
+    if (ret == -1) {
+	clear_obj(gc->gedp, tmpname);
+	bu_vls_free(&oname);
+	return GED_ERROR;
+    }
+
+    if (argc > 2) {
+	const char *tmpname2 = "___analyze_cmd_subtract_tmp_obj_2__";
+	for (int i = 2; i < argc; i++) {
+	    const char *n1 = tmpname;
+	    const char *n2 = argv[i];
+	    dp1 = db_lookup(gedp->ged_wdbp->dbip, n1, LOOKUP_NOISY);
+	    dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
+	    of = _analyze_find_processor(gc, DB_OP_SUBTRACT, dp1->d_minor_type, dp2->d_minor_type);
+	    if (!of) {
+		bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
+		clear_obj(gc->gedp, tmpname);
+		clear_obj(gc->gedp, tmpname2);
+		bu_vls_free(&oname);
+		return GED_ERROR;
+	    }
+	    ret = (*of)(tmpname2, gc->gedp,  DB_OP_SUBTRACT, n1, n2);
+	    mv_obj(gc->gedp, tmpname2, tmpname);
+	    if (ret == -1) {
+		clear_obj(gc->gedp, tmpname);
+		clear_obj(gc->gedp, tmpname2);
+		bu_vls_free(&oname);
+		return GED_ERROR;
+	    }
+	}
+    }
+
+    if (bu_vls_strlen(&oname)) {
+	mv_obj(gc->gedp, tmpname, bu_vls_cstr(&oname));
+    }
+
+    clear_obj(gc->gedp, tmpname);
+
+    bu_vls_sprintf(gedp->ged_result_str, "%ld\n", ret);
+    bu_vls_free(&oname);
+
+    return GED_OK;
+}
 
 extern "C" int
 _analyze_cmd_help(void *bs, int argc, const char **argv)
@@ -522,8 +629,9 @@ _analyze_cmd_help(void *bs, int argc, const char **argv)
 
 
 const struct bu_cmdtab _analyze_cmds[] = {
-      { "summarize",            _analyze_cmd_summarize},
-      { "intersect",            _analyze_cmd_intersect},
+      { "summarize",           _analyze_cmd_summarize},
+      { "intersect",           _analyze_cmd_intersect},
+      { "subtract",            _analyze_cmd_subtract},
       { (char *)NULL,      NULL}
   };
 
