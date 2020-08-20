@@ -40,6 +40,12 @@ extern "C" {
 #include "./ged_analyze.h"
 }
 
+struct ray_result {
+    point_t *p;
+    double dist_test_pt;
+    int flag;
+};
+
 static void
 _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
@@ -62,7 +68,7 @@ in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(s
     struct partition *part = partH->pt_forw;
     struct soltab *stp = part->pt_inseg->seg_stp;
 
-    int *ret = (int *)(ap->a_uptr);
+    struct ray_result *r= (struct ray_result *)(ap->a_uptr);
 
     RT_CK_APPLICATION(ap);
 
@@ -70,14 +76,10 @@ in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(s
 
     // Any partition containing the test point will have a hit distance less than
     // or at the test point.  If we find such a partition, set the flag.
-    if (part->pt_inhit->hit_dist < 0) {
-        (*ret) = -1;
-    }
-
-    // Differentiate approximately on the surface via the flag value, in case
-    // that's of interest.
-    if (NEAR_ZERO(part->pt_inhit->hit_dist, VUNITIZE_TOL)) {
-        (*ret) = 1;
+    bool t1 = ((part->pt_inhit->hit_dist < r->dist_test_pt) || NEAR_EQUAL(part->pt_inhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
+    bool t2 = ((part->pt_outhit->hit_dist > r->dist_test_pt) || NEAR_EQUAL(part->pt_outhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
+    if (t1 && t2) {
+        r->flag = -1;
     }
 
     // Test point not on the partition
@@ -90,17 +92,53 @@ in_out_miss(struct application *UNUSED(ap))
     return 0;
 }
 
+static double _backout(struct application *ap, point_t *p)
+{
+    double bov;
+    point_t ray_point;
+    vect_t diag, dvec, ray_dir, center_bsphere;
+    fastf_t bsphere_diameter, dist_to_target, delta;
+
+    VMOVE(ray_point, *p);
+    VSET(ray_dir, 0, 0, 1);
+
+    VSUB2(diag, ap->a_rt_i->mdl_max, ap->a_rt_i->mdl_min);
+    bsphere_diameter = MAGNITUDE(diag);
+
+    /*
+     * calculate the distance from a plane normal to the ray direction through the center of
+     * the bounding sphere and a plane normal to the ray direction through the aim point.
+     */
+    VADD2SCALE(center_bsphere, ap->a_rt_i->mdl_max, ap->a_rt_i->mdl_min, 0.5);
+
+    dist_to_target = DIST_PNT_PNT(center_bsphere, ray_point);
+
+    VSUB2(dvec, ray_point, center_bsphere);
+    VUNITIZE(dvec);
+    delta = dist_to_target*VDOT(ray_dir, dvec);
+
+    /*
+     * this should put us about a bounding sphere radius in front of the bounding sphere
+     */
+    bov = bsphere_diameter + delta;
+
+    return bov;
+}
+
+
 // Return 0 if not inside, 1 if (approximately) on and -1 if inside the volume.
 static int
 _pnt_in_vol(point_t *p, struct application *ap)
 {
-    int inside_flag = 0;
     int (*a_hit)(struct application *, struct partition *, struct seg *);
     int (*a_miss)(struct application *);
     void *uptr_stash;
+    struct ray_result result;
+    result.flag = 0;
+    result.p = p;
 
     vect_t pz;
-    VSET(pz,  0,  0,  1);
+    VSET(pz, 0, 0, 1);
 
     /* reuse existing application, just cache pre-existing hit routines and
      * substitute our own */
@@ -113,7 +151,13 @@ _pnt_in_vol(point_t *p, struct application *ap)
 
     VMOVE(ap->a_ray.r_pt, *p);
 
-    ap->a_uptr = &inside_flag;
+    double bov = _backout(ap, p);
+    for (int i = 0; i < 3; i++) {
+	ap->a_ray.r_pt[i] = ap->a_ray.r_pt[i] + (bov * -1*(pz[i]));
+    }
+    result.dist_test_pt = DIST_PNT_PNT(ap->a_ray.r_pt, *p);
+
+    ap->a_uptr = &result;
     VMOVE(ap->a_ray.r_dir, pz);
     (void)rt_shootray(ap);
 
@@ -122,7 +166,7 @@ _pnt_in_vol(point_t *p, struct application *ap)
     ap->a_miss = a_miss;
     ap->a_uptr = uptr_stash;
 
-    return inside_flag;
+    return result.flag;
 }
 
 

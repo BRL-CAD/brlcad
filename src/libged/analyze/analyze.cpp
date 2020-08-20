@@ -445,11 +445,11 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	av[1] = o1;
 	av[2] = bu_vls_cstr(&oname);
 	ged_move(gc->gedp, 3, (const char **)av);
-    } else {
-	clear_obj(gc->gedp, o1);
     }
+    clear_obj(gc->gedp, t1);
+    clear_obj(gc->gedp, t2);
 
-    bu_vls_sprintf(gedp->ged_result_str, "%ld", ret);
+    bu_vls_sprintf(gedp->ged_result_str, "%ld\n", ret);
 
     return GED_OK;
 }
