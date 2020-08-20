@@ -29,6 +29,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <iterator>
 
 #include "bu/cmd.h"
 #include "bu/opt.h"

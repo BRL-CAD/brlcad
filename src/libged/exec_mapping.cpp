@@ -36,12 +36,14 @@
 	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
 	{ \
 	    const char *fname = #x ; \
-	    int ret = ged_cmd_valid(argv[0], fname); \
-	    if (ret) { \
-		bu_log("Error(%d): LIBGED command \"ged_" #x "\" called with an unexpected argv[0] value: %s\n", ret, argv[0]); \
-		return GED_UNKNOWN; \
+	    int vret = ged_cmd_valid(argv[0], fname); \
+	    if (vret) { \
+		argv[0] = fname; \
 	    }\
-	    ret = ged_exec(gedp, argc, argv); \
+	    int ret = ged_exec(gedp, argc, argv); \
+	    if (vret) { \
+		ret |= GED_UNKNOWN; \
+	    } \
 	    return ret; \
 	} \
 

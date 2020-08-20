@@ -31,6 +31,11 @@ jobs:
     #  Define a matrix of the operating system and compiler combinations
     #  we want to build against.
     #
+    #  Note that for Windows the vcvars64.bat script is important - that
+    #  is what sets up environment variables to make sure we get the 64
+    #  bit version of the compiler and libraries.  See:
+    #  https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
+    #
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -75,10 +80,10 @@ jobs:
         set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
 
-        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
           execute_process(
-            COMMAND "${{ matrix.config.environment_script }}" && set
-            OUTPUT_FILE environment_script_output.txt
+          COMMAND "${{ matrix.config.environment_script }}" && set
+          OUTPUT_FILE environment_script_output.txt
           )
           file(STRINGS environment_script_output.txt output_lines)
           foreach(line IN LISTS output_lines)
@@ -98,7 +103,7 @@ jobs:
           COMMAND cmake
             -S .
             -B build
-            -D CMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
+            -D CMAKE_BUILD_TYPE=Release
             -D CMAKE_VERBOSE_DISTCHECK=ON
           RESULT_VARIABLE result
         )
@@ -141,7 +146,8 @@ jobs:
            )
         else ("${{ runner.os }}" STREQUAL "Windows")
            execute_process(
-             COMMAND cmake --build build --config Release --target distcheck
+             COMMAND cmake --build build --config Release --target all
+             COMMAND cmake --build build --config Release --target check
              RESULT_VARIABLE result
            )
         endif ("${{ runner.os }}" STREQUAL "Windows")

@@ -332,6 +332,8 @@ bu_process_exec(
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
+	// TODO - should we be doing this for more than 20? See
+	// https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-Tasks-Descriptors-Child_Processes.html
 	for (int i = 3; i < 20; i++) {
 	    (void)close(i);
 	}
@@ -487,6 +489,7 @@ bu_process_wait(
     if (!pinfo)
 	return -1;
 
+    close(pinfo->fd_in);
     close(pinfo->fd_out);
     close(pinfo->fd_err);
 

@@ -72,7 +72,7 @@ _find_closest_point(struct ged_cp_info *s, point_t *p, struct bview_data_line_st
 	point_t c;
 	VMOVE(P0, lines->gdls_points[i]);
 	VMOVE(P1, lines->gdls_points[i+1]);
-	double dsq = bg_lseg_pt_dist_sq(&c, P0, P1, *p);
+	double dsq = bg_distsq_lseg3_pt(&c, P0, P1, *p);
 	// If we're outside tolerance, continue
 	if (dsq > s->ctol_sq) {
 	    continue;
@@ -119,7 +119,7 @@ _find_close_isect(struct ged_cp_info *s, point_t *p)
     VMOVE(Q0, s->c_lset2->gdls_points[s->c_l2]);
     VMOVE(Q1, s->c_lset2->gdls_points[s->c_l2+1]);
 
-    double csdist_sq = bg_lseg_lseg_dist_sq(&c1, &c2, P0, P1, Q0, Q1);
+    double csdist_sq = bg_distsq_lseg3_lseg3(&c1, &c2, P0, P1, Q0, Q1);
     if (csdist_sq > s->ctol_sq) {
 	// Line segments are too far away to use both of them to override the
 	// original answer

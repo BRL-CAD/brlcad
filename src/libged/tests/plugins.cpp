@@ -368,11 +368,19 @@ main(int ac, char *av[]) {
     /* Deliberately call a ged function with invalid argv[0] */
     {
 	const char *wav0 = "wrong_name";
-	int ret = ged_ls(gbp, 1, &wav0);
-	if (ret & GED_UNKNOWN) {
-	    bu_log("\nged_ls called with command name \"%s\" reported expected error\n", wav0);
+	const char *wav[2];
+	wav[0] = wav0;
+	wav[1] = NULL;
+	int ret = ged_ls(gbp, 1, (const char **)wav);
+	if (ret & GED_UNKNOWN && wav[0] != wav0) {
+	    bu_log("\nged_ls called with command name \"%s\" correctly returned with GED_UNKNOWN set\n", wav0);
 	} else {
-	    bu_log("\nged_ls called with command name \"%s\" did not report the expected error\n", wav0);
+	    if (!(ret & GED_UNKNOWN)) {
+		bu_log("\nged_ls called with command name \"%s\" did not return with GED_UNKNOWN set\n", wav0);
+	    }
+	    if (wav[0] == wav0) {
+		bu_log("\nged_ls called with command name \"%s\" did not override wav[0]\n", wav0);
+	    }
 	}
     }
 
@@ -380,11 +388,19 @@ main(int ac, char *av[]) {
      * command, just not one matching the function) */
     {
 	const char *wav1 = "search";
-	int ret = ged_ls(gbp, 1, &wav1);
-	if (ret & GED_UNKNOWN) {
-	    bu_log("\nged_ls called with command name \"%s\" reported expected error\n", wav1);
+	const char *wav[2];
+	wav[0] = wav1;
+	wav[1] = NULL;
+	int ret = ged_ls(gbp, 1, (const char **)wav);
+	if (ret & GED_UNKNOWN && wav[0] != wav1) {
+	    bu_log("\nged_ls called with command name \"%s\" correctly returned with GED_UNKNOWN set\n", wav1);
 	} else {
-	    bu_log("\nged_ls called with command name \"%s\" did not report the expected error\n", wav1);
+	    if (!(ret & GED_UNKNOWN)) {
+		bu_log("\nged_ls called with command name \"%s\" did not return with GED_UNKNOWN set\n", wav1);
+	    }
+	    if (wav[0] == wav1) {
+		bu_log("\nged_ls called with command name \"%s\" did not override wav[0]\n", wav1);
+	    }
 	}
     }
 
