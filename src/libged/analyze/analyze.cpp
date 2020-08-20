@@ -662,7 +662,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     gc->gopts = d;
 
     if (argc == 1) {
-	_analyze_cmd_help(&gc, 0, NULL);
+	_analyze_cmd_help(gc, 0, NULL);
 	_analyze_info_destroy(gc);
 	return GED_OK;
     }
@@ -684,9 +684,9 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 	if (cmd_pos >= 0) {
 	    argc = argc - cmd_pos;
 	    argv = &argv[cmd_pos];
-	    _analyze_cmd_help(&gc, argc, argv);
+	    _analyze_cmd_help(gc, argc, argv);
 	} else {
-	    _analyze_cmd_help(&gc, 0, NULL);
+	    _analyze_cmd_help(gc, 0, NULL);
 	}
 	_analyze_info_destroy(gc);
 	return GED_OK;
