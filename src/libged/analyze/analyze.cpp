@@ -476,7 +476,7 @@ extern "C" int
 _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "analyze [options] subtract [-o out_obj] obj1 obj2 <...>";
-    const char *purpose_string = "Intersect obj1 with obj2 and any subsequent objs";
+    const char *purpose_string = "Subtract obj2 (and any subsequent objects) from obj1";
     if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
