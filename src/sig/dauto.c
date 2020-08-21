@@ -35,6 +35,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -44,7 +45,7 @@ main(int argc, char *argv[])
 {
     static const char usage[] = "Usage: dauto [window_size (512)] < doubles >outputfile\n";
 
-    double *data;			/* Input buffer */
+    double *data;		/* Input buffer */
     double *r;			/* autocor output */
     double *weight;		/* weights to unbias estimation */
 
@@ -55,7 +56,10 @@ main(int argc, char *argv[])
     bu_setprogname(argv[0]);
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", usage);
+	//TODO - bu_exit is bombing here - why?
+	//bu_exit(1, "%s", usage);
+	bu_log("%s", usage);
+	return 1;
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
