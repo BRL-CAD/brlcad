@@ -78,7 +78,7 @@ fi
 
 exists="`timeout --version 2>&1 | head -1 | awk '{print $1}'`"
 if test "x$exists" != "xtimeout" ; then
-    function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+    timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
 fi
 
 
@@ -92,6 +92,7 @@ log "Testing usage statements ..."
 test_usage ( ) {
     cmd=$1
 
+    echo $cmd
     log "=== $cmd === (pid: $$)"
 
     usage="`timeout ${WAIT} $cmd -h -? 2>&1`"

@@ -36,9 +36,7 @@
 
 #include "bu/app.h"
 #include "bu/malloc.h"
-#include "bu/parallel.h"
 #include "bu/exit.h"
-
 
 int
 main(int argc, char *argv[])
