@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* removed facetall.sh script(use MGED facetize cmd) - Cliff Yapp
 * dynamic LIBGED command loading in MGED & Archer - Cliff Yapp
 * dynamic LIBDM display manager loading in MGED & Archer - Cliff Yapp
 * fixed 'idents' crash when running in a read-only dir - Sean Morrison
