@@ -24,7 +24,6 @@
 #include "bu/exit.h"
 
 /* system headers */
-#include <setjmp.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
