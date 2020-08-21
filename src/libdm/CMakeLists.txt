@@ -18,6 +18,27 @@ set(DM_LOCAL_INCLUDE_DIRS
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
+add_custom_command(
+  OUTPUT "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
+  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
+  )
+add_custom_target(dm_plugins_sentinel
+  DEPENDS ${CMAKE_BINARY_DIR}/dm_plugins.sentinel
+  )
+set_target_properties(dm_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/dm")
+
+function(dm_plugin_library name)
+  add_library(${name} ${ARGN})
+  add_dependencies(dm_plugins_sentinel ${name})
+endfunction(dm_plugin_library name)
+
+# This target is supplied so applications wanting to run libdm
+# commands at build time can depend on the plugins being built as well as
+# libdm itself (otherwise LIBGED commands might fail due to their plugins not
+# yet having been built.)
+add_custom_target(dm_plugins ALL DEPENDS dm_plugins_sentinel)
+set_target_properties(dm_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
+
 # Backend implementations
 add_subdirectory(X)
 add_subdirectory(glx)

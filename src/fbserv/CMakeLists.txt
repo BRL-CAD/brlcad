@@ -3,7 +3,7 @@ include_directories(
   )
 
 BRLCAD_ADDEXEC(fbserv "fbserv.c;server.c" libdm)
-ADD_TARGET_DEPS(fbserv dm-ogl dm-wgl)
+ADD_TARGET_DEPS(fbserv dm_plugins)
 
 CMAKEFILES(CMakeLists.txt)
 

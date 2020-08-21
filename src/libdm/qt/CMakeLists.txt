@@ -34,7 +34,7 @@ if(BRLCAD_ENABLE_QT)
 
   add_definitions(-DDM_PLUGIN)
 
-  add_library(dm-qt SHARED ${QT_SRCS})
+  dm_plugin_library(dm-qt SHARED ${QT_SRCS})
   target_link_libraries(dm-qt libdm libbu ${QT_LIBRARIES})
   set_property(TARGET dm-qt APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-qt "${QT_SRCS}")
