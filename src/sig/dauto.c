@@ -35,8 +35,8 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/exit.h"
 
 int
 main(int argc, char *argv[])
@@ -54,7 +54,8 @@ main(int argc, char *argv[])
     bu_setprogname(argv[0]);
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", usage);
+	bu_log("%s", usage);
+	return 1;
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
