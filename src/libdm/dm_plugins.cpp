@@ -384,7 +384,11 @@ fb_open(const char *file, int width, int height)
      * else strip out "/path/devname" and try to look it up in the
      * device array.  If we don't find it assume it's a file.
      */
-    f_it = fmb->find(std::string(file));
+    for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
+	if (bu_strncmp(file, f_it->first.c_str(), strlen(f_it->first.c_str())) == 0) {
+	    break;
+	}
+    }
     if (f_it != fmb->end()) {
 	const struct fb *f = f_it->second;
 	*ifp->i = *(f->i);        /* struct copy */
