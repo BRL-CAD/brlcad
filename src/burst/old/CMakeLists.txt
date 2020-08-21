@@ -27,7 +27,7 @@ set(burst_old_SOURCES
 
 
 BRLCAD_ADDEXEC(burst "${burst_old_SOURCES}" "librt;libdm;${M_LIBRARY}")
-ADD_TARGET_DEPS(burst dm-ogl dm-wgl)
+ADD_TARGET_DEPS(burst dm_plugins)
 
 set(burst_old_noinst_HEADERS
   CMakeLists.txt
