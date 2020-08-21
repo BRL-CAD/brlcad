@@ -3682,6 +3682,7 @@ mark_as_advanced(EXECUTABLE_OUTPUT_PATH)
 mark_as_advanced(LIBRARY_OUTPUT_PATH)
 mark_as_advanced(CMAKE_CXX_COMPILER)
 mark_as_advanced(CMAKE_C_COMPILER)
+mark_as_advanced(CMAKE_AR)
 
 # ----------------------------------------------------------------------------
 # If options have been defined that we are going to document, by now they've

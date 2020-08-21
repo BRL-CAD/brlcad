@@ -8,6 +8,8 @@ add_custom_command(
 add_custom_target(ged_plugins_sentinel
   DEPENDS ${CMAKE_BINARY_DIR}/ged_plugins.sentinel
   )
+set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ged")
+
 function(ged_plugin_library name)
   add_library(${name} ${ARGN})
   add_dependencies(ged_plugins_sentinel ${name})
@@ -18,6 +20,8 @@ endfunction(ged_plugin_library name)
 # libged itself (otherwise LIBGED commands might fail due to their plugins not
 # yet having been built.)
 add_custom_target(ged_plugins ALL DEPENDS ged_plugins_sentinel)
+set_target_properties(ged_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
+
 
 set(LIBGED_SOURCES
   exec.cpp

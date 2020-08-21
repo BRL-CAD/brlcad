@@ -21,7 +21,7 @@ if(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_DM_TK)
 
   add_definitions(-DDM_PLUGIN)
 
-  add_library(dm-tk SHARED ${TK_SRCS})
+  dm_plugin_library(dm-tk SHARED ${TK_SRCS})
   target_link_libraries(dm-tk libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY})
   set_property(TARGET dm-tk APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-tk "${TK_SRCS}")

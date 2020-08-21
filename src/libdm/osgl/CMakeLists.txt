@@ -42,7 +42,7 @@ if(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OSG)
 
   add_definitions(-DDM_PLUGIN)
 
-  add_library(dm-osgl SHARED ${OSGL_SRCS})
+  dm_plugin_library(dm-osgl SHARED ${OSGL_SRCS})
   target_link_libraries(dm-osgl libdm librt libbu ${OSGL_LIBRARIES})
   set_property(TARGET dm-osgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-osgl "${OSGL_SRCS}")
