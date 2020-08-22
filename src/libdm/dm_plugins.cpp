@@ -364,16 +364,6 @@ fb_open(const char *file, int width, int height)
         }
     }
 
-    /* If we have a /dev/mem or a /dev/stack request, those interfaces are built in */
-    if (BU_STR_EQUAL(file, "/dev/mem")) {
-	*ifp->i = *memory_interface.i;        /* struct copy */
-	goto found_interface;
-    }
-    if (BU_STR_EQUAL(file, "/dev/stack")) {
-	*ifp->i = *stk_interface.i;        /* struct copy */
-	goto found_interface;
-    }
-
     /*
      * Determine what type of hardware the device name refers to.
      *
