@@ -60,6 +60,9 @@ main(int argc, char *argv[])
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
+    if (L <= 0) {
+	bu_exit(1, "Invalid window size \"%s\" supplied, quitting", argv[1]);
+    }
     data = (double *)bu_calloc(L, sizeof(double), "data");
     r = (double *)bu_calloc(L, sizeof(double), "r");
     weight = (double *)bu_calloc(L, sizeof(double), "weight");
