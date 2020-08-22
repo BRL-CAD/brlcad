@@ -37,6 +37,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
+#include "bu/exit.h"
 
 
 int

@@ -265,10 +265,8 @@ main(int argc, char **argv)
 	if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	    errors = 1;
 
-	if (errors) {
-	    bu_log("Usage: %s\n%s\n%s\n", USAGE1, USAGE2, USAGE3);
-	    return 1;
-	}
+	if (errors)
+	    bu_exit(1, "Usage: %s\n%s\n%s\n", USAGE1, USAGE2, USAGE3);
     }
 
     if (bu_optind < argc) {
