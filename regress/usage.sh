@@ -107,6 +107,17 @@ test_usage ( ) {
 	lines=0
     fi
 
+    # This is only feasible if we're in single-process-at-a-time mode, but if
+    # we are see if the execution of the command put out a -? file.  If it
+    # did, that means it improperly handled the supplied options.
+    if test $NPSW -eq 1 ; then
+	QFILE=`pwd`/-?
+	if test -f "$QFILE"; then
+	    log "ERROR: command $cmd created a -? file"
+	    rm -f $QFILE
+	fi
+    fi
+
     printf "  %-30s lines:%3d  maxline:%3d\n" "$cmd ..." "$lines" "$length"
 
     if test "x`echo $usage | grep -i usage`" != "x" ; then
