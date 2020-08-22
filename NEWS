@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed crash when drawing a VOL with missing data - Cliff Yapp
-* removed facetall.sh script(use MGED facetize cmd) - Cliff Yapp
+* facetall.sh script is replaced by MGED facetize command - Cliff Yapp
 * dynamic LIBGED command loading in MGED & Archer - Cliff Yapp
 * dynamic LIBDM display manager loading in MGED & Archer - Cliff Yapp
 * fixed 'idents' crash when running in a read-only dir - Sean Morrison
