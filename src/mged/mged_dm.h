@@ -449,8 +449,6 @@ extern void set_curr_dm(struct dm_list *nl);
 #define netchan curr_dm_list->dml_netchan
 #endif
 #define clients curr_dm_list->dml_clients
-#define tkName dm_get_tkname(curr_dm_list->dml_dmp)
-#define dName dm_get_dname(curr_dm_list->dml_dmp)
 #define dirty curr_dm_list->dml_dirty
 #define mapped curr_dm_list->dml_mapped
 #define owner curr_dm_list->dml_owner

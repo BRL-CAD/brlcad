@@ -1272,14 +1272,23 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
     predictor_init();
 
+    struct bu_vls *dnvp = dm_get_dname(curr_dm_list->dml_dmp);
+    if (dnvp) {
+	bu_vls_init(dnvp);
+    }
+
     DMP = dm_get();
     dm_set_null(DMP);
-    bu_vls_init(tkName);
-    bu_vls_init(dName);
-    if (dm_get_pathname(DMP)) {
-	bu_vls_strcpy(dm_get_pathname(DMP), "nu");
+    struct bu_vls *dpvp = dm_get_pathname(DMP);
+    if (dpvp) {
+	bu_vls_strcpy(dpvp, "nu");
     }
-    bu_vls_strcpy(tkName, "nu");
+
+    struct bu_vls *tnvp = dm_get_tkname(curr_dm_list->dml_dmp);
+    if (tnvp) {
+	bu_vls_init(tnvp); /* this may leak */
+	bu_vls_strcpy(tnvp, "nu");
+    }
 
     BU_ALLOC(rubber_band, struct _rubber_band);
     *rubber_band = default_rubber_band;		/* struct copy */
@@ -1540,7 +1549,8 @@ main(int argc, char *argv[])
      */
     {
 	const unsigned char *dm_bg = dm_get_bg(DMP);
-	dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
+	if (dm_bg)
+	    dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
     }
 
     /* initialize a display manager */
