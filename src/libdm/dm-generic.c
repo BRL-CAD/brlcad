@@ -141,8 +141,12 @@ dm_get()
     struct dm *new_dm = DM_NULL;
     BU_GET(new_dm, struct dm);
     BU_GET(new_dm->i, struct dm_impl);
+
+    /* have to manually initialize all internal structs */
     bu_vls_init(&new_dm->i->dm_pathName);
+    bu_vls_init(&new_dm->i->dm_tkName);
     bu_vls_init(&new_dm->i->dm_dName);
+    bu_vls_init(&new_dm->i->dm_log);
 
     return new_dm;
 }
@@ -151,9 +155,14 @@ void
 dm_put(struct dm *dmp)
 {
     if (dmp && dmp != DM_NULL) {
+	/* have to manually de-initialize all internal structs */
 	bu_vls_free(&dmp->i->dm_pathName);
+	bu_vls_free(&dmp->i->dm_tkName);
 	bu_vls_free(&dmp->i->dm_dName);
-	if (dmp->i->fbp) fb_put(dmp->i->fbp);
+	bu_vls_free(&dmp->i->dm_log);
+
+	if (dmp->i->fbp)
+	    fb_put(dmp->i->fbp);
 	if (dmp->i->dm_put_internal)
 	    dmp->i->dm_put_internal(dmp);
 	BU_PUT(dmp->i, struct dm_impl);
