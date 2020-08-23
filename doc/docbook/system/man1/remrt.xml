@@ -326,7 +326,7 @@
     For a somewhat larger render we specify a size of 2048 pixels square.
   </para>
   <para>
-    <userinput>fbserv -s2048 -P0 -F/dev/X</userinput>
+    <userinput>fbserv -s2048 -p0 -F/dev/X</userinput>
   </para>
   <para>
     If an graphical framebuffer was specified, a window should appear.  Otherwise, fbserv will silently
@@ -358,12 +358,14 @@
 
 pkg_permserver(rtsrv, 8): unknown service
 08/22 21:51:41 Automatic REMRT on machine
-08/22 21:51:41 Listening at port 24081, reading script on stdin
+08/23 21:51:41 Assigned LIBPKG permport 24081
+08/23 21:51:41 Listening at TCP port 4446
+08/23 21:51:41 Reading script on stdin
 08/22 21:51:41 Starting to scan animation script
 08/22 21:51:41 Animation script loaded
 08/22 21:51:41 Worker assignment interval=5 seconds:
    Server   Last  Last   Average  Cur   Machine
-    State   Lump Elapsed pix/sec Frame   Name 
+    State   Lump Elapsed pix/sec Frame   Name
   -------- ----- ------- ------- ----- -------------
 08/22 21:51:41 Seeking servers to start
     </literallayout>
