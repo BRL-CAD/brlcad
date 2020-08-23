@@ -61,7 +61,10 @@ to_is_viewable(struct bview *gdvp)
     Tcl_Obj *our_result;
     Tcl_Obj *saved_result;
     int result_int;
-    const char *pathname = bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp));
+    const char *pathname;
+    const struct bu_vls *pathvls = dm_get_pathname((struct dm *)gdvp->dmp);
+
+    pathname = bu_vls_addr(pathvls);
 
     /* stash any existing result so we can inspect our own */
     saved_result = Tcl_GetObjResult(current_top->to_interp);
