@@ -43,10 +43,7 @@
 extern "C" struct dm *
 dm_open(void *interp, const char *type, int argc, const char *argv[])
 {
-    if (BU_STR_EQUIV(type, "nu")) {
-	return dm_null.i->dm_open(interp, argc, argv);
-    }
-    if (BU_STR_EQUIV(type, "null")) {
+    if (BU_STR_EQUIV(type, "nu") || BU_STR_EQUIV(type, "null")) {
 	return dm_null.i->dm_open(interp, argc, argv);
     }
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
@@ -126,7 +123,8 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	std::string key = d_it->first;
 	const struct dm *d = d_it->second;
 	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
-	bu_vls_printf(list, "%s", dm_get_name(d));
+	if (dm_get_name(d))
+	    bu_vls_printf(list, "%s", dm_get_name(d));
     }
     if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
     bu_vls_printf(list, "nu");
@@ -147,7 +145,8 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	}
 	const struct dm *d = d_it->second;
 	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
-	bu_vls_printf(list, "%s", dm_get_name(d));
+	if (dm_get_name(d))
+	    bu_vls_printf(list, "%s", dm_get_name(d));
 	i++;
 	b = priority_list[i];
     }
