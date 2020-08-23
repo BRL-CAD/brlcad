@@ -45,10 +45,6 @@
 #include "bresource.h"
 #include "bsocket.h"
 
-#ifdef VMIN
-#  undef VMIN
-#endif
-
 #include "bu/app.h"
 #include "bu/str.h"
 #include "bu/process.h"
@@ -81,9 +77,9 @@ FILE *outfp = NULL;	/* optional pixel output file */
 
 mat_t view2model;
 mat_t model2view;
-int srv_startpix;	/* offset for view_pixel */
+int srv_startpix = 0;	/* offset for view_pixel */
 int srv_scanlen = REMRT_MAX_PIXELS;	/* max assignment */
-unsigned char *scanbuf;
+unsigned char *scanbuf = NULL;
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup();
@@ -92,30 +88,31 @@ extern void application_init(void);
 
 /***** variables shared with worker() ******/
 struct application APP;
-int report_progress;	/* !0 = user wants progress report */
+int report_progress = 0;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
 /* Variables shared elsewhere */
 extern fastf_t rt_dist_tol;	/* Value for rti_tol.dist */
 extern fastf_t rt_perp_tol;	/* Value for rti_tol.perp */
-static char idbuf[132];		/* First ID record info */
+static char idbuf[132] = {0};		/* First ID record info */
 
 /* State flags */
-static int seen_dirbuild;
-static int seen_gettrees;
-static int seen_matrix;
+static int seen_dirbuild = 0;
+static int seen_gettrees = 0;
+static int seen_matrix = 0;
 
-static char *title_file, *title_obj;	/* name of file and first object */
+static char *title_file = NULL;
+static char *title_obj = NULL;	/* name of file and first object */
 
 #define MAX_WIDTH (16*1024)
 
-static int avail_cpus;		/* # of cpus avail on this system */
+static int avail_cpus = 0;	/* # of cpus avail on this system */
 
 /* store program parameters in case of restart */
 static int original_argc;
 static char **original_argv;
 
-int save_overlaps=0;
+int save_overlaps = 0;
 
 struct icv_image *bif = NULL;
 
@@ -157,6 +154,7 @@ char *tcp_port;		/* TCP port on control_host */
 int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
 char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
+
 
 int
 main(int argc, char **argv)
@@ -200,8 +198,7 @@ main(int argc, char **argv)
      * that will result in a deadlock in bu_semaphore_acquire(res_syscall)!
      * libpkg will default to stderr via pkg_errlog(), which is fine.
      */
-    pcsrv = pkg_open(control_host, tcp_port, "tcp", "", "",
-		     pkgswitch, NULL);
+    pcsrv = pkg_open(control_host, tcp_port, "tcp", "", "", pkgswitch, NULL);
     if (pcsrv == PKC_ERROR) {
 	fprintf(stderr, "rtsrv: unable to contact %s, port %s\n",
 		control_host, tcp_port);
@@ -324,8 +321,7 @@ main(int argc, char **argv)
 	RTG.rtg_parallel = 0;
     }
 
-    bu_log("using %zu of %d cpus\n",
-	   npsw, avail_cpus);
+    bu_log("using %zu of %d cpus\n", npsw, avail_cpus);
 
     /* Before option processing, do application-specific initialization */
     RT_APPLICATION_INIT(&APP);
@@ -353,8 +349,7 @@ main(int argc, char **argv)
 	tv.tv_sec = BU_LIST_NON_EMPTY(&WorkHead) ? 0L : 9999L;
 	tv.tv_usec = 0L;
 
-	if (select(pcsrv->pkc_fd+1, &ifds, (fd_set *)0, (fd_set *)0,
-		   &tv) != 0) {
+	if (select(pcsrv->pkc_fd+1, &ifds, (fd_set *)0, (fd_set *)0, &tv) != 0) {
 	    n = pkg_suckin(pcsrv);
 	    if (n < 0) {
 		bu_log("pkg_suckin error\n");
