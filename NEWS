@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* added help options support (-h,-?) to asc2dsp and g2asc - Cliff Yapp
 * fixed crash when drawing a VOL with missing data - Cliff Yapp
 * facetall.sh script is replaced by MGED facetize command - Cliff Yapp
 * dynamic LIBGED command loading in MGED & Archer - Cliff Yapp
