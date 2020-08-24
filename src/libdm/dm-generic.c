@@ -758,14 +758,14 @@ dm_set_hook(const struct bu_structparse_map *map,
 struct bu_structparse *
 dm_get_vparse(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return dmp->i->vparse;
 }
 
 void *
 dm_get_mvars(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     if (!dmp->i->m_vars) return (void *)dmp;
     return dmp->i->m_vars;
 }
