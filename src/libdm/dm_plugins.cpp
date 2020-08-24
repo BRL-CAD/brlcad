@@ -193,6 +193,9 @@ dm_valid_type(const char *name, const char *dpy_string)
  * backend supports that check, and will report the "best" available WORKING
  * backend rather than simply the first one present in the list that is also
  * in the plugins directory.
+ *
+ * Defaults to "nu" if nothing else is found - nu is compiled into libdm itself
+ * and thus always viable, even if no plugins can be found.
  */
 extern "C" const char *
 dm_bestXType(const char *dpy_string)
@@ -230,6 +233,9 @@ dm_bestXType(const char *dpy_string)
  * specified backend type before reporting it, but does NOT perform a runtime
  * test to verify its suggestion will work (unlike dm_bestXType) before
  * reporting back.
+ *
+ * Defaults to "nu" if nothing else is found - nu is compiled into libdm itself
+ * and thus always available, even if no plugins can be found.
  */
 extern "C" const char *
 dm_default_type()
