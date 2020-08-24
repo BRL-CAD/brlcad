@@ -135,7 +135,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 
     /* calling the display manager specific event handler */
     status = dm_doevent(DMP, clientData, eventPtr);
-    dirty = dm_get_dirty(DMP);
+    DMP_dirty = dm_get_dirty(DMP);
 
     /* no further processing of this event */
     if (status != TCL_OK) {
@@ -150,7 +150,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 
 	dm_configure_win(DMP, 0);
 	rect_image2view();
-	dirty = 1;
+	DMP_dirty = 1;
 
 	if (fbp)
 	    (void)fb_configure_window(fbp, conf->width, conf->height);

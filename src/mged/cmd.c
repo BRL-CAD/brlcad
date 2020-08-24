@@ -1459,7 +1459,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     scroll_y = dml->dml_scroll_y;
     memmove((void *)scroll_array, (void *)dml->dml_scroll_array, sizeof(struct scroll_item *) * 6);
 
-    dirty = 1;
+    DMP_dirty = 1;
     refresh();
 
     view_state = vsp;  /* restore state info pointer */

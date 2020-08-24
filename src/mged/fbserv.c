@@ -144,7 +144,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 	    bu_log("pkg_process error encountered (1)\n");
 
 	if (npp > 0)
-	    dirty = 1;
+	    DMP_dirty = 1;
 
 	if (clients[i].c_fd != fd)
 	    continue;
@@ -160,7 +160,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 	    bu_log("pkg_process error encountered (2)\n");
 
 	if (npp > 0)
-	    dirty = 1;
+	    DMP_dirty = 1;
     }
 
     /* restore */

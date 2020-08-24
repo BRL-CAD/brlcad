@@ -585,7 +585,7 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dirty = 1;
+	DMP_dirty = 1;
 	(void)dm_make_current(DMP);
 	return dm_set_bg(DMP, r, g, b);
     }
@@ -635,7 +635,7 @@ void *
 set_hook_data(struct mged_view_hook_state *hs) {
     hs->hs_dmp = DMP;
     hs->vs = view_state;
-    hs->dirty_global = &(dirty);
+    hs->dirty_global = &(DMP_dirty);
     return (void *)hs;
 }
 

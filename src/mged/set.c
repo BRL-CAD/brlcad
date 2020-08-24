@@ -320,7 +320,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 		    mged_svbase();
 
 		set_scroll();		/* set scroll_array for drawing the scroll bars */
-		dirty = 1;
+		DMP_dirty = 1;
 	    }
 	}
 

@@ -443,13 +443,13 @@ extern void set_curr_dm(struct dm_list *nl);
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define DMP curr_dm_list->dml_dmp
+#define DMP_dirty curr_dm_list->dml_dirty
 #define fbp curr_dm_list->dml_fbp
 #define netfd curr_dm_list->dml_netfd
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #define netchan curr_dm_list->dml_netchan
 #endif
 #define clients curr_dm_list->dml_clients
-#define dirty curr_dm_list->dml_dirty
 #define mapped curr_dm_list->dml_mapped
 #define owner curr_dm_list->dml_owner
 #define am_mode curr_dm_list->dml_am_mode

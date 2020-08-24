@@ -96,7 +96,7 @@ adc_set_scroll(void)
 	if (dmlp->dml_adc_state == adc_state) {
 	    set_curr_dm(dmlp);
 	    set_scroll();
-	    dirty = 1;
+	    DMP_dirty = 1;
 	}
 
     set_curr_dm(save_dmlp);

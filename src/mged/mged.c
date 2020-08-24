@@ -2305,7 +2305,7 @@ refresh(void)
 	 * Otherwise, we are happy with the view we have
 	 */
 	set_curr_dm(p);
-	if (mapped && dirty) {
+	if (mapped && DMP_dirty) {
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&
@@ -2315,7 +2315,7 @@ refresh(void)
 		(void)dm_set_zbuffer(DMP, 0);
 	    }
 
-	    dirty = 0;
+	    DMP_dirty = 0;
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
 
