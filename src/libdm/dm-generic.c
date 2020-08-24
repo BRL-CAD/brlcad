@@ -190,14 +190,14 @@ dm_get_fb(struct dm *dmp)
 const char *
 dm_get_dm_name(const struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
     return dmp->i->dm_name;
 }
 
 const char *
 dm_get_dm_lname(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
     return dmp->i->dm_lname;
 }
 
@@ -239,7 +239,7 @@ dm_graphical(const struct dm *dmp)
 const char *
 dm_get_type(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return 0;
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
     return dmp->i->dm_name;
 }
 
@@ -281,7 +281,8 @@ dm_close(struct dm *dmp)
 unsigned char *
 dm_get_bg(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    static unsigned char dbg[3] = {0, 0, 0};
+    if (UNLIKELY(!dmp)) return dbg;
     return dmp->i->dm_bg;
 }
 
@@ -295,7 +296,8 @@ dm_set_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 unsigned char *
 dm_get_fg(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    static unsigned char dfg[3] = {0, 0, 0};
+    if (UNLIKELY(!dmp)) return dfg;
     return dmp->i->dm_fg;
 }
 
