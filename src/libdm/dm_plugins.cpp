@@ -88,7 +88,7 @@ dm_graphics_system(const char *dmtype)
 	std::string key = d_it->first;
 	const struct dm *d = d_it->second;
 	const char *dname = dm_get_dm_name(d);
-	if (BU_STR_EQUIV(dmtype, dname)) {
+	if (dname && BU_STR_EQUIV(dmtype, dname)) {
 	    ret = dm_get_graphics_system(d);
 	    break;
 	}
@@ -127,8 +127,9 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	std::string key = d_it->first;
 	const struct dm *d = d_it->second;
 	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
-	if (dm_get_name(d))
-	    bu_vls_printf(list, "%s", dm_get_name(d));
+	const char *dname = dm_get_name(d);
+	if (dname)
+	    bu_vls_printf(list, "%s", dname);
     }
     if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
     bu_vls_printf(list, "nu");
@@ -149,8 +150,9 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	}
 	const struct dm *d = d_it->second;
 	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
-	if (dm_get_name(d))
-	    bu_vls_printf(list, "%s", dm_get_name(d));
+	const char *dname = dm_get_name(d);
+	if (dname)
+	    bu_vls_printf(list, "%s", dname);
 	i++;
 	b = priority_list[i];
     }

@@ -1107,9 +1107,9 @@ to_deleteProc(ClientData clientData)
 
 	    // There is a top level command created in the Tcl interp that is the name
 	    // of the dm.  Clear that command.
-	    const char *dm_tcl_cmd = bu_vls_cstr(dm_get_pathname((struct dm *)gdvp->dmp));
-	    if (dm_tcl_cmd)
-		Tcl_DeleteCommand(top->to_interp, dm_tcl_cmd);
+	    struct bu_vls *dm_tcl_cmd = dm_get_pathname((struct dm *)gdvp->dmp);
+	    if (dm_tcl_cmd && bu_vls_strlen(dm_tcl_cmd))
+		Tcl_DeleteCommand(top->to_interp, bu_vls_cstr(dm_tcl_cmd));
 
 	    // Close the dm.  This is not done by libged because libged only manages the
 	    // data bview knows about.  From bview's perspective, dmp is just a pointer
@@ -1623,13 +1623,14 @@ to_constrain_rmode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_rot %s %s %%x %%y}; break",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
