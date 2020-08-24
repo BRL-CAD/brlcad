@@ -1312,27 +1312,27 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l)) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
-		if (dm_get_pathname(DMP)) {
-		    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-				  bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-		    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+		struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dml_dmp);
+		if (pn && bu_vls_strlen(pn)) {
+		    bu_vls_printf(&vls, "%s %s", bu_vls_cstr(&clp->cl_name), bu_vls_cstr(pn));
+		    Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
 		}
 	    } else {
-		bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
-		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+		bu_vls_printf(&vls, "%s {}", bu_vls_cstr(&clp->cl_name));
+		Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
 	    }
 	}
 
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
-	    if (dm_get_pathname(DMP)) {
-		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			      bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+	    struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dml_dmp);
+	    if (pn && bu_vls_strlen(pn)) {
+		bu_vls_printf(&vls, "%s %s", bu_vls_cstr(&clp->cl_name), bu_vls_cstr(pn));
+		Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
 	    }
 	} else {
-	    bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
-	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+	    bu_vls_printf(&vls, "%s {}", bu_vls_cstr(&clp->cl_name));
+	    Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
 	}
 
 	bu_vls_free(&vls);
