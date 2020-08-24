@@ -55,6 +55,7 @@
 /* The internals of the dm structure are hidden using the PImpl pattern*/
 struct dm_impl;
 struct dm {
+    uint32_t magic;
     struct dm_impl *i;
 };
 

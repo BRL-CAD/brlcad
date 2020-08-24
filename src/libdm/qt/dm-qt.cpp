@@ -341,6 +341,8 @@ qt_open(void *vinterp, int argc, const char **argv)
     }
 
     BU_ALLOC(dmp, struct dm);
+    dmp->magic = DM_MAGIC;
+
     BU_ALLOC(dmp->i, struct dm_impl);
 
     *dmp->i = *dm_qt.i; /* struct copy */
@@ -1405,7 +1407,7 @@ struct dm_impl dm_qt_impl = {
 
 
 extern "C" {
-    struct dm dm_qt = { &dm_qt_impl };
+    struct dm dm_qt = { DM_MAGIC, &dm_qt_impl };
 
 #ifdef DM_PLUGIN
     static const struct dm_plugin pinfo = { DM_API, &dm_qt };

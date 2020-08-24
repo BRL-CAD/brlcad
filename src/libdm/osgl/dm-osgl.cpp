@@ -441,6 +441,8 @@ osgl_open(void *vinterp, int argc, const char **argv)
     }
 
     BU_GET(dmp, struct dm);
+    dmp->magic = DM_MAGIC;
+
     BU_GET(dmp->i, struct dm_impl);
 
     *dmp->i = *dm_osgl.i; /* struct copy */
@@ -2753,7 +2755,7 @@ struct dm_impl dm_osgl_impl = {
 
 
 extern "C" {
-    struct dm dm_osgl = { &dm_osgl_impl };
+    struct dm dm_osgl = { DM_MAGIC, &dm_osgl_impl };
 
 #ifdef DM_PLUGIN
     static const struct dm_plugin pinfo = { DM_API, &dm_osgl };

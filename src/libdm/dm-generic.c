@@ -140,6 +140,7 @@ dm_get()
 {
     struct dm *new_dm = DM_NULL;
     BU_GET(new_dm, struct dm);
+    new_dm->magic = DM_MAGIC;
     BU_GET(new_dm->i, struct dm_impl);
 
     /* have to manually initialize all internal structs */
@@ -392,7 +393,7 @@ dm_configure_win(struct dm *dmp, int force)
 struct bu_vls *
 dm_get_pathname(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_pathName);
 }
 
@@ -406,7 +407,7 @@ dm_get_name(const struct dm *dmp)
 struct bu_vls *
 dm_get_dname(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_dName);
 }
 
@@ -420,7 +421,7 @@ dm_get_graphics_system(const struct dm *dmp)
 struct bu_vls *
 dm_get_tkname(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_tkName);
 }
 

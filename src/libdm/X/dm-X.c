@@ -477,6 +477,8 @@ X_open(void *vinterp, int argc, const char **argv)
 #endif
 
     BU_ALLOC(dmp, struct dm);
+    dmp->magic = DM_MAGIC;
+
     BU_ALLOC(dmpi, struct dm_impl);
 
     *dmpi = *dm_X.i; /* struct copy */
@@ -2163,7 +2165,7 @@ struct dm_impl dm_X_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_X = { &dm_X_impl };
+struct dm dm_X = { DM_MAGIC, &dm_X_impl };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_X };

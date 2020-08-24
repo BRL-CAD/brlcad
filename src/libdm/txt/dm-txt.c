@@ -43,6 +43,8 @@ txt_open(void *interp, int argc, const char **argv)
 	return DM_NULL;
 
     BU_ALLOC(dmp, struct dm);
+    dmp->magic = DM_MAGIC;
+
     BU_ALLOC(dmp->i, struct dm_impl);
 
     *dmp->i = *dm_txt.i;
@@ -453,7 +455,7 @@ struct dm_impl dm_txt_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_txt = { &dm_txt_impl };
+struct dm dm_txt = { DM_MAGIC, &dm_txt_impl };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_txt };

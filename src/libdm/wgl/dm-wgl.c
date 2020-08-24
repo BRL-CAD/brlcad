@@ -2416,6 +2416,7 @@ struct dm *
 	}
 
 	BU_ALLOC(dmp, struct dm);
+	dmp->magic = DM_MAGIC;
 	BU_ALLOC(dmp->i, struct dm_impl);
 
 	*dmp->i = dm_wgl_impl; /* struct copy */
@@ -2680,7 +2681,7 @@ struct dm *
 	return dmp;
 }
 
-struct dm dm_wgl = { &dm_wgl_impl };
+struct dm dm_wgl = { DM_MAGIC, &dm_wgl_impl };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_wgl };

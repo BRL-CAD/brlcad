@@ -79,6 +79,8 @@ ps_open(void *vinterp, int argc, const char *argv[])
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
     BU_ALLOC(dmp, struct dm);
+    dmp->magic = DM_MAGIC;
+
     BU_ALLOC(dmp->i, struct dm_impl);
 
     *dmp->i = *dm_ps.i;  /* struct copy */
@@ -830,7 +832,7 @@ struct dm_impl dm_ps_impl = {
 };
 
 
-struct dm dm_ps = { &dm_ps_impl };
+struct dm dm_ps = { DM_MAGIC, &dm_ps_impl };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_ps };
