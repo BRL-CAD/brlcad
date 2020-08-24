@@ -7,6 +7,7 @@ Time Stamp: Day Mon  0 00:00:00 0000
 Density Table Used:/path/to/.density
 
 Material  Density(g/cm^3)  Name
+--------  ---------------  -------------
     1         7.8295       steel
 Weight by region name (in grams, density given in g/cm^3):
 
