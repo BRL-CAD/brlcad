@@ -1377,8 +1377,9 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     /* print out the display manager that we're tied to */
     if (argc == 2) {
 	if (clp->cl_tie) {
-	    if (dm_get_pathname(DMP)) {
-		Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+	    struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dml_dmp);
+	    if (pn && bu_vls_strlen(pn)) {
+		Tcl_AppendElement(interpreter, bu_vls_cstr(pn));
 	    }
 	} else {
 	    Tcl_AppendElement(interpreter, "");
@@ -1392,9 +1393,11 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     else
 	bu_vls_strcpy(&vls, argv[2]);
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if (dm_get_pathname(dlp->dml_dmp) && !bu_vls_strcmp(&vls, dm_get_pathname(dlp->dml_dmp)))
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+	struct bu_vls *pn = dm_get_pathname(dlp->dml_dmp);
+	if (pn && !bu_vls_strcmp(&vls, pn))
 	    break;
+    }
 
     if (dlp == &head_dm_list) {
 	Tcl_AppendResult(interpreter, "f_tie: unrecognized path name - ",
@@ -1486,15 +1489,17 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* print pathname of drawing window with primary focus */
     if (argc == 1) {
-	if (dm_get_pathname(DMP)) {
-	    Tcl_AppendResult(interpreter, bu_vls_addr(dm_get_pathname(DMP)), (char *)NULL);
+	struct bu_vls *pn = dm_get_pathname(DMP);
+	if (pn && bu_vls_strlen(pn)) {
+	    Tcl_AppendResult(interpreter, bu_vls_cstr(pn), (char *)NULL);
 	}
 	return TCL_OK;
     }
 
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (dm_get_pathname(p->dml_dmp) && BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
+	struct bu_vls *pn = dm_get_pathname(p->dml_dmp);
+	if (pn && BU_STR_EQUAL(argv[1], bu_vls_cstr(pn))) {
 	    set_curr_dm(p);
 
 	    if (curr_dm_list->dml_tie)
