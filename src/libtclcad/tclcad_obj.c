@@ -3634,10 +3634,10 @@ to_idle_mode(struct ged *gedp,
     {
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
-	if (dm_get_pathname((struct dm *)gdvp->dmp)) {
-	    bu_vls_printf(&bindings, "bind %s <Motion> {}",
-			  bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)));
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+	if (pathname && bu_vls_strlen(pathname)) {
+	    bu_vls_printf(&bindings, "bind %s <Motion> {}", bu_vls_cstr(pathname));
+	    Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
 	}
 	bu_vls_free(&bindings);
     }
@@ -3982,14 +3982,15 @@ to_move_arb_edge_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_edge %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -4040,14 +4041,15 @@ to_move_arb_face_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_MOVE_ARB_FACE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_face %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -4154,14 +4156,15 @@ to_bot_move_pnt_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_MOVE_BOT_POINT_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnt -r %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -4213,18 +4216,19 @@ to_bot_move_pnts_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnts %s %%x %%y %s ",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
-		      argv[4]);
+		bu_vls_cstr(pathname),
+		bu_vls_cstr(&current_top->to_gedp->go_name),
+		bu_vls_cstr(&gdvp->gv_name),
+		argv[4]);
     }
     for (i = 5; i < argc; ++i)
 	bu_vls_printf(&bindings, "%s ", argv[i]);
     bu_vls_printf(&bindings, "}");
 
-    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     bu_vls_free(&bindings);
 
     return GED_OK;
@@ -4274,14 +4278,15 @@ to_metaball_move_pnt_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_MOVE_METABALL_POINT_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_metaball_move_pnt %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -4332,14 +4337,15 @@ to_pipe_move_pnt_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pipe_move_pnt %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -4511,24 +4517,25 @@ to_new_view(struct ged *gedp,
     /* Set default bindings */
     to_init_default_bindings(new_gdvp);
 
-    if (dm_get_pathname((struct dm *)new_gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)new_gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&event_vls, "event generate %s <Configure>; %s autoview %s",
-		      bu_vls_addr(dm_get_pathname((struct dm *)new_gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&new_gdvp->gv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&event_vls));
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&new_gdvp->gv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&event_vls));
     }
     bu_vls_free(&event_vls);
 
-    if (dm_get_pathname((struct dm *)new_gdvp->dmp)) {
+    if (pathname && bu_vls_strlen(pathname)) {
 	(void)Tcl_CreateCommand(current_top->to_interp,
-				bu_vls_addr(dm_get_pathname((struct dm *)new_gdvp->dmp)),
+		                bu_vls_cstr(pathname),
 				(Tcl_CmdProc *)to_view_cmd,
 				(ClientData)new_gdvp,
 				NULL);
     }
 
-    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gv_name));
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&new_gdvp->gv_name));
     return GED_OK;
 }
 
@@ -4576,13 +4583,14 @@ to_orotate_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_OROTATE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_orotate %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -4633,13 +4641,14 @@ to_oscale_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_OSCALE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_oscale %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -4691,13 +4700,14 @@ to_otranslate_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_OTRANSLATE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_otranslate %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5005,12 +5015,13 @@ to_rect_mode(struct ged *gedp,
     av[3] = (char *)0;
     (void)ged_rect(gedp, ac, (const char **)av);
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rect %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5063,15 +5074,16 @@ to_rotate_arb_face_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rotate_arb_face %s %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3],
 		      argv[4]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5122,12 +5134,13 @@ to_rotate_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_ROTATE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rot %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5284,14 +5297,15 @@ to_protate_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_PROTATE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_protate %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5342,14 +5356,15 @@ to_pscale_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_PSCALE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pscale %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5400,14 +5415,15 @@ to_ptranslate_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_PTRANSLATE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_ptranslate %s %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      argv[2],
 		      argv[3]);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5458,12 +5474,13 @@ to_data_scale_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_DATA_SCALE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_data_scale %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5514,12 +5531,13 @@ to_scale_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_SCALE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_scale %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -5842,12 +5860,13 @@ to_translate_mode(struct ged *gedp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_TRANSLATE_MODE;
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (pathname && bu_vls_strlen(pathname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_trans %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+		      bu_vls_cstr(pathname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
