@@ -133,7 +133,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 
  found:
     /* save */
-    scdlp = curr_dm_list;
+    scdlp = mged_curr_dm;
 
     set_curr_dm(dlp);
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
@@ -218,7 +218,7 @@ fbserv_new_client_handler(ClientData clientData,
 	return;
 
     /* save */
-    scdlp = curr_dm_list;
+    scdlp = mged_curr_dm;
 
     set_curr_dm(dlp);
 
@@ -287,7 +287,7 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	 */
 
 	if (dm_interp(DMP) != NULL) {
-	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
+	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)mged_curr_dm);
 	}
 
 	if (netchan == NULL)
@@ -396,7 +396,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 
  found:
     /* save */
-    scdlp = curr_dm_list;
+    scdlp = mged_curr_dm;
 
     set_curr_dm(dlp);
     fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));

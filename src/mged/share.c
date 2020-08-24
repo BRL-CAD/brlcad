@@ -182,7 +182,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 			if (dlp1->dml_mged_variables->mv_dlist) {
 			    struct mged_dm *save_dlp;
 
-			    save_dlp = curr_dm_list;
+			    save_dlp = mged_curr_dm;
 
 			    set_curr_dm(dlp1);
 			    createDLists(GEDP->ged_gdp->gd_headDisplay);
@@ -387,7 +387,7 @@ usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2)
 
     /* it doesn't make sense to save display list info */
     if (!--dlp2->dml_dlist_state->dl_rc)
-	bu_free((void *)curr_dm_list->dml_dlist_state, "usurp_all_resources: _dlist_state");
+	bu_free((void *)mged_curr_dm->dml_dlist_state, "usurp_all_resources: _dlist_state");
 }
 
 

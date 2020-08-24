@@ -58,13 +58,13 @@ extern struct _color_scheme default_color_scheme;
 
 int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
 struct mged_dm active_dm_set;  /* set of active display managers */
-struct mged_dm *curr_dm_list = (struct mged_dm *)NULL;
+struct mged_dm *mged_curr_dm = (struct mged_dm *)NULL;
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
 /* If we changed the active dm, need to update GEDP as well.. */
 void set_curr_dm(struct mged_dm *nl)
 {
-    curr_dm_list = nl;
+    mged_curr_dm = nl;
     if (nl != DM_LIST_NULL) {
 	GEDP->ged_gvp = nl->dml_view_state->vs_gvp;
 	GEDP->ged_gvp->gv_grid = *nl->dml_grid_state; /* struct copy */
@@ -166,8 +166,8 @@ release(char *name, int need_close)
 		continue;
 
 	    /* found it */
-	    if (p != curr_dm_list) {
-		save_dm_list = curr_dm_list;
+	    if (p != mged_curr_dm) {
+		save_dm_list = mged_curr_dm;
 		set_curr_dm(p);
 	    }
 	    break;
@@ -200,21 +200,21 @@ release(char *name, int need_close)
      * like the last one the user had open. This depends on "nu"
      * always being last in the list.
      */
-    usurp_all_resources(BU_LIST_LAST(mged_dm, &active_dm_set.l), curr_dm_list);
+    usurp_all_resources(BU_LIST_LAST(mged_dm, &active_dm_set.l), mged_curr_dm);
 
     /* If this display is being referenced by a command window, then
      * remove the reference.
      */
-    if (curr_dm_list->dml_tie != NULL)
-	curr_dm_list->dml_tie->cl_tie = (struct mged_dm *)NULL;
+    if (mged_curr_dm->dml_tie != NULL)
+	mged_curr_dm->dml_tie->cl_tie = (struct mged_dm *)NULL;
 
     if (need_close)
 	dm_close(DMP);
 
-    RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
-    BU_LIST_DEQUEUE(&curr_dm_list->l);
-    mged_slider_free_vls(curr_dm_list);
-    bu_free((void *)curr_dm_list, "release: curr_dm_list");
+    RT_FREE_VLIST(&mged_curr_dm->dml_p_vlist);
+    BU_LIST_DEQUEUE(&mged_curr_dm->l);
+    mged_slider_free_vls(mged_curr_dm);
+    bu_free((void *)mged_curr_dm, "release: mged_curr_dm");
 
     if (save_dm_list != DM_LIST_NULL)
 	set_curr_dm(save_dm_list);
@@ -388,11 +388,11 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    o_dm_list = curr_dm_list;
-    BU_ALLOC(curr_dm_list, struct mged_dm);
+    o_dm_list = mged_curr_dm;
+    BU_ALLOC(mged_curr_dm, struct mged_dm);
 
     /* initialize predictor stuff */
-    BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
+    BU_LIST_INIT(&mged_curr_dm->dml_p_vlist);
     predictor_init();
 
     /* Only need to do this once */
@@ -411,14 +411,14 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	struct bu_vls *dname = dm_get_dname(tmp_dmp);
 	if (dname && bu_vls_strlen(dname)) {
 	    if (gui_setup(bu_vls_cstr(dname)) == TCL_ERROR) {
-		bu_free((void *)curr_dm_list, "f_attach: dm_list");
+		bu_free((void *)mged_curr_dm, "f_attach: dm_list");
 		set_curr_dm(o_dm_list);
 		bu_vls_free(&tmp_vls);
 		dm_put(tmp_dmp);
 		return TCL_ERROR;
 	    }
 	} else if (gui_setup((char *)NULL) == TCL_ERROR) {
-	    bu_free((void *)curr_dm_list, "f_attach: dm_list");
+	    bu_free((void *)mged_curr_dm, "f_attach: dm_list");
 	    set_curr_dm(o_dm_list);
 	    bu_vls_free(&tmp_vls);
 	    dm_put(tmp_dmp);
@@ -429,7 +429,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	dm_put(tmp_dmp);
     }
 
-    BU_LIST_APPEND(&active_dm_set.l, &curr_dm_list->l);
+    BU_LIST_APPEND(&active_dm_set.l, &mged_curr_dm->l);
 
     if (!wp_name) {
 	return TCL_ERROR;
@@ -449,7 +449,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	cs_set_bg(sdp, name, base, value, NULL);
     }
 
-    mged_link_vars(curr_dm_list);
+    mged_link_vars(mged_curr_dm);
 
     Tcl_ResetResult(INTERP);
     const char *dm_name = dm_get_dm_name(DMP);
@@ -458,7 +458,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	Tcl_AppendResult(INTERP, "ATTACHING ", dm_name, " (", dm_lname,	")\n", (char *)NULL);
     }
 
-    share_dlist(curr_dm_list);
+    share_dlist(mged_curr_dm);
 
     if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
 	createDLists(GEDP->ged_gdp->gd_headDisplay);
@@ -469,8 +469,8 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     (void)dm_set_win_bounds(DMP, windowbounds);
     mged_fb_open();
 
-    GEDP->ged_gvp = curr_dm_list->dml_view_state->vs_gvp;
-    GEDP->ged_gvp->gv_grid = *curr_dm_list->dml_grid_state; /* struct copy */
+    GEDP->ged_gvp = mged_curr_dm->dml_view_state->vs_gvp;
+    GEDP->ged_gvp->gv_grid = *mged_curr_dm->dml_grid_state; /* struct copy */
 
     return TCL_OK;
 
@@ -612,7 +612,7 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 int
 is_dm_null(void)
 {
-    return curr_dm_list == &active_dm_set;
+    return mged_curr_dm == &active_dm_set;
 }
 
 
@@ -670,7 +670,7 @@ dm_var_init(struct mged_dm *initial_dm_list)
     view_state->vs_gvp->gv_point_scale = 1.0;
     view_state->vs_gvp->gv_curve_scale = 1.0;
     view_state->vs_rc = 1;
-    view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
+    view_ring_init(mged_curr_dm->dml_view_state, (struct _view_state *)NULL);
 
     DMP_dirty = 1;
     mapped = 1;

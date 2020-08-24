@@ -2808,7 +2808,7 @@ get_rotation_vertex(void)
     }
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
-    const struct bu_vls *dnvp = dm_get_dname(curr_dm_list->dml_dmp);
+    const struct bu_vls *dnvp = dm_get_dname(mged_curr_dm->dml_dmp);
 
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",

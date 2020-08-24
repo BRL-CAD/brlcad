@@ -442,49 +442,49 @@ struct mged_dm {
 extern void set_curr_dm(struct mged_dm *nl);
 
 #define DM_LIST_NULL ((struct mged_dm *)NULL)
-#define DMP curr_dm_list->dml_dmp
-#define DMP_dirty curr_dm_list->dml_dirty
-#define fbp curr_dm_list->dml_fbp
-#define netfd curr_dm_list->dml_netfd
+#define DMP mged_curr_dm->dml_dmp
+#define DMP_dirty mged_curr_dm->dml_dirty
+#define fbp mged_curr_dm->dml_fbp
+#define netfd mged_curr_dm->dml_netfd
 #if defined(_WIN32) && !defined(__CYGWIN__)
-#define netchan curr_dm_list->dml_netchan
+#define netchan mged_curr_dm->dml_netchan
 #endif
-#define clients curr_dm_list->dml_clients
-#define mapped curr_dm_list->dml_mapped
-#define owner curr_dm_list->dml_owner
-#define am_mode curr_dm_list->dml_am_mode
-#define perspective_angle curr_dm_list->dml_perspective_angle
-#define zclip_ptr curr_dm_list->dml_zclip_ptr
+#define clients mged_curr_dm->dml_clients
+#define mapped mged_curr_dm->dml_mapped
+#define owner mged_curr_dm->dml_owner
+#define am_mode mged_curr_dm->dml_am_mode
+#define perspective_angle mged_curr_dm->dml_perspective_angle
+#define zclip_ptr mged_curr_dm->dml_zclip_ptr
 
-#define view_state curr_dm_list->dml_view_state
-#define adc_state curr_dm_list->dml_adc_state
-#define menu_state curr_dm_list->dml_menu_state
-#define rubber_band curr_dm_list->dml_rubber_band
-#define mged_variables curr_dm_list->dml_mged_variables
-#define color_scheme curr_dm_list->dml_color_scheme
-#define grid_state curr_dm_list->dml_grid_state
-#define axes_state curr_dm_list->dml_axes_state
-#define dlist_state curr_dm_list->dml_dlist_state
+#define view_state mged_curr_dm->dml_view_state
+#define adc_state mged_curr_dm->dml_adc_state
+#define menu_state mged_curr_dm->dml_menu_state
+#define rubber_band mged_curr_dm->dml_rubber_band
+#define mged_variables mged_curr_dm->dml_mged_variables
+#define color_scheme mged_curr_dm->dml_color_scheme
+#define grid_state mged_curr_dm->dml_grid_state
+#define axes_state mged_curr_dm->dml_axes_state
+#define dlist_state mged_curr_dm->dml_dlist_state
 
-#define cmd_hook curr_dm_list->dml_cmd_hook
-#define viewpoint_hook curr_dm_list->dml_viewpoint_hook
-#define eventHandler curr_dm_list->dml_eventHandler
+#define cmd_hook mged_curr_dm->dml_cmd_hook
+#define viewpoint_hook mged_curr_dm->dml_viewpoint_hook
+#define eventHandler mged_curr_dm->dml_eventHandler
 
-#define adc_auto curr_dm_list->dml_adc_auto
-#define grid_auto_size curr_dm_list->dml_grid_auto_size
+#define adc_auto mged_curr_dm->dml_adc_auto
+#define grid_auto_size mged_curr_dm->dml_grid_auto_size
 
 /* Names of macros must be different than actual struct element */
-#define dml_mouse_dx curr_dm_list->_dml_mouse_dx
-#define dml_mouse_dy curr_dm_list->_dml_mouse_dy
-#define dml_omx curr_dm_list->_dml_omx
-#define dml_omy curr_dm_list->_dml_omy
-#define dml_knobs curr_dm_list->_dml_knobs
-#define dml_work_pt curr_dm_list->_dml_work_pt
+#define dml_mouse_dx mged_curr_dm->_dml_mouse_dx
+#define dml_mouse_dy mged_curr_dm->_dml_mouse_dy
+#define dml_omx mged_curr_dm->_dml_omx
+#define dml_omy mged_curr_dm->_dml_omy
+#define dml_knobs mged_curr_dm->_dml_knobs
+#define dml_work_pt mged_curr_dm->_dml_work_pt
 
-#define scroll_top curr_dm_list->dml_scroll_top
-#define scroll_active curr_dm_list->dml_scroll_active
-#define scroll_y curr_dm_list->dml_scroll_y
-#define scroll_array curr_dm_list->dml_scroll_array
+#define scroll_top mged_curr_dm->dml_scroll_top
+#define scroll_active mged_curr_dm->dml_scroll_active
+#define scroll_y mged_curr_dm->dml_scroll_y
+#define scroll_array mged_curr_dm->dml_scroll_array
 
 #define VIEWSIZE	(view_state->vs_gvp->gv_size)	/* Width of viewing cube */
 #define VIEWFACTOR	(1/view_state->vs_gvp->gv_scale)
@@ -563,7 +563,7 @@ extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
 extern struct mged_dm active_dm_set;	/* defined in attach.c */
-extern struct mged_dm *curr_dm_list;	/* defined in attach.c */
+extern struct mged_dm *mged_curr_dm;	/* defined in attach.c */
 
 /* defined in doevent.c */
 #ifdef HAVE_X11_TYPES

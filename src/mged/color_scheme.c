@@ -287,7 +287,7 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
 	  void *UNUSED(data))
 {
     struct mged_dm *dmlp;
-    struct mged_dm *save_curr_dmlp = curr_dm_list;
+    struct mged_dm *save_curr_dmlp = mged_curr_dm;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&vls, "dm bg %d %d %d",

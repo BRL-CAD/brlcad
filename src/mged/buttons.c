@@ -952,7 +952,7 @@ chg_state(int from, int to, char *str)
 
     stateChange(from, to);
 
-    save_dm_list = curr_dm_list;
+    save_dm_list = mged_curr_dm;
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	set_curr_dm(p);
 

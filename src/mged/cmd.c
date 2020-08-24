@@ -680,7 +680,7 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
     if (!GEDP->ged_gvp)
 	GEDP->ged_gvp = view_state->vs_gvp;
-    GEDP->ged_dmp = (void *)curr_dm_list->dml_dmp;
+    GEDP->ged_dmp = (void *)mged_curr_dm->dml_dmp;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
@@ -1443,7 +1443,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    dml = curr_dm_list;
+    dml = mged_curr_dm;
     GEDP->ged_gvp = view_state->vs_gvp;
     status = mged_attach("postscript", argc, argv);
     if (status == TCL_ERROR)
@@ -1502,8 +1502,8 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 	if (pn && BU_STR_EQUAL(argv[1], bu_vls_cstr(pn))) {
 	    set_curr_dm(p);
 
-	    if (curr_dm_list->dml_tie)
-		curr_cmd_list = curr_dm_list->dml_tie;
+	    if (mged_curr_dm->dml_tie)
+		curr_cmd_list = mged_curr_dm->dml_tie;
 	    else
 		curr_cmd_list = &head_cmd_list;
 
@@ -1828,7 +1828,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	return TCL_ERROR;
 
     /* update and resize the views */
-    struct mged_dm *save_dmlp = curr_dm_list;
+    struct mged_dm *save_dmlp = mged_curr_dm;
     struct cmd_list *save_cmd_list = curr_cmd_list;
     struct mged_dm *dmlp;
     struct display_list *gdlp;
@@ -1838,8 +1838,8 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 
 	set_curr_dm(dmlp);
 
-	if (curr_dm_list->dml_tie) {
-	    curr_cmd_list = curr_dm_list->dml_tie;
+	if (mged_curr_dm->dml_tie) {
+	    curr_cmd_list = mged_curr_dm->dml_tie;
 	} else {
 	    curr_cmd_list = &head_cmd_list;
 	}

@@ -136,7 +136,7 @@ mmenu_set_all(int index, struct menu_item *value)
     struct mged_dm *save_dm_list;
 
     save_cmd_list = curr_cmd_list;
-    save_dm_list = curr_dm_list;
+    save_dm_list = mged_curr_dm;
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	if (p->dml_tie)
 	    curr_cmd_list = p->dml_tie;

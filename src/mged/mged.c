@@ -346,7 +346,7 @@ new_edit_mats(void)
     struct mged_dm *p;
     struct mged_dm *save_dm_list;
 
-    save_dm_list = curr_dm_list;
+    save_dm_list = mged_curr_dm;
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	if (!p->dml_owner)
 	    continue;
@@ -1264,12 +1264,12 @@ main(int argc, char *argv[])
     memset((void *)&active_dm_set, 0, sizeof(struct mged_dm));
     BU_LIST_INIT(&active_dm_set.l);
 
-    BU_ALLOC(curr_dm_list, struct mged_dm);
-    BU_LIST_APPEND(&active_dm_set.l, &curr_dm_list->l);
+    BU_ALLOC(mged_curr_dm, struct mged_dm);
+    BU_LIST_APPEND(&active_dm_set.l, &mged_curr_dm->l);
     netfd = -1;
 
     /* initialize predictor stuff */
-    BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
+    BU_LIST_INIT(&mged_curr_dm->dml_p_vlist);
     predictor_init();
 
     DMP = dm_get();
@@ -1279,7 +1279,7 @@ main(int argc, char *argv[])
 	bu_vls_strcpy(dpvp, "nu");
     }
 
-    struct bu_vls *tnvp = dm_get_tkname(curr_dm_list->dml_dmp);
+    struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dml_dmp);
     if (tnvp) {
 	bu_vls_init(tnvp); /* this may leak */
 	bu_vls_strcpy(tnvp, "nu");
@@ -1312,7 +1312,7 @@ main(int argc, char *argv[])
 
     BU_ALLOC(view_state, struct _view_state);
     view_state->vs_rc = 1;
-    view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
+    view_ring_init(mged_curr_dm->dml_view_state, (struct _view_state *)NULL);
     MAT_IDN(view_state->vs_ModelDelta);
 
     am_mode = AMM_IDLE;
@@ -1344,7 +1344,7 @@ main(int argc, char *argv[])
 
     mmenu_init();
     btn_head_menu(0, 0, 0);
-    mged_link_vars(curr_dm_list);
+    mged_link_vars(mged_curr_dm);
 
     bu_vls_printf(&input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
     (void)Tcl_Eval(INTERP, bu_vls_addr(&input_str));
@@ -1989,7 +1989,7 @@ event_check(int non_blocking)
     /*********************************
      * Handle rate-based processing *
      *********************************/
-    save_dm_list = curr_dm_list;
+    save_dm_list = mged_curr_dm;
     if (edit_rateflag_model_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
@@ -2298,7 +2298,7 @@ refresh(void)
 
     update_views = 0;
 
-    save_dm_list = curr_dm_list;
+    save_dm_list = mged_curr_dm;
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	/*
 	 * if something has changed, then go update the display.
@@ -2471,7 +2471,7 @@ mged_finish(int exitcode)
 	    dm_close(p->dml_dmp);
 	    RT_FREE_VLIST(&p->dml_p_vlist);
 	    mged_slider_free_vls(p);
-	    bu_free(p, "release: curr_dm_list");
+	    bu_free(p, "release: mged_curr_dm");
 	}
 
 	set_curr_dm(DM_LIST_NULL);

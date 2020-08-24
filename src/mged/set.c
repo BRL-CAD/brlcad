@@ -309,7 +309,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
     struct mged_dm *dmlp;
     struct mged_dm *save_dmlp;
 
-    save_dmlp = curr_dm_list;
+    save_dmlp = mged_curr_dm;
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_mged_variables == save_dmlp->dml_mged_variables) {
@@ -376,7 +376,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
     struct mged_dm *save_dlp;
 
     /* save current display manager */
-    save_dlp = curr_dm_list;
+    save_dlp = mged_curr_dm;
 
     if (mged_variables->mv_dlist) {
 	/* create display lists */

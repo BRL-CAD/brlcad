@@ -124,11 +124,11 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     if (eventPtr->type == DestroyNotify || (unsigned long)eventPtr->xany.window == 0)
 	return TCL_OK;
 
-    save_dm_list = curr_dm_list;
-    GET_DM_LIST(curr_dm_list, (unsigned long)eventPtr->xany.window);
+    save_dm_list = mged_curr_dm;
+    GET_DM_LIST(mged_curr_dm, (unsigned long)eventPtr->xany.window);
 
     /* it's an event for a window that I'm not handling */
-    if (curr_dm_list == DM_LIST_NULL) {
+    if (mged_curr_dm == DM_LIST_NULL) {
 	set_curr_dm(save_dm_list);
 	return TCL_OK;
     }
