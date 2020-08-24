@@ -2571,11 +2571,6 @@ DOCUMENTATION
     doc/docbook/presentations/en/intro-to-tcltk.xml
     doc/docbook/specifications/en/BRL_CAD_g_format_V5.xml
 
-* improve rtweight documentation, explain how it computes its
-  "centroid" (as it's not the center of bounding box of all objects,
-  it's the geometric centoid that that takes booleans into
-  consideration).
-
 * write up some documentation on other build tools besides make -
   CMake supports other generators, wouldn't hurt to detail how to
   trigger builds in them (MSVC is partially covered, make sure to

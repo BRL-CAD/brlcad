@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* improved rtweight manual page - Sean Morrison
 * added line reporting TCP listening port to remrt output - Cliff Yapp
 * added help options support (-h,-?) to asc2dsp and g2asc - Cliff Yapp
 * fixed crash when drawing a VOL with missing data - Cliff Yapp
