@@ -87,10 +87,6 @@ mged_dm_init(struct dm_list *o_dm_list,
     /* register application provided routines */
     cmd_hook = dm_commands;
 
-#ifdef HAVE_TK
-    Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
-#endif
-
     if ((DMP = dm_open((void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
@@ -99,7 +95,10 @@ mged_dm_init(struct dm_list *o_dm_list,
     dm_set_perspective(DMP, mged_variables->mv_perspective_mode);
 
 #ifdef HAVE_TK
-    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    if (dm_graphical(DMP)) {
+	Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+	Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    }
 #endif
     (void)dm_configure_win(DMP, 0);
 
