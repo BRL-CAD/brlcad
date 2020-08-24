@@ -1272,11 +1272,6 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
     predictor_init();
 
-    struct bu_vls *dnvp = dm_get_dname(curr_dm_list->dml_dmp);
-    if (dnvp) {
-	bu_vls_init(dnvp);
-    }
-
     DMP = dm_get();
     dm_set_null(DMP);
     struct bu_vls *dpvp = dm_get_pathname(DMP);
