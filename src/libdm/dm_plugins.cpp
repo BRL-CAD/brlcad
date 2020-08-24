@@ -88,7 +88,7 @@ dm_graphics_system(const char *dmtype)
 	std::string key = d_it->first;
 	const struct dm *d = d_it->second;
 	const char *dname = dm_get_dm_name(d);
-	if (dname && BU_STR_EQUIV(dmtype, dname)) {
+	if (BU_STR_EQUIV(dmtype, dname)) {
 	    ret = dm_get_graphics_system(d);
 	    break;
 	}
