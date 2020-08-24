@@ -43,6 +43,7 @@
 
 #include "vmath.h"
 #include "bu/env.h"
+#include "bu/ptbl.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -56,7 +57,7 @@ extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 extern struct _color_scheme default_color_scheme;
 
 int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
-struct dm_list head_dm_list;  /* list of active display managers */
+struct dm_list active_dm_set;  /* set of active display managers */
 struct dm_list *curr_dm_list = (struct dm_list *)NULL;
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
@@ -159,7 +160,7 @@ release(char *name, int need_close)
 	if (BU_STR_EQUAL("nu", name))
 	    return TCL_OK;  /* Ignore */
 
-	FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+	FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	    struct bu_vls *pathname = dm_get_pathname(p->dml_dmp);
 	    if (pathname && bu_vls_strlen(pathname) && !BU_STR_EQUAL(name, bu_vls_cstr(pathname)))
 		continue;
@@ -172,7 +173,7 @@ release(char *name, int need_close)
 	    break;
 	}
 
-	if (p == &head_dm_list) {
+	if (p == &active_dm_set) {
 	    Tcl_AppendResult(INTERP, "release: ", name,
 			     " not found\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -199,7 +200,7 @@ release(char *name, int need_close)
      * like the last one the user had open. This depends on "nu"
      * always being last in the list.
      */
-    usurp_all_resources(BU_LIST_LAST(dm_list, &head_dm_list.l), curr_dm_list);
+    usurp_all_resources(BU_LIST_LAST(dm_list, &active_dm_set.l), curr_dm_list);
 
     /* If this display is being referenced by a command window, then
      * remove the reference.
@@ -218,7 +219,7 @@ release(char *name, int need_close)
     if (save_dm_list != DM_LIST_NULL)
 	set_curr_dm(save_dm_list);
     else
-	set_curr_dm((struct dm_list *)head_dm_list.l.forw);
+	set_curr_dm((struct dm_list *)active_dm_set.l.forw);
 
     return TCL_OK;
 }
@@ -428,7 +429,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	dm_put(tmp_dmp);
     }
 
-    BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
+    BU_LIST_APPEND(&active_dm_set.l, &curr_dm_list->l);
 
     if (!wp_name) {
 	return TCL_ERROR;
@@ -611,7 +612,7 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 int
 is_dm_null(void)
 {
-    return curr_dm_list == &head_dm_list;
+    return curr_dm_list == &active_dm_set;
 }
 
 
@@ -641,7 +642,7 @@ dm_var_init(struct dm_list *initial_dm_list)
     BU_ALLOC(color_scheme, struct _color_scheme);
 
     /* initialize using the nu display manager */
-    *color_scheme = *BU_LIST_LAST(dm_list, &head_dm_list.l)->dml_color_scheme;
+    *color_scheme = *BU_LIST_LAST(dm_list, &active_dm_set.l)->dml_color_scheme;
 
     color_scheme->cs_rc = 1;
 
@@ -712,7 +713,7 @@ f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, 
 	return TCL_ERROR;
     }
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	struct bu_vls *pn = dm_get_pathname(dlp->dml_dmp);
 	if (pn && bu_vls_strlen(pn))
 	    Tcl_AppendElement(interpreter, bu_vls_cstr(pn));

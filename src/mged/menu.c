@@ -119,7 +119,7 @@ mmenu_set(int index, struct menu_item *value)
     Tcl_DStringFree(&ds_menu);
     bu_vls_free(&menu_string);
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	if (menu_state == dlp->dml_menu_state &&
 	    dlp->dml_mged_variables->mv_faceplate &&
 	    dlp->dml_mged_variables->mv_orig_gui)
@@ -137,7 +137,7 @@ mmenu_set_all(int index, struct menu_item *value)
 
     save_cmd_list = curr_cmd_list;
     save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	if (p->dml_tie)
 	    curr_cmd_list = p->dml_tie;
 

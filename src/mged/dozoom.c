@@ -254,7 +254,7 @@ createDListSolid(struct solid *sp)
 
     save_dlp = curr_dm_list;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	if (dlp->dml_mapped &&
 		dm_get_displaylist(dlp->dml_dmp) &&
 		dlp->dml_mged_variables->mv_dlist) {
@@ -307,7 +307,7 @@ freeDListsAll(unsigned int dlist, int range)
 {
     struct dm_list *dlp;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	if (dm_get_displaylist(dlp->dml_dmp) &&
 	    dlp->dml_mged_variables->mv_dlist) {
 	    (void)dm_make_current(DMP);

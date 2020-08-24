@@ -347,7 +347,7 @@ new_edit_mats(void)
     struct dm_list *save_dm_list;
 
     save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	if (!p->dml_owner)
 	    continue;
 
@@ -1261,11 +1261,11 @@ main(int argc, char *argv[])
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    memset((void *)&head_dm_list, 0, sizeof(struct dm_list));
-    BU_LIST_INIT(&head_dm_list.l);
+    memset((void *)&active_dm_set, 0, sizeof(struct dm_list));
+    BU_LIST_INIT(&active_dm_set.l);
 
     BU_ALLOC(curr_dm_list, struct dm_list);
-    BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
+    BU_LIST_APPEND(&active_dm_set.l, &curr_dm_list->l);
     netfd = -1;
 
     /* initialize predictor stuff */
@@ -2183,7 +2183,7 @@ event_check(int non_blocking)
 	    edobj = save_edflag;
     }
 
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	if (!p->dml_owner)
 	    continue;
 
@@ -2279,7 +2279,7 @@ refresh(void)
     int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
 
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	if (!p->dml_view_state)
 	    continue;
 	if (update_views || p->dml_view_state->vs_flag)
@@ -2290,7 +2290,7 @@ refresh(void)
      * This needs to be done separately because dml_view_state may be
      * shared.
      */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	if (!p->dml_view_state)
 	    continue;
 	p->dml_view_state->vs_flag = 0;
@@ -2299,7 +2299,7 @@ refresh(void)
     update_views = 0;
 
     save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	/*
 	 * if something has changed, then go update the display.
 	 * Otherwise, we are happy with the view we have
@@ -2461,7 +2461,7 @@ mged_finish(int exitcode)
     (void)sprintf(place, "exit_status=%d", exitcode);
 
     /* Release all displays */
-    while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
+    while (BU_LIST_WHILE(p, dm_list, &(active_dm_set.l))) {
 	if (!p)
 	    bu_bomb("dm list entry is null? aborting!\n");
 

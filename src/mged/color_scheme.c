@@ -245,7 +245,7 @@ cs_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 {
     struct dm_list *dmlp;
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_color_scheme == color_scheme)
 	    dmlp->dml_dirty = 1;
 }
@@ -302,7 +302,7 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
     // where we act on all dm instances.  set_curr_dm
     // should probably be replaced with get_next_dm
     struct bview *cbv = GEDP->ged_gvp;
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
 	if (dmlp->dml_color_scheme == color_scheme) {
 	    dmlp->dml_dirty = 1;
 	    set_curr_dm(dmlp);

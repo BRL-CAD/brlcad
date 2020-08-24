@@ -78,7 +78,7 @@ adc_set_dirty_flag(void)
 {
     struct dm_list *dmlp;
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_adc_state == adc_state)
 	    dmlp->dml_dirty = 1;
 }
@@ -92,7 +92,7 @@ adc_set_scroll(void)
 
     save_dmlp = curr_dm_list;
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_adc_state == adc_state) {
 	    set_curr_dm(dmlp);
 	    set_scroll();

@@ -444,7 +444,7 @@ edit_com(int argc,
 
     save_dmlp = curr_dm_list;
     save_cmd_list = curr_cmd_list;
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
 	int non_empty = 0; /* start out empty */
 
 	set_curr_dm(dmlp);
@@ -591,7 +591,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
     save_dmlp = curr_dm_list;
     save_cmd_list = curr_cmd_list;
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
 	struct view_ring *vrp;
 
 	set_curr_dm(dmlp);
@@ -2833,7 +2833,7 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     status = mged_svbase();
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
 	/* if sharing view while faceplate and original gui (i.e. button menu, sliders) are on */
 	if (dmlp->dml_view_state == view_state &&
 	    dmlp->dml_mged_variables->mv_faceplate &&

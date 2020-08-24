@@ -1393,13 +1393,13 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     else
 	bu_vls_strcpy(&vls, argv[2]);
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	struct bu_vls *pn = dm_get_pathname(dlp->dml_dmp);
 	if (pn && !bu_vls_strcmp(&vls, pn))
 	    break;
     }
 
-    if (dlp == &head_dm_list) {
+    if (dlp == &active_dm_set) {
 	Tcl_AppendResult(interpreter, "f_tie: unrecognized path name - ",
 			 bu_vls_addr(&vls), "\n", (char *)NULL);
 	bu_vls_free(&vls);
@@ -1497,7 +1497,7 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     }
 
     /* change primary focus to window argv[1] */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	struct bu_vls *pn = dm_get_pathname(p->dml_dmp);
 	if (pn && BU_STR_EQUAL(argv[1], bu_vls_cstr(pn))) {
 	    set_curr_dm(p);
@@ -1833,7 +1833,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     struct dm_list *dmlp;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
 	int non_empty = 0; /* start out empty */
 
 	set_curr_dm(dmlp);

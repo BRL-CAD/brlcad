@@ -123,7 +123,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
     struct dm_list *dlp;
     struct dm_list *scdlp;  /* save current dm_list pointer */
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	for (i = MAX_CLIENTS-1; i >= 0; i--)
 	    if (fd == dlp->dml_clients[i].c_fd)
 		goto found;
@@ -388,7 +388,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
     struct dm_list *dlp;
     struct dm_list *scdlp;  /* save current dm_list pointer */
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l)
 	if (fd == dlp->dml_netfd)
 	    goto found;
 

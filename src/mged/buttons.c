@@ -740,7 +740,7 @@ be_accept()
 	return TCL_OK;
     }
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_mged_variables->mv_transform == 'e')
 	    dmlp->dml_mged_variables->mv_transform = 'v';
 
@@ -804,7 +804,7 @@ be_reject()
     mged_color_soltab();
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_mged_variables->mv_transform == 'e')
 	    dmlp->dml_mged_variables->mv_transform = 'v';
 
@@ -953,7 +953,7 @@ chg_state(int from, int to, char *str)
     stateChange(from, to);
 
     save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
 	set_curr_dm(p);
 
 	new_mats();

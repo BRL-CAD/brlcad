@@ -113,11 +113,11 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	++argv;
     }
 
-    FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
+    FOR_ALL_DISPLAYS(dlp1, &active_dm_set.l)
 	if (dm_get_pathname(dlp1->dml_dmp) && BU_STR_EQUAL(argv[2], bu_vls_addr(dm_get_pathname(dlp1->dml_dmp))))
 	    break;
 
-    if (dlp1 == &head_dm_list) {
+    if (dlp1 == &active_dm_set) {
 	Tcl_AppendResult(interpreter, "share: unrecognized path name - ",
 			 argv[2], "\n", (char *)NULL);
 
@@ -126,11 +126,11 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
     }
 
     if (!uflag) {
-	FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
+	FOR_ALL_DISPLAYS(dlp2, &active_dm_set.l)
 	    if (dm_get_pathname(dlp2->dml_dmp) && BU_STR_EQUAL(argv[3], bu_vls_addr(dm_get_pathname(dlp2->dml_dmp))))
 		break;
 
-	if (dlp2 == &head_dm_list) {
+	if (dlp2 == &active_dm_set) {
 	    Tcl_AppendResult(interpreter, "share: unrecognized path name - ",
 			     argv[3], "\n", (char *)NULL);
 
@@ -434,7 +434,7 @@ share_dlist(struct dm_list *dlp2)
     if (!dm_get_displaylist(dlp2->dml_dmp))
 	return;
 
-    FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dlp1, &active_dm_set.l) {
 	if (dlp1 != dlp2 &&
 	    dm_get_type(dlp1->dml_dmp) == dm_get_type(dlp2->dml_dmp) && dm_get_dname(dlp1->dml_dmp) && dm_get_dname(dlp2->dml_dmp) &&
 	    !bu_vls_strcmp(dm_get_dname(dlp1->dml_dmp), dm_get_dname(dlp2->dml_dmp))) {

@@ -548,21 +548,21 @@ extern void set_curr_dm(struct dm_list *nl);
 #define GET_DM_LIST(p, id) { \
 		struct dm_list *tp; \
 \
-		FOR_ALL_DISPLAYS(tp, &head_dm_list.l) { \
+		FOR_ALL_DISPLAYS(tp, &active_dm_set.l) { \
 			if ((id) == dm_get_id(tp->dml_dmp)) { \
 				(p) = tp; \
 				break; \
 			} \
 		} \
 \
-		if (BU_LIST_IS_HEAD(tp, &head_dm_list.l)) \
+		if (BU_LIST_IS_HEAD(tp, &active_dm_set.l)) \
 			(p) = DM_LIST_NULL; \
 	}
 
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
-extern struct dm_list head_dm_list;	/* defined in attach.c */
+extern struct dm_list active_dm_set;	/* defined in attach.c */
 extern struct dm_list *curr_dm_list;	/* defined in attach.c */
 
 /* defined in doevent.c */

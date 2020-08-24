@@ -79,7 +79,7 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 {
     struct dm_list *dmlp;
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_grid_state == grid_state)
 	    dmlp->dml_dirty = 1;
 }
@@ -107,7 +107,7 @@ set_grid_draw(const struct bu_structparse *sdp,
 
 	grid_state->res_h = res;
 	grid_state->res_v = res;
-	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+	FOR_ALL_DISPLAYS(dlp, &active_dm_set.l)
 	    if (dlp->dml_grid_state == grid_state)
 		dlp->dml_grid_auto_size = 0;
     }
@@ -126,7 +126,7 @@ set_grid_res(const struct bu_structparse *sdp,
     grid_set_dirty_flag(sdp, name, base, value, data);
 
     if (grid_auto_size)
-	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+	FOR_ALL_DISPLAYS(dlp, &active_dm_set.l)
 	    if (dlp->dml_grid_state == grid_state)
 		dlp->dml_grid_auto_size = 0;
 }
@@ -424,7 +424,7 @@ update_grids(fastf_t sf)
     struct bu_vls save_result = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	dlp->dml_grid_state->res_h *= sf;
 	dlp->dml_grid_state->res_v *= sf;
 	VSCALE(dlp->dml_grid_state->anchor, dlp->dml_grid_state->anchor, sf);

@@ -920,7 +920,7 @@ set_e_axes_pos(int both)
 
 	MAT_IDN(acc_rot_sol);
 
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+	FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	    dmlp->dml_mged_variables->mv_transform = 'e';
     }
 }
