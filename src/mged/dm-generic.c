@@ -659,36 +659,39 @@ dm_commands(int argc,
     struct dm_hook_data mged_dm_hook;
     if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	struct bu_structparse *dmparse = dm_get_vparse(DMP);
+	void *mvars = dm_get_mvars(DMP);
+	if (dmparse && mvars) {
+	    if (argc < 2) {
+		struct bu_vls report_str = BU_VLS_INIT_ZERO;
 
-	if (argc < 2) {
-	    struct bu_vls report_str = BU_VLS_INIT_ZERO;
-	    if (dm_get_dm_name(DMP) && dm_get_vparse(DMP)) {
 		bu_vls_sprintf(&report_str, "Display Manager (type %s) internal variables", dm_get_dm_name(DMP));
 		/* Bare set command, print out current settings */
-		bu_vls_struct_print2(&vls, bu_vls_addr(&report_str), dm_get_vparse(DMP), (const char *)dm_get_mvars(DMP));
-	    }
-	    bu_vls_free(&report_str);
-	} else if (argc == 2) {
-	    /* TODO - need to add hook func support to this func, since the one in the libdm structparse isn't enough by itself */
-	    if (dm_get_mvars(DMP) && dm_get_vparse(DMP)) {
-		bu_vls_struct_item_named(&vls, dm_get_vparse(DMP), argv[1], (const char *)dm_get_mvars(DMP), COMMA);
-	    }
-	} else {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	    int ret;
-	    struct mged_view_hook_state global_hs;
-	    void *data = set_hook_data(&global_hs);
+		bu_vls_struct_print2(&vls, bu_vls_addr(&report_str), dmparse, (const char *)mvars);
+		bu_vls_free(&report_str);
+	    } else if (argc == 2) {
+		/* TODO - need to add hook func support to this func, since the
+		 * one in the libdm structparse isn't enough by itself */
+		if (dm_get_mvars(DMP) && dm_get_vparse(DMP)) {
+		    bu_vls_struct_item_named(&vls, dmparse, argv[1], (const char *)mvars, COMMA);
+		}
+	    } else {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+		int ret;
+		struct mged_view_hook_state global_hs;
+		void *data = set_hook_data(&global_hs);
 
-	    ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+		ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
 
-	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-	    bu_vls_putc(&tmp_vls, '\"');
-	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(DMP), (char *)dm_get_mvars(DMP), (void *)(&mged_dm_hook));
-	    bu_vls_free(&tmp_vls);
-	    if (ret < 0) {
-	      bu_vls_free(&vls);
-	      return TCL_ERROR;
+		bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+		bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
+		bu_vls_putc(&tmp_vls, '\"');
+		ret = bu_struct_parse(&tmp_vls, dmparse, (char *)mvars, (void *)(&mged_dm_hook));
+		bu_vls_free(&tmp_vls);
+		if (ret < 0) {
+		    bu_vls_free(&vls);
+		    return TCL_ERROR;
+		}
 	    }
 	}
 
