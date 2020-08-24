@@ -708,13 +708,6 @@ dm_logfile(struct dm *dmp, const char *filename)
     return dmp->i->dm_logfile(dmp, filename);
 }
 
-fastf_t *
-dm_get_vp(struct dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->i->dm_vp;
-}
-
 void
 dm_set_vp(struct dm *dmp, fastf_t *vp)
 {
