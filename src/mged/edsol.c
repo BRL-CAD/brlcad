@@ -750,7 +750,7 @@ set_e_axes_pos(int both)
        set e_axes_pos and curr_e_axes_pos */
 {
     int i;
-    struct mged_dm *dmlp;
+    struct mged_dm *m_dmp;
     const short earb8[12][18] = earb8_edit_array;
     const short earb7[12][18] = earb7_edit_array;
     const short earb6[10][18] = earb6_edit_array;
@@ -920,8 +920,8 @@ set_e_axes_pos(int both)
 
 	MAT_IDN(acc_rot_sol);
 
-	FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	    dmlp->dm_mged_variables->mv_transform = 'e';
+	FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+	    m_dmp->dm_mged_variables->mv_transform = 'e';
     }
 }
 

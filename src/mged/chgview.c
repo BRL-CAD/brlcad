@@ -246,8 +246,8 @@ edit_com(int argc,
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct mged_dm *dmlp;
-    struct mged_dm *save_dmlp;
+    struct mged_dm *m_dmp;
+    struct mged_dm *save_m_dmp;
     struct cmd_list *save_cmd_list;
     int ret;
     int initial_blank_screen = 1;
@@ -442,12 +442,12 @@ edit_com(int argc,
 
     /* update and resize the views */
 
-    save_dmlp = mged_curr_dm;
+    save_m_dmp = mged_curr_dm;
     save_cmd_list = curr_cmd_list;
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
 	int non_empty = 0; /* start out empty */
 
-	set_curr_dm(dmlp);
+	set_curr_dm(m_dmp);
 
 	if (mged_curr_dm->dm_tie) {
 	    curr_cmd_list = mged_curr_dm->dm_tie;
@@ -487,7 +487,7 @@ edit_com(int argc,
 	}
     }
 
-    set_curr_dm(save_dmlp);
+    set_curr_dm(save_m_dmp);
     curr_cmd_list = save_cmd_list;
     GEDP->ged_gvp = view_state->vs_gvp;
 
@@ -570,8 +570,8 @@ emuves_com(int argc, const char *argv[])
 int
 cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct mged_dm *dmlp;
-    struct mged_dm *save_dmlp;
+    struct mged_dm *m_dmp;
+    struct mged_dm *save_m_dmp;
     struct cmd_list *save_cmd_list;
 
     if (argc > 2) {
@@ -589,12 +589,12 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	return TCL_OK;
     }
 
-    save_dmlp = mged_curr_dm;
+    save_m_dmp = mged_curr_dm;
     save_cmd_list = curr_cmd_list;
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
 	struct view_ring *vrp;
 
-	set_curr_dm(dmlp);
+	set_curr_dm(m_dmp);
 
 	if (mged_curr_dm->dm_tie) {
 	    curr_cmd_list = mged_curr_dm->dm_tie;
@@ -626,7 +626,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    vrp->vr_scale = view_state->vs_gvp->gv_scale;
 	}
     }
-    set_curr_dm(save_dmlp);
+    set_curr_dm(save_m_dmp);
     curr_cmd_list = save_cmd_list;
     GEDP->ged_gvp = view_state->vs_gvp;
 
@@ -2815,7 +2815,7 @@ int
 f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int status;
-    struct mged_dm *dmlp;
+    struct mged_dm *m_dmp;
 
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2833,12 +2833,12 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     status = mged_svbase();
 
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
 	/* if sharing view while faceplate and original gui (i.e. button menu, sliders) are on */
-	if (dmlp->dm_view_state == view_state &&
-	    dmlp->dm_mged_variables->mv_faceplate &&
-	    dmlp->dm_mged_variables->mv_orig_gui) {
-	    dmlp->dm_dirty = 1;
+	if (m_dmp->dm_view_state == view_state &&
+	    m_dmp->dm_mged_variables->mv_faceplate &&
+	    m_dmp->dm_mged_variables->mv_orig_gui) {
+	    m_dmp->dm_dirty = 1;
 	}
     }
 

@@ -243,11 +243,11 @@ cs_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(value),
 		  void *UNUSED(data))
 {
-    struct mged_dm *dmlp;
+    struct mged_dm *m_dmp;
 
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dm_color_scheme == color_scheme)
-	    dmlp->dm_dirty = 1;
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+	if (m_dmp->dm_color_scheme == color_scheme)
+	    m_dmp->dm_dirty = 1;
 }
 
 
@@ -286,8 +286,8 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(value),
 	  void *UNUSED(data))
 {
-    struct mged_dm *dmlp;
-    struct mged_dm *save_curr_dmlp = mged_curr_dm;
+    struct mged_dm *m_dmp;
+    struct mged_dm *save_curr_m_dmp = mged_curr_dm;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&vls, "dm bg %d %d %d",
@@ -302,16 +302,16 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
     // where we act on all dm instances.  set_curr_dm
     // should probably be replaced with get_next_dm
     struct bview *cbv = GEDP->ged_gvp;
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
-	if (dmlp->dm_color_scheme == color_scheme) {
-	    dmlp->dm_dirty = 1;
-	    set_curr_dm(dmlp);
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
+	if (m_dmp->dm_color_scheme == color_scheme) {
+	    m_dmp->dm_dirty = 1;
+	    set_curr_dm(m_dmp);
 	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	}
     }
 
     bu_vls_free(&vls);
-    set_curr_dm(save_curr_dmlp);
+    set_curr_dm(save_curr_m_dmp);
     GEDP->ged_gvp = cbv;
 }
 

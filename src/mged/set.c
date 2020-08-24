@@ -138,11 +138,11 @@ set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 	       const char *UNUSED(value),
 	       void *UNUSED(data))
 {
-    struct mged_dm *dmlp;
+    struct mged_dm *m_dmp;
 
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dm_mged_variables == mged_variables)
-	    dmlp->dm_dirty = 1;
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+	if (m_dmp->dm_mged_variables == mged_variables)
+	    m_dmp->dm_dirty = 1;
 }
 
 
@@ -306,14 +306,14 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 		   const char *UNUSED(value),
 		   void *UNUSED(data))
 {
-    struct mged_dm *dmlp;
-    struct mged_dm *save_dmlp;
+    struct mged_dm *m_dmp;
+    struct mged_dm *save_m_dmp;
 
-    save_dmlp = mged_curr_dm;
+    save_m_dmp = mged_curr_dm;
 
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dm_mged_variables == save_dmlp->dm_mged_variables) {
-	    set_curr_dm(dmlp);
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+	if (m_dmp->dm_mged_variables == save_m_dmp->dm_mged_variables) {
+	    set_curr_dm(m_dmp);
 
 	    if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 		if (mged_variables->mv_sliders)	/* zero slider variables */
@@ -324,7 +324,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 	    }
 	}
 
-    set_curr_dm(save_dmlp);
+    set_curr_dm(save_m_dmp);
 }
 
 

@@ -77,11 +77,11 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		    const char *UNUSED(value),
 		    void *UNUSED(data))
 {
-    struct mged_dm *dmlp;
+    struct mged_dm *m_dmp;
 
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dm_grid_state == grid_state)
-	    dmlp->dm_dirty = 1;
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+	if (m_dmp->dm_grid_state == grid_state)
+	    m_dmp->dm_dirty = 1;
 }
 
 

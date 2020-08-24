@@ -76,30 +76,30 @@ static char adc_syntax4[] = "\
 void
 adc_set_dirty_flag(void)
 {
-    struct mged_dm *dmlp;
+    struct mged_dm *m_dmp;
 
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dm_adc_state == adc_state)
-	    dmlp->dm_dirty = 1;
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+	if (m_dmp->dm_adc_state == adc_state)
+	    m_dmp->dm_dirty = 1;
 }
 
 
 void
 adc_set_scroll(void)
 {
-    struct mged_dm *dmlp;
-    struct mged_dm *save_dmlp;
+    struct mged_dm *m_dmp;
+    struct mged_dm *save_m_dmp;
 
-    save_dmlp = mged_curr_dm;
+    save_m_dmp = mged_curr_dm;
 
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dm_adc_state == adc_state) {
-	    set_curr_dm(dmlp);
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+	if (m_dmp->dm_adc_state == adc_state) {
+	    set_curr_dm(m_dmp);
 	    set_scroll();
 	    DMP_dirty = 1;
 	}
 
-    set_curr_dm(save_dmlp);
+    set_curr_dm(save_m_dmp);
 }
 
 

@@ -1828,15 +1828,15 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	return TCL_ERROR;
 
     /* update and resize the views */
-    struct mged_dm *save_dmlp = mged_curr_dm;
+    struct mged_dm *save_m_dmp = mged_curr_dm;
     struct cmd_list *save_cmd_list = curr_cmd_list;
-    struct mged_dm *dmlp;
+    struct mged_dm *m_dmp;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
+    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
 	int non_empty = 0; /* start out empty */
 
-	set_curr_dm(dmlp);
+	set_curr_dm(m_dmp);
 
 	if (mged_curr_dm->dm_tie) {
 	    curr_cmd_list = mged_curr_dm->dm_tie;
@@ -1875,7 +1875,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	}
     }
 
-    set_curr_dm(save_dmlp);
+    set_curr_dm(save_m_dmp);
     curr_cmd_list = save_cmd_list;
     GEDP->ged_gvp = view_state->vs_gvp;
 
