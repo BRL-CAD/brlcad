@@ -704,7 +704,7 @@ be_o_rotate()
 int
 be_accept()
 {
-    struct dm_list *dmlp;
+    struct mged_dm *dmlp;
 
     if (STATE == ST_S_EDIT) {
 	/* Accept a solid edit */
@@ -758,7 +758,7 @@ be_accept()
 int
 be_reject()
 {
-    struct dm_list *dmlp;
+    struct mged_dm *dmlp;
 
     update_views = 1;
 
@@ -939,8 +939,8 @@ stateChange(int UNUSED(oldstate), int newstate)
 int
 chg_state(int from, int to, char *str)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *p;
+    struct mged_dm *save_dm_list;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (STATE != from) {

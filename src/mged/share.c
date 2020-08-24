@@ -75,7 +75,7 @@ extern struct bu_structparse grid_vparse[];
 extern struct bu_structparse rubber_band_vparse[];
 extern struct bu_structparse mged_vparse[];
 
-void free_all_resources(struct dm_list *dlp);
+void free_all_resources(struct mged_dm *dlp);
 
 /*
  * SYNOPSIS
@@ -95,8 +95,8 @@ int
 f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int uflag = 0;		/* unshare flag */
-    struct dm_list *dlp1 = (struct dm_list *)NULL;
-    struct dm_list *dlp2 = (struct dm_list *)NULL;
+    struct mged_dm *dlp1 = (struct mged_dm *)NULL;
+    struct mged_dm *dlp2 = (struct mged_dm *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 4) {
@@ -171,7 +171,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 		struct dm *dmp2 = (struct dm *)NULL;
 
 		dmp1 = dlp1->dml_dmp;
-		if (dlp2 != (struct dm_list *)NULL)
+		if (dlp2 != (struct mged_dm *)NULL)
 		    dmp2 = dlp2->dml_dmp;
 
 		if (dm_share_dlist(dmp1, dmp2) == TCL_OK) {
@@ -180,7 +180,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 			dlp1->dml_dlist_state->dl_active = dlp1->dml_mged_variables->mv_dlist;
 
 			if (dlp1->dml_mged_variables->mv_dlist) {
-			    struct dm_list *save_dlp;
+			    struct mged_dm *save_dlp;
 
 			    save_dlp = curr_dm_list;
 
@@ -363,7 +363,7 @@ f_rset (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
  * probably on its way out (i.e. being destroyed).
  */
 void
-usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
+usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2)
 {
     free_all_resources(dlp1);
     dlp1->dml_view_state = dlp2->dml_view_state;
@@ -396,7 +396,7 @@ usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
  * - free all resources that are not being used
  */
 void
-free_all_resources(struct dm_list *dlp)
+free_all_resources(struct mged_dm *dlp)
 {
     if (!--dlp->dml_view_state->vs_rc) {
 	view_ring_destroy(dlp);
@@ -427,9 +427,9 @@ free_all_resources(struct dm_list *dlp)
 
 
 void
-share_dlist(struct dm_list *dlp2)
+share_dlist(struct mged_dm *dlp2)
 {
-    struct dm_list *dlp1;
+    struct mged_dm *dlp1;
 
     if (!dm_get_displaylist(dlp2->dml_dmp))
 	return;

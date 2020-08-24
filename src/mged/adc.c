@@ -76,7 +76,7 @@ static char adc_syntax4[] = "\
 void
 adc_set_dirty_flag(void)
 {
-    struct dm_list *dmlp;
+    struct mged_dm *dmlp;
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_adc_state == adc_state)
@@ -87,8 +87,8 @@ adc_set_dirty_flag(void)
 void
 adc_set_scroll(void)
 {
-    struct dm_list *dmlp;
-    struct dm_list *save_dmlp;
+    struct mged_dm *dmlp;
+    struct mged_dm *save_dmlp;
 
     save_dmlp = curr_dm_list;
 

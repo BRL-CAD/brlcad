@@ -61,7 +61,7 @@ dozoom(int which_eye)
      * The vectorThreshold stuff in libdm may turn the
      * Tcl-crank causing curr_dm_list to change.
      */
-    struct dm_list *save_dm_list = curr_dm_list;
+    struct mged_dm *save_dm_list = curr_dm_list;
 
     curr_dm_list->dml_ndrawn = 0;
     inv_viewsize = view_state->vs_gvp->gv_isize;
@@ -249,8 +249,8 @@ createDLists(struct bu_list *hdlp)
 void
 createDListSolid(struct solid *sp)
 {
-    struct dm_list *dlp;
-    struct dm_list *save_dlp;
+    struct mged_dm *dlp;
+    struct mged_dm *save_dlp;
 
     save_dlp = curr_dm_list;
 
@@ -305,7 +305,7 @@ createDListAll(struct display_list *gdlp)
 void
 freeDListsAll(unsigned int dlist, int range)
 {
-    struct dm_list *dlp;
+    struct mged_dm *dlp;
 
     FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	if (dm_get_displaylist(dlp->dml_dmp) &&

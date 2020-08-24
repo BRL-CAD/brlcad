@@ -377,8 +377,8 @@ struct _menu_state {
 };
 
 
-struct dm_list {
-    struct bu_list	l;
+struct mged_dm {
+    struct bu_list      l;
     struct dm		*dml_dmp;
     struct fb		*dml_fbp;
     int			dml_netfd;			/* socket used to listen for connections */
@@ -439,9 +439,9 @@ struct dm_list {
 
 /* If we're changing the active DM, use this function so
  * libged also gets the word. */
-extern void set_curr_dm(struct dm_list *nl);
+extern void set_curr_dm(struct mged_dm *nl);
 
-#define DM_LIST_NULL ((struct dm_list *)NULL)
+#define DM_LIST_NULL ((struct mged_dm *)NULL)
 #define DMP curr_dm_list->dml_dmp
 #define DMP_dirty curr_dm_list->dml_dirty
 #define fbp curr_dm_list->dml_fbp
@@ -543,10 +543,10 @@ extern void set_curr_dm(struct dm_list *nl);
 #define BV_MAXFUNC	64	/* largest code used */
 
 #define FOR_ALL_DISPLAYS(p, hp) \
-	for (BU_LIST_FOR(p, dm_list, hp))
+	for (BU_LIST_FOR(p, mged_dm, hp))
 
 #define GET_DM_LIST(p, id) { \
-		struct dm_list *tp; \
+		struct mged_dm *tp; \
 \
 		FOR_ALL_DISPLAYS(tp, &active_dm_set.l) { \
 			if ((id) == dm_get_id(tp->dml_dmp)) { \
@@ -562,8 +562,8 @@ extern void set_curr_dm(struct dm_list *nl);
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
-extern struct dm_list active_dm_set;	/* defined in attach.c */
-extern struct dm_list *curr_dm_list;	/* defined in attach.c */
+extern struct mged_dm active_dm_set;	/* defined in attach.c */
+extern struct mged_dm *curr_dm_list;	/* defined in attach.c */
 
 /* defined in doevent.c */
 #ifdef HAVE_X11_TYPES
@@ -573,7 +573,7 @@ extern int doEvent(ClientData, void *);
 #endif
 
 /* defined in attach.c */
-extern void dm_var_init(struct dm_list *initial_dm_list);
+extern void dm_var_init(struct mged_dm *initial_dm_list);
 
 /* defined in dm-generic.c */
 extern int common_dm(int argc, const char *argv[]);

@@ -120,8 +120,8 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
     int i;
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
     int npp;			/* number of processed packages */
-    struct dm_list *dlp;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
+    struct mged_dm *dlp;
+    struct mged_dm *scdlp;  /* save current dm_list pointer */
 
     FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
 	for (i = MAX_CLIENTS-1; i >= 0; i--)
@@ -210,8 +210,8 @@ fbserv_new_client_handler(ClientData clientData,
 			  char *host,
 			  int port)
 {
-    struct dm_list *dlp = (struct dm_list *)clientData;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
+    struct mged_dm *dlp = (struct mged_dm *)clientData;
+    struct mged_dm *scdlp;  /* save current dm_list pointer */
     uintptr_t fd;
 
     if (dlp == NULL)
@@ -385,8 +385,8 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 {
     uintptr_t datafd = (uintptr_t)clientData;
     int fd = (int)((int32_t)datafd & 0xFFFF);	/* fd's will be small */
-    struct dm_list *dlp;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
+    struct mged_dm *dlp;
+    struct mged_dm *scdlp;  /* save current dm_list pointer */
 
     FOR_ALL_DISPLAYS(dlp, &active_dm_set.l)
 	if (fd == dlp->dml_netfd)

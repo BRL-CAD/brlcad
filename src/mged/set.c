@@ -138,7 +138,7 @@ set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 	       const char *UNUSED(value),
 	       void *UNUSED(data))
 {
-    struct dm_list *dmlp;
+    struct mged_dm *dmlp;
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_mged_variables == mged_variables)
@@ -306,8 +306,8 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 		   const char *UNUSED(value),
 		   void *UNUSED(data))
 {
-    struct dm_list *dmlp;
-    struct dm_list *save_dmlp;
+    struct mged_dm *dmlp;
+    struct mged_dm *save_dmlp;
 
     save_dmlp = curr_dm_list;
 
@@ -371,9 +371,9 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(value),
 	  void *UNUSED(data))
 {
-    struct dm_list *dlp1;
-    struct dm_list *dlp2;
-    struct dm_list *save_dlp;
+    struct mged_dm *dlp1;
+    struct mged_dm *dlp2;
+    struct mged_dm *save_dlp;
 
     /* save current display manager */
     save_dlp = curr_dm_list;

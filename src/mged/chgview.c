@@ -101,11 +101,11 @@ char edit_rate_model_origin;
 char edit_rate_object_origin;
 char edit_rate_view_origin;
 char edit_rate_coords;
-struct dm_list *edit_rate_mr_dm_list;
-struct dm_list *edit_rate_or_dm_list;
-struct dm_list *edit_rate_vr_dm_list;
-struct dm_list *edit_rate_mt_dm_list;
-struct dm_list *edit_rate_vt_dm_list;
+struct mged_dm *edit_rate_mr_dm_list;
+struct mged_dm *edit_rate_or_dm_list;
+struct mged_dm *edit_rate_vr_dm_list;
+struct mged_dm *edit_rate_mt_dm_list;
+struct mged_dm *edit_rate_vt_dm_list;
 
 double mged_abs_tol;
 double mged_rel_tol = 0.01;		/* 1%, by default */
@@ -246,8 +246,8 @@ edit_com(int argc,
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct dm_list *dmlp;
-    struct dm_list *save_dmlp;
+    struct mged_dm *dmlp;
+    struct mged_dm *save_dmlp;
     struct cmd_list *save_cmd_list;
     int ret;
     int initial_blank_screen = 1;
@@ -570,8 +570,8 @@ emuves_com(int argc, const char *argv[])
 int
 cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct dm_list *dmlp;
-    struct dm_list *save_dmlp;
+    struct mged_dm *dmlp;
+    struct mged_dm *save_dmlp;
     struct cmd_list *save_cmd_list;
 
     if (argc > 2) {
@@ -2815,7 +2815,7 @@ int
 f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int status;
-    struct dm_list *dmlp;
+    struct mged_dm *dmlp;
 
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -3012,7 +3012,7 @@ view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2)
 
 
 void
-view_ring_destroy(struct dm_list *dlp)
+view_ring_destroy(struct mged_dm *dlp)
 {
     struct view_ring *vrp;
 

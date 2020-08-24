@@ -343,8 +343,8 @@ sig3(int UNUSED(sig))
 void
 new_edit_mats(void)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *p;
+    struct mged_dm *save_dm_list;
 
     save_dm_list = curr_dm_list;
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
@@ -1261,10 +1261,10 @@ main(int argc, char *argv[])
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    memset((void *)&active_dm_set, 0, sizeof(struct dm_list));
+    memset((void *)&active_dm_set, 0, sizeof(struct mged_dm));
     BU_LIST_INIT(&active_dm_set.l);
 
-    BU_ALLOC(curr_dm_list, struct dm_list);
+    BU_ALLOC(curr_dm_list, struct mged_dm);
     BU_LIST_APPEND(&active_dm_set.l, &curr_dm_list->l);
     netfd = -1;
 
@@ -1954,8 +1954,8 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 int
 event_check(int non_blocking)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *p;
+    struct mged_dm *save_dm_list;
     int save_edflag;
     int handled = 0;
 
@@ -2271,8 +2271,8 @@ event_check(int non_blocking)
 void
 refresh(void)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *p;
+    struct mged_dm *save_dm_list;
     struct bu_vls overlay_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int do_overlay = 1;
@@ -2454,14 +2454,14 @@ void
 mged_finish(int exitcode)
 {
     char place[64];
-    struct dm_list *p;
+    struct mged_dm *p;
     struct cmd_list *c;
     int ret;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
 
     /* Release all displays */
-    while (BU_LIST_WHILE(p, dm_list, &(active_dm_set.l))) {
+    while (BU_LIST_WHILE(p, mged_dm, &(active_dm_set.l))) {
 	if (!p)
 	    bu_bomb("dm list entry is null? aborting!\n");
 

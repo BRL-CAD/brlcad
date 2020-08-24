@@ -1298,7 +1298,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 {
     int uflag = 0;		/* untie flag */
     struct cmd_list *clp;
-    struct dm_list *dlp;
+    struct mged_dm *dlp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 3 < argc) {
@@ -1368,7 +1368,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	if (clp->cl_tie)
 	    clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
 
-	clp->cl_tie = (struct dm_list *)NULL;
+	clp->cl_tie = (struct mged_dm *)NULL;
 
 	bu_vls_free(&vls);
 	return TCL_OK;
@@ -1414,7 +1414,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
     /* already tied */
     if (dlp->dml_tie)
-	dlp->dml_tie->cl_tie = (struct dm_list *)NULL;
+	dlp->dml_tie->cl_tie = (struct mged_dm *)NULL;
 
     dlp->dml_tie = clp;
 
@@ -1428,7 +1428,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
 {
     int status;
     const char *av[2];
-    struct dm_list *dml;
+    struct mged_dm *dml;
     struct _view_state *vsp;
 
     if (argc < 2) {
@@ -1476,7 +1476,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
 int
 f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct dm_list *p;
+    struct mged_dm *p;
 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1828,9 +1828,9 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	return TCL_ERROR;
 
     /* update and resize the views */
-    struct dm_list *save_dmlp = curr_dm_list;
+    struct mged_dm *save_dmlp = curr_dm_list;
     struct cmd_list *save_cmd_list = curr_cmd_list;
-    struct dm_list *dmlp;
+    struct mged_dm *dmlp;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {

@@ -243,7 +243,7 @@ cs_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(value),
 		  void *UNUSED(data))
 {
-    struct dm_list *dmlp;
+    struct mged_dm *dmlp;
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_color_scheme == color_scheme)
@@ -286,8 +286,8 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(value),
 	  void *UNUSED(data))
 {
-    struct dm_list *dmlp;
-    struct dm_list *save_curr_dmlp = curr_dm_list;
+    struct mged_dm *dmlp;
+    struct mged_dm *save_curr_dmlp = curr_dm_list;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&vls, "dm bg %d %d %d",

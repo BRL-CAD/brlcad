@@ -77,7 +77,7 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		    const char *UNUSED(value),
 		    void *UNUSED(data))
 {
-    struct dm_list *dmlp;
+    struct mged_dm *dmlp;
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
 	if (dmlp->dml_grid_state == grid_state)
@@ -92,7 +92,7 @@ set_grid_draw(const struct bu_structparse *sdp,
 	      const char *value,
 	      void *data)
 {
-    struct dm_list *dlp;
+    struct mged_dm *dlp;
 
     if (DBIP == DBI_NULL) {
 	grid_state->draw = 0;
@@ -121,7 +121,7 @@ set_grid_res(const struct bu_structparse *sdp,
 	     const char *value,
 	     void *data)
 {
-    struct dm_list *dlp;
+    struct mged_dm *dlp;
 
     grid_set_dirty_flag(sdp, name, base, value, data);
 
@@ -420,7 +420,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 void
 update_grids(fastf_t sf)
 {
-    struct dm_list *dlp;
+    struct mged_dm *dlp;
     struct bu_vls save_result = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
 

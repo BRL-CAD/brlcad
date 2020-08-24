@@ -52,17 +52,17 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
+extern void share_dlist(struct mged_dm *dlp2);	/* defined in share.c */
 
 extern struct _color_scheme default_color_scheme;
 
 int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
-struct dm_list active_dm_set;  /* set of active display managers */
-struct dm_list *curr_dm_list = (struct dm_list *)NULL;
+struct mged_dm active_dm_set;  /* set of active display managers */
+struct mged_dm *curr_dm_list = (struct mged_dm *)NULL;
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
 /* If we changed the active dm, need to update GEDP as well.. */
-void set_curr_dm(struct dm_list *nl)
+void set_curr_dm(struct mged_dm *nl)
 {
     curr_dm_list = nl;
     if (nl != DM_LIST_NULL) {
@@ -76,7 +76,7 @@ void set_curr_dm(struct dm_list *nl)
 }
 
 int
-mged_dm_init(struct dm_list *o_dm_list,
+mged_dm_init(struct mged_dm *o_dm_list,
 	const char *dm_type,
 	int argc,
 	const char *argv[])
@@ -123,7 +123,7 @@ mged_fb_open(void)
 
 
 void
-mged_slider_init_vls(struct dm_list *p)
+mged_slider_init_vls(struct mged_dm *p)
 {
     bu_vls_init(&p->dml_fps_name);
     bu_vls_init(&p->dml_aet_name);
@@ -135,7 +135,7 @@ mged_slider_init_vls(struct dm_list *p)
 
 
 void
-mged_slider_free_vls(struct dm_list *p)
+mged_slider_free_vls(struct mged_dm *p)
 {
     if (BU_VLS_IS_INITIALIZED(&p->dml_fps_name)) {
 	bu_vls_free(&p->dml_fps_name);
@@ -151,11 +151,11 @@ mged_slider_free_vls(struct dm_list *p)
 int
 release(char *name, int need_close)
 {
-    struct dm_list *save_dm_list = DM_LIST_NULL;
+    struct mged_dm *save_dm_list = DM_LIST_NULL;
     struct bu_vls *cpathname = dm_get_pathname(DMP);
 
     if (name != NULL) {
-	struct dm_list *p;
+	struct mged_dm *p;
 
 	if (BU_STR_EQUAL("nu", name))
 	    return TCL_OK;  /* Ignore */
@@ -200,13 +200,13 @@ release(char *name, int need_close)
      * like the last one the user had open. This depends on "nu"
      * always being last in the list.
      */
-    usurp_all_resources(BU_LIST_LAST(dm_list, &active_dm_set.l), curr_dm_list);
+    usurp_all_resources(BU_LIST_LAST(mged_dm, &active_dm_set.l), curr_dm_list);
 
     /* If this display is being referenced by a command window, then
      * remove the reference.
      */
     if (curr_dm_list->dml_tie != NULL)
-	curr_dm_list->dml_tie->cl_tie = (struct dm_list *)NULL;
+	curr_dm_list->dml_tie->cl_tie = (struct mged_dm *)NULL;
 
     if (need_close)
 	dm_close(DMP);
@@ -219,7 +219,7 @@ release(char *name, int need_close)
     if (save_dm_list != DM_LIST_NULL)
 	set_curr_dm(save_dm_list);
     else
-	set_curr_dm((struct dm_list *)active_dm_set.l.forw);
+	set_curr_dm((struct mged_dm *)active_dm_set.l.forw);
 
     return TCL_OK;
 }
@@ -382,14 +382,14 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 {
     int opt_argc;
     char **opt_argv;
-    struct dm_list *o_dm_list;
+    struct mged_dm *o_dm_list;
 
     if (!wp_name) {
 	return TCL_ERROR;
     }
 
     o_dm_list = curr_dm_list;
-    BU_ALLOC(curr_dm_list, struct dm_list);
+    BU_ALLOC(curr_dm_list, struct mged_dm);
 
     /* initialize predictor stuff */
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
@@ -617,7 +617,7 @@ is_dm_null(void)
 
 
 void
-dm_var_init(struct dm_list *initial_dm_list)
+dm_var_init(struct mged_dm *initial_dm_list)
 {
     BU_ALLOC(adc_state, struct _adc_state);
     *adc_state = *initial_dm_list->dml_adc_state;		/* struct copy */
@@ -642,7 +642,7 @@ dm_var_init(struct dm_list *initial_dm_list)
     BU_ALLOC(color_scheme, struct _color_scheme);
 
     /* initialize using the nu display manager */
-    *color_scheme = *BU_LIST_LAST(dm_list, &active_dm_set.l)->dml_color_scheme;
+    *color_scheme = *BU_LIST_LAST(mged_dm, &active_dm_set.l)->dml_color_scheme;
 
     color_scheme->cs_rc = 1;
 
@@ -683,7 +683,7 @@ dm_var_init(struct dm_list *initial_dm_list)
 
 
 void
-mged_link_vars(struct dm_list *p)
+mged_link_vars(struct mged_dm *p)
 {
     mged_slider_init_vls(p);
     struct bu_vls *pn = dm_get_pathname(p->dml_dmp);
@@ -701,7 +701,7 @@ mged_link_vars(struct dm_list *p)
 int
 f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct dm_list *dlp;
+    struct mged_dm *dlp;
 
     if (argc != 1 || !argv) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
