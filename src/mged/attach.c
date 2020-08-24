@@ -103,9 +103,10 @@ mged_dm_init(struct dm_list *o_dm_list,
 #endif
     (void)dm_configure_win(DMP, 0);
 
-    if (dm_get_pathname(DMP)) {
-	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(DMP)));
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    struct bu_vls *pathname = dm_get_pathname(DMP);
+    if (pathname && bu_vls_strlen(pathname)) {
+	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_cstr(pathname));
+	Tcl_Eval(INTERP, bu_vls_cstr(&vls));
     }
     bu_vls_free(&vls);
 
@@ -151,6 +152,7 @@ int
 release(char *name, int need_close)
 {
     struct dm_list *save_dm_list = DM_LIST_NULL;
+    struct bu_vls *cpathname = dm_get_pathname(DMP);
 
     if (name != NULL) {
 	struct dm_list *p;
@@ -159,7 +161,8 @@ release(char *name, int need_close)
 	    return TCL_OK;  /* Ignore */
 
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	    if (dm_get_pathname(p->dml_dmp) && !BU_STR_EQUAL(name, bu_vls_addr(dm_get_pathname(p->dml_dmp))))
+	    struct bu_vls *pathname = dm_get_pathname(p->dml_dmp);
+	    if (pathname && bu_vls_strlen(pathname) && !BU_STR_EQUAL(name, bu_vls_cstr(pathname)))
 		continue;
 
 	    /* found it */
@@ -175,7 +178,7 @@ release(char *name, int need_close)
 			     " not found\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
-    } else if (DMP && dm_get_pathname(DMP) && BU_STR_EQUAL("nu", bu_vls_addr(dm_get_pathname(DMP))))
+    } else if (cpathname && bu_vls_strlen(cpathname) && BU_STR_EQUAL("nu", bu_vls_cstr(cpathname)))
 	return TCL_OK;  /* Ignore */
 
     if (fbp) {
@@ -405,8 +408,9 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	dm_processOptions(tmp_dmp, &tmp_vls, opt_argc, (const char **)opt_argv);
 	bu_argv_free(opt_argc, opt_argv);
 
-	if (dm_get_dname(tmp_dmp) && strlen(bu_vls_addr(dm_get_dname(tmp_dmp)))) {
-	    if (gui_setup(bu_vls_addr(dm_get_dname(tmp_dmp))) == TCL_ERROR) {
+	struct bu_vls *dname = dm_get_dname(tmp_dmp);
+	if (dname && bu_vls_strlen(dname)) {
+	    if (gui_setup(bu_vls_cstr(dname)) == TCL_ERROR) {
 		bu_free((void *)curr_dm_list, "f_attach: dm_list");
 		set_curr_dm(o_dm_list);
 		bu_vls_free(&tmp_vls);
@@ -448,9 +452,10 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     mged_link_vars(curr_dm_list);
 
     Tcl_ResetResult(INTERP);
-    if (dm_get_dm_name(DMP) && dm_get_dm_lname(DMP)) {
-	Tcl_AppendResult(INTERP, "ATTACHING ", dm_get_dm_name(DMP), " (", dm_get_dm_lname(DMP),
-		")\n", (char *)NULL);
+    const char *dm_name = dm_get_dm_name(DMP);
+    const char *dm_lname = dm_get_dm_lname(DMP);
+    if (dm_name && dm_lname) {
+	Tcl_AppendResult(INTERP, "ATTACHING ", dm_name, " (", dm_lname,	")\n", (char *)NULL);
     }
 
     share_dlist(curr_dm_list);
@@ -585,8 +590,9 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
     }
 
     if (!cmd_hook) {
-	if (dm_get_dm_name(DMP)) {
-	    Tcl_AppendResult(interpreter, "The '", dm_get_dm_name(DMP),
+	const char *dm_name = dm_get_dm_name(DMP);
+	if (dm_name) {
+	    Tcl_AppendResult(interpreter, "The '", dm_name,
 		    "' display manager does not support local commands.\n",
 		    (char *)NULL);
 	}
@@ -680,19 +686,14 @@ void
 mged_link_vars(struct dm_list *p)
 {
     mged_slider_init_vls(p);
-    if (dm_get_pathname(p->dml_dmp)) {
-	bu_vls_printf(&p->dml_fps_name, "%s(%s,fps)", MGED_DISPLAY_VAR,
-		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-	bu_vls_printf(&p->dml_aet_name, "%s(%s,aet)", MGED_DISPLAY_VAR,
-		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-	bu_vls_printf(&p->dml_ang_name, "%s(%s,ang)", MGED_DISPLAY_VAR,
-		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-	bu_vls_printf(&p->dml_center_name, "%s(%s,center)", MGED_DISPLAY_VAR,
-		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-	bu_vls_printf(&p->dml_size_name, "%s(%s,size)", MGED_DISPLAY_VAR,
-		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-	bu_vls_printf(&p->dml_adc_name, "%s(%s,adc)", MGED_DISPLAY_VAR,
-		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
+    struct bu_vls *pn = dm_get_pathname(p->dml_dmp);
+    if (pn) {
+	bu_vls_printf(&p->dml_fps_name, "%s(%s,fps)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
+	bu_vls_printf(&p->dml_aet_name, "%s(%s,aet)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
+	bu_vls_printf(&p->dml_ang_name, "%s(%s,ang)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
+	bu_vls_printf(&p->dml_center_name, "%s(%s,center)", MGED_DISPLAY_VAR, bu_vls_cstr(pn));
+	bu_vls_printf(&p->dml_size_name, "%s(%s,size)", MGED_DISPLAY_VAR, bu_vls_cstr(pn));
+	bu_vls_printf(&p->dml_adc_name, "%s(%s,adc)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
     }
 }
 
@@ -713,8 +714,9 @@ f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, 
     }
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dm_get_pathname(dlp->dml_dmp))
-	    Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(dlp->dml_dmp)));
+	struct bu_vls *pn = dm_get_pathname(dlp->dml_dmp);
+	if (pn && bu_vls_strlen(pn))
+	    Tcl_AppendElement(interpreter, bu_vls_cstr(pn));
     }
     return TCL_OK;
 }
