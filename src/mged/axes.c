@@ -88,8 +88,8 @@ ax_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
     struct mged_dm *dmlp;
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dml_axes_state == axes_state)
-	    dmlp->dml_dirty = 1;
+	if (dmlp->dm_axes_state == axes_state)
+	    dmlp->dm_dirty = 1;
 }
 
 

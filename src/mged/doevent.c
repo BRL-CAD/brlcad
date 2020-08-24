@@ -213,7 +213,7 @@ set_knob_offset()
     int i;
 
     for (i = 0; i < 8; ++i)
-	dml_knobs[i] = 0;
+	dm_knobs[i] = 0;
 }
 #endif
 
@@ -246,8 +246,8 @@ motion_event_handler(XMotionEvent *xmotion)
     height = dm_get_height(DMP);
     mx = xmotion->x;
     my = xmotion->y;
-    dx = mx - dml_omx;
-    dy = my - dml_omy;
+    dx = mx - dm_omx;
+    dy = my - dm_omy;
 
     switch (am_mode) {
 	case AMM_IDLE:
@@ -363,11 +363,11 @@ motion_event_handler(XMotionEvent *xmotion)
 			point_t vcenter, diff;
 
 			/* accumulate distance mouse moved since starting to translate */
-			dml_mouse_dx += dx;
-			dml_mouse_dy += dy;
+			dm_mouse_dx += dx;
+			dm_mouse_dy += dy;
 
-			view_pt[X] = dml_mouse_dx / (fastf_t)width * 2.0;
-			view_pt[Y] = -dml_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
+			view_pt[X] = dm_mouse_dx / (fastf_t)width * 2.0;
+			view_pt[Y] = -dm_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 			view_pt[Z] = 0.0;
 			round_to_grid(&view_pt[X], &view_pt[Y]);
 
@@ -375,7 +375,7 @@ motion_event_handler(XMotionEvent *xmotion)
 			MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
 			VSUB2(diff, model_pt, vcenter);
 			VSCALE(diff, diff, base2local);
-			VADD2(model_pt, dml_work_pt, diff);
+			VADD2(model_pt, dm_work_pt, diff);
 			if (STATE == ST_S_EDIT)
 			    bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 			else
@@ -389,11 +389,11 @@ motion_event_handler(XMotionEvent *xmotion)
 		    else {
 			if (grid_state->snap) {
 			    /* accumulate distance mouse moved since starting to translate */
-			    dml_mouse_dx += dx;
-			    dml_mouse_dy += dy;
+			    dm_mouse_dx += dx;
+			    dm_mouse_dy += dy;
 
-			    snap_view_to_grid(dml_mouse_dx / (fastf_t)width * 2.0,
-					      -dml_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0);
+			    snap_view_to_grid(dm_mouse_dx / (fastf_t)width * 2.0,
+					      -dm_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0);
 
 			    mged_variables->mv_coords = save_coords;
 			    goto handled;
@@ -744,8 +744,8 @@ motion_event_handler(XMotionEvent *xmotion)
 
  handled:
     bu_vls_free(&cmd);
-    dml_omx = mx;
-    dml_omy = my;
+    dm_omx = mx;
+    dm_omy = my;
 }
 #endif /* HAVE_X11_XLIB_H */
 
@@ -771,46 +771,46 @@ dials_event_handler(XDeviceMotionEvent *dmep)
     switch (DIAL0 + dmep->first_axis) {
 	case DIAL0:
 	    if (adc_state->adc_draw) {
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE &&
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE &&
 		    !adc_state->adc_dv_a1)
-		    dml_knobs[dmep->first_axis] +=
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit(adc_state->adc_dv_a1) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob ang1 %f\n",
 			      45.0 - 45.0*((double)setting) * INV_GED);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
 		    f = view_state->vs_rate_model_rotate[Z];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE && !f)
-			dml_knobs[dmep->first_axis] +=
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE && !f)
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(512.5 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    setting = dm_limit(dml_knobs[dmep->first_axis]);
+		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob -m z %f\n", setting / 512.0);
 		} else {
 		    f = view_state->vs_absolute_model_rotate[Z];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE && !f)
-			dml_knobs[dmep->first_axis] +=
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE && !f)
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(2.847 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    f = dm_limit(dml_knobs[dmep->first_axis]) / 512.0;
+		    f = dm_limit(dm_knobs[dmep->first_axis]) / 512.0;
 		    bu_vls_printf(&cmd, "knob -m az %f\n", dm_wrap(f) * 180.0);
 		}
 	    }
@@ -822,15 +822,15 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		else
 		    f = view_state->vs_rate_scale;
 
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE && !f)
-		    dml_knobs[dmep->first_axis] +=
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE && !f)
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] = dm_unlimit((int)(512.5 * f)) +
+		    dm_knobs[dmep->first_axis] = dm_unlimit((int)(512.5 * f)) +
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob S %f\n", setting / 512.0);
 	    } else {
 		if (EDIT_SCALE && mged_variables->mv_transform == 'e')
@@ -838,31 +838,31 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		else
 		    f = view_state->vs_absolute_scale;
 
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE && !f)
-		    dml_knobs[dmep->first_axis] +=
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE && !f)
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit((int)(512.5 * f)) +
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob aS %f\n", setting / 512.0);
 	    }
 	    break;
 	case DIAL2:
 	    if (adc_state->adc_draw) {
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE &&
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE &&
 		    !adc_state->adc_dv_a2)
-		    dml_knobs[dmep->first_axis] +=
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit(adc_state->adc_dv_a2) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob ang2 %f\n",
 			      45.0 - 45.0*((double)setting) * INV_GED);
 	    } else {
@@ -895,16 +895,16 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    else
 			f = view_state->vs_rate_rotate[Z];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE && !f)
-			dml_knobs[dmep->first_axis] +=
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE && !f)
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(512.5 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    setting = dm_limit(dml_knobs[dmep->first_axis]);
+		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob z %f\n", setting / 512.0);
 		} else {
 		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
@@ -935,32 +935,32 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    else
 			f = view_state->vs_absolute_rotate[Z];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE && !f)
-			dml_knobs[dmep->first_axis] +=
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE && !f)
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(2.847 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    f = dm_limit(dml_knobs[dmep->first_axis]) / 512.0;
+		    f = dm_limit(dm_knobs[dmep->first_axis]) / 512.0;
 		    bu_vls_printf(&cmd, "knob az %f\n", dm_wrap(f) * 180.0);
 		}
 	    }
 	    break;
 	case DIAL3:
 	    if (adc_state->adc_draw) {
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE &&
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE &&
 		    !adc_state->adc_dv_dist)
-		    dml_knobs[dmep->first_axis] +=
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit(adc_state->adc_dv_dist) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob distadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
@@ -990,16 +990,16 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    else
 			f = view_state->vs_rate_tran[Z];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE && !f)
-			dml_knobs[dmep->first_axis] +=
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE && !f)
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(512.5 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    setting = dm_limit(dml_knobs[dmep->first_axis]);
+		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob Z %f\n", setting / 512.0);
 		} else {
 		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
@@ -1028,33 +1028,33 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    else
 			f = view_state->vs_absolute_tran[Z];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE &&
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE &&
 			!f)
-			dml_knobs[dmep->first_axis] +=
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(512.5 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    setting = dm_limit(dml_knobs[dmep->first_axis]);
+		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob aZ %f\n", setting / 512.0 * view_state->vs_gvp->gv_scale * base2local);
 		}
 	    }
 	    break;
 	case DIAL4:
 	    if (adc_state->adc_draw) {
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE &&
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE &&
 		    !adc_state->adc_dv_y)
-		    dml_knobs[dmep->first_axis] +=
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit(adc_state->adc_dv_y) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob yadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
@@ -1086,16 +1086,16 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    else
 			f = view_state->vs_rate_rotate[Y];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE && !f)
-			dml_knobs[dmep->first_axis] +=
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE && !f)
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(512.5 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    setting = dm_limit(dml_knobs[dmep->first_axis]);
+		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob y %f\n", setting / 512.0);
 		} else {
 		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
@@ -1126,17 +1126,17 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    else
 			f = view_state->vs_absolute_rotate[Y];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE &&
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE &&
 			!f)
-			dml_knobs[dmep->first_axis] +=
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(2.847 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    f = dm_limit(dml_knobs[dmep->first_axis]) / 512.0;
+		    f = dm_limit(dm_knobs[dmep->first_axis]) / 512.0;
 		    bu_vls_printf(&cmd, "knob ay %f\n", dm_wrap(f) * 180.0);
 		}
 	    }
@@ -1169,16 +1169,16 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		else
 		    f = view_state->vs_rate_tran[Y];
 
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE && !f)
-		    dml_knobs[dmep->first_axis] +=
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE && !f)
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit((int)(512.5 * f)) +
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob Y %f\n", setting / 512.0);
 	    } else {
 		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
@@ -1207,32 +1207,32 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		else
 		    f = view_state->vs_absolute_tran[Y];
 
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE && !f)
-		    dml_knobs[dmep->first_axis] +=
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE && !f)
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] -
 			knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit((int)(512.5 * f)) +
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob aY %f\n", setting / 512.0 * view_state->vs_gvp->gv_scale * base2local);
 	    }
 	    break;
 	case DIAL6:
 	    if (adc_state->adc_draw) {
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE &&
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE &&
 		    !adc_state->adc_dv_x)
-		    dml_knobs[dmep->first_axis] +=
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit(adc_state->adc_dv_x) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob xadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
@@ -1264,16 +1264,16 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    else
 			f = view_state->vs_rate_rotate[X];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE && !f)
-			dml_knobs[dmep->first_axis] +=
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE && !f)
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(512.5 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    setting = dm_limit(dml_knobs[dmep->first_axis]);
+		    setting = dm_limit(dm_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob x %f\n", setting / 512.0);
 		} else {
 		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
@@ -1304,16 +1304,16 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    else
 			f = view_state->vs_absolute_rotate[X];
 
-		    if (-NOISE <= dml_knobs[dmep->first_axis] &&
-			dml_knobs[dmep->first_axis] <= NOISE && !f)
-			dml_knobs[dmep->first_axis] +=
+		    if (-NOISE <= dm_knobs[dmep->first_axis] &&
+			dm_knobs[dmep->first_axis] <= NOISE && !f)
+			dm_knobs[dmep->first_axis] +=
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 		    else
-			dml_knobs[dmep->first_axis] =
+			dm_knobs[dmep->first_axis] =
 			    dm_unlimit((int)(2.847 * f)) +
 			    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		    f = dm_limit(dml_knobs[dmep->first_axis]) / 512.0;
+		    f = dm_limit(dm_knobs[dmep->first_axis]) / 512.0;
 		    bu_vls_printf(&cmd, "knob ax %f\n", dm_wrap(f) * 180.0);
 		}
 	    }
@@ -1346,16 +1346,16 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		else
 		    f = view_state->vs_rate_tran[X];
 
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE && !f)
-		    dml_knobs[dmep->first_axis] +=
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE && !f)
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit((int)(512.5 * f)) +
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob X %f\n", setting / 512.0);
 	    } else {
 		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
@@ -1384,16 +1384,16 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		else
 		    f = view_state->vs_absolute_tran[X];
 
-		if (-NOISE <= dml_knobs[dmep->first_axis] &&
-		    dml_knobs[dmep->first_axis] <= NOISE && !f)
-		    dml_knobs[dmep->first_axis] +=
+		if (-NOISE <= dm_knobs[dmep->first_axis] &&
+		    dm_knobs[dmep->first_axis] <= NOISE && !f)
+		    dm_knobs[dmep->first_axis] +=
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 		else
-		    dml_knobs[dmep->first_axis] =
+		    dm_knobs[dmep->first_axis] =
 			dm_unlimit((int)(512.5 * f)) +
 			dmep->axis_data[0] - knob_values[dmep->first_axis];
 
-		setting = dm_limit(dml_knobs[dmep->first_axis]);
+		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob aX %f\n", setting / 512.0 * view_state->vs_gvp->gv_scale * base2local);
 	    }
 	    break;

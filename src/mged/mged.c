@@ -348,7 +348,7 @@ new_edit_mats(void)
 
     save_dm_list = mged_curr_dm;
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
-	if (!p->dml_owner)
+	if (!p->dm_owner)
 	    continue;
 
 	set_curr_dm(p);
@@ -1269,7 +1269,7 @@ main(int argc, char *argv[])
     netfd = -1;
 
     /* initialize predictor stuff */
-    BU_LIST_INIT(&mged_curr_dm->dml_p_vlist);
+    BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
     predictor_init();
 
     DMP = dm_get();
@@ -1279,7 +1279,7 @@ main(int argc, char *argv[])
 	bu_vls_strcpy(dpvp, "nu");
     }
 
-    struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dml_dmp);
+    struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dm_dmp);
     if (tnvp) {
 	bu_vls_init(tnvp); /* this may leak */
 	bu_vls_strcpy(tnvp, "nu");
@@ -1312,7 +1312,7 @@ main(int argc, char *argv[])
 
     BU_ALLOC(view_state, struct _view_state);
     view_state->vs_rc = 1;
-    view_ring_init(mged_curr_dm->dml_view_state, (struct _view_state *)NULL);
+    view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
     MAT_IDN(view_state->vs_ModelDelta);
 
     am_mode = AMM_IDLE;
@@ -2184,7 +2184,7 @@ event_check(int non_blocking)
     }
 
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
-	if (!p->dml_owner)
+	if (!p->dm_owner)
 	    continue;
 
 	set_curr_dm(p);
@@ -2280,20 +2280,20 @@ refresh(void)
     int do_time = 0;
 
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
-	if (!p->dml_view_state)
+	if (!p->dm_view_state)
 	    continue;
-	if (update_views || p->dml_view_state->vs_flag)
-	    p->dml_dirty = 1;
+	if (update_views || p->dm_view_state->vs_flag)
+	    p->dm_dirty = 1;
     }
 
     /*
-     * This needs to be done separately because dml_view_state may be
+     * This needs to be done separately because dm_view_state may be
      * shared.
      */
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
-	if (!p->dml_view_state)
+	if (!p->dm_view_state)
 	    continue;
-	p->dml_view_state->vs_flag = 0;
+	p->dm_view_state->vs_flag = 0;
     }
 
     update_views = 0;
@@ -2467,9 +2467,9 @@ mged_finish(int exitcode)
 
 	BU_LIST_DEQUEUE(&(p->l));
 
-	if (p && p->dml_dmp) {
-	    dm_close(p->dml_dmp);
-	    RT_FREE_VLIST(&p->dml_p_vlist);
+	if (p && p->dm_dmp) {
+	    dm_close(p->dm_dmp);
+	    RT_FREE_VLIST(&p->dm_p_vlist);
 	    mged_slider_free_vls(p);
 	    bu_free(p, "release: mged_curr_dm");
 	}

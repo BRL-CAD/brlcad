@@ -449,8 +449,8 @@ edit_com(int argc,
 
 	set_curr_dm(dmlp);
 
-	if (mged_curr_dm->dml_tie) {
-	    curr_cmd_list = mged_curr_dm->dml_tie;
+	if (mged_curr_dm->dm_tie) {
+	    curr_cmd_list = mged_curr_dm->dm_tie;
 	} else {
 	    curr_cmd_list = &head_cmd_list;
 	}
@@ -596,8 +596,8 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 	set_curr_dm(dmlp);
 
-	if (mged_curr_dm->dml_tie) {
-	    curr_cmd_list = mged_curr_dm->dml_tie;
+	if (mged_curr_dm->dm_tie) {
+	    curr_cmd_list = mged_curr_dm->dm_tie;
 	} else {
 	    curr_cmd_list = &head_cmd_list;
 	}
@@ -2804,7 +2804,7 @@ mged_svbase(void)
     view_state->vs_absolute_scale = 0.0;
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
-	mged_curr_dm->dml_dirty = 1;
+	mged_curr_dm->dm_dirty = 1;
     }
 
     return TCL_OK;
@@ -2835,10 +2835,10 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l) {
 	/* if sharing view while faceplate and original gui (i.e. button menu, sliders) are on */
-	if (dmlp->dml_view_state == view_state &&
-	    dmlp->dml_mged_variables->mv_faceplate &&
-	    dmlp->dml_mged_variables->mv_orig_gui) {
-	    dmlp->dml_dirty = 1;
+	if (dmlp->dm_view_state == view_state &&
+	    dmlp->dm_mged_variables->mv_faceplate &&
+	    dmlp->dm_mged_variables->mv_orig_gui) {
+	    dmlp->dm_dirty = 1;
 	}
     }
 
@@ -3016,8 +3016,8 @@ view_ring_destroy(struct mged_dm *dlp)
 {
     struct view_ring *vrp;
 
-    while (BU_LIST_NON_EMPTY(&dlp->dml_view_state->vs_headView.l)) {
-	vrp = BU_LIST_FIRST(view_ring, &dlp->dml_view_state->vs_headView.l);
+    while (BU_LIST_NON_EMPTY(&dlp->dm_view_state->vs_headView.l)) {
+	vrp = BU_LIST_FIRST(view_ring, &dlp->dm_view_state->vs_headView.l);
 	BU_LIST_DEQUEUE(&vrp->l);
 	bu_free((void *)vrp, "view_ring_destroy: vrp");
     }

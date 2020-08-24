@@ -741,8 +741,8 @@ be_accept()
     }
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dml_mged_variables->mv_transform == 'e')
-	    dmlp->dml_mged_variables->mv_transform = 'v';
+	if (dmlp->dm_mged_variables->mv_transform == 'e')
+	    dmlp->dm_mged_variables->mv_transform = 'v';
 
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -805,8 +805,8 @@ be_reject()
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dml_mged_variables->mv_transform == 'e')
-	    dmlp->dml_mged_variables->mv_transform = 'v';
+	if (dmlp->dm_mged_variables->mv_transform == 'e')
+	    dmlp->dm_mged_variables->mv_transform = 'v';
 
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;

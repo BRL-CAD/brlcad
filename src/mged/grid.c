@@ -80,8 +80,8 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
     struct mged_dm *dmlp;
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dml_grid_state == grid_state)
-	    dmlp->dml_dirty = 1;
+	if (dmlp->dm_grid_state == grid_state)
+	    dmlp->dm_dirty = 1;
 }
 
 
@@ -108,8 +108,8 @@ set_grid_draw(const struct bu_structparse *sdp,
 	grid_state->res_h = res;
 	grid_state->res_v = res;
 	FOR_ALL_DISPLAYS(dlp, &active_dm_set.l)
-	    if (dlp->dml_grid_state == grid_state)
-		dlp->dml_grid_auto_size = 0;
+	    if (dlp->dm_grid_state == grid_state)
+		dlp->dm_grid_auto_size = 0;
     }
 }
 
@@ -127,8 +127,8 @@ set_grid_res(const struct bu_structparse *sdp,
 
     if (grid_auto_size)
 	FOR_ALL_DISPLAYS(dlp, &active_dm_set.l)
-	    if (dlp->dml_grid_state == grid_state)
-		dlp->dml_grid_auto_size = 0;
+	    if (dlp->dm_grid_state == grid_state)
+		dlp->dm_grid_auto_size = 0;
 }
 
 
@@ -315,8 +315,8 @@ snap_keypoint_to_grid(void)
     bu_vls_free(&cmd);
 
     /* save model_pt in local units */
-    VMOVE(dml_work_pt, model_pt);
-    dml_mouse_dx = dml_mouse_dy = 0;
+    VMOVE(dm_work_pt, model_pt);
+    dm_mouse_dx = dm_mouse_dy = 0;
 }
 
 
@@ -339,8 +339,8 @@ snap_view_center_to_grid(void)
     VSCALE(model_pt, model_pt, base2local);
 
     /* save new center in local units */
-    VMOVE(dml_work_pt, model_pt);
-    dml_mouse_dx = dml_mouse_dy = 0;
+    VMOVE(dm_work_pt, model_pt);
+    dm_mouse_dx = dm_mouse_dy = 0;
 }
 
 
@@ -409,7 +409,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
     MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
     VSUB2(diff, model_pt, vcenter);
     VSCALE(diff, diff, base2local);
-    VSUB2(model_pt, dml_work_pt, diff);
+    VSUB2(model_pt, dm_work_pt, diff);
 
     VSCALE(model_pt, model_pt, local2base);
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
@@ -425,9 +425,9 @@ update_grids(fastf_t sf)
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
     FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
-	dlp->dml_grid_state->res_h *= sf;
-	dlp->dml_grid_state->res_v *= sf;
-	VSCALE(dlp->dml_grid_state->anchor, dlp->dml_grid_state->anchor, sf);
+	dlp->dm_grid_state->res_h *= sf;
+	dlp->dm_grid_state->res_v *= sf;
+	VSCALE(dlp->dm_grid_state->anchor, dlp->dm_grid_state->anchor, sf);
     }
 
     bu_vls_strcpy(&save_result, Tcl_GetStringResult(INTERP));

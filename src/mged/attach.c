@@ -52,22 +52,24 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern void share_dlist(struct mged_dm *dlp2);	/* defined in share.c */
+/* Geometry display instances used by MGED */
+struct mged_dm active_dm_set;  /* set of active display managers */
+struct mged_dm *mged_curr_dm = NULL;
+
 
 extern struct _color_scheme default_color_scheme;
-
+extern void share_dlist(struct mged_dm *dlp2);	/* defined in share.c */
 int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
-struct mged_dm active_dm_set;  /* set of active display managers */
-struct mged_dm *mged_curr_dm = (struct mged_dm *)NULL;
+
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
 /* If we changed the active dm, need to update GEDP as well.. */
-void set_curr_dm(struct mged_dm *nl)
+void set_curr_dm(struct mged_dm *nc)
 {
-    mged_curr_dm = nl;
-    if (nl != DM_LIST_NULL) {
-	GEDP->ged_gvp = nl->dml_view_state->vs_gvp;
-	GEDP->ged_gvp->gv_grid = *nl->dml_grid_state; /* struct copy */
+    mged_curr_dm = nc;
+    if (nc != DM_LIST_NULL) {
+	GEDP->ged_gvp = nc->dm_view_state->vs_gvp;
+	GEDP->ged_gvp->gv_grid = *nc->dm_grid_state; /* struct copy */
     } else {
 	if (GEDP) {
 	    GEDP->ged_gvp = NULL;
@@ -125,25 +127,25 @@ mged_fb_open(void)
 void
 mged_slider_init_vls(struct mged_dm *p)
 {
-    bu_vls_init(&p->dml_fps_name);
-    bu_vls_init(&p->dml_aet_name);
-    bu_vls_init(&p->dml_ang_name);
-    bu_vls_init(&p->dml_center_name);
-    bu_vls_init(&p->dml_size_name);
-    bu_vls_init(&p->dml_adc_name);
+    bu_vls_init(&p->dm_fps_name);
+    bu_vls_init(&p->dm_aet_name);
+    bu_vls_init(&p->dm_ang_name);
+    bu_vls_init(&p->dm_center_name);
+    bu_vls_init(&p->dm_size_name);
+    bu_vls_init(&p->dm_adc_name);
 }
 
 
 void
 mged_slider_free_vls(struct mged_dm *p)
 {
-    if (BU_VLS_IS_INITIALIZED(&p->dml_fps_name)) {
-	bu_vls_free(&p->dml_fps_name);
-	bu_vls_free(&p->dml_aet_name);
-	bu_vls_free(&p->dml_ang_name);
-	bu_vls_free(&p->dml_center_name);
-	bu_vls_free(&p->dml_size_name);
-	bu_vls_free(&p->dml_adc_name);
+    if (BU_VLS_IS_INITIALIZED(&p->dm_fps_name)) {
+	bu_vls_free(&p->dm_fps_name);
+	bu_vls_free(&p->dm_aet_name);
+	bu_vls_free(&p->dm_ang_name);
+	bu_vls_free(&p->dm_center_name);
+	bu_vls_free(&p->dm_size_name);
+	bu_vls_free(&p->dm_adc_name);
     }
 }
 
@@ -161,7 +163,7 @@ release(char *name, int need_close)
 	    return TCL_OK;  /* Ignore */
 
 	FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
-	    struct bu_vls *pathname = dm_get_pathname(p->dml_dmp);
+	    struct bu_vls *pathname = dm_get_pathname(p->dm_dmp);
 	    if (pathname && bu_vls_strlen(pathname) && !BU_STR_EQUAL(name, bu_vls_cstr(pathname)))
 		continue;
 
@@ -205,13 +207,13 @@ release(char *name, int need_close)
     /* If this display is being referenced by a command window, then
      * remove the reference.
      */
-    if (mged_curr_dm->dml_tie != NULL)
-	mged_curr_dm->dml_tie->cl_tie = (struct mged_dm *)NULL;
+    if (mged_curr_dm->dm_tie != NULL)
+	mged_curr_dm->dm_tie->cl_tie = (struct mged_dm *)NULL;
 
     if (need_close)
 	dm_close(DMP);
 
-    RT_FREE_VLIST(&mged_curr_dm->dml_p_vlist);
+    RT_FREE_VLIST(&mged_curr_dm->dm_p_vlist);
     BU_LIST_DEQUEUE(&mged_curr_dm->l);
     mged_slider_free_vls(mged_curr_dm);
     bu_free((void *)mged_curr_dm, "release: mged_curr_dm");
@@ -392,7 +394,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     BU_ALLOC(mged_curr_dm, struct mged_dm);
 
     /* initialize predictor stuff */
-    BU_LIST_INIT(&mged_curr_dm->dml_p_vlist);
+    BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
     predictor_init();
 
     /* Only need to do this once */
@@ -469,8 +471,8 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     (void)dm_set_win_bounds(DMP, windowbounds);
     mged_fb_open();
 
-    GEDP->ged_gvp = mged_curr_dm->dml_view_state->vs_gvp;
-    GEDP->ged_gvp->gv_grid = *mged_curr_dm->dml_grid_state; /* struct copy */
+    GEDP->ged_gvp = mged_curr_dm->dm_view_state->vs_gvp;
+    GEDP->ged_gvp->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
 
     return TCL_OK;
 
@@ -620,19 +622,19 @@ void
 dm_var_init(struct mged_dm *initial_dm_list)
 {
     BU_ALLOC(adc_state, struct _adc_state);
-    *adc_state = *initial_dm_list->dml_adc_state;		/* struct copy */
+    *adc_state = *initial_dm_list->dm_adc_state;		/* struct copy */
     adc_state->adc_rc = 1;
 
     BU_ALLOC(menu_state, struct _menu_state);
-    *menu_state = *initial_dm_list->dml_menu_state;		/* struct copy */
+    *menu_state = *initial_dm_list->dm_menu_state;		/* struct copy */
     menu_state->ms_rc = 1;
 
     BU_ALLOC(rubber_band, struct _rubber_band);
-    *rubber_band = *initial_dm_list->dml_rubber_band;		/* struct copy */
+    *rubber_band = *initial_dm_list->dm_rubber_band;		/* struct copy */
     rubber_band->rb_rc = 1;
 
     BU_ALLOC(mged_variables, struct _mged_variables);
-    *mged_variables = *initial_dm_list->dml_mged_variables;	/* struct copy */
+    *mged_variables = *initial_dm_list->dm_mged_variables;	/* struct copy */
     mged_variables->mv_rc = 1;
     mged_variables->mv_dlist = mged_default_dlist;
     mged_variables->mv_listen = 0;
@@ -642,35 +644,35 @@ dm_var_init(struct mged_dm *initial_dm_list)
     BU_ALLOC(color_scheme, struct _color_scheme);
 
     /* initialize using the nu display manager */
-    *color_scheme = *BU_LIST_LAST(mged_dm, &active_dm_set.l)->dml_color_scheme;
+    *color_scheme = *BU_LIST_LAST(mged_dm, &active_dm_set.l)->dm_color_scheme;
 
     color_scheme->cs_rc = 1;
 
     BU_ALLOC(grid_state, struct bview_grid_state);
-    *grid_state = *initial_dm_list->dml_grid_state;		/* struct copy */
+    *grid_state = *initial_dm_list->dm_grid_state;		/* struct copy */
     grid_state->rc = 1;
 
     BU_ALLOC(axes_state, struct _axes_state);
-    *axes_state = *initial_dm_list->dml_axes_state;		/* struct copy */
+    *axes_state = *initial_dm_list->dm_axes_state;		/* struct copy */
     axes_state->ax_rc = 1;
 
     BU_ALLOC(dlist_state, struct _dlist_state);
     dlist_state->dl_rc = 1;
 
     BU_ALLOC(view_state, struct _view_state);
-    *view_state = *initial_dm_list->dml_view_state;			/* struct copy */
+    *view_state = *initial_dm_list->dm_view_state;			/* struct copy */
     BU_ALLOC(view_state->vs_gvp, struct bview);
     BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bview callbacks");
 
-    *view_state->vs_gvp = *initial_dm_list->dml_view_state->vs_gvp;	/* struct copy */
+    *view_state->vs_gvp = *initial_dm_list->dm_view_state->vs_gvp;	/* struct copy */
     view_state->vs_gvp->gv_clientData = (void *)view_state;
     view_state->vs_gvp->gv_adaptive_plot = 0;
     view_state->vs_gvp->gv_redraw_on_zoom = 0;
     view_state->vs_gvp->gv_point_scale = 1.0;
     view_state->vs_gvp->gv_curve_scale = 1.0;
     view_state->vs_rc = 1;
-    view_ring_init(mged_curr_dm->dml_view_state, (struct _view_state *)NULL);
+    view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
 
     DMP_dirty = 1;
     mapped = 1;
@@ -686,14 +688,14 @@ void
 mged_link_vars(struct mged_dm *p)
 {
     mged_slider_init_vls(p);
-    struct bu_vls *pn = dm_get_pathname(p->dml_dmp);
+    struct bu_vls *pn = dm_get_pathname(p->dm_dmp);
     if (pn) {
-	bu_vls_printf(&p->dml_fps_name, "%s(%s,fps)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
-	bu_vls_printf(&p->dml_aet_name, "%s(%s,aet)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
-	bu_vls_printf(&p->dml_ang_name, "%s(%s,ang)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
-	bu_vls_printf(&p->dml_center_name, "%s(%s,center)", MGED_DISPLAY_VAR, bu_vls_cstr(pn));
-	bu_vls_printf(&p->dml_size_name, "%s(%s,size)", MGED_DISPLAY_VAR, bu_vls_cstr(pn));
-	bu_vls_printf(&p->dml_adc_name, "%s(%s,adc)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
+	bu_vls_printf(&p->dm_fps_name, "%s(%s,fps)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
+	bu_vls_printf(&p->dm_aet_name, "%s(%s,aet)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
+	bu_vls_printf(&p->dm_ang_name, "%s(%s,ang)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
+	bu_vls_printf(&p->dm_center_name, "%s(%s,center)", MGED_DISPLAY_VAR, bu_vls_cstr(pn));
+	bu_vls_printf(&p->dm_size_name, "%s(%s,size)", MGED_DISPLAY_VAR, bu_vls_cstr(pn));
+	bu_vls_printf(&p->dm_adc_name, "%s(%s,adc)", MGED_DISPLAY_VAR,	bu_vls_cstr(pn));
     }
 }
 
@@ -714,7 +716,7 @@ f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, 
     }
 
     FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
-	struct bu_vls *pn = dm_get_pathname(dlp->dml_dmp);
+	struct bu_vls *pn = dm_get_pathname(dlp->dm_dmp);
 	if (pn && bu_vls_strlen(pn))
 	    Tcl_AppendElement(interpreter, bu_vls_cstr(pn));
     }

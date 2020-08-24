@@ -259,8 +259,8 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[2]);
-	dml_omy = atoi(argv[3]);
+	dm_omx = atoi(argv[2]);
+	dm_omy = atoi(argv[3]);
 
 	switch (*argv[1]) {
 	    case 'r':
@@ -325,13 +325,13 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[2]);
-	dml_omy = atoi(argv[3]);
+	dm_omx = atoi(argv[2]);
+	dm_omy = atoi(argv[3]);
 
 	switch (*argv[1]) {
 	    case '1':
-		fx = dm_Xx2Normal(DMP, dml_omx) * GED_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -340,8 +340,8 @@ common_dm(int argc, const char *argv[])
 		am_mode = AMM_ADC_ANG1;
 		break;
 	    case '2':
-		fx = dm_Xx2Normal(DMP, dml_omx) * GED_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -354,7 +354,7 @@ common_dm(int argc, const char *argv[])
 		    point_t model_pt;
 		    point_t view_pt;
 
-		    VSET(view_pt, dm_Xx2Normal(DMP, dml_omx), dm_Xy2Normal(DMP, dml_omy, 1), 0.0);
+		    VSET(view_pt, dm_Xx2Normal(DMP, dm_omx), dm_Xy2Normal(DMP, dm_omy, 1), 0.0);
 
 		    if (grid_state->snap)
 			snap_to_grid(&view_pt[X], &view_pt[Y]);
@@ -371,9 +371,9 @@ common_dm(int argc, const char *argv[])
 
 		break;
 	    case 'd':
-		fx = (dm_Xx2Normal(DMP, dml_omx) * GED_MAX -
+		fx = (dm_Xx2Normal(DMP, dm_omx) * GED_MAX -
 		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
-		fy = (dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX -
+		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX -
 		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 
 		td = sqrt(fx * fx + fy * fy);
@@ -401,8 +401,8 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[3]);
-	dml_omy = atoi(argv[4]);
+	dm_omx = atoi(argv[3]);
+	dm_omy = atoi(argv[4]);
 
 	switch (*argv[1]) {
 	    case 'a':

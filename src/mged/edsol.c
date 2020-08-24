@@ -921,7 +921,7 @@ set_e_axes_pos(int both)
 	MAT_IDN(acc_rot_sol);
 
 	FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	    dmlp->dml_mged_variables->mv_transform = 'e';
+	    dmlp->dm_mged_variables->mv_transform = 'e';
     }
 }
 
@@ -2808,7 +2808,7 @@ get_rotation_vertex(void)
     }
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
-    const struct bu_vls *dnvp = dm_get_dname(mged_curr_dm->dml_dmp);
+    const struct bu_vls *dnvp = dm_get_dname(mged_curr_dm->dm_dmp);
 
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",

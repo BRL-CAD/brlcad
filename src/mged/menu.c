@@ -120,10 +120,10 @@ mmenu_set(int index, struct menu_item *value)
     bu_vls_free(&menu_string);
 
     FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
-	if (menu_state == dlp->dml_menu_state &&
-	    dlp->dml_mged_variables->mv_faceplate &&
-	    dlp->dml_mged_variables->mv_orig_gui)
-	    dlp->dml_dirty = 1;
+	if (menu_state == dlp->dm_menu_state &&
+	    dlp->dm_mged_variables->mv_faceplate &&
+	    dlp->dm_mged_variables->mv_orig_gui)
+	    dlp->dm_dirty = 1;
     }
 }
 
@@ -138,8 +138,8 @@ mmenu_set_all(int index, struct menu_item *value)
     save_cmd_list = curr_cmd_list;
     save_dm_list = mged_curr_dm;
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
-	if (p->dml_tie)
-	    curr_cmd_list = p->dml_tie;
+	if (p->dm_tie)
+	    curr_cmd_list = p->dm_tie;
 
 	set_curr_dm(p);
 	mmenu_set(index, value);

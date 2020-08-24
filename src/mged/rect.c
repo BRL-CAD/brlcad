@@ -74,8 +74,8 @@ rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
     struct mged_dm *dmlp;
 
     FOR_ALL_DISPLAYS(dmlp, &active_dm_set.l)
-	if (dmlp->dml_rubber_band == rubber_band)
-	    dmlp->dml_dirty = 1;
+	if (dmlp->dm_rubber_band == rubber_band)
+	    dmlp->dm_dirty = 1;
 }
 
 

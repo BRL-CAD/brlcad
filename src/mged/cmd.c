@@ -680,7 +680,7 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
     if (!GEDP->ged_gvp)
 	GEDP->ged_gvp = view_state->vs_gvp;
-    GEDP->ged_dmp = (void *)mged_curr_dm->dml_dmp;
+    GEDP->ged_dmp = (void *)mged_curr_dm->dm_dmp;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
@@ -860,7 +860,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 
 	BU_LIST_DEQUEUE(&clp->l);
 	if (clp->cl_tie != NULL)
-	    clp->cl_tie->dml_tie = CMD_LIST_NULL;
+	    clp->cl_tie->dm_tie = CMD_LIST_NULL;
 	bu_vls_free(&clp->cl_more_default);
 	bu_vls_free(&clp->cl_name);
 	bu_free((void *)clp, "cmd_close: clp");
@@ -1312,7 +1312,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l)) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
-		struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dml_dmp);
+		struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dm_dmp);
 		if (pn && bu_vls_strlen(pn)) {
 		    bu_vls_printf(&vls, "%s %s", bu_vls_cstr(&clp->cl_name), bu_vls_cstr(pn));
 		    Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
@@ -1325,7 +1325,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
-	    struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dml_dmp);
+	    struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dm_dmp);
 	    if (pn && bu_vls_strlen(pn)) {
 		bu_vls_printf(&vls, "%s %s", bu_vls_cstr(&clp->cl_name), bu_vls_cstr(pn));
 		Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
@@ -1366,7 +1366,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
     if (uflag) {
 	if (clp->cl_tie)
-	    clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
+	    clp->cl_tie->dm_tie = (struct cmd_list *)NULL;
 
 	clp->cl_tie = (struct mged_dm *)NULL;
 
@@ -1377,7 +1377,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     /* print out the display manager that we're tied to */
     if (argc == 2) {
 	if (clp->cl_tie) {
-	    struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dml_dmp);
+	    struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dm_dmp);
 	    if (pn && bu_vls_strlen(pn)) {
 		Tcl_AppendElement(interpreter, bu_vls_cstr(pn));
 	    }
@@ -1394,7 +1394,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	bu_vls_strcpy(&vls, argv[2]);
 
     FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
-	struct bu_vls *pn = dm_get_pathname(dlp->dml_dmp);
+	struct bu_vls *pn = dm_get_pathname(dlp->dm_dmp);
 	if (pn && !bu_vls_strcmp(&vls, pn))
 	    break;
     }
@@ -1408,15 +1408,15 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
     /* already tied */
     if (clp->cl_tie)
-	clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
+	clp->cl_tie->dm_tie = (struct cmd_list *)NULL;
 
     clp->cl_tie = dlp;
 
     /* already tied */
-    if (dlp->dml_tie)
-	dlp->dml_tie->cl_tie = (struct mged_dm *)NULL;
+    if (dlp->dm_tie)
+	dlp->dm_tie->cl_tie = (struct mged_dm *)NULL;
 
-    dlp->dml_tie = clp;
+    dlp->dm_tie = clp;
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -1452,12 +1452,12 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     vsp = view_state;  /* save state info pointer */
 
     bu_free((void *)menu_state, "f_postscript: menu_state");
-    menu_state = dml->dml_menu_state;
+    menu_state = dml->dm_menu_state;
 
-    scroll_top = dml->dml_scroll_top;
-    scroll_active = dml->dml_scroll_active;
-    scroll_y = dml->dml_scroll_y;
-    memmove((void *)scroll_array, (void *)dml->dml_scroll_array, sizeof(struct scroll_item *) * 6);
+    scroll_top = dml->dm_scroll_top;
+    scroll_active = dml->dm_scroll_active;
+    scroll_y = dml->dm_scroll_y;
+    memmove((void *)scroll_array, (void *)dml->dm_scroll_array, sizeof(struct scroll_item *) * 6);
 
     DMP_dirty = 1;
     refresh();
@@ -1498,12 +1498,12 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
-	struct bu_vls *pn = dm_get_pathname(p->dml_dmp);
+	struct bu_vls *pn = dm_get_pathname(p->dm_dmp);
 	if (pn && BU_STR_EQUAL(argv[1], bu_vls_cstr(pn))) {
 	    set_curr_dm(p);
 
-	    if (mged_curr_dm->dml_tie)
-		curr_cmd_list = mged_curr_dm->dml_tie;
+	    if (mged_curr_dm->dm_tie)
+		curr_cmd_list = mged_curr_dm->dm_tie;
 	    else
 		curr_cmd_list = &head_cmd_list;
 
@@ -1838,8 +1838,8 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 
 	set_curr_dm(dmlp);
 
-	if (mged_curr_dm->dml_tie) {
-	    curr_cmd_list = mged_curr_dm->dml_tie;
+	if (mged_curr_dm->dm_tie) {
+	    curr_cmd_list = mged_curr_dm->dm_tie;
 	} else {
 	    curr_cmd_list = &head_cmd_list;
 	}
