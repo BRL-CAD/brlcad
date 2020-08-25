@@ -51,6 +51,7 @@ mged_color_soltab(void)
 {
     dl_color_soltab(GEDP->ged_gdp->gd_headDisplay);
     update_views = 1;		/* re-write control list with new colors */
+    dm_set_dirty(DMP, 1);
 }
 
 

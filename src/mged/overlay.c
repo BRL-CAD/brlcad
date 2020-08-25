@@ -57,6 +57,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return ret;
 }
@@ -113,6 +114,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     bn_vlblock_free(vbp);
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
 
@@ -253,6 +255,7 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     bn_vlblock_free(vbp);
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
 

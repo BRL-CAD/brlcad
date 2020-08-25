@@ -83,6 +83,7 @@ illuminate(int y) {
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 }
 
 
@@ -161,6 +162,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
 
@@ -304,6 +306,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
 
