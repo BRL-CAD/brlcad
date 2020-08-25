@@ -56,6 +56,9 @@
 #define remainder rem
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
+#  ifdef HAVE_XRENDER
+#    include <X11/extensions/Xrender.h>
+#  endif
 #endif
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
@@ -546,6 +549,15 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 				vip, GLX_DOUBLEBUFFER, &dbfr);
 	    if (fail || !dbfr)
 		continue;
+
+#ifdef HAVE_XRENDER
+	    // https://stackoverflow.com/a/23836430
+	    XRenderPictFormat *pict_format = XRenderFindVisualFormat(pubvars->dpy, vip->visual);
+	    if(pict_format->direct.alphaMask > 0) {
+		//printf("skipping visual with alphaMask\n");
+		continue;
+	    }
+#endif
 
 	    /* desires */
 	    if (m_zbuffer) {
