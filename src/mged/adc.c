@@ -97,6 +97,7 @@ adc_set_scroll(void)
 	    set_curr_dm(m_dmp);
 	    set_scroll();
 	    DMP_dirty = 1;
+	    dm_set_dirty(DMP, 1);
 	}
     }
 

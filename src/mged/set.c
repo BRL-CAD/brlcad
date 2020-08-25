@@ -321,6 +321,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 
 		set_scroll();		/* set scroll_array for drawing the scroll bars */
 		DMP_dirty = 1;
+		dm_set_dirty(DMP, 1);
 	    }
 	}
     }
