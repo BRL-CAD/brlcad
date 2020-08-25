@@ -59,6 +59,9 @@
 #include "bu/mapped_file.h"
 #include "bu/str.h"
 
+extern "C" char *
+bu_strnstr(const char *h, const char *n, size_t hlen);
+
 #define MAX_LINES_CHECK 500
 #define EXPECTED_PLATFORM_SYMBOLS 257
 
@@ -392,7 +395,7 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "bio.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "bio.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
@@ -463,7 +466,7 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "bnetwork.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "bnetwork.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
@@ -541,7 +544,7 @@ common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "common.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "common.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
@@ -696,7 +699,7 @@ setprogname(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "main")) {
+	if (!bu_strnstr((const char *)ifile->buf, "main", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
