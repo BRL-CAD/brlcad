@@ -433,6 +433,7 @@ edit_com(int argc,
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     if (flag_R_noresize) {
 	/* we're done */
@@ -700,6 +701,7 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
     CHECK_DBI_NULL;
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
@@ -1053,6 +1055,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     if (path_piece) {
 	for (i = 0; path_piece[i] != 0; ++i) {
@@ -1138,6 +1141,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
 
@@ -3337,6 +3341,7 @@ mged_erot(char coords,
     mat_t temp1, temp2;
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     switch (coords) {
 	case 'm':
@@ -3734,6 +3739,7 @@ mged_etran(char coords,
 
 	new_edit_mats();
 	update_views = 1;
+	dm_set_dirty(DMP, 1);
     }
 
     return TCL_OK;

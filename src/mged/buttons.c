@@ -582,6 +582,7 @@ be_o_scale()
     edobj = BE_O_SCALE;
     movedir = SARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
 
     edit_absolute_scale = acc_sc_obj - 1.0;
@@ -600,6 +601,7 @@ be_o_xscale()
     edobj = BE_O_XSCALE;
     movedir = SARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
 
     edit_absolute_scale = acc_sc[0] - 1.0;
@@ -618,6 +620,7 @@ be_o_yscale()
     edobj = BE_O_YSCALE;
     movedir = SARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
 
     edit_absolute_scale = acc_sc[1] - 1.0;
@@ -636,6 +639,7 @@ be_o_zscale()
     edobj = BE_O_ZSCALE;
     movedir = SARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
 
     edit_absolute_scale = acc_sc[2] - 1.0;
@@ -654,6 +658,7 @@ be_o_x()
     edobj = BE_O_X;
     movedir = RARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
     return TCL_OK;
 }
@@ -668,6 +673,7 @@ be_o_y()
     edobj = BE_O_Y;
     movedir = UARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
     return TCL_OK;
 }
@@ -682,6 +688,7 @@ be_o_xy()
     edobj = BE_O_XY;
     movedir = UARROW | RARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
     return TCL_OK;
 }
@@ -696,6 +703,7 @@ be_o_rotate()
     edobj = BE_O_ROTATE;
     movedir = ROTARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
     return TCL_OK;
 }
@@ -759,6 +767,7 @@ int
 be_reject()
 {
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     /* Reject edit */
 

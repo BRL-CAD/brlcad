@@ -96,7 +96,7 @@ BASE2=asc2dsp-new
 log "convert dsp data file in asc decimal format to dsp format"
 ASC2="$1/regress/dsp/$BASE2.asc"
 rm -f $BASE2.dsp
-run $A2D $ASC2 $BASE2.dsp
+run $A2D "$ASC2" $BASE2.dsp
 STATUS=$?
 
 # the two dsp files should be identical

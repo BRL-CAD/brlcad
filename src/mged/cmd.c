@@ -267,6 +267,7 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 
     solid_list_callback();
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return TCL_OK;
 }
@@ -338,6 +339,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	return TCL_ERROR;
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return TCL_OK;
 }
@@ -1750,6 +1752,7 @@ cmd_units(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     sf = DBIP->dbi_base2local / sf;
     update_grids(sf);
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return TCL_OK;
 }
