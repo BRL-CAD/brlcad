@@ -397,7 +397,7 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -468,7 +468,7 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -546,7 +546,7 @@ common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -599,7 +599,7 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 
@@ -701,7 +701,7 @@ setprogname(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -768,7 +768,7 @@ platform_symbols(repo_info_t &r, std::vector<std::string> &log, std::vector<std:
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	//std::cout << "Reading " << srcs[i] << "\n";
