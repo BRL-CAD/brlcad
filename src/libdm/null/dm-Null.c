@@ -38,6 +38,8 @@ null_open(void *interp, int UNUSED(argc), const char **UNUSED(argv))
     struct dm *dmp = DM_NULL;
 
     BU_ALLOC(dmp, struct dm);
+    dmp->magic = DM_MAGIC;
+
     BU_ALLOC(dmp->i, struct dm_impl);
 
     *dmp->i = *dm_null.i;
@@ -383,12 +385,12 @@ struct dm_impl dm_null_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
-    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -402,7 +404,7 @@ struct dm_impl dm_null_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_null = { &dm_null_impl };
+struct dm dm_null = { DM_MAGIC, &dm_null_impl };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { &dm_null };

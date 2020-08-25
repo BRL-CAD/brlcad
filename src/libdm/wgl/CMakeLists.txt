@@ -22,7 +22,7 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
   add_definitions(-DDM_PLUGIN)
 
-  add_library(dm-wgl SHARED ${WGL_SRCS})
+  dm_plugin_library(dm-wgl SHARED ${WGL_SRCS})
   target_link_libraries(dm-wgl libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${OPENGL32_LIBRARY} ${OPENGL_LIBRARIES})
   set_property(TARGET dm-wgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-wgl "${WGL_SRCS}")

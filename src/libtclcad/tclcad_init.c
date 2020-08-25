@@ -74,86 +74,6 @@ tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 }
 
 
-int
-Tclcad_Init(Tcl_Interp *interp)
-{
-    if (library_initialized(0))
-	return TCL_OK;
-
-    if (Tcl_Init(interp) == TCL_ERROR) {
-	return TCL_ERROR;
-    }
-
-#ifdef HAVE_TK
-    if (Tk_Init(interp) == TCL_ERROR) {
-	return TCL_ERROR;
-    }
-#endif
-
-    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-    tclcad_auto_path(interp);
-
-    /* Initialize [incr Tcl] */
-    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
-      bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-      return TCL_ERROR;
-    }
-
-#ifdef HAVE_TK
-    /* Initialize [incr Tk] */
-    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
-      bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-      return TCL_ERROR;
-    }
-#endif
-
-    /* Initialize the Iwidgets package */
-    if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
-	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    /* Initialize libstruct dm */
-    if (Dm_Init(interp) == TCL_ERROR) {
-	bu_log("Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    /* Initialize libbu */
-    if (Bu_Init(interp) == TCL_ERROR) {
-	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    /* Initialize libbn */
-    if (Bn_Init(interp) == TCL_ERROR) {
-	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    /* Initialize librt */
-    if (Rt_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    /* Initialize the GED object */
-    if (Ged_Init(interp) == TCL_ERROR) {
-	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    /* initialize command history objects */
-    Cho_Init(interp);
-
-    Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
-
-    (void)library_initialized(1);
-
-    return TCL_OK;
-}
-
-
 /* avoid including itcl.h/itk.h due to their usage of internal headers */
 extern int Itcl_Init(Tcl_Interp *);
 #ifdef HAVE_TK
@@ -187,7 +107,8 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
 
     /* Initialize [incr Tcl] */
     if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
-	if (tlog) bu_vls_printf(tlog, "Itcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	if (tlog)
+	    bu_vls_printf(tlog, "Itcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
@@ -195,13 +116,15 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
     /* Initialize [incr Tk] */
     if (init_gui) {
 	if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
-	    if (tlog) bu_vls_printf(tlog, "Itk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    if (tlog)
+	       	bu_vls_printf(tlog, "Itk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
 
 	/* Initialize the Iwidgets package */
 	if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
-	    if (tlog) bu_vls_printf(tlog, "Iwidgets init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    if (tlog)
+	       	bu_vls_printf(tlog, "Iwidgets init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
     }
@@ -209,31 +132,36 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
 
     /* Initialize libbu */
     if (Bu_Init(interp) == TCL_ERROR) {
-	if (tlog) bu_vls_printf(tlog, "Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	if (tlog)
+	    bu_vls_printf(tlog, "Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
     /* Initialize libbn */
     if (Bn_Init(interp) == TCL_ERROR) {
-	if (tlog) bu_vls_printf(tlog, "Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	if (tlog)
+	    bu_vls_printf(tlog, "Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
     /* Initialize librt */
     if (Rt_Init(interp) == TCL_ERROR) {
-	if (tlog) bu_vls_printf(tlog, "Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	if (tlog)
+	    bu_vls_printf(tlog, "Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
     /* Initialize libdm */
     if (Dm_Init(interp) == TCL_ERROR) {
-	if (tlog) bu_vls_printf(tlog, "Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	if (tlog)
+	    bu_vls_printf(tlog, "Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
     /* Initialize the GED object */
     if (Ged_Init(interp) == TCL_ERROR) {
-	if (tlog) bu_vls_printf(tlog, "Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	if (tlog)
+	    bu_vls_printf(tlog, "Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
@@ -251,43 +179,48 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
 
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		"::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	if (tlog) bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	if (tlog)
+	    bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+
 #ifdef HAVE_TK
     if (init_gui) {
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		    "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
-	    if (tlog) bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    if (tlog)
+	       	bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		    "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
-	    if (tlog) bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    if (tlog)
+	       	bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
     }
 #endif
 
     if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
-	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	if (tlog)
+	    bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
 #ifdef HAVE_TK
     if (init_gui) {
 	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
-	    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    if (tlog)
+		bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
 	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
-	    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    if (tlog)
+		bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
     }
-#endif
 
-#ifdef HAVE_TK
     /* If we're doing Tk, make sure we have a window */
     if (init_gui) {
 	Tk_Window tkwin = Tk_MainWindow(interp);
@@ -295,11 +228,16 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
     }
 #endif
 
-    Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
-
-    (void)library_initialized(1);
-
     return TCL_OK;
+}
+
+/* This is here to allow tclsh to load the .so file and have it initialize.
+ * Application code in BRL-CAD should call tclcad_init and specify GUI/no-GUI
+ * and handle logging as appropriate. */
+TCLCAD_EXPORT int
+Tclcad_Init(Tcl_Interp *interp)
+{
+    return tclcad_init(interp, 1, NULL);
 }
 
 void

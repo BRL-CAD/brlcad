@@ -303,6 +303,7 @@ function(SET_FLAGS_AND_DEFINITIONS srcslist)
 
 endfunction(SET_FLAGS_AND_DEFINITIONS)
 
+define_property(GLOBAL PROPERTY BRLCAD_EXEC_FILES BRIEF_DOCS "BRL-CAD binaries" FULL_DOCS "List of installed BRL-CAD binary programs")
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
@@ -327,6 +328,11 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Let CMAKEFILES know what's going on
   CMAKEFILES(${srcslist})
+
+  # If this is an installed program, note that
+  if (NOT E_NO_INSTALL AND NOT E_TEST)
+    set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_FILES "${execname}")
+  endif (NOT E_NO_INSTALL AND NOT E_TEST)
 
   # Check at compile time the standard BRL-CAD style rules
   VALIDATE_STYLE("${execname}" "${srcslist}")

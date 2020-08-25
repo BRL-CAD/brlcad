@@ -140,9 +140,14 @@ dm_get()
 {
     struct dm *new_dm = DM_NULL;
     BU_GET(new_dm, struct dm);
+    new_dm->magic = DM_MAGIC;
     BU_GET(new_dm->i, struct dm_impl);
+
+    /* have to manually initialize all internal structs */
     bu_vls_init(&new_dm->i->dm_pathName);
+    bu_vls_init(&new_dm->i->dm_tkName);
     bu_vls_init(&new_dm->i->dm_dName);
+    bu_vls_init(&new_dm->i->dm_log);
 
     return new_dm;
 }
@@ -151,9 +156,14 @@ void
 dm_put(struct dm *dmp)
 {
     if (dmp && dmp != DM_NULL) {
+	/* have to manually de-initialize all internal structs */
 	bu_vls_free(&dmp->i->dm_pathName);
+	bu_vls_free(&dmp->i->dm_tkName);
 	bu_vls_free(&dmp->i->dm_dName);
-	if (dmp->i->fbp) fb_put(dmp->i->fbp);
+	bu_vls_free(&dmp->i->dm_log);
+
+	if (dmp->i->fbp)
+	    fb_put(dmp->i->fbp);
 	if (dmp->i->dm_put_internal)
 	    dmp->i->dm_put_internal(dmp);
 	BU_PUT(dmp->i, struct dm_impl);
@@ -180,14 +190,14 @@ dm_get_fb(struct dm *dmp)
 const char *
 dm_get_dm_name(const struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
     return dmp->i->dm_name;
 }
 
 const char *
 dm_get_dm_lname(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
     return dmp->i->dm_lname;
 }
 
@@ -229,7 +239,7 @@ dm_graphical(const struct dm *dmp)
 const char *
 dm_get_type(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return 0;
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
     return dmp->i->dm_name;
 }
 
@@ -271,7 +281,8 @@ dm_close(struct dm *dmp)
 unsigned char *
 dm_get_bg(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    static unsigned char dbg[3] = {0, 0, 0};
+    if (UNLIKELY(!dmp)) return dbg;
     return dmp->i->dm_bg;
 }
 
@@ -285,7 +296,8 @@ dm_set_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 unsigned char *
 dm_get_fg(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    static unsigned char dfg[3] = {0, 0, 0};
+    if (UNLIKELY(!dmp)) return dfg;
     return dmp->i->dm_fg;
 }
 
@@ -383,7 +395,7 @@ dm_configure_win(struct dm *dmp, int force)
 struct bu_vls *
 dm_get_pathname(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_pathName);
 }
 
@@ -397,7 +409,7 @@ dm_get_name(const struct dm *dmp)
 struct bu_vls *
 dm_get_dname(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_dName);
 }
 
@@ -411,7 +423,7 @@ dm_get_graphics_system(const struct dm *dmp)
 struct bu_vls *
 dm_get_tkname(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_tkName);
 }
 
@@ -696,13 +708,6 @@ dm_logfile(struct dm *dmp, const char *filename)
     return dmp->i->dm_logfile(dmp, filename);
 }
 
-fastf_t *
-dm_get_vp(struct dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->i->dm_vp;
-}
-
 void
 dm_set_vp(struct dm *dmp, fastf_t *vp)
 {
@@ -753,14 +758,14 @@ dm_set_hook(const struct bu_structparse_map *map,
 struct bu_structparse *
 dm_get_vparse(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return dmp->i->vparse;
 }
 
 void *
 dm_get_mvars(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     if (!dmp->i->m_vars) return (void *)dmp;
     return dmp->i->m_vars;
 }

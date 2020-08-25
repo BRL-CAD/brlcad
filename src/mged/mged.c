@@ -343,12 +343,12 @@ sig3(int UNUSED(sig))
 void
 new_edit_mats(void)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *save_dm_list;
 
-    save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!p->dml_owner)
+    save_dm_list = mged_curr_dm;
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p->dm_owner)
 	    continue;
 
 	set_curr_dm(p);
@@ -375,6 +375,7 @@ mged_view_callback(struct bview *gvp,
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
+    dm_set_dirty(mged_curr_dm->dm_dmp, 1);
 }
 
 
@@ -1261,25 +1262,28 @@ main(int argc, char *argv[])
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    memset((void *)&head_dm_list, 0, sizeof(struct dm_list));
-    BU_LIST_INIT(&head_dm_list.l);
-
-    BU_ALLOC(curr_dm_list, struct dm_list);
-    BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
+    BU_ALLOC(mged_curr_dm, struct mged_dm);
+    bu_ptbl_init(&active_dm_set, 8, "dm set");
+    bu_ptbl_ins(&active_dm_set, (long *)mged_curr_dm);
+    mged_dm_init_state = mged_curr_dm;
     netfd = -1;
 
     /* initialize predictor stuff */
-    BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
+    BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
     predictor_init();
 
     DMP = dm_get();
     dm_set_null(DMP);
-    bu_vls_init(tkName);
-    bu_vls_init(dName);
-    if (dm_get_pathname(DMP)) {
-	bu_vls_strcpy(dm_get_pathname(DMP), "nu");
+    struct bu_vls *dpvp = dm_get_pathname(DMP);
+    if (dpvp) {
+	bu_vls_strcpy(dpvp, "nu");
     }
-    bu_vls_strcpy(tkName, "nu");
+
+    struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dm_dmp);
+    if (tnvp) {
+	bu_vls_init(tnvp); /* this may leak */
+	bu_vls_strcpy(tnvp, "nu");
+    }
 
     BU_ALLOC(rubber_band, struct _rubber_band);
     *rubber_band = default_rubber_band;		/* struct copy */
@@ -1308,7 +1312,7 @@ main(int argc, char *argv[])
 
     BU_ALLOC(view_state, struct _view_state);
     view_state->vs_rc = 1;
-    view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
+    view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
     MAT_IDN(view_state->vs_ModelDelta);
 
     am_mode = AMM_IDLE;
@@ -1340,7 +1344,7 @@ main(int argc, char *argv[])
 
     mmenu_init();
     btn_head_menu(0, 0, 0);
-    mged_link_vars(curr_dm_list);
+    mged_link_vars(mged_curr_dm);
 
     bu_vls_printf(&input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
     (void)Tcl_Eval(INTERP, bu_vls_addr(&input_str));
@@ -1540,7 +1544,8 @@ main(int argc, char *argv[])
      */
     {
 	const unsigned char *dm_bg = dm_get_bg(DMP);
-	dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
+	if (dm_bg)
+	    dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
     }
 
     /* initialize a display manager */
@@ -1568,16 +1573,11 @@ main(int argc, char *argv[])
 	// If we launched subcommands, we need to process their
 	// output before quitting.  Do one up front to catch
 	// anything produced by a process that already exited,
-	// loop while libged still reports running processes,
-	// and then a final call before quitting to get the
-	// last output from the last command.
-	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
+	// and loop while libged still reports running processes.
+	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
-	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
-	    // Limit CPU burn in case of long running subcommands
-	    Tcl_Sleep(1); 
+	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	}
-	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT); 
 
 	const char *av[2];
 	av[0] = "q";
@@ -1954,8 +1954,7 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 int
 event_check(int non_blocking)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *save_dm_list;
     int save_edflag;
     int handled = 0;
 
@@ -1989,7 +1988,7 @@ event_check(int non_blocking)
     /*********************************
      * Handle rate-based processing *
      *********************************/
-    save_dm_list = curr_dm_list;
+    save_dm_list = mged_curr_dm;
     if (edit_rateflag_model_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
@@ -2183,8 +2182,9 @@ event_check(int non_blocking)
 	    edobj = save_edflag;
     }
 
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!p->dml_owner)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p->dm_owner)
 	    continue;
 
 	set_curr_dm(p);
@@ -2271,41 +2271,43 @@ event_check(int non_blocking)
 void
 refresh(void)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *save_dm_list;
     struct bu_vls overlay_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int do_overlay = 1;
     int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
 
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!p->dml_view_state)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p->dm_view_state)
 	    continue;
-	if (update_views || p->dml_view_state->vs_flag)
-	    p->dml_dirty = 1;
+	if (update_views || p->dm_view_state->vs_flag)
+	    p->dm_dirty = 1;
     }
 
     /*
-     * This needs to be done separately because dml_view_state may be
+     * This needs to be done separately because dm_view_state may be
      * shared.
      */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!p->dml_view_state)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p->dm_view_state)
 	    continue;
-	p->dml_view_state->vs_flag = 0;
+	p->dm_view_state->vs_flag = 0;
     }
 
     update_views = 0;
 
-    save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    save_dm_list = mged_curr_dm;
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	/*
 	 * if something has changed, then go update the display.
 	 * Otherwise, we are happy with the view we have
 	 */
 	set_curr_dm(p);
-	if (mapped && dirty) {
+	if (mapped && DMP_dirty) {
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&
@@ -2315,7 +2317,7 @@ refresh(void)
 		(void)dm_set_zbuffer(DMP, 0);
 	    }
 
-	    dirty = 0;
+	    DMP_dirty = 0;
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
 
@@ -2333,98 +2335,103 @@ refresh(void)
 	    if (mged_variables->mv_predictor)
 		predictor_frame();
 
-	    dm_draw_begin(DMP);	/* update displaylist prolog */
+	    if (dm_get_dirty(DMP)) {
 
-	    if (DBIP != DBI_NULL) {
-		/* do framebuffer underlay */
-		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
-		    if (mged_variables->mv_fb_all)
-			fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
-		    else if (mged_variables->mv_mouse_behavior != 'z')
-			paint_rect_area();
-		}
+		dm_draw_begin(DMP);	/* update displaylist prolog */
 
-		/* do framebuffer overlay for entire window */
-		if (mged_variables->mv_fb &&
-		    mged_variables->mv_fb_overlay &&
-		    mged_variables->mv_fb_all) {
-		    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
-
-		    if (restore_zbuffer)
-			dm_set_zbuffer(DMP, 1);
-		} else {
-		    if (restore_zbuffer)
-			dm_set_zbuffer(DMP, 1);
-
-		    /* Draw each solid in its proper place on the
-		     * screen by applying zoom, rotation, &
-		     * translation.  Calls dm_loadmatrix() and
-		     * dm_draw_vlist().
-		     */
-
-		    if (dm_get_stereo(DMP) == 0 ||
-			mged_variables->mv_eye_sep_dist <= 0) {
-			/* Normal viewing */
-			dozoom(0);
-		    } else {
-			/* Stereo viewing */
-			dozoom(1);
-			dozoom(2);
+		if (DBIP != DBI_NULL) {
+		    /* do framebuffer underlay */
+		    if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
+			if (mged_variables->mv_fb_all)
+			    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
+			else if (mged_variables->mv_mouse_behavior != 'z')
+			    paint_rect_area();
 		    }
 
-		    /* do framebuffer overlay in rectangular area */
+		    /* do framebuffer overlay for entire window */
 		    if (mged_variables->mv_fb &&
-			mged_variables->mv_fb_overlay &&
-			mged_variables->mv_mouse_behavior != 'z')
-			paint_rect_area();
+			    mged_variables->mv_fb_overlay &&
+			    mged_variables->mv_fb_all) {
+			fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
+
+			if (restore_zbuffer)
+			    dm_set_zbuffer(DMP, 1);
+		    } else {
+			if (restore_zbuffer)
+			    dm_set_zbuffer(DMP, 1);
+
+			/* Draw each solid in its proper place on the
+			 * screen by applying zoom, rotation, &
+			 * translation.  Calls dm_loadmatrix() and
+			 * dm_draw_vlist().
+			 */
+
+			if (dm_get_stereo(DMP) == 0 ||
+				mged_variables->mv_eye_sep_dist <= 0) {
+			    /* Normal viewing */
+			    dozoom(0);
+			} else {
+			    /* Stereo viewing */
+			    dozoom(1);
+			    dozoom(2);
+			}
+
+			/* do framebuffer overlay in rectangular area */
+			if (mged_variables->mv_fb &&
+				mged_variables->mv_fb_overlay &&
+				mged_variables->mv_mouse_behavior != 'z')
+			    paint_rect_area();
+		    }
+
+
+		    /* Restore to non-rotated, full brightness */
+		    dm_normal(DMP);
+
+		    /* only if not doing overlay */
+		    if (!mged_variables->mv_fb ||
+			    mged_variables->mv_fb_overlay != 2) {
+			if (rubber_band->rb_active || rubber_band->rb_draw)
+			    draw_rect();
+
+			if (grid_state->draw)
+			    draw_grid();
+
+			/* Compute and display angle/distance cursor */
+			if (adc_state->adc_draw)
+			    adcursor();
+
+			if (axes_state->ax_view_draw)
+			    draw_v_axes();
+
+			if (axes_state->ax_model_draw)
+			    draw_m_axes();
+
+			if (axes_state->ax_edit_draw &&
+				(STATE == ST_S_EDIT || STATE == ST_O_EDIT))
+			    draw_e_axes();
+
+			/* Display titles, etc., if desired */
+			bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+			dotitles(&tmp_vls);
+			bu_vls_trunc(&tmp_vls, 0);
+		    }
 		}
-
-
-		/* Restore to non-rotated, full brightness */
-		dm_normal(DMP);
 
 		/* only if not doing overlay */
 		if (!mged_variables->mv_fb ||
-		    mged_variables->mv_fb_overlay != 2) {
-		    if (rubber_band->rb_active || rubber_band->rb_draw)
-			draw_rect();
-
-		    if (grid_state->draw)
-			draw_grid();
-
-		    /* Compute and display angle/distance cursor */
-		    if (adc_state->adc_draw)
-			adcursor();
-
-		    if (axes_state->ax_view_draw)
-			draw_v_axes();
-
-		    if (axes_state->ax_model_draw)
-			draw_m_axes();
-
-		    if (axes_state->ax_edit_draw &&
-			(STATE == ST_S_EDIT || STATE == ST_O_EDIT))
-			draw_e_axes();
-
-		    /* Display titles, etc., if desired */
-		    bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-		    dotitles(&tmp_vls);
-		    bu_vls_trunc(&tmp_vls, 0);
+			mged_variables->mv_fb_overlay != 2) {
+		    /* Draw center dot */
+		    dm_set_fg(DMP,
+			    color_scheme->cs_center_dot[0],
+			    color_scheme->cs_center_dot[1],
+			    color_scheme->cs_center_dot[2], 1, 1.0);
+		    dm_draw_point_2d(DMP, 0.0, 0.0);
 		}
-	    }
 
-	    /* only if not doing overlay */
-	    if (!mged_variables->mv_fb ||
-		mged_variables->mv_fb_overlay != 2) {
-		/* Draw center dot */
-		dm_set_fg(DMP,
-			  color_scheme->cs_center_dot[0],
-			  color_scheme->cs_center_dot[1],
-			  color_scheme->cs_center_dot[2], 1, 1.0);
-		dm_draw_point_2d(DMP, 0.0, 0.0);
-	    }
+		dm_draw_end(DMP);
+		dm_set_dirty(DMP, 0);
 
-	    dm_draw_end(DMP);
+	    }
 	}
     }
 
@@ -2454,28 +2461,27 @@ void
 mged_finish(int exitcode)
 {
     char place[64];
-    struct dm_list *p;
     struct cmd_list *c;
     int ret;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
 
     /* Release all displays */
-    while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
-	if (!p)
-	    bu_bomb("dm list entry is null? aborting!\n");
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 
-	BU_LIST_DEQUEUE(&(p->l));
+	bu_ptbl_rm(&active_dm_set, (long *)p);
 
-	if (p && p->dml_dmp) {
-	    dm_close(p->dml_dmp);
-	    RT_FREE_VLIST(&p->dml_p_vlist);
+	if (p && p->dm_dmp) {
+	    dm_close(p->dm_dmp);
+	    RT_FREE_VLIST(&p->dm_p_vlist);
 	    mged_slider_free_vls(p);
-	    bu_free(p, "release: curr_dm_list");
+	    bu_free(p, "release: mged_curr_dm");
 	}
 
-	set_curr_dm(DM_LIST_NULL);
+	set_curr_dm(MGED_DM_NULL);
     }
+    bu_ptbl_free(&active_dm_set);
 
     for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
 	bu_vls_free(&c->cl_name);

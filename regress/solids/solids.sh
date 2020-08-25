@@ -110,7 +110,6 @@ fi
 rm -f solids.simple.pix.diff
 $PIXDIFF solids.simple.rt.pix "$PATH_TO_THIS/solids.simple.ref.pix" > solids.simple.pix.diff 2>> $LOGFILE
 
-log "... running tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'"
 NUMBER_WRONG=`tail -n1 "$LOGFILE" | tr , '\012' | awk '/many/ {print $1}'`
 log "solids.simple.rt.pix $NUMBER_WRONG off by many"
 
@@ -180,7 +179,6 @@ log "... running $PIXDIFF solids.rt.pix $PATH_TO_THIS/solids.ref.pix > solids.pi
 rm -f solids.pix.diff
 $PIXDIFF solids.rt.pix "$PATH_TO_THIS/solids.ref.pix" > solids.pix.diff 2> $LOGFILE
 
-tail -n1 "$LOGFILE" | tr , '\012' | awk '/many/ {print $0}'
 NUMBER_WRONG=`tail -n1 "$LOGFILE" | tr , '\012' | awk '/many/ {print $1}'`
 log "solids.rt.pix $NUMBER_WRONG off by many"
 

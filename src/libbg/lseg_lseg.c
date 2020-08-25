@@ -207,7 +207,7 @@ ComputeMinimumParameters(int edge[2], double end[2][2], double parameter[2],
 
 
 double
-bg_lseg_lseg_dist_sq(point_t *c1, point_t *c2,
+bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
 		  const point_t P0, const point_t P1, const point_t Q0, const point_t Q1)
 {
     vect_t diff, r1a, r1b, r2a, r2b, r1, r2;

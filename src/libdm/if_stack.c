@@ -95,7 +95,7 @@ stk_open(struct fb *ifp, const char *file, int width, int height)
 	    *dp++ = *cp++;
 	*dp = '\0';
 	if ((fbp = fb_open(devbuf, width, height)) != FB_NULL) {
-	    FB_CK_FB(fbp);
+	    FB_CK_FB(fbp->i);
 	    /* Track the minimum of all the actual sizes */
 	    if (fbp->i->if_width < ifp->i->if_width)
 		ifp->i->if_width = fbp->i->if_width;
@@ -160,7 +160,7 @@ stk_close(struct fb *ifp)
 
     FB_CK_FB(ifp->i);
     while (*ip != (struct fb *)NULL) {
-	FB_CK_FB((*ip));
+	FB_CK_FB(((*ip)->i));
 	fb_close((*ip));
 	ip++;
     }

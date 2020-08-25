@@ -17,7 +17,7 @@ if(BRLCAD_ENABLE_TCL)
 
   add_definitions(-DDM_PLUGIN)
 
-  add_library(dm-txt SHARED ${TXT_SRCS})
+  dm_plugin_library(dm-txt SHARED ${TXT_SRCS})
   target_link_libraries(dm-txt libdm libbu ${TCL_LIBRARY})
   set_property(TARGET dm-txt APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-txt "${TXT_SRCS}")

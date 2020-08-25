@@ -704,8 +704,6 @@ be_o_rotate()
 int
 be_accept()
 {
-    struct dm_list *dmlp;
-
     if (STATE == ST_S_EDIT) {
 	/* Accept a solid edit */
 	edsol = 0;
@@ -740,9 +738,11 @@ be_accept()
 	return TCL_OK;
     }
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_mged_variables->mv_transform == 'e')
-	    dmlp->dml_mged_variables->mv_transform = 'v';
+    for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
+	if (m_dmp->dm_mged_variables->mv_transform == 'e')
+	    m_dmp->dm_mged_variables->mv_transform = 'v';
+    }
 
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -758,8 +758,6 @@ be_accept()
 int
 be_reject()
 {
-    struct dm_list *dmlp;
-
     update_views = 1;
 
     /* Reject edit */
@@ -804,9 +802,11 @@ be_reject()
     mged_color_soltab();
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_mged_variables->mv_transform == 'e')
-	    dmlp->dml_mged_variables->mv_transform = 'v';
+    for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
+	if (m_dmp->dm_mged_variables->mv_transform == 'e')
+	    m_dmp->dm_mged_variables->mv_transform = 'v';
+    }
 
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -939,8 +939,7 @@ stateChange(int UNUSED(oldstate), int newstate)
 int
 chg_state(int from, int to, char *str)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *save_dm_list;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (STATE != from) {
@@ -952,8 +951,9 @@ chg_state(int from, int to, char *str)
 
     stateChange(from, to);
 
-    save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    save_dm_list = mged_curr_dm;
+    for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
 	set_curr_dm(p);
 
 	new_mats();

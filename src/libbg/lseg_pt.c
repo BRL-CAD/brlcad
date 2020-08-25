@@ -14,7 +14,7 @@
 #include "bg/lseg.h"
 
 double
-bg_lseg_pt_dist_sq(point_t *c, const point_t P0, const point_t P1, const point_t Q)
+bg_distsq_lseg3_pt(point_t *c, const point_t P0, const point_t P1, const point_t Q)
 {
     double ldist_sq, parameter;
     vect_t closest, dir, diff;

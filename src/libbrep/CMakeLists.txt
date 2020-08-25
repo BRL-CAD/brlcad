@@ -46,38 +46,17 @@ set(LIBBREP_SOURCES
   shape_recognition/util.cpp
   ssx_event.cpp
   tools/util.cpp
-  #opennurbs_fit.cpp
   )
-
-set(CDT2_srcs
-  cdt2/cdt.cpp
-  cdt2/vert.cpp
-  cdt2/edge.cpp
-  cdt2/mesh.cpp
-  cdt2/polygon.cpp
-  )
-if (ENABLE_CDT2)
-  set(LIBBREP_SOURCES ${LIBBREP_SOURCES} ${CDT2_srcs})
-endif (ENABLE_CDT2)
 
 set(libbrep_ignored_files
   tools/tools.h
   brep_except.h
   cdt/cdt.h
   cdt/mesh.h
-  cdt/omesh.cpp
-  cdt/overt.cpp
-  cdt/ovlps.cpp
-  cdt/ovlps_grps.cpp
   cdt/RTree.h
-  opennurbs_fit.h
-  opennurbs_fit.cpp
   PullbackCurve.h
   shape_recognition/shape_recognition.h
   shape_recognition/torus.cpp
-  surface_tree_queue_tests.patch
-  ${CDT2_srcs}
-  cdt2/cdt.h
   )
 CMAKEFILES(${libbrep_ignored_files})
 

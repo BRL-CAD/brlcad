@@ -15,7 +15,7 @@ if(BRLCAD_ENABLE_TCL)
 
   add_definitions(-DDM_PLUGIN)
 
-  add_library(dm-plot SHARED ${PLOT_SRCS})
+  dm_plugin_library(dm-plot SHARED ${PLOT_SRCS})
   target_link_libraries(dm-plot libdm libbu ${TCL_LIBRARY})
   set_property(TARGET dm-plot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-plot "${PLOT_SRCS}")
