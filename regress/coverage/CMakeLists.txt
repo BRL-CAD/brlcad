@@ -4,8 +4,8 @@ include_directories(
   )
 
 # Define the actual regression test
-set(BRLCAD_EXEC_LIST "${BRLCAD_BINARY_DIR}/brlcadexec.cmake")
-set(BRLCAD_REGRESS_LIST "${BRLCAD_BINARY_DIR}/regressfiles.cmake")
+set(BRLCAD_EXEC_LIST "${CMAKE_CURRENT_BINARY_DIR}/brlcadexec.cmake")
+set(BRLCAD_REGRESS_LIST "${CMAKE_CURRENT_BINARY_DIR}/regressfiles.cmake")
 set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-coverage.log")
 
 # List potential files of interest in the regress directory
@@ -34,6 +34,8 @@ set_target_properties(covgcheck PROPERTIES FOLDER "BRL-CAD Regression Tests/repo
 
 #BRLCAD_REGRESSION_TEST(regress-coverage "covgcheck" EXEC covgcheck)
 DISTCLEAN(${LOG_FILE})
+DISTCLEAN(${BRLCAD_EXEC_LIST})
+DISTCLEAN(${BRLCAD_REGRESS_LIST})
 
 CMAKEFILES(
   CMakeLists.txt
