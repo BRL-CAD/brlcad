@@ -120,13 +120,16 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
     int i;
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
     int npp;			/* number of processed packages */
-    struct mged_dm *dlp;
+    struct mged_dm *dlp = MGED_DM_NULL;
     struct mged_dm *scdlp;  /* save current dm_list pointer */
 
-    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	for (i = MAX_CLIENTS-1; i >= 0; i--)
-	    if (fd == dlp->dm_clients[i].c_fd)
+	    if (fd == m_dmp->dm_clients[i].c_fd) {
+		dlp = m_dmp;
 		goto found;
+	    }
     }
 
     return;
@@ -388,9 +391,13 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
     struct mged_dm *dlp;
     struct mged_dm *scdlp;  /* save current dm_list pointer */
 
-    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l)
-	if (fd == dlp->dm_netfd)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (fd == m_dmp->dm_netfd) {
+	    dlp = m_dmp;
 	    goto found;
+	}
+    }
 
     return;
 

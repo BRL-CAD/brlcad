@@ -1298,7 +1298,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 {
     int uflag = 0;		/* untie flag */
     struct cmd_list *clp;
-    struct mged_dm *dlp;
+    struct mged_dm *dlp = MGED_DM_NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 3 < argc) {
@@ -1393,13 +1393,16 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     else
 	bu_vls_strcpy(&vls, argv[2]);
 
-    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
-	struct bu_vls *pn = dm_get_pathname(dlp->dm_dmp);
-	if (pn && !bu_vls_strcmp(&vls, pn))
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	struct bu_vls *pn = dm_get_pathname(m_dmp->dm_dmp);
+	if (pn && !bu_vls_strcmp(&vls, pn)) {
+	    dlp = m_dmp;
 	    break;
+	}
     }
 
-    if (dlp == &active_dm_set) {
+    if (dlp == MGED_DM_NULL) {
 	Tcl_AppendResult(interpreter, "f_tie: unrecognized path name - ",
 			 bu_vls_addr(&vls), "\n", (char *)NULL);
 	bu_vls_free(&vls);
@@ -1476,8 +1479,6 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
 int
 f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct mged_dm *p;
-
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1497,7 +1498,8 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     }
 
     /* change primary focus to window argv[1] */
-    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	struct bu_vls *pn = dm_get_pathname(p->dm_dmp);
 	if (pn && BU_STR_EQUAL(argv[1], bu_vls_cstr(pn))) {
 	    set_curr_dm(p);
@@ -1830,10 +1832,10 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     /* update and resize the views */
     struct mged_dm *save_m_dmp = mged_curr_dm;
     struct cmd_list *save_cmd_list = curr_cmd_list;
-    struct mged_dm *m_dmp;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	int non_empty = 0; /* start out empty */
 
 	set_curr_dm(m_dmp);

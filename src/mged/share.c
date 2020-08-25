@@ -95,8 +95,8 @@ int
 f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int uflag = 0;		/* unshare flag */
-    struct mged_dm *dlp1 = (struct mged_dm *)NULL;
-    struct mged_dm *dlp2 = (struct mged_dm *)NULL;
+    struct mged_dm *dlp1 = MGED_DM_NULL;
+    struct mged_dm *dlp2 = MGED_DM_NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 4) {
@@ -113,27 +113,33 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	++argv;
     }
 
-    FOR_ALL_DISPLAYS(dlp1, &active_dm_set.l)
-	if (dm_get_pathname(dlp1->dm_dmp) && BU_STR_EQUAL(argv[2], bu_vls_addr(dm_get_pathname(dlp1->dm_dmp))))
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	struct bu_vls *pname = dm_get_pathname(m_dmp->dm_dmp);
+	if (BU_STR_EQUAL(argv[2], bu_vls_cstr(pname))) {
+	    dlp1 = m_dmp;
 	    break;
+	}
+    }
 
-    if (dlp1 == &active_dm_set) {
-	Tcl_AppendResult(interpreter, "share: unrecognized path name - ",
-			 argv[2], "\n", (char *)NULL);
-
+    if (dlp1 == MGED_DM_NULL) {
+	Tcl_AppendResult(interpreter, "share: unrecognized path name - ", argv[2], "\n", (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
     if (!uflag) {
-	FOR_ALL_DISPLAYS(dlp2, &active_dm_set.l)
-	    if (dm_get_pathname(dlp2->dm_dmp) && BU_STR_EQUAL(argv[3], bu_vls_addr(dm_get_pathname(dlp2->dm_dmp))))
+	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	    struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	    struct bu_vls *pname = dm_get_pathname(m_dmp->dm_dmp);
+	    if (BU_STR_EQUAL(argv[3], bu_vls_cstr(pname))) {
+		dlp2 = m_dmp;
 		break;
+	    }
+	}
 
-	if (dlp2 == &active_dm_set) {
-	    Tcl_AppendResult(interpreter, "share: unrecognized path name - ",
-			     argv[3], "\n", (char *)NULL);
-
+	if (dlp2 == MGED_DM_NULL) {
+	    Tcl_AppendResult(interpreter, "share: unrecognized path name - ", argv[3], "\n", (char *)NULL);
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
@@ -429,12 +435,11 @@ free_all_resources(struct mged_dm *dlp)
 void
 share_dlist(struct mged_dm *dlp2)
 {
-    struct mged_dm *dlp1;
-
     if (!dm_get_displaylist(dlp2->dm_dmp))
 	return;
 
-    FOR_ALL_DISPLAYS(dlp1, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp1 = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (dlp1 != dlp2 &&
 	    dm_get_type(dlp1->dm_dmp) == dm_get_type(dlp2->dm_dmp) && dm_get_dname(dlp1->dm_dmp) && dm_get_dname(dlp2->dm_dmp) &&
 	    !bu_vls_strcmp(dm_get_dname(dlp1->dm_dmp), dm_get_dname(dlp2->dm_dmp))) {

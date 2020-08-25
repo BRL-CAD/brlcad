@@ -249,12 +249,12 @@ createDLists(struct bu_list *hdlp)
 void
 createDListSolid(struct solid *sp)
 {
-    struct mged_dm *dlp;
     struct mged_dm *save_dlp;
 
     save_dlp = mged_curr_dm;
 
-    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (dlp->dm_mapped &&
 		dm_get_displaylist(dlp->dm_dmp) &&
 		dlp->dm_mged_variables->mv_dlist) {
@@ -305,9 +305,8 @@ createDListAll(struct display_list *gdlp)
 void
 freeDListsAll(unsigned int dlist, int range)
 {
-    struct mged_dm *dlp;
-
-    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (dm_get_displaylist(dlp->dm_dmp) &&
 	    dlp->dm_mged_variables->mv_dlist) {
 	    (void)dm_make_current(DMP);

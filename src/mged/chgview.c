@@ -246,7 +246,6 @@ edit_com(int argc,
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct mged_dm *m_dmp;
     struct mged_dm *save_m_dmp;
     struct cmd_list *save_cmd_list;
     int ret;
@@ -444,7 +443,8 @@ edit_com(int argc,
 
     save_m_dmp = mged_curr_dm;
     save_cmd_list = curr_cmd_list;
-    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	int non_empty = 0; /* start out empty */
 
 	set_curr_dm(m_dmp);
@@ -570,7 +570,6 @@ emuves_com(int argc, const char *argv[])
 int
 cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct mged_dm *m_dmp;
     struct mged_dm *save_m_dmp;
     struct cmd_list *save_cmd_list;
 
@@ -591,7 +590,8 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
     save_m_dmp = mged_curr_dm;
     save_cmd_list = curr_cmd_list;
-    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	struct view_ring *vrp;
 
 	set_curr_dm(m_dmp);
@@ -2815,7 +2815,6 @@ int
 f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int status;
-    struct mged_dm *m_dmp;
 
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2833,7 +2832,8 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     status = mged_svbase();
 
-    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	/* if sharing view while faceplate and original gui (i.e. button menu, sliders) are on */
 	if (m_dmp->dm_view_state == view_state &&
 	    m_dmp->dm_mged_variables->mv_faceplate &&

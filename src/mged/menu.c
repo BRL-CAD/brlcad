@@ -103,8 +103,6 @@ mmenu_init(void)
 void
 mmenu_set(int index, struct menu_item *value)
 {
-    struct mged_dm *dlp;
-
     Tcl_DString ds_menu;
     struct bu_vls menu_string = BU_VLS_INIT_ZERO;
 
@@ -119,7 +117,8 @@ mmenu_set(int index, struct menu_item *value)
     Tcl_DStringFree(&ds_menu);
     bu_vls_free(&menu_string);
 
-    FOR_ALL_DISPLAYS(dlp, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (menu_state == dlp->dm_menu_state &&
 	    dlp->dm_mged_variables->mv_faceplate &&
 	    dlp->dm_mged_variables->mv_orig_gui)
@@ -131,13 +130,13 @@ mmenu_set(int index, struct menu_item *value)
 void
 mmenu_set_all(int index, struct menu_item *value)
 {
-    struct mged_dm *p;
     struct cmd_list *save_cmd_list;
     struct mged_dm *save_dm_list;
 
     save_cmd_list = curr_cmd_list;
     save_dm_list = mged_curr_dm;
-    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (p->dm_tie)
 	    curr_cmd_list = p->dm_tie;
 

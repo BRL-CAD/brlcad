@@ -378,7 +378,6 @@ struct _menu_state {
 
 
 struct mged_dm {
-    struct bu_list      l;
     struct dm		*dm_dmp;
     struct fb		*dm_fbp;
     int			dm_netfd;			/* socket used to listen for connections */
@@ -441,7 +440,7 @@ struct mged_dm {
  * libged also gets the word. */
 extern void set_curr_dm(struct mged_dm *nl);
 
-#define DM_LIST_NULL ((struct mged_dm *)NULL)
+#define MGED_DM_NULL ((struct mged_dm *)NULL)
 #define DMP mged_curr_dm->dm_dmp
 #define DMP_dirty mged_curr_dm->dm_dirty
 #define fbp mged_curr_dm->dm_fbp
@@ -542,28 +541,25 @@ extern void set_curr_dm(struct mged_dm *nl);
 
 #define BV_MAXFUNC	64	/* largest code used */
 
-#define FOR_ALL_DISPLAYS(p, hp) \
-	for (BU_LIST_FOR(p, mged_dm, hp))
-
-#define GET_DM_LIST(p, id) { \
-		struct mged_dm *tp; \
-\
-		FOR_ALL_DISPLAYS(tp, &active_dm_set.l) { \
-			if ((id) == dm_get_id(tp->dm_dmp)) { \
-				(p) = tp; \
-				break; \
-			} \
-		} \
-\
-		if (BU_LIST_IS_HEAD(tp, &active_dm_set.l)) \
-			(p) = DM_LIST_NULL; \
-	}
+#define GET_MGED_DM(p, id) { \
+    \
+    (p) = MGED_DM_NULL; \
+    for (size_t dm_ind = 0; dm_ind < BU_PTBL_LEN(&active_dm_set); dm_ind++) { \
+	struct mged_dm *tp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, dm_ind); \
+	if ((id) == dm_get_id(tp->dm_dmp)) { \
+	    (p) = tp; \
+	    break; \
+	} \
+    } \
+    \
+}
 
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
-extern struct mged_dm active_dm_set;	/* defined in attach.c */
+extern struct bu_ptbl active_dm_set;	/* defined in attach.c */
 extern struct mged_dm *mged_curr_dm;	/* defined in attach.c */
+extern struct mged_dm *mged_dm_init_state;
 
 /* defined in doevent.c */
 #ifdef HAVE_X11_TYPES
@@ -573,7 +569,7 @@ extern int doEvent(ClientData, void *);
 #endif
 
 /* defined in attach.c */
-extern void dm_var_init(struct mged_dm *initial_dm_list);
+extern void dm_var_init(struct mged_dm *target_dm);
 
 /* defined in dm-generic.c */
 extern int common_dm(int argc, const char *argv[]);

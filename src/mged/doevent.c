@@ -125,10 +125,10 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	return TCL_OK;
 
     save_dm_list = mged_curr_dm;
-    GET_DM_LIST(mged_curr_dm, (unsigned long)eventPtr->xany.window);
+    GET_MGED_DM(mged_curr_dm, (unsigned long)eventPtr->xany.window);
 
     /* it's an event for a window that I'm not handling */
-    if (mged_curr_dm == DM_LIST_NULL) {
+    if (mged_curr_dm == MGED_DM_NULL) {
 	set_curr_dm(save_dm_list);
 	return TCL_OK;
     }

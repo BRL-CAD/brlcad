@@ -138,11 +138,11 @@ set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 	       const char *UNUSED(value),
 	       void *UNUSED(data))
 {
-    struct mged_dm *m_dmp;
-
-    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_mged_variables == mged_variables)
 	    m_dmp->dm_dirty = 1;
+    }
 }
 
 
@@ -306,12 +306,12 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 		   const char *UNUSED(value),
 		   void *UNUSED(data))
 {
-    struct mged_dm *m_dmp;
     struct mged_dm *save_m_dmp;
 
     save_m_dmp = mged_curr_dm;
 
-    FOR_ALL_DISPLAYS(m_dmp, &active_dm_set.l)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_mged_variables == save_m_dmp->dm_mged_variables) {
 	    set_curr_dm(m_dmp);
 
@@ -323,6 +323,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 		DMP_dirty = 1;
 	    }
 	}
+    }
 
     set_curr_dm(save_m_dmp);
 }
@@ -371,8 +372,6 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(value),
 	  void *UNUSED(data))
 {
-    struct mged_dm *dlp1;
-    struct mged_dm *dlp2;
     struct mged_dm *save_dlp;
 
     /* save current display manager */
@@ -382,7 +381,10 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	/* create display lists */
 
 	/* for each display manager dlp1 that shares its dm_mged_variables with save_dlp */
-	FOR_ALL_DISPLAYS(dlp1, &active_dm_set.l) {
+	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+
+	    struct mged_dm *dlp1 = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+
 	    if (dlp1->dm_mged_variables != save_dlp->dm_mged_variables) {
 		continue;
 	    }
@@ -401,24 +403,32 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	 */
 
 	/* for each display manager dlp1 that shares its dm_mged_variables with save_dlp */
-	FOR_ALL_DISPLAYS(dlp1, &active_dm_set.l) {
+	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+
+	    struct mged_dm *dlp1 = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+
 	    if (dlp1->dm_mged_variables != save_dlp->dm_mged_variables)
 		continue;
 
 	    if (dlp1->dm_dlist_state->dl_active) {
 		/* for each display manager dlp2 that is sharing display lists with dlp1 */
-		FOR_ALL_DISPLAYS(dlp2, &active_dm_set.l) {
-		    if (dlp2->dm_dlist_state != dlp1->dm_dlist_state) {
+		struct mged_dm *dlp2 = MGED_DM_NULL;
+		for (size_t dj = 0; dj < BU_PTBL_LEN(&active_dm_set); dj++) {
+		    struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+
+		    if (m_dmp->dm_dlist_state != dlp1->dm_dlist_state) {
 			continue;
 		    }
 
 		    /* found a dlp2 that is actively using dlp1's display lists */
-		    if (dlp2->dm_mged_variables->mv_dlist)
+		    if (dlp2->dm_mged_variables->mv_dlist) {
+			dlp2 = m_dmp;
 			break;
+		    }
 		}
 
 		/* these display lists are not being used, so free them */
-		if (BU_LIST_IS_HEAD(dlp2, &active_dm_set.l)) {
+		if (dlp2 == MGED_DM_NULL) {
 		    struct display_list *gdlp;
 		    struct display_list *next_gdlp;
 

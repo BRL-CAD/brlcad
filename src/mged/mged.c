@@ -343,11 +343,11 @@ sig3(int UNUSED(sig))
 void
 new_edit_mats(void)
 {
-    struct mged_dm *p;
     struct mged_dm *save_dm_list;
 
     save_dm_list = mged_curr_dm;
-    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_owner)
 	    continue;
 
@@ -1261,11 +1261,10 @@ main(int argc, char *argv[])
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    memset((void *)&active_dm_set, 0, sizeof(struct mged_dm));
-    BU_LIST_INIT(&active_dm_set.l);
-
     BU_ALLOC(mged_curr_dm, struct mged_dm);
-    BU_LIST_APPEND(&active_dm_set.l, &mged_curr_dm->l);
+    bu_ptbl_init(&active_dm_set, 8, "dm set");
+    bu_ptbl_ins(&active_dm_set, (long *)mged_curr_dm);
+    mged_dm_init_state = mged_curr_dm;
     netfd = -1;
 
     /* initialize predictor stuff */
@@ -1954,7 +1953,6 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 int
 event_check(int non_blocking)
 {
-    struct mged_dm *p;
     struct mged_dm *save_dm_list;
     int save_edflag;
     int handled = 0;
@@ -2183,7 +2181,8 @@ event_check(int non_blocking)
 	    edobj = save_edflag;
     }
 
-    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_owner)
 	    continue;
 
@@ -2271,7 +2270,6 @@ event_check(int non_blocking)
 void
 refresh(void)
 {
-    struct mged_dm *p;
     struct mged_dm *save_dm_list;
     struct bu_vls overlay_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
@@ -2279,7 +2277,8 @@ refresh(void)
     int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
 
-    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_view_state)
 	    continue;
 	if (update_views || p->dm_view_state->vs_flag)
@@ -2290,7 +2289,8 @@ refresh(void)
      * This needs to be done separately because dm_view_state may be
      * shared.
      */
-    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_view_state)
 	    continue;
 	p->dm_view_state->vs_flag = 0;
@@ -2299,7 +2299,8 @@ refresh(void)
     update_views = 0;
 
     save_dm_list = mged_curr_dm;
-    FOR_ALL_DISPLAYS(p, &active_dm_set.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	/*
 	 * if something has changed, then go update the display.
 	 * Otherwise, we are happy with the view we have
@@ -2454,18 +2455,16 @@ void
 mged_finish(int exitcode)
 {
     char place[64];
-    struct mged_dm *p;
     struct cmd_list *c;
     int ret;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
 
     /* Release all displays */
-    while (BU_LIST_WHILE(p, mged_dm, &(active_dm_set.l))) {
-	if (!p)
-	    bu_bomb("dm list entry is null? aborting!\n");
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 
-	BU_LIST_DEQUEUE(&(p->l));
+	bu_ptbl_rm(&active_dm_set, (long *)p);
 
 	if (p && p->dm_dmp) {
 	    dm_close(p->dm_dmp);
@@ -2474,8 +2473,9 @@ mged_finish(int exitcode)
 	    bu_free(p, "release: mged_curr_dm");
 	}
 
-	set_curr_dm(DM_LIST_NULL);
+	set_curr_dm(MGED_DM_NULL);
     }
+    bu_ptbl_free(&active_dm_set);
 
     for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
 	bu_vls_free(&c->cl_name);
