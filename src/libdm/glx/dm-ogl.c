@@ -887,6 +887,7 @@ ogl_open(void *vinterp, int argc, const char **argv)
     bu_vls_printf(&dmp->i->dm_tkName, "%s",
 		  (char *)Tk_Name(pubvars->xtkwin));
 
+    Tk_SetWindowBackground(pubvars->xtkwin, BlackPixelOfScreen(Tk_Screen(pubvars->xtkwin)));
 
     if (bu_vls_strlen(&init_proc_vls) > 0) {
 	bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->i->dm_pathName));
