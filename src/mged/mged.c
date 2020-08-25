@@ -375,6 +375,7 @@ mged_view_callback(struct bview *gvp,
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
+    dm_set_dirty(mged_curr_dm->dm_dmp, 1);
 }
 
 
@@ -2334,98 +2335,103 @@ refresh(void)
 	    if (mged_variables->mv_predictor)
 		predictor_frame();
 
-	    dm_draw_begin(DMP);	/* update displaylist prolog */
+	    if (dm_get_dirty(DMP)) {
 
-	    if (DBIP != DBI_NULL) {
-		/* do framebuffer underlay */
-		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
-		    if (mged_variables->mv_fb_all)
-			fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
-		    else if (mged_variables->mv_mouse_behavior != 'z')
-			paint_rect_area();
-		}
+		dm_draw_begin(DMP);	/* update displaylist prolog */
 
-		/* do framebuffer overlay for entire window */
-		if (mged_variables->mv_fb &&
-		    mged_variables->mv_fb_overlay &&
-		    mged_variables->mv_fb_all) {
-		    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
-
-		    if (restore_zbuffer)
-			dm_set_zbuffer(DMP, 1);
-		} else {
-		    if (restore_zbuffer)
-			dm_set_zbuffer(DMP, 1);
-
-		    /* Draw each solid in its proper place on the
-		     * screen by applying zoom, rotation, &
-		     * translation.  Calls dm_loadmatrix() and
-		     * dm_draw_vlist().
-		     */
-
-		    if (dm_get_stereo(DMP) == 0 ||
-			mged_variables->mv_eye_sep_dist <= 0) {
-			/* Normal viewing */
-			dozoom(0);
-		    } else {
-			/* Stereo viewing */
-			dozoom(1);
-			dozoom(2);
+		if (DBIP != DBI_NULL) {
+		    /* do framebuffer underlay */
+		    if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
+			if (mged_variables->mv_fb_all)
+			    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
+			else if (mged_variables->mv_mouse_behavior != 'z')
+			    paint_rect_area();
 		    }
 
-		    /* do framebuffer overlay in rectangular area */
+		    /* do framebuffer overlay for entire window */
 		    if (mged_variables->mv_fb &&
-			mged_variables->mv_fb_overlay &&
-			mged_variables->mv_mouse_behavior != 'z')
-			paint_rect_area();
+			    mged_variables->mv_fb_overlay &&
+			    mged_variables->mv_fb_all) {
+			fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
+
+			if (restore_zbuffer)
+			    dm_set_zbuffer(DMP, 1);
+		    } else {
+			if (restore_zbuffer)
+			    dm_set_zbuffer(DMP, 1);
+
+			/* Draw each solid in its proper place on the
+			 * screen by applying zoom, rotation, &
+			 * translation.  Calls dm_loadmatrix() and
+			 * dm_draw_vlist().
+			 */
+
+			if (dm_get_stereo(DMP) == 0 ||
+				mged_variables->mv_eye_sep_dist <= 0) {
+			    /* Normal viewing */
+			    dozoom(0);
+			} else {
+			    /* Stereo viewing */
+			    dozoom(1);
+			    dozoom(2);
+			}
+
+			/* do framebuffer overlay in rectangular area */
+			if (mged_variables->mv_fb &&
+				mged_variables->mv_fb_overlay &&
+				mged_variables->mv_mouse_behavior != 'z')
+			    paint_rect_area();
+		    }
+
+
+		    /* Restore to non-rotated, full brightness */
+		    dm_normal(DMP);
+
+		    /* only if not doing overlay */
+		    if (!mged_variables->mv_fb ||
+			    mged_variables->mv_fb_overlay != 2) {
+			if (rubber_band->rb_active || rubber_band->rb_draw)
+			    draw_rect();
+
+			if (grid_state->draw)
+			    draw_grid();
+
+			/* Compute and display angle/distance cursor */
+			if (adc_state->adc_draw)
+			    adcursor();
+
+			if (axes_state->ax_view_draw)
+			    draw_v_axes();
+
+			if (axes_state->ax_model_draw)
+			    draw_m_axes();
+
+			if (axes_state->ax_edit_draw &&
+				(STATE == ST_S_EDIT || STATE == ST_O_EDIT))
+			    draw_e_axes();
+
+			/* Display titles, etc., if desired */
+			bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+			dotitles(&tmp_vls);
+			bu_vls_trunc(&tmp_vls, 0);
+		    }
 		}
-
-
-		/* Restore to non-rotated, full brightness */
-		dm_normal(DMP);
 
 		/* only if not doing overlay */
 		if (!mged_variables->mv_fb ||
-		    mged_variables->mv_fb_overlay != 2) {
-		    if (rubber_band->rb_active || rubber_band->rb_draw)
-			draw_rect();
-
-		    if (grid_state->draw)
-			draw_grid();
-
-		    /* Compute and display angle/distance cursor */
-		    if (adc_state->adc_draw)
-			adcursor();
-
-		    if (axes_state->ax_view_draw)
-			draw_v_axes();
-
-		    if (axes_state->ax_model_draw)
-			draw_m_axes();
-
-		    if (axes_state->ax_edit_draw &&
-			(STATE == ST_S_EDIT || STATE == ST_O_EDIT))
-			draw_e_axes();
-
-		    /* Display titles, etc., if desired */
-		    bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-		    dotitles(&tmp_vls);
-		    bu_vls_trunc(&tmp_vls, 0);
+			mged_variables->mv_fb_overlay != 2) {
+		    /* Draw center dot */
+		    dm_set_fg(DMP,
+			    color_scheme->cs_center_dot[0],
+			    color_scheme->cs_center_dot[1],
+			    color_scheme->cs_center_dot[2], 1, 1.0);
+		    dm_draw_point_2d(DMP, 0.0, 0.0);
 		}
-	    }
 
-	    /* only if not doing overlay */
-	    if (!mged_variables->mv_fb ||
-		mged_variables->mv_fb_overlay != 2) {
-		/* Draw center dot */
-		dm_set_fg(DMP,
-			  color_scheme->cs_center_dot[0],
-			  color_scheme->cs_center_dot[1],
-			  color_scheme->cs_center_dot[2], 1, 1.0);
-		dm_draw_point_2d(DMP, 0.0, 0.0);
-	    }
+		dm_draw_end(DMP);
+		dm_set_dirty(DMP, 0);
 
-	    dm_draw_end(DMP);
+	    }
 	}
     }
 

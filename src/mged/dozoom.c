@@ -232,6 +232,7 @@ createDLists(struct bu_list *hdlp)
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
+	dm_set_dirty(DMP, 1);
 	dm_draw_obj(DMP, gdlp);
 
 	gdlp = next_gdlp;
@@ -261,6 +262,7 @@ createDListSolid(struct solid *sp)
 	    if (sp->s_dlist == 0)
 		sp->s_dlist = dm_gen_dlists(DMP, 1);
 
+	    dm_set_dirty(DMP, 1);
 	    (void)dm_make_current(DMP);
 	    (void)dm_begin_dlist(DMP, sp->s_dlist);
 	    if (sp->s_iflag == UP)
@@ -314,6 +316,7 @@ freeDListsAll(unsigned int dlist, int range)
 	}
 
 	dlp->dm_dirty = 1;
+	dm_set_dirty(DMP, 1);
     }
 }
 

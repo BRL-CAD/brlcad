@@ -586,6 +586,7 @@ common_dm(int argc, const char *argv[])
 	}
 
 	DMP_dirty = 1;
+	//dm_set_dirty(DMP, 1);
 	(void)dm_make_current(DMP);
 	return dm_set_bg(DMP, r, g, b);
     }

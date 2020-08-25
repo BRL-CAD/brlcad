@@ -683,6 +683,9 @@ dm_var_init(struct mged_dm *target_dm)
     view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
 
     DMP_dirty = 1;
+    if (target_dm->dm_dmp) {
+	dm_set_dirty(target_dm->dm_dmp, 1);
+    }
     mapped = 1;
     netfd = -1;
     owner = 1;

@@ -1463,6 +1463,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     memmove((void *)scroll_array, (void *)dml->dm_scroll_array, sizeof(struct scroll_item *) * 6);
 
     DMP_dirty = 1;
+    dm_set_dirty(DMP, 1);
     refresh();
 
     view_state = vsp;  /* restore state info pointer */

@@ -151,6 +151,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	dm_configure_win(DMP, 0);
 	rect_image2view();
 	DMP_dirty = 1;
+	dm_set_dirty(DMP, 1);
 
 	if (fbp)
 	    (void)fb_configure_window(fbp, conf->width, conf->height);
@@ -159,16 +160,19 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	status = TCL_RETURN;
     } else if (eventPtr->type == MapNotify) {
 	mapped = 1;
+	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
     } else if (eventPtr->type == UnmapNotify) {
 	mapped = 0;
+	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
     } else if (eventPtr->type == MotionNotify) {
 	motion_event_handler((XMotionEvent *)eventPtr);
+	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
@@ -176,6 +180,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 #ifdef IR_KNOBS
     else if (dm_event_cmp(DMP, DM_MOTION_NOTIFY, eventPtr->type) == 1) {
 	dials_event_handler((XDeviceMotionEvent *)eventPtr);
+	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
@@ -184,11 +189,13 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 #ifdef IR_BUTTONS
     else if (dm_event_cmp(DMP, DM_BUTTON_PRESS, eventPtr->type) == 1) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 1);
+	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
     } else if (dm_event_cmp(DMP, DM_BUTTON_RELEASE, eventPtr->type) == 1) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 0);
+	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;

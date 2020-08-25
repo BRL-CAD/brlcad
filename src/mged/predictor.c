@@ -316,6 +316,7 @@ predictor_hook(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), 
 	predictor_kill();
 
     DMP_dirty = 1;
+    dm_set_dirty(DMP, 1);
 }
 
 
