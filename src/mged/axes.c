@@ -87,8 +87,10 @@ ax_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 {
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
-	if (m_dmp->dm_axes_state == axes_state)
+	if (m_dmp->dm_axes_state == axes_state) {
 	    m_dmp->dm_dirty = 1;
+	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	}
     }
 }
 

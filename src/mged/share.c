@@ -198,8 +198,11 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 			}
 
 			dlp1->dm_dirty = 1;
+			dm_set_dirty(dlp1->dm_dmp, 1);
 		    } else {
 			dlp1->dm_dirty = dlp2->dm_dirty = 1;
+			dm_set_dirty(dlp1->dm_dmp, 1);
+			dm_set_dirty(dlp2->dm_dmp, 1);
 		    }
 		}
 	    }
@@ -255,8 +258,10 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	    return TCL_ERROR;
     }
 
-    if (!uflag)
+    if (!uflag) {
 	dlp2->dm_dirty = 1;	/* need to redraw this guy */
+	dm_set_dirty(dlp2->dm_dmp, 1);
+    }
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -448,6 +453,8 @@ share_dlist(struct mged_dm *dlp2)
 
 		SHARE_RESOURCE(0, _dlist_state, dm_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
 		dlp1->dm_dirty = dlp2->dm_dirty = 1;
+		dm_set_dirty(dlp1->dm_dmp, 1);
+		dm_set_dirty(dlp2->dm_dmp, 1);
 		bu_vls_free(&vls);
 	    }
 

@@ -2809,6 +2809,7 @@ mged_svbase(void)
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 	mged_curr_dm->dm_dirty = 1;
+	dm_set_dirty(DMP, 1);
     }
 
     return TCL_OK;
@@ -2843,6 +2844,7 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	    m_dmp->dm_mged_variables->mv_faceplate &&
 	    m_dmp->dm_mged_variables->mv_orig_gui) {
 	    m_dmp->dm_dirty = 1;
+	    dm_set_dirty(m_dmp->dm_dmp, 1);
 	}
     }
 

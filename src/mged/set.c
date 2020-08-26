@@ -140,8 +140,10 @@ set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 {
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (m_dmp->dm_mged_variables == mged_variables)
+	if (m_dmp->dm_mged_variables == mged_variables) {
 	    m_dmp->dm_dirty = 1;
+	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	}
     }
 }
 
@@ -396,6 +398,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 		createDLists(GEDP->ged_gdp->gd_headDisplay);
 		dlp1->dm_dlist_state->dl_active = 1;
 		dlp1->dm_dirty = 1;
+		dm_set_dirty(dlp1->dm_dmp, 1);
 	    }
 	}
     } else {
