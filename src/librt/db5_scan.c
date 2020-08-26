@@ -303,8 +303,6 @@ db5_diradd(struct db_i *dbip,
     }
     if (rip->h_name_hidden)
 	dp->d_flags |= RT_DIR_HIDDEN;
-    if (dbip->dbi_wdbp->type == RT_WDB_TYPE_DB_INMEM)
-	dp->d_flags |= RT_DIR_INMEM;
     dp->d_len = rip->object_length;		/* in bytes */
     BU_LIST_INIT(&dp->d_use_hd);
     dp->d_animate = NULL;
