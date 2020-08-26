@@ -639,6 +639,7 @@ RT_EXPORT extern int db_v4_get_units_code(const char *str);
  * -1 failure
  */
 RT_EXPORT extern int db_dirbuild(struct db_i *dbip);
+RT_EXPORT extern int db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size);
 RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 					      const struct db5_raw_internal *rip,
 					      b_off_t laddr,
@@ -657,6 +658,14 @@ RT_EXPORT extern int db5_scan(struct db_i *dbip,
 					      b_off_t addr,
 					      void *client_data),
 			      void *client_data);
+RT_EXPORT extern int db5_scan_inmem(struct db_i *dbip,
+				    void (*handler)(struct db_i *,
+						    const struct db5_raw_internal *,
+						    b_off_t addr,
+						    void *client_data),
+				    void *client_data,
+				    const void *data,
+				    b_off_t data_size);
 
 /**
  * obtain the database version for a given database instance.
@@ -664,6 +673,7 @@ RT_EXPORT extern int db5_scan(struct db_i *dbip,
  * presently returns only a 4 or 5 accordingly.
  */
 RT_EXPORT extern int db_version(struct db_i *dbip);
+RT_EXPORT extern int db_version_inmem(struct db_i *dbip, const void *data, b_off_t data_size);
 
 
 /* db_corrupt.c */
@@ -922,6 +932,7 @@ RT_EXPORT extern void rt_alloc_seg_block(struct resource *res);
  * Read named MGED db, build toc.
  */
 RT_EXPORT extern struct rt_i *rt_dirbuild(const char *filename, char *buf, int len);
+RT_EXPORT extern struct rt_i *rt_dirbuild_inmem(const void *data, b_off_t data_size, char *buf, int len);
 
 
 /* db5_types.c */
