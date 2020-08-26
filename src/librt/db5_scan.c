@@ -246,10 +246,6 @@ db5_diradd(struct db_i *dbip,
 
     RT_CK_DBI(dbip);
 
-    if (client_data && RT_G_DEBUG&RT_DEBUG_DB) {
-	bu_log("WARNING: db5_diradd() received non-NULL client_data\n");
-    }
-
     bu_vls_strcpy(&local, (const char *)rip->name.ext_buf);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
@@ -303,6 +299,8 @@ db5_diradd(struct db_i *dbip,
     }
     if (rip->h_name_hidden)
 	dp->d_flags |= RT_DIR_HIDDEN;
+    if (client_data && (*((int*)client_data) == 1))
+	dp->d_flags |= RT_DIR_INMEM;
     dp->d_len = rip->object_length;		/* in bytes */
     BU_LIST_INIT(&dp->d_use_hd);
     dp->d_animate = NULL;
@@ -486,11 +484,12 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
 	struct db5_raw_internal raw;
 	struct bu_attribute_value_set avs;
 	const char *cp;
+	int inmem_flag = 1;
 
 	bu_avs_init_empty(&avs);
 
 	/* File is v5 format */
-	if (db5_scan_inmem(dbip, db5_diradd_handler, NULL, data, data_size) < 0) {
+	if (db5_scan_inmem(dbip, db5_diradd_handler, &inmem_flag, data, data_size) < 0) {
 	    bu_log("db_dirbuild_inmem(): db5_scan_inmem() failed\n");
 	    return -1;
 	}
