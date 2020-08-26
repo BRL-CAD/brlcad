@@ -54,6 +54,19 @@
 
 #include <iostream>
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wshadow"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wshadow"
+#endif
+
 namespace ads
 {
 
@@ -149,12 +162,12 @@ void DockAreaTitleBarPrivate::createButtons()
 	TabsMenuButton->setAutoRaise(true);
 	TabsMenuButton->setPopupMode(QToolButton::InstantPopup);
 	internal::setButtonIcon(TabsMenuButton, QStyle::SP_TitleBarUnshadeButton, ads::DockAreaMenuIcon);
-	QMenu* LTabsMenu = new QMenu(TabsMenuButton);
+	QMenu* TabsMenu = new QMenu(TabsMenuButton);
 #ifndef QT_NO_TOOLTIP
-	LTabsMenu->setToolTipsVisible(true);
+	TabsMenu->setToolTipsVisible(true);
 #endif
-	_this->connect(LTabsMenu, SIGNAL(aboutToShow()), SLOT(onTabsMenuAboutToShow()));
-	TabsMenuButton->setMenu(LTabsMenu);
+	_this->connect(TabsMenu, SIGNAL(aboutToShow()), SLOT(onTabsMenuAboutToShow()));
+	TabsMenuButton->setMenu(TabsMenu);
 	internal::setToolTip(TabsMenuButton, QObject::tr("List All Tabs"));
 	TabsMenuButton->setSizePolicy(ButtonSizePolicy);
 	Layout->addWidget(TabsMenuButton, 0);
@@ -209,17 +222,17 @@ void DockAreaTitleBarPrivate::createTabBar()
 
 
 //============================================================================
-IFloatingWidget* DockAreaTitleBarPrivate::makeAreaFloating(const QPoint& Offset, eDragState LDragState)
+IFloatingWidget* DockAreaTitleBarPrivate::makeAreaFloating(const QPoint& Offset, eDragState DragState)
 {
 	QSize Size = DockArea->size();
-	this->DragState = LDragState;
+	this->DragState = DragState;
 	bool OpaqueUndocking = CDockManager::testConfigFlag(CDockManager::OpaqueUndocking) ||
-		(DraggingFloatingWidget != LDragState);
+		(DraggingFloatingWidget != DragState);
 	CFloatingDockContainer* FloatingDockContainer = nullptr;
-	IFloatingWidget* LFloatingWidget;
+	IFloatingWidget* FloatingWidget;
 	if (OpaqueUndocking)
 	{
-		LFloatingWidget = FloatingDockContainer = new CFloatingDockContainer(DockArea);
+		FloatingWidget = FloatingDockContainer = new CFloatingDockContainer(DockArea);
 	}
 	else
 	{
@@ -228,10 +241,10 @@ IFloatingWidget* DockAreaTitleBarPrivate::makeAreaFloating(const QPoint& Offset,
 		{
 			this->DragState = DraggingInactive;
 		});
-		LFloatingWidget = w;
+		FloatingWidget = w;
 	}
 
-    LFloatingWidget->startFloating(Offset, Size, LDragState, nullptr);
+    FloatingWidget->startFloating(Offset, Size, DragState, nullptr);
     if (FloatingDockContainer)
     {
 		auto TopLevelDockWidget = FloatingDockContainer->topLevelDockWidget();
@@ -241,7 +254,7 @@ IFloatingWidget* DockAreaTitleBarPrivate::makeAreaFloating(const QPoint& Offset,
 		}
     }
 
-	return LFloatingWidget;
+	return FloatingWidget;
 }
 
 
@@ -269,6 +282,8 @@ CDockAreaTitleBar::CDockAreaTitleBar(CDockAreaWidget* parent) :
 	d->createTabBar();
 	d->Layout->addWidget(new CSpacerWidget(this));
 	d->createButtons();
+
+    setFocusPolicy(Qt::NoFocus);
 }
 
 
@@ -577,12 +592,12 @@ void CDockAreaTitleBar::contextMenuEvent(QContextMenuEvent* ev)
 	}
 
 	QMenu Menu(this);
-	auto Action = Menu.addAction(tr("Detach Area"), this, SLOT(onUndockButtonClicked()));
+	auto Action = Menu.addAction(tr("Detach Group"), this, SLOT(onUndockButtonClicked()));
 	Action->setEnabled(d->DockArea->features().testFlag(CDockWidget::DockWidgetFloatable));
 	Menu.addSeparator();
-	Action = Menu.addAction(tr("Close Area"), this, SLOT(onCloseButtonClicked()));
+	Action = Menu.addAction(tr("Close Group"), this, SLOT(onCloseButtonClicked()));
 	Action->setEnabled(d->DockArea->features().testFlag(CDockWidget::DockWidgetClosable));
-	Menu.addAction(tr("Close Other Areas"), d->DockArea, SLOT(closeOtherAreas()));
+	Menu.addAction(tr("Close Other Groups"), d->DockArea, SLOT(closeOtherAreas()));
 	Menu.exec(ev->globalPos());
 }
 
@@ -606,7 +621,7 @@ CTitleBarButton::CTitleBarButton(bool visible, QWidget* parent)
 	  Visible(visible),
 	  HideWhenDisabled(CDockManager::testConfigFlag(CDockManager::DockAreaHideDisabledButtons))
 {
-
+    setFocusPolicy(Qt::NoFocus);
 }
 
 //============================================================================
@@ -645,6 +660,13 @@ CSpacerWidget::CSpacerWidget(QWidget* Parent /*= 0*/) : Super(Parent)
 }
 
 } // namespace ads
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 //---------------------------------------------------------------------------
 // EOF DockAreaTitleBar.cpp
