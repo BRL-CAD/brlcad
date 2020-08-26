@@ -44,7 +44,7 @@ if (BRLCAD_ENABLE_TK)
     ${TK_INCLUDE_PATH}
     )
 
-if (1)
+if (0)
   set(renderer_srcs
     renderer/camera.c
     renderer/darray.c
@@ -62,7 +62,7 @@ if (1)
     renderer/scenes/scene_helper.c
     )
  BRLCAD_ADDEXEC(rendered_img "rendered_image.cpp;${renderer_srcs}" "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
-endif (1)
+endif (0)
 
  BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
  BRLCAD_ADDEXEC(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
