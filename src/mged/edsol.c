@@ -750,7 +750,6 @@ set_e_axes_pos(int both)
        set e_axes_pos and curr_e_axes_pos */
 {
     int i;
-    struct dm_list *dmlp;
     const short earb8[12][18] = earb8_edit_array;
     const short earb7[12][18] = earb7_edit_array;
     const short earb6[10][18] = earb6_edit_array;
@@ -758,6 +757,7 @@ set_e_axes_pos(int both)
     const int local_arb_faces[5][24] = rt_arb_faces;
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     switch (es_int.idb_type) {
 	case ID_ARB8:
 	    if (STATE == ST_O_EDIT) {
@@ -920,8 +920,10 @@ set_e_axes_pos(int both)
 
 	MAT_IDN(acc_rot_sol);
 
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	    dmlp->dml_mged_variables->mv_transform = 'e';
+	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	    struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	    m_dmp->dm_mged_variables->mv_transform = 'e';
+	}
     }
 }
 
@@ -2808,9 +2810,11 @@ get_rotation_vertex(void)
     }
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
+    const struct bu_vls *dnvp = dm_get_dname(mged_curr_dm->dm_dmp);
+
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  bu_vls_addr(dName), bu_vls_addr(&str), arb_vertices[type][loc]);
+		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {
@@ -6694,6 +6698,7 @@ sedit(void)
     replot_editing_solid();
 
     if (update_views) {
+	dm_set_dirty(DMP, 1);
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "active_edit_callback");
@@ -9109,6 +9114,7 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
     set_e_axes_pos(1);
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");
@@ -9165,6 +9171,7 @@ f_oedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
     new_edit_mats();
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");
@@ -9195,6 +9202,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
     init_oedit_vars();
     new_edit_mats();
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");

@@ -28,6 +28,9 @@ add_subdirectory(burst)
 # comgeom Conversion Tests
 add_subdirectory(comgeom)
 
+# Coverage Tests
+add_subdirectory(coverage)
+
 # DSP Regression Tests
 add_subdirectory(dsp)
 

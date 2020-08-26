@@ -75,7 +75,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     view_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
     view_dock->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     view_dock->setMinimumSize(512,512);
-    dock->addDockWidget(ads::CenterDockWidgetArea, view_dock);
+    auto *CentralDockArea = dock->setCentralWidget(view_dock);
+    CentralDockArea->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
     /* Console */
     console_dock = new ads::CDockWidget("Console");

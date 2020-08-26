@@ -126,11 +126,11 @@ if [ X$STATUS != X0 ] ; then
     log "comgeom-g conversion errors: $STATUS"
     FAILURES="`expr $FAILURES + 1`"
 else
-    ERR=`grep error comgeom-g.log`
+    ERR=`grep error $LOGFILE`
     if test "x$ERR" = "x" ; then
 	log "comgeom-g v5 test succeeded (2 of 3)"
     else
-	log "comgeom-g v5 errors, see  'comgeom-g.log'"
+	log "comgeom-g v5 errors, see $LOGFILE"
 	FAILURES="`expr $FAILURES + 1`"
     fi
 fi
@@ -145,11 +145,11 @@ if [ X$STATUS != X0 ] ; then
     log "comgeom-g conversion errors: $STATUS"
     FAILURES="`expr $FAILURES + 1`"
 else
-    ERR=`grep error comgeom-g.log`
+    ERR=`grep error $LOGFILE`
     if test "x$ERR" = "x" ; then
 	log "comgeom-g v4 test succeeded (3 of 3)"
     else
-	log "comgeom-g v4 errors, see  'comgeom-g.log'"
+	log "comgeom-g v4 errors, see $LOGFILE"
 	FAILURES="`expr $FAILURES + 1`"
     fi
 fi

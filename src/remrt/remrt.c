@@ -97,6 +97,8 @@ extern int gettimeofday(struct timeval *, void *);
 #  endif
 #endif
 
+#define REMRT_TCP_DEFAULT_PORT 4446
+
 #define TARDY_SERVER_INTERVAL	(900*60)	/* max seconds of silence */
 #define N_SERVER_ASSIGNMENTS	1		/* desired # of assignments */
 #define MIN_ASSIGNMENT_TIME	5		/* desired seconds/result */
@@ -3555,11 +3557,13 @@ main(int argc, char *argv[])
     }
 
     /* Listen for our PKG connections */
+    int tcp_num = 0;
     if ((tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, remrt_log)) < 0) {
 	char num[8];
 	/* Do it by the numbers */
 	for (i = 0; i < 10; i++) {
-	    sprintf(num, "%d", 4446+i);
+	    tcp_num = REMRT_TCP_DEFAULT_PORT+i;
+	    sprintf(num, "%d", tcp_num);
 	    if ((tcp_listen_fd = pkg_permserver(num, "tcp", 8, remrt_log)) < 0)
 		continue;
 	    break;
@@ -3574,7 +3578,10 @@ main(int argc, char *argv[])
     if (argc <= 1) {
 	(void)signal(SIGINT, SIG_IGN);
 	bu_log("%s Interactive REMRT on %s\n", stamp(), our_hostname);
-	bu_log("%s Listening at port %d\n", stamp(), pkg_permport);
+	bu_log("%s Assigned LIBPKG permport %d\n", stamp(), pkg_permport);
+	if (tcp_num > 0) {
+	    bu_log("%s Listening at TCP port %d\n", stamp(), tcp_num);
+	}
 	FD_ZERO(&clients);
 	FD_SET(fileno(stdin), &clients);
 
@@ -3597,8 +3604,11 @@ main(int argc, char *argv[])
 	bu_log("%s Out of clients\n", stamp());
     } else {
 	bu_log("%s Automatic REMRT on %s\n", stamp(), our_hostname);
-	bu_log("%s Listening at port %d, reading script on stdin\n",
-	       stamp(), pkg_permport);
+	bu_log("%s Assigned LIBPKG permport %d\n", stamp(), pkg_permport);
+	if (tcp_num > 0) {
+	    bu_log("%s Listening at TCP port %d\n", stamp(), tcp_num);
+	}
+	bu_log("%s Reading script on stdin\n", stamp());
 	FD_ZERO(&clients);
 
 	/* parse command line args for sizes, etc. */

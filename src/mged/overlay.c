@@ -45,7 +45,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     Tcl_DStringInit(&ds);
 
-    GEDP->ged_dmp = (void *)curr_dm_list->dml_dmp;
+    GEDP->ged_dmp = (void *)mged_curr_dm->dm_dmp;
     ret = ged_overlay(GEDP, argc, argv);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
@@ -57,6 +57,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return ret;
 }
@@ -113,6 +114,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     bn_vlblock_free(vbp);
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
 
@@ -253,6 +255,7 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     bn_vlblock_free(vbp);
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
 

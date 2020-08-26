@@ -120,20 +120,23 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
     int i;
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
     int npp;			/* number of processed packages */
-    struct dm_list *dlp;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
+    struct mged_dm *dlp = MGED_DM_NULL;
+    struct mged_dm *scdlp;  /* save current dm_list pointer */
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	for (i = MAX_CLIENTS-1; i >= 0; i--)
-	    if (fd == dlp->dml_clients[i].c_fd)
+	    if (fd == m_dmp->dm_clients[i].c_fd) {
+		dlp = m_dmp;
 		goto found;
+	    }
     }
 
     return;
 
  found:
     /* save */
-    scdlp = curr_dm_list;
+    scdlp = mged_curr_dm;
 
     set_curr_dm(dlp);
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
@@ -143,8 +146,10 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
 	    bu_log("pkg_process error encountered (1)\n");
 
-	if (npp > 0)
-	    dirty = 1;
+	if (npp > 0) {
+	    DMP_dirty = 1;
+	    dm_set_dirty(DMP, 1);
+	}
 
 	if (clients[i].c_fd != fd)
 	    continue;
@@ -159,8 +164,10 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
 	    bu_log("pkg_process error encountered (2)\n");
 
-	if (npp > 0)
-	    dirty = 1;
+	if (npp > 0) {
+	    DMP_dirty = 1;
+	    dm_set_dirty(DMP, 1);
+	}
     }
 
     /* restore */
@@ -210,15 +217,15 @@ fbserv_new_client_handler(ClientData clientData,
 			  char *host,
 			  int port)
 {
-    struct dm_list *dlp = (struct dm_list *)clientData;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
+    struct mged_dm *dlp = (struct mged_dm *)clientData;
+    struct mged_dm *scdlp;  /* save current dm_list pointer */
     uintptr_t fd;
 
     if (dlp == NULL)
 	return;
 
     /* save */
-    scdlp = curr_dm_list;
+    scdlp = mged_curr_dm;
 
     set_curr_dm(dlp);
 
@@ -287,7 +294,7 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	 */
 
 	if (dm_interp(DMP) != NULL) {
-	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
+	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)mged_curr_dm);
 	}
 
 	if (netchan == NULL)
@@ -385,18 +392,22 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 {
     uintptr_t datafd = (uintptr_t)clientData;
     int fd = (int)((int32_t)datafd & 0xFFFF);	/* fd's will be small */
-    struct dm_list *dlp;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
+    struct mged_dm *dlp;
+    struct mged_dm *scdlp;  /* save current dm_list pointer */
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if (fd == dlp->dml_netfd)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (fd == m_dmp->dm_netfd) {
+	    dlp = m_dmp;
 	    goto found;
+	}
+    }
 
     return;
 
  found:
     /* save */
-    scdlp = curr_dm_list;
+    scdlp = mged_curr_dm;
 
     set_curr_dm(dlp);
     fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));

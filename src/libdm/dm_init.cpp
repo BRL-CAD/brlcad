@@ -170,6 +170,17 @@ libdm_init(void)
     }
 
     dm_backends = (void *)&dm_map;
+
+    // Populate the built-in if_* backends
+    std::string nullkey("/dev/null");
+    fb_map[nullkey] = &fb_null_interface;
+    std::string debugkey("/dev/debug");
+    fb_map[debugkey] = &debug_interface;
+    std::string memkey("/dev/mem");
+    fb_map[memkey] = &memory_interface;
+    std::string stackkey("/dev/stack");
+    fb_map[stackkey] = &stk_interface;
+
     fb_backends = (void *)&fb_map;
 }
 

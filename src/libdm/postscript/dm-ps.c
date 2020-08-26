@@ -79,6 +79,8 @@ ps_open(void *vinterp, int argc, const char *argv[])
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
     BU_ALLOC(dmp, struct dm);
+    dmp->magic = DM_MAGIC;
+
     BU_ALLOC(dmp->i, struct dm_impl);
 
     *dmp->i = *dm_ps.i;  /* struct copy */
@@ -810,12 +812,12 @@ struct dm_impl dm_ps_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
-    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -830,7 +832,7 @@ struct dm_impl dm_ps_impl = {
 };
 
 
-struct dm dm_ps = { &dm_ps_impl };
+struct dm dm_ps = { DM_MAGIC, &dm_ps_impl };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_ps };

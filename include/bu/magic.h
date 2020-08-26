@@ -218,6 +218,7 @@ __BEGIN_DECLS
 #define DB5_RAW_INTERNAL_MAGIC		0x64357269 /**< d5ri */
 #define DBI_MAGIC			0x57204381 /**< W C? */
 #define DB_FULL_PATH_MAGIC		0x64626670 /**< dbfp */
+#define DM_MAGIC			0x444d4d4d /**< DMMM */
 #define LIGHT_MAGIC			0xdbddbdb7 /**< ???? */
 #define MF_MAGIC			0x55968058 /**< U??X */
 #define PIXEL_EXT_MAGIC 		0x50787400 /**< Pxt  */

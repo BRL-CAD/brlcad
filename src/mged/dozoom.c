@@ -59,11 +59,11 @@ dozoom(int which_eye)
 
     /*
      * The vectorThreshold stuff in libdm may turn the
-     * Tcl-crank causing curr_dm_list to change.
+     * Tcl-crank causing mged_curr_dm to change.
      */
-    struct dm_list *save_dm_list = curr_dm_list;
+    struct mged_dm *save_dm_list = mged_curr_dm;
 
-    curr_dm_list->dml_ndrawn = 0;
+    mged_curr_dm->dm_ndrawn = 0;
     inv_viewsize = view_state->vs_gvp->gv_isize;
 
     /*
@@ -148,10 +148,10 @@ dozoom(int which_eye)
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
-	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-	if (curr_dm_list != save_dm_list) set_curr_dm(save_dm_list);
+	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
+	if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
 
-	curr_dm_list->dml_ndrawn += ndrawn;
+	mged_curr_dm->dm_ndrawn += ndrawn;
 
 	/* disable write to depth buffer */
 	dm_set_depth_mask(DMP, 0);
@@ -173,10 +173,10 @@ dozoom(int which_eye)
 
     }
 
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-    if (curr_dm_list != save_dm_list) set_curr_dm(save_dm_list);
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
+    if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
 
-    curr_dm_list->dml_ndrawn += ndrawn;
+    mged_curr_dm->dm_ndrawn += ndrawn;
 
 
     /* draw predictor vlist */
@@ -185,7 +185,7 @@ dozoom(int which_eye)
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	dm_draw_vlist(DMP, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
+	dm_draw_vlist(DMP, (struct bn_vlist *)&mged_curr_dm->dm_p_vlist);
     }
 
     /*
@@ -213,10 +213,10 @@ dozoom(int which_eye)
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 
-    curr_dm_list->dml_ndrawn += ndrawn;
+    mged_curr_dm->dm_ndrawn += ndrawn;
 
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-    if (curr_dm_list != save_dm_list) set_curr_dm(save_dm_list);
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
+    if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
 }
 
 /*
@@ -232,6 +232,7 @@ createDLists(struct bu_list *hdlp)
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
+	dm_set_dirty(DMP, 1);
 	dm_draw_obj(DMP, gdlp);
 
 	gdlp = next_gdlp;
@@ -249,18 +250,19 @@ createDLists(struct bu_list *hdlp)
 void
 createDListSolid(struct solid *sp)
 {
-    struct dm_list *dlp;
-    struct dm_list *save_dlp;
+    struct mged_dm *save_dlp;
 
-    save_dlp = curr_dm_list;
+    save_dlp = mged_curr_dm;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dlp->dml_mapped &&
-		dm_get_displaylist(dlp->dml_dmp) &&
-		dlp->dml_mged_variables->mv_dlist) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (dlp->dm_mapped &&
+		dm_get_displaylist(dlp->dm_dmp) &&
+		dlp->dm_mged_variables->mv_dlist) {
 	    if (sp->s_dlist == 0)
 		sp->s_dlist = dm_gen_dlists(DMP, 1);
 
+	    dm_set_dirty(DMP, 1);
 	    (void)dm_make_current(DMP);
 	    (void)dm_begin_dlist(DMP, sp->s_dlist);
 	    if (sp->s_iflag == UP)
@@ -274,7 +276,7 @@ createDListSolid(struct solid *sp)
 	    (void)dm_end_dlist(DMP);
 	}
 
-	dlp->dml_dirty = 1;
+	dlp->dm_dirty = 1;
     }
 
     set_curr_dm(save_dlp);
@@ -305,16 +307,16 @@ createDListAll(struct display_list *gdlp)
 void
 freeDListsAll(unsigned int dlist, int range)
 {
-    struct dm_list *dlp;
-
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dm_get_displaylist(dlp->dml_dmp) &&
-	    dlp->dml_mged_variables->mv_dlist) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (dm_get_displaylist(dlp->dm_dmp) &&
+	    dlp->dm_mged_variables->mv_dlist) {
 	    (void)dm_make_current(DMP);
-	    (void)dm_free_dlists(dlp->dml_dmp, dlist, range);
+	    (void)dm_free_dlists(dlp->dm_dmp, dlist, range);
 	}
 
-	dlp->dml_dirty = 1;
+	dlp->dm_dirty = 1;
+	dm_set_dirty(DMP, 1);
     }
 }
 

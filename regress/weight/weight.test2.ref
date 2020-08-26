@@ -7,6 +7,7 @@ Time Stamp: Sat Jan 14 09:01:50 2012
 Density Table Used:/path/to/.density
 
 Material  Density(g/cm^3)  Name
+--------  ---------------  -------------
     2         7.8200       Carbon Tool Steel
     3         2.7000       Aluminum, 6061-T6
     4         2.7400       Aluminum, 7079-T6

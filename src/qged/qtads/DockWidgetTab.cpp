@@ -53,10 +53,23 @@
 
 #include <iostream>
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wshadow"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wshadow"
+#endif
+
 namespace ads
 {
 
-using tTabLabel = CElidingLabel;
+	using tTabLabel = CElidingLabel;
 
 /**
  * Private data class of CDockWidgetTab class (pimpl)
@@ -132,6 +145,18 @@ struct DockWidgetTabPrivate
 		{
 			return new QPushButton();
 		}
+	}
+
+	/**
+	 * Update the close button visibility from current feature/config
+	 */
+	void updateCloseButtonVisibility(bool active)
+	{
+		bool DockWidgetClosable = DockWidget->features().testFlag(CDockWidget::DockWidgetClosable);
+		bool ActiveTabHasCloseButton = testConfigFlag(CDockManager::ActiveTabHasCloseButton);
+		bool AllTabsHaveCloseButton = testConfigFlag(CDockManager::AllTabsHaveCloseButton);
+		bool TabHasCloseButton = (ActiveTabHasCloseButton && active) | AllTabsHaveCloseButton;
+		CloseButton->setVisible(DockWidgetClosable && TabHasCloseButton);
 	}
 
 	template <typename T>
@@ -242,7 +267,7 @@ bool DockWidgetTabPrivate::startFloating(eDragState DraggingState)
 
     ADS_PRINT("startFloating");
 	DragState = DraggingState;
-	IFloatingWidget* LFloatingWidget = nullptr;
+	IFloatingWidget* FloatingWidget = nullptr;
 	bool OpaqueUndocking = CDockManager::testConfigFlag(CDockManager::OpaqueUndocking) ||
 		(DraggingFloatingWidget != DraggingState);
 
@@ -252,21 +277,21 @@ bool DockWidgetTabPrivate::startFloating(eDragState DraggingState)
 	QSize Size;
 	if (DockArea->dockWidgetsCount() > 1)
 	{
-		LFloatingWidget = createFloatingWidget(DockWidget, OpaqueUndocking);
+		FloatingWidget = createFloatingWidget(DockWidget, OpaqueUndocking);
 		Size = DockWidget->size();
 	}
 	else
 	{
-		LFloatingWidget = createFloatingWidget(DockArea, OpaqueUndocking);
+		FloatingWidget = createFloatingWidget(DockArea, OpaqueUndocking);
 		Size = DockArea->size();
 	}
 
     if (DraggingFloatingWidget == DraggingState)
     {
-        LFloatingWidget->startFloating(DragStartMousePosition, Size, DraggingFloatingWidget, _this);
+        FloatingWidget->startFloating(DragStartMousePosition, Size, DraggingFloatingWidget, _this);
     	auto Overlay = DockWidget->dockManager()->containerOverlay();
     	Overlay->setAllowedAreas(OuterDockAreas);
-    	this->FloatingWidget = LFloatingWidget;
+    	this->FloatingWidget = FloatingWidget;
     }
     else
     {
@@ -461,11 +486,7 @@ bool CDockWidgetTab::isActiveTab() const
 //============================================================================
 void CDockWidgetTab::setActiveTab(bool active)
 {
-	bool DockWidgetClosable = d->DockWidget->features().testFlag(CDockWidget::DockWidgetClosable);
-	bool ActiveTabHasCloseButton = d->testConfigFlag(CDockManager::ActiveTabHasCloseButton);
-	bool AllTabsHaveCloseButton = d->testConfigFlag(CDockManager::AllTabsHaveCloseButton);
-	bool TabHasCloseButton = (ActiveTabHasCloseButton && active) | AllTabsHaveCloseButton;
-	d->CloseButton->setVisible(DockWidgetClosable && TabHasCloseButton);
+	d->updateCloseButtonVisibility(active);
 
 	// Focus related stuff
 	if (CDockManager::testConfigFlag(CDockManager::FocusHighlighting) && !d->DockWidget->dockManager()->isRestoringState())
@@ -653,6 +674,7 @@ void CDockWidgetTab::onDockWidgetFeaturesChanged()
 	SizePolicy.setRetainSizeWhenHidden(Features.testFlag(CDockWidget::DockWidgetClosable)
 		&& d->testConfigFlag(CDockManager::RetainTabSizeWhenCloseButtonHidden));
 	d->CloseButton->setSizePolicy(SizePolicy);
+	d->updateCloseButtonVisibility(isActiveTab());
 }
 
 
@@ -673,5 +695,13 @@ void CDockWidgetTab::updateStyle()
 
 
 } // namespace ads
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 //---------------------------------------------------------------------------
 // EOF DockWidgetTab.cpp

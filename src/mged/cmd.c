@@ -267,6 +267,7 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 
     solid_list_callback();
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return TCL_OK;
 }
@@ -338,6 +339,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	return TCL_ERROR;
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return TCL_OK;
 }
@@ -680,7 +682,7 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
     if (!GEDP->ged_gvp)
 	GEDP->ged_gvp = view_state->vs_gvp;
-    GEDP->ged_dmp = (void *)curr_dm_list->dml_dmp;
+    GEDP->ged_dmp = (void *)mged_curr_dm->dm_dmp;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
@@ -860,7 +862,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 
 	BU_LIST_DEQUEUE(&clp->l);
 	if (clp->cl_tie != NULL)
-	    clp->cl_tie->dml_tie = CMD_LIST_NULL;
+	    clp->cl_tie->dm_tie = CMD_LIST_NULL;
 	bu_vls_free(&clp->cl_more_default);
 	bu_vls_free(&clp->cl_name);
 	bu_free((void *)clp, "cmd_close: clp");
@@ -1298,7 +1300,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 {
     int uflag = 0;		/* untie flag */
     struct cmd_list *clp;
-    struct dm_list *dlp;
+    struct mged_dm *dlp = MGED_DM_NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 3 < argc) {
@@ -1312,27 +1314,27 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l)) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
-		if (dm_get_pathname(DMP)) {
-		    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-				  bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-		    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+		struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dm_dmp);
+		if (pn && bu_vls_strlen(pn)) {
+		    bu_vls_printf(&vls, "%s %s", bu_vls_cstr(&clp->cl_name), bu_vls_cstr(pn));
+		    Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
 		}
 	    } else {
-		bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
-		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+		bu_vls_printf(&vls, "%s {}", bu_vls_cstr(&clp->cl_name));
+		Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
 	    }
 	}
 
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
-	    if (dm_get_pathname(DMP)) {
-		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			      bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+	    struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dm_dmp);
+	    if (pn && bu_vls_strlen(pn)) {
+		bu_vls_printf(&vls, "%s %s", bu_vls_cstr(&clp->cl_name), bu_vls_cstr(pn));
+		Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
 	    }
 	} else {
-	    bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
-	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+	    bu_vls_printf(&vls, "%s {}", bu_vls_cstr(&clp->cl_name));
+	    Tcl_AppendElement(interpreter, bu_vls_cstr(&vls));
 	}
 
 	bu_vls_free(&vls);
@@ -1366,9 +1368,9 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
     if (uflag) {
 	if (clp->cl_tie)
-	    clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
+	    clp->cl_tie->dm_tie = (struct cmd_list *)NULL;
 
-	clp->cl_tie = (struct dm_list *)NULL;
+	clp->cl_tie = (struct mged_dm *)NULL;
 
 	bu_vls_free(&vls);
 	return TCL_OK;
@@ -1377,8 +1379,9 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     /* print out the display manager that we're tied to */
     if (argc == 2) {
 	if (clp->cl_tie) {
-	    if (dm_get_pathname(DMP)) {
-		Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+	    struct bu_vls *pn = dm_get_pathname(clp->cl_tie->dm_dmp);
+	    if (pn && bu_vls_strlen(pn)) {
+		Tcl_AppendElement(interpreter, bu_vls_cstr(pn));
 	    }
 	} else {
 	    Tcl_AppendElement(interpreter, "");
@@ -1392,11 +1395,16 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     else
 	bu_vls_strcpy(&vls, argv[2]);
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if (dm_get_pathname(dlp->dml_dmp) && !bu_vls_strcmp(&vls, dm_get_pathname(dlp->dml_dmp)))
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	struct bu_vls *pn = dm_get_pathname(m_dmp->dm_dmp);
+	if (pn && !bu_vls_strcmp(&vls, pn)) {
+	    dlp = m_dmp;
 	    break;
+	}
+    }
 
-    if (dlp == &head_dm_list) {
+    if (dlp == MGED_DM_NULL) {
 	Tcl_AppendResult(interpreter, "f_tie: unrecognized path name - ",
 			 bu_vls_addr(&vls), "\n", (char *)NULL);
 	bu_vls_free(&vls);
@@ -1405,15 +1413,15 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
     /* already tied */
     if (clp->cl_tie)
-	clp->cl_tie->dml_tie = (struct cmd_list *)NULL;
+	clp->cl_tie->dm_tie = (struct cmd_list *)NULL;
 
     clp->cl_tie = dlp;
 
     /* already tied */
-    if (dlp->dml_tie)
-	dlp->dml_tie->cl_tie = (struct dm_list *)NULL;
+    if (dlp->dm_tie)
+	dlp->dm_tie->cl_tie = (struct mged_dm *)NULL;
 
-    dlp->dml_tie = clp;
+    dlp->dm_tie = clp;
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -1425,7 +1433,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
 {
     int status;
     const char *av[2];
-    struct dm_list *dml;
+    struct mged_dm *dml;
     struct _view_state *vsp;
 
     if (argc < 2) {
@@ -1440,7 +1448,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    dml = curr_dm_list;
+    dml = mged_curr_dm;
     GEDP->ged_gvp = view_state->vs_gvp;
     status = mged_attach("postscript", argc, argv);
     if (status == TCL_ERROR)
@@ -1449,14 +1457,15 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     vsp = view_state;  /* save state info pointer */
 
     bu_free((void *)menu_state, "f_postscript: menu_state");
-    menu_state = dml->dml_menu_state;
+    menu_state = dml->dm_menu_state;
 
-    scroll_top = dml->dml_scroll_top;
-    scroll_active = dml->dml_scroll_active;
-    scroll_y = dml->dml_scroll_y;
-    memmove((void *)scroll_array, (void *)dml->dml_scroll_array, sizeof(struct scroll_item *) * 6);
+    scroll_top = dml->dm_scroll_top;
+    scroll_active = dml->dm_scroll_active;
+    scroll_y = dml->dm_scroll_y;
+    memmove((void *)scroll_array, (void *)dml->dm_scroll_array, sizeof(struct scroll_item *) * 6);
 
-    dirty = 1;
+    DMP_dirty = 1;
+    dm_set_dirty(DMP, 1);
     refresh();
 
     view_state = vsp;  /* restore state info pointer */
@@ -1473,8 +1482,6 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
 int
 f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct dm_list *p;
-
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1486,19 +1493,22 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* print pathname of drawing window with primary focus */
     if (argc == 1) {
-	if (dm_get_pathname(DMP)) {
-	    Tcl_AppendResult(interpreter, bu_vls_addr(dm_get_pathname(DMP)), (char *)NULL);
+	struct bu_vls *pn = dm_get_pathname(DMP);
+	if (pn && bu_vls_strlen(pn)) {
+	    Tcl_AppendResult(interpreter, bu_vls_cstr(pn), (char *)NULL);
 	}
 	return TCL_OK;
     }
 
     /* change primary focus to window argv[1] */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (dm_get_pathname(p->dml_dmp) && BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	struct bu_vls *pn = dm_get_pathname(p->dm_dmp);
+	if (pn && BU_STR_EQUAL(argv[1], bu_vls_cstr(pn))) {
 	    set_curr_dm(p);
 
-	    if (curr_dm_list->dml_tie)
-		curr_cmd_list = curr_dm_list->dml_tie;
+	    if (mged_curr_dm->dm_tie)
+		curr_cmd_list = mged_curr_dm->dm_tie;
 	    else
 		curr_cmd_list = &head_cmd_list;
 
@@ -1742,6 +1752,7 @@ cmd_units(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     sf = DBIP->dbi_base2local / sf;
     update_grids(sf);
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return TCL_OK;
 }
@@ -1823,18 +1834,18 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	return TCL_ERROR;
 
     /* update and resize the views */
-    struct dm_list *save_dmlp = curr_dm_list;
+    struct mged_dm *save_m_dmp = mged_curr_dm;
     struct cmd_list *save_cmd_list = curr_cmd_list;
-    struct dm_list *dmlp;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	int non_empty = 0; /* start out empty */
 
-	set_curr_dm(dmlp);
+	set_curr_dm(m_dmp);
 
-	if (curr_dm_list->dml_tie) {
-	    curr_cmd_list = curr_dm_list->dml_tie;
+	if (mged_curr_dm->dm_tie) {
+	    curr_cmd_list = mged_curr_dm->dm_tie;
 	} else {
 	    curr_cmd_list = &head_cmd_list;
 	}
@@ -1870,7 +1881,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	}
     }
 
-    set_curr_dm(save_dmlp);
+    set_curr_dm(save_m_dmp);
     curr_cmd_list = save_cmd_list;
     GEDP->ged_gvp = view_state->vs_gvp;
 
