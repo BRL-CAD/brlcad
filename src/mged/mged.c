@@ -2790,6 +2790,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
     /* initialize a separate wdbp for libged to manage */
     ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
+    if (GEDP) {
+	ged_free(GEDP);
+	BU_ALLOC(GEDP, struct ged);
+    }
     GED_INIT(GEDP, ged_wdbp);
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
