@@ -84,9 +84,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # There will be a sub-directory that is specific to the installed
   # version of CREO - find it
   file(GLOB MDIR RELATIVE "${CREO_ROOT_DIR}" "${CREO_ROOT_DIR}/M*" )
-  if(NOT MDIR)
-    message(FATAL_ERROR "No directory matching the pattern M* found in ${CREO_ROOT_DIR}.  This may indicate the CREO installation directory conventions have changed - if so, the CMakeLists.txt file will need to be updated to reflect the new path structures.")
-  endif(NOT MDIR)
 
   # Define a variable for the current CREO platform
   set(CREO_OS_VERSION x86e_win64)
