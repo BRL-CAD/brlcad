@@ -39,38 +39,16 @@ BRLCAD_ADDEXEC(dm_test dm_test.c "libdm;libbu" TEST)
 
 if (BRLCAD_ENABLE_TK)
   include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
     ${TCL_INCLUDE_PATH}
     ${TK_INCLUDE_PATH}
     )
 
-if (0)
-  set(renderer_srcs
-    renderer/camera.c
-    renderer/darray.c
-    renderer/draw2d.c
-    renderer/graphics.c
-    renderer/image.c
-    renderer/maths.c
-    renderer/mesh.c
-    renderer/private.c
-    renderer/scene.c
-    renderer/skeleton.c
-    renderer/texture.c
-    renderer/scenes/blinn_shader.c
-    renderer/scenes/cache_helper.c
-    renderer/scenes/scene_helper.c
-    )
- BRLCAD_ADDEXEC(rendered_img "rendered_image.cpp;${renderer_srcs}" "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
-endif (0)
-
- BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
- BRLCAD_ADDEXEC(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
+  BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
+  BRLCAD_ADDEXEC(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
 endif (BRLCAD_ENABLE_TK)
 
 CMAKEFILES(CMakeLists.txt)
 CMAKEFILES(
-  rendered_image.cpp
   tcl_img.cpp
   tcl_tevent.cpp
   )
