@@ -81,7 +81,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     endif(NOT "${CMAKE_GENERATOR_TOOLSET}" STREQUAL "v110_xp")
   endif("${CREO_VERSION}" VERSION_GREATER "2.9999" AND "${CREO_VERSION}" VERSION_LESS "4.0")
 
-  # There will be a sub-directory that is specific to the installed
+  # There may be a sub-directory that is specific to the installed
   # version of CREO - find it
   file(GLOB MDIR RELATIVE "${CREO_ROOT_DIR}" "${CREO_ROOT_DIR}/M*" )
 
