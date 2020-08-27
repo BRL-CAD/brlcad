@@ -210,10 +210,10 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     SPSR
     gdiam
     openNURBS
-    p2t
+    poly2tri
     regex_brl
     vds
-    z_brl
+    z_brl1
     )
   set(BRLCAD_STATIC_LIBS)
   set(brlcadlibs_notinstalled)
@@ -223,7 +223,12 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/${blib}.dll COPYONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
-    set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
+    # Sigh - zlib doesn't follow the general pattern
+    if("${blib}" STREQUAL "z_brl1")
+      set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/z_brl.lib")
+    else("${blib}" STREQUAL "z_brl1")
+      set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
+    endif("${blib}" STREQUAL "z_brl1")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
     if(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
       set(brlcadlibs_notinstalled "${brlcadlibs_notinstalled}\n     ${blib}.dll")
