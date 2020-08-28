@@ -18,7 +18,6 @@ extern "C" {
 #include "maths.h"
 #include "mesh.h"
 #include "scene.h"
-#include "skeleton.h"
 #include "texture.h"
 
 scene_t *scene_from_file(const char *filename, mat4_t root);
@@ -27,10 +26,6 @@ scene_t *blinn_lighthouse_scene(void);
 /* mesh related functions */
 mesh_t *cache_acquire_mesh(const char *filename);
 void cache_release_mesh(mesh_t *mesh);
-
-/* skeleton related functions */
-skeleton_t *cache_acquire_skeleton(const char *filename);
-void cache_release_skeleton(skeleton_t *skeleton);
 
 /* texture related functions */
 texture_t *cache_acquire_texture(const char *filename, usage_t usage);

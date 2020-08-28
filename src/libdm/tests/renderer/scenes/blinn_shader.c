@@ -5,46 +5,10 @@
 
 /* low-level api */
 
-static mat4_t get_model_matrix(blinn_attribs_t *attribs,
-                               blinn_uniforms_t *uniforms) {
-    if (uniforms->joint_matrices) {
-        mat4_t joint_matrices[4];
-        mat4_t skin_matrix;
-
-        joint_matrices[0] = uniforms->joint_matrices[(int)attribs->joint.x];
-        joint_matrices[1] = uniforms->joint_matrices[(int)attribs->joint.y];
-        joint_matrices[2] = uniforms->joint_matrices[(int)attribs->joint.z];
-        joint_matrices[3] = uniforms->joint_matrices[(int)attribs->joint.w];
-
-        skin_matrix = mat4_combine(joint_matrices, attribs->weight);
-        return mat4_mul_mat4(uniforms->model_matrix, skin_matrix);
-    } else {
-        return uniforms->model_matrix;
-    }
-}
-
-static mat3_t get_normal_matrix(blinn_attribs_t *attribs,
-                                blinn_uniforms_t *uniforms) {
-    if (uniforms->joint_n_matrices) {
-        mat3_t joint_n_matrices[4];
-        mat3_t skin_n_matrix;
-
-        joint_n_matrices[0] = uniforms->joint_n_matrices[(int)attribs->joint.x];
-        joint_n_matrices[1] = uniforms->joint_n_matrices[(int)attribs->joint.y];
-        joint_n_matrices[2] = uniforms->joint_n_matrices[(int)attribs->joint.z];
-        joint_n_matrices[3] = uniforms->joint_n_matrices[(int)attribs->joint.w];
-
-        skin_n_matrix = mat3_combine(joint_n_matrices, attribs->weight);
-        return mat3_mul_mat3(uniforms->normal_matrix, skin_n_matrix);
-    } else {
-        return uniforms->normal_matrix;
-    }
-}
-
 static vec4_t shadow_vertex_shader(blinn_attribs_t *attribs,
                                    blinn_varyings_t *varyings,
                                    blinn_uniforms_t *uniforms) {
-    mat4_t model_matrix = get_model_matrix(attribs, uniforms);
+    mat4_t model_matrix = uniforms->model_matrix;
     mat4_t light_vp_matrix = uniforms->light_vp_matrix;
 
     vec4_t input_position = vec4_from_vec3(attribs->position, 1);
@@ -58,8 +22,8 @@ static vec4_t shadow_vertex_shader(blinn_attribs_t *attribs,
 static vec4_t common_vertex_shader(blinn_attribs_t *attribs,
                                    blinn_varyings_t *varyings,
                                    blinn_uniforms_t *uniforms) {
-    mat4_t model_matrix = get_model_matrix(attribs, uniforms);
-    mat3_t normal_matrix = get_normal_matrix(attribs, uniforms);
+    mat4_t model_matrix = uniforms->model_matrix;
+    mat3_t normal_matrix = uniforms->normal_matrix;
     mat4_t camera_vp_matrix = uniforms->camera_vp_matrix;
     mat4_t light_vp_matrix = uniforms->light_vp_matrix;
 
@@ -252,27 +216,11 @@ vec4_t blinn_fragment_shader(void *varyings_, void *uniforms_,
 static void update_model(model_t *model, perframe_t *perframe) {
     float ambient_intensity = perframe->ambient_intensity;
     float punctual_intensity = perframe->punctual_intensity;
-    skeleton_t *skeleton = model->skeleton;
     mat4_t model_matrix = model->transform;
     mat3_t normal_matrix;
-    mat4_t *joint_matrices;
-    mat3_t *joint_n_matrices;
     blinn_uniforms_t *uniforms;
 
-    if (skeleton) {
-        skeleton_update_joints(skeleton, perframe->frame_time);
-        joint_matrices = skeleton_get_joint_matrices(skeleton);
-        joint_n_matrices = skeleton_get_normal_matrices(skeleton);
-        if (model->attached >= 0) {
-            mat4_t node_matrix = joint_matrices[model->attached];
-            model_matrix = mat4_mul_mat4(model_matrix, node_matrix);
-            joint_matrices = NULL;
-            joint_n_matrices = NULL;
-        }
-    } else {
-        joint_matrices = NULL;
-        joint_n_matrices = NULL;
-    }
+
     normal_matrix = mat3_inverse_transpose(mat3_from_mat4(model_matrix));
 
     uniforms = (blinn_uniforms_t*)program_get_uniforms(model->program);
@@ -284,8 +232,6 @@ static void update_model(model_t *model, perframe_t *perframe) {
                                               perframe->light_view_matrix);
     uniforms->camera_vp_matrix = mat4_mul_mat4(perframe->camera_proj_matrix,
                                                perframe->camera_view_matrix);
-    uniforms->joint_matrices = joint_matrices;
-    uniforms->joint_n_matrices = joint_n_matrices;
     uniforms->ambient_intensity = float_clamp(ambient_intensity, 0, 5);
     uniforms->punctual_intensity = float_clamp(punctual_intensity, 0, 5);
     uniforms->shadow_map = perframe->shadow_map;
@@ -324,7 +270,6 @@ static void release_model(model_t *model) {
     cache_release_texture(uniforms->specular_map);
     cache_release_texture(uniforms->emission_map);
     program_release(model->program);
-    cache_release_skeleton(model->skeleton);
     cache_release_mesh(model->mesh);
     free(model);
 }
@@ -334,7 +279,6 @@ static texture_t *acquire_color_texture(const char *filename) {
 }
 
 model_t *blinn_create_model(const char *mesh, mat4_t transform,
-                            const char *skeleton, int attached,
                             blinn_material_t *material) {
     int sizeof_attribs = sizeof(blinn_attribs_t);
     int sizeof_varyings = sizeof(blinn_varyings_t);
@@ -359,8 +303,6 @@ model_t *blinn_create_model(const char *mesh, mat4_t transform,
     model->mesh = cache_acquire_mesh(mesh);
     model->program = program;
     model->transform = transform;
-    model->skeleton = cache_acquire_skeleton(skeleton);
-    model->attached = attached;
     model->opaque = !material->enable_blend;
     model->distance = 0;
     model->update = update_model;

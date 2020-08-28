@@ -33,7 +33,6 @@ typedef struct {
 typedef struct {
     int index;
     char mesh[LINE_SIZE];
-    char skeleton[LINE_SIZE];
     int attached;
     int material;
     int transform;
@@ -176,14 +175,16 @@ static scene_transform_t *read_transforms(FILE *file) {
 static scene_model_t read_model(FILE *file) {
     scene_model_t model;
     int items;
+    char skel[LINE_SIZE];
+    int attach;
 
     items = fscanf(file, " model %d:", &model.index);
     assert(items == 1);
     items = fscanf(file, " mesh: %s", model.mesh);
     assert(items == 1);
-    items = fscanf(file, " skeleton: %s", model.skeleton);
+    items = fscanf(file, " skeleton: %s", skel);
     assert(items == 1);
-    items = fscanf(file, " attached: %d", &model.attached);
+    items = fscanf(file, " attached: %d", &attach);
     assert(items == 1);
     items = fscanf(file, " material: %d", &model.material);
     assert(items == 1);
@@ -252,8 +253,6 @@ static scene_t *create_blinn_scene(scene_light_t *scene_light,
         scene_transform_t scene_transform;
         scene_model_t scene_model;
         const char *mesh;
-        const char *skeleton;
-        int attached;
         mat4_t transform;
         blinn_material_t material;
         model_t *model;
@@ -265,8 +264,6 @@ static scene_t *create_blinn_scene(scene_light_t *scene_light,
         UNUSED_VAR(num_materials);
 
         mesh = wrap_path(scene_model.mesh);
-        skeleton = wrap_path(scene_model.skeleton);
-        attached = scene_model.attached;
 
         scene_transform = scene_transforms[scene_model.transform];
         transform = mat4_mul_mat4(root_transform, scene_transform.matrix);
@@ -281,8 +278,7 @@ static scene_t *create_blinn_scene(scene_light_t *scene_light,
         material.enable_blend = wrap_knob(scene_material.enable_blend);
         material.alpha_cutoff = scene_material.alpha_cutoff;
 
-        model = blinn_create_model(mesh, transform, skeleton, attached,
-                                   &material);
+        model = blinn_create_model(mesh, transform, &material);
         darray_push(models, model, model_t *);
     }
 

@@ -4,7 +4,6 @@
 #include "maths.h"
 #include "mesh.h"
 #include "scene.h"
-#include "skeleton.h"
 #include "texture.h"
 
 scene_t *scene_create(vec3_t background, model_t *skybox, model_t **models,

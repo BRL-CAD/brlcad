@@ -27,8 +27,6 @@ typedef struct {
     mat3_t normal_matrix;
     mat4_t light_vp_matrix;
     mat4_t camera_vp_matrix;
-    mat4_t *joint_matrices;
-    mat3_t *joint_n_matrices;
     float ambient_intensity;
     float punctual_intensity;
     texture_t *shadow_map;
@@ -62,7 +60,6 @@ typedef struct {
 } blinn_material_t;
 
 model_t *blinn_create_model(const char *mesh, mat4_t transform,
-                            const char *skeleton, int attached,
                             blinn_material_t *material);
 
 #endif

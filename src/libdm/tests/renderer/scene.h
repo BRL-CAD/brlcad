@@ -4,7 +4,6 @@
 #include "graphics.h"
 #include "maths.h"
 #include "mesh.h"
-#include "skeleton.h"
 #include "texture.h"
 
 typedef struct {
@@ -26,9 +25,6 @@ typedef struct model {
     mesh_t *mesh;
     program_t *program;
     mat4_t transform;
-    /* for animation */
-    skeleton_t *skeleton;
-    int attached;
     /* for sorting */
     int opaque;
     float distance;
