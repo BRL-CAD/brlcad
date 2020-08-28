@@ -6,11 +6,10 @@
 #include "scene.h"
 #include "texture.h"
 
-scene_t *scene_create(vec3_t background, model_t *skybox, model_t **models,
+scene_t *scene_create(vec3_t background, model_t **models,
                       float ambient_intensity, float punctual_intensity) {
     scene_t *scene = (scene_t*)malloc(sizeof(scene_t));
     scene->background = vec4_from_vec3(background, 1);
-    scene->skybox = skybox;
     scene->models = models;
     scene->ambient_intensity = ambient_intensity;
     scene->punctual_intensity = punctual_intensity;
@@ -20,10 +19,6 @@ scene_t *scene_create(vec3_t background, model_t *skybox, model_t **models,
 void scene_release(scene_t *scene) {
     int num_models = darray_size(scene->models);
     int i;
-    if (scene->skybox) {
-        model_t *skybox = scene->skybox;
-        skybox->release(skybox);
-    }
     for (i = 0; i < num_models; i++) {
         model_t *model = scene->models[i];
         model->release(model);

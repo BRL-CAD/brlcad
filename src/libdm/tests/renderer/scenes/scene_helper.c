@@ -7,7 +7,6 @@
 typedef struct {
     vec3_t background;
     char environment[LINE_SIZE];
-    char skybox[LINE_SIZE];
     char shadow[LINE_SIZE];
     float ambient;
     float punctual;
@@ -63,6 +62,7 @@ static scene_light_t read_light(FILE *file) {
     scene_light_t light;
     char header[LINE_SIZE];
     int items;
+    char skybox[LINE_SIZE];
 
     items = fscanf(file, " %s", header);
     assert(equals_to(header, "lighting:"));
@@ -73,7 +73,7 @@ static scene_light_t read_light(FILE *file) {
     assert(items == 3);
     items = fscanf(file, " environment: %s", light.environment);
     assert(items == 1);
-    items = fscanf(file, " skybox: %s", light.skybox);
+    items = fscanf(file, " skybox: %s", skybox);
     assert(items == 1);
     items = fscanf(file, " shadow: %s", light.shadow);
     assert(items == 1);
@@ -232,8 +232,7 @@ static scene_t *create_scene(scene_light_t *light, model_t **models) {
         }
     }
 
-    return scene_create(light->background, NULL, models,
-                        light->ambient, light->punctual);
+    return scene_create(light->background, models, light->ambient, light->punctual);
 }
 
 static scene_t *create_blinn_scene(scene_light_t *scene_light,

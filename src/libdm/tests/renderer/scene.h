@@ -36,14 +36,13 @@ typedef struct model {
 
 typedef struct {
     vec4_t background;
-    model_t *skybox;
     model_t **models;
     /* light intensity */
     float ambient_intensity;
     float punctual_intensity;
 } scene_t;
 
-scene_t *scene_create(vec3_t background, model_t *skybox, model_t **models,
+scene_t *scene_create(vec3_t background, model_t **models,
                       float ambient_intensity, float punctual_intensity
                       );
 void scene_release(scene_t *scene);

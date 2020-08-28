@@ -39,9 +39,6 @@ typedef struct {
     framebuffer_t *framebuffer;
     camera_t *camera;
     vec3_t light_dir;
-    vec2_t click_pos;
-    int single_click;
-    int double_click;
     float frame_time;
     float delta_time;
 } context_t;
@@ -112,7 +109,6 @@ perframe_t test_build_perframe(scene_t *scene, context_t *context) {
     perframe.camera_proj_matrix = camera_get_proj_matrix(camera);
     perframe.ambient_intensity = scene->ambient_intensity;
     perframe.punctual_intensity = scene->punctual_intensity;
-    //perframe.shadow_map = scene->shadow_map;
     perframe.layer_view = -1;
 
     return perframe;
