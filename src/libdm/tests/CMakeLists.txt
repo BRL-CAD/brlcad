@@ -54,7 +54,6 @@ if (BRLCAD_ENABLE_TK)
     renderer/mesh.c
     renderer/private.c
     renderer/scene.c
-    renderer/skeleton.c
     renderer/texture.c
     renderer/scenes/blinn_shader.c
     renderer/scenes/cache_helper.c

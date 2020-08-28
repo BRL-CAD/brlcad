@@ -91,7 +91,7 @@ static void sort_models(model_t **models, mat4_t view_matrix) {
 
 scene_t *blinn_lighthouse_scene(void) {
     mat4_t translation = mat4_translate(-78.203f, -222.929f, 16.181f);
-    mat4_t rotation = mat4_rotate_y(TO_RADIANS(-135));
+    mat4_t rotation = mat4_rotate_z(TO_RADIANS(180));
     mat4_t scale = mat4_scale(0.0016f, 0.0016f, 0.0016f);
     mat4_t root = mat4_mul_mat4(scale, mat4_mul_mat4(rotation, translation));
     return scene_from_file("lighthouse/lighthouse.scn", root);
@@ -112,7 +112,7 @@ perframe_t test_build_perframe(scene_t *scene, context_t *context) {
     perframe.camera_proj_matrix = camera_get_proj_matrix(camera);
     perframe.ambient_intensity = scene->ambient_intensity;
     perframe.punctual_intensity = scene->punctual_intensity;
-    perframe.shadow_map = scene->shadow_map;
+    //perframe.shadow_map = scene->shadow_map;
     perframe.layer_view = -1;
 
     return perframe;
@@ -126,18 +126,6 @@ void test_draw_scene(scene_t *scene, framebuffer_t *framebuffer, perframe_t *per
     for (i = 0; i < num_models; i++) {
 	model_t *model = models[i];
 	model->update(model, perframe);
-    }
-
-    if (scene->shadow_buffer && scene->shadow_map) {
-	sort_models(models, perframe->light_view_matrix);
-	framebuffer_clear_depth(scene->shadow_buffer, 1);
-	for (i = 0; i < num_models; i++) {
-	    model_t *model = models[i];
-	    if (model->opaque) {
-		model->draw(model, scene->shadow_buffer, 1);
-	    }
-	}
-	texture_from_depthbuffer(scene->shadow_map, scene->shadow_buffer);
     }
 
     sort_models(models, perframe->camera_view_matrix);
