@@ -4,7 +4,7 @@
 #include "graphics.h"
 #include "maths.h"
 #include "mesh.h"
-#include "texture.h"
+//#include "texture.h"
 
 typedef struct {
     float frame_time;
@@ -17,7 +17,6 @@ typedef struct {
     mat4_t camera_proj_matrix;
     float ambient_intensity;
     float punctual_intensity;
-    texture_t *shadow_map;
     int layer_view;
 } perframe_t;
 
@@ -42,14 +41,11 @@ typedef struct {
     /* light intensity */
     float ambient_intensity;
     float punctual_intensity;
-    /* shadow mapping */
-    framebuffer_t *shadow_buffer;
-    texture_t *shadow_map;
 } scene_t;
 
 scene_t *scene_create(vec3_t background, model_t *skybox, model_t **models,
-                      float ambient_intensity, float punctual_intensity,
-                      int shadow_width, int shadow_height);
+                      float ambient_intensity, float punctual_intensity
+                      );
 void scene_release(scene_t *scene);
 
 #endif

@@ -234,7 +234,6 @@ static void update_model(model_t *model, perframe_t *perframe) {
                                                perframe->camera_view_matrix);
     uniforms->ambient_intensity = float_clamp(ambient_intensity, 0, 5);
     uniforms->punctual_intensity = float_clamp(punctual_intensity, 0, 5);
-    uniforms->shadow_map = perframe->shadow_map;
 }
 
 static void draw_model(model_t *model, framebuffer_t *framebuffer,

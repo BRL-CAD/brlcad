@@ -233,8 +233,7 @@ static scene_t *create_scene(scene_light_t *light, model_t **models) {
     }
 
     return scene_create(light->background, NULL, models,
-                        light->ambient, light->punctual,
-                        shadow_width, shadow_height);
+                        light->ambient, light->punctual);
 }
 
 static scene_t *create_blinn_scene(scene_light_t *scene_light,
