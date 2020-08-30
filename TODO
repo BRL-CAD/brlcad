@@ -1155,9 +1155,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   http://support.echoview.com/WebHelp/Reference/File_formats/
     Export_file_formats/Volume_data_set_file_formats.htm
 
-* turn geometry converters and image converters into libraries
-  (started as libraries libgcv and libicv)
-
 * add support for querying geometry properties to library including
   computing surface area and weight/mass.
 
