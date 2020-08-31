@@ -430,6 +430,7 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&str, "%s %s\n", bu_vls_cstr(init_proc_vls), bu_vls_cstr(&dmp->i->dm_pathName));
 	if (Tcl_Eval(interp, bu_vls_cstr(&str)) == BRLCAD_ERROR) {
+	    bu_log("tk dm init - error running user supplied script (%s):\n%s\n", bu_vls_cstr(init_proc_vls), Tcl_GetStringResult(interp));
 	    bu_vls_free(&str);
 	    return -1;
 	}
@@ -448,10 +449,10 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
 
     /* Set up the Tk_Photo subwindow */
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&tcl_cmd, "image create %s.canvas.photo", bu_vls_cstr(&dmp->i->dm_pathName));
+    bu_vls_sprintf(&tcl_cmd, "image create photo %s.canvas.photo", bu_vls_cstr(&dmp->i->dm_pathName));
     if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
+	bu_log("tk dm - error creating %s.canvas.photo:\n%s\n", bu_vls_cstr(&dmp->i->dm_pathName), Tcl_GetStringResult(interp));
 	bu_vls_free(&tcl_cmd);
-	bu_log("Tcl/Tk photo creation failed\n");
 	return -1;
     }
     bu_vls_free(&tcl_cmd);
@@ -499,8 +500,8 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
     bu_vls_sprintf(&tcl_cmd, "canvas %s.canvas -width %d -height %d -borderwidth 0",
 	    bu_vls_cstr(&dmp->i->dm_pathName), dm_data.width, dm_data.height);
     if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
+	bu_log("tk dm - error creating %s.canvas:\n%s\n", bu_vls_cstr(&dmp->i->dm_pathName), Tcl_GetStringResult(interp));
 	bu_vls_free(&tcl_cmd);
-	bu_log("Tcl/Tk photo canvas creation failed\n");
 	return -1;
     }
     bu_vls_sprintf(&tcl_cmd, "pack %s.canvas -fill both -expand 1", bu_vls_cstr(&dmp->i->dm_pathName));
@@ -513,7 +514,7 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
 	    bu_vls_cstr(&dmp->i->dm_pathName), bu_vls_cstr(&dmp->i->dm_pathName));
     if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
 	bu_vls_free(&tcl_cmd);
-	bu_log("Tcl/Tk photo canvas packing failed\n");
+	bu_log("Tcl/Tk photo/canvas association failed\n");
 	return -1;
     }
 
