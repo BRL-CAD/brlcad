@@ -84,6 +84,7 @@ struct modifiable_tk_vars {
 
 struct tk_vars {
     OSMesaContext glxc;
+    Tk_PhotoHandle dm_img;
     void *buf;
     GLdouble faceplate_mat[16];
     int face_flag;

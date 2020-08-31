@@ -335,6 +335,7 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
 {
     struct modifiable_tk_vars *mvars = (struct modifiable_tk_vars *)dmp->i->m_vars;
     struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
+    struct tk_vars *privvars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     // Set the Tcl/Tk pathname for this window
     if (bu_vls_strlen(&dmp->i->dm_pathName) == 0) {
@@ -418,9 +419,9 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
     bu_vls_free(&tcl_cmd);
 
     bu_vls_sprintf(&tcl_cmd, "%s.canvas.photo", bu_vls_cstr(&dmp->i->dm_pathName));
-    Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, bu_vls_cstr(&tcl_cmd));
-    Tk_PhotoBlank(dm_img);
-    Tk_PhotoSetSize(interp, dm_img, dmp->i->dm_width, dmp->i->dm_height);
+    privvars->dm_img = Tk_FindPhoto(interp, bu_vls_cstr(&tcl_cmd));
+    Tk_PhotoBlank(privvars->dm_img);
+    Tk_PhotoSetSize(interp, privvars->dm_img, dmp->i->dm_width, dmp->i->dm_height);
 
     // Initialize the PhotoImageBlock information
     Tk_PhotoImageBlock dm_data;
@@ -454,7 +455,7 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
     }
 
     // Let Tk_Photo know we have data
-    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
+    Tk_PhotoPutBlock(interp, privvars->dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
     // Define a canvas widget, pack it into the root window, and associate the image with it
     bu_vls_sprintf(&tcl_cmd, "canvas %s.canvas -width %d -height %d -borderwidth 0",
@@ -482,6 +483,7 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
 
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->i->dm_id = pubvars->win;
+    dmp->i->dm_interp = (void *)interp;
 
     return 0;
 }
@@ -890,6 +892,8 @@ tk_drawBegin(struct dm *dmp)
 HIDDEN int
 tk_drawEnd(struct dm *dmp)
 {
+    struct tk_vars *privvars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
+
     if (dmp->i->dm_debugLevel)
 	bu_log("tk_drawEnd\n");
 
@@ -940,6 +944,18 @@ tk_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
+    // Tk_Photo is the output of the draw, and that's an image as far
+    // as this logic is concerned.
+    tk_getDisplayImage(dmp, (unsigned char **)&privvars->buf);
+
+    Tk_PhotoImageBlock dm_data;
+    Tk_PhotoGetImage(privvars->dm_img, &dm_data);
+    if (dm_data.width != dmp->i->dm_width || dm_data.height != dmp->i->dm_height) {
+	Tk_PhotoSetSize((Tcl_Interp *)dmp->i->dm_interp, privvars->dm_img, dmp->i->dm_width, dmp->i->dm_height);
+	Tk_PhotoGetImage(privvars->dm_img, &dm_data);
+    }
+    dm_data.pixelPtr = (unsigned char *)privvars->buf;
+    Tk_PhotoPutBlock((Tcl_Interp *)dmp->i->dm_interp, privvars->dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
     return BRLCAD_OK;
 }
