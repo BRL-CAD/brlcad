@@ -28,15 +28,8 @@
 
 #include "common.h"
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-
-#ifdef HAVE_GL_GLX_H
-#  include <GL/glx.h>
-#endif
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
+#include "OSMesa/gl.h"
+#include "OSMesa/osmesa.h"
 
 #include "tk.h"
 #define HAVE_X11_TYPES 1
@@ -90,13 +83,11 @@ struct modifiable_tk_vars {
 };
 
 struct tk_vars {
-    GLXContext glxc;
+    OSMesaContext glxc;
+    void *buf;
     GLdouble faceplate_mat[16];
     int face_flag;
     int *perspective_mode;
-    int fontOffset;
-    int ovec;		/* Old color map entry number */
-    char is_direct;
     GLclampf r, g, b;
 };
 
@@ -106,9 +97,6 @@ struct dm_tkvars {
     Tk_Window top;
     Tk_Window xtkwin;
     int depth;
-    Colormap cmap;
-    XVisualInfo *vip;
-    XFontStruct *fontstruct;
     int devmotionnotify;
     int devbuttonpress;
     int devbuttonrelease;

@@ -154,6 +154,9 @@ mged_slider_free_vls(struct mged_dm *p)
 int
 release(char *name, int need_close)
 {
+    if (!DMP)
+	return TCL_OK;  /* Ignore */
+
     struct mged_dm *save_dm_list = MGED_DM_NULL;
     struct bu_vls *cpathname = dm_get_pathname(DMP);
     struct bu_vls *pathname = NULL;

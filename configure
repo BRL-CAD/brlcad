@@ -126,6 +126,10 @@ do
                                   shift;;
      --disable-netpbm)                options="$options -DBRLCAD_NETPBM=SYSTEM";
                                   shift;;
+     --enable-osmesa)                options="$options -DBRLCAD_OSMESA=BUNDLED";
+                                  shift;;
+     --disable-osmesa)                options="$options -DBRLCAD_OSMESA=SYSTEM";
+                                  shift;;
      --enable-utahrle)                options="$options -DBRLCAD_UTAHRLE=BUNDLED";
                                   shift;;
      --disable-utahrle)                options="$options -DBRLCAD_UTAHRLE=SYSTEM";

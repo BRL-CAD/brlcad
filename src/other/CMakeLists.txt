@@ -259,6 +259,24 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
 
+# libosmesa Library - software rasterizer to provide a software-only
+# fallback for 3D display codes.
+set(OSMESA_HAVE_COMMON_H 1)
+set(osmesa_DESCRIPTION "
+Option for enabling and disabling compilation of the Mesa 3-D software
+rasterizer provided with BRL-CAD's source code.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(libosmesa OSMESA osmesa osmesa_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3
+  ALIASES ENABLE_OSMESA FLAGS NOSYS)
+if(BRLCAD_OSMESA_BUILD)
+  SetTargetFolder(osmesa "Third Party Libraries")
+  SetTargetFolder(osmesa-static "Third Party Libraries")
+  set(OSMESA_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libosmesa/include" CACHE STRING "directory with OSMesa/gl.h header" FORCE)
+  mark_as_advanced(OSMESA_INCLUDE_DIR)
+endif(BRLCAD_OSMESA_BUILD)
+
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
 # and the include directory for utahrle are different, so override the
 # macro's setting of UTAHRLE_INCLUDE_DIR here.

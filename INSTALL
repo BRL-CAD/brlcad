@@ -551,6 +551,16 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_NETPBM
 
 
+--- BRLCAD_OSMESA ---
+
+Option for enabling and disabling compilation of the Mesa 3-D software
+rasterizer provided with BRL-CAD's source code.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_OSMESA
+
+
 --- BRLCAD_UTAHRLE ---
 
 Option for enabling and disabling compilation of the Utah Raster

@@ -48,34 +48,11 @@
 #include <signal.h>
 #include <errno.h>
 
-/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
- * parameter names that shadow system symbols.  protect the system
- * symbols by redefining the parameters prior to header inclusion.
- */
-#define j1 J1
-#define y1 Y1
-#define read rd
-#define index idx
-#define access acs
-#define remainder rem
-#ifdef HAVE_GL_GLX_H
-#  define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
-#  include <GL/glx.h>
-#  ifdef HAVE_XRENDER
-#    include <X11/extensions/Xrender.h>
-#  endif
-#endif
-#undef remainder
-#undef access
-#undef index
-#undef read
-#undef y1
-#undef j1
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
+#include "tk.h"
+
 #include "bio.h"
 #include "bresource.h"
+
 
 #include "bu/color.h"
 #include "bu/malloc.h"
@@ -112,7 +89,8 @@ struct wininfo {
  * Per window state information particular to the OpenGL interface
  */
 struct oglinfo {
-    GLXContext glxc;
+    OSMesaContext glxc;
+    void *buf;
     Display *dispp;		/* pointer to X display connection */
     Window wind;		/* Window identifier */
     int firstTime;
@@ -128,7 +106,6 @@ struct oglinfo {
     int vp_height;		/* actual viewport height */
     struct fb_clip clip;	/* current view clipping */
     Window cursor;
-    XVisualInfo *vip;		/* pointer to info on current visual */
     Colormap xcmap;		/* xstyle color map */
     int use_ext_ctrl;		/* for controlling the Ogl graphics engine externally */
 };
@@ -646,8 +623,8 @@ expose_callback(struct fb *ifp)
     if (FB_DEBUG)
 	printf("entering expose_callback()\n");
 
-    if (glXMakeCurrent(TK(ifp)->dispp, TK(ifp)->wind, TK(ifp)->glxc)==False) {
-	fb_log("Warning, expose_callback: glXMakeCurrent unsuccessful.\n");
+    if (OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height)) {
+	fb_log("Warning, expose_callback: OSMesaMakeCurrent unsuccessful.\n");
     }
 
     if (TK(ifp)->firstTime) {
@@ -740,9 +717,7 @@ expose_callback(struct fb *ifp)
 
     /* repaint entire image */
     tk_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
-    if (WIN(ifp)->mi_doublebuffer) {
-	glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-    } else if (TK(ifp)->copy_flag) {
+    if (TK(ifp)->copy_flag) {
 	backbuffer_to_screen(ifp, -1);
     }
 
@@ -761,7 +736,7 @@ expose_callback(struct fb *ifp)
     }
 
     /* unattach context for other threads to use */
-    glXMakeCurrent(TK(ifp)->dispp, None, NULL);
+    OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height);
 }
 
 
@@ -872,147 +847,6 @@ tk_do_event(struct fb *ifp)
 
 
 /**
- * Select an appropriate visual, and set flags.
- *
- * The user requires support for:
- *    	-OpenGL rendering in RGBA mode
- *
- * The user may desire support for:
- *	-a single-buffered OpenGL context
- *	-a double-buffered OpenGL context
- *	-hardware colormapping (DirectColor)
- *
- * We first try to satisfy all requirements and desires. If that
- * fails, we remove the desires one at a time until we succeed or
- * until only requirements are left. If at any stage more than one
- * visual meets the current criteria, the visual with the greatest
- * depth is chosen.
- *
- * The following flags are set:
- * WIN(ifp)->mi_doublebuffer
- * TK(ifp)->soft_cmap_flag
- *
- * Return NULL on failure.
- */
-HIDDEN XVisualInfo *
-fb_tk_choose_visual(struct fb *ifp)
-{
-
-    XVisualInfo *vip, *vibase, *maxvip, _template;
-#define NGOOD 200
-    int good[NGOOD];
-    int num, i, j;
-    int m_hard_cmap, m_sing_buf, m_doub_buf;
-    int use, rgba, dbfr;
-
-    m_hard_cmap = ((ifp->i->if_mode & MODE_7MASK)==MODE_7NORMAL);
-    m_sing_buf  = ((ifp->i->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
-    m_doub_buf =  !m_sing_buf;
-
-    memset((void *)&_template, 0, sizeof(XVisualInfo));
-
-    /* get a list of all visuals on this display */
-    vibase = XGetVisualInfo(TK(ifp)->dispp, 0, &_template, &num);
-    while (1) {
-
-	/* search for all visuals matching current criteria */
-	for (i = 0, j = 0, vip=vibase; i < num; i++, vip++) {
-	    /* requirements */
-	    glXGetConfig(TK(ifp)->dispp, vip, GLX_USE_GL, &use);
-	    if (!use) {
-		continue;
-	    }
-	    glXGetConfig(TK(ifp)->dispp, vip, GLX_RGBA, &rgba);
-	    if (!rgba) {
-		continue;
-	    }
-
-#ifdef HAVE_XRENDER
-	    // https://stackoverflow.com/a/23836430
-	    XRenderPictFormat *pict_format = XRenderFindVisualFormat(TK(ifp)->dispp, vip->visual);
-	    if(pict_format->direct.alphaMask > 0) {
-		//printf("skipping visual with alphaMask\n");
-		continue;
-	    }
-#endif
-
-	    /* desires */
-	    /* X_CreateColormap needs a DirectColor visual */
-	    /* There should be some way of handling this with TrueColor,
-	     * for example:
-	     visual id:    0x50
-	     class:    TrueColor
-	     depth:    24 planes
-	     available colormap entries:    256 per subfield
-	     red, green, blue masks:    0xff0000, 0xff00, 0xff
-	     significant bits in color specification:    8 bits
-	    */
-	    if ((m_hard_cmap) && (vip->class != DirectColor)) {
-		continue;
-	    }
-	    if ((m_hard_cmap) && (vip->colormap_size < 256)) {
-		continue;
-	    }
-	    glXGetConfig(TK(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if ((m_doub_buf) && (!dbfr)) {
-		continue;
-	    }
-	    if ((m_sing_buf) && (dbfr)) {
-		continue;
-	    }
-
-	    /* this visual meets criteria */
-	    if (j >= NGOOD-1) {
-		fb_log("fb_tk_open:  More than %d candidate visuals!\n", NGOOD);
-		break;
-	    }
-	    good[j++] = i;
-	}
-
-	/* from list of acceptable visuals,
-	 * choose the visual with the greatest depth */
-	if (j >= 1) {
-	    maxvip = vibase + good[0];
-	    for (i = 1; i < j; i++) {
-		vip = vibase + good[i];
-		if (vip->depth > maxvip->depth) {
-		    maxvip = vip;
-		}
-	    }
-	    /* set flags and return choice */
-	    TK(ifp)->soft_cmap_flag = !m_hard_cmap;
-	    WIN(ifp)->mi_doublebuffer = m_doub_buf;
-	    return maxvip;
-	}
-
-	/* if no success at this point,
-	 * relax one of the criteria and try again.
-	 */
-	if (m_hard_cmap) {
-	    /* relax hardware colormap requirement */
-	    m_hard_cmap = 0;
-	    fb_log("fb_tk_open: hardware colormapping not available. Using software colormap.\n");
-	} else if (m_sing_buf) {
-	    /* relax single buffering requirement.
-	     * no need for any warning - we'll just use
-	     * the front buffer
-	     */
-	    m_sing_buf = 0;
-	} else if (m_doub_buf) {
-	    /* relax double buffering requirement. */
-	    m_doub_buf = 0;
-	    fb_log("fb_tk_open: double buffering not available. Using single buffer.\n");
-	} else {
-	    /* nothing else to relax */
-	    return NULL;
-	}
-
-    }
-
-}
-
-
-/**
  * Check for a color map being linear in R, G, and B.  Returns 1 for
  * linear map, 0 for non-linear map (i.e., non-identity map).
  */
@@ -1034,9 +868,7 @@ HIDDEN int
 fb_tk_open(struct fb *ifp, const char *file, int width, int height)
 {
     static char title[128] = {0};
-    int mode, i, direct;
-    long valuemask;
-    XSetWindowAttributes swa;
+    int mode;
 
     FB_CK_FB(ifp->i);
 
@@ -1151,138 +983,6 @@ fb_tk_open(struct fb *ifp, const char *file, int width, int height)
     ifp->i->if_xcenter = width/2;
     ifp->i->if_ycenter = height/2;
 
-    /* Open an X connection to the display.  Sending NULL to XOpenDisplay
-       tells it to use the DISPLAY environment variable. */
-    if ((TK(ifp)->dispp = XOpenDisplay(NULL)) == NULL) {
-	fb_log("fb_tk_open: Failed to open display.  Check DISPLAY environment variable.\n");
-	return -1;
-    }
-    ifp->i->if_selfd = ConnectionNumber(TK(ifp)->dispp);
-    if (FB_DEBUG)
-	printf("Connection opened to X display on fd %d.\n", ConnectionNumber(TK(ifp)->dispp));
-
-    /* Choose an appropriate visual. */
-    if ((TK(ifp)->vip = fb_tk_choose_visual(ifp)) == NULL) {
-	fb_log("fb_tk_open: Couldn't find an appropriate visual.  Exiting.\n");
-	return -1;
-    }
-
-    /* Open an OpenGL context with this visual*/
-    TK(ifp)->glxc = glXCreateContext(TK(ifp)->dispp, TK(ifp)->vip, 0, GL_TRUE /* direct context */);
-    if (TK(ifp)->glxc == NULL) {
-	fb_log("ERROR: Couldn't create an OpenGL context!\n");
-	return -1;
-    }
-
-    direct = glXIsDirect(TK(ifp)->dispp, TK(ifp)->glxc);
-    if (FB_DEBUG)
-	printf("Framebuffer drawing context is %s.\n", direct ? "direct" : "indirect");
-
-    /* Create a colormap for this visual */
-    WIN(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-    if (!TK(ifp)->soft_cmap_flag) {
-	if (FB_DEBUG)
-	    printf("Loading read/write colormap.\n");
-
-	TK(ifp)->xcmap = XCreateColormap(TK(ifp)->dispp,
-					  RootWindow(TK(ifp)->dispp,
-						     TK(ifp)->vip->screen),
-					  TK(ifp)->vip->visual,
-					  AllocAll);
-	/* initialize virtual colormap - it will be loaded into
-	 * the hardware. This code has not yet been tested.
-	 */
-	for (i = 0; i < 256; i++) {
-	    color_cell[i].pixel = i;
-	    color_cell[i].red = CMR(ifp)[i];
-	    color_cell[i].green = CMG(ifp)[i];
-	    color_cell[i].blue = CMB(ifp)[i];
-	    color_cell[i].flags = DoRed | DoGreen | DoBlue;
-	}
-	XStoreColors(TK(ifp)->dispp, TK(ifp)->xcmap, color_cell, 256);
-    } else {
-	/* read only colormap */
-	if (FB_DEBUG)
-	    printf("Allocating read-only colormap.\n");
-
-	TK(ifp)->xcmap = XCreateColormap(TK(ifp)->dispp,
-					  RootWindow(TK(ifp)->dispp,
-						     TK(ifp)->vip->screen),
-					  TK(ifp)->vip->visual,
-					  AllocNone);
-    }
-
-    XSync(TK(ifp)->dispp, 0);
-
-    /* Create a window. */
-    memset(&swa, 0, sizeof(swa));
-
-    valuemask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
-
-    swa.background_pixel = BlackPixel(TK(ifp)->dispp,
-				      TK(ifp)->vip->screen);
-    swa.border_pixel = BlackPixel(TK(ifp)->dispp,
-				  TK(ifp)->vip->screen);
-    swa.event_mask = TK(ifp)->event_mask =
-	ExposureMask | KeyPressMask | KeyReleaseMask |
-	ButtonPressMask | ButtonReleaseMask;
-    swa.colormap = TK(ifp)->xcmap;
-
-#define XCreateWindowDebug(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) \
-    (printf("XCreateWindow(display = %08X, \n", (uint32_t)(uintptr_t)display), \
-     printf("                parent = %08X, \n", (uint32_t)(uintptr_t)parent), \
-     printf("                     x = %d, \n", x), \
-     printf("                     y = %d, \n", y), \
-     printf("                 width = %d, \n", (int)width), \
-     printf("                height = %d, \n", (int)height), \
-     printf("          border_width = %d, \n", (int)border_width), \
-     printf("                 depth = %d, \n", (int)depth), \
-     printf("                 class = %d, \n", (int)class), \
-     printf("                visual = %08X, \n", (uint32_t)(uintptr_t)visual), \
-     printf("             valuemask = %08X, \n", (uint32_t)valuemask), \
-     printf("            attributes = {"), \
-     (valuemask & CWBackPixmap) ? printf(" background_pixmap = %08X ", (uint32_t)(uintptr_t)((attributes)->background_pixmap)) : 0, \
-     (valuemask & CWBackPixel) ? printf(" background_pixel = %08X ", (uint32_t)(attributes)->background_pixel) : 0, \
-     (valuemask & CWBorderPixmap) ? printf(" border_pixmap = %08X ", (uint32_t)(uintptr_t)((attributes)->border_pixmap)) : 0, \
-     (valuemask & CWBorderPixel) ? printf(" border_pixel = %08X ", (uint32_t)(attributes)->border_pixel) : 0, \
-     (valuemask & CWBitGravity) ? printf(" bit_gravity = %d ", (attributes)->bit_gravity) : 0, \
-     (valuemask & CWWinGravity) ? printf(" win_gravity = %d ", (attributes)->win_gravity) : 0, \
-     (valuemask & CWBackingStore) ? printf(" backing_store = %d ", (attributes)->backing_store) : 0, \
-     (valuemask & CWBackingPlanes) ? printf(" backing_planes = %u ", (uint32_t)(attributes)->backing_planes) : 0, \
-     (valuemask & CWBackingPixel) ? printf(" backing_pixel = %08X ", (uint32_t)(attributes)->backing_pixel) : 0, \
-     (valuemask & CWOverrideRedirect) ? printf(" override_redirect = %d ", (attributes)->override_redirect) : 0, \
-     (valuemask & CWSaveUnder) ? printf(" save_under = %d ", (attributes)->save_under) : 0, \
-     (valuemask & CWEventMask) ? printf(" event_mask = %08X ", (uint32_t)(attributes)->event_mask) : 0, \
-     (valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X f", (uint32_t)(attributes)->do_not_propagate_mask) : 0, \
-     (valuemask & CWColormap) ? printf(" colormap = %08X ", (uint32_t)(uintptr_t)((attributes)->colormap)) : 0, \
-     (valuemask & CWCursor) ? printf(" cursor = %08X ", (uint32_t)(uintptr_t)((attributes)->cursor)) : 0, \
-     printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : (Window)-1;
-    if (FB_DEBUG) {
-	TK(ifp)->wind = XCreateWindowDebug(TK(ifp)->dispp,
-					    RootWindow(TK(ifp)->dispp,
-						       TK(ifp)->vip->screen),
-					    0, 0, ifp->i->if_width, ifp->i->if_height, 0,
-					    TK(ifp)->vip->depth,
-					    InputOutput,
-					    TK(ifp)->vip->visual,
-					    valuemask, &swa);
-    } else {
-	TK(ifp)->wind = XCreateWindow(TK(ifp)->dispp,
-				       RootWindow(TK(ifp)->dispp,
-						  TK(ifp)->vip->screen),
-				       0, 0, ifp->i->if_width, ifp->i->if_height, 0,
-				       TK(ifp)->vip->depth,
-				       InputOutput,
-				       TK(ifp)->vip->visual,
-				       valuemask, &swa);
-    }
-
-    XStoreName(TK(ifp)->dispp, TK(ifp)->wind, title);
-
-    /* count windows */
-    tk_nwindows++;
-    XMapRaised(TK(ifp)->dispp, TK(ifp)->wind);
-
     TK(ifp)->alive = 1;
     TK(ifp)->firstTime = 1;
 
@@ -1295,7 +995,7 @@ fb_tk_open(struct fb *ifp, const char *file, int width, int height)
 
 
 static int
-open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
+open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, int width, int height, OSMesaContext glxc, int double_buffer, int soft_cmap)
 {
     /*XXX for now use private memory */
     ifp->i->if_mode = MODE_1MALLOC;
@@ -1341,7 +1041,6 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     TK(ifp)->dispp = dpy;
     ifp->i->if_selfd = ConnectionNumber(TK(ifp)->dispp);
 
-    TK(ifp)->vip = vip;
     TK(ifp)->glxc = glxc;
     WIN(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
     TK(ifp)->soft_cmap_flag = soft_cmap;
@@ -1389,7 +1088,7 @@ tk_open_existing(struct fb *ifp, int width, int height, struct fb_platform_speci
     struct tk_fb_info *tk_internal = (struct tk_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
     return open_existing(ifp, tk_internal->dpy, tk_internal->win,
-			 tk_internal->cmap, tk_internal->vip, width, height, tk_internal->glxc,
+			 0, width, height, tk_internal->glxc,
 			 tk_internal->double_buffer, tk_internal->soft_cmap);
 
     return 0;
@@ -1461,20 +1160,18 @@ tk_flush(struct fb *ifp)
 	printf("flushing, copy flag is %d\n", TK(ifp)->copy_flag);
 
     if ((ifp->i->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
-	if (glXMakeCurrent(TK(ifp)->dispp, TK(ifp)->wind, TK(ifp)->glxc)==False) {
-	    fb_log("Warning, tk_flush: glXMakeCurrent unsuccessful.\n");
+	if (OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height)) {
+	    fb_log("Warning, tk_flush: OSMesaMakeCurrent unsuccessful.\n");
 	}
 
 	/* Send entire in-memory buffer to the screen, all at once */
 	tk_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
-	if (WIN(ifp)->mi_doublebuffer) {
-	    glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-	} else if (TK(ifp)->copy_flag) {
+	if (TK(ifp)->copy_flag) {
 	    backbuffer_to_screen(ifp, -1);
 	}
 
 	/* unattach context for other threads to use, also flushes */
-	glXMakeCurrent(TK(ifp)->dispp, None, NULL);
+	OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height);
     }
 
     XFlush(TK(ifp)->dispp);
@@ -1603,8 +1300,8 @@ tk_clear(struct fb *ifp, unsigned char *pp)
 	return 0;
     }
 
-    if (glXMakeCurrent(TK(ifp)->dispp, TK(ifp)->wind, TK(ifp)->glxc)==False) {
-	fb_log("Warning, tk_clear: glXMakeCurrent unsuccessful.\n");
+    if (OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height)) {
+	fb_log("Warning, tk_clear: OSMesaMakeCurrent unsuccessful.\n");
     }
 
     if (pp != RGBPIXEL_NULL) {
@@ -1628,13 +1325,10 @@ tk_clear(struct fb *ifp, unsigned char *pp)
 	}
     } else {
 	glClear(GL_COLOR_BUFFER_BIT);
-	if (WIN(ifp)->mi_doublebuffer) {
-	    glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-	}
     }
 
     /* unattach context for other threads to use */
-    glXMakeCurrent(TK(ifp)->dispp, None, NULL);
+    OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height);
 
     return 0;
 }
@@ -1674,7 +1368,7 @@ tk_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     if (TK(ifp)->use_ext_ctrl) {
 	fb_clipper(ifp);
     } else {
-	if (glXMakeCurrent(TK(ifp)->dispp, TK(ifp)->wind, TK(ifp)->glxc)==False) {
+        if (OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height)) {
 	    fb_log("Warning, tk_view: glXMakeCurrent unsuccessful.\n");
 	}
 
@@ -1699,14 +1393,11 @@ tk_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	    backbuffer_to_screen(ifp, -1);
 	} else {
 	    tk_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
-	    if (WIN(ifp)->mi_doublebuffer) {
-		glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-	    }
 	}
 	glFlush();
 
 	/* unattach context for other threads to use */
-	glXMakeCurrent(TK(ifp)->dispp, None, NULL);
+        OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height);
     }
 
     return 0;
@@ -1869,36 +1560,28 @@ tk_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, si
 
     if (!TK(ifp)->use_ext_ctrl) {
 
-	if (glXMakeCurrent(TK(ifp)->dispp, TK(ifp)->wind, TK(ifp)->glxc)==False) {
+        if (OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height)) {
 	    fb_log("Warning, tk_write: glXMakeCurrent unsuccessful.\n");
 	}
 
 	if (xstart + count < (size_t)ifp->i->if_width) {
 	    tk_xmit_scanlines(ifp, ybase, 1, xstart, count);
-	    if (WIN(ifp)->mi_doublebuffer) {
-		glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-	    } else if (TK(ifp)->copy_flag) {
+	    if (TK(ifp)->copy_flag) {
 		/* repaint one scanline from backbuffer */
 		backbuffer_to_screen(ifp, ybase);
 	    }
 	} else {
 	    /* Normal case -- multi-pixel write */
-	    if (WIN(ifp)->mi_doublebuffer) {
-		/* refresh whole screen */
-		tk_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
-		glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-	    } else {
-		/* just write rectangle */
-		tk_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->i->if_width);
-		if (TK(ifp)->copy_flag) {
-		    backbuffer_to_screen(ifp, -1);
-		}
+	    /* just write rectangle */
+	    tk_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->i->if_width);
+	    if (TK(ifp)->copy_flag) {
+		backbuffer_to_screen(ifp, -1);
 	    }
 	}
 	glFlush();
 
 	/* unattach context for other threads to use */
-	glXMakeCurrent(TK(ifp)->dispp, None, NULL);
+        OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height);
     }
 
     return ret;
@@ -1947,24 +1630,19 @@ tk_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const un
 	return width*height;
 
     if (!TK(ifp)->use_ext_ctrl) {
-	if (glXMakeCurrent(TK(ifp)->dispp, TK(ifp)->wind, TK(ifp)->glxc)==False) {
+        if (OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height)) {
 	    fb_log("Warning, tk_writerect: glXMakeCurrent unsuccessful.\n");
 	}
 
-	if (WIN(ifp)->mi_doublebuffer) {
-	    /* refresh whole screen */
-	    tk_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
-	    glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-	} else {
-	    /* just write rectangle*/
-	    tk_xmit_scanlines(ifp, ymin, height, xmin, width);
-	    if (TK(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
+
+	/* just write rectangle*/
+	tk_xmit_scanlines(ifp, ymin, height, xmin, width);
+	if (TK(ifp)->copy_flag) {
+	    backbuffer_to_screen(ifp, -1);
 	}
 
 	/* unattach context for other threads to use */
-	glXMakeCurrent(TK(ifp)->dispp, None, NULL);
+	OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height);
     }
 
     return width*height;
@@ -2012,24 +1690,18 @@ tk_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
 	return width*height;
 
     if (!TK(ifp)->use_ext_ctrl) {
-	if (glXMakeCurrent(TK(ifp)->dispp, TK(ifp)->wind, TK(ifp)->glxc)==False) {
+        if (OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height)) {
 	    fb_log("Warning, tk_writerect: glXMakeCurrent unsuccessful.\n");
 	}
 
-	if (WIN(ifp)->mi_doublebuffer) {
-	    /* refresh whole screen */
-	    tk_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
-	    glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-	} else {
-	    /* just write rectangle*/
-	    tk_xmit_scanlines(ifp, ymin, height, xmin, width);
-	    if (TK(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
+	/* just write rectangle*/
+	tk_xmit_scanlines(ifp, ymin, height, xmin, width);
+	if (TK(ifp)->copy_flag) {
+	    backbuffer_to_screen(ifp, -1);
 	}
 
 	/* unattach context for other threads to use */
-	glXMakeCurrent(TK(ifp)->dispp, None, NULL);
+	OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height);
     }
 
     return width*height;
@@ -2083,19 +1755,17 @@ tk_wmap(register struct fb *ifp, register const ColorMap *cmp)
 
 	    /* Software color mapping, trigger a repaint */
 
-	    if (glXMakeCurrent(TK(ifp)->dispp, TK(ifp)->wind, TK(ifp)->glxc)==False) {
+	    if (OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height)) {
 		fb_log("Warning, tk_wmap: glXMakeCurrent unsuccessful.\n");
 	    }
 
 	    tk_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
-	    if (WIN(ifp)->mi_doublebuffer) {
-		glXSwapBuffers(TK(ifp)->dispp, TK(ifp)->wind);
-	    } else if (TK(ifp)->copy_flag) {
+	    if (TK(ifp)->copy_flag) {
 		backbuffer_to_screen(ifp, -1);
 	    }
 
 	    /* unattach context for other threads to use, also flushes */
-	    glXMakeCurrent(TK(ifp)->dispp, None, NULL);
+	    OSMesaMakeCurrent(TK(ifp)->glxc, TK(ifp)->buf, GL_UNSIGNED_BYTE, TK(ifp)->win_width, TK(ifp)->win_height);
 	} else {
 	    /* Send color map to hardware */
 	    /* This code has yet to be tested */
@@ -2119,7 +1789,6 @@ HIDDEN int
 tk_help(struct fb *ifp)
 {
     struct modeflags *mfp;
-    XVisualInfo *visual = TK(ifp)->vip;
 
     fb_log("Description: %s\n", ifp->i->if_type);
     fb_log("Device: %s\n", ifp->i->if_name);
@@ -2139,42 +1808,6 @@ tk_help(struct fb *ifp)
     fb_log("	mi_cmap_flag=%d\n", WIN(ifp)->mi_cmap_flag);
     fb_log("	tk_nwindows=%d\n", tk_nwindows);
 
-    fb_log("X11 Visual:\n");
-
-    switch (visual->class) {
-	case DirectColor:
-	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
-		   visual->green_mask, visual->blue_mask);
-	    break;
-	case TrueColor:
-	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
-		   visual->green_mask, visual->blue_mask);
-	    break;
-	case PseudoColor:
-	    fb_log("\tPseudoColor: Alterable RGB maps, single index\n");
-	    break;
-	case StaticColor:
-	    fb_log("\tStaticColor: Fixed RGB maps, single index\n");
-	    break;
-	case GrayScale:
-	    fb_log("\tGrayScale: Alterable map (R=G=B), single index\n");
-	    break;
-	case StaticGray:
-	    fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
-	    break;
-	default:
-	    fb_log("\tUnknown visual class %d\n", visual->class);
-	    break;
-    }
-    fb_log("\tColormap Size: %d\n", visual->colormap_size);
-    fb_log("\tBits per RGB: %d\n", visual->bits_per_rgb);
-    fb_log("\tscreen: %d\n", visual->screen);
-    fb_log("\tdepth (total bits per pixel): %d\n", visual->depth);
-    if (visual->depth < 24)
-	fb_log("\tWARNING: unable to obtain full 24-bits of color, image will be quantized.\n");
-
     return 0;
 }
 
@@ -2191,57 +1824,6 @@ tk_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits
 HIDDEN int
 tk_cursor(struct fb *ifp, int mode, int x, int y)
 {
-    if (mode) {
-	register int xx, xy;
-	register int delta;
-
-	/* If we don't have a cursor, create it */
-	if (!TK(ifp)->cursor) {
-	    XSetWindowAttributes xswa;
-	    XColor rgb_db_def;
-	    XColor bg, bd;
-
-	    XAllocNamedColor(TK(ifp)->dispp, TK(ifp)->xcmap, "black",
-			     &rgb_db_def, &bg);
-	    XAllocNamedColor(TK(ifp)->dispp, TK(ifp)->xcmap, "white",
-			     &rgb_db_def, &bd);
-	    xswa.background_pixel = bg.pixel;
-	    xswa.border_pixel = bd.pixel;
-	    xswa.colormap = TK(ifp)->xcmap;
-	    xswa.save_under = True;
-
-	    TK(ifp)->cursor = XCreateWindow(TK(ifp)->dispp, TK(ifp)->wind,
-					     0, 0, 4, 4, 2, TK(ifp)->vip->depth, InputOutput,
-					     TK(ifp)->vip->visual, CWBackPixel | CWBorderPixel |
-					     CWSaveUnder | CWColormap, &xswa);
-	}
-
-	delta = ifp->i->if_width/ifp->i->if_xzoom/2;
-	xx = x - (ifp->i->if_xcenter - delta);
-	xx *= ifp->i->if_xzoom;
-	xx += ifp->i->if_xzoom/2;  /* center cursor */
-
-	delta = ifp->i->if_height/ifp->i->if_yzoom/2;
-	xy = y - (ifp->i->if_ycenter - delta);
-	xy *= ifp->i->if_yzoom;
-	xy += ifp->i->if_yzoom/2;  /* center cursor */
-	xy = TK(ifp)->win_height - xy;
-
-	/* Move cursor into place; make it visible if it isn't */
-	XMoveWindow(TK(ifp)->dispp, TK(ifp)->cursor, xx - 4, xy - 4);
-
-	/* if cursor window is currently not mapped, map it */
-	if (!ifp->i->if_cursmode)
-	    XMapRaised(TK(ifp)->dispp, TK(ifp)->cursor);
-    } else {
-	/* If we have a cursor and it's mapped, unmap it */
-	if (TK(ifp)->cursor && ifp->i->if_cursmode)
-	    XUnmapWindow(TK(ifp)->dispp, TK(ifp)->cursor);
-    }
-
-    /* Without this flush, cursor movement is sluggish */
-    XFlush(TK(ifp)->dispp);
-
     /* Update position of cursor */
     ifp->i->if_cursmode = mode;
     ifp->i->if_xcurs = x;

@@ -30,6 +30,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "OSMesa/gl.h"
+#include "OSMesa/osmesa.h"
 
 #ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
@@ -97,8 +99,6 @@
 #define YMAXSCREEN	1023
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
-
-HIDDEN XVisualInfo *tk_choose_visual(struct dm *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
@@ -188,8 +188,6 @@ tk_fogHint(struct dm *dmp, int fastfog)
 HIDDEN int
 tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    struct modifiable_tk_vars *mvars = (struct modifiable_tk_vars *)dmp->i->m_vars;
-    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel == 1)
 	bu_log("tk_setBGColor()\n");
@@ -202,15 +200,8 @@ tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     privars->g = g / 255.0;
     privars->b = b / 255.0;
 
-    if (mvars->doublebuffer) {
-	glXSwapBuffers(pubvars->dpy,
-		       pubvars->win);
-	glClearColor(privars->r,
-		     privars->g,
-		     privars->b,
-		     0.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
+    glClearColor(privars->r, privars->g, privars->b, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     return BRLCAD_OK;
 }
@@ -226,137 +217,11 @@ tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 HIDDEN int
 tk_configureWin_guts(struct dm *dmp, int force)
 {
-    XWindowAttributes xwa;
-    XFontStruct *newfontstruct;
-
-    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
-    struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
-
     if (dmp->i->dm_debugLevel)
 	bu_log("tk_configureWin_guts()\n");
 
-    XGetWindowAttributes(pubvars->dpy,
-			 pubvars->win, &xwa);
-
-    /* nothing to do */
-    if (!force &&
-	dmp->i->dm_height == xwa.height &&
-	dmp->i->dm_width == xwa.width)
-	return BRLCAD_OK;
-
-    tk_reshape(dmp, xwa.width, xwa.height);
-
-    /* First time through, load a font or quit */
-    if (pubvars->fontstruct == NULL) {
-	if ((pubvars->fontstruct =
-	     XLoadQueryFont(pubvars->dpy,
-			    FONT9)) == NULL) {
-	    /* Try hardcoded backup font */
-	    if ((pubvars->fontstruct =
-		 XLoadQueryFont(pubvars->dpy,
-				FONTBACK)) == NULL) {
-		bu_log("tk_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return BRLCAD_ERROR;
-	    }
-	}
-	glXUseXFont(pubvars->fontstruct->fid,
-		    0, 127, privars->fontOffset);
-    }
-
-    if (DM_VALID_FONT_SIZE(dmp->i->dm_fontsize)) {
-	if (pubvars->fontstruct->per_char->width != dmp->i->dm_fontsize) {
-	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						DM_FONT_SIZE_TO_NAME(dmp->i->dm_fontsize))) != NULL) {
-		XFreeFont(pubvars->dpy,
-			  pubvars->fontstruct);
-		pubvars->fontstruct = newfontstruct;
-		glXUseXFont(pubvars->fontstruct->fid,
-			    0, 127, privars->fontOffset);
-	    }
-	}
-    } else {
-	/* Always try to choose a the font that best fits the window size.
-	 */
-
-	if (dmp->i->dm_width < 582) {
-	    if (pubvars->fontstruct->per_char->width != 5) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						    FONT5)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
-		}
-	    }
-	} else if (dmp->i->dm_width < 679) {
-	    if (pubvars->fontstruct->per_char->width != 6) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						    FONT6)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
-		}
-	    }
-	} else if (dmp->i->dm_width < 776) {
-	    if (pubvars->fontstruct->per_char->width != 7) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						    FONT7)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
-		}
-	    }
-	} else if (dmp->i->dm_width < 873) {
-	    if (pubvars->fontstruct->per_char->width != 8) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						    FONT8)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
-		}
-	    }
-	} else if (dmp->i->dm_width < 1455) {
-	    if (pubvars->fontstruct->per_char->width != 9) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						    FONT9)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
-		}
-	    }
-	} else if (dmp->i->dm_width < 2037) {
-	    if (pubvars->fontstruct->per_char->width != 10) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						    FONT10)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
-		}
-	    }
-	} else {
-	    if (pubvars->fontstruct->per_char->width != 12) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						    FONT12)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
-		}
-	    }
-	}
-    }
+    if (force)
+	tk_reshape(dmp, dmp->i->dm_width, dmp->i->dm_height);
 
     return BRLCAD_OK;
 }
@@ -402,15 +267,12 @@ tk_reshape(struct dm *dmp, int width, int height)
 HIDDEN int
 tk_makeCurrent(struct dm *dmp)
 {
-    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
 	bu_log("tk_makeCurrent()\n");
 
-    if (!glXMakeCurrent(pubvars->dpy,
-			pubvars->win,
-			privars->glxc)) {
+    if (!OSMesaMakeCurrent(privars->glxc, privars->buf, GL_UNSIGNED_BYTE, dmp->i->dm_width, dmp->i->dm_height)) {
 	bu_log("tk_makeCurrent: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
@@ -435,12 +297,9 @@ tk_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 HIDDEN int
 tk_configureWin(struct dm *dmp, int force)
 {
-    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (!glXMakeCurrent(pubvars->dpy,
-			pubvars->win,
-			privars->glxc)) {
+    if (!OSMesaMakeCurrent(privars->glxc, privars->buf, GL_UNSIGNED_BYTE, dmp->i->dm_width, dmp->i->dm_height)) {
 	bu_log("tk_configureWin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
@@ -483,162 +342,6 @@ tk_setLight(struct dm *dmp, int lighting_on)
     return BRLCAD_OK;
 }
 
-
-/**
- * currently, get a double buffered rgba visual that works with Tk and
- * OpenGL
- */
-HIDDEN XVisualInfo *
-tk_choose_visual(struct dm *dmp, Tk_Window tkwin)
-{
-    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
-    struct modifiable_tk_vars *mvars = (struct modifiable_tk_vars *)dmp->i->m_vars;
-    XVisualInfo *vip, vitemp, *vibase, *maxvip;
-    int tries, baddepth;
-    int num, i, j;
-    int fail;
-    int *good = NULL;
-
-    /* requirements */
-    int screen;
-    int use;
-    int rgba;
-    int dbfr;
-
-    /* desires */
-    int m_zbuffer = 1; /* m_zbuffer - try to get zbuffer */
-    int zbuffer;
-
-    int m_stereo; /* m_stereo - try to get stereo */
-    int stereo;
-
-    if (dmp->i->dm_stereo) {
-	m_stereo = 1;
-    } else {
-	m_stereo = 0;
-    }
-
-    memset((void *)&vitemp, 0, sizeof(XVisualInfo));
-    /* Try to satisfy the above desires with a color visual of the
-     * greatest depth */
-
-    vibase = XGetVisualInfo(pubvars->dpy,
-			    0, &vitemp, &num);
-    screen = DefaultScreen(pubvars->dpy);
-
-    good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
-
-    while (1) {
-	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
-	    /* requirements */
-	    if (vip->screen != screen)
-		continue;
-
-	    fail = glXGetConfig(pubvars->dpy,
-				vip, GLX_USE_GL, &use);
-	    if (fail || !use)
-		continue;
-
-	    fail = glXGetConfig(pubvars->dpy,
-				vip, GLX_RGBA, &rgba);
-	    if (fail || !rgba)
-		continue;
-
-	    fail = glXGetConfig(pubvars->dpy,
-				vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if (fail || !dbfr)
-		continue;
-
-#ifdef HAVE_XRENDER
-	    // https://stackoverflow.com/a/23836430
-	    XRenderPictFormat *pict_format = XRenderFindVisualFormat(pubvars->dpy, vip->visual);
-	    if(pict_format->direct.alphaMask > 0) {
-		//printf("skipping visual with alphaMask\n");
-		continue;
-	    }
-#endif
-
-	    /* desires */
-	    if (m_zbuffer) {
-		fail = glXGetConfig(pubvars->dpy,
-				    vip, GLX_DEPTH_SIZE, &zbuffer);
-		if (fail || !zbuffer)
-		    continue;
-	    }
-
-	    if (m_stereo) {
-		fail = glXGetConfig(pubvars->dpy,
-				    vip, GLX_STEREO, &stereo);
-		if (fail || !stereo) {
-		    bu_log("tk_choose_visual: failed visual - GLX_STEREO\n");
-		    continue;
-		}
-	    }
-
-	    /* this visual meets criteria */
-	    good[j++] = i;
-	}
-
-	/* j = number of acceptable visuals under consideration */
-	if (j >= 1) {
-	    baddepth = 1000;
-	    for (tries = 0; tries < j; ++tries) {
-		maxvip = vibase + good[0];
-		for (i=1; i<j; i++) {
-		    vip = vibase + good[i];
-		    if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)) {
-			maxvip = vip;
-		    }
-		}
-
-		pubvars->cmap =
-		    XCreateColormap(pubvars->dpy,
-				    RootWindow(pubvars->dpy,
-					       maxvip->screen), maxvip->visual, AllocNone);
-
-		if (Tk_SetWindowVisual(tkwin,
-				       maxvip->visual, maxvip->depth,
-				       pubvars->cmap)) {
-
-		    glXGetConfig(pubvars->dpy,
-				 maxvip, GLX_DEPTH_SIZE,
-				 &mvars->depth);
-		    if (mvars->depth > 0)
-			mvars->zbuf = 1;
-
-		    bu_free(good, "dealloc good visuals");
-		    return maxvip; /* success */
-		} else {
-		    /* retry with lesser depth */
-		    baddepth = maxvip->depth;
-		    XFreeColormap(pubvars->dpy,
-				  pubvars->cmap);
-		}
-	    }
-	}
-
-	/* if no success at this point, relax a desire and try again */
-
-	if (m_stereo) {
-	    m_stereo = 0;
-	    bu_log("Stereo not available.\n");
-	    continue;
-	}
-
-	if (m_zbuffer) {
-	    m_zbuffer = 0;
-	    continue;
-	}
-
-	/* ran out of visuals, give up */
-	break;
-    }
-
-    bu_free(good, "dealloc good visuals");
-    return (XVisualInfo *)NULL; /* failure */
-}
-
-
 /*
  * Gracefully release the display.
  */
@@ -650,15 +353,8 @@ tk_close(struct dm *dmp)
 
     if (pubvars->dpy) {
 	if (privars->glxc) {
-	    glXMakeCurrent(pubvars->dpy, None, NULL);
-	    glXDestroyContext(pubvars->dpy,
-			      privars->glxc);
+	    OSMesaDestroyContext(privars->glxc);
 	}
-
-	if (pubvars->cmap)
-	    XFreeColormap(pubvars->dpy,
-			  pubvars->cmap);
-
 	if (pubvars->xtkwin)
 	    Tk_DestroyWindow(pubvars->xtkwin);
     }
@@ -675,18 +371,158 @@ tk_close(struct dm *dmp)
 }
 
 int
-tk_viable(const char *dpy_string)
+tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_cnt, struct bu_vls *init_proc_vls)
 {
-    Display *dpy;
-    int return_val;
-    if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-	    XCloseDisplay(dpy);
-	    return 1;
-	}
-	XCloseDisplay(dpy);
+    struct modifiable_tk_vars *mvars = (struct modifiable_tk_vars *)dmp->i->m_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
+
+    // Set the Tcl/Tk pathname for this window
+    if (bu_vls_strlen(&dmp->i->dm_pathName) == 0) {
+	bu_vls_printf(&dmp->i->dm_pathName, ".dm_tk%d", (*win_cnt));
     }
-    return -1;
+
+    // Increment the global Tk window counter
+    ++(*win_cnt);
+
+    // Find out (or make assumption about) display name
+    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
+	char *dp = getenv("DISPLAY");
+	if (dp) {
+	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
+	} else {
+	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
+	}
+    }
+
+    // Toplevel or embedded window
+    if (dmp->i->dm_top) {
+	/* Make xtkwin a toplevel window */
+	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
+	       	bu_vls_cstr(&dmp->i->dm_pathName), bu_vls_cstr(&dmp->i->dm_dName));
+	pubvars->top = pubvars->xtkwin;
+    } else {
+	/* Make xtkwin an embedded window */
+	char *cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), (int)'.');
+	if (cp == bu_vls_addr(&dmp->i->dm_pathName)) {
+	    pubvars->top = tkwin;
+	} else {
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
+	    bu_vls_strncpy(&top_vls, bu_vls_cstr(&dmp->i->dm_pathName), cp - bu_vls_cstr(&dmp->i->dm_pathName));
+	    pubvars->top = Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+	    bu_vls_free(&top_vls);
+	}
+	pubvars->xtkwin = Tk_CreateWindow(interp, pubvars->top, cp + 1, (char *)NULL);
+    }
+
+    if (pubvars->xtkwin == NULL) {
+	bu_log("dm-tk: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
+	return -1;
+    }
+
+    // Record the name Tk ended up picking
+    bu_vls_printf(&dmp->i->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
+
+    // Set the Tk window background
+    Tk_SetWindowBackground(pubvars->xtkwin, BlackPixelOfScreen(Tk_Screen(pubvars->xtkwin)));
+
+    // If we have a user supplied initialization routine, run it
+    if (bu_vls_strlen(init_proc_vls) > 0) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "%s %s\n", bu_vls_cstr(init_proc_vls), bu_vls_cstr(&dmp->i->dm_pathName));
+	if (Tcl_Eval(interp, bu_vls_cstr(&str)) == BRLCAD_ERROR) {
+	    bu_vls_free(&str);
+	    return -1;
+	}
+	bu_vls_free(&str);
+    }
+
+    /* make sure there really is a display before proceeding. */
+    pubvars->dpy = Tk_Display(pubvars->top);
+    if (!(pubvars->dpy)) {
+	return -1;
+    }
+
+    Tk_GeometryRequest(pubvars->xtkwin, dmp->i->dm_width, dmp->i->dm_height);
+
+    pubvars->depth = mvars->depth;
+
+    /* Set up the Tk_Photo subwindow */
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&tcl_cmd, "image create %s.canvas.photo", bu_vls_cstr(&dmp->i->dm_pathName));
+    if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
+	bu_vls_free(&tcl_cmd);
+	bu_log("Tcl/Tk photo creation failed\n");
+	return -1;
+    }
+    bu_vls_free(&tcl_cmd);
+
+    bu_vls_sprintf(&tcl_cmd, "%s.canvas.photo", bu_vls_cstr(&dmp->i->dm_pathName));
+    Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, bu_vls_cstr(&tcl_cmd));
+    Tk_PhotoBlank(dm_img);
+    Tk_PhotoSetSize(interp, dm_img, dmp->i->dm_width, dmp->i->dm_height);
+
+    // Initialize the PhotoImageBlock information
+    Tk_PhotoImageBlock dm_data;
+    dm_data.width = dmp->i->dm_width;
+    dm_data.height = dmp->i->dm_height;
+    dm_data.pixelSize = 4;
+    dm_data.pitch = dmp->i->dm_width * 4;
+    dm_data.offset[0] = 0;
+    dm_data.offset[1] = 1;
+    dm_data.offset[2] = 2;
+    dm_data.offset[3] = 3;
+    
+    // Actually create our memory for the image buffer.  Expects RGBA information
+    dm_data.pixelPtr = (unsigned char *)Tcl_AttemptAlloc(dm_data.width * dm_data.height * 4);
+    if (!dm_data.pixelPtr) {
+	bu_vls_free(&tcl_cmd);
+	bu_log("Tcl/Tk photo memory allocation failed\n");
+	return -1;
+    }
+
+    // Initialize. This alters the actual data, but Tcl/Tk doesn't know about it yet.
+    for (int i = 0; i < (dm_data.width * dm_data.height * 4); i+=4) {
+	// Red
+	dm_data.pixelPtr[i] = 0;
+	// Green
+	dm_data.pixelPtr[i+1] = 0;
+	// Blue
+	dm_data.pixelPtr[i+2] = 0;
+	// Alpha at 255 - not transparent.
+	dm_data.pixelPtr[i+3] = 255;
+    }
+
+    // Let Tk_Photo know we have data
+    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
+
+    // Define a canvas widget, pack it into the root window, and associate the image with it
+    bu_vls_sprintf(&tcl_cmd, "canvas %s.canvas -width %d -height %d -borderwidth 0",
+	    bu_vls_cstr(&dmp->i->dm_pathName), dm_data.width, dm_data.height);
+    if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
+	bu_vls_free(&tcl_cmd);
+	bu_log("Tcl/Tk photo canvas creation failed\n");
+	return -1;
+    }
+    bu_vls_sprintf(&tcl_cmd, "pack %s.canvas -fill both -expand 1", bu_vls_cstr(&dmp->i->dm_pathName));
+    if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
+	bu_vls_free(&tcl_cmd);
+	bu_log("Tcl/Tk photo canvas packing failed\n");
+	return -1;
+    }
+    bu_vls_sprintf(&tcl_cmd, "%s.canvas create image 0 0 -image %s.canvas.photo -anchor nw",
+	    bu_vls_cstr(&dmp->i->dm_pathName), bu_vls_cstr(&dmp->i->dm_pathName));
+    if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
+	bu_vls_free(&tcl_cmd);
+	bu_log("Tcl/Tk photo canvas packing failed\n");
+	return -1;
+    }
+
+    Tk_MakeWindowExist(pubvars->xtkwin);
+
+    pubvars->win = Tk_WindowId(pubvars->xtkwin);
+    dmp->i->dm_id = pubvars->win;
+
+    return 0;
 }
 
 /*
@@ -701,25 +537,11 @@ tk_open(void *vinterp, int argc, const char **argv)
     int make_square = -1;
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
-#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
-    int j, k;
-    int ndevices;
-    int nclass = 0;
-    int unused;
-    XDeviceInfoPtr olist = NULL, list = NULL;
-    XDevice *dev = NULL;
-    XEventClass e_class[15];
-    XInputClassInfo *cip;
-#endif
-
-    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    Display *tmp_dpy = (Display *)NULL;
     struct dm *dmp = NULL;
     struct dm_impl *dmpi = NULL;
     struct modifiable_tk_vars *mvars = NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
-    int screen_number = -1;
 
     struct dm_tkvars *pubvars = NULL;
     struct tk_vars *privvars = NULL;
@@ -768,19 +590,6 @@ tk_open(void *vinterp, int argc, const char **argv)
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-    if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
-	bu_vls_printf(&dmp->i->dm_pathName, ".dm_tk%d", count);
-    ++count;
-    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
-	char *dp;
-
-	dp = getenv("DISPLAY");
-	if (dp)
-	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
-	else
-	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
-    }
-
     /* initialize dm specific variables */
     pubvars->devmotionnotify = LASTEvent;
     pubvars->devbuttonpress = LASTEvent;
@@ -799,232 +608,52 @@ tk_open(void *vinterp, int argc, const char **argv)
     mvars->bound = dmp->i->dm_bound;
     mvars->boundFlag = dmp->i->dm_boundFlag;
 
-    /* this is important so that tk_configureWin knows to set the font */
-    pubvars->fontstruct = NULL;
-
-    if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->i->dm_dName))) == NULL) {
-	bu_vls_free(&init_proc_vls);
-	(void)tk_close(dmp);
-	return DM_NULL;
-    }
-
-#ifdef HAVE_XQUERYEXTENSION
-    {
-	int return_val;
-
-	if (!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)) {
-	    bu_vls_free(&init_proc_vls);
-	    (void)tk_close(dmp);
-	    return DM_NULL;
-	}
-    }
-#endif
-
-    screen_number = XDefaultScreen(tmp_dpy);
-    if (screen_number < 0)
-	bu_log("WARNING: screen number is [%d]\n", screen_number);
-
     if (dmp->i->dm_width == 0) {
-	dmp->i->dm_width = XDisplayWidth(tmp_dpy, screen_number) - 30;
+	dmp->i->dm_width = 512;
 	++make_square;
     }
     if (dmp->i->dm_height == 0) {
-	dmp->i->dm_height = XDisplayHeight(tmp_dpy, screen_number) - 30;
+	dmp->i->dm_height = 512;
 	++make_square;
     }
 
     if (make_square > 0) {
 	/* Make window square */
-	if (dmp->i->dm_height <
-	    dmp->i->dm_width)
-	    dmp->i->dm_width =
-		dmp->i->dm_height;
-	else
-	    dmp->i->dm_height =
-		dmp->i->dm_width;
-    }
-
-    XCloseDisplay(tmp_dpy);
-
-    if (dmp->i->dm_top) {
-	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin =
-	    Tk_CreateWindowFromPath(interp,
-				    tkwin,
-				    bu_vls_addr(&dmp->i->dm_pathName),
-				    bu_vls_addr(&dmp->i->dm_dName));
-	pubvars->top = pubvars->xtkwin;
-    } else {
-	char *cp;
-
-	cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), (int)'.');
-	if (cp == bu_vls_addr(&dmp->i->dm_pathName)) {
-	    pubvars->top = tkwin;
+	if (dmp->i->dm_height < dmp->i->dm_width) {
+	    dmp->i->dm_width = dmp->i->dm_height;
 	} else {
-	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
-
-	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->i->dm_pathName), cp - bu_vls_addr(&dmp->i->dm_pathName));
-
-	    pubvars->top =
-		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
-	    bu_vls_free(&top_vls);
+	    dmp->i->dm_height =	dmp->i->dm_width;
 	}
-
-	/* Make xtkwin an embedded window */
-	pubvars->xtkwin =
-	    Tk_CreateWindow(interp, pubvars->top,
-			    cp + 1, (char *)NULL);
     }
 
-    if (pubvars->xtkwin == NULL) {
-	bu_log("dm-tk: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
+
+    if (tk_windows_setup(interp, dmp, tkwin, &count, &init_proc_vls)) {
+    	(void)tk_close(dmp);
 	bu_vls_free(&init_proc_vls);
-	(void)tk_close(dmp);
 	return DM_NULL;
     }
-
-    bu_vls_printf(&dmp->i->dm_tkName, "%s",
-		  (char *)Tk_Name(pubvars->xtkwin));
-
-    Tk_SetWindowBackground(pubvars->xtkwin, BlackPixelOfScreen(Tk_Screen(pubvars->xtkwin)));
-
-    if (bu_vls_strlen(&init_proc_vls) > 0) {
-	bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->i->dm_pathName));
-
-	if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
-	    bu_vls_free(&init_proc_vls);
-	    bu_vls_free(&str);
-	    (void)tk_close(dmp);
-	    return DM_NULL;
-	}
-    }
-
     bu_vls_free(&init_proc_vls);
-    bu_vls_free(&str);
 
-    pubvars->dpy =
-	Tk_Display(pubvars->top);
 
-    /* make sure there really is a display before proceeding. */
-    if (!(pubvars->dpy)) {
-	bu_vls_free(&init_proc_vls);
-	bu_vls_free(&str);
+    /* open GL context */
+    privvars->glxc = OSMesaCreateContextExt( OSMESA_RGBA, 16, 0, 0, NULL );
+    if (privvars->glxc ==NULL) {
+	bu_log("tk_open: couldn't create OSMesaContext.\n");
 	(void)tk_close(dmp);
 	return DM_NULL;
     }
-
-    Tk_GeometryRequest(pubvars->xtkwin,
-		       dmp->i->dm_width,
-		       dmp->i->dm_height);
-
-    /* must do this before MakeExist */
-    if ((pubvars->vip=tk_choose_visual(dmp, pubvars->xtkwin)) == NULL) {
-	bu_log("tk_open: Can't get an appropriate visual.\n");
+    privvars->buf = bu_calloc(dmp->i->dm_width * dmp->i->dm_height, sizeof(long), "OSMesa buffer");
+    if (!OSMesaMakeCurrent(privvars->glxc, privvars->buf, GL_UNSIGNED_BYTE, dmp->i->dm_width, dmp->i->dm_height)) {
+	bu_log("tk_open: OSMesaMakeCurrent failed!\n");
 	(void)tk_close(dmp);
 	return DM_NULL;
     }
-
-    pubvars->depth = mvars->depth;
-
-    Tk_MakeWindowExist(pubvars->xtkwin);
-
-    pubvars->win = Tk_WindowId(pubvars->xtkwin);
-    dmp->i->dm_id = pubvars->win;
-
-    /* open GLX context */
-    if ((privvars->glxc =
-	 glXCreateContext(pubvars->dpy, pubvars->vip, (GLXContext)NULL, GL_TRUE))==NULL) {
-	bu_log("tk_open: couldn't create glXContext.\n");
-	(void)tk_close(dmp);
-	return DM_NULL;
-    }
-
-    /* If we used an indirect context, then as far as sgi is concerned,
-     * gl hasn't been used.
-     */
-    privvars->is_direct = (char) glXIsDirect(pubvars->dpy, privvars->glxc);
-
-#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
-    /*
-     * Take a look at the available input devices. We're looking
-     * for "dial+buttons".
-     */
-    if (XQueryExtension(pubvars->dpy, "XInputExtension", &unused, &unused, &unused)) {
-	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
-    }
-
-    if (list == (XDeviceInfoPtr)NULL ||
-	list == (XDeviceInfoPtr)1) goto Done;
-
-    for (j = 0; j < ndevices; ++j, list++) {
-	if (list->use == IsXExtensionDevice) {
-	    if (BU_STR_EQUAL(list->name, "dial+buttons")) {
-		if ((dev = XOpenDevice(pubvars->dpy,
-				       list->id)) == (XDevice *)NULL) {
-		    bu_log("tk_open: Couldn't open the dials+buttons\n");
-		    goto Done;
-		}
-
-		for (cip = dev->classes, k = 0; k < dev->num_classes;
-		     ++k, ++cip) {
-		    switch (cip->input_class) {
-#ifdef IR_BUTTONS
-			case ButtonClass:
-			    DeviceButtonPress(dev, pubvars->devbuttonpress,
-					      e_class[nclass]);
-			    ++nclass;
-			    DeviceButtonRelease(dev, pubvars->devbuttonrelease,
-						e_class[nclass]);
-			    ++nclass;
-			    break;
-#endif
-#ifdef IR_KNOBS
-			case ValuatorClass:
-			    DeviceMotionNotify(dev, pubvars->devmotionnotify,
-					       e_class[nclass]);
-			    ++nclass;
-			    break;
-#endif
-			default:
-			    break;
-		    }
-		}
-
-		XSelectExtensionEvent(pubvars->dpy, pubvars->win, e_class, nclass);
-		goto Done;
-	    }
-	}
-    }
-Done:
-    XFreeDeviceList(olist);
-
-#endif /* HAVE_X11_EXTENSIONS_XINPUT_H */
 
     Tk_MapWindow(pubvars->xtkwin);
 
-    if (!glXMakeCurrent(pubvars->dpy, pubvars->win, privvars->glxc)) {
-	bu_log("tk_open: Couldn't make context current\n");
-	(void)tk_close(dmp);
-	return DM_NULL;
-    }
-
-    /* display list (fontOffset + char) will display a given ASCII char */
-    if ((privvars->fontOffset = glGenLists(128))==0) {
-	bu_log("dm-tk: Can't make display lists for font.\n");
-	(void)tk_close(dmp);
-	return DM_NULL;
-    }
-
-    /* This is the applications display list offset */
-    dmp->i->dm_displaylist = privvars->fontOffset + 128;
-
     tk_setBGColor(dmp, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (mvars->doublebuffer)
-	glDrawBuffer(GL_BACK);
-    else
-	glDrawBuffer(GL_FRONT);
+    glDrawBuffer(GL_FRONT);
 
     /* do viewport, ortho commands and initialize font */
     (void)tk_configureWin_guts(dmp, 1);
@@ -1069,7 +698,7 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
     struct tk_vars *privars = (struct tk_vars *)dmp1->i->dm_vars.priv_vars;
     GLfloat backgnd[4];
     GLfloat vf;
-    GLXContext old_glxContext;
+    OSMesaContext old_glxContext;
 
     if (dmp1 == (struct dm *)NULL)
 	return BRLCAD_ERROR;
@@ -1079,35 +708,19 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
 	old_glxContext = privars->glxc;
 
-	if ((privars->glxc =
-	     glXCreateContext(((struct dm_tkvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_tkvars *)dmp1->i->dm_vars.pub_vars)->vip,
-			      (GLXContext)NULL, GL_TRUE))==NULL) {
+	privars->glxc = OSMesaCreateContextExt( OSMESA_RGBA, 16, 0, 0, NULL );
+	if (privars->glxc ==NULL) {
 	    bu_log("tk_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    privars->glxc = old_glxContext;
-
 	    return BRLCAD_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_tkvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_tkvars *)dmp1->i->dm_vars.pub_vars)->win,
-			    privars->glxc)) {
+	if (!OSMesaMakeCurrent(privars->glxc, privars->buf, GL_UNSIGNED_BYTE, dmp1->i->dm_width, dmp1->i->dm_height)) {
 	    bu_log("tk_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    privars->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
 	}
-
-	/* display list (fontOffset + char) will display a given ASCII char */
-	if ((privars->fontOffset = glGenLists(128))==0) {
-	    bu_log("dm-tk: Can't make display lists for font.\nUsing old context\n.");
-	    privars->glxc = old_glxContext;
-
-	    return BRLCAD_ERROR;
-	}
-
-	/* This is the applications display list offset */
-	dmp1->i->dm_displaylist = privars->fontOffset + 128;
 
 	tk_setBGColor(dmp1, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1116,9 +729,6 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    glDrawBuffer(GL_BACK);
 	else
 	    glDrawBuffer(GL_FRONT);
-
-	/* this is important so that tk_configureWin knows to set the font */
-	((struct dm_tkvars *)dmp1->i->dm_vars.pub_vars)->fontstruct = NULL;
 
 	/* do viewport, ortho commands and initialize font */
 	(void)tk_configureWin_guts(dmp1, 1);
@@ -1151,8 +761,7 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	privars->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_tkvars *)dmp1->i->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_tkvars *)dmp1->i->dm_vars.pub_vars)->dpy, old_glxContext);
+	OSMesaDestroyContext(privars->glxc);
     } else {
 	/* dmp1 will share its display lists with dmp2 */
 
@@ -1165,27 +774,21 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
 	old_glxContext = ((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc;
 
-	if ((((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc =
-	     glXCreateContext(((struct dm_tkvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_tkvars *)dmp2->i->dm_vars.pub_vars)->vip,
-			      privars->glxc,
-			      GL_TRUE))==NULL) {
+	((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc = OSMesaCreateContextExt( OSMESA_RGBA, 16, 0, 0, NULL );
+	if (((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc == NULL) {
 	    bu_log("tk_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_tkvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_tkvars *)dmp2->i->dm_vars.pub_vars)->win,
-			    ((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc)) {
+	if (!OSMesaMakeCurrent(privars->glxc, privars->buf, GL_UNSIGNED_BYTE, dmp2->i->dm_width, dmp2->i->dm_height)) {
 	    bu_log("tk_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
 	}
 
-	((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->fontOffset = privars->fontOffset;
 	dmp2->i->dm_displaylist = dmp1->i->dm_displaylist;
 
 	tk_setBGColor(dmp2, 0, 0, 0);
@@ -1227,8 +830,7 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_tkvars *)dmp2->i->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_tkvars *)dmp2->i->dm_vars.pub_vars)->dpy, old_glxContext);
+	OSMesaDestroyContext(old_glxContext);
     }
 
     return BRLCAD_OK;
@@ -1241,7 +843,6 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
 HIDDEN int
 tk_drawBegin(struct dm *dmp)
 {
-    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct modifiable_tk_vars *mvars = (struct modifiable_tk_vars *)dmp->i->m_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
@@ -1269,9 +870,7 @@ tk_drawBegin(struct dm *dmp)
 
 
 
-    if (!glXMakeCurrent(pubvars->dpy,
-			pubvars->win,
-			privars->glxc)) {
+    if (!OSMesaMakeCurrent(privars->glxc, privars->buf, GL_UNSIGNED_BYTE, dmp->i->dm_width, dmp->i->dm_height)) {
 	bu_log("tk_drawBegin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
@@ -2075,7 +1674,6 @@ tk_normal(struct dm *dmp)
 HIDDEN int
 tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
-    struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
 	bu_log("tk_drawString2D()\n");
 
@@ -2084,7 +1682,6 @@ tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSE
     else
 	glRasterPos2f(x, y);
 
-    glListBase(privars->fontOffset);
     glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
 
     return BRLCAD_OK;
@@ -2483,8 +2080,6 @@ tk_openFb(struct dm *dmp)
     ofb_ps = (struct tk_fb_info *)fb_ps->data;
     ofb_ps->dpy = pubvars->dpy;
     ofb_ps->win = pubvars->win;
-    ofb_ps->cmap = pubvars->cmap;
-    ofb_ps->vip = pubvars->vip;
     ofb_ps->glxc = privars->glxc;
     ofb_ps->double_buffer = mvars->doublebuffer;
     ofb_ps->soft_cmap = 0;
@@ -2718,9 +2313,6 @@ struct bu_structparse dm_tkvars_vparse[] = {
     {"%x",      1,      "top",                  GLXVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%x",      1,      "tkwin",                GLXVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",      1,      "depth",                GLXVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "cmap",                 GLXVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "vip",                  GLXVARS_MV_O(vip),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "fontstruct",           GLXVARS_MV_O(fontstruct), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",      1,      "devmotionnotify",      GLXVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",      1,      "devbuttonpress",       GLXVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",      1,      "devbuttonrelease",     GLXVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -3017,6 +2609,12 @@ tk_event_cmp(struct dm *dmp, dm_event_t type, int event)
 	    return -1;
 	    break;
     };
+}
+
+int tk_viable(const char *dpy_string)
+{
+    if (!dpy_string) return -1;
+    return 1;
 }
 
 struct dm_impl dm_tk_impl = {
