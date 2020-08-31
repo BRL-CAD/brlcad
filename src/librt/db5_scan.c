@@ -234,6 +234,10 @@ db_diradd5(
 }
 
 
+/**
+ * Add a raw internal to the database.  If client_data is 1, the entry
+ * will be marked as in-mem.
+ */
 struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
@@ -313,15 +317,17 @@ db5_diradd(struct db_i *dbip,
 }
 
 
-/*
- * In support of db5_scan, add a named entry to the directory.
+/**
+ * In support of db5_scan(), this helper function adds a named entry
+ * to the directory.  If client_data is 1, it entry will be added as
+ * in-mem database object.
  */
 HIDDEN void
 db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
     b_off_t laddr,
-    void *client_data)	/* unused client_data from db5_scan() */
+    void *client_data)
 {
     RT_CK_DBI(dbip);
 
