@@ -33,46 +33,6 @@
 #include "OSMesa/gl.h"
 #include "OSMesa/osmesa.h"
 
-#ifdef HAVE_X11_XOSDEFS_H
-#  include <X11/Xfuncproto.h>
-#  include <X11/Xosdefs.h>
-#endif
-#ifdef linux
-#  undef X_NOT_STDC_ENV
-#  undef X_NOT_POSIX
-#endif
-
-#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
-#  include <X11/extensions/XInput.h>
-#endif /* HAVE_X11_XINPUT_H */
-
-/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
- * parameter names that shadow system symbols.  protect the system
- * symbols by redefining the parameters prior to header inclusion.
- */
-#define j1 J1
-#define y1 Y1
-#define read rd
-#define index idx
-#define access acs
-#define remainder rem
-#ifdef HAVE_GL_GLX_H
-#  include <GL/glx.h>
-#  ifdef HAVE_XRENDER
-#    include <X11/extensions/Xrender.h>
-#  endif
-#endif
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
-#undef remainder
-#undef access
-#undef index
-#undef read
-#undef y1
-#undef j1
-
 #include "png.h"
 
 #include "tk.h"
@@ -711,7 +671,7 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
 	privars->glxc = OSMesaCreateContextExt( OSMESA_RGBA, 16, 0, 0, NULL );
 	if (privars->glxc ==NULL) {
-	    bu_log("tk_share_dlist: couldn't create glXContext.\nUsing old context\n.");
+	    bu_log("tk_share_dlist: couldn't create OSMesaContext.\nUsing old context\n.");
 	    privars->glxc = old_glxContext;
 	    return BRLCAD_ERROR;
 	}
@@ -777,7 +737,7 @@ tk_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
 	((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc = OSMesaCreateContextExt( OSMESA_RGBA, 16, 0, 0, NULL );
 	if (((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc == NULL) {
-	    bu_log("tk_share_dlist: couldn't create glXContext.\nUsing old context\n.");
+	    bu_log("tk_share_dlist: couldn't create OSMesaContext.\nUsing old context\n.");
 	    ((struct tk_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
@@ -930,10 +890,6 @@ tk_drawBegin(struct dm *dmp)
 HIDDEN int
 tk_drawEnd(struct dm *dmp)
 {
-    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
-    struct modifiable_tk_vars *mvars = (struct modifiable_tk_vars *)dmp->i->m_vars;
-    struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
-
     if (dmp->i->dm_debugLevel)
 	bu_log("tk_drawEnd\n");
 
@@ -955,20 +911,6 @@ tk_drawEnd(struct dm *dmp)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
-    }
-
-    if (mvars->doublebuffer) {
-	glXSwapBuffers(pubvars->dpy,
-		       pubvars->win);
-
-	if (dmp->i->dm_clearBufferAfter) {
-	    /* give Graphics pipe time to work */
-	    glClearColor(privars->r,
-			 privars->g,
-			 privars->b,
-			 0.0);
-	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
     }
 
     if (dmp->i->dm_debugLevel) {
