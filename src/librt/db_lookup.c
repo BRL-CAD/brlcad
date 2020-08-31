@@ -281,6 +281,10 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     RT_CK_DIR(dp);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
     dp->d_addr = laddr;
+
+    /* TODO: investigate removing exclusion of INMEM flag, added by
+     * mike in c13285 when in-mem support was originally added
+     */
     dp->d_flags = flags & ~(RT_DIR_INMEM);
     dp->d_len = len;
     dp->d_forw = *headp;
