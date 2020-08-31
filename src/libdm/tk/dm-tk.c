@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -186,6 +187,41 @@ tk_configureWin_guts(struct dm *dmp, int force)
     return BRLCAD_OK;
 }
 
+int
+tk_dm_image_update_data(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    struct dm *dmp = (struct dm *)clientData;
+
+    if (argc == 4) {
+	// Unpack the current width and height.  If these don't match what idata has
+	// or thinks its working on, update the image size.
+	// (Note: checking errno, although it may not truly be necessary if we
+	// trust Tk to always give us valid coordinates...)
+	char *p_end;
+	errno = 0;
+	long width = strtol(argv[2], &p_end, 10);
+	if (errno == ERANGE || (errno != 0 && width == 0) || p_end == argv[1]) {
+	    bu_log("Invalid width: %s\n", argv[2]);
+	    return TCL_ERROR;
+	}
+	errno = 0;
+	long height = strtol(argv[3], &p_end, 10);
+	if (errno == ERANGE || (errno != 0 && height == 0) || p_end == argv[1]) {
+	    bu_log("Invalid height: %s\n", argv[3]);
+	    return TCL_ERROR;
+	}
+
+	Tk_PhotoImageBlock dm_data;
+	Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, argv[1]);
+	Tk_PhotoGetImage(dm_img, &dm_data);
+	if (dm_data.width != dmp->i->dm_width || dm_data.height != dmp->i->dm_height) {
+	    Tk_PhotoSetSize(interp, dm_img, dmp->i->dm_width, dmp->i->dm_height);
+	}
+    }
+
+    return TCL_OK;
+}
+
 
 HIDDEN int
 tk_reshape(struct dm *dmp, int width, int height)
@@ -197,6 +233,12 @@ tk_reshape(struct dm *dmp, int width, int height)
     dmp->i->dm_height = height;
     dmp->i->dm_width = width;
     dmp->i->dm_aspect = (fastf_t)dmp->i->dm_width / (fastf_t)dmp->i->dm_height;
+
+    Tk_PhotoImageBlock dm_data;
+    Tk_PhotoGetImage(privars->dm_img, &dm_data);
+    if (dm_data.width != dmp->i->dm_width || dm_data.height != dmp->i->dm_height) {
+	Tk_PhotoSetSize((Tcl_Interp *)dmp->i->dm_interp, privars->dm_img, dmp->i->dm_width, dmp->i->dm_height);
+    }
 
     if (dmp->i->dm_debugLevel) {
 	GLfloat m[16];
@@ -476,6 +518,18 @@ tk_windows_setup(Tcl_Interp *interp, struct dm *dmp, Tk_Window tkwin, int *win_c
     if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
 	bu_vls_free(&tcl_cmd);
 	bu_log("Tcl/Tk photo/canvas association failed\n");
+	return -1;
+    }
+
+    // Register an update command so we can change the image contents
+    (void)Tcl_CreateCommand(interp, "tk_dm_image_update", (Tcl_CmdProc *)tk_dm_image_update_data, (ClientData)dmp, (Tcl_CmdDeleteProc  * )NULL);
+
+    bu_vls_sprintf(&tcl_cmd, "bind %s.canvas  <Configure> {tk_dm_image_update %s.canvas.photo [winfo width %%W] [winfo height %%W]}",
+	    bu_vls_cstr(&dmp->i->dm_pathName), bu_vls_cstr(&dmp->i->dm_pathName));
+    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+    if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) == BRLCAD_ERROR) {
+	bu_vls_free(&tcl_cmd);
+	bu_log("Error binding Tk_Photo canvas\n");
 	return -1;
     }
 
