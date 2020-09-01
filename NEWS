@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * upgraded Tcl/Tk from 8.5.19 to 8.6.10 - Cliff Yapp
+* bundled zlib & libpng use API prefix and library suffix - Cliff Yapp
 * improved rtweight density value warnings - Sean Morrison, Cliff Yapp
 * added perception-based hdtv and hdr modes for pix-bw - Sean Morrison
 * fixed semi-transparent DM and FB windows on Linux - Cliff Yapp
@@ -223,7 +224,7 @@ methodologies and usability enhancements.
 * improved 'idents' command portability - Daniel Ramirez, Cliff Yapp
 * changed remrt/rtsrv to no longer report overlaps - Sean Morrison
 * improved GUI of MGED's Overlap Tool - Saran Narayan
-* fixed geometry directory building bug in remrt/rtsrv - Sean Morrison
+* fixed geopmetry directory building bug in remrt/rtsrv - Sean Morrison
 * fixed gcv problem with full paths on Windows - Cliff Yapp
 * removed precision limitation in NIRT input parsing - Cliff Yapp
 * added new example geometry models: chess and die pieces - Jeff Sieu
