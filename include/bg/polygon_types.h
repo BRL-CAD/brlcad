@@ -20,7 +20,7 @@
 
 /*----------------------------------------------------------------------*/
 /* @file polygon_types.h */
-/** @addtogroup polygon */
+/** @addtogroup bg_polygon */
 /** @{ */
 
 /**
