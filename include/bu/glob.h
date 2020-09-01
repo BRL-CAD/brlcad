@@ -29,7 +29,7 @@
 __BEGIN_DECLS
 
 
-/** @addtogroup bu_glob
+/** @addtogroup bu_experimental
  *
  * NOTE - the glob API below is a work in progress - until this notice is
  * removed it should not be considered functional, much less stable!

@@ -38,7 +38,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-
+/** @file bu/app.h */
 
 /**
  * DEPRECATED: This routine is replaced by bu_getcwd().
