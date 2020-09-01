@@ -752,8 +752,13 @@ inline bool vequals(const vec2d& a, const vec2d& b) {
 // 2x2 row-major matrix
 typedef fastf_t mat2d_t[4] VEC_ALIGN;
 
+/* Hide from Doxygen with cond */
+/* @cond */
+
 // 2d point
 typedef fastf_t pt2d_t[2] VEC_ALIGN;
+
+/* @endcond */
 
 //--------------------------------------------------------------------------------
 // MATH / VECTOR ops

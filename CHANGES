@@ -137,6 +137,14 @@ include/bg/chull.h
         bg_polyline_2d_chull, bg_2d_chull, bg_3d_coplanar_chull,
         bg_3d_chull
 
+MGED gui
+	The following will be removed from MGED's menu bar (unused
+	features, can be accomplished another way, or will be exposed
+	only as lower level settings when there are sensible defaults
+	that are seldom changed.)
+
+	Settings->Mouse Behavior->Pick Raytrace-Object(s)
+
 7.30
 ----
 ~/.density

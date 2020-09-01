@@ -466,8 +466,8 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor stringification.
  *
- * #define abc 123
- * CPP_STR(abc) => "abc"
+ *     #define abc 123
+ *     CPP_STR(abc) => "abc"
  */
 #ifndef CPP_STR
 #  define CPP_STR(x) # x
@@ -476,8 +476,8 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor expanded stringification.
  *
- * #define abc 123
- * CPP_XSTR(abc) => "123"
+ *     #define abc 123
+ *     CPP_XSTR(abc) => "123"
  */
 #ifndef CPP_XSTR
 #  define CPP_XSTR(x) CPP_STR(x)
@@ -486,12 +486,12 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor concatenation.
  *
- * #define abc 123
- * CPP_GLUE(abc, 123) => abc123
- * CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
- * CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
- * #define abc123 "xyz"
- * CPP_GLUE(abc, 123) => abc123 => "xyz"
+ *     #define abc 123
+ *     CPP_GLUE(abc, 123) => abc123
+ *     CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
+ *     CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
+ *     #define abc123 "xyz"
+ *     CPP_GLUE(abc, 123) => abc123 => "xyz"
  */
 #ifndef CPP_GLUE
 #  define CPP_GLUE(a, b) a ## b
@@ -500,10 +500,10 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor expanded concatenation.
  *
- * #define abc 123
- * CPP_XGLUE(abc, 123) => 123123
- * CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
- * CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
+ *     #define abc 123
+ *     CPP_XGLUE(abc, 123) => 123123
+ *     CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
+ *     CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
  */
 #ifndef CPP_XGLUE
 #  define CPP_XGLUE(a, b) CPP_GLUE(a, b)
@@ -512,9 +512,9 @@ typedef _TCHAR TCHAR;
 /**
  * Provide format specifier string tied to a size (e.g., "%123s")
  *
- * #define STR_LEN 10+1
- * char str[STR_LEN] = {0};
- * scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ *     #define STR_LEN 10+1
+ *     char str[STR_LEN] = {0};
+ *     scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
  */
 #ifndef CPP_SCAN
 #  define CPP_SCAN(sz) "%" CPP_XSTR(sz) "s"

@@ -18,10 +18,6 @@
  * information.
  */
 
-/** @ingroup process */
-/** @{ */
-/** @file include/bu/process.h */
-/** @} */
 #ifndef BU_PROCESS_H
 #define BU_PROCESS_H
 
@@ -31,6 +27,14 @@
 #include "bu/defines.h"
 
 __BEGIN_DECLS
+
+/** @addtogroup bu_process
+ *
+ * @brief
+ * Routines for process and sub-process management.
+ */
+/** @{ */
+/** @file bu/process.h */
 
 /**
  * returns the process ID of the calling process

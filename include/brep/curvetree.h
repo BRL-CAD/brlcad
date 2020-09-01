@@ -32,9 +32,11 @@
 #include "common.h"
 
 #ifdef __cplusplus
+// @cond SKIP_C++_INCLUDE
 extern "C++" {
 #  include <map>
 }
+// @endcond
 #endif
 
 #include "brep/defines.h"

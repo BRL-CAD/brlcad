@@ -11,6 +11,11 @@
      @brief Routines for application setup and supplying information to user programs.
  */
 /** @ingroup libbu */
+/**  @defgroup bu_process Subprocess Management */
+/**  @addtogroup bu_process
+     @brief Routines for launching and managing applications as subprocesses.
+ */
+/** @ingroup libbu */
 /**  @defgroup bu_container Data Containers */
 /**  @addtogroup bu_container
      @brief Containers for holding various kinds of information.
