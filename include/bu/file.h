@@ -166,7 +166,9 @@ BU_EXPORT extern char *bu_file_realpath(const char *path, char *resolved_path);
 
 /**
  * Windows corecrt_io.h defines an lseek and an _lseeki64, with different function
- * signatures, that cause trouble when we try to simply #define lseek _lseeki64.
+ * signatures, that cause trouble when we try to simply define it à la:
+ *
+ *      #define lseek _lseeki64.
  *
  * Similarly, _ftelli64 has a problematic signature.
  */
