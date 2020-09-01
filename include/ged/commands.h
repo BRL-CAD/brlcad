@@ -834,8 +834,6 @@ __END_DECLS
 
 #endif /* GED_COMMANDS_H */
 
-/** @} */
-
 /*
  * Local Variables:
  * tab-width: 8
