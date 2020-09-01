@@ -2895,7 +2895,7 @@ joint_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern
 
 /*
  * reads datum parameters from keyboard
-n *
+ *
  * returns 0 if successfully read
  * 1 if unsuccessfully read
  */
