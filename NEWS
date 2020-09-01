@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* improved rtweight density value warnings - Sean Morrison, Cliff Yapp
+* added perception-based hdtv and hdr modes for pix-bw - Sean Morrison
 * fixed semi-transparent DM and FB windows on Linux - Cliff Yapp
 * improved rtweight manual page - Sean Morrison
 * added line reporting TCP listening port to remrt output - Cliff Yapp
