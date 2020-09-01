@@ -39,6 +39,8 @@ changes made.  See document footer for additional details.
 * fixed bw-png writing corrupted png files on Windows - Sean Morrison
 * added MGED 'dm type' subcommand for reporting DM type - Cliff Yapp
 * improved vdeck input support for Windows text files - Sean Morrison
+* fixed MGED 'plot' & 'brep plot' commands on Windows - Sean Morrison
+* fixed numerous image utilities on Windows - Sean Morrison
 
 
 ----------------------------------------------------------------------
