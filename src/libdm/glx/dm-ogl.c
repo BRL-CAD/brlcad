@@ -523,8 +523,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     /* Try to satisfy the above desires with a color visual of the
      * greatest depth */
 
-    vibase = XGetVisualInfo(pubvars->dpy,
-			    0, &vitemp, &num);
+    vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
     screen = DefaultScreen(pubvars->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");

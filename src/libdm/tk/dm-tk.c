@@ -164,9 +164,7 @@ tk_open(void *vinterp, int argc, const char **argv)
 	}
 
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin =
-	    Tk_CreateWindow(interp, pubvars->top,
-			    cp + 1, (char *)NULL);
+	pubvars->xtkwin = Tk_CreateWindow(interp, pubvars->top, cp + 1, (char *)NULL);
     }
 
     if (pubvars->xtkwin == NULL) {
