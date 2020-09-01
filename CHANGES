@@ -143,22 +143,7 @@ MGED gui
 	only as lower level settings when there are sensible defaults
 	that are seldom changed.)
 
-	ViewRing menu and entries.
-	Modes->Persistent Sweep Rectangle
-	Modes->Collaborate
-	Modes->Rateknobs
-	Modes->Display Lists
-	Misc->Keystroke Forwarding
-	Misc->Depth Cueing
-	Misc->Z Buffer
-	Misc->Lighting
-	Settings->Mouse Behavior->Sweep Raytrace-Rectangle
-	Settings->Mouse Behavior->Sweep Paint-Rectangle
-	Settings->Mouse Behavior->Sweep Zoom-Rectangle
 	Settings->Mouse Behavior->Pick Raytrace-Object(s)
-	Settings->Apply To->Local Panes
-	Settings->Apply To->Listed Panes
-	Settings->Framebuffer->Rectangle Area
 
 7.30
 ----
