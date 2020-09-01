@@ -73,6 +73,7 @@ changes made.  See document footer for additional details.
 * fixed transparent drawing in MGED - Nick Reed
 * fixed solid NURBS brep intersection testing - Cliff Yapp
 * removed extra blank line after commands in MGED GUI - Sean Morrison
+* minor improvement to NURBS ray tracing performance - Sean Morrison
 * added "plate" object type filter to search command - Cliff Yapp
 * fixed latent logging bug during facetize on Windows - Bob Parker
 * fixed bug closing rt framebuffer windows on Windows - Sean Morrison
