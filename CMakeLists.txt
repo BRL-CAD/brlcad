@@ -3584,6 +3584,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
     set(CPACK_NSIS_MODIFY_PATH ON)
     if(BRLCAD_ENABLE_WIX)
+      # TODO - user report that this version of the installer also supports
+      # non-graphical installation with the /passive option - need to explore
+      # custom WiX template option CPACK_WIX_TEMPLATE to match features with
+      # the NSIS installer.
       set(CPACK_GENERATOR ${CPACK_GENERATOR} WIX)
       set(CPACK_WIX_LICENSE_RTF "${CMAKE_SOURCE_DIR}/misc/wix/License.rtf")
       set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_product.ico")
