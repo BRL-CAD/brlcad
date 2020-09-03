@@ -3592,6 +3592,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
       # non-graphical installation with the /passive option - need to explore
       # custom WiX template option CPACK_WIX_TEMPLATE to match features with
       # the NSIS installer.
+      # Note: for WiX, start menu shortcuts and desktop icons are handled with properties
+      # set on targets.  (At the moment, this is not true for NSIS - it uses entries
+      # in the misc/CMake/NSIS.template.in file.)
       set(CPACK_GENERATOR ${CPACK_GENERATOR} WIX)
       set(CPACK_WIX_LICENSE_RTF "${CMAKE_SOURCE_DIR}/misc/wix/License.rtf")
       set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_product.ico")
