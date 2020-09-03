@@ -3578,7 +3578,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       set(CPACK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
       set(CPACK_DATA_DIR "${DATA_DIR}")
       set(CPACK_DOC_DIR "${DOC_DIR}")
-      # There is a bug in NSI that does not handle full unix paths properly. Make
+      # There is a bug in NSIS that does not handle full unix paths properly. Make
       # sure there is at least one set of four (4) backslashes.
       set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
       set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
@@ -3593,9 +3593,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
       # custom WiX template option CPACK_WIX_TEMPLATE to match features with
       # the NSIS installer.
       set(CPACK_GENERATOR ${CPACK_GENERATOR} WIX)
-      set(CPACK_WIX_TEMPLATE "${BRLCAD_CMAKE_DIR}/WIX.template.in")
       set(CPACK_WIX_LICENSE_RTF "${CMAKE_SOURCE_DIR}/misc/wix/License.rtf")
       set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_product.ico")
+      set(CPACK_WIX_PROGRAM_MENU_FOLDER "BRL-CAD ${BRLCAD_VERSION}")
+      set(CPACK_WIX_TEMPLATE "${BRLCAD_CMAKE_DIR}/WIX.template.in")
       set(CPACK_WIX_UI_BANNER "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_banner.bmp")
       set(CPACK_WIX_UI_DIALOG "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_dialog.bmp")
     endif (Wix_FOUND)
