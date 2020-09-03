@@ -22,8 +22,6 @@ getenv_path(WIX_HOME)
 # Find version specific paths
 file(GLOB WIX_PATHS LIST_DIRECTORIES TRUE "C:/Program Files*/WiX Toolset*")
 
-message("WIX_PATHS: ${WIX_PATHS}")
-
 # construct search paths
 set(WIX_PREFIX_PATH ${WIX_HOME} ${ENV_WIX_HOME} ${WIX_PATHS})
 
