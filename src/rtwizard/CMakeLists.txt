@@ -19,10 +19,10 @@ if (TARGET libtclcad)
   endforeach(item ${tclindex_target_list})
 
   # RtWizard is one of the programs that gets a start menu entry
-  set_property(INSTALL "bin/$<TARGET_FILE_NAME:rtwizard>"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:rtwizard>"
     PROPERTY CPACK_START_MENU_SHORTCUTS "RtWizard ${BRLCAD_VERSION}"
     )
-  set_property(INSTALL "bin/$<TARGET_FILE_NAME:rtwizard>"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:rtwizard>"
     PROPERTY CPACK_DESKTOP_SHORTCUTS "RtWizard ${BRLCAD_VERSION}"
     )
 

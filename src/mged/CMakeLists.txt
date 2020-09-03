@@ -83,10 +83,10 @@ if (BRLCAD_ENABLE_TCL)
   endforeach(item ${tclindex_target_list})
 
   # MGED is one of the programs that gets a start menu entry
-  set_property(INSTALL "bin/$<TARGET_FILE_NAME:mged>"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
     PROPERTY CPACK_START_MENU_SHORTCUTS "MGED ${BRLCAD_VERSION}"
     )
-  set_property(INSTALL "bin/$<TARGET_FILE_NAME:mged>"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
     PROPERTY CPACK_DESKTOP_SHORTCUTS "MGED ${BRLCAD_VERSION}"
     )
 
