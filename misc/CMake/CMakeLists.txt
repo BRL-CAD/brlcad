@@ -53,6 +53,7 @@ set(cmake_ignore_files
   FindXSLTPROC.cmake
   NSIS.template.in
   NSIS_silent.template.in
+  WIX.template.in
   OpenVDBUtils.cmake
   Path_Setup.cmake
   RPath_Setup.cmake
