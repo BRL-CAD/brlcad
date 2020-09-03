@@ -19,10 +19,14 @@ include(FindPkgMacros)
 # Get path, convert backslashes as ${ENV_${var}}
 getenv_path(WIX_HOME)
 
+# Find version specific paths
+file(GLOB WIX_PATHS LIST_DIRECTORIES TRUE "C:/Program Files*/WiX Toolset*")
+
+message("WIX_PATHS: ${WIX_PATHS}")
+
 # construct search paths
-set(WIX_PREFIX_PATH ${WIX_HOME} ${ENV_WIX_HOME}
-	"C:/Program Files/Windows Installer XML Toolset 3.0"
-)
+set(WIX_PREFIX_PATH ${WIX_HOME} ${ENV_WIX_HOME} ${WIX_PATHS})
+
 find_path(Wix_BINARY_DIR NAMES candle.exe HINTS ${WIX_PREFIX_PATH} PATH_SUFFIXES bin)
 
 if(Wix_BINARY_DIR)
