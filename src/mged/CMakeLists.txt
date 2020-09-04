@@ -46,6 +46,14 @@ set(MGED_SOURCES
   wdb_obj.c
   )
 
+if (HAVE_WINDOWS_H)
+  # To associate an icon with the application for Windows (needed
+  # for the WiX installer) we must use an rc file.
+  enable_language(RC)
+  set(MGED_SOURCES ${MGED_SOURCES } mged.rc)
+endif (HAVE_WINDOWS_H)
+
+
 set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY} ${WS2_32_LIBRARY} ${OPENGL32_LIBRARY})
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
@@ -123,6 +131,8 @@ set(mged_ignore_files
   scroll.h
   sedit.h
   titles.h
+  mged.ico
+  mged.rc
   )
 CMAKEFILES(${mged_ignore_files})
 
