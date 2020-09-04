@@ -227,6 +227,23 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 /**
+ * Maximum length of a filesystem path.  Typically defined in a system
+ * file but if it isn't set, we create it.
+ */
+#ifndef MAXPATHLEN
+#  include <limits.h> // Consistently define (or not) PATH_MAX
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX
+#  elif defined(MAX_PATH)
+#    define MAXPATHLEN MAX_PATH
+#  elif defined(_MAX_PATH)
+#    define MAXPATHLEN _MAX_PATH
+#  else
+#    define MAXPATHLEN 2048
+#  endif
+#endif
+
+/**
  * Provide a means to conveniently test the version of the GNU
  * compiler.  Use it like this:
  *
