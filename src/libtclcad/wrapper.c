@@ -1,4 +1,4 @@
-/*                T C L C A D _ O B J _ W R A P P E R . C
+/*                        W R A P P E R . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2020 United States Government as represented by
@@ -17,12 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libtclcad */
-/** @{ */
-/** @file libtclcad/tclcad_obj_wrapper.c
- *
- */
-/** @} */
 
 #include "common.h"
 
@@ -30,7 +24,7 @@
 #include "tclcad.h"
 
 /* Private headers */
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
 #include "./view/view.h"
 
 /* Wraps calls to commands like "draw" that need to reset the view */

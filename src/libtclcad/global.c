@@ -1,4 +1,4 @@
-/*                    T C L C A D _ G L O B A L . C
+/*                           G L O B A L . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2020 United States Government as represented by
@@ -17,17 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libtclcad */
-/** @{ */
-/** @file libtclcad/tclcad_global.c
- *
- */
-/** @} */
 
 #include "common.h"
 
 #include "tclcad.h"
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
+
 
 struct tclcad_obj HeadTclcadObj;
 struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;

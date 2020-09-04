@@ -31,8 +31,8 @@
 #include "nmg.h"
 #include "gcv.h"
 
-#include "./soup.h"
-#include "./tri_intersect.h"
+#include "../soup.h"
+#include "../tri_intersect.h"
 
 int
 test_intersection(int should, point_t *t1, point_t *t2, point_t p1, point_t p2)

@@ -170,6 +170,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* rtwizard's reopening of the database is causing db_dircheck
+  "Duplicate of..." errors when opening read-only .g files.
+
+* procedural studio box generation allowing for specification of size,
+  shape, material, and lighting characteristics
 
 * verify all of the src/util utilities behave correctly on Windows
   with respect to mode (i.e. correctly using setmode/O_BINARY when
@@ -2437,6 +2442,18 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
   primitive for initial estimate, caches result)
 
 * write and use kdtree - make traversal cache coherent
+
+
+GEOMETRY MODELS
+---------------
+
+* CSG shaderball
+
+* solid teapot
+
+* studio box
+
+* CSG lightcycle
 
 
 DOCUMENTATION

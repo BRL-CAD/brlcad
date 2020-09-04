@@ -1,4 +1,4 @@
-/*                   T C L C A D _ P R I V A T E . H
+/*                T C L C A D _ P R I V A T E . H
  * BRL-CAD
  *
  * Copyright (c) 2012-2020 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tclcad_private.h
+/**
  *
  * Private header for libtclcad.
  *

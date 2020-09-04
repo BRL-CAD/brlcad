@@ -60,7 +60,7 @@ bsd_realpath(const char *path, char *resolved)
     unsigned symlinks;
     int serrno, mem_allocated;
     ssize_t slen;
-    char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
+    char left[MAXPATHLEN], next_token[MAXPATHLEN], symlink[MAXPATHLEN];
 
     if (path == NULL) {
 	errno = EINVAL;
@@ -75,7 +75,7 @@ bsd_realpath(const char *path, char *resolved)
     serrno = errno;
 
     if (resolved == NULL) {
-	resolved = (char *)bu_malloc(PATH_MAX, "alloc PATH_MAX");
+	resolved = (char *)bu_malloc(MAXPATHLEN, "alloc MAXPATHLEN");
 	if (resolved == NULL)
 	    return (NULL);
 	mem_allocated = 1;
@@ -91,11 +91,11 @@ bsd_realpath(const char *path, char *resolved)
 	resolved_len = 1;
 	left_len = bu_strlcpy(left, path + 1, sizeof(left));
     } else {
-	if (getcwd(resolved, PATH_MAX) == NULL) {
+	if (getcwd(resolved, MAXPATHLEN) == NULL) {
 	    if (mem_allocated)
 		free(resolved);
 	    else
-		bu_strlcpy(resolved, ".", PATH_MAX);
+		bu_strlcpy(resolved, ".", MAXPATHLEN);
 	    return (NULL);
 	}
 	resolved_len = strlen(resolved);
@@ -129,7 +129,7 @@ bsd_realpath(const char *path, char *resolved)
 	}
 
 	if (resolved[resolved_len - 1] != '/') {
-	    if (resolved_len + 1 >= PATH_MAX) {
+	    if (resolved_len + 1 >= MAXPATHLEN) {
 		errno = ENAMETOOLONG;
 		goto err;
 	    }
@@ -160,8 +160,8 @@ bsd_realpath(const char *path, char *resolved)
 	 * it exists but isn't a symlink, or if there are no more
 	 * path components left.
 	 */
-	resolved_len = bu_strlcat(resolved, next_token, PATH_MAX);
-	if (resolved_len >= PATH_MAX) {
+	resolved_len = bu_strlcat(resolved, next_token, MAXPATHLEN);
+	if (resolved_len >= MAXPATHLEN) {
 	    errno = ENAMETOOLONG;
 	    goto err;
 	}
