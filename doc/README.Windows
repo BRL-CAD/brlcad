@@ -3,17 +3,22 @@ BRL-CAD on Windows README
 
 The usual way to build BRL-CAD for Windows is to use the CMake build
 system generator and the Microsoft Visual Studio C++ (MSVC) compiler.
-Recent versions of both (as of this writing, MSVC 2013 and CMake
-2.8.12+) are recommended.  If generating an installer, the Nullsoft
-Scriptable Install System (NSIS) tool is also required.
+Recent versions of both are recommended.  If generating an installer,
+the following options are available and supported:
 
-In principle, BRL-CAD can be built using CMake and environments like
-Cygwin and/or Mingw/Msys, but the latter is largely untested and
+Nullsoft Scriptable Install System (NSIS) - generates a. .exe installer
+
+WiX Toolset - generates an MSI installer.
+
+These tools must be installed separately - they are not included with
+CMake or Visual Studio.
+
+Note:  In principle BRL-CAD can be built using CMake and environments
+like Cygwin and/or Mingw/Msys, but they are largely untested and
 infrequently supported.  Enhancements or bug reports are welcome.
 
 Visual Studio
 -------------
-
 
 To build with CMake and Visual Studio, the first step is to obtain the
 BRL-CAD sources and create a build directory.  In principle, it is not
@@ -53,6 +58,18 @@ CMAKE_BUILD_TYPE was set to Debug.
 You may want to produce an NSIS installer.  If so, locate a target
 named PACKAGE and run it.  The end result should be an .exe file
 capable of installing BRL-CAD.
+
+Working with MSI files
+----------------------
+
+The WiX Toolset's MSI file, in addition to the standard interactive
+graphical install, also supports a command line based silent
+install. (See, for example, https://stackoverflow.com/a/25230485)
+
+msiexec.exe /i c:\BRL-CAD-7.32.0_win64.msi /QN /L*V "C:\Temp\brlcad_install.log"
+
+The logging step is not required but is recommended to allow for
+easier understanding of any issues that might arise.
 
 ===========================================
 
