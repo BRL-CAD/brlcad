@@ -34,7 +34,7 @@
 
 __BEGIN_DECLS
 
-/* "complex number" data type: */
+/** "complex number" data type */
 typedef struct bn_complex {
     double re;		/**< @brief real part */
     double im;		/**< @brief imaginary part */
