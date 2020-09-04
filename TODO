@@ -18,8 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* rtwizard on Windows is triggering "db_dircheck" errors on
-  startup - creating duplicates of all objects.
+* rtwizard is generating "db_dircheck" errors on
+  startup - creating duplicates of all objects - when
+  opening a read-only database.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
