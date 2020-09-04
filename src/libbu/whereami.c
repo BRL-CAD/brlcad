@@ -281,7 +281,7 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 
   for (;;)
   {
-    resolved = realpath(WAI_PROC_SELF_EXE, buffer);
+    resolved = bu_file_realpath(WAI_PROC_SELF_EXE, buffer);
     if (!resolved)
       break;
 
@@ -366,7 +366,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
         {
           char* resolved;
 
-          resolved = realpath(path, buffer);
+          resolved = bu_file_realpath(path, buffer);
           if (!resolved)
             break;
 
@@ -474,7 +474,7 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
         break;
     }
 
-    resolved = realpath(path, buffer2);
+    resolved = bu_file_realpath(path, buffer2);
     if (!resolved)
       break;
 
@@ -524,7 +524,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
     if (dladdr(WAI_RETURN_ADDRESS(), &info))
     {
-      resolved = realpath(info.dli_fname, buffer);
+      resolved = bu_file_realpath(info.dli_fname, buffer);
       if (!resolved)
         break;
 
@@ -585,7 +585,7 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
     if (!bu_fgets(buffer1, sizeof(buffer1), self_exe))
       break;
 
-    resolved = realpath(buffer1, buffer2);
+    resolved = bu_file_realpath(buffer1, buffer2);
     if (!resolved)
       break;
 
@@ -634,7 +634,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
     if (dladdr(WAI_RETURN_ADDRESS(), &info))
     {
-      resolved = realpath(info.dli_fname, buffer);
+      resolved = bu_file_realpath(info.dli_fname, buffer);
       if (!resolved)
         break;
 
@@ -696,7 +696,7 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
     if (sysctl(mib, (u_int)(sizeof(mib) / sizeof(mib[0])), path, &size, NULL, 0) != 0)
         break;
 
-    resolved = realpath(path, buffer2);
+    resolved = bu_file_realpath(path, buffer2);
     if (!resolved)
       break;
 
@@ -746,7 +746,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
     if (dladdr(WAI_RETURN_ADDRESS(), &info))
     {
-      resolved = realpath(info.dli_fname, buffer);
+      resolved = bu_file_realpath(info.dli_fname, buffer);
       if (!resolved)
         break;
 
