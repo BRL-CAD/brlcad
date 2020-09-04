@@ -466,8 +466,10 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor stringification.
  *
+ @code
  *     #define abc 123
  *     CPP_STR(abc) => "abc"
+ @endcode
  */
 #ifndef CPP_STR
 #  define CPP_STR(x) # x
@@ -476,8 +478,10 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor expanded stringification.
  *
+ @code
  *     #define abc 123
  *     CPP_XSTR(abc) => "123"
+ @endcode
  */
 #ifndef CPP_XSTR
 #  define CPP_XSTR(x) CPP_STR(x)
@@ -486,12 +490,14 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor concatenation.
  *
+ @code
  *     #define abc 123
  *     CPP_GLUE(abc, 123) => abc123
  *     CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
  *     CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
  *     #define abc123 "xyz"
  *     CPP_GLUE(abc, 123) => abc123 => "xyz"
+ @endcode
  */
 #ifndef CPP_GLUE
 #  define CPP_GLUE(a, b) a ## b
@@ -500,10 +506,12 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor expanded concatenation.
  *
+ @code
  *     #define abc 123
  *     CPP_XGLUE(abc, 123) => 123123
  *     CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
  *     CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
+ @endcode
  */
 #ifndef CPP_XGLUE
 #  define CPP_XGLUE(a, b) CPP_GLUE(a, b)
@@ -512,9 +520,11 @@ typedef _TCHAR TCHAR;
 /**
  * Provide format specifier string tied to a size (e.g., "%123s")
  *
+ @code
  *     #define STR_LEN 10+1
  *     char str[STR_LEN] = {0};
  *     scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ @endcode
  */
 #ifndef CPP_SCAN
 #  define CPP_SCAN(sz) "%" CPP_XSTR(sz) "s"
