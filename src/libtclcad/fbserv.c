@@ -1,4 +1,4 @@
-/*                    F B S E R V _ O B J . C
+/*                        F B S E R V . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2020 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup libstruct fb */
 /** @{ */
-/** @file fbserv_obj.c
+/**
  *
  * A framebuffer server object contains the attributes and
  * methods for implementing an fbserv. This code was developed

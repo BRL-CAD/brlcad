@@ -1,4 +1,4 @@
-/*                      B U _ F U N C S . C
+/*                            B U . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2020 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file libtclcad/bu_funcs.c
+/**
  *
  * BRL-CAD's Tcl wrappers for libbu.
  *
@@ -42,7 +42,8 @@
 
 /* Private headers */
 #include "brlcad_version.h"
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
+
 
 static int
 lwrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])

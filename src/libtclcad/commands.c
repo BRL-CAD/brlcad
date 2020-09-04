@@ -82,10 +82,9 @@
 #include "../libged/ged_private.h"
 
 /* Private headers */
-#include "tclcad_private.h"
-#include "./view/view.h"
-
 #include "brlcad_version.h"
+#include "./tclcad_private.h"
+#include "./view/view.h"
 
 
 HIDDEN int to_base2local(struct ged *gedp,

@@ -1,4 +1,4 @@
-/*                   T C L C A D _ I N I T . C
+/*                          I N I T . C
  * BRL-CAD
  *
  * Copyright (c) 2014-2020 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tclcad_init.c
+/**
  *
  * Functions for initializing Tcl environments and BRL-CAD's libtclcad
  * interface.
@@ -41,7 +41,8 @@
 
 /* Private headers */
 #include "brlcad_version.h"
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
+
 
 int
 library_initialized(int setit)
@@ -81,11 +82,7 @@ extern int Itk_Init(Tcl_Interp *);
 #endif
 
 int
-#ifdef HAVE_TK
 tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
-#else
-tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
-#endif
 {
     if (library_initialized(0))
 	return TCL_OK;
@@ -94,13 +91,13 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
 	return TCL_ERROR;
     }
 
-#ifdef HAVE_TK
     if (init_gui) {
+#ifdef HAVE_TK
 	if (Tk_Init(interp) == TCL_ERROR) {
 	    return TCL_ERROR;
 	}
-    }
 #endif
+    }
 
     /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
     tclcad_auto_path(interp);
@@ -112,9 +109,9 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
 	return TCL_ERROR;
     }
 
-#ifdef HAVE_TK
     /* Initialize [incr Tk] */
     if (init_gui) {
+#ifdef HAVE_TK
 	if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
 	    if (tlog)
 	       	bu_vls_printf(tlog, "Itk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
@@ -127,8 +124,8 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
 	       	bu_vls_printf(tlog, "Iwidgets init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
-    }
 #endif
+    }
 
     /* Initialize libbu */
     if (Bu_Init(interp) == TCL_ERROR) {
@@ -184,8 +181,8 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
 	return TCL_ERROR;
     }
 
-#ifdef HAVE_TK
     if (init_gui) {
+#ifdef HAVE_TK
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		    "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 	    if (tlog)
@@ -198,8 +195,8 @@ tclcad_init(Tcl_Interp *interp, int UNUSED(init_gui), struct bu_vls *tlog)
 	       	bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
-    }
 #endif
+    }
 
     if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
 	if (tlog)

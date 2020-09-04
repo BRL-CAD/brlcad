@@ -1,4 +1,4 @@
-/*                        R T _ F U N C S . C
+/*                              R T . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2020 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file libtclcad/rt_funcs.c
+/**
  *
  * BRL-CAD's Tcl wrappers for librt.
  *
@@ -44,7 +44,7 @@
 
 /* Private headers */
 #include "brlcad_version.h"
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
 
 
 #define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
