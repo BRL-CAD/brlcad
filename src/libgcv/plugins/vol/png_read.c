@@ -13,6 +13,8 @@ static void create_opts(struct bu_opt_desc **opts_desc,
 {
   struct png_read_opts *opts_data;
 
+  bu_log("VOL_PLUGIN: entered create_opts()\n");
+
   BU_ALLOC(opts_data, struct png_read_opts);
   *dest_options_data = opts_data;
   *opts_desc = (struct bu_opt_desc *)bu_calloc(3, sizeof(struct bu_opt_desc), "options_desc");
@@ -26,6 +28,8 @@ static void create_opts(struct bu_opt_desc **opts_desc,
 
 static void free_opts(void *options_data)
 {
+  bu_log("VOL_PLUGIN: entered free_opts()\n");
+
   bu_free(options_data, "options_data");
 }
 
@@ -50,7 +54,10 @@ static int png_read(struct gcv_context *context,
 
 HIDDEN int png_can_read(const char * data)
 {
-  if (!data) return 0;
+  bu_log("VOL_PLUGIN: entered png_can_read, data=%p\n", (void *)data);
+
+  if (!data)
+    return 0;
   return 1;
 }
 
