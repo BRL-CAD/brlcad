@@ -221,7 +221,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
      * the argument to the warping function*/
     GDALDatasetH hOutDS;
     int zone = (state->ops->zone == INT_MAX) ? gdal_utm_zone(state) : state->ops->zone;
-    char *dunit;
+    char *dunit = NULL;
     const char *dunit_default = "m";
     struct bu_vls new_proj4_str = BU_VLS_INIT_ZERO;
     if (zone != INT_MAX) {
@@ -236,10 +236,13 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	 * yet in the form needed by the DSP primitive */
 	hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
 	CPLFree(dst_Wkt);
-	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
-	bu_log("\nTransformed dataset info:\n");
-	(void)get_dataset_info(hOutDS);
-	gdal_elev_minmax(hOutDS);
+
+	if (hOutDS) {
+	    dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
+	    bu_log("\nTransformed dataset info:\n");
+	    (void)get_dataset_info(hOutDS);
+	    gdal_elev_minmax(hOutDS);
+	}
     } else {
 	hOutDS = state->hDataset;
 	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
