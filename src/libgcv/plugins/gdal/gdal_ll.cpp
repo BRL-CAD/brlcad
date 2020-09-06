@@ -66,19 +66,24 @@ gdal_ll(GDALDatasetH hDataset, double *lat_center, double *long_center)
 	    CPLPopErrorHandler();
 	    OSRDestroySpatialReference(hll);
 	}
-	if(hpj != NULL) OSRDestroySpatialReference(hpj);
+	if (hpj != NULL)
+	    OSRDestroySpatialReference(hpj);
     }
 
     if(htfm != NULL) {
 	if (OCTTransform(htfm,1,&longitude,&latitude,NULL)) {
-	    if (lat_center)  (*lat_center)  = latitude;
-	    if (long_center) (*long_center) = longitude;
+	    if (lat_center)
+		*lat_center  = latitude;
+	    if (long_center)
+		*long_center = longitude;
 	} else {
 	    return 0;
 	}
     } else {
-	if (lat_center)  (*lat_center)  = latitude;
-	if (long_center) (*long_center) = longitude;
+	if (lat_center)
+	    *lat_center  = latitude;
+	if (long_center)
+	    *long_center = longitude;
     }
     bu_log("lat: %f, long: %f\n", latitude, longitude);
 
