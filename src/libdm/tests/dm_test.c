@@ -58,10 +58,12 @@ main(int UNUSED(argc), const char **argv)
     const char *av0 = "attach";
     struct dm *dmp;
     dmp = dm_open(NULL, "nu", 1, &av0);
-    bu_log("dmp name: %s\n", dm_get_name(dmp));
+    const char *name = dm_get_name(dmp);
+    bu_log("dmp name: %s\n", (name)?name:"(NULL)");
     dm_close(dmp);
     dmp = dm_open(NULL, "txt", 1, &av0);
-    bu_log("dmp name: %s\n", dm_get_name(dmp));
+    name = dm_get_name(dmp);
+    bu_log("dmp name: %s\n", (name)?name:"(NULL)");
     dm_close(dmp);
 
     bu_log("recommended type: %s\n", dm_bestXType(NULL));

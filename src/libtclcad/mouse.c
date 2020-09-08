@@ -1,4 +1,4 @@
-/*                   T C L C A D _ M O U S E . C
+/*                          M O U S E . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2020 United States Government as represented by
@@ -17,12 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libtclcad */
-/** @{ */
-/** @file libtclcad/tclcad_mouse.c
- *
- */
-/** @} */
 
 #include "common.h"
 
@@ -30,7 +24,7 @@
 #include "tclcad.h"
 
 /* Private headers */
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
 #include "./view/view.h"
 
 int
@@ -238,16 +232,17 @@ to_mouse_brep_selection_append(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *dname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (dname && bu_vls_strlen(dname)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_brep_selection_translate %s %s %%x %%y; "
 		      "%s brep %s plot SCV}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(dname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      brep_name,
-		      bu_vls_addr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
 		      brep_name);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 
@@ -968,13 +963,14 @@ to_mouse_joint_select(
 	return GED_ERROR;
     }
 
-    if (dm_get_pathname((struct dm *)gdvp->dmp)) {
+    struct bu_vls *dname = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (dname) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y}",
-		      bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp)),
-		      bu_vls_addr(&current_top->to_gedp->go_name),
-		      bu_vls_addr(&gdvp->gv_name),
+		      bu_vls_cstr(dname),
+		      bu_vls_cstr(&current_top->to_gedp->go_name),
+		      bu_vls_cstr(&gdvp->gv_name),
 		      joint_name);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	Tcl_Eval(current_top->to_interp, bu_vls_cstr(&bindings));
     }
     bu_vls_free(&bindings);
 

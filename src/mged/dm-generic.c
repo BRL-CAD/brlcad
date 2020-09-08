@@ -259,8 +259,8 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[2]);
-	dml_omy = atoi(argv[3]);
+	dm_omx = atoi(argv[2]);
+	dm_omy = atoi(argv[3]);
 
 	switch (*argv[1]) {
 	    case 'r':
@@ -325,13 +325,13 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[2]);
-	dml_omy = atoi(argv[3]);
+	dm_omx = atoi(argv[2]);
+	dm_omy = atoi(argv[3]);
 
 	switch (*argv[1]) {
 	    case '1':
-		fx = dm_Xx2Normal(DMP, dml_omx) * GED_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -340,8 +340,8 @@ common_dm(int argc, const char *argv[])
 		am_mode = AMM_ADC_ANG1;
 		break;
 	    case '2':
-		fx = dm_Xx2Normal(DMP, dml_omx) * GED_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -354,7 +354,7 @@ common_dm(int argc, const char *argv[])
 		    point_t model_pt;
 		    point_t view_pt;
 
-		    VSET(view_pt, dm_Xx2Normal(DMP, dml_omx), dm_Xy2Normal(DMP, dml_omy, 1), 0.0);
+		    VSET(view_pt, dm_Xx2Normal(DMP, dm_omx), dm_Xy2Normal(DMP, dm_omy, 1), 0.0);
 
 		    if (grid_state->snap)
 			snap_to_grid(&view_pt[X], &view_pt[Y]);
@@ -371,9 +371,9 @@ common_dm(int argc, const char *argv[])
 
 		break;
 	    case 'd':
-		fx = (dm_Xx2Normal(DMP, dml_omx) * GED_MAX -
+		fx = (dm_Xx2Normal(DMP, dm_omx) * GED_MAX -
 		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
-		fy = (dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX -
+		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX -
 		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 
 		td = sqrt(fx * fx + fy * fy);
@@ -401,8 +401,8 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[3]);
-	dml_omy = atoi(argv[4]);
+	dm_omx = atoi(argv[3]);
+	dm_omy = atoi(argv[4]);
 
 	switch (*argv[1]) {
 	    case 'a':
@@ -585,7 +585,8 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dirty = 1;
+	DMP_dirty = 1;
+	dm_set_dirty(DMP, 1);
 	(void)dm_make_current(DMP);
 	return dm_set_bg(DMP, r, g, b);
     }
@@ -635,7 +636,7 @@ void *
 set_hook_data(struct mged_view_hook_state *hs) {
     hs->hs_dmp = DMP;
     hs->vs = view_state;
-    hs->dirty_global = &(dirty);
+    hs->dirty_global = &(DMP_dirty);
     return (void *)hs;
 }
 
@@ -659,36 +660,39 @@ dm_commands(int argc,
     struct dm_hook_data mged_dm_hook;
     if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	struct bu_structparse *dmparse = dm_get_vparse(DMP);
+	void *mvars = dm_get_mvars(DMP);
+	if (dmparse && mvars) {
+	    if (argc < 2) {
+		struct bu_vls report_str = BU_VLS_INIT_ZERO;
 
-	if (argc < 2) {
-	    struct bu_vls report_str = BU_VLS_INIT_ZERO;
-	    if (dm_get_dm_name(DMP) && dm_get_vparse(DMP)) {
 		bu_vls_sprintf(&report_str, "Display Manager (type %s) internal variables", dm_get_dm_name(DMP));
 		/* Bare set command, print out current settings */
-		bu_vls_struct_print2(&vls, bu_vls_addr(&report_str), dm_get_vparse(DMP), (const char *)dm_get_mvars(DMP));
-	    }
-	    bu_vls_free(&report_str);
-	} else if (argc == 2) {
-	    /* TODO - need to add hook func support to this func, since the one in the libdm structparse isn't enough by itself */
-	    if (dm_get_mvars(DMP) && dm_get_vparse(DMP)) {
-		bu_vls_struct_item_named(&vls, dm_get_vparse(DMP), argv[1], (const char *)dm_get_mvars(DMP), COMMA);
-	    }
-	} else {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	    int ret;
-	    struct mged_view_hook_state global_hs;
-	    void *data = set_hook_data(&global_hs);
+		bu_vls_struct_print2(&vls, bu_vls_addr(&report_str), dmparse, (const char *)mvars);
+		bu_vls_free(&report_str);
+	    } else if (argc == 2) {
+		/* TODO - need to add hook func support to this func, since the
+		 * one in the libdm structparse isn't enough by itself */
+		if (dm_get_mvars(DMP) && dm_get_vparse(DMP)) {
+		    bu_vls_struct_item_named(&vls, dmparse, argv[1], (const char *)mvars, COMMA);
+		}
+	    } else {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+		int ret;
+		struct mged_view_hook_state global_hs;
+		void *data = set_hook_data(&global_hs);
 
-	    ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+		ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
 
-	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-	    bu_vls_putc(&tmp_vls, '\"');
-	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(DMP), (char *)dm_get_mvars(DMP), (void *)(&mged_dm_hook));
-	    bu_vls_free(&tmp_vls);
-	    if (ret < 0) {
-	      bu_vls_free(&vls);
-	      return TCL_ERROR;
+		bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+		bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
+		bu_vls_putc(&tmp_vls, '\"');
+		ret = bu_struct_parse(&tmp_vls, dmparse, (char *)mvars, (void *)(&mged_dm_hook));
+		bu_vls_free(&tmp_vls);
+		if (ret < 0) {
+		    bu_vls_free(&vls);
+		    return TCL_ERROR;
+		}
 	    }
 	}
 

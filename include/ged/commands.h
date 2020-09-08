@@ -17,13 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup ged_commands
+/** @addtogroup libged
  *
  * Geometry EDiting Library Commands
  *
  */
 /** @{ */
 /** @file ged/commands.h */
+/** @} */
 
 #ifndef GED_COMMANDS_H
 #define GED_COMMANDS_H
@@ -34,16 +35,22 @@
 
 __BEGIN_DECLS
 
-/* Execute plugin based command */
+/** @addtogroup ged_plugins */
+/** @{ */
+/** Execute plugin based command */
 GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
+/** @} */
 
+/** @addtogroup ged_objects */
+/** @{ */
 /**
  * Adjust object's attribute(s)
  */
 GED_EXPORT extern int ged_adjust(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Set, get, show, remove or append to attribute values for the specified object.
+ * @brief Set, get, show, remove or append to attribute values for the specified object.
+ *
  * The arguments for "set" and "append" subcommands are attribute name/value pairs.
  * The arguments for "get", "rm", and "show" subcommands are attribute names.
  * The "set" subcommand sets the specified attributes for the object.
@@ -285,7 +292,8 @@ GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);
 
 
 /**
- * Manipulate opaque binary objects.
+ * @brief Manipulate opaque binary objects.
+ *
  * Must specify one of -i (for creating or adjusting objects (input))
  * or -o for extracting objects (output).
  * If the major type is "u" the minor type must be one of:
@@ -818,13 +826,13 @@ GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]
  */
 GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
 
+/** @} */
+
 
 __END_DECLS
 
 
 #endif /* GED_COMMANDS_H */
-
-/** @} */
 
 /*
  * Local Variables:

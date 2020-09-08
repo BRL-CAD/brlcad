@@ -61,6 +61,9 @@
 #ifdef HAVE_GL_GLX_H
 #  define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #  include <GL/glx.h>
+#  ifdef HAVE_XRENDER
+#    include <X11/extensions/Xrender.h>
+#  endif
 #endif
 #undef remainder
 #undef access
@@ -923,6 +926,16 @@ fb_ogl_choose_visual(struct fb *ifp)
 	    if (!rgba) {
 		continue;
 	    }
+
+#ifdef HAVE_XRENDER
+	    // https://stackoverflow.com/a/23836430
+	    XRenderPictFormat *pict_format = XRenderFindVisualFormat(OGL(ifp)->dispp, vip->visual);
+	    if(pict_format->direct.alphaMask > 0) {
+		//printf("skipping visual with alphaMask\n");
+		continue;
+	    }
+#endif
+
 	    /* desires */
 	    /* X_CreateColormap needs a DirectColor visual */
 	    /* There should be some way of handling this with TrueColor,

@@ -136,12 +136,12 @@ struct dm_impl {
     struct bu_vls dm_pathName;	/**< @brief full Tcl/Tk name of drawing window */
     struct bu_vls dm_tkName;	/**< @brief short Tcl/Tk name of drawing window */
     struct bu_vls dm_dName;	/**< @brief Display name */
+    struct bu_vls dm_log;   /**< @brief !NULL && !empty means log debug output to the file */
     unsigned char dm_bg[3];	/**< @brief background color */
     unsigned char dm_fg[3];	/**< @brief foreground color */
     vect_t dm_clipmin;		/**< @brief minimum clipping vector */
     vect_t dm_clipmax;		/**< @brief maximum clipping vector */
     int dm_debugLevel;		/**< @brief !0 means debugging */
-    struct bu_vls dm_log;   /**< @brief !NULL && !empty means log debug output to the file */
     int dm_perspective;		/**< @brief !0 means perspective on */
     int dm_light;			/**< @brief !0 means lighting on */
     int dm_transparency;		/**< @brief !0 means transparency on */

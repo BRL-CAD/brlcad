@@ -378,7 +378,28 @@ public:
 	 */
 	void loadPerspectives(QSettings& Settings);
 
-	/**
+    /**
+     * This function returns managers central widget or nullptr if no central widget is set.
+     */
+    CDockWidget* centralWidget() const;
+
+    /**
+     * Adds dockwidget widget into the central area and marks it as central widget.
+     * If central widget is set, it will be the only dock widget
+     * that will resize with the dock container. A central widget if not
+     * movable, floatable or closable and the titlebar of the central
+     * dock area is not visible.
+     * If the given widget could be set as central widget, the function returns
+     * the created cok area. If the widget could not be set, because there
+     * is already a central widget, this function returns a nullptr.
+     * To clear the central widget, pass a nullptr to the function.
+     * \retval != 0 The dock area that contains the central widget
+     * \retval nullptr Indicates that the given widget can not be set as central
+     *         widget because there is already a central widget.
+     */
+    CDockAreaWidget* setCentralWidget(CDockWidget* widget);
+
+    /**
 	 * Adds a toggle view action to the the internal view menu.
 	 * You can either manage the insertion of the toggle view actions in your
 	 * application or you can add the actions to the internal view menu and
@@ -502,20 +523,20 @@ signals:
 	 * An application can use this signal to e.g. subscribe to events of
 	 * the newly created window.
 	 */
-	void floatingWidgetCreated(CFloatingDockContainer* FloatingWidget);
+	void floatingWidgetCreated(ads::CFloatingDockContainer* FloatingWidget);
 
     /**
      * This signal is emitted, if a new DockArea has been created.
      * An application can use this signal to set custom icons or custom
      * tooltips for the DockArea buttons.
      */
-    void dockAreaCreated(CDockAreaWidget* DockArea);
+    void dockAreaCreated(ads::CDockAreaWidget* DockArea);
 
     /**
      * This signal is emitted just before the given dock widget is removed
-     * from the
+     * from the dock manager
      */
-    void dockWidgetAboutToBeRemoved(CDockWidget* DockWidget);
+    void dockWidgetAboutToBeRemoved(ads::CDockWidget* DockWidget);
 
     /**
      * This signal is emitted if a dock widget has been removed with the remove
@@ -523,14 +544,14 @@ signals:
      * If this signal is emitted, the dock widget has been removed from the
      * docking system but it is not deleted yet.
      */
-    void dockWidgetRemoved(CDockWidget* DockWidget);
+    void dockWidgetRemoved(ads::CDockWidget* DockWidget);
 
     /**
      * This signal is emitted if the focused dock widget changed.
      * Both old and now can be nullptr.
      * The focused dock widget is the one that is highlighted in the GUI
      */
-    void focusedDockWidgetChanged(CDockWidget* old, CDockWidget* now);
+    void focusedDockWidgetChanged(ads::CDockWidget* old, ads::CDockWidget* now);
 }; // class DockManager
 } // namespace ads
 //-----------------------------------------------------------------------------

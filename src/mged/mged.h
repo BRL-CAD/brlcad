@@ -415,7 +415,7 @@ struct mged_hist {
 /* internal variables related to the command window(s) */
 struct cmd_list {
     struct bu_list l;
-    struct dm_list *cl_tie;        /* the drawing window that we're tied to */
+    struct mged_dm *cl_tie;        /* the drawing window that we're tied to */
     struct mged_hist *cl_cur_hist;
     struct bu_vls cl_more_default;
     struct bu_vls cl_name;
@@ -448,8 +448,8 @@ extern struct run_rt head_run_rt;
 /* attach.c */
 int is_dm_null(void);
 int mged_attach(const char *wp_name, int argc, const char *argv[]);
-void mged_link_vars(struct dm_list *p);
-void mged_slider_free_vls(struct dm_list *p);
+void mged_link_vars(struct mged_dm *p);
+void mged_slider_free_vls(struct mged_dm *p);
 int gui_setup(const char *dstr);
 int gui_output(void *clientData, void *str);
 
@@ -475,7 +475,7 @@ void size_reset(void);
 void solid_list_callback(void);
 
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
-extern void view_ring_destroy(struct dm_list *dlp);
+extern void view_ring_destroy(struct mged_dm *dlp);
 
 /* cmd.c */
 int cmdline(struct bu_vls *vp, int record);
@@ -609,7 +609,7 @@ void init_oedit(void);
 void init_sedit(void);
 
 /* share.c */
-void usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2);
+void usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2);
 
 /* inside.c */
 int torin(struct rt_db_internal *ip, fastf_t thick[6]);

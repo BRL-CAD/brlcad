@@ -70,6 +70,7 @@
 #endif
 
 #include "qtads/DockManager.h"
+#include "qtads/DockAreaWidget.h"
 #include "cadconsole.h"
 #include "cadtreemodel.h"
 #include "cadaccordion.h"

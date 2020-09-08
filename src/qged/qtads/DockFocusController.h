@@ -52,6 +52,7 @@ private slots:
 	void onApplicationFocusChanged(QWidget *old, QWidget *now);
 	void onFocusedDockAreaViewToggled(bool Open);
 	void onStateRestored();
+	void onDockWidgetVisibilityChanged(bool Visible);
 
 public:
 	using Super = QObject;

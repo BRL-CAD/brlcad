@@ -16,7 +16,14 @@ set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARY} ${
 # If/when we add MGED's ability to work in "classic" mode, Archer will have
 # to be built as a non-GUI application (or we'll have to build two executables)
 if(BRLCAD_ENABLE_TK)
-  BRLCAD_ADDEXEC(archer archer.c "${archer_libs}" GUI)
+  set(archer_srcs archer.c)
+  if (HAVE_WINDOWS_H)
+    # To associate an icon with the application for Windows (needed
+    # for the WiX installer) we must use an rc file.
+    enable_language(RC)
+    set(archer_srcs ${archer_srcs} archer.rc)
+  endif (HAVE_WINDOWS_H)
+  BRLCAD_ADDEXEC(archer "${archer_srcs}" "${archer_libs}" GUI)
   add_dependencies(archer archer_launch_tcl_cp)
   add_dependencies(archer rtwizard)
   ADD_TARGET_DEPS(archer Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm_plugins)
@@ -24,6 +31,14 @@ if(BRLCAD_ENABLE_TK)
   foreach(item ${tclindex_target_list})
     add_dependencies(archer ${item})
   endforeach(item ${tclindex_target_list})
+
+  # Archer is one of the programs that gets a start menu entry
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:archer>"
+    PROPERTY CPACK_START_MENU_SHORTCUTS "Archer ${BRLCAD_VERSION}"
+    )
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:archer>"
+    PROPERTY CPACK_DESKTOP_SHORTCUTS "Archer ${BRLCAD_VERSION}"
+    )
 endif(BRLCAD_ENABLE_TK)
 
 
@@ -65,6 +80,8 @@ set(archer_ignore_files
   CMakeLists.txt
   TODO
   archer.c
+  archer.rc
+  archer.ico
   )
 CMAKEFILES(${archer_ignore_files})
 

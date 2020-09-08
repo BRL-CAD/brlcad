@@ -111,6 +111,14 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
+    for (int i = 0; i < argc; i++) {
+	std::string arg(argv[i]);
+	if (arg == std::string("--help") || arg == std::string("-h") || arg == std::string("-?")) {
+	    std::cerr << "Usage: debug2c [-v] file_list output_file\n";
+	    return 0;
+	}
+    }
+
     if (argc == 4) {
 	if (std::string(argv[1]) == std::string("-v")) {
 	    argc--;

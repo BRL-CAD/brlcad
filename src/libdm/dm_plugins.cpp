@@ -40,18 +40,16 @@
 #include "dm.h"
 #include "./include/private.h"
 
+
 extern "C" struct dm *
 dm_open(void *interp, const char *type, int argc, const char *argv[])
 {
-    if (BU_STR_EQUIV(type, "nu")) {
-	return dm_null.i->dm_open(interp, argc, argv);
-    }
-    if (BU_STR_EQUIV(type, "null")) {
+    if (BU_STR_EQUIV(type, "nu") || BU_STR_EQUIV(type, "null")) {
 	return dm_null.i->dm_open(interp, argc, argv);
     }
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::string key(type);
-    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
     std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
     if (d_it == dmb->end()) {
 	return DM_NULL;
@@ -61,7 +59,8 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     return dmp;
 }
 
-extern "C" int 
+
+extern "C" int
 dm_have_graphics()
 {
     int ret = 0;
@@ -77,6 +76,7 @@ dm_have_graphics()
     }
     return ret;
 }
+
 
 extern "C" const char *
 dm_graphics_system(const char *dmtype)
@@ -95,6 +95,7 @@ dm_graphics_system(const char *dmtype)
     }
     return ret;
 }
+
 
 extern "C" void
 dm_list_types(struct bu_vls *list, const char *separator)
@@ -126,7 +127,9 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	std::string key = d_it->first;
 	const struct dm *d = d_it->second;
 	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
-	bu_vls_printf(list, "%s", dm_get_name(d));
+	const char *dname = dm_get_name(d);
+	if (dname)
+	    bu_vls_printf(list, "%s", dname);
     }
     if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
     bu_vls_printf(list, "nu");
@@ -138,7 +141,7 @@ dm_list_types(struct bu_vls *list, const char *separator)
     const char *b = priority_list[i];
     while (!BU_STR_EQUAL(b, "nu")) {
 	std::string key(b);
-	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
 	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
 	if (d_it == dmb->end()) {
 	    i++;
@@ -147,12 +150,15 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	}
 	const struct dm *d = d_it->second;
 	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
-	bu_vls_printf(list, "%s", dm_get_name(d));
+	const char *dname = dm_get_name(d);
+	if (dname)
+	    bu_vls_printf(list, "%s", dname);
 	i++;
 	b = priority_list[i];
     }
 #endif
 }
+
 
 extern "C" int
 dm_validXType(const char *dpy_string, const char *name)
@@ -165,7 +171,7 @@ dm_validXType(const char *dpy_string, const char *name)
     }
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::string key(name);
-    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
     std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
     if (d_it == dmb->end()) {
 	return 0;
@@ -187,7 +193,10 @@ dm_valid_type(const char *name, const char *dpy_string)
  * backend supports that check, and will report the "best" available WORKING
  * backend rather than simply the first one present in the list that is also
  * in the plugins directory.
-  */
+ *
+ * Defaults to "nu" if nothing else is found - nu is compiled into libdm itself
+ * and thus always viable, even if no plugins can be found.
+ */
 extern "C" const char *
 dm_bestXType(const char *dpy_string)
 {
@@ -199,7 +208,7 @@ dm_bestXType(const char *dpy_string)
     const char *b = priority_list[i];
     while (!BU_STR_EQUAL(b, "nu")) {
 	std::string key(b);
-	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
 	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
 	if (d_it == dmb->end()) {
 	    i++;
@@ -218,12 +227,16 @@ dm_bestXType(const char *dpy_string)
     return (ret) ? ret : b;
 }
 
+
 /**
  * dm_default_type suggests a display manager.  Checks if a plugin supplies the
  * specified backend type before reporting it, but does NOT perform a runtime
  * test to verify its suggestion will work (unlike dm_bestXType) before
  * reporting back.
-  */
+ *
+ * Defaults to "nu" if nothing else is found - nu is compiled into libdm itself
+ * and thus always available, even if no plugins can be found.
+ */
 extern "C" const char *
 dm_default_type()
 {
@@ -235,7 +248,7 @@ dm_default_type()
     const char *b = priority_list[i];
     while (!BU_STR_EQUAL(b, "nu")) {
 	std::string key(b);
-	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
 	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
 	if (d_it == dmb->end()) {
 	    i++;
@@ -265,6 +278,7 @@ fb_set_interface(struct fb *ifp, const char *interface_type)
     }
 }
 
+
 extern "C" struct fb_platform_specific *
 fb_get_platform_specific(uint32_t magic)
 {
@@ -280,6 +294,7 @@ fb_get_platform_specific(uint32_t magic)
 
     return NULL;
 }
+
 
 extern "C" void
 fb_put_platform_specific(struct fb_platform_specific *fb_p)
@@ -297,6 +312,7 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
     }
     return;
 }
+
 
 #define Malloc_Bomb(_bytes_)                                    \
     fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",    \
@@ -319,6 +335,7 @@ fb_totally_numeric(const char *s)
 
     return 1;
 }
+
 
 struct fb *
 fb_open(const char *file, int width, int height)
@@ -363,6 +380,7 @@ fb_open(const char *file, int width, int height)
             goto found_interface;
         }
     }
+
     /*
      * Determine what type of hardware the device name refers to.
      *
@@ -373,7 +391,11 @@ fb_open(const char *file, int width, int height)
      * else strip out "/path/devname" and try to look it up in the
      * device array.  If we don't find it assume it's a file.
      */
-    f_it = fmb->find(std::string(file));
+    for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
+	if (bu_strncmp(file, f_it->first.c_str(), strlen(f_it->first.c_str())) == 0) {
+	    break;
+	}
+    }
     if (f_it != fmb->end()) {
 	const struct fb *f = f_it->second;
 	*ifp->i = *(f->i);        /* struct copy */
@@ -462,7 +484,6 @@ fb_genhelp(void)
 
     return 0;
 }
-
 
 
 /*

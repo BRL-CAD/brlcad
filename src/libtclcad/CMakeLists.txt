@@ -2,18 +2,18 @@ set(LIBTCLCAD_SRCS
   auto_path.c
   bn.c
   bu.c
+  commands.c
   cmdhist.c
   dm.c
+  eval.c
   fb.c
   fbserv.c
+  global.c
+  init.c
+  mouse.c
+  polygons.c
   rt.c
-  tclcad_eval.c
-  tclcad_global.c
-  tclcad_init.c
-  tclcad_mouse.c
-  tclcad_obj.c
-  tclcad_obj_wrapper.c
-  tclcad_polygons.c
+  tkImgFmtPIX.c
   view/arrows.c
   view/autoview.c
   view/axes.c
@@ -23,7 +23,7 @@ set(LIBTCLCAD_SRCS
   view/lines.c
   view/refresh.c
   view/util.c
-  tkImgFmtPIX.c
+  wrapper.c
   )
 
 if (BRLCAD_ENABLE_TCL)

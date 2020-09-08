@@ -100,6 +100,8 @@ tk_open(void *vinterp, int argc, const char **argv)
     }
 
     BU_ALLOC(dmp, struct dm);
+    dmp->magic = DM_MAGIC;
+
     BU_ALLOC(dmp_impl, struct dm_impl);
 
     *dmp_impl = *dm_tk.i; /* struct copy */
@@ -162,9 +164,7 @@ tk_open(void *vinterp, int argc, const char **argv)
 	}
 
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin =
-	    Tk_CreateWindow(interp, pubvars->top,
-			    cp + 1, (char *)NULL);
+	pubvars->xtkwin = Tk_CreateWindow(interp, pubvars->top, cp + 1, (char *)NULL);
     }
 
     if (pubvars->xtkwin == NULL) {
@@ -1183,12 +1183,12 @@ struct dm_impl dm_tk_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
-    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -1202,7 +1202,7 @@ struct dm_impl dm_tk_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_tk = { &dm_tk_impl };
+struct dm dm_tk = { DM_MAGIC, &dm_tk_impl };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_tk };

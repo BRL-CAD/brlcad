@@ -273,7 +273,6 @@ DM_EXPORT extern int dm_event_cmp(struct dm *dmp, dm_event_t type, int event);
 
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */
-DM_EXPORT extern fastf_t *dm_get_vp(struct dm *dmp);
 DM_EXPORT extern void dm_set_vp(struct dm *dmp, fastf_t *vp);
 
 DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,

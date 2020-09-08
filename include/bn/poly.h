@@ -41,7 +41,7 @@
 __BEGIN_DECLS
 
 /* This could be larger, or even dynamic... */
-#define BN_MAX_POLY_DEGREE 6	/* Maximum Poly Order */
+#define BN_MAX_POLY_DEGREE 6	/**< Maximum Poly Order */
 
 /**
  * Polynomial data type

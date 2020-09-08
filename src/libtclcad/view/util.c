@@ -58,20 +58,23 @@ screen_to_view_y(struct dm *dmp, fastf_t y)
 int
 to_is_viewable(struct bview *gdvp)
 {
-    Tcl_Obj *our_result;
-    Tcl_Obj *saved_result;
     int result_int;
-    const char *pathname = bu_vls_addr(dm_get_pathname((struct dm *)gdvp->dmp));
+
+    const struct bu_vls *pathvls = dm_get_pathname((struct dm *)gdvp->dmp);
+    if (!pathvls || !bu_vls_strlen(pathvls)) {
+	return 0;
+    }
 
     /* stash any existing result so we can inspect our own */
-    saved_result = Tcl_GetObjResult(current_top->to_interp);
+    Tcl_Obj *saved_result = Tcl_GetObjResult(current_top->to_interp);
     Tcl_IncrRefCount(saved_result);
 
+    const char *pathname = bu_vls_cstr(pathvls);
     if (pathname && tclcad_eval(current_top->to_interp, "winfo viewable", 1, &pathname) != TCL_OK) {
 	return 0;
     }
 
-    our_result = Tcl_GetObjResult(current_top->to_interp);
+    Tcl_Obj *our_result = Tcl_GetObjResult(current_top->to_interp);
     Tcl_GetIntFromObj(current_top->to_interp, our_result, &result_int);
 
     /* restore previous result */

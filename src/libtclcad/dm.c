@@ -1,4 +1,4 @@
-/*                           T C L . C
+/*                            D M . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2020 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libdm/tcl.c
+/**
  *
  * Tcl logic specific to libdm.
  *
@@ -44,7 +44,7 @@
 /* private headers */
 #include "../libdm/include/private.h"
 #include "brlcad_version.h"
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
 
 /**
  *@brief

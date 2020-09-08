@@ -77,11 +77,14 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		    const char *UNUSED(value),
 		    void *UNUSED(data))
 {
-    struct dm_list *dmlp;
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_grid_state == grid_state)
-	    dmlp->dml_dirty = 1;
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (m_dmp->dm_grid_state == grid_state) {
+	    m_dmp->dm_dirty = 1;
+	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	}
+    }
 }
 
 
@@ -92,8 +95,6 @@ set_grid_draw(const struct bu_structparse *sdp,
 	      const char *value,
 	      void *data)
 {
-    struct dm_list *dlp;
-
     if (DBIP == DBI_NULL) {
 	grid_state->draw = 0;
 	return;
@@ -107,9 +108,11 @@ set_grid_draw(const struct bu_structparse *sdp,
 
 	grid_state->res_h = res;
 	grid_state->res_v = res;
-	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	    if (dlp->dml_grid_state == grid_state)
-		dlp->dml_grid_auto_size = 0;
+	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	    struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	    if (dlp->dm_grid_state == grid_state)
+		dlp->dm_grid_auto_size = 0;
+	}
     }
 }
 
@@ -121,14 +124,16 @@ set_grid_res(const struct bu_structparse *sdp,
 	     const char *value,
 	     void *data)
 {
-    struct dm_list *dlp;
-
     grid_set_dirty_flag(sdp, name, base, value, data);
 
-    if (grid_auto_size)
-	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	    if (dlp->dml_grid_state == grid_state)
-		dlp->dml_grid_auto_size = 0;
+    if (!grid_auto_size)
+	return;
+
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	    if (dlp->dm_grid_state == grid_state)
+		dlp->dm_grid_auto_size = 0;
+    }
 }
 
 
@@ -315,8 +320,8 @@ snap_keypoint_to_grid(void)
     bu_vls_free(&cmd);
 
     /* save model_pt in local units */
-    VMOVE(dml_work_pt, model_pt);
-    dml_mouse_dx = dml_mouse_dy = 0;
+    VMOVE(dm_work_pt, model_pt);
+    dm_mouse_dx = dm_mouse_dy = 0;
 }
 
 
@@ -339,8 +344,8 @@ snap_view_center_to_grid(void)
     VSCALE(model_pt, model_pt, base2local);
 
     /* save new center in local units */
-    VMOVE(dml_work_pt, model_pt);
-    dml_mouse_dx = dml_mouse_dy = 0;
+    VMOVE(dm_work_pt, model_pt);
+    dm_mouse_dx = dm_mouse_dy = 0;
 }
 
 
@@ -409,7 +414,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
     MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
     VSUB2(diff, model_pt, vcenter);
     VSCALE(diff, diff, base2local);
-    VSUB2(model_pt, dml_work_pt, diff);
+    VSUB2(model_pt, dm_work_pt, diff);
 
     VSCALE(model_pt, model_pt, local2base);
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
@@ -420,14 +425,14 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 void
 update_grids(fastf_t sf)
 {
-    struct dm_list *dlp;
     struct bu_vls save_result = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	dlp->dml_grid_state->res_h *= sf;
-	dlp->dml_grid_state->res_v *= sf;
-	VSCALE(dlp->dml_grid_state->anchor, dlp->dml_grid_state->anchor, sf);
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	dlp->dm_grid_state->res_h *= sf;
+	dlp->dm_grid_state->res_v *= sf;
+	VSCALE(dlp->dm_grid_state->anchor, dlp->dm_grid_state->anchor, sf);
     }
 
     bu_vls_strcpy(&save_result, Tcl_GetStringResult(INTERP));

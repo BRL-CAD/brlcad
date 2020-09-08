@@ -18,12 +18,36 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* The embedded framebuffer for the X display manager is not working
-  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
-  to XFlush after X24_blit.
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* The following will be removed from MGED's menu bar (unused
+  features, can be accomplished another way, or will be exposed
+  only as lower level settings when there are sensible defaults
+  that are seldom changed.)
+
+  ViewRing menu and entries.
+  Modes->Persistent Sweep Rectangle
+  Modes->Collaborate
+  Modes->Rateknobs
+  Modes->Display Lists
+  Misc->Keystroke Forwarding
+  Misc->Depth Cueing
+  Misc->Z Buffer
+  Misc->Lighting
+  Settings->Mouse Behavior->Sweep Raytrace-Rectangle
+  Settings->Mouse Behavior->Sweep Paint-Rectangle
+  Settings->Mouse Behavior->Sweep Zoom-Rectangle
+  Settings->Apply To->Local Panes
+  Settings->Apply To->Listed Panes
+  Settings->Framebuffer->Rectangle Area
+
+* The embedded framebuffer for the X display manager is not working
+  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
+  to XFlush after X24_blit.  Better solution is to replace the X
+  dm/fb with a cross platform software rasterizing solution of some
+  sort.
 
 * Implement new behavior for quit command in MGED - if bu_subprocess
   commands are running, by default refuse to quit and print out a
@@ -146,6 +170,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* rtwizard's reopening of the database is causing db_dircheck
+  "Duplicate of..." errors when opening read-only .g files.
+
+* procedural studio box generation allowing for specification of size,
+  shape, material, and lighting characteristics
 
 * verify all of the src/util utilities behave correctly on Windows
   with respect to mode (i.e. correctly using setmode/O_BINARY when
@@ -1151,9 +1180,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   3=>1,1,0; 4=>0,0,1; 5=>1,0,1; 6=>0,1,1; 7=>1,1,1. See
   http://support.echoview.com/WebHelp/Reference/File_formats/
     Export_file_formats/Volume_data_set_file_formats.htm
-
-* turn geometry converters and image converters into libraries
-  (started as libraries libgcv and libicv)
 
 * add support for querying geometry properties to library including
   computing surface area and weight/mass.
@@ -2311,7 +2337,14 @@ INFRASTRUCTURE
 
 
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
+(i.e., v6 database format)
 --------------------------------------------------
+
+* support matrices over any object, including over top-level combs
+  without affecting members and including over primitives so they may
+  optionally retain a local coordinate system even after a push
+  operation this also will allow primitives like the torus support
+  non-uniform scaling.
 
 * change convention of using 'u', '+', and '-' for unions,
   intersections, and subtractions respectively to symbols that
@@ -2359,11 +2392,6 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
 * remove the storage of the never-implemented keypoint parameter for
   extrude objects.
-
-* have all primitives record a transformation matrix so that they may
-  retain a local coordinate system even after pushed matrices.  this
-  also will allow primitives like the torus to support non-uniform
-  scaling.
 
 * rename 'part' primitive to 'pill' or remove it entirely in favor of
   a more generalized metaprimitive primitive.
@@ -2414,6 +2442,18 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
   primitive for initial estimate, caches result)
 
 * write and use kdtree - make traversal cache coherent
+
+
+GEOMETRY MODELS
+---------------
+
+* CSG shaderball
+
+* solid teapot
+
+* studio box
+
+* CSG lightcycle
 
 
 DOCUMENTATION
@@ -2570,11 +2610,6 @@ DOCUMENTATION
     doc/docbook/presentations/en/brlcad-app-devel.xml
     doc/docbook/presentations/en/intro-to-tcltk.xml
     doc/docbook/specifications/en/BRL_CAD_g_format_V5.xml
-
-* improve rtweight documentation, explain how it computes its
-  "centroid" (as it's not the center of bounding box of all objects,
-  it's the geometric centoid that that takes booleans into
-  consideration).
 
 * write up some documentation on other build tools besides make -
   CMake supports other generators, wouldn't hurt to detail how to

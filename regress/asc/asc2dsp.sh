@@ -54,53 +54,54 @@ if test ! -f "$A2D" ; then
     exit 1
 fi
 
-CV="`ensearch cv`"
-if test ! -f "$CV" ; then
-    log "Unable to find cv, aborting"
-    exit 1
-fi
+#CV="`ensearch cv`"
+#if test ! -f "$CV" ; then
+#    log "Unable to find cv, aborting"
+#    exit 1
+#fi
+#
+#A2P="`ensearch asc2pix`"
+#if test ! -f "$A2P" ; then
+#    log "Unable to find asc2pix, aborting"
+#    exit 1
+#fi
+#
+#P2B="`ensearch pix-bw`"
+#if test ! -f "$P2B" ; then
+#    log "Unable to find pix-bw, aborting"
+#    exit 1
+#fi
 
-A2P="`ensearch asc2pix`"
-if test ! -f "$A2P" ; then
-    log "Unable to find asc2pix, aborting"
-    exit 1
-fi
 
-P2B="`ensearch pix-bw`"
-if test ! -f "$P2B" ; then
-    log "Unable to find pix-bw, aborting"
-    exit 1
-fi
-
-
-BASE1=asc2dsp-old
+#BASE1=asc2dsp-old
 BASE2=asc2dsp-new
 
 
 # we generate one dsp file the old way and one the new way--they should be identical
 # old first
-log "... convert dsp data file in asc hex format to pix format"
-ASC1="$1/regress/dsp/$BASE1.asc"
-rm -f $BASE1.pix
-$A2P < $ASC1 > $BASE1.pix 2>>$LOGFILE
-
-log "convert pix to bw format"
-rm -f $BASE1.bw
-# take the blue pixel only
-$P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOGFILE
-
-log "convert pix to dsp format"
-rm -f $BASE1.dsp
-run $CV huc nu16 $BASE1.bw $BASE1.dsp
+#log "... convert dsp data file in asc hex format to pix format"
+#ASC1="$1/regress/dsp/$BASE1.asc"
+#rm -f $BASE1.pix
+#$A2P < $ASC1 > $BASE1.pix 2>>$LOGFILE
+#
+#log "convert pix to bw format"
+#rm -f $BASE1.bw
+## take the blue pixel only
+#$P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOGFILE
+#
+#log "convert pix to dsp format"
+#rm -f $BASE1.dsp
+#run $CV huc nu16 $BASE1.bw $BASE1.dsp
 
 log "convert dsp data file in asc decimal format to dsp format"
 ASC2="$1/regress/dsp/$BASE2.asc"
 rm -f $BASE2.dsp
-run $A2D $BASE2.asc $BASE2.dsp
+run $A2D "$ASC2" $BASE2.dsp
+STATUS=$?
 
 # the two dsp files should be identical
-run cmp $BASE1.dsp $BASE2.dsp
-STATUS=$?
+#run cmp $BASE1.dsp $BASE2.dsp
+#STATUS=$?
 
 
 if [ $STATUS -gt 0 ] ; then

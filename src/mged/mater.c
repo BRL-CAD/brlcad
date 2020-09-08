@@ -52,6 +52,7 @@ mged_color_soltab(void)
     struct bu_list *hdlp = ged_drawable_head_dl(GEDP);
     dl_color_soltab(hdlp);
     update_views = 1;		/* re-write control list with new colors */
+    dm_set_dirty(DMP, 1);
 }
 
 

@@ -34,9 +34,11 @@
 #include "bnetwork.h" /* Needed for ntohl and htonl */
 
 #ifdef __cplusplus
+// @cond SKIP_C++_INCLUDE
 extern "C++" {
 #  include <cstring>
 }
+// @endcond
 #endif
 
 

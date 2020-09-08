@@ -983,6 +983,10 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
+    if (!vip->map) {
+	return 1;
+    }
+
     /*
      * Scan across in Z & X.  For each X position, scan down Y,
      * looking for the longest run of edge.

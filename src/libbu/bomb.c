@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <setjmp.h>
 #include "bio.h"
 
 /* implementation headers */

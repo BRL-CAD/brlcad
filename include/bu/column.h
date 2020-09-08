@@ -53,7 +53,8 @@ struct bu_column_state {
 
 #define BU_COLUMN_ALL -1
 
-/* Generate an output string based on the specified layout and contents in the
+/**
+ * Generate an output string based on the specified layout and contents in the
  * bu_column_state s.  Return the number of items printed, or -1 if there is
  * an error.
  *
@@ -74,7 +75,8 @@ struct bu_column_state {
  * Row suffix:       none
  * Fill order:       column first
  *
- * */
+ *
+ */
 BU_EXPORT extern int bu_column_print(struct bu_vls *o, struct bu_column_state *s);
 
 /**

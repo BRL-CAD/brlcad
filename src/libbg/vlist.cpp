@@ -342,7 +342,7 @@ bg_vlist_closest_pt(point_t *cp, struct bg_vlist *v, point_t *tp)
 		    VMOVE(cpnt, *np);
 		    cind = i;
 		}
-		cseg = bg_lseg_pt_dist_sq(&cpnt, p1, p2, *tp);
+		cseg = bg_distsq_lseg3_pt(&cpnt, p1, p2, *tp);
 		if (cseg < seg_dist_sq) {
 		    VMOVE(closest_seg_pt, cpnt);
 		    seg_dist_sq = cseg;
@@ -352,7 +352,7 @@ bg_vlist_closest_pt(point_t *cp, struct bg_vlist *v, point_t *tp)
 	    case BG_VLIST_POLY_END:
 		// Draw commands indicate we have a last segment and the point
 		// we are heading to we have already seen.
-		cseg = bg_lseg_pt_dist_sq(&cpnt, p1, p2, *tp);
+		cseg = bg_distsq_lseg3_pt(&cpnt, p1, p2, *tp);
 		if (cseg < seg_dist_sq) {
 		    VMOVE(closest_seg_pt, cpnt);
 		    seg_dist_sq = cseg;
