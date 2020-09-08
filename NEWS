@@ -93,7 +93,7 @@ changes made.  See document footer for additional details.
 * changed mged escape key binding to reset mouse mode - Sean Morrison
 * removed default xXyYzZ0 rate rotation key bindings - Sean Morrison
 * improved tessellation of nearly coplanar surfaces - John Anderson
-* fixed display of annotations on Windows - Daniel Roßberg
+* fixed annotations display on Windows - Daniel Roßberg, Ali Haydar
 * fixed rtedge and rtwizard occlusion object edge bug - Sean Morrison
 * rt* tools no longer force outputs to be read-only - Sean Morrison
 * fixed 'burst' crash when run without options - Sean Morrison
