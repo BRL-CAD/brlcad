@@ -170,6 +170,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* bot -V check solid bot.s visualizations don't show up if bot.s is
+  first drawn in MGED - should properly "overlay" them so the user
+  doesn't have to first erase the solid from the scene visual.
+
 * MGED's startup directory is inconsistent and sometimes problematic.
   If the current working directory is read-only (e.g., a default
   system install and opening one of the sample .g files), then
