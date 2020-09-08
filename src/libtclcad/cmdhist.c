@@ -1,4 +1,4 @@
-/*                   C M D H I S T _ O B J . C
+/*                       C M D H I S T . C
  * BRL-CAD
  *
  * Copyright (c) 1998-2020 United States Government as represented by
@@ -30,7 +30,8 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "tclcad.h"
-#include "tclcad_private.h"
+
+#include "./tclcad_private.h"
 
 
 /* FIXME: this is apparently used by src/tclscripts/lib/Command.tcl so

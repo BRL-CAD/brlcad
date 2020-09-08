@@ -18,13 +18,36 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* The embedded framebuffer for the X display manager is not working
-  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
-  to XFlush after X24_blit.
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* The following will be removed from MGED's menu bar (unused
+  features, can be accomplished another way, or will be exposed
+  only as lower level settings when there are sensible defaults
+  that are seldom changed.)
+
+  ViewRing menu and entries.
+  Modes->Persistent Sweep Rectangle
+  Modes->Collaborate
+  Modes->Rateknobs
+  Modes->Display Lists
+  Misc->Keystroke Forwarding
+  Misc->Depth Cueing
+  Misc->Z Buffer
+  Misc->Lighting
+  Settings->Mouse Behavior->Sweep Raytrace-Rectangle
+  Settings->Mouse Behavior->Sweep Paint-Rectangle
+  Settings->Mouse Behavior->Sweep Zoom-Rectangle
+  Settings->Apply To->Local Panes
+  Settings->Apply To->Listed Panes
+  Settings->Framebuffer->Rectangle Area
+
+* The embedded framebuffer for the X display manager is not working
+  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
+  to XFlush after X24_blit.  Better solution is to replace the X
+  dm/fb with a cross platform software rasterizing solution of some
+  sort.
 
 * Implement new behavior for quit command in MGED - if bu_subprocess
   commands are running, by default refuse to quit and print out a
@@ -146,6 +169,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* rtwizard's reopening of the database is causing db_dircheck
+  "Duplicate of..." errors when opening read-only .g files.
 
 * procedural studio box generation allowing for specification of size,
   shape, material, and lighting characteristics
@@ -1154,9 +1180,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   3=>1,1,0; 4=>0,0,1; 5=>1,0,1; 6=>0,1,1; 7=>1,1,1. See
   http://support.echoview.com/WebHelp/Reference/File_formats/
     Export_file_formats/Volume_data_set_file_formats.htm
-
-* turn geometry converters and image converters into libraries
-  (started as libraries libgcv and libicv)
 
 * add support for querying geometry properties to library including
   computing surface area and weight/mass.

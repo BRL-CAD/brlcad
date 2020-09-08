@@ -1,4 +1,4 @@
-/*                   T C L C A D _ E V A L . C
+/*                          E V A L . C
  * BRL-CAD
  *
  * Copyright (c) 2014-2020 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tclcad_eval.c
+/**
  *
  * Functions for escaping and evaluating TCL commands.
  *

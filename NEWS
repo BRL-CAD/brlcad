@@ -13,6 +13,11 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* upgraded Tcl/Tk from 8.5.19 to 8.6.10 - Cliff Yapp
+* bundled zlib & libpng use API prefix and library suffix - Cliff Yapp
+* extensive improvements to OpenCL ray trace pipeline - Rishabh Suthar
+* improved rtweight density value warnings - Sean Morrison, Cliff Yapp
+* added perception-based hdtv and hdr modes for pix-bw - Sean Morrison
 * fixed semi-transparent DM and FB windows on Linux - Cliff Yapp
 * improved rtweight manual page - Sean Morrison
 * added line reporting TCP listening port to remrt output - Cliff Yapp
@@ -20,6 +25,7 @@ changes made.  See document footer for additional details.
 * fixed crash when drawing a VOL with missing data - Cliff Yapp
 * facetall.sh script is replaced by MGED facetize command - Cliff Yapp
 * dynamic LIBGED command loading in MGED & Archer - Cliff Yapp
+* removed MGED "Display Manager" switching menu options - Cliff Yapp
 * dynamic LIBDM display manager loading in MGED & Archer - Cliff Yapp
 * fixed 'idents' crash when running in a read-only dir - Sean Morrison
 * fixed fb tools w/ redirected files and cv on Windows - Sean Morrison
@@ -34,6 +40,10 @@ changes made.  See document footer for additional details.
 * improved output path sorting of search command - Cliff Yapp
 * added 3dm-g failure message about supported versions - Cliff Yapp
 * fixed bw-png writing corrupted png files on Windows - Sean Morrison
+* added MGED 'dm type' subcommand for reporting DM type - Cliff Yapp
+* improved vdeck input support for Windows text files - Sean Morrison
+* fixed MGED 'plot' & 'brep plot' commands on Windows - Sean Morrison
+* fixed numerous image utilities on Windows - Sean Morrison
 
 
 ----------------------------------------------------------------------
@@ -66,9 +76,11 @@ changes made.  See document footer for additional details.
 * fixed transparent drawing in MGED - Nick Reed
 * fixed solid NURBS brep intersection testing - Cliff Yapp
 * removed extra blank line after commands in MGED GUI - Sean Morrison
+* minor improvement to NURBS ray tracing performance - Sean Morrison
 * added "plate" object type filter to search command - Cliff Yapp
 * fixed latent logging bug during facetize on Windows - Bob Parker
 * fixed bug closing rt framebuffer windows on Windows - Sean Morrison
+* added EBM support for reading from database objects - Jeffrey Liu
 
 
 ----------------------------------------------------------------------
@@ -83,9 +95,13 @@ changes made.  See document footer for additional details.
 * changed mged escape key binding to reset mouse mode - Sean Morrison
 * removed default xXyYzZ0 rate rotation key bindings - Sean Morrison
 * improved tessellation of nearly coplanar surfaces - John Anderson
-* fixed display of annotations on Windows - Daniel Roßberg
+* fixed annotations display on Windows - Daniel Roßberg, Ali Haydar
 * fixed rtedge and rtwizard occlusion object edge bug - Sean Morrison
 * rt* tools no longer force outputs to be read-only - Sean Morrison
+* fixed bug listing annotations with short label strings - Ali Haydar
+* improved support for label placement in annotations - Ali Haydar
+* fixed bug in annotation object bounding box calculation - Ali Haydar
+* fixed an annotation leader line bug affecting display - Ali Haydar
 * fixed 'burst' crash when run without options - Sean Morrison
 * changed rtweight to not truncate long pathnames - Sean Morrison
 * added new ball bearing example geometry model - Sean Morrison
@@ -214,7 +230,7 @@ methodologies and usability enhancements.
 * improved 'idents' command portability - Daniel Ramirez, Cliff Yapp
 * changed remrt/rtsrv to no longer report overlaps - Sean Morrison
 * improved GUI of MGED's Overlap Tool - Saran Narayan
-* fixed geometry directory building bug in remrt/rtsrv - Sean Morrison
+* fixed geopmetry directory building bug in remrt/rtsrv - Sean Morrison
 * fixed gcv problem with full paths on Windows - Cliff Yapp
 * removed precision limitation in NIRT input parsing - Cliff Yapp
 * added new example geometry models: chess and die pieces - Jeff Sieu
@@ -295,6 +311,7 @@ and address portability issues.
 * fix rtedge foreground/background color options - Jon Engbert
 * support rt -C colors specified as 0-255 or 0.0-1.0 - Jon Engbert
 * fixed xpush bug leaving stray top-level objects - Nick Reed
+* removed MGED wrapper 'mged.bat' batch script on Windows - Cliff Yapp
 
 
 ----------------------------------------------------------------------

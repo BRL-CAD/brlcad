@@ -82,7 +82,7 @@ BN_EXPORT extern void tp_setup(void);
 __END_DECLS
 
 #endif  /* BN_VECTFONT_H */
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

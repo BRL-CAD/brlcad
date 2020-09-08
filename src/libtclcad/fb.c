@@ -1,4 +1,4 @@
-/*                        F B _ O B J . C
+/*                            F B . C
  * BRL-CAD
  *
  * Copyright (c) 1997-2020 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup libstruct fb */
 /** @{ */
-/** @file fb_obj.c
+/**
  *
  * A framebuffer object contains the attributes and
  * methods for controlling framebuffers.
@@ -45,7 +45,7 @@
 #include "../libdm/include/private.h"
 #include "dm.h"
 #include "tclcad.h"
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
 #include "./view/view.h"
 
 /* defined in libfb/tcl.c */

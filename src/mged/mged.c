@@ -2802,6 +2802,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    GEDP->ged_interp = (void *)interpreter;
+    GEDP->ged_interp_eval = &mged_db_search_callback;
     struct tclcad_io_data *t_iod;
     BU_GET(t_iod, struct tclcad_io_data);
     t_iod->io_mode = TCL_READABLE;
@@ -2964,6 +2966,8 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    GEDP->ged_interp = (void *)interpreter;
+    GEDP->ged_interp_eval = &mged_db_search_callback;
     struct tclcad_io_data *t_iod;
     BU_GET(t_iod, struct tclcad_io_data);
     t_iod->io_mode = TCL_READABLE;

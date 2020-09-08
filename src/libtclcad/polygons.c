@@ -1,4 +1,4 @@
-/*                       T C L C A D _ O B J . C
+/*                       P O L Y G O N S . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2020 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup libtclcad */
 /** @{ */
-/** @file libtclcad/tclcad_obj.c
+/**
  *
  * A quasi-object-oriented database interface.
  *
@@ -34,7 +34,7 @@
 #include "tclcad.h"
 
 /* Private headers */
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
 #include "./view/view.h"
 
 /*

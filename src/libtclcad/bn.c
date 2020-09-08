@@ -1,4 +1,4 @@
-/*                        B N _ F U N C S . C
+/*                             B N . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2020 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file libtclcad/bn_funcs.c
+/**
  *
  * BRL-CAD's Tcl wrappers for libbn.
  *
@@ -42,7 +42,8 @@
 
 /* Private headers */
 #include "brlcad_version.h"
-#include "tclcad_private.h"
+#include "./tclcad_private.h"
+
 
 void
 bn_quat_distance_wrapper(double *dp, mat_t q1, mat_t q2)

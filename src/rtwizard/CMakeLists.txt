@@ -12,16 +12,35 @@ if (TARGET libtclcad)
     main.c
     )
 
+  if (HAVE_WINDOWS_H)
+    # To associate an icon with the application for Windows (needed
+    # for the WiX installer) we must use an rc file.
+    enable_language(RC)
+    set(RTWIZARD_SRCS ${RTWIZARD_SRCS} rtwizard.rc)
+  endif (HAVE_WINDOWS_H)
+
+
   BRLCAD_ADDEXEC(rtwizard "${RTWIZARD_SRCS}" "libtclcad;librt;libdm;liboptical;libicv;${ITCL_LIBRARY};${ITK_LIBRARY};${CMAKE_THREAD_LIBS_INIT};${M_LIBRARY}")
   ADD_TARGET_DEPS(rtwizard rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb tkpng dm_plugins)
   foreach(item ${tclindex_target_list})
     add_dependencies(rtwizard ${item})
   endforeach(item ${tclindex_target_list})
+
+  # RtWizard is one of the programs that gets a start menu entry
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:rtwizard>"
+    PROPERTY CPACK_START_MENU_SHORTCUTS "RtWizard ${BRLCAD_VERSION}"
+    )
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:rtwizard>"
+    PROPERTY CPACK_DESKTOP_SHORTCUTS "RtWizard ${BRLCAD_VERSION}"
+    )
+
 endif (TARGET libtclcad)
 
 CMAKEFILES(
   CMakeLists.txt
   main.c
+  rtwizard.rc
+  rtwizard.ico
   )
 
 # Local Variables:
