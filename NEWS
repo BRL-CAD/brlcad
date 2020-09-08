@@ -97,6 +97,10 @@ changes made.  See document footer for additional details.
 * fixed annotations display on Windows - Daniel Roßberg, Ali Haydar
 * fixed rtedge and rtwizard occlusion object edge bug - Sean Morrison
 * rt* tools no longer force outputs to be read-only - Sean Morrison
+* fixed bug listing annotations with short label strings - Ali Haydar
+* improved support for label placement in annotations - Ali Haydar
+* fixed bug in annotation object bounding box calculation - Ali Haydar
+* fixed an annotation leader line bug affecting display - Ali Haydar
 * fixed 'burst' crash when run without options - Sean Morrison
 * changed rtweight to not truncate long pathnames - Sean Morrison
 * added new ball bearing example geometry model - Sean Morrison
