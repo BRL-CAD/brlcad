@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 * upgraded Tcl/Tk from 8.5.19 to 8.6.10 - Cliff Yapp
 * bundled zlib & libpng use API prefix and library suffix - Cliff Yapp
+* extensive improvements to OpenCL ray trace pipeline - Rishabh Suthar
 * improved rtweight density value warnings - Sean Morrison, Cliff Yapp
 * added perception-based hdtv and hdr modes for pix-bw - Sean Morrison
 * fixed semi-transparent DM and FB windows on Linux - Cliff Yapp
