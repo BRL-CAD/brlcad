@@ -125,18 +125,141 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 
     /* print result string */
     if (!EQUAL(propVal, -1.0)) {
-
+	int intprop = (int) propVal;
 	fastf_t tmp = (int) propVal;
 
 	if (EQUAL(propVal, tmp)) {
 	    /* int result */
-	    bu_vls_printf(gb->gedp->ged_result_str, "%d", (int) propVal);
+	    /* for orientation and mode, print something more informative than just
+	     * the number */
+	    if (BU_STR_EQUAL(argv[0], "orientation")) {
+		switch (intprop) {
+		    case RT_BOT_UNORIENTED:
+			bu_vls_printf(gb->gedp->ged_result_str, "none");
+			break;
+		    case RT_BOT_CCW:
+			bu_vls_printf(gb->gedp->ged_result_str, "ccw");
+			break;
+		    case RT_BOT_CW:
+			bu_vls_printf(gb->gedp->ged_result_str, "cw");
+			break;
+		}
+	    } else if (BU_STR_EQUAL(argv[0], "type") || BU_STR_EQUAL(argv[0], "mode")){
+		switch (intprop) {
+		    case RT_BOT_SURFACE:
+			bu_vls_printf(gb->gedp->ged_result_str, "surface");
+			break;
+		    case RT_BOT_SOLID:
+			bu_vls_printf(gb->gedp->ged_result_str, "solid");
+			break;
+		    case RT_BOT_PLATE:
+			bu_vls_printf(gb->gedp->ged_result_str, "plate");
+			break;
+		    case RT_BOT_PLATE_NOCOS:
+			bu_vls_printf(gb->gedp->ged_result_str, "plate_nocos");
+			break;
+		}
+	    } else {
+		bu_vls_printf(gb->gedp->ged_result_str, "%d", (int) propVal);
+	    }
 	} else {
 	    /* float result */
 	    bu_vls_printf(gb->gedp->ged_result_str, "%f", propVal);
 	}
     } else {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s is not a valid argument!", argv[1]);
+	return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+extern "C" int
+_bot_cmd_set(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "bot set <orientation|type> <objname> <val>";
+    const char *purpose_string = "Set BoT object properties";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+
+    argc--; argv++;
+
+    if (argc != 3) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return GED_ERROR;
+    }
+
+    if (_bot_obj_setup(gb, argv[1]) & GED_ERROR) {
+	return GED_ERROR;
+    }
+
+    if (!BU_STR_EQUAL(argv[0], "orientation") && !BU_STR_EQUAL(argv[0], "type") && !BU_STR_EQUAL(argv[0], "mode")) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "orientation")) {
+	int mode = INT_MAX;
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+	if (BU_STR_EQUIV(argv[2], "none") || BU_STR_EQUIV(argv[2], "unoriented")) {
+	    mode = RT_BOT_UNORIENTED;
+	}
+	if (BU_STR_EQUIV(argv[2], "ccw") || BU_STR_EQUIV(argv[2], "counterclockwise")) {
+	    mode = RT_BOT_CCW;
+	}
+	if (BU_STR_EQUIV(argv[2], "cw") || BU_STR_EQUIV(argv[2], "clockwise")) {
+	    mode = RT_BOT_CW;
+	}
+	if (mode == INT_MAX) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Possible orientations are: none ccw cw");
+	    return GED_ERROR;
+	}
+	bot->orientation = mode;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "type") || BU_STR_EQUAL(argv[0], "mode")) {
+	int mode = INT_MAX;
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+	if (BU_STR_EQUIV(argv[2], "surface") || BU_STR_EQUIV(argv[2], "surf")) {
+	    mode = RT_BOT_SURFACE;
+	}
+	if (BU_STR_EQUIV(argv[2], "solid") || BU_STR_EQUIV(argv[2], "sol")) {
+	    mode = RT_BOT_SOLID;
+	}
+	if (BU_STR_EQUIV(argv[2], "plate")) {
+	    mode = RT_BOT_PLATE;
+	}
+	if (BU_STR_EQUIV(argv[2], "plate_nocos")) {
+	    mode = RT_BOT_PLATE_NOCOS;
+	}
+	if (mode == INT_MAX) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "Possible types are: surface solid plate plate_nocos");
+	    return GED_ERROR;
+	}
+	int old_mode = bot->mode;
+	bot->mode = mode;
+	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	    if (old_mode != RT_BOT_PLATE && old_mode != RT_BOT_PLATE_NOCOS) {
+		/* need to create some thicknesses */
+		bot->thickness = (fastf_t *)bu_calloc(bot->num_faces, sizeof(fastf_t), "BOT thickness");
+		bot->face_mode = bu_bitv_new(bot->num_faces);
+	    }
+	} else {
+	    if (old_mode == RT_BOT_PLATE || old_mode == RT_BOT_PLATE_NOCOS) {
+		/* free the per face memory */
+		bu_free((char *)bot->thickness, "BOT thickness");
+		bot->thickness = (fastf_t *)NULL;
+		bu_free((char *)bot->face_mode, "BOT face_mode");
+		bot->face_mode = (struct bu_bitv *)NULL;
+	    }
+	}
+    }
+
+    if (rt_db_put_internal(gb->dp, gb->gedp->ged_wdbp->dbip, gb->intern, &rt_uniresource) < 0) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
 	return GED_ERROR;
     }
 
@@ -313,6 +436,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "chull",      _bot_cmd_chull},
     { "isect",      _bot_cmd_isect},
     { "remesh",     _bot_cmd_remesh},
+    { "set",        _bot_cmd_set},
     { (char *)NULL,      NULL}
 };
 

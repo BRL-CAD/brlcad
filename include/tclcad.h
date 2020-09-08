@@ -518,7 +518,9 @@ TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu
  * Tcl specific I/O handlers
  */
 struct tclcad_io_data {
-    Tcl_Channel chan;
+	Tcl_Channel chan_stdin;
+    Tcl_Channel chan_stdout;
+    Tcl_Channel chan_stderr;
     Tcl_Interp *interp;
     int io_mode;
 };
