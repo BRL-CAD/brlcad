@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* added -size filter to MGED search command - Cliff Yapp
 * upgraded Tcl/Tk from 8.5.19 to 8.6.10 - Cliff Yapp
 * bundled zlib & libpng use API prefix and library suffix - Cliff Yapp
 * extensive improvements to OpenCL ray trace pipeline - Rishabh Suthar
