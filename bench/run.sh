@@ -584,10 +584,12 @@ else
     $ECHO "Using [$ELP] for ELP"
 fi
 
+# prevent git shell and msys2 from expanding -F/dev/debug
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="-F/dev/debug"
+
 # more sanity checks, make sure the binaries and scripts run
-eval \"$RT\" -s1 -o light.pix \"${DB}/moss.g\" LIGHT > /dev/null 2>&1
+eval \"$RT\" -s1 -F/dev/debug \"${DB}/moss.g\" LIGHT > /dev/null 2>&1
 ret=$?
-rm -f light.pix
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "Running \"$RT\":"
