@@ -142,7 +142,6 @@ struct gcv_filter {
     /* If we have a specific model type this converter is known to
      * handle, call it out here.
      *
-     * Use mime_context = BU_MIME_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER
      * Use mime_type = -1 if the plugin is a multi-format I/O plugin.
      */
     const int mime_type;
