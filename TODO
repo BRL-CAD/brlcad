@@ -18,9 +18,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* search -exec appears to be broken (could use an integration test).
-  a simple manual printing returns nothing:
-    search . -exec echo "OBJ: {}" ";"
+* Release Testing, final commit reviews
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
