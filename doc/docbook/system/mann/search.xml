@@ -424,6 +424,14 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><emphasis remap="B" role="bold">-size</emphasis> <emphasis remap="I">[&gt;/&lt;/=]size</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the size of the object is within the range specified.  NOTE:  for combs, extrudes, and other composite objects this filter considers <emphasis>only</emphasis> the object definition itself, not its related elements.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><emphasis remap="B" role="bold">-stdattr</emphasis></term>
 	<listitem>
 	  <para>

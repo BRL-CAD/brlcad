@@ -68,25 +68,32 @@ fi
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
+# Windows has a special NUL device instead of /dev/null
+if test -f /dev/null ; then
+    export NUL=/dev/null
+else
+    export NUL=NUL
+fi
+
 # commands that this script expects
 for __cmd in echo pwd ; do
-    echo "test" | $__cmd > /dev/null 2>&1
+    echo "test" | $__cmd > $NUL 2>&1
     if test ! x$? = x0 ; then
 	echo "INTERNAL ERROR: $__cmd command is required"
 	exit 1
     fi
 done
-echo "test" | grep "test" > /dev/null 2>&1
+echo "test" | grep "test" > $NUL 2>&1
 if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: grep command is required"
     exit 1
 fi
-echo "test" | tr "test" "test" > /dev/null 2>&1
+echo "test" | tr "test" "test" > $NUL 2>&1
 if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: tr command is required"
     exit 1
 fi
-echo "test" | sed "s/test/test/" > /dev/null 2>&1
+echo "test" | sed "s/test/test/" > $NUL 2>&1
 if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: sed command is required"
     exit 1
@@ -393,10 +400,10 @@ fi
 LOGFILE=run-$$-benchmark.log
 touch "$LOGFILE"
 if test ! -w "$LOGFILE" ; then
-    if test ! "x$LOGFILE" = "x/dev/null" ; then
+    if test "x$LOGFILE" != "x/dev/null" -a "x$LOGFILE" != "xNUL" ; then
 	echo "ERROR: Unable to log to $LOGFILE"
     fi
-    LOGFILE=/dev/null
+    LOGFILE=$NUL
 fi
 
 VERBOSE_ECHO=:
@@ -584,10 +591,12 @@ else
     $ECHO "Using [$ELP] for ELP"
 fi
 
-# more sanity checks, make sure the binaries and scripts run
-eval \"$RT\" -s1 -o light.pix \"${DB}/moss.g\" LIGHT > /dev/null 2>&1
+# prevent git shell and msys2 from expanding -F/dev/debug
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="-F/dev/debug"
+
+# sanity check: make sure $RT runs
+eval \"$RT\" -s1 -F/dev/debug \"${DB}/moss.g\" LIGHT > $NUL 2>&1
 ret=$?
-rm -f light.pix
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "Running \"$RT\":"
@@ -597,19 +606,17 @@ if test ! "x${ret}" = "x0" ; then
     exit 2
 fi
 
-# create a temporary file named "null", fopen("/dev/null") does not work on
-# windows (using cygwin), so punt.
-> null
-eval \"$CMP\" null null >/dev/null 2>&1
-rm -f null
-
+# sanity check: make sure $CMP runs
+eval \"$CMP\" $NUL $NUL > $NUL 2>&1
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  CMP does not seem to work as expected"
     exit 2
 fi
-eval \"$ELP\" 0 > /dev/null 2>&1
+
+# sanity check: make sure $ELP runs
+eval \"$ELP\" 0 > $NUL 2>&1
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"
@@ -672,7 +679,7 @@ $ECHO
 
 
 # if expr works, let the user know about how long this might take
-if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
+if test "x`expr 1 - 1 2>$NUL`" = "x0" ; then
     mintime="`expr 6 \* $TIMEFRAME`"
     if test $mintime -lt 1 ; then
 	mintime=0 # zero is okay
@@ -860,13 +867,13 @@ sqrt ( ) {
     if test "x$sqrt_number" = "x" ; then
 	$ECHO "ERROR: cannot compute the square root of nothing" 1>&2
 	exit 1
-    elif test $sqrt_number -lt 0 > /dev/null 2>&1 ; then
+    elif test $sqrt_number -lt 0 > $NUL 2>&1 ; then
 	$ECHO "ERROR: square root of negative numbers is only in your imagination" 1>&2
 	exit 1
     fi
 
     sqrt_have_dc=yes
-    echo "1 1 + p" | dc >/dev/null 2>&1
+    echo "1 1 + p" | dc >$NUL 2>&1
     if test ! x$? = x0 ; then
 	sqrt_have_dc=no
     fi
@@ -876,7 +883,7 @@ sqrt ( ) {
 	sqrt_root=`echo "$sqrt_number v p" | dc`
     else
 	sqrt_have_bc=yes
-	echo "1 + 1" | bc >/dev/null 2>&1
+	echo "1 + 1" | bc >$NUL 2>&1
 	if test ! "x$?" = "x0" ; then
 	    sqrt_have_bc=no
 	fi
@@ -1226,13 +1233,13 @@ perf ( ) {
 
     # see if we have a calculator
     perf_have_dc=yes
-    echo "1 1 + p" | dc >/dev/null 2>&1
+    echo "1 1 + p" | dc >$NUL 2>&1
     if test ! x$? = x0 ; then
 	perf_have_dc=no
     fi
 
     perf_have_bc=yes
-    echo "1 + 1" | bc >/dev/null 2>&1
+    echo "1 + 1" | bc >$NUL 2>&1
     if test ! x$? = x0 ; then
 	perf_have_bc=no
     fi

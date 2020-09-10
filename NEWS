@@ -13,8 +13,10 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* added -size filter to MGED search command - Cliff Yapp
 * upgraded Tcl/Tk from 8.5.19 to 8.6.10 - Cliff Yapp
 * bundled zlib & libpng use API prefix and library suffix - Cliff Yapp
+* extensive improvements to OpenCL ray trace pipeline - Rishabh Suthar
 * improved rtweight density value warnings - Sean Morrison, Cliff Yapp
 * added perception-based hdtv and hdr modes for pix-bw - Sean Morrison
 * fixed semi-transparent DM and FB windows on Linux - Cliff Yapp
@@ -79,6 +81,7 @@ changes made.  See document footer for additional details.
 * added "plate" object type filter to search command - Cliff Yapp
 * fixed latent logging bug during facetize on Windows - Bob Parker
 * fixed bug closing rt framebuffer windows on Windows - Sean Morrison
+* added EBM support for reading from database objects - Jeffrey Liu
 
 
 ----------------------------------------------------------------------
@@ -93,9 +96,13 @@ changes made.  See document footer for additional details.
 * changed mged escape key binding to reset mouse mode - Sean Morrison
 * removed default xXyYzZ0 rate rotation key bindings - Sean Morrison
 * improved tessellation of nearly coplanar surfaces - John Anderson
-* fixed display of annotations on Windows - Daniel Roßberg
+* fixed annotations display on Windows - Daniel Roßberg, Ali Haydar
 * fixed rtedge and rtwizard occlusion object edge bug - Sean Morrison
 * rt* tools no longer force outputs to be read-only - Sean Morrison
+* fixed bug listing annotations with short label strings - Ali Haydar
+* improved support for label placement in annotations - Ali Haydar
+* fixed bug in annotation object bounding box calculation - Ali Haydar
+* fixed an annotation leader line bug affecting display - Ali Haydar
 * fixed 'burst' crash when run without options - Sean Morrison
 * changed rtweight to not truncate long pathnames - Sean Morrison
 * added new ball bearing example geometry model - Sean Morrison
