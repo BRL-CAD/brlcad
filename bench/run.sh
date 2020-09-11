@@ -69,10 +69,10 @@ fi
 LC_ALL=C
 
 # Windows has a special NUL device instead of /dev/null
-if [ "$OSTYPE" == "msys" ] ; then
-    export NUL=NUL
-else
+if test -e /dev/null ; then
     export NUL=/dev/null
+else
+    export NUL=NUL
 fi
 
 # commands that this script expects
