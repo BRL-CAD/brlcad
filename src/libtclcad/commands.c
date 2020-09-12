@@ -1240,20 +1240,23 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
        	return;
     struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
 	switch (d) {
-	case BU_PROCESS_STDIN:
-		Tcl_DeleteChannelHandler(t_iod->chan_stdin, NULL, (ClientData)NULL);
-		if (t_iod->chan_stdin)
+	    case BU_PROCESS_STDIN:
+		if (t_iod->chan_stdin) {
+		    Tcl_DeleteChannelHandler(t_iod->chan_stdin, NULL, (ClientData)NULL);
 		    Tcl_Close(t_iod->interp, t_iod->chan_stdin);
+		}
 		break;
-	case BU_PROCESS_STDOUT:
-		Tcl_DeleteChannelHandler(t_iod->chan_stdout, NULL, (ClientData)NULL);
-		if (t_iod->chan_stdout)
+	    case BU_PROCESS_STDOUT:
+		if (t_iod->chan_stdout) {
+		    Tcl_DeleteChannelHandler(t_iod->chan_stdout, NULL, (ClientData)NULL);
 		    Tcl_Close(t_iod->interp, t_iod->chan_stdout);
+		}
 		break;
-	case BU_PROCESS_STDERR:
-		Tcl_DeleteChannelHandler(t_iod->chan_stderr, NULL, (ClientData)NULL);
-		if (t_iod->chan_stderr)
+	    case BU_PROCESS_STDERR:
+		if (t_iod->chan_stderr) {
+		    Tcl_DeleteChannelHandler(t_iod->chan_stderr, NULL, (ClientData)NULL);
 		    Tcl_Close(t_iod->interp, t_iod->chan_stderr);
+		}
 		break;
 	}
 }
