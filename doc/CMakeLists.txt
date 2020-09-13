@@ -9,9 +9,7 @@ set(documentation_DATA
   README.Linux
   README.MacOSX
   README.Windows
-  README.AIX
   README.BSD
-  README.IRIX
   README.Solaris
   README.VAX
   checklist.txt
