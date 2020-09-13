@@ -42,6 +42,7 @@ changes made.  See document footer for additional details.
 * changed 'whichid' and 'whichair' to print ranges of unused IDs
 	- Nick Reed, Cliff Yapp
 * improved output path sorting of search command - Cliff Yapp
+* added "bot extrude" command for making ARB6s from bots - Cliff Yapp
 * added 3dm-g failure message about supported versions - Cliff Yapp
 * fixed bw-png writing corrupted png files on Windows - Sean Morrison
 * added MGED 'dm type' subcommand for reporting DM type - Cliff Yapp
