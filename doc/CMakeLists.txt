@@ -9,11 +9,11 @@ set(documentation_DATA
   README.Linux
   README.MacOSX
   README.Windows
-  README.other/README.AIX
-  README.other/README.BSD
-  README.other/README.IRIX
-  README.other/README.Solaris
-  README.other/README.VAX
+  README.AIX
+  README.BSD
+  README.IRIX
+  README.Solaris
+  README.VAX
   checklist.txt
   description.txt
   notes/TODO.BREP
@@ -208,7 +208,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
 
 CMAKEFILES(
   CMakeLists.txt
-  README.other/README.OSCON-2014
+  README.OSCON-2014
   STARTERS
   STRATEGY
   notes/bsd_semaphore_bug.txt
