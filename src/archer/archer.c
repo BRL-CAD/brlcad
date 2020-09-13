@@ -26,6 +26,10 @@
 #include "bnetwork.h"
 #include "bio.h"
 
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
+#endif
+
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
@@ -94,6 +98,19 @@ main(int argc, const char **argv)
 	bu_exit(1, NULL);
     }
     bu_vls_free(&tlog);
+
+    /* If the working directory is BU_DIR_BIN, try shifting to the user's
+     * home directory instead */
+    char cwd[MAXPATHLEN] = {0};
+    char bindir[MAXPATHLEN] = {0};
+    bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
+    bu_dir(bindir, MAXPATHLEN, BU_DIR_BIN, NULL);
+    if (BU_STR_EQUAL(cwd, bindir)) {
+	bu_dir(cwd, MAXPATHLEN, BU_DIR_HOME, NULL);
+	if (chdir(cwd)) {
+	    bu_exit(EXIT_FAILURE, "Working directory is the binary directory \"%s\" (read-only), and chdir to home directory \"%s\" failed.", bindir, cwd);
+	}
+    }
 
     archer_tcl = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
     Tcl_DStringInit(&temp);
