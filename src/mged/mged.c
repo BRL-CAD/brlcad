@@ -49,10 +49,6 @@
 #  include <poll.h>
 #endif
 
-#ifdef HAVE_WINDOWS_H
-#  include <direct.h> /* For chdir */
-#endif
-
 #include "bio.h"
 #include "bsocket.h"
 
@@ -1050,21 +1046,6 @@ main(int argc, char *argv[])
     (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
 
     bu_setprogname(argv[0]);
-
-
-    /* If the working directory is BU_DIR_BIN, try shifting to the user's
-     * home directory instead */
-    char cwd[MAXPATHLEN] = {0};
-    char bindir[MAXPATHLEN] = {0};
-    bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
-    bu_dir(bindir, MAXPATHLEN, BU_DIR_BIN, NULL);
-    if (BU_STR_EQUAL(cwd, bindir)) {
-	bu_dir(cwd, MAXPATHLEN, BU_DIR_HOME, NULL);
-	if (chdir(cwd)) {
-	    bu_log("WARNING: working directory is the binary directory \"%s\" (read-only), and chdir to home directory \"%s\" failed.", bindir, cwd);
-	}
-    }
-
 
     /* If multiple processors might be used, initialize for it.
      * Do not run any commands before here.

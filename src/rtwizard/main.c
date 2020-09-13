@@ -24,10 +24,6 @@
 #include "common.h"
 #include "string.h"
 
-#ifdef HAVE_WINDOWS_H
-#  include <direct.h> /* For chdir */
-#endif
-
 #include "tcl.h"
 
 #include "vmath.h"
@@ -1013,20 +1009,6 @@ main(int argc, char **argv)
 	rtwizard_help_dev((struct bu_opt_desc *)&d);
 	bu_exit(EXIT_SUCCESS, NULL);
     }
-
-    /* If the working directory is BU_DIR_BIN, try shifting to the user's
-     * home directory instead */
-    char cwd[MAXPATHLEN] = {0};
-    char bindir[MAXPATHLEN] = {0};
-    bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
-    bu_dir(bindir, MAXPATHLEN, BU_DIR_BIN, NULL);
-    if (BU_STR_EQUAL(cwd, bindir)) {
-	bu_dir(cwd, MAXPATHLEN, BU_DIR_HOME, NULL);
-	if (chdir(cwd)) {
-	    bu_log("WARNING: working directory is the binary directory \"%s\" (read-only), and chdir to home directory \"%s\" failed.  RtWizard requires a read/write working directory.", bindir, cwd);
-	}
-    }
-
 
     {
 	int stop = 0;
