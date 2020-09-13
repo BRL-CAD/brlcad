@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* added 'bot set' command for low level BoT manipulation - Cliff Yapp
 * report semantic strings for 'bot get' mode/orientation - Cliff Yapp
 * added new manual page for the libicv library - Sumagna Das
 * added -size filter to MGED search command - Cliff Yapp
