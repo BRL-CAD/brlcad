@@ -1061,7 +1061,7 @@ main(int argc, char *argv[])
     if (BU_STR_EQUAL(cwd, bindir)) {
 	bu_dir(cwd, MAXPATHLEN, BU_DIR_HOME, NULL);
 	if (chdir(cwd)) {
-	    bu_exit(EXIT_FAILURE, "Working directory is the binary directory \"%s\" (read-only), and chdir to home directory \"%s\" failed.", bindir, cwd);
+	    bu_log("WARNING: working directory is the binary directory \"%s\" (read-only), and chdir to home directory \"%s\" failed.", bindir, cwd);
 	}
     }
 
