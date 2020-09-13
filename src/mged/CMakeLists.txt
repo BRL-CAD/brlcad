@@ -58,6 +58,9 @@ set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
 endif(TARGET libtermio)
+if (ITK_LIBRARY)
+  set(mged_libs ${mged_libs} ${ITK_LIBRARY})
+endif (ITK_LIBRARY)
 
 # Ideally we'd build as GUI for Windows to avoid the command window popping up,
 # but I'm not sure if that would be a problem for scripting with mged.exe on
@@ -73,11 +76,13 @@ if (BRLCAD_ENABLE_TCL)
     ${DM_INCLUDE_DIRS}
     ${BU_INCLUDE_DIRS}
     ${NMG_INCLUDE_DIRS}
-    ${TK_INCLUDE_PATH}
     ${TCL_INCLUDE_PATH}
     ${TERMIO_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     )
+  if (TK_INCLUDE_PATH)
+    set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
+  endif (TK_INCLUDE_PATH)
 
   BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
 

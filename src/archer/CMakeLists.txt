@@ -2,20 +2,21 @@ set(ARCHER_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
   ${TCL_INCLUDE_PATH}
-  ${TK_INCLUDE_PATH}
   )
+if (TK_INCLUDE_PATH)
+  set(ARCHER_INCLUDE_DIRS ${ARCHER_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
+endif (TK_INCLUDE_PATH)
 list(REMOVE_DUPLICATES ARCHER_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
-
-set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
 # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
 # currently works only in graphical mode - might as well behave "nicely" there.
 # If/when we add MGED's ability to work in "classic" mode, Archer will have
 # to be built as a non-GUI application (or we'll have to build two executables)
 if(BRLCAD_ENABLE_TK)
+  set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
   set(archer_srcs archer.c)
   if (HAVE_WINDOWS_H)
     # To associate an icon with the application for Windows (needed
