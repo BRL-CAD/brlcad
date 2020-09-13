@@ -66,9 +66,14 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * dimensions of an image, when the image doesn't supply such
  * information.
  *
- * @param[in] name       String identifying a particular size (pass NULL if not using)
+ * Standard image sizes may be hinted using the label parameter.  Many
+ * standard print and display sizes (e.g., "A4" and "SVGA") are
+ * recognized and used in concert with the dpi and data_size
+ * parameters.
+ *
+ * @param[in] label      String hinting at a size  (pass NULL if not using)
  * @param[in] dpi        Dots per inch of image (pass 0 if not using)
- * @param[in] file_size  File or in-memory size of image (necessary if deducing an unspecified image size)
+ * @param[in] data_size  Number of uncompressed image bytes (necessary if deducing an unspecified image size)
  * @param[in] type       Image type (necessary if deducing an unspecified image size)
  *
  * @param[out] widthp    Pointer to variable that will hold image width
@@ -78,7 +83,7 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * Returns 1 if an image size was identified, zero otherwise.
  *
  */
-ICV_EXPORT extern int icv_image_size(const char *name, size_t dpi, size_t file_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
+ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be

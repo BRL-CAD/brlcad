@@ -13,6 +13,10 @@ changes made.  See document footer for additional details.
 --- 2020-08-XX  Release 7.32.X                                     ---
 ----------------------------------------------------------------------
 
+* added new 'nburst' version of classic burst tool - Cliff Yapp
+* added 'bot set' command for low level BoT manipulation - Cliff Yapp
+* report semantic strings for 'bot get' mode/orientation - Cliff Yapp
+* added new manual page for the libicv library - Sumagna Das
 * added -size filter to MGED search command - Cliff Yapp
 * upgraded Tcl/Tk from 8.5.19 to 8.6.10 - Cliff Yapp
 * bundled zlib & libpng use API prefix and library suffix - Cliff Yapp
@@ -38,7 +42,13 @@ changes made.  See document footer for additional details.
 * improved Combination Editor button behaviors in MGED - Sean Morrison
 * consistent usage taxonomy for ident-related commands - Sean Morrison
 * added units label to the Archer in-scene scale graphic - Cliff Yapp
+* added framebuffer capture option to screengrab command - Cliff Yapp
+* added framebuffer writing option to overlay command - Cliff Yapp
+* added tree search option to 'whichid' and 'whichair' - Cliff Yapp
+* changed 'whichid' and 'whichair' to print ranges of unused IDs
+	- Nick Reed, Cliff Yapp
 * improved output path sorting of search command - Cliff Yapp
+* added "bot extrude" command for making ARB6s from bots - Cliff Yapp
 * added 3dm-g failure message about supported versions - Cliff Yapp
 * fixed bw-png writing corrupted png files on Windows - Sean Morrison
 * added MGED 'dm type' subcommand for reporting DM type - Cliff Yapp
