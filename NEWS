@@ -41,6 +41,7 @@ changes made.  See document footer for additional details.
 * improved Combination Editor button behaviors in MGED - Sean Morrison
 * consistent usage taxonomy for ident-related commands - Sean Morrison
 * added units label to the Archer in-scene scale graphic - Cliff Yapp
+* added tree search option to 'whichid' and 'whichair' - Cliff Yapp
 * changed 'whichid' and 'whichair' to print ranges of unused IDs
 	- Nick Reed, Cliff Yapp
 * improved output path sorting of search command - Cliff Yapp
