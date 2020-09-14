@@ -105,6 +105,9 @@ Development packages for building on Redhat/Fedora platforms:
   yum install fontconfig-devel # optional
   yum install mesa-libGL-devel # optional
 
+If you wish to create rpm packages, you'll need rpmbuild
+
+  yum install rpm-build        # optional
 
 When setting up older versions for building BRL-CAD, it is sometimes
 necessary to install some non-default compilation tools in addition to the
