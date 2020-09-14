@@ -815,11 +815,11 @@ public:
   enum archive_mode
   {
     unknown_archive_mode = 0,
-    read      = 1, // all read modes have bit 0x0001 set
-    write     = 2, // all write modes have bit 0x0002 set
-    readwrite = 3,
-    read3dm   = 5,
-    write3dm  = 6
+    on_read      = 1, // all read modes have bit 0x0001 set
+    on_write     = 2, // all write modes have bit 0x0002 set
+    on_readwrite = 3,
+    on_read3dm   = 5,
+    on_write3dm  = 6
   };
   static archive_mode ArchiveMode(int); // convert integer to endian enum
 
