@@ -51,7 +51,27 @@
       <emphasis remap="I">before</emphasis> the paths and are used to control settings
       that apply globally to <command>search</command>'s behavior and reporting during
       the execution of the search.
+    </para>
 
+    <para>
+      The results of the search command will be sorted according to David Koelle's
+      "alphanum" algorithm, which is basically a human-intuitive ordering for
+      strings with letters and numbers.  For example, a result returning d1.r, d10.r and d2.r
+      will be sorted as:
+      
+      <literallayout>
+d1.r
+d2.r
+d10.r
+      </literallayout>
+
+      instead of the default ASCII character ordering, which would look like:
+      
+      <literallayout>
+d1.r
+d10.r
+d2.r
+      </literallayout>
     </para>
   </refsection>
 
