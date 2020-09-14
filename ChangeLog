@@ -203,32 +203,6 @@
 	  /dev/null is a special device and -f is only for regular files,
 	  so we really just want to check for existence here.
 
-2020-09-10 15:20  starseeker
-
-	* [r77100] include/gcv/api.h:
-	  Actually, we probably want to use the context mime type on
-	  filters.
-
-2020-09-10 14:28  starseeker
-
-	* [r77099] include/gcv/api.h, src/conv/3dm/3dm-g.c,
-	  src/conv/gcv/gcv.c, src/libgcv/gcv.c,
-	  src/libgcv/plugins/asc/asc.cpp,
-	  src/libgcv/plugins/decimate/decimate.c,
-	  src/libgcv/plugins/fastgen4/fastgen4_read.c,
-	  src/libgcv/plugins/fastgen4/fastgen4_write.cpp,
-	  src/libgcv/plugins/gdal/gdal.cpp,
-	  src/libgcv/plugins/obj/obj_read.c,
-	  src/libgcv/plugins/obj/obj_write.c,
-	  src/libgcv/plugins/rhino/rhino_read.cpp,
-	  src/libgcv/plugins/stl/stl_read.c,
-	  src/libgcv/plugins/stl/stl_write.c,
-	  src/libgcv/plugins/vol/png_read.c,
-	  src/libgcv/plugins/vrml/vrml_read/vrml_read.cpp,
-	  src/libgcv/plugins/vrml/vrml_write.c:
-	  Attempt to generalize the GCV plugin typing system beyond just
-	  models.
-
 2020-09-10 04:20  brlcad
 
 	* [r77098] include/icv/io.h:
