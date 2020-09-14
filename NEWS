@@ -10,16 +10,16 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2020-08-XX  Release 7.32.X                                     ---
+--- 2020-09-14  Release 7.32.0                                     ---
 ----------------------------------------------------------------------
 
 This major release of BRL-CAD introduces significant updates to core
 library infrastructure.  The update includes restructuring of nearly
 all of BRL-CAD's display infrastructure in preparation for upcoming
 significant GUI changes.  This release also fixes over fifty of
-BRL-CAD's command-line utilities so they work properly to Windows.
+BRL-CAD's command-line utilities so they work properly on Windows.
 This is likely the last major release of BRL-CAD on Subversion
-inrastructure with BRL-CAD's imminent migration to Git.
+infrastructure with BRL-CAD's imminent migration to Git.
 
 * added basic example to remrt man page - Cliff Yapp, Sean Morrison
 * added new 'nburst' version of classic burst tool - Cliff Yapp
