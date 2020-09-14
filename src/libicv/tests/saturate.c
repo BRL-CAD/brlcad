@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 #include "bu/getopt.h"
@@ -56,6 +57,8 @@ int main(int argc, char* argv[])
     icv_image_t *bif;
     double fraction = 0;
     bu_mime_image_t format = BU_MIME_IMAGE_AUTO;
+
+    bu_setprogname(argv[0]);
 
     if (argc<2) {
 	usage();

@@ -35,6 +35,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "bu/list.h"
@@ -3130,6 +3131,8 @@ main(int argc, char *argv[])
     int code;
     int c;
     int i;
+
+    bu_setprogname(argv[0]);
 
     tol_sq = tol * tol;
 

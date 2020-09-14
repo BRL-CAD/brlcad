@@ -32,6 +32,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -57,12 +58,13 @@ void
 open_file(FILE **fp, char *name)
 {
     /* check for special names */
-    if (BU_STR_EQUAL(name, "-"))
+    if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
-    else if (BU_STR_EQUAL(name, "."))
-	*fp = fopen("/dev/null", "r");
-    else if ((*fp = fopen(name, "r")) == NULL)
+    } else if (BU_STR_EQUAL(name, ".")) {
+	*fp = fopen("/dev/null", "rb");
+    } else if ((*fp = fopen(name, "rb")) == NULL) {
 	bu_exit(2, "bwdiff: Can't open \"%s\"\n", name);
+    }
 }
 
 
@@ -72,6 +74,10 @@ main(int argc, char **argv)
     unsigned char *p1, *p2, *op;
     size_t i, n, m;
     size_t ret;
+
+    bu_setprogname(argv[0]);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     while (argc > 3) {
 	if (BU_STR_EQUAL(argv[1], "-m")) {

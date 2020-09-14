@@ -1,5 +1,7 @@
 https://github.com/DevHwan/RTree
 
+Copyright (c) 1995-2019 Melinda Green, Greg Douglas, Yariv Barkan, Gero Mueller
+
 Original code was taken from http://www.superliminal.com/sources/sources.htm
 and is stored as git revision 0. This revision is entirely free for all uses.
 Enjoy!
@@ -14,3 +16,5 @@ conditions of the BSD, MIT or GPL or 3) any combination of public domain and
 one or more of these licenses.
 
 Thanks Baptiste Lepilleur for the licensing idea.
+
+file:/src/libbrep/cdt/RTree.h

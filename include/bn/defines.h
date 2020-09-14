@@ -34,9 +34,9 @@
 #  if defined(BN_DLL_EXPORTS) && defined(BN_DLL_IMPORTS)
 #    error "Only BN_DLL_EXPORTS or BN_DLL_IMPORTS can be defined, not both."
 #  elif defined(BN_DLL_EXPORTS)
-#    define BN_EXPORT __declspec(dllexport)
+#    define BN_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BN_DLL_IMPORTS)
-#    define BN_EXPORT __declspec(dllimport)
+#    define BN_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BN_EXPORT
 #  endif

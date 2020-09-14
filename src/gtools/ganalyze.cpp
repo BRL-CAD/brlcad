@@ -33,6 +33,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/vls.h"
 #include "raytrace.h"
@@ -139,12 +140,14 @@ struct analyze_command_table analyze_commands[] = {
     {NULL, NULL, NULL, 0, 0, 0 /* END */}
 };
 
-int main(int UNUSED(argc), const char **UNUSED(argv))
+int main(int UNUSED(argc), const char **argv)
 {
     int ret = 0;
     int nret = 0;
     struct analyze_command_state *acs = NULL;
     struct bu_vls iline = BU_VLS_INIT_ZERO;
+
+    bu_setprogname(argv[0]);
 
     /* For Windows */
     setmode(fileno(stdin), O_BINARY);

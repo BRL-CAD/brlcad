@@ -25,12 +25,16 @@
 #include "n_iges.hpp"
 #include "brlcad_brep.hpp"
 
+#include "bu/app.h"
 
 using namespace brlcad;
 
 int
 main(int argc, char** argv) {
     cout << argc << endl;
+
+    bu_setprogname(argv[0]);
+
     if (argc != 3) {
 	bu_exit(0, "iges <iges_filename> <output_filename>\n");
     }

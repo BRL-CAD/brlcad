@@ -163,7 +163,8 @@ ged_trace(struct directory *dp,
 
     /* NOTE - only reach here if gtd_flag == _GED_LISTEVAL */
     bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "/");
-    if ((id=rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, gtdp->gtd_xform, &rt_uniresource)) < 0) {
+    id = rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, gtdp->gtd_xform, &rt_uniresource);
+    if (id < 0) {
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 	return;
     }

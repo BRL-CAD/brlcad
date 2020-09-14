@@ -1,0 +1,72 @@
+# Values set at CMake configure time 
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "${CBDIR}/regress-ged_mater.log")
+
+set(OUTPUT_FILES
+  "${CBDIR}/ged_mater_density_data.txt"
+  "${CBDIR}/ged_mater_density_export.txt"
+  "${CBDIR}/ged_mater_density_map.txt"
+  "${CBDIR}/ged_mater_density_reverse_map.txt"
+  "${CBDIR}/ged_mater_test.g"
+  )
+
+file(WRITE "${LOGFILE}" "Starting mater test run\n")
+
+# The executable locations aren't know at CMake configure time, so it is passed
+# in via the EXEC variable at runtime by a generator expression in the parent
+# build.  De-quote it and assign it to the appropriate variable.
+string(REPLACE "\\" "" MATER_EXEC "${EXEC}")
+if (NOT EXISTS "${MATER_EXEC}")
+  file(WRITE "${LOGFILE}" "mater test program not found at location \"${MATER_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find mater test program, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif (NOT EXISTS "${MATER_EXEC}")
+
+# Clean up in case we've run before unsuccessfully
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
+
+# Run empty density test
+file(APPEND "${LOGFILE}" "Running ${MATER_EXEC} dnull\n")
+execute_process(
+  COMMAND "${MATER_EXEC}" "dnull" RESULT_VARIABLE ged_mater_result
+  OUTPUT_VARIABLE ged_mater_log ERROR_VARIABLE ged_mater_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+file(APPEND "${LOGFILE}" "${ged_mater_log}")
+set(get_mater_log)
+if(ged_mater_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_mater] Failure: ${ged_mater_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_mater_result)
+
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${CBDIR}/ged_mater_test.g")
+
+# Run standard density test
+file(APPEND "${LOGFILE}" "Running ${MATER_EXEC} dstd\n")
+execute_process(
+  COMMAND "${MATER_EXEC}" "dstd" RESULT_VARIABLE ged_mater_result
+  OUTPUT_VARIABLE ged_mater_log ERROR_VARIABLE ged_mater_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+file(APPEND "${LOGFILE}" "${ged_mater_log}")
+set(get_mater_log)
+if(ged_mater_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_mater] Failure: ${ged_mater_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_mater_result)
+
+# Clean up
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

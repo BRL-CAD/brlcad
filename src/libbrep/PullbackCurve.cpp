@@ -471,13 +471,31 @@ surface_GetOptimalNormalVSplit(const ON_Surface *surf, const ON_Interval &u_inte
 
 
 //forward for cyclic
-double surface_GetClosestPoint3dFirstOrderByRange(const ON_Surface *surf, const ON_3dPoint& p, const ON_Interval& u_range,
-						  const ON_Interval& v_range, double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d, double same_point_tol, double within_distance_tol, int level);
+double
+surface_GetClosestPoint3dFirstOrderByRange(const ON_Surface *surf,
+					   const ON_3dPoint& p,
+					   const ON_Interval& u_range,
+					   const ON_Interval& v_range,
+					   double current_closest_dist,
+					   ON_2dPoint& p2d,
+					   ON_3dPoint& p3d,
+					   double same_point_tol,
+					   double within_distance_tol,
+					   int level);
 
-double surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
-						      const ON_3dPoint& p, const ON_Interval &u_interval, double u, const ON_Interval &v_interval, double v,
-						      double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d,
-						      double same_point_tol, double within_distance_tol, int level)
+double
+surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
+					       const ON_3dPoint& p,
+					       const ON_Interval &u_interval,
+					       double u,
+					       const ON_Interval &v_interval,
+					       double v,
+					       double current_closest_dist,
+					       ON_2dPoint& p2d,
+					       ON_3dPoint& p3d,
+					       double same_point_tol,
+					       double within_distance_tol,
+					       int level)
 {
     double min_distance = 0;
     double max_distance = 0;

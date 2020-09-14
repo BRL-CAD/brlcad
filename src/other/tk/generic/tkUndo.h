@@ -16,13 +16,8 @@
 #include "tkInt.h"
 #endif
 
-#ifdef BUILD_tk
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLEXPORT
-#endif
-
 /*
- * Enum definining the types used in an undo stack.
+ * Enum defining the types used in an undo stack.
  */
 
 typedef enum {
@@ -101,9 +96,11 @@ MODULE_SCOPE void	TkUndoClearStack(TkUndoAtom **stack);
  */
 
 MODULE_SCOPE TkUndoRedoStack *TkUndoInitStack(Tcl_Interp *interp, int maxdepth);
-MODULE_SCOPE void	TkUndoSetDepth(TkUndoRedoStack *stack, int maxdepth);
+MODULE_SCOPE void	TkUndoSetMaxDepth(TkUndoRedoStack *stack, int maxdepth);
 MODULE_SCOPE void	TkUndoClearStacks(TkUndoRedoStack *stack);
 MODULE_SCOPE void	TkUndoFreeStack(TkUndoRedoStack *stack);
+MODULE_SCOPE int	TkUndoCanRedo(TkUndoRedoStack *stack);
+MODULE_SCOPE int	TkUndoCanUndo(TkUndoRedoStack *stack);
 MODULE_SCOPE void	TkUndoInsertUndoSeparator(TkUndoRedoStack *stack);
 MODULE_SCOPE TkUndoSubAtom *TkUndoMakeCmdSubAtom(Tcl_Command command,
 			    Tcl_Obj *actionScript, TkUndoSubAtom *subAtomList);
@@ -114,8 +111,5 @@ MODULE_SCOPE void	TkUndoPushAction(TkUndoRedoStack *stack,
 			    TkUndoSubAtom *apply, TkUndoSubAtom *revert);
 MODULE_SCOPE int	TkUndoRevert(TkUndoRedoStack *stack);
 MODULE_SCOPE int	TkUndoApply(TkUndoRedoStack *stack);
-
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKUNDO */

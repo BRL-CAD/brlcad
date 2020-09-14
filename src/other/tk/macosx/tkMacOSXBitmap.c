@@ -12,7 +12,7 @@
  */
 
 #include "tkMacOSXPrivate.h"
-
+#include "tkMacOSXConstants.h"
 /*
  * This structure holds information about native bitmaps.
  */
@@ -49,13 +49,16 @@ static BuiltInIcon builtInIcons[] = {
 
 #define builtInIconSize 32
 
+#define OSTYPE_TO_UTI(x) (NSString *)UTTypeCreatePreferredIdentifierForTag( \
+     kUTTagClassOSType, UTCreateStringForOSType(x), nil)
+
 static Tcl_HashTable iconBitmapTable = {};
 typedef struct {
     int kind, width, height;
     char *value;
 } IconBitmap;
 
-static const char *iconBitmapOptionStrings[] = {
+static const char *const iconBitmapOptionStrings[] = {
     "-file", "-fileType", "-osType", "-systemType", "-namedImage",
     "-imageFile", NULL
 };
@@ -97,8 +100,8 @@ TkpDefineNativeBitmaps(void)
 	name = Tk_GetUid(builtInPtr->name);
 	predefHashPtr = Tcl_CreateHashEntry(tablePtr, name, &isNew);
 	if (isNew) {
-	    TkPredefBitmap *predefPtr = (TkPredefBitmap *)
-		    ckalloc(sizeof(TkPredefBitmap));
+	    TkPredefBitmap *predefPtr = ckalloc(sizeof(TkPredefBitmap));
+
 	    predefPtr->source = UINT2PTR(builtInPtr->iconType);
 	    predefPtr->width = builtInIconSize;
 	    predefPtr->height = builtInIconSize;
@@ -107,14 +110,15 @@ TkpDefineNativeBitmaps(void)
 	}
     }
 }
+
 
 /*
  *----------------------------------------------------------------------
  *
- * GetBitmapForIcon --
+ * PixmapFromImage --
  *
  * Results:
- *	Bitmap for the given IconRef.
+ *	Returns a Pixmap with an NSImage drawn into it.
  *
  * Side effects:
  *	None.
@@ -123,29 +127,33 @@ TkpDefineNativeBitmaps(void)
  */
 
 static Pixmap
-GetBitmapForIcon(
+PixmapFromImage(
     Display *display,
-    IconRef icon,
+    NSImage* image,
     CGSize size)
 {
     TkMacOSXDrawingContext dc;
     Pixmap pixmap;
 
-    pixmap = Tk_GetPixmap(display, TkNone, size.width, size.height, 0);
+    pixmap = Tk_GetPixmap(display, None, size.width, size.height, 0);
     if (TkMacOSXSetupDrawingContext(pixmap, NULL, 1, &dc)) {
 	if (dc.context) {
-	    const CGAffineTransform t = { .a = 1, .b = 0, .c = 0, .d = -1,
-		    .tx = 0, .ty = size.height };
-	    const CGRect r = { .origin = { .x = 0, .y = 0 }, .size = size };
-
+	    CGAffineTransform t = { .a = 1, .b = 0, .c = 0, .d = -1,
+				    .tx = 0, .ty = size.height};
 	    CGContextConcatCTM(dc.context, t);
-	    PlotIconRefInContext(dc.context, &r, kAlignAbsoluteCenter,
-		    kTransformNone, NULL, kPlotIconRefNormalFlags, icon);
+	    [NSGraphicsContext saveGraphicsState];
+	    [NSGraphicsContext setCurrentContext:[NSGraphicsContext
+		graphicsContextWithGraphicsPort:dc.context
+		flipped:NO]];
+	    [image drawAtPoint:NSZeroPoint fromRect:NSZeroRect
+		operation:NSCompositeCopy fraction:1.0];
+	    [NSGraphicsContext restoreGraphicsState];
 	}
 	TkMacOSXRestoreDrawingContext(&dc);
     }
     return pixmap;
 }
+
 
 /*
  *----------------------------------------------------------------------
@@ -166,24 +174,16 @@ GetBitmapForIcon(
 Pixmap
 TkpCreateNativeBitmap(
     Display *display,
-    const char *source)		/* Info about the icon to build. */
+    const void *source)		/* Info about the icon to build. */
 {
-    Pixmap pixmap;
-    IconRef icon;
-    OSErr err;
-
-    err = ChkErr(GetIconRef, kOnSystemDisk, kSystemIconsCreator,
-	    PTR2UINT(source), &icon);
-    if (err == noErr) {
-	pixmap = GetBitmapForIcon(display, icon, CGSizeMake(builtInIconSize,
-		builtInIconSize));
-	ReleaseIconRef(icon);
-    } else {
-	pixmap = Tk_GetPixmap(display, TkNone, builtInIconSize,
-		builtInIconSize, 0);
-    }
+    NSString *iconUTI = OSTYPE_TO_UTI(PTR2UINT(source));
+    NSImage *iconImage = [[NSWorkspace sharedWorkspace]
+			     iconForFileType: iconUTI];
+    CGSize size = CGSizeMake(builtInIconSize, builtInIconSize);
+    Pixmap pixmap = PixmapFromImage(display, iconImage, NSSizeToCGSize(size));
     return pixmap;
 }
+
 
 /*
  *----------------------------------------------------------------------
@@ -210,7 +210,7 @@ OSTypeFromString(const char *s, OSType *t) {
     Tcl_UtfToExternalDString(encoding, s, -1, &ds);
     if (Tcl_DStringLength(&ds) <= 4) {
 	char string[4] = {};
-	memcpy(string, Tcl_DStringValue(&ds), (size_t) Tcl_DStringLength(&ds));
+	memcpy(string, Tcl_DStringValue(&ds), Tcl_DStringLength(&ds));
 	*t = (OSType) string[0] << 24 | (OSType) string[1] << 16 |
 	     (OSType) string[2] <<  8 | (OSType) string[3];
 	result = TCL_OK;
@@ -219,6 +219,7 @@ OSTypeFromString(const char *s, OSType *t) {
     Tcl_FreeEncoding(encoding);
     return result;
 }
+
 
 /*
  *----------------------------------------------------------------------
@@ -234,7 +235,7 @@ OSTypeFromString(const char *s, OSType *t) {
  *	    - 4-char OSType of IconServices icon
  *
  * Results:
- *	Native bitmap or TkNone.
+ *	Native bitmap or None.
  *
  * Side effects:
  *	None.
@@ -250,7 +251,7 @@ TkpGetNativeAppBitmap(
     int *height)
 {
     Tcl_HashEntry *hPtr;
-    Pixmap pixmap = TkNone;
+    Pixmap pixmap = None;
     NSString *string;
     NSImage *image = nil;
     NSSize size = { .width = builtInIconSize, .height = builtInIconSize };
@@ -298,7 +299,7 @@ TkpGetNativeAppBitmap(
 	string = [NSString stringWithUTF8String:name];
 	image = [NSImage imageNamed:string];
 	if (!image) {
-	    NSURL *url = [NSURL URLWithString:string];
+	    NSURL *url = [NSURL fileURLWithPath:string];
 	    if (url) {
 		image = [[[NSImage alloc] initWithContentsOfURL:url]
 			autorelease];
@@ -309,50 +310,17 @@ TkpGetNativeAppBitmap(
 	}
     }
     if (image) {
-	TkMacOSXDrawingContext dc;
-	int depth = 0;
-
-#ifdef MAC_OSX_TK_TODO
-	for (NSImageRep *r in [image representations]) {
-	    NSInteger bitsPerSample = [r bitsPerSample];
-	    if (bitsPerSample && bitsPerSample > depth) {
-		depth = bitsPerSample;
-	    };
-	}
-	if (depth == 1) {
-	    /* TODO: convert BW NSImage to CGImageMask */
-	}
-#endif
-	pixmap = Tk_GetPixmap(display, TkNone, size.width, size.height, depth);
 	*width = size.width;
 	*height = size.height;
-	if (TkMacOSXSetupDrawingContext(pixmap, NULL, 1, &dc)) {
-	    if (dc.context) {
-		CGAffineTransform t = { .a = 1, .b = 0, .c = 0, .d = -1,
-			.tx = 0, .ty = size.height};
-
-		CGContextConcatCTM(dc.context, t);
-		[NSGraphicsContext saveGraphicsState];
-		[NSGraphicsContext setCurrentContext:[NSGraphicsContext
-			graphicsContextWithGraphicsPort:dc.context flipped:NO]];
-		[image drawAtPoint:NSZeroPoint fromRect:NSZeroRect
-			operation:NSCompositeCopy fraction:1.0];
-		[NSGraphicsContext restoreGraphicsState];
-	    }
-	    TkMacOSXRestoreDrawingContext(&dc);
-	}
+	pixmap = PixmapFromImage(display, image, NSSizeToCGSize(size));
     } else if (name) {
 	OSType iconType;
 	if (OSTypeFromString(name, &iconType) == TCL_OK) {
-	    IconRef icon;
-	    OSErr err = ChkErr(GetIconRef, kOnSystemDisk, kSystemIconsCreator,
-		    iconType, &icon);
-	    if (err == noErr) {
-		pixmap = GetBitmapForIcon(display, icon, NSSizeToCGSize(size));
-		*width = size.width;
-		*height = size.height;
-		ReleaseIconRef(icon);
-	    }
+	    NSString *iconUTI = OSTYPE_TO_UTI(iconType);
+	    printf("Found image for UTI %s\n", iconUTI.UTF8String);
+	    NSImage *iconImage = [[NSWorkspace sharedWorkspace]
+				     iconForFileType: iconUTI];
+	    pixmap = PixmapFromImage(display, iconImage, NSSizeToCGSize(size));
 	}
     }
     return pixmap;
@@ -394,7 +362,8 @@ TkMacOSXIconBitmapObjCmd(
     }
     name = Tcl_GetStringFromObj(objv[i++], &len);
     if (!len) {
-	Tcl_AppendResult(interp, "empty bitmap name", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("empty bitmap name", -1));
+	Tcl_SetErrorCode(interp, "TK", "MACBITMAP", "BAD", NULL);
 	goto end;
     }
     if (Tcl_GetIntFromObj(interp, objv[i++], &ib.width) != TCL_OK) {
@@ -403,25 +372,29 @@ TkMacOSXIconBitmapObjCmd(
     if (Tcl_GetIntFromObj(interp, objv[i++], &ib.height) != TCL_OK) {
 	goto end;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[i++], iconBitmapOptionStrings,
-	    "kind", TCL_EXACT, &ib.kind) != TCL_OK) {
+    if (Tcl_GetIndexFromObjStruct(interp, objv[i++], iconBitmapOptionStrings,
+	    sizeof(char *), "kind", TCL_EXACT, &ib.kind) != TCL_OK) {
 	goto end;
     }
     value = Tcl_GetStringFromObj(objv[i++], &len);
     if (!len) {
-	Tcl_AppendResult(interp, "empty bitmap value", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("empty bitmap value", -1));
+	Tcl_SetErrorCode(interp, "TK", "MACBITMAP", "EMPTY", NULL);
 	goto end;
     }
 #if 0
     if ((kind == ICON_TYPE || kind == ICON_SYSTEM)) {
 	Tcl_DString ds;
  	Tcl_Encoding encoding = Tcl_GetEncoding(NULL, "macRoman");
+
 	Tcl_UtfToExternalDString(encoding, value, -1, &ds);
 	len = Tcl_DStringLength(&ds);
 	Tcl_DStringFree(&ds);
 	Tcl_FreeEncoding(encoding);
 	if (len > 4) {
-	    Tcl_AppendResult(interp, "invalid bitmap value", NULL);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "invalid bitmap value", -1));
+	    Tcl_SetErrorCode(interp, "TK", "MACBITMAP", "INVALID", NULL);
 	    goto end;
 	}
     }
@@ -436,12 +409,12 @@ TkMacOSXIconBitmapObjCmd(
 	iconBitmap = Tcl_GetHashValue(hPtr);
 	ckfree(iconBitmap->value);
     } else {
-	iconBitmap = (IconBitmap *) ckalloc(sizeof(IconBitmap));
+	iconBitmap = ckalloc(sizeof(IconBitmap));
 	Tcl_SetHashValue(hPtr, iconBitmap);
     }
     *iconBitmap = ib;
     result = TCL_OK;
-end:
+  end:
     return result;
 }
 

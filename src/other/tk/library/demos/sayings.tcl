@@ -28,8 +28,8 @@ frame $w.frame -borderwidth 10
 pack $w.frame -side top -expand yes -fill both -padx 1c
 
 
-scrollbar $w.frame.yscroll -command "$w.frame.list yview"
-scrollbar $w.frame.xscroll -orient horizontal \
+ttk::scrollbar $w.frame.yscroll -command "$w.frame.list yview"
+ttk::scrollbar $w.frame.xscroll -orient horizontal \
     -command "$w.frame.list xview"
 listbox $w.frame.list -width 20 -height 10 -setgrid 1 \
     -yscroll "$w.frame.yscroll set" -xscroll "$w.frame.xscroll set"

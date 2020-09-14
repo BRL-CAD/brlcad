@@ -1,0 +1,161 @@
+The below backtraces were able to catch the infamous "fatal semaphore
+acquisition failure" bug on BSD.  This is a bit tricky to catch in the act, so
+the below backtraces are added here to serve as references.  They document both
+the gdb backtrace and the trick used to successfully attach to it it (a long
+sleep call compiled in to the key failure area prior to the run, allowing us to
+get a debugger on the program before it actually vanishes.)  This case is most
+reliably seen when running make regress in parallel mode - it doesn't usually
+trigger when running individual programs interactively, although those do
+fail occasionally.
+
+So far this has only been observed on FreeBSD.
+
+Adjustment of the bombing message code reveals that the fatal error is
+EPERM - The current thread does not own the mutex.
+
+Maybe relevant (not sure if we have any code that might be using automatic variables after thread_exit(), but the symptoms sound similar...)  Only other candidate I'm seeing is memory corruption of some sort...
+https://stackoverflow.com/a/7612070
+
+
+The first failure is from a GQA run:
+
+Architecture set to: x86_64--freebsd11.2.
+(lldb) bt
+* thread #1, name = 'gqa'
+  * frame #0: 0x0000000817433f5c libthr.so.3`_umtx_op_err + 12
+    frame #1: 0x000000081743056a libthr.so.3`join_common(pthread=0x000000081ae18800, thread_return=0x0000000000000000, abstime=0x0000000000000000) at thr_join.c:125
+    frame #2: 0x0000000814b9b841 libbu.so.20`bu_parallel(func=(libged.so.20`plane_worker at gqa.c:1223), ncpu=16, arg=0x00007fffffffe660) at parallel.c:722
+    frame #3: 0x0000000800af161c libged.so.20`ged_gqa(gedp=0x000000081ae8d000, argc=11, argv=0x000000081ae1c300) at gqa.c:2449
+    frame #4: 0x00000000004010c3 gqa`main(argc=12, argv=0x00007fffffffe828) at gqa.c:102
+    frame #5: 0x0000000000400c05 gqa`_start + 149
+(lldb) thread list
+Process 56371 stopped
+* thread #1: tid = 101853, 0x0000000817433f5c libthr.so.3`_umtx_op_err + 12, name = 'gqa'
+  thread #2: tid = 100989, 0x000000081792e6da libc.so.7`__sys_nanosleep + 10, name = 'gqa'
+(lldb) thread select 2
+* thread #2, name = 'gqa'
+    frame #0: 0x000000081792e6da libc.so.7`__sys_nanosleep + 10
+libc.so.7`__sys_nanosleep:
+->  0x81792e6da <+10>: jb     0x8179a05a4               ; .cerror
+    0x81792e6e0 <+16>: retq   
+    0x81792e6e1:       int3   
+    0x81792e6e2:       int3   
+(lldb) bt
+* thread #2, name = 'gqa'
+  * frame #0: 0x000000081792e6da libc.so.7`__sys_nanosleep + 10
+    frame #1: 0x0000000817428a2c libthr.so.3`__thr_nanosleep(time_to_sleep=<unavailable>, time_remaining=<unavailable>) at thr_syscalls.c:287
+    frame #2: 0x00000008178b19eb libc.so.7`__sleep(seconds=60000) at sleep.c:62
+    frame #3: 0x0000000814bb218c libbu.so.20`bu_semaphore_release(i=20) at semaphore.c:272
+    frame #4: 0x0000000800aebc31 libged.so.20`hit(ap=0x00007fffdd7f9dd8, PartHeadp=0x00007fffdd7f97e8, segs=0x00007fffdd7f98e8) at gqa.c:1093
+    frame #5: 0x0000000804062b12 librt.so.20`rt_shootray(ap=0x00007fffdd7f9dd8) at shoot.c:1273
+    frame #6: 0x0000000800aec6cf libged.so.20`plane_worker(cpu=5, ptr=0x00007fffffffe660) at gqa.c:1280
+    frame #7: 0x0000000814b9bdcb libbu.so.20`parallel_interface_arg(utd=0x000000081afedc80) at parallel.c:428
+    frame #8: 0x0000000817426026 libthr.so.3`thread_start(curthread=0x000000081ae18800) at thr_create.c:290
+(lldb) up
+frame #1: 0x0000000817428a2c libthr.so.3`__thr_nanosleep(time_to_sleep=<unavailable>, time_remaining=<unavailable>) at thr_syscalls.c:287
+   284 	
+   285 		curthread = _get_curthread();
+   286 		_thr_cancel_enter(curthread);
+-> 287 		ret = __sys_nanosleep(time_to_sleep, time_remaining);
+   288 		_thr_cancel_leave(curthread, 1);
+   289 	
+   290 		return (ret);
+(lldb) up
+frame #2: 0x00000008178b19eb libc.so.7`__sleep(seconds=60000) at sleep.c:62
+   59  	
+   60  		time_to_sleep.tv_sec = seconds;
+   61  		time_to_sleep.tv_nsec = 0;
+-> 62  		if (((int (*)(const struct timespec *, struct timespec *))
+   63  		    __libc_interposing[INTERPOS_nanosleep])(
+   64  		    &time_to_sleep, &time_remaining) != -1)
+   65  			return (0);
+(lldb) up
+frame #3: 0x0000000814bb218c libbu.so.20`bu_semaphore_release(i=20) at semaphore.c:272
+   269 	#  if defined(HAVE_PTHREAD_H)
+   270 	    if (pthread_mutex_unlock(&bu_semaphores[i].mu)) {
+   271 		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
+-> 272 		sleep(60000);
+   273 		bu_bomb("fatal semaphore acquisition failure");
+   274 	    }
+   275 	#  endif
+
+
+The second is from an rt raytrace of a bot:
+
+bin/rt".
+Architecture set to: x86_64--freebsd11.2.
+(lldb) bt
+* thread #1, name = 'rt'
+  * frame #0: 0x0000000800861f5c libthr.so.3`_umtx_op_err + 12
+    frame #1: 0x000000080085e56a libthr.so.3`join_common(pthread=0x000000081aa3a400, thread_return=0x0000000000000000, abstime=0x0000000000000000) at thr_join.c:125
+    frame #2: 0x000000081455d841 libbu.so.20`bu_parallel(func=(librt.so.20`_db_walk_dispatcher at db_tree.c:1955), ncpu=16, arg=0x00007fffffffd700) at parallel.c:722
+    frame #3: 0x00000008032b0f8e librt.so.20`db_walk_tree(dbip=0x000000081a861000, argc=1, argv=0x00007fffffffe888, ncpu=16, init_state=0x00007fffffffd988, reg_start_func=(librt.so.20`_rt_gettree_region_start at tree.c:109), reg_end_func=(librt.so.20`_rt_gettree_region_end at tree.c:146), leaf_func=(librt.so.20`_rt_gettree_leaf at tree.c:444), client_data=0x00007fffffffd978) at db_tree.c:2199
+    frame #4: 0x00000008036661d7 librt.so.20`rt_gettrees_muves(rtip=0x000000081a8a7000, attrs=0x0000000000000000, argc=1, argv=0x00007fffffffe888, ncpus=16) at tree.c:783
+    frame #5: 0x0000000803669021 librt.so.20`rt_gettrees_and_attrs(rtip=0x000000081a8a7000, attrs=0x0000000000000000, argc=1, argv=0x00007fffffffe888, ncpus=16) at tree.c:887
+    frame #6: 0x0000000803669142 librt.so.20`rt_gettrees(rtip=0x000000081a8a7000, argc=1, argv=0x00007fffffffe888, ncpus=16) at tree.c:914
+    frame #7: 0x0000000000406a00 rt`def_tree(rtip=0x000000081a8a7000) at do.c:575
+    frame #8: 0x000000000040bd52 rt`main(argc=6, argv=0x00007fffffffe860) at main.c:495
+    frame #9: 0x00000000004062e5 rt`_start + 149
+(lldb) thread list
+Process 7726 stopped
+* thread #1: tid = 100805, 0x0000000800861f5c libthr.so.3`_umtx_op_err + 12, name = 'rt'
+  thread #2: tid = 101797, 0x0000000816ec76da libc.so.7`__sys_nanosleep + 10, name = 'rt'
+(lldb) thread select 2
+* thread #2, name = 'rt'
+    frame #0: 0x0000000816ec76da libc.so.7`__sys_nanosleep + 10
+libc.so.7`__sys_nanosleep:
+->  0x816ec76da <+10>: jb     0x816f395a4               ; .cerror
+    0x816ec76e0 <+16>: retq   
+    0x816ec76e1:       int3   
+    0x816ec76e2:       int3   
+(lldb) bt
+* thread #2, name = 'rt'
+  * frame #0: 0x0000000816ec76da libc.so.7`__sys_nanosleep + 10
+    frame #1: 0x0000000800856a2c libthr.so.3`__thr_nanosleep(time_to_sleep=<unavailable>, time_remaining=<unavailable>) at thr_syscalls.c:287
+    frame #2: 0x0000000816e4a9eb libc.so.7`__sleep(seconds=60000) at sleep.c:62
+    frame #3: 0x000000081457418c libbu.so.20`bu_semaphore_release(i=12) at semaphore.c:272
+    frame #4: 0x000000080366a193 librt.so.20`_rt_find_identical_solid(mat=0x0000000000000000, dp=0x000000081a8a2e98, rtip=0x000000081a8a7000) at tree.c:425
+    frame #5: 0x00000008036681e3 librt.so.20`_rt_gettree_leaf(tsp=0x000000081a9fa008, pathp=0x000000081a9fa150, ip=0x00007fffd69eecc0, client_data=0x00007fffffffd978) at tree.c:491
+    frame #6: 0x00000008032ae1b1 librt.so.20`db_recurse(tsp=0x000000081a9fa008, pathp=0x000000081a9fa150, region_start_statepp=0x00007fffd69eef60, client_data=0x00007fffffffd978) at db_tree.c:1170
+    frame #7: 0x00000008032b35c9 librt.so.20`_db_walk_subtree(tp=0x000000081a81f200, region_start_statepp=0x00007fffd69eef60, leaf_func=(librt.so.20`_rt_gettree_leaf at tree.c:444), client_data=0x00007fffffffd978, resp=0x000000000062e520) at db_tree.c:1898
+    frame #8: 0x00000008032b172f librt.so.20`_db_walk_dispatcher(cpu=16, arg=0x00007fffffffd700) at db_tree.c:1992
+    frame #9: 0x000000081455ddcb libbu.so.20`parallel_interface_arg(utd=0x000000081a9f85e0) at parallel.c:428
+    frame #10: 0x0000000800854026 libthr.so.3`thread_start(curthread=0x000000081aa3a400) at thr_create.c:290
+(lldb) up
+frame #1: 0x0000000800856a2c libthr.so.3`__thr_nanosleep(time_to_sleep=<unavailable>, time_remaining=<unavailable>) at thr_syscalls.c:287
+   284 	
+   285 		curthread = _get_curthread();
+   286 		_thr_cancel_enter(curthread);
+-> 287 		ret = __sys_nanosleep(time_to_sleep, time_remaining);
+   288 		_thr_cancel_leave(curthread, 1);
+   289 	
+   290 		return (ret);
+(lldb) up
+frame #2: 0x0000000816e4a9eb libc.so.7`__sleep(seconds=60000) at sleep.c:62
+   59  	
+   60  		time_to_sleep.tv_sec = seconds;
+   61  		time_to_sleep.tv_nsec = 0;
+-> 62  		if (((int (*)(const struct timespec *, struct timespec *))
+   63  		    __libc_interposing[INTERPOS_nanosleep])(
+   64  		    &time_to_sleep, &time_remaining) != -1)
+   65  			return (0);
+(lldb) up
+frame #3: 0x000000081457418c libbu.so.20`bu_semaphore_release(i=12) at semaphore.c:272
+   269 	#  if defined(HAVE_PTHREAD_H)
+   270 	    if (pthread_mutex_unlock(&bu_semaphores[i].mu)) {
+   271 		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
+-> 272 		sleep(60000);
+   273 		bu_bomb("fatal semaphore acquisition failure");
+   274 	    }
+   275 	#  endif
+(lldb) up
+frame #4: 0x000000080366a193 librt.so.20`_rt_find_identical_solid(mat=0x0000000000000000, dp=0x000000081a8a2e98, rtip=0x000000081a8a7000) at tree.c:425
+   422 	     */
+   423 	    bu_semaphore_acquire(RT_SEM_STATS);
+   424 	    stp->st_bit = rtip->nsolids++;
+-> 425 	    bu_semaphore_release(RT_SEM_STATS);
+   426 	
+   427 	    /*
+   428 	     * Fill in the last little bit of the structure in full parallel
+(lldb) 
+

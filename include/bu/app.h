@@ -38,7 +38,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-
+/** @file bu/app.h */
 
 /**
  * DEPRECATED: This routine is replaced by bu_getcwd().
@@ -228,22 +228,22 @@ BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 
 
 typedef enum {
-    BU_DIR_CURR=1,  /* (unknown) current working directory */
-    BU_DIR_INIT,    /* (unknown) initial working directory */
-    BU_DIR_BIN,     /* (read-only) user executables (bin) */
-    BU_DIR_LIB,     /* (read-only) object libraries (lib) */
-    BU_DIR_LIBEXEC, /* (read-only) object libraries (libexec) */
-    BU_DIR_INCLUDE, /* (read-only) C/C++ header files (include) */
-    BU_DIR_DATA,    /* (read-only) data files (share) */
-    BU_DIR_DOC,     /* (read-only) documentation, (DATA/doc) */
-    BU_DIR_MAN,     /* (read-only) manual pages, (DATA/man) */
-    BU_DIR_TEMP,    /* (read/write) temporary files (TEMP) */
-    BU_DIR_HOME,    /* (read/write) user home directory (HOME) */
-    BU_DIR_CACHE,   /* (read/write) user cache directory (BU_CACHE_DIR) */
-    BU_DIR_CONFIG,  /* (read/write) user config directory (HOME/.app) */
-    BU_DIR_EXT,     /* (n/a) optional executable extension */
-    BU_DIR_LIBEXT,  /* (n/a) optional library extension */
-    BU_DIR_END
+    BU_DIR_CURR=1,  /**< (unknown) current working directory */
+    BU_DIR_INIT,    /**< (unknown) initial working directory */
+    BU_DIR_BIN,     /**< (read-only) user executables (bin) */
+    BU_DIR_LIB,     /**< (read-only) object libraries (lib) */
+    BU_DIR_LIBEXEC, /**< (read-only) object libraries (libexec) */
+    BU_DIR_INCLUDE, /**< (read-only) C/C++ header files (include) */
+    BU_DIR_DATA,    /**< (read-only) data files (share) */
+    BU_DIR_DOC,     /**< (read-only) documentation, (DATA/doc) */
+    BU_DIR_MAN,     /**< (read-only) manual pages, (DATA/man) */
+    BU_DIR_TEMP,    /**< (read/write) temporary files (TEMP) */
+    BU_DIR_HOME,    /**< (read/write) user home directory (HOME) */
+    BU_DIR_CACHE,   /**< (read/write) user cache directory (BU_CACHE_DIR) */
+    BU_DIR_CONFIG,  /**< (read/write) user config directory (HOME/.app) */
+    BU_DIR_EXT,     /**< (n/a) optional executable extension */
+    BU_DIR_LIBEXT,  /**< (n/a) optional library extension */
+    BU_DIR_END      /**< always the last entry, for iterators */
 } bu_dir_t;
 
 

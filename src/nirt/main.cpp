@@ -591,6 +591,7 @@ main(int argc, const char **argv)
     char *dot = NULL;
     size_t fmtcnt = 0;
     char **names = NULL;
+    struct bu_vls launch_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_vls ncmd = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
@@ -626,6 +627,22 @@ main(int argc, const char **argv)
 
     if (argc == 0 || !argv)
 	return -1;
+
+    /* Store the full execution command as a string so we can report it back in
+     * output if we want to.  Do this before anything alters the argc/argv
+     * values. */
+    for (int ic = 0; ic < argc - 1; ic++) {
+	if (strchr(argv[ic], ' ')) {
+	    bu_vls_printf(&launch_cmd, "\"%s\" ", argv[ic]);
+	} else {
+	    bu_vls_printf(&launch_cmd, "%s ", argv[ic]);
+	}
+    }
+    if (strchr(argv[argc-1], ' ')) {
+	bu_vls_printf(&launch_cmd, "\"%s\" ", argv[argc-1]);
+    } else {
+	bu_vls_printf(&launch_cmd, "%s", argv[argc-1]);
+    }
 
     /* Let bu_brlcad_root and friends know where we are */
     bu_setprogname(argv[0]);
@@ -759,6 +776,10 @@ main(int argc, const char **argv)
 	ret = EXIT_FAILURE;
 	goto done;
     }
+
+    /* Store the execution command as a commented nirt output line */
+    bu_vls_sprintf(&ns->nirt_cmd, "# %s", bu_vls_cstr(&launch_cmd));
+    bu_vls_sprintf(&ns->nirt_format_file, "%s", bu_vls_cstr(sfd.filename));
 
     /* Set up hooks so we can capture I/O from nirt_exec */
     (void)nirt_udata(ns, (void *)&io_data);
@@ -971,6 +992,7 @@ main(int argc, const char **argv)
 
 done:
     linenoiseHistoryFree();
+    bu_vls_free(&launch_cmd);
     bu_vls_free(&msg);
     bu_vls_free(&ncmd);
     bu_vls_free(&iline);

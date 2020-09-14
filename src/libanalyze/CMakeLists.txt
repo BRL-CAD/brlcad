@@ -5,6 +5,7 @@ set(ANALYZE_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 
@@ -27,7 +28,7 @@ add_custom_command(OUTPUT ${DEBUG_CMD_C}
   DEPENDS debug2c
   COMMENT "[DEBUG2C] Scanning for NIRT debugging variables"
   )
-set_source_files_properties(nirt.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_C})
+set_source_files_properties(nirt/nirt.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_C})
 DISTCLEAN(${DEBUG_CMD_C})
 DISTCLEAN(${DEBUG_CMD_HDRS})
 
@@ -40,7 +41,8 @@ set(LIBANALYZE_SOURCES
   inside.c
   mass.c
   moments.c
-  nirt.cpp
+  nirt/nirt.cpp
+  nirt/diff.cpp
   obj_to_pnts.cpp
   overlaps.c
   polygonizer.c
@@ -66,6 +68,7 @@ set(libanalyze_ignored_files
   MeshHealing/MeshConversion_brlcad.h
   MeshHealing/Stitch.h
   MeshHealing/Zipper.h
+  nirt/nirt.h
 )
 CMAKEFILES(${libanalyze_ignored_files})
 

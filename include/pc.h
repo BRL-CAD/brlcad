@@ -39,9 +39,9 @@ __BEGIN_DECLS
 #  if defined(PC_DLL_EXPORTS) && defined(PC_DLL_IMPORTS)
 #    error "Only PC_DLL_EXPORTS or PC_DLL_IMPORTS can be defined, not both."
 #  elif defined(PC_DLL_EXPORTS)
-#    define PC_EXPORT __declspec(dllexport)
+#    define PC_EXPORT COMPILER_DLLEXPORT
 #  elif defined(PC_DLL_IMPORTS)
-#    define PC_EXPORT __declspec(dllimport)
+#    define PC_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define PC_EXPORT
 #  endif

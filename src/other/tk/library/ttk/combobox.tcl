@@ -88,18 +88,18 @@ bind ComboboxPopdown	<ButtonPress> \
 ### Option database settings.
 #
 
-option add *TCombobox*Listbox.font TkTextFont
-option add *TCombobox*Listbox.relief flat
-option add *TCombobox*Listbox.highlightThickness 0
+option add *TCombobox*Listbox.font TkTextFont widgetDefault
+option add *TCombobox*Listbox.relief flat widgetDefault
+option add *TCombobox*Listbox.highlightThickness 0 widgetDefault
 
 ## Platform-specific settings.
 #
 switch -- [tk windowingsystem] {
     x11 {
-	option add *TCombobox*Listbox.background white
+	option add *TCombobox*Listbox.background white widgetDefault
     }
     aqua {
-	option add *TCombobox*Listbox.borderWidth 0
+	option add *TCombobox*Listbox.borderWidth 0 widgetDefault
     }
 }
 
@@ -251,30 +251,16 @@ proc ttk::combobox::UnmapPopdown {w} {
     ttk::releaseGrab $w
 }
 
-###
-#
-
-namespace eval ::ttk::combobox {
-    # @@@ Until we have a proper native scrollbar on Aqua, use
-    # @@@ the regular Tk one.  Use ttk::scrollbar on other platforms.
-    variable scrollbar ttk::scrollbar
-    if {[tk windowingsystem] eq "aqua"} {
-	set scrollbar ::scrollbar
-    }
-}
-
 ## PopdownWindow --
 #	Returns the popdown widget associated with a combobox,
 #	creating it if necessary.
 #
 proc ttk::combobox::PopdownWindow {cb} {
-    variable scrollbar
-
     if {![winfo exists $cb.popdown]} {
 	set poplevel [PopdownToplevel $cb.popdown]
 	set popdown [ttk::frame $poplevel.f -style ComboboxPopdownFrame]
 
-	$scrollbar $popdown.sb \
+	ttk::scrollbar $popdown.sb \
 	    -orient vertical -command [list $popdown.l yview]
 	listbox $popdown.l \
 	    -listvariable ttk::combobox::Values($cb) \
@@ -368,7 +354,8 @@ proc ttk::combobox::PlacePopdown {cb popdown} {
     set y [winfo rooty $cb]
     set w [winfo width $cb]
     set h [winfo height $cb]
-    set postoffset [ttk::style lookup TCombobox -postoffset {} {0 0 0 0}]
+    set style [$cb cget -style]
+    set postoffset [ttk::style lookup $style -postoffset {} {0 0 0 0}]
     foreach var {x y w h} delta $postoffset {
     	incr $var $delta
     }

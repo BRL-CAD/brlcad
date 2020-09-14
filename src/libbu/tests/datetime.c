@@ -28,6 +28,8 @@ main(int argc, char *argv[])
     int64_t curr_time;
     int function_num;
 
+    bu_setprogname(argv[0]);
+
     if (argc != 2) {
 	bu_log("Usage: %s {function_num}\n", argv[0]);
 	bu_exit(1, "ERROR: wrong number of parameters");
@@ -37,7 +39,9 @@ main(int argc, char *argv[])
 
     switch (function_num) {
 	case 0:	{
-	    int64_t time0, time1, time2;
+	    int64_t time0 = 0;
+	    int64_t time1 = 0;
+	    int64_t time2 = 0;
 	    int64_t i = 0;
 	    size_t counter = 1;
 

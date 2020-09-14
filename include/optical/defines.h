@@ -42,9 +42,9 @@ __BEGIN_DECLS
 #  if defined(OPTICAL_DLL_EXPORTS) && defined(OPTICAL_DLL_IMPORTS)
 #    error "Only OPTICAL_DLL_EXPORTS or OPTICAL_DLL_IMPORTS can be defined, not both."
 #  elif defined(OPTICAL_DLL_EXPORTS)
-#    define OPTICAL_EXPORT __declspec(dllexport)
+#    define OPTICAL_EXPORT COMPILER_DLLEXPORT
 #  elif defined(OPTICAL_DLL_IMPORTS)
-#    define OPTICAL_EXPORT __declspec(dllimport)
+#    define OPTICAL_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define OPTICAL_EXPORT
 #  endif

@@ -24,6 +24,7 @@
  * cylinders.  The front of the window frame is centered at (0, 0, 0) and
  * extends in the negative x-direction the depth of the window frame.
  *
+ * Introduced in BRL-CAD release 4.4.
  */
 
 #include "common.h"
@@ -35,6 +36,7 @@
 
 #include "rt/db4.h"
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -71,6 +73,8 @@ main(int argc, char **argv)
 
     int i, j, k;		/* Loop counters. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';

@@ -7,3 +7,7 @@ SoftSurfer makes no warranty for this code, and cannot be held
 liable for any real or imagined damage resulting from its use.
 Users of this code must verify correctness for their application.
 
+file:/src/libbg/chull2.cpp
+file:/src/libbg/chull.c
+file:/src/libbg/util.c
+

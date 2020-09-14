@@ -39,6 +39,7 @@
 
 #include "bio.h" /* for b_off_t */
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -122,13 +123,15 @@ main(int argc, char **argv)
 
     int atoival;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 3) {
 	bu_exit(1, "%s", usage);
     }
-    if ((ifp = fopen(argv[1], "r")) == NULL) {
+    if ((ifp = fopen(argv[1], "rb")) == NULL) {
 	bu_exit(2, "bwcrop: can't open %s for reading\n", argv[1]);
     }
-    if ((ofp = fopen(argv[2], "w")) == NULL) {
+    if ((ofp = fopen(argv[2], "wb")) == NULL) {
 	bu_exit(3, "bwcrop: can't open %s for writing\n", argv[2]);
     }
 

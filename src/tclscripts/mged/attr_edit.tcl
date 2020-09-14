@@ -354,7 +354,8 @@ class Attr_editor {
 	if { [string length $cur_attr_name] == 0 } {
 	    # restore normal binding for attribute name entry widget
 	    bind $fnew.attr_e <Key-Return> [code $this update_cur_attr_name]
-	    $fnew.attr_e configure -bg #d9d9d9
+	    $fnew.attr_e configure -bg #123456
+	    # d9d9d9
 	    set attr_entry_label "Attribute Name:"
 	    return
 	}
@@ -375,7 +376,8 @@ class Attr_editor {
 
 	# restore normal binding for attribute name entry widget
 	bind $fnew.attr_e <Key-Return> [code $this update_cur_attr_name]
-	$fnew.attr_e configure -bg #d9d9d9
+	$fnew.attr_e configure -bg #234567
+	# d9d9d9
 	set attr_entry_label "Attribute Name:"
 
 	focus $textb

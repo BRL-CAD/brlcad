@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "vmath.h"
@@ -50,6 +51,8 @@ main(int ac, char *av[])
     struct ged ged;
     int flag;
 
+    bu_setprogname(av[0]);
+
     /* make sure file doesn't already exist and opens for writing */
     if (bu_file_exists(DEFAULT_COIL_FILENAME, NULL))
 	bu_exit(2, "%s: refusing to overwrite pre-existing file %s\n", av[0], DEFAULT_COIL_FILENAME);
@@ -64,7 +67,7 @@ main(int ac, char *av[])
     flag = ged_coil(&ged, ac, (const char**)av);
     /* Close database */
     wdb_close(db_fp);
-    if (flag == GED_ERROR)
+    if (flag & GED_ERROR)
 	/* Creation failed - remove file */
 	bu_file_delete(DEFAULT_COIL_FILENAME);
     bu_log("%s\n", bu_vls_addr(ged.ged_result_str));

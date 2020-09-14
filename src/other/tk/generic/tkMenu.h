@@ -25,11 +25,6 @@
 #include "default.h"
 #endif
 
-#ifdef BUILD_tk
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLEXPORT
-#endif
-
 /*
  * Dummy types used by the platform menu code.
  */
@@ -80,8 +75,8 @@ typedef struct TkMenuEntry {
 				 * of character to underline (<0 means don't
 				 * underline anything). */
     Tcl_Obj *underlinePtr;	/* Index of character to underline. */
-    Tcl_Obj *bitmapPtr;		/* Bitmap to display in menu entry, or TkNone.
-				 * If not TkNone then label is ignored. */
+    Tcl_Obj *bitmapPtr;		/* Bitmap to display in menu entry, or NULL.
+				 * If not NULL then label is ignored. */
     Tcl_Obj *imagePtr;		/* Name of image to display, or NULL. If not
 				 * NULL, bitmap, text, and textVarName are
 				 * ignored. */
@@ -125,7 +120,7 @@ typedef struct TkMenuEntry {
 				 * always 0 for tearoff and separator
 				 * entries. */
     int hideMargin;		/* If this is 0, then the item has enough
-    				 * margin to accomodate a standard check mark
+    				 * margin to accommodate a standard check mark
     				 * and a default right margin. If this is 1,
     				 * then the item has no such margins, and
     				 * checkbuttons and radiobuttons with this set
@@ -180,7 +175,7 @@ typedef struct TkMenuEntry {
 				 * NULL means use overall disabledGC from menu
 				 * structure. See comments for disabledFg in
 				 * menu structure for more information. */
-    GC indicatorGC;		/* For drawing indicators. TkNone means use GC
+    GC indicatorGC;		/* For drawing indicators. NULL means use GC
 				 * from menu. */
 
     /*
@@ -252,8 +247,6 @@ typedef struct TkMenuEntry {
  * Menu states
  */
 
-MODULE_SCOPE const char *tkMenuStateStrings[];
-
 #define ENTRY_ACTIVE 0
 #define ENTRY_NORMAL 1
 #define ENTRY_DISABLED 2
@@ -303,7 +296,7 @@ typedef struct TkMenu {
     Tcl_Obj *indicatorFgPtr;	/* Color for indicators in radio and check
 				 * button entries. */
     Pixmap gray;		/* Bitmap for drawing disabled entries in a
-				 * stippled fashion. TkNone means not allocated
+				 * stippled fashion. None means not allocated
 				 * yet. */
     GC textGC;			/* GC for drawing text and other features of
 				 * menu entries. */
@@ -347,7 +340,7 @@ typedef struct TkMenu {
     Tcl_Obj *takeFocusPtr;	/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
-    Tcl_Obj *cursorPtr;		/* Current cursor for window, or TkNone. */
+    Tcl_Obj *cursorPtr;		/* Current cursor for window, or NULL. */
     Tcl_Obj *postCommandPtr;	/* Used to detect cycles in cascade hierarchy
     				 * trees when preprocessing postcommands on
     				 * some platforms. See PostMenu for more
@@ -366,10 +359,7 @@ typedef struct TkMenu {
     				/* A pointer to the original menu for this
     				 * clone chain. Points back to this structure
     				 * if this menu is a master menu. */
-    struct TkMenuOptionTables *optionTablesPtr;
-				/* A pointer to the collection of option
-				 * tables that work with menus and menu
-				 * entries. */
+    void *reserved1; /* not used any more. */
     Tk_Window parentTopLevelPtr;/* If this menu is a menubar, this is the
     				 * toplevel that owns the menu. Only
     				 * applicable for menubar clones. */
@@ -438,17 +428,6 @@ typedef struct TkMenuReferences {
 } TkMenuReferences;
 
 /*
- * This structure contains all of the option tables that are needed by menus.
- */
-
-typedef struct TkMenuOptionTables {
-    Tk_OptionTable menuOptionTable;
-				/* The option table for menus. */
-    Tk_OptionTable entryOptionTables[6];
-				/* The tables for menu entries. */
-} TkMenuOptionTables;
-
-/*
  * Flag bits for menus:
  *
  * REDRAW_PENDING:		Non-zero means a DoWhenIdle handler has
@@ -505,12 +484,12 @@ typedef struct TkMenuOptionTables {
 MODULE_SCOPE int	TkActivateMenuEntry(TkMenu *menuPtr, int index);
 MODULE_SCOPE void	TkBindMenu(Tk_Window tkwin, TkMenu *menuPtr);
 MODULE_SCOPE TkMenuReferences*TkCreateMenuReferences(Tcl_Interp *interp,
-			    char *name);
+			    const char *name);
 MODULE_SCOPE void	TkDestroyMenu(TkMenu *menuPtr);
 MODULE_SCOPE void	TkEventuallyRecomputeMenu(TkMenu *menuPtr);
 MODULE_SCOPE void	TkEventuallyRedrawMenu(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr);
-MODULE_SCOPE TkMenuReferences*TkFindMenuReferences(Tcl_Interp *interp, char *name);
+MODULE_SCOPE TkMenuReferences*TkFindMenuReferences(Tcl_Interp *interp, const char *name);
 MODULE_SCOPE TkMenuReferences*TkFindMenuReferencesObj(Tcl_Interp *interp,
 			    Tcl_Obj *namePtr);
 MODULE_SCOPE int	TkFreeMenuReferences(TkMenuReferences *menuRefPtr);
@@ -541,7 +520,7 @@ MODULE_SCOPE int	TkPostCommand(TkMenu *menuPtr);
 MODULE_SCOPE int	TkPostSubmenu(Tcl_Interp *interp, TkMenu *menuPtr,
 			    TkMenuEntry *mePtr);
 MODULE_SCOPE int	TkPostTearoffMenu(Tcl_Interp *interp, TkMenu *menuPtr,
-			    int x, int y);
+					   int x, int y);
 MODULE_SCOPE int	TkPreprocessMenu(TkMenu *menuPtr);
 MODULE_SCOPE void	TkRecomputeMenu(TkMenu *menuPtr);
 
@@ -564,10 +543,9 @@ MODULE_SCOPE void	TkpMenuInit(void);
 MODULE_SCOPE int	TkpMenuNewEntry(TkMenuEntry *mePtr);
 MODULE_SCOPE int	TkpNewMenu(TkMenu *menuPtr);
 MODULE_SCOPE int	TkpPostMenu(Tcl_Interp *interp, TkMenu *menuPtr,
-			    int x, int y);
+			    int x, int y, int index);
+MODULE_SCOPE int	TkpPostTearoffMenu(Tcl_Interp *interp, TkMenu *menuPtr,
+					   int x, int y, int index);
 MODULE_SCOPE void	TkpSetWindowMenuBar(Tk_Window tkwin, TkMenu *menuPtr);
-
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKMENU */

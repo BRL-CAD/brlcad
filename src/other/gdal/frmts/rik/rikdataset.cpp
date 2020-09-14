@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include <cfloat>
-#include <zlib.h>
+#include "zlib.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 

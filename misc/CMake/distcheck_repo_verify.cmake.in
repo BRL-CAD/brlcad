@@ -148,8 +148,8 @@ endif(EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 
 # If we're using Git, check what it thinks the contents should be
 if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
-  # Look for Subversion - if we don't have the command, we can't query the
-  # repository even if it is present.
+  # Look for Git - if we don't have the command, we can't query the
+  # repository even if the repo information is present.
   find_program(GIT_EXEC git)
 
   if(GIT_EXEC)
@@ -158,16 +158,17 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
     # are met, we can collect information from Git
 
     # By default, assume that nothing has been modified.
-    set(SVN_TREE_MODIFIED 0)
+    set(GIT_TREE_MODIFIED 0)
 
     # Get the file list
-    set(GIT_FILES "")
+    unset(GIT_FILES)
     execute_process(COMMAND ${GIT_EXEC} ls-tree --full-tree -r --name-only HEAD
       WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@"
       OUTPUT_VARIABLE GIT_STDOUT
       ERROR_VARIABLE GIT_STDERR
       RESULT_VARIABLE RETVAL)
     string(REGEX REPLACE "\r?\n" ";" GIT_FILES "${GIT_STDOUT}")
+    string(REGEX REPLACE ";$" "" GIT_FILES "${GIT_FILES}")
     if (RETVAL)
       message("")
       message("WARNING: Git does not seem to be working correctly.")
@@ -184,6 +185,9 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
     foreach(ITEM ${GIT_STDOUT})
       list(APPEND GIT_STATUS ${ITEM})
     endforeach(ITEM ${GIT_STDOUT})
+    # Apparently can get an empty list entry from GIT_STDOUT - remove any empty
+    # entries so CMake won't complain.
+    list(REMOVE_ITEM "" GIT_STATUS)
     foreach(ITEM ${GIT_STATUS})
       if(${ITEM} MATCHES "^\\?\\?")
 	string(REGEX REPLACE "^[?][?][\\t\\ ]*" "" item_path "${ITEM}")

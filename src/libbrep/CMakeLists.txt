@@ -46,49 +46,28 @@ set(LIBBREP_SOURCES
   shape_recognition/util.cpp
   ssx_event.cpp
   tools/util.cpp
-  #opennurbs_fit.cpp
   )
-
-set(CDT2_srcs
-  cdt2/cdt.cpp
-  cdt2/vert.cpp
-  cdt2/edge.cpp
-  cdt2/mesh.cpp
-  cdt2/polygon.cpp
-  )
-if (ENABLE_CDT2)
-  set(LIBBREP_SOURCES ${LIBBREP_SOURCES} ${CDT2_srcs})
-endif (ENABLE_CDT2)
 
 set(libbrep_ignored_files
   tools/tools.h
   brep_except.h
   cdt/cdt.h
   cdt/mesh.h
-  cdt/omesh.cpp
-  cdt/overt.cpp
-  cdt/ovlps.cpp
-  cdt/ovlps_grps.cpp
   cdt/RTree.h
-  opennurbs_fit.h
-  opennurbs_fit.cpp
   PullbackCurve.h
   shape_recognition/shape_recognition.h
   shape_recognition/torus.cpp
-  surface_tree_queue_tests.patch
-  ${CDT2_srcs}
-  cdt2/cdt.h
   )
 CMAKEFILES(${libbrep_ignored_files})
 
-# Anyone who needs to import libbrep will also need to import openNURBS
-if(CPP_DLL_DEFINES)
-  set_property(GLOBAL APPEND PROPERTY libbrep_DLL_DEFINES "ON_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
-
 BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
-
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+if(HIDE_INTERNAL_SYMBOLS)
+  set_property(TARGET libbrep APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+  # Anyone who needs to import libbrep will also need to import openNURBS
+  set_property(TARGET libbrep APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)
 

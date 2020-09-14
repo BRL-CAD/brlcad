@@ -31,13 +31,15 @@ main(int ac, char *av[]) {
     int seconds;
     int64_t start;
 
+    bu_setprogname(av[0]);
+
     if (ac < 1 || ac > 2) {
 	printf("Usage: %s [seconds]\n", av[0]);
 	return 1;
     }
 
     if (ac > 1) {
-        size_t invocations = 0;
+	size_t invocations = 0;
 	seconds = atoi(av[1]);
 	start = bu_gettime();
 

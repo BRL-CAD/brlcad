@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "vmath.h"
@@ -37,6 +38,8 @@ main(int argc, const char *argv[])
     point_t *parray;
     point_t center = VINIT_ZERO;
     fastf_t radius = 1.0;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 1) {
 	bu_exit(1, "ERROR: unknown args [%s]\n", argv[0]);

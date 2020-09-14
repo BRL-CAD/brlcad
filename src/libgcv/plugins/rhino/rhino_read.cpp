@@ -972,7 +972,7 @@ rhino_can_read(const char *source_path)
     if (!source_path) return 0;
     FILE *fp = ON::OpenFile(source_path,"rb");
     if (!fp) return 0;
-    ON_BinaryFile file(ON::read3dm,fp);
+    ON_BinaryFile file(ON::on_read3dm,fp);
     if (!file.Read3dmStartSection(&fv, mSC)) return 0;
     if (!file.Read3dmProperties(mprop)) return 0;
     return 1;
@@ -993,7 +993,7 @@ static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 extern "C"
 {
     extern const gcv_plugin gcv_plugin_info_s = {rhino_read::filters};
-    GCV_EXPORT const struct gcv_plugin *
+    COMPILER_DLLEXPORT const struct gcv_plugin *
     gcv_plugin_info()
     {
 	return &gcv_plugin_info_s;

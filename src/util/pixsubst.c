@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "bu/app.h"
 #include "bu/log.h"
 
 
@@ -37,6 +38,8 @@ main(int argc, char **argv)
     unsigned char pix[3], pixin[3], pixout[3];
     int npixels;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 4 && argc != 7) {
 	bu_log("Usage: %s [R_in G_in B_in] R_out G_out B_out < pix_in > pix_out\n", argv[0]);

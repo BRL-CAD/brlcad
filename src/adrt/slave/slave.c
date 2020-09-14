@@ -35,6 +35,7 @@
 #  include <getopt.h>
 #endif
 
+#include "bu/app.h"
 #include "rt/tie.h"
 #include "adrt.h"
 #include "camera.h"
@@ -457,6 +458,7 @@ main(int argc, char **argv)
     int		port = 0, c = 0, threads = 0;
     char		host[64], temp[64];
 
+    bu_setprogname(argv[0]);
 
     /* Default Port */
     signal(SIGINT, finish);

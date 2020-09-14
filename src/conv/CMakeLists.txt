@@ -23,7 +23,6 @@ set(CONV_INCLUDE_DIRS
   ${GCV_INCLUDE_DIRS}
   ${SYSV_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
-  ${TCLCAD_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIR}
   ${WFOBJ_INCLUDE_DIRS}
   )
@@ -52,7 +51,12 @@ BRLCAD_ADDEXEC(k-g k-g.cpp "libwdb;librt;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
+if(BRLCAD_ENABLE_TCL)
+  include_directories(${TCLCAD_INCLUDE_DIRS})
+  BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
+else(BRLCAD_ENABLE_TCL)
+  CMAKEFILES(enf-g.c)
+endif(BRLCAD_ENABLE_TCL)
 
 BRLCAD_ADDEXEC(g-dot g-dot.c "libged;libbu")
 
@@ -120,8 +124,6 @@ BRLCAD_ADDEXEC(g-vrml g-vrml.c "librt;libnmg;libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(g-x3d g-x3d.c "librt;libnmg;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(nastran-g nastran-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")
-
-BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb;librt;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(shp-g "shp/shp-g.c;shp/shapelib/safileio.c;shp/shapelib/shpopen.c" "libwdb;librt;libbu")
 

@@ -34,6 +34,7 @@
 #include "bnetwork.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
 #include "bu/vls.h"
@@ -1517,6 +1518,8 @@ main(int argc, char *argv[])
     struct bu_vls line = BU_VLS_INIT_ZERO;
     int isComment=1;
 
+    bu_setprogname(argv[0]);
+
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(1, "%s", usage);
 
@@ -1577,7 +1580,7 @@ main(int argc, char *argv[])
 	BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
 	interp = Tcl_CreateInterp();
-	Go_Init(interp);
+	tclcad_init(interp, 0, NULL);
 	wdb_close(ofp);
 
 	{

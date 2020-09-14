@@ -32,6 +32,7 @@
 #include "common.h"
 #include "analyze/defines.h"
 
+#include "bu/opt.h"
 #include "bu/vls.h"
 #include "raytrace.h"
 
@@ -41,6 +42,8 @@ __BEGIN_DECLS
 struct nirt_state_impl;
 struct nirt_state {
     struct nirt_state_impl *i;
+    struct bu_vls nirt_cmd;
+    struct bu_vls nirt_format_file;
 };
 
 /**

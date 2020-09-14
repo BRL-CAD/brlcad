@@ -1,20 +1,3 @@
-set(MGED_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${TCLCAD_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  ${DM_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
-  ${TK_INCLUDE_PATH}
-  ${TCL_INCLUDE_PATH}
-  ${TERMIO_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
-
-BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
-
 set(MGED_SOURCES
   adc.c
   arbs.c
@@ -63,24 +46,75 @@ set(MGED_SOURCES
   wdb_obj.c
   )
 
-set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY})
+if (HAVE_WINDOWS_H)
+  # To associate an icon with the application for Windows (needed
+  # for the WiX installer) we must use an rc file.
+  enable_language(RC)
+  set(MGED_SOURCES ${MGED_SOURCES} mged.rc)
+endif (HAVE_WINDOWS_H)
+
+
+set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY} ${WS2_32_LIBRARY} ${OPENGL32_LIBRARY})
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
 endif(TARGET libtermio)
-if(CPP_DLL_DEFINES)
-  set(mged_libs ${mged_libs} ws2_32.lib;opengl32.lib)
-endif(CPP_DLL_DEFINES)
+if (ITK_LIBRARY)
+  set(mged_libs ${mged_libs} ${ITK_LIBRARY})
+endif (ITK_LIBRARY)
 
 # Ideally we'd build as GUI for Windows to avoid the command window popping up,
 # but I'm not sure if that would be a problem for scripting with mged.exe on
 # Windows so leave it for now...
-BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
+if (BRLCAD_ENABLE_TCL)
 
-# mged depends on the creation/installation of all the
-# tclscripts.
-foreach(item ${tclindex_target_list})
-  ADD_DEPENDENCIES(mged ${item})
-endforeach(item ${tclindex_target_list})
+  set(MGED_INCLUDE_DIRS
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${TCLCAD_INCLUDE_DIRS}
+    ${GED_INCLUDE_DIRS}
+    ${WDB_INCLUDE_DIRS}
+    ${DM_INCLUDE_DIRS}
+    ${BU_INCLUDE_DIRS}
+    ${NMG_INCLUDE_DIRS}
+    ${TCL_INCLUDE_PATH}
+    ${TERMIO_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+  if (TK_INCLUDE_PATH)
+    set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
+  endif (TK_INCLUDE_PATH)
+
+  BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
+
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
+  ADD_TARGET_DEPS(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm_plugins)
+
+  # mged depends on the creation/installation of all the
+  # tclscripts.
+  foreach(item ${tclindex_target_list})
+    add_dependencies(mged ${item})
+  endforeach(item ${tclindex_target_list})
+
+  # MGED is one of the programs that gets a start menu entry
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
+    PROPERTY CPACK_START_MENU_SHORTCUTS "MGED ${BRLCAD_VERSION}"
+    )
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
+    PROPERTY CPACK_DESKTOP_SHORTCUTS "MGED ${BRLCAD_VERSION}"
+    )
+
+else (BRLCAD_ENABLE_TCL)
+
+  CMAKEFILES(${MGED_SOURCES})
+
+endif (BRLCAD_ENABLE_TCL)
+
+if (NOT BRLCAD_ENABLE_TCL)
+  set(MGED_INCLUDE_DIRS
+    ${BU_INCLUDE_DIRS}
+    )
+  BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
+endif (NOT BRLCAD_ENABLE_TCL)
 
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 
@@ -93,7 +127,6 @@ set(mged_ignore_files
   comb_bool.h
   comb_bool_parse.y
   comb_bool_scan.l
-  fbserv.h
   htmlLibraryUi.h
   menu.h
   mged.h
@@ -103,6 +136,8 @@ set(mged_ignore_files
   scroll.h
   sedit.h
   titles.h
+  mged.ico
+  mged.rc
   )
 CMAKEFILES(${mged_ignore_files})
 

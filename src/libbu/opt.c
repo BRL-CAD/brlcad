@@ -672,7 +672,8 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
  * an option.  Right now the criteria are:
  *
  * 1.  Must have a '-' char as first character
- * 2.  Must not have white space characters present in the string.
+ * 2.  Must not be ONLY the '-' char
+ * 3.  Must not have white space characters present in the string.
  */
 HIDDEN int
 can_be_opt(const char *opt)
@@ -683,6 +684,8 @@ can_be_opt(const char *opt)
     if (!strlen(opt))
 	return 0;
     if (opt[0] != '-')
+	return 0;
+    if (BU_STR_EQUAL(opt, "-"))
 	return 0;
     for (i = 1; i < strlen(opt); i++) {
 	if (isspace(opt[i]))
@@ -1287,6 +1290,19 @@ bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *vec)
     return -1;
 }
 
+int
+bu_opt_incr_long(struct bu_vls *msg, size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
+{
+    long *long_incr = (long *)set_var;
+    if (long_incr) {
+	(*long_incr) = (*long_incr) + 1;
+    } else {
+	if (msg) {
+	    bu_vls_sprintf(msg, "No valid supplied to bu_opt_incr_long\n");
+	}
+    }
+    return 0;
+}
 
 /*
  * Local Variables:

@@ -35,9 +35,9 @@
 #  if defined(BG_DLL_EXPORTS) && defined(BG_DLL_IMPORTS)
 #    error "Only BG_DLL_EXPORTS or BG_DLL_IMPORTS can be defined, not both."
 #  elif defined(BG_DLL_EXPORTS)
-#    define BG_EXPORT __declspec(dllexport)
+#    define BG_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BG_DLL_IMPORTS)
-#    define BG_EXPORT __declspec(dllimport)
+#    define BG_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BG_EXPORT
 #  endif

@@ -35,7 +35,6 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h> /* for mkdir */
 #endif
-#include <lz4.h>
 
 #include "bio.h"
 #include "bnetwork.h"
@@ -54,6 +53,10 @@
 #include "rt/db_io.h"
 #include "rt/func.h"
 
+/* Defined in cache_lz4.c */
+extern int brl_LZ4_compress_default(const char* source, char* dest, int sourceSize, int maxDestSize);
+extern int brl_LZ4_compressBound(int inputSize);
+extern int brl_LZ4_decompress_fast (const char* source, char* dest, int originalSize);
 
 #define CACHE_FORMAT 3
 
@@ -349,14 +352,14 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
     BU_CK_EXTERNAL(external);
 
     BU_ASSERT(external->ext_nbytes < INT_MAX);
-    compressed_size = LZ4_compressBound((int)external->ext_nbytes);
+    compressed_size = brl_LZ4_compressBound((int)external->ext_nbytes);
 
     /* buffer is uncompsize + maxcompsize + compressed_data */
     buffer = (uint8_t *)bu_malloc((size_t)compressed_size + SIZEOF_NETWORK_LONG, "buffer");
 
     *(uint32_t *)buffer = htonl((uint32_t)external->ext_nbytes);
 
-    ret = LZ4_compress_default((const char *)external->ext_buf, (char *)(buffer + SIZEOF_NETWORK_LONG), external->ext_nbytes, compressed_size);
+    ret = brl_LZ4_compress_default((const char *)external->ext_buf, (char *)(buffer + SIZEOF_NETWORK_LONG), external->ext_nbytes, compressed_size);
     if (ret != 0)
 	compressed = 1;
 
@@ -388,7 +391,7 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
     buffer = (uint8_t *)bu_malloc(dest->ext_nbytes, "buffer");
 
     BU_ASSERT(dest->ext_nbytes < INT_MAX);
-    ret = LZ4_decompress_fast((const char *)(external->ext_buf + SIZEOF_NETWORK_LONG), (char *)buffer, (int)dest->ext_nbytes);
+    ret = brl_LZ4_decompress_fast((const char *)(external->ext_buf + SIZEOF_NETWORK_LONG), (char *)buffer, (int)dest->ext_nbytes);
     if (ret > 0)
 	uncompressed = 1;
 

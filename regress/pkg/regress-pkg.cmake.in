@@ -1,0 +1,34 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "${CBDIR}/regress-pkg.log")
+
+file(WRITE "${LOGFILE}" "Starting pkg test run\n")
+
+# The executable locations aren't know at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" RPKG "${EXEC}")
+if (NOT EXISTS "${RPKG}")
+  file(WRITE "${LOGFILE}" "regress_pkg not found at location \"${RPKG}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find regress_pkg, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif (NOT EXISTS "${RPKG}")
+
+execute_process(
+  COMMAND "${RPKG}"
+  RESULT_VARIABLE pkg_result OUTPUT_VARIABLE pkg_log ERROR_VARIABLE pkg_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+
+if(pkg_result)
+  message(FATAL_ERROR "[pkg] Failure, unexpected result running ${RPKG}\n ${pkg_log}\n")
+endif(pkg_result)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

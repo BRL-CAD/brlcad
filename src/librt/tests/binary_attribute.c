@@ -27,8 +27,9 @@
 
 
 int
-main(int UNUSED(argc), char **UNUSED(argv))
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
 
     return 0;
 }

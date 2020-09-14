@@ -41,6 +41,7 @@ extern "C" b_off_t ftello(FILE *);
 #include <set>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/ptbl.h"
@@ -588,6 +589,8 @@ main(int argc, char **argv)
     int need_help = 0;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     int uac = 0;
+
+    bu_setprogname(argv[0]);
 
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",             "",   NULL, &need_help,    "Print help and exit");

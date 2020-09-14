@@ -67,35 +67,35 @@
 extern double drand48(void);
 #  endif
 
-#if !defined(__cplusplus) || defined(HAVE_SHARED_RINT_TEST)
+# if !defined(__cplusplus) || defined(HAVE_SHARED_RINT_TEST)
 /* make sure lrint() is provided */
-#  if !defined(lrint)
-#    if !defined(HAVE_LRINT)
-#      define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
-#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_LRINT)
+#   if !defined(lrint)
+#     if !defined(HAVE_LRINT)
+#       define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
+#     elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_LRINT)
 long int lrint(double x);
-#      define HAVE_DECL_LRINT 1
-#    endif
-#  endif
+#       define HAVE_DECL_LRINT 1
+#     endif
+#   endif
 
-#  if !defined(HAVE_LRINT)
-#    define HAVE_LRINT 1
-#  endif
+#   if !defined(HAVE_LRINT)
+#     define HAVE_LRINT 1
+#   endif
 
 /* make sure rint() is provided */
-#  if !defined(rint)
-#    if !defined(HAVE_RINT)
-#      define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
-#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_RINT)
+#   if !defined(rint)
+#     if !defined(HAVE_RINT)
+#       define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
+#     elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_RINT)
 double rint(double x);
-#      define HAVE_DECL_RINT 1
-#    endif
-#  endif
+#       define HAVE_DECL_RINT 1
+#     endif
+#   endif
 
-#  if !defined(HAVE_RINT)
-#    define HAVE_RINT 1
-#  endif
-#endif
+#   if !defined(HAVE_RINT)
+#     define HAVE_RINT 1
+#   endif
+# endif
 
 /* strict c89 doesn't declare snprintf() */
 # if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(snprintf) && !defined(__cplusplus)
@@ -151,12 +151,14 @@ extern int snprintf(char *str, size_t size, const char *format, ...);
 #endif
 
 /* make sure the old bsd types are defined for portability */
-#if !defined(HAVE_U_TYPES)
+#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
+# if !defined(HAVE_U_TYPES)
 typedef unsigned char u_char;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
 typedef unsigned short u_short;
-#  define HAVE_U_TYPES 1
+#   define HAVE_U_TYPES 1
+# endif
 #endif
 
 /* We want 64 bit (large file) I/O capabilities whenever they are available.
@@ -170,16 +172,18 @@ typedef unsigned short u_short;
  * regardless, we use it so make sure it's declared by using the
  * similar POSIX ptrdiff_t type.
  */
-#ifndef HAVE_SSIZE_T
-#  ifdef HAVE_SYS_TYPES_H
-#    include <sys/types.h>
-#  endif
-#  include <limits.h>
-#  include <stddef.h>
-#  ifndef SSIZE_MAX
+#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
+# ifndef HAVE_SSIZE_T
+#   ifdef HAVE_SYS_TYPES_H
+#     include <sys/types.h>
+#   endif
+#   include <limits.h>
+#   include <stddef.h>
+#   ifndef SSIZE_MAX
 typedef ptrdiff_t ssize_t;
-#    define HAVE_SSIZE_T 1
-#  endif
+#     define HAVE_SSIZE_T 1
+#   endif
+# endif
 #endif
 
 /* make sure most of the C99 stdint types are provided including the
@@ -220,6 +224,23 @@ typedef ptrdiff_t ssize_t;
 #  define stat  _stat
 #else
 #  define b_off_t off_t
+#endif
+
+/**
+ * Maximum length of a filesystem path.  Typically defined in a system
+ * file but if it isn't set, we create it.
+ */
+#ifndef MAXPATHLEN
+#  include <limits.h> // Consistently define (or not) PATH_MAX
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX
+#  elif defined(MAX_PATH)
+#    define MAXPATHLEN MAX_PATH
+#  elif defined(_MAX_PATH)
+#    define MAXPATHLEN _MAX_PATH
+#  else
+#    define MAXPATHLEN 2048
+#  endif
 #endif
 
 /**
@@ -462,8 +483,10 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor stringification.
  *
- * #define abc 123
- * CPP_STR(abc) => "abc"
+ @code
+ *     #define abc 123
+ *     CPP_STR(abc) => "abc"
+ @endcode
  */
 #ifndef CPP_STR
 #  define CPP_STR(x) # x
@@ -472,8 +495,10 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor expanded stringification.
  *
- * #define abc 123
- * CPP_XSTR(abc) => "123"
+ @code
+ *     #define abc 123
+ *     CPP_XSTR(abc) => "123"
+ @endcode
  */
 #ifndef CPP_XSTR
 #  define CPP_XSTR(x) CPP_STR(x)
@@ -482,12 +507,14 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor concatenation.
  *
- * #define abc 123
- * CPP_GLUE(abc, 123) => abc123
- * CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
- * CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
- * #define abc123 "xyz"
- * CPP_GLUE(abc, 123) => abc123 => "xyz"
+ @code
+ *     #define abc 123
+ *     CPP_GLUE(abc, 123) => abc123
+ *     CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
+ *     CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
+ *     #define abc123 "xyz"
+ *     CPP_GLUE(abc, 123) => abc123 => "xyz"
+ @endcode
  */
 #ifndef CPP_GLUE
 #  define CPP_GLUE(a, b) a ## b
@@ -496,10 +523,12 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor expanded concatenation.
  *
- * #define abc 123
- * CPP_XGLUE(abc, 123) => 123123
- * CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
- * CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
+ @code
+ *     #define abc 123
+ *     CPP_XGLUE(abc, 123) => 123123
+ *     CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
+ *     CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
+ @endcode
  */
 #ifndef CPP_XGLUE
 #  define CPP_XGLUE(a, b) CPP_GLUE(a, b)
@@ -508,9 +537,11 @@ typedef _TCHAR TCHAR;
 /**
  * Provide format specifier string tied to a size (e.g., "%123s")
  *
- * #define STR_LEN 10+1
- * char str[STR_LEN] = {0};
- * scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ @code
+ *     #define STR_LEN 10+1
+ *     char str[STR_LEN] = {0};
+ *     scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ @endcode
  */
 #ifndef CPP_SCAN
 #  define CPP_SCAN(sz) "%" CPP_XSTR(sz) "s"
@@ -524,6 +555,21 @@ typedef _TCHAR TCHAR;
 #  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
 #endif
 
+/**
+ * If we've not already defined COMPILER_DLLEXPORT and COMPILER_DLLIMPORT,
+ * define them away so code including the *_EXPORT header logic won't
+ * fail.
+ */
+#if defined(_MSC_VER)
+#  define COMPILER_DLLEXPORT __declspec(dllexport)
+#  define COMPILER_DLLIMPORT __declspec(dllimport)
+#elif defined(__GNUC__) || defined(__clang__)
+#  define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+#  define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#else
+#  define COMPILER_DLLEXPORT
+#  define COMPILER_DLLIMPORT
+#endif
 
 #endif  /* COMMON_H */
 

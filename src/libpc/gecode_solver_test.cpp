@@ -57,6 +57,8 @@
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
 
+#include "bu/app.h"
+
 class EqSolve : public Gecode::Space {
     public:
 	Gecode::IntVarArray l;
@@ -66,7 +68,9 @@ class EqSolve : public Gecode::Space {
 	void print(void) const {std::cout << l << std::endl;}
 };
 
-int main() {
+int main(int argc, const char *argv[]) {
+
+  bu_setprogname(argv[0]);
 
   EqSolve* m = new EqSolve(4, 0, 10);
 

@@ -938,7 +938,7 @@ namespace quickhull {
 
     template<typename T>
 	std::shared_ptr<std::vector<IndexType>> QuickHull<T>::getIndexVectorFromPool() {
-	    auto r = std::move(m_indexVectorPool.get());
+	    auto r = m_indexVectorPool.get();
 	    r->clear();
 	    return r;
 	}

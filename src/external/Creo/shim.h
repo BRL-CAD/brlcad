@@ -1,4 +1,13 @@
-/* This file is provided as a compilation stub to ensure ongoing build testing
+/*                          S H I M . H
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file shim.h
+ *
+ * This file is provided as a compilation stub to ensure ongoing build testing
  * of CREO to BRL-CAD conversion source code.  This file does not necessarily
  * reflect the CREO api, its values, or type constructs and any similarity is
  * either coincidental or necessary for compilation.

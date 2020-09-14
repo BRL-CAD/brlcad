@@ -750,7 +750,7 @@
 	}
 
 	if {$itk_option(-scaleEnable)} {
-	    Dm::drawScale [View::size] $itk_option(-scaleColor)
+	    Dm::drawScale [View::size] [View::units] $itk_option(-scaleColor)
 	}
 
 	if {$itk_option(-primitiveLabels) != {}} {

@@ -26,7 +26,7 @@
 #include <OpenThreads/Mutex>
 
 
-#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GL3_AVAILABLE)
+#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) || defined(OSG_GLES3_AVAILABLE) && !defined(OSG_GL3_AVAILABLE)
     #define GL_FRONT_LEFT       0x0400
     #define GL_FRONT_RIGHT      0x0401
     #define GL_BACK_LEFT        0x0402
@@ -66,7 +66,7 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         const View* getView() const { return _view; }
 
 
-        /** Set the Stats object used for collect various frame related
+        /** Set the Stats object used to collect various frame related
           * timing and scene graph stats. */
         void setStats(osg::Stats* stats) { _stats = stats; }
 
@@ -157,6 +157,7 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
 
         /** Get the viewport. */
         Viewport* getViewport() { return _viewport.get(); }
+
 
 
         enum TransformOrder
@@ -291,7 +292,7 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
             PIXEL_BUFFER_RTT,
             PIXEL_BUFFER,
             FRAME_BUFFER,
-            SEPERATE_WINDOW
+            SEPARATE_WINDOW
         };
 
         /** Set the render target.*/
@@ -308,14 +309,14 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
 
 
         /** Set the draw buffer used at the start of each frame draw.
-          * Note, a buffer value of GL_NONE is used to sepecify that the rendering back-end should choose the most appropriate buffer.*/
+          * Note, a buffer value of GL_NONE is used to specify that the rendering back-end should choose the most appropriate buffer.*/
         void setDrawBuffer(GLenum buffer) { _drawBuffer = buffer; applyMaskAction( DRAW_BUFFER ); }
 
         /** Get the draw buffer used at the start of each frame draw. */
         GLenum getDrawBuffer() const { return _drawBuffer; }
 
         /** Set the read buffer for any required copy operations to use.
-          * Note, a buffer value of GL_NONE is used to sepecify that the rendering back-end should choose the most appropriate buffer.*/
+          * Note, a buffer value of GL_NONE is used to specify that the rendering back-end should choose the most appropriate buffer.*/
         void setReadBuffer(GLenum buffer) { _readBuffer = buffer; applyMaskAction( READ_BUFFER ); }
 
         /** Get the read buffer for any required copy operations to use. */
@@ -416,27 +417,53 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         const BufferAttachmentMap& getBufferAttachmentMap() const { return _bufferAttachmentMap; }
 
 
+        /** Increment the _attachementMapModifiedCount so that the rendering backend will know that it needs to be updated to handle any new settings (such as format change/resizes.).*/
+        void dirtyAttachmentMap() { ++_attachmentMapModifiedCount; }
+
+        /** Set the AttachmentMapModifiedCount to a specific value.  Note, normal usage you would simply call dirtyAttachmentMap(). */
+        void setAttachmentMapModifiedCount(unsigned int v) { _attachmentMapModifiedCount = v; }
+
+        /** Get the AttachmentMapModifiedCount. */
+        unsigned int getAttachmentMapModifiedCount() const { return _attachmentMapModifiedCount; }
+
+        /** Resize the image and textures in the AttachementMap.*/
+        void resizeAttachments(int width, int height);
+
+
+        enum ResizeMask
+        {
+            RESIZE_VIEWPORT=1,
+            RESIZE_ATTACHMENTS=2,
+            RESIZE_PROJECTIONMATRIX=4,
+            RESIZE_DEFAULT=RESIZE_VIEWPORT|RESIZE_ATTACHMENTS
+        };
+
+        /** Resize, to the specified width and height, the viewport, attachments and projection matrix according to the resizeMask provided.
+          * Note, the adjustment of the projection matrix is done if the RESIZE_PROJECTIONMATRIX mask to set and according to the rules specified in the ProjectionResizePolicy. */
+        void resize(int width, int height, int resizeMask=RESIZE_DEFAULT);
+
+
         /** Explicit control over implicit allocation of buffers when using FBO.
          Implicit buffers are automatically substituted when user have not attached such buffer.
 
          Camera may set up two FBOs: primary Render FBO and secondary Resolve FBO for multisample usage.
-         So in practive we have two masks defined for the Camera:
+         So in practice we have two masks defined for the Camera:
             implicitBufferAttachmentRenderMask
             implicitBufferAttachmentResolveMask
          They can be set together by setImplicitBufferAttachmentMask method, or separately
          by setImplicitBufferAttachmentRenderMask and setImplicitBufferAttachmentResolveMask.
 
          Camera defaults are USE_DISPLAY_SETTINGS_MASK which means that by default
-         Camera chooses to substitue buffer attachments as defined by DisplaySettings.
+         Camera chooses to substitute buffer attachments as defined by DisplaySettings.
 
          Usually DisplaySettings implicit buffer attachment selection defaults to: DEPTH and COLOR
          for both primary (Render) FBO and seconday Multisample (Resolve) FBO
-         ie: IMPLICT_DEPTH_BUFFER_ATTACHMENT | IMPLICIT_COLOR_BUFFER_ATTACHMENT
+         ie: IMPLICIT_DEPTH_BUFFER_ATTACHMENT | IMPLICIT_COLOR_BUFFER_ATTACHMENT
 
          If these masks are not changed and user did not attach depth buffer and/or color buffer
-         to Camera, then OSG implicitly substitues these buffers.
+         to Camera, then OSG implicitly substitutes these buffers.
          By default it does not implicitly allocate a stencil buffer.
-         Use implicti buffer attachment  masks to override default behavior:
+         Use implicit buffer attachment  masks to override default behavior:
          to turn off DEPTH or COLOR buffer substitution or to enforce STENCIL buffer substitution.
 
          Note that both values are ignored if not using FBO.
@@ -468,12 +495,17 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
             _implicitBufferAttachmentResolveMask = implicitBufferAttachmentResolveMask;
         }
 
+        ImplicitBufferAttachmentMask getImplicitBufferAttachmentRenderMask() const
+        {
+            return _implicitBufferAttachmentRenderMask;
+        }
+
         /**
-        Get mask selecting implict buffer attachments for Camera primary FBO
+        Get mask selecting implicit buffer attachments for Camera primary FBO
         if effectiveMask parameter is set, method follows USE_DISPLAY_SETTINGS_MASK dependence and returns effective mask
         if effectiveMask parameter is reset, method returns nominal mask set by the Camera
         */
-        ImplicitBufferAttachmentMask getImplicitBufferAttachmentRenderMask(bool effectiveMask = false) const
+        ImplicitBufferAttachmentMask getImplicitBufferAttachmentRenderMask(bool effectiveMask) const
         {
             if( effectiveMask && _implicitBufferAttachmentRenderMask == USE_DISPLAY_SETTINGS_MASK )
             {
@@ -486,12 +518,17 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
             }
         }
 
+        ImplicitBufferAttachmentMask getImplicitBufferAttachmentResolveMask() const
+        {
+            return _implicitBufferAttachmentResolveMask;
+        }
+
         /**
-        Get mask selecting implict buffer attachments for Camera secondary MULTISAMPLE FBO
+        Get mask selecting implicit buffer attachments for Camera secondary MULTISAMPLE FBO
         if effectiveMask parameter is set, method follows USE_DISPLAY_SETTINGS_MASK dependence and returns effective mask
         if effectiveMask parameter is reset, method returns nominal mask set by the Camera
         */
-        ImplicitBufferAttachmentMask getImplicitBufferAttachmentResolveMask(bool effectiveMask = false) const
+        ImplicitBufferAttachmentMask getImplicitBufferAttachmentResolveMask(bool effectiveMask) const
         {
             if( effectiveMask && _implicitBufferAttachmentResolveMask == USE_DISPLAY_SETTINGS_MASK )
             {
@@ -503,6 +540,11 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
                 return _implicitBufferAttachmentResolveMask;
             }
         }
+
+        /** Set the process affinity hint for any Camera Threads that are/will be assigned to this Camera.*/
+        void setProcessorAffinity(const OpenThreads::Affinity& affinity);
+        OpenThreads::Affinity& getProcessorAffinity() { return _affinity; }
+        const OpenThreads::Affinity& getProcessorAffinity() const { return _affinity; }
 
         /** Create a operation thread for this camera.*/
         void createCameraThread();
@@ -549,19 +591,46 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
 
 
         /** Draw callback for custom operations.*/
-        struct OSG_EXPORT DrawCallback : virtual public Object
+        struct OSG_EXPORT DrawCallback : Callback
         {
             DrawCallback() {}
 
-            DrawCallback(const DrawCallback&,const CopyOp&) {}
+            DrawCallback(const DrawCallback& org,const CopyOp& copyop):
+                Callback(org, copyop) {}
 
             META_Object(osg, DrawCallback);
 
-            /** Functor method called by rendering thread. Users will typically override this method to carry tasks such as screen capture.*/
+            /** Functor method called by rendering thread to recursively launch operator() on _nestedcallback **/
+            inline void run(osg::RenderInfo& renderInfo) const
+            {
+                operator () (renderInfo);
+
+                if (_nestedCallback.valid())
+                    ((const DrawCallback*)_nestedCallback.get())->run(renderInfo);
+            }
+
+            /** Users will typically override this method to carry tasks such as screen capture or bufferobject readback. **/
             virtual void operator () (osg::RenderInfo& renderInfo) const;
 
-            /** Functor method, provided for backwards compatibility, called by operator() (osg::RenderInfo& renderInfo) method.*/
+            /** Functor method, provided for backwards compatibility, called by operator() (osg::RenderInfo& renderInfo) method.**/
             virtual void operator () (const osg::Camera& /*camera*/) const {}
+
+            /** Resize any per context GLObject buffers to specified size. */
+            virtual void resizeGLObjectBuffers(unsigned int maxSize)
+            {
+                if (_nestedCallback.valid())
+                    _nestedCallback->resizeGLObjectBuffers(maxSize);
+            }
+
+            /** If State is non-zero, this function releases any associated OpenGL objects for
+            * the specified graphics context. Otherwise, releases OpenGL objexts
+            * for all graphics contexts. */
+            virtual void releaseGLObjects(osg::State* state = 0) const
+            {
+                if (_nestedCallback.valid())
+                    _nestedCallback->releaseGLObjects(state);
+            }
+
         };
 
         /** Set the initial draw callback for custom operations to be done before the drawing of the camera's subgraph and pre render stages.*/
@@ -573,6 +642,34 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         /** Get the const initial draw callback.*/
         const DrawCallback* getInitialDrawCallback() const { return _initialDrawCallback.get(); }
 
+        /** Convenience method that sets DrawCallback Initial callback of the node if it doesn't exist, or nest it into the existing one. */
+        inline void addInitialDrawCallback(DrawCallback* nc)
+        {
+            if (nc != NULL)
+            {
+                if (_initialDrawCallback.valid()) _initialDrawCallback->addNestedCallback(nc);
+                else setInitialDrawCallback(nc);
+            }
+        }
+
+        template<class T> void addInitialDrawCallback(const ref_ptr<T>& nc) { addInitialDrawCallback(nc.get()); }
+
+        /** Convenience method that removes a given callback from a node, even if that callback is nested. There is no error return in case the given callback is not found. */
+        inline void removeInitialDrawCallback(DrawCallback* nc)
+        {
+            if (nc != NULL && _initialDrawCallback.valid())
+            {
+                if (_initialDrawCallback == nc)
+                {
+                    ref_ptr< DrawCallback> new_nested_callback = (DrawCallback*) nc->getNestedCallback();
+                    nc->setNestedCallback(0);
+                    setInitialDrawCallback(new_nested_callback.get());
+                }
+                else _initialDrawCallback->removeNestedCallback(nc);
+            }
+        }
+
+        template<class T> void removeInitialDrawCallback(const ref_ptr<T>& nc) { removeInitialDrawCallback(nc.get()); }
 
         /** Set the pre draw callback for custom operations to be done before the drawing of the camera's subgraph but after any pre render stages have been completed.*/
         void setPreDrawCallback(DrawCallback* cb) { _preDrawCallback = cb; }
@@ -583,6 +680,34 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         /** Get the const pre draw callback.*/
         const DrawCallback* getPreDrawCallback() const { return _preDrawCallback.get(); }
 
+        /** Convenience method that sets DrawCallback Initial callback of the node if it doesn't exist, or nest it into the existing one. */
+        inline void addPreDrawCallback(DrawCallback* nc)
+        {
+            if (nc != NULL)
+            {
+                if (_preDrawCallback.valid()) _preDrawCallback->addNestedCallback(nc);
+                else setPreDrawCallback(nc);
+            }
+        }
+
+        template<class T> void addPreDrawCallback(const ref_ptr<T>& nc) { addPreDrawCallback(nc.get()); }
+
+        /** Convenience method that removes a given callback from a node, even if that callback is nested. There is no error return in case the given callback is not found. */
+        inline void removePreDrawCallback(DrawCallback* nc)
+        {
+            if (nc != NULL && _preDrawCallback.valid())
+            {
+                if (_preDrawCallback == nc)
+                {
+                    ref_ptr< DrawCallback> new_nested_callback = (DrawCallback*) nc->getNestedCallback();
+                    nc->setNestedCallback(0);
+                    setPreDrawCallback(new_nested_callback.get());
+                }
+                else _preDrawCallback->removeNestedCallback(nc);
+            }
+        }
+
+        template<class T> void removePreDrawCallback(const ref_ptr<T>& nc) { removePreDrawCallback(nc.get()); }
 
         /** Set the post draw callback for custom operations to be done after the drawing of the camera's subgraph but before the any post render stages have been completed.*/
         void setPostDrawCallback(DrawCallback* cb) { _postDrawCallback = cb; }
@@ -593,6 +718,34 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         /** Get the const post draw callback.*/
         const DrawCallback* getPostDrawCallback() const { return _postDrawCallback.get(); }
 
+        /** Convenience method that sets DrawCallback Initial callback of the node if it doesn't exist, or nest it into the existing one. */
+        inline void addPostDrawCallback(DrawCallback* nc)
+        {
+            if (nc != NULL)
+            {
+                if (_postDrawCallback.valid()) _postDrawCallback->addNestedCallback(nc);
+                else setPostDrawCallback(nc);
+            }
+        }
+
+        template<class T> void addPostDrawCallback(const ref_ptr<T>& nc) { addPostDrawCallback(nc.get()); }
+
+        /** Convenience method that removes a given callback from a node, even if that callback is nested. There is no error return in case the given callback is not found. */
+        inline void removePostDrawCallback(DrawCallback* nc)
+        {
+            if (nc != NULL && _postDrawCallback.valid())
+            {
+                if (_postDrawCallback == nc)
+                {
+                    ref_ptr< DrawCallback> new_nested_callback = (DrawCallback*) nc->getNestedCallback();
+                    nc->setNestedCallback(0);
+                    setPostDrawCallback(new_nested_callback.get());
+                }
+                else _postDrawCallback->removeNestedCallback(nc);
+            }
+        }
+
+        template<class T> void removePostDrawCallback(const ref_ptr<T>& nc) { removePostDrawCallback(nc.get()); }
 
         /** Set the final draw callback for custom operations to be done after the drawing of the camera's subgraph and all of the post render stages has been completed.*/
         void setFinalDrawCallback(DrawCallback* cb) { _finalDrawCallback = cb; }
@@ -603,6 +756,34 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         /** Get the const final draw callback.*/
         const DrawCallback* getFinalDrawCallback() const { return _finalDrawCallback.get(); }
 
+        /** Convenience method that sets DrawCallback Initial callback of the node if it doesn't exist, or nest it into the existing one. */
+        inline void addFinalDrawCallback(DrawCallback* nc)
+        {
+            if (nc != NULL)
+            {
+                if (_finalDrawCallback.valid()) _finalDrawCallback->addNestedCallback(nc);
+                else setFinalDrawCallback(nc);
+            }
+        }
+
+        template<class T> void addFinalDrawCallback(const ref_ptr<T>& nc) { addFinalDrawCallback(nc.get()); }
+
+        /** Convenience method that removes a given callback from a node, even if that callback is nested. There is no error return in case the given callback is not found. */
+        inline void removeFinalDrawCallback(DrawCallback* nc)
+        {
+            if (nc != NULL && _finalDrawCallback.valid())
+            {
+                if (_finalDrawCallback == nc)
+                {
+                    ref_ptr< DrawCallback> new_nested_callback = (DrawCallback*) nc->getNestedCallback();
+                    nc->setNestedCallback(0);
+                    setFinalDrawCallback(new_nested_callback.get());
+                }
+                else _finalDrawCallback->removeNestedCallback(nc);
+            }
+        }
+
+        template<class T> void removeFinalDrawCallback(const ref_ptr<T>& nc) { removeFinalDrawCallback(nc.get()); }
 
         OpenThreads::Mutex* getDataChangeMutex() const { return &_dataChangeMutex; }
 
@@ -667,6 +848,9 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         ImplicitBufferAttachmentMask        _implicitBufferAttachmentRenderMask;
         ImplicitBufferAttachmentMask        _implicitBufferAttachmentResolveMask;
 
+        unsigned int                        _attachmentMapModifiedCount;
+
+        OpenThreads::Affinity               _affinity;
         ref_ptr<OperationThread>            _cameraThread;
 
         ref_ptr<GraphicsContext>            _graphicsContext;
@@ -681,7 +865,7 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
 };
 
 
-/** Functor to assist with ordering camers in the order they should be rendered in.*/
+/** Functor to assist with ordering cameras in the order they should be rendered in.*/
 struct CameraRenderOrderSortOp
 {
     inline bool operator() (const Camera* lhs,const Camera* rhs) const

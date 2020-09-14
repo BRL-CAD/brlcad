@@ -27,16 +27,17 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <png.h>
+#include "png.h"
 
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define BYTESPERPIXEL 1
@@ -89,7 +90,7 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
 		    "bw-png: cannot open \"%s\" for reading\n",
@@ -115,6 +116,8 @@ main(int argc, char **argv)
     png_structp png_p;
     png_infop info_p;
     FILE *outfp = stdout;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

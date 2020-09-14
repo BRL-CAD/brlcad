@@ -20,3 +20,6 @@ http://www.tc.faa.gov/its/worldpac/techrpt/AR04-16.pdf
 (Note: the Generic Twin images in that report show the model
 prior to its most recent updates, which are reflected in the
 version included in BRL-CAD.)
+
+file:/db/faa/Business_Jet.fg4
+file:/db/faa/Generic_Twin.fg4

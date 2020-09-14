@@ -8,7 +8,8 @@ after idle {
 after 100 {
     grab -global .dialog2
 }
-set i [tk_dialog .dialog2 "Dialog with global grab" {This dialog box uses a global grab, so it prevents you from interacting with anything on your display until you invoke one of the buttons below.  Global grabs are almost always a bad idea; don't use them unless you're truly desperate.} warning 0 OK Cancel {Show Code}]
+set i [tk_dialog .dialog2 "Dialog with global grab" {This dialog box uses a global grab. If you are using an X11 window manager you will be prevented from interacting with anything on your display until you invoke one of the buttons below.  This is almost always a bad idea; don't use global grabs with X11 unless you're truly desperate.  On macOS systems you will not be able to interact with any window belonging to this process, but interaction with other macOS Applications will still be possible.}\
+warning 0 OK Cancel {Show Code}]
 
 switch $i {
     0 {puts "You pressed OK"}

@@ -116,7 +116,7 @@ static inline void	ResultAdd(ResultBuffer *r, unsigned char *buf,
  * transformations.
  */
 
-static Tcl_ChannelType transformChannelType = {
+static const Tcl_ChannelType transformChannelType = {
     "transform",		/* Type name. */
     TCL_CHANNEL_VERSION_5,	/* v5 channel */
     TransformCloseProc,		/* Close proc. */
@@ -230,7 +230,7 @@ ReleaseData(
     }
     ResultClear(&dataPtr->result);
     Tcl_DecrRefCount(dataPtr->command);
-    ckfree((char *) dataPtr);
+    ckfree(dataPtr);
 }
 
 /*
@@ -287,7 +287,7 @@ TclChannelTransform(
      * regime of the underlying channel and to use the same for us too.
      */
 
-    dataPtr = (TransformChannelData *) ckalloc(sizeof(TransformChannelData));
+    dataPtr = ckalloc(sizeof(TransformChannelData));
 
     dataPtr->refCount = 1;
     Tcl_DStringInit(&ds);
@@ -313,8 +313,8 @@ TclChannelTransform(
     dataPtr->self = Tcl_StackChannel(interp, &transformChannelType, dataPtr,
 	    mode, chan);
     if (dataPtr->self == NULL) {
-	Tcl_AppendResult(interp, "\nfailed to stack channel \"",
-		Tcl_GetChannelName(chan), "\"", NULL);
+	Tcl_AppendPrintfToObj(Tcl_GetObjResult(interp),
+		"\nfailed to stack channel \"%s\"", Tcl_GetChannelName(chan));
 	ReleaseData(dataPtr);
 	return TCL_ERROR;
     }
@@ -683,7 +683,7 @@ TransformInputProc(
 	     * Already saw EOF from downChan; don't ask again.
 	     * NOTE: Could move this up to avoid the last maxRead
 	     * execution.  Believe this would still be correct behavior,
-	     * but the test suite tests the whole command callback 
+	     * but the test suite tests the whole command callback
 	     * sequence, so leave it unchanged for now.
 	     */
 
@@ -696,7 +696,6 @@ TransformInputProc(
 
 	read = Tcl_ReadRaw(downChan, buf, toRead);
 	if (read < 0) {
-
 	    if (Tcl_InputBlocked(downChan) && (gotBytes > 0)) {
 		/*
 		 * Zero bytes available from downChan because blocked.
@@ -838,7 +837,7 @@ TransformSeekProc(
 {
     TransformChannelData *dataPtr = instanceData;
     Tcl_Channel parent = Tcl_GetStackedChannel(dataPtr->self);
-    Tcl_ChannelType *parentType = Tcl_GetChannelType(parent);
+    const Tcl_ChannelType *parentType = Tcl_GetChannelType(parent);
     Tcl_DriverSeekProc *parentSeekProc = Tcl_ChannelSeekProc(parentType);
 
     if ((offset == 0) && (mode == SEEK_CUR)) {
@@ -905,7 +904,7 @@ TransformWideSeekProc(
 {
     TransformChannelData *dataPtr = instanceData;
     Tcl_Channel parent = Tcl_GetStackedChannel(dataPtr->self);
-    Tcl_ChannelType *parentType	= Tcl_GetChannelType(parent);
+    const Tcl_ChannelType *parentType	= Tcl_GetChannelType(parent);
     Tcl_DriverSeekProc *parentSeekProc = Tcl_ChannelSeekProc(parentType);
     Tcl_DriverWideSeekProc *parentWideSeekProc =
 	    Tcl_ChannelWideSeekProc(parentType);
@@ -1274,7 +1273,7 @@ ResultClear(
     r->used = 0;
 
     if (r->allocated) {
-	ckfree((char *) r->buf);
+	ckfree(r->buf);
 	r->buf = NULL;
 	r->allocated = 0;
     }
@@ -1418,10 +1417,10 @@ ResultAdd(
 
 	if (r->allocated == 0) {
 	    r->allocated = toWrite + INCREMENT;
-	    r->buf = UCHARP(ckalloc(r->allocated));
+	    r->buf = ckalloc(r->allocated);
 	} else {
 	    r->allocated += toWrite + INCREMENT;
-	    r->buf = UCHARP(ckrealloc((char *) r->buf, r->allocated));
+	    r->buf = ckrealloc(r->buf, r->allocated);
 	}
     }
 

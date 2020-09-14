@@ -90,10 +90,16 @@
 #endif
 
 /* compiling OpenNurbs as a Windows DLL - export classes, functions, templates, and globals */
-#define ON_CLASS __declspec(dllexport)
-#define ON_DECL __declspec(dllexport)
-#define ON_EXTERN_DECL __declspec(dllexport)
-#define ON_DLL_TEMPLATE
+#ifdef _WIN32
+# define ON_CLASS __declspec(dllexport)
+# define ON_DECL __declspec(dllexport)
+# define ON_EXTERN_DECL __declspec(dllexport)
+# define ON_DLL_TEMPLATE
+#else
+# define ON_CLASS __attribute__ ((visibility ("default")))
+# define ON_DECL __attribute__ ((visibility ("default")))
+# define ON_EXTERN_DECL __attribute__ ((visibility ("default")))
+#endif
 
 #elif defined(ON_DLL_IMPORTS)
 
@@ -102,10 +108,16 @@
 #endif
 
 /* using OpenNurbs as a Windows DLL - import classes, functions, templates, and globals */
-#define ON_CLASS __declspec(dllimport)
-#define ON_DECL __declspec(dllimport)
-#define ON_EXTERN_DECL __declspec(dllimport)
-#define ON_DLL_TEMPLATE extern
+#ifdef _WIN32
+# define ON_CLASS __declspec(dllimport)
+# define ON_DECL __declspec(dllimport)
+# define ON_EXTERN_DECL __declspec(dllimport)
+# define ON_DLL_TEMPLATE extern
+#else
+# define ON_CLASS __attribute__ ((visibility ("default")))
+# define ON_DECL __attribute__ ((visibility ("default")))
+# define ON_EXTERN_DECL __attribute__ ((visibility ("default")))
+#endif
 
 #else
 
@@ -803,11 +815,11 @@ public:
   enum archive_mode
   {
     unknown_archive_mode = 0,
-    read      = 1, // all read modes have bit 0x0001 set
-    write     = 2, // all write modes have bit 0x0002 set
-    readwrite = 3,
-    read3dm   = 5,
-    write3dm  = 6
+    on_read      = 1, // all read modes have bit 0x0001 set
+    on_write     = 2, // all write modes have bit 0x0002 set
+    on_readwrite = 3,
+    on_read3dm   = 5,
+    on_write3dm  = 6
   };
   static archive_mode ArchiveMode(int); // convert integer to endian enum
 
@@ -1228,7 +1240,7 @@ public:
 
     pointcloud_point   =  41,
 
-    group_member       =  51,
+    on_group_member       =  51,
 
 
     extrusion_bottom_profile = 61, // 3d bottom profile curves
@@ -1340,7 +1352,7 @@ public:
 
   /*
   Returns:
-    True if m_type = group_member and m_index >= 0.
+    True if m_type = on_group_member and m_index >= 0.
   */
   bool IsGroupMemberComponentIndex() const;
 

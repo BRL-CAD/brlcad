@@ -38,9 +38,9 @@
 #  if defined(BU_DLL_EXPORTS) && defined(BU_DLL_IMPORTS)
 #    error "Only BU_DLL_EXPORTS or BU_DLL_IMPORTS can be defined, not both."
 #  elif defined(BU_DLL_EXPORTS)
-#    define BU_EXPORT __declspec(dllexport)
+#    define BU_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BU_DLL_IMPORTS)
-#    define BU_EXPORT __declspec(dllimport)
+#    define BU_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BU_EXPORT
 #  endif
@@ -67,22 +67,6 @@
 #    endif  /* _WIN32 */
 #  endif  /* DIR_SEPARATOR_2 */
 #endif  /* DIR_SEPARATOR */
-
-/**
- * Maximum length of a filesystem path.  Typically defined in a system
- * file but if it isn't set, we create it.
- */
-#ifndef MAXPATHLEN
-#  ifdef PATH_MAX
-#    define MAXPATHLEN PATH_MAX
-#  else
-#    ifdef _MAX_PATH
-#      define MAXPATHLEN _MAX_PATH
-#    else
-#      define MAXPATHLEN 1024
-#    endif
-#  endif
-#endif
 
 /**
  * set to the path list separator character

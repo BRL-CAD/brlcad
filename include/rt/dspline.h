@@ -24,6 +24,10 @@
 #ifndef RT_DSPLINE_H
 #define RT_DSPLINE_H
 
+#include "common.h"
+
+#include "vmath.h"
+
 #include "rt/defines.h"
 
 __BEGIN_DECLS

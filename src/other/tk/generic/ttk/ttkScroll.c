@@ -7,7 +7,7 @@
  *
  * Scrollable interface:
  *
- * 	+ 'first' is controlled by [xy]view widget command 
+ * 	+ 'first' is controlled by [xy]view widget command
  * 	  and other scrolling commands like 'see';
  *      + 'total' depends on widget contents;
  *      + 'last' depends on first, total, and widget size.
@@ -16,15 +16,15 @@
  *
  * 	1. User adjusts scrollbar, scrollbar widget calls its -command
  * 	2. Scrollbar -command invokes the scrollee [xy]view widget method
- * 	3. TtkScrollviewCommand calls TtkScrollTo(), which updates 
+ * 	3. TtkScrollviewCommand calls TtkScrollTo(), which updates
  * 	   'first' and schedules a redisplay.
- * 	4. Once the scrollee knows 'total' and 'last' (typically in 
- * 	   the LayoutProc), call TtkScrolled(h,first,last,total) to 
+ * 	4. Once the scrollee knows 'total' and 'last' (typically in
+ * 	   the LayoutProc), call TtkScrolled(h,first,last,total) to
  * 	   synchronize the scrollbar.
  * 	5. The scrollee -[xy]scrollcommand is called (in an idle callback)
  * 	6. Which calls the scrollbar 'set' method and redisplays the scrollbar.
  *
- * If the scrollee has internal scrolling (e.g., a 'see' method), 
+ * If the scrollee has internal scrolling (e.g., a 'see' method),
  * it should TtkScrollTo() directly (step 2).
  *
  * If the widget value changes, it should call TtkScrolled() (step 4).
@@ -34,7 +34,7 @@
  * TtkScrollbarUpdateRequired, which will invoke step (5) (@@@ Fix this)
  */
 
-#include <tkInt.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 
@@ -55,7 +55,7 @@ struct ScrollHandleRec
  */
 ScrollHandle TtkCreateScrollHandle(WidgetCore *corePtr, Scrollable *scrollPtr)
 {
-    ScrollHandle h = (ScrollHandle)ckalloc(sizeof(*h));
+    ScrollHandle h = ckalloc(sizeof(*h));
 
     h->flags = 0;
     h->corePtr = corePtr;
@@ -130,7 +130,7 @@ static void UpdateScrollbarBG(ClientData clientData)
     Tcl_Preserve((ClientData) interp);
     code = UpdateScrollbar(interp, h);
     if (code == TCL_ERROR && !Tcl_InterpDeleted(interp)) {
-	Tcl_BackgroundError(interp);
+	Tcl_BackgroundException(interp, code);
     }
     Tcl_Release((ClientData) interp);
 }
@@ -141,7 +141,7 @@ static void UpdateScrollbarBG(ClientData clientData)
 void TtkScrolled(ScrollHandle h, int first, int last, int total)
 {
     Scrollable *s = h->scrollPtr;
-    
+
     /* Sanity-check inputs:
      */
     if (total <= 0) {
@@ -181,6 +181,19 @@ void TtkScrollbarUpdateRequired(ScrollHandle h)
     h->flags |= SCROLL_UPDATE_REQUIRED;
 }
 
+/* TtkUpdateScrollInfo --
+ * 	Call the layoutProc to update the scroll info first, last, and total.
+ * 	Do it only if needed, that is when a redisplay is pending (which
+ * 	indicates scroll info are possibly out of date).
+ */
+
+void TtkUpdateScrollInfo(ScrollHandle h)
+{
+    if (h->corePtr->flags & REDISPLAY_PENDING) {
+        h->corePtr->widgetSpec->layoutProc(h->corePtr);
+    }
+}
+
 /* TtkScrollviewCommand --
  * 	Widget [xy]view command implementation.
  *
@@ -193,7 +206,10 @@ int TtkScrollviewCommand(
     Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], ScrollHandle h)
 {
     Scrollable *s = h->scrollPtr;
-    int newFirst = s->first;
+    int newFirst;
+
+    TtkUpdateScrollInfo(h);
+    newFirst = s->first;
 
     if (objc == 2) {
 	Tcl_Obj *result[2];
@@ -226,14 +242,18 @@ int TtkScrollviewCommand(
 	}
     }
 
-    TtkScrollTo(h, newFirst);
+    TtkScrollTo(h, newFirst, 0);
 
     return TCL_OK;
 }
 
-void TtkScrollTo(ScrollHandle h, int newFirst)
+void TtkScrollTo(ScrollHandle h, int newFirst, int updateScrollInfo)
 {
     Scrollable *s = h->scrollPtr;
+
+    if (updateScrollInfo) {
+        TtkUpdateScrollInfo(h);
+    }
 
     if (newFirst >= s->total)
 	newFirst = s->total - 1;
@@ -253,6 +273,6 @@ void TtkFreeScrollHandle(ScrollHandle h)
     if (h->flags & SCROLL_UPDATE_PENDING) {
 	Tcl_CancelIdleCall(UpdateScrollbarBG, (ClientData)h);
     }
-    ckfree((ClientData)h);
+    ckfree(h);
 }
 

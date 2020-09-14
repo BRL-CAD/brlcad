@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -132,21 +133,21 @@ get_args(int argc, char **argv)
     }
 
     if (bu_optind + 3 <= argc) {
-	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
+	if ((oldfp = fopen(argv[bu_optind], "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    argv[bu_optind]);
 	    return 0;
 	}
 
-	if ((curfp = fopen(argv[++bu_optind], "r")) == NULL) {
+	if ((curfp = fopen(argv[++bu_optind], "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    argv[bu_optind]);
 	    return 0;
 	}
 
-	if ((newfp = fopen(argv[++bu_optind], "r")) == NULL) {
+	if ((newfp = fopen(argv[++bu_optind], "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    argv[bu_optind]);
@@ -160,7 +161,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	working_name = (char *)bu_malloc(strlen(file_name)+5, "working_name");
 
-	if ((curfp = fopen(file_name, "r")) == NULL) {
+	if ((curfp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    file_name);
@@ -182,7 +183,7 @@ get_args(int argc, char **argv)
 	}
 
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber-1);
-	if ((oldfp = fopen(working_name, "r")) == NULL) {
+	if ((oldfp = fopen(working_name, "rb")) == NULL) {
 	    if (frameNumber-1 != 0) {
 		fprintf(stderr,
 			"pix3filter: cannot open \"%s\" for reading.\n",
@@ -190,7 +191,7 @@ get_args(int argc, char **argv)
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }
-	    if ((oldfp = fopen(file_name, "r")) == NULL) {
+	    if ((oldfp = fopen(file_name, "rb")) == NULL) {
 		fprintf(stderr,
 			"pix3filter: cannot open \"%s\" for reading.\n",
 			file_name);
@@ -200,7 +201,7 @@ get_args(int argc, char **argv)
 	}
 
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber+1);
-	if ((newfp = fopen(working_name, "r")) == NULL) {
+	if ((newfp = fopen(working_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading.\n",
 		    working_name);
@@ -228,6 +229,8 @@ main(int argc, char **argv)
     int x, y, color;
     int value, r1, r2, r3, r4, r5, r6, r7, r8, r9;
     int max, min;
+
+    bu_setprogname(argv[0]);
 
     /* Select Default Filter (low pass) */
     select_filter("low");

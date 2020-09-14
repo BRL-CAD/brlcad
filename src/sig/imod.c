@@ -34,6 +34,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -114,7 +115,7 @@ get_args(int argc, char *argv[])
 	char *file_name = NULL;
 	file_name = argv[bu_optind];
 	ifname = bu_file_realpath(file_name, NULL);
-	if (freopen(ifname, "r", stdin) == NULL) {
+	if (freopen(ifname, "rb", stdin) == NULL) {
 	    fprintf(stderr,
 		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
 		    progname, file_name, ifname);
@@ -172,12 +173,17 @@ main(int argc, char *argv[])
     unsigned long clip_high, clip_low;
     short iobuf[BUFLEN];		/* input buffer */
 
+    bu_setprogname(argv[0]);
+
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;
 
     if (!get_args(argc, argv) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     mk_trans_tbl();
 

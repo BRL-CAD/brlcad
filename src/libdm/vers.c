@@ -24,14 +24,19 @@
 #include "dm.h"
 #include "brlcad_ident.h"
 
-
 /**
  * returns the compile-time version of libdm
  */
 const char *
 dm_version(void)
 {
-    return brlcad_ident("The BRL-CAD Display Manager Library");
+    return brlcad_ident("The BRL-CAD Display Manager/Framebuffer Library");
+}
+
+const char *
+fb_version(void)
+{
+    return brlcad_ident("The BRL-CAD Display Manager/Framebuffer Library");
 }
 
 /*

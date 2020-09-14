@@ -42,6 +42,7 @@
 #include <time.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -123,7 +124,7 @@ get_args(int argc, char **argv)
     f1_name = argv[bu_optind++];
     if (BU_STR_EQUAL(f1_name, "-"))
 	f1 = stdin;
-    else if ((f1 = fopen(f1_name, "r")) == NULL) {
+    else if ((f1 = fopen(f1_name, "rb")) == NULL) {
 	perror(f1_name);
 	fprintf(stderr,
 		"pixblend: cannot open \"%s\" for reading\n",
@@ -134,7 +135,7 @@ get_args(int argc, char **argv)
     f2_name = argv[bu_optind++];
     if (BU_STR_EQUAL(f2_name, "-"))
 	f2 = stdin;
-    else if ((f2 = fopen(f2_name, "r")) == NULL) {
+    else if ((f2 = fopen(f2_name, "rb")) == NULL) {
 	perror(f2_name);
 	fprintf(stderr,
 		"pixblend: cannot open \"%s\" for reading\n",
@@ -162,10 +163,15 @@ main(int argc, char **argv)
     int c = 0;
     size_t ret;
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (!iflg && !rflg) {
 	/* Default action: interpolate by 50% */

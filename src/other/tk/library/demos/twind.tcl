@@ -9,6 +9,14 @@ if {![info exists widgetDemo]} {
 
 package require Tk
 
+# Make an Aqua button's fill color match its parent's background
+proc blend {bt} {
+    if {[tk windowingsystem] eq "aqua"} {
+	$bt configure -highlightbackground [[winfo parent $bt] cget -background]
+    }
+    return $bt
+}
+
 set w .twind
 catch {destroy $w}
 toplevel $w
@@ -25,7 +33,7 @@ set t $w.f.text
 text $t -yscrollcommand "$w.scroll set" -setgrid true -font $font -width 70 \
 	-height 35 -wrap word -highlightthickness 0 -borderwidth 0
 pack $t -expand  yes -fill both
-scrollbar $w.scroll -command "$t yview"
+ttk::scrollbar $w.scroll -command "$t yview"
 pack $w.scroll -side right -fill y
 panedwindow $w.pane
 pack $w.pane -expand yes -fill both
@@ -53,17 +61,19 @@ $t insert end "it.  These are called \"embedded windows\", "
 $t insert end "and they can consist of arbitrary widgets.  "
 $t insert end "For example, here are two embedded button "
 $t insert end "widgets.  You can click on the first button to "
-$t window create end -window $t.on
+$t window create end -window [blend $t.on]
 $t insert end " horizontal scrolling, which also turns off "
 $t insert end "word wrapping.  Or, you can click on the second "
 $t insert end "button to\n"
-$t window create end -window $t.off
+$t window create end -window [blend $t.off]
 $t insert end " horizontal scrolling and turn back on word wrapping.\n\n"
 
 $t insert end "Or, here is another example.  If you "
 $t window create end -create {
     button %W.click -text "Click Here" -command "textWindPlot %W" \
-	    -cursor top_left_arrow}
+	-cursor top_left_arrow
+    blend %W.click
+}
 
 $t insert end " a canvas displaying an x-y plot will appear right here."
 $t mark set plot insert
@@ -72,7 +82,8 @@ $t insert end "  You can drag the data points around with the mouse, "
 $t insert end "or you can click here to "
 $t window create end -create {
     button %W.delete -text "Delete" -command "textWindDel %W" \
-	    -cursor top_left_arrow
+	-cursor top_left_arrow
+    blend %W.delete
 }
 $t insert end " the plot again.\n\n"
 
@@ -80,19 +91,21 @@ $t insert end "You can also create multiple text widgets each of which "
 $t insert end "display the same underlying text. Click this button to "
 $t window create end \
   -create {button %W.peer -text "Make A Peer" -command "textMakePeer %W" \
-  -cursor top_left_arrow} -padx 3
+	       -cursor top_left_arrow
+      blend %W.peer} -padx 3
 $t insert end " widget.  Notice how peer widgets can have different "
 $t insert end "font settings, and by default contain all the images "
-$t insert end "of the 'parent', but many of the embedded windows, "
-$t insert end "such as buttons will not be there.  The easiest way "
-$t insert end "to ensure they are in all peers is to use '-create' "
-$t insert end "embedded window creation scripts "
-$t insert end "(the plot above and the 'Make A Peer' button are "
-$t insert end "designed to show up in all peers).  A good use of "
+$t insert end "of the 'parent', but that the embedded windows, "
+$t insert end "such as buttons may not appear in the peer.  To ensure "
+$t insert end "that embedded windows appear in all peers you can set the "
+$t insert end "'-create' option to a script or a string containing %W.  "
+$t insert end "(The plot above and the 'Make A Peer' button are "
+$t insert end "designed to show up in all peers.)  A good use of "
 $t insert end "peers is for "
 $t window create end \
   -create {button %W.split -text "Split Windows" -command "textSplitWindow %W" \
-  -cursor top_left_arrow} -padx 3
+	       -cursor top_left_arrow
+      blend %W.split} -padx 3
 $t insert end " \n\n"
 
 $t insert end "Users of previous versions of Tk will also be interested "
@@ -112,6 +125,7 @@ $t insert end "you can see how the text widget automatically "
 $t insert end "changes the layout.  Click on the button again "
 $t insert end "to restore the short string.\n"
 
+$t insert end "\nNOTE: these buttons will not appear in peers!\n" "peer_warning"
 button $t.default -text Default -command "embDefBg $t" \
 	-cursor top_left_arrow
 $t window create end -window $t.default -padx 3
@@ -127,11 +141,11 @@ foreach color {AntiqueWhite3 Bisque1 Bisque2 Bisque3 Bisque4
 	DarkSlateGray1 Aquamarine2 DarkSeaGreen2 SeaGreen1
 	Yellow1 IndianRed1 IndianRed2 Tan1 Tan4} {
     button $t.color$i -text $color -cursor top_left_arrow -command \
-	    "$t configure -bg $color"
-    $t window create end -window $t.color$i -padx 3 -pady 2
+	    "changeBg $t $color"
+    $t window create end -window [blend $t.color$i] -padx 3 -pady 2
     incr i
 }
-$t tag add buttons $t.default end
+$t tag add buttons [blend $t.default] end
 
 button $t.bigB -text "Big borders" -command "textWindBigB $t" \
   -cursor top_left_arrow
@@ -152,21 +166,20 @@ set text_normal(pad) [$t cget -padx]
 
 $t insert end "\nYou can also change the usual border width and "
 $t insert end "highlightthickness and padding.\n"
-$t window create end -window $t.bigB
-$t window create end -window $t.smallB
-$t window create end -window $t.bigH
-$t window create end -window $t.smallH
-$t window create end -window $t.bigP
-$t window create end -window $t.smallP
+$t window create end -window [blend $t.bigB]
+$t window create end -window [blend $t.smallB]
+$t window create end -window [blend $t.bigH]
+$t window create end -window [blend $t.smallH]
+$t window create end -window [blend $t.bigP]
+$t window create end -window [blend $t.smallP]
 
 $t insert end "\n\nFinally, images fit comfortably in text widgets too:"
 
 $t image create end -image \
-  [image create bitmap -file [file join $tk_demoDirectory images face.xbm]]
-
+    [image create photo -file [file join $tk_demoDirectory images ouster.png]]
 
 proc textWindBigB w {
-    $w configure -borderwidth 15 
+    $w configure -borderwidth 15
 }
 
 proc textWindBigH w {
@@ -189,11 +202,10 @@ proc textWindSmallP w {
     $w configure -padx $::text_normal(pad) -pady $::text_normal(pad)
 }
 
-
 proc textWindOn w {
     catch {destroy $w.scroll2}
     set t $w.f.text
-    scrollbar $w.scroll2 -orient horizontal -command "$t xview"
+    ttk::scrollbar $w.scroll2 -orient horizontal -command "$t xview"
     pack $w.scroll2 -after $w.buttons -side bottom -fill x
     $t configure -xscrollcommand "$w.scroll2 set" -wrap none
 }
@@ -230,7 +242,7 @@ proc createPlot {t} {
     $c create line 100 250 400 250 -width 2
     $c create line 100 250 100 50 -width 2
     $c create text 225 20 -text "A Simple Plot" -font $font -fill brown
-    
+
     for {set i 0} {$i <= 10} {incr i} {
 	set x [expr {100 + ($i*30)}]
 	$c create line $x 250 $x 245 -width 2
@@ -241,7 +253,7 @@ proc createPlot {t} {
 	$c create line 100 $y 105 $y -width 2
 	$c create text 96 $y -text [expr {$i*50}].0 -anchor e -font $font
     }
-    
+
     foreach point {
 	{12 56} {20 94} {33 98} {32 120} {61 180} {75 160} {98 223}
     } {
@@ -290,8 +302,20 @@ proc textWindDel t {
     }
 }
 
+proc changeBg {t c} {
+    $t configure -background $c
+    if {[tk windowingsystem] eq "aqua"} {
+	foreach b [$t window names] {
+	    if {[winfo class $b] eq "Button"} {
+		$b configure -highlightbackground $c
+	    }
+	}
+    }
+}
+
 proc embDefBg t {
-    $t configure -background [lindex [$t configure -background] 3]
+    set bg [lindex [$t configure -background] 3]
+    changeBg $t $bg
 }
 
 proc textMakePeer {parent} {
@@ -302,8 +326,9 @@ proc textMakePeer {parent} {
     frame $w.f -highlightthickness 1 -borderwidth 1 -relief sunken
     set t [$parent peer create $w.f.text -yscrollcommand "$w.scroll set" \
 	       -borderwidth 0 -highlightthickness 0]
+    $t tag configure peer_warning -font boldFont
     pack $t -expand  yes -fill both
-    scrollbar $w.scroll -command "$t yview"
+    ttk::scrollbar $w.scroll -command "$t yview"
     pack $w.scroll -side right -fill y
     pack $w.f -expand yes -fill both
 }
@@ -317,6 +342,7 @@ proc textSplitWindow {textW} {
 	    set w [winfo parent $parent]
 	    set t [$textW peer create $w.peer \
 	      -yscrollcommand "$w.scroll set"]
+	    $t tag configure peer_warning -font boldFont
 	    $w.pane add $t
 	}
     } else {

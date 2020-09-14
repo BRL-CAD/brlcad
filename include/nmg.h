@@ -86,9 +86,9 @@
 #  if defined(NMG_DLL_EXPORTS) && defined(NMG_DLL_IMPORTS)
 #    error "Only NMG_DLL_EXPORTS or NMG_DLL_IMPORTS can be defined, not both."
 #  elif defined(NMG_DLL_EXPORTS)
-#    define NMG_EXPORT __declspec(dllexport)
+#    define NMG_EXPORT COMPILER_DLLEXPORT
 #  elif defined(NMG_DLL_IMPORTS)
-#    define NMG_EXPORT __declspec(dllimport)
+#    define NMG_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define NMG_EXPORT
 #  endif

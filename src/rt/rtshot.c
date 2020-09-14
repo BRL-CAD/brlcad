@@ -36,6 +36,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -105,6 +106,8 @@ main(int argc, char **argv)
     const char *argv0 = argv[0];
     int atoival;
     struct resource res = RT_RESOURCE_INIT_ZERO;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 3) {
 	usage(argv0);

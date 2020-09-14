@@ -1,5 +1,3 @@
-osg_fb_manipulator.h is based off of code using this license: 
-
 OpenSceneGraph Public License, Version 0.0
                 ==========================================
                 
@@ -578,4 +576,6 @@ necessary.  Here is a sample; alter the names:
   Ty Coon, President of Vice
 
 That's all there is to it!
+
+file:/src/libdm/osgl/osg_fb_manipulator.h
 

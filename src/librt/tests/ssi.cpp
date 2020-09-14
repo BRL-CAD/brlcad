@@ -24,6 +24,7 @@
 #include <iostream>
 #include <assert.h>
 #include "vmath.h"
+#include "bu/app.h"
 #include "brep.h"
 #include "raytrace.h"
 
@@ -66,6 +67,8 @@ main(int argc, char** argv)
 {
     int ret = 0;
     struct bu_vls intersect_name, name;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 6 && argc != 7) {
 	bu_log("Usage: %s %s\n", argv[0], "<file> <obj1> <obj2> <surf_i> <surf_j> [curve_name]");

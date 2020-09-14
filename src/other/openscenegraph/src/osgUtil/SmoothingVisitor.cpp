@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <list>
 #include <set>
+#include <osgUtil/MeshOptimizers>
 
 
 using namespace osg;
@@ -75,19 +76,15 @@ struct SmoothTriangleFunctor
         }
     }
 
-    inline void operator() ( const osg::Vec3 &v1, const osg::Vec3 &v2, const osg::Vec3 &v3, bool treatVertexDataAsTemporary )
+    inline void operator() ( const osg::Vec3 &v1, const osg::Vec3 &v2, const osg::Vec3 &v3)
     {
-        if (!treatVertexDataAsTemporary)
-        {
-            // calc orientation of triangle.
-            osg::Vec3 normal = (v2-v1)^(v3-v1);
-            // normal.normalize();
+        // calc orientation of triangle.
+        osg::Vec3 normal = (v2-v1)^(v3-v1);
+        // normal.normalize();
 
-            updateNormal(normal,&v1);
-            updateNormal(normal,&v2);
-            updateNormal(normal,&v3);
-        }
-
+        updateNormal(normal,&v1);
+        updateNormal(normal,&v2);
+        updateNormal(normal,&v3);
     }
 };
 
@@ -144,7 +141,7 @@ static void smooth_old(osg::Geometry& geom)
     }
     geom.setNormalArray( normals, osg::Array::BIND_PER_VERTEX);
 
-    geom.dirtyDisplayList();
+    geom.dirtyGLObjects();
 }
 
 
@@ -223,8 +220,10 @@ struct SmoothTriangleIndexFunctor
 struct FindSharpEdgesFunctor
 {
     FindSharpEdgesFunctor():
+        _geometry(0),
         _vertices(0),
         _normals(0),
+        _creaseAngle(osg::PI_2),
         _maxDeviationDotProduct(0.0f),
         _currentPrimitiveSetIndex(0)
     {
@@ -480,11 +479,11 @@ struct FindSharpEdgesFunctor
             Triangles::iterator titr = pv->_triangles.begin();
             while(titr != pv->_triangles.end())
             {
-                Triangle* tri = titr->get();
-                osg::Vec3 normal = computeNormal(tri->_p1, tri->_p2, tri->_p3);
+                Triangle* pv_tri = titr->get();
+                osg::Vec3 normal = computeNormal(pv_tri->_p1, pv_tri->_p2, pv_tri->_p3);
 
                 Triangles associatedTriangles;
-                associatedTriangles.push_back(tri);
+                associatedTriangles.push_back(pv_tri);
 
                 // remove triangle for list
                 pv->_triangles.erase(titr);
@@ -515,7 +514,7 @@ struct FindSharpEdgesFunctor
                 // create duplicate vertex to set of associated triangles
                 unsigned int duplicated_p = duplicateVertex(p);
 
-                // now rest the index on th triangles of the point that was duplicated
+                // now rest the index on the triangles of the point that was duplicated
                 for(Triangles::iterator aitr = associatedTriangles.begin();
                     aitr != associatedTriangles.end();
                     ++aitr)
@@ -635,6 +634,13 @@ static void smooth_new(osg::Geometry& geom, double creaseAngle)
     }
 
     osg::TriangleIndexFunctor<FindSharpEdgesFunctor> fsef;
+
+    osgUtil::SharedArrayOptimizer sharedArrayOptimizer;
+    sharedArrayOptimizer.findDuplicatedUVs(geom);
+
+    // Duplicate shared arrays to avoid index errors during duplication
+    if (geom.containsSharedArrays()) geom.duplicateSharedArrays();
+
     if (fsef.set(&geom, creaseAngle))
     {
         // look for normals that deviate too far
@@ -649,17 +655,21 @@ static void smooth_new(osg::Geometry& geom, double creaseAngle)
         // fsef.listProblemVertices();
         fsef.updateGeometry();
 
+        vertices = dynamic_cast<osg::Vec3Array*>(geom.getVertexArray());
+        normals = dynamic_cast<osg::Vec3Array*>(geom.getNormalArray());
         osg::TriangleIndexFunctor<SmoothTriangleIndexFunctor> stif2;
         if (stif2.set(vertices, normals))
         {
             // accumulate all the normals
-            geom.accept(stif);
+            geom.accept(stif2);
 
             // normalize the normals
-            stif.normalize();
+            stif2.normalize();
         }
 
     }
+
+    sharedArrayOptimizer.deduplicateUVs(geom);
 }
 
 }
@@ -688,11 +698,7 @@ void SmoothingVisitor::smooth(osg::Geometry& geom, double creaseAngle)
 }
 
 
-void SmoothingVisitor::apply(osg::Geode& geode)
+void SmoothingVisitor::apply(osg::Geometry& geom)
 {
-    for(unsigned int i = 0; i < geode.getNumDrawables(); i++ )
-    {
-        osg::Geometry* geom = dynamic_cast<osg::Geometry*>(geode.getDrawable(i));
-        if (geom) smooth(*geom, _creaseAngle);
-    }
+    smooth(geom, _creaseAngle);
 }

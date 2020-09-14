@@ -1,10 +1,11 @@
 set(man3_EN
-  libcursor.xml
   libfb.xml
   libplot3.xml
+  libpkg.xml
   librt.xml
   libwdb.xml
   redblack.xml
+  libicv.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they

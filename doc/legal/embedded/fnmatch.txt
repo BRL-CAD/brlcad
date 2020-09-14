@@ -30,3 +30,8 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 
+file:/src/libbu/fnmatch.c
+
+Public domain, 2008, Todd C. Miller <Todd.Miller@courtesan.com>
+
+file:/src/libbu/charclass.h

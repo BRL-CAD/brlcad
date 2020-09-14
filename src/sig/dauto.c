@@ -34,6 +34,8 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -43,7 +45,7 @@ main(int argc, char *argv[])
 {
     static const char usage[] = "Usage: dauto [window_size (512)] < doubles >outputfile\n";
 
-    double *data;			/* Input buffer */
+    double *data;		/* Input buffer */
     double *r;			/* autocor output */
     double *weight;		/* weights to unbias estimation */
 
@@ -51,11 +53,16 @@ main(int argc, char *argv[])
     double *dp1, *dp2;
     size_t ret;
 
+    bu_setprogname(argv[0]);
+
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
+    if (L <= 0) {
+	bu_exit(1, "Invalid window size \"%s\" supplied, quitting", argv[1]);
+    }
     data = (double *)bu_calloc(L, sizeof(double), "data");
     r = (double *)bu_calloc(L, sizeof(double), "r");
     weight = (double *)bu_calloc(L, sizeof(double), "weight");

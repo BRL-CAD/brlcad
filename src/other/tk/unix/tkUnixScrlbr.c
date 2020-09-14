@@ -36,8 +36,11 @@ typedef struct UnixScrollbar {
  * variable is declared at this scope.
  */
 
-Tk_ClassProcs tkpScrollbarProcs = {
-    sizeof(Tk_ClassProcs)	/* size */
+const Tk_ClassProcs tkpScrollbarProcs = {
+    sizeof(Tk_ClassProcs),	/* size */
+    NULL,					/* worldChangedProc */
+    NULL,					/* createProc */
+    NULL					/* modalProc */
 };
 
 /*
@@ -60,13 +63,14 @@ TkScrollbar *
 TkpCreateScrollbar(
     Tk_Window tkwin)
 {
-    UnixScrollbar *scrollPtr = (UnixScrollbar *)ckalloc(sizeof(UnixScrollbar));
-    scrollPtr->troughGC = TkNone;
-    scrollPtr->copyGC = TkNone;
+    UnixScrollbar *scrollPtr = ckalloc(sizeof(UnixScrollbar));
+
+    scrollPtr->troughGC = NULL;
+    scrollPtr->copyGC = NULL;
 
     Tk_CreateEventHandler(tkwin,
 	    ExposureMask|StructureNotifyMask|FocusChangeMask,
-	    TkScrollbarEventProc, (ClientData) scrollPtr);
+	    TkScrollbarEventProc, scrollPtr);
 
     return (TkScrollbar *) scrollPtr;
 }
@@ -285,6 +289,11 @@ TkpComputeScrollbarGeometry(
     scrollPtr->inset = scrollPtr->highlightWidth + scrollPtr->borderWidth;
     width = (scrollPtr->vertical) ? Tk_Width(scrollPtr->tkwin)
 	    : Tk_Height(scrollPtr->tkwin);
+
+    /*
+     * Next line assumes that the arrow area is a square.
+     */
+
     scrollPtr->arrowLength = width - 2*scrollPtr->inset + 1;
     fieldLength = (scrollPtr->vertical ? Tk_Height(scrollPtr->tkwin)
 	    : Tk_Width(scrollPtr->tkwin))
@@ -301,14 +310,13 @@ TkpComputeScrollbarGeometry(
      * grabbed with the mouse).
      */
 
-    if (scrollPtr->sliderFirst > (fieldLength - MIN_SLIDER_LENGTH)) {
+    if (scrollPtr->sliderFirst > fieldLength - MIN_SLIDER_LENGTH) {
 	scrollPtr->sliderFirst = fieldLength - MIN_SLIDER_LENGTH;
     }
     if (scrollPtr->sliderFirst < 0) {
 	scrollPtr->sliderFirst = 0;
     }
-    if (scrollPtr->sliderLast < (scrollPtr->sliderFirst
-	    + MIN_SLIDER_LENGTH)) {
+    if (scrollPtr->sliderLast < scrollPtr->sliderFirst + MIN_SLIDER_LENGTH) {
 	scrollPtr->sliderLast = scrollPtr->sliderFirst + MIN_SLIDER_LENGTH;
     }
     if (scrollPtr->sliderLast > fieldLength) {
@@ -358,10 +366,10 @@ TkpDestroyScrollbar(
 {
     UnixScrollbar *unixScrollPtr = (UnixScrollbar *)scrollPtr;
 
-    if (unixScrollPtr->troughGC != TkNone) {
+    if (unixScrollPtr->troughGC != NULL) {
 	Tk_FreeGC(scrollPtr->display, unixScrollPtr->troughGC);
     }
-    if (unixScrollPtr->copyGC != TkNone) {
+    if (unixScrollPtr->copyGC != NULL) {
 	Tk_FreeGC(scrollPtr->display, unixScrollPtr->copyGC);
     }
 }
@@ -398,14 +406,14 @@ TkpConfigureScrollbar(
 
     gcValues.foreground = scrollPtr->troughColorPtr->pixel;
     new = Tk_GetGC(scrollPtr->tkwin, GCForeground, &gcValues);
-    if (unixScrollPtr->troughGC != TkNone) {
+    if (unixScrollPtr->troughGC != NULL) {
 	Tk_FreeGC(scrollPtr->display, unixScrollPtr->troughGC);
     }
     unixScrollPtr->troughGC = new;
-    if (unixScrollPtr->copyGC == TkNone) {
+    if (unixScrollPtr->copyGC == NULL) {
 	gcValues.graphics_exposures = False;
-	unixScrollPtr->copyGC = Tk_GetGC(scrollPtr->tkwin, GCGraphicsExposures,
-	    &gcValues);
+	unixScrollPtr->copyGC = Tk_GetGC(scrollPtr->tkwin,
+		GCGraphicsExposures, &gcValues);
     }
 }
 
@@ -434,6 +442,7 @@ TkpScrollbarPosition(
     int x, int y)		/* Coordinates within scrollPtr's window. */
 {
     int length, width, tmp;
+    register const int inset = scrollPtr->inset;
 
     if (scrollPtr->vertical) {
 	length = Tk_Height(scrollPtr->tkwin);
@@ -446,8 +455,7 @@ TkpScrollbarPosition(
 	width = Tk_Height(scrollPtr->tkwin);
     }
 
-    if ((x < scrollPtr->inset) || (x >= (width - scrollPtr->inset))
-	    || (y < scrollPtr->inset) || (y >= (length - scrollPtr->inset))) {
+    if (x<inset || x>=width-inset || y<inset || y>=length-inset) {
 	return OUTSIDE;
     }
 
@@ -456,7 +464,7 @@ TkpScrollbarPosition(
      * TkpDisplayScrollbar. Be sure to keep the two consistent.
      */
 
-    if (y < (scrollPtr->inset + scrollPtr->arrowLength)) {
+    if (y < inset + scrollPtr->arrowLength) {
 	return TOP_ARROW;
     }
     if (y < scrollPtr->sliderFirst) {
@@ -465,7 +473,7 @@ TkpScrollbarPosition(
     if (y < scrollPtr->sliderLast) {
 	return SLIDER;
     }
-    if (y >= (length - (scrollPtr->arrowLength + scrollPtr->inset))) {
+    if (y >= length - (scrollPtr->arrowLength + inset)) {
 	return BOTTOM_ARROW;
     }
     return BOTTOM_GAP;

@@ -32,6 +32,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -63,6 +64,8 @@ main(int argc, char **argv)
     int left[BINSIZE];
     int right[BINSIZE];
 
+    bu_setprogname(argv[0]);
+
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
 	argc--;
@@ -73,7 +76,7 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-    if ((fp = fopen(argv[1], "r")) == NULL) {
+    if ((fp = fopen(argv[1], "rb")) == NULL) {
 	bu_exit(2, "bwhisteq: Can't open \"%s\"\n", argv[1]);
     }
 

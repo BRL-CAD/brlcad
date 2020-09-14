@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #endif
 #ifdef HAVE_ZLIB_H
-#include <zlib.h>
+#include "zlib.h"
 #endif
 
 #include <libxml/xmlmemory.h>

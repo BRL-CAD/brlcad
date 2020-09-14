@@ -28,7 +28,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup bu_interrupt
+/** @addtogroup bu_env
  *
  * @brief Routines for managing signals.
  *

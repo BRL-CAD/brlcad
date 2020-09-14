@@ -1,0 +1,10 @@
+SHA-1 in C
+By Steve Reid <steve@edmweb.com>
+100% Public Domain
+
+There doesn't appear to be a definitive upstream for this code. One of a number of sources:
+
+https://github.com/clibs/sha1
+
+file:/src/libbu/sha1.c
+file:/src/libbu/sha1.h

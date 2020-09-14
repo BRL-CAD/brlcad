@@ -29,9 +29,13 @@ extern "C" {
  * +++ Defaults for element option specifications.
  */
 #define DEFAULT_FONT 		"TkDefaultFont"
+#ifdef MAC_OSX_TK
+#define DEFAULT_BACKGROUND	"systemTextBackgroundColor"
+#define DEFAULT_FOREGROUND	"systemTextColor"
+#else
 #define DEFAULT_BACKGROUND	"#d9d9d9"
 #define DEFAULT_FOREGROUND	"black"
-
+#endif
 /*------------------------------------------------------------------------
  * +++ Widget states.
  * 	Keep in sync with stateNames[] in tkstate.c.

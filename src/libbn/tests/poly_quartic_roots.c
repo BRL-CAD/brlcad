@@ -135,9 +135,12 @@ test_bn_poly_qua_rts(void)
 
 
 int
-main(int UNUSED(ac), char **UNUSED(av))
+main(int UNUSED(ac), char **av)
 {
     int ret;
+
+    bu_setprogname(av[0]);
+
     poly_init();
     ret = test_bn_poly_qua_rts();
 

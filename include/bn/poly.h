@@ -31,6 +31,9 @@
 #define BN_POLY_H
 
 #include "common.h"
+
+#include "vmath.h"
+
 #include "bu/magic.h"
 #include "bn/defines.h"
 #include "bn/complex.h"
@@ -38,7 +41,7 @@
 __BEGIN_DECLS
 
 /* This could be larger, or even dynamic... */
-#define BN_MAX_POLY_DEGREE 6	/* Maximum Poly Order */
+#define BN_MAX_POLY_DEGREE 6	/**< Maximum Poly Order */
 
 /**
  * Polynomial data type

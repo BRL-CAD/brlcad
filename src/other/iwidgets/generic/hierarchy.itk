@@ -291,7 +291,10 @@ itcl::body iwidgets::Hierarchy::constructor {args} {
     # bindings for mouse button 1 to do selection and button 3 to 
     # display a popup.
     #
-    bindtags $itk_component(list) [list $itk_component(list) . all]
+    
+    set tags [bindtags $itk_component(list)]
+    set idx [lsearch -exact $tags Text]
+    bindtags $itk_component(list) [lreplace $tags $idx $idx]
     
     bind $itk_component(list) <ButtonPress-1> \
             [itcl::code $this _select %x %y]

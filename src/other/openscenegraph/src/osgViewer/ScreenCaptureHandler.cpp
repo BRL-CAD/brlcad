@@ -72,8 +72,8 @@ class WindowCaptureCallback : public osg::Camera::DrawCallback
 
             void read();
             void readPixels();
-            void singlePBO(osg::GLBufferObject::Extensions* ext);
-            void multiPBO(osg::GLBufferObject::Extensions* ext);
+            void singlePBO(osg::GLExtensions* ext);
+            void multiPBO(osg::GLExtensions* ext);
 
             typedef std::vector< osg::ref_ptr<osg::Image> >             ImageBuffer;
             typedef std::vector< GLuint > PBOBuffer;
@@ -218,9 +218,9 @@ void WindowCaptureCallback::ContextData::updateTimings(osg::Timer_t tick_start,
 
 void WindowCaptureCallback::ContextData::read()
 {
-    osg::GLBufferObject::Extensions* ext = osg::GLBufferObject::getExtensions(_gc->getState()->getContextID(),true);
+    osg::GLExtensions* ext = osg::GLExtensions::Get(_gc->getState()->getContextID(),true);
 
-    if (ext->isPBOSupported() && !_pboBuffer.empty())
+    if (ext->isPBOSupported && !_pboBuffer.empty())
     {
         if (_pboBuffer.size()==1)
         {
@@ -275,7 +275,7 @@ void WindowCaptureCallback::ContextData::readPixels()
     _currentPboIndex = nextPboIndex;
 }
 
-void WindowCaptureCallback::ContextData::singlePBO(osg::GLBufferObject::Extensions* ext)
+void WindowCaptureCallback::ContextData::singlePBO(osg::GLExtensions* ext)
 {
     unsigned int nextImageIndex = (_currentImageIndex+1)%_imageBuffer.size();
 
@@ -350,7 +350,7 @@ void WindowCaptureCallback::ContextData::singlePBO(osg::GLBufferObject::Extensio
     _currentImageIndex = nextImageIndex;
 }
 
-void WindowCaptureCallback::ContextData::multiPBO(osg::GLBufferObject::Extensions* ext)
+void WindowCaptureCallback::ContextData::multiPBO(osg::GLExtensions* ext)
 {
     unsigned int nextImageIndex = (_currentImageIndex+1)%_imageBuffer.size();
     unsigned int nextPboIndex = (_currentPboIndex+1)%_pboBuffer.size();
@@ -747,7 +747,10 @@ osg::Camera* ScreenCaptureHandler::findAppropriateCameraForCallback(osgViewer::V
 // of that view's graphics contexts.
 bool ScreenCaptureHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-    osgViewer::ViewerBase* viewer = dynamic_cast<osgViewer::View*>(&aa)->getViewerBase();
+    osgViewer::View* view = dynamic_cast<osgViewer::View*>(&aa);
+    if (!view) return false;
+
+    osgViewer::ViewerBase* viewer = view->getViewerBase();
     if (!viewer) return false;
 
     switch(ea.getEventType())

@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -102,7 +103,7 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pixembed: cannot open \"%s\" for reading\n",
 		    file_name);
@@ -123,6 +124,11 @@ main(int argc, char **argv)
     size_t ydup;
     size_t i;
     size_t y;
+
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);

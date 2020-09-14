@@ -36,7 +36,8 @@ proc ::tk_setPalette {args} {
 	array set new $args
     }
     if {![info exists new(background)]} {
-	error "must specify a background color"
+	return -code error -errorcode {TK SET_PALETTE BACKGROUND} \
+	    "must specify a background color"
     }
     set bg [winfo rgb . $new(background)]
     if {![info exists new(foreground)]} {
@@ -99,7 +100,7 @@ proc ::tk_setPalette {args} {
 	set new(troughColor) $darkerBg
     }
 
-    # let's make one of each of the widgets so we know what the 
+    # let's make one of each of the widgets so we know what the
     # defaults are currently for this platform.
     toplevel .___tk_set_palette
     wm withdraw .___tk_set_palette
@@ -112,12 +113,12 @@ proc ::tk_setPalette {args} {
     }
 
     # Walk the widget hierarchy, recoloring all existing windows.
-    # The option database must be set according to what we do here, 
-    # but it breaks things if we set things in the database while 
+    # The option database must be set according to what we do here,
+    # but it breaks things if we set things in the database while
     # we are changing colors...so, ::tk::RecolorTree now returns the
     # option database changes that need to be made, and they
     # need to be evalled here to take effect.
-    # We have to walk the whole widget tree instead of just 
+    # We have to walk the whole widget tree instead of just
     # relying on the widgets we've created above to do the work
     # because different extensions may provide other kinds
     # of widgets that we don't currently know about, so we'll
@@ -143,7 +144,7 @@ proc ::tk_setPalette {args} {
 # ::tk::RecolorTree --
 # This procedure changes the colors in a window and all of its
 # descendants, according to information provided by the colors
-# argument. This looks at the defaults provided by the option 
+# argument. This looks at the defaults provided by the option
 # database, if it exists, and if not, then it looks at the default
 # value of the widget itself.
 #
@@ -204,27 +205,27 @@ proc ::tk::RecolorTree {w colors} {
 #
 # Arguments:
 # color -	Name of starting color.
-# perecent -	Integer telling how much to brighten or darken as a
+# percent -	Integer telling how much to brighten or darken as a
 #		percent: 50 means darken by 50%, 110 means brighten
 #		by 10%.
 
 proc ::tk::Darken {color percent} {
-    foreach {red green blue} [winfo rgb . $color] {
-	set red [expr {($red/256)*$percent/100}]
-	set green [expr {($green/256)*$percent/100}]
-	set blue [expr {($blue/256)*$percent/100}]
-	break
+    if {$percent < 0} {
+        return #000000
+    } elseif {$percent > 200} {
+        return #ffffff
+    } elseif {$percent <= 100} {
+        lassign [winfo rgb . $color] r g b
+        set r [expr {($r/256)*$percent/100}]
+        set g [expr {($g/256)*$percent/100}]
+        set b [expr {($b/256)*$percent/100}]
+    } elseif {$percent > 100} {
+        lassign [winfo rgb . $color] r g b
+        set r [expr {255 - ((65535-$r)/256)*(200-$percent)/100}]
+        set g [expr {255 - ((65535-$g)/256)*(200-$percent)/100}]
+        set b [expr {255 - ((65535-$b)/256)*(200-$percent)/100}]
     }
-    if {$red > 255} {
-	set red 255
-    }
-    if {$green > 255} {
-	set green 255
-    }
-    if {$blue > 255} {
-	set blue 255
-    }
-    return [format "#%02x%02x%02x" $red $green $blue]
+    return [format #%02x%02x%02x $r $g $b]
 }
 
 # ::tk_bisque --

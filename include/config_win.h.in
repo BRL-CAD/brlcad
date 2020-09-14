@@ -36,9 +36,6 @@
 #include <math.h>
 #endif
 
-/* !!! this should not be here, should fix the build system settings */
-#define __STDC__ 1
-
 /* 4127 conditional expression is constant
  * 4244 conversion from type 1 to type 2
  * 4305 truncation
@@ -48,14 +45,6 @@
  */
 #pragma warning( disable : 4127 4244 4312 4996 )
 /* #pragma warning( disable : 4244 4305 4018) */
-
-/*
- * Ensure that Project Settings / Project Options includes
- *	/Za		for ANSI C
- */
-# if !__STDC__
-#	error "STDC is not properly set on _WIN32 build, add /Za to Project Settings / Project Options"
-# endif
 
 #ifndef EXPAND_IN_STRING
 #  define EXPAND_IN_STRING(x) EXPAND_IN_STRING_INTERN(x)
@@ -98,15 +87,6 @@
 #define YYTOKENTYPE		1
 
 
-#define close _close
-#define dup _dup
-#define dup2 _dup2
-// Visual Studio 2019 doesn't like this definition in C++, but we appear
-// to need it for 2017...
-#if (defined(__cplusplus) && defined(_MSC_VER) && (_MSC_VER < 1920))
-#  define open _open
-#endif
-
 /* it we're compiling c++ sources, there's a possibility that we'll be
  * including libc++ headers (e.g., iostream) where these underscore IO
  * function hacks become counterproductive.
@@ -122,10 +102,13 @@
 #define chsize _chsize
 #define commit _commit
 #define creat _creat
+#define dup _dup
+#define dup2 _dup2
 /* #define filelength _filelength */
 #define locking _locking
 /* #define mktemp _mktemp */
 #define open _open
+#define close _close
 #define unlink _unlink
 
 /* io.h's _pipe func takes different args */
@@ -328,7 +311,9 @@ typedef int mode_t;
 #define fork() -1
 #define getprogname() _pgmptr
 #define HAVE_SHARED_RINT_TEST 1
-#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
+#ifndef __cplusplus
+#  define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
+#endif
 
 #if !defined(__cplusplus) && !defined(inline)
 /*  Microsoft specific inline specifier */

@@ -24,11 +24,38 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <errno.h>
 
 #include "bio.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/exit.h"
+
+static void
+sem_bomb(int eno) {
+    switch (eno) {
+	case EINVAL:
+	    bu_bomb("fatal semaphore acquisition failure EINVAL");
+	    break;
+	case EBUSY:
+	    bu_bomb("fatal semaphore acquisition failure EBUSY");
+	    break;
+	case EAGAIN:
+	    bu_bomb("fatal semaphore acquisition failure EAGAIN");
+	    break;
+	case EDEADLK:
+	    bu_bomb("fatal semaphore acquisition failure EDEADLK");
+	    break;
+	case EPERM:
+	    bu_bomb("fatal semaphore acquisition failure EPERM");
+	    break;
+	case EOWNERDEAD:
+	    bu_bomb("fatal semaphore acquisition failure EOWNERDEAD");
+	    break;
+	default:
+	    bu_bomb("fatal semaphore acquisition failure");
+    }
+}
 
 
 /*
@@ -131,22 +158,25 @@ bu_semaphore_init(unsigned int nsemaphores)
     }
 
 #  elif defined(HAVE_PTHREAD_H)
-    if (pthread_mutex_lock(&bu_init_lock)) {
+    int ret = pthread_mutex_lock(&bu_init_lock);
+    if (ret) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on init lock\n");
-	bu_bomb("fatal semaphore acquisition failure");
+	sem_bomb(ret);
     }
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
-	if (pthread_mutex_init(&bu_semaphores[i].mu,  NULL)) {
+	ret = pthread_mutex_init(&bu_semaphores[i].mu,  NULL);
+	if (ret) {
 	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
-	    bu_bomb("fatal semaphore acquisition failure");
+	    sem_bomb(ret);
 	}
     }
     bu_nsemaphores = nsemaphores;
-    if (pthread_mutex_unlock(&bu_init_lock)) {
+    ret = pthread_mutex_unlock(&bu_init_lock);
+    if (ret) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on init lock\n");
-	bu_bomb("fatal semaphore acquisition failure");
+	sem_bomb(ret);
     }
 
 #  elif defined(_WIN32) && !defined(__CYGWIN__)
@@ -229,9 +259,10 @@ bu_semaphore_acquire(unsigned int i)
 #  endif
 
 #  if defined(HAVE_PTHREAD_H)
-    if (pthread_mutex_lock(&bu_semaphores[i].mu)) {
+    int ret = pthread_mutex_lock(&bu_semaphores[i].mu);
+    if (ret) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on [%d]\n", i);
-	bu_bomb("fatal semaphore acquisition failure");
+	sem_bomb(ret);
     }
 #  endif
 
@@ -269,9 +300,10 @@ bu_semaphore_release(unsigned int i)
 #  endif
 
 #  if defined(HAVE_PTHREAD_H)
-    if (pthread_mutex_unlock(&bu_semaphores[i].mu)) {
+    int ret = pthread_mutex_unlock(&bu_semaphores[i].mu);
+    if (ret) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
-	bu_bomb("fatal semaphore acquisition failure");
+	sem_bomb(ret);
     }
 #  endif
 

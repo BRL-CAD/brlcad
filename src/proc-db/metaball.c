@@ -40,8 +40,9 @@
 #  include <unistd.h>
 #endif
 
-#include "bu/getopt.h"
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/getopt.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -234,6 +235,8 @@ main(int argc, char *argv[])
     char outfile[MAXPATHLEN] = "metaball.g";
     int optc;
     long count = COUNTMAX;
+
+    bu_setprogname(argv[0]);
 
     while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {
         if (bu_optopt == '?') optc='h';

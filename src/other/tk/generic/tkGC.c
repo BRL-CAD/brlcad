@@ -155,12 +155,12 @@ Tk_GetGC(
     if (valueMask & GCTile) {
 	valueKey.values.tile = valuePtr->tile;
     } else {
-	valueKey.values.tile = TkNone;
+	valueKey.values.tile = None;
     }
     if (valueMask & GCStipple) {
 	valueKey.values.stipple = valuePtr->stipple;
     } else {
-	valueKey.values.stipple = TkNone;
+	valueKey.values.stipple = None;
     }
     if (valueMask & GCTileStipXOrigin) {
 	valueKey.values.ts_x_origin = valuePtr->ts_x_origin;
@@ -175,7 +175,7 @@ Tk_GetGC(
     if (valueMask & GCFont) {
 	valueKey.values.font = valuePtr->font;
     } else {
-	valueKey.values.font = TkNone;
+	valueKey.values.font = None;
     }
     if (valueMask & GCSubwindowMode) {
 	valueKey.values.subwindow_mode = valuePtr->subwindow_mode;
@@ -200,7 +200,7 @@ Tk_GetGC(
     if (valueMask & GCClipMask) {
 	valueKey.values.clip_mask = valuePtr->clip_mask;
     } else {
-	valueKey.values.clip_mask = TkNone;
+	valueKey.values.clip_mask = None;
     }
     if (valueMask & GCDashOffset) {
 	valueKey.values.dash_offset = valuePtr->dash_offset;
@@ -218,7 +218,7 @@ Tk_GetGC(
     valueHashPtr = Tcl_CreateHashEntry(&dispPtr->gcValueTable,
 	    (char *) &valueKey, &isNew);
     if (!isNew) {
-	gcPtr = (TkGC *) Tcl_GetHashValue(valueHashPtr);
+	gcPtr = Tcl_GetHashValue(valueHashPtr);
 	gcPtr->refCount++;
 	return gcPtr->gc;
     }
@@ -228,7 +228,7 @@ Tk_GetGC(
      * and add a new structure to the database.
      */
 
-    gcPtr = (TkGC *) ckalloc(sizeof(TkGC));
+    gcPtr = ckalloc(sizeof(TkGC));
 
     /*
      * Find or make a drawable to use to specify the screen and depth of the
@@ -236,8 +236,8 @@ Tk_GetGC(
      * Tk_MakeWindowExist on the window.
      */
 
-    freeDrawable = TkNone;
-    if (Tk_WindowId(tkwin) != TkNone) {
+    freeDrawable = None;
+    if (Tk_WindowId(tkwin) != None) {
 	d = Tk_WindowId(tkwin);
     } else if (valueKey.depth ==
 	    DefaultDepth(valueKey.display, valueKey.screenNum)) {
@@ -260,7 +260,7 @@ Tk_GetGC(
     }
     Tcl_SetHashValue(valueHashPtr, gcPtr);
     Tcl_SetHashValue(idHashPtr, gcPtr);
-    if (freeDrawable != TkNone) {
+    if (freeDrawable != None) {
 	Tk_FreePixmap(valueKey.display, freeDrawable);
     }
 
@@ -294,9 +294,6 @@ Tk_FreeGC(
     register TkGC *gcPtr;
     TkDisplay *dispPtr = TkGetDisplay(display);
 
-    if (!dispPtr)
-        return;
-
     if (!dispPtr->gcInit) {
 	Tcl_Panic("Tk_FreeGC called before Tk_GetGC");
     }
@@ -314,14 +311,13 @@ Tk_FreeGC(
     if (idHashPtr == NULL) {
 	Tcl_Panic("Tk_FreeGC received unknown gc argument");
     }
-    gcPtr = (TkGC *) Tcl_GetHashValue(idHashPtr);
+    gcPtr = Tcl_GetHashValue(idHashPtr);
     gcPtr->refCount--;
     if (gcPtr->refCount == 0) {
-	Tk_FreeXId(gcPtr->display, (XID) XGContextFromGC(gcPtr->gc));
 	XFreeGC(gcPtr->display, gcPtr->gc);
 	Tcl_DeleteHashEntry(gcPtr->valueHashPtr);
 	Tcl_DeleteHashEntry(idHashPtr);
-	ckfree((char *) gcPtr);
+	ckfree(gcPtr);
     }
 }
 
@@ -352,18 +348,12 @@ TkGCCleanup(
 
     for (entryPtr = Tcl_FirstHashEntry(&dispPtr->gcIdTable, &search);
 	    entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	gcPtr = (TkGC *) Tcl_GetHashValue(entryPtr);
-
-	/*
-	 * This call is not needed, as it is only used on Unix to restore the
-	 * Id to the stack pool, and we don't want to use them anymore.
-	 *   Tk_FreeXId(gcPtr->display, (XID) XGContextFromGC(gcPtr->gc));
-	 */
+	gcPtr = Tcl_GetHashValue(entryPtr);
 
 	XFreeGC(gcPtr->display, gcPtr->gc);
 	Tcl_DeleteHashEntry(gcPtr->valueHashPtr);
 	Tcl_DeleteHashEntry(entryPtr);
-	ckfree((char *) gcPtr);
+	ckfree(gcPtr);
     }
     Tcl_DeleteHashTable(&dispPtr->gcValueTable);
     Tcl_DeleteHashTable(&dispPtr->gcIdTable);

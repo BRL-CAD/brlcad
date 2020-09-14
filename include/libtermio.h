@@ -47,22 +47,33 @@
 #  endif /* BSD */
 #endif /* HAVE_TERMIOS_H */
 
+#ifndef TERMIO_EXPORT
+#  if defined(TERMIO_DLL_EXPORTS) && defined(TERMIO_DLL_IMPORTS)
+#    error "Only TERMIO_DLL_EXPORTS or TERMIO_DLL_IMPORTS can be defined, not both."
+#  elif defined(TERMIO_DLL_EXPORTS)
+#    define TERMIO_EXPORT COMPILER_DLLEXPORT
+#  elif defined(TERMIO_DLL_IMPORTS)
+#    define TERMIO_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define TERMIO_EXPORT
+#  endif
+#endif
 
 __BEGIN_DECLS
 
 void clr_Cbreak(int fd);
-void set_Cbreak(int fd);
+TERMIO_EXPORT void set_Cbreak(int fd);
 void clr_Raw(int fd);
-void set_Raw(int fd);
+TERMIO_EXPORT void set_Raw(int fd);
 void set_Echo(int fd);
-void clr_Echo(int fd);
+TERMIO_EXPORT void clr_Echo(int fd);
 void set_Tabs(int fd);
 void clr_Tabs(int fd);
 void set_HUPCL(int fd);
 void clr_CRNL(int fd);
 unsigned short get_O_Speed(int fd);
-void save_Tty(int fd);
-void reset_Tty(int fd);
+TERMIO_EXPORT void save_Tty(int fd);
+TERMIO_EXPORT void reset_Tty(int fd);
 int save_Fil_Stat(int fd);
 int reset_Fil_Stat(int fd);
 int set_O_NDELAY(int fd);

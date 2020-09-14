@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/file.h"
 
@@ -62,6 +63,8 @@ write_g(char *fileName)
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+
     if (argc < 3) {
 	fprintf(stderr, "No pdb filename or g filename given.\n");
 	return 1;

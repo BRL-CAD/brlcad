@@ -31,10 +31,11 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
 
@@ -46,7 +47,7 @@ main(int argc, char **argv)
 {
     int c;
     int x;
-    fb *fbp;
+    struct fb *fbp;
     int xsize, ysize;
     int len;
     char *framebuffer = (char *)NULL;
@@ -55,6 +56,8 @@ main(int argc, char **argv)
     static RGBpixel red = { 255, 0, 0 };
     static RGBpixel green = { 0, 255, 0 };
     static RGBpixel blue = { 0, 0, 255 };
+
+    bu_setprogname(argv[0]);
 
     xsize = ysize = 0;
     while ((c = bu_getopt(argc, argv, "F:s:w:n:S:W:N:h?")) != -1) {

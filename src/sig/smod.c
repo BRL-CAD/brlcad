@@ -34,6 +34,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -179,6 +180,8 @@ main(int argc, char *argv[])
     unsigned int j, n;
     unsigned long clip_high, clip_low;
     short iobuf[BUFLEN];		/* input buffer */
+
+    bu_setprogname(argv[0]);
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;

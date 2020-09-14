@@ -734,10 +734,22 @@ add_test(NAME bu_mappedfile_repeat_parallel_10 COMMAND bu_test mappedfile 4 10)
 add_test(NAME bu_file_realpath_1 COMMAND bu_test realpath 1)
 add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 
+#
+#  *********** bu_dlopen/bu_dlsym test ************
+#
+add_subdirectory(dylib)
+
 CMAKEFILES(
   tests_bitv.cmake
   tests_vls.cmake
-)
+  dylib/README.txt
+  dylib/CMakeLists.txt
+  dylib/plugin_1.cpp
+  dylib/plugin_2.cpp
+  dylib/dylib.c
+  dylib/run.c
+  dylib/dylib.h
+  )
 
 CMAKEFILES(CMakeLists.txt)
 

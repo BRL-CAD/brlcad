@@ -44,6 +44,10 @@ if(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
    set(CMAKE_CXX_STANDARD 11)
 endif(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+
+find_package(PROJ4 REQUIRED)
+
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/port
@@ -69,6 +73,10 @@ endif(NOT DATA_DIR)
 if(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)
 endif(NOT DEFINED BUILD_SHARED_LIBS)
+
+if (NOT DEFINED BUILD_STATIC_LIBS)
+  set(BUILD_STATIC_LIBS OFF)
+endif (NOT DEFINED BUILD_STATIC_LIBS)
 
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
@@ -99,7 +107,11 @@ add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
 add_definitions(-DGNMDB_ENABLED)
 add_definitions(-DUSE_ONLY_CRYPTODLL_ALG)
-add_definitions(-DINST_DATA=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal\")
+if (NOT DEFINED GDAL_INST_DATA_DIR)
+  add_definitions(-DINST_DATA=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal\")
+else (NOT DEFINED GDAL_INST_DATA_DIR)
+  add_definitions(-DINST_DATA=\"${GDAL_INST_DATA_DIR}/gdal\")
+endif (NOT DEFINED GDAL_INST_DATA_DIR)
 set(HAVE_IEEEFP 1) # TODO test this for real
 
 # see if we have nullptr: https://stackoverflow.com/a/14112019
@@ -130,15 +142,15 @@ if(MSVC)
 endif(MSVC)
 
 find_package(ZLIB)
-if(ZLIB_LIBRARY)
-  include_directories(${ZLIB_INCLUDE_DIR})
+if(ZLIB_LIBRARIES)
+  include_directories(${ZLIB_INCLUDE_DIRS})
   add_definitions(-DHAVE_LIBZ)
-endif(ZLIB_LIBRARY)
+endif(ZLIB_LIBRARIES)
 find_package(PNG)
-if(PNG_LIBRARY)
-  include_directories(${PNG_INCLUDE_DIR})
+if(PNG_LIBRARIES)
+  include_directories(${PNG_INCLUDE_DIRS})
   add_definitions(-DUSE_PNG)
-endif(PNG_LIBRARY)
+endif(PNG_LIBRARIES)
 
 
 include(CheckTypeSize)
@@ -346,8 +358,8 @@ foreach(frmt ${OGR_FORMATS})
   set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
 endforeach(frmt ${OGR_FORMATS})
 
-set(lib_list ZLIB PNG M DL ICONV)
-set(gdal_libs ${PROJ4_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+set(gdal_libs ${PROJ4_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(lib_list M DL ICONV)
 foreach(ll ${lib_list})
   if(${ll}_LIBRARY)
     set(gdal_libs ${gdal_libs} ${${ll}_LIBRARY})
@@ -357,17 +369,34 @@ if(MSVC)
   set(gdal_libs ${gdal_libs} ws2_32.lib kernel32.lib psapi.lib)
 endif(MSVC)
 
-add_library(gdal ${gdal_srcs})
-if(gdal_libs)
-  target_link_libraries(gdal ${gdal_libs})
-endif(gdal_libs)
-install(TARGETS gdal
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
-SetTargetFolder(gdal "Third Party Libraries/GDAL")
+if (BUILD_SHARED_LIBS)
+  add_library(gdal SHARED ${gdal_srcs})
+  if(gdal_libs)
+    target_link_libraries(gdal ${gdal_libs})
+  endif(gdal_libs)
+  install(TARGETS gdal
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_SHARED_LIBS)
 
-add_subdirectory(progs)
+if (BUILD_STATIC_LIBS)
+  add_library(gdal-static STATIC ${gdal_srcs})
+  if (MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(gdal-static PROPERTIES PREFIX "lib")
+  else (MSVC)
+    set_target_properties(gdal-static PROPERTIES OUTPUT_NAME "gdal")
+  endif (MSVC)
+  install(TARGETS gdal-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_STATIC_LIBS)
+
+if (BUILD_SHARED_LIBS)
+  add_subdirectory(progs)
+endif (BUILD_SHARED_LIBS)
 
 # Handle Data files
 install(FILES LICENSE.TXT DESTINATION ${DATA_DIR}/gdal)

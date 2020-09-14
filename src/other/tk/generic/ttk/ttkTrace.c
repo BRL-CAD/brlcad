@@ -34,7 +34,7 @@ VarTraceProc(
     const char *name, *value;
     Tcl_Obj *valuePtr;
 
-    if (flags & TCL_INTERP_DESTROYED) {
+    if (Tcl_InterpDeleted(interp)) {
 	return NULL;
     }
 
@@ -54,7 +54,7 @@ VarTraceProc(
 	    ckfree((ClientData)tracePtr);
 	    return NULL;
 	}
-	Tcl_TraceVar(interp, name,
+	Tcl_TraceVar2(interp, name, NULL,
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		VarTraceProc, clientData);
 	tracePtr->callback(tracePtr->clientData, NULL);
@@ -85,7 +85,7 @@ Ttk_TraceHandle *Ttk_TraceVariable(
     Ttk_TraceProc callback,
     void *clientData)
 {
-    Ttk_TraceHandle *h = (Ttk_TraceHandle*)ckalloc(sizeof(*h));
+    Ttk_TraceHandle *h = ckalloc(sizeof(*h));
     int status;
 
     h->interp = interp;
@@ -94,13 +94,13 @@ Ttk_TraceHandle *Ttk_TraceVariable(
     h->clientData = clientData;
     h->callback = callback;
 
-    status = Tcl_TraceVar(interp, Tcl_GetString(varnameObj),
-	    TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+    status = Tcl_TraceVar2(interp, Tcl_GetString(varnameObj),
+	    NULL, TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 	    VarTraceProc, (ClientData)h);
 
     if (status != TCL_OK) {
 	Tcl_DecrRefCount(h->varnameObj);
-	ckfree((ClientData)h);
+	ckfree(h);
 	return NULL;
     }
 
@@ -150,11 +150,11 @@ void Ttk_UntraceVariable(Ttk_TraceHandle *h)
 	    h->interp = NULL;
 	    return;
 	}
-	Tcl_UntraceVar(h->interp, Tcl_GetString(h->varnameObj),
-		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+	Tcl_UntraceVar2(h->interp, Tcl_GetString(h->varnameObj),
+		NULL, TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		VarTraceProc, (ClientData)h);
 	Tcl_DecrRefCount(h->varnameObj);
-	ckfree((ClientData)h);
+	ckfree(h);
     }
 }
 

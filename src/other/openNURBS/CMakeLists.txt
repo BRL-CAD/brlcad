@@ -39,7 +39,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 # If we can, use OBJECT libraries to build both shared and static
 # libraries from the same .o files, saving double compilation
 include(CMakeDependentOption)
-cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
 
 if(BRLCAD_FLAGS_DEBUG)
   add_definitions(${DEBUG_CXX_FLAGS})
@@ -325,12 +325,12 @@ endif(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
 
 find_package(ZLIB REQUIRED)
 
-set(OPENNURBS_LINKLIBRARIES ${ZLIB_LIBRARY})
+set(OPENNURBS_LINKLIBRARIES ${ZLIB_LIBRARIES})
 
 # Ideally, we should only need ZLIB here
 include_directories(
   ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
-  ${ZLIB_INCLUDE_DIR}
+  ${ZLIB_INCLUDE_DIRS}
   )
 
 add_definitions(-DON_COMPILING_OPENNURBS)
@@ -385,7 +385,6 @@ if(BUILD_SHARED_LIBS)
 endif(BUILD_SHARED_LIBS)
 
 if(BUILD_STATIC_LIBS)
-  target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(openNURBS-static PROPERTIES PREFIX "lib")

@@ -34,7 +34,17 @@
 #define _BU_TCM_H
 
 #include "common.h"
+
+#if !defined(BRLCADBUILD)
+#  error "Warning: included bu/tc.h (compile-time API) without BRLCADBUILD defined"
+#endif
+#if !defined(HAVE_CONFIG_H)
+#  error "Warning: included bu/tc.h (compile-time API) without HAVE_CONFIG_H defined"
+#endif
+
 #include "bu/defines.h"
+
+#include "bio.h" /* For windows.h */
 
 __BEGIN_DECLS
 
@@ -42,25 +52,9 @@ __BEGIN_DECLS
 #  include <pthread.h>
 #endif
 #if defined(HAVE_WINDOWS_H)
-#  ifdef WIN32_LEAN_AND_MEAN
-#    undef WIN32_LEAN_AND_MEAN
-#  endif
-#  define WIN32_LEAN_AND_MEAN 434144 /* don't want winsock.h */
-
-#  ifdef NOMINMAX
-#    undef NOMINMAX
-#  endif
-#  define NOMINMAX 434144 /* don't break std::min and std::max */
-
-#  include <windows.h>
-
-#  undef WIN32_LEAN_AND_MEAN /* unset to not interfere with calling apps */
-#  undef NOMINMAX
-
 #  include <process.h>
 #  include <sys/timeb.h>
 #endif
-
 
 #define bu_thrd_error    0 /**< The requested operation failed */
 #define bu_thrd_success  1 /**< The requested operation succeeded */

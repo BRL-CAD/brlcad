@@ -88,6 +88,8 @@ main(int argc, const char **argv)
     int use_air = 0;
     fastf_t los = -1;
 
+    bu_setprogname(argv[0]);
+
     struct bu_opt_desc d[7] = {BU_OPT_DESC_NULL};
 
     BU_OPT(d[0],  "?", "help",     "",       NULL,             &print_help,   "print help and exit");

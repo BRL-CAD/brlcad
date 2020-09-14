@@ -27,3 +27,11 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
+
+file:/src/tclscripts/hv3/hv3_encodings.tcl
+file:/src/tclscripts/hv3/hv3_form.tcl
+file:/src/tclscripts/hv3/hv3.man
+file:/src/tclscripts/hv3/hv3_request.tcl
+file:/src/tclscripts/hv3/hv3.tcl
+file:/src/tclscripts/hv3/hv3_util.tcl
+file:/src/tclscripts/hv3/tkhtml.n

@@ -32,17 +32,6 @@ BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "libanalyze;librt;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(showshot showshot.c libbn)
 
-set(nirt_sfiles
-  sfiles/csv.nrt
-  sfiles/csv-gap.nrt
-  sfiles/default.nrt
-  sfiles/diff.nrt
-  sfiles/entryexit.nrt
-  sfiles/gap1.nrt
-  sfiles/gap2.nrt
-  )
-BRLCAD_ADDDATA(nirt_sfiles nirt)
-
 set(nirt_ignore_files
   CMakeLists.txt
   nirt.h

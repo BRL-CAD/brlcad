@@ -21,8 +21,16 @@
 
 #include "common.h"
 
+#include <string.h>
+
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/log.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "bu/malloc.h"
+
+extern const char *_bu_progname_raw(void);
 
 #define WAI_MALLOC(size) bu_malloc(size, "WAI_MALLOC")
 #define WAI_FREE(p) bu_free(p, "WAI_FREE")
@@ -80,6 +88,54 @@ extern int dladdr(const void *, Dl_info *);
 #else
 #error unsupported compiler
 #endif
+
+/* LIBBU fallback implementation */
+static
+int _bu_getExecutablePath(char* out, int capacity, int* dirname_length)
+{
+    const char *pname = _bu_progname_raw();
+    struct bu_vls epath = BU_VLS_INIT_ZERO;
+
+    if (pname[0] == '.') {
+        char iwd[MAXPATHLEN];
+        char fullpath[MAXPATHLEN];
+        bu_getiwd(iwd, MAXPATHLEN);
+	// Use a VLS for this, since in principle there's nothing stopping the
+	// iwd and the bu_progname each individually from running right up to
+	// MAXPATHLEN, and if they do a MAXPATHLEN buffer won't hold both of
+	// them for realpath to try and digest down into something sane.
+        bu_vls_sprintf(&epath, "%s%c%s", iwd, BU_DIR_SEPARATOR, pname);
+        if (!bu_file_realpath(bu_vls_cstr(&epath), fullpath)) {
+            /* Unable to resolve initial path concatentation */
+	    bu_vls_free(&epath);
+	    return -1;
+        }
+	bu_vls_sprintf(&epath, "%s", fullpath);
+    } else {
+	bu_vls_sprintf(&epath, "%s", pname);
+    }
+
+    int length = bu_vls_strlen(&epath);
+    if (length <= capacity) {
+
+	memcpy(out, bu_vls_cstr(&epath), length);
+
+	if (dirname_length) {
+	    int i;
+	    for (i = length - 1; i >= 0; --i) {
+		if (out[i] == '/') {
+		    *dirname_length = i;
+		    break;
+		}
+	    }
+	}
+    }
+
+    bu_vls_free(&epath);
+
+    return length;
+}
+
 
 #if defined(_WIN32)
 
@@ -219,13 +275,13 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 WAI_FUNCSPEC
 int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 {
-  char buffer[PATH_MAX];
+  char buffer[MAXPATHLEN];
   char* resolved = NULL;
   int length = -1;
 
   for (;;)
   {
-    resolved = realpath(WAI_PROC_SELF_EXE, buffer);
+    resolved = bu_file_realpath(WAI_PROC_SELF_EXE, buffer);
     if (!resolved)
       break;
 
@@ -250,6 +306,10 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
     }
 
     break;
+  }
+
+  if (length <= 0) {
+    return _bu_getExecutablePath(out, capacity, dirname_length);
   }
 
   return length;
@@ -287,12 +347,12 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
     for (;;)
     {
-      char buffer[PATH_MAX < 1024 ? 1024 : PATH_MAX];
+      char buffer[MAXPATHLEN < 1024 ? 1024 : MAXPATHLEN];
       uint64_t low, high;
       char perms[5];
       uint64_t offset;
       uint32_t major, minor;
-      char path[PATH_MAX];
+      char path[MAXPATHLEN];
       uint32_t inode;
 
       if (!bu_fgets(buffer, sizeof(buffer), maps))
@@ -306,7 +366,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
         {
           char* resolved;
 
-          resolved = realpath(path, buffer);
+          resolved = bu_file_realpath(path, buffer);
           if (!resolved)
             break;
 
@@ -398,8 +458,8 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 WAI_FUNCSPEC
 int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 {
-  char buffer1[PATH_MAX];
-  char buffer2[PATH_MAX];
+  char buffer1[MAXPATHLEN];
+  char buffer2[MAXPATHLEN];
   char* path = buffer1;
   char* resolved = NULL;
   int length = -1;
@@ -414,7 +474,7 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
         break;
     }
 
-    resolved = realpath(path, buffer2);
+    resolved = bu_file_realpath(path, buffer2);
     if (!resolved)
       break;
 
@@ -444,13 +504,17 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
   if (path != buffer1)
     WAI_FREE(path);
 
+  if (length <= 0) {
+    return _bu_getExecutablePath(out, capacity, dirname_length);
+  }
+
   return length;
 }
 
 WAI_NOINLINE WAI_FUNCSPEC
 int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 {
-  char buffer[PATH_MAX];
+  char buffer[MAXPATHLEN];
   char* resolved = NULL;
   int length = -1;
 
@@ -460,7 +524,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
     if (dladdr(WAI_RETURN_ADDRESS(), &info))
     {
-      resolved = realpath(info.dli_fname, buffer);
+      resolved = bu_file_realpath(info.dli_fname, buffer);
       if (!resolved)
         break;
 
@@ -506,8 +570,8 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 WAI_FUNCSPEC
 int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 {
-  char buffer1[PATH_MAX];
-  char buffer2[PATH_MAX];
+  char buffer1[MAXPATHLEN];
+  char buffer2[MAXPATHLEN];
   char* resolved = NULL;
   FILE* self_exe = NULL;
   int length = -1;
@@ -521,7 +585,7 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
     if (!bu_fgets(buffer1, sizeof(buffer1), self_exe))
       break;
 
-    resolved = realpath(buffer1, buffer2);
+    resolved = bu_file_realpath(buffer1, buffer2);
     if (!resolved)
       break;
 
@@ -550,13 +614,17 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 
   fclose(self_exe);
 
+  if (length <= 0) {
+    return _bu_getExecutablePath(out, capacity, dirname_length);
+  }
+
   return length;
 }
 
 WAI_FUNCSPEC
 int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 {
-  char buffer[PATH_MAX];
+  char buffer[MAXPATHLEN];
   char* resolved = NULL;
   int length = -1;
 
@@ -566,7 +634,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
     if (dladdr(WAI_RETURN_ADDRESS(), &info))
     {
-      resolved = realpath(info.dli_fname, buffer);
+      resolved = bu_file_realpath(info.dli_fname, buffer);
       if (!resolved)
         break;
 
@@ -610,8 +678,8 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 WAI_FUNCSPEC
 int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 {
-  char buffer1[PATH_MAX];
-  char buffer2[PATH_MAX];
+  char buffer1[MAXPATHLEN];
+  char buffer2[MAXPATHLEN];
   char* path = buffer1;
   char* resolved = NULL;
   int length = -1;
@@ -628,7 +696,7 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
     if (sysctl(mib, (u_int)(sizeof(mib) / sizeof(mib[0])), path, &size, NULL, 0) != 0)
         break;
 
-    resolved = realpath(path, buffer2);
+    resolved = bu_file_realpath(path, buffer2);
     if (!resolved)
       break;
 
@@ -658,13 +726,17 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
   if (path != buffer1)
     WAI_FREE(path);
 
+  if (length <= 0) {
+    return _bu_getExecutablePath(out, capacity, dirname_length);
+  }
+
   return length;
 }
 
 WAI_NOINLINE WAI_FUNCSPEC
 int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 {
-  char buffer[PATH_MAX];
+  char buffer[MAXPATHLEN];
   char* resolved = NULL;
   int length = -1;
 
@@ -674,7 +746,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
     if (dladdr(WAI_RETURN_ADDRESS(), &info))
     {
-      resolved = realpath(info.dli_fname, buffer);
+      resolved = bu_file_realpath(info.dli_fname, buffer);
       if (!resolved)
         break;
 
@@ -707,10 +779,31 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
 #else
 
-#error unsupported platform
+/* LIBBU fallback implementation */
+WAI_FUNCSPEC
+int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
+{
+    return _bu_getExecutablePath(out, capacity, dirname_length);
+}
+
+WAI_NOINLINE WAI_FUNCSPEC
+int WAI_PREFIX(getModulePath)(char* UNUSED(out), int UNUSED(capacity), int* UNUSED(dirname_length))
+{
+    return -1;
+}
 
 #endif
 
 #ifdef __cplusplus
 }
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

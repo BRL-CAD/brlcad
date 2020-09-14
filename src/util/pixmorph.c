@@ -45,12 +45,13 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 /* Adapted from an assignment for
@@ -414,6 +415,8 @@ main(int argc, char **argv)
     long int i;
     long int autosize;
 
+    bu_setprogname(argv[0]);
+
     autosize = 1L;
     pa_width = pa_height = 0;
     if (get_args(argc, argv, &picAname, &picBname, &linesfilename,
@@ -424,17 +427,17 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    picA = fopen(picAname, "r");
+    picA = fopen(picAname, "rb");
     if (picA == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", picAname);
 	return 1;
     }
-    picB = fopen(picBname, "r");
+    picB = fopen(picBname, "rb");
     if (picB == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", picBname);
 	return 1;
     }
-    linesfile = fopen(linesfilename, "r");
+    linesfile = fopen(linesfilename, "rb");
     if (linesfile == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", linesfilename);
 	return 1;

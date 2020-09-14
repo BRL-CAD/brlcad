@@ -1,3 +1,28 @@
+/*                     O P E N S H E L L . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2020 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file OpenShell.h
+ *
+ * Brief description
+ *
+ */
+
 #ifndef CONV_STEP_STEP_G_OPENSHELL_H
 #define CONV_STEP_STEP_G_OPENSHELL_H
 

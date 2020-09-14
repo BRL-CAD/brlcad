@@ -1184,10 +1184,11 @@ populate_triangle_indexes(struct ga_t *ga,
     tri_arr_2D_t index_arr_tri_2D = NULL;
     tri_arr_3D_t index_arr_tri_3D = NULL;
 
-    double *facePoints;
-    int *triFaces;
-    size_t i, numFacePoints;
-    struct faceuse *fu;
+    double *facePoints = NULL;
+    int *triFaces = NULL;
+    size_t i = 0;
+    size_t numFacePoints = 0;
+    struct faceuse *fu = NULL;
     const int POINTS_PER_FACE = 3;
 
     if (ti->index_arr_tri == (void *)NULL) {
@@ -3526,7 +3527,7 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 	FILE *my_stream;
 	int parse_err;
 
-	if (!(my_stream = fopen(source_path, "r"))) {
+	if (!(my_stream = fopen(source_path, "rb"))) {
 	    perror("libgcv");
 	    bu_log("Cannot open input file (%s)\n", source_path);
 	    obj_parser_destroy(ga.parser);
@@ -3588,7 +3589,7 @@ obj_can_read(const char *source_path)
 	obj_parser_destroy(parser);
 	return 0;
     }
-    if (!(fp = fopen(source_path, "r"))) {
+    if (!(fp = fopen(source_path, "rb"))) {
 	obj_parser_destroy(parser);
 	return 0;
     }
@@ -3613,7 +3614,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_obj_read, &gcv_con
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
-GCV_EXPORT const struct gcv_plugin *
+COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*

@@ -52,7 +52,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${BRLCAD_SOURCE_DIR}/include
   ${BRLCAD_BINARY_DIR}/include
-  ${TCL_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 
 PERPLEX_TARGET(dom2dox_scanner dom2dox_scanner.perplex)

@@ -47,7 +47,7 @@
 #include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "icv.h"
 
 #include "./rtuif.h"
@@ -597,11 +597,11 @@ extern double airdensity;
 static unsigned int clt_mode;           /* Active render buffers */
 static uint8_t clt_o[2];		/* Sub buffer offsets in bytes: {CLT_COLOR, MAX} */
 
-static fb *clt_fbp = FB_NULL;
+static struct fb *clt_fbp = FB_NULL;
 
 
 void
-clt_connect_fb(fb *fbp)
+clt_connect_fb(struct fb *fbp)
 {
     clt_fbp = fbp;
 }
@@ -1267,7 +1267,7 @@ res_pr(void)
 /**
  * Command table for RT control script language
  */
-struct command_tab rt_cmdtab[] = {
+struct command_tab rt_do_tab[] = {
     {"start", "frame number", "start a new frame",
      cm_start,	2, 2},
     {"viewsize", "size in mm", "set view size",

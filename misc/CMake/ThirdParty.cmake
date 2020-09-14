@@ -175,10 +175,16 @@ function(THIRD_PARTY dir varname_root build_target description)
     set(${varname_root}_FOUND_STATUS ${${varname_root}_FOUND})
 
     # Initialize (or rather, uninitialize) variables in preparation for search
-    set(${varname_root}_FOUND "${varname_root}-NOTFOUND" CACHE STRING "${varname_root}_FOUND" FORCE)
+    set(${varname_root}_FOUND "${varname_root}-NOTFOUND")
     mark_as_advanced(${varname_root}_FOUND)
     set(${varname_root}_LIBRARY "${varname_root}-NOTFOUND" CACHE STRING "${varname_root}_LIBRARY" FORCE)
+    mark_as_advanced(${varname_root}_LIBRARY)
+    set(${varname_root}_LIBRARIES "${varname_root}-NOTFOUND" CACHE STRING "${varname_root}_LIBRARIES" FORCE)
+    mark_as_advanced(${varname_root}_LIBRARIES)
     set(${varname_root}_INCLUDE_DIR "${varname_root}-NOTFOUND" CACHE STRING "${varname_root}_INCLUDE_DIR" FORCE)
+    mark_as_advanced(${varname_root}_INCLUDE_DIR)
+    set(${varname_root}_INCLUDE_DIRS "${varname_root}-NOTFOUND" CACHE STRING "${varname_root}_INCLUDE_DIRS" FORCE)
+    mark_as_advanced(${varname_root}_INCLUDE_DIRS)
 
     # Be quiet if we're doing this over
     if("${${varname_root}_FOUND_STATUS}" MATCHES "NOTFOUND")
@@ -227,10 +233,10 @@ function(THIRD_PARTY dir varname_root build_target description)
     file(GLOB STALE_FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}${rootname}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
     foreach(stale_file ${STALE_FILES})
-      EXEC_PROGRAM(
-	${CMAKE_COMMAND} ARGS -E remove ${stale_file}
+      execute_process(
+	COMMAND ${CMAKE_COMMAND} -E remove ${stale_file}
 	OUTPUT_VARIABLE rm_out
-	RETURN_VALUE rm_retval
+	RESULT_VARIABLE rm_retval
 	)
     endforeach(stale_file ${STALE_FILES})
 
@@ -245,12 +251,22 @@ function(THIRD_PARTY dir varname_root build_target description)
   if(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
     add_subdirectory(${dir})
     set(${varname_root}_LIBRARY "${build_target}" CACHE STRING "${varname_root}_LIBRARY" FORCE)
+    set(${varname_root}_LIBRARIES "${build_target}" CACHE STRING "${varname_root}_LIBRARIES" FORCE)
     set(${varname_root}_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${dir}" "${CMAKE_CURRENT_BINARY_DIR}/${dir}" CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
+    set(${varname_root}_INCLUDE_DIRS "${${varname_root}_INCLUDE_DIR}" CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
   endif(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
 
   # Let parent scope know what's happening
+  set(${varname_root}_FOUND "${${varname_root}_FOUND}" PARENT_SCOPE)
   set(${varname_root}_LIBRARY "${${varname_root}_LIBRARY}" PARENT_SCOPE)
+  mark_as_advanced(${varname_root}_LIBRARY)
+  set(${varname_root}_LIBRARIES "${${varname_root}_LIBRARIES}" PARENT_SCOPE)
+  mark_as_advanced(${varname_root}_LIBRARIES)
   set(${varname_root}_INCLUDE_DIR "${${varname_root}_INCLUDE_DIR}" PARENT_SCOPE)
+  mark_as_advanced(${varname_root}_INCLUDE_DIR)
+  set(${varname_root}_INCLUDE_DIRS "${${varname_root}_INCLUDE_DIRS}" PARENT_SCOPE)
+  mark_as_advanced(${varname_root}_INCLUDE_DIRS)
+
   set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ${${CMAKE_PROJECT_NAME}_${varname_root}_BUILD} PARENT_SCOPE)
   set(${CMAKE_PROJECT_NAME}_${varname_root} "${${CMAKE_PROJECT_NAME}_${varname_root}}" PARENT_SCOPE)
 
@@ -264,8 +280,6 @@ function(THIRD_PARTY dir varname_root build_target description)
   # For drop-down menus in CMake gui - set STRINGS property
   set_property(CACHE ${CMAKE_PROJECT_NAME}_${varname_root} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
 
-  mark_as_advanced(${varname_root}_LIBRARY)
-  mark_as_advanced(${varname_root}_INCLUDE_DIR)
 endfunction(THIRD_PARTY)
 
 

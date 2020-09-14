@@ -135,9 +135,13 @@ set demo_arrowInfo(y) 150
 set demo_arrowInfo(smallTips) {5 5 2}
 set demo_arrowInfo(count) 0
 if {[winfo depth $c] > 1} {
-    set demo_arrowInfo(bigLineStyle) "-fill SkyBlue1"
-    set demo_arrowInfo(boxStyle) "-fill {} -outline black -width 1"
-    set demo_arrowInfo(activeStyle) "-fill red -outline black -width 1"
+    if {[tk windowingsystem] eq "aqua"} {
+	set demo_arrowInfo(bigLineStyle) "-fill systemSelectedTextBackgroundColor"
+    } else {
+	set demo_arrowInfo(bigLineStyle) "-fill LightSeaGreen"
+    }
+    set demo_arrowInfo(boxStyle) "-fill {} -width 1"
+    set demo_arrowInfo(activeStyle) "-fill red -width 1"
 } else {
     # Main widget program sets variable tk_demoDirectory
     set demo_arrowInfo(bigLineStyle) "-fill black \

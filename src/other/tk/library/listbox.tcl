@@ -14,7 +14,7 @@
 # tk::Priv elements used in this file:
 #
 # afterId -		Token returned by "after" for autoscanning.
-# listboxPrev -		The last element to be selected or deselected
+# listboxPrev -	The last element to be selected or deselected
 #			during a selection operation.
 # listboxSelection -	All of the items that were selected before the
 #			current selection operation (such as a mouse
@@ -69,28 +69,28 @@ bind Listbox <B1-Enter> {
     tk::CancelRepeat
 }
 
-bind Listbox <Up> {
+bind Listbox <<PrevLine>> {
     tk::ListboxUpDown %W -1
 }
-bind Listbox <Shift-Up> {
+bind Listbox <<SelectPrevLine>> {
     tk::ListboxExtendUpDown %W -1
 }
-bind Listbox <Down> {
+bind Listbox <<NextLine>> {
     tk::ListboxUpDown %W 1
 }
-bind Listbox <Shift-Down> {
+bind Listbox <<SelectNextLine>> {
     tk::ListboxExtendUpDown %W 1
 }
-bind Listbox <Left> {
+bind Listbox <<PrevChar>> {
     %W xview scroll -1 units
 }
-bind Listbox <Control-Left> {
+bind Listbox <<PrevWord>> {
     %W xview scroll -1 pages
 }
-bind Listbox <Right> {
+bind Listbox <<NextChar>> {
     %W xview scroll 1 units
 }
-bind Listbox <Control-Right> {
+bind Listbox <<NextWord>> {
     %W xview scroll 1 pages
 }
 bind Listbox <Prior> {
@@ -107,10 +107,10 @@ bind Listbox <Control-Prior> {
 bind Listbox <Control-Next> {
     %W xview scroll 1 pages
 }
-bind Listbox <Home> {
+bind Listbox <<LineStart>> {
     %W xview moveto 0
 }
-bind Listbox <End> {
+bind Listbox <<LineEnd>> {
     %W xview moveto 1
 }
 bind Listbox <Control-Home> {
@@ -120,7 +120,7 @@ bind Listbox <Control-Home> {
     %W selection set 0
     tk::FireListboxSelectEvent %W
 }
-bind Listbox <Shift-Control-Home> {
+bind Listbox <Control-Shift-Home> {
     tk::ListboxDataExtend %W 0
 }
 bind Listbox <Control-End> {
@@ -130,7 +130,7 @@ bind Listbox <Control-End> {
     %W selection set end
     tk::FireListboxSelectEvent %W
 }
-bind Listbox <Shift-Control-End> {
+bind Listbox <Control-Shift-End> {
     tk::ListboxDataExtend %W [%W index end]
 }
 bind Listbox <<Copy>> {
@@ -157,10 +157,10 @@ bind Listbox <Shift-Select> {
 bind Listbox <Escape> {
     tk::ListboxCancel %W
 }
-bind Listbox <Control-slash> {
+bind Listbox <<SelectAll>> {
     tk::ListboxSelectAll %W
 }
-bind Listbox <Control-backslash> {
+bind Listbox <<SelectNone>> {
     if {[%W cget -selectmode] ne "browse"} {
 	%W selection clear 0 end
         tk::FireListboxSelectEvent %W
@@ -182,36 +182,57 @@ bind Listbox <B2-Motion> {
 
 if {[tk windowingsystem] eq "aqua"} {
     bind Listbox <MouseWheel> {
-        %W yview scroll [expr {- (%D)}] units
+        %W yview scroll [expr {-(%D)}] units
     }
     bind Listbox <Option-MouseWheel> {
         %W yview scroll [expr {-10 * (%D)}] units
     }
     bind Listbox <Shift-MouseWheel> {
-        %W xview scroll [expr {- (%D)}] units
+        %W xview scroll [expr {-(%D)}] units
     }
     bind Listbox <Shift-Option-MouseWheel> {
         %W xview scroll [expr {-10 * (%D)}] units
     }
 } else {
     bind Listbox <MouseWheel> {
-        %W yview scroll [expr {- (%D / 120) * 4}] units
+	if {%D >= 0} {
+	    %W yview scroll [expr {-%D/30}] units
+	} else {
+	    %W yview scroll [expr {(29-%D)/30}] units
+	}
+    }
+    bind Listbox <Shift-MouseWheel> {
+	if {%D >= 0} {
+	    %W xview scroll [expr {-%D/30}] units
+	} else {
+	    %W xview scroll [expr {(29-%D)/30}] units
+	}
     }
 }
 
-if {"x11" eq [tk windowingsystem]} {
+if {[tk windowingsystem] eq "x11"} {
     # Support for mousewheels on Linux/Unix commonly comes through mapping
     # the wheel to the extended buttons.  If you have a mousewheel, find
     # Linux configuration info at:
-    #	http://www.inria.fr/koala/colas/mouse-wheel-scroll/
+    #	http://linuxreviews.org/howtos/xfree/mouse/
     bind Listbox <4> {
 	if {!$tk_strictMotif} {
 	    %W yview scroll -5 units
 	}
     }
+    bind Listbox <Shift-4> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll -5 units
+	}
+    }
     bind Listbox <5> {
 	if {!$tk_strictMotif} {
 	    %W yview scroll 5 units
+	}
+    }
+    bind Listbox <Shift-5> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll 5 units
 	}
     }
 }

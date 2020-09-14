@@ -34,6 +34,8 @@ main(int ac, char *av[]) {
     struct ged *dbp;
     const char *tops[3] = {"tops", "-n", NULL};
 
+    bu_setprogname(av[0]);
+
     if (ac != 2) {
 	printf("Usage: %s file.g\n", av[0]);
 	return 1;

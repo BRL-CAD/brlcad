@@ -33,6 +33,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -107,10 +108,11 @@ get_args(int argc, char *argv[])
 	if (isatty(fileno(stdin)))
 	    return 0;
 	infp = stdin;
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	static char *file_name = NULL;
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "%s: cannot open \"%s\" for reading\n",
 		    progname, file_name);
@@ -136,10 +138,14 @@ main(int argc, char *argv[])
 
     double buf[BU_PAGE_SIZE] = {0.0};		/* working buffer */
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv) || isatty(fileno(infp))
 	|| isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
     }
+
+    setmode(fileno(stdout), O_BINARY);
 
     while ((n = fread(buf, sizeof(*buf), BU_PAGE_SIZE, infp)) > 0) {
 	for (i = 0; i < numop; i++) {

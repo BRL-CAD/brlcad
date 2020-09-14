@@ -62,6 +62,8 @@ main(int argc, char *argv[])
     int flip_transforms = 0;
     AP203_Contents *sc = new AP203_Contents;
 
+    bu_setprogname(argv[0]);
+
     // process command line arguments
     int c;
     char *output_file = (char *)NULL;

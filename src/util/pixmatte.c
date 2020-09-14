@@ -46,6 +46,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/str.h"
@@ -211,6 +212,8 @@ main(int argc, char **argv)
 {
 
     int chunkcount = 0;
+
+    bu_setprogname(argv[0]);
 
     get_args(argc, argv);
 

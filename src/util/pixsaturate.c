@@ -36,6 +36,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -63,6 +64,11 @@ main(int argc, char **argv)
     size_t nby;
     unsigned char *cp;
     size_t ret;
+
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (argc != 2)
 	printusage ();

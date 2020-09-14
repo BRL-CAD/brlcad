@@ -34,11 +34,13 @@
 #define BN_NUMGEN_H
 
 #include "common.h"
+
+#include "vmath.h"
+
 #include "bn/defines.h"
 
 __BEGIN_DECLS
 /* Most of the following are API design possibilities only - not yet active */
-#if 0
 /**
  * The following container holds all state associated with a particular
  * number generator.  The details of that state are specific to the
@@ -48,6 +50,7 @@ __BEGIN_DECLS
  */
 typedef struct bn_num_s *bn_numgen;
 
+#if 0
 /**
  * The available number generators in libbn.
  */

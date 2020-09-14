@@ -59,9 +59,9 @@ __BEGIN_DECLS
 #  if defined(WDB_DLL_EXPORTS) && defined(WDB_DLL_IMPORTS)
 #    error "Only WDB_DLL_EXPORTS or WDB_DLL_IMPORTS can be defined, not both."
 #  elif defined(WDB_DLL_EXPORTS)
-#    define WDB_EXPORT __declspec(dllexport)
+#    define WDB_EXPORT COMPILER_DLLEXPORT
 #  elif defined(WDB_DLL_IMPORTS)
-#    define WDB_EXPORT __declspec(dllimport)
+#    define WDB_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define WDB_EXPORT
 #  endif
@@ -500,11 +500,9 @@ WDB_EXPORT int mk_bot_w_normals_and_uvs(
 					 * into normals array), must
 					 * have 3*num_faces entries
 					 */
-    size_t num_uvs, /* number of uv texture coordinates in uvs array */
-    fastf_t *uvs,   /* array of floats for uv texture coordinates [num_uvs*3] */
-    int *face_uvs   /* array of ints (indices into uvs array),
-		     * must have 3*num_faces entries
-		     */
+    size_t num_uvs, /**< number of uv texture coordinates in uvs array */
+    fastf_t *uvs,   /**< array of floats for uv texture coordinates [num_uvs*3] */
+    int *face_uvs   /**< array of ints (indices into uvs array), must have 3*num_faces entries */
     );
 
 /**

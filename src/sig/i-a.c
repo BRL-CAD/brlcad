@@ -24,14 +24,17 @@
 #include "common.h"
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/snooze.h"
 
 
 int
-main(void)
+main(int UNUSED(argc), const char **argv)
 {
     short ibuf[16*1024];
     int n, i;
+
+    bu_setprogname(argv[0]);
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));

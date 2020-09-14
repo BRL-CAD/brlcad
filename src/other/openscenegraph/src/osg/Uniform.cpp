@@ -45,10 +45,13 @@ Uniform::Uniform( Type type, const std::string& name, int numElements ) :
     allocateDataArray();
 }
 
-Uniform::Uniform( const Uniform& rhs, const CopyOp& copyop ) :
-    Object(rhs,copyop), _type(rhs._type)
+Uniform::Uniform(const Uniform& uniform, const CopyOp& copyop) :
+    Object(uniform, copyop),
+    _type(uniform._type),
+    _updateCallback(copyop(uniform._updateCallback.get())),
+    _eventCallback(copyop(uniform._eventCallback.get()))
 {
-    copyData( rhs );
+    copyData(uniform);
 }
 
 Uniform::~Uniform()
@@ -120,7 +123,7 @@ void Uniform::setNumElements( unsigned int numElements )
 void Uniform::allocateDataArray()
 {
     // if one array is already allocated, the job is done.
-    if( _floatArray.valid() || _doubleArray.valid() || _intArray.valid() || _uintArray.valid() ) return;
+    if( _floatArray.valid() || _doubleArray.valid() || _intArray.valid() || _uintArray.valid() || _int64Array.valid() || _uint64Array.valid()) return;
 
     // array cannot be created until _type and _numElements are specified
     int arrayNumElements = getInternalArrayNumElements();
@@ -144,6 +147,14 @@ void Uniform::allocateDataArray()
                 _uintArray = new UIntArray(arrayNumElements);
                 return;
 
+            case GL_INT64_ARB:
+                _int64Array = new Int64Array(arrayNumElements);
+                return;
+
+            case GL_UNSIGNED_INT64_ARB:
+                _uint64Array = new UInt64Array(arrayNumElements);
+                return;
+
             default:
                 break;
         }
@@ -165,6 +176,8 @@ bool Uniform::setArray( FloatArray* array )
     _doubleArray = 0;
     _intArray = 0;
     _uintArray = 0;
+    _int64Array = 0;
+    _uint64Array = 0;
     dirty();
     return true;
 }
@@ -184,6 +197,8 @@ bool Uniform::setArray( DoubleArray* array )
     _floatArray = 0;
     _intArray = 0;
     _uintArray = 0;
+    _int64Array = 0;
+    _uint64Array = 0;
     dirty();
     return true;
 }
@@ -203,6 +218,8 @@ bool Uniform::setArray( IntArray* array )
     _floatArray = 0;
     _doubleArray = 0;
     _uintArray = 0;
+    _int64Array = 0;
+    _uint64Array = 0;
     dirty();
     return true;
 }
@@ -222,6 +239,49 @@ bool Uniform::setArray( UIntArray* array )
     _floatArray = 0;
     _doubleArray = 0;
     _intArray = 0;
+    _int64Array = 0;
+    _uint64Array = 0;
+    dirty();
+    return true;
+}
+bool Uniform::setArray( UInt64Array* array )
+{
+    if( !array ) return false;
+
+    // incoming array must match configuration of the Uniform
+    if( getInternalArrayType(getType())!=GL_UNSIGNED_INT64_ARB || getInternalArrayNumElements()!=array->getNumElements() )
+    {
+        OSG_WARN << "Uniform::setArray : incompatible array" << std::endl;
+        return false;
+    }
+
+    _uint64Array = array;
+    _floatArray = 0;
+    _doubleArray = 0;
+    _intArray = 0;
+    _uintArray = 0;
+    _int64Array =0;
+    dirty();
+    return true;
+}
+
+bool Uniform::setArray( Int64Array* array )
+{
+    if( !array ) return false;
+
+    // incoming array must match configuration of the Uniform
+    if( getInternalArrayType(getType())!=GL_UNSIGNED_INT64_ARB || getInternalArrayNumElements()!=array->getNumElements() )
+    {
+        OSG_WARN << "Uniform::setArray : incompatible array" << std::endl;
+        return false;
+    }
+
+    _int64Array = array;
+    _floatArray = 0;
+    _doubleArray = 0;
+    _intArray = 0;
+    _uintArray = 0;
+    _uint64Array =0;
     dirty();
     return true;
 }
@@ -279,6 +339,22 @@ int Uniform::compareData(const Uniform& rhs) const
         return memcmp( _uintArray->getDataPointer(), rhs._uintArray->getDataPointer(),
             _uintArray->getTotalDataSize() );
     }
+    
+    else if( _uint64Array.valid() )
+    {
+        if( ! rhs._uint64Array ) return 1;
+        if( _uint64Array == rhs._uint64Array ) return 0;
+        return memcmp( _uint64Array->getDataPointer(), rhs._uint64Array->getDataPointer(),
+            _uint64Array->getTotalDataSize() );
+    }
+    
+    else if( _int64Array.valid() )
+    {
+        if( ! rhs._int64Array ) return 1;
+        if( _int64Array == rhs._int64Array ) return 0;
+        return memcmp( _int64Array->getDataPointer(), rhs._int64Array->getDataPointer(),
+            _int64Array->getTotalDataSize() );
+    }
 
     return -1;  // how got here?
 }
@@ -293,6 +369,8 @@ void Uniform::copyData(const Uniform& rhs)
     if( _doubleArray.valid() && rhs._doubleArray.valid() )  *_doubleArray = *rhs._doubleArray;
     if( _intArray.valid()    && rhs._intArray.valid() )     *_intArray    = *rhs._intArray;
     if( _uintArray.valid()   && rhs._uintArray.valid() )    *_uintArray   = *rhs._uintArray;
+    if( _int64Array.valid()    && rhs._int64Array.valid() )     *_int64Array    = *rhs._int64Array;
+    if( _uint64Array.valid()   && rhs._uint64Array.valid() )    *_uint64Array   = *rhs._uint64Array;
     dirty();
 }
 
@@ -358,6 +436,9 @@ const char* Uniform::getTypename( Type t )
     case BOOL_VEC3: return "bvec3";
     case BOOL_VEC4: return "bvec4";
 
+    case INT64:      return "int64_t";
+    case UNSIGNED_INT64: return "uint64_t";
+
     case FLOAT_MAT2:   return "mat2";
     case FLOAT_MAT3:   return "mat3";
     case FLOAT_MAT4:   return "mat4";
@@ -409,17 +490,17 @@ const char* Uniform::getTypename( Type t )
     case INT_SAMPLER_BUFFER:               return "isamplerBuffer";
     case INT_SAMPLER_2D_RECT:              return "isampler2DRect";
 
-    case UNSIGNED_INT_SAMPLER_1D:                   return "usample1D";
-    case UNSIGNED_INT_SAMPLER_2D:                   return "usample2D";
-    case UNSIGNED_INT_SAMPLER_3D:                   return "usample3D";
-    case UNSIGNED_INT_SAMPLER_CUBE:                 return "usampleCube";
-    case UNSIGNED_INT_SAMPLER_1D_ARRAY:             return "usample1DArray";
-    case UNSIGNED_INT_SAMPLER_2D_ARRAY:             return "usample2DArray";
-    case UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:       return "usampleCubeMapArray";
-    case UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:       return "usample2DMS";
-    case UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "usample2DMSArray";
-    case UNSIGNED_INT_SAMPLER_BUFFER:               return "usampleBuffer";
-    case UNSIGNED_INT_SAMPLER_2D_RECT:              return "usample2DRect";
+    case UNSIGNED_INT_SAMPLER_1D:                   return "usampler1D";
+    case UNSIGNED_INT_SAMPLER_2D:                   return "usampler2D";
+    case UNSIGNED_INT_SAMPLER_3D:                   return "usampler3D";
+    case UNSIGNED_INT_SAMPLER_CUBE:                 return "usamplerCube";
+    case UNSIGNED_INT_SAMPLER_1D_ARRAY:             return "usampler1DArray";
+    case UNSIGNED_INT_SAMPLER_2D_ARRAY:             return "usampler2DArray";
+    case UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:       return "usamplerCubeMapArray";
+    case UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:       return "usampler2DMS";
+    case UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "usampler2DMSArray";
+    case UNSIGNED_INT_SAMPLER_BUFFER:               return "usamplerBuffer";
+    case UNSIGNED_INT_SAMPLER_2D_RECT:              return "usampler2DRect";
 
     case IMAGE_1D:                   return "image1D";
     case IMAGE_2D:                   return "image2D";
@@ -470,6 +551,8 @@ int Uniform::getTypeNumComponents( Type t )
     case INT:
     case UNSIGNED_INT:
     case BOOL:
+    case UNSIGNED_INT64:
+    case INT64:
 
     case SAMPLER_1D:
     case SAMPLER_2D:
@@ -631,6 +714,9 @@ Uniform::Type Uniform::getTypeId( const std::string& tname )
     if( tname == "bvec2" )           return BOOL_VEC2;
     if( tname == "bvec3" )           return BOOL_VEC3;
     if( tname == "bvec4" )           return BOOL_VEC4;
+
+    if( tname == "uint64_t" )        return UNSIGNED_INT64;
+    if( tname == "int64_t" )         return INT64;
 
     if( tname == "mat2" || tname == "mat2x2" ) return FLOAT_MAT2;
     if( tname == "mat3" || tname == "mat3x3" ) return FLOAT_MAT3;
@@ -829,6 +915,12 @@ Uniform::Type Uniform::getGlApiType( Type t )
     case BOOL_VEC4:
         return INT_VEC4;
 
+    case UNSIGNED_INT64:
+        return UNSIGNED_INT64;
+
+    case INT64:
+        return INT64;
+
     default:
         return t;
     }
@@ -962,6 +1054,12 @@ GLenum Uniform::getInternalArrayType( Type t )
     case UNSIGNED_INT_VEC4:
         return GL_UNSIGNED_INT;
 
+    case UNSIGNED_INT64:
+        return GL_UNSIGNED_INT64_ARB;
+
+    case INT64:
+        return GL_INT64_ARB;
+
     default:
         return 0;
     }
@@ -973,7 +1071,7 @@ unsigned int Uniform::getNameID(const std::string& name)
     typedef std::map<std::string, unsigned int> UniformNameIDMap;
     static OpenThreads::Mutex s_mutex_uniformNameIDMap;
     static UniformNameIDMap s_uniformNameIDMap;
-    
+
     OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex_uniformNameIDMap);
     UniformNameIDMap::iterator it = s_uniformNameIDMap.find(name);
     if (it != s_uniformNameIDMap.end())
@@ -985,7 +1083,7 @@ unsigned int Uniform::getNameID(const std::string& name)
     return id;
 }
 
-// Use a proxy to force the initialization of the static variables in the Unifrom::getNameID() method during static initialization
+// Use a proxy to force the initialization of the static variables in the Uniform::getNameID() method during static initialization
 OSG_INIT_SINGLETON_PROXY(UniformNameIDStaticInitializationProxy, Uniform::getNameID(std::string()))
 
 
@@ -1295,10 +1393,23 @@ Uniform::Uniform( const char* name, bool b0, bool b1, bool b2, bool b3 ) :
     allocateDataArray();
     set( b0, b1, b2, b3 );
 }
-
-///////////////////////////////////////////////////////////////////////////
+Uniform::Uniform( const char* name, unsigned long long  ull) :
+    _type(UNSIGNED_INT64), _numElements(1), _modifiedCount(0)
+{
+    setName(name);
+    allocateDataArray();
+    set( ull );
+}
+Uniform::Uniform( const char* name, long long ll) :
+    _type(INT64), _numElements(1), _modifiedCount(0)
+{
+    setName(name);
+    allocateDataArray();
+    set( ll );
+}
+////////////////////////////////////////////////////////////////////////
 // Value assignment for single-element (ie: non-array) uniforms.
-// (For backwards compatability, if not already configured, set the
+// (For backwards compatibility, if not already configured, set the
 // Uniform's _numElements=1)
 
 bool Uniform::set( float f )
@@ -1529,6 +1640,17 @@ bool Uniform::set( bool b0, bool b1, bool b2, bool b3 )
     return isScalar() ? setElement(0,b0,b1,b2,b3) : false;
 }
 
+
+bool Uniform::set( unsigned long long  ull )
+{
+    if( getNumElements() == 0 ) setNumElements(1);
+    return isScalar() ? setElement(0,ull) : false;
+}
+bool Uniform::set( long long ll )
+{
+    if( getNumElements() == 0 ) setNumElements(1);
+    return isScalar() ? setElement(0,ll) : false;
+}
 ///////////////////////////////////////////////////////////////////////////
 // Value query for single-element (ie: non-array) uniforms.
 
@@ -1722,6 +1844,14 @@ bool Uniform::get( bool& b0, bool& b1, bool& b2, bool& b3 ) const
     return isScalar() ? getElement(0,b0,b1,b2,b3) : false;
 }
 
+bool Uniform::get( unsigned long long& ull ) const
+{
+    return isScalar() ? getElement(0,ull) : false;
+}
+bool Uniform::get( long long& ll ) const
+{
+    return isScalar() ? getElement(0,ll) : false;
+}
 ///////////////////////////////////////////////////////////////////////////
 // Value assignment for array uniforms.
 
@@ -2107,7 +2237,22 @@ bool Uniform::setElement( unsigned int index, bool b0, bool b1, bool b2, bool b3
     dirty();
     return true;
 }
-
+bool Uniform::setElement( unsigned int index, unsigned long long ull )
+{
+    if( index>=getNumElements() || !isCompatibleType(UNSIGNED_INT64) ) return false;
+    unsigned int j = index * getTypeNumComponents(getType());
+    (*_uint64Array)[j] = ull;
+    dirty();
+    return true;
+}
+bool Uniform::setElement( unsigned int index, long long ll )
+{
+    if( index>=getNumElements() || !isCompatibleType(INT64) ) return false;
+    unsigned int j = index * getTypeNumComponents(getType());
+    (*_int64Array)[j] = ll;
+    dirty();
+    return true;
+}
 ///////////////////////////////////////////////////////////////////////////
 // Value query for array uniforms.
 
@@ -2419,6 +2564,22 @@ bool Uniform::getElement( unsigned int index, bool& b ) const
     return true;
 }
 
+bool Uniform::getElement( unsigned int index, unsigned long long& ull ) const
+{
+    if( index>=getNumElements() || !isCompatibleType(UNSIGNED_INT64) ) return false;
+    unsigned int j = index * getTypeNumComponents(getType());
+    ull = ((*_uint64Array)[j] != 0);
+    return true;
+}
+
+bool Uniform::getElement( unsigned int index, long long& ll ) const
+{
+    if( index>=getNumElements() || !isCompatibleType(INT64) ) return false;
+    unsigned int j = index * getTypeNumComponents(getType());
+    ll = ((*_int64Array)[j] != 0);
+    return true;
+}
+
 bool Uniform::getElement( unsigned int index, bool& b0, bool& b1 ) const
 {
     if( index>=getNumElements() || !isCompatibleType(BOOL_VEC2) ) return false;
@@ -2456,7 +2617,7 @@ unsigned int Uniform::getNameID() const
 
 ///////////////////////////////////////////////////////////////////////////
 
-void Uniform::apply(const GL2Extensions* ext, GLint location) const
+void Uniform::apply(const GLExtensions* ext, GLint location) const
 {
     // OSG_NOTICE << "uniform at "<<location<<" "<<_name<< std::endl;
 
@@ -2601,13 +2762,26 @@ void Uniform::apply(const GL2Extensions* ext, GLint location) const
         if( _uintArray.valid() ) ext->glUniform4uiv( location, num, &_uintArray->front() );
         break;
 
+    case UNSIGNED_INT64:
+        if( _uint64Array.valid() ){ 
+            if (ext->glUniform1ui64v)
+                ext->glUniform1ui64v( location, num, &_uint64Array->front() );
+            else
+                OSG_WARN << "how got here? " __FILE__ ":" << __LINE__ << std::endl;
+        }
+        break;
+
+    case INT64:
+        if( _int64Array.valid() ) ext->glUniform1i64v( location, num, &_int64Array->front() );
+        break;
+
     default:
         OSG_FATAL << "how got here? " __FILE__ ":" << __LINE__ << std::endl;
         break;
     }
 }
 
-void Uniform::setUpdateCallback(Callback* uc)
+void Uniform::setUpdateCallback(UniformCallback* uc)
 {
     OSG_INFO<<"Uniform::Setting Update callbacks"<<std::endl;
 
@@ -2633,7 +2807,7 @@ void Uniform::setUpdateCallback(Callback* uc)
     }
 }
 
-void Uniform::setEventCallback(Callback* ec)
+void Uniform::setEventCallback(UniformCallback* ec)
 {
     OSG_INFO<<"Uniform::Setting Event callbacks"<<std::endl;
 

@@ -1,6 +1,25 @@
-/*
- * TODO
+/*      F I N D _ S U B T R A C T E D _ S H A P E S . C P P
+ * BRL-CAD
  *
+ * Copyright (c) 2015-2020 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file find_subtracted_shapes.cpp
+ *
+ * TODO
  *
  * better bbox rays function that accepts x, y and z tolerances so we can adaptively sample thin sides
  * without blowing the ray count all out of proportion.  Got to get a handle on intelligently refining
