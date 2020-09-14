@@ -56,7 +56,8 @@ changes made.  See document footer for additional details.
 * added MGED 'dm type' subcommand for reporting DM type - Cliff Yapp
 * improved vdeck input support for Windows text files - Sean Morrison
 * fixed MGED 'plot' & 'brep plot' commands on Windows - Sean Morrison
-* fixed numerous image utilities on Windows - Sean Morrison
+* fixed numerous image utilities reading binary input files on Windows
+	- Sean Morrison, Cliff Yapp
 
 
 ----------------------------------------------------------------------
