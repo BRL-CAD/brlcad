@@ -2514,6 +2514,7 @@ DOCUMENTATION
     dsel
     dstats
     dwin
+    gcv
     ihist
     imod
     isst
