@@ -41,7 +41,7 @@ changes made.  See document footer for additional details.
 * improved gdiff -F filtering option behavior - Cliff Yapp
 * improved gdiff command verbosity reporting options - Cliff Yapp
 * improved Combination Editor button behaviors in MGED - Sean Morrison
-* added 'asc' import support to gcv geometry converter - Cliff Yapp
+* added 'asc' geometry import and export support to gcv  - Cliff Yapp
 * consistent usage taxonomy for ident-related commands - Sean Morrison
 * added units label to the Archer in-scene scale graphic - Cliff Yapp
 * added framebuffer capture option to screengrab command - Cliff Yapp
