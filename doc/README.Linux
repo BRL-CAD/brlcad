@@ -157,6 +157,12 @@ system.  It can be used like so:
 It is also possible to create an RPM package using CPack with the
 make package build target, on systems with the proper RPM tools.
 
+-------
+
+One issue encountered running CentOS in VirtualBox - networking
+is off by default.  To enable, look for a file in
+/etc/sysconfig/network-scripts/ called something like enp0s3 and
+set ONBOOT=yes (see https://unix.stackexchange.com/a/79273)
 
 
 PPC64 Linux
