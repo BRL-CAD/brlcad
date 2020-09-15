@@ -515,7 +515,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     ProMdlMdlnameGet(model, wname);
     ProWstringToString(pname, wname);
 
-    creo_log(cinfo, MSG_DEBUG, "Tessellating part %s...", pname);
+    creo_log(cinfo, MSG_DEBUG, "Tessellating part %s...\n", pname);
 
     /* Tessellate part, going from coarse to fine tessellation */
     for (int i = 0; i <= cinfo->max_to_min_steps; ++i) {
