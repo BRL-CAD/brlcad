@@ -228,5 +228,5 @@ tar -czf brlcad_final.tar.gz brlcad_final.git
 # cd brlcad_final.git
 # git remote add origin git@github.com:BRL-CAD/BRL-CAD.git
 # git push --all -u origin
-
+# git push --follow-tags
 
