@@ -41,6 +41,9 @@ __BEGIN_DECLS
 GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
 /** @} */
 
+GED_EXPORT extern int
+ged_cmd_lookup(const char **ncmd, const char *cmd);
+
 /** @addtogroup ged_objects */
 /** @{ */
 /**

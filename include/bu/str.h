@@ -346,6 +346,14 @@ BU_EXPORT extern char **bu_argv_dup(size_t argc, const char *argv[]);
  */
 BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[]);
 
+/**
+ * Calculate the Damarau Levenshtein edit distance between two strings.  When
+ * max_dist is defined, calculation will terminate once that distance is reached
+ * and max_dist will be returned.  When max_dist is 0, the calculation will
+ * proceed up to an internally defined calculation limit. */
+BU_EXPORT unsigned long
+bu_editdist(const char *s1, const char *s2, unsigned long max_dist);
+
 
 __END_DECLS
 
