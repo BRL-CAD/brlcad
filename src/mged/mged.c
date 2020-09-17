@@ -2870,7 +2870,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&cmd, 0);
-	bu_vls_printf(&cmd, "opendb_callback %s", DBIP->dbi_filename);
+	bu_vls_printf(&cmd, "opendb_callback {%s}", DBIP->dbi_filename);
 	(void)Tcl_Eval(interpreter, bu_vls_addr(&cmd));
 
 	bu_vls_strcpy(&cmd, "local2base");
