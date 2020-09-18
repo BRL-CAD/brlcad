@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed help message for -F option on gdiff command - Cliff Yapp
 * fixed mged -c bomb attaching to graphical displays - Sean Morrison
 * fixed titlebar bug opening .g with filename spaces - Sean Morrison
 
