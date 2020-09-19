@@ -21,7 +21,6 @@
 
 
 #include "Display.h"
-#include <glm/gtc/type_ptr.hpp>
 #include <QtWidgets/QApplication>
 #include <OrthographicCamera.h>
 #include "DisplayManager.h"
@@ -65,9 +64,9 @@ void Display::resizeGL(int w, int h) {
 void Display::paintGL() {
     displayManager->drawBegin();
 
-    displayManager->loadMatrix((const float*)glm::value_ptr(camera->modelViewMatrix()));
-    displayManager->loadPMatrix((const float*)glm::value_ptr(camera->projectionMatrix()));
-
+    displayManager->loadMatrix(camera->modelViewMatrix().data());
+    displayManager->loadPMatrix(camera->projectionMatrix().data());
+ 
     for (auto i:renderers) i->render();
 }
 

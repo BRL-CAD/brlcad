@@ -21,7 +21,6 @@ set(embedded_licenses
   gecode.txt
   gdal_gcv_plugin1.txt
   gdal_gcv_plugin2.txt
-  glm.txt
   halfedge.txt
   humanize.txt
   hv3.txt
