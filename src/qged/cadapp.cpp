@@ -124,35 +124,12 @@ CADApp::closedb()
     current_file.clear();
 }
 
-// TODO - make the type an enum or bit flag or something, instead of multiple integers...
-int
-CADApp::register_command(QString cmdname, ged_func_ptr func, QString role)
-{
-    if (role == QString()) {
-	if (cmd_map.find(cmdname) != cmd_map.end()) return -1;
-	cmd_map.insert(cmdname, func);
-    }
-    if (role == QString("edit")) {
-	edit_cmds.insert(cmdname);
-    }
-    if (role == QString("view")) {
-	view_cmds.insert(cmdname);
-    }
-    return 0;
-}
-
 int
 CADApp::register_gui_command(QString cmdname, gui_cmd_ptr func, QString role)
 {
     if (role == QString()) {
 	if (gui_cmd_map.find(cmdname) != gui_cmd_map.end()) return -1;
 	gui_cmd_map.insert(cmdname, func);
-    }
-    if (role == QString("edit")) {
-	edit_cmds.insert(cmdname);
-    }
-    if (role == QString("view")) {
-	view_cmds.insert(cmdname);
     }
     if (role == QString("preprocess")) {
 	if (preprocess_cmd_map.find(cmdname) != preprocess_cmd_map.end()) return -1;
@@ -218,12 +195,11 @@ CADApp::exec_command(QString *command, QString *result)
 		*result = QString(QLatin1String(bu_vls_addr(ged_pointer->ged_result_str)));
 	    }
 
-	    // Now that the command is run, emit any signals that need emitting.  What would
-	    // really handle this properly is for the ged structure to contain a list of directory
-	    // pointers that were impacted by the command, so we could emit signals with the
-	    // specifics of what objects need updating.
-	    if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) emit db_change();
-	    if (view_cmds.find(QString(largv[0])) != view_cmds.end()) emit view_change();
+	    // Now that the command is run, emit any signals that need emitting.  TODO - we need
+	    // some better mechanism for this.  Once we move to transactions, we can analyze the
+	    // transaction list - hardcoding this per-command is not a great way to go...
+	    //if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) emit db_change();
+	    //if (view_cmds.find(QString(largv[0])) != view_cmds.end()) emit view_change();
 	    bu_free(lcmd, "free tmp cmd str");
 	    bu_free(largv, "free tmp argv");
 	    goto postprocess;
