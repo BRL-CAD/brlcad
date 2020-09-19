@@ -718,6 +718,9 @@ bool CADTreeModel::canFetchMore(const QModelIndex &idx) const
 {
     CADTreeNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return false;
+    if (rowCount(idx)) {
+	return false;
+    }
     if (curr_node->node_dp->d_flags & RT_DIR_COMB) {
 	return true;
     }
