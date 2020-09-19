@@ -10,6 +10,7 @@ set(embedded_licenses
   clipper.txt
   db_faa-info.txt
   db_nist-info.txt
+  damlev.txt
   dehumanize.txt
   delaunator.txt
   DejaVu_Fonts.txt
