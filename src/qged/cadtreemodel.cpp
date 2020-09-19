@@ -413,7 +413,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    db_find_subtree(ret, name, tp->tr_b.tb_right, dbip, depth, max_depth, combinternals, traverse_func);
-	    break;
+	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
