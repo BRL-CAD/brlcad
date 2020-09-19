@@ -181,6 +181,9 @@ CADApp::exec_command(QString *command, QString *result)
     char *lcmd = NULL;
     char **largv = NULL;
     int largc = 0;
+    const char *ccmd = NULL;
+    int edist = 0;
+    struct bu_vls rmsg = BU_VLS_INIT_ZERO;
 
     if (ged_pointer != GED_NULL && command && command->length() > 0) {
 
@@ -195,8 +198,7 @@ CADApp::exec_command(QString *command, QString *result)
 	    (*(preprocess_cmd_itr.value()))(&lcommand, (CADApp *)qApp);
 	}
 
-	ged_cmd_itr = cmd_map.find(cargv0);
-	if (ged_cmd_itr != cmd_map.end()) {
+	if (!ged_cmd_valid(cargv0.toLocal8Bit().constData(), NULL)) {
 	    // Prepare libged arguments
 	    lcmd = bu_strdup(lcommand.toLocal8Bit());
 	    largv = (char **)bu_calloc(lcommand.length()/2+1, sizeof(char *), "cmd_eval argv");
@@ -210,7 +212,7 @@ CADApp::exec_command(QString *command, QString *result)
 	    // text output quite a lot.  However, view commands should return while allowing long
 	    // drawing routines to execute in the background - using something like Z or B should
 	    // abort drawing and clear the view, but otherwise let it complete...
-	    ret = (*(ged_cmd_itr.value()))(ged_pointer, largc, (const char **)largv);
+	    ret = ged_exec(ged_pointer, largc, (const char **)largv);
 
 	    if (result && bu_vls_strlen(ged_pointer->ged_result_str) > 0) {
 		*result = QString(QLatin1String(bu_vls_addr(ged_pointer->ged_result_str)));
@@ -227,12 +229,22 @@ CADApp::exec_command(QString *command, QString *result)
 	    goto postprocess;
 	}
 
+	// Not a valid GED command - see if it's an application level command
 	gui_cmd_itr = gui_cmd_map.find(cargv0);
 	if (gui_cmd_itr != gui_cmd_map.end()) {
 	    QString args(lcommand);
 	    args.replace(0, cargv0.length()+1, QString(""));
 	    ret = (*(gui_cmd_itr.value()))(&args, (CADApp *)qApp);
 	    goto postprocess;
+	}
+
+	// If we didn't find the command either as a ged command or a gui command,
+	// see if libged has a suggestion.
+	edist = ged_cmd_lookup(&ccmd, cargv0.toLocal8Bit().constData());
+	if (edist <= cargv0.length()/2) {
+	    bu_vls_sprintf(&rmsg, "Command \"%s\" not found, did you mean \"%s\"?\n", cargv0.toLocal8Bit().constData(), ccmd);
+	    *result = QString(QLatin1String(bu_vls_cstr(&rmsg)));
+	    ret = 1;
 	}
 
 postprocess:
@@ -245,6 +257,8 @@ postprocess:
 	if (ret == -1)
 	    *result = QString("command not found");
     }
+
+    bu_vls_free(&rmsg);
     return ret;
 }
 
