@@ -555,6 +555,7 @@ GED_EXPORT extern struct directory ** _ged_getspace(struct db_i *dbip,
 					 size_t num_entries);
 
 
+#if 0
 /**
  * Characterize a path specification (search command style).
  *
@@ -569,6 +570,7 @@ GED_EXPORT extern unsigned long long
 _ged_characterize_path_spec(struct bu_vls *normalized,
 	struct ged *gedp, const char *pathspec
 	);
+#endif
 
 /**
  * Routine for generic command help printing.
