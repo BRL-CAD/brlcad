@@ -49,6 +49,8 @@ SOFTWARE.
 #include <stdio.h>
 #include "fort.h"
 
+#include "bu/str.h"
+
 /* Define FT_INTERNAL to make internal libfort functions static
  * in the result amalgamed source file.
  */
@@ -2381,7 +2383,7 @@ size_t cell_vis_width(const f_cell_t *cell, const f_context_t *context)
 }
 
 FT_INTERNAL
-size_t cell_invis_codes_width(const f_cell_t *cell, const f_context_t *context)
+size_t cell_invis_codes_width(const f_cell_t *UNUSED(cell), const f_context_t *context)
 {
     assert(cell);
     assert(context);
@@ -3869,13 +3871,7 @@ char *fort_strdup(const char *str)
     if (str == NULL)
         return NULL;
 
-    size_t sz = strlen(str);
-    char *str_copy = (char *)F_MALLOC((sz + 1) * sizeof(char));
-    if (str_copy == NULL)
-        return NULL;
-
-    strcpy(str_copy, str);
-    return str_copy;
+    return bu_strdup(str);
 }
 
 #if defined(FT_HAVE_WCHAR)
@@ -4316,7 +4312,7 @@ void get_style_tag_for_cell(const f_table_properties_t *props,
     if (text_style < (1U << n_styles)) {
         for (i = 0; i < n_styles; ++i) {
             if (text_style & (1 << i)) {
-                strcat(style_tag, text_styles[i]);
+                bu_strlcat(style_tag, text_styles[i], sz);
             }
         }
     } else {
@@ -4324,7 +4320,7 @@ void get_style_tag_for_cell(const f_table_properties_t *props,
     }
 
     if (bg_color_number < n_bg_colors) {
-        strcat(style_tag, bg_colors[bg_color_number]);
+        bu_strlcat(style_tag, bg_colors[bg_color_number], sz);
     } else {
         goto error;
     }
@@ -4371,7 +4367,7 @@ void get_reset_style_tag_for_cell(const f_table_properties_t *props,
 
 
 reset_style:
-    strcat(reset_style_tag, UNIVERSAL_RESET_TAG);
+    bu_strlcat(reset_style_tag, UNIVERSAL_RESET_TAG, sz);
     return;
 
 error:
@@ -4397,7 +4393,7 @@ void get_style_tag_for_content(const f_table_properties_t *props,
     if (text_style < (1U << n_styles)) {
         for (i = 0; i < n_styles; ++i) {
             if (text_style & (1 << i)) {
-                strcat(style_tag, text_styles[i]);
+                bu_strlcat(style_tag, text_styles[i], sz);
             }
         }
     } else {
@@ -4406,13 +4402,13 @@ void get_style_tag_for_content(const f_table_properties_t *props,
 
     if (fg_color_number < n_fg_colors) {
         if (fg_color_number)
-            strcat(style_tag, fg_colors[fg_color_number]);
+            bu_strlcat(style_tag, fg_colors[fg_color_number], sz);
     } else {
         goto error;
     }
 
     if (bg_color_number < n_bg_colors) {
-        strcat(style_tag, bg_colors[bg_color_number]);
+        bu_strlcat(style_tag, bg_colors[bg_color_number], sz);
     } else {
         goto error;
     }
@@ -4468,7 +4464,7 @@ void get_reset_style_tag_for_content(const f_table_properties_t *props,
 
 
 reset_style:
-    strcat(reset_style_tag, UNIVERSAL_RESET_TAG);
+    bu_strlcat(reset_style_tag, UNIVERSAL_RESET_TAG, sz);
     len = strlen(reset_style_tag);
     get_style_tag_for_cell(props, row, col, reset_style_tag + len, sz - len);
     return;
