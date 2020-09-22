@@ -18,6 +18,7 @@ set(embedded_licenses
   Eigen.txt
   fnmatch.txt
   fontstash.txt
+  fort.txt
   gct.txt
   gecode.txt
   gdal_gcv_plugin1.txt
