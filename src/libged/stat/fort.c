@@ -2385,7 +2385,6 @@ size_t cell_vis_width(const f_cell_t *cell, const f_context_t *context)
 FT_INTERNAL
 size_t cell_invis_codes_width(const f_cell_t *UNUSED(cell), const f_context_t *context)
 {
-    assert(cell);
     assert(context);
 
     f_table_properties_t *properties = context->table_properties;
