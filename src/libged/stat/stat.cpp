@@ -26,13 +26,16 @@
 
 #include "common.h"
 
+#include <set>
 #include <sstream>
+
 extern "C" {
 #include "fort.h"
 #include "../alphanum.h"
 }
 
 #include "bu/opt.h"
+#include "bu/ptbl.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "bu/vls.h"
@@ -560,7 +563,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    struct bu_ptbl objs = BU_PTBL_INIT_ZERO;
+    std::set<struct directory *> udp;
 
     for (int i = 0; i < argc; i++) {
 
@@ -577,13 +580,19 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 		    continue;
 		}
 	    }
-	    bu_ptbl_ins_unique(&objs,  (long *)dp);
+	    udp.insert(dp);
 	}
 
 	bu_free(paths, "dp array");
     }
 
     // If we have any sorting enabled, do that
+    struct bu_ptbl objs = BU_PTBL_INIT_ZERO;
+    std::set<struct directory *>::iterator o_it;
+    for (o_it = udp.begin(); o_it != udp.end(); o_it++) {
+	struct directory *dp = *o_it;
+	bu_ptbl_ins(&objs,  (long *)dp);
+    }
     dpath_sort((void *)objs.buffer, BU_PTBL_LEN(&objs), bu_vls_cstr(&sort_str), gedp);
 
     for (size_t j = 0; j < BU_PTBL_LEN(&objs); j++) {
