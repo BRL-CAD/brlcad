@@ -4312,7 +4312,7 @@ void get_style_tag_for_cell(const f_table_properties_t *props,
     if (text_style < (1U << n_styles)) {
         for (i = 0; i < n_styles; ++i) {
             if (text_style & (1 << i)) {
-                bu_strlcat(style_tag, text_styles[i], sz-1);
+                bu_strlcat(style_tag, text_styles[i], sz);
             }
         }
     } else {
@@ -4320,7 +4320,7 @@ void get_style_tag_for_cell(const f_table_properties_t *props,
     }
 
     if (bg_color_number < n_bg_colors) {
-        bu_strlcat(style_tag, bg_colors[bg_color_number], sz-1);
+        bu_strlcat(style_tag, bg_colors[bg_color_number], sz);
     } else {
         goto error;
     }
@@ -4367,7 +4367,7 @@ void get_reset_style_tag_for_cell(const f_table_properties_t *props,
 
 
 reset_style:
-    bu_strlcat(reset_style_tag, UNIVERSAL_RESET_TAG, sz-1);
+    bu_strlcat(reset_style_tag, UNIVERSAL_RESET_TAG, sz);
     return;
 
 error:
@@ -4393,7 +4393,7 @@ void get_style_tag_for_content(const f_table_properties_t *props,
     if (text_style < (1U << n_styles)) {
         for (i = 0; i < n_styles; ++i) {
             if (text_style & (1 << i)) {
-                bu_strlcat(style_tag, text_styles[i], sz-1);
+                bu_strlcat(style_tag, text_styles[i], sz);
             }
         }
     } else {
@@ -4402,13 +4402,13 @@ void get_style_tag_for_content(const f_table_properties_t *props,
 
     if (fg_color_number < n_fg_colors) {
         if (fg_color_number)
-            bu_strlcat(style_tag, fg_colors[fg_color_number], sz-1);
+            bu_strlcat(style_tag, fg_colors[fg_color_number], sz);
     } else {
         goto error;
     }
 
     if (bg_color_number < n_bg_colors) {
-        bu_strlcat(style_tag, bg_colors[bg_color_number], sz-1);
+        bu_strlcat(style_tag, bg_colors[bg_color_number], sz);
     } else {
         goto error;
     }
@@ -4464,7 +4464,7 @@ void get_reset_style_tag_for_content(const f_table_properties_t *props,
 
 
 reset_style:
-    bu_strlcat(reset_style_tag, UNIVERSAL_RESET_TAG, sz-1);
+    bu_strlcat(reset_style_tag, UNIVERSAL_RESET_TAG, sz);
     len = strlen(reset_style_tag);
     get_style_tag_for_cell(props, row, col, reset_style_tag + len, sz - len);
     return;
