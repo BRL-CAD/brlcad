@@ -72,10 +72,19 @@ LC_ALL=C
 export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="\*"
 
 # Windows has a special NUL device instead of /dev/null
-if test -e /dev/null ; then
+if test -f NUL ; then
+    echo "INTERNAL ERROR: NUL file is in the way (delete it)"
+    exit 1
+fi
+out=`cat NUL 2>&1`
+ret=$?
+if test "x$ret" = "x0" ; then
+    export NUL=NUL
+elif test -e /dev/null ; then
     export NUL=/dev/null
 else
-    export NUL=NUL
+    echo "INTERNAL ERROR: cannot determine a suitable null device"
+    exit 1
 fi
 
 # commands that this script expects
