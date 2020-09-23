@@ -68,6 +68,9 @@ fi
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
+# stop git shell & msys2 arg manipulation (/dev/null, -F/dev/debug)
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="\*"
+
 # Windows has a special NUL device instead of /dev/null
 if test -e /dev/null ; then
     export NUL=/dev/null
@@ -590,9 +593,6 @@ if test "x${ELP}" = "x" ; then
 else
     $ECHO "Using [$ELP] for ELP"
 fi
-
-# prevent git shell and msys2 from expanding -F/dev/debug
-export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="-F/dev/debug"
 
 # sanity check: make sure $RT runs
 eval \"$RT\" -s1 -F/dev/debug \"${DB}/moss.g\" LIGHT > $NUL 2>&1
