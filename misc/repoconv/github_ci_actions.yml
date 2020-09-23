@@ -74,7 +74,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: lukka/get-cmake@latest
-    - uses: seanmiddleditch/gha-setup-ninja@master
 
     - name: Configure
       shell: cmake -P {0}
@@ -82,10 +81,10 @@ jobs:
         set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
 
-          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
           execute_process(
-          COMMAND "${{ matrix.config.environment_script }}" && set
-          OUTPUT_FILE environment_script_output.txt
+            COMMAND "${{ matrix.config.environment_script }}" && set
+            OUTPUT_FILE environment_script_output.txt
           )
           file(STRINGS environment_script_output.txt output_lines)
           foreach(line IN LISTS output_lines)
@@ -100,22 +99,9 @@ jobs:
           set(path_separator ";")
         endif()
         set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
-
-        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
         execute_process(
           COMMAND cmake
             -S .
-            -B build
-            -D ENABLE_ALL=ON
-            -D CMAKE_BUILD_TYPE=Release
-            -D CMAKE_VERBOSE_DISTCHECK=ON
-          RESULT_VARIABLE result
-        )
-        else()
-        execute_process(
-          COMMAND cmake
-            -S .
-            -G Ninja
             -B build
             -D ENABLE_ALL=ON
             -D CMAKE_BUILD_TYPE=Release
