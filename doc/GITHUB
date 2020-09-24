@@ -1,5 +1,6 @@
 Notes about development with the Github hosting platform.
 
+--------------------------------------------------------------------------------
 Using Github Actions to iteratively debug problems.
 
 Github's runners (build platforms for it's Actions CI system) offer a way to
@@ -48,3 +49,12 @@ to perform the full compilation cycle on Windows each time.  Once a working
 benchmark script was identified it was added back to the primary repository and
 the test repo deleted.
 
+--------------------------------------------------------------------------------
+Debugging flags can be added to the actions environment for a given repo:
+
+https://github.community/t/ci-access-to-shell-session/17250
+
+(Note:  the "Secrets" label is misleading in this particular case - that is
+the mechanism by which the values are introduced into the runner environment,
+but there are no actual secrets contained in the values of the debugging
+variables.)
