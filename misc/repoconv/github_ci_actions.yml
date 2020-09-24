@@ -42,7 +42,7 @@ jobs:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         config:
         - {
@@ -114,6 +114,8 @@ jobs:
             -D CMAKE_VERBOSE_DISTCHECK=ON
           RESULT_VARIABLE result
         )
+        # Try Write-VolumeCache for Windows
+        execute_process(COMMAND powershell Write-VolumeCache C)
         else()
         execute_process(
           COMMAND cmake
@@ -125,6 +127,8 @@ jobs:
             -D CMAKE_VERBOSE_DISTCHECK=ON
           RESULT_VARIABLE result
         )
+        # On platforms where we have it, make sure the files are in place with a sync
+        execute_process(COMMAND sync)
         endif()
         if (NOT result EQUAL 0)
           message(FATAL_ERROR "Bad exit status")
@@ -160,17 +164,52 @@ jobs:
         if ("${{ runner.os }}" STREQUAL "Windows")
            execute_process(
              COMMAND cmake --build build -j 1 --config Release --target ALL_BUILD
-             COMMAND cmake --build build -j 1 --config Release --target check
+             RESULT_VARIABLE result
+           )
+           execute_process(
+             COMMAND cmake --build build -j 1 --verbose --config Release --target PACKAGE
              RESULT_VARIABLE result
            )
         else ("${{ runner.os }}" STREQUAL "Windows")
            execute_process(
              COMMAND cmake --build build -j 1 --verbose --config Release --target all
-             COMMAND cmake --build build -j 1 --verbose --config Release --target check
              RESULT_VARIABLE result
            )
+           execute_process(
+             COMMAND cmake --build build -j 1 --verbose --config Release --target package
+             RESULT_VARIABLE result
+           )
+           # On platforms where we have it, make sure the files are in place with a sync
+           execute_process(COMMAND sync)
         endif ("${{ runner.os }}" STREQUAL "Windows")
         if (NOT result EQUAL 0)
           message(FATAL_ERROR "Bad exit status")
         endif()
+
+    - name: Package
+      shell: cmake -P {0}
+      run: |
+        file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" gw_path)
+        message("gw_path: ${gw_path}")
+        # https://cmake.org/pipermail/cmake/2007-July/015471.html
+        file(MAKE_DIRECTORY "${gw_path}/package")
+        file(GLOB pkgs_zip "${gw_path}/build/BRL-CAD*zip")
+        file(GLOB pkgs_gz "${gw_path}/build/BRL-CAD*gz")
+        file(GLOB pkgs_exe "${gw_path}/build/BRL-CAD*exe")
+        set(pkgs ${pkgs_zip} ${pkgs_gz} ${pkgs_exe})
+        foreach(praw ${pkgs})
+           string(REPLACE "\\" "/" p ${praw})
+           get_filename_component(proot ${p} NAME)
+           file(RENAME "${p}" "${gw_path}/package/${proot}")
+           if (NOT EXISTS "${gw_path}/package/${proot}")
+              message(FATAL_ERROR "RENAME of ${p} FAILED!")
+           else (NOT EXISTS "${gw_path}/package/${proot}")
+              message("staged ${gw_path}/package/${proot}")
+           endif (NOT EXISTS "${gw_path}/package/${proot}")
+        endforeach()
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: BRL-CAD_${{ runner.os }}
+        path: ${{ github.workspace }}/package/*
 
