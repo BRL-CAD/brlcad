@@ -4,6 +4,7 @@ verbose_add_subdirectory(doc legal)
 
 set(documentation_DATA
   BRL-CAD.bib
+  GITHUB
   IDEAS
   PROJECTS
   README.Linux
