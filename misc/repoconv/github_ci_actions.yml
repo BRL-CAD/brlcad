@@ -179,23 +179,41 @@ jobs:
         set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
 
         if ("${{ runner.os }}" STREQUAL "Windows")
-           execute_process(
-             COMMAND cmake --build build -j 1 --config Release --target ALL_BUILD
-             COMMAND cmake --build build -j 1 --config Release --target check
-             COMMAND cmake --build build -j 1 --verbose --config Release --target PACKAGE
-             RESULT_VARIABLE result
-           )
-           # Try Write-VolumeCache for Windows
+           set(BCNT 0)
+           set(result 1)
+           while(result AND ${BCNT} LESS 4)
+             execute_process(COMMAND cmake --build build -j 1 --config Release --target ALL_BUILD RESULT_VARIABLE result)
+             if (NOT ${result})
+               execute_process(COMMAND powershell Write-VolumeCache C)
+               execute_process(COMMAND powershell Write-VolumeCache D)
+               execute_process(COMMAND cmake --build build -j 1 --config Release --target check RESULT_VARIABLE result)
+             endif()
+             if (NOT ${result})
+               execute_process(COMMAND powershell Write-VolumeCache C)
+               execute_process(COMMAND powershell Write-VolumeCache D)
+               execute_process(COMMAND cmake --build build -j 1 --verbose --config Release --target PACKAGE RESULT_VARIABLE result
+             endif()
+             )
+             math(EXPR BCNT "${BCNT}+1")
+           endwhile()
            execute_process(COMMAND powershell Write-VolumeCache C)
            execute_process(COMMAND powershell Write-VolumeCache D)
         else ("${{ runner.os }}" STREQUAL "Windows")
-           execute_process(
-             COMMAND cmake --build build -j 1 --verbose --config Release --target all
-             COMMAND cmake --build build -j 1 --verbose --config Release --target check
-             COMMAND cmake --build build -j 1 --verbose --config Release --target package
-             RESULT_VARIABLE result
-           )
-           # On platforms where we have it, make sure the files are in place with a sync
+           set(BCNT 0)
+           set(result 1)
+           while(result AND ${BCNT} LESS 4)
+             execute_process(COMMAND cmake --build build -j 1 --config Release --target all RESULT_VARIABLE result)
+             if (NOT ${result})
+               execute_process(COMMAND sync)
+               execute_process(COMMAND cmake --build build -j 1 --config Release --target check RESULT_VARIABLE result)
+             endif()
+             if (NOT ${result})
+               execute_process(COMMAND sync)
+               execute_process(COMMAND cmake --build build -j 1 --verbose --config Release --target package RESULT_VARIABLE result
+             endif()
+             )
+             math(EXPR BCNT "${BCNT}+1")
+           endwhile()
            execute_process(COMMAND sync)
         endif ("${{ runner.os }}" STREQUAL "Windows")
         if (NOT result EQUAL 0)
