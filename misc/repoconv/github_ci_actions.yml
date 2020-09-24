@@ -164,18 +164,14 @@ jobs:
         if ("${{ runner.os }}" STREQUAL "Windows")
            execute_process(
              COMMAND cmake --build build -j 1 --config Release --target ALL_BUILD
-             RESULT_VARIABLE result
-           )
-           execute_process(
+             COMMAND cmake --build build -j 1 --config Release --target check
              COMMAND cmake --build build -j 1 --verbose --config Release --target PACKAGE
              RESULT_VARIABLE result
            )
         else ("${{ runner.os }}" STREQUAL "Windows")
            execute_process(
              COMMAND cmake --build build -j 1 --verbose --config Release --target all
-             RESULT_VARIABLE result
-           )
-           execute_process(
+             COMMAND cmake --build build -j 1 --verbose --config Release --target check
              COMMAND cmake --build build -j 1 --verbose --config Release --target package
              RESULT_VARIABLE result
            )
