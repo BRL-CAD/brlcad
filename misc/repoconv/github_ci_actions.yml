@@ -18,7 +18,10 @@
 #  comprehensive and heaver test runs.
 #
 #  TODO - figure out if we can generate actual release binaries from the
-#  artifacts of these builds.
+#  artifacts of these builds.  When we do, we'll want to also incorporate
+#  some sort of periodic cleanup so we don't burn too much storage space
+#  with each build - see, for example:
+#  https://poweruser.blog/storage-housekeeping-on-github-actions-e2997b5b23d1?gi=f134f9f8b336
 #
 
 name: BRL-CAD
