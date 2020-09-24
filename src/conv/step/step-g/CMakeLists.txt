@@ -233,6 +233,7 @@ set(stepg_SOURCES
   VolumeUnit.cpp
   step-g.cpp
   )
+CMAKEFILES(${stepg_SOURCES})
 
 set(stepg_HDRS
   AdvancedBrepShapeRepresentation.h
@@ -452,29 +453,30 @@ set(stepg_HDRS
   )
 CMAKEFILES(${stepg_HDRS})
 
-set(stepg_LIBS
-  libwdb
-  librt
-  libbu
-  libbrep
-  steputils
-  stepeditor
-  stepdai
-  stepcore
-  ${OPENNURBS_LIBRARIES}
-  )
-list(APPEND stepg_LIBS ${stepg_LIBS})
+if (BRLCAD_ENABLE_STEP)
+  set(stepg_LIBS
+    libwdb
+    librt
+    libbu
+    libbrep
+    steputils
+    stepeditor
+    stepdai
+    stepcore
+    ${OPENNURBS_LIBRARIES}
+    )
 
-BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
-add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
-set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
+  BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
+  add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
+  set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
 
-if(HIDE_INTERNAL_SYMBOLS)
-  set(SCIMPORTS SC_CORE_DLL_IMPORTS SC_DAI_DLL_IMPORTS SC_EDITOR_DLL_IMPORTS SC_UTILS_DLL_IMPORTS ON_DLL_IMPORTS)
-  foreach(scp ${SCIMPORTS})
-    set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${scp}")
-  endforeach(scp ${SCIMPORTS})
-endif(HIDE_INTERNAL_SYMBOLS)
+  if(HIDE_INTERNAL_SYMBOLS)
+    set(SCIMPORTS SC_CORE_DLL_IMPORTS SC_DAI_DLL_IMPORTS SC_EDITOR_DLL_IMPORTS SC_UTILS_DLL_IMPORTS ON_DLL_IMPORTS)
+    foreach(scp ${SCIMPORTS})
+      set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${scp}")
+    endforeach(scp ${SCIMPORTS})
+  endif(HIDE_INTERNAL_SYMBOLS)
+endif (BRLCAD_ENABLE_STEP)
 
 CMAKEFILES(CMakeLists.txt)
 

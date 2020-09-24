@@ -97,25 +97,31 @@ function(ADD_G_TARGET in_model folder)
   endif(${MODEL_TYPE} STREQUAL "fg4")
 
   if(${MODEL_TYPE} STREQUAL "stp")
-    add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      COMMAND step-g -O ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} > ${log_file} 2>&1
-      DEPENDS step-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
-      )
+    if (BRLCAD_ENABLE_STEP)
+      add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
+	COMMAND step-g -O ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} > ${log_file} 2>&1
+	DEPENDS step-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
+	)
+    else (BRLCAD_ENABLE_STEP)
+      CMAKEFILES(${CMAKE_CURRENT_SOURCE_DIR}/${in_model})
+    endif (BRLCAD_ENABLE_STEP)
   endif(${MODEL_TYPE} STREQUAL "stp")
 
   if(NOT ${MODEL_TYPE} STREQUAL "asc" OR BRLCAD_ENABLE_TCL)
-    add_custom_target(${in_model_root}.g ALL DEPENDS ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file})
-    set_target_properties(${in_model_root}.g PROPERTIES FOLDER "${folder}")
+    if(NOT ${MODEL_TYPE} STREQUAL "stp" OR BRLCAD_ENABLE_STEP)
+      add_custom_target(${in_model_root}.g ALL DEPENDS ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file})
+      set_target_properties(${in_model_root}.g PROPERTIES FOLDER "${folder}")
 
-    # Install logic
-    if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-      install(FILES ${CMAKE_CURRENT_BUILD_DIR_INSTALL}/${output_file} DESTINATION ${DATA_DIR}/${rel_dir})
-    endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
+      # Install logic
+      if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
+	install(FILES ${CMAKE_CURRENT_BUILD_DIR_INSTALL}/${output_file} DESTINATION ${DATA_DIR}/${rel_dir})
+      endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 
-    # Clean-up
-    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${log_file}")
-    DISTCLEAN("${log_file}")
+      # Clean-up
+      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${log_file}")
+      DISTCLEAN("${log_file}")
+    endif(NOT ${MODEL_TYPE} STREQUAL "stp" OR BRLCAD_ENABLE_STEP)
   endif(NOT ${MODEL_TYPE} STREQUAL "asc" OR BRLCAD_ENABLE_TCL)
 
 endfunction(ADD_G_TARGET in_model folder)
