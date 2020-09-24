@@ -191,9 +191,8 @@ jobs:
              if (NOT ${result})
                execute_process(COMMAND powershell Write-VolumeCache C)
                execute_process(COMMAND powershell Write-VolumeCache D)
-               execute_process(COMMAND cmake --build build -j 1 --verbose --config Release --target PACKAGE RESULT_VARIABLE result
+               execute_process(COMMAND cmake --build build -j 1 --verbose --config Release --target PACKAGE RESULT_VARIABLE result)
              endif()
-             )
              math(EXPR BCNT "${BCNT}+1")
            endwhile()
            execute_process(COMMAND powershell Write-VolumeCache C)
@@ -209,9 +208,8 @@ jobs:
              endif()
              if (NOT ${result})
                execute_process(COMMAND sync)
-               execute_process(COMMAND cmake --build build -j 1 --verbose --config Release --target package RESULT_VARIABLE result
+               execute_process(COMMAND cmake --build build -j 1 --verbose --config Release --target package RESULT_VARIABLE result)
              endif()
-             )
              math(EXPR BCNT "${BCNT}+1")
            endwhile()
            execute_process(COMMAND sync)
