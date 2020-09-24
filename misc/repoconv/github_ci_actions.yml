@@ -82,6 +82,14 @@ jobs:
     - name: Configure
       shell: cmake -P {0}
       run: |
+        if ("${{ runner.os }}" STREQUAL "Windows")
+          # Try Write-VolumeCache for Windows
+          execute_process(COMMAND powershell Write-VolumeCache C)
+          execute_process(COMMAND powershell Write-VolumeCache D)
+        else ()
+          # On platforms where we have it, make sure the files are in place with a sync
+          execute_process(COMMAND sync)
+        endif ()
         set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
 
@@ -112,10 +120,15 @@ jobs:
             -D ENABLE_ALL=ON
             -D CMAKE_BUILD_TYPE=Release
             -D CMAKE_VERBOSE_DISTCHECK=ON
-          RESULT_VARIABLE result
+            -D BRLCAD_ENABLE_GDAL=OFF
+            -D BRLCAD_ENABLE_STEP=OFF
+            -D BRLCAD_EXTRADOCS=OFF
+            -D BUILD_STATIC_LIBS=OFF
+           RESULT_VARIABLE result
         )
         # Try Write-VolumeCache for Windows
         execute_process(COMMAND powershell Write-VolumeCache C)
+        execute_process(COMMAND powershell Write-VolumeCache D)
         else()
         execute_process(
           COMMAND cmake
@@ -125,6 +138,10 @@ jobs:
             -D ENABLE_ALL=ON
             -D CMAKE_BUILD_TYPE=Release
             -D CMAKE_VERBOSE_DISTCHECK=ON
+            -D BRLCAD_ENABLE_GDAL=OFF
+            -D BRLCAD_ENABLE_STEP=OFF
+            -D BRLCAD_EXTRADOCS=OFF
+            -D BUILD_STATIC_LIBS=OFF
           RESULT_VARIABLE result
         )
         # On platforms where we have it, make sure the files are in place with a sync
@@ -168,6 +185,9 @@ jobs:
              COMMAND cmake --build build -j 1 --verbose --config Release --target PACKAGE
              RESULT_VARIABLE result
            )
+           # Try Write-VolumeCache for Windows
+           execute_process(COMMAND powershell Write-VolumeCache C)
+           execute_process(COMMAND powershell Write-VolumeCache D)
         else ("${{ runner.os }}" STREQUAL "Windows")
            execute_process(
              COMMAND cmake --build build -j 1 --verbose --config Release --target all
