@@ -1211,24 +1211,24 @@ void
 tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
-       	return;
+	return;
     struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
     HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, d);
     if (fdp) {
-		switch (d) {
-		case BU_PROCESS_STDIN:
-			t_iod->chan_stdin = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-			Tcl_CreateChannelHandler(t_iod->chan_stdin, t_iod->io_mode, callback, (ClientData)data);
-			break;
-		case BU_PROCESS_STDOUT:
-			t_iod->chan_stdout = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-			Tcl_CreateChannelHandler(t_iod->chan_stdout, t_iod->io_mode, callback, (ClientData)data);
-			break;
-		case BU_PROCESS_STDERR:
-			t_iod->chan_stderr = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-			Tcl_CreateChannelHandler(t_iod->chan_stderr, t_iod->io_mode, callback, (ClientData)data);
-			break;
-		}
+	switch (d) {
+	    case BU_PROCESS_STDIN:
+		t_iod->chan_stdin = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+		Tcl_CreateChannelHandler(t_iod->chan_stdin, t_iod->io_mode, callback, (ClientData)data);
+		break;
+	    case BU_PROCESS_STDOUT:
+		t_iod->chan_stdout = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+		Tcl_CreateChannelHandler(t_iod->chan_stdout, t_iod->io_mode, callback, (ClientData)data);
+		break;
+	    case BU_PROCESS_STDERR:
+		t_iod->chan_stderr = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+		Tcl_CreateChannelHandler(t_iod->chan_stderr, t_iod->io_mode, callback, (ClientData)data);
+		break;
+	}
     }
 }
 
@@ -1240,17 +1240,23 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
        	return;
     struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
 	switch (d) {
-	case BU_PROCESS_STDIN:
-		Tcl_DeleteChannelHandler(t_iod->chan_stdin, NULL, (ClientData)NULL);
-		Tcl_Close(t_iod->interp, t_iod->chan_stdin);
+	    case BU_PROCESS_STDIN:
+		if (t_iod->chan_stdin) {
+		    Tcl_DeleteChannelHandler(t_iod->chan_stdin, NULL, (ClientData)NULL);
+		    Tcl_Close(t_iod->interp, t_iod->chan_stdin);
+		}
 		break;
-	case BU_PROCESS_STDOUT:
-		Tcl_DeleteChannelHandler(t_iod->chan_stdout, NULL, (ClientData)NULL);
-		Tcl_Close(t_iod->interp, t_iod->chan_stdout);
+	    case BU_PROCESS_STDOUT:
+		if (t_iod->chan_stdout) {
+		    Tcl_DeleteChannelHandler(t_iod->chan_stdout, NULL, (ClientData)NULL);
+		    Tcl_Close(t_iod->interp, t_iod->chan_stdout);
+		}
 		break;
-	case BU_PROCESS_STDERR:
-		Tcl_DeleteChannelHandler(t_iod->chan_stderr, NULL, (ClientData)NULL);
-		Tcl_Close(t_iod->interp, t_iod->chan_stderr);
+	    case BU_PROCESS_STDERR:
+		if (t_iod->chan_stderr) {
+		    Tcl_DeleteChannelHandler(t_iod->chan_stderr, NULL, (ClientData)NULL);
+		    Tcl_Close(t_iod->interp, t_iod->chan_stderr);
+		}
 		break;
 	}
 }

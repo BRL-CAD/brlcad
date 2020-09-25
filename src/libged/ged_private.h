@@ -554,6 +554,24 @@ GED_EXPORT extern void _ged_vls_col_pr4v(struct bu_vls *vls,
 GED_EXPORT extern struct directory ** _ged_getspace(struct db_i *dbip,
 					 size_t num_entries);
 
+
+#if 0
+/**
+ * Characterize a path specification (search command style).
+ *
+ * Return flags characterizing the path specifier, as defined below:
+ */
+#define GED_PATHSPEC_INVALID   1ULL << 1
+#define GED_PATHSPEC_SPECIFIC  1ULL << 2
+#define GED_PATHSPEC_LOCAL     1ULL << 3
+#define GED_PATHSPEC_FLAT      1ULL << 4
+
+GED_EXPORT extern unsigned long long
+_ged_characterize_path_spec(struct bu_vls *normalized,
+	struct ged *gedp, const char *pathspec
+	);
+#endif
+
 /**
  * Routine for generic command help printing.
  */

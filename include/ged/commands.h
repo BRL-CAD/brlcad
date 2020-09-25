@@ -41,6 +41,35 @@ __BEGIN_DECLS
 GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
 /** @} */
 
+/* LIBGED maintains this list - callers should regard it as read only.  This
+ * list will change (size and pointers to individual command strings if
+ * commands are added or removed - caller is responsible for performing a new
+ * call to get an updated list and size if commands are altered.  */
+GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
+
+/* Report whether a string identifies a valid LIBGED command.  If func is
+ * non-NULL, check that cmd and func both refer to the same function pointer
+ * (i.e., they are aliases for the same command.)
+ *
+ * If func is NULL, a 0 return indicates an valid GED command and non-zero
+ * indicates a valid command.
+ *
+ * If func is non-null:
+ * 0 indicates both cmd and func strings invoke the same LIBGED function
+ * 1 indicates that either or both of cmd and func were invalid GED commands
+ * 2 indicates that both were valid commands, but they did not match.
+ */
+GED_EXPORT int ged_cmd_valid(const char *cmd, const char *func);
+
+/* Given a candidate cmd name, find the closest match to it among defined
+ * GED commands.  Returns the bu_editdist distance between cmd and *ncmd
+ * (0 if they match exactly - i.e. cmd does define a command.)
+ *
+ * Useful for suggesting corrections to commands which are not found.
+ */
+GED_EXPORT extern int
+ged_cmd_lookup(const char **ncmd, const char *cmd);
+
 /** @addtogroup ged_objects */
 /** @{ */
 /**
@@ -825,6 +854,11 @@ GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]
  * manipulate point set geometry
  */
 GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Report object information.
+ */
+GED_EXPORT extern int ged_stat(struct ged *gedp, int argc, const char *argv[]);
 
 /** @} */
 

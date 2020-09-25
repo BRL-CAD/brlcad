@@ -73,6 +73,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_pnts_internal *pnts_ip;
     struct rt_cline_internal *cline_ip;
 
+    /* intentionally not included: cline */
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -114,6 +115,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	    case 't':
 	    case 'T':
 		if (argc == 2) {
+		    /* intentionally not included: cline */
 		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot datum ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
 		    return GED_HELP;
 		}

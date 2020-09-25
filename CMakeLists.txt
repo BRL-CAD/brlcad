@@ -1384,6 +1384,10 @@ mark_as_advanced(BRLCAD_ENABLE_BULLET)
 option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
 
+# Enable features requiring STEPcode library
+option(BRLCAD_ENABLE_STEP "Enable features requiring the STEP support libraries" ON)
+mark_as_advanced(BRLCAD_ENABLE_STEP)
+
 # Enable features requiring Qt
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
@@ -2937,10 +2941,10 @@ if(NOT HAVE_SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
 
 if(HAVE_REALPATH)
-  check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
-  if(HAVE_WORKING_REALPATH)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
-  endif(HAVE_WORKING_REALPATH)
+ #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
+ #if(HAVE_WORKING_REALPATH)
+ #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+ #endif(HAVE_WORKING_REALPATH)
 endif(HAVE_REALPATH)
 
 # GetFullPathName
@@ -3660,6 +3664,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/include/brlcad_config.h.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxyfile.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxygenDefaults.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackProperties.cmake")
   foreach(clearpattern ${DISTCLEAN_OUTFILES})
     DISTCLEAN("${CMAKE_BINARY_DIR}/${clearpattern}")
   endforeach(clearpattern ${DISTCLEAN_OUTFILES})
