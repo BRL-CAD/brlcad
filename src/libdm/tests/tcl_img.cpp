@@ -395,6 +395,8 @@ Dm_Render(ClientData clientData)
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
 
+    std::cout << "DM update: " << r << "," << g << "," << b << "\n";
+
     // Update done - let the parent structure know.  We don't clear the
     // render_needed flag here, since the parent window may have changed
     // between the start and the end of this render and if it has we need
@@ -492,6 +494,8 @@ Fb_Render(ClientData clientData)
     idata->fb_render_ready = 1;
     Tcl_MutexUnlock(&threadMutex);
     Tcl_MutexUnlock(&fblock);
+
+    std::cout << "FB update: " << r << "," << g << "," << b << "\n";
 
     // Generate an event for the manager thread to let it know we're done, if the
     // display manager isn't already about to generate such an event

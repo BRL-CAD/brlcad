@@ -80,8 +80,10 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (m_dmp->dm_grid_state == grid_state)
+	if (m_dmp->dm_grid_state == grid_state) {
 	    m_dmp->dm_dirty = 1;
+	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	}
     }
 }
 

@@ -1294,6 +1294,9 @@ option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry fil
 # we've indicated we *don't* want an X11 build
 if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
   include(FindX11)
+  if (X11_Xrender_FOUND)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_XRENDER 1\n")
+  endif (X11_Xrender_FOUND)
 endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
 
 # make sure Xi is included in the list of X11 libs
@@ -1380,6 +1383,10 @@ mark_as_advanced(BRLCAD_ENABLE_BULLET)
 # Enable features requiring GDAL geospatial library
 option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
+
+# Enable features requiring STEPcode library
+option(BRLCAD_ENABLE_STEP "Enable features requiring the STEP support libraries" ON)
+mark_as_advanced(BRLCAD_ENABLE_STEP)
 
 # Enable features requiring Qt
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
@@ -2933,17 +2940,11 @@ if(NOT HAVE_SNPRINTF)
   endif(HAVE__SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
 
-# So far I haven't been able to come up with a reliable self contained
-# test for this, but libbu's #2 realpath test triggers a stack smash
-# on some linux systems.  For the moment, fall back on OpenBSD's
-# userspace implementation, which does seem to work.  Once we can
-# get a self-contained reproduction of this failure, put it below
-# and we can use the system realpath again.
 if(HAVE_REALPATH)
-  #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[512]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
-  #if(HAVE_WORKING_REALPATH)
-  #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
-  #endif(HAVE_WORKING_REALPATH)
+ #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
+ #if(HAVE_WORKING_REALPATH)
+ #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+ #endif(HAVE_WORKING_REALPATH)
 endif(HAVE_REALPATH)
 
 # GetFullPathName
@@ -3567,26 +3568,45 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(CPACK_RPM_PACKAGE_RELEASE)
 
   if(WIN32)
-    set(CPACK_GENERATOR NSIS)
-    set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD")
-    set(CPACK_NSIS_INSTALL_DIRECTORY "BRL-CAD ${BRLCAD_VERSION}")
-    set(CPACK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-    set(CPACK_DATA_DIR "${DATA_DIR}")
-    set(CPACK_DOC_DIR "${DOC_DIR}")
-    # There is a bug in NSI that does not handle full unix paths properly. Make
-    # sure there is at least one set of four (4) backslashes.
-    set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
-    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
-    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
-    set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
-    set(CPACK_NSIS_MODIFY_PATH ON)
-    if(BRLCAD_ENABLE_WIX)
+    find_package(NSIS)
+    if (NSIS_FOUND)
+      set(CPACK_GENERATOR ${CPACK_GENERATOR} NSIS)
+      set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD")
+      set(CPACK_NSIS_INSTALL_DIRECTORY "BRL-CAD ${BRLCAD_VERSION}")
+      set(CPACK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
+      set(CPACK_DATA_DIR "${DATA_DIR}")
+      set(CPACK_DOC_DIR "${DOC_DIR}")
+      # There is a bug in NSIS that does not handle full unix paths properly. Make
+      # sure there is at least one set of four (4) backslashes.
+      set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
+      set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
+      set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+      set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
+      set(CPACK_NSIS_MODIFY_PATH ON)
+    endif (NSIS_FOUND)
+    find_package(Wix)
+    if (Wix_FOUND)
+      # User report that this version of the installer also supports
+      # non-graphical installation with the /passive option.
+      #
+      # Note: for WiX, start menu shortcuts and desktop icons are handled with
+      # properties set on targets.  (At the moment, this is not true for NSIS -
+      # it uses entries in the misc/CMake/NSIS.template.in file.)
+      #
+      # If we need to get fancier about this, look at the following:
+      # https://github.com/Kitware/CMake/blob/master/CMakeCPackOptions.cmake.in#L216
+      # https://github.com/Kitware/CMake/tree/master/Utilities/Release/WiX
       set(CPACK_GENERATOR ${CPACK_GENERATOR} WIX)
       set(CPACK_WIX_LICENSE_RTF "${CMAKE_SOURCE_DIR}/misc/wix/License.rtf")
       set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_product.ico")
+      set(CPACK_WIX_PROGRAM_MENU_FOLDER "BRL-CAD ${BRLCAD_VERSION}")
       set(CPACK_WIX_UI_BANNER "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_banner.bmp")
       set(CPACK_WIX_UI_DIALOG "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_dialog.bmp")
-    endif(BRLCAD_ENABLE_WIX)
+    endif (Wix_FOUND)
+    if (NOT CPACK_GENERATOR)
+      # If nothing else, make a zip file
+      set(CPACK_GENERATOR ZIP)
+    endif (NOT CPACK_GENERATOR)
     if(CMAKE_CL_64)
       set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win64")
       set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "BRL-CAD ${BRLCAD_VERSION} win64")
@@ -3644,6 +3664,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/include/brlcad_config.h.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxyfile.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxygenDefaults.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackProperties.cmake")
   foreach(clearpattern ${DISTCLEAN_OUTFILES})
     DISTCLEAN("${CMAKE_BINARY_DIR}/${clearpattern}")
   endforeach(clearpattern ${DISTCLEAN_OUTFILES})

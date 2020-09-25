@@ -6,6 +6,7 @@ set(man1_EN
   asc2dsp.xml
   asc2g.xml
   benchmark.xml
+  bolt.xml
   brlman.xml
   bot_dump.xml
   brep_simple.xml

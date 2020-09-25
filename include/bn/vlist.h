@@ -325,7 +325,7 @@ BN_EXPORT extern void bn_vlist_to_uplot(FILE *fp,
 __END_DECLS
 
 #endif  /* BN_VLIST_H */
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

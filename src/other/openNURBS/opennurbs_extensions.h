@@ -237,7 +237,7 @@ public:
 
             if ( 0 != fp )
             {
-              ON_BinaryFile archive( ON::read3dm, fp );
+              ON_BinaryFile archive( ON::on_read3dm, fp );
               bModelRead = model.read( archive, error_log );
               ON::CloseFile( fp );
             }
@@ -334,7 +334,7 @@ public:
               {
                 const char* sStartSectionComment = "...";
                 int version = 5; // 2, 3, 4 or 5 are valid
-                ON_BinaryFile archive( ON::write3dm, fp );
+                ON_BinaryFile archive( ON::on_write3dm, fp );
                 ok = model.write( archive, 
                                   version, 
                                   sStartSectionComment, 

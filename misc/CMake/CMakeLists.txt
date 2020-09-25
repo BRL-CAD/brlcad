@@ -28,6 +28,7 @@ set(cmake_ignore_files
   FindIlmBase.cmake
   FindLEMON.cmake
   FindNETPBM.cmake
+  FindNSIS.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
@@ -46,6 +47,7 @@ set(cmake_ignore_files
   FindUTAHRLE.cmake
   FindUUID.cmake
   FindVDS.cmake
+  FindWix.cmake
   FindX11.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake

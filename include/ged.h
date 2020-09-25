@@ -60,8 +60,12 @@
 #include "ged/debug.h"
 #include "ged/rt.h"
 
+/** @} */
 
 __BEGIN_DECLS
+
+/** @addtogroup ged_misc */
+/** @{ */
 
 /**
  * Delay the specified amount of time
@@ -83,7 +87,10 @@ GED_EXPORT extern int ged_graph(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_help(struct ged *gedp, int argc, const char *argv[]);
 
+/** @} */
 
+/** @addtogroup libged */
+/** @{ */
 /***************************************
  * Conceptual Documentation for LIBGED *
  ***************************************

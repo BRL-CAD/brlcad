@@ -277,6 +277,7 @@ createDListSolid(struct solid *sp)
 	}
 
 	dlp->dm_dirty = 1;
+	dm_set_dirty(DMP, 1);
     }
 
     set_curr_dm(save_dlp);

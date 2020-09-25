@@ -41,9 +41,20 @@
 
 #include <iostream>
 
-#define SMALL_FASTF 1.0e-77
-#define NEAR_ZERO(val, epsilon) (((val) > -epsilon) && ((val) < epsilon))
-#define NEAR_EQUAL(_a, _b, _tol) NEAR_ZERO((_a) - (_b), (_tol))
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
 
 namespace ads
 {
@@ -154,7 +165,7 @@ struct DockOverlayCrossPrivate
 
 	//============================================================================
 	QWidget* createDropIndicatorWidget(DockWidgetArea DockWidgetArea,
-		CDockOverlay::eMode LMode)
+		CDockOverlay::eMode Mode)
 	{
 		QLabel* l = new QLabel();
 		l->setObjectName("DockWidgetAreaLabel");
@@ -162,7 +173,7 @@ struct DockOverlayCrossPrivate
         const qreal metric = dropIndicatiorWidth(l);
 		const QSizeF size(metric, metric);
 
-		l->setPixmap(createHighDpiDropIndicatorPixmap(size, DockWidgetArea, LMode));
+		l->setPixmap(createHighDpiDropIndicatorPixmap(size, DockWidgetArea, Mode));
 		l->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
 		l->setAttribute(Qt::WA_TranslucentBackground);
 		l->setProperty("dockWidgetArea", DockWidgetArea);
@@ -182,7 +193,7 @@ struct DockOverlayCrossPrivate
 
 	//============================================================================
 	QPixmap createHighDpiDropIndicatorPixmap(const QSizeF& size, DockWidgetArea DockWidgetArea,
-		CDockOverlay::eMode LMode)
+		CDockOverlay::eMode Mode)
 	{
 		QColor borderColor = iconColor(CDockOverlayCross::FrameColor);
 		QColor backgroundColor = iconColor(CDockOverlayCross::WindowBackgroundColor);
@@ -243,7 +254,7 @@ struct DockOverlayCrossPrivate
 		}
 
 		QSizeF baseSize = baseRect.size();
-		if (CDockOverlay::ModeContainerOverlay == LMode && DockWidgetArea != CenterDockWidgetArea)
+		if (CDockOverlay::ModeContainerOverlay == Mode && DockWidgetArea != CenterDockWidgetArea)
 		{
 			baseRect = areaRect;
 		}
@@ -287,7 +298,7 @@ struct DockOverlayCrossPrivate
 		p.restore();
 
 		// Draw arrow for outer container drop indicators
-		if (CDockOverlay::ModeContainerOverlay == LMode && DockWidgetArea != CenterDockWidgetArea)
+		if (CDockOverlay::ModeContainerOverlay == Mode && DockWidgetArea != CenterDockWidgetArea)
 		{
 			QRectF ArrowRect;
 			ArrowRect.setSize(baseSize);
@@ -643,7 +654,7 @@ void CDockOverlayCross::setupOverlayCross(CDockOverlay::eMode Mode)
 //============================================================================
 void CDockOverlayCross::updateOverlayIcons()
 {
-	if (NEAR_EQUAL(windowHandle()->devicePixelRatio(), d->LastDevicePixelRatio, SMALL_FASTF))
+	if (windowHandle()->devicePixelRatio() == d->LastDevicePixelRatio)
 	{
 		return;
 	}
@@ -834,5 +845,13 @@ QString CDockOverlayCross::iconColors() const
 
 
 } // namespace ads
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 //----------------------------------------------------------------------------
 

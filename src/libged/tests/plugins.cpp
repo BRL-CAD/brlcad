@@ -47,6 +47,8 @@ main(int ac, char *av[]) {
     const char * const *ged_cmds = NULL;
     size_t ged_cmd_cnt = ged_cmd_list(&ged_cmds);
 
+    bu_log("%s\n", ged_init_msgs());
+
     for (size_t i = 0; i < ged_cmd_cnt; i++) {
 	bu_log("%s\n", ged_cmds[i]);
     }

@@ -57,7 +57,7 @@ int
 process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 {
     std::regex cad_regex(".*BRL-CAD.*");
-    std::regex copyright_regex(".*[Cc]opyright.*[12][0-9[0-9[0-9].*");
+    std::regex copyright_regex(".*[Cc]opyright.*[1-2][0-9][0-9][0-9].*");
     std::regex gov_regex(".*United[ ]States[ ]Government.*");
     std::regex pd_regex(".*[Pp]ublic[ ][Dd]omain.*");
     std::string sline;

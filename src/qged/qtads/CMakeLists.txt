@@ -78,6 +78,10 @@ CMAKEFILES(
   images/close-button.svg
   images/detach-button-disabled.svg
   images/detach-button.svg
+  images/maximize-button-focused.svg
+  images/maximize-button.svg
+  images/restore-button-focused.svg
+  images/restore-button.svg
   images/tabs-menu-button.svg
   linux/FloatingWidgetTitleBar.cpp
   linux/FloatingWidgetTitleBar.h

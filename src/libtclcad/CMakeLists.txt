@@ -2,18 +2,18 @@ set(LIBTCLCAD_SRCS
   auto_path.c
   bn.c
   bu.c
+  commands.c
   cmdhist.c
   dm.c
+  eval.c
   fb.c
   fbserv.c
+  global.c
+  init.c
+  mouse.c
+  polygons.c
   rt.c
-  tclcad_eval.c
-  tclcad_global.c
-  tclcad_init.c
-  tclcad_mouse.c
-  tclcad_obj.c
-  tclcad_obj_wrapper.c
-  tclcad_polygons.c
+  tkImgFmtPIX.c
   view/arrows.c
   view/autoview.c
   view/axes.c
@@ -23,7 +23,7 @@ set(LIBTCLCAD_SRCS
   view/lines.c
   view/refresh.c
   view/util.c
-  tkImgFmtPIX.c
+  wrapper.c
   )
 
 if (BRLCAD_ENABLE_TCL)
@@ -39,8 +39,11 @@ if (BRLCAD_ENABLE_TCL)
     ${BN_INCLUDE_DIRS}
     ${BU_INCLUDE_DIRS}
     ${TCL_INCLUDE_PATH}
-    ${TK_INCLUDE_PATH}
     )
+
+  if (TK_INCLUDE_PATH)
+    set(TCLCAD_INCLUDE_DIRS ${TCLCAD_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
+  endif (TK_INCLUDE_PATH)
 
   # Include directories only needed by the implementation
   set(TCLCAD_LOCAL_INCLUDE_DIRS
@@ -53,7 +56,24 @@ if (BRLCAD_ENABLE_TCL)
     set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
   endif(BRLCAD_ENABLE_X11)
 
-  BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;libdm;libnmg;libbn;libbu;${TCL_LIBRARY};${TK_LIBRARY};${ITCL_LIBRARY};${ITK_LIBRARY};${TCLCAD_XLIBS}")
+  set(TCLCAD_LIBS
+    libged
+    libdm
+    libnmg
+    libbn
+    libbu
+    ${TCL_LIBRARY}
+    ${ITCL_LIBRARY}
+    ${TCLCAD_XLIBS}
+    )
+  if (TK_LIBRARY)
+    set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})
+  endif (TK_LIBRARY)
+  if (ITK_LIBRARY)
+    set(TCLCAD_LIBS ${TCLCAD_LIBS} ${ITK_LIBRARY})
+  endif (ITK_LIBRARY)
+
+  BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_LIBS}")
   set_target_properties(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
   if (TARGET itcl_pkgIndex)
     add_dependencies(libtclcad itcl_pkgIndex)

@@ -56,6 +56,9 @@
 #define remainder rem
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
+#  ifdef HAVE_XRENDER
+#    include <X11/extensions/Xrender.h>
+#  endif
 #endif
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
@@ -520,8 +523,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     /* Try to satisfy the above desires with a color visual of the
      * greatest depth */
 
-    vibase = XGetVisualInfo(pubvars->dpy,
-			    0, &vitemp, &num);
+    vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
     screen = DefaultScreen(pubvars->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
@@ -546,6 +548,15 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 				vip, GLX_DOUBLEBUFFER, &dbfr);
 	    if (fail || !dbfr)
 		continue;
+
+#ifdef HAVE_XRENDER
+	    // https://stackoverflow.com/a/23836430
+	    XRenderPictFormat *pict_format = XRenderFindVisualFormat(pubvars->dpy, vip->visual);
+	    if(pict_format->direct.alphaMask > 0) {
+		//printf("skipping visual with alphaMask\n");
+		continue;
+	    }
+#endif
 
 	    /* desires */
 	    if (m_zbuffer) {
@@ -875,6 +886,7 @@ ogl_open(void *vinterp, int argc, const char **argv)
     bu_vls_printf(&dmp->i->dm_tkName, "%s",
 		  (char *)Tk_Name(pubvars->xtkwin));
 
+    Tk_SetWindowBackground(pubvars->xtkwin, BlackPixelOfScreen(Tk_Screen(pubvars->xtkwin)));
 
     if (bu_vls_strlen(&init_proc_vls) > 0) {
 	bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->i->dm_pathName));

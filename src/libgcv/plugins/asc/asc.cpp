@@ -133,7 +133,8 @@ extern "C"
     {
 	"ASC Reader",
 	GCV_FILTER_READ,
-	BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC,
+	(int)BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC,
+	BU_MIME_MODEL,
 	asc_can_read,
 	NULL,
 	NULL,
@@ -144,7 +145,8 @@ extern "C"
     {
 	"ASC Writer",
        	GCV_FILTER_WRITE,
-       	BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC,
+       	(int)BU_MIME_MODEL_VND_BRLCAD_PLUS_ASC,
+	BU_MIME_MODEL,
        	NULL,
        	NULL,
        	NULL,

@@ -81,12 +81,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     endif(NOT "${CMAKE_GENERATOR_TOOLSET}" STREQUAL "v110_xp")
   endif("${CREO_VERSION}" VERSION_GREATER "2.9999" AND "${CREO_VERSION}" VERSION_LESS "4.0")
 
-  # There will be a sub-directory that is specific to the installed
+  # There may be a sub-directory that is specific to the installed
   # version of CREO - find it
   file(GLOB MDIR RELATIVE "${CREO_ROOT_DIR}" "${CREO_ROOT_DIR}/M*" )
-  if(NOT MDIR)
-    message(FATAL_ERROR "No directory matching the pattern M* found in ${CREO_ROOT_DIR}.  This may indicate the CREO installation directory conventions have changed - if so, the CMakeLists.txt file will need to be updated to reflect the new path structures.")
-  endif(NOT MDIR)
 
   # Define a variable for the current CREO platform
   set(CREO_OS_VERSION x86e_win64)
@@ -207,17 +204,16 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     libbn
     libbrep
     libbu
-    libgdiam
-    liblz4
     libnmg
-    libp2t
     librt
-    libvds
     libwdb
+    SPSR
+    gdiam
     openNURBS
-    regex
-    zlib1
-	libSPSR
+    poly2tri
+    regex_brl
+    vds
+    z_brl1
     )
   set(BRLCAD_STATIC_LIBS)
   set(brlcadlibs_notinstalled)
@@ -228,11 +224,11 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
     # Sigh - zlib doesn't follow the general pattern
-    if("${blib}" STREQUAL "zlib1")
-      set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/zlib.lib")
-    else("${blib}" STREQUAL "zlib1")
+    if("${blib}" STREQUAL "z_brl1")
+      set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/z_brl.lib")
+    else("${blib}" STREQUAL "z_brl1")
       set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
-    endif("${blib}" STREQUAL "zlib1")
+    endif("${blib}" STREQUAL "z_brl1")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
     if(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
       set(brlcadlibs_notinstalled "${brlcadlibs_notinstalled}\n     ${blib}.dll")

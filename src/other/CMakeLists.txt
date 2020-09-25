@@ -124,6 +124,13 @@ SetTargetFolder(regex-static "Third Party Libraries")
 if (NOT BRLCAD_REGEX_BUILD)
   set(REGEX_LIBRARIES ${REGEX_LIBRARY} CACHE STRING "REGEX_LIBRARIES" FORCE)
   set(REGEX_INCLUDE_DIRS "${REGEX_INCLUDE_DIR}" CACHE STRING "REGEX include directory" FORCE)
+else (NOT BRLCAD_REGEX_BUILD)
+  # Our own code (at least the Creo plugin, maybe others) may require our
+  # regex.h to build if compiling against an installed BRL-CAD's libs.
+  # Explicitly override the general suppression of header installs in this
+  # specific case.
+  get_directory_property(REGEX_HDRS DIRECTORY libregex DEFINITION REGEX_HDRS)
+  install(FILES ${REGEX_HDRS} DESTINATION ${INCLUDE_DIR})
 endif (NOT BRLCAD_REGEX_BUILD)
 
 # Same deal for zlib Library - common requirement, deal with it up front
@@ -144,6 +151,12 @@ if(BRLCAD_ZLIB_BUILD)
   add_definitions(-DZ_PREFIX)
   add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
   set(Z_PREFIX_STR "${Z_PREFIX_STR}" CACHE STRING "prefix for zlib functions" FORCE)
+  # Our own code (at least logic using OpenNURBS, maybe others) can require our
+  # zlib.h to build if compiling against an installed BRL-CAD's libs.
+  # Explicitly override the general suppression of header installs in this
+  # specific case.
+  get_directory_property(ZLIB_PUBLIC_HDRS DIRECTORY libz DEFINITION ZLIB_PUBLIC_HDRS)
+  install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION ${INCLUDE_DIR})
 else(BRLCAD_ZLIB_BUILD)
   set(Z_PREFIX_STR "" CACHE STRING "clear prefix for zlib functions" FORCE)
   set(Z_PREFIX_STR)
@@ -723,8 +736,9 @@ set(IS_SUBBUILD ON)
 set(SC_BUILD_SCHEMAS "" CACHE STRING "Disable schema builds for BRL-CAD" FORCE)
 # Lots of "libraries" associated with stepcode - use "stepcode" as the
 # stand-in for the build target var.
-THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION REQUIRED_VARS LEMON_EXECUTABLE
-  PERPLEX_EXECUTABLE BRLCAD_LEVEL3 ALIASES ${sc_ALIASES} RESET_VARS
+THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION
+  REQUIRED_VARS LEMON_EXECUTABLE PERPLEX_EXECUTABLE BRLCAD_LEVEL3 BRLCAD_ENABLE_STEP
+  ALIASES ${sc_ALIASES} RESET_VARS
   EXP2CXX_EXEC EXP2CXX_EXECUTABLE_TARGET FLAGS NOSYS)
 if(BRLCAD_SC_BUILD)
   set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)

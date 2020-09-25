@@ -5,6 +5,8 @@
 /** @ingroup libged */
 /**  @defgroup ged_defines Definitions*/
 /** @ingroup libged */
+/**  @defgroup ged_plugins Plugins */
+/** @ingroup libged */
 /**  @defgroup ged_database Database*/
 /** @ingroup libged */
 /**  @defgroup ged_objects Database Objects*/
@@ -18,6 +20,8 @@
 /**  @defgroup ged_debug Debugging */
 /** @ingroup libged */
 /**  @defgroup ged_raytrace Raytracing */
+/** @ingroup libged */
+/**  @defgroup ged_misc Miscellaneous */
 
 /* Third tier groups */
 /** @ingroup ged_view */

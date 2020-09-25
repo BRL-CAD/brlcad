@@ -141,8 +141,7 @@ set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for li
 set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NMG}}
 set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
-set mged_help_data(dm)		{{set var [val]}	{do display-manager specific command}}
-set mged_help_data(dmtype)	{{{set dmtype}}	{Without argument, display current display manager type.  With 'set dmtype' changes display manager instances to new type.}}
+set mged_help_data(dm)		{{[type|valid|set] [dmtype|var [val]]}	{print/check the display-manager type or list/set specific variables}}
 set mged_help_data(draw)	$helplib_data(dgo_draw)
 set mged_help_data(dsp)         {{obj [command]} {work with DSP primitives}}
 set mged_help_data(dump)	$helplib_data(wdb_dump)

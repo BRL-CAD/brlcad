@@ -121,8 +121,10 @@ mmenu_set(int index, struct menu_item *value)
 	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (menu_state == dlp->dm_menu_state &&
 	    dlp->dm_mged_variables->mv_faceplate &&
-	    dlp->dm_mged_variables->mv_orig_gui)
+	    dlp->dm_mged_variables->mv_orig_gui) {
 	    dlp->dm_dirty = 1;
+	    dm_set_dirty(dlp->dm_dmp, 1);
+	}
     }
 }
 

@@ -2790,6 +2790,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
     /* initialize a separate wdbp for libged to manage */
     ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
+    if (GEDP) {
+	ged_free(GEDP);
+	BU_ALLOC(GEDP, struct ged);
+    }
     GED_INIT(GEDP, ged_wdbp);
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
@@ -2798,6 +2802,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    GEDP->ged_interp = (void *)interpreter;
+    GEDP->ged_interp_eval = &mged_db_search_callback;
     struct tclcad_io_data *t_iod;
     BU_GET(t_iod, struct tclcad_io_data);
     t_iod->io_mode = TCL_READABLE;
@@ -2864,7 +2870,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&cmd, 0);
-	bu_vls_printf(&cmd, "opendb_callback %s", DBIP->dbi_filename);
+	bu_vls_printf(&cmd, "opendb_callback {%s}", DBIP->dbi_filename);
 	(void)Tcl_Eval(interpreter, bu_vls_addr(&cmd));
 
 	bu_vls_strcpy(&cmd, "local2base");
@@ -2960,6 +2966,8 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    GEDP->ged_interp = (void *)interpreter;
+    GEDP->ged_interp_eval = &mged_db_search_callback;
     struct tclcad_io_data *t_iod;
     BU_GET(t_iod, struct tclcad_io_data);
     t_iod->io_mode = TCL_READABLE;

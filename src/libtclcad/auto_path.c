@@ -1,4 +1,4 @@
-/*                T C L C A D A U T O P A T H . C
+/*                       A U T O _ P A T H . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2020 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file libtclcad/tclcadAutoPath.c
+/**
  *
  * Locate the BRL-CAD tclscripts
  *
