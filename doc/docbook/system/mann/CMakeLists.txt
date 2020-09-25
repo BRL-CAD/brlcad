@@ -195,6 +195,7 @@ set(mann_EN
   size.xml
   solids.xml
   sph-part.xml
+  stat.xml
   status.xml
   summary.xml
   sv.xml

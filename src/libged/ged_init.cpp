@@ -88,18 +88,59 @@ ged_cmd_valid(const char *cmd, const char *func)
     if (cmd_invalid) {
 	return cmd_invalid;
     }
-    ged_func_ptr c1 = cmd_it->second->i->cmd;
-    std::map<std::string, const struct ged_cmd *>::iterator func_it = ged_cmd_map.find(std::string(func));
-    if (func_it == ged_cmd_map.end()) {
-	// func not in table, nothing to validate against - return invalid
-	return 1;
+
+    if (func) {
+	ged_func_ptr c1 = cmd_it->second->i->cmd;
+	std::map<std::string, const struct ged_cmd *>::iterator func_it = ged_cmd_map.find(std::string(func));
+	if (func_it == ged_cmd_map.end()) {
+	    // func not in table, nothing to validate against - return invalid
+	    return 1;
+	}
+	ged_func_ptr c2 = func_it->second->i->cmd;
+	int mismatched_functions = 2;
+	if (c1 == c2) {
+	    mismatched_functions = 0;
+	}
+	return mismatched_functions;
     }
-    ged_func_ptr c2 = func_it->second->i->cmd;
-    int mismatched_functions = 2;
-    if (c1 == c2) {
-	mismatched_functions = 0;
+
+    return 0;
+}
+
+/* Use bu_editdist to see if there is a command name similar to cmd
+ * defined.  Return the closest match and the edit distance.  (0 indicates
+ * an exact match, -1 an error) */
+int
+ged_cmd_lookup(const char **ncmd, const char *cmd)
+{
+    if (!cmd || !ncmd) {
+	return -1;
     }
-    return mismatched_functions;
+    unsigned long min_dist = LONG_MAX;
+
+    // On OpenBSD, if the executable was launched in a way that requires
+    // bu_setprogname to find the BRL-CAD root directory the iniital libged
+    // initialization would have failed.  If we have no ged_cmds at all this is
+    // probably what happened, so call libged_init again here.  By the time we
+    // are calling ged_cmd_valid bu_setprogname should be set and we should be
+    // ready to actually find the commands.
+    if (!ged_cmd_map.size()) {
+	libged_init();
+    }
+
+    const char *ccmd = NULL;
+    std::string scmd(cmd);
+    std::map<std::string, const struct ged_cmd *>::iterator cmd_it;
+    for (cmd_it = ged_cmd_map.begin(); cmd_it != ged_cmd_map.end(); cmd_it++) {
+	unsigned long edist = bu_editdist(cmd, cmd_it->first.c_str(), 0);
+	if (edist < min_dist) {
+	    ccmd = (*cmd_it).first.c_str();
+	    min_dist = edist;
+	}
+    }
+
+    (*ncmd) = ccmd;
+    return (int)min_dist;
 }
 
 size_t

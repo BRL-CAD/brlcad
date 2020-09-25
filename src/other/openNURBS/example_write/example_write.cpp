@@ -131,7 +131,7 @@ static bool write_simple_file_example(
   }
 
   // archive to write to
-  ON_BinaryFile archive( ON::write3dm, fp );
+  ON_BinaryFile archive( ON::on_write3dm, fp );
 
   // Set uuid's, indices, etc.
   model.Polish();
@@ -254,7 +254,7 @@ static bool write_points_example( FILE* fp, int version, ON_TextLog& error_log  
     mo.m_attributes.m_name = "last point";
   }
 
-  ON_BinaryFile archive( ON::write3dm, fp ); // fp = pointer from fopoen(...,"wb")
+  ON_BinaryFile archive( ON::on_write3dm, fp ); // fp = pointer from fopoen(...,"wb")
 
   // start section comment
   const char* sStartSectionComment = __FILE__ "write_points_example()" __DATE__;
@@ -394,7 +394,7 @@ static bool write_curves_example( FILE* fp, int version, ON_TextLog& error_log )
   // start section comments
   const char* sStartSectionComment = __FILE__ "write_curves_example()" __DATE__;
 
-  ON_BinaryFile archive( ON::write3dm, fp ); // fp = pointer from fopoen(...,"wb")
+  ON_BinaryFile archive( ON::on_write3dm, fp ); // fp = pointer from fopoen(...,"wb")
 
   // Set uuid's, indices, etc.
   model.Polish();
@@ -471,7 +471,7 @@ static bool write_surfaces_example( FILE* fp, int version )
   bool ok = false;
   if ( nurbs_surface.IsValid() ) 
   {
-    ON_BinaryFile archive( ON::write3dm, fp );
+    ON_BinaryFile archive( ON::on_write3dm, fp );
     ok = ON_WriteOneObjectArchive( archive, version, nurbs_surface );
   }
 
@@ -569,7 +569,7 @@ static bool write_mesh_example( FILE* fp, int version )
     // them by averaging face normals.
     if ( !mesh.HasVertexNormals() )
       mesh.ComputeVertexNormals();
-    ON_BinaryFile archive( ON::write3dm, fp );
+    ON_BinaryFile archive( ON::on_write3dm, fp );
     ok = ON_WriteOneObjectArchive( archive, version, mesh );
   }
 
@@ -1166,7 +1166,7 @@ static bool write_trimmed_surface_example( FILE* fp, int version, ON_TextLog& er
   bool ok = false;
   if ( brep.IsValid( &error_log ) )
   {
-    ON_BinaryFile archive(ON::write3dm,fp);
+    ON_BinaryFile archive(ON::on_write3dm,fp);
     ok = ON_WriteOneObjectArchive( archive, version, brep );
   }
   

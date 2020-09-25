@@ -38,6 +38,9 @@ dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, const 
 {
     int c;
 
+    if (argc < 1 || !argv)
+	return 0;
+
     char **av = bu_argv_dup(argc, argv);
 
     bu_optind = 0;	 /* re-init bu_getopt */

@@ -42,7 +42,7 @@ static bool Dump3dmFileHelper(
     return false;
   }
 
-  ON_BinaryFile file( ON::read3dm, fp );
+  ON_BinaryFile file( ON::on_read3dm, fp );
 
   int version = 0;
   ON_String comment_block;
@@ -101,7 +101,7 @@ static bool ReadFileHelper(
   dump.PushIndent();
 
   // create achive object from file pointer
-  ON_BinaryFile archive( ON::read3dm, archive_fp );
+  ON_BinaryFile archive( ON::on_read3dm, archive_fp );
 
   // read the contents of the file into "model"
   bool rc = model.Read( archive, &dump );

@@ -1780,7 +1780,6 @@ cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, con
 
 }
 
-
 /**
  * "tol" displays current settings
  * "tol abs #" sets absolute tolerance.  # > 0.0

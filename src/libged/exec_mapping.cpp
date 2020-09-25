@@ -31,6 +31,18 @@
 
 #include "ged.h"
 
+/* For this file, we need to undefine stat if defined so the command template
+ * doesn't end up being expanded with the defined version of the string.
+ * Without this we end up with ged__stati64 on Windows, instead of ged_stat.
+ *
+ * If this happens for other commands, the solution will be similar - the
+ * purpose of this function is just to expand templates into definitions to
+ * call ged_cmd_valid and ged_exec, not to actually execute any other
+ * functions; it should be safe to undef them here.
+ */
+#undef stat
+
+
 #define GED_CMD_HELPER1(x, y) x##y
 #define GED_CMD(x) \
 	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
@@ -46,6 +58,7 @@
 	    } \
 	    return ret; \
 	} \
+
 
 GED_CMD(3ptarb)
 GED_CMD(E)
@@ -320,6 +333,7 @@ GED_CMD(solid_report)
 GED_CMD(solids)
 GED_CMD(solids_on_ray)
 GED_CMD(sphgroup)
+GED_CMD(stat)
 GED_CMD(summary)
 GED_CMD(sv)
 GED_CMD(sync)

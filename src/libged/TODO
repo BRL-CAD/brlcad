@@ -175,6 +175,18 @@ Be specific.
   default to a view-oriented "underlay" but permanently stored in the
   .g file as a proper image object (top-level TODO entry).
 
+* 'gsort' or 'tables' or 'filter' command.  Distinction is that this
+  comamnd is object-aware and can process geometry by name in a given
+  column or list.  This way, one could sort output from search, nirt,
+  idents, and other table/list-based commands. Examples:
+
+  Sort by data size: [gsort -size [search .]])
+  Reverse sort of col4 by vol: [gsort -volume -k4 -r [search .]])
+
+  Desirable to intentionally pattern after POSIX sort
+  (https://pubs.opengroup.org/onlinepubs/9699919799/utilities/sort.html),
+  adding geometry extensions similar to BSD sort(1).
+
 * 'layer' command: to create, select, delete, list enable/disable
   on/off, lock/unlock, and set other properties (e.g., color, style).
   need subcommand(s) to move geometry to/from layers, perhaps
@@ -357,10 +369,6 @@ Be specific.
      simulate -f 0 0 -1.0 9.807 3.0  # earth's gravity for 3s
      simulate -k 1.0  # simulate 1s of gravity, overwriting original
      simulate -G -f 1 2 3 .4 5  # no gravity, custom force, 5s
-
-* 'tables' command: do not call system() on the "sort" unix command!
-  It should perform all sorting on the data directly in memory, at
-  least without creating another process.  bad security practice.
 
 * 'text' command: imports a text file (as geometry).  have options to
   specify the spacing between lines, first line, #lines,

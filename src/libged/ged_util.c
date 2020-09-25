@@ -2036,6 +2036,98 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
     return GED_OK;
 }
 
+#if 0
+
+// TODO - need to generalize the path specifier parsing per notes in TODO.  This is a first
+// cut at recasting what search is using now, which doesn't implement the full resolving logic.
+
+int
+_ged_characterize_pathspec(struct bu_vls *normalized, struct ged *gedp, const char *pathspec)
+{
+    struct bu_vls np = BU_VLS_INIT_ZERO;
+    int flags = 0;
+
+    // Start with nothing - if we get a valid answer we'll print it
+    if (normalized) {
+	bu_vls_trunc(normalized, 0);
+    }
+
+    if (!pathspec)
+       	return GED_PATHSPEC_INVALID;
+
+    if (BU_STR_EQUAL(pathspec, "/"))
+	return flags;
+
+    if (BU_STR_EQUAL(pathspec, ".")) {
+	flags |= GED_PATHSPEC_LOCAL;
+	return flags;
+    }
+
+    if (BU_STR_EQUAL(pathspec, "|")) {
+	flags |= GED_PATHSPEC_FLAT;
+	return flags;
+    }
+
+    bu_vls_sprintf(&np, "%s", pathspec);
+    if (bu_vls_cstr(&np)[0] == '|') {
+	flags |= GED_PATHSPEC_FLAT;
+	bu_vls_nibble(&np, 1);
+    }
+    if (BU_STR_EQUAL(bu_vls_cstr(&np), "/")) {
+	bu_vls_free(&np);
+	return flags;
+    }
+
+    if (BU_STR_EQUAL(bu_vls_cstr(&np), ".")) {
+	flags |= GED_PATHSPEC_LOCAL;
+	bu_vls_free(&np);
+	return flags;
+    }
+
+    if (bu_vls_cstr(&np)[0] != '/')
+	flags |= GED_PATHSPEC_LOCAL;
+
+    const char *bu_norm = bu_path_normalize(bu_vls_cstr(&np));
+
+    if (bu_norm && !BU_STR_EQUAL(bu_norm , "/")) {
+	struct bu_vls tmp = BU_VLS_INIT_ZERO;
+	char *tbasename = bu_path_basename(bu_vls_cstr(&np), NULL);
+	bu_vls_sprintf(&tmp, "%s", tbasename);
+	bu_free(tbasename, "free bu_path_basename string (caller's responsibility per bu/log.h)");
+	bu_vls_sprintf(&np, "%s", bu_vls_cstr(&tmp));
+	bu_vls_free(&tmp);
+    } else {
+	bu_vls_sprintf(&np, "%s", "/");
+    }
+
+    // If we've gotten this far, normalizing to nothing is considered invalid.
+    if (!bu_vls_strlen(&np)) {
+	bu_vls_free(&np);
+	return GED_PATHSPEC_INVALID;
+    }
+
+    // If we reduced to the root fullpath, we're done
+    if (BU_STR_EQUAL(bu_vls_cstr(&np), "/")) {
+	bu_vls_free(&np);
+	return flags;
+    }
+
+    /* We've handled the toplevel special cases.  If we got here, we have a specific
+     * path - now the only question is whether that path is valid */
+    flags |= GED_PATHSPEC_SPECIFIC;
+    struct directory *path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&np), LOOKUP_QUIET);
+    if (path_dp == RT_DIR_NULL) {
+	flags = GED_PATHSPEC_INVALID;
+    } else {
+	if (normalized)
+	    bu_vls_sprintf(normalized, "%s", bu_vls_cstr(&np));
+    }
+    bu_vls_free(&np);
+
+    return flags;
+}
+
+#endif
 
 
 /*

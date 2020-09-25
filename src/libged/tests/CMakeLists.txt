@@ -13,6 +13,7 @@ CMAKEFILES(
   lint_tests.g
   obb_tests.g
   ged_tests.g
+  pnts_in_out.g
   )
 
 CMAKEFILES(CMakeLists.txt)

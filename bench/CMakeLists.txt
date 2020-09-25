@@ -22,7 +22,7 @@ add_custom_command(
   COMMAND "${CMAKE_COMMAND}" -E touch  ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
   )
-add_custom_target(benchmark_cp DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done)
+add_custom_target(benchmark_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done)
 set_target_properties(benchmark_cp PROPERTIES FOLDER "Benchmark")
 if(CMAKE_CONFIGURATION_TYPES)
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
