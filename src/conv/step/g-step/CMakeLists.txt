@@ -26,39 +26,41 @@ set(gstep_SOURCES
   Trees.cpp
   g-step.cpp
   )
+CMAKEFILES(${gstep_SOURCES})
 
-set(gstep_LIBS
-  libwdb
-  librt
-  libbrep
-  libbn
-  libbu
-  steputils
-  stepeditor
-  stepdai
-  stepcore
-  ${OPENNURBS_LIBRARIES}
-  )
-list(APPEND gstep_LIBS ${gstep_LIBS})
-
-BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
-add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
-set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
-
-if (HIDE_INTERNAL_SYMBOLS)
-  set(gstep_IMPORTS
-    BU_DLL_IMPORTS
-    BN_DLL_IMPORTS
-    RT_DLL_IMPORTS
-    WDB_DLL_IMPORTS
-    SC_CORE_DLL_IMPORTS
-    SC_DAI_DLL_IMPORTS
-    SC_EDITOR_DLL_IMPORTS
-    SC_UTILS_DLL_IMPORTS
+if (BRLCAD_ENABLE_STEP)
+  set(gstep_LIBS
+    libwdb
+    librt
+    libbrep
+    libbn
+    libbu
+    steputils
+    stepeditor
+    stepdai
+    stepcore
+    ${OPENNURBS_LIBRARIES}
     )
-  list(APPEND gstep_IMPORTS ${gstep_IMPORTS})
-  set_property(TARGET g-step APPEND PROPERTY COMPILE_DEFINITIONS "${gstep_IMPORTS}")
-endif (HIDE_INTERNAL_SYMBOLS)
+
+  BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
+  add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
+  set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
+
+  if (HIDE_INTERNAL_SYMBOLS)
+    set(gstep_IMPORTS
+      BU_DLL_IMPORTS
+      BN_DLL_IMPORTS
+      RT_DLL_IMPORTS
+      WDB_DLL_IMPORTS
+      SC_CORE_DLL_IMPORTS
+      SC_DAI_DLL_IMPORTS
+      SC_EDITOR_DLL_IMPORTS
+      SC_UTILS_DLL_IMPORTS
+      )
+    list(APPEND gstep_IMPORTS ${gstep_IMPORTS})
+    set_property(TARGET g-step APPEND PROPERTY COMPILE_DEFINITIONS "${gstep_IMPORTS}")
+  endif (HIDE_INTERNAL_SYMBOLS)
+endif (BRLCAD_ENABLE_STEP)
 
 set(IGNORE_FILES
   CMakeLists.txt

@@ -32,11 +32,11 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn/spm.h"
 
 
-static fb *fbp;
+static struct fb *fbp;
 
 static char *framebuffer = NULL;
 static int scr_width = 0;

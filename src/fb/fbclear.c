@@ -33,7 +33,7 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 #ifdef HAVE_WINSOCK_H
@@ -42,7 +42,7 @@
 
 
 static char *framebuffer = NULL;
-static fb *fbp;
+static struct fb *fbp;
 static int scr_width = 0;		/* use default size */
 static int scr_height = 0;
 static int clear_and_reset = 0;

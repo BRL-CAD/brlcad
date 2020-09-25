@@ -127,6 +127,24 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.32
+----
+include/bg/chull.h
+        All functions returning point arrays instead of index arrays.
+        Will be replaced by similarly named functions returning
+        indexes into provided points array, to allow the caller
+        to decide if new arrays are needed. [deprecated 7.32]
+        bg_polyline_2d_chull, bg_2d_chull, bg_3d_coplanar_chull,
+        bg_3d_chull
+
+MGED gui
+	The following will be removed from MGED's menu bar (unused
+	features, can be accomplished another way, or will be exposed
+	only as lower level settings when there are sensible defaults
+	that are seldom changed.)
+
+	Settings->Mouse Behavior->Pick Raytrace-Object(s)
+
 7.30
 ----
 ~/.density
@@ -354,6 +372,7 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+        
 7.30.2
 ------
 ray tracing tools
@@ -1527,3 +1546,8 @@ s/wdb_pipept/wdb_pipe_pnt/g
         renamed points from pt to pnt for consistency [7.30]
 s/proe-brl/creo-brl/g
         replaced by newer creo plugin [7.30]
+
+7.32
+----
+s/facetall.sh/mged -c facetize/g
+        replaced by more improved facetize command [7.30]

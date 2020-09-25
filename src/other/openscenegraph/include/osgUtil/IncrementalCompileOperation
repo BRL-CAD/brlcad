@@ -24,7 +24,7 @@ class OSGUTIL_EXPORT StateToCompile : public osg::NodeVisitor
 {
     public:
 
-        StateToCompile(GLObjectsVisitor::Mode mode);
+        StateToCompile(GLObjectsVisitor::Mode mode, osg::Object* markerObject);
 
         typedef std::set<osg::Drawable*> DrawableSet;
         typedef std::set<osg::StateSet*> StateSetSet;
@@ -40,11 +40,11 @@ class OSGUTIL_EXPORT StateToCompile : public osg::NodeVisitor
         ProgramSet  _programs;
         bool        _assignPBOToImages;
         osg::ref_ptr<osg::PixelBufferObject> _pbo;
+        osg::ref_ptr<osg::Object> _markerObject;
 
         bool empty() const { return _textures.empty() &&  _programs.empty() && _drawables.empty(); }
 
         virtual void apply(osg::Node& node);
-        virtual void apply(osg::Geode& node);
 
         virtual void apply(osg::Drawable& drawable);
         virtual void apply(osg::StateSet& stateset);
@@ -107,7 +107,7 @@ class OSGUTIL_EXPORT IncrementalCompileOperation : public osg::GraphicsOperation
         /** ConservativeTimeRatio governs how much of the measured spare time in each frame is used for flushing deleted and compile new OpenGL objects.
           * Default value is 0.5, valid range is 0.1 to 1.0.
           * A ratio near 1.0 will lead to paged databases being compiled and merged quicker but increase the chances of frame drop.
-          * A ratio near 0.1 will lead to paged databases being compiled and merged closer but reduse the chances of frame drop.*/
+          * A ratio near 0.1 will lead to paged databases being compiled and merged closer but reduce the chances of frame drop.*/
         void setConservativeTimeRatio(double ratio) { _conservativeTimeRatio = ratio; }
         double getConservativeTimeRatio() const { return _conservativeTimeRatio; }
 
@@ -266,6 +266,8 @@ class OSGUTIL_EXPORT IncrementalCompileOperation : public osg::GraphicsOperation
             typedef std::map<osg::GraphicsContext*, CompileList >  CompileMap;
             CompileMap                              _compileMap;
 
+            osg::ref_ptr<osg::Object>               _markerObject;
+
         protected:
 
             virtual ~CompileSet() {}
@@ -291,6 +293,10 @@ class OSGUTIL_EXPORT IncrementalCompileOperation : public osg::GraphicsOperation
         OpenThreads::Mutex* getCompiledMutex() { return &_compiledMutex; }
         CompileSets& getCompiled() { return _compiled; }
 
+        void setMarkerObject(osg::Object* mo) { _markerObject = mo; }
+        osg::Object* getMarkerObject() { return _markerObject.get(); }
+        const osg::Object* getMarkerObject() const { return _markerObject.get(); }
+
     protected:
 
         virtual ~IncrementalCompileOperation();
@@ -315,6 +321,8 @@ class OSGUTIL_EXPORT IncrementalCompileOperation : public osg::GraphicsOperation
         CompileSets                         _compiled;
 
         ContextSet                          _contexts;
+
+        osg::ref_ptr<osg::Object>           _markerObject;
 
 };
 

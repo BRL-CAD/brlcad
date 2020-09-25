@@ -26,15 +26,37 @@ g++ -O3 -o svnfexport svnfexport.cxx
 
 echo "Start main conversion"
 REPODERCSDIR="$PWD/repo_dercs"
-./svnfexport ./brlcad_full_dercs.dump account-map $REPODERCSDIR
+./svnfexport ./brlcad_full_dercs.dump account-map_svnfexport.txt $REPODERCSDIR
 
-echo "Do a file git gc --aggressive"
+# Clear previous "final" conversion
+rm -rf brlcad_final.git brlcad_final.tar.gz
+
+# Create an updated svn revision to author map
+svn log file://$REPODIR | grep "|" | grep "^r[0-9][0-9 ]" | grep -v \(no\ author\) | awk -F "|" '{print $1 $2}' | sed -e 's/r//' | sed -e 's/ $//' | sed -e 's/  / /' > rev_map
+
+# Create a fast export file of the conversion.  IMPORTANT - need
+# original ids if we're going to process the git notes down into
+# the commit messages.
+cd cvs_git && git fast-export --show-original-ids --all > ../brlcad_raw.fi && cd ..
+repowork -t -w -e email_fixups.txt -n -r cvs_git -s rev_map ~/brlcad_raw.fi brlcad_final.fi
+
+mkdir brlcad_final.git && cd brlcad_final.git && git init
+cat ../brlcad_final.fi | git fast-import
+
+# Compress the fast-import - by default, it is unoptimized
 git gc --aggressive
+git reflog expire --expire-unreachable=now --all
+git gc --prune=now
+cd ..
 
-echo "Make the final tar.gz file (NOTE!!! we can't use git bundle for this, it drops all the notes with the svn rev info)"
-mkdir brlcad-git
-mv .git brlcad-git
-tar -czf ../brlcad-git.tar.gz brlcad-git
-mv brlcad-git .git
+# Package up the conversion
+tar -czf brlcad_final.tar.gz brlcad_final.git
 
-echo "Be aware that by default a checkout of the repo won't get the notes - it requires an extra step, see https://stackoverflow.com/questions/37941650/fetch-git-notes-when-cloning"
+# If uploading to github, it will look something like the following once the
+# repository has been created through the github website.  Note, in particular,
+# that UNLIKE the github instructions we push everything, not just master:
+#
+# cd brlcad_final.git
+# git remote add origin git@github.com:BRL-CAD/BRL-CAD.git
+# git push --all -u origin
+

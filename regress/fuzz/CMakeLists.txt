@@ -4,26 +4,35 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
-project(fuzz)
+# First check whether fuzzing support is available.
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-fsanitize=fuzzer HAVE_FUZZER)
 
-add_executable(fuzz_test fuzz_ged.cpp)
-target_link_libraries(fuzz_test PUBLIC libbu librt libged)
-brlcad_add_fuzzer(fuzz_test)
+if (HAVE_FUZZER)
 
-configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/fuzz" COPYONLY)
-install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/fuzz" DESTINATION ${BIN_DIR})
-configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/fuzz COPYONLY)
+  add_executable(fuzz_test fuzz_ged.cpp)
+  target_link_libraries(fuzz_test PUBLIC libbu librt libged)
+  target_compile_options(fuzz_test PRIVATE -fsanitize=fuzzer)
+  target_link_options(fuzz_test PRIVATE -fsanitize=fuzzer)
 
-#add_test(NAME fuzz COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run)
+  configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/fuzz" COPYONLY)
+  install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/fuzz" DESTINATION ${BIN_DIR})
+  configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/fuzz COPYONLY)
 
-add_custom_target(fuzz
-  COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run
+  #add_test(NAME fuzz COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run)
+
+  add_custom_target(fuzz
+    COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run
+    )
+
+endif (HAVE_FUZZER)
+
+CMAKEFILES(
+  CMakeLists.txt
+  fuzz_ged.cpp
+  fuzz_test1.cxx
+  run.sh
   )
-
-
-#Not sure what this is for
-#CMAKEFILES(CMakeLists.txt)
-
 
 # Local Variables:
 # tab-width: 8

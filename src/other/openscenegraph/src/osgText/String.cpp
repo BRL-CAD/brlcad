@@ -3,6 +3,8 @@
 #include <osg/Notify>
 #include <osg/Math>
 
+#include <osgDB/ConvertUTF>
+
 #include <iterator>
 
 using namespace osgText;
@@ -238,7 +240,7 @@ unsigned int getNextCharacter(look_ahead_iterator& charString,String::Encoding e
 
 ////////////////////////////////////////////////////////////////////////////
 //
-// String implemention.
+// String implementation.
 //
 
 String::String(const String& str):
@@ -275,8 +277,14 @@ void String::set(const wchar_t* text)
     }
 }
 
-void String::set(const std::string& text,Encoding encoding)
+void String::set(const std::string& text, Encoding encoding)
 {
+    if (encoding==ENCODING_CURRENT_CODE_PAGE)
+    {
+        set(osgDB::convertStringFromCurrentCodePageToUTF8(text), ENCODING_UTF8);
+        return;
+    }
+
     clear();
 
     look_ahead_iterator itr(text);
@@ -312,10 +320,17 @@ std::string String::createUTF8EncodedString() const
             utf8string+=(char)(0xc0 | (currentChar>>6));
             utf8string+=(char)(0x80 | (currentChar & 0x3f));
         }
-        else
+        else if (currentChar < 0x10000)
         {
             utf8string+=(char)(0xe0 | (currentChar>>12));
             utf8string+=(char)(0x80 | ((currentChar>>6) & 0x3f));
+            utf8string+=(char)(0x80 | (currentChar & 0x3f));
+        }
+        else
+        {
+            utf8string+=(char)(0xf0 | (currentChar >> 18));
+            utf8string+=(char)(0x80 | ((currentChar >> 12) & 0x3f));
+            utf8string+=(char)(0x80 | ((currentChar >> 6) & 0x3f));
             utf8string+=(char)(0x80 | (currentChar & 0x3f));
         }
     }

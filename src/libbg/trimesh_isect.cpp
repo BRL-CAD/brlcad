@@ -50,7 +50,7 @@ HIDDEN void
 plot_faces(const char *fname, std::set<int> *faces, int *f, point_t *v)
 {
     std::set<int>::iterator f_it;
-    FILE* plot_file = fopen(fname, "w");
+    FILE* plot_file = fopen(fname, "wb");
     int r = int(256*drand48() + 100.0);
     int g = int(256*drand48() + 100.0);
     int b = int(256*drand48() + 100.0);

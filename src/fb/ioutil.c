@@ -33,7 +33,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
-#include "fb.h"
+#include "dm.h"
 
 
 HIDDEN void
@@ -62,7 +62,7 @@ Message(const char *format, ...)
 
 
 void
-Fatal(fb *fbp, const char *format, ...)
+Fatal(struct fb *fbp, const char *format, ...)
 {
     va_list ap;
 

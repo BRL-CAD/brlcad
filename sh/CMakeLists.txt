@@ -3,7 +3,6 @@ set(sh_SCRIPTS
   elapsed.sh
   cmp.sh
   conversion.sh
-  facetall.sh
   show.sh
   )
 foreach(script ${sh_SCRIPTS})

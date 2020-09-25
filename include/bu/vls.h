@@ -548,6 +548,12 @@ typedef int (*bu_vls_uniq_t)(struct bu_vls *v, void *data);
  * @param[in] incr_spec Optional - string of colon separated
  * parameters defining function behavior.
  *
+ * @param[in] uniq_test Optional - uniqueness testing function.
+ * 
+ * @param[in] data Optional - data to pass to the uniq_test
+ * function call.
+ * 
+ *
  * @section bu_vls_incr_regexp Incrementer Substring Identification
  *
  * bu_vls_incr uses regular expressions to identify the numerical part

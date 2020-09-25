@@ -1,0 +1,48 @@
+BRL-CAD's Geometry Editing Library (LIBGED)
+===========================================
+
+LIBGED is a CLI library for working on BRL-CAD geometry.
+
+LIBGED provides commands that may be invoked via C API or scripting
+languages bound to the API.  It supports the following features:
+
+* stateless command interface
+* stateful commands via context structure (e.g., for objects & views)
+* short and long versions of all flags
+* automatic help generation for commands and flags
+* TODO: automatic help flag recognition for -?, -h, and --help
+* TODO: automatic detailed help for "help [command]"
+* TODO: built-in globbing support
+* TODO: transactional changes (all or nothing)
+* TODO: built-in undo support
+* TODO: command versioning
+
+= Design =
+
+LIBGED's CLI uses a consistent "{action} [args]" (i.e., VERB NOUN)
+command pattern or "{obj_type} {action} [args]" for commands
+specific to an object type (e.g., "attr show myobj").
+
+LIBGED aims to present fewer than 100 top-level commands.
+
+For development, the following guidelines are recommended best
+practice for consistency and uniformity.
+
+1. Usability first.  Helps to develop UI before doing implementation.
+
+2. If something doesn't work well, deprecate, replace, and/or retire.
+
+3. Maintainable means high cohesion, low coupling, & quick to modify.
+
+4. All commands must be documented.  Docs help with scope and design.
+
+5. Take features to completion, not perfection.  Iterate on feedback.
+
+6. Coding solo can be satisfying, but often results in design poison.
+
+7. Reduce, Reuse, Refactor; leverage existing; push duplication down.
+
+Per ISO 9126-1, development priorities SHOULD typically be:
+Usability > Reliability > Maintainability > Functionality > Efficiency
+
+See TODO and include/ged.h for additional notes on LIBGED's design.

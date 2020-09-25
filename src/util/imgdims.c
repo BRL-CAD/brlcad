@@ -40,7 +40,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define NONE -1

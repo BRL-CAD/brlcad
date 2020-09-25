@@ -87,7 +87,7 @@ class OSGGA_EXPORT CameraManipulator : public GUIEventHandler
         /** get the position of the manipulator as a inverse matrix of the manipulator, typically used as a model view matrix.*/
         virtual osg::Matrixd getInverseMatrix() const = 0;
 
-        /** update the camera for the current frame, typically called by the viewer classes. 
+        /** update the camera for the current frame, typically called by the viewer classes.
             Default implementation simply set the camera view matrix. */
         virtual void updateCamera(osg::Camera& camera) { camera.setViewMatrix(getInverseMatrix()); }
 
@@ -143,6 +143,9 @@ class OSGGA_EXPORT CameraManipulator : public GUIEventHandler
         /** Compute the home position.*/
         virtual void computeHomePosition(const osg::Camera *camera = NULL, bool useBoundingBox = false);
 
+        /** finish any active manipulator animations.*/
+        virtual void finishAnimation() {}
+
         /**
         Move the camera to the default position.
         May be ignored by manipulators if home functionality is not appropriate.
@@ -159,9 +162,11 @@ class OSGGA_EXPORT CameraManipulator : public GUIEventHandler
 
         /**
         Start/restart the manipulator.
-        FIXME: what does this actually mean? Provide examples.
         */
         virtual void init(const GUIEventAdapter& ,GUIActionAdapter&) {}
+
+        /** Handle event. Override the handle(..) method in your event handlers to respond to events. */
+        virtual bool handle(osgGA::Event* event, osg::Object* object, osg::NodeVisitor* nv) { return GUIEventHandler::handle(event, object, nv); }
 
         /** Handle events, return true if handled, false otherwise. */
         virtual bool handle(const GUIEventAdapter& ea,GUIActionAdapter& us);

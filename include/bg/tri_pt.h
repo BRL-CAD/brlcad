@@ -20,7 +20,7 @@
 
 /*----------------------------------------------------------------------*/
 /* @file tri_pt.h */
-/** @addtogroup tri_pt */
+/** @addtogroup bg_tri_pt */
 /** @{ */
 
 /**
@@ -39,8 +39,9 @@
 
 __BEGIN_DECLS
 
-/* The parameter closest_pt is optional = if supplied, it will hold the closest point found.
- * The return value is the stance between TP and closest_pt */
+/* The parameter closest_pt is optional = if supplied, it will hold the closest
+ * point found.  The return value is the distance between TP and the closest_pt
+ * to TP on the triangle. */
 BG_EXPORT extern double bg_tri_closest_pt(
 	point_t *closest_pt,
 	const point_t TP,

@@ -1,11 +1,11 @@
 set(dm_headers
   bview.h
+  bview_util.h
   defines.h
-  dm_xvars.h
+  util.h
   )
 BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm)
 
-CMAKEFILES(dm-design.h)
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

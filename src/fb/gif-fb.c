@@ -81,7 +81,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define USAGE "Usage: gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]\n       (stdin used with '<' construct if gif_file not supplied)"
@@ -97,7 +97,7 @@ static int image = 0;		/* # of image to display (0 => all) */
 static char *gif_file = NULL;	/* GIF file name */
 static FILE *gfp = NULL;		/* GIF input stream handle */
 static char *fb_file = NULL;	/* frame buffer name */
-static fb *fbp = FB_NULL;	/* frame buffer handle */
+static struct fb *fbp = FB_NULL;	/* frame buffer handle */
 static int ht;			/* virtual frame buffer height */
 static int width, height;		/* overall "screen" size */
 static int write_width;		/* used width of screen, <= width */
@@ -120,7 +120,7 @@ static RGBpixel *cmap;			/* bu_malloc()ed local color map */
 
 /* in ioutil.c */
 void Message(const char *format, ...);
-void Fatal(fb *fbiop, const char *format, ...);
+void Fatal(struct fb *fbiop, const char *format, ...);
 
 
 static void
@@ -519,8 +519,10 @@ main(int argc, char **argv)
 
 	if ((gfp = fopen(gif_file = argv[bu_optind], "rb")) == NULL)
 	    Fatal(fbp, "Couldn't open GIF file \"%s\"", gif_file);
-    } else
+    } else {
 	gfp = stdin;
+	setmode(fileno(stdin), O_BINARY);
+    }
 
     /* Process GIF signature. */
 

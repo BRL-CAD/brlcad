@@ -7,16 +7,18 @@ project(SVN2GIT)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${SVN2GIT_SOURCE_DIR}/CMake")
 find_package(SubversionLibrary)
 find_package(APR)
-find_package(Qt4 REQUIRED QtCore)
-include(${QT_USE_FILE})
+find_package(Qt5 REQUIRED Core)
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${Qt5Core_INCLUDE_DIRS}
   ${SUBVERSION_INCLUDE_DIRS}
   ${APR_INCLUDE_DIRS}
   )
 
+add_definitions(-fPIC)
+add_definitions(-g)
+
 include(CheckFunctionExists)
-cmake_push_check_state(RESET)
 set(CMAKE_REQUIRED_INCLUDES ${SUBVERSION_INCLUDE_DIRS})
 set(CMAKE_REQUIRED_LIBRARIES ${SUBVERSION_LIBRARIES})
 check_function_exists(svn_repos_open3 HAVE_SVN_REPOS_OPEN3)
@@ -43,7 +45,6 @@ if(NOT HAVE_SVN_STREAM_COPY3)
     add_definitions(-Wno-deprecated-declarations)
   endif(HAVE_SVN_STREAM_COPY)
 endif(NOT HAVE_SVN_STREAM_COPY3)
-cmake_pop_check_state()
 
 set(SVN2GIT_SRCS
   ruleparser.cpp
@@ -53,10 +54,10 @@ set(SVN2GIT_SRCS
   CommandLineParser.cpp
   )
 
-add_definitions(-DVER="brlcad-svn2git-20140907")
+add_definitions(-DVER="brlcad-svn2git-20200725")
 
 add_executable(svn-all-fast-export ${SVN2GIT_SRCS})
-target_link_libraries(svn-all-fast-export ${SUBVERSION_LIBRARIES} ${QT_LIBRARIES})
+target_link_libraries(svn-all-fast-export ${SUBVERSION_LIBRARIES} ${Qt5Core_LIBRARIES})
 
 # Local Variables:
 # tab-width: 8

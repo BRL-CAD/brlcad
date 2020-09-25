@@ -6,11 +6,13 @@ using namespace osgGA;
 
 AnimationPathManipulator::AnimationPathManipulator(osg::AnimationPath* animationPath)
 {
+    _valid = (animationPath!=0);
     _printOutTimingInfo = true;
 
     _animationPath = animationPath;
     _timeOffset = 0.0;
     _timeScale = 1.0;
+    _pauseTime = 0.0;
     _isPaused = false;
 
     _realStartOfTimedPeriod = 0.0;
@@ -20,17 +22,21 @@ AnimationPathManipulator::AnimationPathManipulator(osg::AnimationPath* animation
 
 AnimationPathManipulator::AnimationPathManipulator( const std::string& filename )
 {
+    _valid = true;
     _printOutTimingInfo = true;
 
     _animationPath = new osg::AnimationPath;
     _animationPath->setLoopMode(osg::AnimationPath::LOOP);
     _timeOffset = 0.0;
     _timeScale = 1.0;
+    _pauseTime = 0.0;
     _isPaused = false;
 
+    _realStartOfTimedPeriod = 0.0;
+    _animStartOfTimedPeriod = 0.0;
+    _numOfFramesSinceStartOfTimedPeriod = -1; // need to init.
 
     osgDB::ifstream in(filename.c_str());
-
     if (!in)
     {
         OSG_WARN << "AnimationPathManipulator: Cannot open animation path file \"" << filename << "\".\n";
@@ -180,8 +186,7 @@ void AnimationPathManipulator::handleFrame( double time )
         {
             double delta = time-_realStartOfTimedPeriod;
             double frameRate = (double)_numOfFramesSinceStartOfTimedPeriod/delta;
-            OSG_NOTICE <<"AnimatonPath completed in "<<delta<<" seconds, completing "<<_numOfFramesSinceStartOfTimedPeriod<<" frames,"<<std::endl;
-            OSG_NOTICE <<"             average frame rate = "<<frameRate<<std::endl;
+            OSG_NOTICE <<"AnimatonPath completed in "<<delta<<" seconds, completing "<<_numOfFramesSinceStartOfTimedPeriod<<" frames, average frame rate = "<<frameRate<<std::endl;
         }
 
         // reset counters for next loop.

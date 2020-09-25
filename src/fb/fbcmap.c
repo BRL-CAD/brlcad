@@ -36,7 +36,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/snooze.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 
@@ -655,7 +655,7 @@ main(int argc, char **argv)
     int fudge;
     ColorMap cmap;
     ColorMap *cp = &cmap;
-    fb *fbp;
+    struct fb *fbp;
 
     bu_setprogname(argv[0]);
 

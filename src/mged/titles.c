@@ -301,7 +301,7 @@ dotitles(struct bu_vls *overlay_vls)
     }
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
-    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_center_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_center_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     tmp_val = view_state->vs_gvp->gv_size*base2local;
@@ -310,7 +310,7 @@ dotitles(struct bu_vls *overlay_vls)
     } else {
 	sprintf(size, "sz=%.3g", tmp_val);
     }
-    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_size_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_size_name),
 	       size, TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
@@ -320,7 +320,7 @@ dotitles(struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f", V3ARGS(view_state->vs_gvp->gv_aet));
-    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_aet_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_aet_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     sprintf(ang_x, "%.2f", view_state->vs_rate_rotate[X]);
@@ -329,7 +329,7 @@ dotitles(struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "ang=(%s %s %s)", ang_x, ang_y, ang_z);
-    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_ang_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_ang_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
@@ -542,11 +542,11 @@ dotitles(struct bu_vls *overlay_vls)
 	    dm_draw_string_2d(DMP, bu_vls_addr(&vls),
 			      GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
 	}
-	Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_adc_name),
+	Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_adc_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	ss_line_not_drawn = 0;
     } else {
-	Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_adc_name), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
     if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
@@ -614,7 +614,7 @@ dotitles(struct bu_vls *overlay_vls)
 	dm_draw_string_2d(DMP, bu_vls_addr(&vls),
 			  GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
     }
-    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_fps_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_fps_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     bu_vls_free(&vls);

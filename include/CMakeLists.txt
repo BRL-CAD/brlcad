@@ -10,7 +10,6 @@ add_subdirectory(icv)
 add_subdirectory(nmg)
 add_subdirectory(optical)
 add_subdirectory(rt)
-add_subdirectory(fb)
 
 set(public_hdrs
   RtServerImpl.h
@@ -27,7 +26,6 @@ set(public_hdrs
   bu.h
   common.h
   dm.h
-  fb.h
   fft.h
   gcv.h
   ged.h

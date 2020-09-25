@@ -18,7 +18,8 @@
 #include <osg/Object>
 #include <osg/StateSet>
 #include <osg/BoundingSphere>
-#include <osg/NodeCallback>
+#include <osg/BoundingBox>
+#include <osg/Callback>
 
 #include <string>
 #include <vector>
@@ -33,6 +34,8 @@ namespace osg {
 
 // forcing declare classes to enable declaration of as*() methods.
 class NodeVisitor;
+class Drawable;
+class Geometry;
 class Group;
 class Transform;
 class Node;
@@ -48,6 +51,7 @@ typedef std::vector< NodePath > NodePathList;
 
 /** A vector of NodePath, typically used to describe all the paths from a node to the potential root nodes it has.*/
 typedef std::vector< Matrix > MatrixList;
+
 
 /** META_Node macro define the standard clone, isSameKindAs, className
   * and accept methods.  Use when subclassing from Node to make it
@@ -91,6 +95,28 @@ class OSG_EXPORT Node : public Object
         /** return the name of the node's class type.*/
         virtual const char* className() const { return "Node"; }
 
+        /** Convert 'this' into a Node pointer if Object is a Node, otherwise return 0.
+          * Equivalent to dynamic_cast<Node*>(this).*/
+        virtual Node* asNode() { return this; }
+
+        /** convert 'const this' into a const Node pointer if Object is a Node, otherwise return 0.
+          * Equivalent to dynamic_cast<const Node*>(this).*/
+        virtual const Node* asNode() const { return this; }
+
+        /** convert 'this' into a Drawable pointer if Node is a Drawable, otherwise return 0.
+          * Equivalent to dynamic_cast<Group*>(this).*/
+        virtual Drawable* asDrawable() { return 0; }
+        /** convert 'const this' into a const Drawable pointer if Node is a Drawable, otherwise return 0.
+          * Equivalent to dynamic_cast<const Group*>(this).*/
+        virtual const Drawable* asDrawable() const { return 0; }
+
+        /** convert 'this' into a Geometry pointer if Node is a Geometry, otherwise return 0.
+          * Equivalent to dynamic_cast<Group*>(this).*/
+        virtual Geometry* asGeometry() { return 0; }
+        /** convert 'const this' into a const Geometry pointer if Node is a Geometry, otherwise return 0.
+          * Equivalent to dynamic_cast<const Group*>(this).*/
+        virtual const Geometry* asGeometry() const { return 0; }
+
         /** convert 'this' into a Group pointer if Node is a Group, otherwise return 0.
           * Equivalent to dynamic_cast<Group*>(this).*/
         virtual Group* asGroup() { return 0; }
@@ -106,13 +132,6 @@ class OSG_EXPORT Node : public Object
           * Equivalent to dynamic_cast<const Transform*>(this).*/
         virtual const Transform* asTransform() const { return 0; }
 
-
-        /** Convert 'this' into a Camera pointer if Node is a Camera, otherwise return 0.
-          * Equivalent to dynamic_cast<Camera*>(this).*/
-        virtual Camera* asCamera() { return 0; }
-        /** convert 'const this' into a const Camera pointer if Node is a Camera, otherwise return 0.
-          * Equivalent to dynamic_cast<const Camera*>(this).*/
-        virtual const Camera* asCamera() const { return 0; }
 
 
         /** Convert 'this' into a Switch pointer if Node is a Switch, otherwise return 0.
@@ -172,43 +191,52 @@ class OSG_EXPORT Node : public Object
          */
         inline unsigned int getNumParents() const { return static_cast<unsigned int>(_parents.size()); }
 
+
+
         /** Get the list of node paths parent paths.
-          * The optional Node* haltTraversalAtNode allows the user to prevent traversal beyond a specifed node. */
+          * The optional Node* haltTraversalAtNode allows the user to prevent traversal beyond a specified node. */
         NodePathList getParentalNodePaths(osg::Node* haltTraversalAtNode=0) const;
 
         /** Get the list of matrices that transform this node from local coordinates to world coordinates.
-          * The optional Node* haltTraversalAtNode allows the user to prevent traversal beyond a specifed node. */
+          * The optional Node* haltTraversalAtNode allows the user to prevent traversal beyond a specified node. */
         MatrixList getWorldMatrices(const osg::Node* haltTraversalAtNode=0) const;
 
 
         /** Set update node callback, called during update traversal. */
-        void setUpdateCallback(NodeCallback* nc);
+        void setUpdateCallback(Callback* nc);
+
+        template<class T> void setUpdateCallback(const ref_ptr<T>& nc) { setUpdateCallback(nc.get()); }
 
         /** Get update node callback, called during update traversal. */
-        inline NodeCallback* getUpdateCallback() { return _updateCallback.get(); }
+        inline Callback* getUpdateCallback() { return _updateCallback.get(); }
 
         /** Get const update node callback, called during update traversal. */
-        inline const NodeCallback* getUpdateCallback() const { return _updateCallback.get(); }
+        inline const Callback* getUpdateCallback() const { return _updateCallback.get(); }
 
         /** Convenience method that sets the update callback of the node if it doesn't exist, or nest it into the existing one. */
-        inline void addUpdateCallback(NodeCallback* nc) {
+        inline void addUpdateCallback(Callback* nc) {
             if (nc != NULL) {
                 if (_updateCallback.valid()) _updateCallback->addNestedCallback(nc);
                 else setUpdateCallback(nc);
             }
         }
 
+        template<class T> void addUpdateCallback(const ref_ptr<T>& nc) { addUpdateCallback(nc.get()); }
+
         /** Convenience method that removes a given callback from a node, even if that callback is nested. There is no error return in case the given callback is not found. */
-        inline void removeUpdateCallback(NodeCallback* nc) {
+        inline void removeUpdateCallback(Callback* nc) {
             if (nc != NULL && _updateCallback.valid()) {
                 if (_updateCallback == nc)
                 {
-                    setUpdateCallback(nc->getNestedCallback());        // replace the callback by the nested one
+                    ref_ptr<osg::Callback> new_nested_callback = nc->getNestedCallback();
                     nc->setNestedCallback(0);
+                    setUpdateCallback(new_nested_callback.get());
                 }
                 else _updateCallback->removeNestedCallback(nc);
             }
         }
+
+        template<class T> void removeUpdateCallback(const ref_ptr<T>& nc) { removeUpdateCallback(nc.get()); }
 
         /** Get the number of Children of this node which require Update traversal,
           * since they have an Update Callback attached to them or their children.*/
@@ -216,67 +244,81 @@ class OSG_EXPORT Node : public Object
 
 
         /** Set event node callback, called during event traversal. */
-        void setEventCallback(NodeCallback* nc);
+        void setEventCallback(Callback* nc);
+
+        template<class T> void setEventCallback(const ref_ptr<T>& nc) { setEventCallback(nc.get()); }
 
         /** Get event node callback, called during event traversal. */
-        inline NodeCallback* getEventCallback() { return _eventCallback.get(); }
+        inline Callback* getEventCallback() { return _eventCallback.get(); }
 
         /** Get const event node callback, called during event traversal. */
-        inline const NodeCallback* getEventCallback() const { return _eventCallback.get(); }
+        inline const Callback* getEventCallback() const { return _eventCallback.get(); }
 
         /** Convenience method that sets the event callback of the node if it doesn't exist, or nest it into the existing one. */
-        inline void addEventCallback(NodeCallback* nc) {
+        inline void addEventCallback(Callback* nc) {
             if (nc != NULL) {
                 if (_eventCallback.valid()) _eventCallback->addNestedCallback(nc);
                 else setEventCallback(nc);
             }
         }
 
+        template<class T> void addEventCallback(const ref_ptr<T>& nc) { addEventCallback(nc.get()); }
+
         /** Convenience method that removes a given callback from a node, even if that callback is nested. There is no error return in case the given callback is not found. */
-        inline void removeEventCallback(NodeCallback* nc) {
+        inline void removeEventCallback(Callback* nc) {
             if (nc != NULL && _eventCallback.valid()) {
                 if (_eventCallback == nc)
                 {
-                    setEventCallback(nc->getNestedCallback());        // replace the callback by the nested one
+                    ref_ptr<osg::Callback> new_nested_callback = nc->getNestedCallback();
                     nc->setNestedCallback(0);
+                    setEventCallback(new_nested_callback.get()); // replace the callback by the nested one
                 }
                 else _eventCallback->removeNestedCallback(nc);
             }
         }
 
-        /** Get the number of Children of this node which require Event traversal,
+        template<class T> void removeEventCallback(const ref_ptr<T>& nc) { removeEventCallback(nc.get()); }
+
+            /** Get the number of Children of this node which require Event traversal,
           * since they have an Event Callback attached to them or their children.*/
         inline unsigned int getNumChildrenRequiringEventTraversal() const { return _numChildrenRequiringEventTraversal; }
 
 
         /** Set cull node callback, called during cull traversal. */
-        void setCullCallback(NodeCallback* nc) { _cullCallback = nc; }
+        void setCullCallback(Callback* nc) { _cullCallback = nc; }
+
+        template<class T> void setCullCallback(const ref_ptr<T>& nc) { setCullCallback(nc.get()); }
 
         /** Get cull node callback, called during cull traversal. */
-        inline NodeCallback* getCullCallback() { return _cullCallback.get(); }
+        inline Callback* getCullCallback() { return _cullCallback.get(); }
 
         /** Get const cull node callback, called during cull traversal. */
-        inline const NodeCallback* getCullCallback() const { return _cullCallback.get(); }
+        inline const Callback* getCullCallback() const { return _cullCallback.get(); }
 
         /** Convenience method that sets the cull callback of the node if it doesn't exist, or nest it into the existing one. */
-        inline void addCullCallback(NodeCallback* nc) {
+        inline void addCullCallback(Callback* nc) {
             if (nc != NULL) {
                 if (_cullCallback.valid()) _cullCallback->addNestedCallback(nc);
                 else setCullCallback(nc);
             }
         }
 
+        template<class T> void addCullCallback(const ref_ptr<T>& nc) { addCullCallback(nc.get()); }
+
         /** Convenience method that removes a given callback from a node, even if that callback is nested. There is no error return in case the given callback is not found. */
-        inline void removeCullCallback(NodeCallback* nc) {
+        inline void removeCullCallback(Callback* nc) {
             if (nc != NULL && _cullCallback.valid()) {
                 if (_cullCallback == nc)
                 {
-                    setCullCallback(nc->getNestedCallback());        // replace the callback by the nested one
+                    ref_ptr<osg::Callback> new_nested_callback = nc->getNestedCallback();
                     nc->setNestedCallback(0);
+                    setCullCallback(new_nested_callback.get()); // replace the callback by the nested one
                 }
                 else _cullCallback->removeNestedCallback(nc);
             }
         }
+
+        template<class T> void removeCullCallback(const ref_ptr<T>& nc) { removeCullCallback(nc.get()); }
 
         /** Set the view frustum/small feature culling of this node to be active or inactive.
           * The default value is true for _cullingActive. Used as a guide
@@ -329,6 +371,8 @@ class OSG_EXPORT Node : public Object
         /** Set the node's StateSet.*/
         void setStateSet(osg::StateSet* stateset);
 
+        template<class T> void setStateSet(const osg::ref_ptr<T>& stateset) { setStateSet(stateset.get()); }
+
         /** return the node's StateSet, if one does not already exist create it
           * set the node and return the newly created StateSet. This ensures
           * that a valid StateSet is always returned and can be used directly.*/
@@ -377,8 +421,7 @@ class OSG_EXPORT Node : public Object
             Forcing it to be computed on the next call to getBound().*/
         void dirtyBound();
 
-        /** Get the bounding sphere of node.
-           Using lazy evaluation computes the bounding sphere if it is 'dirty'.*/
+
         inline const BoundingSphere& getBound() const
         {
             if(!_boundingSphereComputed)
@@ -394,7 +437,6 @@ class OSG_EXPORT Node : public Object
             return _boundingSphere;
         }
 
-
         /** Compute the bounding sphere around Node's geometry or children.
             This method is automatically called by getBound() when the bounding
             sphere has been marked dirty via dirtyBound().*/
@@ -405,7 +447,8 @@ class OSG_EXPORT Node : public Object
         {
             ComputeBoundingSphereCallback() {}
 
-            ComputeBoundingSphereCallback(const ComputeBoundingSphereCallback&,const CopyOp&) {}
+            ComputeBoundingSphereCallback(const ComputeBoundingSphereCallback& org,const CopyOp& copyop):
+                Object(org, copyop) {}
 
             META_Object(osg,ComputeBoundingSphereCallback);
 
@@ -414,6 +457,8 @@ class OSG_EXPORT Node : public Object
 
         /** Set the compute bound callback to override the default computeBound.*/
         void setComputeBoundingSphereCallback(ComputeBoundingSphereCallback* callback) { _computeBoundCallback = callback; }
+
+        template<class T> void setComputeBoundingSphereCallback(const ref_ptr<T>& callback) { setComputeBoundingSphereCallback(callback.get()); }
 
         /** Get the compute bound callback.*/
         ComputeBoundingSphereCallback* getComputeBoundingSphereCallback() { return _computeBoundCallback.get(); }
@@ -451,23 +496,23 @@ class OSG_EXPORT Node : public Object
         mutable BoundingSphere                  _boundingSphere;
         mutable bool                            _boundingSphereComputed;
 
-        void addParent(osg::Group* node);
-        void removeParent(osg::Group* node);
+        void addParent(osg::Group* parent);
+        void removeParent(osg::Group* parent);
 
         ParentList _parents;
         friend class osg::Group;
         friend class osg::Drawable;
         friend class osg::StateSet;
 
-        ref_ptr<NodeCallback> _updateCallback;
+        ref_ptr<Callback> _updateCallback;
         unsigned int _numChildrenRequiringUpdateTraversal;
         void setNumChildrenRequiringUpdateTraversal(unsigned int num);
 
-        ref_ptr<NodeCallback> _eventCallback;
+        ref_ptr<Callback> _eventCallback;
         unsigned int _numChildrenRequiringEventTraversal;
         void setNumChildrenRequiringEventTraversal(unsigned int num);
 
-        ref_ptr<NodeCallback> _cullCallback;
+        ref_ptr<Callback> _cullCallback;
 
         bool _cullingActive;
         unsigned int _numChildrenWithCullingDisabled;

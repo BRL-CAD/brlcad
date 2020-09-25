@@ -230,7 +230,7 @@ void
 bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b)
 {
     point_t bnp;
-    FILE* plot_file = fopen(filename, "w");
+    FILE* plot_file = fopen(filename, "wb");
     pl_color(plot_file, r, g, b);
 
     VSET(bnp, pnts[0][X], pnts[0][Y], 0);
@@ -242,6 +242,27 @@ bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r
     }
 
     VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3cont(plot_file, bnp);
+
+    fclose(plot_file);
+}
+
+void
+bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int g, int b)
+{
+    point_t bnp;
+    FILE* plot_file = fopen(filename, "wb");
+    pl_color(plot_file, r, g, b);
+
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3move(plot_file, bnp);
+
+    for (int i = 1; i < npnts; i++) {
+	VSET(bnp, pnts[i][X], pnts[i][Y], pnts[i][Z]);
+	pdv_3cont(plot_file, bnp);
+    }
+
+    VSET(bnp, pnts[0][X], pnts[0][Y], pnts[0][Z]);
     pdv_3cont(plot_file, bnp);
 
     fclose(plot_file);

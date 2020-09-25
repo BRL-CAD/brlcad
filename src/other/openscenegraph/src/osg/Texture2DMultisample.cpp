@@ -86,16 +86,12 @@ void Texture2DMultisample::apply(State& state) const
 {
     // current OpenGL context.
     const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
-    if (!extensions->isTextureMultisampledSupported())
+    const GLExtensions* extensions = state.get<GLExtensions>();
+    if (!extensions->isTextureMultisampledSupported)
     {
-        OSG_INFO<<"Texture2DMultisample not supoorted."<<std::endl;
+        OSG_INFO<<"Texture2DMultisample not supported."<<std::endl;
         return;
     }
-
-    Texture::TextureObjectManager* tom = Texture::getTextureObjectManager(contextID).get();
-    ElapsedTime elapsedTime(&(tom->getApplyTime()));
-    tom->getNumberApplied()++;
 
     // get the texture object for the current contextID.
     TextureObject* textureObject = getTextureObject(contextID);
@@ -106,30 +102,32 @@ void Texture2DMultisample::apply(State& state) const
     }
     else if ( (_textureWidth!=0) && (_textureHeight!=0) && (_numSamples!=0) )
     {
-        _textureObjectBuffer[contextID] = textureObject =
-          generateTextureObject( this,
-                                 contextID,
-                                 getTextureTarget(),
-                                 1,
-                                 _internalFormat,
-                                 _textureWidth,
-                                 _textureHeight,
-                                 1,
-                                 _borderWidth);
+        // no image present, but dimensions at set so lets create the texture
+        GLenum texStorageSizedInternalFormat = extensions->isTextureStorageEnabled && (_borderWidth==0) ? selectSizedInternalFormat() : 0;
+        if (texStorageSizedInternalFormat!=0)
+        {
+            textureObject = generateAndAssignTextureObject(contextID, getTextureTarget(), 1, texStorageSizedInternalFormat, _textureWidth, _textureHeight, 1, 0);
+            textureObject->bind();
 
-        textureObject->bind();
+            extensions->glTexStorage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE, _numSamples, texStorageSizedInternalFormat, _textureWidth, _textureHeight, _fixedsamplelocations);
+        }
+        else
+        {
+            textureObject = generateAndAssignTextureObject(contextID, getTextureTarget(), 1, _internalFormat, _textureWidth, _textureHeight, 1, _borderWidth);
+            textureObject->bind();
 
-        extensions->glTexImage2DMultisample( getTextureTarget(),
+            extensions->glTexImage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE,
                                              _numSamples,
                                              _internalFormat,
                                              _textureWidth,
                                              _textureHeight,
                                              _fixedsamplelocations );
+        }
 
     }
     else
     {
-        glBindTexture( getTextureTarget(), 0 );
+        glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, 0 );
     }
 }
 

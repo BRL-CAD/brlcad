@@ -500,11 +500,9 @@ WDB_EXPORT int mk_bot_w_normals_and_uvs(
 					 * into normals array), must
 					 * have 3*num_faces entries
 					 */
-    size_t num_uvs, /* number of uv texture coordinates in uvs array */
-    fastf_t *uvs,   /* array of floats for uv texture coordinates [num_uvs*3] */
-    int *face_uvs   /* array of ints (indices into uvs array),
-		     * must have 3*num_faces entries
-		     */
+    size_t num_uvs, /**< number of uv texture coordinates in uvs array */
+    fastf_t *uvs,   /**< array of floats for uv texture coordinates [num_uvs*3] */
+    int *face_uvs   /**< array of ints (indices into uvs array), must have 3*num_faces entries */
     );
 
 /**

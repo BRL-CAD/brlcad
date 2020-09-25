@@ -25,7 +25,6 @@
 
 #include "common.h"
 
-#include "tcl.h"
 #include "vmath.h"
 #include "dm.h"
 

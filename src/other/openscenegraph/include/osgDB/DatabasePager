@@ -69,7 +69,7 @@ class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandl
 
 
 
-        /** Add a request to load a node file to end the the database request list.*/
+        /** Add a request to load a node file to end the database request list.*/
         virtual void requestNodeFile(const std::string& fileName, osg::NodePath& nodePath,
                                      float priority, const osg::FrameStamp* framestamp,
                                      osg::ref_ptr<osg::Referenced>& databaseRequest,
@@ -125,6 +125,10 @@ class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandl
             std::string         _name;
 
         };
+
+        virtual void setProcessorAffinity(const OpenThreads::Affinity& affinity);
+        OpenThreads::Affinity& getProcessorAffinity() { return _affinity; }
+        const OpenThreads::Affinity& getProcessorAffinity() const { return _affinity; }
 
         void setUpThreads(unsigned int totalNumThreads=2, unsigned int numHttpThreads=1);
 
@@ -219,7 +223,7 @@ class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandl
         /** Set whether newly loaded textures should have a PixelBufferObject assigned to them to aid download to the GPU.*/
         void setApplyPBOToImages(bool assignPBOToImages) { _assignPBOToImages = assignPBOToImages; }
 
-        /** Get whether newly loaded textures should have a PixelBufferObject assigned to them..*/
+        /** Get whether newly loaded textures should have a PixelBufferObject assigned to them.*/
         bool getApplyPBOToImages() const { return _assignPBOToImages; }
 
 
@@ -243,6 +247,9 @@ class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandl
         /** Merge the changes to the scene graph by calling calling removeExpiredSubgraphs then addLoadedDataToSceneGraph.
           * Note, must only be called from single thread update phase. */
         virtual void updateSceneGraph(const osg::FrameStamp& frameStamp);
+
+        /** Return true if there are GL objects that need to be compiled by a draw traversal. */
+        bool requiresRedraw() const;
 
         /** Report how many items are in the _fileRequestList queue */
         unsigned int getFileRequestListSize() const { return static_cast<unsigned int>(_fileRequestQueue->size() + _httpRequestQueue->size()); }
@@ -286,6 +293,9 @@ class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandl
             virtual bool containsPagedLOD(const osg::observer_ptr<osg::PagedLOD>& plod) const = 0;
         };
 
+        void setMarkerObject(osg::Object* mo) { _markerObject = mo; }
+        osg::Object* getMarkerObject() { return _markerObject.get(); }
+        const osg::Object* getMarkerObject() const { return _markerObject.get(); }
 
     protected:
 
@@ -315,29 +325,30 @@ class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandl
 
             bool valid() const { return _valid; }
 
-            bool                        _valid;
-            std::string                 _fileName;
-            unsigned int                _frameNumberFirstRequest;
-            double                      _timestampFirstRequest;
-            float                       _priorityFirstRequest;
-            unsigned int                _frameNumberLastRequest;
-            double                      _timestampLastRequest;
-            float                       _priorityLastRequest;
-            unsigned int                _numOfRequests;
+            bool isRequestCurrent (int frameNumber) const
+            {
+                return _valid && (frameNumber - _frameNumberLastRequest <= 1);
+            }
+
+            bool                                _valid;
+            std::string                         _fileName;
+            unsigned int                        _frameNumberFirstRequest;
+            double                              _timestampFirstRequest;
+            float                               _priorityFirstRequest;
+            unsigned int                        _frameNumberLastRequest;
+            double                              _timestampLastRequest;
+            float                               _priorityLastRequest;
+            unsigned int                        _numOfRequests;
 
             osg::observer_ptr<osg::Node>        _terrain;
             osg::observer_ptr<osg::Group>       _group;
 
             osg::ref_ptr<osg::Node>             _loadedModel;
             osg::ref_ptr<Options>               _loadOptions;
+            osg::ref_ptr<ObjectCache>           _objectCache;
 
             osg::observer_ptr<osgUtil::IncrementalCompileOperation::CompileSet> _compileSet;
-            bool                        _groupExpired; // flag used only in update thread
-
-            bool isRequestCurrent (int frameNumber) const
-            {
-                return _valid && (frameNumber - _frameNumberLastRequest <= 1);
-            }
+            bool                                _groupExpired; // flag used only in update thread
         };
 
 
@@ -423,13 +434,15 @@ class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandl
         void compileCompleted(DatabaseRequest* databaseRequest);
 
         /** Iterate through the active PagedLOD nodes children removing
-          * children which havn't been visited since specified expiryTime.
+          * children which haven't been visited since specified expiryTime.
           * note, should be only be called from the update thread. */
         virtual void removeExpiredSubgraphs(const osg::FrameStamp &frameStamp);
 
         /** Add the loaded data to the scene graph.*/
         void addLoadedDataToSceneGraph(const osg::FrameStamp &frameStamp);
 
+
+        OpenThreads::Affinity           _affinity;
 
         bool                            _done;
         bool                            _acceptNewRequests;
@@ -469,6 +482,8 @@ class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandl
         double                          _maximumTimeToMergeTile;
         double                          _totalTimeToMergeTiles;
         unsigned int                    _numTilesMerges;
+
+        osg::ref_ptr<osg::Object>       _markerObject;
 };
 
 }

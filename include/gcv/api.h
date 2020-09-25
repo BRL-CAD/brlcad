@@ -139,11 +139,13 @@ struct gcv_filter {
     /* operation type */
     const enum gcv_filter_type filter_type;
 
-    /* If we have a definite type this converter is known to handle, call
-     * it out here.
-     * MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER or
-     * if the plugin is a multi-format I/O plugin */
-    const bu_mime_model_t mime_type;
+    /* If we have a specific model type this converter is known to
+     * handle, call it out here.
+     *
+     * Use mime_type = -1 if the plugin is a multi-format I/O plugin.
+     */
+    const int mime_type;
+    const bu_mime_context_t mime_context;
 
     /* For plugins supporting multiple file types, call this to
      * process them.

@@ -18,6 +18,11 @@
  * information.
  */
 
+// TODO - investigate https://github.com/google/cpu_features and the approach
+// suggested by William Tambellini on the eigen mailing list to build multiple
+// dynamic math libs to be loaded at run-time based on which features we can
+// take advantage of on that platform...
+
 #include "common.h"
 #include "bu/simd.h"
 

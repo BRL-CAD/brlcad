@@ -1,39 +1,62 @@
-if(DYNAMIC_OPENSCENEGRAPH)
-  add_definitions(-DOSGTEXT_LIBRARY)
-else()
-  add_definitions(-DOSG_LIBRARY_STATIC)
-endif()
+IF(OSG_TEXT_USE_FONTCONFIG)
+    find_package(Fontconfig MODULE)
+ENDIF()
+
+IF(DYNAMIC_OPENSCENEGRAPH)
+    ADD_DEFINITIONS(-DOSGTEXT_LIBRARY)
+ELSE()
+    ADD_DEFINITIONS(-DOSG_LIBRARY_STATIC)
+ENDIF()
+
+SET(LIB_NAME osgText)
+SET(HEADER_PATH ${OpenSceneGraph_SOURCE_DIR}/include/${LIB_NAME})
+SET(TARGET_H
+    ${HEADER_PATH}/Export
+    ${HEADER_PATH}/Font
+    ${HEADER_PATH}/Font3D
+    ${HEADER_PATH}/FadeText
+    ${HEADER_PATH}/Glyph
+    ${HEADER_PATH}/KerningType
+    ${HEADER_PATH}/String
+    ${HEADER_PATH}/Style
+    ${HEADER_PATH}/TextBase
+    ${HEADER_PATH}/Text
+    ${HEADER_PATH}/Text3D
+    ${HEADER_PATH}/Version
+)
 
 # FIXME: For OS X, need flag for Framework or dylib
-set(OSGTEXT_SRCS
-  DefaultFont.cpp
-  DefaultFont.h
-  GlyphGeometry.h
-  GlyphGeometry.cpp
-  Font.cpp
-  FadeText.cpp
-  Glyph.cpp
-  String.cpp
-  Style.cpp
-  TextBase.cpp
-  Text.cpp
-  Text3D.cpp
-  Version.cpp
-  ${OPENSCENEGRAPH_VERSIONINFO_RC}
-  )
+SET(TARGET_SRC
+    DefaultFont.cpp
+    DefaultFont.h
+    GlyphGeometry.h
+    GlyphGeometry.cpp
+    Font.cpp
+    FadeText.cpp
+    Glyph.cpp
+    String.cpp
+    Style.cpp
+    TextBase.cpp
+    Text.cpp
+    Text3D.cpp
+    Version.cpp
+    ${OPENSCENEGRAPH_VERSIONINFO_RC}
+)
 
-add_library(osgText ${OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC} ${OSGTEXT_SRCS})
-target_link_libraries(osgText osgDB osgUtil osg OpenThreads ${CMAKE_THREAD_LIBS_INIT}
-  ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY})
-install(TARGETS osgText
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+SET(TARGET_LIBRARIES
+    osgDB
+    osg
+    osgUtil
+    OpenThreads
+)
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+if(OSG_TEXT_USE_FONTCONFIG AND Fontconfig_FOUND)
+    MESSAGE(STATUS "osgText will be linked with FontConfig library")
+    LIST(APPEND TARGET_EXTERNAL_LIBRARIES Fontconfig::Fontconfig)
+    ADD_DEFINITIONS(-DWITH_FONTCONFIG)
+else()
+    MESSAGE(STATUS "osgText will not be linked with FontConfig library")
+endif()
+
+SETUP_LIBRARY(${LIB_NAME})
 

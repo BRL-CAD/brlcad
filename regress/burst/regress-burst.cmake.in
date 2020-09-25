@@ -45,7 +45,8 @@ file(APPEND "${LOGFILE}" "${burst_log}")
 set(burst_log)
 if(NOT EXISTS "${CBDIR}/ktank.burst" OR burst_result)
   file(APPEND "${LOGFILE}" "Failure: ${burst_result}\n")
-  message(FATAL_ERROR "${BURST} failed to process ktank.b, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "${BURST} failed to process ktank.b, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif(NOT EXISTS "${CBDIR}/ktank.burst" OR burst_result)
 
 # If we copied the input files, clear them out as well

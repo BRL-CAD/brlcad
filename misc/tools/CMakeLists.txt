@@ -192,6 +192,10 @@ THIRD_PARTY_EXECUTABLE(debug2c DEBUG2C debug2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
 SetTargetFolder(debug2c "Compilation Utilities")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
+# inactvhdrs - utility that tries to find local headers unused by other
+# source code in a file hierarchy
+CMAKEFILES(inactvhdrs/inactvhdrs.cpp)
+
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)
 

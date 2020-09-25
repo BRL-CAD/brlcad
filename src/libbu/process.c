@@ -76,23 +76,28 @@ struct bu_process {
 
 
 void
-bu_process_close(struct bu_process *pinfo, int fd)
+bu_process_close(struct bu_process *pinfo, bu_process_io_t d)
 {
-    if (!pinfo) return;
-    if (fd == 0) {
-	if (!pinfo->fp_in) return;
+    if (!pinfo)
+	return;
+
+    if (d == BU_PROCESS_STDIN) {
+	if (!pinfo->fp_in)
+	    return;
 	(void)fclose(pinfo->fp_in);
 	pinfo->fp_in = NULL;
 	return;
     }
-    if (fd == 1) {
-	if (!pinfo->fp_out) return;
+    if (d == BU_PROCESS_STDOUT) {
+	if (!pinfo->fp_out)
+	    return;
 	(void)fclose(pinfo->fp_out);
 	pinfo->fp_out = NULL;
 	return;
     }
-    if (fd == 2) {
-	if (!pinfo->fp_err) return;
+    if (d == BU_PROCESS_STDERR) {
+	if (!pinfo->fp_err)
+	    return;
 	(void)fclose(pinfo->fp_err);
 	pinfo->fp_err = NULL;
 	return;
@@ -101,13 +106,14 @@ bu_process_close(struct bu_process *pinfo, int fd)
 
 
 FILE *
-bu_process_open(struct bu_process *pinfo, int fd)
+bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
 {
-    if (!pinfo) return NULL;
+    if (!pinfo)
+	return NULL;
 
-    bu_process_close(pinfo, fd);
+    bu_process_close(pinfo, d);
 
-    if (fd == 0) {
+    if (d == BU_PROCESS_STDIN) {
 #ifndef _WIN32
 	pinfo->fp_in = fdopen(pinfo->fd_in, "wb");
 #else
@@ -115,7 +121,7 @@ bu_process_open(struct bu_process *pinfo, int fd)
 #endif
 	return pinfo->fp_in;
     }
-    if (fd == 1) {
+    if (d == BU_PROCESS_STDOUT) {
 #ifndef _WIN32
 	pinfo->fp_out = fdopen(pinfo->fd_out, "rb");
 #else
@@ -123,7 +129,7 @@ bu_process_open(struct bu_process *pinfo, int fd)
 #endif
 	return pinfo->fp_out;
     }
-    if (fd == 2) {
+    if (d == BU_PROCESS_STDERR) {
 #ifndef _WIN32
 	pinfo->fp_err = fdopen(pinfo->fd_err, "rb");
 #else
@@ -137,18 +143,18 @@ bu_process_open(struct bu_process *pinfo, int fd)
 
 
 void *
-bu_process_fd(struct bu_process *pinfo, int fd)
+bu_process_fd(struct bu_process *pinfo, bu_process_io_t d)
 {
-    if (!pinfo || (fd < 0 || fd > 2)) return NULL;
-    if (fd == 0) {
+    if (!pinfo)
+	return NULL;
+
+    if (d == BU_PROCESS_STDIN)
 	return (void *)(&(pinfo->fd_in));
-    }
-    if (fd == 1) {
+    if (d == BU_PROCESS_STDOUT)
 	return (void *)(&(pinfo->fd_out));
-    }
-    if (fd == 2) {
+    if (d == BU_PROCESS_STDERR)
 	return (void *)(&(pinfo->fd_err));
-    }
+
     return NULL;
 }
 
@@ -156,7 +162,8 @@ bu_process_fd(struct bu_process *pinfo, int fd)
 int
 bu_process_pid(struct bu_process *pinfo)
 {
-    if (!pinfo) return -1;
+    if (!pinfo)
+	return -1;
     return (int)pinfo->pid;
 }
 
@@ -164,23 +171,26 @@ bu_process_pid(struct bu_process *pinfo)
 int
 bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo)
 {
-    if (!pinfo) return 0;
-    if (cmd) {
+    if (!pinfo)
+	return 0;
+
+    if (cmd)
 	*cmd = pinfo->cmd;
-    }
-    if (argv) {
+    if (argv)
 	*argv = (const char * const *)(pinfo->argv);
-    }
+
     return pinfo->argc;
 }
 
 
 int
-bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
+bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n)
 {
     int ret = 1;
-    if (!pinfo || !buff || !n || !count || (fd < 1 || fd > 2)) return -1;
-    if (fd == 1) {
+    if (!pinfo || !buff || !n || !count)
+	return -1;
+
+    if (d == BU_PROCESS_STDOUT) {
 #ifndef _WIN32
 	(*count) = read((int)pinfo->fd_out, buff, n);
 	if ((*count) <= 0) {
@@ -195,7 +205,7 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 	(*count) = (int)dcount;
 #endif
     }
-    if (fd == 2) {
+    if (d == BU_PROCESS_STDERR) {
 #ifndef _WIN32
 	(*count) = read((int)pinfo->fd_err, buff, n);
 	if ((*count) <= 0) {
@@ -210,6 +220,7 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 	(*count) = (int)dcount;
 #endif
     }
+
     /* sanity clamping */
     if ((*count) < 0) {
 	perror("READ ERROR");
@@ -240,9 +251,9 @@ bu_process_exec(
     int pipe_out[2];
     int pipe_err[2];
     const char **av = NULL;
-    if (!p || !cmd) {
+
+    if (!p || !cmd)
 	return;
-    }
 
     BU_GET(*p, struct bu_process);
     (*p)->fp_in = NULL;
@@ -297,17 +308,17 @@ bu_process_exec(
 	setpgid(0, 0);
 
 	/* Redirect stdin and stderr */
-	(void)close(0);
+	(void)close(BU_PROCESS_STDIN);
 	pret = dup(pipe_in[0]);
 	if (pret < 0) {
 	    perror("dup");
 	}
-	(void)close(1);
+	(void)close(BU_PROCESS_STDOUT);
 	pret = dup(pipe_out[1]);
 	if (pret < 0) {
 	    perror("dup");
 	}
-	(void)close(2);
+	(void)close(BU_PROCESS_STDERR);
 	pret = dup(pipe_err[1]);
 	if (pret < 0) {
 	    perror("dup");
@@ -321,6 +332,8 @@ bu_process_exec(
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
+	// TODO - should we be doing this for more than 20? See
+	// https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-Tasks-Descriptors-Child_Processes.html
 	for (int i = 3; i < 20; i++) {
 	    (void)close(i);
 	}
@@ -352,9 +365,9 @@ bu_process_exec(
     STARTUPINFO si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa = {0};
-    if (!cmd || !argc || !argv) {
+
+    if (!cmd || !argc || !argv)
 	return;
-    }
 
     BU_GET(*p, struct bu_process);
     (*p)->fp_in = NULL;
@@ -472,17 +485,24 @@ bu_process_wait(
 #ifndef _WIN32
     int rpid;
     int retcode = 0;
-    if (!pinfo) return -1;
+
+    if (!pinfo)
+	return -1;
+
+    close(pinfo->fd_in);
     close(pinfo->fd_out);
     close(pinfo->fd_err);
-    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1);
+
+    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1) {
+    }
     rc = retcode;
     if (rc) {
 	pinfo->aborted = 1;
     }
 #else
     DWORD retcode = 0;
-    if (!pinfo) return -1;
+    if (!pinfo)
+	return -1;
 
     /* wait for the forked process */
     if (wtime > 0) {
@@ -505,8 +525,8 @@ bu_process_wait(
     }
 
     /* Clean up */
-    bu_process_close(pinfo, 1);
-    bu_process_close(pinfo, 2);
+    bu_process_close(pinfo, BU_PROCESS_STDOUT);
+    bu_process_close(pinfo, BU_PROCESS_STDERR);
 
     /* Free copy of exec args */
     if (pinfo->cmd) {

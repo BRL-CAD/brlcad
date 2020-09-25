@@ -7,7 +7,7 @@ burst-file		ktank.burst
 burst-air-file		ktank_air.ids
 burst-armor-file	ktank_armor.ids
 critical-comp-file	ktank_crit.ids
-#color-file		ktank_burst_colors
+color-file		ktank_colors.ids
 burst-distance		0
 cell-size		16
 attack-direction	0 0

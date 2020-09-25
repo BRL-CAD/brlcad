@@ -67,8 +67,11 @@ main(int argc, char **argv)
 	bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
     }
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     ifname = bu_file_realpath(argv[1], NULL);
-    if ((fd = open(ifname, 0)) < 0) {
+    if ((fd = open(ifname, O_RDONLY|O_BINARY)) < 0) {
 	perror(ifname);
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	exit(1);
@@ -136,8 +139,7 @@ main(int argc, char **argv)
 	    *cp++ = mm * (*dp++) + bb;
 	}
 
-	/* fd 1 is stdout */
-	got = write(1, (char *)&cha[0], count*sizeof(cha[0]));
+	got = write(fileno(stdout), (char *)&cha[0], count*sizeof(cha[0]));
 	if (got < 0 || (size_t)got != count*sizeof(cha[0])) {
 	    perror("write");
 	    exit(2);

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='librt3'>
+<refmeta>
+    <refentrytitle>LIBICV
+</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>libicv</refname>
+<refpurpose>library for image processing in BRL-CAD</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<para>This file seems to be out of date with the sources.
+Consult the headers for up-to-date information.
+Use the below interface documentation at your own discretion.
+</para>
+</refsynopsisdiv>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to <email>devs@brlcad.org</email></para>
+</refsect1>
+</refentry>

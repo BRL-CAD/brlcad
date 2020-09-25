@@ -5,6 +5,7 @@ set(bg_headers
   lseg.h
   obr.h
   polygon.h
+  polygon_types.h
   spsr.h
   tri_pt.h
   tri_ray.h

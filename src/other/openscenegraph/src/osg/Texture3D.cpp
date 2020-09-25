@@ -52,7 +52,7 @@ Texture3D::Texture3D(const Texture3D& text,const CopyOp& copyop):
 }
 
 Texture3D::~Texture3D()
-{  
+{
     setImage(NULL);
 }
 
@@ -141,13 +141,11 @@ void Texture3D::setImage(Image* image)
 
 void Texture3D::computeRequiredTextureDimensions(State& state, const osg::Image& image,GLsizei& inwidth, GLsizei& inheight,GLsizei& indepth, GLsizei& numMipmapLevels) const
 {
-    const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
-    const Texture::Extensions* texExtensions = Texture::getExtensions(contextID,true);
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
     int width,height,depth;
 
-    if( !_resizeNonPowerOfTwoHint && texExtensions->isNonPowerOfTwoTextureSupported(_min_filter) )
+    if( !_resizeNonPowerOfTwoHint && extensions->isNonPowerOfTwoTextureSupported(_min_filter) )
     {
         width = image.s();
         height = image.t();
@@ -161,15 +159,15 @@ void Texture3D::computeRequiredTextureDimensions(State& state, const osg::Image&
     }
 
     // cap the size to what the graphics hardware can handle.
-    if (width>extensions->maxTexture3DSize()) width = extensions->maxTexture3DSize();
-    if (height>extensions->maxTexture3DSize()) height = extensions->maxTexture3DSize();
-    if (depth>extensions->maxTexture3DSize()) depth = extensions->maxTexture3DSize();
+    if (width>extensions->maxTexture3DSize) width = extensions->maxTexture3DSize;
+    if (height>extensions->maxTexture3DSize) height = extensions->maxTexture3DSize;
+    if (depth>extensions->maxTexture3DSize) depth = extensions->maxTexture3DSize;
 
     inwidth = width;
     inheight = height;
     indepth = depth;
 
-    bool useHardwareMipMapGeneration = !image.isMipmap() && _useHardwareMipMapGeneration && texExtensions->isGenerateMipMapSupported();
+    bool useHardwareMipMapGeneration = !image.isMipmap() && _useHardwareMipMapGeneration && extensions->isGenerateMipMapSupported;
 
     if( _min_filter == LINEAR || _min_filter == NEAREST || useHardwareMipMapGeneration )
     {
@@ -206,13 +204,9 @@ void Texture3D::apply(State& state) const
     // current OpenGL context.
     const unsigned int contextID = state.getContextID();
 
-    Texture::TextureObjectManager* tom = Texture::getTextureObjectManager(contextID).get();
-    ElapsedTime elapsedTime(&(tom->getApplyTime()));
-    tom->getNumberApplied()++;
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
-    const Extensions* extensions = getExtensions(contextID,true);
-
-    if (!extensions->isTexture3DSupported())
+    if (!extensions->isTexture3DSupported)
     {
         OSG_WARN<<"Warning: Texture3D::apply(..) failed, 3D texturing is not support by OpenGL driver."<<std::endl;
         return;
@@ -235,7 +229,7 @@ void Texture3D::apply(State& state) const
 
             if (!textureObject->match(GL_TEXTURE_3D, new_numMipmapLevels, _internalFormat, new_width, new_height, new_depth, _borderWidth))
             {
-                Texture::releaseTextureObject(contextID, _textureObjectBuffer[contextID].get());
+                _textureObjectBuffer[contextID]->release();
                 _textureObjectBuffer[contextID] = 0;
                 textureObject = 0;
             }
@@ -247,27 +241,32 @@ void Texture3D::apply(State& state) const
         // we have a valid image
         textureObject->bind();
 
-        if (getTextureParameterDirty(state.getContextID())) applyTexParameters(GL_TEXTURE_3D,state);
-
         if (_subloadCallback.valid())
         {
+            applyTexParameters(GL_TEXTURE_3D,state);
+
             _subloadCallback->subload(*this,state);
         }
         else if (_image.get() && getModifiedCount(contextID) != _image->getModifiedCount())
         {
-           computeRequiredTextureDimensions(state,*_image,_textureWidth, _textureHeight, _textureDepth,_numMipmapLevels);
+            // update the modified count to show that it is up to date.
+            getModifiedCount(contextID) = _image->getModifiedCount();
+
+            applyTexParameters(GL_TEXTURE_3D,state);
+
+            computeRequiredTextureDimensions(state,*_image,_textureWidth, _textureHeight, _textureDepth,_numMipmapLevels);
 
             applyTexImage3D(GL_TEXTURE_3D,_image.get(),state, _textureWidth, _textureHeight, _textureDepth,_numMipmapLevels);
-
-            // update the modified count to show that it is upto date.
-            getModifiedCount(contextID) = _image->getModifiedCount();
         }
+
+        if (getTextureParameterDirty(state.getContextID()))
+            applyTexParameters(GL_TEXTURE_3D,state);
 
     }
     else if (_subloadCallback.valid())
     {
 
-        _textureObjectBuffer[contextID] = textureObject = generateTextureObject(this, contextID,GL_TEXTURE_3D);
+        textureObject = generateAndAssignTextureObject(contextID,GL_TEXTURE_3D);
 
         textureObject->bind();
 
@@ -293,21 +292,18 @@ void Texture3D::apply(State& state) const
         // compute the dimensions of the texture.
         computeRequiredTextureDimensions(state,*_image,_textureWidth, _textureHeight, _textureDepth,_numMipmapLevels);
 
-        textureObject = generateTextureObject(this, contextID,GL_TEXTURE_3D);
+        textureObject = generateAndAssignTextureObject(contextID,GL_TEXTURE_3D);
 
         textureObject->bind();
 
+        // update the modified count to show that it is up to date.
+        getModifiedCount(contextID) = _image->getModifiedCount();
 
         applyTexParameters(GL_TEXTURE_3D,state);
 
         applyTexImage3D(GL_TEXTURE_3D,_image.get(),state, _textureWidth, _textureHeight, _textureDepth,_numMipmapLevels);
 
         textureObject->setAllocated(_numMipmapLevels,_internalFormat,_textureWidth,_textureHeight,_textureDepth,0);
-
-        // update the modified count to show that it is upto date.
-        getModifiedCount(contextID) = _image->getModifiedCount();
-
-        _textureObjectBuffer[contextID] = textureObject;
 
         // unref image data?
         if (isSafeToUnrefImageData(state) && _image->getDataVariance()==STATIC)
@@ -319,20 +315,30 @@ void Texture3D::apply(State& state) const
     }
     else if ( (_textureWidth!=0) && (_textureHeight!=0) && (_textureDepth!=0) && (_internalFormat!=0) )
     {
-        _textureObjectBuffer[contextID] = textureObject = generateTextureObject(
-                this, contextID,GL_TEXTURE_3D,_numMipmapLevels,_internalFormat,_textureWidth,_textureHeight,_textureDepth,0);
-
-        textureObject->bind();
-
-        applyTexParameters(GL_TEXTURE_3D,state);
-
         // no image present, but dimensions at set so lets create the texture
-        extensions->glTexImage3D( GL_TEXTURE_3D, 0, _internalFormat,
+        GLenum texStorageSizedInternalFormat = extensions->isTextureStorageEnabled ? selectSizedInternalFormat() : 0;
+        if (texStorageSizedInternalFormat!=0)
+        {
+            textureObject = generateAndAssignTextureObject(contextID, GL_TEXTURE_3D, _numMipmapLevels, texStorageSizedInternalFormat, _textureWidth, _textureHeight, _textureDepth,0);
+            textureObject->bind();
+            applyTexParameters(GL_TEXTURE_3D, state);
+
+            extensions->glTexStorage3D( GL_TEXTURE_3D, osg::maximum(_numMipmapLevels,1), texStorageSizedInternalFormat, _textureWidth, _textureHeight, _textureDepth);
+        }
+        else
+        {
+            GLenum internalFormat = _sourceFormat ? _sourceFormat : _internalFormat;
+            textureObject = generateAndAssignTextureObject(contextID, GL_TEXTURE_3D, _numMipmapLevels, internalFormat, _textureWidth, _textureHeight, _textureDepth,0);
+            textureObject->bind();
+            applyTexParameters(GL_TEXTURE_3D, state);
+
+            extensions->glTexImage3D( GL_TEXTURE_3D, 0, _internalFormat,
                      _textureWidth, _textureHeight, _textureDepth,
                      _borderWidth,
-                     _sourceFormat ? _sourceFormat : _internalFormat,
+                     internalFormat,
                      _sourceType ? _sourceType : GL_UNSIGNED_BYTE,
                      0);
+        }
 
         if (_readPBuffer.valid())
         {
@@ -367,8 +373,7 @@ void Texture3D::applyTexImage3D(GLenum target, Image* image, State& state, GLsiz
     // get the contextID (user defined ID of 0 upwards) for the
     // current OpenGL context.
     const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
-    const Texture::Extensions* texExtensions = Texture::getExtensions(contextID,true);
+    const GLExtensions* extensions = GLExtensions::Get(contextID,true);
 
     // compute the internal texture format, this set the _internalFormat to an appropriate value.
     computeInternalFormat();
@@ -384,18 +389,18 @@ void Texture3D::applyTexImage3D(GLenum target, Image* image, State& state, GLsiz
     }
 
     //Rescale if resize hint is set or NPOT not supported or dimensions exceed max size
-    if( _resizeNonPowerOfTwoHint || !texExtensions->isNonPowerOfTwoTextureSupported(_min_filter)
-        || inwidth > extensions->maxTexture3DSize()
-        || inheight > extensions->maxTexture3DSize()
-        || indepth > extensions->maxTexture3DSize() )
-        image->ensureValidSizeForTexturing(extensions->maxTexture3DSize());
+    if( _resizeNonPowerOfTwoHint || !extensions->isNonPowerOfTwoTextureSupported(_min_filter)
+        || inwidth > extensions->maxTexture3DSize
+        || inheight > extensions->maxTexture3DSize
+        || indepth > extensions->maxTexture3DSize )
+        image->ensureValidSizeForTexturing(extensions->maxTexture3DSize);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT,image->getPacking());
 #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
     glPixelStorei(GL_UNPACK_ROW_LENGTH,image->getRowLength());
 #endif
 
-    bool useHardwareMipMapGeneration = !image->isMipmap() && _useHardwareMipMapGeneration && texExtensions->isGenerateMipMapSupported();
+    bool useHardwareMipMapGeneration = !image->isMipmap() && _useHardwareMipMapGeneration && extensions->isGenerateMipMapSupported;
 
     if( _min_filter == LINEAR || _min_filter == NEAREST || useHardwareMipMapGeneration )
     {
@@ -489,7 +494,7 @@ void Texture3D::applyTexImage3D(GLenum target, Image* image, State& state, GLsiz
 void Texture3D::copyTexSubImage3D(State& state, int xoffset, int yoffset, int zoffset, int x, int y, int width, int height )
 {
     const unsigned int contextID = state.getContextID();
-    const Extensions* extensions = getExtensions(contextID,true);
+    const GLExtensions* extensions = state.get<GLExtensions>();
 
     // get the texture object for the current contextID.
     TextureObject* textureObject = getTextureObject(contextID);
@@ -510,7 +515,7 @@ void Texture3D::copyTexSubImage3D(State& state, int xoffset, int yoffset, int zo
     }
     else
     {
-        OSG_WARN<<"Warning: Texture3D::copyTexSubImage3D(..) failed, cannot not copy to a non existant texture."<<std::endl;
+        OSG_WARN<<"Warning: Texture3D::copyTexSubImage3D(..) failed, cannot not copy to a non existent texture."<<std::endl;
     }
 }
 
@@ -523,7 +528,7 @@ void Texture3D::allocateMipmap(State& state) const
 
     if (textureObject && _textureWidth != 0 && _textureHeight != 0 && _textureDepth != 0)
     {
-        const Extensions* extensions = getExtensions(contextID,true);
+        const GLExtensions* extensions = state.get<GLExtensions>();
 
         // bind texture
         textureObject->bind();
@@ -561,72 +566,4 @@ void Texture3D::allocateMipmap(State& state) const
         // inform state that this texture is the current one bound.
         state.haveAppliedTextureAttribute(state.getActiveTextureUnit(), this);
     }
-}
-
-typedef buffered_value< ref_ptr<Texture3D::Extensions> > BufferedExtensions;
-static BufferedExtensions s_extensions;
-
-Texture3D::Extensions* Texture3D::getExtensions(unsigned int contextID,bool createIfNotInitalized)
-{
-    if (!s_extensions[contextID] && createIfNotInitalized) s_extensions[contextID] = new Extensions(contextID);
-    return s_extensions[contextID].get();
-}
-
-void Texture3D::setExtensions(unsigned int contextID,Extensions* extensions)
-{
-    s_extensions[contextID] = extensions;
-}
-
-#ifndef GL_MAX_3D_TEXTURE_SIZE
-#define GL_MAX_3D_TEXTURE_SIZE 0x8073
-#endif
-
-Texture3D::Extensions::Extensions(unsigned int contextID)
-{
-    setupGLExtensions(contextID);
-}
-
-Texture3D::Extensions::Extensions(const Extensions& rhs):
-    Referenced()
-{
-    _isTexture3DSupported = rhs._isTexture3DSupported;
-    _isTexture3DFast = rhs._isTexture3DFast;
-    _maxTexture3DSize = rhs._maxTexture3DSize;
-
-    glTexImage3D = rhs.glTexImage3D;
-    glTexSubImage3D = rhs.glTexSubImage3D;
-    glCompressedTexImage3D = rhs.glCompressedTexImage3D;
-    glCompressedTexSubImage3D = rhs.glCompressedTexSubImage3D;
-    glCopyTexSubImage3D = rhs.glCopyTexSubImage3D;
-}
-
-void Texture3D::Extensions::lowestCommonDenominator(const Extensions& rhs)
-{
-    if (!rhs._isTexture3DSupported)                 _isTexture3DSupported = false;
-    if (!rhs._isTexture3DFast)                      _isTexture3DFast = false;
-    if (rhs._maxTexture3DSize<_maxTexture3DSize)    _maxTexture3DSize = rhs._maxTexture3DSize;
-
-    if (!rhs.glTexImage3D)                         glTexImage3D = 0;
-    if (!rhs.glTexSubImage3D)                      glTexSubImage3D = 0;
-    if (!rhs.glCompressedTexImage3D)               glCompressedTexImage3D = 0;
-    if (!rhs.glCompressedTexSubImage3D)            glCompressedTexSubImage3D = 0;
-    if (!rhs.glCopyTexSubImage3D)                  glCopyTexSubImage3D = 0;
-}
-
-void Texture3D::Extensions::setupGLExtensions(unsigned int contextID)
-{
-    _isTexture3DFast = OSG_GL3_FEATURES || isGLExtensionSupported(contextID,"GL_EXT_texture3D");
-
-    if (_isTexture3DFast) _isTexture3DSupported = true;
-    else _isTexture3DSupported = strncmp((const char*)glGetString(GL_VERSION),"1.2",3)>=0;
-
-    _maxTexture3DSize = 0;
-    glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &_maxTexture3DSize);
-
-    setGLExtensionFuncPtr(glTexImage3D,"glTexImage3D","glTexImage3DEXT");
-    setGLExtensionFuncPtr(glTexSubImage3D,"glTexSubImage3D","glTexSubImage3DEXT");
-    setGLExtensionFuncPtr(glCompressedTexImage3D,"glCompressedTexImage3D","glCompressedTexImage3DARB");
-    setGLExtensionFuncPtr(glCompressedTexSubImage3D,"glCompressedTexSubImage3D","glCompressedTexSubImage3DARB");
-    setGLExtensionFuncPtr(glCopyTexSubImage3D,"glCopyTexSubImage3D","glCopyTexSubImage3DEXT");
-
 }
