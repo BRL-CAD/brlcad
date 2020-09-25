@@ -860,6 +860,11 @@ GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_stat(struct ged *gedp, int argc, const char *argv[]);
 
+
+
+/* Debugging command for brep plotting */
+GED_EXPORT extern int ged_dplot(struct ged *gedp, int argc, const char *argv[]);
+
 /** @} */
 
 
