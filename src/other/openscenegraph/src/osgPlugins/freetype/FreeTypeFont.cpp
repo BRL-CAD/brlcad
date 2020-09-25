@@ -36,7 +36,8 @@ struct Char3DInfo
         _maxX(-FLT_MAX),
         _minX(FLT_MAX),
         _minY(FLT_MAX),
-        _coord_scale(1.0/64.0)
+        _coord_scale(1.0/64.0),
+        _reverseFill(false)
     {
         _geometry->setVertexArray(_verts.get());
     }
@@ -49,6 +50,17 @@ struct Char3DInfo
     {
         if (_currentPrimitiveSet.valid() && _currentPrimitiveSet->size()>1)
         {
+            if (_reverseFill)
+            {
+                for ( int near = 0, far = _currentPrimitiveSet->size() - 1;
+                      near < far;
+                      near++, far--)
+                {
+                    std::swap((*_currentPrimitiveSet)[near],
+                              (*_currentPrimitiveSet)[far]);
+                }
+            }
+
             _geometry->addPrimitiveSet( _currentPrimitiveSet.get() );
         }
         _currentPrimitiveSet = 0;
@@ -168,7 +180,7 @@ struct Char3DInfo
     double                          _minX;
     double                          _minY;
     double                          _coord_scale;
-
+    bool                            _reverseFill;
 };
 
 
@@ -266,19 +278,6 @@ void FreeTypeFont::setFontResolution(const osgText::FontResolution& fontSize)
 
     int width = fontSize.first;
     int height = fontSize.second;
-    int maxAxis = std::max(width, height);
-    int margin = _facade->getGlyphImageMargin() + (int)((float)maxAxis * _facade->getGlyphImageMarginRatio());
-
-    if ((unsigned int)(width+2*margin) > _facade->getTextureWidthHint() ||
-        (unsigned int)(width+2*margin) > _facade->getTextureHeightHint())
-    {
-        OSG_WARN<<"Warning: FreeTypeFont::setSize("<<width<<","<<height<<") sizes too large,"<<std::endl;
-
-        width = _facade->getTextureWidthHint()-2*margin;
-        height = _facade->getTextureHeightHint()-2*margin;
-
-        OSG_WARN<<"         sizes capped ("<<width<<","<<height<<") to fit int current glyph texture size."<<std::endl;
-    }
 
     FT_Error error = FT_Set_Pixel_Sizes( _face,      /* handle to face object  */
                                          width,      /* pixel_width            */
@@ -339,6 +338,8 @@ osgText::Glyph* FreeTypeFont::getGlyph(const osgText::FontResolution& fontRes, u
 
     osg::ref_ptr<osgText::Glyph> glyph = new osgText::Glyph(_facade, charcode);
 
+    glyph->setFontResolution(fontRes);
+
     unsigned int dataSize = width*height;
     unsigned char* data = new unsigned char[dataSize];
 
@@ -348,12 +349,10 @@ osgText::Glyph* FreeTypeFont::getGlyph(const osgText::FontResolution& fontRes, u
 
     glyph->setImage(width,height,1,
                     GL_ALPHA,
-                    GL_ALPHA,GL_UNSIGNED_BYTE,
+                    GL_ALPHA, GL_UNSIGNED_BYTE,
                     data,
                     osg::Image::USE_NEW_DELETE,
                     1);
-
-    glyph->setInternalTextureFormat(GL_ALPHA);
 
     // copy image across to osgText::Glyph image.
     switch(glyphslot->bitmap.pixel_mode)
@@ -413,9 +412,11 @@ osgText::Glyph* FreeTypeFont::getGlyph(const osgText::FontResolution& fontRes, u
 
 }
 
-osgText::Glyph3D * FreeTypeFont::getGlyph3D(unsigned int charcode)
+osgText::Glyph3D * FreeTypeFont::getGlyph3D(const osgText::FontResolution& fontRes, unsigned int charcode)
 {
     OpenThreads::ScopedLock<OpenThreads::Mutex> lock(FreeTypeLibrary::instance()->getMutex());
+
+    setFontResolution(fontRes);
 
     //
     // GT: fix for symbol fonts (i.e. the Webdings font) as the wrong character are being
@@ -432,7 +433,7 @@ osgText::Glyph3D * FreeTypeFont::getGlyph3D(unsigned int charcode)
         }
     }
 
-    FT_Error error = FT_Load_Char( _face, charindex, FT_LOAD_DEFAULT|_flags );
+    FT_Error error = FT_Load_Char( _face, charindex, FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING |  _flags );
     if (error)
     {
         OSG_WARN << "FT_Load_Char(...) error 0x"<<std::hex<<error<<std::dec<<std::endl;
@@ -458,6 +459,9 @@ osgText::Glyph3D * FreeTypeFont::getGlyph3D(unsigned int charcode)
     funcs.move_to = (FT_Outline_MoveToFunc)&FreeType::moveTo;
     funcs.shift = 0;
     funcs.delta = 0;
+
+    FT_Orientation orientation = FT_Outline_Get_Orientation(&outline);
+    char3d._reverseFill = (orientation == FT_ORIENTATION_POSTSCRIPT);
 
     // ** record description
     FT_Error _error = FT_Outline_Decompose(&outline, &funcs, &char3d);
@@ -515,9 +519,11 @@ osgText::Glyph3D * FreeTypeFont::getGlyph3D(unsigned int charcode)
     return glyph.release();
 }
 
-osg::Vec2 FreeTypeFont::getKerning(unsigned int leftcharcode,unsigned int rightcharcode, osgText::KerningType kerningType)
+osg::Vec2 FreeTypeFont::getKerning(const osgText::FontResolution& fontRes, unsigned int leftcharcode, unsigned int rightcharcode, osgText::KerningType kerningType)
 {
     OpenThreads::ScopedLock<OpenThreads::Mutex> lock(FreeTypeLibrary::instance()->getMutex());
+
+    setFontResolution(fontRes);
 
     if (!FT_HAS_KERNING(_face) || (kerningType == osgText::KERNING_NONE)) return osg::Vec2(0.0f,0.0f);
 

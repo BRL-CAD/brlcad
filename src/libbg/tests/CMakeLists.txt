@@ -63,12 +63,20 @@ BRLCAD_ADDEXEC(bg_lseg_lseg_dist lseg_lseg.c "libbg;libbn;libbu" TEST)
 
 add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
 
+#  ************ lseg_lseg.c tests ***********
+
+BRLCAD_ADDEXEC(bg_lseg_pt_dist lseg_pt.c "libbg;libbn;libbu" TEST)
+add_test(NAME bg_lseg_pt_dist_case0  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,0,0 0,0,0 0)
+add_test(NAME bg_lseg_pt_dist_case1  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -5,-5,-5 -5,-5,-5, 0)
+add_test(NAME bg_lseg_pt_dist_case2  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,5,5 5,5,5, 0)
+add_test(NAME bg_lseg_pt_dist_case3  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -10,-5,-10 -5,-5,-5 7.07107 )
+add_test(NAME bg_lseg_pt_dist_case4  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,10,10 5,5,5 7.07107)
+add_test(NAME bg_lseg_pt_dist_case5  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,-5,-5 -3.33333,-3.33333,-3.33333 4.08248)
+
 #  ************ tri_ray.c tests ***********
 
 BRLCAD_ADDEXEC(bg_tri_ray_isect tri_ray_isect.cpp "libbg;libbn;libbu" TEST)
 
-# Need to double check, but I think this is an unexpected result - should hit, returns miss?
-#add_test(NAME bg_tri_ray_isect_1   COMMAND bg_tri_ray_isect  23.179952013885874,7.6422705777096072,-0.25 23.279461392150449,7.681746343891751,-0.25 23.240884561991336,7.602980510224489,-0.25 23.249999993258228,7.6246213728328982,4.9870093033699456 0,0,1 1)
 
 #  ************ tri_tri.c tests ***********
 
@@ -124,11 +132,14 @@ BRLCAD_ADDEXEC(bg_tri_closest_pt tri_closest_pt.c "libbg;libbn;libbu" TEST)
 add_test(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_closest_pt  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
 add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
 
-#  ************ trimesh_pt_in.cpp tests ***********
 
-BRLCAD_ADDEXEC(bg_trimesh_pt_in trimesh_pt_in.c "libbg;libbn;libbu" TEST)
+#  ************ polygon_op.cpp tests ***********
 
-add_test(NAME bg_trimesh_pt_in_basic   COMMAND bg_trimesh_pt_in 1)
+BRLCAD_ADDEXEC(bg_polygon_op polygon_op.c "libbg;libbn;libbu" TEST)
+
+add_test(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
+
+
 
 CMAKEFILES(CMakeLists.txt)
 

@@ -45,12 +45,12 @@ inline int EQUAL_F(float a, float b)
 
 
 CullVisitor::CullVisitor():
-    NodeVisitor(CULL_VISITOR,TRAVERSE_ACTIVE_CHILDREN),
+    osg::NodeVisitor(CULL_VISITOR,TRAVERSE_ACTIVE_CHILDREN),
     _currentStateGraph(NULL),
     _currentRenderBin(NULL),
-    _traversalNumber(0),
     _computed_znear(FLT_MAX),
     _computed_zfar(-FLT_MAX),
+    _traversalOrderNumber(0),
     _currentReuseRenderLeafIndex(0),
     _numberOfEncloseOverrideRenderBinDetails(0)
 {
@@ -58,14 +58,14 @@ CullVisitor::CullVisitor():
 }
 
 CullVisitor::CullVisitor(const CullVisitor& rhs):
-    Referenced(true),
+    osg::Object(rhs),
     NodeVisitor(rhs),
     CullStack(rhs),
     _currentStateGraph(NULL),
     _currentRenderBin(NULL),
-    _traversalNumber(0),
     _computed_znear(FLT_MAX),
     _computed_zfar(-FLT_MAX),
+    _traversalOrderNumber(0),
     _currentReuseRenderLeafIndex(0),
     _numberOfEncloseOverrideRenderBinDetails(0),
     _identifier(rhs._identifier)
@@ -103,8 +103,8 @@ void CullVisitor::reset()
 
     _numberOfEncloseOverrideRenderBinDetails = 0;
 
-    // reset the traversal number
-    _traversalNumber = 0;
+    // reset the traversal order number
+    _traversalOrderNumber = 0;
 
     // reset the calculated near far planes.
     _computed_znear = FLT_MAX;
@@ -252,96 +252,16 @@ void CullVisitor::popProjectionMatrix()
     CullStack::popProjectionMatrix();
 }
 
-template<class matrix_type, class value_type>
-bool _clampProjectionMatrix(matrix_type& projection, double& znear, double& zfar, value_type nearFarRatio)
-{
-    double epsilon = 1e-6;
-    if (zfar<znear-epsilon)
-    {
-        if (zfar != -FLT_MAX || znear != FLT_MAX)
-        {
-            OSG_INFO<<"_clampProjectionMatrix not applied, invalid depth range, znear = "<<znear<<"  zfar = "<<zfar<<std::endl;
-        }
-        return false;
-    }
-
-    if (zfar<znear+epsilon)
-    {
-        // znear and zfar are too close together and could cause divide by zero problems
-        // late on in the clamping code, so move the znear and zfar apart.
-        double average = (znear+zfar)*0.5;
-        znear = average-epsilon;
-        zfar = average+epsilon;
-        // OSG_INFO << "_clampProjectionMatrix widening znear and zfar to "<<znear<<" "<<zfar<<std::endl;
-    }
-
-    if (fabs(projection(0,3))<epsilon  && fabs(projection(1,3))<epsilon  && fabs(projection(2,3))<epsilon )
-    {
-        // OSG_INFO << "Orthographic matrix before clamping"<<projection<<std::endl;
-
-        value_type delta_span = (zfar-znear)*0.02;
-        if (delta_span<1.0) delta_span = 1.0;
-        value_type desired_znear = znear - delta_span;
-        value_type desired_zfar = zfar + delta_span;
-
-        // assign the clamped values back to the computed values.
-        znear = desired_znear;
-        zfar = desired_zfar;
-
-        projection(2,2)=-2.0f/(desired_zfar-desired_znear);
-        projection(3,2)=-(desired_zfar+desired_znear)/(desired_zfar-desired_znear);
-
-        // OSG_INFO << "Orthographic matrix after clamping "<<projection<<std::endl;
-    }
-    else
-    {
-
-        // OSG_INFO << "Persepective matrix before clamping"<<projection<<std::endl;
-
-        //std::cout << "_computed_znear"<<_computed_znear<<std::endl;
-        //std::cout << "_computed_zfar"<<_computed_zfar<<std::endl;
-
-        value_type zfarPushRatio = 1.02;
-        value_type znearPullRatio = 0.98;
-
-        //znearPullRatio = 0.99;
-
-        value_type desired_znear = znear * znearPullRatio;
-        value_type desired_zfar = zfar * zfarPushRatio;
-
-        // near plane clamping.
-        double min_near_plane = zfar*nearFarRatio;
-        if (desired_znear<min_near_plane) desired_znear=min_near_plane;
-
-        // assign the clamped values back to the computed values.
-        znear = desired_znear;
-        zfar = desired_zfar;
-
-        value_type trans_near_plane = (-desired_znear*projection(2,2)+projection(3,2))/(-desired_znear*projection(2,3)+projection(3,3));
-        value_type trans_far_plane = (-desired_zfar*projection(2,2)+projection(3,2))/(-desired_zfar*projection(2,3)+projection(3,3));
-
-        value_type ratio = fabs(2.0/(trans_near_plane-trans_far_plane));
-        value_type center = -(trans_near_plane+trans_far_plane)/2.0;
-
-        projection.postMult(osg::Matrix(1.0f,0.0f,0.0f,0.0f,
-                                        0.0f,1.0f,0.0f,0.0f,
-                                        0.0f,0.0f,ratio,0.0f,
-                                        0.0f,0.0f,center*ratio,1.0f));
-
-        // OSG_INFO << "Persepective matrix after clamping"<<projection<<std::endl;
-    }
-    return true;
-}
 
 
 bool CullVisitor::clampProjectionMatrixImplementation(osg::Matrixf& projection, double& znear, double& zfar) const
 {
-    return _clampProjectionMatrix( projection, znear, zfar, _nearFarRatio );
+    return osg::clampProjectionMatrix( projection, znear, zfar, _nearFarRatio );
 }
 
 bool CullVisitor::clampProjectionMatrixImplementation(osg::Matrixd& projection, double& znear, double& zfar) const
 {
-    return _clampProjectionMatrix( projection, znear, zfar, _nearFarRatio );
+    return osg::clampProjectionMatrix( projection, znear, zfar, _nearFarRatio );
 }
 
 template<typename Comparator>
@@ -349,6 +269,7 @@ struct ComputeNearFarFunctor
 {
 
     ComputeNearFarFunctor():
+        _znear(CullVisitor::value_type(0.0)),
         _planes(0) {}
 
     void set(CullVisitor::value_type znear, const osg::Matrix& matrix, const osg::Polytope::PlaneList* planes)
@@ -514,7 +435,8 @@ struct ComputeNearFarFunctor
 
         n1 = distance(p1.second,_matrix);
         n2 = distance(p2.second,_matrix);
-        _znear = _comparator.minimum(n1, n2);
+        _znear = _comparator.minimum(_znear, n1);
+        _znear = _comparator.minimum(_znear, n2);
         //OSG_NOTICE<<"Near plane updated "<<_znear<<std::endl;
     }
 
@@ -739,7 +661,7 @@ bool CullVisitor::updateCalculatedNearFar(const osg::Matrix& matrix,const osg::B
 
 bool CullVisitor::updateCalculatedNearFar(const osg::Matrix& matrix,const osg::Drawable& drawable, bool isBillboard)
 {
-    const osg::BoundingBox& bb = drawable.getBound();
+    const osg::BoundingBox& bb = drawable.getBoundingBox();
 
     value_type d_near, d_far;
 
@@ -962,91 +884,98 @@ void CullVisitor::apply(Geode& node)
 {
     if (isCulled(node)) return;
 
+    // push the culling mode.
+    pushCurrentMask();
+
     // push the node's state.
     StateSet* node_state = node.getStateSet();
     if (node_state) pushStateSet(node_state);
 
-    // traverse any call callbacks and traverse any children.
     handle_cull_callbacks_and_traverse(node);
-
-    RefMatrix& matrix = *getModelViewMatrix();
-    for(unsigned int i=0;i<node.getNumDrawables();++i)
-    {
-        Drawable* drawable = node.getDrawable(i);
-        const BoundingBox &bb =drawable->getBound();
-
-        if( drawable->getCullCallback() )
-        {
-            if( drawable->getCullCallback()->cull( this, drawable, &_renderInfo ) == true )
-            continue;
-        }
-
-        //else
-        {
-            if (node.isCullingActive() && isCulled(bb)) continue;
-        }
-
-
-        if (_computeNearFar && bb.valid())
-        {
-            if (!updateCalculatedNearFar(matrix,*drawable,false)) continue;
-        }
-
-        // need to track how push/pops there are, so we can unravel the stack correctly.
-        unsigned int numPopStateSetRequired = 0;
-
-        // push the geoset's state on the geostate stack.
-        StateSet* stateset = drawable->getStateSet();
-        if (stateset)
-        {
-            ++numPopStateSetRequired;
-            pushStateSet(stateset);
-        }
-
-        CullingSet& cs = getCurrentCullingSet();
-        if (!cs.getStateFrustumList().empty())
-        {
-            osg::CullingSet::StateFrustumList& sfl = cs.getStateFrustumList();
-            for(osg::CullingSet::StateFrustumList::iterator itr = sfl.begin();
-                itr != sfl.end();
-                ++itr)
-            {
-                if (itr->second.contains(bb))
-                {
-                    ++numPopStateSetRequired;
-                    pushStateSet(itr->first.get());
-                }
-            }
-        }
-
-        float depth = bb.valid() ? distance(bb.center(),matrix) : 0.0f;
-
-        if (osg::isNaN(depth))
-        {
-            OSG_NOTICE<<"CullVisitor::apply(Geode&) detected NaN,"<<std::endl
-                                    <<"    depth="<<depth<<", center=("<<bb.center()<<"),"<<std::endl
-                                    <<"    matrix="<<matrix<<std::endl;
-            OSG_DEBUG << "    NodePath:" << std::endl;
-            for (NodePath::const_iterator i = getNodePath().begin(); i != getNodePath().end(); ++i)
-            {
-                OSG_DEBUG << "        \"" << (*i)->getName() << "\"" << std::endl;
-            }
-        }
-        else
-        {
-            addDrawableAndDepth(drawable,&matrix,depth);
-        }
-
-        for(unsigned int i=0;i< numPopStateSetRequired; ++i)
-        {
-            popStateSet();
-        }
-
-    }
 
     // pop the node's state off the geostate stack.
     if (node_state) popStateSet();
 
+    // pop the culling mode.
+    popCurrentMask();
+}
+
+void CullVisitor::apply(osg::Drawable& drawable)
+{
+    RefMatrix& matrix = *getModelViewMatrix();
+
+    const BoundingBox &bb =drawable.getBoundingBox();
+
+    if( drawable.getCullCallback() )
+    {
+        osg::DrawableCullCallback* dcb = drawable.getCullCallback()->asDrawableCullCallback();
+        if (dcb)
+        {
+            if( dcb->cull( this, &drawable, &_renderInfo ) == true ) return;
+        }
+        else
+        {
+            drawable.getCullCallback()->run(&drawable,this);
+        }
+    }
+
+    if (drawable.isCullingActive() && isCulled(bb)) return;
+
+
+    if (_computeNearFar && bb.valid())
+    {
+        if (!updateCalculatedNearFar(matrix,drawable,false)) return;
+    }
+
+    // need to track how push/pops there are, so we can unravel the stack correctly.
+    unsigned int numPopStateSetRequired = 0;
+
+    // push the geoset's state on the geostate stack.
+    StateSet* stateset = drawable.getStateSet();
+    if (stateset)
+    {
+        ++numPopStateSetRequired;
+        pushStateSet(stateset);
+    }
+
+    CullingSet& cs = getCurrentCullingSet();
+    if (!cs.getStateFrustumList().empty())
+    {
+        osg::CullingSet::StateFrustumList& sfl = cs.getStateFrustumList();
+        for(osg::CullingSet::StateFrustumList::iterator itr = sfl.begin();
+            itr != sfl.end();
+            ++itr)
+        {
+            if (itr->second.contains(bb))
+            {
+                ++numPopStateSetRequired;
+                pushStateSet(itr->first.get());
+            }
+        }
+    }
+
+    float depth = bb.valid() ? distance(bb.center(),matrix) : 0.0f;
+
+    if (osg::isNaN(depth))
+    {
+        OSG_NOTICE<<"CullVisitor::apply(Geode&) detected NaN,"<<std::endl
+                                <<"    depth="<<depth<<", center=("<<bb.center()<<"),"<<std::endl
+                                <<"    matrix="<<matrix<<std::endl;
+        OSG_DEBUG << "    NodePath:" << std::endl;
+        for (NodePath::const_iterator i = getNodePath().begin(); i != getNodePath().end(); ++i)
+        {
+            OSG_DEBUG << "        \"" << (*i)->getName() << "\"" << std::endl;
+        }
+    }
+    else
+    {
+        addDrawableAndDepth(&drawable,&matrix,depth);
+    }
+
+    for(unsigned int i=0;i< numPopStateSetRequired; ++i)
+    {
+        popStateSet();
+    }
 }
 
 
@@ -1058,8 +987,8 @@ void CullVisitor::apply(Billboard& node)
     StateSet* node_state = node.getStateSet();
     if (node_state) pushStateSet(node_state);
 
-    // traverse any call callbacks and traverse any children.
-    handle_cull_callbacks_and_traverse(node);
+    // Don't traverse billboard, since drawables are handled manually below
+    //handle_cull_callbacks_and_traverse(node);
 
     const Vec3& eye_local = getEyeLocal();
     const RefMatrix& modelview = *getModelViewMatrix();
@@ -1074,7 +1003,8 @@ void CullVisitor::apply(Billboard& node)
 
         if( drawable->getCullCallback() )
         {
-            if( drawable->getCullCallback()->cull( this, drawable, &_renderInfo ) == true )
+            osg::DrawableCullCallback* dcb = drawable->getCullCallback()->asDrawableCullCallback();
+            if (dcb && dcb->cull( this, drawable, &_renderInfo ) == true )
                 continue;
         }
 
@@ -1083,7 +1013,7 @@ void CullVisitor::apply(Billboard& node)
         node.computeMatrix(*billboard_matrix,eye_local,pos);
 
 
-        if (_computeNearFar && drawable->getBound().valid()) updateCalculatedNearFar(*billboard_matrix,*drawable,true);
+        if (_computeNearFar && drawable->getBoundingBox().valid()) updateCalculatedNearFar(*billboard_matrix,*drawable,true);
         float depth = distance(pos,modelview);
 /*
         if (_computeNearFar)
@@ -1105,9 +1035,9 @@ void CullVisitor::apply(Billboard& node)
                                     <<"    depth="<<depth<<", pos=("<<pos<<"),"<<std::endl
                                     <<"    *billboard_matrix="<<*billboard_matrix<<std::endl;
             OSG_DEBUG << "    NodePath:" << std::endl;
-            for (NodePath::const_iterator i = getNodePath().begin(); i != getNodePath().end(); ++i)
+            for (NodePath::const_iterator itr = getNodePath().begin(); itr != getNodePath().end(); ++itr)
             {
-                OSG_DEBUG << "        \"" << (*i)->getName() << "\"" << std::endl;
+                OSG_DEBUG << "        \"" << (*itr)->getName() << "\"" << std::endl;
             }
         }
         else
@@ -1235,9 +1165,9 @@ void CullVisitor::apply(Transform& node)
     StateSet* node_state = node.getStateSet();
     if (node_state) pushStateSet(node_state);
 
-    ref_ptr<RefMatrix> matrix = createOrReuseMatrix(*getModelViewMatrix());
+    RefMatrix* matrix = createOrReuseMatrix(*getModelViewMatrix());
     node.computeLocalToWorldMatrix(*matrix,this);
-    pushModelViewMatrix(matrix.get(), node.getReferenceFrame());
+    pushModelViewMatrix(matrix, node.getReferenceFrame());
 
     handle_cull_callbacks_and_traverse(node);
 
@@ -1276,8 +1206,8 @@ void CullVisitor::apply(Projection& node)
     _computed_zfar = -FLT_MAX;
 
 
-    ref_ptr<RefMatrix> matrix = createOrReuseMatrix(node.getMatrix());
-    pushProjectionMatrix(matrix.get());
+    RefMatrix *matrix = createOrReuseMatrix(node.getMatrix());
+    pushProjectionMatrix(matrix);
 
     //OSG_INFO<<"Push projection "<<*matrix<<std::endl;
 
@@ -1361,28 +1291,69 @@ void CullVisitor::apply(osg::ClearNode& node)
 namespace osgUtil
 {
 
-class RenderStageCache : public osg::Object
+class RenderStageCache : public osg::Object, public osg::Observer
 {
     public:
 
+        typedef std::map<osg::Referenced*, osg::ref_ptr<RenderStage> > RenderStageMap;
+
         RenderStageCache() {}
         RenderStageCache(const RenderStageCache&, const osg::CopyOp&) {}
+        virtual ~RenderStageCache()
+        {
+            for(RenderStageMap::iterator itr = _renderStageMap.begin();
+                itr != _renderStageMap.end();
+                ++itr)
+            {
+                itr->first->removeObserver(this);
+            }
+        }
 
         META_Object(osgUtil, RenderStageCache);
 
-        void setRenderStage(CullVisitor* cv, RenderStage* rs)
+        virtual void objectDeleted(void* object)
         {
+            osg::Referenced* ref = reinterpret_cast<osg::Referenced*>(object);
+
             OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-            _renderStageMap[cv] = rs;
+
+            RenderStageMap::iterator itr = _renderStageMap.find(ref);
+            if (itr!=_renderStageMap.end())
+            {
+                _renderStageMap.erase(itr);
+            }
         }
 
-        RenderStage* getRenderStage(osgUtil::CullVisitor* cv)
+        void setRenderStage(osg::Referenced* cv, RenderStage* rs)
         {
             OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-            return _renderStageMap[cv].get();
+            RenderStageMap::iterator itr = _renderStageMap.find(cv);
+            if (itr==_renderStageMap.end())
+            {
+                _renderStageMap[cv] = rs;
+                cv->addObserver(this);
+            }
+            else
+            {
+                itr->second = rs;
+            }
+
         }
 
-        typedef std::map<CullVisitor*, osg::ref_ptr<RenderStage> > RenderStageMap;
+        RenderStage* getRenderStage(osg::Referenced* cv)
+        {
+            OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+            RenderStageMap::iterator itr = _renderStageMap.find(cv);
+            if (itr!=_renderStageMap.end())
+            {
+                return itr->second.get();
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
 
         /** Resize any per context GLObject buffers to specified size. */
         virtual void resizeGLObjectBuffers(unsigned int maxSize)
@@ -1524,8 +1495,6 @@ void CullVisitor::apply(osg::Camera& camera)
         // will do later.
         osgUtil::RenderStage* previous_stage = getCurrentRenderBin()->getStage();
 
-//        unsigned int contextID = getState() ? getState()->getContextID() : 0;
-
         // use render to texture stage.
         // create the render to texture stage.
         osg::ref_ptr<osgUtil::RenderStageCache> rsCache = dynamic_cast<osgUtil::RenderStageCache*>(camera.getRenderingCache());
@@ -1540,7 +1509,7 @@ void CullVisitor::apply(osg::Camera& camera)
         {
             OpenThreads::ScopedLock<OpenThreads::Mutex> lock(*(camera.getDataChangeMutex()));
 
-            rtts = new osgUtil::RenderStage;
+            rtts = _rootRenderStage.valid() ? osg::cloneType(_rootRenderStage.get()) : new osgUtil::RenderStage;
             rsCache->setRenderStage(this,rtts.get());
 
             rtts->setCamera(&camera);
@@ -1571,31 +1540,56 @@ void CullVisitor::apply(osg::Camera& camera)
             rtts->reset();
         }
 
-        // set up clera masks/values
+        // cache the StateGraph and replace with a clone of the existing parental chain.
+        osg::ref_ptr<StateGraph> previous_rootStateGraph = _rootStateGraph;
+        StateGraph* previous_currentStateGraph = _currentStateGraph;
+
+        // replicate the StageGraph parental chain so that state graph and render leaves are kept local to the Camera's RenderStage.
+        {
+            typedef std::vector< osg::ref_ptr<StateGraph> > StageGraphStack;
+            StageGraphStack stateGraphParentalChain;
+            StateGraph* sg = _currentStateGraph;
+            while(sg)
+            {
+                stateGraphParentalChain.push_back(sg);
+                sg = sg->_parent;
+            }
+
+            _rootStateGraph = rtts->getStateGraph();
+            if (_rootStateGraph)
+            {
+                _rootStateGraph->clean();
+            }
+            else
+            {
+                _rootStateGraph = new StateGraph;
+
+                // assign the state graph to the RenderStage to ensure it remains in memory for the draw traversal.
+                rtts->setStateGraph(_rootStateGraph.get());
+            }
+            _currentStateGraph = _rootStateGraph.get();
+
+            StageGraphStack::reverse_iterator ritr = stateGraphParentalChain.rbegin();
+
+            if (ritr!=stateGraphParentalChain.rend())
+            {
+                const osg::StateSet* ss = (*ritr++)->getStateSet();
+                _rootStateGraph->setStateSet(ss);
+
+                while(ritr != stateGraphParentalChain.rend())
+                {
+                    _currentStateGraph = _currentStateGraph->find_or_insert((*ritr++)->getStateSet());
+                }
+            }
+        }
+
+
+        // set up clear masks/values
         rtts->setClearDepth(camera.getClearDepth());
         rtts->setClearAccum(camera.getClearAccum());
         rtts->setClearStencil(camera.getClearStencil());
-        rtts->setClearMask(camera.getClearMask());
-
-
-        // set up the background color and clear mask.
-        if (camera.getInheritanceMask() & CLEAR_COLOR)
-        {
-            rtts->setClearColor(previous_stage->getClearColor());
-        }
-        else
-        {
-            rtts->setClearColor(camera.getClearColor());
-        }
-        if (camera.getInheritanceMask() & CLEAR_MASK)
-        {
-            rtts->setClearMask(previous_stage->getClearMask());
-        }
-        else
-        {
-            rtts->setClearMask(camera.getClearMask());
-        }
-
+        rtts->setClearMask((camera.getInheritanceMask() & CLEAR_MASK) ? previous_stage->getClearMask() : camera.getClearMask());
+        rtts->setClearColor((camera.getInheritanceMask() & CLEAR_COLOR) ? previous_stage->getClearColor() : camera.getClearColor());
 
         // set the color mask.
         osg::ColorMask* colorMask = camera.getColorMask()!=0 ? camera.getColorMask() : previous_stage->getColorMask();
@@ -1638,8 +1632,14 @@ void CullVisitor::apply(osg::Camera& camera)
         }
 
 
+        // restore cache of the StateGraph
+        _rootStateGraph->prune();
+        _rootStateGraph = previous_rootStateGraph;
+        _currentStateGraph = previous_currentStateGraph;
+
+
         // and the render to texture stage to the current stages
-        // dependancy list.
+        // dependency list.
         switch(camera.getRenderOrder())
         {
             case osg::Camera::PRE_RENDER:

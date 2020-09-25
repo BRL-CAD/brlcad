@@ -2645,7 +2645,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
 	bu_vls_init(&logstr);
 
-	if (!ftp->ft_adjust || ftp->ft_adjust(&logstr, &intern, argc-3, argv+3) == GED_ERROR) {
+	if (!ftp->ft_adjust || ftp->ft_adjust(&logstr, &intern, argc-3, argv+3) & GED_ERROR) {
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&logstr), (char *)NULL);
 	    bu_vls_free(&logstr);
 	    rt_db_free_internal(&intern);
@@ -10206,7 +10206,7 @@ wdb_newcmds_tcl(void *clientData,
 
     bu_vls_init(&vls);
 
-    if (ret == GED_HELP)
+    if (ret & GED_HELP)
 	bu_vls_strcat(&vls, "1 ");
     else
 	bu_vls_strcat(&vls, "0 ");

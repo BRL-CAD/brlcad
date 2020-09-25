@@ -394,7 +394,7 @@ private:
   size_t m_buffer_position;
 };
 
-ON_UnknownUserDataArchive::ON_UnknownUserDataArchive( const ON_UnknownUserData& ud ) : ON_BinaryArchive( ON::read3dm )
+ON_UnknownUserDataArchive::ON_UnknownUserDataArchive( const ON_UnknownUserData& ud ) : ON_BinaryArchive( ON::on_read3dm )
 {
   SetArchive3dmVersion(ud.m_3dm_version);
   m_sizeof_buffer = ud.m_sizeof_buffer;

@@ -26,18 +26,21 @@ for i in $CASES ; do
   LOG=$BASE2.log
   TGM=$BASE2.g
 
-  TRASH="$TGM $LOG $BASE2.rt.pix $BASE2.asc $BASE2.pix $BASE2.bw $BASE2.dsp"
+  TRASH="$TGM $LOG $BASE2.rt.pix $BASE2.pix $BASE2.bw $BASE2.dsp"
   rm -f $TRASH
 
   # convert dsp data file in asc format to pix format
   DSPASC=$1/regress/dsp/$BASE2.asc
+  echo "$A2P < $DSPASC > $BASE2.pix"
   $A2P < $DSPASC > $BASE2.pix
 
   # convert pix to bw format
   # take the blue pixel only
+  echo "$P2B -B1.0 $BASE2.pix > $BASE2.bw"
   $P2B -B1.0 $BASE2.pix > $BASE2.bw
 
   # convert pix to dsp format
+  echo "$CV huc nu16 $BASE2.bw $BASE2.dsp"
   $CV huc nu16 $BASE2.bw $BASE2.dsp
 
   # build a TGM

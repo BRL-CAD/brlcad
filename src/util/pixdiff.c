@@ -72,19 +72,22 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: pixdiff f1.pix f2.pix >file.pix\n");
     }
 
     if (BU_STR_EQUAL(argv[1], "-"))
 	f1 = stdin;
-    else if ((f1 = fopen(argv[1], "r")) == NULL) {
+    else if ((f1 = fopen(argv[1], "rb")) == NULL) {
 	perror(argv[1]);
 	return 1;
     }
     if (BU_STR_EQUAL(argv[2], "-"))
 	f2 = stdin;
-    else if ((f2 = fopen(argv[2], "r")) == NULL) {
+    else if ((f2 = fopen(argv[2], "rb")) == NULL) {
 	perror(argv[2]);
 	return 1;
     }

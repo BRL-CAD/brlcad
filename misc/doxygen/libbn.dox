@@ -38,6 +38,8 @@
  /**  @defgroup bn_rmt Mersenne Twister */
  /** @ingroup bn_rand */
  /**  @defgroup bn_rnt Random Number Tables */
+ /** @ingroup bn_rand */
+ /**  @defgroup bn_sobol Sobol quasi-random low-discrepancy sequences of numbers */
  /** @ingroup libbn */
  /**  @defgroup bn_plane Point/Line/Plane Geometry Math */
  /** @ingroup libbn */

@@ -65,7 +65,7 @@ main (int argc, char **argv)
     char *bp;
     char buf[BUF_LEN];
     char sarg[BUF_LEN];
-    static char *fm[] = { "r", "w" };
+    static char *fm[] = { "rb", "wb" };
     double darg[6] = {0.0};
     static FILE *fp[2];
     int i;
@@ -83,6 +83,10 @@ main (int argc, char **argv)
     if (argc > 3) {
 	printusage();
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     fp[0] = stdin;
     fp[1] = stdout;
     for (i = 0; (i < 2) && (--argc > 0); ++i) {
@@ -94,7 +98,7 @@ main (int argc, char **argv)
 	}
     }
     if (isatty(fileno(fp[FP_OUT]))) {
-	bu_log("asc-plot3: Will not write to a TTY\n");
+	bu_log("%s: Will not write to a TTY\n", argv[0]);
 	printusage();
 	return 1;
     }

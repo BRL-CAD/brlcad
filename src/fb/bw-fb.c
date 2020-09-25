@@ -47,7 +47,7 @@
 #include "bu/exit.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 int skipbytes(int fd, b_off_t num);
@@ -76,7 +76,7 @@ static int blueflag  = 0;
 static char *framebuffer = NULL;
 static char *file_name;
 static int infd;
-static fb *fbp;
+static struct fb *fbp;
 
 static char usage[] = "\
 Usage: bw-fb [-a -i -c -z -R -G -B] [-F framebuffer]\n\
@@ -158,12 +158,13 @@ get_args(int argc, char **argv)
 	if (isatty(fileno(stdin)))
 	    return 0;
 	file_name = "-";
-	infd = 0;
+	infd = fileno(stdin);
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
 	ifname = bu_file_realpath(file_name, NULL);
-	if ((infd = open(ifname, 0)) < 0) {
+	if ((infd = open(ifname, O_RDONLY|O_BINARY)) < 0) {
 	    fprintf(stderr,
 		    "bw-fb: cannot open \"%s (canonical %s)\" for reading\n",
 		    file_name, ifname);

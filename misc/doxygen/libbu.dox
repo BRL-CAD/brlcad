@@ -6,9 +6,24 @@
 /**  @defgroup bu_defines Definitions*/
 
 /** @ingroup libbu */
+/**  @defgroup bu_app Applications */
+/**  @addtogroup bu_app
+     @brief Routines for application setup and supplying information to user programs.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_process Subprocess Management */
+/**  @addtogroup bu_process
+     @brief Routines for launching and managing applications as subprocesses.
+ */
+/** @ingroup libbu */
 /**  @defgroup bu_container Data Containers */
 /**  @addtogroup bu_container
      @brief Containers for holding various kinds of information.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_dylib Dynamic Libraries*/
+/**  @addtogroup bu_dylib
+     @brief Wrap platform-specific functionality for managing dynamic library run-time loading, symbol access and unloading.
  */
 /** @ingroup libbu */
 /**  @defgroup bu_memory Memory Management */
@@ -49,6 +64,12 @@
  */
 /** @ingroup libbu */
 /**  @defgroup bu_version Version */
+
+/** @ingroup libbu */
+/**  @defgroup bu_experimental EXPERIMENTAL */
+/**  @addtogroup bu_experimental
+     @brief In-progress API, not ready for general use.
+ */
 
 /* Data Containers */
 /** @ingroup bu_container */
@@ -96,6 +117,8 @@
 /** @ingroup bu_io */
 /**   @defgroup bu_log Logging */
 /** @ingroup bu_io */
+/**   @defgroup bu_tbl Tabular Printing */
+/** @ingroup bu_io */
 /**   @defgroup bu_observer Observer*/
 /** @ingroup bu_io */
 /**   @defgroup bu_vfont Vector Fonts */
@@ -105,6 +128,8 @@
 /* Data Management */
 /** @ingroup bu_data */
 /**   @defgroup bu_conv Data Conversion */
+/** @ingroup bu_data */
+/**   @defgroup bu_mime Mime Types */
 /** @ingroup bu_data */
 /**   @defgroup bu_hist Histogram Handling */
 /** @ingroup bu_data */

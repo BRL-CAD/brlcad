@@ -163,7 +163,7 @@ load_file(const char *filename)
 	return;
     }
 
-    fp = fopen(filename, "r");
+    fp = fopen(filename, "rb");
     if (!fp) {
 	perror("unable to open file");
 	bu_log("ERROR: unable to open log file [%s]\n", filename);

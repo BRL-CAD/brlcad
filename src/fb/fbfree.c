@@ -31,7 +31,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static char *framebuffer = NULL;
@@ -43,7 +43,7 @@ int
 main(int argc, char **argv)
 {
     int c;
-    fb *fbp;
+    struct fb *fbp;
 
     bu_setprogname(argv[0]);
 

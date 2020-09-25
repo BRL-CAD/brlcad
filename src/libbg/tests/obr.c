@@ -37,7 +37,7 @@ void plot_obr(int test_num, const point_t *pnt_array, int pnt_cnt)
     FILE *plot_file = NULL;
     bu_vls_init(&name);
     bu_vls_printf(&name, "obr_test_%.3d.pl", test_num);
-    plot_file = fopen(bu_vls_addr(&name), "w");
+    plot_file = fopen(bu_vls_addr(&name), "wb");
     pl_color(plot_file, 0, 255, 0);
     for (i = 0; i < pnt_cnt; i++) {
 	pdv_3move(plot_file, pnt_array[i]);

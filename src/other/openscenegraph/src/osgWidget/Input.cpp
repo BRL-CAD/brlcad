@@ -82,7 +82,8 @@ Input::Input(const std::string& name, const std::string& label, unsigned int siz
    _cursor->setDrawCallback( new BlinkCursorCallback(_insertMode) );
 }
 
-void Input::_calculateSize(const XYCoord& size) {
+void Input::_calculateSize(const XYCoord& /*size*/)
+    {
    // An Input cannot currently set it's own size RELIABLY until the osgText implementation
    // is dratiscally improved. I'm getting wildly crazy results. :(
    // point_type height = size.y() > _cursor->getHeight() ? size.y() : _cursor->getHeight();
@@ -115,18 +116,23 @@ void Input::_calculateCursorOffsets() {
     osgText::Text::TextureGlyphQuadMap& tgqm = const_cast<osgText::Text::TextureGlyphQuadMap&>(_text->getTextureGlyphQuadMap());
     osgText::Text::TextureGlyphQuadMap::iterator tgqmi = tgqm.begin();
 
-    std::vector<osg::Vec2>                coords;
+    std::vector<osg::Vec2>          coords;
     std::vector<osgText::Glyph*>    glyphs;
     for ( ; tgqmi != tgqm.end(); tgqmi++ )
     {
         const osgText::Text::GlyphQuads& gq = tgqmi->second;
 
         //coords.insert(coords.end(),gq.getTransformedCoords(0).begin(),gq.getTransformedCoords(0).end());
-        coords.insert(coords.end(),gq.getCoords().begin(),gq.getCoords().end());
         for (unsigned int i=0; i<gq.getGlyphs().size(); ++i)
         {
             glyphs.push_back(gq.getGlyphs().at(i));
         }
+    }
+
+    unsigned int numCoords = _text->getCoords()->size();
+    for(unsigned int i=0; i<numCoords; ++i)
+    {
+        osg::Vec2 c; _text->getCoord(i, c); coords.push_back(c);
     }
 
     std::list<unsigned int> keys;
@@ -281,11 +287,12 @@ void Input::positioned()
     }
 }
 
-bool Input::keyUp(int key, int mask, const WindowManager*) {
+bool Input::keyUp(int /*key*/, int /*mask*/, const WindowManager*)
+{
    return false;
 }
 
-bool Input::mouseDrag (double x, double y, const WindowManager*)
+bool Input::mouseDrag (double x, double /*y*/, const WindowManager*)
 {
     _mouseClickX += x;
     x = _mouseClickX;
@@ -306,7 +313,7 @@ bool Input::mouseDrag (double x, double y, const WindowManager*)
     return true;
 }
 
-bool Input::mousePush (double x, double y, const WindowManager* wm)
+bool Input::mousePush (double x, double /*y*/, const WindowManager* /*wm*/)
 {
     double offset = getOrigin().x();
     Window* window = getParent();
@@ -559,18 +566,21 @@ bool Input::keyDown(int key, int mask, const WindowManager*)
             if (selectionMax - selectionMin > 0)
             {
                 std::string data;
-                std::copy(s.begin() + selectionMin, s.begin() + selectionMax, std::inserter(data, data.begin()));
+                osgText::String selection;
+                std::copy(s.begin() + selectionMin, s.begin() + selectionMax, std::back_inserter(selection));
+                data = selection.createUTF8EncodedString();
 
 // Data to clipboard
 #ifdef WIN32
                 if(::OpenClipboard(NULL))
                 {
                     ::EmptyClipboard();
-                    HGLOBAL clipbuffer = ::GlobalAlloc(GMEM_DDESHARE, data.length()+1);
-                    char* buffer = (char*)::GlobalLock(clipbuffer);
-                    strcpy(buffer, data.c_str());
+                    int wchar_count = MultiByteToWideChar(CP_UTF8, 0, data.c_str(), -1, NULL, 0);
+                    HGLOBAL clipbuffer = ::GlobalAlloc(GMEM_MOVEABLE, wchar_count * sizeof(wchar_t));
+                    wchar_t* buffer = (wchar_t*)::GlobalLock(clipbuffer);
+                    MultiByteToWideChar(CP_UTF8, 0, data.c_str(), -1, buffer, wchar_count);
                     ::GlobalUnlock(clipbuffer);
-                    ::SetClipboardData(CF_TEXT,clipbuffer);
+                    ::SetClipboardData(CF_UNICODETEXT,clipbuffer);
                     ::CloseClipboard();
                 }
 #endif

@@ -28,9 +28,35 @@
 using namespace osgText;
 using namespace std;
 
+// GL_ALPHA and GL_LUMINANCE_ALPHA are deprecated in GL3/GL4 core profile, use GL_RED & GL_RB in this case.
+#if defined(OSG_GL3_AVAILABLE) && !defined(OSG_GL2_AVAILABLE) && !defined(OSG_GL1_AVAILABLE)
+#define OSGTEXT_GLYPH_ALPHA_FORMAT GL_RED
+#define OSGTEXT_GLYPH_ALPHA_INTERNALFORMAT GL_R8
+#define OSGTEXT_GLYPH_SDF_FORMAT GL_RG
+#define OSGTEXT_GLYPH_SDF_INTERNALFORMAT GL_RG8
+#else
+#define OSGTEXT_GLYPH_ALPHA_FORMAT GL_ALPHA
+#define OSGTEXT_GLYPH_ALPHA_INTERNALFORMAT GL_ALPHA
+#define OSGTEXT_GLYPH_SDF_FORMAT GL_LUMINANCE_ALPHA
+#define OSGTEXT_GLYPH_SDF_INTERNALFORMAT GL_LUMINANCE_ALPHA
+#endif
+
+
+#if 0
+    #define TEXTURE_IMAGE_NUM_CHANNELS 1
+    #define TEXTURE_IMAGE_FORMAT OSGTEXT_GLYPH_FORMAT
+#else
+    #define TEXTURE_IMAGE_NUM_CHANNELS 2
+    #define TEXTURE_IMAGE_FORMAT GL_RGBA
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// GlyphTexture
+//
 GlyphTexture::GlyphTexture():
-    _margin(1),
-    _marginRatio(0.02f),
+    _shaderTechnique(GREYSCALE),
     _usedY(0),
     _partUsedX(0),
     _partUsedY(0)
@@ -51,27 +77,52 @@ int GlyphTexture::compare(const osg::StateAttribute& rhs) const
     return 0;
 }
 
+int GlyphTexture::getEffectMargin(const Glyph* glyph)
+{
+    if (_shaderTechnique==GREYSCALE) return 0;
+    else return osg::maximum(glyph->getFontResolution().second/6, 2u);
+}
+
+int GlyphTexture::getTexelMargin(const Glyph* glyph)
+{
+    int width = glyph->s();
+    int height = glyph->t();
+    int effect_margin = getEffectMargin(glyph);
+
+    int max_dimension = osg::maximum(width, height) + 2 * effect_margin;
+    int margin = osg::maximum(max_dimension/4, 2) + effect_margin;
+
+    return margin;
+}
 
 bool GlyphTexture::getSpaceForGlyph(Glyph* glyph, int& posX, int& posY)
 {
-    int maxAxis = osg::maximum(glyph->s(), glyph->t());
-    int margin = _margin + (int)((float)maxAxis * _marginRatio);
+    int width = glyph->s();
+    int height = glyph->t();
 
-    int width = glyph->s()+2*margin;
-    int height = glyph->t()+2*margin;
+    int margin = getTexelMargin(glyph);
 
-    // first check box (_partUsedX,_usedY) to (width,height)
-    if (width <= (getTextureWidth()-_partUsedX) &&
-        height <= (getTextureHeight()-_usedY))
+    width += 2*margin;
+    height += 2*margin;
+
+    int interval = 4;
+
+    int partUsedX = ((_partUsedX % interval) == 0) ? _partUsedX : (((_partUsedX/interval)+1)*interval);
+    int partUsedY = ((_partUsedY % interval) == 0) ? _partUsedY : (((_partUsedY/interval)+1)*interval);
+    int usedY = ((_usedY % interval) == 0) ? _usedY : (((_usedY/interval)+1)*interval);
+
+    // first check box (partUsedX, usedY) to (width,height)
+    if (width <= (getTextureWidth()-partUsedX) &&
+        height <= (getTextureHeight()-usedY))
     {
         // can fit in existing row.
 
         // record the position in which the texture will be stored.
-        posX = _partUsedX+margin;
-        posY = _usedY+margin;
+        posX = partUsedX+margin;
+        posY = usedY+margin;
 
         // move used markers on.
-        _partUsedX += width;
+        _partUsedX = posX+width;
         if (_usedY+height>_partUsedY) _partUsedY = _usedY+height;
 
         return true;
@@ -83,14 +134,14 @@ bool GlyphTexture::getSpaceForGlyph(Glyph* glyph, int& posX, int& posY)
     {
         // can fit next row.
         _partUsedX = 0;
-        _usedY = _partUsedY;
+        _usedY = partUsedY;
 
         posX = _partUsedX+margin;
         posY = _usedY+margin;
 
         // move used markers on.
-        _partUsedX += width;
-        if (_usedY+height>_partUsedY) _partUsedY = _usedY+height;
+        _partUsedX = posX+width;
+        _partUsedY = _usedY+height;
 
         return true;
     }
@@ -101,299 +152,237 @@ bool GlyphTexture::getSpaceForGlyph(Glyph* glyph, int& posX, int& posY)
 
 void GlyphTexture::addGlyph(Glyph* glyph, int posX, int posY)
 {
+
     OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
 
+    if (!_image.valid()) createImage();
+
     _glyphs.push_back(glyph);
-    for(unsigned int i=0;i<_glyphsToSubload.size();++i)
-    {
-        _glyphsToSubload[i].push_back(glyph);
-    }
 
-    // set up the details of where to place glyph's image in the texture.
-    glyph->setTexture(this);
-    glyph->setTexturePosition(posX,posY);
+    osg::ref_ptr<Glyph::TextureInfo> info = new Glyph::TextureInfo(
+                        this,
+                        posX, posY,
+                        osg::Vec2( static_cast<float>(posX)/static_cast<float>(getTextureWidth()), static_cast<float>(posY)/static_cast<float>(getTextureHeight()) ), // minTexCoord
+                        osg::Vec2( static_cast<float>(posX+glyph->s())/static_cast<float>(getTextureWidth()), static_cast<float>(posY+glyph->t())/static_cast<float>(getTextureHeight()) ), // maxTexCoord
+                        float(getTexelMargin(glyph))); // margin
 
-    glyph->setMinTexCoord( osg::Vec2( static_cast<float>(posX)/static_cast<float>(getTextureWidth()),
-                                      static_cast<float>(posY)/static_cast<float>(getTextureHeight()) ) );
-    glyph->setMaxTexCoord( osg::Vec2( static_cast<float>(posX+glyph->s())/static_cast<float>(getTextureWidth()),
-                                      static_cast<float>(posY+glyph->t())/static_cast<float>(getTextureHeight()) ) );
+    glyph->setTextureInfo(_shaderTechnique, info.get());
+
+    copyGlyphImage(glyph, info.get());
 }
 
-void GlyphTexture::apply(osg::State& state) const
+void GlyphTexture::copyGlyphImage(Glyph* glyph, Glyph::TextureInfo* info)
 {
-    // get the contextID (user defined ID of 0 upwards) for the
-    // current OpenGL context.
-    const unsigned int contextID = state.getContextID();
+    _image->dirty();
 
-    if (contextID>=_glyphsToSubload.size())
+    if (_shaderTechnique<=GREYSCALE)
     {
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+        // OSG_NOTICE<<"GlyphTexture::copyGlyphImage() greyscale copying. glyphTexture="<<this<<", glyph="<<glyph->getGlyphCode()<<std::endl;
+        // make sure the glyph image settings and the target image are consistent before copying.
+        glyph->setPixelFormat(_image->getPixelFormat());
+        glyph->setInternalTextureFormat(_image->getPixelFormat());
+        _image->copySubImage(info->texturePositionX, info->texturePositionY, 0, glyph);
+        return;
+    }
 
-        // graphics context is beyond the number of glyphsToSubloads, so
-        // we must now copy the glyph list across, this is a potential
-        // threading issue though is multiple applies are happening the
-        // same time on this object - to avoid this condition number of
-        // graphics contexts should be set before create text.
-        for(unsigned int i=_glyphsToSubload.size();i<=contextID;++i)
+    // OSG_NOTICE<<"GlyphTexture::copyGlyphImage() generating signed distance field. glyphTexture="<<this<<", glyph="<<glyph->getGlyphCode()<<std::endl;
+
+    int src_columns = glyph->s();
+    int src_rows = glyph->t();
+    unsigned char* src_data = glyph->data();
+
+    int dest_columns = _image->s();
+    int dest_rows = _image->t();
+    unsigned char* dest_data = _image->data(info->texturePositionX, info->texturePositionY);
+
+    int search_distance = getEffectMargin(glyph);
+
+    int left = -search_distance;
+    int right = glyph->s()+search_distance;
+    int lower = -search_distance;
+    int upper = glyph->t()+search_distance;
+
+    float multiplier = 1.0/255.0f;
+
+    float max_distance = sqrtf(float(search_distance)*float(search_distance)*2.0);
+
+    if ((left+info->texturePositionX)<0) left = -info->texturePositionX;
+    if ((right+info->texturePositionX)>=dest_columns) right = dest_columns-info->texturePositionX-1;
+
+    if ((lower+info->texturePositionY)<0) lower = -info->texturePositionY;
+    if ((upper+info->texturePositionY)>=dest_rows) upper = dest_rows-info->texturePositionY-1;
+
+
+    int num_components = osg::Image::computeNumComponents(_image->getPixelFormat());
+    int bytes_per_pixel = osg::Image::computePixelSizeInBits(_image->getPixelFormat(),_image->getDataType())/8;
+    int alpha_offset = (_image->getPixelFormat()==GL_LUMINANCE_ALPHA) ? 1 : 0;
+    int sdf_offset = (_image->getPixelFormat()==GL_LUMINANCE_ALPHA) ? 0 : 1;
+
+
+    unsigned char full_on = 255;
+    unsigned char mid_point = full_on/2;
+    float mid_point_f = float(mid_point)*multiplier;
+
+    for(int dr=lower; dr<=upper; ++dr)
+    {
+        for(int dc=left; dc<=right; ++dc)
         {
-            GlyphPtrList& glyphPtrs = _glyphsToSubload[i];
-            for(GlyphRefList::const_iterator itr=_glyphs.begin();
-                itr!=_glyphs.end();
-                ++itr)
+            unsigned char value = 0;
+
+            unsigned char center_value = 0;
+            if (dr>=0 && dr<src_rows && dc>=0 && dc<src_columns) center_value = *(src_data + dr*src_columns + dc);
+
+            float center_value_f = center_value*multiplier;
+            float min_distance = max_distance;
+
+            if (center_value>0 && center_value<full_on)
             {
-                glyphPtrs.push_back(itr->get());
-            }
-        }
-    }
-
-
-    const Extensions* extensions = getExtensions(contextID,true);
-    bool generateMipMapSupported = extensions->isGenerateMipMapSupported();
-
-    // get the texture object for the current contextID.
-    TextureObject* textureObject = getTextureObject(contextID);
-
-    bool newTextureObject = (textureObject == 0);
-
-    #if defined(OSG_GLES2_AVAILABLE)
-    bool requiresGenerateMipmapCall = false;
-
-    // need to look to see generate mip map call is required.
-    switch(_min_filter)
-    {
-    case NEAREST_MIPMAP_NEAREST:
-    case NEAREST_MIPMAP_LINEAR:
-    case LINEAR_MIPMAP_NEAREST:
-    case LINEAR_MIPMAP_LINEAR:
-        requiresGenerateMipmapCall = generateMipMapSupported;
-        break;
-    default:
-        break;
-    }
-    #endif
-
-    if (newTextureObject)
-    {
-        GLint maxTextureSize = 256;
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
-        if (maxTextureSize < getTextureWidth() || maxTextureSize < getTextureHeight())
-        {
-            OSG_WARN<<"Warning: osgText::Font texture size of ("<<getTextureWidth()<<", "<<getTextureHeight()<<") too large, unable to create font texture."<<std::endl;
-            OSG_WARN<<"         Maximum supported by hardward by native OpenGL implementation is ("<<maxTextureSize<<","<<maxTextureSize<<")."<<std::endl;
-            OSG_WARN<<"         Please set OSG_MAX_TEXTURE_SIZE lenvironment variable to "<<maxTextureSize<<" and re-run application."<<std::endl;
-            return;
-        }
-
-        // being bound for the first time, need to allocate the texture
-
-        _textureObjectBuffer[contextID] = textureObject = osg::Texture::generateTextureObject(
-                this, contextID,GL_TEXTURE_2D,1,GL_ALPHA,getTextureWidth(), getTextureHeight(),1,0);
-
-        textureObject->bind();
-
-
-        applyTexParameters(GL_TEXTURE_2D,state);
-
-        // need to look at generate mip map extension if mip mapping required.
-        switch(_min_filter)
-        {
-        case NEAREST_MIPMAP_NEAREST:
-        case NEAREST_MIPMAP_LINEAR:
-        case LINEAR_MIPMAP_NEAREST:
-        case LINEAR_MIPMAP_LINEAR:
-            if (generateMipMapSupported)
-            {
-            #if !defined(OSG_GLES2_AVAILABLE)
-                glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS,GL_TRUE);
-            #endif
-            }
-            else glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, LINEAR);
-            break;
-        default:
-            // not mip mapping so no problems.
-            break;
-        }
-
-        unsigned int imageDataSize = getTextureHeight()*getTextureWidth();
-        unsigned char* imageData = new unsigned char[imageDataSize];
-        for(unsigned int i=0; i<imageDataSize; ++i)
-        {
-            imageData[i] = 0;
-        }
-
-
-        // allocate the texture memory.
-        glTexImage2D( GL_TEXTURE_2D, 0, GL_ALPHA,
-                getTextureWidth(), getTextureHeight(), 0,
-                GL_ALPHA,
-                GL_UNSIGNED_BYTE,
-                imageData );
-
-        delete [] imageData;
-
-    }
-    else
-    {
-        // reuse texture by binding.
-        textureObject->bind();
-
-        if (getTextureParameterDirty(contextID))
-        {
-            applyTexParameters(GL_TEXTURE_2D,state);
-        }
-
-
-    }
-
-    static const GLubyte* s_renderer = 0;
-    static bool s_subloadAllGlyphsTogether = false;
-    if (!s_renderer)
-    {
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-
-        s_renderer = glGetString(GL_RENDERER);
-        OSG_INFO<<"glGetString(GL_RENDERER)=="<<s_renderer<<std::endl;
-        if (s_renderer && strstr((const char*)s_renderer,"IMPACT")!=0)
-        {
-            // we're running on an Octane, so need to work around its
-            // subloading bugs by loading all at once.
-            s_subloadAllGlyphsTogether = true;
-        }
-
-        if (s_renderer &&
-            ((strstr((const char*)s_renderer,"Radeon")!=0) ||
-            (strstr((const char*)s_renderer,"RADEON")!=0) ||
-            (strstr((const char*)s_renderer,"ALL-IN-WONDER")!=0)))
-        {
-            // we're running on an ATI, so need to work around its
-            // subloading bugs by loading all at once.
-            s_subloadAllGlyphsTogether = true;
-        }
-
-        if (s_renderer && strstr((const char*)s_renderer,"Sun")!=0)
-        {
-            // we're running on an solaris x server, so need to work around its
-            // subloading bugs by loading all at once.
-            s_subloadAllGlyphsTogether = true;
-        }
-
-        const char* str = getenv("OSG_TEXT_INCREMENTAL_SUBLOADING");
-        if (str)
-        {
-            s_subloadAllGlyphsTogether = strcmp(str,"OFF")==0 || strcmp(str,"Off")==0 || strcmp(str,"off")==0;
-        }
-    }
-
-
-    // now subload the glyphs that are outstanding for this graphics context.
-    GlyphPtrList& glyphsWereSubloading = _glyphsToSubload[contextID];
-
-    if (!glyphsWereSubloading.empty() || newTextureObject)
-    {
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-
-        bool subloadAllGlyphsTogether = s_subloadAllGlyphsTogether;
-
-        #if defined(OSG_GLES2_AVAILABLE)
-        if (requiresGenerateMipmapCall) subloadAllGlyphsTogether = true;
-        #endif
-
-        if (!subloadAllGlyphsTogether)
-        {
-            if (newTextureObject)
-            {
-                for(GlyphRefList::const_iterator itr=_glyphs.begin();
-                    itr!=_glyphs.end();
-                    ++itr)
+                if (center_value_f>=mid_point_f)
                 {
-                    (*itr)->subload();
+                    min_distance = center_value_f-mid_point_f;
+                    value = 128+(min_distance/max_distance)*127;
+                }
+                else
+                {
+                    min_distance = mid_point_f-center_value_f;
+                    value = 127-(min_distance/max_distance)*127;
                 }
             }
-            else // just subload the new entries.
+            else
             {
-                // default way of subloading as required.
-                //std::cout<<"subloading"<<std::endl;
-                for(GlyphPtrList::iterator itr=glyphsWereSubloading.begin();
-                    itr!=glyphsWereSubloading.end();
-                    ++itr)
+                for(int radius=1; radius<search_distance; ++radius)
                 {
-                    (*itr)->subload();
-                }
-            }
-
-            // clear the list since we have now subloaded them.
-            glyphsWereSubloading.clear();
-
-        }
-        else
-        {
-            OSG_INFO<<"osgText::Font loading all glyphs as a single subload."<<std::endl;
-
-            // Octane has bugs in OGL driver which mean that subloads smaller
-            // than 32x32 produce errors, and also cannot handle general alignment,
-            // so to get round this copy all glyphs into a temporary image and
-            // then subload the whole lot in one go.
-
-            int tsize = getTextureHeight() * getTextureWidth();
-            unsigned char *local_data = new unsigned char[tsize];
-            memset( local_data, 0L, tsize);
-
-            for(GlyphRefList::const_iterator itr=_glyphs.begin();
-                itr!=_glyphs.end();
-                ++itr)
-            {
-                //(*itr)->subload();
-
-                // Rather than subloading to graphics, we'll write the values
-                // of the glyphs into some intermediate data and subload the
-                // whole thing at the end
-                for( int t = 0; t < (*itr)->t(); t++ )
-                {
-                    for( int s = 0; s < (*itr)->s(); s++ )
+                    for(int span=-radius; span<=radius; ++span)
                     {
-                        int sindex = (t*(*itr)->s()+s);
-                        int dindex =
-                            ((((*itr)->getTexturePositionY()+t) * getTextureWidth()) +
-                            ((*itr)->getTexturePositionX()+s));
+                        {
+                            // left
+                            int dx = -radius;
+                            int dy = span;
 
-                        const unsigned char *sptr = &(*itr)->data()[sindex];
-                        unsigned char *dptr       = &local_data[dindex];
+                            int c = dc+dx;
+                            int r = dr+dy;
 
-                        (*dptr)   = (*sptr);
+                            unsigned char local_value = 0;
+                            if (r>=0 && r<src_rows && c>=0 && c<src_columns) local_value = *(src_data + r*src_columns + c);
+                            if (local_value!=center_value)
+                            {
+                                float local_value_f = float(local_value)*multiplier;
+
+                                float D = sqrtf(float(dx*dx) + float(dy*dy));
+                                float local_multiplier = (abs(dx)>abs(dy)) ? D/float(abs(dx)) : D/float(abs(dy));
+
+                                float local_distance = sqrtf(float(radius*radius)+float(span*span));
+                                if (center_value==0) local_distance += (mid_point_f-local_value_f)*local_multiplier;
+                                else local_distance += (local_value_f - mid_point_f)*local_multiplier;
+
+                                if (local_distance<min_distance) min_distance = local_distance;
+                            }
+                        }
+
+                        {
+                            // top
+                            int dx = span;
+                            int dy = radius;
+
+                            int c = dc+dx;
+                            int r = dr+dy;
+
+                            unsigned char local_value = 0;
+                            if (r>=0 && r<src_rows && c>=0 && c<src_columns) local_value = *(src_data + r*src_columns + c);
+                            if (local_value!=center_value)
+                            {
+                                float local_value_f = float(local_value)*multiplier;
+
+                                float D = sqrtf(float(dx*dx) + float(dy*dy));
+                                float local_multiplier = (abs(dx)>abs(dy)) ? D/float(abs(dx)) : D/float(abs(dy));
+
+                                float local_distance = sqrtf(float(radius*radius)+float(span*span));
+                                if (center_value==0) local_distance += (mid_point_f-local_value_f)*local_multiplier;
+                                else local_distance += (local_value_f - mid_point_f)*local_multiplier;
+
+                                if (local_distance<min_distance) min_distance = local_distance;
+                            }
+                        }
+
+                        {
+                            // right
+                            int dx = radius;
+                            int dy = span;
+
+                            int c = dc+dx;
+                            int r = dr+dy;
+
+                            unsigned char local_value = 0;
+                            if (r>=0 && r<src_rows && c>=0 && c<src_columns) local_value = *(src_data + r*src_columns + c);
+                            if (local_value!=center_value)
+                            {
+                                float local_value_f = float(local_value)*multiplier;
+
+                                float D = sqrtf(float(dx*dx) + float(dy*dy));
+                                float local_multiplier = (abs(dx)>abs(dy)) ? D/float(abs(dx)) : D/float(abs(dy));
+
+                                float local_distance = sqrtf(float(radius*radius)+float(span*span));
+
+                                if (center_value==0) local_distance += (mid_point_f-local_value_f)*local_multiplier;
+                                else local_distance += (local_value_f - mid_point_f)*local_multiplier;
+
+                                if (local_distance<min_distance) min_distance = local_distance;
+                            }
+                        }
+
+                        {
+                            // bottom
+                            int dx = span;
+                            int dy = -radius;
+
+                            int c = dc+dx;
+                            int r = dr+dy;
+
+                            unsigned char local_value = 0;
+                            if (r>=0 && r<src_rows && c>=0 && c<src_columns) local_value = *(src_data + r*src_columns + c);
+                            if (local_value!=center_value)
+                            {
+                                float local_value_f = float(local_value)*multiplier;
+
+                                float D = sqrtf(float(dx*dx) + float(dy*dy));
+                                float local_multiplier = (abs(dx)>abs(dy)) ? D/float(abs(dx)) : D/float(abs(dy));
+
+                                float local_distance = sqrtf(float(radius*radius)+float(span*span));
+                                if (center_value==0) local_distance += (mid_point_f-local_value_f)*local_multiplier;
+                                else local_distance += (local_value_f - mid_point_f)*local_multiplier;
+
+                                if (local_distance<min_distance) min_distance = local_distance;
+                            }
+                        }
                     }
                 }
+
+                if (center_value_f>=0.5)
+                {
+                    value = 128+(min_distance/max_distance)*127;
+                }
+                else
+                {
+                    value = 127-(min_distance/max_distance)*127;
+                }
             }
 
-            // clear the list since we have now subloaded them.
-            glyphsWereSubloading.clear();
 
-            // Subload the image once
-            glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0,
-                    getTextureWidth(),
-                    getTextureHeight(),
-                    GL_ALPHA, GL_UNSIGNED_BYTE, local_data );
+            unsigned char* dest_ptr = dest_data + (dr*dest_columns + dc)*bytes_per_pixel;
+            if (num_components==2)
+            {
+                // signed distance field value
+                *(dest_ptr+sdf_offset) = value;
 
-            #if defined(OSG_GLES2_AVAILABLE)
-            if (requiresGenerateMipmapCall) glGenerateMipmap(GL_TEXTURE_2D);
-            #endif
-
-            delete [] local_data;
-
+                // original alpha value from glyph image
+                *(dest_ptr+alpha_offset) = center_value;
+            }
+            else
+            {
+                *(dest_ptr) = value;
+            }
         }
     }
-    else
-    {
-//        OSG_INFO << "no need to subload "<<std::endl;
-    }
-
-
-
-//     if (generateMipMapTurnedOn)
-//     {
-//         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS,GL_FALSE);
-//     }
-
-
 }
 
 void GlyphTexture::setThreadSafeRefUnref(bool threadSafe)
@@ -421,21 +410,28 @@ void GlyphTexture::resizeGLObjectBuffers(unsigned int maxSize)
 
 osg::Image* GlyphTexture::createImage()
 {
-    osg::ref_ptr<osg::Image> image = new osg::Image;
-    image->allocateImage(getTextureWidth(), getTextureHeight(), 1, GL_ALPHA, GL_UNSIGNED_BYTE);
-    memset(image->data(), 0, image->getTotalSizeInBytes());
-
-    for(GlyphRefList::iterator itr = _glyphs.begin();
-        itr != _glyphs.end();
-        ++itr)
+    if (!_image)
     {
-        Glyph* glyph = itr->get();
-        image->copySubImage(glyph->getTexturePositionX(), glyph->getTexturePositionY(), 0, glyph);
+        OSG_INFO<<"GlyphTexture::createImage() : Creating image 0x"<<std::hex<<TEXTURE_IMAGE_FORMAT<<std::dec<<std::endl;
+
+        _image = new osg::Image;
+
+        GLenum imageFormat = (_shaderTechnique<=GREYSCALE) ? OSGTEXT_GLYPH_ALPHA_FORMAT : OSGTEXT_GLYPH_SDF_FORMAT;
+        GLenum internalFormat = (_shaderTechnique<=GREYSCALE) ? OSGTEXT_GLYPH_ALPHA_INTERNALFORMAT : OSGTEXT_GLYPH_SDF_INTERNALFORMAT;
+
+        _image->allocateImage(getTextureWidth(), getTextureHeight(), 1, imageFormat, GL_UNSIGNED_BYTE);
+        _image->setInternalTextureFormat(internalFormat);
+
+        memset(_image->data(), 0, _image->getTotalSizeInBytes());
     }
 
-    return image.release();
+    return _image.get();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Glyph
+//
 // all the methods in Font::Glyph have been made non inline because VisualStudio6.0 is STUPID, STUPID, STUPID PILE OF JUNK.
 Glyph::Glyph(Font* font, unsigned int glyphCode):
     _font(font),
@@ -445,12 +441,7 @@ Glyph::Glyph(Font* font, unsigned int glyphCode):
     _horizontalBearing(0.0f,0.f),
     _horizontalAdvance(0.f),
     _verticalBearing(0.0f,0.f),
-    _verticalAdvance(0.f),
-    _texture(0),
-    _texturePosX(0),
-    _texturePosY(0),
-    _minTexCoord(0.0f,0.0f),
-    _maxTexCoord(0.0f,0.0f)
+    _verticalAdvance(0.f)
 {
     setThreadSafeRefUnref(true);
 }
@@ -471,67 +462,43 @@ const osg::Vec2& Glyph::getVerticalBearing() const { return _verticalBearing; }
 void Glyph::setVerticalAdvance(float advance) {  _verticalAdvance=advance; }
 float Glyph::getVerticalAdvance() const { return _verticalAdvance; }
 
-void Glyph::setTexture(GlyphTexture* texture) { _texture = texture; }
-GlyphTexture* Glyph::getTexture() { return _texture; }
-const GlyphTexture* Glyph::getTexture() const { return _texture; }
-
-void Glyph::setTexturePosition(int posX,int posY) { _texturePosX = posX; _texturePosY = posY; }
-int Glyph::getTexturePositionX() const { return _texturePosX; }
-int Glyph::getTexturePositionY() const { return _texturePosY; }
-
-void Glyph::setMinTexCoord(const osg::Vec2& coord) { _minTexCoord=coord; }
-const osg::Vec2& Glyph::getMinTexCoord() const { return _minTexCoord; }
-
-void Glyph::setMaxTexCoord(const osg::Vec2& coord) { _maxTexCoord=coord; }
-const osg::Vec2& Glyph::getMaxTexCoord() const { return _maxTexCoord; }
-
-void Glyph::subload() const
+void Glyph::setTextureInfo(ShaderTechnique technique, TextureInfo* info)
 {
-    GLenum errorNo = glGetError();
-    if (errorNo!=GL_NO_ERROR)
+    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_textureInfoListMutex);
+
+    if (technique>=_textureInfoList.size())
     {
-        const GLubyte* msg = osg::gluErrorString(errorNo);
-        if (msg) { OSG_WARN<<"before Glyph::subload(): detected OpenGL error: "<<msg<<std::endl; }
-        else  { OSG_WARN<<"before Glyph::subload(): detected OpenGL error number: "<<errorNo<<std::endl; }
+        _textureInfoList.resize(technique+1);
     }
-
-    if(s() <= 0 || t() <= 0)
-    {
-        OSG_INFO<<"Glyph::subload(): texture sub-image width and/or height of 0, ignoring operation."<<std::endl;
-        return;
-    }
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT,getPacking());
-
-    #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
-    glPixelStorei(GL_UNPACK_ROW_LENGTH,getRowLength());
-    #endif
-
-    glTexSubImage2D(GL_TEXTURE_2D,0,
-                    _texturePosX,_texturePosY,
-                    s(),t(),
-                    (GLenum)getPixelFormat(),
-                    (GLenum)getDataType(),
-                    data());
-
-    errorNo = glGetError();
-    if (errorNo!=GL_NO_ERROR)
-    {
-
-
-        const GLubyte* msg = osg::gluErrorString(errorNo);
-        if (msg) { OSG_WARN<<"after Glyph::subload() : detected OpenGL error: "<<msg<<std::endl; }
-        else { OSG_WARN<<"after Glyph::subload() : detected OpenGL error number: "<<errorNo<<std::endl; }
-
-        OSG_WARN<< "\tglTexSubImage2D(0x"<<hex<<GL_TEXTURE_2D<<dec<<" ,"<<0<<"\t"<<std::endl<<
-                                 "\t                "<<_texturePosX<<" ,"<<_texturePosY<<std::endl<<
-                                 "\t                "<<s()<<" ,"<<t()<<std::endl<<hex<<
-                                 "\t                0x"<<(GLenum)getPixelFormat()<<std::endl<<
-                                 "\t                0x"<<(GLenum)getDataType()<<std::endl<<
-                                 "\t                "<<static_cast<const void*>(data())<<");"<<dec<<std::endl;
-    }
+    _textureInfoList[technique] = info;
 }
 
+const Glyph::TextureInfo* Glyph::getTextureInfo(ShaderTechnique technique) const
+{
+    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_textureInfoListMutex);
+
+    return  (technique<_textureInfoList.size()) ? _textureInfoList[technique].get() : 0;
+}
+
+Glyph::TextureInfo* Glyph::getOrCreateTextureInfo(ShaderTechnique technique)
+{
+    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_textureInfoListMutex);
+
+    if (technique>=_textureInfoList.size())
+    {
+        _textureInfoList.resize(technique+1);
+    }
+    if (!_textureInfoList[technique])
+    {
+        _font->assignGlyphToGlyphTexture(this, technique);
+    }
+    return  _textureInfoList[technique].get();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Glyph3D
+//
 Glyph3D::Glyph3D(Font* font, unsigned int glyphCode):
     osg::Referenced(true),
     _font(font),
@@ -607,17 +574,15 @@ void GlyphGeometry::setup(const Glyph3D* glyph, const Style* style)
         OSG_INFO<<"GlyphGeometry::setup(const Glyph* glyph, NULL) create glyph geometry with custom Style."<<std::endl;
 
         // record the style
-        _style = dynamic_cast<Style*>(style->clone(osg::CopyOp::DEEP_COPY_ALL));
+        _style = osg::clone(style, osg::CopyOp::DEEP_COPY_ALL);
 
-        const Bevel* bevel = style ? style->getBevel() : 0;
-        bool outline = style ? style->getOutlineRatio()>0.0f : false;
+        const Bevel* bevel = style->getBevel();
+        bool outline = style->getOutlineRatio()>0.0f;
         float width = style->getThicknessRatio();
 
         if (bevel)
         {
-            float thickness = bevel->getBevelThickness();
-
-            osg::ref_ptr<osg::Geometry> glyphGeometry = osgText::computeGlyphGeometry(glyph, thickness, width);
+            osg::ref_ptr<osg::Geometry> glyphGeometry = osgText::computeGlyphGeometry(glyph, *bevel, width);
 
             _geometry = osgText::computeTextGeometry(glyphGeometry.get(), *bevel, width);
             shellGeometry = outline ? osgText::computeShellGeometry(glyphGeometry.get(), *bevel, width) : 0;

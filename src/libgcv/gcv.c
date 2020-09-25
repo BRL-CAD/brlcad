@@ -65,13 +65,19 @@ _gcv_brlcad_read(struct gcv_context *context,
 	return 0;
     }
 
-    if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
-	bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
-	db_close(in_dbip);
-	return 0;
-    }
+    if (db_version(in_dbip) > 4) {
+	if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
+	    bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
+	    db_close(in_dbip);
+	    return 0;
+	}
 
-    db_close(in_dbip);
+	db_close(in_dbip);
+    } else {
+	// For v4 .g files, use the original rather than an inmem (which is v5)
+	db_close(context->dbip);
+	context->dbip = in_dbip;
+    }
     return 1;
 }
 
@@ -119,11 +125,11 @@ _gcv_brlcad_can_write(const char *data)
 
 /* TODO - implement a BRL-CAD "valid file" test function...) */
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, BU_MIME_MODEL, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, BU_MIME_MODEL, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void

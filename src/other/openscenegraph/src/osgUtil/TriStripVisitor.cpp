@@ -187,6 +187,146 @@ protected:
         RemapArray& operator = (const RemapArray&) { return *this; }
 };
 
+
+void indexGeometry(osg::Geometry& geom, IndexList& mapping) {
+    // check for the existence of surface primitives
+    unsigned int numSurfacePrimitives = 0;
+    unsigned int numNonSurfacePrimitives = 0;
+    Geometry::PrimitiveSetList& primitives = geom.getPrimitiveSetList();
+    for(Geometry::PrimitiveSetList::iterator itr=primitives.begin();
+        itr!=primitives.end();
+        ++itr)
+    {
+        switch((*itr)->getMode())
+        {
+            case(PrimitiveSet::TRIANGLES):
+            case(PrimitiveSet::TRIANGLE_STRIP):
+            case(PrimitiveSet::TRIANGLE_FAN):
+            case(PrimitiveSet::QUADS):
+            case(PrimitiveSet::QUAD_STRIP):
+            case(PrimitiveSet::POLYGON):
+                ++numSurfacePrimitives;
+                break;
+            default:
+                ++numNonSurfacePrimitives;
+                break;
+        }
+    }
+
+    // nothitng to tri strip leave.
+    if (!numSurfacePrimitives) return;
+
+    // compute duplicate vertices
+
+    unsigned int numVertices = geom.getVertexArray()->getNumElements();
+    IndexList vindices(numVertices);
+    unsigned int i,j;
+    for(i=0;i<numVertices;++i)
+    {
+        vindices[i] = i;
+    }
+
+    VertexAttribComparitor arrayComparitor(geom);
+    std::sort(vindices.begin(),vindices.end(),arrayComparitor);
+
+    unsigned int lastUnique = 0;
+    unsigned int numUnique = 1;
+    unsigned int numDuplicate = 0;
+    for(i=1;i<numVertices;++i)
+    {
+        if (arrayComparitor.compare(vindices[lastUnique],vindices[i])==0)
+        {
+            ++numDuplicate;
+        }
+        else
+        {
+            lastUnique = i;
+            ++numUnique;
+        }
+
+    }
+
+    IndexList remapDuplicatesToOrignals(numVertices);
+    lastUnique = 0;
+    for(i=1;i<numVertices;++i)
+    {
+        if (arrayComparitor.compare(vindices[lastUnique],vindices[i])!=0)
+        {
+            // found a new vertex entry, so previous run of duplicates needs
+            // to be put together.
+            unsigned int min_index = vindices[lastUnique];
+            for(j=lastUnique+1;j<i;++j)
+            {
+                min_index = osg::minimum(min_index,vindices[j]);
+            }
+            for(j=lastUnique;j<i;++j)
+            {
+                remapDuplicatesToOrignals[vindices[j]]=min_index;
+            }
+            lastUnique = i;
+        }
+
+    }
+    unsigned int min_index = vindices[lastUnique];
+    for(j=lastUnique+1;j<i;++j)
+    {
+        min_index = osg::minimum(min_index,vindices[j]);
+    }
+    for(j=lastUnique;j<i;++j)
+    {
+        remapDuplicatesToOrignals[vindices[j]]=min_index;
+    }
+
+
+    // copy the arrays.
+    IndexList finalMapping(numVertices);
+    IndexList copyMapping;
+    copyMapping.reserve(numUnique);
+    unsigned int currentIndex=0;
+    for(i=0;i<numVertices;++i)
+    {
+        if (remapDuplicatesToOrignals[i]==i)
+        {
+            finalMapping[i] = currentIndex;
+            copyMapping.push_back(i);
+            currentIndex++;
+        }
+    }
+
+    for(i=0;i<numVertices;++i)
+    {
+        if (remapDuplicatesToOrignals[i]!=i)
+        {
+            finalMapping[i] = finalMapping[remapDuplicatesToOrignals[i]];
+        }
+    }
+
+    float minimum_ratio_of_indices_to_unique_vertices = 1;
+    unsigned int nbPrimitiveIndices = 0;
+    for(unsigned int k = 0 ; k < geom.getNumPrimitiveSets() ; ++ k) {
+        osg::PrimitiveSet* primitive = geom.getPrimitiveSet(k);
+        if(primitive) {
+            nbPrimitiveIndices += primitive->getNumIndices();
+        }
+    }
+    float ratio_of_indices_to_unique_vertices = ((float)nbPrimitiveIndices/(float)numUnique);
+
+    if(!finalMapping.empty() &&
+       ratio_of_indices_to_unique_vertices >= minimum_ratio_of_indices_to_unique_vertices) {
+
+        OSG_INFO << "TriStripVisitor::stripify(Geometry&): Number of indices" << nbPrimitiveIndices
+                 << " numUnique" << numUnique << std::endl;
+        OSG_INFO << "TriStripVisitor::stripify(Geometry&):     ratio indices/numUnique"
+                 <<  ratio_of_indices_to_unique_vertices << std::endl;
+
+        // remap any shared vertex attributes
+        RemapArray ra(copyMapping);
+        arrayComparitor.accept(ra);
+        finalMapping.swap(mapping);
+    }
+}
+
+
 struct MyTriangleOperator
 {
 
@@ -227,135 +367,24 @@ void TriStripVisitor::stripify(Geometry& geom)
     // no point tri stripping if we don't have enough vertices.
     if (!geom.getVertexArray() || geom.getVertexArray()->getNumElements()<3) return;
 
-    // check for the existence of surface primitives
-    unsigned int numSurfacePrimitives = 0;
-    unsigned int numNonSurfacePrimitives = 0;
-    Geometry::PrimitiveSetList& primitives = geom.getPrimitiveSetList();
-    Geometry::PrimitiveSetList::iterator itr;
-    for(itr=primitives.begin();
-        itr!=primitives.end();
-        ++itr)
-    {
-        switch((*itr)->getMode())
-        {
-            case(PrimitiveSet::TRIANGLES):
-            case(PrimitiveSet::TRIANGLE_STRIP):
-            case(PrimitiveSet::TRIANGLE_FAN):
-            case(PrimitiveSet::QUADS):
-            case(PrimitiveSet::QUAD_STRIP):
-            case(PrimitiveSet::POLYGON):
-                ++numSurfacePrimitives;
-                break;
-            default:
-                ++numNonSurfacePrimitives;
-                break;
-
+    IndexList mapping;
+    if(_indexMesh) {
+        indexGeometry(geom, mapping);
+        if(mapping.empty()) {
+            return;
         }
     }
-
-    // nothitng to tri strip leave.
-    if (!numSurfacePrimitives) return;
-
-    // compute duplicate vertices
-
-    typedef std::vector<unsigned int> IndexList;
-    unsigned int numVertices = geom.getVertexArray()->getNumElements();
-    IndexList indices(numVertices);
-    unsigned int i,j;
-    for(i=0;i<numVertices;++i)
-    {
-        indices[i] = i;
-    }
-
-    VertexAttribComparitor arrayComparitor(geom);
-    std::sort(indices.begin(),indices.end(),arrayComparitor);
-
-    unsigned int lastUnique = 0;
-    unsigned int numUnique = 1;
-    unsigned int numDuplicate = 0;
-    for(i=1;i<numVertices;++i)
-    {
-        if (arrayComparitor.compare(indices[lastUnique],indices[i])==0)
-        {
-            //std::cout<<"  found duplicate "<<indices[lastUnique]<<" and "<<indices[i]<<std::endl;
-            ++numDuplicate;
-        }
-        else
-        {
-            //std::cout<<"  unique "<<indices[i]<<std::endl;
-            lastUnique = i;
-            ++numUnique;
-        }
-
-    }
-//     std::cout<<"  Number of duplicates "<<numDuplicate<<std::endl;
-//     std::cout<<"  Number of unique "<<numUnique<<std::endl;
-//     std::cout<<"  Total number of vertices required "<<numUnique<<" vs original "<<numVertices<<std::endl;
-//     std::cout<<"  % size "<<(float)numUnique/(float)numVertices*100.0f<<std::endl;
-
-    IndexList remapDuplicatesToOrignals(numVertices);
-    lastUnique = 0;
-    for(i=1;i<numVertices;++i)
-    {
-        if (arrayComparitor.compare(indices[lastUnique],indices[i])!=0)
-        {
-            // found a new vertex entry, so previous run of duplicates needs
-            // to be put together.
-            unsigned int min_index = indices[lastUnique];
-            for(j=lastUnique+1;j<i;++j)
-            {
-                min_index = osg::minimum(min_index,indices[j]);
-            }
-            for(j=lastUnique;j<i;++j)
-            {
-                remapDuplicatesToOrignals[indices[j]]=min_index;
-            }
-            lastUnique = i;
-        }
-
-    }
-    unsigned int min_index = indices[lastUnique];
-    for(j=lastUnique+1;j<i;++j)
-    {
-        min_index = osg::minimum(min_index,indices[j]);
-    }
-    for(j=lastUnique;j<i;++j)
-    {
-        remapDuplicatesToOrignals[indices[j]]=min_index;
-    }
-
-
-    // copy the arrays.
-    IndexList finalMapping(numVertices);
-    IndexList copyMapping;
-    copyMapping.reserve(numUnique);
-    unsigned int currentIndex=0;
-    for(i=0;i<numVertices;++i)
-    {
-        if (remapDuplicatesToOrignals[i]==i)
-        {
-            finalMapping[i] = currentIndex;
-            copyMapping.push_back(i);
-            currentIndex++;
-        }
-    }
-
-    for(i=0;i<numVertices;++i)
-    {
-        if (remapDuplicatesToOrignals[i]!=i)
-        {
-            finalMapping[i] = finalMapping[remapDuplicatesToOrignals[i]];
-        }
-    }
-
 
     MyTriangleIndexFunctor taf;
-    taf._remapIndices.swap(finalMapping);
+    if(!mapping.empty()) {
+        taf._remapIndices.swap(mapping);
+    }
 
+    Geometry::PrimitiveSetList& primitives = geom.getPrimitiveSetList();
     Geometry::PrimitiveSetList new_primitives;
     new_primitives.reserve(primitives.size());
 
-    for(itr=primitives.begin();
+    for(Geometry::PrimitiveSetList::iterator itr=primitives.begin();
         itr!=primitives.end();
         ++itr)
     {
@@ -372,18 +401,11 @@ void TriStripVisitor::stripify(Geometry& geom)
             default:
                 new_primitives.push_back(*itr);
                 break;
-
         }
     }
 
-    float minimum_ratio_of_indices_to_unique_vertices = 1;
-    float ratio_of_indices_to_unique_vertices = ((float)taf._in_indices.size()/(float)numUnique);
-
-    OSG_INFO<<"TriStripVisitor::stripify(Geometry&): Number of indices"<<taf._in_indices.size()<<" numUnique"<< numUnique << std::endl;
-    OSG_INFO<<"TriStripVisitor::stripify(Geometry&):     ratio indices/numUnique"<< ratio_of_indices_to_unique_vertices << std::endl;
-
     // only tri strip if there is point in doing so.
-    if (!taf._in_indices.empty() && ratio_of_indices_to_unique_vertices>=minimum_ratio_of_indices_to_unique_vertices)
+    if (!taf._in_indices.empty())
     {
         OSG_INFO<<"TriStripVisitor::stripify(Geometry&):     doing tri strip"<< std::endl;
 
@@ -395,12 +417,8 @@ void TriStripVisitor::stripify(Geometry& geom)
             if (*itr>in_numVertices) in_numVertices=*itr;
         }
         // the largest indice is in_numVertices, but indices start at 0
-        // so increment to give to the corrent number of verticies.
+        // so increment to give to the corrent number of vertices.
         ++in_numVertices;
-
-        // remap any shared vertex attributes
-        RemapArray ra(copyMapping);
-        arrayComparitor.accept(ra);
 
         triangle_stripper::tri_stripper stripifier(taf._in_indices);
         stripifier.SetCacheSize(_cacheSize);
@@ -452,7 +470,7 @@ void TriStripVisitor::stripify(Geometry& geom)
                     pitr = qitr->second;
 
                     unsigned int min_pos = 0;
-                    for(i=1;i<4;++i)
+                    for(unsigned int i = 1 ; i < 4 ; ++ i)
                     {
                         if (pitr->Indices[min_pos]>pitr->Indices[i])
                             min_pos = i;
@@ -463,37 +481,18 @@ void TriStripVisitor::stripify(Geometry& geom)
                     indices.push_back(pitr->Indices[(min_pos+3)%4]);
                 }
 
-                bool inOrder = true;
-                unsigned int previousValue = indices.front();
-                for(IndexList::iterator qi_itr=indices.begin()+1;
-                    qi_itr!=indices.end() && inOrder;
-                    ++qi_itr)
+                unsigned int maxValue = *(std::max_element(indices.begin(),indices.end()));
+                if (maxValue>=65536)
                 {
-                    inOrder = (previousValue+1)==*qi_itr;
-                    previousValue = *qi_itr;
-                }
-
-
-                if (inOrder)
-                {
-                    new_primitives.push_back(new osg::DrawArrays(GL_QUADS,indices.front(),indices.size()));
+                    osg::DrawElementsUInt* elements = new osg::DrawElementsUInt(GL_QUADS);
+                    std::copy(indices.begin(),indices.end(),std::back_inserter(*elements));
+                    new_primitives.push_back(elements);
                 }
                 else
                 {
-                    unsigned int maxValue = *(std::max_element(indices.begin(),indices.end()));
-
-                    if (maxValue>=65536)
-                    {
-                        osg::DrawElementsUInt* elements = new osg::DrawElementsUInt(GL_QUADS);
-                        std::copy(indices.begin(),indices.end(),std::back_inserter(*elements));
-                        new_primitives.push_back(elements);
-                    }
-                    else
-                    {
-                        osg::DrawElementsUShort* elements = new osg::DrawElementsUShort(GL_QUADS);
-                        std::copy(indices.begin(),indices.end(),std::back_inserter(*elements));
-                        new_primitives.push_back(elements);
-                    }
+                    osg::DrawElementsUShort* elements = new osg::DrawElementsUShort(GL_QUADS);
+                    std::copy(indices.begin(),indices.end(),std::back_inserter(*elements));
+                    new_primitives.push_back(elements);
                 }
             }
         }
@@ -505,39 +504,26 @@ void TriStripVisitor::stripify(Geometry& geom)
         {
             if (!_generateFourPointPrimitivesQuads || pitr->Indices.size()!=4)
             {
-                bool inOrder = true;
-                unsigned int previousValue = pitr->Indices.front();
-                for(triangle_stripper::indices::iterator qi_itr=pitr->Indices.begin()+1;
-                    qi_itr!=pitr->Indices.end() && inOrder;
-                    ++qi_itr)
+                unsigned int maxValue = *(std::max_element(pitr->Indices.begin(),pitr->Indices.end()));
+                if (maxValue>=65536)
                 {
-                    inOrder = (previousValue+1)==*qi_itr;
-                    previousValue = *qi_itr;
-                }
-
-                if (inOrder)
-                {
-                    new_primitives.push_back(new osg::DrawArrays(pitr->Type,pitr->Indices.front(),pitr->Indices.size()));
+                    osg::DrawElementsUInt* elements = new osg::DrawElementsUInt(pitr->Type);
+                    elements->reserve(pitr->Indices.size());
+                    std::copy(pitr->Indices.begin(),pitr->Indices.end(),std::back_inserter(*elements));
+                    new_primitives.push_back(elements);
                 }
                 else
                 {
-                    unsigned int maxValue = *(std::max_element(pitr->Indices.begin(),pitr->Indices.end()));
-                    if (maxValue>=65536)
-                    {
-                        osg::DrawElementsUInt* elements = new osg::DrawElementsUInt(pitr->Type);
-                        elements->reserve(pitr->Indices.size());
-                        std::copy(pitr->Indices.begin(),pitr->Indices.end(),std::back_inserter(*elements));
-                        new_primitives.push_back(elements);
-                    }
-                    else
-                    {
-                        osg::DrawElementsUShort* elements = new osg::DrawElementsUShort(pitr->Type);
-                        elements->reserve(pitr->Indices.size());
-                        std::copy(pitr->Indices.begin(),pitr->Indices.end(),std::back_inserter(*elements));
-                        new_primitives.push_back(elements);
-                    }
+                    osg::DrawElementsUShort* elements = new osg::DrawElementsUShort(pitr->Type);
+                    elements->reserve(pitr->Indices.size());
+                    std::copy(pitr->Indices.begin(),pitr->Indices.end(),std::back_inserter(*elements));
+                    new_primitives.push_back(elements);
                 }
             }
+        }
+
+        if(_mergeTriangleStrips) {
+            mergeTriangleStrips(new_primitives);
         }
 
         geom.setPrimitiveSetList(new_primitives);
@@ -563,6 +549,73 @@ void TriStripVisitor::stripify(Geometry& geom)
 
 }
 
+
+void TriStripVisitor::mergeTriangleStrips(osg::Geometry::PrimitiveSetList& primitives)
+{
+    int nbtristrip = 0;
+    int nbtristripVertexes = 0;
+
+    for (unsigned int i = 0; i < primitives.size(); ++ i)
+    {
+        osg::PrimitiveSet* ps = primitives[i].get();
+        osg::DrawElements* de = ps->getDrawElements();
+        if (de && de->getMode() == osg::PrimitiveSet::TRIANGLE_STRIP)
+        {
+            ++ nbtristrip;
+            nbtristripVertexes += de->getNumIndices();
+        }
+    }
+
+    if (nbtristrip > 0) {
+        osg::notify(osg::NOTICE) << "found " << nbtristrip << " tristrip, "
+                                 << "total indices " << nbtristripVertexes
+                                 << " should result to " << nbtristripVertexes + nbtristrip * 2
+                                 << " after connection" << std::endl;
+
+        osg::DrawElementsUInt* ndw = new osg::DrawElementsUInt(osg::PrimitiveSet::TRIANGLE_STRIP);
+        for (unsigned int i = 0; i < primitives.size(); ++ i)
+        {
+            osg::PrimitiveSet* ps = primitives[i].get();
+            if (ps && ps->getMode() == osg::PrimitiveSet::TRIANGLE_STRIP)
+            {
+                osg::DrawElements* de = ps->getDrawElements();
+                if (de)
+                {
+                    // if connection needed insert degenerate triangles
+                    if (ndw->getNumIndices() != 0 && ndw->back() != de->getElement(0))
+                    {
+                        // duplicate last vertex
+                        ndw->addElement(ndw->back());
+                        // insert first vertex of next strip
+                        ndw->addElement(de->getElement(0));
+                    }
+
+                    if (ndw->getNumIndices() % 2 != 0 ) {
+                        // add a dummy vertex to reverse the strip
+                        ndw->addElement(de->getElement(0));
+                    }
+
+                    for (unsigned int j = 0; j < de->getNumIndices(); j++) {
+                        ndw->addElement(de->getElement(j));
+                    }
+                }
+            }
+        }
+
+        for (int i = primitives.size() - 1 ; i >= 0 ; -- i)
+        {
+            osg::PrimitiveSet* ps = primitives[i].get();
+            // remove null primitive sets and all primitives that have been merged
+            // (i.e. all TRIANGLE_STRIP DrawElements)
+            if (ps && ps->getMode() == osg::PrimitiveSet::TRIANGLE_STRIP)
+            {
+                primitives.erase(primitives.begin() + i);
+            }
+        }
+        primitives.insert(primitives.begin(), ndw);
+    }
+}
+
 void TriStripVisitor::stripify()
 {
     for(GeometryList::iterator itr=_geometryList.begin();
@@ -576,11 +629,7 @@ void TriStripVisitor::stripify()
     }
 }
 
-void TriStripVisitor::apply(Geode& geode)
+void TriStripVisitor::apply(Geometry& geom)
 {
-    for(unsigned int i = 0; i < geode.getNumDrawables(); ++i )
-    {
-        osg::Geometry* geom = dynamic_cast<osg::Geometry*>(geode.getDrawable(i));
-        if (geom) _geometryList.insert(geom);
-    }
+    _geometryList.insert(&geom);
 }

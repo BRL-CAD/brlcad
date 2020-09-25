@@ -200,33 +200,10 @@ proc setWidgetRGBColor { w vn rgb } {
 # Set the widget color given a color string.
 #
 proc setWidgetColor { w vn color } {
-    set rgb [getRGBorReset $w $vn $color]
+    set rgb [getRGB $w $color]
     setWidgetRGBColor $w $vn $rgb
 }
 
-
-## -- getRGBorReset
-#
-# Get the RGB value corresponding to the given color. Failing that
-# reset the variable vn to the value provided by the widget w
-#
-proc getRGBorReset { w vn color } {
-    upvar #0 $vn varname
-
-    if ![winfo exists $w] {
-	return -code error "getRGBorReset: bad Tk window name --> $w"
-    }
-
-    # convert to RGB
-    set result [catch {getRGB $w $color} rgb]
-    if {$result} {
-	# reset varname to properly reflect the current color of the widget
-	set varname [$w cget -bg]
-	return -code error $rgb
-    }
-
-    return $rgb
-}
 
 ## -- getRGB
 #

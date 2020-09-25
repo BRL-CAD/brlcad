@@ -400,7 +400,7 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "plot3-ps: cannot open \"%s\" for reading\n",
 		    file_name);
@@ -423,6 +423,9 @@ main(int argc, char **argv)
     struct uplot *up;
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

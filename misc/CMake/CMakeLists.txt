@@ -28,6 +28,7 @@ set(cmake_ignore_files
   FindIlmBase.cmake
   FindLEMON.cmake
   FindNETPBM.cmake
+  FindNSIS.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
@@ -44,10 +45,10 @@ set(cmake_ignore_files
   FindUTAHRLE.cmake
   FindUUID.cmake
   FindVDS.cmake
+  FindWix.cmake
   FindX11.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
-  Fuzzer.cmake
   NSIS.template.in
   NSIS_silent.template.in
   OpenVDBUtils.cmake
@@ -83,6 +84,7 @@ set(cmake_ignore_files
   configure_prefix.sh
   configure_suffix.sh
   distcheck_in_src_dir.cmake.in
+  distcheck_no_tcl.cmake.in
   distcheck_repo_verify.cmake.in
   distcheck_target.cmake.in
   distclean.cmake.in

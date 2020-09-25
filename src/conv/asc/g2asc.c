@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/opt.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -112,10 +113,33 @@ int
 main(int argc, char **argv)
 {
     unsigned i;
+    int need_help = 0;
 
     bu_setprogname(argv[0]);
+    Tcl_FindExecutable(argv[0]);
 
-    if (argc != 3) {
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help   and exit");
+    BU_OPT(d[1], "?", "",            "",         NULL,        &need_help, "");
+    BU_OPT_NULL(d[2]);
+
+    /* Skip first arg */
+    argv++; argc--;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    int uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+
+    if (uac == -1) {
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
+    }
+    bu_vls_free(&optparse_msg);
+
+    argc = uac;
+
+    if (need_help) {
+	bu_exit(EXIT_SUCCESS, "%s", usage);
+    }
+
+    if (argc != 2) {
 	bu_exit(1, "%s", usage);
     }
 
@@ -129,29 +153,36 @@ main(int argc, char **argv)
 
     bu_debug = BU_DEBUG_COREDUMP;
 
-    if (argc >= 3) {
-	iname = argv[1];
+    if (argc >= 2) {
+
+	iname = argv[0];
+
 	if (BU_STR_EQUAL(iname, "-")) {
 	    ifp = stdin;
 	} else {
 	    ifp = fopen(iname, "rb");
 	}
-	if (!ifp)  perror(iname);
-	if (BU_STR_EQUAL(argv[2], "-")) {
+
+	if (!ifp)
+	    perror(iname);
+
+	if (BU_STR_EQUAL(argv[1], "-")) {
 	    ofp = stdout;
 	} else {
-	    ofp = fopen(argv[2], "wb");
+	    ofp = fopen(argv[1], "wb");
 	}
-	if (!ofp)  perror(argv[2]);
+
+	if (!ofp)
+	    perror(argv[1]);
+
 	if (ifp == NULL || ofp == NULL) {
 	    bu_exit(1, "g2asc: can't open files.");
 	}
     }
+
     if (isatty(fileno(ifp))) {
 	bu_exit(1, "%s", usage);
     }
-
-    Tcl_FindExecutable(argv[0]);
 
     /* First, determine what version database this is */
     if (fread((char *)&record, sizeof record, 1, ifp) != 1) {

@@ -69,6 +69,9 @@ main(int ac, char **av)
 
     if (ac > 2 || isatty(fileno(stdin))) usage();
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (ac > 1) {
 	p = av[1];
 	if (*p == '-' && *(p+1) == 'v') verbose = 1;

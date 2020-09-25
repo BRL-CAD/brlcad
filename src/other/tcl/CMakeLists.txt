@@ -105,10 +105,17 @@ add_definitions(-DMP_NO_STDINT)
 
 # Windows specific flags
 if (MSVC)
-  add_definitions(-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
+  add_definitions(-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
   add_definitions(-Dinline=__inline)
 endif (MSVC)
+function(TCL_WIN_FLAGS srcfiles)
+  if (MSVC)
+    foreach(srcfile ${${srcfiles}})
+      set_property(SOURCE ${srcfile} APPEND_STRING PROPERTY COMPILE_DEFINITIONS "-Ot -Oi -fp:strict -Gs -GS -GL -MD")
+    endforeach(srcfile ${${srcfiles}})
+  endif (MSVC)
+endfunction(TCL_WIN_FLAGS)
 
 if (MINGW)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
@@ -1192,7 +1199,6 @@ set(TCL_OSX_SRCS
   )
 
 set(TCL_WIN_SRCS
-  win/tcl.rc
   win/tclAppInit.c
   win/tclWin32Dll.c
   win/tclWinChan.c
@@ -1214,11 +1220,6 @@ set(TCL_WIN_SRCS
   win/tclMainUNICODE.c
   )
 
-set_property(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIBRARY="${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-set_property(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
-set_property(SOURCE win/tclMainUNICODE.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_UNICODE)
-set_property(SOURCE win/tclAppInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_UNICODE)
-
 set(TCL_UNIX_SRCS
   unix/tclAppInit.c
   unix/tclUnixChan.c
@@ -1234,13 +1235,9 @@ set(TCL_UNIX_SRCS
   unix/tclUnixTime.c
   )
 
-set_property(SOURCE unix/tclUnixInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIBRARY="${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-set_property(SOURCE unix/tclUnixInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
-
 set(TCL_NOTIFY_SRCS
   unix/tclUnixNotfy.c
   )
-
 
 set(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_OO_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS})
 if (WIN32)
@@ -1254,6 +1251,24 @@ else (WIN32)
     set(TCL_SRCS ${TCL_SRCS} unix/tclLoadDl.c)
   endif (NOT APPLE)
 endif (WIN32)
+
+if (WIN32)
+  set(TCLSH_SRCS win/tclAppInit.c)
+else (WIN32)
+  set(TCLSH_SRCS unix/tclAppInit.c)
+endif (WIN32)
+
+TCL_WIN_FLAGS(TCL_SRCS)
+TCL_WIN_FLAGS(TCL_STUB_SRCS)
+TCL_WIN_FLAGS(TCLSH_SRCS)
+
+set_property(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIBRARY="${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set_property(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
+set_property(SOURCE win/tclMainUNICODE.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_UNICODE)
+set_property(SOURCE win/tclAppInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_UNICODE)
+
+set_property(SOURCE unix/tclUnixInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIBRARY="${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set_property(SOURCE unix/tclUnixInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
 
 set(TCL_INCLUDE_PATH ${TCL_SOURCE_DIR}/generic ${TCL_SOURCE_DIR}/libtommath ${TCL_BINARY_DIR}/include)
 if (WIN32)
@@ -1274,6 +1289,10 @@ endif (MINGW)
 if (WIN32)
   set(TCL_WIN_LIBS ${TCL_WIN_LIBS} Netapi32)
 endif (WIN32)
+
+if (MSVC)
+  set(TCL_SRCS ${TCL_SRCS} win/tcl.rc)
+endif (MSVC)
 
 set(TCL_LINK_LIBS
   ${CoreFoundation_LIBRARIES}
@@ -1300,7 +1319,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/macosx/Tclsh-Info.plist.in ${TCL_BINARY_DIR}/Tclsh-Info.plist)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
-
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
 target_link_libraries(tclstub ${TCL_LINK_LIBS})
 if (FPIC_COMPILER_FLAG)
@@ -1311,12 +1329,9 @@ install(TARGETS tclstub
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
 
-
-if (WIN32)
-  set(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
-else (WIN32)
-  set(TCLSH_SRCS unix/tclAppInit.c)
-endif (WIN32)
+if (MSVC)
+  set(TCLSH_SRCS ${TCLSH_SRCS} win/tclsh.rc)
+endif (MSVC)
 
 set_property(SOURCE win/tclAppInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_UNICODE)
 add_executable(tclsh ${TCLSH_SRCS})

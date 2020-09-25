@@ -5,6 +5,7 @@ set(man3_EN
   librt.xml
   libwdb.xml
   redblack.xml
+  libicv.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they

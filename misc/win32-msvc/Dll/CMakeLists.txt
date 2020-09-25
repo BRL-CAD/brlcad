@@ -48,7 +48,6 @@ target_link_libraries(BrlcadCore
   libnmg-static
   poly2tri-static
   zlib-static
-  lz4-static
   openNURBS-static
   )
 
@@ -130,7 +129,6 @@ target_link_libraries(brlcad
   libnmg-static
   poly2tri-static
   zlib-static
-  lz4-static
   openNURBS-static
   ${COREINTERFACE_MSVC_LIBRARIES}
   )

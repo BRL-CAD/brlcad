@@ -41,7 +41,7 @@ void StateSetManipulator::setStateSet(StateSet *stateset)
     // specify that this stateset is dynamic so it prevents
     // the draw and update phase from overlapping - good for
     // stability but breaks all the performance advantage of
-    // DrawThreadPerContex.
+    // DrawThreadPerContext.
     _stateset->setDataVariance(osg::Object::DYNAMIC);
 #endif
 }
@@ -72,14 +72,8 @@ void StateSetManipulator::clone()
         itr !=  parents.end();
         ++itr)
     {
-        osg::Object* object = *itr;
-        osg::Node* node = dynamic_cast<osg::Node*>(object);
-        if (node) node->setStateSet(newStateSet.get());
-        else
-        {
-            osg::Drawable* drawable = dynamic_cast<osg::Drawable*>(object);
-            if (drawable) drawable->setStateSet(newStateSet.get());
-        }
+        osg::Node* node = *itr;
+        node->setStateSet(newStateSet.get());
     }
 
     _stateset = newStateSet;
@@ -102,7 +96,7 @@ bool StateSetManipulator::handle(const GUIEventAdapter& ea,GUIActionAdapter& aa)
                    (_stateset->getTextureMode(0,GL_TEXTURE_RECTANGLE)&mode)!=0 ||
                    (_stateset->getTextureMode(0,GL_TEXTURE_CUBE_MAP)&mode)!=0;
 
-        #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+        #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
             _texture |= ((_stateset->getTextureMode(0,GL_TEXTURE_1D)&mode)!=0);
         #endif
     }
@@ -187,7 +181,7 @@ void StateSetManipulator::setTextureEnabled(bool newtexture)
     if ( _texture ) mode = osg::StateAttribute::INHERIT|osg::StateAttribute::ON;
     for( unsigned int ii=0; ii<_maxNumOfTextureUnits; ii++ )
     {
-        #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+        #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE)
             _stateset->setTextureMode( ii, GL_TEXTURE_1D, mode );
         #endif
         _stateset->setTextureMode( ii, GL_TEXTURE_2D, mode );

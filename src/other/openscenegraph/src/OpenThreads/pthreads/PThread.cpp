@@ -1,13 +1,13 @@
 /* -*-c++-*- OpenThreads library, Copyright (C) 2002 - 2007  The Open Thread Group
  *
- * This library is open source and may be redistributed and/or modified under  
- * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
  * (at your option) any later version.  The full license is in LICENSE file
  * included with this distribution, and on the openscenegraph.org website.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * OpenSceneGraph Public License for more details.
 */
 
@@ -21,18 +21,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
+#if defined(HAVE_PTHREAD_SETAFFINITY_NP) && defined(__FreeBSD__)
+    #include <pthread_np.h>
+#endif
 #include <limits.h>
 
-#if defined __linux || defined __sun || defined __APPLE__ || ANDROID
+#if defined __linux__ || defined __sun || defined __APPLE__ || ANDROID
 #include <string.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #if !defined ANDROID
     #include <sys/unistd.h>
 #endif
-#endif
-#if defined(__sgi)
-#include <unistd.h>
 #endif
 #if defined(__hpux)
 #include <sys/mpctl.h>
@@ -43,10 +43,17 @@
 #endif
 #if defined (__FreeBSD__) || defined (__APPLE__) || defined (__MACH__)
     #include <sys/types.h>
+#if !defined (__GNU__)
     #include <sys/sysctl.h>
 #endif
+#endif
 
-#if defined(ANDROID)
+#if defined(__APPLE__) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__ANDROID__)
+#   include <unistd.h>
+#   include <sys/syscall.h>
+#endif
+
+#if defined(__ANDROID__)
     #ifndef PAGE_SIZE
         #define PAGE_SIZE 0x400
     #endif
@@ -65,10 +72,6 @@ using namespace OpenThreads;
 # define DPRINTF(arg)
 #endif
 
-//-----------------------------------------------------------------------------
-// Initialize the static unique ids.
-//
-int PThreadPrivateData::nextId = 0;
 
 //-----------------------------------------------------------------------------
 // Initialize thread master priority level
@@ -83,7 +86,7 @@ struct ThreadCleanupStruct
 {
 
     OpenThreads::Thread *thread;
-    volatile bool *runflag;
+    Atomic *runflag;
 
 };
 
@@ -97,7 +100,7 @@ void thread_cleanup_handler(void *arg)
     ThreadCleanupStruct *tcs = static_cast<ThreadCleanupStruct *>(arg);
 
     tcs->thread->cancelCleanup();
-    *(tcs->runflag) = false;
+    (*(tcs->runflag)).exchange(0);
 
 }
 
@@ -108,6 +111,60 @@ void thread_cleanup_handler(void *arg)
 
 namespace OpenThreads
 {
+
+#if defined(HAVE_PTHREAD_SETAFFINITY_NP) || defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY) || defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
+static void setAffinity(const Affinity& affinity)
+{
+    //std::cout<<"setProcessAffinity : "<< affinity.activeCPUs.size() <<std::endl;
+#if defined(__FreeBSD__)
+    cpuset_t cpumask;
+#else
+    cpu_set_t cpumask;
+#endif
+    CPU_ZERO( &cpumask );
+    unsigned int numprocessors = OpenThreads::GetNumberOfProcessors();
+    if (affinity)
+    {
+        for(Affinity::ActiveCPUs::const_iterator itr = affinity.activeCPUs.begin();
+            itr != affinity.activeCPUs.end();
+            ++itr)
+        {
+            if (*itr<numprocessors)
+            {
+                //std::cout<<"   setting CPU : "<< *itr<<std::endl;
+                CPU_SET( *itr, &cpumask );
+            }
+        }
+    }
+    else
+    {
+        // BUG-fix for linux:
+        // Each thread inherits the processor affinity mask from its parent thread.
+        // We need to explicitly set it to all CPUs, if no affinity was specified.
+        for (unsigned int i = 0; i < numprocessors; ++i)
+        {
+            //std::cout<<"   Fallback setting CPU : "<< i<<std::endl;
+
+            CPU_SET( i, &cpumask );
+        }
+    }
+
+#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
+        pthread_setaffinity_np( pthread_self(), sizeof(cpumask), &cpumask);
+#elif defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY)
+        sched_setaffinity( 0, sizeof(cpumask), &cpumask );
+#elif defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
+        sched_setaffinity( 0, &cpumask );
+#endif
+
+}
+#else
+static void setAffinity(const Affinity&)
+{
+// No supported.
+}
+#endif
+
 
 class ThreadPrivateActions
 {
@@ -127,62 +184,20 @@ private:
 
         Thread *thread = static_cast<Thread *>(data);
 
-        PThreadPrivateData *pd =
-        static_cast<PThreadPrivateData *>(thread->_prvData);
+        PThreadPrivateData *pd = static_cast<PThreadPrivateData *>(thread->_prvData);
 
-
-        if (pd->cpunum>=0)
-        {
-#if defined(__sgi)
-            pthread_setrunon_np( pd->cpunum );
-#elif defined(HAVE_PTHREAD_SETAFFINITY_NP) || defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY) || defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
-            cpu_set_t cpumask;
-            CPU_ZERO( &cpumask );
-            CPU_SET( pd->cpunum, &cpumask );
-
-#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
-            pthread_setaffinity_np( pthread_self(), sizeof(cpumask), &cpumask);
-#elif defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY)
-            sched_setaffinity( 0, sizeof(cpumask), &cpumask );
-#elif defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
-            sched_setaffinity( 0, &cpumask );
-#endif
-#endif
-        }
-#if defined(HAVE_PTHREAD_SETAFFINITY_NP) || defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY) || defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
-        else
-        {
-            // BUG-fix for linux:
-            // Each thread inherits the processor affinity mask from its parent thread.
-            // We need to explicitly set it to all CPUs, if no affinity was specified.
-
-            cpu_set_t cpumask;
-            CPU_ZERO( &cpumask );
-
-            for (int i = 0; i < OpenThreads::GetNumberOfProcessors(); ++i)
-            {
-                CPU_SET( i, &cpumask );
-            }
-
-#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
-            pthread_setaffinity_np( pthread_self(), sizeof(cpumask), &cpumask);
-#elif defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY)
-            sched_setaffinity( 0, sizeof(cpumask), &cpumask );
-#elif defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
-            sched_setaffinity( 0, &cpumask );
-#endif
-        }
-#endif
+        // set up processor affinity
+        setAffinity( pd->affinity );
 
         ThreadCleanupStruct tcs;
         tcs.thread = thread;
-        tcs.runflag = &pd->isRunning;
+        tcs.runflag = &pd->_isRunning;
 
         // Set local storage so that Thread::CurrentThread() can return the right thing
         int status = pthread_setspecific(PThreadPrivateData::s_tls_key, thread);
         if (status)
         {
-            printf("Error: pthread_setspecific(,) returned error status, status = %d\n",status);
+           printf("Error: pthread_setspecific(,) returned error status, status = %d\n",status);
         }
 
         pthread_cleanup_push(thread_cleanup_handler, &tcs);
@@ -196,14 +211,16 @@ private:
 
 #endif // ] ALLOW_PRIORITY_SCHEDULING
 
-        pd->isRunning = true;
+        pd->uniqueId = Thread::CurrentThreadId();
+
+        pd->setRunning(true);
 
         // release the thread that created this thread.
         pd->threadStartedBlock.release();
 
         thread->run();
 
-        pd->isRunning = false;
+        pd->setRunning(false);
 
         pthread_cleanup_pop(0);
 
@@ -230,12 +247,12 @@ private:
 
             if(status != 0) {
             printf("THREAD INFO (%d) : Get sched: %s\n",
-                   thread->getProcessId(),
+                   (int)thread->getProcessId(),
                    strerror(status));
             } else {
             printf(
                 "THREAD INFO (%d) : Thread running at %s / Priority: %d\n",
-                thread->getProcessId(),
+                (int)thread->getProcessId(),
                 (my_policy == SCHED_FIFO ? "SCHEDULE_FIFO"
                  : (my_policy == SCHED_RR ? "SCHEDULE_ROUND_ROBIN"
                 : (my_policy == SCHED_OTHER ? "SCHEDULE_OTHER"
@@ -247,9 +264,8 @@ private:
 
             printf(
                 "THREAD INFO (%d) : Max priority: %d, Min priority: %d\n",
-                thread->getProcessId(),
+                (int)thread->getProcessId(),
                 max_priority, min_priority);
-
             }
 
         }
@@ -257,7 +273,7 @@ private:
         {
             printf(
             "THREAD INFO (%d) POSIX Priority scheduling not available\n",
-            thread->getProcessId());
+            (int)thread->getProcessId());
         }
 
         fflush(stdout);
@@ -286,8 +302,6 @@ private:
             pthread_getschedparam(thread->getProcessId(),
                       &th_policy, &th_param);
 
-#ifndef __linux__
-
             switch(thread->getSchedulePolicy())
             {
 
@@ -304,31 +318,13 @@ private:
                 break;
 
                 default:
-#ifdef __sgi
-                th_policy = SCHED_RR;
-#else
                 th_policy = SCHED_FIFO;
-#endif
                 break;
             };
-
-#else
-            th_policy = SCHED_OTHER;  // Must protect linux from realtime.
-#endif
-
-#ifdef __linux__
-
-            max_priority = 0;
-            min_priority = 20;
-            nominal_priority = (max_priority + min_priority)/2;
-
-#else
 
             max_priority = sched_get_priority_max(th_policy);
             min_priority = sched_get_priority_min(th_policy);
             nominal_priority = (max_priority + min_priority)/2;
-
-#endif
 
             switch(thread->getSchedulePriority())
             {
@@ -413,7 +409,7 @@ int Thread::GetConcurrency()
 
 //----------------------------------------------------------------------------
 //
-// Decription: Constructor
+// Description: Constructor
 //
 // Use: public.
 //
@@ -423,16 +419,6 @@ Thread::Thread()
     if(!s_isInitialized) Init();
 
     PThreadPrivateData *pd = new PThreadPrivateData();
-    pd->stackSize = 0;
-    pd->stackSizeLocked = false;
-    pd->idSet = false;
-    pd->isRunning = false;
-    pd->isCanceled = false;
-    pd->uniqueId = pd->nextId;
-    pd->nextId++;
-    pd->threadPriority = Thread::THREAD_PRIORITY_DEFAULT;
-    pd->threadPolicy = Thread::THREAD_SCHEDULE_DEFAULT;
-    pd->cpunum = -1;
 
     _prvData = static_cast<void *>(pd);
 
@@ -440,7 +426,7 @@ Thread::Thread()
 
 //----------------------------------------------------------------------------
 //
-// Decription: Destructor
+// Description: Destructor
 //
 // Use: public.
 //
@@ -448,7 +434,7 @@ Thread::~Thread()
 {
     PThreadPrivateData *pd = static_cast<PThreadPrivateData *>(_prvData);
 
-    if(pd->isRunning)
+    if(pd->isRunning())
     {
         std::cout<<"Error: Thread "<<this<<" still running in destructor"<<std::endl;
 
@@ -456,10 +442,14 @@ Thread::~Thread()
         // Kill the thread when it is destructed
         //
         cancel();
+
+        // wait till the thread is stopped before finishing.
+        join();
+
     }
 
     delete pd;
-    
+
     _prvData = 0;
 }
 
@@ -473,6 +463,25 @@ Thread *Thread::CurrentThread()
     return thread;
 
 }
+
+size_t Thread::CurrentThreadId()
+{
+#if defined(__APPLE__)
+  return (size_t)::syscall(SYS_thread_selfid);
+#elif defined(__ANDROID__)
+  return (size_t)gettid();
+#elif defined(__linux__)
+  return (size_t)::syscall(SYS_gettid);
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+  long  tid;
+  syscall(SYS_thr_self, &tid);
+  return (size_t)tid;
+#else
+  return (size_t)pthread_self();
+#endif
+}
+
+
 
 //-----------------------------------------------------------------------------
 //
@@ -539,7 +548,7 @@ void Thread::Init()
 //
 // Use: public
 //
-int Thread::getThreadId()
+size_t Thread::getThreadId()
 {
 
     PThreadPrivateData *pd = static_cast<PThreadPrivateData *> (_prvData);
@@ -562,52 +571,41 @@ size_t Thread::getProcessId()
     return (size_t)(pd->tid);
 }
 
+int OpenThreads::SetProcessorAffinityOfCurrentThread(const Affinity& affinity)
+{
+    Thread::Init();
+
+    Thread* thread = Thread::CurrentThread();
+    if (thread)
+    {
+        return thread->setProcessorAffinity(affinity);
+    }
+    else
+    {
+        // set up processor affinity
+        setAffinity( affinity );
+    }
+
+    return -1;
+}
+
 //-----------------------------------------------------------------------------
 //
 // Description: Set the thread's processor affinity
 //
 // Use: public
 //
-int Thread::setProcessorAffinity(unsigned int cpunum)
+int Thread::setProcessorAffinity(const Affinity& affinity)
 {
     PThreadPrivateData *pd = static_cast<PThreadPrivateData *> (_prvData);
-    pd->cpunum = cpunum;
-    if (pd->cpunum<0) return -1;
-    
-#ifdef __sgi
+    pd->affinity = affinity;
 
-    int status;
-    pthread_attr_t thread_attr;
-
-    status = pthread_attr_init( &thread_attr );
-    if(status != 0)
+    if (pd->isRunning() && Thread::CurrentThread()==this)
     {
-        return status;
-    }
-
-    status = pthread_attr_setscope( &thread_attr, PTHREAD_SCOPE_BOUND_NP );
-    return status;
-
-#elif defined(HAVE_PTHREAD_SETAFFINITY_NP) || defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY) || defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
-
-    if (pd->isRunning && Thread::CurrentThread()==this)
-    {
-        cpu_set_t cpumask;
-        CPU_ZERO( &cpumask );
-        CPU_SET( pd->cpunum, &cpumask );
-#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
-        return pthread_setaffinity_np (pthread_self(), sizeof(cpumask), &cpumask);
-#elif defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY)
-        return sched_setaffinity( 0, sizeof(cpumask), &cpumask );
-#elif defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
-        return sched_setaffinity( 0, &cpumask );
-#endif
+        setAffinity( affinity );
     }
 
     return -1;
-#else
-    return -1;
-#endif
 
 }
 
@@ -620,7 +618,7 @@ int Thread::setProcessorAffinity(unsigned int cpunum)
 bool Thread::isRunning()
 {
     PThreadPrivateData *pd = static_cast<PThreadPrivateData *> (_prvData);
-    return pd->isRunning;
+    return pd->isRunning();
 
 }
 
@@ -632,6 +630,12 @@ bool Thread::isRunning()
 //
 int Thread::start() {
 
+    PThreadPrivateData *pd = static_cast<PThreadPrivateData *> (_prvData);
+    if (pd->isRunning())
+    {
+        return 0;
+    }
+
     int status;
     pthread_attr_t thread_attr;
 
@@ -640,8 +644,6 @@ int Thread::start() {
     {
         return status;
     }
-
-    PThreadPrivateData *pd = static_cast<PThreadPrivateData *> (_prvData);
 
     //-------------------------------------------------------------------------
     // Set the stack size if requested, but not less than a platform reasonable
@@ -653,7 +655,7 @@ int Thread::start() {
         if(pd->stackSize < PTHREAD_STACK_MIN)
             pd->stackSize = PTHREAD_STACK_MIN;
 #endif
-        pthread_attr_setstacksize( &thread_attr, pd->stackSize);
+        status = pthread_attr_setstacksize( &thread_attr, pd->stackSize);
         if(status != 0)
         {
             return status;
@@ -664,7 +666,7 @@ int Thread::start() {
     // Now get what we actually have...
     //
     size_t size;
-    pthread_attr_getstacksize( &thread_attr, &size);
+    status = pthread_attr_getstacksize( &thread_attr, &size);
     if(status != 0)
     {
         return status;
@@ -681,14 +683,15 @@ int Thread::start() {
     status = pthread_attr_setinheritsched( &thread_attr,
                        PTHREAD_EXPLICIT_SCHED );
 
-    pthread_attr_setscope(&thread_attr, PTHREAD_SCOPE_SYSTEM);
-
-#endif // ] ALLOW_PRIORITY_SCHEDULING
-
     if(status != 0)
     {
         return status;
     }
+
+    pthread_attr_setscope(&thread_attr, PTHREAD_SCOPE_SYSTEM);
+
+#endif // ] ALLOW_PRIORITY_SCHEDULING
+
 
     pd->threadStartedBlock.reset();
 
@@ -715,7 +718,7 @@ int Thread::start() {
 //
 int Thread::startThread()
 {
-    if (_prvData) return start(); 
+    if (_prvData) return start();
     else return 0;
 }
 
@@ -779,7 +782,7 @@ int Thread::cancel()
 {
 #if defined(HAVE_PTHREAD_CANCEL)
     PThreadPrivateData *pd = static_cast<PThreadPrivateData *> (_prvData);
-    if (pd->isRunning)
+    if (pd->isRunning())
     {
         pd->isCanceled = true;
         int status = pthread_cancel(pd->tid);
@@ -826,7 +829,7 @@ int Thread::setCancelModeAsynchronous() {
 
 //-----------------------------------------------------------------------------
 //
-// Description: set the thread to cancel at the next convienent point.
+// Description: set the thread to cancel at the next convenient point.
 //
 // Use: public
 //
@@ -856,7 +859,7 @@ int Thread::setSchedulePriority(ThreadPriority priority) {
 
     pd->threadPriority = priority;
 
-    if(pd->isRunning)
+    if(pd->isRunning())
         return ThreadPrivateActions::SetThreadSchedulingParams(this);
     else
         return 0;
@@ -896,7 +899,7 @@ int Thread::setSchedulePolicy(ThreadPolicy policy)
 
     pd->threadPolicy = policy;
 
-    if(pd->isRunning)
+    if(pd->isRunning())
     return ThreadPrivateActions::SetThreadSchedulingParams(this);
     else
     return 0;
@@ -992,7 +995,7 @@ int Thread::YieldCurrentThread()
 //
 int Thread::microSleep(unsigned int microsec)
 {
-#if !defined(ANDROID)
+#if !defined(__ANDROID__)
     return ::usleep(microsec);
 #else
     ::usleep(microsec);
@@ -1008,18 +1011,13 @@ int Thread::microSleep(unsigned int microsec)
 //
 int OpenThreads::GetNumberOfProcessors()
 {
-#if defined(__linux__)
+#if defined(__linux__) || defined(__GNU__)
    long ret = sysconf(_SC_NPROCESSORS_ONLN);
    if (ret == -1)
       return 0;
    return ret;
 #elif defined(__sun__)
    long ret = sysconf(_SC_NPROCESSORS_ONLN);
-   if (ret == -1)
-      return 0;
-   return ret;
-#elif defined(__sgi)
-   long ret = sysconf(_SC_NPROC_ONLN);
    if (ret == -1)
       return 0;
    return ret;
@@ -1032,7 +1030,7 @@ int OpenThreads::GetNumberOfProcessors()
    uint64_t num_cpus = 0;
    size_t num_cpus_length = sizeof(num_cpus);
 #if defined(__FreeBSD__)
-   sysctlbyname("hw.ncpu", &num_cpus, &num_cpus_length, NULL, 0);            
+   sysctlbyname("hw.ncpu", &num_cpus, &num_cpus_length, NULL, 0);
 #else
    sysctlbyname("hw.activecpu", &num_cpus, &num_cpus_length, NULL, 0);
 #endif
@@ -1042,33 +1040,3 @@ int OpenThreads::GetNumberOfProcessors()
 #endif
 }
 
-int OpenThreads::SetProcessorAffinityOfCurrentThread(unsigned int cpunum)
-{
-    Thread::Init();
-
-    Thread* thread = Thread::CurrentThread();
-    if (thread) 
-    {
-        return thread->setProcessorAffinity(cpunum);
-    }
-    else
-    {
-#if defined(HAVE_PTHREAD_SETAFFINITY_NP) || defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY) || defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
-        cpu_set_t cpumask;
-        CPU_ZERO( &cpumask );
-        CPU_SET( cpunum, &cpumask );
-#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
-        pthread_setaffinity_np( pthread_self(), sizeof(cpumask), &cpumask);
-        return 0;
-#elif defined(HAVE_THREE_PARAM_SCHED_SETAFFINITY)
-        sched_setaffinity( 0, sizeof(cpumask), &cpumask );
-        return 0;
-#elif defined(HAVE_TWO_PARAM_SCHED_SETAFFINITY)
-        sched_setaffinity( 0, &cpumask );
-        return 0;
-#endif
-#endif
-    }
-    
-    return -1;
-}

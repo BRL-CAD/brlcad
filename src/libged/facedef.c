@@ -31,7 +31,7 @@
 #include "vmath.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "ged_private.h"
+#include "./ged_private.h"
 
 
 char *p_rotfb[] = {
@@ -375,7 +375,6 @@ Enter form of new face definition: ");
 
     return GED_OK;
 }
-
 
 /*
  * Local Variables:

@@ -18,7 +18,7 @@
 
 namespace osg {
 
-/** 
+/**
  *  osg::PrimitiveRestartIndex does nothing if OpenGL 3.1 is not available.
 */
 class OSG_EXPORT PrimitiveRestartIndex : public StateAttribute
@@ -35,51 +35,12 @@ class OSG_EXPORT PrimitiveRestartIndex : public StateAttribute
 
         /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
         virtual int compare(const StateAttribute& sa) const;
-        
+
         inline void setRestartIndex(unsigned int restartIndex ) { _restartIndex = restartIndex; }
-        
+
         inline unsigned int getRestartIndex() const { return _restartIndex; }
 
         virtual void apply(State& state) const;
-
-    public:
-
-        /** Extensions class which encapsulates the querying of extensions and
-          * associated function pointers, and provide convenience wrappers to
-          * check for the extensions or use the associated functions.
-        */
-        class OSG_EXPORT Extensions : public osg::Referenced
-        {
-            public:
-                Extensions(unsigned int contextID);
-
-                Extensions(const Extensions& rhs);
-
-                void lowestCommonDenominator(const Extensions& rhs);
-
-                void setupGLExtensions(unsigned int contextID);
-
-                bool isOpenGL31Supported() const { return _isOpenGL31Supported; }
-                bool isPrimitiveRestartIndexNVSupported() const { return _isPrimitiveRestartIndexNVSupported; }
-
-                void glPrimitiveRestartIndex( GLuint index ) const;
-
-            protected:
-
-                ~Extensions() {}
-                
-                bool _isOpenGL31Supported;
-                bool _isPrimitiveRestartIndexNVSupported;
-
-                typedef void (GL_APIENTRY * PrimitiveRestartIndex)( GLuint index );
-                
-                PrimitiveRestartIndex _glPrimitiveRestartIndex;
-        };
-
-        static Extensions* getExtensions(unsigned int contextID,bool createIfNotInitalized);
-
-        static void setExtensions(unsigned int contextID,Extensions* extensions);
-
 
     protected:
 

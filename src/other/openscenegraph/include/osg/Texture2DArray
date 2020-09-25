@@ -40,10 +40,15 @@ class OSG_EXPORT Texture2DArray : public Texture
         /** Return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs. */
         virtual int compare(const StateAttribute& rhs) const;
 
-        virtual GLenum getTextureTarget() const { return GL_TEXTURE_2D_ARRAY_EXT; }
+        virtual GLenum getTextureTarget() const { return GL_TEXTURE_2D_ARRAY; }
+
+        /** Texture2DArray is related to non fixed pipeline usage only so isn't appropriate to enable/disable.*/
+        virtual bool getModeUsage(StateAttribute::ModeUsage&) const { return false; }
 
         /** Set the texture image for specified layer. */
         virtual void setImage(unsigned int layer, Image* image);
+
+        template<class T> void setImage(unsigned int layer, const ref_ptr<T>& image) { setImage(layer, image.get()); }
 
         /** Get the texture image for specified layer. */
         virtual Image* getImage(unsigned int layer);
@@ -56,7 +61,17 @@ class OSG_EXPORT Texture2DArray : public Texture
          * image/layer count, you have to use the extension subclass, since it provides
          * graphic context dependent information.
          */
-        virtual unsigned int getNumImages() const { return getTextureDepth(); }
+        virtual unsigned int getNumImages() const { return _images.size(); }
+
+        /** return true if the texture image data has been modified and the associated GL texture object needs to be updated.*/
+        virtual bool isDirty(unsigned int contextID) const
+        {
+            for(unsigned int i=0; i<_images.size(); ++i)
+            {
+                if (_images[i].valid() && _images[i]->getModifiedCount()!=_modifiedCount[i][contextID]) return true;
+            }
+            return false;
+        }
 
         /** Check how often was a certain layer in the given context modified */
         inline unsigned int& getModifiedCount(unsigned int layer, unsigned int contextID) const
@@ -95,12 +110,12 @@ class OSG_EXPORT Texture2DArray : public Texture
 
 
 
-        /** Set the number of mip map levels the the texture has been created with.
+        /** Set the number of mip map levels the texture has been created with.
           * Should only be called within an osg::Texture::apply() and custom OpenGL texture load.
         */
         void setNumMipmapLevels(unsigned int num) const { _numMipmapLevels=num; }
 
-        /** Get the number of mip map levels the the texture has been created with. */
+        /** Get the number of mip map levels the texture has been created with. */
         unsigned int getNumMipmapLevels() const { return _numMipmapLevels; }
 
         /** Copies a two-dimensional texture subimage, as per
@@ -117,86 +132,6 @@ class OSG_EXPORT Texture2DArray : public Texture
         */
         virtual void apply(State& state) const;
 
-
-        /** Extensions class which encapsulates the querying of extensions and
-          * associated function pointers, and provides convenience wrappers to
-          * check for the extensions or use the associated functions.
-        */
-        class OSG_EXPORT Extensions : public osg::Referenced
-        {
-            public:
-                Extensions(unsigned int contextID);
-
-                Extensions(const Extensions& rhs);
-
-                void lowestCommonDenominator(const Extensions& rhs);
-
-                void setupGLExtensions(unsigned int contextID);
-
-                void setTexture2DArraySupported(bool flag) { _isTexture2DArraySupported=flag; }
-                bool isTexture2DArraySupported() const { return _isTexture2DArraySupported; }
-
-                void setTexture3DSupported(bool flag) { _isTexture3DSupported=flag; }
-                bool isTexture3DSupported() const { return _isTexture3DSupported; }
-
-                void setMaxLayerCount(GLint count) { _maxLayerCount = count; }
-                GLint maxLayerCount() const { return _maxLayerCount; }
-
-                void setMax2DSize(GLint size) { _max2DSize = size; }
-                GLint max2DSize() const { return _max2DSize; }
-
-                void glTexImage3D( GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels) const;
-
-                void glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels) const;
-
-                void glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) const;
-
-                bool isCompressedTexImage3DSupported() const { return _glCompressedTexImage3D!=0; }
-                void glCompressedTexImage3D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data) const;
-
-                bool isCompressedTexSubImage3DSupported() const { return _glCompressedTexSubImage3D!=0; }
-                void glCompressedTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data ) const;
-
-            protected:
-
-                ~Extensions() {}
-
-                bool    _isTexture2DArraySupported;
-                bool    _isTexture3DSupported;
-
-                GLint   _maxLayerCount;
-                GLint   _max2DSize;
-
-                typedef void (GL_APIENTRY * GLTexImage3DProc)      ( GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-                typedef void (GL_APIENTRY * GLTexSubImage3DProc)   ( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels);
-                typedef void (GL_APIENTRY * CompressedTexImage3DArbProc) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data);
-                typedef void (GL_APIENTRY * CompressedTexSubImage3DArbProc) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data);
-                typedef void (GL_APIENTRY * GLCopyTexSubImageProc) ( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height );
-
-                GLTexImage3DProc                _glTexImage3D;
-                GLTexSubImage3DProc             _glTexSubImage3D;
-                CompressedTexImage3DArbProc     _glCompressedTexImage3D;
-                CompressedTexSubImage3DArbProc  _glCompressedTexSubImage3D;
-                GLCopyTexSubImageProc           _glCopyTexSubImage3D;
-
-        };
-
-        /** Function to call to get the extension of a specified context.
-          * If the Extension object for that context has not yet been created
-          * and the 'createIfNotInitalized' flag been set to false then returns NULL.
-          * If 'createIfNotInitalized' is true then the Extensions object is
-          * automatically created. However, in this case the extension object will
-          * only be created with the graphics context associated with ContextID.
-        */
-        static Extensions* getExtensions(unsigned int contextID,bool createIfNotInitalized);
-
-        /** The setExtensions method allows users to override the extensions across graphics contexts.
-          * Typically used when you have different extensions supported across graphics pipes
-          * but need to ensure that they all use the same low common denominator extensions.
-        */
-        static void setExtensions(unsigned int contextID,Extensions* extensions);
-
-
     protected :
 
         virtual ~Texture2DArray();
@@ -204,19 +139,18 @@ class OSG_EXPORT Texture2DArray : public Texture
         bool imagesValid() const;
 
         virtual void computeInternalFormat() const;
+        GLsizei computeTextureDepth() const;
         void allocateMipmap(State& state) const;
 
-        void applyTexImage2DArray_subload(State& state, Image* image, GLsizei inwidth, GLsizei inheight, GLsizei indepth, GLint inInternalFormat, GLsizei& numMipmapLevels) const;
+        void applyTexImage2DArray_subload(State& state, Image* image, GLsizei layer, GLsizei inwidth, GLsizei inheight, GLsizei indepth, GLint inInternalFormat, GLsizei& numMipmapLevels) const;
 
-        /**
-         * Use std::vector to encapsulate referenced pointers to images of different layers.
-         * Vectors gives us a random access iterator. The overhead of non-used elements is negligible */
-        std::vector<ref_ptr<Image> > _images;
+        typedef std::vector< ref_ptr<Image> > Images;
+        Images _images;
 
         // subloaded images can have different texture and image sizes.
         mutable GLsizei _textureWidth, _textureHeight, _textureDepth;
 
-        // number of mip map levels the the texture has been created with,
+        // number of mip map levels the texture has been created with,
         mutable GLsizei _numMipmapLevels;
 
         ref_ptr<SubloadCallback> _subloadCallback;

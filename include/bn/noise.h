@@ -18,9 +18,9 @@
  * information.
  */
 
-/*----------------------------------------------------------------------*/
 
-/** @addtogroup noise
+/**
+ * @addtogroup noise
  *
  * @brief
  * These noise functions provide mostly random noise at the integer
@@ -137,7 +137,6 @@ BN_EXPORT extern double bn_noise_turb(point_t point,
 				      double octaves);
 
 /**
- *
  * From "Texturing and Modeling, A Procedural Approach" 2nd ed
  */
 BN_EXPORT extern double bn_noise_mf(point_t point,

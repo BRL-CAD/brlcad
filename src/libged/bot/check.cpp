@@ -37,6 +37,7 @@
 #include "bg/trimesh.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "../ged_private.h"
 #include "./ged_bot.h"
 
 
@@ -710,7 +711,7 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    if (_bot_obj_setup(gb, argv[argc-1]) == GED_ERROR) {
+    if (_bot_obj_setup(gb, argv[argc-1]) & GED_ERROR) {
 	return GED_ERROR;
     }
     argc--;

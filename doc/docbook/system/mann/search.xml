@@ -51,7 +51,27 @@
       <emphasis remap="I">before</emphasis> the paths and are used to control settings
       that apply globally to <command>search</command>'s behavior and reporting during
       the execution of the search.
+    </para>
 
+    <para>
+      The results of the search command will be sorted according to David Koelle's
+      "alphanum" algorithm, which is basically a human-intuitive ordering for
+      strings with letters and numbers.  For example, a result returning d1.r, d10.r and d2.r
+      will be sorted as:
+      
+      <literallayout>
+d1.r
+d2.r
+d10.r
+      </literallayout>
+
+      instead of the default ASCII character ordering, which would look like:
+      
+      <literallayout>
+d1.r
+d10.r
+d2.r
+      </literallayout>
     </para>
   </refsection>
 
@@ -420,6 +440,14 @@
 	  <para>
 	    True if the object path matches <emphasis remap="I">pattern.</emphasis>
 	    Pattern evaluation is done using Regular Expression matching.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-size</emphasis> <emphasis remap="I">[&gt;/&lt;/=]size</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the size of the object is within the range specified.  NOTE:  for combs, extrudes, and other composite objects this filter considers <emphasis>only</emphasis> the object definition itself, not its related elements.
 	  </para>
 	</listitem>
       </varlistentry>

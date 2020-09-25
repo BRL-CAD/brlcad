@@ -25,7 +25,7 @@
 namespace osgUtil {
 
 /** A tri stripping visitor for converting Geometry surface primitives into tri strips.
-  * The current implemention is based upon Tanguy Fautre's triangulation code.
+  * The current implementation is based upon Tanguy Fautre's triangulation code.
   */
 class OSGUTIL_EXPORT TriStripVisitor : public BaseOptimizerVisitor
 {
@@ -36,7 +36,9 @@ class OSGUTIL_EXPORT TriStripVisitor : public BaseOptimizerVisitor
                 BaseOptimizerVisitor( optimizer, Optimizer::TRISTRIP_GEOMETRY),
                 _cacheSize( 16 ),
                 _minStripSize( 2 ),
-                _generateFourPointPrimitivesQuads ( false)
+                _generateFourPointPrimitivesQuads ( false ),
+                _mergeTriangleStrips( false ),
+                _indexMesh( true )
         {}
 
         /** Convert mesh primitives in Geometry into Tri Strips.
@@ -45,11 +47,13 @@ class OSGUTIL_EXPORT TriStripVisitor : public BaseOptimizerVisitor
           */
         void stripify(osg::Geometry& drawable);
 
+        void mergeTriangleStrips(osg::Geometry::PrimitiveSetList& primitives);
+
         /** Stripify (make into strips of tria or quads) the accumulated list of Geometry drawables.*/
         void stripify();
 
         /// Accumulate the Geometry drawables to make into strips.
-        virtual void apply(osg::Geode& geode);
+        virtual void apply(osg::Geometry& geom);
 
         inline void setCacheSize( unsigned int size )
         {
@@ -71,10 +75,21 @@ class OSGUTIL_EXPORT TriStripVisitor : public BaseOptimizerVisitor
             return _minStripSize;
         }
 
+        inline void setIndexMesh( bool allow )
+        {
+            _indexMesh = allow;
+        }
+
+        inline bool getIndexMesh() const
+        {
+            return _indexMesh;
+        }
 
         void setGenerateFourPointPrimitivesQuads(bool flag) { _generateFourPointPrimitivesQuads = flag; }
         bool getGenerateFourPointPrimitivesQuads() const { return _generateFourPointPrimitivesQuads; }
 
+        void setMergeTriangleStrips(bool flag) { _mergeTriangleStrips = flag; }
+        bool getMergeTriangleStrips() const { return _mergeTriangleStrips; }
 
     private:
 
@@ -84,6 +99,8 @@ class OSGUTIL_EXPORT TriStripVisitor : public BaseOptimizerVisitor
         unsigned int _minStripSize;
         GeometryList _geometryList;
         bool         _generateFourPointPrimitivesQuads;
+        bool         _mergeTriangleStrips;
+        bool         _indexMesh;
 };
 
 }

@@ -274,7 +274,7 @@ bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *nu
 extern "C" void
 bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b)
 {
-    FILE* plot_file = fopen(filename, "w");
+    FILE* plot_file = fopen(filename, "wb");
     pl_color(plot_file, r, g, b);
 
     for (int k = 0; k < num_faces; k++) {

@@ -581,13 +581,13 @@ bool ON_BinaryArchive::BigSeekFromCurrentPosition( ON__INT64 offset )
 bool
 ON_BinaryArchive::ReadMode() const
 {
-  return (m_mode & ON::read) ? true : false;
+  return (m_mode & ON::on_read) ? true : false;
 }
 
 bool
 ON_BinaryArchive::WriteMode() const
 {
-  return (m_mode & ON::write) ? true : false;
+  return (m_mode & ON::on_write) ? true : false;
 }
 
 bool
@@ -7659,7 +7659,7 @@ int ON_BinaryArchive::Read3dmV1LayerIndex(const char* sV1LayerName) const
 
   int layer_index = -1;
 
-  if (    ON::read3dm == m_mode
+  if (    ON::on_read3dm == m_mode
        && 0 == m_3dm_opennurbs_version
        && 1 == m_3dm_version
        && 0 != m_V1_layer_list
@@ -7784,7 +7784,7 @@ bool ON_BinaryArchive::Read3dmV1Layer( ON_Layer*& layer )
   }
   else if (rc && layer)
   {
-    if (    ON::read3dm == m_mode
+    if (    ON::on_read3dm == m_mode
          && 0 == m_3dm_opennurbs_version
          && 1 == m_3dm_version
          )
@@ -13128,7 +13128,7 @@ ON_BinaryArchive::ReadByte( size_t count, void* p )
                && 0 == m_3dm_start_section_offset
                && ON_BinaryArchive::no_active_table == m_active_table
                && 0 == m_chunk
-               && ON::read3dm == m_mode
+               && ON::on_read3dm == m_mode
                )
           {
             // In Read3dmStartSection(), we search for the string 
@@ -14719,7 +14719,7 @@ ON_Read3dmBufferArchive::ON_Read3dmBufferArchive(
           int archive_3dm_version,
           int archive_opennurbs_version
           )
-: ON_BinaryArchive(ON::read3dm)
+: ON_BinaryArchive(ON::on_read3dm)
 , m_p(0)
 , m_buffer(0)
 , m_sizeof_buffer(0)
@@ -14854,7 +14854,7 @@ ON_Write3dmBufferArchive::ON_Write3dmBufferArchive(
           int archive_3dm_version,
           int archive_opennurbs_version
           )
-: ON_BinaryArchive(ON::write3dm)
+: ON_BinaryArchive(ON::on_write3dm)
 , m_p(0)
 , m_buffer(0)
 , m_sizeof_buffer(0)

@@ -181,92 +181,149 @@ extract_format_prefix(struct bu_vls *format, const char *input)
     return 0;
 }
 
+static int
+fmt_type(bu_mime_context_t *c, int *t, const char *str)
+{
+    int type_int = -1;
+
+    /* Check MODEL first */
+    type_int = bu_file_mime(str, BU_MIME_MODEL);
+    if (((bu_mime_model_t)type_int) != BU_MIME_MODEL_UNKNOWN) {
+	*c = BU_MIME_MODEL;
+	*t = type_int;
+	return 0;
+    }
+
+    /* Not a model - check the others */
+    type_int = bu_file_mime(str, BU_MIME_IMAGE);
+    if (((bu_mime_image_t)type_int) != BU_MIME_IMAGE_UNKNOWN) {
+	*c = BU_MIME_IMAGE;
+	*t = type_int;
+	return 0;
+    }
+
+    type_int = bu_file_mime(str, BU_MIME_CHEMICAL);
+    if (((bu_mime_chemical_t)type_int) != BU_MIME_CHEMICAL_UNKNOWN) {
+	*c = BU_MIME_CHEMICAL;
+	*t = type_int;
+	return 0;
+    }
+
+    type_int = bu_file_mime(str, BU_MIME_VIDEO);
+    if (((bu_mime_video_t)type_int) != BU_MIME_VIDEO_UNKNOWN) {
+	*c = BU_MIME_VIDEO;
+	*t = type_int;
+	return 0;
+    }
+
+    type_int = bu_file_mime(str, BU_MIME_TEXT);
+    if (((bu_mime_text_t)type_int) != BU_MIME_TEXT_UNKNOWN) {
+	*c = BU_MIME_TEXT;
+	*t = type_int;
+	return 0;
+    }
+
+    type_int = bu_file_mime(str, BU_MIME_APPLICATION);
+    if (((bu_mime_application_t)type_int) != BU_MIME_APPLICATION_UNKNOWN) {
+	*c = BU_MIME_APPLICATION;
+	*t = type_int;
+	return 0;
+    }
+
+    type_int = bu_file_mime(str, BU_MIME_AUDIO);
+    if (((bu_mime_audio_t)type_int) != BU_MIME_AUDIO_UNKNOWN) {
+	*c = BU_MIME_AUDIO;
+	*t = type_int;
+	return 0;
+    }
+
+    type_int = bu_file_mime(str, BU_MIME_MESSAGE);
+    if (((bu_mime_message_t)type_int) != BU_MIME_MESSAGE_UNKNOWN) {
+	*c = BU_MIME_MESSAGE;
+	*t = type_int;
+	return 0;
+    }
+
+    type_int = bu_file_mime(str, BU_MIME_X_DASH_CONFERENCE);
+    if (((bu_mime_x_DASH_conference_t)type_int) != BU_MIME_X_DASH_CONFERENCE_UNKNOWN) {
+	*c = BU_MIME_X_DASH_CONFERENCE;
+	*t = type_int;
+	return 0;
+    }
+
+    return -1;
+}
+
 
 static int
-parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, const char *input)
+parse_file_string(int *ffmt, bu_mime_context_t *fc, struct bu_vls *format, struct bu_vls *slog, const char *input)
 {
-    int type_int = 0;
-    bu_mime_model_t type = BU_MIME_MODEL_UNKNOWN;
+    int ret = -1;
+    int type_int = -1;
+    bu_mime_context_t c = BU_MIME_UNKNOWN;
 
-    struct bu_vls format_cpy = BU_VLS_INIT_ZERO;
+    struct bu_vls fmt_prefix = BU_VLS_INIT_ZERO;
     struct bu_vls path = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!input) || UNLIKELY(strlen(input) == 0))
-	return BU_MIME_MODEL_UNKNOWN;
-
-    /* If an external routine has specified a format string, that string will
-     * override the file extension (but not an explicit option or format prefix).
-     * Stash any local format string here for later processing.  The idea is
-     * to allow some other routine (say, an introspection of a file looking for
-     * some signature string) to override a file extension based type identification.
-     * Such introspection is beyond the scope of this function, but should override
-     * the file extension mechanism. */
-    if (format)
-	bu_vls_sprintf(&format_cpy, "%s", bu_vls_addr(format));
+	return ret;
 
     /* If we have an explicit option, that overrides any other format specifiers */
-    if (opt) {
-	type_int = bu_file_mime(opt, BU_MIME_MODEL);
-	type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-	if (type == BU_MIME_MODEL_UNKNOWN) {
-	    /* Have prefix, but doesn't result in a known format - that's an error */
+    if (format && bu_vls_strlen(format)) {
+	if (fmt_type(&c, &type_int, bu_vls_cstr(format))) {
 	    if (slog)
-		bu_vls_printf(slog, "Error: unknown model format \"%s\" specified as an option.\n", opt);
-	    bu_vls_free(&format_cpy);
-	    return -1;
+		bu_vls_printf(slog, "Error: unknown format \"%s\" specified as an option.\n", bu_vls_cstr(format));
+	    *ffmt = -1;
+	    *fc = BU_MIME_UNKNOWN;
+	    ret = -1;
+	} else {
+	    *ffmt = type_int;
+	    *fc = c;
+	    ret = 0;
 	}
+	goto parse_file_cleanup;
     }
 
     /* Try for a format prefix */
-    if (extract_format_prefix(format, input)) {
-	/* If we don't already have a valid type and we had a format prefix,
-	 * find out if it maps to a valid type */
-	if (type == BU_MIME_MODEL_UNKNOWN && format) {
-	    /* Yes - see if the prefix specifies a model format */
-	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_MODEL);
-	    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-	    if (type == BU_MIME_MODEL_UNKNOWN) {
-		/* Have prefix, but doesn't result in a known format - that's an error */
-		if (slog)
-		    bu_vls_printf(slog, "Error: unknown model format \"%s\" specified as a format prefix.\n", bu_vls_addr(format));
-		bu_vls_free(&format_cpy);
-		return -1;
-	    }
-	}
-    }
-
-    /* If we don't already have a type and we were passed a format string, give it a try */
-    if (type == BU_MIME_MODEL_UNKNOWN && format && bu_vls_strlen(&format_cpy) > 0) {
-	bu_vls_sprintf(format, "%s", bu_vls_addr(&format_cpy));
-	type_int = bu_file_mime(bu_vls_addr(&format_cpy), BU_MIME_MODEL);
-	type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-	if (type == BU_MIME_MODEL_UNKNOWN) {
+    if (extract_format_prefix(&fmt_prefix, input)) {
+	if (fmt_type(&c, &type_int, bu_vls_cstr(&fmt_prefix))) {
 	    /* Have prefix, but doesn't result in a known format - that's an error */
 	    if (slog)
-		bu_vls_printf(slog, "Error: unknown model format \"%s\" passed to parse_model_string.\n", bu_vls_addr(format));
-	    bu_vls_free(&format_cpy);
-	    return -1;
+		bu_vls_printf(slog, "Error: unknown format \"%s\" specified as a format prefix.\n", bu_vls_cstr(&fmt_prefix));
+	    *ffmt = -1;
+	    *fc = BU_MIME_UNKNOWN;
+	    ret = -1;
+	} else {
+	    *ffmt = type_int;
+	    *fc = c;
+	    ret = 0;
 	}
+	goto parse_file_cleanup;
     }
 
     /* If we have no prefix or the prefix didn't map to a model type, try file extension */
-    if (type == BU_MIME_MODEL_UNKNOWN && extract_path(&path, input)) {
-	if (bu_path_component(format, bu_vls_addr(&path), BU_PATH_EXT)) {
-	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_MODEL);
-	    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-	    if (type == BU_MIME_MODEL_UNKNOWN) {
+    if (extract_path(&path, input)) {
+	if (bu_path_component(&fmt_prefix, bu_vls_cstr(&path), BU_PATH_EXT)) {
+	    if (fmt_type(&c, &type_int, bu_vls_cstr(&fmt_prefix))) {
 		/* Have file extension, but doesn't result in a known format - that's an error */
 		if (slog)
-		    bu_vls_printf(slog, "Error: file extension \"%s\" does not map to a known model format.\n", bu_vls_addr(format));
-		bu_vls_free(&format_cpy);
-		bu_vls_free(&path);
-		return -1;
+		    bu_vls_printf(slog, "Error: file extension \"%s\" does not map to a known format.\n", bu_vls_cstr(&fmt_prefix));
+		*ffmt = -1;
+		*fc = BU_MIME_UNKNOWN;
+		ret = -1;
+	    } else {
+		*ffmt = type_int;
+		*fc = c;
+		ret = 0;
 	    }
+	    goto parse_file_cleanup;
 	}
     }
+
+parse_file_cleanup:
     bu_vls_free(&path);
-    bu_vls_free(&format_cpy);
-    return (int)type;
+    bu_vls_free(&fmt_prefix);
+    return ret;
 }
 
 
@@ -312,29 +369,6 @@ file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 }
 
 
-static int
-model_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
-{
-    int type_int;
-    bu_mime_model_t type = BU_MIME_MODEL_UNKNOWN;
-    bu_mime_model_t *set_type = (bu_mime_model_t *)set_mime;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
-
-    type_int = bu_file_mime(argv[0], BU_MIME_MODEL);
-    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-    if (type == BU_MIME_MODEL_UNKNOWN) {
-	if (msg) {
-	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
-	}
-	return -1;
-    }
-    if (set_type)
-	(*set_type) = type;
-    return 1;
-}
-
-
 struct help_state {
     int showhelp;
     char *format;
@@ -362,8 +396,8 @@ help(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
 static int
 do_conversion(
     struct bu_vls *messages,
-    const char *in_path, bu_mime_model_t in_type,
-    const char *out_path, bu_mime_model_t out_type,
+    const char *in_path, int in_type, bu_mime_context_t in_c,
+    const char *out_path, int out_type, bu_mime_context_t out_c,
     size_t in_argc, const char **in_argv,
     size_t out_argc, const char **out_argv)
 {
@@ -373,19 +407,19 @@ do_conversion(
     struct gcv_context context;
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
-	bu_mime_model_t emt = (*entry)->mime_type;
+	const struct gcv_filter *e = (*entry);
 	if ((*entry)->filter_type == GCV_FILTER_READ) {
-	    if (!in_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == in_type))
+	    if (!in_filter && (e->mime_context == in_c) && (e->mime_type == in_type))
 		in_filter = *entry;
-	    if (!in_filter && (emt == BU_MIME_MODEL_AUTO) &&
+	    if (!in_filter && (e->mime_context == in_c) && (e->mime_type == -1) &&
 		((*entry)->data_supported && in_path && (*(*entry)->data_supported)(in_path))) {
 	       	in_filter = *entry;
 	    }
 	}
 	if ((*entry)->filter_type == GCV_FILTER_WRITE) {
-	    if (!out_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == out_type))
+	    if (!out_filter && (e->mime_context == out_c) && (e->mime_type == out_type))
 		out_filter = *entry;
-	    if (!out_filter && (emt == BU_MIME_MODEL_AUTO) &&
+	    if (!out_filter && (e->mime_context == out_c) && (e->mime_type == -1) &&
 		((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_MODEL)))) {
 		out_filter = *entry;
 	    }
@@ -393,9 +427,9 @@ do_conversion(
     }
 
     if (!in_filter)
-	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, BU_MIME_MODEL));
+	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, in_c));
     if (!out_filter)
-	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, BU_MIME_MODEL));
+	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, out_c));
     if (!in_filter || !out_filter)
 	return 0;
 
@@ -433,21 +467,20 @@ int
 main(int ac, const char **av)
 {
     size_t i;
-    int fmt = 0;
     int ret = 0;
 
-    static bu_mime_model_t in_type = BU_MIME_MODEL_UNKNOWN;
-    static bu_mime_model_t out_type = BU_MIME_MODEL_UNKNOWN;
+    struct bu_vls in_format = BU_VLS_INIT_ZERO;
+    bu_mime_context_t in_c = BU_MIME_UNKNOWN;
+    static int in_type = -1;
+
+    struct bu_vls out_format = BU_VLS_INIT_ZERO;
+    bu_mime_context_t out_c = BU_MIME_UNKNOWN;
+    static int out_type = -1;
 
     static struct fmt_opts in_only_opts;
     static struct fmt_opts out_only_opts;
     static struct fmt_opts both_opts;
     static struct help_state hs;
-
-    const char *in_fmt = NULL;
-    const char *out_fmt = NULL;
-    struct bu_vls in_format = BU_VLS_INIT_ZERO;
-    struct bu_vls out_format = BU_VLS_INIT_ZERO;
 
     /* input/output file names as read by bu_opt */
     static char *in_str = NULL;
@@ -478,8 +511,8 @@ main(int ac, const char **av)
 	{"?", "",                 "[format]",  &help,    (void *)&hs,            "",                           },
 	{"i", "input",            "file",      &file_stat,   (void *)&in_str,    "Input file.",                },
 	{"o", "output",           "file",      &file_null,   (void *)&out_str,   "Output file.",               },
-	{"",  "input-format",     "format",    &model_mime,  (void *)&in_type,   "File format of input file.", },
-	{"",  "output-format",    "format",    &model_mime,  (void *)&out_type,  "File format of output file." },
+	{"",  "input-format",     "format",    &bu_opt_vls,  (void *)&in_format,   "File format of input file.", },
+	{"",  "output-format",    "format",    &bu_opt_vls,  (void *)&out_format,  "File format of output file." },
 	{"I", "input-only-opts",  "opts",      &fmt_fun, (void *)&in_only_opts,  STR_INOPT,                    },
 	{"O", "output-only-opts", "opts",      &fmt_fun, (void *)&out_only_opts, STR_OUTOPT,                   },
 	{"B", "input-and-output-opts", "opts", &fmt_fun, (void *)&both_opts,     STR_BOTH,                     },
@@ -629,26 +662,11 @@ main(int ac, const char **av)
     }
 
     /* Find out what input file type we are dealing with */
-    if (in_type == BU_MIME_MODEL_UNKNOWN) {
-	fmt = parse_model_string(&in_format, &slog, in_fmt, bu_vls_addr(&in_path_raw));
-	in_type = (fmt < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)fmt;
-	in_fmt = NULL;
-    }
-    /* Identify output file type */
-    if (out_type == BU_MIME_MODEL_UNKNOWN) {
-	fmt = parse_model_string(&out_format, &slog, out_fmt, bu_vls_addr(&out_path_raw));
-	out_type = (fmt < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)fmt;
-	out_fmt = NULL;
-    }
-
-    /* If we get to this point without knowing the input type, it's up to the plugins to see if
-     * any of them can figure it out. */
-    if (in_type == BU_MIME_MODEL_UNKNOWN) {
-	in_type = BU_MIME_MODEL_AUTO;
-    }
+    (void)parse_file_string(&in_type, &in_c, &in_format, &slog, bu_vls_cstr(&in_path_raw));
+    int no_out_fmt = parse_file_string(&out_type, &out_c, &out_format, &slog, bu_vls_cstr(&out_path_raw));
 
     /* If we get to this point without knowing the *output* type, we've got a problem */
-    if (out_type == BU_MIME_MODEL_UNKNOWN) {
+    if (no_out_fmt) {
 	if (bu_vls_strlen(&out_path) > 0) {
 	    bu_vls_printf(&slog, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));
 	} else {
@@ -664,14 +682,18 @@ main(int ac, const char **av)
     /* If we've gotten this far, we know enough to try to convert. Until we
      * hook in conversion calls to libgcv, print a summary of the option
      * parsing results for debugging. */
-    in_fmt = bu_file_mime_str((int)in_type, BU_MIME_MODEL);
-    out_fmt = bu_file_mime_str((int)out_type, BU_MIME_MODEL);
+    const char *in_fmt = bu_file_mime_str(in_type, in_c);
+    const char *out_fmt = bu_file_mime_str(out_type, out_c);
     if (in_fmt) {
 	bu_log("Input file format: %s\n", in_fmt);
+	bu_free((char *)in_fmt, "input format string");
     } else {
 	bu_log("Input file format: AUTO\n");
     }
-    bu_log("Output file format: %s\n", out_fmt);
+    if (out_fmt) {
+	bu_log("Output file format: %s\n", out_fmt);
+	bu_free((char *)out_fmt, "output format string");
+    }
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
@@ -680,8 +702,8 @@ main(int ac, const char **av)
 	const char ** const in_argv = (const char **)in_opts.buffer;
 	const char ** const out_argv = (const char **)out_opts.buffer;
 
-	if (!do_conversion(&slog, bu_vls_addr(&in_path), in_type, bu_vls_addr(&out_path),
-			   out_type, in_argc, in_argv, out_argc, out_argv)) {
+	if (!do_conversion(&slog, bu_vls_cstr(&in_path), in_type, in_c, bu_vls_cstr(&out_path),
+			   out_type, out_c, in_argc, in_argv, out_argc, out_argv)) {
 	    bu_vls_printf(&slog, "Conversion failed\n");
 	    ret = 1;
 	    goto cleanup;
@@ -691,11 +713,7 @@ main(int ac, const char **av)
 cleanup:
     if (bu_vls_strlen(&slog) > 0 && ret != 0)
 	bu_log("%s", bu_vls_addr(&slog));
-    if (in_fmt)
-	bu_free((char *)in_fmt, "input format string");
-    if (out_fmt)
-	bu_free((char *)out_fmt, "output format string");
-
+    
     bu_vls_free(&in_format);
     bu_vls_free(&in_path);
     bu_vls_free(&out_format);

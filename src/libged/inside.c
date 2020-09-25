@@ -1152,46 +1152,10 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     return GED_OK;
 }
 
-
-int
-ged_inside(struct ged *gedp, int argc, const char *argv[])
-{
-    struct directory *outdp;
-    struct rt_db_internal intern;
-    int arg = 1;
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    RT_DB_INTERNAL_INIT(&intern);
-
-    if (argc < arg+1) {
-	bu_vls_printf(gedp->ged_result_str, "Enter name of outside solid: ");
-	return GED_MORE;
-    }
-    if ((outdp = db_lookup(gedp->ged_wdbp->dbip,  argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
-	return GED_ERROR;
-    }
-    ++arg;
-
-    if (rt_db_get_internal(&intern, outdp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	return GED_ERROR;
-    }
-
-    return ged_inside_internal(gedp, &intern, argc, argv, arg, outdp->d_namep);
-}
-
-
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
