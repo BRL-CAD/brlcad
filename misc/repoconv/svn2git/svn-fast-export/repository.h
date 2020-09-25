@@ -101,8 +101,9 @@ public:
         Transaction() {}
     public:
         virtual ~Transaction() {}
-        virtual void commit() = 0;
+        virtual int commit() = 0;
 
+        virtual void setSVNAuthor(const QByteArray &author) = 0;
         virtual void setAuthor(const QByteArray &author) = 0;
         virtual void setDateTime(uint dt) = 0;
         virtual void setLog(const QByteArray &log) = 0;
@@ -112,10 +113,12 @@ public:
         virtual void deleteFile(const QString &path) = 0;
         virtual QIODevice *addFile(const QString &path, int mode, qint64 length) = 0;
 
-        virtual void commitNote(const QByteArray &noteText, bool append,
+        virtual bool commitNote(const QByteArray &noteText, bool append,
                                 const QByteArray &commit = QByteArray()) = 0;
     };
     virtual int setupIncremental(int &cutoff) = 0;
+    virtual void restoreAnnotatedTags() = 0;
+    virtual void restoreBranchNotes() = 0;
     virtual void restoreLog() = 0;
     virtual ~Repository() {}
 
@@ -126,9 +129,10 @@ public:
     virtual Repository::Transaction *newTransaction(const QString &branch, const QString &svnprefix, int revnum) = 0;
 
     virtual void createAnnotatedTag(const QString &name, const QString &svnprefix, int revnum,
-                                    const QByteArray &author, uint dt,
+                                    const QByteArray &svnauthor, const QByteArray &author, uint dt,
                                     const QByteArray &log) = 0;
     virtual void finalizeTags() = 0;
+    virtual void saveBranchNotes() = 0;
     virtual void commit() = 0;
 
     static QByteArray formatMetadataMessage(const QByteArray &svnprefix, int revnum,

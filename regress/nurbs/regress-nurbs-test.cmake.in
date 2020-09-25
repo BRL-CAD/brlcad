@@ -12,7 +12,8 @@ file(WRITE "${LOGFILE}" "Starting nurbs test run\n")
 string(REPLACE "\\" "" NHIT "${EXEC}")
 if (NOT EXISTS "${NHIT}")
   file(WRITE "${LOGFILE}" "analyze_nhit not found at location \"${NHIT}\" - aborting\n")
-  message(FATAL_ERROR "Unable to find analyze_nhit, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find analyze_nhit, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif (NOT EXISTS "${NHIT}")
 
 # Canonicalize path - if we have an absolute path use it, but if the .g file is
@@ -34,7 +35,8 @@ execute_process(
   )
 
 if(nurbs_result)
-  message(FATAL_ERROR "[nurbs] Failure, unexpected result running ${NHIT} @NHIT_OPTS@ @NHIT_GFILE@ @NHIT_ARGS@\n ${nurbs_log}\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[nurbs] Failure, unexpected result running ${NHIT} @NHIT_OPTS@ @NHIT_GFILE@ @NHIT_ARGS@\n ${nurbs_log}\n${LOG}")
 endif(nurbs_result)
 
 # Local Variables:

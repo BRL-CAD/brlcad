@@ -38,6 +38,8 @@ class OSGUTIL_EXPORT RenderStage : public RenderBin
 {
     public:
 
+        typedef std::pair< int , osg::ref_ptr<RenderStage> > RenderStageOrderPair;
+        typedef std::list< RenderStageOrderPair > RenderStageList;
 
         RenderStage();
         RenderStage(SortMode mode);
@@ -143,6 +145,10 @@ class OSGUTIL_EXPORT RenderStage : public RenderBin
         void setCameraRequiresSetUp(bool flag) { _cameraRequiresSetUp = flag; }
         bool getCameraRequiresSetUp() const { return _cameraRequiresSetUp; }
 
+        void setCameraAttachmentMapCount(unsigned int v) { _cameraAttachmentMapModifiedCount = v; }
+        unsigned int getCameraAttachmentMapCount() { return _cameraAttachmentMapModifiedCount; }
+
+
         /** Attempt the set the RenderStage from the Camera settings.*/
         void runCameraSetUp(osg::RenderInfo& renderInfo);
 
@@ -232,6 +238,12 @@ class OSGUTIL_EXPORT RenderStage : public RenderBin
 
         void addPostRenderStage(RenderStage* rs, int order = 0);
 
+        const RenderStageList& getPreRenderList() const { return _preRenderList; }
+        RenderStageList& getPreRenderList() { return _preRenderList; }
+
+        const RenderStageList& getPostRenderList() const { return _postRenderList; }
+        RenderStageList& getPostRenderList() { return _postRenderList; }
+
         /** Extract stats for current draw list. */
         bool getStats(Statistics& stats) const;
 
@@ -262,8 +274,6 @@ protected:
 
         virtual ~RenderStage();
 
-        typedef std::pair< int , osg::ref_ptr<RenderStage> > RenderStageOrderPair;
-        typedef std::list< RenderStageOrderPair > RenderStageList;
         typedef std::vector< osg::ref_ptr<osg::Camera> > Cameras;
 
         bool                                _stageDrawnThisFrame;
@@ -288,6 +298,7 @@ protected:
         int                                 _clearStencil;
 
         bool                                _cameraRequiresSetUp;
+        unsigned int                        _cameraAttachmentMapModifiedCount;
         osg::observer_ptr<osg::Camera>      _camera;
 
         osg::ref_ptr<osg::Texture>              _texture;

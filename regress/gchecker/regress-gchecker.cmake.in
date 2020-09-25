@@ -30,12 +30,14 @@ file(APPEND "${LOGFILE}" "${gchecker_log}")
 set(gchecker_log)
 if(NOT EXISTS "${CBDIR}/gchecker_test.g.ck/ck.gchecker_test.g.overlaps")
   file(APPEND "${LOGFILE}" "\n\nError: return code ${gchecker_result}")
-  message(FATAL_ERROR "${GCHECKER} failed to process gchecker_test.g, aborting.\nSee ${CBDIR}/gchecker.log for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "${GCHECKER} failed to process gchecker_test.g, aborting.\nSee ${CBDIR}/gchecker.log for more details.\n${LOG}")
 endif(NOT EXISTS "${CBDIR}/gchecker_test.g.ck/ck.gchecker_test.g.overlaps")
 
 if(gchecker_result)
   file(APPEND "${LOGFILE}" "\n\nError: return code ${gchecker_result}")
-  message(FATAL_ERROR "[gchecker] Failure, see ${LOGFILE} for more info.\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[gchecker] Failure, see ${LOGFILE} for more info.\n${LOG}")
 endif(gchecker_result)
 
 # Local Variables:

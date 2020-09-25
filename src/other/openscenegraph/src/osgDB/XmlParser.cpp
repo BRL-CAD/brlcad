@@ -97,16 +97,19 @@ void XmlNode::ControlMap::setUpControlMappings()
     addControlToCharacter("&gt;",'>');
     addControlToCharacter("&quot;",'"');
     addControlToCharacter("&apos;",'\'');
+    addControlToCharacter("&nl;",'\n');
 }
 
 XmlNode::Input::Input():
-    _currentPos(0)
+    _currentPos(0),
+    _encoding(ENCODING_ASCII)
 {
 }
 
-XmlNode::Input::Input(const Input&):
+XmlNode::Input::Input(const Input& rhs):
     ControlMap(),
-    _currentPos(0)
+    _currentPos(0),
+    _encoding(rhs._encoding)
 {
 }
 
@@ -210,12 +213,12 @@ bool XmlNode::read(Input& input)
             commentNode->contents = input.substr(0, end);
             if (end!=std::string::npos)
             {
-                OSG_INFO<<"Valid infomation record ["<<commentNode->contents<<"]"<<std::endl;
+                OSG_INFO<<"Valid information record ["<<commentNode->contents<<"]"<<std::endl;
                 input += (end+2);
             }
             else
             {
-                OSG_NOTICE<<"Error: Unclosed infomation record ["<<commentNode->contents<<"]"<<std::endl;
+                OSG_NOTICE<<"Error: Unclosed information record ["<<commentNode->contents<<"]"<<std::endl;
                 input += end;
             }
         }
@@ -230,12 +233,12 @@ bool XmlNode::read(Input& input)
             commentNode->contents = input.substr(0, end);
             if (end!=std::string::npos)
             {
-                OSG_INFO<<"Valid infomation record ["<<commentNode->contents<<"]"<<std::endl;
+                OSG_INFO<<"Valid information record ["<<commentNode->contents<<"]"<<std::endl;
                 input += (end+2);
             }
             else
             {
-                OSG_NOTICE<<"Error: Unclosed infomation record ["<<commentNode->contents<<"]"<<std::endl;
+                OSG_NOTICE<<"Error: Unclosed information record ["<<commentNode->contents<<"]"<<std::endl;
                 input += end;
             }
         }
@@ -250,12 +253,17 @@ bool XmlNode::read(Input& input)
             commentNode->contents = input.substr(0, end);
             if (end!=std::string::npos)
             {
-                OSG_INFO<<"Valid infomation record ["<<commentNode->contents<<"]"<<std::endl;
+                if (commentNode->contents.find("encoding=\"UTF-8\"")!=std::string::npos)
+                {
+                    input.setEncoding(Input::ENCODING_UTF8);
+                }
+
+                OSG_INFO<<"Valid information record ["<<commentNode->contents<<"]"<<std::endl;
                 input += (end+2);
             }
             else
             {
-                OSG_NOTICE<<"Error: Unclosed infomation record ["<<commentNode->contents<<"]"<<std::endl;
+                OSG_NOTICE<<"Error: Unclosed information record ["<<commentNode->contents<<"]"<<std::endl;
                 input += end;
             }
         }
@@ -272,8 +280,7 @@ bool XmlNode::read(Input& input)
             int c = 0;
             while ((c=input[0])>=0 && c!=' ' && c!='\n' && c!='\r' && c!='>' && c!='/')
             {
-                childNode->name.push_back(c);
-                ++input;
+                input.copyCharacterToString(childNode->name);
             }
 
             while ((c=input[0])>=0 && c!='>' && c!='/')
@@ -294,8 +301,7 @@ bool XmlNode::read(Input& input)
                             readAndReplaceControl(option, input);
                         else
                         {
-                            option.push_back(c);
-                            ++input;
+                            input.copyCharacterToString(option);
                         }
                     }
                     option.push_back(input[0]);
@@ -305,8 +311,7 @@ bool XmlNode::read(Input& input)
                 {
                     while((c=input[0])>=0 && c!='>' && c!='/' && c!='"' && c!='\'' && c!='=' && c!=' ' && c!='\n' && c!='\r')
                     {
-                        option.push_back(c);
-                        ++input;
+                        input.copyCharacterToString(option);
                     }
                 }
 
@@ -326,8 +331,7 @@ bool XmlNode::read(Input& input)
                                 readAndReplaceControl(value, input);
                             else
                             {
-                                value.push_back(c);
-                                ++input;
+                                input.copyCharacterToString(value);
                             }
                         }
                         ++input;
@@ -341,8 +345,7 @@ bool XmlNode::read(Input& input)
                                 readAndReplaceControl(value, input);
                             else
                             {
-                                value.push_back(c);
-                                ++input;
+                                input.copyCharacterToString(value);
                             }
                         }
                         ++input;
@@ -352,8 +355,7 @@ bool XmlNode::read(Input& input)
                         ++input;
                         while((c=input[0])>=0 && c!=' ' && c!='\n' && c!='\r' && c!='"' && c!='\'' && c!='>')
                         {
-                            value.push_back(c);
-                            ++input;
+                            input.copyCharacterToString(value);
                         }
                     }
                 }
@@ -413,8 +415,7 @@ bool XmlNode::read(Input& input)
             }
             else
             {
-                contents.push_back( c );
-                ++input;
+                input.copyCharacterToString(contents);
             }
 
         }
@@ -521,7 +522,7 @@ bool XmlNode::writeProperties(const ControlMap& controlMap, std::ostream& fout) 
     return true;
 }
 
-bool XmlNode::readAndReplaceControl(std::string& contents, XmlNode::Input& input)
+bool XmlNode::readAndReplaceControl(std::string& in_contents, XmlNode::Input& input) const
 {
     int c = 0;
     std::string value;
@@ -532,7 +533,7 @@ bool XmlNode::readAndReplaceControl(std::string& contents, XmlNode::Input& input
     {
         c = input._controlToCharacterMap[value];
         OSG_INFO<<"Read control character "<<value<<" converted to "<<char(c)<<std::endl;
-        contents.push_back(c);
+        in_contents.push_back(c);
         return true;
     }
     else

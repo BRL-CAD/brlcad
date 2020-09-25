@@ -87,7 +87,7 @@ static int open_file(
 
     node.lineno = 1;
 
-    FILE *file = fopen(filename.c_str(), "r");
+    FILE *file = fopen(filename.c_str(), "rb");
 
     if (!file) {
 	return errno;

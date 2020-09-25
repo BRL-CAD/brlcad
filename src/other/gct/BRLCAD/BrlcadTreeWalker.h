@@ -151,7 +151,6 @@ class BrlcadTreeWalker
     case OP_UNION : return FLAG_UNION;
     case OP_SUBTRACT : return FLAG_SUBTRACT;
     case OP_INTERSECT : return FLAG_INTERSECT;
-    case OP_XOR : return FLAG_XOR;
     }
     return 0;
   }

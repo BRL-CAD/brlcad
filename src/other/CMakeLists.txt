@@ -124,6 +124,13 @@ SetTargetFolder(regex-static "Third Party Libraries")
 if (NOT BRLCAD_REGEX_BUILD)
   set(REGEX_LIBRARIES ${REGEX_LIBRARY} CACHE STRING "REGEX_LIBRARIES" FORCE)
   set(REGEX_INCLUDE_DIRS "${REGEX_INCLUDE_DIR}" CACHE STRING "REGEX include directory" FORCE)
+else (NOT BRLCAD_REGEX_BUILD)
+  # Our own code (at least the Creo plugin, maybe others) may require our
+  # regex.h to build if compiling against an installed BRL-CAD's libs.
+  # Explicitly override the general suppression of header installs in this
+  # specific case.
+  get_directory_property(REGEX_HDRS DIRECTORY libregex DEFINITION REGEX_HDRS)
+  install(FILES ${REGEX_HDRS} DESTINATION ${INCLUDE_DIR})
 endif (NOT BRLCAD_REGEX_BUILD)
 
 # Same deal for zlib Library - common requirement, deal with it up front
@@ -144,6 +151,12 @@ if(BRLCAD_ZLIB_BUILD)
   add_definitions(-DZ_PREFIX)
   add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
   set(Z_PREFIX_STR "${Z_PREFIX_STR}" CACHE STRING "prefix for zlib functions" FORCE)
+  # Our own code (at least logic using OpenNURBS, maybe others) can require our
+  # zlib.h to build if compiling against an installed BRL-CAD's libs.
+  # Explicitly override the general suppression of header installs in this
+  # specific case.
+  get_directory_property(ZLIB_PUBLIC_HDRS DIRECTORY libz DEFINITION ZLIB_PUBLIC_HDRS)
+  install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION ${INCLUDE_DIR})
 else(BRLCAD_ZLIB_BUILD)
   set(Z_PREFIX_STR "" CACHE STRING "clear prefix for zlib functions" FORCE)
   set(Z_PREFIX_STR)
@@ -326,7 +339,7 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME TCL REQUIRED_VARS BRLCAD_LEVEL2)
+THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME TCL REQUIRED_VARS "BRLCAD_ENABLE_TCL;BRLCAD_LEVEL2")
 
 if(BRLCAD_TCL_BUILD)
 
@@ -357,8 +370,7 @@ if(BRLCAD_TCL_BUILD)
   SetTargetFolder(tcl "Third Party Libraries")
   SetTargetFolder(tclstub "Third Party Libraries")
 
-else(BRLCAD_TCL_BUILD)
-
+elseif(BRLCAD_ENABLE_TCL)
   # We're using the system Tcl, but need some extra information.  FindTCL.cmake
   # doesn't give us a stub library location, so we need to go find it ourselves.
   get_filename_component(TCL_LIB_PATH "${TCL_LIBRARY}" DIRECTORY)
@@ -385,7 +397,6 @@ exit
   find_path(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
   mark_as_advanced(tcl_inittcl)
   CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
-
 endif(BRLCAD_TCL_BUILD)
 mark_as_advanced(TCL_COMPILATION_TRACING)
 mark_as_advanced(TCL_COMPILE_STATS)
@@ -415,7 +426,7 @@ local copy is built even if a system version is present.  This option
 also depends on BRLCAD_ENABLE_TK being ON.
 ")
 
-THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
 
 if(BRLCAD_TK_BUILD)
 
@@ -515,7 +526,7 @@ testing first for a system version if BRLCAD_TCL is set to AUTO or
 SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
 a system version is present.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itcl ${ITCL_DIR} "${TCL_TCLSH}" "tcl" "BRLCAD_LEVEL2" "" itcl_ALIASES itcl_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itcl ${ITCL_DIR} "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TCL;BRLCAD_LEVEL2" "" itcl_ALIASES itcl_DESCRIPTION)
 if(BRLCAD_ITCL_BUILD)
   set(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
   set(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
@@ -545,7 +556,7 @@ AUTO or SYSTEM.  If BRLCAD_ITK is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itk ${ITK_DIR} "${TK_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" itk_ALIASES itk_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itk ${ITK_DIR} "${TK_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" itk_ALIASES itk_DESCRIPTION)
 if(BRLCAD_ITK_BUILD)
   SetTargetFolder(itk "Third Party Libraries")
   SetTargetFolder(itkstub "Third Party Libraries")
@@ -576,7 +587,7 @@ a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
 set(IWIDGETS_VER "4.1.1")
-THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TK_WISH}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TK_WISH}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
 if(BRLCAD_IWIDGETS_BUILD)
   set(IWIDGETS_VERSION "${IWIDGETS_VER}" CACHE STRING "IWIDGETS_VERSION" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/iwidgets/pkgIndex.tcl")
@@ -598,7 +609,7 @@ SYSTEM.  If BRLCAD_TKHTML is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TK_WISH}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TK_WISH}" "tcl;tk" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
 DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
 SetTargetFolder(Tkhtml "Third Party Libraries")
@@ -614,7 +625,7 @@ AUTO or SYSTEM.  If BRLCAD_TKTABLE is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TK_WISH}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktable_ALIASES tktable_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TK_WISH}" "tcl;tk" "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktable_ALIASES tktable_DESCRIPTION)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
 DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
@@ -632,7 +643,7 @@ SetTargetFolder(tktable_header_gen "Compilation Utilities")
 #BRLCAD_ENABLE_TK is OFF.
 #")
 #THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TK_WISH}" "tcl;tk"
-#  "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
+#  "BRLCAD_ENABLE_TCL;BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/pkgIndex.tcl")
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h")
 #DISTCLEAN("${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4")
@@ -725,8 +736,9 @@ set(IS_SUBBUILD ON)
 set(SC_BUILD_SCHEMAS "" CACHE STRING "Disable schema builds for BRL-CAD" FORCE)
 # Lots of "libraries" associated with stepcode - use "stepcode" as the
 # stand-in for the build target var.
-THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION REQUIRED_VARS LEMON_EXECUTABLE
-  PERPLEX_EXECUTABLE BRLCAD_LEVEL3 ALIASES ${sc_ALIASES} RESET_VARS
+THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION
+  REQUIRED_VARS LEMON_EXECUTABLE PERPLEX_EXECUTABLE BRLCAD_LEVEL3 BRLCAD_ENABLE_STEP
+  ALIASES ${sc_ALIASES} RESET_VARS
   EXP2CXX_EXEC EXP2CXX_EXECUTABLE_TARGET FLAGS NOSYS)
 if(BRLCAD_SC_BUILD)
   set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)

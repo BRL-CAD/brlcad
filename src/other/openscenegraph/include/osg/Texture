@@ -23,7 +23,7 @@
 #include <osg/Vec4d>
 #include <osg/Vec4i>
 #include <osg/buffered_value>
-#include <osg/GL2Extensions>
+#include <osg/GLExtensions>
 
 #include <list>
 #include <map>
@@ -188,17 +188,6 @@
     #define GL_TEXTURE_3D                     0x806F
 #endif
 
-#ifndef GL_TEXTURE_2D_ARRAY_EXT
-    #define GL_TEXTURE_2D_ARRAY_EXT           0x8C1A
-    #define GL_TEXTURE_2D_ARRAY_EXT                        0x8C1A
-    #define GL_PROXY_TEXTURE_2D_ARRAY_EXT                  0x8C1B
-    #define GL_TEXTURE_BINDING_2D_ARRAY_EXT                0x8C1D
-    #define GL_MAX_ARRAY_TEXTURE_LAYERS_EXT                0x88FF
-    #define GL_COMPARE_REF_DEPTH_TO_TEXTURE_EXT            0x884E
-    #define GL_SAMPLER_2D_ARRAY_EXT                        0x8DC1
-    #define GL_SAMPLER_2D_ARRAY_SHADOW_EXT                 0x8DC4
-    #define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER_EXT    0x8CD4
-#endif
 
 #ifndef GL_TEXTURE_CUBE_MAP
     #define GL_TEXTURE_CUBE_MAP             0x8513
@@ -305,6 +294,25 @@
     #define GL_RGBA_INTEGER_MODE_EXT                           0x8D9E
 #endif
 
+#ifndef GL_VERSION_1_1
+#define GL_R3_G3_B2                       0x2A10
+#define GL_RGB4                           0x804F
+#define GL_RGB5                           0x8050
+#define GL_RGB8                           0x8051
+#define GL_RGB10                          0x8052
+#define GL_RGB12                          0x8053
+#define GL_RGB16                          0x8054
+#define GL_RGBA2                          0x8055
+#define GL_RGBA4                          0x8056
+#define GL_RGB5_A1                        0x8057
+#define GL_RGBA8                          0x8058
+#define GL_RGB10_A2                       0x8059
+#define GL_RGBA12                         0x805A
+#define GL_RGBA16                         0x805B
+#define GL_BGR_EXT                        0x80E0
+#define GL_BGRA_EXT                       0x80E1
+#endif
+
 #ifndef GL_ARB_texture_rg
     #define GL_RG                             0x8227
     #define GL_RG_INTEGER                     0x8228
@@ -397,7 +405,14 @@
     #define GL_MAX_COMBINED_IMAGE_UNIFORMS    0x90CF
 #endif
 
+//#define OSG_COLLECT_TEXTURE_APPLIED_STATS 1
+
 namespace osg {
+
+
+// forward declare
+class TextureObjectSet;
+class TextureObjectManager;
 
 
 /** Texture pure virtual base class that encapsulates OpenGL texture
@@ -431,11 +446,13 @@ class OSG_EXPORT Texture : public osg::StateAttribute
 
         virtual GLenum getTextureTarget() const = 0;
 
+        #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
         virtual bool getModeUsage(StateAttribute::ModeUsage& usage) const
         {
-            usage.usesTextureMode(getTextureTarget());
+                usage.usesTextureMode(getTextureTarget());
             return true;
         }
+        #endif
 
         virtual int getTextureWidth() const { return 0; }
         virtual int getTextureHeight() const { return 0; }
@@ -504,6 +521,24 @@ class OSG_EXPORT Texture : public osg::StateAttribute
         /** Gets the maximum anisotropy value. */
         inline float getMaxAnisotropy() const { return _maxAnisotropy; }
 
+        /** Sets the minimum level of detail value. */
+        void setMinLOD(float minlod);
+
+        /** Gets the minimum level of detail value. */
+        inline float getMinLOD() const { return _minlod; }
+
+        /** Sets the maximum level of detail value. */
+        void setMaxLOD(float maxlod);
+
+        /** Gets the maximum level of detail value. */
+        inline float getMaxLOD() const { return _maxlod; }
+
+        /** Gets the level of detail bias value. */
+        void setLODBias(float lodbias);
+
+        /** Sets the level of detail bias value. */
+        inline float getLODBias() const { return _lodbias; }
+
         /** Configure the source of texture swizzling for all channels */
         inline void setSwizzle(const Vec4i& swizzle) { _swizzle = swizzle; dirtyTextureParameters(); };
 
@@ -553,6 +588,7 @@ class OSG_EXPORT Texture : public osg::StateAttribute
             USE_PVRTC_2BPP_COMPRESSION,
             USE_PVRTC_4BPP_COMPRESSION,
             USE_ETC_COMPRESSION,
+            USE_ETC2_COMPRESSION,
             USE_RGTC1_COMPRESSION,
             USE_RGTC2_COMPRESSION,
             USE_S3TC_DXT1c_COMPRESSION,
@@ -616,7 +652,14 @@ class OSG_EXPORT Texture : public osg::StateAttribute
         /** Get the internal texture format type. */
         inline InternalFormatType getInternalFormatType() const { return _internalFormatType; }
 
+        /* select the size internal format to use based on Image when available or Texture format settings.*/
+        GLenum selectSizedInternalFormat(const osg::Image* image=0) const;
+
         class TextureObject;
+
+        /** return true if the texture image data has been modified and the associated GL texture object needs to be updated.*/
+        virtual bool isDirty(unsigned int /*contextID*/) const { return false; }
+
 
         /** Returns a pointer to the TextureObject for the current context. */
         inline TextureObject* getTextureObject(unsigned int contextID) const
@@ -658,38 +701,6 @@ class OSG_EXPORT Texture : public osg::StateAttribute
           * min filter is used. */
         void allocateMipmapLevels();
 
-        /** Encapsulates texture image load/store attributes */
-        struct ImageAttachment
-        {
-            GLuint unit;
-            GLint level;
-            GLboolean layered;
-            GLint layer;
-            GLenum access;
-            GLenum format;
-            
-            ImageAttachment()
-            : unit(0), level(0), layered(GL_FALSE), layer(0), access(0), format(0) {}
-        };
-
-        /** Type of access that will be performed on the texture image. */
-        enum ImageAccess
-        {
-             NOT_USED = 0,
-             READ_ONLY = GL_READ_ONLY_ARB,
-             WRITE_ONLY = GL_WRITE_ONLY_ARB,
-             READ_WRITE = GL_READ_WRITE_ARB
-        };
-
-        /** Bind texture to an image unit (available only if GL version is 4.2 or greater)
-          * The format parameter for the image unit need not exactly match the texture internal format,
-          * but if it is set to 0, the texture internal format will be used.
-          * See http://www.opengl.org/registry/specs/ARB/shader_image_load_store.txt */
-        void bindToImageUnit(unsigned int unit, GLenum access, GLenum format=0, int level=0, bool layered=false, int layer=0);
-
-        ImageAttachment& getImageAttachment() { return _imageAttachment; }
-        const ImageAttachment& getImageAttachment() const { return _imageAttachment; }
-
         /** Sets GL_TEXTURE_COMPARE_MODE_ARB to GL_COMPARE_R_TO_TEXTURE_ARB
           * See http://oss.sgi.com/projects/ogl-sample/registry/ARB/shadow.txt. */
         void setShadowComparison(bool flag) { _use_shadow_comparison = flag; }
@@ -713,7 +724,8 @@ class OSG_EXPORT Texture : public osg::StateAttribute
         enum ShadowTextureMode {
             LUMINANCE = GL_LUMINANCE,
             INTENSITY = GL_INTENSITY,
-            ALPHA = GL_ALPHA
+            ALPHA = GL_ALPHA,
+            NONE = GL_NONE
         };
 
         /** Sets shadow texture mode after comparison. */
@@ -729,6 +741,8 @@ class OSG_EXPORT Texture : public osg::StateAttribute
         /** Sets the texture image for the specified face. */
         virtual void setImage(unsigned int face, Image* image) = 0;
 
+        template<class T> void setImage(unsigned int face, const ref_ptr<T>& image) { setImage(face, image.get()); }
+
         /** Gets the texture image for the specified face. */
         virtual Image* getImage(unsigned int face) = 0;
 
@@ -741,6 +755,8 @@ class OSG_EXPORT Texture : public osg::StateAttribute
 
         /** Set the PBuffer graphics context to read from when using PBuffers for RenderToTexture.*/
         void setReadPBuffer(GraphicsContext* context) { _readPBuffer = context; }
+
+        template<class T> void setReadPBuffer(const ref_ptr<T>& context) { setReadPBuffer(context.get()); }
 
         /** Get the PBuffer graphics context to read from when using PBuffers for RenderToTexture.*/
         GraphicsContext* getReadPBuffer() { return _readPBuffer.get(); }
@@ -761,191 +777,6 @@ class OSG_EXPORT Texture : public osg::StateAttribute
           * the specified graphics context. Otherwise, releases OpenGL objects
           * for all graphics contexts. */
         virtual void releaseGLObjects(State* state=0) const;
-
-        /** Encapsulates queries of extension availability, obtains extension
-          * function pointers, and provides convenience wrappers for
-          * calling extension functions. */
-        class OSG_EXPORT Extensions : public osg::Referenced
-        {
-            public:
-                Extensions(unsigned int contextID);
-
-                void setMultiTexturingSupported(bool flag) { _isMultiTexturingSupported=flag; }
-                bool isMultiTexturingSupported() const { return _isMultiTexturingSupported; }
-
-                void setTextureFilterAnisotropicSupported(bool flag) { _isTextureFilterAnisotropicSupported=flag; }
-                bool isTextureFilterAnisotropicSupported() const { return _isTextureFilterAnisotropicSupported; }
-
-                void setTextureSwizzleSupported(bool flag) { _isTextureSwizzleSupported=flag; }
-                bool isTextureSwizzleSupported() const { return _isTextureSwizzleSupported; }
-
-                void setTextureCompressionARBSupported(bool flag) { _isTextureCompressionARBSupported=flag; }
-                bool isTextureCompressionARBSupported() const { return _isTextureCompressionARBSupported; }
-
-                void setTextureCompressionS3TCSupported(bool flag) { _isTextureCompressionS3TCSupported=flag; }
-                bool isTextureCompressionS3TCSupported() const { return _isTextureCompressionS3TCSupported; }
-
-                void setTextureCompressionPVRTC2BPPSupported(bool flag) { _isTextureCompressionPVRTC2BPPSupported=flag; }
-                bool isTextureCompressionPVRTC2BPPSupported() const { return _isTextureCompressionPVRTC2BPPSupported; }
-
-                void setTextureCompressionPVRTC4BPPSupported(bool flag) { _isTextureCompressionPVRTC4BPPSupported=flag; }
-                bool isTextureCompressionPVRTC4BPPSupported() const { return _isTextureCompressionPVRTC4BPPSupported; }
-
-                void setTextureCompressionETCSupported(bool flag) { _isTextureCompressionETCSupported=flag; }
-                bool isTextureCompressionETCSupported() const { return _isTextureCompressionETCSupported; }
-
-                void setTextureCompressionRGTCSupported(bool flag) { _isTextureCompressionRGTCSupported=flag; }
-                bool isTextureCompressionRGTCSupported() const { return _isTextureCompressionRGTCSupported; }
-
-                void setTextureCompressionPVRTCSupported(bool flag) { _isTextureCompressionPVRTCSupported=flag; }
-                bool isTextureCompressionPVRTCSupported() const { return _isTextureCompressionPVRTCSupported; }
-
-                void setTextureMirroredRepeatSupported(bool flag) { _isTextureMirroredRepeatSupported=flag; }
-                bool isTextureMirroredRepeatSupported() const { return _isTextureMirroredRepeatSupported; }
-
-                void setTextureEdgeClampSupported(bool flag) { _isTextureEdgeClampSupported=flag; }
-                bool isTextureEdgeClampSupported() const { return _isTextureEdgeClampSupported; }
-
-                void setTextureBorderClampSupported(bool flag) { _isTextureBorderClampSupported=flag; }
-                bool isTextureBorderClampSupported() const { return _isTextureBorderClampSupported; }
-
-                void setGenerateMipMapSupported(bool flag) { _isGenerateMipMapSupported=flag; }
-                bool isGenerateMipMapSupported() const { return _isGenerateMipMapSupported; }
-
-                void setPreferGenerateMipmapSGISForPowerOfTwo(bool flag) { _preferGenerateMipmapSGISForPowerOfTwo = flag; }
-                bool getPreferGenerateMipmapSGISForPowerOfTwo() const { return _preferGenerateMipmapSGISForPowerOfTwo; }
-
-                void setTextureMultisampledSupported(bool flag) { _isTextureMultisampledSupported=flag; }
-                bool isTextureMultisampledSupported() const { return _isTextureMultisampledSupported; }
-
-                void setShadowSupported(bool flag) { _isShadowSupported = flag; }
-                bool isShadowSupported() const { return _isShadowSupported; }
-
-                void setShadowAmbientSupported(bool flag) { _isShadowAmbientSupported = flag; }
-                bool isShadowAmbientSupported() const { return _isShadowAmbientSupported; }
-
-                void setTextureMaxLevelSupported(bool flag) { _isTextureMaxLevelSupported = flag; }
-                bool isTextureMaxLevelSupported() const { return _isTextureMaxLevelSupported; }
-
-                void setMaxTextureSize(GLint maxsize) { _maxTextureSize=maxsize; }
-                GLint maxTextureSize() const { return _maxTextureSize; }
-
-                void setNumTextureUnits(GLint nunits ) { _numTextureUnits=nunits; }
-                GLint numTextureUnits() const { return _numTextureUnits; }
-
-                bool isCompressedTexImage2DSupported() const { return _glCompressedTexImage2D!=0; }
-                bool isCompressedTexSubImage2DSupported() const { return _glCompressedTexSubImage2D!=0; }
-
-                bool isClientStorageSupported() const { return _isClientStorageSupported; }
-
-                bool isNonPowerOfTwoTextureSupported(GLenum filter) const
-                {
-                    return (filter==GL_LINEAR || filter==GL_NEAREST) ?
-                            _isNonPowerOfTwoTextureNonMipMappedSupported :
-                            _isNonPowerOfTwoTextureMipMappedSupported;
-                }
-
-                void setTextureIntegerSupported(bool flag) { _isTextureIntegerEXTSupported=flag; }
-                bool isTextureIntegerSupported() const { return _isTextureIntegerEXTSupported; }
-
-                bool isBindImageTextureSupported() const { return _glBindImageTexture!=0; }
-
-                void glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) const
-                {
-                    _glCompressedTexImage2D(target, level, internalformat, width, height, border, imageSize, data);
-                }
-
-                void glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data) const
-                {
-                    _glCompressedTexSubImage2D(target, level, xoffset, yoffset, width, height, format, imageSize, data);
-                }
-
-                void glGetCompressedTexImage(GLenum target, GLint level, GLvoid *data) const
-                {
-                    _glGetCompressedTexImage(target, level, data);
-                }
-
-                void glTexImage2DMultisample(GLenum target, GLsizei samples, GLint internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations) const
-                {
-                    _glTexImage2DMultisample(target, samples, internalformat, width, height, fixedsamplelocations);
-                }
-
-                void glTexParameterIiv(GLenum target, GLenum pname, const GLint* data) const
-                {
-                    _glTexParameterIiv(target, pname, data);
-                }
-
-                void glTexParameterIuiv(GLenum target, GLenum pname, const GLuint* data) const
-                {
-                    _glTexParameterIuiv(target, pname, data);
-                }
-
-                // ARB_shader_image_load_store
-                void glBindImageTexture(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format) const
-                {
-                    _glBindImageTexture(unit, texture, level, layered, layer, access, format);
-                }
-
-            protected:
-
-                ~Extensions() {}
-
-                typedef void (GL_APIENTRY * CompressedTexImage2DArbProc) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
-                typedef void (GL_APIENTRY * CompressedTexSubImage2DArbProc) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
-                typedef void (GL_APIENTRY * GetCompressedTexImageArbProc) (GLenum target, GLint level, GLvoid *data);
-                typedef void (GL_APIENTRY * TexImage2DMultisample)(GLenum target, GLsizei samples, GLint internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
-                typedef void (GL_APIENTRY * TexParameterIivProc)(GLenum target, GLenum pname, const GLint* data);
-                typedef void (GL_APIENTRY * TexParameterIuivProc)(GLenum target, GLenum pname, const GLuint* data);
-                typedef void (GL_APIENTRY * BindImageTextureProc)( GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format );
-
-                CompressedTexImage2DArbProc     _glCompressedTexImage2D;
-                CompressedTexSubImage2DArbProc  _glCompressedTexSubImage2D;
-                GetCompressedTexImageArbProc    _glGetCompressedTexImage;
-                TexImage2DMultisample           _glTexImage2DMultisample;
-                TexParameterIivProc             _glTexParameterIiv;
-                TexParameterIuivProc            _glTexParameterIuiv;
-
-                // ARB_shader_image_load_store
-                BindImageTextureProc            _glBindImageTexture;
-
-                bool    _isMultiTexturingSupported;
-                bool    _isTextureFilterAnisotropicSupported;
-                bool    _isTextureSwizzleSupported;
-                bool    _isTextureCompressionARBSupported;
-                bool    _isTextureCompressionS3TCSupported;
-                bool    _isTextureCompressionPVRTC2BPPSupported;
-                bool    _isTextureCompressionPVRTC4BPPSupported;
-                bool    _isTextureCompressionETCSupported;
-                bool    _isTextureCompressionRGTCSupported;
-                bool    _isTextureCompressionPVRTCSupported;
-                bool    _isTextureMirroredRepeatSupported;
-                bool    _isTextureEdgeClampSupported;
-                bool    _isTextureBorderClampSupported;
-                bool    _isGenerateMipMapSupported;
-                bool    _preferGenerateMipmapSGISForPowerOfTwo;
-                bool    _isTextureMultisampledSupported;
-                bool    _isShadowSupported;
-                bool    _isShadowAmbientSupported;
-                bool    _isClientStorageSupported;
-                bool    _isNonPowerOfTwoTextureMipMappedSupported;
-                bool    _isNonPowerOfTwoTextureNonMipMappedSupported;
-                bool    _isTextureIntegerEXTSupported;
-                bool    _isTextureMaxLevelSupported;
-
-                GLint   _maxTextureSize;
-                GLint   _numTextureUnits;
-        };
-
-        /** Gets the extension for the specified context. Creates the
-          * Extensions object for that context if it doesn't exist.
-          * Returns NULL if the Extensions object for the context doesn't
-          * exist and the createIfNotInitalized flag is false. */
-        static Extensions* getExtensions(unsigned int contextID,bool createIfNotInitalized);
-
-        /** Overrides Extensions objects across graphics contexts. Typically
-          * used to ensure the same lowest common denominator of extensions
-          * on systems with different graphics pipes. */
-        static void setExtensions(unsigned int contextID,Extensions* extensions);
 
         /** Determine whether the given internalFormat is a compressed
           * image format. */
@@ -1033,6 +864,9 @@ class OSG_EXPORT Texture : public osg::StateAttribute
         FilterMode      _min_filter;
         FilterMode      _mag_filter;
         float           _maxAnisotropy;
+        float           _minlod;
+        float           _maxlod;
+        float           _lodbias;
         Vec4i           _swizzle;
         bool            _useHardwareMipMapGeneration;
         bool            _unrefImageDataAfterApply;
@@ -1052,8 +886,6 @@ class OSG_EXPORT Texture : public osg::StateAttribute
         ShadowCompareFunc   _shadow_compare_func;
         ShadowTextureMode   _shadow_texture_mode;
         float               _shadow_ambient;
-
-        ImageAttachment _imageAttachment;
 
     public:
 
@@ -1157,11 +989,7 @@ class OSG_EXPORT Texture : public osg::StateAttribute
             unsigned int _size;
         };
 
-        // forward declare
-        class TextureObjectSet;
-        class TextureObjectManager;
-
-        class OSG_EXPORT TextureObject : public osg::Referenced
+        class OSG_EXPORT TextureObject : public GraphicsObject
         {
         public:
 
@@ -1173,6 +1001,7 @@ class OSG_EXPORT Texture : public osg::StateAttribute
                 _next(0),
                 _texture(texture),
                 _allocated(false),
+                _frameLastUsed(0),
                 _timeStamp(0) {}
 
             inline TextureObject(Texture* texture, GLuint id, const TextureProfile& profile):
@@ -1183,6 +1012,7 @@ class OSG_EXPORT Texture : public osg::StateAttribute
                 _next(0),
                 _texture(texture),
                 _allocated(false),
+                _frameLastUsed(0),
                 _timeStamp(0) {}
 
             inline TextureObject(Texture* texture,
@@ -1201,6 +1031,7 @@ class OSG_EXPORT Texture : public osg::StateAttribute
                 _next(0),
                 _texture(texture),
                 _allocated(false),
+                _frameLastUsed(0),
                 _timeStamp(0) {}
 
             inline bool match(GLenum    target,
@@ -1242,6 +1073,8 @@ class OSG_EXPORT Texture : public osg::StateAttribute
 
             inline bool isReusable() const { return _allocated && _profile._width!=0; }
 
+            /** release TextureObject to the orphan list to be reused or deleted.*/
+            void release();
 
             GLuint              _id;
             TextureProfile      _profile;
@@ -1260,154 +1093,10 @@ class OSG_EXPORT Texture : public osg::StateAttribute
 
         typedef std::list< ref_ptr<TextureObject> > TextureObjectList;
 
-        class OSG_EXPORT TextureObjectSet : public Referenced
-        {
-        public:
-            TextureObjectSet(TextureObjectManager* parent, const TextureProfile& profile);
 
-            const TextureProfile& getProfile() const { return _profile; }
+        static osg::ref_ptr<TextureObject> generateTextureObject(const Texture* texture, unsigned int contextID,GLenum target);
 
-            void handlePendingOrphandedTextureObjects();
-
-            void deleteAllTextureObjects();
-            void discardAllTextureObjects();
-            void flushAllDeletedTextureObjects();
-            void discardAllDeletedTextureObjects();
-            void flushDeletedTextureObjects(double currentTime, double& availableTime);
-
-            TextureObject* takeFromOrphans(Texture* texture);
-            TextureObject* takeOrGenerate(Texture* texture);
-            void moveToBack(TextureObject* to);
-            void addToBack(TextureObject* to);
-            void orphan(TextureObject* to);
-            void remove(TextureObject* to);
-            void moveToSet(TextureObject* to, TextureObjectSet* set);
-
-            unsigned int size() const { return _profile._size * _numOfTextureObjects; }
-
-            bool makeSpace(unsigned int& size);
-
-            bool checkConsistency() const;
-
-            TextureObjectManager* getParent() { return _parent; }
-
-            unsigned int computeNumTextureObjectsInList() const;
-            unsigned int getNumOfTextureObjects() const { return _numOfTextureObjects; }
-            unsigned int getNumOrphans() const { return static_cast<unsigned int>(_orphanedTextureObjects.size()); }
-            unsigned int getNumPendingOrphans() const { return static_cast<unsigned int>(_pendingOrphanedTextureObjects.size()); }
-
-        protected:
-
-            virtual ~TextureObjectSet();
-
-            OpenThreads::Mutex  _mutex;
-
-            TextureObjectManager*       _parent;
-            unsigned int                _contextID;
-            TextureProfile              _profile;
-            unsigned int                _numOfTextureObjects;
-            TextureObjectList           _orphanedTextureObjects;
-            TextureObjectList           _pendingOrphanedTextureObjects;
-
-            TextureObject*              _head;
-            TextureObject*              _tail;
-
-        };
-
-        class OSG_EXPORT TextureObjectManager : public osg::Referenced
-        {
-        public:
-            TextureObjectManager(unsigned int contextID);
-
-            unsigned int getContextID() const { return _contextID; }
-
-
-
-            void setNumberActiveTextureObjects(unsigned int size) { _numActiveTextureObjects = size; }
-            unsigned int& getNumberActiveTextureObjects() { return _numActiveTextureObjects; }
-            unsigned int getNumberActiveTextureObjects() const { return _numActiveTextureObjects; }
-
-            void setNumberOrphanedTextureObjects(unsigned int size) { _numOrphanedTextureObjects = size; }
-            unsigned int& getNumberOrphanedTextureObjects() { return _numOrphanedTextureObjects; }
-            unsigned int getNumberOrphanedTextureObjects() const { return _numOrphanedTextureObjects; }
-
-            void setCurrTexturePoolSize(unsigned int size) { _currTexturePoolSize = size; }
-            unsigned int& getCurrTexturePoolSize() { return _currTexturePoolSize; }
-            unsigned int getCurrTexturePoolSize() const { return _currTexturePoolSize; }
-
-            void setMaxTexturePoolSize(unsigned int size);
-            unsigned int getMaxTexturePoolSize() const { return _maxTexturePoolSize; }
-
-            bool hasSpace(unsigned int size) const { return (_currTexturePoolSize+size)<=_maxTexturePoolSize; }
-            bool makeSpace(unsigned int size);
-
-            TextureObject* generateTextureObject(const Texture* texture, GLenum target);
-            TextureObject* generateTextureObject(const Texture* texture,
-                                                        GLenum    target,
-                                                        GLint     numMipmapLevels,
-                                                        GLenum    internalFormat,
-                                                        GLsizei   width,
-                                                        GLsizei   height,
-                                                        GLsizei   depth,
-                                                        GLint     border);
-            void handlePendingOrphandedTextureObjects();
-            void deleteAllTextureObjects();
-            void discardAllTextureObjects();
-            void flushAllDeletedTextureObjects();
-            void discardAllDeletedTextureObjects();
-            void flushDeletedTextureObjects(double currentTime, double& availableTime);
-            void releaseTextureObject(TextureObject* to);
-
-            TextureObjectSet* getTextureObjectSet(const TextureProfile& profile);
-
-            void newFrame(osg::FrameStamp* fs);
-            void resetStats();
-            void reportStats(std::ostream& out);
-            void recomputeStats(std::ostream& out) const;
-            bool checkConsistency() const;
-
-            unsigned int& getFrameNumber() { return _frameNumber; }
-            unsigned int& getNumberFrames() { return _numFrames; }
-
-            unsigned int& getNumberDeleted() { return _numDeleted; }
-            double& getDeleteTime() { return _deleteTime; }
-
-            unsigned int& getNumberGenerated() { return _numGenerated; }
-            double& getGenerateTime() { return _generateTime; }
-
-            unsigned int& getNumberApplied() { return _numApplied; }
-            double& getApplyTime() { return _applyTime; }
-
-
-        protected:
-
-            typedef std::map< TextureProfile, osg::ref_ptr<TextureObjectSet> > TextureSetMap;
-            unsigned int        _contextID;
-            unsigned int        _numActiveTextureObjects;
-            unsigned int        _numOrphanedTextureObjects;
-            unsigned int        _currTexturePoolSize;
-            unsigned int        _maxTexturePoolSize;
-            TextureSetMap       _textureSetMap;
-
-            unsigned int        _frameNumber;
-
-            unsigned int        _numFrames;
-            unsigned int        _numDeleted;
-            double              _deleteTime;
-
-            unsigned int        _numGenerated;
-            double              _generateTime;
-
-            unsigned int        _numApplied;
-            double              _applyTime;
-
-        };
-
-        static osg::ref_ptr<Texture::TextureObjectManager>&  getTextureObjectManager(unsigned int contextID);
-
-        static TextureObject* generateTextureObject(const Texture* texture, unsigned int contextID,GLenum target);
-
-        static TextureObject* generateTextureObject(const Texture* texture,
+        static osg::ref_ptr<TextureObject> generateTextureObject(const Texture* texture,
                                                      unsigned int contextID,
                                                      GLenum    target,
                                                      GLint     numMipmapLevels,
@@ -1417,12 +1106,16 @@ class OSG_EXPORT Texture : public osg::StateAttribute
                                                      GLsizei   depth,
                                                      GLint     border);
 
-        static void deleteAllTextureObjects(unsigned int contextID);
-        static void discardAllTextureObjects(unsigned int contextID);
-        static void flushAllDeletedTextureObjects(unsigned int contextID);
-        static void discardAllDeletedTextureObjects(unsigned int contextID);
-        static void flushDeletedTextureObjects(unsigned int contextID,double currentTime, double& availableTime);
-        static void releaseTextureObject(unsigned int contextID, TextureObject* to);
+        TextureObject* generateAndAssignTextureObject(unsigned int contextID, GLenum target) const;
+
+        TextureObject* generateAndAssignTextureObject(unsigned int contextID,
+                                                     GLenum    target,
+                                                     GLint     numMipmapLevels,
+                                                     GLenum    internalFormat,
+                                                     GLsizei   width,
+                                                     GLsizei   height,
+                                                     GLsizei   depth,
+                                                     GLint     border) const;
 
     protected:
 
@@ -1432,6 +1125,139 @@ class OSG_EXPORT Texture : public osg::StateAttribute
 
 };
 
+class OSG_EXPORT TextureObjectSet : public Referenced
+{
+public:
+    TextureObjectSet(TextureObjectManager* parent, const Texture::TextureProfile& profile);
+
+    const Texture::TextureProfile& getProfile() const { return _profile; }
+
+    void handlePendingOrphandedTextureObjects();
+
+    void deleteAllTextureObjects();
+    void discardAllTextureObjects();
+    void flushAllDeletedTextureObjects();
+    void discardAllDeletedTextureObjects();
+    void flushDeletedTextureObjects(double currentTime, double& availableTime);
+
+    osg::ref_ptr<Texture::TextureObject> takeFromOrphans(Texture* texture);
+    osg::ref_ptr<Texture::TextureObject> takeOrGenerate(Texture* texture);
+    void moveToBack(Texture::TextureObject* to);
+    void addToBack(Texture::TextureObject* to);
+    void orphan(Texture::TextureObject* to);
+    void remove(Texture::TextureObject* to);
+    void moveToSet(Texture::TextureObject* to, TextureObjectSet* set);
+
+    unsigned int size() const { return _profile._size * _numOfTextureObjects; }
+
+    bool makeSpace(unsigned int& size);
+
+    bool checkConsistency() const;
+
+    TextureObjectManager* getParent() { return _parent; }
+
+    unsigned int computeNumTextureObjectsInList() const;
+    unsigned int getNumOfTextureObjects() const { return _numOfTextureObjects; }
+    unsigned int getNumOrphans() const { return static_cast<unsigned int>(_orphanedTextureObjects.size()); }
+    unsigned int getNumPendingOrphans() const { return static_cast<unsigned int>(_pendingOrphanedTextureObjects.size()); }
+
+protected:
+
+    virtual ~TextureObjectSet();
+
+    OpenThreads::Mutex  _mutex;
+
+    TextureObjectManager*       _parent;
+    unsigned int                _contextID;
+    Texture::TextureProfile     _profile;
+    unsigned int                _numOfTextureObjects;
+    Texture::TextureObjectList  _orphanedTextureObjects;
+    Texture::TextureObjectList  _pendingOrphanedTextureObjects;
+
+    Texture::TextureObject*     _head;
+    Texture::TextureObject*     _tail;
+
+};
+
+class OSG_EXPORT TextureObjectManager : public GraphicsObjectManager
+{
+public:
+    TextureObjectManager(unsigned int contextID);
+
+
+    void setNumberActiveTextureObjects(unsigned int size) { _numActiveTextureObjects = size; }
+    unsigned int& getNumberActiveTextureObjects() { return _numActiveTextureObjects; }
+    unsigned int getNumberActiveTextureObjects() const { return _numActiveTextureObjects; }
+
+    void setNumberOrphanedTextureObjects(unsigned int size) { _numOrphanedTextureObjects = size; }
+    unsigned int& getNumberOrphanedTextureObjects() { return _numOrphanedTextureObjects; }
+    unsigned int getNumberOrphanedTextureObjects() const { return _numOrphanedTextureObjects; }
+
+    void setCurrTexturePoolSize(unsigned int size) { _currTexturePoolSize = size; }
+    unsigned int& getCurrTexturePoolSize() { return _currTexturePoolSize; }
+    unsigned int getCurrTexturePoolSize() const { return _currTexturePoolSize; }
+
+    void setMaxTexturePoolSize(unsigned int size);
+    unsigned int getMaxTexturePoolSize() const { return _maxTexturePoolSize; }
+
+    bool hasSpace(unsigned int size) const { return (_currTexturePoolSize+size)<=_maxTexturePoolSize; }
+    bool makeSpace(unsigned int size);
+
+    osg::ref_ptr<Texture::TextureObject> generateTextureObject(const Texture* texture, GLenum target);
+    osg::ref_ptr<Texture::TextureObject> generateTextureObject(const Texture* texture,
+                                                GLenum    target,
+                                                GLint     numMipmapLevels,
+                                                GLenum    internalFormat,
+                                                GLsizei   width,
+                                                GLsizei   height,
+                                                GLsizei   depth,
+                                                GLint     border);
+    void handlePendingOrphandedTextureObjects();
+
+    void deleteAllGLObjects();
+    void discardAllGLObjects();
+    void flushAllDeletedGLObjects();
+    void discardAllDeletedGLObjects();
+    void flushDeletedGLObjects(double currentTime, double& availableTime);
+
+    TextureObjectSet* getTextureObjectSet(const Texture::TextureProfile& profile);
+
+    void newFrame(osg::FrameStamp* fs);
+    void resetStats();
+    void reportStats(std::ostream& out);
+    void recomputeStats(std::ostream& out) const;
+    bool checkConsistency() const;
+
+    unsigned int& getFrameNumber() { return _frameNumber; }
+    unsigned int& getNumberFrames() { return _numFrames; }
+
+    unsigned int& getNumberDeleted() { return _numDeleted; }
+    double& getDeleteTime() { return _deleteTime; }
+
+    unsigned int& getNumberGenerated() { return _numGenerated; }
+    double& getGenerateTime() { return _generateTime; }
+
+protected:
+
+    ~TextureObjectManager();
+
+    typedef std::map< Texture::TextureProfile, osg::ref_ptr<TextureObjectSet> > TextureSetMap;
+
+    unsigned int        _numActiveTextureObjects;
+    unsigned int        _numOrphanedTextureObjects;
+    unsigned int        _currTexturePoolSize;
+    unsigned int        _maxTexturePoolSize;
+    TextureSetMap       _textureSetMap;
+
+    unsigned int        _frameNumber;
+
+    unsigned int        _numFrames;
+    unsigned int        _numDeleted;
+    double              _deleteTime;
+
+    unsigned int        _numGenerated;
+    double              _generateTime;
+};
 }
 
 #endif

@@ -91,7 +91,7 @@ void Keystone::compute3DPositions(osg::DisplaySettings* ds, osg::Vec3& tl, osg::
 //
 // Keystone helper functions
 //
-struct KeystoneCullCallback : public osg::Drawable::CullCallback
+struct KeystoneCullCallback : public osg::DrawableCullCallback
 {
     KeystoneCullCallback(Keystone* keystone=0):_keystone(keystone) {}
     KeystoneCullCallback(const KeystoneCullCallback&, const osg::CopyOp&) {}
@@ -108,7 +108,7 @@ struct KeystoneCullCallback : public osg::Drawable::CullCallback
 };
 
 
-struct KeystoneUpdateCallback : public osg::Drawable::UpdateCallback
+struct KeystoneUpdateCallback : public osg::DrawableUpdateCallback
 {
     KeystoneUpdateCallback(Keystone* keystone=0):_keystone(keystone) {}
     KeystoneUpdateCallback(const KeystoneUpdateCallback&, const osg::CopyOp&) {}
@@ -118,7 +118,7 @@ struct KeystoneUpdateCallback : public osg::Drawable::UpdateCallback
     /** do customized update code.*/
     virtual void update(osg::NodeVisitor*, osg::Drawable* drawable)
     {
-        update(dynamic_cast<osg::Geometry*>(drawable));
+        update(drawable->asGeometry());
     }
 
     void update(osg::Geometry* geometry)
@@ -418,8 +418,8 @@ osg::Vec2d KeystoneHandler::incrementScale(const osgGA::GUIEventAdapter& ea) con
 
 bool KeystoneHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& /*aa*/, osg::Object* obj, osg::NodeVisitor* /*nv*/)
 {
-    osg::Camera* camera = dynamic_cast<osg::Camera*>(obj);
-    osg::Viewport* viewport = camera ?  camera->getViewport() : 0;
+    osg::Camera* camera = obj ? obj->asCamera() : 0;
+    osg::Viewport* viewport = camera ? camera->getViewport() : 0;
 
     if (!viewport) return false;
 
@@ -573,7 +573,7 @@ bool Keystone::loadKeystoneFiles(osg::DisplaySettings* ds)
             ++itr)
         {
             const std::string& filename = *itr;
-            osg::ref_ptr<osgViewer::Keystone> keystone = osgDB::readFile<osgViewer::Keystone>(filename);
+            osg::ref_ptr<osgViewer::Keystone> keystone = osgDB::readRefFile<osgViewer::Keystone>(filename);
             if (keystone.valid())
             {
                 keystone->setUserValue("filename",filename);

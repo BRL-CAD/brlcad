@@ -577,5 +577,5 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-file:/src/libfb/osg_fb_manipulator.h
+file:/src/libdm/osgl/osg_fb_manipulator.h
 

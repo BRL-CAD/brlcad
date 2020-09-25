@@ -3527,7 +3527,7 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 	FILE *my_stream;
 	int parse_err;
 
-	if (!(my_stream = fopen(source_path, "r"))) {
+	if (!(my_stream = fopen(source_path, "rb"))) {
 	    perror("libgcv");
 	    bu_log("Cannot open input file (%s)\n", source_path);
 	    obj_parser_destroy(ga.parser);
@@ -3589,7 +3589,7 @@ obj_can_read(const char *source_path)
 	obj_parser_destroy(parser);
 	return 0;
     }
-    if (!(fp = fopen(source_path, "r"))) {
+    if (!(fp = fopen(source_path, "rb"))) {
 	obj_parser_destroy(parser);
 	return 0;
     }
@@ -3604,7 +3604,7 @@ obj_can_read(const char *source_path)
 
 
 static const struct gcv_filter gcv_conv_obj_read = {
-    "OBJ Reader", GCV_FILTER_READ, BU_MIME_MODEL_OBJ, obj_can_read,
+    "OBJ Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_OBJ, BU_MIME_MODEL, obj_can_read,
     obj_read_create_opts, obj_read_free_opts, obj_read
 };
 

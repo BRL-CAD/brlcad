@@ -323,6 +323,9 @@ main(int ac, char **av)
     progname = *av;
     if (isatty(fileno(stdin))) usage();
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     /* Get # of options & turn all the option flags off
      */
     optlen = strlen(options);

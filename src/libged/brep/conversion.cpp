@@ -100,7 +100,6 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* convert right */
 	    comb = new rt_comb_internal;
 	    newtree->tr_b.tb_right = new tree;

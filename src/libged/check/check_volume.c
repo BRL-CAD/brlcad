@@ -36,7 +36,8 @@ int check_volume(struct current_state *state,
     char *name = "volume.plot3";
 
     if (options->plot_files) {
-	if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_volume = fopen(name, "wb");
+	if (plot_volume == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
 	analyze_set_volume_plotfile(state, plot_volume);
@@ -75,7 +76,7 @@ int check_volume(struct current_state *state,
     if (plot_volume){
 	fclose(plot_volume);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
-    } 
+    }
 
     return 0;
 }

@@ -20,7 +20,7 @@
 
 /*----------------------------------------------------------------------*/
 /* @file trimesh.h */
-/** @addtogroup trimesh */
+/** @addtogroup bg_trimesh */
 /** @{ */
 
 /**
@@ -171,22 +171,6 @@ BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, int *n_ofaces, point2d_t **o
 BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, int *n_ofaces, point_t **opnts, int *n_opnts,
 	const int *ifaces, int n_ifaces, const point_t *ipnts);
 
-
-/**
- * @brief
- * Low level per-face contribution to inside/outside test, used if
- * calling codes prefer to construct their own test with their own
- * mesh containers.
- */
-BG_EXPORT int
-bg_ptm_triangle_chain(point_t v1, point_t v2, point_t v3, point_t tp, int *exact_flag);
-
-/**
- * @brief
- * Report if point tp is inside or outside of the trimesh.
- */
-BG_EXPORT int
-bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_t *pts);
 
 __END_DECLS
 

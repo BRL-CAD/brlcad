@@ -18,10 +18,6 @@
  * information.
  */
 
-/** @ingroup parallel */
-/** @{ */
-/** @file include/bu/parallel.h */
-/** @} */
 #ifndef BU_PARALLEL_H
 #define BU_PARALLEL_H
 
@@ -33,7 +29,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup bu_thread
+/** @addtogroup bu_parallel
  * @brief
  * Thread based parallelism routines.
  */

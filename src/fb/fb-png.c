@@ -38,7 +38,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "pkg.h"
 
@@ -104,6 +104,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
 	outfp = stdout;
+	setmode(fileno(stdout), O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((outfp = fopen(file_name, "wb")) == NULL) {
@@ -128,7 +129,7 @@ main(int argc, char **argv)
     static int scanpix;			/* # of pixels of scanline */
     static ColorMap cmap;		/* libfb color map */
 
-    fb *fbp;
+    struct fb *fbp;
     int y;
     int got;
     png_structp png_p;

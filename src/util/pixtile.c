@@ -119,9 +119,12 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+	bu_exit(1, NULL);
     }
 
     if (bu_optind+1 == argc) {
@@ -135,7 +138,7 @@ main(int argc, char **argv)
 
     if (file_width < 1) {
 	fprintf(stderr, "pixtile: width of %d out of range\n", file_width);
-	bu_exit (12, NULL);
+	bu_exit(12, NULL);
     }
 
     scanbytes = file_width * 3;
@@ -153,7 +156,7 @@ main(int argc, char **argv)
 
     if ((obuf = (char *)malloc(swathbytes)) == (char *)0) {
 	fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
-	bu_exit (10, NULL);
+	bu_exit(10, NULL);
     }
 
     image = 0;
@@ -170,7 +173,7 @@ main(int argc, char **argv)
 	    if (image >= maximage) {
 		fprintf(stderr, "\npixtile: frame full\n");
 		/* All swaths already written out */
-		bu_exit (0, NULL);
+		bu_exit(0, NULL);
 	    }
 	    fprintf(stderr, "%d ", framenumber);  fflush(stdout);
 	    if (is_stream) {
@@ -186,7 +189,7 @@ main(int argc, char **argv)
 		}
 
 		ifname = bu_file_realpath(name, NULL);
-		if ((fd=open(ifname, 0))<0) {
+		if ((fd=open(ifname, O_RDONLY|O_BINARY))<0) {
 		    perror(ifname);
 		    bu_free(ifname, "ifname alloc from bu_file_realpath");
 		    goto done;
@@ -208,9 +211,10 @@ main(int argc, char **argv)
 		    break;
 		}
 	    }
-	    if (fd > 0) close(fd);
+	    if (fd > 0)
+		close(fd);
 	}
-	ret = write(1, obuf, swathbytes);
+	ret = write(fileno(stdout), obuf, swathbytes);
 	if (ret < 0)
 	    perror("write");
 
@@ -219,7 +223,7 @@ main(int argc, char **argv)
 done:
     /* Flush partial frame? */
     if (rel != 0) {
-	ret = write(1, obuf, swathbytes);
+	ret = write(fileno(stdout), obuf, swathbytes);
 	if (ret < 0)
 	    perror("write");
     }

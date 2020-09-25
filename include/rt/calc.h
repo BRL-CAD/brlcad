@@ -17,11 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/**
+/** @addtogroup raytrace */
+/** @{ */
+/** @file rt/calc.h
  * @brief
  * In memory format for non-geometry objects in BRL-CAD databases.
  */
-/** @file rt/calc.h */
 
 #ifndef RT_CALC_H
 #define RT_CALC_H

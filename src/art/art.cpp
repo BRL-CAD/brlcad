@@ -154,13 +154,13 @@ extern "C" {
     struct icv_image* bif = NULL;
 }
 
-/* NOTE: stub in empty rt_cmdtab to satisfy ../rt/opt.c - this means
+/* NOTE: stub in empty rt_do_tab to satisfy ../rt/opt.c - this means
  * we can't run the commands, but they are tied deeply into the various
  * src/rt files and a significant refactor is in order to properly
  * extract that functionality into a library... */
 
 extern "C" {
-    struct command_tab rt_cmdtab[] = { {NULL, NULL, NULL, 0, 0, 0} };
+    struct command_tab rt_do_tab[] = { {NULL, NULL, NULL, 0, 0, 0} };
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 

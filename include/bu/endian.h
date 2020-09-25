@@ -36,9 +36,9 @@ __BEGIN_DECLS
 
 
 typedef enum {
-    BU_LITTLE_ENDIAN = 1234, /* LSB first: i386, VAX order */
-    BU_BIG_ENDIAN    = 4321, /* MSB first: 68000, IBM, network order */
-    BU_PDP_ENDIAN    = 3412  /* LSB first in word, MSW first in long */
+    BU_LITTLE_ENDIAN = 1234, /**< LSB first: i386, VAX order */
+    BU_BIG_ENDIAN    = 4321, /**< MSB first: 68000, IBM, network order */
+    BU_PDP_ENDIAN    = 3412  /**< LSB first in word, MSW first in long */
 } bu_endian_t;
 
 

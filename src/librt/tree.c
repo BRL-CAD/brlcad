@@ -1114,9 +1114,6 @@ rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
 	case OP_INTERSECT:
 	    uop = UOP_INTERSECT;
 	    break;
-	case OP_XOR:
-	    uop = UOP_XOR;
-	    break;
 	default:
 	    bu_log("rt_bit_tree: bad op[%d]\n", tp->tr_op);
 	    exit(1);

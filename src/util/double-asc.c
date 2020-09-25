@@ -40,7 +40,7 @@
 #include "bu/cv.h"
 #include "bu/snooze.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define OPT_STRING "acf:s:n:w:#:h?"
@@ -124,12 +124,13 @@ get_args(int argc, char **argv)
     switch (argc - bu_optind) {
 	case 0:
 	    file_name = "stdin";
-	    infd = 0;
+	    infd = fileno(stdin);
+	    setmode(fileno(stdin), O_BINARY);
 	    break;
 	case 1:
 	    file_name = argv[bu_optind++];
 	    ifname = bu_file_realpath(file_name, NULL);
-	    if ((infd = open(ifname, O_RDONLY)) == -1) {
+	    if ((infd = open(ifname, O_RDONLY|O_BINARY)) == -1) {
 		bu_free(ifname, "ifname alloc from bu_file_realpath");
 		bu_exit (1, "Cannot open file '%s'\n", file_name);
 	    }

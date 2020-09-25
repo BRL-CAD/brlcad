@@ -58,8 +58,11 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (argc > 1) {
-	if ((fp = fopen(argv[1], "r")) == NULL) {
+	if ((fp = fopen(argv[1], "rb")) == NULL) {
 	    fprintf(stderr, "%s", Usage);
 	    bu_exit(1, "pixhist3d-plot3: can't open \"%s\"\n", argv[1]);
 	}

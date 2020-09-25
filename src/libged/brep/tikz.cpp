@@ -40,7 +40,6 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* convert right */
 	    ret = tikz_tree(gedp, tikz, oldtree->tr_b.tb_right, color, cnt);
 	    /* fall through */

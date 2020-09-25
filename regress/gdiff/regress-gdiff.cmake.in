@@ -1,0 +1,204 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(GDIFF_CF "@GDIFF_CLEAN_FILE@")
+set(LOGFILE "@LOG_FILE@")
+
+function(GDIFF_CHECK_INIT msg)
+  math(EXPR TN "${TN} + 1")
+  set(TN "${TN}" PARENT_SCOPE)
+  file(APPEND "${LOGFILE}" "${msg}")
+  unset(gdiff_log PARENT_SCOPE)
+  unset(gdiff_result PARENT_SCOPE)
+endfunction(GDIFF_CHECK_INIT msg)
+
+function(GDIFF_CHECK_RESULT result)
+  file(APPEND "${LOGFILE}" "${gdiff_log}")
+  set(gdiff_result ${${result}})
+  if("${gdiff_result}" STREQUAL "-1")
+    file(READ "${LOGFILE}" LOG)
+    message(FATAL_ERROR "Fatal gdiff error (${gdiff_result}), aborting.\nSee ${LOGFILE} for more details:\n${LOG}")
+  endif("${gdiff_result}" STREQUAL "-1")
+endfunction(GDIFF_CHECK_RESULT result)
+
+
+file(WRITE "${LOGFILE}" "Starting gdiff test run...\n")
+
+# The executable locations aren't know at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" GDIFF "${EXEC}")
+if (NOT EXISTS "${GDIFF}")
+  file(WRITE "${LOGFILE}" "regress_gdiff not found at location \"${GDIFF}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find regress_gdiff, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${GDIFF}")
+
+# Clean up in case we've run before
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${GDIFF_CF}")
+
+set(TN 0)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff moss_1.g moss_3.g\n")
+execute_process(
+  COMMAND "${GDIFF}" "${CSDIR}/moss_1.g" "${CSDIR}/moss_3.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff moss_2.g moss_3.g\n")
+execute_process(
+  COMMAND "${GDIFF}" "${CSDIR}/moss_2.g" "${CSDIR}/moss_3.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -q moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -q "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -v moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -v "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -vv moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -vv "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -a -d moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -a -d "${CSDIR}/moss_1.g" "${CSDIR}/moss_3.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -m moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -m "${CSDIR}/moss_1.g" "${CSDIR}/moss_3.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -u moss_1.g moss_3.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -u "${CSDIR}/moss_1.g" "${CSDIR}/moss_3.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -t 10 moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -t 10 "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -t 100 moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -t 100 "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -F \"-type region\" moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -F "-type region" "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -F \"-type region\" -a -d moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -F "-type region" -a -d "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -F \"! -attr region_id\" -a -d moss_1.g moss_2.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -F "! -attr region_id" "${CSDIR}/moss_1.g" "${CSDIR}/moss_2.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff moss_2.g moss_1.g moss_3.g\n")
+execute_process(
+  COMMAND "${GDIFF}" "${CSDIR}/moss_2.g" "${CSDIR}/moss_1.g" "${CSDIR}/moss_3.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -v moss_2.g moss_1.g moss_3.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -v "${CSDIR}/moss_2.g" "${CSDIR}/moss_1.g" "${CSDIR}/moss_3.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+GDIFF_CHECK_INIT("\nTest ${TN}: gdiff -vv moss_2.g moss_1.g moss_3.g\n")
+execute_process(
+  COMMAND "${GDIFF}" -vv "${CSDIR}/moss_2.g" "${CSDIR}/moss_1.g" "${CSDIR}/moss_3.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE gdiff_log ERROR_VARIABLE gdiff_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+GDIFF_CHECK_RESULT(gdiff_result)
+
+
+# Tests complete, check log against expected output
+file(READ "${CSDIR}/gdiff.ref" GDIFF_REF)
+file(READ "${LOGFILE}" GDIFF_LOG)
+# Strip long numerical values so floating point doesn't interfere
+string(REGEX REPLACE "[.][0-9]+" "" GDIFF_REF2 "${GDIFF_REF}")
+file(WRITE "${CBDIR}/gdiff_ref.log" "${GDIFF_REF}")
+string(REGEX REPLACE "[.][0-9]+" "" GDIFF_LOG2 "${GDIFF_LOG}")
+file(WRITE "${CBDIR}/gdiff_out.log" "${GDIFF_LOG}")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E compare_files "${CBDIR}/gdiff_ref.log" "${CBDIR}/gdiff_out.log"
+  RESULT_VARIABLE cmp_result
+  )
+
+if (cmp_result)
+  message(FATAL_ERROR "${CBDIR}/gdiff_ref.log and ${CBDIR}/gdiff_out.log do not match, haulting.")
+endif (cmp_result)
+
+file(REMOVE "${CBDIR}/gdiff_ref.log")
+file(REMOVE "${CBDIR}/gdiff_out.log")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

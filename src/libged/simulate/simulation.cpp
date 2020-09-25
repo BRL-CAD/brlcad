@@ -123,7 +123,6 @@ get_aabb(db_i &db, const db_full_path &path)
 	    case OP_UNION:
 	    case OP_INTERSECT:
 	    case OP_SUBTRACT:
-	    case OP_XOR:
 		stack.push(current.tr_b.tb_left);
 		stack.push(current.tr_b.tb_right);
 		break;

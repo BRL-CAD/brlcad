@@ -28,7 +28,7 @@ class IntersectionVisitor;
 
 /** Pure virtual base class for implementing custom intersection technique.
   * To implement a specific intersection technique on must override all
-  * the pure virtue methods, concrete examples of how to do this can be seen in
+  * the pure virtual methods, concrete examples of how to do this can be seen in
   * the LineSegmentIntersector. */
 class Intersector : public osg::Referenced
 {
@@ -50,11 +50,11 @@ class Intersector : public osg::Referenced
             LIMIT_NEAREST
         };
 
-        Intersector(CoordinateFrame cf=MODEL):
+        Intersector(CoordinateFrame cf=MODEL, IntersectionLimit il=NO_LIMIT):
             _coordinateFrame(cf),
-            _intersectionLimit(NO_LIMIT),
-            _disabledCount(0) {}
-
+            _intersectionLimit(il),
+            _disabledCount(0),
+            _precisionHint(USE_DOUBLE_CALCULATIONS) {}
 
         void setCoordinateFrame(CoordinateFrame cf) { _coordinateFrame = cf; }
 
@@ -84,12 +84,25 @@ class Intersector : public osg::Referenced
 
         inline bool reachedLimit() { return _intersectionLimit == LIMIT_ONE && containsIntersections(); }
 
-   protected:
+        /** Hint to precision used in the internal intersections calculations.*/
+        enum PrecisionHint
+        {
+            USE_DOUBLE_CALCULATIONS,
+            USE_FLOAT_CALCULATIONS
+        };
 
-        CoordinateFrame _coordinateFrame;
+        /** Set the hint to what precision to use in the intersections calculations.*/
+        void setPrecisionHint(PrecisionHint hint) { _precisionHint = hint; }
+
+        /** Get the hint to what precision should be used in the intersections calculations.*/
+        PrecisionHint getPrecisionHint() const { return _precisionHint; }
+
+protected:
+
+        CoordinateFrame   _coordinateFrame;
         IntersectionLimit _intersectionLimit;
-        unsigned int    _disabledCount;
-
+        unsigned int      _disabledCount;
+        PrecisionHint     _precisionHint;
 };
 
 
@@ -132,7 +145,7 @@ class OSGUTIL_EXPORT IntersectorGroup : public Intersector
 
 };
 
-/** InteresectionVisitor is used to testing for intersections with the scene, traversing the scene using generic osgUtil::Intersector's to test against the scene.
+/** IntersectionVisitor is used to testing for intersections with the scene, traversing the scene using generic osgUtil::Intersector's to test against the scene.
   * To implement different types of intersection techniques, one implements custom versions of the osgUtil::Intersector, and then
   * pass the constructed intersector to the IntersectionVisitor.*/
 class OSGUTIL_EXPORT IntersectionVisitor : public osg::NodeVisitor
@@ -146,7 +159,7 @@ class OSGUTIL_EXPORT IntersectionVisitor : public osg::NodeVisitor
           * tighter integration.*/
         struct ReadCallback : public osg::Referenced
         {
-            virtual osg::Node* readNodeFile(const std::string& filename) = 0;
+            virtual osg::ref_ptr<osg::Node> readNodeFile(const std::string& filename) = 0;
         };
 
 
@@ -154,8 +167,16 @@ class OSGUTIL_EXPORT IntersectionVisitor : public osg::NodeVisitor
 
         META_NodeVisitor(osgUtil, IntersectionVisitor)
 
-        virtual void reset();
+        /** Convert 'this' into a osgUtil::IntersectionVisitor pointer if Object is a IntersectionVisitor, otherwise return 0.
+          * Equivalent to dynamic_cast<osgUtil::IntersectionVisitor*>(this).*/
+        virtual osgUtil::IntersectionVisitor* asIntersectionVisitor() { return this; }
 
+        /** convert 'const this' into a const osgUtil::IntersectionVisitor pointer if Object is a IntersectionVisitor, otherwise return 0.
+          * Equivalent to dynamic_cast<const osgUtil::IntersectionVisitor*>(this).*/
+        virtual const osgUtil::IntersectionVisitor* asIntersectionVisitor() const { return this; }
+
+
+        virtual void reset();
 
         /** Set the intersector that will be used to intersect with the scene, and to store any hits that occur.*/
         void setIntersector(Intersector* intersector);
@@ -244,6 +265,7 @@ class OSGUTIL_EXPORT IntersectionVisitor : public osg::NodeVisitor
     public:
 
         virtual void apply(osg::Node& node);
+        virtual void apply(osg::Drawable& drawable);
         virtual void apply(osg::Geode& geode);
         virtual void apply(osg::Billboard& geode);
         virtual void apply(osg::Group& group);

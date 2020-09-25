@@ -42,6 +42,7 @@ QHash<QByteArray, QByteArray> loadIdentityMapFile(const QString &fileName)
         return result;
     }
 
+    bool found_author;
     while (!file.atEnd()) {
         QByteArray line = file.readLine();
         int comment_pos = line.indexOf('#');
@@ -68,9 +69,13 @@ QHash<QByteArray, QByteArray> loadIdentityMapFile(const QString &fileName)
         line.truncate(leftspace);
 
         result.insert(line, realname);
+        found_author = true;
     };
     file.close();
 
+    if(!found_author) {
+        fprintf(stderr, "No authors found in identity-map file. Check supported formats.\n");
+    }
     return result;
 }
 
@@ -144,6 +149,7 @@ static const CommandLineOption options[] = {
     {"--empty-dirs", "Add .gitignore-file for empty dirs"},
     {"--svn-ignore", "Import svn-ignore-properties via .gitignore"},
     {"--propcheck", "Check for svn-properties except svn-ignore"},
+    {"--fast-import-timeout SECONDS", "number of seconds to wait before terminating fast-import, 0 to wait forever"},
     {"-h, --help", "show help"},
     {"-v, --version", "show version"},
     CommandLineLastOption
@@ -163,9 +169,13 @@ int main(int argc, char **argv)
         printf("Git version: %s\n", VER);
         return 0;
     }
-    if (args->contains(QLatin1String("help")) || args->arguments().count() != 1) {
+    if (args->contains(QLatin1String("help"))) {
         args->usage(QString(), "[Path to subversion repo]");
         return 0;
+    }
+    if (args->arguments().count() != 1) {
+        args->usage(QString(), "[Path to subversion repo]");
+        return 12;
     }
     if (args->undefinedOptions().count()) {
         QTextStream out(stderr);
@@ -210,6 +220,8 @@ int main(int argc, char **argv)
         repositories.insert(rule.name, repo);
 
         int repo_next = repo->setupIncremental(cutoff);
+        repo->restoreAnnotatedTags();
+        repo->restoreBranchNotes();
 
         /*
   * cutoff < resume_from => error exit eventually
@@ -281,6 +293,7 @@ int main(int argc, char **argv)
 
     foreach (Repository *repo, repositories) {
         repo->finalizeTags();
+        repo->saveBranchNotes();
         delete repo;
     }
     Stats::instance()->printStats();

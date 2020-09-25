@@ -17,6 +17,7 @@
 #include <osg/BufferObject>
 #include <osg/Vec2>
 #include <osg/Vec3>
+#include <osg/Vec3i>
 #include <osg/Vec4>
 #include <osg/FrameStamp>
 #include <osg/StateAttribute>
@@ -61,14 +62,22 @@
     #define GL_GREEN                0x1904
     #define GL_BLUE                 0x1905
     #define GL_DEPTH_COMPONENT      0x1902
+#endif
+
+#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) || defined(OSG_GLES3_AVAILABLE)
     #define GL_STENCIL_INDEX        0x1901
 #endif
 
-#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) || defined(OSG_GL3_AVAILABLE)
+#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) || defined(OSG_GLES3_AVAILABLE) || defined(OSG_GL3_AVAILABLE)
+    #define GL_ALPHA4               0x803B
+    #define GL_ALPHA8               0x803C
+    #define GL_ALPHA12              0x803D
+    #define GL_ALPHA16              0x803E
     #define GL_BITMAP               0x1A00
     #define GL_COLOR_INDEX          0x1900
     #define GL_INTENSITY12          0x804C
     #define GL_INTENSITY16          0x804D
+    #define GL_INTENSITY            0x8049
     #define GL_INTENSITY4           0x804A
     #define GL_INTENSITY8           0x804B
     #define GL_LUMINANCE12          0x8041
@@ -96,6 +105,51 @@
 #ifndef GL_OES_compressed_ETC1_RGB8_texture
     #define GL_ETC1_RGB8_OES        0x8D64
 #endif
+
+#ifndef GL_ARB_ES3_compatibility
+    #define GL_COMPRESSED_RGB8_ETC2                             0x9274
+    #define GL_COMPRESSED_SRGB8_ETC2                            0x9275
+    #define GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2         0x9276
+    #define GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2        0x9277
+    #define GL_COMPRESSED_RGBA8_ETC2_EAC                        0x9278
+    #define GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC                 0x9279
+    #define GL_COMPRESSED_R11_EAC                               0x9270
+    #define GL_COMPRESSED_SIGNED_R11_EAC                        0x9271
+    #define GL_COMPRESSED_RG11_EAC                              0x9272
+    #define GL_COMPRESSED_SIGNED_RG11_EAC                       0x9273
+#endif
+
+#ifndef GL_KHR_texture_compression_astc_hdr
+#define GL_KHR_texture_compression_astc_hdr 1
+#define GL_COMPRESSED_RGBA_ASTC_4x4_KHR   0x93B0
+#define GL_COMPRESSED_RGBA_ASTC_5x4_KHR   0x93B1
+#define GL_COMPRESSED_RGBA_ASTC_5x5_KHR   0x93B2
+#define GL_COMPRESSED_RGBA_ASTC_6x5_KHR   0x93B3
+#define GL_COMPRESSED_RGBA_ASTC_6x6_KHR   0x93B4
+#define GL_COMPRESSED_RGBA_ASTC_8x5_KHR   0x93B5
+#define GL_COMPRESSED_RGBA_ASTC_8x6_KHR   0x93B6
+#define GL_COMPRESSED_RGBA_ASTC_8x8_KHR   0x93B7
+#define GL_COMPRESSED_RGBA_ASTC_10x5_KHR  0x93B8
+#define GL_COMPRESSED_RGBA_ASTC_10x6_KHR  0x93B9
+#define GL_COMPRESSED_RGBA_ASTC_10x8_KHR  0x93BA
+#define GL_COMPRESSED_RGBA_ASTC_10x10_KHR 0x93BB
+#define GL_COMPRESSED_RGBA_ASTC_12x10_KHR 0x93BC
+#define GL_COMPRESSED_RGBA_ASTC_12x12_KHR 0x93BD
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR 0x93D0
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR 0x93D1
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR 0x93D2
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR 0x93D3
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR 0x93D4
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR 0x93D5
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR 0x93D6
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR 0x93D7
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR 0x93D8
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR 0x93D9
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR 0x93DA
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR 0x93DB
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR 0x93DC
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR 0x93DD
+#endif /* GL_KHR_texture_compression_astc_hdr */
 
 #ifndef GL_DEPTH_COMPONENT
 #define GL_DEPTH_COMPONENT              0x1902
@@ -210,7 +264,7 @@ class OSG_EXPORT Image : public BufferData
           * Typically used to copy to an already allocated image, such as creating
           * a 3D image from a stack 2D images.
           * If this Image is empty then image data is created to
-          * accomodate the source image in its offset position.
+          * accommodate the source image in its offset position.
           * If source is NULL then no operation happens, this Image is left unchanged.
         */
         virtual void copySubImage(int s_offset, int t_offset, int r_offset, const osg::Image* source);
@@ -359,6 +413,14 @@ class OSG_EXPORT Image : public BufferData
         /** Get the color value for specified texcoord.*/
         Vec4 getColor(const Vec3& texcoord) const;
 
+         /** Set the color value for specified texcoord.*/
+        void setColor(const osg::Vec4& color, unsigned int s, unsigned int t=0, unsigned int r=0);
+
+         /** Set the color value for specified texcoord. Note texcoord is clamped to edge.*/
+        void setColor(const osg::Vec4& color, const osg::Vec2& texcoord ) { setColor(color, osg::Vec3(texcoord, 0.0f)); }
+
+         /** Set the color value for specified texcoord. Note texcoord is clamped to edge.*/
+        void setColor(const osg::Vec4& color, const osg::Vec3& texcoord );
 
         /** Flip the image horizontally, around s dimension. */
         void flipHorizontal();
@@ -366,12 +428,12 @@ class OSG_EXPORT Image : public BufferData
         /** Flip the image vertically, around t dimension. */
         void flipVertical();
 
-        /** Flip the image around the r dimension. Only relevent for 3D textures. */
+        /** Flip the image around the r dimension. Only relevant for 3D textures. */
         void flipDepth();
 
         /** Ensure image dimensions are a power of two.
           * Mipmapped textures require the image dimensions to be
-          * power of two and are within the maxiumum texture size for
+          * power of two and are within the maximum texture size for
           * the host machine.
         */
         void ensureValidSizeForTexturing(GLint maxTextureSize);
@@ -379,11 +441,17 @@ class OSG_EXPORT Image : public BufferData
         static bool isPackedType(GLenum type);
         static GLenum computePixelFormat(GLenum pixelFormat);
         static GLenum computeFormatDataType(GLenum pixelFormat);
+
+        /** return the dimensions of a block of compressed pixels */
+        static osg::Vec3i computeBlockFootprint(GLenum pixelFormat);
+
+        /** return the size in bytes of a block of compressed pixels */
         static unsigned int computeBlockSize(GLenum pixelFormat, GLenum packing);
         static unsigned int computeNumComponents(GLenum pixelFormat);
         static unsigned int computePixelSizeInBits(GLenum pixelFormat,GLenum type);
         static unsigned int computeRowWidthInBytes(int width,GLenum pixelFormat,GLenum type,int packing);
         static unsigned int computeImageSizeInBytes(int width,int height, int depth, GLenum pixelFormat, GLenum type, int packing = 1, int slice_packing = 1, int image_packing = 1);
+        static int roudUpToMultiple(int s, int pack);
         static int computeNearestPowerOfTwo(int s,float bias=0.5f);
         static int computeNumberOfMipmapLevels(int s,int t = 1, int r = 1);
 
@@ -462,15 +530,15 @@ class OSG_EXPORT Image : public BufferData
 
         /** Pass frame information to the custom Image classes, to be called only when objects associated with imagery are not culled.*/
         virtual void setFrameLastRendered(const osg::FrameStamp* /*frameStamp*/) {}
-        
+
         class DimensionsChangedCallback : public osg::Referenced {
         public:
             DimensionsChangedCallback() : osg::Referenced() {}
             virtual void operator()(osg::Image* image) = 0;
         };
-        
+
         typedef std::vector< osg::ref_ptr<DimensionsChangedCallback> > DimensionsChangedCallbackVector;
-        
+
         void addDimensionsChangedCallback(DimensionsChangedCallback* cb);
         void removeDimensionsChangedCallback(DimensionsChangedCallback* cb);
 
@@ -479,8 +547,8 @@ class OSG_EXPORT Image : public BufferData
         virtual ~Image();
 
         Image& operator = (const Image&) { return *this; }
-        
-        void handleDimensionsChangedCallbacks() 
+
+        void handleDimensionsChangedCallbacks()
         {
             for(DimensionsChangedCallbackVector::iterator i = _dimensionsChangedCallbacks.begin(); i != _dimensionsChangedCallbacks.end(); ++i)
             {
@@ -509,7 +577,7 @@ class OSG_EXPORT Image : public BufferData
         void setData(unsigned char* data,AllocationMode allocationMode);
 
         MipmapDataType _mipmapData;
-        
+
         DimensionsChangedCallbackVector _dimensionsChangedCallbacks;
 };
 
@@ -520,11 +588,17 @@ class Geode;
   * Use the image's s and t values to scale the dimensions of the image.
 */
 extern OSG_EXPORT Geode* createGeodeForImage(Image* image);
+
+template<class T> Geode* createGeodeForImage(const ref_ptr<T>& image) { return createGeodeForImage(image.get()); }
+
+
 /** Convenience function to be used by image loaders to generate a valid geode
   * to return for readNode().
   * Use the specified s and t values to scale the dimensions of the image.
 */
-extern OSG_EXPORT Geode* createGeodeForImage(Image* image,float s,float t);
+extern OSG_EXPORT Geode* createGeodeForImage(Image* image, float s, float t);
+
+template<class T> Geode* createGeodeForImage(const ref_ptr<T>& image, float s, float t) { return createGeodeForImage(image.get(), s, t); }
 
 }
 

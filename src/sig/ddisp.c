@@ -36,7 +36,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/snooze.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define VERT 1
@@ -44,7 +44,7 @@
 
 
 static void
-lineout(fb *fbp, double *dat, int n)
+lineout(struct fb *fbp, double *dat, int n)
 {
     static int y = 0;
     int i, value;
@@ -71,7 +71,7 @@ lineout(fb *fbp, double *dat, int n)
  * +/- 1.0 in, becomes +/- 128 from center Y.
  */
 static void
-disp_inten(fb *fbp, double *buf, int size)
+disp_inten(struct fb *fbp, double *buf, int size)
 {
     int x, y;
     RGBpixel color;
@@ -98,7 +98,7 @@ disp_inten(fb *fbp, double *buf, int size)
  * +/- 1.0 in, becomes +/- 128 from center Y.
  */
 static void
-disp_bars(fb *fbp, double *buf, int size)
+disp_bars(struct fb *fbp, double *buf, int size)
 {
     int x, y;
     RGBpixel color;
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 {
     static const char usage[] = "Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile\n";
 
-    fb *fbp = NULL;
+    struct fb *fbp = NULL;
     double buf[BU_PAGE_SIZE];
 
     int n, L;

@@ -43,15 +43,7 @@ extern "C++" {
 /* don't let opennurbs include windows.h */
 #define ON_NO_WINDOWS 1
 
-/* NOTE: we re-define read/write due to the archive_mode enum that
- * shadows the system symbols.  we undefine when done to not interfere
- * with app code.
- */
-#define read on_read
-#define write on_write
 #include "opennurbs.h"
-#undef read
-#undef write
 
 }
 /* @endcond */

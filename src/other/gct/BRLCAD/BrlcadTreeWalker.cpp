@@ -192,7 +192,6 @@ void BrlcadTreeWalker::brlcad_functree_subtree(union tree *tp,
     case OP_UNION:
     case OP_INTERSECT:
     case OP_SUBTRACT:
-    case OP_XOR:
       m_objStack.push_back(StackNode(tp->tr_op));
       // add union to treeFlags & push new value
       m_treeFlags.push_back(m_treeFlags.back()|FLAG_UNION);

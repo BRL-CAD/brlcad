@@ -55,11 +55,11 @@ illuminate(int y) {
     struct solid *sp;
 
     /*
-     * Divide the mouse into 'curr_dm_list->dml_ndrawn' VERTICAL
+     * Divide the mouse into 'mged_curr_dm->dm_ndrawn' VERTICAL
      * zones, and use the zone number as a sequential position among
      * solids which are drawn.
      */
-    count = ((fastf_t)y + GED_MAX) * curr_dm_list->dml_ndrawn / GED_RANGE;
+    count = ((fastf_t)y + GED_MAX) * mged_curr_dm->dm_ndrawn / GED_RANGE;
 
     gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
@@ -83,6 +83,7 @@ illuminate(int y) {
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 }
 
 
@@ -104,7 +105,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    if (!(curr_dm_list->dml_ndrawn)) {
+    if (!(mged_curr_dm->dm_ndrawn)) {
 	return TCL_OK;
     } else if (STATE != ST_S_PICK && STATE != ST_O_PICK  && STATE != ST_O_PATH) {
 	return TCL_OK;
@@ -161,6 +162,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
 
@@ -304,6 +306,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
 

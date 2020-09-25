@@ -53,10 +53,10 @@ you will be able to compile BRL-CAD.
 
 Following the build instructions in the INSTALL file.  You will need:
 
-gcc (3+, e.g. 4.0.3)
-g++ (3+, e.g. 4.0.3)
+gcc (6+, e.g. 6.0.3)
+g++ (6+, e.g. 6.0.3)
 make (e.g. gnu make 3.8.0)
-cmake (2.8.8 or newer)
+cmake (3.0.2 or newer)
 
 All three of those have implicit dependencies on other packages.
 
@@ -89,8 +89,12 @@ should be deleted and recreated for each new attempt at package
 generation.
 
 
-Redhat/Fedora
+Redhat/CentOS/Fedora
 -------------
+
+If you don't already have the necessary development tools:
+
+  yum install gcc gcc-c++ cmake
 
 Development packages for building on Redhat/Fedora platforms:
 
@@ -101,11 +105,48 @@ Development packages for building on Redhat/Fedora platforms:
   yum install fontconfig-devel # optional
   yum install mesa-libGL-devel # optional
 
+If you wish to create rpm packages, you'll need rpmbuild
+
+  yum install rpm-build        # optional
+
+When setting up older versions for building BRL-CAD, it is sometimes
+necessary to install some non-default compilation tools in addition to the
+usual dependencies.  (The default toolchain is sometimes too old to
+properly build BRL-CAD, if the compilers don't support sufficiently modern
+standards.)  The following example is for CentOS 7:
+
+yum install centos-release-scl
+yum install devtoolset-7
+
+Then to run within that environment:
+
+scl enable devtoolset-7 bash
+
+
+The CMake version is often too old as well.  One way forward is to download the
+source code and bootstrap it (do this within the devtoolset enabled bash):
+
+sudo yum install openssl-devel
+
+curl -L -o cmake-3.18.2.tar.gz https://github.com/Kitware/CMake/releases/download/v3.18.2/cmake-3.18.2.tar.gz
+tar -xvf cmake-3.18.2.tar.gz
+cd cmake-3.18.2
+./bootstrap --prefix=/opt/cmake
+make -j3 && make install
+export PATH=/opt/cmake/bin
+
+From there, with the devtoolset enabled and the PATH set to include the new
+CMake, it should be possible to proceed normally with the build.
+
+-------
+
 To determine what particular version of Redhat or Fedora you are
 using, check these files:
 
 cat /etc/redhat-release
 cat /etc/fedora-release
+
+-------
 
 Note there is a supported rpm package generation script in file
 'sh/make_rpm.sh' which can only function on a Fedora or openSUSE
@@ -118,6 +159,14 @@ system.  It can be used like so:
 
 It is also possible to create an RPM package using CPack with the
 make package build target, on systems with the proper RPM tools.
+
+-------
+
+One issue encountered running CentOS in VirtualBox - networking
+is off by default.  To enable, look for a file in
+/etc/sysconfig/network-scripts/ called something like enp0s3 and
+set ONBOOT=yes (see https://unix.stackexchange.com/a/79273)
+
 
 PPC64 Linux
 -----------

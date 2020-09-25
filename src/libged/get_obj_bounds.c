@@ -19,7 +19,12 @@
  */
 /** @file libged/get_obj_bounds.c
  *
- * The orot command.
+ * Calculate object bounds.
+ *
+ * TODO - why are there two versions of this?
+ *
+ * TODO - this belongs at the librt level, and probably
+ * lower than that once libg is split out...
  *
  */
 
@@ -48,7 +53,8 @@ ged_get_obj_bounds(struct ged *gedp,
     struct region *regp;
 
     /* Make a new rt_i instance from the existing db_i structure */
-    if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
+    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    if (rtip == RTI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }
@@ -239,14 +245,15 @@ _ged_get_obj_bounds2(struct ged *gedp,
     VSETALL(rpp_min, MAX_FASTF);
     VREVERSE(rpp_max, rpp_min);
 
-    if (get_objpath_mat(gedp, argc, argv, gtdp) == GED_ERROR)
+    if (get_objpath_mat(gedp, argc, argv, gtdp) & GED_ERROR)
 	return GED_ERROR;
 
     dp = gtdp->gtd_obj[gtdp->gtd_objpos-1];
     GED_DB_GET_INTERNAL(gedp, &intern, dp, gtdp->gtd_xform, &rt_uniresource, GED_ERROR);
 
     /* Make a new rt_i instance from the existing db_i structure */
-    if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
+    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    if (rtip == RTI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }

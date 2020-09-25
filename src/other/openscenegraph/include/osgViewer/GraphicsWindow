@@ -34,8 +34,8 @@ class View;
 
 
 /** Base class for providing Windowing API agnostic access to creating and managing graphics window and events.
-  * Note, the GraphicsWindow is subclassed from osg::GraphicsContext, and to provide an implemention you'll need to implement its
-  * range of pure virtual functions, you'll find these all have naming convention methodNameImplemention(..).
+  * Note, the GraphicsWindow is subclassed from osg::GraphicsContext, and to provide an implementation you'll need to implement its
+  * range of pure virtual functions, you'll find these all have naming convention methodNameImplementation(..).
   * GraphicsWindow adds the event queue on top of the GraphicsContext, thereby adding a mechanism for adapting Windowing events
   * as well as basics graphics context work, you should wire up custom GraphicsWindowImplementation to push their events through
   * into the EventQueue. */
@@ -273,6 +273,7 @@ class GraphicsWindowEmbedded : public GraphicsWindow
         virtual void raiseWindow() {}
 };
 
+
 struct GraphicsWindowFunctionProxy
 {
     GraphicsWindowFunctionProxy(CGraphicsWindowFunction function) { (function)(); }
@@ -285,7 +286,11 @@ struct GraphicsWindowFunctionProxy
 #if defined(_WIN32)
     #define USE_GRAPHICSWINDOW()  USE_GRAPICSWINDOW_IMPLEMENTATION(Win32)
 #elif defined(__APPLE__)
+  #if defined(OSG_WINDOWING_SYSTEM_CARBON)
     #define USE_GRAPHICSWINDOW()  USE_GRAPICSWINDOW_IMPLEMENTATION(Carbon)
+  #else
+    #define USE_GRAPHICSWINDOW()  USE_GRAPICSWINDOW_IMPLEMENTATION(Cocoa)
+  #endif
 #else
     #define USE_GRAPHICSWINDOW()  USE_GRAPICSWINDOW_IMPLEMENTATION(X11)
 #endif

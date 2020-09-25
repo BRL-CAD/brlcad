@@ -97,7 +97,7 @@ void Window::EmbeddedWindow::positioned() {
     point_type h = getHeight();
 
     // If the widget is fillable, ask the internal Window to resize itself.
-    // Whether or not the Window honors this reqest will be up to it.
+    // Whether or not the Window honors this request will be up to it.
     _window->setOrigin(x, y);
     _window->setZ(_calculateZ(getLayer() + 1));
     _window->setZRange(_calculateZ(LAYER_TOP - (getLayer() + 1)));
@@ -758,25 +758,28 @@ bool Window::setFirstFocusable() {
     return false;
 }
 
-bool Window::setNextFocusable() {
+bool Window::setNextFocusable()
+{
     WidgetList focusList;
 
     if(!getFocusList(focusList)) return false;
 
-    WidgetList::iterator w = focusList.begin();
-
     // TODO: This needs to be a more complicated object, since the focus may be
     // in a child Window instead of a Widget.
-    unsigned int focusedIndex = 0;
-
-    for(unsigned int i = 0; w != focusList.end(); w++, i++) if(*w == _focused) {
-        focusedIndex = i;
-
-        break;
+    WidgetList::iterator witr;
+    for(witr = focusList.begin();
+        witr != focusList.end();
+        ++witr)
+    {
+        if (*witr==_focused)
+        {
+            // found current focused widget, move to next widget the one we want to focus on
+            ++witr;
+            break;
+        }
     }
 
-    if(focusedIndex < focusList.size() - 1) _setFocused((++w)->get());
-
+    if (witr!=focusList.end()) _setFocused(witr->get());
     else _setFocused(focusList.front().get());
 
     return true;
