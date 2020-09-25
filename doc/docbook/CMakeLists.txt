@@ -36,6 +36,7 @@ include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
 
 add_subdirectory(articles)
 add_subdirectory(books)
+add_subdirectory(devguides)
 add_subdirectory(lessons)
 add_subdirectory(presentations)
 add_subdirectory(specifications)

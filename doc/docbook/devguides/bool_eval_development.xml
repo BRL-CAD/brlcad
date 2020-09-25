@@ -1,0 +1,2469 @@
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0">
+
+  <info>
+    <title>NURBS Boolean Evaluation Development Guide</title>
+    <author>
+      <personname>
+        <firstname>Nicholas</firstname>
+        <surname>Reed</surname>
+      </personname>
+    </author>
+  </info>
+
+  <section>
+    <title>Introduction</title>
+    <para>
+      This document provides a technical overview of BRL-CAD's
+      Non-Uniform Rational Basis Spline (NURBS) Boolean evaluation
+      implementation.  It includes details on user command line
+      functionality, an overview of the algorithms and source code
+      implementation, details on developer debugging facilities, and
+      an overview of the debugging process (with a real example).
+      This is intended to be a practical resource for software
+      developers wanting improve BRL-CAD's NURBS Boolean evaluation
+      implementation.
+    </para>
+    <para>
+      It is assumed that the reader has rudimentary familiarity with
+      C/C++ software development and the BRL-CAD software package.
+      This includes how to acquire, modify, and rebuild the BRL-CAD
+      source code, and how to run and debug C/C++ applications. It is
+      also assumed that the reader has a some understanding of
+      concepts from 3D geometry such as surface normal vectors,
+      parametric functions, boundary representation (B-Rep) geometry,
+      and trimmed NURBS.
+    </para>
+    <para>
+      Section 2 of this document briefly describes NURBS Boolean
+      evaluation in BRL-CAD from a user perspective.
+    </para>
+    <para>
+      Section 3 outlines the major algorithms being used and the files
+      and functions in the BRL-CAD source code that implement them. It
+      also explains important concepts helpful in understanding and
+      modifying the source code.
+    </para>
+    <para>
+      Section 4 covers the current process for debugging evaluation
+      issues. It describes available debugging tools, and provides
+      step-by-step instructions for tracking down bugs based on debug
+      information, including a complete example of debugging a real
+      evaluation issue.
+    </para>
+    <para>
+      It should be noted that some of the information in this document
+      may become outdated due to future changes to the BRL-CAD
+      software suite. Any developer making significant changes to the
+      implementation should update the copy of this document that is
+      included with the BRL-CAD source code.
+    </para>
+  </section>
+  <section>
+    <title>NURBS Boolean Evaluation Using the <command>brep</command> Command</title>
+    <para>
+      The <command>brep</command> command is available in BRL-CAD's
+      MGED and Archer applications. If the command is run with a
+      single argument naming a combination, the components of the
+      combination are converted into NURBS objects which are combined
+      into a single evaluated NURBS object according to the Boolean
+      operations in the combination.
+    </para>
+    <para>
+      By default, the evaluated B-Rep-type object is written to the
+      database with its original name plus the suffix
+      <literal>.brep</literal> (e.g. running the
+      <command>brep</command> command on <literal>obj</literal>
+      produces <literal>obj.brep</literal>). If a specific name is
+      desired for the output object, it can be provided as the second
+      argument to the <command>brep</command> command.
+    </para>
+    <para>
+      There are a number of known limitations to the NURBS Boolean
+      evaluator as currently implemented:
+    </para>
+    <itemizedlist>
+      <listitem>
+        <para>
+          May produce incorrect output due to unhandled intersection
+          cases.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Unoptimized performance resulting in potentially significant
+          runtimes.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Material properties of source objects are discarded.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Some primitive conversions to NURBS are undefined (e.g., an
+          infinite halfspace).
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Hollow objects are not built topologically continuous.
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Overview of the Implementation</title>
+    <figure>
+      <title>Evaluation of a Subtraction</title>
+      <mediaobject>
+        <imageobject role="html">
+		<imagedata fileref="../../devguides/images/evaluation_overview.png" />
+        </imageobject>
+        <imageobject role="fo">
+
+            <!-- TODO: a different visual that does not have a
+            overlapping/depth component would probably be easier to
+            follow and understand.  the split-out separation of the
+            individual faces and changing colors in the left to right
+            progression makes intuitive reading nearly impossible.  as
+            this visual is the first overview of the implementation
+            process, it would be beneficial to devise an intuitive
+            visual that offers some interesting value regardless of
+            caption (the caption should enhance understanding). -->
+
+	    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/evaluation_overview.png" />
+        </imageobject>
+      </mediaobject>
+      <caption>
+        <para>
+          One cube (red) is subtracted from another (blue). Leftmost
+          image: the two cubes are first converted to B-Rep objects
+          and intersected. Middle images: the individual faces
+          involved in the intersection are split by the intersection
+          curves and categorized as belonging (red, blue) or not
+          belonging (purple) in the final evaluated object. Rightmost
+          image: the final object is stitched together from the
+          retained trimmed faces.
+        </para>
+      </caption>
+    </figure>
+    <section>
+      <title>Technical Approach</title>
+      <section>
+        <para>
+          The technical approach used for evaluating Boolean
+          operations on NURBS entities involves calculating geometric
+          intersections, trimming surfaces accordingly, and stitching
+          together a resulting object.  Boundary representation NURBS
+          objects are composed of faces, edges, and vertices; and
+          these topologically describe how surfaces, curves, and
+          points are joined together to represent geometry.  The
+          geometry is used to find intersections.  The topology is
+          used in the application of Boolean logic.  This is
+          oversimplified as there are also trimming curves, loops,
+          orientations, and other details involved, but this is
+          nonetheless a useful foundation for understanding the basic
+          approach employed.
+        </para>
+        <para>
+          BRL-CAD heavily integrates and extends the OpenNURBS Toolkit
+          by Robert McNeel &amp; Associates, developers of the
+          proprietary Rhinoceros freeform NURBS modeling software.
+          BRL-CAD heavily uses OpenNURBS for trimmed NURBS geometry
+          representation (both in-memory and on-disk) and implements
+          functionality not included with OpenNURBS such as ray
+          tracing and Boolean evaluation.  <footnote><para>While their
+          license is permissive, the OpenNURBS Toolkit is only
+          intended for and McNeel only supports it being using for
+          reading and writing 3DM files.</para></footnote> Additional
+          functionality implemented for BRL-CAD is primarily contained
+          within the boundary representation and ray trace libraries
+          (LIBBREP and LIBRT). <footnote><para>Unless specified
+          otherwise, file references are for LIBBREP source files.  As
+          published, LIBBREP implementation files reside in
+          the <filename>src/libbrep/</filename> directory with public
+          header files residing in the <filename>include/</filename>
+          directory of a BRL-CAD source hierarchy.</para></footnote>
+        </para>
+
+        <para>
+          The overall NURBS Boolean evaluation algorithm is based on
+          the paper <emphasis>BOOLE: A System to Compute Boolean
+          Combinations of Sculptured Solids.</emphasis> (S. Krishnan
+          et al., 1995). The main implementation file for the Boolean
+          evaluation algorithm is
+          <filename>boolean.cpp</filename>.
+        </para>
+        <para>
+          The NURBS surface-surface intersection algorithm is based on
+          the "NURBS Intersection Curve Evaluation" section of the
+          paper <emphasis>Performing Efficient NURBS Modeling
+          Operations on the GPU</emphasis> (A. Krishnamurthy et al.,
+          2008). A detailed outline of the algorithm, as implemented,
+          appears in the main implementation file for the NURBS
+          Surface-Surface intersection algorithm,
+          <filename>intersect.cpp</filename>.
+        </para>
+      </section>        
+    </section>
+
+    <section>
+      <title>The Boolean Evaluation Algorithm</title>
+      <section>
+        <task>
+          <title>Evaluating a Boolean</title>
+          <tasksummary>
+            <para>
+              This is a high-level overview of the Boolean
+              evaluation performed on two B-Rep objects.
+            </para>
+          </tasksummary>
+          <taskprerequisites>
+            <para>
+              Make sure you have two entities that are geometric,
+              solid, and valid; that they are topologically connected,
+              describe manifold surfaces, and enclose some
+              non-infinite volume.
+            </para>
+            <para>
+              Make sure you have a valid Boolean operation (i.e.,
+              UNION, SUBTRACT, INTERSECT).
+            </para>
+            <para>
+              Make sure their bounding boxes overlap, otherwise
+              evaluation is trivial.
+            </para>
+          </taskprerequisites>
+          <procedure>
+            <title>Evaluate Intersections</title>
+            <step>
+              <para>Determine face intersections between the two input objects</para>
+              <para>For each face:</para>
+              <substeps>
+                <step>
+                  <para>Calculate surface intersection with all other surfaces to get intersection curves</para>
+                  <para>For all surfaces whose bounding poxes intersect, calculate surface-surface intersections (SSI)</para>
+                  <substeps>
+                    <step>
+                      <para>Identify any coincident overlap surfaces</para>
+                    </step>
+                    <step>
+                      <para>Identify coincident overlap boundary curves</para>
+                    </step>
+                    <step>
+                      <para>If stitched boundary curves form a closed loop, record an overlap intersection event</para>
+                    </step>
+                    <step>
+                      <para>Identify any other intersection curves and points</para>
+                    </step>
+                  </substeps>
+                </step>
+                <step>
+                  <para>Split original surfaces into pieces</para>
+                  <para>For each intersection curve and overlap intersection event:</para>
+                  <substeps>
+                    <step>
+                      <para>Divide original surface into separate surfaces according to the Boolean operation</para>
+                    </step>
+                    <step>
+                      <para>For each new surface, create new trimmed NURBS face</para>
+                    </step>
+                  </substeps>
+                </step>
+              </substeps>
+            </step>
+            <step>
+              <para>Join trimmed NURBS faces based on intersections and the Boolean operation</para>
+            </step>
+            <step>
+              <para>Combine resulting faces into a new evaluated B-Rep object</para>
+            </step>
+          </procedure>
+        </task>
+      </section>
+    </section>
+
+    <section>
+      <title>Descriptions of Major Functions</title>
+      <section>
+	<title><filename>boolean.cpp</filename></title>
+        <para>
+          The <function>ON_Boolean()</function> function performs a
+          single Boolean evaluation on two B-Rep objects. A single
+          execution of the <command>brep</command> command in MGED
+          or Archer may involve passing several successive pairs of
+          B-Rep objects to this function.
+        </para>
+	<synopsis>
+	<![CDATA[
+int
+ON_Boolean(
+    ON_Brep *evaluated_brep,
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    op_type operation);
+	]]>
+	</synopsis>
+	<para>
+	  In the nontrivial case where the bounding boxes of
+	  <parameter>brep1</parameter> and
+	  <parameter>brep2</parameter> intersect,
+	  <function>get_evaluated_faces()</function> is called to get
+	  the trimmed NURBS faces of the evaluated Boolean result. The
+	  faces are then combined into a single B-Rep object returned
+	  via the <parameter>evaluated_brep</parameter> argument.
+	</para>
+	<synopsis>
+	<![CDATA[
+ON_ClassArray< ON_SimpleArray<Trimmed Face *> >
+get_evaluated_faces(
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    op_type operation);
+	]]>
+	</synopsis>
+	<para>
+	  The intersection curves between the faces of
+	  <parameter>brep1</parameter> and
+	  <parameter>brep2</parameter> are found by
+	  <function>get_face_intersection_curves()</function>. These
+	  curves are used to split the original surfaces into pieces,
+	  each becoming a new trimmed NURBS face. The
+	  <function>categorize_trimmed_faces()</function> function is
+	  used to identify which pieces, based on the Boolean
+	  operation, are part of the evaluated result. Each
+	  <classname>TrimmedFace</classname> whose
+	  <varname>m_belong_to_final</varname> member is marked
+	  <constant>TrimmedFace::BELONG</constant> is used by
+	  <function>ON_Boolean()</function> to create the final
+	  evaluated result.
+	</para>
+	<synopsis>
+	<![CDATA[
+ON_ClassArray< ON_SimpleArray<SSICurve> >
+get_face_intersection_curves(
+    ON_SimpleArray<Subsurface *> &surf_tree1,
+    ON_SimpleArray<Subsurface *> &surf_tree2,
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    op_type operation);
+	]]>
+	</synopsis>
+	<para>
+	  Each pair of <parameter>brep1</parameter> and
+	  <parameter>brep2</parameter> surfaces whose bounding boxes
+	  intersect are passed to the
+	  <function>ON_Intersect()</function> surface-surface
+	  intersection routine. The
+	  <function>get_subcurves_inside_faces()</function> routine is
+	  used to remove irrelevant parts of the surface-surface
+	  intersection curves based on the trimming curves of the
+	  associated faces.
+	</para>
+      </section>
+      <section>
+	<title><filename>intersect.cpp</filename></title>
+	<synopsis>
+	<![CDATA[
+int
+ON_Intersect(const ON_Surface *surfA,
+             const ON_Surface *surfB,
+             ON_ClassArray<ON_SSX_EVENT> &x,
+             double isect_tol,
+             double overlap_tol,
+             double fitting_tol,
+             const ON_Interval *surfaceA_udomain,
+             const ON_Interval *surfaceA_vdomain,
+             const ON_Interval *surfaceB_udomain,
+             const ON_Interval *surfaceB_vdomain,
+             Subsurface *treeA,
+             Subsurface *treeB);
+	]]>
+	</synopsis>
+	<para>
+	    The first stage of the surface-surface intersection
+	    algorithm attempts to identify overlap intersections
+	    (areas where the two surfaces are coincident). Our
+	    assumption is that the boundary curve of any overlap
+	    region must be formed from isocurves of the overlapping
+	    surfaces.
+        </para>
+        <para>
+            Subcurves of isocurves that intersect both surfaces, such
+            that the surfaces are coincident on one side of the curve
+            but not the other, potentially form part of overlap
+            boundaries. These curves are identified using
+            <function>find_overlap_boundary_curves()</function>. To
+            avoid wasted computations, this function also returns
+            intersection points and non-boundary intersection curves
+            which were found during the search for boundary curves.
+        </para>
+        <para>
+            Then, the
+            <function>split_overlaps_at_intersections()</function>
+            function is run, and curve pieces that share endpoints are
+            stitched together. The stitched boundary curves which
+            close to form loops are recorded as overlap intersection
+            events.
+	</para>
+	<para>
+	  The second stage of the surface-surface intersection
+	  algorithm attempts to identify other intersection curves and
+	  points. The input surfaces <parameter>surfA</parameter> and
+	  <parameter>surfB</parameter> are subdivided into four
+	  subsurfaces, whose bounding boxes are tested in pairs to see
+	  which subsurfaces potentially intersect. This subdivision
+	  repeats to a fixed depth determined by the constant
+	  <constant>MAX_SSI_DEPTH</constant> (defined in
+	  <filename>brep_defines.h</filename>).
+        </para>
+        <para>
+          Subsurfaces that lie completely inside an overlap region
+          identified in the first stage are discarded. Each remaining
+          pair of subsurfaces with intersecting bounding boxes is
+          tested for intersection. This is accomplished by
+          approximating each subsurface with two triangles (i.e. a
+          'split' quad whose corners coincide with those of the actual
+          subsurface patch, which has been split diagonally for a more
+          accurate fit). The triangles are then intersected, and the
+          average of all intersection points is used as the initial
+          guess for a Newton iterative solver, implemented by
+          <function>newton_ssi()</function>, which searches for a point
+          close to the initial guess point which lies on both
+          surfaces.
+        </para>
+        <para>
+          Solved points that reside inside an overlap region
+          identified in the first stage are discarded. Of the
+          remaining solved intersection points between
+          <parameter>surfA</parameter> and
+          <parameter>surfB</parameter>, those which are near one
+          another are stitched together into polyline curves. If a
+          line or conic curve can be fit to the polyline curves in 2D,
+          the fit curve replaces the original
+          <parameter>surfA</parameter> and/or
+          <parameter>surfB</parameter> polyline curve.
+	</para>
+      </section>
+    </section>
+    <section>
+      <title>The OpenNURBS API</title>
+      <para>
+        BRL-CAD leverages the OpenNURBS library primarily for its
+        classes that represent general (i.e. NURBS) B-Rep surface,
+        curve, and point geometry. The following sections describe the
+        OpenNURBS library symbols most commonly used in the NURBS
+        Boolean evaluation implementation, with relevant usage notes.
+      </para>
+      <warning>
+        <para>
+          When using an OpenNURBS utility that hasn't been used
+          elsewhere in the implementation, always check the
+          documentation <emphasis>and the implementation</emphasis> to
+          make sure it does what you expect.
+        </para>
+        <para>
+          Misleading methods have been misused in the past. For
+          example, <function>bool ON_Line::InPlane(ON_Plane&amp;
+          plane)</function> appears to test if a line lies in the
+          given plane, but actually constructs a plane that contains
+          the line.
+        </para>
+        <para>
+          Another example is <function>double
+          ON_Line::MinimumDistanceTo(const
+          ON_Line&amp;)</function>. While the function does indeed
+          return the distance of the shortest path between one line
+          and another, reading the implementation reveals an
+          undocumented assumption that the
+          <classname>ON_Line</classname> provided as an argument is
+          not on the same infinite line as the instance the method is
+          invoked on. That is, the <classname>ON_Line</classname>s can
+          be parallel, but not coincident.
+        </para>
+      </warning>
+      <section>
+        <title>Arrays</title>
+        <para>
+          OpenNURBS includes two general array classes,
+          <classname>ON_ClassArray</classname> and
+          <classname>ON_SimpleArray</classname>, which are similar to
+          C++'s <classname>std::vector</classname>. Besides having
+          slightly friendlier interfaces, they also feature some
+          higher-level member functions like
+          <function>Reverse()</function> and
+          <function>Quicksort()</function>.
+        </para>
+        <para>
+          The primary difference between the two classes is that
+          <classname>ON_SimpleArray</classname> doesn't bother
+          constructing and destructing its items. This makes it more
+          efficient than <classname>ON_ClassArray</classname>, but
+          unsuitable for class objects (though pointers to objects are
+          fine). <classname>ON_ClassArray</classname> requires items
+          to have correctly implemented copy and assignment functions.
+        </para>
+	<para>
+	  The NURBS Boolean evaluation implementation generally
+	  employs a combined array of known size to index elements
+	  from two input objects. For example, if
+	  <parameter>brepA</parameter> has
+	  <inlineequation><mathphrase>i</mathphrase></inlineequation>
+	  faces and <parameter>brepB</parameter> has
+	  <inlineequation><mathphrase>j</mathphrase></inlineequation>
+	  faces, a single array of <inlineequation><mathphrase>i +
+	  j</mathphrase></inlineequation> elements is created.
+	</para>
+	<warning>
+	  <para>
+	    The OpenNURBS array classes do not check for out-of-bounds
+	    indexing. This isn't a problem in the simple case where
+	    items are added with <function>Append()</function> and
+	    elements <inlineequation><mathphrase>[0, </mathphrase></inlineequation><function>Count()</function><inlineequation><mathphrase>
+	    - 1]</mathphrase></inlineequation> are iterated over.
+	  </para>
+	  <para>
+	    However, if the array will be a fixed size whose items are
+	    assigned in a non-sequential order, both
+	    the <emphasis>capacity</emphasis>
+	    and <emphasis>count</emphasis> should be set, or else the
+	    reported <function>Count()</function> will be incorrect, and
+	    copying arrays by assignment won't work.
+	  </para>
+	  <programlisting>
+	<![CDATA[
+	ON_ClassArray< ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
+	curves_array.SetCount(curves_array.Capacity());
+	]]>
+	  </programlisting>
+	</warning>
+      </section>
+      <section>
+        <title>Memory</title>
+        <para>
+          Curves and surfaces are nearly always allocated on the heap
+          and referenced by pointers, both in the OpenNURBS library,
+          and in the NURBS Boolean evaluation implementation.
+        </para>
+        <para>
+          Mostly these allocations are simply done with
+          the <code>new</code> keyword as with any other
+          class. However, a few classes,
+          notably <classname>ON_Brep</classname> have
+          a <function>New()</function> function that wraps the
+          allocation, which is preferred over using <code>new</code>
+          directly for technical reasons specified in the
+          OpenNURBS <filename>opennurbs_brep.h</filename> header.
+        </para>
+        <para>
+          Pointers to objects, curves in particular, are generally
+          "stolen" to avoid having to create a new copy of the object.
+          <warning>
+            <para>
+              Classes containing heap-allocated objects delete them in
+              their destructors. Proper stealing of pointers requires
+              the instance's members be set to NULL.
+            </para>
+	    <programlisting>
+	      <![CDATA[
+ON_SimpleArray<ON_SSX_EVENT> x;
+...
+for (int i = 0; i < csx_events.Count(); ++i) {
+    // copy event
+    x.Append(csx_events[i]);
+
+    // clear pointers from original so they aren't deleted by the
+    // ON_SSX_EVENT destructor
+    csx_events[i].m_curveA = NULL;
+    csx_events[i].m_curveB = NULL;
+    csx_events[i].m_curve3d = NULL;
+}
+	      ]]>
+	    </programlisting>
+          </warning>
+        </para>
+      </section>
+      <section>
+        <title>Tolerance Tests</title>
+        <para>
+          The OpenNURBS routines make extensive use of the
+          symbol <varname>ON_ZERO_TOLERANCE</varname> in calculations
+          to test if a result is to be considered equal to zero, or if
+          two values are to be considered equal.
+        </para>
+        <note>
+          <para>
+            The NURBS Boolean evaluation implementation generally uses
+            the function <function>ON_NearZero(double x, double
+            tolerance = ON_ZERO_TOLERANCE)</function> to check if
+            values are near zero, or to check if two values are
+            identical (e.g <function>ON_NearZero(t -
+            last_t)</function>).
+          </para>
+          <para>
+            This function is also used to determine if objects are
+            close enough to be considered
+            intersecting: <function>ON_NearZero(pt.DistanceTo(other.pt),
+            INTERSECTION_TOL)</function>.
+          </para>
+        </note>
+      </section>
+      <section>
+	<title>2D and 3D Points</title>
+	<para>
+	  The <classname>ON_2dPoint</classname> and
+	  <classname>ON_3dPoint</classname> classes intuitively
+	  implement operators such as <literal>+</literal> and
+	  <literal>*</literal> to allow points to be easily summed and
+	  scaled.
+	</para>
+	<para>
+	  The <function>operator[]</function> functions are notable
+	  because coordinates are not actually stored as arrays in
+	  these classes, but rather in the named
+	  members <varname>x</varname>, <varname>y</varname>,
+	  and <varname>z</varname>. So while accessing coordinates
+	  as <varname>pt[0]</varname>, <varname>pt[1]</varname> is
+	  possible, the more
+	  readable <varname>pt.x</varname>, <varname>pt.y</varname>,
+	  is more typically utilized.
+	</para>
+
+	<para>
+	  The most frequently used member function
+	  is <function>DistanceTo(const ON_3dPoint &amp;p)</function>,
+	  used to check inter-point distances, either as part of an
+	  intersection test or to identify closeable gaps or duplicate
+	  points.
+	</para>
+	<note>
+	  <para>
+	    <classname>ON_2dPoint</classname> objects can be, and are,
+	    safely passed to functions that
+	    take <classname>ON_3dPoint</classname>
+	    arguments. The <classname>ON_3dPoint</classname> arguments
+	    are constructed from the
+	    provided <classname>ON_2dPoint</classname> objects, with
+	    their <varname>z</varname> coordinates set to 0.
+	  </para>
+          <para>
+            The NURBS Boolean evaluation implementation generally
+            constructs 2D curves by populating
+            an <classname>ON_3dPointArray</classname> with 2D points,
+            rather than using
+            an <classname>ON_2dPointArray</classname>, as the 3D
+            version of the class (besides having additional useful
+            member functions), can be used to initialize
+            an <classname>ON_PolylineCurve</classname>.
+          </para>
+	</note>
+      </section>
+      <section>
+	<title>Bounding Boxes</title>
+        <para>
+          <classname>ON_BoundingBox</classname> is returned by
+          the <function>BoundingBox()</function>, <function>GetTightBoundingBox()</function>,
+          and <function>GetBBox()</function> functions, which are
+          implemented by all geometry classes inheriting
+          from <classname>ON_Geometry</classname>.
+        </para>
+        <para>
+          The most commonly used members
+          of <classname>ON_BoundingBox</classname>
+          are <function>Diagonal()</function> (usually in an expression
+          such as <varname>bbox.Diagonal().Length()</varname> used as
+          a scalar size estimate), and <function>IsPointIn()</function>
+          and <function>MinimumDistanceTo()</function> (used in
+          intersection tests).
+        </para>
+      </section>
+      <section>
+	<title>Domain Intervals</title>
+	<para>
+	  <classname>ON_Interval</classname> is used to represent the
+	  domains of parametric curves and surfaces. The
+	  domain <emphasis>starts</emphasis>
+	  at <varname>m_t[0]</varname> and <emphasis>ends</emphasis>
+	  at <varname>m_t[1]</varname>. These members can be set
+	  directly or via <function>Set(double t0, double
+	  t1)</function>.
+	</para>
+	<warning>
+	  <para>
+	    The start, end, and overall length of the domain
+	    are <emphasis>arbitrary</emphasis>,
+	    and <varname>m_t[0]</varname> need not be less
+	    than <varname>m_t[1]</varname>. If the numerically smaller
+	    or larger domain endpoint is needed, these should be
+	    accessed via the <function>Min()</function>
+	    and <function>Max()</function> member functions.
+	  </para>
+	</warning>
+	<para>
+	  The <function>ParameterAt(double x)</function> function
+	  translates a <emphasis>normalized</emphasis> parameter (from
+	  a domain starting at 0.0 and ending at 1.0) into
+	  a <emphasis>real</emphasis> parameter. Thus, the start of
+	  the domain is at <varname>domain.ParameterAt(0.0)</varname>,
+	  the midpoint is
+	  at <varname>domain.ParameterAt(.5)</varname>, etc.
+	</para>
+      </section>
+      <section>
+	<title>Parametric Curves</title>
+	<para>
+	  The most frequently used geometry class
+	  is <classname>ON_Curve</classname>, a generic container for
+	  parametric curves. The curve is interrogated by using
+	  the <function>PointAt(double t)</function> method to
+	  evaluate points at arbitrary values inside the curve's
+	  domain, which is specified by
+	  the <classname>ON_Interval</classname> returned by
+	  the <function>Domain()</function> method. The start and end
+	  points of the curve have dedicated access
+	  methods, <function>PointAtStart()</function>
+	  and <function>PointAtEnd()</function>.
+	</para>
+	<warning>
+	  <para>
+	    <function>PointAt()</function> takes a real parameter;
+	    parameters normalized to <inlineequation><mathphrase>[0,
+	    1]</mathphrase></inlineequation> must be converted. For
+	    example, the midpoint of the curve can be found as
+	    <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt()</function>
+	    <emphasis>does not check</emphasis> if the
+	    <parameter>t</parameter> value you give it is inside the
+	    curve's domain, so you have to get this right!
+	  </para>
+	</warning>
+	<para>
+	  All the <function>PointAt()</function> methods return
+	  an <classname>ON_3dPoint</classname>, though in the common
+	  case where <classname>ON_Curve</classname> objects are
+	  representing 2D trim curves, the z coordinate will be 0.0.
+	</para>
+	<para>
+	  It is sometimes necessary to reverse a curve's domain.  This
+	  is done using the <function>Reverse()</function> method to
+	  facilitate stitching curves together. The function has a
+	  Boolean <literal>int</literal> return value that must be
+	  checked.
+	</para>
+	<para>
+	  <programlisting>
+<![CDATA[
+if (curveA->PointAtStart().DistanceTo(curveB->PointAtStart()) < dist_tol) {
+  if (curveA->Reverse()) {
+      curveA = link_curves(curveA, curveB);
+  }
+  /* curves that cannot be reversed are degenerate and discarded */
+}
+]]>
+	  </programlisting>
+	</para>
+	<warning>
+	  <para>
+	    Comparing curve endpoints, or even just bounding boxes
+	    (retrieved via the <function>BoundingBox()</function>
+	    method), is often sufficient in the context of different
+	    intersection and stitching procedures. However, it's
+	    important to keep in mind that in the general case, the
+	    shape of the curve between its endpoints or within its
+	    bounding box could be anything. For example, two curves
+	    with identical start and end points could both be linear,
+	    creating a degenerate loop. A curve whose endpoints are
+	    equal within the OpenNURBS
+	    <constant>ON_ZERO_TOLERANCE</constant> (testable using the
+	    <function>IsClosed()</function> method), may be
+	    self-intersecting, or degenerate to a point.
+	  </para>
+	</warning>
+	<para>
+	  A copy of a curve is easily made using the
+	  <function>Duplicate()</function> member function, which
+	  simply wraps a standard copy procedure:
+	</para>
+	<programlisting>
+ON_Curve* Duplicate()
+{
+  ON_Curve *p = new ON_Curve;
+  if (p) *p = *this;
+  return p;
+}
+	</programlisting>
+	<para>
+	  This function is common to all OpenNURBS geometry classes,
+	  but curves are by far the most frequently duplicated
+	  objects. However, if curves are simply being retained from a
+	  working set of container objects, the curve pointers are
+	  generally "stolen" rather than copied, with curve members
+	  set to <constant>NULL</constant> so that the curves aren't
+	  destructed with the containers.
+	</para>
+      </section>
+      <section>
+	<title>Lines</title>
+	<para>
+	  <classname>ON_Line</classname> is used to represent an
+	  infinite line, defined by two
+	  points, <varname>from</varname> and <varname>to</varname>.
+	</para>
+
+	<para>
+	  <classname>ON_Line</classname> is not a subclass
+	  of <classname>ON_Curve</classname> and should not be
+	  confused with <classname>ON_LineCurve</classname> (which has
+	  an <classname>ON_Line</classname> member), though it does
+	  have some of the same methods as
+	  an <classname>ON_Curve</classname> class,
+	  including <function>PointAt(double t)</function>. However,
+	  because the line has an infinite domain, it can be evaluated
+	  at any <varname>t</varname> value, though evaluating at 0.0
+	  returns <varname>from</varname> and evaluating at 1.0
+	  returns <varname>to</varname>, as if the line was a
+	  parametric curve with a domain between 0.0 and 1.0.
+	</para>
+
+	<para>
+	  <classname>ON_Line</classname> has helpful line-specific
+	  methods such as <function>ClosestPointTo(const ON_3dPoint
+	  &amp;point)</function>. Again, because the line is treated
+	  as infinite, this function doesn't necessarily return a
+	  point in the segment between <varname>from</varname>
+	  and <varname>to</varname>.
+	</para>
+
+	<para>
+	</para>
+      </section>
+      <section>
+	<title>Surfaces</title>
+	<para>
+	  An <classname>ON_Surface</classname> has a similar interface
+	  to an <classname>ON_Curve</classname>, but adapted to
+	  support the surface's two domains, <parameter>u</parameter>
+	  and <parameter>v</parameter> (sometimes
+	  called <parameter>s</parameter>
+	  and <parameter>t</parameter>).  These also correspond to as
+	  the 0 and 1 surface domains (as in the first example in
+	  following) or with an <parameter>x</parameter>
+	  and <parameter>y</parameter> parameterization (as shown in
+	  the second example).
+	</para>
+	<example>
+	  <title>Projecting an arbitrary <inlineequation><mathphrase>(u, v)</mathphrase></inlineequation> point into 3D.</title>
+	  <programlisting>
+<![CDATA[
+ON_Interval udom = surface->Domain(0);
+ON_Interval vdom = surface->Domain(1);
+ON_3dPoint surf_midpt_3d = surface->PointAt(udom.ParameterAt(.5), vdom.ParameterAt(.5));
+]]>
+	  </programlisting>
+	</example>
+	<example>
+	  <title>Projecting a trim-curve point into 3D.</title>
+	  <programlisting>
+<![CDATA[
+ON_Interval tdom = trim_curve->Domain();
+ON_3dPoint trim_midpt_uv = trim_curve->PointAt(tdom.ParameterAt(.5));
+ON_3dPoint trim_midpt_3d = surface->PointAt(trim_midpt_uv.x, trim_midpt_uv.y);
+]]>
+	  </programlisting>
+	</example>
+      </section>
+      <section>
+	<title>Boundary Representation Objects</title>
+	<para>
+	  <classname>ON_Brep</classname> is the top-level OpenNURBS
+	  class used to represent the two input objects and the
+	  evaluated result of the <function>ON_Boolean()</function>
+	  function. The geometry is encoded as a collection of faces,
+	  which for our purposes should be topologically connected to
+	  enclose solid volumes.
+	</para>
+	<para>
+	  An object's faces are <classname>ON_BrepFace</classname>
+	  objects stored in the <classname>ON_Brep</classname> face
+	  array, <varname>m_F[]</varname>.
+	</para>
+	<para>
+	  Each <classname>ON_BrepFace</classname> is defined as the
+	  subset of an <classname>ON_Surface</classname> lying inside
+	  the face's <glossterm>outerloop</glossterm>
+	  (a.k.a. the <glossterm>face boundary</glossterm>) and
+	  outside all of its <glossterm>innerloops</glossterm>
+	  (a.k.a. <glossterm>trim loops</glossterm> or
+	  just <glossterm>trims</glossterm>).
+	</para>
+	<para>
+	  The loops of an <classname>ON_BrepFace</classname> are
+	  listed in its loop array <varname>m_li[]</varname> as indexes
+	  into the associated <classname>ON_Brep</classname>
+	  object's <classname>ON_BrepLoop</classname>
+	  array, <varname>m_L[]</varname>. The first (and possibly only)
+	  loop listed in the face's loop index array is the outerloop,
+	  and all following loops are inner trim loops. The type of
+	  the loop is also recorded in the
+	  loop's <varname>m_type</varname> member.
+	</para>
+	<programlisting>
+brep->m_L[brep->m_F[0]->m_li[0]].m_type;      // ON_BrepLoop::outer
+brep->m_L[brep->m_F[0]->m_li[1]].m_type;      // ON_BrepLoop::inner
+...
+brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
+	</programlisting>
+      </section>
+      <section>
+        <title>Intersection Events</title>
+        <para>
+          There are two OpenNURBS classes for representing
+          intersections. <classname>ON_X_EVENT</classname> is used for
+          curve-curve and curve-surface
+          intersections. <classname>ON_SSX_EVENT</classname> is used
+          for surface-surface intersections.
+        </para>
+        <note>
+          <para>
+            An additional class, <classname>ON_PX_EVENT</classname>
+            has been implemented as an extension to the OpenNURBS API
+            to represent point-point, point-curve, and point-surface
+            intersection events.
+          </para>
+        </note>
+        <para>
+          The intersection classes enumerate a number of intersection
+          types. Over the course of an evaluation, the
+          <varname>m_type</varname> of intersection events is
+          repeatedly checked to determine how each event should be
+          processed.
+        </para>
+        <para>
+          When two curves are coincident with one another over a
+          portion of their domains, <varname>m_type</varname> will be
+          <varname>ON_X_EVENT::ccx_overlap</varname>.
+          <figure>
+            <title>Curve-Curve Overlap Intersection</title>
+            <mediaobject>
+              <imageobject role="html">
+                <imagedata fileref="../../devguides/images/ccx_overlap_event.png" />
+              </imageobject>
+              <imageobject role="fo">
+                <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/ccx_overlap_event.png" />
+              </imageobject>
+            </mediaobject>
+            <caption>
+              <para>
+                Two curves (blue on the left and red on the right)
+                overlap over a portion of their domains (white).
+              </para>
+            </caption>
+          </figure>
+        </para>
+        <para>
+          When two surfaces are coincident over a portion of their
+          domains, <varname>m_type</varname> will be
+          <varname>ON_SSX_EVENT::ssx_overlap</varname>.
+        </para>
+        <figure>
+          <title>Surface-Surface Overlap Intersection</title>
+          <mediaobject>
+            <imageobject role="html">
+              <imagedata fileref="images/ssx_overlap_event.png" />
+            </imageobject>
+            <imageobject role="fo">
+              <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/ssx_overlap_event.png" />
+            </imageobject>
+          </mediaobject>
+          <caption>
+            <para>
+              Two surfaces (blue on the left and red on the right)
+              overlap over a region of their domains (green).
+            </para>
+          </caption>
+        </figure>
+        <para>
+          There are two ways that two surfaces can intersect in a
+          curve. If the normals of the surfaces are parallel over all
+          points of the curve, the intersection
+          <varname>m_type</varname> is
+          <varname>ON_SSX_EVENT::ssx_tangent</varname>, and
+          <varname>ON_SSX_EVENT::ssx_transverse</varname> otherwise.
+        </para>
+        <figure>
+          <title>Surface-Surface Tangent Intersection</title>
+          <mediaobject>
+            <imageobject role="html">
+              <imagedata fileref="../../devguides/images/ssx_tangent_event.png" scale="60" />
+            </imageobject>
+            <imageobject role="fo">
+              <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/ssx_tangent_event.png" />
+            </imageobject>
+          </mediaobject>
+          <caption>
+            <para>
+              Two surfaces (red and blue) intersect in a curve
+              (white). The normals of both surfaces are parallel to
+              each other everywhere along the curve.
+            </para>
+          </caption>
+        </figure>
+        <figure>
+          <title>Surface-Surface Transverse Intersection</title>
+          <mediaobject>
+            <imageobject role="html">
+              <imagedata fileref="../../devguides/images/ssx_transverse_event.png" />
+            </imageobject>
+            <imageobject role="fo">
+              <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/ssx_transverse_event.png" />
+            </imageobject>
+          </mediaobject>
+          <caption>
+            <para>
+              Two surfaces (red and blue) intersect in a curve
+              (yellow). The normals of both surfaces are not parallel
+              to each other along the curve.
+            </para>
+          </caption>
+        </figure>
+        <para>
+          Similarly, if two surfaces intersect at a point, the
+          intersection <varname>m_type</varname> is
+          <varname>ON_SSX_EVENT::ssx_tangent_point</varname> if the
+          normals of the two surfaces are parallel at that point, and
+          <varname>ON_SSX_EVENT::ssx_transverse_point</varname>
+          otherwise.
+        </para>
+        <para>
+          The <varname>m_type</varname> of an intersection event
+          determines how values in the <varname>m_a[]</varname>,
+          <varname>m_b[]</varname>, <varname>m_A[]</varname>,
+          and <varname>m_B[]</varname> array members of the event
+          instance are to be interpreted (documented in the
+          OpenNURBS <filename>opennurbs_x.h</filename> header).
+        </para>
+	<warning>
+	  <para>
+	    It's very easy to confuse the <varname>m_a[]</varname>,
+	    <varname>m_b[]</varname>, <varname>m_A[]</varname>, and
+	    <varname>m_B[]</varname> arrays, as well as
+	    <varname>m_a[0]</varname> vs. <varname>m_a[1]</varname>,
+	    etc. This is especially true when copying and pasting
+	    code.
+	  </para>
+	</warning>
+        <para>
+          For an <classname>ON_X_EVENT</classname> representing a
+          curve-curve intersection whose <varname>m_type</varname> is
+          <varname>ON_X_EVENT::ccx_overlap</varname>,
+          (<varname>m_a[0]</varname>, <varname>m_a[1]</varname>)
+          represents the portion of the first curve's domain that
+          overlaps with the second curve, whereas in other cases
+          <varname>m_a[1]</varname> is simply a duplicate of
+          <varname>m_a[0]</varname>.
+        </para>
+        <para>
+          As a result, a pattern seen repeatedly in the NURBS Boolean
+          evaluation implementation is a loop over intersection events
+          that gathers intersection points for processing, including
+          overlap endpoints if the event represents an overlap.
+        </para>
+        <programlisting>
+            <![CDATA[
+for (int i = 0; i < x_event.Count(); ++i) {
+    x_points.Append(x_event[i].m_a[0]);
+    if (x_event[i].m_type == ON_X_EVENT::ccx_overlap) {
+        x_points.Append(x_event[i].m_a[1]);
+    }
+}
+            ]]>
+	</programlisting>
+      </section>
+    </section>
+    <section>
+      <title>Code Conventions and Pitfalls</title>
+      <section>
+        <title>2D vs 3D</title>
+        <para>
+          Implicit in working with parametric geometry is that some
+          operations are done in 2D while others are done in 3D and
+          it's very important to know the dimension currently being
+          worked in at all times.
+        </para>
+        <para>
+          As mentioned in the section above on 2D and 3D points, 3D
+          classes are often used in the implementation to store 2D
+          points, and thus are not a reliable indication that an
+          operation is happening in 3D.
+        </para>
+        <para>
+          Being that operations in 2D tend to be a lot simpler, 2D is
+          normally the dimension being worked in. However, because
+          parametric curves and surfaces of different objects have
+          different parameterizations, determining where two objects
+          intersect can't be done by comparing 2D parameters; it must
+          happen in 3D.
+        </para>
+        <section>
+          <title>Naming Convention</title>
+          <para>
+            Generally, when 2D and 3D operations are taking place near
+            one another, you'll see a naming convention being used to
+            disambiguate 2D and 3D data. 3D identifiers are unadorned,
+            while 2D names will be suffixed with 1/2 or A/B.
+          </para>
+          <para>
+            Suppose for example we have three arrays of corresponding
+            points that are samples along an intersection curve
+            between two surfaces. The 3D array might simply be
+            named <varname>points</varname>. The corresponding 2D
+            points in the domains of the two surfaces involved are
+            then very likely to be named <varname>points1</varname>
+            and <varname>points2</varname>
+            or <varname>pointsA</varname>
+            and <varname>pointsB</varname>. Whether the 1/2 or A/B
+            suffixes are used typically depends on whether the input
+            surfaces have names
+            like <varname>surf1</varname>/<varname>surf2</varname>
+            or <varname>surfA</varname>/<varname>surfB</varname>. The
+            latter is more likely to be used when processing
+            intersection events, as members of the OpenNURBS
+            intersection event classes are
+            named <varname>m_a</varname>
+            and <varname>m_b</varname>, etc.
+          </para>
+        </section>
+        <section>
+          <title>Intersection Tolerances</title>
+          <para>
+            The <function>ON_Intersect()</function> intersection
+            routines (<filename>intersect.cpp</filename>) generally
+            take an <varname>isect_tol</varname> argument, which is a
+            3D tolerance normally equal to the constant
+            <varname>ON_INTERSECTION_TOL</varname>. 2D tolerances,
+            following the convention described above, are generally
+            named <varname>isect_tolA</varname> and
+            <varname>isect_tolB</varname>.
+          </para>
+          <para>
+            2D tolerance values for curves and surfaces are derived
+            from the 3D tolerance value using
+            the <function>tolerance_2d_from_3d()</function>
+            routines. The length of the diagonal of the 3D bounding
+            box of the curve or surface is divided by the length of
+            the 2D domain to get a rough estimate of what distance in
+            the 2D domain corresponds to the 3D tolerance distance. In
+            other words, the hope is that two points on
+            a <varname>curveA</varname> or <varname>surfA</varname>
+            that are <varname>isect_tolA</varname> units apart in 2D,
+            will evaluate to two 3D points that
+            are <varname>isect_tol</varname> units apart in 3D.
+          </para>
+          <warning>
+            <para>
+              The difference between <varname>isect_tol</varname>
+              and <varname>isect_tolA</varname>
+              and <varname>isect_tolB</varname> can be arbitrarily
+              large, so it's import that the correct tolerance is used
+              in all cases. However, it's sometimes tempting to use
+              the wrong tolerance, for instance using the
+              2D <varname>isect_tolA</varname> in a 3D intersection
+              test simply because the 3D points were evaluated from 2D
+              points in the <varname>surfA</varname> domain.
+            </para>
+          </warning>
+        </section>
+        <section>
+          <title>Curve Traversal Directions</title>
+          <para>
+            It's important to remember that because parameterizations
+            are arbitrary, there is no correspondence whatsoever
+            between a 2D curve in one surface's domain and another
+            surface's domain, even when those 2D curves evaluate to
+            the same 3D curve. In particular, you cannot assume that
+            traversing different curves along their domain from
+            <varname>m_t[0]</varname> to <varname>m_t[1]</varname>
+            translates to a consistent traversal direction in 3D, or
+            even that each 2D curve's
+            <varname>m_t[0]</varname>/<varname>m_t[1]</varname>
+            corresponds to the same 3D starting point on a closed
+            curve.
+          </para>
+          <figure>
+            <title>Different Traversals of the Same Curve</title>
+            <mediaobject>
+              <imageobject role="html">
+                <imagedata fileref="../../devguides/images/curve_traversal_directions.png" scale="60"/>
+              </imageobject>
+              <imageobject role="fo">
+                <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/curve_traversal_directions.png" />
+              </imageobject>
+            </mediaobject>
+            <caption>
+              <para>
+                The projections (red and blue) of two 2D curves in
+                different domains represent the same 3D curve (within
+                tolerance). However, the start and end points as well
+                as the 3D traversal directions differ between the
+                projections.
+              </para>
+            </caption>
+          </figure>
+        </section>
+      </section>
+      <section>
+        <title>Accumulated Error</title>
+        <para>
+          By the nature of the math involved in representing
+          parametric geometry (e.g. converting between 2D and 3D, and
+          solving intersections between objects with different
+          parameterizations) values that are expected to be identical
+          are generally only equal within a certain tolerance, or
+          error.
+        </para>
+        <para>
+          Over the course of the evaluation, the same data is
+          interrogated and processed a number of times. If ignored,
+          the error introduced in one stage of the evaluation can grow
+          over subsequent stages, causing an incorrect determination
+          that leaves a curve unclosed, a surface unsplit, and
+          ultimately an incorrect evaluated result.
+        </para>
+        <para>
+          As a consequence, it's generally a good idea to remove
+          fuzziness when you find it, and avoid algorithms that
+          introduce more error.
+        </para>
+        <section>
+          <title>Clamping</title>
+          <para>
+            Start and end points of closed curves are rarely
+            identical. So if a curve is found to be closed within
+            tolerance, it's a good idea to actually set the end point
+            equal to the start point. Similarly, if an interval of a
+            domain is calculated whose endpoints are within tolerance
+            of the domain endpoints, the entire domain should be used.
+          </para>
+          <note>
+            <para>
+              Producing subcurves of existing curves is a common
+              operation in the NURBS Boolean evaluation
+              implementation. This is a prime example of an operation
+              that can introduce fuzziness into the evaluation. For
+              example, we may be splitting a curve to remove a portion
+              of it, and end up with two new curves with endpoints
+              that used to align when part of the original curve, but
+              no longer do.
+            </para>
+            <para>
+              The <function>Split()</function> method
+              of <classname>ON_Curve</classname> can be used to
+              produce subcurves, but in the implementation it's much
+              preferred to use the <function>sub_curve()</function>
+              function defined in <filename>intersect.cpp</filename>
+              which wraps <function>Split()</function> and correctly
+              handles clamping of curve parameters to domain
+              endpoints.
+            </para>
+          </note>
+        </section>
+        <section>
+          <title>Iterated Solutions</title>
+          <para>
+            The iterative method used to solve points on parametric
+            curves and surfaces is expected to produce better answers
+            given better inputs and more iterations. However, our
+            algorithms can't always produce sufficient inputs, and the
+            value the solver converges on isn't always the correct
+            one.
+          </para>
+          <para>
+            This fuzziness produced in the solver's results can be
+            mitigated in the context of finding intersection curves
+            for example, because we solve many points and fit a curve
+            between them. So, one unsolved point on the curve isn't
+            going to cause an evaluation failure.
+          </para>
+          <warning>
+            <para>
+              It's tempting to test curve characteristics or make
+              inside/outside determinations, etc. by using
+              the <function>ON_Intersect()</function>
+              functions. However, there's a persistent risk that the
+              error in the iteratively solved results will cause
+              incorrect determinations that cascade into larger
+              problems over the course of the evaluation. For this
+              reason, the <function>ON_Intersect()</function> functions
+              should be avoided whenever possible.
+            </para>
+          </warning>
+        </section>
+      </section>
+    </section>
+  </section>
+  <section>
+    <title>Debugging NURBS Boolean Evaluations</title>
+    <para>
+      The current ongoing development activity for NURBS Boolean
+      evaluation is debugging specific evaluation cases in order to
+      find bugs and unhandled geometry cases in the implementation to
+      support the evaluation of more geometry.
+    </para>
+    <section>
+      <title>Debug Plotting</title>
+      <para>
+        There are two Archer commands that can be used to plot
+        individual components of brep NURBS objects to facilitate
+        debugging.
+      </para>
+      <para>
+        These commands work by creating temporary wireframe objects
+        that are drawn in the view window. While drawn, these objects
+        appear in the in-memory database, so the
+        <command>ls</command> command will show these objects (with
+        names like <varname>_BC_S_&lt;obj&gt;_646464></varname>
+        or <varname>bool1_brep1_surface03838ff</varname>), but they are
+        not saved with the database, and are deleted when erased from
+        the display.
+      </para>
+      <note>
+        <para>
+          Debug wireframe objects are not drawn the same way as
+          geometry, and do not trigger an automatic resize and refresh
+          of the view. This means that after running
+          a <command>plot</command> command, you may have to trigger a
+          refresh manually (e.g. by running
+          the <command>autoview</command> command or interactively
+          rotating/resizing the view.
+        </para>
+        <para>
+          Also be aware that debug wireframes are drawn in a variety
+          of hard-coded colors to help distinguish different
+          subcomponents. These colors were designed to be best visible
+          using a view whose background color is black (this should be
+          the default, but can be easily changed in Archer via the
+          view window's right-click menu).
+        </para>
+      </note>
+      <para>
+      </para>
+      <section>
+        <title>The <command>brep</command> Command</title>
+        <para>
+          The Archer <command>brep</command> command (also
+          implemented in MGED) can be used to get structural
+          information about B-Rep objects and visualize different
+          subcomponents.
+        </para>
+        <para>
+          Most importantly, <command>brep &lt;obj&gt; info</command>
+          will report summary information, including the number of
+          NURBS surfaces and faces and <command>brep &lt;obj&gt; plot
+          S &lt;index&gt;</command> can be used to plot individual
+          surfaces in 3D.
+        </para>
+        <para>
+          This is the primary way you can conceptually link a surface
+          or face index to the 3D geometry it represents. So if you
+          notice an error in an object while viewing it in the editor,
+          you can use the <command>brep</command> command to
+          determine the index of the surface with the error, and then
+          inspect the in-memory object in a debugger using that index
+          into the final surface array, tracing that surface object to
+          where it was created, etc.
+        </para>
+        <note>
+          <para>
+            For evaluations involving more than two objects, the final
+            brep NURBS object is made by converting two leaf objects
+            into breps, performing a Boolean evaluation on them,
+            converting the next relevant object to brep and combining
+            it with the first intermediate evaluation to make a second
+            intermediate evaluation, and so on up the tree.
+          </para>
+          <para>
+            In order to inspect the surfaces and indices for a
+            particular stage of the overall evaluation using the
+            <command>brep</command> command, it's necessary to
+            manually create the intermediate combination (a subtree of
+            the one being evaluated), and use the
+            <command>brep</command> command to produce the
+            intermediate NURBS result.
+          </para>
+        </note>
+      </section>
+      <section>
+        <title>The dplot Command</title>
+        <para>
+          The <command>dplot</command> command is used to visualize
+          the results of different stages of the NURBS Boolean
+          evaluation algorithm. This makes it easier to isolate the
+          source of a problem in an evaluation.
+        </para>
+        <para>
+          Unlike the <command>brep</command> command, the
+          <command>dplot</command> command is purely a development
+          tool. Its implementation does not honor library boundaries
+          and does not conform to the typical conventions for editor
+          commands, and for this reason is only available as an Archer
+          command in the NURBS Boolean evaluation development branch
+          (<link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>).
+        </para>
+        <para>
+          In the development branch, the NURBS Boolean evaluation
+          source code contains additional calls to
+          <classname>DebugPlot</classname> functions (implemented in
+          <filename>debug_plot.cpp</filename>) that create
+          wireframe visualizations of data produced during the
+          evaluations.
+        </para>
+        <para>
+          For development convenience, these wireframes are not saved
+          as database objects, but rather are written as files in the
+          current directory, with names of the form
+          <filename>bool1_*.plot3</filename>.  An additional
+          <filename>bool1.dplot</filename> is written which describes
+          the <filename>.plot3</filename> files that were written in a
+          format understood by the <command>dplot</command> command.
+        </para>
+        <para>
+          One set of files is written for each evaluation. Between
+          evaluations, a static counter increments the numeric suffix
+          that's used in the output filenames. So for a combination
+          consisting of three objects, the <filename>bool1*</filename>
+          files will hold results from the intermediate boolean
+          evaluation between the first two objects in the combination,
+          and the <filename>bool2*</filename> files will hold results
+          from the final evaluation between the intermediate evaluated
+          object and the remaining leaf of the original comb.
+        </para>
+        <para>
+          The <classname>DebugPlot</classname> functions always use
+          the same file names and do not check if written files
+          already exist. It is assumed that you will run an
+          evaluation, inspect the generated files using the
+          <command>dplot</command> command, and then manually remove
+          (or just move) the generated <filename>.dplot</filename> and
+          <filename>.plot3</filename> files before performing another
+          evaluation with the <command>brep</command> command.
+        </para>
+        <section>
+          <title>The ssx Subcommands</title>
+          <itemizedlist>
+            <listitem>
+              <para>
+                <emphasis role="bold"><command>dplot bool1.dplot
+                ssx</command></emphasis> lets you interactively step
+                through the pairs of surfaces whose axis-aligned
+                bounding boxes were found to intersect. The wireframes
+                of the B-Rep objects being intersected are drawn with
+                the current surface pair highlighted. The
+                <varname>ssx_index</varname> assigned to the pair,
+                which can be used as an argument to other dplot
+                commands, is displayed in the command window.
+              </para>
+            </listitem>
+	    <listitem>
+              <para>
+		<emphasis role="bold"><command>dplot bool1.dplot
+		&lt;ssx_index&gt;</command></emphasis> lets you
+		interactively step through the specific
+		surface-surface intersections found between the pair
+		of surfaces identified by an
+		<varname>ssx_index</varname>, excluding
+		isocurve-surface intersections (shown by
+		<command>dplot bool1.dplot isocsx</command>).
+              </para>
+	      <para>
+		To make it easier to check that drawn intersection
+		curves are of the correct type and are open or closed
+		curves as appropriate, intersections are color-coded
+		by type (e.g. transverse intersections are drawn in
+		yellow) and the ends of lines are decorated with
+		arrows to indicate open ends or perpendicular segments
+		to indicate coincident endpoints.
+	      </para>
+              <figure>
+                <title>Curve Endpoint Decoration</title>
+                <mediaobject>
+                  <imageobject role="html">
+                    <imagedata fileref="../../devguides/images/compare_endpoint_style.png" />
+                  </imageobject>
+                  <imageobject role="fo">
+                    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/compare_endpoint_style.png" />
+                  </imageobject>
+                </mediaobject>
+                <caption>
+                  <para>
+                    Endpoints of transverse surface-surface
+                    intersection curves (yellow) are decorated with
+                    arrows if open (left), and segments perpendicular
+                    to the curve if closed (right).
+                  </para>
+                </caption>
+              </figure>
+	    </listitem>
+          </itemizedlist>
+	  <para>
+	    The ssx pairs are recorded in the
+	    <function>find_overlap_boundary_curves()</function> function
+	    in <filename>intersect.cpp</filename>.
+	  </para>
+        </section>
+        <section>
+          <title>The isocsx Subcommands</title>
+          <itemizedlist>
+            <listitem>
+              <para>
+		<emphasis role="bold"><command>dplot bool1.dplot
+		isocsx &lt;ssx_index&gt;</command></emphasis> lets
+		you step through the isocurve-surface intersections
+		from the pair of intersecting surfaces identified by
+		the given <varname>ssx_index</varname>. Wireframe
+		plots of the two surfaces are drawn, with one surface
+		and an intersecting isocurve of the second surface
+		highlighted. Each combination of isocurve and surface
+		is assigned an <varname>isocsx_index</varname> (shown
+		in the command window) that can be used as an argument
+		in the second form of the <command>isocsx</command>
+		subcommand.
+	      </para>
+	    </listitem>
+            <listitem>
+              <para>
+		<emphasis role="bold"><command>dplot bool1.dplot
+		isocsx &lt;ssx_index&gt;
+		&lt;isocsx_index&gt;</command></emphasis> shows the
+		actual intersection curve found between the isocurve
+		and surface pair identified by the given
+		<varname>ssx_index</varname> and
+		<varname>isocsx_index</varname>.
+	      </para>
+	      <para>
+		The plotted intersection curves are color-coded for
+		easy type-checking, e.g. overlap intersections are
+		drawn in green.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	  <para>
+	    The isocsx curves are written in the
+	    <function>find_overlap_boundary_curves()</function> function
+	    in
+	    <filename>intersect.cpp</filename>.
+	  </para>
+	</section>
+        <section>
+          <title>Face-Evaluation Subcommands</title>
+          <itemizedlist>
+            <listitem>
+              <para>
+		<emphasis role="bold"><command>dplot bool1.dplot
+		fcurves &lt;ssx_index&gt;</command></emphasis> lets
+		you step through the surface-surface intersection
+		curves identified by the given
+		<varname>ssx_index</varname> after they've been
+		clipped by face trimming curves.
+	      </para>
+	      <para>
+		The clipped 2D intersection curves for the first
+		surface are drawn projected to 3D, followed by the
+		matching curves for the second surface.
+	      </para>
+	    </listitem>
+            <listitem>
+              <para>
+		<emphasis role="bold"><command>dplot bool1.dplot
+		lcurves</command></emphasis> steps through the final
+		3D intersection curves used to split faces, after
+		contiguous face-clipped pieces have been linked
+		together.
+	      </para>
+	      <para>
+		After each curve is drawn independently, all curves
+		are drawn at the same time.
+	      </para>
+	      <para>
+		This subcommand doesn't draw any contextual geometry;
+		only the linked curves. Manually drawing a transparent
+		shaded view of the original geometry usually works
+		well for context.
+	      </para>
+              <figure>
+                <title>Linked Curves in Context</title>
+                <mediaobject>
+                  <imageobject role="html">
+                    <imagedata fileref="../../devguides/images/lcurves_with_shaded_context.png" scale="60"/>
+                  </imageobject>
+                  <imageobject role="fo">
+                    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/lcurves_with_shaded_context.png" />
+                  </imageobject>
+                </mediaobject>
+                <caption>
+                  <para>
+                    An evaluated B-Rep is drawn shaded to give context
+                    to the linked intersection curves (yellow) drawn
+                    by
+                    <command>dplot bool1.dplot lcurves</command>.
+                  </para>
+                </caption>
+              </figure>
+	    </listitem>
+            <listitem>
+              <para>
+		<emphasis role="bold"><command>dplot bool1.dplot
+		faces</command></emphasis> lets you step through the
+		new set of faces formed by splitting the original
+		faces with the final linked intersection curves. Faces
+		that are considered part of the final result are drawn
+		highlighted, while faces that are discarded are drawn
+		dim.
+	      </para>
+	      <para>
+		After each face is drawn independently, all faces are
+		drawn at the same time.
+	      </para>
+	      <para>
+		This subcommand doesn't draw any contextual geometry;
+		only the face curves. Manually drawing a transparent
+		shaded view of the original geometry usually works
+		well for context.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+          <para>
+            The clipped face curves are recorded in
+            <function>get_face_intersection_curves()</function> in
+            <filename>boolean.cpp</filename>.
+          </para>
+          <para>
+            The linked curves and the categorized split faces are
+            recorded in <function>get_evaluated_faces()</function> in
+            <filename>boolean.cpp</filename>.
+          </para>
+	</section>
+      </section>
+      <section>
+        <title>Plotting Arbitrary Evaluation Curves</title>
+        <para>
+          It's possible to write out custom curves from any part of
+          the evaluation (i.e. those not covered by
+          <command>dplot</command>) and view them in MGED/Archer.
+        </para>
+        <para>
+          You can pass a 3D <classname>ON_Curve</classname> to the
+          <function>DebugPlot::Plot3DCurve()</function> function or a 2D
+          <classname>ON_Curve</classname> and an associated
+          <classname>ON_Surface</classname> to the
+          <function>DebugPlot::Plot3DCurve()</function> function.
+        </para>
+        <para>
+          Both of these functions take an arbitrary filename for a
+          plot3 file the function will write, as well as a color for
+          the curve. The <function>DebugPlot::Plot3DCurve()</function>
+          has an optional <varname>vlist</varname> parameter which you
+          should omit (see the full definitions in
+          <filename>debug_plot.cpp</filename>).
+        </para>
+        <example>
+	  <title>Writing a 2D Curve as a plot3 File</title>
+	  <programlisting>
+            <![CDATA[
+// somewhere in boolean.cpp
+if (face1_curves.Count() > 0 && face1_curves[0] != NULL) {
+    static int calls = 0;
+    unsigned char mycolor[] = {0, 0, 62};
+    std::ostringstream plotname;
+
+    // generate a unique filename
+    plotname << "mycurve" << ++calls << ".plot3";
+
+    // plot using method of global DebugPlot instance 'dplot'
+    dplot->Plot3DCurveFrom2D(surf1, face1_curves[0],
+        plotname.str().c_str(), mycolor);
+}
+            ]]>
+	  </programlisting>
+        </example>
+        <para>
+          After running an evaluation that produces a custom plot3
+          file, you can draw it using the <command>overlay</command>
+          editor command.
+        </para>
+        <example>
+          <title>Drawing a plot3 File</title>
+          <screen>
+Archer> overlay mycurve1.plot3 1
+          </screen>
+	</example>
+      </section>
+    </section>
+    <section>
+      <title>Debugging with the <command>dplot</command> Command</title>
+      <section>
+        <title>Tracing Output to the Code That Created It</title>
+        <para>
+          After you notice a problem in the output shown by the
+          <command>dplot</command> command, you need to locate the
+          source code that created the erroneous geometry so you can
+          start debugging. The following sections provide example
+          procedures you can perform in Archer and a debugger to start
+          investigating some common issues.
+        </para>
+        <bridgehead>If the ssx subcommand shows that a surface-surface
+        intersection is missing...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Use the <command>info</command> and
+              <command>plot</command> subcommands of the
+              <command>brep</command> command to find the indexes
+              (<literal>&lt;i&gt;</literal> and
+              <literal>&lt;j&gt;</literal>) of the two faces involved
+              in the missing intersection.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to manually
+              create the appropriate intermediate evaluation,
+              corresponding to the
+              <filename>bool&lt;n&gt;.dplot</filename> showing the
+              error, to run the <command>brep</command> command on.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>ON_Intersect()</function> call in
+              <function>get_face_intersection_curves()</function> with
+              the condition <literal>i == &lt;i&gt; &amp;&amp; j ==
+              &lt;j&gt;</literal>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean()</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Start stepping through the
+              <function>ON_Intersect()</function> call.
+            </para>
+          </listitem>          
+        </orderedlist>
+        <bridgehead>If the <command>isocsx</command> subcommand shows that an
+        isocurve-surface intersection is missing...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> of the
+              surface-surface intersection used as the argument to the
+              <command>isocsx</command> subcommand.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Use the <command>info</command> and
+              <command>plot</command> subcommands of the
+              <command>brep</command> command to find the indexes
+              (<literal>&lt;i&gt;</literal> and
+              <literal>&lt;j&gt;</literal>) of the two faces involved
+              in the missing intersection.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to manually
+              create the appropriate intermediate evaluation,
+              corresponding to the
+              <filename>bool&lt;n&gt;.dplot</filename> showing the
+              error, to run the <command>brep</command> command on.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>ON_Intersect()</function> call in
+              <function>get_face_intersection_curves()</function> with
+              the condition <literal>dplot->SurfacePairs() == &lt;n
+              - 1&gt; &amp;&amp; i == &lt;i&gt; &amp;&amp; j ==
+              &lt;j&gt;</literal>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean()</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              When the break is reached, add a breakpoint at
+              <function>find_overlap_boundary_curves()</function> and
+              advance to that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Step through the intersections, printing out the
+              isocurve endpoints and visualize them in the context of
+              the geometry in Archer (e.g. by centering the view at
+              those points, or creating spheres centered on them,
+              etc.) to find the isocurves of interest:
+              <screen>
+(gdb) print surf1_isocurve->PointAtStart()
+(gdb) print surf1_isocurve->PointAtEnd()
+              </screen>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Investigate how the isocurves are processed.
+            </para>
+          </listitem>
+        </orderedlist>
+        <bridgehead>If the <command>isocsx</command> subcommand shows that isocurve
+        intersections are incorrect...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> of the
+              surface-surface intersection used as the argument to the
+              <command>isocsx</command> subcommand.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a break after the call to
+              <function>find_overlap_boundary_curves()</function> in
+              <filename>intersect.cpp</filename> with the condition
+              <literal>dplot->SurfacePairs() ==
+              &lt;n&gt;</literal>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean()</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Inspect the <varname>overlaps</varname> array.
+            </para>
+          </listitem>
+        </orderedlist>
+        <bridgehead>If the <command>ssx</command> subcommand shows an incorrect
+        intersection curve...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> of the
+              surface-surface intersection used as the argument to the
+              <command>ssx</command> subcommand, and the index
+              <literal>&lt;k&gt;</literal> assigned to the incorrect
+              intersection event.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>ON_Intersect()</function> call in
+              <function>get_face_intersection_curves()</function> with
+              the condition <literal>dplot->SurfacePairs() == &lt;n
+              - 1&gt;</literal>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean()</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Step into <function>ON_Intersect()</function> and wait for
+              <literal>x.Count() == &lt;k - 1&gt;</literal>.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Investigate the creation of the next intersection event.
+            </para>
+          </listitem>
+        </orderedlist>
+        <bridgehead>
+          If the ssx subcommand shows the correct intersections for a
+          given surface pair, but the fcurves subcommand shows those
+          curves are not being correctly clipped by faces...
+        </bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> of the
+              surface-surface intersection used as the argument to the
+              <command>ssx</command> and
+              <command>fcurves</command> subcommands, and the index
+              <literal>&lt;k&gt;</literal> assigned by
+              <command>fcurves</command> to the incorrect clipped
+              curves.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>get_subcurves_inside_faces()</function> call
+              inside <function>get_face_intersection_curves()</function>
+              with the condition <literal>dplot->SurfacePairs() ==
+              &lt;n + 1&gt; &amp;&amp; k == &lt;k&gt;</literal>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean()</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Start stepping through
+              <function>get_face_intersection_curves()</function> to
+              investigate how the event intersection curves are being
+              clipped.
+            </para>
+          </listitem>
+        </orderedlist>
+        <bridgehead>If the faces subcommand shows that an input face
+        was not split correctly, but the lcurves subcommand shows the
+        relevant intersection was accurate...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> assigned by
+              <command>lcurves</command> to the relevant linked
+              curves.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>split_trimmed_face()</function> call inside
+              <function>get_evaluated_faces()</function> with the
+              condition <literal>dplot->LinkedCurves() >= &lt;n +
+              1&gt;</literal>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean()</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Inside <function>split_trimmed_face()</function>, check
+              the input face loops and ssx curves:
+            </para>
+            <screen>
+(gdb) print orig_face->m_outerloop.m_a[i]->PointAtStart()
+(gdb) print orig_face->m_outerloop.m_a[i]->PointAtEnd()
+(gdb) print orig_face->m_innerloop.m_a[i]->PointAtStart()              
+(gdb) print orig_face->m_innerloop.m_a[i]->PointAtEnd()              
+(gdb) print ssx_curves.m_a[i].m_ssi_curves.m_a[i].m_curve->PointAtStart()
+(gdb) print ssx_curves.m_a[i].m_ssi_curves.m_a[i].m_curve->PointAtEnd()
+            </screen>
+          </listitem>
+        </orderedlist>
+      </section>
+      <section>
+        <title>A Historical Debugging Example</title>
+        <para>
+          What follows is a step-by-step debugging of a real issue
+          affecting the <literal>X</literal> combination from the
+          BRL-CAD sample database <filename>axis.g</filename>.
+        </para>
+        <para>
+          This issue was fixed in revision 65179 in the NURBS Boolean
+          evaluation development branch of the source repository
+          (<link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>).
+        </para>
+        <para>
+          If you want to follow along, you can reinstate the error in
+          a checkout of the development branch:
+          <screen>
+$ svn merge -r 65179:65178 ^/brlcad/branches/brep-debug
+          </screen>
+        </para>
+        <orderedlist>
+          <listitem>
+            <para>
+              Open <filename>axis.g</filename> in Archer and convert
+              the original combination to <type>brep</type>.
+              <screen>
+Archer> opendb axis.g
+Archer> brep X
+X.brep is made.
+              </screen>
+            </para>
+            <para>
+              The file <filename>bool1.dplot</filename> is created in
+              the current directory, as well as a few hundred
+              <filename>.plot3</filename> files.
+            </para>
+          </listitem>
+          <listitem>
+            <para>The object <literal>X</literal> is the union of two
+            intersecting arb8 boxes. The arb8s are perpendicularly
+            intersecting plates that create a 3D shape that looks like
+            a 2D letter "X" in the X-Y plane that has been extruded
+            along the Z axis.
+            </para>
+            <figure>
+              <title>"X" from axis.g</title>
+              <mediaobject>
+                <imageobject role="html">
+                  <imagedata fileref="../../devguides/images/axis_X.png" />
+                </imageobject>
+                <imageobject role="fo">
+                  <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/axis_X.png" />
+                </imageobject>
+              </mediaobject>
+            </figure>
+            <para>
+              The <command>ssx</command> subcommand of
+              <command>dplot</command> is used to check that all
+              expected surface-surface intersections were attempted
+              between the B-Rep NURBS versions of the two arb8s,
+              hereafter referred to as <emphasis>brep1</emphasis> and
+              <emphasis>brep2</emphasis>.
+            </para>
+            <para>
+              <screen>
+Archer> dplot bool1.dplot ssx
+Press [Enter] to show surface-surface intersection 0
+...
+Press [Enter] to show surface-surface intersection 13
+              </screen>
+            </para>
+            <para>
+              All 14 expected intersection events are reported. Each
+              of the two larger-area faces of
+              <emphasis>brep1</emphasis> transversely intersects the
+              two similar faces of <emphasis>brep2</emphasis>
+              (<varname>ssx_index</varname> 0, 1, 4, 5). Two edges of
+              each of these faces lie in the same plane (the X-Y plane
+              and another plane parallel to it) as two of the four
+              smaller-area faces of the other B-Rep
+              (<varname>ssx_index</varname> 2, 3, 6, 7, 8, 9, 11,
+              12). These two pairs of smaller area faces also
+              intersect each other in square overlap intersections
+              (<varname>ssx_index</varname> 10, 13).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The <command>ssx &lt;ssx_index&gt;</command> subcommand of
+              <command>dplot</command> is used to check the
+              individual intersection events.
+            </para>
+            <screen>
+Archer> dplot bool1.dplot ssx 0
+...              
+Archer> dplot bool1.dplot ssx 13
+            </screen>
+            <para>
+              The surface-surface intersection with
+              <varname>ssx_index</varname> 10 appears incorrect
+              (compare to the other overlap intersection,
+              <varname>ssx_index</varname> 13). It's been correctly
+              identified as an overlap intersection, but it doesn't
+              contain the full, square area of the overlap.
+            </para>
+            <figure>
+              <title>Comparison of Surface-Surface Intersection Event 10 Versus 13</title>
+              <mediaobject>
+                <imageobject role="html">
+                  <imagedata fileref="../../devguides/images/ssx_10_vs_13.png" />
+                </imageobject>
+                <imageobject role="fo">
+                  <imagedata align="center" width="3.9in" scalefit="1" fileref="../../devguides/images/ssx_10_vs_13.png" />
+                </imageobject>
+              </mediaobject>
+            </figure>
+          </listitem>
+          <listitem>
+            <para>
+              The overlap intersection should have been created by
+              stitching together the four isocurve-surface
+              intersections that make each edge of the square overlap.
+            </para>
+            <para>
+              The <command>isocsx &lt;ssx_index&gt;</command>
+              subcommand of the <command>dplot</command> command is
+              used to check that all isocurve-surface intersections
+              were attempted.
+            </para>
+            <screen>
+Archer> dplot bool1.dplot ssx 10
+            </screen>
+            <para>
+              All four expected isocurve-surface intersections are
+              reported.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The <command>isocsx &lt;ssx_index&gt;
+              &lt;isocsx_index&gt;</command> subcommand of the
+              <command>dplot</command> command is used to check each
+              isocurve-surface intersection curve.
+            </para>
+            <screen>
+Archer> dplot bool1.dplot isocsx 10 0
+Archer> dplot bool1.dplot isocsx 10 1
+Archer> dplot bool1.dplot isocsx 10 2
+Archer> dplot bool1.dplot isocsx 10 3
+            </screen>
+            <para>
+              Each of the four overlap curves appears correct.
+            </para>
+            <para>
+              At this point, the problem doesn't seem to be with the
+              intersection curves, but with how they were processed.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The <command>fcurves</command> subcommand of the
+              <command>dplot</command> command is used to check the
+              overlap intersection curve that resulted from stitching
+              together the four (correct) isocurve-surface
+              intersection curves. The command shows the 3D projection
+              of the 2D curve recorded in the
+              <emphasis>brep1</emphasis> and
+              <emphasis>brep2</emphasis> domains, after they were
+              clipped to fit inside the containing face (though
+              clipping was unnecessary in this case, as the outer
+              loops of the faces coincide with the boundaries of the
+              surfaces).
+            </para>
+            <screen>
+Archer> dplot bool1.dplot fcurves 10
+            </screen>
+            <para>
+              The clipped curves are shown to be incorrect. This
+              isolates the problem to a point between the time the
+              isocurve-surface intersections were found and the time
+              the clipped curves were created.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The isocsx plots are written by the
+              <function>DebugPlot::IsoCSX()</function> method inside the
+              <function>find_overlap_boundary_curves()</function>
+              routine in
+              <filename>intersect.cpp</filename>. The
+              <function>find_overlap_boundary_curves()</function>
+              routine is called from the
+              <function>ON_Intersect()</function> surface-surface
+              intersection function, also defined in
+              <filename>intersect.cpp</filename>. The next
+              call after
+              <function>find_overlap_boundary_curves()</function>
+              returns is
+              <function>split_overlaps_at_intersections()</function>.
+            </para>
+            <para>
+              To quickly check if the splitting function introduced a
+              problem in the overlap curves, we insert code to write
+              out the overlap curves as <filename>.plot3</filename>
+              files just after the
+              <function>split_overlaps_at_intersections()</function>
+              call.
+            </para>
+            <para>
+              Since the <varname>ssx_index</varname> values reported
+              by <command>dplot</command> are numbered from 0, the
+              intersection we want to investigate, whose
+              <varname>ssx_index</varname> is 10, will be the 11th
+              intersection recorded during the evaluation.
+            </para>
+            <para>
+              <varname>dplot->SurfacePairs()</varname> reports the
+              number of surface-surface intersections that have been
+              recorded, so we write our curves on the condition that
+              <literal>dplot->SurfacePairs() == 10</literal>. Then
+              we'll only get the curves from the 11th surface-surface
+              intersection.
+            </para>
+            <programlisting>
+<![CDATA[
+ // intersect.cpp, inside
+ // ON_Intersect(const ON_Surface *surfA, const ON_Surface *surfB, ...)
+
+ split_overlaps_at_intersections(overlaps, surfA, surfB, treeA, treeB,
+                                 isect_tol, isect_tolA, isect_tolB);
+    
++if (dplot->SurfacePairs() == 10) {
++    for (int i = 0; i < overlaps.Count(); ++i) {
++        if (!overlaps[i]) {
++            continue;
++        }
++        unsigned char overlap_color[] = {0, 255, 0};
++        std::ostringstream plotname;
++
++        plotname << "split_overlap" << i << ".plot3";
++        dplot->Plot3DCurve(overlaps[i]->m_curve3d, plotname.str().c_str(),
++                overlap_color);
++    }
++}
++
+ // add csx_events
+ for (int i = 0; i &lt; csx_events.Count(); ++i) {
+     x.Append(csx_events[i]);
+]]>
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+              After rebuilding the code, the evaluation is run again
+              in Archer to produce the custom plot files
+              <filename>split_overlap4.plot3</filename>,
+              <filename>split_overlap5.plot3</filename>,
+              <filename>split_overlap6.plot3</filename>, and
+              <filename>split_overlap7.plot3</filename>.
+            </para>
+            <para>
+              The <command>overlay</command> command is used to draw
+              the contents of the <filename>.plot3</filename> files.
+            </para>
+            <screen>
+Archer> brep X
+Archer> overlay split_overlap4.plot3 1 ol4
+Archer> overlay split_overlap5.plot3 1 ol5
+Archer> overlay split_overlap6.plot3 1 ol6
+Archer> overlay split_overlap7.plot3 1 ol7
+            </screen>
+            <para>
+              When the four curves are drawn, we see they are still
+              correct after splitting, and enclose the square overlap
+              region.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The next step in processing the overlap curves is
+              linking contiguous curve segments together. We'll once
+              again modify the source code, this time to write out the
+              intermediate linked overlap curves.
+            </para>
+            <para>
+              Curve endpoints are tested to see if they coincide, and
+              contiguous curves are linked with the
+              <function>link_curves()</function> routine, which returns
+              a linked curve that replaces the original curves in the
+              <varname>overlaps[]</varname> array. We'll write out each
+              such curve returned by <function>link_curves()</function>.
+            </para>
+            <programlisting>
+<![CDATA[
+ // intersect.cpp, inside
+ // ON_Intersect(const ON_Surface *surfA, const ON_Surface *surfB, ...)
+ // after the calls to link_curves
+ 
+         overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
+     }
+ }
++if (dplot->SurfacePairs() == 10) {
++    unsigned char linked_curve_color[] = {0, 0, 255};
++    std::ostringstream plotname;
++
++    plotname << "linked_" << i << "_" << j << ".plot3";
++    dplot->Plot3DCurve(overlaps[i]->m_curve3d, plotname.str().c_str(),
++                       linked_curve_color);
++}
+ if (!is_valid_overlap(overlaps[j])) {
+     delete overlaps[j];
+     overlaps[j] = NULL;
+
+]]>
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+              The code is re-compiled, <literal>X.brep</literal> is
+              removed from the database, and the dplot-related files
+              are once again cleared from the working directory before
+              re-running the evaluation.
+            </para>
+            <para>
+              We draw our four new linked curve
+              <filename>.plot3</filename> files.
+            </para>
+            <screen>
+Archer> overlay linked_4_5.plot3 1
+Archer> overlay linked_4_6.plot3 1
+Archer> overlay linked_4_7.plot3 1
+Archer> overlay linked_5_4.plot3 1
+            </screen>
+            <para>
+              The intermediate curve represented by
+              <filename>linked_4_7.plot3</filename> (and the
+              subsequent <filename>linked_5_4.plot3</filename>) is
+              clearly incorrect, as it cuts diagonally through the
+              square overlap region.
+            </para>
+            <figure>
+              <title>Overlay Visualization of Intermediate Linked Curves</title>
+              <mediaobject>
+                <imageobject role="html">
+                  <imagedata fileref="../../devguides/images/intermediate_linked_curves.png" />
+                </imageobject>
+                <imageobject role="fo">
+                  <imagedata align="center" width="5.9in" scalefit="1" fileref="../../devguides/images/intermediate_linked_curves.png" />
+                </imageobject>
+              </mediaobject>
+            </figure>
+          </listitem>
+          <listitem>
+            <para>
+              We'll perform the evaluation again via a
+              debugger. <literal>X.brep</literal> is removed from the
+              database, and the <filename>*.dplot</filename> and
+              <filename>*.plot3</filename> files are removed from the
+              working directory.
+            </para>
+            <para>
+              A breakpoint is set just before the calls to
+              <function>link_curves()</function> in the
+              <function>ON_Intersect()</function> surface-surface
+              intersection function (line 3885 in
+              <filename>intersect.cpp</filename> at the time of
+              writing), with the condition that
+              <literal>dplot->SurfacePairs() == 10</literal>, and
+              that the overlap indices <varname>i</varname> and
+              <varname>j</varname> match the linked curve of interest.
+            </para>
+            <screen>
+<![CDATA[
+$ gdb mged
+(gdb) set args axis.g brep X
+(gdb) start
+(gdb) break intersect.cpp:3885 if dplot->SurfacePairs() == 10 && i == 4 && j == 7
+(gdb) continue
+]]>
+            </screen>
+            <para>
+              Stepping from the breakpoint (e.g. with gdb's
+              <command>next</command> command) we see that the macro
+              test <literal>OVERLAPS_LINKED(Start, End)</literal>
+              evaluates as true, indicating that the start of the
+              <varname>overlaps[i]</varname> curves coincide with the
+              end of the <varname>overlaps[j]</varname> curves.
+            </para>
+            <para>
+              Looking at the implementation of
+              <function>link_curves()</function> in
+              <filename>intersect.cpp</filename>, we can see that the
+              second curve argument is joined to the first curve
+              argument using the OpenNURBS
+              <function>ON_NurbsCurve::Append()</function> member
+              function. So, the start point of the second curve is
+              joined to the end point of the first curve.
+            </para>
+            <programlisting>
+<![CDATA[
+HIDDEN ON_Curve *   
+link_curves(ON_Curve *&c1, ON_Curve *&c2)
+{
+    extend_curve_end_to_pt(c1, c2->PointAtEnd(), ON_ZERO_TOLERANCE);
+
+    ON_NurbsCurve *nc1 = c1->NurbsCurve();
+    ON_NurbsCurve *nc2 = c2->NurbsCurve();
+    if (nc1 && nc2) {
+        nc1->Append(*nc2);
+        delete c1;
+        delete c2;
+        c1 = NULL;
+        c2 = NULL;
+        delete nc2;
+        return nc1;
+    } else if (nc1) {
+        delete nc1;
+    } else if (nc2) {
+        delete nc2;
+    }
+    return NULL;
+}   
+]]>
+            </programlisting>
+            <para>
+              <function>link_curves()</function> is here being called
+              with <varname>overlaps[j]->m_curve3d</varname> as its
+              first argument and
+              <varname>overlaps[i]->m_curve3d</varname> as its second
+              argument. This matches our intention to link the end of
+              the <varname>overlaps[j]</varname> curves to the start
+              of the <varname>overlaps[i]</varname> curves.
+            </para>
+            <para>
+              However, going back to the
+              <function>link_curves()</function> implementation, we also
+              see a call to
+              <function>extend_curve_end_to_point()</function> which may
+              modify the first curve argument.
+            </para>
+            <para>
+               This intent of this call is to ensure the end point of
+               the first curve meets the start point of the second
+               curve as tightly as possible (tighter than the
+               <varname>isect_tol</varname> value that was used to
+               determine the points were coincident) before the curves
+               are joined together.
+            </para>
+            <para>
+              However, we see the point argument passed to
+              <function>extend_curve_end_to_point()</function> is
+              <varname>c2->PointAtEnd()</varname>, when it should be
+              <varname>c2->PointAtStart()</varname>.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              This error is corrected and the code is rebuilt. The
+              evaluation is re-run, and we use the
+              <command>dplot</command> command to verify that the
+              overlap intersection associated with
+              <varname>ssx_index</varname> 10 is now correct.
+            </para>
+            <programlisting>
+              <![CDATA[
+HIDDEN ON_Curve *   
+link_curves(ON_Curve *&c1, ON_Curve *&c2)
+{
+-    extend_curve_end_to_pt(c1, c2->PointAtEnd(), ON_ZERO_TOLERANCE);
++    extend_curve_end_to_pt(c1, c2->PointAtStart(), ON_ZERO_TOLERANCE);
+
+    ON_NurbsCurve *nc1 = c1->NurbsCurve();
+    ON_NurbsCurve *nc2 = c2->NurbsCurve();
+              ]]>
+            </programlisting>
+          </listitem>
+        </orderedlist>
+      </section>
+    </section>
+  </section>
+</article>
