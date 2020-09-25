@@ -112,24 +112,6 @@ jobs:
         endif()
         set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
 
-        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-        execute_process(
-          COMMAND cmake
-            -S .
-            -B build
-            -D ENABLE_ALL=ON
-            -D CMAKE_BUILD_TYPE=Release
-            -D CMAKE_VERBOSE_DISTCHECK=ON
-            -D BRLCAD_ENABLE_GDAL=OFF
-            -D BRLCAD_ENABLE_STEP=OFF
-            -D BRLCAD_EXTRADOCS=OFF
-            -D BUILD_STATIC_LIBS=OFF
-           RESULT_VARIABLE result
-        )
-        # Try Write-VolumeCache for Windows
-        execute_process(COMMAND powershell Write-VolumeCache C)
-        execute_process(COMMAND powershell Write-VolumeCache D)
-        else()
         execute_process(
           COMMAND cmake
             -S .
@@ -142,10 +124,15 @@ jobs:
             -D BRLCAD_ENABLE_STEP=OFF
             -D BRLCAD_EXTRADOCS=OFF
             -D BUILD_STATIC_LIBS=OFF
-          RESULT_VARIABLE result
+           RESULT_VARIABLE result
         )
-        # On platforms where we have it, make sure the files are in place with a sync
-        execute_process(COMMAND sync)
+        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+          # Try Write-VolumeCache for Windows
+          execute_process(COMMAND powershell Write-VolumeCache C)
+          execute_process(COMMAND powershell Write-VolumeCache D)
+        else()
+          # On platforms where we have it, make sure the files are in place with a sync
+          execute_process(COMMAND sync)
         endif()
         if (NOT result EQUAL 0)
           message(FATAL_ERROR "Bad exit status")
@@ -182,7 +169,7 @@ jobs:
            set(BCNT 0)
            set(result 1)
            while(result AND ${BCNT} LESS 4)
-             execute_process(COMMAND cmake --build build --config Release --target ALL_BUILD RESULT_VARIABLE result)
+             execute_process(COMMAND cmake --build build --config Release --target all RESULT_VARIABLE result)
              if (NOT ${result})
                execute_process(COMMAND powershell Write-VolumeCache C)
                execute_process(COMMAND powershell Write-VolumeCache D)
@@ -191,7 +178,7 @@ jobs:
              if (NOT ${result})
                execute_process(COMMAND powershell Write-VolumeCache C)
                execute_process(COMMAND powershell Write-VolumeCache D)
-               execute_process(COMMAND cmake --build build --config Release --target PACKAGE RESULT_VARIABLE result)
+               execute_process(COMMAND cmake --build build --config Release --target package RESULT_VARIABLE result)
              endif()
              math(EXPR BCNT "${BCNT}+1")
            endwhile()
