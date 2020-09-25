@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #endif
 #ifdef HAVE_ZLIB_H
-#include <zlib.h>
+#include "zlib.h"
 #endif
 
 #if defined(WIN32) || defined(_WIN32)

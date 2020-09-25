@@ -33,6 +33,7 @@
 #include "vmath.h"
 #include "opennurbs_array.h"
 
+
 bool PointInTriangle(
     const ON_3dPoint& a,
     const ON_3dPoint& b,

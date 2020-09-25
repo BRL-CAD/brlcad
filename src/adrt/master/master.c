@@ -38,7 +38,7 @@
 #if 0
 #include <tinycthread.h>
 #endif
-#include <zlib.h>
+#include "zlib.h"
 
 #include "bnetwork.h"
 #include "bio.h"

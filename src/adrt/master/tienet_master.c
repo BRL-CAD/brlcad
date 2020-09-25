@@ -41,7 +41,7 @@
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
-#include <zlib.h>
+#include "zlib.h"
 
 #include "rt/tie.h"
 #include "bu/str.h"
