@@ -59,8 +59,11 @@
 #include "bu/mapped_file.h"
 #include "bu/str.h"
 
+extern "C" char *
+bu_strnstr(const char *h, const char *n, size_t hlen);
+
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 254
+#define EXPECTED_PLATFORM_SYMBOLS 257
 
 class repo_info_t {
     public:
@@ -273,7 +276,7 @@ regex_init(repo_info_t &r) {
 	cnt = 0;
 	rf = api_func_strs[cnt];
 	while (rf) {
-	    std::string rrf = std::string(".*[^a-zA-Z0-9_:]") + std::string(rf) + std::string("[(].*");
+	    std::string rrf = std::string(".*[^a-zA-Z0-9_:.]") + std::string(rf) + std::string("[(].*");
 	    r.api_func_filters[std::string(rf)] = std::regex(rrf);
 	    cnt++;
 	    rf = api_func_strs[cnt];
@@ -392,12 +395,12 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "bio.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "bio.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -463,12 +466,12 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "bnetwork.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "bnetwork.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -541,12 +544,12 @@ common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "common.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "common.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -599,7 +602,7 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 
@@ -696,12 +699,12 @@ setprogname(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "main")) {
+	if (!bu_strnstr((const char *)ifile->buf, "main", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -768,7 +771,7 @@ platform_symbols(repo_info_t &r, std::vector<std::string> &log, std::vector<std:
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	//std::cout << "Reading " << srcs[i] << "\n";
@@ -855,15 +858,17 @@ main(int argc, const char *argv[])
     // Build a set of filters that will cull out files which would otherwise
     // be matches for items of interest
     const char *reject_filters[] {
-	"/bullet/",
-	"/doc/",
-	"/shapelib/",
 	".log",
 	".svn",
+	"/bullet/",
+	"/doc/",
+	"/qtads/",
+	"/shapelib/",
 	"misc/CMake/Find",
-	"misc/repoconv",
-	"misc/tools",
 	"misc/debian",
+	"misc/repoconv",
+	"misc/repowork",
+	"misc/tools",
 	"pkg.h",
 	"src/libpkg",
 	"src/other/",

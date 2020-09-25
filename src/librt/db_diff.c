@@ -544,8 +544,7 @@ db_diff(const struct db_i *dbip1,
 	    state |= db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
 	}
 	if (flags == DB_COMPARE_ALL && state == DIFF_UNCHANGED && extern_state == DIFF_CHANGED) {
-	    bu_log("WARNING: internal and bu_external comparison disagree for %s and %s\n", dp1->d_namep, dp2->d_namep);
-
+	    //bu_log("WARNING: internal and bu_external comparison disagree for %s and %s\n", dp1->d_namep, dp2->d_namep);
 	}
 
 	if (results) {
@@ -919,7 +918,7 @@ db_diff3(const struct db_i *dbip_left,
 	    ancestor_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, dp_ancestor, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
 	}
 	if (flags == DB_COMPARE_ALL && (ancestor_state == DIFF_UNCHANGED || ancestor_state == DIFF_EMPTY) && extern_state == DIFF_CHANGED) {
-	    bu_log("WARNING: internal and bu_external comparison disagree\n");
+	    //bu_log("WARNING: internal and bu_external comparison disagree\n");
 	}
 
 	if (results) {
@@ -965,7 +964,7 @@ db_diff3(const struct db_i *dbip_left,
 		left_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, NULL, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
 	    }
 	    if (flags == DB_COMPARE_ALL && (left_state == DIFF_UNCHANGED || left_state == DIFF_EMPTY) && extern_state == DIFF_CHANGED) {
-		bu_log("WARNING: internal and bu_external comparison disagree");
+		//bu_log("WARNING: internal and bu_external comparison disagree");
 	    }
 
 	    if (results) {

@@ -304,9 +304,12 @@ main(int argc, char **argv)
     double angle = 0.0;
     ssize_t io;
 
+    bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
     ifp = stdin;
     ofp = stdout;
-    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
 	bu_exit(1, "%s", usage);

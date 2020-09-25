@@ -1,3 +1,10 @@
+set(TERMIO_SRCS
+  termio.c
+  termcap.c
+  tgoto.c
+  tputs.c
+  )
+
 if (NOT WIN32)
   # Include directories needed by libtermio users
   set(TERMIO_INCLUDE_DIRS
@@ -10,13 +17,6 @@ if (NOT WIN32)
      -DB_TERMCAP=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/termio/termcap\"
     )
 
-  set(TERMIO_SRCS
-    termio.c
-    termcap.c
-    tgoto.c
-    tputs.c
-    )
-
   BRLCAD_ADDDATA(termcap termio)
 
   BRLCAD_ADDLIB(libtermio "${TERMIO_SRCS}" "libbu")
@@ -24,8 +24,10 @@ if (NOT WIN32)
 endif(NOT WIN32)
 
 CMAKEFILES(
+  ${TERMIO_SRCS}
   CMakeLists.txt
   termcap.h
+  termcap
   )
 
 # Local Variables:

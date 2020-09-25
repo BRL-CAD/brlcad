@@ -244,7 +244,13 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 	       (void *)dbip, name, (intmax_t)laddr, len, flags, ptr);
     }
 
-    if ((tmp_ptr = strchr(name, '/')) != NULL) {
+    if (BU_STR_EMPTY(name)) {
+	bu_log("db_diradd() object with empty name is illegal, ignored\n");
+	return RT_DIR_NULL;
+    }
+
+    tmp_ptr = strchr(name, '/');
+    if (tmp_ptr != NULL) {
 	/* if this is a version 4 database and the offending char is beyond NAMESIZE
 	 * then it is not really a problem
 	 */
@@ -275,6 +281,10 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     RT_CK_DIR(dp);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
     dp->d_addr = laddr;
+
+    /* TODO: investigate removing exclusion of INMEM flag, added by
+     * mike in c13285 when in-mem support was originally added
+     */
     dp->d_flags = flags & ~(RT_DIR_INMEM);
     dp->d_len = len;
     dp->d_forw = *headp;

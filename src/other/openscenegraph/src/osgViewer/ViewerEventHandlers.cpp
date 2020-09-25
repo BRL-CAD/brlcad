@@ -25,6 +25,7 @@
 #include <osg/TexMat>
 #include <osg/Texture2D>
 #include <osg/TextureRectangle>
+#include <osg/os_utils>
 #include <osg/io_utils>
 
 #include <osgViewer/Viewer>
@@ -407,15 +408,9 @@ RecordCameraPathHandler::RecordCameraPathHandler(const std::string& filename, fl
     _animStartTime(0),
     _lastFrameTime(osg::Timer::instance()->tick())
 {
-    const char* str = getenv("OSG_RECORD_CAMERA_PATH_FPS");
-    if (str)
-    {
-        _interval = 1.0f / osg::asciiToDouble(str);
-    }
-    else
-    {
-        _interval = 1.0f / fps;
-    }
+    osg::getEnvVar("OSG_RECORD_CAMERA_PATH_FPS", fps);
+
+    _interval = 1.0f / fps;
 }
 
 void RecordCameraPathHandler::getUsage(osg::ApplicationUsage &usage) const
@@ -493,7 +488,7 @@ bool RecordCameraPathHandler::handle(const osgGA::GUIEventAdapter &ea, osgGA::GU
                         OSG_NOTICE << "Recording camera path to file " << ss.str() << std::endl;
                         _fout.open( ss.str().c_str() );
 
-                        // make sure doubles are not trucated by default stream precision = 6
+                        // make sure doubles are not truncated by default stream precision = 6
                         _fout.precision( 15 );
                     }
                     else
@@ -719,6 +714,12 @@ InteractiveImageHandler::InteractiveImageHandler(osg::Image* image, osg::Texture
 bool InteractiveImageHandler::mousePosition(osgViewer::View* view, osg::NodeVisitor* nv, const osgGA::GUIEventAdapter& ea, int& x, int &y) const
 {
     if (!view) return false;
+    if (_fullscreen)
+    {
+        x = (int) ea.getX();
+        y = (int) ea.getY();
+        return true;
+    }
 
     osgUtil::LineSegmentIntersector::Intersections intersections;
     bool foundIntersection = (nv==0) ? view->computeIntersections(ea, intersections) :

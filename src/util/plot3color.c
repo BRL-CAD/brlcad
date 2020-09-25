@@ -44,6 +44,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (argc != 4 || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
     }

@@ -39,7 +39,9 @@ main(int argc, char *argv[])
 
     switch (function_num) {
 	case 0:	{
-	    int64_t time0, time1, time2;
+	    int64_t time0 = 0;
+	    int64_t time1 = 0;
+	    int64_t time2 = 0;
 	    int64_t i = 0;
 	    size_t counter = 1;
 

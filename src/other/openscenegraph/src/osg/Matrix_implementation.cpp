@@ -222,7 +222,7 @@ Quat Matrix_implementation::getRotate() const
     QZ = 0.5 * sqrt( osg::maximum( 0.0, 1.0 - _mat[0][0] - _mat[1][1] + _mat[2][2] ) );
 
 #if 0
-    // Robert Osfield, June 7th 2007, arggg this new implementation produces many many errors, so have to revert to sign(..) orignal below.
+    // Robert Osfield, June 7th 2007, arggg this new implementation produces many many errors, so have to revert to sign(..) original below.
     QX = QX * osg::signOrZero(  _mat[1][2] - _mat[2][1]) ;
     QY = QY * osg::signOrZero(  _mat[2][0] - _mat[0][2]) ;
     QZ = QZ * osg::signOrZero(  _mat[0][1] - _mat[1][0]) ;
@@ -618,24 +618,26 @@ bool Matrix_implementation::invert_4x3( const Matrix_implementation& mat )
        return invert_4x3(tm);
     }
 
-    register value_type r00, r01, r02,
-                        r10, r11, r12,
-                        r20, r21, r22;
-      // Copy rotation components directly into registers for speed
-    r00 = mat._mat[0][0]; r01 = mat._mat[0][1]; r02 = mat._mat[0][2];
-    r10 = mat._mat[1][0]; r11 = mat._mat[1][1]; r12 = mat._mat[1][2];
-    r20 = mat._mat[2][0]; r21 = mat._mat[2][1]; r22 = mat._mat[2][2];
+    value_type r00 = mat._mat[0][0];
+    value_type r01 = mat._mat[0][1];
+    value_type r02 = mat._mat[0][2];
+    value_type r10 = mat._mat[1][0];
+    value_type r11 = mat._mat[1][1];
+    value_type r12 = mat._mat[1][2];
+    value_type r20 = mat._mat[2][0];
+    value_type r21 = mat._mat[2][1];
+    value_type r22 = mat._mat[2][2];
 
-        // Partially compute inverse of rot
+    // Partially compute inverse of rot
     _mat[0][0] = r11*r22 - r12*r21;
     _mat[0][1] = r02*r21 - r01*r22;
     _mat[0][2] = r01*r12 - r02*r11;
 
-      // Compute determinant of rot from 3 elements just computed
-    register value_type one_over_det = 1.0/(r00*_mat[0][0] + r10*_mat[0][1] + r20*_mat[0][2]);
+    // Compute determinant of rot from 3 elements just computed
+    value_type one_over_det = 1.0/(r00*_mat[0][0] + r10*_mat[0][1] + r20*_mat[0][2]);
     r00 *= one_over_det; r10 *= one_over_det; r20 *= one_over_det;  // Saves on later computations
 
-      // Finish computing inverse of rot
+    // Finish computing inverse of rot
     _mat[0][0] *= one_over_det;
     _mat[0][1] *= one_over_det;
     _mat[0][2] *= one_over_det;
@@ -740,6 +742,48 @@ inline T SGL_ABS(T a)
 #define SGL_SWAP(a,b,temp) ((temp)=(a),(a)=(b),(b)=(temp))
 #endif
 
+bool Matrix_implementation::transpose(const Matrix_implementation&mat){
+    if (&mat==this) {
+       Matrix_implementation tm(mat);
+       return transpose(tm);
+    }
+    _mat[0][0]=mat._mat[0][0];
+    _mat[0][1]=mat._mat[1][0];
+    _mat[0][2]=mat._mat[2][0];
+    _mat[0][3]=mat._mat[3][0];
+    _mat[1][0]=mat._mat[0][1];
+    _mat[1][1]=mat._mat[1][1];
+    _mat[1][2]=mat._mat[2][1];
+    _mat[1][3]=mat._mat[3][1];
+    _mat[2][0]=mat._mat[0][2];
+    _mat[2][1]=mat._mat[1][2];
+    _mat[2][2]=mat._mat[2][2];
+    _mat[2][3]=mat._mat[3][2];
+    _mat[3][0]=mat._mat[0][3];
+    _mat[3][1]=mat._mat[1][3];
+    _mat[3][2]=mat._mat[2][3];
+    _mat[3][3]=mat._mat[3][3];
+    return true;
+}
+
+bool Matrix_implementation::transpose3x3(const Matrix_implementation&mat){
+    if (&mat==this) {
+       Matrix_implementation tm(mat);
+       return transpose3x3(tm);
+    }
+    _mat[0][0]=mat._mat[0][0];
+    _mat[0][1]=mat._mat[1][0];
+    _mat[0][2]=mat._mat[2][0];
+    _mat[1][0]=mat._mat[0][1];
+    _mat[1][1]=mat._mat[1][1];
+    _mat[1][2]=mat._mat[2][1];
+    _mat[2][0]=mat._mat[0][2];
+    _mat[2][1]=mat._mat[1][2];
+    _mat[2][2]=mat._mat[2][2];
+
+    return true;
+}
+
 bool Matrix_implementation::invert_4x4( const Matrix_implementation& mat )
 {
     if (&mat==this) {
@@ -761,7 +805,7 @@ bool Matrix_implementation::invert_4x4( const Matrix_implementation& mat )
     for(i=0;i<4;i++)
     {
        big=0.0;
-       for (j=0; j<4; j++)
+       for (j=0; j<4; ++j)
           if (ipiv[j] != 1)
              for (k=0; k<4; k++)
              {
@@ -779,7 +823,7 @@ bool Matrix_implementation::invert_4x4( const Matrix_implementation& mat )
              }
        ++(ipiv[icol]);
        if (irow != icol)
-          for (l=0; l<4; l++) SGL_SWAP(operator()(irow,l),
+          for (l=0; l<4; ++l) SGL_SWAP(operator()(irow,l),
                                        operator()(icol,l),
                                        temp);
 
@@ -790,13 +834,13 @@ bool Matrix_implementation::invert_4x4( const Matrix_implementation& mat )
 
        pivinv = 1.0/operator()(icol,icol);
        operator()(icol,icol) = 1;
-       for (l=0; l<4; l++) operator()(icol,l) *= pivinv;
-       for (ll=0; ll<4; ll++)
+       for (l=0; l<4; ++l) operator()(icol,l) *= pivinv;
+       for (ll=0; ll<4; ++ll)
           if (ll != icol)
           {
              dum=operator()(ll,icol);
              operator()(ll,icol) = 0;
-             for (l=0; l<4; l++) operator()(ll,l) -= operator()(icol,l)*dum;
+             for (l=0; l<4; ++l) operator()(ll,l) -= operator()(icol,l)*dum;
           }
     }
     for (int lx=4; lx>0; --lx)

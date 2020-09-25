@@ -97,9 +97,10 @@ dpix_read(const char *filename, size_t width, size_t height)
 	width = 512;
     }
 
-    if (filename == NULL)
+    if (filename == NULL) {
 	fd = fileno(stdin);
-    else if ((fd = open(filename, O_RDONLY|O_BINARY, WRMODE)) <0) {
+	setmode(fd, O_BINARY);
+    } else if ((fd = open(filename, O_RDONLY|O_BINARY, WRMODE)) <0) {
 	bu_log("dpix_read : Cannot open file %s for reading\n, ", filename);
 	return NULL;
     }

@@ -42,7 +42,7 @@
 
 
 __BEGIN_DECLS
-void ged_osgLoadScene(struct bu_list *hdlp, void *osgData);
+void _ged_osgLoadScene(struct bu_list *hdlp, void *osgData);
 __END_DECLS
 
 
@@ -69,7 +69,7 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
     int begin;
     int nverts;
 
-    bu_log("ged_osgLoadSolid: enter\n");
+    bu_log("_ged_osgLoadSolid: enter\n");
 
 
 
@@ -101,7 +101,7 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 		    normals->push_back(osg::Vec3(0.0f,-1.0f,0.0f));
 		    begin += nverts;
 		    nverts = 1;
-		    //bu_log("ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
+		    //bu_log("_ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
 		    break;
 		case BN_VLIST_POLY_START:
 		    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
@@ -115,7 +115,7 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 		    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    ++nverts;
 
-		    //bu_log("ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
+		    //bu_log("_ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
 		    break;
 		case BN_VLIST_POLY_END:
 		    //vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
@@ -142,26 +142,26 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 	//geode->addDrawable(geom);
     }
 
-    bu_log("ged_osgLoadSolid: leave\n");
+    bu_log("_ged_osgLoadSolid: leave\n");
 }
 
 
 void
-ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
+_ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
 {
     register struct display_list *gdlp;
     register struct display_list *next_gdlp;
     struct solid *sp;
     struct osg_stuff *osp = (struct osg_stuff *)osgData;
 
-    bu_log("ged_osgLoadScene: part B\n");
+    bu_log("_ged_osgLoadScene: part B\n");
     osg::Group* root = new osg::Group();
 
     // create the Geode (Geometry Node) to contain all our osg::Geometry objects.
     osg::Geode* geode = new osg::Geode();
 
     bu_log("before: max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
-    bu_log("ged_osgLoadScene: enter\n");
+    bu_log("_ged_osgLoadScene: enter\n");
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
@@ -192,7 +192,7 @@ ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
     bu_log("after: max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
 
-    bu_log("ged_osgLoadScene: loaded geode\n");
+    bu_log("_ged_osgLoadScene: loaded geode\n");
 }
 
 // Local Variables:

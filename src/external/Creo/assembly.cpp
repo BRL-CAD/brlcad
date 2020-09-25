@@ -267,11 +267,9 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     struct bu_attribute_value_set avs;
     db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
 
-    /* Write the object ID as an attribute, if it isn't already being used as the object name */
+    /* Write the object ID as an attribute */
     obj_name = get_brlcad_name(cinfo, wname, NULL, N_CREO);
-    if (!BU_STR_EQUAL(bu_vls_addr(obj_name), bu_vls_addr(comb_name))) {
-	bu_avs_add(&avs, "CREO_NAME", bu_vls_addr(obj_name));
-    }
+    bu_avs_add(&avs, "CREO_NAME", bu_vls_addr(obj_name));
 
     ProWVerstamp cstamp;
     if (ProMdlVerstampGet(model, &cstamp) == PRO_TK_NO_ERROR) {

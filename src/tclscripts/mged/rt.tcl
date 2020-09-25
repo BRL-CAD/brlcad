@@ -478,7 +478,7 @@ proc do_Raytrace { id } {
     }
 
     if {[winfo exists $rt_control($id,top).colorMB] && $rt_control($id,color) != ""} {
-	set rgb [getRGBorReset $rt_control($id,top).colorMB rt_control($id,color) $rt_control($id,color)]
+	set rgb [getRGB $rt_control($id,top).colorMB $rt_control($id,color)]
 	append rt_cmd " -C[lindex $rgb 0]/[lindex $rgb 1]/[lindex $rgb 2]"
     }
 

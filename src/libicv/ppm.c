@@ -90,6 +90,7 @@ ppm_read(const char *filename)
 
     if (filename == NULL) {
 	fp = stdin;
+	setmode(fileno(fp), O_BINARY);
     } else if ((fp = pm_openr(filename)) == NULL) {
 	bu_log("ERROR: Cannot open file for reading\n");
 	return NULL;

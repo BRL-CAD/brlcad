@@ -34,11 +34,10 @@
 
 #include "common.h"
 #include "bu/cmd.h"
+#include "bu/process.h"
 #include "tcl.h"
 #include "dm.h"
 #include "ged.h"
-
-#include "fb.h"
 
 __BEGIN_DECLS
 
@@ -88,37 +87,86 @@ __BEGIN_DECLS
 #define TCLCAD_OBJ_FB_MODE_INTERLAY 2
 #define TCLCAD_OBJ_FB_MODE_OVERLAY  3
 
-struct ged_dm_view {
-    struct bu_list		l;
-    struct bu_vls		gdv_callback;
-    struct bu_vls		gdv_edit_motion_delta_callback;
-    struct bu_vls		gdv_name;
-    struct bview		*gdv_view;
-    dm				*gdv_dmp;
-    struct fbserv_obj		gdv_fbs;
-    struct ged_obj		*gdv_gop;
-    int	   			gdv_hide_view;
+/* Use fbserv */
+#define USE_FBSERV 1
+
+/* Framebuffer server object */
+
+#define NET_LONG_LEN 4 /**< @brief # bytes to network long */
+#define MAX_CLIENTS 32
+#define MAX_PORT_TRIES 100
+#define FBS_CALLBACK_NULL (void (*)())NULL
+#define FBSERV_OBJ_NULL (struct fbserv_obj *)NULL
+
+struct fbserv_listener {
+    int fbsl_fd;                        /**< @brief socket to listen for connections */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsl_chan;
+#endif
+    int fbsl_port;                      /**< @brief port number to listen on */
+    int fbsl_listen;                    /**< @brief !0 means listen for connections */
+    struct fbserv_obj *fbsl_fbsp;       /**< @brief points to its fbserv object */
 };
 
-struct ged_obj {
-    struct ged		*go_gedp;
-    struct ged_dm_view	go_head_views;
-    struct bu_vls	go_name;
+
+struct fbserv_client {
+    int fbsc_fd;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsc_chan;
+    Tcl_FileProc *fbsc_handler;
+#endif
+    struct pkg_conn *fbsc_pkg;
+    struct fbserv_obj *fbsc_fbsp;       /**< @brief points to its fbserv object */
+};
+
+
+struct fbserv_obj {
+    struct fb *fbs_fbp;                        /**< @brief framebuffer pointer */
+    void *fbs_interp;             /**< @brief tcl interpreter */
+    struct fbserv_listener fbs_listener;                /**< @brief data for listening */
+    struct fbserv_client fbs_clients[MAX_CLIENTS];      /**< @brief connected clients */
+    void (*fbs_callback)(void *clientData);             /**< @brief callback function */
+    void *fbs_clientData;
+    int fbs_mode;                       /**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
+};
+
+DM_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
+DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
+
+struct tclcad_ged_data {
+    struct ged		*gedp;
     struct bu_vls	go_more_args_callback;
+    int			go_more_args_callback_cnt;
+
+    // These are view related, but appear to be intended as global across all
+    // views associated with the gedp - that is why they are here and not in
+    // tclcad_view_data.
+    struct bu_hash_tbl	*go_edited_paths;
     struct bu_vls	go_rt_end_callback;
+    int                 go_rt_end_callback_cnt;
+    int			go_dlist_on;
+    int			go_refresh_on;
+
+    // TODO - these really shouldn't be libtclcad specific... we don't want to
+    // depend on Tcl for label primitives...
     struct bu_vls	*go_prim_label_list;
     int			go_prim_label_list_size;
-    int			go_refresh_on;
-    int			go_dlist_on;
-    Tcl_Interp		*interp;
-    struct bu_hash_tbl	*go_edited_paths;
 };
-#define GED_OBJ_NULL ((struct ged_obj *)0)
 
+// Data specific to an individual view rather than the geometry database
+// instance.
+struct tclcad_view_data {
+    struct ged		*gedp;
+    struct bu_vls	gdv_edit_motion_delta_callback;
+    int                 gdv_edit_motion_delta_callback_cnt;
+    struct bu_vls	gdv_callback;
+    int			gdv_callback_cnt;
+    struct fbserv_obj	gdv_fbs;
+};
 
 struct tclcad_obj {
     struct bu_list	l;
-    struct ged_obj	*to_gop;
+    struct ged		*to_gedp;
     Tcl_Interp		*to_interp;
 };
 
@@ -127,9 +175,7 @@ struct tclcad_obj {
 TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Bu_Init(void *interp);
 TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_bn_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 
 
@@ -298,10 +344,7 @@ TCLCAD_EXPORT extern int tcl_list_to_fastf_array(Tcl_Interp *interp,
 						 int *array_len);
 
 
-TCLCAD_EXPORT extern int Tclcad_Init(Tcl_Interp *interp);
-
 /* defined in tclcad_obj.c */
-TCLCAD_EXPORT extern int Go_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 				     Tcl_Interp *interp,
 				     int argc,
@@ -309,108 +352,108 @@ TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *gedp,
 								    int argc,
 								    const char *argv[]);
-TCLCAD_EXPORT extern void go_refresh(struct ged_obj *gop,
-				     struct ged_dm_view *gdvp);
-TCLCAD_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
-					  struct ged_dm_view *gdvp,
+TCLCAD_EXPORT extern void go_refresh(struct ged *gedp,
+				     struct bview *gdvp);
+TCLCAD_EXPORT extern void go_refresh_draw(struct ged *gedp,
+					  struct bview *gdvp,
 					  int restore_zbuffer);
-TCLCAD_EXPORT extern int go_view_axes(struct ged_obj *gop,
-				      struct ged_dm_view *gdvp,
+TCLCAD_EXPORT extern int go_view_axes(struct ged *gedp,
+				      struct bview *gdvp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
 TCLCAD_EXPORT extern int go_data_labels(Tcl_Interp *interp,
 					struct ged *gedp,
-					struct ged_dm_view *gdvp,
+					struct bview *gdvp,
 					int argc,
 					const char *argv[],
 					const char *usage);
 TCLCAD_EXPORT extern int go_data_arrows(Tcl_Interp *interp,
 					struct ged *gedp,
-					struct ged_dm_view *gdvp,
+					struct bview *gdvp,
 					int argc,
 					const char *argv[],
 					const char *usage);
 TCLCAD_EXPORT extern int go_data_pick(struct ged *gedp,
-				      struct ged_dm_view *gdvp,
+				      struct bview *gdvp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
 TCLCAD_EXPORT extern int go_data_axes(Tcl_Interp *interp,
 				      struct ged *gedp,
-				      struct ged_dm_view *gdvp,
+				      struct bview *gdvp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
 TCLCAD_EXPORT extern int go_data_lines(Tcl_Interp *interp,
 				       struct ged *gedp,
-				       struct ged_dm_view *gdvp,
+				       struct bview *gdvp,
 				       int argc,
 				       const char *argv[],
 				       const char *usage);
 TCLCAD_EXPORT extern int go_data_move(Tcl_Interp *interp,
 				      struct ged *gedp,
-				      struct ged_dm_view *gdvp,
+				      struct bview *gdvp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
 TCLCAD_EXPORT extern int go_data_move_object_mode(Tcl_Interp *interp,
 						  struct ged *gedp,
-						  struct ged_dm_view *gdvp,
+						  struct bview *gdvp,
 						  int argc,
 						  const char *argv[],
 						  const char *usage);
 TCLCAD_EXPORT extern int go_data_move_point_mode(Tcl_Interp *interp,
 						 struct ged *gedp,
-						 struct ged_dm_view *gdvp,
+						 struct bview *gdvp,
 						 int argc,
 						 const char *argv[],
 						 const char *usage);
 TCLCAD_EXPORT extern int go_data_polygons(Tcl_Interp *interp,
 					  struct ged *gedp,
-					  struct ged_dm_view *gdvp,
+					  struct bview *gdvp,
 					  int argc,
 					  const char *argv[],
 					  const char *usage);
 TCLCAD_EXPORT extern int go_mouse_poly_circ(Tcl_Interp *interp,
 					    struct ged *gedp,
-					    struct ged_dm_view *gdvp,
+					    struct bview *gdvp,
 					    int argc,
 					    const char *argv[],
 					    const char *usage);
 TCLCAD_EXPORT extern int go_mouse_poly_cont(Tcl_Interp *interp,
 					    struct ged *gedp,
-					    struct ged_dm_view *gdvp,
+					    struct bview *gdvp,
 					    int argc,
 					    const char *argv[],
 					    const char *usage);
 TCLCAD_EXPORT extern int go_mouse_poly_ell(Tcl_Interp *interp,
 					   struct ged *gedp,
-					   struct ged_dm_view *gdvp,
+					   struct bview *gdvp,
 					   int argc,
 					   const char *argv[],
 					   const char *usage);
 TCLCAD_EXPORT extern int go_mouse_poly_rect(Tcl_Interp *interp,
 					    struct ged *gedp,
-					    struct ged_dm_view *gdvp,
+					    struct bview *gdvp,
 					    int argc,
 					    const char *argv[],
 					    const char *usage);
 TCLCAD_EXPORT extern int go_poly_circ_mode(Tcl_Interp *interp,
 					   struct ged *gedp,
-					   struct ged_dm_view *gdvp,
+					   struct bview *gdvp,
 					   int argc,
 					   const char *argv[],
 					   const char *usage);
 TCLCAD_EXPORT extern int go_poly_ell_mode(Tcl_Interp *interp,
 					  struct ged *gedp,
-					  struct ged_dm_view *gdvp,
+					  struct bview *gdvp,
 					  int argc,
 					  const char *argv[],
 					  const char *usage);
 TCLCAD_EXPORT extern int go_poly_rect_mode(Tcl_Interp *interp,
 					   struct ged *gedp,
-					   struct ged_dm_view *gdvp,
+					   struct bview *gdvp,
 					   int argc,
 					   const char *argv[],
 					   const char *usage);
@@ -419,13 +462,13 @@ TCLCAD_EXPORT extern int go_run_tclscript(Tcl_Interp *interp,
 					  struct bu_vls *result_str);
 TCLCAD_EXPORT extern int go_poly_cont_build(Tcl_Interp *interp,
 					    struct ged *gedp,
-					    struct ged_dm_view *gdvp,
+					    struct bview *gdvp,
 					    int argc,
 					    const char *argv[],
 					    const char *usage);
 TCLCAD_EXPORT extern int go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
 						struct ged *gedp,
-						struct ged_dm_view *gdvp,
+						struct bview *gdvp,
 						int argc,
 						const char *argv[],
 						const char *usage);
@@ -472,16 +515,24 @@ TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const ch
 TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog);
 
 /**
- * Create Tcl specific I/O handlers
+ * Tcl specific I/O handlers
  */
+struct tclcad_io_data {
+	Tcl_Channel chan_stdin;
+    Tcl_Channel chan_stdout;
+    Tcl_Channel chan_stderr;
+    Tcl_Interp *interp;
+    int io_mode;
+};
 TCLCAD_EXPORT void
-tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
+tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data);
+TCLCAD_EXPORT void
+tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d);
 
-/**
- * Delete Tcl specific I/O handlers
- */
-TCLCAD_EXPORT void
-tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+
+/* dm_tcl.c */
+/* The presence of Tcl_Interp as an arg prevents giving arg list */
+TCLCAD_EXPORT extern void fb_tcl_setup(void);
 
 __END_DECLS
 

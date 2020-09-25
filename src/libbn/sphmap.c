@@ -64,6 +64,10 @@ bn_spm_init(int N, int elsize)
     int i, nx, total, idx;
     register bn_spm_map_t *mapp;
 
+    if (!N || !elsize) {
+	return BN_SPM_MAP_NULL;
+    }
+
     BU_ALLOC(mapp, bn_spm_map_t);
     if (mapp == BN_SPM_MAP_NULL)
 	return BN_SPM_MAP_NULL;
@@ -206,6 +210,11 @@ bn_spm_save(bn_spm_map_t *mapp, char *filename)
     int got;
     FILE *fp;
 
+    /* Sanity */
+    if (mapp == BN_SPM_MAP_NULL || !filename) {
+	return -1;
+    }
+
     BN_CK_SPM_MAP(mapp);
 
     if (BU_STR_EQUAL(filename, "-"))
@@ -252,6 +261,11 @@ bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny)
     unsigned long red, green, blue;
     long count;
     FILE *fp;
+
+    /* Sanity */
+    if (mapp == BN_SPM_MAP_NULL || !filename || !nx || !ny) {
+	return -1;
+    }
 
     BN_CK_SPM_MAP(mapp);
 

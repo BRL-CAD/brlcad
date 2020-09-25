@@ -76,7 +76,7 @@ BN_EXPORT extern const float bn_rand_table[BN_RAND_TABSIZE];
 #define BN_RANDHALF(_i) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
 #define BN_RANDHALF_INIT(_p) _p = bn_rand_table
 
-#define BN_RANDHALFTABSIZE 16535	/* Powers of two give streaking */
+#define BN_RANDHALFTABSIZE 16535	/**< Powers of two give streaking */
 BN_EXPORT extern int bn_randhalftabsize;
 
 /**

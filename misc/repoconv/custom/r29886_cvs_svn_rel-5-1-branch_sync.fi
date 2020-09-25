@@ -750,7 +750,7 @@ mark :1111229886
 committer CVS SVN Sync <cvs_svn_sync> 1199132714 +0000
 data 77
 Sync CVS repo contents for r29886 to match the SVN contents at that revision.
-from 76a3f8ff0835dc4d1730305d39ac8f536e8340a2
+from bc1a0c8c5e5059eeb1fd92d28a7800b14c143cb8
 D html/manuals/mged/cup.g
 D html/manuals/mged/Cup.g
 M 100755 14a29f45a0e42cb5005742b74fb03691007c9c57 libitcl3.2/itcl/pkgIndex.tcl

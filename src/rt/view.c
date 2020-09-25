@@ -54,7 +54,7 @@
 #include "icv.h"
 #include "raytrace.h"
 #include "bu/cv.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn/plot3.h"
 #include "photonmap.h"
 #include "scanline.h"
@@ -63,7 +63,7 @@
 #include "./ext.h"
 
 
-extern fb *fbp;			/* Framebuffer handle */
+extern struct fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
 extern double airdensity;	/* from opt.c */
@@ -73,7 +73,7 @@ extern plane_t kut_plane;       /* from opt.c */
 extern struct icv_image *bif;
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 extern fastf_t** timeTable_init(int x, int y);  /* from heatgraph.c */
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp); /* from heatgraph.c */
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct fb *efbp); /* from heatgraph.c */
 extern void free_scanlines(int, struct scanline *);
 extern struct scanline* alloc_scanlines(int);
 

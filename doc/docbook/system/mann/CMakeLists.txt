@@ -184,6 +184,7 @@ set(mann_EN
   rtcheck.xml
   saveview.xml
   sca.xml
+  screengrab.xml
   search.xml
   sed.xml
   setview.xml
@@ -194,6 +195,7 @@ set(mann_EN
   size.xml
   solids.xml
   sph-part.xml
+  stat.xml
   status.xml
   summary.xml
   sv.xml

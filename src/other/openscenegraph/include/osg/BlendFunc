@@ -16,7 +16,6 @@
 
 #include <osg/StateAttribute>
 
-
 #ifndef GL_VERSION_1_2
 #define GL_CONSTANT_COLOR                 0x8001
 #define GL_ONE_MINUS_CONSTANT_COLOR       0x8002
@@ -157,54 +156,6 @@ class OSG_EXPORT BlendFunc : public StateAttribute
         inline GLenum getDestinationAlpha() const { return _destination_factor_alpha; }
 
         virtual void apply(State& state) const;
-        /** Encapsulates queries of extension availability, obtains extension
-        * function pointers, and provides convenience wrappers for
-        * calling extension functions. */
-        class OSG_EXPORT Extensions : public osg::Referenced
-        {
-        public:
-            Extensions(unsigned int contextID);
-
-            Extensions(const Extensions& rhs);
-
-            void lowestCommonDenominator(const Extensions& rhs);
-
-            void setupGLExtensions(unsigned int contextID);
-
-            void setBlendFuncSeparateSupported(bool flag) { _isBlendFuncSeparateSupported=flag; }
-            bool isBlendFuncSeparateSupported() const { return _isBlendFuncSeparateSupported; }
-
-            void glBlendFuncSeparate(GLenum sfactorRGB,
-                                     GLenum dfactorRGB,
-                                     GLenum sfactorAlpha,
-                                     GLenum dfactorAlpha) const;
-
-        protected:
-
-            ~Extensions() {}
-
-
-            typedef void (GL_APIENTRY * GLBlendFuncSeparateProc) (GLenum sfactorRGB,
-                                                               GLenum dfactorRGB,
-                                                               GLenum sfactorAlpha,
-                                                               GLenum dfactorAlpha);
-            bool                    _isBlendFuncSeparateSupported;
-            GLBlendFuncSeparateProc _glBlendFuncSeparate;
-
-        };
-
-        /** Returns the Extensions object for the given context.
-        * If createIfNotInitalized is true and the Extensions object doesn't
-        * exist, getExtensions() creates it on the given context.
-        * Returns NULL if createIfNotInitalized is false and the Extensions
-        * object doesn't exist. */
-        static Extensions* getExtensions(unsigned int contextID,bool createIfNotInitalized);
-
-        /** setExtensions() allows users to override the extensions across graphics contexts.
-        * Typically used when you have different extensions supported across graphics pipes,
-        * but need to ensure that they all use the same low common denominator extensions. */
-        static void setExtensions(unsigned int contextID,Extensions* extensions);
-
 
     protected :
 

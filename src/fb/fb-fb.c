@@ -32,7 +32,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static int verbose;
@@ -88,7 +88,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    fb *in_fbp, *out_fbp;
+    struct fb *in_fbp, *out_fbp;
     int n, m;
     int height;
 

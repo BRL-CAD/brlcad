@@ -14,17 +14,19 @@
 
 #include <osg/Version>
 #include <osg/Notify>
+#include <osgDB/ConvertBase64>
 #include <osgDB/FileUtils>
 #include <osgDB/WriteFile>
+#include <osgDB/FileNameUtils>
 #include <osgDB/ObjectWrapper>
-#include <fstream>
+#include <osgDB/fstream>
 #include <sstream>
 #include <stdlib.h>
 
 using namespace osgDB;
 
 OutputStream::OutputStream( const osgDB::Options* options )
-:   _writeImageHint(WRITE_USE_IMAGE_HINT), _useSchemaData(false), _useRobustBinaryFormat(true)
+:   _writeImageHint(WRITE_USE_IMAGE_HINT), _useSchemaData(false), _useRobustBinaryFormat(true), _targetFileVersion(OPENSCENEGRAPH_SOVERSION)
 {
     BEGIN_BRACKET.set( "{", +INDENT_VALUE );
     END_BRACKET.set( "}", -INDENT_VALUE );
@@ -60,15 +62,31 @@ OutputStream::OutputStream( const osgDB::Options* options )
                 _domainVersionMap[keyAndValue.front()] = atoi(keyAndValue.back().c_str());
         }
     }
+
+    if (!options->getPluginStringData("TargetFileVersion").empty())
+    {
+        std::string strVersion = options->getPluginStringData("TargetFileVersion");
+        int version = atoi(strVersion.c_str());
+        if (version > 0 && version <= OPENSCENEGRAPH_SOVERSION)
+            _targetFileVersion = version;
+    }
+
+    if (_targetFileVersion < 99) _useRobustBinaryFormat = false;
 }
 
 OutputStream::~OutputStream()
 {
 }
 
+void OutputStream::setFileVersion( const std::string& d, int v )
+{
+    if (d.empty()) _targetFileVersion = v;
+    else _domainVersionMap[d] = v;
+}
+
 int OutputStream::getFileVersion( const std::string& d ) const
 {
-    if ( d.empty() ) return OPENSCENEGRAPH_SOVERSION;
+    if ( d.empty() ) return _targetFileVersion;
     VersionMap::const_iterator itr = _domainVersionMap.find(d);
     return itr==_domainVersionMap.end() ? 0 : itr->second;
 }
@@ -82,6 +100,7 @@ OutputStream& OutputStream::operator<<( const osg::Vec3b& v )
 OutputStream& OutputStream::operator<<( const osg::Vec4b& v )
 { *this << v.x() << v.y() << v.z() << v.w(); return *this; }
 
+
 OutputStream& OutputStream::operator<<( const osg::Vec2ub& v )
 { *this << v.x() << v.y(); return *this; }
 
@@ -90,6 +109,7 @@ OutputStream& OutputStream::operator<<( const osg::Vec3ub& v )
 
 OutputStream& OutputStream::operator<<( const osg::Vec4ub& v )
 { *this << v.r() << v.g() << v.b() << v.a(); return *this; }
+
 
 OutputStream& OutputStream::operator<<( const osg::Vec2s& v )
 { *this << v.x() << v.y(); return *this; }
@@ -100,6 +120,7 @@ OutputStream& OutputStream::operator<<( const osg::Vec3s& v )
 OutputStream& OutputStream::operator<<( const osg::Vec4s& v )
 { *this << v.x() << v.y() << v.z() << v.w(); return *this; }
 
+
 OutputStream& OutputStream::operator<<( const osg::Vec2us& v )
 { *this << v.x() << v.y(); return *this; }
 
@@ -108,6 +129,7 @@ OutputStream& OutputStream::operator<<( const osg::Vec3us& v )
 
 OutputStream& OutputStream::operator<<( const osg::Vec4us& v )
 { *this << v.x() << v.y() << v.z() << v.w(); return *this; }
+
 
 OutputStream& OutputStream::operator<<( const osg::Vec2f& v )
 { *this << v.x() << v.y(); return *this; }
@@ -118,6 +140,7 @@ OutputStream& OutputStream::operator<<( const osg::Vec3f& v )
 OutputStream& OutputStream::operator<<( const osg::Vec4f& v )
 { *this << v.x() << v.y() << v.z() << v.w(); return *this; }
 
+
 OutputStream& OutputStream::operator<<( const osg::Vec2d& v )
 { *this << v.x() << v.y(); return *this; }
 
@@ -127,12 +150,45 @@ OutputStream& OutputStream::operator<<( const osg::Vec3d& v )
 OutputStream& OutputStream::operator<<( const osg::Vec4d& v )
 { *this << v.x() << v.y() << v.z() << v.w(); return *this; }
 
+
+OutputStream& OutputStream::operator<<( const osg::Vec2i& v )
+{ *this << v.x() << v.y(); return *this; }
+
+OutputStream& OutputStream::operator<<( const osg::Vec3i& v )
+{ *this << v.x() << v.y() << v.z(); return *this; }
+
+OutputStream& OutputStream::operator<<( const osg::Vec4i& v )
+{ *this << v.x() << v.y() << v.z() << v.w(); return *this; }
+
+
+OutputStream& OutputStream::operator<<( const osg::Vec2ui& v )
+{ *this << v.x() << v.y(); return *this; }
+
+OutputStream& OutputStream::operator<<( const osg::Vec3ui& v )
+{ *this << v.x() << v.y() << v.z(); return *this; }
+
+OutputStream& OutputStream::operator<<( const osg::Vec4ui& v )
+{ *this << v.x() << v.y() << v.z() << v.w(); return *this; }
+
+
 OutputStream& OutputStream::operator<<( const osg::Quat& q )
-{ *this << q.x() << q.y() << q.z() << q.w(); return *this; }
+{ *this << (double)q.x() << (double)q.y() << (double)q.z() << (double)q.w(); return *this; }
 
 OutputStream& OutputStream::operator<<( const osg::Plane& p )
 { *this << (double)p[0] << (double)p[1] << (double)p[2] << (double)p[3]; return *this; }
 
+
+OutputStream& OutputStream::operator<<( const osg::BoundingBoxf& bb)
+{ *this << bb.xMin() << bb.yMin() << bb.zMin() << bb.xMax() << bb.yMax() << bb.zMax(); return *this; }
+
+OutputStream& OutputStream::operator<<( const osg::BoundingBoxd& bb)
+{ *this << bb.xMin() << bb.yMin() << bb.zMin() << bb.xMax() << bb.yMax() << bb.zMax(); return *this; }
+
+OutputStream& OutputStream::operator<<( const osg::BoundingSpheref& bs)
+{ *this << bs.center().x() << bs.center().y() << bs.center().z() << bs.radius(); return *this; }
+
+OutputStream& OutputStream::operator<<( const osg::BoundingSphered& bs)
+{ *this << bs.center().x() << bs.center().y() << bs.center().z() << bs.radius(); return *this; }
 
 #if 0
 OutputStream& OutputStream::operator<<( const osg::Matrixf& mat )
@@ -231,6 +287,7 @@ void OutputStream::writeArray( const osg::Array* a )
         *this << MAPPEE(ArrayType, ID_DOUBLE_ARRAY);
         writeArrayImplementation( static_cast<const osg::DoubleArray*>(a), a->getNumElements(), 4 );
         break;
+
     case osg::Array::Vec2bArrayType:
         *this << MAPPEE(ArrayType, ID_VEC2B_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec2bArray*>(a), a->getNumElements() );
@@ -243,6 +300,7 @@ void OutputStream::writeArray( const osg::Array* a )
         *this << MAPPEE(ArrayType, ID_VEC4B_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec4bArray*>(a), a->getNumElements() );
         break;
+
     case osg::Array::Vec2ubArrayType:
         *this << MAPPEE(ArrayType, ID_VEC2UB_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec2ubArray*>(a), a->getNumElements() );
@@ -255,6 +313,7 @@ void OutputStream::writeArray( const osg::Array* a )
         *this << MAPPEE(ArrayType, ID_VEC4UB_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec4ubArray*>(a), a->getNumElements() );
         break;
+
     case osg::Array::Vec2sArrayType:
         *this << MAPPEE(ArrayType, ID_VEC2S_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec2sArray*>(a), a->getNumElements() );
@@ -267,6 +326,7 @@ void OutputStream::writeArray( const osg::Array* a )
         *this << MAPPEE(ArrayType, ID_VEC4S_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec4sArray*>(a), a->getNumElements() );
         break;
+
     case osg::Array::Vec2usArrayType:
         *this << MAPPEE(ArrayType, ID_VEC2US_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec2usArray*>(a), a->getNumElements() );
@@ -279,6 +339,7 @@ void OutputStream::writeArray( const osg::Array* a )
         *this << MAPPEE(ArrayType, ID_VEC4US_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec4usArray*>(a), a->getNumElements() );
         break;
+
     case osg::Array::Vec2ArrayType:
         *this << MAPPEE(ArrayType, ID_VEC2_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec2Array*>(a), a->getNumElements() );
@@ -291,6 +352,7 @@ void OutputStream::writeArray( const osg::Array* a )
         *this << MAPPEE(ArrayType, ID_VEC4_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec4Array*>(a), a->getNumElements() );
         break;
+
     case osg::Array::Vec2dArrayType:
         *this << MAPPEE(ArrayType, ID_VEC2D_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec2dArray*>(a), a->getNumElements() );
@@ -302,6 +364,32 @@ void OutputStream::writeArray( const osg::Array* a )
     case osg::Array::Vec4dArrayType:
         *this << MAPPEE(ArrayType, ID_VEC4D_ARRAY);
         writeArrayImplementation( static_cast<const osg::Vec4dArray*>(a), a->getNumElements() );
+        break;
+
+    case osg::Array::Vec2iArrayType:
+        *this << MAPPEE(ArrayType, ID_VEC2I_ARRAY);
+        writeArrayImplementation( static_cast<const osg::Vec2iArray*>(a), a->getNumElements() );
+        break;
+    case osg::Array::Vec3iArrayType:
+        *this << MAPPEE(ArrayType, ID_VEC3I_ARRAY);
+        writeArrayImplementation( static_cast<const osg::Vec3iArray*>(a), a->getNumElements() );
+        break;
+    case osg::Array::Vec4iArrayType:
+        *this << MAPPEE(ArrayType, ID_VEC4I_ARRAY);
+        writeArrayImplementation( static_cast<const osg::Vec4iArray*>(a), a->getNumElements() );
+        break;
+
+    case osg::Array::Vec2uiArrayType:
+        *this << MAPPEE(ArrayType, ID_VEC2UI_ARRAY);
+        writeArrayImplementation( static_cast<const osg::Vec2uiArray*>(a), a->getNumElements() );
+        break;
+    case osg::Array::Vec3uiArrayType:
+        *this << MAPPEE(ArrayType, ID_VEC3UI_ARRAY);
+        writeArrayImplementation( static_cast<const osg::Vec3uiArray*>(a), a->getNumElements() );
+        break;
+    case osg::Array::Vec4uiArrayType:
+        *this << MAPPEE(ArrayType, ID_VEC4UI_ARRAY);
+        writeArrayImplementation( static_cast<const osg::Vec4uiArray*>(a), a->getNumElements() );
         break;
     default:
         throwException( "OutputStream::writeArray(): Unsupported array type." );
@@ -318,15 +406,18 @@ void OutputStream::writePrimitiveSet( const osg::PrimitiveSet* p )
         *this << MAPPEE(PrimitiveType, ID_DRAWARRAYS);
         {
             const osg::DrawArrays* da = static_cast<const osg::DrawArrays*>(p);
-            *this << MAPPEE(PrimitiveType, da->getMode()) << da->getNumInstances()
-                  << da->getFirst() << da->getCount() << std::endl;
+            *this << MAPPEE(PrimitiveType, da->getMode());
+            if (_targetFileVersion > 96) *this << da->getNumInstances();
+            *this << da->getFirst() << da->getCount() << std::endl;
         }
         break;
     case osg::PrimitiveSet::DrawArrayLengthsPrimitiveType:
         *this << MAPPEE(PrimitiveType, ID_DRAWARRAY_LENGTH);
         {
             const osg::DrawArrayLengths* dl = static_cast<const osg::DrawArrayLengths*>(p);
-            *this << MAPPEE(PrimitiveType, dl->getMode()) << dl->getNumInstances() << dl->getFirst();
+            *this << MAPPEE(PrimitiveType, dl->getMode());
+            if (_targetFileVersion > 96) *this << dl->getNumInstances();
+            *this << dl->getFirst();
             writeArrayImplementation( dl, dl->size(), 4 );
         }
         break;
@@ -334,7 +425,8 @@ void OutputStream::writePrimitiveSet( const osg::PrimitiveSet* p )
         *this << MAPPEE(PrimitiveType, ID_DRAWELEMENTS_UBYTE);
         {
             const osg::DrawElementsUByte* de = static_cast<const osg::DrawElementsUByte*>(p);
-            *this << MAPPEE(PrimitiveType, de->getMode()) << de->getNumInstances();
+            *this << MAPPEE(PrimitiveType, de->getMode());
+            if (_targetFileVersion > 96) *this << de->getNumInstances();
             writeArrayImplementation( de, de->size(), 4 );
         }
         break;
@@ -342,7 +434,8 @@ void OutputStream::writePrimitiveSet( const osg::PrimitiveSet* p )
         *this << MAPPEE(PrimitiveType, ID_DRAWELEMENTS_USHORT);
         {
             const osg::DrawElementsUShort* de = static_cast<const osg::DrawElementsUShort*>(p);
-            *this << MAPPEE(PrimitiveType, de->getMode()) << de->getNumInstances();
+            *this << MAPPEE(PrimitiveType, de->getMode());
+            if (_targetFileVersion > 96) *this << de->getNumInstances();
             writeArrayImplementation( de, de->size(), 4 );
         }
         break;
@@ -350,7 +443,8 @@ void OutputStream::writePrimitiveSet( const osg::PrimitiveSet* p )
         *this << MAPPEE(PrimitiveType, ID_DRAWELEMENTS_UINT);
         {
             const osg::DrawElementsUInt* de = static_cast<const osg::DrawElementsUInt*>(p);
-            *this << MAPPEE(PrimitiveType, de->getMode()) << de->getNumInstances();
+            *this << MAPPEE(PrimitiveType, de->getMode());
+            if (_targetFileVersion > 96) *this << de->getNumInstances();
             writeArrayImplementation( de, de->size(), 4 );
         }
         break;
@@ -369,7 +463,8 @@ void OutputStream::writeImage( const osg::Image* img )
     bool newID = false;
     unsigned int id = findOrCreateObjectID( img, newID );
 
-    *this << PROPERTY("ClassName") << name << std::endl;   // Write object name
+    if (_targetFileVersion > 94) *this << PROPERTY("ClassName") << name << std::endl;   // Write object name
+
     *this << PROPERTY("UniqueID") << id << std::endl;      // Write image ID
     if ( getException() ) return;
 
@@ -385,7 +480,7 @@ void OutputStream::writeImage( const osg::Image* img )
         default:
             if ( img->getWriteHint()==osg::Image::EXTERNAL_FILE )
                 decision = IMAGE_EXTERNAL;
-            else if ( isBinary() )
+            else
                 decision = IMAGE_INLINE_DATA;
             break;
         }
@@ -398,6 +493,12 @@ void OutputStream::writeImage( const osg::Image* img )
             {
                 OSG_NOTICE<<"Empty Image::FileName resetting to image.dds"<<std::endl;
                 imageFileName = "image.dds";
+            }
+
+            std::string imagePath = osgDB::getFilePath(imageFileName);
+            if (!imagePath.empty() && !osgDB::fileExists(imagePath))
+            {
+                osgDB::makeDirectory(imagePath);
             }
 
             bool result = osgDB::writeImageFile( *img, imageFileName );
@@ -428,8 +529,7 @@ void OutputStream::writeImage( const osg::Image* img )
                 *this << img->getAllocationMode();  // _allocationMode
 
                 // _data
-                unsigned int size = img->getTotalSizeInBytesIncludingMipmaps();
-                writeSize(size);
+                writeSize( static_cast<unsigned int>(img->getTotalSizeInBytesIncludingMipmaps()) );
 
                 for(osg::Image::DataIterator img_itr(img); img_itr.valid(); ++img_itr)
                 {
@@ -457,41 +557,92 @@ void OutputStream::writeImage( const osg::Image* img )
                     if (t<1) t=1;
                     if (r<1) r=1;
                 }
+            } else { // ASCII
+                *this << PROPERTY("Origin") << img->getOrigin() << std::endl;  // _origin
+                *this << PROPERTY("Size") << img->s() << img->t() << img->r() << std::endl; // _s & _t & _r
+                *this << PROPERTY("InternalTextureFormat") << img->getInternalTextureFormat() << std::endl;  // _internalTextureFormat
+                *this << PROPERTY("PixelFormat") << img->getPixelFormat() << std::endl;  // _pixelFormat
+                *this << PROPERTY("DataType") << img->getDataType() << std::endl;  // _dataType
+                *this << PROPERTY("Packing") << img->getPacking() << std::endl;  // _packing
+                *this << PROPERTY("AllocationMode") << img->getAllocationMode() << std::endl;  // _allocationMode
+
+                // _data
+                *this << PROPERTY("Data") << img->getNumMipmapLevels();
+                *this << BEGIN_BRACKET << std::endl;
+
+                Base64encoder e;
+                for(osg::Image::DataIterator img_itr(img); img_itr.valid(); ++img_itr)
+                {
+                    std::string encodedData;
+                    e.encode((char*)img_itr.data(), img_itr.size(), encodedData);
+                    // Each set of data is written into a separate string so we can
+                    // distiguish between main data and all mipmap levels, so writing
+                    // mipmap size is not required for ASCII mode.
+                    writeWrappedString(encodedData);
+                }
+
+                *this << END_BRACKET << std::endl;
             }
             break;
         case IMAGE_INLINE_FILE:
             if ( isBinary() )
             {
-                std::string fullPath = osgDB::findDataFile( img->getFileName() );
-                std::ifstream infile( fullPath.c_str(), std::ios::in|std::ios::binary );
-                if ( infile )
+                std::string fullPath = osgDB::findDataFile( img->getFileName(), _options.get() );
+                if (fullPath.empty()==false)
                 {
-                    infile.seekg( 0, std::ios::end );
-                    unsigned int size = infile.tellg();
-                    writeSize(size);
-
-                    if ( size>0 )
+                    osgDB::ifstream infile( fullPath.c_str(), std::ios::in|std::ios::binary );
+                
+                    if ( infile )
                     {
-                        char* data = new char[size];
-                        if ( !data )
-                        {
-                            throwException( "OutputStream::writeImage(): Out of memory." );
-                            if ( getException() ) return;
-                        }
+                        infile.seekg( 0, std::ios::end );
+                        unsigned int size = infile.tellg();
+                        writeSize(size);
 
-                        infile.seekg( 0, std::ios::beg );
-                        infile.read( data, size );
-                        writeCharArray( data, size );
-                        delete[] data;
+                        if ( size>0 )
+                        {
+                            char* data = new char[size];
+                            if ( !data )
+                            {
+                                throwException( "OutputStream::writeImage(): Out of memory." );
+                                if ( getException() ) return;
+                            }
+
+                            infile.seekg( 0, std::ios::beg );
+                            infile.read( data, size );
+                            writeCharArray( data, size );
+                            delete[] data;
+                        }
+                        infile.close();
                     }
-                    infile.close();
+                    else
+                    {
+                        OSG_WARN << "OutputStream::writeImage(): Failed to open image file "
+                                            << img->getFileName() << std::endl;
+                        *this << (unsigned int)0;
+                    }
                 }
                 else
                 {
-                    OSG_WARN << "OutputStream::writeImage(): Failed to open image file "
-                                        << img->getFileName() << std::endl;
-                    *this << (unsigned int)0;
+                    std::string ext = osgDB::getFileExtension( img->getFileName() );
+                    osgDB::ReaderWriter* writer =
+                        osgDB::Registry::instance()->getReaderWriterForExtension( ext );
+                    if ( writer )
+                    {
+                        std::stringstream outputStream;
+                        writer->writeImage(*img, outputStream, getOptions());
+                        std::string data (outputStream.str()); 
+                        unsigned int size = data.size();
+                        writeSize(size);
+                        writeCharArray( data.c_str(), size );
+                    }
+                    else
+                    {
+                        OSG_WARN << "OutputStream::writeImage(): Failed to find a plugin to write the image file "
+                                            << img->getFileName() << std::endl;
+                        *this << (unsigned int)0;
+                    }
                 }
+
             }
             break;
         case IMAGE_EXTERNAL:
@@ -500,7 +651,7 @@ void OutputStream::writeImage( const osg::Image* img )
             break;
         }
 
-        writeObjectFields( img );
+        writeObjectFields( img, "osg::Object" );
     }
 
     // *this << END_BRACKET << std::endl;
@@ -508,7 +659,11 @@ void OutputStream::writeImage( const osg::Image* img )
 
 void OutputStream::writeObject( const osg::Object* obj )
 {
-    if ( !obj ) return;
+    if ( !obj )
+    {
+        *this << std::string("NULL") << std::endl;  // Write NULL token.
+        return;
+    }
 
     std::string name = obj->libraryName();
     name += std::string("::") + obj->className();
@@ -532,6 +687,12 @@ void OutputStream::writeObjectFields( const osg::Object* obj )
 {
     std::string name = obj->libraryName();
     name += std::string("::") + obj->className();
+    writeObjectFields(obj, name);
+}
+
+void OutputStream::writeObjectFields( const osg::Object* obj, const std::string& name )
+{
+    // OSG_NOTICE<<"OutputStream::writeObjectFields("<<obj->className()<<", name="<<name<<")"<<std::endl;
 
     ObjectWrapper* wrapper = Registry::instance()->getObjectWrapperManager()->findWrapper( name );
     if ( !wrapper )
@@ -540,44 +701,54 @@ void OutputStream::writeObjectFields( const osg::Object* obj )
                                 << name << std::endl;
         return;
     }
+    int outputVersion =  getFileVersion(wrapper->getDomain());
 
-    const StringList& associates = wrapper->getAssociates();
-    for ( StringList::const_iterator itr=associates.begin(); itr!=associates.end(); ++itr )
+    const ObjectWrapper::RevisionAssociateList& associates = wrapper->getAssociates();
+    for ( ObjectWrapper::RevisionAssociateList::const_iterator itr=associates.begin(); itr!=associates.end(); ++itr )
     {
-        const std::string& assocName = *itr;
-        ObjectWrapper* assocWrapper = Registry::instance()->getObjectWrapperManager()->findWrapper(assocName);
-        if ( !assocWrapper )
+        if ( itr->_firstVersion <= outputVersion &&
+                outputVersion <= itr->_lastVersion)
         {
-            OSG_WARN << "OutputStream::writeObject(): Unsupported associated class "
-                                    << assocName << std::endl;
-            continue;
-        }
-        else if ( _useSchemaData )
-        {
-            if ( _inbuiltSchemaMap.find(assocName)==_inbuiltSchemaMap.end() )
+            const std::string& assocName = itr->_name;
+            ObjectWrapper* assocWrapper = Registry::instance()->getObjectWrapperManager()->findWrapper(assocName);
+            if ( !assocWrapper )
             {
-                StringList properties;
-                std::vector<int> types;
-                assocWrapper->writeSchema( properties, types );
-
-                unsigned int size = osg::minimum( properties.size(), types.size() );
-                if ( size>0 )
+                OSG_WARN << "OutputStream::writeObject(): Unsupported associated class "
+                                        << assocName << std::endl;
+                continue;
+            }
+            else if ( _useSchemaData )
+            {
+                if ( _inbuiltSchemaMap.find(assocName)==_inbuiltSchemaMap.end() )
                 {
-                    std::stringstream propertiesStream;
-                    for ( unsigned int i=0; i<size; ++i )
+                    StringList properties;
+                    ObjectWrapper::TypeList types;
+                    assocWrapper->writeSchema( properties, types );
+
+                    unsigned int size = osg::minimum( properties.size(), types.size() );
+                    if ( size>0 )
                     {
-                        propertiesStream << properties[i] << ":" << types[i] << " ";
+                        std::stringstream propertiesStream;
+                        for ( unsigned int i=0; i<size; ++i )
+                        {
+                            propertiesStream << properties[i] << ":" << types[i] << " ";
+                        }
+                        _inbuiltSchemaMap[assocName] = propertiesStream.str();
                     }
-                    _inbuiltSchemaMap[assocName] = propertiesStream.str();
                 }
             }
+            _fields.push_back( assocWrapper->getName() );
+
+            assocWrapper->write( *this, *obj );
+            if ( getException() ) return;
+
+            _fields.pop_back();
         }
-        _fields.push_back( assocWrapper->getName() );
-
-        assocWrapper->write( *this, *obj );
-        if ( getException() ) return;
-
-        _fields.pop_back();
+        else
+        {
+            /*OSG_INFO << "OutputStream::writeObject():"<<name<<" Ignoring associated class due to version mismatch "
+                     << itr->_name<<"["<<itr->_firstVersion <<","<<itr->_lastVersion <<"]for output version "<<outputVersion<< std::endl;*/
+        }
     }
 }
 
@@ -591,9 +762,11 @@ void OutputStream::start( OutputIterator* outIterator, OutputStream::WriteType t
         throwException( "OutputStream: Null stream specified." );
     if ( getException() ) return;
 
+    _out->setOutputStream(this);
+
     if ( isBinary() )
     {
-        *this << (unsigned int)type << (unsigned int)OPENSCENEGRAPH_SOVERSION;
+        *this << (unsigned int)type << (unsigned int)_targetFileVersion;
 
         bool useCompressSource = false;
         unsigned int attributes = 0;
@@ -740,10 +913,9 @@ void OutputStream::writeSchema( std::ostream& fout )
         fout << itr->first << " =";
 
         StringList properties;
-        std::vector<int> types;
+        ObjectWrapper::TypeList types;
         wrapper->writeSchema( properties, types );
 
-        std::string propertiesString;
         unsigned int size = osg::minimum( properties.size(), types.size() );
         for ( unsigned int i=0; i<size; ++i )
         {
@@ -759,24 +931,31 @@ template<typename T>
 void OutputStream::writeArrayImplementation( const T* a, int write_size, unsigned int numInRow )
 {
     *this << write_size << BEGIN_BRACKET;
-    if ( numInRow>1 )
+    if ( isBinary() )
     {
-        for ( int i=0; i<write_size; ++i )
-        {
-            if ( !(i%numInRow) )
-            {
-                *this << std::endl << (*a)[i];
-            }
-            else
-                *this << (*a)[i];
-        }
-        *this << std::endl;
+        if (write_size) writeCharArray((char*)&((*a)[0]), write_size * sizeof((*a)[0]));
     }
     else
     {
-        *this << std::endl;
-        for ( int i=0; i<write_size; ++i )
-            *this << (*a)[i] << std::endl;
+        if ( numInRow>1 )
+        {
+            for ( int i=0; i<write_size; ++i )
+            {
+                if ( !(i%numInRow) )
+                {
+                    *this << std::endl << (*a)[i];
+                }
+                else
+                    *this << (*a)[i];
+            }
+            *this << std::endl;
+        }
+        else
+        {
+            *this << std::endl;
+            for ( int i=0; i<write_size; ++i )
+                *this << (*a)[i] << std::endl;
+        }
     }
     *this << END_BRACKET << std::endl;
 }

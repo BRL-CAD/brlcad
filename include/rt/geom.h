@@ -954,7 +954,7 @@ struct rt_pnts_internal {
 #define RT_PNTS_CK_MAGIC(_p) BU_CKMAG(_p, RT_PNTS_INTERNAL_MAGIC, "rt_pnts_internal")
 /** @} */
 
-/** @addtogroup rt_anno */
+/** @addtogroup rt_annotation */
 /** @{ */
 /*
  * ID_ANNO

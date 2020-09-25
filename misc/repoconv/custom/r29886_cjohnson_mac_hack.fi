@@ -17,7 +17,7 @@ data 44051
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (c) 1988-2020 by the United States Army.
+ *	This software is Copyright (C) 1988 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -1752,12 +1752,12 @@ int ymin, ymax;
 	}
 }
 reset refs/heads/cjohnson-mac-hack
-from 30a8b974a8d9c7924db820668ab69cb5a492271e
+from 1185687fc03afab1ba96ca1390b44c36e269ddca
 commit refs/heads/cjohnson-mac-hack
 mark :1111329886
 committer CVS SVN Sync <cvs_svn_sync> 625826938 +0000
 data 24
 Chris Johnson's Mac Hack
-from 30a8b974a8d9c7924db820668ab69cb5a492271e
+from 1185687fc03afab1ba96ca1390b44c36e269ddca
 deleteall
 M 100644 8684ce993e973b87c057cb7bad43a84c71ffe704 libfb/if_X.c

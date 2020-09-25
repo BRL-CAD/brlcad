@@ -57,7 +57,7 @@ int
 process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 {
     std::regex cad_regex(".*BRL-CAD.*");
-    std::regex copyright_regex(".*[Cc]opyright.*[12][0-9[0-9[0-9].*");
+    std::regex copyright_regex(".*[Cc]opyright.*[1-2][0-9][0-9][0-9].*");
     std::regex gov_regex(".*United[ ]States[ ]Government.*");
     std::regex pd_regex(".*[Pp]ublic[ ][Dd]omain.*");
     std::string sline;
@@ -149,6 +149,7 @@ main(int argc, const char *argv[])
     std::regex t_regex(".*[\\/]misc/tools[\\/].*");
     std::regex c_regex(".*[\\/]misc/CMake[\\/].*");
     std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
+    std::regex rw_regex(".*[\\/]misc/repowork[\\/].*");
     std::regex d_regex(".*[\\/]doc[\\/].*");
     std::regex l_regex(".*[\\/]licenses_check.cpp");
     std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
@@ -217,7 +218,8 @@ main(int argc, const char *argv[])
     while (std::getline(src_file_stream, sfile)) {
 	if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex)
 	       	|| std::regex_match(sfile, r_regex) || std::regex_match(sfile, c_regex)
-		 || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)) {
+		 || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)
+		 || std::regex_match(sfile, rw_regex)) {
 	    continue;
 	}
 	if (!std::regex_match(std::string(sfile), srcfile_regex)) {

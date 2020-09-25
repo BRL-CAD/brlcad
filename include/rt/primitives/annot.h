@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rt_annot */
+/** @addtogroup rt_annotation */
 /** @{ */
 /** @file rt/primitives/annot.h */
 

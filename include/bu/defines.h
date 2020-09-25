@@ -69,22 +69,6 @@
 #endif  /* DIR_SEPARATOR */
 
 /**
- * Maximum length of a filesystem path.  Typically defined in a system
- * file but if it isn't set, we create it.
- */
-#ifndef MAXPATHLEN
-#  ifdef PATH_MAX
-#    define MAXPATHLEN PATH_MAX
-#  else
-#    ifdef _MAX_PATH
-#      define MAXPATHLEN _MAX_PATH
-#    else
-#      define MAXPATHLEN 1024
-#    endif
-#  endif
-#endif
-
-/**
  * set to the path list separator character
  */
 #if defined(PATH_SEPARATOR)

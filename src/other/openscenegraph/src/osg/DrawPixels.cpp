@@ -16,7 +16,7 @@ using namespace osg;
 
 DrawPixels::DrawPixels()
 {
-    // turn off display lists right now, just incase we want to modify the projection matrix along the way.
+    // turn off display lists right now, just in case we want to modify the projection matrix along the way.
     setSupportsDisplayList(false);
 
     _position.set(0.0f,0.0f,0.0f);
@@ -69,7 +69,7 @@ void DrawPixels::getSubImageDimensions(unsigned int& offsetX,unsigned int& offse
 }
 
 
-BoundingBox DrawPixels::computeBound() const
+BoundingBox DrawPixels::computeBoundingBox() const
 {
     // really needs to be dependent of view position and projection... will implement simple version right now.
     BoundingBox bbox;

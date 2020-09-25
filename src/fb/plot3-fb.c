@@ -85,7 +85,7 @@
 #include "bu/getopt.h"
 #include "bu/process.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn/plot3.h"
 
 #define COMMA ','
@@ -320,7 +320,7 @@ static int sigs[] = {
 
 
 static FILE *pfin;		/* input file FIO block ptr */
-fb *fbp;			/* Current framebuffer */
+struct fb *fbp;			/* Current framebuffer */
 
 
 /*
@@ -586,6 +586,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	filename = "-";
 	pfin = stdin;
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	/* open file */
 	filename = argv[bu_optind];

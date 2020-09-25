@@ -31,10 +31,10 @@ PatchParameter::~PatchParameter()
 
 void PatchParameter::apply(State& state) const
 {
-    GL2Extensions* extensions = GL2Extensions::Get( state.getContextID(), true );
-    if (extensions->areTessellationShadersSupported() )
+    GLExtensions* extensions = state.get<GLExtensions>();
+    if (extensions->areTessellationShadersSupported )
     {
-        
+
         extensions->glPatchParameteri( GL_PATCH_VERTICES, _vertices );
         extensions->glPatchParameterfv( GL_PATCH_DEFAULT_INNER_LEVEL, _patchDefaultInnerLevel.ptr() );
         extensions->glPatchParameterfv( GL_PATCH_DEFAULT_OUTER_LEVEL, _patchDefaultOuterLevel.ptr() );

@@ -30,8 +30,6 @@
 
 __BEGIN_DECLS
 
-/*----------------------------------------------------------------------*/
-
 /** @addtogroup bu_color
  * @brief
  * Support for storing and manipulating color data.
@@ -74,7 +72,7 @@ typedef struct bu_color bu_color_t;
 
 
 
-/* random color generating methods */
+/** random color generating methods */
 typedef enum {
     BU_COLOR_RANDOM = 0,
     BU_COLOR_RANDOM_LIGHTENED
@@ -94,7 +92,7 @@ BU_EXPORT extern int bu_color_rand(struct bu_color *c, bu_color_rand_t type);
 
 #if 0
 
-/*
+/**
  * Refactoring points:
  * color command (set specified color)
  *     src/libged/color.c

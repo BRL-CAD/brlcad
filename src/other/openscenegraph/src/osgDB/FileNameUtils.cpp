@@ -19,7 +19,6 @@
 #include <osgDB/FileUtils>
 
 #ifdef WIN32
-    #define _WIN32_WINNT 0x0500
     #include <windows.h>
 #endif
 
@@ -28,6 +27,10 @@
 #elif defined(__GNUC__) || !defined(WIN32) || defined(__MWERKS__)
     #include <cctype>
     using std::tolower;
+#endif
+
+#if defined(__GNU__) && !defined(PATH_MAX)
+#define PATH_MAX 4096
 #endif
 
 using namespace std;
@@ -152,7 +155,7 @@ std::string osgDB::getNameLessExtension(const std::string& fileName)
 // strip all extensions from the filename.
 std::string osgDB::getNameLessAllExtensions(const std::string& fileName)
 {
-    // Finds start serach position: from last slash, or the begining of the string if none found
+    // Finds start search position: from last slash, or the beginning of the string if none found
     std::string::size_type startPos = fileName.find_last_of(PATH_SEPARATORS);            // Finds forward slash *or* back slash
     if (startPos == std::string::npos) startPos = 0;
     std::string::size_type dot = fileName.find_first_of('.', startPos);        // Finds *FIRST* dot from start pos
@@ -436,6 +439,7 @@ bool osgDB::isAbsolutePath(const std::string& path) {
     if (path[0] == '/') return true;
     // Now test for Windows root
     if (path.length()<2) return false;
+    if (path[0] == '\\' && path[1] == '\\') return true;
     return path[1] == ':';        // We should check that path[0] is a letter, but as ':' is invalid in paths in other cases, that's not a problem.
 }
 
@@ -445,7 +449,7 @@ std::string osgDB::getPathRelative(const std::string& from, const std::string& t
 
     // Definition: an "element" is a part between slashes. Ex: "/a/b" has two elements ("a" and "b").
     // Algorithm:
-    // 1. If paths are neither both absolute nor both relative, then we cannot do anything (we need to make them absolute, but need additionnal info on how to make it). Return.
+    // 1. If paths are neither both absolute nor both relative, then we cannot do anything (we need to make them absolute, but need additional info on how to make it). Return.
     // 2. If both paths are absolute and root isn't the same (for Windows only, as roots are of the type "C:", "D:"), then the operation is impossible. Return.
     // 3. Iterate over two paths elements until elements are equal
     // 4. For each remaining element in "from", add ".." to result
@@ -479,6 +483,14 @@ std::string osgDB::getPathRelative(const std::string& from, const std::string& t
     }
     return res;
 }
+
+void osgDB::stringcopy(char* dest, const char* src, size_t length)
+{
+    strncpy(dest, src, length-1);
+    dest[length-1] = '\0';
+//    OSG_NOTICE<<"osgDB::stringcopy(["<<dest<<"], src=["<<src<<"], "<<length<<")"<<std::endl;
+}
+
 
 //using namespace osgDB;
 //std::string testA = getPathRelative("C:\\a\\b", "C:\\a/b/d/f");       // d/f

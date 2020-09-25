@@ -408,7 +408,7 @@ DebugPlot::Plot3DCurveFrom2D(
 	if (decorate && first) {
 	    first = false;
 
-	    mag_tan = DIST_PT_PT(prev_pt, pt1);
+	    mag_tan = DIST_PNT_PNT(prev_pt, pt1);
 	    mag_tan = FMAX(mag_tan, min_mag);
 
 	    VUNITIZE(tangent);

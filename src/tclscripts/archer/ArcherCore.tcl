@@ -396,6 +396,7 @@ namespace eval ArcherCore {
 	variable mShowScale 0
 	variable mShowGrid 0
 	variable mSnapGrid 0
+	variable mSnapLines 0
 	variable mShowADC 0
 
 	# variables for preference state
@@ -945,6 +946,7 @@ namespace eval ArcherCore {
 	method showModelAxesTicks {}
 	method showGrid     {}
 	method snapGrid     {}
+	method snapLines    {}
 	method showADC     {}
 
 	# private mged commands
@@ -1374,6 +1376,7 @@ namespace eval ArcherCore {
 }
 
 
+# e_flag_expands_globbing h_flag_unused s_flag_save_needed t_flag_tree_redraw_needed
 ::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
     if {!$mFreezeGUI} {
 	SetWaitCursor $this
@@ -2139,6 +2142,9 @@ namespace eval ArcherCore {
     }
     if {$mSnapGrid} {
 	snapGrid
+    }
+    if {$mSnapLines} {
+	snapLines
     }
     if {$mShowADC} {
 	showADC
@@ -4110,6 +4116,7 @@ namespace eval ArcherCore {
     set mShowViewAxes [gedCmd cget -viewAxesEnable]
     set mShowGrid [gedCmd cget -gridEnable]
     set mSnapGrid [gedCmd cget -gridSnap]
+    set mSnapLines [gedCmd cget -linesSnap]
     set mShowADC [gedCmd cget -adcEnable]
 }
 
@@ -4228,6 +4235,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::snapGrid {} {
     catch {gedCmd configure -gridSnap $mSnapGrid}
+}
+
+::itcl::body ArcherCore::snapLines {} {
+    catch {gedCmd configure -linesSnap $mSnapLines}
 }
 
 ::itcl::body ArcherCore::showADC {} {

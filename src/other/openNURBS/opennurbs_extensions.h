@@ -26,6 +26,7 @@ class ON_CLASS ONX_Model_UserData
 {
 public:
 #if defined(ON_COMPILER_MSC)
+#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
   // See comments at the top of opennurbs_extensions.cpp for details.
 
   // new/delete
@@ -39,6 +40,7 @@ public:
   // in place new/delete
   void* operator new(size_t,void*);
   void  operator delete(void*,void*);
+#endif
 #endif
 
   ONX_Model_UserData();
@@ -68,6 +70,7 @@ class ON_CLASS ONX_Model_Object
 {
 public:
 #if defined(ON_COMPILER_MSC)
+#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
   // See comments at the top of opennurbs_extensions.cpp for details.
 
   // new/delete
@@ -81,6 +84,7 @@ public:
   // in place new/delete
   void* operator new(size_t,void*);
   void  operator delete(void*,void*);
+#endif
 #endif
 
   ONX_Model_Object();
@@ -110,6 +114,7 @@ class ON_CLASS ONX_Model_RenderLight
 {
 public:
 #if defined(ON_COMPILER_MSC)
+#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
   // See comments at the top of opennurbs_extensions.cpp for details.
 
   // new/delete
@@ -123,6 +128,7 @@ public:
   // in place new/delete
   void* operator new(size_t,void*);
   void  operator delete(void*,void*);
+#endif
 #endif
 
   ONX_Model_RenderLight();
@@ -176,6 +182,7 @@ class ON_CLASS ONX_Model
 {
 public:
 #if defined(ON_COMPILER_MSC)
+#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
   // See comments at the top of opennurbs_extensions.cpp for details.
 
   // new/delete
@@ -189,6 +196,7 @@ public:
   // in place new/delete
   void* operator new(size_t,void*);
   void  operator delete(void*,void*);
+#endif
 #endif
 
   ONX_Model();
@@ -229,7 +237,7 @@ public:
 
             if ( 0 != fp )
             {
-              ON_BinaryFile archive( ON::read3dm, fp );
+              ON_BinaryFile archive( ON::on_read3dm, fp );
               bModelRead = model.read( archive, error_log );
               ON::CloseFile( fp );
             }
@@ -326,7 +334,7 @@ public:
               {
                 const char* sStartSectionComment = "...";
                 int version = 5; // 2, 3, 4 or 5 are valid
-                ON_BinaryFile archive( ON::write3dm, fp );
+                ON_BinaryFile archive( ON::on_write3dm, fp );
                 ok = model.write( archive, 
                                   version, 
                                   sStartSectionComment, 

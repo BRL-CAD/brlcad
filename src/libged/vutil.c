@@ -28,52 +28,6 @@
 
 #include "./ged_private.h"
 
-
-void
-ged_view_update(struct bview *gvp)
-{
-    vect_t work, work1;
-    vect_t temp, temp1;
-
-    if (!gvp)
-	return;
-
-    bn_mat_mul(gvp->gv_model2view,
-	       gvp->gv_rotation,
-	       gvp->gv_center);
-    gvp->gv_model2view[15] = gvp->gv_scale;
-    bn_mat_inv(gvp->gv_view2model, gvp->gv_model2view);
-
-    /* Find current azimuth, elevation, and twist angles */
-    VSET(work, 0.0, 0.0, 1.0);       /* view z-direction */
-    MAT4X3VEC(temp, gvp->gv_view2model, work);
-    VSET(work1, 1.0, 0.0, 0.0);      /* view x-direction */
-    MAT4X3VEC(temp1, gvp->gv_view2model, work1);
-
-    /* calculate angles using accuracy of 0.005, since display
-     * shows 2 digits right of decimal point */
-    bn_aet_vec(&gvp->gv_aet[0],
-	       &gvp->gv_aet[1],
-	       &gvp->gv_aet[2],
-	       temp, temp1, (fastf_t)0.005);
-
-    /* Force azimuth range to be [0, 360] */
-    if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
-	 NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
-	gvp->gv_aet[0] < 0 &&
-	!NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-	gvp->gv_aet[0] += 360.0;
-    else if (NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-	gvp->gv_aet[0] = 0.0;
-
-    /* apply the perspective angle to model2view */
-    bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
-
-    if (gvp->gv_callback)
-	(*gvp->gv_callback)(gvp, gvp->gv_clientData);
-}
-
-
 /**
  * FIXME: this routine is suspect and needs investigating.  if run
  * during view initialization, the shaders regression test fails.
@@ -158,7 +112,7 @@ _ged_do_rot(struct ged *gedp,
 
     /* pure rotation */
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
-    ged_view_update(gedp->ged_gvp);
+    bview_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -171,7 +125,7 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 
     MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
-    ged_view_update(gedp->ged_gvp);
+    bview_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -206,7 +160,7 @@ _ged_do_tra(struct ged *gedp,
 
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
-    ged_view_update(gedp->ged_gvp);
+    bview_update(gedp->ged_gvp);
 
     return GED_OK;
 }

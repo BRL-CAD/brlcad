@@ -39,15 +39,11 @@
 #include "bu/str.h"
 #include "tclcad.h"
 
-/* avoid including itcl.h due to their usage of internal headers */
-extern int Itcl_Init(Tcl_Interp *);
-
 #define RTWIZARD_HAVE_GUI 0
 
 #define RTWIZARD_SIZE_DEFAULT 512
 
 #define RTWIZARD_MAGIC 0x72747769 /**< rtwi */
-
 
 struct rtwizard_settings {
     uint32_t magic;

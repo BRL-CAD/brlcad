@@ -11,13 +11,14 @@
  * OpenSceneGraph Public License for more details.
 */
 
-#ifndef OSGGA_EVENT
-#define OSGGA_EVENT 1
+#ifndef OSGGA_GUIEVENTADAPTER
+#define OSGGA_GUIEVENTADAPTER 1
 
 #include <osg/Object>
 #include <osg/Matrix>
 #include <osg/GraphicsContext>
-#include <osgGA/Export>
+
+#include <osgGA/Event>
 
 namespace osgGA{
 
@@ -77,7 +78,7 @@ struct PointerData : public osg::Referenced
 
 /** Event class for storing Keyboard, mouse and window events.
 */
-class OSGGA_EXPORT GUIEventAdapter : public osg::Object
+class OSGGA_EXPORT GUIEventAdapter : public Event
 {
 public:
 
@@ -448,6 +449,9 @@ public:
 
         META_Object(osgGA, GUIEventAdapter);
 
+        virtual GUIEventAdapter* asGUIEventAdapter() { return this; }
+        virtual const GUIEventAdapter* asGUIEventAdapter() const { return this; }
+
 
         /** Get the accumulated event state singleton.
           * Typically all EventQueue will share this single GUIEventAdapter object for tracking
@@ -455,23 +459,11 @@ public:
         static osg::ref_ptr<GUIEventAdapter>& getAccumulatedEventState();
 
 
-        /** Set whether this event has been handled by an event handler or not.*/
-        void setHandled(bool handled) const { _handled = handled; }
-
-        /** Get whether this event has been handled by an event handler or not.*/
-        bool getHandled() const { return _handled; }
-
         /** set the event type. */
         void setEventType(EventType Type) { _eventType = Type; }
 
         /** get the event type. */
         virtual EventType getEventType() const { return _eventType; }
-
-        /** set time in seconds of event. */
-        void setTime(double time) { _time = time; }
-
-        /** get time in seconds of event. */
-        double getTime() const { return _time; }
 
         /** deprecated function for getting time of event. */
         double time() const { return _time; }
@@ -610,6 +602,9 @@ public:
         /// get mouse-Y orientation (mouse-Y increases upwards or downwards).
         MouseYOrientation getMouseYOrientation() const { return _mouseYOrientation; }
 
+        /// set mouse-Y orientation (mouse-Y increases upwards or downwards) and recompute variables
+        void setMouseYOrientationAndUpdateCoords(MouseYOrientation myo);
+
         /// set current mouse button state.
         void setButtonMask(int mask) { _buttonMask = mask; }
 
@@ -683,9 +678,20 @@ public:
 
         void addTouchPoint(unsigned int id, TouchPhase phase, float x, float y, unsigned int tapCount = 0);
 
+        void setTouchData(TouchData* td) { _touchData = td; }
         TouchData* getTouchData() const { return _touchData.get(); }
         bool isMultiTouchEvent() const { return (_touchData.valid()); }
 
+        inline float getTouchPointNormalizedX(unsigned int ndx) const {
+            return (getTouchData()->get(ndx).x-_Xmin)/(_Xmax-_Xmin)*2.0f-1.0f;
+        }
+
+        inline float getTouchPointNormalizedY(unsigned int ndx) const {
+            if (_mouseYOrientation==Y_INCREASING_UPWARDS)
+                return (getTouchData()->get(ndx).y-_Ymin)/(_Ymax-_Ymin)*2.0f-1.0f;
+            else
+                return -((getTouchData()->get(ndx).y-_Ymin)/(_Ymax-_Ymin)*2.0f-1.0f);
+        }
 
         typedef std::vector< osg::ref_ptr<PointerData> > PointerDataList;
         void setPointerDataList(const PointerDataList& pdl) { _pointerDataList = pdl; }
@@ -707,9 +713,7 @@ public:
         /** Force users to create on heap, so that multiple referencing is safe.*/
         virtual ~GUIEventAdapter();
 
-        mutable bool _handled;
         EventType _eventType;
-        double _time;
 
         osg::observer_ptr<osg::GraphicsContext> _context;
         int _windowX;

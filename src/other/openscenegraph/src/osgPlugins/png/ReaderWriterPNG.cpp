@@ -14,8 +14,8 @@ using namespace osg;
 
 extern "C"
 {
-    #include "zlib.h"
-    #include "png.h"
+    #include <zlib.h>
+    #include <png.h>
 }
 
 
@@ -49,7 +49,7 @@ private:
     std::string _message;
 };
 
-void user_error_fn(png_structp png_ptr, png_const_charp error_msg)
+void user_error_fn(png_structp /*png_ptr*/, png_const_charp error_msg)
 {
 #ifdef OSG_CPP_EXCEPTIONS_AVAILABLE
     throw PNGError(error_msg);
@@ -58,7 +58,7 @@ void user_error_fn(png_structp png_ptr, png_const_charp error_msg)
 #endif
 }
 
-void user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
+void user_warning_fn(png_structp /*png_ptr*/, png_const_charp warning_msg)
 {
     OSG_WARN << "PNG lib warning : " << warning_msg << std::endl;
 }
@@ -126,7 +126,8 @@ class ReaderWriterPNG : public osgDB::ReaderWriter
             }
 
             //wish there was a Image::computeComponentSizeInBits()
-            bitDepth = Image::computePixelSizeInBits(img.getPixelFormat(),img.getDataType())/Image::computeNumComponents(img.getPixelFormat());
+            unsigned int numComponents = Image::computeNumComponents(img.getPixelFormat());
+            bitDepth = (numComponents>0) ? (Image::computePixelSizeInBits(img.getPixelFormat(),img.getDataType())/numComponents) : 0;
             if(bitDepth!=8 && bitDepth!=16) return WriteResult::ERROR_IN_WRITING_FILE;
 
             //Create row data
@@ -209,10 +210,10 @@ class ReaderWriterPNG : public osgDB::ReaderWriter
                     pinfo->Depth  = depth;
                 }
 
-                OSG_INFO<<"width="<<width<<" height="<<height<<" depth="<<depth<<std::endl;
-                if ( color == PNG_COLOR_TYPE_RGB) { OSG_INFO << "color == PNG_COLOR_TYPE_RGB "<<std::endl; }
-                if ( color == PNG_COLOR_TYPE_GRAY) { OSG_INFO << "color == PNG_COLOR_TYPE_GRAY "<<std::endl; }
-                if ( color == PNG_COLOR_TYPE_GRAY_ALPHA) { OSG_INFO << "color ==  PNG_COLOR_TYPE_GRAY_ALPHA"<<std::endl; }
+                OSG_DEBUG<<"width="<<width<<" height="<<height<<" depth="<<depth<<std::endl;
+                if ( color == PNG_COLOR_TYPE_RGB) { OSG_DEBUG << "color == PNG_COLOR_TYPE_RGB "<<std::endl; }
+                if ( color == PNG_COLOR_TYPE_GRAY) { OSG_DEBUG << "color == PNG_COLOR_TYPE_GRAY "<<std::endl; }
+                if ( color == PNG_COLOR_TYPE_GRAY_ALPHA) { OSG_DEBUG << "color ==  PNG_COLOR_TYPE_GRAY_ALPHA"<<std::endl; }
 
                 // png default to big endian, so we'll need to swap bytes if on a little endian machine.
                 if (depth>8 && getCpuByteOrder()==osg::LittleEndian)
@@ -306,6 +307,18 @@ class ReaderWriterPNG : public osgDB::ReaderWriter
                     pixelFormat = GL_RGBA;
 
                 int internalFormat = pixelFormat;
+                if (depth > 8)
+                {
+                    switch(color)
+                    {
+                      case(GL_LUMINANCE): internalFormat = GL_LUMINANCE16; break;
+                      case(GL_ALPHA): internalFormat = GL_ALPHA16; break;
+                      case(GL_LUMINANCE_ALPHA): internalFormat = GL_LUMINANCE16_ALPHA16; break;
+                      case(GL_RGB): internalFormat = GL_RGB16; break;
+                      case(GL_RGBA): internalFormat = GL_RGBA16; break;
+                      default: break;
+                    }
+                }
 
                 png_destroy_read_struct(&png, &info, &endinfo);
 

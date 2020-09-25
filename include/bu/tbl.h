@@ -38,7 +38,7 @@ __BEGIN_DECLS
 /** @{ */
 /** @file bu/tbl.h */
 
-/*
+/**
  * this is pulled from num.c where the guts to the table printer
  * currently resides, moved here for easy reference.
  *

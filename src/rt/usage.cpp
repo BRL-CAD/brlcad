@@ -153,7 +153,7 @@ default_options(void)
 
 /* intentionally not listed:
  *   -u units -- because it only applies to rtarea
- *   -r -- is only being reserved to pair with -R (muses a lower/upper on/off convention)
+ *   -r -- only reserved to pair with -R (lower/upper on/off convention)
  */
 }
 

@@ -37,11 +37,11 @@
 #include "bu/exit.h"
 #include "bu/getopt.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 #include "libtermio.h"
 
 
-fb *fbp;
+struct fb *fbp;
 
 int JumpSpeed;		/* # pixels skipped with fast commands. */
 
