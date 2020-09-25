@@ -451,8 +451,10 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
 CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define SHARED_LIBRARY_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
 
-# Let bu_dir know what the target install directory is
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
+# Let bu_dir know what the target install directory is.  In a superbuild
+# configuration this will be the most import place to be sure that we get the
+# actual superbuild install path, not the local BRL-CAD subbuild install path.
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${BRLCAD_INSTALL_PREFIX}\"\n")
 
 # Define the various relative paths for bu_dir (be sure to have included
 # Path_Setup.cmake before this point, as that file defines these variables.)
@@ -1306,6 +1308,11 @@ if(NOT MSVC)
   endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
   if(BRLCAD_ENABLE_COVERAGE)
+    # TODO: These seem to GCC specific flags - should probably set up for clang
+    # as well if that's our compiler...
+    # https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
+    # If we need different settings for different tools, should
+    # encapsulate each tool's setup in a function
     CHECK_C_FLAG(ftest-coverage)
     CHECK_CXX_FLAG(ftest-coverage)
     if(FTEST_COVERAGE_C_FLAG_FOUND)
@@ -1875,17 +1882,11 @@ if(NOT HAVE_SNPRINTF)
   endif(HAVE__SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
 
-# So far I haven't been able to come up with a reliable self contained
-# test for this, but libbu's #2 realpath test triggers a stack smash
-# on some linux systems.  For the moment, fall back on OpenBSD's
-# userspace implementation, which does seem to work.  Once we can
-# get a self-contained reproduction of this failure, put it below
-# and we can use the system realpath again.
 if(HAVE_REALPATH)
-  #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[512]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
-  #if(HAVE_WORKING_REALPATH)
-  #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
-  #endif(HAVE_WORKING_REALPATH)
+ #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
+ #if(HAVE_WORKING_REALPATH)
+ #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+ #endif(HAVE_WORKING_REALPATH)
 endif(HAVE_REALPATH)
 
 # GetFullPathName
@@ -2220,7 +2221,6 @@ endif(BRLCAD_PRINT_MSGS)
 include(CTest)
 mark_as_advanced(BUILD_TESTING)
 
-
 # We've done the toplevel configure steps, now add the subdirectories
 function(verbose_add_subdirectory root dir)
     if(BRLCAD_PRINT_MSGS)
@@ -2379,6 +2379,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 
+# TODO - the below logic will have to be rethought in a superbuild setup...
+
 # To set correct install paths for CMake at build time, rather than CMake
 # time, some rather special logic is necessary - a build target that needs
 # to be run when the current build type changes, and introspective scripting
@@ -2508,26 +2510,45 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(CPACK_RPM_PACKAGE_RELEASE)
 
   if(WIN32)
-    set(CPACK_GENERATOR NSIS)
-    set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD")
-    set(CPACK_NSIS_INSTALL_DIRECTORY "BRL-CAD ${BRLCAD_VERSION}")
-    set(CPACK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-    set(CPACK_DATA_DIR "${DATA_DIR}")
-    set(CPACK_DOC_DIR "${DOC_DIR}")
-    # There is a bug in NSI that does not handle full unix paths properly. Make
-    # sure there is at least one set of four (4) backslashes.
-    set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
-    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
-    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
-    set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
-    set(CPACK_NSIS_MODIFY_PATH ON)
-    if(BRLCAD_ENABLE_WIX)
+    find_package(NSIS)
+    if (NSIS_FOUND)
+      set(CPACK_GENERATOR ${CPACK_GENERATOR} NSIS)
+      set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD")
+      set(CPACK_NSIS_INSTALL_DIRECTORY "BRL-CAD ${BRLCAD_VERSION}")
+      set(CPACK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
+      set(CPACK_DATA_DIR "${DATA_DIR}")
+      set(CPACK_DOC_DIR "${DOC_DIR}")
+      # There is a bug in NSIS that does not handle full unix paths properly. Make
+      # sure there is at least one set of four (4) backslashes.
+      set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
+      set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
+      set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+      set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
+      set(CPACK_NSIS_MODIFY_PATH ON)
+    endif (NSIS_FOUND)
+    find_package(Wix)
+    if (Wix_FOUND)
+      # User report that this version of the installer also supports
+      # non-graphical installation with the /passive option.
+      #
+      # Note: for WiX, start menu shortcuts and desktop icons are handled with
+      # properties set on targets.  (At the moment, this is not true for NSIS -
+      # it uses entries in the misc/CMake/NSIS.template.in file.)
+      #
+      # If we need to get fancier about this, look at the following:
+      # https://github.com/Kitware/CMake/blob/master/CMakeCPackOptions.cmake.in#L216
+      # https://github.com/Kitware/CMake/tree/master/Utilities/Release/WiX
       set(CPACK_GENERATOR ${CPACK_GENERATOR} WIX)
       set(CPACK_WIX_LICENSE_RTF "${CMAKE_SOURCE_DIR}/misc/wix/License.rtf")
       set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_product.ico")
+      set(CPACK_WIX_PROGRAM_MENU_FOLDER "BRL-CAD ${BRLCAD_VERSION}")
       set(CPACK_WIX_UI_BANNER "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_banner.bmp")
       set(CPACK_WIX_UI_DIALOG "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_dialog.bmp")
-    endif(BRLCAD_ENABLE_WIX)
+    endif (Wix_FOUND)
+    if (NOT CPACK_GENERATOR)
+      # If nothing else, make a zip file
+      set(CPACK_GENERATOR ZIP)
+    endif (NOT CPACK_GENERATOR)
     if(CMAKE_CL_64)
       set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win64")
       set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "BRL-CAD ${BRLCAD_VERSION} win64")
@@ -2565,9 +2586,16 @@ if(NOT BRLCAD_IS_SUBBUILD)
     CMAKEFILES(.gitignore)
   endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
 
+  # List any files which may exist for CI testing for distcheck.  TODO -
+  # this should be a fixed list, but until we go live with the Git repo
+  # use file(GLOB_RECURSE) instead
+  file(GLOB_RECURSE GITHUB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ".github/*")
+  CMAKEFILES(${GITHUB_FILES})
+
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmakefiles.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/brlcadexec.cmake")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmake_install.cmake")
   DISTCLEAN("${CMAKE_BINARY_DIR}/install_manifest.txt")
   DISTCLEAN("${CMAKE_BINARY_DIR}/OPTIONS")
@@ -2578,6 +2606,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/include/brlcad_config.h.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxyfile.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxygenDefaults.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackProperties.cmake")
   foreach(clearpattern ${DISTCLEAN_OUTFILES})
     DISTCLEAN("${CMAKE_BINARY_DIR}/${clearpattern}")
   endforeach(clearpattern ${DISTCLEAN_OUTFILES})
@@ -2596,6 +2625,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   #
   # CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
   CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  CREATE_DISTCHECK(no_tcl "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TCL=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install" distcheck_no_tcl.cmake.in)
   CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(no_object "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
@@ -2616,6 +2646,7 @@ mark_as_advanced(EXECUTABLE_OUTPUT_PATH)
 mark_as_advanced(LIBRARY_OUTPUT_PATH)
 mark_as_advanced(CMAKE_CXX_COMPILER)
 mark_as_advanced(CMAKE_C_COMPILER)
+mark_as_advanced(CMAKE_AR)
 
 # ----------------------------------------------------------------------------
 # If options have been defined that we are going to document, by now they've
@@ -2639,7 +2670,7 @@ function(DIFF_FILE filename)
   string(REGEX REPLACE "\r?\n" "" NEW_STR "${BIN_STR}")
   if(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
     set(CONFIG_FATAL_ERROR 1 PARENT_SCOPE)
-    message("\n\"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\"\n")
+    message("\nERROR: \"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\" or find the source of the difference.\n")
   endif(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
 endfunction(DIFF_FILE filename)
 
@@ -2665,7 +2696,7 @@ file(APPEND "${CMAKE_BINARY_DIR}/configure.new" "${CONFIG_SUFFIX}")
 DIFF_FILE(configure)
 
 if(CONFIG_FATAL_ERROR)
-  message(FATAL_ERROR "Configure haulted.")
+  message(FATAL_ERROR "Configure haulted because INSTALL and/or configure script are out of date.")
 endif(CONFIG_FATAL_ERROR)
 
 
@@ -2677,25 +2708,18 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file("${BRLCAD_CMAKE_DIR}/distclean.cmake.in" "${BRLCAD_BINARY_DIR}/distclean.cmake" @ONLY)
-if("${CMAKE_GENERATOR}" MATCHES "Make")
+if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
-    COMMAND ${CMAKE_COMMAND} -E chdir "${BRLCAD_BINARY_DIR}" $(MAKE) clean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean... done."
     COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
     )
-elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
+else ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
-    COMMAND ${CMAKE_COMMAND} -E chdir "${BRLCAD_BINARY_DIR}" ninja -t clean
-    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean... done."
+    COMMAND ${CMAKE_COMMAND} -E echo "Running clean target..."
+    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR} --target clean
+    COMMAND ${CMAKE_COMMAND} -E echo "Running clean target... done."
     COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
     )
-else("${CMAKE_GENERATOR}" MATCHES "Make")
-  add_custom_target(distclean
-    COMMAND ${CMAKE_COMMAND} -E echo "Not implemented for generator ${CMAKE_GENERATOR}"
-    )
-endif("${CMAKE_GENERATOR}" MATCHES "Make")
+endif ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 if(TARGET distclean)
   set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
 endif(TARGET distclean)
@@ -2706,6 +2730,12 @@ get_property(CMAKE_IGNORE_FILES GLOBAL PROPERTY CMAKE_IGNORE_FILES)
 list(REMOVE_DUPLICATES CMAKE_IGNORE_FILES)
 string(REPLACE ";" "\n" CMAKE_IGNORE_FILES "${CMAKE_IGNORE_FILES}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake" "${CMAKE_IGNORE_FILES}")
+
+get_property(BRLCAD_EXEC_FILES GLOBAL PROPERTY BRLCAD_EXEC_FILES)
+list(REMOVE_DUPLICATES BRLCAD_EXEC_FILES)
+list(SORT BRLCAD_EXEC_FILES)
+string(REPLACE ";" "\n" BRLCAD_EXEC_FILES "${BRLCAD_EXEC_FILES}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/brlcadexec.cmake" "${BRLCAD_EXEC_FILES}")
 
 #Done with all really time-consuming steps - do the configure time delta
 if(NOT BRLCAD_IS_SUBBUILD)
@@ -2727,7 +2757,6 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
 add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
-
 
 # Local Variables:
 # tab-width: 8
