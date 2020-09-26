@@ -17,10 +17,6 @@
 # to be ready.  The key variable CMAKE_BUILD_RPATH comes from running the
 # function cmake_set_rpath, which must be available.
 
-# Sophisticated argument parsing is needed (TODO - remove this line after
-# we require >3.4 CMake - after that it is built in
-include(CMakeParseArguments)
-
 # Custom patch utility to replace the build directory path with the install
 # directory path in text files - make sure CMAKE_BINARY_DIR and
 # CMAKE_INSTALL_PREFIX are finalized before generating this file!

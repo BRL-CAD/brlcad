@@ -79,11 +79,11 @@ function(THIRD_PARTY dir vroot build_target description)
   # 0. Whether or not we're building the sources, we are tracking the files
   # that are supposed to be in the directory
   get_filename_component(DIR_NAME "${dir}" NAME)
-  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
-    message(FATAL_ERROR "Third party component ${DIR_NAME} does not have a dist file at \"${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist\"")
-  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
-  include("${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
-  CMAKEFILES_IN_DIR(${DIR_NAME}_ignore_files ${dir})
+  #if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  #  message(FATAL_ERROR "Third party component ${DIR_NAME} does not have a dist file at \"${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist\"")
+  #endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  #include("${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  #CMAKEFILES_IN_DIR(${DIR_NAME}_ignore_files ${dir})
 
   # 1. If any of the required flags are off, this extension is a no-go.
   set(DISABLE_STR "")
