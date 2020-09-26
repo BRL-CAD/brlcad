@@ -238,13 +238,13 @@ function(ExternalProject_Target etarg extproj)
     set(E_SHARED 1)
   endif (E_OUTPUT_FILE AND NOT E_EXEC)
 
-  if (E_LINK_TARGET_DEBUG)
+  if (E_LINK_TARGET_DEBUG AND NOT MSVC)
     set(LINK_TARGET_DEBUG "${E_LINK_TARGET_DEBUG}")
-  endif (E_LINK_TARGET_DEBUG)
+  endif (E_LINK_TARGET_DEBUG AND NOT MSVC)
 
-  if (E_STATIC_LINK_TARGET_DEBUG)
+  if (E_STATIC_LINK_TARGET_DEBUG AND NOT MSVC)
     set(STATIC LINK_TARGET_DEBUG "${E_STATIC_LINK_TARGET_DEBUG}")
-  endif (E_STATIC_LINK_TARGET_DEBUG)
+  endif (E_STATIC_LINK_TARGET_DEBUG AND NOT MSVC)
 
   # Create imported target - need to both make the target itself
   # and set the necessary properties.  See also
@@ -257,11 +257,11 @@ function(ExternalProject_Target etarg extproj)
     # Handle shared library
     if (E_SHARED)
       add_library(${etarg} SHARED IMPORTED GLOBAL)
-      if (E_LINK_TARGET)
+      if (E_LINK_TARGET AND NOT MSVC)
 	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_LINK_TARGET} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
-      else (E_LINK_TARGET)
+      else (E_LINK_TARGET AND NOT MSVC)
 	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_OUTPUT_FILE} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
-      endif (E_LINK_TARGET)
+      endif (E_LINK_TARGET AND NOT MSVC)
 
       install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
       if (E_RPATH AND NOT MSVC)
@@ -272,11 +272,11 @@ function(ExternalProject_Target etarg extproj)
     # If we do have a static lib as well, handle that
     if (E_STATIC AND BUILD_STATIC_LIBS)
       add_library(${etarg}-static STATIC IMPORTED GLOBAL)
-      if (E_STATIC_LINK_TARGET)
+      if (E_STATIC_LINK_TARGET AND NOT MSVC)
 	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_LINK_TARGET} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
-      else (E_STATIC_LINK_TARGET)
+      else (E_STATIC_LINK_TARGET AND NOT MSVC)
 	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_OUTPUT_FILE} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
-      endif (E_STATIC_LINK_TARGET)
+      endif (E_STATIC_LINK_TARGET AND NOT MSVC)
       if (MSVC)
 	install(FILES "${CMAKE_BINARY_DIR}/${BIN_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
       else (MSVC)
@@ -299,11 +299,11 @@ function(ExternalProject_Target etarg extproj)
   add_dependencies(${etarg} ${extproj})
 
   # Add install rules for any symlinks the caller has listed
-  if(E_SYMLINKS)
+  if(E_SYMLINKS AND NOT MSVC)
     foreach(slink ${E_SYMLINKS})
       install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${slink}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
     endforeach(slink ${E_SYMLINKS})
-  endif (E_SYMLINKS)
+  endif(E_SYMLINKS AND NOT MSVC)
 
 endfunction(ExternalProject_Target)
 
