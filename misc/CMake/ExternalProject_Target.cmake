@@ -8,6 +8,11 @@
 # settings in the external projects as if the external files were built by the
 # main CMake project.
 
+# TODO - need to rework this in a way that's compatible with the superbuild
+# pattern.  Main BRL-CAD build won't have the ExternalProject_Add targets from
+# the superbuild, so we need another way to handle getting the necessary
+# info to the main build.  Maybe useful:
+# https://gitlab.kitware.com/cmake/community/-/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
 
 # The catch to this is that the external project outputs MUST be built in a way
 # that is compatible with CMake's RPath handling assumptions.  See
