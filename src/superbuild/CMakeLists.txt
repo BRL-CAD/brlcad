@@ -9,13 +9,21 @@ endfunction(SetTargetFolder)
 # Debugging flag for ExternalProject tools
 set(EXTPROJ_VERBOSE 0)
 
-# Load some CMake macros to handle the special case of third party libraries.
-include(ThirdParty)
-
 # Superbuilds use ExternalProject_Add, and BRL-CAD defines some additional
 # targets for managing them.
 include(ExternalProject)
+# Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized
+# BEFORE including this file!
 include(ExternalProject_Target)
+
+# Load some CMake macros to handle the special case of third party libraries.
+include(ThirdParty)
+
+
+# For now, turn everything on:
+set(BRLCAD_LEVEL2 ON)
+set(BRLCAD_LEVEL3 ON)
+
 
 set(BRLCAD_DEPS)
 
@@ -84,6 +92,246 @@ else (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
   set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}" CACHE STRING "ZLIB include directory" FORCE)
 
 endif (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
+
+# With MSVC, some of the non-CMake subbuilds are going to need the vcvars bat
+# file to set up the environment.
+if(MSVC)
+  get_filename_component(COMPILER_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
+  get_filename_component(COMPILER_ROOT "${COMPILER_DIR}" NAME)
+  set(VCVARS_BAT "${COMPILER_DIR}/vcvars${COMPILER_ROOT}.bat")
+  if(NOT EXISTS "${VCVARS_BAT}")
+    # Try the VS2017 location (https://stackoverflow.com/q/43372235)
+    set(COMPILER_ROOT "")
+    foreach(DIRS RANGE 0 5)
+      get_filename_component(COMPILER_DIR "${COMPILER_DIR}" DIRECTORY)
+    endforeach(DIRS RANGE 0 5)
+    set(COMPILER_DIR "${COMPILER_DIR}/Auxiliary/Build")
+    if(CMAKE_CL_64)
+      set(VCVARS_BAT "${COMPILER_DIR}/vcvars64.bat")
+    else(CMAKE_CL_64)
+      set(VCVARS_BAT "${COMPILER_DIR}/vcvars32.bat")
+    endif(CMAKE_CL_64)
+    if(NOT EXISTS "${VCVARS_BAT}")
+      message(FATAL_ERROR "Could not find vcvars bat file in ${COMPILER_DIR}")
+    endif(NOT EXISTS "${VCVARS_BAT}")
+  endif(NOT EXISTS "${VCVARS_BAT}")
+endif(MSVC)
+
+# In case we need to pass some sort of reasonable parallel
+# flag to a build system, check our processor count
+include(ProcessorCount)
+ProcessorCount(N)
+math(EXPR pcnt "${N} / 2")
+if (NOT pcnt)
+  set(pcnt 1)
+endif (NOT pcnt)
+
+
+###############################################################################
+#                               libregex
+###############################################################################
+
+set (regex_DESCRIPTION "
+Option for enabling and disabling compilation of the Regular
+Expression Library provided with BRL-CAD's source distribution.
+Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
+and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
+
+if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
+
+  set(REGEX_VERSION "1.0.4")
+  if (MSVC)
+    set(REGEX_BASENAME regex_brl)
+    set(REGEX_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  else (MSVC)
+    set(REGEX_BASENAME libregex_brl)
+    set(REGEX_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${REGEX_VERSION})
+  endif (MSVC)
+
+  # Platform differences in default linker behavior make it difficult to
+  # guarantee that our libregex symbols will override libc. We'll avoid the
+  # issue by renaming our libregex symbols to be incompatible with libc.
+  ExternalProject_Add(REGEX_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/libregex"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+    -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    -DREGEX_PREFIX_STR=libregex_
+    )
+
+  ExternalProject_Target(regex REGEX_BLD
+    OUTPUT_FILE ${REGEX_BASENAME}${REGEX_SUFFIX}
+    STATIC_OUTPUT_FILE ${REGEX_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX};${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
+    LINK_TARGET "${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET "${REGEX_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    RPATH
+    )
+  ExternalProject_ByProducts(REGEX_BLD ${INCLUDE_DIR}
+    regex.h
+    )
+
+  list(APPEND BRLCAD_DEPS REGEX_BLD)
+
+  set(REGEX_LIBRARIES regex CACHE STRING "Building bundled libregex" FORCE)
+  set(REGEX_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing regex headers." FORCE)
+
+  SetTargetFolder(REGEX_BLD "Third Party Libraries")
+  SetTargetFolder(regex "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
+
+
+###############################################################################
+#           netpbm library - support for pnm,ppm,pbm, etc. image files
+###############################################################################
+
+set(netpbm_DESCRIPTION "
+Option for enabling and disabling compilation of the netpbm library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_NETPBM)
+
+if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
+
+  if (MSVC)
+    set(NETPBM_BASENAME regex_brl)
+  else (MSVC)
+    set(NETPBM_BASENAME libregex_brl)
+  endif (MSVC)
+
+  ExternalProject_Add(NETPBM_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/libnetpbm"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(netpbm NETPBM_BLD
+    OUTPUT_FILE ${NETPBM_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE ${NETPBM_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(NETPBM_BLD ${INCLUDE_DIR}
+    netpbm/bitio.h
+    netpbm/colorname.h
+    netpbm/pam.h
+    netpbm/pammap.h
+    netpbm/pbm.h
+    netpbm/pbmfont.h
+    netpbm/pgm.h
+    netpbm/pm.h
+    netpbm/pm_gamma.h
+    netpbm/pm_system.h
+    netpbm/pnm.h
+    netpbm/ppm.h
+    netpbm/ppmcmap.h
+    netpbm/ppmfloyd.h
+    )
+
+  list(APPEND BRLCAD_DEPS NETPBM_BLD)
+
+  set(NETPBM_LIBRARIES netpbm CACHE STRING "Building bundled netpbm" FORCE)
+  set(NETPBM_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
+
+  SetTargetFolder(NETPBM_BLD "Third Party Libraries")
+  SetTargetFolder(netpbm "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
+
+
+###############################################################################
+#           libpng - Portable Network Graphics image file support
+###############################################################################
+
+# NOTE: we need to have libpng's internal call to find_package looking for zlib
+# locate our local copy if we have one.  Defining the ZLIB_ROOT prefix for
+# find_package and setting the library file to our custom library name is
+# intended to do this (requires CMake 3.12).
+
+set(png_DESCRIPTION "
+Option for enabling and disabling compilation of the Portable Network
+Graphics library provided with BRL-CAD's source distribution.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+
+# We generally don't want the Mac framework libpng...
+set(CMAKE_FIND_FRAMEWORK LAST)
+
+THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_PNG)
+
+if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
+
+  set(PNG_VERSION_MAJOR 16)
+  set(PNG_VERSION_MINOR 37)
+  set(PNG_LIB_NAME png_brl)
+
+  if (MSVC)
+    set(PNG_BASENAME ${PNG_LIB_NAME})
+    set(PNG_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  else (MSVC)
+    set(PNG_BASENAME lib${PNG_LIB_NAME})
+    set(PNG_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${PNG_VERSION_MAJOR}.${PNG_VERSION_MINOR}.0)
+  endif (MSVC)
+
+  if (TARGET ZLIB_BLD)
+     ExternalProject_Add(PNG_BLD
+       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/libpng"
+       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+       CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_INSTALL_LIBDIR=${LIB_DIR}
+                  -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+                  -DPNG_STATIC=${BUILD_STATIC_LIBS} -DSKIP_INSTALL_FILES=ON -DSKIP_INSTALL_EXECUTABLES=ON
+                  -DSKIP_INSTALL_EXPORT=ON -DPNG_TESTS=OFF -Dld-version-script=OFF
+                  -DZLIB_ROOT=${CMAKE_BINARY_DIR} -DZLIB_LIBRARY=$<TARGET_LINKER_FILE_DIR:zlib>/${ZLIB_BASENAME}$<TARGET_LINKER_FILE_SUFFIX:zlib>
+		  -DPNG_LIB_NAME=${PNG_LIB_NAME} -DPNG_PREFIX=brl_
+       DEPENDS ${ZLIB_TARGET}
+       )
+   else (TARGET ZLIB_BLD)
+     ExternalProject_Add(PNG_BLD
+       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libpng"
+       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+       CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_INSTALL_LIBDIR=${LIB_DIR}
+                  -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+                  -DPNG_STATIC=${BUILD_STATIC_LIBS} -DSKIP_INSTALL_FILES=ON -DSKIP_INSTALL_EXECUTABLES=ON
+                  -DSKIP_INSTALL_EXPORT=ON -DPNG_TESTS=OFF -Dld-version-script=OFF
+                  -DPNG_PREFIX=brl_
+       )
+   endif (TARGET ZLIB_BLD)
+  ExternalProject_Target(png PNG_BLD
+    OUTPUT_FILE ${PNG_BASENAME}${PNG_SUFFIX}
+    STATIC_OUTPUT_FILE ${PNG_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX};${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PNG_VERSION_MAJOR};${PNG_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    LINK_TARGET "${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET "${PNG_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    RPATH
+    )
+  ExternalProject_ByProducts(PNG_BLD ${INCLUDE_DIR}
+    png.h
+    pngconf.h
+    pnglibconf.h
+    libpng${PNG_VERSION_MAJOR}/png.h
+    libpng${PNG_VERSION_MAJOR}/pngconf.h
+    libpng${PNG_VERSION_MAJOR}/pnglibconf.h
+    )
+
+  list(APPEND BRLCAD_DEPS PNG_BLD)
+
+  set(PNG_LIBRARIES png CACHE STRING "Building bundled libpng" FORCE)
+  set(PNG_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
+
+  SetTargetFolder(PNG_BLD "Third Party Libraries")
+  SetTargetFolder(png "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_PNG_BUILD)
+
+
 
 ###############################################################################
 #           openNURBS - Non-Uniform Rational B-Spline support
@@ -263,7 +511,7 @@ ExternalProject_Add(BRLCAD_BLD
   SOURCE_DIR "${BRLCAD_SOURCE_DIR}"
   PREFIX ${BRLCAD_BINARY_DIR}/brlcad
   BINARY_DIR ${BRLCAD_BINARY_DIR}/brlcad-build
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
   -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
   -DSUBBUILD=ON
   DEPENDS ${BRLCAD_DEPS}
