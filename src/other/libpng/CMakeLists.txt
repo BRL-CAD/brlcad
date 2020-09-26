@@ -18,16 +18,7 @@
 # For conditions of distribution and use, see the disclaimer
 # and license in png.h
 
-cmake_minimum_required(VERSION 3.1)
-cmake_policy(VERSION 3.1)
-
-# Use new variable expansion policy.
-if (POLICY CMP0053)
-  cmake_policy(SET CMP0053 NEW)
-endif(POLICY CMP0053)
-if (POLICY CMP0054)
-  cmake_policy(SET CMP0054 NEW)
-endif(POLICY CMP0054)
+cmake_minimum_required(VERSION 3.12)
 
 set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")
 
@@ -591,7 +582,6 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
 endif()
 
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
-  message("got here?????")
   install(FILES ${libpng_public_hdrs} DESTINATION include)
   install(FILES ${libpng_public_hdrs} DESTINATION include/${PNGLIB_NAME})
 endif()
