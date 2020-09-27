@@ -24,6 +24,42 @@ include(ThirdParty)
 include(ThirdPartyExecutable)
 
 
+# In case we need to pass some sort of reasonable parallel
+# flag to a build system, check our processor count
+include(ProcessorCount)
+ProcessorCount(N)
+math(EXPR pcnt "${N} / 2")
+if (NOT pcnt)
+  set(pcnt 1)
+endif (NOT pcnt)
+
+
+# With MSVC, some of the non-CMake subbuilds are going to need the vcvars bat
+# file to set up the environment.
+if(MSVC)
+  get_filename_component(COMPILER_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
+  get_filename_component(COMPILER_ROOT "${COMPILER_DIR}" NAME)
+  set(VCVARS_BAT "${COMPILER_DIR}/vcvars${COMPILER_ROOT}.bat")
+  if(NOT EXISTS "${VCVARS_BAT}")
+    # Try the VS2017 location (https://stackoverflow.com/q/43372235)
+    set(COMPILER_ROOT "")
+    foreach(DIRS RANGE 0 5)
+      get_filename_component(COMPILER_DIR "${COMPILER_DIR}" DIRECTORY)
+    endforeach(DIRS RANGE 0 5)
+    set(COMPILER_DIR "${COMPILER_DIR}/Auxiliary/Build")
+    if(CMAKE_CL_64)
+      set(VCVARS_BAT "${COMPILER_DIR}/vcvars64.bat")
+    else(CMAKE_CL_64)
+      set(VCVARS_BAT "${COMPILER_DIR}/vcvars32.bat")
+    endif(CMAKE_CL_64)
+    if(NOT EXISTS "${VCVARS_BAT}")
+      message(FATAL_ERROR "Could not find vcvars bat file in ${COMPILER_DIR}")
+    endif(NOT EXISTS "${VCVARS_BAT}")
+  endif(NOT EXISTS "${VCVARS_BAT}")
+endif(MSVC)
+
+
+
 # For now, turn everything on:
 set(BRLCAD_LEVEL2 ON)
 set(BRLCAD_LEVEL3 ON)
@@ -151,7 +187,6 @@ endif (${CMAKE_PROJECT_NAME}_PERPLEX_BUILD)
 # Make sure we load FindPERPLEX.cmake to be able to define PERPLEX targets.
 include(${BRLCAD_CMAKE_DIR}/FindPERPLEX.cmake)
 
-
 ###############################################################################
 #                 zlib compression/decompression library
 ###############################################################################
@@ -217,40 +252,6 @@ else (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
   set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}" CACHE STRING "ZLIB include directory" FORCE)
 
 endif (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
-
-# With MSVC, some of the non-CMake subbuilds are going to need the vcvars bat
-# file to set up the environment.
-if(MSVC)
-  get_filename_component(COMPILER_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
-  get_filename_component(COMPILER_ROOT "${COMPILER_DIR}" NAME)
-  set(VCVARS_BAT "${COMPILER_DIR}/vcvars${COMPILER_ROOT}.bat")
-  if(NOT EXISTS "${VCVARS_BAT}")
-    # Try the VS2017 location (https://stackoverflow.com/q/43372235)
-    set(COMPILER_ROOT "")
-    foreach(DIRS RANGE 0 5)
-      get_filename_component(COMPILER_DIR "${COMPILER_DIR}" DIRECTORY)
-    endforeach(DIRS RANGE 0 5)
-    set(COMPILER_DIR "${COMPILER_DIR}/Auxiliary/Build")
-    if(CMAKE_CL_64)
-      set(VCVARS_BAT "${COMPILER_DIR}/vcvars64.bat")
-    else(CMAKE_CL_64)
-      set(VCVARS_BAT "${COMPILER_DIR}/vcvars32.bat")
-    endif(CMAKE_CL_64)
-    if(NOT EXISTS "${VCVARS_BAT}")
-      message(FATAL_ERROR "Could not find vcvars bat file in ${COMPILER_DIR}")
-    endif(NOT EXISTS "${VCVARS_BAT}")
-  endif(NOT EXISTS "${VCVARS_BAT}")
-endif(MSVC)
-
-# In case we need to pass some sort of reasonable parallel
-# flag to a build system, check our processor count
-include(ProcessorCount)
-ProcessorCount(N)
-math(EXPR pcnt "${N} / 2")
-if (NOT pcnt)
-  set(pcnt 1)
-endif (NOT pcnt)
-
 
 ###############################################################################
 #                               libregex
@@ -895,8 +896,177 @@ if(BRLCAD_SC_BUILD)
 endif(BRLCAD_SC_BUILD)
 
 ###############################################################################
+#      VDSlib - A View-Dependent Simplification and Rendering Library
+###############################################################################
+
+#  For the moment, this is marked NOSYS - it's possible that some Debian
+#  systems would have 0.9 of vdslib installed, but it's unmaintained and we're
+#  likely to be making changes.  If our own copy of VDSlib ever spins back off
+#  into its own project, revisit the NOSYS
+
+set(libvds_DESCRIPTION "
+Option for enabling and disabling compilation of the libvds triangle
+simplification library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
+
+if (${CMAKE_PROJECT_NAME}_VDS_BUILD)
+
+  if (MSVC)
+    set(VDS_BASENAME vds)
+  else (MSVC)
+    set(VDS_BASENAME libvds)
+  endif (MSVC)
+
+
+  ExternalProject_Add(VDS_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/libvds"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(vds VDS_BLD
+    OUTPUT_FILE ${VDS_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE ${VDS_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(VDS_BLD ${INCLUDE_DIR}
+    vds.h
+    )
+
+  set(VDS_LIBRARIES vds CACHE STRING "Building bundled netpbm" FORCE)
+  set(VDS_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing vds headers." FORCE)
+
+  list(APPEND BRLCAD_DEPS VDS_BLD)
+  
+  SetTargetFolder(VDS_BLD "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_VDS_BUILD)
+
+
+###############################################################################
+#               gdiam - approximate tight bounding boxes
+###############################################################################
+
+set(libgdiam_DESCRIPTION "
+Option for enabling and disabling compilation of the libgdiam approximate
+tight bounding box library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
+
+if (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
+
+  if (MSVC)
+    set(GDIAM_BASENAME gdiam)
+  else (MSVC)
+    set(GDIAM_BASENAME libgdiam)
+  endif (MSVC)
+
+  ExternalProject_Add(GDIAM_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/libgdiam"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(gdiam GDIAM_BLD
+    OUTPUT_FILE ${GDIAM_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE ${GDIAM_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(GDIAM_BLD ${INCLUDE_DIR}
+    gdiam.hpp
+    )
+  
+  list(APPEND BRLCAD_DEPS GDIAM_BLD)
+
+  SetTargetFolder(GDIAM_BLD "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
+
+
+###############################################################################
+#             Poly2Tri - 2D constrained Delaunay triangulation
+###############################################################################
+
+set(poly2tri_DESCRIPTION "
+Option for enabling and disabling compilation of the poly2tri 2D constrained
+Delaunay triangulation library provided with BRL-CAD's source code.  Default is
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing first
+for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(poly2tri POLY2TRI poly2tri poly2tri_DESCRIPTION ALIASES ENABLE_POLY2TRI FLAGS NOSYS)
+
+if (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
+
+  if (MSVC)
+    set(POLY2TRI_BASENAME poly2tri)
+  else (MSVC)
+    set(POLY2TRI_BASENAME libpoly2tri)
+  endif (MSVC)
+
+  ExternalProject_Add(POLY2TRI_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/poly2tri"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(poly2tri POLY2TRI_BLD
+    OUTPUT_FILE ${POLY2TRI_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE ${POLY2TRI_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(POLY2TRI_BLD ${INCLUDE_DIR}
+    poly2tri/poly2tri.h
+    poly2tri/common/shapes.h
+    poly2tri/sweep/cdt.h
+    poly2tri/sweep/advancing_front.h
+    poly2tri/sweep/sweep.h
+    poly2tri/sweep/sweep_context.h
+    )
+
+  list(APPEND BRLCAD_DEPS POLY2TRI_BLD)
+  
+  SetTargetFolder(POLY2TRI_BLD "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
+
+
+###############################################################################
 #                    Primary BRL-CAD Compilation
 ###############################################################################
+
+# Set variables based on what we're building, so we know what to tell the main
+# BRL-CAD build.
+set(TARGET_LIST
+  LEMON
+  RE2C
+  PERPLEX
+  REGEX
+  ZLIB
+  PNG
+  NETPBM
+  UTAHRLE
+  OPENNURBS
+  SPSR
+  STEPCODE
+  VDS
+  GDIAM
+  POLY2TRI
+  )
+foreach(T ${TARGET_LIST})
+if (TARGET ${T}_BLD)
+  set(${T}_TARGET ${T}_BLD)
+endif (TARGET ${T}_BLD)
+endforeach(T ${TARGET_LIST})
 
 # We've built everything we needed to build - now we can build BRL-CAD itself
 ExternalProject_Add(BRLCAD_BLD
@@ -906,6 +1076,20 @@ ExternalProject_Add(BRLCAD_BLD
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
   -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
   -DSUBBUILD=ON
+  -DLEMON_ROOT=$<$<BOOL:${LEMON_TARGET}>:${CMAKE_BINARY_DIR}> -DLEMON_TEMPLATE=$<$<BOOL:${LEMON_TARGET}>:${LEMON_TEMPLATE}>
+  -DRE2C_ROOT=$<$<BOOL:${RE2C_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DPERPLEX_ROOT=$<$<BOOL:${PERPLEX_TARGET}>:${CMAKE_BINARY_DIR}> -DPERPLEX_TEMPLATE=$<$<BOOL:${PERPLEX_TARGET}>:${PERPLEX_TEMPLATE}>
+  -DREGEX_ROOT=$<$<BOOL:${REGEX_TARGET}>:${CMAKE_BINARY_DIR}> -DREGEX_LIBRARY=$<$<BOOL:${REGEX_TARGET}>:${CMAKE_BINARY_DIR}/${LIB_DIR}/${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}>
+  -DZLIB_ROOT=$<$<BOOL:${ZLIB_TARGET}>:${CMAKE_BINARY_DIR}> -DZLIB_LIBRARY=$<$<BOOL:${ZLIB_TARGET}>:${CMAKE_BINARY_DIR}/${LIB_DIR}/${ZLIB_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}>
+  -DPNG_ROOT=$<$<BOOL:${PNG_TARGET}>:${CMAKE_BINARY_DIR}> -DPNG_LIBRARY=$<$<BOOL:${PNG_TARGET}>:${CMAKE_BINARY_DIR}/${LIB_DIR}/${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}>
+  -DNETPBM_ROOT=$<$<BOOL:${NETPBM_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DUTAHRLE_ROOT=$<$<BOOL:${UTAHRLE_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DOPENNURBS_ROOT=$<$<BOOL:${OPENNURBS_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DSPSR_ROOT=$<$<BOOL:${SPSR_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DSTEPCODE_ROOT=$<$<BOOL:${STEPCODE_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DVDS_ROOT=$<$<BOOL:${VDS_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DGDIAM_ROOT=$<$<BOOL:${GDIAM_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DPOLY2TRI_ROOT=$<$<BOOL:${POLY2TRI_TARGET}>:${CMAKE_BINARY_DIR}>
   DEPENDS ${BRLCAD_DEPS}
   )
 

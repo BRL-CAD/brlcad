@@ -226,7 +226,7 @@ endif (NOT DEFINED SUBBUILD)
 # superbuild.
 if (DEFINED SUBBUILD)
   message("SUBBUILD: ${SUBBUILD}!\n")
-  return()
+  #return()
 endif (DEFINED SUBBUILD)
 #---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
@@ -271,7 +271,7 @@ endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 # For a variety of reasons, we often need to wrap existing CMake
 # commands to add our own logic.
 if(NOT BRLCAD_IS_SUBBUILD)
-  include(Brlcad_Command_Wrappers)
+  include(BRLCAD_Command_Wrappers)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 #---------------------------------------------------------------------
@@ -2300,7 +2300,7 @@ endif(NOT BRLCAD_DISABLE_SUMMARY)
 # that may be able to simplify some of the current timestamp system.
 # We would need to be able to require 2.8.11 or newer, so there will
 # be a bit of a wait, but it's something to look into.
-if(NOT BRLCAD_IS_SUBBUILD)
+if (NOT DEFINED SUBBUILD)
 
   # Set up rules to print a timestamp string during build
   set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
@@ -2320,47 +2320,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
     )
   set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
-endif(NOT BRLCAD_IS_SUBBUILD)
+endif (NOT DEFINED SUBBUILD)
 
-# We want the timestamp to come first, so make ALL targets, depend on
-# timestamp.  Similarly, buildtimedelta needs to depend on every target
-# not excluded from the default build list.
-if(NOT BRLCAD_IS_SUBBUILD)
-
-  # Libraries and executables are fairly straightforward
-  get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
-  get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
-  mark_as_advanced(CMAKE_LIBRARY_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXEC_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_LIBRARY_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_EXEC_TARGET_LIST)
-  foreach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
-    if(TARGET ${ctarget})
-      add_dependencies(${ctarget} timestamp)
-      get_target_property(not_in_all ${ctarget} EXCLUDE_FROM_ALL)
-      get_target_property(not_in_default ${ctarget} EXCLUDE_FROM_DEFAULT_BUILD)
-      if(NOT not_in_all AND NOT not_in_default)
-	add_dependencies(buildtimedelta ${ctarget})
-      endif(NOT not_in_all AND NOT not_in_default)
-    endif(TARGET ${ctarget})
-  endforeach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
-
-  # For the custom targets, we need to avoid circular dependencies
-  get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
-  mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_CUSTOM_TARGET_LIST)
-  foreach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
-    if(NOT ${custtarget} MATCHES "timestamp")
-      add_dependencies(${custtarget} timestamp)
-    endif(NOT ${custtarget} MATCHES "timestamp")
-    if(NOT ${custtarget} MATCHES "buildtimedelta")
-      get_target_property(not_in_all ${custtarget} EXCLUDE_FROM_ALL)
-      get_target_property(not_in_default ${custtarget} EXCLUDE_FROM_DEFAULT_BUILD)
-      if(NOT not_in_all AND NOT not_in_default)
-	add_dependencies(buildtimedelta ${custtarget})
-      endif(NOT not_in_all AND NOT not_in_default)
-    endif(NOT ${custtarget} MATCHES "buildtimedelta")
-  endforeach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
+# In a superbuild configuration, we're primarily concerned with
+# ExternalProject_Add targets.
+if (NOT DEFINED SUBBUILD)
 
   # Theoretical logic to handle external targets - not currently in use
   get_property(CMAKE_EXTERNAL_TARGET_LIST GLOBAL PROPERTY CMAKE_EXTERNAL_TARGET_LIST)
@@ -2376,7 +2340,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(target_confcmd)
   endforeach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
-endif(NOT BRLCAD_IS_SUBBUILD)
+endif (NOT DEFINED SUBBUILD)
 
 
 # TODO - the below logic will have to be rethought in a superbuild setup...
@@ -2676,7 +2640,7 @@ endfunction(DIFF_FILE filename)
 
 # Finalize and check INSTALL file
 file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
-string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
+#string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
 file(WRITE "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_PREFIX}")
 file(READ "${BRLCAD_BINARY_DIR}/OPTIONS" INSTALL_OPTS)
 file(APPEND "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_OPTS}")
@@ -2696,7 +2660,7 @@ file(APPEND "${CMAKE_BINARY_DIR}/configure.new" "${CONFIG_SUFFIX}")
 DIFF_FILE(configure)
 
 if(CONFIG_FATAL_ERROR)
-  message(FATAL_ERROR "Configure haulted because INSTALL and/or configure script are out of date.")
+  #message(FATAL_ERROR "Configure haulted because INSTALL and/or configure script are out of date.")
 endif(CONFIG_FATAL_ERROR)
 
 
