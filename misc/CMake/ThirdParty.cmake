@@ -34,10 +34,6 @@
 #
 ###
 
-# TODO - remove this line after we require CMake 3.4 - it's built
-# in after that point.
-include(CMakeParseArguments)
-
 # Synopsis:
 #
 # THIRD_PARTY(dir
