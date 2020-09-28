@@ -32,8 +32,7 @@ Src/Octree.h
 Src/Octree.inl
 Src/PPolynomial.h
 Src/PPolynomial.inl
-Src/Ply.h
-Src/PlyFile.cpp
+Src/PlyVertexMini.h
 Src/PointStream.h
 Src/PointStream.inl
 Src/PoissonRecon.cpp
