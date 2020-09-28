@@ -175,6 +175,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 # GDAL -  translator library for raster and vector geospatial data formats
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
+# TCL - scripting language
+include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
+
+
 ###############################################################################
 #                    Primary BRL-CAD Compilation
 ###############################################################################
@@ -199,6 +203,7 @@ set(TARGET_LIST
   BSON
   PROJ4
   GDAL
+  TCL
   )
 foreach(T ${TARGET_LIST})
 if (TARGET ${T}_BLD)
@@ -231,6 +236,7 @@ ExternalProject_Add(BRLCAD_BLD
   -DBSON_ROOT=$<$<BOOL:${BSON_TARGET}>:${CMAKE_BINARY_DIR}>
   -DPROJ4_ROOT=$<$<BOOL:${PROJ4_TARGET}>:${CMAKE_BINARY_DIR}>
   -DGDAL_ROOT=$<$<BOOL:${GDAL_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DTCL_ROOT=$<$<BOOL:${TCL_TARGET}>:${CMAKE_BINARY_DIR}>
   DEPENDS ${BRLCAD_DEPS}
   )
 

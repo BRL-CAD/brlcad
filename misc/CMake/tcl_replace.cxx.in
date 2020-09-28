@@ -14,6 +14,8 @@ static const char *MAN_DIR = "@MAN_DIR@";
 static const char *PKG_DIR = "tcl8.@TCL_MINOR_VERSION@";
 static const char *TKTABLE_RUNTIME_DIR = "Tktable@TKTABLE_VERSION@";
 
+static const char *ZLIB_NAME = "@ZLIB_NAME@";
+static const char *DEFLATE_NAME = "@DEFLATE_NAME@";
 
 int main(int argc, const char **argv)
 {
@@ -95,6 +97,16 @@ int main(int argc, const char **argv)
     regexes.push_back(tbl_runtimedir_regex);
     std::string tbl_runtimedir_new  = std::string("\"") + std::string(CMAKE_INSTALL_PREFIX) + std::string(sep) + std::string(LIB_DIR) + std::string(TKTABLE_RUNTIME_DIR) + std::string("\"");
     strings.push_back(tbl_runtimedir_new);
+
+    std::regex zname_regex("for ac_lib in z");
+    regexes.push_back(zname_regex);
+    std::string zname_new  = std::string("for ac_lib in ") + std::string(ZLIB_NAME);
+    strings.push_back(zname_new);
+
+    std::regex deflate_regex("deflateSetHeader");
+    regexes.push_back(deflate_regex);
+    std::string deflate_new  = std::string(DEFLATE_NAME);
+    strings.push_back(deflate_new);
 
     for (int i = 1; i < argc; i++) {
 	std::string cline;
