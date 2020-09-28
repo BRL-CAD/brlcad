@@ -166,6 +166,14 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdiam.cmake)
 # Poly2Tri - 2D constrained Delaunay triangulation
 include(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.cmake)
 
+# libbson - for binary attributes, always use this local version
+include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
+
+# PROJ4 - generic coordinate transformation
+include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
+
+# GDAL -  translator library for raster and vector geospatial data formats
+include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
 ###############################################################################
 #                    Primary BRL-CAD Compilation
@@ -188,6 +196,9 @@ set(TARGET_LIST
   VDS
   GDIAM
   POLY2TRI
+  BSON
+  PROJ4
+  GDAL
   )
 foreach(T ${TARGET_LIST})
 if (TARGET ${T}_BLD)
@@ -217,7 +228,9 @@ ExternalProject_Add(BRLCAD_BLD
   -DVDS_ROOT=$<$<BOOL:${VDS_TARGET}>:${CMAKE_BINARY_DIR}>
   -DGDIAM_ROOT=$<$<BOOL:${GDIAM_TARGET}>:${CMAKE_BINARY_DIR}>
   -DPOLY2TRI_ROOT=$<$<BOOL:${POLY2TRI_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DBRLCAD_ENABLE_GDAL=OFF
+  -DBSON_ROOT=$<$<BOOL:${BSON_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DPROJ4_ROOT=$<$<BOOL:${PROJ4_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DGDAL_ROOT=$<$<BOOL:${GDAL_TARGET}>:${CMAKE_BINARY_DIR}>
   DEPENDS ${BRLCAD_DEPS}
   )
 
