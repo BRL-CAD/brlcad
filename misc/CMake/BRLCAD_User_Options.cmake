@@ -104,10 +104,11 @@ if(BRLCAD_ENABLE_X11)
 endif(BRLCAD_ENABLE_X11)
 mark_as_advanced(OPENGL_USE_AQUA)
 
-# Enable/disable features requiring the Tk toolkit - usually this should
-# be on, as a lot of functionality in BRL-CAD depends on Tk
-option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON)
-mark_as_advanced(BRLCAD_ENABLE_TK)
+# Enable/disable features requiring the Tcl/Tk toolkit - usually this should
+# be on, as a lot of functionality in BRL-CAD depends on Tcl/Tk
+option(BRLCAD_ENABLE_TCL "Enable features requiring the Tcl toolkit" ON)
+cmake_dependent_option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON "BRLCAD_ENABLE_TCL" OFF)
+mark_as_advanced(BRLCAD_ENABLE_TCL BRLCAD_ENABLE_TK)
 if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
   set(BRLCAD_ENABLE_TK OFF)
 endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
