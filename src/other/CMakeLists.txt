@@ -86,8 +86,6 @@ endif (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 find_package(TCL)
 
-CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
-
 if(0)
 # OpenSceneGraph Libraries
 set(openscenegraph_DESCRIPTION "

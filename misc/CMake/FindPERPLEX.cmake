@@ -44,7 +44,29 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-find_program(PERPLEX_EXECUTABLE perplex DOC "path to the perplex executable")
+set(_PERPLEX_SEARCHES)
+
+# Search PERPLEX_ROOT first if it is set.
+if(PERPLEX_ROOT)
+  set(_PERPLEX_SEARCH_ROOT PATHS ${PERPLEX_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _PERPLEX_SEARCHES _PERPLEX_SEARCH_ROOT)
+endif()
+
+# Normal search.
+set(_PERPLEX_x86 "(x86)")
+set(_PERPLEX_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/perplex"
+          "$ENV{ProgramFiles${_PERPLEX_x86}}/perplex")
+unset(_PERPLEX_x86)
+list(APPEND _PERPLEX_SEARCHES _PERPLEX_SEARCH_NORMAL)
+
+set(PERPLEX_NAMES perplex)
+
+# Try each search configuration.
+foreach(search ${_PERPLEX_SEARCHES})
+  find_program(PERPLEX_EXECUTABLE perplex ${${search}} PATH_SUFFIXES bin)
+endforeach()
+
 mark_as_advanced(PERPLEX_EXECUTABLE)
 
 if(PERPLEX_EXECUTABLE AND NOT PERPLEX_TEMPLATE)

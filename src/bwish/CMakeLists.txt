@@ -1,3 +1,4 @@
+find_package(TCL)
 
 if(TARGET libtclcad)
   set(BWISH_INCLUDE_DIRS

@@ -2094,6 +2094,13 @@ add_subdirectory(misc/tools)
 # tests so the CACHE reflects BRL-CAD's test results.
 add_subdirectory(src/other)
 
+set(ITCL_VERSION "3.4")
+CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
+
+set(IWIDGETS_VERSION "4.1.1")
+CONFIG_H_APPEND(BRLCAD "#cmakedefine IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
+
+
 if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
   message("*        Stage 9 of 9 - Output and Summarize Config       *")

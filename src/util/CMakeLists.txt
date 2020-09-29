@@ -1,3 +1,5 @@
+find_package(PNG)
+
 set(UTIL_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}

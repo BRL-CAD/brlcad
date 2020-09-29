@@ -372,14 +372,14 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
     }
 }
 
-
+#if 0
 #ifdef BWISH
 /* structure provided in libtclcad. provides -format pix-n-w support.
  * doesn't really seem to be used anywhere except here.
  */
 extern Tk_PhotoImageFormat tkImgFmtPIX;
 #endif
-
+#endif
 
 int
 cmdInit(Tcl_Interp *interp)
@@ -395,9 +395,11 @@ cmdInit(Tcl_Interp *interp)
     /* Register bwish/btclsh commands */
     register_cmds(interp, bwish_cmds);
 
+#if 0
 #ifdef BWISH
     /* Add pix format for images */
     Tk_CreatePhotoImageFormat(&tkImgFmtPIX);
+#endif
 #endif
 
     /* initialize command history */
