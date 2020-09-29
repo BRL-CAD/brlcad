@@ -2058,12 +2058,6 @@ if(MSVC)
 endif(MSVC)
 
 #-----------------------------------------------------------------------------
-# Before we head into src/other and misc/tools, store all the build
-# flags that have been built up.  It's hard to be sure what will and
-# won't be set in those directories, so make sure we can restore the
-# BRL-CAD flags for the actual BRL-CAD subdirectories.
-CACHE_BUILD_FLAGS(_BRLCAD)
-
 # For lower build levels, some of the third party components are not
 # needed.  define some variables we can use for testing.
 set(BRLCAD_LEVEL2 0)
@@ -2080,19 +2074,11 @@ else(NOT BRLCAD_ENABLE_TARGETS)
   endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
 endif(NOT BRLCAD_ENABLE_TARGETS)
 
-# At the start, clear the src/other subdirs list so repeated
-# configures will correctly add the required directories
-set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
-mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-
 function(SetTargetFolder targetname folder)
   if(TARGET ${targetname})
     set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
   endif(TARGET ${targetname})
 endfunction(SetTargetFolder)
-
-# Load some CMake macros to handle the special case of third party libraries.
-include(ThirdParty)
 
 # Add misc/tools for tools that are used in BRL-CAD's build process
 # but are not otherwise usable in BRL-CAD (due to licensing, design
@@ -2107,18 +2093,6 @@ add_subdirectory(misc/tools)
 # by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
 # tests so the CACHE reflects BRL-CAD's test results.
 add_subdirectory(src/other)
-
-# Now put back the BRL-CAD flags
-RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
-
-# Restore BRL-CAD configurations, if necessary
-if(NOT ENABLE_ALL_CONFIG_TYPES)
-  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-endif(NOT ENABLE_ALL_CONFIG_TYPES)
-
-
 
 if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")

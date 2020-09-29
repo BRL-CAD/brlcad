@@ -11,8 +11,8 @@ set(UTIL_INCLUDE_DIRS
 
 set(UTIL_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${UTAHRLE_INCLUDE_DIRS}
-  ${PNG_INCLUDE_DIRS}
+  ${UTAHRLE_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIR}
   )
 
 set(UTIL_ALL_INCLUDE_DIRS ${UTIL_INCLUDE_DIRS} ${UTIL_LOCAL_INCLUDE_DIRS})
@@ -50,7 +50,7 @@ BRLCAD_ADDEXEC(asc-plot3 asc-plot3.c "libbn;libbu")
 BRLCAD_ADDEXEC(bw-a bw-a.c "libdm;libbu")
 ADD_TARGET_DEPS(bw-a dm_plugins)
 BRLCAD_ADDEXEC(bw-pix bw-pix.c "libbu;libicv")
-BRLCAD_ADDEXEC(bw-png bw-png.c "libdm;libbu;${PNG_LIBRARIES}")
+BRLCAD_ADDEXEC(bw-png bw-png.c "libdm;libbu;${PNG_LIBRARY}")
 ADD_TARGET_DEPS(bw-png dm_plugins)
 BRLCAD_ADDEXEC(bw-ps bw-ps.c libbu)
 BRLCAD_ADDEXEC(bwcrop bwcrop.c libbu)
@@ -86,7 +86,7 @@ BRLCAD_ADDEXEC(mac-pix mac-pix.c libbu)
 BRLCAD_ADDEXEC(random random.c "libbn;libbu")
 BRLCAD_ADDEXEC(pix-alias pix-alias.c libbu)
 BRLCAD_ADDEXEC(pix-bw pix-bw.c "libbu;libicv")
-BRLCAD_ADDEXEC(pix-png pix-png.c "libdm;libbu;${PNG_LIBRARIES}")
+BRLCAD_ADDEXEC(pix-png pix-png.c "libdm;libbu;${PNG_LIBRARY}")
 ADD_TARGET_DEPS(pix-png dm_plugins)
 BRLCAD_ADDEXEC(pix-ppm pix-ppm.c "libdm;libbu")
 ADD_TARGET_DEPS(pix-ppm dm_plugins)
@@ -139,8 +139,8 @@ BRLCAD_ADDEXEC(plot3getframe plot3getframe.c libbu)
 BRLCAD_ADDEXEC(plot3line2 plot3line2.c "libbn;libbu")
 BRLCAD_ADDEXEC(plot3rot plot3rot.c "libbn;libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(plot3stat plot3stat.c libbu)
-BRLCAD_ADDEXEC(png-bw png-bw.c "libbn;libbu;${PNG_LIBRARIES}")
-BRLCAD_ADDEXEC(png-pix png-pix.c "libbn;libbu;${PNG_LIBRARIES}")
+BRLCAD_ADDEXEC(png-bw png-bw.c "libbn;libbu;${PNG_LIBRARY}")
+BRLCAD_ADDEXEC(png-pix png-pix.c "libbn;libbu;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(sun-pix sun-pix.c libbu)
 BRLCAD_ADDEXEC(terrain terrain.c "libbn;libbu;${M_LIBRARY}")
 #FIXME - Need to look at pcattcp port to Windows - ttcp should be

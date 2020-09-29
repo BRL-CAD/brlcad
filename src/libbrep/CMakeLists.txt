@@ -4,8 +4,8 @@ set(BREP_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
-  ${POLY2TRI_INCLUDE_DIRS}
-  ${OPENNURBS_INCLUDE_DIRS}
+  ${POLY2TRI_INCLUDE_DIR}
+  ${OPENNURBS_INCLUDE_DIR}
   )
 
 # locally used but not needed by users of the library
@@ -61,7 +61,7 @@ set(libbrep_ignored_files
   )
 CMAKEFILES(${libbrep_ignored_files})
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${POLY2TRI_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARY};${POLY2TRI_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(HIDE_INTERNAL_SYMBOLS)

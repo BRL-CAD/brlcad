@@ -70,7 +70,6 @@ find_package(RE2C)
 find_package(PERPLEX)
 find_package(REGEX)
 find_package(ZLIB)
-find_package(PNG)
 find_package(NETPBM)
 find_package(UTAHRLE)
 find_package(OPENNURBS)
@@ -86,6 +85,8 @@ if (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 endif (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 find_package(TCL)
+
+CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
 
 if(0)
 # OpenSceneGraph Libraries

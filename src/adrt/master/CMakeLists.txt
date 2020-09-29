@@ -1,3 +1,5 @@
+find_package(ZLIB)
+
 set(ADRT_MASTER_SOURCES
   ../tienet.c
   compnet.c
@@ -6,7 +8,7 @@ set(ADRT_MASTER_SOURCES
   tienet_master.c
   )
 
-BRLCAD_ADDEXEC(adrt_master "${ADRT_MASTER_SOURCES}" librt)
+BRLCAD_ADDEXEC(adrt_master "${ADRT_MASTER_SOURCES}" "librt;${ZLIB_LIBRARY}")
 
 set(adrt_master_ignore_files
   CMakeLists.txt

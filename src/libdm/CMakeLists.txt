@@ -1,3 +1,5 @@
+find_package(PNG)
+
 # Include directories needed by libdm users
 set(DM_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
@@ -7,7 +9,7 @@ set(DM_INCLUDE_DIRS
   ${ICV_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${X11_INCLUDE_DIR}
-  ${PNG_INCLUDE_DIRS}
+  ${PNG_INCLUDE_DIR}
   )
 
 # local includes
@@ -83,7 +85,7 @@ set(LIBDM_SRCS
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libicv;libbu;libpkg;${OPENGL_LIBRARIES};${PNG_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libicv;libbu;libpkg;${OPENGL_LIBRARIES};${PNG_LIBRARY}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if (TARGET profont_ProFont_ttf_cp)

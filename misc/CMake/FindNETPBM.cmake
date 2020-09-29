@@ -51,7 +51,7 @@ set(NETPBM_NAMES netpbm)
 
 # Try each search configuration.
 foreach(search ${_NETPBM_SEARCHES})
-  find_path(NETPBM_INCLUDE_DIR NAMES pam.h ${${search}} PATH_SUFFIXES include include/netpbm)
+  find_path(NETPBM_INCLUDE_DIR NAMES pam.h ${${search}} PATH_SUFFIXES include include/netpbm netpbm)
 endforeach()
 
 # Allow NETPBM_LIBRARY to be set manually, as the location of the netpbm library

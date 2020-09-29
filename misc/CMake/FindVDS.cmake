@@ -1,60 +1,102 @@
-#                   F I N D V D S . C M A K E
-# BRL-CAD
-#
-# Copyright (c) 2013-2020 United States Government as represented by
-# the U.S. Army Research Laboratory.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following
-# disclaimer in the documentation and/or other materials provided
-# with the distribution.
-#
-# 3. The name of the author may not be used to endorse or promote
-# products derived from this software without specific prior written
-# permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
-# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-###
-# - Find View Dependent Simplification library
-#
-# The following variables are set:
-#
-#  VDS_INCLUDE_DIRS   - where to find vds.h, etc.
-#  VDS_LIBRARIES      - List of libraries when using vds.
-#  VDS_FOUND          - True if vds found.
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
+# file Copyright.txt or https://cmake.org/licensing for details.
 
-find_path(VDS_INCLUDE_DIR vds.h)
-find_library(VDS_LIBRARY NAMES vds vdslib)
+#[=======================================================================[.rst:
+FindVDS
+--------
 
-include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(VDS DEFAULT_MSG VDS_LIBRARY VDS_INCLUDE_DIR)
+Find the native VDS includes and library.
 
-IF (VDS_FOUND)
-  set(VDS_INCLUDE_DIRS ${VDS_INCLUDE_DIR})
-  set(VDS_LIBRARIES    ${VDS_LIBRARY})
+IMPORTED Targets
+^^^^^^^^^^^^^^^^
+
+This module defines :prop_tgt:`IMPORTED` target ``VDS::VDS``, if
+VDS has been found.
+
+Result Variables
+^^^^^^^^^^^^^^^^
+
+This module defines the following variables:
+
+::
+
+  VDS_INCLUDE_DIRS   - where to find vds.h, etc.
+  VDS_LIBRARIES      - List of libraries when using vds.
+  VDS_FOUND          - True if vds found.
+
+Hints
+^^^^^
+
+A user may set ``VDS_ROOT`` to a vds installation root to tell this
+module where to look.
+#]=======================================================================]
+
+set(_VDS_SEARCHES)
+
+# Search VDS_ROOT first if it is set.
+if(VDS_ROOT)
+  set(_VDS_SEARCH_ROOT PATHS ${VDS_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _VDS_SEARCHES _VDS_SEARCH_ROOT)
 endif()
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+# Normal search.
+set(_VDS_x86 "(x86)")
+set(_VDS_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/vds"
+          "$ENV{ProgramFiles${_VDS_x86}}/vds")
+unset(_VDS_x86)
+list(APPEND _VDS_SEARCHES _VDS_SEARCH_NORMAL)
+
+set(VDS_NAMES vds)
+
+# Try each search configuration.
+foreach(search ${_VDS_SEARCHES})
+  find_path(VDS_INCLUDE_DIR NAMES vds.h ${${search}} PATH_SUFFIXES include include/vds vds)
+endforeach()
+
+# Allow VDS_LIBRARY to be set manually, as the location of the vds library
+if(NOT VDS_LIBRARY)
+  foreach(search ${_VDS_SEARCHES})
+    find_library(VDS_LIBRARY NAMES ${VDS_NAMES} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
+  endforeach()
+endif()
+
+unset(VDS_NAMES)
+
+mark_as_advanced(VDS_INCLUDE_DIR)
+
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(VDS REQUIRED_VARS VDS_LIBRARY VDS_INCLUDE_DIR)
+
+if(VDS_FOUND)
+    set(VDS_INCLUDE_DIRS ${VDS_INCLUDE_DIR})
+
+    if(NOT VDS_LIBRARIES)
+      set(VDS_LIBRARIES ${VDS_LIBRARY})
+    endif()
+
+    if(NOT TARGET VDS::VDS)
+      add_library(VDS::VDS UNKNOWN IMPORTED)
+      set_target_properties(VDS::VDS PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${VDS_INCLUDE_DIRS}")
+
+      if(VDS_LIBRARY_RELEASE)
+        set_property(TARGET VDS::VDS APPEND PROPERTY
+          IMPORTED_CONFIGURATIONS RELEASE)
+        set_target_properties(VDS::VDS PROPERTIES
+          IMPORTED_LOCATION_RELEASE "${VDS_LIBRARY_RELEASE}")
+      endif()
+
+      if(VDS_LIBRARY_DEBUG)
+        set_property(TARGET VDS::VDS APPEND PROPERTY
+          IMPORTED_CONFIGURATIONS DEBUG)
+        set_target_properties(VDS::VDS PROPERTIES
+          IMPORTED_LOCATION_DEBUG "${VDS_LIBRARY_DEBUG}")
+      endif()
+
+      if(NOT VDS_LIBRARY_RELEASE AND NOT VDS_LIBRARY_DEBUG)
+        set_property(TARGET VDS::VDS APPEND PROPERTY
+          IMPORTED_LOCATION "${VDS_LIBRARY}")
+      endif()
+    endif()
+endif()

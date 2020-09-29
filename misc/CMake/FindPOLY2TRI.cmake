@@ -1,60 +1,102 @@
-#               F I N D P O L Y 2 T R I . C M A K E
-# BRL-CAD
-#
-# Copyright (c) 2013-2020 United States Government as represented by
-# the U.S. Army Research Laboratory.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following
-# disclaimer in the documentation and/or other materials provided
-# with the distribution.
-#
-# 3. The name of the author may not be used to endorse or promote
-# products derived from this software without specific prior written
-# permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
-# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-###
-# - Find Constrained Delaunay Triangulation library
-#
-# The following variables are set:
-#
-#  POLY2TRI_INCLUDE_DIRS   - where to find poly2tri.h, etc.
-#  POLY2TRI_LIBRARIES      - List of libraries when using poly2tri.
-#  POLY2TRI_FOUND          - True if poly2tri found.
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
+# file Copyright.txt or https://cmake.org/licensing for details.
 
-find_path(POLY2TRI_INCLUDE_DIR poly2tri.h)
-find_library(POLY2TRI_LIBRARY NAMES poly2tri)
+#[=======================================================================[.rst:
+FindPOLY2TRI
+--------
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(POLY2TRI DEFAULT_MSG POLY2TRI_LIBRARY POLY2TRI_INCLUDE_DIR)
+Find the native POLY2TRI includes and library.
 
-if(POLY2TRI_FOUND)
-  set(POLY2TRI_INCLUDE_DIRS ${POLY2TRI_INCLUDE_DIR})
-  set(POLY2TRI_LIBRARIES    ${POLY2TRI_LIBRARY})
+IMPORTED Targets
+^^^^^^^^^^^^^^^^
+
+This module defines :prop_tgt:`IMPORTED` target ``POLY2TRI::POLY2TRI``, if
+POLY2TRI has been found.
+
+Result Variables
+^^^^^^^^^^^^^^^^
+
+This module defines the following variables:
+
+::
+
+  POLY2TRI_INCLUDE_DIRS   - where to find poly2tri/poly2tri.h, etc.
+  POLY2TRI_LIBRARIES      - List of libraries when using poly2tri.
+  POLY2TRI_FOUND          - True if poly2tri found.
+
+Hints
+^^^^^
+
+A user may set ``POLY2TRI_ROOT`` to a poly2tri installation root to tell this
+module where to look.
+#]=======================================================================]
+
+set(_POLY2TRI_SEARCHES)
+
+# Search POLY2TRI_ROOT first if it is set.
+if(POLY2TRI_ROOT)
+  set(_POLY2TRI_SEARCH_ROOT PATHS ${POLY2TRI_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _POLY2TRI_SEARCHES _POLY2TRI_SEARCH_ROOT)
 endif()
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+# Normal search.
+set(_POLY2TRI_x86 "(x86)")
+set(_POLY2TRI_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/poly2tri"
+          "$ENV{ProgramFiles${_POLY2TRI_x86}}/poly2tri")
+unset(_POLY2TRI_x86)
+list(APPEND _POLY2TRI_SEARCHES _POLY2TRI_SEARCH_NORMAL)
+
+set(POLY2TRI_NAMES poly2tri)
+
+# Try each search configuration.
+foreach(search ${_POLY2TRI_SEARCHES})
+  find_path(POLY2TRI_INCLUDE_DIR NAMES poly2tri/poly2tri.h ${${search}} PATH_SUFFIXES include include/poly2tri poly2tri)
+endforeach()
+
+# Allow POLY2TRI_LIBRARY to be set manually, as the location of the poly2tri library
+if(NOT POLY2TRI_LIBRARY)
+  foreach(search ${_POLY2TRI_SEARCHES})
+    find_library(POLY2TRI_LIBRARY NAMES ${POLY2TRI_NAMES} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
+  endforeach()
+endif()
+
+unset(POLY2TRI_NAMES)
+
+mark_as_advanced(POLY2TRI_INCLUDE_DIR)
+
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(POLY2TRI REQUIRED_VARS POLY2TRI_LIBRARY POLY2TRI_INCLUDE_DIR)
+
+if(POLY2TRI_FOUND)
+    set(POLY2TRI_INCLUDE_DIRS ${POLY2TRI_INCLUDE_DIR})
+
+    if(NOT POLY2TRI_LIBRARIES)
+      set(POLY2TRI_LIBRARIES ${POLY2TRI_LIBRARY})
+    endif()
+
+    if(NOT TARGET POLY2TRI::POLY2TRI)
+      add_library(POLY2TRI::POLY2TRI UNKNOWN IMPORTED)
+      set_target_properties(POLY2TRI::POLY2TRI PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${POLY2TRI_INCLUDE_DIRS}")
+
+      if(POLY2TRI_LIBRARY_RELEASE)
+        set_property(TARGET POLY2TRI::POLY2TRI APPEND PROPERTY
+          IMPORTED_CONFIGURATIONS RELEASE)
+        set_target_properties(POLY2TRI::POLY2TRI PROPERTIES
+          IMPORTED_LOCATION_RELEASE "${POLY2TRI_LIBRARY_RELEASE}")
+      endif()
+
+      if(POLY2TRI_LIBRARY_DEBUG)
+        set_property(TARGET POLY2TRI::POLY2TRI APPEND PROPERTY
+          IMPORTED_CONFIGURATIONS DEBUG)
+        set_target_properties(POLY2TRI::POLY2TRI PROPERTIES
+          IMPORTED_LOCATION_DEBUG "${POLY2TRI_LIBRARY_DEBUG}")
+      endif()
+
+      if(NOT POLY2TRI_LIBRARY_RELEASE AND NOT POLY2TRI_LIBRARY_DEBUG)
+        set_property(TARGET POLY2TRI::POLY2TRI APPEND PROPERTY
+          IMPORTED_LOCATION "${POLY2TRI_LIBRARY}")
+      endif()
+    endif()
+endif()

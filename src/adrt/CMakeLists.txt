@@ -1,3 +1,5 @@
+find_package(ZLIB)
+
 set(ADRT_INCLUDE_DIRS
   ${GCV_INCLUDE_DIRS}
   ${BRLCAD_SOURCE_DIR}/src/adrt
