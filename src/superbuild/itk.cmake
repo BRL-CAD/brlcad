@@ -50,7 +50,6 @@ if (BRLCAD_ENABLE_TK)
     else (TARGET TCL_BLD)
       get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
     endif (TARGET TCL_BLD)
-    message("TCL_TARGET: ${TCL_TARGET}")
 
     if (TARGET ITCL_BLD)
       set(ITCL_TARGET ITCL_BLD)
