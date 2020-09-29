@@ -93,7 +93,6 @@ set(cmake_ignore_files
   multiconfig_path_clean.cmake.in
   multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
-  tcltest.tcl.in
   )
 CMAKEFILES(${cmake_ignore_files})
 

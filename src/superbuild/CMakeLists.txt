@@ -178,6 +178,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 # TCL - scripting language
 include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
 
 
 ###############################################################################
@@ -185,7 +186,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
 ###############################################################################
 
 # Set variables based on what we're building, so we know what to tell the main
-# BRL-CAD build.
+# BRL-CAD build.  Note we don't need to do this for Tk or the other Tcl
+# packages, as they will key of of the Tcl result.
 set(TARGET_LIST
   LEMON
   RE2C
