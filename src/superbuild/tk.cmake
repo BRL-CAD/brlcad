@@ -1,7 +1,7 @@
 
 # By the time we get here, we have run FindTCL and should know
 # if we have TK.
-if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_FOUND)
+if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
 
   set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
 
@@ -12,6 +12,8 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_FOUND)
     set(TCL_MAJOR_VERSION 8)
     set(TCL_MINOR_VERSION 6)
     set(TCL_TARGET TCL_BLD)
+  else (TARGET TCL_BLD)
+    get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
   endif (TARGET TCL_BLD)
 
   set(TK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TK_BLD-prefix/src/TK_BLD")
@@ -35,7 +37,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_FOUND)
       URL "${CMAKE_CURRENT_SOURCE_DIR}/../other/tk"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
-      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --disable-xft --enable-64bit --enable-rpath
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_DIR}/${LIB_DIR},${TCLCONF_DIR}> --disable-xft --enable-64bit --enable-rpath
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
       DEPENDS ${TCL_TARGET}
@@ -259,7 +261,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_FOUND)
   SetTargetFolder(TK_BLD "Third Party Libraries")
   SetTargetFolder(tk "Third Party Libraries")
 
-endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_FOUND)
+endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
 
 # Local Variables:
 # tab-width: 8
