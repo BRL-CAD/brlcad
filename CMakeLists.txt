@@ -54,7 +54,23 @@ project(BRLCAD)
 # need this definition up front.
 set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
 list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
+
+
+#---------------------------------------------------------------------
+# Setup and checks related to system environment settings.  Some of
+# these impact search results needed to set default options, so we
+# do this for both the superbuild and the main build.
+include(BRLCAD_Environment_Setup)
+
+
+#---------------------------------------------------------------------
+# Define the user level options - the superbuild needs these to make
+# decisions on what to build.
 include(BRLCAD_Options)
+
+#---------------------------------------------------------------------
+# Define various utilities common to both superbuild and the primary
+# build.
 include(BRLCAD_Util)
 
 if (NOT DEFINED SUBBUILD)
@@ -286,9 +302,6 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 # Load macros that will be used to define the BRL-CAD
 # build logic
 include(BRLCAD_Targets)
-
-# Setup and checks related to system environment settings
-include(BRLCAD_Environment_Setup)
 
 include(CheckTypeSize)
 include(CheckCSourceCompiles)
@@ -523,88 +536,7 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
 endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
 
 #----------------------------------------------------------------------
-# Decide whether to do a 32 or a 64 bit build.
-
-set(WORD_SIZE_LABEL "Compile as 32BIT or 64BIT?")
-if(NOT BRLCAD_WORD_SIZE)
-  set(BRLCAD_WORD_SIZE "AUTO" CACHE STRING WORD_SIZE_LABEL)
-endif(NOT BRLCAD_WORD_SIZE)
-set_property(CACHE BRLCAD_WORD_SIZE PROPERTY STRINGS AUTO 32BIT 64BIT)
-string(TOUPPER "${BRLCAD_WORD_SIZE}" BRLCAD_WORD_SIZE_UPPER)
-set(BRLCAD_WORD_SIZE "${BRLCAD_WORD_SIZE_UPPER}" CACHE STRING WORD_SIZE_LABEL FORCE)
-if(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT")
-  message(WARNING "Unknown value ${BRLCAD_WORD_SIZE} supplied for BRLCAD_WORD_SIZE - defaulting to AUTO")
-  message(WARNING "Valid options are AUTO, 32BIT and 64BIT")
-  set(BRLCAD_WORD_SIZE "AUTO" CACHE STRING WORD_SIZE_LABEL FORCE)
-endif(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT")
-# On Windows, we can't set word size at CMake configure time - the
-# compiler chosen at the beginning dictates the result.  Mark as
-# advanced in that situation.
-if(MSVC)
-  mark_as_advanced(BRLCAD_WORD_SIZE)
-endif(MSVC)
-
-# calculate the size of a pointer if we haven't already
-CHECK_TYPE_SIZE("void *" CMAKE_SIZEOF_VOID_P)
-
-# still not defined?
-if(NOT CMAKE_SIZEOF_VOID_P)
-  message(WARNING "CMAKE_SIZEOF_VOID_P is not defined - assuming 32 bit platform")
-  set(CMAKE_SIZEOF_VOID_P 4)
-endif(NOT CMAKE_SIZEOF_VOID_P)
-
-if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-  if(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
-    set(CMAKE_WORD_SIZE "64BIT")
-    set(BRLCAD_WORD_SIZE "64BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
-  else(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
-    if(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
-      set(CMAKE_WORD_SIZE "32BIT")
-      set(BRLCAD_WORD_SIZE "32BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
-    else(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
-      if(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-	set(CMAKE_WORD_SIZE "16BIT")
-	set(BRLCAD_WORD_SIZE "16BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
-      else(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-	set(CMAKE_WORD_SIZE "8BIT")
-	set(BRLCAD_WORD_SIZE "8BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
-      endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-    endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
-  endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
-else(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-  set(CMAKE_WORD_SIZE "${BRLCAD_WORD_SIZE}")
-endif(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-
-# Enable/disable 64-bit build settings for MSVC, which is apparently
-# determined at the CMake generator level - need to override other
-# settings if the compiler disagrees with them.
-if(MSVC)
-  if(CMAKE_CL_64)
-    if(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
-      set(CMAKE_WORD_SIZE "64BIT")
-      if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-	message(WARNING "Selected MSVC compiler is 64BIT - setting word size to 64BIT.  To perform a 32BIT MSVC build, select the 32BIT MSVC CMake generator.")
-	set(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
-      endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-    endif(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
-    add_definitions("-D_WIN64")
-  else(CMAKE_CL_64)
-    set(CMAKE_SIZEOF_VOID_P 4)
-    if(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
-      set(CMAKE_WORD_SIZE "32BIT")
-      if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-	message(WARNING "Selected MSVC compiler is 32BIT - setting word size to 32BIT.  To perform a 64BIT MSVC build, select the 64BIT MSVC CMake generator.")
-	set(BRLCAD_WORD_SIZE "32BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
-      endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-    endif(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  endif(CMAKE_CL_64)
-endif(MSVC)
-
-if (APPLE)
-  if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-    set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
-  endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-endif (APPLE)
+# Let config.h know whether we're doing a 32 or a 64 bit build.
 
 CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
@@ -615,31 +547,6 @@ endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
   CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 64\n#endif\n")
 endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-
-# Based on what we are doing, we may need to constrain our search paths
-#
-# NOTE: Ideally we would set a matching property for 32 bit paths
-# on systems that default to 64 bit - as of 2.8.8 CMake doesn't yet
-# support FIND_LIBRARY_USE_LIB32_PATHS.  There is a bug report on the
-# topic here: http://www.cmake.org/Bug/view.php?id=11260
-#
-if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
-else(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ON)
-endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-
-# One of the problems with 32/64 building is we need to search anew
-# for 64 bit libs after a 32 bit configure, or vice versa.
-if(PREVIOUS_CONFIGURE_TYPE)
-  if(NOT ${PREVIOUS_CONFIGURE_TYPE} MATCHES ${CMAKE_WORD_SIZE})
-    include(ResetCache)
-    RESET_CACHE_file()
-  endif(NOT ${PREVIOUS_CONFIGURE_TYPE} MATCHES ${CMAKE_WORD_SIZE})
-endif(PREVIOUS_CONFIGURE_TYPE)
-
-set(PREVIOUS_CONFIGURE_TYPE ${CMAKE_WORD_SIZE} CACHE STRING "Previous configuration word size" FORCE)
-mark_as_advanced(PREVIOUS_CONFIGURE_TYPE)
 
 # Auto-reconfiguration - by default, a CMake generated build system
 # will re-run CMake if it detects that build system logic has changed.
