@@ -1,0 +1,256 @@
+<TITLE>timeentry - Create and manipulate a timeentry widget</TITLE>
+<H1>timeentry - Create and manipulate a timeentry widget</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>timeentry<I> <I>pathName </I>?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Widget &lt;- LabeledWidget &lt;- Timefield &lt;- Timeentry
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>background</B><br>
+<B>foreground</B><br>
+<B>justify</B><br>
+</td>
+<td valign=top>
+<B>borderWidth</B><br>
+<B>highlightColor</B><br>
+<B>relief</B><br>
+</td>
+<td valign=top>
+<B>cursor</B><br>
+<B>highlightThickness</B><br>
+</td>
+<td valign=top>
+<B>exportSelection</B><br>
+<B>insertBackground</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>INHERITED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>disabledForeground</B><br>
+<B>labelMargin</B><br>
+<B>state</B><br>
+</td>
+<td valign=top>
+<B>labelBitmap</B><br>
+<B>labelPos</B><br>
+</td>
+<td valign=top>
+<B>labelFont</B><br>
+<B>labelText</B><br>
+</td>
+<td valign=top>
+<B>labelImage</B><br>
+<B>labelVariable</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on these
+inherited options.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>command</B><br>
+<B>textFont</B><br>
+</td>
+<td valign=top>
+<B>format</B><br>
+</td>
+<td valign=top>
+<B>seconds</B><br>
+</td>
+<td valign=top>
+<B>textBackground</B><br>
+</td>
+</table>
+<P>
+See the "timefield" class manual entry for details on these
+inherited options.
+</pre><H2>ASSOCIATED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>hourRadius</B><br>
+<B>pivotRadius</B><br>
+<B>clockColor</B><br>
+<B>watchWidth</B><br>
+</td>
+<td valign=top>
+<B>hourColor</B><br>
+<B>pivotColor</B><br>
+<B>clockStipple</B><br>
+</td>
+<td valign=top>
+<B>minuteRadius</B><br>
+<B>secondRadius</B><br>
+<B>tickColor</B><br>
+</td>
+<td valign=top>
+<B>minuteColor</B><br>
+<B>secondColor</B><br>
+<B>watchHeight</B><br>
+</td>
+</table>
+<P>
+See the "watch" manual entry for details on the associated options.
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>closeText</B>
+Class:                  <B>Text</B>
+Command-Line Switch:	<B>-closetext</B>
+</pre>
+<UL>
+Specifies the text to be displayed on the close button of the watch
+popup.  The default is Close.
+</UL>
+<P>
+<pre>
+Name:                   <B>grab</B>
+Class:                  <B>Grab</B>
+Command-Line Switch:	<B>-grab</B>
+</pre>
+<UL>
+Specifies the grab level, <B>local</B> or <B>global</B>, to be obtained before 
+bringing up the popup watch.  The default is global.  For more information
+concerning grab levels, consult the documentation for Tk's <B>grab</B> command.
+</UL>
+<P>
+<pre>
+Name:                   <B>icon</B>
+Class:                  <B>Icon</B>
+Command-Line Switch:	<B>-icon</B>
+</pre>
+<UL>
+Specifies the watch icon image to be used in the timeentry.  
+This image must have been created previously with 
+the <B>image create</B> command.  Should one not be provided, 
+then one will be generated, pixmap if possible, bitmap otherwise.
+</UL>
+<P>
+<pre>
+Name:                   <B>state</B>
+Class:                  <B>State</B>
+Command-Line Switch:	<B>-state</B>
+</pre>
+<UL>
+Specifies the state of the widget which may be <B>disabled</B> or
+<B>normal</B>.  A disabled state prevents selection of the timefield
+or time icon button.
+</UL>
+<P>
+</pre><HR>
+
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>timeentry</B> command creates a time entry field 
+with a popup watch by combining the timefield and watch 
+widgets together.  This allows a user to enter the time via the 
+keyboard or by using the mouse and selecting the watch icon 
+which brings up a popup watch.
+</pre>
+
+</pre><H2>METHODS</H2>
+<P>
+The <B>timeentry</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for timeentry widgets:
+</pre><H2>INHERITED METHODS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>get</B><br>
+</td>
+<td valign=top>
+<B>isvalid</B><br>
+</td>
+<td valign=top>
+<B>show</B><br>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the "timefield" manual entry for details on the associated methods.
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<DL>
+<DT> <I>pathName <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>timeentry</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>timeentry</B>
+command.
+
+</DL>
+</pre><H2>COMPONENTS</H2>
+<P>
+<pre>
+Name:                   <B>label</B>
+Class:                  <B>Label</B>
+</pre>
+<UL>
+The label component provides a label component to used to identify the time.
+See the "label" widget manual entry for details on the label component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>iconbutton</B>
+Class:                  <B>Label</B>
+</pre>
+<UL>
+The iconbutton component provides a labelbutton component to act as a 
+lightweight button
+displaying the watch icon.  Upon pressing the labelbutton, the watch
+appears.  See the "label" widget manual entry for details on the 
+labelbutton component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>time</B>
+Class:                  <B>Entry</B>
+</pre>
+<UL>
+The time component provides the entry field for time input and display.
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/entry.n.html"> "entry" </A> widget manual entry for details on the time component item.
+</UL>
+</table>
+
+</pre><H2>EXAMPLE</H2>
+<pre>
+ timeentry .te
+ pack .te
+</pre>
+</pre><H2>AUTHOR</H2>
+Mark L. Ulferts
+<P>
+</pre><H2>KEYWORDS</H2>
+timeentry, widget

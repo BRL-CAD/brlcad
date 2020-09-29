@@ -1,0 +1,673 @@
+<TITLE>hierarchy - Create and manipulate a hierarchy widget</TITLE>
+<H1>hierarchy - Create and manipulate a hierarchy widget</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>hierarchy<I> <I>pathName </I>?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Widget &lt;- Labeledwidget &lt;- Scrolledwidget &lt;- Hierarchy
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activeBackground</B><br>
+<B>cursor</B><br>
+<B>highlightThickness</B><br>
+</td>
+<td valign=top>
+<B>activeForeground</B><br>
+<B>disabledForeground</B><br>
+<B>relief</B><br>
+</td>
+<td valign=top>
+<B>background</B><br>
+<B>foreground</B><br>
+<B>selectBackground</B><br>
+</td>
+<td valign=top>
+<B>borderWidth</B><br>
+<B>highlightColor</B><br>
+<B>selectForeground</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>ASSOCIATED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activeRelief</B><br>
+</td>
+<td valign=top>
+<B>elementBorderWidth</B><br>
+</td>
+<td valign=top>
+<B>jump</B><br>
+</td>
+<td valign=top>
+<B>troughColor</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/scrollbar.n.html"> "scrollbar" </A> widget manual entry for details on the above
+associated options.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>spacing1</B><br>
+</td>
+<td valign=top>
+<B>spacing2</B><br>
+</td>
+<td valign=top>
+<B>spacing3</B><br>
+</td>
+<td valign=top>
+<B>tabs</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/text.n.html"> "text" </A> widget manual entry for details on the above
+associated options.
+</pre><H2>INHERITED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>labelBitmap</B><br>
+<B>labelPos</B><br>
+</td>
+<td valign=top>
+<B>labelFont</B><br>
+<B>labelText</B><br>
+</td>
+<td valign=top>
+<B>labelImage</B><br>
+<B>labelVariable</B><br>
+</td>
+<td valign=top>
+<B>labelMargin</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the inherited options.
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>alwaysQuery</B>
+Class:                  <B>AlwaysQuery</B>
+Command-Line Switch:	<B>-alwaysquery</B>
+</pre>
+<UL>
+Boolean flag which tells the hierarchy widget weather or not
+each refresh of the display should be via a new query using
+the command value of the -querycommand option or use the values 
+previous found the last time the query was made.  The default
+is no.
+</UL>
+<P>
+<pre>
+Name:                   <B>closedIcon</B>
+Class:                  <B>Icon</B>
+Command-Line Switch:	<B>-closedicon</B>
+</pre>
+<UL>
+Specifies the name of an existing closed icon image to be used in the 
+hierarchy before those nodes that are collapsed.  Should one not be 
+provided, then a folder icon will be generated, pixmap if possible, 
+bitmap otherwise.
+</UL>
+<P>
+<pre>
+Name:                   <B>expanded</B>
+Class:                  <B>Expanded</B>
+Command-Line Switch:	<B>-expanded</B>
+</pre>
+<UL>
+When true, the hierarchy will be completely expanded when it
+is first displayed.  A fresh display can be triggered by
+resetting the -querycommand option.  The default is false.
+</UL>
+<P>
+<pre>
+Name:                   <B>filter</B>
+Class:                  <B>Filter</B>
+Command-Line Switch:	<B>-filter</B>
+</pre>
+<UL>
+When true only the branch nodes and selected items are displayed.
+This gives a compact view of important items.  The default is false.
+</UL>
+<P>
+<pre>
+Name:                   <B>height</B>
+Class:                  <B>Height</B>
+Command-Line Switch:	<B>-height</B>
+</pre>
+<UL>
+Specifies the height of the hierarchy as an entire unit.
+The value may be specified in any of the forms acceptable to 
+<B>Tk_GetPixels</B>.  Any additional space needed to display the other
+components such as labels, margins, and scrollbars force the hierarchy
+to be compressed.  A value of zero along with the same value for 
+the width causes the value given for the visibleitems option 
+to be applied which administers geometry constraints in a different
+manner.  The default height is zero.
+</UL>
+<P>
+<pre>
+Name:                   <B>iconCommand</B>
+Class:                  <B>Command</B>
+Command-Line Switch:	<B>-iconcommand</B>
+</pre>
+<UL>
+Specifies a command to be executed upon user selection via mouse button
+one of any additional icons given in the values returned by the command
+associated with the -querycommand option.  If this command contains "%n", 
+it is replaced with the name of the node the icon belongs to.  Should it 
+contain "%i" then the icon name is  substituted.
+</UL>
+<P>
+<pre>
+Name:                   <B>markBackground</B>
+Class:                  <B>Foreground</B>
+Command-Line Switch:	<B>-markbackground</B>
+</pre>
+<UL>
+Specifies the background color to use when displaying marked nodes.
+</UL>
+<P>
+<pre>
+Name:                   <B>markForeground</B>
+Class:                  <B>Background</B>
+Command-Line Switch:	<B>-markforeground</B>
+</pre>
+<UL>
+Specifies the foreground color to use when displaying marked nodes.
+</UL>
+<P>
+<pre>
+Name:                   <B>menuCursor</B>
+Class:                  <B>Cursor</B>
+Command-Line Switch:	<B>-menucursor</B>
+</pre>
+<UL>
+Specifies the mouse cursor to be used for the item and background 
+menus.  The value may have any of the forms accept able to Tk_GetCursor.
+</UL>
+<P>
+<pre>
+Name:                   <B>nodeIcon</B>
+Class:                  <B>Icon</B>
+Command-Line Switch:	<B>-nodeicon</B>
+</pre>
+<UL>
+Specifies the name of an existing node icon image to be used in the 
+hierarchy before those nodes that are leafs.  Should one not be provided, 
+then a dog-eared page icon will be generated, pixmap if possible, bitmap 
+otherwise.
+</UL>
+<P>
+<pre>
+Name:                   <B>openIcon</B>
+Class:                  <B>Icon</B>
+Command-Line Switch:	<B>-openicon</B>
+</pre>
+<UL>
+Specifies the name of an existing open icon image to be used in the 
+hierarchy before those nodes that are expanded.  Should one not be provided, 
+then an open folder icon will be generated, pixmap if possible, bitmap 
+otherwise.
+</UL>
+<P>
+<pre>
+Name:                   <B>queryCommand</B>
+Class:                  <B>Command</B>
+Command-Line Switch:	<B>-querycommand</B>
+</pre>
+<UL>
+Specifies the command executed to query the contents of each node.  If this 
+command contains "%n", it is replaced with the name of the desired 
+node.  In its simpilest form it should return the children of the 
+given node as a list which will be depicted in the display.
+Since the names of the children are used as tags in the underlying 
+text widget, each child must be unique in the hierarchy.  Due to
+the unique requirement, the nodes shall be reffered to as uids 
+or uid in the singular sense.  The format of returned list is
+</UL>
+<UL>
+  {uid [uid ...]}
+</UL>
+<UL>
+  where uid is a unique id and primary key for the hierarchy entry
+</UL>
+<UL>
+Should the unique requirement pose a problem, the list returned
+can take on another more extended form which enables the 
+association of text to be displayed with the uids.  The uid must
+still be unique, but the text does not have to obey the unique
+rule.  In addition, the format also allows the specification of
+additional tags to be used on the same entry in the hierarchy
+as the uid and additional icons to be displayed just before
+the node.  The tags and icons are considered to be the property of
+the user in that the hierarchy widget will not depend on any of 
+their values.  The extended format is
+</UL>
+<UL>
+  {{uid [text [tags [icons]]]} {uid [text [tags [icons]]]} ...}
+</UL>
+<UL>
+  where uid is a unique id and primary key for the hierarchy entry
+        text is the text to be displayed for this uid
+        tags is a list of user tags to be applied to the entry
+        icons is a list of icons to be displayed in front of the text
+</UL>
+<UL>
+The hierarchy widget does a look ahead from each node to determine
+if the node has a children.  This can be cost some performace with
+large hierarchies.  User's can avoid this by providing a hint in
+the user tags.  A tag of "leaf" or "branch" tells the hierarchy
+widget the information it needs to know thereby avoiding the look
+ahead operation.
+</UL>
+<P>
+<pre>
+Name:                   <B>hscrollMode</B>
+Class:                  <B>ScrollMode</B>
+Command-Line Switch:	<B>-hscrollmode</B>
+</pre>
+<UL>
+Specifies the the display mode to be used for the horizontal
+scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the
+scroll bar as required, and none disables the scroll bar display.  The 
+default is static.
+</UL>
+<P>
+<pre>
+Name:                   <B>sbWidth</B>
+Class:                  <B>Width</B>
+Command-Line Switch:	<B>-sbwidth</B>
+</pre>
+<UL>
+Specifies the width of the scrollbar in any of the forms
+acceptable to <B>Tk_GetPixels</B>.  
+</UL>
+<P>
+<pre>
+Name:                   <B>scrollMargin</B>
+Class:                  <B>Margin</B>
+Command-Line Switch:	<B>-scrollmargin</B>
+</pre>
+<UL>
+Specifies the distance between the text portion of the hierarchy and 
+the scrollbars in any of the forms acceptable to <B>Tk_GetPixels</B>.  The 
+default is 3 pixels.
+</UL>
+<P>
+<pre>
+Name:                   <B>textBackground</B>
+Class:                  <B>Background</B>
+Command-Line Switch:	<B>-textbackground</B>
+</pre>
+<UL>
+Specifies the background color for the text portion of the hierarchy in 
+any of the forms acceptable to <B>Tk_GetColor</B>.
+</UL>
+<P>
+<pre>
+Name:                   <B>textFont</B>
+Class:                  <B>Font</B>
+Command-Line Switch:	<B>-textfont</B>
+</pre>
+<UL>
+Specifies the font to be used in the text portion of the hierarchy.
+</UL>
+<P>
+<pre>
+Name:                   <B>visibleitems</B>
+Class:                  <B>VisibleItems</B>
+Command-Line Switch:	<B>-visibleitems</B>
+</pre>
+<UL>
+Specifies the widthxheight in characters and lines for the hierarchy.
+This option is only administered if the width and height options
+are both set to zero, otherwise they take precedence.  The default value
+is 80x24.  With the visibleitems option engaged, geometry constraints 
+are maintained only on the text portion of the hierarchy.  The size of 
+the other components such as 
+labels, margins, and scroll bars, are additive and independent, 
+effecting the overall size of the hierarchy.  In contrast,
+should the width and height options have non zero values, they
+are applied to the hierarchy as a whole.  The hierarchy 
+is compressed or expanded to maintain the geometry constraints.
+</UL>
+<P>
+<pre>
+Name:                   <B>vscrollMode</B>
+Class:                  <B>ScrollMode</B>
+Command-Line Switch:	<B>-vscrollmode</B>
+</pre>
+<UL>
+Specifies the the display mode to be used for the vertical
+scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the 
+scroll bar as required, and none disables the scroll bar display.  The 
+default is static.
+</UL>
+<P>
+<pre>
+Name:                   <B>width</B>
+Class:                  <B>Width</B>
+Command-Line Switch:	<B>-width</B>
+</pre>
+<UL>
+Specifies the width of the hierarchy as an entire unit.
+The value may be specified in any of the forms acceptable to 
+<B>Tk_GetPixels</B>.  Any additional space needed to display the other
+components such as labels, margins, and scrollbars force the text portion
+of the hierarchy
+to be compressed.  A value of zero along with the same value for 
+the height causes the value given for the visibleitems option 
+to be applied which administers geometry constraints in a different
+manner.  The default width is zero.
+</UL>
+<P>
+</pre><HR>
+
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>hierarchy</B> command creates a hierarchical data view widget.  
+It allows the graphical management of a a list of nodes that can be
+expanded or collapsed.  Individual nodes can be highlighted.
+Clicking with the right mouse button on any item brings up a
+special item menu.  Clicking on the background area brings up
+a different popup menu.  Options exist to provide user control over
+the loading of the nodes and actions associated with node selection.
+Since the hierarchy is based on the scrolledtext widget, it includes
+options to control the method in which the scrollbars are displayed, 
+i.e. statically or  dynamically.  Options also exist for adding a 
+label to the hierarchy and controlling its position.
+
+</pre><H2>METHODS</H2>
+<P>
+The <B>hierarchy</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for hierarchy widgets:
+</pre><H2>ASSOCIATED METHODS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>bbox</B><br>
+<B>dlineinfo</B><br>
+<B>insert</B><br>
+<B>tag</B><br>
+</td>
+<td valign=top>
+<B>compare</B><br>
+<B>dump</B><br>
+<B>scan</B><br>
+<B>window</B><br>
+</td>
+<td valign=top>
+<B>debug</B><br>
+<B>get</B><br>
+<B>search</B><br>
+<B>xview</B><br>
+</td>
+<td valign=top>
+<B>delete</B><br>
+<B>index</B><br>
+<B>see</B><br>
+<B>yview</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/text.n.html"> "text" </A> manual entry for details on the standard methods.
+
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<DL>
+<DT> <I>pathName <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>hierarchy</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName <B>clear</B>
+</I></B>
+<DD> Removes all items from the hierarchy display including all tags and icons.  
+The display will remain empty until the -filter or -querycommand 
+options are set.
+</DL>
+<DL>
+<DT> <I>pathName <B>collapse</B> <I>uid</I>
+</I></B>
+<DD> Collapses the hierarchy beneath the node with the specified unique id by 
+one level.  Since this can take a moment for large hierarchies, the 
+cursor will be changed to a watch during the collapse.  Also, if any
+of the nodes beneath the node being collapsed are selected, their
+status is changed to unselected.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>hierarchy</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName <B>current</B>
+</I></B>
+<DD> Returns the tags for the node that was most recently selected by the 
+right mouse button when the item menu was posted.  Usually used by the code
+in the item menu to figure out what item is being manipulated.
+</DL>
+<DL>
+<DT> <I>pathName <B>draw</B> ?<I>when</I>?
+</I></B>
+<DD> Performs a complete redraw of the entire hierarchy.  When may be either -now
+or -eventually where the latter means the draw can be performed after idle.
+</DL>
+<DL>
+<DT> <I>pathName <B>expand</B> <I>uid</I>
+</I></B>
+<DD> Expands the hierarchy beneath the node with the specified unique id by
+one level.  Since this can take a moment for large hierarchies, the cursor 
+will be changed to a watch during the expansion.
+</DL>
+<DL>
+<DT> <I>pathName <B>mark</B> <I>option ?arg arg ...?</I>
+</I></B>
+<DD> This command is used to manipulate marks which is quite similar to 
+selection, adding a secondary means of hilighting an item in the 
+hierarchy.  The exact behavior of the command depends on the 
+<I>option</I> argument that follows the <B>mark</B> argument.  The 
+following forms of the command are currently supported:
+</DL>
+<UL>
+<DL>
+<DT> <I>pathName <B>mark clear</B>
+</I></B>
+<DD> Clears all the currently marked nodes in the hierarchy.
+</DL>
+<DL>
+<DT> <I>pathName <B>mark add <I>uid </I>?<I>uid uid ...</I>?
+</I></B>
+<DD> Marks the nodes with the specified uids in the hierarchy using the 
+<B>-markbackground</B> and <B>-markforeground</B> options and without
+affecting the mark state of any other nodes that were already 
+marked.
+</DL>
+<DL>
+<DT> <I>pathName <B>mark remove <I>uid </I>?<I>uid uid ...</I>?
+</I></B>
+<DD> Unmarks the nodes with the specified uids in the hierarchy without
+affecting the mark state of any other nodes that were already 
+marked.
+</DL>
+<DL>
+<DT> <I>pathName <B>mark get</B>
+</I></B>
+<DD> Returns a list of the unique ids that are currently marked.
+</DL>
+</UL>
+<DL>
+<DT> <I>pathName <B>refresh</B> <I>uid</I>
+</I></B>
+<DD> Performs a redraw of a specific node that has the given uid.  If the node
+is not currently visible or in other words already drawn on the text,
+then no action is taken.
+</DL>
+<DL>
+<DT> <I>pathName <B>prune</B> <I>uid</I>
+</I></B>
+<DD> Removes the node specified by the given uid from the hierarchy.  Should 
+the node have children, then all of its children will be removed as well.
+</DL>
+<DL>
+<DT> <I>pathName <B>selection</B> <I>option </I>?<I>arg arg ...</I>?
+</I></B>
+<DD> This command is used to manipulate the selection of nodes in the
+hierarchy.  The exact behavior of the command depends on the 
+<I>option</I> argument that follows the <B>selection</B> argument.  The 
+following forms of the command are currently supported:
+</DL>
+<UL>
+<DL>
+<DT> <I>pathName <B>selection clear</B>
+</I></B>
+<DD> Clears all the currently selected nodes in the hierarchy.
+</DL>
+<DL>
+<DT> <I>pathName <B>selection add <I>uid </I>?<I>uid uid ...</I>?
+</I></B>
+<DD> Selects the nodes with the specified uids in the hierarchy using the 
+<B>-selectionbackground</B> and <B>-selectionforeground</B> options and without
+affecting the selection state of any other nodes that were already 
+selected.
+</DL>
+<DL>
+<DT> <I>pathName <B>selection remove <I>uid </I>?<I>uid uid ...</I>?
+</I></B>
+<DD> Deselects the nodes with the specified uids in the hierarchy without
+affecting the selection state of any other nodes that were already 
+selected.
+</DL>
+<DL>
+<DT> <I>pathName <B>selection get</B>
+</I></B>
+<DD> Returns a list of the unique ids that are currently selected.
+</DL>
+</UL>
+A nodes selection status is also dependent on it being visible.  If a 
+node is selected and its parent is then collapsed making the selected
+node not visible, then its selection status is changed to unselected.
+<DL>
+<DT> <I>pathName <B>toggle</B> <I>uid</I>
+</I></B>
+<DD> Toggles the hierarchy beneath the node with the specified unique id.  If 
+the hierarchy is currently expanded, then it is collapsed, and vice-versa.
+
+</DL>
+</pre><H2>COMPONENTS</H2>
+<P>
+<pre>
+Name:                   <B>list</B>
+Class:                  <B>Text</B>
+</pre>
+<UL>
+The list component is the text widget in which the hierarchy is displayed.
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/text.n.html"> "text" </A> widget manual entry for details on the text component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>bgMenu</B>
+Class:                  <B>Menu</B>
+</pre>
+<UL>
+The bgMenu component is the popup menu which is displayed upon pressing
+the right mouse button in the background, i.e. not over a specific node.  Menu
+items can be added along with their commands via the component command.  
+See the "menu" widget manual entry for details on the bgMenu component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>horizsb</B>
+Class:                  <B>Scrollbar</B>
+</pre>
+<UL>
+The horizsb component is the horizontal scroll bar.  See the "scrollbar" 
+widget manual entry for details on the horizsb component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>itemMenu</B>
+Class:                  <B>Menu</B>
+</pre>
+<UL>
+The itemMenu component is the popup menu which is displayed upon selection
+of a hierarchy node with the right mouse button.  Menu items can be 
+added along with their commands via the component command.  See the "menu" 
+widget manual entry for details on the itemMenu component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>vertsb</B>
+Class:                  <B>Scrollbar</B>
+</pre>
+<UL>
+The vertsb component is the vertical scroll bar.  See the "scrollbar" widget 
+manual entry for details on the vertsb component item.
+</UL>
+</table>
+
+</pre><H2>EXAMPLE</H2>
+<pre>
+proc get_files {file} {
+    global env
+
+    if {$file == ""} {
+        set dir $env(HOME)
+    } else {
+        set dir $file
+    }
+
+    if {[catch {cd $dir}] != 0} {
+        return ""
+    }
+
+    set rlist ""
+
+    foreach file [lsort [glob -nocomplain *]] {
+        lappend rlist [list [file join $dir $file] $file]
+    }
+
+    return $rlist
+}
+
+hierarchy .h -querycommand "get_files %n" -visibleitems 30x15 \
+    -labeltext $env(HOME)
+pack .h -side left -expand yes -fill both
+</pre>
+</pre><H2>AUTHORS</H2>
+Mark L. Ulferts
+<P>
+Michael J. McLennan
+</pre><H2>KEYWORDS</H2>
+hierarchy, text, widget

@@ -1,0 +1,14 @@
+# ----------------------------------------------------------------------
+#  DEMO: radiobox in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::radiobox .rb -labeltext "Size:" -labelpos nw
+pack .rb -padx 4 -pady 4 -fill both
+
+.rb add small -text "Small"
+.rb add med -text "Medium"
+.rb add large -text "Large"
+.rb add xlarge -text "Biggie"
+
+.rb select med

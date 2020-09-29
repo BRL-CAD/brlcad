@@ -1,0 +1,149 @@
+'\"
+'\" Copyright (c) 1995 DSC Technologies Corporation
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\"
+'\" @(#) extbutton.n 1.21 01/04/23 16:04:44
+'\" 
+.so man.macros
+.HS iwidgets::extbutton iwid
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+iwidgets::extbutton \- Extends the behavior of the Tk button by allowing
+a bitmap or image to coexist with text.
+.SH SYNOPSIS
+\fBiwidgets::extbutton\fI \fIpathName \fR?\fIoptions\fR?
+.SH "INHERITANCE"
+itk::Widget <- iwidgets::Extbutton
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fB
+activebackground    activeforeground  bitmap
+background          bd                cursor
+disabledforeground  font              foreground
+image               justify           relief      text\fR
+.fi
+.LP
+See the "options" manual entry for details on the standard options.
+.SH "WIDGET-SPECIFIC OPTIONS"
+.ta 4c 8c 12c
+.LP
+.nf
+Name:	\fBbitmapforeground\fR
+Class:	\fBForeground\fR
+Command-Line Switch:	\fB-bitmapforeground\fR
+.fi
+.IP
+Configures the foreground color of the bitmap.
+.LP
+.nf
+Name:	\fBcommand\fR
+Class:	\fBCommand\fR
+Command-Line Switch:	\fB-command\fR
+.fi
+.IP
+Associate a command with the extbutton. Simulates a Tk button's
+-command option. Invoked by either <1> events or by explicitly
+calling the public invoke() method.
+.LP
+.nf
+Name:   \fBdefaultring\fR
+Class:  \fBDefaultRing\fR
+Command-Line Switch:    \fB-defaultring\fR
+.fi
+.IP
+Boolean describing whether the extbutton displays its default ring given in
+any of the forms acceptable to \fBTcl_GetBoolean\fR.  The default is false.
+.LP
+.nf
+Name:   \fBdefaultringpad\fR
+Class:  \fBPad\fR
+Command-Line Switch:    \fB-defaultringpad\fR
+.fi
+.IP
+Specifies the amount of space to be allocated to the indentation of the
+default ring ring given in any of the forms acceptable to \fBTcl_GetPixels\fR.
+The option has no effect if the defaultring option is set to false.  The
+default is 4 pixels.
+.LP
+.nf
+Name:   \fBimagePos\fR
+Class:  \fBPosition\fR
+Command-Line Switch:    \fB-imagepos\fR
+.fi
+.IP
+Specifies the image position relative to the message text: \fBn\fR, \fBne\fR,
+\fBnw\fR, \fBs\fR, \fBse\fR, \fBsw\fR, \fBw\fR, \fBwn\fR, \fBws\fR, \fBe\fR,
+\fBen\fR, or \fBes\fR. The default is w.
+.LP
+.nf
+Name:	\fBringBackground\fR
+Class:	\fBBackground\fR
+Command-Line Switch:	\fB-ringbackground\fR
+.fi
+.IP
+Configures the background color of the default ring frame (if -defaultring
+is set to boolean true).
+.LP
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBextbutton\fR extends the behavior of the atomic Tk button by
+allowing text and an image or bitmap to coexist. The user may use
+the -image or -bitmap options to specify an image as well as the
+-imagepos option to specify image position relative to the text.
+Note that the extbutton is not intended to be used without an
+image/bitmap. There will be an emtpy space next to the text if
+no image/bitmap is specified.
+
+.SH "METHODS"
+.PP
+The \fBiwidgets::extbutton\fR command creates a new Tcl command whose
+name is \fIpathName\fR.  This command may be used to invoke various
+operations on the widget.  It has the following general form:
+.DS C
+\fIpathName option \fR?\fIarg arg ...\fR?
+.DE
+
+.SH "INHERITED METHODS"
+Each of the following methods are inherited from itk::Archetype. See that
+man page for details.
+.DS C
+\fIpathName \fBcget\fR
+\fIpathName \fBcomponent\fR
+\fIpathName \fBconfig\fR
+\fIpathName \fBconfigure\fR
+.DE
+
+.SH "WIDGET-SPECIFIC METHODS"
+.TP
+\fIpathName \fBinvoke\fR
+Evaluates the command fragment associated with the -command option.
+.TP
+\fIpathName \fBflash\fR
+Simulates the Tk button's flash command.
+.DE
+
+.SH EXAMPLES
+.DS
+package require Iwidgets 4.0
+iwidgets::extbutton .eb -text "Bitmap example" -bitmap info \\
+  -background bisque -activeforeground red -bitmapforeground blue \\
+  -defaultring 1 -command {puts "Bisque is beautiful"}
+pack .eb -expand 1
+
+iwidgets::extbutton .eb -text "Image example" -relief ridge -image \\
+  [image create photo -file $itk::library/../iwidgets/demos/images/clear.gif] \\
+  -font 9x15bold -background lightgreen -imagepos e \\
+  -activebackground lightyellow
+pack .eb -expand 1
+.DE
+.SH AUTHOR
+Chad Smith
+.SH KEYWORDS
+button, pushbutton

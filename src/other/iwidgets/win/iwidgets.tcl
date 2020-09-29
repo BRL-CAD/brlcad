@@ -13,29 +13,19 @@
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require Tcl 8.0
-package require Tk 8.0
-package require Itcl @itcl_VERSION@
-if {[string length [package provide Itk]] == 0} {
-    package forget Itk
-    package forget itk
-}
-package require Itk [string index @itcl_VERSION@ 0]
+package require Tcl 8.1
+package require Tk 8.1
+package require Itcl 3.2
+package require Itk 3.2
 
 namespace eval ::iwidgets {
     namespace export *
 
     variable library [file dirname [info script]]
-    variable version @PACKAGE_VERSION@
-
-    lappend auto_path $iwidgets::library
-    variable subdir
-    foreach subdir {generic scripts} {
-	if {[file isdirectory [file join $iwidgets::library $subdir]]} {
-	    lappend auto_path [file join $iwidgets::library $subdir]
-	}
-    }
-    unset subdir
+    variable version 4.0.1
 }
 
+lappend auto_path $iwidgets::library \
+                  [file join $iwidgets::library generic] \
+                  [file join $iwidgets::library scripts]
 package provide Iwidgets $iwidgets::version

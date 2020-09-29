@@ -1,0 +1,13 @@
+# ----------------------------------------------------------------------
+#  DEMO: buttonbox in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::buttonbox .bb 
+
+.bb add OK -text OK -command "puts OK" 
+.bb add Apply -text Apply -command "puts Apply"
+.bb add Cancel -text Cancel -command "puts Cancel"
+.bb default OK
+
+pack .bb -expand yes -fill both

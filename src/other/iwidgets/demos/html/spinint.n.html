@@ -1,0 +1,269 @@
+<TITLE>spinint - Create and manipulate a integer spinner widget</TITLE>
+<H1>spinint - Create and manipulate a integer spinner widget</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>spinint<I> <I>pathName </I>?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Widget &lt;- Labeledwidget &lt;- Spinner &lt;- Spinint
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>background</B><br>
+<B>foreground</B><br>
+<B>insertBorderWidth</B><br>
+<B>justify</B><br>
+<B>selectForeground</B><br>
+</td>
+<td valign=top>
+<B>borderWidth</B><br>
+<B>highlightColor</B><br>
+<B>insertOffTime</B><br>
+<B>relief</B><br>
+<B>textVariable</B><br>
+</td>
+<td valign=top>
+<B>cursor</B><br>
+<B>highlightThickness</B><br>
+<B>insertOnTime</B><br>
+<B>selectBackground</B><br>
+</td>
+<td valign=top>
+<B>exportSelection</B><br>
+<B>insertBackground</B><br>
+<B>insertWidth</B><br>
+<B>selectBorderWidth</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>ASSOCIATED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>show</B><br>
+</td>
+<td valign=top>
+<B>state</B><br>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/entry.n.html"> "entry" </A> manual entry for details on the associated options.
+</pre><H2>INHERITED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>command</B><br>
+<B>invalid</B><br>
+<B>width</B><br>
+</td>
+<td valign=top>
+<B>childSitePos</B><br>
+<B>textBackground</B><br>
+</td>
+<td valign=top>
+<B>fixed</B><br>
+<B>textFont</B><br>
+</td>
+<td valign=top>
+<B>focusCommand</B><br>
+<B>validate</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="entryfield.n.html"> "entryfield" </A> widget manual entry for details on the above
+inherited options.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>disabledForeground</B><br>
+<B>labelMargin</B><br>
+<B>state</B><br>
+</td>
+<td valign=top>
+<B>labelBitmap</B><br>
+<B>labelPos</B><br>
+</td>
+<td valign=top>
+<B>labelFont</B><br>
+<B>labelText</B><br>
+</td>
+<td valign=top>
+<B>labelImage</B><br>
+<B>labelVariable</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> widget manual entry for details on the above
+inherited options.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>arroworient</B><br>
+<B>repeatInterval</B><br>
+</td>
+<td valign=top>
+<B>decrement</B><br>
+</td>
+<td valign=top>
+<B>increment</B><br>
+</td>
+<td valign=top>
+<B>repeatDelay</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="spinner.n.html"> "spinner" </A> widget manual entry for details on the above 
+inherited options.
+
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>range</B>
+Class:                  <B>Range</B>
+Command-Line Switch:	<B>-range</B>
+</pre>
+<UL>
+Specifies a two element list of minimum and maximum integer values.  The
+default is no range, {{} {}}.
+</UL>
+<P>
+<pre>
+Name:                   <B>step</B>
+Class:                  <B>Step</B>
+Command-Line Switch:	<B>-step</B>
+</pre>
+<UL>
+Specifies the increment/decrement value.  The default is 1.
+</UL>
+<P>
+<pre>
+Name:                   <B>wrap</B>
+Class:                  <B>Wrap</B>
+Command-Line Switch:	<B>-wrap</B>
+</pre>
+<UL>
+Specifies whether to wrap the spinner value upon reaching the minimum
+or maximum value in any of the forms acceptable to <B>Tcl_GetBoolean</B>.
+The default is true.
+</UL>
+<P>
+</pre><HR>
+
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>spinint</B> command creates a spinint widget.  The spinint allows
+"spinning" of integer values within a specified range with wrap support.
+The spinner arrows may be drawn horizontally or vertically.
+</pre>
+
+</pre><H2>METHODS</H2>
+<P>
+The <B>spinint</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for spinint widgets:
+</pre><H2>ASSOCIATED METHODS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>delete</B><br>
+<B>insert</B><br>
+<B>xview</B><br>
+</td>
+<td valign=top>
+<B>get</B><br>
+<B>peek</B><br>
+</td>
+<td valign=top>
+<B>icursor</B><br>
+<B>scan</B><br>
+</td>
+<td valign=top>
+<B>index</B><br>
+<B>selection</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/entry.n.html"> "entry" </A> manual entry for details on the associated methods.
+</pre><H2>INHERITED METHODS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>childsite</B><br>
+</td>
+<td valign=top>
+<B>clear</B><br>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the <A HREF="entryfield.n.html"> "entryfield" </A> manual entry for details on the associated methods.
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<DL>
+<DT> <I>pathName <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>spinint</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>spinint</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName <B>down</B>
+</I></B>
+<DD> Decrement the spinner value by the value given in the step option.
+</DL>
+<DL>
+<DT> <I>pathName <B>up</B>
+</I></B>
+<DD> Increment the spinner value by the value given in the step option.
+
+</DL>
+</pre><H2>COMPONENTS</H2>
+<UL>
+See the "Spinner" widget manual entry for details on the integer spinner
+component items.
+
+</UL>
+</pre><H2>EXAMPLE</H2>
+<pre>
+ option add *textBackground white
+ 
+ spinint .si -labeltext "Temperature" -labelpos w \\
+    -fixed yes -width 5 -range {32 212}
+
+ pack .si -pady 10
+</pre>
+</pre><H2>AUTHOR</H2>
+<A HREF="mailto:syockey@spd.dsccc.com">Sue Yockey</A>
+</pre><H2>KEYWORDS</H2>
+spinint, widget

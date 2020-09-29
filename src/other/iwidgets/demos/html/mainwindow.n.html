@@ -1,0 +1,373 @@
+<TITLE>mainwindow - Create and manipulate a mainwindow widget</TITLE>
+<H1>mainwindow - Create and manipulate a mainwindow widget</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>mainwindow<I> <I>pathName </I>?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Toplevel &lt;- shell &lt;- mainwindow
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>background</B><br>
+<B>foreground</B><br>
+</td>
+<td valign=top>
+<B>cursor</B><br>
+<B>highlightBackground</B><br>
+</td>
+<td valign=top>
+<B>disabledForeground</B><br>
+<B>highlightColor</B><br>
+</td>
+<td valign=top>
+<B>font</B><br>
+<B>highlightThickness</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>ASSOCIATED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>balloonBackground</B><br>
+<B>balloonForeground</B><br>
+</td>
+<td valign=top>
+<B>balloonDelay1</B><br>
+</td>
+<td valign=top>
+<B>balloonDelay2</B><br>
+</td>
+<td valign=top>
+<B>ballonFont</B><br>
+</td>
+</table>
+<P>
+See the "toolbar" manual entry for details on the above associated options.
+</pre><H2>INHERITED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>title</B><br>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the "Toplevel" manual entry for details on the above inherited options.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>height</B><br>
+<B>padY</B><br>
+</td>
+<td valign=top>
+<B>master</B><br>
+<B>width</B><br>
+</td>
+<td valign=top>
+<B>modality</B><br>
+</td>
+<td valign=top>
+<B>padX</B><br>
+</td>
+</table>
+<P>
+See the "shell" manual entry for details on the above inherited options.
+
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>helpLine</B>
+Class:                  <B>HelpLine</B>
+Command-Line Switch:	<B>-helpline</B>
+</pre>
+<UL>
+Specifies whether or not to display the help line.  The value
+may be given in any of the forms acceptable to Tk_GetBoolean.
+The default is yes.
+</UL>
+<P>
+<pre>
+Name:                   <B>menuBarBackground</B>
+Class:                  <B>Background</B>
+Command-Line Switch:	<B>-menubarbackground</B>
+</pre>
+<UL>
+Specifies the normal background color for the menubar.
+</UL>
+<P>
+<pre>
+Name:                   <B>menuBarFont</B>
+Class:                  <B>Font</B>
+Command-Line Switch:	<B>-menubarfont</B>
+</pre>
+<UL>
+Specifies the font to use when drawing text inside the menubar.
+</UL>
+<P>
+<pre>
+Name:                   <B>menuBarForeround</B>
+Class:                  <B>Foreground</B>
+Command-Line Switch:	<B>-menubarforeground</B>
+</pre>
+<UL>
+Specifies the normal foreground color for the menubar.
+</UL>
+<P>
+<pre>
+Name:                   <B>statusLine</B>
+Class:                  <B>StatusLine</B>
+Command-Line Switch:	<B>-statusline</B>
+</pre>
+<UL>
+Specifies whether or not to display the status line.  The value
+may be given in any of the forms acceptable to Tk_GetBoolean.
+The default is yes.
+</UL>
+<P>
+<pre>
+Name:                   <B>toolBarBackground</B>
+Class:                  <B>Background</B>
+Command-Line Switch:	<B>-toolbarbackground</B>
+</pre>
+<UL>
+Specifies the normal background color for the toolbar.
+</UL>
+<P>
+<pre>
+Name:                   <B>toolBarFont</B>
+Class:                  <B>Font</B>
+Command-Line Switch:	<B>-toolbarfont</B>
+</pre>
+<UL>
+Specifies the font to use when drawing text inside the toolbar.
+</UL>
+<P>
+<pre>
+Name:                   <B>toolBarForeround</B>
+Class:                  <B>Foreground</B>
+Command-Line Switch:	<B>-toolbarforeground</B>
+</pre>
+<UL>
+Specifies the normal foreground color for the toolbar.
+</UL>
+</pre><HR>
+
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>mainwindow</B> command creates a mainwindow shell which contains
+a menubar, toolbar, mousebar, childsite, status line, and help line.  
+Each item may be filled and configured to suit individual needs.
+
+</pre><H2>METHODS</H2>
+<P>
+The <B>mainwindow</B> command create a new Tcl command whose
+name is <I>pathName</I>.  This command may be used to invoke various
+operations on the widget.  It has the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for mainwindow widgets:
+</pre><H2>INHERITED METHODS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activate</B><br>
+</td>
+<td valign=top>
+<B>center</B><br>
+</td>
+<td valign=top>
+<B>deactivate</B><br>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the "shell" manual entry for details on the above inherited methods.
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<DL>
+<DT> <I>pathName <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>mainwindow</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName <B>childsite</B>
+</I></B>
+<DD> Returns the pathname of the child site widget.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>mainwindow</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName <B>menubar</B> ?<I>args</I>?
+</I></B>
+<DD> The <B>menubar</B> method provides access to the menubar.  Invoked with
+no arguments it returns the pathname of the menubar.  With arguments,
+they are evaluated against the menubar which in effect provides
+access to the entire API of the menubar.  See the "menubar" manual
+entry for details on the commands available in the menubar.
+</DL>
+<DL>
+<DT> <I>pathName <B>mousebar</B> ?<I>args</I>?
+</I></B>
+<DD> The <B>mousebar</B> method provides access to the mousebar which is a 
+vertical toolbar.  Invoked with no arguments it returns the pathname 
+of the mousebar.  With arguments, they are evaluated against the mousebar 
+which in effect provides access to the entire API of the underlying 
+toolbar.  See the "toolbar" manual entry for details on the commands 
+available in the mousebar.
+</DL>
+<DL>
+<DT> <I>pathName <B>msgd</B> ?<I>args</I>?
+</I></B>
+<DD> The <B>msgd</B> method provides access to the messagedialog contained
+in the mainwindow.  Invoked with no arguments it returns the pathname 
+of the messagedialog.  With arguments, they are evaluated against the 
+messagedialog which in effect provides access to the entire API of the 
+messagedialog.  See the "messagedialog" manual
+entry for details on the commands available in the messagedialog.
+</DL>
+<DL>
+<DT> <I>pathName <B>toolbar</B> ?<I>args</I>?
+</I></B>
+<DD> The <B>toolbar</B> method provides access to the toolbar.  Invoked with
+no arguments it returns the pathname of the toolbar.  With arguments,
+they are evaluated against the toolbar which in effect provides
+access to the entire API of the toolbar.  See the "toolbar" manual
+entry for details on the commands available in the toolbar.
+
+</DL>
+</pre><H2>COMPONENTS</H2>
+<P>
+<pre>
+Name:                   <B>help</B>
+Class:                  <B>Label</B>
+</pre>
+<UL>
+The help component provides a location for displaying any help
+strings provided in the menubar, toolbar, or mousebar.  See the "label" 
+widget manual entry for details on the help component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>menubar</B>
+Class:                  <B>Menubar</B>
+</pre>
+<UL>
+The menubar component is the menubar located at the top of the window.
+See the "menubar" widget manual entry for details on the menubar 
+component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>mousebar</B>
+Class:                  <B>Toolbar</B>
+</pre>
+<UL>
+The mousebar component is the vertical toolbar located on the right side
+of the window.  See the "toolbar" widget manual entry for details on 
+the mousebar component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>msgd</B>
+Class:                  <B>Messagedialog</B>
+</pre>
+<UL>
+The msgd component is a messagedialog which may be reconfigured as needed 
+and used repeatedly throughout the application.  See the "messagedialog" 
+widget manual entry for details on the messagedialog component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>status</B>
+Class:                  <B>Label</B>
+</pre>
+<UL>
+The status component provides a location for displaying application
+status information.  See the "label" widget manual entry for details 
+on the status component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>toolbar</B>
+Class:                  <B>Toolbar</B>
+</pre>
+<UL>
+The toolbar component is the horizontal toolbar located on the top 
+of the window.  See the "toolbar" widget manual entry for details on 
+the toolbar component item.
+</UL>
+</table>
+
+</pre><H2>EXAMPLE</H2>
+<pre>
+ mainwindow .mw
+
+ #
+ # Add a File menubutton
+ #
+ .mw menubar add menubutton file -text "File" -underline 0 -padx 8 -pady 2 \\
+    -menu {options -tearoff no
+	   command new -label "New" -underline 0 \\
+	       -helpstr "Create a new file"
+	   command open -label "Open ..." -underline 0 \\
+	       -helpstr "Open an existing file"
+	   command save -label "Save" -underline 0 \\
+	       -helpstr "Save the current file"
+	   command saveas -label "Save As ..." -underline 5 \\
+	       -helpstr "Save the file as a differnet name"
+	   command print -label "Print" -underline 0 \\
+	       -helpstr "Print the file"
+           separator sep1
+	   command close -label "Close" -underline 0 \\
+	       -helpstr "Close the file"
+	   separator sep2
+	   command exit -label "Exit" -underline 1 \\
+	       -helpstr "Exit this application" 
+    }
+
+ #
+ # Install a scrolledtext widget in the childsite.
+ #
+ scrolledtext [.mw childsite].st
+ pack [.mw childsite].st -fill both -expand yes
+
+ #
+ # Activate the main window.
+ #
+ .mw activate
+</pre>
+</pre><H2>AUTHORS</H2>
+Mark L. Ulferts
+<P>
+John A. Tucker
+<P>
+</pre><H2>KEYWORDS</H2>
+mainwindow, shell, widget
