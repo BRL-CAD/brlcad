@@ -44,7 +44,7 @@
 #  OpenNURBS requires zlib
 find_package(ZLIB)
 
-find_path(OPENNURBS_INCLUDE_DIR opennurbs.h)
+find_path(OPENNURBS_INCLUDE_DIR opennurbs.h PATHS openNURBS)
 find_library(OPENNURBS_LIBRARY NAMES opennurbs openNURBS OpenNURBS)
 
 include(FindPackageHandleStandardArgs)
