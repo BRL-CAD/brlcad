@@ -66,7 +66,6 @@ set(LOG_OPTS)
 
 # Load some CMake macros to handle the special case of third party libraries.
 include(ThirdParty)
-include(ThirdParty_TCL)
 include(ThirdPartyExecutable)
 
 # In case we need to pass some sort of reasonable parallel
