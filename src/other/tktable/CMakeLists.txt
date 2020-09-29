@@ -6,6 +6,8 @@ project(TKTABLE)
 
 find_package(TCL)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/TCL_PKGINDEX.cmake")
+
 if (WIN32 OR "${TK_SYSTEM_GRAPHICS}" MATCHES "aqua")
   include_directories("${TK_SOURCE_DIR}/xlib/X11")
 else ()

@@ -15,7 +15,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
-      "${ZLIB_INCLUDE_DIRS}"
+      "${ZLIB_INCLUDE_DIR}"
       "${REGEX_INCLUDE_DIRS}"
       "${TCL_INCLUDE_PATH}"
       )

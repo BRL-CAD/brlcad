@@ -180,7 +180,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
-
+include(${CMAKE_CURRENT_SOURCE_DIR}/tktable.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/tkhtml.cmake)
 
 ###############################################################################
 #                    Primary BRL-CAD Compilation

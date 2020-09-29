@@ -6,6 +6,8 @@ project(TKHTML)
 
 find_package(TCL)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/TCL_PKGINDEX.cmake")
+
 if (TK_SYSTEM_GRAPHICS MATCHES "x11")
   find_package(X11)
 endif (TK_SYSTEM_GRAPHICS MATCHES "x11")
