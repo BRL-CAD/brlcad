@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* improved pixcmp support for subset image comparisons - Sean Morrison
 * added subtract subcommand to MGED analyze command - Cliff Yapp
 * added intersect subcommand to MGED analyze command - Cliff Yapp
 * added summarize subcommand to MGED analyze command - Cliff Yapp
