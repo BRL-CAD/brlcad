@@ -561,9 +561,6 @@ vdir(char *result, size_t len, va_list args)
 		cpath = _bu_dir_brlcad_root(BRLCAD_MAN_DIR, 1);
 		path_append(&vls, cpath);
 		break;
-	    case BU_DIR_INSTALL:
-		bu_vls_strcat(&vls, BRLCAD_ROOT);
-		break;
 	    case BU_DIR_TEMP:
 		cpath = dir_temp(buf, MAXPATHLEN);
 		path_append(&vls, cpath);
