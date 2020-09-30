@@ -221,6 +221,7 @@ if(BRLCAD_DEPS)
 endif(BRLCAD_DEPS)
 
 # We've built everything we needed to build - now we can build BRL-CAD itself
+
 ExternalProject_Add(BRLCAD_BLD
   SOURCE_DIR "${BRLCAD_SOURCE_DIR}"
   PREFIX ${BRLCAD_BINARY_DIR}/brlcad
@@ -248,6 +249,24 @@ ExternalProject_Add(BRLCAD_BLD
   -DTCL_ROOT=${CMAKE_BINARY_DIR}
   DEPENDS ${BRLCAD_DEPS}
   )
+
+if("${CMAKE_GENERATOR}" MATCHES "Make")
+  add_custom_target(brlcad ALL
+    COMMAND cd ${BRLCAD_BINARY_DIR}/brlcad-build && $(MAKE) && $(MAKE) install
+    DEPENDS deps
+    )
+elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
+  add_custom_target(brlcad ALL
+    COMMAND cd ${BRLCAD_BINARY_DIR}/brlcad-build && ninja && ninja install
+    DEPENDS deps
+    )
+else()
+  add_custom_target(brlcad ALL
+    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build
+    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build --target install
+    DEPENDS deps
+    )
+endif()
 
 # Local Variables:
 # tab-width: 8
