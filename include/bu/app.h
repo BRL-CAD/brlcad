@@ -237,6 +237,7 @@ typedef enum {
     BU_DIR_DATA,    /**< (read-only) data files (share) */
     BU_DIR_DOC,     /**< (read-only) documentation, (DATA/doc) */
     BU_DIR_MAN,     /**< (read-only) manual pages, (DATA/man) */
+    BU_DIR_INSTALL, /**< (read-only) root dir of install target */
     BU_DIR_TEMP,    /**< (read/write) temporary files (TEMP) */
     BU_DIR_HOME,    /**< (read/write) user home directory (HOME) */
     BU_DIR_CACHE,   /**< (read/write) user cache directory (BU_CACHE_DIR) */

@@ -318,6 +318,10 @@ _tclcad_bu_dir_print(const char *dirkey, int fail_quietly)
 	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_MAN, NULL));
 	return result;
     }
+    if (BU_STR_EQUIV(dirkey, "install") || BU_STR_EQUAL(dirkey, "BU_DIR_INSTALL")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_INSTALL, NULL));
+	return result;
+    }
     if (BU_STR_EQUIV(dirkey, "temp") || BU_STR_EQUAL(dirkey, "BU_DIR_TEMP")) {
 	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_TEMP, NULL));
 	return result;
@@ -365,7 +369,7 @@ tcl_bu_dir(void *clientData,
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
     if (argc != 2) {
-	bu_log("Usage: bu_dir [curr|init|bin|lib|libexec|include|data|doc|man|temp|home|cache|config|ext|libext]\n");
+	bu_log("Usage: bu_dir [curr|init|bin|lib|libexec|include|data|doc|man|install|temp|home|cache|config|ext|libext]\n");
 	return BRLCAD_ERROR;
     }
     Tcl_AppendResult(interp, _tclcad_bu_dir_print(argv[1],1), NULL);
