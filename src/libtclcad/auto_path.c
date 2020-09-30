@@ -345,13 +345,13 @@ tclcad_auto_path(Tcl_Interp *interp)
 	const char *path = (const char *)BU_PTBL_GET(&paths, i);
 	/* make sure it exists before appending */
 	if (bu_file_exists(path, NULL)) {
-	    printf("APPENDING: %s\n", path);
+	    //printf("APPENDING: %s\n", path);
 	    struct bu_vls lappend = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&lappend, "lappend auto_path {%s}", path);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&lappend));
 	    bu_vls_free(&lappend);
 	} else {
-	    printf("NOT APPENDING: %s\n", path);
+	    //printf("NOT APPENDING: %s\n", path);
 	    continue;
 	}
 
