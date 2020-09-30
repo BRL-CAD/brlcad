@@ -115,7 +115,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     struct bu_vls root_buf = BU_VLS_INIT_ZERO;
     const char *root = NULL;
     const char *data = NULL;
-    char buffer[MAX_BUF] = {0};
+    struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
     const char *which_argv = NULL;
     const char *srcpath = NULL;
@@ -173,8 +173,8 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* make sure tcl_library path is in the auto_path */
-    snprintf(buffer, MAX_BUF, "set tcl_library");
-    Tcl_Eval(interp, buffer);
+    bu_vls_sprintf(&buffer, "set tcl_library");
+    Tcl_Eval(interp, bu_vls_cstr(&buffer));
     bu_vls_strncat(&auto_path, Tcl_GetStringResult(interp), MAX_BUF);
 
     /* get string of invocation binary */
@@ -184,10 +184,10 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* get name of installation binary */
-    snprintf(buffer, MAX_BUF, "%s%cbin%c%s", root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, bu_getprogname());
+    bu_vls_sprintf(&buffer, "%s%cbin%c%s", root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, bu_getprogname());
 
     /* are we running from an installed binary? if so add to path */
-    if (bu_file_exists(buffer, NULL) && bu_file_same(buffer, which_argv)) {
+    if (bu_file_exists(bu_vls_cstr(&buffer), NULL) && bu_file_same(bu_vls_cstr(&buffer), which_argv)) {
 	from_installed = 1;
 	join_path(&auto_path, root, "lib", NULL);
 	join_path(&auto_path, root, "lib", bu_vls_addr(&tcl), NULL);
@@ -242,8 +242,8 @@ tclcad_auto_path(Tcl_Interp *interp)
     /* see if user already set ITCL_LIBRARY override */
     library_path = getenv("ITCL_LIBRARY");
     if (!found_itcl_tcl && library_path) {
-	snprintf(buffer, MAX_BUF, "%s%citcl.tcl", library_path, BU_DIR_SEPARATOR);
-	if (bu_file_exists(buffer, NULL)) {
+	bu_vls_sprintf(&buffer, "%s%citcl.tcl", library_path, BU_DIR_SEPARATOR);
+	if (bu_file_exists(bu_vls_cstr(&buffer), NULL)) {
 	    found_itcl_tcl=1;
 	}
     }
@@ -251,8 +251,8 @@ tclcad_auto_path(Tcl_Interp *interp)
     /* see if user already set ITK_LIBRARY override */
     library_path = getenv("ITK_LIBRARY");
     if (!found_itk_tcl && library_path) {
-	snprintf(buffer, MAX_BUF, "%s%citk.tcl", library_path, BU_DIR_SEPARATOR);
-	if (bu_file_exists(buffer, NULL)) {
+	bu_vls_sprintf(&buffer, "%s%citk.tcl", library_path, BU_DIR_SEPARATOR);
+	if (bu_file_exists(bu_vls_cstr(&buffer), NULL)) {
 	    found_itk_tcl=1;
 	}
     }
@@ -274,11 +274,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	/* specifically look for init.tcl so we can set tcl_library */
 	if (!found_init_tcl) {
-	    snprintf(buffer, MAX_BUF, "%s%cinit.tcl", srcpath, BU_DIR_SEPARATOR);
-	    if (bu_file_exists(buffer, NULL)) {
+	    bu_vls_sprintf(&buffer, "%s%cinit.tcl", srcpath, BU_DIR_SEPARATOR);
+	    if (bu_file_exists(bu_vls_cstr(&buffer), NULL)) {
 		/* this really sets it */
-		snprintf(buffer, MAX_BUF, "set tcl_library {%s}", srcpath);
-		if (Tcl_Eval(interp, buffer)) {
+		bu_vls_sprintf(&buffer, "set tcl_library {%s}", srcpath);
+		if (Tcl_Eval(interp, bu_vls_cstr(&buffer))) {
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_init_tcl=1;
@@ -290,8 +290,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		library_path = getenv("TCL_LIBRARY");
 		if (!library_path) {
 		    /* this REALLY sets it */
-		    snprintf(buffer, MAX_BUF, "set env(TCL_LIBRARY) {%s}", srcpath);
-		    if (Tcl_Eval(interp, buffer)) {
+		    bu_vls_sprintf(&buffer, "set env(TCL_LIBRARY) {%s}", srcpath);
+		    if (Tcl_Eval(interp, bu_vls_cstr(&buffer))) {
 			bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		    }
 		}
@@ -300,11 +300,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	/* specifically look for tk.tcl so we can set tk_library */
 	if (!found_tk_tcl) {
-	    snprintf(buffer, MAX_BUF, "%s%ctk.tcl", srcpath, BU_DIR_SEPARATOR);
-	    if (bu_file_exists(buffer, NULL)) {
+	    bu_vls_sprintf(&buffer, "%s%ctk.tcl", srcpath, BU_DIR_SEPARATOR);
+	    if (bu_file_exists(bu_vls_cstr(&buffer), NULL)) {
 		/* this really sets it */
-		snprintf(buffer, MAX_BUF, "set tk_library {%s}", srcpath);
-		if (Tcl_Eval(interp, buffer)) {
+		bu_vls_sprintf(&buffer, "set tk_library {%s}", srcpath);
+		if (Tcl_Eval(interp, bu_vls_cstr(&buffer))) {
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_tk_tcl=1;
@@ -314,11 +314,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	/* specifically look for itcl.tcl so we can set ITCL_LIBRARY */
 	if (!found_itcl_tcl) {
-	    snprintf(buffer, MAX_BUF, "%s%citcl.tcl", srcpath, BU_DIR_SEPARATOR);
-	    if (bu_file_exists(buffer, NULL)) {
+	    bu_vls_sprintf(&buffer, "%s%citcl.tcl", srcpath, BU_DIR_SEPARATOR);
+	    if (bu_file_exists(bu_vls_cstr(&buffer), NULL)) {
 		/* this really sets it */
-		snprintf(buffer, MAX_BUF, "set env(ITCL_LIBRARY) {%s}", srcpath);
-		if (Tcl_Eval(interp, buffer)) {
+		bu_vls_sprintf(&buffer, "set env(ITCL_LIBRARY) {%s}", srcpath);
+		if (Tcl_Eval(interp, bu_vls_cstr(&buffer))) {
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_itcl_tcl=1;
@@ -328,11 +328,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	/* specifically look for itk.tcl so we can set ITK_LIBRARY */
 	if (!found_itk_tcl) {
-	    snprintf(buffer, MAX_BUF, "%s%citk.tcl", srcpath, BU_DIR_SEPARATOR);
-	    if (bu_file_exists(buffer, NULL)) {
+	    bu_vls_sprintf(&buffer, "%s%citk.tcl", srcpath, BU_DIR_SEPARATOR);
+	    if (bu_file_exists(bu_vls_cstr(&buffer), NULL)) {
 		/* this really sets it */
-		snprintf(buffer, MAX_BUF, "set env(ITK_LIBRARY) {%s}", srcpath);
-		if (Tcl_Eval(interp, buffer)) {
+		bu_vls_sprintf(&buffer, "set env(ITK_LIBRARY) {%s}", srcpath);
+		if (Tcl_Eval(interp, bu_vls_cstr(&buffer))) {
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_itk_tcl=1;
@@ -342,6 +342,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     which_argv = NULL;
+    bu_vls_free(&buffer);
     bu_vls_free(&tcl);
     bu_vls_free(&itcl);
 #ifdef HAVE_TK
