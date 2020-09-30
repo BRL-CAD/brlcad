@@ -216,6 +216,10 @@ if (TARGET ${T}_BLD)
 endif (TARGET ${T}_BLD)
 endforeach(T ${TARGET_LIST})
 
+if(BRLCAD_DEPS)
+  add_custom_target(deps DEPENDS ${BRLCAD_DEPS})
+endif(BRLCAD_DEPS)
+
 # We've built everything we needed to build - now we can build BRL-CAD itself
 ExternalProject_Add(BRLCAD_BLD
   SOURCE_DIR "${BRLCAD_SOURCE_DIR}"
@@ -241,7 +245,7 @@ ExternalProject_Add(BRLCAD_BLD
   -DBSON_ROOT=$<$<BOOL:${BSON_TARGET}>:${CMAKE_BINARY_DIR}>
   -DPROJ4_ROOT=$<$<BOOL:${PROJ4_TARGET}>:${CMAKE_BINARY_DIR}>
   -DGDAL_ROOT=$<$<BOOL:${GDAL_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DTCL_ROOT=$<$<BOOL:${TCL_TARGET}>:${CMAKE_BINARY_DIR}>
+  -DTCL_ROOT=${CMAKE_BINARY_DIR}
   DEPENDS ${BRLCAD_DEPS}
   )
 
