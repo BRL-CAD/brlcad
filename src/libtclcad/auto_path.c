@@ -22,6 +22,17 @@
  *
  * Locate the BRL-CAD tclscripts
  *
+ * TODO - superbuild presents us with a challenge here.  This logic
+ * is optimized for assuming that packages are either installed with
+ * the associated system Tcl/Tk or present in the BRL-CAD build
+ * directory.  Superbuilds present another possibility - a system
+ * Tcl/Tk, a superbuild Itcl/Itk in the superbuild's directory,
+ * and a BRL-CAD build needing to reference the staging install of
+ * Itcl/Itk during its build.
+ *
+ * Not sure what the answer is yet.  One possibility is to use the
+ * environment variables during the BRL-CAD build's execution of
+ * its tools, but not sure yet if that's practical.
  */
 
 #include "common.h"
