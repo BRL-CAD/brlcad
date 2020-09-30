@@ -253,17 +253,17 @@ ExternalProject_Add(BRLCAD_BLD
 if("${CMAKE_GENERATOR}" MATCHES "Make")
   add_custom_target(brlcad ALL
     COMMAND cd ${BRLCAD_BINARY_DIR}/brlcad-build && $(MAKE) && $(MAKE) install
-    DEPENDS deps
+    DEPENDS BRLCAD_BLD
     )
 elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
   add_custom_target(brlcad ALL
     COMMAND cd ${BRLCAD_BINARY_DIR}/brlcad-build && ninja && ninja install
-    DEPENDS deps
+    DEPENDS BRLCAD_BLD
     )
 else()
   add_custom_target(brlcad-build
     COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build
-    DEPENDS deps
+    DEPENDS BRLCAD_BLD
     )
   add_custom_target(brlcad ALL
     COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build --target install
