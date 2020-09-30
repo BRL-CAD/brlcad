@@ -44,7 +44,8 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
     # command that builds the index when the dependency is resolved
     add_custom_command(
       OUTPUT ${tclindex_outdir}/${outfile}
-      COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir} >> ${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log 2>&1
+      #COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir} >> ${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log 2>&1
+      COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir}
       DEPENDS btclsh ${data_target_list} ${tcl_files}
       )
 

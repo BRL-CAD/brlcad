@@ -2102,6 +2102,8 @@ add_subdirectory(src/other)
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
 
+set(TCL_VERSION "8.6")
+CONFIG_H_APPEND(BRLCAD "#define TCL_VERSION \"${TCL_VERSION}\"\n")
 
 set(ITCL_VERSION "3.4")
 CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
