@@ -16,18 +16,30 @@
 #
 ###############################################################################
 
-# Try to use OSGeo4W installation
-if(WIN32)
-    set(PROJ4_OSGEO4W_HOME "C:/OSGeo4W") 
+set(_PROJ4_SEARCHES)
 
-    if($ENV{OSGEO4W_HOME})
-        set(PROJ4_OSGEO4W_HOME "$ENV{OSGEO4W_HOME}") 
-    endif()
+# Search PROJ4_ROOT first if it is set.
+if(PROJ4_ROOT)
+  set(_PROJ4_SEARCH_ROOT PATHS ${PROJ4_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _PROJ4_SEARCHES _PROJ4_SEARCH_ROOT)
 endif()
 
-find_path(PROJ4_INCLUDE_DIR proj_api.h
-    PATHS ${PROJ4_OSGEO4W_HOME}/include
-    DOC "Path to PROJ.4 library include directory")
+# Normal search.
+set(_PROJ4_x86 "(x86)")
+set(_PROJ4_SEARCH_NORMAL
+    PATHS
+	 "$ENV{OSGEO4W_HOME}"
+	 "C:/OSGeo4W"
+  	 "$ENV{ProgramFiles}/proj4"
+	 "$ENV{ProgramFiles${_PROJ4_x86}}/proj4"
+	 )
+ unset(_PROJ4_x86)
+list(APPEND _PROJ4_SEARCHES _PROJ4_SEARCH_NORMAL)
+
+# Try each search configuration.
+foreach(search ${_PROJ4_SEARCHES})
+  find_path(PROJ4_INCLUDE_DIR NAMES proj_api.h ${${search}} PATH_SUFFIXES include include/proj4 proj4 include/proj proj)
+endforeach()
 
 if (PROJ4_INCLUDE_DIR)
 	# Extract version from proj_api.h (ex: 480)
@@ -41,10 +53,12 @@ if (PROJ4_INCLUDE_DIR)
 endif()
 
 set(PROJ4_NAMES ${PROJ4_NAMES} proj proj_i)
-find_library(PROJ4_LIBRARY
-    NAMES ${PROJ4_NAMES}
-    PATHS ${PROJ4_OSGEO4W_HOME}/lib
-    DOC "Path to PROJ.4 library file")
+if(NOT PROJ4_LIBRARY)
+	foreach(search ${_PROJ4_SEARCHES})
+		find_library(PROJ4_LIBRARY NAMES ${PROJ4_NAMES} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
+	endforeach()
+endif()
+unset(PROJ4_NAMES)
 
 if(PROJ4_LIBRARY)
   set(PROJ4_LIBRARIES ${PROJ4_LIBRARY})

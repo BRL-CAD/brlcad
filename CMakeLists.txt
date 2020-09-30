@@ -2074,6 +2074,12 @@ else(NOT BRLCAD_ENABLE_TARGETS)
   endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
 endif(NOT BRLCAD_ENABLE_TARGETS)
 
+# Before we head into src/other and misc/tools, store all the build
+# flags that have been built up.  It's hard to be sure what will and
+# won't be set in those directories, so make sure we can restore the
+# BRL-CAD flags for the actual BRL-CAD subdirectories.
+CACHE_BUILD_FLAGS(_BRLCAD)
+
 # At the start, clear the misc/tools subdirs list so repeated
 # configures will correctly add the required directories
 set(MISC_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
@@ -2092,6 +2098,10 @@ add_subdirectory(misc/tools)
 # by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
 # tests so the CACHE reflects BRL-CAD's test results.
 add_subdirectory(src/other)
+
+# Now put back the BRL-CAD flags
+RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
+
 
 set(ITCL_VERSION "3.4")
 CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
