@@ -160,7 +160,7 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     tclcad_auto_path(interp);
 
     /* Initialize [incr Tcl] */
-    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+    if (Tcl_Eval(interp, "package require Itcl 3") != TCL_OK) {
 	if (tlog)
 	    bu_vls_printf(tlog, "Itcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
@@ -169,7 +169,7 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     /* Initialize [incr Tk] */
     if (init_gui) {
 #ifdef HAVE_TK
-	if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+	if (Tcl_Eval(interp, "package require Itk 3") != TCL_OK) {
 	    if (tlog)
 	       	bu_vls_printf(tlog, "Itk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
