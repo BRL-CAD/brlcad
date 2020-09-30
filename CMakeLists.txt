@@ -2074,11 +2074,10 @@ else(NOT BRLCAD_ENABLE_TARGETS)
   endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
 endif(NOT BRLCAD_ENABLE_TARGETS)
 
-function(SetTargetFolder targetname folder)
-  if(TARGET ${targetname})
-    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
-  endif(TARGET ${targetname})
-endfunction(SetTargetFolder)
+# At the start, clear the misc/tools subdirs list so repeated
+# configures will correctly add the required directories
+set(MISC_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+mark_as_advanced(MISC_ADDED_DIRS)
 
 # Add misc/tools for tools that are used in BRL-CAD's build process
 # but are not otherwise usable in BRL-CAD (due to licensing, design
@@ -2099,6 +2098,10 @@ CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
 
 set(IWIDGETS_VERSION "4.1.1")
 CONFIG_H_APPEND(BRLCAD "#cmakedefine IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
+
+if(BRLCAD_ENABLE_TK)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_TK 1\n")
+endif(BRLCAD_ENABLE_TK)
 
 
 if(BRLCAD_PRINT_MSGS)

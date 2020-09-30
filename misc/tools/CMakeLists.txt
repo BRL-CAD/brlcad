@@ -20,6 +20,12 @@
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/Third_Party_Exec.cmake")
 
+function(SetTargetFolder targetname folder)
+  if(TARGET ${targetname})
+    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
+  endif(TARGET ${targetname})
+endfunction(SetTargetFolder)
+
 # Clear all pre-defined CMake flags
 CLEAR_BUILD_FLAGS()
 
@@ -99,6 +105,18 @@ SetTargetFolder(xmllint "Compilation Utilities")
 SetTargetFolder(xml "Third Party Libraries")
 SetTargetFolder(xslt "Third Party Libraries")
 SetTargetFolder(exslt "Third Party Libraries")
+
+# env2c - Scanner to generate a list of environment variables used by
+# source code
+THIRD_PARTY_EXECUTABLE(env2c ENV2C env2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
+SetTargetFolder(env2c "Compilation Utilities")
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
+
+# debug2c - Scanner to generate a list of debug variables used by
+# source code
+THIRD_PARTY_EXECUTABLE(debug2c DEBUG2C debug2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
+SetTargetFolder(debug2c "Compilation Utilities")
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
 # inactvhdrs - utility that tries to find local headers unused by other
 # source code in a file hierarchy

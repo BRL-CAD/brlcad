@@ -23,15 +23,6 @@ foreach(hdr ${NIRT_DBG_HDRS})
   file(APPEND "${DEBUG_CMD_HDRS}" "${hdr}\n")
 endforeach(hdr ${NIRT_DBG_HDRS})
 
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
-
-add_executable(debug2c ../../misc/tools/debug2c/debug2c.cxx)
-if (O3_COMPILER_FLAG)
-  # If we have the O3 flag, use it
-  target_compile_options(debug2c PRIVATE "-O3")
-endif (O3_COMPILER_FLAG)
-
 add_custom_command(OUTPUT ${DEBUG_CMD_C}
   COMMAND debug2c ${DEBUG_CMD_HDRS} ${DEBUG_CMD_C}
   DEPENDS debug2c
