@@ -261,10 +261,13 @@ elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
     DEPENDS deps
     )
 else()
-  add_custom_target(brlcad ALL
+  add_custom_target(brlcad-build
     COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build
-    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build --target install
     DEPENDS deps
+    )
+  add_custom_target(brlcad ALL
+    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build --target install
+    DEPENDS brlcad-build
     )
 endif()
 
