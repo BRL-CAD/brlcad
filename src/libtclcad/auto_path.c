@@ -298,10 +298,10 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_path_component(&pdir, bu_vls_cstr(&w_root), BU_PATH_DIRNAME);
 	bu_vls_sprintf(&tdir, "%s%c%s", bu_vls_cstr(&pdir), BU_DIR_SEPARATOR, bu_vls_cstr(&libstr));
 	// Have a library directory, see what's in it
-	if (bu_file_exists(bu_vls_cstr(&lib_path), NULL)) {
+	if (bu_file_exists(bu_vls_cstr(&tdir), NULL)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(&lib_subpaths); i++) {
 		const char *fname = (const char *)BU_PTBL_GET(&lib_subpaths, i);
-		bu_vls_sprintf(&lib_path, "%s%c%s", libdir, BU_DIR_SEPARATOR, fname);
+		bu_vls_sprintf(&lib_path, "%s%c%s", bu_vls_cstr(&tdir), BU_DIR_SEPARATOR, fname);
 		if (bu_file_exists(bu_vls_cstr(&lib_path), NULL)) {
 		    // Have a path
 		    const char *p = bu_strdup(bu_vls_cstr(&lib_path));
@@ -318,6 +318,12 @@ tclcad_auto_path(Tcl_Interp *interp)
 	}
 	bu_ptbl_free(&found_subpaths);
     }
+
+    // Libs not found
+    //for (size_t i = 0; i < BU_PTBL_LEN(&lib_subpaths); i++) {
+    //    const char *fname = (const char *)BU_PTBL_GET(&lib_subpaths, i);
+    //    bu_log("Not found: %s\n", fname);
+    //}
 
     // Now that we've looked for the libs, handle the data dirs.  These are
     // simpler as they should be guaranteed to be in BU_DIR_DATA.
