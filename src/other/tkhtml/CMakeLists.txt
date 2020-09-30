@@ -4,9 +4,9 @@ cmake_minimum_required(VERSION 3.12)
 # set CMake project name
 project(TKHTML)
 
-find_package(TCL)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/TCL_PKGINDEX.cmake")
+find_package(TCL)
 
 if (TK_SYSTEM_GRAPHICS MATCHES "x11")
   find_package(X11)
@@ -101,7 +101,7 @@ install(TARGETS Tkhtml
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
 
-include(TCL_PKGINDEX.cmake)
+include(TCL_PKGINDEX)
 TCL_PKGINDEX(Tkhtml ${TKHTML_PKGNAME} ${TKHTML_PKGVERSION})
 
 add_custom_command(

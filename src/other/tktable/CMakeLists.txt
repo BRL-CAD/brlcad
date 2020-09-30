@@ -4,9 +4,9 @@ cmake_minimum_required(VERSION 3.12)
 # set CMake project name
 project(TKTABLE)
 
-find_package(TCL)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/TCL_PKGINDEX.cmake")
+find_package(TCL)
 
 if (WIN32 OR "${TK_SYSTEM_GRAPHICS}" MATCHES "aqua")
   include_directories("${TK_SOURCE_DIR}/xlib/X11")
@@ -80,6 +80,7 @@ install(TARGETS Tktable
   ARCHIVE DESTINATION ${LIB_DIR})
 
 # Create the pkgIndex.tcl file.
+include(TCL_PKGINDEX)
 TCL_PKGINDEX(Tktable ${TKTABLE_PKGNAME} ${TKTABLE_PKGVERSION})
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.txt DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
