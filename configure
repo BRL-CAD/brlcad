@@ -174,10 +174,6 @@ do
                                   shift;;
      --disable-step-class-libraries)                options="$options -DBRLCAD_SC=SYSTEM";
                                   shift;;
-     --enable-vds)                options="$options -DBRLCAD_VDS=BUNDLED";
-                                  shift;;
-     --disable-vds)                options="$options -DBRLCAD_VDS=SYSTEM";
-                                  shift;;
      --enable-openscenegraph)                options="$options -DBRLCAD_OSG=BUNDLED";
                                   shift;;
      --disable-openscenegraph)                options="$options -DBRLCAD_OSG=SYSTEM";

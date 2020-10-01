@@ -46,7 +46,6 @@ set(cmake_ignore_files
   FindTCL.cmake
   FindUTAHRLE.cmake
   FindUUID.cmake
-  FindVDS.cmake
   FindWix.cmake
   FindX11.cmake
   FindXMLLINT.cmake

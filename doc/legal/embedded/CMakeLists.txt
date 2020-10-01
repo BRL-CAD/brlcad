@@ -70,6 +70,7 @@ set(embedded_licenses
   tkcon.txt
   tri_pt.txt
   uce_dirent.txt
+  vds.txt
   whereami.txt
   winmmap.txt
   x24.txt

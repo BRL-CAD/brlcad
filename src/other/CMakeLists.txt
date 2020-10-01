@@ -782,25 +782,6 @@ if(BRLCAD_ENABLE_GECODE)
   endif(BRLCAD_GECODE_BUILD)
 endif(BRLCAD_ENABLE_GECODE)
 
-# VDSlib - A View-Dependent Simplification and Rendering Library For
-# the moment, this is marked NOSYS - it's possible that some Debian
-# systems would have 0.9 of vdslib installed, but it's unmaintained
-# and we're likely to be making changes.  If our own copy of VDSlib
-# ever spins back off into its own project, revisit the NOSYS
-set(libvds_DESCRIPTION "
-Option for enabling and disabling compilation of the libvds triangle
-simplification library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-")
-THIRD_PARTY(libvds VDS vds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
-set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
-mark_as_advanced(LIBVDS_INCLUDE_DIR)
-SetTargetFolder(vds "Third Party Libraries")
-SetTargetFolder(vds-static "Third Party Libraries")
-
-
 # OpenSceneGraph Libraries
 set(openscenegraph_DESCRIPTION "
 Option for enabling and disabling compilation of the OpenSceneGraph

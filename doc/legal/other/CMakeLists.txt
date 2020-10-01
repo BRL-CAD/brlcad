@@ -9,7 +9,6 @@ set(other_licenses
   libpng.txt
   libregex.txt
   libutahrle.txt
-  libvds.txt
   libz.txt
   linenoise.txt
   OpenNURBS.txt

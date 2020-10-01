@@ -43,7 +43,6 @@ target_link_libraries(BrlcadCore
   regex-static
   librt-static
   libbrep-static
-  vds-static
   libwdb-static
   libnmg-static
   poly2tri-static
@@ -124,7 +123,6 @@ target_link_libraries(brlcad
   regex-static
   librt-static
   libbrep-static
-  vds-static
   libwdb-static
   libnmg-static
   poly2tri-static

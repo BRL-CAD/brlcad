@@ -1,3 +1,35 @@
+/***************************************************************************\
+
+  Copyright 1999 The University of Virginia.
+  All Rights Reserved.
+
+  Permission to use, copy, modify and distribute this software and its
+  documentation without fee, and without a written agreement, is
+  hereby granted, provided that the above copyright notice and the
+  complete text of this comment appear in all copies, and provided that
+  the University of Virginia and the original authors are credited in
+  any publications arising from the use of this software.
+
+  IN NO EVENT SHALL THE UNIVERSITY OF VIRGINIA OR THE AUTHOR OF THIS
+  SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
+  INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
+  OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE
+  UNIVERSITY OF VIRGINIA AND/OR THE AUTHOR OF THIS SOFTWARE HAVE BEEN
+  ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+  The author of the vdslib software library may be contacted at:
+
+  US Mail:             Dr. David Patrick Luebke
+  Department of Computer Science
+  Thornton Hall, University of Virginia
+  Charlottesville, VA 22903
+
+Phone:               (804)924-1021
+
+EMail:               luebke@cs.virginia.edu
+
+\*****************************************************************************/
+
 /**
  * @memo	Routines for constructing the VDSlib vertex tree.
  * @name 	Building the vertex tree
@@ -45,12 +77,13 @@
  */
 /*@{*/
 
-#include <assert.h>
+#include "common.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "vmath.h"
 #include "vds.h"
 
 #define MAJOR 1
@@ -66,7 +99,6 @@
 #define VDS_DEBUG(x) printf x
 #else
 #define VDS_DEBUG(x)
-#define NDEBUG 				/* disable asserts */
 #endif
 
 /**
@@ -135,68 +167,68 @@ extern void vdsComputeTriNodes(vdsNode *node, vdsNode *root);
 extern "C" {
 #endif
 
-#define VEC3_EQUAL(a,b) ((a)[0]==(b)[0]&&(a)[1]==(b)[1]&&(a)[2]==(b)[2])
+#define VEC3_EQUAL(a,b) (NEAR_EQUAL((a)[0],(b)[0], SMALL_FASTF) && NEAR_EQUAL((a)[1],(b)[1], SMALL_FASTF) && NEAR_EQUAL((a)[2],(b)[2],SMALL_FASTF))
 
 #define VEC3_COPY(dst,src) ((dst)[0]=(src)[0], \
-                            (dst)[1]=(src)[1], \
-                            (dst)[2]=(src)[2])
+	(dst)[1]=(src)[1], \
+	(dst)[2]=(src)[2])
 
 #define VEC3_ADD(dst,a,b) 	{(dst)[0]=(a)[0]+(b)[0];\
-                                 (dst)[1]=(a)[1]+(b)[1];\
-                                 (dst)[2]=(a)[2]+(b)[2];}
+    (dst)[1]=(a)[1]+(b)[1];\
+    (dst)[2]=(a)[2]+(b)[2];}
 
 
 #define VEC3_SUBTRACT(dst,a,b) {(dst)[0]=(a)[0]-(b)[0];\
-                                (dst)[1]=(a)[1]-(b)[1];\
-                                (dst)[2]=(a)[2]-(b)[2];}
+    (dst)[1]=(a)[1]-(b)[1];\
+    (dst)[2]=(a)[2]-(b)[2];}
 
 #define VEC3_SCALE(dst,scal,vec) {(dst)[0]=(vec)[0]*(scal);\
-                                  (dst)[1]=(vec)[1]*(scal);\
-                                  (dst)[2]=(vec)[2]*(scal);}
+    (dst)[1]=(vec)[1]*(scal);\
+    (dst)[2]=(vec)[2]*(scal);}
 
 #define VEC3_AVERAGE(dst,a,b) {(dst)[0]=((a)[0]+(b)[0])/2.0;\
-                               (dst)[1]=((a)[1]+(b)[1])/2.0;\
-                               (dst)[2]=((a)[2]+(b)[2])/2.0;}
+    (dst)[1]=((a)[1]+(b)[1])/2.0;\
+    (dst)[2]=((a)[2]+(b)[2])/2.0;}
 
 #define VEC3_DOT(_v0, _v1) ((_v0)[0] * (_v1)[0] +    \
-                            (_v0)[1] * (_v1)[1] +    \
-                            (_v0)[2] * (_v1)[2])
+	(_v0)[1] * (_v1)[1] +    \
+	(_v0)[2] * (_v1)[2])
 
 #define VEC3_CROSS(dst,a,b) {(dst)[0]=(a)[1]*(b)[2]-(a)[2]*(b)[1];\
-                             (dst)[1]=(a)[2]*(b)[0]-(a)[0]*(b)[2];\
-                             (dst)[2]=(a)[0]*(b)[1]-(a)[1]*(b)[0];}
+    (dst)[1]=(a)[2]*(b)[0]-(a)[0]*(b)[2];\
+    (dst)[2]=(a)[0]*(b)[1]-(a)[1]*(b)[0];}
 
 #define VEC3_LENGTH_SQUARED(v) ((v)[0]*(v)[0] + (v)[1]*(v)[1] + (v)[2]*(v)[2])
 
 #define VEC3_LENGTH(v) (sqrt(VEC3_LENGTH_SQUARED(v)))
 
 #define VEC3_DISTANCE_SQUARED(a,b) (((a)[0]-(b)[0])*((a)[0]-(b)[0]) +	\
-				    ((a)[1]-(b)[1])*((a)[1]-(b)[1]) +	\
-				    ((a)[2]-(b)[2])*((a)[2]-(b)[2]))
+	((a)[1]-(b)[1])*((a)[1]-(b)[1]) +	\
+	((a)[2]-(b)[2])*((a)[2]-(b)[2]))
 
 #define VEC3_DISTANCE(a,b) (sqrt(VEC3_DISTANCE_SQUARED((a),(b))))
 
 #define VEC3_NORMALIZE(v) {static vdsFloat _n;				\
-                           _n = 1.0/sqrt((v)[0]*(v)[0] +		\
-				         (v)[1]*(v)[1] +		\
-					 (v)[2]*(v)[2]);		\
-			   (v)[0]*=_n;					\
-			   (v)[1]*=_n;					\
-			   (v)[2]*=_n;}
+    _n = 1.0/sqrt((v)[0]*(v)[0] +		\
+	    (v)[1]*(v)[1] +		\
+	    (v)[2]*(v)[2]);		\
+    (v)[0]*=_n;					\
+    (v)[1]*=_n;					\
+    (v)[2]*=_n;}
 
 #define VEC3_FIND_MAX(dst,a,b) {(dst)[0]=(a)[0]>(b)[0]?(a)[0]:(b)[0];\
-                                (dst)[1]=(a)[1]>(b)[1]?(a)[1]:(b)[1];\
-                                (dst)[2]=(a)[2]>(b)[2]?(a)[2]:(b)[2];}
+    (dst)[1]=(a)[1]>(b)[1]?(a)[1]:(b)[1];\
+    (dst)[2]=(a)[2]>(b)[2]?(a)[2]:(b)[2];}
 
 #define VEC3_FIND_MIN(dst,a,b) {(dst)[0]=(a)[0]<(b)[0]?(a)[0]:(b)[0];\
-                                (dst)[1]=(a)[1]<(b)[1]?(a)[1]:(b)[1];\
-                                (dst)[2]=(a)[2]<(b)[2]?(a)[2]:(b)[2];}
+    (dst)[1]=(a)[1]<(b)[1]?(a)[1]:(b)[1];\
+    (dst)[2]=(a)[2]<(b)[2]?(a)[2]:(b)[2];}
 
 #define BYTE3_EQUAL(a,b) ((a)[0]==(b)[0]&&(a)[1]==(b)[1]&&(a)[2]==(b)[2])
 
 #define BYTE3_COPY(dst,src) ((dst)[0]=(src)[0], \
-                            (dst)[1]=(src)[1], \
-                            (dst)[2]=(src)[2])
+	(dst)[1]=(src)[1], \
+	(dst)[2]=(src)[2])
 
 #ifdef __cplusplus
 }
@@ -220,7 +252,6 @@ static int openflag = 0;
  */
 void vdsBeginVertexTree()
 {
-    assert(openflag == 0);
     openflag = 1;
 }
 
@@ -230,7 +261,6 @@ void vdsBeginVertexTree()
  */
 void vdsBeginGeometry()
 {
-    assert(openflag == 1);
     maxnodes = 1024;
     nodearray = (vdsNode *) calloc(maxnodes, sizeof(vdsNode));
     vdsNumnodes = 0;
@@ -252,7 +282,6 @@ void vdsBeginGeometry()
  */
 vdsNode *vdsEndGeometry()
 {
-    assert(openflag == 1);
     /* Tighten nodearray and triarray to free up unused memory */
     nodearray = (vdsNode *) realloc(nodearray, vdsNumnodes * sizeof(vdsNode));
     triarray = (vdsTri *) realloc(triarray, vdsNumtris * sizeof(vdsTri));
@@ -297,7 +326,6 @@ void vdsNewObject()
  */
 vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z)
 {
-    assert(openflag == 1);
     nodearray[vdsNumnodes].coord[0] = x;
     nodearray[vdsNumnodes].coord[1] = y;
     nodearray[vdsNumnodes].coord[2] = z;
@@ -330,16 +358,12 @@ vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z)
  *		and vdsEndGeometry().
  */
 vdsTri *vdsAddTri(int v0, int v1, int v2,
-		  vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
-		  vdsByte3 c0, vdsByte3 c1, vdsByte3 c2)
+	vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
+	vdsByte3 c0, vdsByte3 c1, vdsByte3 c2)
 {
-    assert(openflag == 1);
     triarray[vdsNumtris].corners[0].index = v0 + curroffset;
     triarray[vdsNumtris].corners[1].index = v1 + curroffset;
     triarray[vdsNumtris].corners[2].index = v2 + curroffset;
-    assert(v0 + curroffset < vdsNumnodes); 		/* Sanity check */
-    assert(v1 + curroffset < vdsNumnodes);		/* Sanity check */
-    assert(v2 + curroffset < vdsNumnodes);		/* Sanity check */
     VEC3_COPY(triarray[vdsNumtris].normal[0], n0);
     VEC3_COPY(triarray[vdsNumtris].normal[1], n1);
     VEC3_COPY(triarray[vdsNumtris].normal[2], n2);
@@ -370,18 +394,14 @@ vdsTri *vdsAddTri(int v0, int v1, int v2,
  *		This pointer is only valid until the vdsEndVertexTree() call.
  */
 vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
-		 vdsFloat x, vdsFloat y, vdsFloat z)
+	vdsFloat x, vdsFloat y, vdsFloat z)
 {
     int i;
     vdsNode *parent = (vdsNode *) calloc(1, sizeof(vdsNode));
 
-    assert(nnodes <= VDS_MAXDEGREE);
-    assert(nodes[0] != NULL);
     parent->children = nodes[0];
     parent->children->parent = parent;
     for (i = 1; i < nnodes; i++) {
-	assert(nodes[i] != NULL);
-	assert(nodes[i]->parent == NULL);
 	nodes[i]->parent = parent;
 	nodes[i - 1]->sibling = nodes[i];
     }
@@ -391,76 +411,6 @@ vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
     parent->coord[2] = z;
 
     return parent;
-}
-
-/*
- * Function:	idEqual
- * Description:	Returns 1 if the two given vdsNodeIds are equal, 0 otherwise
- */
-static int idEqual(vdsNodeId n1, vdsNodeId n2)
-{
-    if (n1.depth != n2.depth) {
-	return 0;
-    } else {
-	if (n1.path != n2.path) {
-	    return 0;
-	} else {
-	    return 1;
-	}
-    }
-}
-
-/*
- * Function:	assignNodeIds
- * Description:	Recursively descends vertex tree, assigning node paths & depths
- *		and initializing node->status to Inactive (since 0 == Boundary
- *		for speed reasons).
- * Arguments:	node - the node rooting the given subtree
- *		nodeId - the node id of the given node
- * 		idArray - array in which we put ids of leaf nodes
- */
-static int assignNodeIds(vdsNode *node, vdsNodeId nodeId, vdsNodeId *idArray)
-{
-    int i, j;
-    vdsNode *child;
-    vdsNodeId childId;
-    static int maxdepth = 0;
-    static int maxdegree = 0;
-
-    node->status = Inactive;
-    node->depth = nodeId.depth;
-    j = 0;
-    child = node->children;
-    while (child != NULL) {
-	childId.depth = nodeId.depth + 1;
-	PATH_COPY(childId.path, nodeId.path);
-	PATH_SET_BRANCH(childId.path, nodeId.depth, j);
-
-	assignNodeIds(child, childId, idArray);
-	j++;
-	child = child->sibling;
-    }
-    /*
-     * If this is a leaf node (i.e., a vertex in original model) store its
-     * NodeId in idArray[].  Later we will convert tri->corners to reference
-     * these nodes by NodeId rather than index in nodearray[].
-     */
-    if (j == 0) {
-	int index = node - nodearray;		/* pointer arithmetic */
-
-	assert(index < vdsNumnodes);
-	idArray[index] = nodeId;
-    }
-    if (j > maxdegree) {
-	maxdegree = j;
-    }
-    if (nodeId.depth > maxdepth) {
-	maxdepth = nodeId.depth;
-    }
-    assert (maxdegree <= VDS_MAXDEGREE);
-    assert(maxdepth <= VDS_MAXDEPTH);
-
-    return maxdepth;
 }
 
 /*
@@ -597,102 +547,6 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
     return N;
 }
 
-/*
- * Function:	computeInternalBounds
- * Description:	Recursively descends the vertex tree, computing each node's
- *		bounding sphere from its children's bounds.
- * Algorithm:	Computes the center of the new bounding sphere by averaging
- *		the centers of the child spheres.  For each child sphere,
- *		find the distance from its center to the averaged parent
- *		center, plus the radius of the child sphere.  The maximum of
- *		these is used as the radius for the parent sphere.
- * XXX:		This is certainly suboptimal.  Perhaps I should modify and use
- *		the Graphics Gems code for finding tightly-enclosing spheres?
- */
-static void computeInternalBounds(vdsNode *node)
-{
-    vdsNode *child = node->children;
-    int numchildren = 0;
-    vdsFloat maxdist = 0;
-    vdsVec3 center = {0, 0, 0};
-
-    /* If node is a leaf, just return */
-    if (child == NULL) {
-	return;
-    }
-
-    while (child != NULL) {
-	computeInternalBounds(child);	/* Recurse to compute child sphere */
-	VEC3_ADD(center, center, child->bound.center);
-	child = child->sibling;
-	numchildren++;
-    }
-    VEC3_SCALE(center,  1.0 / (vdsFloat)numchildren, center);
-    child = node->children;
-    while (child != NULL) {
-	vdsFloat dist =
-	    VEC3_DISTANCE(center, child->bound.center) + child->bound.radius;
-	if (dist > maxdist) {
-	    maxdist = dist;
-	}
-	child = child->sibling;
-    }
-    VEC3_COPY(node->bound.center, center);
-    node->bound.radius = maxdist;
-}
-
-/* Recursively assign bounding volumes to each node.
- *
- * Algorithm:	For the moment, uses a very simple, crude way of estimating
- *		bounding spheres: spins through triarray and for each leaf
- *		node, computes an axis-aligned bounding box that completely
- *		contains all triangles associated with that node.  From this
- *		AABB bounding spheres are calculated for each leaf node, then
- *		a recursive postorder traversal builds bounding spheres for
- *		the internal nodes of the vertex tree.
- */
-static void assignNodeBounds(vdsNode *root)
-{
-    typedef struct {
-	vdsVec3 min, max;
-    } Box;
-    Box *boxes;
-    int i, j, k;
-
-    boxes = (Box *) malloc(vdsNumnodes * sizeof(Box));
-    for (i = 0; i < vdsNumnodes; i++) {
-	VEC3_COPY(boxes[i].min, nodearray[i].coord);
-	VEC3_COPY(boxes[i].max, nodearray[i].coord);
-    }
-    for (i = 0; i < vdsNumtris; i++) {	/* iterate over tris */
-	vdsTri *t = &triarray[i];
-	vdsNode *c0 = &nodearray[t->corners[0].index];
-	vdsNode *c1 = &nodearray[t->corners[1].index];
-	vdsNode *c2 = &nodearray[t->corners[2].index];
-
-	for (j = 0; j < 3; j++) {	/* iterate over corners of tri */
-	    int cindex = t->corners[j].index;
-	    vdsNode *corner = &nodearray[cindex];
-	    /* Some effort wasted here testing each corner against itself: */
-	    VEC3_FIND_MAX(boxes[cindex].max, boxes[cindex].max, c0->coord);
-	    VEC3_FIND_MIN(boxes[cindex].min, boxes[cindex].min, c0->coord);
-	    VEC3_FIND_MAX(boxes[cindex].max, boxes[cindex].max, c1->coord);
-	    VEC3_FIND_MIN(boxes[cindex].min, boxes[cindex].min, c1->coord);
-	    VEC3_FIND_MAX(boxes[cindex].max, boxes[cindex].max, c2->coord);
-	    VEC3_FIND_MIN(boxes[cindex].min, boxes[cindex].min, c2->coord);
-	}
-    }
-    /* Calculate bounding spheres from leaf nodes' bounding boxes */
-    for (i = 0; i < vdsNumnodes; i++) {
-	vdsNode *N = &nodearray[i];
-
-	VEC3_AVERAGE(N->bound.center, boxes[i].min, boxes[i].max);
-	N->bound.radius = VEC3_DISTANCE(boxes[i].min, boxes[i].max) / 2.0;
-    }
-    free(boxes);
-    /* Recursively calculate internal node bounds from leaf bounds */
-    computeInternalBounds(root);
-}
 
 /** Finalize the VDS vertex tree.
  * 		After all geometry has been added and all leaf nodes (created
@@ -717,19 +571,21 @@ static void assignNodeBounds(vdsNode *root)
 vdsNode *vdsEndVertexTree()
 {
     vdsNode *root;
+#ifdef VDS_DEBUGPRINT
     vdsNodeId rootId = {0, 0};
+#endif
     vdsNodeId *ids;
-    int maxdepth;
-    int i, j;
+    int i;
 
-    assert(openflag == 1);
     root = &nodearray[0];
     while (root->parent != NULL) {
 	root = root->parent;
     }
     VDS_DEBUG(("Assigning node ids..."));
     ids = (vdsNodeId *) calloc(vdsNumnodes, sizeof(vdsNodeId));
-    maxdepth = assignNodeIds(root, rootId, ids);
+#ifdef VDS_DEBUGPRINT
+    int maxdepth = assignNodeIds(root, rootId, ids);
+#endif
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Verifying that all nodes form a single rooted tree..."));
     verifyRootedTree(root);
@@ -752,17 +608,9 @@ vdsNode *vdsEndVertexTree()
 	c1 = T->corners[1].index;
 	c2 = T->corners[2].index;
 
-	assert(c0 < vdsNumnodes && c0 >= 0);
-	assert(c1 < vdsNumnodes && c1 >= 0);
-	assert(c2 < vdsNumnodes && c2 >= 0);
-
 	T->corners[0].id = ids[c0];
 	T->corners[1].id = ids[c1];
 	T->corners[2].id = ids[c2];
-
-	assert(! idEqual(T->corners[0].id, T->corners[1].id) &&
-	       ! idEqual(T->corners[1].id, T->corners[2].id) &&
-	       ! idEqual(T->corners[2].id, T->corners[0].id));
     }
     free(ids);
     VDS_DEBUG(("Done.\n"));
@@ -770,7 +618,7 @@ vdsNode *vdsEndVertexTree()
     computeSubtris(root);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Reallocating nodes and copying triangles into node->subtris "
-	       "fields..."));
+		"fields..."));
     root = moveTrisToNodes(root);	/* Note: reallocates all nodes	    */
     free(nodearray);
     VDS_DEBUG(("Done.\n"));
@@ -779,8 +627,9 @@ vdsNode *vdsEndVertexTree()
     free(triarray);			/* nodearray still holds leaf nodes */
     root->status = Boundary;		/* root initially on boundary	    */
     root->next = root->prev = root;	/* root always on boundary path	    */
+#ifdef VDS_DEBUGPRINT
     VDS_DEBUG(("Done.\nVertex tree complete! Maximum depth = %d\n", maxdepth));
-
+#endif
     openflag = 0;
     return root;
 }
@@ -809,13 +658,13 @@ vdsNode *vdsEndVertexTree()
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-		       Department of Computer Science
-		       Thornton Hall, University of Virginia
-		       Charlottesville, VA 22903
+  Department of Computer Science
+  Thornton Hall, University of Virginia
+  Charlottesville, VA 22903
 
-  Phone:               (804)924-1021
+Phone:               (804)924-1021
 
-  EMail:               luebke@cs.virginia.edu
+EMail:               luebke@cs.virginia.edu
 
 \*****************************************************************************/
 /*
@@ -847,11 +696,9 @@ vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
     int i, j;
     vdsVec3 min, max, center, average = {0, 0, 0};
 
-    assert(depth < VDS_MAXDEPTH);
     /* Overestimate array size needs for childnodes now; shrink later */
     for (i = 0; i < 8; i++) {
 	childnodes[i] = (vdsNode **) malloc(sizeof(vdsNode *) * nnodes);
-	assert(childnodes[i] != NULL);
     }
     /* Find the min and max bounds of nodes, and accumulate average coord */
     VEC3_COPY(min, nodes[0]->coord);
@@ -897,7 +744,7 @@ vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
     /* Resize childnodes arrays to use only as much space as necessary */
     for (i = 0; i < 8; i++) {
 	childnodes[i] = (vdsNode **)
-		realloc(childnodes[i], sizeof(vdsNode *) * nchildnodes[i]);
+	    realloc(childnodes[i], sizeof(vdsNode *) * nchildnodes[i]);
     }
     /* Recurse or store non-empty children */
     for (i = 0; i < 8; i++) {
@@ -914,7 +761,7 @@ vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth)
     }
     /* Finally, cluster nonempty children; this node is the resulting parent */
     thisnode = vdsClusterNodes(nchildren, children,
-		       average[0], average[1], average[2]);
+	    average[0], average[1], average[2]);
     for (i = 0; i < 8; i++) {
 	if (nchildnodes[i]) {
 	    free(childnodes[i]);
@@ -1057,16 +904,11 @@ void vdsFoldNode(vdsNode *node)
     vdsTri *t;
     int i;
 
-    assert(node->status == Active);
-
     /* Activate node and deactivate children */
     node->status = Boundary;
     child = node->children;
-    assert(child != NULL);
     prev = child->prev;			/* Set prev to first child's prev */
     while (child != NULL) {
-	assert(child->status == Boundary);
-
 	child->status = Inactive;
 	next = child->next;		/* Set next to last child's next */
 	child = child->sibling;		/* Advance to next child	 */
@@ -1103,8 +945,6 @@ void vdsUnfoldNode(vdsNode *node)
     vdsTri *t;
     int i;
 
-    assert(node->status == Boundary);
-
     if (child == NULL) {
 	return;    /* Node is a leaf, leave on boundary */
     }
@@ -1117,7 +957,6 @@ void vdsUnfoldNode(vdsNode *node)
 	prev->next = child;
 	prev = child;
 
-	assert(child->status == Inactive);
 	child->status = Boundary;
 	child = child->sibling;			/* Advance to next child */
     }
@@ -1146,7 +985,6 @@ void vdsFoldSubtree(vdsNode *node)
 {
     vdsNode *child = node->children;
 
-    assert(node->status == Active);
     while (child != NULL) {
 	if (child->status == Active) {
 	    vdsFoldSubtree(child);
@@ -1172,7 +1010,6 @@ void vdsUnfoldAncestors(vdsNode *node)
 {
     vdsNode *parent = node->parent;
 
-    assert(node->status == Inactive);
     if (parent != NULL) {
 	if (parent->status == Boundary) {
 	    vdsUnfoldNode(parent);
@@ -1228,7 +1065,6 @@ void vdsAdjustTreeBoundary(vdsNode *root, vdsFoldCriterion foldtest, void *udata
 	    current = current->children;
 	} else {
 	    /* No folds or unfolds, move on to next node on the boundary */
-	    assert(current->next != NULL);
 	    current = current->next;
 	}
     } while (current != root);
@@ -1293,13 +1129,13 @@ void vdsAdjustTreeTopDown(vdsNode *node, vdsFoldCriterion foldtest, void *udata)
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-		       Department of Computer Science
-		       Thornton Hall, University of Virginia
-		       Charlottesville, VA 22903
+  Department of Computer Science
+  Thornton Hall, University of Virginia
+  Charlottesville, VA 22903
 
-  Phone:               (804)924-1021
+Phone:               (804)924-1021
 
-  EMail:               luebke@cs.virginia.edu
+EMail:               luebke@cs.virginia.edu
 
 \*****************************************************************************/
 /**
@@ -1342,7 +1178,6 @@ static vdsNode *firstActiveAncestor(vdsNodeId id, vdsNode *proxy)
 		proxy = proxy->sibling;
 		whichchild --;
 	    }
-	    assert(proxy != NULL);
 	}
 	return proxy;	/* proxy->status is now Boundary */
     }
@@ -1389,7 +1224,7 @@ void vdsUpdateTriProxies(vdsTri *t)
  *		        of a node.  NULL if the node is to be assumed visible.
  */
 void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
-		   vdsVisibilityFunction visible, void *udata)
+	vdsVisibilityFunction visible, void *udata)
 {
     vdsNode *child;
 
@@ -1440,13 +1275,13 @@ void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-		       Department of Computer Science
-		       Thornton Hall, University of Virginia
-		       Charlottesville, VA 22903
+  Department of Computer Science
+  Thornton Hall, University of Virginia
+  Charlottesville, VA 22903
 
-  Phone:               (804)924-1021
+Phone:               (804)924-1021
 
-  EMail:               luebke@cs.virginia.edu
+EMail:               luebke@cs.virginia.edu
 
 \*****************************************************************************/
 /**
@@ -1475,7 +1310,6 @@ vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root)
 
 	tmp = tmp->children;
 	while (whichchild > 0) {
-	    assert(tmp != NULL);
 	    tmp = tmp->sibling;
 	    --whichchild;
 	}
@@ -1503,7 +1337,6 @@ vdsNodeId vdsFindCommonId(vdsNodeId id1, vdsNodeId id2, int maxdepth)
 
     maxcommondepth = (id1.depth < id2.depth) ? id1.depth : id2.depth;
     maxcommondepth = (maxdepth < maxcommondepth) ? maxdepth : maxcommondepth;
-    assert(maxcommondepth <= VDS_MAXDEPTH);
 
     common.depth = 0;
     for (i = 0; i < maxcommondepth; i++) {
@@ -1574,28 +1407,6 @@ void vdsPrintNodeId(const vdsNodeId *id)
 	    tmppath >>= VDS_NUMBITS;
 	}
 	putchar('\n');
-    }
-}
-
-/** Print a vdsNodeID to a string.
- * 		Prints the node ID (depth & path down the vertex tree) in
- *		human-readable form to the given string <b>str</b>.  The caller
- *		must ensure that <b>str</b> points to VDS_MAXDEPTH+1 allocated
- *		bytes.  The returned <b>str</b> is null-terminated.
- */
-void vdsSprintNodeId(char *str, const vdsNodeId *id)
-{
-    int i;
-    vdsNodePath tmppath = id->path;
-
-    if (id->depth == 0) {
-	strcpy(str, "<root>");
-    } else {
-	for (i = 0; i < id->depth; i++) {
-	    str[i] = (tmppath & VDS_BITMASK) + '0';
-	    tmppath >>= VDS_NUMBITS;
-	}
-	str[i] = '\0';
     }
 }
 
@@ -1695,13 +1506,13 @@ void vdsFreeTree(vdsNode *node)
   The author of the vdslib software library may be contacted at:
 
   US Mail:             Dr. David Patrick Luebke
-		       Department of Computer Science
-		       Thornton Hall, University of Virginia
-		       Charlottesville, VA 22903
+  Department of Computer Science
+  Thornton Hall, University of Virginia
+  Charlottesville, VA 22903
 
-  Phone:               (804)924-1021
+Phone:               (804)924-1021
 
-  EMail:               luebke@cs.virginia.edu
+EMail:               luebke@cs.virginia.edu
 
 \*****************************************************************************/
 /**
@@ -1739,16 +1550,15 @@ vdsNode *vdsReadTree(FILE *f, vdsNodeDataReader readdata)
 {
     int major, minor;
     int numnodes, numverts, numtris;
-    vdsNode *root, *currentnode, *lastnode, *parent;
+    vdsNode *root;
 
-    assert(f != NULL);
     if (fscanf(f, "VDS Vertex Tree file format version %d.%d\n",
-	       &major, &minor) != 2) {
+		&major, &minor) != 2) {
 	fprintf(stderr, "Error reading line 1 of input file.\n");
 	exit(1);
     }
     if (fscanf(f, "Total nodes: %d\nVertices: %d\nTriangles: %d\n",
-	       &numnodes, &numverts, &numtris) != 3) {
+		&numnodes, &numverts, &numtris) != 3) {
 	fprintf(stderr, "Error reading lines 2-4 of input file.\n");
 	exit(1);
     }
@@ -1774,7 +1584,6 @@ static vdsNode *readChildren(FILE *f, vdsNode *parent, vdsNodeDataReader get)
 {
     vdsNode *node, *firstnode;
 
-    assert(parent != NULL);
     firstnode = readNode(f, get);
     node = firstnode;
     while (node != NULL) {
@@ -1808,12 +1617,10 @@ static vdsNode *readNode(FILE *f, vdsNodeDataReader getdata)
     int numchildren, numsubtris;
 
     node = (vdsNode *) calloc(1, sizeof(vdsNode));
-    assert(node != NULL);
     node->status = Inactive;
     fread(&node->bound, sizeof(vdsBoundingVolume), 1, f);
     fread(&node->coord, sizeof(vdsVec3), 1, f);
     fread(&numchildren, sizeof(numchildren), 1, f);
-    assert(numchildren <= VDS_MAXDEGREE);
     /* if numchildren is 0, set node->children NULL, otherwise to non-NULL */
     node->children = (numchildren == 0 ? NULL : (vdsNode *) 0x1);
     /* Read sibling pointer (actually we just care if it's NULL or not) */
@@ -1828,7 +1635,7 @@ static vdsNode *readNode(FILE *f, vdsNodeDataReader getdata)
     fread(&numsubtris, sizeof(numsubtris), 1, f);
     node->nsubtris = numsubtris;
     node = (vdsNode *) realloc(node, sizeof(vdsNode) +
-		       numsubtris * sizeof(vdsTri));
+	    numsubtris * sizeof(vdsTri));
     fread(&node->subtris[0], sizeof(vdsTri), numsubtris, f);
     /* Now get the associated node data if user has provided a function */
     if (getdata == NULL) {
@@ -1854,9 +1661,7 @@ static vdsNode *readNode(FILE *f, vdsNodeDataReader getdata)
 void vdsWriteTree(FILE *f, vdsNode *root, vdsNodeDataWriter writedata)
 {
     int numnodes, numverts, numtris;
-    vdsNode *child;
 
-    assert(f != NULL);
     fprintf(f, "VDS Vertex Tree file format version %d.%d\n", MAJOR, MINOR);
     vdsStatTree(root, &numnodes, &numverts, &numtris);
     fprintf(f, "Total nodes: %d\n", numnodes);
@@ -1900,7 +1705,7 @@ static void writeChildren(FILE *f, vdsNode *parent, vdsNodeDataWriter put)
 static void writeNode(FILE *f, vdsNode *node, vdsNodeDataWriter putdata)
 {
     vdsNode *child;
-    int i, numchildren = 0, numsubtris = node->nsubtris;
+    int numchildren = 0, numsubtris = node->nsubtris;
 
     fwrite(&node->bound, sizeof(vdsBoundingVolume), 1, f);
     fwrite(&node->coord, sizeof(vdsVec3), 1, f);
@@ -1909,7 +1714,6 @@ static void writeNode(FILE *f, vdsNode *node, vdsNodeDataWriter putdata)
 	numchildren ++;
 	child = child->sibling;
     }
-    assert(numchildren <= VDS_MAXDEGREE);
     fwrite(&numchildren, sizeof(numchildren), 1, f);
     /* Write the sibling pointer (actually we just care if it's NULL or not) */
     fwrite(&node->sibling, sizeof(node->sibling), 1, f);
@@ -1925,34 +1729,13 @@ static void writeNode(FILE *f, vdsNode *node, vdsNodeDataWriter putdata)
 }
 
 /*@}*/
-/***************************************************************************\
 
-  Copyright 1999 The University of Virginia.
-  All Rights Reserved.
-
-  Permission to use, copy, modify and distribute this software and its
-  documentation without fee, and without a written agreement, is
-  hereby granted, provided that the above copyright notice and the
-  complete text of this comment appear in all copies, and provided that
-  the University of Virginia and the original authors are credited in
-  any publications arising from the use of this software.
-
-  IN NO EVENT SHALL THE UNIVERSITY OF VIRGINIA OR THE AUTHOR OF THIS
-  SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
-  INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
-  OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE
-  UNIVERSITY OF VIRGINIA AND/OR THE AUTHOR OF THIS SOFTWARE HAVE BEEN
-  ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-
-  The author of the vdslib software library may be contacted at:
-
-  US Mail:             Dr. David Patrick Luebke
-		       Department of Computer Science
-		       Thornton Hall, University of Virginia
-		       Charlottesville, VA 22903
-
-  Phone:               (804)924-1021
-
-  EMail:               luebke@cs.virginia.edu
-
-\*****************************************************************************/
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

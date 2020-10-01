@@ -1,3 +1,36 @@
+/***************************************************************************\
+
+  Copyright 1999 The University of Virginia.
+  All Rights Reserved.
+
+  Permission to use, copy, modify and distribute this software and its
+  documentation without fee, and without a written agreement, is
+  hereby granted, provided that the above copyright notice and the
+  complete text of this comment appear in all copies, and provided that
+  the University of Virginia and the original authors are credited in
+  any publications arising from the use of this software.
+
+  IN NO EVENT SHALL THE UNIVERSITY OF VIRGINIA
+  OR THE AUTHOR OF THIS SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT,
+  INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+  LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+  DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
+  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
+  SUCH DAMAGES.
+
+  The author of the vdslib software library may be contacted at:
+
+  US Mail:             Dr. David Patrick Luebke
+  Department of Computer Science
+  Thornton Hall, University of Virginia
+  Charlottesville, VA 22903
+
+Phone:               (804)924-1021
+
+EMail:               luebke@cs.virginia.edu
+
+\*****************************************************************************/
+
 /**
  * Note: This is just an unofficial overview of the basics of what libvds
  * is/does and how to use it. It is not guaranteed to be complete or accurate!
@@ -71,30 +104,6 @@
 
 #ifndef _VDS_H
 #define _VDS_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if defined(_WIN32)
-# define COMPILER_DLLEXPORT __declspec(dllexport)
-# define COMPILER_DLLIMPORT __declspec(dllimport)
-#else
-# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
-# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
-#endif
-
-#ifndef VDS_EXPORT
-#  if defined(VDS_DLL_EXPORTS) && defined(VDS_DLL_IMPORTS)
-#    error "Only VDS_DLL_EXPORTS or VDS_DLL_IMPORTS can be defined, not both."
-#  elif defined(VDS_DLL_EXPORTS)
-#    define VDS_EXPORT COMPILER_DLLEXPORT
-#  elif defined(VDS_DLL_IMPORTS)
-#    define VDS_EXPORT COMPILER_DLLIMPORT
-#  else
-#    define VDS_EXPORT
-#  endif
-#endif
 
 #include <stdio.h>
 
@@ -177,9 +186,9 @@ typedef union {
  */
 typedef struct _vdsTri {
     vdsTriCorner	corners[3];	/* leaf nodes corresponding to 	*
-				     * 3 original corner vertices	*/
+					 * 3 original corner vertices	*/
     struct _vdsNode	*proxies[3];	/* nodes representing corners;	*
-				     * i.e., the FAA of each corner	*/
+					 * i.e., the FAA of each corner	*/
     struct _vdsNode	*node;		/* smallest node containing tri	*/
     vdsVec3		normal[3];	/* normal for the tri		*/
     vdsByte3		color[3];	/* RGB for the tri's corners	*/
@@ -199,10 +208,10 @@ typedef struct _vdsNode {
     vdsNodeStatus	status;		/* is node currently active?	*/
 
     vdsBoundingVolume 	bound;		/* bounding volume of triangles	*
-				     * supported by the node	*/
+					 * supported by the node	*/
     vdsVec3		coord;		/* coordinate of node's proxy	*/
     vdsTri		*vistris;	/* linked list of visible tris 	*
-				     * contained by this node	*/
+					 * contained by this node	*/
     vdsNodeData		data;		/* auxiliary node data		*/
     struct _vdsNode	*next;		/* next node in boundary path	*/
     struct _vdsNode	*prev;		/* prev node in boundary path	*/
@@ -241,44 +250,44 @@ typedef vdsNodeData (*vdsNodeDataReader) (FILE *f);
  */
 
 /* Routines for maintaining the vertex tree (dynamic.c) */
-VDS_EXPORT extern void vdsAdjustTreeBoundary(vdsNode *, vdsFoldCriterion, void *);
-VDS_EXPORT extern void vdsAdjustTreeTopDown(vdsNode *, vdsFoldCriterion, void *);
+extern void vdsAdjustTreeBoundary(vdsNode *, vdsFoldCriterion, void *);
+extern void vdsAdjustTreeTopDown(vdsNode *, vdsFoldCriterion, void *);
 /* Low-level vertex tree maintainance routines; not need by most users: */
-VDS_EXPORT extern void vdsFoldNode(vdsNode *);
-VDS_EXPORT extern void vdsUnfoldNode(vdsNode *);
-VDS_EXPORT extern void vdsFoldSubtree(vdsNode *);
+extern void vdsFoldNode(vdsNode *);
+extern void vdsUnfoldNode(vdsNode *);
+extern void vdsFoldSubtree(vdsNode *);
 
 /* Routines for rendering the vertex tree (render.c) */
-VDS_EXPORT extern void vdsUpdateTriProxies(vdsTri *t);
-VDS_EXPORT extern void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
-		  vdsVisibilityFunction visible, void *udata);
+extern void vdsUpdateTriProxies(vdsTri *t);
+extern void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
+	vdsVisibilityFunction visible, void *udata);
 
 /* Routines for building the vertex tree (build.c) */
-VDS_EXPORT extern void vdsBeginVertexTree();
-VDS_EXPORT extern void vdsBeginGeometry();
-VDS_EXPORT extern vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z);
-VDS_EXPORT extern vdsTri *vdsAddTri(int v0, int v1, int v2,
-		 vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
-		 vdsByte3 c0, vdsByte3 c1, vdsByte3 c2);
-VDS_EXPORT extern void vdsNewObject();
-VDS_EXPORT extern vdsNode *vdsEndGeometry();
-VDS_EXPORT extern vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
-		vdsFloat x, vdsFloat y, vdsFloat z);
-VDS_EXPORT extern vdsNode *vdsEndVertexTree();
+extern void vdsBeginVertexTree();
+extern void vdsBeginGeometry();
+extern vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z);
+extern vdsTri *vdsAddTri(int v0, int v1, int v2,
+	vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
+	vdsByte3 c0, vdsByte3 c1, vdsByte3 c2);
+extern void vdsNewObject();
+extern vdsNode *vdsEndGeometry();
+extern vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
+	vdsFloat x, vdsFloat y, vdsFloat z);
+extern vdsNode *vdsEndVertexTree();
 
 /* Routines for reading and writing the vertex tree (file.c) */
-VDS_EXPORT extern vdsNode *vdsReadTree(FILE *f, vdsNodeDataReader readdata);
-VDS_EXPORT extern void vdsWriteTree(FILE *f, vdsNode *root, vdsNodeDataWriter writedata);
+extern vdsNode *vdsReadTree(FILE *f, vdsNodeDataReader readdata);
+extern void vdsWriteTree(FILE *f, vdsNode *root, vdsNodeDataWriter writedata);
 
 /* Assorted useful routines (util.c) */
-VDS_EXPORT extern vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root);
-VDS_EXPORT extern void vdsPrintNodeId(const vdsNodeId *id);
-VDS_EXPORT extern void vdsSprintNodeId(char *str, const vdsNodeId *id);
-VDS_EXPORT extern void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris);
-VDS_EXPORT extern void vdsFreeTree(vdsNode *node);
+extern vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root);
+extern void vdsPrintNodeId(const vdsNodeId *id);
+extern void vdsSprintNodeId(char *str, const vdsNodeId *id);
+extern void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris);
+extern void vdsFreeTree(vdsNode *node);
 
 /* (cluster.c) */
-VDS_EXPORT extern vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth);
+extern vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth);
 
 /*
  * The following macros relate to the maximum degree of the vertex tree,
@@ -312,42 +321,16 @@ VDS_EXPORT extern vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int dep
 #    error "Only values of 2, 4, and 8 supported for VDS_MAXDEGREE"
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif		/* _VDS_H */
 
 /*@}*/
-/***************************************************************************\
 
-  Copyright 1999 The University of Virginia.
-  All Rights Reserved.
-
-  Permission to use, copy, modify and distribute this software and its
-  documentation without fee, and without a written agreement, is
-  hereby granted, provided that the above copyright notice and the
-  complete text of this comment appear in all copies, and provided that
-  the University of Virginia and the original authors are credited in
-  any publications arising from the use of this software.
-
-  IN NO EVENT SHALL THE UNIVERSITY OF VIRGINIA
-  OR THE AUTHOR OF THIS SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT,
-  INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
-  LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-  DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
-  SUCH DAMAGES.
-
-  The author of the vdslib software library may be contacted at:
-
-  US Mail:             Dr. David Patrick Luebke
-		       Department of Computer Science
-		       Thornton Hall, University of Virginia
-		       Charlottesville, VA 22903
-
-  Phone:               (804)924-1021
-
-  EMail:               luebke@cs.virginia.edu
-
-\*****************************************************************************/
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
