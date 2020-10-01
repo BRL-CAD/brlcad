@@ -108,7 +108,11 @@ if (BRLCAD_ENABLE_TK)
       )
 
     ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
+      itk${ITK_VERSION}/Archetype.itk
+      itk${ITK_VERSION}/Toplevel.itk
+      itk${ITK_VERSION}/Widget.itk
       itk${ITK_VERSION}/itk.tcl
+      itk${ITK_VERSION}/tclIndex
       )
     ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
       itk${ITK_VERSION}/pkgIndex.tcl
