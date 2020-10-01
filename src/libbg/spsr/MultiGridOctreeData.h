@@ -29,6 +29,10 @@ DAMAGE.
 #ifndef MULTI_GRID_OCTREE_DATA_INCLUDED
 #define MULTI_GRID_OCTREE_DATA_INCLUDED
 
+#include <unordered_map>
+#define hash_map unordered_map
+using std::unordered_map;
+
 #define NEW_CODE 1
 
 //#define MAX_MEMORY_GB 15
@@ -76,7 +80,6 @@ DAMAGE.
 #pragma message( "[WARNING] Not zeroing out normal component on boundary" )
 #endif // !FORCE_NEUMANN_FIELD
 
-#include "Hash.h"
 #include "BSplineData.h"
 #include "PointStream.h"
 

@@ -23,7 +23,6 @@ set(SPSR_srcs
   spsr/Geometry.cpp
   spsr/Geometry.h
   spsr/Geometry.inl
-  spsr/Hash.h
   spsr/MarchingCubes.cpp
   spsr/MarchingCubes.h
   spsr/MAT.h

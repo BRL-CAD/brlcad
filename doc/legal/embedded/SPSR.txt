@@ -98,7 +98,6 @@ file:/src/libbg/spsr/FunctionData.inl
 file:/src/libbg/spsr/Geometry.cpp
 file:/src/libbg/spsr/Geometry.h
 file:/src/libbg/spsr/Geometry.inl
-file:/src/libbg/spsr/Hash.h
 file:/src/libbg/spsr/MAT.h
 file:/src/libbg/spsr/MAT.inl
 file:/src/libbg/spsr/MarchingCubes.cpp

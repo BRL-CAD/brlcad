@@ -32,7 +32,9 @@ DAMAGE.
 #include <math.h>
 #include <vector>
 #include <cstdlib>
-#include "Hash.h"
+#include <unordered_map>
+#define hash_map unordered_map
+using std::unordered_map;
 
 template<class Real>
 Real Random(void);
