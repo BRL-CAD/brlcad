@@ -18,11 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Release Testing, final commit reviews
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
+* Update libgcv plugin installation location - now that its
+  available, they belong with the other plugins in libexec
 
 * The following will be removed from MGED's menu bar (unused
   features, can be accomplished another way, or will be exposed
@@ -167,6 +164,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
+
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS

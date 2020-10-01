@@ -35,7 +35,6 @@ DAMAGE.
 #include <algorithm>
 #include "CmdLineParser.h"
 #include "Geometry.h"
-#include "Ply.h"
 #include "MAT.h"
 #include "MyTime.h"
 

@@ -39,8 +39,8 @@ DAMAGE.
 #include "MarchingCubes.h"
 #include "Octree.h"
 #include "SparseMatrix.h"
+#include "PlyVertexMini.h"
 #include "PPolynomial.h"
-#include "Ply.h"
 #include "MemoryUsage.h"
 #ifdef _OPENMP
 #include "omp.h"
