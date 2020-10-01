@@ -102,7 +102,6 @@ file:/src/libbg/spsr/MAT.h
 file:/src/libbg/spsr/MAT.inl
 file:/src/libbg/spsr/MarchingCubes.cpp
 file:/src/libbg/spsr/MarchingCubes.h
-file:/src/libbg/spsr/MemoryUsage.h
 file:/src/libbg/spsr/MultiGridOctreeData.IsoSurface.inl
 file:/src/libbg/spsr/MultiGridOctreeData.SortedTreeNodes.inl
 file:/src/libbg/spsr/MultiGridOctreeData.h
