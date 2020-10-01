@@ -40,7 +40,6 @@ DAMAGE.
 #include "SparseMatrix.h"
 #include "CmdLineParser.h"
 #include "PPolynomial.h"
-#include "Ply.h"
 #include "MemoryUsage.h"
 #ifdef _OPENMP
 #include "omp.h"

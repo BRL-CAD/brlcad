@@ -13,6 +13,12 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* applied shorter default title in fast4-g conversions - Cliff Yapp
+* improved pixcmp support for subset image comparisons - Sean Morrison
+* added subtract subcommand to MGED analyze command - Cliff Yapp
+* added intersect subcommand to MGED analyze command - Cliff Yapp
+* added summarize subcommand to MGED analyze command - Cliff Yapp
+* added quiet (-q) flag to MGED kill command - Cliff Yapp
 * added MGED stat command for reporting of object info - Cliff Yapp
 * corrected examples in gdiff man page - Cliff Yapp
 * fixed help message for -F option on gdiff command - Cliff Yapp

@@ -111,6 +111,8 @@ GED_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1,
 GED_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 GED_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 
+GED_EXPORT extern int ged_dplot_core(struct ged *gedp, int argc, const char *argv[]);
+
 using namespace brlcad;
 void
 plotface(const ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d, const int red, const int green, const int blue);

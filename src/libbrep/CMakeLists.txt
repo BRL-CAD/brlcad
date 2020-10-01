@@ -33,6 +33,7 @@ set(LIBBREP_SOURCES
   cdt/mesh.cpp
   cdt/ovlps_simple.cpp
   cdt/tri_isect.cpp
+  debug_plot.cpp
   intersect.cpp
   tools/tools.cpp
   opennurbs_ext.cpp

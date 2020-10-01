@@ -180,6 +180,12 @@ HIDDEN int to_data_vZ(struct ged *gedp,
 		      ged_func_ptr func,
 		      const char *usage,
 		      int maxargs);
+HIDDEN int to_dplot(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr func,
+		       const char *usage,
+		       int maxargs);
 HIDDEN int to_dlist_on(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -604,6 +610,7 @@ static struct to_cmdtab ged_cmds[] = {
     {"debugnmg",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugnmg},
     {"decompose",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_decompose},
     {"delay",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_delay},
+    {"dplot",	"dplot_logfile", 1, to_dplot, ged_dplot},
     {"metaball_delete_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_metaball_delete_pnt},
     {"pipe_delete_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pipe_delete_pnt},
     {"dir2ae",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dir2ae},
@@ -3217,6 +3224,144 @@ to_dlist_on(struct ged *gedp,
     return GED_OK;
 }
 
+HIDDEN int
+to_dplot(struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    ged_func_ptr func,
+	    const char *UNUSED(usage),
+	    int UNUSED(maxargs))
+{
+    int ac;
+    int ret;
+    char *av[256];
+    struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
+    struct bu_vls result_copy = BU_VLS_INIT_ZERO;
+    struct bview *gdvp;
+    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+    char *who_av[3] = {"who", "b", NULL};
+    int first = 1;
+    int aflag = 0;
+
+    /* copy all args */
+    ac = argc;
+    for (int i = 0; i < ac; ++i)
+	av[i] = bu_strdup((char *)argv[i]);
+    av[ac] = (char *)0;
+
+    /* check for displayed objects */
+    ret = ged_who(gedp, 2, (const char **)who_av);
+    if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
+	aflag = 1;
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
+	int ac_more;
+	const char **avmp;
+	const char **av_more = NULL;
+
+	/* save result string */
+	bu_vls_substr(&result_copy, gedp->ged_result_str, 0, bu_vls_strlen(gedp->ged_result_str));
+	bu_vls_trunc(gedp->ged_result_str, 0);
+
+	ret = ged_who(gedp, 1, (const char **)who_av);
+	if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
+	    aflag = 1;
+
+	bu_vls_trunc(gedp->ged_result_str, 0);
+
+	for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	    gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	    if (to_is_viewable(gdvp)) {
+		gedp->ged_gvp->gv_x_samples = dm_get_width((struct dm *)gdvp->dmp);
+		gedp->ged_gvp->gv_y_samples = dm_get_height((struct dm *)gdvp->dmp);
+	    }
+	}
+
+	if (first && aflag) {
+	    first = 0;
+	    to_autoview_all_views(current_top);
+	} else {
+	    to_refresh_all_views(current_top);
+	}
+	/* restore result string */
+	bu_vls_substr(gedp->ged_result_str, &result_copy, 0, bu_vls_strlen(&result_copy));
+	bu_vls_free(&result_copy);
+
+	if (0 < bu_vls_strlen(&tgd->go_more_args_callback)) {
+	    bu_vls_trunc(&callback_cmd, 0);
+	    bu_vls_printf(&callback_cmd, "%s [string range {%s} 0 end]",
+			  bu_vls_addr(&tgd->go_more_args_callback),
+			  bu_vls_addr(gedp->ged_result_str));
+
+	    if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd)) != TCL_OK) {
+		bu_vls_trunc(gedp->ged_result_str, 0);
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		Tcl_ResetResult(current_top->to_interp);
+		return GED_ERROR;
+	    }
+
+	    bu_vls_trunc(&temp, 0);
+	    bu_vls_printf(&temp, "%s", Tcl_GetStringResult(current_top->to_interp));
+	    Tcl_ResetResult(current_top->to_interp);
+	} else {
+	    bu_log("\r%s", bu_vls_addr(gedp->ged_result_str));
+	    bu_vls_trunc(&temp, 0);
+	    if (bu_vls_gets(&temp, stdin) < 0) {
+		break;
+	    }
+	}
+
+	if (Tcl_SplitList(current_top->to_interp, bu_vls_addr(&temp), &ac_more, &av_more) != TCL_OK) {
+	    continue;
+	}
+
+	if (ac_more < 1) {
+	    /* space has still been allocated */
+	    Tcl_Free((char *)av_more);
+
+	    continue;
+	}
+
+	/* skip first element if empty */
+	avmp = av_more;
+	if (*avmp[0] == '\0') {
+	    --ac_more;
+	    ++avmp;
+	}
+
+	/* ignore last element if empty */
+	if (*avmp[ac_more-1] == '\0')
+	    --ac_more;
+
+	/* copy additional args */
+	for (int i = 0; i < ac_more; ++i)
+	    av[ac++] = bu_strdup(avmp[i]);
+	av[ac+1] = (char *)0;
+
+	Tcl_Free((char *)av_more);
+    }
+
+    for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	if (to_is_viewable(gdvp)) {
+	    gedp->ged_gvp->gv_x_samples = dm_get_width((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->gv_y_samples = dm_get_height((struct dm *)gdvp->dmp);
+	}
+    }
+    to_refresh_all_views(current_top);
+
+    bu_vls_free(&callback_cmd);
+    bu_vls_free(&temp);
+
+    bu_vls_printf(gedp->ged_result_str, "BUILT_BY_MORE_ARGS");
+    for (int i = 0; i < ac; ++i) {
+	bu_vls_printf(gedp->ged_result_str, "%s ", av[i]);
+	bu_free((void *)av[i], "to_more_args_func");
+    }
+    return GED_OK;
+}
 
 HIDDEN int
 to_fontsize(struct ged *gedp,

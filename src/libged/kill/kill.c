@@ -60,13 +60,16 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "fn")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "fnq")) != -1) {
 	switch (c) {
 	    case 'f':
 		force = 1;
 		break;
 	    case 'n':
 		nflag = 1;
+		break;
+	    case 'q':
+		verbose = LOOKUP_QUIET;
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
