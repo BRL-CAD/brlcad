@@ -9,9 +9,9 @@ THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVE
 if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
 
   if (MSVC)
-    set(NETPBM_BASENAME regex_brl)
+    set(NETPBM_BASENAME netpbm)
   else (MSVC)
-    set(NETPBM_BASENAME libregex_brl)
+    set(NETPBM_BASENAME libnetpbm)
   endif (MSVC)
 
   ExternalProject_Add(NETPBM_BLD

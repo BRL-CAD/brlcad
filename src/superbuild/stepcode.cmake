@@ -20,9 +20,9 @@ if(BRLCAD_SC_BUILD)
 
   if (MSVC)
     set(SC_PREFIX "")
-    set(SC_SUFFIX "")
+    set(SC_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
   else (MSVC)
-    set(SC_PREFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(SC_PREFIX "lib")
     set(SC_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}.${SC_VERSION}")
   endif (MSVC)
 

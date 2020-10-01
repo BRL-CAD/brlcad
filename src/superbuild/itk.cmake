@@ -105,8 +105,6 @@ if (BRLCAD_ENABLE_TK)
     ExternalProject_ByProducts(ITK_BLD ${INCLUDE_DIR}
       itk.h
       itkDecls.h
-      itkInt.h
-      itkIntDecls.h
       )
 
     ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
