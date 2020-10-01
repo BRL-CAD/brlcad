@@ -828,22 +828,6 @@ else(BRLCAD_OSG_BUILD)
   endif (BRLCAD_ENABLE_OSG)
 endif(BRLCAD_OSG_BUILD)
 
-# gdiam
-set(gdiam_DESCRIPTION "
-Option for enabling and disabling compilation of the libgdiam approximate
-tight bounding box library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-")
-THIRD_PARTY(libgdiam GDIAM gdiam gdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
-set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
-mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
-SetTargetFolder(gdiam "Third Party Libraries")
-SetTargetFolder(gdiam-static "Third Party Libraries")
-mark_as_advanced(GDIAM_LIBRARIES)
-mark_as_advanced(GDIAM_INCLUDE_DIRS)
-
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code
 # becomes sufficiently useful, Adaptagrams will be integrated.  In the

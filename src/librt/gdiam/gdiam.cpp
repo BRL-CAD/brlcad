@@ -4,53 +4,66 @@
  *   point-set in 3d.
  *
  * Copyright 2001 Sariel Har-Peled (ssaarriieell@cs.uiuc.edu)
+ * https://sarielhp.org/research/papers/00/diameter/diam_prog.html
  *
+ * Note:  gdiam is available under multiple licenses - we make
+ * use of it under the MIT license:
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of either:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
  *
- * * the GNU General Public License as published by the Free
- *   Software Foundation; either version 2, or (at your option)
- *   any later version.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * or
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
- * * the GNU Lesser General Public License as published by the Free
- *   Software Foundation; either version 2.1, or (at your option)
- *   any later version.
- *
- * or 
- *  
- * * MIT license 
- * 
  * Code is based on the paper:
  *   A Practical Approach for Computing the Diameter of a
- *        Point-Set (in ACM Sym. on Computation Geometry
- *                   SoCG 2001)
+ *   Point-Set (in ACM Sym. on Computation Geometry SoCG 2001)
  *   Sariel Har-Peled (http://www.uiuc.edu/~sariel)
  *--------------------------------------------------------------
  * History
- *  3/6/18 
- *        - Tobias Stohr reported & fixed a bug wis missing
- *          constructor for 
- * 8/19/16 - Clifford Yap updated the source
+ *  3/6/18
+ *        - Tobias Stohr reported & fixed a bug was missing
+ *          constructor for
+ * 8/19/16 - Clifford Yapp updated the source
  * 3/28/01 -
  *     This is a more robust version of the code. It should
  *     handlereally abnoxious inputs well (i.e., points with equal
  *     coordinates, etc.
 \*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*/
 
-#include  <stdlib.h>
-#include  <stdio.h>
-#include  <assert.h>
-#include  <memory.h>
-#include  <math.h>
+#include "common.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <memory.h>
+#include <math.h>
 
 #include  <iostream>
 #include  <vector>
 #include  <algorithm>
 
 #include  "gdiam.hpp"
+
+/* for g++ to quell warnings */
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif defined(__clang__)
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
 
 /*--- Constants ---*/
 
@@ -79,7 +92,7 @@ public:
     int  size() const {
         return  (int)( p_pnt_right - p_pnt_left );
     }
-    const gdiam_point  getCenter() const {
+    gdiam_point  getCenter() const {
         return   (gdiam_point)center;
     }
     int  nodes_number() const {
@@ -230,7 +243,7 @@ public:
         return  diam.distance;
     }
 
-    const gdiam_point  getPoint( int  ind ) const {
+    gdiam_point  getPoint( int  ind ) const {
         return  arr[ ind ];
     }
 
@@ -299,8 +312,6 @@ public:
         if  ( left_size <= 0.0 ) {
             printf( "bb: %g   %g\n",
                     bb.min_coord( dim ), bb.max_coord( dim ) );
-            printf( "left: %p, right: %p\n",
-                    node->p_pnt_left, node->p_pnt_right );
             assert( left_size > 0 );
         }
         if  ( left_size >= (node->p_pnt_right - node->p_pnt_left + 1 ) ) {
@@ -371,7 +382,7 @@ public:
     }
 
     void  init( GFSPTreeNode  * _left, GFSPTreeNode  * _right,
-                gdiam_point  proj_dir, gdiam_real dist )
+                gdiam_point  proj_dir, gdiam_real UNUSED(dist) )
     {
         left = _left;
         right = _right;
@@ -809,7 +820,7 @@ void  GTreeDiamAlg::compute_by_heap_proj( double  eps,
                 threshold_brute *= 2;
                 printf( "threshold_brute: %d\n", threshold_brute );
                 heap_limit += heap_delta;
-            } 
+            }
         }
         count++;
     }
@@ -865,7 +876,7 @@ void  GTreeDiamAlg::addPairHeap( g_heap_pairs_p  & heap,
                                  GFSPTreeNode  * left,
                                  GFSPTreeNode  * right,
                                  gdiam_point  proj,
-                                 GFSPPair  & father )
+                                 GFSPPair  &UNUSED(father) )
 {
     const gdiam_point  p( *(left->ptr_pnt_left()) );
     const gdiam_point  q( *(right->ptr_pnt_left()) );
@@ -1377,7 +1388,7 @@ point2d_ptr  get_min_point( vec_point_2d  & in,
 }
 
 
-const void  dump( vec_point_2d   & vec )
+void  dump( vec_point_2d   & vec )
 {
     for  ( int  ind = 0; ind < (int)vec.size(); ind++ ) {
         printf( "-- %11d (%-11g, %-11g)\n",
@@ -2125,7 +2136,7 @@ gdiam_bbox   gdiam_mvbb_optimize( gdiam_point  * start, int  size,
 
 
 gdiam_bbox   gdiam_approx_mvbb( gdiam_point  * start, int  size,
-                                gdiam_real  eps )
+                                gdiam_real  UNUSED(eps) )
 {
     gdiam_bbox  bb, bb2;
 
@@ -2372,6 +2383,20 @@ gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
     return  bb;
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif defined(__clang__)
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 /* gdiam.C - End of File ------------------------------------------*/
 
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
