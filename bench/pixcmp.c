@@ -121,7 +121,8 @@ main(int argc, char *argv[])
 {
     FILE *f1 = NULL;
     FILE *f2 = NULL;
-    struct stat sf1, sf2;
+    struct stat sf1 = {0};
+    struct stat sf2 = {0};
 
     size_t matching = 0;
     size_t off1 = 0;
@@ -190,6 +191,10 @@ main(int argc, char *argv[])
     }
 
     /* printf("Skip from FILE1: %ld and from FILE2: %ld\n", f1_skip, f2_skip); */
+    if (!print_bytes) {
+	f1_skip *= 3;
+	f2_skip *= 3;
+    }
 
     if (BU_STR_EQUAL(argv[0], "-")) {
 	f1 = stdin;
@@ -204,16 +209,23 @@ main(int argc, char *argv[])
 	exit(FILE_ERROR);
     }
 
-    stat(argv[0], &sf1);
-    stat(argv[1], &sf2);
+    fstat(fileno(f1), &sf1);
+    fstat(fileno(f2), &sf2);
 
-    if (sf1.st_size != sf2.st_size) {
-	bu_exit(FILE_ERROR, "Different file sizes found: %s(%d) and %s(%d).  Cannot perform pixcmp.\n", argv[0], (int)sf1.st_size, argv[1], (int)sf2.st_size);
-    }
-
-    if (!print_bytes) {
-	f1_skip *= 3;
-	f2_skip *= 3;
+    if ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip)) {
+	bu_log("WARNING: Different image sizes detected\n");
+	if (print_bytes) {
+	    bu_log("\t%s: %7zu bytes (%8zu bytes, skipping %7zu)\n",
+		   argv[0], sf1.st_size - f1_skip, sf1.st_size, f1_skip);
+	    bu_log("\t%s: %7zu bytes (%8zu bytes, skipping %7zu)\n",
+		   argv[1], sf2.st_size - f2_skip, sf2.st_size, f2_skip);
+	} else {
+	    bu_log("\t%s: %7zu pixels (%8zu bytes, skipping %7zu)\n",
+		   argv[0], (sf1.st_size - f1_skip)/3, sf1.st_size, f1_skip);
+	    bu_log("\t%s: %7zu pixels (%8zu bytes, skipping %7zu)\n",
+		   argv[1], (sf2.st_size - f2_skip)/3, sf2.st_size, f2_skip);
+	}
+	bu_exit(1, "ERROR: Cannot pixcmp due to different images sizes (unimplemented).\n");
     }
 
     /* skip requested pixels/bytes in FILE1 */

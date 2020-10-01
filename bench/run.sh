@@ -613,18 +613,14 @@ if test ! "x${ret}" = "x0" ; then
 fi
 
 # sanity check: make sure $CMP runs
-echo "" > tmp1
-echo "" > tmp2
-out=`echo "" | eval \"$CMP\" tmp1 tmp2 2>&1`
+out=`echo "" | eval \"$CMP\" - - 2>&1`
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  CMP does not seem to work as expected"
     $ECHO "        (output was [$out])"
-    rm -f tmp1 tmp2
     exit 2
 fi
-rm -f tmp1 tmp2
 
 # sanity check: make sure $ELP runs
 out=`eval \"$ELP\" 0 2>&1`
