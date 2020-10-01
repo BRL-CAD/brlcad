@@ -26,6 +26,23 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 #include <math.h>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wimplicit-fallthrough"
+#  pragma clang diagnostic ignored "-Wconstant-logical-operand"
+#endif
+
 #include "MarchingCubes.h"
 
 ////////////
@@ -64,7 +81,8 @@ void Square::FactorEdgeIndex(int idx,int& orientation,int& i){
 	};
 }
 void Square::EdgeCorners(int idx,int& c1,int& c2){
-	int orientation,i;
+	int orientation = 0;
+	int i = 0;
 	FactorEdgeIndex(idx,orientation,i);
 	switch(orientation){
 		case 0:
@@ -303,7 +321,7 @@ int	Cube::EdgeReflectEdgeIndex( int edgeIndex )
 // MarchingSquares //
 /////////////////////
 #if NEW_ORDERING
-#pragma message ( "[WARNING] Not clear if MarchingSquares::edgeMask and MarchingSquares::edges are set correctly" )
+//#pragma message ( "[WARNING] Not clear if MarchingSquares::edgeMask and MarchingSquares::edges are set correctly" )
 const int MarchingSquares::cornerMap[] = { 0 , 1 , 3 , 2 };
 bool MarchingSquares::HasEdgeRoots( unsigned char mcIndex , int edgeIndex )
 {
@@ -927,7 +945,7 @@ unsigned char MarchingCubes::GetFaceIndex( unsigned char mcIndex , int faceIndex
 {
 	int i,j,x,y,z;
 	unsigned char idx=0;
-	int v[2][2];
+	int v[2][2] = {{0,0},{0,0}};
 	Cube::FactorFaceIndex(faceIndex,x,y,z);
 	if		(x<0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=mcIndex&(1<<MarchingCubes::cornerMap[Cube::CornerIndex(0,i,j)]);}}}
 	else if	(x>0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=mcIndex&(1<<MarchingCubes::cornerMap[Cube::CornerIndex(1,i,j)]);}}}
@@ -1023,3 +1041,11 @@ void MarchingCubes::SetVertex( int e , const float values[Cube::CORNERS] , float
 	}
 }
 float MarchingCubes::Interpolate( float v1 , float v2 ){ return v1/(v1-v2); }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+

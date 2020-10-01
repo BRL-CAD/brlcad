@@ -207,7 +207,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     libnmg
     librt
     libwdb
-    SPSR
     gdiam
     openNURBS
     poly2tri
@@ -295,7 +294,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
-	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "SPSR_DLL_IMPORTS")
   endif(DEFINED CREO_EXEC_PLUGIN)
 
   # Install the resource files

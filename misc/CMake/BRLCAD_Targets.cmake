@@ -121,9 +121,9 @@ function(FILE_LANG sfile outvar)
     endwhile(NOT "${f_ext}" STREQUAL "")
 
     # C++
-    if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+    if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
       set(file_language CXX)
-    endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+    endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
     if(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
       set(file_language CXX)
     endif(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")

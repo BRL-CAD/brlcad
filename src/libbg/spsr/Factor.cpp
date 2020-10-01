@@ -26,6 +26,19 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
 //////////////////////
 // Polynomial Roots //
 //////////////////////
@@ -262,3 +275,11 @@ int Solve(const double* eqns,const double* values,double* solutions,int dim){
 	delete[] set;
 	return 1;
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+

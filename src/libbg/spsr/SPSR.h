@@ -29,37 +29,8 @@ DAMAGE.
 #ifndef SPSR_INCLUDED
 #define SPSR_INCLUDED
 
+#include "common.h"
 #include "cvertex.h"
-
-#if defined(_WIN32)
-# define COMPILER_DLLEXPORT __declspec(dllexport)
-# define COMPILER_DLLIMPORT __declspec(dllimport)
-#else
-# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
-# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
-#endif
-
-#ifndef SPSR_EXPORT
-#  if defined(SPSR_DLL_EXPORTS) && defined(SPSR_DLL_IMPORTS)
-#    error "Only SPSR_DLL_EXPORTS or SPSR_DLL_IMPORTS can be defined, not both."
-#  elif defined(SPSR_DLL_EXPORTS)
-#    define SPSR_EXPORT COMPILER_DLLEXPORT
-#  elif defined(SPSR_DLL_IMPORTS)
-#    define SPSR_EXPORT COMPILER_DLLIMPORT
-#  else
-#    define SPSR_EXPORT
-#  endif
-#endif
-
-#ifndef __BEGIN_DECLS
-#  ifdef __cplusplus
-#    define __BEGIN_DECLS   extern "C" {
-#    define __END_DECLS     }
-#  else
-#    define __BEGIN_DECLS
-#    define __END_DECLS
-#  endif
-#endif
 
 __BEGIN_DECLS
 
@@ -92,7 +63,7 @@ struct spsr_options {
 
 #define SPSR_OPTIONS_DEFAULT_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 1.1, 0.001, 4.0 }
 
-SPSR_EXPORT extern int
+extern int
 spsr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
 		const struct cvertex **verts, int cnt, struct spsr_options *opts);
 

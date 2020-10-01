@@ -26,29 +26,53 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <float.h>
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#  pragma GCC diagnostic ignored "-Wunused-variable"
+#  pragma GCC diagnostic ignored "-Wsign-compare"
+#  pragma GCC diagnostic ignored "-Wunused-value"
+#  pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#  pragma GCC diagnostic ignored "-Wparentheses"
+#  pragma GCC diagnostic ignored "-Wreturn-type"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunknown-warning-option"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#  pragma clang diagnostic ignored "-Wunused-variable"
+#  pragma clang diagnostic ignored "-Wsign-compare"
+#  pragma clang diagnostic ignored "-Wunused-value"
+#  pragma clang diagnostic ignored "-Wmisleading-indentation"
+#  pragma clang diagnostic ignored "-Wparentheses"
+#  pragma clang diagnostic ignored "-Wreturn-type"
+#endif
+
 #include "SPSR.h"
 #include <iostream>
-#ifdef _WIN32
-#include <Windows.h>
-#include <Psapi.h>
-#endif // _WIN32
 #include "MarchingCubes.h"
 #include "Octree.h"
 #include "SparseMatrix.h"
 #include "PlyVertexMini.h"
 #include "PPolynomial.h"
-#include "MemoryUsage.h"
-#ifdef _OPENMP
-#include "omp.h"
-#endif // _OPENMP
-void DumpOutput( const char* format , ... ) {};
-void DumpOutput2( char* str , const char* format , ... ) {};
 #include "MultiGridOctreeData.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 extern "C" int
 spsr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
@@ -62,13 +86,12 @@ spsr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
     Octree< double > tree;
     tree.threads = opts->thread_cnt;
     OctNode< TreeNodeData >::SetAllocator( MEMORY_ALLOCATOR_BLOCK_SIZE );
-    double maxMemoryUsage;
     Octree< double >::PointInfo* pointInfo = new Octree< double >::PointInfo();
     Octree< double >::NormalInfo* normalInfo = new Octree< double >::NormalInfo();
     std::vector< double >* kernelDensityWeights = new std::vector< double >();
     std::vector< double >* centerWeights = new std::vector< double >();
     PointStream< float >* pointStream = new CVertexPointStream< float >( cnt, verts );
-    int pointCount = tree.SetTree< float >(pointStream , opts->mindepth, opts->depth, opts->fulldepth, opts->kerneldepth,
+    tree.SetTree< float >(pointStream , opts->mindepth, opts->depth, opts->fulldepth, opts->kerneldepth,
 	    opts->samples_per_node, opts->scale, 0, 0, opts->pointweight, opts->adaptiveexponent, *pointInfo,
 	    *normalInfo , *kernelDensityWeights , *centerWeights , opts->boundarytype, xForm , 0);
     kernelDensityWeights->clear();
@@ -79,7 +102,7 @@ spsr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
     Pointer( double ) solution = tree.SolveSystem( *pointInfo , constraints , 0 , opts->iters , opts->maxsolvedepth , opts->cgdepth , float(opts->cssolveraccuracy) );
     delete pointInfo;
     FreePointer(constraints);
-    CoredFileMeshData< PlyVertex <float> > mesh;
+    CoredVectorMeshData< PlyVertex <float> > mesh;
     double isoValue = tree.GetIsoValue( solution , *centerWeights );
     centerWeights->clear();
     delete centerWeights;

@@ -670,11 +670,11 @@ void BSplineElements< 1 >::upSample( BSplineElements< 1 >& high ) const
 template<>
 void BSplineElements< 2 >::upSample( BSplineElements< 2 >& high ) const
 {
-	//    /----\
-	//   /      \
-	//  /        \  = 1  /--\       +3    /--\     +3      /--\   +1        /--\
-	// /          \     /    \           /    \           /    \           /    \
-	// |----------|     |----------|   |----------|   |----------|   |----------|
+	/*    /----\                                                                  */
+	/*   /      \                                                                 */
+	/*  /        \  = 1  /--\       +3    /--\     +3      /--\   +1        /--\  */
+	/* /          \     /    \           /    \           /    \           /    \ */
+	/* |----------|     |----------|   |----------|   |----------|   |----------| */
 
 	high.resize( size()*2 );
 	high.assign( high.size() , BSplineElementCoefficients<2>() );

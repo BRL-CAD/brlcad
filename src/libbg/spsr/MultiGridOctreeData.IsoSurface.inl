@@ -27,8 +27,6 @@ DAMAGE.
 */
 
 #include "Octree.h"
-#include "MyTime.h"
-#include "MemoryUsage.h"
 #include "MAT.h"
 
 
@@ -145,10 +143,8 @@ void Octree< Real >::GetMCIsoSurface( ConstPointer( Real ) kernelDensityWeights 
 	int maxDepth = tree.maxDepth();
 
 	std::vector< Real > coarseSolution( _sNodes.nodeCount[maxDepth] , 0 );
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[_minDepth] ; i<_sNodes.nodeCount[maxDepth] ; i++ ) coarseSolution[i] = solution[i];
 	for( int d=_minDepth ; d<maxDepth ; d++ ) UpSample( d , _sNodes , ( ConstPointer( Real ) )GetPointer( coarseSolution ) + _sNodes.nodeCount[d-1] , GetPointer( coarseSolution ) + _sNodes.nodeCount[d] );
-	MemoryUsage();
 
 	typename TreeOctNode::ConstNeighborKey3 neighborKey;
 	neighborKey.set( maxDepth );
@@ -222,7 +218,6 @@ void Octree< Real >::GetMCIsoSurface( ConstPointer( Real ) kernelDensityWeights 
 			if( o&1 ) break;
 		}
 	}
-	MemoryUsage();
 }
 
 template< class Real >
@@ -241,14 +236,12 @@ Real Octree< Real >::GetIsoValue( ConstPointer( Real ) solution , const std::vec
 	}
 	std::vector< Real > metSolution( _sNodes.nodeCount[maxDepth] , 0 );
 	std::vector< Real > centerValues( _sNodes.nodeCount[maxDepth+1] );
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[_minDepth] ; i<_sNodes.nodeCount[maxDepth] ; i++ ) metSolution[i] = solution[i];
 	for( int d=_minDepth ; d<maxDepth ; d++ ) UpSample( d , _sNodes , ( ConstPointer( Real ) )GetPointer( metSolution ) + _sNodes.nodeCount[d-1] , GetPointer( metSolution ) + _sNodes.nodeCount[d] );
 	for( int d=maxDepth ; d>=_minDepth ; d-- )
 	{
 		std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 		for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( d );
-#pragma omp parallel for num_threads( threads ) reduction( + : isoValue , weightSum )
 		for( int i=_sNodes.nodeCount[d] ; i<_sNodes.nodeCount[d+1] ; i++ )
 		{
 			typename TreeOctNode::ConstNeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -297,7 +290,6 @@ void Octree< Real >::SetSliceIsoCorners( ConstPointer( Real ) solution , ConstPo
 	typename Octree< Real >::template SliceValues< Vertex >& sValues = slabValues[depth].sliceValues( slice );
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z+1] ; i++ )
 	{
 		Real squareValues[ Square::CORNERS ];
@@ -365,7 +357,6 @@ void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeig
 	typename Octree< Real >::template SliceValues< Vertex >& sValues = slabValues[depth].sliceValues( slice );
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z+1] ; i++ )
 	{
 		typename TreeOctNode::ConstNeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -391,7 +382,6 @@ void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeig
 							vertex.point = vertex.point * _scale + _center;
 							bool stillOwner = false;
 							std::pair< int , Vertex > hashed_vertex;
-#pragma omp critical (add_point_access)
 							{
 								if( !sValues.edgeSet[vIndex] )
 								{
@@ -425,7 +415,6 @@ void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeig
 										{
 											node = node->parent , _depth-- , _slice >>= 1;
 											typename Octree< Real >::template SliceValues< Vertex >& _sValues = slabValues[_depth].sliceValues( _slice );
-#pragma omp critical (add_coarser_point_access)
 											_sValues.edgeVertexMap[key] = hashed_vertex;
 											switch( o )
 											{
@@ -452,7 +441,6 @@ void Octree< Real >::SetXSliceIsoVertices( ConstPointer( Real ) kernelDensityWei
 
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slab] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slab+1] ; i++ )
 	{
 		typename TreeOctNode::ConstNeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -479,7 +467,6 @@ void Octree< Real >::SetXSliceIsoVertices( ConstPointer( Real ) kernelDensityWei
 							vertex.point = vertex.point * _scale + _center;
 							bool stillOwner = false;
 							std::pair< int , Vertex > hashed_vertex;
-#pragma omp critical (add_x_point_access)
 							{
 								if( !xValues.edgeSet[vIndex] )
 								{
@@ -508,7 +495,6 @@ void Octree< Real >::SetXSliceIsoVertices( ConstPointer( Real ) kernelDensityWei
 										{
 											node = node->parent , _depth-- , _slab >>= 1;
 											typename Octree< Real >::template XSliceValues< Vertex >& _xValues = slabValues[_depth].xSliceValues( _slab );
-#pragma omp critical (add_x_coarser_point_access)
 											_xValues.edgeVertexMap[key] = hashed_vertex;
 											_isNeeded = ( neighborKey.neighbors[_depth].neighbors[2*x][1][1]==NULL || neighborKey.neighbors[_depth].neighbors[2*x][2*y][1]==NULL || neighborKey.neighbors[_depth].neighbors[1][2*y][1]==NULL );
 										}
@@ -537,7 +523,6 @@ void Octree< Real >::CopyFinerSliceIsoEdgeKeys( int depth , int slice , int z , 
 	SliceValues< Vertex >& cSliceValues = slabValues[depth+1].sliceValues(slice<<1);
 	typename SortedTreeNodes::SliceTableData& pSliceData = pSliceValues.sliceData;
 	typename SortedTreeNodes::SliceTableData& cSliceData = cSliceValues.sliceData;
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth] + _sNodes.sliceOffsets[depth][slice-z] ; i<_sNodes.nodeCount[depth] + _sNodes.sliceOffsets[depth][slice-z+1] ; i++ )
 		if( _sNodes.treeNodes[i]->children )
 		{
@@ -564,7 +549,6 @@ void Octree< Real >::CopyFinerSliceIsoEdgeKeys( int depth , int slice , int z , 
 						if( cSliceValues.edgeSet[cIndex1] ) key = cSliceValues.edgeKeys[cIndex1];
 						else                                key = cSliceValues.edgeKeys[cIndex2];
 						std::pair< int , Vertex > vPair = cSliceValues.edgeVertexMap.find( key )->second;
-#pragma omp critical ( copy_finer_edge_keys )
 						pSliceValues.edgeVertexMap[key] = vPair;
 						pSliceValues.edgeKeys[pIndex] = key;
 						pSliceValues.edgeSet[pIndex] = 1;
@@ -572,7 +556,6 @@ void Octree< Real >::CopyFinerSliceIsoEdgeKeys( int depth , int slice , int z , 
 					else if( cSliceValues.edgeSet[cIndex1] && cSliceValues.edgeSet[cIndex2] )
 					{
 						long long key1 = cSliceValues.edgeKeys[cIndex1] , key2 = cSliceValues.edgeKeys[cIndex2];
-#pragma omp critical ( set_edge_pairs )
 						pSliceValues.vertexPairMap[ key1 ] = key2 ,	pSliceValues.vertexPairMap[ key2 ] = key1;
 
 						const TreeOctNode* node = _sNodes.treeNodes[i];
@@ -581,7 +564,6 @@ void Octree< Real >::CopyFinerSliceIsoEdgeKeys( int depth , int slice , int z , 
 						{
 							node = node->parent , _depth-- , _slice >>= 1;
 							SliceValues< Vertex >& _pSliceValues = slabValues[_depth].sliceValues(_slice);
-#pragma omp critical ( set_edge_pairs )
 							_pSliceValues.vertexPairMap[ key1 ] = key2 , _pSliceValues.vertexPairMap[ key2 ] = key1;
 						}
 					}
@@ -599,7 +581,6 @@ void Octree< Real >::CopyFinerXSliceIsoEdgeKeys( int depth , int slab , std::vec
 	typename SortedTreeNodes::XSliceTableData& pSliceData  = pSliceValues.xSliceData;
 	typename SortedTreeNodes::XSliceTableData& cSliceData0 = cSliceValues0.xSliceData;
 	typename SortedTreeNodes::XSliceTableData& cSliceData1 = cSliceValues1.xSliceData;
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth] + _sNodes.sliceOffsets[depth][slab] ; i<_sNodes.nodeCount[depth] + _sNodes.sliceOffsets[depth][slab+1] ; i++ )
 		if( _sNodes.treeNodes[i]->children )
 		{
@@ -619,7 +600,6 @@ void Octree< Real >::CopyFinerXSliceIsoEdgeKeys( int depth , int slab , std::vec
 						std::pair< int , Vertex > vPair;
 						if( cSliceValues0.edgeSet[cIndex0] ) key = cSliceValues0.edgeKeys[cIndex0] , vPair = cSliceValues0.edgeVertexMap.find( key )->second;
 						else                                 key = cSliceValues1.edgeKeys[cIndex1] , vPair = cSliceValues1.edgeVertexMap.find( key )->second;
-#pragma omp critical ( copy_finer_x_edge_keys )
 						pSliceValues.edgeVertexMap[key] = vPair;
 						pSliceValues.edgeKeys[ pIndex ] = key;
 						pSliceValues.edgeSet[ pIndex ] = 1;
@@ -627,7 +607,6 @@ void Octree< Real >::CopyFinerXSliceIsoEdgeKeys( int depth , int slab , std::vec
 					else if( cSliceValues0.edgeSet[cIndex0] && cSliceValues1.edgeSet[cIndex1] )
 					{
 						long long key0 = cSliceValues0.edgeKeys[cIndex0] , key1 = cSliceValues1.edgeKeys[cIndex1];
-#pragma omp critical ( set_x_edge_pairs )
 						pSliceValues.vertexPairMap[ key0 ] = key1 , pSliceValues.vertexPairMap[ key1 ] = key0;
 						const TreeOctNode* node = _sNodes.treeNodes[i];
 						int _depth = depth , _slab = slab , ce = Cube::CornerIndex( 2 , x , y );
@@ -635,7 +614,6 @@ void Octree< Real >::CopyFinerXSliceIsoEdgeKeys( int depth , int slab , std::vec
 						{
 							node = node->parent , _depth-- , _slab>>= 1;
 							SliceValues< Vertex >& _pSliceValues = slabValues[_depth].sliceValues(_slab);
-#pragma omp critical ( set_x_edge_pairs )
 							_pSliceValues.vertexPairMap[ key0 ] = key1 , _pSliceValues.vertexPairMap[ key1 ] = key0;
 						}
 					}
@@ -657,7 +635,6 @@ void Octree< Real >::SetSliceIsoEdges( int depth , int slice , int z , std::vect
 	typename Octree< Real >::template SliceValues< Vertex >& sValues = slabValues[depth].sliceValues( slice );
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z+1] ; i++ )
 	{
 		int isoEdges[ 2 * MarchingSquares::MAX_EDGES ];
@@ -694,7 +671,6 @@ void Octree< Real >::SetSliceIsoEdges( int depth , int slice , int z , std::vect
 						node = node->parent , _depth-- , _slice >>= 1;
 						if( neighborKey.neighbors[_depth].neighbors[1][1][2*z] && neighborKey.neighbors[_depth].neighbors[1][1][2*z]->children ) break;
 						long long key = VertexData::FaceIndex( node , f , _sNodes.maxDepth );
-#pragma omp critical( add_iso_edge_access )
 						{
 							typename Octree< Real >::template SliceValues< Vertex >& _sValues = slabValues[_depth].sliceValues( _slice );
 							typename hash_map< long long , std::vector< IsoEdge > >::iterator iter = _sValues.faceEdgeMap.find(key);
@@ -717,7 +693,6 @@ void Octree< Real >::SetXSliceIsoEdges( int depth , int slab , std::vector< Slab
 
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slab] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slab+1] ; i++ )
 	{
 		int isoEdges[ 2 * MarchingSquares::MAX_EDGES ];
@@ -742,7 +717,8 @@ void Octree< Real >::SetXSliceIsoEdges( int depth , int slab , std::vector< Slab
 						fe.count = MarchingSquares::AddEdgeIndices( _mcIndex , isoEdges );
 						for( int j=0 ; j<fe.count ; j++ ) for( int k=0 ; k<2 ; k++ )
 						{
-							int _o , _x;
+							int _o = 0;
+							int _x = 0;
 							Square::FactorEdgeIndex( isoEdges[2*j+k] , _o , _x );
 							if( _o==1 ) // Cross-edge
 							{
@@ -771,7 +747,6 @@ void Octree< Real >::SetXSliceIsoEdges( int depth , int slab , std::vector< Slab
 							node = node->parent , _depth-- , _slab >>= 1;
 							if( neighborKey.neighbors[_depth].neighbors[xx][yy][zz] && neighborKey.neighbors[_depth].neighbors[xx][yy][zz]->children ) break;
 							long long key = VertexData::FaceIndex( node , f , _sNodes.maxDepth );
-#pragma omp critical( add_x_iso_edge_access )
 							{
 								typename Octree< Real >::template XSliceValues< Vertex >& _xValues = slabValues[_depth].xSliceValues( _slab );
 								typename hash_map< long long , std::vector< IsoEdge > >::iterator iter = _xValues.faceEdgeMap.find(key);
@@ -793,7 +768,6 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	std::vector< std::vector< IsoEdge > > edgess( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][offset] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][offset+1] ; i++ )
 	{
 		typename TreeOctNode::ConstNeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -919,7 +893,8 @@ bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , R
 	x0 = sValues.cornerValues[idx[c0]] , x1 = sValues.cornerValues[idx[c1]];
 	if( sValues.cornerNormals ) n0 = sValues.cornerNormals[idx[c0]] , n1 = sValues.cornerNormals[idx[c1]];
 
-	int o , y;
+	int o = 0;
+	int y = 0;
 	Square::FactorEdgeIndex( edgeIndex , o , y );
 
 	Point3D< Real > c;
@@ -1081,7 +1056,6 @@ int Octree< Real >::AddIsoPolygons( CoredMeshData< Vertex >& mesh , std::vector<
 			for( int i=0 ; i<(int)polygon.size() ; i++ ) c += polygon[i].second;
 			c /= Real( polygon.size() );
 			int cIdx;
-#pragma omp critical (add_barycenter_point_access)
 			{
 				cIdx = mesh.addOutOfCorePoint( c );
 				vOffset++;

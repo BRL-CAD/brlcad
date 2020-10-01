@@ -26,28 +26,35 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 
-#ifndef MY_TIME_INCLUDED
-#define MY_TIME_INCLUDED
-
-#include <string.h>
-#ifdef HAVE_SYS_TIMEB
-#  include <sys/timeb.h>
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
 #endif
-#ifndef WIN32
-#include <sys/time.h>
-#endif // WIN32
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
 
-inline double Time( void )
-{
-#ifdef WIN32
-	struct _timeb t;
-	_ftime( &t );
-	return double( t.time ) + double( t.millitm ) / 1000.0;
-#else // WIN32
-	struct timeval t;
-	gettimeofday( &t , NULL );
-	return t.tv_sec + double( t.tv_usec ) / 1000000;
-#endif // WIN32
-}
+#include "Geometry.h"
+#include <stdio.h>
+#include <string.h>
 
-#endif // MY_TIME_INCLUDED
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
+///////////////////
+// CoredMeshData //
+///////////////////
+
+TriangulationEdge::TriangulationEdge(void){pIndex[0]=pIndex[1]=tIndex[0]=tIndex[1]=-1;}
+TriangulationTriangle::TriangulationTriangle(void){eIndex[0]=eIndex[1]=eIndex[2]=-1;}
+
+

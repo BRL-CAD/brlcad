@@ -152,7 +152,6 @@ void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int
 	sData.cTable.resize( sData.nodeCount ) , sData.eTable.resize( sData.nodeCount ) , sData.fTable.resize( sData.nodeCount );
 	std::vector< TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=span.first ; i<span.second ; i++ )
 	{
 		TreeOctNode::ConstNeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -249,7 +248,6 @@ void SortedTreeNodes::setSliceTableData( SliceTableData& sData , int depth , int
 	for( int i=0 ; i<sData._cMap.size() ; i++ ) if( sData._cMap[i] ) sData._cMap[i] = cCount++;
 	for( int i=0 ; i<sData._eMap.size() ; i++ ) if( sData._eMap[i] ) sData._eMap[i] = eCount++;
 	for( int i=0 ; i<sData._fMap.size() ; i++ ) if( sData._fMap[i] ) sData._fMap[i] = fCount++;
-#pragma omp parallel for num_threads( threads )
 	for( int i=0 ; i<sData.nodeCount ; i++ )
 	{
 		for( int j=0 ; j<Square::CORNERS ; j++ ) sData.cTable[i][j] = sData._cMap[ sData.cTable[i][j] ];
@@ -273,7 +271,6 @@ void SortedTreeNodes::setXSliceTableData( XSliceTableData& sData , int depth , i
 	sData.eTable.resize( sData.nodeCount ) , sData.fTable.resize( sData.nodeCount );
 	std::vector< TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=span.first ; i<span.second ; i++ )
 	{
 		TreeOctNode::ConstNeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -337,7 +334,6 @@ void SortedTreeNodes::setXSliceTableData( XSliceTableData& sData , int depth , i
 
 	for( int i=0 ; i<sData._eMap.size() ; i++ ) if( sData._eMap[i] ) sData._eMap[i] = eCount++;
 	for( int i=0 ; i<sData._fMap.size() ; i++ ) if( sData._fMap[i] ) sData._fMap[i] = fCount++;
-#pragma omp parallel for num_threads( threads )
 	for( int i=0 ; i<sData.nodeCount ; i++ )
 	{
 		for( int j=0 ; j<Square::CORNERS ; j++ ) sData.eTable[i][j] = sData._eMap[ sData.eTable[i][j] ];

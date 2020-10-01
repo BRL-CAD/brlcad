@@ -27,8 +27,6 @@ DAMAGE.
 */
 
 #include "Octree.h"
-#include "MyTime.h"
-#include "MemoryUsage.h"
 #include "PointStream.h"
 #include "MAT.h"
 
@@ -53,15 +51,6 @@ TreeNodeData::~TreeNodeData( void ) { }
 ////////////
 // Octree //
 ////////////
-template< class Real > double Octree< Real >::maxMemoryUsage=0;
-
-template< class Real >
-double Octree< Real >::MemoryUsage(void)
-{
-	double mem = double( MemoryInfo::Usage() ) / (1<<20);
-	if( mem>maxMemoryUsage ) maxMemoryUsage=mem;
-	return mem;
-}
 
 template< class Real >
 Octree< Real >::Octree( void )
@@ -449,7 +438,6 @@ int Octree< Real >::SetTree( PointStream< PointReal >* pointStream , int minDept
 
 	// Read through once to get the center and scale
 	{
-		double t = Time();
 		Point3D< Real > p;
 		Point3D< PointReal > _p , _n;
 		while( pointStream->nextPoint( _p , _n ) )
@@ -472,7 +460,6 @@ int Octree< Real >::SetTree( PointStream< PointReal >* pointStream , int minDept
 	for( i=0 ; i<DIMENSION ; i++ ) _center[i] -= _scale/2;
 	if( splatDepth>0 )
 	{
-		double t = Time();
 		cnt = 0;
 		pointStream->reset();
 		Point3D< Real > p , n;
@@ -612,7 +599,6 @@ int Octree< Real >::SetTree( PointStream< PointReal >* pointStream , int minDept
 	constraintWeight *= Real( pointWeightSum );
 	constraintWeight /= cnt;
 
-	MemoryUsage( );
 	if( _constrainValues )
 		// Set the average position and scale the weights
 		for( TreeOctNode* node=tree.nextNode() ; node ; node=tree.nextNode(node) )
@@ -647,7 +633,6 @@ int Octree< Real >::SetTree( PointStream< PointReal >* pointStream , int minDept
 		if( idx<0 ) centerWeights[ node->nodeData.nodeIndex ] = 0;
 		else        centerWeights[ node->nodeData.nodeIndex ] = Real( Length( normalInfo.normals[ idx ] ) );
 	}
-	MemoryUsage();
 	{
 		std::vector< int > indexMap;
 		if( makeComplete ) MakeComplete( &indexMap );
@@ -689,7 +674,6 @@ void Octree< Real >::MakeComplete( std::vector< int >* map )
 {
 	tree.setFullDepth( tree.maxDepth() );
 	refineBoundary( map );
-	MemoryUsage();
 }
 template< class Real >
 void Octree< Real >::ClipTree( const NormalInfo& normalInfo )
@@ -702,7 +686,6 @@ void Octree< Real >::ClipTree( const NormalInfo& normalInfo )
 			for( int i=0 ; i<Cube::CORNERS && !hasNormals ; i++ ) hasNormals = HasNormals( &temp->children[i] , normalInfo );
 			if( !hasNormals ) temp->children=NULL;
 		}
-	MemoryUsage();
 }
 
 template< class Real >
@@ -1186,7 +1169,6 @@ void Octree< Real >::UpdateConstraintsFromFiner( const typename BSplineData< 2 >
 	// Iterate over the nodes @( depth )
 	std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth-1 );
-#pragma omp parallel for num_threads( threads )
 	for( int i=sNodes.nodeCount[depth] ; i<sNodes.nodeCount[depth+1] ; i++ )
 	{
 		typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -1223,13 +1205,11 @@ void Octree< Real >::UpdateConstraintsFromFiner( const typename BSplineData< 2 >
 				{
 					const TreeOctNode* _node = pNeighbors5.neighbors[x][y][z];
 					if( isInterior )
-#pragma omp atomic
 						__coarseConstraints[ _node->nodeData.nodeIndex ] += Real( lapStencil.values[x][y][z] * solution );
 					else
 					{
 						int _d , _off[3];
 						_node->depthAndOffset( _d , _off );
-#pragma omp atomic
 						__coarseConstraints[ _node->nodeData.nodeIndex ] += Real( GetLaplacian( integrator , d , off , _off , true ) * solution );
 					}
 				}
@@ -1309,7 +1289,6 @@ void Octree< Real >::DownSample( int depth , const SortedTreeNodes& sNodes , Con
 	else                         cornerValue = 0.75;
 	std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=sNodes.nodeCount[depth] ; i<sNodes.nodeCount[depth+1] ; i++ )
 	{
 		typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -1338,7 +1317,6 @@ void Octree< Real >::DownSample( int depth , const SortedTreeNodes& sNodes , Con
 					int _kk = kk + usData[2].start;
 					TreeOctNode* pNode = neighbors.neighbors[_ii][_jj][_kk];
 					if( pNode )
-#pragma omp atomic
 						coarseConstraints[ pNode->nodeData.nodeIndex-sNodes.nodeCount[depth-1] ] += C( cxy*usData[2].v[kk] );
 				}
 			}
@@ -1357,7 +1335,6 @@ void Octree< Real >::UpSample( int depth , const SortedTreeNodes& sNodes , Const
 
 	std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth-1 );
-#pragma omp parallel for num_threads( threads )
 	for( int i=sNodes.nodeCount[depth] ; i<sNodes.nodeCount[depth+1] ; i++ )
 	{
 		typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -1405,7 +1382,6 @@ void Octree< Real >::SetPointValuesFromCoarser( PointInfo& pointInfo , int depth
 	// For every node at the current depth
 	std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=sNodes.nodeCount[depth] ; i<sNodes.nodeCount[depth+1] ; i++ )
 	{
 		typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -1487,7 +1463,6 @@ void Octree< Real >::SetPointConstraintsFromFiner( const PointInfo& pointInfo , 
 	memset( coarserConstraints , 0 , sizeof( Real ) * ( sNodes.nodeCount[depth]-sNodes.nodeCount[depth-1] ) );
 	std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth-1 );
-#pragma omp parallel for num_threads( threads )
 	for( int i=sNodes.nodeCount[depth-1] ; i<sNodes.nodeCount[depth] ; i++ )
 	{
 		typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -1510,7 +1485,6 @@ void Octree< Real >::SetPointConstraintsFromFiner( const PointInfo& pointInfo , 
 				for( int x=0 ; x<3 ; x++ ) for( int y=0 ; y<3 ; y++ ) for( int z=0 ; z<3 ; z++ )
 					if( neighbors.neighbors[x][y][z] )
 					{
-#pragma omp atomic
 						coarserConstraints[ neighbors.neighbors[x][y][z]->nodeData.nodeIndex - sNodes.nodeCount[depth-1] ] +=
 							Real(
 							_fData.baseBSplines[idx[0]+x][2-x]( p[0] ) *
@@ -1574,7 +1548,6 @@ int Octree< Real >::GetSliceMatrixAndUpdateConstraints( const PointInfo& pointIn
 	matrix.Resize( (int)range );
 	std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=0 ; i<range ; i++ )
 	{
 		typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -1586,7 +1559,6 @@ int Octree< Real >::GetSliceMatrixAndUpdateConstraints( const PointInfo& pointIn
 		int count = insetSupported ? GetMatrixRowSize( neighbors5 , false ) : 1;
 
 		// Allocate memory for the row
-#pragma omp critical (matrix_set_row_size)
 		{
 			matrix.SetRowSize( i , count );
 		}
@@ -1629,7 +1601,6 @@ int Octree< Real >::GetMatrixAndUpdateConstraints( const PointInfo& pointInfo , 
 	matrix.Resize( (int)range );
 	std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
-#pragma omp parallel for num_threads( threads )
 	for( int i=0 ; i<range ; i++ )
 	{
 		typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -1641,7 +1612,6 @@ int Octree< Real >::GetMatrixAndUpdateConstraints( const PointInfo& pointInfo , 
 		int count = insetSupported ? GetMatrixRowSize( neighbors5 , true ) : 1;
 
 		// Allocate memory for the row
-#pragma omp critical (matrix_set_row_size)
 		matrix.SetRowSize( i , count );
 
 		// Set the row entries
@@ -1689,7 +1659,6 @@ Pointer( Real ) Octree< Real >::SolveSystem( PointInfo& pointInfo , Pointer( Rea
 	std::vector< Real > metSolution( _sNodes.nodeCount[ _sNodes.maxDepth-1 ] , 0 );
 	for( int d=_minDepth ; d<_sNodes.maxDepth ; d++ )
 	{
-		DumpOutput( "Depth[%d/%d]: %d\n" , _boundaryType==0 ? d-1 : d , _boundaryType==0 ? _sNodes.maxDepth-2 : _sNodes.maxDepth-1 , _sNodes.nodeCount[d+1]-_sNodes.nodeCount[d] );
 		if( d==_minDepth )
 			_SolveSystemCG( pointInfo , d , integrator , _sNodes , solution , constraints , GetPointer( metSolution ) , _sNodes.nodeCount[_minDepth+1]-_sNodes.nodeCount[_minDepth] , true , showResidual, NULL , NULL , NULL );
 		else
@@ -1708,13 +1677,11 @@ void Octree< Real >::_setMultiColorIndices( int start , int end , std::vector< s
 	indices.resize( modulus*modulus*modulus );
 	int count[modulus*modulus*modulus];
 	memset( count , 0 , sizeof(int)*modulus*modulus*modulus );
-#pragma omp parallel for num_threads( threads )
 	for( int i=start ; i<end ; i++ )
 	{
 		int d , off[3];
 		_sNodes.treeNodes[i]->depthAndOffset( d , off );
 		int idx = (modulus*modulus) * ( off[2]%modulus ) + modulus * ( off[1]%modulus ) + ( off[0]%modulus );
-#pragma omp atomic
 		count[idx]++;
 	}
 
@@ -1736,11 +1703,8 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 	if( coarseToFine ) metSolution    = metSolutionConstraints;	// This stores the up-sampled solution up to depth-2
 	else               metConstraints = metSolutionConstraints; // This stores the down-sampled constraints up to depth
 
-	double _maxMemoryUsage = maxMemoryUsage;
-	maxMemoryUsage = 0;
 	Vector< Real > X , B;
 	int slices = 1<<depth;
-	double systemTime=0. , solveTime=0. , updateTime=0. ,  evaluateTime = 0.;
 	std::vector< int > offsets( slices+1 , 0 );
 	for( int i=sNodes.nodeCount[depth] ; i<sNodes.nodeCount[depth+1] ; i++ )
 	{
@@ -1761,21 +1725,17 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 			// Up-sample the cumulative change in solution @(depth-2) into the cumulative change in solution @(depth-1)
 			if( depth-2>=_minDepth ) UpSample( depth-1 , sNodes , ( ConstPointer( Real ) )metSolution+_sNodes.nodeCount[depth-2] , metSolution+_sNodes.nodeCount[depth-1] );
 			// Add in the change in solution @(depth-1)
-#pragma omp parallel for num_threads( threads )
 			for( int i=_sNodes.nodeCount[depth-1] ; i<_sNodes.nodeCount[depth] ; i++ ) metSolution[i] += solution[i];
 			// Evaluate the points @(depth) using the cumulative change in solution @(depth-1)
 			if( _constrainValues )
 			{
-				evaluateTime = Time();
 				SetPointValuesFromCoarser( pointInfo , depth , sNodes , metSolution+_sNodes.nodeCount[depth-1] );
-				evaluateTime = Time() - evaluateTime;
 			}
 		}
 	}
 	else if( depth<_sNodes.maxDepth-1 )
 		for( int i=_sNodes.nodeCount[depth] ; i<_sNodes.nodeCount[depth+1] ; i++ ) constraints[i] -= metConstraints[i];
 	// Initialize with the previously computed solution
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth] ; i<_sNodes.nodeCount[depth+1] ; i++ ) X[ i-_sNodes.nodeCount[depth] ] = solution[i];
 	double bNorm=0 , inRNorm=0 , outRNorm=0;
 	if( depth>=_minDepth )
@@ -1793,9 +1753,7 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 			if( frontSlice+frontOffset*dir>=0 && frontSlice+frontOffset*dir<slices )
 			{
 				int s = frontSlice+frontOffset*dir , _s = s % matrixSlices;
-				t = Time();
 				GetSliceMatrixAndUpdateConstraints( pointInfo , _M[_s] , constraints , integrator , depth , sNodes , metSolution , coarseToFine , offsets[s]+sNodes.nodeCount[depth] , offsets[s+1]+sNodes.nodeCount[depth] );
-				systemTime += Time()-t;
 				Pointer( TreeOctNode* ) const nodes = sNodes.treeNodes + sNodes.nodeCount[depth];
 				for( int i=offsets[s] ; i<offsets[s+1] ; i++ )
 				{
@@ -1803,7 +1761,6 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 					else                                                    B[i] = Real(0);
 				}
 				if( showResidual || inRNorm2 )
-#pragma omp parallel for num_threads( threads ) reduction( + : bNorm , inRNorm )
 					for( int j=0 ; j<_M[_s].rows ; j++ )
 					{
 						Real temp = Real(0);
@@ -1816,14 +1773,12 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 						inRNorm += (temp-b) * (temp-b);
 					}
 				else if( bNorm2 )
-#pragma omp parallel for num_threads( threads ) reduction( + : bNorm )
 					for( int j=0 ; j<_M[_s].rows ; j++ )
 					{
 						Real b = B[ j + offsets[s] ] ;
 						bNorm += b*b;
 					}
 			}
-			t = Time();
 			if( iters && frontSlice>=0 && frontSlice<slices )
 			{
 				int s = frontSlice , _s = s % matrixSlices , __s = s % solveSlices;
@@ -1836,11 +1791,9 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 					int s = slice , _s = s % matrixSlices , __s = s % solveSlices;
 					SparseMatrix< Real >::SolveGS( __mcIndices[__s] , _M[_s] , B , X , !coarseToFine , threads , offsets[s] );
 				}
-			solveTime += Time() - t;
 			if( (showResidual || outRNorm2) && backSlice-backOffset*dir>=0 && backSlice-backOffset*dir<slices )
 			{
 				int s = backSlice-backOffset*dir , _s = s % matrixSlices;
-#pragma omp parallel for num_threads( threads ) reduction( + : outRNorm )
 				for( int j=0 ; j<_M[_s].rows ; j++ )
 				{
 					Real temp = Real(0);
@@ -1865,7 +1818,6 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 	}
 
 	// Copy the old solution into the buffer, write in the new solution, compute the change, and update the met constraints
-#pragma omp parallel for num_threads( threads )
 	for( int i=sNodes.nodeCount[depth] ; i<sNodes.nodeCount[depth+1] ; i++ ) solution[i] = X[ i-sNodes.nodeCount[depth] ];
 	if( !coarseToFine && depth>_minDepth )
 	{
@@ -1878,10 +1830,6 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 		}
 	}
 
-	MemoryUsage();
-	if( !forceSilent ) DumpOutput( "\tEvaluated / Got / Solved in: %6.3f / %6.3f / %6.3f\t(%.3f MB)\n" , evaluateTime , systemTime , solveTime , float( maxMemoryUsage ) );
-	maxMemoryUsage = std::max< double >( maxMemoryUsage , _maxMemoryUsage );
-
 	return iters;
 }
 template< class Real >
@@ -1891,12 +1839,9 @@ int Octree< Real >::_SolveSystemCG( PointInfo& pointInfo , int depth , const typ
 	Pointer( Real ) metConstraints = NullPointer< Real >();
 	if( coarseToFine ) metSolution    = metSolutionConstraints;	// This stores the up-sampled solution up to depth-2
 	else               metConstraints = metSolutionConstraints; // This stores the down-sampled constraints up to depth
-	double _maxMemoryUsage = maxMemoryUsage;
-	maxMemoryUsage = 0;
 	int iter = 0;
 	Vector< Real > X , B;
 	SparseSymmetricMatrix< Real > M;
-	double systemTime=0. , solveTime=0. , updateTime=0. ,  evaluateTime = 0.;
 	X.Resize( sNodes.nodeCount[depth+1]-sNodes.nodeCount[depth] );
 	if( coarseToFine )
 	{
@@ -1905,23 +1850,18 @@ int Octree< Real >::_SolveSystemCG( PointInfo& pointInfo , int depth , const typ
 			// Up-sample the cumulative change in solution @(depth-2) into the cumulative change in solution @(depth-1)
 			if( depth-2>=_minDepth ) UpSample( depth-1 , sNodes , ( ConstPointer( Real ) )metSolution+_sNodes.nodeCount[depth-2] , metSolution+_sNodes.nodeCount[depth-1] );
 			// Add in the change in solution @(depth-1)
-#pragma omp parallel for num_threads( threads )
 			for( int i=_sNodes.nodeCount[depth-1] ; i<_sNodes.nodeCount[depth] ; i++ ) metSolution[i] += solution[i];
 			// Evaluate the points @(depth) using the cumulative change in solution @(depth-1)
 			if( _constrainValues )
 			{
-				evaluateTime = Time();
 				SetPointValuesFromCoarser( pointInfo , depth , sNodes , metSolution+_sNodes.nodeCount[depth-1] );
-				evaluateTime = Time() - evaluateTime;
 			}
 		}
 	}
 	else if( depth<_sNodes.maxDepth-1 )
 		for( int i=_sNodes.nodeCount[depth] ; i<_sNodes.nodeCount[depth+1] ; i++ ) constraints[i] -= metConstraints[i];
 	// Initialize with the previously computed solution
-#pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth] ; i<_sNodes.nodeCount[depth+1] ; i++ ) X[ i-_sNodes.nodeCount[depth] ] = solution[i];
-	systemTime = Time();
 	{
 		// Get the system matrix (and adjust the right-hand-side based on the coarser solution if prolonging)
 		if( coarseToFine ) GetMatrixAndUpdateConstraints( pointInfo , M , constraints , integrator , depth , sNodes , metSolution           , true  );
@@ -1932,9 +1872,7 @@ int Octree< Real >::_SolveSystemCG( PointInfo& pointInfo , int depth , const typ
 			if( _boundaryType!=0 || _IsInsetSupported( sNodes.treeNodes[i] ) ) B[i-sNodes.nodeCount[depth]] = constraints[i];
 			else                                                               B[i-sNodes.nodeCount[depth]] = Real(0);
 	}
-	systemTime = Time()-systemTime;
 
-	solveTime = Time();
 	// Solve the linear system
 	accuracy = Real( accuracy / 100000 ) * M.rows;
 	int res = 1<<depth;
@@ -1948,7 +1886,6 @@ int Octree< Real >::_SolveSystemCG( PointInfo& pointInfo , int depth , const typ
 
 	if( _boundaryType==0 && depth>3 ) res -= 1<<(depth-2);
 	if( iters ) iter += SparseSymmetricMatrix< Real >::SolveCG( M , B , iters , X , mrVector , Real( accuracy ) , 0 , addDCTerm );
-	solveTime = Time()-solveTime;
 	if( showResidual || outRNorm2 ) outRNorm = ( addDCTerm ? ( B - M * X - X.Average() ) : ( B - M * X ) ).Norm( 2 );
 	if( bNorm2 ) bNorm2[depth] = bNorm * bNorm;
 	if( inRNorm2 ) inRNorm2[depth] = inRNorm * inRNorm;
@@ -1961,7 +1898,6 @@ int Octree< Real >::_SolveSystemCG( PointInfo& pointInfo , int depth , const typ
 
 	// Copy the old solution into the buffer, write in the new solution, compute the change, and update the met solution
 	{
-#pragma omp parallel for num_threads( threads )
 		for( int i=sNodes.nodeCount[depth] ; i<sNodes.nodeCount[depth+1] ; i++ ) solution[i] = X[ i-sNodes.nodeCount[depth] ];
 		if( !coarseToFine && depth>_minDepth )
 		{
@@ -1975,9 +1911,6 @@ int Octree< Real >::_SolveSystemCG( PointInfo& pointInfo , int depth , const typ
 		}
 	}
 
-	MemoryUsage();
-	DumpOutput( "\tEvaluated / Got / Solved in: %6.3f / %6.3f / %6.3f\t(%.3f MB)\n" , evaluateTime , systemTime , solveTime , float( maxMemoryUsage ) );
-	maxMemoryUsage = std::max< double >( maxMemoryUsage , _maxMemoryUsage );
 	return iter;
 }
 template< class Real >
@@ -2011,7 +1944,6 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 	Pointer( Real ) _constraints = AllocPointer< Real >( _sNodes.nodeCount[maxDepth] );
 	if( !_constraints ) fprintf( stderr , "[ERROR] Failed to allocate _constraints: %d * %zu\n" , _sNodes.nodeCount[maxDepth] , sizeof( Real ) ) , exit( 0 );
 	memset( _constraints , 0 , sizeof(Real)*_sNodes.nodeCount[maxDepth] );
-	MemoryUsage();
 
 	for( int d=maxDepth ; d>=(_boundaryType==0?2:0) ; d-- )
 	{
@@ -2022,7 +1954,6 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 
 		std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 		for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( _fData.depth );
-#pragma omp parallel for num_threads( threads )
 		for( int i=_sNodes.nodeCount[d] ; i<_sNodes.nodeCount[d+1] ; i++ )
 		{
 			typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -2056,7 +1987,7 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 			// Gather the constraints from the vector-field at _node into the constraint stored with node
 			{
 
-				if( isInterior )
+				if( isInterior ) {
 					for( int x=startX ; x<endX ; x++ ) for( int y=startY ; y<endY ; y++ ) for( int z=startZ ; z<endZ ; z++ )
 					{
 						const TreeOctNode* _node = neighbors5.neighbors[x][y][z];
@@ -2066,7 +1997,7 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 							if( _idx>=0 ) constraints[ node->nodeData.nodeIndex ] += Point3D< Real >::Dot( stencil.values[x][y][z] , normalInfo.normals[ _idx ] );
 						}
 					}
-				else
+				} else {
 					for( int x=startX ; x<endX ; x++ ) for( int y=startY ; y<endY ; y++ ) for( int z=startZ ; z<endZ ; z++ )
 					{
 						const TreeOctNode* _node = neighbors5.neighbors[x][y][z];
@@ -2081,6 +2012,7 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 							}
 						}
 					}
+				}
 					UpdateCoarserSupportBounds( neighbors5.neighbors[2][2][2] , startX , endX , startY  , endY , startZ , endZ );
 			}
 			int idx = normalInfo.normalIndex( node );
@@ -2109,19 +2041,16 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 							_node->depthAndOffset( _d , _off );
 							c = Real( GetDivergence1( integrator , d , off , _off , true , normal ) );
 						}
-#pragma omp atomic
 						_constraints[ _node->nodeData.nodeIndex ] += c;
 					}
 			}
 		}
-		MemoryUsage();
 	}
 
 	// Fine-to-coarse down-sampling of constraints
 	for( int d=maxDepth-1 ; d>=(_boundaryType==0?2:0) ; d-- ) DownSample( d , _sNodes , ( ConstPointer( Real ) )_constraints + _sNodes.nodeCount[d] , _constraints+_sNodes.nodeCount[d-1] );
 
 	// Add the accumulated constraints from all finer depths
-#pragma omp parallel for num_threads( threads )
 	for( int i=0 ; i<_sNodes.nodeCount[maxDepth] ; i++ ) constraints[i] += _constraints[i];
 
 	FreePointer( _constraints );
@@ -2130,7 +2059,6 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 	std::vector< Point3D< Real > > coefficients( _sNodes.nodeCount[maxDepth] , zeroPoint );
 	for( int d=maxDepth-1 ; d>=0 ; d-- )
 	{
-#pragma omp parallel for num_threads( threads )
 		for( int i=_sNodes.nodeCount[d] ; i<_sNodes.nodeCount[d+1] ; i++ )
 		{
 			int idx = normalInfo.normalIndex( _sNodes.treeNodes[i] );
@@ -2150,7 +2078,6 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 		SetDivergenceStencils( d , integrator , stencils , false );
 		std::vector< typename TreeOctNode::NeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 		for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( maxDepth );
-#pragma omp parallel for num_threads( threads )
 		for( int i=_sNodes.nodeCount[d] ; i<_sNodes.nodeCount[d+1] ; i++ )
 		{
 			typename TreeOctNode::NeighborKey3& neighborKey = neighborKeys[ omp_get_thread_num() ];
@@ -2203,7 +2130,6 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 				constraints[ node->nodeData.nodeIndex ] += constraint;
 		}
 	}
-	MemoryUsage();
 	return constraints;
 }
 template< class Real >

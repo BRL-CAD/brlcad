@@ -414,10 +414,8 @@ protected:
 	void refineBoundary( std::vector< int >* map );
 public:
 	int threads;
-	static double maxMemoryUsage;
 	TreeOctNode tree;
 
-	static double MemoryUsage( void );
 	Octree( void );
 
 	void MakeComplete( std::vector< int >* map=NULL );
@@ -442,7 +440,6 @@ template< class Real >
 void Reset( void )
 {
 	TreeNodeData::NodeCount=0;
-	Octree< Real >::maxMemoryUsage = 0;
 }
 
 #include "MultiGridOctreeData.inl"

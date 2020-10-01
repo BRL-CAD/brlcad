@@ -454,7 +454,6 @@ template< class Vertex >
 int CoredVectorMeshData< Vertex >::addOutOfCorePoint_s( const Vertex& p )
 {
 	size_t sz;
-#pragma omp critical (CoredVectorMeshData_addOutOfCorePoint_s )
 	{
 		sz = oocPoints.size();
 		oocPoints.push_back(p);
@@ -465,7 +464,6 @@ template< class Vertex >
 int CoredVectorMeshData< Vertex >::addPolygon_s( const std::vector< int >& polygon )
 {
 	size_t sz;
-#pragma omp critical (CoredVectorMeshData_addPolygon_s)
 	{
 		sz = polygon.size();
 		polygons.push_back( polygon );
@@ -510,114 +508,3 @@ int CoredVectorMeshData< Vertex >::outOfCorePointCount(void){return int(oocPoint
 template< class Vertex >
 int CoredVectorMeshData< Vertex >::polygonCount( void ) { return int( polygons.size() ); }
 
-///////////////////////
-// CoredFileMeshData //
-///////////////////////
-template< class Vertex >
-CoredFileMeshData< Vertex >::CoredFileMeshData( void )
-{
-	oocPoints = polygons = 0;
-
-	oocPointFile = new BufferedReadWriteFile();
-	polygonFile = new BufferedReadWriteFile();
-}
-template< class Vertex >
-CoredFileMeshData< Vertex >::~CoredFileMeshData( void )
-{
-	delete oocPointFile;
-	delete polygonFile;
-}
-template< class Vertex >
-void CoredFileMeshData< Vertex >::resetIterator ( void )
-{
-	oocPointFile->reset();
-	polygonFile->reset();
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::addOutOfCorePoint( const Vertex& p )
-{
-	oocPointFile->write( &p , sizeof( Vertex ) );
-	oocPoints++;
-	return oocPoints-1;
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::addPolygon( const std::vector< int >& vertices )
-{
-	int vSize = (int)vertices.size();
-	polygonFile->write( &vSize , sizeof(int) );
-	polygonFile->write( &vertices[0] , sizeof(int)*vSize );
-	polygons++;
-	return polygons-1;
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::addPolygon( const std::vector< CoredVertexIndex >& vertices )
-{
-	std::vector< int > polygon( vertices.size() );
-	for( int i=0 ; i<(int)vertices.size() ; i++ )
-		if( vertices[i].inCore ) polygon[i] =  vertices[i].idx;
-		else                     polygon[i] = -vertices[i].idx-1;
-	return addPolygon( polygon );
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::addOutOfCorePoint_s( const Vertex& p )
-{
-	int sz;
-#pragma omp critical (CoredFileMeshData_addOutOfCorePoint_s)
-	{
-		sz = oocPoints;
-		oocPointFile->write( &p , sizeof( Vertex ) );
-		oocPoints++;
-	}
-	return sz;
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::addPolygon_s( const std::vector< int >& vertices )
-{
-	int sz , vSize = (int)vertices.size();
-#pragma omp critical (CoredFileMeshData_addPolygon_s )
-	{
-		sz = polygons;
-		polygonFile->write( &vSize , sizeof(int) );
-		polygonFile->write( &vertices[0] , sizeof(int) * vSize );
-		polygons++;
-	}
-	return sz;
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::addPolygon_s( const std::vector< CoredVertexIndex >& vertices )
-{
-	std::vector< int > polygon( vertices.size() );
-	for( int i=0 ; i<(int)vertices.size() ; i++ )
-		if( vertices[i].inCore ) polygon[i] =  vertices[i].idx;
-		else                     polygon[i] = -vertices[i].idx-1;
-	return addPolygon_s( polygon );
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::nextOutOfCorePoint( Vertex& p )
-{
-	if( oocPointFile->read( &p , sizeof( Vertex ) ) ) return 1;
-	else return 0;
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::nextPolygon( std::vector< CoredVertexIndex >& vertices )
-{
-	int pSize;
-	if( polygonFile->read( &pSize , sizeof(int) ) )
-	{
-		std::vector< int > polygon( pSize );
-		if( polygonFile->read( &polygon[0] , sizeof(int)*pSize ) )
-		{
-			vertices.resize( pSize );
-			for( int i=0 ; i<int(polygon.size()) ; i++ )
-				if( polygon[i]<0 ) vertices[i].idx = -polygon[i]-1 , vertices[i].inCore = false;
-				else               vertices[i].idx =  polygon[i]   , vertices[i].inCore = true;
-			return 1;
-		}
-		return 0;
-	}
-	else return 0;
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::outOfCorePointCount( void ){ return oocPoints; }
-template< class Vertex >
-int CoredFileMeshData< Vertex >::polygonCount( void ) { return polygons; }
