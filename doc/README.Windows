@@ -86,6 +86,18 @@ installed on the system.  To see what versions are installed,
 look for Windows SDK installs in the "Apps & Features" Setup
 interface.
 
+=======================================================
+
+=== Tracking down the source of a header inclusion  ===
+
+If a Windows system header is reporting an error, it can be helpful to
+identify where the header is being included from.  By default MSVC
+doesn't report this, but in Visual Studio there is a "ShowIncludes"
+setting that may be enabled to find this information:
+
+https://stackoverflow.com/a/1138045
+
+
 ===========================================
 
 === Notes on Visual Studio 14 2015 ===
