@@ -3228,6 +3228,11 @@ else(NOT BRLCAD_ENABLE_TARGETS)
   endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
 endif(NOT BRLCAD_ENABLE_TARGETS)
 
+# If we're below level 2, we don't need Tcl
+if (NOT BRLCAD_LEVEL2)
+  set(BRLCAD_ENABLE_TCL OFF CACHE BOOL "Disabled due to level 1 build" FORCE)
+endif (NOT BRLCAD_LEVEL2)
+
 # At the start, clear the src/other subdirs list so repeated
 # configures will correctly add the required directories
 set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
