@@ -28,7 +28,6 @@ DAMAGE.
 
 #ifndef POINT_STREAM_INCLUDED
 #define POINT_STREAM_INCLUDED
-#include "Ply.h"
 #include "cvertex.h"
 
 template< class Real >
@@ -87,23 +86,6 @@ class BinaryPointStream : public PointStream< Real >
 public:
 	BinaryPointStream( const char* filename );
 	~BinaryPointStream( void );
-	void reset( void );
-	bool nextPoint( Point3D< Real >& p , Point3D< Real >& n );
-};
-
-template< class Real >
-class PLYPointStream : public PointStream< Real >
-{
-	char* _fileName;
-	PlyFile* _ply;
-	int _nr_elems;
-	char **_elist;
-
-	int _pCount , _pIdx;
-	void _free( void );
-public:
-	PLYPointStream( const char* fileName );
-	~PLYPointStream( void );
 	void reset( void );
 	bool nextPoint( Point3D< Real >& p , Point3D< Real >& n );
 };

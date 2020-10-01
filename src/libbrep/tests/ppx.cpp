@@ -22,6 +22,9 @@
  * Point-point intersection tests.
  *
  */
+
+#define NOMINMAX
+
 #include "common.h"
 #include "bu.h"
 #include "brep.h"

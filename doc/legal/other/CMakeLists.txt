@@ -16,7 +16,6 @@ set(other_licenses
   openscenegraph.txt
   poly2tri.txt
   proj-4.txt
-  SPSR.txt
   stepcode.txt
   tcl.txt
   tkhtml.txt
