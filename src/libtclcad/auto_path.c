@@ -192,6 +192,14 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_vls_sprintf(&buffer, "iwidgets%s", IWIDGETS_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
+
+	bu_vls_sprintf(&buffer, "Tkhtml3.0");
+	p = bu_strdup(bu_vls_cstr(&buffer));
+	bu_ptbl_ins(&lib_subpaths, (long *)p);
+
+	bu_vls_sprintf(&buffer, "Tktable2.10");
+	p = bu_strdup(bu_vls_cstr(&buffer));
+	bu_ptbl_ins(&lib_subpaths, (long *)p);
 #endif
 
 	bu_vls_sprintf(&buffer, "tclscripts");
