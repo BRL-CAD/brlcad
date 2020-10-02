@@ -47,6 +47,7 @@
 #include  <memory.h>
 #include  <math.h>
 
+#include  "bu/app.h"
 #include  "gdiam.hpp"
 
 /*--- Start of Code ---*/
@@ -150,6 +151,7 @@ void  test_file( const char  * file_name )
 
 int  main( int  argc, char  ** argv )
 {
+    bu_setprogname(argv[0]);
     if  ( argc == 1 ) {
         standard_test();
         return  0;
