@@ -1104,12 +1104,15 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     /* Match anything that doesn't define a 2D or 3D shape - unfortunately, this list will have to
      * be updated manually unless/until some functionality is added to generate it */
     if (!bu_path_match(plan->p_un._type_data, "shape", 0) &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_DATUM &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SUBMODEL
 	) {
 	type_match = 1;
     }

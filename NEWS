@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* updated non-shape objects list for search shape filter - Cliff Yapp
 * added volume type to search -type filters - Cliff Yapp
 * applied shorter default title in fast4-g conversions - Cliff Yapp
 * improved pixcmp support for subset image comparisons - Sean Morrison
