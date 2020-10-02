@@ -592,7 +592,7 @@ d2.r
 	    plate mode objects will not match because their volume is implicit, and
 	    (for example) surface mode BoTs will not match because they don't define a
 	    volume.
-	  </para
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>
