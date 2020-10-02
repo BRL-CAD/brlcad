@@ -389,7 +389,9 @@ vdsTri *vdsAddTri(int v0, int v1, int v2,
  * @param 	nnodes 	The number of nodes being merged
  * @param	nodes 	Nodes being merged (it is an error if any of these
  *			nodes already has a parent node)
- * @param	XYZ  The coordinates of the new node's repvert
+ * @param	x  The X coordinate of the new node's repvert
+ * @param	y  The Y coordinate of the new node's repvert
+ * @param	z  The Z coordinate of the new node's repvert
  * @return	A pointer to the newly created parent node. <b>NOTE</b>:
  *		This pointer is only valid until the vdsEndVertexTree() call.
  */
@@ -1077,7 +1079,8 @@ void vdsAdjustTreeBoundary(vdsNode *root, vdsFoldCriterion foldtest, void *udata
  * determine whether to fold or unfold nodes.
  *
  * @param	node 		the root of the (sub)tree to be adjusted
- * @param	foldtest() 	returns 1 if node should be folded, 0 otherwise
+ * @param	foldtest	returns 1 if node should be folded, 0 otherwise
+ * @param	udata           user data 
  */
 void vdsAdjustTreeTopDown(vdsNode *node, vdsFoldCriterion foldtest, void *udata)
 {
@@ -1618,13 +1621,13 @@ static vdsNode *readNode(FILE *f, vdsNodeDataReader getdata)
 
     node = (vdsNode *) calloc(1, sizeof(vdsNode));
     node->status = Inactive;
-    fread(&node->bound, sizeof(vdsBoundingVolume), 1, f);
-    fread(&node->coord, sizeof(vdsVec3), 1, f);
-    fread(&numchildren, sizeof(numchildren), 1, f);
+    if (!fread(&node->bound, sizeof(vdsBoundingVolume), 1, f)) return node;
+    if (!fread(&node->coord, sizeof(vdsVec3), 1, f)) return node;
+    if (!fread(&numchildren, sizeof(numchildren), 1, f)) return node;
     /* if numchildren is 0, set node->children NULL, otherwise to non-NULL */
     node->children = (numchildren == 0 ? NULL : (vdsNode *) 0x1);
     /* Read sibling pointer (actually we just care if it's NULL or not) */
-    fread(&node->sibling, sizeof(node->sibling), 1, f);
+    if (!fread(&node->sibling, sizeof(node->sibling), 1, f)) return node;
     /*
      * We can read and write the triangles directly to the binary file, at
      * the expense of re-running vdsComputeTriNodes() afterwards.  Also,
@@ -1632,14 +1635,14 @@ static vdsNode *readNode(FILE *f, vdsNodeDataReader getdata)
      * that we are locked to a particular architecture/compiler's memory
      * alignment...not very portable.
      */
-    fread(&numsubtris, sizeof(numsubtris), 1, f);
+    if (!fread(&numsubtris, sizeof(numsubtris), 1, f)) return node;
     node->nsubtris = numsubtris;
     node = (vdsNode *) realloc(node, sizeof(vdsNode) +
 	    numsubtris * sizeof(vdsTri));
-    fread(&node->subtris[0], sizeof(vdsTri), numsubtris, f);
+    if (!fread(&node->subtris[0], sizeof(vdsTri), numsubtris, f)) return node;
     /* Now get the associated node data if user has provided a function */
     if (getdata == NULL) {
-	fread(&node->data, sizeof(vdsNodeData), 1, f);
+	if (!fread(&node->data, sizeof(vdsNodeData), 1, f)) return node;
     } else {
 	node->data = getdata(f);
     }
