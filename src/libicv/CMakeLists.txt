@@ -1,4 +1,5 @@
 find_package(PNG)
+find_package(NETPBM)
 
 set(ICV_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include

@@ -16,9 +16,11 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
       "${ZLIB_INCLUDE_DIR}"
-      "${REGEX_INCLUDE_DIRS}"
       "${TCL_INCLUDE_PATH}"
       )
+    if (REGEX_INCLUDE_DIRS)
+      include_directories("${REGEX_INCLUDE_DIRS}")
+    endif (REGEX_INCLUDE_DIRS)
 
     # The build shims aren't so great at mocking the initialization
     # behavior of the real code.

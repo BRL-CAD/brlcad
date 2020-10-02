@@ -144,17 +144,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/netpbm.cmake)
 # libpng - Portable Network Graphics image file support
 include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
 
-# libutahrle - Runtime Length Encoding image file support
-include(${CMAKE_CURRENT_SOURCE_DIR}/utahrle.cmake)
-
-# openNURBS - Non-Uniform Rational B-Spline support
-include(${CMAKE_CURRENT_SOURCE_DIR}/openNURBS.cmake)
-
 # STEPcode - support for reading and writing STEP files
 include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
-
-# Poly2Tri - 2D constrained Delaunay triangulation
-include(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.cmake)
 
 # libbson - for binary attributes, always use this local version
 include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
@@ -171,28 +162,33 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/tktable.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/tkhtml.cmake)
 
 ###############################################################################
 #                    Primary BRL-CAD Compilation
 ###############################################################################
 
+# Dependencies are now defined - defined a convenience target to build all of
+# them without triggering the main BRL-CAD build.
+if(BRLCAD_DEPS)
+  add_custom_target(deps DEPENDS ${BRLCAD_DEPS})
+endif(BRLCAD_DEPS)
+
+
 # Set variables based on what we're building, so we know what to tell the main
-# BRL-CAD build.  Note we don't need to do this for Tk or the other Tcl
-# packages, as they will key of of the Tcl result.
+# BRL-CAD build.  We don't need to do this for Tk or the other Tcl
+# packages, as they will key off of the Tcl result.
+#
+# Note that these *_TARGET variables aren't used for dependency tracking, but
+# rather for controlling build settings passed to the primary BRL_CAD build.
 set(TARGET_LIST
   LEMON
   RE2C
   PERPLEX
-  REGEX
   ZLIB
-  PNG
+  REGEX
   NETPBM
-  UTAHRLE
-  OPENNURBS
+  PNG
   STEPCODE
-  POLY2TRI
   BSON
   PROJ4
   GDAL
@@ -204,12 +200,21 @@ if (TARGET ${T}_BLD)
 endif (TARGET ${T}_BLD)
 endforeach(T ${TARGET_LIST})
 
-if(BRLCAD_DEPS)
-  add_custom_target(deps DEPENDS ${BRLCAD_DEPS})
-endif(BRLCAD_DEPS)
-
-# We've built everything we needed to build - now we can build BRL-CAD itself
-
+# We've built everything we needed to build - now we can define the build
+# invocation for BRL-CAD itself.
+#
+# Unlike other projects here, BRL-CAD's build system is both the superbuild and
+# the main BRL-CAD build, depending on which options are passed to it.  To
+# trigger what users would think of as the "main BRL-CAD" build that actually
+# creates BRL-CAD's libraries and programs, we pass SUBBUILD=ON to CMake.
+#
+# Note that this is also the default behavior of the build if src/superbuild is
+# not present in the tree - in that case BRL-CAD is fully reliant on successful
+# find_package calls and will not compile any of the superbuild-managed
+# libraries as fallbacks.
+#
+# (For REGEX, ZLIB and PNG we need to do a little extra work and supply our
+# custom library names so find_package knows about them.)
 ExternalProject_Add(BRLCAD_BLD
   SOURCE_DIR "${BRLCAD_SOURCE_DIR}"
   PREFIX ${BRLCAD_BINARY_DIR}/brlcad
@@ -224,13 +229,7 @@ ExternalProject_Add(BRLCAD_BLD
   -DZLIB_ROOT=$<$<BOOL:${ZLIB_TARGET}>:${CMAKE_BINARY_DIR}> -DZLIB_LIBRARY=$<$<BOOL:${ZLIB_TARGET}>:${CMAKE_BINARY_DIR}/${LIB_DIR}/${ZLIB_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}>
   -DPNG_ROOT=$<$<BOOL:${PNG_TARGET}>:${CMAKE_BINARY_DIR}> -DPNG_LIBRARY=$<$<BOOL:${PNG_TARGET}>:${CMAKE_BINARY_DIR}/${LIB_DIR}/${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}>
   -DNETPBM_ROOT=$<$<BOOL:${NETPBM_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DUTAHRLE_ROOT=$<$<BOOL:${UTAHRLE_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DOPENNURBS_ROOT=$<$<BOOL:${OPENNURBS_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DSPSR_ROOT=$<$<BOOL:${SPSR_TARGET}>:${CMAKE_BINARY_DIR}>
   -DSTEPCODE_ROOT=$<$<BOOL:${STEPCODE_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DVDS_ROOT=$<$<BOOL:${VDS_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DGDIAM_ROOT=$<$<BOOL:${GDIAM_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DPOLY2TRI_ROOT=$<$<BOOL:${POLY2TRI_TARGET}>:${CMAKE_BINARY_DIR}>
   -DBSON_ROOT=$<$<BOOL:${BSON_TARGET}>:${CMAKE_BINARY_DIR}>
   -DPROJ4_ROOT=$<$<BOOL:${PROJ4_TARGET}>:${CMAKE_BINARY_DIR}>
   -DGDAL_ROOT=$<$<BOOL:${GDAL_TARGET}>:${CMAKE_BINARY_DIR}>

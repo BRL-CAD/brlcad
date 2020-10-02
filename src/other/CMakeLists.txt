@@ -1,30 +1,76 @@
 #-----------------------------------------------------------------------
-# Local Copies of External Libraries
+# Bundled External Libraries and other 3rd party components.
 #
-# BRL-CAD depends on a variety of external libraries and tools -
-# rather than fail if those requirements are not satisfied, we build
-# local copies at need.
+# In general, source code here will meet one of the following criteria:
 #
-# There are three overall approaches to the handling of these
-# dependencies:
+# 1.  A third party library where BRL-CAD has had to make local
+#     modifications that are essential to our use of the library,
+#     precluding the use of a system-supplied version, and the library
+#     is not readily integrable into BRL-CAD's own compilation.
 #
-# 1.  Auto - detect system libraries and use them if suitable,
-#     otherwise build and use the local copy.  This is the default
-#     approach.
+# 2.  A header only library or some other component used in the
+#     compilation of multiple parts of BRL-CAD (i.e. it isn't practical
+#     to locate it with the logic that uses it.)
 #
-# 2.  Bundled - regardless of system conditions, build and use all
-#     bundled libraries.
-#
-# 3.  System - fail to build if the system libraries do not satisfy
-#     requirements.  This is primarily useful for distributions that
-#     want to ensure packages are using external libraries.
-#
-# In addition to the broad toplevel control, individual libraries can
-# also be overridden - for example, if the toplevel setting is for
-# Bundled libs, it is still possible to request a system library in
-# individual cases.
+# 3.  A third party component that is not widely available in the
+#     the broader software ecosystem.  Since we know we will
+#     always be building those components, there isn't any gain or
+#     justification for the increased complexity of maintaining a
+#     superbuild detect-and-build-if-needed approach to support it.
 #
 #-----------------------------------------------------------------------
+
+# Clear all BRL-CAD defined CMake flags
+CLEAR_BUILD_FLAGS()
+
+# Restore CMake's original flags
+RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
+
+# Quiet all warnings in this directory
+DISABLE_WARNINGS()
+
+# For src/other, be liberal about standards
+unset(CMAKE_C_EXTENSIONS)
+unset(CMAKE_C_STANDARD_REQUIRED)
+unset(CMAKE_C_STANDARD)
+unset(CMAKE_CXX_EXTENSIONS)
+unset(CMAKE_CXX_STANDARD_REQUIRED)
+unset(CMAKE_CXX_STANDARD)
+
+###############################################################################
+# Unlike the misc/tools directory components built in src/other are part of
+# the distribution, not just the compilation.  Hence we need to make sure of
+# some basic compatibility between the build settings.
+
+# We don't want to try to mix 32 and 64 bit builds so despite clearing the
+# parent build flags,  set the 32/64 bit flag specifically if we have it from
+# the parent build.
+if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64 AND DEFINED 64BIT_FLAG)
+  ADD_NEW_FLAG(C 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(CXX 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(SHARED_LINKER 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(EXE_LINKER 64BIT_FLAG ALL)
+endif(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64 AND DEFINED 64BIT_FLAG)
+if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
+  ADD_NEW_FLAG(C 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(CXX 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(SHARED_LINKER 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(EXE_LINKER 32BIT_FLAG ALL)
+endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
+
+###############################################################################
+
+# Set a variable that will tell build logic in subdirectories that there is a
+# parent build.  This will in some cases disable attempts to define settings
+# such as RPATH values that we need the parent build to manage.
+set(HAVE_PARENT_BUILD 1)
+
+# Ideally we wouldn't need this, but in a few cases we're using BRL-CAD's
+# include dirs.
+include_directories(
+  "${BRLCAD_BINARY_DIR}/include"
+  "${BRLCAD_SOURCE_DIR}/include"
+  )
 
 # Most third party items have a list calling out files for distcheck -
 # these are stored in files in the dlists directory.  Ignore that
@@ -35,102 +81,63 @@ foreach(ITEM ${dlists})
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
 
-# By default, changes in src/other files won't trigger a rebuild.  Setting this
-# to 1 at configure time changes that, but at the expense of running the build
-# step every time.  This may be fast if there is nothing to update in the
-# project, but it will be slower than skipping the step completely.
-if (NOT DEFINED EXTERNAL_BUILD_UPDATE)
-  set(EXTERNAL_BUILD_UPDATE 0)
-endif (NOT DEFINED EXTERNAL_BUILD_UPDATE)
+# If the option is available (and in a number of cases we make sure it is)
+# don't install the headers as part of the BRL-CAD package.  We compile
+# against these, but we may have adjusted them compared to system versions
+# and we don't want them mixing with the system version for an external
+# code via it including our version of the header
+set(SKIP_INSTALL_HEADERS TRUE CACHE  BOOL "Don't install src/other headers" FORCE)
+mark_as_advanced(SKIP_INSTALL_HEADERS)
 
-# Use this variable to key both CMake messages and tools like rpath_replace
-if(NOT DEFINED EXTPROJ_VERBOSE)
-  set(EXTPROJ_VERBOSE 0)
-endif(NOT DEFINED EXTPROJ_VERBOSE)
+# libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
+# and the include directory for utahrle are different, so override the
+# macro's setting of UTAHRLE_INCLUDE_DIR here.
+if (BRLCAD_LEVEL3)
+  add_subdirectory(libutahrle)
+  set(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
+  mark_as_advanced(UTAHRLE_INCLUDE_DIR)
+endif (BRLCAD_LEVEL3)
 
-# ExternalProject_Add uses configure_file internally - we don't want warnings
-# about those files, so suppress our warning system
-set(SUPPRESS_GENERATED_TAG TRUE)
+# OpenNURBS Library
+add_subdirectory(openNURBS)
+SetTargetFolder(openNURBS "Third Party Libraries")
+SetTargetFolder(openNURBS-static "Third Party Libraries")
+SetTargetFolder(openNURBS-obj "Third Party Libraries")
+set(OPENNURBS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
+set(OPENNURBS_LIBRARY openNURBS CACHE STRING "Require opennurbs libraries" FORCE)
+mark_as_advanced(OPENNURBS_INCLUDE_DIR)
+mark_as_advanced(OPENNURBS_LIBRARY)
+get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
+set(openNURBS_headers)
+foreach(onhfile ${openNURBS_headers_orig})
+  set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
+endforeach(onhfile ${openNURBS_headers_orig})
+BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
 
-# Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized BEFORE including this file!
-include(ExternalProject_Target)
+# Poly2Tri CDT library
+# Note - this really should be embedded as part of libbg - it is simple, can be
+# compiled as part of libbg with a few source adjustments, and there is an API
+# for this feature exposed by libbg.  The only reason it is still maintained as
+# a separate library is the fast cdt feature of libbrep, which is using this
+# API directly instead of going through libbg.  Care will have to be taken when
+# making that shift, and it may even be that we'll discover a need to adjust the
+# libbg API in doing so to avoid performance issues.  We should eventually
+# address those issues though, if for no other reason than to discourage other
+# direct uses of this API instead of bg_nested_polygon_triangulate.
+#
+# May also want to investigate https://github.com/MetricPanda/fast-poly2tri, but
+# the removal of Steiner point insertion would probably need to be addressed...
+add_subdirectory(poly2tri)
+include("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist")
+CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
+DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile")
+set(POLY2TRI_LIBRARY "poly2tri" CACHE STRING "Poly2Tri library" FORCE)
+set(POLY2TRI_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
+SetTargetFolder(poly2tri "Third Party Libraries")
+SetTargetFolder(poly2tri-static "Third Party Libraries")
+mark_as_advanced(POLY2TRI_LIBRARY)
+mark_as_advanced(POLY2TRI_INCLUDE_DIR)
 
-# External build outputs can be verbose - capture them to files instead of
-# outputting to console
-#set(LOG_OPTS
-#  LOG_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/ExternalProject_logs"
-#  LOG_CONFIGURE ON LOG_BUILD ON LOG_INSTALL ON
-#  LOG_MERGED_STDOUTERR ON LOG_OUTPUT_ON_FAILURE ON
-#  )
-
-set(LOG_OPTS)
-
-find_package(LEMON)
-find_package(RE2C)
-find_package(PERPLEX)
-find_package(REGEX)
-find_package(ZLIB)
-find_package(NETPBM)
-find_package(UTAHRLE)
-find_package(OPENNURBS)
-find_package(STEPCODE)
-find_package(POLY2TRI)
-
-# For testing set(BRLCAD_ENABLE_BINARY_ATTRIBUTES ON)
-if (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-  find_package(BSON)
-endif (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-
-find_package(TCL)
-
-if(0)
-# OpenSceneGraph Libraries
-set(openscenegraph_DESCRIPTION "
-Option for enabling and disabling compilation of the OpenSceneGraph
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(openscenegraph OSG osg openscenegraph_DESCRIPTION
-  ALIASES ENABLE_OPENSCENEGRAPH REQUIRED_VARS "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" FIND_NAME OpenSceneGraph FIND_COMPONENTS
-  osgText osgViewer FLAGS NOSYS)
-if(BRLCAD_OSG_BUILD)
-  set(OSG_LIBRARY osg CACHE STRING "libosg" FORCE)
-  set(OSGUTIL_LIBRARY osgUtil CACHE STRING "osgutil" FORCE)
-  set(OSGDB_LIBRARY osgDB CACHE STRING "osgdb" FORCE)
-  set(OSGGA_LIBRARY osgGA CACHE STRING "osgGA" FORCE)
-  set(OSGTEXT_LIBRARY osgText CACHE STRING "osg Text library" FORCE)
-  set(OSGVIEWER_LIBRARY osgViewer CACHE STRING "osg Viewer library" FORCE)
-  set(OPENTHREADS_LIBRARY OpenThreads CACHE STRING "OpenThreads library" FORCE)
-  set(OPENTHREADS_INCLUDE_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}/openscenegraph/src/OpenThreads/include"
-    "${BRLCAD_SOURCE_DIR}/src/other/openscenegraph/src/OpenThreads/include"
-    CACHE STRING "OpenThreads include dirs" FORCE
-    )
-  set(OSG_INCLUDE_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}/openscenegraph/include"
-    "${BRLCAD_SOURCE_DIR}/src/other/openscenegraph/include"
-    CACHE STRING "OpenSceneGraph include dirs" FORCE
-    )
-  set(OSG_INCLUDE_DIR "${OSG_INCLUDE_DIR}" CACHE STRING "Directory containing OpenSceneGraph headers." FORCE)
-  set(OSG_LIBRARIES "${OSG_LIBRARY};${OSGUTIL_LIBRARY};${OSGDB_LIBRARY};${OSGGA_LIBRARY};${OSGTEXT_LIBRARY};${OSGVIEWER_LIBRARY};${OPENTHREADS_LIBRARY}" CACHE STRING "OpenSceneGraph Libraries")
-  SetTargetFolder(osg "Third Party Libraries")
-  SetTargetFolder(osgDB "Third Party Libraries")
-  SetTargetFolder(osgGA "Third Party Libraries")
-  SetTargetFolder(osgText "Third Party Libraries")
-  SetTargetFolder(osgViewer "Third Party Libraries")
-  SetTargetFolder(osgUtil "Third Party Libraries")
-  SetTargetFolder(osgWidget "Third Party Libraries")
-  SetTargetFolder(osgdb_freetype "Third Party Libraries")
-  SetTargetFolder(osgdb_osg "Third Party Libraries")
-  SetTargetFolder(osgdb_png "Third Party Libraries")
-else(BRLCAD_OSG_BUILD)
-  if (BRLCAD_ENABLE_OSG)
-    find_package(OpenThreads)
-  endif (BRLCAD_ENABLE_OSG)
-endif(BRLCAD_OSG_BUILD)
-
-endif (0)
 
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
@@ -145,11 +152,30 @@ CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
 CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
 
+
+if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
+
+  # Tkhtml doesn't have an active upstream
+  add_subdirectory(tkhtml)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
+  SetTargetFolder(Tkhtml "Third Party Libraries")
+  SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
+
+  # Tktable is a borderline case.  It does exist and is used in the Tcl/Tk
+  # ecosystem, but it is has the same problem we have generally with "package
+  # require" Tk package testing and there is very little upstream activity...
+  add_subdirectory(tktable)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
+  SetTargetFolder(Tktable "Third Party Libraries")
+  SetTargetFolder(tktable_header_gen "Compilation Utilities")
+
+endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
+
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)
-
-# Done with ExternalProject_Add
-set(SUPPRESS_GENERATED_TAG FALSE)
 
 # Local Variables:
 # tab-width: 8
