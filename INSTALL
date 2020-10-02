@@ -571,16 +571,6 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_OPENNURBS
 
 
---- BRLCAD_SPSR ---
-
-Option for enabling and disabling compilation of the Screened Poisson
-Surface Reconstruction library provided with BRL-CAD's source code.
-Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
-and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_SPSR
-
-
 --- BRLCAD_BSON ---
 
 Option for enabling and disabling compilation of the Libbson library
@@ -588,28 +578,6 @@ provided with BRL-CAD's source code.  Default is BUNDLED, using
 the included other/src version.
 
 Aliases:  ENABLE_BSON
-
-
---- BRLCAD_VDS ---
-
-Option for enabling and disabling compilation of the libvds triangle
-simplification library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_VDS
-
-
---- BRLCAD_GDIAM ---
-
-Option for enabling and disabling compilation of the libgdiam approximate
-tight bounding box library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_GDIAM
 
 
 --- BRLCAD_POLY2TRI ---

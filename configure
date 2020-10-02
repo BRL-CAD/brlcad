@@ -134,10 +134,6 @@ do
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";
                                   shift;;
-     --enable-spsr)                options="$options -DBRLCAD_SPSR=BUNDLED";
-                                  shift;;
-     --disable-spsr)                options="$options -DBRLCAD_SPSR=SYSTEM";
-                                  shift;;
      --enable-bson)                options="$options -DBRLCAD_BSON=BUNDLED";
                                   shift;;
      --disable-bson)                options="$options -DBRLCAD_BSON=SYSTEM";

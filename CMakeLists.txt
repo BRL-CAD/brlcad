@@ -2074,6 +2074,11 @@ else(NOT BRLCAD_ENABLE_TARGETS)
   endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
 endif(NOT BRLCAD_ENABLE_TARGETS)
 
+# If we're below level 2, we don't need Tcl
+if (NOT BRLCAD_LEVEL2)
+  set(BRLCAD_ENABLE_TCL OFF CACHE BOOL "Disabled due to level 1 build" FORCE)
+endif (NOT BRLCAD_LEVEL2)
+
 # Before we head into src/other and misc/tools, store all the build
 # flags that have been built up.  It's hard to be sure what will and
 # won't be set in those directories, so make sure we can restore the

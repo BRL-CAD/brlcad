@@ -150,17 +150,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/utahrle.cmake)
 # openNURBS - Non-Uniform Rational B-Spline support
 include(${CMAKE_CURRENT_SOURCE_DIR}/openNURBS.cmake)
 
-# Screened Poisson Reconstruction Library
-include(${CMAKE_CURRENT_SOURCE_DIR}/spsr.cmake)
-
 # STEPcode - support for reading and writing STEP files
 include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
-
-# VDSlib - A View-Dependent Simplification and Rendering Library
-include(${CMAKE_CURRENT_SOURCE_DIR}/vds.cmake)
-
-# gdiam - approximate tight bounding boxes
-include(${CMAKE_CURRENT_SOURCE_DIR}/gdiam.cmake)
 
 # Poly2Tri - 2D constrained Delaunay triangulation
 include(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.cmake)
@@ -200,10 +191,7 @@ set(TARGET_LIST
   NETPBM
   UTAHRLE
   OPENNURBS
-  SPSR
   STEPCODE
-  VDS
-  GDIAM
   POLY2TRI
   BSON
   PROJ4
@@ -270,6 +258,8 @@ else()
     DEPENDS brlcad-build
     )
 endif()
+
+#install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\" -DCMAKE_BINARY_DIR=\"${CMAKE_BINARY_DIR}\" -DCMAKE_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\" -P \"${CMAKE_CURRENT_SOURCE_DIR}/brlcad.cmake\")")
 
 # Local Variables:
 # tab-width: 8

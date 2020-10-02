@@ -4,12 +4,10 @@ set(other_licenses
   incrTcl.txt
   libbson.txt
   libbson_yajl.txt
-  libgdiam.txt
   libnetpbm.txt
   libpng.txt
   libregex.txt
   libutahrle.txt
-  libvds.txt
   libz.txt
   linenoise.txt
   OpenNURBS.txt
