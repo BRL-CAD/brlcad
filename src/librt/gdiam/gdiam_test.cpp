@@ -4,19 +4,32 @@
  * bounding box.
  *
  * Copyright 2000 Sariel Har-Peled (ssaarriieell@cs.uiuc.edu)
+ * https://sarielhp.org/research/papers/00/diameter/diam_prog.html
  *
- * * the GNU General Public License as published by the Free
- *   Software Foundation; either version 2, or (at your option)
- *   any later version.
+ * Note:  gdiam is available under multiple licenses - we make
+ * use of it under the MIT license:
  *
- * or
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
  *
- * * the GNU Lesser General Public License as published by the Free
- *   Software Foundation; either version 2.1, or (at your option)
- *   any later version.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  * Code is based on the paper:
- *   A Practical Approach for Computing the Diameter of a Point-Set.
+ *   A Practical Approach for Computing the Diameter of a
+ *   Point-Set (in ACM Sym. on Computation Geometry SoCG 2001)
  *   Sariel Har-Peled (http://www.uiuc.edu/~sariel)
  *---------------------------------------------------------------
  * History:

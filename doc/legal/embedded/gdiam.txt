@@ -19,5 +19,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 file:/src/librt/gdiam/gdiam.cpp
+file:/src/librt/gdiam/gdiam_test.cpp
 file:/src/librt/gdiam/gdiam.hpp
 
