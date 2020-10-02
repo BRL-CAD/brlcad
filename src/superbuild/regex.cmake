@@ -5,7 +5,7 @@ Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
 and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
+THIRD_PARTY(regex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
 
 if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
 
@@ -22,7 +22,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
   # guarantee that our libregex symbols will override libc. We'll avoid the
   # issue by renaming our libregex symbols to be incompatible with libc.
   ExternalProject_Add(REGEX_BLD
-    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/libregex"
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/regex"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
     -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}

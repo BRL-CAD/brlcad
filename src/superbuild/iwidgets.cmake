@@ -54,12 +54,12 @@ if (BRLCAD_ENABLE_TK)
     endif (TARGET ITK_BLD)
     # The Iwidgets build doesn't seem to work with Itk the same way it does with the other
     # dependencies - just point it to our local source copy
-    set(ITK_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/itk3")
+    set(ITK_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/itk3")
 
     if (NOT MSVC)
 
       ExternalProject_Add(IWIDGETS_BLD
-	URL "${CMAKE_CURRENT_SOURCE_DIR}/../other/iwidgets"
+	URL "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${IWIDGETS_PATCH_FILES}
 	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${IWIDGETS_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --exec-prefix=${CMAKE_BINARY_DIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_DIR}/${LIB_DIR},${TCLCONF_DIR}> --with-tk=$<IF:$<BOOL:${TK_TARGET}>,${CMAKE_BINARY_DIR}/${LIB_DIR},${TKCONF_DIR}> --with-itcl=$<IF:$<BOOL:${ITCL_TARGET}>,${CMAKE_BINARY_DIR}/${LIB_DIR},${ITCLCONF_DIR}> --with-itk=${ITK_SOURCE_DIR}
@@ -71,7 +71,7 @@ if (BRLCAD_ENABLE_TK)
     else (NOT MSVC)
 
       ExternalProject_Add(IWIDGETS_BLD
-	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../other/iwidgets"
+	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	CONFIGURE_COMMAND ""
 	BINARY_DIR ${IWIDGETS_SRC_DIR}/win
