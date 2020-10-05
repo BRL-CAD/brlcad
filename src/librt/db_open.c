@@ -42,6 +42,7 @@
 
 #include "bu/parallel.h"
 #include "bu/path.h"
+#include "bu/app.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
