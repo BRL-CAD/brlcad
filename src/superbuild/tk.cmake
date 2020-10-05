@@ -22,7 +22,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
   # Tcl's own build will think are the final paths.  Rather than attempt build system trickery we simply
   # hard set the values in the source files by rewriting them.
   if (NOT TARGET tcl_replace)
-    configure_file(${BRLCAD_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+    configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   endif (NOT TARGET tcl_replace)
 
@@ -37,7 +37,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tk"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
-      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_DIR}/${LIB_DIR},${TCLCONF_DIR}> --disable-xft --enable-64bit --enable-rpath
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_INSTALL_PREFIX} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_INSTALL_PREFIX}/${LIB_DIR},${TCLCONF_DIR}> --disable-xft --enable-64bit --enable-rpath
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
       DEPENDS ${TCL_TARGET}
@@ -53,8 +53,8 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       CONFIGURE_COMMAND ""
       BINARY_DIR ${TK_SRC_DIR}/win
-      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
-      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
+      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} TCLDIR=${TCL_SRC_DIR}
+      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_INSTALL_PREFIX} TCLDIR=${TCL_SRC_DIR}
       DEPENDS ${TCL_TARGET}
       )
 
@@ -256,7 +256,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
   list(APPEND BRLCAD_DEPS TK_BLD)
 
   set(TK_LIBRARIES tk CACHE STRING "Building bundled tk" FORCE)
-  set(TK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+  set(TK_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
   SetTargetFolder(TK_BLD "Third Party Libraries")
   SetTargetFolder(tk "Third Party Libraries")

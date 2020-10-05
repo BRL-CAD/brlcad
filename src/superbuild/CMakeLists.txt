@@ -26,6 +26,28 @@
 #
 #-----------------------------------------------------------------------
 
+project(BDEPS)
+
+cmake_minimum_required(VERSION 3.12)
+
+# If defined, get feature variables from parent
+if (EXISTS ${CMAKE_BINARY_DIR}/brlcad_vars.cmake)
+  include(${CMAKE_BINARY_DIR}/brlcad_vars.cmake)
+endif (EXISTS ${CMAKE_BINARY_DIR}/brlcad_vars.cmake)
+
+# We need some extra functionality for this...
+set(BDEPS_CMAKE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+set(CMAKE_MODULE_PATH "${BDEPS_CMAKE_DIR};${CMAKE_MODULE_PATH}")
+
+# We do not want to search in our install target; on a second
+# configure pass the outputs of previous builds will be detected
+# and mess up the results...
+set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_INSTALL_PREFIX}")
+
+include(Path_Setup)
+include(RPath_Setup)
+cmake_set_rpath()
+
 # If targets are built, we want to group them in build tools that support
 # doing so.
 function(SetTargetFolder targetname folder)
@@ -34,10 +56,10 @@ function(SetTargetFolder targetname folder)
   endif(TARGET ${targetname})
 endfunction(SetTargetFolder)
 
-# By default, changes in src/other files won't trigger a rebuild.  Setting this
-# to 1 at configure time changes that, but at the expense of running the build
-# step every time.  This may be fast if there is nothing to update in the
-# project, but it will be slower than skipping the step completely.
+# By default, changes in src/superbuild files won't trigger a rebuild.  Setting
+# this to 1 changes that, but at the expense of running the build step every
+# time.  This may be fast if there is nothing to update in the project, but it
+# will be slower than skipping the step completely.
 if (NOT DEFINED EXTERNAL_BUILD_UPDATE)
   set(EXTERNAL_BUILD_UPDATE 0)
 endif (NOT DEFINED EXTERNAL_BUILD_UPDATE)
@@ -122,7 +144,7 @@ set(BRLCAD_DEPS)
 # system.
 ###############################################################################
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/tools.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/perplex.cmake)
 
 ###############################################################################
 # Build logic is broken out per-library, but the ordering is important.  Some
@@ -163,102 +185,51 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
 
-###############################################################################
-#                    Primary BRL-CAD Compilation
-###############################################################################
+# For anything we've built here, we need to let the parent build know
+# where to go looking for key components
+file(WRITE "${BRLCAD_BINARY_DIR}/superbuild.cmake" "\#superbuild outputs\n")
+if (TARGET PERPLEX_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(LEMON_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(LEMON_TEMPLATE ${BRLCAD_BINARY_DIR}/${DATA_DIR}/lemon/lempar.c)\n")
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(RE2C_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(PERPLEX_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(PERPLEX_TEMPLATE ${BRLCAD_BINARY_DIR}/${DATA_DIR}/perplex/perplex_template.c)\n")
+else (TARGET PERPLEX_BLD)
+  message(FATAL_ERROR "Failed to build perplex\n")
+endif (TARGET PERPLEX_BLD)
+if (TARGET NETPBM_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(NETPBM_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+endif (TARGET NETPBM_BLD)
+if (TARGET STEPCODE_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(STEPCODE_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+endif (TARGET STEPCODE_BLD)
+if (TARGET BSON_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(BSON_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+endif (TARGET BSON_BLD)
+if (TARGET PROJ4_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(PROJ4_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+endif (TARGET PROJ4_BLD)
+if (TARGET GDAL_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(GDAL_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+endif (TARGET GDAL_BLD)
+if (TARGET TCL_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(TCL_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+endif (TARGET TCL_BLD)
 
-# Dependencies are now defined - defined a convenience target to build all of
-# them without triggering the main BRL-CAD build.
-if(BRLCAD_DEPS)
-  add_custom_target(deps DEPENDS ${BRLCAD_DEPS})
-endif(BRLCAD_DEPS)
-
-
-# Set variables based on what we're building, so we know what to tell the main
-# BRL-CAD build.  We don't need to do this for Tk or the other Tcl
-# packages, as they will key off of the Tcl result.
-#
-# Note that these *_TARGET variables aren't used for dependency tracking, but
-# rather for controlling build settings passed to the primary BRL_CAD build.
-set(TARGET_LIST
-  LEMON
-  RE2C
-  PERPLEX
-  ZLIB
-  REGEX
-  NETPBM
-  PNG
-  STEPCODE
-  BSON
-  PROJ4
-  GDAL
-  TCL
-  )
-foreach(T ${TARGET_LIST})
-if (TARGET ${T}_BLD)
-  set(${T}_TARGET ${T}_BLD)
-endif (TARGET ${T}_BLD)
-endforeach(T ${TARGET_LIST})
-
-# We've built everything we needed to build - now we can define the build
-# invocation for BRL-CAD itself.
-#
-# Unlike other projects here, BRL-CAD's build system is both the superbuild and
-# the main BRL-CAD build, depending on which options are passed to it.  To
-# trigger what users would think of as the "main BRL-CAD" build that actually
-# creates BRL-CAD's libraries and programs, we pass SUBBUILD=ON to CMake.
-#
-# Note that this is also the default behavior of the build if src/superbuild is
-# not present in the tree - in that case BRL-CAD is fully reliant on successful
-# find_package calls and will not compile any of the superbuild-managed
-# libraries as fallbacks.
-#
 # (For REGEX, ZLIB and PNG we need to do a little extra work and supply our
 # custom library names so find_package knows about them.)
-ExternalProject_Add(BRLCAD_BLD
-  SOURCE_DIR "${BRLCAD_SOURCE_DIR}"
-  PREFIX ${BRLCAD_BINARY_DIR}/brlcad
-  BINARY_DIR ${BRLCAD_BINARY_DIR}/brlcad-build
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
-  -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
-  -DSUBBUILD=ON -DBRLCAD_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-  -DLEMON_ROOT=$<$<BOOL:${LEMON_TARGET}>:${CMAKE_BINARY_DIR}> -DLEMON_TEMPLATE=$<$<BOOL:${LEMON_TARGET}>:${LEMON_TEMPLATE}>
-  -DRE2C_ROOT=$<$<BOOL:${RE2C_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DPERPLEX_ROOT=$<$<BOOL:${PERPLEX_TARGET}>:${CMAKE_BINARY_DIR}> -DPERPLEX_TEMPLATE=${CMAKE_SOURCE_DIR}/misc/tools/perplex/perplex_template.c
-  -DREGEX_ROOT=$<$<BOOL:${REGEX_TARGET}>:${CMAKE_BINARY_DIR}> -DREGEX_LIBRARY=$<$<BOOL:${REGEX_TARGET}>:${CMAKE_BINARY_DIR}/${LIB_DIR}/${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}>
-  -DZLIB_ROOT=$<$<BOOL:${ZLIB_TARGET}>:${CMAKE_BINARY_DIR}> -DZLIB_LIBRARY=$<$<BOOL:${ZLIB_TARGET}>:${CMAKE_BINARY_DIR}/${LIB_DIR}/${ZLIB_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}>
-  -DPNG_ROOT=$<$<BOOL:${PNG_TARGET}>:${CMAKE_BINARY_DIR}> -DPNG_LIBRARY=$<$<BOOL:${PNG_TARGET}>:${CMAKE_BINARY_DIR}/${LIB_DIR}/${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}>
-  -DNETPBM_ROOT=$<$<BOOL:${NETPBM_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DSTEPCODE_ROOT=$<$<BOOL:${STEPCODE_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DBSON_ROOT=$<$<BOOL:${BSON_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DPROJ4_ROOT=$<$<BOOL:${PROJ4_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DGDAL_ROOT=$<$<BOOL:${GDAL_TARGET}>:${CMAKE_BINARY_DIR}>
-  -DTCL_ROOT=${CMAKE_BINARY_DIR}
-  DEPENDS ${BRLCAD_DEPS}
-  )
-
-if("${CMAKE_GENERATOR}" MATCHES "Make")
-  add_custom_target(brlcad ALL
-    COMMAND cd ${BRLCAD_BINARY_DIR}/brlcad-build && $(MAKE) && $(MAKE) install
-    DEPENDS BRLCAD_BLD
-    )
-elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
-  add_custom_target(brlcad ALL
-    COMMAND cd ${BRLCAD_BINARY_DIR}/brlcad-build && ninja && ninja install
-    DEPENDS BRLCAD_BLD
-    )
-else()
-  add_custom_target(brlcad-build
-    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build
-    DEPENDS BRLCAD_BLD
-    )
-  add_custom_target(brlcad ALL
-    COMMAND ${CMAKE_COMMAND} --build ${BRLCAD_BINARY_DIR}/brlcad-build --target install
-    DEPENDS brlcad-build
-    )
-endif()
-
-#install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\" -DCMAKE_BINARY_DIR=\"${CMAKE_BINARY_DIR}\" -DCMAKE_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\" -P \"${CMAKE_CURRENT_SOURCE_DIR}/brlcad.cmake\")")
+if (TARGET REGEX_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(REGEX_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(REGEX_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
+endif (TARGET REGEX_BLD)
+if (TARGET ZLIB_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(ZLIB_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(REGEX_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${ZLIB_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
+endif (TARGET ZLIB_BLD)
+if (TARGET PNG_BLD)
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(PNG_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(PNG_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
+endif (TARGET PNG_BLD)
 
 # Local Variables:
 # tab-width: 8

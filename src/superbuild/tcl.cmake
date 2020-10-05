@@ -7,7 +7,7 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL REQUIRED_VARS BRLCAD_LEVEL2)
 
-if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
+if (BRLCAD_TCL_BUILD)
 
   set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
   set(TCL_MAJOR_VERSION 8)
@@ -28,7 +28,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
   # We need to set internal Tcl variables to the final install paths, not the intermediate install paths that
   # Tcl's own build will think are the final paths.  Rather than attempt build system trickery we simply
   # hard set the values in the source files by rewriting them.
-  configure_file(${BRLCAD_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+  configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
 
   if (NOT MSVC)
@@ -44,7 +44,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
       COMMAND tcl_replace ${TCL_REWORK_FILES}
-      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR}
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_INSTALL_PREFIX}
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
       DEPENDS ${ZLIB_TARGET} tcl_replace
@@ -59,8 +59,8 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       CONFIGURE_COMMAND ""
       BINARY_DIR ${TCL_SRC_DIR}/win
-      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR}
-      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR}
+      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX}
+      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_INSTALL_PREFIX}
       )
 
   endif (NOT MSVC)
@@ -314,12 +314,12 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
   list(APPEND BRLCAD_DEPS TCL_BLD)
 
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
-  set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+  set(TCL_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
   SetTargetFolder(TCL_BLD "Third Party Libraries")
   SetTargetFolder(tcl "Third Party Libraries")
 
-endif (${CMAKE_PROJECT_NAME}_TCL_BUILD)
+endif (BRLCAD_TCL_BUILD)
 
 # Local Variables:
 # tab-width: 8

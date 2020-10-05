@@ -73,24 +73,22 @@ include(BRLCAD_Options)
 # build.
 include(BRLCAD_Util)
 
-if (NOT DEFINED SUBBUILD)
-  #---------------------------------------------------------------------
-  # Record the CMake command line arguments (more or less) in
-  # CMakeFiles/CMakeOutput.log
-  record_cmdline_args()
+#---------------------------------------------------------------------
+# Record the CMake command line arguments (more or less) in
+# CMakeFiles/CMakeOutput.log
+record_cmdline_args()
 
-  #---------------------------------------------------------------------
-  # Set up the necessary support for timing of the configuration and
-  # build processes
-  set_config_time()
-  generate_sstamp()
+#---------------------------------------------------------------------
+# Set up the necessary support for timing of the configuration and
+# build processes
+set_config_time()
+generate_sstamp()
 
-  #---------------------------------------------------------------------
-  # Mark the time at which the configuration process began.
+#---------------------------------------------------------------------
+# Mark the time at which the configuration process began.
 
-  set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
-  execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
-endif (NOT DEFINED SUBBUILD)
+set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
+execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
 
 #---------------------------------------------------------------------
 #  Options controlling user level features.  These may impact which
@@ -160,90 +158,109 @@ if(MSVC)
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 endif(MSVC)
 
-#---------------------------------------------------------------------
-# We need to build at least some third party components, and maybe a lot of
-# them depending on the options.  Now that we know what the high level options
-# are, we know what to do.
+#------------------------------------------------------------------------------
+# We need to build at least some third party components, which are managed in
+# src/other, but many others may optionally use system versions.  For the
+# latter cases, we need to conditionally prepare our integrated versions IFF we
+# are not using the system versions and IFF they are required based on the
+# feature settings enabled.
 
-# If this is the top level control loop, we're going to build everything
-# (including BRL-CAD itself) as external projects of a superbuild.  That means
-# every option above will have to be passed to the BRL-CAD subbuild (which will
-# use this same CMakeLists.txt file) along with a -DSUBBUILD=1 option to let
-# the logic know it is time to do the main build.
+# In order to make this work with a minimum of disruption to BRL-CAD's primary
+# build, it is necessary that all required 3rd party dependencies not being
+# managed as part of the main build are prepared and ready *before* we do the
+# work of configuring BRL-CAD itself (beyond the initial determination of
+# feature settings, which is needed to decide whether to enable or disable the
+# 3rd party components in the first place.)
 
-# This is necessary to ensure the ExternalProject_Add dependencies are fully
-# positioned and ready for the main build - CMake has no practical mechanism to
-# ensure all ExternalProject_Add builds and installs are fully complete before
-# trying to build main target object files, which results in build order chaos
-# and unsuccessful compilations.
-if (NOT DEFINED SUBBUILD)
-  message("SUPERBUILD\n")
+# Historically this was done in BRL-CAD by treating ALL 3rd party builds as
+# integrated CMake builds, which offers advantages for packaging, but is
+# practical only when the 3rd party components in question also use CMake for
+# their build systems.  If they didn't, BRL-CAD had to produce such a build
+# system.  That was viable early on, but only scales to a point - we cannot
+# rewrite many large, complex build systems for many large dependencies.
 
+# The alternative which allows us to use external build systems directly is the
+# ExternalProject_Add function provided by CMake, but that imposes its own
+# constraints.  In particular, the "install" step of the ExternalProject is run
+# independently, not as part of the BRL-CAD install target.  Originally this
+# meant that if we wanted to use ExternalProject, we had to have write access
+# to the final install location for the CMAKE_INSTALL_PREFIX during the *build*
+# process - something that can't always be assured.  However, since the
+# original solution (writing our own CMake builds) doesn't scale indefinitely,
+# another solution is needed.
 
-  ##########################################################################
-  # TODO - revisit this someday, after digesting
-  # https://discourse.cmake.org/t/how-to-install-an-external-project/888
-  # and related discussions for how best to do all of this.
+# An initial attempt was made to integrate ExternalProject into the main build
+# and manage the build outputs, but while aspects of this worked it proved
+# impossible to produce a reliably ordered build - CMake does not provide the
+# necessary ordering mechanisms to ensure a complete execution of the
+# ExternalProject cycle before starting to build standard object file targets
+# in the primary build.  This means that (for example) headers which need to be
+# generated by an ExternalProject to successfully compile object files in the
+# main build may not be there reliably.
 
-  # The most non-standard thing we're doing is undoubtedly using CMake
-  # to update rpath settings for non-CMake builds, but otherwise it looks
-  # like there is a lot of recent discussion in the CMake discorse on the
-  # use of ExternalProject_Add and superbuilds so there's some learning
-  # to be done before finalizing a design.
-  ##########################################################################
+# The "standard" solution in CMake to this problem is what's called the
+# "superbuild" pattern, in which all necessary builds (including the "primary"
+# build of the project) are managed by a single, higher level build whose job
+# is to manage the ordering and dependencies among the ExternalProjet targets.
+# Because the dependency ordering between ExternalProject targets *does*
+# provide the necessary guarantees, it is possible to prepare a reliably
+# building system.  Unfortunately, for BRL-CAD this greatly complicates the
+# custom logic previously prepared to support working from both build and
+# install locations, as well as the logic providing information about install
+# target locations to libbu directory management mechanisms.
 
+# To work around this issue, we exploit one other guaranteed ordering in the
+# workflow process - the configure step itself.  In this mode, the setup and
+# compilation of any necessary 3rd party dependencies are invoked by the
+# configure stage, rather than the build stage.  In essence, it becomes
+# the role of configure not simply to detect dependencies, but to guarantee
+# them - whether by system detection or by triggering the compilation process
+# to create them.  The superbuild mechanism is still used with ExternalProject
+# to prepare them, allowing for managing non-CMake based external builds, but
+# that process is independent of the main BRL-CAD build, which just needs to
+# call find_package with the appropriate arguments.
 
-  # We had to get the feature level variables from the user first, since they
-  # have an impact on whic libraries are required.  That means we'll need to
-  # pass all the BRLCAD_ variable states to the subbuild, since the user should
-  # only specify them once.  The below snippit shows how to retrieve them
-  # (https://stackoverflow.com/a/9328525) but the question of whether we can
-  # programmatically assign them to the arguments of an ExternalProejct_Add
-  # build is open/untested.  Worst case we can generate the project_add
-  # description in a file and include it.
-  get_cmake_property(VARS VARIABLES)
-  list(SORT VARS)
-  foreach(v ${VARS})
-    if ("${v}" MATCHES "^BRLCAD*" AND NOT "${v}" MATCHES "DESCRIPTION$" AND NOT "${v}" MATCHES "AVAILABLE$")
-      message("${v}: ${${v}}")
-    endif ()
-  endforeach(v ${VARS})
+# Step 1 is to write out all BRL-CAD related variables to a file for
+# loading by the 3rd party superbuild: (https://stackoverflow.com/a/9328525)
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild")
+file(WRITE ${CMAKE_BINARY_DIR}/superbuild/brlcad_vars.cmake "\# Feature variables\n")
+get_cmake_property(VARS VARIABLES)
+list(SORT VARS)
+foreach(v ${VARS})
+  if ("${v}" MATCHES "^BRLCAD*" AND NOT "${v}" MATCHES "DESCRIPTION$" AND NOT "${v}" MATCHES "AVAILABLE$")
+    file(APPEND ${CMAKE_BINARY_DIR}/superbuild/brlcad_vars.cmake "set(${v} \"${${v}}\")\n")
+  endif ()
+endforeach(v ${VARS})
 
-  # The pattern here is similar to the fork-exec model - the CMakeLists.txt
-  # file without the SUBBUILD flag defined simply sets the stage and enters the
-  # superbuild directory.  In addition to executing any necessary
-  # ExternalProject_Add builds, the superbuild's final task is to build
-  # BRL-CAD as an ExternalProject_Add subproject of itself.
-  add_subdirectory(src/superbuild)
+# Now we prepare and invoke the superbuild as a separate process
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR}/src/superbuild -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
+  )
+execute_process(
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/superbuild --config Release --target all
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
+  )
 
-  # TODO - if we go this route, the final make install and CPack package building
-  # is going to be the responsibility of the superbuild, not the "main" BRL-CAD
-  # build.  That may mean we'll have to manage the BRL-CAD outputs exactly the
-  # same way we're going to have to handle the src/other build outputs... urk...
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/superbuild.cmake)
+  message(FATAL_ERROR "Third party library info file ${CMAKE_BINARY_DIR}/superbuild.cmake was not found.")
+endif (NOT EXISTS ${CMAKE_BINARY_DIR}/superbuild.cmake)
 
-  # The top level superbuild is done at this point.
-  return()
-endif (NOT DEFINED SUBBUILD)
+include(${CMAKE_BINARY_DIR}/superbuild.cmake)
+message("LEMON_TEMPLATE: ${LEMON_TEMPLATE}")
 
-# If we're not a superbuild, it's time to figure out which 3rd party libs got installed
-# into the bin/lib/etc. dirs and set up the necessary logic to have them managed by
-# this build's make install.  They not only need to be bundled, but also need to have
-# the same rpath settings used as the "main" BRL-CAD libraries so everything in the
-# binary packages works together.
+find_package(LEMON)
+find_package(RE2C)
+find_package(PERPLEX)
+find_package(NETPBM)
+find_package(STEPCODE)
+#find_package(BSON)
+find_package(PROJ4)
+find_package(GDAL)
+find_package(TCL)
 
-# TODO - add superbuild subdir with different flags set?  Need to think about how
-# to manage this...
+message("LEMON_TEMPLATE: ${LEMON_TEMPLATE}")
 
-# From here on out, the build logic will assume that all third party dependencies
-# of any sort have been properly found - either from system libs, or supplied
-# by the superbuild's external project builds and installs into the parent
-# CMake build directory.  One of the necessary tricks will be for the subbuild
-# to target for it's output bin/lib/etc. dirs the same directories as the
-# superbuild.
-if (DEFINED SUBBUILD)
-  message("SUBBUILD: ${SUBBUILD}!\n")
-  #return()
-endif (DEFINED SUBBUILD)
 #---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
 # passes.  It will impact whether we print certain messages

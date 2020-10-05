@@ -46,7 +46,7 @@ ENDIF()
 
 
 ## variables that apply to all packages
-SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${OPENSCENEGRAPH_VERSION}")
+SET(CPACK_PACKAGE_FILE_NAME "BRLCAD-${OPENSCENEGRAPH_VERSION}")
 
 # these goes for all platforms. Setting these stops the CPack.cmake script from generating options about other package compression formats (.z .tz, etc.)
 IF(WIN32)

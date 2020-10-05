@@ -285,31 +285,9 @@ int main(int argc, char *argv[])
 			break;
 
 			case 'v':
-			cout << "re2c " << PACKAGE_VERSION << "\n";
+			cout << "re2c 0.13.5 BRL-CAD\n";
 			return 2;
 
-			case 'V': {
-				string vernum(PACKAGE_VERSION);
-
-				if (vernum[1] == '.')
-				{
-					vernum.insert(0, "0");
-				}
-				vernum.erase(2, 1);
-				if (vernum[3] == '.')
-				{
-					vernum.insert(2, "0");
-				}
-				vernum.erase(4, 1);
-				if (vernum.length() < 6 || vernum[5] < '0' || vernum[5] > '9')
-				{
-					vernum.insert(4, "0");
-				}
-				vernum.resize(6);
-				cout << vernum << endl;
-				return 2;
-			}
-			
 			case 'w':
 			nRealChars = (1<<16); /* 0x10000 */
 			sFlag = true;
