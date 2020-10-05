@@ -101,7 +101,8 @@ try_load(const char *path, const char *material)
 	shader_mfuncs = (struct mfuncs *)bu_dlsym((struct mfuncs *)handle, "shader_mfuncs");
 	if ((dl_error_str=bu_dlerror()) != (char *)NULL) {
 	    /* didn't find anything appropriate, give up */
-	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
+		bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
 	    bu_dlclose(handle);
 	    return (struct mfuncs *)NULL;
 	}
@@ -120,7 +121,8 @@ try_load(const char *path, const char *material)
 	}
     }
 
-    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", material);
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
+	bu_log("shader '%s' not found in library\n", material);
 
     /* found the library, but not the shader */
     bu_dlclose(handle);
@@ -266,7 +268,6 @@ retry:
 	goto retry;
     }
 
-
     /* If we get here, then the shader was not found at all (either in
      * the compiled-in or dynamically loaded shader sets).  We set the
      * shader name to "default" (which should match an entry in the
@@ -285,6 +286,7 @@ retry:
     bu_vls_free(&params);
     bu_vls_free(&name);
     return -1;
+
 found:
     rp->reg_mfuncs = (char *)mfp;
     rp->reg_udata = (char *)0;
