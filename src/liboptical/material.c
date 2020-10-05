@@ -156,8 +156,15 @@ load_dynamic_shader(const char *material)
     if ((shader_mfuncs = try_load(libname, material, sh_name)))
 	goto done;
 
-    /* Look in the current working directory for shaders.so */
-    snprintf(libname, sizeof(libname), "%s/shaders.so", cwd);
+    /* Look in the current working directory for lib{sh_name}.so */
+    snprintf(libname, sizeof(libname), "%s/lib%s.so", cwd, sh_name);
+    if ((shader_mfuncs = try_load(libname, material, sh_name)))
+	goto done;
+
+    /* Look in the location indicated by $LD_LIBRARY_PATH for
+     * {sh_name}.so
+     */
+    snprintf(libname, sizeof(libname), "%s.so", sh_name);
     if ((shader_mfuncs = try_load(libname, material, sh_name)))
 	goto done;
 
@@ -165,6 +172,12 @@ load_dynamic_shader(const char *material)
      * lib{sh_name}.so
      */
     snprintf(libname, sizeof(libname), "lib%s.so", sh_name);
+    if ((shader_mfuncs = try_load(libname, material, sh_name)))
+	goto done;
+
+    /* Look in BRL-CAD install dir under lib dir for lib{sh_name}.so */
+    snprintf(libpath, sizeof(libpath), "/lib/%s.so", sh_name);
+    bu_strlcpy(libname, bu_brlcad_root(libpath, 1), sizeof(libname));
     if ((shader_mfuncs = try_load(libname, material, sh_name)))
 	goto done;
 
