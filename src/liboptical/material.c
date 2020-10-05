@@ -149,23 +149,17 @@ load_dynamic_shader(const char *material)
     if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
 	bu_log("load_dynamic_shader(\"%s\")\n", sh_name);
 
-    cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
+    cwd = bu_getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
-    if (cwd) {
-	/* Look in the current working directory for {sh_name}.so */
-	snprintf(libname, sizeof(libname), "%s/%s.so", cwd, sh_name);
-	if ((shader_mfuncs = try_load(libname, material, sh_name)))
-	    goto done;
+    /* Look in the current working directory for {sh_name}.so */
+    snprintf(libname, sizeof(libname), "%s/%s.so", cwd, sh_name);
+    if ((shader_mfuncs = try_load(libname, material, sh_name)))
+	goto done;
 
-
-	/* Look in the current working directory for shaders.so */
-	snprintf(libname, sizeof(libname), "%s/shaders.so", cwd);
-	if ((shader_mfuncs = try_load(libname, material, sh_name)))
-	    goto done;
-
-    } else {
-	bu_log("Cannot get current working directory\n\tSkipping local shader load\n");
-    }
+    /* Look in the current working directory for shaders.so */
+    snprintf(libname, sizeof(libname), "%s/shaders.so", cwd);
+    if ((shader_mfuncs = try_load(libname, material, sh_name)))
+	goto done;
 
     /* Look in the location indicated by $LD_LIBRARY_PATH for
      * lib{sh_name}.so
