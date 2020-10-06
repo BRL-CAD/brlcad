@@ -238,7 +238,7 @@ execute_process(
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
   )
 execute_process(
-  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/superbuild --config Release --target all
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/superbuild -j12 --config Release --target all
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
   )
 
@@ -246,20 +246,26 @@ if (NOT EXISTS ${CMAKE_BINARY_DIR}/superbuild.cmake)
   message(FATAL_ERROR "Third party library info file ${CMAKE_BINARY_DIR}/superbuild.cmake was not found.")
 endif (NOT EXISTS ${CMAKE_BINARY_DIR}/superbuild.cmake)
 
+# Find packages based on superbuild results
 include(${CMAKE_BINARY_DIR}/superbuild.cmake)
-message("LEMON_TEMPLATE: ${LEMON_TEMPLATE}")
-
 find_package(LEMON)
 find_package(RE2C)
 find_package(PERPLEX)
+find_package(ZLIB)
+find_package(PNG)
+find_package(REGEX)
 find_package(NETPBM)
-find_package(STEPCODE)
+if (BRLCAD_ENABLE_STEPCODE)
+  find_package(STEPCODE)
+endif (BRLCAD_ENABLE_STEPCODE)
 #find_package(BSON)
-find_package(PROJ4)
-find_package(GDAL)
-find_package(TCL)
-
-message("LEMON_TEMPLATE: ${LEMON_TEMPLATE}")
+if (BRLCAD_ENABLE_GDAL)
+  find_package(PROJ4)
+  find_package(GDAL)
+endif (BRLCAD_ENABLE_GDAL)
+if (BRLCAD_ENABLE_TCL)
+  find_package(TCL)
+endif (BRLCAD_ENABLE_TCL)
 
 #---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
