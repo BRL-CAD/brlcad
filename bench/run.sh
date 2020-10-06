@@ -613,7 +613,7 @@ if test ! "x${ret}" = "x0" ; then
 fi
 
 # sanity check: make sure $CMP runs
-out=`echo "" | eval \"$CMP\" - - 2>&1`
+out=`echo -n "" | eval \"$CMP\" - - 2>&1`
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
