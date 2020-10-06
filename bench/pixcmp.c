@@ -47,10 +47,16 @@
 #define FILE_ERROR 126
 
 /* exit codes for normal operation */
-#define OFF_BY_NONE 0
-#define OFF_BY_ONE  1
-#define OFF_BY_MANY 2
+#define EXIT_OFF_BY_NONE 0
+#define EXIT_OFF_BY_ONE  1
+#define EXIT_OFF_BY_MANY 2
 
+enum label {
+    MATCHING,
+    OFF_BY_ONE,
+    OFF_BY_MANY,
+    MISSING
+};
 
 HIDDEN void
 usage(const char *name)
@@ -59,19 +65,28 @@ usage(const char *name)
     if (!name) {
 	name = unknown;
     }
-    /* this must be split, ISO C90 has a max static string length of 509 */
-    bu_log("Usage: %s [OPTIONS] FILE1 [FILE2 [SKIP1 [SKIP2]]]\n%s", name,
-	   "Compare two PIX image files pixel by pixel.\n\n"
-	   "  -l   List pixel numbers and values for all pixels that differ.\n"
-	   "  -b   Output and process by bytes instead of pixels.\n"
+
+    /* split to fit within ISO C90 max static string length < 509 chars */
+    bu_log("Usage: %s [OPTIONS] FILE1 [FILE2 [SKIP1 [SKIP2]]]\n"
+	   "\n"
+	   "  Compare two PIX files pixel by pixel (or byte by byte), optionally"
+	   "  skipping initial pixels (or bytes) in one or both input files.\n"
+	   "\n", name);
+    bu_log("Options:"
+	   "  -b   Iterate and print by bytes instead of by pixels.\n"
+	   "  -s   Print all that have the same matching values.\n"
+	   "  -d   Print all that have different values.\n"
+	   "  -q   Quiet.  Suppress printing header and summary.\n"
 	   "  -i SKIP\n"
-	   "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n");
-    bu_log("  -i SKIP1:SKIP2\n"
-	   "       Skip the first SKIP1 pixels in FILE1 and SKIP2 pixels in FILE2.\n"
-	   "  -s   Silent output.  Only return an exit status.\n\n"
-	   "If FILE is `-' or is missing, then input is read from standard input.\n"
+	   "       Skip first SKIP pixels (or bytes) of input for FILE1 and FILE2\n"
+	   "  -i SKIP1:SKIP2\n"
+	   "       Skip SKIP1 pixels (or bytes) in FILE1 and SKIP2 pixels in FILE2.\n");
+    bu_log("\n"
+	   "If either FILE is `-' or is missing, then input is read from standard input.\n"
+	   "If FILE1 and FILE2 are both standard input, then values must be interleaved.\n"
 	   "If the `-b' option is used, SKIP values are bytes instead of pixels.\n"
-	   "Pixel numbers and bytes are indexed linearly from one.\n");
+	   "Pixel numbers and bytes are indexed linearly from one.\n"
+	   "\n");
     return;
 }
 
@@ -130,9 +145,10 @@ main(int argc, char *argv[])
     size_t missing = 0;
 
     int c;
-    int list_pixel_values = 0;
+    int list_same = 0;
+    int list_diff = 0;
     int print_bytes = 0;
-    int silent = 0;
+    int quiet = 0;
     size_t f1_skip = 0;
     size_t f2_skip = 0;
     size_t bytes = 0;
@@ -140,10 +156,12 @@ main(int argc, char *argv[])
     bu_setprogname(argv[0]);
 
     /* process opts */
-    while ((c = bu_getopt(argc, argv, "lbi:s")) != -1) {
+    while ((c = bu_getopt(argc, argv, "sdbi:q?")) != -1) {
 	switch (c) {
-	    case 'l':
-		list_pixel_values = 1;
+	    case 's':
+		list_same = 1;
+	    case 'd':
+		list_diff = 1;
 		break;
 	    case 'b':
 		print_bytes = 1;
@@ -151,12 +169,14 @@ main(int argc, char *argv[])
 	    case 'i':
 		handle_i_opt(bu_optarg, &f1_skip, &f2_skip);
 		break;
-	    case 's':
-		silent = 1;
+	    case 'q':
+		quiet = 1;
 		break;
-	    default:
-		bu_log("\n");
+	    case '?':
+	    case 'h':
 		usage(argv[0]);
+		return 0;
+	    default:
 		exit(OPTS_ERROR);
 	}
     }
@@ -214,7 +234,7 @@ main(int argc, char *argv[])
     fstat(fileno(f1), &sf1);
     fstat(fileno(f2), &sf2);
 
-    if ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip)) {
+    if (!quiet && ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip))) {
 	bu_log("WARNING: Different image sizes detected\n");
 	if (print_bytes) {
 	    bu_log("\t%s: %7llu bytes (%8llu bytes, skipping %7llu)\n",
@@ -250,86 +270,119 @@ main(int argc, char *argv[])
     }
 
     /* print header to stderr, output to stdout */
-    if (list_pixel_values) {
+    if (!quiet && (list_same || list_diff)) {
 	if (print_bytes) {
-	    bu_log("#Byte FILE1_byte FILE2_byte\n");
+	    bu_log("#Byte FILE1_byte FILE2_byte LABEL\n");
 	} else {
 	    bu_log("#Pixel\t(FILE1 R, G, B) (FILE2 R, G, B)\n");
 	}
     }
 
     /* iterate over the pixels/bytes in the files */
-    while ((!feof(f1) || !feof(f2)) &&
-	   (!ferror(f1) || !ferror(f2))) {
-	register int r1, r2, g1, g2, b1, b2;
+    while ((!feof(f1) || !feof(f2))
+	   && (!ferror(f1) || !ferror(f2)))
+    {
+	enum label result;
+	int r1, r2, g1, g2, b1, b2;
 	r1 = r2 = g1 = g2 = b1 = b2 = -1;
+	result = MISSING;
 
 	r1 = fgetc(f1);
 	r2 = fgetc(f2);
-	if (feof(f1) && feof(f2))
-	    break;
 	bytes++;
-	if (!print_bytes) {
+
+	/* stop if we can't even compare a byte */
+	if (r1 == r2 && r1 == -1)
+	    break;
+
+	if (print_bytes) {
+	    /* replicate */
+	    b1 = g1 = 0;
+	    b2 = g2 = 0;
+	} else {
 	    g1 = fgetc(f1);
 	    g2 = fgetc(f2);
-	    if (feof(f1) && feof(f2))
-		break;
 	    bytes++;
 	    b1 = fgetc(f1);
 	    b2 = fgetc(f2);
-	    if (feof(f1) && feof(f2))
-		break;
 	    bytes++;
 	}
 
-	if ((r1 == r2 && r1 != -1 && r2 != -1) && (g1 == g2 && g1 != -1 && g2 != -1) && (b1 == b2 && b1 != -1 && b2 != -1)) {
+	if ((r1 == r2 && r1 != -1)
+	    && (g1 == g2 && g1 != -1)
+	    && (b1 == b2 && b1 != -1))
+	{
+	    result = MATCHING;
 	    matching++;
-	    continue;
-	}
-
-	/* tabulate differing pixels */
-	if (r1 == -1 || r2 == -1 || g1 == -1 || g2 == -1 || b1 == -1 || b2 == -1) {
+	} else if (r1 == -1 || r2 == -1 || g1 == -1 || g2 == -1 || b1 == -1 || b2 == -1) {
+	    /* image sizes don't match (or other I/O error) */
+	    result = MISSING;
 	    missing++;
-	} else if (((r1 != r2) && (g1 == g2) && (b1 == b2)) ||
-		   ((r1 == r2) && (g1 != g2) && (b1 == b2)) ||
-		   ((r1 == r2) && (g1 == g2) && (b1 != b2))) {
+	} else if (((r1 != r2) && (g1 == g2) && (b1 == b2))
+		   || ((r1 == r2) && (g1 != g2) && (b1 == b2))
+		   || ((r1 == r2) && (g1 == g2) && (b1 != b2)))
+	{
 	    /* off by one channel */
 	    if (r1 != r2) {
 		if ((r1 > r2 ? r1 - r2 : r2 - r1) > 1) {
+		    result = OFF_BY_MANY;
 		    offmany++;
 		} else {
+		    result = OFF_BY_ONE;
 		    off1++;
 		}
 	    } else if (g1 != g2) {
 		if ((g1 > g2 ? g1 - g2 : g2 - g1) > 1) {
+		    result = OFF_BY_MANY;
 		    offmany++;
 		} else {
+		    result = OFF_BY_ONE;
 		    off1++;
 		}
 	    } else if (b1 != b2) {
 		if ((b1 > b2 ? b1 - b2 : b2 - b1) > 1) {
+		    result = OFF_BY_MANY;
 		    offmany++;
 		} else {
+		    result = OFF_BY_ONE;
 		    off1++;
 		}
 	    }
 	} else {
-	    /* off by many */
+	    result = OFF_BY_MANY;
 	    offmany++;
 	}
 
-	/* they're different, so print something */
-	if (list_pixel_values) {
+	/* print them? */
+	if ((result==MATCHING && list_same)
+	    || (result!=MATCHING && list_diff))
+	{
+	    const char *label = NULL;
+	    switch (result) {
+		case MATCHING:
+		    label = "MATCHING";
+		    break;
+		case OFF_BY_MANY:
+		    label = "OFF_BY_MANY";
+		    break;
+		case OFF_BY_ONE:
+		    label = "OFF_BY_ONE";
+		    break;
+		case MISSING:
+		default:
+		    label = "MISSING";
+		    break;
+	    }
 	    if (print_bytes) {
-		printf("%ld %3d %3d\n", bytes, r1, r2);
+		printf("%ld %3d %3d %s\n", bytes, r1, r2, label);
 	    } else {
-		printf("%ld\t(%3d, %3d, %3d)\t(%3d, %3d, %3d)\n", bytes / 3, r1, g1, b1, r2, g2, b2);
+		printf("%ld\t(%3d, %3d, %3d)\t(%3d, %3d, %3d) %s\n", bytes / 3, r1, g1, b1, r2, g2, b2, label);
 	    }
 	}
     }
 
     /* print summary */
-    if (!silent) {
+    if (!quiet) {
 	printf("pixcmp %s: %8zd matching, %8zd off by 1, %8zd off by many",
 	       print_bytes?"bytes":"pixels", matching, off1, offmany);
 	if (missing) {
@@ -347,14 +400,14 @@ main(int argc, char *argv[])
 
     /* indicate how many differences there were overall */
     if (offmany || missing) {
-	return OFF_BY_MANY;
+	return EXIT_OFF_BY_MANY;
     }
     if (off1) {
-	return OFF_BY_ONE;
+	return EXIT_OFF_BY_ONE;
     }
 
     /* Success! */
-    return OFF_BY_NONE;
+    return EXIT_OFF_BY_NONE;
 }
 
 
