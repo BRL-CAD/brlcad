@@ -33,6 +33,13 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+
+# TODO - update summary printing to reflect new build structure -
+# will need to have the superbuild report which components are
+# enabled, rather than the logic below which uses third party
+# build settings no longer in use.
+
+
 #
 # This file contains the CMake routines that summarize the results
 # of the BRL-CAD configure process.
