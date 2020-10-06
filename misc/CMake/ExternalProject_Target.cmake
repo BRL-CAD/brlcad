@@ -22,6 +22,9 @@
 # to be ready.  The key variable CMAKE_BUILD_RPATH comes from running the
 # function cmake_set_rpath, which must be available.
 
+# Be quite about tool outputs by default
+set(EXTPROJ_VERBOSE 0)
+
 # Custom patch utility to replace the build directory path with the install
 # directory path in text files - make sure CMAKE_BINARY_DIR and
 # CMAKE_INSTALL_PREFIX are finalized before generating this file!
@@ -214,10 +217,6 @@ function(ExternalProject_Target etarg extproj)
 
   cmake_parse_arguments(E "RPATH;EXEC" "SUBDIR;OUTPUT_FILE;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_OUTPUT_FILE;STATIC_LINK_TARGET;STATIC_LINK_TARGET_DEBUG" "SYMLINKS;DEPS" ${ARGN})
 
-  if(NOT TARGET ${extproj})
-    message(FATAL_ERROR "${extprog} is not a target")
-  endif(NOT TARGET ${extproj})
-
   # Protect against redefinition of already defined targets.
   if(TARGET ${etarg})
     message(FATAL_ERROR "Target ${etarg} is already defined\n")
@@ -271,17 +270,20 @@ function(ExternalProject_Target etarg extproj)
 
     # If we do have a static lib as well, handle that
     if (E_STATIC AND BUILD_STATIC_LIBS)
-      add_library(${etarg}-static STATIC IMPORTED GLOBAL)
-      if (E_STATIC_LINK_TARGET AND NOT MSVC)
-	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_LINK_TARGET} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
-      else (E_STATIC_LINK_TARGET AND NOT MSVC)
-	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_OUTPUT_FILE} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
-      endif (E_STATIC_LINK_TARGET AND NOT MSVC)
-      if (MSVC)
-	install(FILES "${CMAKE_BINARY_DIR}/${BIN_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
-      else (MSVC)
-	install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
-      endif (MSVC)
+      if (EXISTS "${E_STATIC_OUTPUT_FILE}")
+	message("Found: ${E_STATIC_OUTPUT_FILE}")
+	add_library(${etarg}-static STATIC IMPORTED GLOBAL)
+	if (E_STATIC_LINK_TARGET AND NOT MSVC)
+	  ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_LINK_TARGET} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
+	else (E_STATIC_LINK_TARGET AND NOT MSVC)
+	  ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_OUTPUT_FILE} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
+	endif (E_STATIC_LINK_TARGET AND NOT MSVC)
+	if (MSVC)
+	  install(FILES "${CMAKE_BINARY_DIR}/${BIN_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
+	else (MSVC)
+	  install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
+	endif (MSVC)
+      endif (EXISTS "${E_STATIC_OUTPUT_FILE}")
     endif (E_STATIC AND BUILD_STATIC_LIBS)
 
   else (NOT E_EXEC)
@@ -295,13 +297,12 @@ function(ExternalProject_Target etarg extproj)
 
   endif (NOT E_EXEC)
 
-  # Let CMake know there is a target dependency here, despite this being an import target
-  add_dependencies(${etarg} ${extproj})
-
   # Add install rules for any symlinks the caller has listed
   if(E_SYMLINKS AND NOT MSVC)
     foreach(slink ${E_SYMLINKS})
-      install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${slink}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
+      if (EXISTS "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${slink}")
+	install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${slink}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
+      endif (EXISTS "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${slink}")
     endforeach(slink ${E_SYMLINKS})
   endif(E_SYMLINKS AND NOT MSVC)
 

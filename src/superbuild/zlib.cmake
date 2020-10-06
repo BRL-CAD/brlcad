@@ -45,7 +45,7 @@ if (BRLCAD_ZLIB_BUILD)
     zconf.h
     zlib.h
     )
-  ")
+  \n")
 
   list(APPEND BRLCAD_DEPS ZLIB_BLD)
 

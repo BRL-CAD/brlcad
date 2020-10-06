@@ -220,6 +220,12 @@ endif(MSVC)
 # that process is independent of the main BRL-CAD build, which just needs to
 # call find_package with the appropriate arguments.
 
+# We need some custom logic to augment ExternalProject_Add:
+# Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized
+# BEFORE including this file!
+include(ExternalProject)
+include(ExternalProject_Target)
+
 # Step 1 is to write out all BRL-CAD related variables to a file for
 # loading by the 3rd party superbuild: (https://stackoverflow.com/a/9328525)
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild")

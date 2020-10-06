@@ -37,8 +37,6 @@ unset(CMAKE_CXX_EXTENSIONS)
 unset(CMAKE_CXX_STANDARD_REQUIRED)
 unset(CMAKE_CXX_STANDARD)
 
-include(${CMAKE_BINARY_DIR}/superbuild.cmake)
-
 ###############################################################################
 # Unlike the misc/tools directory components built in src/other are part of
 # the distribution, not just the compilation.  Hence we need to make sure of

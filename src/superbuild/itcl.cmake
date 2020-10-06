@@ -103,6 +103,8 @@ if (BRLCAD_ENABLE_TCL)
 
     endif (NOT MSVC)
 
+    # Tell the parent build about files and libraries
+    file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
     ExternalProject_Target(itcl ITCL_BLD
       SUBDIR itcl${ITCL_VERSION}
       OUTPUT_FILE ${ITCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -123,6 +125,7 @@ if (BRLCAD_ENABLE_TCL)
       itcl${ITCL_VERSION}/pkgIndex.tcl
       FIXPATH
       )
+    \n")
 
     list(APPEND BRLCAD_DEPS ITCL_BLD)
 

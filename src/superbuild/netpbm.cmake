@@ -20,6 +20,9 @@ if (BRLCAD_NETPBM_BUILD)
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
+
+  # Tell the parent build about files and libraries
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" " 
   ExternalProject_Target(netpbm NETPBM_BLD
     OUTPUT_FILE ${NETPBM_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE ${NETPBM_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
@@ -42,6 +45,7 @@ if (BRLCAD_NETPBM_BUILD)
     netpbm/ppmcmap.h
     netpbm/ppmfloyd.h
     )
+  \n")
 
   list(APPEND BRLCAD_DEPS NETPBM_BLD)
 

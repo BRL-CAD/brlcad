@@ -31,12 +31,14 @@ if (BRLCAD_GDAL_BUILD)
     -DGDAL_INST_DATA_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal
     DEPENDS ${PROJ4_TARGET} ${PNG_TARGET} ${ZLIB_TARGET}
     )
+
+  # Tell the parent build about files and libraries
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
   ExternalProject_Target(gdal GDAL_BLD
     OUTPUT_FILE ${GDAL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE ${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
-
   set(GDAL_EXECUTABLES gdalinfo gdallocationinfo gdal_translate gdaltransform gdaldem gdalwarp gdalbuildvrt)
   foreach(GDALEXEC ${GDAL_EXECUTABLES})
     ExternalProject_Target(${GDALEXEC} GDAL_BLD
@@ -44,7 +46,6 @@ if (BRLCAD_GDAL_BUILD)
       RPATH EXEC
       )
   endforeach(GDALEXEC ${GDAL_EXECUTABLES})
-
   ExternalProject_ByProducts(GDAL_BLD ${DATA_DIR}/gdal
     LICENSE.TXT
     GDALLogoBW.svg
@@ -136,6 +137,7 @@ if (BRLCAD_GDAL_BUILD)
     vertcs.csv
     vertcs.override.csv
     )
+  \n")
 
   list(APPEND BRLCAD_DEPS GDAL_BLD)
 

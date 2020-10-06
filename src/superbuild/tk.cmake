@@ -60,6 +60,8 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
 
   endif (NOT MSVC)
 
+  # Tell the parent build about files and libraries
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
   ExternalProject_Target(tk TK_BLD
     OUTPUT_FILE ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE ${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
@@ -74,7 +76,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
     tkConfig.sh
     )
 
-  ExternalProject_ByProducts(TK_BLD ${LIB_DIR}/tk8.${TK_MINOR_VERSION}
+  ExternalProject_ByProducts(TK_BLD ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}
     bgerror.tcl
     button.tcl
     choosedir.tcl
@@ -252,6 +254,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
     tk.h
     tkPlatDecls.h
     )
+  \n")
 
   list(APPEND BRLCAD_DEPS TK_BLD)
 

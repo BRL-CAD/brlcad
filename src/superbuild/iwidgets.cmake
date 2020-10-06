@@ -82,6 +82,8 @@ if (BRLCAD_ENABLE_TK)
 
     endif (NOT MSVC)
 
+    # Tell the parent build about files and libraries
+    file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" " 
     ExternalProject_ByProducts(IWIDGETS_BLD ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
       demos/buttonbox
       demos/calendar
@@ -275,6 +277,7 @@ if (BRLCAD_ENABLE_TK)
       scripts/unknownimage.gif
       scripts/watch.itk
       )
+    \n")
 
     list(APPEND BRLCAD_DEPS IWIDGETS_BLD)
 

@@ -39,12 +39,15 @@ if(BRLCAD_SC_BUILD)
                -DINCLUDE_INSTALL_DIR=${INCLUDE_DIR}
     DEPENDS ${SC_DEPS}
     )
- set(STEPCODE_LIBS base express exppp stepcore stepeditor stepdai steputils)
+
+  # Tell the parent build about files and libraries
+  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" " 
+  set(STEPCODE_LIBS base express exppp stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
     ExternalProject_Target(lib${SCLIB} STEPCODE_BLD
       OUTPUT_FILE ${SC_PREFIX}${SCLIB}${SC_SUFFIX}
-      SYMLINKS "${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2"
-      LINK_TARGET "${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}"
+      SYMLINKS \"${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2\"
+      LINK_TARGET \"${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}\"
       RPATH
       )
   endforeach(SCLIB ${STEPCODE_LIBS})
@@ -56,10 +59,6 @@ if(BRLCAD_SC_BUILD)
       )
   endforeach(SCEXEC ${STEPCODE_EXECS})
 
-  set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)
-  mark_as_advanced(EXP2CXX_EXEC)
-  set(EXP2CXX_EXECUTABLE_TARGET exp2cxx CACHE STRING "Express to C++ executable target" FORCE)
-  mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
   ExternalProject_ByProducts(STEPCODE_BLD ${INCLUDE_DIR}
     stepcode/cldai/sdaiApplication_instance_set.h
     stepcode/cldai/sdaiSession_instance.h
@@ -141,6 +140,7 @@ if(BRLCAD_SC_BUILD)
     stepcode/clstepcore/Registry.h
     stepcode/clstepcore/complexSupport.h
     )
+  \n")
 
   list(APPEND BRLCAD_DEPS STEPCODE_BLD)
 
