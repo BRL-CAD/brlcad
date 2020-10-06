@@ -88,7 +88,7 @@ string(TIMESTAMP CONFIG_DATESTAMP "%a, %d %b %Y %H:%M:%S UTC" UTC)
 # Mark the time at which the configuration process began.
 
 set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
-execute_process(COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE="${CONFIG_DELTA_START}" -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake")
+execute_process(COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${CONFIG_DELTA_START} -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake")
 
 #---------------------------------------------------------------------
 #  Options controlling user level features.  These may impact which
@@ -2243,11 +2243,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   add_custom_command(
     OUTPUT ${BUILD_DELTA_START}
-    COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE="${BUILD_DELTA_START}" -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake"
+    COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${BUILD_DELTA_START} -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake"
     COMMENT ""
     )
   add_custom_target(timestamp ALL
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts${EXE_EXT} \"Build Time:  \"
+    COMMAND "${CMAKE_COMMAND}" -DMSG=\"Build Time:\" -P "${BRLCAD_CMAKE_DIR}/scripts/printtime.cmake"
     DEPENDS ${BUILD_DELTA_START}
     )
   set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
