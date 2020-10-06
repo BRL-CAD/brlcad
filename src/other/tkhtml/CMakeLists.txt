@@ -4,8 +4,6 @@ cmake_minimum_required(VERSION 3.12)
 # set CMake project name
 project(TKHTML)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
-
 find_package(TCL)
 
 if (TK_SYSTEM_GRAPHICS MATCHES "x11")

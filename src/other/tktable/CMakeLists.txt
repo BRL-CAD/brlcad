@@ -4,8 +4,6 @@ cmake_minimum_required(VERSION 3.12)
 # set CMake project name
 project(TKTABLE)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
-
 find_package(TCL)
 
 if (WIN32 OR "${TK_SYSTEM_GRAPHICS}" MATCHES "aqua")
@@ -34,14 +32,14 @@ ENDIF(WIN32)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TKTABLE_CFLAGS}")
 
-ADD_CUSTOM_COMMAND(
+add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
   COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
   COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${TCL_TCLSH}
   )
-ADD_CUSTOM_TARGET(tktable_header_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h)
+add_custom_target(tktable_header_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h)
 
 set(TKTABLE_SRCS
   generic/tkTable.c
@@ -99,7 +97,7 @@ else(CMAKE_CONFIGURATION_TYPES)
   file(COPY ${TKTABLE_MISC} DESTINATION ${CMAKE_BINARY_DIR}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
 endif(CMAKE_CONFIGURATION_TYPES)
 
-INSTALL(FILES ${TKTABLE_MISC} DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
+install(FILES ${TKTABLE_MISC} DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
 
 # Local Variables:
 # tab-width: 8
