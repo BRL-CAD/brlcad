@@ -134,6 +134,10 @@ set(BRLCAD_LEVEL3 ON)
 # hardcoded.
 set(BRLCAD_DEPS)
 
+# It's not enough to simply generate the outputs - we'll also need to install
+# them, which means passing the relevant information back up to the parent
+# build.  We do so with a file the parent build knows to look for:
+file(WRITE "${BRLCAD_BINARY_DIR}/superbuild.cmake" "\#superbuild outputs\n")
 
 ###############################################################################
 # BRL-CAD and some of its dependencies require the lemon, re2c and perplex
@@ -185,7 +189,6 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
 
 # For anything we've built here, we need to let the parent build know
 # where to go looking for key components
-file(WRITE "${BRLCAD_BINARY_DIR}/superbuild.cmake" "\#superbuild outputs\n")
 if (TARGET PERPLEX_BLD)
   file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(LEMON_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
   file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "set(LEMON_TEMPLATE ${BRLCAD_BINARY_DIR}/${DATA_DIR}/lemon/lempar.c)\n")
