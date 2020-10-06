@@ -249,6 +249,15 @@ main(int argc, char *argv[])
 	exit(FILE_ERROR);
     }
 
+    /* print header to stderr, output to stdout */
+    if (list_pixel_values) {
+	if (print_bytes) {
+	    bu_log("#Byte FILE1_byte FILE2_byte\n");
+	} else {
+	    bu_log("#Pixel\t(FILE1 R, G, B) (FILE2 R, G, B)\n");
+	}
+    }
+
     /* iterate over the pixels/bytes in the files */
     while ((!feof(f1) || !feof(f2)) &&
 	   (!ferror(f1) || !ferror(f2))) {
