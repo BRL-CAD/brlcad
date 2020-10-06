@@ -127,6 +127,7 @@ main(int argc, char *argv[])
     size_t matching = 0;
     size_t off1 = 0;
     size_t offmany = 0;
+    size_t missing = 0;
 
     int c;
     int list_pixel_values = 0;
@@ -202,6 +203,7 @@ main(int argc, char *argv[])
 	perror(argv[0]);
 	exit(FILE_ERROR);
     }
+
     if ((argc < 2) || BU_STR_EQUAL(argv[1], "-")) {
 	f2 = stdin;
     } else if ((f2 = fopen(argv[1], "rb")) == NULL) {
@@ -225,7 +227,6 @@ main(int argc, char *argv[])
 	    bu_log("\t%s: %7llu pixels (%8llu bytes, skipping %7llu)\n",
 		   argv[1], (unsigned long long)((sf2.st_size - f2_skip)/3), (unsigned long long)sf2.st_size, (unsigned long long)f2_skip);
 	}
-	bu_exit(1, "ERROR: Cannot pixcmp due to different images sizes (unimplemented).\n");
     }
 
     /* skip requested pixels/bytes in FILE1 */
@@ -249,35 +250,40 @@ main(int argc, char *argv[])
     }
 
     /* iterate over the pixels/bytes in the files */
-    while ((!feof(f1) && !feof(f2)) &&
-	   (!ferror(f1) && !ferror(f2))) {
+    while ((!feof(f1) || !feof(f2)) &&
+	   (!ferror(f1) || !ferror(f2))) {
 	register int r1, r2, g1, g2, b1, b2;
 	r1 = r2 = g1 = g2 = b1 = b2 = -1;
 
 	r1 = fgetc(f1);
 	r2 = fgetc(f2);
-	if (feof(f1) || feof(f2)) break;
+	if (feof(f1) && feof(f2))
+	    break;
 	bytes++;
 	if (!print_bytes) {
 	    g1 = fgetc(f1);
 	    g2 = fgetc(f2);
-	    if (feof(f1) || feof(f2)) break;
+	    if (feof(f1) && feof(f2))
+		break;
 	    bytes++;
 	    b1 = fgetc(f1);
 	    b2 = fgetc(f2);
-	    if (feof(f1) || feof(f2)) break;
+	    if (feof(f1) && feof(f2))
+		break;
 	    bytes++;
 	}
 
-	if ((r1 == r2) && (g1 == g2) && (b1 == b2)) {
+	if ((r1 == r2 && r1 != -1 && r2 != -1) && (g1 == g2 && g1 != -1 && g2 != -1) && (b1 == b2 && b1 != -1 && b2 != -1)) {
 	    matching++;
 	    continue;
 	}
 
 	/* tabulate differing pixels */
-	if (((r1 != r2) && (g1 == g2) && (b1 == b2)) ||
-	    ((r1 == r2) && (g1 != g2) && (b1 == b2)) ||
-	    ((r1 == r2) && (g1 == g2) && (b1 != b2))) {
+	if (r1 == -1 || r2 == -1 || g1 == -1 || g2 == -1 || b1 == -1 || b2 == -1) {
+	    missing++;
+	} else if (((r1 != r2) && (g1 == g2) && (b1 == b2)) ||
+		   ((r1 == r2) && (g1 != g2) && (b1 == b2)) ||
+		   ((r1 == r2) && (g1 == g2) && (b1 != b2))) {
 	    /* off by one channel */
 	    if (r1 != r2) {
 		if ((r1 > r2 ? r1 - r2 : r2 - r1) > 1) {
@@ -315,9 +321,13 @@ main(int argc, char *argv[])
 
     /* print summary */
     if (!silent) {
-	printf("pixcmp %s: %8zd matching, %8zd off by 1, %8zd off by many\n",
-	       print_bytes?"bytes":"pixels",
-	       matching, off1, offmany);
+	printf("pixcmp %s: %8zd matching, %8zd off by 1, %8zd off by many",
+	       print_bytes?"bytes":"pixels", matching, off1, offmany);
+	if (missing) {
+	    printf(", %8zd missing\n", missing);
+	} else {
+	    printf("\n");
+	}
     }
 
     /* check for errors */
@@ -326,13 +336,8 @@ main(int argc, char *argv[])
 	return FILE_ERROR;
     }
 
-    /* if files were of different lengths, consider it an error */
-    if (feof(f1) != feof(f2)) {
-	return FILE_ERROR;
-    }
-
     /* indicate how many differences there were overall */
-    if (offmany) {
+    if (offmany || missing) {
 	return OFF_BY_MANY;
     }
     if (off1) {
