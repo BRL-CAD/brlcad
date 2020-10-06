@@ -81,14 +81,14 @@ record_cmdline_args()
 #---------------------------------------------------------------------
 # Set up the necessary support for timing of the configuration and
 # build processes
-set_config_time()
-generate_sstamp()
+string(TIMESTAMP CONFIG_DATE "%Y%m%d")
+string(TIMESTAMP CONFIG_DATESTAMP "%a, %d %b %Y %H:%M:%S UTC" UTC)
 
 #---------------------------------------------------------------------
 # Mark the time at which the configuration process began.
 
 set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
-execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
+execute_process(COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE="${CONFIG_DELTA_START}" -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake")
 
 #---------------------------------------------------------------------
 #  Options controlling user level features.  These may impact which
@@ -2236,18 +2236,14 @@ endif(NOT BRLCAD_DISABLE_SUMMARY)
 # *******************************************************************
 # ***                      Timestamp Rules                        ***
 # *******************************************************************
-# TODO - As of CMake 2.8.11, the string command has a TIMESTAMP option
-# that may be able to simplify some of the current timestamp system.
-# We would need to be able to require 2.8.11 or newer, so there will
-# be a bit of a wait, but it's something to look into.
-if (NOT DEFINED SUBBUILD)
+# Set up rules to print a timestamp string during build
+if(NOT BRLCAD_IS_SUBBUILD)
 
-  # Set up rules to print a timestamp string during build
   set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
 
   add_custom_command(
     OUTPUT ${BUILD_DELTA_START}
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT} "${BUILD_DELTA_START}"
+    COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE="${BUILD_DELTA_START}" -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake"
     COMMENT ""
     )
   add_custom_target(timestamp ALL
@@ -2260,11 +2256,45 @@ if (NOT DEFINED SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
     )
   set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
-endif (NOT DEFINED SUBBUILD)
 
-# In a superbuild configuration, we're primarily concerned with
-# ExternalProject_Add targets.
-if (NOT DEFINED SUBBUILD)
+  # We want the timestamp to come first, so make ALL targets, depend on
+  # timestamp.  Similarly, buildtimedelta needs to depend on every target
+  # not excluded from the default build list.
+
+  # Libraries and executables are fairly straightforward
+  get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
+  get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
+  mark_as_advanced(CMAKE_LIBRARY_TARGET_LIST)
+  mark_as_advanced(CMAKE_EXEC_TARGET_LIST)
+  list(REMOVE_DUPLICATES CMAKE_LIBRARY_TARGET_LIST)
+  list(REMOVE_DUPLICATES CMAKE_EXEC_TARGET_LIST)
+  foreach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
+    if(TARGET ${ctarget})
+      add_dependencies(${ctarget} timestamp)
+      get_target_property(not_in_all ${ctarget} EXCLUDE_FROM_ALL)
+      get_target_property(not_in_default ${ctarget} EXCLUDE_FROM_DEFAULT_BUILD)
+      if(NOT not_in_all AND NOT not_in_default)
+	add_dependencies(buildtimedelta ${ctarget})
+      endif(NOT not_in_all AND NOT not_in_default)
+    endif(TARGET ${ctarget})
+  endforeach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
+
+  # For the custom targets, we need to avoid circular dependencies
+  get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
+  mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
+  list(REMOVE_DUPLICATES CMAKE_CUSTOM_TARGET_LIST)
+  foreach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
+    if(NOT ${custtarget} MATCHES "timestamp")
+      add_dependencies(${custtarget} timestamp)
+    endif(NOT ${custtarget} MATCHES "timestamp")
+    if(NOT ${custtarget} MATCHES "buildtimedelta")
+      get_target_property(not_in_all ${custtarget} EXCLUDE_FROM_ALL)
+      get_target_property(not_in_default ${custtarget} EXCLUDE_FROM_DEFAULT_BUILD)
+      if(NOT not_in_all AND NOT not_in_default)
+	add_dependencies(buildtimedelta ${custtarget})
+      endif(NOT not_in_all AND NOT not_in_default)
+    endif(NOT ${custtarget} MATCHES "buildtimedelta")
+  endforeach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
 
   # Theoretical logic to handle external targets - not currently in use
   get_property(CMAKE_EXTERNAL_TARGET_LIST GLOBAL PROPERTY CMAKE_EXTERNAL_TARGET_LIST)
@@ -2280,10 +2310,8 @@ if (NOT DEFINED SUBBUILD)
     endif(target_confcmd)
   endforeach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
-endif (NOT DEFINED SUBBUILD)
+endif(NOT BRLCAD_IS_SUBBUILD)
 
-
-# TODO - the below logic will have to be rethought in a superbuild setup...
 
 # To set correct install paths for CMake at build time, rather than CMake
 # time, some rather special logic is necessary - a build target that needs
