@@ -172,7 +172,7 @@ else (WIN32)
   if(SEARCH_64BIT)
     set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64;/usr/lib/x86_64-linux-gnu")
   else(SEARCH_64BIT)
-    set(32BIT_DIRS "/usr/lib/X11;/usr/lib;/usr/lib/i386-linux-gnu")
+    set(32BIT_DIRS "/usr/lib/X11;/usr/lib;/usr/lib/i386-linux-gnu;/usr/lib/arm-linux-gnueabihf")
   endif(SEARCH_64BIT)
 
   set(OPENGL_LIB_SEARCH_PATH
