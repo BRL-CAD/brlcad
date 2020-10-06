@@ -34,6 +34,16 @@
 # the build directory AND install directory.
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
 
+# TODO - investigate using BUILD_RPATH and INSTALL_RPATH on a per
+# target basis for more precise control (for example, when setting
+# up paths for libs in subdirs...  not sure yet if it could be helpful
+# but should be explored.
+
+# Note in particular that BUILD_RPATH supports generator expressions,
+# in case that's of use to pull other properties on which to base
+# rpaths...
+
+
 include(CMakeParseArguments)
 
 # For a given path, calculate the $ORIGIN style path needed relative
