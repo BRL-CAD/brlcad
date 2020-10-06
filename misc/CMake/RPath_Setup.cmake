@@ -48,7 +48,7 @@ include(CMakeParseArguments)
 
 # For a given path, calculate the $ORIGIN style path needed relative
 # to CMAKE_INSTALL_PREFIX
-function(SUFFIX_STRING POPATH INIT_PATH)
+function(ORIGIN_REL_PATH POPATH INIT_PATH)
 
   get_filename_component(CPATH "${INIT_PATH}" REALPATH)
   set(RELDIRS)
@@ -68,7 +68,7 @@ function(SUFFIX_STRING POPATH INIT_PATH)
   set(FPATH "${FPATH}${RELDIRS}")
 
   set(${POPATH} ${FPATH} PARENT_SCOPE)
-endfunction(SUFFIX_STRING)
+endfunction()
 
 
 if(NOT COMMAND cmake_set_rpath)
@@ -100,16 +100,16 @@ if(NOT COMMAND cmake_set_rpath)
     # Calculate how many ../ offsets are needed to return from this directory
     # to the install origin
     set(OPATH)
-    SUFFIX_STRING(OPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX}")
+    ORIGIN_REL_PATH(OPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX}")
 
     # Set RPATH value to use when installing.  This should be set to always
     # prefer the version in the installed path when possible, but fall back on a
     # location relative to the loading file's path if the installed version is
     # not present.  How to do so is platform specific.
     if(NOT APPLE)
-      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX}:\$ORIGIN/${OPATH}/${LSUFFIX}")
+      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX}:\$ORIGIN/${OPATH}")
     else(NOT APPLE)
-      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX};@loader_path/${OPATH}/${LSUFFIX}")
+      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX};@loader_path/${OPATH}")
     endif(NOT APPLE)
 
     # Determine what the build time RPATH will be that is used to support
