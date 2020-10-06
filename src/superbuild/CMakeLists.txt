@@ -45,8 +45,6 @@ set(CMAKE_MODULE_PATH "${BDEPS_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_INSTALL_PREFIX}")
 
 include(Path_Setup)
-include(RPath_Setup)
-cmake_set_rpath()
 
 # If targets are built, we want to group them in build tools that support
 # doing so.

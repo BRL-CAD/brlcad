@@ -234,7 +234,7 @@ endforeach(v ${VARS})
 
 # Now we prepare and invoke the superbuild as a separate process
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR}/src/superbuild -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR}/src/superbuild -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_BUILD_RPATH=${CMAKE_BUILD_RPATH}
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
   )
 execute_process(
