@@ -160,6 +160,7 @@ main(int argc, char *argv[])
 	switch (c) {
 	    case 's':
 		list_same = 1;
+		break;
 	    case 'd':
 		list_diff = 1;
 		break;
