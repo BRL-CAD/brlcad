@@ -239,14 +239,25 @@ foreach(v ${VARS})
 endforeach(v ${VARS})
 
 # Now we prepare and invoke the superbuild as a separate process
+file(REMOVE "${CMAKE_BINARY_DIR}/superbuild/CMakeCache.txt")
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR}/src/superbuild -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_BUILD_RPATH=${CMAKE_BUILD_RPATH}
+  COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR}/src/superbuild -G ${CMAKE_GENERATOR} -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_BUILD_RPATH=${CMAKE_BUILD_RPATH}
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
   )
-execute_process(
-  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/superbuild -j12 --config Release --target all
-  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
-  )
+
+if (CMAKE_CONFIGURATION_TYPES)
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/superbuild -j12 --config ${CFG_TYPE} --target all
+      WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
+      )
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+else (CMAKE_CONFIGURATION_TYPES)
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/superbuild -j12 --config Release --target all
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/superbuild"
+    )
+endif (CMAKE_CONFIGURATION_TYPES)
 
 if (NOT EXISTS ${CMAKE_BINARY_DIR}/superbuild.cmake)
   message(FATAL_ERROR "Third party library info file ${CMAKE_BINARY_DIR}/superbuild.cmake was not found.")
@@ -254,22 +265,36 @@ endif (NOT EXISTS ${CMAKE_BINARY_DIR}/superbuild.cmake)
 
 # Find packages based on superbuild results
 include(${CMAKE_BINARY_DIR}/superbuild.cmake)
-find_package(LEMON)
-find_package(RE2C)
-find_package(PERPLEX)
-find_package(ZLIB)
-find_package(PNG)
-find_package(REGEX)
-find_package(NETPBM)
+
+set(PKGS LEMON RE2C PERPLEX ZLIB PNG REGEX NETPBM)
+foreach(P ${PKGS})
+  unset(${P}_FOUND CACHE)
+  unset(${P}_LIBRARY CACHE)
+  find_package(${P})
+endforeach(P ${PKGS})
 if (BRLCAD_ENABLE_STEPCODE)
+  set(STEPCODE_FOUND "STEPCODE-NOTFOUND" CACHE STRING "STEPCODE_FOUND" FORCE)
   find_package(STEPCODE)
 endif (BRLCAD_ENABLE_STEPCODE)
 #find_package(BSON)
 if (BRLCAD_ENABLE_GDAL)
+  set(PROJ4_FOUND "PROJ4-NOTFOUND" CACHE STRING "PROJ4_FOUND" FORCE)
   find_package(PROJ4)
+  set(GDAL_FOUND "GDAL-NOTFOUND" CACHE STRING "GDAL_FOUND" FORCE)
   find_package(GDAL)
 endif (BRLCAD_ENABLE_GDAL)
 if (BRLCAD_ENABLE_TCL)
+  unset(TCL_FOUND CACHE)
+  unset(TCL_INCLUDE_PATH CACHE)
+  unset(TCL_LIBRARY CACHE)
+  unset(TCL_STUB_LIBRARY CACHE)
+  unset(TCL_TCLSH CACHE)
+  unset(TK_INCLUDE_PATH CACHE)
+  unset(TK_LIBRARY CACHE)
+  unset(TK_STUB_LIBRARY CACHE)
+  unset(TK_WISH CACHE)
+  unset(TK_X11_GRAPHICS CACHE)
+  unset(TTK_STUB_LIBRARY CACHE)
   find_package(TCL)
 endif (BRLCAD_ENABLE_TCL)
 
