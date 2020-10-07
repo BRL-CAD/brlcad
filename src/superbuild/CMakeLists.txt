@@ -137,7 +137,7 @@ set(BRLCAD_DEPS)
 # It's not enough to simply generate the outputs - we'll also need to install
 # them, which means passing the relevant information back up to the parent
 # build.  We do so with a file the parent build knows to look for:
-set(SUPERBUILD "${BRLCAD_BINARY_DIR}/superbuild.cmake")
+set(SUPERBUILD_OUT "${BRLCAD_BINARY_DIR}/superbuild.cmake")
 file(WRITE "${SUPERBUILD_OUT}" "\#superbuild outputs\n")
 
 ###############################################################################
