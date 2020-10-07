@@ -47,7 +47,7 @@ if (BRLCAD_PNG_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
+  file(APPEND "${SUPERBUILD_OUT}" "
   ExternalProject_Target(png PNG_BLD
     OUTPUT_FILE ${PNG_BASENAME}${PNG_SUFFIX}
     STATIC_OUTPUT_FILE ${PNG_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}

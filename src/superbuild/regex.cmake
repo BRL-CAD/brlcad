@@ -30,7 +30,7 @@ if (BRLCAD_REGEX_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
+  file(APPEND "${SUPERBUILD_OUT}" "
   ExternalProject_Target(regex REGEX_BLD
     OUTPUT_FILE ${REGEX_BASENAME}${REGEX_SUFFIX}
     STATIC_OUTPUT_FILE ${REGEX_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}

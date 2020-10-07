@@ -61,7 +61,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
-  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
+  file(APPEND "${SUPERBUILD_OUT}" "
   ExternalProject_Target(tk TK_BLD
     OUTPUT_FILE ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE ${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}

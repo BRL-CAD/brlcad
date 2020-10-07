@@ -97,7 +97,7 @@ if (BRLCAD_ENABLE_TK)
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries
-    file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
+    file(APPEND "${SUPERBUILD_OUT}" "
     ExternalProject_Target(itk ITK_BLD
       SUBDIR itk${ITK_VERSION}
       OUTPUT_FILE ${ITK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}

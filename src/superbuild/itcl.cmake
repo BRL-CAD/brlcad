@@ -104,7 +104,7 @@ if (BRLCAD_ENABLE_TCL)
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries
-    file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
+    file(APPEND "${SUPERBUILD_OUT}" "
     ExternalProject_Target(itcl ITCL_BLD
       SUBDIR itcl${ITCL_VERSION}
       OUTPUT_FILE ${ITCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}

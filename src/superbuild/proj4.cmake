@@ -31,7 +31,7 @@ if (BRLCAD_PROJ4_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" " 
+  file(APPEND "${SUPERBUILD_OUT}" " 
   ExternalProject_Target(proj PROJ4_BLD
     OUTPUT_FILE ${PROJ_BASENAME}${PROJ_SUFFIX}
     STATIC_OUTPUT_FILE ${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}

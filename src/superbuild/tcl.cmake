@@ -66,7 +66,7 @@ if (BRLCAD_TCL_BUILD)
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
-  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
+  file(APPEND "${SUPERBUILD_OUT}" "
   ExternalProject_Target(tcl TCL_BLD
     OUTPUT_FILE ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE ${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}

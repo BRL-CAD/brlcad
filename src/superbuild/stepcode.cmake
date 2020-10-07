@@ -41,7 +41,7 @@ if(BRLCAD_SC_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" " 
+  file(APPEND "${SUPERBUILD_OUT}" " 
   set(STEPCODE_LIBS base express exppp stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
     ExternalProject_Target(lib${SCLIB} STEPCODE_BLD

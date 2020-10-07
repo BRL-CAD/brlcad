@@ -33,7 +33,7 @@ if (BRLCAD_ZLIB_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
+  file(APPEND "${SUPERBUILD_OUT}" "
   ExternalProject_Target(zlib ZLIB_BLD
     OUTPUT_FILE ${ZLIB_BASENAME}${ZLIB_SUFFIX}
     STATIC_OUTPUT_FILE ${ZLIB_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}

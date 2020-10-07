@@ -33,7 +33,7 @@ if (BRLCAD_GDAL_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${BRLCAD_BINARY_DIR}/superbuild.cmake" "
+  file(APPEND "${SUPERBUILD_OUT}" "
   ExternalProject_Target(gdal GDAL_BLD
     OUTPUT_FILE ${GDAL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE ${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
