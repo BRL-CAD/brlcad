@@ -7,15 +7,15 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-gqa SHARED gqa.c)
+ged_plugin_library(ged-gqa SHARED gqa.cpp)
 target_link_libraries(ged-gqa libged libbu)
 set_property(TARGET ged-gqa APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-gqa gqa.c)
+VALIDATE_STYLE(ged-gqa gqa.cpp)
 PLUGIN_SETUP(ged-gqa ged)
 
 CMAKEFILES(
   CMakeLists.txt
-  gqa.c
+  gqa.cpp
   )
 
 # Local Variables:

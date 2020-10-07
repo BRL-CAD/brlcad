@@ -54,8 +54,8 @@ struct analyze_densities *_gd_densities;
 char *_gd_densities_source;
 
 /* bu_getopt() options */
-char *options = "A:a:de:f:g:Gn:N:p:P:qrS:s:t:U:u:vV:W:h?";
-char *options_str = "[-A A|a|b|c|e|g|m|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+const char *options = "A:a:de:f:g:Gn:N:p:P:qrS:s:t:U:u:vV:W:h?";
+const char *options_str = "[-A A|a|b|c|e|g|m|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUMES          1
 #define ANALYSIS_WEIGHTS          2
@@ -882,7 +882,7 @@ void _gqa_exposed_air(struct application *ap,
  * this routine must be prepared to run in parallel
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+_gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     /* see raytrace.h for all of these guys */
     struct partition *pp;
@@ -1183,7 +1183,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
  * This routine must be prepared to run in parallel
  */
 int
-miss(struct application *ap)
+_gqa_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
 
@@ -1229,8 +1229,8 @@ plane_worker(int cpu, void *ptr)
 
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = (struct rt_i *)state->rtip;	/* application uses this instance */
-    ap.a_hit = hit;    /* where to go on a hit */
-    ap.a_miss = miss;  /* where to go on a miss */
+    ap.a_hit = _gqa_hit;    /* where to go on a hit */
+    ap.a_miss = _gqa_miss;  /* where to go on a miss */
     ap.a_logoverlap = logoverlap;
     ap.a_overlap = _gqa_overlap;
     ap.a_resource = &state->resp[cpu];
@@ -2249,7 +2249,7 @@ summary_reports(struct cstate *state)
 }
 
 
-int
+extern "C" int
 ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 {
     int arg_count;
@@ -2554,20 +2554,22 @@ aborted:
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl gqa_cmd_impl = {
-    "gqa",
-    ged_gqa_core,
-    GED_CMD_DEFAULT
-};
+extern "C" {
+    struct ged_cmd_impl gqa_cmd_impl = {
+	"gqa",
+	ged_gqa_core,
+	GED_CMD_DEFAULT
+    };
 
-const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
-const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
+    const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
+    const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  gqa_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  gqa_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-{
-    return &pinfo;
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
 }
 #endif /* GED_PLUGIN */
 
