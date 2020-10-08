@@ -201,9 +201,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/perplex.cmake)
 # zlib compression/decompression library
 include(${CMAKE_CURRENT_SOURCE_DIR}/zlib.cmake)
 
-## libregex regular expression matching
-#include(${CMAKE_CURRENT_SOURCE_DIR}/regex.cmake)
-#
+# libregex regular expression matching
+include(${CMAKE_CURRENT_SOURCE_DIR}/regex.cmake)
+
 ## netpbm library - support for pnm,ppm,pbm, etc. image files
 #include(${CMAKE_CURRENT_SOURCE_DIR}/netpbm.cmake)
 #
