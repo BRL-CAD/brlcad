@@ -51,7 +51,7 @@
 #define EXIT_OFF_BY_ONE  1
 #define EXIT_OFF_BY_MANY 2
 
-enum label {
+enum diff {
     MATCHING,
     OFF_BY_ONE,
     OFF_BY_MANY,
@@ -137,6 +137,60 @@ handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
     } else {
 	bu_exit(OPTS_ERROR, "Unexpected input processing [%s]\n", arg);
     }
+}
+
+
+HIDDEN enum diff
+compare(int r1, int g1, int b1, int r2, int g2, int b2, size_t *matching, size_t *off1, size_t *offmany, size_t *missing)
+{
+    enum diff result = MISSING;
+
+    if ((r1 == r2 && r1 != -1)
+	&& (g1 == g2 && g1 != -1)
+	&& (b1 == b2 && b1 != -1))
+    {
+	result = MATCHING;
+	(*matching)++;
+    } else if (r1 == -1 || r2 == -1 || g1 == -1 || g2 == -1 || b1 == -1 || b2 == -1) {
+	/* image sizes don't match (or other I/O error) */
+	result = MISSING;
+	(*missing)++;
+    } else if (((r1 != r2) && (g1 == g2) && (b1 == b2))
+	       || ((r1 == r2) && (g1 != g2) && (b1 == b2))
+	       || ((r1 == r2) && (g1 == g2) && (b1 != b2)))
+    {
+	/* off by one channel */
+	if (r1 != r2) {
+	    if ((r1 > r2 ? r1 - r2 : r2 - r1) > 1) {
+		result = OFF_BY_MANY;
+		(*offmany)++;
+	    } else {
+		result = OFF_BY_ONE;
+		(*off1)++;
+	    }
+	} else if (g1 != g2) {
+	    if ((g1 > g2 ? g1 - g2 : g2 - g1) > 1) {
+		result = OFF_BY_MANY;
+		(*offmany)++;
+	    } else {
+		result = OFF_BY_ONE;
+		(*off1)++;
+	    }
+	} else if (b1 != b2) {
+	    if ((b1 > b2 ? b1 - b2 : b2 - b1) > 1) {
+		result = OFF_BY_MANY;
+		(*offmany)++;
+	    } else {
+		result = OFF_BY_ONE;
+		(*off1)++;
+	    }
+	}
+    } else {
+	result = OFF_BY_MANY;
+	(*offmany)++;
+    }
+
+    return result;
 }
 
 
@@ -351,10 +405,9 @@ main(int argc, char *argv[])
 
     /* iterate over the pixels/bytes in the files */
     while (bytes < stop_after) {
-	enum label result;
+	enum diff result;
 	int r1, r2, g1, g2, b1, b2;
 	r1 = r2 = g1 = g2 = b1 = b2 = -1;
-	result = MISSING;
 
 	/* bu_log("\tbytes[%zu] < stop[%zu\n", bytes, stop_after); */
 
@@ -375,50 +428,7 @@ main(int argc, char *argv[])
 	    bytes++;
 	}
 
-	if ((r1 == r2 && r1 != -1)
-	    && (g1 == g2 && g1 != -1)
-	    && (b1 == b2 && b1 != -1))
-	{
-	    result = MATCHING;
-	    matching++;
-	} else if (r1 == -1 || r2 == -1 || g1 == -1 || g2 == -1 || b1 == -1 || b2 == -1) {
-	    /* image sizes don't match (or other I/O error) */
-	    result = MISSING;
-	    missing++;
-	} else if (((r1 != r2) && (g1 == g2) && (b1 == b2))
-		   || ((r1 == r2) && (g1 != g2) && (b1 == b2))
-		   || ((r1 == r2) && (g1 == g2) && (b1 != b2)))
-	{
-	    /* off by one channel */
-	    if (r1 != r2) {
-		if ((r1 > r2 ? r1 - r2 : r2 - r1) > 1) {
-		    result = OFF_BY_MANY;
-		    offmany++;
-		} else {
-		    result = OFF_BY_ONE;
-		    off1++;
-		}
-	    } else if (g1 != g2) {
-		if ((g1 > g2 ? g1 - g2 : g2 - g1) > 1) {
-		    result = OFF_BY_MANY;
-		    offmany++;
-		} else {
-		    result = OFF_BY_ONE;
-		    off1++;
-		}
-	    } else if (b1 != b2) {
-		if ((b1 > b2 ? b1 - b2 : b2 - b1) > 1) {
-		    result = OFF_BY_MANY;
-		    offmany++;
-		} else {
-		    result = OFF_BY_ONE;
-		    off1++;
-		}
-	    }
-	} else {
-	    result = OFF_BY_MANY;
-	    offmany++;
-	}
+	result = compare(r1, g1, b1, r2, g2, b2, &matching, &off1, &offmany, &missing);
 
 	/* print them? */
 	if ((result==MATCHING && list_same)
