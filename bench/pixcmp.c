@@ -262,6 +262,10 @@ main(int argc, char *argv[])
 	exit(FILE_ERROR);
     }
 
+    setmode(fileno(stdin), O_BINARY);
+    /* we're writing out ascii */
+    /* setmode(fileno(stdout), O_BINARY); */
+
     if (f1_skip != f2_skip && f1 == stdin && f2 == stdin) {
 	bu_exit(OPTS_ERROR, "ERROR: cannot skip the same input stream by different amounts\n");
     }
