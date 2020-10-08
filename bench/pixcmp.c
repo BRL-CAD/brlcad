@@ -222,7 +222,6 @@ main(int argc, char *argv[])
 	handle_range_opt(range, &f1_skip, &f2_skip);
     }
 
-    /* printf("Skip from FILE1: %ld and from FILE2: %ld\n", f1_skip, f2_skip); */
     if (!print_bytes) {
 	f1_skip *= 3;
 	f2_skip *= 3;
@@ -244,13 +243,13 @@ main(int argc, char *argv[])
     }
 
     if (f1_skip != f2_skip && f1 == stdin && f2 == stdin) {
-	bu_log("ERROR: Cannot skip the same input stream by different amounts\n\n");
-	usage(argv0);
-	exit(OPTS_ERROR);
+	bu_exit(OPTS_ERROR, "ERROR: cannot skip the same input stream by different amounts\n");
     }
 
     fstat(fileno(f1), &sf1);
     fstat(fileno(f2), &sf2);
+
+    bu_log("FILE1_size(%zu) FILE1_skip(%zu) FILE2_size(%zu) FILE2_skip(%zu)\n", (size_t)sf1.st_size, f1_skip, (size_t)sf2.st_size, f2_skip);
 
     if (!quiet && ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip))) {
 	bu_log("WARNING: Different image sizes detected\n");
@@ -267,38 +266,51 @@ main(int argc, char *argv[])
 	}
     }
 
+    /* make sure we read all bytes */
+    if (stop_after == 0) {
+	stop_after = FMAX((sf1.st_size - f1_skip), (sf2.st_size - f2_skip));
+	if (f1 == stdin && f2 == stdin) {
+	    /* dual stdin is interleaved */
+	    stop_after = (stop_after+1)/2;
+	}
+    }
+
     /*
-    bu_log("!!! mode is [%d] and [%d]\n", S_ISFIFO(sf1.st_mode), S_ISFIFO(sf2.st_mode));
-    bu_log("!!! tty is [%d] and [%d]\n", isatty(fileno(f1)), isatty(fileno(f2)));
+    bu_log("mode is [%d] and [%d]\n", S_ISFIFO(sf1.st_mode), S_ISFIFO(sf2.st_mode));
+    bu_log("tty is [%d] and [%d]\n", isatty(fileno(f1)), isatty(fileno(f2)));
     */
 
     /* skip requested pixels/bytes in FILE1 */
-    if (f1_skip && !S_ISFIFO(sf1.st_mode) && fseek(f1, f1_skip, SEEK_SET)) {
-	bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
-	       f1_skip,
-	       print_bytes?"byte":"pixel",
-	       f1_skip==1?"":"s");
-	perror("FILE1 fseek failure");
-	exit(FILE_ERROR);
-    } else {
-	size_t skipped = 0;
-	for (skipped = 0; skipped < f1_skip; skipped++) {
-	    (void)fgetc(f1);
+    if (f1_skip) {
+	if (S_ISFIFO(sf1.st_mode)) {
+	    size_t skipped = 0;
+	    for (skipped = 0; skipped < f1_skip; skipped++) {
+		(void)fgetc(f1);
+	    }
+	} else if (fseek(f1, f1_skip, SEEK_SET)) {
+	    bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
+		   f1_skip,
+		   print_bytes?"byte":"pixel",
+		   f1_skip==1?"":"s");
+	    perror("FILE1 fseek failure");
+	    exit(FILE_ERROR);
 	}
     }
 
     /* skip requested pixels in FILE2 */
-    if (f2_skip && !S_ISFIFO(sf2.st_mode) && fseek(f2, f2_skip, SEEK_SET)) {
-	bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
-	       f2_skip,
-	       print_bytes?"byte":"pixel",
-	       f2_skip==1?"":"s");
-	perror("FILE2 fseek failure");
-	exit(FILE_ERROR);
-    } else {
-	size_t skipped = 0;
-	for (skipped = 0; skipped < f2_skip; skipped++) {
-	    (void)fgetc(f2);
+    if (f2_skip) {
+	if (S_ISFIFO(sf2.st_mode)) {
+	    size_t skipped = 0;
+	    for (skipped = 0; skipped < f2_skip; skipped++) {
+		(void)fgetc(f2);
+	    }
+	} else if (fseek(f2, f2_skip, SEEK_SET)) {
+	    bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
+		   f2_skip,
+		   print_bytes?"byte":"pixel",
+		   f2_skip==1?"":"s");
+	    perror("FILE2 fseek failure");
+	    exit(FILE_ERROR);
 	}
     }
 
@@ -311,26 +323,20 @@ main(int argc, char *argv[])
 	}
     }
 
-    /* make sure we don't stop */
-    if (stop_after == 0)
-	stop_after = SIZE_MAX;
+    /* bu_log("INITIAL: bytes[%zu] < stop[%zu]\n", bytes, stop_after); */
 
     /* iterate over the pixels/bytes in the files */
-    while ((!feof(f1) || !feof(f2))
-	   && (!ferror(f1) || !ferror(f2)))
-    {
+    while (bytes < stop_after) {
 	enum label result;
 	int r1, r2, g1, g2, b1, b2;
 	r1 = r2 = g1 = g2 = b1 = b2 = -1;
 	result = MISSING;
 
+	/* bu_log("\tbytes[%zu] < stop[%zu\n", bytes, stop_after); */
+
 	r1 = fgetc(f1);
 	r2 = fgetc(f2);
 	bytes++;
-
-	/* stop if we can't even compare a byte */
-	if (r1 == r2 && r1 == -1)
-	    break;
 
 	if (print_bytes) {
 	    /* replicate */
@@ -415,16 +421,6 @@ main(int argc, char *argv[])
 	    } else {
 		printf("%ld\t(%3d, %3d, %3d)\t(%3d, %3d, %3d) %s\n", bytes / 3, r1, g1, b1, r2, g2, b2, label);
 	    }
-	}
-
-	/* see if we need to terminate prematurely */
-	if ((stop_after == (size_t)-1)
-	    && (feof(f1) || feof(f2))) {
-	    /* bu_log("exiting because of feof\n"); */
-	    break;
-	} else if (bytes >= stop_after) {
-	    /* bu_log("exiting because of bytes\n"); */
-	    break;
 	}
     }
 
