@@ -14,43 +14,41 @@ if (BRLCAD_NETPBM_BUILD)
     set(NETPBM_BASENAME libnetpbm)
   endif (MSVC)
 
+  set(NETPBM_INSTDIR ${CMAKE_BINARY_DIR}/netpbm)
+
   ExternalProject_Add(NETPBM_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/netpbm"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${NETPBM_INSTDIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
 
-  # Tell the parent build about files and libraries
-  file(APPEND "${SUPERBUILD_OUT}" " 
-  ExternalProject_Target(netpbm NETPBM_BLD
-    OUTPUT_FILE ${NETPBM_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC_OUTPUT_FILE ${NETPBM_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    RPATH
-    )
+ # Tell the parent build about files and libraries
+ ExternalProject_Target(netpbm NETPBM_BLD ${NETPBM_INSTDIR}
+   SHARED ${LIB_DIR}/${NETPBM_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+   STATIC ${LIB_DIR}/${NETPBM_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+   RPATH
+   )
 
-  ExternalProject_ByProducts(NETPBM_BLD ${INCLUDE_DIR}
-    netpbm/bitio.h
-    netpbm/colorname.h
-    netpbm/pam.h
-    netpbm/pammap.h
-    netpbm/pbm.h
-    netpbm/pbmfont.h
-    netpbm/pgm.h
-    netpbm/pm.h
-    netpbm/pm_gamma.h
-    netpbm/pm_system.h
-    netpbm/pnm.h
-    netpbm/ppm.h
-    netpbm/ppmcmap.h
-    netpbm/ppmfloyd.h
-    )
-  \n")
-
-  list(APPEND BRLCAD_DEPS NETPBM_BLD)
+ ExternalProject_ByProducts(netpbm NETPBM_BLD ${NETPBM_INSTDIR} ${INCLUDE_DIR}/netpbm ${INCLUDE_DIR}/netpbm
+   bitio.h
+   colorname.h
+   pam.h
+   pammap.h
+   pbm.h
+   pbmfont.h
+   pgm.h
+   pm.h
+   pm_gamma.h
+   pm_system.h
+   pnm.h
+   ppm.h
+   ppmcmap.h
+   ppmfloyd.h
+   )
 
   set(NETPBM_LIBRARIES netpbm CACHE STRING "Building bundled netpbm" FORCE)
-  set(NETPBM_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
+  set(NETPBM_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/$<CONFIG>/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
 
   SetTargetFolder(NETPBM_BLD "Third Party Libraries")
   SetTargetFolder(netpbm "Third Party Libraries")
