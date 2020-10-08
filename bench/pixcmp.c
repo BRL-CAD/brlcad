@@ -137,6 +137,8 @@ handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 int
 main(int argc, char *argv[])
 {
+    const char *argv0 = argv[0];
+
     FILE *f1 = NULL;
     FILE *f2 = NULL;
     struct stat sf1 = {0};
@@ -183,7 +185,7 @@ main(int argc, char *argv[])
 		break;
 	    case '?':
 	    case 'h':
-		usage(argv[0]);
+		usage(argv0);
 		return 0;
 	    default:
 		exit(OPTS_ERROR);
@@ -195,17 +197,17 @@ main(int argc, char *argv[])
     /* validate what is left over */
     if (argc < 1 || argc > 4) {
 	bu_log("ERROR: incorrect number of arguments provided\n\n");
-	usage(argv[0]);
+	usage(argv0);
 	exit(OPTS_ERROR);
     }
     if ((argc > 0 && !argv[0]) || (argc > 1 && !argv[1])) {
 	bu_log("ERROR: bad filename\n\n");
-	usage(argv[0]);
+	usage(argv0);
 	exit(OPTS_ERROR);
     }
     if ((argc > 2 && !argv[2]) || (argc > 3 && !argv[3])) {
 	bu_log("ERROR: bad skip value\n\n");
-	usage(argv[0]);
+	usage(argv0);
 	exit(OPTS_ERROR);
     }
 
@@ -239,6 +241,12 @@ main(int argc, char *argv[])
     } else if ((f2 = fopen(argv[1], "rb")) == NULL) {
 	perror(argv[1]);
 	exit(FILE_ERROR);
+    }
+
+    if (f1_skip != f2_skip && f1 == stdin && f2 == stdin) {
+	bu_log("ERROR: Cannot skip the same input stream by different amounts\n\n");
+	usage(argv0);
+	exit(OPTS_ERROR);
     }
 
     fstat(fileno(f1), &sf1);
