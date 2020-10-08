@@ -58,6 +58,7 @@ enum label {
     MISSING
 };
 
+
 HIDDEN void
 usage(const char *name)
 {
@@ -78,13 +79,15 @@ usage(const char *name)
 	   "  -d   Print all that have different values.\n"
 	   "  -q   Quiet.  Suppress printing header and summary.\n"
 	   "  -i SKIP\n"
-	   "       Skip first SKIP pixels (or bytes) of input for FILE1 and FILE2\n"
+	   "       Discard initial SKIP pixels (or bytes w/ -b) in FILE1 and FILE2 input.\n"
 	   "  -i SKIP1:SKIP2\n"
-	   "       Skip SKIP1 pixels (or bytes) in FILE1 and SKIP2 pixels in FILE2.\n");
-    bu_log("\n"
-	   "If either FILE is `-' or is missing, then input is read from standard input.\n"
+	   "       Skip initial SKIP1 pixels (or bytes w/ -b) in FILE1 and SKIP2 in FILE2.\n"
+	   "  -n COUNT\n"
+	   "       Compare COUNT pixels (or bytes w/ -b).  Stops by default at EOF.\n"
+	   "\n");
+    bu_log("If either FILE is `-' or is missing, then input is read from standard input.\n"
 	   "If FILE1 and FILE2 are both standard input, then values must be interleaved.\n"
-	   "If the `-b' option is used, SKIP values are bytes instead of pixels.\n"
+	   "If the `-b' option is used, SKIP and COUNT values are bytes instead of pixels.\n"
 	   "Pixel numbers and bytes are indexed linearly from one.\n"
 	   "\n");
     return;
@@ -92,7 +95,7 @@ usage(const char *name)
 
 
 HIDDEN void
-handle_i_opt(const char *arg, size_t *skip1, size_t *skip2)
+handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 {
     const char *endptr = arg;
     if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))) {
@@ -145,18 +148,20 @@ main(int argc, char *argv[])
     size_t missing = 0;
 
     int c;
-    int list_same = 0;
     int list_diff = 0;
+    int list_same = 0;
     int print_bytes = 0;
     int quiet = 0;
+
+    size_t bytes = 0;
     size_t f1_skip = 0;
     size_t f2_skip = 0;
-    size_t bytes = 0;
+    size_t stop_after = 0;
 
     bu_setprogname(argv[0]);
 
     /* process opts */
-    while ((c = bu_getopt(argc, argv, "sdbi:q?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "sdbi:n:q?")) != -1) {
 	switch (c) {
 	    case 's':
 		list_same = 1;
@@ -168,7 +173,10 @@ main(int argc, char *argv[])
 		print_bytes = 1;
 		break;
 	    case 'i':
-		handle_i_opt(bu_optarg, &f1_skip, &f2_skip);
+		handle_range_opt(bu_optarg, &f1_skip, &f2_skip);
+		break;
+	    case 'n':
+		stop_after = (size_t)strtol(bu_optarg, NULL, 10);
 		break;
 	    case 'q':
 		quiet = 1;
@@ -209,13 +217,14 @@ main(int argc, char *argv[])
 	} else {
 	    snprintf(range, 64, "%s", argv[2]);
 	}
-	handle_i_opt(range, &f1_skip, &f2_skip);
+	handle_range_opt(range, &f1_skip, &f2_skip);
     }
 
     /* printf("Skip from FILE1: %ld and from FILE2: %ld\n", f1_skip, f2_skip); */
     if (!print_bytes) {
 	f1_skip *= 3;
 	f2_skip *= 3;
+	stop_after *= 3;
     }
 
     if (BU_STR_EQUAL(argv[0], "-")) {
@@ -250,34 +259,53 @@ main(int argc, char *argv[])
 	}
     }
 
+    /*
+    bu_log("!!! mode is [%d] and [%d]\n", S_ISFIFO(sf1.st_mode), S_ISFIFO(sf2.st_mode));
+    bu_log("!!! tty is [%d] and [%d]\n", isatty(fileno(f1)), isatty(fileno(f2)));
+    */
+
     /* skip requested pixels/bytes in FILE1 */
-    if (f1_skip && fseek(f1, f1_skip, SEEK_SET)) {
+    if (f1_skip && !S_ISFIFO(sf1.st_mode) && fseek(f1, f1_skip, SEEK_SET)) {
 	bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",
 	       f1_skip==1?"":"s");
 	perror("FILE1 fseek failure");
 	exit(FILE_ERROR);
+    } else {
+	size_t skipped = 0;
+	for (skipped = 0; skipped < f1_skip; skipped++) {
+	    (void)fgetc(f1);
+	}
     }
 
     /* skip requested pixels in FILE2 */
-    if (f2_skip && fseek(f2, f2_skip, SEEK_SET)) {
+    if (f2_skip && !S_ISFIFO(sf2.st_mode) && fseek(f2, f2_skip, SEEK_SET)) {
 	bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
 	       f2_skip,
 	       print_bytes?"byte":"pixel",
 	       f2_skip==1?"":"s");
 	perror("FILE2 fseek failure");
 	exit(FILE_ERROR);
+    } else {
+	size_t skipped = 0;
+	for (skipped = 0; skipped < f2_skip; skipped++) {
+	    (void)fgetc(f2);
+	}
     }
 
     /* print header to stderr, output to stdout */
     if (!quiet && (list_same || list_diff)) {
 	if (print_bytes) {
-	    bu_log("#Byte FILE1_byte FILE2_byte LABEL\n");
+	    bu_log("#Byte FILE1 FILE2 LABEL\n");
 	} else {
 	    bu_log("#Pixel\t(FILE1 R, G, B) (FILE2 R, G, B)\n");
 	}
     }
+
+    /* make sure we don't stop */
+    if (stop_after == 0)
+	stop_after = SIZE_MAX;
 
     /* iterate over the pixels/bytes in the files */
     while ((!feof(f1) || !feof(f2))
@@ -379,6 +407,16 @@ main(int argc, char *argv[])
 	    } else {
 		printf("%ld\t(%3d, %3d, %3d)\t(%3d, %3d, %3d) %s\n", bytes / 3, r1, g1, b1, r2, g2, b2, label);
 	    }
+	}
+
+	/* see if we need to terminate prematurely */
+	if ((stop_after == (size_t)-1)
+	    && (feof(f1) || feof(f2))) {
+	    /* bu_log("exiting because of feof\n"); */
+	    break;
+	} else if (bytes >= stop_after) {
+	    /* bu_log("exiting because of bytes\n"); */
+	    break;
 	}
     }
 
