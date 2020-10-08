@@ -98,6 +98,8 @@ HIDDEN void
 handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 {
     const char *endptr = arg;
+    long val;
+
     if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))) {
 	/* nothing to do */
 	return;
@@ -109,12 +111,14 @@ handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 	/* probably empty string */
 	if (skip2) {
 	    endptr++;
-	    *skip2 = strtol(endptr, NULL, 10);
+	    val = strtol(endptr, NULL, 10);
+	    *skip2 = (val < 0) ? 0 : val;
 	}
     } else if ((endptr == NULL) || (endptr[0] == '\0')) {
 	/* no : found */
 	if (skip2) {
-	    *skip2 = strtol(arg, NULL, 10);
+	    val = strtol(arg, NULL, 10);
+	    *skip2 = (val < 0) ? 0 : val;
 	}
 	if (skip1 && skip2) {
 	    *skip1 = *skip2;
@@ -122,11 +126,13 @@ handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
     } else if (endptr[0] == ':') {
 	/* found : */
 	if (skip1) {
-	    *skip1 = strtol(arg, NULL, 10);
+	    val = strtol(arg, NULL, 10);
+	    *skip1 = (val < 0) ? 0 : val;
 	}
 	if (skip2) {
 	    endptr++; /* skip over : */
-	    *skip2 = strtol(endptr, NULL, 10);
+	    val = strtol(endptr, NULL, 10);
+	    *skip2 = (val < 0) ? 0 : val;
 	}
     } else {
 	bu_exit(OPTS_ERROR, "Unexpected input processing [%s]\n", arg);
@@ -178,8 +184,11 @@ main(int argc, char *argv[])
 		handle_range_opt(bu_optarg, &f1_skip, &f2_skip);
 		break;
 	    case 'n':
-		stop_after = (size_t)strtol(bu_optarg, NULL, 10);
+	    {
+		long num = strtol(bu_optarg, NULL, 10);
+		stop_after = (num < 0) ? 0 : num;
 		break;
+	    }
 	    case 'q':
 		quiet = 1;
 		break;
@@ -223,8 +232,19 @@ main(int argc, char *argv[])
     }
 
     if (!print_bytes) {
+	if ((f1_skip > ((size_t)-1)/3)
+	    || (f2_skip > ((size_t)-1)/3))
+	{
+	    bu_log("ERROR: overflow, -i skip value(s) are too big {%zu:%zu}\n", f1_skip, f2_skip);
+	    exit(OPTS_ERROR);
+	}
 	f1_skip *= 3;
 	f2_skip *= 3;
+	if (stop_after > ((size_t)-1)/3)
+	{
+	    bu_log("ERROR: overflow, -n number is too big {%zu}\n", stop_after);
+	    exit(OPTS_ERROR);
+	}
 	stop_after *= 3;
     }
 
