@@ -263,9 +263,9 @@ main(int argc, char *argv[])
     /* skip requested pixels in FILE2 */
     if (f2_skip && fseek(f2, f2_skip, SEEK_SET)) {
 	bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
-	       f1_skip,
+	       f2_skip,
 	       print_bytes?"byte":"pixel",
-	       f1_skip==1?"":"s");
+	       f2_skip==1?"":"s");
 	perror("FILE2 fseek failure");
 	exit(FILE_ERROR);
     }
