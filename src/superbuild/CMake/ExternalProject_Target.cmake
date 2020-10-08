@@ -22,17 +22,56 @@
 # to be ready.  The key variable CMAKE_BUILD_RPATH comes from running the
 # function cmake_set_rpath, which must be available.
 
+# Be quite about tool outputs by default
+if(NOT DEFINED EXTPROJ_VERBOSE)
+  set(EXTPROJ_VERBOSE 0)
+endif(NOT DEFINED EXTPROJ_VERBOSE)
+
+# When staging files in the build directory, we have to be aware of multiple
+# configurations.  This is done post-ExternalProject build, at the parent build
+# time, so it needs to be a custom command. Until add_custom_command outputs
+# can use $<CONFIG>, we need to handle multi-config situations manually with
+# multiple copy commands.
+#
+# cmake -E copy follows symlinks to get the final file, which is not what we
+# want in this situation.  To avoid this, we create a copy script which uses
+# file(COPY) and run that script with cmake -P
+file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake" "get_filename_component(DDIR \${DEST} DIRECTORY)\nfile(COPY \${SRC} DESTINATION \${DDIR})")
+
+function(fcfgcpy outvar extproj root dir ofile tfile)
+ #message("extproj: ${extproj}")
+ #message("root: ${root}")
+ #message("dir: ${dir}")
+ #message("ofile: ${ofile}")
+ #message("tfile: ${tfile}")
+  if (NOT CMAKE_CONFIGURATION_TYPES)
+    add_custom_command(
+      OUTPUT "${CMAKE_BINARY_DIR}/${dir}/${tfile}"
+      COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/${dir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
+      DEPENDS ${extproj}
+      )
+    set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${dir}/${tfile}")
+  else (NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      add_custom_command(
+	OUTPUT "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${dir}/${tfile}"
+	COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/${CFG_TYPE}/${dir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
+	DEPENDS ${extproj}
+	)
+      set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${dir}/${tfile}")
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif (NOT CMAKE_CONFIGURATION_TYPES)
+  set(${outvar} ${TOUT} PARENT_SCOPE)
+endfunction(fcfgcpy file)
+
+
 # Custom patch utility to replace the build directory path with the install
 # directory path in text files - make sure CMAKE_BINARY_DIR and
 # CMAKE_INSTALL_PREFIX are finalized before generating this file!
-configure_file(${BDEPS_SOURCE_DIR}/CMake/buildpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
+configure_file(${CMAKE_SOURCE_DIR}/CMake/buildpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 add_executable(buildpath_replace ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 
-# Custom patch utility for external RPath preparation
-configure_file(${BDEPS_SOURCE_DIR}/CMake/rpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx @ONLY)
-add_executable(rpath_replace ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
-
-function(ExternalProject_ByProducts extproj E_IMPORT_PREFIX)
+function(ExternalProject_ByProducts etarg extproj extroot E_IMPORT_PREFIX target_dir)
 
   cmake_parse_arguments(E "FIXPATH" "" "" ${ARGN})
 
@@ -55,24 +94,32 @@ function(ExternalProject_ByProducts extproj E_IMPORT_PREFIX)
 
   endif (EXTPROJ_VERBOSE)
 
+  unset(TOUT)
   foreach (bpf ${E_UNPARSED_ARGUMENTS})
+    # If a relative prefix was specified, construct the "source" file using it.
+    # This is used to save verbosity in ByProducts input lists.
+    if (E_IMPORT_PREFIX)
+      set(ofile ${E_IMPORT_PREFIX}/${bpf})
+    else (E_IMPORT_PREFIX)
+      set(ofile ${bpf})
+    endif (E_IMPORT_PREFIX)
 
-    set(D_IMPORT_PREFIX "${E_IMPORT_PREFIX}")
-    get_filename_component(BPF_DIR "${bpf}" DIRECTORY)
-    if (BPF_DIR)
-      set(D_IMPORT_PREFIX "${D_IMPORT_PREFIX}/${BPF_DIR}")
-    endif (BPF_DIR)
+    fcfgcpy(TOUT ${extproj} ${extroot} "${target_dir}" ${ofile} ${bpf})
 
-    set(I_IMPORT_PREFIX ${CMAKE_BINARY_DIR}/${E_IMPORT_PREFIX})
-    install(FILES "${I_IMPORT_PREFIX}/${bpf}" DESTINATION "${D_IMPORT_PREFIX}/")
+    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${target_dir}/${bpf}" DESTINATION "${target_dir}/")
     if (E_FIXPATH)
       # Note - proper quoting for install(CODE) is extremely important for CPack, see
       # https://stackoverflow.com/a/48487133
-      install(CODE "execute_process(COMMAND ${CMAKE_BINARY_DIR}/${BIN_DIR}/buildpath_replace${CMAKE_EXECUTABLE_SUFFIX} \"\${CMAKE_INSTALL_PREFIX}/${E_IMPORT_PREFIX}/${bpf}\")")
+      install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\${CMAKE_INSTALL_PREFIX}/${E_IMPORT_PREFIX}/${bpf}\")")
     endif (E_FIXPATH)
 
-
   endforeach (bpf ${E_UNPARSED_ARGUMENTS})
+
+  if (E_UNPARSED_ARGUMENTS)
+    string(MD5 UKEY "${E_UNPARSED_ARGUMENTS}")
+    add_custom_target(${etarg}_${UKEY} ALL DEPENDS ${TOUT})
+    add_dependencies(${etarg} ${etarg}_${UKEY})
+  endif (E_UNPARSED_ARGUMENTS)
 
 endfunction(ExternalProject_ByProducts)
 
@@ -90,6 +137,7 @@ function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
     else()
       set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
     endif(ET_STATIC)
+    message("prefix: ${IMPORT_PREFIX}")
     if(IN_IMPORT_PREFIX)
       set(IMPORT_PREFIX "${IMPORT_PREFIX}/${IN_IMPORT_PREFIX}")
     endif(IN_IMPORT_PREFIX)
@@ -100,30 +148,36 @@ function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
       IMPORTED_SONAME_NOCONFIG "${IN_LINK_TARGET}"
       )
 
+    message("${IMPORT_PREFIX}/${IN_LINK_TARGET}")
+    message("${IN_LINK_TARGET}")
+
   else(NOT CMAKE_CONFIGURATION_TYPES)
 
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 
-      # The config variables are the ones set in this mode, but everything is being targeted to
-      # one consistent top-level layout.  Adjust accordingly.
+      # The config variables are the ones set in this mode.
       if(ET_STATIC)
-	set(IMPORT_PREFIX "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/../../${LIB_DIR}")
+	set(IMPORT_PREFIX "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
       elseif(ET_EXEC)
-	set(IMPORT_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/../../${BIN_DIR}")
+	set(IMPORT_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
       else()
-	set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/../../${LIB_DIR}")
+	set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
       endif(ET_STATIC)
 
       if(IN_IMPORT_PREFIX)
 	set(IMPORT_PREFIX "${IMPORT_PREFIX}/${IN_IMPORT_PREFIX}")
       endif(IN_IMPORT_PREFIX)
 
+      message("IMPORT_PREFIX: ${IMPORT_PREFIX}")
+
       if("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
 	set(LINK_TARGET ${ET_LINK_TARGET_DEBUG})
       else("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
 	set(LINK_TARGET ${IN_LINK_TARGET})
       endif("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
+
+      message("LINK_TARGET: ${LINK_TARGET}")
 
       set_target_properties(${etarg} PROPERTIES
 	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${LINK_TARGET}"
@@ -148,7 +202,7 @@ function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
     #  MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
     #  )
 
-    endif(NOT CMAKE_CONFIGURATION_TYPES)
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 endfunction(ET_target_props)
 
@@ -192,7 +246,6 @@ function(ET_RPath LIB_DIR OUTPUT_DIR SUB_DIR E_OUTPUT_FILE)
     set(NEW_RPATH "$ENV{DESTDIR}${RRPATH}:@loader_path/${OPATH}")
   endif (NOT APPLE)
   if (NOT DEFINED CMAKE_BUILD_RPATH)
-    return()
     message(FATAL_ERROR "ET_RPath run without CMAKE_BUILD_RPATH defined - run cmake_set_rpath before defining external projects.")
   endif (NOT DEFINED CMAKE_BUILD_RPATH)
   if (NOT "${SUB_DIR}" STREQUAL "")
@@ -204,15 +257,17 @@ function(ET_RPath LIB_DIR OUTPUT_DIR SUB_DIR E_OUTPUT_FILE)
   # https://stackoverflow.com/a/48487133
   install(CODE "
   file(RPATH_CHANGE
-    FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OUTPUT_DIR}/${OFINAL}\"
+    FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFINAL}\"
     OLD_RPATH \"${CMAKE_BUILD_RPATH}\"
     NEW_RPATH \"${NEW_RPATH}\")
   ")
 endfunction(ET_RPath)
 
-function(ExternalProject_Target etarg extproj)
 
-  cmake_parse_arguments(E "RPATH;EXEC" "SUBDIR;OUTPUT_FILE;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_OUTPUT_FILE;STATIC_LINK_TARGET;STATIC_LINK_TARGET_DEBUG" "SYMLINKS;DEPS" ${ARGN})
+
+function(ExternalProject_Target etarg extproj extroot)
+
+  cmake_parse_arguments(E "RPATH" "EXEC;SHARED;STATIC;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_LINK_TARGET;STATIC_LINK_TARGET_DEBUG" "SYMLINKS;DEPS" ${ARGN})
 
   if(NOT TARGET ${extproj})
     message(FATAL_ERROR "${extprog} is not a target")
@@ -226,24 +281,25 @@ function(ExternalProject_Target etarg extproj)
     message(FATAL_ERROR "Target ${etarg}-static is already defined\n")
   endif(E_STATIC AND TARGET ${etarg}-static)
 
-  if (EXTPROJ_VERBOSE)
-    message("${extproj}: Adding target \"${etarg}\"")
-  endif (EXTPROJ_VERBOSE)
+  message("${extproj}: Adding target \"${etarg}\"")
 
-  if (E_STATIC_OUTPUT_FILE)
-    set(E_STATIC 1)
-  endif (E_STATIC_OUTPUT_FILE)
-
-  if (E_OUTPUT_FILE AND NOT E_EXEC)
-    set(E_SHARED 1)
-  endif (E_OUTPUT_FILE AND NOT E_EXEC)
-
-  if (E_LINK_TARGET_DEBUG AND NOT MSVC)
-    set(LINK_TARGET_DEBUG "${E_LINK_TARGET_DEBUG}")
-  endif (E_LINK_TARGET_DEBUG AND NOT MSVC)
-
+  if (E_LINK_TARGET AND NOT MSVC)
+    set(LINK_TARGET "${E_LINK_TARGET}")
+  endif (E_LINK_TARGET AND NOT MSVC)
+  if (NOT MSVC)
+    if (E_LINK_TARGET_DEBUG)
+      set(LINK_TARGET_DEBUG "${E_LINK_TARGET_DEBUG}")
+    elseif (E_LINK_TARGET)
+      set(LINK_TARGET_DEBUG "${E_LINK_TARGET}")
+    else (E_LINK_TARGET_DEBUG)
+      set(LINK_TARGET_DEBUG "${E_SHARED}")
+    endif (E_LINK_TARGET_DEBUG)
+  endif (NOT MSVC)
   if (E_STATIC_LINK_TARGET_DEBUG AND NOT MSVC)
-    set(STATIC LINK_TARGET_DEBUG "${E_STATIC_LINK_TARGET_DEBUG}")
+    set(LINK_TARGET "${E_STATIC_LINK_TARGET}")
+  endif (E_STATIC_LINK_TARGET_DEBUG AND NOT MSVC)
+  if (E_STATIC_LINK_TARGET_DEBUG AND NOT MSVC)
+    set(STATIC_LINK_TARGET_DEBUG "${E_STATIC_LINK_TARGET_DEBUG}")
   endif (E_STATIC_LINK_TARGET_DEBUG AND NOT MSVC)
 
   # Create imported target - need to both make the target itself
@@ -252,58 +308,90 @@ function(ExternalProject_Target etarg extproj)
 
   # Because the outputs are not properly build target outputs of the primary
   # CMake project, we need to install as either FILES or PROGRAMS
-  if (NOT E_EXEC)
+  set(TOUT)
 
-    # Handle shared library
-    if (E_SHARED)
-      add_library(${etarg} SHARED IMPORTED GLOBAL)
-      if (E_LINK_TARGET AND NOT MSVC)
-	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_LINK_TARGET} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
-      else (E_LINK_TARGET AND NOT MSVC)
-	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_OUTPUT_FILE} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
-      endif (E_LINK_TARGET AND NOT MSVC)
+  # Handle shared library
+  message("Adding imported library: ${etarg}")
+  message("Adding imported library: ${E_SHARED}")
+  if (E_SHARED)
+    add_library(${etarg} SHARED IMPORTED GLOBAL)
+    string(REPLACE "${LIB_DIR}/" ""  ENAME ${E_SHARED})
+    fcfgcpy(TOUT ${extproj} ${extroot} ${LIB_DIR} ${E_SHARED} ${ENAME})
+    if (E_LINK_TARGET AND NOT MSVC)
+      ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_LINK_TARGET} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
+      string(REPLACE "${LIB_DIR}/" ""  ENAME ${E_LINK_TARGET})
+    else (E_LINK_TARGET AND NOT MSVC)
+      ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_SHARED} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
+    endif (E_LINK_TARGET AND NOT MSVC)
 
-      install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
-      if (E_RPATH AND NOT MSVC)
-	ET_RPath("${LIB_DIR}" "${LIB_DIR}" "${E_SUBDIR}" "${E_OUTPUT_FILE}")
-      endif (E_RPATH AND NOT MSVC)
-    endif (E_SHARED)
+    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${E_SHARED}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
 
-    # If we do have a static lib as well, handle that
-    if (E_STATIC AND BUILD_STATIC_LIBS)
-      add_library(${etarg}-static STATIC IMPORTED GLOBAL)
-      if (E_STATIC_LINK_TARGET AND NOT MSVC)
-	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_LINK_TARGET} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
-      else (E_STATIC_LINK_TARGET AND NOT MSVC)
-	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_OUTPUT_FILE} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
-      endif (E_STATIC_LINK_TARGET AND NOT MSVC)
-      if (MSVC)
-	install(FILES "${CMAKE_BINARY_DIR}/${BIN_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
-      else (MSVC)
-	install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
-      endif (MSVC)
-    endif (E_STATIC AND BUILD_STATIC_LIBS)
-
-  else (NOT E_EXEC)
-
-    add_executable(${etarg} IMPORTED GLOBAL)
-    ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_OUTPUT_FILE} EXEC)
-    install(PROGRAMS "${CMAKE_BINARY_DIR}/${BIN_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
+    # Perform RPath magic
     if (E_RPATH AND NOT MSVC)
-      ET_RPath("${LIB_DIR}" "${BIN_DIR}" "${E_SUBDIR}" "${E_OUTPUT_FILE}")
+      ET_RPath("${LIB_DIR}" "${LIB_DIR}" "" "${E_SHARED}")
     endif (E_RPATH AND NOT MSVC)
 
-  endif (NOT E_EXEC)
+  endif (E_SHARED)
 
-  # Let CMake know there is a target dependency here, despite this being an import target
-  add_dependencies(${etarg} ${extproj})
+  # If we do have a static lib as well, handle that
+  if (E_STATIC AND BUILD_STATIC_LIBS)
+    add_library(${etarg}-static STATIC IMPORTED GLOBAL)
+    if (E_STATIC_LINK_TARGET AND NOT MSVC)
+      ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_LINK_TARGET} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
+    else (E_STATIC_LINK_TARGET AND NOT MSVC)
+      ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_OUTPUT_FILE} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
+    endif (E_STATIC_LINK_TARGET AND NOT MSVC)
+    if (MSVC)
+      string(REPLACE "${BIN_DIR}/" ""  ENAME ${E_STATIC})
+      fcfgcpy(TOUT ${extproj} ${extroot} ${BIN_DIR} ${E_STATIC} ${ENAME})
+      install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${E_STATIC}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
+    else (MSVC)
+      string(REPLACE "${LIB_DIR}/" ""  ENAME ${E_STATIC})
+      fcfgcpy(TOUT ${extproj} ${extroot} ${LIB_DIR} ${E_STATIC} ${ENAME})
+      install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${E_STATIC}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
+    endif (MSVC)
+    # Let CMake know there is a target dependency here, despite this being an import target
+    add_dependencies(${etarg}-static ${extproj})
+  endif (E_STATIC AND BUILD_STATIC_LIBS)
 
-  # Add install rules for any symlinks the caller has listed
+  if (E_EXEC)
+    add_executable(${etarg} IMPORTED GLOBAL)
+
+    string(REPLACE "${BIN_DIR}/" ""  ENAME ${E_EXEC})
+    fcfgcpy(TOUT ${extproj} ${extroot} ${BIN_DIR} ${E_EXEC} ${ENAME})
+    ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_EXEC} EXEC)
+    install(PROGRAMS "${CMAKE_BINARY_DIR}/$<CONFIG>/${E_EXEC}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
+
+    # Let CMake know there is a target dependency here, despite this being an import target
+    add_dependencies(${etarg} ${extproj})
+
+    # Perform RPath magic
+    if (E_RPATH AND NOT MSVC)
+      ET_RPath("${LIB_DIR}" "${BIN_DIR}" "" "${E_EXEC}")
+    endif (E_RPATH AND NOT MSVC)
+  endif (E_EXEC)
+
+    # Add install rules for any symlinks the caller has listed
   if(E_SYMLINKS AND NOT MSVC)
     foreach(slink ${E_SYMLINKS})
-      install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${slink}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
+      string(REPLACE "${LIB_DIR}/" ""  ENAME ${slink})
+      fcfgcpy(TOUT ${extproj} ${extroot} ${LIB_DIR} ${slink} ${ENAME})
+      install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${ENAME}" DESTINATION ${LIB_DIR})
     endforeach(slink ${E_SYMLINKS})
   endif(E_SYMLINKS AND NOT MSVC)
+
+  # Let CMake know there is a target dependency here, despite this being an import target
+
+  if (TOUT)
+    add_custom_target(${etarg}_stage ALL DEPENDS ${TOUT})
+  endif (TOUT)
+
+  if (TARGET ${etarg}) 
+    add_dependencies(${etarg} ${etarg}_stage ${extproj})
+  endif (TARGET ${etarg}) 
+  if (TARGET ${etarg}-static) 
+    add_dependencies(${etarg}-static ${etarg}_stage ${extproj})
+  endif (TARGET ${etarg}-static) 
 
 endfunction(ExternalProject_Target)
 

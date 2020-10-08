@@ -30,6 +30,17 @@ project(BDEPS)
 
 cmake_minimum_required(VERSION 3.12)
 
+# Find the executable extension, if there is one
+get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
+
+# If targets are built, we want to group them in build tools that support
+# doing so.
+function(SetTargetFolder targetname folder)
+  if(TARGET ${targetname})
+    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
+  endif(TARGET ${targetname})
+endfunction(SetTargetFolder)
+
 # If defined, get feature variables from parent
 if (EXISTS ${CMAKE_BINARY_DIR}/brlcad_vars.cmake)
   include(${CMAKE_BINARY_DIR}/brlcad_vars.cmake)
@@ -44,16 +55,52 @@ set(CMAKE_MODULE_PATH "${BDEPS_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 # and mess up the results...
 set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_INSTALL_PREFIX}")
 
+#---------------------------------------------------------------------
+# Define relative install locations and output directories.  Don't set
+# these if they have already been set by some other means (like a
+# higher level CMakeLists.txt file including this one).
+# For output directories - where built library and executable
+# files will be placed after building but prior to install.  The
+# necessary variables change between single and multi configuration
+# build systems, so it is necessary to handle both cases on a
+# conditional basis.
+
 include(Path_Setup)
 
-# If targets are built, we want to group them in build tools that support
-# doing so.
-function(SetTargetFolder targetname folder)
-  if(TARGET ${targetname})
-    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
-  endif(TARGET ${targetname})
-endfunction(SetTargetFolder)
+#---------------------------------------------------------------------
+# RPath handling is what allows us to run binaries from the build
+# directory without having to set LD_LIBRARY_PATH, and what allows
+# for relocatable binary packages on Linux and similar platforms.
+# BRL-CAD's needs are rather complex when it comes to RPath, so we
+# define a series of functions:
+include(RPath_Setup)
 
+# We want the full RPATH set in the build tree so we can run programs without
+# needing to set LD_LIBRARY_PATH
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+
+# We DON'T want the final install directory RPATH set in the build directory
+# - it should only be set to the installation value when actually installed.
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# Add the automatically determined parts of the RPATH which point to
+# directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Set RPATH value to use when installing.  This should be set to always
+# prefer the version in the installed path when possible, but fall back on a
+# location relative to the loading file's path if the installed version is
+# not present.  How to do so is platform specific.
+relative_rpath(RELPATH)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
+
+# 3rd party build outputs use a CMAKE_RPATH_BUILD setting that is different
+# from the "vanilla" management used with other BRL-CAD targets.  The
+# function below encapsulates the setup needed for CMAKE_RPATH_BUILD
+ext_build_rpath()
+
+
+#---------------------------------------------------------------------
 # By default, changes in src/superbuild files won't trigger a rebuild.  Setting
 # this to 1 changes that, but at the expense of running the build step every
 # time.  This may be fast if there is nothing to update in the project, but it
@@ -134,12 +181,6 @@ set(BRLCAD_LEVEL3 ON)
 # hardcoded.
 set(BRLCAD_DEPS)
 
-# It's not enough to simply generate the outputs - we'll also need to install
-# them, which means passing the relevant information back up to the parent
-# build.  We do so with a file the parent build knows to look for:
-set(SUPERBUILD_OUT "${BRLCAD_BINARY_DIR}/superbuild.cmake")
-file(WRITE "${SUPERBUILD_OUT}" "\#superbuild outputs\n")
-
 ###############################################################################
 # BRL-CAD and some of its dependencies require the lemon, re2c and perplex
 # tools for compilation.  They are not installed, but must be available.  We
@@ -160,78 +201,78 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/perplex.cmake)
 # zlib compression/decompression library
 include(${CMAKE_CURRENT_SOURCE_DIR}/zlib.cmake)
 
-# libregex regular expression matching
-include(${CMAKE_CURRENT_SOURCE_DIR}/regex.cmake)
-
-# netpbm library - support for pnm,ppm,pbm, etc. image files
-include(${CMAKE_CURRENT_SOURCE_DIR}/netpbm.cmake)
-
-# libpng - Portable Network Graphics image file support
-include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
-
-# STEPcode - support for reading and writing STEP files
-include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
-
-# libbson - for binary attributes, always use this local version
-include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
-
-# PROJ4 - generic coordinate transformation
-include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
-
-# GDAL -  translator library for raster and vector geospatial data formats
-include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
-
-# TCL - scripting language
-include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
-
-# For anything we've built here, we need to let the parent build know
-# where to go looking for key components
-if (TARGET PERPLEX_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(LEMON_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-  file(APPEND "${SUPERBUILD_OUT}" "set(LEMON_TEMPLATE ${BRLCAD_BINARY_DIR}/${DATA_DIR}/lemon/lempar.c)\n")
-  file(APPEND "${SUPERBUILD_OUT}" "set(RE2C_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-  file(APPEND "${SUPERBUILD_OUT}" "set(PERPLEX_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-  file(APPEND "${SUPERBUILD_OUT}" "set(PERPLEX_TEMPLATE ${BRLCAD_BINARY_DIR}/${DATA_DIR}/perplex/perplex_template.c)\n")
-else (TARGET PERPLEX_BLD)
-  message(FATAL_ERROR "Failed to build perplex\n")
-endif (TARGET PERPLEX_BLD)
-if (TARGET NETPBM_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(NETPBM_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-endif (TARGET NETPBM_BLD)
-if (TARGET STEPCODE_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(STEPCODE_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-endif (TARGET STEPCODE_BLD)
-if (TARGET BSON_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(BSON_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-endif (TARGET BSON_BLD)
-if (TARGET PROJ4_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(PROJ4_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-endif (TARGET PROJ4_BLD)
-if (TARGET GDAL_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(GDAL_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-endif (TARGET GDAL_BLD)
-if (TARGET TCL_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(TCL_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-endif (TARGET TCL_BLD)
-
-# (For REGEX, ZLIB and PNG we need to do a little extra work and supply our
-# custom library names so find_package knows about them.)
-if (TARGET REGEX_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(REGEX_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-  file(APPEND "${SUPERBUILD_OUT}" "set(REGEX_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
-endif (TARGET REGEX_BLD)
-if (TARGET ZLIB_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(ZLIB_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-  file(APPEND "${SUPERBUILD_OUT}" "set(ZLIB_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${ZLIB_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
-endif (TARGET ZLIB_BLD)
-if (TARGET PNG_BLD)
-  file(APPEND "${SUPERBUILD_OUT}" "set(PNG_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
-  file(APPEND "${SUPERBUILD_OUT}" "set(PNG_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
-endif (TARGET PNG_BLD)
+## libregex regular expression matching
+#include(${CMAKE_CURRENT_SOURCE_DIR}/regex.cmake)
+#
+## netpbm library - support for pnm,ppm,pbm, etc. image files
+#include(${CMAKE_CURRENT_SOURCE_DIR}/netpbm.cmake)
+#
+## libpng - Portable Network Graphics image file support
+#include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
+#
+## STEPcode - support for reading and writing STEP files
+#include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
+#
+## libbson - for binary attributes, always use this local version
+#include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
+#
+## PROJ4 - generic coordinate transformation
+#include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
+#
+## GDAL -  translator library for raster and vector geospatial data formats
+#include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
+#
+## TCL - scripting language
+#include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
+#
+## For anything we've built here, we need to let the parent build know
+## where to go looking for key components
+#if (TARGET PERPLEX_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(LEMON_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#  file(APPEND "${SUPERBUILD_OUT}" "set(LEMON_TEMPLATE ${BRLCAD_BINARY_DIR}/${DATA_DIR}/lemon/lempar.c)\n")
+#  file(APPEND "${SUPERBUILD_OUT}" "set(RE2C_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#  file(APPEND "${SUPERBUILD_OUT}" "set(PERPLEX_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#  file(APPEND "${SUPERBUILD_OUT}" "set(PERPLEX_TEMPLATE ${BRLCAD_BINARY_DIR}/${DATA_DIR}/perplex/perplex_template.c)\n")
+#else (TARGET PERPLEX_BLD)
+#  message(FATAL_ERROR "Failed to build perplex\n")
+#endif (TARGET PERPLEX_BLD)
+#if (TARGET NETPBM_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(NETPBM_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#endif (TARGET NETPBM_BLD)
+#if (TARGET STEPCODE_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(STEPCODE_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#endif (TARGET STEPCODE_BLD)
+#if (TARGET BSON_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(BSON_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#endif (TARGET BSON_BLD)
+#if (TARGET PROJ4_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(PROJ4_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#endif (TARGET PROJ4_BLD)
+#if (TARGET GDAL_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(GDAL_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#endif (TARGET GDAL_BLD)
+#if (TARGET TCL_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(TCL_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#endif (TARGET TCL_BLD)
+#
+## (For REGEX, ZLIB and PNG we need to do a little extra work and supply our
+## custom library names so find_package knows about them.)
+#if (TARGET REGEX_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(REGEX_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#  file(APPEND "${SUPERBUILD_OUT}" "set(REGEX_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
+#endif (TARGET REGEX_BLD)
+#if (TARGET ZLIB_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(ZLIB_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#  file(APPEND "${SUPERBUILD_OUT}" "set(ZLIB_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${ZLIB_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
+#endif (TARGET ZLIB_BLD)
+#if (TARGET PNG_BLD)
+#  file(APPEND "${SUPERBUILD_OUT}" "set(PNG_ROOT \"${BRLCAD_BINARY_DIR}\")\n")
+#  file(APPEND "${SUPERBUILD_OUT}" "set(PNG_LIBRARY \"${BRLCAD_BINARY_DIR}/${LIB_DIR}/${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\")\n")
+#endif (TARGET PNG_BLD)
 
 # Local Variables:
 # tab-width: 8
