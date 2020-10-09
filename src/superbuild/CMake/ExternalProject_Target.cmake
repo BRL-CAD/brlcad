@@ -39,11 +39,11 @@ endif(NOT DEFINED EXTPROJ_VERBOSE)
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake" "get_filename_component(DDIR \${DEST} DIRECTORY)\nfile(COPY \${SRC} DESTINATION \${DDIR})")
 
 function(fcfgcpy outvar extproj root dir ofile tfile)
- #message("extproj: ${extproj}")
- #message("root: ${root}")
- #message("dir: ${dir}")
- #message("ofile: ${ofile}")
- #message("tfile: ${tfile}")
+ message("extproj: ${extproj}")
+ message("root: ${root}")
+ message("dir: ${dir}")
+ message("ofile: ${ofile}")
+ message("tfile: ${tfile}")
   if (NOT CMAKE_CONFIGURATION_TYPES)
     add_custom_command(
       OUTPUT "${CMAKE_BINARY_DIR}/${dir}/${tfile}"
@@ -94,7 +94,10 @@ function(ExternalProject_ByProducts etarg extproj extroot E_IMPORT_PREFIX target
 
   endif (EXTPROJ_VERBOSE)
 
-  unset(TOUT)
+  if (NOT TARGET ${etarg}_stage)
+    add_custom_target(${etarg}_stage ALL)
+  endif (NOT TARGET ${etarg}_stage)
+
   foreach (bpf ${E_UNPARSED_ARGUMENTS})
     # If a relative prefix was specified, construct the "source" file using it.
     # This is used to save verbosity in ByProducts input lists.
@@ -104,7 +107,11 @@ function(ExternalProject_ByProducts etarg extproj extroot E_IMPORT_PREFIX target
       set(ofile ${bpf})
     endif (E_IMPORT_PREFIX)
 
+    unset(TOUT)
     fcfgcpy(TOUT ${extproj} ${extroot} "${target_dir}" ${ofile} ${bpf})
+    string(MD5 UKEY "${TOUT}")
+    add_custom_target(${etarg}_${UKEY} ALL DEPENDS ${TOUT})
+    add_dependencies(${etarg}_stage ${etarg}_${UKEY})
 
     install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${target_dir}/${bpf}" DESTINATION "${target_dir}/")
     if (E_FIXPATH)
