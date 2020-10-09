@@ -176,11 +176,6 @@ set(BRLCAD_LEVEL2 ON)
 set(BRLCAD_LEVEL3 ON)
 
 
-# We need to track projects that must be built before starting the main
-# BRL-CAD build, since that set changes with build options and can't be
-# hardcoded.
-set(BRLCAD_DEPS)
-
 ###############################################################################
 # BRL-CAD and some of its dependencies require the lemon, re2c and perplex
 # tools for compilation.  They are not installed, but must be available.  We
@@ -206,10 +201,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/regex.cmake)
 
 # netpbm library - support for pnm,ppm,pbm, etc. image files
 include(${CMAKE_CURRENT_SOURCE_DIR}/netpbm.cmake)
-#
-## libpng - Portable Network Graphics image file support
-#include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
-#
+
+# libpng - Portable Network Graphics image file support
+include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
+
 ## STEPcode - support for reading and writing STEP files
 #include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 #
