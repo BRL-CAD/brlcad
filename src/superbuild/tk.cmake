@@ -5,16 +5,16 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
 
   set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
 
-  if (TARGET TCL_BLD)
+  if (TARGET tcl_stage)
     # If we're building against a compiled Tcl and not a system Tcl,
     # set some vars accordingly
     set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
     set(TCL_MAJOR_VERSION 8)
     set(TCL_MINOR_VERSION 6)
-    set(TCL_TARGET TCL_BLD)
-  else (TARGET TCL_BLD)
+    set(TCL_TARGET tcl_stage)
+  else (TARGET tcl_stage)
     get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
-  endif (TARGET TCL_BLD)
+  endif (TARGET tcl_stage)
 
   set(TK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TK_BLD-prefix/src/TK_BLD")
 
@@ -26,21 +26,24 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   endif (NOT TARGET tcl_replace)
 
-  set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
+  set(TK_INSTDIR ${CMAKE_BINARY_DIR}/tk$<CONFIG>)
+
 
   if (NOT MSVC)
 
     set(TK_BASENAME libtk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
     set(TK_STUBNAME libtkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
 
+    set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
+
     ExternalProject_Add(TK_BLD
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tk"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
-      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_INSTALL_PREFIX} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_INSTALL_PREFIX}/${LIB_DIR},${TCLCONF_DIR}> --disable-xft --enable-64bit --enable-rpath
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${TK_INSTDIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR},${TCLCONF_DIR}> --disable-xft --enable-64bit --enable-rpath
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
-      DEPENDS ${TCL_TARGET}
+      DEPENDS ${TCL_TARGET} rpath_replace
       )
 
   else (NOT MSVC)
@@ -53,30 +56,30 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       CONFIGURE_COMMAND ""
       BINARY_DIR ${TK_SRC_DIR}/win
-      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} TCLDIR=${TCL_SRC_DIR}
-      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_INSTALL_PREFIX} TCLDIR=${TCL_SRC_DIR}
+      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${TK_INSTDIR} TCLDIR=${TCL_SRC_DIR}
+      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TK_INSTDIR} TCLDIR=${TCL_SRC_DIR}
       DEPENDS ${TCL_TARGET}
       )
 
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
-  file(APPEND "${SUPERBUILD_OUT}" "
-  ExternalProject_Target(tk TK_BLD
-    OUTPUT_FILE ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC_OUTPUT_FILE ${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+  ExternalProject_Target(tk TK_BLD ${TK_INSTDIR}
+    SHARED ${LIB_DIR}/${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC ${LIB_DIR}/${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(wish TK_BLD
-    OUTPUT_FILE wish${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
-    RPATH EXEC
+  ExternalProject_Target(wish TK_BLD ${TK_INSTDIR}
+    EXEC ${BIN_DIR}/wish${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
+    RPATH
     )
 
-  ExternalProject_ByProducts(TK_BLD ${LIB_DIR} FIXPATH
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR} ${LIB_DIR}
     tkConfig.sh
+    FIXPATH
     )
 
-  ExternalProject_ByProducts(TK_BLD ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}
     bgerror.tcl
     button.tcl
     choosedir.tcl
@@ -249,17 +252,14 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
     unsupported.tcl
     xmfbox.tcl
     )
-  ExternalProject_ByProducts(TK_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
     tkDecls.h
     tk.h
     tkPlatDecls.h
     )
-  \n")
-
-  list(APPEND BRLCAD_DEPS TK_BLD)
 
   set(TK_LIBRARIES tk CACHE STRING "Building bundled tk" FORCE)
-  set(TK_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+  set(TK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
   SetTargetFolder(TK_BLD "Third Party Libraries")
   SetTargetFolder(tk "Third Party Libraries")

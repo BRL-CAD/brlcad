@@ -5,7 +5,7 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL REQUIRED_VARS BRLCAD_LEVEL2)
+THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL REQUIRED_VARS "BRLCAD_LEVEL2;BRLCAD_ENABLE_TCL")
 
 if (BRLCAD_TCL_BUILD)
 
@@ -16,20 +16,22 @@ if (BRLCAD_TCL_BUILD)
   # In addition to the usual target dependencies, we need to adjust for the
   # non-standard BRL-CAD zlib name, if we are using our bundled version.  Set a
   # variable here so the tcl_replace utility will know the right value.
-  if (TARGET ZLIB_BLD)
-    set(ZLIB_TARGET ZLIB_BLD)
+  if (TARGET zlib_stage)
+    set(ZLIB_TARGET zlib_stage)
     set(ZLIB_NAME z_brl)
     set(DEFLATE_NAME brl_deflateSetHeader)
-  else (TARGET ZLIB_BLD)
+  else (TARGET zlib_stage)
     set(ZLIB_NAME z)
     set(DEFLATE_NAME deflateSetHeader)
-  endif (TARGET ZLIB_BLD)
+  endif (TARGET zlib_stage)
 
   # We need to set internal Tcl variables to the final install paths, not the intermediate install paths that
   # Tcl's own build will think are the final paths.  Rather than attempt build system trickery we simply
   # hard set the values in the source files by rewriting them.
-  configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
-  add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+  if (NOT TARGET tcl_replace)
+    configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+    add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+  endif (NOT TARGET tcl_replace)
 
   set(TCL_INSTDIR ${CMAKE_BINARY_DIR}/tcl$<CONFIG>)
 
@@ -49,7 +51,7 @@ if (BRLCAD_TCL_BUILD)
       CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${TCL_INSTDIR}
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
-      DEPENDS ${ZLIB_TARGET} tcl_replace
+      DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
       )
   else (NOT MSVC)
 

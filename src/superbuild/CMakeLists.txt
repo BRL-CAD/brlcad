@@ -180,6 +180,8 @@ set(BRLCAD_LEVEL2 ON)
 set(BRLCAD_LEVEL3 ON)
 set(BRLCAD_ENABLE_STEP ON)
 set(BRLCAD_ENABLE_GDAL ON)
+set(BRLCAD_ENABLE_TCL ON)
+set(BRLCAD_ENABLE_TK ON)
 
 ###############################################################################
 # BRL-CAD and some of its dependencies require the lemon, re2c and perplex
@@ -224,7 +226,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
 ## TCL - scripting language
 include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
