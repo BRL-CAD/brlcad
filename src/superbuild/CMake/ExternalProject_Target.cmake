@@ -316,8 +316,9 @@ function(ExternalProject_Target etarg extproj extroot)
   # CMake project, we need to install as either FILES or PROGRAMS
   set(TOUT)
 
-  # Handle shared library
   message("Adding target: ${etarg}")
+
+  # Handle shared library
   if (E_SHARED)
     add_library(${etarg} SHARED IMPORTED GLOBAL)
     string(REPLACE "${LIB_DIR}/" ""  ENAME ${E_SHARED})
@@ -383,11 +384,12 @@ function(ExternalProject_Target etarg extproj extroot)
       if (NOT BUILD_STATIC_LIBS)
 	if (NOT "${slink}" MATCHES ".*${CMAKE_STATIC_LIBRARY_SUFFIX}")
 	  fcfgcpy(TOUT ${extproj} ${extroot} ${LIB_DIR} ${slink} ${ENAME})
+	  install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${ENAME}" DESTINATION ${LIB_DIR})
 	endif (NOT "${slink}" MATCHES ".*${CMAKE_STATIC_LIBRARY_SUFFIX}")
       else (NOT BUILD_STATIC_LIBS)
 	fcfgcpy(TOUT ${extproj} ${extroot} ${LIB_DIR} ${slink} ${ENAME})
+	install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${ENAME}" DESTINATION ${LIB_DIR})
       endif (NOT BUILD_STATIC_LIBS)
-      install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${ENAME}" DESTINATION ${LIB_DIR})
     endforeach(slink ${E_SYMLINKS})
   endif(E_SYMLINKS AND NOT MSVC)
 
