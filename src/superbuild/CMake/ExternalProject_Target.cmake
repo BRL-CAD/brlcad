@@ -98,6 +98,7 @@ function(ExternalProject_ByProducts etarg extproj extroot E_IMPORT_PREFIX target
     add_custom_target(${etarg}_stage ALL)
   endif (NOT TARGET ${etarg}_stage)
 
+  set(ALL_TOUT)
   foreach (bpf ${E_UNPARSED_ARGUMENTS})
     # If a relative prefix was specified, construct the "source" file using it.
     # This is used to save verbosity in ByProducts input lists.
@@ -109,9 +110,7 @@ function(ExternalProject_ByProducts etarg extproj extroot E_IMPORT_PREFIX target
 
     unset(TOUT)
     fcfgcpy(TOUT ${extproj} ${extroot} "${target_dir}" ${ofile} ${bpf})
-    string(MD5 UKEY "${TOUT}")
-    add_custom_target(${etarg}_${UKEY} ALL DEPENDS ${TOUT})
-    add_dependencies(${etarg}_stage ${etarg}_${UKEY})
+    set(ALL_TOUT ${ALL_TOUT} ${TOUT})
 
     install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${target_dir}/${bpf}" DESTINATION "${target_dir}/")
     if (E_FIXPATH)
@@ -122,11 +121,11 @@ function(ExternalProject_ByProducts etarg extproj extroot E_IMPORT_PREFIX target
 
   endforeach (bpf ${E_UNPARSED_ARGUMENTS})
 
-  if (E_UNPARSED_ARGUMENTS)
-    string(MD5 UKEY "${E_UNPARSED_ARGUMENTS}")
-    add_custom_target(${etarg}_${UKEY} ALL DEPENDS ${TOUT})
-    add_dependencies(${etarg} ${etarg}_${UKEY})
-  endif (E_UNPARSED_ARGUMENTS)
+  if (ALL_TOUT)
+    string(MD5 UKEY "${ALL_TOUT}")
+    add_custom_target(${etarg}_${UKEY} ALL DEPENDS ${ALL_TOUT})
+    add_dependencies(${etarg}_stage ${etarg}_${UKEY})
+  endif (ALL_TOUT)
 
 endfunction(ExternalProject_ByProducts)
 
