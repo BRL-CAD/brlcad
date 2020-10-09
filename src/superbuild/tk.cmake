@@ -86,130 +86,17 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
     clrpick.tcl
     comdlg.tcl
     console.tcl
-    demos/README
-    demos/anilabel.tcl
-    demos/aniwave.tcl
-    demos/arrow.tcl
-    demos/bind.tcl
-    demos/bitmap.tcl
-    demos/browse
-    demos/button.tcl
-    demos/check.tcl
-    demos/clrpick.tcl
-    demos/colors.tcl
-    demos/combo.tcl
-    demos/cscroll.tcl
-    demos/ctext.tcl
-    demos/dialog1.tcl
-    demos/dialog2.tcl
-    demos/en.msg
-    demos/entry1.tcl
-    demos/entry2.tcl
-    demos/entry3.tcl
-    demos/filebox.tcl
-    demos/floor.tcl
-    demos/fontchoose.tcl
-    demos/form.tcl
-    demos/goldberg.tcl
-    demos/hello
-    demos/hscale.tcl
-    demos/icon.tcl
-    demos/image1.tcl
-    demos/image2.tcl
-    demos/images/earth.gif
-    demos/images/earthmenu.png
-    demos/images/earthris.gif
-    demos/images/flagdown.xbm
-    demos/images/flagup.xbm
-    demos/images/gray25.xbm
-    demos/images/letters.xbm
-    demos/images/noletter.xbm
-    demos/images/ouster.png
-    demos/images/pattern.xbm
-    demos/images/tcllogo.gif
-    demos/images/teapot.ppm
-    demos/items.tcl
-    demos/ixset
-    demos/knightstour.tcl
-    demos/label.tcl
-    demos/labelframe.tcl
-    demos/license.terms
-    demos/mclist.tcl
-    demos/menu.tcl
-    demos/menubu.tcl
-    demos/msgbox.tcl
-    demos/nl.msg
-    demos/paned1.tcl
-    demos/paned2.tcl
-    demos/pendulum.tcl
-    demos/plot.tcl
-    demos/puzzle.tcl
-    demos/radio.tcl
-    demos/rmt
-    demos/rolodex
-    demos/ruler.tcl
-    demos/sayings.tcl
-    demos/search.tcl
-    demos/spin.tcl
-    demos/states.tcl
-    demos/style.tcl
-    demos/tclIndex
-    demos/tcolor
-    demos/text.tcl
-    demos/textpeer.tcl
-    demos/timer
-    demos/toolbar.tcl
-    demos/tree.tcl
-    demos/ttkbut.tcl
-    demos/ttkmenu.tcl
-    demos/ttknote.tcl
-    demos/ttkpane.tcl
-    demos/ttkprogress.tcl
-    demos/ttkscale.tcl
-    demos/twind.tcl
-    demos/unicodeout.tcl
-    demos/vscale.tcl
-    demos/widget
     dialog.tcl
     entry.tcl
     focus.tcl
     fontchooser.tcl
     iconlist.tcl
     icons.tcl
-    images/README
-    images/logo.eps
-    images/logo100.gif
-    images/logo64.gif
-    images/logoLarge.gif
-    images/logoMed.gif
-    images/pwrdLogo.eps
-    images/pwrdLogo100.gif
-    images/pwrdLogo150.gif
-    images/pwrdLogo175.gif
-    images/pwrdLogo200.gif
-    images/pwrdLogo75.gif
-    images/tai-ku.gif
     listbox.tcl
     megawidget.tcl
     menu.tcl
     mkpsenc.tcl
     msgbox.tcl
-    msgs/cs.msg
-    msgs/da.msg
-    msgs/de.msg
-    msgs/el.msg
-    msgs/en.msg
-    msgs/en_gb.msg
-    msgs/eo.msg
-    msgs/es.msg
-    msgs/fr.msg
-    msgs/hu.msg
-    msgs/it.msg
-    msgs/nl.msg
-    msgs/pl.msg
-    msgs/pt.msg
-    msgs/ru.msg
-    msgs/sv.msg
     obsolete.tcl
     optMenu.tcl
     palette.tcl
@@ -225,33 +112,72 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
     tk.tcl
     tkAppInit.c
     tkfbox.tcl
-    ttk/altTheme.tcl
-    ttk/aquaTheme.tcl
-    ttk/button.tcl
-    ttk/clamTheme.tcl
-    ttk/classicTheme.tcl
-    ttk/combobox.tcl
-    ttk/cursors.tcl
-    ttk/defaults.tcl
-    ttk/entry.tcl
-    ttk/fonts.tcl
-    ttk/menubutton.tcl
-    ttk/notebook.tcl
-    ttk/panedwindow.tcl
-    ttk/progress.tcl
-    ttk/scale.tcl
-    ttk/scrollbar.tcl
-    ttk/sizegrip.tcl
-    ttk/spinbox.tcl
-    ttk/treeview.tcl
-    ttk/ttk.tcl
-    ttk/utils.tcl
-    ttk/vistaTheme.tcl
-    ttk/winTheme.tcl
-    ttk/xpTheme.tcl
     unsupported.tcl
     xmfbox.tcl
     )
+
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/images ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/images
+    README
+    logo.eps
+    logo100.gif
+    logo64.gif
+    logoLarge.gif
+    logoMed.gif
+    pwrdLogo.eps
+    pwrdLogo100.gif
+    pwrdLogo150.gif
+    pwrdLogo175.gif
+    pwrdLogo200.gif
+    pwrdLogo75.gif
+    tai-ku.gif
+    )
+
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/msgs ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/msgs
+    cs.msg
+    da.msg
+    de.msg
+    el.msg
+    en.msg
+    en_gb.msg
+    eo.msg
+    es.msg
+    fr.msg
+    hu.msg
+    it.msg
+    nl.msg
+    pl.msg
+    pt.msg
+    ru.msg
+    sv.msg
+    )
+
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/ttk ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/ttk
+    altTheme.tcl
+    aquaTheme.tcl
+    button.tcl
+    clamTheme.tcl
+    classicTheme.tcl
+    combobox.tcl
+    cursors.tcl
+    defaults.tcl
+    entry.tcl
+    fonts.tcl
+    menubutton.tcl
+    notebook.tcl
+    panedwindow.tcl
+    progress.tcl
+    scale.tcl
+    scrollbar.tcl
+    sizegrip.tcl
+    spinbox.tcl
+    treeview.tcl
+    ttk.tcl
+    utils.tcl
+    vistaTheme.tcl
+    winTheme.tcl
+    xpTheme.tcl
+    )
+
   ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
     tkDecls.h
     tk.h
