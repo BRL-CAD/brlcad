@@ -31,6 +31,8 @@ if (BRLCAD_TCL_BUILD)
   configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
 
+  set(TCL_INSTDIR ${CMAKE_BINARY_DIR}/tcl$<CONFIG>)
+
   if (NOT MSVC)
 
     set(TCL_BASENAME libtcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
@@ -44,7 +46,7 @@ if (BRLCAD_TCL_BUILD)
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
       COMMAND tcl_replace ${TCL_REWORK_FILES}
-      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_INSTALL_PREFIX}
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${TCL_INSTDIR}
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
       DEPENDS ${ZLIB_TARGET} tcl_replace
@@ -59,29 +61,29 @@ if (BRLCAD_TCL_BUILD)
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       CONFIGURE_COMMAND ""
       BINARY_DIR ${TCL_SRC_DIR}/win
-      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX}
-      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_INSTALL_PREFIX}
+      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${TCL_INSTDIR}
+      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TCL_INSTDIR}
       )
 
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
-  file(APPEND "${SUPERBUILD_OUT}" "
-  ExternalProject_Target(tcl TCL_BLD
-    OUTPUT_FILE ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC_OUTPUT_FILE ${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+  ExternalProject_Target(tcl TCL_BLD ${TCL_INSTDIR}
+    SHARED ${LIB_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC ${LIB_DIR}/${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_Target(tclsh TCL_BLD
-    OUTPUT_FILE tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
-    RPATH EXEC
+  ExternalProject_Target(tclsh TCL_BLD ${TCL_INSTDIR}
+    EXEC ${BIN_DIR}/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
+    RPATH
     )
-  ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} FIXPATH
+  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
     tclConfig.sh
     tclooConfig.sh
+    FIXPATH
     )
-  ExternalProject_ByProducts(TCL_BLD ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION}
+  ExternalProject_ByProducts(tcl  TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION} ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION}
     auto.tcl
     clock.tcl
     encoding/ascii.enc
@@ -303,7 +305,7 @@ if (BRLCAD_TCL_BUILD)
     tm.tcl
     word.tcl
     )
-  ExternalProject_ByProducts(TCL_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
     tclDecls.h
     tcl.h
     tclOODecls.h
@@ -312,12 +314,9 @@ if (BRLCAD_TCL_BUILD)
     tclTomMathDecls.h
     tclTomMath.h
     )
-  \n")
-
-  list(APPEND BRLCAD_DEPS TCL_BLD)
 
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
-  set(TCL_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+  set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
   SetTargetFolder(TCL_BLD "Third Party Libraries")
   SetTargetFolder(tcl "Third Party Libraries")

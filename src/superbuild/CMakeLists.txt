@@ -114,6 +114,10 @@ if(NOT DEFINED EXTPROJ_VERBOSE)
   set(EXTPROJ_VERBOSE 0)
 endif(NOT DEFINED EXTPROJ_VERBOSE)
 
+# Tool for replacing rpath values in build files
+configure_file(${BDEPS_CMAKE_DIR}/rpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
+add_executable(rpath_replace ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
+
 # Superbuilds use ExternalProject_Add, and BRL-CAD defines some additional
 # targets for managing them.
 include(ExternalProject)
@@ -174,6 +178,7 @@ endif(MSVC)
 # For now, turn everything on:
 set(BRLCAD_LEVEL2 ON)
 set(BRLCAD_LEVEL3 ON)
+set(BRLCAD_ENABLE_STEP ON)
 set(BRLCAD_ENABLE_GDAL ON)
 
 ###############################################################################
@@ -218,7 +223,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
 ## TCL - scripting language
-#include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
