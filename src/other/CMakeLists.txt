@@ -60,6 +60,15 @@ endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
 
 ###############################################################################
 
+# If we're using a bundled zlib with a prefix defined, we need a definition
+# flag.
+# TODO - is there some target property we can use to pass this automatically?
+# Hammering it at high levels is almost certainly not the right approach...
+if (Z_PREFIX_STR)
+  add_definitions(-DZ_PREFIX)
+  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
+endif (Z_PREFIX_STR)
+
 # Set a variable that will tell build logic in subdirectories that there is a
 # parent build.  This will in some cases disable attempts to define settings
 # such as RPATH values that we need the parent build to manage.
