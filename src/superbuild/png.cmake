@@ -71,8 +71,11 @@ if (BRLCAD_PNG_BUILD)
     libpng${PNG_VERSION_MAJOR}/pnglibconf.h
     )
 
+  set(PNG_LIBRARY_DEBUG png CACHE STRING "Building bundled libpng" FORCE)
+  set(PNG_LIBRARY_RELEASE png CACHE STRING "Building bundled libpng" FORCE)
   set(PNG_LIBRARIES png CACHE STRING "Building bundled libpng" FORCE)
-  set(PNG_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
+  set(PNG_PNG_INCLUDE_DIR "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
+  set(PNG_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
 
   SetTargetFolder(PNG_BLD "Third Party Libraries")
   SetTargetFolder(png "Third Party Libraries")
