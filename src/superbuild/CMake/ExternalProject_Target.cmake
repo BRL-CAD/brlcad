@@ -39,11 +39,11 @@ endif(NOT DEFINED EXTPROJ_VERBOSE)
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake" "get_filename_component(DDIR \${DEST} DIRECTORY)\nfile(COPY \${SRC} DESTINATION \${DDIR})")
 
 function(fcfgcpy outvar extproj root dir ofile tfile)
- message("extproj: ${extproj}")
- message("root: ${root}")
- message("dir: ${dir}")
- message("ofile: ${ofile}")
- message("tfile: ${tfile}")
+  #message("extproj: ${extproj}")
+  #message("root: ${root}")
+  #message("dir: ${dir}")
+  #message("ofile: ${ofile}")
+  #message("tfile: ${tfile}")
   if (NOT CMAKE_CONFIGURATION_TYPES)
     add_custom_command(
       OUTPUT "${CMAKE_BINARY_DIR}/${dir}/${tfile}"
