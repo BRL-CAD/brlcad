@@ -63,24 +63,27 @@ if (BRLCAD_ENABLE_TCL)
     set(ITCL_MINOR_VERSION 4)
     set(ITCL_VERSION ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 
-    set(ITCL_PATCH_FILES "${ITCL_SRC_DIR}/configure" "${ITCL_SRC_DIR}/tclconfig/tcl.m4")
 
-    if (TARGET TCL_BLD)
-      set(TCL_TARGET TCL_BLD)
-    else (TARGET TCL_BLD)
+    if (TARGET tcl_stage)
+      set(TCL_TARGET tcl_stage)
+    else (TARGET tcl_stage)
       get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
-    endif (TARGET TCL_BLD)
+    endif (TARGET tcl_stage)
+
+    set(ITCL_INSTDIR ${CMAKE_BINARY_DIR}/itcl3)
 
     if (NOT MSVC)
 
       set(ITCL_BASENAME libitcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
       set(ITCL_STUBNAME libitclstub${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 
+      set(ITCL_PATCH_FILES "${ITCL_SRC_DIR}/configure" "${ITCL_SRC_DIR}/tclconfig/tcl.m4")
+
       ExternalProject_Add(ITCL_BLD
 	URL "${CMAKE_CURRENT_SOURCE_DIR}/itcl3"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${ITCL_PATCH_FILES}
-	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/${LIB_DIR} ${ITCL_SRC_DIR}/configure --prefix=${CMAKE_INSTALL_PREFIX} --exec-prefix=${CMAKE_INSTALL_PREFIX} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_INSTALL_PREFIX}/${LIB_DIR},${TCLCONF_DIR}>
+	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR} ${ITCL_SRC_DIR}/configure --prefix=${ITCL_INSTDIR} --exec-prefix=${ITCL_INSTDIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR},${TCLCONF_DIR}>
 	BUILD_COMMAND make -j${pcnt}
 	INSTALL_COMMAND make install
 	DEPENDS ${TCL_TARGET}
@@ -97,39 +100,37 @@ if (BRLCAD_ENABLE_TCL)
 	CONFIGURE_COMMAND ""
 	BINARY_DIR ${ITCL_SRC_DIR}/win
 	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} TCLDIR=${TCL_SRC_DIR}
-	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_INSTALL_PREFIX} TCLDIR=${TCL_SRC_DIR}
+	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${ITCL_INSTDIR} TCLDIR=${TCL_SRC_DIR}
 	DEPENDS ${TCL_TARGET}
 	)
 
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries
-    file(APPEND "${SUPERBUILD_OUT}" "
-    ExternalProject_Target(itcl ITCL_BLD
-      SUBDIR itcl${ITCL_VERSION}
-      OUTPUT_FILE ${ITCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-      STATIC_OUTPUT_FILE ${ITCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    ExternalProject_Target(itcl ITCL_BLD ${ITCL_INSTDIR}
+      SUBDIR  itcl${ITCL_VERSION}
+      SHARED ${LIB_DIR}/itcl${ITCL_VERSION}/${ITCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      STATIC ${LIB_DIR}/itcl${ITCL_VERSION}/${ITCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
       )
 
-    ExternalProject_ByProducts(ITCL_BLD ${INCLUDE_DIR}
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
       itcl.h
       itclDecls.h
       itclInt.h
       itclIntDecls.h
       )
 
-    ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
       itcl${ITCL_VERSION}/itcl.tcl
       )
-    ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
+
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
       itcl${ITCL_VERSION}/pkgIndex.tcl
       FIXPATH
       )
-    \n")
-
-    list(APPEND BRLCAD_DEPS ITCL_BLD)
 
     SetTargetFolder(ITCL_BLD "Third Party Libraries")
+
   endif (BUILD_ITCL)
 
 endif (BRLCAD_ENABLE_TCL)
