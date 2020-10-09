@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2016 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -44,8 +44,36 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-find_program(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
+set(_LEMON_SEARCHES)
+
+# Search LEMON_ROOT first if it is set.
+if(LEMON_ROOT)
+  set(_LEMON_SEARCH_ROOT PATHS ${LEMON_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _LEMON_SEARCHES _LEMON_SEARCH_ROOT)
+endif()
+
+# Normal search.
+set(_LEMON_x86 "(x86)")
+set(_LEMON_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/lemon"
+          "$ENV{ProgramFiles${_LEMON_x86}}/lemon")
+unset(_LEMON_x86)
+list(APPEND _LEMON_SEARCHES _LEMON_SEARCH_NORMAL)
+
+set(LEMON_NAMES lemon)
+
+# Try each search configuration.
+foreach(search ${_LEMON_SEARCHES})
+  find_program(LEMON_EXECUTABLE lemon ${${search}} PATH_SUFFIXES bin)
+endforeach()
+
 mark_as_advanced(LEMON_EXECUTABLE)
+
+foreach(search ${_LEMON_SEARCHES})
+  find_file(LEMON_TEMPLATE lempar.c ${${search}} PATH_SUFFIXES share/lemon)
+endforeach()
+
+mark_as_advanced(LEMON_TEMPLATE)
 
 if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
   # look for the template in share
@@ -160,7 +188,7 @@ if(NOT COMMAND LEMON_TARGET)
     add_custom_command(
       OUTPUT ${LEMON_GEN_OUT} ${LEMON_GEN_SOURCE} ${LEMON_GEN_HEADER}
       COMMAND ${CMAKE_COMMAND} -E copy ${lemon_in_file} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}
-      COMMAND ${LEMON_EXECUTABLE} -l -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME} ${${LVAR_PREFIX}__EXTRA_ARGS}
+      COMMAND ${LEMON_EXECUTABLE} -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME} ${${LVAR_PREFIX}__EXTRA_ARGS}
       DEPENDS ${Input} ${LEMON_TEMPLATE} ${LEMON_EXECUTABLE_TARGET}
       WORKING_DIRECTORY ${${LVAR_PREFIX}_WORKING_DIR}
       COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"

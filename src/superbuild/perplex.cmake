@@ -18,20 +18,16 @@ if (BRLCAD_LEVEL2)
     EXEC ${BIN_DIR}/re2c${EXE_EXT}
     RPATH
     )
-  ExternalProject_Target(perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT}
+  ExternalProject_Target(perplex_perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT}
     EXEC ${BIN_DIR}/perplex${EXE_EXT}
     RPATH
     )
-  ExternalProject_ByProducts(perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT} ${DATA_DIR}/lemon ${DATA_DIR}/lemon
+  ExternalProject_ByProducts(perplex_lemon PERPLEX_BLD ${PERPLEX_BLD_ROOT} ${DATA_DIR}/lemon ${DATA_DIR}/lemon
     lempar.c
     )
-  ExternalProject_ByProducts(perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT} ${DATA_DIR}/perplex ${DATA_DIR}/perplex
+  ExternalProject_ByProducts(perplex_perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT} ${DATA_DIR}/perplex ${DATA_DIR}/perplex
     perplex_template.c
     )
-
-  set(LEMON_ROOT ${CMAKE_BUILD_RPATH})
-  set(RE2C_ROOT ${CMAKE_BUILD_RPATH})
-  set(PERPLEX_ROOT ${CMAKE_BUILD_RPATH})
 
 endif (BRLCAD_LEVEL2)
 

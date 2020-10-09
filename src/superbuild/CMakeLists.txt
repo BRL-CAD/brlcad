@@ -205,9 +205,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/netpbm.cmake)
 # libpng - Portable Network Graphics image file support
 include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
 
-## STEPcode - support for reading and writing STEP files
-#include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
-#
+# STEPcode - support for reading and writing STEP files
+include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
+
 ## libbson - for binary attributes, always use this local version
 #include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
 #

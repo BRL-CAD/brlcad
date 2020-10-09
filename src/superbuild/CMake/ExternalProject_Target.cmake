@@ -311,8 +311,7 @@ function(ExternalProject_Target etarg extproj extroot)
   set(TOUT)
 
   # Handle shared library
-  message("Adding imported library: ${etarg}")
-  message("Adding imported library: ${E_SHARED}")
+  message("Adding target: ${etarg}")
   if (E_SHARED)
     add_library(${etarg} SHARED IMPORTED GLOBAL)
     string(REPLACE "${LIB_DIR}/" ""  ENAME ${E_SHARED})
@@ -389,7 +388,11 @@ function(ExternalProject_Target etarg extproj extroot)
   # Let CMake know there is a target dependency here, despite this being an import target
 
   if (TOUT)
-    add_custom_target(${etarg}_stage ALL DEPENDS ${TOUT})
+    if (NOT TARGET ${etarg}_stage)
+      add_custom_target(${etarg}_stage ALL DEPENDS ${TOUT})
+    else (NOT TARGET ${etarg}_stage)
+      add_dependencies(${etarg}_stage ${TOUT})
+    endif (NOT TARGET ${etarg}_stage)
   endif (TOUT)
 
   if (TARGET ${etarg})
