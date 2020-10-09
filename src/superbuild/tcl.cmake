@@ -72,11 +72,14 @@ if (BRLCAD_TCL_BUILD)
   # Tell the parent build about files and libraries
   ExternalProject_Target(tcl TCL_BLD ${TCL_INSTDIR}
     SHARED ${LIB_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC ${LIB_DIR}/${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_Target(tclsh TCL_BLD ${TCL_INSTDIR}
+  ExternalProject_Target(tclstub TCL_BLD ${TCL_INSTDIR}
+    STATIC ${LIB_DIR}/${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    )
+
+  ExternalProject_Target(tclsh_exe TCL_BLD ${TCL_INSTDIR}
     EXEC ${BIN_DIR}/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
     RPATH
     )
@@ -317,7 +320,12 @@ if (BRLCAD_TCL_BUILD)
     tclTomMath.h
     )
 
+
+  set(TCL_LIBRARY tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
+  set(TCL_STUB_LIBRARY tclstub CACHE STRING "Building bundled tcl" FORCE)
+  set(TCL_TCLSH tclsh_exe CACHE STRING "Building bundled tcl" FORCE)
+  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
   set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
   SetTargetFolder(TCL_BLD "Third Party Libraries")

@@ -33,6 +33,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
 
     set(TK_BASENAME libtk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
     set(TK_STUBNAME libtkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TTK_STUBNAME libttkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
 
     set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
 
@@ -48,8 +49,9 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
 
   else (NOT MSVC)
 
-    set(TCL_BASENAME tk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-    set(TCL_STUBNAME tkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TK_BASENAME tk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TK_STUBNAME tkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TTK_STUBNAME ttkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
 
     ExternalProject_Add(TK_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tk"
@@ -66,10 +68,15 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
   # Tell the parent build about files and libraries
   ExternalProject_Target(tk TK_BLD ${TK_INSTDIR}
     SHARED ${LIB_DIR}/${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC ${LIB_DIR}/${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(wish TK_BLD ${TK_INSTDIR}
+  ExternalProject_Target(tkstub TK_BLD ${TK_INSTDIR}
+    STATIC ${LIB_DIR}/${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    )
+  ExternalProject_Target(ttkstub TK_BLD ${TK_INSTDIR}
+    STATIC ${LIB_DIR}/${TTK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    )
+  ExternalProject_Target(wish_exe TK_BLD ${TK_INSTDIR}
     EXEC ${BIN_DIR}/wish${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
     RPATH
     )
@@ -184,7 +191,12 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
     tkPlatDecls.h
     )
 
+  set(TK_LIBRARY tk CACHE STRING "Building bundled tk" FORCE)
   set(TK_LIBRARIES tk CACHE STRING "Building bundled tk" FORCE)
+  set(TK_STUB_LIBRARY tkstub CACHE STRING "Building bundled tk" FORCE)
+  set(TTK_STUB_LIBRARY ttkstub CACHE STRING "Building bundled tk" FORCE)
+  set(TK_WISH wish_exe CACHE STRING "Building bundled tk" FORCE)
+  set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
   set(TK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
   SetTargetFolder(TK_BLD "Third Party Libraries")
