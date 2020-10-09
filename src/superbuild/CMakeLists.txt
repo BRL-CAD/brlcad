@@ -174,7 +174,7 @@ endif(MSVC)
 # For now, turn everything on:
 set(BRLCAD_LEVEL2 ON)
 set(BRLCAD_LEVEL3 ON)
-
+set(BRLCAD_ENABLE_GDAL ON)
 
 ###############################################################################
 # BRL-CAD and some of its dependencies require the lemon, re2c and perplex
@@ -210,9 +210,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 
 ## libbson - for binary attributes, always use this local version
 #include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
-#
-## PROJ4 - generic coordinate transformation
-#include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
+
+# PROJ4 - generic coordinate transformation
+include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 #
 ## GDAL -  translator library for raster and vector geospatial data formats
 #include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)

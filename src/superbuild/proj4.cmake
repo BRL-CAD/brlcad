@@ -22,51 +22,50 @@ if (BRLCAD_PROJ4_BUILD)
     set(PROJ_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_VERSION})
   endif (MSVC)
 
+  set(PROJ4_INSTDIR ${CMAKE_BINARY_DIR}/proj-4)
+
   ExternalProject_Add(PROJ4_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/proj-4"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${PROJ4_INSTDIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
                -DPROJ_LIB_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/proj
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${SUPERBUILD_OUT}" " 
-  ExternalProject_Target(proj PROJ4_BLD
-    OUTPUT_FILE ${PROJ_BASENAME}${PROJ_SUFFIX}
-    STATIC_OUTPUT_FILE ${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    SYMLINKS \"${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX};${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_API_VERSION}\"
-    LINK_TARGET \"${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\"
+  ExternalProject_Target(proj PROJ4_BLD ${PROJ4_INSTDIR}
+    SHARED ${LIB_DIR}/${PROJ_BASENAME}${PROJ_SUFFIX}
+    STATIC ${LIB_DIR}/${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS ${LIB_DIR}/${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_API_VERSION}
+    LINK_TARGET ${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_LINK_TARGET \"${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}\"
     RPATH
     )
 
-  ExternalProject_ByProducts(PROJ4_BLD ${DATA_DIR}
-    proj/epsg
-    proj/esri
-    proj/world
-    proj/esri.extra
-    proj/other.extra
-    proj/IGNF
-    proj/nad27
-    proj/GL27
-    proj/nad83
-    proj/nad.lst
-    proj/proj_def.dat
-    proj/CH
+  ExternalProject_ByProducts(proj PROJ4_BLD ${PROJ4_INSTDIR} ${DATA_DIR}/proj ${DATA_DIR}/proj
+    epsg
+    esri
+    world
+    esri.extra
+    other.extra
+    IGNF
+    nad27
+    GL27
+    nad83
+    nad.lst
+    proj_def.dat
+    CH
     )
 
-  ExternalProject_ByProducts(PROJ4_BLD ${INCLUDE_DIR}/proj
+  ExternalProject_ByProducts(proj PROJ4_BLD ${PROJ4_INSTDIR} ${INCLUDE_DIR}/proj ${INCLUDE_DIR}/proj
     projects.h
     proj_api.h
     geodesic.h
     )
-  \n")
 
-  list(APPEND BRLCAD_DEPS PROJ4_BLD)
 
   set(PROJ4_LIBRARIES proj CACHE STRING "Building bundled proj" FORCE)
-  set(PROJ4_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR}/proj" CACHE STRING "Directory containing proj headers." FORCE)
+  set(PROJ4_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/proj" CACHE STRING "Directory containing proj headers." FORCE)
 
   SetTargetFolder(PROJ4_BLD "Third Party Libraries")
   SetTargetFolder(proj "Third Party Libraries")
