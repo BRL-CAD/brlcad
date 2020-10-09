@@ -228,8 +228,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
 
 # Local Variables:
 # tab-width: 8

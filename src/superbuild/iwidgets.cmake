@@ -26,43 +26,46 @@ if (BRLCAD_ENABLE_TK)
     set(IWIDGETS_PATCH_VERSION 1)
     set(IWIDGETS_VERSION ${IWIDGETS_MAJOR_VERSION}.${IWIDGETS_MINOR_VERSION}.${IWIDGETS_PATCH_VERSION})
 
-    set(IWIDGETS_PATCH_FILES "${IWIDGETS_SRC_DIR}/configure" "${IWIDGETS_SRC_DIR}/tclconfig/tcl.m4")
-
     # If we have build targets, set the variables accordingly.  Otherwise,
     # we need to find the *Config.sh script locations.
-    if (TARGET TCL_BLD)
-      set(TCL_TARGET TCL_BLD)
-    else (TARGET TCL_BLD)
+    if (TARGET tcl_stage)
+      set(TCL_TARGET tcl_stage)
+    else (TARGET tcl_stage)
       get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
-    endif (TARGET TCL_BLD)
+    endif (TARGET tcl_stage)
 
-    if (TARGET ITCL_BLD)
-      set(ITCL_TARGET ITCL_BLD)
-    else (TARGET ITCL_BLD)
+    if (TARGET itcl_stage)
+      set(ITCL_TARGET itcl_stage)
+    else (TARGET itcl_stage)
       find_library(ITCL_LIBRARY NAMES itcl itcl3)
       get_filename_component(ITCLCONF_DIR "${ITCL_LIBRARY}" DIRECTORY)
-    endif (TARGET ITCL_BLD)
+    endif (TARGET itcl_stage)
 
-    if (TARGET TK_BLD)
-      set(TK_TARGET TK_BLD)
-    else (TARGET TK_BLD)
+    if (TARGET tk_stage)
+      set(TK_TARGET tk_stage)
+    else (TARGET tk_stage)
       get_filename_component(TKCONF_DIR "${TK_LIBRARY}" DIRECTORY)
-    endif (TARGET TK_BLD)
+    endif (TARGET tk_stage)
 
-    if (TARGET ITK_BLD)
-      set(ITK_TARGET ITK_BLD)
-    endif (TARGET ITK_BLD)
+    if (TARGET itk_stage)
+      set(ITK_TARGET itk_stage)
+    endif (TARGET itk_stage)
+
     # The Iwidgets build doesn't seem to work with Itk the same way it does with the other
     # dependencies - just point it to our local source copy
     set(ITK_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/itk3")
 
+    set(IWIDGETS_INSTDIR "${CMAKE_BINARY_DIR}/iwidgets")
+
     if (NOT MSVC)
+
+      set(IWIDGETS_PATCH_FILES "${IWIDGETS_SRC_DIR}/configure" "${IWIDGETS_SRC_DIR}/tclconfig/tcl.m4")
 
       ExternalProject_Add(IWIDGETS_BLD
 	URL "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${IWIDGETS_PATCH_FILES}
-	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/${LIB_DIR} ${IWIDGETS_SRC_DIR}/configure --prefix=${CMAKE_INSTALL_PREFIX} --exec-prefix=${CMAKE_INSTALL_PREFIX} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_INSTALL_PREFIX}/${LIB_DIR},${TCLCONF_DIR}> --with-tk=$<IF:$<BOOL:${TK_TARGET}>,${CMAKE_INSTALL_PREFIX}/${LIB_DIR},${TKCONF_DIR}> --with-itcl=$<IF:$<BOOL:${ITCL_TARGET}>,${CMAKE_INSTALL_PREFIX}/${LIB_DIR},${ITCLCONF_DIR}> --with-itk=${ITK_SOURCE_DIR}
+	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR} ${IWIDGETS_SRC_DIR}/configure --prefix=${IWIDGETS_INSTDIR} --exec-prefix=${IWIDGETS_INSTDIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR},${TCLCONF_DIR}> --with-tk=$<IF:$<BOOL:${TK_TARGET}>,${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR},${TKCONF_DIR}> --with-itcl=$<IF:$<BOOL:${ITCL_TARGET}>,${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR},${ITCLCONF_DIR}> --with-itk=${ITK_SOURCE_DIR}
 	BUILD_COMMAND make -j${pcnt}
 	INSTALL_COMMAND make install
 	DEPENDS ${TCL_TARGET} ${TK_TARGET} ${ITCL_TARGET} ${ITK_TARGET}
@@ -75,16 +78,15 @@ if (BRLCAD_ENABLE_TK)
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	CONFIGURE_COMMAND ""
 	BINARY_DIR ${IWIDGETS_SRC_DIR}/win
-	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} TCLDIR=${TCL_SRC_DIR}
-	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_INSTALL_PREFIX} TCLDIR=${TCL_SRC_DIR}
+	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${IWIDGETS_INSTDIR} TCLDIR=${TCL_SRC_DIR}
+	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${IWIDGETS_INSTDIR} TCLDIR=${TCL_SRC_DIR}
 	DEPENDS ${TCL_TARGET}
 	)
 
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries
-    file(APPEND "${SUPERBUILD_OUT}" " 
-    ExternalProject_ByProducts(IWIDGETS_BLD ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
+    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
       demos/buttonbox
       demos/calendar
       demos/canvasprintbox
@@ -277,9 +279,6 @@ if (BRLCAD_ENABLE_TK)
       scripts/unknownimage.gif
       scripts/watch.itk
       )
-    \n")
-
-    list(APPEND BRLCAD_DEPS IWIDGETS_BLD)
 
     SetTargetFolder(IWIDGETS_BLD "Third Party Libraries")
 

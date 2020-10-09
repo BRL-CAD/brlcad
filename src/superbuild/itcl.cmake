@@ -126,6 +126,7 @@ if (BRLCAD_ENABLE_TCL)
 
     ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
       itcl${ITCL_VERSION}/pkgIndex.tcl
+      itclConfig.sh
       FIXPATH
       )
 
