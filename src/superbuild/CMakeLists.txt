@@ -213,10 +213,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 
 # PROJ4 - generic coordinate transformation
 include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
-#
-## GDAL -  translator library for raster and vector geospatial data formats
-#include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
-#
+
+# GDAL -  translator library for raster and vector geospatial data formats
+include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
+
 ## TCL - scripting language
 #include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)

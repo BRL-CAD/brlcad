@@ -59,7 +59,7 @@ if(BRLCAD_SC_BUILD)
   endforeach(SCLIB ${STEPCODE_LIBS})
   set(STEPCODE_EXECS check-express exppp exp2cxx)
   foreach(SCEXEC ${STEPCODE_EXECS})
-    ExternalProject_Target(${SCEXEC}_exe STEPCODE_BLD
+    ExternalProject_Target(${SCEXEC}_exe STEPCODE_BLD ${STEPCODE_INSTDIR}
       EXEC ${BIN_DIR}/${SCEXEC}${CMAKE_EXECUTABLE_SUFFIX}
       RPATH
       )

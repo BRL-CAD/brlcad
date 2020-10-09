@@ -15,38 +15,42 @@ if (BRLCAD_GDAL_BUILD)
     set(GDAL_BASENAME libgdal)
   endif (MSVC)
 
-  set(TARGET_LIST ZLIB PNG PROJ4)
+  set(GDAL_DEPS)
+  set(TARGET_LIST zlib png proj)
   foreach(T ${TARGET_LIST})
-    if (TARGET ${T}_BLD)
-      set(${T}_TARGET ${T}_BLD)
-    endif (TARGET ${T}_BLD)
+    if (TARGET ${T}_stage)
+      list(APPEND GDAL_DEPS ${T}_stage)
+    endif (TARGET ${T}_stage)
   endforeach(T ${TARGET_LIST})
+
+  set(GDAL_INSTDIR ${CMAKE_BINARY_DIR}/gdal)
 
   ExternalProject_Add(GDAL_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdal"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${GDAL_INSTDIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
     -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
-    -DZLIB_ROOT=${CMAKE_INSTALL_PREFIX} -DPNG_ROOT=${CMAKE_INSTALL_PREFIX} -DPROJ4_ROOT=${CMAKE_INSTALL_PREFIX}
+    -DZLIB_ROOT=${CMAKE_BINARY_DIR}/$<CONFIG>
+    -DPNG_ROOT=${CMAKE_BINARY_DIR}/$<CONFIG>
+    -DPROJ4_ROOT=${CMAKE_BINARY_DIR}/$<CONFIG>
     -DGDAL_INST_DATA_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal
-    DEPENDS ${PROJ4_TARGET} ${PNG_TARGET} ${ZLIB_TARGET}
+    DEPENDS ${GDAL_DEPS}
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${SUPERBUILD_OUT}" "
-  ExternalProject_Target(gdal GDAL_BLD
-    OUTPUT_FILE ${GDAL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC_OUTPUT_FILE ${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+  ExternalProject_Target(gdal GDAL_BLD ${GDAL_INSTDIR}
+    SHARED ${LIB_DIR}/${GDAL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC ${LIB_DIR}/${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
   set(GDAL_EXECUTABLES gdalinfo gdallocationinfo gdal_translate gdaltransform gdaldem gdalwarp gdalbuildvrt)
   foreach(GDALEXEC ${GDAL_EXECUTABLES})
-    ExternalProject_Target(${GDALEXEC} GDAL_BLD
-      OUTPUT_FILE ${GDALEXEC}${CMAKE_EXECUTABLE_SUFFIX}
-      RPATH EXEC
+    ExternalProject_Target(${GDALEXEC}_exe GDAL_BLD ${GDAL_INSTDIR}
+      EXEC ${GDALEXEC}${CMAKE_EXECUTABLE_SUFFIX}
+      RPATH
       )
   endforeach(GDALEXEC ${GDAL_EXECUTABLES})
-  ExternalProject_ByProducts(GDAL_BLD ${DATA_DIR}/gdal
+  ExternalProject_ByProducts(gdal GDAL_BLD ${GDAL_INSTDIR} ${DATA_DIR}/gdal ${DATA_DIR}/gdal
     LICENSE.TXT
     GDALLogoBW.svg
     GDALLogoColor.svg
@@ -137,12 +141,9 @@ if (BRLCAD_GDAL_BUILD)
     vertcs.csv
     vertcs.override.csv
     )
-  \n")
-
-  list(APPEND BRLCAD_DEPS GDAL_BLD)
 
   set(GDAL_LIBRARIES gdal CACHE STRING "Building bundled gdal" FORCE)
-  set(GDAL_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${INCLUDE_DIR}/gdal" CACHE STRING "Directory containing GDAL headers." FORCE)
+  set(GDAL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/gdal" CACHE STRING "Directory containing GDAL headers." FORCE)
 
   SetTargetFolder(GDAL_BLD "Third Party Libraries")
   SetTargetFolder(gdal "Third Party Libraries")
