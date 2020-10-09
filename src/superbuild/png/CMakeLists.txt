@@ -20,8 +20,6 @@
 
 cmake_minimum_required(VERSION 3.12)
 
-#set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")
-
 project(libpng C)
 enable_testing()
 
@@ -32,8 +30,15 @@ set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
 set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
 
 # needed packages
-  find_package(ZLIB REQUIRED)
-  include_directories(${ZLIB_INCLUDE_DIRS})
+if (Z_PREFIX)
+  add_definitions(-DZ_PREFIX)
+endif (Z_PREFIX)
+if (Z_PREFIX_STR)
+  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
+endif (Z_PREFIX_STR)
+
+find_package(ZLIB REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIRS})
 
 if(UNIX AND NOT APPLE AND NOT BEOS AND NOT HAIKU)
   find_library(M_LIBRARY m)
