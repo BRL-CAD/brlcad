@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 3.12)
 
-set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")
+#set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")
 
 project(libpng C)
 enable_testing()
@@ -61,7 +61,7 @@ if (NOT DEFINED PNG_LIB_NAME)
 endif (NOT DEFINED PNG_LIB_NAME)
 
 # to distinguish between debug and release lib
-set(CMAKE_DEBUG_POSTFIX "d")
+#set(CMAKE_DEBUG_POSTFIX "d")
 
 include(CheckCSourceCompiles)
 option(ld-version-script "Enable linker version script" ON)
