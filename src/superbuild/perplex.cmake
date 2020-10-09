@@ -30,10 +30,10 @@ if (BRLCAD_LEVEL2)
     )
 
   set(LEMON_TEMPLATE "${CMAKE_BINARY_DIR}/$<CONFIG>/${DATA_DIR}/lemon/lempar.c" CACHE PATH "lemon template" FORCE)
-  set(LEMON_EXECUTABLE "${CMAKE_BINARY_DIR}/$<CONFIG>/${BIN_DIR}/lemon${EXE_EXT}" CACHE PATH "lemon" FORCE)
-
   set(PERPLEX_TEMPLATE "${CMAKE_BINARY_DIR}/$<CONFIG>/${DATA_DIR}/perplex/perplex_template.c" CACHE PATH "perplex template" FORCE)
-  set(PERPLEX_EXECUTABLE "${CMAKE_BINARY_DIR}/$<CONFIG>/${BIN_DIR}/perplex${EXE_EXT}" CACHE PATH "perplex" FORCE)
+  set(LEMON_EXECUTABLE perplex_lemon CACHE STRING "lemon" FORCE)
+  set(RE2C_EXECUTABLE perplex_re2c CACHE STRING "re2c" FORCE)
+  set(PERPLEX_EXECUTABLE perplex_perplex CACHE STRING "perplex" FORCE)
 
 endif (BRLCAD_LEVEL2)
 

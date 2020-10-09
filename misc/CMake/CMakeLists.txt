@@ -55,8 +55,6 @@ set(cmake_ignore_files
   RPath_Setup.cmake
   ResetCache.cmake
   TCL_PKGINDEX.cmake
-  ThirdParty.cmake
-  ThirdPartyExecutable.cmake
   compat/README
   compat/README.compat
   compat/README.compat.c99

@@ -365,7 +365,8 @@ function(ExternalProject_Target etarg extproj extroot)
 
     string(REPLACE "${BIN_DIR}/" ""  ENAME ${E_EXEC})
     fcfgcpy(TOUT ${extproj} ${extroot} ${BIN_DIR} ${E_EXEC} ${ENAME})
-    ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_EXEC} EXEC)
+    string(REPLACE "${BIN_DIR}/" ""  ENAME ${E_EXEC})
+    ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${ENAME} EXEC)
     install(PROGRAMS "${CMAKE_BINARY_DIR}/$<CONFIG>/${E_EXEC}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
 
     # Let CMake know there is a target dependency here, despite this being an import target
