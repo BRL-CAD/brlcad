@@ -273,7 +273,7 @@ endfunction(ET_RPath)
 
 function(ExternalProject_Target etarg extproj extroot)
 
-  cmake_parse_arguments(E "RPATH" "EXEC;SHARED;STATIC;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_LINK_TARGET;STATIC_LINK_TARGET_DEBUG" "SYMLINKS;DEPS" ${ARGN})
+  cmake_parse_arguments(E "RPATH" "EXEC;SHARED;STATIC;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_LINK_TARGET;STATIC_LINK_TARGET_DEBUG;SUBDIR" "SYMLINKS;DEPS" ${ARGN})
 
   if(NOT TARGET ${extproj})
     message(FATAL_ERROR "${extprog} is not a target")

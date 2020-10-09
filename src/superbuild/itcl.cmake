@@ -120,12 +120,14 @@ if (BRLCAD_ENABLE_TCL)
       itclIntDecls.h
       )
 
-    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
-      itcl${ITCL_VERSION}/itcl.tcl
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR}/itcl${ITCL_VERSION} ${LIB_DIR}/itcl${ITCL_VERSION}
+      itcl.tcl
       )
-
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR}/itcl${ITCL_VERSION} ${LIB_DIR}/itcl${ITCL_VERSION}
+      pkgIndex.tcl
+      FIXPATH
+      )
     ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
-      itcl${ITCL_VERSION}/pkgIndex.tcl
       itclConfig.sh
       FIXPATH
       )

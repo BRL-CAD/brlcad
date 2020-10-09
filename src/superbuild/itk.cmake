@@ -111,16 +111,16 @@ if (BRLCAD_ENABLE_TK)
       itkDecls.h
       )
 
-    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR} ${LIB_DIR}
-      itk${ITK_VERSION}/Archetype.itk
-      itk${ITK_VERSION}/Toplevel.itk
-      itk${ITK_VERSION}/Widget.itk
-      itk${ITK_VERSION}/itk.tcl
-      itk${ITK_VERSION}/tclIndex
+    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR}/itk${ITK_VERSION} ${LIB_DIR}/itk${ITK_VERSION}
+      Archetype.itk
+      Toplevel.itk
+      Widget.itk
+      itk.tcl
+      tclIndex
       )
 
-    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR} ${LIB_DIR}
-      itk${ITK_VERSION}/pkgIndex.tcl
+    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR}/itk${ITK_VERSION} ${LIB_DIR}/itk${ITK_VERSION}
+      pkgIndex.tcl
       FIXPATH
       )
 
