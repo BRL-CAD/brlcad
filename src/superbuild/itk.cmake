@@ -68,7 +68,6 @@ if (BRLCAD_ENABLE_TK)
     if (NOT MSVC)
 
       set(ITK_BASENAME libitk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
-      set(ITK_STUBNAME libitkstub${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 
       set(ITK_PATCH_FILES "${ITK_SRC_DIR}/configure" "${ITK_SRC_DIR}/tclconfig/tcl.m4")
 
@@ -85,7 +84,6 @@ if (BRLCAD_ENABLE_TK)
     else (NOT MSVC)
 
       set(ITK_BASENAME itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
-      set(ITK_STUBNAME itkstub${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 
       ExternalProject_Add(ITK_BLD
 	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/itk3"
@@ -103,7 +101,6 @@ if (BRLCAD_ENABLE_TK)
     ExternalProject_Target(itk ITK_BLD ${ITK_INSTDIR}
       SUBDIR itk${ITK_VERSION}
       SHARED ${LIB_DIR}/itk${ITK_VERSION}/${ITK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-      STATIC ${LIB_DIR}/itk${ITK_VERSION}/${ITK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
       )
 
     ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}

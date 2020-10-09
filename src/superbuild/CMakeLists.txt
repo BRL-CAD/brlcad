@@ -178,8 +178,8 @@ endif(MSVC)
 # For now, turn everything on:
 set(BRLCAD_LEVEL2 ON)
 set(BRLCAD_LEVEL3 ON)
-set(BRLCAD_ENABLE_STEP ON)
-set(BRLCAD_ENABLE_GDAL ON)
+#set(BRLCAD_ENABLE_STEP ON)
+#set(BRLCAD_ENABLE_GDAL ON)
 set(BRLCAD_ENABLE_TCL ON)
 set(BRLCAD_ENABLE_TK ON)
 
@@ -224,12 +224,16 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 # GDAL -  translator library for raster and vector geospatial data formats
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
-## TCL - scripting language
+# TCL - scripting language.  For Tcl/Tk builds we want
+# static lib building on so we get the stub libraries.
+set(BSL_CACHE ${BUILD_STATIC_LIBS})
+set(BUILD_STATIC_LIBS ON)
 include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
+set(BUILD_STATIC_LIBS ${BSL_CACHE})
 
 # Local Variables:
 # tab-width: 8
