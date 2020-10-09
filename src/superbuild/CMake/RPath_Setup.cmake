@@ -35,7 +35,7 @@ include(CMakeParseArguments)
 # function to hide the details from other code.
 function(relative_rpath outvar)
 
-  cmake_parse_arguments(R "" "SUFFIX" "" ${ARGN})
+  cmake_parse_arguments(R "" "SUFFIX;LEN" "" ${ARGN})
 
   if (R_SUFFIX)
     set(DPATH)
@@ -49,10 +49,23 @@ function(relative_rpath outvar)
   endif (R_SUFFIX)
 
   if (APPLE)
-    set(${outvar} ";@loader_path/${DPATH}${LIB_DIR}" PARENT_SCOPE)
+    set(RELATIVE_RPATH ";@loader_path/${DPATH}${LIB_DIR}" PARENT_SCOPE)
   else (APPLE)
-    set(${outvar} ":\$ORIGIN/${DPATH}${LIB_DIR}" PARENT_SCOPE)
+    set(RELATIVE_RPATH ":\$ORIGIN/${DPATH}${LIB_DIR}" PARENT_SCOPE)
   endif (APPLE)
+
+  # IFF the caller tells us to, lengthen the relative path to a
+  # specified length.  This is useful in scenarios where the relative
+  # path is the only viable option
+  if (R_LEN)
+    string(LENGTH "${RELATIVE_RPATH}" CURR_LEN)
+    while("${CURR_LEN}" LESS "${R_LEN}")
+      set(RELATIVE_RPATH "${RELATIVE_RPATH}:")
+      string(LENGTH "${RELATIVE_RPATH}" CURR_LEN)
+    endwhile("${CURR_LEN}" LESS "${R_LEN}")
+  endif (R_LEN)
+
+  set(${outvar} "${RELATIVE_RPATH}" PARENT_SCOPE)
 
 endfunction(relative_rpath)
 
