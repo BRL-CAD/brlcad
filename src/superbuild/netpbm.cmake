@@ -45,12 +45,13 @@ if (BRLCAD_NETPBM_BUILD)
    ppm.h
    ppmcmap.h
    ppmfloyd.h
+   pm_config.h
    )
 
   set(NETPBM_LIBRARY netpbm CACHE STRING "Building bundled netpbm" FORCE)
   set(NETPBM_LIBRARIES netpbm CACHE STRING "Building bundled netpbm" FORCE)
-  set(NETPBM_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/$<CONFIG>/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
-  set(NETPBM_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/$<CONFIG>/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
+  set(NETPBM_INCLUDE_DIR "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
+  set(NETPBM_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
 
   SetTargetFolder(NETPBM_BLD "Third Party Libraries")
   SetTargetFolder(netpbm "Third Party Libraries")
