@@ -47,7 +47,10 @@ if (BRLCAD_ZLIB_BUILD)
     zlib.h
     )
 
+  set(ZLIB_LIBRARY_DEBUG zlib CACHE STRING "Building bundled zlib" FORCE)
+  set(ZLIB_LIBRARY_RELEASE zlib CACHE STRING "Building bundled zlib" FORCE)
   set(ZLIB_LIBRARIES zlib CACHE STRING "Building bundled zlib" FORCE)
+  set(ZLIB_INCLUDE_DIR "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
   set(ZLIB_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
 
   SetTargetFolder(ZLIB_BLD "Third Party Libraries")

@@ -29,6 +29,12 @@ if (BRLCAD_LEVEL2)
     perplex_template.c
     )
 
+  set(LEMON_TEMPLATE "${CMAKE_BINARY_DIR}/$<CONFIG>/${DATA_DIR}/lemon/lempar.c" CACHE PATH "lemon template" FORCE)
+  set(LEMON_EXECUTABLE "${CMAKE_BINARY_DIR}/$<CONFIG>/${BIN_DIR}/lemon${EXE_EXT}" CACHE PATH "lemon" FORCE)
+
+  set(PERPLEX_TEMPLATE "${CMAKE_BINARY_DIR}/$<CONFIG>/${DATA_DIR}/perplex/perplex_template.c" CACHE PATH "perplex template" FORCE)
+  set(PERPLEX_EXECUTABLE "${CMAKE_BINARY_DIR}/$<CONFIG>/${BIN_DIR}/perplex${EXE_EXT}" CACHE PATH "perplex" FORCE)
+
 endif (BRLCAD_LEVEL2)
 
 # Local Variables:

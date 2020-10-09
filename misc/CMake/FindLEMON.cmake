@@ -66,8 +66,12 @@ set(LEMON_NAMES lemon)
 foreach(search ${_LEMON_SEARCHES})
   find_program(LEMON_EXECUTABLE lemon ${${search}} PATH_SUFFIXES bin)
 endforeach()
-
 mark_as_advanced(LEMON_EXECUTABLE)
+
+foreach(search ${_LEMON_SEARCHES})
+  find_file(LEMON_TEMPLATE lempar.c ${${search}} PATH_SUFFIXES ${DATA_DIR} ${DATA_DIR}/lemon)
+endforeach()
+mark_as_advanced(LEMON_TEMPLATE)
 
 if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
   # look for the template in share

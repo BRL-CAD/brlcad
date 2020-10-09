@@ -66,8 +66,12 @@ set(PERPLEX_NAMES perplex)
 foreach(search ${_PERPLEX_SEARCHES})
   find_program(PERPLEX_EXECUTABLE perplex ${${search}} PATH_SUFFIXES bin)
 endforeach()
-
 mark_as_advanced(PERPLEX_EXECUTABLE)
+
+foreach(search ${_PERPLEX_SEARCHES})
+  find_file(PERPLEX_TEMPLATE perplex_template.c ${${search}} PATH_SUFFIXES ${DATA_DIR} ${DATA_DIR}/perplex)
+endforeach()
+mark_as_advanced(PERPLEX_TEMPLATE)
 
 if(PERPLEX_EXECUTABLE AND NOT PERPLEX_TEMPLATE)
   get_filename_component(perplex_path ${PERPLEX_EXECUTABLE} PATH)
