@@ -328,6 +328,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_config.h.in ${CMAKE_CURRENT_
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h DESTINATION include/gdal)
+
 add_subdirectory(port)
 add_subdirectory(gcore)
 add_subdirectory(alg)

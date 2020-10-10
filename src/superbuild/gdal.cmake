@@ -152,8 +152,27 @@ if (BRLCAD_GDAL_BUILD)
     vertcs.override.csv
     )
 
+  ExternalProject_ByProducts(gdal GDAL_BLD ${GDAL_INSTDIR} include/gdal ${INCLUDE_DIR}/gdal
+    cpl_config.h
+    )
+
+  set(GDAL_LIBRARY gdal CACHE STRING "Building bundled gdal" FORCE)
   set(GDAL_LIBRARIES gdal CACHE STRING "Building bundled gdal" FORCE)
-  set(GDAL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/gdal" CACHE STRING "Directory containing GDAL headers." FORCE)
+
+  # TODO - to make this work, need to add install logic to GDAL build to position the headers in the right directories,
+  # and more ByProducts functions to copy them to the build dir...
+  set(GDAL_INCLUDE_DIR
+    "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/gdal"
+    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/port"
+    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/gcore"
+    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/alg"
+    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/ogr"
+    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/ogr/ogrsf_frmts"
+    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/gnm"
+    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/apps"
+    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/frmts/vrt"
+    CACHE STRING "Directories containing GDAL headers." FORCE)
+  set(GDAL_INCLUDE_DIRS "${GDAL_INCLUDE_DIR}" CACHE STRING "Directories containing GDAL headers." FORCE)
 
   SetTargetFolder(GDAL_BLD "Third Party Libraries")
   SetTargetFolder(gdal "Third Party Libraries")
