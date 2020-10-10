@@ -153,6 +153,7 @@ if (BRLCAD_GDAL_BUILD)
     )
 
   ExternalProject_ByProducts(gdal GDAL_BLD ${GDAL_INSTDIR} include/gdal ${INCLUDE_DIR}/gdal
+    NOINSTALL
     cpl_config.h
     )
 

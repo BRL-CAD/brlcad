@@ -8,19 +8,13 @@
 # settings in the external projects as if the external files were built by the
 # main CMake project.
 
-# TODO - need to rework this in a way that's compatible with the superbuild
-# pattern.  Main BRL-CAD build won't have the ExternalProject_Add targets from
-# the superbuild, so we need another way to handle getting the necessary
-# info to the main build.  Maybe useful:
-# https://gitlab.kitware.com/cmake/community/-/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
-
 # The catch to this is that the external project outputs MUST be built in a way
 # that is compatible with CMake's RPath handling assumptions.  See
 # https://stackoverflow.com/questions/41175354/can-i-install-shared-imported-library
 # for one of the issues surrounding this - file(RPATH_CHANGE) must be able to
 # succeed, and it is up to the 3rd party build setups to prepare their outputs
-# to be ready.  The key variable CMAKE_BUILD_RPATH comes from running the
-# function cmake_set_rpath, which must be available.
+# to be ready.  The key variable CMAKE_BUILD_RPATH must be set correctly ahead
+# of time - see RPath_Setup.cmake
 
 # Be quite about tool outputs by default
 if(NOT DEFINED EXTPROJ_VERBOSE)
@@ -73,7 +67,7 @@ add_executable(buildpath_replace ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.c
 
 function(ExternalProject_ByProducts etarg extproj extroot E_IMPORT_PREFIX target_dir)
 
-  cmake_parse_arguments(E "FIXPATH" "" "" ${ARGN})
+  cmake_parse_arguments(E "FIXPATH;NOINSTALL" "" "" ${ARGN})
 
   if (EXTPROJ_VERBOSE)
 
@@ -112,12 +106,14 @@ function(ExternalProject_ByProducts etarg extproj extroot E_IMPORT_PREFIX target
     fcfgcpy(TOUT ${extproj} ${extroot} "${target_dir}" ${ofile} ${bpf})
     set(ALL_TOUT ${ALL_TOUT} ${TOUT})
 
-    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${target_dir}/${bpf}" DESTINATION "${target_dir}/")
-    if (E_FIXPATH)
-      # Note - proper quoting for install(CODE) is extremely important for CPack, see
-      # https://stackoverflow.com/a/48487133
-      install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\${CMAKE_INSTALL_PREFIX}/${E_IMPORT_PREFIX}/${bpf}\")")
-    endif (E_FIXPATH)
+    if (NOT E_NOINSTALL)
+      install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${target_dir}/${bpf}" DESTINATION "${target_dir}/")
+      if (E_FIXPATH)
+	# Note - proper quoting for install(CODE) is extremely important for CPack, see
+	# https://stackoverflow.com/a/48487133
+	install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\${CMAKE_INSTALL_PREFIX}/${E_IMPORT_PREFIX}/${bpf}\")")
+      endif (E_FIXPATH)
+    endif (NOT E_NOINSTALL)
 
   endforeach (bpf ${E_UNPARSED_ARGUMENTS})
 
