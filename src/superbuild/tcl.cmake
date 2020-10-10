@@ -325,9 +325,12 @@ if (BRLCAD_TCL_BUILD)
     tclTomMath.h
     )
 
+  # Anything building against the stub will want the headers, etc. in place
+  add_dependencies(tclstub-static tcl_stage)
+
   set(TCL_LIBRARY tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
-  set(TCL_STUB_LIBRARY tclstub CACHE STRING "Building bundled tcl" FORCE)
+  set(TCL_STUB_LIBRARY tclstub-static CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_TCLSH tclsh_exe CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
   set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)

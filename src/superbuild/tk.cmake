@@ -1,7 +1,14 @@
 
 # By the time we get here, we have run FindTCL and should know
 # if we have TK.
-if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
+
+if (NOT TK_LIBRARY OR TARGET tcl_stage)
+  set(TK_DO_BUILD 1)
+else (NOT TK_LIBRARY OR TARGET tcl_stage)
+  set(TK_DO_BUILD 0)
+endif (NOT TK_LIBRARY OR TARGET tcl_stage)
+
+if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
   set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
 
@@ -27,7 +34,6 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
   endif (NOT TARGET tcl_replace)
 
   set(TK_INSTDIR ${CMAKE_BINARY_DIR}/tk$<CONFIG>)
-
 
   if (NOT MSVC)
 
@@ -191,9 +197,12 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
     tkPlatDecls.h
     )
 
+  # If something uses the stub, we're going to want the headers, etc. in place
+  add_dependencies(tkstub-static tk_stage)
+
   set(TK_LIBRARY tk CACHE STRING "Building bundled tk" FORCE)
   set(TK_LIBRARIES tk CACHE STRING "Building bundled tk" FORCE)
-  set(TK_STUB_LIBRARY tkstub CACHE STRING "Building bundled tk" FORCE)
+  set(TK_STUB_LIBRARY tkstub-static CACHE STRING "Building bundled tk" FORCE)
   #set(TTK_STUB_LIBRARY ttkstub CACHE STRING "Building bundled tk" FORCE)
   set(TK_WISH wish_exe CACHE STRING "Building bundled tk" FORCE)
   set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
@@ -220,7 +229,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
   SetTargetFolder(TK_BLD "Third Party Libraries")
   SetTargetFolder(tk "Third Party Libraries")
 
-endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND NOT TK_LIBRARY)
+endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
 # Local Variables:
 # tab-width: 8
