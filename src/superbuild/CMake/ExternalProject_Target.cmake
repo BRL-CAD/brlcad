@@ -148,8 +148,13 @@ function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
       set(IMPORT_PREFIX "${IMPORT_PREFIX}/${IN_IMPORT_PREFIX}")
     endif(IN_IMPORT_PREFIX)
 
+    # Note: per https://stackoverflow.com/a/49390802 need to set
+    # IMPORTED_NO_SONAME to get working linking for what we're trying to do
+    # here.  Without that property set, build dir copies of libraries will use
+    # an incorrect relative link and fail to find the library.
     set_property(TARGET ${etarg} APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
     set_target_properties(${etarg} PROPERTIES
+      IMPORTED_NO_SONAME TRUE
       IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${IN_LINK_TARGET}"
       IMPORTED_SONAME_NOCONFIG "${IN_LINK_TARGET}"
       )
