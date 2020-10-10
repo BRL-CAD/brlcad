@@ -1,11 +1,3 @@
-# Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
-
-# set CMake project name
-project(TKHTML)
-
-find_package(TCL)
-
 if (TK_SYSTEM_GRAPHICS MATCHES "x11")
   find_package(X11)
 endif (TK_SYSTEM_GRAPHICS MATCHES "x11")
@@ -74,13 +66,6 @@ set(TKHTML_SRCS
   src/swproc.c
   )
 
-if (NOT LIB_DIR)
-  if (NOT WIN32)
-    set(LIB_DIR lib)
-  else (NOT WIN32)
-    set(LIB_DIR bin)
-  endif (NOT WIN32)
-endif (NOT LIB_DIR)
 
 add_library(Tkhtml SHARED ${TKHTML_SRCS})
 if (TK_SYSTEM_GRAPHICS MATCHES "aqua")

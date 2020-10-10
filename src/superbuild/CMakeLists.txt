@@ -73,7 +73,9 @@ include(Path_Setup)
 # for relocatable binary packages on Linux and similar platforms.
 # BRL-CAD's needs are rather complex when it comes to RPath, so we
 # define a series of functions:
-include(RPath_Setup)
+if (NOT COMMAND std_build_rpath)
+  include(RPath_Setup)
+endif (NOT COMMAND std_build_rpath)
 
 # We want the full RPATH set in the build tree so we can run programs without
 # needing to set LD_LIBRARY_PATH
@@ -234,6 +236,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
 set(BUILD_STATIC_LIBS ${BSL_CACHE})
+
+
+std_build_rpath()
+message("CMAKE_BUILD_RPATH: ${CMAKE_BUILD_RPATH}")
 
 # Local Variables:
 # tab-width: 8

@@ -80,7 +80,7 @@ if (BRLCAD_TCL_BUILD)
     )
 
   ExternalProject_Target(tclsh_exe TCL_BLD ${TCL_INSTDIR}
-    EXEC ${BIN_DIR}/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
+    EXEC ${BIN_DIR}/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${EXE_EXT}
     RPATH
     )
   ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
@@ -310,6 +310,11 @@ if (BRLCAD_TCL_BUILD)
     tm.tcl
     word.tcl
     )
+
+  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}/tcl8/8.5 ${LIB_DIR}/tcl8/8.5
+    msgcat-1.6.1.tm
+    )
+
   ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
     tclDecls.h
     tcl.h
@@ -320,13 +325,29 @@ if (BRLCAD_TCL_BUILD)
     tclTomMath.h
     )
 
-
   set(TCL_LIBRARY tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_STUB_LIBRARY tclstub CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_TCLSH tclsh_exe CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
   set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+
+
+ #if (CMAKE_CONFIGURATION_TYPES)
+ #  set(TCL_LIBRARY "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
+ #  set(TCL_LIBRARIES ${TCL_LIBRARY} CACHE STRING "Building bundled tcl" FORCE)
+ #  set(TCL_STUB_LIBRARY "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
+ #  set(TCL_TCLSH "${CMAKE_BINARY_DIR}/$<CONFIG>/${BIN_DIR}/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${EXE_EXT}" CACHE STRING "Building bundled tcl" FORCE)
+ #  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+ #  set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+ #else (CMAKE_CONFIGURATION_TYPES)
+ #  set(TCL_LIBRARY "${CMAKE_BINARY_DIR}/${LIB_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
+ #  set(TCL_LIBRARIES ${TCL_LIBRARY} CACHE STRING "Building bundled tcl" FORCE)
+ #  set(TCL_STUB_LIBRARY "${CMAKE_BINARY_DIR}/${LIB_DIR}/${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
+ #  set(TCL_TCLSH "${CMAKE_BINARY_DIR}/${BIN_DIR}/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${EXE_EXT}" CACHE STRING "Building bundled tcl" FORCE)
+ #  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+ #  set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+ #endif (CMAKE_CONFIGURATION_TYPES)
 
   SetTargetFolder(TCL_BLD "Third Party Libraries")
   SetTargetFolder(tcl "Third Party Libraries")
