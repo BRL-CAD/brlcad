@@ -121,6 +121,9 @@ if (BRLCAD_ENABLE_TK)
       FIXPATH
       )
 
+    set(ITK_LIBRARY itk CACHE STRING "Building bundled itcl" FORCE)
+    set(ITK_LIBRARIES itk CACHE STRING "Building bundled itcl" FORCE)
+
     SetTargetFolder(ITK_BLD "Third Party Libraries")
 
   endif (DO_ITK_BUILD)

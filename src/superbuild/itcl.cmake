@@ -132,6 +132,9 @@ if (BRLCAD_ENABLE_TCL)
       FIXPATH
       )
 
+    set(ITCL_LIBRARY itcl CACHE STRING "Building bundled itcl" FORCE)
+    set(ITCL_LIBRARIES itcl CACHE STRING "Building bundled itcl" FORCE)
+
     SetTargetFolder(ITCL_BLD "Third Party Libraries")
 
   endif (BUILD_ITCL)
