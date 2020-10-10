@@ -175,15 +175,15 @@ if(MSVC)
   endif(NOT EXISTS "${VCVARS_BAT}")
 endif(MSVC)
 
-
-
-# For now, turn everything on:
+# TODO - need to set these based on the feature flags...
 set(BRLCAD_LEVEL2 ON)
 set(BRLCAD_LEVEL3 ON)
+
+# TODO - in stand-alone mode, these need to be set to enable the builds...
 #set(BRLCAD_ENABLE_STEP ON)
 #set(BRLCAD_ENABLE_GDAL ON)
-set(BRLCAD_ENABLE_TCL ON)
-set(BRLCAD_ENABLE_TK ON)
+#set(BRLCAD_ENABLE_TCL ON)
+#set(BRLCAD_ENABLE_TK ON)
 
 ###############################################################################
 # BRL-CAD and some of its dependencies require the lemon, re2c and perplex

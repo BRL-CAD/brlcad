@@ -16,7 +16,7 @@ CHECK_CXX_FLAG("wd4800") # implicit conversions to bool
 CHECK_CXX_FLAG("Wno-ignored-qualifiers")
 
 
-set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
+set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/superbuild/stepcode)
 set(STEP_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}

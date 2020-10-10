@@ -164,6 +164,10 @@ if(BRLCAD_ENABLE_BULLET)
 endif(BRLCAD_ENABLE_BULLET)
 mark_as_advanced(BRLCAD_ENABLE_BULLET)
 
+# Enable features requiring STEPcode library
+option(BRLCAD_ENABLE_STEP "Enable features requiring the STEP support libraries" ON)
+mark_as_advanced(BRLCAD_ENABLE_STEP)
+
 # Enable features requiring GDAL geospatial library
 option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
