@@ -44,8 +44,34 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-find_program(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
+set(_LEMON_SEARCHES)
+
+# Search LEMON_ROOT first if it is set.
+if(LEMON_ROOT)
+  set(_LEMON_SEARCH_ROOT PATHS ${LEMON_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _LEMON_SEARCHES _LEMON_SEARCH_ROOT)
+endif()
+
+# Normal search.
+set(_LEMON_x86 "(x86)")
+set(_LEMON_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/lemon"
+          "$ENV{ProgramFiles${_LEMON_x86}}/lemon")
+unset(_LEMON_x86)
+list(APPEND _LEMON_SEARCHES _LEMON_SEARCH_NORMAL)
+
+set(LEMON_NAMES lemon)
+
+# Try each search configuration.
+foreach(search ${_LEMON_SEARCHES})
+  find_program(LEMON_EXECUTABLE lemon ${${search}} PATH_SUFFIXES bin)
+endforeach()
 mark_as_advanced(LEMON_EXECUTABLE)
+
+foreach(search ${_LEMON_SEARCHES})
+  find_file(LEMON_TEMPLATE lempar.c ${${search}} PATH_SUFFIXES ${DATA_DIR} ${DATA_DIR}/lemon)
+endforeach()
+mark_as_advanced(LEMON_TEMPLATE)
 
 if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
   # look for the template in share

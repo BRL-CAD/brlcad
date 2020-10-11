@@ -77,6 +77,10 @@ if(NOT DEFINED LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT DEFINED LIB_DIR)
 
+if(NOT DEFINED DATA_DIR)
+  set(DATA_DIR share)
+endif(NOT DEFINED DATA_DIR)
+
 # Because the STEPcode headers are used in BRL-CAD, we have added some decl code
 # to the headers for strict c89/c++98.  Don't use it for the stepcode build itself
 add_definitions(-DHAVE_DECL_FSEEKO)
