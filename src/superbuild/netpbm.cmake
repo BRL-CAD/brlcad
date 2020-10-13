@@ -4,7 +4,12 @@ provided with BRL-CAD's source code.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(netpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_NETPBM)
+THIRD_PARTY(netpbm NETPBM netpbm
+  netpbm_DESCRIPTION
+  REQUIRED_VARS BRLCAD_LEVEL2
+  ALIASES ENABLE_NETPBM
+  RESET_VARS NETPBM_LIBRARY NETPBM_INCLUDE_DIR
+  )
 
 if (BRLCAD_NETPBM_BUILD)
 

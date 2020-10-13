@@ -229,6 +229,10 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
   SetTargetFolder(TK_BLD "Third Party Libraries")
   SetTargetFolder(tk "Third Party Libraries")
 
+elseif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
+
+  set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
+
 endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
 # Local Variables:

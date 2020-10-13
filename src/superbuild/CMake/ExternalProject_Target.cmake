@@ -139,7 +139,6 @@ function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
     else()
       set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
     endif(ET_STATIC)
-    message("prefix: ${IMPORT_PREFIX}")
     if(IN_IMPORT_PREFIX)
       set(IMPORT_PREFIX "${IMPORT_PREFIX}/${IN_IMPORT_PREFIX}")
     endif(IN_IMPORT_PREFIX)
@@ -154,9 +153,6 @@ function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
       IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${IN_LINK_TARGET}"
       IMPORTED_SONAME_NOCONFIG "${IN_LINK_TARGET}"
       )
-
-    message("${IMPORT_PREFIX}/${IN_LINK_TARGET}")
-    message("${IN_LINK_TARGET}")
 
   else(NOT CMAKE_CONFIGURATION_TYPES)
 
@@ -186,10 +182,6 @@ function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
       if(IN_IMPORT_PREFIX)
 	set(IMPORT_PREFIX "${IMPORT_PREFIX}/${IN_IMPORT_PREFIX}")
       endif(IN_IMPORT_PREFIX)
-
-      message("IMPORT_PREFIX: ${IMPORT_PREFIX}")
-
-      message("LINK_TARGET: ${LINK_TARGET}")
 
       set_target_properties(${etarg} PROPERTIES
 	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${LINK_TARGET}"
@@ -293,8 +285,6 @@ function(ExternalProject_Target etarg extproj extroot)
     message(FATAL_ERROR "Target ${etarg}-static is already defined\n")
   endif(E_STATIC AND TARGET ${etarg}-static)
 
-  message("${extproj}: Adding target \"${etarg}\"")
-
   if (E_LINK_TARGET AND NOT MSVC)
     set(LINK_TARGET "${E_LINK_TARGET}")
   endif (E_LINK_TARGET AND NOT MSVC)
@@ -321,8 +311,6 @@ function(ExternalProject_Target etarg extproj extroot)
   # Because the outputs are not properly build target outputs of the primary
   # CMake project, we need to install as either FILES or PROGRAMS
   set(TOUT)
-
-  message("Adding target: ${etarg}")
 
   # Handle shared library
   if (E_SHARED)
@@ -372,7 +360,6 @@ function(ExternalProject_Target etarg extproj extroot)
 
     string(REPLACE "${BIN_DIR}/" ""  ENAME ${E_EXEC})
     fcfgcpy(TOUT ${extproj} ${extroot} ${BIN_DIR} ${E_EXEC} ${ENAME})
-    message("TOUT: ${TOUT}")
     string(REPLACE "${BIN_DIR}/" ""  ENAME ${E_EXEC})
     ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${ENAME} EXEC)
     install(PROGRAMS "${CMAKE_BINARY_DIR}/$<CONFIG>/${E_EXEC}" DESTINATION ${BIN_DIR}/${E_SUBDIR})

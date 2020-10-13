@@ -5,7 +5,13 @@ Option for enabling and disabling compilation of the Libbson library
 provided with BRL-CAD's source code.  Default is BUNDLED, using
 the included other/src version.
 ")
-THIRD_PARTY(bson BSON Libbson libbson_DESCRIPTION ALIASES ENABLE_BSON REQUIRED_VARS BRLCAD_ENABLE_BINARY_ATTRIBUTES FLAGS NOSYS UNDOCUMENTED)
+THIRD_PARTY(bson BSON Libbson
+  libbson_DESCRIPTION
+  ALIASES ENABLE_BSON
+  REQUIRED_VARS BRLCAD_ENABLE_BINARY_ATTRIBUTES
+  FLAGS NOSYS UNDOCUMENTED
+  RESET_VARS BSON_LIBRARY BSON_INCLUDE_DIR
+  )
 
 if (BRLCAD_BSON_BUILD)
 

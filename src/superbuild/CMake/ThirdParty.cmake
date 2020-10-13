@@ -190,15 +190,15 @@ function(THIRD_PARTY dir vroot build_target description)
     set(${vroot}_FOUND_STATUS ${${vroot}_FOUND})
 
     # Initialize (or rather, uninitialize) variables in preparation for search
-    set(${vroot}_FOUND "${vroot}-NOTFOUND" CACHE STRING "${vroot}_FOUND" FORCE)
+    unset(${vroot}_FOUND CACHE)
     mark_as_advanced(${vroot}_FOUND)
     foreach(item ${TP_RESET_VARS})
-      set(${item} "${vroot}-NOTFOUND" CACHE STRING "${item}" FORCE)
+      unset(${item} CACHE)
     endforeach(item ${TP_RESET_VARS})
 
     # Be quiet if we're doing this over
     if("${${vroot}_FOUND_STATUS}" MATCHES "NOTFOUND")
-      set(${vroot}_FIND_QUIETLY TRUE)
+      #set(${vroot}_FIND_QUIETLY TRUE)
     endif("${${vroot}_FOUND_STATUS}" MATCHES "NOTFOUND")
 
     # Find the package in question.  It is the toplevel CMakeLists.txt's responsibility to make
