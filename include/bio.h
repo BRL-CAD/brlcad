@@ -96,42 +96,49 @@ extern int fileno(FILE *stream);
 #    define S_ISBLK(mode) (((mode) & S_IFMT) == S_IFBLK)
 #  else
 #    define S_ISBLK(mode) (0)
+#  endif
 #endif
 #ifndef S_ISCHR
 #  ifdef S_IFCHR
 #    define S_ISCHR(mode) (((mode) & S_IFMT) == S_IFCHR)
 #  else
 #    define S_ISCHR(mode) (0)
+#  endif
 #endif
 #ifndef S_ISDIR
 #  ifdef S_IFDIR
 #    define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #  else
 #    define S_ISDIR(mode) (0)
+#  endif
 #endif
 #ifndef S_ISFIFO
 #  ifdef S_IFIFO
 #    define S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFIFO)
 #  else
 #    define S_ISFIFO(mode) (0)
+#  endif
 #endif
 #ifndef S_ISLNK
 #  ifdef S_IFLNK
 #    define S_ISLNK(mode) (((mode) & S_IFMT) == S_IFLNK)
 #  else
 #    define S_ISLNK(mode) (0)
+#  endif
 #endif
 #ifndef S_ISREG
 #  ifdef S_IFREG
 #    define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)
 #  else
 #    define S_ISREG(mode) (0)
+#  endif
 #endif
 #ifndef S_ISSOCK
 #  ifdef S_IFSOCK
 #    define S_ISSOCK(mode) (((mode) & S_IFMT) == S_IFSOCK)
 #  else
 #    define S_ISSOCK(mode) (0)
+#  endif
 #endif
 
 #endif /* BIO_H */
