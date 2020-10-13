@@ -141,7 +141,7 @@ handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 
 
 HIDDEN enum diff
-compare(int r1, int g1, int b1, int r2, int g2, int b2, size_t *matching, size_t *off1, size_t *offmany, size_t *missing)
+compare_rgb(int r1, int g1, int b1, int r2, int g2, int b2, size_t *matching, size_t *off1, size_t *offmany, size_t *missing)
 {
     enum diff result = MISSING;
 
@@ -401,8 +401,6 @@ main(int argc, char *argv[])
 	}
     }
 
-    /* bu_log("INITIAL: bytes[%zu] < stop[%zu]\n", bytes, stop_after); */
-
     /* iterate over the pixels/bytes in the files */
     while (bytes < stop_after) {
 	enum diff result;
@@ -428,7 +426,7 @@ main(int argc, char *argv[])
 	    bytes++;
 	}
 
-	result = compare(r1, g1, b1, r2, g2, b2, &matching, &off1, &offmany, &missing);
+	result = compare_rgb(r1, g1, b1, r2, g2, b2, &matching, &off1, &offmany, &missing);
 
 	/* print them? */
 	if ((result==MATCHING && list_same)
