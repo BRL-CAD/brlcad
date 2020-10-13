@@ -156,6 +156,7 @@ if (BRLCAD_GDAL_BUILD)
     NOINSTALL
     cpl_config.h
     )
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} gdal CACHE STRING "Bundled system include dirs" FORCE)
 
   set(GDAL_LIBRARY gdal CACHE STRING "Building bundled gdal" FORCE)
   set(GDAL_LIBRARIES gdal CACHE STRING "Building bundled gdal" FORCE)

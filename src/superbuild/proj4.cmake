@@ -62,6 +62,7 @@ if (BRLCAD_PROJ4_BUILD)
     proj_api.h
     geodesic.h
     )
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} proj  CACHE STRING "Bundled system include dirs" FORCE)
 
 
   set(PROJ4_LIBRARIES proj CACHE STRING "Building bundled proj" FORCE)

@@ -55,6 +55,11 @@ set(CMAKE_MODULE_PATH "${BDEPS_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 # and mess up the results...
 set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_INSTALL_PREFIX}")
 
+
+# We will build up a list of all include dirs coming from 3rd party
+# projects, so we can include them with -isystem
+unset(SYS_INCLUDE_PATTERNS CACHE)
+
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
 # these if they have already been set by some other means (like a

@@ -47,6 +47,7 @@ if (BRLCAD_NETPBM_BUILD)
    ppmfloyd.h
    pm_config.h
    )
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} netpbm  CACHE STRING "Bundled system include dirs" FORCE)
 
   set(NETPBM_LIBRARY netpbm CACHE STRING "Building bundled netpbm" FORCE)
   set(NETPBM_LIBRARIES netpbm CACHE STRING "Building bundled netpbm" FORCE)
