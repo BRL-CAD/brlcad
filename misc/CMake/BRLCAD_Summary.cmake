@@ -34,12 +34,6 @@
 #
 ###
 
-# TODO - update summary printing to reflect new build structure -
-# will need to have the superbuild report which components are
-# enabled, rather than the logic below which uses third party
-# build settings no longer in use.
-
-
 #
 # This file contains the CMake routines that summarize the results
 # of the BRL-CAD configure process.
@@ -284,8 +278,7 @@ function(BRLCAD_Summary)
 
   # Make sets to use for iteration over all report items
   set(BUILD_REPORT_ITEMS
-    TCL TK INCRTCL IWIDGETS TKHTML TKTABLE PNG REGEX ZLIB
-    TERMLIB UTAHRLE OPENNURBS SC)
+    TCL TK INCRTCL IWIDGETS PNG REGEX ZLIB SC)
 
   set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL
@@ -367,18 +360,18 @@ function(BRLCAD_Summary)
 
   # Set state messages for standard components
   foreach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
-    get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_BUILD)
-    get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_NOTFOUND)
+    get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/superbuild DEFINITION BRLCAD_${ITEM}_BUILD)
+    get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/superbuild DEFINITION BRLCAD_${ITEM}_NOTFOUND)
     if("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
       set(BRLCAD_${ITEM}_BUILD "OFF!")
     endif("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
   endforeach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
 
   # IncrTcl is both ITCL and ITK - handle the various possibilities here
-  get_directory_property(BRLCAD_ITCL_BUILD DIRECTORY src/other DEFINITION	BRLCAD_ITCL_BUILD)
-  get_directory_property(BRLCAD_ITK_BUILD DIRECTORY src/other DEFINITION BRLCAD_ITK_BUILD)
-  get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_ITCL_NOTFOUND)
-  get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_ITK_NOTFOUND)
+  get_directory_property(BRLCAD_ITCL_BUILD DIRECTORY src/superbuild DEFINITION	BRLCAD_ITCL_BUILD)
+  get_directory_property(BRLCAD_ITK_BUILD DIRECTORY src/superbuild DEFINITION BRLCAD_ITK_BUILD)
+  get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/superbuild DEFINITION BRLCAD_ITCL_NOTFOUND)
+  get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/superbuild DEFINITION BRLCAD_ITK_NOTFOUND)
   if(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
     set(BRLCAD_INCRTCL_BUILD ON)
   else(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)

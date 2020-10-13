@@ -19,6 +19,8 @@ if (BRLCAD_ENABLE_TK)
 
   if (DO_IWIDGETS_BUILD)
 
+    set(BRLCAD_IWIDGETS_BUILD "ON" CACHE STRING "Enable Iwidgets build" FORCE)
+
     set(IWIDGETS_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/IWIDGETS_BLD-prefix/src/IWIDGETS_BLD")
 
     set(IWIDGETS_MAJOR_VERSION 4)
@@ -155,6 +157,10 @@ if (BRLCAD_ENABLE_TK)
       )
 
     SetTargetFolder(IWIDGETS_BLD "Third Party Libraries")
+
+  else (DO_IWIDGETS_BUILD)
+
+    set(BRLCAD_IWIDGETS_BUILD "OFF" CACHE STRING "Disable Iwidgets build" FORCE)
 
   endif (DO_IWIDGETS_BUILD)
 

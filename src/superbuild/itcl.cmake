@@ -57,6 +57,9 @@ if (BRLCAD_ENABLE_TCL)
   ITCL_TEST(BUILD_ITCL)
 
   if (BUILD_ITCL)
+
+    set(BRLCAD_ITCL_BUILD "ON" CACHE STRING "Enable Itcl build" FORCE)
+
     set(ITCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/ITCL_BLD-prefix/src/ITCL_BLD")
 
     set(ITCL_MAJOR_VERSION 3)
@@ -137,8 +140,11 @@ if (BRLCAD_ENABLE_TCL)
 
     SetTargetFolder(ITCL_BLD "Third Party Libraries")
 
-  endif (BUILD_ITCL)
+  else (BUILD_ITCL)
 
+    set(BRLCAD_ITCL_BUILD "OFF" CACHE STRING "Disable Itcl build" FORCE)
+
+  endif (BUILD_ITCL)
 endif (BRLCAD_ENABLE_TCL)
 
 # Local Variables:

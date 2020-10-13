@@ -11,6 +11,7 @@ endif (NOT TK_LIBRARY OR TARGET tcl_stage)
 if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
   set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
+  set(BRLCAD_TK_BUILD ON CACHE STRING "Enabling Tk build" FORCE)
 
   if (TARGET tcl_stage)
     # If we're building against a compiled Tcl and not a system Tcl,
@@ -232,6 +233,11 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 elseif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
 
   set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
+  set(BRLCAD_TK_BUILD OFF CACHE STRING "Disabling Tk build" FORCE)
+
+elseif (NOT BRLCAD_ENABLE_TK)
+
+  set(BRLCAD_TK_BUILD "Disabled" CACHE STRING "Disabling Tk build" FORCE)
 
 endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 

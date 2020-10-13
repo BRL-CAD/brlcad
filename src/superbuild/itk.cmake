@@ -35,6 +35,8 @@ if (BRLCAD_ENABLE_TK)
 
   if (DO_ITK_BUILD)
 
+    set(BRLCAD_ITK_BUILD "ON" CACHE STRING "Enable Itk build" FORCE)
+
     set(ITK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/ITK_BLD-prefix/src/ITK_BLD")
 
     set(ITK_MAJOR_VERSION 3)
@@ -125,6 +127,10 @@ if (BRLCAD_ENABLE_TK)
     set(ITK_LIBRARIES itk CACHE STRING "Building bundled itcl" FORCE)
 
     SetTargetFolder(ITK_BLD "Third Party Libraries")
+
+  else (DO_ITK_BUILD)
+
+    set(BRLCAD_ITK_BUILD "OFF" CACHE STRING "Disable Itk build" FORCE)
 
   endif (DO_ITK_BUILD)
 
