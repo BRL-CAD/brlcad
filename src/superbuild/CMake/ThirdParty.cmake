@@ -265,6 +265,17 @@ function(THIRD_PARTY dir vroot build_target description)
   # After all that, we know now what to do about this particular dependency
   set(BRLCAD_${vroot}_BUILD "${BRLCAD_${vroot}_BUILD}" PARENT_SCOPE)
 
+
+  # If this is a BRL-CAD build, update the options
+  if (COMMAND BRLCAD_OPTION)
+    if(NOT ${vroot}_UNDOCUMENTED)
+      BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${vroot}" "${${CMAKE_PROJECT_NAME}_${vroot}}"
+	TYPE ABS
+	ALIASES ${TP_ALIASES}
+	DESCRIPTION "${description}")
+    endif(NOT ${vroot}_UNDOCUMENTED)
+  endif (COMMAND BRLCAD_OPTION)
+
   # For drop-down menus in CMake gui - set STRINGS property
   set_property(CACHE BRLCAD_${vroot} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
 

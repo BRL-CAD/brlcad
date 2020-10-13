@@ -301,6 +301,18 @@ function(THIRD_PARTY_EXECUTABLE dir varname_root build_target)
   mark_as_advanced(${varname_root}_EXECUTABLE_TARGET)
   mark_as_advanced(${varname_root}_FOUND)
 
+
+  # If this is a BRL-CAD build, update the options
+  if (COMMAND BRLCAD_OPTION)
+    if(TP_ALIASES AND TP_DESCRIPTION)
+      BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${vroot}" "${${CMAKE_PROJECT_NAME}_${vroot}}"
+	TYPE ABS
+	ALIASES ${TP_ALIASES}
+	DESCRIPTION "${TP_DESCRIPTION}")
+    endif(TP_ALIASES AND TP_DESCRIPTION)
+  endif (COMMAND BRLCAD_OPTION)
+
+
   # Tell the calling scope what the final result was
   set(BRLCAD_${varname_root}_BUILD ${BRLCAD_${varname_root}_BUILD} PARENT_SCOPE)
 
