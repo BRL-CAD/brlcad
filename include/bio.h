@@ -92,25 +92,46 @@ extern int fileno(FILE *stream);
    already defined in C99 compliant compilers
    this is the work-around for older compilers */
 #ifndef S_ISBLK
-#   define S_ISBLK(mode) (((mode) & S_IFMT) == S_IFBLK)
+#  ifdef S_IFBLK
+#    define S_ISBLK(mode) (((mode) & S_IFMT) == S_IFBLK)
+#  else
+#    define S_ISBLK(mode) (0)
 #endif
 #ifndef S_ISCHR
-#   define S_ISCHR(mode) (((mode) & S_IFMT) == S_IFCHR)
+#  ifdef S_IFCHR
+#    define S_ISCHR(mode) (((mode) & S_IFMT) == S_IFCHR)
+#  else
+#    define S_ISCHR(mode) (0)
 #endif
 #ifndef S_ISDIR
-#   define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+#  ifdef S_IFDIR
+#    define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+#  else
+#    define S_ISDIR(mode) (0)
 #endif
 #ifndef S_ISFIFO
-#   define S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFIFO)
+#  ifdef S_IFIFO
+#    define S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFIFO)
+#  else
+#    define S_ISFIFO(mode) (0)
 #endif
 #ifndef S_ISLNK
-#   define S_ISLNK(mode) (((mode) & S_IFMT) == S_IFLNK)
+#  ifdef S_IFLNK
+#    define S_ISLNK(mode) (((mode) & S_IFMT) == S_IFLNK)
+#  else
+#    define S_ISLNK(mode) (0)
 #endif
 #ifndef S_ISREG
-#   define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)
+#  ifdef S_IFREG
+#    define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)
+#  else
+#    define S_ISREG(mode) (0)
 #endif
 #ifndef S_ISSOCK
-#   define S_ISSOCK(mode) (((mode) & S_IFMT) == S_IFSOCK)
+#  ifdef S_IFSOCK
+#    define S_ISSOCK(mode) (((mode) & S_IFMT) == S_IFSOCK)
+#  else
+#    define S_ISSOCK(mode) (0)
 #endif
 
 #endif /* BIO_H */
