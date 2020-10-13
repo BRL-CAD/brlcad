@@ -7,6 +7,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/ogrsf_frmts/mem
 	${CMAKE_CURRENT_SOURCE_DIR}/ogrsf_frmts/geojson
 	${CMAKE_CURRENT_SOURCE_DIR}/ogrsf_frmts/geojson/libjson
+	${PROJ4_INCLUDE_DIRS}
 	)
 
 set(ogr_srcs
@@ -77,4 +78,7 @@ add_definitions(-DHAVE_MITAB)
 
 add_library(gdal_ogr_obj OBJECT ${ogr_srcs})
 set_target_properties(gdal_ogr_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
+if(TARGET proj)
+	add_dependencies(gdal_ogr_obj proj)
+endif(TARGET proj)
 

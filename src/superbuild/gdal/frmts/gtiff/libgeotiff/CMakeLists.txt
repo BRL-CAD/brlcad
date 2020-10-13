@@ -1,6 +1,7 @@
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/../libtiff
+	${PROJ4_INCLUDE_DIRS}
 	)
 
 set(libgeotiff_srcs
@@ -24,3 +25,7 @@ add_definitions(-DDONT_DEPRECATE_SPRINTF)
 
 add_library(libgeotiff_obj OBJECT ${libgeotiff_srcs})
 set_target_properties(libgeotiff_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
+if(TARGET proj)
+	add_dependencies(libgeotiff_obj proj)
+endif(TARGET proj)
+

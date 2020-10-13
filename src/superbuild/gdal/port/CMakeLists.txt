@@ -1,3 +1,7 @@
+include_directories(
+	${ZLIB_INCLUDE_DIRS}
+	)
+
 set(cpl_srcs
 	cpl_conv.cpp
 	cpl_error.cpp
@@ -65,4 +69,7 @@ endif(ZLIB_LIBRARY)
 
 add_library(gdal_cpl_obj OBJECT ${cpl_srcs})
 set_target_properties(gdal_cpl_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
+if (TARGET "${ZLIB_LIBRARY}")
+	add_dependencies(gdal_cpl_obj ${ZLIB_LIBRARY})
+endif (TARGET "${ZLIB_LIBRARY}")
 

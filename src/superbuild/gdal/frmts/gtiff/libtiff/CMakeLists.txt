@@ -1,5 +1,6 @@
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${ZLIB_INCLUDE_DIRS}
 	)
 
 set(libtiff_srcs
@@ -51,3 +52,7 @@ endif(ZLIB_LIBRARY)
 
 add_library(libtiff_obj OBJECT ${libtiff_srcs})
 set_target_properties(libtiff_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
+if (TARGET "${ZLIB_LIBRARY}")
+	add_dependencies(libtiff_obj "${ZLIB_LIBRARY}")
+endif (TARGET "${ZLIB_LIBRARY}")
+
