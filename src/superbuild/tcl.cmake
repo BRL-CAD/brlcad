@@ -82,7 +82,8 @@ if (BRLCAD_TCL_BUILD)
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
-  # TODO - LIB_DIR is wrong with MSVC...
+  # TODO - LIB_DIR is wrong with MSVC... we adjust for it here, but we're still
+  # copying to the wrong place in ExternalProject_Target's logic...
   ExternalProject_Target(tcl TCL_BLD ${TCL_INSTDIR}
     SHARED ${SHARED_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
