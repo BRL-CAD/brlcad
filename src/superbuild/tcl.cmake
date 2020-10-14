@@ -59,6 +59,7 @@ if (BRLCAD_TCL_BUILD)
       DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
       )
     set(TCL_APPINIT tclAppInit.c)
+    set(SHARED_DIR ${LIB_DIR})
 
   else (NOT MSVC)
 
@@ -74,13 +75,14 @@ if (BRLCAD_TCL_BUILD)
       INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TCL_INSTDIR} SUFX=
       )
     set(TCL_APPINIT)
+    set(SHARED_DIR ${BIN_DIR})
 
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
   # TODO - LIB_DIR is wrong with MSVC...
   ExternalProject_Target(tcl TCL_BLD ${TCL_INSTDIR}
-    SHARED ${LIB_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    SHARED ${SHARED_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
 
