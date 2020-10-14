@@ -494,18 +494,22 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 }
 
 
+#define MAX_ATTACH_RETRIES 100
+
 void
 get_attached(void)
 {
-    int inflimit = 1000;
+    char **dms;
+    int inflimit = MAX_ATTACH_RETRIES;
+    int nargc;
     int ret;
-    struct bu_vls type = BU_VLS_INIT_ZERO;
-
-    struct bu_vls type_msg = BU_VLS_INIT_ZERO;
     struct bu_vls dm_types = BU_VLS_INIT_ZERO;
+    struct bu_vls type = BU_VLS_INIT_ZERO;
+    struct bu_vls type_msg = BU_VLS_INIT_ZERO;
+
     dm_list_types(&dm_types, " ");
-    char **dms = (char **)bu_calloc(bu_vls_strlen(&dm_types), sizeof(char *), "dm name array");
-    int nargc = bu_argv_from_string(dms, bu_vls_strlen(&dm_types), bu_vls_addr(&dm_types));
+    dms = (char **)bu_calloc(bu_vls_strlen(&dm_types), sizeof(char *), "dm name array");
+    nargc = bu_argv_from_string(dms, bu_vls_strlen(&dm_types), bu_vls_addr(&dm_types));
 
     bu_vls_sprintf(&type_msg, "attach (nu");
     for (int i = 0; i < nargc; i++) {
