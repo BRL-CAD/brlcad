@@ -58,6 +58,8 @@ if (BRLCAD_TCL_BUILD)
       INSTALL_COMMAND make install
       DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
       )
+    set(TCL_APPINIT unix/tclAppInit.c)
+
   else (NOT MSVC)
 
     set(TCL_BASENAME tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
@@ -68,13 +70,15 @@ if (BRLCAD_TCL_BUILD)
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       CONFIGURE_COMMAND ""
       BINARY_DIR ${TCL_SRC_DIR}/win
-      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${TCL_INSTDIR}
-      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TCL_INSTDIR}
+      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${TCL_INSTDIR} SUFX=
+      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TCL_INSTDIR} SUFX=
       )
+    set(TCL_APPINIT)
 
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
+  # TODO - LIB_DIR is wrong with MSVC...
   ExternalProject_Target(tcl TCL_BLD ${TCL_INSTDIR}
     SHARED ${LIB_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
@@ -310,7 +314,7 @@ if (BRLCAD_TCL_BUILD)
     package.tcl
     parray.tcl
     safe.tcl
-    tclAppInit.c
+    ${TCL_APPINIT}
     tclIndex
     tm.tcl
     word.tcl
