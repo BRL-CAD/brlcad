@@ -58,7 +58,7 @@ if (BRLCAD_TCL_BUILD)
       INSTALL_COMMAND make install
       DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
       )
-    set(TCL_APPINIT unix/tclAppInit.c)
+    set(TCL_APPINIT tclAppInit.c)
 
   else (NOT MSVC)
 
