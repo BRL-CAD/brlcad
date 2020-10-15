@@ -133,14 +133,18 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	    continue;
 	}
 	const struct dm *d = d_it->second;
-	if (strlen(bu_vls_cstr(list)) > 0)
-	    bu_vls_printf(list, "%s", separator);
 	const char *dname = dm_get_name(d);
-	if (dname)
+	if (dname) {
+	    if (strlen(bu_vls_cstr(list)) > 0)
+		bu_vls_printf(list, "%s", separator);
 	    bu_vls_printf(list, "%s", dname);
+	}
 	i++;
 	b = priority_list[i];
     }
+    if (strlen(bu_vls_cstr(list)) > 0)
+	bu_vls_printf(list, "%s", separator);
+    bu_vls_strcat(list, "nu");
 }
 
 
