@@ -2507,8 +2507,9 @@ mged_finish(int exitcode)
     Tcl_Release((ClientData)INTERP);
 
     ged_close(GEDP);
-    if (GEDP->ged_io_data)
-	BU_PUT(GEDP->ged_io_data, struct tclcad_io_data);
+    if (GEDP->ged_io_data) {
+	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
+    }
     if (GEDP)
 	BU_PUT(GEDP, struct ged);
 
@@ -2804,8 +2805,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
     GEDP->ged_interp = (void *)interpreter;
     GEDP->ged_interp_eval = &mged_db_search_callback;
-    struct tclcad_io_data *t_iod;
-    BU_GET(t_iod, struct tclcad_io_data);
+    struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
     t_iod->interp = interpreter;
     GEDP->ged_io_data = t_iod;
@@ -2951,8 +2951,9 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    if (GEDP->ged_io_data)
-	BU_PUT(GEDP->ged_io_data, struct tclcad_io_data);
+    if (GEDP->ged_io_data) {
+	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
+    }
     ged_close(GEDP);
     BU_PUT(GEDP, struct ged);
 
@@ -2968,8 +2969,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
     GEDP->ged_interp = (void *)interpreter;
     GEDP->ged_interp_eval = &mged_db_search_callback;
-    struct tclcad_io_data *t_iod;
-    BU_GET(t_iod, struct tclcad_io_data);
+    struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
     t_iod->interp = interpreter;
     GEDP->ged_io_data = t_iod;

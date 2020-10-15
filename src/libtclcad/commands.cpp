@@ -31,6 +31,8 @@
 
 #include "common.h"
 
+#include <map>
+
 extern "C" {
 #include <stdlib.h>
 #include <ctype.h>
@@ -85,6 +87,29 @@ extern "C" {
 #include "brlcad_version.h"
 #include "./tclcad_private.h"
 #include "./view/view.h"
+}
+
+struct tclcad_process_channels {
+    Tcl_Channel cstdin;
+    Tcl_Channel cstdout;
+    Tcl_Channel cstderr;
+};
+
+struct tclcad_io_data *
+tclcad_create_io_data()
+{
+    struct tclcad_io_data *d;
+    BU_GET(d, struct tclcad_io_data);
+    d->state = new std::map<struct ged_subprocess *, struct tclcad_process_channels *>;
+    return d;
+}
+
+TCLCAD_EXPORT void
+tclcad_destroy_io_data(struct tclcad_io_data *d)
+{
+    std::map<struct ged_subprocess *, struct tclcad_process_channels *> *s = (std::map<struct ged_subprocess *, struct tclcad_process_channels *> *)d->state;
+    delete s;
+    BU_PUT(d, struct tclcad_io_data);
 }
 
 HIDDEN int to_base2local(struct ged *gedp,
@@ -1146,7 +1171,8 @@ to_deleteProc(ClientData clientData)
 	}
 	if (top->to_gedp->ged_io_data) {
 	    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)top->to_gedp->ged_io_data;
-	    BU_PUT(t_iod, struct tclcad_io_data);
+	    tclcad_destroy_io_data(t_iod);
+	    top->to_gedp->ged_io_data = NULL;
 	}
 
 	// Got the libtclcad cleanup done, have libged do its up.
@@ -1220,25 +1246,37 @@ tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_fun
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
     struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+    std::map<struct ged_subprocess *, struct tclcad_process_channels *> *pmap = (std::map<struct ged_subprocess *, struct tclcad_process_channels *> *)t_iod->state;
+    struct tclcad_process_channels *pchan = NULL;
+    if (pmap->find(p) == pmap->end()) {
+	BU_GET(pchan, struct tclcad_process_channels);
+	pchan->cstdin = NULL;
+	pchan->cstdout = NULL;
+	pchan->cstderr = NULL;
+	pmap[p] = pchan;
+    } else {
+	pchan = pmap[p];
+    }
+
     HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, d);
     if (fdp) {
 	switch (d) {
 	    case BU_PROCESS_STDIN:
-		if (!t_iod->chan_stdin) {
-		    t_iod->chan_stdin = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		    Tcl_CreateChannelHandler(t_iod->chan_stdin, t_iod->io_mode, callback, (ClientData)data);
+		if (!pchan->cstdin) {
+		    pchan->cstdin = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+		    Tcl_CreateChannelHandler(pchan->cstdin, t_iod->io_mode, callback, (ClientData)data);
 		}
 		break;
 	    case BU_PROCESS_STDOUT:
-		if (!t_iod->chan_stdout) {
-		    t_iod->chan_stdout = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		    Tcl_CreateChannelHandler(t_iod->chan_stdout, t_iod->io_mode, callback, (ClientData)data);
+		if (!pchan->cstdout) {
+		    pchan->cstdout = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+		    Tcl_CreateChannelHandler(pchan->cstdout, t_iod->io_mode, callback, (ClientData)data);
 		}
 		break;
 	    case BU_PROCESS_STDERR:
-		if (!t_iod->chan_stderr) {
-		    t_iod->chan_stderr = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		    Tcl_CreateChannelHandler(t_iod->chan_stderr, t_iod->io_mode, callback, (ClientData)data);
+		if (!pchan->cstderr) {
+		    pchan->cstderr = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+		    Tcl_CreateChannelHandler(pchan->cstderr, t_iod->io_mode, callback, (ClientData)data);
 		}
 		break;
 	}
@@ -1252,26 +1290,38 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
     struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+    std::map<struct ged_subprocess *, struct tclcad_process_channels *> *pmap = (std::map<struct ged_subprocess *, struct tclcad_process_channels *> *)t_iod->state;
+    struct tclcad_process_channels *pchan = NULL;
+    if (!pmap || pmap->find(p) == pmap->end()) {
+	return;
+    }
+    pchan = pmap[p];
+    if (!pchan->cstdin && !pchan->cstdout && !pchan->cstdout) {
+	// All subprocess channels destroyed; we're done with the I/O from this subprocess, clean up
+	BU_PUT(pchan, struct tclcad_process_channels);
+	pmap.erase(p);
+    }
+
     switch (d) {
 	case BU_PROCESS_STDIN:
-	    if (t_iod->chan_stdin) {
-		Tcl_DeleteChannelHandler(t_iod->chan_stdin, NULL, (ClientData)NULL);
-		Tcl_Close(t_iod->interp, t_iod->chan_stdin);
-		t_iod->chan_stdin = NULL;
+	    if (pchan->cstdin) {
+		Tcl_DeleteChannelHandler(pchan->cstdin, NULL, (ClientData)NULL);
+		Tcl_Close(t_iod->interp, pchan->cstdin);
+		pchan->cstdin = NULL;
 	    }
 	    break;
 	case BU_PROCESS_STDOUT:
-	    if (t_iod->chan_stdout) {
-		Tcl_DeleteChannelHandler(t_iod->chan_stdout, NULL, (ClientData)NULL);
-		Tcl_Close(t_iod->interp, t_iod->chan_stdout);
-		t_iod->chan_stdout = NULL;
+	    if (pchan->cstdout) {
+		Tcl_DeleteChannelHandler(pchan->cstdout, NULL, (ClientData)NULL);
+		Tcl_Close(t_iod->interp, pchan->cstdout);
+		pchan->cstdout = NULL;
 	    }
 	    break;
 	case BU_PROCESS_STDERR:
-	    if (t_iod->chan_stderr) {
-		Tcl_DeleteChannelHandler(t_iod->chan_stderr, NULL, (ClientData)NULL);
-		Tcl_Close(t_iod->interp, t_iod->chan_stderr);
-		t_iod->chan_stderr = NULL;
+	    if (pchan->cstderr) {
+		Tcl_DeleteChannelHandler(pchan->cstderr, NULL, (ClientData)NULL);
+		Tcl_Close(t_iod->interp, pchan->cstderr);
+		pchan->cstderr = NULL;
 	    }
 	    break;
     }
@@ -1355,8 +1405,7 @@ to_open_tcl(ClientData UNUSED(clientData),
     gedp->ged_interp = (void *)interp;
 
     /* Set the Tcl specific I/O handlers for asynchronous subprocess I/O */
-    struct tclcad_io_data *t_iod;
-    BU_GET(t_iod, struct tclcad_io_data);
+    struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode  = TCL_READABLE;
     t_iod->interp = interp;
     gedp->ged_io_data = (void *)t_iod;
