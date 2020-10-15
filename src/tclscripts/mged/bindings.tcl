@@ -232,6 +232,7 @@ proc forward_key_bindings { w } {
     bind $w t {}
     bind $w b {}
     bind $w l {}
+    bind $w n {}
     bind $w r {}
     bind $w R {}
     bind $w s {}
