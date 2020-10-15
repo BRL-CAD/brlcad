@@ -48,6 +48,7 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     if (BU_STR_EQUIV(type, "nu") || BU_STR_EQUIV(type, "null")) {
 	return dm_null.i->dm_open(interp, argc, argv);
     }
+
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::string key(type);
     std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -55,6 +56,7 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     if (d_it == dmb->end()) {
 	return DM_NULL;
     }
+
     const struct dm *d = d_it->second;
     struct dm *dmp = d->i->dm_open(interp, argc, argv);
     return dmp;
@@ -65,8 +67,10 @@ extern "C" int
 dm_have_graphics()
 {
     int ret = 0;
+
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::map<std::string, const struct dm *>::iterator d_it;
+
     for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
 	std::string key = d_it->first;
 	const struct dm *d = d_it->second;
@@ -75,6 +79,7 @@ dm_have_graphics()
 	    break;
 	}
     }
+
     return ret;
 }
 
@@ -83,8 +88,10 @@ extern "C" const char *
 dm_graphics_system(const char *dmtype)
 {
     const char *ret = NULL;
+
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::map<std::string, const struct dm *>::iterator d_it;
+
     for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
 	std::string key = d_it->first;
 	const struct dm *d = d_it->second;
@@ -94,11 +101,12 @@ dm_graphics_system(const char *dmtype)
 	    break;
 	}
     }
+
     return ret;
 }
 
 
-static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu", NULL};
+static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", NULL};
 
 
 extern "C" void
@@ -115,7 +123,7 @@ dm_list_types(struct bu_vls *list, const char *separator)
 
     int i = 0;
     const char *b = priority_list[i];
-    while (!BU_STR_EQUAL(b, "nu")) {
+    while (b) {
 	std::string key(b);
 	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
 	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
@@ -139,23 +147,26 @@ dm_list_types(struct bu_vls *list, const char *separator)
 extern "C" int
 dm_validXType(const char *dpy_string, const char *name)
 {
-    if (BU_STR_EQUIV(name, "nu")) {
+    if (BU_STR_EQUIV(name, "nu") || BU_STR_EQUIV(name, "null")) {
 	return 1;
     }
-    if (BU_STR_EQUIV(name, "null")) {
-	return 1;
-    }
+
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::string key(name);
     std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
     std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
+
     if (d_it == dmb->end()) {
 	return 0;
     }
+
     const struct dm *d = d_it->second;
     int is_valid = d->i->dm_viable(dpy_string);
+
     return is_valid;
 }
+
+
 extern "C" int
 dm_valid_type(const char *name, const char *dpy_string)
 {
@@ -181,10 +192,12 @@ dm_bestXType(const char *dpy_string)
 
     int i = 0;
     const char *b = priority_list[i];
-    while (!BU_STR_EQUAL(b, "nu")) {
+
+    while (b) {
 	std::string key(b);
 	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
 	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
+
 	if (d_it == dmb->end()) {
 	    i++;
 	    b = priority_list[i];
@@ -198,8 +211,10 @@ dm_bestXType(const char *dpy_string)
 	i++;
 	b = priority_list[i];
     }
+    if (!ret)
+	ret = "nu";
 
-    return (ret) ? ret : b;
+    return ret;
 }
 
 
@@ -220,10 +235,12 @@ dm_default_type()
 
     int i = 0;
     const char *b = priority_list[i];
-    while (!BU_STR_EQUAL(b, "nu")) {
+
+    while (b) {
 	std::string key(b);
 	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
 	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
+
 	if (d_it == dmb->end()) {
 	    i++;
 	    b = priority_list[i];
@@ -231,8 +248,10 @@ dm_default_type()
 	}
 	ret = b;
     }
+    if (!ret)
+	ret = "nu";
 
-    return (ret) ? ret : b;
+    return ret;
 }
 
 
@@ -241,8 +260,10 @@ fb_set_interface(struct fb *ifp, const char *interface_type)
 {
     if (!ifp)
 	return;
+
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
+
     for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
 	const struct fb *f = f_it->second;
         if (bu_strncmp(interface_type, f->i->if_name+5, strlen(interface_type)) == 0) {
@@ -259,6 +280,7 @@ fb_get_platform_specific(uint32_t magic)
 {
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
+
     for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
 	const struct fb *f = f_it->second;
         if (magic == f->i->type_magic) {
@@ -278,6 +300,7 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
+
     for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
 	const struct fb *f = f_it->second;
 	if (fb_p->magic == f->i->type_magic) {
@@ -285,6 +308,7 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 	    return;
 	}
     }
+
     return;
 }
 
@@ -318,6 +342,7 @@ fb_open(const char *file, int width, int height)
     struct fb *ifp;
     int i = 0;
     const char *b;
+
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
 
@@ -341,7 +366,7 @@ fb_open(const char *file, int width, int height)
 	    snprintf(device, sizeof(device), "/dev/%s", priority_list[i]);
 	    b = device;
 
-	    while (!BU_STR_EQUAL(b, "nu")) {
+	    while (priority_list[i]) {
 		f_it = fmb->find(std::string(b));
 		if (f_it == fmb->end()) {
 		    i++;
@@ -446,6 +471,7 @@ fb_genhelp(void)
 {
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
+
     for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
 	const struct fb *f = f_it->second;
 	fb_log("%-12s  %s\n", f->i->if_name, f->i->if_type);
