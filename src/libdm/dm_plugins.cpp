@@ -238,7 +238,8 @@ dm_default_type()
 extern "C" void
 fb_set_interface(struct fb *ifp, const char *interface_type)
 {
-    if (!ifp) return;
+    if (!ifp)
+	return;
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
     for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
@@ -297,7 +298,7 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 static int
 fb_totally_numeric(const char *s)
 {
-    if (s == (char *)0 || *s == 0)
+    if (!s || s[0] == '\0')
         return 0;
 
     while (*s) {
@@ -323,15 +324,16 @@ fb_open(const char *file, int width, int height)
     if (width < 0 || height < 0)
         return FB_NULL;
 
-    ifp = (struct fb *) calloc(sizeof(struct fb), 1);
+    ifp = (struct fb *)calloc(sizeof(struct fb), 1);
     if (ifp == FB_NULL) {
         Malloc_Bomb(sizeof(struct fb));
         return FB_NULL;
     }
-    ifp->i = (struct fb_impl *) calloc(sizeof(struct fb_impl), 1);
+    ifp->i = (struct fb_impl *)calloc(sizeof(struct fb_impl), 1);
     if (file == NULL || *file == '\0') {
         /* No name given, check environment variable first.     */
-        if ((file = (const char *)getenv("FB_FILE")) == NULL || *file == '\0') {
+	file = (const char *)getenv("FB_FILE");
+        if (!file || file[0] == '\0') {
             /* None set, use first valid device in priority order as default */
 	    i = 0;
 	    b = priority_list[i];
@@ -403,7 +405,7 @@ fb_open(const char *file, int width, int height)
 found_interface:
     /* Copy over the name it was opened by. */
     ifp->i->if_name = (char*)malloc((unsigned) strlen(file) + 1);
-    if (ifp->i->if_name == (char *)NULL) {
+    if (!ifp->i->if_name) {
         Malloc_Bomb(strlen(file) + 1);
         free((void *) ifp);
         return FB_NULL;
@@ -413,7 +415,7 @@ found_interface:
     /* Mark OK by filling in magic number */
     ifp->i->if_magic = FB_MAGIC;
 
-    i=(*ifp->i->if_open)(ifp, file, width, height);
+    i = (*ifp->i->if_open)(ifp, file, width, height);
     if (i != 0) {
         ifp->i->if_magic = 0;           /* sanity */
         free((void *) ifp->i->if_name);
