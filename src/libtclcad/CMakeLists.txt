@@ -2,7 +2,8 @@ set(LIBTCLCAD_SRCS
   auto_path.c
   bn.c
   bu.c
-  commands.cpp
+  command_io.cpp
+  commands.c
   cmdhist.c
   dm.c
   eval.c
