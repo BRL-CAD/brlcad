@@ -29,6 +29,7 @@
 #include <cctype>
 #include <map>
 #include <string>
+#include <cstdio>
 
 #include "bu/app.h"
 #include "bu/dylib.h"
@@ -97,6 +98,9 @@ dm_graphics_system(const char *dmtype)
 }
 
 
+static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu", NULL};
+
+
 extern "C" void
 dm_list_types(struct bu_vls *list, const char *separator)
 {
@@ -107,7 +111,6 @@ dm_list_types(struct bu_vls *list, const char *separator)
     if (!separator)
 	separator = " ";
 
-    static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
 
     int i = 0;
@@ -173,7 +176,6 @@ dm_valid_type(const char *name, const char *dpy_string)
 extern "C" const char *
 dm_bestXType(const char *dpy_string)
 {
-    static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     const char *ret = NULL;
 
@@ -213,7 +215,6 @@ dm_bestXType(const char *dpy_string)
 extern "C" const char *
 dm_default_type()
 {
-    static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     const char *ret = NULL;
 
@@ -314,9 +315,8 @@ fb_totally_numeric(const char *s)
 struct fb *
 fb_open(const char *file, int width, int height)
 {
-    static const char *priority_list[] = {"/dev/osgl", "/dev/wgl", "/dev/ogl", "/dev/X", "/dev/tk", "nu"};
     struct fb *ifp;
-    int i;
+    int i = 0;
     const char *b;
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
@@ -333,24 +333,29 @@ fb_open(const char *file, int width, int height)
     if (file == NULL || *file == '\0') {
         /* No name given, check environment variable first.     */
 	file = (const char *)getenv("FB_FILE");
+
         if (!file || file[0] == '\0') {
-            /* None set, use first valid device in priority order as default */
+            /* None set, use first valid device as default */
 	    i = 0;
-	    b = priority_list[i];
+	    char device[1024] = {0};
+	    snprintf(device, sizeof(device), "/dev/%s", priority_list[i]);
+	    b = device;
+
 	    while (!BU_STR_EQUAL(b, "nu")) {
 		f_it = fmb->find(std::string(b));
 		if (f_it == fmb->end()) {
 		    i++;
-		    b = priority_list[i];
+		    snprintf(device, sizeof(device), "/dev/%s", priority_list[i]);
+		    b = device;
 		    continue;
 		}
 		const struct fb *f = f_it->second;
-		*ifp->i = *(f->i);        /* struct copy */
+		*ifp->i = *(f->i);          /* struct copy */
 		file = ifp->i->if_name;
 		goto found_interface;
 	    }
 
-            *ifp->i = *fb_null_interface.i;        /* struct copy */
+            *ifp->i = *fb_null_interface.i; /* struct copy */
             file = ifp->i->if_name;
             goto found_interface;
         }
