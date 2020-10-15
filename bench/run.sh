@@ -608,17 +608,17 @@ if test ! "x${ret}" = "x0" ; then
     "$RT"
     $ECHO
     $ECHO "ERROR:  RT does not seem to work as expected"
-    $ECHO "        (output was [$out])"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
 # sanity check: make sure $CMP runs
-out=`echo -n "" | eval \"$CMP\" - - 2>&1`
+out=`echo '\n\n\n\n\n' | eval \"$CMP\" - - 2>&1`
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  CMP does not seem to work as expected"
-    $ECHO "        (output was [$out])"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
@@ -627,7 +627,7 @@ out=`eval \"$ELP\" 0 2>&1`
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"
-    $ECHO "        (output was [$out])"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
