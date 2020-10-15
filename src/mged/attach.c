@@ -532,12 +532,14 @@ get_attached(void)
 	    /* handle EOF */
 	    bu_log("\n");
 	    bu_vls_free(&wanted_type);
+	    bu_vls_free(&prompt);
 	    return;
 	}
 
 	if (bu_vls_strlen(&wanted_type) == 0 || BU_STR_EQUAL(bu_vls_addr(&wanted_type), "nu")) {
 	    /* Nothing more to do. */
 	    bu_vls_free(&wanted_type);
+	    bu_vls_free(&prompt);
 	    return;
 	}
 
