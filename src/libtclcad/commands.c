@@ -31,7 +31,6 @@
 
 #include "common.h"
 
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -85,7 +84,6 @@
 #include "brlcad_version.h"
 #include "./tclcad_private.h"
 #include "./view/view.h"
-
 
 HIDDEN int to_base2local(struct ged *gedp,
 			 int argc,
@@ -545,8 +543,8 @@ typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_p
 
 
 struct to_cmdtab {
-    char *to_name;
-    char *to_usage;
+    const char *to_name;
+    const char *to_usage;
     int to_maxargs;
     to_wrapper_func_ptr to_wrapper_func;
     ged_func_ptr to_func;
@@ -1594,7 +1592,7 @@ to_configure(struct ged *gedp,
     {
 	char cdimX[32];
 	char cdimY[32];
-	char *av[5];
+	const char *av[5];
 
 	snprintf(cdimX, 32, "%d", dm_get_width((struct dm *)gdvp->dmp));
 	snprintf(cdimY, 32, "%d", dm_get_height((struct dm *)gdvp->dmp));
@@ -1758,7 +1756,7 @@ to_copy(struct ged *gedp,
     struct ged *from_gedp = GED_NULL;
     struct ged *to_gedp = GED_NULL;
     int ret;
-    char *cp;
+    const char *cp;
     struct tclcad_obj *top;
     struct bu_vls db_vls = BU_VLS_INIT_ZERO;
     struct bu_vls from_vls = BU_VLS_INIT_ZERO;
@@ -2544,18 +2542,18 @@ to_data_pick_func(struct ged *gedp,
     size_t top_j = 0;
     size_t top_k = 0;
     int found_top = 0;
-    char *top_data_str = NULL;
-    char *top_data_label = NULL;
+    const char *top_data_str = NULL;
+    const char *top_data_label = NULL;
     static fastf_t tol = 0.015;
-    static char *data_polygons_str = "data_polygons";
-    static char *data_labels_str = "data_labels";
-    static char *sdata_labels_str = "sdata_labels";
-    static char *data_lines_str = "data_lines";
-    static char *sdata_lines_str = "sdata_lines";
-    static char *data_arrows_str = "data_arrows";
-    static char *sdata_arrows_str = "sdata_arrows";
-    static char *data_axes_str = "data_axes";
-    static char *sdata_axes_str = "sdata_axes";
+    static const char *data_polygons_str = "data_polygons";
+    static const char *data_labels_str = "data_labels";
+    static const char *sdata_labels_str = "sdata_labels";
+    static const char *data_lines_str = "data_lines";
+    static const char *sdata_lines_str = "sdata_lines";
+    static const char *data_arrows_str = "data_arrows";
+    static const char *sdata_arrows_str = "sdata_arrows";
+    static const char *data_axes_str = "data_axes";
+    static const char *sdata_axes_str = "sdata_axes";
 
     if (argc == 2) {
 	if (bu_sscanf(argv[1], "%d %d", &mx, &my) != 2)
@@ -3249,7 +3247,7 @@ to_dplot(struct ged *gedp,
     struct bu_vls result_copy = BU_VLS_INIT_ZERO;
     struct bview *gdvp;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-    char *who_av[3] = {"who", "b", NULL};
+    const char *who_av[3] = {"who", "b", NULL};
     int first = 1;
     int aflag = 0;
 
@@ -3805,7 +3803,7 @@ to_idle_mode(struct ged *gedp,
 	gdvp->gv_redraw_on_zoom &&
 	mode == TCLCAD_SCALE_MODE)
     {
-	char *av[] = {"redraw", NULL};
+	const char *av[] = {"redraw", NULL};
 
 	ged_redraw(gedp, 1, (const char **)av);
 
@@ -3829,7 +3827,7 @@ to_idle_mode(struct ged *gedp,
 	(mode == TCLCAD_TRANSLATE_MODE ||
 	 mode == TCLCAD_CONSTRAINED_TRANSLATE_MODE))
     {
-	char *av[3];
+	const char *av[3];
 
 	gedp->ged_gvp = gdvp;
 	av[0] = "grid";
@@ -4000,7 +3998,7 @@ to_make(struct ged *gedp,
 	int UNUSED(maxargs))
 {
     int ret;
-    char *av[3];
+    const char *av[3];
 
     ret = ged_make(gedp, argc, argv);
 
@@ -4024,7 +4022,7 @@ to_mirror(struct ged *gedp,
 	  int UNUSED(maxargs))
 {
     int ret;
-    char *av[3];
+    const char *av[3];
 
     ret = ged_mirror(gedp, argc, argv);
 
@@ -4251,7 +4249,7 @@ to_bot_move_pnt(struct ged *gedp,
     int ret;
 
     if ((ret = ged_bot_move_pnt(gedp, argc, argv)) == GED_OK) {
-	char *av[3];
+	const char *av[3];
 	int i;
 
 	if (argc == 4)
@@ -4282,7 +4280,7 @@ to_bot_move_pnts(struct ged *gedp,
     int ret;
 
     if ((ret = ged_bot_move_pnts(gedp, argc, argv)) == GED_OK) {
-	char *av[3];
+	const char *av[3];
 
 	av[0] = "draw";
 	av[1] = (char *)argv[1];
@@ -4547,7 +4545,7 @@ to_move_pnt_common(struct ged *gedp,
     int ret;
 
     if ((ret = (*func)(gedp, argc, argv)) == GED_OK) {
-	char *av[3];
+	const char *av[3];
 	int i;
 
 	if (argc == 4)
@@ -5137,7 +5135,7 @@ to_rect_mode(struct ged *gedp,
 {
     int ac;
     int x, y;
-    char *av[5];
+    const char *av[5];
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct bu_vls x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls y_vls = BU_VLS_INIT_ZERO;
@@ -5947,7 +5945,7 @@ to_bot_edge_split(struct ged *gedp,
     int ret;
 
     if ((ret = ged_bot_edge_split(gedp, argc, argv)) == GED_OK) {
-	char *av[3];
+	const char *av[3];
 	struct bu_vls save_result;
 
 	bu_vls_init(&save_result);
@@ -5979,7 +5977,7 @@ to_bot_face_split(struct ged *gedp,
     int ret;
 
     if ((ret = ged_bot_face_split(gedp, argc, argv)) == GED_OK) {
-	char *av[3];
+	const char *av[3];
 	struct bu_vls save_result;
 
 	bu_vls_init(&save_result);
@@ -6294,7 +6292,7 @@ to_vmake(struct ged *gedp,
 
     {
 	int ret;
-	char *av[8];
+	const char *av[8];
 	char center[512];
 	char scale[128];
 
@@ -6337,7 +6335,7 @@ to_vslew(struct ged *gedp,
 {
     int ret, width, height;
     int ac;
-    char *av[3];
+    const char *av[3];
     fastf_t xpos2, ypos2;
     fastf_t sf;
     struct bu_vls slew_vec = BU_VLS_INIT_ZERO;
