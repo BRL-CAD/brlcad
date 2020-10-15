@@ -55,6 +55,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
       )
 
     set(SHARED_DIR ${LIB_DIR})
+    set(TK_APPINIT tkAppInit.c)
 
   else (NOT MSVC)
 
@@ -73,6 +74,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
       )
 
     set(SHARED_DIR ${BIN_DIR})
+    set(TK_APPINIT)
 
   endif (NOT MSVC)
 
@@ -128,7 +130,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     tearoff.tcl
     text.tcl
     tk.tcl
-    tkAppInit.c
+    ${TK_APPINIT}
     tkfbox.tcl
     unsupported.tcl
     xmfbox.tcl
