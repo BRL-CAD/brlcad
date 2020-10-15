@@ -1030,7 +1030,7 @@ to_cmd(ClientData clientData,
 	int argc,
 	char **argv)
 {
-    register struct to_cmdtab *ctp;
+    struct to_cmdtab *ctp;
     struct tclcad_obj *top = (struct tclcad_obj *)clientData;
     Tcl_DString ds;
     int ret = GED_ERROR;
@@ -2586,7 +2586,7 @@ to_data_pick_func(struct ged *gedp,
     fastf_t vx, vy;
     fastf_t sf;
     point_t dpoint, vpoint;
-    register int i;
+    int i;
     fastf_t top_z = -MAX_FASTF;
     point_t top_point = VINIT_ZERO;
     size_t top_i = 0;
@@ -2628,7 +2628,7 @@ to_data_pick_func(struct ged *gedp,
     /* check for polygon points */
     if (gdvp->gv_data_polygons.gdps_draw &&
 	    gdvp->gv_data_polygons.gdps_polygons.num_polygons) {
-	register size_t si, sj, sk;
+	size_t si, sj, sk;
 
 	bview_data_polygon_state *gdpsp = &gdvp->gv_data_polygons;
 
@@ -4096,7 +4096,7 @@ to_edit_motion_delta_callback(struct ged *gedp,
 	const char *usage,
 	int UNUSED(maxargs))
 {
-    register int i;
+    int i;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -4139,7 +4139,7 @@ to_more_args_callback(struct ged *gedp,
 	const char *UNUSED(usage),
 	int UNUSED(maxargs))
 {
-    register int i;
+    int i;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     /* initialize result */
@@ -4412,7 +4412,7 @@ to_bot_move_pnts_mode(struct ged *gedp,
 	const char *usage,
 	int UNUSED(maxargs))
 {
-    register int i;
+    int i;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
     /* must be double for scanf */
@@ -5408,7 +5408,7 @@ to_rt_end_callback(struct ged *gedp,
 	const char *UNUSED(usage),
 	int UNUSED(maxargs))
 {
-    register int i;
+    int i;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     /* initialize result */
@@ -6166,7 +6166,7 @@ to_view_callback(struct ged *gedp,
 	const char *usage,
 	int UNUSED(maxargs))
 {
-    register int i;
+    int i;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6584,7 +6584,7 @@ HIDDEN void
 to_create_vlist_callback_solid(struct solid *sp)
 {
     struct bview *gdvp;
-    register int first = 1;
+    int first = 1;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
 
