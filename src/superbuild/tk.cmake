@@ -204,6 +204,25 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     tkPlatDecls.h
     )
 
+  if (MSVC)
+    ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
+      tkIntXlibDecls.h
+      X11/ap_keysym.h
+      X11/cursorfont.h
+      X11/DECkeysym.h
+      X11/HPkeysym.h
+      X11/keysymdef.h
+      X11/keysym.h
+      X11/Sunkeysym.h
+      X11/Xatom.h
+      X11/XF86keysym.h
+      X11/Xfuncproto.h
+      X11/X.h
+      X11/Xlib.h
+      X11/Xutil.h
+      )
+  endif (MSVC)
+
   # If something uses the stub, we're going to want the headers, etc. in place
   add_dependencies(tkstub-static tk_stage)
 
