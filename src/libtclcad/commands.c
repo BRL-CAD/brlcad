@@ -1224,16 +1224,22 @@ tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_fun
     if (fdp) {
 	switch (d) {
 	    case BU_PROCESS_STDIN:
-		t_iod->chan_stdin = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		Tcl_CreateChannelHandler(t_iod->chan_stdin, t_iod->io_mode, callback, (ClientData)data);
+			if (!t_iod->chan_stdin) {
+				t_iod->chan_stdin = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+				Tcl_CreateChannelHandler(t_iod->chan_stdin, t_iod->io_mode, callback, (ClientData)data);
+			}
 		break;
 	    case BU_PROCESS_STDOUT:
-		t_iod->chan_stdout = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		Tcl_CreateChannelHandler(t_iod->chan_stdout, t_iod->io_mode, callback, (ClientData)data);
+			if (!t_iod->chan_stdout) {
+				t_iod->chan_stdout = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+				Tcl_CreateChannelHandler(t_iod->chan_stdout, t_iod->io_mode, callback, (ClientData)data);
+			}
 		break;
 	    case BU_PROCESS_STDERR:
-		t_iod->chan_stderr = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		Tcl_CreateChannelHandler(t_iod->chan_stderr, t_iod->io_mode, callback, (ClientData)data);
+			if (!t_iod->chan_stderr) {
+				t_iod->chan_stderr = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
+				Tcl_CreateChannelHandler(t_iod->chan_stderr, t_iod->io_mode, callback, (ClientData)data);
+			}
 		break;
 	}
     }
@@ -1251,18 +1257,21 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 		if (t_iod->chan_stdin) {
 		    Tcl_DeleteChannelHandler(t_iod->chan_stdin, NULL, (ClientData)NULL);
 		    Tcl_Close(t_iod->interp, t_iod->chan_stdin);
+			t_iod->chan_stdin = NULL;
 		}
 		break;
 	    case BU_PROCESS_STDOUT:
 		if (t_iod->chan_stdout) {
 		    Tcl_DeleteChannelHandler(t_iod->chan_stdout, NULL, (ClientData)NULL);
 		    Tcl_Close(t_iod->interp, t_iod->chan_stdout);
+			t_iod->chan_stdout = NULL;
 		}
 		break;
 	    case BU_PROCESS_STDERR:
 		if (t_iod->chan_stderr) {
 		    Tcl_DeleteChannelHandler(t_iod->chan_stderr, NULL, (ClientData)NULL);
 		    Tcl_Close(t_iod->interp, t_iod->chan_stderr);
+			t_iod->chan_stderr = NULL;
 		}
 		break;
 	}
