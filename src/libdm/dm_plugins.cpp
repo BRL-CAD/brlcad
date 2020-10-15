@@ -104,13 +104,8 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	return;
     }
 
-    // We've got something, and may need a separator
-    struct bu_vls sep = BU_VLS_INIT_ZERO;
-    if (!separator) {
-	bu_vls_sprintf(&sep, " ");
-    } else {
-	bu_vls_sprintf(&sep, "%s", separator);
-    }
+    if (!separator)
+	separator = " ";
 
     // TODO - the first method below is independent of specific backends,
     // and preferable for that reason.  Unfortunately, Archer is calling
@@ -126,12 +121,14 @@ dm_list_types(struct bu_vls *list, const char *separator)
     for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
 	std::string key = d_it->first;
 	const struct dm *d = d_it->second;
-	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
+	if (strlen(bu_vls_cstr(list)) > 0)
+	    bu_vls_printf(list, "%s", separator);
 	const char *dname = dm_get_name(d);
 	if (dname)
 	    bu_vls_printf(list, "%s", dname);
     }
-    if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
+    if (strlen(bu_vls_cstr(list)) > 0)
+	bu_vls_printf(list, "%s", separator);
     bu_vls_printf(list, "nu");
 #else
     static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
@@ -149,7 +146,8 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	    continue;
 	}
 	const struct dm *d = d_it->second;
-	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
+	if (strlen(bu_vls_cstr(list)) > 0)
+	    bu_vls_printf(list, "%s", separator);
 	const char *dname = dm_get_name(d);
 	if (dname)
 	    bu_vls_printf(list, "%s", dname);
