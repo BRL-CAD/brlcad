@@ -100,17 +100,17 @@ if (BRLCAD_ENABLE_TK)
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries
-    ExternalProject_Target(itk ITK_BLD ${ITK_INSTDIR}
+    ExternalProject_Target(SHARED itk ITK_BLD ${ITK_INSTDIR}
+      itk${ITK_VERSION}/${ITK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
       SUBDIR itk${ITK_VERSION}
-      SHARED ${LIB_DIR}/itk${ITK_VERSION}/${ITK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
       )
 
-    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
+    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${INCLUDE_DIR}
       itk.h
       itkDecls.h
       )
 
-    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR}/itk${ITK_VERSION} ${LIB_DIR}/itk${ITK_VERSION}
+    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR}/itk${ITK_VERSION}
       Archetype.itk
       Toplevel.itk
       Widget.itk
@@ -118,7 +118,7 @@ if (BRLCAD_ENABLE_TK)
       tclIndex
       )
 
-    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR}/itk${ITK_VERSION} ${LIB_DIR}/itk${ITK_VERSION}
+    ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR}/itk${ITK_VERSION}
       pkgIndex.tcl
       FIXPATH
       )

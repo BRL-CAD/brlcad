@@ -38,16 +38,17 @@ if (BRLCAD_PROJ4_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  ExternalProject_Target(proj PROJ4_BLD ${PROJ4_INSTDIR}
-    SHARED ${LIB_DIR}/${PROJ_BASENAME}${PROJ_SUFFIX}
-    STATIC ${LIB_DIR}/${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    SYMLINKS ${LIB_DIR}/${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_API_VERSION}
+  ExternalProject_Target(SHARED proj PROJ4_BLD ${PROJ4_INSTDIR}
+    ${PROJ_BASENAME}${PROJ_SUFFIX}
+    SYMLINKS ${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX};${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_API_VERSION}
     LINK_TARGET ${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC_LINK_TARGET \"${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}\"
     RPATH
     )
+  ExternalProject_Target(STATIC proj-static PROJ4_BLD ${PROJ4_INSTDIR}
+    ${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    )
 
-  ExternalProject_ByProducts(proj PROJ4_BLD ${PROJ4_INSTDIR} ${DATA_DIR}/proj ${DATA_DIR}/proj
+  ExternalProject_ByProducts(proj PROJ4_BLD ${PROJ4_INSTDIR} ${DATA_DIR}/proj
     epsg
     esri
     world
@@ -62,7 +63,7 @@ if (BRLCAD_PROJ4_BUILD)
     CH
     )
 
-  ExternalProject_ByProducts(proj PROJ4_BLD ${PROJ4_INSTDIR} ${INCLUDE_DIR}/proj ${INCLUDE_DIR}/proj
+  ExternalProject_ByProducts(proj PROJ4_BLD ${PROJ4_INSTDIR} ${INCLUDE_DIR}/proj
     projects.h
     proj_api.h
     geodesic.h

@@ -60,7 +60,6 @@ if (BRLCAD_TCL_BUILD)
       DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
       )
     set(TCL_APPINIT tclAppInit.c)
-    set(SHARED_DIR ${LIB_DIR})
 
   else (NOT MSVC)
 
@@ -77,32 +76,30 @@ if (BRLCAD_TCL_BUILD)
       INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TCL_INSTDIR} SUFX=
       )
     set(TCL_APPINIT)
-    set(SHARED_DIR ${BIN_DIR})
 
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
-  # TODO - LIB_DIR is wrong with MSVC... we adjust for it here, but we're still
-  # copying to the wrong place in ExternalProject_Target's logic...
-  ExternalProject_Target(tcl TCL_BLD ${TCL_INSTDIR}
-    SHARED ${SHARED_DIR}/${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+  ExternalProject_Target(SHARED tcl TCL_BLD ${TCL_INSTDIR}
+    ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_Target(tclstub TCL_BLD ${TCL_INSTDIR}
-    STATIC ${LIB_DIR}/${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+  ExternalProject_Target(STATIC tclstub TCL_BLD ${TCL_INSTDIR}
+    ${TCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     )
 
-  ExternalProject_Target(tclsh_exe TCL_BLD ${TCL_INSTDIR}
-    EXEC ${BIN_DIR}/${TCL_EXECNAME}${EXE_EXT}
+  ExternalProject_Target(EXEC tclsh_exe TCL_BLD ${TCL_INSTDIR}
+    ${TCL_EXECNAME}${CMAKE_EXECUTABLE_SUFFIX}
     RPATH
     )
-  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
+
+  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}
     tclConfig.sh
     tclooConfig.sh
     FIXPATH
     )
-  ExternalProject_ByProducts(tcl  TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION} ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION}
+  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION}
     auto.tcl
     clock.tcl
     encoding/ascii.enc
@@ -325,11 +322,11 @@ if (BRLCAD_TCL_BUILD)
     word.tcl
     )
 
-  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}/tcl8/8.5 ${LIB_DIR}/tcl8/8.5
+  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}/tcl8/8.5
     msgcat-1.6.1.tm
     )
 
-  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
+  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${INCLUDE_DIR}
     tclDecls.h
     tcl.h
     tclOODecls.h
@@ -340,11 +337,11 @@ if (BRLCAD_TCL_BUILD)
     )
 
   # Anything building against the stub will want the headers, etc. in place
-  add_dependencies(tclstub-static tcl_stage)
+  add_dependencies(tclstub tcl_stage)
 
   set(TCL_LIBRARY tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
-  set(TCL_STUB_LIBRARY tclstub-static CACHE STRING "Building bundled tcl" FORCE)
+  set(TCL_STUB_LIBRARY tclstub CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_TCLSH tclsh_exe CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
   set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)

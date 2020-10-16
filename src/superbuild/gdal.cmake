@@ -53,19 +53,22 @@ if (BRLCAD_GDAL_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  ExternalProject_Target(gdal GDAL_BLD ${GDAL_INSTDIR}
-    SHARED ${LIB_DIR}/${GDAL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC ${LIB_DIR}/${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+  ExternalProject_Target(SHARED gdal GDAL_BLD ${GDAL_INSTDIR}
+    ${GDAL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
+  ExternalProject_Target(STATIC gdal-static GDAL_BLD ${GDAL_INSTDIR}
+    ${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    )
+
   set(GDAL_EXECUTABLES gdalinfo gdallocationinfo gdal_translate gdaltransform gdaldem gdalwarp gdalbuildvrt)
   foreach(GDALEXEC ${GDAL_EXECUTABLES})
-    ExternalProject_Target(${GDALEXEC}_exe GDAL_BLD ${GDAL_INSTDIR}
-      EXEC ${BIN_DIR}/${GDALEXEC}${CMAKE_EXECUTABLE_SUFFIX}
+    ExternalProject_Target(EXEC ${GDALEXEC}_exe GDAL_BLD ${GDAL_INSTDIR}
+      ${GDALEXEC}${CMAKE_EXECUTABLE_SUFFIX}
       RPATH
       )
   endforeach(GDALEXEC ${GDAL_EXECUTABLES})
-  ExternalProject_ByProducts(gdal GDAL_BLD ${GDAL_INSTDIR} ${DATA_DIR}/gdal ${DATA_DIR}/gdal
+  ExternalProject_ByProducts(gdal GDAL_BLD ${GDAL_INSTDIR} ${DATA_DIR}/gdal
     LICENSE.TXT
     GDALLogoBW.svg
     GDALLogoColor.svg
@@ -157,7 +160,7 @@ if (BRLCAD_GDAL_BUILD)
     vertcs.override.csv
     )
 
-  ExternalProject_ByProducts(gdal GDAL_BLD ${GDAL_INSTDIR} include/gdal ${INCLUDE_DIR}/gdal
+  ExternalProject_ByProducts(gdal GDAL_BLD ${GDAL_INSTDIR} ${INCLUDE_DIR}/gdal
     NOINSTALL
     cpl_config.h
     )

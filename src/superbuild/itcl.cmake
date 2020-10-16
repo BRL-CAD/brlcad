@@ -110,27 +110,32 @@ if (BRLCAD_ENABLE_TCL)
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries
-    ExternalProject_Target(itcl ITCL_BLD ${ITCL_INSTDIR}
+    ExternalProject_Target(SHARED itcl ITCL_BLD ${ITCL_INSTDIR}
+      itcl${ITCL_VERSION}/${ITCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
       SUBDIR  itcl${ITCL_VERSION}
-      SHARED ${LIB_DIR}/itcl${ITCL_VERSION}/${ITCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-      STATIC ${LIB_DIR}/itcl${ITCL_VERSION}/${ITCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
       )
 
-    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
+    ExternalProject_Target(STATIC itcl-static ITCL_BLD ${ITCL_INSTDIR}
+      itcl${ITCL_VERSION}/${ITCL_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      SUBDIR  itcl${ITCL_VERSION}
+      )
+
+
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${INCLUDE_DIR}
       itcl.h
       itclDecls.h
       itclInt.h
       itclIntDecls.h
       )
 
-    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR}/itcl${ITCL_VERSION} ${LIB_DIR}/itcl${ITCL_VERSION}
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR}/itcl${ITCL_VERSION}
       itcl.tcl
       )
-    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR}/itcl${ITCL_VERSION} ${LIB_DIR}/itcl${ITCL_VERSION}
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR}/itcl${ITCL_VERSION}
       pkgIndex.tcl
       FIXPATH
       )
-    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR} ${LIB_DIR}
+    ExternalProject_ByProducts(itcl ITCL_BLD ${ITCL_INSTDIR} ${LIB_DIR}
       itclConfig.sh
       FIXPATH
       )

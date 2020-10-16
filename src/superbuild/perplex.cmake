@@ -10,22 +10,22 @@ if (BRLCAD_LEVEL2)
     )
 
   # Tell the parent about files and libraries
-  ExternalProject_Target(perplex_lemon PERPLEX_BLD ${PERPLEX_BLD_ROOT}
-    EXEC ${BIN_DIR}/lemon${EXE_EXT}
+  ExternalProject_Target(EXEC perplex_lemon PERPLEX_BLD ${PERPLEX_BLD_ROOT}
+    lemon${CMAKE_EXECUTABLE_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(perplex_re2c PERPLEX_BLD ${PERPLEX_BLD_ROOT}
-    EXEC ${BIN_DIR}/re2c${EXE_EXT}
+  ExternalProject_Target(EXEC perplex_re2c PERPLEX_BLD ${PERPLEX_BLD_ROOT}
+    re2c${CMAKE_EXECUTABLE_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(perplex_perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT}
-    EXEC ${BIN_DIR}/perplex${EXE_EXT}
+  ExternalProject_Target(EXEC perplex_perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT}
+    perplex${CMAKE_EXECUTABLE_SUFFIX}
     RPATH
     )
-  ExternalProject_ByProducts(perplex_lemon PERPLEX_BLD ${PERPLEX_BLD_ROOT} ${DATA_DIR}/lemon ${DATA_DIR}/lemon
+  ExternalProject_ByProducts(perplex_lemon PERPLEX_BLD ${PERPLEX_BLD_ROOT} ${DATA_DIR}/lemon
     lempar.c
     )
-  ExternalProject_ByProducts(perplex_perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT} ${DATA_DIR}/perplex ${DATA_DIR}/perplex
+  ExternalProject_ByProducts(perplex_perplex PERPLEX_BLD ${PERPLEX_BLD_ROOT} ${DATA_DIR}/perplex
     perplex_template.c
     )
 

@@ -50,22 +50,25 @@ if(BRLCAD_SC_BUILD)
   # Tell the parent build about files and libraries
   set(STEPCODE_LIBS base express exppp stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
-    ExternalProject_Target(lib${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
-      SHARED ${LIB_DIR}/${SC_PREFIX}${SCLIB}${SC_SUFFIX}
-      SYMLINKS ${LIB_DIR}/${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2
+    ExternalProject_Target(SHARED lib${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
+      ${SC_PREFIX}${SCLIB}${SC_SUFFIX}
+      SYMLINKS ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2
       LINK_TARGET ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}
       RPATH
       )
   endforeach(SCLIB ${STEPCODE_LIBS})
   set(STEPCODE_EXECS check-express exppp exp2cxx)
   foreach(SCEXEC ${STEPCODE_EXECS})
-    ExternalProject_Target(${SCEXEC}_exe STEPCODE_BLD ${STEPCODE_INSTDIR}
-      EXEC ${BIN_DIR}/${SCEXEC}${CMAKE_EXECUTABLE_SUFFIX}
+    ExternalProject_Target(EXEC ${SCEXEC}_exe STEPCODE_BLD ${STEPCODE_INSTDIR}
+      ${SCEXEC}${CMAKE_EXECUTABLE_SUFFIX}
       RPATH
       )
+    foreach(SCLIB ${STEPCODE_LIBS})
+      add_dependencies(${SCEXEC}_exe lib${SCLIB}_stage)
+    endforeach(SCLIB ${STEPCODE_LIBS})
   endforeach(SCEXEC ${STEPCODE_EXECS})
 
-  ExternalProject_ByProducts(libstepcore_stage STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode ${INCLUDE_DIR}/stepcode
+  ExternalProject_ByProducts(libstepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
     cldai/sdaiApplication_instance_set.h
     cldai/sdaiSession_instance.h
     cldai/sdaiObject.h
@@ -146,6 +149,7 @@ if(BRLCAD_SC_BUILD)
     clstepcore/Registry.h
     clstepcore/complexSupport.h
     )
+
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} stepcode  CACHE STRING "Bundled system include dirs" FORCE)
 
   set(STEPCODE_BASE_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode/base CACHE STRING "Building bundled STEPCODE" FORCE)

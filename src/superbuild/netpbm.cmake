@@ -29,13 +29,15 @@ if (BRLCAD_NETPBM_BUILD)
     )
 
  # Tell the parent build about files and libraries
- ExternalProject_Target(netpbm NETPBM_BLD ${NETPBM_INSTDIR}
-   SHARED ${LIB_DIR}/${NETPBM_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-   STATIC ${LIB_DIR}/${NETPBM_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+ ExternalProject_Target(SHARED netpbm NETPBM_BLD ${NETPBM_INSTDIR}
+   ${NETPBM_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
    RPATH
    )
+ ExternalProject_Target(STATIC netpbm-static NETPBM_BLD ${NETPBM_INSTDIR}
+   ${NETPBM_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+   )
 
- ExternalProject_ByProducts(netpbm NETPBM_BLD ${NETPBM_INSTDIR} ${INCLUDE_DIR}/netpbm ${INCLUDE_DIR}/netpbm
+ ExternalProject_ByProducts(netpbm NETPBM_BLD ${NETPBM_INSTDIR} ${INCLUDE_DIR}/netpbm
    bitio.h
    colorname.h
    pam.h

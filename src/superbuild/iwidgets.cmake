@@ -88,13 +88,13 @@ if (BRLCAD_ENABLE_TK)
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries
-    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
+    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
       iwidgets.tcl
       license.terms
       pkgIndex.tcl
       )
 
-    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}/scripts ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}/scripts
+    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}/scripts
       buttonbox.itk
       calendar.itk
       canvasprintbox.itk

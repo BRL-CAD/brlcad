@@ -36,16 +36,17 @@ if (BRLCAD_BSON_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  file(APPEND "${SUPERBUILD_OUT}" "
-  ExternalProject_Target(bson BSON_BLD
-    OUTPUT_FILE ${BSON_BASENAME}${BSON_SUFFIX}
-    STATIC_OUTPUT_FILE ${BSON_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    SYMLINKS \"${BSON_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX};${BSON_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${BSON_MAJOR_VERSION}\"
-    LINK_TARGET \"${BSON_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}\"
-    STATIC_LINK_TARGET \"${BSON_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}\"
+  ExternalProject_Target(SHARED bson BSON_BLD
+    ${BSON_BASENAME}${BSON_SUFFIX}
+    SYMLINKS "${BSON_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX};${BSON_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${BSON_MAJOR_VERSION}"
+    LINK_TARGET ${BSON_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_ByProducts(BSON_BLD ${INCLUDE_DIR}
+  ExternalProject_Target(STATIC bson-static BSON_BLD
+    ${BSON_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    )
+ 
+  ExternalProject_ByProducts(bson BSON_BLD ${BSON_INSTDIR} ${INCLUDE_DIR}
     libbson-1.0/bson-endian.h
     libbson-1.0/bson-md5.h
     libbson-1.0/bson-value.h
@@ -73,7 +74,6 @@ if (BRLCAD_BSON_BUILD)
     libbson-1.0/bson-config.h
     libbson-1.0/bson-clock.h
     )
-  \n")
 
   list(APPEND BRLCAD_DEPS BSON_BLD)
 

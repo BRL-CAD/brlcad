@@ -54,7 +54,6 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
       DEPENDS ${TCL_TARGET} rpath_replace
       )
 
-    set(SHARED_DIR ${LIB_DIR})
     set(TK_APPINIT tkAppInit.c)
 
   else (NOT MSVC)
@@ -73,33 +72,32 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
       DEPENDS ${TCL_TARGET}
       )
 
-    set(SHARED_DIR ${BIN_DIR})
     set(TK_APPINIT)
 
   endif (NOT MSVC)
 
   # Tell the parent build about files and libraries
-  ExternalProject_Target(tk TK_BLD ${TK_INSTDIR}
-    SHARED ${SHARED_DIR}/${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+  ExternalProject_Target(SHARED tk TK_BLD ${TK_INSTDIR}
+    ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(tkstub TK_BLD ${TK_INSTDIR}
-    STATIC ${LIB_DIR}/${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+  ExternalProject_Target(STATIC tkstub TK_BLD ${TK_INSTDIR}
+    ${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     )
 
-  ExternalProject_Target(wish_exe TK_BLD ${TK_INSTDIR}
-    EXEC ${BIN_DIR}/${TK_WISHNAME}${CMAKE_EXECUTABLE_SUFFIX}
+  ExternalProject_Target(EXEC wish_exe TK_BLD ${TK_INSTDIR}
+    ${TK_WISHNAME}${CMAKE_EXECUTABLE_SUFFIX}
     RPATH
     )
 
   if (NOT MSVC)
-    ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR} ${LIB_DIR}
+    ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}
       tkConfig.sh
       FIXPATH
       )
   endif (NOT MSVC)
 
-  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}
     bgerror.tcl
     button.tcl
     choosedir.tcl
@@ -136,7 +134,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     xmfbox.tcl
     )
 
-  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/images ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/images
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/images
     README
     logo.eps
     logo100.gif
@@ -152,7 +150,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     tai-ku.gif
     )
 
-  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/msgs ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/msgs
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/msgs
     cs.msg
     da.msg
     de.msg
@@ -171,7 +169,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     sv.msg
     )
 
-  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/ttk ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/ttk
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/ttk
     altTheme.tcl
     aquaTheme.tcl
     button.tcl
@@ -198,14 +196,14 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     xpTheme.tcl
     )
 
-  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
+  ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${INCLUDE_DIR}
     tkDecls.h
     tk.h
     tkPlatDecls.h
     )
 
   if (MSVC)
-    ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${INCLUDE_DIR} ${INCLUDE_DIR}
+    ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${INCLUDE_DIR}
       tkIntXlibDecls.h
       X11/ap_keysym.h
       X11/cursorfont.h
@@ -224,11 +222,11 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
   endif (MSVC)
 
   # If something uses the stub, we're going to want the headers, etc. in place
-  add_dependencies(tkstub-static tk_stage)
+  add_dependencies(tkstub tk_stage)
 
   set(TK_LIBRARY tk CACHE STRING "Building bundled tk" FORCE)
   set(TK_LIBRARIES tk CACHE STRING "Building bundled tk" FORCE)
-  set(TK_STUB_LIBRARY tkstub-static CACHE STRING "Building bundled tk" FORCE)
+  set(TK_STUB_LIBRARY tkstub CACHE STRING "Building bundled tk" FORCE)
   #set(TTK_STUB_LIBRARY ttkstub CACHE STRING "Building bundled tk" FORCE)
   set(TK_WISH wish_exe CACHE STRING "Building bundled tk" FORCE)
   set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
