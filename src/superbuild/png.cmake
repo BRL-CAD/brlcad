@@ -41,7 +41,7 @@ if (BRLCAD_PNG_BUILD)
     list(APPEND PNG_DEPS ZLIB_BLD zlib_stage)
   endif (TARGET ZLIB_BLD)
 
-  set(PNG_INSTDIR ${CMAKE_BINARY_DIR}/png)
+  set(PNG_INSTDIR ${CMAKE_BINARY_DIR}/png$<CONFIG>)
 
   ExternalProject_Add(PNG_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/png"

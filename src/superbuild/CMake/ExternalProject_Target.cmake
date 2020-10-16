@@ -53,7 +53,7 @@ function(fcfgcpy outvar extproj root ofile dir tfile)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       add_custom_command(
 	OUTPUT "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${rdir}/${tfile}"
-	COMMAND ${CMAKE_COMMAND} -DSRC="${root}${CFG_TYPE}/${rdir}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/${CFG_TYPE}/${rdir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
+	COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${rdir}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/${CFG_TYPE}/${rdir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
 	DEPENDS ${extproj}
 	)
       set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${rdir}/${tfile}")
@@ -165,15 +165,15 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
       # If we're multiconfig, define properties for each configuration
       set_target_properties(${etarg} PROPERTIES
 	IMPORTED_NO_SONAME_${CFG_TYPE_UPPER} TRUE
-	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${REL_DIR}/${CLINK_TARGET}"
-	IMPORTED_SONAME_${CFG_TYPE_UPPER} "${CLINK_TARGET}"
+	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${REL_DIR}/${LINK_TARGET}"
+	IMPORTED_SONAME_${CFG_TYPE_UPPER} "${LINK_TARGET}"
 	)
 
       # For Windows, IMPORTED_IMPLIB is important for shared libraries.
       # It is that property that will tell a toplevel target what to link against
       # when building - pointing out the dll isn't enough by itself.
       if(ET_SHARED AND MSVC)
-	string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${CLINK_TARGET}")
+	string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${LINK_TARGET}")
 	set_target_properties(${etarg} PROPERTIES
 	  IMPORTED_IMPLIB_${CFG_TYPE_UPPER} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${REL_DIR}/${IMPLIB_FILE}"
 	  )

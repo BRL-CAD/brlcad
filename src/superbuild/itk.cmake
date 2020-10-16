@@ -65,7 +65,7 @@ if (BRLCAD_ENABLE_TK)
       get_filename_component(TKCONF_DIR "${TK_LIBRARY}" DIRECTORY)
     endif (TARGET tk_stage)
 
-    set(ITK_INSTDIR ${CMAKE_BINARY_DIR}/itk3)
+    set(ITK_INSTDIR ${CMAKE_BINARY_DIR}/itk3$<CONFIG>)
 
     if (NOT MSVC)
 

@@ -22,7 +22,7 @@ if (BRLCAD_REGEX_BUILD)
     set(REGEX_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${REGEX_VERSION})
   endif (MSVC)
 
-  set(REGEX_INSTDIR ${CMAKE_BINARY_DIR}/regex)
+  set(REGEX_INSTDIR ${CMAKE_BINARY_DIR}/regex$<CONFIG>)
 
   # Platform differences in default linker behavior make it difficult to
   # guarantee that our libregex symbols will override libc. We'll avoid the
@@ -46,7 +46,7 @@ if (BRLCAD_REGEX_BUILD)
     ${REGEX_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
- 
+
   ExternalProject_ByProducts(regex REGEX_BLD ${REGEX_INSTDIR} ${INCLUDE_DIR}
     regex.h
     )

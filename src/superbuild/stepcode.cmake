@@ -31,7 +31,7 @@ if(BRLCAD_SC_BUILD)
     list(APPEND SC_DEPS perplex_lemon perplex_re2c perplex_perplex)
   endif (TARGET PERPLEX_BLD)
 
-  set(STEPCODE_INSTDIR "${CMAKE_BINARY_DIR}/stepcode")
+  set(STEPCODE_INSTDIR "${CMAKE_BINARY_DIR}/stepcode$<CONFIG>")
 
   ExternalProject_Add(STEPCODE_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stepcode"

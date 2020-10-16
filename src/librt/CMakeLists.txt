@@ -389,7 +389,7 @@ endif(HIDE_INTERNAL_SYMBOLS)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
-add_subdirectory(tests)
+#add_subdirectory(tests)
 
 CMAKEFILES(
   CMakeLists.txt

@@ -73,7 +73,7 @@ if (BRLCAD_ENABLE_TCL)
       get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
     endif (TARGET tcl_stage)
 
-    set(ITCL_INSTDIR ${CMAKE_BINARY_DIR}/itcl3)
+    set(ITCL_INSTDIR ${CMAKE_BINARY_DIR}/itcl3$<CONFIG>)
 
     if (NOT MSVC)
 

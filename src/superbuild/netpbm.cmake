@@ -19,7 +19,7 @@ if (BRLCAD_NETPBM_BUILD)
     set(NETPBM_BASENAME libnetpbm)
   endif (MSVC)
 
-  set(NETPBM_INSTDIR ${CMAKE_BINARY_DIR}/netpbm)
+  set(NETPBM_INSTDIR ${CMAKE_BINARY_DIR}/netpbm$<CONFIG>)
 
   ExternalProject_Add(NETPBM_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/netpbm"

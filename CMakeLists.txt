@@ -254,8 +254,8 @@ BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DAT
 # Set up include paths for generated header files.  For multi-config
 # builds, make sure we get build-specific dirs.
 if(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR})
-  include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR}/brlcad)
+  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR})
+  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad)
 else(CMAKE_CONFIGURATION_TYPES)
   include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
 endif(CMAKE_CONFIGURATION_TYPES)
