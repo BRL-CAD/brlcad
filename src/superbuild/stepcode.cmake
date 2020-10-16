@@ -64,7 +64,7 @@ if(BRLCAD_SC_BUILD)
       RPATH
       )
     foreach(SCLIB ${STEPCODE_LIBS})
-      add_dependencies(${SCEXEC}_exe lib${SCLIB}_stage)
+      add_dependencies(${SCEXEC}_exe_stage lib${SCLIB}_stage)
     endforeach(SCLIB ${STEPCODE_LIBS})
   endforeach(SCEXEC ${STEPCODE_EXECS})
 
