@@ -81,6 +81,11 @@ function(std_build_rpath)
 
   # Done - let the parent know what the answers are
   set(CMAKE_BUILD_RPATH "${CMAKE_BUILD_RPATH}" PARENT_SCOPE)
+
+  # Set the final install rpath
+  relative_rpath(RELPATH)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}" PARENT_SCOPE)
+
 endfunction(std_build_rpath)
 
 #---------------------------------------------------------------------
@@ -210,6 +215,10 @@ function(ext_build_rpath)
 
   # Done - let the parent know what the answers are
   set(CMAKE_BUILD_RPATH "${BUILD_RPATH}" PARENT_SCOPE)
+
+  # Set the final install rpath
+  relative_rpath(RELPATH)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}" PARENT_SCOPE)
 
 endfunction(ext_build_rpath)
 
