@@ -123,7 +123,7 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
 endfunction(ExternalProject_ByProducts)
 
 
-function(ET_target_props etarg IMPORT_PREFIX LINK_TARGET)
+function(ET_target_props etarg REL_DIR LINK_TARGET)
 
   cmake_parse_arguments(ET "SHARED" "LINK_TARGET_DEBUG" "" ${ARGN})
 
@@ -136,7 +136,7 @@ function(ET_target_props etarg IMPORT_PREFIX LINK_TARGET)
     set_property(TARGET ${etarg} APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
     set_target_properties(${etarg} PROPERTIES
       IMPORTED_NO_SONAME TRUE
-      IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${LINK_TARGET}"
+      IMPORTED_LOCATION_NOCONFIG "${CMAKE_BINARY_DIR}/${REL_DIR}/${LINK_TARGET}"
       IMPORTED_SONAME_NOCONFIG "${LINK_TARGET}"
       )
 
@@ -146,7 +146,7 @@ function(ET_target_props etarg IMPORT_PREFIX LINK_TARGET)
     if(ET_SHARED AND MSVC)
       string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${LINK_TARGET}")
       set_target_properties(${etarg} PROPERTIES
-	IMPORTED_IMPLIB_NOCONFIG "${IMPORT_PREFIX}/${IMPLIB_FILE}"
+	IMPORTED_IMPLIB_NOCONFIG "${CMAKE_BINARY_DIR}/${REL_DIR}/${IMPLIB_FILE}"
 	)
     endif(ET_SHARED AND MSVC)
 
@@ -165,7 +165,7 @@ function(ET_target_props etarg IMPORT_PREFIX LINK_TARGET)
       # If we're multiconfig, define properties for each configuration
       set_target_properties(${etarg} PROPERTIES
 	IMPORTED_NO_SONAME_${CFG_TYPE_UPPER} TRUE
-	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${CLINK_TARGET}"
+	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${REL_DIR}/${CLINK_TARGET}"
 	IMPORTED_SONAME_${CFG_TYPE_UPPER} "${CLINK_TARGET}"
 	)
 
@@ -175,7 +175,7 @@ function(ET_target_props etarg IMPORT_PREFIX LINK_TARGET)
       if(ET_SHARED AND MSVC)
 	string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${CLINK_TARGET}")
 	set_target_properties(${etarg} PROPERTIES
-	  IMPORTED_IMPLIB_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${IMPLIB_FILE}"
+	  IMPORTED_IMPLIB_${CFG_TYPE_UPPER} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${REL_DIR}/${IMPLIB_FILE}"
 	  )
       endif(ET_SHARED AND MSVC)
 
@@ -317,12 +317,22 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
     add_library(${etarg} SHARED IMPORTED GLOBAL)
 
-    fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${fname})
+    if (MSVC)
+      set(SHARED_DIR ${BIN_DIR})
+    else (MSVC)
+      set(SHARED_DIR ${LIB_DIR})
+    endif (MSVC)
 
+    fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${SHARED_DIR} ${fname})
+
+    # Because we're using LINK_TARGET here rather than fname, we need to take any relative
+    # directories specified in fname and ppend them to SHARED_DIR. (For other cases we are
+    # just feeding fname directly, so there are no such concerns.  TODO - should we just
+    # require relative dirs on all the symlinks instead?
     get_filename_component(LDIR "${fname}" DIRECTORY)
-    ET_target_props(${etarg} "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LDIR}" ${LINK_TARGET} SHARED LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
+    ET_target_props(${etarg} "${SHARED_DIR}/${LDIR}" ${LINK_TARGET} SHARED LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
 
-    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${fname}" DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${E_SUBDIR})
+    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${SHARED_DIR}/${fname}" DESTINATION ${SHARED_DIR}/${E_SUBDIR})
 
     # Let CMake know there is a target dependency here, despite this being an import target
     add_dependencies(${etarg} ${extproj})
@@ -332,13 +342,13 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
       # Perform RPath magic
       if (E_RPATH)
-	ET_RPath("${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${fname}")
+	ET_RPath("${CMAKE_INSTALL_PREFIX}/${SHARED_DIR}/${fname}")
       endif (E_RPATH)
 
       # Add install rules for any symlinks the caller has listed
       foreach(slink ${E_SYMLINKS})
-	fcfgcpy(TOUT ${extproj} ${extroot} ${slink} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${slink})
-	install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${slink}" DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${E_SUBDIR})
+	fcfgcpy(TOUT ${extproj} ${extroot} ${slink} ${SHARED_DIR} ${slink})
+	install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${SHARED_DIR}/${slink}" DESTINATION ${SHARED_DIR}/${E_SUBDIR})
       endforeach(slink ${E_SYMLINKS})
 
     endif (NOT MSVC)
@@ -350,10 +360,10 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
     add_library(${etarg} STATIC IMPORTED GLOBAL)
 
-    fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} ${fname})
+    fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${LIB_DIR} ${fname})
 
-    ET_target_props(${etarg} "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}" ${fname} STATIC LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
-    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${fname}" DESTINATION ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${E_SUBDIR})
+    ET_target_props(${etarg} "${LIB_DIR}" ${fname} STATIC LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
+    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${fname}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
 
     # Let CMake know there is a target dependency here, despite this being an import target
     add_dependencies(${etarg} ${extproj})
@@ -363,8 +373,8 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
       # Add install rules for any symlinks the caller has listed
       foreach(slink ${E_SYMLINKS})
-	fcfgcpy(TOUT ${extproj} ${extroot} ${slink} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} ${slink})
-	install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${slink}" DESTINATION ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
+	fcfgcpy(TOUT ${extproj} ${extroot} ${slink} ${LIB_DIR} ${slink})
+	install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${slink}" DESTINATION ${LIB_DIR})
       endforeach(slink ${E_SYMLINKS})
 
     endif (NOT MSVC)
@@ -376,25 +386,25 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
     add_executable(${etarg} IMPORTED GLOBAL)
 
-    fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ${fname})
-    
-    ET_target_props(${etarg} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" ${fname})
+    fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${BIN_DIR} ${fname})
 
-    install(PROGRAMS "${CMAKE_BINARY_DIR}/$<CONFIG>/${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${fname}" DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${E_SUBDIR})
+    ET_target_props(${etarg} "${BIN_DIR}" ${fname})
+
+    install(PROGRAMS "${CMAKE_BINARY_DIR}/$<CONFIG>/${BIN_DIR}/${fname}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
 
     # Let CMake know there is a target dependency here, despite this being an import target
     add_dependencies(${etarg} ${extproj})
 
     # additional (non-MSVC) work specific to shared libraries:
     if (NOT MSVC)
- 
+
       # Perform RPath magic
       if (E_RPATH)
-	ET_RPath("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${fname}")
+	ET_RPath("${CMAKE_INSTALL_PREFIX}/${BIN_DIR}/${fname}")
       endif (E_RPATH)
 
     endif (NOT MSVC)
-  
+
   endif ("${etype}" STREQUAL "EXEC")
 
   # Set up the staging targets - these copy the files we are interested in from the
