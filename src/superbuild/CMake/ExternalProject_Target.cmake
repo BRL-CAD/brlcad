@@ -241,7 +241,7 @@ function(ET_RPath OFILE)
   # https://stackoverflow.com/a/48487133
   install(CODE "
   file(RPATH_CHANGE
-    FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFINAL}\"
+    FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\"
     OLD_RPATH \"${CMAKE_BUILD_RPATH}\"
     NEW_RPATH \"${NEW_RPATH}\")
   ")
@@ -342,7 +342,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
       # Perform RPath magic
       if (E_RPATH)
-	ET_RPath("${CMAKE_INSTALL_PREFIX}/${SHARED_DIR}/${fname}")
+	ET_RPath("${SHARED_DIR}/${fname}")
       endif (E_RPATH)
 
       # Add install rules for any symlinks the caller has listed
@@ -400,7 +400,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
       # Perform RPath magic
       if (E_RPATH)
-	ET_RPath("${CMAKE_INSTALL_PREFIX}/${BIN_DIR}/${fname}")
+	ET_RPath("${BIN_DIR}/${fname}")
       endif (E_RPATH)
 
     endif (NOT MSVC)
