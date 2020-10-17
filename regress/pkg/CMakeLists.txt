@@ -13,6 +13,7 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/regress-pkg.log)
 
 CMAKEFILES(
   CMakeLists.txt
+  regress-pkg.cmake.in
   )
 # Local Variables:
 # tab-width: 8

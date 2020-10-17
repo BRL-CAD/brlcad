@@ -80,6 +80,7 @@ set(cmake_ignore_files
   compat/test_strtok_r.c
   configure_prefix.sh
   configure_suffix.sh
+  date_delta.cpp
   distcheck_in_src_dir.cmake.in
   distcheck_no_tcl.cmake.in
   distcheck_repo_verify.cmake.in

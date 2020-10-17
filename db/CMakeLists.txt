@@ -57,6 +57,7 @@ function(ADD_G_TARGET in_model folder)
     set(OUTPUT_FILE "${output_file}")
     # Use the model name for the script, since the output file is specific to this input
     configure_file("${CMAKE_SOURCE_DIR}/db/conv_run.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
 
     # Define the target
     add_custom_command(
@@ -226,12 +227,13 @@ CMAKEFILES(
   ${G_SAMPLE_MODELS}
   CMakeLists.txt
   aet.rt
+  conv_run.cmake.in
   cornell.rt
   cube.rt
   db.php
   include/ctype.inc
   include/debug.inc
-)
+  )
 
 # Local Variables:
 # tab-width: 8

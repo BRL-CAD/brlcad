@@ -1104,12 +1104,15 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     /* Match anything that doesn't define a 2D or 3D shape - unfortunately, this list will have to
      * be updated manually unless/until some functionality is added to generate it */
     if (!bu_path_match(plan->p_un._type_data, "shape", 0) &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_DATUM &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SUBMODEL
 	) {
 	type_match = 1;
     }
@@ -1131,6 +1134,36 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		break;
 	}
     }
+
+    if (!bu_path_match(plan->p_un._type_data, "volume", 0) &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_DATUM &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SUBMODEL &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SKETCH) {
+	switch (intern.idb_minor_type) {
+	    case DB5_MINORTYPE_BRLCAD_BOT:
+		bot_ip = (struct rt_bot_internal *)intern.idb_ptr;
+		if (bot_ip->mode == RT_BOT_SOLID) {
+		    type_match = 1;
+		}
+		break;
+	    case DB5_MINORTYPE_BRLCAD_BREP:
+		if (!rt_brep_plate_mode(&intern)) {
+		    type_match = 1;
+		}
+		break;
+	    default:
+		type_match = 1;
+		break;
+	}
+    }
+
 
     rt_db_free_internal(&intern);
 

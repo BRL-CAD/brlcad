@@ -60,6 +60,7 @@ endif("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUA
 foreach(pkgfile ${pkgconfig_DATA})
   string(REGEX REPLACE "([0-9a-z_-]*).pc.in" "\\1" filename_root "${pkgfile}")
   configure_file(${pkgfile} ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc @ONLY)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc DESTINATION ${LIB_DIR}/pkgconfig)
 endforeach(pkgfile ${pkgconfig_DATA})
 

@@ -584,6 +584,15 @@ d2.r
 	    object whose internal definition indiciates it is of that type.  Currently
 	    such objects are possible with "bot" and "brep" objects.
 	  </para>
+	  <para>
+	    The the pattern <emphasis remap="B">volume</emphasis> can be used as a mirror
+	    of plate, in that it will report objects that clearly define a non-implicit
+	    solid volume.  Its determination is local - for example, combs aren't matched
+	    because a comb may be made up of non-volumetric objects.  In particular,
+	    plate mode objects will not match because their volume is implicit, and
+	    (for example) surface mode BoTs will not match because they don't define a
+	    volume.
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>

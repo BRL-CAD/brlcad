@@ -39,7 +39,7 @@
 # ******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14)
 
 # set CMake project name
 project(BRLCAD)
@@ -220,13 +220,6 @@ endif("${CMAKE_GENERATOR}" MATCHES "Make")
 if("${CMAKE_GENERATOR}" MATCHES "Ninja")
   set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} build.ninja rules.ninja)
 endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
-
-#---------------------------------------------------------------------
-# For a variety of reasons, we often need to wrap existing CMake
-# commands to add our own logic.
-if(NOT BRLCAD_IS_SUBBUILD)
-  include(BRLCAD_Command_Wrappers)
-endif(NOT BRLCAD_IS_SUBBUILD)
 
 #---------------------------------------------------------------------
 # CMake's default "make test" target is a bit limited - define
@@ -2141,82 +2134,97 @@ endif(NOT BRLCAD_DISABLE_SUMMARY)
 # ***                      Timestamp Rules                        ***
 # *******************************************************************
 # Set up rules to print a timestamp string during build
-if(NOT BRLCAD_IS_SUBBUILD)
+set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
 
-  set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
-
-  add_custom_command(
+add_custom_command(
     OUTPUT ${BUILD_DELTA_START}
     COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${BUILD_DELTA_START} -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake"
     COMMENT ""
     )
-  add_custom_target(timestamp ALL
+add_custom_target(timestamp ALL
     COMMAND "${CMAKE_COMMAND}" -DMSG=\"Build Time:\" -P "${BRLCAD_CMAKE_DIR}/scripts/printtime.cmake"
     DEPENDS ${BUILD_DELTA_START}
     )
-  set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
-  add_custom_target(buildtimedelta ALL
+set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
+add_custom_target(buildtimedelta ALL
     COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT} final ${BUILD_DELTA_START} ${CONFIG_DELTA_START}
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
     )
-  set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
+set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 
-  # We want the timestamp to come first, so make ALL targets, depend on
-  # timestamp.  Similarly, buildtimedelta needs to depend on every target
-  # not excluded from the default build list.
+#------------------------------------------------------------------------------
+# We want the timestamp to come first, so make all targets depend on timestamp.
+# Similarly, buildtimedelta needs to depend on every target not excluded from
+# the default build list.  Doing this without function overrides for
+# bookkeeping drives a minimum CMake version requirement of 3.7, in order to
+# get the SUBDIRECTORIES and BUILDSYTEM_TARGETS properties.
 
-  # Libraries and executables are fairly straightforward
-  get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
-  get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
-  mark_as_advanced(CMAKE_LIBRARY_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXEC_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_LIBRARY_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_EXEC_TARGET_LIST)
-  foreach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
-    if(TARGET ${ctarget})
-      add_dependencies(${ctarget} timestamp)
-      get_target_property(not_in_all ${ctarget} EXCLUDE_FROM_ALL)
-      get_target_property(not_in_default ${ctarget} EXCLUDE_FROM_DEFAULT_BUILD)
-      if(NOT not_in_all AND NOT not_in_default)
-	add_dependencies(buildtimedelta ${ctarget})
-      endif(NOT not_in_all AND NOT not_in_default)
-    endif(TARGET ${ctarget})
-  endforeach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
+# First, use the SUBDIRECTORIES property to build up a list of all
+# active directories in CMake:
+# https://cmake.org/cmake/help/latest/prop_dir/SUBDIRECTORIES.html
+#
+# We do this because we need to use get_property on them, and get_property will
+# produce an error if we give it a non-CMake processed directory.  As a side
+# benefit, it should also be considerably faster than using FILE_GLOB and
+# trying to trim down the results.
+set(ALL_DIRS)
+get_property(SUBDIRS DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY SUBDIRECTORIES)
+while(SUBDIRS)
+  # TODO - once we require 3.15.7 or greater, use list(POP_FRONT) for this...
+  list(GET SUBDIRS 0 CDIR)
+  list(REMOVE_AT SUBDIRS 0)
+  set(ALL_DIRS ${ALL_DIRS} ${CDIR})
+  get_property(CSUBDIRS DIRECTORY "${CDIR}" PROPERTY SUBDIRECTORIES)
+  set(SUBDIRS ${SUBDIRS} ${CSUBDIRS})
+endwhile(SUBDIRS)
 
-  # For the custom targets, we need to avoid circular dependencies
-  get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
-  mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_CUSTOM_TARGET_LIST)
-  foreach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
-    if(NOT ${custtarget} MATCHES "timestamp")
-      add_dependencies(${custtarget} timestamp)
-    endif(NOT ${custtarget} MATCHES "timestamp")
-    if(NOT ${custtarget} MATCHES "buildtimedelta")
-      get_target_property(not_in_all ${custtarget} EXCLUDE_FROM_ALL)
-      get_target_property(not_in_default ${custtarget} EXCLUDE_FROM_DEFAULT_BUILD)
-      if(NOT not_in_all AND NOT not_in_default)
-	add_dependencies(buildtimedelta ${custtarget})
-      endif(NOT not_in_all AND NOT not_in_default)
-    endif(NOT ${custtarget} MATCHES "buildtimedelta")
-  endforeach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
+# Next, for all active directories, collect the list of targets using the
+# BUILDSYSTEM_TARGETS property set on each directory.
 
-  # Theoretical logic to handle external targets - not currently in use
-  get_property(CMAKE_EXTERNAL_TARGET_LIST GLOBAL PROPERTY CMAKE_EXTERNAL_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXTERNAL_TARGET_LIST)
-  if(CMAKE_EXTERNAL_TARGET_LIST)
-    list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
-  endif(CMAKE_EXTERNAL_TARGET_LIST)
-  foreach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
-    get_target_property(target_confcmd ${externaltarget} _EP_CONFIGURE_COMMAND)
-    if(target_confcmd)
-      add_dependencies(${externaltarget} timestamp)
-      add_dependencies(buildtimedelta ${externaltarget})
-    endif(target_confcmd)
-  endforeach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
+# Iterate over all the SUBDIRECTORIES identified directories to build up the
+# comprehensive set.  As target names are unique, we don't need to worry about
+# removing duplicates.  Because we're using the set of all active directories
+# assembled above, this should collect all build targets we need to care about
+# for timestamping purposes.
+set(ALL_TARGETS)
+foreach(ad ${ALL_DIRS})
+  get_property(DIR_TARGETS DIRECTORY "${ad}" PROPERTY BUILDSYSTEM_TARGETS SET)
+  if (DIR_TARGETS)
+    get_property(DIR_TARGETS DIRECTORY "${ad}" PROPERTY BUILDSYSTEM_TARGETS)
+    set(ALL_TARGETS ${ALL_TARGETS} ${DIR_TARGETS})
+  endif (DIR_TARGETS)
+endforeach(ad ${ALL_DIRS})
 
-endif(NOT BRLCAD_IS_SUBBUILD)
+# Now, set up the target dependencies for tiemstamp and buildtimedelta.  These
+# dependencies will produce a build-tool-independent ordering that gives us the
+# timing behavior we want.
+foreach(ctarget ${ALL_TARGETS})
+  if(NOT ${ctarget} MATCHES "timestamp")
+    add_dependencies(${ctarget} timestamp)
+  endif(NOT ${ctarget} MATCHES "timestamp")
+  if(NOT ${ctarget} MATCHES "buildtimedelta")
+    get_target_property(not_in_all ${ctarget} EXCLUDE_FROM_ALL)
+    get_target_property(not_in_default ${ctarget} EXCLUDE_FROM_DEFAULT_BUILD)
+    if(NOT not_in_all AND NOT not_in_default)
+      add_dependencies(buildtimedelta ${ctarget})
+    endif(NOT not_in_all AND NOT not_in_default)
+  endif(NOT ${ctarget} MATCHES "buildtimedelta")
+endforeach(ctarget ${ALL_TARGETS})
 
+#------------------------------------------------------------------------------
+# Use the set of all directories assembled above to also set up distclean rules.
+# This eliminates the need to override add_subdirectory.  Needs CMake 3.7 for
+# BINARY_DIR property.
+foreach(ad ${ALL_DIRS})
+  get_property(BDIR DIRECTORY "${ad}" PROPERTY BINARY_DIR)
+  DISTCLEAN("${BDIR}/CMakeFiles")
+  DISTCLEAN("${BDIR}/cmake_install.cmake")
+  foreach(clearpattern ${DISTCLEAN_OUTFILES})
+    DISTCLEAN("${BDIR}/${clearpattern}")
+  endforeach(clearpattern ${DISTCLEAN_OUTFILES})
+endforeach(ad ${ALL_DIRS})
 
+#------------------------------------------------------------------------------
 # To set correct install paths for CMake at build time, rather than CMake
 # time, some rather special logic is necessary - a build target that needs
 # to be run when the current build type changes, and introspective scripting
@@ -2235,7 +2243,9 @@ if(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
   # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
   string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
   configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake")
   configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake")
   if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
     file(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
   endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
@@ -2260,6 +2270,7 @@ endif(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
 if(NOT BRLCAD_IS_SUBBUILD)
 
   configure_file("${BRLCAD_CMAKE_DIR}/source_archive_setup.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake")
 
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
   set(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
@@ -2403,9 +2414,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 
   configure_file("${BRLCAD_CMAKE_DIR}/BRLCAD_CPackOptions.cmake.in" "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
   set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 
   include(CPack)
+
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackConfig.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackSourceConfig.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/DartConfiguration.tcl")
 
   # Some files to ignore for distcheck.  For this case
   # only, we add CMakeLists.txt (others are handled
@@ -2544,6 +2560,7 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file("${BRLCAD_CMAKE_DIR}/distclean.cmake.in" "${BRLCAD_BINARY_DIR}/distclean.cmake" @ONLY)
+DISTCLEAN("${BRLCAD_BINARY_DIR}/distclean.cmake")
 if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_custom_target(distclean
     COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"

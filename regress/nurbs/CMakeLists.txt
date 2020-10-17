@@ -37,9 +37,10 @@ BRLCAD_REGRESSION_TEST(regress-nurbs_${NHIT_NAME} "analyze_nhit" TEST_SCRIPT "${
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/regress-nurbs_${NHIT_NAME}.log)
 
 CMAKEFILES(
-  brep-3dm.tar.bz2
-  sph.g
   CMakeLists.txt
+  brep-3dm.tar.bz2
+  regress-nurbs-test.cmake.in
+  sph.g
   )
 
 # Local Variables:

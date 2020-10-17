@@ -1,5 +1,6 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/attributes.xml.in
   ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml COPYONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/attributes.xml")
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/attr_std_table.xml
@@ -35,7 +36,10 @@ set(man5_EN
 set(attribute_DEPS attr_std_list_xml attr_std_table_xml)
 
 ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN man5 "${attribute_DEPS}")
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  attributes.xml.in
+  )
 
 # Local Variables:
 # tab-width: 8

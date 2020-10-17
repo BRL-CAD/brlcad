@@ -51,10 +51,8 @@ endforeach(srcfile ${bu_test_srcs})
 
 # Generate bu_test.c file and build it
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
-set(SUPPRESS_GENERATED_TAG ON)
 configure_file(bu_test.c.in "${CMAKE_CURRENT_BINARY_DIR}/bu_test.c" @ONLY)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/bu_test.c")
-set(SUPPRESS_GENERATED_TAG OFF)
 BRLCAD_ADDEXEC(bu_test "${CMAKE_CURRENT_BINARY_DIR}/bu_test.c" libbu TEST)
 
 # Housekeeping for included source files
@@ -743,18 +741,18 @@ add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 add_subdirectory(dylib)
 
 CMAKEFILES(
-  tests_bitv.cmake
-  tests_vls.cmake
-  dylib/README.txt
+  CMakeLists.txt
+  bu_test.c.in
   dylib/CMakeLists.txt
+  dylib/README.txt
+  dylib/dylib.c
+  dylib/dylib.h
   dylib/plugin_1.cpp
   dylib/plugin_2.cpp
-  dylib/dylib.c
   dylib/run.c
-  dylib/dylib.h
+  tests_bitv.cmake
+  tests_vls.cmake
   )
-
-CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

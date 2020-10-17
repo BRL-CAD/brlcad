@@ -74,14 +74,15 @@
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #  pragma GCC diagnostic ignored "-Wunused-parameter"
 #  pragma GCC diagnostic ignored "-Wpedantic"
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
 #  pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#  if (__GNUC__ >= 8)
+#    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  endif
 #endif
 #if defined(__clang__)
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #  pragma clang diagnostic ignored "-Wunused-parameter"
 #  pragma clang diagnostic ignored "-Wpedantic"
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
 #  pragma clang diagnostic ignored "-Wignored-qualifiers"
 #endif
 
