@@ -95,6 +95,8 @@ set(cmake_ignore_files
   multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
+  scripts/timestamp.cmake
+  scripts/printtime.cmake
   )
 CMAKEFILES(${cmake_ignore_files})
 

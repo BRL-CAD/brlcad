@@ -146,13 +146,14 @@ record_cmdline_args()
 #---------------------------------------------------------------------
 # Set up the necessary support for timing of the configuration and
 # build processes
-set_config_time()
-generate_sstamp()
+string(TIMESTAMP CONFIG_DATE "%Y%m%d")
+string(TIMESTAMP CONFIG_DATESTAMP "%a, %d %b %Y %H:%M:%S UTC" UTC)
 
 #---------------------------------------------------------------------
 # Mark the time at which the configuration process began.
+
 set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
-execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
+execute_process(COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${CONFIG_DELTA_START} -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake")
 
 #------------------------------------------------------------------------------
 # The SuperBuild (https://blog.kitware.com/cmake-superbuilds-git-submodules/)
@@ -3208,28 +3209,23 @@ endif(NOT BRLCAD_DISABLE_SUMMARY)
 # *******************************************************************
 # ***                      Timestamp Rules                        ***
 # *******************************************************************
-# TODO - As of CMake 2.8.11, the string command has a TIMESTAMP option
-# that may be able to simplify some of the current timestamp system.
-# We would need to be able to require 2.8.11 or newer, so there will
-# be a bit of a wait, but it's something to look into.
-
 # Set up rules to print a timestamp string during build
 set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
 
 add_custom_command(
-  OUTPUT ${BUILD_DELTA_START}
-  COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT} "${BUILD_DELTA_START}"
-  COMMENT ""
-  )
+    OUTPUT ${BUILD_DELTA_START}
+    COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${BUILD_DELTA_START} -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake"
+    COMMENT ""
+    )
 add_custom_target(timestamp ALL
-  COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts${EXE_EXT} \"Build Time:  \"
-  DEPENDS ${BUILD_DELTA_START}
-  )
+    COMMAND "${CMAKE_COMMAND}" -DMSG=\"Build Time:\" -P "${BRLCAD_CMAKE_DIR}/scripts/printtime.cmake"
+    DEPENDS ${BUILD_DELTA_START}
+    )
 set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
 add_custom_target(buildtimedelta ALL
-  COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT} final ${BUILD_DELTA_START} ${CONFIG_DELTA_START}
-  COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
-  )
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT} final ${BUILD_DELTA_START} ${CONFIG_DELTA_START}
+    COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
+    )
 set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 
 #------------------------------------------------------------------------------
