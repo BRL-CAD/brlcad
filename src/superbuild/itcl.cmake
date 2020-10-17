@@ -143,6 +143,10 @@ if (BRLCAD_ENABLE_TCL)
     set(ITCL_LIBRARY itcl CACHE STRING "Building bundled itcl" FORCE)
     set(ITCL_LIBRARIES itcl CACHE STRING "Building bundled itcl" FORCE)
 
+    if (TARGET tcl_stage)
+      add_dependencies(itcl_stage tcl_stage)
+    endif (TARGET tcl_stage)
+
     SetTargetFolder(ITCL_BLD "Third Party Libraries")
 
   else (BUILD_ITCL)

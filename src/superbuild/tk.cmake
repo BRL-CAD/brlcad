@@ -224,6 +224,10 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
   # If something uses the stub, we're going to want the headers, etc. in place
   add_dependencies(tkstub tk_stage)
 
+  if (TARGET tcl_stage)
+    add_dependencies(tk_stage tcl_stage)
+  endif (TARGET tcl_stage)
+
   set(TK_LIBRARY tk CACHE STRING "Building bundled tk" FORCE)
   set(TK_LIBRARIES tk CACHE STRING "Building bundled tk" FORCE)
   set(TK_STUB_LIBRARY tkstub CACHE STRING "Building bundled tk" FORCE)

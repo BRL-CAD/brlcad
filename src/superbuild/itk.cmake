@@ -126,6 +126,14 @@ if (BRLCAD_ENABLE_TK)
     set(ITK_LIBRARY itk CACHE STRING "Building bundled itcl" FORCE)
     set(ITK_LIBRARIES itk CACHE STRING "Building bundled itcl" FORCE)
 
+    if (TARGET itcl_stage)
+      add_dependencies(itk_stage itcl_stage)
+    endif (TARGET itcl_stage)
+
+    if (TARGET tk_stage)
+      add_dependencies(itk_stage tk_stage)
+    endif (TARGET tk_stage)
+
     SetTargetFolder(ITK_BLD "Third Party Libraries")
 
   else (DO_ITK_BUILD)
