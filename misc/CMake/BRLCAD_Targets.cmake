@@ -433,6 +433,10 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   # If we need it, set up the OBJECT library build
   if(USE_OBJECT_LIBS)
     add_library(${libname}-obj OBJECT ${lsrcslist})
+    if(${libname} MATCHES "^lib*")
+      set_target_properties(${libname}-obj PROPERTIES PREFIX "")
+    endif(${libname} MATCHES "^lib*")
+
     set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
 
@@ -458,6 +462,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
+    if(${libname} MATCHES "^lib*")
+      set_target_properties(${libname} PROPERTIES PREFIX "")
+    endif(${libname} MATCHES "^lib*")
 
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
@@ -476,6 +483,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set(libstatic ${libname}-static)
     endif(L_STATIC)
     add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
+    if(${libstatic} MATCHES "^lib*")
+      set_target_properties(${libstatic} PROPERTIES PREFIX "")
+    endif(${libstatic} MATCHES "^lib*")
 
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libstatic} PRIVATE BRLCADBUILD HAVE_CONFIG_H)

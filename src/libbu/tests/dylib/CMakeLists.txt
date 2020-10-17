@@ -32,6 +32,7 @@ foreach (target_name ${plugin_targets})
 endforeach (target_name${plugins})
 
 add_library(libdylib SHARED dylib.c)
+set_target_properties(libdylib PROPERTIES PREFIX "")
 if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
   set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)

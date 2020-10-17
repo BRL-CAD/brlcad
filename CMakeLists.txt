@@ -366,17 +366,6 @@ endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
 if(NOT BRLCAD_IS_SUBBUILD)
 
-  # Override and wrap add_library.  Avoid doubling up on the lib prefix for
-  # libraries if the target name is lib<target>.
-  #
-  # TODO - move this to BRLCAD_ADDLIB, avoid the redefinition
-  function(add_library name)
-    _add_library(${name} ${ARGN})
-    if(${name} MATCHES "^lib*")
-      set_target_properties(${name} PROPERTIES PREFIX "")
-    endif(${name} MATCHES "^lib*")
-  endfunction(add_library)
-
   # Override and wrap configure_file.  In the case of configure_file, we'll
   # check that the file is part of the source tree and not itself a
   # generated file, but not reject full-path entries since there are quite a
