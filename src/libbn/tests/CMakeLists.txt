@@ -1137,10 +1137,13 @@ add_test(NAME bn_vlist_cmd_cnt_15 COMMAND bn_test vlist 15)
 add_test(NAME bn_vlist_cmd_cnt_45 COMMAND bn_test vlist 45)
 add_test(NAME bn_vlist_cmd_cnt_500 COMMAND bn_test vlist 500)
 
-
-CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c)
-CMAKEFILES(bntester.dat)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  bntester.dat
+  bn_test.c.in
+  poly_cubic_roots.c
+  poly_quartic_roots.c
+  )
 
 # Local Variables:
 # tab-width: 8

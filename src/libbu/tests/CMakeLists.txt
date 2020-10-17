@@ -740,18 +740,18 @@ add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 add_subdirectory(dylib)
 
 CMAKEFILES(
-  tests_bitv.cmake
-  tests_vls.cmake
-  dylib/README.txt
+  CMakeLists.txt
+  bu_test.c.in
   dylib/CMakeLists.txt
+  dylib/README.txt
+  dylib/dylib.c
+  dylib/dylib.h
   dylib/plugin_1.cpp
   dylib/plugin_2.cpp
-  dylib/dylib.c
   dylib/run.c
-  dylib/dylib.h
+  tests_bitv.cmake
+  tests_vls.cmake
   )
-
-CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

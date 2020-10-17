@@ -226,12 +226,13 @@ CMAKEFILES(
   ${G_SAMPLE_MODELS}
   CMakeLists.txt
   aet.rt
+  conv_run.cmake.in
   cornell.rt
   cube.rt
   db.php
   include/ctype.inc
   include/debug.inc
-)
+  )
 
 # Local Variables:
 # tab-width: 8
