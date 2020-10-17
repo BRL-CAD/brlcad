@@ -415,26 +415,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(NOT ${targetfile} MATCHES "distclean")
   endfunction(configure_file)
 
-  # Override and wrap add_subdirectory.
-  function(add_subdirectory name)
-    _add_subdirectory(${name} ${ARGN})
-
-    # TODO - try to come up with some good way to do this bookkeeping without
-    # having to override add_subdirectory...
-    #
-    # see https://cmake.org/pipermail/cmake-developers/2015-July/025730.html
-    # for some work related to this...  the SOURCE_DIR and SOURCES properties
-    # went in in CMake 3.4.  Once we can require that as a minimum version, we
-    # can probably revisit at least part of this by getting a list of source
-    # directories for all targets at the end of the build and setting
-    # properties then.
-    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/CMakeFiles")
-    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_install.cmake")
-    foreach(clearpattern ${DISTCLEAN_OUTFILES})
-      DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/${clearpattern}")
-    endforeach(clearpattern ${DISTCLEAN_OUTFILES})
-  endfunction(add_subdirectory)
-
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 # "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
@@ -3310,27 +3290,25 @@ endif(NOT BRLCAD_DISABLE_SUMMARY)
 # that may be able to simplify some of the current timestamp system.
 # We would need to be able to require 2.8.11 or newer, so there will
 # be a bit of a wait, but it's something to look into.
-if(NOT BRLCAD_IS_SUBBUILD)
 
-  # Set up rules to print a timestamp string during build
-  set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
+# Set up rules to print a timestamp string during build
+set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
 
-  add_custom_command(
-    OUTPUT ${BUILD_DELTA_START}
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT} "${BUILD_DELTA_START}"
-    COMMENT ""
-    )
-  add_custom_target(timestamp ALL
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts${EXE_EXT} \"Build Time:  \"
-    DEPENDS ${BUILD_DELTA_START}
-    )
-  set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
-  add_custom_target(buildtimedelta ALL
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT} final ${BUILD_DELTA_START} ${CONFIG_DELTA_START}
-    COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
-    )
-  set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
-endif(NOT BRLCAD_IS_SUBBUILD)
+add_custom_command(
+  OUTPUT ${BUILD_DELTA_START}
+  COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT} "${BUILD_DELTA_START}"
+  COMMENT ""
+  )
+add_custom_target(timestamp ALL
+  COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts${EXE_EXT} \"Build Time:  \"
+  DEPENDS ${BUILD_DELTA_START}
+  )
+set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
+add_custom_target(buildtimedelta ALL
+  COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT} final ${BUILD_DELTA_START} ${CONFIG_DELTA_START}
+  COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
+  )
+set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 
 #------------------------------------------------------------------------------
 # We want the timestamp to come first, so make all targets depend on timestamp.
@@ -3390,6 +3368,19 @@ foreach(ctarget ${ALL_TARGETS})
     endif(NOT not_in_all AND NOT not_in_default)
   endif(NOT ${ctarget} MATCHES "buildtimedelta")
 endforeach(ctarget ${ALL_TARGETS})
+
+#------------------------------------------------------------------------------
+# Use the set of all directories assembled above to also set up distclean rules.
+# This eliminates the need to override add_subdirectory.  Needs CMake 3.7 for
+# BINARY_DIR property.
+foreach(ad ${ALL_DIRS})
+  get_property(BDIR DIRECTORY "${ad}" PROPERTY BINARY_DIR)
+  DISTCLEAN("${BDIR}/CMakeFiles")
+  DISTCLEAN("${BDIR}/cmake_install.cmake")
+  foreach(clearpattern ${DISTCLEAN_OUTFILES})
+    DISTCLEAN("${BDIR}/${clearpattern}")
+  endforeach(clearpattern ${DISTCLEAN_OUTFILES})
+endforeach(ad ${ALL_DIRS})
 
 #------------------------------------------------------------------------------
 # To set correct install paths for CMake at build time, rather than CMake
