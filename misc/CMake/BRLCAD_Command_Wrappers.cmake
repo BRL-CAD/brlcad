@@ -1,3 +1,17 @@
+# TODO:  3.7 has a new property that may help eliminate the need to
+# do the wrappers below (wrapping CMake functions in this manner
+# is officially discouraged, it causes problems..)
+#
+# https://cmake.org/cmake/help/latest/prop_dir/BUILDSYSTEM_TARGETS.html#prop_dir:BUILDSYSTEM_TARGETS
+#
+# Between that and a couple other notes below, we may be able to
+# eliminate most of the wrappers now.  configure_file we may need
+# to turn into our own function, but if we're managing external
+# build systems with ExternalProject_Add now that becomes more
+# practical.  Worth doing to get us grounded on officially
+# supported CMake features.
+
+
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to
 # global lists of executable and library targets.  This is useful
@@ -46,10 +60,7 @@
     endif(${name} MATCHES "^lib*")
 
     # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
+    # feature in CMake, possibly using BUILDSYSTEM_TARGETS
     set(add_lib_to_list 1)
     foreach(libarg ${ARGN})
       if("${libarg}" STREQUAL "INTERFACE")
@@ -66,10 +77,7 @@
     _add_executable(${name} ${ARGN})
 
     # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
+    # feature in CMake, possibly using BUILDSYSTEM_TARGETS
     set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
   endfunction(add_executable)
 
@@ -78,10 +86,7 @@
     _add_custom_target(${name} ${ARGN})
 
     # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
+    # feature in CMake, possibly using BUILDSYSTEM_TARGETS
     set_property(GLOBAL APPEND PROPERTY CMAKE_CUSTOM_TARGET_LIST ${name})
   endfunction(add_custom_target)
 
