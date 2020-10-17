@@ -23,6 +23,7 @@ if (NOT LEMON_SKIP_INSTALL)
 endif (NOT LEMON_SKIP_INSTALL)
 
 configure_file(lempar.c ${CMAKE_BINARY_DIR}/${DATA_DIR}/lemon COPYONLY)
+DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR}/lemon)
 
 # Local Variables:
 # tab-width: 8

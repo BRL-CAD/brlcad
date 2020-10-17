@@ -258,6 +258,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
       set(CURRENT_TCL_PACKAGE_NAME ${pkgname})
       set(pkg_test_file "${CMAKE_BINARY_DIR}/CMakeTmp/${pkgname}_version.tcl")
       configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/tcltest.tcl.in" ${pkg_test_file} @ONLY)
+      DISTCLEAN("${pkg_test_file}")
       EXEC_PROGRAM(${wishcmd} ARGS ${pkg_test_file} OUTPUT_VARIABLE EXECOUTPUT)
       file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION" pkgversion)
       string(REGEX REPLACE "\n" "" ${PKGNAME_UPPER}_PACKAGE_VERSION ${pkgversion})

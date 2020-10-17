@@ -953,6 +953,7 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
     else (${testname}_TEST_SCRIPT)
       configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${testname}.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake" @ONLY)
     endif (${testname}_TEST_SCRIPT)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
 
     if (TARGET ${${testname}_EXEC})
       add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")

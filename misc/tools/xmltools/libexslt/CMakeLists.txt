@@ -6,6 +6,7 @@ SET(WITH_CRYPTO 0)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exsltconfig.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/../include/libexslt/exsltconfig.h)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../include/libexslt/exsltconfig.h")
 
 SET(libexslt_srcs
   src/common.c

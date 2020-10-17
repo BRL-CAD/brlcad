@@ -3323,7 +3323,9 @@ if(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
   # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
   string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
   configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake")
   configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake")
   if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
     file(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
   endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
@@ -3348,6 +3350,7 @@ endif(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
 if(NOT BRLCAD_IS_SUBBUILD)
 
   configure_file("${BRLCAD_CMAKE_DIR}/source_archive_setup.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake")
 
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
   set(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
@@ -3491,9 +3494,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 
   configure_file("${BRLCAD_CMAKE_DIR}/BRLCAD_CPackOptions.cmake.in" "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
   set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 
   include(CPack)
+
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackConfig.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackSourceConfig.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/DartConfiguration.tcl")
 
   # Some files to ignore for distcheck.  For this case
   # only, we add CMakeLists.txt (others are handled
@@ -3632,6 +3640,7 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file("${BRLCAD_CMAKE_DIR}/distclean.cmake.in" "${BRLCAD_BINARY_DIR}/distclean.cmake" @ONLY)
+DISTCLEAN("${BRLCAD_BINARY_DIR}/distclean.cmake")
 if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_custom_target(distclean
     COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
