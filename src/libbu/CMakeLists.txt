@@ -167,7 +167,7 @@ set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
-#add_subdirectory(tests)
+add_subdirectory(tests)
 
 set(bu_ignore_files
   CMakeLists.txt

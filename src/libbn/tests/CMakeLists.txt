@@ -33,7 +33,10 @@ endforeach(srcfile ${bn_test_srcs})
 
 # Generate bn_test.c file and bnild it
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
+set(SUPPRESS_GENERATED_TAG ON)
 configure_file(bn_test.c.in "${CMAKE_CURRENT_BINARY_DIR}/bn_test.c" @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/bn_test.c")
+set(SUPPRESS_GENERATED_TAG OFF)
 BRLCAD_ADDEXEC(bn_test "${CMAKE_CURRENT_BINARY_DIR}/bn_test.c" libbn TEST)
 
 # Housekeeping for included source files
