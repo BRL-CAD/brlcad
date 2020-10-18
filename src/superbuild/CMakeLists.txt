@@ -55,10 +55,26 @@ set(CMAKE_MODULE_PATH "${BDEPS_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 # and mess up the results...
 set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_INSTALL_PREFIX}")
 
-
 # We will build up a list of all include dirs coming from 3rd party
 # projects, so we can include them with -isystem
 unset(SYS_INCLUDE_PATTERNS CACHE)
+
+# For the individual builds to be done here, we need to target their installs
+# to locations in the CMAKE_BINARY_DIR, which is the only place we can be
+# assured of having write access.  However, for multiconfig build systems, we
+# need to define per-config output targets so each individual config's build
+# won't stomp on the output from other configs.  We also *don't* want to do
+# that for single config builds, where user expectation is that
+# CMAKE_BINARY_DIR is the root for such paths.  The $<CONFIG> generator
+# expression lets us set up per-config paths, but as $<CONFIG> is ALSO defined
+# for non-multiconfig builds when CMAKE_BUILD_TYPE is set we need to define
+# $<CONFIG> based paths ONLY when we have CMAKE_CONFIGURATION_TYPES set
+# (which indicates a multiconfig generator is in use.)
+if (CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BINARY_ROOT "${CMAKE_BINARY_DIR}/$<CONFIG>")
+else (CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BINARY_ROOT "${CMAKE_BINARY_DIR}")
+endif (CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
