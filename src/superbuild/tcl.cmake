@@ -38,7 +38,7 @@ if (BRLCAD_TCL_BUILD)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   endif (NOT TARGET tcl_replace)
 
-  set(TCL_INSTDIR ${CMAKE_BINARY_DIR}/tcl$<CONFIG>)
+  set(TCL_INSTDIR ${CMAKE_BINARY_ROOT}/ext/tcl)
 
   if (NOT MSVC)
 
@@ -54,7 +54,7 @@ if (BRLCAD_TCL_BUILD)
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
       COMMAND tcl_replace ${TCL_REWORK_FILES}
-      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${TCL_INSTDIR}
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_ROOT}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_ROOT}/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${TCL_INSTDIR}
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
       DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
@@ -343,8 +343,8 @@ if (BRLCAD_TCL_BUILD)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_STUB_LIBRARY tclstub CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_TCLSH tclsh_exe CACHE STRING "Building bundled tcl" FORCE)
-  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
-  set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+  set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
 
   SetTargetFolder(TCL_BLD "Third Party Libraries")

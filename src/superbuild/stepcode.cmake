@@ -31,16 +31,16 @@ if(BRLCAD_SC_BUILD)
     list(APPEND SC_DEPS perplex_lemon perplex_re2c perplex_perplex)
   endif (TARGET PERPLEX_BLD)
 
-  set(STEPCODE_INSTDIR "${CMAKE_BINARY_DIR}/stepcode$<CONFIG>")
+  set(STEPCODE_INSTDIR "${CMAKE_BINARY_ROOT}/ext/stepcode")
 
   ExternalProject_Add(STEPCODE_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stepcode"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${STEPCODE_INSTDIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
-	       -DLEMON_ROOT=${CMAKE_BINARY_DIR}/$<CONFIG>
-	       -DRE2C_ROOT=${CMAKE_BINARY_DIR}/$<CONFIG>
-	       -DPERPLEX_ROOT=${CMAKE_BINARY_DIR}/$<CONFIG>
+	       -DLEMON_ROOT=${CMAKE_BINARY_ROOT}
+	       -DRE2C_ROOT=${CMAKE_BINARY_ROOT}
+	       -DPERPLEX_ROOT=${CMAKE_BINARY_ROOT}
                -DSC_IS_SUBBUILD=ON -DSC_PYTHON_GENERATOR=OFF
                -DSC_ENABLE_TESTING=OFF -DSC_ENABLE_COVERAGE=OFF -DSC_BUILD_SCHEMAS=
                -DINCLUDE_INSTALL_DIR=${INCLUDE_DIR}
@@ -50,7 +50,7 @@ if(BRLCAD_SC_BUILD)
   # Tell the parent build about files and libraries
   set(STEPCODE_LIBS base express exppp stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
-    ExternalProject_Target(SHARED lib${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
+    ExternalProject_Target(SHARED ${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
       ${SC_PREFIX}${SCLIB}${SC_SUFFIX}
       SYMLINKS ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2
       LINK_TARGET ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -64,11 +64,11 @@ if(BRLCAD_SC_BUILD)
       RPATH
       )
     foreach(SCLIB ${STEPCODE_LIBS})
-      add_dependencies(${SCEXEC}_exe_stage lib${SCLIB}_stage)
+      add_dependencies(${SCEXEC}_exe_stage ${SCLIB}_stage)
     endforeach(SCLIB ${STEPCODE_LIBS})
   endforeach(SCEXEC ${STEPCODE_EXECS})
 
-  ExternalProject_ByProducts(libstepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
+  ExternalProject_ByProducts(stepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
     cldai/sdaiApplication_instance_set.h
     cldai/sdaiSession_instance.h
     cldai/sdaiObject.h
@@ -152,22 +152,22 @@ if(BRLCAD_SC_BUILD)
 
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} stepcode  CACHE STRING "Bundled system include dirs" FORCE)
 
-  set(STEPCODE_BASE_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode/base CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_DAI_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode/cldai CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_EDITOR_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode/cleditor CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_STEPCORE_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode/clstepcore CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_UTILS_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode/clutils CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_EXPPP_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode/exppp CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_EXPRESS_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode/express CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_INCLUDE_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/stepcode CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_BASE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/base CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_DAI_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/cldai CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EDITOR_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/cleditor CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_STEPCORE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/clstepcore CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_UTILS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/clutils CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EXPPP_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/exppp CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EXPRESS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/express CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_INCLUDE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode CACHE STRING "Building bundled STEPCODE" FORCE)
 
-  set(STEPCODE_BASE_LIBRARY libbase CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_EXPRESS_LIBRARY libexpress CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_EXPPP_LIBRARY libexppp CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_CORE_LIBRARY libstepcore CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_EDITOR_LIBRARY libstepeditor CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_DAI_LIBRARY libstepdai CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_UTILS_LIBRARY libsteputils CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_BASE_LIBRARY base CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EXPRESS_LIBRARY express CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EXPPP_LIBRARY exppp CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_CORE_LIBRARY stepcore CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EDITOR_LIBRARY stepeditor CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_DAI_LIBRARY stepdai CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_UTILS_LIBRARY steputils CACHE STRING "Building bundled STEPCODE" FORCE)
 
   set(EXP2CXX_EXECUTABLE exp2cxx_exe CACHE STRING "Building bundled STEPCODE" FORCE)
   set(EXPPP_EXECUTABLE exppp_exe CACHE STRING "Building bundled STEPCODE" FORCE)
@@ -191,7 +191,7 @@ if(BRLCAD_SC_BUILD)
     ${STEPCODE_UTILS_LIBRARY}
     CACHE STRING "Directories containing STEPCODE headers." FORCE)
 
-  set(STEPCODE_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>/stepcode CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_DIR ${CMAKE_BINARY_ROOT}/ext/stepcode CACHE STRING "Building bundled STEPCODE" FORCE)
 
   SetTargetFolder(STEPCODE_BLD "Third Party Libraries")
   SetTargetFolder(stepcode "Third Party Libraries")

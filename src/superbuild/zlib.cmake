@@ -28,7 +28,7 @@ if (BRLCAD_ZLIB_BUILD)
     set(ZLIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${ZLIB_VERSION})
   endif (MSVC)
 
-  set(ZLIB_INSTDIR ${CMAKE_BINARY_DIR}/zlib$<CONFIG>)
+  set(ZLIB_INSTDIR ${CMAKE_BINARY_ROOT}/ext/zlib)
 
   ExternalProject_Add(ZLIB_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/zlib"
@@ -57,8 +57,8 @@ if (BRLCAD_ZLIB_BUILD)
   set(ZLIB_LIBRARY_DEBUG zlib CACHE STRING "Building bundled zlib" FORCE)
   set(ZLIB_LIBRARY_RELEASE zlib CACHE STRING "Building bundled zlib" FORCE)
   set(ZLIB_LIBRARIES zlib CACHE STRING "Building bundled zlib" FORCE)
-  set(ZLIB_INCLUDE_DIR "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
-  set(ZLIB_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
+  set(ZLIB_INCLUDE_DIR "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
+  set(ZLIB_INCLUDE_DIRS "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
 
   SetTargetFolder(ZLIB_BLD "Third Party Libraries")
   SetTargetFolder(zlib "Third Party Libraries")

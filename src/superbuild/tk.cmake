@@ -34,7 +34,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   endif (NOT TARGET tcl_replace)
 
-  set(TK_INSTDIR ${CMAKE_BINARY_DIR}/tk$<CONFIG>)
+  set(TK_INSTDIR ${CMAKE_BINARY_ROOT}/ext/tk)
 
   if (NOT MSVC)
 
@@ -48,7 +48,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tk"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
-      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${TK_INSTDIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR},${TCLCONF_DIR}> --disable-xft --enable-64bit --enable-rpath
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_ROOT}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_ROOT}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${TK_INSTDIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_ROOT}/${LIB_DIR},${TCLCONF_DIR}> --disable-xft --enable-64bit --enable-rpath
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
       DEPENDS ${TCL_TARGET} rpath_replace
@@ -233,26 +233,8 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
   set(TK_STUB_LIBRARY tkstub CACHE STRING "Building bundled tk" FORCE)
   #set(TTK_STUB_LIBRARY ttkstub CACHE STRING "Building bundled tk" FORCE)
   set(TK_WISH wish_exe CACHE STRING "Building bundled tk" FORCE)
-  set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
-  set(TK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
-
- #if (CMAKE_CONFIGURATION_TYPES)
- #  set(TK_LIBRARY "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
- #  set(TK_LIBRARIES ${TK_LIBRARY} CACHE STRING "Building bundled tcl" FORCE)
- #  set(TK_STUB_LIBRARY "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
- #  set(TTK_STUB_LIBRARY "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${TTK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
- #  set(TK_WISH "${CMAKE_BINARY_DIR}/$<CONFIG>/${BIN_DIR}/wish${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${EXE_EXT}" CACHE STRING "Building bundled tcl" FORCE)
- #  set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
- #  set(TK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
- #else (CMAKE_CONFIGURATION_TYPES)
- #  set(TK_LIBRARY "${CMAKE_BINARY_DIR}/${LIB_DIR}/${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
- #  set(TK_LIBRARIES ${TK_LIBRARY} CACHE STRING "Building bundled tcl" FORCE)
- #  set(TK_STUB_LIBRARY "${CMAKE_BINARY_DIR}/${LIB_DIR}/${TK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
- #  set(TTK_STUB_LIBRARY "${CMAKE_BINARY_DIR}/${LIB_DIR}/${TTK_STUBNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "Building bundled tcl" FORCE)
- #  set(TK_WISH "${CMAKE_BINARY_DIR}/${BIN_DIR}/wish${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${EXE_EXT}" CACHE STRING "Building bundled tcl" FORCE)
- #  set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
- #  set(TK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
- #endif (CMAKE_CONFIGURATION_TYPES)
+  set(TK_INCLUDE_PATH "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+  set(TK_INCLUDE_DIRS "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
   SetTargetFolder(TK_BLD "Third Party Libraries")
   SetTargetFolder(tk "Third Party Libraries")

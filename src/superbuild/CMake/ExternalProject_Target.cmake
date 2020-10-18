@@ -104,7 +104,7 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
     set(ALL_TOUT ${ALL_TOUT} ${TOUT})
 
     if (NOT E_NOINSTALL)
-      install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${dir}/${bpf}" DESTINATION "${dir}/")
+      install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/")
       if (E_FIXPATH)
 	# Note - proper quoting for install(CODE) is extremely important for CPack, see
 	# https://stackoverflow.com/a/48487133
@@ -152,10 +152,17 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
 
   else(NOT CMAKE_CONFIGURATION_TYPES)
 
+    # If no config is set for multiconfig, default to Debug
+    set_target_properties(${etarg} PROPERTIES
+      IMPORTED_NO_SONAME TRUE
+      IMPORTED_LOCATION_NOCONFIG "${CMAKE_BINARY_DIR}/Debug/${REL_DIR}/${LINK_TARGET}"
+      IMPORTED_SONAME_NOCONFIG "${LINK_TARGET}"
+      )
+
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 
-      # The config variables are the ones set in this mode.
+      # The config variables need to be set in this mode.
       if("${CFG_TYPE_UPPER}" STREQUAL "DEBUG" AND ET_LINK_TARGET_DEBUG)
 	set(C_LINK_TARGET ${ET_LINK_TARGET_DEBUG})
       else()
@@ -254,11 +261,11 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
   cmake_parse_arguments(E "RPATH" "LINK_TARGET;LINK_TARGET_DEBUG;SUBDIR" "SYMLINKS" ${ARGN})
 
-  message("etype: ${etype}")
-  message("etarg: ${etarg}")
-  message("extproj: ${extproj}")
-  message("extroot: ${extroot}")
-  message("fname: ${fname}")
+  #message("etype: ${etype}")
+  #message("etarg: ${etarg}")
+  #message("extproj: ${extproj}")
+  #message("extroot: ${extroot}")
+  #message("fname: ${fname}")
 
   # If we have a static target but BUILD_STATIC_LIBS is off, we're done
   if ("${etype}" STREQUAL "STATIC" AND NOT BUILD_STATIC_LIBS)
@@ -332,7 +339,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
     get_filename_component(LDIR "${fname}" DIRECTORY)
     ET_target_props(${etarg} "${SHARED_DIR}/${LDIR}" ${LINK_TARGET} SHARED LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
 
-    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${SHARED_DIR}/${fname}" DESTINATION ${SHARED_DIR}/${E_SUBDIR})
+    install(FILES "${CMAKE_BINARY_ROOT}/${SHARED_DIR}/${fname}" DESTINATION ${SHARED_DIR}/${E_SUBDIR})
 
     # Let CMake know there is a target dependency here, despite this being an import target
     add_dependencies(${etarg} ${extproj})
@@ -348,7 +355,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
       # Add install rules for any symlinks the caller has listed
       foreach(slink ${E_SYMLINKS})
 	fcfgcpy(TOUT ${extproj} ${extroot} ${slink} ${SHARED_DIR} ${slink})
-	install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${SHARED_DIR}/${slink}" DESTINATION ${SHARED_DIR}/${E_SUBDIR})
+	install(FILES "${CMAKE_BINARY_ROOT}/${SHARED_DIR}/${slink}" DESTINATION ${SHARED_DIR}/${E_SUBDIR})
       endforeach(slink ${E_SYMLINKS})
 
     endif (NOT MSVC)
@@ -363,7 +370,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
     fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${LIB_DIR} ${fname})
 
     ET_target_props(${etarg} "${LIB_DIR}" ${fname} STATIC LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
-    install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${fname}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
+    install(FILES "${CMAKE_BINARY_ROOT}/${LIB_DIR}/${fname}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
 
     # Let CMake know there is a target dependency here, despite this being an import target
     add_dependencies(${etarg} ${extproj})
@@ -374,7 +381,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
       # Add install rules for any symlinks the caller has listed
       foreach(slink ${E_SYMLINKS})
 	fcfgcpy(TOUT ${extproj} ${extroot} ${slink} ${LIB_DIR} ${slink})
-	install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/${LIB_DIR}/${slink}" DESTINATION ${LIB_DIR})
+	install(FILES "${CMAKE_BINARY_ROOT}/${LIB_DIR}/${slink}" DESTINATION ${LIB_DIR})
       endforeach(slink ${E_SYMLINKS})
 
     endif (NOT MSVC)
@@ -390,7 +397,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
     ET_target_props(${etarg} "${BIN_DIR}" ${fname})
 
-    install(PROGRAMS "${CMAKE_BINARY_DIR}/$<CONFIG>/${BIN_DIR}/${fname}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
+    install(PROGRAMS "${CMAKE_BINARY_ROOT}/${BIN_DIR}/${fname}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
 
     # Let CMake know there is a target dependency here, despite this being an import target
     add_dependencies(${etarg} ${extproj})

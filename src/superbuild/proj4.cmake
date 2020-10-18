@@ -27,7 +27,7 @@ if (BRLCAD_PROJ4_BUILD)
     set(PROJ_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_VERSION})
   endif (MSVC)
 
-  set(PROJ4_INSTDIR ${CMAKE_BINARY_DIR}/proj-4$<CONFIG>)
+  set(PROJ4_INSTDIR ${CMAKE_BINARY_ROOT}/ext/proj-4)
 
   ExternalProject_Add(PROJ4_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/proj-4"
@@ -72,7 +72,7 @@ if (BRLCAD_PROJ4_BUILD)
 
 
   set(PROJ4_LIBRARIES proj CACHE STRING "Building bundled proj" FORCE)
-  set(PROJ4_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/proj" CACHE STRING "Directory containing proj headers." FORCE)
+  set(PROJ4_INCLUDE_DIRS "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/proj" CACHE STRING "Directory containing proj headers." FORCE)
 
   SetTargetFolder(PROJ4_BLD "Third Party Libraries")
   SetTargetFolder(proj "Third Party Libraries")
