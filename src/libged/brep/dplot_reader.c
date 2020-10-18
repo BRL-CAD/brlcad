@@ -27,6 +27,8 @@ main(int argc, char *argv[])
 	bu_exit(1, "usage: %s input\n", argv[0]);
     }
 
+    bu_setprogname(argv[0]);
+
     /* initialize scanner */
     input_file = fopen(argv[1], "r");
     if (!input_file) {
