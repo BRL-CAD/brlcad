@@ -190,6 +190,11 @@ bu_file_same(const char *fn1, const char *fn2)
 	return 0;
     }
 
+    /* stdin is a special case */
+    if (BU_STR_EQUAL(rp1, rp2) && BU_STR_EQUAL(rp1, "-"))
+	return 1;
+    }
+
     if (!bu_file_exists(fn1, NULL) || !bu_file_exists(fn2, NULL)) {
 	return 0;
     }
