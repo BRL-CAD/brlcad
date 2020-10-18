@@ -73,6 +73,17 @@ bu_file_exists(const char *path, int *fd)
 	return 0;
     }
 
+    /* stdin is special case */
+    if (BU_STR_EQUAL(path, "-")) {
+	if (fd) {
+	    *fd = fileno(stdin);
+	}
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	    bu_log("YES\n");
+	}
+	return 1;
+    }
+
     /* capture file descriptor if requested */
     if (fd) {
 	*fd = open(path, O_RDONLY);
@@ -191,7 +202,7 @@ bu_file_same(const char *fn1, const char *fn2)
     }
 
     /* stdin is a special case */
-    if (BU_STR_EQUAL(rp1, rp2) && BU_STR_EQUAL(rp1, "-"))
+    if (BU_STR_EQUAL(rp1, rp2) && BU_STR_EQUAL(rp1, "-")) {
 	return 1;
     }
 
