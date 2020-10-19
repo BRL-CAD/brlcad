@@ -73,6 +73,7 @@ if(BRLCAD_SC_BUILD)
     foreach(SCLIB ${STEPCODE_LIBS})
       add_dependencies(${SCEXEC}_exe_stage ${SCLIB}_stage)
     endforeach(SCLIB ${STEPCODE_LIBS})
+    add_dependencies(${SCEXEC}_exe_stage libexppp_stage)
   endforeach(SCEXEC ${STEPCODE_EXECS})
 
   ExternalProject_ByProducts(stepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
