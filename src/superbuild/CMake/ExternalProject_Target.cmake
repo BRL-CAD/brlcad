@@ -145,6 +145,7 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
     # when building - pointing out the dll isn't enough by itself.
     if(ET_SHARED AND MSVC)
       string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${LINK_TARGET}")
+      string(REPLACE "${SHARED_DIR}" "${LIB_DIR}" REL_DIR "${REL_DIR}")
       set_target_properties(${etarg} PROPERTIES
 	IMPORTED_IMPLIB_NOCONFIG "${CMAKE_BINARY_DIR}/${REL_DIR}/${IMPLIB_FILE}"
 	)
@@ -182,6 +183,7 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
       # when building - pointing out the dll isn't enough by itself.
       if(ET_SHARED AND MSVC)
 	string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${LINK_TARGET}")
+	string(REPLACE "${SHARED_DIR}" "${LIB_DIR}" REL_DIR "${REL_DIR}")
 	set_target_properties(${etarg} PROPERTIES
 	  IMPORTED_IMPLIB_${CFG_TYPE_UPPER} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${REL_DIR}/${IMPLIB_FILE}"
 	  )
@@ -291,7 +293,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
   unset(LINK_TARGET)
   unset(LINK_TARGET_DEBUG)
 
-  if ("${etype}" STREQUAL "SHARED" AND NOT MSVC)
+  if ("${etype}" STREQUAL "SHARED")
 
     if (E_LINK_TARGET)
       set(LINK_TARGET "${E_LINK_TARGET}")
@@ -309,7 +311,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
       set(LINK_TARGET_DEBUG "${LINK_TARGET}")
     endif ()
 
-  endif ("${etype}" STREQUAL "SHARED" AND NOT MSVC)
+  endif ("${etype}" STREQUAL "SHARED")
 
   # Create imported target - need to both make the target itself
   # and set the necessary properties.  See also
