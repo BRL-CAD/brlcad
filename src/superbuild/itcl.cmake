@@ -66,11 +66,11 @@ if (BRLCAD_ENABLE_TCL)
     set(ITCL_MINOR_VERSION 4)
     set(ITCL_VERSION ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 
-
+    set(ITCL_DEPS)
     if (TARGET tcl_stage)
-      set(TCL_TARGET tcl_stage)
-    else (TARGET tcl_stage)
-      get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
+      list(APPEND ITCL_DEPS tcl_stage)
+      list(APPEND ITCL_DEPS tclstub_stage)
+      list(APPEND ITCL_DEPS tclsh_exe_stage)
     endif (TARGET tcl_stage)
 
     set(ITCL_INSTDIR ${CMAKE_BINARY_ROOT}/ext/itcl3)
@@ -88,7 +88,7 @@ if (BRLCAD_ENABLE_TCL)
       -DITCL_STATIC=${BUILD_STATIC_LIBS}
       -DTCL_ROOT=$<$<BOOL:${TCL_TARGET}>:${CMAKE_BINARY_ROOT}>
       -DTCL_VERSION=${TCL_VERSION}
-      DEPENDS ${TCL_TARGET}
+      DEPENDS ${ITCL_DEPS}
       )
 
     if (NOT MSVC)
