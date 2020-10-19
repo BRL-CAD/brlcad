@@ -540,14 +540,9 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-# TODO: GAH!  Our compiler flag management has always been centered on single
-# configuration builds, so we've never actually properly set up to manage the
-# population of CMAKE_C_FLAGS_DEBUG, CMAKE_C_FLAGS_RELEASE, etc.  We don't
-# manage build flags much with MSVC, so up until recently Xcode would have been
-# the only practical scenario where this would have been an issue and Xcode is
-# not extensively used/tested with BRL-CAD.  However, with the new Ninja
-# Multi-Config CMake generator, we can't assume single-config any more for
-# build flags, which implies a re-think on how we are tracking this.
+# TODO - the Ninja single config generator in Release build uses the O3
+# and other optimization flags, but they don't seem to make it to the
+# step-g sources in MultiConfig release build???
 
 # load our compiler testing macro definitions
 include(CompilerFlags)
