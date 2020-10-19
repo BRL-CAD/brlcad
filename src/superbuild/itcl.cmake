@@ -68,6 +68,7 @@ if (BRLCAD_ENABLE_TCL)
 
     set(ITCL_DEPS)
     if (TARGET tcl_stage)
+      set(TCL_TARGET ON)
       list(APPEND ITCL_DEPS tcl_stage)
       list(APPEND ITCL_DEPS tclstub_stage)
       list(APPEND ITCL_DEPS tclsh_exe_stage)
