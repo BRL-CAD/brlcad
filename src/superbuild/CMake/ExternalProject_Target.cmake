@@ -332,6 +332,11 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
     fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${SHARED_DIR} ${fname})
 
+    if (MSVC)
+      string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${IMPLIB_FILE}")
+      fcfgcpy(TOUT ${extproj} ${extroot} ${IMPLIB_FILE} ${LIB_DIR} ${IMPLIB_FILE})
+    endif (MSVC)
+
     # Because we're using LINK_TARGET here rather than fname, we need to take any relative
     # directories specified in fname and ppend them to SHARED_DIR. (For other cases we are
     # just feeding fname directly, so there are no such concerns.  TODO - should we just
@@ -340,6 +345,9 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
     ET_target_props(${etarg} "${SHARED_DIR}/${LDIR}" ${LINK_TARGET} SHARED LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
 
     install(FILES "${CMAKE_BINARY_ROOT}/${SHARED_DIR}/${fname}" DESTINATION ${SHARED_DIR}/${E_SUBDIR})
+    if (MSVC)
+      install(FILES "${CMAKE_BINARY_ROOT}/${LIB_DIR}/${IMPLIB_FILE}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
+    endif (MSVC)
 
     # Let CMake know there is a target dependency here, despite this being an import target
     add_dependencies(${etarg} ${extproj})
