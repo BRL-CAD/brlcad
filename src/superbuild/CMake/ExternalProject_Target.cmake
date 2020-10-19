@@ -171,6 +171,7 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
 
       # If we're multiconfig, define properties for each configuration
       set_target_properties(${etarg} PROPERTIES
+	IMPORTED_CONFIGURATIONS "${CMAKE_CONFIGURATION_TYPES}"
 	IMPORTED_NO_SONAME_${CFG_TYPE_UPPER} TRUE
 	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${REL_DIR}/${LINK_TARGET}"
 	IMPORTED_SONAME_${CFG_TYPE_UPPER} "${LINK_TARGET}"
