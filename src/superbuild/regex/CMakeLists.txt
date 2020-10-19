@@ -94,10 +94,6 @@ install(TARGETS regex
 if (BUILD_STATIC_LIBS)
   add_library(regex-static STATIC ${REGEX_SOURCES})
   set_target_properties(regex-static PROPERTIES OUTPUT_NAME "regex_brl")
-  if (MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(regex-static PROPERTIES PREFIX "lib")
-  endif (MSVC)
   install(TARGETS regex-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

@@ -384,12 +384,9 @@ endif (BUILD_SHARED_LIBS)
 
 if (BUILD_STATIC_LIBS)
   add_library(gdal-static STATIC ${gdal_srcs})
-  if (MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(gdal-static PROPERTIES PREFIX "lib")
-  else (MSVC)
+  if (NOT MSVC)
     set_target_properties(gdal-static PROPERTIES OUTPUT_NAME "gdal")
-  endif (MSVC)
+  endif (NOT MSVC)
   install(TARGETS gdal-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

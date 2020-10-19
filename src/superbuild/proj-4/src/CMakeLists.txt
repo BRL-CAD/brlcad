@@ -217,12 +217,9 @@ endif (BUILD_SHARED_LIBS)
 
 if (BUILD_STATIC_LIBS)
   add_library(proj-static STATIC ${all_srcs} ${hdr_files})
-  if (MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(proj-static PROPERTIES PREFIX "lib")
-  else (MSVC)
+  if (NOT MSVC)
     set_target_properties(proj-static PROPERTIES OUTPUT_NAME "proj")
-  endif (MSVC)
+  endif (NOT MSVC)
   install(TARGETS proj-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
