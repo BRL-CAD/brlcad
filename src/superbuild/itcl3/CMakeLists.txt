@@ -205,7 +205,7 @@ file(GENERATE
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl"
   CONTENT "
 if {![package vsatisfies [package provide Tcl] ${TCL_VERSION}]} {return}
-package ifneeded Itcl ${ITCL_VERSION} [list load [file join $dir ../../${SHARED_LIB}/itcl${ITCL_VERSION} $<TARGET_FILE_NAME:itcl${ITCL_VERSION}>] Itcl]
+package ifneeded Itcl ${ITCL_VERSION} [list load [file join $dir ../../${SHARED_DIR}/itcl${ITCL_VERSION} $<TARGET_FILE_NAME:itcl${ITCL_VERSION}>] Itcl]
 ")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${LIB_DIR}/itcl${ITCL_VERSION})
 
