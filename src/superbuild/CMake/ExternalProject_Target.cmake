@@ -332,8 +332,9 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
     fcfgcpy(TOUT ${extproj} ${extroot} ${fname} ${SHARED_DIR} ${fname})
 
+    # On Windows, we need both a .dll and a .lib file to use a shared library for compilation
     if (MSVC)
-      string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${IMPLIB_FILE}")
+      string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${fname}")
       fcfgcpy(TOUT ${extproj} ${extroot} ${IMPLIB_FILE} ${LIB_DIR} ${IMPLIB_FILE})
     endif (MSVC)
 

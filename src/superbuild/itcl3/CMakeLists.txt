@@ -44,7 +44,7 @@ project(ITCL)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 
-find_package(TCL REQUIRED)
+find_package(TCL)
 
 # version numbers
 set(ITCL_VERSION_MAJOR 3)
