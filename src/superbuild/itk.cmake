@@ -43,60 +43,50 @@ if (BRLCAD_ENABLE_TK)
     set(ITK_MINOR_VERSION 4)
     set(ITK_VERSION ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 
-
-    # If we have build targets, set the variables accordingly.  Otherwise,
-    # we need to find the *Config.sh script locations.
+    set(ITK_DEPS)
     if (TARGET tcl_stage)
-      set(TCL_TARGET tcl_stage)
-    else (TARGET tcl_stage)
-      get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
+      set(TCL_TARGET ON)
+      list(APPEND ITK_DEPS tcl_stage)
+      list(APPEND ITK_DEPS tclstub_stage)
     endif (TARGET tcl_stage)
 
     if (TARGET itcl_stage)
-      set(ITCL_TARGET itcl_stage)
-    else (TARGET itcl_stage)
-      find_library(ITCL_LIBRARY NAMES itcl itcl3 PATH_SUFFIXES lib)
-      get_filename_component(ITCLCONF_DIR "${ITCL_LIBRARY}" DIRECTORY)
+      set(ITCL_TARGET ON)
+      list(APPEND ITK_DEPS itcl_stage)
+      list(APPEND ITK_DEPS itclstub_stage)
     endif (TARGET itcl_stage)
 
     if (TARGET tk_stage)
-      set(TK_TARGET tk_stage)
-    else (TARGET tk_stage)
-      get_filename_component(TKCONF_DIR "${TK_LIBRARY}" DIRECTORY)
+      list(APPEND ITK_DEPS tk_stage)
+      list(APPEND ITK_DEPS tkstub_stage)
     endif (TARGET tk_stage)
 
     set(ITK_INSTDIR ${CMAKE_BINARY_ROOT}/ext/itk3)
 
+    ExternalProject_Add(ITK_BLD
+      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/itk3"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+      CMAKE_ARGS
+      --debug-find
+      -DCMAKE_INSTALL_PREFIX=${ITK_INSTDIR}
+      -DBIN_DIR=${BIN_DIR}
+      -DLIB_DIR=${LIB_DIR}
+      -DSHARED_DIR=${SHARED_DIR}
+      -DINCLUDE_DIR=${INCLUDE_DIR}
+      -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+      -DBUILD_STATIC_LIBS_STATIC=${BUILD_STATIC_LIBS}
+      -DTCL_ROOT=$<$<BOOL:${TCL_TARGET}>:${CMAKE_BINARY_ROOT}>
+      -DITCL_ROOT=$<$<BOOL:${ITCL_TARGET}>:${CMAKE_BINARY_ROOT}>
+      -DTCL_VERSION=${TCL_VERSION}
+      DEPENDS ${ITK_DEPS}
+      )
+
     if (NOT MSVC)
-
       set(ITK_BASENAME libitk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
-
-      set(ITK_PATCH_FILES "${ITK_SRC_DIR}/configure" "${ITK_SRC_DIR}/tclconfig/tcl.m4")
-
-      ExternalProject_Add(ITK_BLD
-	URL "${CMAKE_CURRENT_SOURCE_DIR}/itk3"
-	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${ITK_PATCH_FILES}
-	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_ROOT}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_ROOT}/${LIB_DIR} ${ITK_SRC_DIR}/configure --prefix=${ITK_INSTDIR} --exec-prefix=${ITK_INSTDIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_ROOT}/${LIB_DIR},${TCLCONF_DIR}> --with-tk=$<IF:$<BOOL:${TK_TARGET}>,${CMAKE_BINARY_ROOT}/${LIB_DIR},${TKCONF_DIR}> --with-itcl=$<IF:$<BOOL:${ITCL_TARGET}>,${CMAKE_BINARY_ROOT}/${LIB_DIR},${ITCLCONF_DIR}>
-	BUILD_COMMAND make -j${pcnt}
-	INSTALL_COMMAND make install
-	DEPENDS ${TCL_TARGET} ${TK_TARGET} ${ITCL_TARGET}
-	)
-
+      set(ITK_STUBNAME libitkstub)
     else (NOT MSVC)
-
       set(ITK_BASENAME itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
-
-      ExternalProject_Add(ITK_BLD
-	URL "${CMAKE_CURRENT_SOURCE_DIR}/itk3"
-	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-	CONFIGURE_COMMAND ""
-	BINARY_DIR ${ITK_SRC_DIR}/win
-	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${ITK_INSTDIR} TCLDIR=${TCL_SRC_DIR}
-	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${ITK_INSTDIR} TCLDIR=${TCL_SRC_DIR}
-	DEPENDS ${TCL_TARGET}
-	)
-
+      set(ITK_STUBNAME itkstub)
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries

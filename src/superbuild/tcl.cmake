@@ -1,3 +1,7 @@
+if (BRLCAD_ENABLE_TCL)
+  set(TCL_VERSION "8.6" CACHE STRING "BRL-CAD uses Tcl 8.6" FORCE)
+endif (BRLCAD_ENABLE_TCL)
+
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
 provided with BRL-CAD's source code.  Default is AUTO, responsive to
