@@ -48,7 +48,7 @@ if(BRLCAD_SC_BUILD)
     )
 
   # Tell the parent build about files and libraries
-  set(STEPCODE_LIBS base express exppp stepcore stepeditor stepdai steputils)
+  set(STEPCODE_LIBS base express stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
     ExternalProject_Target(SHARED ${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
       ${SC_PREFIX}${SCLIB}${SC_SUFFIX}
@@ -57,6 +57,13 @@ if(BRLCAD_SC_BUILD)
       RPATH
       )
   endforeach(SCLIB ${STEPCODE_LIBS})
+  # libexppp is a special naming case, to avoid conflict with the exppp executable
+  ExternalProject_Target(SHARED libexppp STEPCODE_BLD ${STEPCODE_INSTDIR}
+    libexppp${SC_SUFFIX}
+    SYMLINKS libexppp${CMAKE_SHARED_LIBRARY_SUFFIX};libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}.2
+    LINK_TARGET libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}
+    RPATH
+    )
   set(STEPCODE_EXECS check-express exppp exp2cxx)
   foreach(SCEXEC ${STEPCODE_EXECS})
     ExternalProject_Target(EXEC ${SCEXEC}_exe STEPCODE_BLD ${STEPCODE_INSTDIR}
