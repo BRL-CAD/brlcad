@@ -211,7 +211,6 @@ file(GENERATE
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl"
   CONTENT "
 if {![package vsatisfies [package provide Tcl] ${TCL_VERSION}]} {return}
-if {![package vsatisfies [package provide Tk] ${TCL_VERSION}]} {return}
 package ifneeded Itk ${ITK_VERSION} [list load [file join $dir $<TARGET_FILE_NAME:itk${ITK_VERSION}>] Itk]
 ")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${LIB_DIR}/itk${ITK_VERSION})

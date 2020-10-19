@@ -30,27 +30,18 @@ if (BRLCAD_ENABLE_TK)
 
     # If we have build targets, set the variables accordingly.  Otherwise,
     # we need to find the *Config.sh script locations.
+    set(IWIDGETS_DEPS)
     if (TARGET tcl_stage)
-      set(TCL_TARGET tcl_stage)
-    else (TARGET tcl_stage)
-      get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
+      list(APPEND IWIDGETS_DEPS tcl_stage)
     endif (TARGET tcl_stage)
-
     if (TARGET itcl_stage)
-      set(ITCL_TARGET itcl_stage)
-    else (TARGET itcl_stage)
-      find_library(ITCL_LIBRARY NAMES itcl itcl3)
-      get_filename_component(ITCLCONF_DIR "${ITCL_LIBRARY}" DIRECTORY)
+      list(APPEND IWIDGETS_DEPS itcl_stage)
     endif (TARGET itcl_stage)
-
     if (TARGET tk_stage)
-      set(TK_TARGET tk_stage)
-    else (TARGET tk_stage)
-      get_filename_component(TKCONF_DIR "${TK_LIBRARY}" DIRECTORY)
+      list(APPEND IWIDGETS_DEPS tk_stage)
     endif (TARGET tk_stage)
-
     if (TARGET itk_stage)
-      set(ITK_TARGET itk_stage)
+      list(APPEND IWIDGETS_DEPS itk_stage)
     endif (TARGET itk_stage)
 
     # The Iwidgets build doesn't seem to work with Itk the same way it does with the other
@@ -59,42 +50,23 @@ if (BRLCAD_ENABLE_TK)
 
     set(IWIDGETS_INSTDIR "${CMAKE_BINARY_ROOT}/ext/iwidgets")
 
-    if (NOT MSVC)
-
-      set(IWIDGETS_PATCH_FILES "${IWIDGETS_SRC_DIR}/configure" "${IWIDGETS_SRC_DIR}/tclconfig/tcl.m4")
-
-      ExternalProject_Add(IWIDGETS_BLD
-	URL "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
-	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${IWIDGETS_PATCH_FILES}
-	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_ROOT}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_ROOT}/${LIB_DIR} ${IWIDGETS_SRC_DIR}/configure --prefix=${IWIDGETS_INSTDIR} --exec-prefix=${IWIDGETS_INSTDIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_ROOT}/${LIB_DIR},${TCLCONF_DIR}> --with-tk=$<IF:$<BOOL:${TK_TARGET}>,${CMAKE_BINARY_ROOT}/${LIB_DIR},${TKCONF_DIR}> --with-itcl=$<IF:$<BOOL:${ITCL_TARGET}>,${CMAKE_BINARY_ROOT}/${LIB_DIR},${ITCLCONF_DIR}> --with-itk=${ITK_SOURCE_DIR}
-	BUILD_COMMAND make -j${pcnt}
-	INSTALL_COMMAND make install
-	DEPENDS ${TCL_TARGET} ${TK_TARGET} ${ITCL_TARGET} ${ITK_TARGET}
-	)
-
-    else (NOT MSVC)
-
-      ExternalProject_Add(IWIDGETS_BLD
-	URL "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
-	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-	CONFIGURE_COMMAND ""
-	BINARY_DIR ${IWIDGETS_SRC_DIR}/win
-	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${IWIDGETS_INSTDIR} TCLDIR=${TCL_SRC_DIR}
-	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${IWIDGETS_INSTDIR} TCLDIR=${TCL_SRC_DIR}
-	DEPENDS ${TCL_TARGET}
-	)
-
-    endif (NOT MSVC)
+    ExternalProject_Add(IWIDGETS_BLD
+      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+      CMAKE_ARGS
+      -DCMAKE_INSTALL_PREFIX=${IWIDGETS_INSTDIR}
+      -DLIB_DIR=${LIB_DIR}
+      DEPENDS ${IWIDGETS_DEPS}
+      )
 
     # Tell the parent build about files and libraries
-    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
+    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/Iwidgets${IWIDGETS_VERSION}
       iwidgets.tcl
       license.terms
       pkgIndex.tcl
       )
 
-    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}/scripts
+    ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/Iwidgets${IWIDGETS_VERSION}/scripts
       buttonbox.itk
       calendar.itk
       canvasprintbox.itk
