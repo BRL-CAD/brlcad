@@ -15,6 +15,8 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL)
     ${OPENGL_INCLUDE_DIR_GL}
     ${TCL_INCLUDE_PATH}
     ${TK_INCLUDE_PATH}
+    # Needed for tkWinInt.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../superbuild/tk/generic
     ${CMAKE_CURRENT_SOURCE_DIR}/../../superbuild/tk/win
     )
 
