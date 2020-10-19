@@ -556,7 +556,7 @@ int main(int argc, const char **argv) {
   try_compile(dreport_build "${CMAKE_BINARY_DIR}/CMakeTmp"
     SOURCES "${CMAKE_BINARY_DIR}/CMakeTmp/dreport.c"
     OUTPUT_VARIABLE FREPORT_BUILD_INFO
-    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT}")
+    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport${CMAKE_EXECUTABLE_SUFFIX}")
   if(NOT dreport_build)
     message(FATAL_ERROR "Could not build time delta reporting utility: ${FREPORT_BUILD_INFO}")
   endif(NOT dreport_build)
