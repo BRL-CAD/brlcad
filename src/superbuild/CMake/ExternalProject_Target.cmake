@@ -29,39 +29,20 @@ file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake" "get_filename_component(DDI
 # When staging files in the build directory, we have to be aware of multiple
 # configurations.  This is done post-ExternalProject build, at the parent build
 # time, so it needs to be a custom command. Until add_custom_command outputs
-# can use $<CONFIG>, we need to handle multi-config situations manually with
-# multiple copy commands. The absence of $<CONFIG> support makes this clunky -
-# we need the root dirs and the relative subdirs passed in separately, so we
-# can construct configuration specific paths to cover all the necessary copy
-# operations.
-#
-# There are practical limits to how flexible we can make this right now...  The
-# implicit assumption is that the tree structures under each configuration root
-# are the same.  Doing anything else would make this much more convoluted, and
-# it's already bad enough - don't make it any worse until it's proven that we
-# have to.
+# can use $<CONFIG>, we use the old-school CMAKE_CFG_INTDIR variable in the OUTPUT
+# path.  This is key, because it allows the add_custom_command to be aware that
+# it needs to execute the correct copy command for a current configuration at build
+# time.
 function(fcfgcpy outvar extproj root ofile dir tfile)
   string(REPLACE "${CMAKE_BINARY_DIR}/" "" rdir "${dir}")
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    add_custom_command(
-      OUTPUT "${CMAKE_BINARY_DIR}/${rdir}/${tfile}"
-      COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${rdir}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/${rdir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
-      DEPENDS ${extproj}
-      )
-    set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${rdir}/${tfile}")
-  else (NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      add_custom_command(
-	OUTPUT "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${rdir}/${tfile}"
-	COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${rdir}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/${CFG_TYPE}/${rdir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
-	DEPENDS ${extproj}
-	)
-      set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${rdir}/${tfile}")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (NOT CMAKE_CONFIGURATION_TYPES)
+  add_custom_command(
+    OUTPUT "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${rdir}/${tfile}"
+    COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${rdir}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/$<CONFIG>/${rdir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
+    DEPENDS ${extproj}
+    )
+  set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${rdir}/${tfile}")
   set(${outvar} ${TOUT} PARENT_SCOPE)
 endfunction(fcfgcpy file)
-
 
 # Custom patch utility to replace the build directory path with the install
 # directory path in text files - make sure CMAKE_BINARY_DIR and
@@ -156,8 +137,8 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
     # If no config is set for multiconfig, default to Debug
     set_target_properties(${etarg} PROPERTIES
       IMPORTED_NO_SONAME TRUE
-      IMPORTED_LOCATION_NOCONFIG "${CMAKE_BINARY_DIR}/Debug/${REL_DIR}/${LINK_TARGET}"
-      IMPORTED_SONAME_NOCONFIG "${LINK_TARGET}"
+      IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/Debug/${REL_DIR}/${LINK_TARGET}"
+      IMPORTED_SONAME "${LINK_TARGET}"
       )
 
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
