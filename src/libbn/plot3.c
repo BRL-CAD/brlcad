@@ -759,6 +759,266 @@ pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
     pdv_3cont(fp, tip);
 }
 
+
+/*
+ * Routines to validate a plot file
+ */
+
+static int
+read_short(FILE *fp, int cnt, int mode)
+{
+    if (mode == PL_OUTPUT_MODE_BINARY) {
+	for (int i = 0; i < cnt * 2; i++) {
+	    if (getc(fp) == EOF)
+		return 1;
+	}
+	return 0;
+    }
+    if (mode == PL_OUTPUT_MODE_TEXT) {
+	int ret;
+	double val;
+	for (int i = 0; i < cnt; i++) {
+	    ret = fscanf(fp, "%lf", &val);
+	    if (ret != 1)
+		return 1;
+	}
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+read_ieee(FILE *fp, int cnt, int mode)
+{
+    int ret;
+    if (mode == PL_OUTPUT_MODE_BINARY) {
+	for (int i = 0; i < cnt; i++) {
+	    char inbuf[SIZEOF_NETWORK_DOUBLE];
+	    ret = fread(inbuf, SIZEOF_NETWORK_DOUBLE, 1, fp);
+	    if (ret != 1)
+		return 1;
+	}
+	return 0;
+    }
+    if (mode == PL_OUTPUT_MODE_TEXT) {
+	double val;
+	for (int i = 0; i < cnt; i++) {
+	    ret = fscanf(fp, "%lf", &val);
+	    if (ret != 1)
+		return 1;
+	}
+	return 0;
+    }
+    return 1;
+}
+
+static int
+read_tstring(FILE *fp, int mode)
+{
+    int ret;
+    if (mode == PL_OUTPUT_MODE_BINARY) {
+	int str_done = 0;
+	int cc;
+	while (!feof(fp) && !str_done) {
+	    cc = getc(fp);
+	    if (cc == '\n')
+		str_done = 1;
+	}
+	return 0;
+    }
+    if (mode == PL_OUTPUT_MODE_TEXT) {
+	char carg[256];
+	ret = fscanf(fp, "%256s\n", &carg[0]);
+	if (ret != 1)
+	    return 1;
+	return 0;
+    }
+    return 1;
+}
+
+int
+plot3_invalid(FILE *fp, int mode)
+{
+
+    /* Only two valid modes */
+    if (mode != PL_OUTPUT_MODE_BINARY && mode != PL_OUTPUT_MODE_TEXT) {
+	return 1;
+    }
+
+    /* A non-readable file isn't a valid file */
+    if (!fp) {
+	return 1;
+    }
+
+    int i = 0;
+    int c;
+    unsigned int tchar = 0;
+
+    while (!feof(fp) && (c=getc(fp)) != EOF) {
+	if (c < 'A' || c > 'z') {
+	    return 1;
+	}
+	switch (c) {
+	    case 'C':
+		// TCHAR, 3, "color"
+		if (mode == PL_OUTPUT_MODE_BINARY) {
+		    for (i = 0; i < 3; i++) {
+			if (getc(fp) == EOF)
+			    return 1;
+		    }
+		}
+		if (mode == PL_OUTPUT_MODE_TEXT) {
+		    i = fscanf(fp, "%u", &tchar);
+		    if (i != 1)
+			return 1;
+		}
+		break;
+	    case 'F':
+		// TNONE, 0, "flush"
+		break;
+	    case 'L':
+		// TSHORT, 6, "3line"
+		if (read_short(fp, 6, mode))
+		    return 1;
+		break;
+	    case 'M':
+		// TSHORT, 3, "3move"
+		if (read_short(fp, 3, mode))
+		    return 1;
+		break;
+	    case 'N':
+		// TSHORT, 3, "3cont"
+		if (read_short(fp, 3, mode))
+		    return 1;
+		break;
+	    case 'O':
+		// TIEEE, 3, "d_3move"
+		if (read_ieee(fp, 3, mode))
+		    return 1;
+		break;
+	    case 'P':
+		// TSHORT, 3, "3point"
+		if (read_short(fp, 3, mode))
+		    return 1;
+		break;
+	    case 'Q':
+		// TIEEE, 3, "d_3cont"
+		if (read_ieee(fp, 3, mode))
+		    return 1;
+		break;
+	    case 'S':
+		// TSHORT, 6, "3space"
+		if (read_short(fp, 6, mode))
+		    return 1;
+			break;
+	    case 'V':
+		// TIEEE, 6, "d_3line"
+		if (read_ieee(fp, 6, mode))
+		    return 1;
+		break;
+	    case 'W':
+		// TIEEE, 6, "d_3space"
+		if (read_ieee(fp, 6, mode))
+		    return 1;
+		break;
+	    case 'X':
+		// TIEEE, 3, "d_3point"
+		if (read_ieee(fp, 3, mode))
+		    return 1;
+		break;
+	    case 'a':
+		// TSHORT, 6, "arc"
+		if (read_short(fp, 6, mode))
+		    return 1;
+			break;
+	    case 'c':
+		// TSHORT, 3, "circle"
+			if (read_short(fp, 3, mode))
+			    return 1;
+			break;
+	    case 'e':
+		// TNONE, 0, "erase"
+		break;
+	    case 'f':
+		// TSTRING, 1, "linmod"
+		if (read_tstring(fp, mode))
+		    return 1;
+		break;
+	    case 'i':
+		// TIEEE, 3, "d_circle"
+		if (read_ieee(fp, 3, mode))
+		    return 1;
+		break;
+	    case 'l':
+		// TSHORT, 4, "line"
+		if (read_short(fp, 4, mode))
+		    return 1;
+			break;
+	    case 'm':
+		// TSHORT, 2, "move"
+		if (read_short(fp, 2, mode))
+		    return 1;
+			break;
+	    case 'n':
+		// TSHORT, 2, "cont"
+		if (read_short(fp, 2, mode))
+		    return 1;
+			break;
+	    case 'o':
+		// TIEEE, 2, "d_move"
+		if (read_ieee(fp, 2, mode))
+		    return 1;
+		break;
+	    case 'p':
+		// TSHORT, 2, "point"
+		if (read_short(fp, 2, mode))
+		    return 1;
+		break;
+	    case 'q':
+		// TIEEE, 2, "d_cont"
+		if (read_ieee(fp, 2, mode))
+		    return 1;
+		break;
+	    case 'r':
+		// TIEEE, 6, "d_arc"
+		if (read_ieee(fp, 6, mode))
+		    return 1;
+		break;
+	    case 's':
+		// TSHORT, 4, "space"
+		if (read_short(fp, 4, mode))
+		    return 1;
+		break;
+	    case 't':
+		// TSTRING, 1, "label"
+		if (read_tstring(fp, mode))
+		    return 1;
+		break;
+	    case 'v':
+		// TIEEE, 4, "d_line"
+		if (read_ieee(fp, 4, mode))
+		    return 1;
+		break;
+	    case 'w':
+		// TIEEE, 4, "d_space"
+		if (read_ieee(fp, 4, mode))
+		    return 1;
+		break;
+	    case 'x':
+		// TIEEE, 2, "d_point"
+		if (read_ieee(fp, 2, mode))
+		    return 1;
+		break;
+	    default:
+		return 1;
+		break;
+	};
+    }
+
+    return 0;
+}
+
 /** @} */
 /*
  * Local Variables:

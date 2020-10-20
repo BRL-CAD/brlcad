@@ -48,6 +48,11 @@ BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" TEST)
 # WIP - needs to become real test
 BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
 
+# This test program is being kept separate because the plot3 logic really
+# should move, and when it does it will be easier to move the test if it
+# is not tied into the bn_test target
+BRLCAD_ADDEXEC(bn_plot3 plot3.c "libbu;libbn" TEST)
+
 #
 #  ************ list.c tests *************
 #
