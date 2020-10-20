@@ -191,7 +191,8 @@ int
 bu_file_same(const char *fn1, const char *fn2)
 {
     int ret = 0;
-    char *rp1, *rp2;
+    char *rp1 = NULL;
+    char *rp2 = NULL;
 
     if (UNLIKELY(!fn1 || !fn2)) {
 	return 0;
@@ -202,7 +203,7 @@ bu_file_same(const char *fn1, const char *fn2)
     }
 
     /* stdin is a special case */
-    if (BU_STR_EQUAL(rp1, rp2) && BU_STR_EQUAL(rp1, "-")) {
+    if (BU_STR_EQUAL(fn1, fn2) && BU_STR_EQUAL(fn1, "-")) {
 	return 1;
     }
 
