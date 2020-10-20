@@ -1149,6 +1149,8 @@ CMAKEFILES(
   bn_test.c.in
   poly_cubic_roots.c
   poly_quartic_roots.c
+  valid.plot3
+  invalid.plot3
   )
 
 # Local Variables:
