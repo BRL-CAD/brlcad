@@ -68,7 +68,7 @@ static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GE
 void set_curr_dm(struct mged_dm *nc)
 {
     mged_curr_dm = nc;
-    if (nc != MGED_DM_NULL) {
+    if (nc != MGED_DM_NULL && nc->dm_view_state) {
 	GEDP->ged_gvp = nc->dm_view_state->vs_gvp;
 	GEDP->ged_gvp->gv_grid = *nc->dm_grid_state; /* struct copy */
     } else {
