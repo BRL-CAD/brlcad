@@ -65,7 +65,7 @@
  * BRLCAD_ROOT/lib/tclTK_VERSION/tk.tcl
  * BRLCAD_ROOT/lib/itclITCL_VERSION/itcl.tcl
  * BRLCAD_ROOT/lib/itkITCL_VERSION/itk.tcl
- * BRLCAD_ROOT/lib/iwidgetsIWIDGETS_VERSION/iwidgets.tcl
+ * BRLCAD_ROOT/lib/IwidgetsIWIDGETS_VERSION/iwidgets.tcl
  * BRLCAD_ROOT/share/tclscripts/pkgIndex.tcl and subdirs
  *
  * if TCLCAD_LIBRARY_PATH is set append to search path.
@@ -189,7 +189,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
-	bu_vls_sprintf(&buffer, "iwidgets%s", IWIDGETS_VERSION);
+	bu_vls_sprintf(&buffer, "Iwidgets%s", IWIDGETS_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
