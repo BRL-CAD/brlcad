@@ -88,12 +88,16 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 	return TCL_OK;
 
     if (Tcl_Init(interp) == TCL_ERROR) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Tcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
     if (init_gui) {
 #ifdef HAVE_TK
 	if (Tk_Init(interp) == TCL_ERROR) {
+	    if (tlog)
+		bu_vls_printf(tlog, "Tk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
 #endif
