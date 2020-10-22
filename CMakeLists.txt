@@ -182,6 +182,16 @@ include(CheckCXXSourceCompiles)
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
 #---------------------------------------------------------------------
+# Set up include paths for generated header files.  For multi-config
+# builds, make sure we get build-specific dirs.
+if(CMAKE_CONFIGURATION_TYPES)
+  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR})
+  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad)
+else(CMAKE_CONFIGURATION_TYPES)
+  include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
+endif(CMAKE_CONFIGURATION_TYPES)
+
+#---------------------------------------------------------------------
 # Intricacies involved with setting the install path mostly revolve
 # around build type dependent install directories.  Also needs the
 # current version defined.
