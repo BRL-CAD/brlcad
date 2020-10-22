@@ -11,23 +11,31 @@ library is.  This code sets the following variables:
 
 ::
 
-  TCL_FOUND              = Tcl was found
-  TK_FOUND               = Tk was found
-  TCLTK_FOUND            = Tcl and Tk were found
-  TCLSH_FOUND            = TRUE if tclsh has been found
-  TCL_LIBRARY            = path to Tcl library (tcl tcl80)
-  TCL_INCLUDE_PATH       = path to where tcl.h can be found
-  TCL_TCLSH              = path to tclsh binary (tcl tcl80)
-  TK_LIBRARY             = path to Tk library (tk tk80 etc)
-  TK_INCLUDE_PATH        = path to where tk.h can be found
-  TK_WISH                = full path to the wish executable
-  TCL_STUB_LIBRARY       = path to Tcl stub library
-  TK_STUB_LIBRARY        = path to Tk stub library
-  TTK_STUB_LIBRARY       = path to ttk stub library
+TCL_FOUND              = Tcl was found
+TK_FOUND               = Tk was found
+TCLTK_FOUND            = Tcl and Tk were found
+TCLSH_FOUND            = TRUE if tclsh has been found
+TCL_LIBRARY            = path to Tcl library (tcl tcl80)
+TCL_INCLUDE_PATH       = path to where tcl.h can be found
+TCL_TCLSH              = path to tclsh binary (tcl tcl80)
+TK_LIBRARY             = path to Tk library (tk tk80 etc)
+TK_INCLUDE_PATH        = path to where tk.h can be found
+TK_WISH                = full path to the wish executable
+TCL_STUB_LIBRARY       = path to Tcl stub library
+TK_STUB_LIBRARY        = path to Tk stub library
+TTK_STUB_LIBRARY       = path to ttk stub library
 
 #]=======================================================================]
 
 include(CMakeFindFrameworks)
+
+set(_TCL_SEARCHES)
+
+# Search TCL_ROOT first if it is set.
+if(TCL_ROOT)
+  set(_TCL_SEARCH_ROOT PATHS ${TCL_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _TCL_SEARCHES _TCL_SEARCH_ROOT)
+endif()
 
 if(WIN32)
   get_filename_component(
@@ -44,8 +52,8 @@ if(WIN32)
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.0;Root]/bin"
     )
 
- get_filename_component(
-	 ActiveTcl_CurrentVersion
+  get_filename_component(
+    ActiveTcl_CurrentVersion
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl;CurrentVersion]"
     NAME)
   set(TCLTK_POSSIBLE_LIB_PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
@@ -61,7 +69,7 @@ if(WIN32)
     "C:/Tcl/lib"
     )
 
- set(TCLTK_POSSIBLE_INCLUDE_PATHS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
+  set(TCLTK_POSSIBLE_INCLUDE_PATHS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl\\${ActiveTcl_CurrentVersion}]/include"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.6;Root]/include"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.5;Root]/include"
@@ -87,14 +95,15 @@ set(TCL_TCLSH_NAMES
   tclsh80 tclsh8.0
   )
 if(CYGWIN)
-	set(TCL_TCLSH_NAMES ${TCL_TCLSH_NAMES} cygtclsh83 cygtclsh80)
+  set(TCL_TCLSH_NAMES ${TCL_TCLSH_NAMES} cygtclsh83 cygtclsh80)
 endif(CYGWIN)
 
-
-find_program(TCL_TCLSH
-  NAMES ${TCL_TCLSH_NAMES}
-  HINTS ${TCLTK_POSSIBLE_BIN_PATHS}
-  )
+foreach(search ${_TCL_SEARCHES})
+  find_program(TCL_TCLSH NAMES ${TCL_TCLSH_NAMES} ${${search}} PATH_SUFFIXES bin)
+endforeach()
+if (NOT TCL_TCLSH)
+  find_program(TCL_TCLSH NAMES ${TCL_TCLSH_NAMES} HINTS ${TCLTK_POSSIBLE_BIN_PATHS})
+endif (NOT TCL_TCLSH)
 
 set(TK_WISH_NAMES
   wish
@@ -108,13 +117,15 @@ set(TK_WISH_NAMES
   )
 
 if(CYGWIN)
-	set(TK_WISH_NAMES ${TK_WISH_NAMES} cygwish80 )
+  set(TK_WISH_NAMES ${TK_WISH_NAMES} cygwish80 )
 endif()
 
-find_program(TK_WISH
-  NAMES ${TK_WISH_NAMES}
-  HINTS ${TCLTK_POSSIBLE_BIN_PATHS}
-  )
+foreach(search ${_TCL_SEARCHES})
+  find_program(TK_WISH NAMES ${TK_WISH_NAMES} ${${search}} PATH_SUFFIXES bin)
+endforeach()
+if (NOT TK_WISH)
+  find_program(TK_WISH	NAMES ${TK_WISH_NAMES} HINTS ${TCLTK_POSSIBLE_BIN_PATHS})
+endif (NOT TK_WISH)
 
 if(TCLSH_VERSION_STRING)
   set(TCL_TCLSH_VERSION "${TCLSH_VERSION_STRING}")
@@ -132,9 +143,10 @@ set(TCLTK_POSSIBLE_LIB_PATHS
   "${TK_LIBRARY_PATH}"
   "${TCL_TCLSH_PATH_PARENT}/lib"
   "${TK_WISH_PATH_PARENT}/lib"
-)
-
+  )
 set(TCLTK_POSSIBLE_LIB_PATH_SUFFIXES
+  lib
+  lib/tcl
   lib/tcl/tcl8.7
   lib/tcl/tk8.7
   lib/tcl/tcl8.6
@@ -143,10 +155,9 @@ set(TCLTK_POSSIBLE_LIB_PATH_SUFFIXES
   lib/tcl/tk8.5
   lib/tcl/tcl8.4
   lib/tcl/tk8.4
-)
+  )
 
-find_library(TCL_LIBRARY
-  NAMES
+set(TCL_POSSIBLE_LIB_NAMES
   tcl
   tcl${TCL_LIBRARY_VERSION} tcl${TCL_TCLSH_VERSION} tcl${TK_WISH_VERSION}
   tcl87 tcl8.7 tcl87t tcl8.7t
@@ -156,12 +167,25 @@ find_library(TCL_LIBRARY
   tcl83 tcl8.3
   tcl82 tcl8.2
   tcl80 tcl8.0
-  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
-  PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
   )
 
-find_library(TCL_STUB_LIBRARY
-  NAMES
+if(NOT TCL_LIBRARY)
+  foreach(search ${_TCL_SEARCHES})
+    find_library(TCL_LIBRARY
+      NAMES ${TCL_POSSIBLE_LIB_NAMES}
+      NAMES_PER_DIR ${${search}}
+      PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES})
+  endforeach()
+endif()
+if(NOT TCL_LIBRARY)
+  find_library(TCL_LIBRARY
+    NAMES ${TCL_POSSIBLE_LIB_NAMES}
+    PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+    PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
+    )
+endif(NOT TCL_LIBRARY)
+
+set(TCLSTUB_POSSIBLE_LIB_NAMES
   tclstub
   tclstub${TK_LIBRARY_VERSION} tclstub${TCL_TCLSH_VERSION} tclstub${TK_WISH_VERSION}
   tclstub87 tclstub8.7
@@ -171,11 +195,24 @@ find_library(TCL_STUB_LIBRARY
   tclstub83 tclstub8.3
   tclstub82 tclstub8.2
   tclstub80 tclstub8.0
-  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
-)
+  )
+if(NOT TCL_STUB_LIBRARY)
+  foreach(search ${_TCL_SEARCHES})
+    find_library(TCL_STUB_LIBRARY
+      NAMES ${TCLSTUB_POSSIBLE_LIB_NAMES}
+      NAMES_PER_DIR ${${search}}
+      PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
+      )
+  endforeach()
+endif()
+if(NOT TCL_STUB_LIBRARY)
+  find_library(TCL_STUB_LIBRARY
+    NAMES ${TCLSTUB_POSSIBLE_LIB_NAMES}
+    PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+    )
+endif()
 
-find_library(TK_LIBRARY
-  NAMES
+set(TK_POSSIBLE_LIB_NAMES
   tk
   tk${TK_LIBRARY_VERSION} tk${TCL_TCLSH_VERSION} tk${TK_WISH_VERSION}
   tk87 tk8.7 tk87t tk8.7t
@@ -185,12 +222,26 @@ find_library(TK_LIBRARY
   tk83 tk8.3
   tk82 tk8.2
   tk80 tk8.0
-  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
-  PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
   )
 
-find_library(TK_STUB_LIBRARY
-  NAMES
+if(NOT TK_LIBRARY)
+  foreach(search ${_TCL_SEARCHES})
+    find_library(TK_LIBRARY
+      NAMES ${TK_POSSIBLE_LIB_NAMES}
+      NAMES_PER_DIR ${${search}}
+      PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
+      )
+  endforeach()
+endif()
+if(NOT TK_LIBRARY)
+  find_library(TK_LIBRARY
+    NAMES ${TK_POSSIBLE_LIB_NAMES}
+    PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+    PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
+    )
+endif(NOT TK_LIBRARY)
+
+set(TK_STUB_POSSIBLE_LIB_NAMES
   tkstub
   tkstub${TCL_LIBRARY_VERSION} tkstub${TCL_TCLSH_VERSION} tkstub${TK_WISH_VERSION}
   tkstub87 tkstub8.7
@@ -200,19 +251,48 @@ find_library(TK_STUB_LIBRARY
   tkstub83 tkstub8.3
   tkstub82 tkstub8.2
   tkstub80 tkstub8.0
-  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
-)
+  )
 
-find_library(TTK_STUB_LIBRARY
-  NAMES
+if(NOT TK_STUB_LIBRARY)
+  foreach(search ${_TCL_SEARCHES})
+    find_library(TK_STUB_LIBRARY
+      NAMES ${TK_STUB_POSSIBLE_LIB_NAMES}
+      NAMES_PER_DIR ${${search}}
+      PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
+      )
+  endforeach()
+endif()
+if(NOT TK_STUB_LIBRARY)
+  find_library(TK_STUB_LIBRARY
+    NAMES ${TK_STUB_POSSIBLE_LIB_NAMES}
+    PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+    )
+endif()
+
+set(TTK_STUB_POSSIBLE_LIB_NAMES
   ttkstub
   ttkstub${TCL_LIBRARY_VERSION} ttkstub${TCL_TCLSH_VERSION} ttkstub${TK_WISH_VERSION}
   ttkstub88 ttkstub8.8
   ttkstub87 ttkstub8.7
   ttkstub86 ttkstub8.6
   ttkstub85 ttkstub8.5
-  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
-)
+  )
+
+if(NOT TTK_STUB_LIBRARY)
+  foreach(search ${_TCL_SEARCHES})
+    find_library(TTK_STUB_LIBRARY
+      NAMES ${TTK_STUB_POSSIBLE_LIB_NAMES}
+      NAMES_PER_DIR ${${search}}
+      PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
+      )
+  endforeach()
+endif()
+if(NOT TTK_STUB_LIBRARY)
+  find_library(TTK_STUB_LIBRARY
+    NAMES ${TTK_STUB_POSSIBLE_LIB_NAMES}
+    PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+    )
+endif()
 
 CMAKE_FIND_FRAMEWORKS(Tcl)
 CMAKE_FIND_FRAMEWORKS(Tk)
@@ -231,7 +311,7 @@ if(Tk_FRAMEWORKS)
   if(NOT TK_INCLUDE_PATH)
     foreach(dir ${Tk_FRAMEWORKS})
       set(TK_FRAMEWORK_INCLUDES ${TK_FRAMEWORK_INCLUDES}
-        ${dir}/Headers ${dir}/PrivateHeaders)
+	${dir}/Headers ${dir}/PrivateHeaders)
     endforeach()
   endif()
 endif()
@@ -263,75 +343,90 @@ set(TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES
   include/tcl8.0
   )
 
-find_path(TCL_INCLUDE_PATH
-  NAMES tcl.h
-  HINTS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
-  PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
-  )
-
-find_path(TK_INCLUDE_PATH
-  NAMES tk.h
-  HINTS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
-  PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
-  )
+foreach(search ${_TCL_SEARCHES})
+  find_path(TCL_INCLUDE_PATH
+    NAMES tcl.h ${${search}}
+    PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
+    )
+endforeach()
+if (NOT TCL_INCLUDE_PATH)
+  find_path(TCL_INCLUDE_PATH
+    NAMES tcl.h
+    HINTS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
+    PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
+    )
+endif()
+foreach(search ${_TCL_SEARCHES})
+  find_path(TK_INCLUDE_PATH
+    NAMES tk.h ${${search}}
+    PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
+    )
+endforeach()
+if (NOT TK_INCLUDE_PATH)
+  find_path(TK_INCLUDE_PATH
+    NAMES tk.h
+    HINTS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
+    PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
+    )
+endif()
 
 # IFF we have TCL_TK_SYSTEM_GRAPHICS set and have a system TK_WISH, check that the
 # windowing system matches the specified type
 if (NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
-	set(tkwin_script "
-	set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
-	set fileId [open $filename \"w\"]
-	set windowingsystem [tk windowingsystem]
-	puts $fileId $windowingsystem
-	close $fileId
-	exit
-	")
-	set(tkwin_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
-	set(WSYS "wm-NOTFOUND")
-	file(WRITE ${tkwin_scriptfile} ${tkwin_script})
-	execute_process(COMMAND ${TK_WISH} ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-	if (EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
-		file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM" readresultvar)
-		string(REGEX REPLACE "\n" "" WSYS "${readresultvar}")
-	endif (EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
+  set(tkwin_script "
+  set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
+  set fileId [open $filename \"w\"]
+  set windowingsystem [tk windowingsystem]
+  puts $fileId $windowingsystem
+  close $fileId
+  exit
+  ")
+  set(tkwin_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
+  set(WSYS "wm-NOTFOUND")
+  file(WRITE ${tkwin_scriptfile} ${tkwin_script})
+  execute_process(COMMAND ${TK_WISH} ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+  if (EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
+    file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM" readresultvar)
+    string(REGEX REPLACE "\n" "" WSYS "${readresultvar}")
+  endif (EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
 
-	# If we have no information about the windowing system or it does not match
-	# a specified system, the find_package detection has failed
-	if (NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
-		unset(TCL_LIBRARY CACHE)
-		unset(TCL_STUB_LIBRARY CACHE)
-		unset(TK_LIBRARY CACHE)
-		unset(TK_STUB_LIBRARY CACHE)
-		unset(TCL_FOUND CACHE)
-		unset(TK_FOUND CACHE)
-		unset(TCLTK_FOUND CACHE)
-		unset(TCLSH_FOUND CACHE)
-		unset(TCL_LIBRARY CACHE)
-		unset(TCL_INCLUDE_PATH CACHE)
-		unset(TCL_TCLSH CACHE)
-		unset(TK_LIBRARY CACHE)
-		unset(TK_INCLUDE_PATH CACHE)
-		unset(TK_WISH CACHE)
-		unset(TCL_STUB_LIBRARY CACHE)
-		unset(TK_STUB_LIBRARY CACHE)
-		unset(TTK_STUB_LIBRARY CACHE)
-	endif (NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
+  # If we have no information about the windowing system or it does not match
+  # a specified system, the find_package detection has failed
+  if (NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
+    unset(TCL_LIBRARY CACHE)
+    unset(TCL_STUB_LIBRARY CACHE)
+    unset(TK_LIBRARY CACHE)
+    unset(TK_STUB_LIBRARY CACHE)
+    unset(TCL_FOUND CACHE)
+    unset(TK_FOUND CACHE)
+    unset(TCLTK_FOUND CACHE)
+    unset(TCLSH_FOUND CACHE)
+    unset(TCL_LIBRARY CACHE)
+    unset(TCL_INCLUDE_PATH CACHE)
+    unset(TCL_TCLSH CACHE)
+    unset(TK_LIBRARY CACHE)
+    unset(TK_INCLUDE_PATH CACHE)
+    unset(TK_WISH CACHE)
+    unset(TCL_STUB_LIBRARY CACHE)
+    unset(TK_STUB_LIBRARY CACHE)
+    unset(TTK_STUB_LIBRARY CACHE)
+  endif (NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
 endif (NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
 
 include(FindPackageHandleStandardArgs)
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL
-	REQUIRED_VARS TCL_LIBRARY TCL_STUB_LIBRARY TCL_INCLUDE_PATH TCL_TCLSH
-	VERSION_VAR TCLSH_VERSION_STRING)
+  REQUIRED_VARS TCL_LIBRARY TCL_STUB_LIBRARY TCL_INCLUDE_PATH TCL_TCLSH
+  VERSION_VAR TCLSH_VERSION_STRING)
 set(FPHSA_NAME_MISMATCHED 1)
 set(TCLTK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
 set(TCLTK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCLTK
-	REQUIRED_VARS TCL_LIBRARY TCL_STUB_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_STUB_LIBRARY TK_INCLUDE_PATH)
+  REQUIRED_VARS TCL_LIBRARY TCL_STUB_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_STUB_LIBRARY TK_INCLUDE_PATH)
 set(TK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
 set(TK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TK
-	REQUIRED_VARS TK_LIBRARY TK_STUB_LIBRARY TK_INCLUDE_PATH TK_WISH)
+  REQUIRED_VARS TK_LIBRARY TK_STUB_LIBRARY TK_INCLUDE_PATH TK_WISH)
 unset(FPHSA_NAME_MISMATCHED)
 
 mark_as_advanced(
@@ -346,3 +441,10 @@ mark_as_advanced(
   TTK_STUB_LIBRARY
   )
 
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

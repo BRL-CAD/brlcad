@@ -44,8 +44,34 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-find_program(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
+set(_LEMON_SEARCHES)
+
+# Search LEMON_ROOT first if it is set.
+if(LEMON_ROOT)
+  set(_LEMON_SEARCH_ROOT PATHS ${LEMON_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _LEMON_SEARCHES _LEMON_SEARCH_ROOT)
+endif()
+
+# Normal search.
+set(_LEMON_x86 "(x86)")
+set(_LEMON_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/lemon"
+          "$ENV{ProgramFiles${_LEMON_x86}}/lemon")
+unset(_LEMON_x86)
+list(APPEND _LEMON_SEARCHES _LEMON_SEARCH_NORMAL)
+
+set(LEMON_NAMES lemon)
+
+# Try each search configuration.
+foreach(search ${_LEMON_SEARCHES})
+  find_program(LEMON_EXECUTABLE lemon ${${search}} PATH_SUFFIXES bin)
+endforeach()
 mark_as_advanced(LEMON_EXECUTABLE)
+
+foreach(search ${_LEMON_SEARCHES})
+  find_file(LEMON_TEMPLATE lempar.c ${${search}} PATH_SUFFIXES ${DATA_DIR} ${DATA_DIR}/lemon)
+endforeach()
+mark_as_advanced(LEMON_TEMPLATE)
 
 if (LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
   # look for the template in share
@@ -113,6 +139,10 @@ if(NOT COMMAND LEMON_TARGET)
       CMAKE_PARSE_ARGUMENTS(${LVAR_PREFIX} "" "OUT_SRC_FILE;OUT_HDR_FILE;WORKING_DIR;EXTRA_ARGS" "" ${ARGN})
     endif(${ARGC} GREATER 3)
 
+    if (TARGET perplex_stage)
+      set(DEPS_TARGET perplex_stage)
+    endif (TARGET perplex_stage)
+
     # Need a working directory
     if("${${LVAR_PREFIX}_WORKING_DIR}" STREQUAL "")
       set(${LVAR_PREFIX}_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/${LVAR_PREFIX}")
@@ -160,8 +190,8 @@ if(NOT COMMAND LEMON_TARGET)
     add_custom_command(
       OUTPUT ${LEMON_GEN_OUT} ${LEMON_GEN_SOURCE} ${LEMON_GEN_HEADER}
       COMMAND ${CMAKE_COMMAND} -E copy ${lemon_in_file} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}
-      COMMAND ${LEMON_EXECUTABLE} -l -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME} ${${LVAR_PREFIX}__EXTRA_ARGS}
-      DEPENDS ${Input} ${LEMON_TEMPLATE} ${LEMON_EXECUTABLE_TARGET}
+      COMMAND ${LEMON_EXECUTABLE} -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME} ${${LVAR_PREFIX}__EXTRA_ARGS}
+      DEPENDS ${Input} ${LEMON_EXECUTABLE_TARGET} ${DEPS_TARGET}
       WORKING_DIRECTORY ${${LVAR_PREFIX}_WORKING_DIR}
       COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
       )
@@ -171,7 +201,7 @@ if(NOT COMMAND LEMON_TARGET)
       add_custom_command(
 	OUTPUT ${${LVAR_PREFIX}_OUT_SRC_FILE}
 	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_SOURCE} ${${LVAR_PREFIX}_OUT_SRC_FILE}
-	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE}
+	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE} ${DEPS_TARGET}
 	)
       set(LEMON_${Name}_OUTPUTS ${${LVAR_PREFIX}_OUT_SRC_FILE} ${LEMON_${Name}_OUTPUTS})
     endif(NOT "${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "${LEMON_GEN_SOURCE}")
@@ -179,7 +209,7 @@ if(NOT COMMAND LEMON_TARGET)
       add_custom_command(
 	OUTPUT ${${LVAR_PREFIX}_OUT_HDR_FILE}
 	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_HEADER} ${${LVAR_PREFIX}_OUT_HDR_FILE}
-	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER}
+	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER} ${DEPS_TARGET}
 	)
       set(LEMON_${Name}_OUTPUTS ${${LVAR_PREFIX}_OUT_HDR_FILE} ${LEMON_${Name}_OUTPUTS})
     endif(NOT "${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "${LEMON_GEN_HEADER}")
