@@ -192,6 +192,16 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
+# We want to check /usr/local by default, so add it if it exists
+if (IS_DIRECTORY /usr/local)
+  set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
+  if (IS_DIRECTORY /usr/local/include)
+    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
+    include_directories(AFTER SYSTEM /usr/local/include)
+  endif (IS_DIRECTORY /usr/local/include)
+endif (IS_DIRECTORY /usr/local)
+
+#---------------------------------------------------------------------
 # Intricacies involved with setting the install path mostly revolve
 # around build type dependent install directories.  Also needs the
 # current version defined.

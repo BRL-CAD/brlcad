@@ -63,16 +63,6 @@ mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 
 
 #---------------------------------------------------------------------
-# We want to check /usr/local by default, so add it if it exists
-if (IS_DIRECTORY /usr/local)
-  set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
-  if (IS_DIRECTORY /usr/local/include)
-    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
-    include_directories(AFTER SYSTEM /usr/local/include)
-  endif (IS_DIRECTORY /usr/local/include)
-endif (IS_DIRECTORY /usr/local)
-
-#---------------------------------------------------------------------
 # The location in which to install BRL-CAD.  Only do this if
 # CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
 # parent builds (if any) some control.
