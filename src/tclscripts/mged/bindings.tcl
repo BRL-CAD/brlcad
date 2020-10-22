@@ -125,7 +125,7 @@ proc default_key_bindings { w } {
     bind $w r "winset $w; press right; break"
     bind $w R "winset $w; press rear; break"
     bind $w s "winset $w; press sill; break"
-    bind $w S "winset $w; puts \[nirt -b\]; break"
+    bind $w N "winset $w; puts \[nirt -b\]; break"
     bind $w o "winset $w; press oill; break"
     bind $w q "winset $w; press reject; break"
     bind $w A "winset $w; press accept; break"
@@ -232,7 +232,7 @@ proc forward_key_bindings { w } {
     bind $w t {}
     bind $w b {}
     bind $w l {}
-    bind $w n {}
+    bind $w N {}
     bind $w r {}
     bind $w R {}
     bind $w s {}
