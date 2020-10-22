@@ -28,7 +28,6 @@
 
 #define GED_API (2*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
 
-extern void *ged_cmds;
 
 /* Default command behaviors when it comes to impacts on calling applications.
  * Need callback hooks in gedp so the application can tell the command what it
