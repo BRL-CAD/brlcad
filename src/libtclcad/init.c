@@ -97,47 +97,18 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     char libdir[MAXPATHLEN] = {0};
     bu_dir(libdir, MAXPATHLEN, BU_DIR_LIB, NULL);
     if (strlen(libdir)) {
-	struct bu_vls initpath = BU_VLS_INIT_ZERO;
 	struct bu_vls lib_path = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&lib_path, "%s%ctcl%s/init.tcl", libdir, BU_DIR_SEPARATOR, TCL_VERSION);
 	if (bu_file_exists(bu_vls_cstr(&lib_path), NULL)) {
+	    struct bu_vls initpath = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&lib_path, "%s%ctcl%s", libdir, BU_DIR_SEPARATOR, TCL_VERSION);
 	    bu_vls_printf(&initpath, "set tcl_library {%s}", bu_vls_cstr(&lib_path));
 	    if (Tcl_Eval(interp, bu_vls_addr(&initpath))) {
-		bu_log("Problem initializing tcl_library to system init.tcl path: Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		bu_log("Problem initializing tcl_library to init.tcl path: Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    }
-	} else {
-	    /* For superbuilds, we may need to look one directory up.  Only do this when we're not installed. */
-	    int installed = 0;
-	    struct bu_vls ppath = BU_VLS_INIT_ZERO;
-	    bu_path_component(&ppath, libdir, BU_PATH_DIRNAME);
-	    {
-		char inst[MAXPATHLEN] = {0};
-		bu_dir(inst, MAXPATHLEN, BU_DIR_INSTALL, NULL);
-		if (BU_STR_EQUAL(bu_vls_cstr(&ppath), inst)) {
-		    installed = 1;
-		}
-	    }
-	    if (!installed) {
-		struct bu_vls ptail = BU_VLS_INIT_ZERO;
-		struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		bu_path_component(&ptail, libdir, BU_PATH_BASENAME);
-		bu_path_component(&tpath, bu_vls_cstr(&ppath), BU_PATH_DIRNAME);
-		bu_vls_sprintf(&lib_path, "%s%c%s%ctcl%s/init.tcl", bu_vls_cstr(&tpath), BU_DIR_SEPARATOR, bu_vls_cstr(&ptail), BU_DIR_SEPARATOR, TCL_VERSION);
-		if (bu_file_exists(bu_vls_cstr(&lib_path), NULL)) {
-		    bu_vls_sprintf(&lib_path, "%s%c%s%ctcl%s", bu_vls_cstr(&tpath), BU_DIR_SEPARATOR, bu_vls_cstr(&ptail), BU_DIR_SEPARATOR, TCL_VERSION);
-		    bu_vls_printf(&initpath, "set tcl_library {%s}", bu_vls_cstr(&lib_path));
-		    if (Tcl_Eval(interp, bu_vls_addr(&initpath))) {
-			bu_log("Problem initializing tcl_library to system init.tcl path: Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-		    }
-		}
-		bu_vls_free(&tpath);
-		bu_vls_free(&ptail);
-	    }
-	    bu_vls_free(&ppath);
+	    bu_vls_free(&initpath);
 	}
 	bu_vls_free(&lib_path);
-	bu_vls_free(&initpath);
     }
 
     if (Tcl_Init(interp) == TCL_ERROR) {
