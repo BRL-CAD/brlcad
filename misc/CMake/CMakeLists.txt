@@ -35,13 +35,14 @@ set(cmake_ignore_files
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
+  FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
-  FindSSE.cmake
   FindSTL.cmake
   FindShellDeps.cmake
+  FindSTEPCODE.cmake
   FindTBB.cmake
   FindTCL.cmake
   FindUTAHRLE.cmake
