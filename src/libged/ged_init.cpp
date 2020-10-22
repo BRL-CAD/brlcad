@@ -43,15 +43,14 @@
 
 #include "./include/plugin.h"
 
-static std::map<std::string, const struct ged_cmd *> cmd_map;
-static size_t cmd_list_len = 0;
 static char **cmd_list = NULL;
+static size_t cmd_list_len = 0;
+static std::map<std::string, const struct ged_cmd *> cmd_map;
+static std::set<void *> cmd_funcs;
+static struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 void *ged_cmds;
 
 extern "C" void libged_init(void);
-
-static std::set<void *> cmd_funcs;
-static struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
 
 const char *
@@ -109,6 +108,7 @@ ged_cmd_valid(const char *cmd, const char *func)
     return 0;
 }
 
+
 /* Use bu_editdist to see if there is a command name similar to cmd
  * defined.  Return the closest match and the edit distance.  (0 indicates
  * an exact match, -1 an error) */
@@ -145,6 +145,7 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
     return (int)min_dist;
 }
 
+
 size_t
 ged_cmd_list(const char * const **cl)
 {
@@ -162,6 +163,7 @@ ged_cmd_list(const char * const **cl)
     (*cl) = (const char * const *)cmd_list;
     return cmd_list_len;
 }
+
 
 extern "C" void
 libged_init(void)
@@ -273,8 +275,8 @@ struct libged_initializer {
     }
 };
 
-static libged_initializer LIBGED;
 
+static libged_initializer LIBGED;
 
 
 // Local Variables:
