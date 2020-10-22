@@ -33,7 +33,6 @@
 #include "./include/plugin.h"
 
 extern "C" void libged_init(void);
-extern std::map<std::string, const struct ged_cmd *>& ged_cmd_map(void); /* from ged_init.cpp */
 
 
 extern "C" int
@@ -49,13 +48,30 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	start = bu_gettime();
     }
 
-    // TODO - right now this is the map from the libged load, which we
-    // shouldn't be directly accessing.
-    std::map<std::string, const struct ged_cmd *>& cmap = ged_cmd_map();
+    // TODO - right now this is the map from the libged load - should
+    // probably use this to initialize a struct ged copy when ged_init
+    // is called, so client codes can add their own commands to their
+    // gedp...
+    //
+    // The ged_cmds map should always reflect the original, vanilla
+    // state of libged's command set so we have a clean fallback
+    // available if we ever need it to fall back on/recover with.
+    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
+
+    // On OpenBSD, if the executable was launched in a way that
+    // requires bu_setprogname to find the BRL-CAD root directory the
+    // initial libged initialization would have failed.  If we have no
+    // ged_cmds at all this is probably what happened, so call
+    // libged_init again here.  By the time we are calling ged_exec
+    // bu_setprogname should be set and we should be ready to actually
+    // find the commands.
+    if (!cmap->size()) {
+	libged_init();
+    }
 
     std::string key(argv[0]);
-    std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap.find(key);
-    if (c_it == cmap.end()) {
+    std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(key);
+    if (c_it == cmap->end()) {
 	bu_vls_printf(gedp->ged_result_str, "unknown command: %s", argv[0]);
 	return (GED_ERROR | GED_UNKNOWN);
     }
