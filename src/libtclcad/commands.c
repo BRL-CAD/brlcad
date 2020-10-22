@@ -69,9 +69,6 @@
 #include "icv/crop.h"
 #include "dm.h"
 
-#if defined(HAVE_WINDOWS_H)
-#  include <tkwinport.h>
-#endif
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
