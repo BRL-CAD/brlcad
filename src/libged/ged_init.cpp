@@ -51,12 +51,12 @@ void *ged_cmds;
 extern "C" void libged_init(void);
 
 static std::set<void *> ged_handles;
-struct bu_vls *ged_init_msg_str;
+static struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
 const char *
 ged_init_msgs()
 {
-    return bu_vls_cstr(ged_init_msg_str);
+    return bu_vls_cstr(&init_msgs);
 }
 
 /* If func is NULL, just see if the string has a ged_cmd_map entry.
@@ -164,10 +164,6 @@ ged_cmd_list(const char * const **cl)
 extern "C" void
 libged_init(void)
 {
-
-    BU_GET(ged_init_msg_str, struct bu_vls);
-    bu_vls_init(ged_init_msg_str);
-
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "ged", NULL);
     char **filenames;
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
@@ -181,9 +177,9 @@ libged_init(void)
 	if (!dl_handle) {
 	    const char * const error_msg = bu_dlerror();
 	    if (error_msg)
-		bu_vls_printf(ged_init_msg_str, "%s\n", error_msg);
+		bu_vls_printf(&init_msgs, "%s\n", error_msg);
 
-	    bu_vls_printf(ged_init_msg_str, "Unable to dynamically load '%s' (skipping)\n", pfile);
+	    bu_vls_printf(&init_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
 	    continue;
 	}
 	{
@@ -194,10 +190,10 @@ libged_init(void)
 		const char * const error_msg = bu_dlerror();
 
 		if (error_msg)
-		    bu_vls_printf(ged_init_msg_str, "%s\n", error_msg);
+		    bu_vls_printf(&init_msgs, "%s\n", error_msg);
 
-		bu_vls_printf(ged_init_msg_str, "Unable to load symbols from '%s' (skipping)\n", pfile);
-		bu_vls_printf(ged_init_msg_str, "Could not find '%s' symbol in plugin\n", psymbol);
+		bu_vls_printf(&init_msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Could not find '%s' symbol in plugin\n", psymbol);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
@@ -205,25 +201,25 @@ libged_init(void)
 	    const struct ged_plugin *plugin = plugin_info();
 
 	    if (!plugin) {
-		bu_vls_printf(ged_init_msg_str, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
 
 	    if (*((const uint32_t *)(plugin)) != (uint32_t)  (GED_API)) {
-		bu_vls_printf(ged_init_msg_str, "Plugin version %d of '%s' differs from %d (skipping)\n", *((const uint32_t *)(plugin)), pfile, GED_API);
+		bu_vls_printf(&init_msgs, "Plugin version %d of '%s' differs from %d (skipping)\n", *((const uint32_t *)(plugin)), pfile, GED_API);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
 
 	    if (!plugin->cmds) {
-		bu_vls_printf(ged_init_msg_str, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
 
 	    if (!plugin->cmd_cnt) {
-		bu_vls_printf(ged_init_msg_str, "Plugin '%s' contains no commands, (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Plugin '%s' contains no commands, (skipping)\n", pfile);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
@@ -233,7 +229,7 @@ libged_init(void)
 		const struct ged_cmd *cmd = cmds[c];
 		std::string key(cmd->i->cname);
 		if (ged_cmd_map.find(key) != ged_cmd_map.end()) {
-		    bu_vls_printf(ged_init_msg_str, "Warning - plugin '%s' provides command '%s' but that command has already been loaded, skipping\n", pfile, cmd->i->cname);
+		    bu_vls_printf(&init_msgs, "Warning - plugin '%s' provides command '%s' but that command has already been loaded, skipping\n", pfile, cmd->i->cname);
 		    continue;
 		}
 		ged_cmd_map[key] = cmd;
@@ -260,9 +256,6 @@ libged_clear(void)
 	bu_dlclose(handle);
     }
     ged_handles.clear();
-
-    bu_vls_free(ged_init_msg_str);
-    BU_PUT(ged_init_msg_str, struct bu_vls);
 }
 
 
@@ -274,6 +267,7 @@ struct libged_initializer {
     /* destructor */
     ~libged_initializer() {
 	libged_clear();
+	bu_vls_free(&init_msgs);
     }
 };
 
