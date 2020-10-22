@@ -1,6 +1,6 @@
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 3.12)
+  cmake_minimum_required(VERSION 3.14)
 
   # Set CMake project name
   project(UG2G)
@@ -15,12 +15,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
-      "${ZLIB_INCLUDE_DIR}"
-      "${TCL_INCLUDE_PATH}"
+      ${ZLIB_INCLUDE_DIRS}
+      ${REGEX_INCLUDE_DIRS}
+      ${TCL_INCLUDE_PATH}
       )
-    if (REGEX_INCLUDE_DIRS)
-      include_directories("${REGEX_INCLUDE_DIRS}")
-    endif (REGEX_INCLUDE_DIRS)
 
     # The build shims aren't so great at mocking the initialization
     # behavior of the real code.

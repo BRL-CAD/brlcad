@@ -51,7 +51,8 @@ __BEGIN_DECLS
  * Returns truthfully whether the given file path exists or not.  An
  * empty or NULL path name is treated as a non-existent file and, as
  * such, will return false.  If fd is non-NULL, it will be set to a
- * read-only open file descriptor for the provided path.
+ * read-only open file descriptor for the provided path.  If path is
+ * "-", fd is set to standard input's file descriptor if provided.
  *
  * @return >0 The given filename exists.
  * @return 0 The given filename does not exist.

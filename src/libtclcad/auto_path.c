@@ -22,17 +22,6 @@
  *
  * Locate the BRL-CAD tclscripts
  *
- * TODO - superbuild presents us with a challenge here.  This logic
- * is optimized for assuming that packages are either installed with
- * the associated system Tcl/Tk or present in the BRL-CAD build
- * directory.  Superbuilds present another possibility - a system
- * Tcl/Tk, a superbuild Itcl/Itk in the superbuild's directory,
- * and a BRL-CAD build needing to reference the staging install of
- * Itcl/Itk during its build.
- *
- * Not sure what the answer is yet.  One possibility is to use the
- * environment variables during the BRL-CAD build's execution of
- * its tools, but not sure yet if that's practical.
  */
 
 #include "common.h"
@@ -59,22 +48,6 @@
  * scripting resources. Detect whether the current invocation is from
  * an installed binary or not and append to the auto_path accordingly
  * for where the needed tclscript resources should be found.
- *
- ** installed invocation paths
- * BRLCAD_ROOT/lib/tclTCL_VERSION/init.tcl
- * BRLCAD_ROOT/lib/tclTK_VERSION/tk.tcl
- * BRLCAD_ROOT/lib/itclITCL_VERSION/itcl.tcl
- * BRLCAD_ROOT/lib/itkITCL_VERSION/itk.tcl
- * BRLCAD_ROOT/lib/IwidgetsIWIDGETS_VERSION/iwidgets.tcl
- * BRLCAD_ROOT/share/tclscripts/pkgIndex.tcl and subdirs
- *
- * if TCLCAD_LIBRARY_PATH is set append to search path.
- * get installation directory and invocation path
- * if being run from installation directory
- *   add installation paths to search path
- * if being run from source directory
- *   add source paths to search path
- * add installation paths to search path
  */
 void
 tclcad_auto_path(Tcl_Interp *interp)
@@ -243,11 +216,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_ptbl_ins(&data_subpaths, (long *)p);
     }
 
-    // The lib paths present some potential challenges.  Depending on where
-    // packages are at runtime, there are a variety of potential locations
-    // where they may be found.  To further complicate life, some of them
-    // may be in system locations and some in local locations.
-
     // First off, see what's in BU_DIR_LIB.
     char libdir[MAXPATHLEN] = {0};
     struct bu_vls lib_path = BU_VLS_INIT_ZERO;
@@ -276,65 +244,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_ptbl_free(&found_subpaths);
     }
 
-    // Determine if we're running from the final install location or from
-    // somewhere else, and whether the final install location has relevant
-    // files.  If we're in the non-final location, there is some
-    // extra work to do.
-    int installed = 0;
-    struct bu_vls w_root = BU_VLS_INIT_ZERO;
-    bu_path_component(&w_root, libdir, BU_PATH_DIRNAME);
-    {
-	char inst[MAXPATHLEN] = {0};
-	bu_dir(inst, MAXPATHLEN, BU_DIR_INSTALL, NULL);
-	if (BU_STR_EQUAL(bu_vls_cstr(&w_root), inst)) {
-	    installed = 1;
-	}
-    }
-
-    // If we're not installed, we may be in a subbuild, in which case we
-    // need to go up the tree to find any not-yet-installed dependencies.
-    // The way the BRL-CAD subbuild is set up we should only need to go up
-    // one level, so that's all we implement right now.
-    if (!installed) {
-	// Get the actual lib directory name - that's what we'll be checking
-	// for in the parent dir.
-	struct bu_ptbl found_subpaths = BU_PTBL_INIT_ZERO;
-	struct bu_vls pdir = BU_VLS_INIT_ZERO;
-	struct bu_vls tdir = BU_VLS_INIT_ZERO;
-	struct bu_vls libstr = BU_VLS_INIT_ZERO;
-	bu_path_component(&libstr, libdir, BU_PATH_BASENAME);
-	bu_path_component(&pdir, bu_vls_cstr(&w_root), BU_PATH_DIRNAME);
-	bu_vls_sprintf(&tdir, "%s%c%s", bu_vls_cstr(&pdir), BU_DIR_SEPARATOR, bu_vls_cstr(&libstr));
-	// Have a library directory, see what's in it
-	if (bu_file_exists(bu_vls_cstr(&tdir), NULL)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&lib_subpaths); i++) {
-		const char *fname = (const char *)BU_PTBL_GET(&lib_subpaths, i);
-		bu_vls_sprintf(&lib_path, "%s%c%s", bu_vls_cstr(&tdir), BU_DIR_SEPARATOR, fname);
-		if (bu_file_exists(bu_vls_cstr(&lib_path), NULL)) {
-		    // Have a path
-		    const char *p = bu_strdup(bu_vls_cstr(&lib_path));
-		    bu_ptbl_ins(&paths, (long *)p);
-		    bu_ptbl_ins(&found_subpaths, (long *)fname);
-		}
-	    }
-	    // Clear anything we found out of lib_subpaths - we don't need or
-	    // want to find it again.  The more local to the install, the
-	    // better...
-	    for (size_t i = 0; i < BU_PTBL_LEN(&found_subpaths); i++) {
-		bu_ptbl_rm(&lib_subpaths, BU_PTBL_GET(&found_subpaths, i));
-	    }
-	}
-	bu_ptbl_free(&found_subpaths);
-    }
-
-    // Libs not found
-    //for (size_t i = 0; i < BU_PTBL_LEN(&lib_subpaths); i++) {
-    //    const char *fname = (const char *)BU_PTBL_GET(&lib_subpaths, i);
-    //    bu_log("Not found: %s\n", fname);
-    //}
-
-    // Now that we've looked for the libs, handle the data dirs.  These are
-    // simpler as they should be guaranteed to be in BU_DIR_DATA.
+    // Now that we've looked for the libs, handle the data dirs.
     struct bu_vls data_path = BU_VLS_INIT_ZERO;
     char datadir[MAXPATHLEN] = {0};
     bu_dir(datadir, MAXPATHLEN, BU_DIR_DATA, NULL);
@@ -353,7 +263,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	}
     }
 
-    /* iterate over the paths set and modify the real Tcl auto_path */
+    /* Iterate over the paths set and modify the real Tcl auto_path */
     int tk_set = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(&paths); i++) {
 	const char *path = (const char *)BU_PTBL_GET(&paths, i);

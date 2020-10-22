@@ -87,17 +87,27 @@ main(int ac, char *av[])
 
     /* bu_log("using %s temp file\n", filename); */
 
+    /* make sure we don't overflow */
+    BU_ASSERT((uint64_t)sz < (uint64_t)(SIZE_MAX/2));
+    BU_ASSERT(sz > strlen("123......321")+1);
+
     title = (char *)bu_malloc(sz * 2, "test allocation");
     bu_free(title, "test allocation");
-    
+
     title = (char *)bu_malloc(sz, "title");
     memset(title, ' ', sz);
-    title[0] = '3';
+    title[0] = '1';
     title[1] = '2';
-    title[2] = '1';
-    title[sz-4] = '1';
+    title[2] = '3';
+    title[3] = '.';
+    title[4] = '.';
+    title[5] = '.';
+    title[sz-7] = '.';
+    title[sz-6] = '.';
+    title[sz-5] = '.';
+    title[sz-4] = '3';
     title[sz-3] = '2';
-    title[sz-2] = '3';
+    title[sz-2] = '1';
     title[sz-1] = '\0';
 
     /* bu_log("setting title to %ld == %ld chars long (%c%c%c <> %c%c%c)\n", strlen(title), sz-1, title[0], title[1], title[2], title[sz-4], title[sz-3], title[sz-2]); */

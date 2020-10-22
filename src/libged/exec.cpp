@@ -34,8 +34,10 @@
 
 extern "C" void libged_init(void);
 
+
 extern "C" int
-ged_exec(struct ged *gedp, int argc, const char *argv[]) {
+ged_exec(struct ged *gedp, int argc, const char *argv[])
+{
     if (!gedp || !argc || !argv) {
 	return GED_ERROR;
     }
@@ -46,21 +48,23 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
 	start = bu_gettime();
     }
 
-    // TODO - right now this is the map from the libged load - should probably
-    // use this to initialize a struct ged copy when ged_init is called, so
-    // client codes can add their own commands to their gedp...
+    // TODO - right now this is the map from the libged load - should
+    // probably use this to initialize a struct ged copy when ged_init
+    // is called, so client codes can add their own commands to their
+    // gedp...
     //
-    // The ged_cmds map should always reflect the original, vanilla state of
-    // libged's command set so we have a clean fallback available if we ever
-    // need it to fall back on/recover with.
+    // The ged_cmds map should always reflect the original, vanilla
+    // state of libged's command set so we have a clean fallback
+    // available if we ever need it to fall back on/recover with.
     std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
 
-    // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the iniital libged
-    // initialization would have failed.  If we have no ged_cmds at all this is
-    // probably what happened, so call libged_init again here.  By the time we
-    // are calling ged_exec bu_setprogname should be set and we should be ready
-    // to actually find the commands.
+    // On OpenBSD, if the executable was launched in a way that
+    // requires bu_setprogname to find the BRL-CAD root directory the
+    // initial libged initialization would have failed.  If we have no
+    // ged_cmds at all this is probably what happened, so call
+    // libged_init again here.  By the time we are calling ged_exec
+    // bu_setprogname should be set and we should be ready to actually
+    // find the commands.
     if (!cmap->size()) {
 	libged_init();
     }
@@ -74,8 +78,8 @@ ged_exec(struct ged *gedp, int argc, const char *argv[]) {
 
     const struct ged_cmd *cmd = c_it->second;
 
-    // TODO - if interactive command via cmd->i->interactive, don't execute
-    // unless we have the necessary callbacks defined in gedp
+    // TODO - if interactive command via cmd->i->interactive, don't
+    // execute unless we have the necessary callbacks defined in gedp
 
     int cret = (*cmd->i->cmd)(gedp, argc, argv);
 

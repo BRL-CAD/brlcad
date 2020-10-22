@@ -50,9 +50,6 @@ extern "C++" {
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic ignored "-Wclass-memaccess"
 #endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
 
 /* don't let opennurbs include windows.h */
 #define ON_NO_WINDOWS 1
