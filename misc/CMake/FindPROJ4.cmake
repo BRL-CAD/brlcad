@@ -11,35 +11,45 @@
 #
 # Copyright (c) 2009 Mateusz Loskot <mateusz@loskot.net>
 #
-# Redistribution and use is allowed according to the terms of the BSD license.
-# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
 
-set(_PROJ4_SEARCHES)
+if (NOT PROJ4_FOUND)
 
-# Search PROJ4_ROOT first if it is set.
-if(PROJ4_ROOT)
-  set(_PROJ4_SEARCH_ROOT PATHS ${PROJ4_ROOT} NO_DEFAULT_PATH)
-  list(APPEND _PROJ4_SEARCHES _PROJ4_SEARCH_ROOT)
+# Try to use OSGeo4W installation
+if(WIN32)
+    set(PROJ4_OSGEO4W_HOME "C:/OSGeo4W") 
+
+    if($ENV{OSGEO4W_HOME})
+        set(PROJ4_OSGEO4W_HOME "$ENV{OSGEO4W_HOME}") 
+    endif()
 endif()
 
-# Normal search.
-set(_PROJ4_x86 "(x86)")
-set(_PROJ4_SEARCH_NORMAL
-    PATHS
-	 "$ENV{OSGEO4W_HOME}"
-	 "C:/OSGeo4W"
-  	 "$ENV{ProgramFiles}/proj4"
-	 "$ENV{ProgramFiles${_PROJ4_x86}}/proj4"
-	 )
- unset(_PROJ4_x86)
-list(APPEND _PROJ4_SEARCHES _PROJ4_SEARCH_NORMAL)
-
-# Try each search configuration.
-foreach(search ${_PROJ4_SEARCHES})
-  find_path(PROJ4_INCLUDE_DIR NAMES proj_api.h ${${search}} PATH_SUFFIXES include include/proj4 proj4 include/proj proj)
-endforeach()
+find_path(PROJ4_INCLUDE_DIR proj_api.h
+	PATHS ${PROJ4_ROOT}/include/proj ${PROJ4_OSGEO4W_HOME}/include
+    DOC "Path to PROJ.4 library include directory")
 
 if (PROJ4_INCLUDE_DIR)
 	# Extract version from proj_api.h (ex: 480)
@@ -53,12 +63,10 @@ if (PROJ4_INCLUDE_DIR)
 endif()
 
 set(PROJ4_NAMES ${PROJ4_NAMES} proj proj_i)
-if(NOT PROJ4_LIBRARY)
-	foreach(search ${_PROJ4_SEARCHES})
-		find_library(PROJ4_LIBRARY NAMES ${PROJ4_NAMES} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
-	endforeach()
-endif()
-unset(PROJ4_NAMES)
+find_library(PROJ4_LIBRARY
+    NAMES ${PROJ4_NAMES}
+    PATHS ${PROJ4_ROOT}/lib64 ${PROJ4_ROOT}/lib ${PROJ4_OSGEO4W_HOME}/lib
+    DOC "Path to PROJ.4 library file")
 
 if(PROJ4_LIBRARY)
   set(PROJ4_LIBRARIES ${PROJ4_LIBRARY})
@@ -70,3 +78,5 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PROJ4 DEFAULT_MSG
 	PROJ4_LIBRARY
 	PROJ4_INCLUDE_DIR)
+
+endif (NOT PROJ4_FOUND)
