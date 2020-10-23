@@ -180,7 +180,7 @@ endif(MSVC)
 # are not using the system versions and IFF they are required based on the
 # feature settings enabled.
 
-add_subdirectory(src/superbuild)
+add_subdirectory(src/other/ext)
 
 #---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
