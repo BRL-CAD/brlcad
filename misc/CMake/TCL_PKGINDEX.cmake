@@ -50,6 +50,8 @@ function(TCL_PKGINDEX target pkgname pkgversion)
     )
   add_custom_target(${pkgname}_pkgIndex ALL DEPENDS ${WORKING_PKGFILE} ${INSTALL_PKGFILE})
 
+  install(FILES ${INSTALL_PKGFILE} DESTINATION ${LIB_DIR}/${pkgname}${pkgversion})
+
   DISTCLEAN("${WORKING_PKGFILE}")
   DISTCLEAN("${INSTALL_PKGFILE}")
 
