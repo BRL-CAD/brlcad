@@ -214,12 +214,31 @@ include(BRLCAD_Install_Prefix)
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 # Documentation of these options is available at
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
+if (NOT COMMAND std_build_rpath)
+  include(RPath_Setup)
+endif (NOT COMMAND std_build_rpath)
 
-# TODO - once we've shifted to function invocation rather than having
-# our logic execute on load, this "include" step will probably be
-# consolidated into one large include...
-include(RPath_Setup)
-cmake_set_rpath()
+# We want the full RPATH set in the build tree so we can run programs without
+# needing to set LD_LIBRARY_PATH
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+
+# We DON'T want the final install directory RPATH set in the build directory
+# - it should only be set to the installation value when actually installed.
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# Add the automatically determined parts of the RPATH which point to
+# directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Set RPATH value to use when installing.  This should be set to always
+# prefer the version in the installed path when possible, but fall back on a
+# location relative to the loading file's path if the installed version is
+# not present.  How to do so is platform specific.
+relative_rpath(RELPATH)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
+
+std_build_rpath()
+
 
 #---------------------------------------------------------------------
 # We need compiler support for certain C and C++ standards when we
