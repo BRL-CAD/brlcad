@@ -18,6 +18,14 @@
 # situations, CMake provides a variable CMAKE_CFG_INTDIR that will
 # insert the correct logic for config-dependent paths.
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/Third_Party_Exec.cmake")
+
+function(SetTargetFolder targetname folder)
+  if(TARGET ${targetname})
+    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
+  endif(TARGET ${targetname})
+endfunction(SetTargetFolder)
+
 # Clear all pre-defined CMake flags
 CLEAR_BUILD_FLAGS()
 
@@ -42,6 +50,7 @@ foreach(ITEM ${dlists})
   get_filename_component(dlist ${ITEM} NAME)
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
+
 
 # To enforce style guidelines rigorously, BRL-CAD bundles the
 # Artistic Style code formatter.  This tool is LGPLv3 licensed
@@ -113,8 +122,11 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 # source code in a file hierarchy
 CMAKEFILES(inactvhdrs/inactvhdrs.cpp)
 
-CMAKEFILES(README)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  README
+  Third_Party_Exec.cmake
+  )
 
 # Locac Variables:
 # tab-width: 8
