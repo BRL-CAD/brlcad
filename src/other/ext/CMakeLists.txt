@@ -150,6 +150,16 @@ include(ExternalProject)
 # CMAKE_INSTALL_PREFIX are finalized before generating this file!
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CMake/buildpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 add_executable(buildpath_replace ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
+# TODO - remove once we require CMake >=3.14
+# Until we can require CMake 3.14 for generator expressions in install(CODE), force
+# the location of buildpath_replace to a known location in all cases
+set_property(TARGET buildpath_replace PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp)
+if(CMAKE_CONFIGURATION_TYPES)
+  foreach(ct ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${ct}" CTU)
+    set_property(TARGET buildpath_replace PROPERTY RUNTIME_OUTPUT_DIRECTORY_${CTU} ${CMAKE_BINARY_DIR}/CMakeTmp)
+  endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
+endif(CMAKE_CONFIGURATION_TYPES)
 
 # BRL-CAD defines some additional custom targets used to manage the outputs of
 # ExternalProject_Add targets.

@@ -83,7 +83,16 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
       if (E_FIXPATH)
 	# Note - proper quoting for install(CODE) is extremely important for CPack, see
 	# https://stackoverflow.com/a/48487133
-	install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\${CMAKE_INSTALL_PREFIX}/${dir}/${bpf}\")")
+	#install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\${CMAKE_INSTALL_PREFIX}/${dir}/${bpf}\")")
+
+	# The proper way to do this is the line above with generator
+	# expressions, but support for using them in INSTALL(CODE) wasn't added
+	# until CMake 3.14.  The workaround is to manually specify he output
+	# path and force the buildpath_replace target to output in a specific
+	# location via its RUNTIME_OUTPUT_DIRECTORY properties.
+	get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
+	install(CODE "execute_process(COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/buildpath_replace${EXE_EXT} \"\${CMAKE_INSTALL_PREFIX}/${dir}/${bpf}\")")
+
       endif (E_FIXPATH)
     endif (NOT E_NOINSTALL)
 
