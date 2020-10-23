@@ -43,9 +43,7 @@ if(NOT DEFINED LIB_DIR)
 endif(NOT DEFINED LIB_DIR)
 
 set(IWIDGETS_PKGNAME Iwidgets)
-set(IWIDGETS_PKGVERSION "4.1.1")
-set(VERSION ${IWIDGETS_PKGVERSION})
-set(IWIDGETS_VERSION ${IWIDGETS_PKGVERSION})
+set(IWIDGETS_VERSION "4.1.1")
 
 set(IWIDGETS_SCRIPTS
   generic/buttonbox.itk
@@ -110,46 +108,17 @@ set(IWIDGETS_SCRIPTS
   )
 
 # Set up install rules
-foreach(script ${IWIDGETS_SCRIPTS})
-  install(FILES ${script} DESTINATION ${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/scripts)
-endforeach(script ${IWIDGETS_SCRIPTS})
+install(FILES ${IWIDGETS_SCRIPTS} DESTINATION ${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_VERSION}/scripts)
 
 # Create the pkgIndex.tcl file and configure iwidgets.tcl.
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${IWIDGETS_PKGNAME} ${IWIDGETS_PKGVERSION} [list source [file join $dir iwidgets.tcl]]")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${IWIDGETS_PKGNAME} ${IWIDGETS_VERSION} [list source [file join $dir ../../${LIB_DIR}/Iwidgets${IWIDGETS_VERSION}/iwidgets.tcl]]")
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl PROPERTIES GENERATED TRUE)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.tcl.in ${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl)
 
-# Place files in build directory
-foreach(file ${IWIDGETS_SCRIPTS})
-  get_filename_component(filename ${file} NAME)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${file} ${CMAKE_BINARY_DIR}/${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/scripts/${filename} COPYONLY)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${file} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/scripts/${filename} COPYONLY)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-endforeach(file ${IWIDGETS_SCRIPTS})
-
-# Place files in build directory
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  configure_file(${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl ${CMAKE_BINARY_DIR}/${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/iwidgets.tcl COPYONLY)
-  configure_file(${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl ${CMAKE_BINARY_DIR}/${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/pkgIndex.tcl COPYONLY)
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    configure_file(${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/iwidgets.tcl COPYONLY)
-    configure_file(${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/pkgIndex.tcl COPYONLY)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-endif(NOT CMAKE_CONFIGURATION_TYPES)
-
 # Add install rules for generated files
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl DESTINATION ${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION})
-install(FILES license.terms DESTINATION ${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION})
-
-CMAKEFILES(${IWIDGETS_SCRIPTS})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_VERSION})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl DESTINATION ${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_VERSION})
+install(FILES license.terms DESTINATION ${LIB_DIR}/${IWIDGETS_PKGNAME}${IWIDGETS_VERSION})
 
 # Local Variables:
 # tab-width: 8
