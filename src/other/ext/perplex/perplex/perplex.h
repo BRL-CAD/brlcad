@@ -42,7 +42,7 @@
 #define PERPLEX_H
 
 #include <stdio.h>
-#include "parser.h"
+#include "perplex_parser.h"
 #include "token_type.h"
 
 /* tokens are typically ints defined starting from 0,
