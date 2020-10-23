@@ -6,7 +6,7 @@ include_directories(
 
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/superbuild/stepcode/data/ap203/ap203.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap203/ap203.exp)
 add_definitions(-DAP203)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)
