@@ -224,6 +224,7 @@ if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" AND NOT "${CMAKE_SYSTEM_PROC
 endif(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
 
 # Threads
+include(CMakePushCheckState)
 CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H)
 if (NOT PROBE_PTHREAD_H)
   cmake_push_check_state(RESET)
@@ -328,6 +329,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_config.h.in ${CMAKE_CURRENT_
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h DESTINATION include/gdal)
+
 add_subdirectory(port)
 add_subdirectory(gcore)
 add_subdirectory(alg)
@@ -382,12 +385,9 @@ endif (BUILD_SHARED_LIBS)
 
 if (BUILD_STATIC_LIBS)
   add_library(gdal-static STATIC ${gdal_srcs})
-  if (MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(gdal-static PROPERTIES PREFIX "lib")
-  else (MSVC)
+  if (NOT MSVC)
     set_target_properties(gdal-static PROPERTIES OUTPUT_NAME "gdal")
-  endif (MSVC)
+  endif (NOT MSVC)
   install(TARGETS gdal-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
