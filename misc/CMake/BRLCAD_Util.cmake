@@ -38,6 +38,14 @@
 include(CMakeParseArguments)
 
 #-----------------------------------------------------------------------------
+# Find the executable extension, if there is one.  Really should be able to use
+# CMAKE_EXECUTABLE_SUFFIX for this, but we've hit a few cases over the years
+# where that hasn't been defined.  CMAKE_COMMAND does seem to be reliably
+# defined, however, so we establish the convention of using it to supply us
+# with the platform exe extension, if there is one.
+get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
+
+#-----------------------------------------------------------------------------
 # We want to support a "distclean" build target that will clear all
 # CMake-generated files from a source directory in the case of an
 # in-source-dir configuration.  Not recommended, but we'll try to

@@ -101,13 +101,6 @@ if(USE_OBJECT_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 endif(USE_OBJECT_LIBS)
 
-# Find the executable extension, if there is one.  Really should be able to use
-# CMAKE_EXECUTABLE_SUFFIX for this, but we've hit a few cases over the years
-# where that hasn't been defined.  CMAKE_COMMAND does seem to be reliably
-# defined, however, so we establish the convention of using it to supply us
-# with the platform exe extension, if there is one.
-get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
-
 #---------------------------------------------------------------------
 # Record the CMake command line arguments (more or less) in
 # CMakeFiles/CMakeOutput.log
