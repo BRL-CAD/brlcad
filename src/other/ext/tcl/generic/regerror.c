@@ -46,7 +46,7 @@ static const struct rerr {
     const char *name;
     const char *explain;
 } rerrs[] = {
-    /* The actual table is built from regextcl.h */
+    /* The actual table is built from regex.h */
 #include "regerrs.h"
     { -1, "", "oops" },		/* explanation special-cased in code */
 };
