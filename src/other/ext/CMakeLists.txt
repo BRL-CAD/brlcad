@@ -144,6 +144,13 @@ add_executable(rpath_replace ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 # Independent projects with their own build systems (potentially not CMake
 # based) need ExternalProject_Add
 include(ExternalProject)
+
+# Custom patch utility to replace the build directory path with the install
+# directory path in text files - make sure CMAKE_BINARY_DIR and
+# CMAKE_INSTALL_PREFIX are finalized before generating this file!
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CMake/buildpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
+add_executable(buildpath_replace ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
+
 # BRL-CAD defines some additional custom targets used to manage the outputs of
 # ExternalProject_Add targets.
 # Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized

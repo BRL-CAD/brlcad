@@ -44,12 +44,6 @@ function(fcfgcpy outvar extproj root ofile dir tfile)
   set(${outvar} ${TOUT} PARENT_SCOPE)
 endfunction(fcfgcpy file)
 
-# Custom patch utility to replace the build directory path with the install
-# directory path in text files - make sure CMAKE_BINARY_DIR and
-# CMAKE_INSTALL_PREFIX are finalized before generating this file!
-configure_file(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/buildpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
-add_executable(buildpath_replace ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
-
 function(ExternalProject_ByProducts etarg extproj extroot dir)
 
   cmake_parse_arguments(E "FIXPATH;NOINSTALL" "" "" ${ARGN})
