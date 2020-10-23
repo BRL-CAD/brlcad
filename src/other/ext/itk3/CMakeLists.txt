@@ -42,7 +42,10 @@ cmake_minimum_required(VERSION 3.14)
 # set CMake project name
 project(ITK)
 
-find_package(TCL)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+
+find_package(TCL REQUIRED)
+find_package(ITCL REQUIRED)
 
 # version numbers
 set(ITK_VERSION_MAJOR 3)
@@ -52,19 +55,22 @@ set(ITK_VERSION "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}")
 
 #---------------------------------------------------------------------
 # Initialize some relative variable names
-if(NOT DEFINED BIN_DIR)
+if(NOT BIN_DIR)
   set(BIN_DIR bin)
-endif(NOT DEFINED BIN_DIR)
-if(NOT DEFINED LIB_DIR)
+endif(NOT BIN_DIR)
+if(NOT SHARED_DIR)
   if(NOT WIN32)
-    set(LIB_DIR lib)
+    set(SHARED_DIR lib)
   else(NOT WIN32)
-    set(LIB_DIR bin)
+    set(SHARED_DIR bin)
   endif(NOT WIN32)
-endif(NOT DEFINED LIB_DIR)
-if(NOT DEFINED INCLUDE_DIR)
+endif(NOT SHARED_DIR)
+if(NOT LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT LIB_DIR)
+if(NOT INCLUDE_DIR)
   set(INCLUDE_DIR include)
-endif(NOT DEFINED INCLUDE_DIR)
+endif(NOT INCLUDE_DIR)
 
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way
@@ -151,7 +157,7 @@ mark_as_advanced(ITK_INCLUDE_DIRS)
 # Like ITcl, Itk requires private Tcl headers, which we can't assume from a system
 # install of Tcl.  The workaround is to use our local copies and hope they
 # are workable. (Ugh.)
-if (TARGET tk OR NOT EXISTS "${TCL_INCLUDE_PATH}/tcl-private/generic")
+if (NOT EXISTS "${TCL_INCLUDE_PATH}/tcl-private/generic")
     set(TCL_PRIVATE_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
   if(NOT WIN32)
     set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
@@ -176,44 +182,38 @@ include_directories(
   ${ITK_INCLUDE_DIRS}
   ${X11_INCLUDE_DIR}
   ${TCL_PRIVATE_HDRS}
-  # We can't realistically assume Itcl3 from any system install - just reference the local copy
-  ${CMAKE_CURRENT_SOURCE_DIR}/../itcl/generic
+  # Itcl3 is iffy as a system install - just reference the local copy
+  ${CMAKE_CURRENT_SOURCE_DIR}/../itcl3/generic
   )
 
-add_library(itk ${ITK_SRCS})
-target_link_libraries(itk ${M_LIBRARY} ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY} ${ITCL_STUB_LIBRARY})
-set_property(TARGET itk APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
-set_property(TARGET itk APPEND PROPERTY COMPILE_DEFINITIONS USE_ITCL_STUBS)
-set_property(TARGET itk APPEND PROPERTY COMPILE_DEFINITIONS USE_TK_STUBS)
-set_target_properties(itk PROPERTIES VERSION ${ITK_VERSION} SOVERSION ${ITK_VERSION_MAJOR})
-install(TARGETS itk
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
-if (TARGET tk)
-  add_dependencies(itk tk)
-endif (TARGET tk)
-if (TARGET itcl)
-  add_dependencies(itk itcl)
-  add_dependencies(itk itcl_pkgIndex)
-endif (TARGET itcl)
-
+add_library(itk${ITK_VERSION} SHARED ${ITK_SRCS})
+target_link_libraries(itk${ITK_VERSION} ${M_LIBRARY} ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY} ${ITCL_STUB_LIBRARY})
+set_property(TARGET itk${ITK_VERSION} APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
+set_property(TARGET itk${ITK_VERSION} APPEND PROPERTY COMPILE_DEFINITIONS USE_ITCL_STUBS)
+set_property(TARGET itk${ITK_VERSION} APPEND PROPERTY COMPILE_DEFINITIONS USE_TK_STUBS)
+install(TARGETS itk${ITK_VERSION}
+  RUNTIME DESTINATION ${BIN_DIR}/itk${ITK_VERSION}
+  LIBRARY DESTINATION ${SHARED_DIR}/itk${ITK_VERSION}
+  ARCHIVE DESTINATION ${LIB_DIR}/itk${ITK_VERSION})
 
 add_library(itkstub STATIC ${ITK_STUB_SRCS})
-target_link_libraries(itkstub ${ITCL_STUB_LIBRARY} ${TCL_STUB_LIBRARY})
+target_link_libraries(itkstub ${ITCL_STUB_LIBRARY} ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY})
 set_property(TARGET itkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 set_property(TARGET itkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_ITCL_STUBS)
 set_property(TARGET itkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TK_STUBS)
 install(TARGETS itkstub
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}/itk${ITK_VERSION}
+  LIBRARY DESTINATION ${LIB_DIR}/itk${ITK_VERSION}
+  ARCHIVE DESTINATION ${LIB_DIR}/itk${ITK_VERSION})
 
-include(ITK_PKGINDEX.cmake)
-ITK_PKGINDEX(itk itk "${ITK_VERSION}")
-if (TARGET wish)
-  add_dependencies(wish itk_pkgIndex)
-endif (TARGET wish)
+# Create pkgIndex.tcl files
+file(GENERATE
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl"
+  CONTENT "
+if {![package vsatisfies [package provide Tcl] ${TCL_VERSION}]} {return}
+package ifneeded Itk ${ITK_VERSION} [list load [file join $dir ../../${SHARED_DIR}/itk${ITK_VERSION} $<TARGET_FILE_NAME:itk${ITK_VERSION}>] Itk]
+")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${LIB_DIR}/itk${ITK_VERSION})
 
 set(ITK_LIBRARY_FILES
   library/Archetype.itk
@@ -224,38 +224,11 @@ set(ITK_LIBRARY_FILES
   )
 install(FILES ${ITK_LIBRARY_FILES} DESTINATION lib/itk${ITK_VERSION})
 
-foreach(file ${ITK_LIBRARY_FILES})
-  get_filename_component(filename ${file} NAME)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${file} ${CMAKE_BINARY_DIR}/lib/itk${ITK_VERSION}/${filename} COPYONLY)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${file} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/itk${ITK_VERSION}/${filename} COPYONLY)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-endforeach(file ${ITK_LIBRARY_FILES})
-
 set(ITK_HDRS
   generic/itk.h
   generic/itkDecls.h
   )
-install(FILES ${ITK_HDRS} DESTINATION include)
-
-# TODO - investigate whether file(GENERATE can replace the below file copying pattern
-
-# Set up build directory copies of the public headers
-foreach(hdrfile ${ITK_HDRS})
-  get_filename_component(hf ${hdrfile} NAME)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/${hf} COPYONLY)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/${hf} COPYONLY)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-endforeach(hdrfile ${ITK_HDRS})
+install(FILES ${ITK_HDRS} DESTINATION ${INCLUDE_DIR})
 
 # Local Variables:
 # tab-width: 8

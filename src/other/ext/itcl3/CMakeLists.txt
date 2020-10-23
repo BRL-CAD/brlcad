@@ -42,6 +42,8 @@ cmake_minimum_required(VERSION 3.14)
 # set CMake project name
 project(ITCL)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+
 find_package(TCL)
 
 # version numbers
@@ -53,19 +55,22 @@ set(ITCL_VERSION "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}")
 
 #---------------------------------------------------------------------
 # Initialize some relative variable names
-if(NOT DEFINED BIN_DIR)
+if(NOT BIN_DIR)
   set(BIN_DIR bin)
-endif(NOT DEFINED BIN_DIR)
-if(NOT DEFINED LIB_DIR)
+endif(NOT BIN_DIR)
+if(NOT SHARED_DIR)
   if(NOT WIN32)
-    set(LIB_DIR lib)
+    set(SHARED_DIR lib)
   else(NOT WIN32)
-    set(LIB_DIR bin)
+    set(SHARED_DIR bin)
   endif(NOT WIN32)
-endif(NOT DEFINED LIB_DIR)
-if(NOT DEFINED INCLUDE_DIR)
+endif(NOT SHARED_DIR)
+if(NOT LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT LIB_DIR)
+if(NOT INCLUDE_DIR)
   set(INCLUDE_DIR include)
-endif(NOT DEFINED INCLUDE_DIR)
+endif(NOT INCLUDE_DIR)
 
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way
@@ -155,12 +160,11 @@ set(ITCL_STUB_SRCS generic/itclStubLib.c)
 set(ITCL_INCLUDE_PATH ${ITCL_SOURCE_DIR}/generic ${ITCL_BINARY_DIR}/include)
 mark_as_advanced(ITCL_INCLUDE_PATH)
 
-
 # ITcl requires private Tcl headers, which we can't assume from a system
-# install of Tcl.  The workaround is to use our local copies and hope they
-# are workable. (Ugh.)
-if (TARGET tcl OR NOT EXISTS "${TCL_INCLUDE_PATH}/tcl-private/generic")
-    set(TCL_PRIVATE_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
+# install of Tcl.  The fallback is to use our local copies and hope they
+# work. (Ugh.)
+if (NOT EXISTS "${TCL_INCLUDE_PATH}/tcl-private/generic")
+  set(TCL_PRIVATE_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
   if(NOT WIN32)
     set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
   else(NOT WIN32)
@@ -181,51 +185,31 @@ include_directories(
   ${TCL_PRIVATE_HDRS}
   )
 
-add_library(itcl ${ITCL_SRCS})
-target_link_libraries(itcl ${M_LIBRARY} ${TCL_STUB_LIBRARY} )
-set_target_properties(itcl PROPERTIES VERSION ${ITCL_VERSION} SOVERSION ${ITCL_VERSION_MAJOR})
-set_property(TARGET itcl APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
-install(TARGETS itcl
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
-if (TARGET tcl)
-  add_dependencies(itcl tcl)
-endif (TARGET tcl)
+add_library(itcl${ITCL_VERSION} SHARED ${ITCL_SRCS})
+target_link_libraries(itcl${ITCL_VERSION} ${M_LIBRARY} ${TCL_STUB_LIBRARY} )
+set_property(TARGET itcl${ITCL_VERSION} APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
+install(TARGETS itcl${ITCL_VERSION}
+  RUNTIME DESTINATION ${BIN_DIR}/itcl${ITCL_VERSION}
+  LIBRARY DESTINATION ${SHARED_DIR}/itcl${ITCL_VERSION}
+  ARCHIVE DESTINATION ${LIB_DIR}/itcl${ITCL_VERSION})
 
 add_library(itclstub STATIC ${ITCL_STUB_SRCS})
 install(TARGETS itclstub
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}/itcl${ITCL_VERSION}
+  LIBRARY DESTINATION ${LIB_DIR}/itcl${ITCL_VERSION}
+  ARCHIVE DESTINATION ${LIB_DIR}/itcl${ITCL_VERSION})
 set_property(TARGET itclstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 
 # Create pkgIndex.tcl files
-include(ITCL_PKGINDEX.cmake)
-ITCL_PKGINDEX(itcl itcl ${ITCL_VERSION})
-if (TARGET tclsh)
-  add_dependencies(tclsh itcl_pkgIndex)
-endif (TARGET tclsh)
-if (TARGET wish)
-  add_dependencies(wish itcl_pkgIndex)
-endif (TARGET wish)
+file(GENERATE
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl"
+  CONTENT "
+if {![package vsatisfies [package provide Tcl] ${TCL_VERSION}]} {return}
+package ifneeded Itcl ${ITCL_VERSION} [list load [file join $dir ../../${SHARED_DIR}/itcl${ITCL_VERSION} $<TARGET_FILE_NAME:itcl${ITCL_VERSION}>] Itcl]
+")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${LIB_DIR}/itcl${ITCL_VERSION})
 
-
-# Put library files where they need to go, and set up install rules
-set(LIBRARY_FILES itcl.tcl)
-foreach(libfile ${LIBRARY_FILES})
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/${libfile}
-      ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VERSION}/${libfile} COPYONLY)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/${libfile}
-	${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/itcl${ITCL_VERSION}/${libfile} COPYONLY)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-  install(FILES library/${libfile} DESTINATION lib/itcl${ITCL_VERSION})
-endforeach(libfile ${LIBRARY_FILES})
+install(FILES library/itcl.tcl DESTINATION ${LIB_DIR}/itcl${ITCL_VERSION})
 
 set(ITCL_HDRS
   generic/itcl.h
@@ -233,20 +217,7 @@ set(ITCL_HDRS
   generic/itclInt.h
   generic/itclIntDecls.h
   )
-install(FILES ${ITCL_HDRS} DESTINATION include)
-
-# Set up build directory copies of the public headers
-foreach(hdrfile ${ITCL_HDRS})
-  get_filename_component(hf ${hdrfile} NAME)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/${hf} COPYONLY)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/${hf} COPYONLY)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-endforeach(hdrfile ${ITCL_HDRS})
+install(FILES ${ITCL_HDRS} DESTINATION ${INCLUDE_DIR})
 
 # Local Variables:
 # tab-width: 8
