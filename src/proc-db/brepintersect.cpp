@@ -133,7 +133,7 @@ bool PointInTriangle(
 
 bool PointInPolyline(
     const ON_3dPoint& P,
-    const ON_Polyline pline,
+    const ON_Polyline& pline,
     double tol
     )
 {
