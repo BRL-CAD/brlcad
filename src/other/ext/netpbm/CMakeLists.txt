@@ -135,11 +135,10 @@ set(NETPBM_HEADERS
   ppm.h
   ppmcmap.h
   ppmfloyd.h
+  ${CMAKE_CURRENT_BINARY_DIR}/pm_config.h
   )
 
-if (NOT SKIP_INSTALL_HEADERS)
-  install (FILES ${NETPBM_HEADERS} DESTINATION ${INCLUDE_DIR}/netpbm)
-endif (NOT SKIP_INSTALL_HEADERS)
+install (FILES ${NETPBM_HEADERS} DESTINATION ${INCLUDE_DIR}/netpbm)
 
 
 if (NOT DEFINED BUILD_SHARED_LIBS)
@@ -155,20 +154,14 @@ if (BUILD_SHARED_LIBS)
 endif (BUILD_SHARED_LIBS)
 
 if(MSVC)
-  # msvc does not append 'lib' - do it here to have consistent name
-  set_target_properties(netpbm PROPERTIES PREFIX "lib")
-  set_target_properties(netpbm PROPERTIES IMPORT_PREFIX "lib")
   set_property(TARGET netpbm APPEND PROPERTY COMPILE_DEFINITIONS "NETPBM_DLL_EXPORTS")
 endif(MSVC)
 
 if (BUILD_STATIC_LIBS)
   add_library(netpbm-static STATIC ${NETPBM_SRCS})
-  if (MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(netpbm-static PROPERTIES PREFIX "lib")
-  else (MSVC)
+  if (NOT MSVC)
     set_target_properties(netpbm-static PROPERTIES OUTPUT_NAME "netpbm")
-  endif (MSVC)
+  endif (NOT MSVC)
   install(TARGETS netpbm-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
