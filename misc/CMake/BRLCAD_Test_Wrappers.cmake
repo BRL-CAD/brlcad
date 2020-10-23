@@ -1,39 +1,39 @@
 
 # "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
-  include(ProcessorCount)
+include(ProcessorCount)
 ProcessorCount(N)
-  if(NOT N EQUAL 0)
-    math(EXPR NC "${N} / 2")
-    if(${NC} GREATER 1)
-      set(JFLAG "-j${NC}")
-    else(${NC} GREATER 1)
-      set(JFLAG)
-    endif(${NC} GREATER 1)
-  else(NOT N EQUAL 0)
-    # Huh?  No j flag if we can't get a processor count
-    set(JFLAG)
-  endif(NOT N EQUAL 0)
+if(NOT N EQUAL 0)
+	math(EXPR NC "${N} / 2")
+	if(${NC} GREATER 1)
+		set(JFLAG "-j${NC}")
+	else(${NC} GREATER 1)
+		set(JFLAG)
+	endif(${NC} GREATER 1)
+else(NOT N EQUAL 0)
+	# Huh?  No j flag if we can't get a processor count
+	set(JFLAG)
+endif(NOT N EQUAL 0)
 
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(CONFIG $<CONFIG>)
-  else(CMAKE_CONFIGURATION_TYPES)
-    if ("${CONFIG}" STREQUAL "")
-      set(CONFIG "\"\"")
-    endif ("${CONFIG}" STREQUAL "")
-  endif(CMAKE_CONFIGURATION_TYPES)
+if(CMAKE_CONFIGURATION_TYPES)
+	set(CONFIG $<CONFIG>)
+else(CMAKE_CONFIGURATION_TYPES)
+	if ("${CONFIG}" STREQUAL "")
+		set(CONFIG "\"\"")
+	endif ("${CONFIG}" STREQUAL "")
+endif(CMAKE_CONFIGURATION_TYPES)
 
-  add_custom_target(check
-    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
-    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
-    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
-    COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
-    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+add_custom_target(check
+	COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+	COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
+	COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
+	COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
+	COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
+	COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
 	COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|STAND_ALONE\" -E \"^regress-|NOTE|benchmark|slow-\" --output-on-failure ${JFLAG}
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
-    )
-  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
+	COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
+	COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
+	)
+set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
 
 # To support "make unit" (which will build the required targets for testing
 # in the style of GNU Autotools "make check") we define a "unit" target per
