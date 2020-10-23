@@ -93,6 +93,16 @@ if (BRLCAD_PNG_BUILD)
   SetTargetFolder(PNG_BLD "Third Party Libraries")
   SetTargetFolder(png "Third Party Libraries")
 
+else (BRLCAD_PNG_BUILD)
+
+  set(PNG_INCLUDE_DIRS "${PNG_PNG_INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
+
+  if (DEFINED PNG_LIBRARY_RELEASE)
+    set(PNG_LIBRARIES ${PNG_LIBRARY_RELEASE} CACHE STRING "libpng" FORCE)
+  else (DEFINED PNG_LIBRARY_RELEASE)
+    set(PNG_LIBRARIES ${PNG_LIBRARY_DEBUG} CACHE STRING "libpng" FORCE)
+  endif (DEFINED PNG_LIBRARY_RELEASE)
+
 endif (BRLCAD_PNG_BUILD)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/png.dist")
