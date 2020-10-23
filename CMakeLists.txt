@@ -1969,24 +1969,24 @@ if (NOT BRLCAD_LEVEL2)
   set(BRLCAD_ENABLE_TCL OFF CACHE BOOL "Disabled due to level 1 build" FORCE)
 endif (NOT BRLCAD_LEVEL2)
 
-# At the start, clear the src/other subdirs list so repeated
+# Before we head into src/other and misc/tools, store all the build
+# flags that have been built up.  It's hard to be sure what will and
+# won't be set in those directories, so make sure we can restore the
+# BRL-CAD flags for the actual BRL-CAD subdirectories.
+CACHE_BUILD_FLAGS(_BRLCAD)
+
+# At the start, clear the misc/tools subdirs list so repeated
 # configures will correctly add the required directories
-set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
-mark_as_advanced(SRC_OTHER_ADDED_DIRS)
+set(MISC_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+mark_as_advanced(MISC_ADDED_DIRS)
 
-function(SetTargetFolder targetname folder)
-  if(TARGET ${targetname})
-    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
-  endif(TARGET ${targetname})
-endfunction(SetTargetFolder)
-
-# Load some CMake macros to handle the special case of third party libraries.
-include(ThirdParty)
+# The first order of business is the ext projects
+add_subdirectory(src/other/ext)
 
 # Add misc/tools for tools that are used in BRL-CAD's build process
 # but are not otherwise usable in BRL-CAD (due to licensing, design
 # intent, etc.)  misc/tools must be handled before src/other because
-# some of src/other's projects need tools from misc/tools.
+# some of src/other's projects may need tools from misc/tools.
 add_subdirectory(misc/tools)
 
 # Now that we've done the system tests with BRL-CAD's compile flags,
@@ -2000,12 +2000,8 @@ add_subdirectory(src/other)
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
 
-# Restore BRL-CAD configurations, if necessary
-if(NOT ENABLE_ALL_CONFIG_TYPES)
-  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-endif(NOT ENABLE_ALL_CONFIG_TYPES)
+set(TCL_VERSION "8.6")
+CONFIG_H_APPEND(BRLCAD "#define TCL_VERSION \"${TCL_VERSION}\"\n")
 
 set(ITCL_VERSION "3.4")
 CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
