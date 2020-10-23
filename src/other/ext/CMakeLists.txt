@@ -249,12 +249,16 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 
 ## libbson - for binary attributes, always use this local version
 #include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/bson.dist)
 
 # PROJ4 - generic coordinate transformation
 include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 
 # GDAL -  translator library for raster and vector geospatial data formats
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
+
+# OpenSceneGraph
+include(${CMAKE_CURRENT_SOURCE_DIR}/openscenegraph.dist)
 
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
@@ -269,6 +273,61 @@ set(BUILD_STATIC_LIBS ${BSL_CACHE})
 
 
 std_build_rpath()
+
+if (COMMAND CMAKEFILES)
+  CMAKEFILES(
+    CMakeLists.txt
+    CMake/ExternalProject_Target.cmake
+    CMake/FindBSON.cmake
+    CMake/FindLEMON.cmake
+    CMake/FindNETPBM.cmake
+    CMake/FindOPENNURBS.cmake
+    CMake/FindPERPLEX.cmake
+    CMake/FindPOLY2TRI.cmake
+    CMake/FindPROJ4.cmake
+    CMake/FindRE2C.cmake
+    CMake/FindREGEX.cmake
+    CMake/FindSTEPCODE.cmake
+    CMake/FindTCL.cmake
+    CMake/FindUTAHRLE.cmake
+    CMake/Path_Setup.cmake
+    CMake/RPath_Setup.cmake
+    CMake/ThirdParty.cmake
+    CMake/ThirdPartyExecutable.cmake
+    CMake/buildpath_replace.cxx.in
+    CMake/rpath_replace.cxx.in
+    CMake/tcl_replace.cxx.in
+    bson.cmake
+    bson.dist
+    gdal.cmake
+    gdal.dist
+    itcl.cmake
+    itcl3.dist
+    itk.cmake
+    itk3.dist
+    iwidgets.cmake
+    iwidgets.dist
+    netpbm.cmake
+    netpbm.dist
+    openscenegraph.dist
+    perplex.cmake
+    perplex.dist
+    png.cmake
+    png.dist
+    proj-4.dist
+    proj4.cmake
+    regex.cmake
+    regex.dist
+    stepcode.cmake
+    stepcode.dist
+    tcl.cmake
+    tcl.dist
+    tk.cmake
+    tk.dist
+    zlib.cmake
+    zlib.dist
+    )
+endif (COMMAND CMAKEFILES)
 
 # Local Variables:
 # tab-width: 8

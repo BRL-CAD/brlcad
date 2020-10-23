@@ -70,3 +70,7 @@ incoming/src/collapsablewidget.itk
 iwidgets.tcl.in
 license.terms
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(iwidgets_ignore_files iwidgets)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

@@ -1,4 +1,4 @@
-set(libregex_ignore_files
+set(regex_ignore_files
 CMakeLists.txt
 COPYRIGHT
 cclass.h
@@ -12,3 +12,7 @@ regexec.c
 regfree.c
 utils.h
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(regex_ignore_files regex)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

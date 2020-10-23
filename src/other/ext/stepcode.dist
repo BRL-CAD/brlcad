@@ -530,3 +530,7 @@ test/unitary_schemas/select_lookup_enum.exp
 test/unitary_schemas/single_inheritance.exp
 test/unitary_schemas/single_inheritance_multi_level.exp
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(stepcode_ignore_files stepcode)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

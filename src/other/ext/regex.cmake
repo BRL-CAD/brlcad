@@ -59,6 +59,8 @@ if (BRLCAD_REGEX_BUILD)
 
 endif (BRLCAD_REGEX_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/regex.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

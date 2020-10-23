@@ -37,6 +37,8 @@ if (BRLCAD_LEVEL2)
 
 endif (BRLCAD_LEVEL2)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/perplex.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

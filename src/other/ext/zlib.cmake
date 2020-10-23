@@ -72,6 +72,8 @@ else (BRLCAD_ZLIB_BUILD)
 
 endif (BRLCAD_ZLIB_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/zlib.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

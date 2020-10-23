@@ -66,6 +66,8 @@ if (BRLCAD_NETPBM_BUILD)
 
 endif (BRLCAD_NETPBM_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/netpbm.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

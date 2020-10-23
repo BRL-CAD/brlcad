@@ -198,3 +198,7 @@ src/projects.h
 src/rtodms.c
 src/vector1.c
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(proj-4_ignore_files proj-4)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

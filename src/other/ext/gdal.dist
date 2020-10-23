@@ -1267,3 +1267,7 @@ progs/gdalinfo_bin.cpp
 progs/gdaltransform.cpp
 progs/gdalwarp_bin.cpp
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(gdal_ignore_files gdal)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

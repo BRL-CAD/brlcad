@@ -64,8 +64,6 @@ set(cmake_ignore_files
   RPath_Setup.cmake
   ResetCache.cmake
   TCL_PKGINDEX.cmake
-  ThirdParty.cmake
-  ThirdParty_TCL.cmake
   compat/README
   compat/README.compat
   compat/README.compat.c99
@@ -102,8 +100,9 @@ set(cmake_ignore_files
   multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
-  scripts/timestamp.cmake
   scripts/printtime.cmake
+  scripts/tcl_mkindex.cmake
+  scripts/timestamp.cmake
   )
 CMAKEFILES(${cmake_ignore_files})
 

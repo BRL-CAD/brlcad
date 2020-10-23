@@ -79,6 +79,8 @@ if (BRLCAD_PROJ4_BUILD)
 
 endif (BRLCAD_PROJ4_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/proj-4.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

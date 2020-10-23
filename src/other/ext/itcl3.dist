@@ -1,5 +1,5 @@
 set(itcl3_ignore_files
-ITCL_PKGINDEX.cmake
+CMake/FindTCL.cmake
 license.terms
 generic/itclStubLib.c
 generic/itclDecls.h
@@ -20,10 +20,12 @@ generic/itcl.h
 generic/itcl_migrate.c
 generic/itcl_objects.c
 library/itcl.tcl
-pkgIndex.tcl.in
 win/dllEntryPoint.c
 win/toaster.bmp
 win/itcl.rc
 CMakeLists.txt
-pkg_mkIndex.cmake
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(itcl3_ignore_files itcl3)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

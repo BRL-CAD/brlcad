@@ -84,3 +84,7 @@ src/yajl/yajl_tree.h
 src/yajl/yajl_version.c
 src/yajl/yajl_version.h
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(libbson_ignore_files bson)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

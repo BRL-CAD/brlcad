@@ -205,6 +205,8 @@ if(BRLCAD_SC_BUILD)
   SetTargetFolder(stepcode "Third Party Libraries")
 endif(BRLCAD_SC_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/stepcode.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

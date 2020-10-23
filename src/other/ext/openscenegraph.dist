@@ -884,3 +884,7 @@ src/osgWidget/Widget.cpp
 src/osgWidget/Window.cpp
 src/osgWidget/WindowManager.cpp
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(openscenegraph_ignore_files openscenegraph)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

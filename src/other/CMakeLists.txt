@@ -106,6 +106,9 @@ if (BRLCAD_LEVEL3)
   set(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
 endif (BRLCAD_LEVEL3)
+include("${CMAKE_CURRENT_SOURCE_DIR}/libutahrle.dist")
+CMAKEFILES_IN_DIR(libutahrle_ignore_files libutahrle)
+
 
 # OpenNURBS Library
 add_subdirectory(openNURBS)
@@ -122,6 +125,9 @@ foreach(onhfile ${openNURBS_headers_orig})
   set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
 endforeach(onhfile ${openNURBS_headers_orig})
 BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
+include("${CMAKE_CURRENT_SOURCE_DIR}/openNURBS.dist")
+CMAKEFILES_IN_DIR(openNURBS_ignore_files openNURBS)
+
 
 # Poly2Tri CDT library
 # Note - this really should be embedded as part of libbg - it is simple, can be
@@ -184,8 +190,16 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
 
 endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
 
-CMAKEFILES(README)
-CMAKEFILES(CMakeLists.txt)
+include("${CMAKE_CURRENT_SOURCE_DIR}/tkhtml.dist")
+CMAKEFILES_IN_DIR(tkhtml_ignore_files tkhtml)
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/tktable.dist")
+CMAKEFILES_IN_DIR(tktable_ignore_files tktable)
+
+CMAKEFILES(
+  README
+  CMakeLists.txt
+  )
 
 # Local Variables:
 # tab-width: 8

@@ -250,6 +250,8 @@ elseif (NOT BRLCAD_ENABLE_TK)
 
 endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/tk.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

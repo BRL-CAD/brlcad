@@ -95,6 +95,8 @@ if (BRLCAD_PNG_BUILD)
 
 endif (BRLCAD_PNG_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/png.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

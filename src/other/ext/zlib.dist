@@ -1,4 +1,4 @@
-set(libz_ignore_files
+set(zlib_ignore_files
 CMakeLists.txt
 README
 adler32.c
@@ -29,3 +29,7 @@ zlib.h.in
 zutil.c
 zutil.h
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(zlib_ignore_files zlib)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

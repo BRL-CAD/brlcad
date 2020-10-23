@@ -1,4 +1,4 @@
-set(libnetpbm_ignore_files
+set(netpbm_ignore_files
 CMakeLists.txt
 README
 bitio.c
@@ -67,3 +67,7 @@ util/pm_c_util.h
 util/ppmdcfont.c
 version.h.in
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(netpbm_ignore_files netpbm)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

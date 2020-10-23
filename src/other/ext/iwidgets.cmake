@@ -138,6 +138,8 @@ if (BRLCAD_ENABLE_TK)
 
 endif (BRLCAD_ENABLE_TK)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

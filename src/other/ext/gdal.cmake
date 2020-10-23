@@ -195,6 +195,8 @@ if (BRLCAD_GDAL_BUILD)
 
 endif (BRLCAD_GDAL_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/gdal.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

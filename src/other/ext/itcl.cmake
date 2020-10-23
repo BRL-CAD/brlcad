@@ -140,6 +140,8 @@ if (BRLCAD_ENABLE_TCL)
   endif (BUILD_ITCL)
 endif (BRLCAD_ENABLE_TCL)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/itcl3.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

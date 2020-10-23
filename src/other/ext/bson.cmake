@@ -85,6 +85,8 @@ if (BRLCAD_BSON_BUILD)
 
 endif (BRLCAD_BSON_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/bson.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

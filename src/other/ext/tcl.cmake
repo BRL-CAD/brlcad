@@ -356,6 +356,8 @@ if (BRLCAD_TCL_BUILD)
 
 endif (BRLCAD_TCL_BUILD)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

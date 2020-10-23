@@ -1,4 +1,4 @@
-set(libpng_ignore_files
+set(png_ignore_files
 CMakeLists.txt
 LICENSE
 README
@@ -42,3 +42,7 @@ scripts/symbols.c
 scripts/symbols.def
 scripts/vers.c
 )
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(png_ignore_files png)
+endif (COMMAND CMAKEFILES_IN_DIR)
+
