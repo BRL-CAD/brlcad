@@ -271,6 +271,12 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/itk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.cmake)
 set(BUILD_STATIC_LIBS ${BSL_CACHE})
 
+# A lot of code depends on knowing about Tk being active,
+# so we set a flag in the configuration header to pass
+# on that information.
+if (COMMAND CONFIG_H_APPEND)
+  CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
+endif (COMMAND CONFIG_H_APPEND)
 
 std_build_rpath()
 
