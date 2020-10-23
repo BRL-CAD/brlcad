@@ -718,6 +718,7 @@ tests/window.test
 tests/winfo.test
 tests/wm.test
 tests/xmfbox.test
+unix/Makefile.in
 unix/README
 unix/aclocal.m4
 unix/configure
@@ -757,6 +758,7 @@ unix/tkUnixSelect.c
 unix/tkUnixSend.c
 unix/tkUnixWm.c
 unix/tkUnixXId.c
+win/Makefile.in
 win/README
 win/aclocal.m4
 win/buildall.vc.bat

@@ -35,6 +35,7 @@ compat/zlib/CMakeLists.txt
 compat/zlib/ChangeLog
 compat/zlib/FAQ
 compat/zlib/INDEX
+compat/zlib/Makefile.in
 compat/zlib/README
 compat/zlib/adler32.c
 compat/zlib/amiga/Makefile.pup
@@ -1669,6 +1670,7 @@ macosx/tclMacOSXNotify.c
 pkgs/README
 pkgs/itcl4.2.0/.project
 pkgs/itcl4.2.0/ChangeLog
+pkgs/itcl4.2.0/Makefile.in
 pkgs/itcl4.2.0/README
 pkgs/itcl4.2.0/TODO
 pkgs/itcl4.2.0/aclocal.m4
@@ -1779,6 +1781,7 @@ pkgs/itcl4.2.0/win/targets.vc
 pkgs/itcl4.2.0/win/toaster.bmp
 pkgs/package.list.txt
 pkgs/tdbc1.1.1/ChangeLog
+pkgs/tdbc1.1.1/Makefile.in
 pkgs/tdbc1.1.1/README
 pkgs/tdbc1.1.1/aclocal.m4
 pkgs/tdbc1.1.1/configure
@@ -1818,6 +1821,7 @@ pkgs/tdbc1.1.1/win/rules.vc
 pkgs/tdbc1.1.1/win/targets.vc
 pkgs/tdbc1.1.1/win/tdbc.rc
 pkgs/tdbcmysql1.1.1/ChangeLog
+pkgs/tdbcmysql1.1.1/Makefile.in
 pkgs/tdbcmysql1.1.1/README
 pkgs/tdbcmysql1.1.1/aclocal.m4
 pkgs/tdbcmysql1.1.1/configure
@@ -1843,6 +1847,7 @@ pkgs/tdbcmysql1.1.1/win/rules-ext.vc
 pkgs/tdbcmysql1.1.1/win/rules.vc
 pkgs/tdbcmysql1.1.1/win/targets.vc
 pkgs/tdbcodbc1.1.1/ChangeLog
+pkgs/tdbcodbc1.1.1/Makefile.in
 pkgs/tdbcodbc1.1.1/README
 pkgs/tdbcodbc1.1.1/aclocal.m4
 pkgs/tdbcodbc1.1.1/configure
@@ -1869,6 +1874,7 @@ pkgs/tdbcodbc1.1.1/win/rules-ext.vc
 pkgs/tdbcodbc1.1.1/win/rules.vc
 pkgs/tdbcodbc1.1.1/win/targets.vc
 pkgs/tdbcpostgres1.1.1/ChangeLog
+pkgs/tdbcpostgres1.1.1/Makefile.in
 pkgs/tdbcpostgres1.1.1/README
 pkgs/tdbcpostgres1.1.1/TODO
 pkgs/tdbcpostgres1.1.1/aclocal.m4
@@ -1896,6 +1902,7 @@ pkgs/tdbcpostgres1.1.1/win/rules-ext.vc
 pkgs/tdbcpostgres1.1.1/win/rules.vc
 pkgs/tdbcpostgres1.1.1/win/targets.vc
 pkgs/tdbcsqlite3-1.1.1/ChangeLog
+pkgs/tdbcsqlite3-1.1.1/Makefile.in
 pkgs/tdbcsqlite3-1.1.1/README
 pkgs/tdbcsqlite3-1.1.1/aclocal.m4
 pkgs/tdbcsqlite3-1.1.1/configure
@@ -1915,6 +1922,7 @@ pkgs/tdbcsqlite3-1.1.1/win/rules-ext.vc
 pkgs/tdbcsqlite3-1.1.1/win/rules.vc
 pkgs/tdbcsqlite3-1.1.1/win/targets.vc
 pkgs/thread2.8.5/ChangeLog
+pkgs/thread2.8.5/Makefile.in
 pkgs/thread2.8.5/README
 pkgs/thread2.8.5/aclocal.m4
 pkgs/thread2.8.5/configure
@@ -2147,6 +2155,7 @@ tests/winNotify.test
 tests/winPipe.test
 tests/winTime.test
 tests/zlib.test
+tools/Makefile.in
 tools/README
 tools/checkLibraryDoc.tcl
 tools/configure
@@ -2176,10 +2185,12 @@ tools/tsdPerf.tcl
 tools/uniClass.tcl
 tools/uniParse.tcl
 tools/white.bmp
+unix/Makefile.in
 unix/README
 unix/aclocal.m4
 unix/configure
 unix/configure.in
+unix/dltest/Makefile.in
 unix/dltest/README
 unix/dltest/pkga.c
 unix/dltest/pkgb.c
@@ -2220,6 +2231,7 @@ unix/tclUnixTime.c
 unix/tclXtNotify.c
 unix/tclXtTest.c
 unix/tclooConfig.sh
+win/Makefile.in
 win/README
 win/aclocal.m4
 win/buildall.vc.bat
