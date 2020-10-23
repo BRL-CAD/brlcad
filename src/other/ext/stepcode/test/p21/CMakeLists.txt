@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 #test part 21 files
 
 #used to create a number of small files at test-time. you probably don't want to modify.

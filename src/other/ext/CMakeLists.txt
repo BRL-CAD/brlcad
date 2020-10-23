@@ -28,7 +28,7 @@
 
 project(BDEPS)
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.12)
 
 # Find the executable extension, if there is one
 get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)

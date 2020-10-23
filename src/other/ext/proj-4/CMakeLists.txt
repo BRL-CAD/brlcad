@@ -9,7 +9,7 @@
 #################################################################################
 # General settings
 #################################################################################
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.12)
 
 # proj4 is an ANSI C project
 project(PROJ4 C)
