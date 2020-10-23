@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.12)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 project(zlib C)
@@ -156,10 +156,6 @@ set_target_properties(zlib PROPERTIES OUTPUT_NAME z_brl)
 if(BUILD_STATIC_LIBS)
   add_library(zlib-static STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
   set_target_properties(zlib-static PROPERTIES OUTPUT_NAME z_brl)
-  if(MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(zlib-static PROPERTIES PREFIX "lib")
-  endif(MSVC)
   if(CMAKE_CL_64)
     set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   elseif(MSVC)
@@ -179,18 +175,6 @@ if(NOT CYGWIN)
   # This has no effect with MSVC, on that platform the version info for
   # the DLL comes from the resource file win32/zlib1.rc
   set_target_properties(zlib PROPERTIES VERSION ${ZLIB_FULL_VERSION})
-endif()
-
-if(UNIX)
-  # On unix-like platforms the library is almost always called libz
-  if(NOT APPLE AND BUILD_SHARED_LIBS)
-    set_target_properties(zlib PROPERTIES LINK_FLAGS "-Wl,--version-script,\"${CMAKE_CURRENT_SOURCE_DIR}/zlib.map\"")
-  endif()
-elseif(BUILD_SHARED_LIBS AND WIN32)
-  # Creates zlib1.dll when building shared library version
-  if(BUILD_SHARED_LIBS)
-    set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
-  endif(BUILD_SHARED_LIBS)
 endif()
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
