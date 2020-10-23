@@ -448,6 +448,20 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
 
+    # If the library depends on other targets in this build, not just system
+    # libraries, make sure the object targets depends them as well.  In
+    # principle this isn't always required - object compilation may be
+    # independent of the dependencies needed at link time - but if compilation
+    # DOES depends on those targets having first performed some action (like
+    # staging a header in an expected location) NOT setting this dependency
+    # explicitly will eventually cause build failures.
+    #
+    # Without setting the OBJECT dependencies, success in the above case would
+    # depend on whether or not the high level build ordering happened to run
+    # the required targets before performing this step.  That failure mode is
+    # semi-random and intermittent (top level build ordering without explicit
+    # dependencies varies depending on -j flag values) making it hard to debug.
+    # Ask me how I know.
     if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       foreach(ll ${libslist})
 	if (TARGET ${ll})
@@ -655,24 +669,21 @@ function(BRLCAD_INCLUDE_DIRS DIR_LIST)
     if (NOT IS_LOCAL)
       IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
     endif (NOT IS_LOCAL)
-    if("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
-      # Unfortunately, a bug in the CMake SYSTEM option to
-      # include_directories requires that these variables
-      # be explicitly set on OSX until we can require CMake
-      # version 3.6 - see
-      # https://public.kitware.com/Bug/view.php?id=15953
-      if(APPLE)
-	set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
-	set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
-      endif(APPLE)
-      if("${inc_dir}" MATCHES "other")
+    set(IS_SYSPATH 0)
+    foreach(sp ${SYS_INCLUDE_PATTERNS})
+      if("${inc_dir}" MATCHES "${sp}")
+	set(IS_SYSPATH 1)
+      endif("${inc_dir}" MATCHES "${sp}")
+    endforeach(sp ${SYS_INCLUDE_PATTERNS})
+    if(IS_SYSPATH OR NOT IS_LOCAL)
+      if(IS_SYSPATH)
 	include_directories(SYSTEM ${inc_dir})
-      else("${inc_dir}" MATCHES "other")
+      else(IS_SYSPATH)
 	include_directories(AFTER SYSTEM ${inc_dir})
-      endif("${inc_dir}" MATCHES "other")
-    else("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
+      endif(IS_SYSPATH)
+    else(IS_SYSPATH OR NOT IS_LOCAL)
       include_directories(BEFORE ${inc_dir})
-    endif("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
+    endif(IS_SYSPATH OR NOT IS_LOCAL)
   endforeach(inc_dir ${ALL_INCLUDES})
 
 endfunction(BRLCAD_INCLUDE_DIRS DIR_LIST)
