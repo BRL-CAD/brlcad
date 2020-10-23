@@ -110,14 +110,6 @@ proc default_key_bindings { w } {
     bind $w 6 "winset $w; ae 215 25; break"
     bind $w 7 "winset $w; ae 325 25; break"
 
-    # default shift+key shortcuts
-    bind $w A "winset $w; press accept; break"
-    bind $w I "winset $w; aip b; break"
-    bind $w N "winset $w; puts \[nirt -b\]; break"
-    bind $w P "winset $w; catch {sed_apply}; break"
-    bind $w R "winset $w; press rear; break"
-    bind $w S "winset $w; catch {sed_reset}; break"
-
     # default key shortcuts
     bind $w a "winset $w; adc; break"
     bind $w b "winset $w; press bottom; break"
@@ -136,11 +128,20 @@ proc default_key_bindings { w } {
     bind $w u "winset $w; svb; break"
     bind $w v "winset $w; rset ax view_draw !; update_gui $w view_draw \[rset ax view_draw\]; break"
 
-    # shift grips navigation
+    # default shift+key shortcuts
+    bind $w A "winset $w; press accept; break"
+    bind $w I "winset $w; aip b; break"
+    bind $w N "winset $w; puts \[nirt -b\]; break"
+    bind $w P "winset $w; catch {sed_apply}; break"
+    bind $w R "winset $w; press rear; break"
+    bind $w S "winset $w; catch {sed_reset}; break"
+
+    # default control+key shortcuts
     bind $w <Control-n> "winset $w; _mged_view_ring next; break"
     bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
     bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
 
+    # shift grips navigation
     bind $w <Control-Shift-Down> "winset $w; knob -i aY \$mged_default(tran_factor); break"
     bind $w <Control-Shift-Left> "winset $w; knob -i az \$mged_default(rot_factor); break"
     bind $w <Control-Shift-Right> "winset $w; knob -i az -\$mged_default(rot_factor); break"
@@ -148,11 +149,11 @@ proc default_key_bindings { w } {
     bind $w <Down> "winset $w; knob -i ax \$mged_default(rot_factor); break"
     bind $w <Left> "winset $w; knob -i ay -\$mged_default(rot_factor); break"
     bind $w <Right> "winset $w; knob -i ay \$mged_default(rot_factor); break"
+    bind $w <Up> "winset $w; knob -i ax -\$mged_default(rot_factor); break"
     bind $w <Shift-Down> "winset $w; knob -i aZ -\$mged_default(tran_factor); break"
     bind $w <Shift-Left> "winset $w; knob -i aX \$mged_default(tran_factor); break"
     bind $w <Shift-Right> "winset $w; knob -i aX -\$mged_default(tran_factor); break"
     bind $w <Shift-Up> "winset $w; knob -i aZ \$mged_default(tran_factor); break"
-    bind $w <Up> "winset $w; knob -i ax -\$mged_default(rot_factor); break"
 
     # function keys (settings)
     bind $w <F1> "winset $w; dm set depthcue !; update_gui $w depthcue \[dm set depthcue\]; break"
