@@ -30,6 +30,13 @@ project(BDEPS)
 
 cmake_minimum_required(VERSION 3.12)
 
+# install(CODE) uses generator expressions - requires 3.14 or newer.
+# We want it to be on, but until we can bump our minimum requirement
+# set it to OLD to make sure we don't break anything.
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 OLD)
+endif (POLICY CMP0087)
+
 # Find the executable extension, if there is one
 get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
 

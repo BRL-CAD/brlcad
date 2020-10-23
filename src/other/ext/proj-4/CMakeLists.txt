@@ -14,6 +14,13 @@ cmake_minimum_required(VERSION 3.12)
 # proj4 is an ANSI C project
 project(PROJ4 C)
 
+# install(CODE) uses generator expressions - requires 3.14 or newer.
+# We want it to be on, but until we can bump our minimum requirement
+# set it to OLD to make sure we don't break anything.
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 OLD)
+endif (POLICY CMP0087)
+
 #################################################################################
 set(PROJ_VERSION_MAJOR 4)
 set(PROJ_VERSION_MINOR 9)

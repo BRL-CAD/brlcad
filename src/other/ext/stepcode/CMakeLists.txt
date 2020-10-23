@@ -40,6 +40,16 @@
 
 project(SC)
 
+# Minimum required version of CMake
+cmake_minimum_required(VERSION 3.12)
+
+# install(CODE) uses generator expressions - requires 3.14 or newer.
+# We want it to be on, but until we can bump our minimum requirement
+# set it to OLD to make sure we don't break anything.
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 OLD)
+endif (POLICY CMP0087)
+
 # SC version
 SET(SC_VERSION_MAJOR 0)
 if(NOT SC_IS_SUBBUILD)
@@ -53,9 +63,6 @@ SET(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
 # for each release introducing API incompatibilities
 SET(SC_ABI_SOVERSION 2)
 SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
-
-# Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
 
 IF( NOT DEFINED INCLUDE_INSTALL_DIR )
   SET( INCLUDE_INSTALL_DIR include )

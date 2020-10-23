@@ -44,6 +44,18 @@ cmake_minimum_required(VERSION 3.12)
 # set CMake project name
 project(BRLCAD)
 
+# install(CODE) uses generator expressions - requires 3.14 or newer.
+# We want it to be on, but until we can bump our minimum requirement
+# set it to OLD to make sure we don't break anything.
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 OLD)
+endif (POLICY CMP0087)
+
+# Test name character check - need to look into this one...
+if (POLICY CMP0110)
+  cmake_policy(SET CMP0110 OLD)
+endif (POLICY CMP0110)
+
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.  If we

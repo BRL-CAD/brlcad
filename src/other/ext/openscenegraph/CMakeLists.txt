@@ -15,6 +15,13 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.12.0 FATAL_ERROR)
 
+# install(CODE) uses generator expressions - requires 3.14 or newer.
+# We want it to be on, but until we can bump our minimum requirement
+# set it to OLD to make sure we don't break anything.
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 OLD)
+endif (POLICY CMP0087)
+
 if(COMMAND cmake_policy)
     # Works around warnings libraries linked against that don't
     # have absolute paths (e.g. -lpthreads)
