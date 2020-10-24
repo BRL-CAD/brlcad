@@ -16,9 +16,11 @@ if (BRLCAD_REGEX_BUILD)
   set(REGEX_VERSION "1.0.4")
   if (MSVC)
     set(REGEX_BASENAME regex_brl)
+    set(REGEX_STATICNAME regex_brl-static)
     set(REGEX_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
   else (MSVC)
     set(REGEX_BASENAME libregex_brl)
+    set(REGEX_STATICNAME libregex_brl)
     set(REGEX_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${REGEX_VERSION})
   endif (MSVC)
 
@@ -46,7 +48,7 @@ if (BRLCAD_REGEX_BUILD)
     )
   if (BUILD_STATIC_LIBS)
     ExternalProject_Target(STATIC regex-static REGEX_BLD ${REGEX_INSTDIR}
-      ${REGEX_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      ${REGEX_STATICNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
       RPATH
       )
   endif (BUILD_STATIC_LIBS)
