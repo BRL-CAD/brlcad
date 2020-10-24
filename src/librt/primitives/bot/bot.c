@@ -426,32 +426,28 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     struct rt_bot_internal *bot_ip;
     size_t vert_index;
     size_t tri_index;
-    point_t p1;
-    size_t pt1, pt2, pt3;
 
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
-    
+
     struct bu_bitv *visit_vert = bu_bitv_new(bot_ip->num_vertices);
 
     VSETALL((*min), INFINITY);
     VSETALL((*max), -INFINITY);
 
-    /* iterate through all faces of the BoT and mark vertices that are being reached in the bit-vector */
+    /* First Pass: coherently iterate through all faces of the BoT and
+     * mark vertices in a bit-vector that are referenced by a face.
+     */
     for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++) {
-        pt1 = bot_ip->faces[tri_index*3];
-        pt2 = bot_ip->faces[tri_index*3 + 1];
-        pt3 = bot_ip->faces[tri_index*3 + 2];
-	BU_BITSET(visit_vert,pt1);
-	BU_BITSET(visit_vert,pt2);
-	BU_BITSET(visit_vert,pt3);        
+	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + X]);
+	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + Y]);
+	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + Z]);
      }
-    /* Check max and min of vertices marked  */
+    /* Second Pass: check max and min of vertices marked */
     for(vert_index = 0; vert_index < bot_ip->num_vertices; vert_index++){
         if(BU_BITTEST(visit_vert,vert_index)){
-	    VMOVE(p1, &bot_ip->vertices[vert_index*3]);
-	    VMINMAX((*min), (*max), p1);	    
+	    VMINMAX((*min), (*max), &bot_ip->vertices[vert_index*3]);
 	}
     }
     bu_bitv_free(visit_vert);
