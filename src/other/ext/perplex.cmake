@@ -1,6 +1,6 @@
 if (BRLCAD_LEVEL2)
 
-  set(PERPLEX_BLD_ROOT ${CMAKE_BINARY_DIR}/superbuild/perplex)
+  set(PERPLEX_BLD_ROOT ${CMAKE_BINARY_DIR}/other/ext/perplex)
 
   ExternalProject_Add(PERPLEX_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/perplex"
