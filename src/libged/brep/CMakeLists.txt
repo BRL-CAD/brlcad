@@ -12,6 +12,7 @@ LEMON_TARGET(
   OUT_SRC_FILE ${DPLOT_READER}_parser.c
   OUT_HDR_FILE ${DPLOT_READER}_parser.h)
 ADD_PERPLEX_LEMON_DEPENDENCY(${DPLOT_READER}_scanner ${DPLOT_READER}_parser)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/dplot_parser_dplot_parser/dplot_parser.lemon")
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}

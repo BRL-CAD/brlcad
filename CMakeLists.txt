@@ -161,7 +161,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Make")
   set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} Makefile)
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
 if("${CMAKE_GENERATOR}" MATCHES "Ninja")
-  set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} build.ninja rules.ninja)
+  set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} build.ninja rules.ninja .ninja_log)
 endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
 #---------------------------------------------------------------------
@@ -2278,10 +2278,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
   foreach(clearpattern ${DISTCLEAN_OUTFILES})
     DISTCLEAN("${CMAKE_BINARY_DIR}/${clearpattern}")
   endforeach(clearpattern ${DISTCLEAN_OUTFILES})
-  if("${CMAKE_GENERATOR}" MATCHES "Ninja")
+  if("${CMAKE_GENERATOR}" MATCHES "Ninja*")
     DISTCLEAN("${CMAKE_BINARY_DIR}/.ninja_log")
     DISTCLEAN("${CMAKE_BINARY_DIR}/.ninja_deps")
-  endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
+  endif("${CMAKE_GENERATOR}" MATCHES "Ninja*")
 
   # ----------------------------------------------------------------------------
   # Define a distcheck target.  This performs a variety of tests to determine
