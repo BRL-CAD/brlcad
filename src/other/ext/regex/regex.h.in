@@ -99,22 +99,27 @@
 # endif
 #endif
 
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#endif
 
 #ifndef REGEX_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef REGEX_EXPORT_DLL
-#      define REGEX_EXPORT __declspec(dllexport)
-#    else
-#      define REGEX_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(REGEX_DLL_EXPORTS) && defined(REGEX_DLL_IMPORTS)
+#    error "Only REGEX_DLL_EXPORTS or REGEX_DLL_IMPORTS can be defined, not both."
+#  elif defined(REGEX_DLL_EXPORTS)
+#    define REGEX_EXPORT COMPILER_DLLEXPORT
+#  elif defined(REGEX_DLL_IMPORTS)
+#    define REGEX_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define REGEX_EXPORT
 #  endif
 #endif
 
 /* types */
-
-
 
 typedef struct {
 	int re_magic;
