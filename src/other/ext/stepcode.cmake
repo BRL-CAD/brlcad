@@ -4,6 +4,7 @@ Libraries provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
+set(sc_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 
 THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION
   REQUIRED_VARS BRLCAD_LEVEL3 BRLCAD_ENABLE_STEP

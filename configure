@@ -102,6 +102,18 @@ do
                                   shift;;
      --disable-png)                options="$options -DBRLCAD_PNG=SYSTEM";
                                   shift;;
+     --enable-scl)                options="$options -DBRLCAD_SC=BUNDLED";
+                                  shift;;
+     --disable-scl)                options="$options -DBRLCAD_SC=SYSTEM";
+                                  shift;;
+     --enable-step)                options="$options -DBRLCAD_SC=BUNDLED";
+                                  shift;;
+     --disable-step)                options="$options -DBRLCAD_SC=SYSTEM";
+                                  shift;;
+     --enable-step-class-libraries)                options="$options -DBRLCAD_SC=BUNDLED";
+                                  shift;;
+     --disable-step-class-libraries)                options="$options -DBRLCAD_SC=SYSTEM";
+                                  shift;;
      --enable-proj4)                options="$options -DBRLCAD_PROJ4=BUNDLED";
                                   shift;;
      --disable-proj4)                options="$options -DBRLCAD_PROJ4=SYSTEM";
