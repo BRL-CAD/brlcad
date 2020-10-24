@@ -195,6 +195,11 @@ if (BRLCAD_GDAL_BUILD)
   SetTargetFolder(GDAL_BLD "Third Party Libraries")
   SetTargetFolder(gdal "Third Party Libraries")
 
+else (BRLCAD_GDAL_BUILD)
+
+  set(GDAL_LIBRARIES ${GDAL_LIBRARY} CACHE STRING "gdal" FORCE)
+  set(GDAL_INCLUDE_DIRS "${GDAL_INCLUDE_DIR}" CACHE STRING "Directories containing GDAL headers." FORCE)
+
 endif (BRLCAD_GDAL_BUILD)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/gdal.dist")
