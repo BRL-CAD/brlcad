@@ -67,9 +67,11 @@ if (BRLCAD_GDAL_BUILD)
     ${GDAL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(STATIC gdal-static GDAL_BLD ${GDAL_INSTDIR}
-    ${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    )
+  if (BUILD_STATIC_LIBS)
+    ExternalProject_Target(STATIC gdal-static GDAL_BLD ${GDAL_INSTDIR}
+      ${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      )
+  endif (BUILD_STATIC_LIBS)
 
   set(GDAL_EXECUTABLES gdalinfo gdallocationinfo gdal_translate gdaltransform gdaldem gdalwarp gdalbuildvrt)
   foreach(GDALEXEC ${GDAL_EXECUTABLES})

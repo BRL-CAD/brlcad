@@ -44,10 +44,12 @@ if (BRLCAD_REGEX_BUILD)
     LINK_TARGET ${REGEX_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(STATIC regex-static REGEX_BLD ${REGEX_INSTDIR}
-    ${REGEX_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    RPATH
-    )
+  if (BUILD_STATIC_LIBS)
+    ExternalProject_Target(STATIC regex-static REGEX_BLD ${REGEX_INSTDIR}
+      ${REGEX_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      RPATH
+      )
+  endif (BUILD_STATIC_LIBS)
 
   ExternalProject_ByProducts(regex REGEX_BLD ${REGEX_INSTDIR} ${INCLUDE_DIR}
     regex.h

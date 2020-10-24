@@ -46,9 +46,11 @@ if (BRLCAD_PROJ4_BUILD)
     LINK_TARGET ${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(STATIC proj-static PROJ4_BLD ${PROJ4_INSTDIR}
-    ${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    )
+  if (BUILD_STATIC_LIBS)
+    ExternalProject_Target(STATIC proj-static PROJ4_BLD ${PROJ4_INSTDIR}
+      ${PROJ_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      )
+  endif (BUILD_STATIC_LIBS)
 
   ExternalProject_ByProducts(proj PROJ4_BLD ${PROJ4_INSTDIR} ${DATA_DIR}/proj
     epsg

@@ -75,7 +75,6 @@ if (BRLCAD_ENABLE_TK)
       -DSHARED_DIR=${SHARED_DIR}
       -DINCLUDE_DIR=${INCLUDE_DIR}
       -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
-      -DBUILD_STATIC_LIBS_STATIC=${BUILD_STATIC_LIBS}
       -DTCL_ROOT=$<$<BOOL:${TCL_TARGET}>:${CMAKE_BINARY_ROOT}>
       -DITCL_ROOT=$<$<BOOL:${ITCL_TARGET}>:${CMAKE_BINARY_ROOT}>
       -DTCL_VERSION=${TCL_VERSION}
@@ -86,10 +85,8 @@ if (BRLCAD_ENABLE_TK)
 
     if (NOT MSVC)
       set(ITK_BASENAME libitk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
-      set(ITK_STUBNAME libitkstub)
     else (NOT MSVC)
       set(ITK_BASENAME itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
-      set(ITK_STUBNAME itkstub)
     endif (NOT MSVC)
 
     # Tell the parent build about files and libraries

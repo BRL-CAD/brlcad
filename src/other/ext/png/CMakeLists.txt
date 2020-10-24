@@ -56,7 +56,7 @@ endif()
 
 # COMMAND LINE OPTIONS
 option(PNG_SHARED "Build shared lib" ON)
-option(PNG_STATIC "Build static lib" ON)
+option(PNG_STATIC "Build static lib" ${BUILD_STATIC_LIBS})
 option(PNG_TESTS  "Build libpng tests" ON)
 
 # Many more configuration options could be added here

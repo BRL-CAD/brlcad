@@ -47,10 +47,12 @@ if (BRLCAD_ZLIB_BUILD)
     LINK_TARGET "${ZLIB_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}"
     RPATH
     )
-  ExternalProject_Target(STATIC zlib-static ZLIB_BLD ${ZLIB_INSTDIR}
-    ${ZLIB_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    )
- 
+  if (BUILD_STATIC_LIBS)
+    ExternalProject_Target(STATIC zlib-static ZLIB_BLD ${ZLIB_INSTDIR}
+      ${ZLIB_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      )
+  endif (BUILD_STATIC_LIBS)
+
   ExternalProject_ByProducts(zlib ZLIB_BLD ${ZLIB_INSTDIR} ${INCLUDE_DIR}
     zconf.h
     zlib.h

@@ -43,9 +43,11 @@ if (BRLCAD_BSON_BUILD)
     RPATH
     )
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BSON_BLD-prefix")
-  ExternalProject_Target(STATIC bson-static BSON_BLD
-    ${BSON_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    )
+  if (BUILD_STATIC_LIBS)
+    ExternalProject_Target(STATIC bson-static BSON_BLD
+      ${BSON_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      )
+  endif (BUILD_STATIC_LIBS)
  
   ExternalProject_ByProducts(bson BSON_BLD ${BSON_INSTDIR} ${INCLUDE_DIR}
     libbson-1.0/bson-endian.h

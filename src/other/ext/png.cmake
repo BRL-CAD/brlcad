@@ -73,9 +73,11 @@ if (BRLCAD_PNG_BUILD)
     LINK_TARGET ${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(STATIC png-static PNG_BLD ${PNG_INSTDIR}
-    ${PNG_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
-    )
+  if (BUILD_STATIC_LIBS)
+    ExternalProject_Target(STATIC png-static PNG_BLD ${PNG_INSTDIR}
+      ${PNG_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      )
+  endif (BUILD_STATIC_LIBS)
 
   ExternalProject_ByProducts(png PNG_BLD ${PNG_INSTDIR} ${INCLUDE_DIR}
     png.h
