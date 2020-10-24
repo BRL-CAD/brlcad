@@ -139,7 +139,7 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
       string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${LINK_TARGET}")
       string(REPLACE "${SHARED_DIR}" "${LIB_DIR}" REL_DIR "${REL_DIR}")
       set_target_properties(${etarg} PROPERTIES
-	IMPORTED_IMPLIB_NOCONFIG "${CMAKE_BINARY_DIR}/${REL_DIR}/${IMPLIB_FILE}"
+	IMPORTED_IMPLIB "${CMAKE_BINARY_DIR}/${REL_DIR}/${IMPLIB_FILE}"
 	)
     endif(ET_SHARED AND MSVC)
 
