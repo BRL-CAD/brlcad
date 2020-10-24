@@ -41,8 +41,9 @@ if (BRLCAD_TCL_BUILD)
     configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   endif (NOT TARGET tcl_replace)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
 
-  set(TCL_INSTDIR ${CMAKE_BINARY_ROOT}/ext/tcl)
+  set(TCL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/tcl)
 
   if (NOT MSVC)
 
@@ -63,6 +64,7 @@ if (BRLCAD_TCL_BUILD)
       INSTALL_COMMAND make install
       DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
       )
+
     set(TCL_APPINIT tclAppInit.c)
 
   else (NOT MSVC)
@@ -82,6 +84,8 @@ if (BRLCAD_TCL_BUILD)
     set(TCL_APPINIT)
 
   endif (NOT MSVC)
+
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix")
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED tcl TCL_BLD ${TCL_INSTDIR}

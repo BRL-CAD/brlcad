@@ -74,7 +74,7 @@ if (BRLCAD_ENABLE_TCL)
       list(APPEND ITCL_DEPS tclsh_exe_stage)
     endif (TARGET tcl_stage)
 
-    set(ITCL_INSTDIR ${CMAKE_BINARY_ROOT}/ext/itcl3)
+    set(ITCL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/itcl3)
 
     ExternalProject_Add(ITCL_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/itcl3"
@@ -91,6 +91,8 @@ if (BRLCAD_ENABLE_TCL)
       -DTCL_VERSION=${TCL_VERSION}
       DEPENDS ${ITCL_DEPS}
       )
+
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/ITCL_BLD-prefix")
 
     if (NOT MSVC)
       set(ITCL_BASENAME libitcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})

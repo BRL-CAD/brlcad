@@ -66,22 +66,25 @@ set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_INSTALL_PREFIX}")
 # projects, so we can include them with -isystem
 unset(SYS_INCLUDE_PATTERNS CACHE)
 
-# For the individual builds to be done here, we need to target their installs
-# to locations in the CMAKE_BINARY_DIR, which is the only place we can be
-# assured of having write access.  However, for multiconfig build systems, we
-# need to define per-config output targets so each individual config's build
-# won't stomp on the output from other configs.  We also *don't* want to do
-# that for single config builds, where user expectation is that
-# CMAKE_BINARY_DIR is the root for such paths.  The $<CONFIG> generator
-# expression lets us set up per-config paths, but as $<CONFIG> is ALSO defined
-# for non-multiconfig builds when CMAKE_BUILD_TYPE is set we need to define
-# $<CONFIG> based paths ONLY when we have CMAKE_CONFIGURATION_TYPES set
-# (which indicates a multiconfig generator is in use.)
+# For the individual builds to be done here, we need to place their outputs to
+# standard locations in the CMAKE_BINARY_DIR.  However, that target is not
+# always unique - for multiconfig build systems, we need to define per-config
+# output targets.  The $<CONFIG> generator expression lets us set up per-config
+# paths, but as $<CONFIG> is ALSO defined for non-multiconfig builds when
+# CMAKE_BUILD_TYPE is set we need to define $<CONFIG> based paths ONLY when we
+# have CMAKE_CONFIGURATION_TYPES set (which indicates a multiconfig generator
+# is in use.)
 if (CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BINARY_ROOT "${CMAKE_BINARY_DIR}/$<CONFIG>")
 else (CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BINARY_ROOT "${CMAKE_BINARY_DIR}")
 endif (CMAKE_CONFIGURATION_TYPES)
+
+# We execute the install process of ExternalProjects and then copy the outputs
+# we need into the BRL-CAD structure.  For cleanup convenience, use a common
+# install target that will hold all of the various subbuild outputs.
+set(CMAKE_BINARY_INSTALL_ROOT "${CMAKE_BINARY_ROOT}/extinstall")
+DISTCLEAN("${CMAKE_BINARY_ROOT}/extinstall")
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
@@ -147,6 +150,7 @@ endif(NOT DEFINED EXTPROJ_VERBOSE)
 # Tool for replacing rpath values in build files
 configure_file(${BDEPS_CMAKE_DIR}/rpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 add_executable(rpath_replace ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 
 # Independent projects with their own build systems (potentially not CMake
 # based) need ExternalProject_Add
@@ -167,6 +171,7 @@ if(CMAKE_CONFIGURATION_TYPES)
     set_property(TARGET buildpath_replace PROPERTY RUNTIME_OUTPUT_DIRECTORY_${CTU} ${CMAKE_BINARY_DIR}/CMakeTmp)
   endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
 endif(CMAKE_CONFIGURATION_TYPES)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 
 # BRL-CAD defines some additional custom targets used to manage the outputs of
 # ExternalProject_Add targets.

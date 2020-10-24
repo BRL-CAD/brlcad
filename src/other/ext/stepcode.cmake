@@ -31,7 +31,7 @@ if(BRLCAD_SC_BUILD)
     list(APPEND SC_DEPS perplex_lemon perplex_re2c perplex_perplex)
   endif (TARGET PERPLEX_BLD)
 
-  set(STEPCODE_INSTDIR "${CMAKE_BINARY_ROOT}/ext/stepcode")
+  set(STEPCODE_INSTDIR "${CMAKE_BINARY_INSTALL_ROOT}/stepcode")
 
   ExternalProject_Add(STEPCODE_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stepcode"
@@ -46,6 +46,8 @@ if(BRLCAD_SC_BUILD)
                -DINCLUDE_INSTALL_DIR=${INCLUDE_DIR}
     DEPENDS ${SC_DEPS}
     )
+
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/STEPCODE_BLD-prefix")
 
   # Tell the parent build about files and libraries
   set(STEPCODE_LIBS base express stepcore stepeditor stepdai steputils)

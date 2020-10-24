@@ -41,7 +41,7 @@ if (BRLCAD_PNG_BUILD)
     list(APPEND PNG_DEPS ZLIB_BLD zlib_stage)
   endif (TARGET ZLIB_BLD)
 
-  set(PNG_INSTDIR ${CMAKE_BINARY_ROOT}/ext/png)
+  set(PNG_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/png)
 
   if (MSVC)
     set(ZLIB_LIBRARY ${CMAKE_BINARY_ROOT}/${LIB_DIR}/${ZLIB_BASENAME}.lib)
@@ -63,6 +63,8 @@ if (BRLCAD_PNG_BUILD)
                -DPNG_LIB_NAME=${PNG_LIB_NAME} -DPNG_PREFIX=brl_
     DEPENDS ${PNG_DEPS}
     )
+
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/PNG_BLD-prefix")
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED png PNG_BLD ${PNG_INSTDIR}

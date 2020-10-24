@@ -27,7 +27,7 @@ if (BRLCAD_PROJ4_BUILD)
     set(PROJ_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_VERSION})
   endif (MSVC)
 
-  set(PROJ4_INSTDIR ${CMAKE_BINARY_ROOT}/ext/proj-4)
+  set(PROJ4_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/proj-4)
 
   ExternalProject_Add(PROJ4_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/proj-4"
@@ -36,6 +36,8 @@ if (BRLCAD_PROJ4_BUILD)
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
                -DPROJ_LIB_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/proj
     )
+
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/PROJ4_BLD-prefix")
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED proj PROJ4_BLD ${PROJ4_INSTDIR}

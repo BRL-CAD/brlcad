@@ -36,7 +36,7 @@ if (BRLCAD_GDAL_BUILD)
     set(PNG_TARGET PNG_BLD)
   endif (TARGET PNG_BLD)
 
-  set(GDAL_INSTDIR ${CMAKE_BINARY_ROOT}/ext/gdal)
+  set(GDAL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/gdal)
 
   if (MSVC)
     set(ZLIB_LIBRARY ${CMAKE_BINARY_ROOT}/${LIB_DIR}/${ZLIB_BASENAME}.lib)
@@ -59,6 +59,8 @@ if (BRLCAD_GDAL_BUILD)
     -DGDAL_INST_DATA_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal
     DEPENDS ${GDAL_DEPS}
     )
+
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/GDAL_BLD-prefix")
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED gdal GDAL_BLD ${GDAL_INSTDIR}

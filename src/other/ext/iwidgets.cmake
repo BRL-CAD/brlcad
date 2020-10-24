@@ -48,7 +48,7 @@ if (BRLCAD_ENABLE_TK)
     # dependencies - just point it to our local source copy
     set(ITK_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/itk3")
 
-    set(IWIDGETS_INSTDIR "${CMAKE_BINARY_ROOT}/ext/iwidgets")
+    set(IWIDGETS_INSTDIR "${CMAKE_BINARY_INSTALL_ROOT}/iwidgets")
 
     ExternalProject_Add(IWIDGETS_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
@@ -58,6 +58,8 @@ if (BRLCAD_ENABLE_TK)
       -DLIB_DIR=${LIB_DIR}
       DEPENDS ${IWIDGETS_DEPS}
       )
+
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/IWIDGETS_BLD-prefix")
 
     # Tell the parent build about files and libraries
     ExternalProject_ByProducts(iwidgets IWIDGETS_BLD ${IWIDGETS_INSTDIR} ${LIB_DIR}/Iwidgets${IWIDGETS_VERSION}

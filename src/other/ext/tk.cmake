@@ -34,7 +34,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   endif (NOT TARGET tcl_replace)
 
-  set(TK_INSTDIR ${CMAKE_BINARY_ROOT}/ext/tk)
+  set(TK_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/tk)
 
   if (NOT MSVC)
 
@@ -75,6 +75,8 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     set(TK_APPINIT)
 
   endif (NOT MSVC)
+
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/TK_BLD-prefix")
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED tk TK_BLD ${TK_INSTDIR}

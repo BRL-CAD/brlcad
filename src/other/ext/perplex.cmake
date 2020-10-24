@@ -1,6 +1,7 @@
 if (BRLCAD_LEVEL2)
 
-  set(PERPLEX_BLD_ROOT ${CMAKE_BINARY_DIR}/other/ext/perplex)
+  set(PERPLEX_BLD_ROOT "${CMAKE_BINARY_DIR}/other/ext/perplex")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/other/ext/perplex")
 
   ExternalProject_Add(PERPLEX_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/perplex"
@@ -8,6 +9,8 @@ if (BRLCAD_LEVEL2)
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${PERPLEX_BLD_ROOT} -DBIN_DIR=${BIN_DIR}
     -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DDATA_DIR=${DATA_DIR}
     )
+
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/PERPLEX_BLD-prefix")
 
   # Tell the parent about files and libraries
   ExternalProject_Target(EXEC perplex_lemon PERPLEX_BLD ${PERPLEX_BLD_ROOT}

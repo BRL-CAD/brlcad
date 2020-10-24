@@ -63,7 +63,7 @@ if (BRLCAD_ENABLE_TK)
       list(APPEND ITK_DEPS wish_exe_stage)
     endif (TARGET tk_stage)
 
-    set(ITK_INSTDIR ${CMAKE_BINARY_ROOT}/ext/itk3)
+    set(ITK_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/itk3)
 
     ExternalProject_Add(ITK_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/itk3"
@@ -81,6 +81,8 @@ if (BRLCAD_ENABLE_TK)
       -DTCL_VERSION=${TCL_VERSION}
       DEPENDS ${ITK_DEPS}
       )
+
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/ITK_BLD-prefix")
 
     if (NOT MSVC)
       set(ITK_BASENAME libitk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
