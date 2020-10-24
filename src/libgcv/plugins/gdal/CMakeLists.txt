@@ -1,6 +1,6 @@
 if(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
-  include_directories(SYSTEM ${GDAL_INCLUDE_DIR})
-  LIBGCV_ADD_PLUGIN(gdal "gdal.cpp;gdal_ll.cpp" "librt;libbu;${GDAL_LIBRARY}")
+  include_directories(SYSTEM ${GDAL_INCLUDE_DIRS})
+  LIBGCV_ADD_PLUGIN(gdal "gdal.cpp;gdal_ll.cpp" "librt;libbu;${GDAL_LIBRARIES}")
 endif(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
 
 CMAKEFILES(gdal.cpp)

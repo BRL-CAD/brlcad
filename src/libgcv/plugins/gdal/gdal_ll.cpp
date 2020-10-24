@@ -27,13 +27,13 @@
 #include "common.h"
 
 /* GDAL headers */
-#include <gdal.h>
-#include <gdalwarper.h>
-#include <gdal_utils.h>
-#include <cpl_conv.h>
-#include <cpl_string.h>
-#include <cpl_multiproc.h>
-#include <ogr_spatialref.h>
+#include "gdal.h"
+#include "gdalwarper.h"
+#include "gdal_utils.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "cpl_multiproc.h"
+#include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
 #include "bu/log.h"

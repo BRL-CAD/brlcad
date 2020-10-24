@@ -179,14 +179,14 @@ if (BRLCAD_GDAL_BUILD)
 
   set(GDAL_INCLUDE_DIR
     "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/gdal"
-    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/port"
-    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/gcore"
-    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/alg"
-    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/ogr"
-    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/ogr/ogrsf_frmts"
-    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/gnm"
-    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/apps"
-    "${BRLCAD_SOURCE_DIR}/src/superbuild/gdal/frmts/vrt"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/gdal/port"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/gdal/gcore"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/gdal/alg"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/gdal/ogr"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/gdal/ogr/ogrsf_frmts"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/gdal/gnm"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/gdal/apps"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/gdal/frmts/vrt"
     CACHE STRING "Directories containing GDAL headers." FORCE)
   set(GDAL_INCLUDE_DIRS "${GDAL_INCLUDE_DIR}" CACHE STRING "Directories containing GDAL headers." FORCE)
 
