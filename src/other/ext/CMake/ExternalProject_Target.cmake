@@ -35,12 +35,21 @@ file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake" "get_filename_component(DDI
 # time.
 function(fcfgcpy outvar extproj root ofile dir tfile)
   string(REPLACE "${CMAKE_BINARY_DIR}/" "" rdir "${dir}")
-  add_custom_command(
-    OUTPUT "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${rdir}/${tfile}"
-    COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${rdir}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/$<CONFIG>/${rdir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
-    DEPENDS ${extproj}
-    )
-  set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${rdir}/${tfile}")
+  if (CMAKE_CONFIGURATION_TYPES)
+    add_custom_command(
+      OUTPUT "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${rdir}/${tfile}"
+      COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${rdir}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/$<CONFIG>/${rdir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
+      DEPENDS ${extproj}
+      )
+    set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${rdir}/${tfile}")
+  else (CMAKE_CONFIGURATION_TYPES)
+    add_custom_command(
+      OUTPUT "${CMAKE_BINARY_DIR}/${rdir}/${tfile}"
+      COMMAND ${CMAKE_COMMAND} -DSRC="${root}/${rdir}/${ofile}" -DDEST="${CMAKE_BINARY_DIR}/${rdir}/${tfile}" -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
+      DEPENDS ${extproj}
+      )
+    set(TOUT ${TOUT} "${CMAKE_BINARY_DIR}/${rdir}/${tfile}")
+  endif (CMAKE_CONFIGURATION_TYPES)
   set(${outvar} ${TOUT} PARENT_SCOPE)
 endfunction(fcfgcpy file)
 
@@ -117,11 +126,10 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
     # IMPORTED_NO_SONAME to get working linking for what we're trying to do
     # here.  Without that property set, build dir copies of libraries will use
     # an incorrect relative link and fail to find the library.
-    set_property(TARGET ${etarg} APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
     set_target_properties(${etarg} PROPERTIES
       IMPORTED_NO_SONAME TRUE
-      IMPORTED_LOCATION_NOCONFIG "${CMAKE_BINARY_DIR}/${REL_DIR}/${LINK_TARGET}"
-      IMPORTED_SONAME_NOCONFIG "${LINK_TARGET}"
+      IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/${REL_DIR}/${LINK_TARGET}"
+      IMPORTED_SONAME "${LINK_TARGET}"
       )
 
     # For Windows, IMPORTED_IMPLIB is important for shared libraries.
