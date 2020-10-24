@@ -1,66 +1,6 @@
-
-#---------------------------------------------------------------------
-# Searching the system for packages presents something of a dilemma -
-# in most situations it is Very Bad for a BRL-CAD build to be using
-# older versions of libraries in install directories as search results.
-# Generally, the desired behavior is to ignore whatever libraries are
-# in the install directories, and only use external library results if
-# they are something already found on the system due to non-BRL-CAD
-# installation (source compile, package managers, etc.).  Unfortunately,
-# CMake's standard behavior is to add CMAKE_INSTALL_PREFIX to the search
-# path once defined, resulting in (for us) the unexpected behavior of
-# returning old installed libraries when CMake is re-run in a directory.
-#
-# To work around this, there are two possible approaches.  One,
-# identified by Maik Beckmann, operates on CMAKE_SYSTEM_PREFIX_PATH:
-#
-# http://www.cmake.org/pipermail/cmake/2010-October/040292.html
-#
-# The other, pointed out by Michael Hertling, uses the
-# CMake_[SYSTEM_]IGNORE_PATH variables.
-#
-# http://www.cmake.org/pipermail/cmake/2011-May/044503.html
-#
-# BRL-CAD initially operated on CMAKE_SYSTEM_PREFIX_PATH, but has
-# switched to using the *_IGNORE_PATH variables.  This requires
-# CMake 2.8.3 or later.
-#
-# The complication with ignoring install paths is if we are
-# installing to a "legitimate" system search path - i.e. our
-# CMAKE_INSTALL_PREFIX value is standard enough that it is a legitimate
-# search target for find_package. In this case, we can't exclude
-# accidental hits on our libraries without also excluding legitimate
-# find_package results.  So the net results are:
-#
-# 1.  If you are planning to install to a system directory (typically
-#     a bad idea but the settings are legal) clean out the old system
-#     first or accept that the old libraries will be found and used.
-#
-# 2.  For more custom paths, the logic below will avoid the value
-#     of CMAKE_INSTALL_PREFIX in find_package searches
-#
-# (Note:  CMAKE_INSTALL_PREFIX must be checked in the case where someone
-# sets it on the command line prior to CMake being run.  BRLCAD_PREFIX
-# preserves the CMAKE_INSTALL_PREFIX setting from the previous CMake run.
-# CMAKE_INSTALL_PREFIX does not seem to be immediately set in this context
-# when CMake is re-run unless specified explicitly on the command line.
-# To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
-# is available, BRLCAD_PREFIX is used to store the value in the cache.)
-
-if(CMAKE_INSTALL_PREFIX)
-  if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
-    get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
-    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
-  endif(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
-endif(CMAKE_INSTALL_PREFIX)
-if(BRLCAD_PREFIX)
-  if(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
-    get_filename_component(PATH_NORMALIZED "${BRLCAD_PREFIX}/${LIB_DIR}" ABSOLUTE)
-    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
-  endif(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
-endif(BRLCAD_PREFIX)
-mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
-
+# If we need it, use a standard string to stand in for build types.  This
+# allows for easier replacing later in the logic
+set(BUILD_TYPE_KEY "----BUILD_TYPE----")
 
 #---------------------------------------------------------------------
 # The location in which to install BRL-CAD.  Only do this if
@@ -111,7 +51,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 				set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
 			endif(CMAKE_CL_64)
 		else(MSVC)
-			set(CMAKE_INSTALL_PREFIX "/usr/brlcad/----BUILD_TYPE-----${BRLCAD_VERSION}")
+			set(CMAKE_INSTALL_PREFIX "/usr/brlcad/${BUILD_TYPE_KEY}-${BRLCAD_VERSION}")
 		endif(MSVC)
 	endif(NOT CMAKE_CONFIGURATION_TYPES)
 	set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
@@ -142,6 +82,74 @@ if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR
   endif(SLEEP_EXEC)
   message(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ALLOW_INSTALL_TO_USR=1 for CMake")
 endif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
+
+#---------------------------------------------------------------------
+# Searching the system for packages presents something of a dilemma -
+# in most situations it is Very Bad for a BRL-CAD build to be using
+# older versions of libraries in install directories as search results.
+# Generally, the desired behavior is to ignore whatever libraries are
+# in the install directories, and only use external library results if
+# they are something already found on the system due to non-BRL-CAD
+# installation (source compile, package managers, etc.).  Unfortunately,
+# CMake's standard behavior is to add CMAKE_INSTALL_PREFIX to the search
+# path once defined, resulting in (for us) the unexpected behavior of
+# returning old installed libraries when CMake is re-run in a directory.
+#
+# To work around this, there are two possible approaches.  One,
+# identified by Maik Beckmann, operates on CMAKE_SYSTEM_PREFIX_PATH:
+#
+# http://www.cmake.org/pipermail/cmake/2010-October/040292.html
+#
+# The other, pointed out by Michael Hertling, uses the
+# CMake_[SYSTEM_]IGNORE_PATH variables.
+#
+# http://www.cmake.org/pipermail/cmake/2011-May/044503.html
+#
+# BRL-CAD initially operated on CMAKE_SYSTEM_PREFIX_PATH, but has
+# switched to using the *_IGNORE_PATH variables.  This requires
+# CMake 2.8.3 or later.
+#
+# The complication with ignoring install paths is if we are
+# installing to a "legitimate" system search path - i.e. our
+# CMAKE_INSTALL_PREFIX value is standard enough that it is a legitimate
+# search target for find_package. In this case, we can't exclude
+# accidental hits on our libraries without also excluding legitimate
+# find_package results.  So the net results are:
+#
+# 1.  If you are planning to install to a system directory (typically
+#     a bad idea but the settings are legal) clean out the old system
+#     first or accept that the old libraries will be found and used.
+#
+# 2.  For more custom paths, the logic below will avoid the value
+#     of CMAKE_INSTALL_PREFIX in find_package searches
+#
+# (Note:  CMAKE_INSTALL_PREFIX must be checked in the case where someone
+# sets it on the command line prior to CMake being run.  BRLCAD_PREFIX
+# preserves the CMAKE_INSTALL_PREFIX setting from the previous CMake run.
+# CMAKE_INSTALL_PREFIX does not seem to be immediately set in this context
+# when CMake is re-run unless specified explicitly on the command line.
+# To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
+# is available, BRLCAD_PREFIX is used to store the value in the cache.)
+
+if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
+	get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
+	if (CMAKE_CONFIGURATION_TYPES)
+		foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
+			if ("${cfg}" STREQUAL "Release")
+				string(REPLACE "${BUILD_TYPE_KEY}" "rel" "${CMAKE_INSTALL_PREFIX}" RELPATH)
+				set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${RELPATH}")
+			endif ("${cfg}" STREQUAL "Release")
+			if ("${cfg}" STREQUAL "Debug")
+				string(REPLACE "${BUILD_TYPE_KEY}" "dev" "${CMAKE_INSTALL_PREFIX}" DEVPATH)
+				set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${DEVPATH}")
+			endif ("${cfg}" STREQUAL "Debug")
+			string(REPLACE "${BUILD_TYPE_KEY}" "${cfg}" "${CMAKE_INSTALL_PREFIX}" TYPEPATH)
+			set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${TYPEPATH}")
+		endforeach(cfg ${CMAKE_CONFIGURATION_TYPES})
+	else (CMAKE_CONFIGURATION_TYPES)
+		set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
+	endif (CMAKE_CONFIGURATION_TYPES)
+endif(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
 
 #------------------------------------------------------------------------------
 # Now that we know the install prefix, generate the binary for calculating
