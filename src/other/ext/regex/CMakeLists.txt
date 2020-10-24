@@ -90,8 +90,7 @@ add_library(regex SHARED ${REGEX_SOURCES})
 set_target_properties(regex PROPERTIES OUTPUT_NAME regex_brl)
 set_target_properties(regex PROPERTIES VERSION 1.0.4 SOVERSION 1)
 if (MSVC)
-  set_property(TARGET regex APPEND PROPERTY COMPILE_DEFINITIONS "REGEX_EXPORT_DLL")
-  set_property(TARGET regex APPEND PROPERTY COMPILE_DEFINITIONS "BRLCAD_DLL")
+  set_property(TARGET regex APPEND PROPERTY COMPILE_DEFINITIONS "REGEX_DLL_EXPORTS")
 endif (MSVC)
 install(TARGETS regex
   RUNTIME DESTINATION ${BIN_DIR}
@@ -100,7 +99,11 @@ install(TARGETS regex
 
 if (BUILD_STATIC_LIBS)
   add_library(regex-static STATIC ${REGEX_SOURCES})
-  set_target_properties(regex-static PROPERTIES OUTPUT_NAME "regex_brl")
+  if (MSVC)
+    set_target_properties(regex-static PROPERTIES OUTPUT_NAME "regex_brl-static")
+  else (MSVC)
+    set_target_properties(regex-static PROPERTIES OUTPUT_NAME "regex_brl")
+  endif (MSVC)
   install(TARGETS regex-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
