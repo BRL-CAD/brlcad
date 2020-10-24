@@ -145,6 +145,10 @@ function(ET_target_props etarg REL_DIR LINK_TARGET)
 
   else(NOT CMAKE_CONFIGURATION_TYPES)
 
+    # TODO - see if we need to set any DLL import/export information onto these
+    # targets to replace information previously passed in the CMake build targets
+    # on Windows...
+
     # If no config is set for multiconfig, default to Debug
     set_target_properties(${etarg} PROPERTIES
       IMPORTED_NO_SONAME TRUE
