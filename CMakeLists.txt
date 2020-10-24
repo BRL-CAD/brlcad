@@ -3685,6 +3685,9 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND false
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
+
+# NOTE: set to NEW and remove slashes after 3.19 is required
+cmake_policy(SET CMP0110 OLD)
 add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 
 # Local Variables:
