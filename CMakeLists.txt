@@ -1871,6 +1871,7 @@ if(NOT MSVC)
       set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     endif (PROBE_PTHREAD_H_CLOCKID_T)
   endif (NOT PROBE_PTHREAD_H)
+  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
   # -O3/-Ofast can enable -ffast-math which can provoke a stack
   # corruption in the shadow computations because of strict aliasing
