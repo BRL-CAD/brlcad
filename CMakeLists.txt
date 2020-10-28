@@ -1868,10 +1868,8 @@ if(NOT MSVC)
       set(CXX_STANDARD_FLAGS "${CXX_STANDARD_FLAGS} -Dclockid_t=clock_t -pthread")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dclockid_t=clock_t -pthread")
-      set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     endif (PROBE_PTHREAD_H_CLOCKID_T)
   endif (NOT PROBE_PTHREAD_H)
-  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
   # -O3/-Ofast can enable -ffast-math which can provoke a stack
   # corruption in the shadow computations because of strict aliasing
@@ -2287,8 +2285,15 @@ endif(BRLCAD_PRINT_MSGS)
 # Post 3.1 CMake has switched to recommending using an imported target
 # and setting a "prefer pthreads" flag - previously we were using the
 # CMAKE_THREAD_LIBS_INIT variable
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
+if(CMAKE_THREAD_LIBS_INIT)
+  message("Using threading library: ${CMAKE_THREAD_LIBS_INIT}")
+else(CMAKE_THREAD_LIBS_INIT)
+  message("Using threading from system library")
+endif(CMAKE_THREAD_LIBS_INIT)
+
 # By default, the Threads package doesn't stash any of its values in
 # cache.  This is inconvenient for debugging, so we set them ourselves.
 set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} CACHE STRING "Threads")
