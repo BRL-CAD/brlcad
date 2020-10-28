@@ -2284,9 +2284,17 @@ endif(BRLCAD_PRINT_MSGS)
 # be referenced in a pkgconfig file
 
 # Look for threads (doesn't check for headers)
-# The variable CMAKE_THREAD_LIBS_INIT is the one of interest
-# when writing target_link_libraries lists.
+# Post 3.1 CMake has switched to recommending using an imported target
+# and setting a "prefer pthreads" flag - previously we were using the
+# CMAKE_THREAD_LIBS_INIT variable
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
+# By default, the Threads package doesn't stash any of its values in
+# cache.  This is inconvenient for debugging, so we set them ourselves.
+set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} CACHE STRING "Threads")
+set(CMAKE_USE_WIN32_THREADS_INIT ${CMAKE_USE_WIN32_THREADS_INIT} CACHE STRING "Threads")
+set(CMAKE_USE_PTHREADS_INIT ${CMAKE_USE_PTHREADS_INIT} CACHE STRING "Threads")
+set(CMAKE_HP_PTHREADS_INIT ${CMAKE_HP_PTHREADS_INIT} CACHE STRING "Threads")
 
 # Check for the C++ STL library - need to link it explicitly in
 # some compilation situations
