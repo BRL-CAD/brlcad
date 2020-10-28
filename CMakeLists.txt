@@ -2285,8 +2285,8 @@ endif(BRLCAD_PRINT_MSGS)
 # Post 3.1 CMake has switched to recommending using an imported target
 # and setting a "prefer pthreads" flag - previously we were using the
 # CMAKE_THREAD_LIBS_INIT variable
-set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 if(CMAKE_THREAD_LIBS_INIT)
   message("Using threading library: ${CMAKE_THREAD_LIBS_INIT}")
