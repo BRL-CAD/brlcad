@@ -368,7 +368,7 @@ foreach(frmt ${OGR_FORMATS})
   set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
 endforeach(frmt ${OGR_FORMATS})
 
-set(gdal_libs ${PROJ4_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(gdal_libs ${PROJ4_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES} Threads::Threads)
 set(lib_list M DL ICONV)
 foreach(ll ${lib_list})
   if(${ll}_LIBRARY)
