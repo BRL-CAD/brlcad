@@ -22,9 +22,11 @@ if (BRLCAD_ZLIB_BUILD)
 
   if (MSVC)
     set(ZLIB_BASENAME z_brl)
+    set(ZLIB_STATICNAME z_brl_static)
     set(ZLIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
   else (MSVC)
     set(ZLIB_BASENAME libz_brl)
+    set(ZLIB_STATICNAME libz_brl)
     set(ZLIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${ZLIB_VERSION})
   endif (MSVC)
 
@@ -49,7 +51,7 @@ if (BRLCAD_ZLIB_BUILD)
     )
   if (BUILD_STATIC_LIBS)
     ExternalProject_Target(STATIC zlib-static ZLIB_BLD ${ZLIB_INSTDIR}
-      ${ZLIB_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      ${ZLIB_STATICNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
       )
   endif (BUILD_STATIC_LIBS)
 

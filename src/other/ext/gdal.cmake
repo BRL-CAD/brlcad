@@ -16,8 +16,10 @@ if (BRLCAD_GDAL_BUILD)
 
   if (MSVC)
     set(GDAL_BASENAME gdal)
+    set(GDAL_STATICNAME gdal-static)
   else (MSVC)
     set(GDAL_BASENAME libgdal)
+    set(GDAL_STATICNAME libgdal)
   endif (MSVC)
 
   set(GDAL_DEPS)
@@ -69,7 +71,7 @@ if (BRLCAD_GDAL_BUILD)
     )
   if (BUILD_STATIC_LIBS)
     ExternalProject_Target(STATIC gdal-static GDAL_BLD ${GDAL_INSTDIR}
-      ${GDAL_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      ${GDAL_STATICNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
       )
   endif (BUILD_STATIC_LIBS)
 

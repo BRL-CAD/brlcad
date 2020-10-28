@@ -15,8 +15,10 @@ if (BRLCAD_NETPBM_BUILD)
 
   if (MSVC)
     set(NETPBM_BASENAME netpbm)
+    set(NETPBM_STATICNAME netpbm-static)
   else (MSVC)
     set(NETPBM_BASENAME libnetpbm)
+    set(NETPBM_STATICNAME libnetpbm)
   endif (MSVC)
 
   set(NETPBM_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/netpbm)
@@ -37,7 +39,7 @@ if (BRLCAD_NETPBM_BUILD)
    )
  if (BUILD_STATIC_LIBS)
    ExternalProject_Target(STATIC netpbm-static NETPBM_BLD ${NETPBM_INSTDIR}
-     ${NETPBM_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+     ${NETPBM_STATICNAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
      )
  endif (BUILD_STATIC_LIBS)
 
