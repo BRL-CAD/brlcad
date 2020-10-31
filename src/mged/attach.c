@@ -155,7 +155,6 @@ int
 release(char *name, int need_close)
 {
     struct mged_dm *save_dm_list = MGED_DM_NULL;
-    struct bu_vls *cpathname = dm_get_pathname(DMP);
     struct bu_vls *pathname = NULL;
 
     if (name != NULL) {
@@ -166,6 +165,9 @@ release(char *name, int need_close)
 
 	for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	    struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
+	    if (!m_dmp || !m_dmp->dm_dmp)
+		continue;
+
 	    pathname = dm_get_pathname(m_dmp->dm_dmp);
 	    if (!BU_STR_EQUAL(name, bu_vls_cstr(pathname)))
 		continue;
@@ -183,7 +185,7 @@ release(char *name, int need_close)
 	    Tcl_AppendResult(INTERP, "release: ", name, " not found\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
-    } else if (BU_STR_EQUAL("nu", bu_vls_cstr(cpathname)))
+    } else if (DMP && BU_STR_EQUAL("nu", bu_vls_cstr(dm_get_pathname(DMP))))
 	return TCL_OK;  /* Ignore */
 
     if (fbp) {

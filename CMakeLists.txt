@@ -202,7 +202,6 @@ if (IS_DIRECTORY /usr/local)
   set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
   if (IS_DIRECTORY /usr/local/include)
     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
-    include_directories(AFTER SYSTEM /usr/local/include)
   endif (IS_DIRECTORY /usr/local/include)
 endif (IS_DIRECTORY /usr/local)
 
@@ -1207,6 +1206,7 @@ endif(BRLCAD_PRINT_MSGS)
 # and setting a "prefer pthreads" flag - previously we were using the
 # CMAKE_THREAD_LIBS_INIT variable
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 # By default, the Threads package doesn't stash any of its values in
 # cache.  This is inconvenient for debugging, so we set them ourselves.
@@ -2434,6 +2434,11 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND false
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
+
+# NOTE: set to NEW and remove slashes after 3.19 is required
+if(POLICY CMP0110)
+  cmake_policy(SET CMP0110 OLD)
+endif(POLICY CMP0110)
 add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 
 # Local Variables:

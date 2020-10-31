@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* improved performance calculating BoT bounding boxes - Vikram Atreya
 * fixed MGED crash closing multiple rt views on Windows - Cliff Yapp
 * fixed 'n' key binding override with MGED key forwarding - Cliff Yapp
 * fixed mged crash when there are no display managers - Sean Morrison
@@ -31,6 +32,7 @@ changes made.  See document footer for additional details.
 * fixed help message for -F option on gdiff command - Cliff Yapp
 * fixed mged -c bomb attaching to graphical displays - Sean Morrison
 * fixed titlebar bug opening .g with filename spaces - Sean Morrison
+* added a new 'N' graphics window keybinding to run nirt - Cliff Yapp
 
 ----------------------------------------------------------------------
 --- 2020-09-14  Release 7.32.0                                     ---
