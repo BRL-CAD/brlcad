@@ -29,7 +29,7 @@ if (BRLCAD_PNG_BUILD)
 
   if (MSVC)
     set(PNG_BASENAME ${PNG_LIB_NAME})
-    set(PNG_STATICNAME ${PNG_LIB_NAME}-static)
+    set(PNG_STATICNAME ${PNG_LIB_NAME}_static)
     set(PNG_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
   else (MSVC)
     set(PNG_BASENAME lib${PNG_LIB_NAME})
