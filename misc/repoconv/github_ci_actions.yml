@@ -93,17 +93,40 @@ jobs:
         set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
 
-          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-          execute_process(
-          COMMAND "${{ matrix.config.environment_script }}" && set
-          OUTPUT_FILE environment_script_output.txt
-          )
-          file(STRINGS environment_script_output.txt output_lines)
-          foreach(line IN LISTS output_lines)
-            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-            endif()
-          endforeach()
+        # Microsoft's environment setup presents a particular challenge.  We want the
+        # proper setup when we run CMake below to configure the build, but that requires
+        # setting up the command line first:
+        #
+        # https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
+        #
+        # However, by the time we are here we are already off and running.  We can execute
+        # the setup file, but its setup will be scoped to the executed process, not this
+        # process.  To "lift" up the results of the script to the current environment, we
+        # capture the current state of the subprocess environment after script execute by
+        # printing it with a "set" command and having execute process capture it to a file.
+        # Then, that file is parsed into key/value pairs and the set(ENV) cmake command is
+        # used to apply those values to the current environment.
+        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+
+           # Collect the dev env info
+           execute_process(
+             COMMAND "${{ matrix.config.environment_script }}" && set
+             OUTPUT_FILE environment_script_output.txt
+           )
+
+           # Eliminate backslashes on the end of lines for file(STRINGS)
+           file(READ environment_script_output.txt file_contents)
+           string(REPLACE "\\\n" "\n" NFILE "${file_contents}")
+           file(WRITE environment_script_output.txt "${NFILE}")
+
+           # Extract environment key/value pairs
+           file(STRINGS environment_script_output.txt output_lines)
+           foreach(line IN LISTS output_lines)
+             if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+               set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+             endif()
+           endforeach()
+
         endif()
 
         set(path_separator ":")
