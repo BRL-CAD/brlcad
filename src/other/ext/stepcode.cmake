@@ -22,6 +22,9 @@ if(BRLCAD_SC_BUILD)
   if (MSVC)
     set(SC_PREFIX "")
     set(SC_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  elseif (APPLE)
+    set(SC_PREFIX "lib")
+    set(SC_SUFFIX ".${SC_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
   else (MSVC)
     set(SC_PREFIX "lib")
     set(SC_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}.${SC_VERSION}")
@@ -53,6 +56,13 @@ if(BRLCAD_SC_BUILD)
   # Tell the parent build about files and libraries
   set(STEPCODE_LIBS base express stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
+    if (APPLE)
+      set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
+      set(SYMLINK_2 ${SC_PREFIX}${SCLIB}.2${CMAKE_SHARED_LIBRARY_SUFFIX})
+    else (APPLE)
+      set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
+      set(SYMLINK_2 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2)
+    endif (APPLE)
     ExternalProject_Target(SHARED ${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
       ${SC_PREFIX}${SCLIB}${SC_SUFFIX}
       SYMLINKS ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2
