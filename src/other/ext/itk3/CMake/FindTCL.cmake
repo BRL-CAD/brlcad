@@ -328,6 +328,7 @@ set(TCLTK_POSSIBLE_INCLUDE_PATHS
   )
 
 set(TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES
+  include
   include/tcl${TK_LIBRARY_VERSION}
   include/tcl${TCL_LIBRARY_VERSION}
   include/tcl8.7
