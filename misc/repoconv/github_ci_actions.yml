@@ -108,7 +108,11 @@ jobs:
         # used to apply those values to the current environment.
         if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
 
-           # Collect the dev env info
+           # Collect the dev env info.
+           #
+           # Off by default, but we can set VSCMD_DEBUG to report debug
+           # info for debugging purposes (max value is 3 - we start at 1).
+           #set(ENV{VSCMD_DEBUG} 1)
            execute_process(
              COMMAND "${{ matrix.config.environment_script }}" && set
              OUTPUT_FILE environment_script_output.txt
