@@ -79,6 +79,10 @@ if (BRLCAD_ENABLE_TCL)
       list(APPEND ITCL_DEPS tclstub_stage)
       list(APPEND ITCL_DEPS tclsh_exe_stage)
     endif (TARGET tcl_stage)
+    if (TARGET tk_stage)
+      list(APPEND ITCL_DEPS tk_stage)
+      list(APPEND ITCL_DEPS tkstub_stage)
+    endif (TARGET tk_stage)
 
     set(ITCL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/itcl3.4)
 
