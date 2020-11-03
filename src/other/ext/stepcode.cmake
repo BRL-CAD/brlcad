@@ -56,24 +56,29 @@ if(BRLCAD_SC_BUILD)
   # Tell the parent build about files and libraries
   set(STEPCODE_LIBS base express stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
+    set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
     if (APPLE)
-      set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
       set(SYMLINK_2 ${SC_PREFIX}${SCLIB}.2${CMAKE_SHARED_LIBRARY_SUFFIX})
     else (APPLE)
-      set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
       set(SYMLINK_2 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2)
     endif (APPLE)
     ExternalProject_Target(SHARED ${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
       ${SC_PREFIX}${SCLIB}${SC_SUFFIX}
-      SYMLINKS ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2
+      SYMLINKS ${SYMLINK_1};${SYMLINK_2}
       LINK_TARGET ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}
       RPATH
       )
   endforeach(SCLIB ${STEPCODE_LIBS})
   # libexppp is a special naming case, to avoid conflict with the exppp executable
+  set(SYMLINK_1 libexppp${CMAKE_SHARED_LIBRARY_SUFFIX})
+  if (APPLE)
+    set(SYMLINK_2 libexppp.2${CMAKE_SHARED_LIBRARY_SUFFIX})
+  else (APPLE)
+    set(SYMLINK_2 libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}.2)
+  endif (APPLE)
   ExternalProject_Target(SHARED libexppp STEPCODE_BLD ${STEPCODE_INSTDIR}
     libexppp${SC_SUFFIX}
-    SYMLINKS libexppp${CMAKE_SHARED_LIBRARY_SUFFIX};libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}.2
+    SYMLINKS ${SYMLINK_1};${SYMLINK_2}
     LINK_TARGET libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )

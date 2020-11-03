@@ -9,7 +9,7 @@
  * This code was developed with the support of the United States Government,
  * and is not subject to copyright.
  *
- * $Log: express.c,v $
+ * $Log$
  * Revision 1.20  1997/01/21 19:53:20  dar
  * made C++ compatible
  *
@@ -84,6 +84,9 @@
 #include "expparse.h"
 #include "expscan.h"
 #include "parse_data.h"
+
+extern void SCANcleanup( void );
+extern void parserInitState();
 
 void * ParseAlloc( void * ( *mallocProc )( size_t ) );
 void ParseFree( void * parser, void ( *freeProc )( void * ) );
