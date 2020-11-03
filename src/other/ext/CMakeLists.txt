@@ -234,33 +234,6 @@ if(MSVC)
     endif(NOT EXISTS "${VCVARS_BAT}")
   endif(NOT EXISTS "${VCVARS_BAT}")
 
-
-  # Collect the dev env info.  The VCVARS bat file may not exit without error,
-  # even if it produces a working build environment.  To deal with this, we
-  # create a CMake script that sets up the environment and runs a user
-  # supplied command.
-  execute_process(
-    COMMAND "${VCVARS_BAT}" && set
-    OUTPUT_FILE vcvars.txt
-    )
-
-  # Eliminate backslashes on the end of lines for file(STRINGS)
-  file(READ vcvars.txt vcvars)
-  string(REPLACE "\\\n" "\n" nvcvars "${vcvars}")
-  file(WRITE vcvars.txt "${nvcvars}")
-
-  # Stage file
-  file(WRITE "${CMAKE_BINARY_DIR}/win_exec.cmake" "# Set Visual Studio environment vars and run programs")
-
-  # Extract environment key/value pairs
-  file(STRINGS vcvars.txt vlines)
-  foreach(line IN LISTS vlines)
-    if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-      file(APPEND "${CMAKE_BINARY_DIR}/win_exec.cmake" "set(ENV{${CMAKE_MATCH_1}} \"${CMAKE_MATCH_2}\")\n")
-    endif()
-  endforeach()
-  file(APPEND "${CMAKE_BINARY_DIR}/win_exec.cmake" "execute_process(COMMAND \${CMD})\n")
-
 endif(MSVC)
 
 # TODO - need to set these based on the feature flags...
