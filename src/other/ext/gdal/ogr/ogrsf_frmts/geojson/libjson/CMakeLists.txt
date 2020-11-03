@@ -14,7 +14,9 @@ set(libjson_srcs
 	json_c_version.c
 	)
 
-add_definitions(-D_XOPEN_SOURCE=500)
+if(NOT APPLE)
+  add_definitions(-D_XOPEN_SOURCE=500)
+endif(NOT APPLE)
 
 add_library(json_obj OBJECT ${libjson_srcs})
 set_target_properties(json_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
