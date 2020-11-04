@@ -74,7 +74,7 @@ fp_name_compare(const void *d1, const void *d2, void *arg)
 
 struct ged_search {
     struct directory **paths;
-    int path_cnt;
+    size_t path_cnt;
     int search_type;
 };
 
@@ -221,16 +221,17 @@ _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls 
 HIDDEN int
 _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct directory ***path_list, struct db_search_context *ctx)
 {
-    int path_cnt;
-    int j;
+    size_t path_cnt;
+    size_t j;
     const char *comb_str = "-name *";
     struct bu_ptbl *tmp_search;
 
     BU_ALLOC(tmp_search, struct bu_ptbl);
 
     (void)db_search(tmp_search, DB_SEARCH_RETURN_UNIQ_DP, comb_str, 1, &path, gedp->ged_wdbp->dbip, ctx);
-    path_cnt = (int)BU_PTBL_LEN(tmp_search);
+    path_cnt = BU_PTBL_LEN(tmp_search);
     (*path_list) = (struct directory **)bu_malloc(sizeof(char *) * (path_cnt+1), "object path array");
+
     for (j = 0; j < path_cnt; j++) {
 	(*path_list)[j] = (struct directory *)BU_PTBL_GET(tmp_search, j);
     }
@@ -246,7 +247,9 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
 int
 ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
-    int i, c, optcnt;
+    size_t i;
+    int c;
+    int optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
     int wflag = 0; /* flag controlling whether to fail quietly or not */
     int flags = 0;
@@ -273,7 +276,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
      * (do db_lookup on things to see if they are paths, recognize
      * toplevel path specifiers, etc. */
     optcnt = 0;
-    for (i = 1; i < argc; i++) {
+    for (i = 1; i < (size_t)argc; i++) {
 	if ((argv_orig[i][0] == '-') && (strlen(argv_orig[i]) == 2)) {
 	    optcnt++;
 	} else {
@@ -441,7 +444,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     }
 
     /* Check if all of our searches are local or not */
-    for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
+    for (i = BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 	if (search->search_type != 1) {
 	    all_local = 0;
@@ -458,8 +461,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
 
-	for (i = (int)len - 1; i >= 0; i--) {
-	    int path_cnt = 0;
+	for (i = len - 1; i >= 0; i--) {
+	    size_t path_cnt = 0;
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 	    struct directory *curr_path = search->paths[path_cnt];
 
@@ -474,7 +477,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	/* For this return, we want a list of all unique leaf objects */
 	bu_sort((void *)BU_PTBL_BASEADDR(uniq_db_objs), BU_PTBL_LEN(uniq_db_objs), sizeof(struct directory *), dp_name_compare, NULL);
 
-	for (i = (int)BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0; i--) {
+	for (i = BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0; i--) {
 	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 	}
@@ -497,9 +500,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	sdata->dbip = gedp->ged_wdbp->dbip;
 	sdata->print_verbose_info = print_verbose_info;
 
-	for (i = 0; i < (int)BU_PTBL_LEN(search_set); i++) {
-	    int path_cnt = 0;
-	    int j;
+	for (i = 0; i < BU_PTBL_LEN(search_set); i++) {
+	    size_t path_cnt = 0;
+	    size_t j;
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 
 	    if (search && (search->path_cnt > 0 || search->search_type == 2)) {
@@ -522,7 +525,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 		    if (BU_PTBL_LEN(search_results) > 0) {
 			bu_sort((void *)BU_PTBL_BASEADDR(search_results), BU_PTBL_LEN(search_results), sizeof(struct directory *), dp_name_compare, NULL);
-			for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
+			for (j = BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 			}
@@ -550,7 +553,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 				if (BU_PTBL_LEN(search_results) > 0) {
 				    bu_sort((void *)BU_PTBL_BASEADDR(search_results), BU_PTBL_LEN(search_results), sizeof(struct directory *), fp_name_compare, (void *)sdata);
 
-				    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
+				    for (j = BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
 					bu_vls_trunc(&fullpath_string, 0);
 					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->ged_wdbp->dbip, print_verbose_info);
@@ -563,7 +566,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip, ctx);
 				bu_sort((void *)BU_PTBL_BASEADDR(search_results), BU_PTBL_LEN(search_results), sizeof(struct directory *), dp_name_compare, NULL);
 
-				for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
+				for (j = BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 				    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
 				    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 				}
