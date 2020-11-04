@@ -263,7 +263,7 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
     BU_CK_VLS(vls);
     RT_CK_FULL_PATH(full_path);
 
-    if (!full_path->fp_names[0]) {
+    if (!full_path->fp_names) {
 	bu_vls_strcat(vls, "**NULL**");
 	return;
     }
