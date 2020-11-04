@@ -182,7 +182,7 @@ bn_mat_mul4(
 
 
 void
-bn_matXvec(vect_t ov, const mat_t im, const vect_t iv)
+bn_matXvec(hvect_t ov, const mat_t im, const hvect_t iv)
 {
     register int eo = 0;	/* Position in output vector */
     register int em = 0;	/* Position in input matrix */
@@ -337,7 +337,7 @@ bn_mat_trn(mat_t om, const mat_t im)
 
 
 void
-bn_mat_ae(fastf_t *m, double azimuth, double elev)
+bn_mat_ae(mat_t m, double azimuth, double elev)
 {
     double sin_az, sin_el;
     double cos_az, cos_el;
@@ -391,8 +391,8 @@ bn_aet_vec(
     fastf_t *az,
     fastf_t *el,
     fastf_t *twist,
-    fastf_t *vec_ae,
-    fastf_t *vec_twist,
+    vect_t vec_ae,
+    vect_t vec_twist,
     fastf_t accuracy)
 {
     vect_t zero_twist, ninety_twist;
@@ -455,11 +455,7 @@ bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
 
 
 void
-bn_mat_angles(
-    register fastf_t *mat,
-    double alpha_in,
-    double beta_in,
-    double ggamma_in)
+bn_mat_angles(mat_t mat, double alpha_in, double beta_in, double ggamma_in)
 {
     double alpha, beta, ggamma;
     double calpha, cbeta, cgamma;
@@ -565,8 +561,8 @@ void
 bn_eigen2x2(
     fastf_t *val1,
     fastf_t *val2,
-    fastf_t *vec1,
-    fastf_t *vec2,
+    vect_t vec1,
+    vect_t vec2,
     fastf_t a,
     fastf_t b,
     fastf_t c)
@@ -720,7 +716,7 @@ bn_mat_fromto(
 
 
 void
-bn_mat_xrot(fastf_t *m, double sinx, double cosx)
+bn_mat_xrot(mat_t m, double sinx, double cosx)
 {
     m[0] = 1.0;
     m[1] = 0.0;
@@ -743,7 +739,7 @@ bn_mat_xrot(fastf_t *m, double sinx, double cosx)
 
 
 void
-bn_mat_yrot(fastf_t *m, double siny, double cosy)
+bn_mat_yrot(mat_t m, double siny, double cosy)
 {
     m[0] = cosy;
     m[1] = 0.0;
@@ -766,7 +762,7 @@ bn_mat_yrot(fastf_t *m, double siny, double cosy)
 
 
 void
-bn_mat_zrot(fastf_t *m, double sinz, double cosz)
+bn_mat_zrot(mat_t m, double sinz, double cosz)
 {
     m[0] = cosz;
     m[1] = -sinz;
@@ -1110,7 +1106,7 @@ bn_mat_ck(const char *title, const mat_t m)
 fastf_t
 bn_mat_det3(const mat_t m)
 {
-    register ffastf_t sum;
+    register fastf_t sum;
 
     sum = m[0] * (m[5] * m[10] - m[6] * m[9])
 	- m[1] * (m[4] * m[10] - m[6] * m[8])
