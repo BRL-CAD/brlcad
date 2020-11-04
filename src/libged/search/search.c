@@ -455,16 +455,21 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
      * return one unique list of objects.  If one or more paths are non-local,
      * each path is treated as its own search */
     if (all_local) {
+	size_t len;
 	struct bu_ptbl *uniq_db_objs;
-	size_t len = BU_PTBL_LEN(search_set);
 
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
 
-	for (i = len - 1; i >= 0; i--) {
+	for (i = 0; i < BU_PTBL_LEN(search_set); i++) {
 	    size_t path_cnt = 0;
-	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
-	    struct directory *curr_path = search->paths[path_cnt];
+	    struct ged_search *search;
+	    struct directory *curr_path;
+
+	    search = (struct ged_search *)BU_PTBL_GET(search_set, i);
+	    if (!search || !search->paths)
+		continue;
+	    curr_path = search->paths[path_cnt];
 
 	    while (path_cnt < search->path_cnt) {
 		flags |= DB_SEARCH_RETURN_UNIQ_DP;
@@ -477,9 +482,11 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	/* For this return, we want a list of all unique leaf objects */
 	bu_sort((void *)BU_PTBL_BASEADDR(uniq_db_objs), BU_PTBL_LEN(uniq_db_objs), sizeof(struct directory *), dp_name_compare, NULL);
 
-	for (i = BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0; i--) {
-	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
+	len = BU_PTBL_LEN(uniq_db_objs);
+	while (len > 0) {
+	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, len-1);
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
+	    len--;
 	}
 
 	bu_ptbl_free(uniq_db_objs);
