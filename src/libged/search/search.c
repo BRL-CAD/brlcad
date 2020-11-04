@@ -444,9 +444,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     }
 
     /* Check if all of our searches are local or not */
-    for (i = BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
+    for (i = 0; i < BU_PTBL_LEN(search_set); i++) {
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
-	if (search->search_type != 1) {
+	if (search && search->search_type != 1) {
 	    all_local = 0;
 	}
     }
