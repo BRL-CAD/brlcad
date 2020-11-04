@@ -203,7 +203,7 @@ mapped_file_invalidate(struct bu_mapped_file *mp)
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
     if (mp->appl)
 	bu_free(mp->appl, "appl");
-    mp->appl = bu_strdup("_INVALID_");
+    mp->appl = NULL;
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
     return;
