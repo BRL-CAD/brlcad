@@ -53,31 +53,40 @@ db5_header_is_valid(const unsigned char *hp)
 {
     const struct db5_ondisk_header *odp = (const struct db5_ondisk_header *)hp;
 
-    if (odp->db5h_magic1 != DB5HDR_MAGIC1) return 0;
-    if (hp[7] != DB5HDR_MAGIC2) return 0;
+    if (odp->db5h_magic1 != DB5HDR_MAGIC1)
+	return 0;
+    if (hp[7] != DB5HDR_MAGIC2)
+	return 0;
 
     /* hflags */
     if ((odp->db5h_hflags & DB5HDR_HFLAGS_DLI_MASK) != DB5HDR_HFLAGS_DLI_HEADER_OBJECT)
 	return 0;
-    if ((odp->db5h_hflags & DB5HDR_HFLAGS_NAME_PRESENT)) return 0;
-    if (((odp->db5h_hflags & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >> DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT)
-	!= DB5HDR_WIDTHCODE_8BIT) return 0;
+    if ((odp->db5h_hflags & DB5HDR_HFLAGS_NAME_PRESENT))
+	return 0;
+    if (((odp->db5h_hflags & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >> DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) != DB5HDR_WIDTHCODE_8BIT)
+	return 0;
 
     /* aflags */
-    if ((odp->db5h_aflags & DB5HDR_AFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED) return 0;
-    if (odp->db5h_aflags & DB5HDR_AFLAGS_PRESENT) return 0;
-    if (((odp->db5h_aflags & DB5HDR_AFLAGS_WIDTH_MASK) >> DB5HDR_AFLAGS_WIDTH_SHIFT)
-	!= DB5HDR_WIDTHCODE_8BIT) return 0;
+    if ((odp->db5h_aflags & DB5HDR_AFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED)
+	return 0;
+    if (odp->db5h_aflags & DB5HDR_AFLAGS_PRESENT)
+	return 0;
+    if (((odp->db5h_aflags & DB5HDR_AFLAGS_WIDTH_MASK) >> DB5HDR_AFLAGS_WIDTH_SHIFT) != DB5HDR_WIDTHCODE_8BIT)
+	return 0;
 
     /* bflags */
-    if ((odp->db5h_bflags & DB5HDR_BFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED) return 0;
-    if (odp->db5h_bflags & DB5HDR_BFLAGS_PRESENT) return 0;
-    if (((odp->db5h_bflags & DB5HDR_BFLAGS_WIDTH_MASK) >> DB5HDR_BFLAGS_WIDTH_SHIFT)
-	!= DB5HDR_WIDTHCODE_8BIT) return 0;
+    if ((odp->db5h_bflags & DB5HDR_BFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED)
+	return 0;
+    if (odp->db5h_bflags & DB5HDR_BFLAGS_PRESENT)
+	return 0;
+    if (((odp->db5h_bflags & DB5HDR_BFLAGS_WIDTH_MASK) >> DB5HDR_BFLAGS_WIDTH_SHIFT) != DB5HDR_WIDTHCODE_8BIT)
+	return 0;
 
     /* major and minor type */
-    if (odp->db5h_major_type != DB5_MAJORTYPE_RESERVED) return 0;
-    if (odp->db5h_minor_type != 0) return 0;
+    if (odp->db5h_major_type != DB5_MAJORTYPE_RESERVED)
+	return 0;
+    if (odp->db5h_minor_type != 0)
+	return 0;
 
     /* Check length, known to be 8-bit.  Header len=1 8-byte chunk. */
     if (hp[6] != 1)
@@ -86,12 +95,16 @@ db5_header_is_valid(const unsigned char *hp)
     return 1;		/* valid */
 }
 
+
 int
 db5_select_length_encoding(size_t len)
 {
-    if (len <= 255) return DB5HDR_WIDTHCODE_8BIT;
-    if (len <= 65535) return DB5HDR_WIDTHCODE_16BIT;
-    if (len < 0x7ffffffe) return DB5HDR_WIDTHCODE_32BIT;
+    if (len <= 255)
+	return DB5HDR_WIDTHCODE_8BIT;
+    if (len <= 65535)
+	return DB5HDR_WIDTHCODE_16BIT;
+    if (len < 0x7ffffffe)
+	return DB5HDR_WIDTHCODE_32BIT;
     return DB5HDR_WIDTHCODE_64BIT;
 }
 
@@ -120,6 +133,7 @@ db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
     bu_bomb("db5_decode_length(): unknown width code\n");
     return 0;
 }
+
 
 size_t
 db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
@@ -215,22 +229,15 @@ crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
     rip->major_type = cp[4];
     rip->minor_type = cp[5];
 
-    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("crack_disk_header()\n\
-	h_dli=%d, h_object_width=%d, h_name_present=%d, h_name_width=%d, \n\
-	a_width=%d, a_present=%d, a_zzz=%d, \n\
-	b_width=%d, b_present=%d, b_zzz=%d, major=%d, minor=%d\n",
-				    rip->h_dli,
-				    rip->h_object_width,
-				    rip->h_name_present,
-				    rip->h_name_width,
-				    rip->a_width,
-				    rip->a_present,
-				    rip->a_zzz,
-				    rip->b_width,
-				    rip->b_present,
-				    rip->b_zzz,
-				    rip->major_type,
-				    rip->minor_type);
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
+	bu_log("crack_disk_header()\n"
+	       "\th_dli=%d, h_object_width=%d, h_name_present=%d, h_name_width=%d,\n"
+	       "\ta_width=%d, a_present=%d, a_zzz=%d,\n"
+	       "\tb_width=%d, b_present=%d, b_zzz=%d, major=%d, minor=%d\n",
+	       rip->h_dli, rip->h_object_width, rip->h_name_present, rip->h_name_width,
+	       rip->a_width, rip->a_present, rip->a_zzz,
+	       rip->b_width, rip->b_present, rip->b_zzz, rip->major_type, rip->minor_type);
+    }
 
     return 0;
 }
@@ -241,15 +248,15 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 {
     const unsigned char *cp = ip;
 
-    if (crack_disk_header(rip, cp) < 0) return NULL;
+    if (crack_disk_header(rip, cp) < 0)
+	return NULL;
     cp += sizeof(struct db5_ondisk_header);
 
     cp += db5_decode_length(&rip->object_length, cp, rip->h_object_width);
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
-	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database possibly corrupted\n",
-	       rip->object_length);
+	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database possibly corrupted\n", rip->object_length);
 	return NULL;
     }
 
@@ -265,16 +272,14 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 
     /* Grab name, if present */
     if (rip->h_name_present) {
-	cp += db5_decode_length(&rip->name.ext_nbytes,
-				cp, rip->h_name_width);
+	cp += db5_decode_length(&rip->name.ext_nbytes, cp, rip->h_name_width);
 	rip->name.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->name.ext_nbytes;
     }
 
     /* Point to attributes, if present */
     if (rip->a_present) {
-	cp += db5_decode_length(&rip->attributes.ext_nbytes,
-				cp, rip->a_width);
+	cp += db5_decode_length(&rip->attributes.ext_nbytes, cp, rip->a_width);
 	rip->attributes.ext_buf = (uint8_t *)cp;	/* discard const */
 #if defined(USE_BINARY_ATTRIBUTES)
 	rip->attributes.widcode = rip->a_width;
@@ -284,8 +289,7 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 
     /* Point to body, if present */
     if (rip->b_present) {
-	cp += db5_decode_length(&rip->body.ext_nbytes,
-				cp, rip->b_width);
+	cp += db5_decode_length(&rip->body.ext_nbytes, cp, rip->b_width);
 	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->body.ext_nbytes;
     }
@@ -294,6 +298,7 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 
     return ip + rip->object_length;
 }
+
 
 int
 db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
@@ -307,7 +312,8 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     unsigned char *cp;
 
     if (fread((unsigned char *)&header, sizeof header, 1, fp) != 1) {
-	if (feof(fp)) return -1;
+	if (feof(fp))
+	    return -1;
 	bu_log("db5_get_raw_internal_fp(): fread header error\n");
 	return -2;
     }
@@ -380,16 +386,14 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 
     /* Grab name, if present */
     if (rip->h_name_present) {
-	cp += db5_decode_length(&rip->name.ext_nbytes,
-				cp, rip->h_name_width);
+	cp += db5_decode_length(&rip->name.ext_nbytes, cp, rip->h_name_width);
 	rip->name.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->name.ext_nbytes;
     }
 
     /* Point to attributes, if present */
     if (rip->a_present) {
-	cp += db5_decode_length(&rip->attributes.ext_nbytes,
-				cp, rip->a_width);
+	cp += db5_decode_length(&rip->attributes.ext_nbytes, cp, rip->a_width);
 	rip->attributes.ext_buf = (uint8_t *)cp;	/* discard const */
 #if defined(USE_BINARY_ATTRIBUTES)
 	rip->attributes.widcode = rip->a_width;
@@ -399,14 +403,14 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 
     /* Point to body, if present */
     if (rip->b_present) {
-	cp += db5_decode_length(&rip->body.ext_nbytes,
-				cp, rip->b_width);
+	cp += db5_decode_length(&rip->body.ext_nbytes, cp, rip->b_width);
 	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->body.ext_nbytes;
     }
 
     return 0;		/* success */
 }
+
 
 void
 db5_export_object3(
@@ -560,6 +564,7 @@ db5_export_object3(
     BU_ASSERT(out->ext_nbytes >= 8);
 }
 
+
 void
 db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 {
@@ -588,6 +593,7 @@ db5_make_free_object_hdr(struct bu_external *ep, size_t length)
     cp = ((unsigned char *)ep->ext_buf) + sizeof(struct db5_ondisk_header);
     db5_encode_length(cp, length>>3, h_width);
 }
+
 
 void
 db5_make_free_object(struct bu_external *ep, size_t length)
@@ -619,6 +625,7 @@ db5_make_free_object(struct bu_external *ep, size_t length)
     cp = ((unsigned char *)ep->ext_buf) + length-1;
     *cp = DB5HDR_MAGIC2;
 }
+
 
 int
 rt_db_cvt_to_external5(
@@ -690,6 +697,7 @@ rt_db_cvt_to_external5(
     return 0;		/* OK */
 }
 
+
 int
 db_wrap_v5_external(struct bu_external *ep, const char *name)
 {
@@ -732,6 +740,7 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
     return 0;
 }
 
+
 int
 db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 {
@@ -740,7 +749,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     BU_CK_EXTERNAL(ep);
 
     if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
-				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
+				       dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
     if (dbip->dbi_read_only) {
 	bu_log("db_put_external5(%s):  READ-ONLY file\n",
@@ -776,6 +785,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     }
     return 0;
 }
+
 
 int
 rt_db_put_internal5(
@@ -874,7 +884,8 @@ rt_db_external5_to_internal5(
     if ((raw.major_type == DB5_MAJORTYPE_BRLCAD)
 	||(raw.major_type == DB5_MAJORTYPE_BINARY_UNIF)) {
 	/* As a convenience to older ft_import routines */
-	if (mat == NULL) mat = bn_mat_identity;
+	if (mat == NULL)
+	    mat = bn_mat_identity;
     } else {
 	bu_log("rt_db_external5_to_internal5(%s):  unable to import non-BRL-CAD object, major=%d minor=%d\n",
 	       name, raw.major_type, raw.minor_type);
@@ -946,6 +957,7 @@ rt_db_external5_to_internal5(
     return id;			/* OK */
 }
 
+
 int
 rt_db_get_internal5(
     struct rt_db_internal *ip,
@@ -981,6 +993,7 @@ db5_export_color_table(struct bu_vls *ostr, struct db_i *dbip)
     rt_vls_color_map(ostr);
 }
 
+
 void
 db5_import_color_table(char *cp)
 {
@@ -993,6 +1006,7 @@ db5_import_color_table(char *cp)
 	rt_color_addrec(low, high, r, g, b, MATER_NO_ADDR);
     }
 }
+
 
 int
 db5_put_color_table(struct db_i *dbip)
@@ -1011,6 +1025,7 @@ db5_put_color_table(struct db_i *dbip)
     bu_vls_free(&str);
     return ret;
 }
+
 
 int
 db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, const struct directory *dp)
@@ -1045,6 +1060,7 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
     bu_free_external(&ext);
     return 0;
 }
+
 
 /** @} */
 /*
