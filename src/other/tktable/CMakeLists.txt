@@ -32,12 +32,14 @@ ENDIF(WIN32)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TKTABLE_CFLAGS}")
 
+add_executable(tktable_hdr tktable_hdr.cxx)
+
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
-  COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
+  COMMAND tktable_hdr ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
   COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${TCL_TCLSH}
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl tktable_hdr
   )
 add_custom_target(tktable_header_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h)
 
