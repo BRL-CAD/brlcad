@@ -119,25 +119,24 @@ _path_scrub(struct bu_vls *path)
 HIDDEN void
 _ged_free_search_set(struct bu_ptbl *search_set)
 {
-    int i;
+    size_t i;
 
     if (!search_set)
 	return;
 
-    for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
+    for (i = 0; i < BU_PTBL_LEN(search_set); i++) {
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 
-	if (search && search->paths)
-	    bu_free(search->paths, "free search paths");
-
-	if (search)
+	if (search) {
+	    if (search->paths) {
+		bu_free(search->paths, "free search paths");
+	    }
 	    bu_free(search, "free search");
+	}
     }
 
-    if (search_set) {
-	bu_ptbl_free(search_set);
-	bu_free(search_set, "free search container");
-    }
+    bu_ptbl_free(search_set);
+    bu_free(search_set, "free search container");
 }
 
 
@@ -454,10 +453,12 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
      * each path is treated as its own search */
     if (all_local) {
 	struct bu_ptbl *uniq_db_objs;
+	size_t len = BU_PTBL_LEN(search_set);
+
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
 
-	for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
+	for (i = (int)len - 1; i >= 0; i--) {
 	    int path_cnt = 0;
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 	    struct directory *curr_path = search->paths[path_cnt];
