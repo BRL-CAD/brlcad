@@ -121,7 +121,7 @@ bn_atan2(double y, double x)
 
 
 void
-bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
+bn_mat_mul(mat_t o, const mat_t a, const mat_t b)
 {
     o[ 0] = a[ 0] * b[ 0] + a[ 1] * b[ 4] + a[ 2] * b[ 8] + a[ 3] * b[12];
     o[ 1] = a[ 0] * b[ 1] + a[ 1] * b[ 5] + a[ 2] * b[ 9] + a[ 3] * b[13];
@@ -146,7 +146,7 @@ bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
 
 
 void
-bn_mat_mul2(register const mat_t i, register mat_t o)
+bn_mat_mul2(const mat_t i, mat_t o)
 {
     mat_t temp;
 
@@ -182,10 +182,7 @@ bn_mat_mul4(
 
 
 void
-bn_matXvec(
-    register vect_t ov,
-    register const mat_t im,
-    register const vect_t iv)
+bn_matXvec(vect_t ov, const mat_t im, const vect_t iv)
 {
     register int eo = 0;	/* Position in output vector */
     register int em = 0;	/* Position in input matrix */
@@ -204,7 +201,7 @@ bn_matXvec(
 
 
 void
-bn_mat_inv(register mat_t output, const mat_t input)
+bn_mat_inv(mat_t output, const mat_t input)
 {
     if (bn_mat_inverse(output, input) == 0) {
 
@@ -219,7 +216,7 @@ bn_mat_inv(register mat_t output, const mat_t input)
 
 
 int
-bn_mat_inverse(register mat_t output, const mat_t input)
+bn_mat_inverse(mat_t output, const mat_t input)
 {
     register int i, j;	/* Indices */
     int k;		/* Indices */
@@ -307,7 +304,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 
 
 void
-bn_vtoh_move(register vect_t h, register const vect_t v)
+bn_vtoh_move(vect_t h, const vect_t v)
 {
     VMOVE(h, v);
     h[W] = 1.0;
@@ -315,7 +312,7 @@ bn_vtoh_move(register vect_t h, register const vect_t v)
 
 
 void
-bn_htov_move(register vect_t v, register const vect_t h)
+bn_htov_move(vect_t v, const vect_t h)
 {
     register fastf_t inv;
 
@@ -333,14 +330,14 @@ bn_htov_move(register vect_t v, register const vect_t h)
 
 
 void
-bn_mat_trn(mat_t om, register const mat_t im)
+bn_mat_trn(mat_t om, const mat_t im)
 {
     MAT_TRANSPOSE(om, im);
 }
 
 
 void
-bn_mat_ae(register fastf_t *m, double azimuth, double elev)
+bn_mat_ae(fastf_t *m, double azimuth, double elev)
 {
     double sin_az, sin_el;
     double cos_az, cos_el;
@@ -847,7 +844,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 
 
 void
-bn_vec_ortho(register vect_t out, register const vect_t in)
+bn_vec_ortho(vect_t out, const vect_t in)
 {
     register int j, k;
     register fastf_t f;
@@ -1113,7 +1110,7 @@ bn_mat_ck(const char *title, const mat_t m)
 fastf_t
 bn_mat_det3(const mat_t m)
 {
-    register fastf_t sum;
+    register ffastf_t sum;
 
     sum = m[0] * (m[5] * m[10] - m[6] * m[9])
 	- m[1] * (m[4] * m[10] - m[6] * m[8])
