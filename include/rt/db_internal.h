@@ -64,7 +64,9 @@ struct rt_db_internal {
 
 /**
  * Get an object from the database, and convert it into its internal
- * representation.
+ * (i.e., unserialized in-memory) representation.  Applies the
+ * provided matrix transform only to the in-memory internal being
+ * returned.
  *
  * Returns -
  * <0 On error
