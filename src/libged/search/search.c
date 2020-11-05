@@ -483,10 +483,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	bu_sort((void *)BU_PTBL_BASEADDR(uniq_db_objs), BU_PTBL_LEN(uniq_db_objs), sizeof(struct directory *), dp_name_compare, NULL);
 
 	len = BU_PTBL_LEN(uniq_db_objs);
-	while (len > 0) {
-	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, len-1);
+	while (len-- > 0) {
+	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, len);
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
-	    len--;
 	}
 
 	bu_ptbl_free(uniq_db_objs);
@@ -535,10 +534,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		    if (sr_len > 0) {
 			bu_sort((void *)BU_PTBL_BASEADDR(search_results), sr_len, sizeof(struct directory *), dp_name_compare, NULL);
 
-			while (j > 0) {
-			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j-1);
+			while (j-- > 0) {
+			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
-			    j--;
 			}
 		    }
 
@@ -565,12 +563,11 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 				if (sr_len > 0) {
 				    bu_sort((void *)BU_PTBL_BASEADDR(search_results), sr_len, sizeof(struct directory *), fp_name_compare, (void *)sdata);
 
-				    while (j > 0) {
-					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j-1);
+				    while (j-- > 0) {
+					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
 					bu_vls_trunc(&fullpath_string, 0);
 					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->ged_wdbp->dbip, print_verbose_info);
 					bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&fullpath_string));
-					j--;
 				    }
 				}
 				break;
@@ -582,10 +579,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 				if (sr_len > 0) {
 				    bu_sort((void *)BU_PTBL_BASEADDR(search_results), sr_len, sizeof(struct directory *), dp_name_compare, NULL);
 
-				    while (j > 0) {
-					struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j-1);
+				    while (j-- > 0) {
+					struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
 					bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
-					j--;
 				    }
 				}
 				break;
