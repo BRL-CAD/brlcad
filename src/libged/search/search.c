@@ -244,6 +244,26 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
 }
 
 
+HIDDEN void
+search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
+{
+    size_t len;
+
+    if (!objs || !out)
+	return;
+
+    len = BU_PTBL_LEN(objs);
+    if (len > 0) {
+	bu_sort((void *)BU_PTBL_BASEADDR(objs), len, sizeof(struct directory *), dp_name_compare, NULL);
+
+	while (len-- > 0) {
+	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(objs, len);
+	    bu_vls_printf(out, "%s\n", uniq_dp->d_namep);
+	}
+    }
+}
+
+
 int
 ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
@@ -455,7 +475,6 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
      * return one unique list of objects.  If one or more paths are non-local,
      * each path is treated as its own search */
     if (all_local) {
-	size_t len;
 	struct bu_ptbl *uniq_db_objs;
 
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
@@ -479,14 +498,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	    }
 	}
 
-	/* For this return, we want a list of all unique leaf objects */
-	bu_sort((void *)BU_PTBL_BASEADDR(uniq_db_objs), BU_PTBL_LEN(uniq_db_objs), sizeof(struct directory *), dp_name_compare, NULL);
-
-	len = BU_PTBL_LEN(uniq_db_objs);
-	while (len-- > 0) {
-	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, len);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
-	}
+	search_print_objs_to_vls(uniq_db_objs, gedp->ged_result_str);
 
 	bu_ptbl_free(uniq_db_objs);
 	bu_free(uniq_db_objs, "free unique object container");
@@ -530,21 +542,14 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			}
 		    }
 
-		    sr_len = j = BU_PTBL_LEN(search_results);
-		    if (sr_len > 0) {
-			bu_sort((void *)BU_PTBL_BASEADDR(search_results), sr_len, sizeof(struct directory *), dp_name_compare, NULL);
+		    search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
-			while (j-- > 0) {
-			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
-			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
-			}
-		    }
-
-		    /* Make sure to clear the flag in case of subsequent searches of different types */
-
-		    flags = flags & ~(DB_SEARCH_FLAT);
 		    db_search_free(search_results);
 		    bu_free(search_results, "free search container");
+
+		    /* Make sure to clear the flag in case of subsequent searches of different types */
+		    flags = flags & ~(DB_SEARCH_FLAT);
+
 		} else {
 		    struct directory *curr_path = search->paths[path_cnt];
 
@@ -574,21 +579,15 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			    case 1:
 				flags |= DB_SEARCH_RETURN_UNIQ_DP;
 				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip, ctx);
-				sr_len = j = BU_PTBL_LEN(search_results);
 
-				if (sr_len > 0) {
-				    bu_sort((void *)BU_PTBL_BASEADDR(search_results), sr_len, sizeof(struct directory *), dp_name_compare, NULL);
+				search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
-				    while (j-- > 0) {
-					struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
-					bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
-				    }
-				}
 				break;
 			    default:
 				bu_log("Warning - ignoring unknown search type %d\n", search->search_type);
 				break;
 			}
+
 			db_search_free(search_results);
 			bu_free(search_results, "free search container");
 			bu_vls_free(&fullpath_string);
