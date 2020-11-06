@@ -7,8 +7,8 @@
  * Date:        10/31/96                                                     *
  *****************************************************************************/
 
-#include "complexSupport.h"
-#include <sc_memmgr.h>
+#include "./complexSupport.h"
+
 
 // Local function prototypes:
 static char * joinText( JoinType, char * );

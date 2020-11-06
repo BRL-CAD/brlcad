@@ -4,7 +4,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log: lexact.c,v $
+ * $Log$
  * Revision 1.10  1997/09/24 20:05:38  dar
  * scanner went into infinite loop with unmatched single quote at eol
  *
@@ -51,7 +51,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
+
 #include <stdlib.h>
 #include <ctype.h>
 #include "express/lexact.h"
@@ -328,7 +328,7 @@ SCANprocess_logical_literal( char * string ) {
             break;
             /* default will actually be triggered by 'UNKNOWN' keyword */
     }
-    sc_free( string );
+    free( string );
     return TOK_LOGICAL_LITERAL;
 }
 
@@ -338,11 +338,12 @@ SCANprocess_identifier_or_keyword( const char * yytext ) {
     struct keyword_entry * k;
 
     int len;
-    char * src, *dest;
+    const char * src;
+    char *dest;
 
     /* make uppercase copy */
     len = strlen( yytext );
-    dest = test_string = ( char * )sc_malloc( len + 1 );
+    dest = test_string = ( char * )malloc( len + 1 );
     for( src = yytext; *src; src++, dest++ ) {
         *dest = ( islower( *src ) ? toupper( *src ) : *src );
     }
@@ -358,7 +359,7 @@ SCANprocess_identifier_or_keyword( const char * yytext ) {
             case TOK_LOGICAL_LITERAL:
                 return SCANprocess_logical_literal( test_string );
             default:
-                sc_free( test_string );
+                free( test_string );
                 return k->token;
         }
     }
@@ -555,8 +556,8 @@ SCANupperize( char * s ) {
 }
 
 char *
-SCANstrdup( char * s ) {
-    char * s2 = ( char * )sc_malloc( strlen( s ) + 1 );
+SCANstrdup( const char * s ) {
+    char * s2 = ( char * )malloc( strlen( s ) + 1 );
     if( !s2 ) {
         return 0;
     }

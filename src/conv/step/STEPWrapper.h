@@ -41,11 +41,11 @@
 #include <vector>
 
 /* interface headers */
-#include <sdai.h>
+#include "stepcode/core/sdai.h"
 
-#include <STEPattribute.h>
-#include <STEPcomplex.h>
-#include <STEPfile.h>
+#include "stepcode/core/STEPattribute.h"
+#include "stepcode/core/STEPcomplex.h"
+#include "stepcode/editor/STEPfile.h"
 
 #include <BRLCADWrapper.h>
 

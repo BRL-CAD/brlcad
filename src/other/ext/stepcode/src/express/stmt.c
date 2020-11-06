@@ -18,7 +18,7 @@
  * This code was developed with the support of the United States Government,
  * and is not subject to copyright.
  *
- * $Log: stmt.c,v $
+ * $Log$
  * Revision 1.3  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -40,7 +40,7 @@
  *
  */
 
-#include <sc_memmgr.h>
+
 #include "express/stmt.h"
 
 struct freelist_head STMT_fl;

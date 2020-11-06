@@ -15,7 +15,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log: scope.c,v $
+ * $Log$
  * Revision 1.9  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -38,7 +38,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
+
 #define SCOPE_C
 #include "express/scope.h"
 #include "express/resolve.h"

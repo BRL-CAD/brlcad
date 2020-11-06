@@ -11,8 +11,8 @@
  * Date:        01/03/97                                                     *
  *****************************************************************************/
 
-#include "complexSupport.h"
-#include <sc_memmgr.h>
+#include "./complexSupport.h"
+
 
 // Local function prototypes:
 static void initEnts( Express );

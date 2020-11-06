@@ -5,7 +5,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log: expscan.l,v $
+ * $Log$
  * Revision 1.12  1997/05/29 20:17:34  sauderd
  * Made some changes to Symbol (to be Symbol_) and false and true to be False
  * and True. These changes affect the generated expscan.c file so that it will
@@ -98,9 +98,11 @@
  *
  * Revision 4.1  90/09/13  16:29:00  clark
  * BPR 2.1 alpha
- * 
+ *
  */
 
+#define _XOPEN_SOURCE /* for isascii */
+#include <ctype.h> /* for isascii */
 #include "express/basic.h"
 #include "express/error.h"
 #include "express/lexact.h"

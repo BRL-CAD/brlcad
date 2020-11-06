@@ -4,7 +4,7 @@
  * This work was supported by the United States Government, and is
  * not subject to copyright.
  *
- * $Log: dict.c,v $
+ * $Log$
  * Revision 1.4  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -33,7 +33,7 @@
  * Initial revision
  */
 
-#include <sc_memmgr.h>
+
 #include "express/dict.h"
 #include "express/object.h"
 #include "express/expbasic.h"

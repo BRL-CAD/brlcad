@@ -22,9 +22,9 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 #include <ctype.h>
 
 
-#include "express.h"
-#include "exppp.h"
-#include "dict.h"
+#include "express/express.h"
+#include "exppp/exppp.h"
+#include "express/dict.h"
 
 #define MAX_LEN              240
 #define DEBUG                if (0) printf

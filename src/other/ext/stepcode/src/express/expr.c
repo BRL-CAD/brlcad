@@ -20,7 +20,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log: expr.c,v $
+ * $Log$
  * Revision 1.6  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -70,7 +70,7 @@
  *
  */
 
-#include <sc_memmgr.h>
+
 #include "express/expr.h"
 #include "express/resolve.h"
 

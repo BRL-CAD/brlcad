@@ -10,8 +10,8 @@
  * Date:        01/09/97                                                     *
  *****************************************************************************/
 
-#include "complexSupport.h"
-#include <sc_memmgr.h>
+#include "./complexSupport.h"
+
 
 // Local function prototypes:
 static void writeheader( ostream &, int );
@@ -117,7 +117,7 @@ static void writeheader( ostream & os, int noLists )
            << " * file, however, there are no complex entities, so this\n"
            << " * function is a stub.\n"
            << " */" << endl << endl;
-        os << "#include \"complexSupport.h\"\n#include \"sc_memmgr.h\"\n\n";
+        os << "#include \"stepcode/core/complexSupport.h\"\n\n\n";
         os << "ComplexCollect *gencomplex()" << endl;
         os << "{" << endl;
         return;
@@ -129,7 +129,7 @@ static void writeheader( ostream & os, int noLists )
        << " * support structures.  The structures will be used in the SCL to\n"
        << " * validate user requests to instantiate complex entities.\n"
        << " */" << endl << endl;
-    os << "#include \"complexSupport.h\"\n#include \"sc_memmgr.h\"\n\n";
+    os << "#include \"stepcode/core/complexSupport.h\"\n\n\n";
     os << "ComplexCollect *gencomplex()" << endl;
     os << "    /*" << endl
        << "     * This function contains instantiation statments for all the\n"

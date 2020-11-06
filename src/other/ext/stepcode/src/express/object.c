@@ -4,7 +4,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log: object.c,v $
+ * $Log$
  * Revision 1.7  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -21,7 +21,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
+
 #include <stdlib.h>
 #include "express/object.h"
 
@@ -37,7 +37,7 @@ Symbol * UNK_get_symbol( Generic x ) {
 void OBJinitialize() {
     int i;
 
-    OBJ = ( struct Object * )sc_malloc( MAX_OBJECT_TYPES * sizeof( struct Object ) );
+    OBJ = ( struct Object * )malloc( MAX_OBJECT_TYPES * sizeof( struct Object ) );
     for( i = 0; i < MAX_OBJECT_TYPES; i++ ) {
         OBJ[i].get_symbol = UNK_get_symbol;
         OBJ[i].type = "of unknown_type";
@@ -47,7 +47,7 @@ void OBJinitialize() {
 
 /** Clean up the Object module */
 void OBJcleanup() {
-    sc_free( OBJ );
+    free( OBJ );
 }
 
 void OBJcreate( char type, struct Symbol_ * ( *get_symbol )( Generic ), char * printable_type, int bits ) {

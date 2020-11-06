@@ -21,7 +21,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log: entity.c,v $
+ * $Log$
  * Revision 1.11  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -111,7 +111,7 @@
  *
  */
 
-#include <sc_memmgr.h>
+
 #include "express/entity.h"
 #include "express/express.h"
 #include "express/object.h"

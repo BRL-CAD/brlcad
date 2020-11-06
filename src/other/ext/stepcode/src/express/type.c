@@ -24,7 +24,7 @@ This module implements the type abstraction.  It is
  * This code was developed with the support of the United States Government,
  * and is not subject to copyright.
  *
- * $Log: type.c,v $
+ * $Log$
  * Revision 1.12  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -122,7 +122,7 @@ This module implements the type abstraction.  It is
  *
  */
 
-#include <sc_memmgr.h>
+
 #include "express/type.h"
 
 /* Very commonly-used read-only types */

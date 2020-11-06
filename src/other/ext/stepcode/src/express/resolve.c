@@ -4,7 +4,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log: resolve.c,v $
+ * $Log$
  * Revision 1.14  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -55,7 +55,7 @@
  *
  */
 
-#include <sc_memmgr.h>
+
 #include <stdlib.h>
 #include "express/resolve.h"
 #include "stack.h"

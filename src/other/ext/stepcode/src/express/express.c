@@ -68,9 +68,9 @@
  *
  */
 
-#include "sc_memmgr.h"
+
 #include "express/basic.h"
-#include "sc_version_string.h"
+#include "config.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <setjmp.h>
@@ -257,7 +257,7 @@ char * EXPRESSversion( void ) {
 void EXPRESSusage( int _exit ) {
     fprintf( stderr, "usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
     fprintf( stderr, "where\t-v produces the following version description:\n" );
-    fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode\n", EXPRESSprogram_name, sc_version() );
+    fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode\n", EXPRESSprogram_name, STEPCODE_VERSION );
     fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
     fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
     fprintf( stderr, "\t-w warning enable\n" );
@@ -307,18 +307,18 @@ Symbol * EXPRESS_get_symbol( Generic e ) {
 
 Express EXPRESScreate() {
     Express model = SCOPEcreate( OBJ_EXPRESS );
-    model->u.express = ( struct Express_ * )sc_calloc( 1, sizeof( struct Express_ ) );
+    model->u.express = ( struct Express_ * )calloc( 1, sizeof( struct Express_ ) );
     return model;
 }
 
 void EXPRESSdestroy( Express model ) {
     if( model->u.express->basename ) {
-        sc_free( model->u.express->basename );
+        free( model->u.express->basename );
     }
     if( model->u.express->filename ) {
-        sc_free( model->u.express->filename );
+        free( model->u.express->filename );
     }
-    sc_free( model->u.express );
+    free( model->u.express );
     SCOPEdestroy( model );
 }
 
@@ -336,7 +336,7 @@ static void EXPRESS_PATHinit() {
     p = getenv( "EXPRESS_PATH" );
     if( !p ) {
         /* if no EXPRESS_PATH, search current directory anyway */
-        dir = ( Dir * )sc_malloc( sizeof( Dir ) );
+        dir = ( Dir * )malloc( sizeof( Dir ) );
         dir->leaf = dir->full;
         LISTadd( EXPRESS_path, ( Generic )dir );
     } else {
@@ -369,7 +369,7 @@ static void EXPRESS_PATHinit() {
             }
             p++;    /* leave p after terminating null */
 
-            dir = ( Dir * )sc_malloc( sizeof( Dir ) );
+            dir = ( Dir * )malloc( sizeof( Dir ) );
 
             /* if it's just ".", make it as if it was */
             /* just "" to make error messages cleaner */
@@ -401,7 +401,7 @@ static void EXPRESS_PATHinit() {
 
 static void EXPRESS_PATHfree( void ) {
     LISTdo( EXPRESS_path, dir, Dir * )
-    sc_free( dir );
+    free( dir );
     LISTod
     LISTfree( EXPRESS_path );
 }
@@ -598,7 +598,7 @@ void EXPRESSparse( Express model, FILE * fp, char * filename ) {
             length -= 4;
         }
 
-        model->u.express->basename = ( char * )sc_malloc( length + 1 );
+        model->u.express->basename = ( char * )malloc( length + 1 );
         memcpy( model->u.express->basename, filename, length );
         model->u.express->basename[length] = '\0';
 

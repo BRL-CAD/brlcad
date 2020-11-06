@@ -12,7 +12,7 @@
  * This code was developed with the support of the United States Government,
  * and is not subject to copyright.
  *
- * $Log: symbol.c,v $
+ * $Log$
  * Revision 1.6  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -32,7 +32,7 @@
  * Initial revision
  */
 
-#include <sc_memmgr.h>
+
 #include "express/symbol.h"
 
 struct freelist_head SYMBOL_fl;

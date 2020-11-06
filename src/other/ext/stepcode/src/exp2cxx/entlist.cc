@@ -13,8 +13,8 @@
  * Date:        9/18/96                                                      *
  *****************************************************************************/
 
-#include "complexSupport.h"
-#include <sc_memmgr.h>
+#include "./complexSupport.h"
+
 
 int EntList::siblings()
 /*

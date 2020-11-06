@@ -4,7 +4,7 @@
  * This work was supported by the United States Government, and is
  * not subject to copyright.
  *
- * $Log: linklist.c,v $
+ * $Log$
  * Revision 1.3  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -21,7 +21,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
+
 #include "express/linklist.h"
 
 Error ERROR_empty_list = ERROR_none;

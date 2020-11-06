@@ -10,8 +10,8 @@
  * Date:        01/07/97                                                     *
  *****************************************************************************/
 
-#include "complexSupport.h"
-#include <sc_memmgr.h>
+#include "./complexSupport.h"
+
 
 ComplexList::~ComplexList()
 /*

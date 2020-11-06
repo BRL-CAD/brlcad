@@ -29,7 +29,7 @@
 
 #include "STEPEntity.h"
 
-#include "sdai.h"
+#include "core/sdai.h"
 
 class ProductDefinition;
 class ProductDefinitionRelationship;

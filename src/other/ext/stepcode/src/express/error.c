@@ -9,7 +9,7 @@
  * Development of this code was funded by the United States Government,
  * and is not subject to copyright.
  *
- * $Log: error.c,v $
+ * $Log$
  * Revision 1.13  1997/10/23 21:41:44  sauderd
  * I am backing out to version 1.10 before the changes related to va_list and
  * __STDC__ etc. I don't have time to finish fixing all this.
@@ -51,7 +51,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
+
 #include <stdlib.h>
 #include <setjmp.h>
 
@@ -124,7 +124,7 @@ void ERRORinitialize( void ) {
     ERROR_syntax_expecting =
         ERRORcreate( "%s, expecting %s in %s %s", SEVERITY_EXIT );
 
-    ERROR_string_base = ( char * )sc_malloc( ERROR_MAX_SPACE );
+    ERROR_string_base = ( char * )malloc( ERROR_MAX_SPACE );
     ERROR_start_message_buffer();
 
 
@@ -147,7 +147,7 @@ void ERRORcleanup( void ) {
     ERRORdestroy( ERROR_subordinate_failed );
     ERRORdestroy( ERROR_syntax_expecting );
 
-    sc_free( ERROR_string_base );
+    free( ERROR_string_base );
 }
 
 /** Need the LIST routines to complete ERROR initialization */
@@ -439,7 +439,7 @@ void ERRORnospace() {
 Error ERRORcreate( char * message, Severity severity ) {
     Error n;
 
-    n = ( struct Error_ * )sc_malloc( sizeof( struct Error_ ) );
+    n = ( struct Error_ * )malloc( sizeof( struct Error_ ) );
     n->message = message;
     n->severity = severity;
     n->enabled = true;
@@ -447,7 +447,7 @@ Error ERRORcreate( char * message, Severity severity ) {
 }
 
 void ERRORdestroy( Error error ) {
-    sc_free( error );
+    free( error );
 }
 
 /** \fn ERRORbuffer_messages

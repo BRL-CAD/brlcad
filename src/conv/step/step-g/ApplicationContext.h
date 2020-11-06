@@ -29,7 +29,7 @@
 
 #include "STEPEntity.h"
 
-#include "sdai.h"
+#include "core/sdai.h"
 
 // forward declaration of class
 class ON_Brep;

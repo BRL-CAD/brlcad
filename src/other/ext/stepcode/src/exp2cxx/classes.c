@@ -25,14 +25,11 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 /* this is used to add new dictionary calls */
 /* #define NEWDICT */
 
-#include <sc_memmgr.h>
+
 #include <stdlib.h>
 #include <assert.h>
 #include "classes.h"
-#include <ordered_attrs.h>
-
-#include <sc_trace_fprintf.h>
-
+#include "express/ordered_attrs.h"
 
 int isAggregateType( const Type t );
 int isAggregate( Variable a );
@@ -125,7 +122,7 @@ void format_for_std_stringout( FILE * f, const char * orig_buf ) {
         optr++;
     }
     fprintf( f,  s_end );
-    sc_free( orig_buf );
+    free( orig_buf );
 }
 
 void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file ) {
@@ -444,7 +441,7 @@ char * generate_attribute_name( Variable a, char * out ) {
         }
     }
     *q = '\0';
-    sc_free( temp );
+    free( temp );
     return out;
 }
 
@@ -502,7 +499,7 @@ char * generate_dict_attr_name( Variable a, char * out ) {
     }
     *q = '\0';
 
-    sc_free( temp );
+    free( temp );
     return out;
 }
 
@@ -595,7 +592,7 @@ char * TYPEget_express_type( const Type t ) {
 
         /*  this will declare extra memory when aggregate is > 1D  */
 
-        permval = ( char * )sc_malloc( strlen( retval ) * sizeof( char ) + 1 );
+        permval = ( char * )malloc( strlen( retval ) * sizeof( char ) + 1 );
         strcpy( permval, retval );
         return permval;
 
@@ -755,7 +752,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
 
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
             fprintf( file, "        if(! (_%s == S_ENTITY_NULL) )\n        {\n", attrnm );
@@ -779,7 +776,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         fprintf( file, "{\n" );
         if( print_logging ) {
             fprintf( file, "\n" );
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
 
@@ -810,7 +807,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
 
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
             fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
@@ -833,7 +830,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
@@ -849,7 +846,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     if( class == enumeration_ )  {
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -870,7 +867,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
@@ -898,7 +895,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     if( ( class == string_ ) || ( class == binary_ ) )  {
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -917,7 +914,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!x)\n        {\n" );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -938,7 +935,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     if( class == integer_ ) {
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!(_%s == S_INT_NULL) )\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -958,7 +955,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!(x == S_INT_NULL) )\n        {\n" );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -982,7 +979,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     if( ( class == number_ ) || ( class == real_ ) ) {
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!(_%s == S_REAL_NULL) )\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -1000,7 +997,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SC_LOGGING\n" );
+            fprintf( file, "#ifdef STEPCODE_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!(_%s == S_REAL_NULL) )\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -2200,15 +2197,15 @@ void ENTITYincode_print( Entity entity, FILES * files, Schema schema ) {
 
     if( VARis_derived( v ) && v->initializer ) {
         tmp = EXPRto_string( v->initializer );
-        tmp2 = ( char * )sc_malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
+        tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
         fprintf( files->init, "        %s::%s%d%s%s->initializer_(\"%s\");\n",
                  schema_name, ATTR_PREFIX, attr_count,
                  ( VARis_derived( v ) ? "D" :
                    ( VARis_type_shifter( v ) ? "R" :
                      ( VARget_inverse( v ) ? "I" : "" ) ) ),
                  attrnm, format_for_stringout( tmp, tmp2 ) );
-        sc_free( tmp );
-        sc_free( tmp2 );
+        free( tmp );
+        free( tmp2 );
     }
     if( VARget_inverse( v ) ) {
         fprintf( files->init, "        %s::%s%d%s%s->inverted_attr_id_(\"%s\");\n",
@@ -2404,11 +2401,11 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
 
         if( whereRule_formatted_size == 0 ) {
             whereRule_formatted_size = 3 * BUFSIZ;
-            whereRule_formatted = ( char * )sc_malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
         } else if( ( strlen( whereRule ) + 300 ) > whereRule_formatted_size ) {
-            sc_free( whereRule_formatted );
+            free( whereRule_formatted );
             whereRule_formatted_size = strlen( whereRule ) + BUFSIZ;
-            whereRule_formatted = ( char * )sc_malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
         }
         whereRule_formatted[0] = '\0';
         if( w->label ) {
@@ -2482,7 +2479,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
         fprintf( files->create, "        %s::%s%s->_where_rules->Append(wr);\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
-        sc_free( whereRule );
+        free( whereRule );
         ptr2 = whereRule = 0;
         LISTod
     }
@@ -2496,7 +2493,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
         if( whereRule_formatted_size == 0 ) {
-            uniqRule_formatted = ( char * )sc_malloc( sizeof( char ) * 2 * BUFSIZ );
+            uniqRule_formatted = ( char * )malloc( sizeof( char ) * 2 * BUFSIZ );
             whereRule_formatted = uniqRule_formatted;
         } else {
             uniqRule_formatted = whereRule_formatted;
@@ -2524,7 +2521,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
             }
             uniqRule = EXPRto_string( v->name );
             fprintf( files->create, "%s", uniqRule );
-            sc_free( uniqRule );
+            free( uniqRule );
         }
         LISTod
         fprintf( files->create, ";\\n\");\n" );
@@ -2534,7 +2531,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     }
 
     if( whereRule_formatted_size > 0 ) {
-        sc_free( whereRule_formatted );
+        free( whereRule_formatted );
     }
 
     n = ENTITYget_classname( entity );
@@ -3355,7 +3352,7 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
                  "        %s = new SelectTypeDescriptor (\n                  ~%s,        //unique elements,\n",
                  TYPEtd_name( type ),
                  temp );
-        sc_free( temp );
+        free( temp );
         TYPEprint_nm_ft_desc( schema, type, create, "," );
 
         fprintf( create,
@@ -3457,11 +3454,11 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
 
         if( whereRule_formatted_size == 0 ) {
             whereRule_formatted_size = 3 * BUFSIZ;
-            whereRule_formatted = ( char * )sc_malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
         } else if( ( strlen( whereRule ) + 300 ) > whereRule_formatted_size ) {
-            sc_free( whereRule_formatted );
+            free( whereRule_formatted );
             whereRule_formatted_size = strlen( whereRule ) + BUFSIZ;
-            whereRule_formatted = ( char * )sc_malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
         }
         whereRule_formatted[0] = '\0';
         if( w->label ) {
@@ -3519,10 +3516,10 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
         fprintf( create, "        %s->_where_rules->Append(wr);\n",
                  TYPEtd_name( type ) );
 
-        sc_free( whereRule );
+        free( whereRule );
         ptr2 = whereRule = 0;
         LISTod
-        sc_free( whereRule_formatted );
+        free( whereRule_formatted );
     }
 }
 

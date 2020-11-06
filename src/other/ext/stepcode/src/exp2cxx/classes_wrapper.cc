@@ -2,10 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "complexSupport.h"
-#include <sc_memmgr.h>
-
-#include <sc_trace_fprintf.h>
+#include "./complexSupport.h"
 
 /*******************************************************************
 ** FedEx parser output module for generating C++  class definitions
@@ -33,7 +30,7 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 void use_ref( Schema, Express, FILES * );
 
 void create_builtin_type_decl( FILES * files, char * name ) {
-    fprintf( files->incall, "extern SC_%s_EXPORT TypeDescriptor *%s%s_TYPE;\n",
+    fprintf( files->incall, "extern STEPCODE_%s_EXPORT TypeDescriptor *%s%s_TYPE;\n",
              "SCHEMA", TD_PREFIX, name );
 }
 
@@ -61,46 +58,45 @@ void print_file_header( Express express, FILES * files ) {
     files -> incall = FILEcreate( "schema.h" );
     fprintf( files->incall, "\n// in the exp2cxx source code, this file is generally referred to as files->incall or schemafile\n" );
 
-    fprintf( files->incall, "\n#ifndef SC_%s_EXPORT\n", "SCHEMA" );
-    fprintf( files->incall, "# if defined(SC_%s_DLL_EXPORTS) && defined(SC_%s_DLL_IMPORTS)\n", "SCHEMA", "SCHEMA" );
-    fprintf( files->incall, "#  error \"SC_%s_DLL_EXPORTS or SC_%s_DLL_IMPORTS can be defined, not both.\"\n", "SCHEMA", "SCHEMA" );
-    fprintf( files->incall, "# elif defined(SC_%s_DLL_EXPORTS)\n", "SCHEMA" );
+    fprintf( files->incall, "\n#ifndef STEPCODE_%s_EXPORT\n", "SCHEMA" );
+    fprintf( files->incall, "# if defined(STEPCODE_%s_DLL_EXPORTS) && defined(STEPCODE_%s_DLL_IMPORTS)\n", "SCHEMA", "SCHEMA" );
+    fprintf( files->incall, "#  error \"STEPCODE_%s_DLL_EXPORTS or STEPCODE_%s_DLL_IMPORTS can be defined, not both.\"\n", "SCHEMA", "SCHEMA" );
+    fprintf( files->incall, "# elif defined(STEPCODE_%s_DLL_EXPORTS)\n", "SCHEMA" );
 #ifdef _WIN32
-    fprintf( files->incall, "#  define SC_%s_EXPORT __declspec(dllexport)\n", "SCHEMA" );
+    fprintf( files->incall, "#  define STEPCODE_%s_EXPORT __declspec(dllexport)\n", "SCHEMA" );
 #else
-    fprintf( files->incall, "#  define SC_%s_EXPORT __attribute__ ((visibility (\"default\")))\n", "SCHEMA" );
+    fprintf( files->incall, "#  define STEPCODE_%s_EXPORT __attribute__ ((visibility (\"default\")))\n", "SCHEMA" );
 #endif
-    fprintf( files->incall, "# elif defined(SC_%s_DLL_IMPORTS)\n", "SCHEMA" );
+    fprintf( files->incall, "# elif defined(STEPCODE_%s_DLL_IMPORTS)\n", "SCHEMA" );
 #ifdef _WIN32
-    fprintf( files->incall, "#  define SC_%s_EXPORT __declspec(dllimport)\n", "SCHEMA" );
+    fprintf( files->incall, "#  define STEPCODE_%s_EXPORT __declspec(dllimport)\n", "SCHEMA" );
 #else
-    fprintf( files->incall, "#  define SC_%s_EXPORT __attribute__ ((visibility (\"default\")))\n", "SCHEMA" );
+    fprintf( files->incall, "#  define STEPCODE_%s_EXPORT __attribute__ ((visibility (\"default\")))\n", "SCHEMA" );
 #endif
     fprintf( files->incall, "# else\n" );
-    fprintf( files->incall, "#  define SC_%s_EXPORT\n", "SCHEMA" );
+    fprintf( files->incall, "#  define STEPCODE_%s_EXPORT\n", "SCHEMA" );
     fprintf( files->incall, "# endif\n" );
     fprintf( files->incall, "#endif\n\n" );
 
-    fprintf( files->incall, "#ifdef SC_LOGGING\n" );
+    fprintf( files->incall, "#ifdef STEPCODE_LOGGING\n" );
     fprintf( files->incall, "#include <sys/time.h>\n" );
     fprintf( files->incall, "#endif\n" );
 
-    fprintf( files->incall, "#include <sdai.h>\n\n" );
-    fprintf( files->incall, "\n#include <Registry.h>\n" );
-    fprintf( files->incall, "\n#include <STEPaggregate.h>\n" );
-    fprintf( files->incall, "\n#include <STEPundefined.h>\n" );
-    fprintf( files->incall, "\n#include <ExpDict.h>\n" );
-    fprintf( files->incall, "\n#include <STEPattribute.h>\n" );
+    fprintf( files->incall, "#include <stepcode/core/sdai.h>\n\n" );
+    fprintf( files->incall, "\n#include <stepcode/core/Registry.h>\n" );
+    fprintf( files->incall, "\n#include <stepcode/core/STEPaggregate.h>\n" );
+    fprintf( files->incall, "\n#include <stepcode/core/STEPundefined.h>\n" );
+    fprintf( files->incall, "\n#include <stepcode/core/ExpDict.h>\n" );
+    fprintf( files->incall, "\n#include <stepcode/core/STEPattribute.h>\n" );
 
     fprintf( files->incall, "\n#include <Sdaiclasses.h>\n" );
 
-    fprintf( files->incall, "extern SC_%s_EXPORT void SchemaInit (Registry &);\n", "SCHEMA" );
-    fprintf( files->incall, "extern SC_%s_EXPORT void InitSchemasAndEnts (Registry &);\n", "SCHEMA" );
+    fprintf( files->incall, "extern STEPCODE_%s_EXPORT void SchemaInit (Registry &);\n", "SCHEMA" );
+    fprintf( files->incall, "extern STEPCODE_%s_EXPORT void InitSchemasAndEnts (Registry &);\n", "SCHEMA" );
 
     files -> initall = FILEcreate( "schema.cc" );
     fprintf( files->initall, "\n// in the exp2cxx source code, this file is generally referred to as files->initall or schemainit\n" );
     fprintf( files->initall, "#include \"schema.h\"\n" );
-    fprintf( files->initall, "#include \"sc_memmgr.h\"\n" );
     fprintf( files->initall, "class Registry;\n" );
 
     fprintf( files->initall, "\nvoid SchemaInit (Registry & reg) {\n" );
@@ -114,7 +110,6 @@ void print_file_header( Express express, FILES * files ) {
     files -> create = FILEcreate( "SdaiAll.cc" );
     fprintf( files->create, "\n// in the exp2cxx source code, this file is generally referred to as files->create or createall\n" );
     fprintf( files->create, "#include \"schema.h\"\n" );
-    fprintf( files->create, "#include \"sc_memmgr.h\"\n" );
     fprintf( files->create, "\nvoid InitSchemasAndEnts (Registry & reg) {\n" );
 
     // This file declares all entity classes as incomplete types.  This will
@@ -401,8 +396,7 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
     fprintf( files->inc, "\n// in the exp2cxx source code, this file is generally referred to as files->inc or incfile\n" );
 
     fprintf( incfile, "#include \"schema.h\"\n" );
-    fprintf( incfile, "#include \"sc_memmgr.h\"\n" );
-
+    
     np = fnm + strlen( fnm ) - 1; /*  point to end of constant part of string  */
 
     /*  2.  class source file            */
@@ -420,10 +414,9 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
 #else
     fprintf( libfile, "#include \"schema.h\"\n" );
 #endif
-    fprintf( libfile, "#include \"sc_memmgr.h\"\n" );
 
     fprintf( libfile,
-             "\n#ifdef  SC_LOGGING \n"
+             "\n#ifdef  STEPCODE_LOGGING \n"
              "#include <fstream.h>\n"
              "    extern ofstream *logStream;\n"
              "#define SCLLOGFILE \"scl.log\"\n"
@@ -466,8 +459,8 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
                  "#include \"schema.h\"\n"
                  "#endif\n" );
 #endif
-        fprintf( initfile, "#include <Registry.h>\n#include <string>\n" );
-        fprintf( initfile, "#include <sc_memmgr.h>\n" );
+        fprintf( initfile, "#include <stepcode/core/Registry.h>\n#include <string>\n" );
+        fprintf( initfile, "\n" );
         fprintf( files->init, "\n#include \"%sHelpers.h\"\n", schnm );
 
         fprintf( initfile, "\nvoid %sInit (Registry& reg) {\n    std::string str;\n", schnm );
@@ -637,7 +630,7 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     }
     fprintf( files->inc, "\n// in the exp2cxx source code, this file is generally referred to as files->inc or incfile\n" );
 
-    fprintf( incfile, "#include <sdai.h> \n" );
+    fprintf( incfile, "#include <stepcode/core/sdai.h> \n" );
 
     np = fnm + strlen( fnm ) - 1; /*  point to end of constant part of string  */
 

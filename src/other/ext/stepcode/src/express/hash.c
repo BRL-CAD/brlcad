@@ -28,7 +28,7 @@
  *
  * snc: fixed concatenation for ANSII C, 10-Mar-1989
  *
- * $Log: hash.c,v $
+ * $Log$
  * Revision 1.8  1997/10/22 16:36:49  sauderd
  * Changed the use and definitions of the compiler macros MUL and DIV. They
  * seem to be defined and used only within hash.h and hash.c
@@ -105,7 +105,7 @@
  *
  */
 
-#include <sc_memmgr.h>
+
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -301,7 +301,7 @@ HASHdestroy( Hash_Table table ) {
                         p = q;
                     }
                 }
-                sc_free( table->Directory[i] );
+                free( table->Directory[i] );
             }
         }
         HASH_Table_destroy( table );
