@@ -1748,11 +1748,13 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *results)
 {
-    if (!results)
+    if (!results || !db_node)
 	return 1;
 
     if (db_node->flags & DB_SEARCH_FLAT || db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
-	bu_ptbl_ins_unique(results, (long *)DB_FULL_PATH_CUR_DIR(db_node->path));
+	long *dbfp = (long *)DB_FULL_PATH_CUR_DIR(db_node->path);
+	if (dbfp)
+	    bu_ptbl_ins_unique(results, dbfp);
     } else {
 	struct db_full_path *new_entry;
 	BU_ALLOC(new_entry, struct db_full_path);
