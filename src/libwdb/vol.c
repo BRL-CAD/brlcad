@@ -35,8 +35,9 @@
 
 
 int
-mk_vol(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi, const fastf_t *cellsize, const matp_t mat)
-    /* name of file containing bitmap */
+mk_vol(struct rt_wdb *fp, const char *name, char datasrc, const char *file, size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi, const fastf_t *cellsize, const matp_t mat)
+    /* type of data source */
+    /* name of file/object containing bitmap */
     /* X dimension of file (w cells) */
     /* Y dimension of file (n cells) */
     /* Z dimension of file (d cells) */
@@ -49,7 +50,8 @@ mk_vol(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
 
     BU_ALLOC(vol, struct rt_vol_internal);
     vol->magic = RT_VOL_INTERNAL_MAGIC;
-    bu_strlcpy(vol->file, file, RT_VOL_NAME_LEN);
+    vol->datasrc = datasrc;
+    bu_strlcpy(vol->name, file, RT_VOL_NAME_LEN);
     vol->xdim = xdim;
     vol->ydim = ydim;
     vol->zdim = zdim;
