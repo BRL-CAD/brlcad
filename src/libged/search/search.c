@@ -38,6 +38,7 @@
 #include "bu/getopt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
+#include "bu/defines.h"
 
 #include "../alphanum.h"
 #include "../ged_private.h"
@@ -47,8 +48,13 @@ dp_name_compare(const void *d1, const void *d2, void *arg)
 {
     struct directory *dp1 = *(struct directory **)d1;
     struct directory *dp2 = *(struct directory **)d2;
-    int ret = alphanum_impl((const char *)dp2->d_namep, (const char *)dp1->d_namep, arg);
-    return ret;
+    if (dp1 == dp2)
+	return 0;
+    else if (!dp1)
+	return 1;
+    else if (!dp2)
+	return -1;
+    return alphanum_impl((const char *)dp2->d_namep, (const char *)dp1->d_namep, arg);
 }
 
 struct fp_cmp_vls {
@@ -63,12 +69,23 @@ fp_name_compare(const void *d1, const void *d2, void *arg)
     struct db_full_path *fp1 = *(struct db_full_path **)d1;
     struct db_full_path *fp2 = *(struct db_full_path **)d2;
     struct fp_cmp_vls *data = (struct fp_cmp_vls *)arg;
+
+    BU_ASSERT(data != NULL);
+
+    if (fp1 == fp2)
+	return 0;
+    else if (!fp1)
+	return 1;
+    else if (!fp2)
+	return -1;
+
     bu_vls_trunc(data->left, 0);
     bu_vls_trunc(data->right, 0);
+
     db_fullpath_to_vls(data->left, fp1, data->dbip, data->print_verbose_info);
     db_fullpath_to_vls(data->right, fp2, data->dbip, data->print_verbose_info);
-    int ret = alphanum_impl(bu_vls_cstr(data->right), bu_vls_cstr(data->left), arg);
-    return ret;
+
+    return alphanum_impl(bu_vls_cstr(data->right), bu_vls_cstr(data->left), arg);
 }
 
 
