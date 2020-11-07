@@ -15,7 +15,10 @@ set(DAI_SRCS
 add_library(stepdai SHARED ${DAI_SRCS})
 set_target_properties(stepdai PROPERTIES VERSION ${STEPCODE_ABI_VERSION} SOVERSION ${STEPCODE_ABI_SOVERSION})
 target_link_libraries(stepdai steputils)
-target_compile_definitions(stepdai PRIVATE STEPCODE_DAI_DLL_EXPORTS)
+target_compile_definitions(stepdai PRIVATE
+  STEPCODE_DAI_DLL_EXPORTS
+  STEPCODE_UTILS_DLL_IMPORTS
+  )
 install(TARGETS stepdai
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}

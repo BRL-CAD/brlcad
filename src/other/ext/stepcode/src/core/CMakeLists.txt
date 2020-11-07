@@ -36,7 +36,11 @@ set(CORE_SRCS
 add_library(stepcore SHARED ${CORE_SRCS})
 set_target_properties(stepcore PROPERTIES VERSION ${STEPCODE_ABI_VERSION} SOVERSION ${STEPCODE_ABI_SOVERSION})
 target_link_libraries(stepcore steputils stepdai)
-target_compile_definitions(stepcore PRIVATE STEPCODE_CORE_DLL_EXPORTS)
+target_compile_definitions(stepcore PRIVATE
+  STEPCODE_CORE_DLL_EXPORTS
+  STEPCODE_UTILS_DLL_IMPORTS
+  STEPCODE_DAI_DLL_IMPORTS
+  )
 install(TARGETS stepcore
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
