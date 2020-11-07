@@ -91,7 +91,6 @@ endforeach()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(STEPCODE DEFAULT_MSG
   STEPCODE_INCLUDE_DIR
-  STEPCODE_BASE_LIBRARY
   STEPCODE_EXPRESS_LIBRARY
   STEPCODE_EXPPP_LIBRARY
   STEPCODE_CORE_LIBRARY
