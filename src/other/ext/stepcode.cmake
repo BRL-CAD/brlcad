@@ -54,7 +54,7 @@ if(BRLCAD_SC_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/STEPCODE_BLD-prefix")
 
   # Tell the parent build about files and libraries
-  set(STEPCODE_LIBS express exppp stepcore stepeditor stepdai steputils)
+  set(STEPCODE_LIBS express stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
     set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
     if (APPLE)
@@ -127,7 +127,6 @@ if(BRLCAD_SC_BUILD)
     utils/gennodearray.h
     utils/gennodelist.h
     utils/sc_hash.h
-    exppp/exppp.h
     express/alg.h
     express/basic.h
     express/caseitem.h
@@ -138,6 +137,7 @@ if(BRLCAD_SC_BUILD)
     express/entity.h
     express/error.h
     express/expbasic.h
+    express/exppp.h
     express/expr.h
     express/express.h
     express/hash.h
@@ -168,7 +168,6 @@ if(BRLCAD_SC_BUILD)
   set(STEPCODE_INCLUDE_DIRS ${STEPCODE_INCLUDE_DIR} CACHE STRING "Directories containing STEPCODE headers." FORCE)
 
   set(STEPCODE_EXPRESS_LIBRARY express CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_EXPPP_LIBRARY exppp CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_CORE_LIBRARY stepcore CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_EDITOR_LIBRARY stepeditor CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_DAI_LIBRARY stepdai CACHE STRING "Building bundled STEPCODE" FORCE)

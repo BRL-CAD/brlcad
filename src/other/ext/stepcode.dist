@@ -60,8 +60,6 @@ include/stepcode/editor/cmdmgr.h
 include/stepcode/editor/editordefines.h
 include/stepcode/editor/seeinfodefault.h
 include/stepcode/export.h
-include/stepcode/exppp/CMakeLists.txt
-include/stepcode/exppp/exppp.h
 include/stepcode/express/CMakeLists.txt
 include/stepcode/express/alg.h
 include/stepcode/express/basic.h
@@ -73,6 +71,7 @@ include/stepcode/express/dict.h
 include/stepcode/express/entity.h
 include/stepcode/express/error.h
 include/stepcode/express/expbasic.h
+include/stepcode/express/exppp.h
 include/stepcode/express/expr.h
 include/stepcode/express/express.h
 include/stepcode/express/hash.h
@@ -177,9 +176,6 @@ src/exp2cxx/sc_mkdir.c
 src/exp2cxx/selects.c
 src/exp2cxx/trynext.cc
 src/exp2cxx/write.cc
-src/exppp/CMakeLists.txt
-src/exppp/README
-src/exppp/exppp.c
 src/express/CMakeLists.txt
 src/express/Changes
 src/express/README
@@ -189,6 +185,7 @@ src/express/dict.c
 src/express/entity.c
 src/express/error.c
 src/express/expparse.y
+src/express/exppp.c
 src/express/expr.c
 src/express/express.c
 src/express/expscan.l

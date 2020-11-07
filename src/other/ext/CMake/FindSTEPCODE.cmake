@@ -48,7 +48,6 @@
 
 set(STEPCODE_LIBS
   express
-  exppp
   stepcore
   stepeditor
   stepdai
@@ -74,7 +73,6 @@ endforeach()
 # Allow STEPCODE_LIBRARY to be set manually, as the location of the netpbm library
 foreach(search ${_STEPCODE_SEARCHES})
   find_library(STEPCODE_EXPRESS_LIBRARY NAMES express NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
-  find_library(STEPCODE_EXPPP_LIBRARY NAMES exppp NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_CORE_LIBRARY NAMES stepcore NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_EDITOR_LIBRARY NAMES stepeditor NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_DAI_LIBRARY NAMES stepdai NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
@@ -92,7 +90,6 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(STEPCODE DEFAULT_MSG
   STEPCODE_INCLUDE_DIR
   STEPCODE_EXPRESS_LIBRARY
-  STEPCODE_EXPPP_LIBRARY
   STEPCODE_CORE_LIBRARY
   STEPCODE_EDITOR_LIBRARY
   STEPCODE_DAI_LIBRARY
@@ -106,7 +103,6 @@ if (STEPCODE_FOUND)
     )
   set(STEPCODE_LIBRARIES
     ${STEPCODE_EXPRESS_LIBRARY}
-    ${STEPCODE_EXPPP_LIBRARY}
     ${STEPCODE_CORE_LIBRARY}
     ${STEPCODE_EDITOR_LIBRARY}
     ${STEPCODE_DAI_LIBRARY}
