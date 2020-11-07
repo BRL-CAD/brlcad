@@ -76,6 +76,7 @@
 #include "config.h"
 
 #include "export.h"
+#include "express/error.h"
 #include "express/express.h"
 #include "express/resolve.h"
 

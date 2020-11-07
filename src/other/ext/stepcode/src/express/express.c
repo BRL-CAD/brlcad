@@ -69,6 +69,7 @@
  */
 
 
+#include "express/error.h"
 #include "express/basic.h"
 #include "config.h"
 #include <ctype.h>
