@@ -87,7 +87,7 @@ int STEPfile::SetFileType( FileTypeCode ft ) {
 ** from filename
 */
 std::string STEPfile::TruncFileName( const std::string filename ) const {
-#if defined(__WIN32__) && !defined(__mingw32__)
+#if defined(_WIN32) && !defined(__mingw32__)
     char slash = '\\';
 #else
     char slash = '/';

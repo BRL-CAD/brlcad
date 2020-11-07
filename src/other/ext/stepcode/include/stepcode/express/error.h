@@ -116,7 +116,7 @@ extern STEPCODE_EXPRESS_EXPORT void ( *ERRORusage_function )( void );
 /* function prototypes */
 /***********************/
 
-#if defined(__MSVC__) || defined(__BORLAND__)
+#if defined(_WIN32) || defined(__BORLAND__)
 extern STEPCODE_EXPRESS_EXPORT void ERROR_start_message_buffer PROTO( ( void ) );
 extern STEPCODE_EXPRESS_EXPORT void ERROR_flush_message_buffer PROTO( ( void ) );
 #endif
@@ -142,7 +142,7 @@ static_inline bool ERRORis_enabled( Error error ) {
 }
 
 static_inline void ERRORbuffer_messages( bool flag ) {
-#if !defined(__MSVC__) && !defined(__BORLAND__)
+#if !defined(_WIN32) && !defined(__BORLAND__)
     extern void ERROR_start_message_buffer( void ),
            ERROR_flush_message_buffer( void );
 #endif
@@ -155,7 +155,7 @@ static_inline void ERRORbuffer_messages( bool flag ) {
 }
 
 static_inline void ERRORflush_messages( void ) {
-#if !defined(__MSVC__) && !defined(__BORLAND__)
+#if !defined(_WIN32) && !defined(__BORLAND__)
     extern void ERROR_start_message_buffer( void ),
            ERROR_flush_message_buffer( void );
 #endif
@@ -183,7 +183,7 @@ struct Symbol_; /* mention Symbol to avoid warning on following line */
 extern STEPCODE_EXPRESS_EXPORT void ERRORreport_with_symbol PROTO( ( Error, struct Symbol_ *, ... ) );
 extern STEPCODE_EXPRESS_EXPORT void ERRORreport_with_line PROTO( ( Error, int, ... ) );
 
-#if !defined(__MSVC__) && !defined(__BORLAND__)
+#if !defined(_WIN32) && !defined(__BORLAND__)
 extern STEPCODE_EXPRESS_EXPORT void ERROR_start_message_buffer PROTO( ( void ) );
 extern STEPCODE_EXPRESS_EXPORT void ERROR_flush_message_buffer PROTO( ( void ) );
 #endif

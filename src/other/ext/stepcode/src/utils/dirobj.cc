@@ -57,7 +57,7 @@
 #include <string>
 #include <iostream>
 
-#if defined(__WIN32__)
+#if defined(_WIN32)
 #include <shlwapi.h>
 #endif
 
@@ -149,7 +149,7 @@ int DirObj::Index( const char * name ) {
 bool DirObj::Reset( const std::string & path ) {
     bool successful = IsADirectory( path.c_str() );
     if( successful ) {
-#ifdef __WIN32__
+#ifdef _WIN32
         WIN32_FIND_DATA FindFileData;
         HANDLE hFind;
 
@@ -186,7 +186,7 @@ bool DirObj::Reset( const std::string & path ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 bool DirObj::IsADirectory( const char * path ) {
-#if defined(__WIN32__)
+#if defined(_WIN32)
     if( PathIsDirectory( path ) ) {
         return true;
     }
@@ -221,7 +221,7 @@ bool DirObj::IsADirectory( const char * path ) {
 std::string DirObj::Normalize( const std::string & path ) {
     std::string buf;
     const char * slash;
-#if defined(__WIN32__)
+#if defined(_WIN32)
     char b[MAX_PATH];
     PathCanonicalize( b, path.c_str() );
     slash = "\\";
@@ -235,7 +235,7 @@ std::string DirObj::Normalize( const std::string & path ) {
     } else {
         buf.assign( b );
 
-#if !defined(__WIN32__)
+#if !defined(_WIN32)
 	free(b);
 #endif
     }
@@ -258,7 +258,7 @@ std::string DirObj::Normalize( const std::string & path ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 const char * DirObj::ValidDirectories( const char * path ) {
-#ifdef __WIN32__
+#ifdef _WIN32
     static char buf[MAX_PATH + 1];
 #else
     static char buf[MAXPATHLEN + 1];
@@ -312,7 +312,7 @@ void DirObj::InsertFile( const char * f, int index ) {
         CheckIndex( index );
         spot = &fileList[index];
     }
-#ifdef __MSVC__
+#ifdef _WIN32
     char * string = _strdup( f );
 #else
     char * string = strdup( f );
