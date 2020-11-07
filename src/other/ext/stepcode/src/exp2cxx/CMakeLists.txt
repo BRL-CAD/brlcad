@@ -26,7 +26,7 @@ set(exp2cxx_SOURCES
   )
 
 add_executable(exp2cxx ${exp2cxx_SOURCES})
-target_link_libraries(exp2cxx exppp express)
+target_link_libraries(exp2cxx express)
 install(TARGETS exp2cxx
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}

@@ -16,7 +16,7 @@
 
 #include "express/expbasic.h"
 #include "express/express.h"
-#include "exppp/exppp.h"
+#include "express/exppp.h"
 
 #define EXPR_out(e,p) EXPR__out(e,p,OP_UNKNOWN)
 #define EXPRop2_out(oe,string,paren,pad) \

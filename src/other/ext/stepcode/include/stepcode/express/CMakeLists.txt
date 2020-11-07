@@ -9,6 +9,7 @@ set(EXPRESS_HDRS
 	entity.h
 	error.h
 	expbasic.h
+	exppp.h
 	expr.h
 	express.h
 	hash.h

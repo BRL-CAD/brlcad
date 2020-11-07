@@ -35,19 +35,6 @@
 #  endif
 #endif
 
-/* Import/Export flags for exppp. */
-#ifndef STEPCODE_EXPPP_EXPORT
-#  if defined(STEPCODE_EXPPP_DLL_EXPORTS) && defined(STEPCODE_EXPPP_DLL_IMPORTS)
-#    error "Only STEPCODE_EXPPP_DLL_EXPORTS or STEPCODE_EXPPP_DLL_IMPORTS can be defined, not both."
-#  elif defined(STEPCODE_EXPPP_DLL_EXPORTS)
-#    define STEPCODE_EXPPP_EXPORT COMPILER_DLLEXPORT
-#  elif defined(STEPCODE_EXPPP_DLL_IMPORTS)
-#    define STEPCODE_EXPPP_EXPORT COMPILER_DLLIMPORT
-#  else
-#    define STEPCODE_EXPPP_EXPORT
-#  endif
-#endif
-
 /* Import/Export flags for utils. */
 #ifndef STEPCODE_UTILS_EXPORT
 #  if defined(STEPCODE_UTILS_DLL_EXPORTS) && defined(STEPCODE_UTILS_DLL_IMPORTS)

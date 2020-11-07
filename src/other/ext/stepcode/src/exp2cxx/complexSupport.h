@@ -10,7 +10,7 @@ extern "C"
 #include <string.h>
 #include "classes.h"
 #include "express/express.h"
-#include "exppp/exppp.h"
+#include "express/exppp.h"
 #include "express/dict.h"
 }
 

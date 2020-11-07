@@ -42,6 +42,7 @@ set(EXPRESS_SOURCES
   dict.c
   entity.c
   error.c
+  exppp.c
   expr.c
   express.c
   hash.c
