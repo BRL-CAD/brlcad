@@ -150,8 +150,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+extern "C" {
 char   *sc_optarg;        // global argument pointer
 int     sc_optind = 0;    // global argv index
+}
 
 extern "C" int
 sc_getopt(int argc, char *argv[], char *optstring) {
