@@ -27,6 +27,7 @@ set(exp2cxx_SOURCES
 
 add_executable(exp2cxx ${exp2cxx_SOURCES})
 target_link_libraries(exp2cxx express)
+target_compile_definitions(exp2cxx PRIVATE STEPCODE_EXPRESS_DLL_IMPORTS)
 install(TARGETS exp2cxx
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
