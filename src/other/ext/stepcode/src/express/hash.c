@@ -105,7 +105,7 @@
  *
  */
 
-
+#include <sc_memmgr.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -301,7 +301,7 @@ HASHdestroy( Hash_Table table ) {
                         p = q;
                     }
                 }
-                free( table->Directory[i] );
+                sc_free( table->Directory[i] );
             }
         }
         HASH_Table_destroy( table );

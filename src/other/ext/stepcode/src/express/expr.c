@@ -70,7 +70,7 @@
  *
  */
 
-
+#include <sc_memmgr.h>
 #include "express/expr.h"
 #include "express/resolve.h"
 

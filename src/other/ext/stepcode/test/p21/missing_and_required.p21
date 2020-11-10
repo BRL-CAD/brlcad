@@ -1,0 +1,13 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('SCL test file'),'2;1');
+FILE_NAME('missing_and_required.stp','2011-11-29T',('mp'),(''),'0','1','2');
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN'));
+ENDSEC;
+DATA;
+/* ERROR:  ENTITY #56 Cartesian_Point
+  name :   missing and required. For compatibility, replacing with ''.
+*/
+#56=CARTESIAN_POINT($,(366.025403784,-4.80740671596E-14,0.00000000000));
+ENDSEC;
+END-ISO-10303-21;

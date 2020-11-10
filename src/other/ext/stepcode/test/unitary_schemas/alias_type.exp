@@ -1,0 +1,11 @@
+SCHEMA alias_type;
+
+TYPE enum = ENUMERATION OF (
+	item1,
+	item2);
+END_TYPE;
+
+TYPE enum_alias = enum;
+END_TYPE;
+
+END_SCHEMA;

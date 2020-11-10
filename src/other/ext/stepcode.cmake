@@ -14,7 +14,7 @@ THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION
 
 if(BRLCAD_SC_BUILD)
 
-  set(SC_MAJOR_VERSION 3)
+  set(SC_MAJOR_VERSION 2)
   set(SC_MINOR_VERSION 0)
   set(SC_PATCH_VERSION 0)
   set(SC_VERSION ${SC_MAJOR_VERSION}.${SC_MINOR_VERSION}.${SC_PATCH_VERSION})
@@ -55,7 +55,7 @@ if(BRLCAD_SC_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/STEPCODE_BLD-prefix")
 
   # Tell the parent build about files and libraries
-  set(STEPCODE_LIBS express stepcore stepeditor stepdai steputils)
+  set(STEPCODE_LIBS base express stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
     set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
     if (APPLE)
@@ -70,114 +70,146 @@ if(BRLCAD_SC_BUILD)
       RPATH
       )
   endforeach(SCLIB ${STEPCODE_LIBS})
-  ExternalProject_Target(EXEC exp2cxx_exe STEPCODE_BLD ${STEPCODE_INSTDIR}
-    exp2cxx${CMAKE_EXECUTABLE_SUFFIX}
+  # libexppp is a special naming case, to avoid conflict with the exppp executable
+  set(SYMLINK_1 libexppp${CMAKE_SHARED_LIBRARY_SUFFIX})
+  if (APPLE)
+    set(SYMLINK_2 libexppp.${SC_MAJOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
+  else (APPLE)
+    set(SYMLINK_2 libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}.${SC_MAJOR_VERSION})
+  endif (APPLE)
+  ExternalProject_Target(SHARED libexppp STEPCODE_BLD ${STEPCODE_INSTDIR}
+    libexppp${SC_SUFFIX}
+    SYMLINKS ${SYMLINK_1};${SYMLINK_2}
+    LINK_TARGET libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
-  foreach(SCLIB ${STEPCODE_LIBS})
-    add_dependencies(exp2cxx_exe_stage ${SCLIB}_stage)
-  endforeach(SCLIB ${STEPCODE_LIBS})
+  set(STEPCODE_EXECS check-express exppp exp2cxx)
+  foreach(SCEXEC ${STEPCODE_EXECS})
+    ExternalProject_Target(EXEC ${SCEXEC}_exe STEPCODE_BLD ${STEPCODE_INSTDIR}
+      ${SCEXEC}${CMAKE_EXECUTABLE_SUFFIX}
+      RPATH
+      )
+    foreach(SCLIB ${STEPCODE_LIBS})
+      add_dependencies(${SCEXEC}_exe_stage ${SCLIB}_stage)
+    endforeach(SCLIB ${STEPCODE_LIBS})
+    add_dependencies(${SCEXEC}_exe_stage libexppp_stage)
+  endforeach(SCEXEC ${STEPCODE_EXECS})
 
   ExternalProject_ByProducts(stepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
-    export.h
-    core/baseType.h
-    core/complexSupport.h
-    core/dictdefs.h
-    core/dispnode.h
-    core/dispnodelist.h
-    core/ExpDict.h
-    core/instmgr.h
-    core/mgrnodearray.h
-    core/mgrnode.h
-    core/mgrnodelist.h
-    core/needFunc.h
-    core/read_func.h
-    core/Registry.h
-    core/sdaiApplication_instance.h
-    core/sdai.h
-    core/sdaiSelect.h
-    core/SingleLinkList.h
-    core/STEPaggregate.h
-    core/STEPattribute.h
-    core/STEPattributeList.h
-    core/STEPcomplex.h
-    core/STEPundefined.h
-    core/SubSuperIterators.h
-    dai/sdaiApplication_instance_set.h
-    dai/sdaiBinary.h
-    dai/sdaiDaObject.h
-    dai/sdaiEntity_extent.h
-    dai/sdaiEntity_extent_set.h
-    dai/sdaiEnum.h
-    dai/sdaiModel_contents.h
-    dai/sdaiModel_contents_list.h
-    dai/sdaiObject.h
-    dai/sdaiSession_instance.h
-    dai/sdaiString.h
-    editor/STEPfile.h
-    editor/SdaiHeaderSchema.h
-    editor/SdaiHeaderSchemaClasses.h
-    editor/SdaiSchemaInit.h
-    editor/cmdmgr.h
-    editor/editordefines.h
-    editor/seeinfodefault.h
-    utils/Str.h
-    utils/dirobj.h
-    utils/errordesc.h
-    utils/gennode.h
-    utils/gennodearray.h
-    utils/gennodelist.h
-    utils/sc_hash.h
-    express/alg.h
-    express/basic.h
-    express/caseitem.h
-    express/de_end.h
-    express/decstart.h
-    express/defstart.h
-    express/dict.h
-    express/entity.h
-    express/error.h
-    express/expbasic.h
-    express/exppp.h
-    express/expr.h
-    express/express.h
+    cldai/sdaiApplication_instance_set.h
+    cldai/sdaiSession_instance.h
+    cldai/sdaiObject.h
+    cldai/sdaiString.h
+    cldai/sdaiEntity_extent.h
+    cldai/sdaiEnum.h
+    cldai/sdaiModel_contents.h
+    cldai/sdaiBinary.h
+    cldai/sdaiEntity_extent_set.h
+    cldai/sdaiModel_contents_list.h
+    cldai/sdaiDaObject.h
+    ordered_attrs.h
+    exppp/exppp.h
     express/hash.h
-    express/lexact.h
+    express/error.h
     express/linklist.h
+    express/basic.h
     express/memory.h
-    express/object.h
-    express/ordered_attrs.h
+    express/lexact.h
+    express/type.h
+    express/caseitem.h
+    express/entity.h
     express/resolve.h
     express/schema.h
-    express/scope.h
     express/stmt.h
-    express/symbol.h
-    express/type.h
+    express/expr.h
+    express/dict.h
+    express/expbasic.h
+    express/alg.h
     express/variable.h
-    )
-
-  ExternalProject_ByProducts(stepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${DATA_DIR}/step
-    ap203/ap203.exp
-    ap203e2/ap203e2_mim_lf.exp
-    ap214e3/AP214E3_2010.exp
-    ap242/ap242e1.exp
+    express/express.h
+    express/object.h
+    express/symbol.h
+    express/scope.h
+    sc_export.h
+    sc_cf.h
+    clutils/Str.h
+    clutils/gennodearray.h
+    clutils/gennode.h
+    clutils/errordesc.h
+    clutils/gennodelist.h
+    clutils/sc_hash.h
+    clutils/dirobj.h
+    cleditor/cmdmgr.h
+    cleditor/editordefines.h
+    cleditor/SdaiHeaderSchemaClasses.h
+    cleditor/seeinfodefault.h
+    cleditor/SdaiHeaderSchema.h
+    cleditor/SdaiSchemaInit.h
+    cleditor/STEPfile.h
+    sc_version_string.h
+    sc_stdbool.h
+    base/sc_getopt.h
+    base/sc_trace_fprintf.h
+    base/sc_benchmark.h
+    base/sc_memmgr.h
+    clstepcore/STEPundefined.h
+    clstepcore/mgrnodelist.h
+    clstepcore/STEPattribute.h
+    clstepcore/STEPaggregate.h
+    clstepcore/ExpDict.h
+    clstepcore/read_func.h
+    clstepcore/needFunc.h
+    clstepcore/mgrnodearray.h
+    clstepcore/mgrnode.h
+    clstepcore/dispnode.h
+    clstepcore/sdai.h
+    clstepcore/STEPcomplex.h
+    clstepcore/instmgr.h
+    clstepcore/baseType.h
+    clstepcore/sdaiSelect.h
+    clstepcore/SubSuperIterators.h
+    clstepcore/dictdefs.h
+    clstepcore/SingleLinkList.h
+    clstepcore/STEPattributeList.h
+    clstepcore/dispnodelist.h
+    clstepcore/sdaiApplication_instance.h
+    clstepcore/Registry.h
+    clstepcore/complexSupport.h
     )
 
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} stepcode  CACHE STRING "Bundled system include dirs" FORCE)
 
+  set(STEPCODE_BASE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/base CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_DAI_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/cldai CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EDITOR_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/cleditor CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_STEPCORE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/clstepcore CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_UTILS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/clutils CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EXPPP_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/exppp CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EXPRESS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/express CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_INCLUDE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode CACHE STRING "Building bundled STEPCODE" FORCE)
-  set(STEPCODE_INCLUDE_DIRS ${STEPCODE_INCLUDE_DIR} CACHE STRING "Directories containing STEPCODE headers." FORCE)
 
+  set(STEPCODE_BASE_LIBRARY base CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_EXPRESS_LIBRARY express CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(STEPCODE_EXPPP_LIBRARY exppp CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_CORE_LIBRARY stepcore CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_EDITOR_LIBRARY stepeditor CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_DAI_LIBRARY stepdai CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_UTILS_LIBRARY steputils CACHE STRING "Building bundled STEPCODE" FORCE)
 
   set(EXP2CXX_EXECUTABLE exp2cxx_exe CACHE STRING "Building bundled STEPCODE" FORCE)
+  set(EXPPP_EXECUTABLE exppp_exe CACHE STRING "Building bundled STEPCODE" FORCE)
 
+  set(STEPCODE_INCLUDE_DIRS
+    ${STEPCODE_DIR}
+    ${STEPCODE_BASE_DIR}
+    ${STEPCODE_STEPCORE_DIR}
+    ${STEPCODE_EDITOR_DIR}
+    ${STEPCODE_UTILS_DIR}
+    ${STEPCODE_DAI_DIR}
+    CACHE STRING "Directories containing STEPCODE headers." FORCE)
 
   set(STEPCODE_LIBRARIES
+    ${STEPCODE_BASE_LIBRARY}
     ${STEPCODE_EXPRESS_LIBRARY}
     ${STEPCODE_EXPPP_LIBRARY}
     ${STEPCODE_CORE_LIBRARY}
@@ -185,6 +217,8 @@ if(BRLCAD_SC_BUILD)
     ${STEPCODE_DAI_LIBRARY}
     ${STEPCODE_UTILS_LIBRARY}
     CACHE STRING "Directories containing STEPCODE headers." FORCE)
+
+  set(STEPCODE_DIR ${CMAKE_BINARY_ROOT}/ext/stepcode CACHE STRING "Building bundled STEPCODE" FORCE)
 
   SetTargetFolder(STEPCODE_BLD "Third Party Libraries")
   SetTargetFolder(stepcode "Third Party Libraries")

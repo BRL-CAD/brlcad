@@ -43,8 +43,8 @@
 //
 // include NIST step related headers
 //
-#include "core/sdai.h"
-#include "editor/STEPfile.h"
+#include <sdai.h>
+#include <STEPfile.h>
 #include "Factory.h"
 #include "schema.h"
 

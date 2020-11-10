@@ -36,7 +36,7 @@
 #include <iostream>
 
 // step-g related headers
-#include "stepcode/editor/SdaiHeaderSchema.h"
+#include "SdaiHeaderSchema.h"
 #include "schema.h"
 
 #include "G_Objects.h"

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<!--
+  EXPRESS syntax definition based on sql-mysql.xml by Shane Wright (me@shanewright.co.uk)
+  
+  This is for Kate, the KDE editor. Rename to express.xml and place in the syntax directory (on Debian, this is /usr/share/kde4/apps/katepart/syntax )
+-->
+<language name="EXPRESS" version="0.1" kateversion="2.5" section="Database" extensions="*.exp;*.EXP;*.p11" mimetype="text/x-express" casesensitive="0" author="Mark Pictor (mpictor@gmail.com)" license="">
+  <highlighting>
+    <list name="keywords">
+      <item> of </item>
+      <item> or </item>
+      <item> to </item>
+      <item> where </item>
+      <item> subtype </item>
+      <item> supertype </item>
+      <item> abstract </item>
+      <item> oneof </item>
+      <item> not </item>
+      <item> in </item>
+      <item> and </item>
+      <item> return </item>
+      <item> then </item>
+      <item> derive </item>
+      <item> optional </item>
+      <!-- put SCHEMA and END_SCHEMA here so code folding will fold
+      everything in a schema, and not collapse the schema itself -->
+      <item> schema </item>
+      <item> end_schema </item>
+    </list>
+    <list name="kw_begin"> <!-- kw's that can begin a foldable region -->
+      <item> type </item>
+      <item> entity </item>
+      <item> function </item>
+      <item> rule </item>
+      <item> constant </item>
+      <item> if </item>
+      <item> local </item>
+      <item> repeat </item>
+      <item> begin </item>
+      <item> case </item>
+    </list>
+    <list name="kw_end"> <!-- kw's that can end a foldable region -->
+      <item> end </item>
+      <item> end_type </item>
+      <item> end_entity </item>
+      <item> end_function </item>
+      <item> end_rule </item>
+      <item> end_constant </item>
+      <item> end_if </item>
+      <item> end_local </item>
+      <item> end_repeat </item>
+      <item> end_case </item>
+    </list>
+    <list name="kw_end_begin"> <!-- end one foldable region, begin another -->
+      <item> else </item>
+    </list>
+    <list name="interface_specification"> <!-- USE FROM, REFERENCE FROM -->
+      <item> use </item>
+      <item> reference </item>
+    </list>
+
+    <list name="operators">
+        <item> : </item>
+        <item> , </item>
+        <item> || </item>
+        <item> . </item>
+        <item> = </item>
+        <item> ** </item>
+        <item> | </item>
+        <item> &lt;* </item>
+        <item> &gt;= </item>
+        <item> &gt; </item>
+        <item> :=: </item>
+        <item> :&lt;&gt;: </item>
+        <item> [ </item>
+        <item> { </item>
+        <item> ( </item>
+        <item> &lt;= </item>
+        <item> &lt; </item>
+        <item> - </item>
+        <item> &lt;&gt; </item>
+        <item> + </item>
+        <item> / </item>
+        <item> ] </item>
+        <item> } </item>
+        <item> ) </item>
+        <item> * </item>
+        <item> \\ </item>
+    </list>
+    <list name="functions">
+        <item> ABS </item>
+        <item> ACOS </item>
+        <item> ASIN </item>
+        <item> ATAN </item>
+        <item> BLENGTH </item>
+        <item> COS </item>
+        <item> EXISTS </item>
+        <item> EXP </item>
+        <item> FORMAT </item>
+        <item> HIBOUND </item>
+        <item> HIINDEX </item>
+        <item> LENGTH </item>
+        <item> LOBOUND </item>
+        <item> LOINDEX </item>
+        <item> LOG </item>
+        <item> LOG2 </item>
+        <item> LOG10 </item>
+        <item> NVL </item>
+        <item> ODD </item>
+        <item> ROLESOF </item>
+        <item> SIN </item>
+        <item> SIZEOF </item>
+        <item> SQRT </item>
+        <item> TAN </item>
+        <item> TYPEOF </item>
+        <item> USEDIN </item>
+        <item> VALUE </item>
+        <item> VALUE_IN </item>
+        <item> VALUE_UNIQUE </item>
+        <item> QUERY </item>
+    </list>
+    <list name="constants">
+        <item> CONST_E </item>
+        <item> PI </item>
+        <item> SELF </item>
+<!--         <item> ? </item> -->
+    </list>
+    <list name="types">
+      <item> binary </item>
+      <item> boolean </item>
+      <item> integer </item>
+      <item> logical </item>
+      <item> number </item>
+      <item> real </item>
+      <item> string </item>
+      <item> enumeration </item>
+      <item> select </item>
+      <item> array </item>
+      <item> list </item>
+      <item> bag </item>
+      <item> set </item>
+      <item> generic </item>
+    </list>
+    <contexts>
+      <context name="Normal" attribute="Normal Text" lineEndContext="#stay">
+        <DetectSpaces />
+        <!-- Make code folding work for SCHEMA/END_SCHEMA, TYPE/END_TYPE, etc -->
+<!--         <RegExpr attribute="Block" context="#stay" String="(?:^|[^\w'])(?:SCHEMA|TYPE|ENTITY|FUNCTION|RULE|CONSTANT|IF|LOCAL|REPEAT|BEGIN)" insensitive="false" beginRegion="Blk" firstNonSpace="false" /> -->
+<!--         <RegExpr attribute="Block" context="#stay" String="END_(?:SCHEMA|TYPE|ENTITY|FUNCTION|RULE|CONSTANT|IF|LOCAL|REPEAT)" insensitive="false" endRegion="Blk" firstNonSpace="false" /> -->
+<!--         <RegExpr attribute="Block" context="#stay" String="END(?:[^_]|$)" endRegion="Blk" firstNonSpace="false" /> -->
+<!--         <RegExpr attribute="Block" context="#stay" String="(?:^|[^\w])ELSE(?:$|[^\w])" endRegion="Blk" beginRegion="Blk" firstNonSpace="false" /> -->
+
+        <!-- using the lists -->
+        <keyword attribute="Keyword" context="#stay" String="keywords"/>
+        <keyword attribute="Keyword" context="#stay" String="kw_begin" beginRegion="Blk" firstNonSpace="false"/>
+        <keyword attribute="Keyword" context="#stay" String="kw_end_begin" endRegion="Blk" beginRegion="Blk" firstNonSpace="false" />
+        <keyword attribute="Keyword" context="#stay" String="kw_end" endRegion="Blk" firstNonSpace="false"/>
+        
+        <keyword attribute="Operator" context="#stay" String="operators"/>
+        <keyword attribute="Function" context="#stay" String="functions"/>
+        <keyword attribute="Constants" context="#stay" String="constants"/>
+        <keyword attribute="Data Type" context="#stay" String="types"/>
+        
+        <keyword attribute="Interface Specification" context="Interface Specification" String="interface_specification" firstNonSpace="true" />
+        
+        <DetectIdentifier />
+        <!-- extra data types -->
+        <!-- numbers -->
+        <HlCHex attribute="Hex" context="#stay"/>
+        <Float attribute="Float" context="#stay"/>
+        <Int attribute="Decimal" context="#stay"/>
+        <!-- strings -->
+        <DetectChar attribute="String" context="String" char="'"/>
+        <DetectChar attribute="String" context="String2" char="&quot;"/>
+        <!-- comments -->
+        <Detect2Chars attribute="Comment" context="SingleLineComment" char="-" char1="-"/>
+        <Detect2Chars attribute="Comment" context="MultiLineComment" char="(" char1="*" beginRegion="Comment"/>
+
+        <DetectChar attribute="Constants" context="#stay" char="?"/>
+      </context>
+      <!-- 'string' -->
+      <context name="String" attribute="String" lineEndContext="#stay">
+        <LineContinue attribute="String" context="#pop"/>
+        <DetectChar attribute="String" context="#pop" char="'"/>
+      </context>
+      <!-- "string", extra context needed to enable "str'ing" and 'str"ing' -->
+      <context name="String2" attribute="String" lineEndContext="#stay">
+        <LineContinue attribute="String" context="#pop"/>
+        <HlCStringChar attribute="String Char" context="#stay"/>
+        <DetectChar attribute="String" context="#pop" char="&quot;"/>
+      </context>
+      <!-- comments -->
+      <context name="SingleLineComment" attribute="Comment" lineEndContext="#pop"/>
+      <context name="MultiLineComment" attribute="Comment" lineEndContext="#stay">
+        <Detect2Chars attribute="Comment" context="#pop" char="*" char1=")" endRegion="Comment" />
+      </context>
+      <context name="Interface Specification" attribute="Interface Specification" >
+<!--           lineEndContext="#pop" -->
+        <DetectChar attribute="Interface Specification" context="#pop" char=";"/>
+      </context>
+    </contexts>
+    <itemDatas>
+      <itemData name="Normal Text"  defStyleNum="dsNormal"  spellChecking="false"/>
+      <itemData name="Keyword"      defStyleNum="dsKeyword" spellChecking="false"/>
+      <itemData name="Block"        defStyleNum="dsKeyword" spellChecking="false"/>
+      <itemData name="Operator"     defStyleNum="dsNormal"  spellChecking="false"/>
+      <itemData name="Function"     defStyleNum="dsFunction" spellChecking="false"/>
+      <itemData name="Constants"    defStyleNum="dsOthers"  spellChecking="false"/>
+      <itemData name="Data Type"    defStyleNum="dsDataType" spellChecking="false"/>
+      <itemData name="Decimal"      defStyleNum="dsDecVal"  spellChecking="false"/>
+      <itemData name="Float"        defStyleNum="dsFloat"   spellChecking="false"/>
+      <itemData name="Hex"          defStyleNum="dsBaseN"   spellChecking="false"/>
+      <itemData name="String"       defStyleNum="dsString"/>
+      <itemData name="String Char"  defStyleNum="dsChar"    spellChecking="false"/>
+      <itemData name="Comment"      defStyleNum="dsComment"/>
+      <itemData name="Interface Specification" defStyleNum="dsOthers" spellChecking="false"/>
+    </itemDatas>
+  </highlighting>
+  <general>
+    <comments>
+      <comment name="singleLine" start="--"/>
+      <comment name="multiLine" start="(*" end="*)"/>
+    </comments>
+    <keywords casesensitive="0" additionalDeliminator="'" />
+        <!-- weakDeliminator="+-*/|=!&lt;&gt;~^:." -->
+  </general>
+</language>
+

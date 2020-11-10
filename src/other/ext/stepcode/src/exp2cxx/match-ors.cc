@@ -13,8 +13,8 @@
  * Date:        10/17/96                                                     *
  *****************************************************************************/
 
-#include "./complexSupport.h"
-
+#include "complexSupport.h"
+#include <sc_memmgr.h>
 
 MatchType AndOrList::matchORs( EntNode * ents )
 /*

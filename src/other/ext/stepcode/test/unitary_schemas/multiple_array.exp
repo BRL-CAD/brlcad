@@ -1,0 +1,7 @@
+SCHEMA test_array_of_array_of_simple_types;
+
+ENTITY transformation;
+    rotation : ARRAY[1:3] OF ARRAY[1:3] OF REAL;
+END_ENTITY;
+
+END_SCHEMA;

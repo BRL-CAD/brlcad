@@ -46,8 +46,25 @@
 # module where to look.
 # =============================================================================
 
+# Check that each of the libraries has an expected header,
+# as well as the toplevel defined headers. (TODO - are the
+# latter needed beyond the stepcode build itself?  Trim this
+# to the minimum actually needed...)
+set(STEPCODE_HDRS
+  base/sc_benchmark.h
+  cldai/sdaiObject.h
+  cleditor/STEPfile.h
+  clstepcore/sdai.h
+  clutils/gennodearray.h
+  exppp/exppp.h
+  express/express.h
+  sc_cf.h
+  )
+
 set(STEPCODE_LIBS
+  base
   express
+  exppp
   stepcore
   stepeditor
   stepdai
@@ -56,6 +73,7 @@ set(STEPCODE_LIBS
 
 set(STEPCODE_EXEC
   exp2cxx
+  exppp
   )
 
 # Search STEPCODE_ROOT first if it is set.
@@ -67,12 +85,22 @@ endif()
 
 # Try each search configuration.
 foreach(search ${_STEPCODE_SEARCHES})
-  find_path(STEPCODE_INCLUDE_DIR NAMES stepcode/core/sdai.h ${${search}} PATH_SUFFIXES include)
+  find_path(STEPCODE_BASE_DIR NAMES sc_benchmark.h ${${search}} PATH_SUFFIXES include include/stepcode/base)
+  find_path(STEPCODE_DAI_DIR NAMES sdaiObject.h ${${search}} PATH_SUFFIXES include include/stepcode/cldai)
+  find_path(STEPCODE_EDITOR_DIR NAMES STEPfile.h ${${search}} PATH_SUFFIXES include include/stepcode/cleditor)
+  find_path(STEPCODE_STEPCORE_DIR NAMES sdai.h ${${search}} PATH_SUFFIXES include include/stepcode/clstepcore)
+  find_path(STEPCODE_UTILS_DIR NAMES gennodearray.h ${${search}} PATH_SUFFIXES include include/stepcode/clutils)
+  find_path(STEPCODE_EXPPP_DIR NAMES exppp.h ${${search}} PATH_SUFFIXES include include/stepcode/exppp)
+  find_path(STEPCODE_EXPRESS_DIR NAMES express.h ${${search}} PATH_SUFFIXES include include/stepcode/express)
+  find_path(STEPCODE_INCLUDE_DIR NAMES sc_cf.h ${${search}} PATH_SUFFIXES include include/stepcode)
+  #TODO - should be an all-or-nothing for the set...
 endforeach()
 
 # Allow STEPCODE_LIBRARY to be set manually, as the location of the netpbm library
 foreach(search ${_STEPCODE_SEARCHES})
+  find_library(STEPCODE_BASE_LIBRARY NAMES base NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_EXPRESS_LIBRARY NAMES express NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
+  find_library(STEPCODE_EXPPP_LIBRARY NAMES exppp NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_CORE_LIBRARY NAMES stepcore NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_EDITOR_LIBRARY NAMES stepeditor NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   find_library(STEPCODE_DAI_LIBRARY NAMES stepdai NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
@@ -83,26 +111,44 @@ endforeach()
 # Allow STEPCODE_LIBRARY to be set manually, as the location of the netpbm library
 foreach(search ${_STEPCODE_SEARCHES})
   find_program(EXP2CXX_EXECUTABLE exp2cxx ${${search}} PATH_SUFFIXES bin)
+  find_program(EXPPP_EXECUTABLE exppp ${${search}} PATH_SUFFIXES bin)
   #TODO - should be an all-or-nothing for the set...
 endforeach()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(STEPCODE DEFAULT_MSG
+  STEPCODE_BASE_DIR
+  STEPCODE_DAI_DIR
+  STEPCODE_EDITOR_DIR
+  STEPCODE_STEPCORE_DIR
+  STEPCODE_UTILS_DIR
+  STEPCODE_EXPPP_DIR
+  STEPCODE_EXPRESS_DIR
   STEPCODE_INCLUDE_DIR
+  STEPCODE_BASE_LIBRARY
   STEPCODE_EXPRESS_LIBRARY
+  STEPCODE_EXPPP_LIBRARY
   STEPCODE_CORE_LIBRARY
   STEPCODE_EDITOR_LIBRARY
   STEPCODE_DAI_LIBRARY
   STEPCODE_UTILS_LIBRARY
   EXP2CXX_EXECUTABLE
+  EXPPP_EXECUTABLE
   )
 
 if (STEPCODE_FOUND)
   set(STEPCODE_INCLUDE_DIRS
     ${STEPCODE_INCLUDE_DIR}
+    ${STEPCODE_BASE_DIR}
+    ${STEPCODE_STEPCORE_DIR}
+    ${STEPCODE_EDITOR_DIR}
+    ${STEPCODE_UTILS_DIR}
+    ${STEPCODE_DAI_DIR}
     )
   set(STEPCODE_LIBRARIES
+    ${STEPCODE_BASE_LIBRARY}
     ${STEPCODE_EXPRESS_LIBRARY}
+    ${STEPCODE_EXPPP_LIBRARY}
     ${STEPCODE_CORE_LIBRARY}
     ${STEPCODE_EDITOR_LIBRARY}
     ${STEPCODE_DAI_LIBRARY}

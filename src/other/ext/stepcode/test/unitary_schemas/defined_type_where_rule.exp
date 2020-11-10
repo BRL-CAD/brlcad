@@ -1,0 +1,14 @@
+SCHEMA test_where_rule;
+
+TYPE positive = INTEGER;
+WHERE
+notnegative : SELF > 0;
+END_TYPE;
+
+TYPE month = INTEGER;
+WHERE
+SELF<=12;
+SELF>=1;
+END_TYPE;
+
+END_SCHEMA;

@@ -33,7 +33,7 @@
  * Initial revision
  */
 
-
+#include <sc_memmgr.h>
 #include "express/dict.h"
 #include "express/object.h"
 #include "express/expbasic.h"

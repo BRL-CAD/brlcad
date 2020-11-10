@@ -18,12 +18,12 @@
 #include <iostream>
 
 /* General SCL stuff */
-#include "stepcode/core/ExpDict.h"
-#include "stepcode/editor/STEPfile.h"
-#include "stepcode/core/STEPattribute.h"
-#include "stepcode/core/STEPcomplex.h"
-#include "stepcode/editor/SdaiHeaderSchema.h"
-#include "stepcode/core/sdai.h"
+#include <ExpDict.h>
+#include <STEPfile.h>
+#include <STEPattribute.h>
+#include <STEPcomplex.h>
+#include <SdaiHeaderSchema.h>
+#include <sdai.h>
 #include "schema.h"
 
 #include "ap_schema.h"

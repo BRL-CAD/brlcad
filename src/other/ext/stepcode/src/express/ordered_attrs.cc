@@ -1,6 +1,6 @@
 /// \file ordered_attrs.cc - create a list of attributes in the proper order for part 21, taking into account derivation, diamond inheritance, and (TODO) redefinition
 
-#include "express/ordered_attrs.h"
+#include "ordered_attrs.h"
 #include <vector>
 #include <assert.h>
 

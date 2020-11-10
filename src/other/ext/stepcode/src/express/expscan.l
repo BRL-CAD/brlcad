@@ -98,11 +98,9 @@
  *
  * Revision 4.1  90/09/13  16:29:00  clark
  * BPR 2.1 alpha
- *
+ * 
  */
 
-#define _XOPEN_SOURCE /* for isascii */
-#include <ctype.h> /* for isascii */
 #include "express/basic.h"
 #include "express/error.h"
 #include "express/lexact.h"

@@ -1,0 +1,5 @@
+SCHEMA error_line_nums_past_eof;
+TYPE srt = ENUMERATION OF (UNSPECIFIED, line, translation); END_TYPE;
+ENTITY circle SUBTYPE OF (conic); END_ENTITY;
+ENTITY line; END_ENTITY;
+END_SCHEMA; 

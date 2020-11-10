@@ -1,0 +1,18 @@
+SCHEMA test_named_type;
+
+TYPE measure = REAL;
+END_TYPE;
+
+TYPE type2 = INTEGER;
+END_TYPE;
+
+TYPE type3 = type2;
+END_TYPE;
+
+ENTITY line;
+    line_length : measure;
+    other_param : type3;
+    and_another : REAL;
+END_ENTITY;
+
+END_SCHEMA;

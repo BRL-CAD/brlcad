@@ -51,7 +51,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-
+#include <sc_memmgr.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include "express/lexact.h"
@@ -328,7 +328,7 @@ SCANprocess_logical_literal( char * string ) {
             break;
             /* default will actually be triggered by 'UNKNOWN' keyword */
     }
-    free( string );
+    sc_free( string );
     return TOK_LOGICAL_LITERAL;
 }
 
@@ -338,12 +338,11 @@ SCANprocess_identifier_or_keyword( const char * yytext ) {
     struct keyword_entry * k;
 
     int len;
-    const char * src;
-    char *dest;
+    char * src, *dest;
 
     /* make uppercase copy */
     len = strlen( yytext );
-    dest = test_string = ( char * )malloc( len + 1 );
+    dest = test_string = ( char * )sc_malloc( len + 1 );
     for( src = yytext; *src; src++, dest++ ) {
         *dest = ( islower( *src ) ? toupper( *src ) : *src );
     }
@@ -359,7 +358,7 @@ SCANprocess_identifier_or_keyword( const char * yytext ) {
             case TOK_LOGICAL_LITERAL:
                 return SCANprocess_logical_literal( test_string );
             default:
-                free( test_string );
+                sc_free( test_string );
                 return k->token;
         }
     }
@@ -556,8 +555,8 @@ SCANupperize( char * s ) {
 }
 
 char *
-SCANstrdup( const char * s ) {
-    char * s2 = ( char * )malloc( strlen( s ) + 1 );
+SCANstrdup( char * s ) {
+    char * s2 = ( char * )sc_malloc( strlen( s ) + 1 );
     if( !s2 ) {
         return 0;
     }

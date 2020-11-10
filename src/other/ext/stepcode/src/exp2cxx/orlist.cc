@@ -10,8 +10,8 @@
  * Date:        9/18/96                                                      *
  *****************************************************************************/
 
-#include "./complexSupport.h"
-
+#include "complexSupport.h"
+#include <sc_memmgr.h>
 
 int OrList::hit( const char * nm )
 /*

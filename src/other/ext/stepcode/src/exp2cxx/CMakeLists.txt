@@ -1,43 +1,38 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+set(FEDEX_COMMON_SRCS
+    classes_misc.c
+    ../express/fedex.c
+)
 
 set(exp2cxx_SOURCES
-  main.c
-  classes_misc.c
-  classes_wrapper.cc
-  classes.c
-  selects.c
-  multpass.c
-  collect.cc
-  complexlist.cc
-  entlist.cc
-  multlist.cc
-  orlist.cc
-  entnode.cc
-  expressbuild.cc
-  non-ors.cc
-  match-ors.cc
-  trynext.cc
-  write.cc
-  print.cc
-  sc_getopt.cpp
-  sc_mkdir.c
-  )
+    ${FEDEX_COMMON_SRCS}
+    fedex_main.c
+    classes_wrapper.cc
+    classes.c
+    selects.c
+    multpass.c
+    collect.cc
+    complexlist.cc
+    entlist.cc
+    multlist.cc
+    orlist.cc
+    entnode.cc
+    expressbuild.cc
+    non-ors.cc
+    match-ors.cc
+    trynext.cc
+    write.cc
+    print.cc
+)
 
-add_executable(exp2cxx ${exp2cxx_SOURCES})
-target_link_libraries(exp2cxx express)
-target_compile_definitions(exp2cxx PRIVATE STEPCODE_EXPRESS_DLL_IMPORTS)
-install(TARGETS exp2cxx
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR}
-  )
+include_directories(
+    ${SC_SOURCE_DIR}/include
+    ${SC_SOURCE_DIR}/include/exppp
+    ${SC_SOURCE_DIR}/include/express
+    ${SC_SOURCE_DIR}/src/base
+)
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+SC_ADDEXEC(exp2cxx "${exp2cxx_SOURCES}" "libexppp;express;base" ${SC_EXEC_NOINSTALL})
 
+if (NOT SC_IS_SUBBUILD)
+	add_dependencies( exp2cxx version_string )
+endif (NOT SC_IS_SUBBUILD)

@@ -40,7 +40,7 @@
  *
  */
 
-
+#include <sc_memmgr.h>
 #include "express/stmt.h"
 
 struct freelist_head STMT_fl;

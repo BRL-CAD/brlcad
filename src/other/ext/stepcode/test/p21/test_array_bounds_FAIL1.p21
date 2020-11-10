@@ -1,0 +1,12 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('SCL test file'),'2;1');
+FILE_NAME('test_array_bounds_FAIL1.p21','2012-03-31T',('mp'),(''),'0','1','2');
+FILE_SCHEMA(('test_array_bounds_expr'));
+ENDSEC;
+DATA;
+/* attr 2 in inst 1 is wrong */
+#1=STRUCTURED_MESH('one',2,(1,2,3));
+#2=STRUCTURED_MESH('two',5,(9,34,0,3,999999));
+ENDSEC;
+END-ISO-10303-21;

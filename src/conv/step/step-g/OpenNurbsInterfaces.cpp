@@ -45,7 +45,7 @@
 #  pragma clang diagnostic pop
 #endif
 
-#include "core/sdai.h"
+#include "sdai.h"
 class SDAI_Application_instance;
 
 /* must come after nist step headers */

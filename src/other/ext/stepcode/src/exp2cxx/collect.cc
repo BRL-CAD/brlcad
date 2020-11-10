@@ -11,8 +11,8 @@
  * Date:        11/14/96                                                     *
  *****************************************************************************/
 
-#include "./complexSupport.h"
-
+#include "complexSupport.h"
+#include <sc_memmgr.h>
 
 void ComplexCollect::insert( ComplexList * c )
 /*

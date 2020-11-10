@@ -12,8 +12,8 @@
  * Date:        9/18/96                                                      *
  *****************************************************************************/
 
-#include "./complexSupport.h"
-
+#include "complexSupport.h"
+#include <sc_memmgr.h>
 
 MultList::~MultList()
 /*

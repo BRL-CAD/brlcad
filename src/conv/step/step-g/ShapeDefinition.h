@@ -29,7 +29,7 @@
 
 #include "STEPEntity.h"
 
-#include "core/sdai.h"
+#include "sdai.h"
 
 class ProductDefinitionShape;
 class ShapeAspect;

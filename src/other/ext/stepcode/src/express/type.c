@@ -122,7 +122,7 @@ This module implements the type abstraction.  It is
  *
  */
 
-
+#include <sc_memmgr.h>
 #include "express/type.h"
 
 /* Very commonly-used read-only types */

@@ -29,7 +29,7 @@
 
 #include "STEPEntity.h"
 
-#include "core/sdai.h"
+#include "sdai.h"
 
 #include "PropertyDefinitionRepresentation.h"
 // forward declaration of class
