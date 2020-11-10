@@ -2,7 +2,7 @@
 if (SH_EXEC AND TARGET mged)
 
   if (NOT WIN32)
-    add_test(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/dsp.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_ADD_TEST(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/dsp.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
   else (NOT WIN32)
     message(WARNING "regress-dsp failes on some Windows platforms (pix-bw appears to hang on github runners) - skipping")

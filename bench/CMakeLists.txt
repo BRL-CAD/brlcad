@@ -48,7 +48,7 @@ CMAKEFILES(
 
 if(SH_EXEC AND TARGET m35.g)
   # CTest enabled short run of the benchmark suite
-  add_test(NAME benchmark COMMAND ${SH_EXEC} "$<TARGET_FILE_DIR:bark>/benchmark" run TIMEFRAME=1)
+  BRLCAD_ADD_TEST(NAME benchmark COMMAND ${SH_EXEC} "$<TARGET_FILE_DIR:bark>/benchmark" run TIMEFRAME=1)
   set_tests_properties(benchmark PROPERTIES LABELS "Benchmark")
   add_custom_target(benchmark-check
     COMMAND ${CMAKE_CTEST_COMMAND} -L Benchmark --output-on-failure

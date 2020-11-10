@@ -1,7 +1,7 @@
 
 if (SH_EXEC AND TARGET mged)
 
-  add_test(NAME regress-spdi COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/spdi.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_ADD_TEST(NAME regress-spdi COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/spdi.sh" ${CMAKE_SOURCE_DIR})
   BRLCAD_REGRESSION_TEST(regress-spdi "rt;mged;pixdiff" TEST_DEFINED)
 
 endif (SH_EXEC AND TARGET mged)

@@ -1,7 +1,7 @@
 
 if (SH_EXEC AND TARGET asc2g)
 
-  add_test(NAME regress-lights COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/lights.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_ADD_TEST(NAME regress-lights COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/lights.sh" ${CMAKE_SOURCE_DIR})
   BRLCAD_REGRESSION_TEST(regress-lights "rt;asc2g;pixdiff" TEST_DEFINED)
 
 endif (SH_EXEC AND TARGET asc2g)
