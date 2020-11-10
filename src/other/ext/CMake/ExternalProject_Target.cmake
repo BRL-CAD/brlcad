@@ -24,7 +24,21 @@ endif(NOT DEFINED EXTPROJ_VERBOSE)
 # cmake -E copy follows symlinks to get the final file, which is not what we
 # want in this situation.  To avoid this, we create a copy script which uses
 # file(COPY) and run that script with cmake -P
-file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake" "get_filename_component(DDIR \${DEST} DIRECTORY)\nfile(COPY \${SRC} DESTINATION \${DDIR})")
+file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake" "
+get_filename_component(DNAME \"\${DEST}\" NAME)
+string(REGEX REPLACE \"\${DNAME}$\" \"\" DDIR \"\${DEST}\")
+if (NOT WIN32)
+  string(REPLACE \"\\\\ \" \" \" SDIR \"\${SRC}\")
+  string(REPLACE \"\\\\ \" \" \" DDIR \"\${DDIR}\")
+  execute_process(COMMAND mkdir -p \${DDIR})
+  execute_process(COMMAND cp \${SDIR} \${DDIR} RESULT_VARIABLE CPRESULT)
+  if (CPRESULT)
+    message(FATAL_ERROR \"COPY FAILURE:  cp \${SDIR} \${DDIR}\")
+  endif (CPRESULT)
+else (NOT WIN32)
+  file(COPY \"\${SRC}\" DESTINATION \"\${DDIR}\")
+endif (NOT WIN32)
+")
 
 # When staging files in the build directory, we have to be aware of multiple
 # configurations.  This is done post-ExternalProject build, at the parent build
