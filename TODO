@@ -2141,7 +2141,9 @@ CONVERTERS
 
 * implement a ls-dyna "keyword" file format importer.  perhaps extract
   as nmg/bot boundary representation meshes.  lots of great vehicle
-  datasets at http://www.ncac.gwu.edu/vml/models.html
+  datasets at http://www.ncac.gwu.edu/vml/models.html (update -  link
+  seems to be down as of 2020, see https://www.ccsa.gmu.edu/models/
+  for some examples.)
 
 
 STEP
