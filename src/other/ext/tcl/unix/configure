@@ -18856,7 +18856,7 @@ fi
 #
 eval "TCL_STUB_LIB_FILE=libtclstub${TCL_UNSHARED_LIB_SUFFIX}"
 eval "TCL_STUB_LIB_FILE=\"${TCL_STUB_LIB_FILE}\""
-eval "TCL_STUB_LIB_DIR=${libdir}"
+eval "TCL_STUB_LIB_DIR=\"${libdir}\""
 
 if test "${TCL_LIB_VERSIONS_OK}" = "ok"; then
     TCL_STUB_LIB_FLAG="-ltclstub${TCL_VERSION}"
