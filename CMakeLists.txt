@@ -450,14 +450,14 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
     elseif ("${empty}" EQUAL 10)
-      foreach (i 1 2 3 4 5 6)
+      foreach (i 1 2 3 4 5 6 7)
 	if (ARGN)
 	  list(REMOVE_AT ARGN 0)
 	endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
     elseif ("${empty}" EQUAL 11)
-      foreach (i 1 2 3 4 5 6)
+      foreach (i 1 2 3 4 5 6 7 8)
 	if (ARGN)
 	  list(REMOVE_AT ARGN 0)
 	endif (ARGN)
@@ -465,13 +465,13 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
 
 
-      # ADD_EMPTY_HERE: insert support for addition argv positions
+      # ADD_EMPTY_HERE: insert support for additional argv positions
       # as extra elseif tests here using the preceding pattern.  be
       # sure to update the index in the following else clause fatal
       # error message too.
 
     else ("${empty}" EQUAL 4)
-      message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV9.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
+      message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV11.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
     endif ("${empty}" EQUAL 4)
 
   else ("${cnt}" GREATER 0)
