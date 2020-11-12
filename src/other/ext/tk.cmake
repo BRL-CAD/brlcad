@@ -13,73 +13,74 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
   set(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
   set(BRLCAD_TK_BUILD ON CACHE STRING "Enabling Tk build" FORCE)
 
-  set(TK_MAJOR_VERSION 8)
-  set(TK_MINOR_VERSION 6)
-  set(TK_PATCH_VERSION 10)
-  set(TK_DEPS)
-
   if (TARGET tcl_stage)
     # If we're building against a compiled Tcl and not a system Tcl,
     # set some vars accordingly
     set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
     set(TCL_MAJOR_VERSION 8)
     set(TCL_MINOR_VERSION 6)
-    set(TCL_PATCH_VERSION 10)
     set(TCL_TARGET tcl_stage)
-    list(APPEND TK_DEPS tcl_stage tclstub_stage tclsh_exe_stage)
   else (TARGET tcl_stage)
     get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
   endif (TARGET tcl_stage)
 
   set(TK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TK_BLD-prefix/src/TK_BLD")
 
+  # We need to set internal Tcl variables to the final install paths, not the intermediate install paths that
+  # Tcl's own build will think are the final paths.  Rather than attempt build system trickery we simply
+  # hard set the values in the source files by rewriting them.
+  if (NOT TARGET tcl_replace)
+    configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+    add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+  endif (NOT TARGET tcl_replace)
+
   set(TK_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/tk)
 
-  if (MSVC)
-    set(TK_BASENAME tk)
-    set(TK_STUBNAME tkstub)
-    set(TK_WISHNAME wish${TK_MAJOR_VERSION}${TK_MINOR_VERSION})
-    set(TK_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
-    set(TK_SYMLINK_1 ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    set(TK_SYMLINK_2 ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
+  if (NOT MSVC)
+
+    set(TK_BASENAME libtk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TK_STUBNAME libtkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TK_WISHNAME wish${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+
+    set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
+
+    ExternalProject_Add(TK_BLD
+      URL "${CMAKE_CURRENT_SOURCE_DIR}/tk"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+      PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_ROOT}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_ROOT}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${TK_INSTDIR} --with-tcl=$<IF:$<BOOL:${TCL_TARGET}>,${CMAKE_BINARY_ROOT}/${LIB_DIR},${TCLCONF_DIR}> --disable-xft --enable-64bit --enable-rpath
+      BUILD_COMMAND make -j${pcnt}
+      INSTALL_COMMAND make install
+      DEPENDS ${TCL_TARGET} rpath_replace
+      )
+
+    set(TK_APPINIT tkAppInit.c)
+
+  else (NOT MSVC)
+
+    set(TK_BASENAME tk${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+    set(TK_STUBNAME tkstub${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+    set(TK_WISHNAME wish${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+
+    ExternalProject_Add(TK_BLD
+      URL "${CMAKE_CURRENT_SOURCE_DIR}/tk"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+      CONFIGURE_COMMAND ""
+      BINARY_DIR ${TK_SRC_DIR}/win
+      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${TK_INSTDIR} TCLDIR=${TCL_SRC_DIR} SUFX=
+      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TK_INSTDIR} TCLDIR=${TCL_SRC_DIR} SUFX=
+      DEPENDS ${TCL_TARGET}
+      )
+
     set(TK_APPINIT)
-  elseif (APPLE)
-    set(TK_BASENAME libtk)
-    set(TK_STUBNAME libtkstub)
-    set(TK_EXECNAME wish-${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
-    set(TK_SUFFIX .${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    set(TK_SYMLINK_1 ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    set(TK_SYMLINK_2 ${TK_BASENAME}.${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    set(TK_APPINIT tkAppInit.c)
-  else (MSVC)
-    set(TK_BASENAME libtk)
-    set(TK_STUBNAME libtkstub)
-    set(TK_WISHNAME wish-${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
-    set(TK_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_VERSION})
-    set(TK_SYMLINK_1 ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    set(TK_SYMLINK_2 ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
-    set(TK_APPINIT tkAppInit.c)
-  endif (MSVC)
 
-
-  ExternalProject_Add(TK_BLD
-    URL "${CMAKE_CURRENT_SOURCE_DIR}/tk"
-    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TK_INSTDIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
-    $<$<NOT:$<BOOL:${CMAKE_CONFIGURATION_TYPES}>>:-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}>
-    -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
-    -DTCL_ROOT=$<$<BOOL:${TCL_TARGET}>:${CMAKE_BINARY_ROOT}>
-    -DTCL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/tcl
-    DEPENDS ${TK_DEPS}
-    )
+  endif (NOT MSVC)
 
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/TK_BLD-prefix")
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED tk TK_BLD ${TK_INSTDIR}
-    ${TK_BASENAME}${TK_SUFFIX}
-    SYMLINKS ${TK_SYMLINK_1};${TK_SYMLINK_2}
-    LINK_TARGET ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
   ExternalProject_Target(STATIC tkstub TK_BLD ${TK_INSTDIR}
@@ -90,6 +91,13 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     ${TK_WISHNAME}${CMAKE_EXECUTABLE_SUFFIX}
     RPATH
     )
+
+  if (NOT MSVC)
+    ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}
+      tkConfig.sh
+      FIXPATH
+      )
+  endif (NOT MSVC)
 
   ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}
     bgerror.tcl

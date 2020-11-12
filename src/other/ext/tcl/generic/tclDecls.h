@@ -3856,7 +3856,7 @@ extern const TclStubs *tclStubsPtr;
 	    (tclStubsPtr->tcl_ObjSetVar2(interp, part1, part2, newValue, flags))
 #endif
 
-#if defined(_WIN32) && defined(TCL_UNICODE)
+#if defined(_WIN32) && defined(UNICODE)
 #   define Tcl_FindExecutable(arg) ((Tcl_FindExecutable)((const char *)(arg)))
 #   define Tcl_MainEx Tcl_MainExW
     EXTERN void Tcl_MainExW(int argc, wchar_t **argv,

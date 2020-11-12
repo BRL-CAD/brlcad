@@ -17,7 +17,7 @@
  */
 
 /*
- * On Windows, this file needs to be compiled twice, once with TCL_UNICODE and
+ * On Windows, this file needs to be compiled twice, once with UNICODE and
  * _UNICODE defined. This way both Tcl_Main and Tcl_MainExW can be
  * implemented, sharing the same source code.
  */
@@ -31,7 +31,7 @@
 #define DEFAULT_PRIMARY_PROMPT	"% "
 
 /*
- * This file can be compiled on Windows in TCL_UNICODE mode, as well as on all
+ * This file can be compiled on Windows in UNICODE mode, as well as on all
  * other platforms using the native encoding. This is done by using the normal
  * Windows functions like _tcscmp, but on platforms which don't have <tchar.h>
  * we have to translate that to strcmp here.
@@ -49,7 +49,7 @@ NewNativeObj(
 {
     Tcl_DString ds;
 
-#ifdef TCL_UNICODE
+#ifdef UNICODE
     Tcl_WinTCharToUtf(string, -1, &ds);
 #else
     Tcl_ExternalToUtfDString(NULL, (char *) string, -1, &ds);
@@ -117,7 +117,7 @@ static void		Prompt(Tcl_Interp *interp, InteractiveState *isPtr);
 static void		StdinProc(ClientData clientData, int mask);
 static void		FreeMainInterp(ClientData clientData);
 
-#if !defined(_WIN32) || defined(TCL_UNICODE)
+#if !defined(_WIN32) || defined(UNICODE)
 static Tcl_ThreadDataKey dataKey;
 
 /*
@@ -262,7 +262,7 @@ Tcl_SourceRCFile(
 	Tcl_DStringFree(&temp);
     }
 }
-#endif /* !TCL_UNICODE */
+#endif /* !UNICODE */
 
 /*----------------------------------------------------------------------
  *
@@ -618,7 +618,7 @@ Tcl_MainEx(
     Tcl_Exit(exitCode);
 }
 
-#if (TCL_MAJOR_VERSION == 8) && !defined(TCL_UNICODE)
+#if (TCL_MAJOR_VERSION == 8) && !defined(UNICODE)
 #undef Tcl_Main
 extern DLLEXPORT void
 Tcl_Main(
@@ -631,9 +631,9 @@ Tcl_Main(
 {
     Tcl_MainEx(argc, argv, appInitProc, Tcl_CreateInterp());
 }
-#endif /* TCL_MAJOR_VERSION == 8 && !TCL_UNICODE */
+#endif /* TCL_MAJOR_VERSION == 8 && !UNICODE */
 
-#if !defined(_WIN32) || defined(TCL_UNICODE)
+#if !defined(_WIN32) || defined(UNICODE)
 
 /*
  *---------------------------------------------------------------
@@ -724,7 +724,7 @@ TclFullFinalizationRequested(void)
     return finalize;
 #endif /* PURIFY */
 }
-#endif /* TCL_UNICODE */
+#endif /* UNICODE */
 
 /*
  *----------------------------------------------------------------------

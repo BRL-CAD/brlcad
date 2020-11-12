@@ -14,7 +14,7 @@
 #ifndef _TCLREGEXP
 #define _TCLREGEXP
 
-#include "regextcl.h"
+#include "regex.h"
 
 /*
  * The TclRegexp structure encapsulates a compiled regex_t, the flags that
