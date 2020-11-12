@@ -74,14 +74,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 
 include(Path_Setup)
 
-#-----------------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in the build
-# directory AND install directory. Documentation of these options is available
-# at http://www.cmake.org/Wiki/CMake_RPATH_handling
-
-include(RPath_Setup)
-cmake_set_rpath()
-
 find_package(TCL)
 
 #----------------------------------------------------------------------------

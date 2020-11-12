@@ -35,6 +35,7 @@ if (BRLCAD_TCL_BUILD)
     set(ZLIB_TARGET zlib_stage)
     set(ZLIB_NAME z_brl)
     set(DEFLATE_NAME brl_deflateSetHeader)
+    list(APPEND TCL_DEPS ZLIB_BLD zlib_stage)
   else (TARGET zlib_stage)
     set(ZLIB_NAME z)
     set(DEFLATE_NAME deflateSetHeader)
@@ -89,6 +90,7 @@ if (BRLCAD_TCL_BUILD)
     -DZLIB_LIBRARY=$<$<BOOL:${ZLIB_TARGET}>:${ZLIB_LIBRARY}>
     $<$<BOOL:${ZLIB_TARGET}>:-DZ_PREFIX=ON>
     $<$<BOOL:${ZLIB_TARGET}>:-DZ_PREFIX_STR=${Z_PREFIX_STR}>
+    DEPENDS ${TCL_DEPS}
     )
 
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix")
@@ -349,6 +351,7 @@ if (BRLCAD_TCL_BUILD)
 
   # Anything building against the stub will want the headers, etc. in place
   add_dependencies(tclstub tcl_stage)
+  add_dependencies(tclsh_exe tcl_stage)
 
   set(TCL_LIBRARY tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
