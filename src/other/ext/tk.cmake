@@ -16,6 +16,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
   set(TK_MAJOR_VERSION 8)
   set(TK_MINOR_VERSION 6)
   set(TK_PATCH_VERSION 10)
+  set(TK_DEPS)
 
   if (TARGET tcl_stage)
     # If we're building against a compiled Tcl and not a system Tcl,
@@ -25,6 +26,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     set(TCL_MINOR_VERSION 6)
     set(TCL_PATCH_VERSION 10)
     set(TCL_TARGET tcl_stage)
+    list(APPEND TK_DEPS tcl_stage tclstub_stage tclsh_exe_stage)
   else (TARGET tcl_stage)
     get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)
   endif (TARGET tcl_stage)
@@ -68,7 +70,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     -DTCL_ROOT=$<$<BOOL:${TCL_TARGET}>:${CMAKE_BINARY_ROOT}>
     -DTCL_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/tcl
-    DEPENDS ${TCL_TARGET}
+    DEPENDS ${TK_DEPS}
     )
 
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/TK_BLD-prefix")
