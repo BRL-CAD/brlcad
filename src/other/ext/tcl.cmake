@@ -1,3 +1,8 @@
+# TODO - We appear to have a problem with spaces in pathnames and the 8.6 autotools
+# build. (https://core.tcl-lang.org/tcl/tktview/888c1a8c9d84c1f5da4a46352bbf531424fe7126)
+# May have to switch back to the CMake system until that's fixed, if we want to
+# keep the odd pathnames test running with bundled libs...
+
 if (BRLCAD_ENABLE_TCL)
   set(TCL_VERSION "8.6" CACHE STRING "BRL-CAD uses Tcl 8.6" FORCE)
 endif (BRLCAD_ENABLE_TCL)
