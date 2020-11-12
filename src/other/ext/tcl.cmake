@@ -26,6 +26,7 @@ if (BRLCAD_TCL_BUILD)
   set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
   set(TCL_MAJOR_VERSION 8)
   set(TCL_MINOR_VERSION 6)
+  set(TCL_PATCH_VERSION 10)
 
   # In addition to the usual target dependencies, we need to adjust for the
   # non-standard BRL-CAD zlib name, if we are using our bundled version.  Set a
@@ -42,59 +43,61 @@ if (BRLCAD_TCL_BUILD)
   # We need to set internal Tcl variables to the final install paths, not the intermediate install paths that
   # Tcl's own build will think are the final paths.  Rather than attempt build system trickery we simply
   # hard set the values in the source files by rewriting them.
+  set(TCL_REWORK_FILES ${TCL_PATCH_FILES} "${TCL_SRC_DIR}/unix/tclUnixInit.c" "${TCL_SRC_DIR}/generic/tclPkgConfig.c")
   if (NOT TARGET tcl_replace)
     configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
   endif (NOT TARGET tcl_replace)
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+
 
   set(TCL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/tcl)
 
-  if (NOT MSVC)
-
-    set(TCL_BASENAME libtcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-    set(TCL_STUBNAME libtclstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-    set(TCL_EXECNAME tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-
-    set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
-    set(TCL_REWORK_FILES ${TCL_PATCH_FILES} "${TCL_SRC_DIR}/unix/tclUnixInit.c" "${TCL_SRC_DIR}/generic/tclPkgConfig.c")
-
-    ExternalProject_Add(TCL_BLD
-      URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
-      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-      PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
-      COMMAND tcl_replace ${TCL_REWORK_FILES}
-      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_ROOT}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_ROOT}/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${TCL_INSTDIR}
-      BUILD_COMMAND make -j${pcnt}
-      INSTALL_COMMAND make install
-      DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
-      )
-
-    set(TCL_APPINIT tclAppInit.c)
-
-  else (NOT MSVC)
-
-    set(TCL_BASENAME tcl${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
-    set(TCL_STUBNAME tclstub${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+  if (MSVC)
+    set(TCL_BASENAME tcl)
+    set(TCL_STUBNAME tclstub)
     set(TCL_EXECNAME tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
-
-    ExternalProject_Add(TCL_BLD
-      URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
-      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-      CONFIGURE_COMMAND ""
-      BINARY_DIR ${TCL_SRC_DIR}/win
-      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${TCL_INSTDIR} SUFX=
-      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TCL_INSTDIR} SUFX=
-      )
+    set(TCL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(TCL_SYMLINK_1 ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(TCL_SYMLINK_2 ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
     set(TCL_APPINIT)
+  elseif (APPLE)
+    set(TCL_BASENAME libtcl)
+    set(TCL_STUBNAME libtclstub)
+    set(TCL_EXECNAME tclsh-${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TCL_SUFFIX .${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}.${TCL_PATCH_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(TCL_SYMLINK_1 ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(TCL_SYMLINK_2 ${TCL_BASENAME}.${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(TCL_APPINIT tclAppInit.c)
+  else (MSVC)
+    set(TCL_BASENAME libtcl)
+    set(TCL_STUBNAME libtclstub)
+    set(TCL_EXECNAME tclsh-${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TCL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}.${TCL_PATCH_VERSION})
+    set(TCL_SYMLINK_1 ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(TCL_SYMLINK_2 ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    set(TCL_APPINIT tclAppInit.c)
+  endif (MSVC)
 
-  endif (NOT MSVC)
+  ExternalProject_Add(TCL_BLD
+    URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+    PATCH_COMMAND tcl_replace ${TCL_REWORK_FILES}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TCL_INSTDIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+    $<$<NOT:$<BOOL:${CMAKE_CONFIGURATION_TYPES}>>:-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}>
+    -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    -DZLIB_ROOT=$<$<BOOL:${ZLIB_TARGET}>:${CMAKE_BINARY_ROOT}>
+    -DZLIB_LIBRARY=$<$<BOOL:${ZLIB_TARGET}>:${ZLIB_LIBRARY}>
+    $<$<BOOL:${ZLIB_TARGET}>:-DZ_PREFIX=ON>
+    $<$<BOOL:${ZLIB_TARGET}>:-DZ_PREFIX_STR=${Z_PREFIX_STR}>
+    )
 
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix")
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED tcl TCL_BLD ${TCL_INSTDIR}
-    ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    ${TCL_BASENAME}${TCL_SUFFIX}
+    SYMLINKS ${TCL_SYMLINK_1};${TCL_SYMLINK_2}
+    LINK_TARGET ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
 
@@ -107,11 +110,6 @@ if (BRLCAD_TCL_BUILD)
     RPATH
     )
 
-  ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}
-    tclConfig.sh
-    tclooConfig.sh
-    FIXPATH
-    )
   ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION}
     auto.tcl
     clock.tcl

@@ -68,15 +68,3 @@ END
 //
 
 tclsh                      ICON    DISCARDABLE     "tclsh.ico"
-
-//
-// This is needed for Windows 8.1 onwards.
-//
-
-#ifndef RT_MANIFEST
-#define RT_MANIFEST     24
-#endif
-#ifndef CREATEPROCESS_MANIFEST_RESOURCE_ID
-#define CREATEPROCESS_MANIFEST_RESOURCE_ID 1
-#endif
-CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "tclsh.exe.manifest"
