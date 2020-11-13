@@ -27,13 +27,6 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
     # normalize so we can use it as a name
     string(REGEX REPLACE "/" "_" name ${targetdir})
 
-    # divert output to diff paths depending on whether debug or release
-    if(CMAKE_CONFIGURATION_TYPES)
-      set(tclindex_outdir "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir}")
-    else(CMAKE_CONFIGURATION_TYPES)
-      set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
-    endif(CMAKE_CONFIGURATION_TYPES)
-
     # get file copy target(s) so we can make tclindex.tcl depend on them
     BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
 
@@ -42,14 +35,25 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
     file(GLOB tcl_files "*.tcl")
 
     # command that builds the index when the dependency is resolved
+    set(tclindex_outdir "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir}")
     add_custom_command(
       OUTPUT ${tclindex_outdir}/${outfile}
       COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir} >> ${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log 2>&1
       DEPENDS btclsh ${data_target_list} ${tcl_files}
       )
 
-    # put tclindex.tcl where it goes
-    install(FILES ${tclindex_outdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+    # Install logic for index file.
+    if(CMAKE_CONFIGURATION_TYPES)
+      # Need to use $<CONFIG> here rather than CMAKE_CFG_INTDIR
+      # as install in interpreted by CMake, not by the build tool.  See
+      # https://discourse.cmake.org/t/cmake-cfg-intdir-and-file-install/2169
+      install(FILES ${CMAKE_BINARY_DIR}/$<CONFIG>/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+    else(CMAKE_CONFIGURATION_TYPES)
+      # CMAKE_CFG_INTDIR expands to "." in non-multiconfig builds, which is why we can use it universally in
+      # the add_custom_command logic.  However, $<CONFIG> may be Debug or Release even in a singlei
+      # configuration.  Therefore, we use a non-config specific path if we're not in multiconfig build mode.
+      install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+    endif(CMAKE_CONFIGURATION_TYPES)
 
     # convenience target
     add_custom_target(${name}_${cmd}.tcl ALL DEPENDS ${tclindex_outdir}/${outfile})
