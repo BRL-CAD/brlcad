@@ -38,6 +38,15 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
   if (NOT MSVC)
 
+    # Check for spaces in the source and build directories - those won't work
+    # reliably with the Tk autotools based build.
+    if ("${CMAKE_CURRENT_SOURCE_DIR}" MATCHES ".* .*")
+      message(FATAL_ERROR "Bundled Tk enabled, but the path \"${CMAKE_CURRENT_SOURCE_DIR}\" contains spaces.  On this platform, Tk uses autotools to build; paths with spaces are not supported.  To continue relocate your source directory to a path that does not use spaces.")
+    endif ("${CMAKE_CURRENT_SOURCE_DIR}" MATCHES ".* .*")
+    if ("${CMAKE_CURRENT_BINARY_DIR}" MATCHES ".* .*")
+      message(FATAL_ERROR "Bundled Tk enabled, but the path \"${CMAKE_CURRENT_BINARY_DIR}\" contains spaces.  On this platform, Tk uses autotools to build; paths with spaces are not supported.  To continue you must select a build directory with a path that does not use spaces.")
+    endif ("${CMAKE_CURRENT_BINARY_DIR}" MATCHES ".* .*")
+
     set(TK_BASENAME libtk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
     set(TK_STUBNAME libtkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
     set(TK_WISHNAME wish${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})

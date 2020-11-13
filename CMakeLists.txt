@@ -2308,7 +2308,17 @@ if(NOT BRLCAD_IS_SUBBUILD)
   CREATE_DISTCHECK(no_object "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  #CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
+  # The odd pathnames test cannot work with bundled autoconf builds, so disable
+  # if any of them have set the flag.  This isn't perfect, since a configure
+  # with BRLCAD_BUNDLED_LIBS= BUNDLED will disable this test even if a viable
+  # system component is present.  However, the complexity/fragility of
+  # attempting to stash the system detections when we want the variables set to
+  # the bundled versions outweighs the minor benefit of trying harder to enable
+  # this test (which may or may not be viable anyway depending on system
+  # component availability.)
+  if (NOT BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
+    CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED ${BRLCAD_DISABLE_ODD_PATHNAMES_FLAGS}" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
+  endif (NOT BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
   CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
 
   # Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
