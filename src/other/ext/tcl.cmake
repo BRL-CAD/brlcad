@@ -23,10 +23,6 @@ THIRD_PARTY(tcl TCL tcl
 
 if (BRLCAD_TCL_BUILD)
 
-  # Bundled Tcl is a poison pill for the odd_pathnames distcheck test
-  set(BRLCAD_DISABLE_ODD_PATHNAMES_TEST ON CACHE BOOL "Bundled disable by Tcl of distcheck-odd_pathnames")
-
-
   set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
   set(TCL_MAJOR_VERSION 8)
   set(TCL_MINOR_VERSION 6)
@@ -55,6 +51,10 @@ if (BRLCAD_TCL_BUILD)
   set(TCL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/tcl)
 
   if (NOT MSVC)
+
+    # Bundled Tcl is a poison pill for the odd_pathnames distcheck test
+    set(BRLCAD_DISABLE_ODD_PATHNAMES_TEST ON CACHE BOOL "Bundled disable by Tcl of distcheck-odd_pathnames")
+    mark_as_advanced(BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
 
     # Check for spaces in the source and build directories - those won't work
     # reliably with the Tcl autotools based build.
@@ -379,6 +379,7 @@ if (BRLCAD_TCL_BUILD)
 else (BRLCAD_TCL_BUILD)
 
   set(BRLCAD_DISABLE_ODD_PATHNAMES_FLAGS "${BRLCAD_DISABLE_ODD_PATHNAMES_FLAGS} -DBRLCAD_TCL=SYSTEM" CACHE STRING "Options to pass to odd_pathnames distcheck")
+  mark_as_advanced(BRLCAD_DISABLE_ODD_PATHNAMES_FLAGS)
 
 endif (BRLCAD_TCL_BUILD)
 
