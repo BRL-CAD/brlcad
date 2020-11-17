@@ -12,9 +12,9 @@ int main(int argc, const char **argv)
 	std::cerr << "Error: no file specified for processing or missing RPATH to set.\n";
 	return -1;
     }
-    std::string new_rpath = std::string("-rpath,") + std::string(argv[1]);
+    std::string new_rpath = std::string("-rpath,") + std::string("@CMAKE_BUILD_RPATH@");
 
-    for (int i = 2; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
 	std::string cline;
 	std::string nfile_contents;
 	std::ifstream fs;

@@ -154,7 +154,8 @@ if(NOT DEFINED EXTPROJ_VERBOSE)
   set(EXTPROJ_VERBOSE 0)
 endif(NOT DEFINED EXTPROJ_VERBOSE)
 
-# Tool for replacing rpath values in build files
+# Tool for replacing rpath values in build files.  CMAKE_BUILD_RPATH must be
+# set before configuring this file.
 configure_file(${BDEPS_CMAKE_DIR}/rpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 add_executable(rpath_replace ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
