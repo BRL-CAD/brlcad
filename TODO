@@ -174,6 +174,26 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* RTAREA
+
+  * add an option to rtarea for onehit.  this is probably best as an
+    option that reports the requested objects only and then has a
+    verbose option for the more detailed hiearchical report that is
+    currently produced.
+
+  * verify rtarea.  There are reports that the rtarea
+    command may have a bug in its calculations.  This needs to be
+    investigated.
+
+  * review and fix rtarea's taxonomy for describing
+    presented/projected areas.  users expect presented area to
+    represent what is currently referred to as exposed area.  may make
+    more sense to introduce a different terms for other shotline
+    encounters.
+
+  * make rtarea display a cross-hair and perhaps coordinates for the
+    center of area if run from within mged.
+
 * bot -V check solid bot.s visualizations don't show up if bot.s is
   first drawn in MGED - should properly "overlay" them so the user
   doesn't have to first erase the solid from the scene visual.
@@ -864,11 +884,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   file for FIXME note); add tests for both functions (note only
   g-dot.c wants to use the functions at the moment)
 
-* verify/fix/improve rtarea.  There are reports that the rtarea
-  command may have a bug in its calculations.  This needs to be
-  investigated along with a review of the taxonomy used by rtarea for
-  describing presented/projected areas.
-
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
@@ -1032,9 +1047,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   all supported dump formats (obj, dxf, etc.) optionally write out
   normals.  Consider adding an option to smoothly interpolate normals
   (per face or vertex).
-
-* make rtarea display a cross-hair and perhaps coordinates for the
-  center of area if run from within mged.
 
 * refactor and manage libbn tolerance uses by providing an interface
   default (e.g., an init macro) and making everyone use that where it
