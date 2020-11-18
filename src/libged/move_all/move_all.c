@@ -44,6 +44,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct bu_ptbl stack;
+    size_t moved = 0;
 
     /* check the old_name source and new_name target */
 
@@ -100,6 +101,8 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
 		if (rt_db_put_internal(dirp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 		    bu_log("INTERNAL ERROR: unable to write sketch [%s] during mvall\n", new_name);
+		} else {
+		    moved++;
 		}
 		rt_db_free_internal(&intern);
 	    }
@@ -123,6 +126,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return GED_ERROR;
 	}
+	moved++;
     }
 
     bu_ptbl_init(&stack, 64, "combination stack for wdb_mvall_cmd");
@@ -177,6 +181,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		    return GED_ERROR;
 		}
 	    }
+	    moved++;
 	}
     }
 
@@ -219,6 +224,11 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	    free((void *)dupstr);
 	    bu_vls_free(&new_path);
 	}
+    }
+
+    if (!moved) {
+	bu_log("ERROR: move %s to %s: no such object or reference\n", old_name, new_name);
+	return GED_ERROR;
     }
 
     return GED_OK;
