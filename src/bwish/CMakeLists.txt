@@ -12,7 +12,7 @@ if(TARGET libtclcad)
   list(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
   BRLCAD_INCLUDE_DIRS(BWISH_INCLUDE_DIRS)
 
-  set(btclsh_libs libtclcad libbu ${TCL_LIBRARY} ${ITCL_LIBRARY})
+  set(btclsh_libs libtclcad libbu ${TCL_LIBRARY})
 
   if(TARGET libtermio)
     set(btclsh_libs ${btclsh_libs} libtermio)
@@ -28,7 +28,7 @@ if(TARGET libtclcad)
   # If we have Tk enabled, we want bwish too
   if(BRLCAD_ENABLE_TK)
 
-    set(bwish_libs libtclcad libbu ${TCL_LIBRARY} ${ITCL_LIBRARY} ${TK_LIBRARY} ${ITK_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
+    set(bwish_libs libtclcad libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
     if(TARGET libtermio)
       set(bwish_libs ${bwish_libs} libtermio)
