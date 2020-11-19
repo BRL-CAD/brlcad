@@ -1,0 +1,13 @@
+Index: unix/configure
+===================================================================
+--- unix/configure	(revision 77749)
++++ unix/configure	(working copy)
+@@ -20059,4 +20059,8 @@
+   $ac_cs_success || { (exit 1); exit 1; }
+ fi
+ 
++if test "`uname -s`" = "Darwin"; then
++  CC_SEARCH_FLAGS='-Wl,-rpath,${LIB_RUNTIME_DIR}'
++  LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
++fi
+ 

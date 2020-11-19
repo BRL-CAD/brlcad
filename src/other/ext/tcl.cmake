@@ -75,7 +75,8 @@ if (BRLCAD_TCL_BUILD)
     ExternalProject_Add(TCL_BLD
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-      PATCH_COMMAND rpath_replace ${TCL_PATCH_FILES}
+      PATCH_COMMAND patch "${TCL_SRC_DIR}/unix/configure" "${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl_configure.patch"
+      COMMAND rpath_replace ${TCL_PATCH_FILES}
       COMMAND tcl_replace ${TCL_REWORK_FILES}
       CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_ROOT}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_ROOT}/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${TCL_INSTDIR}
       BUILD_COMMAND make -j${pcnt}
