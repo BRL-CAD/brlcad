@@ -1756,69 +1756,69 @@ void OctNode< NodeData >::NeighborKey3::getNeighbors( OctNode< NodeData >* node 
 		const OctNode< NodeData >* const * _node;
 		const OctNode< NodeData >* __node;
 		int iS , iE , jS , jE , kS , kE;
-#define _S( i ) ( (i==0) ? 1 : 0 )
-#define _E( i ) ( (i==2) ? 1 : 2 )
+#define Oct_S( i ) ( (i==0) ? 1 : 0 )
+#define Oct_E( i ) ( (i==2) ? 1 : 2 )
 		switch( c )
 		{
 		case 0:
 			_node = _nodes;
-			for( int i=0 ; i<3 ; i++ ){ iE=_E(i) ; for( int j=0 ; j<3 ; j++ ){ jE=_E(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kE=_E(k) , __node = *_node;
+			for( int i=0 ; i<3 ; i++ ){ iE=Oct_E(i) ; for( int j=0 ; j<3 ; j++ ){ jE=Oct_E(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kE=Oct_E(k) , __node = *_node;
 			if( __node && __node->children ) for( int ii=0 , iii=2*i ; ii<iE ; ii++ , iii++ ) for( int jj=0 , jjj=2*j ; jj<jE ; jj++ , jjj++ ) for( int kk=0 , kkk=2*k ; kk<kE ; kk++ , kkk++ )
 				neighbors.neighbors[iii][jjj][kkk] = __node->children + Cube::CornerIndex( ii , jj , kk );
 			} } }
 			break;
 		case 1:
 			_node = _nodes;
-			for( int i=0 ; i<3 ; i++ ){ iS=_S(i) ; for( int j=0 ; j<3 ; j++ ){ jE=_E(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kE=_E(k) , __node = *_node;
+			for( int i=0 ; i<3 ; i++ ){ iS=Oct_S(i) ; for( int j=0 ; j<3 ; j++ ){ jE=Oct_E(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kE=Oct_E(k) , __node = *_node;
 			if( __node && __node->children ) for( int ii=iS , iii=2*i+iS-1 ; ii<2 ; ii++ , iii++ ) for( int jj=0 , jjj=2*j ; jj<jE ; jj++ , jjj++ ) for( int kk=0 , kkk=2*k ; kk<kE ; kk++ , kkk++ )
 				neighbors.neighbors[iii][jjj][kkk] = __node->children + Cube::CornerIndex( ii , jj , kk );
 			} } }
 			break;
 		case 2:
 			_node = _nodes;
-			for( int i=0 ; i<3 ; i++ ){ iE=_E(i) ; for( int j=0 ; j<3 ; j++ ){ jS=_S(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kE=_E(k) , __node = *_node;
+			for( int i=0 ; i<3 ; i++ ){ iE=Oct_E(i) ; for( int j=0 ; j<3 ; j++ ){ jS=Oct_S(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kE=Oct_E(k) , __node = *_node;
 			if( __node && __node->children ) for( int ii=0 , iii=2*i ; ii<iE ; ii++ , iii++ ) for( int jj=jS , jjj=2*j+jS-1 ; jj<2 ; jj++ , jjj++ ) for( int kk=0 , kkk=2*k ; kk<kE; kk++ , kkk++ )
 				neighbors.neighbors[iii][jjj][kkk] = __node->children + Cube::CornerIndex( ii , jj , kk );
 			} } }
 			break;
 		case 3:
 			_node = _nodes;
-			for( int i=0  ; i<3 ; i++ ){ iS=_S(i) ; for( int j=0 ; j<3 ; j++ ){ jS=_S(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kE=_E(k) , __node = *_node;
+			for( int i=0  ; i<3 ; i++ ){ iS=Oct_S(i) ; for( int j=0 ; j<3 ; j++ ){ jS=Oct_S(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kE=Oct_E(k) , __node = *_node;
 			if( __node && __node->children ) for( int ii=iS , iii=2*i+iS-1 ; ii<2 ; ii++ , iii++ ) for( int jj=jS , jjj=2*j+jS-1 ; jj<2 ; jj++ , jjj++ ) for( int kk=0 , kkk=2*k ; kk<kE ; kk++ , kkk++ )
 				neighbors.neighbors[iii][jjj][kkk] = __node->children + Cube::CornerIndex( ii , jj , kk );
 			} } }
 			break;
 		case 4:
 			_node = _nodes;
-			for( int i=0 ; i<3 ; i++ ){ iE=_E(i) ; for( int j=0 ; j<3 ; j++ ){ jE=_E(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kS=_S(k) , __node = *_node;
+			for( int i=0 ; i<3 ; i++ ){ iE=Oct_E(i) ; for( int j=0 ; j<3 ; j++ ){ jE=Oct_E(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kS=Oct_S(k) , __node = *_node;
 			if( __node && __node->children ) for( int ii=0 , iii=2*i ; ii<iE ; ii++ , iii++ ) for( int jj=0 , jjj=2*j ; jj<jE ; jj++ , jjj++ ) for( int kk=kS , kkk=2*k+kS-1 ; kk<2 ; kk++ , kkk++ )
 				neighbors.neighbors[iii][jjj][kkk] = __node->children + Cube::CornerIndex( ii , jj , kk );
 			} } }
 			break;
 		case 5:
 			_node = _nodes;
-			for( int i=0 ; i<3 ; i++ ){ iS=_S(i) ; for( int j=0 ; j<3 ; j++ ){ jE=_E(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kS=_S(k) , __node = *_node;
+			for( int i=0 ; i<3 ; i++ ){ iS=Oct_S(i) ; for( int j=0 ; j<3 ; j++ ){ jE=Oct_E(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kS=Oct_S(k) , __node = *_node;
 			if( __node && __node->children ) for( int ii=iS , iii=2*i+iS-1 ; ii<2 ; ii++ , iii++ ) for( int jj=0 , jjj=2*j ; jj<jE ; jj++ , jjj++ ) for( int kk=kS , kkk=2*k+kS-1 ; kk<2 ; kk++ , kkk++ )
 				neighbors.neighbors[iii][jjj][kkk] = __node->children + Cube::CornerIndex( ii , jj , kk );
 			} } }
 			break;
 		case 6:
 			_node = _nodes;
-			for( int i=0 ; i<3 ; i++ ){ iE=_E(i) ; for( int j=0 ; j<3 ; j++ ){ jS=_S(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kS=_S(k) , __node = *_node;
+			for( int i=0 ; i<3 ; i++ ){ iE=Oct_E(i) ; for( int j=0 ; j<3 ; j++ ){ jS=Oct_S(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kS=Oct_S(k) , __node = *_node;
 			if( __node && __node->children ) for( int ii=0 , iii=2*i ; ii<iE ; ii++ , iii++ ) for( int jj=jS , jjj=2*j+jS-1 ; jj<2 ; jj++ , jjj++ ) for( int kk=kS , kkk=2*k+kS-1 ; kk<2 ; kk++ , kkk++ )
 				neighbors.neighbors[iii][jjj][kkk] = __node->children + Cube::CornerIndex( ii , jj , kk );
 			} } }
 			break;
 		case 7:
 			_node = _nodes;
-			for( int i=0 ; i<3 ; i++ ){ iS=_S(i) ; for( int j=0 ; j<3 ; j++ ){ jS=_S(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kS=_S(k) , __node = *_node;
+			for( int i=0 ; i<3 ; i++ ){ iS=Oct_S(i) ; for( int j=0 ; j<3 ; j++ ){ jS=Oct_S(j) ; for( int k=0 ; k<3 ; k++ , _node++ ){ kS=Oct_S(k) , __node = *_node;
 			if( __node && __node->children ) for( int ii=iS , iii=2*i+iS-1 ; ii<2 ; ii++ , iii++ ) for( int jj=jS , jjj=2*j+jS-1 ; jj<2 ; jj++ , jjj++ ) for( int kk=kS , kkk=2*k+kS-1 ; kk<2 ; kk++ , kkk++ )
 				neighbors.neighbors[iii][jjj][kkk] = __node->children + Cube::CornerIndex( ii , jj , kk );
 			} } }
 			break;
 		}
-#undef _S
-#undef _E
+#undef Oct_S
+#undef Oct_E
 	}
 }
 template< class NodeData >

@@ -168,9 +168,7 @@ endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 # CMake's default "make test" target is a bit limited - define
 # our own "unit" and "check" targets that automate more of the
 # dependency updating process.
-if(NOT BRLCAD_IS_SUBBUILD)
-  include(BRLCAD_Test_Wrappers)
-endif(NOT BRLCAD_IS_SUBBUILD)
+include(BRLCAD_Test_Wrappers)
 
 #---------------------------------------------------------------------
 # Load macros that will be used to define the BRL-CAD

@@ -159,6 +159,7 @@ set(G_SAMPLE_MODELS
   pic.asc
   pinewood.asc
   prim.asc
+  radialgrid.asc
   rounds.asc
   tank_car.asc
   terra.asc

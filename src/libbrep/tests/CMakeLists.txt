@@ -2,7 +2,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 BRLCAD_ADDEXEC(test_brep_ppx ppx.cpp "libbrep"  NO_INSTALL)
-add_test(NAME brep_ppx COMMAND test_brep_ppx)
+BRLCAD_ADD_TEST(NAME brep_ppx COMMAND test_brep_ppx)
 
 CMAKEFILES(
   CMakeLists.txt

@@ -19,7 +19,7 @@ if (HAVE_FUZZER)
   install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/fuzz" DESTINATION ${BIN_DIR})
   configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/fuzz COPYONLY)
 
-  #add_test(NAME fuzz COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run)
+  #BRLCAD_ADD_TEST(NAME fuzz COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run)
 
   add_custom_target(fuzz
     COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run
