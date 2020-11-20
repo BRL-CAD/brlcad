@@ -2,16 +2,19 @@
 if(BRLCAD_EXTRADOCS_HTML)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-presentation-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-presentation-xhtml-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-presentation-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_HTML)
 
 if(BRLCAD_EXTRADOCS_PHP)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-presentation-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-presentation-xhtml-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-presentation-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PHP)
 
 if(BRLCAD_EXTRADOCS_PPT)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/presentation.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/presentation.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/presentation.xsl")
 endif(BRLCAD_EXTRADOCS_PPT)
 
 # Files for PDF products
@@ -19,6 +22,7 @@ if(BRLCAD_EXTRADOCS_PDF)
   # Style sheet for XSLT transformation to PDF
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-presentation-fo-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-presentation-fo-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-presentation-fo-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML and FO (FO is an intermediate file used in the

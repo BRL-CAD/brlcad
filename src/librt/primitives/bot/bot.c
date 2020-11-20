@@ -52,6 +52,8 @@
 #include "./bot_edge.h"
 #include "../../librt_private.h"
 
+//adding time only for now, delete later******
+//#include <time.h>
 
 #define MAXHITS 128
 
@@ -422,30 +424,35 @@ rt_bot_prep_pieces(struct bot_specific *bot,
 int
 rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_bot_internal *bot_ip;
+    size_t vert_index;
     size_t tri_index;
-    point_t p1, p2, p3;
-    size_t pt1, pt2, pt3;
 
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
+    struct bu_bitv *visit_vert = bu_bitv_new(bot_ip->num_vertices);
+
     VSETALL((*min), INFINITY);
     VSETALL((*max), -INFINITY);
 
+    /* First Pass: coherently iterate through all faces of the BoT and
+     * mark vertices in a bit-vector that are referenced by a face.
+     */
     for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++) {
-	pt1 = bot_ip->faces[tri_index*3];
-	pt2 = bot_ip->faces[tri_index*3 + 1];
-	pt3 = bot_ip->faces[tri_index*3 + 2];
-	VMOVE(p1, &bot_ip->vertices[pt1*3]);
-	VMOVE(p2, &bot_ip->vertices[pt2*3]);
-	VMOVE(p3, &bot_ip->vertices[pt3*3]);
-	VMINMAX((*min), (*max), p1);
-	VMINMAX((*min), (*max), p2);
-	VMINMAX((*min), (*max), p3);
+	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + X]);
+	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + Y]);
+	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + Z]);
+     }
+    /* Second Pass: check max and min of vertices marked */
+    for(vert_index = 0; vert_index < bot_ip->num_vertices; vert_index++){
+        if(BU_BITTEST(visit_vert,vert_index)){
+	    VMINMAX((*min), (*max), &bot_ip->vertices[vert_index*3]);
+	}
     }
+    bu_bitv_free(visit_vert);
 
-    /* Prevent the RPP from being 0 thickness */
+    /* Make sure the RPP created is not of zero volume */
     if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
 	(*min)[X] -= SMALL_FASTF;
 	(*max)[X] += SMALL_FASTF;
@@ -458,6 +465,7 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 	(*min)[Z] -= SMALL_FASTF;
 	(*max)[Z] += SMALL_FASTF;
     }
+
     return 0;
 }
 

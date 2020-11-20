@@ -250,6 +250,7 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
       if(NOT "${outputs}" STREQUAL "")
 	string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${fname}")
 	configure_file(${BRLCAD_CMAKE_DIR}/docbook.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake @ONLY)
+	DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake")
 	add_custom_command(
 	  OUTPUT ${outputs}
 	  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake

@@ -1,8 +1,0 @@
-set(libgdiam_ignore_files
-CMakeLists.txt
-LICENSE.MIT
-README
-gdiam.cpp
-gdiam.hpp
-gdiam_test.cpp
-)
