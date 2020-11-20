@@ -1,7 +1,0 @@
-set(libvds_ignore_files
-CMakeLists.txt
-COPYING
-README
-vds.c
-vds.h
-)

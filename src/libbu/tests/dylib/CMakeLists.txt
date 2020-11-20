@@ -32,6 +32,7 @@ foreach (target_name ${plugin_targets})
 endforeach (target_name${plugins})
 
 add_library(libdylib SHARED dylib.c)
+set_target_properties(libdylib PROPERTIES PREFIX "")
 if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
   set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
@@ -51,7 +52,7 @@ set_target_properties(bu_dylib PROPERTIES FOLDER "BRL-CAD Executables/Test Progr
 # As a build convenience, make bu_dylib depend on everything
 add_dependencies(bu_dylib plugin_1 plugin_2)
 
-add_test(NAME bu_dylib COMMAND bu_dylib)
+BRLCAD_ADD_TEST(NAME bu_dylib COMMAND bu_dylib)
 
 # Local Variables:
 # tab-width: 8

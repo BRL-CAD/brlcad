@@ -152,8 +152,7 @@ struct list_client_data_t {
  */
 HIDDEN void
 db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
-			 void (*traverse_func) (struct db_full_path *path,
-						void *),
+			 void (*traverse_func) (struct db_full_path *path, void *),
 			 void *client_data)
 {
     struct directory *dp;
@@ -228,8 +227,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
  * processing and filtering by the search routines.
  */
 HIDDEN void
-db_fullpath_list(struct db_full_path *path,
-		 void *client_data)
+db_fullpath_list(struct db_full_path *path, void *client_data)
 {
     struct directory *dp;
     struct list_client_data_t *lcd= (struct list_client_data_t *)client_data;
@@ -338,7 +336,8 @@ c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct 
 
 
 HIDDEN int
-find_execute_nested_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t *db_node, struct db_plan_t *plan) {
+find_execute_nested_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t *db_node, struct db_plan_t *plan)
+{
     struct db_plan_t *p = NULL;
     int state = 0;
     for (p = plan; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
@@ -526,7 +525,6 @@ f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
     int ret = 0;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-
     if (!dp) {
 	db_node->matched_filters = 0;
 	return 0;
@@ -619,7 +617,8 @@ c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
 
 
 HIDDEN int
-string_to_name_and_val(const char *in, struct bu_vls *name, struct bu_vls *value) {
+string_to_name_and_val(const char *in, struct bu_vls *name, struct bu_vls *value)
+{
     size_t equalpos = 0;
     int checkval = 0;
 
@@ -1104,12 +1103,15 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     /* Match anything that doesn't define a 2D or 3D shape - unfortunately, this list will have to
      * be updated manually unless/until some functionality is added to generate it */
     if (!bu_path_match(plan->p_un._type_data, "shape", 0) &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_DATUM &&
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SUBMODEL
 	) {
 	type_match = 1;
     }
@@ -1131,6 +1133,36 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		break;
 	}
     }
+
+    if (!bu_path_match(plan->p_un._type_data, "volume", 0) &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_DATUM &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SUBMODEL &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SKETCH) {
+	switch (intern.idb_minor_type) {
+	    case DB5_MINORTYPE_BRLCAD_BOT:
+		bot_ip = (struct rt_bot_internal *)intern.idb_ptr;
+		if (bot_ip->mode == RT_BOT_SOLID) {
+		    type_match = 1;
+		}
+		break;
+	    case DB5_MINORTYPE_BRLCAD_BREP:
+		if (!rt_brep_plate_mode(&intern)) {
+		    type_match = 1;
+		}
+		break;
+	    default:
+		type_match = 1;
+		break;
+	}
+    }
+
 
     rt_db_free_internal(&intern);
 
@@ -1171,7 +1203,8 @@ f_size(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     struct bu_vls value = BU_VLS_INIT_ZERO;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp) return 0;
+    if (!dp)
+	return 0;
 
     /* Check for unescaped >, < or = characters.  If present, the
      * attribute must not only be present but the value assigned to
@@ -1407,10 +1440,12 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 {
     /* TODO make this faster by storing the individual "subholes" so they don't have to be recalculated */
     int ret, hole_i, char_i, plain_begin, plain_len;
-    char **originals = NULL;
     char **filleds = NULL;
+    char **originals = NULL;
     char *name;
-    size_t name_len, filled_len, old_filled_len;
+    size_t filled_len = 0;
+    size_t name_len = 0;
+    size_t old_filled_len = 0;
 
     if (0 < plan->p_un.ex._e_nholes) {
 	originals = (char **)bu_calloc(plan->p_un.ex._e_nholes, sizeof(char *), "f_exec originals");
@@ -1426,7 +1461,8 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     } else {
 	name = db_path_to_string(db_node->path);
     }
-    name_len = strlen(name);
+    if (name)
+	name_len = strlen(name);
 
     for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
 	plain_begin = 0;
@@ -1712,11 +1748,13 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *results)
 {
-    if (!results)
+    if (!results || !db_node)
 	return 1;
 
     if (db_node->flags & DB_SEARCH_FLAT || db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
-	bu_ptbl_ins_unique(results, (long *)DB_FULL_PATH_CUR_DIR(db_node->path));
+	long *dbfp = (long *)DB_FULL_PATH_CUR_DIR(db_node->path);
+	if (dbfp)
+	    bu_ptbl_ins_unique(results, dbfp);
     } else {
 	struct db_full_path *new_entry;
 	BU_ALLOC(new_entry, struct db_full_path);
@@ -2365,7 +2403,8 @@ db_search_form_plan(char **argv,
 
 
 HIDDEN void
-find_execute_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t *db_node, struct db_plan_t *plan) {
+find_execute_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t *db_node, struct db_plan_t *plan)
+{
     struct db_plan_t *p;
     for (p = plan; p && (p->eval)(p, db_node, dbip, results); p = p->next)
 	;

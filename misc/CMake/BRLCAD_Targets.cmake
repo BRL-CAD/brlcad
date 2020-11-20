@@ -121,9 +121,9 @@ function(FILE_LANG sfile outvar)
     endwhile(NOT "${f_ext}" STREQUAL "")
 
     # C++
-    if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+    if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
       set(file_language CXX)
-    endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+    endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc" OR ${srcfile_ext} STREQUAL ".inl")
     if(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
       set(file_language CXX)
     endif(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
@@ -433,6 +433,10 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   # If we need it, set up the OBJECT library build
   if(USE_OBJECT_LIBS)
     add_library(${libname}-obj OBJECT ${lsrcslist})
+    if(${libname} MATCHES "^lib*")
+      set_target_properties(${libname}-obj PROPERTIES PREFIX "")
+    endif(${libname} MATCHES "^lib*")
+
     set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
 
@@ -458,6 +462,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
+    if(${libname} MATCHES "^lib*")
+      set_target_properties(${libname} PROPERTIES PREFIX "")
+    endif(${libname} MATCHES "^lib*")
 
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
@@ -476,6 +483,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set(libstatic ${libname}-static)
     endif(L_STATIC)
     add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
+    if(${libstatic} MATCHES "^lib*")
+      set_target_properties(${libstatic} PROPERTIES PREFIX "")
+    endif(${libstatic} MATCHES "^lib*")
 
     # Set the standard build definitions for all BRL-CAD targets
     target_compile_definitions(${libstatic} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
@@ -943,6 +953,7 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
     else (${testname}_TEST_SCRIPT)
       configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${testname}.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake" @ONLY)
     endif (${testname}_TEST_SCRIPT)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
 
     if (TARGET ${${testname}_EXEC})
       add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")

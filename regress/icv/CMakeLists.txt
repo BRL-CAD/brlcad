@@ -122,6 +122,8 @@ CMAKEFILES(
   m35.ppm.tbz2
   m35.dpix.tbz2
   m35.bw.tbz2
+  regress-icv_export.cmake.in
+  regress-icv_import.cmake.in
   )
 
 # Local Variables:

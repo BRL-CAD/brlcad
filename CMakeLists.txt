@@ -79,7 +79,7 @@
 # BRL-CAD software package.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 # set CMake project name
 project(BRLCAD)
@@ -146,34 +146,14 @@ record_cmdline_args()
 #---------------------------------------------------------------------
 # Set up the necessary support for timing of the configuration and
 # build processes
-set_config_time()
-generate_sstamp()
+string(TIMESTAMP CONFIG_DATE "%Y%m%d")
+string(TIMESTAMP CONFIG_DATESTAMP "%a, %d %b %Y %H:%M:%S UTC" UTC)
 
 #---------------------------------------------------------------------
 # Mark the time at which the configuration process began.
-set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
-execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
 
-#------------------------------------------------------------------------------
-# The SuperBuild (https://blog.kitware.com/cmake-superbuilds-git-submodules/)
-# pattern requires a differentiation between the CMake installation prefix used
-# for the build and the specification of the ultimate installation location
-# used for the superbuild's install.  Any hard-coded knowledge of the final
-# path backed into BRL-CAD must use the superbuild's final destination, not the
-# intermediate build-directory installation used by the superbuild.
-#
-# For the moment we are not using superbuild, but we will ultimately need to
-# move to that approach to manage increasingly complex dependencies.  To allow
-# the code to work seamlessly with both variables, make them match unless both
-# are explicitly set in advance.
-if (DEFINED BRLCAD_INSTALL_PREFIX)
-  if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT DEFINED CMAKE_INSTALL_PREFIX)
-    set(CMAKE_INSTALL_PREFIX "${BRLCAD_INSTALL_PREFIX}")
-  endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT DEFINED CMAKE_INSTALL_PREFIX)
-endif (DEFINED BRLCAD_INSTALL_PREFIX)
-if (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED BRLCAD_INSTALL_PREFIX)
-  set(BRLCAD_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-endif (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED BRLCAD_INSTALL_PREFIX)
+set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
+execute_process(COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${CONFIG_DELTA_START} -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake")
 
 #---------------------------------------------------------------------
 # Allow the BRLCAD_ROOT environment variable to set during build, but be noisy
@@ -187,16 +167,6 @@ if(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
     execute_process(COMMAND ${SLEEP_EXEC} 2)
   endif(SLEEP_EXEC)
 endif(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
-
-# If BRLCAD_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
-# this location is dangerous/destructive on some systems.
-if("${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
-  message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
-  if(SLEEP_EXEC)
-    execute_process(COMMAND ${SLEEP_EXEC} 15)
-  endif(SLEEP_EXEC)
-  message(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ALLOW_INSTALL_TO_USR=1 for CMake")
-endif("${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
@@ -257,13 +227,6 @@ include(Path_Setup)
 # when CMake is re-run unless specified explicitly on the command line.
 # To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
 # is available, BRLCAD_PREFIX is used to store the value in the cache.)
-
-if(BRLCAD_INSTALL_PREFIX)
-  if(NOT "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/local")
-    get_filename_component(PATH_NORMALIZED "${BRLCAD_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
-    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
-  endif(NOT "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/local")
-endif(BRLCAD_INSTALL_PREFIX)
 
 if(CMAKE_INSTALL_PREFIX)
   if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
@@ -339,181 +302,36 @@ if("${CMAKE_GENERATOR}" MATCHES "Ninja")
 endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
 #---------------------------------------------------------------------
-# By default (as of version 2.8.2) CMake does not provide access to
-# global lists of executable and library targets.  This is useful
-# in a number of situations related to formulating custom rules and
-# target dependency management.  To avoid the necessity of replacing
-# add_library and add_executable calls with custom macros, override
-# the function names and call the _add_* functions to access the CMake
-# functionality previously available under the add_* functions. See
-# http://www.cmake.org/pipermail/cmake/2010-September/039388.html
-
-# To allow a hypothetical parent build to disable this mechanism and
-# replace it, we wrap the whole show in an IF conditional.  To avoid
-# the distcheck setup, the parent file should define the variable
-# BRLCAD_IS_SUBBUILD to ON.  Note that this also disables the
-# liblib prefix check in add_library, making that the responsibility
-# of the parent build as well, and disables the mechanism for ensuring
-# that the timing code runs at the correct points during the build.
-
-# We also need to provide bookkeeping logic here for the distribution
-# verification or "distcheck" routines that will validate the state
-# of the source tree against that expected and accounted for in the
-# build files.  The global coverage needed for the purpose results in
-# the add_library/add_executable command override mechanism having
-# to serve two purposes at once; since we only override these functions
-# once the logic for both jobs is intertwined below.
-
-if(NOT BRLCAD_IS_SUBBUILD)
-  # Functions in CMake have local variable scope,
-  # hence the use of properties to allow access to directory-specific
-  # and global information scopes.
-  define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "libtarget list" FULL_DOCS "Library target list")
-  define_property(GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST BRIEF_DOCS "exec target list" FULL_DOCS "Executable target list")
-  define_property(GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST BRIEF_DOCS "custom target list" FULL_DOCS "Custom target list")
-  define_property(GLOBAL PROPERTY CMAKE_EXTERNAL_TARGET_LIST BRIEF_DOCS "external target list" FULL_DOCS "External target list")
-  mark_as_advanced(CMAKE_LIBRARY_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXEC_TARGET_LIST)
-  mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXTERNAL_TARGET_LIST)
-
-  # Override and wrap add_library.  While we're at it, avoid doubling up
-  # on the lib prefix for libraries if the target name is lib<target>
-  function(add_library name)
-    _add_library(${name} ${ARGN})
-    if(${name} MATCHES "^lib*")
-      set_target_properties(${name} PROPERTIES PREFIX "")
-    endif(${name} MATCHES "^lib*")
-
-    # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
-    set(add_lib_to_list 1)
-    foreach(libarg ${ARGN})
-      if("${libarg}" STREQUAL "INTERFACE")
-	set(add_lib_to_list 0)
-      endif("${libarg}" STREQUAL "INTERFACE")
-    endforeach(libarg ${ARGN})
-    if (add_lib_to_list)
-      set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
-    endif (add_lib_to_list)
-  endfunction(add_library)
-
-  # Override and wrap add_executable
-  function(add_executable name)
-    _add_executable(${name} ${ARGN})
-
-    # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
-    set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
-  endfunction(add_executable)
-
-  # Override and wrap add_custom_target
-  function(add_custom_target name)
-    _add_custom_target(${name} ${ARGN})
-
-    # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
-    set_property(GLOBAL APPEND PROPERTY CMAKE_CUSTOM_TARGET_LIST ${name})
-  endfunction(add_custom_target)
-
-  # Note that at the moment we do not need to override CMake's external
-  # project mechanisms because CMake does not use them, but if that changes
-  # in the future an override will need to be added here - probably of the
-  # ExternalProject_Add functionality.
-
-  # Override and wrap configure_file.  In the case of configure_file, we'll
-  # check that the file is part of the source tree and not itself a
-  # generated file, but not reject full-path entries since there are quite a
-  # few of them. This means that, unlike CMAKEFILES's reliance on full vs.
-  # relative path comparisons, generated files supplied to configure_file
-  # need to have the GENERATED property set in order to reliably tell which
-  # files should be added to the build system's lists.  Not
-  # so critical with not-in-src-dir builds, but makes a big difference
-  # spotting files to avoid when all generated files have source directory
-  # prefixes.
-  function(configure_file file targetfile)
-    _configure_file(${file} ${targetfile} ${ARGN})
-    # Tag output from configure with the GENERATED tag
-    set_source_files_properties(${targetfile} PROPERTIES GENERATED TRUE)
-    # If it's a generated file, don't register it
-    get_property(IS_GENERATED SOURCE ${file} PROPERTY GENERATED)
-    if(NOT IS_GENERATED)
-      get_filename_component(item_absolute ${file} ABSOLUTE)
-      # If we're not in the source dir, we can do some extra checking.
-      if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	IS_SUBPATH("${CMAKE_BINARY_DIR}" "${item_absolute}" SUBPATH_TEST)
-      else(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	set(SUBPATH_TEST "0")
-      endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-      if("${SUBPATH_TEST}" STREQUAL "0")
-	IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${item_absolute}" SUBPATH_TEST)
-	if("${SUBPATH_TEST}" STREQUAL "1")
-	  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
-	endif("${SUBPATH_TEST}" STREQUAL "1")
-      else("${SUBPATH_TEST}" STREQUAL "0")
-	message(WARNING "The generated file ${file} is passed to configure_file but does not have the GENERATED source file property set in CMake.  It is HIGHLY recommended that the GENERATED property be set for this file in \"${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt\" using a command with the following form:\nset_source_files_properties(<file> PROPERTIES GENERATED TRUE)\n(or in \"${CMAKE_SOURCE_DIR}/src/other/CMakeLists.txt\" for third party components with their own build system.)\n")
-      endif("${SUBPATH_TEST}" STREQUAL "0")
-    endif(NOT IS_GENERATED)
-    if(NOT ${targetfile} MATCHES "distclean")
-      DISTCLEAN(${targetfile})
-    endif(NOT ${targetfile} MATCHES "distclean")
-  endfunction(configure_file)
-
-  # Override and wrap add_subdirectory.
-  function(add_subdirectory name)
-    _add_subdirectory(${name} ${ARGN})
-
-    # TODO - try to come up with some good way to do this bookkeeping without
-    # having to override add_subdirectory...
-    #
-    # see https://cmake.org/pipermail/cmake-developers/2015-July/025730.html
-    # for some work related to this...  the SOURCE_DIR and SOURCES properties
-    # went in in CMake 3.4.  Once we can require that as a minimum version, we
-    # can probably revisit at least part of this by getting a list of source
-    # directories for all targets at the end of the build and setting
-    # properties then.
-    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/CMakeFiles")
-    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_install.cmake")
-    foreach(clearpattern ${DISTCLEAN_OUTFILES})
-      DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/${clearpattern}")
-    endforeach(clearpattern ${DISTCLEAN_OUTFILES})
-  endfunction(add_subdirectory)
-
-endif(NOT BRLCAD_IS_SUBBUILD)
-
 # "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
-if(NOT BRLCAD_IS_SUBBUILD)
-  include(ProcessorCount)
-  ProcessorCount(N)
-  if(NOT N EQUAL 0)
-    math(EXPR NC "${N} / 2")
-    if(${NC} GREATER 1)
-      set(JFLAG "-j${NC}")
-    else(${NC} GREATER 1)
-      set(JFLAG)
-    endif(${NC} GREATER 1)
-  else(NOT N EQUAL 0)
-    # Huh?  No j flag if we can't get a processor count
+# "make unit"  runs all the unit tests.
+# To build the required targets for testing in the style of GNU Autotools "make
+# check") we define "unit" and "check" targets per
+# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
+# automatically assemble its targets into the unit dependency list.
+
+include(ProcessorCount)
+ProcessorCount(N)
+if(NOT N EQUAL 0)
+  math(EXPR NC "${N} / 2")
+  if(${NC} GREATER 1)
+    set(JFLAG "-j${NC}")
+  else(${NC} GREATER 1)
     set(JFLAG)
-  endif(NOT N EQUAL 0)
+  endif(${NC} GREATER 1)
+else(NOT N EQUAL 0)
+  # Huh?  No j flag if we can't get a processor count
+  set(JFLAG)
+endif(NOT N EQUAL 0)
 
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(CONFIG $<CONFIG>)
-  else(CMAKE_CONFIGURATION_TYPES)
-    if ("${CONFIG}" STREQUAL "")
-      set(CONFIG "\"\"")
-    endif ("${CONFIG}" STREQUAL "")
-  endif(CMAKE_CONFIGURATION_TYPES)
+if(CMAKE_CONFIGURATION_TYPES)
+  set(CONFIG $<CONFIG>)
+else(CMAKE_CONFIGURATION_TYPES)
+  if ("${CONFIG}" STREQUAL "")
+    set(CONFIG "\"\"")
+  endif ("${CONFIG}" STREQUAL "")
+endif(CMAKE_CONFIGURATION_TYPES)
 
+if (NOT TARGET check)
   add_custom_target(check
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
@@ -526,36 +344,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
     )
   set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
-endif(NOT BRLCAD_IS_SUBBUILD)
+endif (NOT TARGET check)
 
-
-# To support "make unit" (which will build the required targets for testing
-# in the style of GNU Autotools "make check") we define a "unit" target per
-# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
-# automatically assemble its targets into the unit dependency list.
-if(NOT BRLCAD_IS_SUBBUILD)
-  include(ProcessorCount)
-  ProcessorCount(N)
-  if(NOT N EQUAL 0)
-    math(EXPR NC "${N} / 2")
-    if(${NC} GREATER 1)
-      set(JFLAG "-j${NC}")
-    else(${NC} GREATER 1)
-      set(JFLAG)
-    endif(${NC} GREATER 1)
-  else(NOT N EQUAL 0)
-    # Huh?  No j flag if we can't get a processor count
-    set(JFLAG)
-  endif(NOT N EQUAL 0)
-
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(CONFIG $<CONFIG>)
-  else(CMAKE_CONFIGURATION_TYPES)
-    if ("${CONFIG}" STREQUAL "")
-      set(CONFIG "\"\"")
-    endif ("${CONFIG}" STREQUAL "")
-  endif(CMAKE_CONFIGURATION_TYPES)
-
+if (NOT TARGET unit)
   add_custom_target(unit
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"unit\\\" a.k.a. \\\"BRL-CAD Unit Testing\\\" target runs the"
@@ -565,126 +356,156 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" ${JFLAG}
     )
-
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
+endif (NOT TARGET unit)
 
-  # we wrap the CMake add_test() function in order to automatically
-  # set up test dependencies for the 'unit' and 'check' test targets.
-  #
-  # this function extravagantly tries to work around a bug in CMake
-  # where we cannot pass an empty string through this wrapper to
-  # _add_test()/add_test().  passed as a list (e.g., via ARGN, ARGV,
-  # or manually composed), the empty string is skipped(!).  passed as
-  # a string, it is all treated as command name with no arguments.
-  #
-  # manual workaround used here involves invoking _add_test() with all
-  # args individually recreated/specified (i.e., not as a list) as
-  # this preserves empty strings.  this approach means we cannot
-  # generalize and only support a limited variety of empty string
-  # arguments, but we do test and halt if someone unknowingly tries.
-  function(add_test NAME test_name COMMAND test_prog)
+# we wrap the CMake add_test() function in order to automatically set up test
+# dependencies for the 'unit' and 'check' test targets.
+#
+# this function extravagantly tries to work around a bug in CMake where we
+# cannot pass an empty string through this wrapper to add_test().  passed as a
+# list (e.g., via ARGN, ARGV, or manually composed), the empty string is
+# skipped(!).  passed as a string, it is all treated as command name with no
+# arguments.
+#
+# manual workaround used here involves invoking _add_test() with all args
+# individually recreated/specified (i.e., not as a list) as this preserves
+# empty strings.  this approach means we cannot generalize and only support a
+# limited variety of empty string arguments, but we do test and halt if someone
+# unknowingly tries.
+function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
-    # find any occurrences of empty strings
-    set(idx 0)
-    set(matches)
-    foreach (ARG IN LISTS ARGV)
-      # need 'x' to avoid older cmake seeing "COMMAND" "STREQUAL" ""
-      if ("x${ARG}" STREQUAL "x")
-	list(APPEND matches ${idx})
-      endif ("x${ARG}" STREQUAL "x")
-      math(EXPR idx "${idx} + 1")
-    endforeach()
+  # TODO - once we can require CMake 3.18, replace the empty string workaround
+  # below with this cmake_language based version.  See
+  # https://gitlab.kitware.com/cmake/cmake/-/issues/21414
 
-    # make sure we don't exceed current support
-    list(LENGTH matches cnt)
-    if ("${cnt}" GREATER 1)
-      message(FATAL_ERROR "ERROR: encountered ${cnt} > 1 empty string being passed to add_test(${test_name}).  Expand support in the top-level CMakeLists.txt file (grep add_test) or pass fewer empty strings.")
-    endif ("${cnt}" GREATER 1)
-
-    # if there are empty strings, we need to manually recreate their calling
-    if ("${cnt}" GREATER 0)
-
-      list(GET matches 0 empty)
-      if ("${empty}" EQUAL 4)
-	foreach (i 1)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} "" ${ARGN})
-      elseif ("${empty}" EQUAL 5)
-	foreach (i 1 2)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} "" ${ARGN})
-      elseif ("${empty}" EQUAL 6)
-	foreach (i 1 2 3)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} "" ${ARGN})
-      elseif ("${empty}" EQUAL 7)
-	foreach (i 1 2 3 4)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} "" ${ARGN})
-      elseif ("${empty}" EQUAL 8)
-	foreach (i 1 2 3 4 5)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} "" ${ARGN})
-      elseif ("${empty}" EQUAL 9)
-	foreach (i 1 2 3 4 5 6)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
-      elseif ("${empty}" EQUAL 10)
-	foreach (i 1 2 3 4 5 6)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
-      elseif ("${empty}" EQUAL 11)
-	foreach (i 1 2 3 4 5 6)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
+  # cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
+  # foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
+  #   string(APPEND test_args " [==[${_av}]==]")
+  # endforeach()
+  # cmake_language(EVAL CODE "add_test(NAME ${test_name} COMMAND ${test_args})")
 
 
-	# ADD_EMPTY_HERE: insert support for addition argv positions
-	# as extra elseif tests here using the preceding pattern.  be
-	# sure to update the index in the following else clause fatal
-	# error message too.
+  # find any occurrences of empty strings
+  set(idx 0)
+  set(matches)
+  foreach (ARG IN LISTS ARGV)
+    # need 'x' to avoid older cmake seeing "COMMAND" "STREQUAL" ""
+    if ("x${ARG}" STREQUAL "x")
+      list(APPEND matches ${idx})
+    endif ("x${ARG}" STREQUAL "x")
+    math(EXPR idx "${idx} + 1")
+  endforeach()
 
-      else ("${empty}" EQUAL 4)
-	message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV9.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
-      endif ("${empty}" EQUAL 4)
+  # make sure we don't exceed current support
+  list(LENGTH matches cnt)
+  if ("${cnt}" GREATER 1)
+    message(FATAL_ERROR "ERROR: encountered ${cnt} > 1 empty string being passed to add_test(${test_name}).  Expand support in the top-level CMakeLists.txt file (grep add_test) or pass fewer empty strings.")
+  endif ("${cnt}" GREATER 1)
 
-    else ("${cnt}" GREATER 0)
-      # no empty strings, no worries
-      _add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGN})
-    endif ("${cnt}" GREATER 0)
+  # if there are empty strings, we need to manually recreate their calling
+  if ("${cnt}" GREATER 0)
 
-    # add test to unit and check targets
-    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
-      add_dependencies(unit ${test_prog})
-      add_dependencies(check ${test_prog})
-    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
+    list(GET matches 0 empty)
+    if ("${empty}" EQUAL 4)
+      foreach (i 1)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} "" ${ARGN})
+    elseif ("${empty}" EQUAL 5)
+      foreach (i 1 2)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} "" ${ARGN})
+    elseif ("${empty}" EQUAL 6)
+      foreach (i 1 2 3)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} "" ${ARGN})
+    elseif ("${empty}" EQUAL 7)
+      foreach (i 1 2 3 4)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} "" ${ARGN})
+    elseif ("${empty}" EQUAL 8)
+      foreach (i 1 2 3 4 5)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} "" ${ARGN})
+    elseif ("${empty}" EQUAL 9)
+      foreach (i 1 2 3 4 5 6)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
+    elseif ("${empty}" EQUAL 10)
+      foreach (i 1 2 3 4 5 6 7)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
+    elseif ("${empty}" EQUAL 11)
+      foreach (i 1 2 3 4 5 6 7 8)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
 
-  endfunction(add_test NAME test_name COMMAND test_prog)
-endif(NOT BRLCAD_IS_SUBBUILD)
+
+      # ADD_EMPTY_HERE: insert support for additional argv positions
+      # as extra elseif tests here using the preceding pattern.  be
+      # sure to update the index in the following else clause fatal
+      # error message too.
+
+    else ("${empty}" EQUAL 4)
+      message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV11.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
+    endif ("${empty}" EQUAL 4)
+
+  else ("${cnt}" GREATER 0)
+    # no empty strings, no worries
+    add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGN})
+  endif ("${cnt}" GREATER 0)
+
+
+  # There are a variety of criteria that disqualify test_prog as a
+  # dependency - check and return if we hit any of them.
+  if (NOT TARGET ${test_prog})
+    return()
+  endif ()
+  if ("${test_name}" MATCHES ^regress-)
+    return()
+  endif ()
+  if ("${test_prog}" MATCHES ^regress-)
+    return()
+  endif ()
+  if ("${test_name}" MATCHES ^slow-)
+    return()
+  endif ()
+  if ("${test_name}" STREQUAL "benchmark")
+    return()
+  endif ()
+  if ("${test_name}" MATCHES ^NOTE:)
+    return()
+  endif ()
+
+  # add program needed for test to unit and check target dependencies
+  add_dependencies(unit ${test_prog})
+  add_dependencies(check ${test_prog})
+
+endfunction(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
 
 
@@ -819,63 +640,73 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # ExternalProject_Add approach first as well - that way unmodified install
 # commands in 3rd party CMake files will be moot.
 #
-# if (NOT BRLCAD_INSTALL_PREFIX)
-# set(BRLCAD_INSTALL_PREFIX "/usr/brlcad/")
+# if (NOT CMAKE_INSTALL_PREFIX)
+# set(CMAKE_INSTALL_PREFIX "/usr/brlcad/")
 #    if (NOT MSVC)
 #       set(gen_exp $<IF:$<CONFIG:Debug>,dev-${BRLCAD_VERSION}/,$<IF:$<CONFIG:Release>,rel-${BRLCAD_VERSION}/${BRLCAD_VERSION},>>)
 #    else (NOT MSVC)
 #       set(gen_exp)
 #        if(CMAKE_CL_64)
-#          set(BRLCAD_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
+#          set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
 #        else(CMAKE_CL_64)
-#          set(BRLCAD_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
+#          set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
 #        endif(CMAKE_CL_64)
 #    endif (NOT MSVC)
-# endif (NOT BRLCAD_INSTALL_PREFIX)
+# endif (NOT CMAKE_INSTALL_PREFIX)
 # install(TARGETS mged DESTINATION ${gen_exp}${BIN_DIR})
 #
 # Another (maybe better) option instead of generators might be to use the CONFIGURATIONS
 # option in our macros and the ExternalProject_Add management:
 # https://cmake.org/cmake/help/latest/command/install.html
 #
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT BRLCAD_INSTALL_PREFIX)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
   if(NOT CMAKE_CONFIGURATION_TYPES)
     if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-      set(BRLCAD_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}")
+      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}")
     else("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-      set(BRLCAD_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
+      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
     endif("${CMAKE_BUILD_TYPE}" MATCHES "Release")
   else(NOT CMAKE_CONFIGURATION_TYPES)
     if(MSVC)
       if(CMAKE_CL_64)
-	set(BRLCAD_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
+	set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
       else(CMAKE_CL_64)
-	set(BRLCAD_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
+	set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
       endif(CMAKE_CL_64)
     else(MSVC)
-      set(BRLCAD_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
+      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
     endif(MSVC)
   endif(NOT CMAKE_CONFIGURATION_TYPES)
-  set(BRLCAD_INSTALL_PREFIX ${BRLCAD_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
-  set(BRLCAD_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
-endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT BRLCAD_INSTALL_PREFIX)
-set(BRLCAD_PREFIX "${BRLCAD_INSTALL_PREFIX}" CACHE STRING "BRL-CAD install prefix")
+  set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
+  set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
+set(BRLCAD_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "BRL-CAD install prefix")
 mark_as_advanced(BRLCAD_PREFIX)
-if (DEFINED BRLCAD_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "${BRLCAD_INSTALL_PREFIX}")
-endif (DEFINED BRLCAD_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
+if (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
+  set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+endif (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
 
 
 # If we've a Release build with a Debug path or vice versa, warn about
 # it.  A "make install" of a Release build into a dev install
 # directory or vice versa is going to result in an install that
 # doesn't respect BRL-CAD standard naming conventions.
-if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-  message(FATAL_ERROR "\nInstallation directory (BRLCAD_INSTALL_PREFIX) is set to /usr/brlcad/dev-${BRLCAD_VERSION}, but build type is set to Release!\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-  message(FATAL_ERROR "\nInstallation directory (BRLCAD_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${BRLCAD_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
+  message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/dev-${BRLCAD_VERSION}, but build type is set to Release!\n")
+endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
+if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+  message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
+endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+
+# If CMAKE_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
+# this location is dangerous/destructive on some systems.
+if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
+  message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+  if(SLEEP_EXEC)
+    execute_process(COMMAND ${SLEEP_EXEC} 15)
+  endif(SLEEP_EXEC)
+  message(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ALLOW_INSTALL_TO_USR=1 for CMake")
+endif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
 
 #------------------------------------------------------------------------------
 # Now that we know the install prefix, generate the binary for calculating
@@ -1028,7 +859,7 @@ CONFIG_H_APPEND(BRLCAD "#define SHARED_LIBRARY_SUFFIX \"${CMAKE_SHARED_LIBRARY_S
 # Let bu_dir know what the target install directory is.  In a superbuild
 # configuration this will be the most import place to be sure that we get the
 # actual superbuild install path, not the local BRL-CAD subbuild install path.
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${BRLCAD_INSTALL_PREFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
 
 # Define the various relative paths for bu_dir (be sure to have included
 # Path_Setup.cmake before this point, as that file defines these variables.)
@@ -2046,7 +1877,6 @@ if(NOT MSVC)
       set(CXX_STANDARD_FLAGS "${CXX_STANDARD_FLAGS} -Dclockid_t=clock_t -pthread")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dclockid_t=clock_t -pthread")
-      set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     endif (PROBE_PTHREAD_H_CLOCKID_T)
   endif (NOT PROBE_PTHREAD_H)
 
@@ -2461,9 +2291,24 @@ endif(BRLCAD_PRINT_MSGS)
 # be referenced in a pkgconfig file
 
 # Look for threads (doesn't check for headers)
-# The variable CMAKE_THREAD_LIBS_INIT is the one of interest
-# when writing target_link_libraries lists.
+# Post 3.1 CMake has switched to recommending using an imported target
+# and setting a "prefer pthreads" flag - previously we were using the
+# CMAKE_THREAD_LIBS_INIT variable
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
+if(CMAKE_THREAD_LIBS_INIT)
+  message("Using threading library: ${CMAKE_THREAD_LIBS_INIT}")
+else(CMAKE_THREAD_LIBS_INIT)
+  message("Using threading from system library")
+endif(CMAKE_THREAD_LIBS_INIT)
+
+# By default, the Threads package doesn't stash any of its values in
+# cache.  This is inconvenient for debugging, so we set them ourselves.
+set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} CACHE STRING "Threads")
+set(CMAKE_USE_WIN32_THREADS_INIT ${CMAKE_USE_WIN32_THREADS_INIT} CACHE STRING "Threads")
+set(CMAKE_USE_PTHREADS_INIT ${CMAKE_USE_PTHREADS_INIT} CACHE STRING "Threads")
+set(CMAKE_HP_PTHREADS_INIT ${CMAKE_HP_PTHREADS_INIT} CACHE STRING "Threads")
 
 # Check for the C++ STL library - need to link it explicitly in
 # some compilation situations
@@ -3228,6 +3073,11 @@ else(NOT BRLCAD_ENABLE_TARGETS)
   endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
 endif(NOT BRLCAD_ENABLE_TARGETS)
 
+# If we're below level 2, we don't need Tcl
+if (NOT BRLCAD_LEVEL2)
+  set(BRLCAD_ENABLE_TCL OFF CACHE BOOL "Disabled due to level 1 build" FORCE)
+endif (NOT BRLCAD_LEVEL2)
+
 # At the start, clear the src/other subdirs list so repeated
 # configures will correctly add the required directories
 set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
@@ -3354,91 +3204,98 @@ endif(NOT BRLCAD_DISABLE_SUMMARY)
 # *******************************************************************
 # ***                      Timestamp Rules                        ***
 # *******************************************************************
-# TODO - As of CMake 2.8.11, the string command has a TIMESTAMP option
-# that may be able to simplify some of the current timestamp system.
-# We would need to be able to require 2.8.11 or newer, so there will
-# be a bit of a wait, but it's something to look into.
-if(NOT BRLCAD_IS_SUBBUILD)
+# Set up rules to print a timestamp string during build
+set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
 
-  # Set up rules to print a timestamp string during build
-  set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
-
-  add_custom_command(
+add_custom_command(
     OUTPUT ${BUILD_DELTA_START}
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT} "${BUILD_DELTA_START}"
+    COMMAND "${CMAKE_COMMAND}" -DSTAMP_FILE=${BUILD_DELTA_START} -P "${BRLCAD_CMAKE_DIR}/scripts/timestamp.cmake"
     COMMENT ""
     )
-  add_custom_target(timestamp ALL
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts${EXE_EXT} \"Build Time:  \"
+add_custom_target(timestamp ALL
+    COMMAND "${CMAKE_COMMAND}" -DMSG=\"Build Time:\" -P "${BRLCAD_CMAKE_DIR}/scripts/printtime.cmake"
     DEPENDS ${BUILD_DELTA_START}
     )
-  set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
-  add_custom_target(buildtimedelta ALL
+set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
+add_custom_target(buildtimedelta ALL
     COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT} final ${BUILD_DELTA_START} ${CONFIG_DELTA_START}
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
     )
-  set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
-endif(NOT BRLCAD_IS_SUBBUILD)
+set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 
-# We want the timestamp to come first, so make ALL targets, depend on
-# timestamp.  Similarly, buildtimedelta needs to depend on every target
-# not excluded from the default build list.
-if(NOT BRLCAD_IS_SUBBUILD)
+#------------------------------------------------------------------------------
+# We want the timestamp to come first, so make all targets depend on timestamp.
+# Similarly, buildtimedelta needs to depend on every target not excluded from
+# the default build list.  Doing this without function overrides for
+# bookkeeping drives a minimum CMake version requirement of 3.7, in order to
+# get the SUBDIRECTORIES and BUILDSYTEM_TARGETS properties.
 
-  # Libraries and executables are fairly straightforward
-  get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
-  get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
-  mark_as_advanced(CMAKE_LIBRARY_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXEC_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_LIBRARY_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_EXEC_TARGET_LIST)
-  foreach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
-    if(TARGET ${ctarget})
-      add_dependencies(${ctarget} timestamp)
-      get_target_property(not_in_all ${ctarget} EXCLUDE_FROM_ALL)
-      get_target_property(not_in_default ${ctarget} EXCLUDE_FROM_DEFAULT_BUILD)
-      if(NOT not_in_all AND NOT not_in_default)
-	add_dependencies(buildtimedelta ${ctarget})
-      endif(NOT not_in_all AND NOT not_in_default)
-    endif(TARGET ${ctarget})
-  endforeach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
+# First, use the SUBDIRECTORIES property to build up a list of all
+# active directories in CMake:
+# https://cmake.org/cmake/help/latest/prop_dir/SUBDIRECTORIES.html
+#
+# We do this because we need to use get_property on them, and get_property will
+# produce an error if we give it a non-CMake processed directory.  As a side
+# benefit, it should also be considerably faster than using FILE_GLOB and
+# trying to trim down the results.
+set(ALL_DIRS)
+get_property(SUBDIRS DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY SUBDIRECTORIES)
+while(SUBDIRS)
+  # TODO - once we require 3.15.7 or greater, use list(POP_FRONT) for this...
+  list(GET SUBDIRS 0 CDIR)
+  list(REMOVE_AT SUBDIRS 0)
+  set(ALL_DIRS ${ALL_DIRS} ${CDIR})
+  get_property(CSUBDIRS DIRECTORY "${CDIR}" PROPERTY SUBDIRECTORIES)
+  set(SUBDIRS ${SUBDIRS} ${CSUBDIRS})
+endwhile(SUBDIRS)
 
-  # For the custom targets, we need to avoid circular dependencies
-  get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
-  mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
-  list(REMOVE_DUPLICATES CMAKE_CUSTOM_TARGET_LIST)
-  foreach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
-    if(NOT ${custtarget} MATCHES "timestamp")
-      add_dependencies(${custtarget} timestamp)
-    endif(NOT ${custtarget} MATCHES "timestamp")
-    if(NOT ${custtarget} MATCHES "buildtimedelta")
-      get_target_property(not_in_all ${custtarget} EXCLUDE_FROM_ALL)
-      get_target_property(not_in_default ${custtarget} EXCLUDE_FROM_DEFAULT_BUILD)
-      if(NOT not_in_all AND NOT not_in_default)
-	add_dependencies(buildtimedelta ${custtarget})
-      endif(NOT not_in_all AND NOT not_in_default)
-    endif(NOT ${custtarget} MATCHES "buildtimedelta")
-  endforeach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
+# Next, for all active directories, collect the list of targets using the
+# BUILDSYSTEM_TARGETS property set on each directory.
 
-  # Theoretical logic to handle external targets - not currently in use
-  get_property(CMAKE_EXTERNAL_TARGET_LIST GLOBAL PROPERTY CMAKE_EXTERNAL_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXTERNAL_TARGET_LIST)
-  if(CMAKE_EXTERNAL_TARGET_LIST)
-    list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
-  endif(CMAKE_EXTERNAL_TARGET_LIST)
-  foreach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
-    get_target_property(target_confcmd ${externaltarget} _EP_CONFIGURE_COMMAND)
-    if(target_confcmd)
-      add_dependencies(${externaltarget} timestamp)
-      add_dependencies(buildtimedelta ${externaltarget})
-    endif(target_confcmd)
-  endforeach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
+# Iterate over all the SUBDIRECTORIES identified directories to build up the
+# comprehensive set.  As target names are unique, we don't need to worry about
+# removing duplicates.  Because we're using the set of all active directories
+# assembled above, this should collect all build targets we need to care about
+# for timestamping purposes.
+set(ALL_TARGETS)
+foreach(ad ${ALL_DIRS})
+  get_property(DIR_TARGETS DIRECTORY "${ad}" PROPERTY BUILDSYSTEM_TARGETS SET)
+  if (DIR_TARGETS)
+    get_property(DIR_TARGETS DIRECTORY "${ad}" PROPERTY BUILDSYSTEM_TARGETS)
+    set(ALL_TARGETS ${ALL_TARGETS} ${DIR_TARGETS})
+  endif (DIR_TARGETS)
+endforeach(ad ${ALL_DIRS})
 
-endif(NOT BRLCAD_IS_SUBBUILD)
+# Now, set up the target dependencies for tiemstamp and buildtimedelta.  These
+# dependencies will produce a build-tool-independent ordering that gives us the
+# timing behavior we want.
+foreach(ctarget ${ALL_TARGETS})
+  if(NOT ${ctarget} MATCHES "timestamp")
+    add_dependencies(${ctarget} timestamp)
+  endif(NOT ${ctarget} MATCHES "timestamp")
+  if(NOT ${ctarget} MATCHES "buildtimedelta")
+    get_target_property(not_in_all ${ctarget} EXCLUDE_FROM_ALL)
+    get_target_property(not_in_default ${ctarget} EXCLUDE_FROM_DEFAULT_BUILD)
+    if(NOT not_in_all AND NOT not_in_default)
+      add_dependencies(buildtimedelta ${ctarget})
+    endif(NOT not_in_all AND NOT not_in_default)
+  endif(NOT ${ctarget} MATCHES "buildtimedelta")
+endforeach(ctarget ${ALL_TARGETS})
 
+#------------------------------------------------------------------------------
+# Use the set of all directories assembled above to also set up distclean rules.
+# This eliminates the need to override add_subdirectory.  Needs CMake 3.7 for
+# BINARY_DIR property.
+foreach(ad ${ALL_DIRS})
+  get_property(BDIR DIRECTORY "${ad}" PROPERTY BINARY_DIR)
+  DISTCLEAN("${BDIR}/CMakeFiles")
+  DISTCLEAN("${BDIR}/cmake_install.cmake")
+  foreach(clearpattern ${DISTCLEAN_OUTFILES})
+    DISTCLEAN("${BDIR}/${clearpattern}")
+  endforeach(clearpattern ${DISTCLEAN_OUTFILES})
+endforeach(ad ${ALL_DIRS})
 
-# TODO - the below logic will have to be rethought in a superbuild setup...
-
+#------------------------------------------------------------------------------
 # To set correct install paths for CMake at build time, rather than CMake
 # time, some rather special logic is necessary - a build target that needs
 # to be run when the current build type changes, and introspective scripting
@@ -3457,7 +3314,9 @@ if(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
   # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
   string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
   configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake")
   configure_file("${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in" "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake")
   if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
     file(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
   endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH")
@@ -3482,6 +3341,7 @@ endif(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
 if(NOT BRLCAD_IS_SUBBUILD)
 
   configure_file("${BRLCAD_CMAKE_DIR}/source_archive_setup.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake")
 
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
   set(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
@@ -3625,9 +3485,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 
   configure_file("${BRLCAD_CMAKE_DIR}/BRLCAD_CPackOptions.cmake.in" "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
   set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 
   include(CPack)
+
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackConfig.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CPackSourceConfig.cmake")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/DartConfiguration.tcl")
 
   # Some files to ignore for distcheck.  For this case
   # only, we add CMakeLists.txt (others are handled
@@ -3766,6 +3631,7 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file("${BRLCAD_CMAKE_DIR}/distclean.cmake.in" "${BRLCAD_BINARY_DIR}/distclean.cmake" @ONLY)
+DISTCLEAN("${BRLCAD_BINARY_DIR}/distclean.cmake")
 if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_custom_target(distclean
     COMMAND ${CMAKE_COMMAND} -P "${BRLCAD_BINARY_DIR}/distclean.cmake"
@@ -3814,6 +3680,11 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND false
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
+
+# NOTE: set to NEW and remove slashes after 3.19 is required
+if(POLICY CMP0110)
+  cmake_policy(SET CMP0110 OLD)
+endif(POLICY CMP0110)
 add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 
 # Local Variables:

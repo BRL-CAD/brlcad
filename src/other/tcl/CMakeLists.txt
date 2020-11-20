@@ -37,7 +37,7 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 # Set CMake project name
 project(TCL)
@@ -173,7 +173,7 @@ check_c_compiler_flag(-fPIC FPIC_COMPILER_FLAG)
 # support for threads.
 include(CheckFunctionExists)
 function(check_extra_pthread_funcs)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+  set(CMAKE_REQUIRED_LIBRARIES Threads::Threads)
   check_function_exists(pthread_mutex_init HAVE_PTHREAD_MUTEX_INIT)
   if (HAVE_PTHREAD_MUTEX_INIT)
     add_definitions(-DHAVE_PTHREAD_MUTEX_INIT=1)
@@ -1302,7 +1302,7 @@ set(TCL_LINK_LIBS
   ${GHBN_LIBRARY}
   ${ZLIB_LIBRARIES}
   ${M_LIBRARY}
-  ${CMAKE_THREAD_LIBS_INIT}
+  Threads::Threads
  )
 
 add_library(tcl ${TCL_SRCS})

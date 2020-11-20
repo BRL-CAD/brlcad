@@ -608,17 +608,18 @@ if test ! "x${ret}" = "x0" ; then
     "$RT"
     $ECHO
     $ECHO "ERROR:  RT does not seem to work as expected"
-    $ECHO "        (output was [$out])"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
 # sanity check: make sure $CMP runs
-out=`echo "" | eval \"$CMP\" - - 2>&1`
+out=`eval \"$CMP\" - - 2>&1 <<EOF
+EOF`
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  CMP does not seem to work as expected"
-    $ECHO "        (output was [$out])"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
@@ -627,7 +628,7 @@ out=`eval \"$ELP\" 0 2>&1`
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"
-    $ECHO "        (output was [$out])"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
@@ -1140,7 +1141,7 @@ EOF
 	ls -la *.pix*
     fi
     $VERBOSE_ECHO "DEBUG: $CMP $PIX/${bench_testname}.pix ${bench_testname}.pix"
-    cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1`"
+    cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1 | grep pixels`"
     ret=$?
 
     $ECHO "$cmp_result"
