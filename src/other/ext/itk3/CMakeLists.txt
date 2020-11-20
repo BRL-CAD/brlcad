@@ -148,9 +148,11 @@ Tcl_Check_Include_File(sys/wait.h USE)
 Tcl_Check_Include_File(unistd.h)
 Tcl_Check_Include_File(values.h USE)
 
-if(TK_GRAPHICS_SYSTEM STREQUAL "x11")
+# TODO - for now, we need X11 on both *nix and Mac platforms.
+# Eventually we'll need to re-enable support for Aqua on Mac...
+if(NOT WIN32)
   find_package(X11)
-endif(TK_GRAPHICS_SYSTEM STREQUAL "x11")
+endif()
 
 set(ITK_SRCS
   generic/itkStubInit.c
