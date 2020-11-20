@@ -38,11 +38,6 @@ int main(int argc, const char **argv)
     std::string tcllib2_new  = std::string("= \"") + std::string(CMAKE_INSTALL_PREFIX) + std::string(sep) + std::string(LIB_DIR) + std::string("\";");
     strings.push_back(tcllib2_new);
 
-    std::regex tclpkg_regex("TCL_PACKAGE_PATH");
-    regexes.push_back(tclpkg_regex);
-    std::string tclpkg_new  = std::string("\"") + std::string(CMAKE_INSTALL_PREFIX) + std::string(sep) + std::string(LIB_DIR) + std::string(sep) + std::string(PKG_DIR) + std::string("\"");
-    strings.push_back(tclpkg_new);
-
     std::regex run_libdir_regex("CFG_RUNTIME_LIBDIR");
     regexes.push_back(run_libdir_regex);
     std::string run_libdir_new  = std::string("\"") + std::string(CMAKE_INSTALL_PREFIX) + std::string(sep) + std::string(LIB_DIR) + std::string("\"");
