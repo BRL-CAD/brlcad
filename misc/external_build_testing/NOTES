@@ -1,8 +1,0 @@
-Per https://cmake.org/pipermail/cmake/2019-June/069643.html investigate
-whether we can use git apply in lieu of porting patch to Windows...
-
-If we're converting to git anyway, that would be considerably simpler.
-Just need to make sure we can use git apply on vanilla source hierarchies
-that aren't themselves git repositories...
-
-An example use:  https://cmake.org/pipermail/cmake/2019-June/069669.html

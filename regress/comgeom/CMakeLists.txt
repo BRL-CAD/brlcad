@@ -1,7 +1,7 @@
 
 if (SH_EXEC AND TARGET mged AND TARGET asc2g)
 
-  add_test(NAME regress-comgeom COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/comgeom.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_ADD_TEST(NAME regress-comgeom COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/comgeom.sh" ${CMAKE_SOURCE_DIR})
   BRLCAD_REGRESSION_TEST(regress-comgeom "mged;asc2g;vdeck;comgeom-g" TEST_DEFINED)
 
 endif (SH_EXEC AND TARGET mged AND TARGET asc2g)

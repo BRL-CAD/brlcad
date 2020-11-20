@@ -1,7 +1,7 @@
 
 if (SH_EXEC AND TARGET mged)
 
-  add_test(NAME regress-bots COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/bots.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_ADD_TEST(NAME regress-bots COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/bots.sh" ${CMAKE_SOURCE_DIR})
   BRLCAD_REGRESSION_TEST(regress-bots "mged;pixdiff;rt" TEST_DEFINED)
 
 endif (SH_EXEC AND TARGET mged)

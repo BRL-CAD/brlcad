@@ -79,13 +79,6 @@ set(misc_ignore_files
   check/volume.sh
   check/gap.sh
   clang-static-analyzer-run.sh
-  external_build_testing/CMakeLists.txt
-  external_build_testing/CMake/buildpath_replace.cxx.in
-  external_build_testing/CMake/Path_Setup.cmake
-  external_build_testing/CMake/rpath_replace.cxx.in
-  external_build_testing/CMake/RPath_Setup.cmake
-  external_build_testing/CMake/ExternalProject_Target.cmake
-  external_build_testing/NOTES
   flawfinder
   hawaii_islands.sh
   jove.emacs

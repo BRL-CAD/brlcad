@@ -107,7 +107,8 @@ static const char *p_submodel[] = {
 
 
 static const char *p_vol[] = {
-    "Enter name of file containing voxel data: ",
+    "Take data from file or database binary object [f|o]: ",
+    "Enter name of file/object: ",
     "Enter X, Y, Z dimensions of file (number of cells): ",
     "Enter Y dimension of file (number of cells): ",
     "Enter Z dimension of file (number of cells): ",
@@ -998,15 +999,23 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)vol;
     vol->magic = RT_VOL_INTERNAL_MAGIC;
 
-    bu_strlcpy(vol->file, cmd_argvs[3], sizeof(vol->file));
-    vol->xdim = atoi(cmd_argvs[4]);
-    vol->ydim = atoi(cmd_argvs[5]);
-    vol->zdim = atoi(cmd_argvs[6]);
-    vol->lo = atoi(cmd_argvs[7]);
-    vol->hi = atoi(cmd_argvs[8]);
-    vol->cellsize[0] = atof(cmd_argvs[9]) * gedp->ged_wdbp->dbip->dbi_local2base;
-    vol->cellsize[1] = atof(cmd_argvs[10]) * gedp->ged_wdbp->dbip->dbi_local2base;
-    vol->cellsize[2] = atof(cmd_argvs[11]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    bu_strlcpy(vol->name, cmd_argvs[4], sizeof(vol->name));
+    vol->xdim = atoi(cmd_argvs[5]);
+    vol->ydim = atoi(cmd_argvs[6]);
+    vol->zdim = atoi(cmd_argvs[7]);
+    vol->lo = atoi(cmd_argvs[8]);
+    vol->hi = atoi(cmd_argvs[9]);
+    vol->cellsize[0] = atof(cmd_argvs[10]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    vol->cellsize[1] = atof(cmd_argvs[11]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    vol->cellsize[2] = atof(cmd_argvs[12]) * gedp->ged_wdbp->dbip->dbi_local2base;
+
+    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
+  vol->datasrc = RT_VOL_SRC_FILE;
+    else if (*cmd_argvs[3] == 'o' || *cmd_argvs[3] == 'O')
+  vol->datasrc = RT_VOL_SRC_OBJ;
+    else
+  return GED_ERROR;
+
     MAT_IDN(vol->mat);
 
     return GED_OK;
@@ -3206,7 +3215,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	menu = p_submodel;
 	fn_in = submodel_in;
     } else if (BU_STR_EQUAL(argv[2], "vol")) {
-	nvals = 9;
+	nvals = 10;
 	menu = p_vol;
 	fn_in = vol_in;
     } else if (BU_STR_EQUAL(argv[2], "hf")) {

@@ -23,6 +23,7 @@ set(embedded_licenses
   gecode.txt
   gdal_gcv_plugin1.txt
   gdal_gcv_plugin2.txt
+  gdiam.txt
   halfedge.txt
   humanize.txt
   hv3.txt
@@ -70,6 +71,7 @@ set(embedded_licenses
   tkcon.txt
   tri_pt.txt
   uce_dirent.txt
+  vds.txt
   whereami.txt
   winmmap.txt
   x24.txt

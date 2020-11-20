@@ -1,7 +1,7 @@
 
 if (SH_EXEC AND TARGET mged)
 
-  add_test(NAME regress-nirt COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/nirt.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_ADD_TEST(NAME regress-nirt COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/nirt.sh" ${CMAKE_SOURCE_DIR})
   BRLCAD_REGRESSION_TEST(regress-nirt "mged;nirt" TEST_DEFINED)
 
 endif (SH_EXEC AND TARGET mged)
