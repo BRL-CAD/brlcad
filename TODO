@@ -174,8 +174,34 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* extract a skin or other exterior surface for a given model.  3 options:
+  1. Implement a "shrinkwrap" feature that calculates a concave hull
+  2. Shoot rays from outside, construct exterior mesh based on hits
+     (akin to marching cubes, a surface reconstruction)
+  3. Shoot rays from outside at exterior vertices, retain all mesh faces
+     and objects encountered (i.e., not reconstructed, but extracted)
+
 * RTAREA
 
+  * add an option to rtarea for onehit.  this is probably best as an
+    option that reports the requested objects only and then has a
+    verbose option for the more detailed hiearchical report that is
+    currently produced.
+
+  * verify rtarea.  There are reports that the rtarea
+    command may have a bug in its calculations.  This needs to be
+    investigated.
+
+  * review and fix rtarea's taxonomy for describing
+    presented/projected areas.  users expect presented area to
+    represent what is currently referred to as exposed area.  may make
+    more sense to introduce a different terms for other shotline
+    encounters.
+
+  * make rtarea display a cross-hair and perhaps coordinates for the
+    center of area if run from within mged.
+
+=======
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
     verbose option for the more detailed hiearchical report that is
@@ -211,6 +237,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * procedural studio box generation allowing for specification of size,
   shape, material, and lighting characteristics
 
+>>>>>>> .r77755
 * verify all of the src/util utilities behave correctly on Windows
   with respect to mode (i.e. correctly using setmode/O_BINARY when
   performing file I/O.)
