@@ -145,9 +145,9 @@ ext_build_rpath()
 # this to 1 changes that, but at the expense of running the build step every
 # time.  This may be fast if there is nothing to update in the project, but it
 # will be slower than skipping the step completely.
-if (NOT DEFINED EXTERNAL_BUILD_UPDATE)
-  set(EXTERNAL_BUILD_UPDATE 0)
-endif (NOT DEFINED EXTERNAL_BUILD_UPDATE)
+if (NOT DEFINED EXT_BUILD_ALWAYS)
+  set(EXT_BUILD_ALWAYS 0)
+endif (NOT DEFINED EXT_BUILD_ALWAYS)
 
 # Use this variable to key both CMake messages and tools like rpath_replace
 if(NOT DEFINED EXTPROJ_VERBOSE)
