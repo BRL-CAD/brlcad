@@ -63,6 +63,7 @@ function(fcfgcpy ftype outvar extproj root ofile dir tfile)
   if (CMAKE_CONFIGURATION_TYPES)
     add_custom_command(
       OUTPUT "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${rdir}/${tfile}"
+      COMMAND ls -lR ${CMAKE_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -DFTYPE=${ftype} -DSRC=${root}/${rdir}/${ofile} -DDEST=${CMAKE_BINARY_DIR}/$<CONFIG>/${rdir}/${tfile} -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
       DEPENDS ${extproj}
       )
@@ -270,15 +271,29 @@ function(ET_RPath OFILE)
   endif (NOT DEFINED CMAKE_BUILD_RPATH)
   # Note - proper quoting for install(CODE) is extremely important for CPack, see
   # https://stackoverflow.com/a/48487133
-  install(CODE "
-  message(\"OLD_RPATH: ${CMAKE_BUILD_RPATH}\")
-  message(\"NEW_RPATH: ${NEW_RPATH}\")
-  execute_process(COMMAND otool -l \${CMAKE_INSTALL_PREFIX}/${OFILE})
-  file(RPATH_CHANGE
-    FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\"
-    OLD_RPATH \"${CMAKE_BUILD_RPATH}\"
-    NEW_RPATH \"${NEW_RPATH}\")
-  ")
+  if (APPLE)
+    install(CODE "
+    message(\"OLD_RPATH: ${CMAKE_BUILD_RPATH}\")
+    message(\"NEW_RPATH: ${NEW_RPATH}\")
+    set(WPATH \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\")
+    execute_process(COMMAND ls -l \${CMAKE_INSTALL_PREFIX}/${OFILE})
+    execute_process(COMMAND chmod u+w \${CMAKE_INSTALL_PREFIX}/${OFILE})
+    execute_process(COMMAND ls -l \${CMAKE_INSTALL_PREFIX}/${OFILE})
+    execute_process(COMMAND otool -l \"\${WPATH}\" OUTPUT_VARIABLE OTOOL_OUT)
+    message(\"OTOOL_OUT: \${OTOOL_OUT}\")
+    message(\"install_name_tool -change ${CMAKE_BUILD_RPATH} ${NEW_RPATH} \${WPATH}\")
+    execute_process(COMMAND install_name_tool -change \"${CMAKE_BUILD_RPATH}\" \"${NEW_RPATH}\" \"\${WPATH}\")
+    execute_process(COMMAND otool -l \"\${WPATH}\" OUTPUT_VARIABLE OTOOL_OUT2)
+    message(\"OTOOL_OUT2: \${OTOOL_OUT2}\")
+    ")
+  else (APPLE)
+    install(CODE "
+    file(RPATH_CHANGE
+      FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\"
+      OLD_RPATH \"${CMAKE_BUILD_RPATH}\"
+      NEW_RPATH \"${NEW_RPATH}\")
+    ")
+  endif (APPLE)
 endfunction(ET_RPath)
 
 
