@@ -272,6 +272,7 @@ function(ET_RPath OFILE)
   # Note - proper quoting for install(CODE) is extremely important for CPack, see
   # https://stackoverflow.com/a/48487133
   if (APPLE)
+    # install_name_tool works more reliably than file(RPATH_CHANGE) on the Mac...
     install(CODE "
     message(\"OLD_RPATH: ${CMAKE_BUILD_RPATH}\")
     message(\"NEW_RPATH: ${NEW_RPATH}\")
@@ -281,10 +282,14 @@ function(ET_RPath OFILE)
     execute_process(COMMAND ls -l \${CMAKE_INSTALL_PREFIX}/${OFILE})
     execute_process(COMMAND otool -l \"\${WPATH}\" OUTPUT_VARIABLE OTOOL_OUT)
     message(\"OTOOL_OUT: \${OTOOL_OUT}\")
-    message(\"install_name_tool -change ${CMAKE_BUILD_RPATH} ${NEW_RPATH} \${WPATH}\")
-    execute_process(COMMAND install_name_tool -change \"${CMAKE_BUILD_RPATH}\" \"${NEW_RPATH}\" \"\${WPATH}\")
+    message(\"install_name_tool -delete_rpath ${CMAKE_BUILD_RPATH} \${WPATH}\")
+    execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BUILD_RPATH}\" \"\${WPATH}\")
     execute_process(COMMAND otool -l \"\${WPATH}\" OUTPUT_VARIABLE OTOOL_OUT2)
     message(\"OTOOL_OUT2: \${OTOOL_OUT2}\")
+    message(\"install_name_tool -add_rpath ${NEW_RPATH} \${WPATH}\")
+    execute_process(COMMAND install_name_tool -add_rpath \"${NEW_RPATH}\" \"\${WPATH}\")
+    execute_process(COMMAND otool -l \"\${WPATH}\" OUTPUT_VARIABLE OTOOL_OUT3)
+    message(\"OTOOL_OUT3: \${OTOOL_OUT3}\")
     ")
   else (APPLE)
     install(CODE "
