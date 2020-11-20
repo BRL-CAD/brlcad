@@ -45,8 +45,6 @@ string(REGEX REPLACE \"\${DNAME}$\" \"\" DDIR \"\${DEST}\")
 file(COPY \"\${SRC}\" DESTINATION \"\${DDIR}\")
 ")
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E cat "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake")
-
 # When staging files in the build directory, we have to be aware of multiple
 # configurations.  This is done post-ExternalProject build, at the parent build
 # time, so it needs to be a custom command. Until add_custom_command outputs
