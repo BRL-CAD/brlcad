@@ -51,6 +51,12 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+
 if (NOT DEFINED BIN_DIR)
   set(BIN_DIR bin)
 endif (NOT DEFINED BIN_DIR)
@@ -88,7 +94,11 @@ set (REGEX_SOURCES
 
 add_library(regex SHARED ${REGEX_SOURCES})
 set_target_properties(regex PROPERTIES OUTPUT_NAME regex_brl)
-set_target_properties(regex PROPERTIES VERSION 1.0.4 SOVERSION 1)
+if (OPENBSD)
+  set_target_properties(regex PROPERTIES VERSION 1.0)
+else (OPENBSD)
+  set_target_properties(regex PROPERTIES VERSION 1.0.4 SOVERSION 1)
+endif (OPENBSD)
 if (MSVC)
   set_property(TARGET regex APPEND PROPERTY COMPILE_DEFINITIONS "REGEX_DLL_EXPORTS")
 endif (MSVC)
