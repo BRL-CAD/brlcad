@@ -239,6 +239,12 @@ if(MSVC)
 
 endif(MSVC)
 
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+
 # TODO - need to set these based on the feature flags...
 set(BRLCAD_LEVEL2 ON)
 set(BRLCAD_LEVEL3 ON)
