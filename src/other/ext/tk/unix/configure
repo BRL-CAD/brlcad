@@ -5381,7 +5381,7 @@ fi
 
 	    LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
 	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so${SHLIB_VERSION}'
-	    LDFLAGS="-Wl,-export-dynamic"
+	    LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
 	    CFLAGS_OPTIMIZE="-O2"
 	    if test "${TCL_THREADS}" = "1"; then
 
