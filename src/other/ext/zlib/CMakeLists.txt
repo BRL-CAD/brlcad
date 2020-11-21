@@ -177,7 +177,13 @@ endif(BUILD_STATIC_LIBS)
 set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
 set_target_properties(zlib PROPERTIES SOVERSION 1)
 
-if(NOT CYGWIN)
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+
+if(NOT CYGWIN AND NOT OPENBSD)
   # This property causes shared libraries on Linux to have the full version
   # encoded into their final filename.  We disable this on Cygwin because
   # it causes cygz-${ZLIB_FULL_VERSION}.dll to be created when cygz.dll
@@ -187,6 +193,10 @@ if(NOT CYGWIN)
   # the DLL comes from the resource file win32/zlib1.rc
   set_target_properties(zlib PROPERTIES VERSION ${ZLIB_FULL_VERSION})
 endif()
+
+if (OPENBSD)
+  set_target_properties(zlib PROPERTIES VERSION 1.2)
+endif (OPENBSD)
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
   if(BUILD_SHARED_LIBS)
