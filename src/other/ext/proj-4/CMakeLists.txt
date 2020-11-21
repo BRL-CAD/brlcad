@@ -21,17 +21,28 @@ if (POLICY CMP0087)
   cmake_policy(SET CMP0087 OLD)
 endif (POLICY CMP0087)
 
+
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+
 #################################################################################
 set(PROJ_VERSION_MAJOR 4)
 set(PROJ_VERSION_MINOR 9)
 set(PROJ_VERSION_PATCH 3)
-set(PROJ_VERSION ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH})
+if (OPENBSD)
+  set(PROJ_VERSION ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR})
+else (OPENBSD)
+  set(PROJ_VERSION ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH})
+  set(PROJ_API_VERSION "12")
+  set(PROJ_BUILD_VERSION "${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_API_VERSION}")
+endif (OPENBSD)
 set(VERSION ${PROJ_VERSION})
 if(WIN32)
   set(PROJ_ABI_VERSION "${PROJ_VERSION_MAJOR}_${PROJ_VERSION_MINOR}")
 endif(WIN32)
-set(PROJ_API_VERSION "12")
-set(PROJ_BUILD_VERSION "${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_API_VERSION}")
 
 #################################################################################
 if(NOT BIN_DIR)
