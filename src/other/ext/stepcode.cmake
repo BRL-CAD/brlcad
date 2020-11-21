@@ -17,7 +17,11 @@ if(BRLCAD_SC_BUILD)
   set(SC_MAJOR_VERSION 2)
   set(SC_MINOR_VERSION 0)
   set(SC_PATCH_VERSION 0)
-  set(SC_VERSION ${SC_MAJOR_VERSION}.${SC_MINOR_VERSION}.${SC_PATCH_VERSION})
+  if (OPENBSD)
+    set(SC_VERSION ${SC_MAJOR_VERSION}.${SC_MINOR_VERSION})
+  else (OPENBSD)
+    set(SC_VERSION ${SC_MAJOR_VERSION}.${SC_MINOR_VERSION}.${SC_PATCH_VERSION})
+  endif (OPENBSD)
 
   if (MSVC)
     set(SC_PREFIX "")
@@ -59,30 +63,34 @@ if(BRLCAD_SC_BUILD)
   # Tell the parent build about files and libraries
   set(STEPCODE_LIBS base express stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
-    set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    if (APPLE)
-      set(SYMLINK_2 ${SC_PREFIX}${SCLIB}.${SC_MAJOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    else (APPLE)
-      set(SYMLINK_2 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.${SC_MAJOR_VERSION})
-    endif (APPLE)
+    if (NOT OPENBSD)
+      set(SYMLINK_1 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
+      if (APPLE)
+	set(SYMLINK_2 ${SC_PREFIX}${SCLIB}.${SC_MAJOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
+      else (APPLE)
+	set(SYMLINK_2 ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.${SC_MAJOR_VERSION})
+      endif (APPLE)
+    endif (NOT OPENBSD)
     ExternalProject_Target(SHARED ${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
       ${SC_PREFIX}${SCLIB}${SC_SUFFIX}
       SYMLINKS ${SYMLINK_1};${SYMLINK_2}
-      LINK_TARGET ${SC_PREFIX}${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      LINK_TARGET ${SYMLINK_1}
       RPATH
       )
   endforeach(SCLIB ${STEPCODE_LIBS})
   # libexppp is a special naming case, to avoid conflict with the exppp executable
-  set(SYMLINK_1 libexppp${CMAKE_SHARED_LIBRARY_SUFFIX})
-  if (APPLE)
-    set(SYMLINK_2 libexppp.${SC_MAJOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
-  else (APPLE)
-    set(SYMLINK_2 libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}.${SC_MAJOR_VERSION})
-  endif (APPLE)
+  if (NOT OPENBSD)
+    set(SYMLINK_1 libexppp${CMAKE_SHARED_LIBRARY_SUFFIX})
+    if (APPLE)
+      set(SYMLINK_2 libexppp.${SC_MAJOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    else (APPLE)
+      set(SYMLINK_2 libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}.${SC_MAJOR_VERSION})
+    endif (APPLE)
+  endif (NOT OPENBSD)
   ExternalProject_Target(SHARED libexppp STEPCODE_BLD ${STEPCODE_INSTDIR}
     libexppp${SC_SUFFIX}
     SYMLINKS ${SYMLINK_1};${SYMLINK_2}
-    LINK_TARGET libexppp${CMAKE_SHARED_LIBRARY_SUFFIX}
+    LINK_TARGET ${SYMLINK_1}
     RPATH
     )
   set(STEPCODE_EXECS check-express exppp exp2cxx)

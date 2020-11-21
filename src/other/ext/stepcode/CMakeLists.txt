@@ -50,6 +50,12 @@ if (POLICY CMP0087)
   cmake_policy(SET CMP0087 OLD)
 endif (POLICY CMP0087)
 
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+
 # SC version
 SET(SC_VERSION_MAJOR 0)
 if(NOT SC_IS_SUBBUILD)

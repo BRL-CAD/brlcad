@@ -99,7 +99,11 @@ MACRO(SC_ADDLIB libname srcslist libslist)
           target_link_libraries(${libname} ${libslist})
           DEFINE_DLL_IMPORTS(${libname} "${libslist}" )
       endif(NOT "${libs}" MATCHES "NONE")
-      SET_TARGET_PROPERTIES(${libname} PROPERTIES VERSION ${SC_ABI_VERSION} SOVERSION ${SC_ABI_SOVERSION} )
+      if(OPENBSD)
+	SET_TARGET_PROPERTIES(${libname} PROPERTIES VERSION ${SC_VERSION} )
+      else(OPENBSD)
+	SET_TARGET_PROPERTIES(${libname} PROPERTIES VERSION ${SC_ABI_VERSION} SOVERSION ${SC_ABI_SOVERSION} )
+      endif(OPENBSD)
       if(NOT ${LIBNAME_UPPER}_NO_INSTALL AND NOT ${LIBNAME_UPPER}_TESTABLE)
 	install(TARGETS ${libname}
 	  RUNTIME DESTINATION ${BIN_DIR}
