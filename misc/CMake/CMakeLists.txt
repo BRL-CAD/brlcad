@@ -46,7 +46,6 @@ set(cmake_ignore_files
   FindTCL.cmake
   FindUTAHRLE.cmake
   FindUUID.cmake
-  FindVDS.cmake
   FindWix.cmake
   FindX11.cmake
   FindXMLLINT.cmake
@@ -85,6 +84,7 @@ set(cmake_ignore_files
   compat/test_strtok_r.c
   configure_prefix.sh
   configure_suffix.sh
+  date_delta.cpp
   distcheck_in_src_dir.cmake.in
   distcheck_no_tcl.cmake.in
   distcheck_repo_verify.cmake.in
@@ -95,6 +95,8 @@ set(cmake_ignore_files
   multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
+  scripts/timestamp.cmake
+  scripts/printtime.cmake
   )
 CMAKEFILES(${cmake_ignore_files})
 

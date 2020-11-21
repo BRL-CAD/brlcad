@@ -48,6 +48,10 @@ PLUGIN_SETUP(ged-brep ged)
 CMAKEFILES(
   CMakeLists.txt
   ${BREP_SRCS}
+  dplot_parser.lemon
+  dplot_reader.c
+  dplot_reader.h
+  dplot_scanner.perplex
   )
 
 # Local Variables:

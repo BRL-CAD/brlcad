@@ -162,10 +162,6 @@ do
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";
                                   shift;;
-     --enable-spsr)                options="$options -DBRLCAD_SPSR=BUNDLED";
-                                  shift;;
-     --disable-spsr)                options="$options -DBRLCAD_SPSR=SYSTEM";
-                                  shift;;
      --enable-scl)                options="$options -DBRLCAD_SC=BUNDLED";
                                   shift;;
      --disable-scl)                options="$options -DBRLCAD_SC=SYSTEM";
@@ -178,17 +174,9 @@ do
                                   shift;;
      --disable-step-class-libraries)                options="$options -DBRLCAD_SC=SYSTEM";
                                   shift;;
-     --enable-vds)                options="$options -DBRLCAD_VDS=BUNDLED";
-                                  shift;;
-     --disable-vds)                options="$options -DBRLCAD_VDS=SYSTEM";
-                                  shift;;
      --enable-openscenegraph)                options="$options -DBRLCAD_OSG=BUNDLED";
                                   shift;;
      --disable-openscenegraph)                options="$options -DBRLCAD_OSG=SYSTEM";
-                                  shift;;
-     --enable-gdiam)                options="$options -DBRLCAD_GDIAM=BUNDLED";
-                                  shift;;
-     --disable-gdiam)                options="$options -DBRLCAD_GDIAM=SYSTEM";
                                   shift;;
      --enable-proj4)                options="$options -DBRLCAD_PROJ4=BUNDLED";
                                   shift;;

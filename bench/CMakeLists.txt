@@ -15,6 +15,7 @@ BRLCAD_ADDEXEC(bark "${BARK_SOURCES}" libbu NO_STRICT NO_INSTALL TEST_USESDATA)
 
 configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/benchmark" COPYONLY)
 install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/benchmark" DESTINATION ${BIN_DIR})
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/benchmark")
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
@@ -47,7 +48,7 @@ CMAKEFILES(
 
 if(SH_EXEC AND TARGET m35.g)
   # CTest enabled short run of the benchmark suite
-  add_test(NAME benchmark COMMAND ${SH_EXEC} "$<TARGET_FILE_DIR:bark>/benchmark" run TIMEFRAME=1)
+  BRLCAD_ADD_TEST(NAME benchmark COMMAND ${SH_EXEC} "$<TARGET_FILE_DIR:bark>/benchmark" run TIMEFRAME=1)
   set_tests_properties(benchmark PROPERTIES LABELS "Benchmark")
   add_custom_target(benchmark-check
     COMMAND ${CMAKE_CTEST_COMMAND} -L Benchmark --output-on-failure

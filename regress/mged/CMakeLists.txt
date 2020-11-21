@@ -98,7 +98,7 @@ if (TARGET mged)
 
   # Original shell based test
   if (SH_EXEC)
-    add_test(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/mged.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_ADD_TEST(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/mged.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-mged "mged;rtarea;rt;rtcheck" TEST_DEFINED)
   endif (SH_EXEC)
 

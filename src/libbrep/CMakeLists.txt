@@ -49,18 +49,6 @@ set(LIBBREP_SOURCES
   tools/util.cpp
   )
 
-set(libbrep_ignored_files
-  tools/tools.h
-  brep_except.h
-  cdt/cdt.h
-  cdt/mesh.h
-  cdt/RTree.h
-  PullbackCurve.h
-  shape_recognition/shape_recognition.h
-  shape_recognition/torus.cpp
-  )
-CMAKEFILES(${libbrep_ignored_files})
-
 BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
@@ -72,7 +60,19 @@ endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  PullbackCurve.h
+  brep_defines.h
+  brep_except.h
+  cdt/RTree.h
+  cdt/cdt.h
+  cdt/mesh.h
+  debug_plot.h
+  shape_recognition/shape_recognition.h
+  shape_recognition/torus.cpp
+  tools/tools.h
+  )
 
 # Local Variables:
 # tab-width: 8

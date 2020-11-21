@@ -11,12 +11,15 @@ string(REPLACE " " "%20" DOCBOOK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
 
 # Common xsl for all outputs
 configure_file(brlcad-common.xsl.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-common.xsl)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad-common.xsl")
 
 # Fonts definition
 configure_file(brlcad-fonts.xsl.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-fonts.xsl)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad-fonts.xsl")
 
 # Wordpress
 configure_file(wordpress.xsl.in ${CMAKE_CURRENT_BINARY_DIR}/wordpress.xsl)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/wordpress.xsl")
 
 # Make sure distcheck knows about all files in directory
 set(ignore_files

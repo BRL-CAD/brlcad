@@ -37,13 +37,13 @@
 
 BRLCAD_ADDEXEC(bg_obr obr.c "libbg;libbn;libbu" TEST)
 
-#add_test(NAME bg_obr_simple			COMMAND bg_obr) # Default points
+#BRLCAD_ADD_TEST(NAME bg_obr_simple			COMMAND bg_obr) # Default points
 
 
 #  ************ polygon.c tests ***********
 BRLCAD_ADDEXEC(bg_polygon_triangulate polygon_triangulate.c "libbg;libbn;libbu" TEST)
 
-add_test(NAME bg_polygon_triangulate	    COMMAND bg_polygon_triangulate)
+BRLCAD_ADD_TEST(NAME bg_polygon_triangulate	    COMMAND bg_polygon_triangulate)
 
 
 #  ************ chull.c tests ***********
@@ -61,17 +61,17 @@ BRLCAD_ADDEXEC(bg_chull3d chull3d.c "libbg;libbn;libbu" TEST)
 
 BRLCAD_ADDEXEC(bg_lseg_lseg_dist lseg_lseg.c "libbg;libbn;libbu" TEST)
 
-add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
+BRLCAD_ADD_TEST(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
 
 #  ************ lseg_lseg.c tests ***********
 
 BRLCAD_ADDEXEC(bg_lseg_pt_dist lseg_pt.c "libbg;libbn;libbu" TEST)
-add_test(NAME bg_lseg_pt_dist_case0  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,0,0 0,0,0 0)
-add_test(NAME bg_lseg_pt_dist_case1  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -5,-5,-5 -5,-5,-5, 0)
-add_test(NAME bg_lseg_pt_dist_case2  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,5,5 5,5,5, 0)
-add_test(NAME bg_lseg_pt_dist_case3  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -10,-5,-10 -5,-5,-5 7.07107 )
-add_test(NAME bg_lseg_pt_dist_case4  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,10,10 5,5,5 7.07107)
-add_test(NAME bg_lseg_pt_dist_case5  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,-5,-5 -3.33333,-3.33333,-3.33333 4.08248)
+BRLCAD_ADD_TEST(NAME bg_lseg_pt_dist_case0  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,0,0 0,0,0 0)
+BRLCAD_ADD_TEST(NAME bg_lseg_pt_dist_case1  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -5,-5,-5 -5,-5,-5, 0)
+BRLCAD_ADD_TEST(NAME bg_lseg_pt_dist_case2  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,5,5 5,5,5, 0)
+BRLCAD_ADD_TEST(NAME bg_lseg_pt_dist_case3  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -10,-5,-10 -5,-5,-5 7.07107 )
+BRLCAD_ADD_TEST(NAME bg_lseg_pt_dist_case4  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,10,10 5,5,5 7.07107)
+BRLCAD_ADD_TEST(NAME bg_lseg_pt_dist_case5  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,-5,-5 -3.33333,-3.33333,-3.33333 4.08248)
 
 #  ************ tri_ray.c tests ***********
 
@@ -94,17 +94,17 @@ BRLCAD_ADDEXEC(bg_tri_tri_isect_coplanar tri_tri_isect_coplanar.cpp "libbg;libbn
 # TODO - need some tests with floating point vertices that are down around the EPSILON threshold - that's
 # where the NEAR_ZERO components of the bg_tri_tri_isect_coplanar logic become important.
 
-add_test(NAME bg_tri_tri_isect_coplanar_null_noarea   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0  0)
-add_test(NAME bg_tri_tri_isect_coplanar_vertex_noarea COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        0  1)
-add_test(NAME bg_tri_tri_isect_coplanar_edge_noarea   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        0  1)
-add_test(NAME bg_tri_tri_isect_coplanar_full_noarea   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    0  1)
-add_test(NAME bg_tri_tri_isect_coplanar_null_area   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  1  0)
-add_test(NAME bg_tri_tri_isect_coplanar_vertex_area COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1  0)
-add_test(NAME bg_tri_tri_isect_coplanar_edge_area   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1  0)
-add_test(NAME bg_tri_tri_isect_coplanar_full_area   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1  1)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_null_noarea   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0  0)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_vertex_noarea COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        0  1)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_edge_noarea   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        0  1)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_full_noarea   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    0  1)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_null_area   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  1  0)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_vertex_area COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1  0)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_edge_area   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1  0)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_full_area   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1  1)
 
 # TODO - in the debugger this is looking like it shouldn't return intersecting - it's very nearly an edge only intersect - but the final point-in-triangle test is doing something I don't quite understand: it seems to be checking only one point per triangle for inside/outside instead of all three points against each triangle...
-#add_test(NAME bg_tri_tri_isect_coplanar_f1 COMMAND bg_tri_tri_isect_coplanar -0.17062162871133435,0.02417062256398481,0.00000000000000000 -0.20768111931464361,-0.34362144340377737,0.00000000000000000 0.17876567813733310,-0.05826268893839849,0.00000000000000000 0.17876567813748631,-0.05826268893840295,0.00000000000000000 -0.17062162871171396,0.02417062256397554,0.00000000000000000 0.19139302046287024,0.41180557615261132,0.00000000000000000 1 0)
+#BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_coplanar_f1 COMMAND bg_tri_tri_isect_coplanar -0.17062162871133435,0.02417062256398481,0.00000000000000000 -0.20768111931464361,-0.34362144340377737,0.00000000000000000 0.17876567813733310,-0.05826268893839849,0.00000000000000000 0.17876567813748631,-0.05826268893840295,0.00000000000000000 -0.17062162871171396,0.02417062256397554,0.00000000000000000 0.19139302046287024,0.41180557615261132,0.00000000000000000 1 0)
 
 # For COMMAND bg_tri_tri_isect, the input format is as follows:
 #
@@ -116,28 +116,28 @@ add_test(NAME bg_tri_tri_isect_coplanar_full_area   COMMAND bg_tri_tri_isect_cop
 BRLCAD_ADDEXEC(bg_tri_tri_isect tri_tri_isect.c "libbg;libbn;libbu" TEST)
 
 # Test coplanar triangles
-add_test(NAME bg_tri_tri_isect_cp_null   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0)
-add_test(NAME bg_tri_tri_isect_cp_vertex COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1)
-add_test(NAME bg_tri_tri_isect_cp_edge   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1)
-add_test(NAME bg_tri_tri_isect_cp_full   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_cp_null   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_cp_vertex COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_cp_edge   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_cp_full   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1)
 
 # Test more general triangles
-add_test(NAME bg_tri_tri_isect_null   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,1 1,0,1 1,1,1  0)
+BRLCAD_ADD_TEST(NAME bg_tri_tri_isect_null   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,1 1,0,1 1,1,1  0)
 
 
 #  ************ tri_closest_pt.c tests ***********
 
 BRLCAD_ADDEXEC(bg_tri_closest_pt tri_closest_pt.c "libbg;libbn;libbu" TEST)
 
-add_test(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_closest_pt  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
-add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
+BRLCAD_ADD_TEST(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_closest_pt  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
+BRLCAD_ADD_TEST(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
 
 
 #  ************ polygon_op.cpp tests ***********
 
 BRLCAD_ADDEXEC(bg_polygon_op polygon_op.c "libbg;libbn;libbu" TEST)
 
-add_test(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
+BRLCAD_ADD_TEST(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
 
 
 

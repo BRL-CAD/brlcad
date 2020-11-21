@@ -241,7 +241,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "unable to stat input file");
 		return GED_ERROR;
 	    }
-	    unsigned long lwidth, lheight;
+	    size_t lwidth, lheight;
 	    if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, type, &lwidth, &lheight)) {
 		bu_vls_printf(gedp->ged_result_str, "input image type does not have dimension information encoded, and libicv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
 		return GED_ERROR;

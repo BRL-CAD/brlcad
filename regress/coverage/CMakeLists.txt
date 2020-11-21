@@ -24,7 +24,7 @@ foreach(rf ${REGRESS_FILES_CMAKE})
 endforeach(rf ${REGRESS_FILES_CMAKE})
 
 # Build a scanner to introspect the tests
-BRLCAD_ADDEXEC(covgcheck covgcheck.cpp "libbu;${CMAKE_THREAD_LIBS_INIT}" TEST)
+BRLCAD_ADDEXEC(covgcheck covgcheck.cpp "libbu;Threads::Threads" TEST)
 if (O3_COMPILER_FLAG)
   # This check benefits greatly from optimization. If we have the O3 flag, use
   # it - whether or not the standard build settings would add it.
