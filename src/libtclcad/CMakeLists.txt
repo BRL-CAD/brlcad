@@ -82,13 +82,12 @@ if (BRLCAD_ENABLE_TCL)
   # For anyone to do anything with tclcad, we need the libged plugins
   add_dependencies(libtclcad ged_plugins)
 
-  if (TARGET itcl_stage)
-    add_dependencies(libtclcad itcl_stage)
-  endif (TARGET itcl_stage)
-
-  if (TARGET itk_stage)
-    add_dependencies(libtclcad itk_stage)
-  endif (TARGET itk_stage)
+  set(STAGE_TGTS tcl_stage tk_stage itcl_stage itk_stage iwidgets_stage)
+  foreach(tgt ${STAGE_TGTS})
+    if (TARGET ${tgt})
+      add_dependencies(libtclcad ${tgt})
+    endif (TARGET ${tgt})
+  endforeach(tgt ${STAGE_TGTS})
 
 endif (BRLCAD_ENABLE_TCL)
 
