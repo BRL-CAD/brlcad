@@ -57,7 +57,6 @@ function(fcfgcpy ftype outvar extproj root ofile dir tfile)
   if (CMAKE_CONFIGURATION_TYPES)
     add_custom_command(
       OUTPUT "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${rdir}/${tfile}"
-      COMMAND ls -lR ${CMAKE_BINARY_DIR}
       COMMAND ${CMAKE_COMMAND} -DFTYPE=${ftype} -DSRC=${root}/${rdir}/${ofile} -DDEST=${CMAKE_BINARY_DIR}/$<CONFIG>/${rdir}/${tfile} -P "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake"
       DEPENDS ${extproj}
       )
