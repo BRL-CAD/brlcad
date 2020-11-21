@@ -53,6 +53,12 @@ endif(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+
 find_package(PROJ4 REQUIRED)
 
 include_directories(
@@ -384,6 +390,9 @@ if (BUILD_SHARED_LIBS)
   if(gdal_libs)
     target_link_libraries(gdal ${gdal_libs})
   endif(gdal_libs)
+  if (OPENBSD)
+    set_target_properties(gdal PROPERTIES VERSION 1.0)
+  endif (OPENBSD)
   install(TARGETS gdal
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

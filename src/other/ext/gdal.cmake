@@ -14,14 +14,6 @@ THIRD_PARTY(gdal GDAL gdal
 
 if (BRLCAD_GDAL_BUILD)
 
-  if (MSVC)
-    set(GDAL_BASENAME gdal)
-    set(GDAL_STATICNAME gdal-static)
-  else (MSVC)
-    set(GDAL_BASENAME libgdal)
-    set(GDAL_STATICNAME libgdal)
-  endif (MSVC)
-
   set(GDAL_DEPS)
   set(TARGET_LIST zlib png proj)
   foreach(T ${TARGET_LIST})
@@ -38,7 +30,6 @@ if (BRLCAD_GDAL_BUILD)
     set(PNG_TARGET PNG_BLD)
   endif (TARGET PNG_BLD)
 
-  set(GDAL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/gdal)
 
   if (MSVC)
     set(ZLIB_LIBRARY ${CMAKE_BINARY_ROOT}/${LIB_DIR}/${ZLIB_BASENAME}.lib)
@@ -50,6 +41,22 @@ if (BRLCAD_GDAL_BUILD)
     set(ZLIB_LIBRARY ${CMAKE_BINARY_ROOT}/${LIB_DIR}/${ZLIB_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
     set(PNG_LIBRARY ${CMAKE_BINARY_ROOT}/${LIB_DIR}/${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
   endif (MSVC)
+
+  if (MSVC)
+    set(GDAL_BASENAME gdal)
+    set(GDAL_STATICNAME gdal-static)
+    set(GDAL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  elseif (OPENBSD)
+    set(GDAL_BASENAME libgdal)
+    set(GDAL_STATICNAME libgdal)
+    set(GDAL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0)
+  else (MSVC)
+    set(GDAL_BASENAME libgdal)
+    set(GDAL_STATICNAME libgdal)
+    set(GDAL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  endif (MSVC)
+
+  set(GDAL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/gdal)
 
   ExternalProject_Add(GDAL_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdal"
@@ -72,7 +79,7 @@ if (BRLCAD_GDAL_BUILD)
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED gdal GDAL_BLD ${GDAL_INSTDIR}
-    ${GDAL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    ${GDAL_BASENAME}${GDAL_SUFFIX}
     RPATH
     )
   if (BUILD_STATIC_LIBS)
