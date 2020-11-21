@@ -65,8 +65,15 @@ if (BRLCAD_TCL_BUILD)
       message(FATAL_ERROR "Bundled Tcl enabled, but the path \"${CMAKE_CURRENT_BINARY_DIR}\" contains spaces.  On this platform, Tcl uses autotools to build; paths with spaces are not supported.  To continue you must select a build directory with a path that does not use spaces.")
     endif ("${CMAKE_CURRENT_BINARY_DIR}" MATCHES ".* .*")
 
-    set(TCL_BASENAME libtcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-    set(TCL_STUBNAME libtclstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    if (OPENBSD)
+      set(TCL_BASENAME libtcl${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+      set(TCL_STUBNAME libtclstub${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+      set(TCL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0)
+    else (OPENBSD)
+      set(TCL_BASENAME libtcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+      set(TCL_STUBNAME libtclstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+      set(TCL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+    endif (OPENBSD)
     set(TCL_EXECNAME tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
 
     set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
@@ -90,6 +97,7 @@ if (BRLCAD_TCL_BUILD)
     set(TCL_BASENAME tcl${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
     set(TCL_STUBNAME tclstub${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
     set(TCL_EXECNAME tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+    set(TCL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 
     ExternalProject_Add(TCL_BLD
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
@@ -107,7 +115,7 @@ if (BRLCAD_TCL_BUILD)
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED tcl TCL_BLD ${TCL_INSTDIR}
-    ${TCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    ${TCL_BASENAME}${TCL_SUFFIX}
     RPATH
     )
 

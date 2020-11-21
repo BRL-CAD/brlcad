@@ -47,8 +47,16 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
       message(FATAL_ERROR "Bundled Tk enabled, but the path \"${CMAKE_CURRENT_BINARY_DIR}\" contains spaces.  On this platform, Tk uses autotools to build; paths with spaces are not supported.  To continue you must select a build directory with a path that does not use spaces.")
     endif ("${CMAKE_CURRENT_BINARY_DIR}" MATCHES ".* .*")
 
-    set(TK_BASENAME libtk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-    set(TK_STUBNAME libtkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+    if (OPENBSD)
+      set(TK_BASENAME libtk${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+      set(TK_STUBNAME libtkstub${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+      set(TK_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0)
+    else (OPENBSD)
+      set(TK_BASENAME libtk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+      set(TK_STUBNAME libtkstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+      set(TK_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+    endif (OPENBSD)
+
     set(TK_WISHNAME wish${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
 
     set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
@@ -69,6 +77,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
     set(TK_BASENAME tk${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
     set(TK_STUBNAME tkstub${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
+    set(TK_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
     set(TK_WISHNAME wish${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
 
     ExternalProject_Add(TK_BLD
@@ -89,7 +98,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED tk TK_BLD ${TK_INSTDIR}
-    ${TK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    ${TK_BASENAME}${TK_SUFFIX}
     RPATH
     )
   ExternalProject_Target(STATIC tkstub TK_BLD ${TK_INSTDIR}
