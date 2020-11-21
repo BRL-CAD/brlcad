@@ -347,23 +347,8 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 HIDDEN const char *
 _gcv_plugins_get_path(void)
 {
-    const char *brlcad_libs_path;
-    struct bu_vls buffer;
-    const char *result;
-
-    /* LIBGCV_PLUGINS_PATH is where the plugin dir resides, defined via cppflag */
-    brlcad_libs_path = bu_brlcad_dir(LIBGCV_PLUGINS_PATH, 0);
-
-    if (!brlcad_libs_path)
-	return NULL;
-
-    bu_vls_init(&buffer);
-    /* LIBGCV_PLUGINS_DIRECTORY is the name of the plugin dir, defined via cppflag */
-    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
-		   LIBGCV_PLUGINS_DIRECTORY);
-    result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
-    bu_vls_free(&buffer);
-
+    const char *pdir = bu_dir(NULL, 0, BU_DIR_LIBEXEC, LIBGCV_PLUGINS_DIRECTORY, NULL);
+    const char *result = bu_strdup(pdir);
     return result;
 }
 

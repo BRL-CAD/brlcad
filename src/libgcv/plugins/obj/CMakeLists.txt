@@ -12,13 +12,21 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/wfobj
   )
 
-LIBGCV_ADD_PLUGIN(obj "obj_read.c;obj_write.c;tri_face.c" "librt;libwfobj")
-
-set(obj_ignore_files
-  CMakeLists.txt
+set(OBJ_SRCS
   obj_read.c
   obj_write.c
   tri_face.c
+  )
+
+gcv_plugin_library(gcv-obj SHARED ${OBJ_SRCS})
+target_link_libraries(gcv-obj librt libwfobj)
+set_property(TARGET gcv-obj APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+VALIDATE_STYLE(gcv-obj "${OBJ_SRCS}")
+PLUGIN_SETUP(gcv-obj gcv)
+
+set(obj_ignore_files
+  CMakeLists.txt
+  ${OBJ_SRCS}
   tri_face.h
   wfobj/CMake/FindLEMON.cmake
   wfobj/CMake/FindPERPLEX.cmake
