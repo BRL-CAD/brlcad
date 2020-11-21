@@ -30,11 +30,22 @@ endif (POLICY CMP0087)
 project(libpng C)
 enable_testing()
 
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+
 set(PNGLIB_MAJOR 1)
 set(PNGLIB_MINOR 6)
 set(PNGLIB_RELEASE 37)
 set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
-set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
+if(OPENBSD)
+  set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR})
+else(OPENBSD)
+  set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
+endif(OPENBSD)
+
 
 # needed packages
 if (Z_PREFIX)
@@ -544,11 +555,16 @@ endif()
 
 # SET UP LINKS
 if(PNG_SHARED)
-  set_target_properties(png PROPERTIES
-#   VERSION 16.${PNGLIB_RELEASE}.1.6.37
-    VERSION 16.${PNGLIB_RELEASE}.0
-    SOVERSION 16
-    CLEAN_DIRECT_OUTPUT 1)
+  if(OPENBSD)
+    set_target_properties(png PROPERTIES
+      VERSION 1.6
+      CLEAN_DIRECT_OUTPUT 1)
+  else(OPENBSD)
+    set_target_properties(png PROPERTIES
+      VERSION 16.${PNGLIB_RELEASE}.0
+      SOVERSION 16
+      CLEAN_DIRECT_OUTPUT 1)
+  endif(OPENBSD)
 endif()
 
 # INSTALL
@@ -560,7 +576,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
           FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-  if(PNG_SHARED)
+  if(PNG_SHARED AND NOT OPENBSD)
     # Create a symlink for libpng.dll.a => libpng16.dll.a on Cygwin
     if(CYGWIN OR MINGW)
       create_symlink(libpng${CMAKE_IMPORT_LIBRARY_SUFFIX} TARGET png)
@@ -575,7 +591,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     endif()
   endif()
 
-  if(PNG_STATIC)
+  if(PNG_STATIC AND NOT OPENBSD)
     if(NOT WIN32 OR CYGWIN OR MINGW)
       create_symlink(libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static)
       install(FILES $<TARGET_LINKER_FILE_DIR:png_static>/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}
