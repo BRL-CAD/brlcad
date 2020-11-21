@@ -1837,46 +1837,13 @@ set(BRLCAD_COMPILE_COUNT ${buildCounter})
 # DATE - RFC2822 timestamp
 set(BRLCAD_COMPILE_DATE \"${CONFIG_DATESTAMP}\")
 
-# Add definition HAVE_UNISTD_H to try_run for next couple tests, if present
-if(HAVE_UNISTD_H)
-  set(UNISTD_DEF "-DHAVE_UNISTD_H")
-endif(HAVE_UNISTD_H)
-
 # HOST
 cmake_host_system_information(RESULT BRLCAD_COMPILE_HOSTNAME QUERY HOSTNAME)
 string(STRIP ${BRLCAD_COMPILE_HOSTNAME} BRLCAD_COMPILE_HOSTNAME)
 
 # USER
-set(report_username_src "
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#ifdef HAVE_UNISTD_H
-   #include <unistd.h>
-#endif
-int main(void) {
-  char *name = getenv(\"USERNAME\");
-  if ((name == 0) || (strlen(name) == 0)) name = getenv(\"USER\");
-  if ((name == 0) || (strlen(name) == 0)) name = \"unknown\";
-  printf(\"%s\", name);
-  return 0;
-}
-")
-file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c" "${report_username_src}")
-# Add definition HAVE_UNISTD_H to try_run
-try_run(RU_RESULT RU_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
-  "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c"
-  COMPILE_DEFINITIONS "${UNISTD_DEF}"
-  COMPILE_OUTPUT_VARIABLE RU_COMPILE_MSGS
-  RUN_OUTPUT_VARIABLE BRLCAD_COMPILE_USER)
-if(NOT RU_COMPILED)
-  message(FATAL_ERROR "Could not build username reporting utility: ${RU_COMPILE_MSGS}")
-endif(NOT RU_COMPILED)
-if(RU_RESULT)
-  message(FATAL_ERROR "Could not run username reporting utility: ${BRLCAD_COMPILE_USER}")
-endif(RU_RESULT)
+set(BRLCAD_COMPILE_USER $ENV{USERNAME})
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
-file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c")
 
 if(MSVC)
   # By default, do not warn when built on machines using only VS Express
