@@ -14,7 +14,7 @@ if(MSVC)
 else(MSVC)
   set(LIBGCV_PLUGINS_PATH "${LIB_DIR}")
 endif(MSVC)
-set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
+set(LIBGCV_PLUGINS_DIRECTORY "gcv")
 add_subdirectory(plugins)
 
 set(LIBGCV_SOURCES
