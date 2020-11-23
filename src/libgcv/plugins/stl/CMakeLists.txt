@@ -4,7 +4,7 @@ set(STL_SRCS
   )
 
 gcv_plugin_library(gcv-stl SHARED ${STL_SRCS})
-target_link_libraries(gcv-stl librt)
+target_link_libraries(gcv-stl libwdb librt)
 set_property(TARGET gcv-stl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(gcv-stl "${STL_SRCS}")
 PLUGIN_SETUP(gcv-stl gcv)

@@ -19,7 +19,7 @@ set(OBJ_SRCS
   )
 
 gcv_plugin_library(gcv-obj SHARED ${OBJ_SRCS})
-target_link_libraries(gcv-obj librt libwfobj)
+target_link_libraries(gcv-obj libwdb librt libwfobj)
 set_property(TARGET gcv-obj APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(gcv-obj "${OBJ_SRCS}")
 PLUGIN_SETUP(gcv-obj gcv)

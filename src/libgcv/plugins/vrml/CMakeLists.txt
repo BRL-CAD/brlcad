@@ -10,7 +10,7 @@ set(VRML_SRCS
   )
 
 gcv_plugin_library(gcv-vrml SHARED ${VRML_SRCS})
-target_link_libraries(gcv-vrml librt libbn libbu)
+target_link_libraries(gcv-vrml libwdb librt libbn libbu)
 set_property(TARGET gcv-vrml APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(gcv-vrml "${VRML_SRCS}")
 PLUGIN_SETUP(gcv-vrml gcv)
