@@ -217,7 +217,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		{
-		    ON_3dPointArray bezpoints = ON_3dPointArray(bsg->degree + 1);
+		    ON_3dPointArray bezpoints(bsg->degree + 1);
 		    for (int j = 0; j < bsg->degree + 1; j++) {
 			bezpoints.Append((*b)->m_V[bsg->ctl_points[j]].Point());
 		    }
