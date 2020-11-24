@@ -42,7 +42,7 @@ set(LIBRENDER_SRCS
   )
 BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
-add_dependencies(librender gcv_plugins)
+add_dependencies(librender libgcv_plugins)
 
 set(tie_HDRS
   adrt.h

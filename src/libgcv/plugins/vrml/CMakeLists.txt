@@ -1,4 +1,4 @@
-set(VRML_SRCS
+set(LIBGCV_VRML_SOURCES
   vrml_read/file_util.cpp
   vrml_read/node.cpp
   vrml_read/node_type.cpp
@@ -9,15 +9,11 @@ set(VRML_SRCS
   vrml_write.c
   )
 
-gcv_plugin_library(gcv-vrml SHARED ${VRML_SRCS})
-target_link_libraries(gcv-vrml libwdb librt libbn libbu)
-set_property(TARGET gcv-vrml APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(gcv-vrml "${VRML_SRCS}")
-PLUGIN_SETUP(gcv-vrml gcv)
+
+LIBGCV_ADD_PLUGIN(vrml "${LIBGCV_VRML_SOURCES}" "librt;libbn;libbu")
 
 CMAKEFILES(
   CMakeLists.txt
-  ${VRML_SRCS}
   vrml_read/file_util.h
   vrml_read/node.h
   vrml_read/node_type.h
