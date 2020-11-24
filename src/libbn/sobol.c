@@ -20,11 +20,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* Generation of Sobol sequences in up to 1111 dimensions, based on the
-   algorithms described in:
-   P. Bratley and B. L. Fox, Algorithm 659, ACM Trans.
-   Math. Soft. 14 (1), 88-100 (1988),
-   as modified by:
+/* Generation of Sobol sequences in up to 1111 dimensions, based on
+   the algorithms described in: P. Bratley and B. L. Fox, Algorithm
+   659, ACM Trans.  Math. Soft. 14 (1), 88-100 (1988), as modified by:
    S. Joe and F. Y. Kuo, ACM Trans. Math. Soft 29 (1), 49-57 (2003).
 
    Note that the code below was written without even looking at the
@@ -41,10 +39,10 @@
    dimensions compared to the table of published numbers (to the 5
    published significant digits).
 
-   This is not to say that the authors above should not be credited for
-   their clear description of the algorithm (and their tabulation of
-   the critical numbers).  Please cite them.  Just that I needed
-   a free/open-source implementation. */
+   This is not to say that the authors above should not be credited
+   for their clear description of the algorithm (and their tabulation
+   of the critical numbers).  Please cite them.  Just that I needed a
+   free/open-source implementation. */
 
 #include "common.h"
 #include <stdlib.h>
@@ -63,6 +61,7 @@
 
 /* Maximum supported dimension of Sobol output array */
 #define SOBOL_MAXDIM 1111
+
 
 struct bn_soboldata {
     unsigned sdim; /* dimension of sequence being generated */
@@ -142,8 +141,8 @@ static double nlopt_genrand_res53(struct bn_soboldata *sd)
 
 
 /* generate uniform random number in [a, b) with 53-bit resolution,
- * added by SGJ.  Not static because we use this in libbn testing,
- * but it is not public API. */
+ * added by SGJ.  Not static because we use this in libbn testing, but
+ * it is not public API. */
 BN_EXPORT double _sobol_urand(struct bn_soboldata *sd, double a, double b)
 {
     return(a + (b - a) * nlopt_genrand_res53(sd));
@@ -154,8 +153,7 @@ BN_EXPORT double _sobol_urand(struct bn_soboldata *sd, double a, double b)
  *
  * This code uses a 32-bit version of algorithm to find the rightmost
  * one bit in Knuth, _The Art of Computer Programming_, volume 4A
- * (draft fascicle), section 7.1.3, "Bitwise tricks and
- * techniques."
+ * (draft fascicle), section 7.1.3, "Bitwise tricks and techniques."
  *
  * Assumes n has a zero bit, i.e. n < 2^32 - 1.
  *
@@ -205,7 +203,7 @@ static int sobol_gen(struct bn_soboldata *sd, double *x)
 
 
 /* next vector x[sdim] in Sobol sequence, with each x[i] in (0, 1) */
-static void bn_sobol_next_01(struct bn_soboldata *s)
+static void sobol_next_01(struct bn_soboldata *s)
 {
     if (!sobol_gen(s, s->cvec)) {
 	/* fall back on pseudo random numbers in the unlikely event
@@ -276,10 +274,12 @@ static int sobol_init(struct bn_soboldata *sd, unsigned sdim, unsigned long seed
 }
 
 
-/************************************************************************/
-/* API to Sobol sequence creation */
+/********************************************************************/
+/* BN API for Sobol sequences */
 
-struct bn_soboldata *bn_sobol_create(unsigned int sdim, unsigned long seed)
+
+struct bn_soboldata *
+bn_sobol_create(unsigned int sdim, unsigned long seed)
 {
     struct bn_soboldata *s = NULL;
     if (sdim > BN_SOBOL_MAXDIM)
@@ -296,7 +296,8 @@ struct bn_soboldata *bn_sobol_create(unsigned int sdim, unsigned long seed)
 }
 
 
-void bn_sobol_destroy(struct bn_soboldata *sd)
+void
+bn_sobol_destroy(struct bn_soboldata *sd)
 {
     if (!sd)
 	return;
@@ -309,12 +310,12 @@ void bn_sobol_destroy(struct bn_soboldata *sd)
 }
 
 
-/* return next vector in Sobol sequence, scaled to (lb[i], ub[i]) interval */
-double *bn_sobol_next(struct bn_soboldata *s, const double *lb, const double *ub)
+double *
+bn_sobol_next(struct bn_soboldata *s, const double *lb, const double *ub)
 {
     unsigned int i;
 
-    bn_sobol_next_01(s);
+    sobol_next_01(s);
 
     if (lb && ub) {
 	for (i = 0; i < s->sdim; ++i) {
@@ -326,8 +327,8 @@ double *bn_sobol_next(struct bn_soboldata *s, const double *lb, const double *ub
 }
 
 
-/* Joe and Kuo (2003), per Acworth et al (1998) */
-void bn_sobol_skip(struct bn_soboldata *s, unsigned n)
+void
+bn_sobol_skip(struct bn_soboldata *s, unsigned n)
 {
     if (!s)
 	return;
