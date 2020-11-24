@@ -76,6 +76,7 @@ struct bn_soboldata {
     double *cvec;  /* The current sequence vector */
 };
 
+
 /* initializes NLmt[N] with a seed */
 static void nlopt_init_genrand(struct bn_soboldata *sd, unsigned long s)
 {
@@ -91,7 +92,8 @@ static void nlopt_init_genrand(struct bn_soboldata *sd, unsigned long s)
     }
 }
 
-/* generates a random number on [0,0xffffffff]-interval */
+
+/* generates a random number on [0, 0xffffffff]-interval */
 static uint32_t nlopt_genrand_int32(struct bn_soboldata *sd)
 {
     uint32_t y;
@@ -128,22 +130,25 @@ static uint32_t nlopt_genrand_int32(struct bn_soboldata *sd)
     return y;
 }
 
-/* generates a random number on [0,1) with 53-bit resolution*/
+
+/* generates a random number on [0, 1) with 53-bit resolution*/
 static double nlopt_genrand_res53(struct bn_soboldata *sd)
 {
-    uint32_t a=nlopt_genrand_int32(sd)>>5, b=nlopt_genrand_int32(sd)>>6;
+    uint32_t a=nlopt_genrand_int32(sd)>>5;
+    uint32_t b=nlopt_genrand_int32(sd)>>6;
     return(a*67108864.0+b)*(1.0/9007199254740992.0);
 }
 /* These real versions are due to Isaku Wada, 2002/01/09 added */
 
 
-/* generate uniform random number in [a,b) with 53-bit resolution,
+/* generate uniform random number in [a, b) with 53-bit resolution,
  * added by SGJ.  Not static because we use this in libbn testing,
  * but it is not public API. */
 BN_EXPORT double _sobol_urand(struct bn_soboldata *sd, double a, double b)
 {
     return(a + (b - a) * nlopt_genrand_res53(sd));
 }
+
 
 /* Return position (0, 1, ...) of rightmost (least-significant) zero bit in n.
  *
@@ -162,23 +167,25 @@ static unsigned rightzero32(uint32_t n)
     return __builtin_ctz(~n); /* gcc builtin for version >= 3.4 */
 #else
     const uint32_t a = 0x05f66a47; /* magic number, found by brute force */
-    static const unsigned decode[32] = {0,1,2,26,23,3,15,27,24,21,19,4,12,16,28,6,31,25,22,14,20,18,11,5,30,13,17,10,29,9,8,7};
+    static const unsigned decode[32] = {0, 1, 2, 26, 23, 3, 15, 27, 24, 21, 19, 4, 12, 16, 28, 6, 31, 25, 22, 14, 20, 18, 11, 5, 30, 13, 17, 10, 29, 9, 8, 7};
     n = ~n; /* change to rightmost-one problem */
     n = a * (n & (~n + 1u)); /* store in n to make sure mult. is 32 bits */
     return decode[n >> 27];
 #endif
 }
 
+
 /* generate the next term x_{n+1} in the Sobol sequence, as an array
-   x[sdim] of numbers in (0,1).  Returns 1 on success, 0 on failure
+   x[sdim] of numbers in (0, 1).  Returns 1 on success, 0 on failure
    (if too many #'s generated) */
 static int sobol_gen(struct bn_soboldata *sd, double *x)
 {
     unsigned c, b, i, sdim;
 
-    if (sd->n == 4294967295U) return 0; /* n == 2^32 - 1 ... we would
-					   need to switch to a 64-bit version
-					   to generate more terms. */
+    if (sd->n == 4294967295U)
+	return 0; /* n == 2^32 - 1 ... we would need to switch to a
+		     64-bit version to generate more terms. */
+
     c = rightzero32(sd->n++);
     sdim = sd->sdim;
     for (i = 0; i < sdim; ++i) {
@@ -196,7 +203,8 @@ static int sobol_gen(struct bn_soboldata *sd, double *x)
     return 1;
 }
 
-/* next vector x[sdim] in Sobol sequence, with each x[i] in (0,1) */
+
+/* next vector x[sdim] in Sobol sequence, with each x[i] in (0, 1) */
 static void bn_sobol_next_01(struct bn_soboldata *s)
 {
     if (!sobol_gen(s, s->cvec)) {
@@ -204,18 +212,19 @@ static void bn_sobol_next_01(struct bn_soboldata *s)
 	   that we exceed 2^32-1 points */
 	unsigned int i;
 	for (i = 0; i < s->sdim; ++i)
-	    s->cvec[i] = _sobol_urand(s, 0.0,1.0);
+	    s->cvec[i] = _sobol_urand(s, 0.0, 1.0);
     }
 }
 
+
 static int sobol_init(struct bn_soboldata *sd, unsigned sdim, unsigned long seed)
 {
-    unsigned i,j;
+    unsigned i, j;
 
-    if (!sdim || sdim > MAXDIM) return 0;
+    if (!sdim || sdim > MAXDIM)
+	return 0;
 
     sd->mdata = (uint32_t *) bu_malloc(sizeof(uint32_t) * (sdim * 32), "sobol mdata");
-    if (!sd->mdata) return 0;
 
     /* mti==N+1 means mt[N] is not initialized */
     sd->NL_mti=NL_N+1;
@@ -250,10 +259,7 @@ static int sobol_init(struct bn_soboldata *sd, unsigned sdim, unsigned long seed
     }
 
     sd->x = (uint32_t *) bu_malloc(sizeof(uint32_t) * sdim, "sobol x");
-    if (!sd->x) { bu_free(sd->mdata, "sobol x"); return 0; }
-
     sd->b = (unsigned *) bu_malloc(sizeof(unsigned) * sdim, "sobol b");
-    if (!sd->b) { bu_free(sd->x, "sobol x"); bu_free(sd->mdata, "sobol mdata"); return 0; }
 
     for (i = 0; i < sdim; ++i) {
 	sd->x[i] = 0;
@@ -263,11 +269,11 @@ static int sobol_init(struct bn_soboldata *sd, unsigned sdim, unsigned long seed
     sd->n = 0;
     sd->sdim = sdim;
 
-    if (seed) nlopt_init_genrand(sd, seed);
+    if (seed)
+	nlopt_init_genrand(sd, seed);
 
     return 1;
 }
-
 
 
 /************************************************************************/
@@ -276,47 +282,63 @@ static int sobol_init(struct bn_soboldata *sd, unsigned sdim, unsigned long seed
 struct bn_soboldata *bn_sobol_create(unsigned int sdim, unsigned long seed)
 {
     struct bn_soboldata *s = NULL;
-    if (sdim > BN_SOBOL_MAXDIM) return NULL;
+    if (sdim > BN_SOBOL_MAXDIM)
+	return NULL;
+
     s = (struct bn_soboldata *) bu_malloc(sizeof(struct bn_soboldata), "sobol data");
-    if (!s) return NULL;
+
     s->cvec = (double *)bu_malloc(sizeof(double) * SOBOL_MAXDIM, "results array");
-    if (!sobol_init(s, sdim, seed)) { bu_free(s, "sobol data"); return NULL; }
+    if (!sobol_init(s, sdim, seed)) {
+	bu_free(s, "sobol data");
+	return NULL;
+    }
     return s;
 }
 
+
 void bn_sobol_destroy(struct bn_soboldata *sd)
 {
-    if (sd) {
-	bu_free(sd->mdata, "sobol mdata");
-	bu_free(sd->x, "sobol x");
-	bu_free(sd->b, "sobol b");
-	bu_free(sd->cvec, "sobol cvec");
-	bu_free(sd, "sobol");
-    }
+    if (!sd)
+	return;
+
+    bu_free(sd->mdata, "sobol mdata");
+    bu_free(sd->x, "sobol x");
+    bu_free(sd->b, "sobol b");
+    bu_free(sd->cvec, "sobol cvec");
+    bu_free(sd, "sobol");
 }
+
 
 /* return next vector in Sobol sequence, scaled to (lb[i], ub[i]) interval */
 double *bn_sobol_next(struct bn_soboldata *s, const double *lb, const double *ub)
 {
     unsigned int i;
+
     bn_sobol_next_01(s);
+
     if (lb && ub) {
 	for (i = 0; i < s->sdim; ++i) {
 	    s->cvec[i] = lb[i] + (ub[i] - lb[i]) * s->cvec[i];
 	}
     }
+
     return s->cvec;
 }
+
 
 /* Joe and Kuo (2003), per Acworth et al (1998) */
 void bn_sobol_skip(struct bn_soboldata *s, unsigned n)
 {
-    if (s) {
-	unsigned int k = 1;
-	while (k*2 < n) k *= 2;
-	while (k-- > 0) sobol_gen(s, s->cvec);
-    }
+    if (!s)
+	return;
+
+    unsigned int k = 1;
+    while (k*2 < n)
+	k *= 2;
+    while (k-- > 0)
+	sobol_gen(s, s->cvec);
 }
+
 
 /*
  * Local Variables:
