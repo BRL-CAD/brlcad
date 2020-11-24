@@ -109,12 +109,12 @@ bn_vlist_bbox_internal(struct bn_vlist *vp, point_t *bmin, point_t *bmax, int *d
 }
 
 int
-bn_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, int *length) 
+bn_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, size_t *length)
 {
     struct bn_vlist* vp;
     int cmd = 0;
     int disp_mode = 0;
-    int len = 0;
+    size_t len = 0;
     for (BU_LIST_FOR(vp, bn_vlist, vlistp)) {
 	cmd = bn_vlist_bbox_internal(vp, bmin, bmax, &disp_mode);
 	if (cmd) {

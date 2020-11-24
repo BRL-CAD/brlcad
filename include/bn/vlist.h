@@ -182,7 +182,7 @@ struct bn_vlist  {
 
 
 BN_EXPORT extern size_t bn_vlist_cmd_cnt(struct bn_vlist *vlist);
-BN_EXPORT extern int bn_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, int *length);
+BN_EXPORT extern int bn_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, size_t *length);
 
 
 
