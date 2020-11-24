@@ -915,7 +915,7 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
     char	*cp;
     size_t nbytes;
     size_t len;
-    int got;
+    ssize_t got;
     int	fd;
     size_t i;
 
@@ -947,7 +947,7 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
 	    perror(filename);
 	    bu_log("bn_tabdata_binary_read read error on \"%s\"\n", filename);
 	} else {
-	    bu_log("bn_tabdata_binary_read(%s) expected %zu got %d\n", filename, len, got);
+	    bu_log("bn_tabdata_binary_read(%s) expected %zu got %zd\n", filename, len, got);
 	}
 	bu_free(data, "bn_tabdata[]");
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
