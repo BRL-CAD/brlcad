@@ -226,7 +226,7 @@ static int sobol_init(struct bn_soboldata *sd, unsigned sdim, unsigned long seed
     if (!sdim || sdim > MAXDIM)
 	return 0;
 
-    sd->mdata = (uint32_t *) bu_malloc(sizeof(uint32_t) * (sdim * 32), "sobol mdata");
+    sd->mdata = (uint32_t *)bu_calloc(sdim * 32, sizeof(uint32_t), "sobol mdata");
 
     /* mti==N+1 means mt[N] is not initialized */
     sd->NL_mti=NL_N+1;
@@ -260,8 +260,8 @@ static int sobol_init(struct bn_soboldata *sd, unsigned sdim, unsigned long seed
 	}
     }
 
-    sd->x = (uint32_t *) bu_malloc(sizeof(uint32_t) * sdim, "sobol x");
-    sd->b = (unsigned *) bu_malloc(sizeof(unsigned) * sdim, "sobol b");
+    sd->x = (uint32_t *)bu_calloc(sdim, sizeof(uint32_t), "sobol x");
+    sd->b = (unsigned *)bu_calloc(sdim, sizeof(unsigned), "sobol b");
 
     for (i = 0; i < sdim; ++i) {
 	sd->x[i] = 0;
@@ -288,8 +288,8 @@ bn_sobol_create(unsigned int sdim, unsigned long seed)
     struct bn_soboldata *s = NULL;
     BU_ASSERT(sdim <= BN_SOBOL_MAXDIM);
 
-    s = (struct bn_soboldata *) bu_malloc(sizeof(struct bn_soboldata), "sobol data");
-    s->cvec = (double *)bu_malloc(sizeof(double) * SOBOL_MAXDIM, "results array");
+    s = (struct bn_soboldata *)bu_calloc(1, sizeof(struct bn_soboldata), "sobol data");
+    s->cvec = (double *)bu_calloc(SOBOL_MAXDIM, sizeof(double), "results array");
 
     sobol_init(s, sdim, seed);
 
