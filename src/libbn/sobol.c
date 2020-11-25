@@ -286,16 +286,13 @@ struct bn_soboldata *
 bn_sobol_create(unsigned int sdim, unsigned long seed)
 {
     struct bn_soboldata *s = NULL;
-    if (sdim > BN_SOBOL_MAXDIM)
-	return NULL;
+    BU_ASSERT(sdim <= BN_SOBOL_MAXDIM);
 
     s = (struct bn_soboldata *) bu_malloc(sizeof(struct bn_soboldata), "sobol data");
-
     s->cvec = (double *)bu_malloc(sizeof(double) * SOBOL_MAXDIM, "results array");
-    if (!sobol_init(s, sdim, seed)) {
-	bu_free(s, "sobol data");
-	return NULL;
-    }
+
+    sobol_init(s, sdim, seed);
+
     return s;
 }
 
