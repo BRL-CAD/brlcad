@@ -26,13 +26,13 @@
 #include <string.h>
 #include <stdarg.h>
 #include <errno.h>
-#include "bio.h"
-
 #include <random>
+#include "bio.h"
 
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/assert.h"
 
 
 #define COMMA ','

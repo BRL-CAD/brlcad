@@ -35,7 +35,7 @@
 #include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/exit.h"
-
+#include "bu/assert.h"
 
 /* wrap for hack above */
 #if !defined(C99_POSIX_USE_BSD)

@@ -25,6 +25,7 @@
 #include "bio.h"
 
 #include "bu/debug.h"
+#include "bu/assert.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"

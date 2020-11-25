@@ -45,12 +45,16 @@
    free/open-source implementation. */
 
 #include "common.h"
+
 #include <stdlib.h>
 #include <math.h>
+
+#include "bu/assert.h"
 #include "bu/malloc.h"
 #include "bn/rand.h"
 #include "bn/sobol.h"
 #include "soboldata.h"
+
 
 /* Period parameters */
 #define NL_N 624

@@ -198,25 +198,6 @@
 #define BU_FORTRAN(lc, uc) lc ## _
 
 
-/**
- * @def BU_ASSERT(eqn)
- * Quick and easy macros to generate an informative error message and
- * abort execution if the specified condition does not hold true.
- *
- */
-#ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation) (void)(_equation)
-#else
-#  define BU_ASSERT(_equation)	\
-    if (UNLIKELY(!(_equation))) { \
-	const char *_equation_buf = #_equation; \
-	bu_log("BU_ASSERT(%s), failed, file %s, line %d\n", \
-	       _equation_buf, __FILE__, __LINE__); \
-	bu_bomb("BU_ASSERT failure\n"); \
-    }
-#endif
-
-
 /** @} */
 
 #endif  /* BU_DEFINES_H */

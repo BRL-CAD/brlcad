@@ -24,6 +24,7 @@
 #include "common.h"
 
 #include "bu/defines.h"
+#include "bu/assert.h"
 #include "bu/magic.h"
 
 __BEGIN_DECLS
