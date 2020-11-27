@@ -131,6 +131,14 @@ endif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_
 # To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
 # is available, BRLCAD_PREFIX is used to store the value in the cache.)
 
+# TODO - CMAKE_IGNORE_PATH needs a list of explicit directories, not a
+# list of prefixes - in other words, it ignores EXACTLY the specfied
+# path and not any subdirectories under that path.  We need to use
+# file(GLOB_RECURSE) to check CMAKE_INSTALL_PREFIX for any directories
+# under it, once we've ruled out the standard system directories, and
+# pass the full list in to CMAKE_IGNORE_PATH.  See:
+# https://cmake.org/cmake/help/latest/variable/CMAKE_IGNORE_PATH.html
+
 if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
 	get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
 	if (CMAKE_CONFIGURATION_TYPES)
