@@ -105,13 +105,13 @@ bu_tbl_style(struct bu_tbl *tbl, enum bu_tbl_style style)
 	    ft_add_separator(tbl->t);
 	    break;
 	case BU_TBL_ALIGN_LEFT:
-	    ft_set_default_tbl_prop(FT_CPROP_TEXT_ALIGN, FT_ALIGNED_LEFT);
+	    ft_set_default_cell_prop(FT_CPROP_TEXT_ALIGN, FT_ALIGNED_LEFT);
 	    break;
 	case BU_TBL_ALIGN_CENTER:
-	    ft_set_default_tbl_prop(FT_CPROP_TEXT_ALIGN, FT_ALIGNED_CENTER);
+	    ft_set_default_cell_prop(FT_CPROP_TEXT_ALIGN, FT_ALIGNED_CENTER);
 	    break;
 	case BU_TBL_ALIGN_RIGHT:
-	    ft_set_default_tbl_prop(FT_CPROP_TEXT_ALIGN, FT_ALIGNED_RIGHT);
+	    ft_set_default_cell_prop(FT_CPROP_TEXT_ALIGN, FT_ALIGNED_RIGHT);
 	    break;
 
 	case BU_TBL_ROW_ALIGN_LEFT:
