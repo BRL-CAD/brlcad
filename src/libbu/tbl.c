@@ -205,7 +205,7 @@ bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
 	    back--;
 	}
 	while (zeros--) {
-	    ft_printf(tbl->t, " ");
+	    ft_printf(tbl->t, "");
 	}
 	ft_printf(tbl->t, "%s", cstr);
 	last = cstr;
@@ -224,7 +224,7 @@ bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
 		back--;
 	    }
 	    while (zeros--) {
-		ft_printf(tbl->t, " ");
+		ft_printf(tbl->t, "");
 	    }
 
 	    ft_printf(tbl->t, "%s", cstr);
@@ -239,7 +239,7 @@ bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
 	last++;
     }
     while (zeros--) {
-	ft_printf(tbl->t, " ");
+	ft_printf(tbl->t, "");
     }
 
     return tbl;
