@@ -112,37 +112,61 @@ bu_tbl_destroy(struct bu_tbl *);
 /**
  * erases all cells in a table, but doesn't erase the table itself
  */
-BU_EXPORT int
+BU_EXPORT extern int
 bu_tbl_clear(struct bu_tbl *);
 
 
 enum bu_tbl_style {
+    /* table border style */
     BU_TBL_STYLE_NONE,
     BU_TBL_STYLE_BASIC,
     BU_TBL_STYLE_SIMPLE,
     BU_TBL_STYLE_SINGLE,
     BU_TBL_STYLE_DOUBLE,
-    BU_TBL_ROW_HEADER,
-    BU_TBL_ROW_SEPARATOR,
+
+    /* table alignment */
     BU_TBL_ALIGN_LEFT,
     BU_TBL_ALIGN_CENTER,
     BU_TBL_ALIGN_RIGHT,
-    BU_TBL_END
+
+    /* cell styling */
+    BU_TBL_ROW_HEADER,
+
+    /* insert a horizontal separator */
+    BU_TBL_ROW_SEPARATOR,
+
+    /* cell alignment */
+    BU_TBL_ROW_ALIGN_LEFT,
+    BU_TBL_ROW_ALIGN_CENTER,
+    BU_TBL_ROW_ALIGN_RIGHT,
+    BU_TBL_COL_ALIGN_LEFT,
+    BU_TBL_COL_ALIGN_CENTER,
+    BU_TBL_COL_ALIGN_RIGHT,
+
+    /* go to next row beginning */
+    BU_TBL_ROW_END
 };
 
 
 /**
  * sets table styling or formatting on cells printed next.
  */
-BU_EXPORT struct bu_tbl *
+BU_EXPORT extern struct bu_tbl *
 bu_tbl_style(struct bu_tbl *, enum bu_tbl_style);
 
 
 /**
- * set the table insertion point.
+ * set cell position of the current table insertion point.
  */
-BU_EXPORT struct bu_tbl *
-bu_tbl_index(struct bu_tbl *, size_t row, size_t col);
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_go_to(struct bu_tbl *, size_t row, size_t col);
+
+
+/**
+ * get cell position for the current table insertion point.
+ */
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_is_at(struct bu_tbl *, size_t *row, size_t *col);
 
 
 /**
@@ -151,11 +175,9 @@ bu_tbl_index(struct bu_tbl *, size_t row, size_t col);
  * each column of the 'fmt' printf-style format specfier must be
  * delimited by a '|' character.
  *
- * callers can specify bu_tbl_style parameters as arguments after
- * 'fmt' in order to affect cell presentation.  BU_TBL_END denotes the
- * end of a row.  any existing values will be overwritten.
+ * any existing values will be overwritten.
  */
-BU_EXPORT struct bu_tbl *
+BU_EXPORT extern struct bu_tbl *
 bu_tbl_printf(struct bu_tbl *, const char *fmt, ...);
 
 
