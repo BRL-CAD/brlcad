@@ -619,8 +619,8 @@ function(set_lib_vars RVAR root vmaj vmin vpatch)
   set(${RVAR}_BASENAME   "${${RVAR}_BASENAME}"   PARENT_SCOPE)
   set(${RVAR}_STATICNAME "${${RVAR}_STATICNAME}" PARENT_SCOPE)
   set(${RVAR}_SUFFIX     "${${RVAR}_SUFFIX}"     PARENT_SCOPE)
-  set(${RVAR}_SYMLINK1   "${${RVAR}_SYMLINK1}"   PARENT_SCOPE)
-  set(${RVAR}_SYMLINK2   "${${RVAR}_SYMLINK2}"   PARENT_SCOPE)
+  set(${RVAR}_SYMLINK_1   "${${RVAR}_SYMLINK_1}"   PARENT_SCOPE)
+  set(${RVAR}_SYMLINK_2   "${${RVAR}_SYMLINK_2}"   PARENT_SCOPE)
 
 endfunction(set_lib_vars RVAR root)
 
