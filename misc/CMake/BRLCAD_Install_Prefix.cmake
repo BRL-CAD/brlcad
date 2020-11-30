@@ -131,35 +131,38 @@ endif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_
 # To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
 # is available, BRLCAD_PREFIX is used to store the value in the cache.)
 
-# TODO - CMAKE_IGNORE_PATH needs a list of explicit directories, not a
-# list of prefixes - in other words, it ignores EXACTLY the specfied
-# path and not any subdirectories under that path.  We need to use
-# file(GLOB_RECURSE) to check CMAKE_INSTALL_PREFIX for any directories
-# under it, once we've ruled out the standard system directories, and
-# pass the full list in to CMAKE_IGNORE_PATH.  See:
+# CMAKE_IGNORE_PATH needs a list of explicit directories, not a
+# list of prefixes - in other words, it ignores EXACTLY the specified
+# path and not any subdirectories under that path.  See:
 # https://cmake.org/cmake/help/latest/variable/CMAKE_IGNORE_PATH.html
+# This means we can't just add the install path to the ignore variables
+# and have find_package skip items in the bin and lib subdirs - we need
+# to list them explicitly for exclusion.
 
 if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
-	get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
+	# Make sure we are working with the fully normalized path
+	get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
+	set(IGNORE_SUBDIRS ${BIN_DIR} ${LIB_DIR})
 	if (CMAKE_CONFIGURATION_TYPES)
+		# If we're doing multi-config, ignore all the possible output locations
 		foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
 			if ("${cfg}" STREQUAL "Release")
-				string(REPLACE "${BUILD_TYPE_KEY}" "rel" "${CMAKE_INSTALL_PREFIX}" RELPATH)
-				set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${RELPATH}")
-				set(CMAKE_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${RELPATH}")
+				string(REPLACE "${BUILD_TYPE_KEY}" "rel" "${CMAKE_INSTALL_PREFIX}" TYPEPATH)
+			elseif ("${cfg}" STREQUAL "Debug")
+				string(REPLACE "${BUILD_TYPE_KEY}" "dev" "${CMAKE_INSTALL_PREFIX}" TYPEPATH)
+			else ("${cfg}" STREQUAL "Release")
+				string(REPLACE "${BUILD_TYPE_KEY}" "${cfg}" "${CMAKE_INSTALL_PREFIX}" TYPEPATH)
 			endif ("${cfg}" STREQUAL "Release")
-			if ("${cfg}" STREQUAL "Debug")
-				string(REPLACE "${BUILD_TYPE_KEY}" "dev" "${CMAKE_INSTALL_PREFIX}" DEVPATH)
-				set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${DEVPATH}")
-				set(CMAKE_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${DEVPATH}")
-			endif ("${cfg}" STREQUAL "Debug")
-			string(REPLACE "${BUILD_TYPE_KEY}" "${cfg}" "${CMAKE_INSTALL_PREFIX}" TYPEPATH)
-			set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${TYPEPATH}")
-			set(CMAKE_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${TYPEPATH}")
+			foreach(sd ${IGNORE_SUBDIRS})
+				set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${TYPEPATH}/${sd}")
+				set(CMAKE_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${TYPEPATH}/${sd}")
+			endforeach(sd ${IGNORE_SUBDIRS})
 		endforeach(cfg ${CMAKE_CONFIGURATION_TYPES})
 	else (CMAKE_CONFIGURATION_TYPES)
-		set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
-		set(CMAKE_IGNORE_PATH "${PATH_NORMALIZED}")
+		foreach(sd ${IGNORE_SUBDIRS})
+			set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${PATH_NORMALIZED}/${sd}")
+			set(CMAKE_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${PATH_NORMALIZED}/${sd}")
+		endforeach(sd ${IGNORE_SUBDIRS})
 	endif (CMAKE_CONFIGURATION_TYPES)
 endif(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
 
