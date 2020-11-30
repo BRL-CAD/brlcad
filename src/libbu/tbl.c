@@ -177,7 +177,10 @@ bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
 
     va_list ap;
 #define BUFSZ 4096
-    char buf[BUFSZ] = {0};
+    char buf[BUFSZ];
+    char *back;
+    char *last;
+    size_t zeros;
 
     if (!fmt)
 	return tbl;
@@ -185,14 +188,58 @@ bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
     BU_ASSERT(tbl);
     BU_ASSERT(tbl->t);
 
+    memset(buf, 255, BUFSZ);
+
     va_start(ap, fmt);
     vsnprintf(buf, BUFSZ, fmt, ap);
     va_end(ap);
 
     cstr = strtok(buf, "|");
-    while (cstr) {
+    if (cstr) {
+	/* strtok collapses empty tokens, so check */
+	back = cstr;
+	zeros = 0;
+	back--;
+	while ((*back == '\0' || *back == '|') && buf <= back) {
+	    zeros++;
+	    back--;
+	}
+	while (zeros--) {
+	    ft_printf(tbl->t, "");
+	}
 	ft_printf(tbl->t, "%s", cstr);
+	last = cstr;
+    }
+
+    while (cstr) {
 	cstr = strtok(NULL, "|");
+
+	if (cstr) {
+	    /* strtok collapses empty tokens, so check */
+	    back = cstr;
+	    zeros = 0;
+	    back -= 2;
+	    while ((*back == '\0' || *back == '|') && buf <= back) {
+		zeros++;
+		back--;
+	    }
+	    while (zeros--) {
+		ft_printf(tbl->t, "");
+	    }
+
+	    ft_printf(tbl->t, "%s", cstr);
+	    last = cstr;
+	}
+    }
+
+    zeros = 0;
+    last += 2;
+    while ((*last == '\0' || *last == '|')) {
+	zeros++;
+	last++;
+    }
+    while (zeros--) {
+	ft_printf(tbl->t, "");
     }
 
     return tbl;
