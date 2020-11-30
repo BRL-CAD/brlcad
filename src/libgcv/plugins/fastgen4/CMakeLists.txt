@@ -4,7 +4,7 @@ set(FASTGEN4_SRCS
   )
 
 gcv_plugin_library(gcv-fastgen4 SHARED ${FASTGEN4_SRCS})
-target_link_libraries(gcv-fastgen4 librt libbu)
+target_link_libraries(gcv-fastgen4 libgcv libwdb librt libbu)
 set_property(TARGET gcv-fastgen4 APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(gcv-fastgen4 "${FASTGEN4_SRCS}")
 PLUGIN_SETUP(gcv-fastgen4 gcv)

@@ -31,6 +31,7 @@
 
 #include "bu/cv.h"
 #include "bu/log.h"
+#include "bu/assert.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/parse.h"

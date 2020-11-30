@@ -38,7 +38,7 @@ vlist_main(int argc, char* argv[])
     point_t ptzero = VINIT_ZERO;
     struct bu_list head;
     struct bu_list vlfree;
-    int cmd_cnt_length = 0;
+    size_t cmd_cnt_length = 0;
     int expected_length = 0;
 
     sscanf(argv[1], "%d", &expected_length);
@@ -50,7 +50,7 @@ vlist_main(int argc, char* argv[])
     BU_LIST_INIT(&head);
     BU_LIST_INIT(&vlfree);
     if (expected_length < 0) {
-	return bn_vlist_cmd_cnt(NULL);
+	return (int)bn_vlist_cmd_cnt(NULL);
     }
 
     for (int i = 0; i < expected_length; i++) {
@@ -59,7 +59,7 @@ vlist_main(int argc, char* argv[])
 
     cmd_cnt_length = bn_vlist_cmd_cnt((struct bn_vlist*) & head);
 
-    return !(expected_length == cmd_cnt_length);
+    return !((size_t)expected_length == cmd_cnt_length);
 }
 
 

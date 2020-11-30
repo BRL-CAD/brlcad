@@ -8,7 +8,7 @@ if(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
   include_directories(SYSTEM ${GDAL_INCLUDE_DIR})
 
   gcv_plugin_library(gcv-gdal SHARED ${GDAL_SRCS})
-  target_link_libraries(gcv-gdal librt libbu ${GDAL_LIBRARIES})
+  target_link_libraries(gcv-gdal libwdb librt libbu ${GDAL_LIBRARIES})
   set_property(TARGET gcv-gdal APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(gcv-gdal "${GDAL_SRCS}")
   PLUGIN_SETUP(gcv-gdal gcv)

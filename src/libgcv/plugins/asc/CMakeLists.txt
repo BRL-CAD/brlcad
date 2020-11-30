@@ -5,7 +5,7 @@ set(ASC_SRCS
   )
 
 gcv_plugin_library(gcv-asc SHARED ${ASC_SRCS})
-target_link_libraries(gcv-asc librt libbu)
+target_link_libraries(gcv-asc libwdb librt libbu)
 set_property(TARGET gcv-asc APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(gcv-asc "${ASC_SRCS}")
 PLUGIN_SETUP(gcv-asc gcv)

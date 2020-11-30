@@ -1,5 +1,6 @@
 set(bu_headers
   app.h
+  assert.h
   avs.h
   bitv.h
   cmd.h

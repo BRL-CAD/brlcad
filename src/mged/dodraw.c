@@ -74,7 +74,7 @@ static void
 mged_bound_solid(struct solid *sp)
 {
     point_t bmin, bmax;
-    int length = 0;
+    size_t length = 0;
     int cmd;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
@@ -87,7 +87,7 @@ mged_bound_solid(struct solid *sp)
 	bu_vls_free(&tmp_vls);
     }
 
-    sp->s_vlen = length;
+    sp->s_vlen = (int)length;
     sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
     sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
     sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;

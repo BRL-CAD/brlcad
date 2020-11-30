@@ -45,7 +45,7 @@ __BEGIN_DECLS
  @code
  double vals[16] = {-1.123123123123, 0, 0, 1.0/0.0, 0, 123, 0, 0, 0, -2345, 123123.123123123123, 0, 123123123.123123123, 21, 1.0/0.0, 1};
 
- bu_num_print
+
  bu_num_print(vals, 16, 4, "my matrix\n[\n", "\t[", NULL, ", ", "]\n", "]\n]\n");
  -------------------------------------------------------------------------------
 my matrix
@@ -87,95 +87,105 @@ MATRIX [ [-1.1231231231229999,     0,                  0, inf]
  */
 
 
-struct bu_tbl_style {
-    const char *before_tbl;
-    const char *before_row;
-    const char *before_col;
-    const char *before_elm;
-    const char *format_scan;
-    const char *format_print;
-    const char *after_elm;
-    const char *after_col;
-    const char *after_row;
-    const char *after_tbl;
+struct bu_tbl;
+
+
+/**
+ * static-initializer for bu_tbl objects on the stack
+ */
+#define BU_TBL_INIT_ZERO {0}
+
+/**
+ * always returns a pointer to a newly allocated table
+ */
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_create();
+
+
+/**
+ * releases all dynamic memory associated with the specified table
+ */
+BU_EXPORT extern void
+bu_tbl_destroy(struct bu_tbl *);
+
+
+/**
+ * erases all cells in a table, but doesn't erase the table itself
+ */
+BU_EXPORT extern int
+bu_tbl_clear(struct bu_tbl *);
+
+
+enum bu_tbl_style {
+    /* table border style */
+    BU_TBL_STYLE_NONE,
+    BU_TBL_STYLE_BASIC,
+    BU_TBL_STYLE_SIMPLE,
+    BU_TBL_STYLE_SINGLE,
+    BU_TBL_STYLE_DOUBLE,
+
+    /* table alignment */
+    BU_TBL_ALIGN_LEFT,
+    BU_TBL_ALIGN_CENTER,
+    BU_TBL_ALIGN_RIGHT,
+
+    /* cell styling */
+    BU_TBL_ROW_HEADER,
+
+    /* insert a horizontal separator */
+    BU_TBL_ROW_SEPARATOR,
+
+    /* cell alignment */
+    BU_TBL_ROW_ALIGN_LEFT,
+    BU_TBL_ROW_ALIGN_CENTER,
+    BU_TBL_ROW_ALIGN_RIGHT,
+    BU_TBL_COL_ALIGN_LEFT,
+    BU_TBL_COL_ALIGN_CENTER,
+    BU_TBL_COL_ALIGN_RIGHT,
+
+    /* go to next row beginning */
+    BU_TBL_ROW_END
 };
 
 
 /**
- * set what to print at the beginning and end of the table.
- *
- * defaults: before="" after=""
+ * sets table styling or formatting on cells printed next.
  */
-BU_EXPORT extern struct bu_tbl_style *
-bu_tbl_style_tbl(struct bu_tbl_style *s, const char *before, const char *after);
-
-/**
- * set what to print before and after each table row and how many rows
- * to display.
- *
- * defaults: before="" after="" maxrows=-1 (unlimited)
- */
-BU_EXPORT extern struct bu_tbl_style *
-bu_tbl_style_row(struct bu_tbl_style *s, const char *before, const char *after, size_t maxrows);
-
-/**
- * set what to print before and after each table column and how many
- * columns to display.
- *
- * defaults: before="" after="" maxcols=1
- */
-BU_EXPORT extern struct bu_tbl_style *
-bu_tbl_style_col(struct bu_tbl_style *s, const char *before, const char *after, size_t maxcols);
-
-/**
- * set what to print before and after each table element.
- *
- * defaults: before="" after=""
- */
-BU_EXPORT extern struct bu_tbl_style *
-bu_tbl_style_elm(struct bu_tbl_style *s, const char *before, const char *after);
-
-/**
- * set scanf-style and printf-style format specifiers to use reading
- * and displaying table elements respectively
- *
- * defaults: scan="%lf" print="%.17g"
- */
-BU_EXPORT extern struct bu_tbl_style *
-bu_tbl_style_fmt(struct bu_tbl_style *s, const char *scan, const char *print);
-
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_style(struct bu_tbl *, enum bu_tbl_style);
 
 
 /**
- *
- @code
-struct bu_tbl_style s = BU_TBL_STYLE_INIT_ZERO;
-bu_tbl_style_tbl(&s, "MATRIX [", "]\n");
-bu_tbl_style_row(&s, "\t[", "]\n");
-bu_tbl_print(s, vals, nvals, ncols);
- @endcode
+ * set cell position of the current table insertion point.
  */
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_go_to(struct bu_tbl *, size_t row, size_t col);
 
 
 /**
- * format a set of data into a given vls string
+ * get cell position for the current table insertion point.
+ */
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_is_at(struct bu_tbl *, size_t *row, size_t *col);
+
+
+/**
+ * print values into the table at the current insertion point.
+ *
+ * each column of the 'fmt' printf-style format specfier must be
+ * delimited by a '|' character.
+ *
+ * any existing values will be overwritten.
+ */
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_printf(struct bu_tbl *, const char *fmt, ...);
+
+
+/**
+ * print a table into a vls
  */
 BU_EXPORT extern void
-bu_tbl_vls(struct bu_vls *str, const struct bu_tbl_style *s, const double *vals, size_t nvals, size_t ncols);
-
-
-/**
- * format a set of data into a given vls string
- */
-BU_EXPORT extern void
-bu_tbl_str(char *str, size_t maxlen, const struct bu_tbl_style *s, const double *vals, size_t nvals, size_t ncols);
-
-
-/**
- * format a set of data and print them to the given file descriptor
- */
-BU_EXPORT extern void
-bu_tbl_print(int fd, const struct bu_tbl_style *s, const void *elms, size_t nelms, size_t selms);
+bu_tbl_vls(struct bu_vls *str, const struct bu_tbl *t);
 
 
 __END_DECLS
