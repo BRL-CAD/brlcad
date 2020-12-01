@@ -68,7 +68,7 @@ ShellBasedSurfaceModel::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sbsm_boundary.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "sbsm_boundary");
 	if (attr) {
-	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->Raw()->a);
 	    if (!sa) goto step_error;
 	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 

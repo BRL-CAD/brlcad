@@ -139,6 +139,10 @@ void SDAI_Application_instance::AppendMultInstance( SDAI_Application_instance * 
     }
 }
 
+const EntityDescriptor* SDAI_Application_instance::getEDesc() const {
+    return eDesc;
+}
+
 // BUG implement this -- FIXME function is never used
 
 SDAI_Application_instance * SDAI_Application_instance::GetMiEntity( char * entName ) {

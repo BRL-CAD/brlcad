@@ -208,19 +208,19 @@ class SC_CORE_EXPORT EntList {
         // but all we need.
         EntList * firstNot( JoinType );
         EntList * nextNot( JoinType j ) {
-            return (next) ? next->firstNot( j ) : NULL;
+            return next->firstNot( j );
         }
         EntList * firstWanted( MatchType );
         EntList * nextWanted( MatchType mat ) {
-            return (next) ? next->firstWanted( mat ) : NULL;
+            return next->firstWanted( mat );
         }
         EntList * lastNot( JoinType );
         EntList * prevNot( JoinType j ) {
-            return (prev) ? prev->lastNot( j ) : NULL;
+            return prev->lastNot( j );
         }
         EntList * lastWanted( MatchType );
         EntList * prevWanted( MatchType mat ) {
-            return (prev) ? prev->lastWanted( mat ) : NULL;
+            return prev->lastWanted( mat );
         }
 
         JoinType join;

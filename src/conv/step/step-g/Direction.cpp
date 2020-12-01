@@ -71,7 +71,7 @@ Direction::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     STEPattribute *attr = step->getAttribute(sse, "direction_ratios");
     if (attr != NULL) {
-	STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	STEPaggregate *sa = (STEPaggregate *)(attr->Raw()->a);
 	RealNode *rn = (RealNode *)sa->GetHead();
 	int index = 0;
 	while (rn != NULL) {

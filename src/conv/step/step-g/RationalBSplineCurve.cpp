@@ -71,7 +71,7 @@ RationalBSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	STEPattribute *attr = step->getAttribute(sse, "weights_data");
 
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	    STEPaggregate *sa = (STEPaggregate *)(attr->Raw()->a);
 	    if (!sa) goto step_error;
 	    RealNode *rn = (RealNode *)sa->GetHead();
 

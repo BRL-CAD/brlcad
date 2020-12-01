@@ -106,7 +106,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (trim_1.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "trim_1");
 	if (attr) {
-	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->Raw()->a);
 	    if (!sa) goto step_error;
 	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 	    SDAI_Select *p;
@@ -127,7 +127,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (trim_2.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "trim_2");
 	if (attr) {
-	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->Raw()->a);
 	    if (!sa) goto step_error;
 	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 	    SDAI_Select *p;
