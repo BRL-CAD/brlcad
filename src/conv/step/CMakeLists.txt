@@ -48,6 +48,8 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     set(express_srcs
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
+      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_entities.cc
+      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_types.cc
       ${SCHEMA_OUT_DIR}/SdaiAll.cc
       ${SCHEMA_OUT_DIR}/compstructs.cc
       ${SCHEMA_OUT_DIR}/schema.cc
@@ -60,6 +62,8 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Helpers.h
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Names.h
+      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_entities.h
+      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_types.h
       ${SCHEMA_OUT_DIR}/Sdaiclasses.h
       ${SCHEMA_OUT_DIR}/schema.h
       )
