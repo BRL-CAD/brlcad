@@ -42,13 +42,9 @@ project(SC)
 
 # SC version
 set(SC_VERSION_MAJOR 0)
-set(SC_VERSION_MINOR 8-dev)
-set(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
-
-# SC ABI version. SC_ABI_SOVERSION should be incremented
-# for each release introducing API incompatibilities
-set(SC_ABI_SOVERSION 2)
-set(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
+set(SC_VERSION_MINOR 9)
+set(SC_VERSION_PATCH 1)
+set(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR}.${SC_VERSION_PATCH})
 
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 3.6.3)
@@ -64,6 +60,12 @@ if(NOT SC_IS_SUBBUILD)
 else(NOT SC_IS_SUBBUILD)
   set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${SC_CMAKE_DIR}")
 endif(NOT SC_IS_SUBBUILD)
+
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
 
 # testing and compilation options, build output dirs, install dirs, uninstall, package creation, etc
 include(${SC_CMAKE_DIR}/SC_Build_opts.cmake)
