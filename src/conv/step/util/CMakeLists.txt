@@ -28,6 +28,7 @@ if (BRLCAD_ENABLE_STEP)
   BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${lelem_LIBS}" NO_STRICT NO_INSTALL)
   add_dependencies(list_elements step-express-${SCHEMA_NAME}-list_elements)
   set_property(TARGET list_elements APPEND PROPERTY INCLUDE_DIRECTORIES "${list_elements_SCHEMA_OUT_DIR}")
+  target_compile_definitions(list_elements PRIVATE SC_SCHEMA_DLL_EXPORTS)
 
   if (HIDE_INTERNAL_SYMBOLS)
     set(list_elements_IMPORTS
