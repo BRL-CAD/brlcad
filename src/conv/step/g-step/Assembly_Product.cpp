@@ -267,12 +267,12 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "rep_1")) {
-	    attr->ptr.c = new (STEPentity *);
-	    *(attr->ptr.c) = parent;
+	    attr->Raw()->c = new (STEPentity *);
+	    *(attr->Raw()->c) = parent;
 	}
 	if (!bu_strcmp(attr->Name(), "rep_2")) {
-	    attr->ptr.c = new (STEPentity *);
-	    *(attr->ptr.c) = child;
+	    attr->Raw()->c = new (STEPentity *);
+	    *(attr->Raw()->c) = child;
 	}
     }
 
@@ -282,7 +282,7 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "transformation_operator")) {
 	    SdaiTransformation *transformation = new SdaiTransformation((SdaiItem_defined_transformation *)input_transformation);
-	    attr->ptr.sh = transformation;
+	    attr->Raw()->sh = transformation;
 	}
     }
 

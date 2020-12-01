@@ -50,8 +50,8 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
 	    stepcomplex->ResetAttributes();
 	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "prefix")) attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
-		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
+		if (!bu_strcmp(attr->Name(), "prefix")) attr->Raw()->e = new SdaiSi_prefix_var(Si_prefix__milli);
+		if (!bu_strcmp(attr->Name(), "name")) attr->Raw()->e = new SdaiSi_unit_name_var(Si_unit_name__metre);
 	    }
 	}
 	stepcomplex = stepcomplex->sc;
@@ -61,7 +61,7 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
     uncertainty->ResetAttributes();
     {
 	while ((attr = uncertainty->NextAttribute()) != NULL) {
-	    if (!bu_strcmp(attr->Name(), "unit_component")) attr->ptr.sh = new_unit;
+	    if (!bu_strcmp(attr->Name(), "unit_component")) attr->Raw()->sh = new_unit;
 	    if (!bu_strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
 	}
     }
@@ -74,7 +74,7 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
 	    stepcomplex->ResetAttributes();
 	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__steradian);
+		if (!bu_strcmp(attr->Name(), "name")) attr->Raw()->e = new SdaiSi_unit_name_var(Si_unit_name__steradian);
 	    }
 	}
 	stepcomplex = stepcomplex->sc;
@@ -89,7 +89,7 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
 	    stepcomplex->ResetAttributes();
 	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__radian);
+		if (!bu_strcmp(attr->Name(), "name")) attr->Raw()->e = new SdaiSi_unit_name_var(Si_unit_name__radian);
 	    }
 	}
 	stepcomplex = stepcomplex->sc;
@@ -129,8 +129,8 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
 		if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("'DEGREES'");
 		if (!bu_strcmp(attr->Name(), "conversion_factor")) {
-		    attr->ptr.c = new (STEPentity *);
-		    *(attr->ptr.c) = (STEPentity *)(p_ang_measure_with_unit);
+		    attr->Raw()->c = new (STEPentity *);
+		    *(attr->Raw()->c) = (STEPentity *)(p_ang_measure_with_unit);
 		}
 	    }
 	}
@@ -138,8 +138,8 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 	    stepcomplex->ResetAttributes();
 	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
 		if (!bu_strcmp(attr->Name(), "dimensions")) {
-		    attr->ptr.c = new (STEPentity *);
-		    *(attr->ptr.c) = (STEPentity *)(dimensional_exp);
+		    attr->Raw()->c = new (STEPentity *);
+		    *(attr->Raw()->c) = (STEPentity *)(dimensional_exp);
 		}
 	    }
 	}
@@ -172,7 +172,7 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 		if (!bu_strcmp(attr->Name(), "uncertainty")) {
 		    EntityAggregate *unc_agg = new EntityAggregate();
 		    unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    attr->ptr.a = unc_agg;
+		    attr->Raw()->a = unc_agg;
 		}
 	    }
 
@@ -187,7 +187,7 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)unit_complex));
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
-		    attr->ptr.a = unit_assigned_agg;
+		    attr->Raw()->a = unit_assigned_agg;
 		}
 	    }
 	}
