@@ -1847,6 +1847,12 @@ if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1\n")
 endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 
+# Check whether the compiler supports __attribute__((flatten))
+check_c_source_compiles("__attribute__((flatten)) int *func(int *v){(*v)-=1; return v;} __attribute((flatten)) int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_FLATTEN_ATTRIBUTE)
+if(HAVE_FLATTEN_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_FLATTEN_ATTRIBUTE 1\n")
+endif(HAVE_FLATTEN_ATTRIBUTE)
+
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
 # warnings about such arguments, and we don't really care.
