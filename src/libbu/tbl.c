@@ -85,12 +85,16 @@ bu_tbl_style(struct bu_tbl *tbl, enum bu_tbl_style style)
     switch (style) {
 	case BU_TBL_STYLE_NONE:
 	    ft_set_border_style(tbl->t, FT_EMPTY_STYLE);
+	    ft_set_cell_prop(tbl->t, FT_ANY_ROW, FT_ANY_COLUMN, FT_CPROP_LEFT_PADDING, 0);
+	    ft_set_cell_prop(tbl->t, FT_ANY_ROW, FT_ANY_COLUMN, FT_CPROP_RIGHT_PADDING, 1);
+	    break;
+	case BU_TBL_STYLE_LIST:
+	    ft_set_border_style(tbl->t, FT_SIMPLE_STYLE);
+	    ft_set_cell_prop(tbl->t, FT_ANY_ROW, FT_ANY_COLUMN, FT_CPROP_LEFT_PADDING, 0);
+	    ft_set_cell_prop(tbl->t, FT_ANY_ROW, FT_ANY_COLUMN, FT_CPROP_RIGHT_PADDING, 0);
 	    break;
 	case BU_TBL_STYLE_BASIC:
 	    ft_set_border_style(tbl->t, FT_BASIC_STYLE);
-	    break;
-	case BU_TBL_STYLE_SIMPLE:
-	    ft_set_border_style(tbl->t, FT_SIMPLE_STYLE);
 	    break;
 	case BU_TBL_STYLE_SINGLE:
 	    ft_set_border_style(tbl->t, FT_SOLID_ROUND_STYLE);
