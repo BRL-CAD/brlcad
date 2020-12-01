@@ -118,7 +118,7 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (associated_geometry.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "associated_geometry");
 	if (attr) {
-	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->Raw()->a);
 	    if (!sa) goto step_error;
 	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 
