@@ -71,7 +71,7 @@ void checkSchemaName( Registry & reg, STEPfile & sf, bool ignoreErr ) {
     SDAI_Application_instance * ai =
         sf.HeaderInstances()->FindFileId( 3 )->GetApplication_instance();
     while( ( attr = ai->NextAttribute() ) ) {
-        attr->asStr( sname );
+        sname = attr->asStr();
         while( ( sc = reg.NextSchema() ) ) {
             if( compareOneSchName( sname, sc->Name() ) ) {
                 match = true;
@@ -91,7 +91,7 @@ void checkSchemaName( Registry & reg, STEPfile & sf, bool ignoreErr ) {
 }
 
 void printVersion( const char * exe ) {
-    std::cout << exe << " build info: " << sc_version() << std::endl;
+    std::cout << exe << " build info: " << sc_version << std::endl;
 }
 
 void printUse( const char * exe ) {
@@ -115,7 +115,9 @@ int main( int argc, char * argv[] ) {
     if( argc > 4 || argc < 2 ) {
         printUse( argv[0] );
     }
-    while( ( c = sc_getopt( argc, argv, "itsv" ) ) != -1 ) {
+
+    char opts[] = "itsv";
+    while( ( c = sc_getopt( argc, argv, opts ) ) != -1 ) {
         switch( c ) {
             case 'i':
                 ignoreErr = true;
@@ -151,8 +153,8 @@ int main( int argc, char * argv[] ) {
     benchmark stats( "p21 ReadExchangeFile()" );
 
     cout << argv[0] << ": load file ..." << endl;
-    if( argc >= ( optind + 1 ) ) {
-        flnm = argv[optind];
+    if( argc >= ( sc_optind + 1 ) ) {
+        flnm = argv[sc_optind];
     } else {
         flnm = ( char * )"testfile.step";
     }
@@ -175,8 +177,8 @@ int main( int argc, char * argv[] ) {
     Severity readSev = sfile.Error().severity(); //otherwise, errors from reading will be wiped out by sfile.WriteExchangeFile()
 
     cout << argv[0] << ": write file ..." << endl;
-    if( argc == optind + 2 ) {
-        flnm = argv[optind + 1];
+    if( argc == sc_optind + 2 ) {
+        flnm = argv[sc_optind + 1];
     } else {
         flnm = ( char * )"file.out";
     }

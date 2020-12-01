@@ -18,7 +18,7 @@
  * This code was developed with the support of the United States Government,
  * and is not subject to copyright.
  *
- * $Log$
+ * $Log: stmt.c,v $
  * Revision 1.3  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -26,7 +26,7 @@
  * CADDETC certified
  *
  * Revision 1.6  1993/02/16  03:27:02  libes
- * removed artifical begin/end nesting for improved reconstruction (printing)
+ * removed artificial begin/end nesting for improved reconstruction (printing)
  * of original Express file
  *
  * Revision 1.5  1992/08/18  17:13:43  libes
@@ -40,20 +40,7 @@
  *
  */
 
-#include <sc_memmgr.h>
 #include "express/stmt.h"
-
-struct freelist_head STMT_fl;
-
-struct freelist_head ALIAS_fl;
-struct freelist_head ASSIGN_fl;
-struct freelist_head CASE_fl;
-struct freelist_head COMP_STMT_fl;
-struct freelist_head COND_fl;
-struct freelist_head LOOP_fl;
-struct freelist_head PCALL_fl;
-struct freelist_head RET_fl;
-struct freelist_head INCR_fl;
 
 Statement STATEMENT_ESCAPE = STATEMENT_NULL;
 Statement STATEMENT_SKIP = STATEMENT_NULL;
@@ -68,21 +55,6 @@ Statement STMTcreate( int type ) {
 
 /** Initialize the Statement module. */
 void STMTinitialize( void ) {
-    MEMinitialize( &STMT_fl, sizeof( struct Statement_ ), 500, 100 );
-
-    MEMinitialize( &ALIAS_fl, sizeof( struct Alias_ ), 10, 10 );
-    MEMinitialize( &ASSIGN_fl, sizeof( struct Assignment_ ), 100, 30 );
-    MEMinitialize( &CASE_fl, sizeof( struct Case_Statement_ ), 100, 30 );
-    MEMinitialize( &COMP_STMT_fl, sizeof( struct Compound_Statement_ ), 100, 30 );
-    MEMinitialize( &COND_fl, sizeof( struct Conditional_ ), 100, 30 );
-    MEMinitialize( &LOOP_fl, sizeof( struct Loop_ ), 100, 30 );
-    MEMinitialize( &PCALL_fl, sizeof( struct Procedure_Call_ ), 100, 30 );
-    MEMinitialize( &RET_fl, sizeof( struct Return_Statement_ ), 100, 30 );
-    MEMinitialize( &INCR_fl, sizeof( struct Increment_ ), 100, 30 );
-
-    OBJcreate( OBJ_ALIAS, SCOPE_get_symbol, "alias scope", OBJ_UNUSED_BITS );
-    OBJcreate( OBJ_INCREMENT, SCOPE_get_symbol, "increment scope", OBJ_UNUSED_BITS );
-
     STATEMENT_SKIP = STMTcreate( STMT_SKIP );
     STATEMENT_ESCAPE = STMTcreate( STMT_ESCAPE );
 }
@@ -205,7 +177,7 @@ Scope INCR_CTLcreate( Symbol * control, Expression start,
     Expression e = EXPcreate_from_symbol( Type_Attribute, control );
     Variable v = VARcreate( e, Type_Number );
     DICTdefine( s->symbol_table, control->name,
-                ( Generic )v, control, OBJ_VARIABLE );
+                v, control, OBJ_VARIABLE );
     s->u.incr = INCR_new();
     s->u.incr->init = start;
     s->u.incr->end = end;

@@ -58,11 +58,18 @@ class SC_EDITOR_EXPORT STEPfile {
 
 //file information
         DirObj * _currentDir;
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::string _fileName;
 
         //the following are used to compute read/write progress
         std::ifstream::pos_type _iFileSize; ///< input file size
         std::ifstream::pos_type _iFileCurrentPosition; ///< input file position (from ifstream::tellg())
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
         bool _iFileStage1Done; ///< set immediately before ReadData1() returns
         int _oFileInstsWritten; ///< number of instances that have been written
 
@@ -92,8 +99,15 @@ class SC_EDITOR_EXPORT STEPfile {
 //file type information
         FileTypeCode _fileType;
         char ENTITY_NAME_DELIM;
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::string FILE_DELIM;
         std::string END_FILE_DELIM;
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 //public member functions
     public:

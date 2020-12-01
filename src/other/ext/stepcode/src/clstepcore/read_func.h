@@ -69,7 +69,7 @@ extern SC_CORE_EXPORT const char * ReadStdKeyword( istream & in, std::string & b
 
 extern SC_CORE_EXPORT const char * GetKeyword( istream & in, const char * delims, ErrorDescriptor & err );
 
-extern SC_CORE_EXPORT int FoundEndSecKywd( istream & in, ErrorDescriptor & err );
+extern SC_CORE_EXPORT int FoundEndSecKywd( istream& in );
 
 extern SC_CORE_EXPORT const char * ReadComment( std::string & ss, const char * s );
 

@@ -12,7 +12,7 @@
  * This code was developed with the support of the United States Government,
  * and is not subject to copyright.
  *
- * $Log$
+ * $Log: symbol.c,v $
  * Revision 1.6  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -32,25 +32,8 @@
  * Initial revision
  */
 
-#include <sc_memmgr.h>
 #include "express/symbol.h"
-
-struct freelist_head SYMBOL_fl;
 
 /** Initialize the Symbol module */
 void SYMBOLinitialize( void ) {
-    MEMinitialize( &SYMBOL_fl, sizeof( struct Symbol_ ), 100, 100 );
-}
-
-Symbol * SYMBOLcreate( char * name, int line, char * filename ) {
-    Symbol * sym = SYMBOL_new();
-    sym->name = name;
-    sym->line = line;
-    sym->filename = filename; /* NOTE this used the global 'current_filename',
-                               * instead of 'filename'. This func is only
-                               * called in two places, and both calls use
-                               * 'current_filename'. Changed this to avoid
-                               * potential future headaches. (MAP, Jan 12)
-                               */
-    return sym;
 }

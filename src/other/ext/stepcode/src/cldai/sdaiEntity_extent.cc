@@ -51,13 +51,11 @@ SDAI_Entity_extent::definition_name_( const SDAI_Entity_name & en ) {
     strncpy( _definition_name, en, strlen( en ) + 1 );
 }
 
-void
-SDAI_Entity_extent::owned_by_( SDAI_Model_contents__list_var & mclv ) {
-//    _owned_by = mcp;
+void SDAI_Entity_extent::owned_by_( SDAI_Model_contents__list_var& mclv ) {
+    _owned_by = *mclv;
 }
 
-SDAI_Model_contents__list_var
-SDAI_Entity_extent ::owned_by_() const {
+SDAI_Model_contents__list_var SDAI_Entity_extent ::owned_by_() const {
     return ( const SDAI_Model_contents__list_var ) &_owned_by;
 }
 

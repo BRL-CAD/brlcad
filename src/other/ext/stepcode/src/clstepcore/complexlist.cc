@@ -144,7 +144,7 @@ bool ComplexList::contains( EntNode * ents ) {
             ours = ours->next;
         }
         if( ours == NULL || *ours > *theirs ) {
-            // If either of these occured, we couldn't find one of ours which
+            // If either of these occurred, we couldn't find one of ours which
             // matched the current "theirs".
             return false;
         }

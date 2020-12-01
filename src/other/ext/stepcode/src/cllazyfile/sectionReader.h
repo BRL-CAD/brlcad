@@ -18,10 +18,17 @@ class SC_LAZYFILE_EXPORT sectionReader {
     protected:
         //protected data members
         lazyFileReader * _lazyFile;
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::ifstream & _file;
 
         std::streampos _sectionStart,  ///< the start of this section as reported by tellg()
             _sectionEnd;               ///< the end of this section as reported by tellg()
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
         unsigned long _totalInstances;
 
         ErrorDescriptor * _error;
@@ -81,7 +88,27 @@ class SC_LAZYFILE_EXPORT sectionReader {
 
         virtual const namedLazyInstance nextInstance() = 0;
 
+        /** returns the type string for an instance, read straight from the file
+         * if this function changes, probably need to change nextInstance() as well
+         * don't check errors - they would have been encountered during the initial file scan, and the file is still open so it can't have been modified */
+        const char * getType( long int offset ) {
+            if( offset <= 0 ) {
+                return 0;
+            }
+            _file.seekg( offset );
+            readInstanceNumber();
+            skipWS();
+            return getDelimitedKeyword( ";( /\\" );
+        }
+
         instanceID readInstanceNumber();
+
+        void seekg( std::streampos pos ) {
+            _file.seekg( pos );
+        }
+        std::streampos tellg() {
+            return _file.tellg();
+        }
 };
 
 #endif //SECTIONREADER_H

@@ -73,7 +73,7 @@ class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
 //    void definition_(const Entity_ptr& ep);
 #endif
         void definition_name_( const SDAI_Entity_name & ep );
-        void owned_by_( SDAI_Model_contents__list_var & mcp );
+        void owned_by_( SDAI_Model_contents__list_var & mclv );
 
         /*
            7.3.3.1  SDAI operation declarations

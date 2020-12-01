@@ -25,7 +25,7 @@ int main() {
 
     // This test creates a bunch of different entities, puts values in them,
     // prints the values out, links them to an array of entities, and then
-    // outputs all the enitities in STEP exchange format.
+    // outputs all the entities in STEP exchange format.
 
     // For specifics on the structure of the entity classes, see
     // the SdaiEXAMPLE_SCHEMA.h header file.

@@ -97,14 +97,14 @@ extern SC_EXPRESS_EXPORT char DICT_type;  /**< set as a side-effect of DICT look
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void     DICTinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void     DICTcleanup PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT int      DICTdefine PROTO( ( Dictionary, char *, Generic, Symbol *, char ) );
-extern SC_EXPRESS_EXPORT int      DICT_define PROTO( ( Dictionary, char *, Generic, Symbol *, char ) );
-extern SC_EXPRESS_EXPORT void     DICTundefine PROTO( ( Dictionary, char * ) );
-extern SC_EXPRESS_EXPORT Generic      DICTlookup PROTO( ( Dictionary, char * ) );
-extern SC_EXPRESS_EXPORT Generic      DICTlookup_symbol PROTO( ( Dictionary, char *, Symbol ** ) );
-extern SC_EXPRESS_EXPORT Generic      DICTdo PROTO( ( DictionaryEntry * ) );
-extern SC_EXPRESS_EXPORT void     DICTprint PROTO( ( Dictionary ) );
+extern SC_EXPRESS_EXPORT void     DICTinitialize( void );
+extern SC_EXPRESS_EXPORT void     DICTcleanup( void );
+extern SC_EXPRESS_EXPORT int      DICTdefine( Dictionary, char *, void *, Symbol *, char );
+extern SC_EXPRESS_EXPORT int      DICT_define( Dictionary, char *, void *, Symbol *, char );
+extern SC_EXPRESS_EXPORT void     DICTundefine( Dictionary, char * );
+extern SC_EXPRESS_EXPORT void *   DICTlookup( Dictionary, char * );
+extern SC_EXPRESS_EXPORT void *   DICTlookup_symbol( Dictionary, char *, Symbol ** );
+extern SC_EXPRESS_EXPORT void *   DICTdo( DictionaryEntry * );
+extern SC_EXPRESS_EXPORT void     DICTprint( Dictionary );
 
 #endif /*DICTIONARY_H*/

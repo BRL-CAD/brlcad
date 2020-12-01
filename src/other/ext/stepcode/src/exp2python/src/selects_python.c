@@ -23,7 +23,9 @@ extern int multiple_inheritance;
 **************************************************************************/
 #include <stdlib.h>
 #include "classes.h"
+#include <sc_stdbool.h>
 
+bool is_python_keyword( char * word );
 int isAggregateType( const Type t );
 char * generate_attribute_name( Variable a, char * out );
 void ATTRsign_access_methods( Variable a, FILE * file );
@@ -59,25 +61,18 @@ void ATTRprint_access_methods_put_head( const char * entnm, Variable a, FILE * f
 #define TRUE    1
 #define FALSE   0
 
-static void initSelItems( const Type, FILE * );
-
 const char *
 SEL_ITEMget_enumtype( Type t ) {
     return StrToUpper( TYPEget_name( t ) );
 }
 
 
-/******************************************************************
- ** Procedure:  TYPEget_utype
- ** Parameters:  Type t
- ** Returns:  type used to represent the underlying type in a select class
- ** Description:
- ** Side Effects:
- ** Status:
- ******************************************************************/
-
-const char *
-TYPEget_utype( Type t )  {
+/** FIXME implement for python or remove
+ ** \returns type used to represent the underlying type in a select class
+ */
+const char * TYPEget_utype( Type t )  {
+    (void) t; /* unused */
+    return NULL;
 }
 
 /*******************
@@ -86,8 +81,8 @@ LISTmember
 determines if the given entity is a member of the list.
 RETURNS the member if it is a member; otherwise 0 is returned.
 *******************/
-Generic
-LISTmember( const Linked_List list, Generic e ) {
+void *
+LISTmember( const Linked_List list, void *e ) {
     Link node;
     for( node = list->mark->next; node != list->mark; node = node->next )
         if( e == node -> data ) {
@@ -398,7 +393,7 @@ non_unique_types_vector( const Type type, int * tvec ) {
             tvec[tnumber]++;
             break;
         default:
-            printf( "Error in %s, line %d: type %d not handled by switch statement.", __FILE__, __LINE__, TYPEget_body( t )->type );
+            fprintf( stderr, "Error at %s:%d - type %d not handled by switch statement.", __FILE__, __LINE__, TYPEget_body( t )->type );
             abort();
     }
     LISTod;
@@ -516,7 +511,7 @@ SEL_TYPEgetnew_attribute_list( const Type type ) {
     if( TYPEis_entity( t ) ) {
         cur = ENT_TYPEget_entity( t );
         attrs = ENTITYget_all_attributes( cur );
-        LISTdo( attrs, a, Variable )
+        LISTdo_n( attrs, a, Variable, b )
         if( ! ATTR_LISTmember( newlist, a ) ) {
             LISTadd_first( newlist, a );
         }
@@ -526,43 +521,6 @@ SEL_TYPEgetnew_attribute_list( const Type type ) {
     return newlist;
 }
 
-/*******************
-TYPEselect_inc_print_vars prints the class 'definition', that is, the objects
-    and the constructor(s)/destructor for a select class.
-********************/
-void
-TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
-
-}
-
-/*******************
-TYPEselect_inc_print prints the class member function declarations of a select
-class.
-*******************/
-void
-TYPEselect_inc_print( const Type type, FILE * f ) {
-}
-
-
-/*******************
-TYPEselect_lib_print_part_one prints constructor(s)/destructor of a select
-class.
-*******************/
-void
-TYPEselect_lib_print_part_one( const Type type, FILE * f, Schema schema,
-                               Linked_List dups, char * n ) {
-}
-
-static void
-initSelItems( const Type type, FILE * f )
-/*
- * Creates initialization functions for the select items of a select.  The
- * selects must have their typedescriptors set properly.  If a select is a
- * renaming of another select ("TYPE selB = selA") its td would default to
- * selA's, so it must be set specifically.
- */
-{
-}
 
 Linked_List
 ENTITYget_expanded_entities( Entity e, Linked_List l ) {
@@ -609,103 +567,31 @@ SELget_entity_itemlist( const Type type ) {
 
 }
 
-static int
-memberOfEntPrimary( Entity ent, Variable uattr )
-/*
- * Specialized function used in function TYPEselect_lib_print_part_three
- * below.  Calls a function to check if an attribute of an entity belongs
- * to its primary path (is its own attr, that of its first super, that of
- * its first super's first super etc), and does necessary housekeeping.
- */
-{
-    Linked_List attrlist = LISTcreate();
-    int result;
-
-    ENTITYget_first_attribs( ent, attrlist );
-    result = ( LISTmember( attrlist, uattr ) != 0 );
-    LIST_destroy( attrlist );
-    return result;
-}
-
-/*******************
-TYPEselect_lib_print_part_three prints part 3) of the SDAI C++ binding for
-a select class -- access functions for the data members of underlying entity
-types.
-*******************/
-void
-TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
-                                 char * classnm ) {
-}
-
-/*******************
-TYPEselect_lib_print_part_four prints part 4 of the SDAI document of a select
-class.
-*******************/
-void
-TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
-                                Linked_List dups, char * n ) {
-}
-
-
-/*******************
-TYPEselect_init_print prints the types that belong to the select type
-*******************/
-
-void
-TYPEselect_init_print( const Type type, FILE * f, Schema schema ) {
-#define schema_name SCHEMAget_name(schema)
-    LISTdo( SEL_TYPEget_items( type ), t, Type )
-
-    fprintf( f, "\t%s -> Elements ().AddNode",
-             TYPEtd_name( type ) );
-    fprintf( f, " (%s);\n",
-             TYPEtd_name( t ) );
-    LISTod;
-#undef schema_name
-}
-
-void
-TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
-}
-
-
-void
-TYPEselect_lib_StrToVal( const Type type, FILE * f, Schema schema ) {
-}
-
-void
-TYPEselect_lib_virtual( const Type type, FILE * f, Schema schema ) {
-    TYPEselect_lib_part21( type, f,  schema );
-    TYPEselect_lib_StrToVal( type, f,  schema );
-}
-
-void
-SELlib_print_protected( const Type type,  FILE * f, const Schema schema ) {
-}
 
 /*******************
 TYPEselect_lib_print prints the member functions (definitions) of a select
 class.
 *******************/
 void
-TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
+TYPEselect_lib_print( const Type type, FILE * f ) {
     int nbr_select = 0;
     int num = 0;
 
     fprintf( f, "# SELECT TYPE %s\n", TYPEget_name( type ) );
-    // create the SELECT
+    /* create the SELECT */
     if( is_python_keyword( TYPEget_name( type ) ) ) {
         fprintf( f, "%s_ = SELECT(", TYPEget_name( type ) );
     } else {
         fprintf( f, "%s = SELECT(", TYPEget_name( type ) );
     }
 
-    // first compute the number of types (necessary to insert commas)
+    /* first compute the number of types (necessary to insert commas) */
     nbr_select = 0;
     LISTdo( SEL_TYPEget_items( type ), t, Type )
+    (void) t; /* unused */
     nbr_select++;
     LISTod;
-    // then write types
+    /* then write types */
     num = 0;
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     if( is_python_keyword( TYPEget_name( t ) ) ) {
@@ -721,9 +607,6 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
     fprintf( f, ",\n\tscope = schema_scope)\n" );
 }
 
-void
-TYPEselect_print( Type t, FILES * files, Schema schema ) {
-}
 #undef BASE_SELECT
 
 

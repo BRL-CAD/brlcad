@@ -83,10 +83,10 @@
 extern void print_fedex_version( void );
 
 static void exp2cxx_usage( void ) {
-    fprintf( stderr, "usage: %s [-s|-S] [-a|-A] [-c|-C] [-L] [-v] [-d # | -d 9 -l nnn -u nnn] [-n] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
+    char *warnings_help_msg = ERRORget_warnings_help("\t", "\n");
+    fprintf( stderr, "usage: %s [-s|-S] [-a|-A] [-L] [-v] [-d # | -d 9 -l nnn -u nnn] [-n] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
     fprintf( stderr, "where\t-s or -S uses only single inheritance in the generated C++ classes\n" );
     fprintf( stderr, "\t-a or -A generates the early bound access functions for entity classes the old way (without an underscore)\n" );
-    fprintf( stderr, "\t-c or -C generates C++ classes for use with CORBA (Orbix)\n" );
     fprintf( stderr, "\t-L prints logging code in the generated C++ classes\n" );
     fprintf( stderr, "\t-v produces the version description below\n" );
     fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
@@ -96,9 +96,7 @@ static void exp2cxx_usage( void ) {
     fprintf( stderr, "\t-i warning ignore\n" );
     fprintf( stderr, "and <warning> is one of:\n" );
     fprintf( stderr, "\tnone\n\tall\n" );
-    LISTdo( ERRORwarnings, opt, Error_Warning )
-    fprintf( stderr, "\t%s\n", opt->name );
-    LISTod
+    fprintf( stderr, "%s", warnings_help_msg);
     fprintf( stderr, "and <object_type> is one or more of:\n" );
     fprintf( stderr, "	e	entity\n" );
     fprintf( stderr, "	p	procedure\n" );
@@ -120,6 +118,7 @@ void resolution_success( void ) {
 }
 
 int success( Express model ) {
+    (void) model; /* unused */
     printf( "Finished writing files.\n" );
     return( 0 );
 }
@@ -131,7 +130,7 @@ void EXPRESSinit_init( void ) {
     EXPRESSsucceed = success;
     EXPRESSgetopt = Handle_FedPlus_Args;
     /* so the function getopt (see man 3 getopt) will not report an error */
-    strcat( EXPRESSgetopt_options, "sSlLcCaA" );
+    strcat( EXPRESSgetopt_options, "sSlLaA" );
     ERRORusage_function = exp2cxx_usage;
 }
 

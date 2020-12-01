@@ -342,9 +342,6 @@ SDAI_Enum::SDAI_Enum() {
     v = 0;
 }
 
-SDAI_Enum::~SDAI_Enum() {
-}
-
 /**
  * \copydoc set_value( const char * n )
  */
@@ -360,6 +357,7 @@ int SDAI_Enum::put( const char * n ) {
 }
 
 /// return 0 if unset otherwise return 1
+/// WARNING it appears that exists() will return true after a call to nullify(). is this intended?
 int SDAI_Enum::exists() const {
     return !( v > no_elements() );
 }
@@ -556,8 +554,10 @@ Severity SDAI_Enum::STEPread( istream & in, ErrorDescriptor * err, int optional 
 
 const char * SDAI_Enum::asStr( std::string & s ) const  {
     if( exists() ) {
-        return const_cast<char *>( ( s = element_at( v ) ).c_str() );
+        s = element_at( v );
+        return s.c_str();
     } else {
+        s.clear();
         return "";
     }
 }

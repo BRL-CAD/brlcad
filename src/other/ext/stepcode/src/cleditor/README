@@ -1,6 +1,6 @@
 This directory contains source code defining a collection of
 application independent classes supporting the editing of STEP
-instance data.  This library includes functions  for editing
+instance data.  This library includes functions for editing
 individual instances and for manipulating groups of instances.
 The editor library acts as an intermediary between the core library
 and a graphical user interface library.

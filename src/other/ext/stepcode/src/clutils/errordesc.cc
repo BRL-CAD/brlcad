@@ -131,7 +131,7 @@ void ErrorDescriptor::PrependToUserMsg( const char * msg ) {
 }
 
 void ErrorDescriptor::AppendToUserMsg( const char c ) {
-    _userMsg.append( &c );
+    _userMsg.push_back( c );
 }
 
 void ErrorDescriptor::AppendToUserMsg( const char * msg ) {
@@ -147,7 +147,7 @@ void ErrorDescriptor::PrependToDetailMsg( const char * msg ) {
 }
 
 void ErrorDescriptor::AppendToDetailMsg( const char c ) {
-    _detailMsg.append( &c );
+    _detailMsg.push_back( c );
 }
 
 void ErrorDescriptor::AppendToDetailMsg( const char * msg ) {

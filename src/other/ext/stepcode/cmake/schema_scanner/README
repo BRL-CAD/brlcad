@@ -1,0 +1,10 @@
+README for STEPcode schema scanner
+--------------
+
+The files in this directory are for a schema scanner executable, built by CMake during the configuration stage.
+
+This scanner is used to determine the file names that exp2cxx will use. In CMake, all file names must be known before
+configuration finishes - so it is necessary to parse the schemas early.
+
+This appears to be a standalone project to CMake, but it is intended to be built only as part of STEPcode. It is configured,
+built, and executed during the configuration stage of STEPcode.

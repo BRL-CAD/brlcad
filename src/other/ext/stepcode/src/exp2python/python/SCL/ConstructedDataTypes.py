@@ -30,19 +30,10 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+from enum import Enum
 import BaseType
 
-class EnumerationId(object):
-    """
-    EXPRESS definition:
-    ===================
-    An enumeration data type has as its domain an ordered set of names. The names represent
-    values of the enumeration data type. These names are designated by enumeration_ids and are
-    referred to as enumeration items.
-    """
-    pass
-
-class ENUMERATION(object):
+class ENUMERATION(Enum):
     """
     EXPRESS definition:
     ===================
@@ -57,51 +48,17 @@ class ENUMERATION(object):
       (ahead,
        behind);
     END_TYPE; -- ahead_or_behind
-    
-    is implemented in python with the line:
-    >>> ahead_of_behind = ENUMERATION('ahead','behind', the_current_scope)
-    >>> ahead_or_behind.ahead
-    >>> ahead_of_behind.behind
-    
-    And, if and only if ahead and/or behind are not in scope (e.g. they are not entity names,
-    and/or many enums define the same enumeration identifier):
-    >>> ahead
-    >>> behind
-    """
-    def __init__(self,*kargs,**args):
-        # first defining the scope
-        if args.has_key('scope'):
-            self._scope = args['scope']
-        else:
-            self._scope = None
-        # store passed enum identifiers
-        self._enum_id_names = list(kargs)
-        self._enum_ids = []
-        # we create enums id from names, and create attributes
-        # for instance, from the identifier name 'ahead',
-        # we create an attribute ahead with which is a new
-        # instance of EnumerationId
-        for enum_id_name in self._enum_id_names:
-            setattr(self,enum_id_name,EnumerationId())
-            # we store this new attributes to the enum_ids list, which
-            # will be accessed by the type checker with the get_enum_ids method
-            self._enum_ids.append(self.__getattribute__(enum_id_name))
-        #
-        # Then we check if the enums names can be added to the current scope:
-        # if the name is already in the scope, then another enums id or select
-        # has the same name -> we do nothing, enums will be called 
-        # with ahead_of_behind.ahead or ahead_or_behind.behind.
-        # otherwise, they can be called as only ahead or behind
-        # Note: since ENUMERATIONS are defined *before* entities, if an entity
-        # has the same name as an enum id, it will replace it in the current scope.
-        #
-        for enum_id_name in self._enum_id_names:
-            if not vars(self._scope).has_key(enum_id_name):
-                vars(self._scope)[enum_id_name] = self.__getattribute__(enum_id_name)
 
-    def get_enum_ids(self):
-        return self._enum_ids
-        
+    Scoping and visibility of ENUMERATIONS is similar in EXPRESS and Python
+    
+    Enum implemented as per Standard Library / PEP 435
+    >>> ahead_or_behind = ENUMERATION('ahead_or_behind', 'ahead behind')
+    >>> race_position = ahead_or_behind.ahead
+    >>> if race_position == ahead_or_behind.ahead:
+    ...   # do stuff! 
+    """
+    pass
+       
 class SELECT(object):
     """ A select data type has as its domain the union of the domains of the named data types in
     its select list. The select data type is a generalization of each of the named data types in its
@@ -109,7 +66,7 @@ class SELECT(object):
     """
     def __init__(self,*kargs,**args):
         # first defining the scope
-        if args.has_key('scope'):
+        if 'scope' in args:
             self._scope = args['scope']
         else:
             self._scope = None
@@ -127,7 +84,7 @@ class SELECT(object):
 
     def get_allowed_basic_types(self):
         ''' if a select contains some subselect, goes down through the different
-        sublayers untill there is no more '''
+        sublayers until there is no more '''
         b = []
         _auth_types = self.get_allowed_types()
         for _auth_type in _auth_types:

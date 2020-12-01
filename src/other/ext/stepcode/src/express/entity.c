@@ -1,7 +1,8 @@
 
 
-/** **********************************************************************
+/**
 ** Module:  Entity \file entity.c
+*
 ** This module is used to represent Express entity definitions.
 **  An entity definition consists of a name, a set of attributes, a
 **  collection of uniqueness sets, a specification of the entity's
@@ -12,6 +13,7 @@
 **  of the entity.  Thus, the uniqueness set { name, ssn } indicates
 **  that no two instances of the entity may share both the same
 **  values for both name and ssn.
+*
 ** Constants:
 **  ENTITY_NULL - the null entity
 **
@@ -21,7 +23,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log$
+ * $Log: entity.c,v $
  * Revision 1.11  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -111,12 +113,10 @@
  *
  */
 
-#include <sc_memmgr.h>
 #include "express/entity.h"
 #include "express/express.h"
 #include "express/object.h"
 
-struct freelist_head ENTITY_fl;
 int ENTITY_MARK = 0;
 
 /** returns true if variable is declared (or redeclared) directly by entity */
@@ -144,7 +144,7 @@ static Entity ENTITY_find_inherited_entity( Entity entity, char * name, int down
     entity->search_id = __SCOPE_search_id;
 
     LISTdo( entity->u.entity->supertypes, super, Entity )
-    if( streq( super->symbol.name, name ) ) {
+    if( !strcmp( super->symbol.name, name ) ) {
         return super;
     }
     LISTod
@@ -158,7 +158,7 @@ static Entity ENTITY_find_inherited_entity( Entity entity, char * name, int down
 
     if( down ) {
         LISTdo( entity->u.entity->subtypes, sub, Entity )
-        if( streq( sub->symbol.name, name ) ) {
+        if( !strcmp( sub->symbol.name, name ) ) {
             return sub;
         }
         LISTod;
@@ -175,7 +175,7 @@ static Entity ENTITY_find_inherited_entity( Entity entity, char * name, int down
 }
 
 struct Scope_ * ENTITYfind_inherited_entity( struct Scope_ *entity, char * name, int down ) {
-    if( streq( name, entity->symbol.name ) ) {
+    if( !strcmp( name, entity->symbol.name ) ) {
         return( entity );
     }
 
@@ -246,8 +246,6 @@ Variable ENTITYfind_inherited_attribute( struct Scope_ *entity, char * name,
  * report errors as appropriate
  */
 Variable ENTITYresolve_attr_ref( Entity e, Symbol * grp_ref, Symbol * attr_ref ) {
-    extern Error ERROR_unknown_supertype;
-    extern Error ERROR_unknown_attr_in_entity;
     Entity ref_entity;
     Variable attr;
     struct Symbol_ *where;
@@ -256,15 +254,13 @@ Variable ENTITYresolve_attr_ref( Entity e, Symbol * grp_ref, Symbol * attr_ref )
         /* use entity provided in group reference */
         ref_entity = ENTITYfind_inherited_entity( e, grp_ref->name, 0 );
         if( !ref_entity ) {
-            ERRORreport_with_symbol( ERROR_unknown_supertype, grp_ref,
-                                     grp_ref->name, e->symbol.name );
+            ERRORreport_with_symbol(UNKNOWN_SUPERTYPE, grp_ref, grp_ref->name, e->symbol.name );
             return 0;
         }
         attr = ( Variable )DICTlookup( ref_entity->symbol_table,
                                        attr_ref->name );
         if( !attr ) {
-            ERRORreport_with_symbol( ERROR_unknown_attr_in_entity,
-                                     attr_ref, attr_ref->name,
+            ERRORreport_with_symbol(UNKNOWN_ATTR_IN_ENTITY, attr_ref, attr_ref->name,
                                      ref_entity->symbol.name );
             /*      resolve_failed(e);*/
         }
@@ -273,36 +269,15 @@ Variable ENTITYresolve_attr_ref( Entity e, Symbol * grp_ref, Symbol * attr_ref )
         where = NULL;
         attr = ENTITYfind_inherited_attribute( e, attr_ref->name, &where );
         if( !attr /* was ref_entity? */ ) {
-            ERRORreport_with_symbol( ERROR_unknown_attr_in_entity,
+            ERRORreport_with_symbol(UNKNOWN_ATTR_IN_ENTITY,
                                      attr_ref, attr_ref->name,
                                      e->symbol.name );
         } else if( where != NULL ) {
-            ERRORreport_with_symbol( ERROR_implicit_downcast, attr_ref,
+            ERRORreport_with_symbol(IMPLICIT_DOWNCAST, attr_ref,
                                      where->name );
         }
     }
     return attr;
-}
-
-/**
-** low-level function for type Entity
-**
-** \note The attribute list of a new entity is defined as an
-**  empty list; all other aspects of the entity are initially
-**  undefined (i.e., have appropriate NULL values).
-*/
-Entity ENTITYcreate( Symbol * sym ) {
-    Scope s = SCOPEcreate( OBJ_ENTITY );
-
-    s->u.entity = ENTITY_new();
-    s->u.entity->attributes = LISTcreate();
-    s->u.entity->inheritance = ENTITY_INHERITANCE_UNINITIALIZED;
-
-    /* it's so useful to have a type hanging around for each entity */
-    s->u.entity->type = TYPEcreate_name( sym );
-    s->u.entity->type->u.type->body = TYPEBODYcreate( entity_ );
-    s->u.entity->type->u.type->body->entity = s;
-    return( s );
 }
 
 /**
@@ -318,9 +293,6 @@ Entity ENTITYcopy( Entity e ) {
 
 /** Initialize the Entity module. */
 void ENTITYinitialize() {
-    MEMinitialize( &ENTITY_fl, sizeof( struct Entity_ ), 500, 100 );
-    OBJcreate( OBJ_ENTITY, SCOPE_get_symbol, "entity",
-               OBJ_ENTITY_BITS );
 }
 
 /**
@@ -334,14 +306,14 @@ void ENTITYadd_attribute( Entity entity, Variable attr ) {
     if( attr->name->type->u.type->body->type != op_ ) {
         /* simple id */
         rc = DICTdefine( entity->symbol_table, attr->name->symbol.name,
-                         ( Generic )attr, &attr->name->symbol, OBJ_VARIABLE );
+                         attr, &attr->name->symbol, OBJ_VARIABLE );
     } else {
         /* SELF\ENTITY.SIMPLE_ID */
         rc = DICTdefine( entity->symbol_table, attr->name->e.op2->symbol.name,
-                         ( Generic )attr, &attr->name->symbol, OBJ_VARIABLE );
+                         attr, &attr->name->symbol, OBJ_VARIABLE );
     }
     if( rc == 0 ) {
-        LISTadd_last( entity->u.entity->attributes, ( Generic )attr );
+        LISTadd_last( entity->u.entity->attributes, attr );
         VARput_offset( attr, entity->u.entity->attribute_count );
         entity->u.entity->attribute_count++;
     }
@@ -352,11 +324,11 @@ void ENTITYadd_attribute( Entity entity, Variable attr ) {
 ** \param instance new instance
 ** Add an item to the instance list of an entity.
 */
-void ENTITYadd_instance( Entity entity, Generic instance ) {
+void ENTITYadd_instance( Entity entity, void *instance ) {
     if( entity->u.entity->instances == LIST_NULL ) {
         entity->u.entity->instances = LISTcreate();
     }
-    LISTadd( entity->u.entity->instances, instance );
+    LISTadd_last( entity->u.entity->instances, instance );
 }
 
 /**
@@ -392,14 +364,14 @@ bool ENTITYhas_immediate_supertype( Entity child, Entity parent ) {
     return false;
 }
 
-/// called by ENTITYget_all_attributes(). \sa ENTITYget_all_attributes
+/** called by ENTITYget_all_attributes(). \sa ENTITYget_all_attributes */
 static void ENTITY_get_all_attributes( Entity entity, Linked_List result ) {
     LISTdo( entity->u.entity->supertypes, super, Entity )
     /*  if (OBJis_kind_of(super, Class_Entity))*/
     ENTITY_get_all_attributes( super, result );
     LISTod;
     /* Gee, aren't they resolved by this time? */
-    LISTdo( entity->u.entity->attributes, attr, Generic )
+    LISTdo( entity->u.entity->attributes, attr, void * )
     LISTadd_last( result, attr );
     LISTod;
 }
@@ -409,9 +381,9 @@ static void ENTITY_get_all_attributes( Entity entity, Linked_List result ) {
  ** \return all attributes of this entity
  **
  ** Retrieve the attribute list of an entity.
- ** \sa ENTITY_get_all_attributes
+ ** \sa ENTITY_get_all_attributes()
  **
- ** Notes:   If an entity has neither defines nor inherits any
+ ** \note   If an entity has neither defines nor inherits any
  **      attributes, this call returns an empty list.  Note
  **      that this is distinct from the constant LIST_NULL.
  */
@@ -428,14 +400,14 @@ Linked_List ENTITYget_all_attributes( Entity entity ) {
 ** \return the named attribute of this entity
 ** Retrieve an entity attribute by name.
 **
-** Notes:   If the entity has no attribute with the given name,
+** \note   If the entity has no attribute with the given name,
 **  VARIABLE_NULL is returned.
 */
 Variable ENTITYget_named_attribute( Entity entity, char * name ) {
     Variable attribute;
 
     LISTdo( entity->u.entity->attributes, attr, Variable )
-    if( streq( VARget_simple_name( attr ), name ) ) {
+    if( !strcmp( VARget_simple_name( attr ), name ) ) {
         return attr;
     }
     LISTod;
@@ -455,7 +427,7 @@ Variable ENTITYget_named_attribute( Entity entity, char * name ) {
 ** \return offset to given attribute
 ** Retrieve offset to an entity attribute.
 **
-** Notes:   If the entity does not include the attribute, -1
+** \note   If the entity does not include the attribute, -1
 **  is returned.
 */
 int ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
@@ -485,7 +457,7 @@ int ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
 ** \return offset to named attribute of this entity
 ** Retrieve offset to an entity attribute by name.
 **
-** Notes:   If the entity has no attribute with the given name,
+** \note   If the entity has no attribute with the given name,
 **      -1 is returned.
 */
 int ENTITYget_named_attribute_offset( Entity entity, char * name ) {
@@ -493,7 +465,7 @@ int ENTITYget_named_attribute_offset( Entity entity, char * name ) {
     int value;
 
     LISTdo( entity->u.entity->attributes, attr, Variable )
-    if( streq( VARget_simple_name( attr ), name ) )
+    if( !strcmp( VARget_simple_name( attr ), name ) )
         return entity->u.entity->inheritance +
                VARget_offset( ENTITY_find_inherited_attribute( entity, name, 0, 0 ) );
     LISTod;

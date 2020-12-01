@@ -33,7 +33,27 @@ SDAI_Select::SDAI_Select( const SelectTypeDescriptor * s,
 #endif
 }
 
+SDAI_Select::SDAI_Select( const SDAI_Select & other ) {
+    underlying_type = other.underlying_type;
+    base_type = other.base_type;
+    _type = other._type;
+#ifdef SC_LOGGING
+    *logStream << "Exiting SDAI_Select constructor." << endl;
+#endif
+}
+
 SDAI_Select::~SDAI_Select() {
+}
+
+SDAI_Select & SDAI_Select::operator=( const SDAI_Select & other ) {
+    if( &other != this ) {
+        _error = other._error;
+        _type = other._type;
+        base_type = other.base_type;
+        underlying_type = other.underlying_type;
+        val = other.val;
+    }
+    return *this;
 }
 
 Severity SDAI_Select::severity() const {
@@ -135,7 +155,7 @@ void SDAI_Select::nullify() {
 }
 
 Severity SDAI_Select::SelectValidLevel( const char * attrValue, ErrorDescriptor * err,
-                                        InstMgr * im, int clearError ) {
+                                        InstMgrBase * im ) {
     SDAI_Select * tmp = NewSelect();
     Severity s = SEVERITY_NULL;
 
@@ -146,7 +166,7 @@ Severity SDAI_Select::SelectValidLevel( const char * attrValue, ErrorDescriptor 
 }
 
 Severity SDAI_Select::StrToVal( const char * Val, const char * selectType,
-                                ErrorDescriptor * err, InstMgr * instances ) {
+                                ErrorDescriptor * err, InstMgrBase * instances ) {
     severity( SEVERITY_NULL );
     if( SetUnderlyingType( CanBe( selectType ) ) )
 
@@ -208,7 +228,7 @@ Severity SDAI_Select::StrToVal( const char * Val, const char * selectType,
  * This function does the following:
  */
 Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
-                                InstMgr * instances, const char * utype,
+                                InstMgrBase * instances, const char * utype,
                                 int addFileId, const char * currSch ) {
     char c = '\0';
     std::string tmp;
@@ -222,7 +242,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
     /**
     ** This section of code is used to read a value belonging to a select
     ** contained in another select. If you have read the text part of the
-    ** TYPED_PARAMETER and it needs to fall down thru some levels of contained
+    ** TYPED_PARAMETER and it needs to fall down through some levels of contained
     ** select types, then the text is passed down to each select in the utype
     ** parameter as STEPread is called on each contained select type.DAS 2/4/97
     */
@@ -471,11 +491,11 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
         }
 
         if( base_type == ENTITY_TYPE ) {
-            // you don\'t know if this is an ENTITY or a SELECT
+            // you don't know if this is an ENTITY or a SELECT
             // have to do this here - not in STEPread_content
-            STEPentity * tmp =
+            STEPentity * temp =
                 ReadEntityRef( in, err, ",)", instances, addFileId );
-            if( tmp && ( tmp != ENTITY_NULL ) && AssignEntity( tmp ) ) {
+            if( temp && ( temp != ENTITY_NULL ) && AssignEntity( temp ) ) {
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
@@ -494,7 +514,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
             STEPread_content( in, instances, 0, addFileId );
         }
 
-        else { // ERROR  -- the type wasn\'t one of the choices
+        else { // ERROR  -- the type wasn't one of the choices
             err->AppendToDetailMsg(
                 "The type of the SELECT type is not valid.\n" );
             err->GreaterSeverity( SEVERITY_WARNING );
@@ -572,11 +592,11 @@ const char * SDAI_Select::STEPwrite( std::string & s, const char * currSch )  co
     return const_cast<char *>( s.c_str() );
 }
 
-int SDAI_Select::set_null() {
+bool SDAI_Select::set_null() {
     nullify();
-    return 1;
+    return true;
 }
 
-int SDAI_Select::is_null() {
+bool SDAI_Select::is_null() {
     return ( !exists() );
 }

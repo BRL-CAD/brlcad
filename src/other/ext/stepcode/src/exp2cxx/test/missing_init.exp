@@ -1,0 +1,19 @@
+SCHEMA missing_init;
+
+TYPE surface_tolerance_deviation = positive_length_measure;
+END_TYPE; -- 10303-46: presentation_appearance_schema
+
+TYPE positive_length_measure = non_negative_length_measure;
+WHERE
+  wr1 : SELF > 0.0;
+END_TYPE; -- 10303-41: measure_schema
+
+TYPE non_negative_length_measure = length_measure;
+WHERE
+  wr1 : SELF >= 0.0;
+END_TYPE; -- 10303-41: measure_schema
+
+TYPE length_measure = REAL;
+END_TYPE; -- 10303-41: measure_schema
+
+END_SCHEMA;

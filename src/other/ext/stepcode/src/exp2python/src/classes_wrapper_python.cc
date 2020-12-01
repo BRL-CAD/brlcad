@@ -4,124 +4,7 @@
 
 #include "complexSupport.h"
 
-extern int corba_binding;
-
 void use_ref( Schema, Express, FILES * );
-
-void
-create_builtin_type_decl( FILES * files, char * name ) {
-    //fprintf( files->incall, "extern TypeDescriptor *%s%s_TYPE;\n",
-    //         TD_PREFIX, name );
-}
-
-void
-create_builtin_type_defn( FILES * files, char * name ) {
-    //fprintf( files->initall, "\t%s%s_TYPE = TypeDescriptor (",
-    //         TD_PREFIX, name );
-    //fprintf( files->initall, "\"%s\", %s_TYPE, \"%s\");\n",
-    //         PrettyTmpName( name ), StrToUpper( name ), StrToLower( name ) );
-}
-
-/******************************************************************
- ** Procedure:  print_file_header
- ** Parameters: const Schema schema - top-level schema being printed
- **     FILE*        file   - file on which to print header
- ** Returns:
- ** Description:  handles file related tasks that need to be done once
- ** at the beginning of processing.
- ** In this case the file schema.h is initiated
- ** Status:  ok 1/15/91
- ******************************************************************/
-
-void
-print_file_header( Express express, FILES * files ) {
-    //files -> incall = FILEcreate( "schema.h" );
-
-    /* prevent RCS from expanding this! */
-    //fprintf( files->incall, "import sdai\n" );
-    //fprintf( files->incall, "import Registry\n" );
-
-    //fprintf( files->incall, "\n#include <STEPaggregate.h>\n" );
-    //fprintf( files->incall, "\n#include <STEPundefined.h>\n" );
-    //fprintf( files->incall, "\n#include <ExpDict.h>\n" );
-    //fprintf( files->incall, "\n#include <STEPattribute.h>\n" );
-
-    //fprintf( files->incall, "\n#include <Sdaiclasses.h>\n" );
-    //fprintf( files->incall, "import Sdaiclasses\n" );
-    //fprintf( files->incall, "extern void SchemaInit (Registry &);\n" );
-    //fprintf( files->incall, "extern void InitSchemasAndEnts (Registry &);\n" );
-
-    //files -> initall = FILEcreate( "schema.py" );
-    //fprintf( files->initall, "/* %cId$  */ \n", '\044' );
-    //fprintf( files->initall, "#include <schema.h>\n" );
-    //fprintf( files->initall, "import schema\n" );
-    //fprintf( files-> initall, "class Registry:\n" );
-
-    //fprintf( files->initall, "\tdef SchemaInit (Registry reg)\n{\n" );
-    //fprintf( files->initall, "\t extern void InitSchemasAndEnts " );
-    //fprintf( files->initall, "(Registry & r);\n" );
-    //fprintf( files->initall, "\t InitSchemasAndEnts (reg);\n" );
-
-    // This file will contain instantiation statements for all the schemas and
-    // entities in the express file.  (They must all be in separate function
-    // called first by SchemaInit() so that all entities will exist
-    //files -> create = FILEcreate( "SdaiAll.py" );
-    //fprintf( files->create, "/* %cId$  */ \n", '\044' );
-    //fprintf( files->create, "#include <schema.h>\n" );
-    //fprintf( files->create, "import schema" );
-    //fprintf( files->create, "\nvoid\nInitSchemasAndEnts (Registry & reg)\n{\n" );
-
-    // This file declares all entity classes as incomplete types.  This will
-    // allow all the .h files to reference all .h's.  We can then have e.g.,
-    // entX from schemaA have attribute attr1 = entY from schemaB.
-    //files -> classes = FILEcreate( "Sdaiclasses.h" );
-    //fprintf( files->classes, "/* %cId$  */ \n", '$' );
-    //fprintf( files->classes, "#include <schema.h>\n" );
-
-    /* create built-in types */
-    /*  no need to generate
-        create_builtin_type_decl(files,"INTEGER");
-        create_builtin_type_decl(files,"REAL");
-        create_builtin_type_decl(files,"STRING");
-        create_builtin_type_decl(files,"BINARY");
-        create_builtin_type_decl(files,"BOOLEAN");
-        create_builtin_type_decl(files,"LOGICAL");
-        create_builtin_type_decl(files,"NUMBER");
-        create_builtin_type_decl(files,"GENERIC");
-    */
-    /* create built-in types */
-    /*  no need to generate
-        create_builtin_type_defn(files,"INTEGER");
-        create_builtin_type_defn(files,"REAL");
-        create_builtin_type_defn(files,"STRING");
-        create_builtin_type_defn(files,"BINARY");
-        create_builtin_type_defn(files,"BOOLEAN");
-        create_builtin_type_defn(files,"LOGICAL");
-        create_builtin_type_defn(files,"NUMBER");
-        create_builtin_type_defn(files,"GENERIC");
-    */
-
-}
-
-/******************************************************************
- ** Procedure:  print_file_trailer
- ** Parameters: const Schema schema - top-level schema printed
- **     FILE*        file   - file on which to print trailer
- ** Returns:
- ** Description:  handles cleaning up things at end of processing
- ** Status:  ok 1/15/91
- ******************************************************************/
-
-/*ARGSUSED*/
-void
-print_file_trailer( Express express, FILES * files ) {
-    //FILEclose( files->incall );
-    //FILEclose( files->initall );
-    //fprintf( files->create, "}\n\n" );
-    //FILEclose( files->create );
-    //fprintf( files->classes, "\n" );
-    //FILEclose( files->classes );
-}
 
 /******************************************************************
  **  SCHEMA SECTION                      **/
@@ -139,15 +22,37 @@ print_file_trailer( Express express, FILES * files ) {
  ** organization of the schemas in the input Express
  ******************************************************************/
 
-void
-SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
-            ComplexCollect * col, int cnt ) {
+void SCOPEPrint( Scope scope, FILES * files, Schema schema ) {
     Linked_List list = SCOPEget_entities_superclass_order( scope );
     Linked_List function_list = SCOPEget_functions( scope );
     Linked_List rule_list = SCOPEget_rules( scope );
     DictionaryEntry de;
     Type i;
     int redefs = 0;// index = 0;
+
+    /* Defined Types based on SIMPLE types */
+    SCOPEdo_types( scope, t, de )
+    if ( ( t->search_id == CANPROCESS )
+            && !( TYPEis_enumeration( t ) || TYPEis_select( t ) || TYPEis_aggregate( t ) )
+            && ( TYPEget_ancestor( t ) == NULL) ) {
+        TYPEprint_descriptions( t, files, schema );
+        t->search_id = PROCESSED;
+    }
+    SCOPEod
+
+    /* Defined Types with defined ancestor head
+     * TODO: recursive approach
+     */
+    SCOPEdo_types( scope, t, de )
+    if ( ( t->search_id == CANPROCESS )
+            && !( TYPEis_enumeration( t ) || TYPEis_select( t ) || TYPEis_aggregate( t ) )
+            && ( ( i = TYPEget_head( t ) ) != NULL ) ) {
+        if (i->search_id == PROCESSED) {
+            TYPEprint_descriptions( t, files, schema );
+            t->search_id = PROCESSED;
+        }
+    }
+    SCOPEod
 
     /* fill in the values for the type descriptors */
     /* and print the enumerations */
@@ -199,7 +104,8 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
     if( t->search_id == CANPROCESS ) {
         // Only selects haven't been processed yet and may still be set to
         // CANPROCESS.
-        TYPEselect_print( t, files, schema );
+        //FIXME this function is not implemented!
+//         TYPEselect_print( t, files, schema );
         t->search_id = PROCESSED;
     }
     SCOPEod;
@@ -207,7 +113,7 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
     // process each entity. This must be done *before* typedefs are defined
     LISTdo( list, e, Entity );
     if( e->search_id == CANPROCESS ) {
-        ENTITYPrint( e, files, schema );
+        ENTITYPrint( e, files );
         e->search_id = PROCESSED;
     }
     LISTod;
@@ -215,89 +121,18 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
 
     // process each function. This must be done *before* typedefs are defined
     LISTdo( function_list, f, Function );
-    FUNCPrint( f, files, schema );
+    FUNCPrint( f, files );
     LISTod;
     LISTfree( function_list );
 
     // process each rule. This must be done *before* typedefs are defined
     LISTdo( rule_list, r, Rule );
-    RULEPrint( r, files, schema );
+    RULEPrint( r, files );
     LISTod;
     LISTfree( rule_list );
 
 }
 
-
-void
-PrintModelContentsSchema( Scope scope, FILES * files, Schema schema,
-                          Express model ) {
-    Linked_List list;
-    char nm[BUFSIZ];
-    DictionaryEntry de;
-
-    //fprintf( files -> inc, "\n/*\t**************  TYPES  \t*/\n" );
-    // Types should be exported to schema_name.DefinedDataTypes
-    //fprintf( files -> lib, "\n/*\t**************  TYPES  \t*/\n" );
-    //fprintf( files -> init, "\n/*\t**************  TYPES  \t*/\n" );
-
-    /* do \'new\'s for types descriptors  */
-    SCOPEdo_types( scope, t, de )
-    //TYPEprint_new( t, files->create, schema );
-    SCOPEod;
-
-    /* do \'new\'s for entity descriptors  */
-    list = SCOPEget_entities_superclass_order( scope );
-    //fprintf( files->init, "\n\t//\t*****  Describe the Entities  \t*/\n" );
-    fprintf( files->inc, "\n//\t***** Describe the Entities  \t\n" );
-    LISTdo( list, e, Entity );
-    ENTITYput_superclass( e ); /*  find supertype to use for single  */
-    ENTITYprint_new( e, files, schema, 0 );         /*  inheritance  */
-    LISTod;
-
-    // Print Entity Classes
-    LISTdo( list, e, Entity );
-    ENTITYPrint( e, files, schema );
-    LISTod;
-    /*  fill in the values for the type descriptors */
-    /*  and print the enumerations  */
-    //fprintf(files->lib,"register_defined_types():\n");
-    fprintf( files->inc, "\n//\t***** Describe the Other Types  \t\n" );
-    SCOPEdo_types( scope, t, de )
-    TYPEprint_descriptions( t, files, schema );
-    if( TYPEis_select( t ) ) {
-        /*   do the select aggregates here  */
-        strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ );
-        nm[BUFSIZ-1] = '\0';
-        fprintf( files->inc, "class %s;\ntypedef %s * %sH;\n", nm, nm, nm );
-        fprintf( files->inc,
-                 "typedef %s * %s_ptr;\ntypedef %s_ptr %s_var;\n\n",
-                 nm, nm, nm, nm );
-        fprintf( files->inc, "class %ss;\ntypedef %ss * %ssH;\n", nm, nm, nm );
-        fprintf( files->inc,
-                 "typedef %ss * %ss_ptr;\ntypedef %ss_ptr %ss_var;\n\n",
-                 nm, nm, nm, nm );
-    }
-    SCOPEod;
-
-    /*  build the typedefs  */
-    SCOPEdo_types( scope, t, de )
-    if( !( TYPEis_select( t ) ) ) {
-        TYPEprint_typedefs( t, files ->inc );
-    }
-    SCOPEod;
-
-    /*  do the select definitions next, since they depend on the others  */
-    fprintf( files->inc, "\n//\t***** Build the SELECT Types  \t\n" );
-    //fprintf( files->init, "\n//\t***** Add the TypeDescriptor's to the"
-    //         " SELECT Types  \t\n" );
-    SCOPEdo_types( scope, t, de )
-    if( TYPEis_select( t ) ) {
-        TYPEselect_print( t, files, schema );
-    }
-    SCOPEod;
-
-    LISTfree( list );
-}
 
 
 
@@ -315,21 +150,13 @@ PrintModelContentsSchema( Scope scope, FILES * files, Schema schema,
  ** Status:
  ******************************************************************/
 
-void
-SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
-             int suffix ) {
+void SCHEMAprint( Schema schema, FILES * files, int suffix ) {
     char schnm[MAX_LEN], sufnm[MAX_LEN], fnm[MAX_LEN], *np;
     /* sufnm = schema name + suffix */
     FILE * libfile;
-    Rule r;
-    Function f;
-    Procedure p;
-    DictionaryEntry de;
     /**********  create files based on name of schema   ***********/
     /*  return if failure           */
     /*  1.  header file             */
-    //sprintf( schnm, "%s%s", SCHEMA_FILE_PREFIX,
-    //         StrToUpper( SCHEMAget_name( schema ) ) );
     sprintf( schnm, "%s", SCHEMAget_name( schema ) );
     if( suffix == 0 ) {
         sprintf( sufnm, "%s", schnm );
@@ -345,7 +172,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     if( !( libfile = ( files -> lib ) = FILEcreate( fnm ) ) ) {
         return;
     }
-    //fprintf( libfile, "/* %cId$  */ \n", '$' );
     fprintf( libfile, "import sys\n" );
     fprintf( libfile, "\n" );
     fprintf( libfile, "from SCL.SCLBase import *\n" );
@@ -366,8 +192,7 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     /**********  do the schemas ***********/
 
     /* really, create calls for entity constructors */
-    SCOPEPrint( schema, files, schema, model, ( ComplexCollect * )complexCol,
-                suffix );
+    SCOPEPrint( schema, files, schema );
 
     /**********  close the files    ***********/
     FILEclose( libfile );
@@ -439,7 +264,7 @@ getMCPrint( Express express, FILE * schema_h, FILE * schema_cc ) {
  ** Status:  24-Feb-1992 new -kcm
  ******************************************************************/
 void
-EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
+EXPRESSPrint( Express express, FILES * files ) {
     char fnm [MAX_LEN];
     const char  * schnm;  /* schnm is really "express name" */
     FILE * libfile;
@@ -452,51 +277,17 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     /*  return if failure           */
     /*  1.  header file             */
     sprintf( fnm, "%s.h", schnm = ClassName( EXPRESSget_basename( express ) ) );
-    //if( !( incfile = ( files -> inc ) = FILEcreate( fnm ) ) ) {
-    //    return;
-    //}
-    //fprintf( incfile, "/* %cId$ */\n", '$' );
-
-    //fprintf( incfile, "#ifdef __O3DB__\n" );
-    //fprintf( incfile, "#include <OpenOODB.h>\n" );
-    //fprintf( incfile, "#endif\n\n" );
-    //fprintf( incfile, "#include <sdai.h> \n" );
-    /*    fprintf (incfile, "#include <schema.h> \n");*/
-    /*    fprintf (incfile, "extern void %sInit (Registry & r);\n", schnm);*/
-
-    //np = fnm + strlen( fnm ) - 1; /*  point to end of constant part of string  */
 
     /*  2.  class source file            */
     //sprintf( np, "cc" );
     if( !( libfile = ( files -> lib ) = FILEcreate( fnm ) ) ) {
         return;
     }
-    //fprintf( libfile, "/* %cId$ */\n", '$' );
-    //fprintf( libfile, "#include <%s.h> n", schnm );
-
-    /*  3.  source code to initialize entity registry   */
-    /*  prints header of file for input function    */
-
-    //sprintf( np, "init.cc" );
-    //if( !( initfile = ( files -> init ) = FILEcreate( fnm ) ) ) {
-    //    return;
-    //}
-    //fprintf( initfile, "/* $Id%d */\n", '$' );
-    //fprintf( initfile, "#include <%s.h>\n\n", schnm );
-    //fprintf( initfile, "void \n%sInit (Registry& reg)\n{\n", schnm );
-
-    /**********  record in files relating to entire input   ***********/
-
-    /*  add to schema's include and initialization file */
-    //fprintf( schemafile, "#include <%s.h>\n\n", schnm );
-    //fprintf( schemafile, "extern void %sInit (Registry & r);\n", schnm );
-    //fprintf( schemainit, "\t extern void %sInit (Registry & r);\n", schnm );
-    //fprintf( schemainit, "\t %sInit (reg);\n", schnm );
 
     /**********  do all schemas ***********/
     DICTdo_init( express->symbol_table, &de );
     while( 0 != ( schema = ( Scope )DICTdo( &de ) ) ) {
-        SCOPEPrint( schema, files, schema, express, &col, 0 );
+        SCOPEPrint( schema, files, schema );
     }
 
 
@@ -521,9 +312,9 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
  ******************************************************************/
 
 void
-print_schemas_combined( Express express, ComplexCollect & col, FILES * files ) {
+print_schemas_combined( Express express, FILES * files ) {
 
-    EXPRESSPrint( express, col, files );
+    EXPRESSPrint( express, files );
 }
 
 /*
@@ -541,18 +332,14 @@ void
 print_file( Express express ) {
     extern void RESOLUTIONsucceed( void );
     int separate_schemas = 1;
-    ComplexCollect col( express );
 
     File_holder files;
 
     resolution_success();
 
-    print_file_header( express, &files );
     if( separate_schemas ) {
-        print_schemas_separate( express, ( void * )&col, &files );
+        print_schemas_separate( express, &files );
     } else {
-        print_schemas_combined( express, col, &files );
+        print_schemas_combined( express, &files );
     }
-    print_file_trailer( express, &files );
-    //print_complex( col, ( const char * )"compstructs.cc" );
 }

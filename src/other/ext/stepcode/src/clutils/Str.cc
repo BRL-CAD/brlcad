@@ -228,7 +228,7 @@ char * PrettyNewName( const char * oldname ) {
 *** the value.
 
 *** If the input stream can be readable again then
-***  - any error states set for the the stream are cleared.
+***  - any error states set for the stream are cleared.
 ***  - white space skipped in the input stream
 ***  - if EOF is encountered it returns
 ***    otherwise it peeks at the next character
@@ -317,4 +317,8 @@ Severity CheckRemainingInput( istream & in, ErrorDescriptor * err,
         }
     }
     return err->severity();
+}
+
+Severity CheckRemainingInput( std::istream & in, ErrorDescriptor * err, const std::string typeName, const char * tokenList ) {
+    return CheckRemainingInput( in, err, typeName.c_str(), tokenList );
 }

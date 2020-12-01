@@ -14,18 +14,17 @@
 
 #include <sc_export.h>
 
+/** Base class for a singly-linked list.
+ * \sa SingleLinkNode
+ *
+ * node which represents the value is contained in the subclass
+ * since it may have different types for different lists
+ */
 class SC_CORE_EXPORT SingleLinkList  {
-
-        // node which represents the value is contained in the subclass
-        //  since it may have different types for different lists
-
     protected:
-
         class  SingleLinkNode  * head;
         SingleLinkNode  * tail;
-
     public:
-
         virtual SingleLinkNode * NewNode();
         virtual void AppendNode( SingleLinkNode * );
         virtual void DeleteNode( SingleLinkNode * );
@@ -38,23 +37,26 @@ class SC_CORE_EXPORT SingleLinkList  {
 
         SingleLinkList();
         virtual ~SingleLinkList();
+};
 
-}
-;
-
-
+/** Base class for nodes of a single-linked list.
+ * \sa SingleLinkList
+ */
 class SC_CORE_EXPORT SingleLinkNode {
         friend class SingleLinkList;
-    protected:
-
     public:
         SingleLinkList * owner;
         SingleLinkNode * next;
 
-        virtual SingleLinkNode * NextNode() const;
-        SingleLinkNode() : owner( 0 ), next( 0 )  { }
-        virtual ~SingleLinkNode() { }
+        virtual SingleLinkNode * NextNode() const {
+            return next;
+        }
 
+        SingleLinkNode() : owner( 0 ), next( 0 ) {
+        }
+
+        virtual ~SingleLinkNode() {
+        }
 };
 
 #endif

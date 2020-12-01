@@ -32,27 +32,7 @@
 //  judy_prv:   retrieve the cell pointer for the prev string in the array.
 //  judy_del:   delete the key and cell for the current stack entry.
 
-/* Import/Export flags for base. */
-#if defined(_WIN32)
-# define COMPILER_DLLEXPORT __declspec(dllexport)
-# define COMPILER_DLLIMPORT __declspec(dllimport)
-#else
-# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
-# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
-#endif
-
-
-#ifndef SC_BASE_EXPORT
-# if defined(SC_BASE_DLL_EXPORTS) && defined(SC_BASE_DLL_IMPORTS)
-#  error "Only SC_BASE_DLL_EXPORTS or SC_BASE_DLL_IMPORTS can be defined, not both."
-# elif defined(SC_BASE_DLL_EXPORTS)
-#  define SC_BASE_EXPORT COMPILER_DLLEXPORT
-# elif defined(SC_BASE_DLL_IMPORTS)
-#  define SC_BASE_EXPORT COMPILER_DLLIMPORT
-# else
-#  define SC_BASE_EXPORT
-# endif
-#endif
+#include "sc_export.h"
 
 #if defined(__LP64__)      || \
     defined(__x86_64__)    || \

@@ -336,7 +336,7 @@ int JoinList::acceptChoice( EntNode * ents )
         if( child->viable >= MATCHSOME ) {
             // Only mark children which have new nodes they can mark.  (This
             // condition is important.  Sometimes, there will be children who
-            // can mark but whose vaiable val = SATISFIED.  This will be the
+            // can mark but whose variable val = SATISFIED.  This will be the
             // case if there's another EntList with higher priority which can
             // also mark this node.  (For example, if an AND has an OR and a
             // SIMPLE child, the SIMPLE wins so that we'll have fewer OR

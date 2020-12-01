@@ -4,7 +4,7 @@
  * This work was supported by the United States Government, and is
  * not subject to copyright.
  *
- * $Log$
+ * $Log: linklist.c,v $
  * Revision 1.3  1997/01/21 19:19:51  dar
  * made C++ compatible
  *
@@ -21,21 +21,12 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
 #include "express/linklist.h"
 
-Error ERROR_empty_list = ERROR_none;
-struct freelist_head LINK_fl;
-struct freelist_head LIST_fl;
-
 void LISTinitialize( void ) {
-    MEMinitialize( &LINK_fl, sizeof( struct Link_ ), 500, 100 );
-    MEMinitialize( &LIST_fl, sizeof( struct Linked_List_ ), 100, 50 );
-    ERROR_empty_list = ERRORcreate( "Empty list in %s.", SEVERITY_ERROR );
 }
 
 void LISTcleanup( void ) {
-    ERRORdestroy( ERROR_empty_list );
 }
 
 Linked_List LISTcreate() {
@@ -47,8 +38,8 @@ Linked_List LISTcreate() {
 
 Linked_List LISTcopy( Linked_List src ) {
     Linked_List dst = LISTcreate();
-    LISTdo( src, x, Generic )
-    LISTadd( dst, x );
+    LISTdo( src, x, void * )
+    LISTadd_last( dst, x );
     LISTod
     return dst;
 }
@@ -67,7 +58,39 @@ void LISTfree( Linked_List list ) {
     LIST_destroy( list );
 }
 
-Generic LISTadd_first( Linked_List list, Generic item ) {
+void LISTsort( Linked_List list, int (*comp)(void*, void*)) {
+    unsigned int moved;
+    Link node, prev;
+
+    if (LISTempty(list))
+        return;
+
+    while (true) {
+        for ( node = list->mark->next, moved = 0; node != list->mark; node = node->next ) {
+            prev = node->prev;
+            if (prev != list->mark && comp(prev->data, node->data) < 0) {
+                LISTswap(prev, node);
+                moved++;
+            }
+        }
+        if (moved == 0)
+            break;
+    }
+}
+
+void LISTswap( Link p, Link q ) {
+    void *tmp;
+
+    if( p == LINK_NULL || q == LINK_NULL || p == q )
+        return;
+
+    tmp = p->data;
+    p->data = q->data;
+    q->data = tmp;
+}
+
+
+void *LISTadd_first( Linked_List list, void *item ) {
     Link        node;
 
     node = LINK_new();
@@ -77,7 +100,7 @@ Generic LISTadd_first( Linked_List list, Generic item ) {
     return item;
 }
 
-Generic LISTadd_last( Linked_List list, Generic item ) {
+void *LISTadd_last( Linked_List list, void *item ) {
     Link        node;
 
     node = LINK_new();
@@ -87,7 +110,7 @@ Generic LISTadd_last( Linked_List list, Generic item ) {
     return item;
 }
 
-Generic LISTadd_after( Linked_List list, Link link, Generic item ) {
+void *LISTadd_after( Linked_List list, Link link, void *item ) {
     Link node;
 
     if( link == LINK_NULL ) {
@@ -101,7 +124,7 @@ Generic LISTadd_after( Linked_List list, Link link, Generic item ) {
     return item;
 }
 
-Generic LISTadd_before( Linked_List list, Link link, Generic item ) {
+void *LISTadd_before( Linked_List list, Link link, void *item ) {
     Link node;
 
     if( link == LINK_NULL ) {
@@ -119,13 +142,13 @@ Generic LISTadd_before( Linked_List list, Link link, Generic item ) {
 }
 
 
-Generic LISTremove_first( Linked_List list ) {
+void *LISTremove_first( Linked_List list ) {
     Link        node;
-    Generic     item;
+    void *item;
 
     node = list->mark->next;
     if( node == list->mark ) {
-        ERRORreport( ERROR_empty_list, "LISTremove_first" );
+        ERRORreport( EMPTY_LIST, "LISTremove_first" );
         return NULL;
     }
     item = node->data;
@@ -134,20 +157,9 @@ Generic LISTremove_first( Linked_List list ) {
     return item;
 }
 
-/* 1st arg is historical and can be removed */
-Generic LISTremove( Linked_List list, Link link ) {
-    Generic     item;
-
-    link->next->prev = link->prev;
-    link->prev->next = link->next;
-    item = link->data;
-    LINK_destroy( link );
-    return item;
-}
-
-Generic LISTget_first( Linked_List list ) {
+void *LISTget_first( Linked_List list ) {
     Link node;
-    Generic item;
+    void *item;
 
     node = list->mark->next;
     if( node == list->mark ) {
@@ -157,9 +169,9 @@ Generic LISTget_first( Linked_List list ) {
     return item;
 }
 
-Generic LISTget_second( Linked_List list ) {
+void *LISTget_second( Linked_List list ) {
     Link        node;
-    Generic     item;
+    void *item;
 
     node = list->mark->next;
     if( node == list->mark ) {
@@ -174,7 +186,7 @@ Generic LISTget_second( Linked_List list ) {
 }
 
 /** first is 1, not 0 */
-Generic LISTget_nth( Linked_List list, int n ) {
+void *LISTget_nth( Linked_List list, int n ) {
     int count = 1;
     Link node;
 

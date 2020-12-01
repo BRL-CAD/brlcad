@@ -58,7 +58,7 @@ typedef struct Scan_Buffer {
 #endif
     char  * savedPos;
     FILE  * file;
-    char  *  filename;
+    const char  *  filename;
     bool readEof;
     int lineno;
     int bol;
@@ -71,16 +71,6 @@ typedef struct Scan_Buffer {
 extern SC_EXPRESS_EXPORT Scan_Buffer  SCAN_buffers[SCAN_NESTING_DEPTH];
 extern SC_EXPRESS_EXPORT int      SCAN_current_buffer;
 extern SC_EXPRESS_EXPORT char    *    SCANcurrent;
-
-extern SC_EXPRESS_EXPORT Error        ERROR_include_file;
-extern SC_EXPRESS_EXPORT Error        ERROR_unmatched_close_comment;
-extern SC_EXPRESS_EXPORT Error        ERROR_unmatched_open_comment;
-extern SC_EXPRESS_EXPORT Error        ERROR_unterminated_string;
-extern SC_EXPRESS_EXPORT Error        ERROR_encoded_string_bad_digit;
-extern SC_EXPRESS_EXPORT Error        ERROR_encoded_string_bad_count;
-extern SC_EXPRESS_EXPORT Error        ERROR_bad_identifier;
-extern SC_EXPRESS_EXPORT Error        ERROR_unexpected_character;
-extern SC_EXPRESS_EXPORT Error        ERROR_nonascii_char;
 
 /******************************/
 /* macro function definitions */
@@ -95,28 +85,30 @@ extern SC_EXPRESS_EXPORT Error        ERROR_nonascii_char;
 # define SCANtext_ready (*SCANcurrent != '\0')
 #endif
 
+#ifndef static_inline
+# define static_inline static inline
+#endif
+
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void SCANinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT int  SCANprocess_real_literal PROTO( ( const char * ) );
-extern SC_EXPRESS_EXPORT int  SCANprocess_integer_literal PROTO( ( const char * ) );
-extern SC_EXPRESS_EXPORT int  SCANprocess_binary_literal PROTO( ( const char * ) );
-extern SC_EXPRESS_EXPORT int  SCANprocess_logical_literal PROTO( ( char * ) );
-extern SC_EXPRESS_EXPORT int  SCANprocess_identifier_or_keyword PROTO( ( const char * ) );
-extern SC_EXPRESS_EXPORT int  SCANprocess_string PROTO( ( const char * ) );
-extern SC_EXPRESS_EXPORT int  SCANprocess_encoded_string PROTO( ( const char * ) );
-extern SC_EXPRESS_EXPORT int  SCANprocess_semicolon PROTO( ( const char *, int ) );
-extern SC_EXPRESS_EXPORT void SCANsave_comment PROTO( ( const char * ) );
-extern SC_EXPRESS_EXPORT bool  SCANread PROTO( ( void ) );
-#ifdef macros_bit_the_dust
-extern SC_EXPRESS_EXPORT void SCANdefine_macro PROTO( ( char *, char * ) );
-#endif
-extern SC_EXPRESS_EXPORT void SCANinclude_file PROTO( ( char * ) );
-SC_EXPRESS_EXPORT void        SCANlowerize PROTO( ( char * ) );
-SC_EXPRESS_EXPORT void        SCANupperize PROTO( ( char * ) );
-extern SC_EXPRESS_EXPORT char  *  SCANstrdup PROTO( ( char * ) );
-extern SC_EXPRESS_EXPORT long SCANtell PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void SCANinitialize( void );
+extern SC_EXPRESS_EXPORT void SCANcleanup( void );
+extern SC_EXPRESS_EXPORT int  SCANprocess_real_literal( const char * );
+extern SC_EXPRESS_EXPORT int  SCANprocess_integer_literal( const char * );
+extern SC_EXPRESS_EXPORT int  SCANprocess_binary_literal( const char * );
+extern SC_EXPRESS_EXPORT int  SCANprocess_logical_literal( char * );
+extern SC_EXPRESS_EXPORT int  SCANprocess_identifier_or_keyword( const char * );
+extern SC_EXPRESS_EXPORT int  SCANprocess_string( const char * );
+extern SC_EXPRESS_EXPORT int  SCANprocess_encoded_string( const char * );
+extern SC_EXPRESS_EXPORT int  SCANprocess_semicolon( const char *, int );
+extern SC_EXPRESS_EXPORT void SCANsave_comment( const char * );
+extern SC_EXPRESS_EXPORT bool SCANread( void );
+extern SC_EXPRESS_EXPORT void SCANinclude_file( char * );
+       SC_EXPRESS_EXPORT void SCANlowerize( char * );
+       SC_EXPRESS_EXPORT void SCANupperize( char * );
+extern SC_EXPRESS_EXPORT char  *  SCANstrdup( const char * );
+extern SC_EXPRESS_EXPORT long SCANtell( void );
 
 #endif /* LEX_ACTIONS_H */

@@ -46,11 +46,7 @@ typedef enum { Lfalse, Lunknown, Ltrue } Logical;
 /* typedef ... Binary; done below because String not defined yet */
 
 #ifndef _CLIENTDATA
-#   ifdef __STDC__
 typedef void * ClientData;
-#   else
-typedef int * ClientData;
-#   endif /* __STDC__ */
 #define _CLIENTDATA
 #endif
 
@@ -58,7 +54,7 @@ typedef int * ClientData;
 /* packages used throughout */
 /****************************/
 
-#include "memory.h"
+#include "alloc.h"
 
 typedef struct Scope_ * Type;
 typedef struct Scope_ * Scope;

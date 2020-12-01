@@ -9,17 +9,11 @@
 
 typedef char * SDAI_DAObjectID;
 
-// interface PID (ISO/DIS 10303-23:1996(E) 5.3.10.1)
-// Also, CORBA POS specification, Section 5.4
 //
 //    The PID class maintains the persistent object identifier for every
 // persistent object, objects of class DAObject, and objects of any class
 // derived directly or indirectly from DAObject.
 //
-// POS: The PID identifies one or more locations within a Datastore that
-// represent the persistent data of an object and generates a string
-// identifier for that data. An object must have a PID in order to store
-// its data persistently.
 //
 /*
    The EXPRESS ENTITY application_instance from the SDAI_data_type_schema from
@@ -29,7 +23,7 @@ typedef char * SDAI_DAObjectID;
    The class DAObject is supported by the classes PID, PID_SDAI and the type
    SDAI_DAObjectID as follows:
  */
-
+/// interface PID (ISO/DIS 10303-23:1996(E) 5.3.10.1)
 class SC_DAI_EXPORT SDAI_PID : public SDAI_sdaiObject {
     public:
 
@@ -67,13 +61,11 @@ typedef SDAI_PID * SDAI_PID_ptr;
 typedef SDAI_PID_ptr SDAI_PID_var;
 
 
-// interface PID_DA (ISO/DIS 10303-23:1996(E) 5.3.10.3)
-// Also, CORBA POS specification, Direct Access Protocol, Section 5.10.1
 //
 // The Direct Access Protocol supports direct access to persistent data
 // through typed attributes organized in data objects that are defined
 // in a Data Definition Language (DDL). An object using this protocol
-// whould represent its persistent data as one or more interconnected
+// would represent its persistent data as one or more interconnected
 // data objects, For uniformity, the persistent data of an object is
 // described as a single data object; however, that data object might be
 // the root of a graph of data objects interconnected by stored data
@@ -88,7 +80,7 @@ typedef SDAI_PID_ptr SDAI_PID_var;
 // may be accessed through this extension to the CosPersistencePID
 // interface.
 //
-
+/// interface PID_DA (ISO/DIS 10303-23:1996(E) 5.3.10.3)
 class SC_DAI_EXPORT SDAI_PID_DA: public SDAI_PID {
     public:
 
@@ -120,11 +112,11 @@ class SC_DAI_EXPORT SDAI_PID_DA: public SDAI_PID {
 typedef SDAI_PID_DA * SDAI_PID_DA_ptr;
 typedef SDAI_PID_DA_ptr SDAI_PID_DA_var;
 
-// interface PID_SDAI (ISO/DIS 10303-23:1996(E) 5.3.10.2)
 //
 //    The PID_SDAI class maintains the persistent object identifier for
 // a Model_contents object.
 //
+/// interface PID_SDAI (ISO/DIS 10303-23:1996(E) 5.3.10.2)
 class SC_DAI_EXPORT SDAI_PID_SDAI : public SDAI_PID {
     public:
         SDAI_String _modelid;
@@ -150,8 +142,6 @@ class SC_DAI_EXPORT SDAI_PID_SDAI : public SDAI_PID {
 typedef SDAI_PID_SDAI * SDAI_PID_SDAI_ptr;
 typedef SDAI_PID_SDAI_ptr SDAI_PID_SDAI_var;
 
-// interface DAObject (ISO/DIS 10303-23:1996(E) 5.3.10.5)
-// Also, CORBA POS Section 5.10.2, Direct Access Protocol.
 //
 //  From POS: The DAObject interface provides operations that many data
 // object clients need. A Datastore implementation may provide support
@@ -166,6 +156,7 @@ class SDAI_DAObject;
 typedef SDAI_DAObject * SDAI_DAObject_ptr;
 typedef SDAI_DAObject_ptr SDAI_DAObject_var;
 
+/// interface DAObject (ISO/DIS 10303-23:1996(E) 5.3.10.5)
 class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
     public:
 
@@ -262,7 +253,7 @@ class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
         void dado_free() { }
 };
 
-/*
+/**
    5.3.10.1  DAObject_SDAI
 */
 

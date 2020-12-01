@@ -12,6 +12,7 @@
 * and is not subject to copyright.
 */
 
+#include <iostream>
 #include <sc_export.h>
 
 class SC_DAI_EXPORT SDAI_Enum {
@@ -23,11 +24,11 @@ class SC_DAI_EXPORT SDAI_Enum {
         virtual int set_value( const char * n );
         virtual int set_value( const int n );
         SDAI_Enum();
-        virtual ~SDAI_Enum();
 
     public:
+        virtual ~SDAI_Enum() {};
 
-        void PrintContents( ostream & out = cout ) const {
+        void PrintContents( ostream & out = std::cout ) const {
             DebugDisplay( out );
         }
 
@@ -51,7 +52,7 @@ class SC_DAI_EXPORT SDAI_Enum {
         }
 
         const char * asStr( std::string & s ) const;
-        void STEPwrite( ostream & out = cout )  const;
+        void STEPwrite( ostream & out = std::cout )  const;
         const char * STEPwrite( std::string & s ) const;
 
         Severity StrToVal( const char * s, ErrorDescriptor * err, int optional = 1 );
@@ -60,8 +61,8 @@ class SC_DAI_EXPORT SDAI_Enum {
 
         virtual int put( int val );
         virtual int put( const char * n );
-        int is_null() const {
-            return !( exists() );
+        bool is_null() const {
+            return ( exists() == 0 );
         }
         void set_null() {
             nullify();
@@ -69,9 +70,11 @@ class SC_DAI_EXPORT SDAI_Enum {
         SDAI_Enum & operator= ( const int );
         SDAI_Enum & operator= ( const SDAI_Enum & );
 
+        /// WARNING it appears that exists() will return true after a call to nullify(). is this intended?
+        ///FIXME need to rewrite this function, but strange implementation...
         virtual int exists() const;
         virtual void nullify();
-        void DebugDisplay( ostream & out = cout ) const;
+        void DebugDisplay( ostream & out = std::cout ) const;
 
     protected:
         virtual Severity ReadEnum( istream & in, ErrorDescriptor * err,

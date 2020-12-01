@@ -39,8 +39,6 @@ class recursiveEntDescripIterator {
         recursiveEntDescripIterator( const EntityDescriptor * t = 0 ): startEntity( t ), position( 0 ) {
             //NOTE due to pure virtual functions, derived class constructor *must* call reset(t)
         }
-        recursiveEntDescripIterator( ): startEntity( 0 ), position( 0 ) {
-        }
         ~recursiveEntDescripIterator( ) {
         }
 

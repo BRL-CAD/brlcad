@@ -27,7 +27,7 @@ class SC_LAZYFILE_EXPORT headerSectionReader: public sectionReader {
             return _headerInstances;
         }
 
-        ~headerSectionReader() {
+        virtual ~headerSectionReader() {
             //FIXME delete each instance?! maybe add to clear, since it iterates over everything already
             //enum clearHow { rawData, deletePointers }
             _headerInstances->clear();

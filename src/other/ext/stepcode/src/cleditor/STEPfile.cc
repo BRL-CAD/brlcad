@@ -101,7 +101,7 @@ float STEPfile::GetWriteProgress() const {
  * returns an error descriptor.
  * It expects to find the "HEADER;" symbol at the beginning of the istream.
  *
- * side effects: The function  gobbles all characters up to and including the
+ * side effects: The function gobbles all characters up to and including the
  * next "ENDSEC;" from in.
  * The STEPfile::_headerInstances may change.
  */
@@ -198,14 +198,14 @@ Severity STEPfile::ReadHeader( istream & in ) {
             } else { //not ENTITY_NULL
                 //read the header instance
 
-                //check obj's Error Descriptor
-                objsev = AppendEntityErrorMsg( &( obj->Error() ) );
+                AppendEntityErrorMsg( &( obj->Error() ) );
 
                 //set file_id to reflect the appropriate Header Section Entity
                 fileid = HeaderId( const_cast<char *>( keywd.c_str() ) );
 
                 //read the values from the istream
                 objsev = obj->STEPread( fileid, 0, ( InstMgr * )0, in, NULL, true, _strict );
+                _error.GreaterSeverity( objsev );
                 if( !cmtStr.empty() ) {
                     obj->PrependP21Comment( cmtStr );
                 }
@@ -289,16 +289,10 @@ SDAI_Application_instance * STEPfile::HeaderDefaultFileName() {
 
     fn->name_( "" );
     fn->time_stamp_( "" );
-    tmp->StrToVal( "", &_error,
-                   fn->attributes[2].
-                   aDesc -> DomainType(),
-                   _headerInstances );
+    tmp->StrToVal( "", &_error, fn->attributes[2].getADesc()->DomainType(), _headerInstances );
     fn->author_( tmp );
 
-    tmp->StrToVal( "", &_error,
-                   fn->attributes[3].
-                   aDesc -> DomainType(),
-                   _headerInstances );
+    tmp->StrToVal( "", &_error, fn->attributes[3].getADesc()->DomainType(), _headerInstances );
     fn->organization_( tmp );
 
     fn->preprocessor_version_( "" );
@@ -324,10 +318,7 @@ SDAI_Application_instance * STEPfile::HeaderDefaultFileSchema() {
     SdaiFile_schema * fs = new SdaiFile_schema;
     StringAggregate_ptr tmp = new StringAggregate;
 
-    tmp->StrToVal( "", &_error,
-                   fs->attributes[0].
-                   aDesc -> DomainType(),
-                   _headerInstances );
+    tmp->StrToVal( "", &_error, fs->attributes[0].getADesc()->DomainType(), _headerInstances );
     fs->schema_identifiers_( tmp );
 
     fs->STEPfile_id = HeaderId( "File_Schema" );
@@ -350,7 +341,7 @@ SDAI_Application_instance * STEPfile::HeaderDefaultFileSchema() {
  * If the _headerInstances contain no instances, then copy the instances
  * from im onto the _headerInstances.
  * This only works for an instance manager which contains the following
- * header section entites. The file id numbers are important.
+ * header section entities. The file id numbers are important.
  *
  * #1 = FILE_DESCRIPTION
  * #2 = FILE_NAME
@@ -461,7 +452,7 @@ int STEPfile::ReadData1( istream & in ) {
     ErrorDescriptor e;
 
     //  PASS 1:  create instances
-    endsec = FoundEndSecKywd( in, _error );
+    endsec = FoundEndSecKywd( in );
     while( in.good() && !endsec ) {
         e.ClearErrorMsg();
         ReadTokenSeparator( in ); // also skips white space
@@ -484,7 +475,7 @@ int STEPfile::ReadData1( istream & in ) {
         if( c != ENTITY_NAME_DELIM ) {
             in.putback( c );
             while( c != ENTITY_NAME_DELIM && in.good() &&
-                    !( endsec = FoundEndSecKywd( in, _error ) ) ) {
+                    !( endsec = FoundEndSecKywd( in ) ) ) {
                 tmpbuf.clear();
                 FindStartOfInstance( in, tmpbuf );
                 cout << "ERROR: trying to recover from invalid data. skipping: "
@@ -533,7 +524,7 @@ int STEPfile::ReadData1( istream & in ) {
                 return instance_count;
             }
 
-            endsec = FoundEndSecKywd( in, _error );
+            endsec = FoundEndSecKywd( in );
 
         }
     } // end while loop
@@ -581,7 +572,7 @@ int STEPfile::ReadData2( istream & in, bool useTechCor ) {
     SDAI_Application_instance * obj = ENTITY_NULL;
     std::string cmtStr;
 
-    int endsec = FoundEndSecKywd( in, _error );
+    int endsec = FoundEndSecKywd( in );
 
     //  PASS 2:  read instances
     while( in.good() && !endsec ) {
@@ -599,7 +590,7 @@ int STEPfile::ReadData2( istream & in, bool useTechCor ) {
         if( c != ENTITY_NAME_DELIM ) {
             in.putback( c );
             while( c != ENTITY_NAME_DELIM && in.good() &&
-                    !( endsec = FoundEndSecKywd( in, _error ) ) ) {
+                    !( endsec = FoundEndSecKywd( in ) ) ) {
 
                 tmpbuf.clear();
                 FindStartOfInstance( in, tmpbuf );
@@ -653,7 +644,7 @@ int STEPfile::ReadData2( istream & in, bool useTechCor ) {
                 return valid_insts;
             }
 
-            endsec = FoundEndSecKywd( in, _error );
+            endsec = FoundEndSecKywd( in );
         }
     } // end while loop
 
@@ -1316,7 +1307,7 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
         case SEVERITY_BUG:
 
         case SEVERITY_INCOMPLETE:
-            if( ( _fileType == VERSION_CURRENT ) ) {
+            if( _fileType == VERSION_CURRENT ) {
                 cerr << "ERROR in EXCHANGE FILE: incomplete instance #"
                      << obj -> STEPfile_id << ".\n";
                 if( _fileType != WORKING_SESSION ) {
@@ -1742,19 +1733,15 @@ Severity STEPfile::AppendFile( istream * in, bool useTechCor ) {
         keywd = GetKeyword( *in2, ";", _error );
         //yank the ";" from the istream
         //if (';' == in2->peek()) in2->get();
-        char c;
-        in2->get( c );
-        if( c == ';' ) {
-            ;
-        } else {
-            //FIXME shouldn't *something* be done based upon the value of c? MAP, 9/2011
+        char ch;
+        in2->get( ch );
+        if( ch != ';' ) {
+            std::cerr << __FILE__ << ":" << __LINE__ << " - Expected ';' at Part 21 EOF, found '" << c << "'." << std::endl;
         }
     }
 
-    if( ( strncmp( const_cast<char *>( keywd.c_str() ),
-                   END_FILE_DELIM.c_str(),
-                   strlen( const_cast<char *>( keywd.c_str() ) ) ) || !( in2 -> good() ) ) ) {
-        _error.AppendToUserMsg( END_FILE_DELIM.c_str() );
+    if( ( !keywd.compare( 0, keywd.size(), END_FILE_DELIM ) ) || !( in2 -> good() ) ) {
+        _error.AppendToUserMsg( END_FILE_DELIM );
         _error.AppendToUserMsg( " missing at end of file.\n" );
         CloseInputFile( in2 );
         return _error.GreaterSeverity( SEVERITY_WARNING );

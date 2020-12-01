@@ -47,25 +47,12 @@
 
 extern SC_EXPRESS_EXPORT int print_objects_while_running;
 
-extern SC_EXPRESS_EXPORT Error ERROR_undefined_attribute;
-extern SC_EXPRESS_EXPORT Error ERROR_undefined_type;
-extern SC_EXPRESS_EXPORT Error ERROR_undefined_schema;
-extern SC_EXPRESS_EXPORT Error ERROR_unknown_attr_in_entity;
-extern SC_EXPRESS_EXPORT Error ERROR_unknown_subtype;
-extern SC_EXPRESS_EXPORT Error ERROR_unknown_supertype;
-extern SC_EXPRESS_EXPORT Error ERROR_circular_reference;
-extern SC_EXPRESS_EXPORT Error ERROR_ambiguous_attribute;
-extern SC_EXPRESS_EXPORT Error ERROR_ambiguous_group;
-
-extern SC_EXPRESS_EXPORT Error WARNING_case_skip_label;
-extern SC_EXPRESS_EXPORT Error WARNING_fn_skip_branch;
-
 /* macros */
 
 /* cheaper doing the check here, then inside the function call.  Return */
 /* immediately for RESOLVED, FAILED_TO_RESOLVE, and RESOLVE_IN_PROGRESS */
-#define TYPEresolve(t,s)        if (is_resolvable((*(t)))) TYPE_resolve((t))
-#define VARresolve_types(v,s)       if (is_resolvable((v)->name)) VAR_resolve_types((v),(s))
+#define TYPEresolve(t)        if (is_resolvable((*(t)))) TYPE_resolve((t))
+#define VARresolve_types(v)       if (is_resolvable((v)->name)) VAR_resolve_types((v))
 #define VARresolve_expressions(v,s) if (is_resolvable((v)->name)) VAR_resolve_expressions((v),(s))
 #define EXPresolve(expr,scope,type) if (!is_resolved(expr)) EXP_resolve(expr,scope,type)
 
@@ -73,14 +60,29 @@ extern SC_EXPRESS_EXPORT Error WARNING_fn_skip_branch;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void RESOLVEinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void RESOLVEcleanup PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void SCOPEresolve_expressions_statements PROTO( ( Scope ) );
-extern SC_EXPRESS_EXPORT void SCOPEresolve_subsupers PROTO( ( Scope ) );
-extern SC_EXPRESS_EXPORT void SCOPEresolve_types PROTO( ( Scope ) );
-extern SC_EXPRESS_EXPORT void TYPE_resolve PROTO( ( Type * ) );
-extern SC_EXPRESS_EXPORT void EXP_resolve PROTO( ( Expression, Scope, Type ) );
-extern SC_EXPRESS_EXPORT void ALGresolve PROTO( ( Scope ) );
-extern SC_EXPRESS_EXPORT void SCHEMAresolve PROTO( ( Scope ) );
+extern SC_EXPRESS_EXPORT void RESOLVEinitialize( void );
+extern SC_EXPRESS_EXPORT void RESOLVEcleanup( void );
+extern SC_EXPRESS_EXPORT void SCOPEresolve_expressions_statements( Scope );
+extern SC_EXPRESS_EXPORT void SCOPEresolve_subsupers( Scope );
+extern SC_EXPRESS_EXPORT void SCOPEresolve_types( Scope );
+extern SC_EXPRESS_EXPORT void TYPE_resolve( Type * );
+extern SC_EXPRESS_EXPORT void EXP_resolve( Expression, Scope, Type );
+extern SC_EXPRESS_EXPORT void ALGresolve( Scope );
+extern SC_EXPRESS_EXPORT void SCHEMAresolve( Scope );
+extern SC_EXPRESS_EXPORT void RENAMEresolve( Rename *, Schema );
+
+/*
+ * for unit tests, no extern / export
+ */
+void VAR_resolve_expressions( Variable, Entity );
+void ENTITYresolve_subtypes( Schema );
+void ENTITYresolve_supertypes( Entity );
+void ENTITYresolve_expressions( Entity e );
+void ALGresolve_expressions_statements( Scope, Linked_List );
+int WHEREresolve( Linked_List, Scope, int );
+void TYPEresolve_expressions( Type, Scope );
+void STMTresolve( Statement, Scope );
+void STMTlist_resolve( Linked_List, Scope );
+int  ENTITYresolve_subtype_expression( Expression, Entity, Linked_List * );
 
 #endif /*RESOLVE_H*/

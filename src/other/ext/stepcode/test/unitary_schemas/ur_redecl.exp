@@ -1,0 +1,24 @@
+SCHEMA ur_redecl;
+
+ENTITY single_property_is_definition
+  SUBTYPE OF (property_definition);
+  SELF\property_definition.definition : product_definition;
+UNIQUE
+  UR1: SELF\property_definition.definition;
+  UR2: definition;
+END_ENTITY;
+
+ENTITY property_definition  SUPERTYPE OF ( SINGLE_PROPERTY_IS_DEFINITION ) ;
+   definition : characterized_definition;
+END_ENTITY;
+TYPE characterized_definition = SELECT ( product_definition, shape_definition); END_TYPE;
+ENTITY product_definition;
+   id : identifier;
+END_ENTITY;
+ENTITY shape_definition;
+    id : text;
+END_ENTITY;
+TYPE text = STRING; END_TYPE;
+TYPE identifier = STRING; END_TYPE;
+
+END_SCHEMA;

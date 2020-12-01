@@ -81,7 +81,7 @@ struct Object {
 /* global variables */
 /********************/
 
-extern SC_EXPRESS_EXPORT struct Object * OBJ;
+extern SC_EXPRESS_EXPORT struct Object OBJ[];
 
 /******************************/
 /* macro function definitions */
@@ -96,10 +96,5 @@ extern SC_EXPRESS_EXPORT struct Object * OBJ;
 /***********************/
 /* function prototypes */
 /***********************/
-
-extern SC_EXPRESS_EXPORT void OBJinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void OBJcleanup PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void OBJcreate PROTO( ( char, struct Symbol_ * ( * )( Generic ), char *, int ) );
-extern SC_EXPRESS_EXPORT Symbol * UNK_get_symbol PROTO( ( Generic x ) );
 
 #endif /*OBJECT_H*/

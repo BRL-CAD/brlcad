@@ -1,6 +1,4 @@
-/*  "$Id: sc_hash.cc,v 3.0.1.2 1997/11/05 22:33:50 sauderd DP3.1 $"; */
-
-/*
+/** \file sc_hash.cc
  * Dynamic hashing, after CACM April 1988 pp 446-457, by Per-Ake Larson.
  * Coded into C, with minor code improvements, and with hsearch(3) interface,
  * by ejp@ausmelb.oz, Jul 26, 1988: 13:16;
@@ -13,48 +11,31 @@
 #include <string.h>
 #include <sc_memmgr.h>
 
-/*************/
 /* constants */
-/*************/
-
 #define HASH_NULL       (Hash_TableP)NULL
-
 #define SEGMENT_SIZE        256
 #define SEGMENT_SIZE_SHIFT  8   /* log2(SEGMENT_SIZE)   */
 #define PRIME1          37
 #define PRIME2          1048583
 #define MAX_LOAD_FACTOR 5
 
-/************/
-/* typedefs */
-/************/
-
-typedef unsigned long Address;
-
-/******************************/
 /* macro function definitions */
-/******************************/
-
-/*
-** Fast arithmetic, relying on powers of 2
-*/
-
-#define MUL(x,y)        ((x) << (y##_SHIFT))
-#define DIV(x,y)        ((x) >> (y##_SHIFT))
-#define MOD(x,y)        ((x) & ((y)-1))
-
 #define SC_HASH_Table_new()        new Hash_Table
 #define SC_HASH_Table_destroy(x)   delete x
 #define SC_HASH_Element_new()      new Element
 #define SC_HASH_Element_destroy(x) delete x
 
+/* Macros for fast arithmetic, relying on powers of 2 */
+#define MUL(x,y)        ((x) << (y##_SHIFT))
+#define DIV(x,y)        ((x) >> (y##_SHIFT))
+#define MOD(x,y)        ((x) & ((y)-1))
+
+/* typedefs */
+typedef unsigned long Address;
 typedef struct Element * ElementP;
 typedef struct Hash_Table * Hash_TableP;
 
-/*
-** Internal routines
-*/
-
+/* Internal routines */
 Address     SC_HASHhash( char *, Hash_TableP );
 static void SC_HASHexpand_table( Hash_TableP );
 
@@ -62,8 +43,8 @@ static void SC_HASHexpand_table( Hash_TableP );
 static long     HashAccesses, HashCollisions;
 # endif
 
-void *
-SC_HASHfind( Hash_TableP t, char * s ) {
+/// find entry in given hash table
+void * SC_HASHfind( Hash_TableP t, char * s ) {
     struct Element e;
     struct Element * ep;
 
@@ -73,8 +54,8 @@ SC_HASHfind( Hash_TableP t, char * s ) {
     return( ep ? ep->data : 0 );
 }
 
-void
-SC_HASHinsert( Hash_TableP t, char * s, void * data ) {
+/// insert entry into given hash table
+void SC_HASHinsert( Hash_TableP t, char * s, void * data ) {
     struct Element e, *e2;
 
     e.key = s;
@@ -82,12 +63,12 @@ SC_HASHinsert( Hash_TableP t, char * s, void * data ) {
     e.symbol = 0;
     e2 = SC_HASHsearch( t, &e, HASH_INSERT );
     if( e2 ) {
-        printf( "Redeclaration of %s\n", s );
+        fprintf( stderr, "%s: Redeclaration of %s\n", __FUNCTION__, s );
     }
 }
 
-Hash_TableP
-SC_HASHcreate( unsigned count ) {
+/// create a hash table
+Hash_TableP SC_HASHcreate( unsigned count ) {
     unsigned int i;
     Hash_TableP table;
 
@@ -138,10 +119,9 @@ SC_HASHcreate( unsigned count ) {
     return( table );
 }
 
-/* initialize pointer to beginning of hash table so we can step through it */
-/* on repeated calls to HASHlist - DEL */
-void
-SC_HASHlistinit( Hash_TableP table, HashEntry * he ) {
+/** initialize pointer to beginning of hash table so we can
+ * step through it on repeated calls to HASHlist - DEL */
+void SC_HASHlistinit( Hash_TableP table, HashEntry * he ) {
     he->i = he->j = 0;
     he->p = 0;
     he->table = table;
@@ -149,8 +129,7 @@ SC_HASHlistinit( Hash_TableP table, HashEntry * he ) {
     he->e = 0;
 }
 
-void
-SC_HASHlistinit_by_type( Hash_TableP table, HashEntry * he, char type ) {
+void SC_HASHlistinit_by_type( Hash_TableP table, HashEntry * he, char type ) {
     he->i = he->j = 0;
     he->p = 0;
     he->table = table;
@@ -158,9 +137,8 @@ SC_HASHlistinit_by_type( Hash_TableP table, HashEntry * he, char type ) {
     he->e = 0;
 }
 
-/* provide a way to step through the hash */
-struct Element *
-SC_HASHlist( HashEntry * he ) {
+/** provide a way to step through the hash */
+struct Element * SC_HASHlist( HashEntry * he ) {
     int i2 = he->i;
     int j2 = he->j;
     struct Element ** s;
@@ -202,8 +180,8 @@ SC_HASHlist( HashEntry * he ) {
     return( he->e );
 }
 
-void
-SC_HASHdestroy( Hash_TableP table ) {
+/// destroy all elements in given table, then the table itself
+void SC_HASHdestroy( Hash_TableP table ) {
     struct Element ** s;
     struct Element * p, *q;
 
@@ -226,16 +204,13 @@ SC_HASHdestroy( Hash_TableP table ) {
         }
         SC_HASH_Table_destroy( table );
 # if defined(HASH_STATISTICS) && defined(DEBUG)
-        fprintf( stderr,
-                 "[hdestroy] Accesses %ld Collisions %ld\n",
-                 HashAccesses,
-                 HashCollisions );
+        fprintf( stderr, "[hdestroy] Accesses %ld Collisions %ld\n", HashAccesses, HashCollisions );
 # endif
     }
 }
 
-struct Element *
-SC_HASHsearch( Hash_TableP table, const struct Element * item, Action action ) {
+/// search table for 'item', perform 'action' (find/insert/delete)
+struct Element * SC_HASHsearch( Hash_TableP table, const struct Element * item, Action action ) {
     Address h;
     struct Element ** CurrentSegment;
     int     SegmentIndex;
@@ -317,10 +292,9 @@ SC_HASHsearch( Hash_TableP table, const struct Element * item, Action action ) {
 ** Internal routines
 */
 
-Address
-SC_HASHhash( char * Key, Hash_TableP table ) {
+Address SC_HASHhash( char * Key, Hash_TableP table ) {
     Address     h, address;
-    register unsigned char * k = ( unsigned char * )Key;
+    unsigned char * k = ( unsigned char * )Key;
 
     h = 0;
     /*
@@ -337,9 +311,7 @@ SC_HASHhash( char * Key, Hash_TableP table ) {
     return( address );
 }
 
-static
-void
-SC_HASHexpand_table( Hash_TableP table ) {
+static void SC_HASHexpand_table( Hash_TableP table ) {
     struct Element ** OldSegment, **NewSegment;
     struct Element * Current, **Previous, **LastOfNew;
 
@@ -407,7 +379,7 @@ SC_HASHexpand_table( Hash_TableP table ) {
     }
 }
 
-/* following code is for testing hash package */
+/* for testing sc_hash */
 #ifdef HASHTEST
 struct Element e1, e2, e3, *e;
 struct Hash_Table * t;

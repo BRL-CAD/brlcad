@@ -94,7 +94,7 @@ class representation_relationship(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument name is mantatory and can not be set to None')
+				raise AssertionError('Argument name is mandatory and can not be set to None')
 			if not check_type(value,label):
 				self._name = label(value)
 			else:
@@ -108,7 +108,7 @@ class representation_relationship(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument rep_1 is mantatory and can not be set to None')
+				raise AssertionError('Argument rep_1 is mandatory and can not be set to None')
 			if not check_type(value,representation):
 				self._rep_1 = representation(value)
 			else:
@@ -122,7 +122,7 @@ class representation_relationship(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument rep_2 is mantatory and can not be set to None')
+				raise AssertionError('Argument rep_2 is mandatory and can not be set to None')
 			if not check_type(value,representation):
 				self._rep_2 = representation(value)
 			else:
@@ -172,7 +172,7 @@ class representation(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument name is mantatory and can not be set to None')
+				raise AssertionError('Argument name is mandatory and can not be set to None')
 			if not check_type(value,label):
 				self._name = label(value)
 			else:
@@ -186,7 +186,7 @@ class representation(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument items is mantatory and can not be set to None')
+				raise AssertionError('Argument items is mandatory and can not be set to None')
 			if not check_type(value,SET(1,None,'STRING', scope = schema_scope)):
 				self._items = SET(value)
 			else:
@@ -200,7 +200,7 @@ class representation(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument context_of_items is mantatory and can not be set to None')
+				raise AssertionError('Argument context_of_items is mandatory and can not be set to None')
 			if not check_type(value,representation_context):
 				self._context_of_items = representation_context(value)
 			else:
@@ -244,7 +244,7 @@ class property_definition(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument name is mantatory and can not be set to None')
+				raise AssertionError('Argument name is mandatory and can not be set to None')
 			if not check_type(value,label):
 				self._name = label(value)
 			else:
@@ -258,7 +258,7 @@ class property_definition(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument definition is mantatory and can not be set to None')
+				raise AssertionError('Argument definition is mandatory and can not be set to None')
 			if not check_type(value,characterized_definition):
 				self._definition = characterized_definition(value)
 			else:
@@ -291,7 +291,7 @@ class context_dependent_shape_representation(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument representation_relation is mantatory and can not be set to None')
+				raise AssertionError('Argument representation_relation is mandatory and can not be set to None')
 			if not check_type(value,shape_representation_relationship):
 				self._representation_relation = shape_representation_relationship(value)
 			else:

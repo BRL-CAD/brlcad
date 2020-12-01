@@ -5,7 +5,7 @@
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
  *
- * $Log$
+ * $Log: expscan.l,v $
  * Revision 1.12  1997/05/29 20:17:34  sauderd
  * Made some changes to Symbol (to be Symbol_) and false and true to be False
  * and True. These changes affect the generated expscan.c file so that it will
@@ -110,7 +110,6 @@
 
 enum { INITIAL, code, comment, return_end_schema };
 
-extern void	yyerror();
 extern int	yylineno;
 extern bool	yyeof;
 static int	nesting_level = 0;
@@ -143,26 +142,13 @@ SCANnextchar(char* buffer)
 #endif
 	buffer[0] = *(SCANcurrent++);
 	if (!isascii(buffer[0])) {
-	    ERRORreport_with_line(ERROR_nonascii_char,yylineno,
+	    ERRORreport_with_line(NONASCII_CHAR,yylineno,
 				  0xff & buffer[0]);
 	    buffer[0] = ' ';	/* substitute space */
 	}
 	return 1;
     } else
 	return 0;
-}
-
-static int
-yywrap()
-{
-    int i;
-
-    for (i = 0; i < nesting_level && i < MAX_NESTED_COMMENTS; i++) {
-	ERRORreport_with_symbol(ERROR_unmatched_open_comment,
-		&open_comment[i]);
-	/* maybe not all, but at least some will be reported - DEL */
-    }
-    return 1;
 }
 
 #define NEWLINE (yylineno++)
@@ -238,7 +224,7 @@ integer {
 
 /* bad identifier */
 [_A-Za-z]id_char* {
-    ERRORreport_with_line(ERROR_bad_identifier, yylineno, yytext);
+    ERRORreport_with_line(BAD_IDENTIFIER, yylineno, yytext);
     return SCANprocess_identifier_or_keyword(yytext);
 }
 
@@ -249,7 +235,7 @@ integer {
 }
 
 "'"([^'\n]|"''")*'\n' {
-    ERRORreport_with_line(ERROR_unterminated_string, LINENO_FUDGE);
+    ERRORreport_with_line(UNTERMINATED_STRING, LINENO_FUDGE);
     NEWLINE;
     return SCANprocess_string(yytext);
 }
@@ -259,7 +245,7 @@ integer {
 }
 
 '"'[^\"\n]*'\n' {
-    ERRORreport_with_line(ERROR_unterminated_string, LINENO_FUDGE);
+    ERRORreport_with_line(UNTERMINATED_STRING, LINENO_FUDGE);
     NEWLINE;
     return SCANprocess_encoded_string(yytext);
 }
@@ -313,7 +299,7 @@ integer {
 }
 
 <code>"*)" {
-    ERRORreport_with_line(ERROR_unmatched_close_comment, yylineno);
+    ERRORreport_with_line(UNMATCHED_CLOSE_COMMENT, yylineno);
     IGNORE_TOKEN;
 }	
 
@@ -330,7 +316,7 @@ integer {
 
 /* As per N15, 7.1.5.3, all other recognized chars are incorrect - DEL */
 <code>[$%&@\^{}~] {
-    ERRORreport_with_line(ERROR_unexpected_character,yylineno,yytext[0]);
+    ERRORreport_with_line(UNEXPECTED_CHARACTER,yylineno,yytext[0]);
     IGNORE_TOKEN;
 }
 

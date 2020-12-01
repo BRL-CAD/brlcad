@@ -10,8 +10,31 @@
 
 #include <list>
 
-typedef std::list<void *>            STEPcomplex_attr_data_list;
-typedef std::list<void *>::iterator  STEPcomplex_attr_data;
+/* attr's for SC's are created with a pointer to their data.
+ * STEPcomplex_attr_data_list is used to store the pointers for
+ * deletion. this list is composed of attrData_t's, which track
+ * types for ease of deletion
+ */
+typedef struct {
+    PrimitiveType type;
+    union {
+        SDAI_Integer * i;
+        SDAI_String * str;
+        SDAI_Binary * bin;
+        SDAI_Real * r;
+        SDAI_BOOLEAN * b;
+        SDAI_LOGICAL * l;
+        SDAI_Application_instance ** ai;
+        SDAI_Enum * e;
+        SDAI_Select * s;
+        STEPaggregate * a;
+    };
+} attrData_t;
+typedef std::list< attrData_t >               STEPcomplex_attr_data_list;
+typedef STEPcomplex_attr_data_list::iterator  STEPcomplex_attr_data_iter;
+
+/** FIXME are inverse attr's initialized for STEPcomplex? */
+
 
 class SC_CORE_EXPORT STEPcomplex : public SDAI_Application_instance {
     public: //TODO should this _really_ be public?!
@@ -19,7 +42,14 @@ class SC_CORE_EXPORT STEPcomplex : public SDAI_Application_instance {
         STEPcomplex * head;
         Registry * _registry;
         int visited; ///< used when reading (or as you wish?)
-        STEPcomplex_attr_data_list _attr_data_list;
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
+        STEPcomplex_attr_data_list _attr_data_list; ///< attrs are created with a pointer to data; this stores them for deletion
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
     public:
         STEPcomplex( Registry * registry, int fileid );
         STEPcomplex( Registry * registry, const std::string ** names, int fileid,
@@ -34,11 +64,11 @@ class SC_CORE_EXPORT STEPcomplex : public SDAI_Application_instance {
 
         virtual const EntityDescriptor * IsA( const EntityDescriptor * ) const;
 
-        virtual Severity ValidLevel( ErrorDescriptor * error, InstMgr * im,
+        virtual Severity ValidLevel( ErrorDescriptor * error, InstMgrBase * im,
                                      int clearError = 1 );
 // READ
         virtual Severity STEPread( int id, int addFileId,
-                                   class InstMgr * instance_set,
+                                   class InstMgrBase * instance_set,
                                    istream & in = cin, const char * currSch = NULL,
                                    bool useTechCor = true, bool strict = true );
 

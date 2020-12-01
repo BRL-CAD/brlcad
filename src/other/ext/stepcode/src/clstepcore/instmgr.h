@@ -39,7 +39,13 @@
 
 #include <mgrnodearray.h>
 
-class SC_CORE_EXPORT InstMgr {
+class SC_CORE_EXPORT InstMgrBase {
+    public:
+        virtual MgrNodeBase * FindFileId( int fileId ) = 0;
+        virtual ~InstMgrBase() {};
+};
+
+class SC_CORE_EXPORT InstMgr : public InstMgrBase {
     protected:
         int maxFileId;
         int _ownsInstances; // if true will delete instances inside destructor

@@ -54,7 +54,7 @@ class shape(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument item_name is mantatory and can not be set to None')
+				raise AssertionError('Argument item_name is mandatory and can not be set to None')
 			if not check_type(value,label):
 				self._item_name = label(value)
 			else:
@@ -68,7 +68,7 @@ class shape(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument number_of_sides is mantatory and can not be set to None')
+				raise AssertionError('Argument number_of_sides is mandatory and can not be set to None')
 			if not check_type(value,INTEGER):
 				self._number_of_sides = INTEGER(value)
 			else:
@@ -99,7 +99,7 @@ class rectangle(shape):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument height is mantatory and can not be set to None')
+				raise AssertionError('Argument height is mandatory and can not be set to None')
 			if not check_type(value,length_measure):
 				self._height = length_measure(value)
 			else:
@@ -113,7 +113,7 @@ class rectangle(shape):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument width is mantatory and can not be set to None')
+				raise AssertionError('Argument width is mandatory and can not be set to None')
 			if not check_type(value,length_measure):
 				self._width = length_measure(value)
 			else:

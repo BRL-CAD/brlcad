@@ -53,6 +53,7 @@ if(BRLCAD_SC_BUILD)
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=OFF
 	       $<$<NOT:$<BOOL:${CMAKE_CONFIGURATION_TYPES}>>:-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}>
 	       -DLEMON_ROOT=${CMAKE_BINARY_ROOT}
+	       -DLEMON_TEMPLATE=${CMAKE_BINARY_ROOT}/${DATA_DIR}/lemon/lempar.c
 	       -DRE2C_ROOT=${CMAKE_BINARY_ROOT}
 	       -DPERPLEX_ROOT=${CMAKE_BINARY_ROOT}
                -DSC_IS_SUBBUILD=ON -DSC_PYTHON_GENERATOR=OFF
@@ -109,85 +110,137 @@ if(BRLCAD_SC_BUILD)
   endforeach(SCEXEC ${STEPCODE_EXECS})
 
   ExternalProject_ByProducts(stepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
+    base/judy.h
+    base/judyL2Array.h
+    base/judyLArray.h
+    base/judyS2Array.h
+    base/judySArray.h
+    base/path2str.h
+    base/sc_benchmark.h
+    base/sc_getopt.h
+    base/sc_memmgr.h
+    base/sc_mkdir.h
+    base/sc_nullptr.h
+    base/sc_trace_fprintf.h
     cldai/sdaiApplication_instance_set.h
-    cldai/sdaiSession_instance.h
-    cldai/sdaiObject.h
-    cldai/sdaiString.h
+    cldai/sdaiBinary.h
+    cldai/sdaiDaObject.h
     cldai/sdaiEntity_extent.h
+    cldai/sdaiEntity_extent_set.h
     cldai/sdaiEnum.h
     cldai/sdaiModel_contents.h
-    cldai/sdaiBinary.h
-    cldai/sdaiEntity_extent_set.h
     cldai/sdaiModel_contents_list.h
-    cldai/sdaiDaObject.h
-    ordered_attrs.h
-    exppp/exppp.h
-    express/hash.h
-    express/error.h
-    express/linklist.h
-    express/basic.h
-    express/memory.h
-    express/lexact.h
-    express/type.h
-    express/caseitem.h
-    express/entity.h
-    express/resolve.h
-    express/schema.h
-    express/stmt.h
-    express/expr.h
-    express/dict.h
-    express/expbasic.h
-    express/alg.h
-    express/variable.h
-    express/express.h
-    express/object.h
-    express/symbol.h
-    express/scope.h
-    sc_export.h
-    sc_cf.h
-    clutils/Str.h
-    clutils/gennodearray.h
-    clutils/gennode.h
-    clutils/errordesc.h
-    clutils/gennodelist.h
-    clutils/sc_hash.h
-    clutils/dirobj.h
+    cldai/sdaiObject.h
+    cldai/sdaiSession_instance.h
+    cldai/sdaiString.h
+    cleditor/STEPfile.h
+    cleditor/SdaiHeaderSchema.h
+    cleditor/SdaiHeaderSchemaClasses.h
+    cleditor/SdaiSchemaInit.h
     cleditor/cmdmgr.h
     cleditor/editordefines.h
-    cleditor/SdaiHeaderSchemaClasses.h
     cleditor/seeinfodefault.h
-    cleditor/SdaiHeaderSchema.h
-    cleditor/SdaiSchemaInit.h
-    cleditor/STEPfile.h
-    sc_version_string.h
-    sc_stdbool.h
-    base/sc_getopt.h
-    base/sc_trace_fprintf.h
-    base/sc_benchmark.h
-    base/sc_memmgr.h
-    clstepcore/STEPundefined.h
-    clstepcore/mgrnodelist.h
-    clstepcore/STEPattribute.h
-    clstepcore/STEPaggregate.h
+    cllazyfile/headerSectionReader.h
+    cllazyfile/instMgrHelper.h
+    cllazyfile/lazyDataSectionReader.h
+    cllazyfile/lazyFileReader.h
+    cllazyfile/lazyInstMgr.h
+    cllazyfile/lazyP21DataSectionReader.h
+    cllazyfile/lazyTypes.h
+    cllazyfile/p21HeaderSectionReader.h
+    cllazyfile/sectionReader.h
     clstepcore/ExpDict.h
-    clstepcore/read_func.h
-    clstepcore/needFunc.h
-    clstepcore/mgrnodearray.h
-    clstepcore/mgrnode.h
-    clstepcore/dispnode.h
-    clstepcore/sdai.h
-    clstepcore/STEPcomplex.h
-    clstepcore/instmgr.h
-    clstepcore/baseType.h
-    clstepcore/sdaiSelect.h
-    clstepcore/SubSuperIterators.h
-    clstepcore/dictdefs.h
-    clstepcore/SingleLinkList.h
-    clstepcore/STEPattributeList.h
-    clstepcore/dispnodelist.h
-    clstepcore/sdaiApplication_instance.h
     clstepcore/Registry.h
+    clstepcore/STEPaggrBinary.h
+    clstepcore/STEPaggrEntity.h
+    clstepcore/STEPaggrEnum.h
+    clstepcore/STEPaggrGeneric.h
+    clstepcore/STEPaggrInt.h
+    clstepcore/STEPaggrReal.h
+    clstepcore/STEPaggrSelect.h
+    clstepcore/STEPaggrString.h
+    clstepcore/STEPaggregate.h
+    clstepcore/STEPattribute.h
+    clstepcore/STEPattributeList.h
+    clstepcore/STEPcomplex.h
+    clstepcore/STEPinvAttrList.h
+    clstepcore/STEPundefined.h
+    clstepcore/SingleLinkList.h
+    clstepcore/SubSuperIterators.h
+    clstepcore/aggrTypeDescriptor.h
+    clstepcore/attrDescriptor.h
+    clstepcore/attrDescriptorList.h
+    clstepcore/baseType.h
     clstepcore/complexSupport.h
+    clstepcore/create_Aggr.h
+    clstepcore/derivedAttribute.h
+    clstepcore/dictSchema.h
+    clstepcore/dictdefs.h
+    clstepcore/dictionaryInstance.h
+    clstepcore/dispnode.h
+    clstepcore/dispnodelist.h
+    clstepcore/entityDescriptor.h
+    clstepcore/entityDescriptorList.h
+    clstepcore/enumTypeDescriptor.h
+    clstepcore/explicitItemId.h
+    clstepcore/globalRule.h
+    clstepcore/implicitItemId.h
+    clstepcore/instmgr.h
+    clstepcore/interfaceSpec.h
+    clstepcore/interfacedItem.h
+    clstepcore/inverseAttribute.h
+    clstepcore/inverseAttributeList.h
+    clstepcore/mgrnode.h
+    clstepcore/mgrnodearray.h
+    clstepcore/mgrnodelist.h
+    clstepcore/needFunc.h
+    clstepcore/read_func.h
+    clstepcore/realTypeDescriptor.h
+    clstepcore/schRename.h
+    clstepcore/sdai.h
+    clstepcore/sdaiApplication_instance.h
+    clstepcore/sdaiSelect.h
+    clstepcore/selectTypeDescriptor.h
+    clstepcore/stringTypeDescriptor.h
+    clstepcore/typeDescriptor.h
+    clstepcore/typeDescriptorList.h
+    clstepcore/typeOrRuleVar.h
+    clstepcore/uniquenessRule.h
+    clstepcore/whereRule.h
+    clutils/Str.h
+    clutils/dirobj.h
+    clutils/errordesc.h
+    clutils/gennode.h
+    clutils/gennodearray.h
+    clutils/gennodelist.h
+    clutils/sc_hash.h
+    exppp/exppp.h
+    express/alg.h
+    express/basic.h
+    express/caseitem.h
+    express/dict.h
+    express/entity.h
+    express/error.h
+    express/expbasic.h
+    express/expr.h
+    express/express.h
+    express/hash.h
+    express/lexact.h
+    express/linklist.h
+    express/memory.h
+    express/object.h
+    express/resolve.h
+    express/schema.h
+    express/scope.h
+    express/stmt.h
+    express/symbol.h
+    express/type.h
+    express/variable.h
+    ordered_attrs.h
+    sc_cf.h
+    sc_export.h
+    sc_stdbool.h
+    sc_version_string.h
     )
 
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} stepcode  CACHE STRING "Bundled system include dirs" FORCE)

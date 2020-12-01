@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Copyright (c) 2011, Thomas Paviot (tpaviot@gmail.com)
 # All rights reserved.
 
@@ -40,20 +41,20 @@ def cast_python_object_to_aggregate(obj, aggregate):
     [1.,2.,3.]-> ARRAY(1,3,REAL)"""
     aggregate_lower_bound = aggregate.bound_1()
     aggregate_upper_bound = aggregate.bound_2()
-    if type(obj)==list:
+    if isinstance(obj, list):
         for idx in range(aggregate_lower_bound,aggregate_upper_bound+1):
             aggregate[idx] = obj[idx-aggregate_lower_bound]
     return aggregate
 
 def check_type(instance, expected_type):
-    """ This function checks wether an object is an instance of a given class
+    """ This function checks whether an object is an instance of a given class
     returns False or True
     """
     type_match = False #by default, will be set to True if any match
     if DEBUG:
-        print "==="
-        print "Instance passed: ",instance
-        print "Expected type: ", expected_type
+        print("===")
+        print("Instance passed: ",instance)
+        print("Expected type: ", expected_type)
     # in the case of an enumeration, we have to check if the instance is in the list
     if (isinstance(expected_type,ENUMERATION)):
         allowed_ids = expected_type.get_enum_ids()
@@ -71,11 +72,11 @@ def check_type(instance, expected_type):
             if RAISE_EXCEPTION_IF_TYPE_DOES_NOT_MATCH:
                 raise TypeError('Argument type must be %s (you passed %s)'%(allowed_types,type(instance)))
             else:
-                print "WARNING: expected '%s' but passed a '%s', casting from python value to EXPRESS type"%(allowed_types, type(instance))
+                print("WARNING: expected '%s' but passed a '%s', casting from python value to EXPRESS type"%(allowed_types, type(instance)))
                 return False
     elif (isinstance(expected_type, BaseType.Aggregate)):
         # first check that they are instance of the same class
-        if not (type(instance) == type(expected_type)):
+        if not (isinstance(instance, type(expected_type))):
             raise TypeError('Expected %s but passed %s'%(type(expected_type),type(instance)))
         # then check that the base type is the same
         elif not (instance.get_type() == expected_type.get_type()):
@@ -96,6 +97,6 @@ def check_type(instance, expected_type):
             if RAISE_EXCEPTION_IF_TYPE_DOES_NOT_MATCH:
                 raise TypeError('Argument type must be %s (you passed %s)'%(expected_type,type(instance)))
             else:
-                print "WARNING: expected '%s' but passed a '%s', casting from python value to EXPRESS type"%(expected_type, type(instance))
+                print("WARNING: expected '%s' but passed a '%s', casting from python value to EXPRESS type"%(expected_type, type(instance)))
                 return False
     return True

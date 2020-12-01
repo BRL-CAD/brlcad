@@ -22,7 +22,7 @@ print_schemas( Express model ) {
     printf( "File: %s\n  ", model->u.express->filename );
 
     DICTdo_init( model->symbol_table, &de );
-    while( 0 != ( s = DICTdo( &de ) ) ) {
+    while( 0 != ( s = (Schema) DICTdo( &de ) ) ) {
         printf( "%s", s->symbol.name );
     }
     printf( "\n" );

@@ -7,6 +7,7 @@
 #include <assert.h>
 
 #include "Registry.h"
+#include "sc_strtoull.h"
 #include "sdaiApplication_instance.h"
 #include "read_func.h"
 #include "SdaiSchemaInit.h"
@@ -16,13 +17,13 @@
 #include "lazyFileReader.h"
 #include "lazyInstMgr.h"
 #include "lazyTypes.h"
-#include "instMgrHelper.h"
 
 #include "current_function.hpp"
 
 sectionReader::sectionReader( lazyFileReader * parent, std::ifstream & file, std::streampos start, sectionID sid ):
     _lazyFile( parent ), _file( file ), _sectionStart( start ), _sectionID( sid ) {
     _fileID = _lazyFile->ID();
+    _error = new ErrorDescriptor();
 }
 
 
@@ -46,7 +47,7 @@ std::streampos sectionReader::findNormalString( const std::string & str, bool se
         }
         if( c == '\'' ) {
             //push past string
-            _file.unget();
+            _file.seekg( _file.tellg() - std::streampos(1) );
             GetLiteralStr( _file, _lazyFile->getInstMgr()->getErrorDesc() );
         }
         if( ( c == '/' ) && ( _file.peek() == '*' ) ) {
@@ -80,10 +81,11 @@ std::streampos sectionReader::findNormalString( const std::string & str, bool se
 
 
 //NOTE different behavior than const char * GetKeyword( istream & in, const char * delims, ErrorDescriptor & err ) in read_func.cc
+// returns pointer to the contents of a static std::string
 const char * sectionReader::getDelimitedKeyword( const char * delimiters ) {
     static std::string str;
     char c;
-    str.assign( (size_t) 0, 0 ); //clear() frees the memory
+    str.clear();
     str.reserve( 100 );
     skipWS();
     while( c = _file.get(), _file.good() ) {
@@ -127,7 +129,7 @@ std::streampos sectionReader::seekInstanceEnd( instanceRefs ** refs ) {
                 }
                 break;
             case '\'':
-                _file.unget();
+                _file.seekg( _file.tellg() - std::streampos(1) );
                 GetLiteralStr( _file, _lazyFile->getInstMgr()->getErrorDesc() );
                 break;
             case '=':
@@ -153,7 +155,7 @@ std::streampos sectionReader::seekInstanceEnd( instanceRefs ** refs ) {
                     if( _file.get() == ';' ) {
                         return _file.tellg();
                     } else {
-                        _file.unget();
+                        _file.seekg( _file.tellg() - std::streampos(1) );
                     }
                 }
             default:
@@ -174,9 +176,8 @@ void sectionReader::locateAllInstances() {
 }
 
 instanceID sectionReader::readInstanceNumber() {
-    std::streampos start, end;
     char c;
-    int digits = 0;
+    size_t digits = 0;
     instanceID id = 0;
 
     //find instance number ("# nnnn ="), where ' ' is any whitespace found by isspace()
@@ -185,7 +186,7 @@ instanceID sectionReader::readInstanceNumber() {
     if( ( c == '/' ) && ( _file.peek() == '*' ) ) {
         findNormalString( "*/" );
     } else {
-        _file.unget();
+        _file.seekg( _file.tellg() - std::streampos(1) );
     }
     skipWS();
     c = _file.get();
@@ -193,35 +194,67 @@ instanceID sectionReader::readInstanceNumber() {
         return 0;
     }
     skipWS();
-    start = _file.tellg();
+
+    // The largest instance ID yet supported is the maximum value of unsigned long long int
+    assert( std::numeric_limits<instanceID>::max() <= std::numeric_limits<unsigned long long int>::max() );
+
+    size_t instanceIDLength = std::numeric_limits<instanceID>::digits10 + 1;
+    char * buffer = new char[ instanceIDLength + 1 ]; // +1 for the terminating character
+    
+    std::stringstream errorMsg;
+
     do {
         c = _file.get();
         if( isdigit( c ) ) {
+            buffer[ digits ] = c; //copy the character into the buffer
             digits++;
+
         } else {
-            _file.unget();
+            _file.seekg( _file.tellg() - std::streampos(1) );
             break;
         }
+
+        if( digits > instanceIDLength ) {
+            errorMsg << "A very large instance ID of string length greater then " << instanceIDLength << " found. Skipping data section " << _sectionID << ".";
+
+            _error->GreaterSeverity( SEVERITY_INPUT_ERROR );
+            _error->UserMsg( "A very large instance ID encountered" );
+            _error->DetailMsg( errorMsg.str() );
+
+            delete buffer;
+            return 0;    
+        }
+
     } while( _file.good() );
+    buffer[ digits ] = '\0'; //Append the terminating character
     skipWS();
 
     if( _file.good() && ( digits > 0 ) && ( _file.get() == '=' ) ) {
-        end = _file.tellg();
-        _file.seekg( start );
-        _file >> id;
-        _file.seekg( end );
+        id = strtoull( buffer, NULL, 10); 
+        if( id == std::numeric_limits<instanceID>::max() ) {
+            //Handling those cases where although the number of digits is equal, but the id value is greater then equal to the maximum allowed value. 
+            errorMsg << "A very large instance ID caused an overflow. Skipping data section " << _sectionID << ".";
+
+            _error->GreaterSeverity( SEVERITY_INPUT_ERROR );
+            _error->UserMsg( "A very large instance ID encountered" );
+            _error->DetailMsg( errorMsg.str() );
+        }
+
         assert( id > 0 );
     }
+    delete [] buffer;
     return id;
 }
 
-//TODO: most of the rest of readdata1, all of readdata2
+/** load an instance and return a pointer to it.
+ * side effect: recursively loads any instances the specified instance depends upon
+ */
 SDAI_Application_instance * sectionReader::getRealInstance( const Registry * reg, long int begin, instanceID instance,
         const std::string & typeName, const std::string & schName, bool header ) {
     char c;
     const char * tName = 0, * sName = 0; //these are necessary since typeName and schName are const
     std::string comment;
-    Severity sev;
+    Severity sev = SEVERITY_NULL;
     SDAI_Application_instance * inst = 0;
 
     tName = typeName.c_str();
@@ -269,28 +302,29 @@ SDAI_Application_instance * sectionReader::getRealInstance( const Registry * reg
             inst = reg->ObjCreate( tName, sName );
             break;
     }
-
-    if( inst != & NilSTEPentity ) {
+    if( !isNilSTEPentity( inst ) ) {
         if( !comment.empty() ) {
             inst->AddP21Comment( comment );
         }
-        assert( inst->eDesc );
+        assert( inst->getEDesc() );
         _file.seekg( begin );
         findNormalString( "(" );
-        _file.unget();
-        //TODO do something with 'sev'
+        _file.seekg( _file.tellg() - std::streampos(1) );
         sev = inst->STEPread( instance, 0, _lazyFile->getInstMgr()->getAdapter(), _file, sName, true, false );
+        //TODO do something with 'sev'
+        inst->InitIAttrs();
     }
     return inst;
 }
 
-STEPcomplex * sectionReader::CreateSubSuperInstance( const Registry * reg, instanceID fileid, Severity & sev ) {
+STEPcomplex * sectionReader::CreateSubSuperInstance( const Registry * reg, instanceID fileid, Severity & ) {
     std::string buf;
     ErrorDescriptor err;
     std::vector<std::string *> typeNames;
     _file.get(); //move past the first '('
+    skipWS();
     while( _file.good() && ( _file.peek() != ')' ) ) {
-        typeNames.push_back( new std::string( getDelimitedKeyword( ";( /\\" ) ) );
+        typeNames.push_back( new std::string( getDelimitedKeyword( ";( /\\\n" ) ) );
         if( typeNames.back()->empty() ) {
             delete typeNames.back();
             typeNames.pop_back();
@@ -312,6 +346,9 @@ STEPcomplex * sectionReader::CreateSubSuperInstance( const Registry * reg, insta
         names[ i ] = typeNames[i]->c_str();
     }
     //TODO still need the schema name
-    return new STEPcomplex( ( const_cast<Registry *>( reg ) ), ( const char ** ) names, ( int ) fileid /*, schnm*/ );
+    STEPcomplex * sc = new STEPcomplex( ( const_cast<Registry *>( reg ) ), names, ( int ) fileid /*, schnm*/ );
+    delete[] names;
+    //TODO also delete contents of typeNames!
+    return sc;
 }
 

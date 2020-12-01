@@ -15,19 +15,29 @@
 # error Need std::thread for this test!
 #endif
 
+#ifdef HAVE_STD_CHRONO
+# include <chrono>
+#endif
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
 #include "SdaiAUTOMOTIVE_DESIGN.h"
 
-//macro for 50 ms sleep (could be more for a larger file, may need reduced for a fast processor)
-#ifndef __WIN32__
-# define DELAY(t) usleep( t * 100 );
+//macro for N ms sleep
+//currently used for 5ms sleep (could be more for a larger file, may need reduced for a fast processor)
+//TODO: rework this test to not be timing-sensitive
+#ifdef HAVE_STD_CHRONO
+# define DELAY(t) std::this_thread::sleep_for(std::chrono::milliseconds(t));
 #else
-#define DELAY(t) Sleep( t );
+# ifndef _WIN32
+#  define DELAY(t) usleep( t * 100 )
+# else
+#  include <WinBase.h>
+#  define DELAY(t) Sleep( t )
+# endif
 #endif
-
 
 // NOTE this test requires std::thread, part of C++11. It will fail to compile otherwise.
 
@@ -37,7 +47,7 @@ void readProgressParallel( STEPfile & f, float & maxProgress ) {
         if( p > maxProgress ) {
             maxProgress = p;
         }
-        DELAY( 50 );
+        DELAY( 5 );
     }
 }
 
@@ -47,7 +57,7 @@ void writeProgressParallel( STEPfile & f, float & maxProgress ) {
         if( p > maxProgress ) {
             maxProgress = p;
         }
-        DELAY( 50 );
+        DELAY( 5 );
     }
 }
 
