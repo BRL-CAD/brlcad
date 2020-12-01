@@ -190,6 +190,18 @@
 
 
 /**
+ * shorthand placed before a function _definition_ indicating to some
+ * compilers that it should inline most of the function calls within
+ * the function.  this should be used sparingly on functions that are
+ * demonstrably hot, as indicated by a profiler.
+ */
+#ifdef HAVE_FLATTEN_ATTRIBUTE
+#  define _BU_ATTR_FLATTEN __attribute__((flatten))
+#else
+#  define _BU_ATTR_FLATTEN
+#endif
+
+/**
  * This macro is used to take the 'C' function name, and convert it at
  * compile time to the FORTRAN calling convention.
  *
