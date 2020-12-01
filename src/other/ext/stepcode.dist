@@ -178,7 +178,6 @@ misc/notepad++-syntax-highlighting-express.xml
 misc/summarize-appveyor-log.go
 misc/wiki-scripts/build_all.sh
 misc/wiki-scripts/update-matrix.py
-rm.sh
 run_ctest.cmake
 src/base/CMakeLists.txt
 src/base/judy/CMakeLists.txt
