@@ -93,6 +93,10 @@ class SC_CORE_EXPORT STEPattribute {
         const AttrDescriptor * aDesc;
         int refCount;
 
+	const AttrDescriptor * getADesc() {
+            return aDesc;
+        }
+
         /** \union ptr
         ** You know which of these to use based on the return value of
         ** NonRefType() - see below. BASE_TYPE is defined in baseType.h
