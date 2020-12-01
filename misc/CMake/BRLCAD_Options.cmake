@@ -133,7 +133,7 @@ endfunction(OPTION_RESOLVE_ALIASES)
 # Write documentation description for BRL-CAD options
 function(WRITE_OPTION_DESCRIPTION opt opt_ALIASES opt_DESCRIPTION)
 
-  set(ofile "${CMAKE_BINARY_DIR}/OPTIONS")
+  set(ofile "${CMAKE_BINARY_DIR}/BRLCAD_OPTIONS")
 
   file(APPEND "${ofile}" "\n--- ${opt} ---\n")
   file(APPEND "${ofile}" "${${opt_DESCRIPTION}}")
