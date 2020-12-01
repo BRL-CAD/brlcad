@@ -60,7 +60,6 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     set(EXPRESS_OUTPUT
       ${express_srcs}
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Helpers.h
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Names.h
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_entities.h
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_types.h
