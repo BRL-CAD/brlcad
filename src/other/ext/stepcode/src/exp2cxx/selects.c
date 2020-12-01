@@ -611,7 +611,7 @@ void TYPEselect_inc_print( const Type type, FILE * f ) {
                  AccessType( t ) : TYPEget_utype( t ) );
     LISTod;
 
-    fprintf( f, "\n    //  part 3 -- 1\n" );
+    fprintf( f, "\n    //  part 3\n" );
     attrs = SEL_TYPEgetnew_attribute_list( type );
     /* get the list of unique attributes from the entity items */
     LISTdo( attrs, a, Variable )

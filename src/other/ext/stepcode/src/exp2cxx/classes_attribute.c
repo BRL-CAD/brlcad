@@ -537,7 +537,7 @@ void ATTRprint_access_methods( const char * entnm, Variable a, FILE * file, Sche
         fprintf( file, "const {\n    return (const %s) &_%s;\n}\n",  ctype, attrnm );
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, " {\n    _%s = x;\n}\n", attrnm );
-	return;
+        return;
     }
     /*    case TYPE_AGGRETATES: */
     /* handled in AGGRprint_access_methods(entnm, a, file, t, ctype, attrnm) */
