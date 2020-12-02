@@ -1407,9 +1407,7 @@ endif(BRLCAD_HEADERS_OLD_COMPAT)
 #----------------------------------------------------------------------
 # Some generators in CMake support generating folders in IDEs for
 # organizing build targets.  We want to use them if they are there.
-if(MSVC)
-  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-endif(MSVC)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 #----------------------------------------------------------------------
 # There are extra documentation files available requiring DocBook
