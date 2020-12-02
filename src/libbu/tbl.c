@@ -41,7 +41,7 @@ struct bu_tbl {
 struct bu_tbl *
 bu_tbl_create()
 {
-    struct bu_tbl *tbl;
+    struct bu_tbl *tbl = NULL;
 
     tbl = (struct bu_tbl *)bu_calloc(1, sizeof(struct bu_tbl), "bu_tbl alloc");
     tbl->t = ft_create_table();
@@ -85,12 +85,16 @@ bu_tbl_style(struct bu_tbl *tbl, enum bu_tbl_style style)
     switch (style) {
 	case BU_TBL_STYLE_NONE:
 	    ft_set_border_style(tbl->t, FT_EMPTY_STYLE);
+	    ft_set_cell_prop(tbl->t, FT_ANY_ROW, FT_ANY_COLUMN, FT_CPROP_LEFT_PADDING, 0);
+	    ft_set_cell_prop(tbl->t, FT_ANY_ROW, FT_ANY_COLUMN, FT_CPROP_RIGHT_PADDING, 1);
+	    break;
+	case BU_TBL_STYLE_LIST:
+	    ft_set_border_style(tbl->t, FT_SIMPLE_STYLE);
+	    ft_set_cell_prop(tbl->t, FT_ANY_ROW, FT_ANY_COLUMN, FT_CPROP_LEFT_PADDING, 0);
+	    ft_set_cell_prop(tbl->t, FT_ANY_ROW, FT_ANY_COLUMN, FT_CPROP_RIGHT_PADDING, 0);
 	    break;
 	case BU_TBL_STYLE_BASIC:
 	    ft_set_border_style(tbl->t, FT_BASIC_STYLE);
-	    break;
-	case BU_TBL_STYLE_SIMPLE:
-	    ft_set_border_style(tbl->t, FT_SIMPLE_STYLE);
 	    break;
 	case BU_TBL_STYLE_SINGLE:
 	    ft_set_border_style(tbl->t, FT_SOLID_ROUND_STYLE);
@@ -173,14 +177,14 @@ bu_tbl_is_at(struct bu_tbl *tbl, size_t *row, size_t *col)
 struct bu_tbl *
 bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
 {
-    char *cstr;
+    char *cstr = NULL;
 
     va_list ap;
 #define BUFSZ 4096
     char buf[BUFSZ];
-    char *back;
-    char *last;
-    size_t zeros;
+    char *back = NULL;
+    char *last = NULL;
+    size_t zeros = 0;
 
     if (!fmt)
 	return tbl;
