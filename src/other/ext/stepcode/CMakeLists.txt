@@ -49,6 +49,7 @@ set(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR}.${SC_VERSION_PATCH})
 
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 3.12)
+cmake_policy(SET CMP0077 OLD)
 
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
