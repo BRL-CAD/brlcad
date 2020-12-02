@@ -11,10 +11,10 @@ if(SC_GENERATE_LP_SOURCES)
   PERPLEX_TARGET(ExpScanner expscan.l)
   ADD_PERPLEX_LEMON_DEPENDENCY(ExpScanner ExpParser)
 
-  add_library(objlib_expscan_c OBJECT ${PERPLEX_ExpScanner_SRC})
+  add_library(objlib_expscan_c OBJECT ${PERPLEX_ExpScanner_SRC} ${PERPLEX_ExpScanner_HDR})
   set_property(TARGET objlib_expscan_c PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-  add_library(objlib_expparse_c OBJECT ${LEMON_ExpParser_SRC})
+  add_library(objlib_expparse_c OBJECT ${LEMON_ExpParser_SRC} ${LEMON_ExpParser_HDR})
   set_property(TARGET objlib_expparse_c PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 else(SC_GENERATE_LP_SOURCES)
