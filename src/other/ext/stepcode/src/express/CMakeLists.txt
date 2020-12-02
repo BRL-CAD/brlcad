@@ -49,7 +49,13 @@ set(EXPRESS_SOURCES
   ordered_attrs.cc
   info.c
   factory.c
- )
+  )
+
+set_source_files_properties(
+  info.c fedex.c
+  PROPERTIES OBJECT_DEPENDS
+  "${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h"
+  )
 
 set(EXPRESS_OBJS)
 foreach(_src ${EXPRESS_SOURCES})

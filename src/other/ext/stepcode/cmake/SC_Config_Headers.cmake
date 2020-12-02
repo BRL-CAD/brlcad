@@ -111,7 +111,7 @@ if(SC_GIT_VERSION)
   configure_file(${SC_CMAKE_DIR}/sc_version_string.cmake ${SC_BINARY_DIR}/sc_version_string.cmake @ONLY)
   add_custom_target(version_string ALL DEPENDS ver_string)
   # creates sc_version_string.h using cmake script
-  add_custom_command(OUTPUT ver_string
+  add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
     COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SC_SOURCE_DIR} -DBINARY_DIR=${SC_BINARY_DIR} -P ${SC_BINARY_DIR}/sc_version_string.cmake
     )
   # sc_version_string.h is a generated file

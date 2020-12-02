@@ -39,6 +39,12 @@ include_directories(
 
 SC_ADDEXEC(exp2cxx SOURCES ${exp2cxx_SOURCES} LINK_LIBRARIES libexppp express base)
 
+set_source_files_properties(
+  classes_misc.c
+  PROPERTIES OBJECT_DEPENDS
+  "${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h"
+  )
+
 if(NOT SC_IS_SUBBUILD AND SC_GIT_VERSION)
   add_dependencies(exp2cxx version_string)
 endif(NOT SC_IS_SUBBUILD AND SC_GIT_VERSION)
