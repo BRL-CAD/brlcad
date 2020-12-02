@@ -933,11 +933,10 @@ if(MSVC)
   endif(CMAKE_CL_64)
 endif(MSVC)
 
-if (APPLE)
-  if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-    set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
-  endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-endif (APPLE)
+# If a platform specific variable needs to be set for 32 bit, do it here
+if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
+  set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
+endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
 
 CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
