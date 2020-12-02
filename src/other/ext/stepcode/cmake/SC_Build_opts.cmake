@@ -103,23 +103,33 @@ endif(SC_SKIP_EXEC_INSTALL)
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
 
 # use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+if(NOT DEFINED CMAKE_SKIP_BUILD_RPATH)
+  set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+endif()
 
 # when building, don't use the install RPATH already
 # (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+if(NOT DEFINED CMAKE_BUILD_WITH_INSTALL_RPATH)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+endif()
 
 # the RPATH/INSTALL_NAME_DIR to be used when installing
 if (NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
+  if(NOT DEFINED CMAKE_INSTALL_RPATH)
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
+  endif()
 endif(NOT APPLE)
 # On OSX, we need to set INSTALL_NAME_DIR instead of RPATH
 # http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
-set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+if(NOT DEFINED CMAKE_INSTALL_NAME_DIR)
+  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif(NOT DEFINED )
 
 # add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+if(NOT DEFINED CMAKE_INSTALL_RPATH_USE_LINK_PATH)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif(NOT DEFINED )
 
 # When this is a subbuild, assume that the parent project controls all of the following
 #======================================================================================
