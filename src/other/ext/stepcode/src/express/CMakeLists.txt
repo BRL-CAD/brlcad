@@ -17,6 +17,8 @@ if(SC_GENERATE_LP_SOURCES)
   add_library(objlib_expparse_c OBJECT ${LEMON_ExpParser_SRC})
   set_property(TARGET objlib_expparse_c PROPERTY POSITION_INDEPENDENT_CODE ON)
 
+  set_source_files_properties(${PERPLEX_ExpScanner_SRC} ${LEMON_ExpParser_SRC} PROPERTIES OBJECT_DEPENDS "${PERPLEX_ExpScanner_HDR};${LEMON_ExpParser_HDR}")
+
 else(SC_GENERATE_LP_SOURCES)
   add_subdirectory(generated)
   include_directories(generated)
