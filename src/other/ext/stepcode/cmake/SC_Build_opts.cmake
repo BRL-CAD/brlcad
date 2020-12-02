@@ -123,13 +123,13 @@ endif(NOT APPLE)
 # http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
 if(NOT DEFINED CMAKE_INSTALL_NAME_DIR)
   set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-endif(NOT DEFINED )
+endif()
 
 # add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
 if(NOT DEFINED CMAKE_INSTALL_RPATH_USE_LINK_PATH)
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-endif(NOT DEFINED )
+endif()
 
 # When this is a subbuild, assume that the parent project controls all of the following
 #======================================================================================
