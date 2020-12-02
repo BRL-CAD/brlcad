@@ -38,6 +38,7 @@
 # This file contains the top level CMakeLists.txt logic for the
 # STEPcode software package.
 
+
 project(SC)
 
 # SC version
@@ -47,10 +48,7 @@ set(SC_VERSION_PATCH 1)
 set(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR}.${SC_VERSION_PATCH})
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.6.3)
-cmake_policy(SET CMP0003 NEW)
-cmake_policy(SET CMP0026 NEW)
-cmake_policy(SET CMP0057 NEW)
+cmake_minimum_required(VERSION 3.12)
 
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
