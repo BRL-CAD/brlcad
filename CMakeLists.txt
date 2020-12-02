@@ -1729,6 +1729,20 @@ if(HAVE_GETFULLPATHNAME)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_GETFULLPATHNAME 1\n")
 endif(HAVE_GETFULLPATHNAME)
 
+# If we have GetProcessTimes, we need it instead of clock() for CPU time.
+# https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/clock
+check_c_source_compiles("
+#include <windows.h>
+int main() {
+FILETIME a,b,c,d;
+(void)GetProcessTimes(GetCurrentProcess(),&a,&b,&c,&d);
+return 0;
+}
+" HAVE_GETPROCESSTIMES)
+if(HAVE_GETPROCESSTIMES)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_GETPROCESSTIMES 1\n")
+endif(HAVE_GETPROCESSTIMES)
+
 # GetCurrentProcessId
 check_c_source_compiles("
 #include <windows.h>

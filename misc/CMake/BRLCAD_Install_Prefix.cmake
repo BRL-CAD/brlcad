@@ -7,32 +7,7 @@ set(BUILD_TYPE_KEY "----BUILD_TYPE----")
 # CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
 # parent builds (if any) some control.
 
-# TODO - generator expressions may be a way to replace some of this logic (or
-# improve it) by letting us ditch the logic tracking whether the path is
-# initialized to default - that's used to know whether or not it is safe to
-# override CMAKE_INSTALL_PREFIX based on build type.  If we use the generator
-# expressions, we won't have to be concerned about that - problem is that
-# change will require updating all the install commands in the build target
-# functions.  Third party logic will probably need to shift over to the new
-# ExternalProject_Add approach first as well - that way unmodified install
-# commands in 3rd party CMake files will be moot.
-#
-# if (NOT CMAKE_INSTALL_PREFIX)
-# set(CMAKE_INSTALL_PREFIX "/usr/brlcad/")
-#    if (NOT MSVC)
-#       set(gen_exp $<IF:$<CONFIG:Debug>,dev-${BRLCAD_VERSION}/,$<IF:$<CONFIG:Release>,rel-${BRLCAD_VERSION}/${BRLCAD_VERSION},>>)
-#    else (NOT MSVC)
-#       set(gen_exp)
-#        if(CMAKE_CL_64)
-#          set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
-#        else(CMAKE_CL_64)
-#          set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
-#        endif(CMAKE_CL_64)
-#    endif (NOT MSVC)
-# endif (NOT CMAKE_INSTALL_PREFIX)
-# install(TARGETS mged DESTINATION ${gen_exp}${BIN_DIR})
-#
-# Another (maybe better) option instead of generators might be to use the CONFIGURATIONS
+# TODO - explore use the CONFIGURATIONS
 # option in our macros and the ExternalProject_Add management:
 # https://cmake.org/cmake/help/latest/command/install.html
 #

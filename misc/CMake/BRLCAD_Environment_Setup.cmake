@@ -91,12 +91,7 @@ if(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" 
   message(WARNING "Valid options are AUTO, 32BIT and 64BIT")
   set(BRLCAD_WORD_SIZE "AUTO" CACHE STRING WORD_SIZE_LABEL FORCE)
 endif(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT")
-# On Windows, we can't set word size at CMake configure time - the
-# compiler chosen at the beginning dictates the result.  Mark as
-# advanced in that situation.
-if(MSVC)
-  mark_as_advanced(BRLCAD_WORD_SIZE)
-endif(MSVC)
+mark_as_advanced(BRLCAD_WORD_SIZE)
 
 # calculate the size of a pointer if we haven't already
 include(CheckTypeSize)
@@ -155,11 +150,10 @@ if(MSVC)
   endif(CMAKE_CL_64)
 endif(MSVC)
 
-if (APPLE)
-  if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-    set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
-  endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-endif (APPLE)
+# If a platform specific variable needs to be set for 32 bit, do it here
+if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
+	set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
+endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
 
 # Based on what we are doing, we may need to constrain our search paths
 #
