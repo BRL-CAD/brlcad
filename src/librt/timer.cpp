@@ -24,6 +24,7 @@
 #include <chrono>
 #include <sstream>
 #include <iomanip>
+#include "bu/log.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "rt/timer.h"
@@ -31,7 +32,7 @@
 #ifdef HAVE_GETPROCESSTIMES
 static double  time_cpu;	/* Time at which timing started */
 #else
-static clock_t time_cpu;	/* Time at which timing started */
+static std::clock_t time_cpu;	/* Time at which timing started */
 #endif
 static std::chrono::steady_clock::time_point time_wall;
 
@@ -48,7 +49,7 @@ rt_prep_timer(void)
     /* https://stackoverflow.com/a/17440673 */
     time_cpu = (double)(d.dwLowDateTime | ((unsigned long long)d.dwHighDateTime << 32)) * 0.0000001;
 #else
-    time_cpu = clock();
+    time_cpu = std::clock();
 #endif
     time_wall = std::chrono::steady_clock::now();
 }
@@ -65,13 +66,13 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
     double time1 = DBL_MAX;
     if (!GetProcessTimes(GetCurrentProcess(),&a,&b,&c,&d)) {
 	bu_log("Warning - could not initialize RT timer!\n");
-	return;
+	return DBL_MAX;
     }
     /* https://stackoverflow.com/a/17440673 */
     time1 = (double)(d.dwLowDateTime | ((unsigned long long)d.dwHighDateTime << 32)) * 0.0000001;
-    user_cpu_secs = time1 - time0;
+    user_cpu_secs = time1 - time_cpu;
 #else
-    clock_t time1 = clock();
+    std::clock_t time1 = std::clock();
     user_cpu_secs = (double)(time1 - time_cpu)/CLOCKS_PER_SEC;
 #endif
 
