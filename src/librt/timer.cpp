@@ -31,7 +31,7 @@
 #ifdef HAVE_GETPROCESSTIMES
 static double  time_cpu;	/* Time at which timing started */
 #else
-static clock_t time_cpu;	/* Time at which timing started */
+static std::clock_t time_cpu;	/* Time at which timing started */
 #endif
 static std::chrono::steady_clock::time_point time_wall;
 
@@ -48,7 +48,7 @@ rt_prep_timer(void)
     /* https://stackoverflow.com/a/17440673 */
     time_cpu = (double)(d.dwLowDateTime | ((unsigned long long)d.dwHighDateTime << 32)) * 0.0000001;
 #else
-    time_cpu = clock();
+    time_cpu = std::clock();
 #endif
     time_wall = std::chrono::steady_clock::now();
 }
@@ -71,7 +71,7 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
     time1 = (double)(d.dwLowDateTime | ((unsigned long long)d.dwHighDateTime << 32)) * 0.0000001;
     user_cpu_secs = time1 - time0;
 #else
-    clock_t time1 = clock();
+    std::clock_t time1 = std::clock();
     user_cpu_secs = (double)(time1 - time_cpu)/CLOCKS_PER_SEC;
 #endif
 
