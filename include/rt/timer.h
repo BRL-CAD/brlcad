@@ -33,41 +33,23 @@ __BEGIN_DECLS
 /** @addtogroup rt_timer */
 /** @{ */
 /**
- * To provide timing information for RT.
- * THIS VERSION FOR Denelcor HEP/UPX (System III-like)
+ * Provide timing information for RT.
  */
 
 /**
- *
- * To provide timing information for RT when running on 4.2 BSD UNIX.
- *
+ * Initialize global librt timer
  */
-
-/**
- *
- * To provide timing information on Microsoft Windows NT.
- */
-/**
- *
- * To provide timing information for RT.  This version for any non-BSD
- * UNIX system, including System III, Vr1, Vr2.  Version 6 & 7 should
- * also be able to use this (untested).  The time() and times()
- * sys-calls are used for all timing.
- *
- */
-
-
 RT_EXPORT extern void rt_prep_timer(void);
-/* Read global timer, return time + str */
+
 /**
- * Reports on the passage of time, since rt_prep_timer() was called.
- * Explicit return is number of CPU seconds.  String return is
- * descriptive.  If "elapsed" pointer is non-null, number of elapsed
- * seconds are returned.  Times returned will never be zero.
+ * Reports on the passage of time, since rt_prep_timer() was called.  Explicit
+ * return is number of CPU seconds.  String return is descriptive.  If "wall"
+ * pointer is non-null, number of elapsed seconds per the wall clock are
+ * returned.  Times returned will never be zero.
  */
-RT_EXPORT extern double rt_get_timer(struct bu_vls *vp,
-				     double *elapsed);
+RT_EXPORT extern double rt_get_timer(struct bu_vls *vp, double *elapsed);
 /* Return CPU time, text, & wall clock time off the global timer */
+
 /**
  * Compatibility routine
  */

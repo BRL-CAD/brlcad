@@ -216,6 +216,7 @@ set(LIBRT_SOURCES
   roots.c
   search.c
   shoot.c
+  timer.cpp
   tol.c
   transform.c
   tree.c
@@ -301,9 +302,6 @@ set(librt_ignored_files
   test_dbio.c
   test_nurbsfit.cpp
   test_root3-subd.cpp
-  timer-nt.c
-  timer42.c
-  timerunix.c
   uvpoints.cpp
   )
 if(NOT BRLCAD_ENABLE_GCT)
@@ -349,12 +347,6 @@ set(CL_FILES
 BRLCAD_ADDDATA(nurb_example.c sample_applications)
 BRLCAD_ADDDATA(raydebug.tcl sample_applications)
 BRLCAD_ADDDATA(CL_FILES opencl)
-
-if(MSVC)
-  set(LIBRT_SOURCES ${LIBRT_SOURCES} timer-nt.c)
-else(MSVC)
-  set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
-endif(MSVC)
 
 if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
