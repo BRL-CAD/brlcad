@@ -26,7 +26,7 @@ if (BRLCAD_ENABLE_TK)
     set(IWIDGETS_MAJOR_VERSION 4)
     set(IWIDGETS_MINOR_VERSION 1)
     set(IWIDGETS_PATCH_VERSION 1)
-    set(IWIDGETS_VERSION ${IWIDGETS_MAJOR_VERSION}.${IWIDGETS_MINOR_VERSION}.${IWIDGETS_PATCH_VERSION})
+    set(IWIDGETS_VERSION ${IWIDGETS_MAJOR_VERSION}.${IWIDGETS_MINOR_VERSION}.${IWIDGETS_PATCH_VERSION} CACHE STRING "IWidgets version")
 
     # If we have build targets, set the variables accordingly.  Otherwise,
     # we need to find the *Config.sh script locations.

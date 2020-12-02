@@ -329,6 +329,7 @@ if (COMMAND CMAKEFILES)
     CMakeLists.txt
     CMake/ExternalProject_Target.cmake
     CMake/FindBSON.cmake
+    CMake/FindITCL.cmake
     CMake/FindLEMON.cmake
     CMake/FindNETPBM.cmake
     CMake/FindOPENNURBS.cmake

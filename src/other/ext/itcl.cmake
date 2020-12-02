@@ -45,8 +45,19 @@ function(ITCL_TEST bvar)
 	set(${bvar} 1 PARENT_SCOPE)
       endif ("${BRLCAD_ITCL}" STREQUAL "SYSTEM")
     else (ITCL_TEST_FAILED)
-      # We have Itcl 3 - no need to build.
-      set(${bvar} 0 PARENT_SCOPE)
+      # We have Itcl 3, but that's not enough by itself - we may need to build
+      # Itk, and for that to work find_package has to also be able to locate Itcl.
+      find_package(ITCL)
+      if(ITCL_FOUND)
+	set(${bvar} 0 PARENT_SCOPE)
+      else(ITCL_FOUND)
+	if ("${BRLCAD_ITCL}" STREQUAL "SYSTEM")
+	  # Test failed, but user has specified system - this is fatal.
+	  message(FATAL_ERROR "System-installed Itcl3 specified, but package is not installed in such a way that find_package(ITCL) can locate its components.")
+	else ("${BRLCAD_ITCL}" STREQUAL "SYSTEM")
+	  set(${bvar} 1 PARENT_SCOPE)
+	endif ("${BRLCAD_ITCL}" STREQUAL "SYSTEM")
+      endif(ITCL_FOUND)
     endif (ITCL_TEST_FAILED)
 
   endif (NOT "${BRLCAD_ITCL}" STREQUAL "BUNDLED")
@@ -70,7 +81,7 @@ if (BRLCAD_ENABLE_TCL)
 
     set(ITCL_MAJOR_VERSION 3)
     set(ITCL_MINOR_VERSION 4)
-    set(ITCL_VERSION ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
+    set(ITCL_VERSION ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} CACHE STRING "Itcl version")
 
     set(ITCL_DEPS)
     if (TARGET tcl_stage)
