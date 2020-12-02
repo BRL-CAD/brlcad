@@ -236,8 +236,15 @@ bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
 	}
     }
 
+    if (!last)
+	return tbl;
+
     zeros = 0;
     last += 2;
+
+    if (!last)
+	return tbl;
+
     while ((*last == '\0' || *last == '|')) {
 	zeros++;
 	last++;

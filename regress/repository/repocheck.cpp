@@ -63,7 +63,7 @@ extern "C" char *
 bu_strnstr(const char *h, const char *n, size_t hlen);
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 246
+#define EXPECTED_PLATFORM_SYMBOLS 243
 
 class repo_info_t {
     public:
