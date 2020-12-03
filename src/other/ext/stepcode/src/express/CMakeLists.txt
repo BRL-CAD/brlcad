@@ -103,6 +103,11 @@ set(CHECK_EXPRESS_SOURCES
  )
 add_executable(check-express ${CHECK_EXPRESS_SOURCES})
 target_link_libraries(check-express express base)
+install(TARGETS check-express
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
+
 
 if(SC_ENABLE_TESTING)
   add_subdirectory(test)
