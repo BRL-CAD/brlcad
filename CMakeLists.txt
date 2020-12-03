@@ -37,6 +37,46 @@
 #       See the COPYING file for more details.
 #
 # ******************************************************************
+#
+# Early versions of this CMakeLists.txt file were based on the VTK
+# CMakeLists.txt file, also licensed under Modified BSD.
+
+# *******************************************************************
+# ***                 BRL-CAD's CMakeLists.txt                    ***
+# *******************************************************************
+#
+# This file defines the toplevel CMake build logic for BRL-CAD.
+# As best as is reasonably possible, proper ordering and
+# separation of tests and settings should be maintained per the
+# recommended standard layout.  The tests should be added to the
+# labeled sections below so that they are organized in stages as
+# follows:
+#
+#   Stage 0 - information on the package and toplevel CMake settings
+#   Stage 1 - define top level options
+#   Stage 2 - check programs
+#   Stage 3 - check compiler characteristics
+#   Stage 4 - check libraries
+#   Stage 5 - check headers
+#   Stage 6 - check types/structures
+#   Stage 7 - check functions
+#   Stage 8 - check system services
+#   Stage 9 - define the BRL-CAD build targets
+#
+# The output summary should report key information about the final
+# configuration of the build.  Comprehensive information is available
+# in the CMake cache file in the build directory, so just hit the
+# high points in the summary.
+#
+# After the main configure process is finished, a summary is printed
+# and various settings and configuration files that require full
+# knowledge of the main configure results are handled.
+#
+# *******************************************************************
+# ***                 Top Level Settings                          ***
+# *******************************************************************
+# This file contains the top level CMakeLists.txt logic for the
+# BRL-CAD software package.
 
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 3.12)
@@ -790,10 +830,8 @@ if(NOT MSVC)
       set(CXX_STANDARD_FLAGS "${CXX_STANDARD_FLAGS} -Dclockid_t=clock_t -pthread")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dclockid_t=clock_t -pthread")
-      set(THREADS_PREFER_PTHREAD_FLAG TRUE)
     endif (PROBE_PTHREAD_H_CLOCKID_T)
   endif (NOT PROBE_PTHREAD_H)
-  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
   # -O3/-Ofast can enable -ffast-math which can provoke a stack
   # corruption in the shadow computations because of strict aliasing
