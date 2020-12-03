@@ -9,6 +9,7 @@ set(cmake_ignore_files
   BRLCAD_Regress_Util.cmake
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
+  BRLCAD_Test_Wrappers.cmake
   BRLCAD_Util.cmake
   CMakeLists.txt
   CheckCInline.cmake
