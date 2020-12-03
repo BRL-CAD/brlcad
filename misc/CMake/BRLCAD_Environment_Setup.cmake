@@ -1,3 +1,5 @@
+# Setup and checks related to system environment settings
+
 #---------------------------------------------------------------------
 # Save the current LC_ALL, LC_MESSAGES, and LANG environment variables
 # and set them to "C" so things like date output are as expected.
@@ -73,7 +75,7 @@ if(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
   endif(SLEEP_EXEC)
 endif(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
 
-#----------------------------------------------------------------------
+#---------------------------------------------------------------------
 # Characterize the system as 32 or 64 bit - this has an impact on many
 # of the subsequent operations, including find_package results, so it
 # must be done up front.
@@ -92,7 +94,8 @@ endif(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BI
 mark_as_advanced(BRLCAD_WORD_SIZE)
 
 # calculate the size of a pointer if we haven't already
-CHECK_TYPE_SIZE("void *" CMAKE_SIZEOF_VOID_P)
+include(CheckTypeSize)
+check_type_size("void *" CMAKE_SIZEOF_VOID_P)
 
 # still not defined?
 if(NOT CMAKE_SIZEOF_VOID_P)
@@ -110,11 +113,11 @@ if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
       set(BRLCAD_WORD_SIZE "32BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
     else(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
       if(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-	set(CMAKE_WORD_SIZE "16BIT")
-	set(BRLCAD_WORD_SIZE "16BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
+        set(CMAKE_WORD_SIZE "16BIT")
+        set(BRLCAD_WORD_SIZE "16BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
       else(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-	set(CMAKE_WORD_SIZE "8BIT")
-	set(BRLCAD_WORD_SIZE "8BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
+        set(CMAKE_WORD_SIZE "8BIT")
+        set(BRLCAD_WORD_SIZE "8BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
     endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
   endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
@@ -130,8 +133,8 @@ if(MSVC)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
       set(CMAKE_WORD_SIZE "64BIT")
       if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-	message(WARNING "Selected MSVC compiler is 64BIT - setting word size to 64BIT.  To perform a 32BIT MSVC build, select the 32BIT MSVC CMake generator.")
-	set(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
+        message(WARNING "Selected MSVC compiler is 64BIT - setting word size to 64BIT.  To perform a 32BIT MSVC build, select the 32BIT MSVC CMake generator.")
+        set(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
     add_definitions("-D_WIN64")
@@ -140,8 +143,8 @@ if(MSVC)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
       set(CMAKE_WORD_SIZE "32BIT")
       if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-	message(WARNING "Selected MSVC compiler is 32BIT - setting word size to 32BIT.  To perform a 64BIT MSVC build, select the 64BIT MSVC CMake generator.")
-	set(BRLCAD_WORD_SIZE "32BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
+        message(WARNING "Selected MSVC compiler is 32BIT - setting word size to 32BIT.  To perform a 64BIT MSVC build, select the 64BIT MSVC CMake generator.")
+        set(BRLCAD_WORD_SIZE "32BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
   endif(CMAKE_CL_64)
@@ -149,18 +152,8 @@ endif(MSVC)
 
 # If a platform specific variable needs to be set for 32 bit, do it here
 if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
+	set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
 endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-
-CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
-
-# OpenBSD doesn't define __WORD_SIZE
-if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 32\n#endif\n")
-endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-  CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 64\n#endif\n")
-endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
 # Based on what we are doing, we may need to constrain our search paths
 #
