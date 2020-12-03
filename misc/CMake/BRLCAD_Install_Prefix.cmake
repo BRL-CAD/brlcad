@@ -65,9 +65,6 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 set(BRLCAD_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "BRL-CAD install prefix")
 mark_as_advanced(BRLCAD_PREFIX)
-if (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-endif (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
 
 # If we've a Release build with a Debug path or vice versa, warn about
 # it.  A "make install" of a Release build into a dev install
@@ -83,6 +80,7 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQU
 #------------------------------------------------------------------------------
 # If CMAKE_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
 # this location is dangerous/destructive on some systems.
+find_program(SLEEP_EXEC sleep)
 if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
   message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
   if(SLEEP_EXEC)
