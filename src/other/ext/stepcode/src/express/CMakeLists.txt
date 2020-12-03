@@ -19,7 +19,7 @@ else(SC_GENERATE_LP_SOURCES)
   set(LEMON_ExpParser_HDR ${CMAKE_CURRENT_SOURCE_DIR}/generated/expparse.h)
   set(PERPLEX_ExpScanner_SRC ${CMAKE_CURRENT_SOURCE_DIR}/generated/expscan.c)
   set(PERPLEX_ExpScanner_HDR ${CMAKE_CURRENT_SOURCE_DIR}/generated/expscan.h)
-  include_directories(generated)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/generated)
 endif(SC_GENERATE_LP_SOURCES)
 
 set(EXPRESS_SOURCES
