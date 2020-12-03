@@ -451,6 +451,20 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
 
+    # If the library depends on other targets in this build, not just system
+    # libraries, make sure the object targets depends them as well.  In
+    # principle this isn't always required - object compilation may be
+    # independent of the dependencies needed at link time - but if compilation
+    # DOES depends on those targets having first performed some action (like
+    # staging a header in an expected location) NOT setting this dependency
+    # explicitly will eventually cause build failures.
+    #
+    # Without setting the OBJECT dependencies, success in the above case would
+    # depend on whether or not the high level build ordering happened to run
+    # the required targets before performing this step.  That failure mode is
+    # semi-random and intermittent (top level build ordering without explicit
+    # dependencies varies depending on -j flag values) making it hard to debug.
+    # Ask me how I know.
     if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       foreach(ll ${libslist})
 	if (TARGET ${ll})
