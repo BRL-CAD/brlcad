@@ -49,10 +49,10 @@ file(WRITE "${CMAKE_BINARY_DIR}/BRLCAD_OPTIONS" "${CONFIG_OPT_STRING}")
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-# Build static libs by default unless we're debugging. Note: this
-# option will not disable libraries specifically added as STATIC even
-# when OFF.  For multi-configuration options the build type determination
-# is made at build time, so just default to "ON".
+# Build static libs by default unless we're debugging. Note: this option will
+# not disable libraries specifically added as STATIC even when OFF.  For
+# multi-configuration options the build type determination is made at build
+# time, so just default to "ON".
 cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT \"${CMAKE_BUILD_TYPE}\" STREQUAL Debug" OFF)
 
 # Turn off the brlcad.dll build.
@@ -269,15 +269,15 @@ if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 
-#----------------------------------------------------------------------
-# The following are fine-grained options for enabling/disabling compiler
-# and source code definition settings.  Typically these are set to
-# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but
-# can also be individually set.
+#------------------------------------------------------------------------------
+# The following are fine-grained options for enabling/disabling compiler and
+# source code definition settings.  Typically these are set to various
+# configurations by the toplevel CMAKE_BUILD_TYPE setting, but can also be
+# individually set.
 
-# Enable/disable runtime debugging - these are protections for
-# minimizing the possibility of corrupted data files.  Generally
-# speaking these should be left on.
+# Enable/disable runtime debugging - these are protections for minimizing the
+# possibility of corrupted data files.  Generally speaking these should be left
+# on.
 set(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES
   ENABLE_RUNTIME_DEBUG
   ENABLE_RUN_TIME_DEBUG
@@ -313,8 +313,8 @@ if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
   CONFIG_H_APPEND(BRLCAD "#define NO_DEBUG_CHECKING 1\n")
 endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
-# Enable debug flags during compilation - we always want to use these
-# unless explicitly told not to.
+# Enable debug flags during compilation - we always want to use these unless
+# explicitly told not to.
 set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
 Add compiler flags to aid in program debugging.  Defaults to ON.
 ")
@@ -323,8 +323,8 @@ BRLCAD_OPTION(BRLCAD_FLAGS_DEBUG ON
   ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS
   DESCRIPTION BRLCAD_FLAGS_DEBUG_DESCRIPTION)
 
-# A variety of debugging messages in the code key off of the DEBUG
-# definition - set it according to whether we're using debug flags.
+# A variety of debugging messages in the code key off of the DEBUG definition -
+# set it according to whether we're using debug flags.
 if(BRLCAD_FLAGS_DEBUG)
   CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
 endif(BRLCAD_FLAGS_DEBUG)
@@ -339,11 +339,11 @@ BRLCAD_OPTION(BRLCAD_ENABLE_COMPILER_WARNINGS ON
   DESCRIPTION BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
 mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
 
-# Enable/disable strict compiler settings - these are used for building
-# BRL-CAD by default, but not src/other code.  Always used for BRL-CAD
-# code unless the NO_STRICT option is specified when defining a target
-# with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
-# are not compatible with strict, the NO_STRICT_CXX option can be used.
+# Enable/disable strict compiler settings - these are used for building BRL-CAD
+# by default, but not src/other code.  Always used for BRL-CAD code unless the
+# NO_STRICT option is specified when defining a target with BRLCAD_ADDEXEC or
+# BRLCAD_ADDLIB.  If only C++ files in a target are not compatible with strict,
+# the NO_STRICT_CXX option can be used.
 set(BRLCAD_ENABLE_STRICT_DESCRIPTION "
 Causes all compilation warnings for C code to be treated as errors.  This is now
 the default for BRL-CAD source code, and developers should address issues
@@ -369,19 +369,19 @@ else(CMAKE_BUILD_TYPE)
 endif(CMAKE_BUILD_TYPE)
 mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
 
-# Build with full compiler lines visible by default (won't need make
-# VERBOSE=1) on command line
+# Build with full compiler lines visible by default (won't need make VERBOSE=1)
+# on command line
 option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
 mark_as_advanced(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
   set(CMAKE_VERBOSE_MAKEFILE ON)
 endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 
-# Build with profile-guided optimization support.  this requires a
-# two-pass compile, once with BRLCAD_PGO=ON on a location that did not
-# exist beforehand (specified via the PGO_PATH environment variable),
-# and again to use profiling metrics captured on "typical" operations
-# and data.  By default, path is BUILDDIR/profiling
+# Build with profile-guided optimization support.  this requires a two-pass
+# compile, once with BRLCAD_PGO=ON on a location that did not exist beforehand
+# (specified via the PGO_PATH environment variable), and again to use profiling
+# metrics captured on "typical" operations and data.  By default, path is
+# BUILDDIR/profiling
 
 option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
 mark_as_advanced(BRLCAD_PGO)
@@ -425,20 +425,19 @@ if(BRLCAD_HEADERS_OLD_COMPAT)
   add_definitions(-DEXPOSE_DM_HEADER)
 endif(BRLCAD_HEADERS_OLD_COMPAT)
 
-#----------------------------------------------------------------------
-# Some generators in CMake support generating folders in IDEs for
-# organizing build targets.  We want to use them if they are there.
+#-----------------------------------------------------------------------------
+# Some generators in CMake support generating folders in IDEs for organizing
+# build targets.  We want to use them if they are there.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-#----------------------------------------------------------------------
-# There are extra documentation files available requiring DocBook
-# They are quite useful in graphical interfaces, but also add considerably
-# to the overall build time.  If necessary BRL-CAD provides its own
-# xsltproc (see src/other/xmltools), so the html and man page
-# outputs are always potentially available.  PDF output, on the other hand,
-# needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for
-# a number of reasons, so we simply check to see if it is present and set
-# the options accordingly.
+#-----------------------------------------------------------------------------
+# There are extra documentation files available requiring DocBook They are
+# quite useful in graphical interfaces, but also add considerably to the
+# overall build time.  If necessary BRL-CAD provides its own xsltproc (see
+# src/other/xmltools), so the html and man page outputs are always potentially
+# available.  PDF output, on the other hand, needs Apache FOP.  FOP is not a
+# candidate for bundling with BRL-CAD for a number of reasons, so we simply
+# check to see if it is present and set the options accordingly.
 
 # Do we have the environment variable set locally?
 if(NOT "$ENV{APACHE_FOP}" STREQUAL "")
@@ -485,10 +484,10 @@ BRLCAD_OPTION(BRLCAD_EXTRADOCS ${EXTRADOCS_DEFAULT}
   DESCRIPTION BRLCAD_EXTRADOCS_DESCRIPTION)
 
 
-# The HTML output is used in the graphical help browsers in MGED and Archer,
-# as well as being the most likely candidate for external viewers. Turn this
-# on unless explicitly instructed otherwise by the user or all extra
-# documentation is disabled.
+# The HTML output is used in the graphical help browsers in MGED and Archer, as
+# well as being the most likely candidate for external viewers. Turn this on
+# unless explicitly instructed otherwise by the user or all extra documentation
+# is disabled.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
 
@@ -498,16 +497,15 @@ mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PPT "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_PPT)
 
-# Normally, we'll turn on man page output by default, but there is
-# no point in doing man page output for a Visual Studio build - the
-# files aren't useful and it *seriously* increases the target build
-# count/build time.  Conditionalize on the CMake MSVC variable NOT
-# being set.
+# Normally, we'll turn on man page output by default, but there is no point in
+# doing man page output for a Visual Studio build - the files aren't useful and
+# it *seriously* increases the target build count/build time.  Conditionalize
+# on the CMake MSVC variable NOT being set.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
 
-# Don't do PDF by default because it's pretty expensive, and hide the
-# option unless the tools to do it are present.
+# Don't do PDF by default because it's pretty expensive, and hide the option
+# unless the tools to do it are present.
 set(BRLCAD_EXTRADOCS_PDF_DESCRIPTION "
 Option that enables building of BRL-CAD's DocBook PDF-based documentation
 (includes manuals and man pages for commands, among
@@ -518,15 +516,14 @@ usually a shell script with 0755 permissions).
 ")
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
 
-# Provide an option to enable/disable XML validation as part
-# of the DocBook build - sort of a "strict flags" mode for DocBook.
-# By default, this will be enabled when extra docs are built and
-# the toplevel BRLCAD_ENABLE_STRICT setting is enabled.
-# Unfortunately, Visual Studio 2010 seems to have issues when we
-# enable validation on top of everything else... not clear why,
-# unless build target counts >1800 are beyond MSVC's practical
-# limit.  Until we either find a resolution or a way to reduce
-# the target count on MSVC, disable validation there.
+# Provide an option to enable/disable XML validation as part of the DocBook
+# build - sort of a "strict flags" mode for DocBook.  By default, this will be
+# enabled when extra docs are built and the toplevel BRLCAD_ENABLE_STRICT
+# setting is enabled.  Unfortunately, Visual Studio 2010 seems to have issues
+# when we enable validation on top of everything else... not clear why, unless
+# build target counts >1800 are beyond MSVC's practical limit.  Until we either
+# find a resolution or a way to reduce the target count on MSVC, disable
+# validation there.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
