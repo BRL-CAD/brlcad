@@ -1,4 +1,5 @@
 #      B R L C A D _ T E S T _ W R A P P E R S . C M A K E
+#
 # BRL-CAD
 #
 # Copyright (c) 2020 United States Government as represented by
@@ -36,13 +37,13 @@
 #---------------------------------------------------------------------
 # "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
 # "make unit"  runs all the unit tests.
+
 # To build the required targets for testing in the style of GNU Autotools "make
 # check") we define "unit" and "check" targets per
 # http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
 # automatically assemble its targets into the unit dependency list.
 
-include(ProcessorCount)
-ProcessorCount(N)
+cmake_host_system_information(RESULT N QUERY NUMBER_OF_LOGICAL_CORES)
 if(NOT N EQUAL 0)
   math(EXPR NC "${N} / 2")
   if(${NC} GREATER 1)
@@ -51,7 +52,7 @@ if(NOT N EQUAL 0)
     set(JFLAG)
   endif(${NC} GREATER 1)
 else(NOT N EQUAL 0)
-  # Huh?  No j flag if we can't get a processor count
+  # Huh?  No j flag if we can't get a core count
   set(JFLAG)
 endif(NOT N EQUAL 0)
 
@@ -238,7 +239,6 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
   add_dependencies(check ${test_prog})
 
 endfunction(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
-
 
 
 # Local Variables:
