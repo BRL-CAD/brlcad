@@ -531,6 +531,12 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   # Extra static lib specific work
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+    # We need to make sure the target depends on any targets in the libslist
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	add_dependencies(${libstatic} ${ll})
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
     set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
     VALIDATE_STYLE("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
     if(NOT L_NO_INSTALL)
