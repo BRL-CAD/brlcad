@@ -116,6 +116,9 @@ option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry fil
 # we've indicated we *don't* want an X11 build
 if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
   find_package(X11)
+  if (X11_Xrender_FOUND)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_XRENDER 1\n")
+  endif (X11_Xrender_FOUND)
 endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
 
 # make sure Xi is included in the list of X11 libs
