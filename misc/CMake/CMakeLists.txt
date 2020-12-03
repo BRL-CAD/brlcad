@@ -3,6 +3,7 @@ set(cmake_ignore_files
   BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
+  BRLCAD_Environment_Setup.cmake
   BRLCAD_Options.cmake
   BRLCAD_Regress_Util.cmake
   BRLCAD_Summary.cmake
