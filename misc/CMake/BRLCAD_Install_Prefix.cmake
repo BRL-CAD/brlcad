@@ -33,10 +33,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# If we need it, use a standard string to stand in for build types.  This
-# allows for easier replacing later in the logic
-set(BUILD_TYPE_KEY "----BUILD_TYPE----")
-
 #---------------------------------------------------------------------
 # The location in which to install BRL-CAD.  Only do this if
 # CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
@@ -61,7 +57,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 	set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
       endif(CMAKE_CL_64)
     else(MSVC)
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/${BUILD_TYPE_KEY}-${BRLCAD_VERSION}")
+      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
     endif(MSVC)
   endif(NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
@@ -69,6 +65,9 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 set(BRLCAD_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "BRL-CAD install prefix")
 mark_as_advanced(BRLCAD_PREFIX)
+if (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
+  set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+endif (DEFINED CMAKE_INSTALL_PREFIX AND NOT DEFINED CMAKE_INSTALL_PREFIX)
 
 # If we've a Release build with a Debug path or vice versa, warn about
 # it.  A "make install" of a Release build into a dev install
@@ -84,7 +83,6 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQU
 #------------------------------------------------------------------------------
 # If CMAKE_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
 # this location is dangerous/destructive on some systems.
-find_program(SLEEP_EXEC sleep)
 if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
   message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
   if(SLEEP_EXEC)
@@ -141,40 +139,20 @@ endif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_
 # To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
 # is available, BRLCAD_PREFIX is used to store the value in the cache.)
 
-# CMAKE_IGNORE_PATH needs a list of explicit directories, not a
-# list of prefixes - in other words, it ignores EXACTLY the specified
-# path and not any subdirectories under that path.  See:
-# https://cmake.org/cmake/help/latest/variable/CMAKE_IGNORE_PATH.html
-# This means we can't just add the install path to the ignore variables
-# and have find_package skip items in the bin and lib subdirs - we need
-# to list them explicitly for exclusion.
+if(CMAKE_INSTALL_PREFIX)
+  if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
+    get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
+    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
+  endif(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
+endif(CMAKE_INSTALL_PREFIX)
 
-if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
-  # Make sure we are working with the fully normalized path
-  get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
-  set(IGNORE_SUBDIRS ${BIN_DIR} ${LIB_DIR})
-  if (CMAKE_CONFIGURATION_TYPES)
-    # If we're doing multi-config, ignore all the possible output locations
-    foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-      if ("${cfg}" STREQUAL "Release")
-	string(REPLACE "${BUILD_TYPE_KEY}" "rel" "${CMAKE_INSTALL_PREFIX}" TYPEPATH)
-      elseif ("${cfg}" STREQUAL "Debug")
-	string(REPLACE "${BUILD_TYPE_KEY}" "dev" "${CMAKE_INSTALL_PREFIX}" TYPEPATH)
-      else ("${cfg}" STREQUAL "Release")
-	string(REPLACE "${BUILD_TYPE_KEY}" "${cfg}" "${CMAKE_INSTALL_PREFIX}" TYPEPATH)
-      endif ("${cfg}" STREQUAL "Release")
-      foreach(sd ${IGNORE_SUBDIRS})
-	set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${TYPEPATH}/${sd}")
-	set(CMAKE_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${TYPEPATH}/${sd}")
-      endforeach(sd ${IGNORE_SUBDIRS})
-    endforeach(cfg ${CMAKE_CONFIGURATION_TYPES})
-  else (CMAKE_CONFIGURATION_TYPES)
-    foreach(sd ${IGNORE_SUBDIRS})
-      set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${PATH_NORMALIZED}/${sd}")
-      set(CMAKE_IGNORE_PATH "${CMAKE_SYSTEM_IGNORE_PATH};${PATH_NORMALIZED}/${sd}")
-    endforeach(sd ${IGNORE_SUBDIRS})
-  endif (CMAKE_CONFIGURATION_TYPES)
-endif(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
+if(BRLCAD_PREFIX)
+  if(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
+    get_filename_component(PATH_NORMALIZED "${BRLCAD_PREFIX}/${LIB_DIR}" ABSOLUTE)
+    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
+  endif(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
+endif(BRLCAD_PREFIX)
+mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 
 #------------------------------------------------------------------------------
 # Now that we know the install prefix, generate the binary for calculating
