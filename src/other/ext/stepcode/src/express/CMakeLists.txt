@@ -10,19 +10,23 @@ if(SC_GENERATE_LP_SOURCES)
   LEMON_TARGET(ExpParser expparse.y)
   PERPLEX_TARGET(ExpScanner expscan.l)
   ADD_PERPLEX_LEMON_DEPENDENCY(ExpScanner ExpParser)
-
-  add_library(objlib_expscan_c OBJECT ${PERPLEX_ExpScanner_SRC})
-  set_property(TARGET objlib_expscan_c PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-  add_library(objlib_expparse_c OBJECT ${LEMON_ExpParser_SRC})
-  set_property(TARGET objlib_expparse_c PROPERTY POSITION_INDEPENDENT_CODE ON)
-
+  include_directories(
+    ${LEMON_ExpParser_INCLUDE_DIR}
+    ${PERPLEX_ExpScanner_INCLUDE_DIR}
+    )
 else(SC_GENERATE_LP_SOURCES)
-  add_subdirectory(generated)
+  set(LEMON_ExpParser_SRC ${CMAKE_CURRENT_SOURCE_DIR}/generated/expparse.c)
+  set(LEMON_ExpParser_HDR ${CMAKE_CURRENT_SOURCE_DIR}/generated/expparse.h)
+  set(PERPLEX_ExpScanner_SRC ${CMAKE_CURRENT_SOURCE_DIR}/generated/expscan.c)
+  set(PERPLEX_ExpScanner_HDR ${CMAKE_CURRENT_SOURCE_DIR}/generated/expscan.h)
   include_directories(generated)
 endif(SC_GENERATE_LP_SOURCES)
 
 set(EXPRESS_SOURCES
+  ${LEMON_ExpParser_HDR}
+  ${LEMON_ExpParser_SRC}
+  ${PERPLEX_ExpScanner_HDR}
+  ${PERPLEX_ExpScanner_SRC}
   symbol.c
   type.c
   variable.c
@@ -47,30 +51,42 @@ set(EXPRESS_SOURCES
   ordered_attrs.cc
   info.c
   factory.c
- )
+  )
 
-set(EXPRESS_OBJS)
-foreach(_src ${EXPRESS_SOURCES})
-    string(REPLACE "." "_" _suffix ${_src})
-    set(_objlib "objlib_${_suffix}")
-    add_library(${_objlib} OBJECT ${_src})
-    # TODO: probably PIC should be used everywhere...
-    set_property(TARGET ${_objlib} PROPERTY POSITION_INDEPENDENT_CODE ON)
-    list(APPEND EXPRESS_OBJS $<TARGET_OBJECTS:${_objlib}>)
-endforeach()
-
-list(APPEND EXPRESS_OBJS $<TARGET_OBJECTS:objlib_expscan_c>)
-list(APPEND EXPRESS_OBJS $<TARGET_OBJECTS:objlib_expparse_c>)
+add_library(express-obj OBJECT ${EXPRESS_SOURCES})
+add_dependencies(express-obj base)
+if(MSVC)
+  set_property(TARGET express-obj APPEND PROPERTY COMPILE_DEFINITIONS "SC_EXPRESS_DLL_EXPORTS")
+endif(MSVC)
 
 
-if(SC_GENERATE_LP_SOURCES)
-  set_property(TARGET objlib_expparse_c objlib_express_c objlib_lexact_c 
-	       APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_ExpScanner_INCLUDE_DIR}")
-  set_property(TARGET objlib_expscan_c objlib_express_c objlib_lexact_c
-               APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_ExpParser_INCLUDE_DIR}")
-  # OBJECT libraries are not targets, and so an explicit dependency is required
-  set_source_files_properties(express.c lexact.c PROPERTIES OBJECT_DEPENDS "${PERPLEX_ExpScanner_HDR};${LEMON_ExpParser_HDR}")
-endif()
+add_library(express SHARED ${EXPRESS_SOURCES})
+target_link_libraries(express base)
+if(OPENBSD)
+  set_target_properties(express PROPERTIES VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
+else(OPENBSD)
+  set_target_properties(express PROPERTIES VERSION ${SC_VERSION} SOVERSION ${SC_VERSION_MAJOR})
+endif(OPENBSD)
+if(APPLE)
+  set_property(TARGET express APPEND PROPERTY LINK_FLAGS "-flat_namespace -undefined suppress")
+endif(APPLE)
+install(TARGETS express
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
+
+if(MSVC)
+  set_property(TARGET express APPEND PROPERTY COMPILE_DEFINITIONS "SC_EXPRESS_DLL_EXPORTS")
+  set_property(TARGET express APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SC_EXPRESS_DLL_IMPORTS")
+endif(MSVC)
+
+if (BUILD_STATIC_LIBS)
+  add_library(express-static STATIC ${EXPRESS_SOURCES})
+  install(TARGETS express-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_STATIC_LIBS)
 
 # TODO
 # Currently, fedex.c provides the main() for multiple programs. These programs
@@ -85,35 +101,8 @@ set(CHECK_EXPRESS_SOURCES
   fedex.c
   inithook.c
  )
-
-SET(EXPRESS_PRIVATE_HDRS
-  exptoks.h
-  stack.h
-  )
-
-variable_watch(SC_ADDLIB_EXPRESS_ARG_LINK_LIBRARIES)
-variable_watch(SC_ADDLIB_EXPRESS-STATIC_ARG_LINK_LIBRARIES)
-
-if($CACHE{SC_BUILD_SHARED_LIBS})
-  SC_ADDLIB(express SHARED SOURCES "dummy.c" ${EXPRESS_OBJS} LINK_LIBRARIES base)
-  if(WIN32)
-    target_compile_definitions(express PRIVATE SC_EXPRESS_DLL_EXPORTS)
-  endif()
-
-  if(NOT SC_IS_SUBBUILD AND SC_GIT_VERSION)
-    add_dependencies(express version_string)
-  endif()
-endif()
-
-if($CACHE{SC_BUILD_STATIC_LIBS})
-  SC_ADDLIB(express-static STATIC SOURCES "dummy.c" ${EXPRESS_OBJS} LINK_LIBRARIES base-static)
- 
-  if(NOT SC_IS_SUBBUILD AND SC_GIT_VERSION)
-    add_dependencies(express-static version_string)
-  endif()
-endif()
-
-SC_ADDEXEC(check-express SOURCES ${CHECK_EXPRESS_SOURCES} LINK_LIBRARIES express base ${SC_EXEC_NOINSTALL})
+add_executable(check-express ${CHECK_EXPRESS_SOURCES})
+target_link_libraries(check-express express base)
 
 if(SC_ENABLE_TESTING)
   add_subdirectory(test)
