@@ -1,5 +1,5 @@
 
-set(STEPEDITOR_SRCS
+set(LIBSTEPEDITOR_SRCS
   STEPfile.cc
   STEPfile.inline.cc
   cmdmgr.cc
@@ -9,7 +9,7 @@ set(STEPEDITOR_SRCS
   SdaiSchemaInit.cc
   )
 
-SET(STEPEDITOR_HDRS
+SET(SC_CLEDITOR_HDRS
   STEPfile.h
   cmdmgr.h
   editordefines.h
@@ -27,41 +27,18 @@ include_directories(
   ${SC_SOURCE_DIR}/src/clutils
   )
 
-add_library(stepeditor-obj OBJECT ${STEPEDITOR_SRCS})
-set_property(TARGET stepeditor-obj PROPERTY POSITION_INDEPENDENT_CODE ON)
-add_dependencies(stepeditor-obj base)
-if(MSVC)
-  set_property(TARGET stepeditor-obj APPEND PROPERTY COMPILE_DEFINITIONS "SC_EDITOR_DLL_EXPORTS")
-endif(MSVC)
+if($CACHE{SC_BUILD_SHARED_LIBS})
+  SC_ADDLIB(stepeditor SHARED SOURCES ${LIBSTEPEDITOR_SRCS} LINK_LIBRARIES stepcore stepdai steputils base)
+  if(WIN32)
+    target_compile_definitions(stepeditor PRIVATE SC_EDITOR_DLL_EXPORTS)
+  endif()
+endif()
 
-add_library(stepeditor SHARED $<TARGET_OBJECTS:stepeditor-obj>)
-target_link_libraries(stepeditor steputils stepdai base)
-if(OPENBSD)
-  set_target_properties(stepeditor PROPERTIES VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
-else(OPENBSD)
-  set_target_properties(stepeditor PROPERTIES VERSION ${SC_VERSION} SOVERSION ${SC_VERSION_MAJOR})
-endif(OPENBSD)
-if(APPLE)
-  set_property(TARGET stepeditor APPEND PROPERTY LINK_FLAGS "-flat_namespace -undefined suppress")
-endif(APPLE)
-if(MSVC)
-  set_property(TARGET stepeditor APPEND PROPERTY COMPILE_DEFINITIONS "SC_EDITOR_DLL_EXPORTS")
-  set_property(TARGET stepeditor APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SC_EDITOR_DLL_IMPORTS")
-endif(MSVC)
-install(TARGETS stepeditor
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+if($CACHE{SC_BUILD_STATIC_LIBS})
+  SC_ADDLIB(stepeditor-static STATIC SOURCES ${LIBSTEPEDITOR_SRCS} LINK_LIBRARIES stepcore-static stepdai-static steputils-static base-static)
+endif()
 
-if (BUILD_STATIC_LIBS)
-  add_library(stepeditor-static STATIC $<TARGET_OBJECTS:stepeditor-obj>)
-  install(TARGETS stepeditor-static
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
-endif (BUILD_STATIC_LIBS)
-
-install(FILES ${STEPEDITOR_HDRS}
+install(FILES ${SC_CLEDITOR_HDRS}
   DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cleditor)
 
 # Local Variables:

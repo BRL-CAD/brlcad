@@ -37,12 +37,7 @@ include_directories(
   ${SC_SOURCE_DIR}/src/base
   )
 
-add_executable(exp2cxx ${exp2cxx_SOURCES})
-target_link_libraries(exp2cxx libexppp express base)
-install(TARGETS exp2cxx
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+SC_ADDEXEC(exp2cxx SOURCES ${exp2cxx_SOURCES} LINK_LIBRARIES libexppp express base)
 
 if(SC_ENABLE_TESTING)
   add_subdirectory(test)

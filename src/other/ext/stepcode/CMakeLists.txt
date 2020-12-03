@@ -69,6 +69,9 @@ endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
 # testing and compilation options, build output dirs, install dirs, uninstall, package creation, etc
 include(${SC_CMAKE_DIR}/SC_Build_opts.cmake)
 
+# SC_ADDEXEC and SC_ADDLIB macros, dllimport/export, etc
+include(${SC_CMAKE_DIR}/SC_Targets.cmake)
+
 # Macros related to paths
 include(${SC_CMAKE_DIR}/SC_Paths.cmake)
 

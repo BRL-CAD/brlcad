@@ -1,4 +1,5 @@
-set(STEPUTILS_SRCS
+
+set(LIBSTEPUTILS_SRCS
   Str.cc
   dirobj.cc
   gennode.cc
@@ -8,7 +9,7 @@ set(STEPUTILS_SRCS
   errordesc.cc
   )
 
-set(STEPUTILS_HDRS
+set(SC_CLUTILS_HDRS
   dirobj.h
   errordesc.h
   gennodearray.h
@@ -24,42 +25,22 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
-add_library(steputils-obj OBJECT ${STEPUTILS_SRCS})
-set_property(TARGET steputils-obj PROPERTY POSITION_INDEPENDENT_CODE ON)
-add_dependencies(steputils-obj base)
-if(MSVC)
-  set_property(TARGET steputils-obj APPEND PROPERTY COMPILE_DEFINITIONS "SC_UTILS_DLL_EXPORTS")
-endif(MSVC)
+if($CACHE{SC_BUILD_SHARED_LIBS})
+  SC_ADDLIB(steputils SHARED SOURCES ${LIBSTEPUTILS_SRCS} LINK_LIBRARIES base)
+  if(WIN32)
+    target_compile_definitions(steputils PRIVATE SC_UTILS_DLL_EXPORTS)
+    target_link_libraries(steputils shlwapi)
+  endif()
+endif()
 
-add_library(steputils SHARED $<TARGET_OBJECTS:steputils-obj>)
-target_link_libraries(steputils base)
-if(OPENBSD)
-  set_target_properties(steputils PROPERTIES VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
-else(OPENBSD)
-  set_target_properties(steputils PROPERTIES VERSION ${SC_VERSION} SOVERSION ${SC_VERSION_MAJOR})
-endif(OPENBSD)
-if(APPLE)
-  set_property(TARGET steputils APPEND PROPERTY LINK_FLAGS "-flat_namespace -undefined suppress")
-endif(APPLE)
-if(MSVC)
-  target_link_libraries(steputils shlwapi)
-  set_property(TARGET steputils APPEND PROPERTY COMPILE_DEFINITIONS "SC_UTILS_DLL_EXPORTS")
-  set_property(TARGET steputils APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SC_UTILS_DLL_IMPORTS")
-endif(MSVC)
-install(TARGETS steputils
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+if($CACHE{SC_BUILD_STATIC_LIBS})
+  SC_ADDLIB(steputils-static STATIC SOURCES ${LIBSTEPUTILS_SRCS} LINK_LIBRARIES base-static)
+  if(WIN32)
+    target_link_libraries(steputils-static shlwapi)
+  endif()
+endif()
 
-if (BUILD_STATIC_LIBS)
-  add_library(steputils-static STATIC $<TARGET_OBJECTS:steputils-obj>)
-  install(TARGETS steputils-static
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
-endif (BUILD_STATIC_LIBS)
-
-install(FILES ${STEPUTILS_HDRS}
+install(FILES ${SC_CLUTILS_HDRS}
   DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/clutils)
 
 # Local Variables:

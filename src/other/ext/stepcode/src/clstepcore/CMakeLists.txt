@@ -1,4 +1,5 @@
-set(STEPCORE_SRCS
+
+set(LIBSTEPCORE_SRCS
   aggrTypeDescriptor.cc
   attrDescriptor.cc
   attrDescriptorList.cc
@@ -61,7 +62,7 @@ set(STEPCORE_SRCS
   whereRule.cc
 )
 
-set(STEPCORE_HDRS
+set(SC_CLSTEPCORE_HDRS
   aggrTypeDescriptor.h
   attrDescriptor.h
   attrDescriptorList.h
@@ -130,41 +131,20 @@ include_directories(
   ${SC_SOURCE_DIR}/src/clutils
   )
 
-add_library(stepcore-obj OBJECT ${STEPCORE_SRCS})
-set_property(TARGET stepcore-obj PROPERTY POSITION_INDEPENDENT_CODE ON)
-add_dependencies(stepcore-obj base)
-if(MSVC)
-  set_property(TARGET stepcore-obj APPEND PROPERTY COMPILE_DEFINITIONS "SC_CORE_DLL_EXPORTS")
-endif(MSVC)
+set(_libdeps steputils stepdai base)
 
-add_library(stepcore SHARED $<TARGET_OBJECTS:stepcore-obj>)
-target_link_libraries(stepcore steputils stepdai base)
-if(OPENBSD)
-  set_target_properties(stepcore PROPERTIES VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
-else(OPENBSD)
-  set_target_properties(stepcore PROPERTIES VERSION ${SC_VERSION} SOVERSION ${SC_VERSION_MAJOR})
-endif(OPENBSD)
-if(APPLE)
-  set_property(TARGET stepcore APPEND PROPERTY LINK_FLAGS "-flat_namespace -undefined suppress")
-endif(APPLE)
-if(MSVC)
-  set_property(TARGET stepcore APPEND PROPERTY COMPILE_DEFINITIONS "SC_CORE_DLL_EXPORTS")
-  set_property(TARGET stepcore APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SC_CORE_DLL_IMPORTS")
-endif(MSVC)
-install(TARGETS stepcore
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+if($CACHE{SC_BUILD_SHARED_LIBS})
+  SC_ADDLIB(stepcore SHARED SOURCES ${LIBSTEPCORE_SRCS} LINK_LIBRARIES ${_libdeps})
+  if(WIN32)
+    target_compile_definitions(stepcore PRIVATE SC_CORE_DLL_EXPORTS)
+  endif()
+endif()
 
-if (BUILD_STATIC_LIBS)
-  add_library(stepcore-static STATIC $<TARGET_OBJECTS:stepcore-obj>)
-  install(TARGETS stepcore-static
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
-endif (BUILD_STATIC_LIBS)
+if($CACHE{SC_BUILD_STATIC_LIBS})
+  SC_ADDLIB(stepcore-static STATIC SOURCES ${LIBSTEPCORE_SRCS} LINK_LIBRARIES $<JOIN:${_libdeps},-static>-static)
+endif()
 
-install(FILES ${STEPCORE_HDRS}
+install(FILES ${SC_CLSTEPCORE_HDRS}
   DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/clstepcore)
 
 if(SC_ENABLE_TESTING)

@@ -22,6 +22,7 @@ cmake/SC_Outdirs.cmake
 cmake/SC_Paths.cmake
 cmake/SC_Regenerate.cmake
 cmake/SC_Run_exp2cxx.cmake
+cmake/SC_Targets.cmake
 cmake/cmake_uninstall.cmake.in
 cmake/schema_scanner/CMakeLists.txt
 cmake/schema_scanner/README
@@ -564,6 +565,7 @@ src/express/express.c
 src/express/expscan.l
 src/express/factory.c
 src/express/fedex.c
+src/express/generated/CMakeLists.txt
 src/express/generated/README
 src/express/generated/expparse.c
 src/express/generated/expparse.h
@@ -677,5 +679,4 @@ test/unitary_schemas/ur_redecl.exp
 if (COMMAND CMAKEFILES_IN_DIR)
   CMAKEFILES_IN_DIR(stepcode_ignore_files stepcode)
 endif (COMMAND CMAKEFILES_IN_DIR)
-
 
