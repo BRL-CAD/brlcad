@@ -64,3 +64,10 @@ endif(CMAKE_CONFIGURATION_TYPES)
 mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
 
 
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

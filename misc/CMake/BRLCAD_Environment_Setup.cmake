@@ -1,3 +1,38 @@
+#  B R L C A D _ E N V I R O N M E N T _ S E T U P . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2020 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
 # Setup and checks related to system environment settings
 
 #---------------------------------------------------------------------
@@ -113,11 +148,11 @@ if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
       set(BRLCAD_WORD_SIZE "32BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
     else(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
       if(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-        set(CMAKE_WORD_SIZE "16BIT")
-        set(BRLCAD_WORD_SIZE "16BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
+	set(CMAKE_WORD_SIZE "16BIT")
+	set(BRLCAD_WORD_SIZE "16BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
       else(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
-        set(CMAKE_WORD_SIZE "8BIT")
-        set(BRLCAD_WORD_SIZE "8BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
+	set(CMAKE_WORD_SIZE "8BIT")
+	set(BRLCAD_WORD_SIZE "8BIT (AUTO)" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^2$")
     endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^4$")
   endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
@@ -133,8 +168,8 @@ if(MSVC)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
       set(CMAKE_WORD_SIZE "64BIT")
       if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-        message(WARNING "Selected MSVC compiler is 64BIT - setting word size to 64BIT.  To perform a 32BIT MSVC build, select the 32BIT MSVC CMake generator.")
-        set(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
+	message(WARNING "Selected MSVC compiler is 64BIT - setting word size to 64BIT.  To perform a 32BIT MSVC build, select the 32BIT MSVC CMake generator.")
+	set(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
     add_definitions("-D_WIN64")
@@ -143,8 +178,8 @@ if(MSVC)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
       set(CMAKE_WORD_SIZE "32BIT")
       if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
-        message(WARNING "Selected MSVC compiler is 32BIT - setting word size to 32BIT.  To perform a 64BIT MSVC build, select the 64BIT MSVC CMake generator.")
-        set(BRLCAD_WORD_SIZE "32BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
+	message(WARNING "Selected MSVC compiler is 32BIT - setting word size to 32BIT.  To perform a 64BIT MSVC build, select the 64BIT MSVC CMake generator.")
+	set(BRLCAD_WORD_SIZE "32BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
       endif(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
   endif(CMAKE_CL_64)
@@ -152,7 +187,7 @@ endif(MSVC)
 
 # If a platform specific variable needs to be set for 32 bit, do it here
 if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
-	set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
+  set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
 endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
 
 # Based on what we are doing, we may need to constrain our search paths
@@ -180,3 +215,10 @@ endif(PREVIOUS_CONFIGURE_TYPE)
 set(PREVIOUS_CONFIGURE_TYPE ${CMAKE_WORD_SIZE} CACHE STRING "Previous configuration word size" FORCE)
 mark_as_advanced(PREVIOUS_CONFIGURE_TYPE)
 
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
