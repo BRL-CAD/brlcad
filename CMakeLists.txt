@@ -84,6 +84,39 @@ cmake_minimum_required(VERSION 3.12)
 # set CMake project name
 project(BRLCAD)
 
+# install(CODE) uses generator expressions - requires 3.14 or newer.
+# We want it to be on, but until we can bump our minimum requirement
+# set it to OLD to make sure we don't break anything.
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 OLD)
+endif (POLICY CMP0087)
+
+# Test name character check - need to look into this one...
+if (POLICY CMP0110)
+  cmake_policy(SET CMP0110 OLD)
+endif (POLICY CMP0110)
+
+#---------------------------------------------------------------------
+# CMake derives much of its functionality from modules, typically
+# stored in one directory - let CMake know where to find them.  If we
+# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
+# our own, otherwise misc/CMake takes first priority.
+set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
+list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
+
+
+#---------------------------------------------------------------------
+# Setup and checks related to system environment settings.  Some of
+# these impact search results needed to set default options, so we
+# do this early in the process.
+include(BRLCAD_Environment_Setup)
+
+
+#---------------------------------------------------------------------
+# Define various utilities.
+include(BRLCAD_Util)
+
+
 #---------------------------------------------------------------------
 # Define the current BRL-CAD version.
 # See HACKING for details on how to properly update the version
@@ -110,35 +143,15 @@ else(NOT EXISTS ${BRLCAD_CNT_FILE})
   set(BRLCAD_PRINT_MSGS 0)
 endif(NOT EXISTS ${BRLCAD_CNT_FILE})
 
-# We will need to define a number of dependent options early on
-include(CMakeDependentOption)
-
 #---------------------------------------------------------------------
-# Define an option to use OBJECT libraries - when we build this
-# way, we also need position independent code.
+# Define an option to use OBJECT libraries.  If we are building with object
+# libraries, we need position independent code.
+include(CMakeDependentOption)
 cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
 mark_as_advanced(USE_OBJECT_LIBS)
 if(USE_OBJECT_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 endif(USE_OBJECT_LIBS)
-
-#---------------------------------------------------------------------
-# CMake derives much of its functionality from modules, typically
-# stored in one directory - let CMake know where to find them.  If we
-# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
-# our own, otherwise misc/CMake takes first priority.
-set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
-list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
-
-#---------------------------------------------------------------------
-# Setup and checks related to system environment settings.  Some of
-# these impact search results needed to set default options, so we
-# do this early in the process.
-include(BRLCAD_Environment_Setup)
-
-#---------------------------------------------------------------------
-# Load general utility routines for BRL-CAD CMake logic
-include(BRLCAD_Util)
 
 #---------------------------------------------------------------------
 # Record the CMake command line arguments (more or less) in
@@ -176,16 +189,6 @@ if (NOT BRLCAD_IS_SUBBUILD)
 endif (NOT BRLCAD_IS_SUBBUILD)
 
 #---------------------------------------------------------------------
-# Set up include paths for generated header files.  For multi-config
-# builds, make sure we get build-specific dirs.
-if(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR})
-  include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR}/brlcad)
-else(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
-endif(CMAKE_CONFIGURATION_TYPES)
-
-#---------------------------------------------------------------------
 # For cleaning files as part of the distclean command, CMake needs
 # to be aware of what various generators will (or might) write out
 # in each build directory.
@@ -198,7 +201,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Make")
   set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} Makefile)
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
 if("${CMAKE_GENERATOR}" MATCHES "Ninja")
-  set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} build.ninja rules.ninja)
+  set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} build.ninja rules.ninja .ninja_log)
 endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
 #---------------------------------------------------------------------
@@ -220,6 +223,16 @@ include(CheckCXXSourceCompiles)
 #---------------------------------------------------------------------
 # print out the title with a pretty box computed to wrap around
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
+
+#---------------------------------------------------------------------
+# Set up include paths for generated header files.  For multi-config
+# builds, make sure we get build-specific dirs.
+if(CMAKE_CONFIGURATION_TYPES)
+  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR})
+  include_directories(${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad)
+else(CMAKE_CONFIGURATION_TYPES)
+  include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it if it exists
@@ -422,7 +435,6 @@ if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
   CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 64\n#endif\n")
 endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
-#----------------------------------------------------------------------
 # Auto-reconfiguration - by default, a CMake generated build system
 # will re-run CMake if it detects that build system logic has changed.
 # This is normally a good thing, but becomes problematic when using
@@ -465,7 +477,6 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-#----------------------------------------------------------------------
 # Load various wrapper macros for checking libraries, headers and
 # functions, some in use by src/other build logic
 include(BRLCAD_CheckFunctions)
@@ -1433,7 +1444,13 @@ BRLCAD_INCLUDE_FILE(ulocks.h HAVE_ULOCKS_H)
 BRLCAD_INCLUDE_FILE(uuid.h HAVE_UUID_H) # for uuid_generate() on BSD
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux
-BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
+
+# TODO - this test is failing on the github runner???
+#BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
+if(MSVC)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_WINDOWS_H 1\n")
+endif(MSVC)
+
 
 # custom sys/sysctl.h test due to BSDisms when compiling
 check_c_source_compiles("typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <sys/sysctl.h>\nint main() { return 0; }" HAVE_SYS_SYSCTL_H)
@@ -2316,10 +2333,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
   foreach(clearpattern ${DISTCLEAN_OUTFILES})
     DISTCLEAN("${CMAKE_BINARY_DIR}/${clearpattern}")
   endforeach(clearpattern ${DISTCLEAN_OUTFILES})
-  if("${CMAKE_GENERATOR}" MATCHES "Ninja")
+  if("${CMAKE_GENERATOR}" MATCHES "Ninja*")
     DISTCLEAN("${CMAKE_BINARY_DIR}/.ninja_log")
     DISTCLEAN("${CMAKE_BINARY_DIR}/.ninja_deps")
-  endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
+  endif("${CMAKE_GENERATOR}" MATCHES "Ninja*")
 
   # ----------------------------------------------------------------------------
   # Define a distcheck target.  This performs a variety of tests to determine
