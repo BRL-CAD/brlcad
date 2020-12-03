@@ -18,12 +18,6 @@ set(LIBEXPPP_SOURCES
   pretty_where.c
  )
 
-set_source_files_properties(
-  pretty_schema.c
-  PROPERTIES OBJECT_DEPENDS
-  "${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h"
-  )
-
 SET(EXPPP_SOURCES
   ../express/fedex.c
   exppp-main.c
@@ -48,7 +42,6 @@ if($CACHE{SC_BUILD_STATIC_LIBS})
   SC_ADDLIB(libexppp-static STATIC SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express-static base-static)
   set_target_properties(libexppp-static PROPERTIES PREFIX "")
 endif()
-
 
 SC_ADDEXEC(exppp SOURCES ${EXPPP_SOURCES} LINK_LIBRARIES libexppp express base)
 
