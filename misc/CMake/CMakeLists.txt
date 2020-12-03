@@ -1,4 +1,5 @@
 set(cmake_ignore_files
+  BRLCAD_Build_Types.cmake
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
   BRLCAD_Options.cmake
