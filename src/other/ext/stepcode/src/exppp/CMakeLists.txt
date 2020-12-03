@@ -18,7 +18,7 @@ set(LIBEXPPP_SOURCES
   pretty_where.c
  )
 
-SET(EXPPP_SOURCES
+set(EXPPP_SOURCES
   ../express/fedex.c
   exppp-main.c
  )
@@ -30,20 +30,49 @@ include_directories(
   ${SC_SOURCE_DIR}/src/express
  )
 
-if($CACHE{SC_BUILD_SHARED_LIBS})
-  SC_ADDLIB(libexppp SHARED SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express base)
-  set_target_properties(libexppp PROPERTIES PREFIX "")
-  if(WIN32)
-    target_compile_definitions(libexppp PRIVATE SC_EXPPP_DLL_EXPORTS)
-  endif()
-endif()
+add_library(libexppp-obj OBJECT ${LIBEXPPP_SOURCES})
+set_target_properties(libexppp-obj PROPERTIES PREFIX "")
+set_property(TARGET libexppp-obj PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_dependencies(libexppp-obj base)
+if(MSVC)
+  set_property(TARGET libexppp-obj APPEND PROPERTY COMPILE_DEFINITIONS "SC_EXPPP_DLL_EXPORTS")
+endif(MSVC)
 
-if($CACHE{SC_BUILD_STATIC_LIBS})
-  SC_ADDLIB(libexppp-static STATIC SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express-static base-static)
+add_library(libexppp SHARED $<TARGET_OBJECTS:libexppp-obj>)
+target_link_libraries(libexppp base)
+set_target_properties(libexppp PROPERTIES PREFIX "")
+if(OPENBSD)
+  set_target_properties(libexppp PROPERTIES VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
+else(OPENBSD)
+  set_target_properties(libexppp PROPERTIES VERSION ${SC_VERSION} SOVERSION ${SC_VERSION_MAJOR})
+endif(OPENBSD)
+if(APPLE)
+  set_property(TARGET libexppp APPEND PROPERTY LINK_FLAGS "-flat_namespace -undefined suppress")
+endif(APPLE)
+if(MSVC)
+  set_property(TARGET libexppp APPEND PROPERTY COMPILE_DEFINITIONS "SC_EXPPP_DLL_EXPORTS")
+  set_property(TARGET libexppp APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SC_EXPPP_DLL_IMPORTS")
+endif(MSVC)
+install(TARGETS libexppp
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
+
+if (BUILD_STATIC_LIBS)
+  add_library(libexppp-static STATIC $<TARGET_OBJECTS:libexppp-obj>)
   set_target_properties(libexppp-static PROPERTIES PREFIX "")
-endif()
+  install(TARGETS libexppp-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_STATIC_LIBS)
 
-SC_ADDEXEC(exppp SOURCES ${EXPPP_SOURCES} LINK_LIBRARIES libexppp express base)
+add_executable(exppp ${EXPPP_SOURCES})
+target_link_libraries(exppp libexppp express base)
+install(TARGETS exppp
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 if(SC_ENABLE_TESTING)
   add_subdirectory(test)

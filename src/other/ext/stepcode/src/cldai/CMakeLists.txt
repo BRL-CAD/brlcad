@@ -1,5 +1,4 @@
-
-set(LIBSTEPDAI_SRCS
+set(STEPDAI_SRCS
   sdaiApplication_instance_set.cc
   sdaiBinary.cc
   sdaiDaObject.cc
@@ -13,7 +12,7 @@ set(LIBSTEPDAI_SRCS
   sdaiString.cc
   )
 
-SET(SC_CLDAI_HDRS
+SET(STEPDAI_HDRS
   sdaiApplication_instance_set.h
   sdaiBinary.h
   sdaiDaObject.h
@@ -34,20 +33,41 @@ include_directories(
   ${SC_SOURCE_DIR}/src/clutils
   )
 
-set(_libdeps steputils base)
+add_library(stepdai-obj OBJECT ${STEPDAI_SRCS})
+set_property(TARGET stepdai-obj PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_dependencies(stepdai-obj base)
+if(MSVC)
+  set_property(TARGET stepdai-obj APPEND PROPERTY COMPILE_DEFINITIONS "SC_DAI_DLL_EXPORTS")
+endif(MSVC)
 
-if($CACHE{SC_BUILD_SHARED_LIBS})
-  SC_ADDLIB(stepdai SHARED SOURCES ${LIBSTEPDAI_SRCS} LINK_LIBRARIES ${_libdeps})
-  if(WIN32)
-    target_compile_definitions(stepdai PRIVATE SC_DAI_DLL_EXPORTS)
-  endif()
-endif()
+add_library(stepdai SHARED $<TARGET_OBJECTS:stepdai-obj>)
+target_link_libraries(stepdai steputils base)
+if(OPENBSD)
+  set_target_properties(stepdai PROPERTIES VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
+else(OPENBSD)
+  set_target_properties(stepdai PROPERTIES VERSION ${SC_VERSION} SOVERSION ${SC_VERSION_MAJOR})
+endif(OPENBSD)
+if(APPLE)
+  set_property(TARGET stepdai APPEND PROPERTY LINK_FLAGS "-flat_namespace -undefined suppress")
+endif(APPLE)
+if(MSVC)
+  set_property(TARGET stepdai APPEND PROPERTY COMPILE_DEFINITIONS "SC_DAI_DLL_EXPORTS")
+  set_property(TARGET stepdai APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SC_DAI_DLL_IMPORTS")
+endif(MSVC)
+install(TARGETS stepdai
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
-if($CACHE{SC_BUILD_STATIC_LIBS})
-  SC_ADDLIB(stepdai-static STATIC SOURCES ${LIBSTEPDAI_SRCS} LINK_LIBRARIES $<JOIN:${_libdeps},-static >-static)
-endif()
+if (BUILD_STATIC_LIBS)
+  add_library(stepdai-static STATIC $<TARGET_OBJECTS:stepdai-obj>)
+  install(TARGETS stepdai-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_STATIC_LIBS)
 
-install(FILES ${SC_CLDAI_HDRS}
+install(FILES ${STEPDAI_HDRS}
   DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cldai)
 
 # Local Variables:

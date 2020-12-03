@@ -29,11 +29,14 @@ if(SC_PYTHON_GENERATOR)
     ../exp2cxx/write.cc
     ../exp2cxx/print.cc
    )
- SC_ADDEXEC(exp2python SOURCES ${exp2python_SOURCES} LINK_LIBRARIES express base)
 
-  if(NOT SC_IS_SUBBUILD AND SC_GIT_VERSION)
-    add_dependencies(exp2python version_string)
-  endif(NOT SC_IS_SUBBUILD AND SC_GIT_VERSION)
+ add_executable(exp2python ${exp2python_SOURCES})
+ target_link_libraries(exp2python express base)
+ install(TARGETS exp2python
+   RUNTIME DESTINATION ${BIN_DIR}
+   LIBRARY DESTINATION ${LIB_DIR}
+   ARCHIVE DESTINATION ${LIB_DIR})
+
 endif(SC_PYTHON_GENERATOR)
 
 # Local Variables:

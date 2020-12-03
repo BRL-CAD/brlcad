@@ -1,5 +1,5 @@
 
-set( clLazyFile_SRCS
+set(clLazyFile_SRCS
   lazyDataSectionReader.cc
   lazyFileReader.cc
   lazyInstMgr.cc
@@ -8,7 +8,7 @@ set( clLazyFile_SRCS
   lazyP21DataSectionReader.cc
   )
 
-set( SC_CLLAZYFILE_HDRS
+set(clLazyFile_HDRS
   headerSectionReader.h
   lazyFileReader.h
   lazyP21DataSectionReader.h
@@ -30,23 +30,41 @@ include_directories(
   ${SC_SOURCE_DIR}/src/base/judy/src
   )
 
-set(_libdeps stepcore stepdai steputils base stepeditor)
+add_library(steplazyfile-obj OBJECT ${clLazyFile_SRCS})
+set_property(TARGET steplazyfile-obj PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_dependencies(steplazyfile-obj base)
+if(MSVC)
+  set_property(TARGET steplazyfile-obj APPEND PROPERTY COMPILE_DEFINITIONS "SC_LAZYFILE_DLL_EXPORTS")
+endif(MSVC)
 
-if($CACHE{SC_BUILD_SHARED_LIBS})
-  SC_ADDLIB(steplazyfile SHARED SOURCES ${clLazyFile_SRCS} LINK_LIBRARIES ${_libdeps})
-  if(WIN32)
-    target_compile_definitions(steplazyfile PRIVATE SC_LAZYFILE_DLL_EXPORTS)
-  endif()
-endif()
+add_library(steplazyfile SHARED $<TARGET_OBJECTS:steplazyfile-obj>)
+target_link_libraries(steplazyfile stepcore stepdai steputils base stepeditor)
+if(OPENBSD)
+  set_target_properties(steplazyfile PROPERTIES VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
+else(OPENBSD)
+  set_target_properties(steplazyfile PROPERTIES VERSION ${SC_VERSION} SOVERSION ${SC_VERSION_MAJOR})
+endif(OPENBSD)
+if(APPLE)
+  set_property(TARGET steplazyfile APPEND PROPERTY LINK_FLAGS "-flat_namespace -undefined suppress")
+endif(APPLE)
+if(MSVC)
+  set_property(TARGET steplazyfile APPEND PROPERTY COMPILE_DEFINITIONS "SC_LAZYFILE_DLL_EXPORTS")
+  set_property(TARGET steplazyfile APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SC_LAZYFILE_DLL_IMPORTS")
+endif(MSVC)
+install(TARGETS steplazyfile
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
-if($CACHE{SC_BUILD_STATIC_LIBS})
-  SC_ADDLIB(steplazyfile-static STATIC SOURCES ${clLazyFile_SRCS} LINK_LIBRARIES $<JOIN:${_libdeps},-static >-static)
-endif()
+if (BUILD_STATIC_LIBS)
+  add_library(steplazyfile-static STATIC $<TARGET_OBJECTS:steplazyfile-obj>)
+  install(TARGETS steplazyfile-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_STATIC_LIBS)
 
-SC_ADDEXEC(lazy_test SOURCES lazy_test.cc LINK_LIBRARIES steplazyfile stepeditor NO_INSTALL)
-target_compile_definitions(lazy_test PRIVATE NO_REGISTRY)
-
-install(FILES ${SC_CLLAZYFILE_HDRS}
+install(FILES ${clLazyFile_HDRS}
   DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cllazyfile)
 
 # Local Variables:
