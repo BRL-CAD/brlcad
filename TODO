@@ -122,12 +122,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   routines that need to autogenerate names to use the new
   bu_vls_incr/bu_vls_simplify functions.
 
-* investigate possibility of using simple, compact libs
-  like miniz and lodepng to replace the complexity of
-  managing zlib and libpng in src/other.  These have been
-  a source of ongoing annoyance, particularly (but not
-  exclusively) on OSX.
-
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
