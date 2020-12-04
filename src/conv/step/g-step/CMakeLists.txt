@@ -2,9 +2,12 @@
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${STEPCODE_INCLUDE_DIRS}
   )
 
-set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
+link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
+
+set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
 add_definitions(-DAP203)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
@@ -45,6 +48,7 @@ if (BRLCAD_ENABLE_STEP)
   BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
   add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
   set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
+  target_compile_definitions(g-step PRIVATE SC_SCHEMA_DLL_EXPORTS)
 
   if (HIDE_INTERNAL_SYMBOLS)
     set(gstep_IMPORTS
