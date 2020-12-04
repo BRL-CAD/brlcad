@@ -602,6 +602,7 @@ else(BRLCAD_ITK_BUILD)
 endif(BRLCAD_ITK_BUILD)
 mark_as_advanced(ITK_VERSION)
 mark_as_advanced(ITK_LIBRARY)
+CONFIG_H_APPEND(BRLCAD "#cmakedefine ITK_VERSION	\"${ITK_VERSION}\"\n")
 
 set(iwidgets_ALIASES ENABLE_IWIDGETS)
 set(iwidgets_DESCRIPTION "

@@ -149,16 +149,18 @@ tclcad_auto_path(Tcl_Interp *interp)
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
+#ifdef ITCL_VERSION
 	bu_vls_sprintf(&buffer, "itcl%s", ITCL_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
+#endif
 
 #ifdef HAVE_TK
 	bu_vls_sprintf(&buffer, "tk%s", TK_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
-	bu_vls_sprintf(&buffer, "itk%s", ITCL_VERSION);
+	bu_vls_sprintf(&buffer, "itk%s", ITK_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
