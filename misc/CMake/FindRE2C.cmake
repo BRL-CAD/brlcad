@@ -3,7 +3,29 @@
 #
 #=============================================================================
 
-find_program(RE2C_EXECUTABLE re2c DOC "path to the re2c executable")
+set(_RE2C_SEARCHES)
+
+# Search RE2C_ROOT first if it is set.
+if(RE2C_ROOT)
+  set(_RE2C_SEARCH_ROOT PATHS ${RE2C_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _RE2C_SEARCHES _RE2C_SEARCH_ROOT)
+endif()
+
+# Normal search.
+set(_RE2C_x86 "(x86)")
+set(_RE2C_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/re2c"
+          "$ENV{ProgramFiles${_RE2C_x86}}/re2c")
+unset(_RE2C_x86)
+list(APPEND _RE2C_SEARCHES _RE2C_SEARCH_NORMAL)
+
+set(RE2C_NAMES re2c)
+
+# Try each search configuration.
+foreach(search ${_RE2C_SEARCHES})
+  find_program(RE2C_EXECUTABLE re2c ${${search}} PATH_SUFFIXES bin)
+endforeach()
+
 mark_as_advanced(RE2C_EXECUTABLE)
 
 include(FindPackageHandleStandardArgs)

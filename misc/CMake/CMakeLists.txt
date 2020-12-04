@@ -46,7 +46,6 @@ set(cmake_ignore_files
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
-  FindSSE.cmake
   FindSTL.cmake
   FindShellDeps.cmake
   FindSTEPCODE.cmake
@@ -103,8 +102,8 @@ set(cmake_ignore_files
   multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
-  scripts/timestamp.cmake
   scripts/printtime.cmake
+  scripts/timestamp.cmake
   scripts/tcl_mkindex.cmake
   )
 CMAKEFILES(${cmake_ignore_files})
