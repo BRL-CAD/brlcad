@@ -122,17 +122,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   routines that need to autogenerate names to use the new
   bu_vls_incr/bu_vls_simplify functions.
 
-* rename zlib and libpng when building bundled to avoid conflicting
-  with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
-  with name z_brlcad (perhaps as a post-compile rename custom command)
-  and png_brlcad respectively.
-
-* investigate possibility of using simple, compact libs
-  like miniz and lodepng to replace the complexity of
-  managing zlib and libpng in src/other.  These have been
-  a source of ongoing annoyance, particularly (but not
-  exclusively) on OSX.
-
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
@@ -243,7 +232,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * procedural studio box generation allowing for specification of size,
   shape, material, and lighting characteristics
 
->>>>>>> .r77755
 * verify all of the src/util utilities behave correctly on Windows
   with respect to mode (i.e. correctly using setmode/O_BINARY when
   performing file I/O.)
@@ -553,11 +541,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   + bu_for() specifies iterations of a loop body to be executed in
   parallel.  This would be a way to easily parallelize existing code
   without needing to create wrapper functions for bu_parallel().
-
-* Now that we have >3.0 CMake required, look into replacing our custom
-  time stamping code in favor of using  the CMake time stamp mechanism.
-  Also get rid of the fallback in src/libgcv/plugins/CMakeLists.txt
-  (and any others that have crept in over the years...)
 
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)
