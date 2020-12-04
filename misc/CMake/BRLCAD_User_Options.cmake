@@ -53,12 +53,7 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 # not disable libraries specifically added as STATIC even when OFF.  For
 # multi-configuration options the build type determination is made at build
 # time, so just default to "ON".
-if(NOT CMAKE_BUILD_TYPE)
-  set(CBT "MULTICONFIG")
-else(NOT CMAKE_BUILD_TYPE)
-  set(CBT "${CMAKE_BUILD_TYPE}")
-endif(NOT CMAKE_BUILD_TYPE)
-cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT ${CBT} STREQUAL Debug" OFF)
+cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT \"${CMAKE_BUILD_TYPE}\" STREQUAL Debug" OFF)
 
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
@@ -117,10 +112,10 @@ mark_as_advanced(BRLCAD_ENABLE_AQUA)
 # Install example BRL-CAD Geometry Files
 option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
 
-# test for X11 on all platforms since we don't know when/where we'll find it,
-# unless we've indicated we *don't* want an X11 build
+# test for X11 on all platforms since we don't know when/where we'll find it, unless
+# we've indicated we *don't* want an X11 build
 if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
-  include(FindX11)
+  find_package(X11)
   if (X11_Xrender_FOUND)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_XRENDER 1\n")
   endif (X11_Xrender_FOUND)
