@@ -105,6 +105,7 @@ set(cmake_ignore_files
   tcltest.tcl.in
   scripts/timestamp.cmake
   scripts/printtime.cmake
+  scripts/tcl_mkindex.cmake
   )
 CMAKEFILES(${cmake_ignore_files})
 
