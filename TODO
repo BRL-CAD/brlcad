@@ -232,7 +232,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * procedural studio box generation allowing for specification of size,
   shape, material, and lighting characteristics
 
->>>>>>> .r77755
 * verify all of the src/util utilities behave correctly on Windows
   with respect to mode (i.e. correctly using setmode/O_BINARY when
   performing file I/O.)
@@ -542,11 +541,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   + bu_for() specifies iterations of a loop body to be executed in
   parallel.  This would be a way to easily parallelize existing code
   without needing to create wrapper functions for bu_parallel().
-
-* Now that we have >3.0 CMake required, look into replacing our custom
-  time stamping code in favor of using  the CMake time stamp mechanism.
-  Also get rid of the fallback in src/libgcv/plugins/CMakeLists.txt
-  (and any others that have crept in over the years...)
 
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)
