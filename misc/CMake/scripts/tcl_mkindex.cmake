@@ -31,10 +31,23 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
-
 get_filename_component(TFD "${TF_DIR}" REALPATH)
-file(WRITE "${WORKING_PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] ${pkgname}]")
-file(WRITE "${INSTALL_PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir .. .. \"${INST_DIR}\" ${TF_NAME}] ${pkgname}]")
+
+# file(WRITE) is digesting the paths and producing incorrect directories
+# when there are spaces in paths.  To avoid this, use get_filename_component
+# to "pre-digest" the paths and then correct any  "/ " patterns introduced.
+get_filename_component(WFD "${WORKING_PKGFILE}" DIRECTORY)
+get_filename_component(WFN "${WORKING_PKGFILE}" NAME)
+string(REPLACE "/ " " " WFD "${WFD}")
+file(WRITE "${WFD}/${WFN}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] ${pkgname}]")
+
+# file(WRITE) is digesting the paths and producing incorrect directories
+# when there are spaces in paths.  To avoid this, use get_filename_component
+# to "pre-digest" the paths and then correct any  "/ " patterns introduced.
+get_filename_component(WFD "${INSTALL_PKGFILE}" DIRECTORY)
+get_filename_component(WFN "${INSTALL_PKGFILE}" NAME)
+string(REPLACE "/ " " " WFD "${WFD}")
+file(WRITE "${WFD}/${WFN}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir .. .. \"${INST_DIR}\" ${TF_NAME}] ${pkgname}]")
 
 # Local Variables:
 # tab-width: 8
