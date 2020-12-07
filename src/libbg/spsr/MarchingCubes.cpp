@@ -35,7 +35,7 @@ DAMAGE.
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
-#  if __GNUC_PREREQ(7,0)
+#  if (__GNUC__ >= 7)
 #    pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #  endif
 #endif

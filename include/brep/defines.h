@@ -48,7 +48,9 @@ extern "C++" {
 #  pragma clang diagnostic push
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  if (__GNUC__ >= 8)
+#    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  endif
 #endif
 
 /* don't let opennurbs include windows.h */
