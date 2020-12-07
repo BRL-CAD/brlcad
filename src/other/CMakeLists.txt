@@ -342,6 +342,11 @@ endif(BRLCAD_ENABLE_AQUA)
 TCL_RESET_VARS()
 TK_RESET_VARS()
 
+# The new FindTCL needs to be told to look for Tk
+if(BRLCAD_ENABLE_TK)
+  set(TCL_ENABLE_TK ON)
+endif(BRLCAD_ENABLE_TK)
+
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
 provided with BRL-CAD's source code.  Default is AUTO, responsive to
