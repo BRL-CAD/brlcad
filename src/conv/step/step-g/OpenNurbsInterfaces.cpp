@@ -33,7 +33,9 @@
 #  pragma clang diagnostic push
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  if GCC_PREREQ(8,0)
+#    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  endif
 #endif
 
 #include "opennurbs.h"
