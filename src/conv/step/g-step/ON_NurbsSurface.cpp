@@ -127,19 +127,19 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 
     stepcomplex = complex_entity->EntityPart("b_spline_surface");
     stepcomplex->ResetAttributes();
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	if (!bu_strcmp(attr->Name(), "u_degree")) attr->Raw()->i = new SDAI_Integer(nsurface->Degree(0));
-	if (!bu_strcmp(attr->Name(), "v_degree")) attr->Raw()->i = new SDAI_Integer(nsurface->Degree(1));
+	if (!bu_strcmp(attr->Name(), "u_degree")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(0));
+	if (!bu_strcmp(attr->Name(), "v_degree")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(1));
 
 	if (!bu_strcmp(attr->Name(), "control_points_list")) {
 	    GenericAggregate *control_pnts= new GenericAggregate();
 	    ON_NurbsSurfaceCV_Initialize(nsurface, complex_entity, info);
-	    attr->Raw()->a = control_pnts;
+	    attr->ptr.a = control_pnts;
 	    info->surf_genagg[(STEPentity*)complex_entity] = control_pnts;
 	}
-	if (!bu_strcmp(attr->Name(), "surface_form")) attr->Raw()->e = new SdaiB_spline_surface_form_var(B_spline_surface_form__unspecified);
-	if (!bu_strcmp(attr->Name(), "u_closed")) attr->Raw()->e = new SDAI_LOGICAL((Logical)(nsurface->IsClosed(0)));
-	if (!bu_strcmp(attr->Name(), "v_closed")) attr->Raw()->e = new SDAI_LOGICAL((Logical)(nsurface->IsClosed(1)));
-	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->Raw()->e = new SDAI_LOGICAL(LFalse);
+	if (!bu_strcmp(attr->Name(), "surface_form")) attr->ptr.e = new SdaiB_spline_surface_form_var(B_spline_surface_form__unspecified);
+	if (!bu_strcmp(attr->Name(), "u_closed")) attr->ptr.e = new SDAI_LOGICAL((Logical)(nsurface->IsClosed(0)));
+	if (!bu_strcmp(attr->Name(), "v_closed")) attr->ptr.e = new SDAI_LOGICAL((Logical)(nsurface->IsClosed(1)));
+	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->ptr.e = new SDAI_LOGICAL(LFalse);
     }
 
     /* Set knots */
@@ -154,13 +154,13 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 
 
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 
-	if (!bu_strcmp(attr->Name(), "u_multiplicities")) attr->Raw()->a = u_multiplicities;
-	if (!bu_strcmp(attr->Name(), "v_multiplicities")) attr->Raw()->a = v_multiplicities;
+	if (!bu_strcmp(attr->Name(), "u_multiplicities")) attr->ptr.a = u_multiplicities;
+	if (!bu_strcmp(attr->Name(), "v_multiplicities")) attr->ptr.a = v_multiplicities;
 
-	if (!bu_strcmp(attr->Name(), "u_knots")) attr->Raw()->a = u_knots;
-	if (!bu_strcmp(attr->Name(), "v_knots")) attr->Raw()->a = v_knots;
+	if (!bu_strcmp(attr->Name(), "u_knots")) attr->ptr.a = u_knots;
+	if (!bu_strcmp(attr->Name(), "v_knots")) attr->ptr.a = v_knots;
 
-	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->Raw()->e = new SdaiKnot_type_var(Knot_type__unspecified);
+	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
     }
 
     /* Set weights */
@@ -181,7 +181,7 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 
 		weights->AddNode(new GenericAggrNode(str.c_str()));
 
 	    }
-	    attr->Raw()->a = weights;
+	    attr->ptr.a = weights;
 	}
     }
 

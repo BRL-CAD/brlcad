@@ -73,7 +73,7 @@ CartesianPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     attr = step->getAttribute(sse, "coordinates");
     if (attr != NULL) {
-	sa = (STEPaggregate *)(attr->Raw()->a);
+	sa = (STEPaggregate *)(attr->ptr.a);
 	if (!sa) goto step_error;
 	RealNode *rn = (RealNode *)sa->GetHead();
 	if (!rn) goto step_error;

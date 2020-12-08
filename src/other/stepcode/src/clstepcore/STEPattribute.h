@@ -93,10 +93,6 @@ class SC_CORE_EXPORT STEPattribute {
         const AttrDescriptor * aDesc;
         int refCount;
 
-	const AttrDescriptor * getADesc() {
-            return aDesc;
-        }
-
         /** \union ptr
         ** You know which of these to use based on the return value of
         ** NonRefType() - see below. BASE_TYPE is defined in baseType.h
@@ -104,7 +100,7 @@ class SC_CORE_EXPORT STEPattribute {
         ** class in the generated schema class library (the entity class is
         ** inherited from SDAI_Application_instance)
         */
-        union attrUnion {
+        union  {
             SDAI_String * S;                 // STRING_TYPE
             SDAI_Integer * i;                // INTEGER_TYPE (Integer is a long int)
             SDAI_Binary * b;                 // BINARY_TYPE
@@ -132,7 +128,6 @@ class SC_CORE_EXPORT STEPattribute {
                            int addFileId = 0, const char * = NULL, bool strict = true );
 
         const char * asStr( std::string &, const char * = 0 ) const;
-        string asStr( const char * currSch = 0 ) const;
         // return the attr value as a string
         void STEPwrite( ostream & out = cout, const char * = 0 );
 
@@ -140,10 +135,6 @@ class SC_CORE_EXPORT STEPattribute {
 
         Severity set_null();
 
-        /// allows direct access to the union containing attr data (dangerous!)
-        attrUnion * Raw() {
-            return & ptr;
-        }
 ////////////// Return info on attr
 
         int Nullable() const; // may this attribute be null?

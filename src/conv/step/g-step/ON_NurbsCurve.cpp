@@ -81,16 +81,16 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
     stepcomplex->ResetAttributes();
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "degree")) {
-	    attr->Raw()->i = new SDAI_Integer(ncurve->Degree());
+	    attr->ptr.i = new SDAI_Integer(ncurve->Degree());
 	}
 	if (!bu_strcmp(attr->Name(), "control_points_list")) {
 	    EntityAggregate *control_pnts= new EntityAggregate();
 	    ON_NurbsCurveCV_to_EntityAggregate(control_pnts, ncurve, info);
-	    attr->Raw()->a = control_pnts;
+	    attr->ptr.a = control_pnts;
 	}
-	if (!bu_strcmp(attr->Name(), "curve_form")) attr->Raw()->e = new SdaiB_spline_curve_form_var(B_spline_curve_form__unspecified);
-	if (!bu_strcmp(attr->Name(), "closed_curve")) attr->Raw()->e = new SDAI_LOGICAL((Logical)(ncurve->IsClosed()));
-	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->Raw()->e = new SDAI_LOGICAL(LFalse);
+	if (!bu_strcmp(attr->Name(), "curve_form")) attr->ptr.e = new SdaiB_spline_curve_form_var(B_spline_curve_form__unspecified);
+	if (!bu_strcmp(attr->Name(), "closed_curve")) attr->ptr.e = new SDAI_LOGICAL((Logical)(ncurve->IsClosed()));
+	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->ptr.e = new SDAI_LOGICAL(LFalse);
     }
 
     /* Set knots */
@@ -101,12 +101,12 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
     ON_NurbsCurveKnots_to_Aggregates(knot_multiplicities, knots, ncurve);
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "knot_multiplicities")) {
-	    attr->Raw()->a = knot_multiplicities;
+	    attr->ptr.a = knot_multiplicities;
 	}
 	if (!bu_strcmp(attr->Name(), "knots")) {
-	    attr->Raw()->a = knots;
+	    attr->ptr.a = knots;
 	}
-	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->Raw()->e = new SdaiKnot_type_var(Knot_type__unspecified);
+	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
     }
 
     /* Set weights */
@@ -120,7 +120,7 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
 	    wnode->value = ncurve->Weight(i);
 	    weights->AddNode(wnode);
 	}
-	attr->Raw()->a = weights;
+	attr->ptr.a = weights;
     }
 
     /* Representation item */

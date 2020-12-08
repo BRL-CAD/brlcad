@@ -79,7 +79,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (u_multiplicities.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "u_multiplicities");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->Raw()->a);
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    if (!sa) goto step_error;
 	    IntNode *in = (IntNode *)sa->GetHead();
 
@@ -95,7 +95,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (v_multiplicities.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "v_multiplicities");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->Raw()->a);
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    if (!sa) goto step_error;
 	    IntNode *in = (IntNode *)sa->GetHead();
 
@@ -111,7 +111,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (u_knots.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "u_knots");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->Raw()->a);
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    if (!sa) goto step_error;
 	    RealNode *rn = (RealNode *)sa->GetHead();
 
@@ -127,7 +127,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (v_knots.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "v_knots");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->Raw()->a);
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    if (!sa) goto step_error;
 	    RealNode *rn = (RealNode *)sa->GetHead();
 

@@ -77,7 +77,7 @@ RationalBSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	STEPattribute *attr = step->getAttribute(sse, "weights_data");
 
 	if (attr) {
-	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->Raw()->a;
+	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
 	    if (!gp) goto step_error;
 	    STEPnode *sn = (STEPnode *)gp->GetHead();
 	    const char *eaStr;

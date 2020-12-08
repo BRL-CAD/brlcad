@@ -80,7 +80,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	STEPattribute *attr = step->getAttribute(sse, "knot_multiplicities");
 
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->Raw()->a);
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    if (!sa) goto step_error;
 	    IntNode *in = (IntNode *)sa->GetHead();
 	    if (!in) goto step_error;
@@ -98,7 +98,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (knots.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "knots");
 	if (attr) {
-	    STEPaggregate *sa = (STEPaggregate *)(attr->Raw()->a);
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	    if (!sa) goto step_error;
 	    RealNode *rn = (RealNode *)sa->GetHead();
 	    if (!rn) goto step_error;
