@@ -196,7 +196,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   * make rtarea display a cross-hair and perhaps coordinates for the
     center of area if run from within mged.
 
-=======
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
     verbose option for the more detailed hiearchical report that is
