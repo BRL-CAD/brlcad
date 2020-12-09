@@ -32,25 +32,8 @@
  * Initial revision
  */
 
-#include <sc_memmgr.h>
 #include "express/symbol.h"
-
-struct freelist_head SYMBOL_fl;
 
 /** Initialize the Symbol module */
 void SYMBOLinitialize( void ) {
-    MEMinitialize( &SYMBOL_fl, sizeof( struct Symbol_ ), 100, 100 );
-}
-
-Symbol * SYMBOLcreate( char * name, int line, char * filename ) {
-    Symbol * sym = SYMBOL_new();
-    sym->name = name;
-    sym->line = line;
-    sym->filename = filename; /* NOTE this used the global 'current_filename',
-                               * instead of 'filename'. This func is only
-                               * called in two places, and both calls use
-                               * 'current_filename'. Changed this to avoid
-                               * potential future headaches. (MAP, Jan 12)
-                               */
-    return sym;
 }

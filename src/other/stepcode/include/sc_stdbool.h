@@ -14,27 +14,17 @@
  * for various compiler versions and defines things that are missing in
  * those versions.
  *
- * The GNU and Watcom compilers include a stdbool.h, but the Borland
- * C/C++ 5.5.1 compiler and the Microsoft compilers do not.
- *
  * See http://predef.sourceforge.net/precomp.html for compile macros.
  */
 
 #ifndef __cplusplus
 
 /**
- * Borland C++ 5.5.1 does not define _Bool.
- */
-#if defined(__BORLANDC__) && __BORLANDC__ < 0x630
-typedef int _Bool;
-#endif
-
-/**
  * Microsoft C/C++ version 14.00.50727.762, which comes with Visual C++ 2005,
  * and version 15.00.30729.01, which comes with Visual C++ 2008, do not
  * define _Bool.
  */
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER<1800
 typedef int _Bool;
 #endif
 

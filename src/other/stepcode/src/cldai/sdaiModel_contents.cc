@@ -50,29 +50,29 @@ SDAI_Model_contents::populated_folders_() const {
     return ( const SDAI_Entity_extent__set_var )&_populated_folders;
 }
 
-SDAI_PID_DA_ptr
-SDAI_Model_contents::get_object_pid( const SDAI_DAObject_ptr & d )
-const {
+SDAI_PID_DA_ptr SDAI_Model_contents::get_object_pid( const SDAI_DAObject_ptr & d ) const {
+    std::cerr << __FILE__ << ":" << __LINE__ << " - SDAI_Model_contents::get_object_pid() unimplemented!" << std::endl;
+    (void) d; //unused
     return 0;
 }
 
-SDAI_DAObject_ptr
-SDAI_Model_contents::lookup( const SDAI_PID_DA_ptr & p ) const {
+SDAI_DAObject_ptr SDAI_Model_contents::lookup( const SDAI_PID_DA_ptr & p ) const {
+    std::cerr << __FILE__ << ":" << __LINE__ << " - SDAI_Model_contents::lookup() unimplemented!" << std::endl;
+    (void) p; //unused
     return 0;
 }
 
-SDAI_DAObject_ptr
-SDAI_Model_contents::CreateEntityInstance( const char * Type ) {
+SDAI_DAObject_ptr SDAI_Model_contents::CreateEntityInstance( const char * Type ) {
+    std::cerr << __FILE__ << ":" << __LINE__ << " - SDAI_Model_contents::CreateEntityInstance() unimplemented!" << std::endl;
+    (void) Type; //unused
     return 0;
 }
 
-void
-SDAI_Model_contents::AddInstance( const SDAI_DAObject_SDAI_ptr & appInst ) {
+void SDAI_Model_contents::AddInstance( const SDAI_DAObject_SDAI_ptr & appInst ) {
     _instances.contents_()->Append( appInst );
 }
 
-void
-SDAI_Model_contents::RemoveInstance( SDAI_DAObject_SDAI_ptr & appInst ) {
+void SDAI_Model_contents::RemoveInstance( SDAI_DAObject_SDAI_ptr & appInst ) {
     _instances.contents_()->Remove( _instances.contents_()->Index( appInst ) );
 }
 

@@ -284,7 +284,7 @@ class personal_address(address):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument people is mantatory and can not be set to None')
+				raise AssertionError('Argument people is mandatory and can not be set to None')
 			if not check_type(value,SET(1,None,'person', scope = schema_scope)):
 				self._people = SET(value)
 			else:
@@ -329,7 +329,7 @@ class organizational_address(address):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument organizations is mantatory and can not be set to None')
+				raise AssertionError('Argument organizations is mandatory and can not be set to None')
 			if not check_type(value,SET(1,None,'organization', scope = schema_scope)):
 				self._organizations = SET(value)
 			else:
@@ -389,7 +389,7 @@ class person(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument id is mantatory and can not be set to None')
+				raise AssertionError('Argument id is mandatory and can not be set to None')
 			if not check_type(value,identifier):
 				self._id = identifier(value)
 			else:
@@ -514,7 +514,7 @@ class organization(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument name is mantatory and can not be set to None')
+				raise AssertionError('Argument name is mandatory and can not be set to None')
 			if not check_type(value,label):
 				self._name = label(value)
 			else:
@@ -560,7 +560,7 @@ class person_and_organization_address(organizational_address,personal_address):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument organizational_address_organizations is mantatory and can not be set to None')
+				raise AssertionError('Argument organizational_address_organizations is mandatory and can not be set to None')
 			if not check_type(value,SET(1,1,'organization', scope = schema_scope)):
 				self._organizational_address_organizations = SET(value)
 			else:
@@ -574,7 +574,7 @@ class person_and_organization_address(organizational_address,personal_address):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument personal_address_people is mantatory and can not be set to None')
+				raise AssertionError('Argument personal_address_people is mandatory and can not be set to None')
 			if not check_type(value,SET(1,1,'person', scope = schema_scope)):
 				self._personal_address_people = SET(value)
 			else:

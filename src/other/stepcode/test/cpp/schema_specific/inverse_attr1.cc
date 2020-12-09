@@ -4,7 +4,6 @@
 **
 */
 #include <sc_cf.h>
-extern void SchemaInit( class Registry & );
 #include "sc_version_string.h"
 #include "SubSuperIterators.h"
 #include <STEPfile.h>
@@ -73,7 +72,7 @@ int main( int argc, char * argv[] ) {
 //find inverse attribute descriptors
     //first, find inverse attrs unique to this entity (i.e. not inherited)
     const EntityDescriptor * ed = registry.FindEntity( "window" );
-    InverseAItr iaIter( ed->InverseAttr() ); //iterator for inverse attributes
+    InverseAItr iaIter( &( ed->InverseAttr() ) ); //iterator for inverse attributes
     if( findInverseAttrs1( iaIter, instance_list ) ) {
         inverseAttrsFound = true;
     }
@@ -84,7 +83,7 @@ int main( int argc, char * argv[] ) {
     for( ; !iter.empty(); iter++ ) {
         super = iter.current();
         cout << "supertype " << super->Name() << endl;
-        InverseAItr superIaIter( super->InverseAttr() );
+        InverseAItr superIaIter( &( super->InverseAttr() ) );
         if( findInverseAttrs1( superIaIter, instance_list ) ) {
             inverseAttrsFound = true;
         }

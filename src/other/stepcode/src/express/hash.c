@@ -105,27 +105,25 @@
  *
  */
 
-#include <sc_memmgr.h>
 #include <assert.h>
-#include <string.h>
 #include <stdlib.h>
-#include "express/hash.h"
+#include <string.h>
 
-struct freelist_head HASH_Table_fl;
-struct freelist_head HASH_Element_fl;
+#include "sc_memmgr.h"
+#include "express/hash.h"
 
 /*
 ** Internal routines
 */
 
-static_inline Address   HASHhash( char *, Hash_Table );
+static inline Address   HASHhash( char *, Hash_Table );
 static void     HASHexpand_table( Hash_Table );
 
 /*
 ** Local data
 */
 
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
 static long     HashAccesses, HashCollisions;
 # endif
 
@@ -135,12 +133,6 @@ static long     HashAccesses, HashCollisions;
 
 void
 HASHinitialize() {
-    if( HASH_Table_fl.size_elt == 0 ) {
-        MEMinitialize( &HASH_Table_fl, sizeof( struct Hash_Table_ ), 50, 50 );
-    }
-    if( HASH_Element_fl.size_elt == 0 ) {
-        MEMinitialize( &HASH_Element_fl, sizeof( struct Element_ ), 500, 100 );
-    }
 }
 
 Hash_Table
@@ -174,7 +166,7 @@ HASHcreate( unsigned count ) {
     table->maxp = MUL( count, SEGMENT_SIZE_SHIFT );
     table->MinLoadFactor = 1;
     table->MaxLoadFactor = MAX_LOAD_FACTOR;
-# if HASH_DEBUG
+# ifdef HASH_DEBUG
     fprintf( stderr,
              "[HASHcreate] table %x count %d maxp %d SegmentCount %d\n",
              table,
@@ -182,7 +174,7 @@ HASHcreate( unsigned count ) {
              table->maxp,
              table->SegmentCount );
 # endif
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
     HashAccesses = HashCollisions = 0;
 # endif
     return( table );
@@ -305,7 +297,7 @@ HASHdestroy( Hash_Table table ) {
             }
         }
         HASH_Table_destroy( table );
-# if HASH_STATISTICS && HASH_DEBUG
+# if defined(HASH_STATISTICS) && defined(HASH_DEBUG)
         fprintf( stderr,
                  "[hdestroy] Accesses %ld Collisions %ld\n",
                  HashAccesses,
@@ -325,7 +317,7 @@ HASHsearch( Hash_Table table, Element item, Action action ) {
     Element deleteme;
 
     assert( table != HASH_NULL ); /* Kinder really than return(NULL); */
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
     HashAccesses++;
 # endif
     h = HASHhash( item->key, table );
@@ -347,7 +339,7 @@ HASHsearch( Hash_Table table, Element item, Action action ) {
     while( q != NULL && strcmp( q->key, item->key ) ) {
         p = &q->next;
         q = *p;
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
         HashCollisions++;
 # endif
     }
@@ -409,9 +401,7 @@ HASHsearch( Hash_Table table, Element item, Action action ) {
 ** Internal routines
 */
 
-static_inline
-Address
-HASHhash( char * Key, Hash_Table table ) {
+static inline Address HASHhash( char * Key, Hash_Table table ) {
     Address     h, address;
     register unsigned char * k = ( unsigned char * )Key;
 
@@ -420,6 +410,7 @@ HASHhash( char * Key, Hash_Table table ) {
     ** Convert string to integer
     */
     /*SUPPRESS 112*/
+    assert( Key );
     while( *k )
         /*SUPPRESS 8*/ { /*SUPPRESS 112*/
         h = h * PRIME1 ^ ( *k++ - ' ' );
@@ -432,9 +423,7 @@ HASHhash( char * Key, Hash_Table table ) {
     return( address );
 }
 
-static
-void
-HASHexpand_table( Hash_Table table ) {
+static void HASHexpand_table( Hash_Table table ) {
     Segment OldSegment, NewSegment;
     Element Current, *Previous, *LastOfNew;
 
@@ -509,7 +498,7 @@ HASHcopy( Hash_Table oldtable ) {
     Segment s, s2;
     Element * pp;   /* old element */
     Element * qq;   /* new element */
-    int i, j;
+    unsigned int i, j;
 
     newtable = HASH_Table_new();
     for( i = 0; i < oldtable->SegmentCount; i++ ) {
@@ -571,7 +560,7 @@ main() {
         if( !e ) {
             exit( 0 );
         }
-        printf( "found key %s, data %d\n", e->key, ( int )e->data );
+        fprintf( stderr, "found key %s, data %d\n", e->key, ( int )e->data );
     }
 }
 #endif

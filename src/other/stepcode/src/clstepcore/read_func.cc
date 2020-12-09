@@ -727,7 +727,7 @@ const char * GetKeyword( istream & in, const char * delims, ErrorDescriptor & er
  * next chars are DATA; for the beginning of the data section).
  * FIXME putback() doesn't work well on all platforms
  */
-int FoundEndSecKywd( istream & in, ErrorDescriptor & err ) {
+int FoundEndSecKywd( istream & in ) {
     char c;
     in >> ws;
     in.get( c );

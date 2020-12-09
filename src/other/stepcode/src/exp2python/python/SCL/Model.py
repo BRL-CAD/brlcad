@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Copyright (c) 2011-2012, Thomas Paviot (tpaviot@gmail.com)
 # All rights reserved.
 
@@ -29,11 +30,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-class Model(objet):
+class Model(object):
     """ The container for entity instances
     """
     def __init_(self):
-        print "Model initialized"
+        print("Model initialized")
         self._instances = []
     
     def add_instance(self, entity_instance):

@@ -1664,7 +1664,7 @@ time_t start = time(NULL);
     fprintf (stderr, "CreateFileMapping error %d\n", GetLastError()), exit(1);
   size |= (unsigned long long)hiword << 32;
 #else
-  size = lseek (ifd, 0, 2);
+  size = lseek (ifd, 0L, 2);
 #endif
 
   while( offset < size ) {
@@ -1912,9 +1912,9 @@ time_t start[1], stop[1];
     judy = judy_open (1024, 0);
 
 //    build judy array
-    size = lseek (fileno(in), 0, 2);
+    size = lseek (fileno(in), 0L, 2);
     askitis = malloc(size);
-    lseek (fileno(in), 0, 0);
+    lseek (fileno(in), 0L, 0);
     read (fileno(in), askitis,size);
     prev = 0;
 //    naskitis.com:
@@ -1959,11 +1959,11 @@ time_t start[1], stop[1];
 
 //    search judy array
     if( in = freopen ("skew1_1", "rb", in) )
-        size = lseek (fileno(in), 0, 2);
+        size = lseek (fileno(in), 0L, 2);
     else
         exit(0);
     askitis = malloc(size);
-    lseek (fileno(in), 0, 0);
+    lseek (fileno(in), 0L, 0);
     read (fileno(in), askitis,size);
     prev = 0;
 

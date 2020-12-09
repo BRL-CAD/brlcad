@@ -71,26 +71,28 @@
  *
  */
 
-#include <sc_cf.h>
-#include <sc_memmgr.h>
-#include <sc_export.h>
-#include "sc_version_string.h"
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "sc_cf.h"
+#include "sc_memmgr.h"
+#include "sc_export.h"
+#include "sc_version_string.h"
 #include "sc_getopt.h"
 #include "express/error.h"
 #include "express/express.h"
 #include "express/resolve.h"
+#include "express/info.h"
 
 #ifdef YYDEBUG
 extern int exp_yydebug;
 #endif /*YYDEBUG*/
 
-char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz"; //larger than the string because exp2cxx, exppp, etc may append their own options
+char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz"; /* larger than the string because exp2cxx, exppp, etc may append their own options */
 static int no_need_to_work = 0; /* TRUE if we can exit gracefully without doing any work */
 
 void print_fedex_version( void ) {
-    fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode\n", EXPRESSprogram_name, sc_version() );
+    fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode and scl-dev on google groups\n", EXPRESSprogram_name, sc_version );
     no_need_to_work = 1;
 }
 
@@ -103,7 +105,6 @@ int main( int argc, char ** argv ) {
     int result;
 
     bool buffer_messages = false;
-    char * filename = 0;
     Express model;
 
     EXPRESSprogram_name = argv[0];
@@ -117,12 +118,12 @@ int main( int argc, char ** argv ) {
         ( *EXPRESSinit_args )( argc, argv );
     }
 
-    optind = 1;
-    while( ( c = sc_getopt( argc, argv, EXPRESSgetopt_options ) ) != -1 )
+    sc_optind = 1;
+    while( ( c = sc_getopt( argc, argv, EXPRESSgetopt_options ) ) != -1 ) {
         switch( c ) {
             case 'd':
                 ERRORdebugging = 1;
-                switch( atoi( optarg ) ) {
+                switch( atoi( sc_optarg ) ) {
                     case 0:
                         fprintf( stderr, "\ndebug codes:\n" );
                         fprintf( stderr, "  0 - this help\n" );
@@ -164,7 +165,7 @@ int main( int argc, char ** argv ) {
                 buffer_messages = false;
                 break;
             case 'e':
-                filename = optarg;
+                input_filename = sc_optarg;
                 break;
             case 'r':
                 resolve = 0;
@@ -172,10 +173,10 @@ int main( int argc, char ** argv ) {
             case 'i':
             case 'w':
                 no_warnings = 0;
-                ERRORset_warning( optarg, c == 'w' );
+                ERRORset_warning( sc_optarg, c == 'w' );
                 break;
             case 'p':
-                for( cp = optarg; *cp; cp++ ) {
+                for( cp = sc_optarg; *cp; cp++ ) {
                     if( *cp == '#' ) {
                         print_objects_while_running |= OBJ_PASS_BITS;
                     } else if( *cp == 'E' ) {
@@ -192,7 +193,7 @@ int main( int argc, char ** argv ) {
             default:
                 rc = 1;
                 if( EXPRESSgetopt ) {
-                    rc = ( *EXPRESSgetopt )( c, optarg );
+                    rc = ( *EXPRESSgetopt )( c, sc_optarg );
                 }
                 if( rc == 1 ) {
                     if( ERRORusage_function ) {
@@ -203,10 +204,10 @@ int main( int argc, char ** argv ) {
                 }
                 break;
         }
-
-    if( !filename ) {
-        filename = argv[optind];
-        if( !filename ) {
+    }
+    if( !input_filename ) {
+        input_filename = argv[sc_optind];
+        if( !input_filename ) {
             EXPRESScleanup();
             if( no_need_to_work ) {
                 return( 0 );
@@ -226,7 +227,7 @@ int main( int argc, char ** argv ) {
     }
 
     model = EXPRESScreate();
-    EXPRESSparse( model, ( FILE * )0, filename );
+    EXPRESSparse( model, ( FILE * )0, input_filename );
     if( ERRORoccurred ) {
         result = EXPRESS_fail( model );
         EXPRESScleanup();

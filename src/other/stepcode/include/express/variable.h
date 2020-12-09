@@ -76,21 +76,21 @@ typedef struct Variable_ * Variable;
 /***************************/
 
 struct Variable_ {
-    Expression  name;    /**< Symbol is inside of 'name' below */
+    Expression  name;        /**< Symbol is inside of 'name' */
     Type        type;
     Expression  initializer; /**< or 'derived' */
-    int         offset;
+    int         offset;      /**< used for attr order in Entitys, and for decl order in LOCAL vars. these two uses should never conflict! */
+    int         idx;         /**< used in exp2cxx to simplify calculation of attrDescriptor names in generated code */
 
     struct {
-        int optional    : 1; /**< OPTIONAL keyword */
-        int var         : 1; /**< VAR keyword */
-        int constant    : 1; /**< from CONSTANT...END_CONSTANT */
-        int unique      : 1; /**< appears in UNIQUE list */
-        int parameter   : 1; /**< is a formal parameter */
-        int attribute   : 1; /**< is an attribute (rule parameters are marked this way, too) */
+        unsigned int optional    : 1; /**< OPTIONAL keyword */
+        unsigned int var         : 1; /**< VAR keyword */
+        unsigned int constant    : 1; /**< from CONSTANT...END_CONSTANT */
+        unsigned int unique      : 1; /**< appears in UNIQUE list */
+        unsigned int parameter   : 1; /**< is a formal parameter */
+        unsigned int attribute   : 1; /**< is an attribute (rule parameters are marked this way, too) */
     } flags;
 
-#define query_symbol inverse_symbol
     Symbol   *  inverse_symbol;     /**< entity symbol */
     Variable    inverse_attribute;  /**< attribute related by inverse relationship */
 };
@@ -105,8 +105,8 @@ extern SC_EXPRESS_EXPORT struct freelist_head VAR_fl;
 /* macro function definitions */
 /******************************/
 
-#define VAR_new()   (struct Variable_ *)MEM_new(&VAR_fl)
-#define VAR_destroy(x)  MEM_destroy(&VAR_fl,(Freelist *)(Generic)x)
+#define VAR_new()   (struct Variable_ *)ALLOC_new(&VAR_fl)
+#define VAR_destroy(x)  ALLOC_destroy(&VAR_fl,(Freelist *)x)
 
 #define VARget_name(v)          ((v)->name)
 #define VARput_name(v,n)        ((v)->name = (n))
@@ -125,8 +125,8 @@ extern SC_EXPRESS_EXPORT struct freelist_head VAR_fl;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Variable VARcreate PROTO( ( Expression, Type ) );
-extern SC_EXPRESS_EXPORT void VARinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT char * VARget_simple_name PROTO( ( Variable ) );
+extern SC_EXPRESS_EXPORT Variable VARcreate( Expression, Type );
+extern SC_EXPRESS_EXPORT void VARinitialize( void );
+extern SC_EXPRESS_EXPORT char * VARget_simple_name( Variable );
 
 #endif    /*  VARIABLE_H  */

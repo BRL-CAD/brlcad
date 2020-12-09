@@ -74,7 +74,7 @@ class SC_EDITOR_EXPORT SdaiFile_population  :    public SDAI_Application_instanc
         const SdaiExchange_structure_identifier determination_method_() const;
         void determination_method_( const SdaiExchange_structure_identifier x );
 
-        const StringAggregate_ptr governed_sections_() const;
+        StringAggregate_ptr governed_sections_() const;
         void governed_sections_( const StringAggregate_ptr x );
 
 };
@@ -122,10 +122,10 @@ class SC_EDITOR_EXPORT SdaiFile_name  :    public SDAI_Application_instance {
         const SdaiTime_stamp_text time_stamp_() const;
         void time_stamp_( const SdaiTime_stamp_text x );
 
-        const StringAggregate_ptr author_() const;
+        StringAggregate_ptr author_() const;
         void author_( const StringAggregate_ptr x );
 
-        const StringAggregate_ptr organization_() const;
+        StringAggregate_ptr organization_() const;
         void organization_( const StringAggregate_ptr x );
 
         const SDAI_String preprocessor_version_() const;
@@ -170,7 +170,7 @@ class SC_EDITOR_EXPORT SdaiSection_context  :    public SDAI_Application_instanc
         const SdaiSection_name section_() const;
         void section_( const SdaiSection_name x );
 
-        const StringAggregate_ptr context_identifiers_() const;
+        StringAggregate_ptr context_identifiers_() const;
         void context_identifiers_( const StringAggregate_ptr x );
 
 };
@@ -202,7 +202,7 @@ class SC_EDITOR_EXPORT SdaiFile_description  :    public SDAI_Application_instan
         int opcode()  {
             return 4 ;
         }
-        const StringAggregate_ptr description_() const;
+        StringAggregate_ptr description_() const;
         void description_( const StringAggregate_ptr x );
 
         const SDAI_String implementation_level_() const;
@@ -236,7 +236,7 @@ class SC_EDITOR_EXPORT SdaiFile_schema  :    public SDAI_Application_instance {
         int opcode()  {
             return 5 ;
         }
-        const StringAggregate_ptr schema_identifiers_() const;
+        StringAggregate_ptr schema_identifiers_() const;
         void schema_identifiers_( const StringAggregate_ptr x );
 
 };

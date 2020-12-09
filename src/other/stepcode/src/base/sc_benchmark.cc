@@ -3,8 +3,8 @@
 #include "sc_benchmark.h"
 #include "sc_memmgr.h"
 
-#ifdef __WIN32__
-#include <Windows.h>
+#ifdef _WIN32
+#include <windows.h>
 #include <psapi.h>
 #else
 #include <sys/time.h>
@@ -12,6 +12,7 @@
 #include <unistd.h>
 #endif
 
+#include <assert.h>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -48,11 +49,12 @@ benchVals getMemAndTime( ) {
     vals.sysMilliseconds  = ( stime * 1000 ) / sysconf( _SC_CLK_TCK );
 #elif defined(__APPLE__)
     // http://stackoverflow.com/a/1911863/382458
-#elif defined(__WIN32__)
+#elif defined(_WIN32)
     // http://stackoverflow.com/a/282220/382458 and http://stackoverflow.com/a/64166/382458
     PROCESS_MEMORY_COUNTERS MemoryCntrs;
     FILETIME CreationTime, ExitTime, KernelTime, UserTime;
     long page_size_kb = 1024;
+    ULARGE_INTEGER kTime, uTime;
 
     if( GetProcessMemoryInfo( GetCurrentProcess(), &MemoryCntrs, sizeof( MemoryCntrs ) ) ) {
         vals.physMemKB = MemoryCntrs.PeakWorkingSetSize / page_size_kb;
@@ -63,8 +65,11 @@ benchVals getMemAndTime( ) {
     }
 
     if( GetProcessTimes( GetCurrentProcess(), &CreationTime, &ExitTime, &KernelTime, &UserTime ) ) {
-        vals.userMilliseconds = ( long )( ( ( ULARGE_INTEGER * ) &UserTime )->QuadPart / 100000L );
-        vals.sysMilliseconds = ( long )( ( ( ULARGE_INTEGER * ) &KernelTime )->QuadPart / 100000L );
+        assert( sizeof( FILETIME ) == sizeof( ULARGE_INTEGER ) );
+        memcpy( &kTime, &KernelTime, sizeof( FILETIME ) );
+        memcpy( &uTime, &UserTime, sizeof( FILETIME ) );
+        vals.userMilliseconds = ( long )( uTime.QuadPart / 100000L );
+        vals.sysMilliseconds = ( long )( kTime.QuadPart / 100000L );
     } else {
         vals.userMilliseconds = 0;
         vals.sysMilliseconds = 0;

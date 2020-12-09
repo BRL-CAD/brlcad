@@ -9,7 +9,7 @@ Jeff,
 This is the layout of the dictionary classes in our toolkit (when the
 new changes get integrated).  This matches Part 23.
 
-// The classes in the heirarchy are the new names for our classes.
+// The classes in the hierarchy are the new names for our classes.
 
 //                         DictionaryInstance
 //                                    |

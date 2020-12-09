@@ -38,9 +38,10 @@ typedef std::string Express_id;
 class TypeDescriptor;
 class EntityDescriptor;
 class SelectTypeDescriptor;
-class InstMgr;
+class InstMgrBase;
 
 #include "STEPattributeList.h"
+#include "STEPinvAttrList.h"
 
 class STEPattributeList;
 class STEPattribute;
@@ -212,6 +213,8 @@ typedef SDAI_Model_contents_ptr SDAI_Model_contents_var;
 
 //  ENTITY
 extern SC_CORE_EXPORT SDAI_Application_instance NilSTEPentity;
+//FIXME why 3 of these? remove 2?
+//in libexpress, ENTITY_NULL is also used but refers to something different
 #define ENTITY_NULL        &NilSTEPentity
 #define NULL_ENTITY        &NilSTEPentity
 #define S_ENTITY_NULL        &NilSTEPentity
@@ -226,7 +229,7 @@ typedef SDAI_Application_instance * STEPentityH;
 
 extern SC_CORE_EXPORT SDAI_Application_instance *
 ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
-               InstMgr * instances, int addFileId );
+               InstMgrBase * instances, int addFileId );
 
 #define SdaiInteger SDAI_Integer
 #define SdaiReal SDAI_Real
@@ -243,7 +246,7 @@ ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
 /******************************************************************************
 AGGREGATE TYPES
 
-    Aggregate types are accessed generically.  (There are not seperate
+    Aggregate types are accessed generically.  (There are not separate
     classes for the different types of aggregates.)  Aggregates are
     implemented through the STEPaggregate class.
 

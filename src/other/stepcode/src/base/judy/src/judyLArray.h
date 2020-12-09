@@ -29,14 +29,16 @@ struct judylKVpair {
  */
 template< typename JudyKey, typename JudyValue >
 class judyLArray {
+    public:
+        typedef judylKVpair< JudyKey, JudyValue > pair;
     protected:
         Judy * _judyarray;
         unsigned int _maxLevels, _depth;
         JudyValue * _lastSlot;
         JudyKey _buff[1];
         bool _success;
+        pair _kv;
     public:
-        typedef judylKVpair< JudyKey, JudyValue > pair;
         judyLArray(): _maxLevels( sizeof( JudyKey ) ), _depth( 1 ), _lastSlot( 0 ), _success( true ) {
             assert( sizeof( JudyKey ) == JUDY_key_size && "JudyKey *must* be the same size as a pointer!" );
             assert( sizeof( JudyValue ) == JUDY_key_size && "JudyValue *must* be the same size as a pointer!" );
@@ -55,9 +57,12 @@ class judyLArray {
             judy_close( _judyarray );
         }
 
-        void clear() {
+        void clear( bool deleteContents = false ) {
             JudyKey key = 0;
             while( 0 != ( _lastSlot = ( JudyValue * ) judy_strt( _judyarray, ( const unsigned char * ) &key, 0 ) ) ) {
+                if( deleteContents ) {
+                    delete *_lastSlot;
+                }
                 judy_del( _judyarray );
             }
         }
@@ -112,18 +117,17 @@ class judyLArray {
         }
 
         /// retrieve the key-value pair for the most recent judy query.
-        inline const pair mostRecentPair() {
-            pair kv;
+        inline const pair & mostRecentPair() {
             judy_key( _judyarray, ( unsigned char * ) _buff, _depth * JUDY_key_size );
             if( _lastSlot ) {
-                kv.value = *_lastSlot;
+                _kv.value = *_lastSlot;
                 _success = true;
             } else {
-                kv.value = ( JudyValue ) 0;
+                _kv.value = ( JudyValue ) 0;
                 _success = false;
             }
-            kv.key = _buff[0];
-            return kv;
+            _kv.key = _buff[0];
+            return _kv;
         }
 
         /// retrieve the first key-value pair in the array

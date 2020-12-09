@@ -26,10 +26,17 @@ class headerSectionReader;
 ///for use only from within lazyInstMgr
 class SC_LAZYFILE_EXPORT lazyFileReader {
     protected:
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::string _fileName;
         lazyInstMgr * _parent;
         headerSectionReader * _header;
         std::ifstream _file;
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
         fileTypeEnum _fileType;
         fileID _fileID;
 

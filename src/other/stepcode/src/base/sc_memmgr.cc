@@ -168,7 +168,7 @@ sc_memmgr::~sc_memmgr( void ) {
     // Check if total allocated equals total deallocated
     if( _allocated_total != _deallocated_total ) {
         // todo: generate warning for possible memory leaks, enable full memory leak checking
-        printf( "sc_memmgr warning: Possible memory leaks detected (%d of %d bytes)\n", _allocated_total - _deallocated_total, _allocated_total );
+        fprintf( stderr, "sc_memmgr warning: Possible memory leaks detected (%d of %d bytes)\n", _allocated_total - _deallocated_total, _allocated_total );
     }
 
     // Compact leaks into an error list to prevent same leak being reported multiple times.
@@ -193,7 +193,7 @@ sc_memmgr::~sc_memmgr( void ) {
             ierror != errors.end();
             ierror ++ ) {
         // todo: generate error for memory leak
-        printf( "sc_memmgr warning: Possible memory leak in %s line %d\n", ierror->getsrcfile().c_str(), ierror->getsrcline() );
+        fprintf( stderr, "sc_memmgr warning: Possible memory leak in %s line %d\n", ierror->getsrcfile().c_str(), ierror->getsrcline() );
     }
 
     // Clear remaining records
@@ -211,7 +211,7 @@ void * sc_memmgr::allocate( size_t size, const char * file, const int line ) {
     addr = malloc( size );
     if( addr == NULL ) {
         // todo: error allocation failed
-        printf( "sc_memmgr error: Memory allocation failed in %s line %d\n", file, line );
+        fprintf( stderr, "sc_memmgr error: Memory allocation failed in %s line %d\n", file, line );
     }
 
     // Some stl implementations (for example debian gcc) use the new operator to construct
@@ -246,7 +246,7 @@ void * sc_memmgr::reallocate( void * addr, size_t size, const char * file, const
         record = _records.find( sc_memmgr_record( addr ) );
         if( record == _records.end() ) {
             // todo: error reallocating memory not allocated?
-            printf( "sc_memmgr warning: Reallocation of not allocated memory at %s line %d\n", file, line );
+            fprintf( stderr, "sc_memmgr warning: Reallocation of not allocated memory at %s line %d\n", file, line );
         } else {
             // Update stats
             _allocated -= record->getsize();
@@ -264,7 +264,7 @@ void * sc_memmgr::reallocate( void * addr, size_t size, const char * file, const
     addr = realloc( addr, size );
     if( addr == NULL ) {
         // todo: error reallocation failed
-        printf( "sc_memmgr error: Reallocation failed at %s line %d\n", file, line );
+        fprintf( stderr, "sc_memmgr error: Reallocation failed at %s line %d\n", file, line );
     }
 
 #ifdef SC_MEMMGR_ENABLE_CHECKS
@@ -296,7 +296,7 @@ void sc_memmgr::deallocate( void * addr, const char * file, const int line ) {
         record = _records.find( sc_memmgr_record( addr ) );
         if( record == _records.end() ) {
             // todo: error free called for not allocated memory?
-            printf( "sc_memmgr warning: Deallocate of not allocated memory at %s line %d\n", file, line );
+            fprintf( stderr, "sc_memmgr warning: Deallocate of not allocated memory at %s line %d\n", file, line );
         } else {
             // Update stats
             _allocated -= record->getsize();
@@ -308,6 +308,9 @@ void sc_memmgr::deallocate( void * addr, const char * file, const int line ) {
             _record_erase_busy = false;
         }
     }
+#else
+    (void) file; // quell unused param warnings
+    (void) line;
 #endif /* SC_MEMMGR_ENABLE_CHECKS */
 
     // Deallocate

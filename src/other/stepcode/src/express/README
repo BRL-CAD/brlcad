@@ -41,7 +41,7 @@ them.
 
 I expect this should run on any UNIX, POSIX, or other system using a
 compatibility package.  For instance, you can build this on a PC
-runing DOS using djgpp (GNU C on DOS).  (Ask your local archie server
+running DOS using djgpp (GNU C on DOS).  (Ask your local archie server
 where to get djgpp.)
 
 --------------------

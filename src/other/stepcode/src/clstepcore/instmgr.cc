@@ -308,11 +308,11 @@ InstMgr::EntityKeywordCount( const char * name ) {
     MgrNode * node;
     SDAI_Application_instance * se;
     int n = InstanceCount();
+    const char *pretty_name = PrettyTmpName( name );
     for( int j = 0; j < n; ++j ) {
         node = GetMgrNode( j );
         se = node->GetApplication_instance();
-        if( !strcmp( se->EntityName(),
-                     PrettyTmpName( name ) ) ) {
+        if( !strcmp( se->EntityName(), pretty_name ) ) {
             ++count;
         }
     }
@@ -357,13 +357,13 @@ SDAI_Application_instance *
 InstMgr::GetApplication_instance( const char * entityKeyword, int starting_index ) {
     MgrNode * node;
     SDAI_Application_instance * se;
+    const char *pretty_name = PrettyTmpName( entityKeyword );
 
     int count = InstanceCount();
     for( int j = starting_index; j < count; ++j ) {
         node = GetMgrNode( j );
         se = node->GetApplication_instance();
-        if( !strcmp( se->EntityName(),
-                     PrettyTmpName( entityKeyword ) ) ) {
+        if( !strcmp( se->EntityName(), pretty_name ) ) {
             return se;
         }
     }
@@ -374,13 +374,13 @@ SDAI_Application_instance *
 InstMgr::GetSTEPentity( const char * entityKeyword, int starting_index ) {
     MgrNode * node;
     SDAI_Application_instance * se;
+    const char *pretty_name = PrettyTmpName( entityKeyword );
 
     int count = InstanceCount();
     for( int j = starting_index; j < count; ++j ) {
         node = GetMgrNode( j );
         se = node->GetApplication_instance();
-        if( !strcmp( se->EntityName(),
-                     PrettyTmpName( entityKeyword ) ) ) {
+        if( !strcmp( se->EntityName(), pretty_name ) ) {
             return se;
         }
     }

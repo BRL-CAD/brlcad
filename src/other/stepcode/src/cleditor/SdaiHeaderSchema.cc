@@ -44,7 +44,7 @@ SdaiSection_language::SdaiSection_language( ) {
     a -> set_null();
     attributes.push( a );
 }
-SdaiSection_language::SdaiSection_language( SdaiSection_language & e ) {
+SdaiSection_language::SdaiSection_language( SdaiSection_language & e ): SDAI_Application_instance() {
     CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiSection_language::~SdaiSection_language() {  }
@@ -62,7 +62,7 @@ SdaiSection_language::SdaiSection_language( SDAI_Application_instance * se, int 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -72,7 +72,7 @@ SdaiSection_language::SdaiSection_language( SDAI_Application_instance * se, int 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -126,7 +126,7 @@ SdaiFile_population::SdaiFile_population( ) {
     a -> set_null();
     attributes.push( a );
 }
-SdaiFile_population::SdaiFile_population( SdaiFile_population & e ) {
+SdaiFile_population::SdaiFile_population( SdaiFile_population & e ): SDAI_Application_instance() {
     CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiFile_population::~SdaiFile_population() {  }
@@ -144,7 +144,7 @@ SdaiFile_population::SdaiFile_population( SDAI_Application_instance * se, int * 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -154,7 +154,7 @@ SdaiFile_population::SdaiFile_population( SDAI_Application_instance * se, int * 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -164,7 +164,7 @@ SdaiFile_population::SdaiFile_population( SDAI_Application_instance * se, int * 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -194,7 +194,7 @@ SdaiFile_population::determination_method_( const SdaiExchange_structure_identif
     _determination_method = x;
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiFile_population::governed_sections_() const {
     return ( StringAggregate_ptr ) &_governed_sections;
 }
@@ -246,7 +246,7 @@ SdaiFile_name::SdaiFile_name( ) {
     a -> set_null();
     attributes.push( a );
 }
-SdaiFile_name::SdaiFile_name( SdaiFile_name & e ) {
+SdaiFile_name::SdaiFile_name( SdaiFile_name & e ): SDAI_Application_instance() {
     CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiFile_name::~SdaiFile_name() {  }
@@ -264,7 +264,7 @@ SdaiFile_name::SdaiFile_name( SDAI_Application_instance * se, int * addAttrs ) {
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -274,7 +274,7 @@ SdaiFile_name::SdaiFile_name( SDAI_Application_instance * se, int * addAttrs ) {
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -284,7 +284,7 @@ SdaiFile_name::SdaiFile_name( SDAI_Application_instance * se, int * addAttrs ) {
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -294,7 +294,7 @@ SdaiFile_name::SdaiFile_name( SDAI_Application_instance * se, int * addAttrs ) {
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -304,7 +304,7 @@ SdaiFile_name::SdaiFile_name( SDAI_Application_instance * se, int * addAttrs ) {
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -314,7 +314,7 @@ SdaiFile_name::SdaiFile_name( SDAI_Application_instance * se, int * addAttrs ) {
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -324,7 +324,7 @@ SdaiFile_name::SdaiFile_name( SDAI_Application_instance * se, int * addAttrs ) {
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -354,7 +354,7 @@ SdaiFile_name::time_stamp_( const SdaiTime_stamp_text x )
     _time_stamp = x;
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiFile_name::author_() const {
     return ( StringAggregate_ptr ) &_author;
 }
@@ -366,7 +366,7 @@ SdaiFile_name::author_( const StringAggregate_ptr x )
     _author.ShallowCopy( *x );
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiFile_name::organization_() const {
     return ( StringAggregate_ptr ) &_organization;
 }
@@ -434,7 +434,7 @@ SdaiSection_context::SdaiSection_context( ) {
     a -> set_null();
     attributes.push( a );
 }
-SdaiSection_context::SdaiSection_context( SdaiSection_context & e ) {
+SdaiSection_context::SdaiSection_context( SdaiSection_context & e ): SDAI_Application_instance() {
     CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiSection_context::~SdaiSection_context() {  }
@@ -452,7 +452,7 @@ SdaiSection_context::SdaiSection_context( SDAI_Application_instance * se, int * 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -462,7 +462,7 @@ SdaiSection_context::SdaiSection_context( SDAI_Application_instance * se, int * 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -480,7 +480,7 @@ SdaiSection_context::section_( const SdaiSection_name x )
     _section = x;
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiSection_context::context_identifiers_() const {
     return ( StringAggregate_ptr ) &_context_identifiers;
 }
@@ -512,10 +512,10 @@ SdaiFile_description::SdaiFile_description( ) {
     a -> set_null();
     attributes.push( a );
 }
-SdaiFile_description::SdaiFile_description( SdaiFile_description & e ) {
+SdaiFile_description::SdaiFile_description( SdaiFile_description & e ): SDAI_Application_instance() {
     CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
-SdaiFile_description::~SdaiFile_description() {  }
+SdaiFile_description::~SdaiFile_description() {}
 
 SdaiFile_description::SdaiFile_description( SDAI_Application_instance * se, int * addAttrs ) {
     /* Set this to point to the head entity. */
@@ -530,7 +530,7 @@ SdaiFile_description::SdaiFile_description( SDAI_Application_instance * se, int 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
@@ -540,13 +540,13 @@ SdaiFile_description::SdaiFile_description( SDAI_Application_instance * se, int 
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiFile_description::description_() const {
     return ( StringAggregate_ptr ) &_description;
 }
@@ -586,7 +586,7 @@ SdaiFile_schema::SdaiFile_schema( ) {
     a -> set_null();
     attributes.push( a );
 }
-SdaiFile_schema::SdaiFile_schema( SdaiFile_schema & e ) {
+SdaiFile_schema::SdaiFile_schema( SdaiFile_schema & e ): SDAI_Application_instance() {
     CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiFile_schema::~SdaiFile_schema() {  }
@@ -604,13 +604,13 @@ SdaiFile_schema::SdaiFile_schema( SDAI_Application_instance * se, int * addAttrs
     /*access functions still work. */
     attributes.push( a );
     /* Put attribute on the attributes list for the */
-    /* main inheritance heirarchy. */
+    /* main inheritance hierarchy. */
     if( !addAttrs || addAttrs[0] ) {
         se->attributes.push( a );
     }
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiFile_schema::schema_identifiers_() const {
     return ( StringAggregate_ptr ) &_schema_identifiers;
 }

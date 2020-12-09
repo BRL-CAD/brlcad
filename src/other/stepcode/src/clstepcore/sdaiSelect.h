@@ -52,6 +52,7 @@ class SC_CORE_EXPORT SDAI_Select {
         // constructors
         SDAI_Select( const SelectTypeDescriptor * s = 0,
                      const TypeDescriptor * td = 0 );
+        SDAI_Select( const SDAI_Select & other );
         virtual ~SDAI_Select();
 
         // from SDAI binding
@@ -61,7 +62,7 @@ class SC_CORE_EXPORT SDAI_Select {
         void nullify();
 
         Severity SelectValidLevel( const char * attrValue, ErrorDescriptor * err,
-                                   InstMgr * im, int clearError );
+                                   InstMgrBase * im );
 
         // reading and writing
         const char * STEPwrite( std::string & s, const char * currSch = 0 ) const;
@@ -75,25 +76,28 @@ class SC_CORE_EXPORT SDAI_Select {
 
 
         Severity StrToVal( const char * val, const char * selectType,
-                           ErrorDescriptor * err, InstMgr * instances = 0 );
+                           ErrorDescriptor * err, InstMgrBase * instances = 0 );
         virtual Severity StrToVal_content( const char *,
-                                           InstMgr * instances = 0 ) = 0;
+                                           InstMgrBase * instances = 0 ) = 0;
 
         Severity STEPread( istream & in, ErrorDescriptor * err,
-                           InstMgr * instances = 0, const char * utype = 0,
+                           InstMgrBase * instances = 0, const char * utype = 0,
                            int addFileId = 0, const char * = NULL );
 
         // abstract function
         virtual Severity STEPread_content( istream & in = cin,
-                                           InstMgr * instances = 0,
+                                           InstMgrBase * instances = 0,
                                            const char * utype = 0,
                                            int addFileId = 0,
                                            const char * currSch = 0 ) = 0;
 
-        virtual SDAI_Select & operator =( const SDAI_Select & ) = 0;
+        //windows complains if operator= is pure virtual, perhaps because the impl is not in the lib with the definition
+        //linux has a regression if the pure virtual operator= is commented out
+        virtual SDAI_Select & operator =( const SDAI_Select & other );
 
-        int set_null();
-        int is_null();
+        //FIXME set_null always returns true. why not void?!
+        bool set_null();
+        bool is_null();
 
 };        /** end class  **/
 

@@ -58,7 +58,7 @@ class line(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument line_length is mantatory and can not be set to None')
+				raise AssertionError('Argument line_length is mandatory and can not be set to None')
 			if not check_type(value,measure):
 				self._line_length = measure(value)
 			else:
@@ -72,7 +72,7 @@ class line(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument other_param is mantatory and can not be set to None')
+				raise AssertionError('Argument other_param is mandatory and can not be set to None')
 			if not check_type(value,type3):
 				self._other_param = type3(value)
 			else:
@@ -86,7 +86,7 @@ class line(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument and_another is mantatory and can not be set to None')
+				raise AssertionError('Argument and_another is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._and_another = REAL(value)
 			else:

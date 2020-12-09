@@ -50,7 +50,7 @@ instancesLoaded_t * lazyFileReader::getHeaderInstances() {
 }
 
 lazyFileReader::lazyFileReader( std::string fname, lazyInstMgr * i, fileID fid ): _fileName( fname ), _parent( i ), _fileID( fid ) {
-    _file.open( _fileName.c_str() );
+    _file.open( _fileName.c_str(), std::ios::binary );
     _file.imbue( std::locale::classic() );
     _file.unsetf( std::ios_base::skipws );
     assert( _file.is_open() && _file.good() );

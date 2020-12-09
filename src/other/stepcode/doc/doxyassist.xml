@@ -36,7 +36,7 @@
     <!-- This is a single string setting. When writing this out to the doxyfile,
          it will be quoted and treated as a whole. -->
     <string name="OUTPUT_LANGUAGE">English</string>
-    <!-- A list setting contains multiple elements, seperated by whitespace. Each
+    <!-- A list setting contains multiple elements, separated by whitespace. Each
          individual item will be quoted and treated as a whole for Doxygen. By
          default a list replaces the existing setting. If the append attribute is
          set to true, then the items will be added to the existing set. -->

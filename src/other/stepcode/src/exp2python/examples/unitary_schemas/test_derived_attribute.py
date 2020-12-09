@@ -58,7 +58,7 @@ class circle(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument centre is mantatory and can not be set to None')
+				raise AssertionError('Argument centre is mandatory and can not be set to None')
 			if not check_type(value,point):
 				self._centre = point(value)
 			else:
@@ -72,7 +72,7 @@ class circle(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument radius is mantatory and can not be set to None')
+				raise AssertionError('Argument radius is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._radius = REAL(value)
 			else:
@@ -86,7 +86,7 @@ class circle(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument axis is mantatory and can not be set to None')
+				raise AssertionError('Argument axis is mandatory and can not be set to None')
 			if not check_type(value,vector):
 				self._axis = vector(value)
 			else:

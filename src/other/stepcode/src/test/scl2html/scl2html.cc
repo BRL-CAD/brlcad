@@ -35,7 +35,7 @@
 #include "../SEarritr.h"
 
 // PrintAttrTypeWithAnchor()
-// Given an atribute, print out its immediate type (not fundamental).
+// Given an attribute, print out its immediate type (not fundamental).
 // Ah, but if life were so simple.  If this attribute is _not_ of a
 // fundamental type, put in an anchor to somewhere with info on the type.
 // This could be either the index page Type list, or an entity's page if
@@ -84,7 +84,8 @@ void PrintAttrTypeWithAnchor( const TypeDescriptor * typeDesc, ofstream & outhtm
         outhtml << ".html\">";
     }
 
-    outhtml << typeDesc->AttrTypeName( buf );
+    typeDesc->AttrTypeName( buf );
+    outhtml << buf;
 
     if( base == sdaiAGGR ) {
         outhtml << " (contains elements of type ";
@@ -134,7 +135,7 @@ int PrintAttrsHTML( const EntityDescriptor * ent, ofstream & outhtml ) {
 // PrintParentAttrsHTML()
 // This function, given an entity and its parent, recursively travels up
 // the inheritance tree of the entity, printing to the HTML file a
-// description-list structre showing all ancestors.  For each ancestor,
+// description-list structure showing all ancestors.  For each ancestor,
 // the attributes are printed using the PrintAttrsHTML() function above.
 void PrintParentAttrsHTML( const EntityDescriptor * ent,
                            const EntityDescriptor * parent, ofstream & outhtml ) {
@@ -161,9 +162,9 @@ void PrintParentAttrsHTML( const EntityDescriptor * ent,
         grandpaNode = ( EntityDescLinkNode * )grandpaNode->NextNode();
     }
 
-    // Now print the parent's atributes.  This calls PrintAttrsHTML() to
+    // Now print the parent's attributes.  This calls PrintAttrsHTML() to
     // actually print any existing attributes, but to see if there are
-    // any, we'll check to see if the head of the atribute descriptor list
+    // any, we'll check to see if the head of the attribute descriptor list
     // exists.  Conversely, once grabbing the head we could print out
     // the attributes by following the list (attrNode->NextNode()).
     const AttrDescriptorList * attrList = &( parent->ExplicitAttr() );
@@ -244,7 +245,7 @@ main() {
 
     // These are all pointers we need to wander around the registry
     // information.  We'll want to not only look at the current entity
-    // and its attributes, but also which entites are super- and subclasses
+    // and its attributes, but also which entities are super- and subclasses
     // of the current entity.  Here, supers isn't really used beyond checking
     // for ancestors, but we'll use subs to list subclasses and make links
     // to them.

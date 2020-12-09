@@ -83,23 +83,14 @@
  *
  */
 
-#include <sc_memmgr.h>
 #include <stdlib.h>
+
 #include "express/variable.h"
 #include "express/object.h"
 char * opcode_print( Op_Code o );
 
-struct freelist_head VAR_fl;
-
-Symbol * VAR_get_symbol( Generic v ) {
-    return( &( ( Variable )v )->name->symbol );
-}
-
 /** Initialize the Variable module. */
 void VARinitialize() {
-    MEMinitialize( &VAR_fl, sizeof( struct Variable_ ), 100, 50 );
-    /*  OBJcreate(OBJ_VARIABLE,VAR_get_symbol,"variable",OBJ_UNUSED_BITS);*/
-    OBJcreate( OBJ_VARIABLE, VAR_get_symbol, "variable", OBJ_VARIABLE_BITS );
 }
 
 /** VARget_simple_name
@@ -121,21 +112,4 @@ extern char * VARget_simple_name( Variable v ) {
         }
     }
     return EXPget_name( e );
-}
-
-/**  VARcreate
-** \param name name of variable to create
-** \param type type of new variable
-** \return the Variable created
-** Create and return a new variable.
-**
-** \note The reference class of the variable is, by default,
-**      dynamic.  Special flags associated with the variable
-**      (e.g., optional) are initially false.
-*/
-Variable VARcreate( Expression name, Type type ) {
-    Variable v = VAR_new();
-    v->name = name;
-    v->type = type;
-    return v;
 }

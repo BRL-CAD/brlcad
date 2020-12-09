@@ -27,7 +27,7 @@
  * CADDETC certified
  *
  * Revision 1.5  1993/02/16  03:27:02  libes
- * removed artifical begin/end nesting for improved reconstruction (printing)
+ * removed artificial begin/end nesting for improved reconstruction (printing)
  * of original Express file
  *
  * Revision 1.4  1992/08/18  17:12:41  libes
@@ -183,28 +183,28 @@ extern SC_EXPRESS_EXPORT Statement STATEMENT_SKIP;
 /* macro function definitions */
 /******************************/
 
-#define STMT_new()  (struct Statement_ *)MEM_new(&STMT_fl)
-#define STMT_destroy(x) MEM_destroy(&STMT_fl,(Freelist *)(Generic)x)
+#define STMT_new()  (struct Statement_ *)ALLOC_new(&STMT_fl)
+#define STMT_destroy(x) ALLOC_destroy(&STMT_fl,(Freelist *)x)
 
-#define ALIAS_new()     (struct Alias_ *)MEM_new(&ALIAS_fl)
-#define ALIAS_destroy(x)        MEM_destroy(&ALIAS_fl,(Freelist *)(Generic)x)
-#define ASSIGN_new()        (struct Assignment_ *)MEM_new(&ASSIGN_fl)
-#define ASSIGN_destroy(x)       MEM_destroy(&ASSIGN_fl,(Freelist *)(Generic)x)
-#define CASE_new()      (struct Case_Statement_ *)MEM_new(&CASE_fl)
-#define CASE_destroy(x)     MEM_destroy(&CASE_fl,(Freelist *)(Generic)x)
-#define COMP_STMT_new()     (struct Compound_Statement_ *)MEM_new(&COMP_STMT_fl)
-#define COMP_STMT_destroy(x)        MEM_destroy(&COMP_STMT_fl,(Freelist *)(Generic)x)
-#define COND_new()      (struct Conditional_ *)MEM_new(&COND_fl)
-#define COND_destroy(x)     MEM_destroy(&COND_fl,(Freelist *)(Generic)x)
-#define LOOP_new()      (struct Loop_ *)MEM_new(&LOOP_fl)
-#define LOOP_destroy(x)     MEM_destroy(&LOOP_fl,(Freelist *)(Generic)x)
-#define PCALL_new()     (struct Procedure_Call_ *)MEM_new(&PCALL_fl)
-#define PCALL_destroy(x)    MEM_destroy(&PCALL_fl,(Freelist *)(Generic)x)
-#define RET_new()       (struct Return_Statement_ *)MEM_new(&RET_fl)
-#define RET_destroy(x)      MEM_destroy(&RET_fl,(Freelist *)(Generic)x)
+#define ALIAS_new()     (struct Alias_ *)ALLOC_new(&ALIAS_fl)
+#define ALIAS_destroy(x)        ALLOC_destroy(&ALIAS_fl,(Freelist *)x)
+#define ASSIGN_new()        (struct Assignment_ *)ALLOC_new(&ASSIGN_fl)
+#define ASSIGN_destroy(x)       ALLOC_destroy(&ASSIGN_fl,(Freelist *)x)
+#define CASE_new()      (struct Case_Statement_ *)ALLOC_new(&CASE_fl)
+#define CASE_destroy(x)     ALLOC_destroy(&CASE_fl,(Freelist *)x)
+#define COMP_STMT_new()     (struct Compound_Statement_ *)ALLOC_new(&COMP_STMT_fl)
+#define COMP_STMT_destroy(x)        ALLOC_destroy(&COMP_STMT_fl,(Freelist *)x)
+#define COND_new()      (struct Conditional_ *)ALLOC_new(&COND_fl)
+#define COND_destroy(x)     ALLOC_destroy(&COND_fl,(Freelist *)x)
+#define LOOP_new()      (struct Loop_ *)ALLOC_new(&LOOP_fl)
+#define LOOP_destroy(x)     ALLOC_destroy(&LOOP_fl,(Freelist *)x)
+#define PCALL_new()     (struct Procedure_Call_ *)ALLOC_new(&PCALL_fl)
+#define PCALL_destroy(x)    ALLOC_destroy(&PCALL_fl,(Freelist *)x)
+#define RET_new()       (struct Return_Statement_ *)ALLOC_new(&RET_fl)
+#define RET_destroy(x)      ALLOC_destroy(&RET_fl,(Freelist *)x)
 
-#define INCR_new()      (struct Increment_ *)MEM_new(&INCR_fl)
-#define INCR_destroy(x)     MEM_destroy(&INCR_fl,(Freelist *)(char *)x)
+#define INCR_new()      (struct Increment_ *)ALLOC_new(&INCR_fl)
+#define INCR_destroy(x)     ALLOC_destroy(&INCR_fl,(Freelist *)(char *)x)
 
 #define ASSIGNget_lhs(s)    ((s)->u.assign->lhs)
 #define ASSIGNget_rhs(s)    ((s)->u.assign->rhs)
@@ -225,17 +225,17 @@ extern SC_EXPRESS_EXPORT Statement STATEMENT_SKIP;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Statement    STMTcreate PROTO( ( int ) );
-extern SC_EXPRESS_EXPORT Statement    ALIAScreate PROTO( ( struct Scope_ *, Variable, Linked_List ) );
-extern SC_EXPRESS_EXPORT Statement    CASEcreate PROTO( ( Expression , Linked_List ) );
-extern SC_EXPRESS_EXPORT Statement    ASSIGNcreate PROTO( ( Expression , Expression ) );
-extern SC_EXPRESS_EXPORT Statement    COMP_STMTcreate PROTO( ( Linked_List ) );
-extern SC_EXPRESS_EXPORT Statement    CONDcreate PROTO( ( Expression, Linked_List, Linked_List ) );
-extern SC_EXPRESS_EXPORT Statement    LOOPcreate PROTO( ( struct Scope_ *, Expression, Expression, Linked_List ) );
-extern SC_EXPRESS_EXPORT Statement    PCALLcreate PROTO( ( Linked_List ) );
-extern SC_EXPRESS_EXPORT Statement    RETcreate PROTO( ( Expression ) );
-extern SC_EXPRESS_EXPORT void     STMTinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT struct Scope_ * INCR_CTLcreate PROTO( ( Symbol *, Expression start,
-        Expression end, Expression increment ) );
+extern SC_EXPRESS_EXPORT Statement    STMTcreate( int );
+extern SC_EXPRESS_EXPORT Statement    ALIAScreate( struct Scope_ *, Variable, Linked_List );
+extern SC_EXPRESS_EXPORT Statement    CASEcreate( Expression , Linked_List );
+extern SC_EXPRESS_EXPORT Statement    ASSIGNcreate( Expression , Expression );
+extern SC_EXPRESS_EXPORT Statement    COMP_STMTcreate( Linked_List );
+extern SC_EXPRESS_EXPORT Statement    CONDcreate( Expression, Linked_List, Linked_List );
+extern SC_EXPRESS_EXPORT Statement    LOOPcreate( struct Scope_ *, Expression, Expression, Linked_List );
+extern SC_EXPRESS_EXPORT Statement    PCALLcreate( Linked_List );
+extern SC_EXPRESS_EXPORT Statement    RETcreate( Expression );
+extern SC_EXPRESS_EXPORT void     STMTinitialize( void );
+extern SC_EXPRESS_EXPORT struct Scope_ * INCR_CTLcreate( Symbol *, Expression start,
+        Expression end, Expression increment );
 
 #endif /*STATEMENT_H*/

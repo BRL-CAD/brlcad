@@ -1,22 +1,25 @@
 #ifndef EXPPP_H
 #define EXPPP_H
+
+#include <sc_stdbool.h>
+
 #include <sc_export.h>
 
-extern SC_EXPPP_EXPORT int exppp_nesting_indent;    /* default nesting indent */
-extern SC_EXPPP_EXPORT int exppp_continuation_indent;   /* default nesting indent for */
-/* continuation lines */
-extern SC_EXPPP_EXPORT int exppp_linelength;        /* leave some slop for closing */
-/* parens.  \n is not included in */
-/* this count either */
-extern SC_EXPPP_EXPORT bool exppp_rmpp;          /* if true, create rmpp */
-extern SC_EXPPP_EXPORT bool exppp_alphabetize;       /* if true, alphabetize */
-extern SC_EXPPP_EXPORT bool exppp_terse;         /* don't describe action to stdout */
-extern SC_EXPPP_EXPORT bool exppp_reference_info;    /* if true, add commentary */
-/* about where things came from */
-extern SC_EXPPP_EXPORT bool exppp_preserve_comments; /* if true, preserve comments where */
-/* possible */
-extern SC_EXPPP_EXPORT char * exppp_output_filename; /* force output filename */
-extern SC_EXPPP_EXPORT bool exppp_output_filename_reset; /* if true, force output filename */
+#include "../express/expbasic.h"
+#include "../express/express.h"
+
+extern SC_EXPPP_EXPORT const int exppp_nesting_indent;      /**< default nesting indent */
+extern SC_EXPPP_EXPORT const int exppp_continuation_indent; /**< default nesting indent for continuation lines */
+extern SC_EXPPP_EXPORT int exppp_linelength;                /**< leave some slop for closing parens.
+                                                              *  \n is not included in this count either */
+extern SC_EXPPP_EXPORT bool exppp_alphabetize;              /**< if true, alphabetize */
+extern SC_EXPPP_EXPORT bool exppp_terse;                    /**< don't describe action to stdout */
+extern SC_EXPPP_EXPORT bool exppp_reference_info;           /**< if true, add commentary about where things came from */
+extern SC_EXPPP_EXPORT char * exppp_output_filename;        /**< force output filename */
+extern SC_EXPPP_EXPORT bool exppp_output_filename_reset;    /**< if true, force output filename */
+extern SC_EXPPP_EXPORT bool exppp_print_to_stdout;          /**< if true, print to stdout */
+extern SC_EXPPP_EXPORT bool exppp_aggressively_wrap_consts; /**< for constants, print one item per line */
+extern SC_EXPPP_EXPORT bool exppp_tail_comment;             /**< print tail comment, such as END_ENTITY; --entity_name */
 
 SC_EXPPP_EXPORT void EXPRESSout( Express e );
 
@@ -61,6 +64,7 @@ SC_EXPPP_EXPORT int TYPEbody_to_buffer( Type t, char * buffer, int length );
 SC_EXPPP_EXPORT int WHEREto_buffer( Linked_List w, char * buffer, int length );
 
 SC_EXPPP_EXPORT int EXPRlength( Expression e );
-SC_EXPPP_EXPORT int count_newlines( char * s );
+extern SC_EXPPP_EXPORT void tail_comment( const char * name );
+extern SC_EXPPP_EXPORT int count_newlines( char * s );
 
 #endif

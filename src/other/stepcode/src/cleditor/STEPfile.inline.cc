@@ -26,12 +26,10 @@ extern void HeaderSchemaInit( Registry & reg );
 //constructor & destructor
 
 STEPfile::STEPfile( Registry & r, InstMgr & i, const std::string filename, bool strict ) :
-    _instances( i ), _reg( r ), _fileIdIncr( 0 ), _headerId( 0 ),
-    _entsNotCreated( 0 ), _entsInvalid( 0 ), _entsIncomplete( 0 ),
-    _entsWarning( 0 ), _errorCount( 0 ), _warningCount( 0 ),
-    _maxErrorCount( 100000 ), _strict( strict ), _iFileSize( 0 ),
-    _iFileCurrentPosition( 0 ), _oFileInstsWritten( 0 ),
-    _iFileStage1Done( false ) {
+        _instances( i ), _reg( r ), _fileIdIncr( 0 ), _headerId( 0 ), _iFileSize( 0 ),
+        _iFileCurrentPosition( 0 ), _iFileStage1Done( false ), _oFileInstsWritten( 0 ),
+        _entsNotCreated( 0 ), _entsInvalid( 0 ), _entsIncomplete( 0 ), _entsWarning( 0 ),
+        _errorCount( 0 ), _warningCount( 0 ), _maxErrorCount( 100000 ), _strict( strict ) {
     SetFileType( VERSION_CURRENT );
     SetFileIdIncrement();
     _currentDir = new DirObj( "" );
@@ -87,7 +85,7 @@ int STEPfile::SetFileType( FileTypeCode ft ) {
 ** from filename
 */
 std::string STEPfile::TruncFileName( const std::string filename ) const {
-#if defined(__WIN32__) && !defined(__mingw32__)
+#if defined(_WIN32) && !defined(__mingw32__)
     char slash = '\\';
 #else
     char slash = '/';
@@ -214,7 +212,7 @@ istream * STEPfile::OpenInputFile( const std::string filename ) {
 
 /******************************************************/
 void STEPfile::CloseInputFile( istream * in ) {
-    if( in && in != &(std::cin) ) {
+    if (in != &std::cin) {
         delete in;
     }
 

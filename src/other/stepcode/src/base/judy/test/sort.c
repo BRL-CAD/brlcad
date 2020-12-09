@@ -69,7 +69,7 @@ void sort( FILE * infile, char * outname ) {
     }
     size |= ( unsigned long long )hiword << 32;
 #else
-    size = lseek( ifd, 0, 2 );
+    size = lseek( ifd, 0L, 2 );
 #endif
 
     while( offset < size ) {

@@ -6,6 +6,7 @@
 
 #ifdef __cplusplus
 #include <iostream>
+#include <iosfwd>
 #include <string>
 
 #include "sc_memmgr.h"
@@ -37,11 +38,19 @@ extern "C" {
  *
  * depends on getMemAndTime() above - may not work on all platforms.
  */
+
 class SC_BASE_EXPORT benchmark {
     protected:
         benchVals initialVals, laterVals;
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::ostream & ostr;
         std::string descr;
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
         bool debug, stopped;
     public:
         benchmark( std::string description = "", bool debugMessages = true, std::ostream & o_stream = std::cout );

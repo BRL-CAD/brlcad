@@ -1,7 +1,7 @@
 /*************************************************************************//**
  * collect.cc     \class ComplexCollect                                      *
  *                                                                           *
- * Description: ComplexCollect is the container structure for all ofthe com- *
+ * Description: ComplexCollect is the container structure for all of the com-*
  *              plex entity information in a schema.  It contains a list of  *
  *              ComplexList structures each of which corresponds to one set  *
  *              of subtype/supertype information about the schema. This file *
@@ -85,8 +85,8 @@ ComplexList * ComplexCollect::find( char * name ) {
 
 /**
  * Determines if the parent schema supports the instantiation of a complex
- * type consisting of the the entities named in ents.  Does so by attempt-
- * ing to match ents against the ComplexLists in clists.  If one of the
+ * type consisting of the entities named in ents.  Does so by attempting
+ * to match ents against the ComplexLists in clists.  If one of the
  * nodes of ents has multSupers set to true (it has >1 supertype), it
  * should be included in >1 CList.  A more complicated algorithm is applied
  * to match it, as described in the commenting.

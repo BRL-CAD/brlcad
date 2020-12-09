@@ -15,7 +15,15 @@
 
 class SC_DAI_EXPORT SDAI_Binary {
     private:
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::string content;
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
+
     public:
 
         //constructor(s) & destructor

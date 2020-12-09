@@ -132,7 +132,7 @@ static void writeheader( ostream & os, int noLists )
     os << "#include \"complexSupport.h\"\n#include \"sc_memmgr.h\"\n\n";
     os << "ComplexCollect *gencomplex()" << endl;
     os << "    /*" << endl
-       << "     * This function contains instantiation statments for all the\n"
+       << "     * This function contains instantiation statements for all the\n"
        << "     * ComplexLists and EntLists in a ComplexCollect.  The instan-\n"
        << "     * stiation statements were generated in order of lower to\n"
        << "     * higher, and last to first to simplify creating some of the\n"

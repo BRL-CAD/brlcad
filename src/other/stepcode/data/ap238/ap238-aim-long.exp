@@ -3891,11 +3891,11 @@ ENTITY grooving_turning_operation
   WR3:  (verify_optional_action_property        (SELF, 'allowance')) AND
         (verify_length_measure_action_property  (SELF, 'allowance'));
 
-  -- allowance propery required for roughing
+  -- allowance property required for roughing
   WR4:  NOT (SELF.description = 'roughing') OR
         (verify_required_action_property (SELF, 'allowance'));
 
-  -- allowance propery forbidden for cutting in
+  -- allowance property forbidden for cutting in
   WR5:  NOT (SELF.description = 'cutting in') OR
         (0 = SIZEOF (get_action_property (SELF, 'allowance')));
 END_ENTITY; -- 10303-238: integrated_cnc_schema

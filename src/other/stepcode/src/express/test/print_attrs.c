@@ -16,7 +16,8 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#include "express/express.h"
+#include <express/info.h>
+#include <express/express.h>
 #include <express/scope.h>
 #include <express/variable.h>
 #include "ordered_attrs.h"
@@ -24,14 +25,14 @@
 
 char * entityName, _buf[512] = { 0 };
 
-///print usage info specific to print_attrs
-void my_usage() {
+/** prints usage info specific to print_attrs */
+void my_usage(void) {
     EXPRESSusage( 0 );
     printf( "   ----\n\t-a <entity>: print attrs for <entity>\n" );
     exit( 2 );
 }
 
-///prints info about one attr
+/** prints info about one attr */
 void describeAttr( const orderedAttr * oa ) {
     const char * visible_p21 = "    Y    ", * hidden_p21 = "    N    ", * explicit_derived = "    *    ";
     const char * visibility, * descrip1="", * descrip2="", * descrip3=0;
@@ -73,16 +74,16 @@ void find_and_print( Express model ) {
     Schema s;
     Entity e;
     DICTdo_init( model->symbol_table, &de );
-    while( 0 != ( s = DICTdo( &de ) ) ) {
+    while( 0 != ( s = (Schema) DICTdo( &de ) ) ) {
         printf( "Schema %s\n", s->symbol.name );
-        e = DICTlookup( s->symbol_table, entityName );
+        e = (Entity) DICTlookup( s->symbol_table, entityName );
         if( e ) {
             print_attrs( e );
         }
     }
 }
 
-///reads arg setting entity name
+/** reads arg setting entity name */
 int attr_arg( int i, char * arg ) {
     const char * src = arg;
     int count = 0;
@@ -100,13 +101,15 @@ int attr_arg( int i, char * arg ) {
             entityName = 0;
         }
     } else if( !entityName ) {
-        //if libexpress comes across an unrecognized arg that isn't '-a' and if the entityName isn't set
-        return 1; // print usage and exit
+        /* if libexpress comes across an unrecognized arg that isn't '-a',
+         * and if the entityName isn't set, print usage and exit
+         */
+        return 1;
     }
     return 0;
 }
 
-///set the functions to be called by main() in libexpress
+/** set the functions to be called by main() in libexpress */
 void EXPRESSinit_init() {
     entityName = 0;
     EXPRESSbackend = find_and_print;

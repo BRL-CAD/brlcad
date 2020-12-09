@@ -122,75 +122,9 @@ This module implements the type abstraction.  It is
  *
  */
 
-#include <sc_memmgr.h>
+#include <assert.h>
+
 #include "express/type.h"
-
-/* Very commonly-used read-only types */
-/* non-constant versions probably aren't necessary? */
-Type Type_Bad;
-Type Type_Unknown;
-Type Type_Dont_Care;
-Type Type_Runtime; /* indicates that this object can't be */
-/* calculated now but must be deferred */
-/* til (the mythical) runtime */
-Type Type_Binary;
-Type Type_Boolean;
-Type Type_Enumeration;
-Type Type_Expression;
-Type Type_Aggregate;
-Type Type_Integer;
-Type Type_Integer;
-Type Type_Number;
-Type Type_Real;
-Type Type_String;
-Type Type_String_Encoded;
-Type Type_Logical;
-Type Type_Set;
-Type Type_Attribute;
-Type Type_Entity;
-Type Type_Funcall;
-Type Type_Generic;
-Type Type_Identifier;
-Type Type_Oneof;
-Type Type_Query;
-Type Type_Self;
-Type Type_Set_Of_String;
-Type Type_Set_Of_Generic;
-Type Type_Bag_Of_Generic;
-
-struct freelist_head TYPEHEAD_fl;
-struct freelist_head TYPEBODY_fl;
-
-Error ERROR_corrupted_type = ERROR_none;
-
-static Error ERROR_undefined_tag;
-/**
- * create a type with no symbol table
- */
-Type TYPEcreate_nostab( struct Symbol_ *symbol, Scope scope, char objtype ) {
-    Type t = SCOPEcreate_nostab( OBJ_TYPE );
-    TypeHead th = TYPEHEAD_new();
-
-    t->u.type = th;
-    t->symbol = *symbol;
-    DICTdefine( scope->symbol_table, symbol->name, ( Generic )t, &t->symbol, objtype );
-
-    return t;
-}
-
-/**
- * create a type but this is just a shell, either to be completed later
- * such as enumerations (which have a symbol table added later)
- * or to be used as a type reference
- */
-Type TYPEcreate_name( Symbol * symbol ) {
-    Scope s = SCOPEcreate_nostab( OBJ_TYPE );
-    TypeHead t = TYPEHEAD_new();
-
-    s->u.type = t;
-    s->symbol = *symbol;
-    return s;
-}
 
 Type TYPEcreate_user_defined_tag( Type base, Scope scope, struct Symbol_ *symbol ) {
     Type t;
@@ -214,7 +148,7 @@ Type TYPEcreate_user_defined_tag( Type base, Scope scope, struct Symbol_ *symbol
      * then we can only refer to existing tags, so produce an error
      */
     if( tag_count < 0 ) {
-        ERRORreport_with_symbol( ERROR_undefined_tag, symbol,
+        ERRORreport_with_symbol( UNDEFINED_TAG, symbol,
                                  symbol->name );
         return( 0 );
     }
@@ -231,29 +165,6 @@ Type TYPEcreate_user_defined_tag( Type base, Scope scope, struct Symbol_ *symbol
     return( t );
 }
 
-Type TYPEcreate( enum type_enum type ) {
-    TypeBody tb = TYPEBODYcreate( type );
-    Type t = TYPEcreate_from_body_anonymously( tb );
-    return( t );
-}
-
-Type TYPEcreate_from_body_anonymously( TypeBody tb ) {
-    Type t = SCOPEcreate_nostab( OBJ_TYPE );
-    TypeHead th = TYPEHEAD_new();
-
-    t->u.type = th;
-    t->u.type->body = tb;
-    t->symbol.name = 0;
-    SYMBOLset( t );
-    return t;
-}
-
-TypeBody TYPEBODYcreate( enum type_enum type ) {
-    TypeBody tb = TYPEBODY_new();
-    tb->type = type;
-    return tb;
-}
-
 /**
  * return true if "type t" inherits from "enum type_enum"
  * may need to be implemented for more types
@@ -262,7 +173,7 @@ TypeBody TYPEBODYcreate( enum type_enum type ) {
 
 bool TYPEinherits_from( Type t, enum type_enum e ) {
     TypeBody tb = t->u.type->body;
-
+    assert( ( t->type == OBJ_TYPE ) && ( tb ) && "Not a Type!" );
     switch( e ) {
         case aggregate_:
             if( tb->type == aggregate_ ||
@@ -308,124 +219,12 @@ return( false );
 }
 #endif
 
-Symbol * TYPE_get_symbol( Generic t ) {
-    return( &( ( Type )t )->symbol );
-}
-
-
 /** Initialize the Type module */
 void TYPEinitialize() {
-    MEMinitialize( &TYPEHEAD_fl, sizeof( struct TypeHead_ ), 500, 100 );
-    MEMinitialize( &TYPEBODY_fl, sizeof( struct TypeBody_ ), 200, 100 );
-    OBJcreate( OBJ_TYPE, TYPE_get_symbol, "type", OBJ_TYPE_BITS );
-    /*  OBJcreate(OBJ_TYPE,TYPE_get_symbol,"(headless) type", OBJ_UNFINDABLE_BITS);*/
-    OBJcreate( OBJ_TAG, TYPE_get_symbol, "tag", OBJ_TYPE_BITS );
-
-    /* Very commonly-used read-only types */
-    Type_Unknown = TYPEcreate( unknown_ );
-    Type_Dont_Care = TYPEcreate( special_ );
-    Type_Bad = TYPEcreate( special_ );
-    Type_Runtime = TYPEcreate( runtime_ );
-
-    Type_Enumeration = TYPEcreate( enumeration_ );
-    Type_Enumeration->u.type->body->flags.shared = 1;
-    resolved_all( Type_Enumeration );
-
-    Type_Expression = TYPEcreate( op_ );
-    Type_Expression->u.type->body->flags.shared = 1;
-
-    Type_Aggregate = TYPEcreate( aggregate_ );
-    Type_Aggregate->u.type->body->flags.shared = 1;
-    Type_Aggregate->u.type->body->base = Type_Runtime;
-
-    Type_Integer = TYPEcreate( integer_ );
-    Type_Integer->u.type->body->flags.shared = 1;
-    resolved_all( Type_Integer );
-
-    Type_Real = TYPEcreate( real_ );
-    Type_Real->u.type->body->flags.shared = 1;
-    resolved_all( Type_Real );
-
-    Type_Number = TYPEcreate( number_ );
-    Type_Number->u.type->body->flags.shared = 1;
-    resolved_all( Type_Number );
-
-    Type_String = TYPEcreate( string_ );
-    Type_String->u.type->body->flags.shared = 1;
-    resolved_all( Type_String );
-
-    Type_String_Encoded = TYPEcreate( string_ );
-    Type_String_Encoded->u.type->body->flags.shared = 1;
-    Type_String_Encoded->u.type->body->flags.encoded = 1;
-    resolved_all( Type_String );
-
-    Type_Logical = TYPEcreate( logical_ );
-    Type_Logical->u.type->body->flags.shared = 1;
-    resolved_all( Type_Logical );
-
-    Type_Binary = TYPEcreate( binary_ );
-    Type_Binary->u.type->body->flags.shared = 1;
-    resolved_all( Type_Binary );
-
-    Type_Number = TYPEcreate( number_ );
-    Type_Number->u.type->body->flags.shared = 1;
-    resolved_all( Type_Number );
-
-    Type_Boolean = TYPEcreate( boolean_ );
-    Type_Boolean->u.type->body->flags.shared = 1;
-    resolved_all( Type_Boolean );
-
-    Type_Generic = TYPEcreate( generic_ );
-    Type_Generic->u.type->body->flags.shared = 1;
-    resolved_all( Type_Generic );
-
-    Type_Set_Of_String = TYPEcreate( set_ );
-    Type_Set_Of_String->u.type->body->flags.shared = 1;
-    Type_Set_Of_String->u.type->body->base = Type_String;
-
-    Type_Set_Of_Generic = TYPEcreate( set_ );
-    Type_Set_Of_Generic->u.type->body->flags.shared = 1;
-    Type_Set_Of_Generic->u.type->body->base = Type_Generic;
-
-    Type_Bag_Of_Generic = TYPEcreate( bag_ );
-    Type_Bag_Of_Generic->u.type->body->flags.shared = 1;
-    Type_Bag_Of_Generic->u.type->body->base = Type_Generic;
-
-    Type_Attribute = TYPEcreate( attribute_ );
-    Type_Attribute->u.type->body->flags.shared = 1;
-
-    Type_Entity = TYPEcreate( entity_ );
-    Type_Entity->u.type->body->flags.shared = 1;
-
-    Type_Funcall = TYPEcreate( funcall_ );
-    Type_Funcall->u.type->body->flags.shared = 1;
-
-    Type_Generic = TYPEcreate( generic_ );
-    Type_Generic->u.type->body->flags.shared = 1;
-
-    Type_Identifier = TYPEcreate( identifier_ );
-    Type_Identifier->u.type->body->flags.shared = 1;
-
-    Type_Oneof = TYPEcreate( oneof_ );
-    Type_Oneof->u.type->body->flags.shared = 1;
-
-    Type_Query = TYPEcreate( query_ );
-    Type_Query->u.type->body->flags.shared = 1;
-
-    Type_Self = TYPEcreate( self_ );
-    Type_Self->u.type->body->flags.shared = 1;
-
-    ERROR_corrupted_type =
-        ERRORcreate( "Corrupted type in %s", SEVERITY_DUMP );
-
-    ERROR_undefined_tag =
-        ERRORcreate( "Undefined type tag %s", SEVERITY_ERROR );
 }
 
 /** Clean up the Type module */
 void TYPEcleanup( void ) {
-    ERRORdestroy( ERROR_corrupted_type );
-    ERRORdestroy( ERROR_undefined_tag );
 }
 
 /**

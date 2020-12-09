@@ -109,8 +109,8 @@ extern SC_EXPRESS_EXPORT int ENTITY_MARK;
 /* macro function definitions */
 /******************************/
 
-#define ENTITY_new()        (struct Entity_ *)MEM_new(&ENTITY_fl)
-#define ENTITY_destroy(x)   MEM_destroy(&ENTITY_fl,(Freelist *)(char *)x)
+#define ENTITY_new()        (struct Entity_ *)ALLOC_new(&ENTITY_fl)
+#define ENTITY_destroy(x)   ALLOC_destroy(&ENTITY_fl,(Freelist *)(char *)x)
 
 #define ENTITYget_symbol(e) SCOPEget_symbol(e)
 /* returns a function (i.e., which can be passed to other functions) */
@@ -140,19 +140,19 @@ extern SC_EXPRESS_EXPORT int ENTITY_MARK;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT struct Scope_  * ENTITYcreate PROTO( ( struct Symbol_ * ) );
-extern SC_EXPRESS_EXPORT void     ENTITYinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void     ENTITYadd_attribute PROTO( ( struct Scope_ *, struct Variable_ * ) );
-extern SC_EXPRESS_EXPORT struct Scope_  * ENTITYcopy PROTO( ( struct Scope_ * ) );
-extern SC_EXPRESS_EXPORT Entity       ENTITYfind_inherited_entity PROTO( ( struct Scope_ *, char *, int ) );
-extern SC_EXPRESS_EXPORT Variable     ENTITYfind_inherited_attribute PROTO( ( struct Scope_ *, char *, struct Symbol_ ** ) );
-extern SC_EXPRESS_EXPORT Variable     ENTITYresolve_attr_ref PROTO( ( Entity, Symbol *, Symbol * ) );
-extern SC_EXPRESS_EXPORT bool      ENTITYhas_immediate_supertype PROTO( ( Entity, Entity ) );
-extern SC_EXPRESS_EXPORT Variable     ENTITYget_named_attribute PROTO( ( Entity, char * ) );
-extern SC_EXPRESS_EXPORT Linked_List  ENTITYget_all_attributes PROTO( ( Entity ) );
-extern SC_EXPRESS_EXPORT bool      ENTITYhas_supertype PROTO( ( Entity, Entity ) );
-extern SC_EXPRESS_EXPORT void     ENTITYadd_instance PROTO( ( Entity, Generic ) );
-extern SC_EXPRESS_EXPORT int      ENTITYget_initial_offset PROTO( ( Entity ) );
-extern SC_EXPRESS_EXPORT int      ENTITYdeclares_variable PROTO( ( Entity, struct Variable_ * ) );
+extern SC_EXPRESS_EXPORT struct Scope_  * ENTITYcreate( struct Symbol_ * );
+extern SC_EXPRESS_EXPORT void     ENTITYinitialize( void );
+extern SC_EXPRESS_EXPORT void     ENTITYadd_attribute( struct Scope_ *, struct Variable_ * );
+extern SC_EXPRESS_EXPORT struct Scope_  * ENTITYcopy( struct Scope_ * );
+extern SC_EXPRESS_EXPORT Entity       ENTITYfind_inherited_entity( struct Scope_ *, char *, int );
+extern SC_EXPRESS_EXPORT Variable     ENTITYfind_inherited_attribute( struct Scope_ *, char *, struct Symbol_ ** );
+extern SC_EXPRESS_EXPORT Variable     ENTITYresolve_attr_ref( Entity, Symbol *, Symbol * );
+extern SC_EXPRESS_EXPORT bool      ENTITYhas_immediate_supertype( Entity, Entity );
+extern SC_EXPRESS_EXPORT Variable     ENTITYget_named_attribute( Entity, char * );
+extern SC_EXPRESS_EXPORT Linked_List  ENTITYget_all_attributes( Entity );
+extern SC_EXPRESS_EXPORT bool      ENTITYhas_supertype( Entity, Entity );
+extern SC_EXPRESS_EXPORT void     ENTITYadd_instance( Entity, void *);
+extern SC_EXPRESS_EXPORT int      ENTITYget_initial_offset( Entity );
+extern SC_EXPRESS_EXPORT int      ENTITYdeclares_variable( Entity, struct Variable_ * );
 
 #endif    /*  ENTITY_H  */

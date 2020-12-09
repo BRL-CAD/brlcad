@@ -31,6 +31,8 @@
 #include <math.h>
 #include "sc_memmgr.h"
 
+#include "sdaiApplication_instance.h"
+
 // to help ObjectCenter
 #ifndef HAVE_MEMMOVE
 extern "C"

@@ -4,6 +4,7 @@
 #include <STEPcomplex.h>
 #include <complexSupport.h>
 #include <STEPattribute.h>
+#include <STEPaggregate.h>
 #include <sstream>
 #include "sc_memmgr.h"
 
@@ -12,13 +13,13 @@ ReadStdKeyword( istream & in, std::string & buf, int skipInitWS );
 
 
 STEPcomplex::STEPcomplex( Registry * registry, int fileid )
-    : SDAI_Application_instance( fileid, 1 ),  sc( 0 ), _registry( registry ), visited( 0 ) {
+    : SDAI_Application_instance( fileid, true ),  sc( 0 ), _registry( registry ), visited( 0 ) {
     head = this;
 }
 
 STEPcomplex::STEPcomplex( Registry * registry, const std::string ** names,
                           int fileid, const char * schnm )
-    : SDAI_Application_instance( fileid, 1 ),  sc( 0 ), _registry( registry ), visited( 0 ) {
+    : SDAI_Application_instance( fileid, true ),  sc( 0 ), _registry( registry ), visited( 0 ) {
     char * nms[BUFSIZ];
     int j, k;
 
@@ -38,7 +39,7 @@ STEPcomplex::STEPcomplex( Registry * registry, const std::string ** names,
 
 STEPcomplex::STEPcomplex( Registry * registry, const char ** names, int fileid,
                           const char * schnm )
-    : SDAI_Application_instance( fileid, 1 ),  sc( 0 ), _registry( registry ), visited( 0 ) {
+    : SDAI_Application_instance( fileid, true ),  sc( 0 ), _registry( registry ), visited( 0 ) {
 
     head = this;
     Initialize( names, schnm );
@@ -148,15 +149,61 @@ void STEPcomplex::Initialize( const char ** names, const char * schnm ) {
 }
 
 STEPcomplex::~STEPcomplex() {
-    STEPcomplex_attr_data attr_data;
+    STEPcomplex_attr_data_iter attr_data;
 
     if( sc ) {
         delete sc;
     }
-    for( attr_data = _attr_data_list.begin();
-            attr_data != _attr_data_list.end();
-            attr_data ++ ) {
-        delete *attr_data;
+    for( attr_data = _attr_data_list.begin(); attr_data != _attr_data_list.end(); attr_data ++ ) {
+        attrData_t attrData = *attr_data;
+        switch( attrData.type ) {
+            case INTEGER_TYPE:
+                delete attrData.i;
+                break;
+            case STRING_TYPE:
+                delete attrData.str;
+                break;
+            case BINARY_TYPE:
+                delete attrData.bin;
+                break;
+            case REAL_TYPE:
+            case NUMBER_TYPE:
+                delete  attrData.r;
+                break;
+            case BOOLEAN_TYPE:
+                delete  attrData.b;
+                break;
+            case LOGICAL_TYPE:
+                delete  attrData.l;
+                break;
+            case ENTITY_TYPE:
+                delete attrData.ai;
+                break;
+            case ENUM_TYPE:
+                if( attrData.e ) {
+                    delete attrData.e;
+                }
+                break;
+            case SELECT_TYPE:
+                if( attrData.s ) {
+                    delete attrData.s;
+                }
+                break;
+            case AGGREGATE_TYPE:
+            case ARRAY_TYPE:      // DAS
+            case BAG_TYPE:        // DAS
+            case SET_TYPE:        // DAS
+            case LIST_TYPE:       // DAS
+                if( attrData.a ) {
+                    delete attrData.a;
+                }
+                break;
+
+            default:
+                //should not be possible to get here.
+                std::cerr << "Possible data corruption detected: invalid attr data encountered in STEPcomplex destructor." << std::endl;
+                abort();
+        }
     }
     _attr_data_list.clear();
 }
@@ -204,17 +251,14 @@ void STEPcomplex::AssignDerives() {
     }
 }
 
-/** \fn STEPcomplex::AddEntityPart
-** this function should only be called for the head entity
-** in the list of entity parts.
-*/
+/** this function should only be called for the head entity in the list of entity parts. */
 void STEPcomplex::AddEntityPart( const char * name ) {
     STEPcomplex * scomplex;
-
     if( name ) {
         scomplex = new STEPcomplex( _registry, STEPfile_id );
         scomplex->BuildAttrs( name );
         if( scomplex->eDesc ) {
+            scomplex->InitIAttrs();
             scomplex->head = this;
             AppendEntity( scomplex );
         } else {
@@ -231,9 +275,10 @@ STEPcomplex * STEPcomplex::EntityPart( const char * name, const char * currSch )
             if( scomp->eDesc->CurrName( name, currSch ) ) {
                 return scomp;
             }
-        } else
+        } else {
             cout << "Bug in STEPcomplex::EntityPart(): entity part has "
                  << "no EntityDescriptor\n";
+        }
         scomp = scomp->sc;
     }
     return 0;
@@ -258,8 +303,11 @@ const EntityDescriptor * STEPcomplex::IsA( const EntityDescriptor * ed ) const {
     }
 }
 
-Severity STEPcomplex::ValidLevel( ErrorDescriptor * error, InstMgr * im,
+Severity STEPcomplex::ValidLevel( ErrorDescriptor * error, InstMgrBase * im,
                                   int clearError ) {
+    (void) error; //unused
+    (void) im;
+    (void) clearError;
     cout << "STEPcomplex::ValidLevel() not implemented.\n";
     return SEVERITY_NULL;
 }
@@ -273,7 +321,7 @@ void STEPcomplex::AppendEntity( STEPcomplex * stepc ) {
 }
 
 // READ
-Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_set,
+Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgrBase * instance_set,
                                 istream & in, const char * currSch, bool /*useTechCor*/, bool /*strict*/ ) {
     char c;
     std::string typeNm;
@@ -300,8 +348,7 @@ Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_
             in >> ws;
             c = in.peek();
             if( c != '(' ) {
-                _error.AppendToDetailMsg(
-                    "Missing open paren before entity attr values.\n" );
+                _error.AppendToDetailMsg( "Missing open paren before entity attr values.\n" );
                 cout << "ERROR: missing open paren\n";
                 _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
                 STEPread_error( c, 0, in, currSch );
@@ -309,15 +356,12 @@ Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_
             }
 
             stepc = EntityPart( typeNm.c_str(), currSch );
-            if( stepc )
-                stepc->SDAI_Application_instance::STEPread( id, addFileId,
-                        instance_set, in,
-                        currSch );
-            else {
-                cout << "ERROR: complex entity part \"" << typeNm
-                     << "\" does not exist.\n";
-                _error.AppendToDetailMsg(
-                    "Complex entity part of instance does not exist.\n" );
+            if( stepc ) {
+                //WARNING need to seek to the correct position when this is done... how?
+                stepc->SDAI_Application_instance::STEPread( id, addFileId, instance_set, in, currSch );
+            } else {
+                cout << "ERROR: complex entity part \"" << typeNm << "\" does not exist." << endl;;
+                _error.AppendToDetailMsg( "Complex entity part of instance does not exist.\n" );
                 _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
                 STEPread_error( c, 0, in, currSch );
                 return _error.severity();
@@ -325,12 +369,16 @@ Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_
             in >> ws;
             c = in.peek();
         }
-        if( c != ')' )
-            cout <<
-                 "ERROR: missing ending paren for complex entity instance.\n";
-        else {
+        if( c != ')' ) {
+            cout << "ERROR: missing ending paren for complex entity instance." << endl;
+        } else {
             in.get( c );    // read the closing paren
         }
+    } else {
+        _error.AppendToDetailMsg( "Complex instances must begin with '('. Found '" );
+        _error.AppendToDetailMsg( c );
+        _error.AppendToDetailMsg( "' instead.\n" );
+        _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
     }
     return _error.severity();
 }
@@ -338,7 +386,7 @@ Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_
 //FIXME delete this?
 #ifdef buildwhileread
 // READ
-Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_set,
+Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgrBase * instance_set,
                                 istream & in, const char * currSch ) {
     ClearError( 1 );
     STEPfile_id = id;
@@ -427,18 +475,7 @@ void STEPcomplex::BuildAttrs( const char * s ) {
     eDesc = ( class EntityDescriptor * )_registry->FindEntity( s );
 
     if( eDesc ) {
-        const AttrDescriptorList * attrList;
-        SDAI_Integer * integer_data;
-        SDAI_String * string_data;
-        SDAI_Binary * binary_data;
-        SDAI_Real * real_data;
-        SDAI_BOOLEAN * boolean_data;
-        SDAI_LOGICAL * logical_data;
-        SDAI_Application_instance ** entity_data;
-        SDAI_Enum * enum_data;
-        SDAI_Select * select_data;
-        STEPaggregate * aggr_data;
-        attrList = &( eDesc->ExplicitAttr() );
+        const AttrDescriptorList * attrList = &( eDesc->ExplicitAttr() );
 
         //////////////////////////////////////////////
         // find out how many attrs there are
@@ -446,70 +483,61 @@ void STEPcomplex::BuildAttrs( const char * s ) {
 
         STEPattribute * a = 0;
 
+        //_attr_data_list used to store everything as void *, but we couldn't correctly delete the contents in the dtor.
         AttrDescLinkNode * attrPtr = ( AttrDescLinkNode * )attrList->GetHead();
         while( attrPtr != 0 ) {
             const AttrDescriptor * ad = attrPtr->AttrDesc();
 
             if( ( ad->Derived() ) != LTrue ) {
-
-                switch( ad->NonRefType() ) {
+                attrData_t attrData;
+                attrData.type = ad->NonRefType();
+                switch( attrData.type ) {
                     case INTEGER_TYPE:
-                        integer_data = new SDAI_Integer;
-                        _attr_data_list.push_back( ( void * ) integer_data );
-                        a = new STEPattribute( *ad, integer_data );
+                        attrData.i = new SDAI_Integer;
+                        a = new STEPattribute( *ad, attrData.i );
                         break;
 
                     case STRING_TYPE:
-                        string_data = new SDAI_String;
-                        _attr_data_list.push_back( ( void * ) string_data );
-                        a = new STEPattribute( *ad, string_data );
+                        attrData.str = new SDAI_String;
+                        a = new STEPattribute( *ad, attrData.str );
                         break;
 
                     case BINARY_TYPE:
-                        binary_data = new SDAI_Binary;
-                        _attr_data_list.push_back( ( void * ) binary_data );
-                        a = new STEPattribute( *ad, binary_data );
+                        attrData.bin = new SDAI_Binary;
+                        a = new STEPattribute( *ad, attrData.bin );
                         break;
 
                     case REAL_TYPE:
                     case NUMBER_TYPE:
-                        real_data = new SDAI_Real;
-                        _attr_data_list.push_back( ( void * ) real_data );
-                        a = new STEPattribute( *ad,  real_data );
+                        attrData.r = new SDAI_Real;
+                        a = new STEPattribute( *ad,  attrData.r );
                         break;
 
                     case BOOLEAN_TYPE:
-                        boolean_data = new SDAI_BOOLEAN;
-                        _attr_data_list.push_back( ( void * ) boolean_data );
-                        a = new STEPattribute( *ad,  boolean_data );
+                        attrData.b = new SDAI_BOOLEAN;
+                        a = new STEPattribute( *ad,  attrData.b );
                         break;
 
                     case LOGICAL_TYPE:
-                        logical_data = new SDAI_LOGICAL;
-                        _attr_data_list.push_back( ( void * ) logical_data );
-                        a = new STEPattribute( *ad,  logical_data );
+                        attrData.l = new SDAI_LOGICAL;
+                        a = new STEPattribute( *ad,  attrData.l );
                         break;
 
                     case ENTITY_TYPE:
-                        entity_data = new( SDAI_Application_instance * );
-                        _attr_data_list.push_back( ( void * ) entity_data );
-                        a = new STEPattribute( *ad, entity_data );
+                        attrData.ai = new( SDAI_Application_instance * );
+                        a = new STEPattribute( *ad, attrData.ai );
                         break;
 
                     case ENUM_TYPE: {
-                        EnumTypeDescriptor * enumD =
-                            ( EnumTypeDescriptor * )ad->ReferentType();
-                        enum_data = enumD->CreateEnum();
-                        _attr_data_list.push_back( ( void * ) enum_data );
-                        a = new STEPattribute( *ad, enum_data );
+                        EnumTypeDescriptor * enumD = ( EnumTypeDescriptor * )ad->ReferentType();
+                        attrData.e = enumD->CreateEnum();
+                        a = new STEPattribute( *ad, attrData.e );
                         break;
                     }
                     case SELECT_TYPE: {
-                        SelectTypeDescriptor * selectD =
-                            ( SelectTypeDescriptor * )ad->ReferentType();
-                        select_data = selectD->CreateSelect();
-                        _attr_data_list.push_back( ( void * ) select_data );
-                        a = new STEPattribute( *ad, select_data );
+                        SelectTypeDescriptor * selectD = ( SelectTypeDescriptor * )ad->ReferentType();
+                        attrData.s = selectD->CreateSelect();
+                        a = new STEPattribute( *ad, attrData.s );
                         break;
                     }
                     case AGGREGATE_TYPE:
@@ -517,18 +545,19 @@ void STEPcomplex::BuildAttrs( const char * s ) {
                     case BAG_TYPE:        // DAS
                     case SET_TYPE:        // DAS
                     case LIST_TYPE: {     // DAS
-                        AggrTypeDescriptor * aggrD =
-                            ( AggrTypeDescriptor * )ad->ReferentType();
-                        aggr_data = aggrD->CreateAggregate();
-                        //_attr_data_list.push_back( ( void * ) aggr_data );
-                        _attr_data_list.push_back( aggr_data );
-                        a = new STEPattribute( *ad, aggr_data );
+                        AggrTypeDescriptor * aggrD = ( AggrTypeDescriptor * )ad->ReferentType();
+                        attrData.a = aggrD->CreateAggregate();
+                        a = new STEPattribute( *ad, attrData.a );
                         break;
                     }
                     default:
                         _error.AppendToDetailMsg( "STEPcomplex::BuildAttrs: Found attribute of unknown type. Creating default attribute.\n" );
                         _error.GreaterSeverity( SEVERITY_WARNING );
                         a = new STEPattribute();
+                        attrData.type = UNKNOWN_TYPE; //don't add to attr list
+                }
+                if( attrData.type != UNKNOWN_TYPE ) {
+                    _attr_data_list.push_back( attrData );
                 }
 
                 a -> set_null();
@@ -605,17 +634,16 @@ void STEPcomplex::WriteExtMapEntities( ostream & out, const char * currSch ) {
 
 /** \copydoc STEPcomplex::STEPwrite */
 const char * STEPcomplex::WriteExtMapEntities( std::string & buf, const char * currSch ) {
-
     std::string tmp;
 
-    buf.append( ( char * )StrToUpper( EntityName( currSch ), tmp ) );
+    StrToUpper( EntityName( currSch ), tmp );
+    buf.append( tmp );
     buf.append( "i" );
 
     int n = attributes.list_length();
 
     for( int i = 0 ; i < n; i++ ) {
-        attributes[i].asStr( tmp, currSch ) ;
-        buf.append( tmp );
+        buf.append( attributes[i].asStr( currSch ) );
         if( i < n - 1 ) {
             buf.append( "," );
         }
@@ -626,7 +654,7 @@ const char * STEPcomplex::WriteExtMapEntities( std::string & buf, const char * c
         sc->WriteExtMapEntities( buf, currSch );
     }
 
-    return const_cast<char *>( buf.c_str() );
+    return buf.c_str();
 }
 
 void STEPcomplex::CopyAs( SDAI_Application_instance * se ) {

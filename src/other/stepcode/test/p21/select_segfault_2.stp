@@ -1,0 +1,14 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION((''),'2;1');
+FILE_NAME('','',(''),(''),'','','');
+FILE_SCHEMA(('select_segfault_2'));
+ENDSEC;
+DATA;
+
+#1 = drc(cdl((#2,#3)));
+#2 = dre(4.5);
+#3 = dre(2.0);
+
+ENDSEC;
+END-ISO-10303-21;

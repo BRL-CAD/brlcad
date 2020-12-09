@@ -40,6 +40,7 @@ class judyS2Array {
         vector ** _lastSlot;
         unsigned char * _buff;
         bool _success;
+        cpair kv;
     public:
         judyS2Array( unsigned int maxKeyLen ): _maxKeyLen( maxKeyLen ), _lastSlot( 0 ), _success( true ) {
             _judyarray = judy_open( _maxKeyLen, 0 );
@@ -184,14 +185,13 @@ class judyS2Array {
         }
 
         /// retrieve the key-value pair for the most recent judy query.
-        inline const cpair mostRecentPair() {
-            cpair kv;
+        inline const cpair & mostRecentPair() {
             judy_key( _judyarray, _buff, _maxKeyLen );
             if( _lastSlot ) {
                 kv.value = *_lastSlot;
                 _success = true;
             } else {
-                kv.value = (cvector *) 0;
+                kv.value = NULL;
                 _success = false;
             }
             kv.key = _buff;

@@ -134,14 +134,16 @@ struct Scope_ {
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT struct Symbol_ * SCOPE_get_symbol PROTO( ( Generic ) );
-extern SC_EXPRESS_EXPORT void     SCOPE_get_entities PROTO( ( Scope, Linked_List ) );
-extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities PROTO( ( Scope ) );
-extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities_superclass_order PROTO( ( Scope ) );
-extern SC_EXPRESS_EXPORT Generic      SCOPEfind PROTO( ( Scope, char *, int ) );
-extern SC_EXPRESS_EXPORT void     SCOPE_get_functions PROTO( ( Scope, Linked_List ) );
-extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_functions PROTO( ( Scope ) );
-extern SC_EXPRESS_EXPORT void     SCOPE_get_rules PROTO( ( Scope, Linked_List ) );
-extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_rules PROTO( ( Scope ) );
+extern SC_EXPRESS_EXPORT struct Symbol_ * SCOPE_get_symbol( void * );
+extern SC_EXPRESS_EXPORT void     SCOPE_get_entities( Scope, Linked_List );
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities( Scope );
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities_superclass_order( Scope );
+extern SC_EXPRESS_EXPORT void *   SCOPEfind( Scope, char *, int );
+extern SC_EXPRESS_EXPORT void     SCOPE_get_functions( Scope, Linked_List );
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_functions( Scope );
+extern SC_EXPRESS_EXPORT void     SCOPE_get_rules( Scope, Linked_List );
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_rules( Scope );
+
+void * SCOPE_find( Scope, char *, int );
 
 #endif /* SCOPE_H */
