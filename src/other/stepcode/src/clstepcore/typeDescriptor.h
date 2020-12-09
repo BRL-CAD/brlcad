@@ -93,7 +93,8 @@
  * It is the same as _name for EXPRESS base types TypeDescriptors (with
  * the possible exception of upper or lower case differences).
  */
-class SC_CORE_EXPORT TypeDescriptor {
+class SC_CORE_EXPORT TypeDescriptor
+{
 
     protected:
 
@@ -105,7 +106,7 @@ class SC_CORE_EXPORT TypeDescriptor {
         /// generated code, for example, places a literal string in its
         /// TypeDesc constructor calls.  This creates a location in me-
         /// mory static throughout the lifetime of the calling program.
-        const char  * _name ;
+        const char   *_name ;
 
         /// an alternate name of type - such as one given by a different
         /// schema which USEs/ REFERENCEs this.  (A complete list of
@@ -115,56 +116,58 @@ class SC_CORE_EXPORT TypeDescriptor {
 
         /// contains list of renamings of type - used by other schemas
         /// which USE/ REFERENCE this
-        const SchRename * altNames;
+        const SchRename *altNames;
 
         /// the type of the type (see above).
         /// it is an enum see file clstepcore/baseType.h
         PrimitiveType _fundamentalType;
 
-        const Schema * _originatingSchema;
+        const Schema *_originatingSchema;
 
         /// further describes the type (see above)
         /// most often (or always) points at a subtype.
-        const TypeDescriptor * _referentType;
+        const TypeDescriptor *_referentType;
 
         /// Express file description (see above)
         /// e.g. the right side of an Express TYPE stmt
         /// (See note above by _name regarding memory allocation.)
-        const char  * _description;
+        const char   *_description;
 
     public:
         /// a Where_rule may contain only a comment
         Where_rule__list_var _where_rules; // initially a null pointer
 
-        Where_rule__list_var & where_rules_() {
+        Where_rule__list_var &where_rules_()
+        {
             return _where_rules;
         }
 
-        void where_rules_( Where_rule__list * wrl ) {
+        void where_rules_(Where_rule__list *wrl)
+        {
             _where_rules = wrl;
         }
 
     protected:
         /// Functions used to check the current name of the type (may
         /// != _name if altNames has diff name for current schema).
-        bool PossName( const char * ) const;
-        bool OurName( const char * ) const;
-        bool AltName( const char * ) const;
+        bool PossName(const char *) const;
+        bool OurName(const char *) const;
+        bool AltName(const char *) const;
 
     public:
 
-        TypeDescriptor( const char * nm, PrimitiveType ft, const char * d );
-        TypeDescriptor( const char * nm, PrimitiveType ft,
-                        Schema * origSchema, const char * d );
-        TypeDescriptor( );
+        TypeDescriptor(const char *nm, PrimitiveType ft, const char *d);
+        TypeDescriptor(const char *nm, PrimitiveType ft,
+                       Schema *origSchema, const char *d);
+        TypeDescriptor();
         virtual ~TypeDescriptor();
 
-        virtual const char * GenerateExpress( std::string & buf ) const;
+        virtual const char *GenerateExpress(std::string &buf) const;
 
         /// The name of this type.  If schnm != NULL, the name we're
         /// referred to by schema schnm (may be diff name in our alt-
         /// names list (based on schnm's USE/REF list)).
-        const char * Name( const char * schnm = NULL ) const;
+        const char *Name(const char *schnm = NULL) const;
 
         /// The name that would be found on the right side of an
         /// attribute definition. In the case of a type defined like
@@ -174,10 +177,11 @@ class SC_CORE_EXPORT TypeDescriptor {
         /// defined in an attribute it will be the _description
         /// member variable since _name will be null. e.g. attr. def.
         /// project_names : ARRAY [1..10] name;
-        void AttrTypeName( std::string & buf, const char * schnm = NULL ) const;
+        void AttrTypeName(std::string &buf, const char *schnm = NULL) const;
 
         /// Linked link of alternate names for the type:
-        const SchRename * AltNameList() const {
+        const SchRename *AltNameList() const
+        {
             return altNames;
         }
 
@@ -186,13 +190,15 @@ class SC_CORE_EXPORT TypeDescriptor {
         /// except it is more thorough of a description where possible
         /// e.g. if the description contains a TYPE name it will also
         /// be explained.
-        const char * TypeString( std::string & s ) const;
+        const char *TypeString(std::string &s) const;
 
         /// This TypeDescriptor's type
-        PrimitiveType Type() const {
+        PrimitiveType Type() const
+        {
             return _fundamentalType;
         }
-        void Type( const PrimitiveType type ) {
+        void Type(const PrimitiveType type)
+        {
             _fundamentalType = type;
         }
 
@@ -207,8 +213,8 @@ class SC_CORE_EXPORT TypeDescriptor {
         ///  TypeDescriptor *BaseTypeDescriptor() returns the TypeDescriptor
         ///  for Integer.
         PrimitiveType       BaseType() const;
-        const TypeDescriptor * BaseTypeDescriptor() const;
-        const char * BaseTypeName() const;
+        const TypeDescriptor *BaseTypeDescriptor() const;
+        const char *BaseTypeName() const;
 
         /// the first PrimitiveType that is not REFERENCE_TYPE (the first
         /// TypeDescriptor *_referentType that does not have REFERENCE_TYPE
@@ -219,36 +225,43 @@ class SC_CORE_EXPORT TypeDescriptor {
         /// would work the same?
 
         PrimitiveType   NonRefType() const;
-        const TypeDescriptor * NonRefTypeDescriptor() const;
+        const TypeDescriptor *NonRefTypeDescriptor() const;
 
         int   IsAggrType() const;
         PrimitiveType   AggrElemType() const;
-        const TypeDescriptor * AggrElemTypeDescriptor() const;
+        const TypeDescriptor *AggrElemTypeDescriptor() const;
 
-        PrimitiveType FundamentalType() const {
+        PrimitiveType FundamentalType() const
+        {
             return _fundamentalType;
         }
-        void FundamentalType( PrimitiveType ftype ) {
+        void FundamentalType(PrimitiveType ftype)
+        {
             _fundamentalType = ftype;
         }
 
         /// The TypeDescriptor for the type this type is based on
-        const TypeDescriptor * ReferentType() const {
+        const TypeDescriptor *ReferentType() const
+        {
             return _referentType;
         }
-        void ReferentType( const TypeDescriptor * rtype ) {
+        void ReferentType(const TypeDescriptor *rtype)
+        {
             _referentType = rtype;
         }
 
 
-        const Schema * OriginatingSchema()  const {
+        const Schema *OriginatingSchema()  const
+        {
             return _originatingSchema;
         }
-        void OriginatingSchema( const Schema * os ) {
+        void OriginatingSchema(const Schema *os)
+        {
             _originatingSchema = os;
         }
-        const char * schemaName() const {
-            if( _originatingSchema ) {
+        const char *schemaName() const
+        {
+            if(_originatingSchema) {
                 return _originatingSchema->Name();
             } else {
                 return "";
@@ -258,30 +271,35 @@ class SC_CORE_EXPORT TypeDescriptor {
         /// A description of this type's type. Basically you
         /// get the right side of a TYPE statement minus END_TYPE.
         /// For base type TypeDescriptors it is the same as _name.
-        const char * Description() const    {
+        const char *Description() const
+        {
             return _description;
         }
-        void Description( const char * desc ) {
+        void Description(const char *desc)
+        {
             _description = desc;
         }
 
-        virtual const TypeDescriptor * IsA( const TypeDescriptor * ) const;
-        virtual const TypeDescriptor * BaseTypeIsA( const TypeDescriptor * )
+        virtual const TypeDescriptor *IsA(const TypeDescriptor *) const;
+        virtual const TypeDescriptor *BaseTypeIsA(const TypeDescriptor *)
         const;
-        virtual const TypeDescriptor * IsA( const char * ) const;
-        virtual const TypeDescriptor * CanBe( const TypeDescriptor * n ) const {
-            return IsA( n );
+        virtual const TypeDescriptor *IsA(const char *) const;
+        virtual const TypeDescriptor *CanBe(const TypeDescriptor *n) const
+        {
+            return IsA(n);
         }
-        virtual const TypeDescriptor * CanBe( const char * n ) const {
-            return IsA( n );
+        virtual const TypeDescriptor *CanBe(const char *n) const
+        {
+            return IsA(n);
         }
-        virtual const TypeDescriptor * CanBeSet( const char * n,
-                const char * schNm = 0 ) const {
-            return ( CurrName( n, schNm ) ? this : 0 );
+        virtual const TypeDescriptor *CanBeSet(const char *n,
+                                               const char *schNm = 0) const
+        {
+            return (CurrName(n, schNm) ? this : 0);
         }
-        bool CurrName( const char *, const char * = 0 ) const;
+        bool CurrName(const char *, const char * = 0) const;
         /// Adds an additional name, newnm, to be use when schema schnm is USE/REFERENCE'ing us (added to altNames).
-        void addAltName( const char * schnm, const char * newnm );
+        void addAltName(const char *schnm, const char *newnm);
 };
 
 #endif //TYPEDESCRIPTOR_H

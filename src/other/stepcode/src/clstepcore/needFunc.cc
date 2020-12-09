@@ -15,6 +15,7 @@
 // To see an example of this function used with the Data Probe look in
 // ../clprobe-ui/StepEntEditor.cc  Look at DeleteSEE() and ~StepEntityEditor().
 ///////////////////////////////////////////////////////////////////////////////
-void DeleteSEE( StepEntityEditor * se ) {
+void DeleteSEE(StepEntityEditor *se)
+{
     delete se;
 }

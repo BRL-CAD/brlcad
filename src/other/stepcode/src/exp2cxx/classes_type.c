@@ -29,43 +29,44 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 
 static int type_count;  /**< number each temporary type for same reason as \sa attr_count */
 
-extern char * non_unique_types_string( const Type type );
+extern char *non_unique_types_string(const Type type);
 
-static void printEnumCreateHdr( FILE *, const Type );
-static void printEnumCreateBody( FILE *, const Type );
-static void printEnumAggrCrHdr( FILE *, const Type );
-static void printEnumAggrCrBody( FILE *, const Type );
+static void printEnumCreateHdr(FILE *, const Type);
+static void printEnumCreateBody(FILE *, const Type);
+static void printEnumAggrCrHdr(FILE *, const Type);
+static void printEnumAggrCrBody(FILE *, const Type);
 
-int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema );
+int TYPEget_RefTypeVarNm(const Type t, char *buf, Schema schema);
 
-int isMultiDimAggregateType( const Type t );
+int isMultiDimAggregateType(const Type t);
 
-void Type_Description( const Type, char * );
-void TypeBody_Description( TypeBody body, char * buf );
+void Type_Description(const Type, char *);
+void TypeBody_Description(TypeBody body, char *buf);
 
 /** write representation of expression to end of buf
  *
  * TODO: add buflen arg and check for overflow
  */
-void strcat_expr( Expression e, char * buf ) {
-    if( e == LITERAL_INFINITY ) {
-        strcat( buf, "?" );
-    } else if( e == LITERAL_PI ) {
-        strcat( buf, "PI" );
-    } else if( e == LITERAL_E ) {
-        strcat( buf, "E" );
-    } else if( e == LITERAL_ZERO ) {
-        strcat( buf, "0" );
-    } else if( e == LITERAL_ONE ) {
-        strcat( buf, "1" );
-    } else if( TYPEget_name( e ) ) {
-        strcat( buf, TYPEget_name( e ) );
-    } else if( TYPEget_body( e->type )->type == integer_ ) {
+void strcat_expr(Expression e, char *buf)
+{
+    if(e == LITERAL_INFINITY) {
+        strcat(buf, "?");
+    } else if(e == LITERAL_PI) {
+        strcat(buf, "PI");
+    } else if(e == LITERAL_E) {
+        strcat(buf, "E");
+    } else if(e == LITERAL_ZERO) {
+        strcat(buf, "0");
+    } else if(e == LITERAL_ONE) {
+        strcat(buf, "1");
+    } else if(TYPEget_name(e)) {
+        strcat(buf, TYPEget_name(e));
+    } else if(TYPEget_body(e->type)->type == integer_) {
         char tmpbuf[30];
-        sprintf( tmpbuf, "%d", e->u.integer );
-        strcat( buf, tmpbuf );
+        sprintf(tmpbuf, "%d", e->u.integer);
+        strcat(buf, tmpbuf);
     } else {
-        strcat( buf, "??" );
+        strcat(buf, "??");
     }
 }
 
@@ -73,16 +74,17 @@ void strcat_expr( Expression e, char * buf ) {
  *
  * TODO: add buflen arg and check for overflow
  */
-void strcat_bounds( TypeBody b, char * buf ) {
-    if( !b->upper ) {
+void strcat_bounds(TypeBody b, char *buf)
+{
+    if(!b->upper) {
         return;
     }
 
-    strcat( buf, " [" );
-    strcat_expr( b->lower, buf );
-    strcat( buf, ":" );
-    strcat_expr( b->upper, buf );
-    strcat( buf, "]" );
+    strcat(buf, " [");
+    strcat_expr(b->lower, buf);
+    strcat(buf, ":");
+    strcat_expr(b->upper, buf);
+    strcat(buf, "]");
 }
 
 /******************************************************************
@@ -100,28 +102,30 @@ void strcat_bounds( TypeBody b, char * buf ) {
  ** - Changed to match CD2 Part 23, 1/14/97 DAS
  ** Change Date: 5/22/91  CD
  ******************************************************************/
-const char * EnumCElementName( Type type, Expression expr )  {
+const char *EnumCElementName(Type type, Expression expr)
+{
     static char buf [BUFSIZ];
-    sprintf( buf, "%s__",
-             EnumName( TYPEget_name( type ) ) );
-    strcat( buf, StrToLower( EXPget_name( expr ) ) );
+    sprintf(buf, "%s__",
+            EnumName(TYPEget_name(type)));
+    strcat(buf, StrToLower(EXPget_name(expr)));
 
     return buf;
 }
 
-char * CheckEnumSymbol( char * s ) {
+char *CheckEnumSymbol(char *s)
+{
     static char b [BUFSIZ];
-    if( strcmp( s, "sdaiTRUE" )
-            && strcmp( s, "sdaiFALSE" )
-            && strcmp( s, "sdaiUNKNOWN" ) ) {
+    if(strcmp(s, "sdaiTRUE")
+            && strcmp(s, "sdaiFALSE")
+            && strcmp(s, "sdaiUNKNOWN")) {
         /*  if the symbol is not a reserved one */
-        return ( s );
+        return (s);
 
     } else {
-        strcpy( b, s );
-        strcat( b, "_" );
-        fprintf( stderr, "Warning in %s: the enumerated value %s is already being used and has been changed to %s\n", __FUNCTION__, s, b );
-        return ( b );
+        strcpy(b, s);
+        strcat(b, "_");
+        fprintf(stderr, "Warning in %s: the enumerated value %s is already being used and has been changed to %s\n", __FUNCTION__, s, b);
+        return (b);
     }
 }
 
@@ -129,15 +133,16 @@ char * CheckEnumSymbol( char * s ) {
  * return printable version of entire type definition
  * return it in static buffer
  */
-char * TypeDescription( const Type t ) {
+char *TypeDescription(const Type t)
+{
     static char buf[6000];
 
     buf[0] = '\0';
 
-    if( TYPEget_head( t ) ) {
-        Type_Description( TYPEget_head( t ), buf );
+    if(TYPEget_head(t)) {
+        Type_Description(TYPEget_head(t), buf);
     } else {
-        TypeBody_Description( TYPEget_body( t ), buf );
+        TypeBody_Description(TYPEget_body(t), buf);
     }
 
     /* should also print out where clause here */
@@ -150,217 +155,222 @@ char * TypeDescription( const Type t ) {
  ** Description: Writes enum type descriptors and classes.
  ** Change Date:
  ********************************************************************/
-void TYPEenum_inc_print( const Type type, FILE * inc ) {
+void TYPEenum_inc_print(const Type type, FILE *inc)
+{
     Expression expr;
 
     char tdnm[BUFSIZ],
          enumAggrNm[BUFSIZ];
-    const char * n;  /*  pointer to class name  */
+    const char *n;   /*  pointer to class name  */
     int cnt = 0;
 
     /*  print c++ enumerated values for class   */
-    fprintf( inc, "enum %s {\n", EnumName( TYPEget_name( type ) ) );
+    fprintf(inc, "enum %s {\n", EnumName(TYPEget_name(type)));
 
-    LISTdo_links( TYPEget_body( type )->list, link )
+    LISTdo_links(TYPEget_body(type)->list, link)
     /*  print the elements of the c++ enum type  */
-    expr = ( Expression )link->data;
-    if( cnt != 0 ) {
-        fprintf( inc, ",\n" );
+    expr = (Expression)link->data;
+    if(cnt != 0) {
+        fprintf(inc, ",\n");
     }
     ++cnt;
-    fprintf( inc, "        %s", EnumCElementName( type, expr ) );
+    fprintf(inc, "        %s", EnumCElementName(type, expr));
 
     LISTod
 
-    fprintf( inc, ",\n        %s_unset\n};\n", EnumName( TYPEget_name( type ) ) );
+    fprintf(inc, ",\n        %s_unset\n};\n", EnumName(TYPEget_name(type)));
 
     /*  print class for enumeration */
-    n = TYPEget_ctype( type );
-    fprintf( inc, "\nclass SC_SCHEMA_EXPORT %s  :  public SDAI_Enum  {\n", n );
+    n = TYPEget_ctype(type);
+    fprintf(inc, "\nclass SC_SCHEMA_EXPORT %s  :  public SDAI_Enum  {\n", n);
 
-    fprintf( inc, "  protected:\n        EnumTypeDescriptor *type;\n\n" );
+    fprintf(inc, "  protected:\n        EnumTypeDescriptor *type;\n\n");
 
     /*  constructors    */
-    strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
-    tdnm[BUFSIZ-1] = '\0';
-    fprintf( inc, "  public:\n        %s (const char * n =0, EnumTypeDescriptor *et =%s);\n", n, tdnm );
-    fprintf( inc, "        %s (%s e, EnumTypeDescriptor *et =%s)\n"
-             "                : type(et) {  set_value (e);  }\n",
-             n, EnumName( TYPEget_name( type ) ), tdnm );
-    fprintf( inc, "        %s (const %s &e) { set_value(e); }\n", n, TYPEget_ctype( type ));
+    strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
+    tdnm[BUFSIZ - 1] = '\0';
+    fprintf(inc, "  public:\n        %s (const char * n =0, EnumTypeDescriptor *et =%s);\n", n, tdnm);
+    fprintf(inc, "        %s (%s e, EnumTypeDescriptor *et =%s)\n"
+            "                : type(et) {  set_value (e);  }\n",
+            n, EnumName(TYPEget_name(type)), tdnm);
+    fprintf(inc, "        %s (const %s &e) { set_value(e); }\n", n, TYPEget_ctype(type));
 
     /*  destructor  */
-    fprintf( inc, "        ~%s () { }\n", n );
+    fprintf(inc, "        ~%s () { }\n", n);
 
     /*      operator =      */
-    fprintf( inc, "        %s& operator= (const %s& e)\n",
-             n, TYPEget_ctype( type ) );
-    fprintf( inc, "                {  set_value (e);  return *this;  }\n" );
+    fprintf(inc, "        %s& operator= (const %s& e)\n",
+            n, TYPEget_ctype(type));
+    fprintf(inc, "                {  set_value (e);  return *this;  }\n");
 
     /*      operator to cast to an enumerated type  */
-    fprintf( inc, "        operator %s () const;\n",
-             EnumName( TYPEget_name( type ) ) );
+    fprintf(inc, "        operator %s () const;\n",
+            EnumName(TYPEget_name(type)));
 
     /*      others          */
-    fprintf( inc, "\n        inline virtual const char * Name () const\n" );
-    fprintf( inc, "                {  return type->Name();  }\n" );
-    fprintf( inc, "        inline virtual int no_elements () const"
-             "  {  return %d;  }\n", cnt );
-    fprintf( inc, "        virtual const char * element_at (int n) const;\n" );
+    fprintf(inc, "\n        inline virtual const char * Name () const\n");
+    fprintf(inc, "                {  return type->Name();  }\n");
+    fprintf(inc, "        inline virtual int no_elements () const"
+            "  {  return %d;  }\n", cnt);
+    fprintf(inc, "        virtual const char * element_at (int n) const;\n");
 
     /*  end class definition  */
-    fprintf( inc, "};\n" );
+    fprintf(inc, "};\n");
 
-    fprintf( inc, "\ntypedef       %s *   %s_ptr;\n", n, n );
-    fprintf( inc, "\ntypedef const %s *   %s_ptr_c;\n", n, n );
+    fprintf(inc, "\ntypedef       %s *   %s_ptr;\n", n, n);
+    fprintf(inc, "\ntypedef const %s *   %s_ptr_c;\n", n, n);
 
 
     /*  Print ObjectStore Access Hook function  */
-    printEnumCreateHdr( inc, type );
+    printEnumCreateHdr(inc, type);
 
     /* DAS brandnew above */
 
     /*  print things for aggregate class  */
-    sprintf( enumAggrNm, "%s_agg", n );
+    sprintf(enumAggrNm, "%s_agg", n);
 
-    fprintf( inc, "\nclass %s_agg  :  public EnumAggregate  {\n", n );
+    fprintf(inc, "\nclass %s_agg  :  public EnumAggregate  {\n", n);
 
-    fprintf( inc, "  protected:\n    EnumTypeDescriptor *enum_type;\n\n" );
-    fprintf( inc, "  public:\n" );
-    fprintf( inc, "    %s_agg( EnumTypeDescriptor * =%s);\n", n, tdnm );
-    fprintf( inc, "    virtual ~%s_agg();\n", n );
-    fprintf( inc, "    virtual SingleLinkNode * NewNode()\n" );
-    fprintf( inc, "        { return new EnumNode (new %s( \"\", enum_type )); }"
-             "\n", n );
+    fprintf(inc, "  protected:\n    EnumTypeDescriptor *enum_type;\n\n");
+    fprintf(inc, "  public:\n");
+    fprintf(inc, "    %s_agg( EnumTypeDescriptor * =%s);\n", n, tdnm);
+    fprintf(inc, "    virtual ~%s_agg();\n", n);
+    fprintf(inc, "    virtual SingleLinkNode * NewNode()\n");
+    fprintf(inc, "        { return new EnumNode (new %s( \"\", enum_type )); }"
+            "\n", n);
 
-    fprintf( inc, "};\n" );
+    fprintf(inc, "};\n");
 
-    fprintf( inc, "\ntypedef       %s_agg *   %s_agg_ptr;\n", n, n );
-    fprintf( inc, "\ntypedef const %s_agg *   %s_agg_ptr_c;\n", n, n );
+    fprintf(inc, "\ntypedef       %s_agg *   %s_agg_ptr;\n", n, n);
+    fprintf(inc, "\ntypedef const %s_agg *   %s_agg_ptr_c;\n", n, n);
 
     /* DAS brandnew below */
 
     /* DAS creation function for enum aggregate class */
-    printEnumAggrCrHdr( inc, type );
+    printEnumAggrCrHdr(inc, type);
 
     /* DAS brandnew above */
 }
 
-void TYPEenum_lib_print( const Type type, FILE * f ) {
+void TYPEenum_lib_print(const Type type, FILE *f)
+{
     DictionaryEntry de;
     Expression expr;
-    const char * n;   /*  pointer to class name  */
+    const char *n;    /*  pointer to class name  */
     char c_enum_ele [BUFSIZ];
 
-    n = TYPEget_ctype( type );
+    n = TYPEget_ctype(type);
 
     /*  set up the dictionary info  */
 
-    fprintf( f, "const char *\n%s::element_at (int n) const  {\n", n );
-    fprintf( f, "  switch (n)  {\n" );
-    DICTdo_type_init( ENUM_TYPEget_items( type ), &de, OBJ_ENUM );
-    while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
-        strncpy( c_enum_ele, EnumCElementName( type, expr ), BUFSIZ );
-	c_enum_ele[BUFSIZ-1] = '\0';
-        fprintf( f, "  case %s:  return \"%s\";\n",
-                 c_enum_ele,
-                 StrToUpper( EXPget_name( expr ) ) );
+    fprintf(f, "const char *\n%s::element_at (int n) const  {\n", n);
+    fprintf(f, "  switch (n)  {\n");
+    DICTdo_type_init(ENUM_TYPEget_items(type), &de, OBJ_ENUM);
+    while(0 != (expr = (Expression)DICTdo(&de))) {
+        strncpy(c_enum_ele, EnumCElementName(type, expr), BUFSIZ);
+        c_enum_ele[BUFSIZ - 1] = '\0';
+        fprintf(f, "  case %s:  return \"%s\";\n",
+                c_enum_ele,
+                StrToUpper(EXPget_name(expr)));
     }
-    fprintf( f, "  case %s_unset        :\n", EnumName( TYPEget_name( type ) ) );
-    fprintf( f, "  default                :  return \"UNSET\";\n  }\n}\n" );
+    fprintf(f, "  case %s_unset        :\n", EnumName(TYPEget_name(type)));
+    fprintf(f, "  default                :  return \"UNSET\";\n  }\n}\n");
 
     /*    constructors    */
     /*    construct with character string  */
-    fprintf( f, "\n%s::%s (const char * n, EnumTypeDescriptor *et)\n"
-             "  : type(et)\n{\n", n, n );
-    fprintf( f, "  set_value (n);\n}\n" );
+    fprintf(f, "\n%s::%s (const char * n, EnumTypeDescriptor *et)\n"
+            "  : type(et)\n{\n", n, n);
+    fprintf(f, "  set_value (n);\n}\n");
 
     /*      cast operator to an enumerated type  */
-    fprintf( f, "\n%s::operator %s () const {\n", n,
-             EnumName( TYPEget_name( type ) ) );
-    fprintf( f, "  switch (v) {\n" );
-    DICTdo_type_init( ENUM_TYPEget_items( type ), &de, OBJ_ENUM );
-    while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
-        strncpy( c_enum_ele, EnumCElementName( type, expr ), BUFSIZ );
-        fprintf( f, "        case %s        :  ", c_enum_ele );
-        fprintf( f, "return %s;\n", c_enum_ele );
+    fprintf(f, "\n%s::operator %s () const {\n", n,
+            EnumName(TYPEget_name(type)));
+    fprintf(f, "  switch (v) {\n");
+    DICTdo_type_init(ENUM_TYPEget_items(type), &de, OBJ_ENUM);
+    while(0 != (expr = (Expression)DICTdo(&de))) {
+        strncpy(c_enum_ele, EnumCElementName(type, expr), BUFSIZ);
+        fprintf(f, "        case %s        :  ", c_enum_ele);
+        fprintf(f, "return %s;\n", c_enum_ele);
     }
     /*  print the last case with the default so sun c++ doesn't complain */
-    fprintf( f, "        case %s_unset        :\n", EnumName( TYPEget_name( type ) ) );
-    fprintf( f, "        default                :  return %s_unset;\n  }\n}\n", EnumName( TYPEget_name( type ) ) );
+    fprintf(f, "        case %s_unset        :\n", EnumName(TYPEget_name(type)));
+    fprintf(f, "        default                :  return %s_unset;\n  }\n}\n", EnumName(TYPEget_name(type)));
 
-    printEnumCreateBody( f, type );
+    printEnumCreateBody(f, type);
 
     /* print the enum aggregate functions */
 
-    fprintf( f, "\n%s_agg::%s_agg( EnumTypeDescriptor *et )\n", n, n );
-    fprintf( f, "    : enum_type(et)\n{\n}\n\n" );
-    fprintf( f, "%s_agg::~%s_agg()\n{\n}\n", n, n );
+    fprintf(f, "\n%s_agg::%s_agg( EnumTypeDescriptor *et )\n", n, n);
+    fprintf(f, "    : enum_type(et)\n{\n}\n\n");
+    fprintf(f, "%s_agg::~%s_agg()\n{\n}\n", n, n);
 
-    printEnumAggrCrBody( f, type );
+    printEnumAggrCrBody(f, type);
 }
 
-void TYPEPrint_h( const Type type, FILE * file ) {
-    DEBUG( "Entering TYPEPrint_h for %s\n", TYPEget_ctype( type ) );
+void TYPEPrint_h(const Type type, FILE *file)
+{
+    DEBUG("Entering TYPEPrint_h for %s\n", TYPEget_ctype(type));
 
-    if ( TYPEis_enumeration( type ) ) {
-        TYPEenum_inc_print( type, file );
-    } else if ( TYPEis_select( type ) ) {
-        TYPEselect_inc_print( type, file );
+    if(TYPEis_enumeration(type)) {
+        TYPEenum_inc_print(type, file);
+    } else if(TYPEis_select(type)) {
+        TYPEselect_inc_print(type, file);
     }
 
-    fprintf( file, "void init_%s(Registry& reg);\n\n", TYPEget_ctype( type ) );
+    fprintf(file, "void init_%s(Registry& reg);\n\n", TYPEget_ctype(type));
 
-    DEBUG( "DONE TYPEPrint_h\n" );
+    DEBUG("DONE TYPEPrint_h\n");
 }
 
-void TYPEPrint_cc( const Type type, const filenames_t * names, FILE * hdr, FILE * impl, Schema schema ) {
-    DEBUG( "Entering TYPEPrint_cc for %s\n", names->impl );
+void TYPEPrint_cc(const Type type, const filenames_t *names, FILE *hdr, FILE *impl, Schema schema)
+{
+    DEBUG("Entering TYPEPrint_cc for %s\n", names->impl);
 
-    fprintf( impl, "#include \"schema.h\"\n" );
-    fprintf( impl, "#include \"sc_memmgr.h\"\n" );
-    fprintf( impl, "#include \"%s\"\n\n", names->header );
+    fprintf(impl, "#include \"schema.h\"\n");
+    fprintf(impl, "#include \"sc_memmgr.h\"\n");
+    fprintf(impl, "#include \"%s\"\n\n", names->header);
 
-    if ( TYPEis_enumeration( type ) ) {
-        TYPEenum_lib_print( type, impl );
-    } else if ( TYPEis_select( type ) ) {
-        TYPEselect_lib_print( type, impl );
+    if(TYPEis_enumeration(type)) {
+        TYPEenum_lib_print(type, impl);
+    } else if(TYPEis_select(type)) {
+        TYPEselect_lib_print(type, impl);
     }
 
-    fprintf( impl, "\nvoid init_%s( Registry& reg ) {\n", TYPEget_ctype( type ) );
-    fprintf( impl, "    std::string str;\n" );
+    fprintf(impl, "\nvoid init_%s( Registry& reg ) {\n", TYPEget_ctype(type));
+    fprintf(impl, "    std::string str;\n");
     /* moved from SCOPEPrint in classes_wrapper */
-    TYPEprint_new( type, impl, schema, true );
-    TYPEprint_init( type, hdr, impl, schema );
-    fprintf( impl, "}\n\n" );
+    TYPEprint_new(type, impl, schema, true);
+    TYPEprint_init(type, hdr, impl, schema);
+    fprintf(impl, "}\n\n");
 
-    DEBUG( "DONE TYPEPrint_cc\n" );
+    DEBUG("DONE TYPEPrint_cc\n");
 }
 
-void TYPEPrint( const Type type, FILES *files, Schema schema ) {
-    FILE * hdr, * impl;
-    filenames_t names = getTypeFilenames( type );
+void TYPEPrint(const Type type, FILES *files, Schema schema)
+{
+    FILE *hdr, * impl;
+    filenames_t names = getTypeFilenames(type);
 
-    fprintf( files->inc, "#include \"%s\"\n", names.header );
+    fprintf(files->inc, "#include \"%s\"\n", names.header);
 
-    fprintf( files->init, "    init_%s( reg );\n", TYPEget_ctype( type ) );
+    fprintf(files->init, "    init_%s( reg );\n", TYPEget_ctype(type));
 
-    if( mkDirIfNone( "type" ) == -1 ) {
-        fprintf( stderr, "At %s:%d - mkdir() failed with error ", __FILE__, __LINE__);
-        perror( 0 );
+    if(mkDirIfNone("type") == -1) {
+        fprintf(stderr, "At %s:%d - mkdir() failed with error ", __FILE__, __LINE__);
+        perror(0);
         abort();
     }
-    hdr = FILEcreate( names.header );
-    impl = FILEcreate( names.impl );
-    assert( hdr && impl && "error creating files" );
-    fprintf( files->unity.type.hdr, "#include \"%s\"\n", names.header );
-    fprintf( files->unity.type.impl, "#include \"%s\"\n", names.impl );
+    hdr = FILEcreate(names.header);
+    impl = FILEcreate(names.impl);
+    assert(hdr && impl && "error creating files");
+    fprintf(files->unity.type.hdr, "#include \"%s\"\n", names.header);
+    fprintf(files->unity.type.impl, "#include \"%s\"\n", names.impl);
 
-    TYPEPrint_h( type, hdr );
-    TYPEPrint_cc( type, &names, hdr, impl, schema );
+    TYPEPrint_h(type, hdr);
+    TYPEPrint_cc(type, &names, hdr, impl, schema);
 
-    FILEclose( hdr );
-    FILEclose( impl );
+    FILEclose(hdr);
+    FILEclose(impl);
 }
 
 /**
@@ -371,41 +381,45 @@ void TYPEPrint( const Type type, FILES *files, Schema schema ) {
  * NOTE - "Print ObjectStore Access Hook function" comment seen at one of
  * the calls seems to imply it's ObjectStore specific...
  */
-static void printEnumCreateHdr( FILE * inc, const Type type ) {
-    const char * nm = TYPEget_ctype( type );
+static void printEnumCreateHdr(FILE *inc, const Type type)
+{
+    const char *nm = TYPEget_ctype(type);
 
-    fprintf( inc, "  SDAI_Enum * create_%s();\n", nm );
+    fprintf(inc, "  SDAI_Enum * create_%s();\n", nm);
 }
 
 /** See header comment above by printEnumCreateHdr. */
-static void printEnumCreateBody( FILE * lib, const Type type ) {
-    const char * nm = TYPEget_ctype( type );
+static void printEnumCreateBody(FILE *lib, const Type type)
+{
+    const char *nm = TYPEget_ctype(type);
     char tdnm[BUFSIZ];
-    tdnm[BUFSIZ-1] = '\0';
+    tdnm[BUFSIZ - 1] = '\0';
 
-    strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
-    tdnm[BUFSIZ-1] = '\0';
+    strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
+    tdnm[BUFSIZ - 1] = '\0';
 
-    fprintf( lib, "\nSDAI_Enum *\ncreate_%s ()\n{\n", nm );
-    fprintf( lib, "    return new %s( \"\", %s );\n}\n\n", nm, tdnm );
+    fprintf(lib, "\nSDAI_Enum *\ncreate_%s ()\n{\n", nm);
+    fprintf(lib, "    return new %s( \"\", %s );\n}\n\n", nm, tdnm);
 }
 
 /** Similar to printEnumCreateHdr above for the enum aggregate. */
-static void printEnumAggrCrHdr( FILE * inc, const Type type ) {
-    const char * n = TYPEget_ctype( type );
+static void printEnumAggrCrHdr(FILE *inc, const Type type)
+{
+    const char *n = TYPEget_ctype(type);
     /*    const char *n = ClassName( TYPEget_name(type) ));*/
-    fprintf( inc, "  STEPaggregate * create_%s_agg ();\n", n );
+    fprintf(inc, "  STEPaggregate * create_%s_agg ();\n", n);
 }
 
-static void printEnumAggrCrBody( FILE * lib, const Type type ) {
-    const char * n = TYPEget_ctype( type );
+static void printEnumAggrCrBody(FILE *lib, const Type type)
+{
+    const char *n = TYPEget_ctype(type);
     char tdnm[BUFSIZ];
 
-    strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
-    tdnm[BUFSIZ-1] = '\0';
+    strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
+    tdnm[BUFSIZ - 1] = '\0';
 
-    fprintf( lib, "\nSTEPaggregate *\ncreate_%s_agg ()\n{\n", n );
-    fprintf( lib, "    return new %s_agg( %s );\n}\n", n, tdnm );
+    fprintf(lib, "\nSTEPaggregate *\ncreate_%s_agg ()\n{\n", n);
+    fprintf(lib, "    return new %s_agg( %s );\n}\n", n, tdnm);
 }
 
 /** ************************************************************************
@@ -423,13 +437,14 @@ static void printEnumAggrCrBody( FILE * lib, const Type type ) {
  ** Status:  16-Mar-1993 kcm; updated 04-Feb-1997 dar
  ** Dec 2011 - MAP - remove goto
  **************************************************************************/
-void TYPEprint_typedefs( Type t, FILE * classes ) {
+void TYPEprint_typedefs(Type t, FILE *classes)
+{
     char nm [BUFSIZ];
     Type i;
     bool aggrNot1d = true;  /* added so I can get rid of a goto */
 
     /* Print the typedef statement (poss also a forward class def: */
-    if( TYPEis_enumeration( t ) ) {
+    if(TYPEis_enumeration(t)) {
         /* For enums and sels (else clause below), we need forward decl's so
           that if we later come across a type which is an aggregate of one of
           them, we'll be able to process it.  For selects, we also need a decl
@@ -438,32 +453,32 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
           same is basically true for the select, but a sel containing an ent
           containing a sel needs the forward decl (trust me ;-) ).
          */
-        if( !TYPEget_head( t ) ) {
+        if(!TYPEget_head(t)) {
             /* Only print this enum if it is an actual type and not a redefi-
               nition of another enum.  (Those are printed at the end of the
               classes file - after all the actual enum's.  They must be
               printed last since they depend on the others.)
              */
-            strncpy( nm, TYPEget_ctype( t ), BUFSIZ );
-	    nm[BUFSIZ-1] = '\0';
-            fprintf( classes, "class %s_agg;\n", nm );
+            strncpy(nm, TYPEget_ctype(t), BUFSIZ);
+            nm[BUFSIZ - 1] = '\0';
+            fprintf(classes, "class %s_agg;\n", nm);
         }
-    } else if( TYPEis_select( t ) ) {
-        if( !TYPEget_head( t ) ) {
+    } else if(TYPEis_select(t)) {
+        if(!TYPEget_head(t)) {
             /* Same comment as above. */
-            strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ );
-	    nm[BUFSIZ-1] = '\0';
-            fprintf( classes, "class %s;\n", nm );
-            fprintf( classes, "typedef       %s *   %s_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %s *   %s_ptr_c;\n", nm, nm );
-            fprintf( classes, "class %s_agg;\n", nm );
-            fprintf( classes, "typedef       %s_agg *   %s_agg_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %s_agg *   %s_agg_ptr_c;\n", nm, nm );
+            strncpy(nm, SelectName(TYPEget_name(t)), BUFSIZ);
+            nm[BUFSIZ - 1] = '\0';
+            fprintf(classes, "class %s;\n", nm);
+            fprintf(classes, "typedef       %s *   %s_ptr;\n", nm, nm);
+            fprintf(classes, "typedef const %s *   %s_ptr_c;\n", nm, nm);
+            fprintf(classes, "class %s_agg;\n", nm);
+            fprintf(classes, "typedef       %s_agg *   %s_agg_ptr;\n", nm, nm);
+            fprintf(classes, "typedef const %s_agg *   %s_agg_ptr_c;\n", nm, nm);
         }
     } else {
-        if( TYPEis_aggregate( t ) ) {
-            i = TYPEget_base_type( t );
-            if( TYPEis_enumeration( i ) || TYPEis_select( i ) ) {
+        if(TYPEis_aggregate(t)) {
+            i = TYPEget_base_type(t);
+            if(TYPEis_enumeration(i) || TYPEis_select(i)) {
                 /* One exceptional case - a 1d aggregate of an enum or select.
                    We must wait till the enum/sel itself has been processed.
                    To ensure this, we process all such 1d aggrs in a special
@@ -474,26 +489,26 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
                 aggrNot1d = false;
             }
         }
-        if( aggrNot1d ) {
+        if(aggrNot1d) {
             /* At this point, we'll print typedefs for types which are redefined
                fundamental types and their aggregates, and for 2D aggregates(aggre-
                gates of aggregates) of enum's and selects.
              */
-            strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
-	    nm[BUFSIZ-1] = '\0';
-            fprintf( classes, "typedef       %s       %s;\n", TYPEget_ctype( t ), nm );
-            if( TYPEis_aggregate( t ) ) {
-                fprintf( classes, "typedef       %s *     %sH;\n", nm, nm );
-                fprintf( classes, "typedef       %s *     %s_ptr;\n", nm, nm );
-                fprintf( classes, "typedef const %s *     %s_ptr_c;\n", nm, nm );
-                fprintf( classes, "typedef       %s_ptr   %s_var;\n", nm, nm );
+            strncpy(nm, ClassName(TYPEget_name(t)), BUFSIZ);
+            nm[BUFSIZ - 1] = '\0';
+            fprintf(classes, "typedef       %s       %s;\n", TYPEget_ctype(t), nm);
+            if(TYPEis_aggregate(t)) {
+                fprintf(classes, "typedef       %s *     %sH;\n", nm, nm);
+                fprintf(classes, "typedef       %s *     %s_ptr;\n", nm, nm);
+                fprintf(classes, "typedef const %s *     %s_ptr_c;\n", nm, nm);
+                fprintf(classes, "typedef       %s_ptr   %s_var;\n", nm, nm);
             }
         }
     }
 
     /* Print the extern statement: */
-    strncpy( nm, TYPEtd_name( t ), BUFSIZ );
-    fprintf( classes, "extern SC_SCHEMA_EXPORT %s         *%s;\n", GetTypeDescriptorName( t ), nm );
+    strncpy(nm, TYPEtd_name(t), BUFSIZ);
+    fprintf(classes, "extern SC_SCHEMA_EXPORT %s         *%s;\n", GetTypeDescriptorName(t), nm);
 }
 
 /** **
@@ -505,90 +520,92 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
    initialize it in the .init.cc file (DAR - all initialization done in fn
        TYPEprint_init() (below) which is done in exp2cxx's 1st pass only.)
 *****/
-void TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
+void TYPEprint_descriptions(const Type type, FILES *files, Schema schema)
+{
     char tdnm [BUFSIZ],
          typename_buf [MAX_LEN],
          base [BUFSIZ],
          nm [BUFSIZ];
     Type i;
 
-    strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
-    tdnm[BUFSIZ-1] = '\0';
+    strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
+    tdnm[BUFSIZ - 1] = '\0';
 
     /* define type descriptor pointer */
     /*  in source - declare the real definition of the pointer */
     /*  i.e. in the .cc file                                   */
-    fprintf( files -> lib, "%s         *%s;\n", GetTypeDescriptorName( type ), tdnm );
+    fprintf(files -> lib, "%s         *%s;\n", GetTypeDescriptorName(type), tdnm);
 
-    if( isAggregateType( type ) ) {
-        const char * ctype = TYPEget_ctype( type );
+    if(isAggregateType(type)) {
+        const char *ctype = TYPEget_ctype(type);
 
-        fprintf( files->inc, "STEPaggregate * create_%s ();\n\n",
-                 ClassName( TYPEget_name( type ) ) );
+        fprintf(files->inc, "STEPaggregate * create_%s ();\n\n",
+                ClassName(TYPEget_name(type)));
 
-        fprintf( files->lib,
-                 "STEPaggregate *\ncreate_%s () {  return create_%s();  }\n",
-                 ClassName( TYPEget_name( type ) ), ctype );
+        fprintf(files->lib,
+                "STEPaggregate *\ncreate_%s () {  return create_%s();  }\n",
+                ClassName(TYPEget_name(type)), ctype);
 
         /* this function is assigned to the aggrCreator var in TYPEprint_new */
     }
 
-    if( TYPEis_enumeration( type ) && ( i = TYPEget_ancestor( type ) ) != NULL ) {
+    if(TYPEis_enumeration(type) && (i = TYPEget_ancestor(type)) != NULL) {
         /* If we're a renamed enum type, just print a few typedef's to the
          * original and some specialized create functions:
          */
-        strncpy( base, EnumName( TYPEget_name( i ) ), BUFSIZ );
-        strncpy( nm, EnumName( TYPEget_name( type ) ), BUFSIZ );
-        fprintf( files->inc, "typedef %s %s;\n", base, nm );
-        strncpy( base, TYPEget_ctype( i ), BUFSIZ );
-        strncpy( nm, TYPEget_ctype( type ), BUFSIZ );
-        fprintf( files->inc, "typedef %s %s;\n", base, nm );
-        printEnumCreateHdr( files->inc, type );
-        printEnumCreateBody( files->lib, type );
-        fprintf( files->inc, "typedef       %s_agg *       %s_agg_ptr;\n", nm, nm );
-        fprintf( files->inc, "typedef const %s_agg *       %s_agg_ptr_c;\n", nm, nm );
-        printEnumAggrCrHdr( files->inc, type );
-        printEnumAggrCrBody( files->lib, type );
+        strncpy(base, EnumName(TYPEget_name(i)), BUFSIZ);
+        strncpy(nm, EnumName(TYPEget_name(type)), BUFSIZ);
+        fprintf(files->inc, "typedef %s %s;\n", base, nm);
+        strncpy(base, TYPEget_ctype(i), BUFSIZ);
+        strncpy(nm, TYPEget_ctype(type), BUFSIZ);
+        fprintf(files->inc, "typedef %s %s;\n", base, nm);
+        printEnumCreateHdr(files->inc, type);
+        printEnumCreateBody(files->lib, type);
+        fprintf(files->inc, "typedef       %s_agg *       %s_agg_ptr;\n", nm, nm);
+        fprintf(files->inc, "typedef const %s_agg *       %s_agg_ptr_c;\n", nm, nm);
+        printEnumAggrCrHdr(files->inc, type);
+        printEnumAggrCrBody(files->lib, type);
         return;
     }
 
-    if( !TYPEget_RefTypeVarNm( type, typename_buf, schema ) ) {
-        if( TYPEis_enumeration( type ) ) {
-                TYPEPrint( type, files, schema );
+    if(!TYPEget_RefTypeVarNm(type, typename_buf, schema)) {
+        if(TYPEis_enumeration(type)) {
+            TYPEPrint(type, files, schema);
         } /* so we don't do anything for non-enums??? */
     } else {
-        TYPEprint_new( type, files->create, schema, false );
-        TYPEprint_init( type, files->inc, files->init, schema );
+        TYPEprint_new(type, files->create, schema, false);
+        TYPEprint_init(type, files->inc, files->init, schema);
     }
 }
 
-void TYPEprint_init( const Type type, FILE * header, FILE * impl, Schema schema ) {
+void TYPEprint_init(const Type type, FILE *header, FILE *impl, Schema schema)
+{
     char tdnm [BUFSIZ];
     char typename_buf[MAX_LEN];
 
-    strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
+    strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
 
-    if( isAggregateType( type ) ) {
-        AGGRprint_init( header, impl, type, tdnm, type->symbol.name );
+    if(isAggregateType(type)) {
+        AGGRprint_init(header, impl, type, tdnm, type->symbol.name);
     }
 
     /* fill in the TD's values in the SchemaInit function (it is already
     declared with basic values) */
 
-    if( TYPEget_RefTypeVarNm( type, typename_buf, schema ) ) {
-        fprintf( impl, "        %s->ReferentType(%s);\n", tdnm, typename_buf );
+    if(TYPEget_RefTypeVarNm(type, typename_buf, schema)) {
+        fprintf(impl, "        %s->ReferentType(%s);\n", tdnm, typename_buf);
     } else {
-        switch( TYPEget_body( type )->type ) {
+        switch(TYPEget_body(type)->type) {
             case aggregate_: /* aggregate_ should not happen? DAS */
             case array_:
             case bag_:
             case set_:
             case list_: {
-                if( isMultiDimAggregateType( type ) ) {
-                    print_typechain( header, impl, TYPEget_body( type )->base,
-                                     typename_buf, schema, type->symbol.name );
-                    fprintf( impl, "        %s->ReferentType(%s);\n", tdnm,
-                             typename_buf );
+                if(isMultiDimAggregateType(type)) {
+                    print_typechain(header, impl, TYPEget_body(type)->base,
+                                    typename_buf, schema, type->symbol.name);
+                    fprintf(impl, "        %s->ReferentType(%s);\n", tdnm,
+                            typename_buf);
                 }
                 break;
             }
@@ -599,71 +616,73 @@ void TYPEprint_init( const Type type, FILE * header, FILE * impl, Schema schema 
 
     /* DAR - moved fn call below from TYPEselect_print to here to put all init
     ** info together. */
-    if( TYPEis_select( type ) ) {
-        TYPEselect_init_print( type, impl );
+    if(TYPEis_select(type)) {
+        TYPEselect_init_print(type, impl);
     }
 #ifdef NEWDICT
     /* DAS New SDAI Dictionary 5/95 */
     /* insert the type into the schema descriptor */
-    fprintf( impl,
-             "        ((SDAIAGGRH(Set,DefinedTypeH))%s::schema->Types())->Add((DefinedTypeH)%s);\n",
-             SCHEMAget_name( schema ), tdnm );
+    fprintf(impl,
+            "        ((SDAIAGGRH(Set,DefinedTypeH))%s::schema->Types())->Add((DefinedTypeH)%s);\n",
+            SCHEMAget_name(schema), tdnm);
 #endif
     /* insert into type dictionary */
-    fprintf( impl, "    reg.AddType (*%s);\n", tdnm );
+    fprintf(impl, "    reg.AddType (*%s);\n", tdnm);
 }
 
 /** print name, fundamental type, and description initialization function calls */
-void TYPEprint_nm_ft_desc( Schema schema, const Type type, FILE * f, char * endChars ) {
-    fprintf( f, "                  \"%s\",        // Name\n", PrettyTmpName( TYPEget_name( type ) ) );
-    fprintf( f, "                  %s,        // FundamentalType\n", FundamentalType( type, 1 ) );
-    fprintf( f, "                  %s::schema,        // Originating Schema\n", SCHEMAget_name( schema ) );
-    fprintf( f, "                  \"%s\"%s        // Description\n", TypeDescription( type ), endChars );
+void TYPEprint_nm_ft_desc(Schema schema, const Type type, FILE *f, char *endChars)
+{
+    fprintf(f, "                  \"%s\",        // Name\n", PrettyTmpName(TYPEget_name(type)));
+    fprintf(f, "                  %s,        // FundamentalType\n", FundamentalType(type, 1));
+    fprintf(f, "                  %s::schema,        // Originating Schema\n", SCHEMAget_name(schema));
+    fprintf(f, "                  \"%s\"%s        // Description\n", TypeDescription(type), endChars);
 }
 
 /** new space for a variable of type TypeDescriptor (or subtype).  This
  *  function is called for Types that have an Express name.
  */
-void TYPEprint_new( const Type type, FILE * create, Schema schema, bool needWR ) {
-    Type tmpType = TYPEget_head( type );
+void TYPEprint_new(const Type type, FILE *create, Schema schema, bool needWR)
+{
+    Type tmpType = TYPEget_head(type);
     Type bodyType = tmpType;
 
     /* define type definition */
     /*  in source - the real definition of the TypeDescriptor   */
 
-    if( TYPEis_select( type ) ) {
-        char * temp;
-        temp = non_unique_types_string( type );
-        fprintf( create, "        %s = new SelectTypeDescriptor (\n                  ~%s,        //unique elements,\n", TYPEtd_name( type ), temp );
-        sc_free( temp );
-        TYPEprint_nm_ft_desc( schema, type, create, "," );
-        fprintf( create, "                  (SelectCreator) create_%s);        // Creator function\n", SelectName( TYPEget_name( type ) ) );
+    if(TYPEis_select(type)) {
+        char *temp;
+        temp = non_unique_types_string(type);
+        fprintf(create, "        %s = new SelectTypeDescriptor (\n                  ~%s,        //unique elements,\n", TYPEtd_name(type), temp);
+        sc_free(temp);
+        TYPEprint_nm_ft_desc(schema, type, create, ",");
+        fprintf(create, "                  (SelectCreator) create_%s);        // Creator function\n", SelectName(TYPEget_name(type)));
     } else {
-        switch( TYPEget_body( type )->type ) {
+        switch(TYPEget_body(type)->type) {
             case boolean_:
-                fprintf( create, "        %s = new EnumTypeDescriptor (\n", TYPEtd_name( type ) );
-                TYPEprint_nm_ft_desc( schema, type, create, "," );
-                fprintf( create, "                  (EnumCreator) create_BOOLEAN);        // Creator function\n" );
+                fprintf(create, "        %s = new EnumTypeDescriptor (\n", TYPEtd_name(type));
+                TYPEprint_nm_ft_desc(schema, type, create, ",");
+                fprintf(create, "                  (EnumCreator) create_BOOLEAN);        // Creator function\n");
                 break;
             case logical_:
-                fprintf( create, "        %s = new EnumTypeDescriptor (\n", TYPEtd_name( type ) );
-                TYPEprint_nm_ft_desc( schema, type, create, "," );
-                fprintf( create, "                  (EnumCreator) create_LOGICAL);        // Creator function\n" );
+                fprintf(create, "        %s = new EnumTypeDescriptor (\n", TYPEtd_name(type));
+                TYPEprint_nm_ft_desc(schema, type, create, ",");
+                fprintf(create, "                  (EnumCreator) create_LOGICAL);        // Creator function\n");
                 break;
             case enumeration_:
-                fprintf( create, "        %s = new EnumTypeDescriptor (\n", TYPEtd_name( type ) );
-                TYPEprint_nm_ft_desc( schema, type, create, "," );
+                fprintf(create, "        %s = new EnumTypeDescriptor (\n", TYPEtd_name(type));
+                TYPEprint_nm_ft_desc(schema, type, create, ",");
                 /* get the type name of the underlying type - it is the type that needs to get created */
-                tmpType = TYPEget_head( type );
-                if( tmpType ) {
+                tmpType = TYPEget_head(type);
+                if(tmpType) {
                     bodyType = tmpType;
-                    while( tmpType ) {
+                    while(tmpType) {
                         bodyType = tmpType;
-                        tmpType = TYPEget_head( tmpType );
+                        tmpType = TYPEget_head(tmpType);
                     }
-                    fprintf( create, "                  (EnumCreator) create_%s);        // Creator function\n", TYPEget_ctype( bodyType ) );
+                    fprintf(create, "                  (EnumCreator) create_%s);        // Creator function\n", TYPEget_ctype(bodyType));
                 } else {
-                    fprintf( create, "                  (EnumCreator) create_%s);        // Creator function\n", TYPEget_ctype( type ) );
+                    fprintf(create, "                  (EnumCreator) create_%s);        // Creator function\n", TYPEget_ctype(type));
                 }
                 break;
             case aggregate_:
@@ -671,20 +690,20 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema, bool needWR )
             case bag_:
             case set_:
             case list_:
-                fprintf( create, "\n        %s = new %s (\n", TYPEtd_name( type ), GetTypeDescriptorName( type ) );
-                TYPEprint_nm_ft_desc( schema, type, create, "," );
-                fprintf( create, "                  (AggregateCreator) create_%s);        // Creator function\n\n", ClassName( TYPEget_name( type ) ) );
+                fprintf(create, "\n        %s = new %s (\n", TYPEtd_name(type), GetTypeDescriptorName(type));
+                TYPEprint_nm_ft_desc(schema, type, create, ",");
+                fprintf(create, "                  (AggregateCreator) create_%s);        // Creator function\n\n", ClassName(TYPEget_name(type)));
                 break;
             default:
-                fprintf( create, "        %s = new TypeDescriptor (\n", TYPEtd_name( type ) );
-                TYPEprint_nm_ft_desc( schema, type, create, ");" );
+                fprintf(create, "        %s = new TypeDescriptor (\n", TYPEtd_name(type));
+                TYPEprint_nm_ft_desc(schema, type, create, ");");
                 break;
         }
     }
     /* add the type to the Schema dictionary entry */
-    fprintf( create, "        %s::schema->AddType(%s);\n", SCHEMAget_name( schema ), TYPEtd_name( type ) );
+    fprintf(create, "        %s::schema->AddType(%s);\n", SCHEMAget_name(schema), TYPEtd_name(type));
 
-    WHEREprint( TYPEtd_name( type ), type->where, create, 0, needWR );
+    WHEREprint(TYPEtd_name(type), type->where, create, 0, needWR);
 }
 
 /** Get the TypeDescriptor variable name that t's TypeDescriptor references (if
@@ -706,22 +725,23 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema, bool needWR )
    Nov 2011 - MAP - modified to insert scope operator into variable name.
    Reason: use of namespace for global variables
 */
-int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
+int TYPEget_RefTypeVarNm(const Type t, char *buf, Schema schema)
+{
 
     /* It looks like TYPEget_head(t) is true when processing a type
        that refers to another type. e.g. when processing "name" in:
        TYPE name = label; ENDTYPE; TYPE label = STRING; ENDTYPE; DAS */
-    if( TYPEget_head( t ) ) {
+    if(TYPEget_head(t)) {
         /* this means that it is defined in an Express TYPE stmt and
            it refers to another Express TYPE stmt */
         /*  it would be a reference_ type */
         /*  a TypeDescriptor of the form <schema_name>t_<type_name_referred_to> */
-        sprintf( buf, "%s::%s%s",
-                 SCHEMAget_name( TYPEget_head( t )->superscope ),
-                 TYPEprefix( t ), TYPEget_name( TYPEget_head( t ) ) );
+        sprintf(buf, "%s::%s%s",
+                SCHEMAget_name(TYPEget_head(t)->superscope),
+                TYPEprefix(t), TYPEget_name(TYPEget_head(t)));
         return 1;
     } else {
-        switch( TYPEget_body( t )->type ) {
+        switch(TYPEget_body(t)->type) {
             case integer_:
             case real_:
             case boolean_:
@@ -731,7 +751,7 @@ int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
             case number_:
                 /* one of the SCL builtin TypeDescriptors of the form
                    t_STRING_TYPE, or t_REAL_TYPE */
-                sprintf( buf, "%s%s", TD_PREFIX, FundamentalType( t, 0 ) );
+                sprintf(buf, "%s%s", TD_PREFIX, FundamentalType(t, 0));
                 return 1;
                 break;
 
@@ -742,7 +762,7 @@ int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
                 break;
 
             case entity_:
-                sprintf( buf, "%s", TYPEtd_name( t ) );
+                sprintf(buf, "%s", TYPEtd_name(t));
                 /* following assumes we are not in a nested entity */
                 /* otherwise we should search upward for schema */
                 return 1;
@@ -756,11 +776,11 @@ int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
                 /* referent TypeDescriptor will be the one for the element unless it
                    is a multidimensional aggregate then return 0 */
 
-                if( isMultiDimAggregateType( t ) ) {
-                    if( TYPEget_name( TYPEget_body( t )->base ) ) {
-                        sprintf( buf, "%s::%s%s",
-                                 SCHEMAget_name( TYPEget_body( t )->base->superscope ),
-                                 TYPEprefix( t ), TYPEget_name( TYPEget_body( t )->base ) );
+                if(isMultiDimAggregateType(t)) {
+                    if(TYPEget_name(TYPEget_body(t)->base)) {
+                        sprintf(buf, "%s::%s%s",
+                                SCHEMAget_name(TYPEget_body(t)->base->superscope),
+                                TYPEprefix(t), TYPEget_name(TYPEget_body(t)->base));
                         return 1;
                     }
 
@@ -772,22 +792,22 @@ int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
                        for element */
                     /* being an aggregate implies that base below is not 0 */
 
-                    if( TYPEget_body( TYPEget_body( t )->base )->type == enumeration_ ||
-                            TYPEget_body( TYPEget_body( t )->base )->type == select_ ) {
+                    if(TYPEget_body(TYPEget_body(t)->base)->type == enumeration_ ||
+                            TYPEget_body(TYPEget_body(t)->base)->type == select_) {
 
-                        sprintf( buf, "%s", TYPEtd_name( TYPEget_body( t )->base ) );
+                        sprintf(buf, "%s", TYPEtd_name(TYPEget_body(t)->base));
                         return 1;
-                    } else if( TYPEget_name( TYPEget_body( t )->base ) ) {
-                        if( TYPEget_body( TYPEget_body( t )->base )->type == entity_ ) {
-                            sprintf( buf, "%s", TYPEtd_name( TYPEget_body( t )->base ) );
+                    } else if(TYPEget_name(TYPEget_body(t)->base)) {
+                        if(TYPEget_body(TYPEget_body(t)->base)->type == entity_) {
+                            sprintf(buf, "%s", TYPEtd_name(TYPEget_body(t)->base));
                             return 1;
                         }
-                        sprintf( buf, "%s::%s%s",
-                                 SCHEMAget_name( TYPEget_body( t )->base->superscope ),
-                                 TYPEprefix( t ), TYPEget_name( TYPEget_body( t )->base ) );
+                        sprintf(buf, "%s::%s%s",
+                                SCHEMAget_name(TYPEget_body(t)->base->superscope),
+                                TYPEprefix(t), TYPEget_name(TYPEget_body(t)->base));
                         return 1;
                     }
-                    return TYPEget_RefTypeVarNm( TYPEget_body( t )->base, buf, schema );
+                    return TYPEget_RefTypeVarNm(TYPEget_body(t)->base, buf, schema);
                 }
                 break;
             default:
@@ -825,277 +845,284 @@ int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
         that can be referenced to refer to the type that was created for
     Type t.
 */
-void print_typechain( FILE * header, FILE * impl, const Type t, char * buf, Schema schema, const char * type_name ) {
+void print_typechain(FILE *header, FILE *impl, const Type t, char *buf, Schema schema, const char *type_name)
+{
     /* if we've been called, current type has no name */
     /* nor is it a built-in type */
     /* the type_count variable is there for debugging purposes  */
 
-    const char * ctype = TYPEget_ctype( t );
+    const char *ctype = TYPEget_ctype(t);
     int count = type_count++;
     char name_buf[MAX_LEN];
     int s;
 
-    switch( TYPEget_body( t )->type ) {
+    switch(TYPEget_body(t)->type) {
         case aggregate_:
         case array_:
         case bag_:
         case set_:
         case list_:
             /* create a new TypeDescriptor variable, e.g. t1, and new space for it */
-            fprintf( impl, "        %s * %s%d = new %s;\n",
-                     GetTypeDescriptorName( t ), TD_PREFIX, count,
-                     GetTypeDescriptorName( t ) );
+            fprintf(impl, "        %s * %s%d = new %s;\n",
+                    GetTypeDescriptorName(t), TD_PREFIX, count,
+                    GetTypeDescriptorName(t));
 
-            fprintf( impl,
-                     "        %s%d->AssignAggrCreator((AggregateCreator) create_%s);%s",
-                     TD_PREFIX, count, ctype, "        // Creator function\n" );
+            fprintf(impl,
+                    "        %s%d->AssignAggrCreator((AggregateCreator) create_%s);%s",
+                    TD_PREFIX, count, ctype, "        // Creator function\n");
 
-            s = sprintf( name_buf, "%s%d", TD_PREFIX, count );
-            assert( ( s > 0 ) && ( s < MAX_LEN ) );
-            AGGRprint_init( header, impl, t, name_buf, type_name );
+            s = sprintf(name_buf, "%s%d", TD_PREFIX, count);
+            assert((s > 0) && (s < MAX_LEN));
+            AGGRprint_init(header, impl, t, name_buf, type_name);
 
             break;
 
         default: /* this should not happen since only aggregates are allowed to
           not have a name. This funct should only be called for aggrs
           without names. */
-            fprintf( impl, "        TypeDescriptor * %s%d = new TypeDescriptor;\n",
-                     TD_PREFIX, count );
+            fprintf(impl, "        TypeDescriptor * %s%d = new TypeDescriptor;\n",
+                    TD_PREFIX, count);
     }
 
     /* there is no name so name doesn't need to be initialized */
 
-    fprintf( impl, "        %s%d->FundamentalType(%s);\n", TD_PREFIX, count,
-             FundamentalType( t, 1 ) );
-    fprintf( impl, "        %s%d->Description(\"%s\");\n", TD_PREFIX, count,
-             TypeDescription( t ) );
+    fprintf(impl, "        %s%d->FundamentalType(%s);\n", TD_PREFIX, count,
+            FundamentalType(t, 1));
+    fprintf(impl, "        %s%d->Description(\"%s\");\n", TD_PREFIX, count,
+            TypeDescription(t));
 
     /* DAS ORIG SCHEMA FIX */
-    fprintf( impl, "        %s%d->OriginatingSchema(%s::schema);\n", TD_PREFIX, count, SCHEMAget_name( schema ) );
+    fprintf(impl, "        %s%d->OriginatingSchema(%s::schema);\n", TD_PREFIX, count, SCHEMAget_name(schema));
 
-    if( TYPEget_RefTypeVarNm( t, name_buf, schema ) ) {
-        fprintf( impl, "        %s%d->ReferentType(%s);\n", TD_PREFIX, count, name_buf );
+    if(TYPEget_RefTypeVarNm(t, name_buf, schema)) {
+        fprintf(impl, "        %s%d->ReferentType(%s);\n", TD_PREFIX, count, name_buf);
     } else {
         Type base = 0;
         /* no name, recurse */
         char callee_buffer[MAX_LEN];
-        if( TYPEget_body( t ) ) {
-            base = TYPEget_body( t )->base;
+        if(TYPEget_body(t)) {
+            base = TYPEget_body(t)->base;
         }
-        print_typechain( header, impl, base, callee_buffer, schema, type_name );
-        fprintf( impl, "        %s%d->ReferentType(%s);\n", TD_PREFIX, count, callee_buffer );
+        print_typechain(header, impl, base, callee_buffer, schema, type_name);
+        fprintf(impl, "        %s%d->ReferentType(%s);\n", TD_PREFIX, count, callee_buffer);
     }
-    sprintf( buf, "%s%d", TD_PREFIX, count );
+    sprintf(buf, "%s%d", TD_PREFIX, count);
 
     /* Types */
-    fprintf( impl, "        %s::schema->AddUnnamedType(%s%d);\n", SCHEMAget_name( schema ), TD_PREFIX, count );
+    fprintf(impl, "        %s::schema->AddUnnamedType(%s%d);\n", SCHEMAget_name(schema), TD_PREFIX, count);
 }
 
 /** return 1 if it is a multidimensional aggregate at the level passed in
    otherwise return 0;  If it refers to a type that is a multidimensional
    aggregate 0 is still returned. */
-int isMultiDimAggregateType( const Type t ) {
-    if( TYPEget_body( t )->base )
-        if( isAggregateType( TYPEget_body( t )->base ) ) {
+int isMultiDimAggregateType(const Type t)
+{
+    if(TYPEget_body(t)->base)
+        if(isAggregateType(TYPEget_body(t)->base)) {
             return 1;
         }
     return 0;
 }
 
-void Type_Description( const Type t, char * buf ) {
-    if( TYPEget_name( t ) ) {
-        strcat( buf, " " );
-        strcat( buf, TYPEget_name( t ) );
+void Type_Description(const Type t, char *buf)
+{
+    if(TYPEget_name(t)) {
+        strcat(buf, " ");
+        strcat(buf, TYPEget_name(t));
     } else {
-        TypeBody_Description( TYPEget_body( t ), buf );
+        TypeBody_Description(TYPEget_body(t), buf);
     }
 }
 
-void TypeBody_Description( TypeBody body, char * buf ) {
-    char * s;
+void TypeBody_Description(TypeBody body, char *buf)
+{
+    char *s;
 
-    switch( body->type ) {
+    switch(body->type) {
         case integer_:
-            strcat( buf, " INTEGER" );
+            strcat(buf, " INTEGER");
             break;
         case real_:
-            strcat( buf, " REAL" );
+            strcat(buf, " REAL");
             break;
         case string_:
-            strcat( buf, " STRING" );
+            strcat(buf, " STRING");
             break;
         case binary_:
-            strcat( buf, " BINARY" );
+            strcat(buf, " BINARY");
             break;
         case boolean_:
-            strcat( buf, " BOOLEAN" );
+            strcat(buf, " BOOLEAN");
             break;
         case logical_:
-            strcat( buf, " LOGICAL" );
+            strcat(buf, " LOGICAL");
             break;
         case number_:
-            strcat( buf, " NUMBER" );
+            strcat(buf, " NUMBER");
             break;
         case entity_:
-            strcat( buf, " " );
-            strcat( buf, PrettyTmpName( TYPEget_name( body->entity ) ) );
+            strcat(buf, " ");
+            strcat(buf, PrettyTmpName(TYPEget_name(body->entity)));
             break;
         case aggregate_:
         case array_:
         case bag_:
         case set_:
         case list_:
-            switch( body->type ) {
-                    /* ignore the aggregate bounds for now */
+            switch(body->type) {
+                /* ignore the aggregate bounds for now */
                 case aggregate_:
-                    strcat( buf, " AGGREGATE OF" );
+                    strcat(buf, " AGGREGATE OF");
                     break;
                 case array_:
-                    strcat( buf, " ARRAY" );
-                    strcat_bounds( body, buf );
-                    strcat( buf, " OF" );
-                    if( body->flags.optional ) {
-                        strcat( buf, " OPTIONAL" );
+                    strcat(buf, " ARRAY");
+                    strcat_bounds(body, buf);
+                    strcat(buf, " OF");
+                    if(body->flags.optional) {
+                        strcat(buf, " OPTIONAL");
                     }
-                    if( body->flags.unique ) {
-                        strcat( buf, " UNIQUE" );
+                    if(body->flags.unique) {
+                        strcat(buf, " UNIQUE");
                     }
                     break;
                 case bag_:
-                    strcat( buf, " BAG" );
-                    strcat_bounds( body, buf );
-                    strcat( buf, " OF" );
+                    strcat(buf, " BAG");
+                    strcat_bounds(body, buf);
+                    strcat(buf, " OF");
                     break;
                 case set_:
-                    strcat( buf, " SET" );
-                    strcat_bounds( body, buf );
-                    strcat( buf, " OF" );
+                    strcat(buf, " SET");
+                    strcat_bounds(body, buf);
+                    strcat(buf, " OF");
                     break;
                 case list_:
-                    strcat( buf, " LIST" );
-                    strcat_bounds( body, buf );
-                    strcat( buf, " OF" );
-                    if( body->flags.unique ) {
-                        strcat( buf, " UNIQUE" );
+                    strcat(buf, " LIST");
+                    strcat_bounds(body, buf);
+                    strcat(buf, " OF");
+                    if(body->flags.unique) {
+                        strcat(buf, " UNIQUE");
                     }
                     break;
                 default:
-                    fprintf(stderr, "Error: reached default case at %s:%d", __FILE__, __LINE__ );
+                    fprintf(stderr, "Error: reached default case at %s:%d", __FILE__, __LINE__);
                     abort();
             }
 
-            Type_Description( body->base, buf );
+            Type_Description(body->base, buf);
             break;
         case enumeration_:
-            strcat( buf, " ENUMERATION of (" );
-            LISTdo( body->list, e, Expression )
-            strcat( buf, ENUMget_name( e ) );
-            strcat( buf, ", " );
+            strcat(buf, " ENUMERATION of (");
+            LISTdo(body->list, e, Expression)
+            strcat(buf, ENUMget_name(e));
+            strcat(buf, ", ");
             LISTod
             /* find last comma and replace with ')' */
-            s = strrchr( buf, ',' );
-            if( s ) {
-                strcpy( s, ")" );
+            s = strrchr(buf, ',');
+            if(s) {
+                strcpy(s, ")");
             }
             break;
 
         case select_:
-            strcat( buf, " SELECT (" );
-            LISTdo( body->list, t, Type )
-            strcat( buf, PrettyTmpName( TYPEget_name( t ) ) );
-            strcat( buf, ", " );
+            strcat(buf, " SELECT (");
+            LISTdo(body->list, t, Type)
+            strcat(buf, PrettyTmpName(TYPEget_name(t)));
+            strcat(buf, ", ");
             LISTod
             /* find last comma and replace with ')' */
-            s = strrchr( buf, ',' );
-            if( s ) {
-                strcpy( s, ")" );
+            s = strrchr(buf, ',');
+            if(s) {
+                strcpy(s, ")");
             }
             break;
         default:
-            strcat( buf, " UNKNOWN" );
+            strcat(buf, " UNKNOWN");
     }
 
-    if( body->precision ) {
-        strcat( buf, " (" );
-        strcat_expr( body->precision, buf );
-        strcat( buf, ")" );
+    if(body->precision) {
+        strcat(buf, " (");
+        strcat_expr(body->precision, buf);
+        strcat(buf, ")");
     }
-    if( body->flags.fixed ) {
-        strcat( buf, " FIXED" );
+    if(body->flags.fixed) {
+        strcat(buf, " FIXED");
     }
 }
 
-const char * IdlEntityTypeName( Type t ) {
+const char *IdlEntityTypeName(Type t)
+{
     static char name [BUFSIZ];
-    strcpy( name, TYPE_PREFIX );
-    if( TYPEget_name( t ) ) {
-        strcpy( name, FirstToUpper( TYPEget_name( t ) ) );
+    strcpy(name, TYPE_PREFIX);
+    if(TYPEget_name(t)) {
+        strcpy(name, FirstToUpper(TYPEget_name(t)));
     } else {
-        return TYPEget_ctype( t );
+        return TYPEget_ctype(t);
     }
     return name;
 }
 
-const char * GetAggrElemType( const Type type ) {
+const char *GetAggrElemType(const Type type)
+{
     Class_Of_Type class;
     Type bt;
     static char retval [BUFSIZ];
 
-    if( isAggregateType( type ) ) {
-        bt = TYPEget_nonaggregate_base_type( type );
-        if( isAggregateType( bt ) ) {
-            strcpy( retval, "ERROR_aggr_of_aggr" );
+    if(isAggregateType(type)) {
+        bt = TYPEget_nonaggregate_base_type(type);
+        if(isAggregateType(bt)) {
+            strcpy(retval, "ERROR_aggr_of_aggr");
         }
 
-        class = TYPEget_type( bt );
+        class = TYPEget_type(bt);
 
         /*      case TYPE_INTEGER:  */
-        if( class == integer_ ) {
-            strcpy( retval, "long" );
+        if(class == integer_) {
+            strcpy(retval, "long");
         }
 
         /*      case TYPE_REAL:
             case TYPE_NUMBER:   */
-        if( ( class == number_ ) || ( class == real_ ) ) {
-            strcpy( retval, "double" );
+        if((class == number_) || (class == real_)) {
+            strcpy(retval, "double");
         }
 
         /*      case TYPE_ENTITY:   */
-        if( class == entity_ ) {
-            strcpy( retval, IdlEntityTypeName( bt ) );
+        if(class == entity_) {
+            strcpy(retval, IdlEntityTypeName(bt));
         }
 
         /*      case TYPE_ENUM:     */
         /*  case TYPE_SELECT:   */
-        if( ( class == enumeration_ )
-                || ( class == select_ ) )  {
-            strcpy( retval, TYPEget_ctype( bt ) );
+        if((class == enumeration_)
+                || (class == select_))  {
+            strcpy(retval, TYPEget_ctype(bt));
         }
 
         /*  case TYPE_LOGICAL:  */
-        if( class == logical_ ) {
-            strcpy( retval, "Logical" );
+        if(class == logical_) {
+            strcpy(retval, "Logical");
         }
 
         /*  case TYPE_BOOLEAN:  */
-        if( class == boolean_ ) {
-            strcpy( retval, "Bool" );
+        if(class == boolean_) {
+            strcpy(retval, "Bool");
         }
 
         /*  case TYPE_STRING:   */
-        if( class == string_ ) {
-            strcpy( retval, "string" );
+        if(class == string_) {
+            strcpy(retval, "string");
         }
 
         /*  case TYPE_BINARY:   */
-        if( class == binary_ ) {
-            strcpy( retval, "binary" );
+        if(class == binary_) {
+            strcpy(retval, "binary");
         }
     }
     return retval;
 }
 
-const char * TYPEget_idl_type( const Type t ) {
+const char *TYPEget_idl_type(const Type t)
+{
     Class_Of_Type class;
     static char retval [BUFSIZ];
 
@@ -1106,86 +1133,86 @@ const char * TYPEget_idl_type( const Type t ) {
     case TYPE_SET:
     */
 
-    if( isAggregateType( t ) ) {
-        strcpy( retval, GetAggrElemType( t ) );
+    if(isAggregateType(t)) {
+        strcpy(retval, GetAggrElemType(t));
 
         /*  case TYPE_ARRAY:    */
-        if( TYPEget_type( t ) == array_ ) {
-            strcat( retval, "__array" );
+        if(TYPEget_type(t) == array_) {
+            strcat(retval, "__array");
         }
         /*  case TYPE_LIST: */
-        if( TYPEget_type( t ) == list_ ) {
-            strcat( retval, "__list" );
+        if(TYPEget_type(t) == list_) {
+            strcat(retval, "__list");
         }
         /*  case TYPE_SET:  */
-        if( TYPEget_type( t ) == set_ ) {
-            strcat( retval, "__set" );
+        if(TYPEget_type(t) == set_) {
+            strcat(retval, "__set");
         }
         /*  case TYPE_BAG:  */
-        if( TYPEget_type( t ) == bag_ ) {
-            strcat( retval, "__bag" );
+        if(TYPEget_type(t) == bag_) {
+            strcat(retval, "__bag");
         }
         return retval;
     }
 
     /*  the rest is for things that are not aggregates  */
 
-    class = TYPEget_type( t );
+    class = TYPEget_type(t);
 
     /*    case TYPE_LOGICAL:    */
-    if( class == logical_ ) {
-        return ( "Logical" );
+    if(class == logical_) {
+        return ("Logical");
     }
 
     /*    case TYPE_BOOLEAN:    */
-    if( class == boolean_ ) {
-        return ( "Boolean" );
+    if(class == boolean_) {
+        return ("Boolean");
     }
 
     /*      case TYPE_INTEGER:  */
-    if( class == integer_ ) {
-        return ( "SDAI_Integer" );
+    if(class == integer_) {
+        return ("SDAI_Integer");
     }
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
-    if( ( class == number_ ) || ( class == real_ ) ) {
-        return ( "SDAI_Real" );
+    if((class == number_) || (class == real_)) {
+        return ("SDAI_Real");
     }
 
     /*      case TYPE_STRING:   */
-    if( class == string_ ) {
-        return ( "char *" );
+    if(class == string_) {
+        return ("char *");
     }
 
     /*      case TYPE_BINARY:   */
-    if( class == binary_ ) {
-        return ( AccessType( t ) );
+    if(class == binary_) {
+        return (AccessType(t));
     }
 
     /*      case TYPE_ENTITY:   */
-    if( class == entity_ ) {
+    if(class == entity_) {
         /* better do this because the return type might go away */
-        strcpy( retval, IdlEntityTypeName( t ) );
-        strcat( retval, "_ptr" );
+        strcpy(retval, IdlEntityTypeName(t));
+        strcat(retval, "_ptr");
         return retval;
     }
     /*    case TYPE_ENUM:   */
     /*    case TYPE_SELECT: */
-    if( class == enumeration_ ) {
-        strncpy( retval, EnumName( TYPEget_name( t ) ), BUFSIZ - 2 );
+    if(class == enumeration_) {
+        strncpy(retval, EnumName(TYPEget_name(t)), BUFSIZ - 2);
 
-        strcat( retval, " /*" );
-        strcat( retval, IdlEntityTypeName( t ) );
-        strcat( retval, "*/ " );
+        strcat(retval, " /*");
+        strcat(retval, IdlEntityTypeName(t));
+        strcat(retval, "*/ ");
         return retval;
     }
-    if( class == select_ )  {
-        return ( IdlEntityTypeName( t ) );
+    if(class == select_)  {
+        return (IdlEntityTypeName(t));
     }
 
     /*  default returns undefined   */
-    return ( "SCLundefined" );
+    return ("SCLundefined");
 }
 
 /**************************************************************//**
@@ -1199,11 +1226,12 @@ const char * TYPEget_idl_type( const Type t ) {
  ** Side Effects:
  ** Status:  new 1/24/91
  ******************************************************************/
-char * TYPEget_express_type( const Type t ) {
+char *TYPEget_express_type(const Type t)
+{
     Class_Of_Type class;
     Type bt;
     char retval [BUFSIZ];
-    char * n, * permval, * aggr_type;
+    char *n, * permval, * aggr_type;
 
 
     /*  1.  "DEFINED" types */
@@ -1211,38 +1239,38 @@ char * TYPEget_express_type( const Type t ) {
     /*    case TYPE_ENTITY: */
     /*  case TYPE_SELECT:       */
 
-    n = TYPEget_name( t );
-    if( n ) {
-        PrettyTmpName( n );
+    n = TYPEget_name(t);
+    if(n) {
+        PrettyTmpName(n);
     }
 
     /*   2.   "BASE" types  */
-    class = TYPEget_type( t );
+    class = TYPEget_type(t);
 
     /*    case TYPE_LOGICAL:    */
-    if( ( class == boolean_ ) || ( class == logical_ ) ) {
-        return ( "Logical" );
+    if((class == boolean_) || (class == logical_)) {
+        return ("Logical");
     }
 
     /*      case TYPE_INTEGER:  */
-    if( class == integer_ ) {
-        return ( "Integer " );
+    if(class == integer_) {
+        return ("Integer ");
     }
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
-    if( ( class == number_ ) || ( class == real_ ) ) {
-        return ( "Real " );
+    if((class == number_) || (class == real_)) {
+        return ("Real ");
     }
 
     /*      case TYPE_STRING:   */
-    if( class == string_ ) {
-        return ( "String " )      ;
+    if(class == string_) {
+        return ("String ")      ;
     }
 
     /*      case TYPE_BINARY:   */
-    if( class == binary_ ) {
-        return ( "Binary " )      ;
+    if(class == binary_) {
+        return ("Binary ")      ;
     }
 
     /*  AGGREGATES
@@ -1251,70 +1279,71 @@ char * TYPEget_express_type( const Type t ) {
     case TYPE_LIST:
     case TYPE_SET:
     */
-    if( isAggregateType( t ) ) {
-        bt = TYPEget_nonaggregate_base_type( t );
-        class = TYPEget_type( bt );
+    if(isAggregateType(t)) {
+        bt = TYPEget_nonaggregate_base_type(t);
+        class = TYPEget_type(bt);
 
         /*  case TYPE_ARRAY:    */
-        if( TYPEget_type( t ) == array_ ) {
+        if(TYPEget_type(t) == array_) {
             aggr_type = "Array";
         }
         /*  case TYPE_LIST: */
-        if( TYPEget_type( t ) == list_ ) {
+        if(TYPEget_type(t) == list_) {
             aggr_type = "List";
         }
         /*  case TYPE_SET:  */
-        if( TYPEget_type( t ) == set_ ) {
+        if(TYPEget_type(t) == set_) {
             aggr_type = "Set";
         }
         /*  case TYPE_BAG:  */
-        if( TYPEget_type( t ) == bag_ ) {
+        if(TYPEget_type(t) == bag_) {
             aggr_type = "Bag";
         }
 
-        sprintf( retval, "%s of %s",
-                 aggr_type, TYPEget_express_type( bt ) );
+        sprintf(retval, "%s of %s",
+                aggr_type, TYPEget_express_type(bt));
 
         /*  this will declare extra memory when aggregate is > 1D  */
 
-        permval = ( char * )sc_malloc( strlen( retval ) * sizeof( char ) + 1 );
-        strcpy( permval, retval );
+        permval = (char *)sc_malloc(strlen(retval) * sizeof(char) + 1);
+        strcpy(permval, retval);
         return permval;
 
     }
 
     /*  default returns undefined   */
 
-    fprintf( stderr, "Warning in %s: type %s is undefined\n", __FUNCTION__, TYPEget_name( t ) );
-    return ( "SCLundefined" );
+    fprintf(stderr, "Warning in %s: type %s is undefined\n", __FUNCTION__, TYPEget_name(t));
+    return ("SCLundefined");
 
 }
 
 /** Initialize an upper or lower bound for an aggregate. \sa AGGRprint_init */
-void AGGRprint_bound( FILE * header, FILE * impl, const char * var_name, const char * aggr_name, const char * cname, Expression bound, int boundNr ) {
-    if( bound->symbol.resolved ) {
-        if( bound->type == Type_Funcall ) {
-            fprintf( impl, "        %s->SetBound%dFromExpressFuncall( \"%s\" );\n", var_name, boundNr, EXPRto_string( bound ) );
+void AGGRprint_bound(FILE *header, FILE *impl, const char *var_name, const char *aggr_name, const char *cname, Expression bound, int boundNr)
+{
+    if(bound->symbol.resolved) {
+        if(bound->type == Type_Funcall) {
+            fprintf(impl, "        %s->SetBound%dFromExpressFuncall( \"%s\" );\n", var_name, boundNr, EXPRto_string(bound));
         } else {
-            fprintf( impl, "        %s->SetBound%d( %d );\n", var_name, boundNr, bound->u.integer );
+            fprintf(impl, "        %s->SetBound%d( %d );\n", var_name, boundNr, bound->u.integer);
         }
     } else { /* resolved == 0 seems to mean that this is Type_Runtime */
-        assert( cname && ( bound->e.op2 ) && ( bound->e.op2->symbol.name ) );
-        fprintf( impl, "        %s->SetBound%dFromMemberAccessor( &getBound%d_%s__%s );\n", var_name, boundNr, boundNr, cname, aggr_name );
-        fprintf( header, "inline SDAI_Integer getBound%d_%s__%s( SDAI_Application_instance* this_ptr ) {\n", boundNr, cname, aggr_name );
-        fprintf( header, "    %s * ths = (%s *) this_ptr;\n", cname, cname );
-        fprintf( header, "    ths->ResetAttributes();\n" );
-        fprintf( header, "    STEPattribute * a = ths->NextAttribute();\n" );
-        fprintf( header, "    while( strcmp( a->Name(), \"%s\" ) != 0 ) {\n", bound->e.op2->symbol.name );
-        fprintf( header, "        a = ths->NextAttribute();\n" );
-        fprintf( header, "        if( !a ) {\n" );
-        fprintf( header, "            break;\n" );
-        fprintf( header, "        }\n" );
-        fprintf( header, "    }\n" );
-        fprintf( header, "    assert( a->NonRefType() == INTEGER_TYPE && \"Error in schema or in exp2cxx at %s:%d %s\" );\n", path2str( __FILE__ ),
-                 __LINE__, "(incorrect assumption of integer type?) Please report error to STEPcode: scl-dev at groups.google.com." );
-        fprintf( header, "    return *( a->Integer() );\n" ); /* always an integer? if not, would need to translate somehow due to return type... */
-        fprintf( header, "}\n" );
+        assert(cname && (bound->e.op2) && (bound->e.op2->symbol.name));
+        fprintf(impl, "        %s->SetBound%dFromMemberAccessor( &getBound%d_%s__%s );\n", var_name, boundNr, boundNr, cname, aggr_name);
+        fprintf(header, "inline SDAI_Integer getBound%d_%s__%s( SDAI_Application_instance* this_ptr ) {\n", boundNr, cname, aggr_name);
+        fprintf(header, "    %s * ths = (%s *) this_ptr;\n", cname, cname);
+        fprintf(header, "    ths->ResetAttributes();\n");
+        fprintf(header, "    STEPattribute * a = ths->NextAttribute();\n");
+        fprintf(header, "    while( strcmp( a->Name(), \"%s\" ) != 0 ) {\n", bound->e.op2->symbol.name);
+        fprintf(header, "        a = ths->NextAttribute();\n");
+        fprintf(header, "        if( !a ) {\n");
+        fprintf(header, "            break;\n");
+        fprintf(header, "        }\n");
+        fprintf(header, "    }\n");
+        fprintf(header, "    assert( a->NonRefType() == INTEGER_TYPE && \"Error in schema or in exp2cxx at %s:%d %s\" );\n", path2str(__FILE__),
+                __LINE__, "(incorrect assumption of integer type?) Please report error to STEPcode: scl-dev at groups.google.com.");
+        fprintf(header, "    return *( a->Integer() );\n");   /* always an integer? if not, would need to translate somehow due to return type... */
+        fprintf(header, "}\n");
     }
 
 }
@@ -1329,28 +1358,29 @@ void AGGRprint_bound( FILE * header, FILE * impl, const char * var_name, const c
  * \param t the Type
  * \param var_name the name of the C++ variable, such as t_1 or schema::t_name
  */
-void AGGRprint_init( FILE * header, FILE * impl, const Type t, const char * var_name, const char * aggr_name ) {
-    if( !header ) {
-        fprintf( stderr, "ERROR at %s:%d! 'header' is null for aggregate %s.", __FILE__, __LINE__, t->symbol.name );
+void AGGRprint_init(FILE *header, FILE *impl, const Type t, const char *var_name, const char *aggr_name)
+{
+    if(!header) {
+        fprintf(stderr, "ERROR at %s:%d! 'header' is null for aggregate %s.", __FILE__, __LINE__, t->symbol.name);
         abort();
     }
-    if( !TYPEget_head( t ) ) {
-        const char * cname = 0;
-        if( ( t->superscope ) && ( t->superscope->symbol.name ) ) {
-            cname = ClassName( t->superscope->symbol.name );
+    if(!TYPEget_head(t)) {
+        const char *cname = 0;
+        if((t->superscope) && (t->superscope->symbol.name)) {
+            cname = ClassName(t->superscope->symbol.name);
         }
 
-        if( TYPEget_body( t )->lower ) {
-            AGGRprint_bound( header, impl, var_name, aggr_name, cname, TYPEget_body( t )->lower, 1 );
+        if(TYPEget_body(t)->lower) {
+            AGGRprint_bound(header, impl, var_name, aggr_name, cname, TYPEget_body(t)->lower, 1);
         }
-        if( TYPEget_body( t )->upper ) {
-            AGGRprint_bound( header, impl, var_name, aggr_name, cname, TYPEget_body( t )->upper, 2 );
+        if(TYPEget_body(t)->upper) {
+            AGGRprint_bound(header, impl, var_name, aggr_name, cname, TYPEget_body(t)->upper, 2);
         }
-        if( TYPEget_body( t )->flags.unique ) {
-            fprintf( impl, "        %s->UniqueElements(LTrue);\n", var_name );
+        if(TYPEget_body(t)->flags.unique) {
+            fprintf(impl, "        %s->UniqueElements(LTrue);\n", var_name);
         }
-        if( TYPEget_body( t )->flags.optional ) {
-            fprintf( impl, "        %s->OptionalElements(LTrue);\n", var_name );
+        if(TYPEget_body(t)->flags.optional) {
+            fprintf(impl, "        %s->OptionalElements(LTrue);\n", var_name);
         }
     }
 }

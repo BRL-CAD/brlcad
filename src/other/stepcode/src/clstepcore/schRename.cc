@@ -5,12 +5,13 @@
  * See if nm = one of our choices (either ours or that of a SchRename
  * later in the list.
  */
-bool SchRename::choice( const char * nm ) const {
-    if( !StrCmpIns( nm, newName ) ) {
+bool SchRename::choice(const char *nm) const
+{
+    if(!StrCmpIns(nm, newName)) {
         return true;
     }
-    if( next ) {
-        return ( next->choice( nm ) );
+    if(next) {
+        return (next->choice(nm));
     }
     return false;
 }
@@ -22,13 +23,14 @@ bool SchRename::choice( const char * nm ) const {
  * on next.  Thus, this function will tell us if this or any later SchRe-
  * name in this list provide a new name for TypeDesc for schema schnm.
  */
-char * SchRename::rename( const char * schnm, char * newnm ) const {
-    if( !StrCmpIns( schnm, schName ) ) {
-        strcpy( newnm, newName );
+char *SchRename::rename(const char *schnm, char *newnm) const
+{
+    if(!StrCmpIns(schnm, schName)) {
+        strcpy(newnm, newName);
         return newnm;
     }
-    if( next ) {
-        return ( next->rename( schnm, newnm ) );
+    if(next) {
+        return (next->rename(schnm, newnm));
     }
     return NULL;
 }

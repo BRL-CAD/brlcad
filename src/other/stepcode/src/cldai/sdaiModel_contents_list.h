@@ -3,28 +3,29 @@
 
 #include <sc_export.h>
 
-class SC_DAI_EXPORT SDAI_Model_contents__list {
+class SC_DAI_EXPORT SDAI_Model_contents__list
+{
     public:
-        SDAI_Model_contents__list( int = 16 );
+        SDAI_Model_contents__list(int = 16);
         ~SDAI_Model_contents__list();
 
-        SDAI_Model_contents_ptr retrieve( int index );
+        SDAI_Model_contents_ptr retrieve(int index);
         int is_empty();
 
-        SDAI_Model_contents_ptr & operator[]( int index );
+        SDAI_Model_contents_ptr &operator[](int index);
 
-        void Insert( SDAI_Model_contents_ptr, int index );
-        void Append( SDAI_Model_contents_ptr );
-        void Remove( int index );
-        int Index( SDAI_Model_contents_ptr );
+        void Insert(SDAI_Model_contents_ptr, int index);
+        void Append(SDAI_Model_contents_ptr);
+        void Remove(int index);
+        int Index(SDAI_Model_contents_ptr);
 
         void Clear();
         int Count();
 
     private:
-        void Check( int index );
+        void Check(int index);
     private:
-        SDAI_Model_contents_ptr * _buf;
+        SDAI_Model_contents_ptr *_buf;
         int _bufsize;
         int _count;
 };

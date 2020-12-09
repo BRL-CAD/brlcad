@@ -29,24 +29,26 @@
 //  This will be used to represent the display state lists.
 //////////////////////////////////////////////////////////////////////////////
 
-class SC_CORE_EXPORT DisplayNodeList : public GenNodeList {
+class SC_CORE_EXPORT DisplayNodeList : public GenNodeList
+{
     public:
-        DisplayNodeList( displayStateEnum type );
+        DisplayNodeList(displayStateEnum type);
         ~DisplayNodeList() { }
 
 // ADDED functions
-        displayStateEnum GetState() {
+        displayStateEnum GetState()
+        {
             return listType;
         }
 
 // REDEFINED functions
         // deletes node from its previous list & appends
-        virtual void Append( GenericNode * node );
+        virtual void Append(GenericNode *node);
         // deletes newNode from its previous list & inserts in
         //  relation to existNode
-        virtual void InsertAfter( GenericNode * newNode, GenericNode * existNode );
-        virtual void InsertBefore( GenericNode * newNode, GenericNode * existNode );
-        virtual void Remove( GenericNode * node );
+        virtual void InsertAfter(GenericNode *newNode, GenericNode *existNode);
+        virtual void InsertBefore(GenericNode *newNode, GenericNode *existNode);
+        virtual void Remove(GenericNode *node);
 
     protected:
     private:
@@ -59,10 +61,11 @@ class SC_CORE_EXPORT DisplayNodeList : public GenNodeList {
 //  other classes) that aren't in this file except for Generic functions
 //////////////////////////////////////////////////////////////////////////////
 
-inline DisplayNodeList::DisplayNodeList( displayStateEnum type )
-    : GenNodeList( new DisplayNode() ) {
+inline DisplayNodeList::DisplayNodeList(displayStateEnum type)
+    : GenNodeList(new DisplayNode())
+{
     listType = type;
-    ( ( DisplayNode * )head )->displayState = type;
+    ((DisplayNode *)head)->displayState = type;
 }
 
 #endif

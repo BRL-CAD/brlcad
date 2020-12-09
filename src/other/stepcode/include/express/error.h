@@ -166,7 +166,7 @@ typedef struct Error_ *Error;
 /********************/
 
 extern SC_EXPRESS_EXPORT bool __ERROR_buffer_errors;
-extern SC_EXPRESS_EXPORT const char * current_filename;
+extern SC_EXPRESS_EXPORT const char *current_filename;
 
 /* flag to remember whether non-warning errors have occurred */
 extern SC_EXPRESS_EXPORT bool ERRORoccurred;
@@ -180,26 +180,28 @@ extern SC_EXPRESS_EXPORT int malloc_debug_resolve;
 /* for debugging yacc/lex */
 extern SC_EXPRESS_EXPORT int debug;
 
-extern SC_EXPRESS_EXPORT void ( *ERRORusage_function )( void );
+extern SC_EXPRESS_EXPORT void (*ERRORusage_function)(void);
 
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void ERROR_start_message_buffer( void );
-extern SC_EXPRESS_EXPORT void ERROR_flush_message_buffer( void );
+extern SC_EXPRESS_EXPORT void ERROR_start_message_buffer(void);
+extern SC_EXPRESS_EXPORT void ERROR_flush_message_buffer(void);
 
-static inline void ERRORbuffer_messages( bool flag ) {
+static inline void ERRORbuffer_messages(bool flag)
+{
     __ERROR_buffer_errors = flag;
-    if( __ERROR_buffer_errors ) {
+    if(__ERROR_buffer_errors) {
         ERROR_start_message_buffer();
     } else {
         ERROR_flush_message_buffer();
     }
 }
 
-static inline void ERRORflush_messages( void ) {
-    if( __ERROR_buffer_errors ) {
+static inline void ERRORflush_messages(void)
+{
+    if(__ERROR_buffer_errors) {
         ERROR_flush_message_buffer();
         ERROR_start_message_buffer();
     }
@@ -210,22 +212,22 @@ static inline void ERRORflush_messages( void ) {
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void ERRORinitialize( void );
-extern SC_EXPRESS_EXPORT void ERRORcleanup( void );
-extern SC_EXPRESS_EXPORT void ERRORnospace( void );
-extern SC_EXPRESS_EXPORT void ERRORabort( int );
-extern SC_EXPRESS_EXPORT void ERRORreport( enum ErrorCode, ... );
+extern SC_EXPRESS_EXPORT void ERRORinitialize(void);
+extern SC_EXPRESS_EXPORT void ERRORcleanup(void);
+extern SC_EXPRESS_EXPORT void ERRORnospace(void);
+extern SC_EXPRESS_EXPORT void ERRORabort(int);
+extern SC_EXPRESS_EXPORT void ERRORreport(enum ErrorCode, ...);
 
 struct Symbol_; /* mention Symbol to avoid warning on following line */
-extern SC_EXPRESS_EXPORT void ERRORreport_with_symbol( enum ErrorCode, struct Symbol_ *, ... );
-extern SC_EXPRESS_EXPORT void ERRORreport_with_line( enum ErrorCode, int, ... );
+extern SC_EXPRESS_EXPORT void ERRORreport_with_symbol(enum ErrorCode, struct Symbol_ *, ...);
+extern SC_EXPRESS_EXPORT void ERRORreport_with_line(enum ErrorCode, int, ...);
 
-extern SC_EXPRESS_EXPORT void ERRORset_warning( char *, bool );
-extern SC_EXPRESS_EXPORT void ERRORset_all_warnings( bool );
-extern SC_EXPRESS_EXPORT void ERRORsafe( jmp_buf env );
-extern SC_EXPRESS_EXPORT void ERRORunsafe( void );
+extern SC_EXPRESS_EXPORT void ERRORset_warning(char *, bool);
+extern SC_EXPRESS_EXPORT void ERRORset_all_warnings(bool);
+extern SC_EXPRESS_EXPORT void ERRORsafe(jmp_buf env);
+extern SC_EXPRESS_EXPORT void ERRORunsafe(void);
 
-extern SC_EXPRESS_EXPORT char * ERRORget_warnings_help(const char* prefix, const char *eol);
+extern SC_EXPRESS_EXPORT char *ERRORget_warnings_help(const char *prefix, const char *eol);
 extern bool ERRORis_enabled(enum ErrorCode errnum);
 
 #endif /* ERROR_H */

@@ -29,22 +29,23 @@
 
 class MgrNode;
 
-class SC_CORE_EXPORT MgrNodeList : public GenNodeList {
+class SC_CORE_EXPORT MgrNodeList : public GenNodeList
+{
     public:
-        MgrNodeList( stateEnum type );
+        MgrNodeList(stateEnum type);
         virtual ~MgrNodeList() { }
 
 // ADDED functions
-        virtual MgrNode * FindFileId( int fileId );
+        virtual MgrNode *FindFileId(int fileId);
 
 // REDEFINED functions
         // deletes node from its previous list & appends
-        virtual void Append( GenericNode * node );
+        virtual void Append(GenericNode *node);
         // deletes newNode from its previous list & inserts in
         //  relation to existNode
-        virtual void InsertAfter( GenericNode * newNode, GenericNode * existNode );
-        virtual void InsertBefore( GenericNode * newNode, GenericNode * existNode );
-        virtual void Remove( GenericNode * node );
+        virtual void InsertAfter(GenericNode *newNode, GenericNode *existNode);
+        virtual void InsertBefore(GenericNode *newNode, GenericNode *existNode);
+        virtual void Remove(GenericNode *node);
 
     protected:
         stateEnum listType;

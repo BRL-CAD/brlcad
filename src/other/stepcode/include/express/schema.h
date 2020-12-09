@@ -72,10 +72,10 @@
 enum rename_type { use, ref };
 
 typedef struct Rename {
-    struct Symbol_ * schema_sym;
+    struct Symbol_ *schema_sym;
     Schema schema;
-    struct Symbol_ * old;
-    struct Symbol_ * nnew;
+    struct Symbol_ *old;
+    struct Symbol_ *nnew;
     void *object;     /**< once object has been looked up */
     char type;      /**< drat, need to remember this once renames have been
                      * resolved to avoid looking them up in the dictionary again */
@@ -133,22 +133,22 @@ extern SC_EXPRESS_EXPORT int __SCOPE_search_id;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Variable VARfind( Scope, char *, int );
-extern SC_EXPRESS_EXPORT Schema   SCHEMAcreate( void );
-extern SC_EXPRESS_EXPORT void     SCHEMAinitialize( void );
-extern SC_EXPRESS_EXPORT void     SCHEMAadd_use( Schema, Symbol *, Symbol *, Symbol * );
-extern SC_EXPRESS_EXPORT void     SCHEMAadd_reference( Schema, Symbol *, Symbol *, Symbol * );
-extern SC_EXPRESS_EXPORT void     SCHEMAdefine_use( Schema, Rename * );
-extern SC_EXPRESS_EXPORT void     SCHEMAdefine_reference( Schema, Rename * );
-extern SC_EXPRESS_EXPORT void *   SCHEMAfind( Schema, char * name, int search_refs );
-extern SC_EXPRESS_EXPORT Scope    SCOPEcreate( char );
-extern SC_EXPRESS_EXPORT Scope    SCOPEcreate_tiny( char );
-extern SC_EXPRESS_EXPORT Scope    SCOPEcreate_nostab( char );
-extern SC_EXPRESS_EXPORT void     SCOPEdestroy( Scope );
-extern SC_EXPRESS_EXPORT Linked_List SCHEMAget_entities_use( Scope );
-extern SC_EXPRESS_EXPORT Linked_List SCHEMAget_entities_ref( Scope );
+extern SC_EXPRESS_EXPORT Variable VARfind(Scope, char *, int);
+extern SC_EXPRESS_EXPORT Schema   SCHEMAcreate(void);
+extern SC_EXPRESS_EXPORT void     SCHEMAinitialize(void);
+extern SC_EXPRESS_EXPORT void     SCHEMAadd_use(Schema, Symbol *, Symbol *, Symbol *);
+extern SC_EXPRESS_EXPORT void     SCHEMAadd_reference(Schema, Symbol *, Symbol *, Symbol *);
+extern SC_EXPRESS_EXPORT void     SCHEMAdefine_use(Schema, Rename *);
+extern SC_EXPRESS_EXPORT void     SCHEMAdefine_reference(Schema, Rename *);
+extern SC_EXPRESS_EXPORT void    *SCHEMAfind(Schema, char *name, int search_refs);
+extern SC_EXPRESS_EXPORT Scope    SCOPEcreate(char);
+extern SC_EXPRESS_EXPORT Scope    SCOPEcreate_tiny(char);
+extern SC_EXPRESS_EXPORT Scope    SCOPEcreate_nostab(char);
+extern SC_EXPRESS_EXPORT void     SCOPEdestroy(Scope);
+extern SC_EXPRESS_EXPORT Linked_List SCHEMAget_entities_use(Scope);
+extern SC_EXPRESS_EXPORT Linked_List SCHEMAget_entities_ref(Scope);
 
-void SCHEMA_get_entities_ref( Scope, Linked_List );
+void SCHEMA_get_entities_ref(Scope, Linked_List);
 
 #endif /*  SCHEMA_H */
 

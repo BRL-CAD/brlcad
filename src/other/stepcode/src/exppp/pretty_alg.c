@@ -13,17 +13,19 @@
 #include "pretty_scope.h"
 #include "pretty_alg.h"
 
-void ALGscope_out( Scope s, int level ) {
-    SCOPEtypes_out( s, level );
-    SCOPEentities_out( s, level );
-    SCOPEalgs_out( s, level );
+void ALGscope_out(Scope s, int level)
+{
+    SCOPEtypes_out(s, level);
+    SCOPEentities_out(s, level);
+    SCOPEalgs_out(s, level);
 
-    SCOPEconsts_out( s, level );
-    SCOPElocals_out( s, level );
+    SCOPEconsts_out(s, level);
+    SCOPElocals_out(s, level);
 }
 
 /** last arg is not terminated with ; or \n */
-void ALGargs_out( Linked_List args, int level ) {
+void ALGargs_out(Linked_List args, int level)
+{
     Type previoustype = 0;
     bool previousVAR = false;
     indent2 = level + exppp_continuation_indent;
@@ -35,26 +37,27 @@ void ALGargs_out( Linked_List args, int level ) {
      * flags.var is set in the formal_parameter production
      */
 
-    LISTdo( args, v, Variable ) {
-        if( ( previoustype != v->type ) || ( previousVAR != v->flags.var ) ) {
-            if( previoustype ) {
-                wrap( " : " );
-                TYPE_head_out( previoustype, NOLEVEL );
-                raw( ";\n" );
+    LISTdo(args, v, Variable) {
+        if((previoustype != v->type) || (previousVAR != v->flags.var)) {
+            if(previoustype) {
+                wrap(" : ");
+                TYPE_head_out(previoustype, NOLEVEL);
+                raw(";\n");
             }
-            raw( "%*s", level, "" );
-            if( v->flags.var ) {
-                raw( "VAR " );
+            raw("%*s", level, "");
+            if(v->flags.var) {
+                raw("VAR ");
             }
-            EXPR_out( VARget_name( v ), 0 );
+            EXPR_out(VARget_name(v), 0);
         } else {
-            raw( ", " );
-            EXPR_out( VARget_name( v ), 0 );
+            raw(", ");
+            EXPR_out(VARget_name(v), 0);
         }
         previoustype = v->type;
         previousVAR = v->flags.var;
-    } LISTod
+    }
+    LISTod
 
-    wrap( " : " );
-    TYPE_head_out( previoustype, NOLEVEL );
+    wrap(" : ");
+    TYPE_head_out(previoustype, NOLEVEL);
 }

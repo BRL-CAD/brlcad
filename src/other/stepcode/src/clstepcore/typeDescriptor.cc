@@ -1,20 +1,23 @@
 #include "typeDescriptor.h"
 
-TypeDescriptor::TypeDescriptor( )
-    : _name( 0 ), altNames( 0 ), _fundamentalType( UNKNOWN_TYPE ),
-      _originatingSchema( 0 ), _referentType( 0 ), _description( 0 ), _where_rules( 0 ) {
+TypeDescriptor::TypeDescriptor()
+    : _name(0), altNames(0), _fundamentalType(UNKNOWN_TYPE),
+      _originatingSchema(0), _referentType(0), _description(0), _where_rules(0)
+{
 }
 
 TypeDescriptor::TypeDescriptor
-( const char * nm, PrimitiveType ft, Schema * origSchema,
-  const char * d )
-    :  _name( nm ), altNames( 0 ), _fundamentalType( ft ),
-       _originatingSchema( origSchema ), _referentType( 0 ), _description( d ),
-       _where_rules( 0 ) {
+(const char *nm, PrimitiveType ft, Schema *origSchema,
+ const char *d)
+    :  _name(nm), altNames(0), _fundamentalType(ft),
+       _originatingSchema(origSchema), _referentType(0), _description(d),
+       _where_rules(0)
+{
 }
 
-TypeDescriptor::~TypeDescriptor() {
-    if( _where_rules ) {
+TypeDescriptor::~TypeDescriptor()
+{
+    if(_where_rules) {
         delete _where_rules;
     }
 }
@@ -29,11 +32,12 @@ TypeDescriptor::~TypeDescriptor() {
  * and returns the new name if found.  (See header comments to function
  * SchRename::rename().)
  */
-const char * TypeDescriptor::Name( const char * schnm ) const {
-    if( schnm == NULL ) {
+const char *TypeDescriptor::Name(const char *schnm) const
+{
+    if(schnm == NULL) {
         return _name;
     }
-    if( altNames && altNames->rename( schnm, ( char * )_altname ) ) {
+    if(altNames && altNames->rename(schnm, (char *)_altname)) {
         // If our altNames list has an alternate for schnm, copy it into
         // _altname, and return it:
         return _altname;
@@ -41,18 +45,20 @@ const char * TypeDescriptor::Name( const char * schnm ) const {
     return _name;
 }
 
-const char * TypeDescriptor::BaseTypeName()  const {
+const char *TypeDescriptor::BaseTypeName()  const
+{
     return BaseTypeDescriptor() ?  BaseTypeDescriptor() -> Name() : 0;
 }
 
-const TypeDescriptor * TypeDescriptor::BaseTypeIsA( const TypeDescriptor * td ) const {
-    switch( NonRefType() ) {
+const TypeDescriptor *TypeDescriptor::BaseTypeIsA(const TypeDescriptor *td) const
+{
+    switch(NonRefType()) {
         case AGGREGATE_TYPE:
-            return AggrElemTypeDescriptor() -> IsA( td );
+            return AggrElemTypeDescriptor() -> IsA(td);
         case ENTITY_TYPE:
         case SELECT_TYPE:
         default:
-            return IsA( td );
+            return IsA(td);
     }
 }
 
@@ -64,37 +70,41 @@ const TypeDescriptor * TypeDescriptor::BaseTypeIsA( const TypeDescriptor * td ) 
  * case if schNm USEs or REFERENCEs type and renames it in the process
  * (e.g., "USE (X as Y)".
  */
-bool TypeDescriptor::CurrName( const char * other, const char * schNm ) const {
-    if( !schNm || *schNm == '\0' ) {
+bool TypeDescriptor::CurrName(const char *other, const char *schNm) const
+{
+    if(!schNm || *schNm == '\0') {
         // If there's no current schema, accept any possible name of this.
         // (I.e., accept its actual name or any substitute):
-        return ( PossName( other ) );
+        return (PossName(other));
     }
-    if( altNames && altNames->rename( schNm, ( char * )_altname ) ) {
+    if(altNames && altNames->rename(schNm, (char *)_altname)) {
         // If we have a different name when the current schema = schNm, then
         // other better = the alt name.
-        return ( !StrCmpIns( _altname, other ) );
+        return (!StrCmpIns(_altname, other));
     } else {
         // If we have no desginated alternate name when the current schema =
         // schNm, other must = our _name.
-        return ( OurName( other ) );
+        return (OurName(other));
     }
 }
 
 /**
  * return true if nm is either our name or one of the possible alternates.
  */
-bool TypeDescriptor::PossName( const char * nm ) const {
-    return ( OurName( nm ) || AltName( nm ) );
+bool TypeDescriptor::PossName(const char *nm) const
+{
+    return (OurName(nm) || AltName(nm));
 }
 
-bool TypeDescriptor::OurName( const char * nm ) const {
-    return !StrCmpIns( nm, _name );
+bool TypeDescriptor::OurName(const char *nm) const
+{
+    return !StrCmpIns(nm, _name);
 }
 
-bool TypeDescriptor::AltName( const char * nm ) const {
-    if( altNames ) {
-        return ( altNames->choice( nm ) );
+bool TypeDescriptor::AltName(const char *nm) const
+{
+    if(altNames) {
+        return (altNames->choice(nm));
     }
     return false;
 }
@@ -103,16 +113,17 @@ bool TypeDescriptor::AltName( const char * nm ) const {
  * Creates a SchRename consisting of schnm & newnm.  Places it in alphabe-
  * tical order in this's altNames list.
  */
-void TypeDescriptor::addAltName( const char * schnm, const char * newnm ) {
-    SchRename * newpair = new SchRename( schnm, newnm ),
-    *node = ( SchRename * )altNames, *prev = NULL;
+void TypeDescriptor::addAltName(const char *schnm, const char *newnm)
+{
+    SchRename *newpair = new SchRename(schnm, newnm),
+    *node = (SchRename *)altNames, *prev = NULL;
 
-    while( node && *node < *newpair ) {
+    while(node && *node < *newpair) {
         prev = node;
         node = node->next;
     }
     newpair->next = node; // node may = NULL
-    if( prev ) {
+    if(prev) {
         // Will be the case if new node should not be first (and above while
         // loop was entered).
         prev->next = newpair;
@@ -122,67 +133,69 @@ void TypeDescriptor::addAltName( const char * schnm, const char * newnm ) {
     }
 }
 
-void TypeDescriptor::AttrTypeName( std::string & buf, const char * schnm ) const {
-    const char * sn = Name( schnm );
-    if( sn ) {
-        StrToLower( sn , buf );
+void TypeDescriptor::AttrTypeName(std::string &buf, const char *schnm) const
+{
+    const char *sn = Name(schnm);
+    if(sn) {
+        StrToLower(sn, buf);
     } else {
         buf = _description;
     }
 }
 
-const char * TypeDescriptor::GenerateExpress( std::string & buf ) const {
+const char *TypeDescriptor::GenerateExpress(std::string &buf) const
+{
     char tmp[BUFSIZ];
     buf = "TYPE ";
-    buf.append( StrToLower( Name(), tmp ) );
-    buf.append( " = " );
-    const char * desc = Description();
-    const char * ptr = desc;
+    buf.append(StrToLower(Name(), tmp));
+    buf.append(" = ");
+    const char *desc = Description();
+    const char *ptr = desc;
 
-    while( *ptr != '\0' ) {
-        if( *ptr == ',' ) {
-            buf.append( ",\n  " );
-        } else if( *ptr == '(' ) {
-            buf.append( "\n  (" );
-        } else if( isupper( *ptr ) ) {
-            buf += ( char )tolower( *ptr );
+    while(*ptr != '\0') {
+        if(*ptr == ',') {
+            buf.append(",\n  ");
+        } else if(*ptr == '(') {
+            buf.append("\n  (");
+        } else if(isupper(*ptr)) {
+            buf += (char)tolower(*ptr);
         } else {
             buf += *ptr;
         }
         ptr++;
     }
-    buf.append( ";\n" );
+    buf.append(";\n");
     ///////////////
     // count is # of WHERE rules
-    if( _where_rules != 0 ) {
+    if(_where_rules != 0) {
         int all_comments = 1;
         int count = _where_rules->Count();
-        for( int i = 0; i < count; i++ ) { // print out each UNIQUE rule
-            if( !( *( _where_rules ) )[i]->_label.size() ) {
+        for(int i = 0; i < count; i++) {   // print out each UNIQUE rule
+            if(!(*(_where_rules))[i]->_label.size()) {
                 all_comments = 0;
             }
         }
 
-        if( all_comments ) {
-            buf.append( "  (* WHERE *)\n" );
+        if(all_comments) {
+            buf.append("  (* WHERE *)\n");
         } else {
-            buf.append( "    WHERE\n" );
+            buf.append("    WHERE\n");
         }
 
-        for( int i = 0; i < count; i++ ) { // print out each WHERE rule
-            if( !( *( _where_rules ) )[i]->_comment.empty() ) {
-                buf.append( "    " );
-                buf.append( ( *( _where_rules ) )[i]->comment_() );
+        for(int i = 0; i < count; i++) {   // print out each WHERE rule
+            if(!(*(_where_rules))[i]->_comment.empty()) {
+                buf.append("    ");
+                buf.append((*(_where_rules))[i]->comment_());
             }
-            if( ( *( _where_rules ) )[i]->_label.size() ) {
-                buf.append( "      " );
-                buf.append( ( *( _where_rules ) )[i]->label_() );
+            if((*(_where_rules))[i]->_label.size()) {
+                buf.append("      ");
+                buf.append((*(_where_rules))[i]->label_());
             }
         }
     }
 
-    buf.append( "END_TYPE;\n" );
-    return const_cast<char *>( buf.c_str() );
+    buf.append("END_TYPE;\n");
+    return const_cast<char *>(buf.c_str());
 }
 
 /**
@@ -192,106 +205,107 @@ const char * TypeDescriptor::GenerateExpress( std::string & buf ) const {
  * e.g. if the description contains a TYPE name it will also
  * be explained.
  */
-const char * TypeDescriptor::TypeString( std::string & s ) const {
-    switch( Type() ) {
+const char *TypeDescriptor::TypeString(std::string &s) const
+{
+    switch(Type()) {
         case REFERENCE_TYPE:
-            if( Name() ) {
-                s.append( "TYPE " );
-                s.append( Name() );
-                s.append( " = " );
+            if(Name()) {
+                s.append("TYPE ");
+                s.append(Name());
+                s.append(" = ");
             }
-            if( Description() ) {
-                s.append( Description() );
+            if(Description()) {
+                s.append(Description());
             }
-            if( ReferentType() ) {
-                s.append( " -- " );
+            if(ReferentType()) {
+                s.append(" -- ");
                 std::string tmp;
-                s.append( ReferentType()->TypeString( tmp ) );
+                s.append(ReferentType()->TypeString(tmp));
             }
-            return const_cast<char *>( s.c_str() );
+            return const_cast<char *>(s.c_str());
 
         case INTEGER_TYPE:
             s.clear();
-            if( _referentType != 0 ) {
+            if(_referentType != 0) {
                 s = "TYPE ";
-                s.append( Name() );
-                s.append( " = " );
+                s.append(Name());
+                s.append(" = ");
             }
-            s.append( "Integer" );
+            s.append("Integer");
             break;
 
         case STRING_TYPE:
             s.clear();
-            if( _referentType != 0 ) {
+            if(_referentType != 0) {
                 s = "TYPE ";
-                s.append( Name() );
-                s.append( " = " );
+                s.append(Name());
+                s.append(" = ");
             }
-            s.append( "String" );
+            s.append("String");
             break;
 
         case REAL_TYPE:
             s.clear();
-            if( _referentType != 0 ) {
+            if(_referentType != 0) {
                 s = "TYPE ";
-                s.append( Name() );
-                s.append( " = " );
+                s.append(Name());
+                s.append(" = ");
             }
-            s.append( "Real" );
+            s.append("Real");
             break;
 
         case ENUM_TYPE:
             s = "Enumeration: ";
-            if( Name() ) {
-                s.append( "TYPE " );
-                s.append( Name() );
-                s.append( " = " );
+            if(Name()) {
+                s.append("TYPE ");
+                s.append(Name());
+                s.append(" = ");
             }
-            if( Description() ) {
-                s.append( Description() );
+            if(Description()) {
+                s.append(Description());
             }
             break;
 
         case BOOLEAN_TYPE:
             s.clear();
-            if( _referentType != 0 ) {
+            if(_referentType != 0) {
                 s = "TYPE ";
-                s.append( Name() );
-                s.append( " = " );
+                s.append(Name());
+                s.append(" = ");
             }
-            s.append( "Boolean: F, T" );
+            s.append("Boolean: F, T");
             break;
         case LOGICAL_TYPE:
             s.clear();
-            if( _referentType != 0 ) {
+            if(_referentType != 0) {
                 s = "TYPE ";
-                s.append( Name() );
-                s.append( " = " );
+                s.append(Name());
+                s.append(" = ");
             }
-            s.append( "Logical: F, T, U" );
+            s.append("Logical: F, T, U");
             break;
         case NUMBER_TYPE:
             s.clear();
-            if( _referentType != 0 ) {
+            if(_referentType != 0) {
                 s = "TYPE ";
-                s.append( Name() );
-                s.append( " = " );
+                s.append(Name());
+                s.append(" = ");
             }
-            s.append( "Number" );
+            s.append("Number");
             break;
         case BINARY_TYPE:
             s.clear();
-            if( _referentType != 0 ) {
+            if(_referentType != 0) {
                 s = "TYPE ";
-                s.append( Name() );
-                s.append( " = " );
+                s.append(Name());
+                s.append(" = ");
             }
-            s.append( "Binary" );
+            s.append("Binary");
             break;
         case ENTITY_TYPE:
             s = "Entity: ";
-            if( Name() ) {
-                s.append( Name() );
+            if(Name()) {
+                s.append(Name());
             }
             break;
         case AGGREGATE_TYPE:
@@ -300,39 +314,41 @@ const char * TypeDescriptor::TypeString( std::string & s ) const {
         case SET_TYPE:        // DAS
         case LIST_TYPE:       // DAS
             s = Description();
-            if( ReferentType() ) {
-                s.append( " -- " );
+            if(ReferentType()) {
+                s.append(" -- ");
                 std::string tmp;
-                s.append( ReferentType()->TypeString( tmp ) );
+                s.append(ReferentType()->TypeString(tmp));
             }
             break;
         case SELECT_TYPE:
-            s.append( Description() );
+            s.append(Description());
             break;
         case GENERIC_TYPE:
         case UNKNOWN_TYPE:
             s = "Unknown";
             break;
     } // end switch
-    return const_cast<char *>( s.c_str() );
+    return const_cast<char *>(s.c_str());
 
 }
 
-const TypeDescriptor * TypeDescriptor::IsA( const TypeDescriptor * other )  const {
-    if( this == other ) {
+const TypeDescriptor *TypeDescriptor::IsA(const TypeDescriptor *other)  const
+{
+    if(this == other) {
         return other;
     }
     return 0;
 }
 
-const TypeDescriptor * TypeDescriptor::IsA( const char * other ) const  {
-    if( !Name() ) {
+const TypeDescriptor *TypeDescriptor::IsA(const char *other) const
+{
+    if(!Name()) {
         return 0;
     }
-    if( !StrCmpIns( _name, other ) ) {   // this is the type
+    if(!StrCmpIns(_name, other)) {       // this is the type
         return this;
     }
-    return ( ReferentType() ? ReferentType() -> IsA( other ) : 0 );
+    return (ReferentType() ? ReferentType() -> IsA(other) : 0);
 }
 
 /**
@@ -344,20 +360,22 @@ const TypeDescriptor * TypeDescriptor::IsA( const char * other ) const  {
  * an element by calling AggrElemType().  Select types
  * would work the same?
  */
-PrimitiveType TypeDescriptor::NonRefType() const {
-    const TypeDescriptor * td = NonRefTypeDescriptor();
-    if( td ) {
+PrimitiveType TypeDescriptor::NonRefType() const
+{
+    const TypeDescriptor *td = NonRefTypeDescriptor();
+    if(td) {
         return td->FundamentalType();
     }
     return UNKNOWN_TYPE;
 }
 
 
-const TypeDescriptor * TypeDescriptor::NonRefTypeDescriptor() const {
-    const TypeDescriptor * td = this;
+const TypeDescriptor *TypeDescriptor::NonRefTypeDescriptor() const
+{
+    const TypeDescriptor *td = this;
 
-    while( td->ReferentType() ) {
-        if( td->Type() != REFERENCE_TYPE ) {
+    while(td->ReferentType()) {
+        if(td->Type() != REFERENCE_TYPE) {
             return td;
         }
         td = td->ReferentType();
@@ -367,8 +385,9 @@ const TypeDescriptor * TypeDescriptor::NonRefTypeDescriptor() const {
 }
 
 /// This returns the PrimitiveType of the first non-aggregate element of an aggregate
-int TypeDescriptor::IsAggrType() const {
-    switch( NonRefType() ) {
+int TypeDescriptor::IsAggrType() const
+{
+    switch(NonRefType()) {
         case AGGREGATE_TYPE:
         case ARRAY_TYPE:      // DAS
         case BAG_TYPE:        // DAS
@@ -381,18 +400,20 @@ int TypeDescriptor::IsAggrType() const {
     }
 }
 
-PrimitiveType TypeDescriptor::AggrElemType() const {
-    const TypeDescriptor * aggrElemTD = AggrElemTypeDescriptor();
-    if( aggrElemTD ) {
+PrimitiveType TypeDescriptor::AggrElemType() const
+{
+    const TypeDescriptor *aggrElemTD = AggrElemTypeDescriptor();
+    if(aggrElemTD) {
         return aggrElemTD->Type();
     }
     return UNKNOWN_TYPE;
 }
 
-const TypeDescriptor * TypeDescriptor::AggrElemTypeDescriptor() const {
-    const TypeDescriptor * aggrTD = NonRefTypeDescriptor();
-    const TypeDescriptor * aggrElemTD = aggrTD->ReferentType();
-    if( aggrElemTD ) {
+const TypeDescriptor *TypeDescriptor::AggrElemTypeDescriptor() const
+{
+    const TypeDescriptor *aggrTD = NonRefTypeDescriptor();
+    const TypeDescriptor *aggrElemTD = aggrTD->ReferentType();
+    if(aggrElemTD) {
         aggrElemTD = aggrElemTD->NonRefTypeDescriptor();
     }
     return aggrElemTD;
@@ -408,19 +429,21 @@ const TypeDescriptor * TypeDescriptor::AggrElemTypeDescriptor() const {
  *  TypeDescriptor *BaseTypeDescriptor() returns the TypeDescriptor
  *  for Integer
  */
-PrimitiveType TypeDescriptor::BaseType() const {
-    const TypeDescriptor * td = BaseTypeDescriptor();
-    if( td ) {
+PrimitiveType TypeDescriptor::BaseType() const
+{
+    const TypeDescriptor *td = BaseTypeDescriptor();
+    if(td) {
         return td->FundamentalType();
     } else {
         return ENTITY_TYPE;
     }
 }
 
-const TypeDescriptor * TypeDescriptor::BaseTypeDescriptor() const {
-    const TypeDescriptor * td = this;
+const TypeDescriptor *TypeDescriptor::BaseTypeDescriptor() const
+{
+    const TypeDescriptor *td = this;
 
-    while( td -> ReferentType() ) {
+    while(td -> ReferentType()) {
         td = td->ReferentType();
     }
     return td;

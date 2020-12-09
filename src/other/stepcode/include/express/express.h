@@ -68,7 +68,7 @@
 /* typedefs */
 /************/
 
-typedef struct Scope_ * Express;
+typedef struct Scope_ *Express;
 
 /****************/
 /* modules used */
@@ -79,33 +79,33 @@ typedef struct Scope_ * Express;
 /***************************/
 
 struct Express_ {
-    FILE * file;
-    char * filename;
-    char * basename; /**< name of file but without directory or .exp suffix */
+    FILE *file;
+    char *filename;
+    char *basename;  /**< name of file but without directory or .exp suffix */
 };
 
 /********************/
 /* global variables */
 /********************/
 
-extern SC_EXPRESS_EXPORT char * input_filename;
+extern SC_EXPRESS_EXPORT char *input_filename;
 extern SC_EXPRESS_EXPORT Linked_List EXPRESS_path;
 extern SC_EXPRESS_EXPORT int EXPRESSpass;
 
-extern SC_EXPRESS_EXPORT void ( *EXPRESSinit_args )( int, char ** );
-extern SC_EXPRESS_EXPORT void ( *EXPRESSinit_parse )( void );
-extern SC_EXPRESS_EXPORT int ( *EXPRESSfail )( Express );
-extern SC_EXPRESS_EXPORT int ( *EXPRESSsucceed )( Express );
-extern SC_EXPRESS_EXPORT void ( *EXPRESSbackend )( Express );
-extern SC_EXPRESS_EXPORT char * EXPRESSprogram_name;
+extern SC_EXPRESS_EXPORT void (*EXPRESSinit_args)(int, char **);
+extern SC_EXPRESS_EXPORT void (*EXPRESSinit_parse)(void);
+extern SC_EXPRESS_EXPORT int (*EXPRESSfail)(Express);
+extern SC_EXPRESS_EXPORT int (*EXPRESSsucceed)(Express);
+extern SC_EXPRESS_EXPORT void (*EXPRESSbackend)(Express);
+extern SC_EXPRESS_EXPORT char *EXPRESSprogram_name;
 extern char   EXPRESSgetopt_options[];  /* initialized elsewhere */
-extern SC_EXPRESS_EXPORT int ( *EXPRESSgetopt )( int, char * );
+extern SC_EXPRESS_EXPORT int (*EXPRESSgetopt)(int, char *);
 extern SC_EXPRESS_EXPORT bool    EXPRESSignore_duplicate_schemas;
 
 extern SC_EXPRESS_EXPORT Dictionary EXPRESSbuiltins;  /* procedures/functions */
 
-extern SC_EXPRESS_EXPORT struct Scope_ * FUNC_NVL;
-extern SC_EXPRESS_EXPORT struct Scope_ * FUNC_USEDIN;
+extern SC_EXPRESS_EXPORT struct Scope_ *FUNC_NVL;
+extern SC_EXPRESS_EXPORT struct Scope_ *FUNC_USEDIN;
 
 /******************************/
 /* macro function definitions */
@@ -120,15 +120,15 @@ extern SC_EXPRESS_EXPORT struct Scope_ * FUNC_USEDIN;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Express  EXPRESScreate( void );
-extern SC_EXPRESS_EXPORT void     EXPRESSdestroy( Express );
-extern SC_EXPRESS_EXPORT void     EXPRESSparse( Express, FILE *, char * );
-extern SC_EXPRESS_EXPORT void     EXPRESSinitialize( void );
-extern SC_EXPRESS_EXPORT void     EXPRESScleanup( void );
-extern SC_EXPRESS_EXPORT void     EXPRESSresolve( Express );
-extern SC_EXPRESS_EXPORT int      EXPRESS_fail( Express model );
-extern SC_EXPRESS_EXPORT int      EXPRESS_succeed( Express model );
-extern                   void     EXPRESSinit_init( void );
-extern SC_EXPRESS_EXPORT void     build_complex( Express );
+extern SC_EXPRESS_EXPORT Express  EXPRESScreate(void);
+extern SC_EXPRESS_EXPORT void     EXPRESSdestroy(Express);
+extern SC_EXPRESS_EXPORT void     EXPRESSparse(Express, FILE *, char *);
+extern SC_EXPRESS_EXPORT void     EXPRESSinitialize(void);
+extern SC_EXPRESS_EXPORT void     EXPRESScleanup(void);
+extern SC_EXPRESS_EXPORT void     EXPRESSresolve(Express);
+extern SC_EXPRESS_EXPORT int      EXPRESS_fail(Express model);
+extern SC_EXPRESS_EXPORT int      EXPRESS_succeed(Express model);
+extern                   void     EXPRESSinit_init(void);
+extern SC_EXPRESS_EXPORT void     build_complex(Express);
 
 #endif /*EXPRESS_H*/

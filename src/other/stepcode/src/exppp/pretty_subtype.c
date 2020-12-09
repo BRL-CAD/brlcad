@@ -10,25 +10,27 @@
 #include "pretty_expr.h"
 #include "pretty_subtype.h"
 
-void SUBTYPEout( Expression e ) {
+void SUBTYPEout(Expression e)
+{
     /* language insists on having parens around entity names */
     /* even if there is only one, but if the expression is */
     /* complex, EXPRout will add on its own parens */
     /*  if (TYPEis_expression(e->type)) {*/
-    raw( "( " );
+    raw("( ");
     /*  }*/
 
-    EXPR_out( e, 0 );
+    EXPR_out(e, 0);
 
     /*  if (TYPEis_expression(e->type)) {*/
-    raw( " )" );
+    raw(" )");
     /*  }*/
 }
 
-char * SUBTYPEto_string( Expression e ) {
-    if( prep_string() ) {
+char *SUBTYPEto_string(Expression e)
+{
+    if(prep_string()) {
         return placeholder;
     }
-    EXPR_out( e, 0 );
-    return ( finish_string() );
+    EXPR_out(e, 0);
+    return (finish_string());
 }

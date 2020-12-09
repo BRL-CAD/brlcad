@@ -24,11 +24,12 @@
 //  void GenNodeList::Append(GenericNode *node) from the gennodelist.h
 //////////////////////////////////////////////////////////////////////////////
 
-void GenericNode::Append( GenNodeList * list ) {
+void GenericNode::Append(GenNodeList *list)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "GenericNode::Append()\n";
 //    if(debug_level >= PrintValues)
 //  cout << "GenericNode::this : '" << this << "'\n";
-    list->Append( this );
+    list->Append(this);
 }
 

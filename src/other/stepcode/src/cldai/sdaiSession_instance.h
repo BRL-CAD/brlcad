@@ -5,7 +5,8 @@
 #include <sc_export.h>
 //#include <sdai.h>
 
-class SC_DAI_EXPORT SDAI_Session_instance : public SDAI_sdaiObject {
+class SC_DAI_EXPORT SDAI_Session_instance : public SDAI_sdaiObject
+{
 
     public:
         int x;
@@ -14,7 +15,7 @@ class SC_DAI_EXPORT SDAI_Session_instance : public SDAI_sdaiObject {
         virtual ~SDAI_Session_instance();
 };
 
-typedef SDAI_Session_instance * SDAI_Session_instance_ptr;
+typedef SDAI_Session_instance *SDAI_Session_instance_ptr;
 typedef SDAI_Session_instance_ptr SDAI_Session_instance_var;
 
 // the old names

@@ -3,6 +3,6 @@
 
 #include <express/stmt.h>
 
-void CASEout( struct Case_Statement_ * c, int level );
+void CASEout(struct Case_Statement_ * c, int level);
 
 #endif /* PRETTY_CASE_H */

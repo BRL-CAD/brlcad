@@ -4,7 +4,7 @@ Linux, OSX (LLVM) | Windows (MSVC)
 [![Build Status](https://travis-ci.org/stepcode/stepcode.svg?branch=master)](https://travis-ci.org/stepcode/stepcode) | [![Build status](https://ci.appveyor.com/api/projects/status/3fbr9t9gfa812oqu?svg=true)](https://ci.appveyor.com/project/mpictor/stepcode)
 
 ***********************************************************************
-STEPcode v0.8 -- stepcode.org, github.com/stepcode/stepcode
+STEPcode v0.9 -- stepcode.org, github.com/stepcode/stepcode
 
 * What is STEPcode? SC reads ISO10303-11 EXPRESS schemas and generates
   C++ source code that can read and write Part 21 files conforming
@@ -36,14 +36,16 @@ CODING STANDARDS
 SC's source has been reformatted with astyle. When making changes, try
 to match the current formatting. The main points are:
 
-  - compact (java-style) brackets:
+  - K&R (Kernighan & Ritchie) brackets:
 ```C
-    if( a == 3 ) {
-        c = 5;
-        function( a, b );
-    } else {
-        somefunc( );
-    }
+   int Foo(bool isBar)
+   {
+       if (isBar) {
+           bar();
+           return 1;
+       } else
+           return 0;
+   }
 ```
   - indents are 4 spaces
   - no tab characters

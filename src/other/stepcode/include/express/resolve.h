@@ -60,29 +60,29 @@ extern SC_EXPRESS_EXPORT int print_objects_while_running;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void RESOLVEinitialize( void );
-extern SC_EXPRESS_EXPORT void RESOLVEcleanup( void );
-extern SC_EXPRESS_EXPORT void SCOPEresolve_expressions_statements( Scope );
-extern SC_EXPRESS_EXPORT void SCOPEresolve_subsupers( Scope );
-extern SC_EXPRESS_EXPORT void SCOPEresolve_types( Scope );
-extern SC_EXPRESS_EXPORT void TYPE_resolve( Type * );
-extern SC_EXPRESS_EXPORT void EXP_resolve( Expression, Scope, Type );
-extern SC_EXPRESS_EXPORT void ALGresolve( Scope );
-extern SC_EXPRESS_EXPORT void SCHEMAresolve( Scope );
-extern SC_EXPRESS_EXPORT void RENAMEresolve( Rename *, Schema );
+extern SC_EXPRESS_EXPORT void RESOLVEinitialize(void);
+extern SC_EXPRESS_EXPORT void RESOLVEcleanup(void);
+extern SC_EXPRESS_EXPORT void SCOPEresolve_expressions_statements(Scope);
+extern SC_EXPRESS_EXPORT void SCOPEresolve_subsupers(Scope);
+extern SC_EXPRESS_EXPORT void SCOPEresolve_types(Scope);
+extern SC_EXPRESS_EXPORT void TYPE_resolve(Type *);
+extern SC_EXPRESS_EXPORT void EXP_resolve(Expression, Scope, Type);
+extern SC_EXPRESS_EXPORT void ALGresolve(Scope);
+extern SC_EXPRESS_EXPORT void SCHEMAresolve(Scope);
+extern SC_EXPRESS_EXPORT void RENAMEresolve(Rename *, Schema);
 
 /*
  * for unit tests, no extern / export
  */
-void VAR_resolve_expressions( Variable, Entity );
-void ENTITYresolve_subtypes( Schema );
-void ENTITYresolve_supertypes( Entity );
-void ENTITYresolve_expressions( Entity e );
-void ALGresolve_expressions_statements( Scope, Linked_List );
-int WHEREresolve( Linked_List, Scope, int );
-void TYPEresolve_expressions( Type, Scope );
-void STMTresolve( Statement, Scope );
-void STMTlist_resolve( Linked_List, Scope );
-int  ENTITYresolve_subtype_expression( Expression, Entity, Linked_List * );
+void VAR_resolve_expressions(Variable, Entity);
+void ENTITYresolve_subtypes(Schema);
+void ENTITYresolve_supertypes(Entity);
+void ENTITYresolve_expressions(Entity e);
+void ALGresolve_expressions_statements(Scope, Linked_List);
+int WHEREresolve(Linked_List, Scope, int);
+void TYPEresolve_expressions(Type, Scope);
+void STMTresolve(Statement, Scope);
+void STMTlist_resolve(Linked_List, Scope);
+int  ENTITYresolve_subtype_expression(Expression, Entity, Linked_List *);
 
 #endif /*RESOLVE_H*/

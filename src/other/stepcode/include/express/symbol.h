@@ -58,8 +58,8 @@ typedef struct Symbol_ Symbol;
 /***************************/
 
 struct Symbol_ {
-    char * name;
-    const char * filename;
+    char *name;
+    const char *filename;
     int line;
     char resolved;
 };
@@ -88,7 +88,7 @@ extern SC_EXPRESS_EXPORT struct freelist_head SYMBOL_fl;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void SYMBOLinitialize( void );
-SC_EXPRESS_EXPORT Symbol * SYMBOLcreate( char * name, int line, const char * filename );
+extern SC_EXPRESS_EXPORT void SYMBOLinitialize(void);
+SC_EXPRESS_EXPORT Symbol *SYMBOLcreate(char *name, int line, const char *filename);
 
 #endif    /*  SYMBOL_H  */

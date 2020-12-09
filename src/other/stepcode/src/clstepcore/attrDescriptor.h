@@ -20,39 +20,42 @@ class EntityDescriptor;
  * An instance of this class will be generated for each attribute for
  * an Entity.  They will be pointed to by the EntityTypeDescriptors.
  */
-class SC_CORE_EXPORT AttrDescriptor {
+class SC_CORE_EXPORT AttrDescriptor
+{
 
     protected:
-        const char  * _name;   // the attributes name
+        const char   *_name;   // the attributes name
         // this defines the domain of the attribute
-        const TypeDescriptor * _domainType;
+        const TypeDescriptor *_domainType;
         SDAI_LOGICAL _optional;
         SDAI_LOGICAL _unique;
         AttrType_Enum _attrType; // former attribute _derived
-        const EntityDescriptor & _owner;  // the owning entityDescriptor
+        const EntityDescriptor &_owner;   // the owning entityDescriptor
     public:
 
         AttrDescriptor(
-            const char * name,       // i.e. char *
-            const TypeDescriptor * domainType,
+            const char *name,        // i.e. char *
+            const TypeDescriptor *domainType,
             Logical optional,    // i.e. F U or T
             Logical unique,  // i.e. F U or T
             AttrType_Enum at,// AttrType_Explicit, AttrType_Inverse,
             // AttrType_Deriving,AttrType_Redefining
-            const EntityDescriptor & owner
+            const EntityDescriptor &owner
         );
         virtual ~AttrDescriptor();
 
-        const char * GenerateExpress( std::string & buf ) const;
+        const char *GenerateExpress(std::string &buf) const;
 
         // the attribute Express def
-        virtual const char * AttrExprDefStr( std::string & s ) const;
+        virtual const char *AttrExprDefStr(std::string &s) const;
 
         // left side of attr def
-        const char * Name() const      {
+        const char *Name() const
+        {
             return _name;
         }
-        void     Name( const char  * n ) {
+        void     Name(const char   *n)
+        {
             _name = n;
         }
 
@@ -76,7 +79,7 @@ class SC_CORE_EXPORT AttrDescriptor {
          */
         ///@{
         PrimitiveType BaseType() const;
-        const TypeDescriptor * BaseTypeDescriptor() const;
+        const TypeDescriptor *BaseTypeDescriptor() const;
         ///@}
 
         /**
@@ -92,12 +95,12 @@ class SC_CORE_EXPORT AttrDescriptor {
          */
         ///@{
         PrimitiveType NonRefType() const;
-        const TypeDescriptor * NonRefTypeDescriptor() const;
+        const TypeDescriptor *NonRefTypeDescriptor() const;
         ///@}
 
         int   IsAggrType() const;
         PrimitiveType   AggrElemType() const;
-        const TypeDescriptor * AggrElemTypeDescriptor() const;
+        const TypeDescriptor *AggrElemTypeDescriptor() const;
 
         /// The type of the attributes TypeDescriptor
         PrimitiveType Type() const;
@@ -106,56 +109,71 @@ class SC_CORE_EXPORT AttrDescriptor {
         const std::string TypeName() const;
 
         /// an expanded right side of attr def
-        const char * ExpandedTypeName( std::string & s ) const;
+        const char *ExpandedTypeName(std::string &s) const;
 
-        int RefersToType() const    {
-            return !( _domainType == 0 );
+        int RefersToType() const
+        {
+            return !(_domainType == 0);
         }
 
-        const TypeDescriptor * ReferentType() const {
+        const TypeDescriptor *ReferentType() const
+        {
             return _domainType;
         }
-        const TypeDescriptor * DomainType() const {
+        const TypeDescriptor *DomainType() const
+        {
             return _domainType;
         }
-        void DomainType( const TypeDescriptor * td )  {
+        void DomainType(const TypeDescriptor *td)
+        {
             _domainType = td;
         }
-        void ReferentType( const TypeDescriptor * td ) {
+        void ReferentType(const TypeDescriptor *td)
+        {
             _domainType = td;
         }
 
-        const SDAI_LOGICAL & Optional() const {
+        const SDAI_LOGICAL &Optional() const
+        {
             return _optional;
         }
-        void Optional( SDAI_LOGICAL & opt ) {
-            _optional.put( opt.asInt() );
+        void Optional(SDAI_LOGICAL &opt)
+        {
+            _optional.put(opt.asInt());
         }
 
-        void Optional( Logical opt ) {
-            _optional.put( opt );
+        void Optional(Logical opt)
+        {
+            _optional.put(opt);
         }
-        void Optional( const char * opt ) {
-            _optional.put( opt );
+        void Optional(const char *opt)
+        {
+            _optional.put(opt);
         }
 
-        const SDAI_LOGICAL & Unique() const {
+        const SDAI_LOGICAL &Unique() const
+        {
             return _unique;
         }
-        void Unique( SDAI_LOGICAL uniq ) {
-            _unique.put( uniq.asInt() );
+        void Unique(SDAI_LOGICAL uniq)
+        {
+            _unique.put(uniq.asInt());
         }
-        void Unique( Logical uniq ) {
-            _unique.put( uniq );
+        void Unique(Logical uniq)
+        {
+            _unique.put(uniq);
         }
-        void Unique( const char * uniq )  {
-            _unique.put( uniq );
+        void Unique(const char *uniq)
+        {
+            _unique.put(uniq);
         }
 
-        void AttrType( enum AttrType_Enum ate ) {
+        void AttrType(enum AttrType_Enum ate)
+        {
             _attrType = ate;
         }
-        enum AttrType_Enum AttrType() const {
+        enum AttrType_Enum AttrType() const
+        {
             return _attrType;
         }
 
@@ -165,40 +183,50 @@ class SC_CORE_EXPORT AttrDescriptor {
         Logical Deriving() const;
 
         //outdated functions, use AttrType func above, new support of redefined
-        Logical Derived() const {
+        Logical Derived() const
+        {
             return Deriving();
         }
-        void Derived( Logical x );    // outdated DAS
-        void Derived( SDAI_LOGICAL x ); // outdated DAS
-        void Derived( const char * x ); // outdated DAS
+        void Derived(Logical x);      // outdated DAS
+        void Derived(SDAI_LOGICAL x);   // outdated DAS
+        void Derived(const char *x);    // outdated DAS
 
-        const SDAI_LOGICAL & Optionality() const {
+        const SDAI_LOGICAL &Optionality() const
+        {
             return _optional;
         }
-        void Optionality( SDAI_LOGICAL & opt ) {
-            _optional.put( opt.asInt() );
+        void Optionality(SDAI_LOGICAL &opt)
+        {
+            _optional.put(opt.asInt());
         }
-        void Optionality( Logical opt ) {
-            _optional.put( opt );
+        void Optionality(Logical opt)
+        {
+            _optional.put(opt);
         }
-        void Optionality( const char * opt ) {
-            _optional.put( opt );
+        void Optionality(const char *opt)
+        {
+            _optional.put(opt);
         }
 
-        const SDAI_LOGICAL & Uniqueness() const {
+        const SDAI_LOGICAL &Uniqueness() const
+        {
             return _unique;
         }
-        void Uniqueness( SDAI_LOGICAL uniq ) {
-            _unique.put( uniq.asInt() );
+        void Uniqueness(SDAI_LOGICAL uniq)
+        {
+            _unique.put(uniq.asInt());
         }
-        void Uniqueness( Logical uniq ) {
-            _unique.put( uniq );
+        void Uniqueness(Logical uniq)
+        {
+            _unique.put(uniq);
         }
-        void Uniqueness( const char * uniq ) {
-            _unique.put( uniq );
+        void Uniqueness(const char *uniq)
+        {
+            _unique.put(uniq);
         }
 
-        const EntityDescriptor & Owner() const {
+        const EntityDescriptor &Owner() const
+        {
             return _owner;
         }
 };

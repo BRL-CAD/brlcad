@@ -93,8 +93,8 @@
 /* function pointer types */
 /**************************/
 
-typedef void ( *voidFuncptr )();
-typedef int ( *intFuncptr )();
+typedef void (*voidFuncptr)();
+typedef int (*intFuncptr)();
 
 #endif    /* BASIC_H */
 

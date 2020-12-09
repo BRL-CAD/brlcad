@@ -30,95 +30,96 @@ unsigned int MaxMem = 0;
    On linux, a 1M-line file can be created with the following:
    hexdump -v -e '2/8 "%08x"' -e '"\n"' /dev/urandom |head -n 1000000 >in-file
 */
-int main( int argc, char ** argv ) {
+int main(int argc, char **argv)
+{
     unsigned char buff[1024];
     JudySlot max = 0;
-    JudySlot * cell;
-    FILE * in, *out;
-    void * judy;
+    JudySlot *cell;
+    FILE *in, *out;
+    void *judy;
     unsigned int len;
     unsigned int idx;
 
-    if( argc > 1 ) {
-        in = fopen( argv[1], "rb" );
+    if(argc > 1) {
+        in = fopen(argv[1], "rb");
     } else {
         in = stdin;
     }
 
-    if( argc > 2 ) {
-        out = fopen( argv[2], "wb" );
+    if(argc > 2) {
+        out = fopen(argv[2], "wb");
     } else {
         out = stdout;
     }
 
-    setvbuf( out, NULL, _IOFBF, 4096 * 1024 );
+    setvbuf(out, NULL, _IOFBF, 4096 * 1024);
 
-    if( !in ) {
-        fprintf( stderr, "unable to open input file\n" );
+    if(!in) {
+        fprintf(stderr, "unable to open input file\n");
     }
 
-    if( !out ) {
-        fprintf( stderr, "unable to open output file\n" );
+    if(!out) {
+        fprintf(stderr, "unable to open output file\n");
     }
 
-    PennyMerge = ( unsigned long long )PennyLine * PennyRecs;
+    PennyMerge = (unsigned long long)PennyLine * PennyRecs;
 
-    judy = judy_open( 1024, 16 / JUDY_key_size );
+    judy = judy_open(1024, 16 / JUDY_key_size);
 
-    while( fgets( ( char * )buff, sizeof( buff ), in ) ) {
+    while(fgets((char *)buff, sizeof(buff), in)) {
         judyvalue key[16 / JUDY_key_size];
-        if( len = strlen( ( const char * )buff ) ) {
+        if(len = strlen((const char *)buff)) {
             buff[--len] = 0;    // remove LF
         }
 #if JUDY_key_size == 4
-        key[3] = strtoul( buff + 24, NULL, 16 );
+        key[3] = strtoul(buff + 24, NULL, 16);
         buff[24] = 0;
-        key[2] = strtoul( buff + 16, NULL, 16 );
+        key[2] = strtoul(buff + 16, NULL, 16);
         buff[16] = 0;
-        key[1] = strtoul( buff + 8, NULL, 16 );
+        key[1] = strtoul(buff + 8, NULL, 16);
         buff[8] = 0;
-        key[0] = strtoul( buff, NULL, 16 );
+        key[0] = strtoul(buff, NULL, 16);
 #else
-        key[1] = strtoull( buff + 16, NULL, 16 );
+        key[1] = strtoull(buff + 16, NULL, 16);
         buff[16] = 0;
-        key[0] = strtoull( buff, NULL, 16 );
+        key[0] = strtoull(buff, NULL, 16);
 #endif
-        *( judy_cell( judy, ( void * )key, 0 ) ) += 1;   // count instances of string
+        *(judy_cell(judy, (void *)key, 0)) += 1;         // count instances of string
         max++;
     }
 
-    fprintf( stderr, "%" PRIuint " memory used\n", MaxMem );
+    fprintf(stderr, "%" PRIuint " memory used\n", MaxMem);
 
-    cell = judy_strt( judy, NULL, 0 );
+    cell = judy_strt(judy, NULL, 0);
 
-    if( cell ) do {
+    if(cell) do {
             judyvalue key[16 / JUDY_key_size];
-            len = judy_key( judy, ( void * )key, 0 );
-            for( idx = 0; idx < *cell; idx++ ) {       // spit out duplicates
+            len = judy_key(judy, (void *)key, 0);
+            for(idx = 0; idx < *cell; idx++) {         // spit out duplicates
 #if JUDY_key_size == 4
-                fprintf( out, "%.8X", key[0] );
-                fprintf( out, "%.8X", key[1] );
-                fprintf( out, "%.8X", key[2] );
-                fprintf( out, "%.8X", key[3] );
+                fprintf(out, "%.8X", key[0]);
+                fprintf(out, "%.8X", key[1]);
+                fprintf(out, "%.8X", key[2]);
+                fprintf(out, "%.8X", key[3]);
 #else
-                fprintf( out, "%.16llX", key[0] );
-                fprintf( out, "%.16llX", key[1] );
+                fprintf(out, "%.16llX", key[0]);
+                fprintf(out, "%.16llX", key[1]);
 #endif
-                fputc( '\n', out );
+                fputc('\n', out);
             }
-        } while( cell = judy_nxt( judy ) );
+        } while(cell = judy_nxt(judy));
 
 #if 0
     // test deletion all the way to an empty tree
 
-    if( cell = judy_prv( judy ) )
+    if(cell = judy_prv(judy))
         do {
             max -= *cell;
-        } while( cell = judy_del( judy ) );
+        } while(cell = judy_del(judy));
 
-    assert( max == 0 );
+    assert(max == 0);
 #endif
-    judy_close( judy );
+    judy_close(judy);
     return 0;
 }
 

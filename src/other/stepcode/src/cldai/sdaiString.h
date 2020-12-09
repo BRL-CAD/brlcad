@@ -15,7 +15,8 @@
 #include <limits>
 
 
-class SC_DAI_EXPORT SDAI_String {
+class SC_DAI_EXPORT SDAI_String
+{
     private:
 #ifdef _MSC_VER
 #pragma warning( push )
@@ -29,29 +30,30 @@ class SC_DAI_EXPORT SDAI_String {
     public:
 
         //constructor(s) & destructor
-        SDAI_String( const char * str = "", size_t max = std::string::npos );
-        SDAI_String( const std::string & s );
-        SDAI_String( const SDAI_String & s );
-        ~SDAI_String( void );
+        SDAI_String(const char *str = "", size_t max = std::string::npos);
+        SDAI_String(const std::string &s);
+        SDAI_String(const SDAI_String &s);
+        ~SDAI_String(void);
 
 //  operators
-        SDAI_String & operator= ( const char * s );
-        bool operator== ( const char * s ) const;
+        SDAI_String &operator= (const char *s);
+        bool operator== (const char *s) const;
 
-        void clear( void );
-        bool empty( void ) const;
-        const char * c_str( void ) const;
+        void clear(void);
+        bool empty(void) const;
+        const char *c_str(void) const;
         // format for STEP
-        const char * asStr( std::string & s ) const {
+        const char *asStr(std::string &s) const
+        {
             s = c_str();
             return s.c_str();
         }
-        void STEPwrite( ostream & out = cout )  const;
-        void STEPwrite( std::string & s ) const;
+        void STEPwrite(ostream &out = cout)  const;
+        void STEPwrite(std::string &s) const;
 
-        Severity StrToVal( const char * s );
-        Severity STEPread( istream & in, ErrorDescriptor * err );
-        Severity STEPread( const char * s, ErrorDescriptor * err );
+        Severity StrToVal(const char *s);
+        Severity STEPread(istream &in, ErrorDescriptor *err);
+        Severity STEPread(const char *s, ErrorDescriptor *err);
 
 };
 

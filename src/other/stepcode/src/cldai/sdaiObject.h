@@ -13,7 +13,8 @@
    The class Entity_instance shall be a subtype of the C++ class Object:
 */
 
-class SC_DAI_EXPORT SDAI_sdaiObject {
+class SC_DAI_EXPORT SDAI_sdaiObject
+{
     public:
         SDAI_sdaiObject();
         virtual ~SDAI_sdaiObject();
@@ -22,7 +23,7 @@ class SC_DAI_EXPORT SDAI_sdaiObject {
 
 };
 
-typedef SDAI_sdaiObject * SDAI_sdaiObject_ptr;
+typedef SDAI_sdaiObject *SDAI_sdaiObject_ptr;
 typedef SDAI_sdaiObject_ptr SDAI_sdaiObject_var;
 
 /*

@@ -34,22 +34,25 @@
 STEPaggregate NilSTEPaggregate;
 
 
-STEPaggregate::STEPaggregate() {
+STEPaggregate::STEPaggregate()
+{
     _null = true;
 }
 
-STEPaggregate::~STEPaggregate() {
-    STEPnode * node;
+STEPaggregate::~STEPaggregate()
+{
+    STEPnode *node;
 
-    node = ( STEPnode * ) head;
-    while( node ) {
+    node = (STEPnode *) head;
+    while(node) {
         head = node->NextNode();
         delete node;
-        node = ( STEPnode * ) head;
+        node = (STEPnode *) head;
     }
 }
 
-STEPaggregate & STEPaggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate &STEPaggregate::ShallowCopy(const STEPaggregate &a)
+{
     (void) a; // unused
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__
          << "\n" << _POC_ "\n";
@@ -58,50 +61,53 @@ STEPaggregate & STEPaggregate::ShallowCopy( const STEPaggregate & a ) {
 }
 
 /// do not require exchange file format
-Severity STEPaggregate::AggrValidLevel( const char * value, ErrorDescriptor * err,
-                                        const TypeDescriptor * elem_type, InstMgrBase * insts,
-                                        int optional, char * tokenList, int addFileId,
-                                        int clearError ) {
+Severity STEPaggregate::AggrValidLevel(const char *value, ErrorDescriptor *err,
+                                       const TypeDescriptor *elem_type, InstMgrBase *insts,
+                                       int optional, char *tokenList, int addFileId,
+                                       int clearError)
+{
     std::string buf;
-    if( clearError ) {
+    if(clearError) {
         err->ClearErrorMsg();
     }
 
-    istringstream in( ( char * )value ); // sz defaults to length of s
+    istringstream in((char *)value);     // sz defaults to length of s
 
-    ReadValue( in, err, elem_type, insts, addFileId, 0, 0 );
-    elem_type->AttrTypeName( buf );
-    CheckRemainingInput( in, err, buf, tokenList );
-    if( optional && ( err->severity() == SEVERITY_INCOMPLETE ) ) {
-        err->severity( SEVERITY_NULL );
+    ReadValue(in, err, elem_type, insts, addFileId, 0, 0);
+    elem_type->AttrTypeName(buf);
+    CheckRemainingInput(in, err, buf, tokenList);
+    if(optional && (err->severity() == SEVERITY_INCOMPLETE)) {
+        err->severity(SEVERITY_NULL);
     }
     return err->severity();
 }
 
 /// require exchange file format
-Severity STEPaggregate::AggrValidLevel( istream & in, ErrorDescriptor * err,
-                                        const TypeDescriptor * elem_type, InstMgrBase * insts,
-                                        int optional, char * tokenList, int addFileId,
-                                        int clearError ) {
+Severity STEPaggregate::AggrValidLevel(istream &in, ErrorDescriptor *err,
+                                       const TypeDescriptor *elem_type, InstMgrBase *insts,
+                                       int optional, char *tokenList, int addFileId,
+                                       int clearError)
+{
     std::string buf;
-    if( clearError ) {
+    if(clearError) {
         err->ClearErrorMsg();
     }
 
-    ReadValue( in, err, elem_type, insts, addFileId, 0, 1 );
-    elem_type->AttrTypeName( buf );
-    CheckRemainingInput( in, err, buf, tokenList );
-    if( optional && ( err->severity() == SEVERITY_INCOMPLETE ) ) {
-        err->severity( SEVERITY_NULL );
+    ReadValue(in, err, elem_type, insts, addFileId, 0, 1);
+    elem_type->AttrTypeName(buf);
+    CheckRemainingInput(in, err, buf, tokenList);
+    if(optional && (err->severity() == SEVERITY_INCOMPLETE)) {
+        err->severity(SEVERITY_NULL);
     }
     return err->severity();
 }
 
 /// if exchangeFileFormat == 1 then paren delims are required.
-Severity STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
-                                   const TypeDescriptor * elem_type, InstMgrBase * insts,
-                                   int addFileId, int assignVal, int exchangeFileFormat,
-                                   const char * ) {
+Severity STEPaggregate::ReadValue(istream &in, ErrorDescriptor *err,
+                                  const TypeDescriptor *elem_type, InstMgrBase *insts,
+                                  int addFileId, int assignVal, int exchangeFileFormat,
+                                  const char *)
+{
     (void) insts; //not used in ReadValue() for this class
     (void) addFileId; //not used in ReadValue() for this class
 
@@ -110,7 +116,7 @@ Severity STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
     int value_cnt = 0;
     std::string buf;
 
-    if( assignVal ) {
+    if(assignVal) {
         Empty();    // read new values and discard existing ones
     }
 
@@ -120,134 +126,138 @@ Severity STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
 
     c = in.peek(); // does not advance input
 
-    if( in.eof() || c == '$' ) {
+    if(in.eof() || c == '$') {
         _null = true;
-        err->GreaterSeverity( SEVERITY_INCOMPLETE );
+        err->GreaterSeverity(SEVERITY_INCOMPLETE);
         return SEVERITY_INCOMPLETE;
     }
 
-    if( c == '(' ) {
-        in.get( c );
-    } else if( exchangeFileFormat ) {
+    if(c == '(') {
+        in.get(c);
+    } else if(exchangeFileFormat) {
         // error did not find opening delim
         // cannot recover so give up and let STEPattribute recover
-        err->GreaterSeverity( SEVERITY_INPUT_ERROR );
+        err->GreaterSeverity(SEVERITY_INPUT_ERROR);
         return SEVERITY_INPUT_ERROR;
-    } else if( !in.good() ) {
+    } else if(!in.good()) {
         // this should actually have been caught by skipping white space above
-        err->GreaterSeverity( SEVERITY_INCOMPLETE );
+        err->GreaterSeverity(SEVERITY_INCOMPLETE);
         return SEVERITY_INCOMPLETE;
     }
 
-    STEPnode * item = 0;
+    STEPnode *item = 0;
 
     in >> ws;
     // take a peek to see if there are any elements before committing to an
     // element
     c = in.peek(); // does not advance input
-    if( c == ')' ) {
-        in.get( c );
+    if(c == ')') {
+        in.get(c);
     }
     // if not assigning values only need one node. So only one node is created.
     // It is used to read the values
-    else if( !assignVal ) {
-        item = ( STEPnode * )NewNode();
+    else if(!assignVal) {
+        item = (STEPnode *)NewNode();
     }
 
     // ')' is the end of the aggregate
-    while( in.good() && ( c != ')' ) ) {
+    while(in.good() && (c != ')')) {
         value_cnt++;
-        if( assignVal ) { // create a new node each time through the loop
-            item = ( STEPnode * )NewNode();
+        if(assignVal) {   // create a new node each time through the loop
+            item = (STEPnode *)NewNode();
         }
 
         errdesc.ClearErrorMsg();
 
-        if( exchangeFileFormat ) {
-            item->STEPread( in, &errdesc );
+        if(exchangeFileFormat) {
+            item->STEPread(in, &errdesc);
         } else {
-            item->StrToVal( in, &errdesc );
+            item->StrToVal(in, &errdesc);
         }
 
         // read up to the next delimiter and set errors if garbage is
         // found before specified delims (i.e. comma and quote)
-        elem_type->AttrTypeName( buf );
-        CheckRemainingInput( in, &errdesc, buf, ",)" );
+        elem_type->AttrTypeName(buf);
+        CheckRemainingInput(in, &errdesc, buf, ",)");
 
-        if( errdesc.severity() < SEVERITY_INCOMPLETE ) {
-            sprintf( errmsg, "  index:  %d\n", value_cnt );
-            errdesc.PrependToDetailMsg( errmsg );
-            err->AppendFromErrorArg( &errdesc );
+        if(errdesc.severity() < SEVERITY_INCOMPLETE) {
+            sprintf(errmsg, "  index:  %d\n", value_cnt);
+            errdesc.PrependToDetailMsg(errmsg);
+            err->AppendFromErrorArg(&errdesc);
         }
-        if( assignVal ) { // pass the node to STEPaggregate
-            AddNode( item );
+        if(assignVal) {   // pass the node to STEPaggregate
+            AddNode(item);
         }
 
         in >> ws; // skip white space (although should already be skipped)
-        in.get( c ); // read delim
+        in.get(c);   // read delim
 
         // CheckRemainingInput should have left the input right at the delim
         // so that it would be read in in.get() above.  Since it did not find
         // the delim this does not know how to find it either!
-        if( ( c != ',' ) && ( c != ')' ) ) {
+        if((c != ',') && (c != ')')) {
             // cannot recover so give up and let STEPattribute recover
-            err->GreaterSeverity( SEVERITY_INPUT_ERROR );
+            err->GreaterSeverity(SEVERITY_INPUT_ERROR);
             return SEVERITY_INPUT_ERROR;
         }
     }
-    if( c == ')' ) {
+    if(c == ')') {
         _null = false;
     } else { // expectation for end paren delim has not been met
-        err->GreaterSeverity( SEVERITY_INPUT_ERROR );
-        err->AppendToUserMsg( "Missing close paren for aggregate value" );
+        err->GreaterSeverity(SEVERITY_INPUT_ERROR);
+        err->AppendToUserMsg("Missing close paren for aggregate value");
         return SEVERITY_INPUT_ERROR;
     }
     return err->severity();
 }
 
-Severity STEPaggregate::StrToVal( const char * s, ErrorDescriptor * err,
-                                  const TypeDescriptor * elem_type, InstMgrBase * insts,
-                                  int addFileId ) {
-    istringstream in( ( char * )s );
-    return ReadValue( in, err, elem_type, insts, addFileId, 1, 0 );
+Severity STEPaggregate::StrToVal(const char *s, ErrorDescriptor *err,
+                                 const TypeDescriptor *elem_type, InstMgrBase *insts,
+                                 int addFileId)
+{
+    istringstream in((char *)s);
+    return ReadValue(in, err, elem_type, insts, addFileId, 1, 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Severity STEPaggregate::STEPread( istream & in, ErrorDescriptor * err,
-                                  const TypeDescriptor * elem_type, InstMgrBase * insts,
-                                  int addFileId, const char * currSch ) {
-    return ReadValue( in, err, elem_type, insts, addFileId, 1, 1, currSch );
+Severity STEPaggregate::STEPread(istream &in, ErrorDescriptor *err,
+                                 const TypeDescriptor *elem_type, InstMgrBase *insts,
+                                 int addFileId, const char *currSch)
+{
+    return ReadValue(in, err, elem_type, insts, addFileId, 1, 1, currSch);
 }
 
-const char * STEPaggregate::asStr( std::string & s ) const {
+const char *STEPaggregate::asStr(std::string &s) const
+{
     s.clear();
 
-    if( !_null ) {
+    if(!_null) {
         s = "(";
-        STEPnode * n = ( STEPnode * ) head;
+        STEPnode *n = (STEPnode *) head;
         std::string tmp;
-        while( n ) {
-            s.append( n->STEPwrite( tmp ) );
-            n = ( STEPnode * ) n -> NextNode();
-            if( n ) {
-                s.append( "," );
+        while(n) {
+            s.append(n->STEPwrite(tmp));
+            n = (STEPnode *) n -> NextNode();
+            if(n) {
+                s.append(",");
             }
         }
-        s.append( ")" );
+        s.append(")");
     }
-    return const_cast<char *>( s.c_str() );
+    return const_cast<char *>(s.c_str());
 }
 
-void STEPaggregate::STEPwrite( ostream & out, const char * currSch ) const {
-    if( !_null ) {
+void STEPaggregate::STEPwrite(ostream &out, const char *currSch) const
+{
+    if(!_null) {
         out << '(';
-        STEPnode * n = ( STEPnode * )head;
+        STEPnode *n = (STEPnode *)head;
         std::string s;
-        while( n ) {
-            out << n->STEPwrite( s, currSch );
-            n = ( STEPnode * ) n -> NextNode();
-            if( n ) {
+        while(n) {
+            out << n->STEPwrite(s, currSch);
+            n = (STEPnode *) n -> NextNode();
+            if(n) {
                 out <<  ',';
             }
         }
@@ -257,18 +267,21 @@ void STEPaggregate::STEPwrite( ostream & out, const char * currSch ) const {
     }
 }
 
-SingleLinkNode * STEPaggregate::NewNode() {
+SingleLinkNode *STEPaggregate::NewNode()
+{
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPaggregate::NewNode \n" << _POC_ << "\n";
     return 0;
 }
 
-void STEPaggregate::AddNode( SingleLinkNode * n ) {
-    SingleLinkList::AppendNode( n );
+void STEPaggregate::AddNode(SingleLinkNode *n)
+{
+    SingleLinkList::AppendNode(n);
     _null = false;
 }
 
-void STEPaggregate::Empty() {
+void STEPaggregate::Empty()
+{
     SingleLinkList::Empty();
     _null = true;
 }
@@ -278,35 +291,38 @@ void STEPaggregate::Empty() {
 // STEPnode
 ///////////////////////////////////////////////////////////////////////////////
 
-Severity STEPnode::StrToVal( const char * s, ErrorDescriptor * err ) {
+Severity STEPnode::StrToVal(const char *s, ErrorDescriptor *err)
+{
     // defined in subtypes
     (void) s; //unused
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     err->AppendToDetailMsg(
         " function: STEPnode::StrToVal() called instead of virtual function.\n"
     );
-    err->AppendToDetailMsg( "Aggr. attr value: '\n" );
-    err->AppendToDetailMsg( "not assigned.\n" );
-    err->AppendToDetailMsg( _POC_ );
-    err->GreaterSeverity( SEVERITY_BUG );
+    err->AppendToDetailMsg("Aggr. attr value: '\n");
+    err->AppendToDetailMsg("not assigned.\n");
+    err->AppendToDetailMsg(_POC_);
+    err->GreaterSeverity(SEVERITY_BUG);
     return SEVERITY_BUG;
 }
 
-Severity STEPnode::StrToVal( istream & in, ErrorDescriptor * err ) {
+Severity STEPnode::StrToVal(istream &in, ErrorDescriptor *err)
+{
     // defined in subtypes
     (void) in; //unused
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     err->AppendToDetailMsg(
         " function: STEPnode::StrToVal() called instead of virtual function.\n"
     );
-    err->AppendToDetailMsg( "Aggr. attr value: '\n" );
-    err->AppendToDetailMsg( "not assigned.\n" );
-    err->AppendToDetailMsg( _POC_ );
-    err->GreaterSeverity( SEVERITY_BUG );
+    err->AppendToDetailMsg("Aggr. attr value: '\n");
+    err->AppendToDetailMsg("not assigned.\n");
+    err->AppendToDetailMsg(_POC_);
+    err->GreaterSeverity(SEVERITY_BUG);
     return SEVERITY_BUG;
 }
 
-Severity STEPnode::STEPread( const char * s, ErrorDescriptor * err ) {
+Severity STEPnode::STEPread(const char *s, ErrorDescriptor *err)
+{
     //  defined in subclasses
     (void) s; //unused
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
@@ -316,13 +332,14 @@ Severity STEPnode::STEPread( const char * s, ErrorDescriptor * err ) {
     err->AppendToDetailMsg(
         " function: STEPnode::STEPread() called instead of virtual function.\n"
     );
-    err->AppendToDetailMsg( _POC_ );
-    err->GreaterSeverity( SEVERITY_BUG );
+    err->AppendToDetailMsg(_POC_);
+    err->GreaterSeverity(SEVERITY_BUG);
 
     return SEVERITY_BUG;
 }
 
-Severity STEPnode::STEPread( istream & in, ErrorDescriptor * err ) {
+Severity STEPnode::STEPread(istream &in, ErrorDescriptor *err)
+{
     (void) in; //unused
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPnode::STEPread called instead of virtual function.\n"
@@ -331,12 +348,13 @@ Severity STEPnode::STEPread( istream & in, ErrorDescriptor * err ) {
     err->AppendToDetailMsg(
         " function: STEPnode::STEPread() called instead of virtual function.\n"
     );
-    err->AppendToDetailMsg( _POC_ );
-    err->GreaterSeverity( SEVERITY_BUG );
+    err->AppendToDetailMsg(_POC_);
+    err->GreaterSeverity(SEVERITY_BUG);
     return SEVERITY_BUG;
 }
 
-const char * STEPnode::asStr( std::string & s ) {
+const char *STEPnode::asStr(std::string &s)
+{
     //  defined in subclasses
     (void) s; //unused
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
@@ -361,7 +379,8 @@ const char * STEPnode::asStr( std::string & s ) {
  * selects.  But since currently (3/27/97) the SCL handles 2D+ aggrs using
  * SCLundefined's, this is not implemented.)
  */
-const char * STEPnode::STEPwrite( std::string & s, const char * currSch ) {
+const char *STEPnode::STEPwrite(std::string &s, const char *currSch)
+{
     (void) s; //unused
     (void) currSch; //unused
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
@@ -370,7 +389,8 @@ const char * STEPnode::STEPwrite( std::string & s, const char * currSch ) {
     return "";
 }
 
-void STEPnode::STEPwrite( ostream & out ) {
+void STEPnode::STEPwrite(ostream &out)
+{
     (void) out; //unused
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPnode::STEPwrite called instead of virtual function.\n"

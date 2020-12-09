@@ -9,14 +9,15 @@
 #include "pretty_schema.h"
 #include "pretty_express.h"
 
-void EXPRESSout( Express e ) {
+void EXPRESSout(Express e)
+{
     Schema s;
     DictionaryEntry de;
 
     exppp_init();
 
-    DICTdo_init( e->symbol_table, &de );
-    while( 0 != ( s = ( Schema )DICTdo( &de ) ) ) {
-        ( void ) SCHEMAout( s );
+    DICTdo_init(e->symbol_table, &de);
+    while(0 != (s = (Schema)DICTdo(&de))) {
+        (void) SCHEMAout(s);
     }
 }

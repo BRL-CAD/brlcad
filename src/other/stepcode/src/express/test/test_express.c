@@ -34,8 +34,8 @@ int yyerrstatus;
 /*
  * mock functions
  */
-typedef void * (*malloc_func_t) (size_t);
-typedef void   (*free_func_t)   (void *);
+typedef void *(*malloc_func_t)(size_t);
+typedef void (*free_func_t)(void *);
 
 DEFINE_FFF_GLOBALS
 
@@ -71,7 +71,8 @@ FAKE_VALUE_FUNC(char *, SCANstrdup, const char *)
 FAKE_VALUE_FUNC(perplex_t, perplexFileScanner, FILE *)
 FAKE_VALUE_FUNC(int, yylex, perplex_t)
 
-void setup() {
+void setup()
+{
     RESET_FAKE(RESOLVEinitialize);
     RESET_FAKE(SYMBOLinitialize);
     RESET_FAKE(SCOPEinitialize);
@@ -104,7 +105,8 @@ void setup() {
     RESET_FAKE(yylex);
 }
 
-int test_express_rename_resolve() {
+int test_express_rename_resolve()
+{
     Schema cur_schema, ref_schema;
     Rename *use_ref;
     Entity ent;
@@ -114,17 +116,17 @@ int test_express_rename_resolve() {
     ent_id = SYMBOLcreate("line", 1, "cur.exp");
     ent_ref = SYMBOLcreate("line", 1, "ref.exp");
     ref_schema_id = SYMBOLcreate("ref_schema", 1, "ref.exp");
-    
+
     cur_schema = SCHEMAcreate();
     cur_schema->symbol = *cur_schema_id;
     cur_schema->u.schema->uselist = LISTcreate();
-    
+
     ref_schema = SCHEMAcreate();
     ref_schema->symbol = *ref_schema_id;
-    
+
     ent = ENTITYcreate(ent_id);
     DICTdefine(ref_schema->symbol_table, ent_id->name, ent, ent_id, OBJ_ENTITY);
-    
+
     /* TODO: create RENcreate(...), refactor SCHEMAadd_use() */
     use_ref = REN_new();
     use_ref->schema_sym = ref_schema_id;
@@ -133,9 +135,9 @@ int test_express_rename_resolve() {
     use_ref->rename_type = use;
     LISTadd_last(cur_schema->u.schema->uselist, use_ref);
     use_ref->schema = ref_schema;
-    
+
     RENAMEresolve(use_ref, cur_schema);
-    
+
     assert(use_ref->type == OBJ_ENTITY);
     return 0;
 }

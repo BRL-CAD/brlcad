@@ -98,8 +98,10 @@ static struct Error_ LibErrors[] = {
     [FILE_UNREADABLE] = {SEVERITY_ERROR, "Could not read file %s: %s", NULL, false},
     [FILE_UNWRITABLE] = {SEVERITY_ERROR, "Could not write file %s: %s", NULL, false},
     [WARN_UNSUPPORTED_LANG_FEAT] = {SEVERITY_WARNING, "Unsupported language feature (%s) at %s:%d", "unsupported", false},
-    [WARN_SMALL_REAL] = {SEVERITY_WARNING, "REALs with extremely small magnitude may be interpreted as zero by other EXPRESS parsers "
-                                           "(IEEE 754 float denormals are sometimes rounded to zero) - fabs(%f) <= FLT_MIN.", "limits", false},
+    [WARN_SMALL_REAL] = {
+        SEVERITY_WARNING, "REALs with extremely small magnitude may be interpreted as zero by other EXPRESS parsers "
+        "(IEEE 754 float denormals are sometimes rounded to zero) - fabs(%f) <= FLT_MIN.", "limits", false
+    },
     /* lexact.c */
     [INCLUDE_FILE] = {SEVERITY_ERROR, "Could not open include file `%s'.", NULL, false},
     [UNMATCHED_CLOSE_COMMENT] = {SEVERITY_ERROR, "unmatched close comment", NULL, false},
@@ -157,7 +159,7 @@ static struct Error_ LibErrors[] = {
 
 
 bool __ERROR_buffer_errors = false;
-const char * current_filename = "stdin";
+const char *current_filename = "stdin";
 
 /* flag to remember whether non-warning errors have occurred */
 bool ERRORoccurred = false;
@@ -174,7 +176,7 @@ int malloc_debug_resolve = 0;
 /* for debugging yacc/lex */
 int debug = 0;
 
-void ( *ERRORusage_function )( void );
+void (*ERRORusage_function)(void);
 
 #define ERROR_MAX_ERRORS    100 /**< max line-numbered errors */
 #define ERROR_MAX_SPACE     4000 /**< max space for line-numbered errors */
@@ -185,16 +187,16 @@ void ( *ERRORusage_function )( void );
 
 static struct heap_element {
     int line;
-    char * msg;
+    char *msg;
 } heap[ERROR_MAX_ERRORS + 1]; /**< NOTE!  element 0 is purposely ignored, and
                                 * an additional element is at the end.  This
                                 * allows the later heap calculations to be
                                 * much simpler */
 
 static int ERROR_with_lines = 0;    /**< number of warnings & errors that have occurred with a line number */
-static char * ERROR_string;
-static char * ERROR_string_base;
-static char * ERROR_string_end;
+static char *ERROR_string;
+static char *ERROR_string_base;
+static char *ERROR_string_end;
 
 static bool ERROR_unsafe = false;
 static jmp_buf ERROR_safe_env;
@@ -202,8 +204,9 @@ static jmp_buf ERROR_safe_env;
 
 #define error_file stderr /**< message buffer file */
 
-static int ERROR_vprintf( const char *format, va_list ap ) {
-    int result = vsnprintf( ERROR_string, ERROR_string_end - ERROR_string, format, ap );
+static int ERROR_vprintf(const char *format, va_list ap)
+{
+    int result = vsnprintf(ERROR_string, ERROR_string_end - ERROR_string, format, ap);
 
     if(result < 0) {
         ERROR_string = ERROR_string_end;
@@ -215,102 +218,109 @@ static int ERROR_vprintf( const char *format, va_list ap ) {
     return result;
 }
 
-static int ERROR_printf( const char *format, ... ) {
+static int ERROR_printf(const char *format, ...)
+{
     int result;
     va_list ap;
-    va_start( ap, format );
-    result = ERROR_vprintf( format, ap );
-    va_end( ap );
+    va_start(ap, format);
+    result = ERROR_vprintf(format, ap);
+    va_end(ap);
     return result;
 }
 
-static void ERROR_nexterror() {
-    if( ERROR_string == ERROR_string_end ) {
+static void ERROR_nexterror()
+{
+    if(ERROR_string == ERROR_string_end) {
         return;
     }
     ERROR_string++;
 }
 
 /** Initialize the Error module */
-void ERRORinitialize( void ) {
-    ERROR_string_base = ( char * )sc_malloc( ERROR_MAX_SPACE );
+void ERRORinitialize(void)
+{
+    ERROR_string_base = (char *)sc_malloc(ERROR_MAX_SPACE);
     ERROR_string_end = ERROR_string_base + ERROR_MAX_SPACE;
     ERROR_start_message_buffer();
 
 #ifdef SIGQUIT
-    signal( SIGQUIT, ERRORabort );
+    signal(SIGQUIT, ERRORabort);
 #endif
 #ifdef SIGBUS
-    signal( SIGBUS, ERRORabort );
+    signal(SIGBUS, ERRORabort);
 #endif
 #ifdef SIGSEGV
-    signal( SIGSEGV, ERRORabort );
+    signal(SIGSEGV, ERRORabort);
 #endif
 #ifdef SIGABRT
-    signal( SIGABRT, ERRORabort );
+    signal(SIGABRT, ERRORabort);
 #endif
 }
 
 /** Clean up the Error module */
-void ERRORcleanup( void ) {
-    sc_free( ERROR_string_base );
+void ERRORcleanup(void)
+{
+    sc_free(ERROR_string_base);
 }
 
-void ERRORset_warning(char * name, bool warn_only) {
+void ERRORset_warning(char *name, bool warn_only)
+{
     Error err;
     bool found = false;
-    
-    for (unsigned int errnum = 0; errnum < (sizeof LibErrors / sizeof LibErrors[0]); errnum++) {
+
+    for(unsigned int errnum = 0; errnum < (sizeof LibErrors / sizeof LibErrors[0]); errnum++) {
         err = &LibErrors[errnum];
-        if (err->severity <= SEVERITY_WARNING && !strcmp(err->name, name)) {
+        if(err->severity <= SEVERITY_WARNING && !strcmp(err->name, name)) {
             found = true;
             err->override = warn_only;
         }
-    }    
-    
-    if (!found) {
-        fprintf( stderr, "unknown warning: %s\n", name );
-        if( ERRORusage_function ) {
-            ( *ERRORusage_function )();
+    }
+
+    if(!found) {
+        fprintf(stderr, "unknown warning: %s\n", name);
+        if(ERRORusage_function) {
+            (*ERRORusage_function)();
         } else {
             EXPRESSusage(1);
         }
     }
 }
 
-void ERRORset_all_warnings( bool warn_only ) {
+void ERRORset_all_warnings(bool warn_only)
+{
     Error err;
-    
-    for (unsigned int errnum = 0; errnum < (sizeof LibErrors / sizeof LibErrors[0]); errnum++) {
+
+    for(unsigned int errnum = 0; errnum < (sizeof LibErrors / sizeof LibErrors[0]); errnum++) {
         err = &LibErrors[errnum];
-	if (err->severity <= SEVERITY_WARNING) {
+        if(err->severity <= SEVERITY_WARNING) {
             err->override = warn_only;
-	}
-    }    
+        }
+    }
 }
 
-char * ERRORget_warnings_help(const char* prefix, const char *eol) {
+char *ERRORget_warnings_help(const char *prefix, const char *eol)
+{
     unsigned int sz = 2048, len, clen;
     char *buf, *nbuf;
     Error err;
-    
+
     clen = strlen(prefix) + strlen(eol) + 1;
-    
+
     buf = sc_malloc(sz);
-    if (!buf) {
+    if(!buf) {
         fprintf(error_file, "failed to allocate memory for warnings help!\n");
     }
     buf[0] = '\0';
-    
-    for (unsigned int errnum = 0; errnum < (sizeof LibErrors / sizeof LibErrors[0]); errnum++) {
+
+    for(unsigned int errnum = 0; errnum < (sizeof LibErrors / sizeof LibErrors[0]); errnum++) {
         err = &LibErrors[errnum];
-        if (err->name) {
+        if(err->name) {
             len = strlen(buf) + strlen(err->name) + clen;
-            if (len > sz) {
+            if(len > sz) {
                 sz *= 2;
                 nbuf = sc_realloc(buf, sz);
-                if (!nbuf) {
-                    fprintf(error_file, "failed to reallocate / grow memory for warnings help!\n");            
+                if(!nbuf) {
+                    fprintf(error_file, "failed to reallocate / grow memory for warnings help!\n");
                 }
                 buf = nbuf;
             }
@@ -319,12 +329,13 @@ char * ERRORget_warnings_help(const char* prefix, const char *eol) {
             strcat(buf, eol);
         }
     }
-    
+
     return buf;
 }
 
 bool
-ERRORis_enabled(enum ErrorCode errnum) {
+ERRORis_enabled(enum ErrorCode errnum)
+{
     Error err = &LibErrors[errnum];
     return !err->override;
 }
@@ -338,33 +349,34 @@ ERRORis_enabled(enum ErrorCode errnum) {
 **      format fields of the message generated by 'what.'
 */
 void
-ERRORreport( enum ErrorCode errnum, ... ) {
+ERRORreport(enum ErrorCode errnum, ...)
+{
     va_list args;
 
-    va_start( args, errnum );
+    va_start(args, errnum);
     Error what = &LibErrors[errnum];
 
-    if (errnum != SUBORDINATE_FAILED && ERRORis_enabled(errnum) ) {
-        if( what->severity >= SEVERITY_ERROR ) {
-            fprintf( error_file, "ERROR PE%03d: ", errnum );
-            vfprintf( error_file, what->message, args );
-            fputc( '\n', error_file );
+    if(errnum != SUBORDINATE_FAILED && ERRORis_enabled(errnum)) {
+        if(what->severity >= SEVERITY_ERROR) {
+            fprintf(error_file, "ERROR PE%03d: ", errnum);
+            vfprintf(error_file, what->message, args);
+            fputc('\n', error_file);
             ERRORoccurred = true;
         } else {
-            fprintf( error_file, "WARNING PW%03d: %d", errnum, what->severity );
-            vfprintf( error_file, what->message, args );
-            fputc( '\n', error_file );
+            fprintf(error_file, "WARNING PW%03d: %d", errnum, what->severity);
+            vfprintf(error_file, what->message, args);
+            fputc('\n', error_file);
         }
-        if( what->severity >= SEVERITY_EXIT ) {
+        if(what->severity >= SEVERITY_EXIT) {
             ERROR_flush_message_buffer();
-            if( what->severity >= SEVERITY_DUMP ) {
+            if(what->severity >= SEVERITY_DUMP) {
                 abort();
             } else {
-                exit( EXPRESS_fail( ( Express )0 ) );
+                exit(EXPRESS_fail((Express)0));
             }
         }
     }
-    va_end( args );
+    va_end(args);
 }
 
 /**
@@ -377,10 +389,11 @@ ERRORreport( enum ErrorCode errnum, ... ) {
 **      format fields of the message generated by 'what.'
 */
 void
-ERRORreport_with_line( enum ErrorCode errnum, int line, ... ) {
+ERRORreport_with_line(enum ErrorCode errnum, int line, ...)
+{
     Symbol sym;
     va_list args;
-    va_start( args, line );
+    va_start(args, line);
 
     sym.filename = current_filename;
     sym.line = line;
@@ -388,13 +401,14 @@ ERRORreport_with_line( enum ErrorCode errnum, int line, ... ) {
 }
 
 void
-ERRORreport_with_symbol( enum ErrorCode errnum, Symbol * sym, ... ) {
+ERRORreport_with_symbol(enum ErrorCode errnum, Symbol *sym, ...)
+{
     va_list args;
-    va_start( args, sym );
+    va_start(args, sym);
     Error what = &LibErrors[errnum];
 
-    if (errnum != SUBORDINATE_FAILED && ERRORis_enabled(errnum)) {
-        if( __ERROR_buffer_errors ) {
+    if(errnum != SUBORDINATE_FAILED && ERRORis_enabled(errnum)) {
+        if(__ERROR_buffer_errors) {
             int child, parent;
 
             /*
@@ -406,8 +420,8 @@ ERRORreport_with_symbol( enum ErrorCode errnum, Symbol * sym, ... ) {
 
             child = ++ERROR_with_lines;
             parent = child / 2;
-            while( parent ) {
-                if( sym->line < heap[parent].line ) {
+            while(parent) {
+                if(sym->line < heap[parent].line) {
                     heap[child] = heap[parent];
                 } else {
                     break;
@@ -418,52 +432,53 @@ ERRORreport_with_symbol( enum ErrorCode errnum, Symbol * sym, ... ) {
             heap[child].line = sym->line;
             heap[child].msg = ERROR_string;
 
-            if( what->severity >= SEVERITY_ERROR ) {
-                ERROR_printf( "%s:%d: --ERROR PE%03d: ", sym->filename, sym->line, errnum );
-                ERROR_vprintf( what->message, args );
+            if(what->severity >= SEVERITY_ERROR) {
+                ERROR_printf("%s:%d: --ERROR PE%03d: ", sym->filename, sym->line, errnum);
+                ERROR_vprintf(what->message, args);
                 ERROR_nexterror();
                 ERRORoccurred = true;
             } else {
-                ERROR_printf( "%s:%d: WARNING PW%03d: ", sym->filename, sym->line, errnum );
-                ERROR_vprintf( what->message, args );
+                ERROR_printf("%s:%d: WARNING PW%03d: ", sym->filename, sym->line, errnum);
+                ERROR_vprintf(what->message, args);
                 ERROR_nexterror();
             }
-            if( what->severity >= SEVERITY_EXIT ||
+            if(what->severity >= SEVERITY_EXIT ||
                     ERROR_string + ERROR_MAX_STRLEN > ERROR_string_base + ERROR_MAX_SPACE ||
-                    ERROR_with_lines == ERROR_MAX_ERRORS ) {
+                    ERROR_with_lines == ERROR_MAX_ERRORS) {
                 ERROR_flush_message_buffer();
-                if( what->severity >= SEVERITY_DUMP ) {
+                if(what->severity >= SEVERITY_DUMP) {
                     abort();
                 } else {
-                    exit( EXPRESS_fail( ( Express )0 ) );
+                    exit(EXPRESS_fail((Express)0));
                 }
             }
         } else {
-            if( what->severity >= SEVERITY_ERROR ) {
-                fprintf( error_file, "%s:%d: --ERROR PE%03d: ", sym->filename, sym->line, errnum );
-                vfprintf( error_file, what->message, args );
-                fprintf( error_file, "\n" );
+            if(what->severity >= SEVERITY_ERROR) {
+                fprintf(error_file, "%s:%d: --ERROR PE%03d: ", sym->filename, sym->line, errnum);
+                vfprintf(error_file, what->message, args);
+                fprintf(error_file, "\n");
                 ERRORoccurred = true;
             } else {
-                fprintf( error_file, "%s:%d: WARNING PW%03d: ", sym->filename, sym->line, errnum );
-                vfprintf( error_file, what->message, args );
-                fprintf( error_file, "\n" );
+                fprintf(error_file, "%s:%d: WARNING PW%03d: ", sym->filename, sym->line, errnum);
+                vfprintf(error_file, what->message, args);
+                fprintf(error_file, "\n");
             }
-            if( what->severity >= SEVERITY_EXIT ) {
-                if( what->severity >= SEVERITY_DUMP ) {
+            if(what->severity >= SEVERITY_EXIT) {
+                if(what->severity >= SEVERITY_DUMP) {
                     abort();
                 } else {
-                    exit( EXPRESS_fail( ( Express )0 ) );
+                    exit(EXPRESS_fail((Express)0));
                 }
             }
         }
     }
-    va_end( args );
+    va_end(args);
 }
 
-void ERRORnospace() {
-    fprintf( stderr, "%s: out of space\n", EXPRESSprogram_name );
-    ERRORabort( 0 );
+void ERRORnospace()
+{
+    fprintf(stderr, "%s: out of space\n", EXPRESSprogram_name);
+    ERRORabort(0);
 }
 
 /** \fn ERRORbuffer_messages
@@ -479,38 +494,40 @@ void ERRORnospace() {
 ** \note The error messages are sorted by line number (which appears in the third column).
 */
 
-void ERROR_start_message_buffer( void ) {
+void ERROR_start_message_buffer(void)
+{
     ERROR_string = ERROR_string_base;
     ERROR_with_lines = 0;
 }
 
-void ERROR_flush_message_buffer( void ) {
+void ERROR_flush_message_buffer(void)
+{
     if(!__ERROR_buffer_errors) {
         return;
     }
 
-    while( ERROR_with_lines ) {
-        struct heap_element * replace;
+    while(ERROR_with_lines) {
+        struct heap_element *replace;
         int parent, child;
 
         /* pop off the top of the heap */
-        fprintf( stderr, "%s", heap[1].msg );
+        fprintf(stderr, "%s", heap[1].msg);
 
         replace = &heap[ERROR_with_lines--];
 
         child = 1;
-        while( 1 ) {
+        while(1) {
             parent = child;
             child = 2 * parent;
-            if( child > ERROR_with_lines ) {
+            if(child > ERROR_with_lines) {
                 break;
             }
-            if( child + 1 <= ERROR_with_lines ) {
-                if( heap[child].line > heap[child + 1].line ) {
+            if(child + 1 <= ERROR_with_lines) {
+                if(heap[child].line > heap[child + 1].line) {
                     child++;
                 }
             }
-            if( replace->line <= heap[child].line ) {
+            if(replace->line <= heap[child].line) {
                 break;
             }
             heap[parent] = heap[child];
@@ -519,29 +536,32 @@ void ERROR_flush_message_buffer( void ) {
     }
 }
 
-void ERRORabort( int sig ) {
+void ERRORabort(int sig)
+{
     (void) sig; /* quell unused param warning */
 
     /* TODO: rework - fprintf is not atomic
      * so ERRORflush_messages() is unsafe if __ERROR_buffer_errors is set
      */
-    
+
     /* NOTE: signals can be caught in gdb,
      * no need for special treatment of debugging scenario */
-    if( ERROR_unsafe ) {
-        longjmp( ERROR_safe_env, 1 );
+    if(ERROR_unsafe) {
+        longjmp(ERROR_safe_env, 1);
     }
 #ifdef SIGABRT
-    signal( SIGABRT, SIG_DFL );
+    signal(SIGABRT, SIG_DFL);
 #endif
     /* TODO: library shouldn't abort an application? */
     abort();
 }
 
-void ERRORsafe( jmp_buf env ) {
-    memcpy( ERROR_safe_env, env, sizeof( jmp_buf ) );
+void ERRORsafe(jmp_buf env)
+{
+    memcpy(ERROR_safe_env, env, sizeof(jmp_buf));
 }
 
-void ERRORunsafe() {
+void ERRORunsafe()
+{
     ERROR_unsafe = true;
 }

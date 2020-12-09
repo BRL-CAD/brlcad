@@ -10,19 +10,23 @@
 #include <stdarg.h>
 
 static __inline int
-c99_vsnprintf(char *buffer, size_t sz, const char *format, va_list ap) {
+c99_vsnprintf(char *buffer, size_t sz, const char *format, va_list ap)
+{
     int count = -1;
 
-    if (sz != 0)
+    if(sz != 0) {
         count = _vsnprintf_s(buffer, sz, _TRUNCATE, format, ap);
-    if (count == -1)
+    }
+    if(count == -1) {
         count = _vscprintf(format, ap);
+    }
 
     return count;
 }
 
 static __inline int
-c99_snprintf(char *buffer, size_t sz, const char *format, ...) {
+c99_snprintf(char *buffer, size_t sz, const char *format, ...)
+{
     int count;
     va_list ap;
 

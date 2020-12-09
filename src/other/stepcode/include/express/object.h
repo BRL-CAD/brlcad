@@ -68,8 +68,8 @@
 /***************************/
 
 struct Object {
-    struct Symbol_ * ( *get_symbol )();
-    char * type; /**< should complete the phrase "X is ..." - i.e., "an entity", "a type", "of unknown type" */
+    struct Symbol_ *(*get_symbol)();
+    char *type;  /**< should complete the phrase "X is ..." - i.e., "an entity", "a type", "of unknown type" */
     int bits;   /**< a bitwise selector of a type, i.e. OBJ_XX_BITS */
 };
 

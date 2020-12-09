@@ -7,10 +7,11 @@
 #include <SdaiSchemaInit.h>
 #include "sc_memmgr.h"
 
-void HeaderSchemaInit( Registry & reg ) {
-    HeaderInitSchemasAndEnts( reg );
-    SdaiHEADER_SECTION_SCHEMAInit( reg );
-    reg.SetCompCollect( 0 );
+void HeaderSchemaInit(Registry &reg)
+{
+    HeaderInitSchemasAndEnts(reg);
+    SdaiHEADER_SECTION_SCHEMAInit(reg);
+    reg.SetCompCollect(0);
 }
 
 #endif

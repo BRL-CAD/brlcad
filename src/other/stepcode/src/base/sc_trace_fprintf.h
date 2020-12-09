@@ -17,10 +17,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    /** Used to find where generated c++ originates from in exp2cxx.
-     * To enable, configure with 'cmake .. -DSC_TRACE_FPRINTF=ON'
-     */
-    SC_BASE_EXPORT void trace_fprintf( char const * sourcefile, int line, FILE * file, const char * format, ... );
+/** Used to find where generated c++ originates from in exp2cxx.
+ * To enable, configure with 'cmake .. -DSC_TRACE_FPRINTF=ON'
+ */
+SC_BASE_EXPORT void trace_fprintf(char const *sourcefile, int line, FILE *file, const char *format, ...);
 #ifdef __cplusplus
 }
 #endif

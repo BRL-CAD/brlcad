@@ -48,29 +48,29 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 #define move(b)              (b = (b + strlen(b)))
 #define TYPEtd_name(t)       TypeDescriptorName (t)
 
-Variable VARis_type_shifter( Variable a );
-int isAggregateType( const Type t );
-int isAggregate( Variable a );
+Variable VARis_type_shifter(Variable a);
+int isAggregateType(const Type t);
+int isAggregate(Variable a);
 
 typedef  struct file_holder  {
-    FILE * inc;                /**<  include file */
-    FILE * lib;                /**<  library file */
-    FILE * incall;             /**<  include file for collecting all include files */
-    FILE * initall;            /**<  for registering all entities from all schemas */
-    FILE * init;               /**<  contains function to initialize program to use schema's entities */
-    FILE * create;             /**<  DAR - added - to create all schema & ent descriptors.  In multiple
+    FILE *inc;                 /**<  include file */
+    FILE *lib;                 /**<  library file */
+    FILE *incall;              /**<  include file for collecting all include files */
+    FILE *initall;             /**<  for registering all entities from all schemas */
+    FILE *init;                /**<  contains function to initialize program to use schema's entities */
+    FILE *create;             /**<  DAR - added - to create all schema & ent descriptors.  In multiple
                                 *    interrelated schemas, must be done before attribute descriptors and
                                 *    sub-super links created.
                                 */
-    FILE * classes;            /**<  DAR - added - a new .h file to contain declarations of all the
+    FILE *classes;            /**<  DAR - added - a new .h file to contain declarations of all the
                                 *    classes, so that all the .h files can refer any of the entity classes.
                                 *    Nec. if ent1 of schemaA has attribute ent2 from schemaB.
                                 */
-    FILE * names;               /**< MAP Nov 2011 - header with namespace for entity and attr descriptors */
+    FILE *names;                /**< MAP Nov 2011 - header with namespace for entity and attr descriptors */
     struct {
         struct {
-            FILE * impl;
-            FILE * hdr;
+            FILE *impl;
+            FILE *hdr;
         } entity, type;
     } unity;
 }  File_holder, FILES;
@@ -78,7 +78,7 @@ typedef  struct file_holder  {
 /**  these fields are used so that ENTITY types are processed in order
  *   when appearing in different schemas
  */
-typedef struct EntityTag_ * EntityTag;
+typedef struct EntityTag_ *EntityTag;
 struct EntityTag_ {
     unsigned int  started : 1;   /**<  marks the beginning of processing */
     unsigned int  complete : 1;  /**<  marks the end of processing */
@@ -86,36 +86,36 @@ struct EntityTag_ {
 };
 
 /** these fields are used so that SELECT types are processed in order */
-typedef struct SelectTag_ * SelectTag;
+typedef struct SelectTag_ *SelectTag;
 struct SelectTag_ {
     unsigned int started : 1;   /**<  marks the beginning of processing */
     unsigned int complete : 1;  /**<  marks the end of processing */
 };
 
-const char   *  GetTypeDescriptorName( Type t );
-char      *     format_for_stringout( char * orig_buf, char * return_buf );
-void            format_for_std_stringout( FILE* f, char* orig_buf );
-const char   *  CheckWord( const char * );
-const char   *  StrToLower( const char * );
-const char   *  StrToUpper( const char * );
-const char   *  FirstToUpper( const char * );
-const char   *  SelectName( const char * );
-FILE      *     FILEcreate( const char * );
-void            FILEclose( FILE * );
-const char   *  ClassName( const char * );
-void            FUNCPrint( Function, FILES *, Schema );
-void            RULEPrint( Rule, FILES *, Schema );
-const char   *  StrToConstant( const char * );
-void            MODELPrint( Entity, FILES *, Schema, int );
-void            MODELprint_new( Entity entity, FILES* files );
-void            MODELPrintConstructorBody( Entity, FILES *, Schema/*, int*/ );
-const char   *  PrettyTmpName( const char * oldname );
-const char   *  EnumName( const char * oldname );
-void            print_file( Express );
-void            resolution_success( void );
-void            SCHEMAprint( Schema schema, FILES* files, void* complexCol, int suffix );
-const char   *  FundamentalType( const Type t, int report_reftypes );
-void            numberAttributes( Scope scope );
+const char     *GetTypeDescriptorName(Type t);
+char           *format_for_stringout(char *orig_buf, char *return_buf);
+void            format_for_std_stringout(FILE *f, char *orig_buf);
+const char     *CheckWord(const char *);
+const char     *StrToLower(const char *);
+const char     *StrToUpper(const char *);
+const char     *FirstToUpper(const char *);
+const char     *SelectName(const char *);
+FILE           *FILEcreate(const char *);
+void            FILEclose(FILE *);
+const char     *ClassName(const char *);
+void            FUNCPrint(Function, FILES *, Schema);
+void            RULEPrint(Rule, FILES *, Schema);
+const char     *StrToConstant(const char *);
+void            MODELPrint(Entity, FILES *, Schema, int);
+void            MODELprint_new(Entity entity, FILES *files);
+void            MODELPrintConstructorBody(Entity, FILES *, Schema/*, int*/);
+const char     *PrettyTmpName(const char *oldname);
+const char     *EnumName(const char *oldname);
+void            print_file(Express);
+void            resolution_success(void);
+void            SCHEMAprint(Schema schema, FILES *files, void *complexCol, int suffix);
+const char     *FundamentalType(const Type t, int report_reftypes);
+void            numberAttributes(Scope scope);
 
 /*Variable*/
 #define VARis_simple_explicit(a)  (!VARis_type_shifter(a))
@@ -123,14 +123,14 @@ void            numberAttributes( Scope scope );
 /*Variable*/
 #define VARis_simple_derived(a)  (!VARis_overrider(a))
 
-Variable VARis_overrider( Entity e, Variable a );
+Variable VARis_overrider(Entity e, Variable a);
 
 /* Added for multiple schema support: */
-void            print_schemas_separate( Express, void *, FILES * );
-void            getMCPrint( Express, FILE *, FILE * );
-int             sameSchema( Scope, Scope );
+void            print_schemas_separate(Express, void *, FILES *);
+void            getMCPrint(Express, FILE *, FILE *);
+int             sameSchema(Scope, Scope);
 
-void            USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file );
+void            USEREFout(Schema schema, Dictionary refdict, Linked_List reflist, char *type, FILE *file);
 
 #include "classes_attribute.h"
 #include "classes_type.h"

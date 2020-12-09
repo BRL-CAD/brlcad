@@ -56,10 +56,10 @@
 #define YYEOF -1
 
 struct Buf {
-    void   *elts;	/* elements. */
-    int     nelts;	/* number of elements. */
-    size_t  elt_size;	/* in bytes. */
-    int     nmax;	/* max capacity of elements. */
+    void   *elts;   /* elements. */
+    int     nelts;  /* number of elements. */
+    size_t  elt_size;   /* in bytes. */
+    int     nmax;   /* max capacity of elements. */
 };
 
 /* scanner data */
@@ -82,7 +82,7 @@ void perplexFree(perplex_t scanner);
 
 void perplexUnput(perplex_t scanner, char c);
 void perplexSetExtra(perplex_t scanner, void *extra);
-void* perplexGetExtra(perplex_t scanner);
+void *perplexGetExtra(perplex_t scanner);
 
 #ifndef PERPLEX_LEXER
 #define PERPLEX_LEXER yylex

@@ -48,7 +48,7 @@
 /* typedefs */
 /************/
 
-typedef struct Case_Item_ * Case_Item;
+typedef struct Case_Item_ *Case_Item;
 
 /****************/
 /* modules used */
@@ -63,7 +63,7 @@ typedef struct Case_Item_ * Case_Item;
 struct Case_Item_ {
     Symbol symbol;
     Linked_List labels;
-    struct Statement_ * action;
+    struct Statement_ *action;
 };
 
 /********************/
@@ -86,7 +86,7 @@ extern SC_EXPRESS_EXPORT struct freelist_head CASE_IT_fl;
 #define CASE_IT_new()       (struct Case_Item_ *)ALLOC_new(&CASE_IT_fl)
 #define CASE_IT_destroy(x)  ALLOC_destroy(&CASE_IT_fl,(Freelist *)x)
 
-extern SC_EXPRESS_EXPORT Case_Item    CASE_ITcreate( Linked_List, struct Statement_ * );
-extern SC_EXPRESS_EXPORT void     CASE_ITinitialize( void );
+extern SC_EXPRESS_EXPORT Case_Item    CASE_ITcreate(Linked_List, struct Statement_ *);
+extern SC_EXPRESS_EXPORT void     CASE_ITinitialize(void);
 
 #endif /*CASE_ITEM_H*/

@@ -13,7 +13,8 @@
 * and is not subject to copyright.
 */
 
-class SC_DAI_EXPORT SDAI_Binary {
+class SC_DAI_EXPORT SDAI_Binary
+{
     private:
 #ifdef _MSC_VER
 #pragma warning( push )
@@ -27,37 +28,38 @@ class SC_DAI_EXPORT SDAI_Binary {
     public:
 
         //constructor(s) & destructor
-        SDAI_Binary( const char * str = 0, int max = 0 );
-        SDAI_Binary( const std::string & s );
-        ~SDAI_Binary( void );
+        SDAI_Binary(const char *str = 0, int max = 0);
+        SDAI_Binary(const std::string &s);
+        ~SDAI_Binary(void);
 
         //  operators
-        SDAI_Binary & operator= ( const char * s );
+        SDAI_Binary &operator= (const char *s);
 
-        void clear( void );
-        bool empty( void ) const;
-        const char * c_str( void ) const;
+        void clear(void);
+        bool empty(void) const;
+        const char *c_str(void) const;
         // format for STEP
-        const char * asStr() const  {
+        const char *asStr() const
+        {
             return c_str();
         }
-        void STEPwrite( ostream & out = cout )  const;
-        const char * STEPwrite( std::string & s ) const;
+        void STEPwrite(ostream &out = cout)  const;
+        const char *STEPwrite(std::string &s) const;
 
-        Severity StrToVal( const char * s, ErrorDescriptor * err );
-        Severity STEPread( istream & in, ErrorDescriptor * err );
-        Severity STEPread( const char * s, ErrorDescriptor * err );
+        Severity StrToVal(const char *s, ErrorDescriptor *err);
+        Severity STEPread(istream &in, ErrorDescriptor *err);
+        Severity STEPread(const char *s, ErrorDescriptor *err);
 
-        Severity BinaryValidLevel( const char * value, ErrorDescriptor * err,
-                                   int optional, char * tokenList,
-                                   int needDelims = 0, int clearError = 1 );
-        Severity BinaryValidLevel( istream & in, ErrorDescriptor * err,
-                                   int optional, char * tokenList,
-                                   int needDelims = 0, int clearError = 1 );
+        Severity BinaryValidLevel(const char *value, ErrorDescriptor *err,
+                                  int optional, char *tokenList,
+                                  int needDelims = 0, int clearError = 1);
+        Severity BinaryValidLevel(istream &in, ErrorDescriptor *err,
+                                  int optional, char *tokenList,
+                                  int needDelims = 0, int clearError = 1);
 
     protected:
-        Severity ReadBinary( istream & in, ErrorDescriptor * err, int AssignVal = 1,
-                             int needDelims = 1 );
+        Severity ReadBinary(istream &in, ErrorDescriptor *err, int AssignVal = 1,
+                            int needDelims = 1);
 };
 
 #endif

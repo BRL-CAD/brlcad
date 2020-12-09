@@ -56,17 +56,17 @@
 /* typedefs */
 /************/
 
-typedef struct Statement_  * Statement,
-        *Alias,
-        *Assignment,
-        *Case_Statement,
-        *Compound_Statement,
-        *Conditional,
-        *Loop,
-        *Procedure_Call,
-        *Return_Statement;
+typedef struct Statement_   *Statement,
+            *Alias,
+            *Assignment,
+            *Case_Statement,
+            *Compound_Statement,
+            *Conditional,
+            *Loop,
+            *Procedure_Call,
+            *Return_Statement;
 
-typedef struct Scope_ * Increment;
+typedef struct Scope_ *Increment;
 
 /****************/
 /* modules used */
@@ -97,21 +97,21 @@ struct Statement_ {
     int type;   /**< one of STMT_XXX above */
     /* hey, is there nothing in common beside symbol and private data?? */
     union u_statement {
-        struct Alias_     *     alias;
-        struct Assignment_   *  assign;
-        struct Case_Statement_   *  Case;
-        struct Compound_Statement_ * compound;
-        struct Conditional_  *  cond;
-        struct Loop_      *     loop;
-        struct Procedure_Call_   *  proc;
-        struct Return_Statement_  * ret;
+        struct Alias_          *alias;
+        struct Assignment_     *assign;
+        struct Case_Statement_     *Case;
+        struct Compound_Statement_ *compound;
+        struct Conditional_    *cond;
+        struct Loop_           *loop;
+        struct Procedure_Call_     *proc;
+        struct Return_Statement_   *ret;
         /* skip & escape have no data */
     } u;
 };
 
 struct Alias_ {
-    struct Scope_ * scope;
-    struct Variable_ * variable;
+    struct Scope_ *scope;
+    struct Variable_ *variable;
     Linked_List statements;     /**< list of statements */
 };
 
@@ -136,7 +136,7 @@ struct Conditional_ {
 };
 
 struct Loop_ {
-    struct Scope_ * scope;      /**< scope for increment control */
+    struct Scope_ *scope;       /**< scope for increment control */
     Expression while_expr;
     Expression until_expr;
     Linked_List statements;     /**< list of statements */
@@ -150,7 +150,7 @@ struct Increment_ {
 };
 
 struct Procedure_Call_ {
-    struct Scope_ * procedure;
+    struct Scope_ *procedure;
     Linked_List parameters; /**< list of expressions */
 };
 
@@ -225,17 +225,17 @@ extern SC_EXPRESS_EXPORT Statement STATEMENT_SKIP;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Statement    STMTcreate( int );
-extern SC_EXPRESS_EXPORT Statement    ALIAScreate( struct Scope_ *, Variable, Linked_List );
-extern SC_EXPRESS_EXPORT Statement    CASEcreate( Expression , Linked_List );
-extern SC_EXPRESS_EXPORT Statement    ASSIGNcreate( Expression , Expression );
-extern SC_EXPRESS_EXPORT Statement    COMP_STMTcreate( Linked_List );
-extern SC_EXPRESS_EXPORT Statement    CONDcreate( Expression, Linked_List, Linked_List );
-extern SC_EXPRESS_EXPORT Statement    LOOPcreate( struct Scope_ *, Expression, Expression, Linked_List );
-extern SC_EXPRESS_EXPORT Statement    PCALLcreate( Linked_List );
-extern SC_EXPRESS_EXPORT Statement    RETcreate( Expression );
-extern SC_EXPRESS_EXPORT void     STMTinitialize( void );
-extern SC_EXPRESS_EXPORT struct Scope_ * INCR_CTLcreate( Symbol *, Expression start,
-        Expression end, Expression increment );
+extern SC_EXPRESS_EXPORT Statement    STMTcreate(int);
+extern SC_EXPRESS_EXPORT Statement    ALIAScreate(struct Scope_ *, Variable, Linked_List);
+extern SC_EXPRESS_EXPORT Statement    CASEcreate(Expression, Linked_List);
+extern SC_EXPRESS_EXPORT Statement    ASSIGNcreate(Expression, Expression);
+extern SC_EXPRESS_EXPORT Statement    COMP_STMTcreate(Linked_List);
+extern SC_EXPRESS_EXPORT Statement    CONDcreate(Expression, Linked_List, Linked_List);
+extern SC_EXPRESS_EXPORT Statement    LOOPcreate(struct Scope_ *, Expression, Expression, Linked_List);
+extern SC_EXPRESS_EXPORT Statement    PCALLcreate(Linked_List);
+extern SC_EXPRESS_EXPORT Statement    RETcreate(Expression);
+extern SC_EXPRESS_EXPORT void     STMTinitialize(void);
+extern SC_EXPRESS_EXPORT struct Scope_ *INCR_CTLcreate(Symbol *, Expression start,
+        Expression end, Expression increment);
 
 #endif /*STATEMENT_H*/

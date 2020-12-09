@@ -56,9 +56,9 @@ typedef struct Scan_Buffer {
 #ifdef keep_nul
     int numRead;
 #endif
-    char  * savedPos;
-    FILE  * file;
-    const char  *  filename;
+    char   *savedPos;
+    FILE   *file;
+    const char    *filename;
     bool readEof;
     int lineno;
     int bol;
@@ -70,7 +70,7 @@ typedef struct Scan_Buffer {
 
 extern SC_EXPRESS_EXPORT Scan_Buffer  SCAN_buffers[SCAN_NESTING_DEPTH];
 extern SC_EXPRESS_EXPORT int      SCAN_current_buffer;
-extern SC_EXPRESS_EXPORT char    *    SCANcurrent;
+extern SC_EXPRESS_EXPORT char        *SCANcurrent;
 
 /******************************/
 /* macro function definitions */
@@ -93,22 +93,22 @@ extern SC_EXPRESS_EXPORT char    *    SCANcurrent;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void SCANinitialize( void );
-extern SC_EXPRESS_EXPORT void SCANcleanup( void );
-extern SC_EXPRESS_EXPORT int  SCANprocess_real_literal( const char * );
-extern SC_EXPRESS_EXPORT int  SCANprocess_integer_literal( const char * );
-extern SC_EXPRESS_EXPORT int  SCANprocess_binary_literal( const char * );
-extern SC_EXPRESS_EXPORT int  SCANprocess_logical_literal( char * );
-extern SC_EXPRESS_EXPORT int  SCANprocess_identifier_or_keyword( const char * );
-extern SC_EXPRESS_EXPORT int  SCANprocess_string( const char * );
-extern SC_EXPRESS_EXPORT int  SCANprocess_encoded_string( const char * );
-extern SC_EXPRESS_EXPORT int  SCANprocess_semicolon( const char *, int );
-extern SC_EXPRESS_EXPORT void SCANsave_comment( const char * );
-extern SC_EXPRESS_EXPORT bool SCANread( void );
-extern SC_EXPRESS_EXPORT void SCANinclude_file( char * );
-       SC_EXPRESS_EXPORT void SCANlowerize( char * );
-       SC_EXPRESS_EXPORT void SCANupperize( char * );
-extern SC_EXPRESS_EXPORT char  *  SCANstrdup( const char * );
-extern SC_EXPRESS_EXPORT long SCANtell( void );
+extern SC_EXPRESS_EXPORT void SCANinitialize(void);
+extern SC_EXPRESS_EXPORT void SCANcleanup(void);
+extern SC_EXPRESS_EXPORT int  SCANprocess_real_literal(const char *);
+extern SC_EXPRESS_EXPORT int  SCANprocess_integer_literal(const char *);
+extern SC_EXPRESS_EXPORT int  SCANprocess_binary_literal(const char *);
+extern SC_EXPRESS_EXPORT int  SCANprocess_logical_literal(char *);
+extern SC_EXPRESS_EXPORT int  SCANprocess_identifier_or_keyword(const char *);
+extern SC_EXPRESS_EXPORT int  SCANprocess_string(const char *);
+extern SC_EXPRESS_EXPORT int  SCANprocess_encoded_string(const char *);
+extern SC_EXPRESS_EXPORT int  SCANprocess_semicolon(const char *, int);
+extern SC_EXPRESS_EXPORT void SCANsave_comment(const char *);
+extern SC_EXPRESS_EXPORT bool SCANread(void);
+extern SC_EXPRESS_EXPORT void SCANinclude_file(char *);
+SC_EXPRESS_EXPORT void SCANlowerize(char *);
+SC_EXPRESS_EXPORT void SCANupperize(char *);
+extern SC_EXPRESS_EXPORT char    *SCANstrdup(const char *);
+extern SC_EXPRESS_EXPORT long SCANtell(void);
 
 #endif /* LEX_ACTIONS_H */

@@ -38,28 +38,31 @@
 // If you delete this object it deletes all of the entries it points to.
 //////////////////////////////////////////////////////////////////////////////
 
-class SC_CORE_EXPORT MgrNodeArray : public GenNodeArray {
+class SC_CORE_EXPORT MgrNodeArray : public GenNodeArray
+{
     public:
-        MgrNodeArray( int defaultSize = ARRAY_DEFAULT_SIZE );
+        MgrNodeArray(int defaultSize = ARRAY_DEFAULT_SIZE);
         ~MgrNodeArray();
 
 // REDEFINED functions
         // need to redefine Append() & Insert(GenericNode *) so they call
         //  MgrNodeArray::Insert(GenericNode *, int index);
-        virtual int Insert( GenericNode * gn, int index );
-        virtual void Append( GenericNode * gn )    {
-            Insert( gn, _count );
+        virtual int Insert(GenericNode *gn, int index);
+        virtual void Append(GenericNode *gn)
+        {
+            Insert(gn, _count);
         }
-        virtual int Insert( GenericNode * gn )     {
-            return Insert( gn, _count );
+        virtual int Insert(GenericNode *gn)
+        {
+            return Insert(gn, _count);
         }
-        virtual void Remove( int index );
+        virtual void Remove(int index);
         virtual void ClearEntries();
         virtual void DeleteEntries();
 
 // ADDED functions
-        virtual int MgrNodeIndex( int fileId );
-        void AssignIndexAddress( int index );
+        virtual int MgrNodeIndex(int fileId);
+        void AssignIndexAddress(int index);
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -70,31 +73,34 @@ class SC_CORE_EXPORT MgrNodeArray : public GenNodeArray {
 // If you delete this object it won't delete the entries it points to.
 //////////////////////////////////////////////////////////////////////////////
 
-class SC_CORE_EXPORT MgrNodeArraySorted : public GenNodeArray {
+class SC_CORE_EXPORT MgrNodeArraySorted : public GenNodeArray
+{
     public:
-        MgrNodeArraySorted( int defaultSize = ARRAY_DEFAULT_SIZE );
+        MgrNodeArraySorted(int defaultSize = ARRAY_DEFAULT_SIZE);
         ~MgrNodeArraySorted() { }
 
 // REDEFINED functions
-        virtual int Index( GenericNode * gn );
-        virtual int Index( GenericNode ** gn );
+        virtual int Index(GenericNode *gn);
+        virtual int Index(GenericNode **gn);
 
-        virtual int Insert( GenericNode * gn );
-        virtual int Insert( GenericNode * gn, int index ) {
+        virtual int Insert(GenericNode *gn);
+        virtual int Insert(GenericNode *gn, int index)
+        {
             cerr <<
                  "Call MgrNodeArraySorted::Insert() without index argument instead.\n"
                  << "index argument: " << index << " being ignored.\n";
-            return Insert( gn );
+            return Insert(gn);
         }
-        virtual void Append( GenericNode * gn )        {
-            Insert( gn );
+        virtual void Append(GenericNode *gn)
+        {
+            Insert(gn);
         }
         virtual void ClearEntries();
         virtual void DeleteEntries();
 
 // ADDED functions
-        virtual int MgrNodeIndex( int fileId );
-        int FindInsertPosition( const int fileId );
+        virtual int MgrNodeIndex(int fileId);
+        int FindInsertPosition(const int fileId);
 };
 
 
