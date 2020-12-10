@@ -66,13 +66,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-DirObj::DirObj( const char * dirName ) {
+DirObj::DirObj(const char *dirName)
+{
     const int defaultSize = 256;
 
     fileListSize = defaultSize;
-    fileList = new char*[fileListSize];
+    fileList = new char *[fileListSize];
     fileCount = 0;
-    LoadDirectory( dirName );
+    LoadDirectory(dirName);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,7 +82,8 @@ DirObj::DirObj( const char * dirName ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-DirObj::~DirObj() {
+DirObj::~DirObj()
+{
     ClearFileList();
     delete [] fileList;
 }
@@ -94,10 +96,11 @@ DirObj::~DirObj() {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-const char * DirObj::RealPath( const char * path ) {
-    const char * realpath;
+const char *DirObj::RealPath(const char *path)
+{
+    const char *realpath;
 
-    if( path == 0 || *path == '\0' ) {
+    if(path == 0 || *path == '\0') {
         realpath = "./";
     } else {
         realpath = path;
@@ -111,11 +114,12 @@ const char * DirObj::RealPath( const char * path ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-bool DirObj::LoadDirectory( const std::string & name ) {
-    if( name.empty() ) {
-        return Reset( "./" );
+bool DirObj::LoadDirectory(const std::string &name)
+{
+    if(name.empty()) {
+        return Reset("./");
     } else {
-        return Reset( name );
+        return Reset(name);
     }
 }
 
@@ -126,9 +130,10 @@ bool DirObj::LoadDirectory( const std::string & name ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-int DirObj::Index( const char * name ) {
-    for( int i = 0; i < fileCount; ++i ) {
-        if( strcmp( fileList[i], name ) == 0 ) {
+int DirObj::Index(const char *name)
+{
+    for(int i = 0; i < fileCount; ++i) {
+        if(strcmp(fileList[i], name) == 0) {
             return i;
         }
     }
@@ -143,30 +148,31 @@ int DirObj::Index( const char * name ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-bool DirObj::Reset( const std::string & path ) {
-    bool successful = IsADirectory( path.c_str() );
-    if( successful ) {
+bool DirObj::Reset(const std::string &path)
+{
+    bool successful = IsADirectory(path.c_str());
+    if(successful) {
 #ifdef _WIN32
         WIN32_FIND_DATA FindFileData;
         HANDLE hFind;
 
         ClearFileList();
-        hFind = FindFirstFile( path.c_str(), &FindFileData );
-        if( hFind != INVALID_HANDLE_VALUE ) {
+        hFind = FindFirstFile(path.c_str(), &FindFileData);
+        if(hFind != INVALID_HANDLE_VALUE) {
             int i = 0;
             do {
-                InsertFile( FindFileData.cFileName, i++ );
-            } while( FindNextFile( hFind, &FindFileData ) );
-            FindClose( hFind );
+                InsertFile(FindFileData.cFileName, i++);
+            } while(FindNextFile(hFind, &FindFileData));
+            FindClose(hFind);
         }
 #else
-        DIR * dir = opendir( path.c_str() );
+        DIR *dir = opendir(path.c_str());
         ClearFileList();
 
-        for( struct dirent * d = readdir( dir ); d != NULL; d = readdir( dir ) ) {
-            InsertFile( d->d_name, Position( d->d_name ) );
+        for(struct dirent *d = readdir(dir); d != NULL; d = readdir(dir)) {
+            InsertFile(d->d_name, Position(d->d_name));
         }
-        closedir( dir );
+        closedir(dir);
 #endif
     } else {
         std::cout << "not a directory: " << path << "!" << std::endl;
@@ -182,15 +188,16 @@ bool DirObj::Reset( const std::string & path ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-bool DirObj::IsADirectory( const char * path ) {
+bool DirObj::IsADirectory(const char *path)
+{
 #ifdef _WIN32
-    if( PathIsDirectory( path ) ) {
+    if(PathIsDirectory(path)) {
         return true;
     }
     return false;
 #else
     struct stat st;
-    return stat( path, &st ) == 0 && ( st.st_mode & S_IFMT ) == S_IFDIR;
+    return stat(path, &st) == 0 && (st.st_mode & S_IFMT) == S_IFDIR;
 #endif
 }
 
@@ -215,35 +222,36 @@ bool DirObj::IsADirectory( const char * path ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-std::string DirObj::Normalize( const std::string & path ) {
+std::string DirObj::Normalize(const std::string &path)
+{
     std::string buf;
-    const char * slash;
+    const char *slash;
 #ifdef _WIN32
     char b[MAX_PATH];
-    PathCanonicalize( b, path.c_str() );
+    PathCanonicalize(b, path.c_str());
     slash = "\\";
 #else
-    char * b;
-    b = realpath( path.c_str(), 0 );
+    char *b;
+    b = realpath(path.c_str(), 0);
     slash = "/";
 #endif
-    if( b == 0 ) {
+    if(b == 0) {
         buf.clear();
     } else {
-        buf.assign( b );
+        buf.assign(b);
 
 #if !defined(_WIN32)
-	free(b);
+        free(b);
 #endif
     }
 
-    if( buf.empty() ) {
+    if(buf.empty()) {
         buf = ".";
-        buf.append( slash );
+        buf.append(slash);
 
         // if buf is a path to a directory and doesn't end with '/'
-    } else if( IsADirectory( buf.c_str() ) && buf[buf.size()] != slash[0] ) {
-        buf.append( slash );
+    } else if(IsADirectory(buf.c_str()) && buf[buf.size()] != slash[0]) {
+        buf.append(slash);
     }
     return buf;
 }
@@ -254,17 +262,18 @@ std::string DirObj::Normalize( const std::string & path ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-const char * DirObj::ValidDirectories( const char * path ) {
+const char *DirObj::ValidDirectories(const char *path)
+{
 #ifdef _WIN32
     static char buf[MAX_PATH + 1];
 #else
     static char buf[MAXPATHLEN + 1];
 #endif
-    strcpy( buf, path );
-    int i = strlen( path );
+    strcpy(buf, path);
+    int i = strlen(path);
 
-    while( !IsADirectory( RealPath( buf ) ) && i >= 0 ) {
-        for( --i; buf[i] != '/' && i >= 0; --i ) {
+    while(!IsADirectory(RealPath(buf)) && i >= 0) {
+        for(--i; buf[i] != '/' && i >= 0; --i) {
             ;
         }
         buf[i + 1] = '\0';
@@ -279,13 +288,14 @@ const char * DirObj::ValidDirectories( const char * path ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-void DirObj::CheckIndex( int index ) {
-    char ** newstrbuf;
+void DirObj::CheckIndex(int index)
+{
+    char **newstrbuf;
 
-    if( index >= fileListSize ) {
-        fileListSize = ( index + 1 ) * 2;
-        newstrbuf = new char*[fileListSize];
-        memmove( newstrbuf, fileList, fileCount * sizeof( char * ) );
+    if(index >= fileListSize) {
+        fileListSize = (index + 1) * 2;
+        newstrbuf = new char *[fileListSize];
+        memmove(newstrbuf, fileList, fileCount * sizeof(char *));
         delete [] fileList;
         fileList = newstrbuf;
     }
@@ -297,22 +307,23 @@ void DirObj::CheckIndex( int index ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-void DirObj::InsertFile( const char * f, int index ) {
-    char ** spot;
-    index = ( index < 0 ) ? fileCount : index;
+void DirObj::InsertFile(const char *f, int index)
+{
+    char **spot;
+    index = (index < 0) ? fileCount : index;
 
-    if( index < fileCount ) {
-        CheckIndex( fileCount + 1 );
+    if(index < fileCount) {
+        CheckIndex(fileCount + 1);
         spot = &fileList[index];
-        memmove( spot + 1, spot, ( fileCount - index )*sizeof( char * ) );
+        memmove(spot + 1, spot, (fileCount - index)*sizeof(char *));
     } else {
-        CheckIndex( index );
+        CheckIndex(index);
         spot = &fileList[index];
     }
 #ifdef _MSC_VER
-    char * string = _strdup( f );
+    char *string = _strdup(f);
 #else
-    char * string = strdup( f );
+    char *string = strdup(f);
 #endif
     *spot = string;
     ++fileCount;
@@ -324,11 +335,12 @@ void DirObj::InsertFile( const char * f, int index ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-void DirObj::RemoveFile( int index ) {
-    if( index < --fileCount ) {
-        const char ** spot = ( const char ** )&fileList[index];
+void DirObj::RemoveFile(int index)
+{
+    if(index < --fileCount) {
+        const char **spot = (const char **)&fileList[index];
         delete spot;
-        memmove( spot, spot + 1, ( fileCount - index )*sizeof( char * ) );
+        memmove(spot, spot + 1, (fileCount - index)*sizeof(char *));
     }
 }
 
@@ -338,9 +350,10 @@ void DirObj::RemoveFile( int index ) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-void DirObj::ClearFileList() {
-    for( int i = 0; i < fileCount; ++i ) {
-        free( fileList[i] );
+void DirObj::ClearFileList()
+{
+    for(int i = 0; i < fileCount; ++i) {
+        free(fileList[i]);
     }
     fileCount = 0;
 }
@@ -352,11 +365,12 @@ void DirObj::ClearFileList() {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-int DirObj::Position( const char * f ) {
+int DirObj::Position(const char *f)
+{
     int i;
 
-    for( i = 0; i < fileCount; ++i ) {
-        if( strcmp( f, fileList[i] ) < 0 ) {
+    for(i = 0; i < fileCount; ++i) {
+        if(strcmp(f, fileList[i]) < 0) {
             return i;
         }
     }

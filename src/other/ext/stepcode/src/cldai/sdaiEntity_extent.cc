@@ -5,8 +5,9 @@
 #include <sdai.h>
 #include "sc_memmgr.h"
 
-SDAI_Entity_extent::SDAI_Entity_extent( )
-    : _definition( 0 ), _definition_name( 0 ), _owned_by( 0 ) {
+SDAI_Entity_extent::SDAI_Entity_extent()
+    : _definition(0), _definition_name(0), _owned_by(0)
+{
     /*
         _definition = 0;
         _definition_name = 0;
@@ -23,12 +24,14 @@ SDAI_Entity_extent::SDAI_Entity_extent(const SDAI_Entity_extent& ee)
 }
 */
 
-SDAI_Entity_extent::~SDAI_Entity_extent() {
+SDAI_Entity_extent::~SDAI_Entity_extent()
+{
     delete _definition_name;
 }
 
 Entity_ptr
-SDAI_Entity_extent ::definition_() const {
+SDAI_Entity_extent ::definition_() const
+{
     return _definition;
 }
 
@@ -41,22 +44,26 @@ SDAI_Entity_extent::definition_name_() const
 */
 
 void
-SDAI_Entity_extent::definition_( const Entity_ptr & ep ) {
+SDAI_Entity_extent::definition_(const Entity_ptr &ep)
+{
     _definition = ep;
 }
 
 void
-SDAI_Entity_extent::definition_name_( const SDAI_Entity_name & en ) {
-    _definition_name = new char[strlen( en ) + 1];
-    strncpy( _definition_name, en, strlen( en ) + 1 );
+SDAI_Entity_extent::definition_name_(const SDAI_Entity_name &en)
+{
+    _definition_name = new char[strlen(en) + 1];
+    strncpy(_definition_name, en, strlen(en) + 1);
 }
 
-void SDAI_Entity_extent::owned_by_( SDAI_Model_contents__list_var& mclv ) {
+void SDAI_Entity_extent::owned_by_(SDAI_Model_contents__list_var &mclv)
+{
     _owned_by = *mclv;
 }
 
-SDAI_Model_contents__list_var SDAI_Entity_extent ::owned_by_() const {
-    return ( const SDAI_Model_contents__list_var ) &_owned_by;
+SDAI_Model_contents__list_var SDAI_Entity_extent ::owned_by_() const
+{
+    return (const SDAI_Model_contents__list_var) &_owned_by;
 }
 
 /*
@@ -91,8 +98,9 @@ SDAI_DAObject__set_var instances_() const
 */
 
 void
-SDAI_Entity_extent::AddInstance( const SDAI_DAObject_ptr & appInst ) {
-    _instances.Append( appInst );
+SDAI_Entity_extent::AddInstance(const SDAI_DAObject_ptr &appInst)
+{
+    _instances.Append(appInst);
 }
 
 /*
@@ -113,8 +121,9 @@ SDAI_Entity_extent::AddInstance( const SDAI_DAObject_ptr & appInst ) {
 
 
 void
-SDAI_Entity_extent::RemoveInstance( const SDAI_DAObject_ptr & appInst ) {
-    _instances.Remove( _instances.Index( appInst ) );
+SDAI_Entity_extent::RemoveInstance(const SDAI_DAObject_ptr &appInst)
+{
+    _instances.Remove(_instances.Index(appInst));
 }
 
 /////////    END_ENTITY SDAI_Entity_extent

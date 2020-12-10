@@ -13,8 +13,8 @@
 
 typedef struct {
     /* will we ever need more file names? */
-    const char * impl;
-    const char * header;
+    const char *impl;
+    const char *header;
 } filenames_t;
 
 /** write entity filenames to a pair of shared static buffers.
@@ -22,13 +22,13 @@ typedef struct {
  *
  * \sa getTypeFilenames()
  */
-filenames_t getEntityFilenames( Entity e );
+filenames_t getEntityFilenames(Entity e);
 
 /** write type filenames to a pair of shared static buffers.
  * names will be overwritten by next call to a function using those buffers!
  *
  * \sa getEntityFilenames()
  */
-filenames_t getTypeFilenames( Type t );
+filenames_t getTypeFilenames(Type t);
 
 #endif /* GENCXXFILENAMES_H */

@@ -46,7 +46,7 @@ typedef enum { Lfalse, Lunknown, Ltrue } Logical;
 /* typedef ... Binary; done below because String not defined yet */
 
 #ifndef _CLIENTDATA
-typedef void * ClientData;
+typedef void *ClientData;
 #define _CLIENTDATA
 #endif
 
@@ -56,11 +56,11 @@ typedef void * ClientData;
 
 #include "alloc.h"
 
-typedef struct Scope_ * Type;
-typedef struct Scope_ * Scope;
-typedef struct Scope_ * Schema;
+typedef struct Scope_ *Type;
+typedef struct Scope_ *Scope;
+typedef struct Scope_ *Schema;
 
-typedef char * Binary;
+typedef char *Binary;
 #include "linklist.h"
 
 #define UNRESOLVED      0x0

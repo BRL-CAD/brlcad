@@ -30,26 +30,26 @@
 #  error "PP_SMALL_BUF_SZ already defined"
 #endif
 
-void ALGscope_out( Scope s, int level );
-void ENTITYattrs_out( Linked_List attributes, int derived, int level );
-void ENTITY_out( Entity e, int level );
-void ENTITYinverse_out( Linked_List attrs, int level );
-void ENTITYunique_out( Linked_List u, int level );
-void FUNC_out( Function fn, int level );
-void PROC_out( Procedure p, int level );
-void REFout( Dictionary refdict, Linked_List reflist, char * type, int level );
-void RULE_out( Rule r, int level );
-void SCOPEalgs_out( Scope s, int level );
-void SCOPEconsts_out( Scope s, int level );
-void SCOPEentities_out( Scope s, int level );
-void SCOPElocals_out( Scope s, int level );
-void SCOPEtypes_out( Scope s, int level );
-void STMT_out( Statement s, int level );
-void STMTlist_out( Linked_List stmts, int level );
-void TYPE_out( Type t, int level );
-void TYPE_head_out( Type t, int level );
-void TYPE_body_out( Type t, int level );
-void WHERE_out( Linked_List wheres, int level );
+void ALGscope_out(Scope s, int level);
+void ENTITYattrs_out(Linked_List attributes, int derived, int level);
+void ENTITY_out(Entity e, int level);
+void ENTITYinverse_out(Linked_List attrs, int level);
+void ENTITYunique_out(Linked_List u, int level);
+void FUNC_out(Function fn, int level);
+void PROC_out(Procedure p, int level);
+void REFout(Dictionary refdict, Linked_List reflist, char *type, int level);
+void RULE_out(Rule r, int level);
+void SCOPEalgs_out(Scope s, int level);
+void SCOPEconsts_out(Scope s, int level);
+void SCOPEentities_out(Scope s, int level);
+void SCOPElocals_out(Scope s, int level);
+void SCOPEtypes_out(Scope s, int level);
+void STMT_out(Statement s, int level);
+void STMTlist_out(Linked_List stmts, int level);
+void TYPE_out(Type t, int level);
+void TYPE_head_out(Type t, int level);
+void TYPE_body_out(Type t, int level);
+void WHERE_out(Linked_List wheres, int level);
 
 Error ERROR_select_empty;
 
@@ -73,11 +73,11 @@ bool exppp_terse = false;
 bool exppp_reference_info = false;   /* if true, add commentary about where things came from */
 bool exppp_tail_comment = false;
 
-FILE * exppp_fp = NULL;         /* output file */
-char * exppp_buf = 0;           /* output buffer */
+FILE *exppp_fp = NULL;          /* output file */
+char *exppp_buf = 0;            /* output buffer */
 int exppp_maxbuflen = 0;        /* size of expppbuf */
 unsigned int exppp_buflen = 0;  /* remaining space in expppbuf */
-char * exppp_bufp = 0;          /* pointer to write position in expppbuf,
+char *exppp_bufp = 0;          /* pointer to write position in expppbuf,
                                  * should usually be pointing to a "\0" */
 
 /** used to print a comment containing the name of a  structure at the
@@ -85,18 +85,20 @@ char * exppp_bufp = 0;          /* pointer to write position in expppbuf,
  *
  * prints a newline regardless
  */
-void tail_comment( const char * name ) {
-    if( exppp_tail_comment ) {
-        raw( " -- %s", name );
+void tail_comment(const char *name)
+{
+    if(exppp_tail_comment) {
+        raw(" -- %s", name);
     }
-    raw( "\n" );
+    raw("\n");
 }
 
 /** count newlines in a string */
-int count_newlines( char * s ) {
+int count_newlines(char *s)
+{
     int count = 0;
-    for( ; *s; s++ ) {
-        if( *s == '\n' ) {
+    for(; *s; s++) {
+        if(*s == '\n') {
             count++;
         }
     }
@@ -106,46 +108,48 @@ int count_newlines( char * s ) {
 /** true if last char through exp_output was a space */
 static bool printedSpaceLast = false;
 
-void exp_output( char * buf, unsigned int len ) {
-    FILE * fp = ( exppp_fp ? exppp_fp : stdout );
+void exp_output(char *buf, unsigned int len)
+{
+    FILE *fp = (exppp_fp ? exppp_fp : stdout);
 
-    error_sym.line += count_newlines( buf );
-    printedSpaceLast = ( *( buf + len - 1) == ' ' );
-    if( exppp_buf ) {
+    error_sym.line += count_newlines(buf);
+    printedSpaceLast = (*(buf + len - 1) == ' ');
+    if(exppp_buf) {
         /* output to string */
-        if( len > exppp_buflen ) {
+        if(len > exppp_buflen) {
             /* should provide flag to enable complaint */
             /* for now, just ignore */
             return;
         }
-        memcpy( exppp_bufp, buf, len + 1 );
+        memcpy(exppp_bufp, buf, len + 1);
         exppp_bufp += len;
         exppp_buflen -= len;
     } else {
         /* output to file */
-        size_t out = fwrite( buf, 1, len, fp );
-        if( out != len ) {
-            const char * err = "%s:%u - ERROR: write operation on output file failed. Wanted %u bytes, wrote %u.";
-            fprintf( stderr, err, __FILE__, __LINE__, len, out );
+        size_t out = fwrite(buf, 1, len, fp);
+        if(out != len) {
+            const char *err = "%s:%u - ERROR: write operation on output file failed. Wanted %u bytes, wrote %u.";
+            fprintf(stderr, err, __FILE__, __LINE__, len, out);
             abort();
         }
     }
 }
 
-void wrap( const char * fmt, ... ) {
+void wrap(const char *fmt, ...)
+{
     char buf[10000];
-    char * p, * start = buf;
+    char *p, * start = buf;
     int len;
     va_list args;
 
-    va_start( args, fmt );
-    vsprintf( buf, fmt, args );
-    va_end( args );
+    va_start(args, fmt);
+    vsprintf(buf, fmt, args);
+    va_end(args);
 
-    len = strlen( buf );
+    len = strlen(buf);
 
     /* eliminate leading whitespace */
-    while( ( *start == ' ' ) && ( ( printedSpaceLast ) || ( *( start + 1 ) == ' ' ) ) ){
+    while((*start == ' ') && ((printedSpaceLast) || (*(start + 1) == ' '))) {
         start++;
         len--;
     }
@@ -157,26 +161,26 @@ void wrap( const char * fmt, ... ) {
      * 3rd condition: if exppp_linelength == indent2 and curpos > indent2, always newline
      * to use #3: temporarily change exppp_linelength; it doesn't make sense to change indent2
      */
-    if( ( ( ( curpos + len ) > exppp_linelength ) && ( ( indent2 + len ) < exppp_linelength ) )
-        || ( ( exppp_linelength == indent2 ) && ( curpos > indent2 ) ) ) {
+    if((((curpos + len) > exppp_linelength) && ((indent2 + len) < exppp_linelength))
+            || ((exppp_linelength == indent2) && (curpos > indent2))) {
         /* move to new continuation line */
         char line[1000];
-        sprintf( line, "\n%*s", indent2, "" );
-        exp_output( line, 1 + indent2 );
+        sprintf(line, "\n%*s", indent2, "");
+        exp_output(line, 1 + indent2);
 
         curpos = indent2;       /* reset current position */
     }
 
     /* eliminate leading whitespace  - again */
-    while( ( *start == ' ' ) && ( ( printedSpaceLast ) || ( *( start + 1 ) == ' ' ) ) ){
+    while((*start == ' ') && ((printedSpaceLast) || (*(start + 1) == ' '))) {
         start++;
         len--;
     }
-    exp_output( start, len );
+    exp_output(start, len);
 
-    if( len ) {
+    if(len) {
         /* reset cur position based on last newline seen */
-        if( 0 == ( p = strrchr( start, '\n' ) ) ) {
+        if(0 == (p = strrchr(start, '\n'))) {
             curpos += len;
         } else {
             curpos = len + start - p;
@@ -184,23 +188,24 @@ void wrap( const char * fmt, ... ) {
     }
 }
 
-void raw( const char * fmt, ... ) {
-    char * p;
+void raw(const char *fmt, ...)
+{
+    char *p;
     char buf[10000];
     int len;
     va_list args;
 
-    va_start( args, fmt );
-    vsprintf( buf, fmt, args );
-    va_end( args );
+    va_start(args, fmt);
+    vsprintf(buf, fmt, args);
+    va_end(args);
 
-    len = strlen( buf );
+    len = strlen(buf);
 
-    exp_output( buf, len );
+    exp_output(buf, len);
 
-    if( len ) {
+    if(len) {
         /* reset cur position based on last newline seen */
-        if( 0 == ( p = strrchr( buf, '\n' ) ) ) {
+        if(0 == (p = strrchr(buf, '\n'))) {
             curpos += len;
         } else {
             curpos = len + buf - p;
@@ -208,19 +213,21 @@ void raw( const char * fmt, ... ) {
     }
 }
 
-void exppp_init() {
+void exppp_init()
+{
     static bool first_time = true;
 
-    if( !first_time ) {
+    if(!first_time) {
         return;
     }
     first_time = false;
 }
 
 
-void exppp_ref_info( Symbol * s ) {
-    if( exppp_reference_info ) {
-        raw( "--info %s %s %d\n", s->name, s->filename, s->line );
+void exppp_ref_info(Symbol *s)
+{
+    if(exppp_reference_info) {
+        raw("--info %s %s %d\n", s->name, s->filename, s->line);
     }
 }
 
@@ -230,19 +237,21 @@ void exppp_ref_info( Symbol * s ) {
  */
 bool first_line = true;       /* if first line */
 
-void first_newline() {
-    if( first_line ) {
+void first_newline()
+{
+    if(first_line) {
         first_line = false;
     } else {
-        raw( "\n" );
+        raw("\n");
     }
 }
 
-int minimum( int a, int b, int c ) {
-    if( a < b ) {
-        return ( ( a < c ) ? a : c );
+int minimum(int a, int b, int c)
+{
+    if(a < b) {
+        return ((a < c) ? a : c);
     } else {
-        return ( ( b < c ) ? b : c );
+        return ((b < c) ? b : c);
     }
 }
 
@@ -252,10 +261,11 @@ int minimum( int a, int b, int c ) {
  * \param r the real to convert
  * \returns const char pointer to static buffer containing ascii representation of real
  */
-const char * real2exp( double r ) {
-    #define PP_SMALL_BUF_SZ 80
+const char *real2exp(double r)
+{
+#define PP_SMALL_BUF_SZ 80
     static char result[PP_SMALL_BUF_SZ] = { 0 };
-    char * pos = result, * lcNumeric = setlocale( LC_NUMERIC, NULL );
+    char *pos = result, * lcNumeric = setlocale(LC_NUMERIC, NULL);
 
     /* the following ensures that PP_SMALL_BUF_SZ is at least
      * as big as the largest possible string:
@@ -270,89 +280,92 @@ const char * real2exp( double r ) {
      * non-exotic platforms.
      */
     unsigned int exponentDigits = 2, expMax = DBL_MAX_10_EXP;
-    while( expMax >= 10 ) {
+    while(expMax >= 10) {
         exponentDigits++;
         expMax /= 10;
     }
-    if( !( ( DBL_DIG + exponentDigits + 3 ) < PP_SMALL_BUF_SZ ) ) {
-        fprintf( stderr, "ERROR: buffer undersized at %s:%d\n", __FILE__, __LINE__ );
+    if(!((DBL_DIG + exponentDigits + 3) < PP_SMALL_BUF_SZ)) {
+        fprintf(stderr, "ERROR: buffer undersized at %s:%d\n", __FILE__, __LINE__);
         abort();
     }
 
-    if( strcmp( "C", lcNumeric ) ) {
-        fprintf( stderr, "WARNING: locale has been set to \"%s\", not \"C\" %s", lcNumeric,
-                 "(are you calling exppp from Qt?). Incorrect formatting is possible.\n" );
-        setlocale( LC_NUMERIC, "C" );
+    if(strcmp("C", lcNumeric)) {
+        fprintf(stderr, "WARNING: locale has been set to \"%s\", not \"C\" %s", lcNumeric,
+                "(are you calling exppp from Qt?). Incorrect formatting is possible.\n");
+        setlocale(LC_NUMERIC, "C");
     }
-    snprintf( result, PP_SMALL_BUF_SZ, "%#.*g", DBL_DIG, r );
+    snprintf(result, PP_SMALL_BUF_SZ, "%#.*g", DBL_DIG, r);
 
     /* eliminate trailing zeros in the mantissa */
-    assert( strlen( result ) < PP_SMALL_BUF_SZ - 1 );
-    while( ( *pos != '.' ) && ( *pos != '\0' ) ) {
+    assert(strlen(result) < PP_SMALL_BUF_SZ - 1);
+    while((*pos != '.') && (*pos != '\0')) {
         /* search for '.' */
         pos++;
     }
-    if( *pos != '\0' ) {
-        char * firstUnnecessaryDigit = NULL; /* this will be the first zero of the trailing zeros in the mantissa */
+    if(*pos != '\0') {
+        char *firstUnnecessaryDigit = NULL;  /* this will be the first zero of the trailing zeros in the mantissa */
         pos++;
-        while( isdigit( *pos ) ) {
-            if( ( *pos == '0' ) && ( firstUnnecessaryDigit == NULL ) ) {
+        while(isdigit(*pos)) {
+            if((*pos == '0') && (firstUnnecessaryDigit == NULL)) {
                 firstUnnecessaryDigit = pos;
-            } else if( *pos != '0' ) {
+            } else if(*pos != '0') {
                 firstUnnecessaryDigit = NULL;
             }
             pos++;
         }
-        if( ( firstUnnecessaryDigit != NULL ) && ( firstUnnecessaryDigit < pos ) ) {
-            if( ( *( firstUnnecessaryDigit - 1 ) == '.' ) && ( *pos == '\0' ) ) {
+        if((firstUnnecessaryDigit != NULL) && (firstUnnecessaryDigit < pos)) {
+            if((*(firstUnnecessaryDigit - 1) == '.') && (*pos == '\0')) {
                 /* no exponent, nothing after decimal point - remove decimal point */
-                *( firstUnnecessaryDigit - 1 ) = '\0';
+                *(firstUnnecessaryDigit - 1) = '\0';
             } else {
                 /* copy exponent (or \0) immediately after the decimal point */
-                memmove( firstUnnecessaryDigit, pos, strlen( pos ) + 1 );
+                memmove(firstUnnecessaryDigit, pos, strlen(pos) + 1);
             }
         }
     }
-    assert( strlen( result ) < PP_SMALL_BUF_SZ - 1 );
+    assert(strlen(result) < PP_SMALL_BUF_SZ - 1);
     return result;
-    #undef PP_SMALL_BUF_SZ
+#undef PP_SMALL_BUF_SZ
 }
 
 /** Find next '.' in null-terminated string, return number of chars
  *  If no '.' found, returns length of string
  */
-int nextBreakpoint( const char * pos, const char * end ) {
+int nextBreakpoint(const char *pos, const char *end)
+{
     int i = 0;
-    while( ( *pos != '.' ) && ( *pos != '\0' ) && ( pos < end ) ) {
+    while((*pos != '.') && (*pos != '\0') && (pos < end)) {
         i++;
         pos++;
     }
-    if( *pos == '.' ) {
+    if(*pos == '.') {
         i++;
     }
     return i;
 }
 
 /** true if it makes sense to break before printing next part of the string */
-bool shouldBreak( int len ) {
-    if( ( curpos > indent2 ) &&
-        ( ( curpos + len ) > exppp_linelength ) ) {
+bool shouldBreak(int len)
+{
+    if((curpos > indent2) &&
+            ((curpos + len) > exppp_linelength)) {
         return true;
     }
     return false;
 }
 
 /** Insert newline if it makes sense. */
-void maybeBreak( int len, bool first ) {
-    if( shouldBreak( len ) ) {
-        if( first ) {
-            raw( "\n%*s'", indent2, "" );
+void maybeBreak(int len, bool first)
+{
+    if(shouldBreak(len)) {
+        if(first) {
+            raw("\n%*s'", indent2, "");
         } else {
-            raw( "'\n%*s+ '", indent2, "" );
+            raw("'\n%*s+ '", indent2, "");
         }
-    } else if( first ) {
+    } else if(first) {
         /* staying on same line */
-        raw( "%s", ( printedSpaceLast ? "'": " '" ) );
+        raw("%s", (printedSpaceLast ? "'" : " '"));
     }
 }
 
@@ -363,28 +376,29 @@ void maybeBreak( int len, bool first ) {
  * side effects: output via raw()
  * reads globals indent2 and curpos
  */
-void breakLongStr( const char * in ) {
-    const char * iptr = in, * end;
-    unsigned int inlen = strlen( in );
+void breakLongStr(const char *in)
+{
+    const char *iptr = in, * end;
+    unsigned int inlen = strlen(in);
     bool first = true;
     /* used to ensure that we don't overrun the input buffer */
     end = in + inlen;
 
-    if( ( inlen == 0 ) || ( ( ( int ) inlen + curpos ) < exppp_linelength ) ) {
+    if((inlen == 0) || (((int) inlen + curpos) < exppp_linelength)) {
         /* short enough to fit on current line */
-        raw( "%s'%s'", ( printedSpaceLast ? "": " " ), in );
+        raw("%s'%s'", (printedSpaceLast ? "" : " "), in);
         return;
     }
 
     /* insert newlines at dots as necessary */
-    while( ( iptr < end ) && ( *iptr ) ) {
-        int i = nextBreakpoint( iptr, end );
-        maybeBreak( i, first );
+    while((iptr < end) && (*iptr)) {
+        int i = nextBreakpoint(iptr, end);
+        maybeBreak(i, first);
         first = false;
-        raw( "%.*s", i, iptr );
+        raw("%.*s", i, iptr);
         iptr += i;
     }
-    raw( "' ");
+    raw("' ");
 }
 
 /* Interfacing Definitions */
@@ -396,10 +410,11 @@ static bool string_func_in_use = false;
 static bool file_func_in_use = false;
 
 /** return 0 if successful */
-int prep_buffer( char * buf, int len ) {
+int prep_buffer(char *buf, int len)
+{
     /* this should never happen */
-    if( string_func_in_use ) {
-        fprintf( stderr, "cannot generate EXPRESS string representations recursively!\n" );
+    if(string_func_in_use) {
+        fprintf(stderr, "cannot generate EXPRESS string representations recursively!\n");
         return 1;
     }
     string_func_in_use = true;
@@ -418,7 +433,8 @@ int prep_buffer( char * buf, int len ) {
 }
 
 /** \return length of string */
-int finish_buffer() {
+int finish_buffer()
+{
     exppp_buf = 0;
     curpos = old_curpos;
     error_sym.line = old_lineno;
@@ -427,17 +443,18 @@ int finish_buffer() {
 }
 
 /** \return 0 if successful */
-int prep_string() {
+int prep_string()
+{
     /* this should never happen */
-    if( string_func_in_use ) {
-        fprintf( stderr, "cannot generate EXPRESS string representations recursively!\n" );
+    if(string_func_in_use) {
+        fprintf(stderr, "cannot generate EXPRESS string representations recursively!\n");
         return 1;
     }
     string_func_in_use = true;
 
-    exppp_buf = exppp_bufp = ( char * )sc_malloc( BIGBUFSIZ );
-    if( !exppp_buf ) {
-        fprintf( stderr, "failed to allocate exppp buffer\n" );
+    exppp_buf = exppp_bufp = (char *)sc_malloc(BIGBUFSIZ);
+    if(!exppp_buf) {
+        fprintf(stderr, "failed to allocate exppp buffer\n");
         return 1;
     }
     exppp_buflen = exppp_maxbuflen = BIGBUFSIZ;
@@ -452,11 +469,12 @@ int prep_string() {
     return 0;
 }
 
-char * finish_string() {
-    char * b = ( char * )sc_realloc( exppp_buf, 1 + exppp_maxbuflen - exppp_buflen );
+char *finish_string()
+{
+    char *b = (char *)sc_realloc(exppp_buf, 1 + exppp_maxbuflen - exppp_buflen);
 
-    if( b == 0 ) {
-        fprintf( stderr, "failed to reallocate exppp buffer\n" );
+    if(b == 0) {
+        fprintf(stderr, "failed to reallocate exppp buffer\n");
         return 0;
     }
     exppp_buf = 0;
@@ -467,13 +485,14 @@ char * finish_string() {
     return b;
 }
 
-static FILE * oldfp;
+static FILE *oldfp;
 
-void prep_file() {
+void prep_file()
+{
     /* this can only happen if user calls output func while suspended */
     /* inside another output func both called from debugger */
-    if( file_func_in_use ) {
-        fprintf( stderr, "cannot print EXPRESS representations recursively!\n" );
+    if(file_func_in_use) {
+        fprintf(stderr, "cannot print EXPRESS representations recursively!\n");
     }
     file_func_in_use = true;
 
@@ -484,12 +503,13 @@ void prep_file() {
     curpos = 1;
 }
 
-void finish_file() {
+void finish_file()
+{
     exppp_fp = oldfp;       /* reset back to original file */
     file_func_in_use = false;
 }
 
-char * placeholder = "placeholder";
+char *placeholder = "placeholder";
 
 
 

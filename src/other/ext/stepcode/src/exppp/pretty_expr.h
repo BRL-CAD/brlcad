@@ -10,13 +10,13 @@
 EXPRop2__out(oe,string,paren,pad,OP_UNKNOWN)
 #define EXPRop_out(oe,paren) EXPRop__out(oe,paren,OP_UNKNOWN)
 
-void EXPRop__out( struct Op_Subexpression * oe, int paren, unsigned int previous_op );
-void EXPRop_string( char * buffer, struct Op_Subexpression * oe );
-void EXPRop1_out( struct Op_Subexpression * eo, char * opcode, int paren );
-void EXPRop2__out( struct Op_Subexpression * eo, char * opcode, int paren, int pad, unsigned int previous_op );
-void EXPR__out( Expression e, int paren, unsigned int previous_op );
-void EXPRbounds_out( TypeBody tb );
-int EXPRlength( Expression e );
+void EXPRop__out(struct Op_Subexpression *oe, int paren, unsigned int previous_op);
+void EXPRop_string(char *buffer, struct Op_Subexpression *oe);
+void EXPRop1_out(struct Op_Subexpression *eo, char *opcode, int paren);
+void EXPRop2__out(struct Op_Subexpression *eo, char *opcode, int paren, int pad, unsigned int previous_op);
+void EXPR__out(Expression e, int paren, unsigned int previous_op);
+void EXPRbounds_out(TypeBody tb);
+int EXPRlength(Expression e);
 
 #endif /* PRETTY_EXPR_H */
 

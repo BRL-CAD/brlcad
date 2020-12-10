@@ -20,18 +20,18 @@
 /** \returns:  temporary copy of name suitable for use as a class name
  *  Side Effects:  erases the name created by a previous call to this function
  */
-const char * ClassName( const char * oldname );
+const char *ClassName(const char *oldname);
 
 /** \returns  the name of the c++ class representing the entity */
-const char * ENTITYget_classname( Entity ent );
+const char *ENTITYget_classname(Entity ent);
 
 /** supplies the type of a data member for the c++ class
  * \returns:  a string which is the type of the data member in the c++ class
  */
-const char * TYPEget_ctype( const Type t );
+const char *TYPEget_ctype(const Type t);
 
 /** name of type as defined in SDAI C++ binding  4-Nov-1993 */
-const char * TypeName( Type t );
+const char *TypeName(Type t);
 
 /** These functions take a character or a string and return
  ** a temporary copy of the string with the function applied to it.
@@ -42,11 +42,11 @@ const char * TypeName( Type t );
  ** \returns a temporary copy of characters
  ** @{
  */
-char ToLower( char c );
-char ToUpper( char c );
-const char * StrToLower( const char * word );
-const char * StrToUpper( const char * word );
-const char * StrToConstant( const char * word );
-const char * FirstToUpper( const char * word );
+char ToLower(char c);
+char ToUpper(char c);
+const char *StrToLower(const char *word);
+const char *StrToUpper(const char *word);
+const char *StrToConstant(const char *word);
+const char *FirstToUpper(const char *word);
 /* @} */
 #endif /* CLASS_STRINGS_H */

@@ -50,10 +50,10 @@
 /* typedefs */
 /************/
 
-typedef struct Scope_ * Procedure;
-typedef struct Scope_ * Function;
-typedef struct Scope_ * Rule;
-typedef struct Where_ * Where;
+typedef struct Scope_ *Procedure;
+typedef struct Scope_ *Function;
+typedef struct Scope_ *Rule;
+typedef struct Where_ *Where;
 
 /***************************/
 /* hidden type definitions */
@@ -63,13 +63,13 @@ typedef struct Where_ * Where;
  * As each (real) call is resolved, the tag->type is temporarily borrowed
  */
 struct tag {
-    char * name;
+    char *name;
     Type type;
 };
 
 /** location of fulltext of algorithm in source file */
 struct FullText {
-    const char * filename;
+    const char *filename;
     unsigned int start, end;
 };
 
@@ -101,7 +101,7 @@ struct Rule_ {
 
 /** define a where clause */
 struct Where_ {
-    Symbol   *   label;
+    Symbol      *label;
     Expression  expr;
 };
 
@@ -161,8 +161,8 @@ extern SC_EXPRESS_EXPORT struct freelist_head WHERE_fl;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Scope    ALGcreate( char );
-extern SC_EXPRESS_EXPORT void     ALGinitialize( void );
-extern SC_EXPRESS_EXPORT void     ALGput_full_text( Scope, int, int );
+extern SC_EXPRESS_EXPORT Scope    ALGcreate(char);
+extern SC_EXPRESS_EXPORT void     ALGinitialize(void);
+extern SC_EXPRESS_EXPORT void     ALGput_full_text(Scope, int, int);
 
 #endif /* ALGORITHM_H */

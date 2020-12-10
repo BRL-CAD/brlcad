@@ -20,26 +20,28 @@ class STEPattribute;
 
 class STEPattributeList;
 
-class SC_CORE_EXPORT AttrListNode :  public SingleLinkNode {
+class SC_CORE_EXPORT AttrListNode :  public SingleLinkNode
+{
         friend class STEPattributeList;
 
     protected:
-        STEPattribute * attr;
+        STEPattribute *attr;
 
     public:
-        AttrListNode( STEPattribute * a );
+        AttrListNode(STEPattribute *a);
         virtual ~AttrListNode();
 
 };
 
-class SC_CORE_EXPORT STEPattributeList : public SingleLinkList {
+class SC_CORE_EXPORT STEPattributeList : public SingleLinkList
+{
     public:
         STEPattributeList();
         virtual ~STEPattributeList();
 
-        STEPattribute & operator []( int n );
+        STEPattribute &operator [](int n);
         int list_length();
-        void push( STEPattribute * a );
+        void push(STEPattribute *a);
 };
 
 /*****************************************************************

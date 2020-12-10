@@ -47,57 +47,63 @@
 
 /*****************************************************************************/
 
-class SC_UTILS_EXPORT DirObj {
+class SC_UTILS_EXPORT DirObj
+{
     public:
-        DirObj( const char * dirName );
+        DirObj(const char *dirName);
         virtual ~DirObj();
 
-        bool LoadDirectory( const std::string & name );
-        static std::string Normalize( const std::string & s );
+        bool LoadDirectory(const std::string &name);
+        static std::string Normalize(const std::string &s);
 
-        const char * ValidDirectories( const char * );
+        const char *ValidDirectories(const char *);
 
-        int Index( const char * );
-        const char * File( int index );
+        int Index(const char *);
+        const char *File(int index);
         // check for file in the currently loaded directory
-        bool FileExists( const char * file ) {
-            return Index( file ) ? 1 : 0;
+        bool FileExists(const char *file)
+        {
+            return Index(file) ? 1 : 0;
         }
-        bool FileExists( const std::string & file ) {
-            return Index( file.c_str() ) ? true : false;
+        bool FileExists(const std::string &file)
+        {
+            return Index(file.c_str()) ? true : false;
         }
         int Count();
 
-        static bool IsADirectory( const char * );
+        static bool IsADirectory(const char *);
     private:
-        const char * RealPath( const char * );
+        const char *RealPath(const char *);
 
-        bool Reset( const std::string & path );
+        bool Reset(const std::string &path);
         void ClearFileList();
-        void CheckIndex( int index );
-        void InsertFile( const char *, int index );
-        void AppendFile( const char * );
-        void RemoveFile( int index );
-        virtual int Position( const char * );
+        void CheckIndex(int index);
+        void InsertFile(const char *, int index);
+        void AppendFile(const char *);
+        void RemoveFile(int index);
+        virtual int Position(const char *);
     private:
-        char ** fileList;
+        char **fileList;
         int fileCount;
         int fileListSize;
 };
 
 // Return the number of files in the loaded directory.
-inline int DirObj::Count() {
+inline int DirObj::Count()
+{
     return fileCount;
 }
 
 // Insert a new file into the fileList.
-inline void DirObj::AppendFile( const char * s ) {
-    InsertFile( s, fileCount );
+inline void DirObj::AppendFile(const char *s)
+{
+    InsertFile(s, fileCount);
 }
 
 // Return the file at the given index (starting at 0) in the fileList
-inline const char * DirObj::File( int index ) {
-    return ( 0 <= index && index < fileCount ) ? fileList[index] : 0;
+inline const char *DirObj::File(int index)
+{
+    return (0 <= index && index < fileCount) ? fileList[index] : 0;
 }
 
 #endif

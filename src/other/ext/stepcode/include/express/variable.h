@@ -62,7 +62,7 @@
 /* typedefs */
 /************/
 
-typedef struct Variable_ * Variable;
+typedef struct Variable_ *Variable;
 
 /****************/
 /* modules used */
@@ -91,7 +91,7 @@ struct Variable_ {
         unsigned int attribute   : 1; /**< is an attribute (rule parameters are marked this way, too) */
     } flags;
 
-    Symbol   *  inverse_symbol;     /**< entity symbol */
+    Symbol     *inverse_symbol;     /**< entity symbol */
     Variable    inverse_attribute;  /**< attribute related by inverse relationship */
 };
 
@@ -125,8 +125,8 @@ extern SC_EXPRESS_EXPORT struct freelist_head VAR_fl;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Variable VARcreate( Expression, Type );
-extern SC_EXPRESS_EXPORT void VARinitialize( void );
-extern SC_EXPRESS_EXPORT char * VARget_simple_name( Variable );
+extern SC_EXPRESS_EXPORT Variable VARcreate(Expression, Type);
+extern SC_EXPRESS_EXPORT void VARinitialize(void);
+extern SC_EXPRESS_EXPORT char *VARget_simple_name(Variable);
 
 #endif    /*  VARIABLE_H  */

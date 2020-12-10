@@ -21,30 +21,31 @@
  * list, then sets this to the first element, and then deletes the first
  * element.  This ensures that `this' points to the start of the list.
  */
-EntNode::EntNode( const char ** names ) {
+EntNode::EntNode(const char **names)
+{
     int j = 1, comp;
-    EntNode * prev, *prev2 = NULL, // prev2 - the one before prev
-                     *newnode, *firstnode;
-    const char * nm;
+    EntNode *prev, *prev2 = NULL,  // prev2 - the one before prev
+                    *newnode, *firstnode;
+    const char *nm;
 
     // Create a first EntNode:
-    firstnode = prev = new EntNode( names[0] );
+    firstnode = prev = new EntNode(names[0]);
 
-    while( names[j] && *names[j] != '*' ) {
+    while(names[j] && *names[j] != '*') {
         nm = names[j];
-        while( prev != NULL && ( comp = StrCmpIns( prev->name, nm ) ) < 0 ) {
+        while(prev != NULL && (comp = StrCmpIns(prev->name, nm)) < 0) {
             prev2 = prev;
             prev = prev->next;
         }
 
         // One exceptional case:  If new name is same as prev, skip it:
-        if( comp != 0 ) {
+        if(comp != 0) {
             // At this point, we know the new node belongs between prev2 and
             // prev.  prev or prev2 may = NULL if newnode belongs at the end of
             // the list or before the beginning, respectively.
-            newnode = new EntNode( nm );
+            newnode = new EntNode(nm);
             newnode->next = prev;
-            if( prev2 == NULL ) {
+            if(prev2 == NULL) {
                 // This will be the case if the inner while was never entered.
                 // That happens when newnode belonged at the beginning of the
                 // list.  If so, reset firstnode.
@@ -70,10 +71,11 @@ EntNode::EntNode( const char ** names ) {
 /**
  * Copies all of ent's values here.
  */
-EntNode & EntNode::operator= ( EntNode & ent ) {
-    Name( ent.name );
-    setmark( ent.mark );
-    multSuprs( ent.multSupers );
+EntNode &EntNode::operator= (EntNode &ent)
+{
+    Name(ent.name);
+    setmark(ent.mark);
+    multSuprs(ent.multSupers);
     next = ent.next;
     return *this;
 }
@@ -81,10 +83,11 @@ EntNode & EntNode::operator= ( EntNode & ent ) {
 /**
  * Marks/unmarks all the nodes in this's list (default is to mark).
  */
-void EntNode::markAll( MarkType stamp ) {
-    EntNode * node = this;
+void EntNode::markAll(MarkType stamp)
+{
+    EntNode *node = this;
 
-    while( node != NULL ) {
+    while(node != NULL) {
         node->mark = stamp;
         node = node->next;
     }
@@ -93,11 +96,12 @@ void EntNode::markAll( MarkType stamp ) {
 /**
  * Returns true if this and all nodes following it are marked.
  */
-bool EntNode::allMarked() {
-    EntNode * node = this;
+bool EntNode::allMarked()
+{
+    EntNode *node = this;
 
-    while( node != NULL ) {
-        if( node->mark == NOMARK ) {
+    while(node != NULL) {
+        if(node->mark == NOMARK) {
             return false;
         }
         node = node->next;
@@ -108,12 +112,13 @@ bool EntNode::allMarked() {
 /**
  * Returns the number of unmarked nodes in this's list.
  */
-int EntNode::unmarkedCount() {
+int EntNode::unmarkedCount()
+{
     int count = 0;
-    EntNode * node = this;
+    EntNode *node = this;
 
-    while( node != NULL ) {
-        if( node->mark == NOMARK ) {
+    while(node != NULL) {
+        if(node->mark == NOMARK) {
             count++;
         }
         node = node->next;
@@ -125,13 +130,14 @@ int EntNode::unmarkedCount() {
  * Starting from `this', search for the last node (along our next's) which
  * alphabetically precedes ent.
  */
-EntNode * EntNode::lastSmaller( EntNode * ent ) {
-    EntNode * eptr = next, *prev = this;
+EntNode *EntNode::lastSmaller(EntNode *ent)
+{
+    EntNode *eptr = next, *prev = this;
 
-    if( *this > *ent ) {
+    if(*this > *ent) {
         return NULL;
     }
-    while( eptr && *eptr > *prev && *eptr < *ent ) {
+    while(eptr && *eptr > *prev && *eptr < *ent) {
         prev = eptr;
         eptr = eptr->next;
     }
@@ -147,10 +153,11 @@ EntNode * EntNode::lastSmaller( EntNode * ent ) {
  * few of the nodes.  The nodes at first were in order; only the renamed
  * ones may be out of place.)
  */
-void EntNode::sort( EntNode ** first ) {
-    EntNode * eptr1, *eptr2, *temp1, *temp2;
+void EntNode::sort(EntNode **first)
+{
+    EntNode *eptr1, *eptr2, *temp1, *temp2;
 
-    while( next && *this > *next ) {
+    while(next && *this > *next) {
 
         // Find the earliest node greater than next.  (I.e., is not only this >
         // next but also some of this's preceding nodes.  Since the nodes
@@ -158,20 +165,20 @@ void EntNode::sort( EntNode ** first ) {
         // ordered chunk of nodes which next should precede.)  (eptr1 is
         // actually set to the one before, so that we'll know that eptr1->next
         // should now be set to next.)
-        eptr1 = ( *first )->lastSmaller( next );
+        eptr1 = (*first)->lastSmaller(next);
 
         // Take the latest node eptr1 is greater than.  (I.e., beyond next are
         // there more nodes which should be immediately after eptr1.)  (The
         // succeeding nodes are not necessarily in order, so lastSmaller() also
         // checks that nodes later than next are also > their prev's.)
-        if( eptr1 ) {
-            eptr2 = next->lastSmaller( eptr1->next );
+        if(eptr1) {
+            eptr2 = next->lastSmaller(eptr1->next);
         } else {
-            eptr2 = next->lastSmaller( *first );
+            eptr2 = next->lastSmaller(*first);
         }
 
         // Switch the two lists:
-        if( eptr1 ) {
+        if(eptr1) {
             temp1 = eptr1->next;
             eptr1->next = next;
             temp2 = eptr2->next;
@@ -186,7 +193,7 @@ void EntNode::sort( EntNode ** first ) {
         }
     }
 
-    if( next ) {
-        next->sort( first );
+    if(next) {
+        next->sort(first);
     }
 }

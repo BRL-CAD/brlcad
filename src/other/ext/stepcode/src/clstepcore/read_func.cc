@@ -11,9 +11,10 @@ const int RealNumPrecision = REAL_NUM_PRECISION;
 
 // print Error information for debugging purposes
 void
-PrintErrorState( ErrorDescriptor & err ) {
+PrintErrorState(ErrorDescriptor &err)
+{
     cout << "** severity: ";
-    switch( err.severity() ) {
+    switch(err.severity()) {
         case SEVERITY_NULL :
             cout << "\n  Null\n";
             break;
@@ -37,14 +38,15 @@ PrintErrorState( ErrorDescriptor & err ) {
 }
 
 // print istream error information for debugging purposes
-void IStreamState( istream & in ) {
-    if( in.good() ) {
+void IStreamState(istream &in)
+{
+    if(in.good()) {
         cerr << "istream GOOD\n" << flush;
     }
-    if( in.fail() ) {
+    if(in.fail()) {
         cerr << "istream FAIL\n" << flush;
     }
-    if( in.eof() ) {
+    if(in.eof()) {
         cerr << "istream EOF\n" << flush;
     }
 }
@@ -69,27 +71,29 @@ void IStreamState( istream & in ) {
 //   by any characters other than white space (i.e. EOF must happen)
 //
 ///////////////////////////////////////////////////////////////////////////////
-int ReadInteger( SDAI_Integer & val, istream & in, ErrorDescriptor * err,
-                 const char * tokenList ) {
+int ReadInteger(SDAI_Integer &val, istream &in, ErrorDescriptor *err,
+                const char *tokenList)
+{
     SDAI_Integer  i = 0;
     in >> ws;
     in >> i;
 
     int valAssigned = 0;
 
-    if( !in.fail() ) {
+    if(!in.fail()) {
         valAssigned = 1;
         val = i;
     }
-    CheckRemainingInput( in, err, "Integer", tokenList );
+    CheckRemainingInput(in, err, "Integer", tokenList);
     return valAssigned;
 }
 
 /// same as above but reads from a const char *
-int ReadInteger( SDAI_Integer & val, const char * s, ErrorDescriptor * err,
-                 const char * tokenList ) {
-    istringstream in( ( char * )s );
-    return ReadInteger( val, in, err, tokenList );
+int ReadInteger(SDAI_Integer &val, const char *s, ErrorDescriptor *err,
+                const char *tokenList)
+{
+    istringstream in((char *)s);
+    return ReadInteger(val, in, err, tokenList);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,37 +115,39 @@ int ReadInteger( SDAI_Integer & val, const char * s, ErrorDescriptor * err,
 //   null then attrValue must only contain a valid value and nothing else
 //   following.
 ///////////////////////////////////////////////////////////////////////////////
-Severity IntValidLevel( const char * attrValue, ErrorDescriptor * err,
-                        int clearError, int optional, const char * tokenList ) {
-    if( clearError ) {
+Severity IntValidLevel(const char *attrValue, ErrorDescriptor *err,
+                       int clearError, int optional, const char *tokenList)
+{
+    if(clearError) {
         err->ClearErrorMsg();
     }
 
-    istringstream in( ( char * )attrValue );
+    istringstream in((char *)attrValue);
     in >> ws; // skip white space
     char c = in.peek();
-    if( in.eof() ) {
-        if( !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+    if(in.eof()) {
+        if(!optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
-    } else if( c == '$' ) {
-        if( !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+    } else if(c == '$') {
+        if(!optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
         in >> c;
-        CheckRemainingInput( in, err, "integer", tokenList );
+        CheckRemainingInput(in, err, "integer", tokenList);
         return err->severity();
     } else {
         SDAI_Integer  val = 0;
-        int valAssigned = ReadInteger( val, in, err, tokenList );
-        if( !valAssigned && !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+        int valAssigned = ReadInteger(val, in, err, tokenList);
+        if(!valAssigned && !optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
     }
     return err->severity();
 }
 
-std::string WriteReal( SDAI_Real val ) {
+std::string WriteReal(SDAI_Real val)
+{
     char rbuf[64];
     std::string s;
 
@@ -154,22 +160,22 @@ std::string WriteReal( SDAI_Real val ) {
     // Also use G instead of g since G writes uppercase E (E instead of e
     // is also required by Part 21) when scientific notation is used - DAS
 
-    sprintf( rbuf, "%.*G", ( int ) RealNumPrecision, val );
-    if( !strchr( rbuf, '.' ) ) {
-        if( strchr( rbuf, 'E' ) || strchr( rbuf, 'e' ) ) {
-            char * expon = strchr( rbuf, 'E' );
+    sprintf(rbuf, "%.*G", (int) RealNumPrecision, val);
+    if(!strchr(rbuf, '.')) {
+        if(strchr(rbuf, 'E') || strchr(rbuf, 'e')) {
+            char *expon = strchr(rbuf, 'E');
 
-            if( !expon ) {
-                expon = strchr( rbuf, 'e' );
+            if(!expon) {
+                expon = strchr(rbuf, 'e');
             }
             *expon = '\0';
             s = rbuf;
-            s.append( "." );
-            s.append( "E" );
+            s.append(".");
+            s.append("E");
             expon++;
             s += expon;
         } else {
-            int rindex = strlen( rbuf );
+            int rindex = strlen(rbuf);
             rbuf[rindex] = '.';
             rbuf[rindex + 1] = '\0';
             s = rbuf;
@@ -180,8 +186,9 @@ std::string WriteReal( SDAI_Real val ) {
     return s;
 }
 
-void WriteReal( SDAI_Real  val, ostream & out ) {
-    out << WriteReal( val );
+void WriteReal(SDAI_Real  val, ostream &out)
+{
+    out << WriteReal(val);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -209,8 +216,9 @@ void WriteReal( SDAI_Real  val, ostream & out ) {
 //   an error), optional sign, at least one decimal digit if there is an E.
 //
 ///////////////////////////////////////////////////////////////////////////////
-int ReadReal( SDAI_Real & val, istream & in, ErrorDescriptor * err,
-              const char * tokenList ) {
+int ReadReal(SDAI_Real &val, istream &in, ErrorDescriptor *err,
+             const char *tokenList)
+{
     SDAI_Real  d = 0;
 
     // Read the real's value into a string so we can make sure it is properly
@@ -225,71 +233,71 @@ int ReadReal( SDAI_Real & val, istream & in, ErrorDescriptor * err,
 
     // read optional sign
     c = in.peek();
-    if( c == '+' || c == '-' ) {
-        in.get( buf[i++] );
+    if(c == '+' || c == '-') {
+        in.get(buf[i++]);
         c = in.peek();
     }
 
     // check for required initial decimal digit
-    if( !isdigit( c ) ) {
-        e.severity( SEVERITY_WARNING );
-        e.DetailMsg( "Real must have an initial digit.\n" );
+    if(!isdigit(c)) {
+        e.severity(SEVERITY_WARNING);
+        e.DetailMsg("Real must have an initial digit.\n");
     }
     // read one or more decimal digits
-    while( isdigit( c ) ) {
-        in.get( buf[i++] );
+    while(isdigit(c)) {
+        in.get(buf[i++]);
         c = in.peek();
     }
 
     // read Part 21 required decimal point
-    if( c == '.' ) {
-        in.get( buf[i++] );
+    if(c == '.') {
+        in.get(buf[i++]);
         c = in.peek();
     } else {
         // It may be the number they wanted but it is incompletely specified
         // without a decimal and thus it is an error
-        e.GreaterSeverity( SEVERITY_WARNING );
-        e.AppendToDetailMsg( "Reals are required to have a decimal point.\n" );
+        e.GreaterSeverity(SEVERITY_WARNING);
+        e.AppendToDetailMsg("Reals are required to have a decimal point.\n");
     }
 
     // read optional decimal digits
-    while( isdigit( c ) ) {
-        in.get( buf[i++] );
+    while(isdigit(c)) {
+        in.get(buf[i++]);
         c = in.peek();
     }
 
     // try to read an optional E for scientific notation
-    if( ( c == 'e' ) || ( c == 'E' ) ) {
-        if( c == 'e' ) {
+    if((c == 'e') || (c == 'E')) {
+        if(c == 'e') {
             // this is incorrectly specified and thus is an error
-            e.GreaterSeverity( SEVERITY_WARNING );
+            e.GreaterSeverity(SEVERITY_WARNING);
             e.AppendToDetailMsg(
-                "Reals using scientific notation must use upper case E.\n" );
+                "Reals using scientific notation must use upper case E.\n");
         }
-        in.get( buf[i++] ); // read the E
+        in.get(buf[i++]);   // read the E
         c = in.peek();
 
         // read optional sign
-        if( c == '+' || c == '-' ) {
-            in.get( buf[i++] );
+        if(c == '+' || c == '-') {
+            in.get(buf[i++]);
             c = in.peek();
         }
 
         // read required decimal digit (since it has an E)
-        if( !isdigit( c ) ) {
-            e.GreaterSeverity( SEVERITY_WARNING );
+        if(!isdigit(c)) {
+            e.GreaterSeverity(SEVERITY_WARNING);
             e.AppendToDetailMsg(
-                "Real must have at least one digit following E for scientific notation.\n" );
+                "Real must have at least one digit following E for scientific notation.\n");
         }
         // read one or more decimal digits
-        while( isdigit( c ) ) {
-            in.get( buf[i++] );
+        while(isdigit(c)) {
+            in.get(buf[i++]);
             c = in.peek();
         }
     }
     buf[i] = '\0';
 
-    istringstream in2( ( char * )buf );
+    istringstream in2((char *)buf);
 
     // now that we have the real the stream will be able to salvage reading
     // whatever kind of format was used to represent the real.
@@ -297,24 +305,25 @@ int ReadReal( SDAI_Real & val, istream & in, ErrorDescriptor * err,
 
     int valAssigned = 0;
 
-    if( !in2.fail() ) {
+    if(!in2.fail()) {
         valAssigned = 1;
         val = d;
-        err->GreaterSeverity( e.severity() );
-        err->AppendToDetailMsg( e.DetailMsg() );
+        err->GreaterSeverity(e.severity());
+        err->AppendToDetailMsg(e.DetailMsg());
     } else {
         val = S_REAL_NULL;
     }
 
-    CheckRemainingInput( in, err, "Real", tokenList );
+    CheckRemainingInput(in, err, "Real", tokenList);
     return valAssigned;
 }
 
 /// same as above but reads from a const char *
-int ReadReal( SDAI_Real & val, const char * s, ErrorDescriptor * err,
-              const char * tokenList ) {
-    istringstream in( ( char * )s );
-    return ReadReal( val, in, err, tokenList );
+int ReadReal(SDAI_Real &val, const char *s, ErrorDescriptor *err,
+             const char *tokenList)
+{
+    istringstream in((char *)s);
+    return ReadReal(val, in, err, tokenList);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -336,31 +345,32 @@ int ReadReal( SDAI_Real & val, const char * s, ErrorDescriptor * err,
 //   null then attrValue must only contain a valid value and nothing else
 //   following.
 ///////////////////////////////////////////////////////////////////////////////
-Severity RealValidLevel( const char * attrValue, ErrorDescriptor * err,
-                         int clearError, int optional, const char * tokenList ) {
-    if( clearError ) {
+Severity RealValidLevel(const char *attrValue, ErrorDescriptor *err,
+                        int clearError, int optional, const char *tokenList)
+{
+    if(clearError) {
         err->ClearErrorMsg();
     }
 
-    istringstream in( ( char * )attrValue );
+    istringstream in((char *)attrValue);
     in >> ws; // skip white space
     char c = in.peek();
-    if( in.eof() ) {
-        if( !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+    if(in.eof()) {
+        if(!optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
-    } else if( c == '$' ) {
-        if( !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+    } else if(c == '$') {
+        if(!optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
         in >> c;
-        CheckRemainingInput( in, err, "real", tokenList );
+        CheckRemainingInput(in, err, "real", tokenList);
         return err->severity();
     } else {
         SDAI_Real  val = 0;
-        int valAssigned = ReadReal( val, in, err, tokenList );
-        if( !valAssigned && !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+        int valAssigned = ReadReal(val, in, err, tokenList);
+        if(!valAssigned && !optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
     }
     return err->severity();
@@ -385,26 +395,28 @@ Severity RealValidLevel( const char * attrValue, ErrorDescriptor * err,
  *   to be invalid.  If tokenList is null then the value must not be followed
  *   by any characters other than white space (i.e. EOF must happen)
  */
-int ReadNumber( SDAI_Real & val, istream & in, ErrorDescriptor * err,
-                const char * tokenList ) {
+int ReadNumber(SDAI_Real &val, istream &in, ErrorDescriptor *err,
+               const char *tokenList)
+{
     SDAI_Real  d = 0;
     in >> ws;
     in >> d;
 
     int valAssigned = 0;
-    if( !in.fail() ) {
+    if(!in.fail()) {
         valAssigned = 1;
         val = d;
     }
-    CheckRemainingInput( in, err, "Number", tokenList );
+    CheckRemainingInput(in, err, "Number", tokenList);
     return valAssigned;
 }
 
 /// same as above but reads from a const char *
-int ReadNumber( SDAI_Real & val, const char * s, ErrorDescriptor * err,
-                const char * tokenList ) {
-    istringstream in( ( char * )s );
-    return ReadNumber( val, in, err, tokenList );
+int ReadNumber(SDAI_Real &val, const char *s, ErrorDescriptor *err,
+               const char *tokenList)
+{
+    istringstream in((char *)s);
+    return ReadNumber(val, in, err, tokenList);
 }
 
 
@@ -427,73 +439,76 @@ int ReadNumber( SDAI_Real & val, const char * s, ErrorDescriptor * err,
 //   null then attrValue must only contain a valid value and nothing else
 //   following.
 ///////////////////////////////////////////////////////////////////////////////
-Severity NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
-                           int clearError, int optional, const char * tokenList ) {
-    if( clearError ) {
+Severity NumberValidLevel(const char *attrValue, ErrorDescriptor *err,
+                          int clearError, int optional, const char *tokenList)
+{
+    if(clearError) {
         err->ClearErrorMsg();
     }
 
-    istringstream in( ( char * )attrValue );
+    istringstream in((char *)attrValue);
     in >> ws; // skip white space
     char c = in.peek();
-    if( in.eof() ) {
-        if( !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+    if(in.eof()) {
+        if(!optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
-    } else if( c == '$' ) {
-        if( !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+    } else if(c == '$') {
+        if(!optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
         in >> c;
-        CheckRemainingInput( in, err, "number", tokenList );
+        CheckRemainingInput(in, err, "number", tokenList);
         return err->severity();
     } else {
         SDAI_Real  val = 0;
-        int valAssigned = ReadNumber( val, in, err, tokenList );
-        if( !valAssigned && !optional ) {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
+        int valAssigned = ReadNumber(val, in, err, tokenList);
+        if(!valAssigned && !optional) {
+            err->GreaterSeverity(SEVERITY_INCOMPLETE);
         }
     }
     return err->severity();
 }
 
 /// assign 's' so that it contains an exchange file format string read from 'in'.
-void PushPastString( istream & in, std::string & s, ErrorDescriptor * err ) {
-    s += GetLiteralStr( in, err );
+void PushPastString(istream &in, std::string &s, ErrorDescriptor *err)
+{
+    s += GetLiteralStr(in, err);
 }
 
 /**
  * assign 's' so that it contains an exchange file format aggregate read from 'in'.
  * This is used to read aggregates that are part of multidimensional aggregates.
  */
-void PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err ) {
+void PushPastImbedAggr(istream &in, std::string &s, ErrorDescriptor *err)
+{
     char messageBuf[BUFSIZ];
     messageBuf[0] = '\0';
 
     char c;
     in >> ws;
-    in.get( c );
+    in.get(c);
 
-    if( c == '(' ) {
+    if(c == '(') {
         s += c;
-        in.get( c );
-        while( in.good() && ( c != ')' ) ) {
-            if( c == '(' ) {
-                in.putback( c );
-                PushPastImbedAggr( in, s, err );
-            } else if( c == STRING_DELIM ) {
-                in.putback( c );
-                PushPastString( in, s, err );
+        in.get(c);
+        while(in.good() && (c != ')')) {
+            if(c == '(') {
+                in.putback(c);
+                PushPastImbedAggr(in, s, err);
+            } else if(c == STRING_DELIM) {
+                in.putback(c);
+                PushPastString(in, s, err);
             } else {
                 s += c;
             }
-            in.get( c );
+            in.get(c);
         }
-        if( c != ')' ) {
-            err->GreaterSeverity( SEVERITY_INPUT_ERROR );
-            sprintf( messageBuf, "Invalid aggregate value.\n" );
-            err->AppendToDetailMsg( messageBuf );
-            s.append( ")" );
+        if(c != ')') {
+            err->GreaterSeverity(SEVERITY_INPUT_ERROR);
+            sprintf(messageBuf, "Invalid aggregate value.\n");
+            err->AppendToDetailMsg(messageBuf);
+            s.append(")");
         } else {
             s += c;
         }
@@ -505,37 +520,38 @@ void PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err ) {
  * This is used to read a single dimensional aggregate (i.e. it is not allowed
  * to contain an aggregate as an element.
  */
-void PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err ) {
+void PushPastAggr1Dim(istream &in, std::string &s, ErrorDescriptor *err)
+{
     char messageBuf[BUFSIZ];
     messageBuf[0] = '\0';
 
     char c;
     in >> ws;
-    in.get( c );
+    in.get(c);
 
-    if( c == '(' ) {
+    if(c == '(') {
         s += c;
-        in.get( c );
-        while( in.good() && ( c != ')' ) ) {
-            if( c == '(' ) {
-                err->GreaterSeverity( SEVERITY_WARNING );
-                sprintf( messageBuf, "Invalid aggregate value.\n" );
-                err->AppendToDetailMsg( messageBuf );
+        in.get(c);
+        while(in.good() && (c != ')')) {
+            if(c == '(') {
+                err->GreaterSeverity(SEVERITY_WARNING);
+                sprintf(messageBuf, "Invalid aggregate value.\n");
+                err->AppendToDetailMsg(messageBuf);
             }
 
-            if( c == STRING_DELIM ) {
-                in.putback( c );
-                PushPastString( in, s, err );
+            if(c == STRING_DELIM) {
+                in.putback(c);
+                PushPastString(in, s, err);
             } else {
                 s += c;
             }
-            in.get( c );
+            in.get(c);
         }
-        if( c != ')' ) {
-            err->GreaterSeverity( SEVERITY_INPUT_ERROR );
-            sprintf( messageBuf, "Invalid aggregate value.\n" );
-            err->AppendToDetailMsg( messageBuf );
-            s.append( ")" );
+        if(c != ')') {
+            err->GreaterSeverity(SEVERITY_INPUT_ERROR);
+            sprintf(messageBuf, "Invalid aggregate value.\n");
+            err->AppendToDetailMsg(messageBuf);
+            s.append(")");
         } else {
             s += c;
         }
@@ -547,22 +563,23 @@ void PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err ) {
 * it copies what is read to the std::string inst.  It leaves the # on the
 * istream.
 */
-Severity FindStartOfInstance( istream & in, std::string & inst ) {
+Severity FindStartOfInstance(istream &in, std::string &inst)
+{
     char c = 0;
     ErrorDescriptor errs;
     SDAI_String  tmp;
 
-    while( in.good() ) {
+    while(in.good()) {
         in >> c;
-        switch( c )  {
+        switch(c)  {
             case '#':  //  found char looking for.
-                in.putback( c );
+                in.putback(c);
                 return SEVERITY_NULL;
 
             case '\'':  // get past the string
-                in.putback( c );
-                tmp.STEPread( in, &errs );
-                inst.append( tmp.c_str() );
+                in.putback(c);
+                tmp.STEPread(in, &errs);
+                inst.append(tmp.c_str());
                 break;
 
             case '\0':  // problem in input ?
@@ -579,21 +596,22 @@ Severity FindStartOfInstance( istream & in, std::string & inst ) {
 * SkipInstance reads in an instance terminated with ;.  it copies
 * what is read to the std::string inst.
 */
-Severity SkipInstance( istream & in, std::string & inst ) {
+Severity SkipInstance(istream &in, std::string &inst)
+{
     char c = 0;
     ErrorDescriptor errs;
     SDAI_String  tmp;
 
-    while( in.good() ) {
+    while(in.good()) {
         in >> c;
-        switch( c )  {
+        switch(c)  {
             case ';':  //  end of instance reached
                 return SEVERITY_NULL;
 
             case '\'':  // get past the string
-                in.putback( c );
-                tmp.STEPread( in, &errs );
-                inst.append( tmp.c_str() );
+                in.putback(c);
+                tmp.STEPread(in, &errs);
+                inst.append(tmp.c_str());
                 break;
 
             case '\0':  // problem in input ?
@@ -614,38 +632,39 @@ Severity SkipInstance( istream & in, std::string & inst ) {
 // external mapping don't have them.  If you are reading a simple record in the
 // form of an internal mapping you will have to read the semicolon.
 */
-const char * SkipSimpleRecord( istream & in, std::string & buf, ErrorDescriptor * err ) {
+const char *SkipSimpleRecord(istream &in, std::string &buf, ErrorDescriptor *err)
+{
     char c;
     std::string s;
 
     in >> ws;
-    in.get( c );
-    if( c == '(' ) { // beginning of record
+    in.get(c);
+    if(c == '(') {   // beginning of record
         buf += c;
-        while( in.get( c ) && ( c != ')' ) && ( err->severity() > SEVERITY_INPUT_ERROR ) ) {
-            if( c == '\'' ) {
-                in.putback( c );
+        while(in.get(c) && (c != ')') && (err->severity() > SEVERITY_INPUT_ERROR)) {
+            if(c == '\'') {
+                in.putback(c);
                 s.clear();
-                PushPastString( in, s, err );
-                buf.append( s.c_str() );
-            } else if( c == '(' ) {
-                in.putback( c );
+                PushPastString(in, s, err);
+                buf.append(s.c_str());
+            } else if(c == '(') {
+                in.putback(c);
                 s.clear();
-                PushPastImbedAggr( in, s, err );
-                buf.append( s.c_str() );
+                PushPastImbedAggr(in, s, err);
+                buf.append(s.c_str());
             } else {
                 buf += c;
             }
         }
-        if( !in.good() ) {
-            err->GreaterSeverity( SEVERITY_INPUT_ERROR );
-            err->DetailMsg( "File problems reading simple record.\n" );
+        if(!in.good()) {
+            err->GreaterSeverity(SEVERITY_INPUT_ERROR);
+            err->DetailMsg("File problems reading simple record.\n");
         }
-        buf.append( ")" );
+        buf.append(")");
     } else {
-        in.putback( c );    // put back open paren
+        in.putback(c);      // put back open paren
     }
-    return const_cast<char *>( buf.c_str() );
+    return const_cast<char *>(buf.c_str());
 }
 
 /**
@@ -653,21 +672,22 @@ const char * SkipSimpleRecord( istream & in, std::string & buf, ErrorDescriptor 
 // entity types.  To read a user-defined keyword: read the '!' then call
 // this function with skipInitWS turned off.
 **/
-const char * ReadStdKeyword( istream & in, std::string & buf, int skipInitWS ) {
+const char *ReadStdKeyword(istream &in, std::string &buf, int skipInitWS)
+{
     char c;
-    if( skipInitWS ) {
+    if(skipInitWS) {
         in >> ws;
     }
 
-    while( in.get( c ) && !isspace( c ) && ( isalnum( c ) || ( c == '_' ) ) ) {
+    while(in.get(c) && !isspace(c) && (isalnum(c) || (c == '_'))) {
         buf += c;
     }
 
-    if( in.eof() || in.good() ) {
-        in.putback( c );
+    if(in.eof() || in.good()) {
+        in.putback(c);
     }
 
-    return const_cast<char *>( buf.c_str() );
+    return const_cast<char *>(buf.c_str());
 }
 
 /***************************
@@ -684,35 +704,36 @@ of an entity of a specific type. They shall consist of uppercase letters,
 digits, underscore characters, and possibly an exclamation mark.
 The "!" shall appear only once, and only as the first character.
 ***************************/
-const char * GetKeyword( istream & in, const char * delims, ErrorDescriptor & err ) {
+const char *GetKeyword(istream &in, const char *delims, ErrorDescriptor &err)
+{
     char c;
     int sz = 1;
     static std::string str;
 
     str = "";
-    in.get( c );
-    while( !( ( isspace( c ) ) || ( strchr( delims, c ) ) ) ) {
+    in.get(c);
+    while(!((isspace(c)) || (strchr(delims, c)))) {
         //check to see if the char is valid
-        if( !( ( isupper( c ) ) ||
-                ( isdigit( c ) ) ||
-                ( c == '_' )   ||
-                ( c == '-' )   ||  //for reading 'ISO-10303-21'
-                ( ( c == '!' ) && ( sz == 1 ) ) ) ) {
+        if(!((isupper(c)) ||
+                (isdigit(c)) ||
+                (c == '_')   ||
+                (c == '-')   ||    //for reading 'ISO-10303-21'
+                ((c == '!') && (sz == 1)))) {
             cerr << "Error: Invalid character \'" << c <<
                  "\' in GetKeyword.\nkeyword was: " << str << "\n";
-            err.GreaterSeverity( SEVERITY_WARNING );
-            in.putback( c );
-            return const_cast<char *>( str.c_str() );
+            err.GreaterSeverity(SEVERITY_WARNING);
+            in.putback(c);
+            return const_cast<char *>(str.c_str());
         }
-        if( !in.good() ) {
+        if(!in.good()) {
             break;    //BUG: should do something on eof()
         }
         str += c;
         ++sz;
-        in.get( c );
+        in.get(c);
     }
-    in.putback( c );
-    return const_cast<char *>( str.c_str() );
+    in.putback(c);
+    return const_cast<char *>(str.c_str());
 }
 
 /**
@@ -727,46 +748,47 @@ const char * GetKeyword( istream & in, const char * delims, ErrorDescriptor & er
  * next chars are DATA; for the beginning of the data section).
  * FIXME putback() doesn't work well on all platforms
  */
-int FoundEndSecKywd( istream & in ) {
+int FoundEndSecKywd(istream &in)
+{
     char c;
     in >> ws;
-    in.get( c );
+    in.get(c);
 
-    if( c == 'E' ) {
-        in.get( c );
-        if( c == 'N' ) {
-            in.get( c );
-            if( c == 'D' ) {
-                in.get( c );
-                if( c == 'S' ) {
-                    in.get( c );
-                    if( c == 'E' ) {
-                        in.get( c );
-                        if( c == 'C' ) {
+    if(c == 'E') {
+        in.get(c);
+        if(c == 'N') {
+            in.get(c);
+            if(c == 'D') {
+                in.get(c);
+                if(c == 'S') {
+                    in.get(c);
+                    if(c == 'E') {
+                        in.get(c);
+                        if(c == 'C') {
                             in >> ws;
-                            in.get( c );
-                            if( c == ';' ) {
+                            in.get(c);
+                            if(c == ';') {
                                 return 1;
                             } else {
-                                in.putback( c );
+                                in.putback(c);
                             }
                         } else {
-                            in.putback( c );
+                            in.putback(c);
                         }
                     } else {
-                        in.putback( c );
+                        in.putback(c);
                     }
                 } else {
-                    in.putback( c );
+                    in.putback(c);
                 }
             } else {
-                in.putback( c );
+                in.putback(c);
             }
         } else {
-            in.putback( c );
+            in.putback(c);
         }
     } else {
-        in.putback( c );
+        in.putback(c);
     }
     // error
     return 0;
@@ -779,27 +801,28 @@ int FoundEndSecKywd( istream & in ) {
 // returned.  If one is found ss is appended with it and a pointer just
 // past the comment in s is returned. Note* a carraige return ('\n') is added
 // after the comment that is appended.
-const char * ReadComment( std::string & ss, const char * s ) {
+const char *ReadComment(std::string &ss, const char *s)
+{
     std::string ssTmp;
 
-    if( s ) {
+    if(s) {
         int endComment = 0;
-        while( *s && *s != '/' ) {
+        while(*s && *s != '/') {
             s++;    // skip leading everything
         }
-        if( *s == '/' ) {
+        if(*s == '/') {
             s++;
-            if( *s == '*' ) { // found a comment
-                ssTmp.append( "/*" );
+            if(*s == '*') {   // found a comment
+                ssTmp.append("/*");
                 s++;
-                while( *s && !endComment ) {
-                    if( *s == '*' ) {
+                while(*s && !endComment) {
+                    if(*s == '*') {
                         ssTmp += *s;
                         s++;
-                        if( *s == '/' ) {
+                        if(*s == '/') {
                             endComment = 1;
                             ssTmp += *s;
-                            ssTmp.append( "\n" );
+                            ssTmp.append("\n");
                         } else {
                             s--;
                         }
@@ -810,8 +833,8 @@ const char * ReadComment( std::string & ss, const char * s ) {
                 }
             }
         }
-        if( endComment ) {
-            ss.append( ssTmp.c_str() );
+        if(endComment) {
+            ss.append(ssTmp.c_str());
         }
     }
     return s;
@@ -829,29 +852,30 @@ const char * ReadComment( std::string & ss, const char * s ) {
  * only the slash will be read from 'in'.
  * FIXME putback() doesn't work well on all platforms
 ***************************/
-const char * ReadComment( istream & in, std::string & s ) {
+const char *ReadComment(istream &in, std::string &s)
+{
     char c = '\0';
     in >> ws;
     in >> c;
 
     // it looks like a comment so far
-    if( c == '/' ) { // leave slash read from stream
-        in.get( c ); // won't skip space
-        if( c == '*' ) { // it is a comment
+    if(c == '/') {   // leave slash read from stream
+        in.get(c);   // won't skip space
+        if(c == '*') {   // it is a comment
             in >> ws; // skip leading comment space
             int commentLength = 0;
 
             // only to keep it from completely gobbling up input
-            while( commentLength <= MAX_COMMENT_LENGTH ) {
-                in.get( c );
-                if( c == '*' ) { // looks like start of end comment
-                    in.get( c );
-                    if( c == '/' ) { // it is end of comment
+            while(commentLength <= MAX_COMMENT_LENGTH) {
+                in.get(c);
+                if(c == '*') {   // looks like start of end comment
+                    in.get(c);
+                    if(c == '/') {   // it is end of comment
                         return s.c_str();    // return comment as a string
                     } else { // it is not end of comment
                         // so store the * and put back the other char
-                        s.append( "*" );
-                        in.putback( c );
+                        s.append("*");
+                        in.putback(c);
                         commentLength++;
                     }
                 } else {
@@ -863,17 +887,17 @@ const char * ReadComment( istream & in, std::string & s ) {
                  << MAX_COMMENT_LENGTH << "\n"
                  << "Will try to recover...\n";
             std::string tmp;
-            SkipInstance( in, tmp );
+            SkipInstance(in, tmp);
             return s.c_str();
         }
         // leave slash read from stream... assume caller already knew there was
         //  a slash, leave it off stream so they don't think this funct needs
         // to be called again
         else { // not a comment
-            in.putback( c );    // put non asterisk char back on input stream
+            in.putback(c);      // put non asterisk char back on input stream
         }
     } else { // first non-white char is not a slash
-        in.putback( c );    // put non slash char back on input stream
+        in.putback(c);      // put non slash char back on input stream
     }
 
     return 0; // no comment string to return
@@ -884,15 +908,16 @@ const char * ReadComment( istream & in, std::string & s ) {
  ** "\F\" == formfeed
  ** "\N\" == newline
  ***************************/
-Severity ReadPcd( istream & in ) {
+Severity ReadPcd(istream &in)
+{
     char c;
-    in.get( c );
-    if( c == '\\' ) {
-        in.get( c );
-        if( c == 'F' || c == 'N' ) {
-            in.get( c );
-            if( c == '\\' ) {
-                in.get( c );
+    in.get(c);
+    if(c == '\\') {
+        in.get(c);
+        if(c == 'F' || c == 'N') {
+            in.get(c);
+            if(c == '\\') {
+                in.get(c);
                 return SEVERITY_NULL;
             }
         }
@@ -911,32 +936,33 @@ and comments.
 Part 21 considers the blank to be the space character,
 but this function considers blanks to be the return value of isspace(c)
 ******************************/
-void ReadTokenSeparator( istream & in, std::string * comments ) {
+void ReadTokenSeparator(istream &in, std::string *comments)
+{
     char c;
     std::string s; // used if need to read a comment
 
-    if( in.eof() ) {
+    if(in.eof()) {
         //BUG: no error message is reported
         return;
     }
 
-    while( in ) {
+    while(in) {
         in >> ws; // skip white space.
         c = in.peek(); // look at next char on input stream
 
-        switch( c ) {
+        switch(c) {
             case '/': // read p21 file comment
                 s.clear();
-                ReadComment( in, s );
-                if( !s.empty() && comments ) {
-                    comments->append( "/*" );
-                    comments->append( s.c_str() );
-                    comments->append( "*/\n" );
+                ReadComment(in, s);
+                if(!s.empty() && comments) {
+                    comments->append("/*");
+                    comments->append(s.c_str());
+                    comments->append("*/\n");
                 }
                 break;
 
             case '\\': // try to read a print control directive
-                ReadPcd( in );
+                ReadPcd(in);
                 break;
             case '\n':
                 in.ignore();

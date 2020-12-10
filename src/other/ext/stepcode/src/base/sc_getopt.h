@@ -20,10 +20,10 @@
 extern "C" {
 #endif
 
-    extern SC_BASE_EXPORT int sc_optind, sc_opterr;
-    extern SC_BASE_EXPORT char * sc_optarg;
+extern SC_BASE_EXPORT int sc_optind, sc_opterr;
+extern SC_BASE_EXPORT char *sc_optarg;
 
-    int    SC_BASE_EXPORT sc_getopt( int argc, char * argv[], char * optstring );
+int    SC_BASE_EXPORT sc_getopt(int argc, char *argv[], char *optstring);
 
 #ifdef __cplusplus
 }

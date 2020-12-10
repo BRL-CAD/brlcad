@@ -87,29 +87,31 @@
 
 #include "express/variable.h"
 #include "express/object.h"
-char * opcode_print( Op_Code o );
+char *opcode_print(Op_Code o);
 
 /** Initialize the Variable module. */
-void VARinitialize() {
+void VARinitialize()
+{
 }
 
 /** VARget_simple_name
  * returns simple name of variable
  * for example, if var is named SELF\xxx.yyy, return yyy
  */
-extern char * VARget_simple_name( Variable v ) {
-    Expression e = VARget_name( v );
+extern char *VARget_simple_name(Variable v)
+{
+    Expression e = VARget_name(v);
 
-    while( TYPEis_expression( EXPget_type( e ) ) ) {
-        switch( e->e.op_code ) {
+    while(TYPEis_expression(EXPget_type(e))) {
+        switch(e->e.op_code) {
             case OP_DOT:
             case OP_GROUP:
                 e = e->e.op2;
                 break;
             default:
-                fprintf( stderr, "unexpected op_code (%s) encountered in variable name expression\n", opcode_print( e->e.op_code ) );
+                fprintf(stderr, "unexpected op_code (%s) encountered in variable name expression\n", opcode_print(e->e.op_code));
                 abort();
         }
     }
-    return EXPget_name( e );
+    return EXPget_name(e);
 }

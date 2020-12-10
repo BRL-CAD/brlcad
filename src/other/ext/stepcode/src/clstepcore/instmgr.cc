@@ -36,24 +36,27 @@ static int debug_level = 3;
 ///////////////////////////////////////////////////////////////////////////////
 
 void
-InstMgr::PrintSortedFileIds() {
-    MgrNode * mn = 0;
+InstMgr::PrintSortedFileIds()
+{
+    MgrNode *mn = 0;
     int count = InstanceCount();
     int i = 0;
-    for( i = 0; i < count; i++ ) {
-        mn = ( MgrNode * )( ( *sortedMaster )[i] );
+    for(i = 0; i < count; i++) {
+        mn = (MgrNode *)((*sortedMaster)[i]);
         cout << i << " " << mn->GetFileId() << endl;
     }
 }
 
-InstMgr::InstMgr( int ownsInstances )
-    : maxFileId( -1 ), _ownsInstances( ownsInstances ) {
+InstMgr::InstMgr(int ownsInstances)
+    : maxFileId(-1), _ownsInstances(ownsInstances)
+{
     master = new MgrNodeArray();
     sortedMaster = new std::map<int, MgrNode *>;
 }
 
-InstMgr::~InstMgr() {
-    if( _ownsInstances ) {
+InstMgr::~InstMgr()
+{
+    if(_ownsInstances) {
         master->DeleteEntries();
     } else {
         master->ClearEntries();
@@ -67,13 +70,15 @@ InstMgr::~InstMgr() {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void InstMgr::ClearInstances() {
+void InstMgr::ClearInstances()
+{
     master->ClearEntries();
     sortedMaster->clear();
     maxFileId = -1;
 }
 
-void InstMgr::DeleteInstances() {
+void InstMgr::DeleteInstances()
+{
     master->DeleteEntries();
     sortedMaster->clear();
     maxFileId = -1;
@@ -92,13 +97,13 @@ void InstMgr::DeleteInstances() {
 **************************************************/
 
 enum Severity
-InstMgr::VerifyInstances( ErrorDescriptor & err ) {
+InstMgr::VerifyInstances(ErrorDescriptor &err) {
     int errorCount = 0;
     char errbuf[BUFSIZ];
 
     int n = InstanceCount();
-    MgrNode * mn;
-    SDAI_Application_instance * se;
+    MgrNode *mn;
+    SDAI_Application_instance *se;
     enum Severity rval = SEVERITY_NULL;
 
     //for each instance on the list,
@@ -111,52 +116,54 @@ InstMgr::VerifyInstances( ErrorDescriptor & err ) {
     //   if it is not valid, then increment the error count
     //      and set the rval to
 
-    for( int i = 0; i < n; ++i ) {
-        mn = GetMgrNode( i );
-        if( !mn ) {
+    for(int i = 0; i < n; ++i)
+    {
+        mn = GetMgrNode(i);
+        if(!mn) {
             ++errorCount;
-            if( errorCount == 1 )
-                sprintf( errbuf,
-                         "VerifyInstances: Unable to verify the following instances: node %d",
-                         i );
+            if(errorCount == 1)
+                sprintf(errbuf,
+                        "VerifyInstances: Unable to verify the following instances: node %d",
+                        i);
             else {
-                sprintf( errbuf, ", node %d", i );
+                sprintf(errbuf, ", node %d", i);
             }
 
-            err.AppendToDetailMsg( errbuf );
+            err.AppendToDetailMsg(errbuf);
             rval = SEVERITY_INPUT_ERROR;
-            err.GreaterSeverity( SEVERITY_INPUT_ERROR );
+            err.GreaterSeverity(SEVERITY_INPUT_ERROR);
             continue;
         }
-        if( debug_level > 3 )
+        if(debug_level > 3)
             cerr << "In VerifyInstances:  "
                  << "new MgrNode for " << mn->GetFileId() << " with state "
                  << mn->CurrState() << endl;
-        if( !mn->MgrNodeListMember( completeSE ) ) {
+        if(!mn->MgrNodeListMember(completeSE)) {
             se = mn->GetApplication_instance();
-            if( se->ValidLevel( &err, this, 0 ) < SEVERITY_USERMSG ) {
-                if( rval > SEVERITY_INCOMPLETE ) {
+            if(se->ValidLevel(&err, this, 0) < SEVERITY_USERMSG) {
+                if(rval > SEVERITY_INCOMPLETE) {
                     rval = SEVERITY_INCOMPLETE;
                 }
                 ++errorCount;
-                if( errorCount == 1 )
-                    sprintf( errbuf,
-                             "VerifyInstances: Unable to verify the following instances: #%d",
-                             se->StepFileId() );
+                if(errorCount == 1)
+                    sprintf(errbuf,
+                            "VerifyInstances: Unable to verify the following instances: #%d",
+                            se->StepFileId());
                 else {
-                    sprintf( errbuf, ", #%d", se->StepFileId() );
+                    sprintf(errbuf, ", #%d", se->StepFileId());
                 }
-                err.AppendToDetailMsg( errbuf );
+                err.AppendToDetailMsg(errbuf);
             }
         }
     }
-    if( errorCount ) {
-        sprintf( errbuf,
-                 "VerifyInstances: %d invalid instances in list.\n",
-                 errorCount );
-        err.AppendToUserMsg( errbuf );
-        err.AppendToDetailMsg( ".\n" );
-        err.GreaterSeverity( SEVERITY_INCOMPLETE );
+    if(errorCount)
+    {
+        sprintf(errbuf,
+                "VerifyInstances: %d invalid instances in list.\n",
+                errorCount);
+        err.AppendToUserMsg(errbuf);
+        err.AppendToDetailMsg(".\n");
+        err.GreaterSeverity(SEVERITY_INCOMPLETE);
     }
 
     return rval;
@@ -164,27 +171,32 @@ InstMgr::VerifyInstances( ErrorDescriptor & err ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-MgrNode * InstMgr::FindFileId( int fileId ) {
-	std::map<int, MgrNode *>::iterator it;
-	it=sortedMaster->find(fileId);
-	if (it == sortedMaster->end()) return ( MgrNode * )0;
-	return it->second;
+MgrNode *InstMgr::FindFileId(int fileId)
+{
+    std::map<int, MgrNode *>::iterator it;
+    it = sortedMaster->find(fileId);
+    if(it == sortedMaster->end()) {
+        return (MgrNode *)0;
+    }
+    return it->second;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 // get the index into display list given a SDAI_Application_instance
 //  called by see initiated functions
-int InstMgr::GetIndex( MgrNode * mn ) {
+int InstMgr::GetIndex(MgrNode *mn)
+{
     return mn->ArrayIndex();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int InstMgr::VerifyEntity( int fileId, const char * expectedType ) {
-    MgrNode * mn = FindFileId( fileId );
-    if( mn ) {
-        if( !strcmp( expectedType, mn->GetApplication_instance()->EntityName() ) ) {
+int InstMgr::VerifyEntity(int fileId, const char *expectedType)
+{
+    MgrNode *mn = FindFileId(fileId);
+    if(mn) {
+        if(!strcmp(expectedType, mn->GetApplication_instance()->EntityName())) {
             return 2;    // types match
         } else {
             return 1;    // possible mismatch depending on descendants
@@ -198,39 +210,40 @@ int InstMgr::VerifyEntity( int fileId, const char * expectedType ) {
 //   Append instance to the list of instances.  Checks the file id and
 //   sets it if 1) it is not set already or 2) it already exists in the list.
 
-MgrNode * InstMgr::Append( SDAI_Application_instance * se, stateEnum listState ) {
-    if( debug_level > 3 ) {
+MgrNode *InstMgr::Append(SDAI_Application_instance *se, stateEnum listState)
+{
+    if(debug_level > 3) {
         cout << "#" << se->StepFileId() << " append node to InstMgr" << endl;
     }
-    MgrNode * mn = 0;
+    MgrNode *mn = 0;
 
-    if( se->StepFileId() == 0 ) { // no id assigned
-        se->StepFileId( NextFileId() );    // assign a file id
+    if(se->StepFileId() == 0) {   // no id assigned
+        se->StepFileId(NextFileId());      // assign a file id
     }
 
-    mn = FindFileId( se->StepFileId() );
-    if( mn ) { // if id already in list
+    mn = FindFileId(se->StepFileId());
+    if(mn) {   // if id already in list
         // and it's because instance is already in list
-        if( GetApplication_instance( mn ) == se ) {
+        if(GetApplication_instance(mn) == se) {
             return 0;    // return 0 or mn?
         } else {
-            se->StepFileId( NextFileId() );    // otherwise assign a new file id
+            se->StepFileId(NextFileId());      // otherwise assign a new file id
         }
     }
     // update the maxFileId if needed
-    if( se->StepFileId() > MaxFileId() ) {
+    if(se->StepFileId() > MaxFileId()) {
         maxFileId = se->StepFileId();
     }
 
-    mn = new MgrNode( se, listState );
+    mn = new MgrNode(se, listState);
 
-    if( debug_level > 3 )
+    if(debug_level > 3)
         cerr << "new MgrNode for " << mn->GetFileId() << " with state "
              << mn->CurrState() << endl;
-    if( listState == noStateSE )
+    if(listState == noStateSE)
         cout << "append to InstMgr **ERROR ** node #" << se->StepFileId() <<
              " doesn't have state information" << endl;
-    master->Append( mn );
+    master->Append(mn);
     (*sortedMaster)[mn->GetFileId()] = mn;
     //PrintSortedFileIds();
     return mn;
@@ -238,53 +251,56 @@ MgrNode * InstMgr::Append( SDAI_Application_instance * se, stateEnum listState )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void InstMgr::Delete( MgrNode * node ) {
+void InstMgr::Delete(MgrNode *node)
+{
     // delete the node from its current state list
     node->Remove();
 
     // remove the node from the sorted master array
-    sortedMaster->erase( node->GetFileId() );
+    sortedMaster->erase(node->GetFileId());
 
     // get the index into the master array by ptr arithmetic
     int index = node->ArrayIndex();
-    master->Remove( index );
+    master->Remove(index);
 
     delete node;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void InstMgr::Delete( SDAI_Application_instance * se ) {
-    Delete( FindFileId( se->StepFileId() ) );
+void InstMgr::Delete(SDAI_Application_instance *se)
+{
+    Delete(FindFileId(se->StepFileId()));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void InstMgr::ChangeState( MgrNode * node, stateEnum listState ) {
-    switch( listState ) {
+void InstMgr::ChangeState(MgrNode *node, stateEnum listState)
+{
+    switch(listState) {
         case completeSE:
-            if( debug_level > 3 )
+            if(debug_level > 3)
                 cout << "#" << node->GetApplication_instance()->StepFileId() <<
                      " change node to InstMgr's complete list\n";
-            node->ChangeState( listState );
+            node->ChangeState(listState);
             break;
         case incompleteSE:
-            if( debug_level > 3 )
+            if(debug_level > 3)
                 cout << "#" << node->GetApplication_instance()->StepFileId() <<
                      " change node to InstMgr's incomplete list\n";
-            node->ChangeState( listState );
+            node->ChangeState(listState);
             break;
         case newSE:
-            if( debug_level > 3 )
+            if(debug_level > 3)
                 cout << "#" << node->GetApplication_instance()->StepFileId() <<
                      " change node to InstMgr's new list\n";
-            node->ChangeState( listState );
+            node->ChangeState(listState);
             break;
         case deleteSE:
-            if( debug_level > 3 )
+            if(debug_level > 3)
                 cout << "#" << node->GetApplication_instance()->StepFileId() <<
                      " change node to InstMgr's delete list\n";
-            node->ChangeState( listState );
+            node->ChangeState(listState);
             break;
         case noStateSE:
             cout << "#" << node->GetApplication_instance()->StepFileId() <<
@@ -303,16 +319,17 @@ void InstMgr::ChangeState( MgrNode * node, stateEnum listState ) {
     on the instance manager.
 **************************************************/
 int
-InstMgr::EntityKeywordCount( const char * name ) {
+InstMgr::EntityKeywordCount(const char *name)
+{
     int count = 0;
-    MgrNode * node;
-    SDAI_Application_instance * se;
+    MgrNode *node;
+    SDAI_Application_instance *se;
     int n = InstanceCount();
-    const char *pretty_name = PrettyTmpName( name );
-    for( int j = 0; j < n; ++j ) {
-        node = GetMgrNode( j );
+    const char *pretty_name = PrettyTmpName(name);
+    for(int j = 0; j < n; ++j) {
+        node = GetMgrNode(j);
         se = node->GetApplication_instance();
-        if( !strcmp( se->EntityName(), pretty_name ) ) {
+        if(!strcmp(se->EntityName(), pretty_name)) {
             ++count;
         }
     }
@@ -322,9 +339,10 @@ InstMgr::EntityKeywordCount( const char * name ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 SDAI_Application_instance *
-InstMgr::GetApplication_instance( int index ) {
-    MgrNode * mn = ( MgrNode * )( *master )[index];
-    if( mn ) {
+InstMgr::GetApplication_instance(int index)
+{
+    MgrNode *mn = (MgrNode *)(*master)[index];
+    if(mn) {
         return mn->GetApplication_instance();
     } else {
         return 0;
@@ -332,9 +350,10 @@ InstMgr::GetApplication_instance( int index ) {
 }
 
 SDAI_Application_instance *
-InstMgr::GetSTEPentity( int index ) {
-    MgrNode * mn = ( MgrNode * )( *master )[index];
-    if( mn ) {
+InstMgr::GetSTEPentity(int index)
+{
+    MgrNode *mn = (MgrNode *)(*master)[index];
+    if(mn) {
         return mn->GetApplication_instance();
     } else {
         return 0;
@@ -354,16 +373,17 @@ InstMgr::GetSTEPentity( int index ) {
     starting_index.
 **************************************************/
 SDAI_Application_instance *
-InstMgr::GetApplication_instance( const char * entityKeyword, int starting_index ) {
-    MgrNode * node;
-    SDAI_Application_instance * se;
-    const char *pretty_name = PrettyTmpName( entityKeyword );
+InstMgr::GetApplication_instance(const char *entityKeyword, int starting_index)
+{
+    MgrNode *node;
+    SDAI_Application_instance *se;
+    const char *pretty_name = PrettyTmpName(entityKeyword);
 
     int count = InstanceCount();
-    for( int j = starting_index; j < count; ++j ) {
-        node = GetMgrNode( j );
+    for(int j = starting_index; j < count; ++j) {
+        node = GetMgrNode(j);
         se = node->GetApplication_instance();
-        if( !strcmp( se->EntityName(), pretty_name ) ) {
+        if(!strcmp(se->EntityName(), pretty_name)) {
             return se;
         }
     }
@@ -371,16 +391,17 @@ InstMgr::GetApplication_instance( const char * entityKeyword, int starting_index
 }
 
 SDAI_Application_instance *
-InstMgr::GetSTEPentity( const char * entityKeyword, int starting_index ) {
-    MgrNode * node;
-    SDAI_Application_instance * se;
-    const char *pretty_name = PrettyTmpName( entityKeyword );
+InstMgr::GetSTEPentity(const char *entityKeyword, int starting_index)
+{
+    MgrNode *node;
+    SDAI_Application_instance *se;
+    const char *pretty_name = PrettyTmpName(entityKeyword);
 
     int count = InstanceCount();
-    for( int j = starting_index; j < count; ++j ) {
-        node = GetMgrNode( j );
+    for(int j = starting_index; j < count; ++j) {
+        node = GetMgrNode(j);
         se = node->GetApplication_instance();
-        if( !strcmp( se->EntityName(), pretty_name ) ) {
+        if(!strcmp(se->EntityName(), pretty_name)) {
             return se;
         }
     }
@@ -390,9 +411,10 @@ InstMgr::GetSTEPentity( const char * entityKeyword, int starting_index ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void *
-InstMgr::GetSEE( int index ) {
-    MgrNode * mn = ( MgrNode * )( *master )[index];
-    if( mn ) {
+InstMgr::GetSEE(int index)
+{
+    MgrNode *mn = (MgrNode *)(*master)[index];
+    if(mn) {
         return mn->SEE();
     } else {
         return 0;

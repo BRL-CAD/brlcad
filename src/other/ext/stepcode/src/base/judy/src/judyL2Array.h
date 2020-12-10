@@ -29,60 +29,68 @@ struct judyl2KVpair {
  *  \param JudyValue the type of the value, i.e. int, pointer-to-object, etc. With judyL2Array, the size of this value can vary.
  */
 template< typename JudyKey, typename JudyValue >
-class judyL2Array {
+class judyL2Array
+{
     public:
         typedef std::vector< JudyValue > vector;
         typedef const vector cvector;
         typedef judyl2KVpair< JudyKey, vector * > pair;
         typedef judyl2KVpair< JudyKey, cvector * > cpair;
     protected:
-        Judy * _judyarray;
+        Judy *_judyarray;
         unsigned int _maxLevels, _depth;
-        vector ** _lastSlot;
+        vector **_lastSlot;
         JudyKey _buff[1];
         bool _success;
         cpair kv;
     public:
-        judyL2Array(): _maxLevels( sizeof( JudyKey ) ), _depth( 1 ), _lastSlot( 0 ), _success( true ) {
-            assert( sizeof( JudyKey ) == JUDY_key_size && "JudyKey *must* be the same size as a pointer!" );
-            _judyarray = judy_open( _maxLevels, _depth );
+        judyL2Array(): _maxLevels(sizeof(JudyKey)), _depth(1), _lastSlot(0), _success(true)
+        {
+            assert(sizeof(JudyKey) == JUDY_key_size && "JudyKey *must* be the same size as a pointer!");
+            _judyarray = judy_open(_maxLevels, _depth);
             _buff[0] = 0;
         }
 
-        explicit judyL2Array( const judyL2Array< JudyKey, JudyValue > & other ): _maxLevels( other._maxLevels ),
-            _depth( other._depth ), _success( other._success ) {
-            _judyarray = judy_clone( other._judyarray );
+        explicit judyL2Array(const judyL2Array< JudyKey, JudyValue > &other): _maxLevels(other._maxLevels),
+            _depth(other._depth), _success(other._success)
+        {
+            _judyarray = judy_clone(other._judyarray);
             _buff[0] = other._buff[0];
-            find( *_buff ); //set _lastSlot
+            find(*_buff);   //set _lastSlot
         }
 
         /// calls clear, so should be safe to call at any point
-        ~judyL2Array() {
+        ~judyL2Array()
+        {
             clear();
-            judy_close( _judyarray );
+            judy_close(_judyarray);
         }
 
         /// delete all vectors and empty the array
-        void clear() {
+        void clear()
+        {
             JudyKey key = 0;
-            while( 0 != ( _lastSlot = ( vector ** ) judy_strt( _judyarray, ( const unsigned char * ) &key, 0 ) ) ) {
+            while(0 != (_lastSlot = (vector **) judy_strt(_judyarray, (const unsigned char *) &key, 0))) {
                 //( * _lastSlot )->~vector(); //TODO: placement new
-                delete( * _lastSlot );
-                judy_del( _judyarray );
+                delete(* _lastSlot);
+                judy_del(_judyarray);
             }
         }
 
-        vector * getLastValue() {
-            assert( _lastSlot );
+        vector *getLastValue()
+        {
+            assert(_lastSlot);
             return &_lastSlot;
         }
 
-        void setLastValue( vector * value ) {
-            assert( _lastSlot );
+        void setLastValue(vector *value)
+        {
+            assert(_lastSlot);
             &_lastSlot = value;
         }
 
-        bool success() {
+        bool success()
+        {
             return _success;
         }
 
@@ -96,10 +104,11 @@ class judyL2Array {
         // void *judy_data (Judy *judy, unsigned int amt);
 
         /// insert value into the vector for key.
-        bool insert( JudyKey key, JudyValue value ) {
-            _lastSlot = ( vector ** ) judy_cell( _judyarray, ( const unsigned char * ) &key, _depth * JUDY_key_size );
-            if( _lastSlot ) {
-                if( !( * _lastSlot ) ) {
+        bool insert(JudyKey key, JudyValue value)
+        {
+            _lastSlot = (vector **) judy_cell(_judyarray, (const unsigned char *) &key, _depth * JUDY_key_size);
+            if(_lastSlot) {
+                if(!(* _lastSlot)) {
                     * _lastSlot = new vector;
                     /* TODO store vectors inside judy with placement new
                     * vector * n = judy_data( _judyarray, sizeof( std::vector < JudyValue > ) );
@@ -109,7 +118,7 @@ class judyL2Array {
                     * also use placement new in the other insert function, below
                     */
                 }
-                ( * _lastSlot )->push_back( value );
+                (* _lastSlot)->push_back(value);
                 _success = true;
             } else {
                 _success = false;
@@ -121,18 +130,19 @@ class judyL2Array {
          * this never simply re-uses the pointer to the given vector because
          * that would mean that two keys could have the same value (pointer).
          */
-        bool insert( JudyKey key, const vector & values, bool overwrite = false ) {
-            _lastSlot = ( vector ** ) judy_cell( _judyarray, ( const unsigned char * ) &key, _depth * JUDY_key_size );
-            if( _lastSlot ) {
-                if( !( * _lastSlot ) ) {
+        bool insert(JudyKey key, const vector &values, bool overwrite = false)
+        {
+            _lastSlot = (vector **) judy_cell(_judyarray, (const unsigned char *) &key, _depth * JUDY_key_size);
+            if(_lastSlot) {
+                if(!(* _lastSlot)) {
                     * _lastSlot = new vector;
                     /* TODO store vectors inside judy with placement new
                      * (see other insert(), above)
                      */
-                } else if( overwrite ) {
-                    ( * _lastSlot )->clear();
+                } else if(overwrite) {
+                    (* _lastSlot)->clear();
                 }
-                std::copy( values.begin(), values.end(), std::back_inserter< vector >( ( ** _lastSlot ) ) );
+                std::copy(values.begin(), values.end(), std::back_inserter< vector >((** _lastSlot)));
                 _success = true;
             } else {
                 _success = false;
@@ -142,15 +152,17 @@ class judyL2Array {
 
         /// retrieve the cell pointer greater than or equal to given key
         /// NOTE what about an atOrBefore function?
-        const cpair atOrAfter( JudyKey key ) {
-            _lastSlot = ( vector ** ) judy_strt( _judyarray, ( const unsigned char * ) &key, _depth * JUDY_key_size );
+        const cpair atOrAfter(JudyKey key)
+        {
+            _lastSlot = (vector **) judy_strt(_judyarray, (const unsigned char *) &key, _depth * JUDY_key_size);
             return mostRecentPair();
         }
 
         /// retrieve the cell pointer, or return NULL for a given key.
-        cvector * find( JudyKey key ) {
-            _lastSlot = ( vector ** ) judy_slot( _judyarray, ( const unsigned char * ) &key, _depth * JUDY_key_size );
-            if( ( _lastSlot ) && ( * _lastSlot ) ) {
+        cvector *find(JudyKey key)
+        {
+            _lastSlot = (vector **) judy_slot(_judyarray, (const unsigned char *) &key, _depth * JUDY_key_size);
+            if((_lastSlot) && (* _lastSlot)) {
                 _success = true;
                 return * _lastSlot;
             } else {
@@ -160,9 +172,10 @@ class judyL2Array {
         }
 
         /// retrieve the key-value pair for the most recent judy query.
-        inline const cpair & mostRecentPair() {
-            judy_key( _judyarray, ( unsigned char * ) _buff, _depth * JUDY_key_size );
-            if( _lastSlot ) {
+        inline const cpair &mostRecentPair()
+        {
+            judy_key(_judyarray, (unsigned char *) _buff, _depth * JUDY_key_size);
+            if(_lastSlot) {
                 kv.value = *_lastSlot;
                 _success = true;
             } else {
@@ -174,27 +187,31 @@ class judyL2Array {
         }
 
         /// retrieve the first key-value pair in the array
-        const cpair & begin() {
+        const cpair &begin()
+        {
             JudyKey key = 0;
-            _lastSlot = ( vector ** ) judy_strt( _judyarray, ( const unsigned char * ) &key, 0 );
+            _lastSlot = (vector **) judy_strt(_judyarray, (const unsigned char *) &key, 0);
             return mostRecentPair();
         }
 
         /// retrieve the last key-value pair in the array
-        const cpair & end() {
-            _lastSlot = ( vector ** ) judy_end( _judyarray );
+        const cpair &end()
+        {
+            _lastSlot = (vector **) judy_end(_judyarray);
             return mostRecentPair();
         }
 
         /// retrieve the key-value pair for the next string in the array.
-        const cpair & next() {
-            _lastSlot = ( vector ** ) judy_nxt( _judyarray );
+        const cpair &next()
+        {
+            _lastSlot = (vector **) judy_nxt(_judyarray);
             return mostRecentPair();
         }
 
         /// retrieve the key-value pair for the prev string in the array.
-        const cpair & previous() {
-            _lastSlot = ( vector ** ) judy_prv( _judyarray );
+        const cpair &previous()
+        {
+            _lastSlot = (vector **) judy_prv(_judyarray);
             return mostRecentPair();
         }
 
@@ -202,11 +219,12 @@ class judyL2Array {
          * getLastValue() will return the entry before the one that was deleted
          * \sa isEmpty()
          */
-        bool removeEntry( JudyKey key ) {
-            if( 0 != ( _lastSlot = ( vector ** ) judy_slot( _judyarray, ( const unsigned char * ) &key, _depth * JUDY_key_size ) ) ) {
+        bool removeEntry(JudyKey key)
+        {
+            if(0 != (_lastSlot = (vector **) judy_slot(_judyarray, (const unsigned char *) &key, _depth * JUDY_key_size))) {
                 // _lastSlot->~vector(); //for use with placement new
                 delete _lastSlot;
-                _lastSlot = ( vector ** ) judy_del( _judyarray );
+                _lastSlot = (vector **) judy_del(_judyarray);
                 return true;
             } else {
                 return false;
@@ -214,9 +232,10 @@ class judyL2Array {
         }
 
         /// true if the array is empty
-        bool isEmpty() {
+        bool isEmpty()
+        {
             JudyKey key = 0;
-            return ( ( judy_strt( _judyarray, ( const unsigned char * ) &key, _depth * JUDY_key_size ) ) ? false : true );
+            return ((judy_strt(_judyarray, (const unsigned char *) &key, _depth * JUDY_key_size)) ? false : true);
         }
 };
 #endif //JUDYL2ARRAY_H

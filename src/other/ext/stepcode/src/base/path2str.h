@@ -9,7 +9,7 @@
  * silence "unknown escape sequence" warning when contents of __FILE__
  * are fprintf'd into string in generated code
  */
-SC_BASE_EXPORT const char * path2str_fn( const char * fileMacro );
+SC_BASE_EXPORT const char *path2str_fn(const char *fileMacro);
 
 #ifdef _WIN32
 #  define path2str(path) path2str_fn(path)

@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 #test part 21 files
 
 #necessary macros won't already be defined if SC_BUILD_SCHEMAS is set to ""

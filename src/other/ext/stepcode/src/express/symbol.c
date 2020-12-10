@@ -35,5 +35,6 @@
 #include "express/symbol.h"
 
 /** Initialize the Symbol module */
-void SYMBOLinitialize( void ) {
+void SYMBOLinitialize(void)
+{
 }

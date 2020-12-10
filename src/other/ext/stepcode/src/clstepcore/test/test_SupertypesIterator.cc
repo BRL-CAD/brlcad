@@ -8,76 +8,77 @@
 #include "ExpDict.h"
 #include <iomanip>
 
-int main( int /*argc*/, char ** /*argv*/ ) {
-    Schema * a = 0;
-    Logical b( LFalse );
+int main(int /*argc*/, char ** /*argv*/)
+{
+    Schema *a = 0;
+    Logical b(LFalse);
     char buf[20][2]  = { { '\0' } };
     int i, d;
-    EntityDescriptor * descriptors[20], ed( "ed", a, b, b );
+    EntityDescriptor *descriptors[20], ed("ed", a, b, b);
     bool failed = false;
 
     //create 20 more ed's
-    for( i = 0; i < 20; i++ ) {
+    for(i = 0; i < 20; i++) {
         buf[i][0] = 'a' + i; //ed names are 1st 20 lowercase chars
-        descriptors[i] = new EntityDescriptor( buf[i], a, b, b );
+        descriptors[i] = new EntityDescriptor(buf[i], a, b, b);
     }
     //link the ed's together
-    ed.AddSupertype( descriptors[0] );
-    for( i = 0; i < 10; i++ ) {
-        descriptors[i]->AddSupertype( descriptors[i + 1] );
+    ed.AddSupertype(descriptors[0]);
+    for(i = 0; i < 10; i++) {
+        descriptors[i]->AddSupertype(descriptors[i + 1]);
     }
-    for( i = 11; i < 20; i++ ) {
-        descriptors[5]->AddSupertype( descriptors[i] );
+    for(i = 11; i < 20; i++) {
+        descriptors[5]->AddSupertype(descriptors[i]);
     }
 
     //print the ed's
     i = 0;
     d = 0;
     std::cout << "head, name " << ed.Name() << std::endl;
-    supertypesIterator iter( &ed );
-    for( ; !iter.empty(); iter++ ) {
-        if( !iter.hasNext() ) { //hasNext should be false once and once only
+    supertypesIterator iter(&ed);
+    for(; !iter.empty(); iter++) {
+        if(!iter.hasNext()) {   //hasNext should be false once and once only
             i++;
         }
-        if( iter.depth() > d ) {
+        if(iter.depth() > d) {
             d = iter.depth();
         }
-        std::cout << "position " << std::setw( 3 ) << iter.pos() << ", name " << std::setw( iter.depth() ) << iter->Name() << std::endl;
+        std::cout << "position " << std::setw(3) << iter.pos() << ", name " << std::setw(iter.depth()) << iter->Name() << std::endl;
     }
-    if( iter.pos() == 20 ) {
+    if(iter.pos() == 20) {
         std::cout << "success" << std::endl;
     } else {
         std::cout << "expected 20, got " << iter.pos() << std::endl;
         failed = true;
     }
-    if( i != 1 ) {
+    if(i != 1) {
         std::cout << "problem with hasNext(): expected 1, got " << i << std::endl;
         failed = true;
     }
-    if( d != 11 ) {
+    if(d != 11) {
         std::cout << "problem with depth(): expected 11, got " << d << std::endl;
         failed = true;
     }
 
-    supertypesIterator it2( &ed ), it3, uninitializedIter;
+    supertypesIterator it2(&ed), it3, uninitializedIter;
     it3 = it2;
 
     //test operator==, operator!=
-    if( ( it2 == iter ) || ( it2 == uninitializedIter ) ) {
+    if((it2 == iter) || (it2 == uninitializedIter)) {
         std::cout << "problem with operator== at " << __LINE__ << std::endl;
         failed = true;
     } else {
         std::cout << "operator== passed 1st" << std::endl;
     }
 
-    if( !( it2 == it3 ) ) {
+    if(!(it2 == it3)) {
         std::cout << "problem with operator== at " << __LINE__ << std::endl;
         failed = true;
     } else {
         std::cout << "operator== passed 2nd" << std::endl;
     }
 
-    if( !( it2 != iter ) ) {
+    if(!(it2 != iter)) {
         std::cout << "problem with operator!=" << std::endl;
         failed = true;
     } else {
@@ -88,19 +89,19 @@ int main( int /*argc*/, char ** /*argv*/ ) {
     ++it3;
 
     // operator>
-    if( ( it3 > it2 ) != LTrue ) {
+    if((it3 > it2) != LTrue) {
         std::cout << "problem with operator>, expected LTrue" << std::endl;
         failed = true;
     } else {
         std::cout << "operator>  passed LTrue" << std::endl;
     }
-    if( ( uninitializedIter > it2 ) != LUnknown ) {
+    if((uninitializedIter > it2) != LUnknown) {
         std::cout << "problem with operator>, expected LUnknown" << std::endl;
         failed = true;
     } else {
         std::cout << "operator>  passed LUnknown" << std::endl;
     }
-    if( ( it2 > it2 ) != LFalse ) {
+    if((it2 > it2) != LFalse) {
         std::cout << "problem with operator>, expected LFalse" << std::endl;
         failed = true;
     } else {
@@ -108,19 +109,19 @@ int main( int /*argc*/, char ** /*argv*/ ) {
     }
 
     // operator<
-    if( ( it2 < it3 ) != LTrue ) {
+    if((it2 < it3) != LTrue) {
         std::cout << "problem with operator<, expected LTrue" << std::endl;
         failed = true;
     } else {
         std::cout << "operator<  passed LTrue" << std::endl;
     }
-    if( ( it2 < uninitializedIter ) != LUnknown ) {
+    if((it2 < uninitializedIter) != LUnknown) {
         std::cout << "problem with operator<, expected LUnknown" << std::endl;
         failed = true;
     } else {
         std::cout << "operator<  passed LUnknown" << std::endl;
     }
-    if( ( it2 < it2 ) != LFalse ) {
+    if((it2 < it2) != LFalse) {
         std::cout << "problem with operator<, expected LFalse" << std::endl;
         failed = true;
     } else {
@@ -128,19 +129,19 @@ int main( int /*argc*/, char ** /*argv*/ ) {
     }
 
     // operator<=
-    if( ( it2 <= it2 ) != LTrue ) {
+    if((it2 <= it2) != LTrue) {
         std::cout << "problem with operator<=, expected LTrue" << std::endl;
         failed = true;
     } else {
         std::cout << "operator<= passed LTrue" << std::endl;
     }
-    if( ( it2 <= uninitializedIter ) != LUnknown ) {
+    if((it2 <= uninitializedIter) != LUnknown) {
         std::cout << "problem with operator<=, expected LUnknown" << std::endl;
         failed = true;
     } else {
         std::cout << "operator<= passed LUnknown" << std::endl;
     }
-    if( ( it3 <= it2 ) != LFalse ) {
+    if((it3 <= it2) != LFalse) {
         std::cout << "problem with operator<=, expected LFalse" << std::endl;
         failed = true;
     } else {
@@ -148,19 +149,19 @@ int main( int /*argc*/, char ** /*argv*/ ) {
     }
 
     // operator>=
-    if( ( it2 >= it2 ) != LTrue ) {
+    if((it2 >= it2) != LTrue) {
         std::cout << "problem with operator>=, expected LTrue" << std::endl;
         failed = true;
     } else {
         std::cout << "operator>= passed LTrue" << std::endl;
     }
-    if( ( it2 >= uninitializedIter ) != LUnknown ) {
+    if((it2 >= uninitializedIter) != LUnknown) {
         std::cout << "problem with operator>=, expected LUnknown" << std::endl;
         failed = true;
     } else {
         std::cout << "operator>= passed LUnknown" << std::endl;
     }
-    if( ( it2 >= it3 ) != LFalse ) {
+    if((it2 >= it3) != LFalse) {
         std::cout << "problem with operator>=, expected LFalse" << std::endl;
         failed = true;
     } else {
@@ -169,19 +170,19 @@ int main( int /*argc*/, char ** /*argv*/ ) {
     /// still need operator* >=
 
     it3.reset();
-    const EntityDescriptor * e = *it3;
-    const char * n = "a";
-    if( strcmp( e->Name(), n ) ) {
+    const EntityDescriptor *e = *it3;
+    const char *n = "a";
+    if(strcmp(e->Name(), n)) {
         std::cout << "problem with operator*" << std::endl;
         failed = true;
     } else {
         std::cout << "operator*  passed " << std::endl;
     }
 
-    if( failed ) {
-        exit( EXIT_FAILURE );
+    if(failed) {
+        exit(EXIT_FAILURE);
     } else {
-        exit( EXIT_SUCCESS );
+        exit(EXIT_SUCCESS);
     }
 }
 /* output:

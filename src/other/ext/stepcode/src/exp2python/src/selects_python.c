@@ -25,13 +25,13 @@ extern int multiple_inheritance;
 #include "classes.h"
 #include <sc_stdbool.h>
 
-bool is_python_keyword( char * word );
-int isAggregateType( const Type t );
-char * generate_attribute_name( Variable a, char * out );
-void ATTRsign_access_methods( Variable a, FILE * file );
-char * generate_attribute_func_name( Variable a, char * out );
-void ATTRprint_access_methods_get_head( const char * classnm, Variable a, FILE * file );
-void ATTRprint_access_methods_put_head( const char * entnm, Variable a, FILE * file );
+bool is_python_keyword(char *word);
+int isAggregateType(const Type t);
+char *generate_attribute_name(Variable a, char *out);
+void ATTRsign_access_methods(Variable a, FILE *file);
+char *generate_attribute_func_name(Variable a, char *out);
+void ATTRprint_access_methods_get_head(const char *classnm, Variable a, FILE *file);
+void ATTRprint_access_methods_put_head(const char *entnm, Variable a, FILE *file);
 
 #define BASE_SELECT "SCLP23(Select)"
 
@@ -62,15 +62,17 @@ void ATTRprint_access_methods_put_head( const char * entnm, Variable a, FILE * f
 #define FALSE   0
 
 const char *
-SEL_ITEMget_enumtype( Type t ) {
-    return StrToUpper( TYPEget_name( t ) );
+SEL_ITEMget_enumtype(Type t)
+{
+    return StrToUpper(TYPEget_name(t));
 }
 
 
 /** FIXME implement for python or remove
  ** \returns type used to represent the underlying type in a select class
  */
-const char * TYPEget_utype( Type t )  {
+const char *TYPEget_utype(Type t)
+{
     (void) t; /* unused */
     return NULL;
 }
@@ -82,13 +84,14 @@ determines if the given entity is a member of the list.
 RETURNS the member if it is a member; otherwise 0 is returned.
 *******************/
 void *
-LISTmember( const Linked_List list, void *e ) {
+LISTmember(const Linked_List list, void *e)
+{
     Link node;
-    for( node = list->mark->next; node != list->mark; node = node->next )
-        if( e == node -> data ) {
+    for(node = list->mark->next; node != list->mark; node = node->next)
+        if(e == node -> data) {
             return e;
         }
-    return ( 0 );
+    return (0);
 }
 
 /*******************
@@ -103,18 +106,19 @@ LISTmember( const Linked_List list, void *e ) {
  dered equivalent.  One such case is the generation of duplicate lists.
  *******************/
 static int
-compareOrigTypes( Type a, Type b ) {
+compareOrigTypes(Type a, Type b)
+{
     Type t, u;
 
-    if( ( TYPEis_select( a ) && TYPEis_select( b ) )
-            || ( TYPEis_enumeration( a ) && TYPEis_enumeration( b ) ) ) {
+    if((TYPEis_select(a) && TYPEis_select(b))
+            || (TYPEis_enumeration(a) && TYPEis_enumeration(b))) {
         t = a;
         u = b;
-    } else if( TYPEis_aggregate( a ) && TYPEis_aggregate( b ) ) {
-        t = TYPEget_base_type( a );
-        u = TYPEget_base_type( b );
-        if( !( ( TYPEis_select( t ) && TYPEis_select( u ) )
-                || ( TYPEis_enumeration( t ) && TYPEis_enumeration( u ) ) ) ) {
+    } else if(TYPEis_aggregate(a) && TYPEis_aggregate(b)) {
+        t = TYPEget_base_type(a);
+        u = TYPEget_base_type(b);
+        if(!((TYPEis_select(t) && TYPEis_select(u))
+                || (TYPEis_enumeration(t) && TYPEis_enumeration(u)))) {
             return FALSE;
             /* Only go further with 1D aggregates of sels or enums.  Note that
             // for 2D aggrs and higher we do not continue.  These are all recog-
@@ -125,13 +129,13 @@ compareOrigTypes( Type a, Type b ) {
         return FALSE;
     }
 
-    if( TYPEget_head( t ) ) {
-        t = TYPEget_ancestor( t );
+    if(TYPEget_head(t)) {
+        t = TYPEget_ancestor(t);
     }
-    if( TYPEget_head( u ) ) {
-        u = TYPEget_ancestor( u );
+    if(TYPEget_head(u)) {
+        u = TYPEget_ancestor(u);
     }
-    return ( !strcmp( TYPEget_name( t ), TYPEget_name( u ) ) );
+    return (!strcmp(TYPEget_name(t), TYPEget_name(u)));
 }
 
 /*******************
@@ -145,15 +149,16 @@ compareOrigTypes( Type a, Type b ) {
  compareOrigTypes() above).
  *******************/
 const char *
-utype_member( const Linked_List list, const Type check, int rename ) {
+utype_member(const Linked_List list, const Type check, int rename)
+{
     static char r [BUFSIZ];
 
-    LISTdo( list, t, Type )
-    strncpy( r, TYPEget_utype( t ), BUFSIZ );
-    if( strcmp( r, TYPEget_utype( check ) ) == 0 ) {
+    LISTdo(list, t, Type)
+    strncpy(r, TYPEget_utype(t), BUFSIZ);
+    if(strcmp(r, TYPEget_utype(check)) == 0) {
         return r;
     }
-    if( rename && compareOrigTypes( check, t ) ) {
+    if(rename && compareOrigTypes(check, t)) {
         return r;
     }
     LISTod;
@@ -171,15 +176,16 @@ utype_member( const Linked_List list, const Type check, int rename ) {
 
 
 Linked_List
-SELgetnew_dmlist( const Type type ) {
-    Linked_List complete = SEL_TYPEget_items( type );
+SELgetnew_dmlist(const Type type)
+{
+    Linked_List complete = SEL_TYPEget_items(type);
     Linked_List newlist = LISTcreate();
 
-    LISTdo( complete, t, Type )
+    LISTdo(complete, t, Type)
 
     /*     if t\'s underlying type is not already in newlist, */
-    if( ! utype_member( newlist, t, 0 ) ) {
-        LISTadd_last( newlist, t );
+    if(! utype_member(newlist, t, 0)) {
+        LISTadd_last(newlist, t);
     }
 
     LISTod;
@@ -189,9 +195,10 @@ SELgetnew_dmlist( const Type type ) {
 }
 
 const char *
-SEL_ITEMget_dmtype( Type t, const Linked_List l ) {
-    const char * r = utype_member( l, t, 0 );
-    return StrToLower( r ? r : TYPEget_utype( t ) );
+SEL_ITEMget_dmtype(Type t, const Linked_List l)
+{
+    const char *r = utype_member(l, t, 0);
+    return StrToLower(r ? r : TYPEget_utype(t));
 
 }
 
@@ -204,14 +211,15 @@ of the list.
     RETURNS 1 if true, else 0.
 *******************/
 int
-duplicate_in_express_list( const Linked_List list, const Type check ) {
-    if( TYPEis_entity( check ) ) {
+duplicate_in_express_list(const Linked_List list, const Type check)
+{
+    if(TYPEis_entity(check)) {
         return FALSE;
     }
     /*  entities are never the same  */
 
-    LISTdo( list, t, Type )
-    if( t == check ) {
+    LISTdo(list, t, Type)
+    if(t == check) {
         ;    /*  don\'t compare check to itself  */
     } else {
         return TRUE;    /* other things in the list conflict  */
@@ -228,9 +236,10 @@ underlying Express type.
 RETURNS 1 if true, else 0.
 *******************/
 int
-unique_types( const Linked_List list ) {
-    LISTdo( list, t, Type )
-    if( duplicate_in_express_list( list, t ) ) {
+unique_types(const Linked_List list)
+{
+    LISTdo(list, t, Type)
+    if(duplicate_in_express_list(list, t)) {
         return FALSE;
     }
     LISTod;
@@ -245,29 +254,30 @@ determines if the given "link's" C++ representation is used again in the list.
     RETURNS 1 if true, else 0.
 *******************/
 int
-duplicate_utype_member( const Linked_List list, const Type check ) {
+duplicate_utype_member(const Linked_List list, const Type check)
+{
     char b [BUFSIZ];
 
-    if( TYPEis_entity( check ) ) {
+    if(TYPEis_entity(check)) {
         return FALSE;
     }
     /*  entities are never the same  */
 
-    LISTdo( list, t, Type )
-    if( t == check ) {
+    LISTdo(list, t, Type)
+    if(t == check) {
         ;
     }
     /*  don\'t compare check to itself  */
     else {   /*  continue looking  */
-        strncpy( b, TYPEget_utype( t ), BUFSIZ );
-        if( ( !strcmp( b, TYPEget_utype( check ) ) )
-                || ( compareOrigTypes( t, check ) ) )
+        strncpy(b, TYPEget_utype(t), BUFSIZ);
+        if((!strcmp(b, TYPEget_utype(check)))
+                || (compareOrigTypes(t, check)))
             /*  if the underlying types are the same  */
         {
             return TRUE;
         }
-        if( ! strcmp( b, "SCLP23(Integer)" ) &&
-                ( ! strcmp( TYPEget_utype( check ), "SCLP23(Real)" ) ) )
+        if(! strcmp(b, "SCLP23(Integer)") &&
+                (! strcmp(TYPEget_utype(check), "SCLP23(Real)")))
             /*  integer\'s and real\'s are not unique  */
         {
             return TRUE;
@@ -285,9 +295,10 @@ C++ representation for the underlying Express type.
 RETURNS 1 if true, else 0.
 *******************/
 int
-any_duplicates_in_select( const Linked_List list ) {
-    LISTdo( list, t, Type )
-    if( duplicate_utype_member( list, t ) ) {
+any_duplicates_in_select(const Linked_List list)
+{
+    LISTdo(list, t, Type)
+    if(duplicate_utype_member(list, t)) {
         return TRUE;
     }
     LISTod;
@@ -303,24 +314,25 @@ returns TRUE, else FALSE.
 list should be unbound before calling, and freed afterwards.
 *******************/
 int
-find_duplicate_list( const Type type, Linked_List * duplicate_list ) {
+find_duplicate_list(const Type type, Linked_List *duplicate_list)
+{
     Linked_List temp; /** temporary list for comparison **/
 
     *duplicate_list = LISTcreate();
-    if( any_duplicates_in_select( SEL_TYPEget_items( type ) ) ) {
+    if(any_duplicates_in_select(SEL_TYPEget_items(type))) {
         /**  if there is a dup somewhere  **/
         temp = LISTcreate();
-        LISTdo( SEL_TYPEget_items( type ), u, Type )
-        if( !utype_member( *duplicate_list, u, 1 ) ) {
+        LISTdo(SEL_TYPEget_items(type), u, Type)
+        if(!utype_member(*duplicate_list, u, 1)) {
             /**  if not already a duplicate  **/
-            if( utype_member( temp, u, 1 ) ) {
-                LISTadd_first( *duplicate_list, u );
+            if(utype_member(temp, u, 1)) {
+                LISTadd_first(*duplicate_list, u);
             } else {
-                LISTadd_first( temp, u );
+                LISTadd_first(temp, u);
             }
         }
         LISTod;
-        LISTfree( temp );
+        LISTfree(temp);
         return TRUE;
     }
     return FALSE;
@@ -355,9 +367,10 @@ enum __types {
    the leaf nodes.
 */
 void
-non_unique_types_vector( const Type type, int * tvec ) {
-    LISTdo( SEL_TYPEget_items( type ), t, Type )
-    switch( TYPEget_body( t )->type ) {
+non_unique_types_vector(const Type type, int *tvec)
+{
+    LISTdo(SEL_TYPEget_items(type), t, Type)
+    switch(TYPEget_body(t)->type) {
         case integer_:
             tvec[tint]++;
             break;
@@ -377,7 +390,7 @@ non_unique_types_vector( const Type type, int * tvec ) {
             break;
         case select_:
             /* SELECT, ergo recurse! */
-            non_unique_types_vector( t, tvec );
+            non_unique_types_vector(t, tvec);
             break;
         case entity_:
             tvec[tentity]++;
@@ -393,7 +406,7 @@ non_unique_types_vector( const Type type, int * tvec ) {
             tvec[tnumber]++;
             break;
         default:
-            fprintf( stderr, "Error at %s:%d - type %d not handled by switch statement.", __FILE__, __LINE__, TYPEget_body( t )->type );
+            fprintf(stderr, "Error at %s:%d - type %d not handled by switch statement.", __FILE__, __LINE__, TYPEget_body(t)->type);
             abort();
     }
     LISTod;
@@ -405,59 +418,60 @@ non_unique_types_vector( const Type type, int * tvec ) {
    types.  If all types are unique, the string (0) is generated.
 */
 char *
-non_unique_types_string( const Type type ) {
+non_unique_types_string(const Type type)
+{
     int tvec[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    char * typestr;
+    char *typestr;
     int first = 1;
     int i;
 
-    non_unique_types_vector( type, tvec );
+    non_unique_types_vector(type, tvec);
 
     /* build type string from vector */
-    typestr = ( char * )malloc( BUFSIZ );
+    typestr = (char *)malloc(BUFSIZ);
     typestr[0] = '\0';
-    strcat( typestr, ( char * )"(" );
-    for( i = 0; i <= tnumber; i++ ) {
-        if( tvec[i] < 2 ) {
+    strcat(typestr, (char *)"(");
+    for(i = 0; i <= tnumber; i++) {
+        if(tvec[i] < 2) {
             continue;    /* skip, this one is unique */
         }
 
-        if( !first ) {
-            strcat( typestr, ( char * )" | " );
+        if(!first) {
+            strcat(typestr, (char *)" | ");
         } else {
             first = 0;
         }
-        switch( i ) {
+        switch(i) {
             case tint   :
-                strcat( typestr, ( char * )"sdaiINTEGER" );
+                strcat(typestr, (char *)"sdaiINTEGER");
                 break;
             case treal  :
-                strcat( typestr, ( char * )"sdaiREAL" );
+                strcat(typestr, (char *)"sdaiREAL");
                 break;
             case tstring:
-                strcat( typestr, ( char * )"sdaiSTRING" );
+                strcat(typestr, (char *)"sdaiSTRING");
                 break;
             case tbinary:
-                strcat( typestr, ( char * )"sdaiBINARY" );
+                strcat(typestr, (char *)"sdaiBINARY");
                 break;
             case tenum  :
-                strcat( typestr, ( char * )"sdaiENUMERATION" );
+                strcat(typestr, (char *)"sdaiENUMERATION");
                 break;
             case tentity:
-                strcat( typestr, ( char * )"sdaiINSTANCE" );
+                strcat(typestr, (char *)"sdaiINSTANCE");
                 break;
             case taggr  :
-                strcat( typestr, ( char * )"sdaiAGGR" );
+                strcat(typestr, (char *)"sdaiAGGR");
                 break;
             case tnumber:
-                strcat( typestr, ( char * )"sdaiNUMBER" );
+                strcat(typestr, (char *)"sdaiNUMBER");
                 break;
         }
     }
-    if( first ) {
-        strcat( typestr, ( char * )"0" );
+    if(first) {
+        strcat(typestr, (char *)"0");
     }
-    strcat( typestr, ( char * )")" );
+    strcat(typestr, (char *)")");
     return typestr;
 }
 
@@ -474,18 +488,19 @@ non_unique_types_string( const Type type ) {
  ******************************************************************/
 
 Variable
-ATTR_LISTmember( Linked_List l, Variable check ) {
+ATTR_LISTmember(Linked_List l, Variable check)
+{
     char nm [BUFSIZ];
     char cur [BUFSIZ];
 
-    generate_attribute_name( check, nm );
-    LISTdo( l, a, Variable )
-    generate_attribute_name( a, cur );
-    if( ! strcmp( nm, cur ) ) {
+    generate_attribute_name(check, nm);
+    LISTdo(l, a, Variable)
+    generate_attribute_name(a, cur);
+    if(! strcmp(nm, cur)) {
         return check;
     }
     LISTod;
-    return ( 0 );
+    return (0);
 }
 
 
@@ -501,19 +516,20 @@ ATTR_LISTmember( Linked_List l, Variable check ) {
  ******************************************************************/
 
 Linked_List
-SEL_TYPEgetnew_attribute_list( const Type type ) {
-    Linked_List complete = SEL_TYPEget_items( type );
+SEL_TYPEgetnew_attribute_list(const Type type)
+{
+    Linked_List complete = SEL_TYPEget_items(type);
     Linked_List newlist = LISTcreate();
     Linked_List attrs;
     Entity cur;
 
-    LISTdo( complete, t, Type )
-    if( TYPEis_entity( t ) ) {
-        cur = ENT_TYPEget_entity( t );
-        attrs = ENTITYget_all_attributes( cur );
-        LISTdo_n( attrs, a, Variable, b )
-        if( ! ATTR_LISTmember( newlist, a ) ) {
-            LISTadd_first( newlist, a );
+    LISTdo(complete, t, Type)
+    if(TYPEis_entity(t)) {
+        cur = ENT_TYPEget_entity(t);
+        attrs = ENTITYget_all_attributes(cur);
+        LISTdo_n(attrs, a, Variable, b)
+        if(! ATTR_LISTmember(newlist, a)) {
+            LISTadd_first(newlist, a);
         }
         LISTod;
     }
@@ -523,44 +539,46 @@ SEL_TYPEgetnew_attribute_list( const Type type ) {
 
 
 Linked_List
-ENTITYget_expanded_entities( Entity e, Linked_List l ) {
+ENTITYget_expanded_entities(Entity e, Linked_List l)
+{
     Linked_List supers;
     Entity super;
 
-    if( ! LISTmember( l, e ) ) {
-        LISTadd_first( l, e );
+    if(! LISTmember(l, e)) {
+        LISTadd_first(l, e);
     }
 
-    if( multiple_inheritance ) {
+    if(multiple_inheritance) {
         int super_cnt = 0;
-        supers = ENTITYget_supertypes( e );
-        LISTdo( supers, s, Entity )
+        supers = ENTITYget_supertypes(e);
+        LISTdo(supers, s, Entity)
         /* ignore the more than one supertype
            since multiple inheritance isn\'t implemented  */
-        if( super_cnt == 0 ) {
-            ENTITYget_expanded_entities( s, l );
+        if(super_cnt == 0) {
+            ENTITYget_expanded_entities(s, l);
         }
         ++ super_cnt;
         LISTod;
     } else {
         /* ignore the more than one supertype
         since multiple inheritance isn\'t implemented  */
-        super = ENTITYget_superclass( e );
-        ENTITYget_expanded_entities( super, l );
+        super = ENTITYget_superclass(e);
+        ENTITYget_expanded_entities(super, l);
     }
     return l;
 }
 
 Linked_List
-SELget_entity_itemlist( const Type type ) {
-    Linked_List complete = SEL_TYPEget_items( type );
+SELget_entity_itemlist(const Type type)
+{
+    Linked_List complete = SEL_TYPEget_items(type);
     Linked_List newlist = LISTcreate();
     Entity cur;
 
-    LISTdo( complete, t, Type )
-    if( TYPEis_entity( t ) ) {
-        cur = ENT_TYPEget_entity( t );
-        ENTITYget_expanded_entities( cur, newlist );
+    LISTdo(complete, t, Type)
+    if(TYPEis_entity(t)) {
+        cur = ENT_TYPEget_entity(t);
+        ENTITYget_expanded_entities(cur, newlist);
     }
     LISTod;
     return newlist;
@@ -573,38 +591,39 @@ TYPEselect_lib_print prints the member functions (definitions) of a select
 class.
 *******************/
 void
-TYPEselect_lib_print( const Type type, FILE * f ) {
+TYPEselect_lib_print(const Type type, FILE *f)
+{
     int nbr_select = 0;
     int num = 0;
 
-    fprintf( f, "# SELECT TYPE %s\n", TYPEget_name( type ) );
+    fprintf(f, "# SELECT TYPE %s\n", TYPEget_name(type));
     /* create the SELECT */
-    if( is_python_keyword( TYPEget_name( type ) ) ) {
-        fprintf( f, "%s_ = SELECT(", TYPEget_name( type ) );
+    if(is_python_keyword(TYPEget_name(type))) {
+        fprintf(f, "%s_ = SELECT(", TYPEget_name(type));
     } else {
-        fprintf( f, "%s = SELECT(", TYPEget_name( type ) );
+        fprintf(f, "%s = SELECT(", TYPEget_name(type));
     }
 
     /* first compute the number of types (necessary to insert commas) */
     nbr_select = 0;
-    LISTdo( SEL_TYPEget_items( type ), t, Type )
+    LISTdo(SEL_TYPEget_items(type), t, Type)
     (void) t; /* unused */
     nbr_select++;
     LISTod;
     /* then write types */
     num = 0;
-    LISTdo( SEL_TYPEget_items( type ), t, Type )
-    if( is_python_keyword( TYPEget_name( t ) ) ) {
-        fprintf( f, "\n\t'%s_'", TYPEget_name( t ) );
+    LISTdo(SEL_TYPEget_items(type), t, Type)
+    if(is_python_keyword(TYPEget_name(t))) {
+        fprintf(f, "\n\t'%s_'", TYPEget_name(t));
     } else {
-        fprintf( f, "\n\t'%s'", TYPEget_name( t ) );
+        fprintf(f, "\n\t'%s'", TYPEget_name(t));
     }
-    if( num < nbr_select - 1 ) {
-        fprintf( f, "," );
+    if(num < nbr_select - 1) {
+        fprintf(f, ",");
     }
     num++;
     LISTod;
-    fprintf( f, ",\n\tscope = schema_scope)\n" );
+    fprintf(f, ",\n\tscope = schema_scope)\n");
 }
 
 #undef BASE_SELECT

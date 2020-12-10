@@ -4,16 +4,18 @@
 // SelectTypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_Select * SelectTypeDescriptor::CreateSelect() {
-    if( CreateNewSelect ) {
+SDAI_Select *SelectTypeDescriptor::CreateSelect()
+{
+    if(CreateNewSelect) {
         return CreateNewSelect();
     } else {
         return 0;
     }
 }
 
-const TypeDescriptor * SelectTypeDescriptor::IsA( const TypeDescriptor * other ) const {
-    return TypeDescriptor::IsA( other );
+const TypeDescriptor *SelectTypeDescriptor::IsA(const TypeDescriptor *other) const
+{
+    return TypeDescriptor::IsA(other);
 }
 
 /**
@@ -21,15 +23,16 @@ const TypeDescriptor * SelectTypeDescriptor::IsA( const TypeDescriptor * other )
  * type but only at this unexpanded level. The td ultimately describing the
  * type may be an element of a td for a select that is returned.
  */
-const TypeDescriptor * SelectTypeDescriptor::CanBe( const TypeDescriptor * other ) const {
-    if( this == other ) {
+const TypeDescriptor *SelectTypeDescriptor::CanBe(const TypeDescriptor *other) const
+{
+    if(this == other) {
         return other;
     }
 
-    TypeDescItr elements( GetElements() ) ;
-    const TypeDescriptor * td = elements.NextTypeDesc();
-    while( td )  {
-        if( td -> CanBe( other ) ) {
+    TypeDescItr elements(GetElements()) ;
+    const TypeDescriptor *td = elements.NextTypeDesc();
+    while(td)  {
+        if(td -> CanBe(other)) {
             return td;
         }
         td = elements.NextTypeDesc();
@@ -42,18 +45,19 @@ const TypeDescriptor * SelectTypeDescriptor::CanBe( const TypeDescriptor * other
  * type but only at this unexpanded level. The td ultimately describing the
  * type may be an element of a td for a select that is returned.
  */
-const TypeDescriptor * SelectTypeDescriptor::CanBe( const char * other ) const {
-    TypeDescItr elements( GetElements() ) ;
-    const TypeDescriptor * td = 0;
+const TypeDescriptor *SelectTypeDescriptor::CanBe(const char *other) const
+{
+    TypeDescItr elements(GetElements()) ;
+    const TypeDescriptor *td = 0;
 
     // see if other is the select
-    if( !StrCmpIns( _name, other ) ) {
+    if(!StrCmpIns(_name, other)) {
         return this;
     }
 
     // see if other is one of the elements
-    while( ( td = elements.NextTypeDesc() ) ) {
-        if( td -> CanBe( other ) ) {
+    while((td = elements.NextTypeDesc())) {
+        if(td -> CanBe(other)) {
             return td;
         }
     }
@@ -79,17 +83,18 @@ const TypeDescriptor * SelectTypeDescriptor::CanBe( const char * other ) const {
  * if schNm = a schema which USEs or REFERENCEs this and renames it (e.g., "USE
  * from XX (A as B)").
  */
-const TypeDescriptor * SelectTypeDescriptor::CanBeSet( const char * other, const char * schNm ) const {
-    TypeDescItr elements( GetElements() ) ;
-    const TypeDescriptor * td = elements.NextTypeDesc();
+const TypeDescriptor *SelectTypeDescriptor::CanBeSet(const char *other, const char *schNm) const
+{
+    TypeDescItr elements(GetElements()) ;
+    const TypeDescriptor *td = elements.NextTypeDesc();
 
-    while( td ) {
-        if( td->Type() == REFERENCE_TYPE && td->NonRefType() == sdaiSELECT ) {
+    while(td) {
+        if(td->Type() == REFERENCE_TYPE && td->NonRefType() == sdaiSELECT) {
             // Just look at this level, don't look at my items (see intro).
-            if( td->CurrName( other, schNm ) ) {
+            if(td->CurrName(other, schNm)) {
                 return td;
             }
-        } else if( td->CanBeSet( other, schNm ) ) {
+        } else if(td->CanBeSet(other, schNm)) {
             return td;
         }
         td = elements.NextTypeDesc();

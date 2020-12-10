@@ -7,13 +7,14 @@ EntityDescriptor *ed  = 0;
 TypeDescriptor   *td;
 Schema           *sch = 0;
 
-int main () {
+int main()
+{
     SDAI_String _description;
-    sch = new Schema( "Ifc2x3" );
-    td = new TypeDescriptor( "Ifctext", sdaiSTRING, sch, "STRING" );
-    ed = new EntityDescriptor( "Ifcroot", sch, LTrue, LFalse );
-    ad = new AttrDescriptor( "description", td, LTrue, LFalse, AttrType_Explicit, *ed );
-    ed->AddExplicitAttr( ad );
+    sch = new Schema("Ifc2x3");
+    td = new TypeDescriptor("Ifctext", sdaiSTRING, sch, "STRING");
+    ed = new EntityDescriptor("Ifcroot", sch, LTrue, LFalse);
+    ad = new AttrDescriptor("description", td, LTrue, LFalse, AttrType_Explicit, *ed);
+    ed->AddExplicitAttr(ad);
     STEPattribute *a = new STEPattribute(*ad,  &_description);
     a -> set_null();
     delete a;

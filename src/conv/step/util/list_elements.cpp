@@ -79,7 +79,7 @@ void PrintEntity(STEPentity * ent)
     //cout << attrCount << " attributes." << endl;
 
 
-    const EntityDescriptorList * supertypeList = &(ent->getEDesc()->Supertypes());
+    const EntityDescriptorList * supertypeList = &(ent->eDesc->Supertypes());
     EntityDescLinkNode * supertypePtr = (EntityDescLinkNode *)supertypeList->GetHead();
     entDesc = 0;
     while (supertypePtr != 0) {
@@ -92,7 +92,7 @@ void PrintEntity(STEPentity * ent)
     }
 
 
-    const EntityDescriptorList * subtypeList = &(ent->getEDesc()->Subtypes());
+    const EntityDescriptorList * subtypeList = &(ent->eDesc->Subtypes());
     EntityDescLinkNode * subtypePtr = (EntityDescLinkNode *)subtypeList->GetHead();
     entDesc = 0;
     while (subtypePtr != 0) {
@@ -108,7 +108,7 @@ void PrintEntity(STEPentity * ent)
 
     STEPattribute * attr = ent->NextAttribute();
     while (attr != 0) {
-	const AttrDescriptor * attrDesc = attr->getADesc();
+	const AttrDescriptor * attrDesc = attr->aDesc;
 	cout << "     " << attrDesc->Name() << "[" << attrDesc->TypeName() << "]\n";
 	attr = ent->NextAttribute();
     }

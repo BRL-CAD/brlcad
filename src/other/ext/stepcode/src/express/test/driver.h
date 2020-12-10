@@ -3,7 +3,7 @@
 
 struct test_def {
     const char *name;
-    int (*testfunc) (void);
+    int (*testfunc)(void);
 };
 
 void setup();

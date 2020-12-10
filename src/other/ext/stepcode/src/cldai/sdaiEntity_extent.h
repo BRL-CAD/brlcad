@@ -15,10 +15,11 @@
 */
 
 class SDAI_Entity_extent;
-typedef SDAI_Entity_extent * SDAI_Entity_extent_ptr;
+typedef SDAI_Entity_extent *SDAI_Entity_extent_ptr;
 typedef SDAI_Entity_extent_ptr SDAI_Entity_extent_var;
 
-class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
+class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance
+{
 
         friend class SDAI_Model_contents;
         /*
@@ -43,7 +44,8 @@ class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
 
     public:
 
-        SDAI_Entity_name definition_name_() const {
+        SDAI_Entity_name definition_name_() const
+        {
             return _definition_name;
         }
 
@@ -52,11 +54,13 @@ class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
 //    const Entity_ptr definition_() const;
 #endif
 
-        SDAI_DAObject__set_var instances_() {
+        SDAI_DAObject__set_var instances_()
+        {
             return &_instances;
         }
-        SDAI_DAObject__set_var instances_() const {
-            return ( const SDAI_DAObject__set_var )&_instances;
+        SDAI_DAObject__set_var instances_() const
+        {
+            return (const SDAI_DAObject__set_var)&_instances;
         }
 
 // need to implement Model_contents__list
@@ -68,12 +72,12 @@ class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
 //    static SDAI_Entity_extent_ptr _nil();
 
 //  private:
-        void definition_( const Entity_ptr & ep );
+        void definition_(const Entity_ptr &ep);
 #ifdef SDAI_CPP_LATE_BINDING
 //    void definition_(const Entity_ptr& ep);
 #endif
-        void definition_name_( const SDAI_Entity_name & ep );
-        void owned_by_( SDAI_Model_contents__list_var & mclv );
+        void definition_name_(const SDAI_Entity_name &ep);
+        void owned_by_(SDAI_Model_contents__list_var &mclv);
 
         /*
            7.3.3.1  SDAI operation declarations
@@ -82,7 +86,7 @@ class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
          */
 
         // this is no longer in Part 23
-        void AddInstance( const SDAI_DAObject_ptr & appInst );
+        void AddInstance(const SDAI_DAObject_ptr &appInst);
 
         /*
            Function:
@@ -101,7 +105,7 @@ class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
          */
 
         // this is no longer in Part 23
-        void RemoveInstance( const SDAI_DAObject_ptr & appInst );
+        void RemoveInstance(const SDAI_DAObject_ptr &appInst);
 
         /*
            7.3.3.1.2  RemoveInstance

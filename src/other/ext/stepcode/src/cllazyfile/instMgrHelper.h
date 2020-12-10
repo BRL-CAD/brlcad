@@ -17,21 +17,25 @@
  * This class is used when creating SDAI_Application_instance's and using a lazyInstMgr. It is returned
  * by instMgrAdapter. SDAI_Application_instance only uses the GetSTEPentity function.
  */
-class SC_LAZYFILE_EXPORT mgrNodeHelper: public MgrNodeBase {
+class SC_LAZYFILE_EXPORT mgrNodeHelper: public MgrNodeBase
+{
     protected:
-        lazyInstMgr * _lim;
+        lazyInstMgr *_lim;
         instanceID _id;
     public:
-        mgrNodeHelper( lazyInstMgr * lim ) {
+        mgrNodeHelper(lazyInstMgr *lim)
+        {
             _lim = lim;
             _id = 0;
             prev = next = 0;
         }
-        inline void setInstance( instanceID id ) {
+        inline void setInstance(instanceID id)
+        {
             _id = id;
         }
-        inline SDAI_Application_instance * GetSTEPentity() {
-            return _lim->loadInstance( _id, true );
+        inline SDAI_Application_instance *GetSTEPentity()
+        {
+            return _lim->loadInstance(_id, true);
         }
 };
 
@@ -43,15 +47,17 @@ class SC_LAZYFILE_EXPORT mgrNodeHelper: public MgrNodeBase {
  * when an instance is looked up, this uses lazyInstMgr to load it, and then returns a pointer to it.
  */
 
-class SC_LAZYFILE_EXPORT instMgrAdapter: public InstMgrBase {
+class SC_LAZYFILE_EXPORT instMgrAdapter: public InstMgrBase
+{
     protected:
         mgrNodeHelper _mn;
     public:
-        instMgrAdapter( lazyInstMgr * lim ): InstMgrBase(), _mn( lim ) {}
+        instMgrAdapter(lazyInstMgr *lim): InstMgrBase(), _mn(lim) {}
 
-        inline mgrNodeHelper * FindFileId( int fileId ) {
+        inline mgrNodeHelper *FindFileId(int fileId)
+        {
             //TODO check if fileId exists. if not, return null
-            _mn.setInstance( fileId );
+            _mn.setInstance(fileId);
             return &_mn;
         }
 };

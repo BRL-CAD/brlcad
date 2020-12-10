@@ -27,28 +27,32 @@ class DisplayNodeList;
 // If you delete this object it first removes itself from any list it is in.
 //////////////////////////////////////////////////////////////////////////////
 
-class SC_UTILS_EXPORT GenericNode {
+class SC_UTILS_EXPORT GenericNode
+{
         friend class GenNodeList;
         friend class MgrNodeList;
         friend class DisplayNodeList;
 
     protected:
-        GenericNode * next;
-        GenericNode * prev;
+        GenericNode *next;
+        GenericNode *prev;
     public:
         GenericNode();
         virtual ~GenericNode();
 
-        GenericNode * Next() {
+        GenericNode *Next()
+        {
             return next;
         }
-        GenericNode * Prev() {
+        GenericNode *Prev()
+        {
             return prev;
         }
-        virtual void Append( GenNodeList * list );
-        virtual void Remove() {
-            ( next ) ? ( next->prev = prev ) : 0;
-            ( prev ) ? ( prev->next = next ) : 0;
+        virtual void Append(GenNodeList *list);
+        virtual void Remove()
+        {
+            (next) ? (next->prev = prev) : 0;
+            (prev) ? (prev->next = next) : 0;
             /*
             //  if(next)
             //      next->prev = prev;

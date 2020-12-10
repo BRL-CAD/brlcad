@@ -60,11 +60,11 @@ typedef union YYSTYPE {
     Linked_List      list;
     Logical          logical;
     Op_Code          op_code;
-    Qualified_Attr * qualified_attr;
+    Qualified_Attr *qualified_attr;
     Real             rVal;
     Statement        statement;
-    Symbol         * symbol;
-    char           * string;
+    Symbol          *symbol;
+    char            *string;
     Type             type;
     TypeBody         typebody;
     Variable         variable;

@@ -152,34 +152,35 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-char  * sc_optarg;        // global argument pointer
+char   *sc_optarg;        // global argument pointer
 int     sc_optind = 0;     // global argv index
 
-int sc_getopt( int argc, char * argv[], char * optstring ) {
-    static char * next = NULL;
-    if( sc_optind == 0 ) {
+int sc_getopt(int argc, char *argv[], char *optstring)
+{
+    static char *next = NULL;
+    if(sc_optind == 0) {
         next = NULL;
     }
 
     sc_optarg = NULL;
 
-    if( next == NULL || *next == '\0' ) {
-        if( sc_optind == 0 ) {
+    if(next == NULL || *next == '\0') {
+        if(sc_optind == 0) {
             sc_optind++;
         }
 
-        if( sc_optind >= argc || argv[sc_optind][0] != '-' || argv[sc_optind][1] == '\0' ) {
+        if(sc_optind >= argc || argv[sc_optind][0] != '-' || argv[sc_optind][1] == '\0') {
             sc_optarg = NULL;
-            if( sc_optind < argc ) {
+            if(sc_optind < argc) {
                 sc_optarg = argv[sc_optind];
             }
             return EOF;
         }
 
-        if( strcmp( argv[sc_optind], "--" ) == 0 ) {
+        if(strcmp(argv[sc_optind], "--") == 0) {
             sc_optind++;
             sc_optarg = NULL;
-            if( sc_optind < argc ) {
+            if(sc_optind < argc) {
                 sc_optarg = argv[sc_optind];
             }
             return EOF;
@@ -191,18 +192,18 @@ int sc_getopt( int argc, char * argv[], char * optstring ) {
     }
 
     char c = *next++;
-    char * cp = strchr( optstring, c );
+    char *cp = strchr(optstring, c);
 
-    if( cp == NULL || c == ':' ) {
+    if(cp == NULL || c == ':') {
         return '?';
     }
 
     cp++;
-    if( *cp == ':' ) {
-        if( *next != '\0' ) {
+    if(*cp == ':') {
+        if(*next != '\0') {
             sc_optarg = next;
             next = NULL;
-        } else if( sc_optind < argc ) {
+        } else if(sc_optind < argc) {
             sc_optarg = argv[sc_optind];
             sc_optind++;
         } else {

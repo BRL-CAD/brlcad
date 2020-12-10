@@ -18,7 +18,7 @@ ComplexList::~ComplexList()
  * Destructor for ComplexList.
  */
 {
-    if( next ) {
+    if(next) {
         delete next;
     }
     delete head;
@@ -39,7 +39,7 @@ void ComplexList::remove()
     delete this;
 }
 
-int ComplexList::toplevel( const char * name )
+int ComplexList::toplevel(const char *name)
 /*
  * Returns TRUE if name is already contained at the top level of our
  * EntList hierarchy.  By top level, we mean the level under head.  This
@@ -47,14 +47,14 @@ int ComplexList::toplevel( const char * name )
  * a temporary CList to test entities which are subtypes of >1 supertype.
  */
 {
-    EntList * slist = head->childList;
+    EntList *slist = head->childList;
 
-    while( slist ) {
-        if( *( SimpleList * )slist == name ) {
+    while(slist) {
+        if(*(SimpleList *)slist == name) {
             return TRUE;
         }
         slist = slist->next;
-        if( slist ) {
+        if(slist) {
             slist = slist->next;
         }
     }
@@ -71,20 +71,20 @@ void ComplexList::buildList()
  * ComplexList certainly can't support it.
  */
 {
-    EntList * sibling = head->childList->next;
+    EntList *sibling = head->childList->next;
     // sibling = the first EntList (below the overall AND) after the supertype.
 
     // If there was a list before, delete it:
-    if( list ) {
+    if(list) {
         delete list;
     }
 
     // Add first node based on supertype:
-    list = new EntNode( ( ( SimpleList * )head->childList )->name );
+    list = new EntNode(((SimpleList *)head->childList)->name);
 
     // Recursively add all descendents:
-    while( sibling ) {
-        addChildren( sibling );
+    while(sibling) {
+        addChildren(sibling);
         sibling = sibling->next;
         // Note - a CList usually has no more than 1 sibling, corresponding to
         // the subtype info of a supertype.  But this may be a combo-CList used
@@ -93,37 +93,37 @@ void ComplexList::buildList()
 
 }
 
-void ComplexList::addChildren( EntList * ent )
+void ComplexList::addChildren(EntList *ent)
 /*
  * Recursive function to add all the SimpleList descendents of ent into
  * this's list.
  */
 {
-    EntList * child;
-    char * nm;
-    EntNode * prev = list, *prev2 = NULL, *newnode;
+    EntList *child;
+    char *nm;
+    EntNode *prev = list, *prev2 = NULL, *newnode;
     int comp = 0;
 
-    if( ent->multiple() ) {
-        child = ( ( MultList * )ent )->childList;
-        while( child ) {
-            addChildren( child );
+    if(ent->multiple()) {
+        child = ((MultList *)ent)->childList;
+        while(child) {
+            addChildren(child);
             child = child->next;
         }
     } else {
-        nm = ( dynamic_cast< SimpleList * >(ent) )->name;
-        while( prev != NULL && ( comp = strcmp( prev->name, nm ) ) < 0 ) {
+        nm = (dynamic_cast< SimpleList * >(ent))->name;
+        while(prev != NULL && (comp = strcmp(prev->name, nm)) < 0) {
             prev2 = prev;
             prev = prev->next;
         }
         // One exceptional case:  If new name is same as prev, skip it:
-        if( comp != 0 ) {
+        if(comp != 0) {
             // At this point, we know the new node belongs between prev2 and
             // prev.  prev or prev2 may = NULL if newnode belongs at the end
             // of the list or before the beginning, respectively.
-            newnode = new EntNode( nm );
+            newnode = new EntNode(nm);
             newnode->next = prev;
-            if( prev2 == NULL ) {
+            if(prev2 == NULL) {
                 // This will be the case if the inner while was never entered.
                 // That happens when newnode belonged at the beginning of the
                 // list.  If so, reset firstnode.
@@ -135,7 +135,7 @@ void ComplexList::addChildren( EntList * ent )
     }
 }
 
-int ComplexList::contains( EntNode * ents )
+int ComplexList::contains(EntNode *ents)
 /*
  * Does a simple search to determine if this contains all the nodes of an
  * EntNode list.  If not, there's no way this will match ents.  If so,
@@ -144,13 +144,13 @@ int ComplexList::contains( EntNode * ents )
  * cally.
  */
 {
-    EntNode * ours = list, *theirs = ents;
+    EntNode *ours = list, *theirs = ents;
 
-    while( theirs != NULL ) {
-        while( ours != NULL && *ours < *theirs ) {
+    while(theirs != NULL) {
+        while(ours != NULL && *ours < *theirs) {
             ours = ours->next;
         }
-        if( ours == NULL || *ours > *theirs ) {
+        if(ours == NULL || *ours > *theirs) {
             // If either of these occurred, we couldn't find one of ours which
             // matched the current "theirs".
             return FALSE;
@@ -163,7 +163,7 @@ int ComplexList::contains( EntNode * ents )
     return TRUE;
 }
 
-int ComplexList::matches( EntNode * ents )
+int ComplexList::matches(EntNode *ents)
 /*
  * Receives as input an EntNode list, corresponding to a user request to
  * instantiate the corresponding complex type.  Returns TRUE if such a list
@@ -176,32 +176,32 @@ int ComplexList::matches( EntNode * ents )
 
     // First check if this ComplexList at least contains all the nodes of ents.
     // If it does, we'll search in detail.  If not, we're done.
-    if( ! contains( ents ) ) {
+    if(! contains(ents)) {
         return FALSE;
     }
 
     // Now start a thorough search through this ComplexList:
-    if( ( retval = head->matchNonORs( ents ) ) == MATCHALL ) {
+    if((retval = head->matchNonORs(ents)) == MATCHALL) {
         result = TRUE;
-    } else if( retval != UNKNOWN ) {
+    } else if(retval != UNKNOWN) {
         result = FALSE;
         // UNKNOWN is the return val if there are ORs matchNonORs can't
         // analyze.  Unless we got a MATCHALL already, that's our only hope.
     } else {
-        if( ( ( retval = head->matchORs( ents ) ) == MATCHALL ) &&
-                ( hitMultNodes( ents ) ) ) {
+        if(((retval = head->matchORs(ents)) == MATCHALL) &&
+                (hitMultNodes(ents))) {
             // hitMultNodes() checks that in case we're a combo-CList (see
             // CColect->supports()) we have a legal choice (see comments in
             // hitMultNodes()).
             result = TRUE;
-        } else if( retval >= MATCHSOME ) {
+        } else if(retval >= MATCHSOME) {
             MatchType otherChoices = NEWCHOICE;
             // We have a partial answer.  Check if other solutions exist (i.e.,
             // if there are OR's with other choices):
-            while( otherChoices == NEWCHOICE ) {
-                otherChoices = head->tryNext( ents );
-                if( otherChoices == MATCHALL ) {
-                    if( hitMultNodes( ents ) ) {
+            while(otherChoices == NEWCHOICE) {
+                otherChoices = head->tryNext(ents);
+                if(otherChoices == MATCHALL) {
+                    if(hitMultNodes(ents)) {
                         result = TRUE;
                     } else {
                         otherChoices = NEWCHOICE;
@@ -217,7 +217,7 @@ int ComplexList::matches( EntNode * ents )
     return result;
 }
 
-int ComplexList::isDependent( const char * ent )
+int ComplexList::isDependent(const char *ent)
 /*
  * Do any of our members tell us that ent cannot be instantiated indepen-
  * dently.  This is the case if ent = one of the subtypes beneath and the
@@ -229,22 +229,22 @@ int ComplexList::isDependent( const char * ent )
  * it could (must?) be created with internal mapping.
  */
 {
-    EntList * elist = head->childList->next;
+    EntList *elist = head->childList->next;
     // We start searching from the first sibling after head->childList.  head->
     // childList represents the supertype (`A' in header comments) which though
     // it of course is AND'ed with all its subtypes, it doesn't make its sub's
     // non-independent.
 
-    if( elist->isDependent( ent ) == TRUE ) {
+    if(elist->isDependent(ent) == TRUE) {
         return TRUE;
     }
-    if( next ) {
-        return ( next->isDependent( ent ) );
+    if(next) {
+        return (next->isDependent(ent));
     }
     return FALSE;
 }
 
-int ComplexList::hitMultNodes( EntNode * ents )
+int ComplexList::hitMultNodes(EntNode *ents)
 /*
  * This function has a specialized application.  If the user wants to
  * instantiate a complex type containing an entity with >1 supertype (call
@@ -259,34 +259,34 @@ int ComplexList::hitMultNodes( EntNode * ents )
  * also deals with the possibility that >1 entities like C exist.)
  */
 {
-    EntNode * node;
-    EntList * child;
+    EntNode *node;
+    EntList *child;
 
     // First get rid of the trivial case:  If this is not a combo-CList at all,
     // we have nothing to check for.  (CList::matches() routinely checks for
     // hitMultNodes in case we're a combo.)
-    if( !multSupers ) {
+    if(!multSupers) {
         return TRUE;
     }
 
-    for( node = ents; node != NULL; node = node->next ) {
-        if( node->multSuprs() ) {
+    for(node = ents; node != NULL; node = node->next) {
+        if(node->multSuprs()) {
             child = head->childList->next;
             // child points to the sublist of the first CList.  (head is the
             // AndList which AND's them all together.)
-            while( child ) {
+            while(child) {
                 // child is one of the EntList members of this which corre-
                 // sponds to one of the combined CLists.  If child has node as
                 // a member, it must have matched node, or we do not have a
                 // legal match (see function header comments).  We check this
                 // below.
-                if( child->contains( node->name ) ) {
-                    if( ! child->hit( node->name ) ) {
+                if(child->contains(node->name)) {
+                    if(! child->hit(node->name)) {
                         return FALSE;
                     }
                 }
                 child = child->next;
-                if( child ) {
+                if(child) {
                     child = child->next;
                 }
                 // We increment child twice.  We know this is how CLists are

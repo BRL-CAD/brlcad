@@ -7,7 +7,7 @@
 
 #include <sc_export.h>
 
-typedef char * SDAI_DAObjectID;
+typedef char *SDAI_DAObjectID;
 
 //
 //    The PID class maintains the persistent object identifier for every
@@ -24,7 +24,8 @@ typedef char * SDAI_DAObjectID;
    SDAI_DAObjectID as follows:
  */
 /// interface PID (ISO/DIS 10303-23:1996(E) 5.3.10.1)
-class SC_DAI_EXPORT SDAI_PID : public SDAI_sdaiObject {
+class SC_DAI_EXPORT SDAI_PID : public SDAI_sdaiObject
+{
     public:
 
 // These are in the IDL generated code for Part 26. I will have to think about
@@ -44,20 +45,22 @@ class SC_DAI_EXPORT SDAI_PID : public SDAI_sdaiObject {
            The Datestore_type attribute shall identify the type of the underlying
            datastore.
          */
-        char * Datastore_type() const {
-            return const_cast<char *>( _datastore_type.c_str() );
+        char *Datastore_type() const
+        {
+            return const_cast<char *>(_datastore_type.c_str());
         }
-        void Datastore_type( char * x ) {
+        void Datastore_type(char *x)
+        {
             _datastore_type = x;
         }
 
         /*
            This function shall return a string version of the receiver.
          */
-        char * get_PIDString();
+        char *get_PIDString();
 };
 
-typedef SDAI_PID * SDAI_PID_ptr;
+typedef SDAI_PID *SDAI_PID_ptr;
 typedef SDAI_PID_ptr SDAI_PID_var;
 
 
@@ -81,7 +84,8 @@ typedef SDAI_PID_ptr SDAI_PID_var;
 // interface.
 //
 /// interface PID_DA (ISO/DIS 10303-23:1996(E) 5.3.10.3)
-class SC_DAI_EXPORT SDAI_PID_DA: public SDAI_PID {
+class SC_DAI_EXPORT SDAI_PID_DA: public SDAI_PID
+{
     public:
 
         SDAI_String _oid;
@@ -101,15 +105,17 @@ class SC_DAI_EXPORT SDAI_PID_DA: public SDAI_PID {
         SDAI_PID_DA();
         virtual ~SDAI_PID_DA();
 
-        virtual void oid( const SDAI_DAObjectID x ) {
+        virtual void oid(const SDAI_DAObjectID x)
+        {
             _oid = x;
         }
-        virtual SDAI_DAObjectID oid() const {
-            return const_cast<char *>( _oid.c_str() );
+        virtual SDAI_DAObjectID oid() const
+        {
+            return const_cast<char *>(_oid.c_str());
         }
 };
 
-typedef SDAI_PID_DA * SDAI_PID_DA_ptr;
+typedef SDAI_PID_DA *SDAI_PID_DA_ptr;
 typedef SDAI_PID_DA_ptr SDAI_PID_DA_var;
 
 //
@@ -117,7 +123,8 @@ typedef SDAI_PID_DA_ptr SDAI_PID_DA_var;
 // a Model_contents object.
 //
 /// interface PID_SDAI (ISO/DIS 10303-23:1996(E) 5.3.10.2)
-class SC_DAI_EXPORT SDAI_PID_SDAI : public SDAI_PID {
+class SC_DAI_EXPORT SDAI_PID_SDAI : public SDAI_PID
+{
     public:
         SDAI_String _modelid;
 
@@ -131,15 +138,17 @@ class SC_DAI_EXPORT SDAI_PID_SDAI : public SDAI_PID {
         // the persistent identifier of the cluster of data for the
         // Model_contents referred to by this PID.
         //
-        virtual void Modelid( const char * x ) {
+        virtual void Modelid(const char *x)
+        {
             _modelid = x;
         }
-        virtual char * Modelid() const {
-            return const_cast<char *>( _modelid.c_str() );
+        virtual char *Modelid() const
+        {
+            return const_cast<char *>(_modelid.c_str());
         }
 };
 
-typedef SDAI_PID_SDAI * SDAI_PID_SDAI_ptr;
+typedef SDAI_PID_SDAI *SDAI_PID_SDAI_ptr;
 typedef SDAI_PID_SDAI_ptr SDAI_PID_SDAI_var;
 
 //
@@ -153,11 +162,12 @@ typedef SDAI_PID_SDAI_ptr SDAI_PID_SDAI_var;
 
 // predefine these _ptr since they are used inside this class
 class SDAI_DAObject;
-typedef SDAI_DAObject * SDAI_DAObject_ptr;
+typedef SDAI_DAObject *SDAI_DAObject_ptr;
 typedef SDAI_DAObject_ptr SDAI_DAObject_var;
 
 /// interface DAObject (ISO/DIS 10303-23:1996(E) 5.3.10.5)
-class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
+class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject
+{
     public:
 
         SDAI_String _dado_oid;
@@ -176,8 +186,11 @@ class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
         SDAI_DAObject();
         virtual ~SDAI_DAObject();
 
-        Logical dado_same( SDAI_DAObject_ptr obj ) {
-            if (obj == this) return LTrue;
+        Logical dado_same(SDAI_DAObject_ptr obj)
+        {
+            if(obj == this) {
+                return LTrue;
+            }
             return LUnknown;
         }
 
@@ -210,8 +223,9 @@ class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
                  note that the return value as described in the text above
                  should be a string type.
          */
-        SDAI_DAObjectID dado_oid() {
-            return const_cast<char *>( _dado_oid.c_str() );
+        SDAI_DAObjectID dado_oid()
+        {
+            return const_cast<char *>(_dado_oid.c_str());
         }
 
         // dado_pid
@@ -223,7 +237,8 @@ class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
                  part of interface DAObject in the specification of the
                  Persistent Object Service.
          */
-        SDAI_PID_DA_ptr dado_pid() {
+        SDAI_PID_DA_ptr dado_pid()
+        {
             return 0;
         }
 
@@ -257,7 +272,8 @@ class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
    5.3.10.1  DAObject_SDAI
 */
 
-class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
+class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject
+{
 
     public:
         SDAI_DAObject_SDAI();
@@ -304,7 +320,7 @@ class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
            5.3.10.1.3  Is same
          */
 
-        Logical IsSame( const SDAI_sdaiObject_ptr & otherEntity ) const;
+        Logical IsSame(const SDAI_sdaiObject_ptr &otherEntity) const;
 
         /*
            Function:
@@ -329,8 +345,8 @@ class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
          */
 
 #ifdef SDAI_CPP_LATE_BINDING
-        Any_var GetAttr( const Attribute_ptr & attDef );
-        Any_var GetAttr( const char * attName );
+        Any_var GetAttr(const Attribute_ptr &attDef);
+        Any_var GetAttr(const char *attName);
 #endif
 
         /*
@@ -369,9 +385,9 @@ class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
            5.3.10.1.6  Is instance of
          */
 
-        ::Boolean IsInstanceOf( const char * typeName ) const;
+        ::Boolean IsInstanceOf(const char *typeName) const;
 #ifdef SDAI_CPP_LATE_BINDING
-        ::Boolean IsInstanceOf( const Entity_ptr & otherEntity ) const;
+        ::Boolean IsInstanceOf(const Entity_ptr &otherEntity) const;
 #endif
 
         /*
@@ -391,9 +407,9 @@ class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
            5.3.10.1.7  Is kind of
          */
 
-        ::Boolean IsKindOf( const char * typeName ) const;
+        ::Boolean IsKindOf(const char *typeName) const;
 #ifdef SDAI_CPP_LATE_BINDING
-        ::Boolean IsKindOf( const Entity_ptr & theType ) const;
+        ::Boolean IsKindOf(const Entity_ptr &theType) const;
 #endif
 
         /*
@@ -411,10 +427,10 @@ class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
            5.3.10.1.8  Is SDAI kind of
            */
 
-        ::Boolean IsSDAIKindOf( const char * typeName ) const;
+        ::Boolean IsSDAIKindOf(const char *typeName) const;
 
 #ifdef SDAI_CPP_LATE_BINDING
-        ::Boolean IsSDAIKindOf( const Entity_ptr & theType ) const;
+        ::Boolean IsSDAIKindOf(const Entity_ptr &theType) const;
 #endif
 
         /*
@@ -434,8 +450,8 @@ class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
          */
 
 #ifdef SDAI_CPP_LATE_BINDING
-        ::Boolean TestAttr( const Attribute_ptr & attDef );
-        ::Boolean TestAttr( const char * attName ) const;
+        ::Boolean TestAttr(const Attribute_ptr &attDef);
+        ::Boolean TestAttr(const char *attName) const;
 #endif
 
         /*
@@ -455,7 +471,7 @@ class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
          */
 
 #ifndef SDAI_CPP_LATE_BINDING
-        char * GetInstanceTypeName() const;
+        char *GetInstanceTypeName() const;
 #endif
         /*
            Function:
@@ -477,32 +493,33 @@ class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
 
 };
 
-typedef SDAI_DAObject_SDAI * SDAI_DAObject_SDAI_ptr;
+typedef SDAI_DAObject_SDAI *SDAI_DAObject_SDAI_ptr;
 typedef SDAI_DAObject_SDAI_ptr SDAI_DAObject_SDAI_var;
 
-class SC_DAI_EXPORT SDAI_DAObject__set {
+class SC_DAI_EXPORT SDAI_DAObject__set
+{
     public:
-        SDAI_DAObject__set( int = 16 );
+        SDAI_DAObject__set(int = 16);
         ~SDAI_DAObject__set();
 
-        SDAI_DAObject_ptr retrieve( int index );
+        SDAI_DAObject_ptr retrieve(int index);
         int is_empty();
 
-        SDAI_DAObject_ptr & operator[]( int index );
+        SDAI_DAObject_ptr &operator[](int index);
 
-        void Insert( SDAI_DAObject_ptr, int index );
-        void Append( SDAI_DAObject_ptr );
-        void Remove( int index );
+        void Insert(SDAI_DAObject_ptr, int index);
+        void Append(SDAI_DAObject_ptr);
+        void Remove(int index);
 
-        int Index( SDAI_DAObject_ptr );
+        int Index(SDAI_DAObject_ptr);
 
         void Clear();
         int Count();
 
     private:
-        void Check( int index );
+        void Check(int index);
     private:
-        SDAI_DAObject_ptr * _buf;
+        SDAI_DAObject_ptr *_buf;
         int _bufsize;
         int _count;
 
@@ -510,7 +527,7 @@ class SC_DAI_EXPORT SDAI_DAObject__set {
 
 };
 
-typedef SDAI_DAObject__set * SDAI_DAObject__set_ptr;
+typedef SDAI_DAObject__set *SDAI_DAObject__set_ptr;
 typedef SDAI_DAObject__set_ptr SDAI_DAObject__set_var;
 
 #endif

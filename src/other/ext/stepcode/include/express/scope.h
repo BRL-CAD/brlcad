@@ -83,16 +83,16 @@ struct Scope_ {
     ClientData      clientData; /**< user may use this for any purpose */
     int             search_id;  /**< key to avoid searching this scope twice */
     Dictionary      symbol_table, enum_table;
-    struct Scope_ * superscope;
+    struct Scope_ *superscope;
     union {
-        struct Procedure_ * proc;
-        struct Function_ * func;
-        struct Rule_ * rule;
-        struct Entity_ * entity;
-        struct Schema_ * schema;
-        struct Express_ * express;
-        struct Increment_ * incr;
-        struct TypeHead_ * type;
+        struct Procedure_ *proc;
+        struct Function_ *func;
+        struct Rule_ *rule;
+        struct Entity_ *entity;
+        struct Schema_ *schema;
+        struct Express_ *express;
+        struct Increment_ *incr;
+        struct TypeHead_ *type;
         /* no, query owns a scope rather than scope owning a query
          *      struct Query *query;  */
     } u;
@@ -134,16 +134,16 @@ struct Scope_ {
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT struct Symbol_ * SCOPE_get_symbol( void * );
-extern SC_EXPRESS_EXPORT void     SCOPE_get_entities( Scope, Linked_List );
-extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities( Scope );
-extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities_superclass_order( Scope );
-extern SC_EXPRESS_EXPORT void *   SCOPEfind( Scope, char *, int );
-extern SC_EXPRESS_EXPORT void     SCOPE_get_functions( Scope, Linked_List );
-extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_functions( Scope );
-extern SC_EXPRESS_EXPORT void     SCOPE_get_rules( Scope, Linked_List );
-extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_rules( Scope );
+extern SC_EXPRESS_EXPORT struct Symbol_ *SCOPE_get_symbol(void *);
+extern SC_EXPRESS_EXPORT void     SCOPE_get_entities(Scope, Linked_List);
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities(Scope);
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities_superclass_order(Scope);
+extern SC_EXPRESS_EXPORT void    *SCOPEfind(Scope, char *, int);
+extern SC_EXPRESS_EXPORT void     SCOPE_get_functions(Scope, Linked_List);
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_functions(Scope);
+extern SC_EXPRESS_EXPORT void     SCOPE_get_rules(Scope, Linked_List);
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_rules(Scope);
 
-void * SCOPE_find( Scope, char *, int );
+void *SCOPE_find(Scope, char *, int);
 
 #endif /* SCOPE_H */
