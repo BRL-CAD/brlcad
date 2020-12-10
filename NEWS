@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed crash when trying to shade invalid breps - Cliff Yapp
 * changed 'mvall' to rename all refs even w/ no object - Sean Morrison
 * fixed MGED search command crash on empty database - Sean Morrison
 * improved performance calculating BoT bounding boxes - Vikram Atreya
