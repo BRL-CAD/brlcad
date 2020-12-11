@@ -97,7 +97,7 @@ class SC_CORE_EXPORT Schema : public Dictionary_instance
             return _procedure_list;
         }
 
-        void AddProcedure(const std::string &p);
+        void AddProcedure(const char *p);
 
         EntityDescLinkNode *AddEntity(EntityDescriptor *ed)
         {

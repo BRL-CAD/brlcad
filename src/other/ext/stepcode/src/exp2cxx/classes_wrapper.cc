@@ -521,7 +521,7 @@ void SCHEMAprint(Schema schema, FILES *files, void *complexCol, int suffix)
         while(0 != (r = (Rule)DICTdo(&de))) {
             fprintf(createall, "    str.clear();\n");
             format_for_std_stringout(createall, RULEto_string(r));
-            fprintf(createall, "gr = new Global_rule(\"%s\",%s::schema, str );\n", r->symbol.name, SCHEMAget_name(schema));
+            fprintf(createall, "gr = new Global_rule(\"%s\",%s::schema, str.c_str() );\n", r->symbol.name, SCHEMAget_name(schema));
             fprintf(createall, "%s::schema->AddGlobal_rule(gr);\n", SCHEMAget_name(schema));
         }
         /**************/
@@ -538,7 +538,7 @@ void SCHEMAprint(Schema schema, FILES *files, void *complexCol, int suffix)
         while(0 != (p = (Procedure)DICTdo(&de))) {
             fprintf(createall, "    str.clear();\n");
             format_for_std_stringout(createall, PROCto_string(p));
-            fprintf(createall, "%s::schema->AddProcedure( str );\n", SCHEMAget_name(schema));
+            fprintf(createall, "%s::schema->AddProcedure( str.c_str() );\n", SCHEMAget_name(schema));
         }
 
         fprintf(files->classes, "\n// Schema:  %s", schnm);

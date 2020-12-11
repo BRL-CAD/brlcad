@@ -57,9 +57,10 @@ void Schema::global_rules_(Global_rule__set_var &grs)
     _global_rules = grs;
 }
 
-void Schema::AddProcedure(const std::string &p)
+void Schema::AddProcedure(const char *p)
 {
-    _procedure_list.push_back(p);
+    std::string pstr(p);
+    _procedure_list.push_back(pstr);
 }
 
 /// the whole schema

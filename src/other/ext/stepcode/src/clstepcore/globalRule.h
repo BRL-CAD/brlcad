@@ -25,7 +25,7 @@ class SC_CORE_EXPORT Global_rule : public Dictionary_instance
         Schema_ptr _parent_schema;
 
         Global_rule();
-        Global_rule(const char *n, Schema_ptr parent_sch, const std::string &rt);
+        Global_rule(const char *n, Schema_ptr parent_sch, const char *rt);
         Global_rule(Global_rule &);   // not fully implemented
         virtual ~Global_rule();
 
