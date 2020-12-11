@@ -140,9 +140,9 @@ class SC_CORE_EXPORT EntityDescriptor  :    public TypeDescriptor
         {
             _subtypes.AddNode(ed);
         }
-        void AddSupertype_Stmt(const char *s)
+        void AddSupertype_Stmt(const std::string s)
         {
-            _supertype_stmt = std::string(s);
+            _supertype_stmt = s;
         }
         const char *Supertype_Stmt()
         {
