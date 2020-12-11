@@ -739,7 +739,7 @@ void ENTITYincode_print(Entity entity, FILE *header, FILE *impl, Schema schema)
 
             format_for_std_stringout(impl, SUBTYPEto_string(entity->u.entity->subtype_expression));
             fprintf(impl, "    str.append( \")\" );\n");
-            fprintf(impl, "    %s::%s%s->AddSupertype_Stmt( str );\n", schema_name, ENT_PREFIX, entity_name);
+            fprintf(impl, "    %s::%s%s->AddSupertype_Stmt( str.c_str() );\n", schema_name, ENT_PREFIX, entity_name);
         } else {
             fprintf(impl, "    %s::%s%s->AddSupertype_Stmt( \"ABSTRACT SUPERTYPE\" );\n",
                     schema_name, ENT_PREFIX, entity_name);
@@ -749,7 +749,7 @@ void ENTITYincode_print(Entity entity, FILE *header, FILE *impl, Schema schema)
             fprintf(impl, "    str.clear();\n    str.append( \"SUPERTYPE OF ( \" );\n");
             format_for_std_stringout(impl, SUBTYPEto_string(entity->u.entity->subtype_expression));
             fprintf(impl, "    str.append( \")\" );\n");
-            fprintf(impl, "    %s::%s%s->AddSupertype_Stmt( str );\n", schema_name, ENT_PREFIX, entity_name);
+            fprintf(impl, "    %s::%s%s->AddSupertype_Stmt( str.c_str() );\n", schema_name, ENT_PREFIX, entity_name);
         }
     }
     LISTdo(ENTITYget_supertypes(entity), sup, Entity)
