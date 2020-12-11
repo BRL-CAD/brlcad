@@ -31,9 +31,10 @@ Schema::~Schema()
     }
 }
 
-void Schema::AddFunction(const std::string &f)
+void Schema::AddFunction(const char *f)
 {
-    _function_list.push_back(f);
+    std::string fstr(f);
+    _function_list.push_back(fstr);
 }
 
 void Schema::AddGlobal_rule(Global_rule_ptr gr)

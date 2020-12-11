@@ -530,7 +530,7 @@ void SCHEMAprint(Schema schema, FILES *files, void *complexCol, int suffix)
         while(0 != (f = (Function)DICTdo(&de))) {
             fprintf(createall, "    str.clear();\n");
             format_for_std_stringout(createall, FUNCto_string(f));
-            fprintf(createall, "%s::schema->AddFunction( str );\n", SCHEMAget_name(schema));
+            fprintf(createall, "%s::schema->AddFunction( str.c_str() );\n", SCHEMAget_name(schema));
         }
 
         /* add PROCEDUREs to Schema dictionary entry */

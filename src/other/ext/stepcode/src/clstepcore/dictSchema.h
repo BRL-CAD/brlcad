@@ -81,7 +81,7 @@ class SC_CORE_EXPORT Schema : public Dictionary_instance
             return _function_list;
         }
 
-        void AddFunction(const std::string &f);
+        void AddFunction(const char *f);
 
         Global_rule__set_var global_rules_()   // const
         {
