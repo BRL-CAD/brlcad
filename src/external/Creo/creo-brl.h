@@ -45,6 +45,7 @@ extern "C" {
 #include <ProArray.h>
 #include <ProAsmcomppath.h>
 #include <ProAssembly.h>
+#include <ProElement.h>
 #include <ProFaminstance.h>
 #include <ProFeatType.h>
 #include <ProHole.h>
