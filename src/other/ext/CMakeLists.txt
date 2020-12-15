@@ -148,6 +148,18 @@ if (NOT DEFINED EXT_BUILD_ALWAYS)
   set(EXT_BUILD_ALWAYS 0)
 endif (NOT DEFINED EXT_BUILD_ALWAYS)
 
+# The verbosity of the ExtProject stages is controlled by log options - they
+# can either output to the console or to log files.  We establish a top level
+# control for this - by default these outputs are logged, but if the verbose
+# flag is set they will be printed to the console during build (useful in
+# scenarios such as CI build runners, where it is advantageous to capture as
+# much output as possible in the top level log.
+if (EXT_BUILD_VERBOSE)
+  set(EXT_BUILD_QUIET OFF)
+else (EXT_BUILD_VERBOSE)
+  set(EXT_BUILD_QUIET ON)
+endif (EXT_BUILD_VERBOSE)
+
 # Use this variable to key both CMake messages and tools like rpath_replace
 if(NOT DEFINED EXTPROJ_VERBOSE)
   set(EXTPROJ_VERBOSE 0)

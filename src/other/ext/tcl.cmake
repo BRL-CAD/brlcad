@@ -88,6 +88,10 @@ if (BRLCAD_TCL_BUILD)
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
       DEPENDS ${ZLIB_TARGET} tcl_replace rpath_replace
+      # Note - LOG_CONFIGURE doesn't seem to be compatible with complex CONFIGURE_COMMAND setups
+      LOG_BUILD ${EXT_BUILD_QUIET}
+      LOG_INSTALL ${EXT_BUILD_QUIET}
+      LOG_OUTPUT_ON_FAILURE ${EXT_BUILD_QUIET}
       )
 
     set(TCL_APPINIT tclAppInit.c)
@@ -106,6 +110,9 @@ if (BRLCAD_TCL_BUILD)
       BINARY_DIR ${TCL_SRC_DIR}/win
       BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${TCL_INSTDIR} SUFX=
       INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TCL_INSTDIR} SUFX=
+      LOG_BUILD ${EXT_BUILD_QUIET}
+      LOG_INSTALL ${EXT_BUILD_QUIET}
+      LOG_OUTPUT_ON_FAILURE ${EXT_BUILD_QUIET}
       )
     set(TCL_APPINIT)
 
