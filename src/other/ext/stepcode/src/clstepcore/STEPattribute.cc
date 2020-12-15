@@ -1498,6 +1498,7 @@ STEPattribute::~STEPattribute()
                     delete(SDAI_BOOLEAN *) ptr.e;
                     ptr.e = 0;
                 }
+                break;
             case LOGICAL_TYPE:
                 if(ptr.e) {
                     delete(SDAI_LOGICAL *) ptr.e;

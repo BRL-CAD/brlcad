@@ -12,6 +12,7 @@
 */
 
 #include <sc_export.h>
+#include <string>
 #include <limits>
 
 
@@ -37,6 +38,7 @@ class SC_DAI_EXPORT SDAI_String
 
 //  operators
         SDAI_String &operator= (const char *s);
+        SDAI_String &operator= (const SDAI_String &s);
         bool operator== (const char *s) const;
 
         void clear(void);

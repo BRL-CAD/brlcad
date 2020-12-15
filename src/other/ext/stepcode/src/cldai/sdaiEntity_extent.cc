@@ -63,7 +63,7 @@ void SDAI_Entity_extent::owned_by_(SDAI_Model_contents__list_var &mclv)
 
 SDAI_Model_contents__list_var SDAI_Entity_extent ::owned_by_() const
 {
-    return (const SDAI_Model_contents__list_var) &_owned_by;
+    return (SDAI_Model_contents__list_var) &_owned_by;
 }
 
 /*

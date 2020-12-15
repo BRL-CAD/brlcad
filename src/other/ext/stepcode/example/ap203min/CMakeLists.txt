@@ -14,14 +14,14 @@ if(NOT DEFINED STEPCODE_ROOT_DIR)
 endif(NOT DEFINED STEPCODE_ROOT_DIR)
 
 # STEPCODE_ROOT_DIR is relative or absolute path?
-if(EXISTS "${CMAKE_BINARY_DIR}/${STEPCODE_ROOT_DIR}/SC_VERSION.txt")
+if(EXISTS "${CMAKE_BINARY_DIR}/${STEPCODE_ROOT_DIR}/src/express/express.c")
   set(STEPCODE_ROOT_DIR "${CMAKE_BINARY_DIR}/${STEPCODE_ROOT_DIR}")
   message("** STEPCODE_ROOT_DIR is a relative path; converted to absolute path: ${STEPCODE_ROOT_DIR}.")
 else()
-  if(NOT EXISTS "${STEPCODE_ROOT_DIR}/SC_VERSION.txt")
+  if(NOT EXISTS "${STEPCODE_ROOT_DIR}/src/express/express.c")
     message(FATAL_ERROR "****  Cannot locate STEPCODE_ROOT_DIR - try an absolute path.")
-  endif(NOT EXISTS "${STEPCODE_ROOT_DIR}/SC_VERSION.txt")
-endif(EXISTS "${CMAKE_BINARY_DIR}/${STEPCODE_ROOT_DIR}/SC_VERSION.txt")
+  endif(NOT EXISTS "${STEPCODE_ROOT_DIR}/src/express/express.c")
+endif(EXISTS "${CMAKE_BINARY_DIR}/${STEPCODE_ROOT_DIR}/src/express/express.c")
 
 
 # Use STEPcode as library, but build from this build process.

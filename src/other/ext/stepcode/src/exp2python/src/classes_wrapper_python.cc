@@ -153,6 +153,7 @@ void SCOPEPrint(Scope scope, FILES *files, Schema schema)
 
 void SCHEMAprint(Schema schema, FILES *files, int suffix)
 {
+    int ocnt = 0;
     char schnm[MAX_LEN], sufnm[MAX_LEN], fnm[MAX_LEN], *np;
     /* sufnm = schema name + suffix */
     FILE *libfile;
@@ -163,9 +164,15 @@ void SCHEMAprint(Schema schema, FILES *files, int suffix)
     if(suffix == 0) {
         sprintf(sufnm, "%s", schnm);
     } else {
-        sprintf(sufnm, "%s_%d", schnm, suffix);
+        ocnt = snprintf(sufnm, MAX_LEN, "%s_%d", schnm, suffix);
+	if (ocnt > MAX_LEN) {
+	    std::cerr << "Warning - classes_wrapper_python.cc - sufnm not large enough to hold string\n";
+	}
     }
-    sprintf(fnm, "%s.h", sufnm);
+    ocnt = snprintf(fnm, MAX_LEN, "%s.h", sufnm);
+    if (ocnt > MAX_LEN) {
+	    std::cerr << "Warning - classes_wrapper_python.cc - fnm not large enough to hold string\n";
+    }
 
     np = fnm + strlen(fnm) - 1;   /*  point to end of constant part of string  */
 

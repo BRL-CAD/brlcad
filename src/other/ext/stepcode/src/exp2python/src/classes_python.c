@@ -24,8 +24,10 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 /* this is used to add new dictionary calls */
 /* #define NEWDICT */
 
+#define _POSIX_C_SOURCE 200809L /* for strdup */
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 #include "sc_memmgr.h"
 #include "classes.h"
@@ -386,7 +388,7 @@ char *EXPRto_python(Expression e)
 
     buf = (char *)sc_malloc(bufsize);
     if(!buf) {
-        fprintf(stderr, "%s failed to allocate buffer: %s\n", __FUNCTION__, strerror(errno));
+        fprintf(stderr, "%s failed to allocate buffer: %s\n", __func__, strerror(errno));
         abort();
     }
 
@@ -483,7 +485,7 @@ char *EXPRto_python(Expression e)
 
     temp = (char *)sc_realloc(buf, 1 + strlen(buf));
     if(temp == 0) {
-        fprintf(stderr, "%s failed to realloc buffer: %s\n", __FUNCTION__, strerror(errno));
+        fprintf(stderr, "%s failed to realloc buffer: %s\n", __func__, strerror(errno));
         abort();
     }
 

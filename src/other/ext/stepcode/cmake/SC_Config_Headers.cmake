@@ -1,4 +1,4 @@
-# create sc_cf.h and sc_version_string.h
+# create sc_cf.h
 
 # Take the sc config file template as the starting point for
 # sc_cf.h.in - scripts may need to append to the template, so
@@ -99,19 +99,7 @@ endif(SC_ENABLE_CXX11)
 # Now that all the tests are done, configure the sc_cf.h file:
 get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY SC_CONFIG_H_CONTENTS)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
-configure_file(${CONFIG_H_FILE} ${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_cf.h)
-
-set(VER_HDR "
-#ifndef SC_VERSION_STRING
-#define SC_VERSION_STRING
-static char sc_version[512] = {\"${SC_VERSION}\"};
-#endif"
-)
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h "${VER_HDR}")
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
-  PROPERTIES GENERATED TRUE
-  HEADER_FILE_ONLY TRUE
-  )
+configure_file(${CONFIG_H_FILE} ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h)
 
 # Local Variables:
 # tab-width: 8

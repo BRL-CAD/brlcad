@@ -71,9 +71,9 @@ message( STATUS "Schema scanner built. Running it...")
 
 # not sure if it makes sense to install this or not...
 if(WIN32)
-	install(PROGRAMS ${SCANNER_OUT_DIR}/schema_scanner.exe DESTINATION ${BIN_INSTALL_DIR})
+	install(PROGRAMS ${SCANNER_OUT_DIR}/schema_scanner.exe DESTINATION ${BIN_DIR})
 else(WIN32)
-	install(PROGRAMS ${SCANNER_OUT_DIR}/schema_scanner DESTINATION ${BIN_INSTALL_DIR})
+	install(PROGRAMS ${SCANNER_OUT_DIR}/schema_scanner DESTINATION ${BIN_DIR})
 endif(WIN32)
 
 # macro SCHEMA_CMLIST

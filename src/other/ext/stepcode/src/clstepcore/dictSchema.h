@@ -81,7 +81,7 @@ class SC_CORE_EXPORT Schema : public Dictionary_instance
             return _function_list;
         }
 
-        void AddFunction(const char *f);
+        void AddFunction(const std::string &f);
 
         Global_rule__set_var global_rules_()   // const
         {
@@ -97,7 +97,7 @@ class SC_CORE_EXPORT Schema : public Dictionary_instance
             return _procedure_list;
         }
 
-        void AddProcedure(const char *p);
+        void AddProcedure(const std::string &p);
 
         EntityDescLinkNode *AddEntity(EntityDescriptor *ed)
         {

@@ -5,7 +5,7 @@ Global_rule::Global_rule()
 {
 }
 
-Global_rule::Global_rule(const char *n, Schema_ptr parent_sch, const char *rt)
+Global_rule::Global_rule(const char *n, Schema_ptr parent_sch, const std::string &rt)
     : _name(n), _entities(0), _where_rules(0), _parent_schema(parent_sch),
       _rule_text(rt)
 {

@@ -34,11 +34,6 @@ class SC_CORE_EXPORT EntityDescriptor  :    public TypeDescriptor
         EntityDescriptorList _supertypes; // OPTIONAL
         AttrDescriptorList _explicitAttr; // OPTIONAL
         Inverse_attributeList _inverseAttr;  // OPTIONAL
-
-// TODO - We need to address this issue properly:
-// https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4251
-// Ninja build on Windows is resulting in non-functional step tools, and WinDBG leads back to this
-// string (probably among others) being in a corrupted state.
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable: 4251 )

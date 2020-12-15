@@ -13,10 +13,8 @@ foreach(UNITARY_SCHEMA ${UNITARY_SCHEMAS})
   endif( UNITARY_SCHEMA MATCHES "fail_.*" )
 endforeach(UNITARY_SCHEMA ${UNITARY_SCHEMAS})
 
-if(NOT ${SC_BUILD_EXPRESS_ONLY})
-  add_subdirectory(p21)
-  add_subdirectory(cpp)
-endif()
+add_subdirectory(p21)
+add_subdirectory(cpp)
 
 # Local Variables:
 # tab-width: 8

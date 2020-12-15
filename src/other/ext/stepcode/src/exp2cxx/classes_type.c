@@ -124,7 +124,7 @@ char *CheckEnumSymbol(char *s)
     } else {
         strcpy(b, s);
         strcat(b, "_");
-        fprintf(stderr, "Warning in %s: the enumerated value %s is already being used and has been changed to %s\n", __FUNCTION__, s, b);
+        fprintf(stderr, "Warning in %s: the enumerated value %s is already being used and has been changed to %s\n", __func__, s, b);
         return (b);
     }
 }
@@ -1313,7 +1313,7 @@ char *TYPEget_express_type(const Type t)
 
     /*  default returns undefined   */
 
-    fprintf(stderr, "Warning in %s: type %s is undefined\n", __FUNCTION__, TYPEget_name(t));
+    fprintf(stderr, "Warning in %s: type %s is undefined\n", __func__, TYPEget_name(t));
     return ("SCLundefined");
 
 }

@@ -1,4 +1,4 @@
-
+#define _XOPEN_SOURCE /* for S_IFDIR */
 #include "sc_mkdir.h"
 
 #include <sys/stat.h>

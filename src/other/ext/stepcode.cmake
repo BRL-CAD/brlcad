@@ -107,7 +107,6 @@ if(BRLCAD_SC_BUILD)
     base/sc_getopt.h
     base/sc_memmgr.h
     base/sc_mkdir.h
-    base/sc_nullptr.h
     base/sc_trace_fprintf.h
     cldai/sdaiApplication_instance_set.h
     cldai/sdaiBinary.h
@@ -227,7 +226,6 @@ if(BRLCAD_SC_BUILD)
     sc_cf.h
     sc_export.h
     sc_stdbool.h
-    sc_version_string.h
     )
 
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} stepcode  CACHE STRING "Bundled system include dirs" FORCE)

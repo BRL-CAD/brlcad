@@ -359,7 +359,7 @@ void ATTRprint_access_methods_str_bin(const char *entnm, const char *attrnm, con
     ATTRprint_access_methods_get_head(entnm, a, file, true);
     fprintf(file, "const {\n");
     ATTRprint_access_methods_str_bin_logging(entnm, attrnm, funcnm, file, true);
-    fprintf(file, "    return (const %s) _%s;\n}\n", ctype, attrnm);
+    fprintf(file, "    return (%s) _%s;\n}\n", ctype, attrnm);
     ATTRprint_access_methods_put_head(entnm, a, file);
     fprintf(file, "{\n");
     ATTRprint_access_methods_str_bin_logging(entnm, attrnm, funcnm, file, false);
@@ -401,7 +401,7 @@ void ATTRprint_access_methods_enum(const char *entnm, const char *attrnm, const 
     ATTRprint_access_methods_get_head(entnm, a, file, true);
     fprintf(file, "const {\n");
     ATTRprint_access_methods_enum_logging(entnm, attrnm, funcnm, file, false);
-    fprintf(file, "    return (const %s) _%s;\n}\n", EnumName(TYPEget_name(t)), attrnm);
+    fprintf(file, "    return (%s) _%s;\n}\n", EnumName(TYPEget_name(t)), attrnm);
 
     ATTRprint_access_methods_put_head(entnm, a, file);
     fprintf(file, "{\n");
@@ -442,7 +442,7 @@ void ATTRprint_access_methods_log_bool(const char *entnm, const char *attrnm, co
 {
     fprintf(file, "const {\n");
     ATTRprint_access_methods_log_bool_logging(entnm, attrnm, funcnm, file, false);
-    fprintf(file, "    return (const %s) _%s;\n}\n", ctype, attrnm);
+    fprintf(file, "    return (%s) _%s;\n}\n", ctype, attrnm);
 
     /* don't need a const method for logical or boolean
      * ATTRprint_access_methods_get_head( entnm, a, file, true );
@@ -554,7 +554,7 @@ void ATTRprint_access_methods(const char *entnm, Variable a, FILE *file, Schema 
     if(classType == select_)  {
         fprintf(file, " {\n    return &_%s;\n}\n", attrnm);
         ATTRprint_access_methods_get_head(entnm, a, file, true);
-        fprintf(file, "const {\n    return (const %s) &_%s;\n}\n",  ctype, attrnm);
+        fprintf(file, "const {\n    return (%s) &_%s;\n}\n",  ctype, attrnm);
         ATTRprint_access_methods_put_head(entnm, a, file);
         fprintf(file, " {\n    _%s = x;\n}\n", attrnm);
         return;
@@ -588,7 +588,7 @@ void ATTRprint_access_methods(const char *entnm, Variable a, FILE *file, Schema 
         }
         /*  default:  INTEGER   */
         /*  is the same type as the data member  */
-        fprintf(file, "    return (const %s) _%s;\n}\n", ctype, attrnm);
+        fprintf(file, "    return (%s) _%s;\n}\n", ctype, attrnm);
         ATTRprint_access_methods_put_head(entnm, a, file);
         fprintf(file, "{\n");
         if(print_logging) {

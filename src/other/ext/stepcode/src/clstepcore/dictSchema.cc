@@ -31,10 +31,9 @@ Schema::~Schema()
     }
 }
 
-void Schema::AddFunction(const char *f)
+void Schema::AddFunction(const std::string &f)
 {
-    std::string fstr(f);
-    _function_list.push_back(fstr);
+    _function_list.push_back(f);
 }
 
 void Schema::AddGlobal_rule(Global_rule_ptr gr)
@@ -57,10 +56,9 @@ void Schema::global_rules_(Global_rule__set_var &grs)
     _global_rules = grs;
 }
 
-void Schema::AddProcedure(const char *p)
+void Schema::AddProcedure(const std::string &p)
 {
-    std::string pstr(p);
-    _procedure_list.push_back(pstr);
+    _procedure_list.push_back(p);
 }
 
 /// the whole schema

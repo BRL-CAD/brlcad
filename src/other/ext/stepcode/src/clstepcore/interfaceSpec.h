@@ -15,7 +15,17 @@ class SC_CORE_EXPORT Interface_spec : public Dictionary_instance
 #pragma warning( disable: 4251 )
 #endif
         Express_id _current_schema_id; // schema containing the USE/REF stmt
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
+        // set of objects from USE/REFERENCE stmt(s)
+        Explicit_item_id__set_var _explicit_items;
+        Implicit_item_id__set_var _implicit_items; //not yet initialized for schema
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         // non-SDAI, not useful for SDAI use of Interface_spec (it would need to
         // be a list).
         // schema that defined the USE/REFd objects
@@ -23,10 +33,6 @@ class SC_CORE_EXPORT Interface_spec : public Dictionary_instance
 #ifdef _MSC_VER
 #pragma warning( pop )
 #endif
-
-        // set of objects from USE/REFERENCE stmt(s)
-        Explicit_item_id__set_var _explicit_items;
-        Implicit_item_id__set_var _implicit_items; //not yet initialized for schema
 
         // non-SDAI, not useful for SDAI use of Interface_spec (it would need to
         // be a list of ints).

@@ -28,10 +28,8 @@ endmacro(P21_TESTS sfile)
 macro(SCHEMA_EXES)
   RELATIVE_PATH_TO_TOPLEVEL(${CMAKE_CURRENT_SOURCE_DIR} RELATIVE_PATH_COMPONENT)
   SC_ADDEXEC(p21read_${PROJECT_NAME} SOURCES "${RELATIVE_PATH_COMPONENT}/src/test/p21read/p21read.cc" LINK_LIBRARIES ${PROJECT_NAME} stepdai stepcore stepeditor steputils base TESTABLE)
-  #add_dependencies(p21read_${PROJECT_NAME} version_string)
   if(NOT WIN32)
     SC_ADDEXEC(lazy_${PROJECT_NAME} SOURCES "${RELATIVE_PATH_COMPONENT}/src/cllazyfile/lazy_test.cc" LINK_LIBRARIES ${PROJECT_NAME} steplazyfile stepdai stepcore stepeditor steputils base TESTABLE)
-    #add_dependencies(lazy_${PROJECT_NAME} version_string)
   endif(NOT WIN32)
 
   #add user-defined executables
@@ -39,7 +37,6 @@ macro(SCHEMA_EXES)
     get_filename_component(name ${src} NAME_WE)
     get_filename_component(path ${src} ABSOLUTE)
     SC_ADDEXEC(${name}_${PROJECT_NAME} SOURCES ${src} LINK_LIBRARIES ${PROJECT_NAME} stepdai stepcore stepeditor steputils base TESTABLE)
-    add_dependencies(${name}_${PROJECT_NAME} version_string)
     #set_target_properties(${name}_${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "${${PROJECT_NAME}_COMPILE_FLAGS} -I${path}")
   endforeach(src ${SC_SDAI_ADDITIONAL_EXES_SRCS})
 ENDMACRO(SCHEMA_EXES)
@@ -96,7 +93,7 @@ macro(SCHEMA_TARGETS expFile schemaName sourceFiles)
     ${SC_SOURCE_DIR}/src/base/judy/src
   )
   # if testing is enabled, "TESTABLE" sets property EXCLUDE_FROM_ALL and prevents installation
-  if($CACHE{SC_BUILD_SHARED_LIBS})
+  if(BUILD_SHARED_LIBS)
     SC_ADDLIB(${PROJECT_NAME} SHARED SOURCES ${sourceFiles} LINK_LIBRARIES stepdai stepcore stepeditor steputils base TESTABLE)
     add_dependencies(${PROJECT_NAME} generate_cpp_${PROJECT_NAME})
     if(WIN32)
@@ -104,6 +101,12 @@ macro(SCHEMA_TARGETS expFile schemaName sourceFiles)
       if(MSVC)
         target_compile_options("${PROJECT_NAME}" PRIVATE "/bigobj")
       endif()
+    endif()
+    # TODO - ideally we would avoid generating code that triggers this warning, but figuring out
+    # how to do so is a non-trivial exercise.  In the meantime, suppress the (very verbose) warnings
+    # we get due to this issue so it doesn't mask other problems.
+    if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
+      target_compile_options("${PROJECT_NAME}" PRIVATE "-Wno-ignored-qualifiers")
     endif()
   endif()
 
