@@ -165,13 +165,13 @@ void SCHEMAprint(Schema schema, FILES *files, int suffix)
         sprintf(sufnm, "%s", schnm);
     } else {
         ocnt = snprintf(sufnm, MAX_LEN, "%s_%d", schnm, suffix);
-	if (ocnt > MAX_LEN) {
-	    std::cerr << "Warning - classes_wrapper_python.cc - sufnm not large enough to hold string\n";
-	}
+        if(ocnt > MAX_LEN) {
+            std::cerr << "Warning - classes_wrapper_python.cc - sufnm not large enough to hold string\n";
+        }
     }
     ocnt = snprintf(fnm, MAX_LEN, "%s.h", sufnm);
-    if (ocnt > MAX_LEN) {
-	    std::cerr << "Warning - classes_wrapper_python.cc - fnm not large enough to hold string\n";
+    if(ocnt > MAX_LEN) {
+        std::cerr << "Warning - classes_wrapper_python.cc - fnm not large enough to hold string\n";
     }
 
     np = fnm + strlen(fnm) - 1;   /*  point to end of constant part of string  */

@@ -1113,9 +1113,9 @@ void TYPEselect_lib_print_part_three(const Type type, FILE *f, char *classnm)
 
             /*   get methods  */
             TYPEselect_lib_part_three_getter(type, classnm, attrnm, utype, uent, funcnm, items, a, uattr, ent, f, false);
-	    /* TODO - This isn't good enough - the compiler warning Wignored-qualifiers is picking up
-	     * a lot of spurious const expressions coming from these outputs. Not sure of the pattern
-	     * yet, but it looks like not all attrIsObj entities should be using it. */
+            /* TODO - This isn't good enough - the compiler warning Wignored-qualifiers is picking up
+             * a lot of spurious const expressions coming from these outputs. Not sure of the pattern
+             * yet, but it looks like not all attrIsObj entities should be using it. */
             if(attrIsObj(VARget_type(a))) {
                 TYPEselect_lib_part_three_getter(type, classnm, attrnm, utype, uent, funcnm, items, a, uattr, ent, f, true);
             }

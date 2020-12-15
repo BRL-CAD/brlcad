@@ -3,7 +3,6 @@
  * Test attribute access; uses a tiny schema similar to a subset of IFC2x3
  */
 #include <sc_cf.h>
-#include "sc_version_string.h"
 #include <STEPfile.h>
 #include <sdai.h>
 #include <STEPattribute.h>

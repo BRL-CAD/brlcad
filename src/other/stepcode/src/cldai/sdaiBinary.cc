@@ -9,43 +9,91 @@
 * and is not subject to copyright.
 */
 
+#include <stdio.h>
 #include <sstream>
 #include <sdai.h>
 #include "sc_memmgr.h"
 
 SDAI_Binary::SDAI_Binary(const char *str, int max)
 {
-    content = std::string(str, max);
+    if(content) {
+        free((void *)content);
+    }
+
+    content = (char *)calloc(max + 1, sizeof(char));
+    snprintf(content, max, "%s", str);
+}
+
+SDAI_Binary::SDAI_Binary(const char *s)
+{
+    if(content) {
+        free((void *)content);
+    }
+
+    content = (char *)calloc(strlen(s) + 1, sizeof(char));
+    snprintf(content, strlen(s), "%s", s);
 }
 
 SDAI_Binary::SDAI_Binary(const std::string &s)
 {
-    content = std::string(s);
+    if(content) {
+        free((void *)content);
+    }
+
+    content = (char *)calloc(s.length() + 1, sizeof(char));
+    snprintf(content, s.length(), "%s", s.c_str());
+}
+
+SDAI_Binary::SDAI_Binary(int i)
+{
+    if(content) {
+        free((void *)content);
+    }
+
+    content = (char *)calloc(2, sizeof(char));
+    if(i) {
+        content[0] = '1';
+    } else {
+        content[0] = '0';
+    }
+    content[1] = '\0';
 }
 
 SDAI_Binary::~SDAI_Binary(void)
 {
+    if(content) {
+        free((void *)content);
+    }
+    content = NULL;
 }
 
 SDAI_Binary &SDAI_Binary::operator= (const char *s)
 {
-    content = std::string(s);
+    if(content) {
+        free((void *)content);
+    }
+
+    content = (char *)calloc(strlen(s) + 1, sizeof(char));
+    snprintf(content, strlen(s), "%s", s);
     return *this;
 }
 
 void SDAI_Binary::clear(void)
 {
-    content.clear();
+    if(content) {
+        free((void *)content);
+    }
+    content = NULL;
 }
 
 bool SDAI_Binary::empty(void) const
 {
-    return content.empty();
+    return (!content) ? true : false;
 }
 
 const char *SDAI_Binary::c_str(void) const
 {
-    return content.c_str();
+    return (const char *)content;
 }
 
 void SDAI_Binary::STEPwrite(ostream &out) const

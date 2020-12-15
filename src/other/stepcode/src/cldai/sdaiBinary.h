@@ -1,7 +1,10 @@
 #ifndef SDAIBINARY_H
 #define SDAIBINARY_H 1
 
-#include <string>
+#include "sc_export.h"
+#include "errordesc.h"
+
+#include <iostream>
 
 /*
 * NIST STEP Core Class Library
@@ -16,20 +19,15 @@
 class SC_DAI_EXPORT SDAI_Binary
 {
     private:
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable: 4251 )
-#endif
-        std::string content;
-#ifdef _MSC_VER
-#pragma warning( pop )
-#endif
+        char *content = NULL;
 
     public:
 
         //constructor(s) & destructor
         SDAI_Binary(const char *str = 0, int max = 0);
+        SDAI_Binary(const char *s);
         SDAI_Binary(const std::string &s);
+        SDAI_Binary(int i);
         ~SDAI_Binary(void);
 
         //  operators
@@ -43,7 +41,7 @@ class SC_DAI_EXPORT SDAI_Binary
         {
             return c_str();
         }
-        void STEPwrite(ostream &out = cout)  const;
+        void STEPwrite(std::ostream &out = std::cout)  const;
         const char *STEPwrite(std::string &s) const;
 
         Severity StrToVal(const char *s, ErrorDescriptor *err);

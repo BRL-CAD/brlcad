@@ -5,9 +5,7 @@
 #include "sc_export.h"
 
 #ifdef __cplusplus
-#include <iostream>
 #include <iosfwd>
-#include <string>
 
 #include "sc_memmgr.h"
 extern "C" {
@@ -43,34 +41,26 @@ class SC_BASE_EXPORT benchmark
 {
     protected:
         benchVals initialVals, laterVals;
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable: 4251 )
-#endif
-        std::ostream &ostr;
-        std::string descr;
-#ifdef _MSC_VER
-#pragma warning( pop )
-#endif
         bool debug, stopped;
+        char *benchVals_str = NULL;
+
     public:
-        benchmark(std::string description = "", bool debugMessages = true, std::ostream &o_stream = std::cout);
+        benchmark(bool debugMessages = true);
 
         /// if 'stopped' is false, uses str(true) to print to ostream
         ~benchmark();
         void reset();
-        void reset(std::string description);
         benchVals get();
         void stop();
 
         /// converts data member 'laterVals' into a string and returns it
-        std::string str();
+        const char *str();
 
         /// outputs result of str() on ostream 'ostr'
         void out();
 
         /// converts 'bv' into a string, prefixed by data member 'descr'
-        std::string str(const benchVals &bv);
+        const char *str(const benchVals &bv);
 };
 
 

@@ -13,6 +13,7 @@
 #endif
 
 #include <assert.h>
+#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -83,8 +84,7 @@ benchVals getMemAndTime()
 
 // ---------------------   benchmark class   ---------------------
 
-benchmark::benchmark(std::string description, bool debugMessages, std::ostream &o_stream): ostr(o_stream),
-    descr(description), debug(debugMessages), stopped(false)
+benchmark::benchmark(bool debugMessages): debug(debugMessages), stopped(false)
 {
     initialVals = getMemAndTime();
 }
@@ -94,9 +94,13 @@ benchmark::~benchmark()
     if(!stopped) {
         stop();
         if(debug) {
-            ostr << "benchmark::~benchmark(): stop was not called before destructor!" << std::endl;
+            std::cerr << "benchmark::~benchmark(): stop was not called before destructor!" << std::endl;
         }
         out();
+    }
+    if(benchVals_str) {
+        free((void *)benchVals_str);
+        benchVals_str = NULL;
     }
 }
 
@@ -129,32 +133,34 @@ benchVals benchmark::get()
     return delta;
 }
 
-void benchmark::reset(std::string description)
-{
-    descr = description;
-    reset();
-}
 void benchmark::reset()
 {
     stopped = false;
     initialVals = getMemAndTime();
 }
 
-std::string benchmark::str()
+const char *benchmark::str()
 {
     return str(get());
 }
 
 void benchmark::out()
 {
-    ostr << str() << std::endl;
+    std::cout << str() << std::endl;
 }
 
-std::string benchmark::str(const benchVals &bv)
+const char *benchmark::str(const benchVals &bv)
 {
     std::stringstream ss;
-    ss << descr << " Physical memory: " << bv.physMemKB << "kb; Virtual memory: " << bv.virtMemKB;
+    ss << " Physical memory: " << bv.physMemKB << "kb; Virtual memory: " << bv.virtMemKB;
     ss << "kb; User CPU time: " << bv.userMilliseconds << "ms; System CPU time: " << bv.sysMilliseconds << "ms";
-    return ss.str();
+    if(benchVals_str) {
+        free((void *)benchVals_str);
+        benchVals_str = NULL;
+    }
+    benchVals_str = (char *)calloc(ss.str().length() + 1, sizeof(char));
+    snprintf(benchVals_str, ss.str().length(), "%s", ss.str().c_str());
+    benchVals_str[ss.str().length()] = '\0';
+    return benchVals_str;
 }
 

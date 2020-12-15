@@ -105,10 +105,10 @@ class SC_CORE_EXPORT STEPattribute
         ErrorDescriptor _error;
         STEPattribute *_redefAttr;
     public:
-	const AttrDescriptor *aDesc;
+        const AttrDescriptor *aDesc;
 
     protected:
-	int refCount;
+        int refCount;
 
         char SkipBadAttr(istream &in, char *StopChars);
         void AddErrorInfo();
