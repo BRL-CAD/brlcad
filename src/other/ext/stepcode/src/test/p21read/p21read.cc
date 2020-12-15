@@ -13,7 +13,6 @@
 */
 
 extern void SchemaInit(class Registry &);
-#include "sc_version_string.h"
 #include <STEPfile.h>
 #include <sdai.h>
 #include <STEPattribute.h>
@@ -94,7 +93,7 @@ void checkSchemaName(Registry &reg, STEPfile &sf, bool ignoreErr)
 
 void printVersion(const char *exe)
 {
-    std::cout << exe << " build info: " << sc_version << std::endl;
+    std::cout << exe << " build info: " << SC_VERSION << std::endl;
 }
 
 void printUse(const char *exe)
@@ -155,7 +154,8 @@ int main(int argc, char *argv[])
     STEPfile  sfile(registry, instance_list, "", strict);
     char     *flnm;
 
-    benchmark stats("p21 ReadExchangeFile()");
+    // p21 ReadExchangeFile()
+    benchmark stats;
 
     cout << argv[0] << ": load file ..." << endl;
     if(argc >= (sc_optind + 1)) {

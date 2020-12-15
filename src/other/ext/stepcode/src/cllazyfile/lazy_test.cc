@@ -1,7 +1,9 @@
+#include <iostream>
+#include <string>
 #include "lazyInstMgr.h"
-#include <sc_benchmark.h>
 #include "SdaiSchemaInit.h"
 #include "sc_memmgr.h"
+#include "sc_benchmark.h"
 #include <sc_cf.h>
 
 #ifndef NO_REGISTRY
@@ -148,13 +150,15 @@ int main(int argc, char **argv)
 #endif //NO_REGISTRY
 
     instanceID instWithRef;
-    benchmark stats("================ p21 lazy load: scanning the file ================\n");
+    benchmark stats;
+    std::cout << "================ p21 lazy load: scanning the file ================\n";
     mgr->openFile(argv[1]);
     stats.stop();
     benchVals scanStats = stats.get();
     stats.out();
 
-    stats.reset("================ p21 lazy load: gathering statistics ================\n");
+    std::cout << "================ p21 lazy load: gathering statistics ================\n";
+    stats.reset();
 
     int instances = mgr->totalInstanceCount();
     std::cout << "Total instances: " << instances << " (" << (float)(scanStats.userMilliseconds * 1000) / instances << "us per instance, ";
@@ -197,7 +201,8 @@ int main(int argc, char **argv)
 #endif //NO_REGISTRY
 
     stats.out();
-    stats.reset("================ p21 lazy load: freeing memory ================\n");
+    std::cout << "================ p21 lazy load: freeing memory ================\n";
+    stats.reset();
     delete mgr;
     //stats will print from its destructor
 }

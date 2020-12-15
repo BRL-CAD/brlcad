@@ -4,7 +4,6 @@
 **
 */
 #include <sc_cf.h>
-#include "sc_version_string.h"
 #include "SubSuperIterators.h"
 #include <STEPfile.h>
 #include <sdai.h>
