@@ -10,7 +10,7 @@
 # .exp file inside, which it uses. otherwise, ${path} is assumed to
 # be an express file.
 
-if(NOT ${SC_BUILD_EXPRESS_ONLY} AND NOT "${SC_BUILD_SCHEMAS}" STREQUAL "")
+if(NOT "${SC_BUILD_SCHEMAS}" STREQUAL "")
   include(${SC_CMAKE_DIR}/schema_scanner/schemaScanner.cmake)
   foreach(src ${SC_SDAI_ADDITIONAL_EXES_SRCS})
     get_filename_component(name ${src} NAME_WE)

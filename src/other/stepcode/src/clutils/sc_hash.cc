@@ -65,7 +65,7 @@ void SC_HASHinsert(Hash_TableP t, char *s, void *data)
     e.symbol = 0;
     e2 = SC_HASHsearch(t, &e, HASH_INSERT);
     if(e2) {
-        fprintf(stderr, "%s: Redeclaration of %s\n", __FUNCTION__, s);
+        fprintf(stderr, "%s: Redeclaration of %s\n", __func__, s);
     }
 }
 

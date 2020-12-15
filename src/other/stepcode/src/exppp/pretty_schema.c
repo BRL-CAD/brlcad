@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include <sc_version_string.h>
 #include <express/express.h>
 
 #include <exppp/exppp.h>
@@ -109,7 +108,7 @@ char *SCHEMAout(Schema s)
     for(hp = expheader; *hp; hp++) {
         if((**hp == '\0') && (**(hp + 1) == '\0')) {
             /* if this and the next lines are blank, put version string on this line */
-            raw("%s\n", sc_version);
+            raw("%s\n", SC_VERSION);
         } else {
             raw("%s\n", *hp);
         }

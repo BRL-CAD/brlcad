@@ -77,7 +77,6 @@
 #include "sc_cf.h"
 #include "sc_memmgr.h"
 #include "sc_export.h"
-#include "sc_version_string.h"
 #include "sc_getopt.h"
 #include "express/error.h"
 #include "express/express.h"
@@ -93,7 +92,7 @@ static int no_need_to_work = 0; /* TRUE if we can exit gracefully without doing 
 
 void print_fedex_version(void)
 {
-    fprintf(stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode and scl-dev on google groups\n", EXPRESSprogram_name, sc_version);
+    fprintf(stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode and scl-dev on google groups\n", EXPRESSprogram_name, SC_VERSION);
     no_need_to_work = 1;
 }
 

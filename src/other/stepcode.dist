@@ -9,12 +9,10 @@ INSTALL
 INTENT.md
 NEWS
 README.md
-SC_VERSION.txt
 cmake/FindLEMON.cmake
 cmake/FindPERPLEX.cmake
 cmake/FindRE2C.cmake
-cmake/Generated_Source_Utils.cmake
-cmake/SC_Build_opts.cmake
+cmake/Path_Setup.cmake
 cmake/SC_CXX_schema_macros.cmake
 cmake/SC_Config_Headers.cmake
 cmake/SC_Locale.cmake
@@ -208,7 +206,6 @@ src/base/sc_memmgr.cc
 src/base/sc_memmgr.h
 src/base/sc_mkdir.c
 src/base/sc_mkdir.h
-src/base/sc_nullptr.h
 src/base/sc_stdio.h
 src/base/sc_strtoull.h
 src/base/sc_trace_fprintf.c

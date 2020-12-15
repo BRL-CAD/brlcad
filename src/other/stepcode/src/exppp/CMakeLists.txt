@@ -30,7 +30,7 @@ include_directories(
   ${SC_SOURCE_DIR}/src/express
  )
 
-if($CACHE{SC_BUILD_SHARED_LIBS})
+if(BUILD_SHARED_LIBS)
   SC_ADDLIB(libexppp SHARED SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express base)
   set_target_properties(libexppp PROPERTIES PREFIX "")
   if(WIN32)
@@ -38,7 +38,7 @@ if($CACHE{SC_BUILD_SHARED_LIBS})
   endif()
 endif()
 
-if($CACHE{SC_BUILD_STATIC_LIBS})
+if(BUILD_STATIC_LIBS)
   SC_ADDLIB(libexppp-static STATIC SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express-static base-static)
   set_target_properties(libexppp-static PROPERTIES PREFIX "")
 endif()

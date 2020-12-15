@@ -98,14 +98,17 @@ class SC_CORE_EXPORT STEPattribute
             void *p;
         } ptr;
 
-        const AttrDescriptor *aDesc;
 
     protected:
         bool _derive;
         bool _mustDeletePtr; ///if a member uses new to create an object in ptr
         ErrorDescriptor _error;
         STEPattribute *_redefAttr;
-        int refCount;
+    public:
+	const AttrDescriptor *aDesc;
+
+    protected:
+	int refCount;
 
         char SkipBadAttr(istream &in, char *StopChars);
         void AddErrorInfo();

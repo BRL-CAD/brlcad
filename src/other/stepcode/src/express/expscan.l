@@ -118,6 +118,11 @@ static int	nesting_level = 0;
 #define MAX_NESTED_COMMENTS 20
 static struct Symbol_ open_comment[MAX_NESTED_COMMENTS];
 
+/* isascii isn't part of newer C standards */
+#ifndef isascii
+#  define isascii(c) ((unsigned)((c) + 1) < 129)
+#endif
+
 static_inline
 int
 SCANnextchar(char* buffer)

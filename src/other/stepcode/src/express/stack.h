@@ -75,12 +75,4 @@ typedef Linked_List Stack;
 /* function prototypes */
 /***********************/
 
-/*******************************/
-/* inline function definitions */
-/*******************************/
-
-#if supports_inline_functions || defined(STACK_C)
-
-#endif /* supports_inline_functions || defined(STACK_C) */
-
 #endif    /*  STACK_H  */
