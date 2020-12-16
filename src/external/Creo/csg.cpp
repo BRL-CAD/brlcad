@@ -51,120 +51,70 @@ hole_elem_filter(ProElement UNUSED(elem_tree), ProElement UNUSED(elem), ProElemp
     return PRO_TK_NO_ERROR;
 }
 
+
 extern "C" ProError
 hole_elem_visit(ProElement UNUSED(elem_tree), ProElement elem, ProElempath UNUSED(elem_path), ProAppData data)
 {
-    ProError ret;
-    ProElemId elem_id;
-    ProValue val_junk;
-    ProValueData val;
+    ProError         err;
+    ProElemId        elemid;
+    ProValueDataType data_type;
+
     struct hole_info *hinfo = (struct hole_info *)data;
 
-    if ((ret = ProElementIdGet(elem, &elem_id)) != PRO_TK_NO_ERROR) return ret;
-
-    switch (elem_id) {
-	case PRO_E_HLE_ADD_CBORE:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->add_cbore = val.v.i;
-	    break;
-	case PRO_E_HLE_ADD_CSINK:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->add_csink = val.v.i;
-	    break;
-	case PRO_E_DIAMETER:
-	    /* diameter of straight hole */
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->hole_diam = val.v.d;
-	    break;
-	case PRO_E_HLE_HOLEDIAM:
-	    /* diameter of main portion of standard drilled hole */
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->hole_diam = val.v.d;
-	    break;
-	case PRO_E_HLE_CBOREDEPTH:
-	    /* depth of counterbore */
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->cb_depth = val.v.d;
-	    break;
-	case PRO_E_HLE_CBOREDIAM:
-	    /* diameter of counterbore */
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->cb_diam = val.v.d;
-	    break;
-	case PRO_E_HLE_CSINKANGLE:
-	    /* angle of countersink (degrees) */
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->cs_angle = val.v.d;
-	    break;
-	case PRO_E_HLE_CSINKDIAM:
-	    /* diameter of countersink */
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->cs_diam = val.v.d;
-	    break;
-	case PRO_E_HLE_DRILLDEPTH:
-	    /* overall depth of standard drilled hole without drill tip */
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->hole_depth = val.v.d;
-	    break;
-	case PRO_E_HLE_DRILLANGLE:
-	    /* drill tip angle (degrees) */
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->drill_angle = val.v.d;
-	    break;
-	case PRO_E_HLE_DEPTH:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->hole_depth_type = val.v.i;
-	    break;
-	case PRO_E_HLE_TYPE_NEW:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    hinfo->hole_type = val.v.i;
-	    break;
-	case PRO_E_HLE_STAN_TYPE:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    break;
-	case PRO_E_STD_EDGE_CHAMF_DIM1:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    break;
-	case PRO_E_STD_EDGE_CHAMF_DIM2:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    break;
-	case PRO_E_STD_EDGE_CHAMF_ANGLE:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    break;
-	case PRO_E_STD_EDGE_CHAMF_DIM:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    break;
-	case PRO_E_STD_EDGE_CHAMF_SCHEME:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    break;
-	case PRO_E_EXT_DEPTH_FROM_VALUE:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    break;
-	case PRO_E_EXT_DEPTH_TO_VALUE:
-	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
-	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
-	    break;
-    }
-
+    if ((err = ProElementValuetypeGet(elem, &data_type)) != PRO_TK_NO_ERROR) return err;
+  
+    switch (data_type) {
+        case PRO_VALUE_TYPE_INT:                           /* integer data type */
+            int intval;
+            if ((err = ProElementIntegerGet(elem, NULL, &intval)) != PRO_TK_NO_ERROR) return err;
+            if ((err = ProElementIdGet(elem, &elemid))            != PRO_TK_NO_ERROR) return err;
+            switch (elemid) {
+                case PRO_E_HLE_ADD_CBORE:                  /* add counterbore */
+ 	            hinfo->add_cbore = intval;
+	            break;
+                case PRO_E_HLE_ADD_CSINK:                  /* add countersink */
+	            hinfo->add_csink = intval;
+	            break;
+                case PRO_E_HLE_DEPTH:                      /* hole depth */
+                    hinfo->hole_depth_type = intval;
+	            break;    
+                case PRO_E_HLE_TYPE_NEW:                   /* hole type */
+                    hinfo->hole_type = intval;
+	            break;
+                }
+            break;
+        case PRO_VALUE_TYPE_DOUBLE:                        /* double data type */
+            double dblval;
+            if ((err = ProElementDoubleGet(elem, NULL, &dblval)) != PRO_TK_NO_ERROR) return err;
+            if ((err = ProElementIdGet(elem, &elemid))           != PRO_TK_NO_ERROR) return err;
+            switch (elemid) {
+                case PRO_E_DIAMETER:                       /* hole diameter */
+	            hinfo->hole_diam = dblval;
+	            break;
+                case PRO_E_HLE_CBOREDEPTH:                 /* counterbore depth */
+	            hinfo->cb_depth = dblval;
+	            break;
+                case PRO_E_HLE_CBOREDIAM:                  /* counterbore diameter */
+	            hinfo->cb_diam = dblval;
+	            break;
+                case PRO_E_HLE_CSINKANGLE:                 /* countersink angle (deg) */
+	            hinfo->cs_angle = dblval;
+	            break;
+                case PRO_E_HLE_CSINKDIAM:                  /* countersink diameter */
+	            hinfo->cs_diam = dblval;
+	            break;
+                case PRO_E_HLE_DRILLANGLE:                 /* drill tip angle (deg) */
+	            hinfo->drill_angle = dblval;
+	            break;
+                case PRO_E_HLE_DRILLDEPTH:                 /* drill depth w/o tip */
+	            hinfo->hole_depth = dblval;
+	            break;
+                case PRO_E_HLE_HOLEDIAM:                   /* hole diameter */
+	            hinfo->hole_diam = dblval;
+	            break;
+                }
+            break;
+        }
     return PRO_TK_NO_ERROR;
 }
 
@@ -245,7 +195,7 @@ subtract_hole(struct part_conv_info *pinfo)
     hinfo->diameter = pinfo->diameter;
 
     /* Do a more detailed characterization of the hole elements */
-    if ((ret=ProFeatureElemtreeCreate(hinfo->feat, &elem_tree )) == PRO_TK_NO_ERROR ) {
+    if ((ret=ProFeatureElemtreeExtract(hinfo->feat, NULL, PRO_FEAT_EXTRACT_NO_OPTS, &elem_tree )) == PRO_TK_NO_ERROR ) {
 	if ((ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo)) != PRO_TK_NO_ERROR ) {
 	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {fprintf( stderr, "Error freeing element tree\n" );}
 	    BU_PUT(hinfo, struct hole_info);

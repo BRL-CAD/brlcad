@@ -29,12 +29,16 @@ extern "C" int ProBsplinesrfdataGet(void**,int[2],double**,double**,double**,Pro
 extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),int,int,int*) {return 0;}
 extern "C" int ProDimensionTypeGet(void**,int*) {return 0;}
 extern "C" int ProDimensionValueGet(void**,double *) {return 0;}
+extern "C" int ProElementDoubleGet(void*,void*,double*) {return 0;}
 extern "C" int ProElementFree(void**) {return 0;}
 extern "C" int ProElementIdGet(void*,int*) {return 0;}
+extern "C" int ProElementIntegerGet(void*,void*,int*) {return 0;}
 extern "C" int ProElementValueGet(void*,void**) {return 0;}
+extern "C" int ProElementValuetypeGet(void*,int*) {return 0;}
 extern "C" int ProElemtreeElementVisit(void*,void*,int (*)(void*,void*,void*,void*),int (*)(void*,void*,void*,void*),void*) {return 0;}
 extern "C" int ProFeatureDimensionVisit(ProFeature *,int (*)(void* *,int ,void*),int (*)(void**,void*),void*) {return 0;}
 extern "C" int ProFeatureElemtreeCreate(ProFeature *,void**) {return 0;}
+extern "C" int ProFeatureElemtreeExtract(ProFeature *,void*,int,void**) {return 0;}
 extern "C" int ProFeatureGeomitemVisit(ProFeature *,int,int (*)(void**,int,void*),int (*)(void**,void*),void*) {return 0;}
 extern "C" int ProFeatureInit(void*,int,ProFeature*) {return 0;}
 extern "C" int ProFeatureResume(void*,int*,int,void*,int) {return 0;}
@@ -54,6 +58,7 @@ extern "C" int ProMenubarmenuPushbuttonAdd(const char*,const char*,const char*,c
 extern "C" int ProMessageDisplay(wchar_t *,const char *,const char *) {return 0;}
 extern "C" int ProParameterInit(void *,wchar_t *,void *) {return 0;}
 extern "C" int ProParameterValueGet(ProParameter *,void *) {return 0;}
+extern "C" int ProParameterValueWithUnitsGet(ProParameter *,void *,void *) {return 0;}
 extern "C" int ProParameterVisit (void **,	void*,int (*)(ProParameter*,int,void*),void *) {return 0;}
 extern "C" int ProParamvalueTypeGet(void **,void *) {return 0;}
 extern "C" int ProParamvalueValueGet(void **,int,void *) {return 0;}
