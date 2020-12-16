@@ -90,13 +90,39 @@ interface.
 
 === Tracking down the source of a header inclusion  ===
 
-If a Windows system header is reporting an error, it can be helpful to
-identify where the header is being included from.  By default MSVC
-doesn't report this, but in Visual Studio there is a "ShowIncludes"
-setting that may be enabled to find this information:
+If a Windows system header is reporting an error, it can be helpful to identify
+where the header is being included from.  By default MSVC doesn't report this,
+but in Visual Studio there is a "ShowIncludes" setting that may be enabled to
+find this information:
 
 https://stackoverflow.com/a/1138045
 
+This setting may also be added to the compilation flags directly
+in CMake as "/showIncludes":
+
+https://docs.microsoft.com/en-us/cpp/build/reference/showincludes-list-include-files
+
+Note that the output of this can be very verbose, especially if applied
+globally to all targets - you may want to consider applying it specifically to
+an individual target with target_compile_options.  This flag is a very useful
+tool when trying to determine *why* a particular header is present in an error
+message.
+
+=========================================================
+
+=== Debugging build outputs from a Ninja compilation  ===
+
+Normally, Visual Studio is used to debug Windows executables.  However,
+another alternative is available called WinDbg:
+
+https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/debugger-download-tools
+
+This has been used successfully to debug Ninja produced executables.
+Note that if debugging an issue unique to Release builds, you will
+want to set the CMake variable ENABLE_ALL_CONFIG_TYPES to ON
+and the specific build type to RelWithDebInfo
+
+cmake.exe -G Ninja -ENABLE_ALL_CONFIG_TYPES=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 ===========================================
 
