@@ -99,6 +99,9 @@
 #define PRO_PARAM_INTEGER			79
 #define PRO_PARAM_BOOLEAN			80
 #define PRO_PARAM_DOUBLE			81
+#define PRO_VALUE_TYPE_INT			82
+#define PRO_VALUE_TYPE_DOUBLE			83
+#define PRO_FEAT_EXTRACT_NO_OPTS		84
 
 typedef int ProBool;
 typedef int ProBoolean;
@@ -118,6 +121,7 @@ typedef int ProSrftype;
 typedef int ProSurfaceOrient;
 typedef int ProType;
 typedef int ProUIMessageButton;
+typedef int ProValueDataType;
 typedef int uiCmdAccessMode;
 typedef int uiCmdAccessState;
 typedef int uiCmdCmdId;
@@ -177,7 +181,6 @@ extern "C" int ProArrayFree(void**);
 extern "C" int ProArraySizeGet(ProArray,int*);
 extern "C" int ProAsmcompMdlGet(ProFeature*,void**);
 extern "C" int ProAsmcompMdlNameGet(ProFeature*,int*,wchar_t*);
-extern "C" int ProAsmcompMdlNameGet(ProFeature*,int*,wchar_t*);
 extern "C" int ProAsmcomppathInit(void*,ProIdTable,int,void**);
 extern "C" int ProAsmcomppathTrfGet(void**,int,ProMatrix);
 extern "C" int ProAssemblyIsExploded(void*,int*);
@@ -185,12 +188,16 @@ extern "C" int ProBsplinesrfdataGet(void**,int[2],double**,double**,double**,Pro
 extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),int,int,int*);
 extern "C" int ProDimensionTypeGet(void**,int*);
 extern "C" int ProDimensionValueGet(void**,double *);
+extern "C" int ProElementDoubleGet(void*,void*,double*);
 extern "C" int ProElementFree(void**);
 extern "C" int ProElementIdGet(void*,int*);
+extern "C" int ProElementIntegerGet(void*,void*,int*);
 extern "C" int ProElementValueGet(void*,void**);
+extern "C" int ProElementValuetypeGet(void*,int*);
 extern "C" int ProElemtreeElementVisit(void*,void*,int (*)(void*,void*,void*,void*),int (*)(void*,void*,void*,void*),void*);
 extern "C" int ProFeatureDimensionVisit(ProFeature *,int (*)(void* *,int ,void*),int (*)(void**,void*),void*);
 extern "C" int ProFeatureElemtreeCreate(ProFeature *,void**);
+extern "C" int ProFeatureElemtreeExtract(ProFeature *,void*,int,void**);
 extern "C" int ProFeatureGeomitemVisit(ProFeature *,int,int (*)(void**,int,void*),int (*)(void**,void*),void*);
 extern "C" int ProFeatureInit(void*,int,ProFeature*);
 extern "C" int ProFeatureResume(void*,int*,int,void*,int);
@@ -210,6 +217,7 @@ extern "C" int ProMenubarmenuPushbuttonAdd(const char*,const char*,const char*,c
 extern "C" int ProMessageDisplay(wchar_t *,const char *,const char *);
 extern "C" int ProParameterInit(void *,wchar_t *,void *);
 extern "C" int ProParameterValueGet(ProParameter *,void *);
+extern "C" int ProParameterValueWithUnitsGet(ProParameter *,void *,void *);
 extern "C" int ProParameterVisit (void **,	void*,int (*)(ProParameter*,int,void*),void *);
 extern "C" int ProParamvalueTypeGet(void **,void *);
 extern "C" int ProParamvalueValueGet(void **,int,void *);
@@ -248,6 +256,7 @@ extern "C" void ProAssemblyUnexplode(void*);
 extern "C" void ProContourEdgeVisit(void*,void*,int(*)(void*,int,void*),int(*)(void*,void*),void*);
 extern "C" void ProContourTraversalGet(void*,int*);
 extern "C" void ProMdlIsSkeleton(void*, int*);
+extern "C" void ProMdlMdlNameGet(void*,int*,wchar_t*);
 extern "C" void ProMdlMdlnameGet(void*,wchar_t*);
 extern "C" void ProMessageClear();
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**);
@@ -261,6 +270,6 @@ extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int);
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*);
 extern "C" void ProUnitInit(void*,const wchar_t *,void**);
 extern "C" void ProWstringToString(char*,wchar_t*);
-extern "C" void* ProMdlToPart(void*);
-extern "C" void* ProMdlToSolid(void*);
+extern "C" void* ProMdlToPart(void*v);
+extern "C" void* ProMdlToSolid(void*v);
 extern "C" void** PRO_CURVE_DATA(void*);
