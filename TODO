@@ -41,9 +41,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
-* libgcv should add objects to an existing .g if one is specified
-  as the output target - right now it's overwriting the old file
-
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
