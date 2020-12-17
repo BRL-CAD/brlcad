@@ -48,12 +48,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   Settings->Apply To->Listed Panes
   Settings->Framebuffer->Rectangle Area
 
-* The embedded framebuffer for the X display manager is not working
-  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
-  to XFlush after X24_blit.  Better solution is to replace the X
-  dm/fb with a cross platform software rasterizing solution of some
-  sort.
-
 * Implement new behavior for quit command in MGED - if bu_subprocess
   commands are running, by default refuse to quit and print out a
   list of currently running processes and instructions on how to abort
@@ -168,6 +162,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* The embedded framebuffer for the X display manager is not working
+  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
+  to XFlush after X24_blit.  Better solution is to replace the X
+  dm/fb with a cross platform software rasterizing solution of some
+  sort.
 
 * extract a skin or other exterior surface for a given model.  3 options:
   1. Implement a "shrinkwrap" feature that calculates a concave hull
