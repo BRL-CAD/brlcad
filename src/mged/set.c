@@ -425,7 +425,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 		    }
 
 		    /* found a dlp2 that is actively using dlp1's display lists */
-		    if (dlp2->dm_mged_variables->mv_dlist) {
+		    if (dlp2 && dlp2->dm_mged_variables->mv_dlist) {
 			dlp2 = m_dmp;
 			break;
 		    }
