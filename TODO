@@ -24,25 +24,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   both mged -c and gui mode on Mac.  MGED is blocking when running
   "rt" command until after the framebuffer window is closed.
 
-* implement uv-mapping callback so we can texture-map BoT, NMG, and
-  NURBS geometry
-
 * check thread safety history of gqa + plot calls (pl_color)
 
 * mged> nirt -? needs to provide help
 
 * mged> nirt -f fmt doesn't seem to work at all
-
-* modify libfb's default memory buffer allocation to be dynamic
-
-* create a BRL-CAD .g with all possible object types embedded.
-  integrate into testing. e.g., scene with all object types plus a
-  lookup check to ensure none are missing.
-
-* fix pipe subtractions shaded display issue in archer
-
-* attribute normalization is drastically slowing down
-  region creation - need to fix or back out
 
 * g-obj not exporting colors
 
@@ -133,6 +119,21 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   Misc->Depth Cueing
   Misc->Z Buffer
   Misc->Lighting
+
+* implement uv-mapping callback so we can texture-map BoT, NMG, and
+  NURBS geometry
+
+* modify libfb's default memory buffer allocation to be dynamic
+
+* create a BRL-CAD .g with all possible object types embedded.
+  integrate into testing. e.g., scene with all object types plus a
+  lookup check to ensure none are missing.
+
+* fix pipe subtractions shaded display issue in archer
+
+* attribute normalization is drastically slowing down
+  region creation - need to fix or back out
+
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
