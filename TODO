@@ -41,8 +41,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
-* check that dbconcat supports objects created with the bo cmd
-
 * libgcv should add objects to an existing .g if one is specified
   as the output target - right now it's overwriting the old file
 
