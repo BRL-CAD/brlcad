@@ -55,9 +55,11 @@ DAMAGE.
 #  pragma clang diagnostic ignored "-Wunused-variable"
 #  pragma clang diagnostic ignored "-Wsign-compare"
 #  pragma clang diagnostic ignored "-Wunused-value"
-#  pragma clang diagnostic ignored "-Wmisleading-indentation"
 #  pragma clang diagnostic ignored "-Wparentheses"
 #  pragma clang diagnostic ignored "-Wreturn-type"
+#  if (__clang_major__ >= 10)
+#    pragma clang diagnostic ignored "-Wmisleading-indentation"
+#  endif
 #endif
 
 #include "SPSR.h"
