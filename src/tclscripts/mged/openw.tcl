@@ -262,6 +262,16 @@ if {[namespace exists ::tk]} {
     set ::tk::Priv(cad_dialog) .mged_dialog
 }
 
+proc tracer_read {varname args} {
+   upvar #0 $varname var
+   tk_messageBox -message "tracer_read: $varname $var"
+}
+
+proc tracer_write {varname args} {
+   upvar #0 $varname var
+   tk_messageBox -message "tracer_write: $varname $var"
+}
+
 proc gui { args } {
     global tmp_hoc
     global mged_gui
@@ -437,6 +447,8 @@ proc gui { args } {
 
     set mged_gui($id,comb) $comb
     set mged_gui($id,show_cmd) $scw
+    trace add variable mged_gui($id,show_cmd) write "tracer_write mged_gui($id,show_cmd)"
+    trace add variable mged_gui($id,show_cmd) read "tracer_read mged_gui($id,show_cmd)"
     set mged_gui($id,show_dm) $sgw
     set mged_gui($id,show_status) $mged_default(status_bar)
     set mged_gui($id,apply_to) 0
@@ -2631,6 +2643,7 @@ proc set_cmd_win { id } {
 
 proc open_cmd_win {id} {
     set mged_gui($id,show_cmd) 1
+    tk_messageBox -message "mged_gui($id,show_cmd): $mged_gui($id,show_cmd)"
     wm deiconify .$id
     raise .$id
 }
