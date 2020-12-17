@@ -988,19 +988,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Apply To" "Active Pane" "Active Pane"\
 	{ { summary "Set the \"Apply To\" mode such that the user's
 	interaction with the GUI is applied to the active pane." } }
-    .$id.menubar.settings.applyTo add radiobutton -value 1 -variable mged_gui($id,apply_to)\
-	-label "Local Panes" -underline 0
-    hoc_register_menu_data "Apply To" "Local Panes" "Local Panes"\
-	{ { summary "Set the \"Apply To\" mode such that the user's
-	interaction with the GUI is applied to all panes
-	local to this instance of the GUI." } }
-    .$id.menubar.settings.applyTo add radiobutton -value 2 -variable mged_gui($id,apply_to)\
-	-label "Listed Panes" -underline 1
-    hoc_register_menu_data "Apply To" "Listed Panes" "Listed Panes"\
-	{ { summary "Set the \"Apply To\" mode such that the user's
-	interaction with the GUI is applied to all panes
-	listed in the Tcl variable mged_gui(id,apply_list)
-	(Note - id refers to the GUI's id)." } }
     .$id.menubar.settings.applyTo add radiobutton -value 3 -variable mged_gui($id,apply_to)\
 	-label "All Panes" -underline 4
     hoc_register_menu_data "Apply To" "All Panes" "All Panes"\
@@ -1090,20 +1077,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	\t\t3\t\tZoom in by a factor of 2" }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.mouse_behavior add separator
-    .$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep Raytrace-Rectangle" -underline 6\
-	-command "set_mouse_behavior $id"
-    hoc_register_menu_data "Mouse Behavior" "Sweep Raytrace-Rectangle" "Sweep Raytrace-Rectangle"\
-	{ { synopsis "Enter sweep raytrace-rectangle mode." }
-	    { description "If the framebuffer is active, the rectangular area as
-	specified by the user is raytraced. The rectangular area is
-	also painted with the current contents of the framebuffer. Otherwise,
-	only the rectangle is drawn.\n
-	\tMouse Button\t\t\tBehavior
-	\t\t1\t\tZoom out by a factor of 2
-	\t\t2\t\tDraw raytrace-rectangle
-	\t\t3\t\tZoom in by a factor of 2" }
-	    { see_also "rset, vars" } }
     .$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_gui($id,mouse_behavior)\
 	-label "Pick Raytrace-Object(s)" -underline 14\
 	-command "set_mouse_behavior $id"
@@ -1126,33 +1099,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	\t\t2\t\tFire query ray
 	\t\t3\t\tZoom in by a factor of 2" }
 	    { see_also "nirt, qray, rset, vars" } }
-    .$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep Paint-Rectangle" -underline 6\
-	-command "set_mouse_behavior $id"
-    hoc_register_menu_data "Mouse Behavior" "Sweep Paint-Rectangle" "Sweep Paint-Rectangle"\
-	{ { synopsis "Enter sweep paint-rectangle mode." }
-	    { description "If the framebuffer is active, the rectangular area
-	as specified by the user is painted with the current contents of the
-	framebuffer. Otherwise, only the rectangle is drawn.\n
-	\tMouse Button\t\t\tBehavior
-	\t\t1\t\tZoom out by a factor of 2
-	\t\t2\t\tDraw paint rectangle
-	\t\t3\t\tZoom in by a factor of 2" }
-	    { see_also "rset, vars" } }
-    .$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep Zoom-Rectangle" -underline 6\
-	-command "set_mouse_behavior $id"
-    hoc_register_menu_data "Mouse Behavior" "Sweep Zoom-Rectangle" "Sweep Zoom-Rectangle"\
-	{ { synopsis "Enter sweep zoom-rectangle mode." }
-	    { description "The rectangular area as specified by the user is used
-	to zoom the view. Note - as the user stretches out the zoom
-	rectangle, the rectangle is constrained to be the same shape as the
-	window. This insures that the user gets what he or she sees.\n
-	\tMouse Button\t\t\tBehavior
-	\t\t1\t\tZoom out by a factor of 2
-	\t\t2\t\tDraw zoom rectangle
-	\t\t3\t\tZoom in by a factor of 2" }
-	    { see_also "rset, vars" } }
 
     menu .$id.menubar.settings.qray -title "Query Ray Effects" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.qray add radiobutton -value t -variable mged_gui($id,qray_effects)\
@@ -1235,12 +1181,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
     hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
 	{ { summary "Use the entire pane for the framebuffer." }
-	    { see_also "rset, vars" } }
-    .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_all)\
-	-label "Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
-    hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
-	{ { summary "Use the rectangle area for the framebuffer." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.fb add separator
     .$id.menubar.settings.fb add radiobutton -value 2 -variable mged_gui($id,fb_overlay)\
@@ -1597,12 +1537,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	data." }
 	    { see_also "rset, vars" } }
     .$id.menubar.modes add separator
-    .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rubber_band)\
-	-label "Persistent Sweep Rectangle" -underline 0\
-	-command "mged_apply $id \"rset rb draw \$mged_gui($id,rubber_band)\""
-    hoc_register_menu_data "Modes" "Persistent sweep rectangle" "Persistent Rubber Band"\
-	{ { summary "Toggle drawing the rectangle while idle." }
-	    { see_also "rset" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,adc_draw)\
 	-label "Angle/Dist Cursor" -underline 0 \
 	-command "adc_CBHandler $id"
@@ -1655,24 +1589,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { { summary "Toggle display of the graphics window." } }
     }
     .$id.menubar.modes add separator
-    .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,collaborate)\
-	-label "Collaborate" -underline 0\
-	-command "collab_doit $id"
-    hoc_register_menu_data "Modes" "Collaborate" "Collaborate"\
-	{ { summary "Toggle collaborate mode. When in collaborate
-	mode, the upper right pane's view can be shared
-	with other instances of MGED's new GUI that are
-	also collaborating." } }
-    .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rateknobs)\
-	-label "Rateknobs" -underline 0\
-	-command "mged_apply $id \"set rateknobs \$mged_gui($id,rateknobs)\""
-    hoc_register_menu_data "Modes" "Rateknobs" "Rate Knobs"\
-	{ { summary "Toggle rate knob mode. When in rate knob mode,
-	transformation with the mouse becomes rate based.
-	For example, if the user rotates the view about
-	the X axis, the view continues to rotate about the
-	X axis until the rate rotation is stopped." }
-	    { see_also "knob" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,dlist)\
 	-label "Display Lists" -underline 8\
 	-command "mged_apply $id \"set dlist \$mged_gui($id,dlist)\""

@@ -24,27 +24,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   both mged -c and gui mode on Mac.  MGED is blocking when running
   "rt" command until after the framebuffer window is closed.
 
-* The following will be removed from MGED's menu bar (unused
-  features, can be accomplished another way, or will be exposed
-  only as lower level settings when there are sensible defaults
-  that are seldom changed.)
-
-  ViewRing menu and entries.
-  Modes->Persistent Sweep Rectangle
-  Modes->Collaborate
-  Modes->Rateknobs
-  Modes->Display Lists
-  Misc->Keystroke Forwarding
-  Misc->Depth Cueing
-  Misc->Z Buffer
-  Misc->Lighting
-  Settings->Mouse Behavior->Sweep Raytrace-Rectangle
-  Settings->Mouse Behavior->Sweep Paint-Rectangle
-  Settings->Mouse Behavior->Sweep Zoom-Rectangle
-  Settings->Apply To->Local Panes
-  Settings->Apply To->Listed Panes
-  Settings->Framebuffer->Rectangle Area
-
 * Implement new behavior for quit command in MGED - if bu_subprocess
   commands are running, by default refuse to quit and print out a
   list of currently running processes and instructions on how to abort
@@ -155,6 +134,16 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* The following will be removed from MGED's menu bar (unused
+  features, can be accomplished another way, or will be exposed
+  only as lower level settings when there are sensible defaults
+  that are seldom changed.)
+
+  Modes->Display Lists
+  Misc->Keystroke Forwarding
+  Misc->Depth Cueing
+  Misc->Z Buffer
+  Misc->Lighting
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
