@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* bounding box reduction command
-
 * MGED asynchronous subprocess management appears to be broken with
   both mged -c and gui mode on Mac.  MGED is blocking when running
   "rt" command until after the framebuffer window is closed.
@@ -29,8 +27,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * mged> nirt -? needs to provide help
 
 * mged> nirt -f fmt doesn't seem to work at all
-
-* g-obj not exporting colors
 
 * finish testing of libbu bu_dir API and matching bu_dir TCL function.
   bu_dir bin and lib don't work when the MGED prompt's working directory
@@ -45,15 +41,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   breaks if an application changes its notion of the current working
   directory after initialization, for example.
 
-* tree command shouldn't infinite loop when encountering a cyclic
-  path - need to print a warning and stop walking.  Requries full
-  path awareness in tree command walk.
-
-  Consider implementing a corollary to FTS instead of dirent for
-  simplified tree traversal with cyclic awareness.
-
-  https://keramida.wordpress.com/2009/07/05/fts3-or-avoiding-to-reinvent-the-wheel/
-
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
@@ -63,14 +50,39 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * libgcv should add objects to an existing .g if one is specified
   as the output target - right now it's overwriting the old file
 
-* consolidate dbconcat, clone, make_name, and any other .g I/O
-  routines that need to autogenerate names to use the new
-  bu_vls_incr/bu_vls_simplify functions.
-
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
   if the file isn't a valid .g?
+
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+* The following will be removed from MGED's menu bar (unused
+  features, can be accomplished another way, or will be exposed
+  only as lower level settings when there are sensible defaults
+  that are seldom changed.)
+
+  Modes->Display Lists
+  Misc->Keystroke Forwarding
+  Misc->Depth Cueing
+  Misc->Z Buffer
+  Misc->Lighting
+
+* implement uv-mapping callback so we can texture-map BoT, NMG, and
+  NURBS geometry
+
+* modify libfb's default memory buffer allocation to be dynamic
+
+* create a BRL-CAD .g with all possible object types embedded.
+  integrate into testing. e.g., scene with all object types plus a
+  lookup check to ensure none are missing.
+
+* fix pipe subtractions shaded display issue in archer
+
+* attribute normalization is drastically slowing down
+  region creation - need to fix or back out
 
 * add regression test for directional light sources
 
@@ -102,37 +114,25 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
 
+* tree command shouldn't infinite loop when encountering a cyclic
+  path - need to print a warning and stop walking.  Requries full
+  path awareness in tree command walk.
+
+  Consider implementing a corollary to FTS instead of dirent for
+  simplified tree traversal with cyclic awareness.
+
+  https://keramida.wordpress.com/2009/07/05/fts3-or-avoiding-to-reinvent-the-wheel/
+
+* bounding box reduction command
+
+* consolidate dbconcat, clone, make_name, and any other .g I/O
+  routines that need to autogenerate names to use the new
+  bu_vls_incr/bu_vls_simplify functions.
+
+* g-obj not exporting colors
+
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
-
-* The following will be removed from MGED's menu bar (unused
-  features, can be accomplished another way, or will be exposed
-  only as lower level settings when there are sensible defaults
-  that are seldom changed.)
-
-  Modes->Display Lists
-  Misc->Keystroke Forwarding
-  Misc->Depth Cueing
-  Misc->Z Buffer
-  Misc->Lighting
-
-* implement uv-mapping callback so we can texture-map BoT, NMG, and
-  NURBS geometry
-
-* modify libfb's default memory buffer allocation to be dynamic
-
-* create a BRL-CAD .g with all possible object types embedded.
-  integrate into testing. e.g., scene with all object types plus a
-  lookup check to ensure none are missing.
-
-* fix pipe subtractions shaded display issue in archer
-
-* attribute normalization is drastically slowing down
-  region creation - need to fix or back out
 
 
 
