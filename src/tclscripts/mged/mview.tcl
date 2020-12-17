@@ -246,6 +246,11 @@ proc releasemv { id } {
     catch  { release $mged_gui($id,top).ur }
     catch  { release $mged_gui($id,top).ll }
     catch  { release $mged_gui($id,top).lr }
+
+    # If all the windows are gone, we're closing the application
+    if { !$mged_gui($id,show_cmd) && !$mged_gui($id,show_dm)} {
+	exit
+    }
 }
 
 proc closemv { id } {
