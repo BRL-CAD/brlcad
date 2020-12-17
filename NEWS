@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* added a '-f' forcing option to MGED's quit command - Cliff Yapp
+* changed MGED's quit command to wait for subprocesses - Cliff Yapp
 * removed obscure MGED menu entries for unused features - Cliff Yapp
 * fixed crash when trying to shade invalid breps - Cliff Yapp
 * changed 'mvall' to rename all refs even w/ no object - Sean Morrison

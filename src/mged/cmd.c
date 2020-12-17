@@ -1259,11 +1259,28 @@ f_comm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 int
 f_quit(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    if (argc < 1 || 1 < argc) {
+    int force_quit = 0;
+
+    if (argc < 1 || argc > 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-f"))
+	    force_quit = 1;
+    }
+
+    /* Check if we have any ged subprocesses running.  If we do, unless we're forcing, don't
+     * quite yet. */
+    if (GEDP && BU_PTBL_LEN(&GEDP->ged_subp) && !force_quit) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&vls, " attempting to quit while GED subprocesses are running.\n\nTo list running processes, use the 'process list' command.\n\nTo exit despite the running subprocesses, add the '-f' option to the quit command.");
+	Tcl_AppendResult(interpreter, bu_vls_cstr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }

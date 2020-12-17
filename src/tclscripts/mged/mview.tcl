@@ -249,7 +249,7 @@ proc releasemv { id } {
 
     # If all the windows are gone, we're closing the application
     if { !$mged_gui($id,show_cmd) && !$mged_gui($id,show_dm)} {
-	exit
+	quit -f
     }
 }
 

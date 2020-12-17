@@ -24,17 +24,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   both mged -c and gui mode on Mac.  MGED is blocking when running
   "rt" command until after the framebuffer window is closed.
 
-* Implement new behavior for quit command in MGED - if bu_subprocess
-  commands are running, by default refuse to quit and print out a
-  list of currently running processes and instructions on how to abort
-  them.  Implement a -f option to forcibly quite even if there are
-  subprocesses running, and (perhaps) a --wait option to quite after
-  all subprocesses complete.
-
-  Also of interest in this context (but not critical for the basic
-  functionality) is designing a general mechanism or protocol for
-  applications to communicate progress back to bu_subprocess.
-
 * implement uv-mapping callback so we can texture-map BoT, NMG, and
   NURBS geometry
 
