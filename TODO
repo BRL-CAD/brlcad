@@ -24,9 +24,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   both mged -c and gui mode on Mac.  MGED is blocking when running
   "rt" command until after the framebuffer window is closed.
 
-* Update libgcv plugin installation location - now that its
-  available, they belong with the other plugins in libexec
-
 * The following will be removed from MGED's menu bar (unused
   features, can be accomplished another way, or will be exposed
   only as lower level settings when there are sensible defaults
