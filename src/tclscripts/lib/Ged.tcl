@@ -163,8 +163,6 @@ package provide cadwidgets::Ged 1.0
 	method bounds_all {args}
 	method brep {args}
 	method bu_units_conversion {args}
-	method bu_brlcad_dir {args}
-	method bu_brlcad_root {args}
 	method bu_prmem {args}
 	method bu_get_value_by_keyword {args}
 	method bu_rgb_to_hsv {args}
@@ -1388,14 +1386,6 @@ package provide cadwidgets::Ged 1.0
     uplevel \#0 bu_units_conversion $args
 }
 
-::itcl::body cadwidgets::Ged::bu_brlcad_dir {args} {
-    uplevel \#0 bu_brlcad_dir $args
-}
-
-::itcl::body cadwidgets::Ged::bu_brlcad_root {args} {
-    uplevel \#0 bu_brlcad_root $args
-}
-
 ::itcl::body cadwidgets::Ged::bu_prmem {args} {
     uplevel \#0 bu_prmem $args
 }
@@ -1894,7 +1884,7 @@ package provide cadwidgets::Ged 1.0
     incr mLastPort
     set port $mLastPort
 
-    set binpath [bu_brlcad_root "bin"]
+    set binpath [bu_dir bin]
 
     # This doesn't work (i.e. the "&" causes exec to always succeed, even when the command fails)
     while {[catch {exec [file join $binpath fbserv] -w $_w -n $_n $port $_fbtype &} pid]} {
@@ -2137,7 +2127,7 @@ package provide cadwidgets::Ged 1.0
     make_image $fbs_port $w $n $viewsize $orientation $eye_pt $perspective \
 	$_bgcolor $_ecolor $_necolor $_occmode $_gamma $_color_objects $_ghost_objects $_edge_objects
 
-    set binpath [bu_brlcad_root "bin"]
+    set binpath [bu_dir bin]
     catch {exec [file join $binpath fb-fb] $fbs_port $port &}
 
     if {$::tcl_platform(platform) == "windows"} {
@@ -6229,8 +6219,6 @@ package provide cadwidgets::Ged 1.0
 	[brepname] - convert the non-BREP object to BREP form
 	[suffix] - convert non-BREP comb to unevaluated BREP form}}
     $help add bu_units_conversion  {{units} {}}
-    $help add bu_brlcad_dir	{{dirkey} {}}
-    $help add bu_brlcad_root	{{subdir} {}}
     $help add bu_prmem		{{title} {}}
     $help add bu_get_value_by_keyword {{iwant list} {}}
     $help add bu_rgb_to_hsv	{{rgb} {}}
