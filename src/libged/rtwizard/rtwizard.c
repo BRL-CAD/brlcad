@@ -57,6 +57,9 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 
     BU_GET(run_rtp, struct ged_subprocess);
     run_rtp->magic = GED_CMD_MAGIC;
+    run_rtp->stdin_active = 0;
+    run_rtp->stdout_active = 0;
+    run_rtp->stderr_active = 0;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;

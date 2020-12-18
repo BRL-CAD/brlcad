@@ -272,6 +272,10 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     rtcp->rrtp->p = p;
     rtcp->rrtp->aborted = 0;
     rtcp->rrtp->gedp = gedp;
+    rtcp->rrtp->stdin_active = 0;
+    rtcp->rrtp->stdout_active = 0;
+    rtcp->rrtp->stderr_active = 0;
+
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(rtcp->rrtp, BU_PROCESS_STDOUT, rtcheck_vector_handler, (void *)rtcp);
     }

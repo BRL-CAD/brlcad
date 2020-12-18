@@ -129,6 +129,9 @@ struct ged_subprocess {
     void *chan;
     int aborted;
     struct ged *gedp;
+    int stdin_active;
+    int stdout_active;
+    int stderr_active;
 };
 
 /* FIXME: should be private */
