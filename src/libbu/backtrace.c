@@ -444,7 +444,7 @@ bu_backtrace(FILE *fp)
 	/* MUST give gdb path to binary, otherwise attach bug causes
 	 * process kill on some platforms (e.g., FreeBSD9+AMD64)
 	 */
-	bu_strlcpy(debugger_args[1], bu_argv0_full_path(), MAXPATHLEN);
+	bu_strlcpy(debugger_args[1], bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL), MAXPATHLEN);
     } else if (have_lldb) {
 	bu_strlcpy(debugger_args[0], path_lldb, MAXPATHLEN);
     }

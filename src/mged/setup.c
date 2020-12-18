@@ -426,7 +426,7 @@ mged_setup(Tcl_Interp **interpreter)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
-    const char *name = bu_argv0_full_path();
+    const char *name = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
 
     /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
     if (name) {

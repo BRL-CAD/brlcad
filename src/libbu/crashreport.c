@@ -59,7 +59,7 @@ bu_crashreport(const char *filename)
     /* vat time ist? */
     (void)time(&now);
 
-    path = bu_argv0_full_path();
+    path = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
 
     /* do our own expansion to avoid heap allocation */
     snprintf(buffer, CR_BUFSIZE, "******************************************\n\n"

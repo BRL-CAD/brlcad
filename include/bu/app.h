@@ -51,7 +51,7 @@ __BEGIN_DECLS
  * identified but should never return NULL.  this routine is not
  * thread-safe.
  */
-BU_EXPORT extern const char *bu_argv0_full_path(void);
+DEPRECATED BU_EXPORT extern const char *bu_argv0_full_path(void);
 
 /**
  * Routine for obtaining the current working directory.
