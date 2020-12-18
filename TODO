@@ -37,10 +37,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   breaks if an application changes its notion of the current working
   directory after initialization, for example.
 
-* move the rt_*_timer timing facilities to libbu and rework to allow
-  contexts, allowing for more than one timer to be active.  Make sure
-  the old librt API can be obsoleted cleanly.
-
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
@@ -129,6 +125,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * mged> nirt -f fmt doesn't seem to work at all
 
+* move the rt_*_timer timing facilities to libbu and rework to allow
+  contexts, allowing for more than one timer to be active.  Make sure
+  the old librt API can be obsoleted cleanly.
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
