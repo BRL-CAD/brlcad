@@ -201,12 +201,12 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 	    p->stdout_active = 0;
 	    break;
 	case BU_PROCESS_STDERR:
-	    if (p->stdout_err && pchan->cstderr) {
+	    if (p->stderr_active && pchan->cstderr) {
 		Tcl_DeleteChannelHandler(pchan->cstderr, NULL, (ClientData)NULL);
 		Tcl_Close(t_iod->interp, pchan->cstderr);
 		pchan->cstderr = NULL;
 	    }
-	    p->stdout_err = 0;
+	    p->stderr_active = 0;
 	    break;
     }
 }
