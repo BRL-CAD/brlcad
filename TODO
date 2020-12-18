@@ -129,6 +129,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
+* investigate problems with struct parsing running the MGED
+  "vars" command - most visible on OpenBSD, but Linux valgrind can
+  also see issues.
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
