@@ -421,11 +421,11 @@ BRLMAN_MAIN(
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 
 	} else {
-	    bu_vls_sprintf(&tcl_cmd, "set ::data_dir %s/html", bu_brlcad_dir("doc", 1));
+	    bu_vls_sprintf(&tcl_cmd, "set ::data_dir %s/html", bu_dir(NULL, 0, BU_DIR_DOC, NULL));
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
 
-	brlman_tcl = bu_brlcad_root("share/tclscripts/brlman/brlman.tcl", 1);
+	brlman_tcl = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "brlman", "brlman.tcl", NULL);
 	Tcl_DStringInit(&temp);
 	fullname = Tcl_TranslateFileName(interp, brlman_tcl, &temp);
 	status = Tcl_EvalFile(interp, fullname);

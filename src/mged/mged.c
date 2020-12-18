@@ -1474,9 +1474,9 @@ main(int argc, char *argv[])
 		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;
-		const char *archer = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
 		const char *archer_trans;
 		Tcl_DStringInit(&temp);
+		const char *archer = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "archer", "archer_launch.tcl", NULL);
 		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
 		tclcad_set_argv(INTERP, argc, (const char **)argv);
 		status = Tcl_EvalFile(INTERP, archer_trans);

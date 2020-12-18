@@ -249,7 +249,7 @@ ged_help_core(struct ged *gedp, int argc, const char *argv[])
 	return -1;
 
     /* get our doc dir */
-    dir = bu_strdup(bu_brlcad_dir("doc", 0));
+    dir = bu_strdup(bu_dir(NULL, 0, BU_DIR_DOC, NULL));
 
     /* get recursive list of documentation files */
     count = help_files(dir, &entries);

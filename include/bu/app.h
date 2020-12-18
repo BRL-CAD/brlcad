@@ -204,7 +204,7 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
  */
-BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
+DEPRECATED BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
 
 /**
  * @brief
@@ -224,7 +224,7 @@ BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly)
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
  */
-BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
+DEPRECATED BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 
 
 typedef enum {

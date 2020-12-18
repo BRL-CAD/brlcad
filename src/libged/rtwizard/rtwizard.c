@@ -111,7 +111,7 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    bin = bu_brlcad_root("bin", 1);
+    bin = bu_dir(NULL, 0, BU_DIR_BIN, NULL);
     if (bin) {
 	snprintf(rtscript, 256, "%s/rtwizard", bin);
     } else {
