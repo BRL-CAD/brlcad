@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* added decimation control examples to facetize man page - Cliff Yapp
 * changed gcv converter to append to existing .g files - Cliff Yapp
 * added a '-f' forcing option to MGED's quit command - Cliff Yapp
 * changed MGED's quit command to wait for subprocesses - Cliff Yapp
