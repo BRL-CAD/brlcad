@@ -177,7 +177,7 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 	return;
     }
     pchan = (*pmap)[p];
-    if (!pchan->cstdin && !pchan->cstdout && !pchan->cstdout) {
+    if (!pchan->cstdin && !pchan->cstdout && !pchan->cstderr) {
 	// All subprocess channels destroyed; we're done with the I/O from this subprocess, clean up
 	BU_PUT(pchan, struct tclcad_process_channels);
 	pmap->erase(p);
