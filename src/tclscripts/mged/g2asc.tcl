@@ -50,7 +50,7 @@ proc init_g2asc { id } {
 	set mged_gui(databaseDir) [ file dirname $filename ]
 
 	# convert binary database to ascii
-	set g2asc [bu_brlcad_root "bin/g2asc"]
+	set g2asc [file join [bu_dir bin] g2asc]
 	catch {exec $g2asc $db_name $filename} msg
     }
 }

@@ -286,7 +286,7 @@ proc dbupgrade {args} {
     }
 
     # dbupgrade converts the original database to the current db format
-    set dbupgrade_cmd [file join [bu_brlcad_root "bin"] dbupgrade]
+    set dbupgrade_cmd [file join [bu_dir bin] dbupgrade]
     catch {exec "$dbupgrade_cmd" "$db_orig" "$dbname"} ret
 
     if {![file exists "$dbname"]} {

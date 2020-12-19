@@ -44,7 +44,7 @@ proc man {{cmdname {}}} {
 	    if {$::tcl_platform(platform) == "windows"} {
 		set exe_ext ".exe"
 	    }
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] brlman$exe_ext]]]
+	    set cmd [list [file join [bu_dir bin] brlman$exe_ext]]
 	    exec $cmd $cmdname
 	}
     }

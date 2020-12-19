@@ -52,9 +52,9 @@ if {![info exists mged_default(tran_factor)]} {
     set mged_default(tran_factor) 0.01
 }
 
-set mged_default(html_dir) [file normalize [file join [bu_brlcad_root "share/html"] manuals mged]]
+set mged_default(html_dir) [file normalize [file join [bu_dir data] html manuals mged]]
 if {![file exists $mged_default(html_dir)]} {
-    set mged_default(html_dir) [file normalize [file join [bu_brlcad_root "share/doc"] html manuals mged]]
+    set mged_default(html_dir) [file normalize [file join [bu_dir doc] html manuals mged]]
 }
 
 if {[info exists env(MGED_HTML_DIR)]} {

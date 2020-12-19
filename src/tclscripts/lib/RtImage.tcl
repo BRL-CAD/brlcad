@@ -90,7 +90,7 @@ proc rtimage {rtimage_dict} {
     set tmod [list [file join $dir $pid\_bwmod.bw] ]
     set tbwpix [list [file join $dir $pid\_bwpix.pix] ]
 
-    set binpath [bu_brlcad_root "bin"]
+    set binpath [bu_dir bin]
 
     if {[llength $_color_objects]} {
 	set have_color_objects 1
