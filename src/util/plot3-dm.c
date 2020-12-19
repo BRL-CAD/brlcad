@@ -1116,7 +1116,7 @@ appInit(Tcl_Interp *_interp)
 	bu_exit (1, "appInit: Failed to get main window.\n");
 
     /* Locate the BRL-CAD-specific Tcl scripts */
-    filename = bu_brlcad_root("share/tclscripts", 0);
+    filename = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", NULL);
 
     bu_vls_printf(&str2, "%s/plot3-dm", filename);
     bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",

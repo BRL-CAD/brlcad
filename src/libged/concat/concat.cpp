@@ -283,6 +283,10 @@ copy_object(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* db_diradd doesn't produce the correct major type for binary objects -
+     * make sure they match. */
+    new_dp->d_major_type = input_dp->d_major_type;
+
     if (rt_db_put_internal(new_dp, curr_dbip, &ip, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",

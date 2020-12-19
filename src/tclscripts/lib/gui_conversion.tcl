@@ -144,7 +144,7 @@ proc rhino_options {} {
 
 # For 3dm-g, it's options first, then output file, then input file
 proc ::rhino_build_cmd {} {
-    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g$::exe_ext]]]
+    set cmd [list [file join [bu_dir bin] 3dm-g$::exe_ext]]
 
     if {$::print_debug_info == 1} {
        append cmd " -d" { }
@@ -246,7 +246,7 @@ proc fast4_options {} {
 }
 
 proc ::fast4_build_cmd {} {
-    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]]]
+    set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext]]
 
     if {$::print_debug_info == 1} {
        append cmd " -d" { }
@@ -361,7 +361,7 @@ proc stl_options {} {
 
 # For stl-g, it's options first, then input file, then output file
 proc ::stl_build_cmd {} {
-    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g$::exe_ext]]]
+    set cmd [list [file join [bu_dir bin] stl-g$::exe_ext]]
 
     if {$::print_debug_info == 1} {
        append cmd " -d" { }
@@ -504,7 +504,7 @@ proc obj_options {} {
 
 # For obj-g, it's options first, then input file, then output file
 proc ::obj_build_cmd {} {
-    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] obj-g$::exe_ext]]]
+    set cmd [list [file join [bu_dir bin] obj-g$::exe_ext]]
     if {[llength "$::debug_level"] > 0} {
        append cmd " -d -v $::debug_level" { }
     }
@@ -684,7 +684,7 @@ proc ::conversion_config { } {
            gui_conversion $::rhino_cmd $::log_file
        }
        ".asc" {
-   	set asc_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] asc2g$::exe_ext]] \
+   	set asc_cmd [list [file join [bu_dir bin] asc2g$::exe_ext] \
    	                    $::input_file \
    			    $::output_file]
            gui_conversion $asc_cmd $::log_file
@@ -730,13 +730,13 @@ proc ::conversion_config { } {
            gui_conversion $::stl_cmd $::log_file
        }
        ".stp" {
-   	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
+   	set step_cmd [list [file join [bu_dir bin] step-g$::exe_ext] \
    	                    -v -o $::output_file \
    			    $::input_file]
            gui_conversion $step_cmd $::log_file
        }
        ".step" {
-   	set step_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
+   	set step_cmd [list [file join [bu_dir bin] step-g$::exe_ext] \
    	                    -v -o $::output_file \
    			    $::input_file]
            gui_conversion $step_cmd $::log_file

@@ -23,11 +23,7 @@
 #	 This is a script for loading/registering the bot editor utility.
 #
 
-set filename [file join [bu_brlcad_root "share/plugins"] archer Utility botUtilityP BotUtilityP.tcl]
-if { ![file exists $filename] } {
-    # non-tclscript resource, look in the source invocation path
-    set filename [file join [bu_brlcad_root "src"] archer plugins Utility botUtilityP BotUtilityP.tcl]
-}
+set filename [file join [bu_dir data] plugins archer Utility botUtilityP BotUtilityP.tcl]
 if { ![file exists $filename] } {
     puts "Could not load the BotUtilityP plugin, skipping $filename"
     return

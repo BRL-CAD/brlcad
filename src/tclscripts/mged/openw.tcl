@@ -52,9 +52,9 @@ if {![info exists mged_default(tran_factor)]} {
     set mged_default(tran_factor) 0.01
 }
 
-set mged_default(html_dir) [file normalize [file join [bu_brlcad_root "share/html"] manuals mged]]
+set mged_default(html_dir) [file normalize [file join [bu_dir data] html manuals mged]]
 if {![file exists $mged_default(html_dir)]} {
-    set mged_default(html_dir) [file normalize [file join [bu_brlcad_root "share/doc"] html manuals mged]]
+    set mged_default(html_dir) [file normalize [file join [bu_dir doc] html manuals mged]]
 }
 
 if {[info exists env(MGED_HTML_DIR)]} {
@@ -504,7 +504,6 @@ proc gui { args } {
     .$id.menubar add cascade -label "Edit" -underline 0 -menu .$id.menubar.edit
     .$id.menubar add cascade -label "Create" -underline 0 -menu .$id.menubar.create
     .$id.menubar add cascade -label "View" -underline 0 -menu .$id.menubar.view
-    .$id.menubar add cascade -label "ViewRing" -underline 4 -menu .$id.menubar.viewring
     .$id.menubar add cascade -label "Settings" -underline 0 -menu .$id.menubar.settings
     .$id.menubar add cascade -label "Modes" -underline 0 -menu .$id.menubar.modes
     .$id.menubar add cascade -label "Misc" -underline 1 -menu .$id.menubar.misc
@@ -959,47 +958,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { accelerator "0" }
 	    { see_also "knob, press" } }
 
-    menu .$id.menubar.viewring -title "ViewRing" -tearoff $mged_default(tearoff_menus)
-    .$id.menubar.viewring add command -label "Add View" -underline 0 -command "view_ring_add $id"
-    hoc_register_menu_data "ViewRing" "Add View" "Add View"\
-	{ { synopsis "Add a view to the view ring." }
-	    { description "A view ring is a mechanism for managing multiple
-	views within a single pane or display manager. Each pane
-	has its own view ring where any number of views can be stored.
-	The stored views can be removed or traversed." } }
-    .$id.menubar.viewring add cascade -label "Select View" -underline 0 -menu .$id.menubar.viewring.select
-    .$id.menubar.viewring add cascade -label "Delete View" -underline 0 -menu .$id.menubar.viewring.delete
-    .$id.menubar.viewring add command -label "Next View" -underline 0 -command "view_ring_next $id"
-    hoc_register_menu_data "ViewRing" "Next View" "Next View"\
-	{ { synopsis "Go to the next view on the view ring." }
-	    { accelerator "Control-n" } }
-    .$id.menubar.viewring add command -label "Prev View" -underline 0 -command "view_ring_prev $id"
-    hoc_register_menu_data "ViewRing" "Prev View" "Previous View"\
-	{ { synopsis "Go to the previous view on the view ring." }
-	    { accelerator "Control-p" } }
-    .$id.menubar.viewring add command -label "Last View" -underline 0 -command "view_ring_toggle $id"
-    hoc_register_menu_data "ViewRing" "Last View" "Last View"\
-	{ { synopsis "Go to the last view. This can be used to toggle
-	between two views." }
-	    { accelerator "Control-t" } }
-
-    #menu .$id.menubar.viewring.select -title "Select View" -tearoff $mged_default(tearoff_menus)\
-	-postcommand "update_view_ring_labels $id"
-    menu .$id.menubar.viewring.select -title "Select View" -tearoff $mged_default(tearoff_menus) \
-	-postcommand "view_ring_save_curr $id"
-
-    update_view_ring_entries $id s
-
-    set mged_gui($id,views) ""
-    set view_ring($id) 0
-    set view_ring($id,curr) 0
-    set view_ring($id,prev) 0
-    #menu .$id.menubar.viewring.delete -title "Delete View" -tearoff $mged_default(tearoff_menus)\
-	-postcommand "update_view_ring_labels $id"
-    menu .$id.menubar.viewring.delete -title "Delete View" -tearoff $mged_default(tearoff_menus)
-
-    update_view_ring_entries $id d
-
     menu .$id.menubar.settings -title "Settings" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings add cascade -label "Mouse Behavior" -underline 0\
 	-menu .$id.menubar.settings.mouse_behavior
@@ -1030,19 +988,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Apply To" "Active Pane" "Active Pane"\
 	{ { summary "Set the \"Apply To\" mode such that the user's
 	interaction with the GUI is applied to the active pane." } }
-    .$id.menubar.settings.applyTo add radiobutton -value 1 -variable mged_gui($id,apply_to)\
-	-label "Local Panes" -underline 0
-    hoc_register_menu_data "Apply To" "Local Panes" "Local Panes"\
-	{ { summary "Set the \"Apply To\" mode such that the user's
-	interaction with the GUI is applied to all panes
-	local to this instance of the GUI." } }
-    .$id.menubar.settings.applyTo add radiobutton -value 2 -variable mged_gui($id,apply_to)\
-	-label "Listed Panes" -underline 1
-    hoc_register_menu_data "Apply To" "Listed Panes" "Listed Panes"\
-	{ { summary "Set the \"Apply To\" mode such that the user's
-	interaction with the GUI is applied to all panes
-	listed in the Tcl variable mged_gui(id,apply_list)
-	(Note - id refers to the GUI's id)." } }
     .$id.menubar.settings.applyTo add radiobutton -value 3 -variable mged_gui($id,apply_to)\
 	-label "All Panes" -underline 4
     hoc_register_menu_data "Apply To" "All Panes" "All Panes"\
@@ -1132,20 +1077,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	\t\t3\t\tZoom in by a factor of 2" }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.mouse_behavior add separator
-    .$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep Raytrace-Rectangle" -underline 6\
-	-command "set_mouse_behavior $id"
-    hoc_register_menu_data "Mouse Behavior" "Sweep Raytrace-Rectangle" "Sweep Raytrace-Rectangle"\
-	{ { synopsis "Enter sweep raytrace-rectangle mode." }
-	    { description "If the framebuffer is active, the rectangular area as
-	specified by the user is raytraced. The rectangular area is
-	also painted with the current contents of the framebuffer. Otherwise,
-	only the rectangle is drawn.\n
-	\tMouse Button\t\t\tBehavior
-	\t\t1\t\tZoom out by a factor of 2
-	\t\t2\t\tDraw raytrace-rectangle
-	\t\t3\t\tZoom in by a factor of 2" }
-	    { see_also "rset, vars" } }
     .$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_gui($id,mouse_behavior)\
 	-label "Pick Raytrace-Object(s)" -underline 14\
 	-command "set_mouse_behavior $id"
@@ -1168,33 +1099,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	\t\t2\t\tFire query ray
 	\t\t3\t\tZoom in by a factor of 2" }
 	    { see_also "nirt, qray, rset, vars" } }
-    .$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep Paint-Rectangle" -underline 6\
-	-command "set_mouse_behavior $id"
-    hoc_register_menu_data "Mouse Behavior" "Sweep Paint-Rectangle" "Sweep Paint-Rectangle"\
-	{ { synopsis "Enter sweep paint-rectangle mode." }
-	    { description "If the framebuffer is active, the rectangular area
-	as specified by the user is painted with the current contents of the
-	framebuffer. Otherwise, only the rectangle is drawn.\n
-	\tMouse Button\t\t\tBehavior
-	\t\t1\t\tZoom out by a factor of 2
-	\t\t2\t\tDraw paint rectangle
-	\t\t3\t\tZoom in by a factor of 2" }
-	    { see_also "rset, vars" } }
-    .$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep Zoom-Rectangle" -underline 6\
-	-command "set_mouse_behavior $id"
-    hoc_register_menu_data "Mouse Behavior" "Sweep Zoom-Rectangle" "Sweep Zoom-Rectangle"\
-	{ { synopsis "Enter sweep zoom-rectangle mode." }
-	    { description "The rectangular area as specified by the user is used
-	to zoom the view. Note - as the user stretches out the zoom
-	rectangle, the rectangle is constrained to be the same shape as the
-	window. This insures that the user gets what he or she sees.\n
-	\tMouse Button\t\t\tBehavior
-	\t\t1\t\tZoom out by a factor of 2
-	\t\t2\t\tDraw zoom rectangle
-	\t\t3\t\tZoom in by a factor of 2" }
-	    { see_also "rset, vars" } }
 
     menu .$id.menubar.settings.qray -title "Query Ray Effects" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.qray add radiobutton -value t -variable mged_gui($id,qray_effects)\
@@ -1277,12 +1181,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
     hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
 	{ { summary "Use the entire pane for the framebuffer." }
-	    { see_also "rset, vars" } }
-    .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_all)\
-	-label "Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
-    hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
-	{ { summary "Use the rectangle area for the framebuffer." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.fb add separator
     .$id.menubar.settings.fb add radiobutton -value 2 -variable mged_gui($id,fb_overlay)\
@@ -1639,12 +1537,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	data." }
 	    { see_also "rset, vars" } }
     .$id.menubar.modes add separator
-    .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rubber_band)\
-	-label "Persistent Sweep Rectangle" -underline 0\
-	-command "mged_apply $id \"rset rb draw \$mged_gui($id,rubber_band)\""
-    hoc_register_menu_data "Modes" "Persistent sweep rectangle" "Persistent Rubber Band"\
-	{ { summary "Toggle drawing the rectangle while idle." }
-	    { see_also "rset" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,adc_draw)\
 	-label "Angle/Dist Cursor" -underline 0 \
 	-command "adc_CBHandler $id"
@@ -1697,24 +1589,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { { summary "Toggle display of the graphics window." } }
     }
     .$id.menubar.modes add separator
-    .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,collaborate)\
-	-label "Collaborate" -underline 0\
-	-command "collab_doit $id"
-    hoc_register_menu_data "Modes" "Collaborate" "Collaborate"\
-	{ { summary "Toggle collaborate mode. When in collaborate
-	mode, the upper right pane's view can be shared
-	with other instances of MGED's new GUI that are
-	also collaborating." } }
-    .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rateknobs)\
-	-label "Rateknobs" -underline 0\
-	-command "mged_apply $id \"set rateknobs \$mged_gui($id,rateknobs)\""
-    hoc_register_menu_data "Modes" "Rateknobs" "Rate Knobs"\
-	{ { summary "Toggle rate knob mode. When in rate knob mode,
-	transformation with the mouse becomes rate based.
-	For example, if the user rotates the view about
-	the X axis, the view continues to rotate about the
-	X axis until the rate rotation is stopped." }
-	    { see_also "knob" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,dlist)\
 	-label "Display Lists" -underline 8\
 	-command "mged_apply $id \"set dlist \$mged_gui($id,dlist)\""
@@ -2630,6 +2504,8 @@ proc set_cmd_win { id } {
 }
 
 proc open_cmd_win {id} {
+    global mged_gui
+
     set mged_gui($id,show_cmd) 1
     wm deiconify .$id
     raise .$id
@@ -2668,75 +2544,6 @@ proc set_dm_win { id } {
 
 	set nlines [expr $h / $fh]
 	.$id.t configure -height $nlines
-    }
-}
-
-proc view_ring_add {id} {
-    global mged_gui
-    global mged_default
-    global view_ring
-    global mged_collaborators
-
-    winset $mged_gui($id,active_dm)
-
-    # already have 10 views in the view ring, ignore add
-    if {$mged_default(max_views) <= [llength $mged_gui($id,views)]} {
-	return
-    }
-
-    # calculate a view id for the new view
-    set vid [.$id.menubar.viewring.select entrycget end -value]
-    if {$vid == ""} {
-	set vid 0
-    } else {
-	incr vid
-    }
-
-    # get view parameters
-    set aet [_mged_ae]
-    set center [_mged_center]
-    set size [_mged_size]
-
-    # save view commands
-    set vcmds "_mged_ae $aet; _mged_center $center; _mged_size $size"
-
-    # format view parameters for display in menu
-    set aet [format "az=%.2f el=%.2f tw=%.2f" \
-		 [lindex $aet 0] [lindex $aet 1] [lindex $aet 2]]
-    set center [format "cent=(%.3f %.3f %.3f)" \
-		    [lindex $center 0] [lindex $center 1] [lindex $center 2]]
-    set size [format "size=%.3f" $size]
-
-    if {[lsearch -exact $mged_collaborators $id] != -1} {
-	foreach cid $mged_collaborators {
-	    # append view commands to view list
-	    lappend mged_gui($cid,views) $vcmds
-
-	    .$cid.menubar.viewring.select add radiobutton -value $vid -variable view_ring($cid) \
-		-label "$center $size $aet" -command "view_ring_goto $cid $vid"
-	    .$cid.menubar.viewring.delete add command -label "$center $size $aet" \
-		-command "view_ring_delete $cid $vid"
-
-	    # remember the last selected radiobutton
-	    set view_ring($cid,prev) $view_ring($cid)
-
-	    # update radio buttons
-	    set view_ring($cid) $vid
-	}
-    } else {
-	# append view commands to view list
-	lappend mged_gui($id,views) $vcmds
-
-	.$id.menubar.viewring.select add radiobutton -value $vid -variable view_ring($id) \
-	    -label "$center $size $aet" -command "view_ring_goto $id $vid"
-	.$id.menubar.viewring.delete add command -label "$center $size $aet" \
-	    -command "view_ring_delete $id $vid"
-
-	# remember the last selected radiobutton
-	set view_ring($id,prev) $view_ring($id)
-
-	# update radio buttons
-	set view_ring($id) $vid
     }
 }
 
@@ -2781,225 +2588,6 @@ proc view_ring_set_view {id vid vi} {
 	set view_ring($id) $vid
 	winset $mged_gui($id,active_dm)
 	eval [lindex $mged_gui($id,views) $vi]
-    }
-}
-
-proc view_ring_delete {id vid} {
-    global mged_gui
-    global mged_default
-    global view_ring
-    global mged_collaborators
-
-    #		 winset $mged_gui($id,active_dm)
-
-    if {![find_view_index $vid vi .$id.menubar.viewring.select]} {
-	return
-    }
-
-    # we're collaborating, so update collaborators
-    if {[lsearch -exact $mged_collaborators $id] != -1} {
-	foreach cid $mged_collaborators {
-	    .$cid.menubar.viewring.select delete $vi
-	    .$cid.menubar.viewring.delete delete $vi
-	    set mged_gui($cid,views) [lreplace $mged_gui($cid,views) $vi $vi]
-	    set view_ring($cid) 0
-	    set view_ring($cid,prev) 0
-	}
-    } else {
-	.$id.menubar.viewring.select delete $vi
-	.$id.menubar.viewring.delete delete $vi
-	set mged_gui($id,views) [lreplace $mged_gui($id,views) $vi $vi]
-	set view_ring($id) 0
-	set view_ring($id,prev) 0
-    }
-}
-
-#
-# This gets called when the .$id.menubar.viewring.select menu is posted
-# to capture the current value of view_ring($id) before it gets
-# modified by selecting one of the entries (i.e. view_ring($id) is tied
-# to the radiobuttons).
-#
-proc view_ring_save_curr {id} {
-    global view_ring
-
-    set view_ring($id,curr) $view_ring($id)
-}
-
-proc view_ring_goto {id vid} {
-    global mged_gui
-    global mged_default
-    global view_ring
-    global mged_collaborators
-
-    #		 winset $mged_gui($id,active_dm)
-
-    if {![find_view_index $vid vi .$id.menubar.viewring.select]} {
-	return
-    }
-
-    # Since view_ring(id) has been modified by the radiobutton, we'll put
-    # it back the way it was for now. view_ring_set_view will restore it again.
-    # This is done so that view_ring(id,prev) gets updated properly.
-    set view_ring($id) $view_ring($id,curr)
-    view_ring_set_view $id $vid $vi
-}
-
-proc view_ring_next {id} {
-    global mged_gui
-    global view_ring
-
-    #		 winset $mged_gui($id,active_dm)
-
-    # find view index of menu entry whose value is $view_ring($id)
-    if {![find_view_index $view_ring($id) vi .$id.menubar.viewring.select]} {
-	return
-    }
-
-    # advance view index to next
-    incr vi
-
-    # see if we have to wrap
-    if {[.$id.menubar.viewring.select index end] < $vi} {
-	set vi 0
-    }
-
-    set vid [.$id.menubar.viewring.select entrycget $vi -value]
-    view_ring_set_view $id $vid $vi
-}
-
-proc view_ring_prev {id} {
-    global mged_gui
-    global view_ring
-
-    #		 winset $mged_gui($id,active_dm)
-
-    # find view index of menu entry whose value is $view_ring($id)
-    if {![find_view_index $view_ring($id) vi .$id.menubar.viewring.select]} {
-	return
-    }
-
-    # advance view index to next
-    incr vi -1
-
-    # see if we have to wrap
-    if {$vi < 0} {
-	set vi [.$id.menubar.viewring.select index end]
-    }
-
-    set vid [.$id.menubar.viewring.select entrycget $vi -value]
-    view_ring_set_view $id $vid $vi
-}
-
-proc view_ring_toggle {id} {
-    global mged_gui
-    global view_ring
-
-    # validate view_ring(id)
-    if {![find_view_index $view_ring($id) vi .$id.menubar.viewring.select]} {
-	return
-    }
-
-    # validate view_ring(id,prev) and find its corresponding menu view index
-    if {![find_view_index $view_ring($id,prev) vi_prev .$id.menubar.viewring.select]} {
-	return
-    }
-
-    view_ring_set_view $id $view_ring($id,prev) $vi_prev
-}
-
-proc view_ring_copy {from to} {
-    global mged_gui
-    global view_ring
-
-    # first, delete all menu entries in select and delete menus
-    .$to.menubar.viewring.select delete 0 end
-    .$to.menubar.viewring.delete delete 0 end
-
-    # update list of views
-    set mged_gui($to,views) $mged_gui($from,views)
-
-    # redo the select and delete menus
-    set len [llength $mged_gui($to,views)]
-    for {set i 0} {$i < $len} {incr i} {
-	# get the label from the from_menu
-	set label [.$from.menubar.viewring.select entrycget $i -label]
-
-	# get the value/view_id from the from_menu
-	set vid [.$from.menubar.viewring.select entrycget $i -value]
-
-	# recreate the entries for the select and delete menus
-	.$to.menubar.viewring.select add radiobutton -value $vid -variable view_ring($to) \
-	    -label $label -command "view_ring_goto $to $vid"
-	.$to.menubar.viewring.delete add command -label $label \
-	    -command "view_ring_delete $to $vid"
-    }
-}
-
-proc update_view_ring_entries { id m } {
-    global view_ring
-
-    if {0} {
-	set views [view_ring get -a]
-	set llen [llength $views]
-
-	if {$m == "s"} {
-	    set w .$id.menubar.viewring.select
-	    $w delete 0 end
-	    for {set i 0} {$i < $llen} {incr i} {
-		$w add radiobutton -value [lindex $views $i] -variable view_ring($id)\
-		    -label [lindex $views $i] -command "view_ring_goto $id [lindex $views $i]"
-	    }
-	} elseif {$m == "d"} {
-	    set w .$id.menubar.viewring.delete
-	    $w delete 0 end
-	    for {set i 0} {$i < $llen} {incr i} {
-		$w add command -label [lindex $views $i]\
-		    -command "view_ring_delete $id [lindex $views $i]"
-	    }
-	} else {
-	    puts "Usage: update_view_ring_entries w s|d"
-	}
-    }
-}
-
-proc update_view_ring_labels { id } {
-    global mged_gui
-    global view_ring
-
-    if {0} {
-	if {[_mged_opendb] == ""} {
-	    error "No database has been opened!"
-	}
-
-	winset $mged_gui($id,active_dm)
-	set view_ring($id) [view_ring get]
-	set views [view_ring get -a]
-	set llen [llength $views]
-
-	# we need to also save the previous view so that
-	# toggle will continue to work
-	view_ring toggle
-	set prev [view_ring get]
-
-	set ws .$id.menubar.viewring.select
-	set wd .$id.menubar.viewring.delete
-	for {set i 0} {$i < $llen} {incr i} {
-	    view_ring goto [lindex $views $i]
-	    set aet [view aet]
-	    set aet [format "az=%.2f el=%.2f tw=%.2f"\
-			 [lindex $aet 0] [lindex $aet 1] [lindex $aet 2]]
-	    set center [view center]
-	    set center [format "cent=(%.3f %.3f %.3f)"\
-			    [lindex $center 0] [lindex $center 1] [lindex $center 2]]
-	    set size [format "size=%.3f" [view size]]
-	    $ws entryconfigure $i -label "$center $size $aet"
-	    $wd entryconfigure $i -label "$center $size $aet"
-	}
-
-	# restore both previous and current views
-	view_ring goto $prev
-	view_ring goto $view_ring($id)
     }
 }
 

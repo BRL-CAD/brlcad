@@ -151,7 +151,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     }
 
     if ((pid1 = fork()) == 0) {
-	const char *cad_boundp = bu_brlcad_root("bin/cad_boundp", 1);
+	const char *cad_boundp = bu_dir(NULL, 0, BU_DIR_BIN, "cad_boundp", BU_DIR_EXT, NULL);
 
 	dup2(fd1[0], fileno(stdin));
 	dup2(fd2[1], fileno(stdout));
@@ -167,7 +167,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     }
 
     if ((pid2 = fork()) == 0) {
-	const char *cad_parea = bu_brlcad_root("bin/cad_parea", 1);
+	const char *cad_parea = bu_dir(NULL, 0, BU_DIR_BIN, "cad_parea", BU_DIR_EXT, NULL);
 
 	dup2(fd2[0], fileno(stdin));
 	dup2(fd3[1], fileno(stdout));

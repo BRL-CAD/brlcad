@@ -653,8 +653,8 @@ const char *fullname;
     argv++; argc--;
     tclcad_set_argv(interp, argc, argv);
 
-    isst_tcl = bu_brlcad_root("share/tclscripts/isst/isst.tcl", 1);
     Tcl_DStringInit(&temp);
+    isst_tcl = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "isst", "isst.tcl", NULL);
     fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);
     Tcl_DStringFree(&temp);

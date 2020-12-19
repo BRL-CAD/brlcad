@@ -97,6 +97,7 @@ struct _mged_variables default_mged_variables = {
 #define MV_O(_m) bu_offsetof(struct _mged_variables, _m)
 #define LINE RT_MAXLINE
 struct bu_structparse mged_vparse[] = {
+    {"%d", 1, "rc",			MV_O(mv_rc),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "rateknobs",		MV_O(mv_rateknobs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "sliders",		MV_O(mv_sliders),		set_scroll_private, NULL, NULL },
@@ -293,7 +294,7 @@ f_set(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     mged_vls_struct_parse_old(&vls, "mged variables", mged_vparse,
-			      (char *)&mged_variables, argc, argv);
+			      (char *)mged_variables, argc, argv);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -425,7 +426,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 		    }
 
 		    /* found a dlp2 that is actively using dlp1's display lists */
-		    if (dlp2->dm_mged_variables->mv_dlist) {
+		    if (dlp2 && dlp2->dm_mged_variables->mv_dlist) {
 			dlp2 = m_dmp;
 			break;
 		    }

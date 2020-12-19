@@ -1091,7 +1091,7 @@ namespace eval ArcherCore {
 	set env(DISPLAY) ":0"
     }
 
-    set mImgDir [file join [bu_brlcad_root "share/tclscripts"] archer images]
+    set mImgDir [file join [bu_dir data] tclscripts archer images]
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]

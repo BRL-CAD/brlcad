@@ -281,7 +281,7 @@ body GraphEditor::destructor {} {
     # destroy the framebuffer, if we opened it
     if { $_weStartedFbserv } {
 	puts "cleaning up fbserv"
-	set fbfree [file join [bu_brlcad_root "bin"] fbfree]
+	set fbfree [file join [bu_dir bin] fbfree]
 	if { [ catch { exec $fbfree -F $_fbservPort } error ] } {
 	    puts $error
 	    puts "Unable to properly clean up after our fbserv"
@@ -380,10 +380,10 @@ body GraphEditor::renderPreview { { rtoptions "-P4 -R -B" } } {
     set device /dev/X
     set rgb "255 255 255"
     set rtrun ""
-    set fbserv [file join [bu_brlcad_root "bin"] fbserv]
-    set fbfree [file join [bu_brlcad_root "bin"] fbfree]
-    set fbline [file join [bu_brlcad_root "bin"] fbline]
-    set fbclear [file join [bu_brlcad_root "bin"] fbclear]
+    set fbserv [file join [bu_dir bin] fbserv]
+    set fbfree [file join [bu_dir bin] fbfree]
+    set fbline [file join [bu_dir bin] fbline]
+    set fbclear [file join [bu_dir bin] fbclear]
 
     # see if we can try to use the mged graphics window instead of firing up our own framebuffer
     set useMgedWindow 0
