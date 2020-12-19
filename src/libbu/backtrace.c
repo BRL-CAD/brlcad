@@ -395,7 +395,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
 
 int
-bu_backtrace(FILE *fp)
+bu_backtrace_app(FILE *fp, const char *argv0)
 {
     if (!fp) {
 	fp = stdout;
@@ -440,11 +440,17 @@ bu_backtrace(FILE *fp)
 #endif
 
     if (have_gdb) {
+	const char *gdb_path = NULL;
 	bu_strlcpy(debugger_args[0], path_gdb, MAXPATHLEN);
 	/* MUST give gdb path to binary, otherwise attach bug causes
 	 * process kill on some platforms (e.g., FreeBSD9+AMD64)
 	 */
-	bu_strlcpy(debugger_args[1], bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL), MAXPATHLEN);
+	if (argv0) {
+	    gdb_path = argv0;
+	} else {
+	    gdb_path = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
+	}
+	bu_strlcpy(debugger_args[1], gdb_path, MAXPATHLEN);
     } else if (have_lldb) {
 	bu_strlcpy(debugger_args[0], path_lldb, MAXPATHLEN);
     }
@@ -535,6 +541,11 @@ bu_backtrace(FILE *fp)
     return 1;
 }
 
+int
+bu_backtrace(FILE *fp)
+{
+    return bu_backtrace_app(fp, NULL);
+}
 
 /*
  * Local Variables:
