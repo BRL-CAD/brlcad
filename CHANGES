@@ -129,6 +129,10 @@ removed at any time.
 
 7.32
 ----
+include/bu/app.h
+        bu_brlcad_root: replaced by bu_dir
+        bu_brlcad_dir:  replaced by bu_dir
+
 include/bg/chull.h
         All functions returning point arrays instead of index arrays.
         Will be replaced by similarly named functions returning
