@@ -506,8 +506,8 @@ fb_osgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 	std::string ppath = std::string(bu_dir(NULL, 0, BU_DIR_LIB, "osgPlugins"));
 	osgDB::FilePathList paths = osgDB::Registry::instance()->getLibraryFilePathList();
 	if (ppath.length()) {
-	    /* The first entry is the final installed path - prefer that to the local
-	     * bu_brlcad_root lib directory.  This means our new path should be the
+	    /* The first entry is the final installed path - prefer that to the
+	     * local lib directory.  This means our new path should be the
 	     * second entry in the list - insert it accordingly. */
 	    osgDB::FilePathList::iterator in_itr=++(paths.begin());
 	    paths.insert(in_itr, ppath);

@@ -23,14 +23,9 @@
 #	 This is a script for loading/registering the tire wizard.
 #
 
-set brlcadDataPath [bu_brlcad_root "share/plugins"]
+set brlcadDataPath [file join [bu_dir data] plugins]
 # puts "pwd is [pwd], path is $brlcadDataPath"
 set filename [file join $brlcadDataPath archer Wizards tirewizard TireWizard.tcl]
-if { ![file exists $filename] } {
-    # non-tclscript resource, look in the source invocation path
-    set brlcadDataPath [bu_brlcad_root "src"]
-    set filename [file join $brlcadDataPath archer plugins Wizards tirewizard TireWizard.tcl]
-}
 if { ![file exists $filename] } {
     puts "Could not load the TireWizard plugin, skipping $filename"
     return

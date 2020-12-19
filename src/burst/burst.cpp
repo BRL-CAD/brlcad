@@ -1786,7 +1786,7 @@ main(int argc, const char **argv)
 
     if (argc == 0 || !argv) return -1;
 
-    /* Let bu_brlcad_root and friends know where we are */
+    /* Let libbu know where we are */
     bu_setprogname(argv[0]);
 
     /* Initialize */

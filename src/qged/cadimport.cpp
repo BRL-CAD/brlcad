@@ -109,10 +109,7 @@ RhinoImportDialog::RhinoImportDialog(QString filename)
 QString
 RhinoImportDialog::command()
 {
-    QString prog_name(bu_brlcad_dir("bin", 1));
-    prog_name.append("/3dm-g");
-    prog_name.append(EXECUTABLE_SUFFIX);
-    prog_name = QString(bu_brlcad_root((const char *)prog_name.toLocal8Bit(), 1));
+    QString prog_name(bu_dir(NULL, 0, BU_DIR_BIN, "3dm-g", BU_DIR_EXT, NULL));
     return prog_name;
 }
 
@@ -190,10 +187,7 @@ STEPImportDialog::STEPImportDialog(QString filename)
 QString
 STEPImportDialog::command()
 {
-    QString prog_name(bu_brlcad_dir("bin", 1));
-    prog_name.append("/step-g");
-    prog_name.append(EXECUTABLE_SUFFIX);
-    prog_name = QString(bu_brlcad_root((const char *)prog_name.toLocal8Bit(), 1));
+    QString prog_name(bu_dir(NULL, 0, BU_DIR_BIN, "step-g", BU_DIR_EXT, NULL));
     return prog_name;
 }
 
