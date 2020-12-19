@@ -168,9 +168,6 @@ endif(NOT DEFINED EXTPROJ_VERBOSE)
 # Tool for replacing rpath values in build files.  CMAKE_BUILD_RPATH must be
 # set before configuring this file.
 configure_file(${BDEPS_CMAKE_DIR}/rpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
-if (APPLE)
-  execute_process(COMMAND more ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
-endif (APPLE)
 add_executable(rpath_replace ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 
