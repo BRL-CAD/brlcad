@@ -421,7 +421,7 @@ _bu_dir_brlcad_root(const char *rhs, int fail_quietly)
     char where[MAX_WHERE_SIZE] = {0};
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-	bu_log("bu_brlcad_root: searching for [%s]\n", rhs?rhs:"");
+	bu_log("_bu_dir_brlcad_root: searching for [%s]\n", rhs?rhs:"");
     }
 
     /* BRLCAD_ROOT environment variable if set */

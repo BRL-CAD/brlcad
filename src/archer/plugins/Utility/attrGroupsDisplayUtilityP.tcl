@@ -23,14 +23,8 @@
 #	 This is a script for loading/registering the attribute groups display utility.
 #
 
-set brlcadDataPath [bu_brlcad_root "share/plugins"]
-# puts "pwd is [pwd], path is $brlcadDataPath"
+set brlcadDataPath [file join [bu_dir data] plugins]
 set filename [file join $brlcadDataPath archer Utility attrGroupsDisplayUtilityP AttrGroupsDisplayUtilityP.tcl]
-if { ![file exists $filename] } {
-    # non-tclscript resource, look in the source invocation path
-    set brlcadDataPath [bu_brlcad_root "src"]
-    set filename [file join $brlcadDataPath archer plugins Utility attrGroupsDisplayUtilityP AttrGroupsDisplayUtilityP.tcl]
-}
 if { ![file exists $filename] } {
     puts "Could not load the AttrGroupsDisplayUtilityP plugin, skipping $filename"
     return
