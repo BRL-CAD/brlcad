@@ -245,6 +245,8 @@ libged_init(void)
 	    cmd_funcs.insert(dl_handle);
 	}
     }
+    bu_argv_free(nfiles, filenames);
+    bu_vls_free(&plugin_pattern);
 
     ged_cmds = (void *)&cmd_map;
 }
