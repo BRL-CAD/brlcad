@@ -19,6 +19,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
 * check thread safety history of gqa + plot calls (pl_color)
+  UPDATE - breakage was identified as having been introduced
+  during the libbu semaphore system update circa commit r73078
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
