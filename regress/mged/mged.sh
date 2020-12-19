@@ -99,14 +99,6 @@ check_command ( ) {
     return 0
 }
 
-touch mged.g
-output="`$MGED -c mged.g quit 2>&1`"
-if test $? != 0 ; then
-    log "Output: $output"
-    log "Unable to run mged, aborting"
-    exit 1
-fi
-
 log "seting up an almost empty database (mged.g) to make sure mged runs"
 rm -f mged.g
 $MGED -c >> $LOGFILE 2>&1 <<EOF
