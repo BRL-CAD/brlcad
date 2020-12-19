@@ -20,11 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * check thread safety history of gqa + plot calls (pl_color)
 
-* f_dbopen in MGED doesn't seem to be reporting failure
-  if a non-.g file is fed to opendb.  That doesn't seem
-  right... shouldn't the open process completely fail
-  if the file isn't a valid .g?
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

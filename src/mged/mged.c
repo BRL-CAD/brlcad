@@ -2733,6 +2733,14 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     } else {
 	/* Opened existing database file */
 
+	/* If dbi_version < 0, file isn't a valid .g file - don't proceed */
+	if (DBIP->dbi_version < 0) {
+	    bu_free(DBIP->dbi_filename, "free filename");
+	    DBIP = DBI_NULL;
+	    Tcl_AppendResult(interpreter, "opendb:  ", argv[1], " is not a valid database\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
 	/* Scan geometry database and build in-memory directory */
 	(void)db_dirbuild(DBIP);
     }
