@@ -42,7 +42,7 @@ bind $w <q> ::exit
 if {[info exists ::man_file]} {
     $w select $man_file
 } else {
-    set intro_file [file join [bu_brlcad_root "share/$::data_dir"] mann/Introduction.html]
+    set intro_file [file join [bu_dir doc] html mann Introduction.html]
     $w loadPage $intro_file
 }
 

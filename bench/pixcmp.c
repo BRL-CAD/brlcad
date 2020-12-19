@@ -201,8 +201,8 @@ main(int argc, char *argv[])
 
     FILE *f1 = NULL;
     FILE *f2 = NULL;
-    struct stat sf1 = {0};
-    struct stat sf2 = {0};
+    struct stat sf1;
+    struct stat sf2;
 
     size_t matching = 0;
     size_t off1 = 0;

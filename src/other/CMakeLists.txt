@@ -487,6 +487,7 @@ if(BRLCAD_TK_BUILD)
   SetTargetFolder(wish "Third Party Executables")
   SetTargetFolder(tk "Third Party Libraries")
   SetTargetFolder(tkstub "Third Party Libraries")
+  SetTargetFolder(Tk_pkgIndex "Third Party Libraries")
 
 elseif(BRLCAD_ENABLE_TK)
 

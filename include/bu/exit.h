@@ -51,6 +51,15 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_backtrace(FILE *fp);
 
+/**
+ * A version of bu_backtrace where the caller provides their own
+ * full path to their executable for passing to GDB, rather than
+ * having libbu attempt to determine that path.
+ *
+ * Passing NULL to argv0 makes the behavior identical to
+ * that of bu_backtrace.
+ */
+BU_EXPORT extern int bu_backtrace_app(FILE *fp, const char *argv0);
 
 /**
  * Adds a hook to the list of bu_bomb hooks.  The top (newest) one of these
@@ -137,6 +146,17 @@ BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_ANALYZE
  * due to various reasons, this routine is NOT thread-safe.
  */
 BU_EXPORT extern int bu_crashreport(const char *filename);
+
+/**
+ * A version of bu_crashreport where the caller provides their own
+ * full path to their executable for passing to GDB, rather than
+ * having libbu attempt to determine that path.
+ *
+ * Passing NULL to argv0 makes the behavior identical to
+ * that of bu_crashreport.
+ */
+BU_EXPORT extern int bu_crashreport_app(const char *filename, const char *argv0);
+
 
 /** @} */
 

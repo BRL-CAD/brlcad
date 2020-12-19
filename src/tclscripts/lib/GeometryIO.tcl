@@ -32,14 +32,14 @@ if {$::tcl_platform(platform) == "windows"} {
 }
 
 proc ::run_conversion_config {input_file log_file} {
-    set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
-    [bu_brlcad_root "share/tclscripts/lib/gui_conversion.tcl"] "$input_file" "$log_file"]
+    set gui_cmd [list [file join [bu_dir bin] bwish$::exe_ext] \
+    [file join [bu_dir data] tclscripts lib gui_conversion.tcl] "$input_file" "$log_file"]
     catch {eval exec $gui_cmd} _conv_log
 }
 
 proc geom_load {input_file gui_feedback} {
 
-    set binpath [bu_brlcad_root [bu_brlcad_dir "bin"] ]
+    set binpath [bu_dir bin]
 
     set input_ext [file extension $input_file]
     set input_root [file rootname [file tail $input_file]]
@@ -60,19 +60,20 @@ proc geom_load {input_file gui_feedback} {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] 3dm-g$::exe_ext]] \
+	        set cmd [list [file join [bu_dir bin] 3dm-g$::exe_ext] \
 	            -r \
 	            -c \
 		    -o $output_file \
 	    	    $input_file]
- 		catch {eval exec $cmd} _conv_log
+ 		#catch {eval exec $cmd} _conv_log
+ 		eval exec $cmd
             }
 	}
 	".asc" {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] asc2g$::exe_ext]] \
+	        set cmd [list [file join [bu_dir bin] asc2g$::exe_ext] \
 	    	    $input_file \
 		    $output_file]
  		catch {eval exec $cmd} _conv_log
@@ -82,7 +83,7 @@ proc geom_load {input_file gui_feedback} {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]] \
+	        set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext] \
 	            -d \
 	    	    $input_file \
 		    $output_file]
@@ -93,7 +94,7 @@ proc geom_load {input_file gui_feedback} {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]] \
+	        set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext] \
 	            -d \
 	    	    $input_file \
 		    $output_file]
@@ -104,7 +105,7 @@ proc geom_load {input_file gui_feedback} {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]] \
+	        set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext] \
 	            -d \
 	    	    $input_file \
 		    $output_file]
@@ -115,7 +116,7 @@ proc geom_load {input_file gui_feedback} {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] fast4-g$::exe_ext]] \
+	        set cmd [list [file join [bu_dir bin] fast4-g$::exe_ext] \
 	            -d \
 	    	    $input_file \
 		    $output_file]
@@ -127,7 +128,7 @@ proc geom_load {input_file gui_feedback} {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] stl-g$::exe_ext]] \
+	        set cmd [list [file join [bu_dir bin] stl-g$::exe_ext] \
 	    	    $input_file \
 		    $output_file]
  		catch {eval exec $cmd} _conv_log
@@ -137,7 +138,7 @@ proc geom_load {input_file gui_feedback} {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	        set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
+	        set cmd [list [file join [bu_dir bin] step-g$::exe_ext] \
 	    	    -v -o $output_file \
 		    $input_file]
 
@@ -148,7 +149,7 @@ proc geom_load {input_file gui_feedback} {
             if {[string compare $gui_feedback "1"] == 0} {
 		::run_conversion_config $input_file $log_file
             } else {
-	       set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] step-g$::exe_ext]] \
+	       set cmd [list [file join [bu_dir bin] step-g$::exe_ext] \
 	    	    -v -o $output_file \
 		    $input_file]
 
@@ -175,7 +176,7 @@ proc geom_load {input_file gui_feedback} {
 # and may only want a subset.
 proc geom_save {input_file output_file db_component} {
 
-    set binpath [bu_brlcad_root [bu_brlcad_dir "bin"] ]
+    set binpath [bu_dir bin] ]
 
     set output_filename [file tail $output_file]
     set output_dir [file dirname $output_file]
@@ -199,7 +200,7 @@ proc geom_save {input_file output_file db_component} {
     switch -- $output_ext {
 	".obj" {
 	    set tops_list [lsort -dictionary [$db_component tops]]
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] g-obj$::exe_ext]] \
+	    set cmd [list [file join [bu_dir bin] g-obj$::exe_ext] \
 		    -o $output_file \
 	    	    $input_file]
             append cmd " " { }
@@ -210,7 +211,7 @@ proc geom_save {input_file output_file db_component} {
 	}
 	".stl" {
 	    set tops_list [lsort -dictionary [$db_component tops]]
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] g-stl$::exe_ext]] \
+	    set cmd [list [file join [bu_dir bin] g-stl$::exe_ext] \
 	            -o $output_file \
 	    	    $input_file]
             append cmd " " { }

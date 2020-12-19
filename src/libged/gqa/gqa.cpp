@@ -2410,6 +2410,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize some stuff */
     state.sem_worker = bu_semaphore_register("gqa_sem_worker");
     state.sem_stats = bu_semaphore_register("gqa_sem_stats");
+    state.sem_lists = bu_semaphore_register("gqa_sem_lists");
     state.rtip = rtip;
     state.first = 1;
     allocate_per_region_data(&state, start_objs, argc, argv);

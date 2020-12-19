@@ -48,12 +48,12 @@ if { [info exists tk_strictMotif] == 0 } {
 
 # MGED html manual directory search order precedence should be:
 #   MGED_HTML_DIR
-#   bu_brlcad_root/share/html/manuals/mged
+#   [bu_dir doc]/html/manuals/mged
 
 if ![info exists mged_default(html_dir)] {
-    set mged_default(html_dir) [file normalize [file join [bu_brlcad_root "share/html"] manuals mged]]
+    set mged_default(html_dir) [file normalize [file join [bu_dir doc] html manuals mged]]
     if {![file exists $mged_default(html_dir)]} {
-	set mged_default(html_dir) [file normalize [file join [bu_brlcad_root "share/doc"] html manuals mged]]
+	set mged_default(html_dir) [file normalize [file join [bu_dir doc] html manuals mged]]
     }
 }
 

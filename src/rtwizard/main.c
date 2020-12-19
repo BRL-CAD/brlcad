@@ -1136,7 +1136,7 @@ main(int argc, char **argv)
 	/* We're using this path on the file system, not in Tcl: translate it
 	 * to the appropriate form before doing the eval */
 	Tcl_DStringInit(&temp);
-	rtwizard = bu_brlcad_root("share/tclscripts/rtwizard/rtwizard", 1);
+	rtwizard = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "rtwizard", "rtwizard", NULL);
 	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
 	status = Tcl_EvalFile(interp, fullname);
 	Tcl_DStringFree(&temp);

@@ -50,7 +50,7 @@ static const char *path = NULL;
 
 
 int
-bu_crashreport(const char *filename)
+bu_crashreport_app(const char *filename, const char *argv0)
 {
     if (UNLIKELY(!filename || strlen(filename) == 0)) {
 	return 0;
@@ -59,7 +59,11 @@ bu_crashreport(const char *filename)
     /* vat time ist? */
     (void)time(&now);
 
-    path = bu_argv0_full_path();
+    if (argv0) {
+	path = argv0;
+    } else {
+	path = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
+    }
 
     /* do our own expansion to avoid heap allocation */
     snprintf(buffer, CR_BUFSIZE, "******************************************\n\n"
@@ -179,6 +183,12 @@ bu_crashreport(const char *filename)
 
     /* success */
     return 1;
+}
+
+int
+bu_crashreport(const char *filename)
+{
+    return bu_crashreport_app(filename, NULL);
 }
 
 /*
