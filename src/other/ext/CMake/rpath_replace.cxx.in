@@ -8,11 +8,15 @@ int main(int argc, const char **argv)
 {
     int verbose = @EXTPROJ_VERBOSE@;
     std::regex old_rpath("-rpath,\\$\\{LIB_RUNTIME_DIR\\}");
-    if (argc < 3) {
-	std::cerr << "Error: no file specified for processing or missing RPATH to set.\n";
+    std::string new_rpath = std::string("-rpath,") + std::string("@CMAKE_BUILD_RPATH@");
+
+    std::regex tk_dylib("-install_name [\"][$][{]DYLIB_INSTALL_DIR[}]/");
+    std::string tk_rpath = std::string("-install_name \"") + std::string("@CMAKE_BINARY_DIR@/@LIB_DIR@/");
+
+    if (argc < 2) {
+	std::cerr << "Error: no file specified for processing.\n";
 	return -1;
     }
-    std::string new_rpath = std::string("-rpath,") + std::string("@CMAKE_BUILD_RPATH@");
 
     for (int i = 1; i < argc; i++) {
 	std::string cline;
@@ -30,6 +34,7 @@ int main(int argc, const char **argv)
 
 	while (std::getline(fs, cline)) {
 	    std::string nline = std::regex_replace(cline, old_rpath, new_rpath);
+	    nline = std::regex_replace(nline, tk_dylib, tk_rpath);
 	    nfile_contents.append(nline);
 	    nfile_contents.append("\n");
 	    if (nline != cline) {
