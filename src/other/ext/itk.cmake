@@ -35,6 +35,12 @@ if (BRLCAD_ENABLE_TK)
 
   if (DO_ITK_BUILD)
 
+    # If we're building ITK, it's path setup must take into account the
+    # subdirectory in which we are storing the library.
+    relative_rpath(RELPATH SUFFIX itk3.4)
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
+    ext_build_rpath(SUFFIX itk3.4)
+
     set(BRLCAD_ITK_BUILD "ON" CACHE STRING "Enable Itk build" FORCE)
 
     set(ITK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/ITK_BLD-prefix/src/ITK_BLD")
