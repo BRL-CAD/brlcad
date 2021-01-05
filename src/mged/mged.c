@@ -49,6 +49,10 @@
 #  include <poll.h>
 #endif
 
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
+#endif
+
 #include "bio.h"
 #include "bsocket.h"
 
@@ -1038,6 +1042,7 @@ main(int argc, char *argv[])
 #endif
 
     char *attach = (char *)NULL;
+    char *wdir = (char *)NULL;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -1062,7 +1067,7 @@ main(int argc, char *argv[])
 #endif
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:vW:?")) != -1) {
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
@@ -1104,12 +1109,32 @@ main(int argc, char *argv[])
 		bu_log("WARNING: -o is a developer option and subject to change.  Do not use.\n");
 		old_mged_gui = 0;
 		break;
+	    case 'W':
+		wdir = bu_optarg;
+		break;
 	    default:
 		bu_log("Unrecognized option (%c)\n", bu_optopt);
 		/* fall through */
 	    case 'h':
 		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
+    }
+
+    /* Change the working directory, if the user specified one */
+    if (wdir) {
+	struct bu_vls wldir = BU_VLS_INIT_ZERO;
+	/* Make sure '~' is always interpreted as the home directory */
+	if (BU_STR_EQUAL(wdir, "~")) {
+	    const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
+	    bu_vls_sprintf(&wldir, "%s", homed);
+	} else {
+	    bu_vls_sprintf(&wldir, "%s", wdir);
+	}
+	if (chdir(bu_vls_cstr(&wldir))) {
+	    bu_vls_free(&wldir);
+	    bu_exit(1, "Failed to change working directory to \"%s\" ", wdir);
+	}
+	bu_vls_free(&wldir);
     }
 
     /* skip the args and invocation name */
