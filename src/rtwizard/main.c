@@ -22,7 +22,11 @@
  */
 
 #include "common.h"
-#include "string.h"
+#include <string.h>
+
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
+#endif
 
 #include "tcl.h"
 
@@ -945,10 +949,12 @@ main(int argc, char **argv)
     int need_help_dev = 0;
     int uac = 0;
 
+    struct bu_vls wdir = BU_VLS_INIT_ZERO;
+
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[35];
+    struct bu_opt_desc d[36];
 
     BU_OPT(d[0],  "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
     BU_OPT(d[1],  "",  "help-dev",      "",          NULL,            &need_help_dev,    "Print options intended for developer/programmatic use and exit.");
@@ -984,7 +990,8 @@ main(int argc, char **argv)
     BU_OPT(d[31], "v", "verbose",       "#",         &bu_opt_int,     &s->verbose,      "Verbosity");
     BU_OPT(d[32], "",  "log-file",      "filename",  &bu_opt_vls,     s->log_file,      "Log debugging output to this file");
     BU_OPT(d[33], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
-    BU_OPT_NULL(d[34]);
+    BU_OPT(d[34], "",  "working-dir",   "path",   &bu_opt_vls,     &wdir,      "Specify a working directory");
+    BU_OPT_NULL(d[35]);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
@@ -1009,6 +1016,18 @@ main(int argc, char **argv)
 	rtwizard_help_dev((struct bu_opt_desc *)&d);
 	bu_exit(EXIT_SUCCESS, NULL);
     }
+
+    if (bu_vls_strlen(&wdir)) {
+	/* Make sure '~' is always interpreted as the home directory */
+	if (BU_STR_EQUAL(bu_vls_cstr(&wdir), "~")) {
+	    const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
+	    bu_vls_sprintf(&wdir, "%s", homed);
+	}
+	if (chdir(bu_vls_cstr(&wdir))) {
+	    bu_exit(EXIT_FAILURE, "Failed to change working directory to \"%s\" ", bu_vls_cstr(&wdir));
+	}
+    }
+    bu_vls_free(&wdir);
 
     {
 	int stop = 0;
