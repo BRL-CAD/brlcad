@@ -13,6 +13,9 @@ changes made.  See document footer for additional details.
 --- 2020-xx-xx  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* updated Archer to set cwd=HOME when run without args - Cliff Yapp
+* updated rtwizard to set cwd=HOME when run without args - Cliff Yapp
+* updated MGED to set cwd=HOME when run without args - Cliff Yapp
 * fixed reporting of MGED "vars" command - Cliff Yapp
 * updated MGED to not open non-.g-files as databases - Cliff Yapp
 * fixed problems with command I/O management in MGED - Cliff Yapp

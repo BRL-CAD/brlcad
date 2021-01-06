@@ -95,15 +95,11 @@ if (BRLCAD_ENABLE_TCL)
     add_dependencies(mged ${item})
   endforeach(item ${tclindex_target_list})
 
-  # The bat file is used to set the working directory for shortcuts in MSIS
-  # installers generated with WiX.
-  BRLCAD_MANAGE_FILES("mged.bat" ${BIN_DIR} EXEC)
-
   # MGED is one of the programs that gets a start menu entry
-  set_property(INSTALL "${BIN_DIR}/mged.bat"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
     PROPERTY CPACK_START_MENU_SHORTCUTS "MGED ${BRLCAD_VERSION}"
     )
-  set_property(INSTALL "${BIN_DIR}/mged.bat"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
     PROPERTY CPACK_DESKTOP_SHORTCUTS "MGED ${BRLCAD_VERSION}"
     )
 

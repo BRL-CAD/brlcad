@@ -26,15 +26,11 @@ if (TARGET libtclcad)
     add_dependencies(rtwizard ${item})
   endforeach(item ${tclindex_target_list})
 
-  # The bat file is used to set the working directory for shortcuts in MSIS
-  # installers generated with WiX.
-  BRLCAD_MANAGE_FILES("rtwizard.bat" ${BIN_DIR} EXEC)
-
   # RtWizard is one of the programs that gets a start menu entry
-  set_property(INSTALL "${BIN_DIR}/rtwizard.bat"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:rtwizard>"
     PROPERTY CPACK_START_MENU_SHORTCUTS "RtWizard ${BRLCAD_VERSION}"
     )
-  set_property(INSTALL "${BIN_DIR}/rtwizard.bat"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:rtwizard>"
     PROPERTY CPACK_DESKTOP_SHORTCUTS "RtWizard ${BRLCAD_VERSION}"
     )
 
