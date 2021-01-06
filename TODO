@@ -120,6 +120,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* pixscale doesn't seem to handle stdin (due to bu_seek) for very
+  long
+
 * The embedded framebuffer for the X display manager is not working
   with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
   to XFlush after X24_blit.  Better solution is to replace the X
