@@ -195,7 +195,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     fastf_t oldtime, currtime;
     int ind = 0;
     int count = 0;
-    struct rt_i *rtip;
+    struct rt_i *rtip = NULL;
     int ncpus = bu_avail_cpus();
     fastf_t *rays;
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
@@ -250,8 +250,14 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     }
 #endif
 #if 1
-    if (rt_gettree(rtip, left) < 0) return -1;
-    if (rt_gettree(rtip, right) < 0) return -1;
+    if (rt_gettree(rtip, left) < 0) {
+	rt_free_rti(rtip);
+	return -1;
+    }
+    if (rt_gettree(rtip, right) < 0) {
+	rt_free_rti(rtip);
+	return -1;
+    }
 #endif
 
     rt_prep_parallel(rtip, ncpus);
@@ -340,6 +346,9 @@ memfree:
     bu_free(state, "free state containers");
     bu_free(local_state, "free state containers");
     bu_free(resp, "free resources");
+    if (rtip) {
+	rt_free_rti(rtip);
+    }
 
     return ret;
 }
