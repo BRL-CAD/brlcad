@@ -33,22 +33,45 @@
 
 #include "../ged_private.h"
 
+static void
+npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
+    char *option_help = bu_opt_describe(d, NULL);
+    bu_vls_sprintf(str, "Usage: npush [options] obj\n");
+    bu_vls_printf(str, "\nPushes position/rotation matrices 'down' the tree hierarchy, altering existing geometry as needed.  Default behavior clears all matrices from tree, unless push requires creation of new geometry objects.\n\n");
+    if (option_help) {
+	bu_vls_printf(str, "Options:\n%s\n", option_help);
+	bu_free(option_help, "help str");
+    }
+}
+
 
 extern "C" int
 ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 {
     int print_help = 0;
-    struct bu_opt_desc d[6];
-    const char *usage = "npush (options)";
-    BU_OPT(d[0], "h", "help",      "",             NULL,        &print_help,   "Print help and exit");
-    BU_OPT(d[1], "?", "",           "",            NULL,        &print_help,    "");
-    BU_OPT_NULL(d[2]);
+    int xpush = 0;
+    int to_regions = 0;
+    int to_solids = 0;
+    int max_depth = 0;
+    struct bu_opt_desc d[8];
+    BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,  "Print help and exit");
+    BU_OPT(d[1], "?", "",          "",   NULL,         &print_help,  "");
+    BU_OPT(d[2], "f", "force",     "",   NULL,         &xpush,       "Create new objects if needed to push matrices (xpush)");
+    BU_OPT(d[3], "x", "xpush",     "",   NULL,         &xpush,       "");
+    BU_OPT(d[4], "r", "regions",   "",   NULL,         &to_regions,  "Halt push at regions (matrix will be above region reference)");
+    BU_OPT(d[5], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
+    BU_OPT(d[6], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
+
+    BU_OPT_NULL(d[7]);
 
     /* parse standard options */
     int opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
+    if (argc == 1 || print_help) {
+	struct bu_vls npush_help = BU_VLS_INIT_ZERO;
+	npush_usage(&npush_help, d);
+	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&npush_help));
+	bu_vls_free(&npush_help);
 	return GED_OK;
     }
 
@@ -61,12 +84,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
 
     return GED_OK;
 }
