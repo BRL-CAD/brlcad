@@ -785,6 +785,7 @@ GED_EXPORT extern int ged_whatid(struct ged *gedp, int argc, const char *argv[])
  * Push object path transformations to solids, creating primitives if necessary
  */
 GED_EXPORT extern int ged_xpush(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_npush(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Voxelize the specified objects
