@@ -37,15 +37,23 @@
 extern "C" int
 ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 {
+    int print_help = 0;
     struct bu_opt_desc d[6];
+    const char *usage = "npush (options)";
     BU_OPT(d[0], "h", "help",      "",             NULL,        &print_help,   "Print help and exit");
     BU_OPT(d[1], "?", "",           "",            NULL,        &print_help,    "");
-    BU_OPT(d[1], "s", "script",    "",             NULL,        &sflag,        "Different output formatting for script  ing");
-    BU_OPT(d[2], "V", "",          "",             NULL,        &eflag,        "List all active ids, even if no associ  ated regions are found");
-    BU_OPT(d[3], "U", "unused",    "",             NULL,        &unused,       "Report unused ids in the specified ran  ge");
-    BU_OPT(d[4], "",  "root",      "<root_name>",  &bu_opt_vls, &root,         "Search only in the tree below 'root_na  me'");
-    BU_OPT_NULL(d[5]);
+    BU_OPT_NULL(d[2]);
 
+    /* parse standard options */
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* adjust argc to match the leftovers of the options parsing */
+    argc = opt_ret;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
