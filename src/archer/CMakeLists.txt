@@ -33,17 +33,14 @@ if(BRLCAD_ENABLE_TK)
     add_dependencies(archer ${item})
   endforeach(item ${tclindex_target_list})
 
-  # The bat file is used to set the working directory for shortcuts in MSIS
-  # installers generated with WiX.
-  BRLCAD_MANAGE_FILES("archer.bat" ${BIN_DIR} EXEC)
-
   # Archer is one of the programs that gets a start menu entry
-  set_property(INSTALL "${BIN_DIR}/archer.bat"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:archer>"
     PROPERTY CPACK_START_MENU_SHORTCUTS "Archer ${BRLCAD_VERSION}"
     )
-  set_property(INSTALL "${BIN_DIR}/archer.bat"
+  set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:archer>"
     PROPERTY CPACK_DESKTOP_SHORTCUTS "Archer ${BRLCAD_VERSION}"
     )
+
 endif(BRLCAD_ENABLE_TK)
 
 
