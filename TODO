@@ -25,6 +25,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   UPDATE - breakage was identified as having been introduced
   during the libbu semaphore system update circa commit r73078
 
+* dbconcat corrupted database / failed. created a top-level comb with
+  invalid "1_[subcomb]/" to be created that result in error messages
+  during any db listing (e.g., tops).  workaround was to manually edit
+  the comb and remove the 1_ and / on the entries.
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
