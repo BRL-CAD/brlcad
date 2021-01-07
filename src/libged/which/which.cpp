@@ -59,13 +59,14 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     const char *usageIds = "[options] region_id(s)";
     std::map<int, std::set<std::string>> id2names;
 
-    struct bu_opt_desc d[6];
+    struct bu_opt_desc d[7];
     BU_OPT(d[0], "h", "help",      "",             NULL,        &print_help,   "Print help and exit");
-    BU_OPT(d[1], "s", "script",    "",             NULL,        &sflag,        "Different output formatting for scripting");
-    BU_OPT(d[2], "V", "",          "",             NULL,        &eflag,        "List all active ids, even if no associated regions are found");
-    BU_OPT(d[3], "U", "unused",    "",             NULL,        &unused,       "Report unused ids in the specified range");
-    BU_OPT(d[4], "",  "root",      "<root_name>",  &bu_opt_vls, &root,         "Search only in the tree below 'root_name'");
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[1], "?", "",           "",            NULL,        &print_help,    "");
+    BU_OPT(d[2], "s", "script",    "",             NULL,        &sflag,        "Different output formatting for scripting");
+    BU_OPT(d[3], "V", "",          "",             NULL,        &eflag,        "List all active ids, even if no associated regions are found");
+    BU_OPT(d[4], "U", "unused",    "",             NULL,        &unused,       "Report unused ids in the specified range");
+    BU_OPT(d[5], "",  "root",      "<root_name>",  &bu_opt_vls, &root,         "Search only in the tree below 'root_name'");
+    BU_OPT_NULL(d[6]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
