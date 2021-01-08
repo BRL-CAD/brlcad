@@ -66,6 +66,7 @@ class dp_i {
 struct push_state {
     std::set<dp_i> s_i;
     std::map<struct directory *, int> s_c;
+    int verbosity = 0;
 };
 
 static void
@@ -81,12 +82,18 @@ visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union 
 	return;
 
     s->s_c[dp]++;
-    bu_log("Found comb entry: %s (%d)\n", dp->d_namep, s->s_c[dp]);
-    if (comb_leaf->tr_l.tl_mat) {
-	struct bu_vls title = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&title, "%s matrix:", comb_leaf->tr_l.tl_name);
-	bn_mat_print(bu_vls_cstr(&title), comb_leaf->tr_l.tl_mat);
-	bu_vls_free(&title);
+    if (s->verbosity) {
+	if (comb_leaf->tr_l.tl_mat) {
+	    bu_log("Found comb entry: %s[M] (%d)\n", dp->d_namep, s->s_c[dp]);
+	    if (s->verbosity > 1) {
+		struct bu_vls title = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&title, "%s matrix:", comb_leaf->tr_l.tl_name);
+		bn_mat_print(bu_vls_cstr(&title), comb_leaf->tr_l.tl_mat);
+		bu_vls_free(&title);
+	    }
+	} else {
+	    bu_log("Found comb entry: %s (%d)\n", dp->d_namep, s->s_c[dp]);
+	}
     }
 }
 
@@ -100,7 +107,10 @@ void comb_cnt(struct db_i *dbip, struct directory *dp, void *data)
     if (comb->tree)
 	db_tree_funcleaf(dbip, comb, comb->tree, visit_comb_memb, data, NULL, NULL, NULL);
     rt_db_free_internal(&intern);
-    bu_log("Visited comb: %s\n", dp->d_namep);
+    struct push_state *s = (struct push_state *)data;
+    if (s->verbosity) {
+	bu_log("Visited comb: %s\n", dp->d_namep);
+    }
 }
 
 
@@ -124,16 +134,18 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     int to_regions = 0;
     int to_solids = 0;
     int max_depth = 0;
-    struct bu_opt_desc d[8];
+    int verbosity = 0;
+    struct bu_opt_desc d[9];
     BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,  "Print help and exit");
     BU_OPT(d[1], "?", "",          "",   NULL,         &print_help,  "");
-    BU_OPT(d[2], "f", "force",     "",   NULL,         &xpush,       "Create new objects if needed to push matrices (xpush)");
-    BU_OPT(d[3], "x", "xpush",     "",   NULL,         &xpush,       "");
-    BU_OPT(d[4], "r", "regions",   "",   NULL,         &to_regions,  "Halt push at regions (matrix will be above region reference)");
-    BU_OPT(d[5], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
-    BU_OPT(d[6], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
+    BU_OPT(d[2], "v", "verbosity",  "",  &bu_opt_incr_long, &verbosity,     "Increase output verbosity (multiple specifications of -v increase verbosity)");
+    BU_OPT(d[3], "f", "force",     "",   NULL,         &xpush,       "Create new objects if needed to push matrices (xpush)");
+    BU_OPT(d[4], "x", "xpush",     "",   NULL,         &xpush,       "");
+    BU_OPT(d[5], "r", "regions",   "",   NULL,         &to_regions,  "Halt push at regions (matrix will be above region reference)");
+    BU_OPT(d[6], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
+    BU_OPT(d[7], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
 
-    BU_OPT_NULL(d[7]);
+    BU_OPT_NULL(d[8]);
 
     /* Skip command name */
     argc--; argv++;
@@ -161,6 +173,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     struct push_state s;
+    s.verbosity = verbosity;
     for (int i = 0; i < argc; i++) {
 	struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL) {
