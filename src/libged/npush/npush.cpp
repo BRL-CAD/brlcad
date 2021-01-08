@@ -33,6 +33,99 @@
 
 #include "../ged_private.h"
 
+static void
+push_walk(struct db_i *dbip,
+	    struct directory *dp,
+	    void (*comb_func) (struct db_i *, struct directory *, int depth, void *),
+	    void (*leaf_func) (struct db_i *, struct directory *, int depth, void *),
+	    struct resource *resp,
+	    int depth,
+	    void *client_data);
+
+static void
+push_walk_subtree(struct db_i *dbip,
+		    union tree *tp,
+		    void (*comb_func) (struct db_i *, struct directory *, int depth, void *),
+		    void (*leaf_func) (struct db_i *, struct directory *, int depth, void *),
+		    struct resource *resp,
+		    int depth,
+		    void *client_data)
+{
+    struct directory *dp;
+
+    if (!tp)
+	return;
+
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    }
+
+    switch (tp->tr_op) {
+
+	case OP_DB_LEAF:
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+		return;
+	    push_walk(dbip, dp, comb_func, leaf_func, resp, depth, client_data);
+	    break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    push_walk_subtree(dbip, tp->tr_b.tb_left, comb_func, leaf_func, resp, depth, client_data);
+	    push_walk_subtree(dbip, tp->tr_b.tb_right, comb_func, leaf_func, resp, depth, client_data);
+	    break;
+	default:
+	    bu_log("push_walk_subtree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("push_walk_subtree: unrecognized operator\n");
+    }
+}
+
+static void
+push_walk(struct db_i *dbip,
+	    struct directory *dp,
+	    void (*comb_func) (struct db_i *, struct directory *, int depth, void *),
+	    void (*leaf_func) (struct db_i *, struct directory *, int depth, void *),
+	    struct resource *resp,
+	    int depth,
+	    void *client_data)
+{
+    RT_CK_DBI(dbip);
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    }
+
+    if ((!dp) || (!comb_func && !leaf_func)) {
+	return; /* nothing to do */
+    }
+
+    if (dp->d_flags & RT_DIR_COMB) {
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+
+	if (rt_db_get_internal5(&in, dp, dbip, NULL, resp) < 0)
+	    return;
+
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+	push_walk_subtree(dbip, comb->tree, comb_func, leaf_func, resp, depth+1, client_data);
+	rt_db_free_internal(&in);
+
+	/* Finally, the combination itself */
+	if (comb_func)
+	    comb_func(dbip, dp, depth, client_data);
+
+    } else if (dp->d_flags & RT_DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
+	if (leaf_func)
+	    leaf_func(dbip, dp, depth, client_data);
+    } else {
+	bu_log("push_walk:  %s is neither COMB nor SOLID?\n", dp->d_namep);
+    }
+}
+
+
+
 /* When it comes to push operations, the notion of what constitutes a unique
  * instance is defined as the combination of the object and its associated
  * parent matrix. Because the dp may be used under multiple matrices, for some
@@ -84,7 +177,7 @@ visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union 
     s->s_c[dp]++;
     if (s->verbosity) {
 	if (comb_leaf->tr_l.tl_mat) {
-	    bu_log("Found comb entry: %s[M] (%d)\n", dp->d_namep, s->s_c[dp]);
+	    bu_log("Found comb entry: %s[M] (Instance count: %d)\n", dp->d_namep, s->s_c[dp]);
 	    if (s->verbosity > 1) {
 		struct bu_vls title = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&title, "%s matrix:", comb_leaf->tr_l.tl_name);
@@ -92,12 +185,12 @@ visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union 
 		bu_vls_free(&title);
 	    }
 	} else {
-	    bu_log("Found comb entry: %s (%d)\n", dp->d_namep, s->s_c[dp]);
+	    bu_log("Found comb entry: %s (Instance count: %d)\n", dp->d_namep, s->s_c[dp]);
 	}
     }
 }
 
-void comb_cnt(struct db_i *dbip, struct directory *dp, void *data)
+void comb_cnt(struct db_i *dbip, struct directory *dp, int depth, void *data)
 {
     struct rt_db_internal intern;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -105,11 +198,11 @@ void comb_cnt(struct db_i *dbip, struct directory *dp, void *data)
     }
     struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (comb->tree)
-	db_tree_funcleaf(dbip, comb, comb->tree, visit_comb_memb, data, NULL, NULL, NULL);
+	db_tree_funcleaf(dbip, comb, comb->tree, visit_comb_memb, data, (void *)&depth, NULL, NULL);
     rt_db_free_internal(&intern);
     struct push_state *s = (struct push_state *)data;
     if (s->verbosity) {
-	bu_log("Visited comb: %s\n", dp->d_namep);
+	bu_log("Processed comb (depth: %d): %s\n", depth, dp->d_namep);
     }
 }
 
@@ -177,7 +270,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
 	struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL) {
-	    db_functree(dbip, dp, comb_cnt, NULL, &rt_uniresource, &s);
+	    push_walk(dbip, dp, comb_cnt, NULL, &rt_uniresource, 0, &s);
 	}
     }
 
