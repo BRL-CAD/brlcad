@@ -68,21 +68,40 @@ struct push_state {
     std::map<struct directory *, int> s_c;
 };
 
-
-void comb_cnt(struct db_i *UNUSED(dbip), struct directory *dp, void *data)
+static void
+visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *data, void *UNUSED(u2), void *UNUSED(u3), void *UNUSED(u4))
 {
     struct push_state *s = (struct push_state *)data;
+    struct directory *dp;
+
+    RT_CK_DBI(dbip);
+    RT_CK_TREE(comb_leaf);
+
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
+	return;
+
     s->s_c[dp]++;
-    bu_log("Visiting comb: %s (%d)\n", dp->d_namep, s->s_c[dp]);
+    bu_log("Found comb entry: %s (%d)\n", dp->d_namep, s->s_c[dp]);
+    if (comb_leaf->tr_l.tl_mat) {
+	struct bu_vls title = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&title, "%s matrix:", comb_leaf->tr_l.tl_name);
+	bn_mat_print(bu_vls_cstr(&title), comb_leaf->tr_l.tl_mat);
+	bu_vls_free(&title);
+    }
 }
 
-void solid_cnt(struct db_i *UNUSED(dbip), struct directory *dp, void *data)
+void comb_cnt(struct db_i *dbip, struct directory *dp, void *data)
 {
-    struct push_state *s = (struct push_state *)data;
-    s->s_c[dp]++;
-    bu_log("Visiting solid: %s (%d)\n", dp->d_namep, s->s_c[dp]);
+    struct rt_db_internal intern;
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	return;
+    }
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
+    if (comb->tree)
+	db_tree_funcleaf(dbip, comb, comb->tree, visit_comb_memb, data, NULL, NULL, NULL);
+    rt_db_free_internal(&intern);
+    bu_log("Visited comb: %s\n", dp->d_namep);
 }
-
 
 
 static void
@@ -145,7 +164,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
 	struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL) {
-	    db_functree(dbip, dp, comb_cnt, solid_cnt, &rt_uniresource, &s);
+	    db_functree(dbip, dp, comb_cnt, NULL, &rt_uniresource, &s);
 	}
     }
 
