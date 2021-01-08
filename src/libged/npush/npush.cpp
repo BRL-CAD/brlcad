@@ -25,13 +25,65 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
+#include <set>
+#include <map>
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
 
 #include "../ged_private.h"
+
+/* When it comes to push operations, the notion of what constitutes a unique
+ * instance is defined as the combination of the object and its associated
+ * parent matrix. Because the dp may be used under multiple matrices, for some
+ * push operations it will be necessary to generate a new unique name to refer
+ * to instances - we store those names with the instances for convenience. */
+class dp_i {
+    public:
+	struct directory *dp;
+	mat_t mat;
+	std::string iname;
+	const struct bn_tol *ts_tol;
+
+	bool operator<(const dp_i &o) const {
+	    if (dp < o.dp) return true;
+	    if (o.dp < dp) return false;
+	    /* If the dp doesn't tell us, check the matrix. */
+	    if (!bn_mat_is_equal(mat, o.mat, ts_tol)) {
+		for (int i = 0; i < 16; i++) {
+		    if (mat[i] < o.mat[i]) {
+			return true;
+		    }
+		}
+	    }
+	    return false;
+	}
+};
+
+/* Container to hold information during tree walk.  To generate names (or
+ * recognize when a push would create a conflict) we keep track of how many
+ * times we have encountered each dp during processing. */
+struct push_state {
+    std::set<dp_i> s_i;
+    std::map<struct directory *, int> s_c;
+};
+
+
+void comb_cnt(struct db_i *UNUSED(dbip), struct directory *dp, void *data)
+{
+    struct push_state *s = (struct push_state *)data;
+    s->s_c[dp]++;
+    bu_log("Visiting comb: %s (%d)\n", dp->d_namep, s->s_c[dp]);
+}
+
+void solid_cnt(struct db_i *UNUSED(dbip), struct directory *dp, void *data)
+{
+    struct push_state *s = (struct push_state *)data;
+    s->s_c[dp]++;
+    bu_log("Visiting solid: %s (%d)\n", dp->d_namep, s->s_c[dp]);
+}
+
+
 
 static void
 npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
@@ -64,10 +116,13 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     BU_OPT_NULL(d[7]);
 
+    /* Skip command name */
+    argc--; argv++;
+
     /* parse standard options */
     int opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
-    if (argc == 1 || print_help) {
+    if (!argc || print_help) {
 	struct bu_vls npush_help = BU_VLS_INIT_ZERO;
 	npush_usage(&npush_help, d);
 	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&npush_help));
@@ -81,9 +136,18 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct push_state s;
+    for (int i = 0; i < argc; i++) {
+	struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_NOISY);
+	if (dp != RT_DIR_NULL) {
+	    db_functree(dbip, dp, comb_cnt, solid_cnt, &rt_uniresource, &s);
+	}
+    }
 
     return GED_OK;
 }
