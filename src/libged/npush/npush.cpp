@@ -33,6 +33,46 @@
 
 #include "../ged_private.h"
 
+/* When it comes to push operations, the notion of what constitutes a unique
+ * instance is defined as the combination of the object and its associated
+ * parent matrix. Because the dp may be used under multiple matrices, for some
+ * push operations it will be necessary to generate a new unique name to refer
+ * to instances - we store those names with the instances for convenience. */
+class dp_i {
+    public:
+	struct directory *dp;
+	mat_t mat;
+	std::string iname;
+	const struct bn_tol *ts_tol;
+	bool push_obj = true;
+
+	bool operator<(const dp_i &o) const {
+	    if (dp < o.dp) return true;
+	    if (o.dp < dp) return false;
+	    /* If the dp doesn't tell us, check the matrix. */
+	    if (!bn_mat_is_equal(mat, o.mat, ts_tol)) {
+		for (int i = 0; i < 16; i++) {
+		    if (mat[i] < o.mat[i]) {
+			return true;
+		    }
+		}
+	    }
+	    return false;
+	}
+};
+
+/* Container to hold information during tree walk.  To generate names (or
+ * recognize when a push would create a conflict) we keep track of how many
+ * times we have encountered each dp during processing. */
+struct push_state {
+    bool survey = false;
+    std::set<std::string> target_objs;
+    std::set<dp_i> s_i;
+    std::map<struct directory *, int> s_c;
+    int verbosity = 0;
+    const struct bn_tol *tol;
+};
+
 static void
 push_walk(struct db_i *dbip,
 	    struct directory *dp,
@@ -54,6 +94,7 @@ push_walk_subtree(struct db_i *dbip,
 		    void *client_data)
 {
     struct directory *dp;
+    struct push_state *s = (struct push_state *)client_data;
     mat_t om, nm;
 
     if (!tp)
@@ -68,8 +109,17 @@ push_walk_subtree(struct db_i *dbip,
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
+
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
+
+	    if (s->survey) {
+		// In a survey, if a leaf is one of the originally specified
+		// objects, we're done - below here push logic is active.
+		if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
+		    return;
+		}
+	    }
 
 	    /* Update current matrix state to reflect the new branch of
 	     * the tree we are about to go down. */
@@ -150,43 +200,6 @@ push_walk(struct db_i *dbip,
 
 
 
-/* When it comes to push operations, the notion of what constitutes a unique
- * instance is defined as the combination of the object and its associated
- * parent matrix. Because the dp may be used under multiple matrices, for some
- * push operations it will be necessary to generate a new unique name to refer
- * to instances - we store those names with the instances for convenience. */
-class dp_i {
-    public:
-	struct directory *dp;
-	mat_t mat;
-	std::string iname;
-	const struct bn_tol *ts_tol;
-
-	bool operator<(const dp_i &o) const {
-	    if (dp < o.dp) return true;
-	    if (o.dp < dp) return false;
-	    /* If the dp doesn't tell us, check the matrix. */
-	    if (!bn_mat_is_equal(mat, o.mat, ts_tol)) {
-		for (int i = 0; i < 16; i++) {
-		    if (mat[i] < o.mat[i]) {
-			return true;
-		    }
-		}
-	    }
-	    return false;
-	}
-};
-
-/* Container to hold information during tree walk.  To generate names (or
- * recognize when a push would create a conflict) we keep track of how many
- * times we have encountered each dp during processing. */
-struct push_state {
-    std::set<dp_i> s_i;
-    std::map<struct directory *, int> s_c;
-    int verbosity = 0;
-    const struct bn_tol *tol;
-};
-
 static void
 visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *data, void *cm, void *UNUSED(u3), void *UNUSED(u4))
 {
@@ -199,12 +212,11 @@ visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union 
     if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
 	return;
 
-    s->s_c[dp]++;
     if (s->verbosity) {
 	if (comb_leaf->tr_l.tl_mat) {
-	    bu_log("Found comb entry: %s[M] (Instance count: %d)\n", dp->d_namep, s->s_c[dp]);
+	    bu_log("Found comb entry: %s[M]\n", dp->d_namep);
 	} else {
-	    bu_log("Found comb entry: %s (Instance count: %d)\n", dp->d_namep, s->s_c[dp]);
+	    bu_log("Found comb entry: %s\n", dp->d_namep);
 	}
 	if (s->verbosity > 1) {
 	    struct bu_vls title = BU_VLS_INIT_ZERO;
@@ -215,6 +227,24 @@ visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union 
 	    bu_vls_free(&title);
 	}
     }
+
+    dp_i idp;
+    idp.dp = dp;
+    /* In a survey of objects we are not pushing, we need to evaluate 
+     * the object in isolation (i.e. using its global position, not the
+     * instance position.)  If we're evaluating a push operation,
+     * we're considering the instance with its evaluated matrix. */
+    if (!s->survey) {
+	MAT_COPY(idp.mat, *((mat_t *)cm));
+    } else {
+	MAT_IDN(idp.mat);
+    }
+    /* Record for each object if it's a push object or not, to make
+     * subsequent processing easier. */
+    idp.push_obj = !s->survey;
+    idp.ts_tol = s->tol;
+    if (s->s_i.find(idp) == s->s_i.end())
+	s->s_i.insert(idp);
 }
 
 void comb_cnt(struct db_i *dbip, struct directory *dp, int depth, mat_t *curr_mat, void *data)
@@ -289,9 +319,15 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
     struct db_i *dbip = gedp->ged_wdbp->dbip;
 
+    /* Need nref current for db_ls to work */
+    db_update_nref(dbip, &rt_uniresource);
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+
+    /* Based on the push arg list, walk the specified trees to identify
+     * instances involved with matrices */
     struct push_state s;
     s.verbosity = verbosity;
     s.tol = &gedp->ged_wdbp->wdb_tol;
@@ -300,7 +336,58 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
 	struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL) {
+	    s.target_objs.insert(std::string(dp->d_namep));
+	}
+    }
+    std::set<std::string>::iterator s_it;
+    for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
+	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
+	push_walk(dbip, dp, comb_cnt, NULL, &rt_uniresource, 0, &m, &s);
+    }
+
+    /* Sanity - if we didn't end up with m back at the identity matrix,
+     * something went wrong with the walk */
+    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->ged_wdbp->wdb_tol)) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk finished with non-IDN matrix.\n");
+	return GED_ERROR;
+    }
+
+
+    /* Because pushes have potentially global consequences, we must
+     * also characterize all unique object instances in the database.  That
+     * information will be needed to know if any given matrix push is self
+     * contained as-is or would require an object copy+rename to be isolated.
+     */
+    s.survey = true;
+    struct directory **all_paths;
+    int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+    for (int i = 0; i < tops_cnt; i++) {
+	struct directory *dp = all_paths[i];
+	if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
 	    push_walk(dbip, dp, comb_cnt, NULL, &rt_uniresource, 0, &m, &s);
+    }
+    bu_free(all_paths, "free db_ls output");
+
+    // Once the survey walk is complete, iterate over s_i and count how many
+    // instances of each dp are present.  Any dp with multiple instances can't
+    // be pushed without a copy being made, as the dp instances represent
+    // multiple volumes in space.
+    std::set<dp_i>::iterator si_it;
+    for (si_it = s.s_i.begin(); si_it != s.s_i.end(); si_it++) {
+	const dp_i &dpi = *si_it;
+	s.s_c[dpi.dp]++;
+    }
+
+
+
+    // See what we've got...
+    for (si_it = s.s_i.begin(); si_it != s.s_i.end(); si_it++) {
+	const dp_i &dpi = *si_it;
+	if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+	    std::cout << dpi.dp->d_namep << "(" << dpi.push_obj << "," << s.s_c[dpi.dp] << "):\n";
+	    bn_mat_print(dpi.dp->d_namep, dpi.mat);
+	} else {
+	    std::cout << dpi.dp->d_namep << "(" << dpi.push_obj << "," << s.s_c[dpi.dp] << ")\n";
 	}
     }
 
