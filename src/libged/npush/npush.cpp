@@ -334,15 +334,13 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     mat_t m;
     MAT_IDN(m);
     for (int i = 0; i < argc; i++) {
-	struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_NOISY);
-	if (dp != RT_DIR_NULL) {
-	    s.target_objs.insert(std::string(dp->d_namep));
-	}
+	s.target_objs.insert(std::string(argv[i]));
     }
     std::set<std::string>::iterator s_it;
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
-	push_walk(dbip, dp, comb_cnt, NULL, &rt_uniresource, 0, &m, &s);
+	if (dp != RT_DIR_NULL)
+	    push_walk(dbip, dp, comb_cnt, NULL, &rt_uniresource, 0, &m, &s);
     }
 
     /* Sanity - if we didn't end up with m back at the identity matrix,
@@ -377,19 +375,55 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	const dp_i &dpi = *si_it;
 	s.s_c[dpi.dp]++;
     }
-
-
-
-    // See what we've got...
+    std::map<struct directory *, std::vector<dp_i>> dpref;
+    std::set<dp_i> bpush;
     for (si_it = s.s_i.begin(); si_it != s.s_i.end(); si_it++) {
-	const dp_i &dpi = *si_it;
-	if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-	    std::cout << dpi.dp->d_namep << "(" << dpi.push_obj << "," << s.s_c[dpi.dp] << "):\n";
-	    bn_mat_print(dpi.dp->d_namep, dpi.mat);
-	} else {
-	    std::cout << dpi.dp->d_namep << "(" << dpi.push_obj << "," << s.s_c[dpi.dp] << ")\n";
+    	const dp_i *dpi = &(*si_it);
+	if (dpi->push_obj) {
+	    if (s.s_c[dpi->dp] > 1) {
+		dpref[dpi->dp].push_back(*dpi);
+	    } else {
+		if (!bn_mat_is_equal(dpi->mat, bn_mat_identity, s.tol))
+		    bpush.insert(*dpi);
+	    }
 	}
     }
+    std::map<struct directory *, std::vector<dp_i>>::iterator d_it;
+    for (d_it = dpref.begin(); d_it != dpref.end(); d_it++) {
+	for (size_t i = 0; i < d_it->second.size(); i++) {
+	    dp_i &sd = d_it->second[i];
+	    std::string nname = std::string(d_it->first->d_namep) + std::string("_") + std::to_string(i);
+	    sd.iname = nname;
+	}
+    }
+
+    // See what we've got...
+    if (dpref.size()) {
+	std::cout << "Need renaming:\n"; 
+	for (d_it = dpref.begin(); d_it != dpref.end(); d_it++) {
+	    std::cout << d_it->first->d_namep << ":\n";
+	    for (size_t i = 0; i < d_it->second.size(); i++) {
+		dp_i &dpi = d_it->second[i];
+		std::cout << dpi.iname << "\n";
+		if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		    bn_mat_print(dpi.dp->d_namep, dpi.mat);
+		}
+	    }
+	}
+    }
+
+    if (bpush.size()) {
+	std::cout << "Push:\n"; 
+	std::set<dp_i>::iterator b_it;
+	for (b_it = bpush.begin(); b_it != bpush.end(); b_it++) {
+	    const dp_i &dpi = *b_it;
+	    if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		std::cout << dpi.dp->d_namep << "\n";
+		bn_mat_print(dpi.dp->d_namep, dpi.mat);
+	    }
+	}
+    }
+ 
 
     return GED_OK;
 }
