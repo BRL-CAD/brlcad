@@ -70,8 +70,32 @@ struct push_state {
     std::set<dp_i> s_i;
     std::map<struct directory *, int> s_c;
     int verbosity = 0;
+    int max_depth = 0;
     const struct bn_tol *tol;
 };
+
+// TODO - terminate non-survey walk according to leaf criteria for
+// push operations - depth, region, etc.
+static bool
+is_push_leaf(struct directory *dp, int depth, struct push_state *s)
+{
+    if (!dp || !s || depth < 0) return true;
+
+    if (s->survey) {
+	// In a survey, if a leaf is one of the originally specified objects,
+	// we're done - below such an object push logic is active.  A survey
+	// needs to find objects not otherwise considered by the push.
+	if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
+	    return true;
+	}
+	return false;
+    }
+
+    if (s->max_depth && (depth >= s->max_depth))
+	return true;
+
+    return false;
+}
 
 static void
 push_walk(struct db_i *dbip,
@@ -113,12 +137,8 @@ push_walk_subtree(struct db_i *dbip,
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
-	    if (s->survey) {
-		// In a survey, if a leaf is one of the originally specified
-		// objects, we're done - below here push logic is active.
-		if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
-		    return;
-		}
+	    if (is_push_leaf(dp, depth, s)) {
+		return;
 	    }
 
 	    /* Update current matrix state to reflect the new branch of
@@ -131,7 +151,10 @@ push_walk_subtree(struct db_i *dbip,
 	    }
 	    bn_mat_mul(*curr_mat, om, nm);
 
-	    /* Process branch */
+	    /* Process branch.  Note - in pushes leaf_func is null, since
+	     * matrix operations are defined in comb trees. If solids need to
+	     * be updated to push matrices to their parameters, this is handled
+	     * at the end when we have full knowledge of what must be done. */
 	    push_walk(dbip, dp, comb_func, leaf_func, resp, depth, curr_mat, client_data);
 
 	    /* Done with branch - put back the old matrix state */
@@ -201,7 +224,7 @@ push_walk(struct db_i *dbip,
 
 
 static void
-visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *data, void *cm, void *UNUSED(u3), void *UNUSED(u4))
+visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *data, void *cm, void *tdepth, void *UNUSED(u4))
 {
     struct push_state *s = (struct push_state *)data;
     struct directory *dp;
@@ -230,23 +253,33 @@ visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union 
 
     dp_i idp;
     idp.dp = dp;
-    /* In a survey of objects we are not pushing, we need to evaluate 
-     * the object in isolation (i.e. using its global position, not the
-     * instance position.)  If we're evaluating a push operation,
-     * we're considering the instance with its evaluated matrix. */
+    idp.ts_tol = s->tol;
+    idp.push_obj = !(s->survey);
+
     if (!s->survey) {
-	if (comb_leaf->tr_l.tl_mat) {
-	    bn_mat_mul(idp.mat, *((mat_t *)cm), comb_leaf->tr_l.tl_mat);
+	/* If this is a "leaf" as far as the proposed push operation is
+	 * concerned, either because of depth or because it satisfies
+	 * other criteria, record the final matrix for application.  Otherwise,
+	 * the matrix is an identity matrix since the push operation will
+	 * keep going. */
+	int tree_depth = *(int *)tdepth;
+	if (is_push_leaf(dp, tree_depth, s)) {
+	    if (comb_leaf->tr_l.tl_mat) {
+		bn_mat_mul(idp.mat, *((mat_t *)cm), comb_leaf->tr_l.tl_mat);
+	    } else {
+		MAT_COPY(idp.mat, *((mat_t *)cm));
+	    }
 	} else {
-	    MAT_COPY(idp.mat, *((mat_t *)cm));
+	    MAT_IDN(idp.mat);
 	}
     } else {
+	/* In a survey of objects we are not pushing, we need to evaluate
+	 * the object in isolation (i.e. using its global position, not the
+	 * instance position.)  If we're evaluating a push operation,
+	 * we're considering the instance with its evaluated matrix. */
 	MAT_IDN(idp.mat);
     }
-    /* Record for each object if it's a push object or not, to make
-     * subsequent processing easier. */
-    idp.push_obj = !s->survey;
-    idp.ts_tol = s->tol;
+
     if (s->s_i.find(idp) == s->s_i.end())
 	s->s_i.insert(idp);
 }
@@ -259,7 +292,7 @@ void comb_cnt(struct db_i *dbip, struct directory *dp, int depth, mat_t *curr_ma
     }
     struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (comb->tree)
-	db_tree_funcleaf(dbip, comb, comb->tree, visit_comb_memb, data, (void *)curr_mat, NULL, NULL);
+	db_tree_funcleaf(dbip, comb, comb->tree, visit_comb_memb, data, (void *)curr_mat, (void *)&depth, NULL);
     rt_db_free_internal(&intern);
     struct push_state *s = (struct push_state *)data;
     if (s->verbosity) {
