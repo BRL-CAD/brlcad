@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="STATFORMAT" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <refmeta>
+    <refentrytitle>NPUSH</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>npush</refname>
+    <refpurpose>
+      push matrices down a tree hierarchy
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>npush</command>
+      <arg choice="opt" rep="norepeat">-h</arg>
+      <arg choice="opt" rep="norepeat">-?</arg>
+      <arg choice="opt" rep="norepeat">-v</arg>
+      <arg choice="opt" rep="norepeat">-f</arg>
+      <arg choice="opt" rep="norepeat">-x</arg>
+      <arg choice="opt" rep="norepeat">-r</arg>
+      <arg choice="opt" rep="norepeat">-s</arg>
+      <arg choice="opt" rep="norepeat">-d <replaceable>max_depth</replaceable></arg>
+      <arg choice="req">arg1 [arg2]...</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  
+  <refsection xml:id="npush_background"><info><title>Background: Matrices in BRL-CAD</title></info>
+
+  <para>
+    BRL-CAD uses a global coordinate system in which all objects are placed.  This means each region
+    must uniquely occupy its own portion of that space in order to avoid overlapping with another
+    region.  Naively, this means that all objects defined in a .g file need to individually
+    describe distinct volumes using unique primitives.  While possible, such an approach is quite
+    wasteful if different regions define the same shape and vary only in the positioning of that shape.
+    A classic example is as a standard bolt used hundereds of times in assembling a machine - ideally
+    such a shape should only need to be described once, and then <emphasis>instances</emphasis> of that
+    shape are positioned to identify individual bolts in the overall model.
+  </para>
+  <para>
+    COMB trees, which describe organized hierarchies of individual shapes (or other COMB trees) in
+    BRL-CAD, are the standard mechanism used in .g files to reusing otherwise identical object definitions
+    in <emphasis>different</emphasis> positions and orientations. Matrices associated with instances of
+    objects listed in COMB trees position those individual parts, and matrices at different portions of
+    the COMB tree hierarchy can position smaller or large components of the whole.
+    For example, the tree:
+  </para>
+  <literallayout>
+    sph3/
+	u sph3_1.r/R
+		u sph3.s
+	u sph3_2.r/R
+		u sph3.s
+  </literallayout>
+  <para>
+    appears at first glance to define an overlap, since it includes two different regions both of which
+    are defined using the same sphere object: sph3.s.  However, if we inspect sph3_1.r and sph3_2.r more
+    closely, we see that their definitions incorporate matrices over the instances of sph3.s:
+  </para>
+  <literallayout>
+sph3_1.r:  REGION id=1002 (air=0, los=100, GIFTmater=1) --
+   u sph3.s [10, 0, 0] scale 1
+sph3_2.r:  REGION id=1003 (air=0, los=100, GIFTmater=1) --
+   u sph3.s [20, 0, 0] scale 1
+  </literallayout>
+  <para>
+    The instance of sph3.s in sph3_1.r is offset in the X direction by 10mm, and the sph3_2.r instance is
+    offset by 20mm.  In addition, if we inspect sph3's tree:
+  </para>
+  <literallayout>
+sph3:  --
+   u sph3_1.r
+   u sph3_2.r [100, 0, 0] scale 1
+  </literallayout>
+  <para>
+    we see that the instance of sph3_2.r in sph3 also has a matrix offsetting its position.  So the
+    instance of sph.s defined by sph3/sph3_2.r/sph.s is offset in total by 120mm in the positive X direction
+    relative to the global definition of sph.s
+  </para>
+  <para>
+    As useful as these matrices are, users frequently need to consolidate multiple levels of positioning
+    within a COMB tree, or even eliminate them completely if a client's code is not able to properly interpret
+    the matrix information of a COMB hierarchy for its own processing.  Thus, specific logic is available in
+    BRL-CAD to accomplish these tasks.
+  </para>
+  
+  </refsection>
+
+  <refsection xml:id="npush_overview"><info><title>Overview</title></info>
+
+  <para>
+    The GED command <command>npush</command> defines logic for "moving" matrix operations within a COMB tree,
+    without changing the position of individual object instances in the tree definition.
+  </para>
+  
+  </refsection>
+
+  <refsection xml:id="search_options"><title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-h or -?</emphasis></term>
+        <listitem>
+          <para>
+            Print help and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-v</emphasis></term>
+        <listitem>
+          <para>
+            Verbose processing output (primarily used for debugging).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-f or -x</emphasis></term>
+        <listitem>
+          <para>
+            Force creation of new objects if necessary to avoid conflicts while fully push matrices. (A.k.a "xpush" mode).
+          </para>
+        </listitem>
+      </varlistentry>
+       <varlistentry>
+        <term><emphasis remap="B" role="bold">-r</emphasis></term>
+        <listitem>
+          <para>
+            Halt push operations at the hierarchy level above regions.
+          </para>
+        </listitem>
+       </varlistentry>
+        <varlistentry>
+        <term><emphasis remap="B" role="bold">-s</emphasis></term>
+        <listitem>
+          <para>
+	    Halt push operations at the hierarchy level above solids.
+          </para>
+        </listitem>
+	</varlistentry>
+        <varlistentry>
+        <term><emphasis remap="B" role="bold">-d max_depth</emphasis></term>
+        <listitem>
+          <para>
+	    Halt push operations at the hierarchy level specified by <emphasis>max_depth</emphasis>.
+          </para>
+        </listitem>
+	</varlistentry>
+    </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+    <example><title>Default</title>
+      <para>
+        <userinput>push sph1</userinput>
+      </para>
+      <literallayout>
+      </literallayout>
+    </example>
+    
+  </refsection>
+  
+</refentry>
