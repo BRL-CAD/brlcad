@@ -235,7 +235,11 @@ visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union 
      * instance position.)  If we're evaluating a push operation,
      * we're considering the instance with its evaluated matrix. */
     if (!s->survey) {
-	MAT_COPY(idp.mat, *((mat_t *)cm));
+	if (comb_leaf->tr_l.tl_mat) {
+	    bn_mat_mul(idp.mat, *((mat_t *)cm), comb_leaf->tr_l.tl_mat);
+	} else {
+	    MAT_COPY(idp.mat, *((mat_t *)cm));
+	}
     } else {
 	MAT_IDN(idp.mat);
     }
