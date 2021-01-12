@@ -14,6 +14,7 @@ CMAKEFILES(
   obb_tests.g
   ged_tests.g
   pnts_in_out.g
+  push_tests.g
   )
 
 CMAKEFILES(CMakeLists.txt)
