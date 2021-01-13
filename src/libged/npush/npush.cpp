@@ -27,6 +27,7 @@
 
 #include <set>
 #include <map>
+#include <string>
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
