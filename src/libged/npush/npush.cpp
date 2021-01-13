@@ -28,6 +28,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
@@ -65,6 +66,101 @@ class dp_i {
 	    }
 	    return false;
 	}
+
+	bool operator=(const dp_i &o) const {
+	    if (dp != o.dp) return false;
+	    return bn_mat_is_equal(mat, o.mat, ts_tol);
+	}
+};
+
+static void
+tree_instances(struct db_i *dbip, union tree *tp, std::set<dp_i> &t)
+{
+    struct directory *dp;
+    if (!tp)
+	return;
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+    switch (tp->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    /* fall through */
+	    tree_instances(dbip, tp->tr_b.tb_right, t);
+	    goto treefall;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+treefall:
+	    /* fall through */
+	    tree_instances(dbip, tp->tr_b.tb_left, t);
+	    break;
+	case OP_DB_LEAF:
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		return;
+	    } else {
+		dp_i ndp;
+		ndp.dp = dp;
+		if (tp->tr_l.tl_mat) {
+		    MAT_COPY(ndp.mat, tp->tr_l.tl_mat);
+		} else {
+		    MAT_IDN(ndp.mat);
+		}
+		t.insert(ndp);
+		break;
+	    }
+
+	default:
+	    bu_log("_db_comb_get_children: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("_db_comb_get_children\n");
+    }
+}
+
+class combtree_i {
+    public:
+	struct directory *dp;
+	std::set<dp_i> t;
+	const struct bn_tol *ts_tol;
+	bool push_obj = true;
+
+	combtree_i(struct db_i *dbip, struct rt_comb_internal *comb)
+	{
+	    if (!db_tree_nleaves(comb->tree)) return;
+	    tree_instances(dbip, comb->tree, t);
+	};
+
+	bool operator<(const combtree_i &o) const {
+	    if (dp < o.dp) return true;
+	    if (o.dp < dp) return false;
+	    /* If the dp doesn't tell us, check children in tree. */
+	    std::set<dp_i>::iterator c_it;
+	    std::set<dp_i>::iterator o_it;
+	    /* dp_i sets are sorted.  Find the first non-matching instance,
+	     * and compare them */
+	    for (c_it = t.begin(); c_it != t.end(); c_it++) {
+		std::set<dp_i>::iterator oi_it;
+		for (o_it = o.t.begin(); o_it != o.t.end(); o_it++) {
+		    if (o_it->dp > c_it->dp)
+			break;
+		    oi_it = o_it;
+		}
+		if (oi_it->dp != c_it->dp) {
+		    return (c_it->dp < oi_it->dp);
+		}
+		if (!bn_mat_is_equal(c_it->mat, oi_it->mat, ts_tol)) {
+		    for (int i = 0; i < 16; i++) {
+			if (c_it->mat[i] < oi_it->mat[i]) {
+			    return true;
+			}
+		    }
+		}
+	    }
+	    // If everything checked out, check the set sizes - smaller is <
+	    if (t.size() < o.t.size()) return true;
+
+	    return false;
+	}
 };
 
 /* Container to hold information during tree walk.  To generate names (or
@@ -75,6 +171,8 @@ struct push_state {
     std::set<std::string> target_objs;
     std::set<dp_i> s_i;
     std::map<struct directory *, int> s_c;
+    std::set<combtree_i> t_i;
+    std::map<struct directory *, int> t_c;
     int verbosity = 0;
     int max_depth = 0;
     bool stop_at_regions = false;
