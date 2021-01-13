@@ -42,6 +42,11 @@ class dp_i {
     public:
 	struct directory *dp;
 	mat_t mat;
+	// TODO - for combs, need to store local copies of the comb trees in
+	// the instances - some pushes may alter the trees of combs in one
+	// branch of a parent tree but not another, and in those cases we're
+	// going to have to duplicate combs to preserve local-only impact.
+	// Need to think about how to detect that and handle it...
 	std::string iname;
 	const struct bn_tol *ts_tol;
 	bool push_obj = true;
