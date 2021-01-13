@@ -101,6 +101,183 @@ sph3:  --
   
   </refsection>
 
+  <refsection xml:id="npush_depth"><info><title>A Note on Depth</title></info>
+
+  <para>
+    It is worth taking a little time to define what we are referring to when we discuss the concept of
+    depth when it comes to applying matrix pushing operations.  Consider the hierarchy:
+  </para>
+  <literallayout>
+sph_009/
+	u [M1] sph9_g1/
+		u [M2] sph9_g2/
+			u [M3] sph9_g3/
+				u [M4] sph9_g4/
+					u [M5] sph9.r/R
+						u [M6] sph9.s
+  </literallayout>
+  <para>
+    M1, M2, etc. are matrices applied at each level of the hierarchy.  When discussing M1, we would refer
+    to that matrix as being at "depth 1" in the hierarchy, as it is defined at one level below the top
+    of the tree.  Similarly, M2 would be defined as being at depth 2, and so on.
+  </para>
+  <para>
+    When discussing depth in push operations, pushing a matrix to a depth means we propagate the matrices
+    down the tree to define a matrix at the specified depth.  For example, in the above example, a push
+    of the matrices to depth 4 would result in:
+  </para>
+  <literallayout>
+sph_009/
+	u sph9_g1/
+		u sph9_g2/
+			u sph9_g3/
+				u [M1234] sph9_g4/
+					u [M5] sph9.r/R
+						u [M6] sph9.s
+  </literallayout>
+  <para>
+    where M1234 is the accumulated application of M1, M2, M3 and M4.  Note the new matrix is applied at
+    depth 4, the depth specified as the depth limit in the push.  Similarly, a depth limit of 6 would
+    result in:
+  </para>
+  <literallayout>
+sph_009/
+	u sph9_g1/
+		u sph9_g2/
+			u sph9_g3/
+				u sph9_g4/
+					u sph9.r/R
+						u [M123456] sph9.s
+  </literallayout>
+  <para>
+    where M123456 is the accumulated application of M1, M2, M3, M4, M5 and M6.  Note that the final step
+    of eliminating the matrix by updating the parameters of sph.s was not taken.  That operation is defined
+    conceptually as being at one depth lower than the matrix applied to the object.  Thus, it would require
+    a depth limit of 7 to completely eliminate all the matrices in the example and update sph.s:
+  </para>
+  <literallayout>
+sph_009/
+	u sph9_g1/
+		u sph9_g2/
+			u sph9_g3/
+				u sph9_g4/
+					u sph9.r/R
+						u sph9.s (updated)
+  </literallayout>
+  <para>
+    Note that if an object or comb exists at different levels of the hierarchy, depth limits may produce
+    copies of an object even if there wouldn't otherwise be a need for those copies.  Take the following
+    example:
+  </para>
+  <literallayout>
+sph_010/
+	u [M1] sph10_f/
+		u [M1] sph10_g/
+			u [M1] sph10.r/R
+				u [M2] sph10.s
+	u [M3] sph10_a.r/R
+		u [M3] sph10.s
+  </literallayout>
+  <para>
+    where 3*M1+M2 = 2*M3 (i.e., the matricies on each branch of sph_010's tree individually evaluate out
+    to the same result).  Since sph10.s ends up in the same place in both branches of sph_010, a full
+    push of all matrices in this tree shouldn't need to create a copy of sph10.s with new paramenters.  However,
+    if a push is limited to depth 3, we get a different outcome in that respect:
+  </para>
+  <literallayout>
+sph_010/
+	u sph10_f/
+		u sph10_g/
+			u [M1*3] sph10.r/R
+				u [M2] sph10.s
+	u sph10_a.r/R
+		u sph10.s_01 (updated sph10.s copy)
+  </literallayout>   
+  <para>
+    Depth 3 is deep enough that the parameters of sph10.s in the second branch should be updated.  However,
+    in the first branch, there is an instance of sph10.s that will remain unmodified with a depth limit of
+    three.  Thus, the database needs to contain both the modified and unmodified sph10.s in order to define
+    the requested comb tree.  A subsequent full push would result in sph10.s being identical to sph10.s_01,
+    but (at least for now) logic to automatically recognize this case and simplify it is not built in to the
+    push logic.
+  </para>
+  <para>
+    The same phenomena can occur with comb trees.  Consider the following example:
+  </para>
+  <literallayout>
+sph_011/
+	u sph11_f/
+		u [M1] sph11_g/
+			u sph11.s
+	u sph11_h/
+		u [M2] sph11_g/
+			u sph11.s
+  </literallayout>
+  <para>
+    If sph_011 is pushed to depth 3, the matrices will be pushed to the level of sph11_g's instance
+    references (sph11.s, in this case.)  However, if M1 != M2, sph11_g would need to have two different
+    matrices in its tree for the same instance.  Since a depth limit of 3 does not push the matrices
+    down to parameter setting of sph11.s, a new comb must be created:
+  </para>
+  <literallayout>
+sph_011/
+	u sph11_f/
+		u sph11_g/
+			u [M1] sph11.s
+	u sph11_h/
+		u sph11_g_01/ (updated sph11_g copy)
+			u [M2] sph11.s
+  </literallayout>
+  
+  </refsection>
+
+  <refsection xml:id="npush_special_depths"><info><title>Pushing relative to Regions and Shapes</title></info>
+
+  <para>
+    In addition to numerical depth limits, <command>npush</command> offers two additional specifiers that
+    are more aware of specific types of objects in trees.  The <option>r</option> option will push matrices
+    down to a level just above region references, and the <option>s</option> option will push matrices to
+    a level just above primitive shapes.  For example, using the following hierarchy:
+  </para>
+  <literallayout>
+sph_010/
+	u [M1] sph10_f/
+		u [M1] sph10_g/
+			u [M1] sph10.r/R
+				u [M2] sph10.s
+	u [M3] sph10_a.r/R
+		u [M3] sph10.s
+  </literallayout>
+  <para>
+    a <option>r</option> push would result in the following:
+  </para>
+  <literallayout>
+sph_010/
+	u sph10_f/
+		u sph10_g/
+			u [M1*3] sph10.r/R
+				u [M2] sph10.s
+	u [M3] sph10_a.r/R
+		u [M3] sph10.s
+  </literallayout>
+  <para>
+    A <option>s</option> push, on the other hand, will take the matrices in both branches deeper:
+  </para>
+  <literallayout>
+sph_010/
+	u sph10_f/
+		u sph10_g/
+			u sph10.r/R
+				u [M1*3+M2] sph10.s
+	u sph10_a.r/R
+		u [M3*2] sph10.s
+  </literallayout>
+  <para>
+    Note that neither option alters the parameters of primitive shapes.
+  </para>
+  
+  </refsection>
+ 
   <refsection xml:id="search_options"><title>OPTIONS</title>
 
     <variablelist remap="TP">
@@ -124,7 +301,7 @@ sph3:  --
         <term><emphasis remap="B" role="bold">-f or -x</emphasis></term>
         <listitem>
           <para>
-            Force creation of new objects if necessary to avoid conflicts while fully push matrices. (A.k.a "xpush" mode).
+            Force creation of new objects if necessary to avoid conflicts while fully pushing matrices. (A.k.a "xpush" mode).
           </para>
         </listitem>
       </varlistentry>
