@@ -140,9 +140,8 @@ struct push_state {
     std::string problem_obj;
     std::set<std::string> target_objs;
     std::set<dp_i> s_i;
-    std::map<struct directory *, int> s_c;
     std::set<combtree_i> t_i;
-    std::map<struct directory *, int> t_c;
+    std::map<struct directory *, int> s_c;
     int verbosity = 0;
     int max_depth = 0;
     bool stop_at_regions = false;
@@ -357,8 +356,6 @@ push_walk_subtree(struct db_i *dbip,
 
 		if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
 		    s->ct[combtree_ind].t.insert(dnew);
-		if (s->s_i.find(dnew) == s->s_i.end())
-		    s->s_i.insert(dnew);
 		return;
 	    } else {
 		// If we're continuing, this is not the termination point of a
@@ -375,8 +372,6 @@ push_walk_subtree(struct db_i *dbip,
 	    }
 	    if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
 		s->ct[combtree_ind].t.insert(dnew);
-	    if (s->s_i.find(dnew) == s->s_i.end())
-		s->s_i.insert(dnew);
 
 	    /* Process branch's tree */
 	    tnew.dp = dp;
@@ -555,6 +550,22 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    push_walk(dbip, dp, 0, &rt_uniresource, 0, &m, &s);
     }
     bu_free(all_paths, "free db_ls output");
+
+
+    /* Build a set of unique combtrees */
+    std::cout << "tree vect size: " << s.ct.size() << "\n";
+    for (size_t i = 0; i < s.ct.size(); i++) {
+	s.t_i.insert(s.ct[i]);
+    }
+    std::cout << "tree set size: " << s.t_i.size() << "\n";
+
+    /* Iterate over unique combtrees and build a set of unique instances */
+    std::set<combtree_i>::iterator tr_it;
+    for (tr_it = s.t_i.begin(); tr_it != s.t_i.end(); tr_it++) {
+	const combtree_i &t = *tr_it;
+	s.s_i.insert(t.t.begin(), t.t.end());
+    }
+    std::cout << "instance set size: " << s.s_i.size() << "\n";
 
     // Once the survey walk is complete, iterate over s_i and count how many
     // instances of each dp are present.  Any dp with multiple instances can't
