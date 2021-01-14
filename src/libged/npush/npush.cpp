@@ -487,6 +487,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
 	s.target_objs.insert(std::string(argv[i]));
     }
+
+    // TODO - either need to validate that no target_obj is underneath another target obj,
+    // or fully process the first target obj before moving on to the second.  Otherwise
+    // multiple push operations may collide.
+
     std::set<std::string>::iterator s_it;
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
@@ -500,7 +505,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk finished with non-IDN matrix.\n");
 	return GED_ERROR;
     }
-
 
     /* Because pushes have potentially global consequences, we must
      * also characterize all unique object instances in the database.  That
