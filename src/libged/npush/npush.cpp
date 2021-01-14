@@ -265,13 +265,6 @@ validate_walk(struct db_i *dbip,
 }
 
 static void
-process_comb(struct db_i *dbip,
-	struct directory *dp,
-	int depth,
-	mat_t *curr_mat,
-	void *data);
-
-static void
 push_walk(struct db_i *dbip,
 	struct directory *dp,
 	int combtree_ind,
@@ -291,7 +284,9 @@ push_walk_subtree(struct db_i *dbip,
 		    void *client_data)
 {
     struct directory *dp;
+    struct bu_vls title = BU_VLS_INIT_ZERO;
     combtree_i tnew;
+    dp_i dnew;
     struct push_state *s = (struct push_state *)client_data;
     mat_t om, nm;
 
@@ -310,7 +305,7 @@ push_walk_subtree(struct db_i *dbip,
 
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
-	
+
 	    /* Update current matrix state to reflect the new branch of
 	     * the tree. */
 	    MAT_COPY(om, *curr_mat);
@@ -320,6 +315,30 @@ push_walk_subtree(struct db_i *dbip,
 		MAT_IDN(nm);
 	    }
 	    bn_mat_mul(*curr_mat, om, nm);    
+
+	    if (s->verbosity) {
+		if (tp->tr_l.tl_mat) {
+		    bu_log("Found comb entry: %s[M]\n", dp->d_namep);
+		} else {
+		    bu_log("Found comb entry: %s\n", dp->d_namep);
+		}
+		if (s->verbosity > 1) {
+		    bu_vls_sprintf(&title, "%s matrix", tp->tr_l.tl_name);
+		    if (!bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol))
+			bn_mat_print(bu_vls_cstr(&title), *curr_mat);
+		    bu_vls_free(&title);
+		}
+	    }
+
+	    // Define the instance container
+	    dnew.dp = dp;
+	    dnew.ts_tol = s->tol;
+	    dnew.push_obj = !(s->survey);
+	    if (!s->survey) {
+		MAT_COPY(dnew.mat, *curr_mat);
+	    } else {
+		MAT_COPY(dnew.mat, nm);
+	    }
 
 	    if (is_push_leaf(dp, depth, s)) {
 
@@ -332,34 +351,39 @@ push_walk_subtree(struct db_i *dbip,
 			// If dp is a solid, we're not depth limited, and the solid supports it we apply
 			// the matrix to the primitive itself.  The comb dp_i instance will use the IDN matrix.
 			bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", parent_dp->d_namep, dp->d_namep);
-		    } else {
-			// Else, the matrix we've accumulated to this point, plus tl_mat from this instance,
-			// becomes the final state of the push on this branch and is applied to the comb dp_i
-			// instance instead of the IDN matrix.
-			bu_log("Comb pushed leaf instance (applied matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
+			dnew.apply_to_solid = true;
 		    }
-		} else {
-		    // Survey entry just uses what's in tl_mat without alteration.
-		    bu_log("Survey leaf: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 		}
-		return;
-	    }
 
-	    if (!s->survey) {
-		// If we're continuing, this is not the termination point of the
+		if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
+		    s->ct[combtree_ind].t.insert(dnew);
+		if (s->s_i.find(dnew) == s->s_i.end())
+		    s->s_i.insert(dnew);
+		return;
+	    } else {
+		// If we're continuing, this is not the termination point of a
 		// push - the matrix becomes an IDN matrix for this comb instance,
 		// and the matrix continues down the branch.
-		bu_log("Comb pushed instance (need IDN matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
-	    } else {
-		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		if (!s->survey) { 
+		    bu_log("Comb pushed instance (IDN matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		    MAT_IDN(dnew.mat);
+		}
 	    }
 
-	    /* Process branch. */
+	    if (s->survey) { 
+		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
+	    }
+	    if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
+		s->ct[combtree_ind].t.insert(dnew);
+	    if (s->s_i.find(dnew) == s->s_i.end())
+		s->s_i.insert(dnew);
+
+	    /* Process branch's tree */
 	    tnew.dp = dp;
 	    tnew.ts_tol = s->tol;
 	    tnew.push_obj = !(s->survey);
 	    s->ct.push_back(tnew);
-	    push_walk(dbip, dp, combtree_ind + 1, resp, depth, curr_mat, client_data);
+	    push_walk(dbip, dp, s->ct.size()-1, resp, depth, curr_mat, client_data);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -407,90 +431,6 @@ push_walk(struct db_i *dbip,
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	push_walk_subtree(dbip, dp, combtree_ind, comb->tree, resp, depth+1, curr_mat, client_data);
 	rt_db_free_internal(&in);
-
-	/* Finally, the combination itself */
-	process_comb(dbip, dp, depth, curr_mat, client_data);
-
-    }
-}
-
-
-
-static void
-visit_comb_memb(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *data, void *cm, void *tdepth, void *UNUSED(u4))
-{
-    struct push_state *s = (struct push_state *)data;
-    struct directory *dp;
-
-    RT_CK_DBI(dbip);
-    RT_CK_TREE(comb_leaf);
-
-    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
-	return;
-
-    if (s->verbosity) {
-	if (comb_leaf->tr_l.tl_mat) {
-	    bu_log("Found comb entry: %s[M]\n", dp->d_namep);
-	} else {
-	    bu_log("Found comb entry: %s\n", dp->d_namep);
-	}
-	if (s->verbosity > 1) {
-	    struct bu_vls title = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&title, "%s matrix", comb_leaf->tr_l.tl_name);
-	    mat_t *curr_mat = (mat_t *)cm;
-	    if (!bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol))
-		bn_mat_print(bu_vls_cstr(&title), *curr_mat);
-	    bu_vls_free(&title);
-	}
-    }
-
-    dp_i idp;
-    idp.dp = dp;
-    idp.ts_tol = s->tol;
-    idp.push_obj = !(s->survey);
-
-    if (!s->survey) {
-	/* If this is a "leaf" as far as the proposed push operation is
-	 * concerned, either because of depth or because it satisfies
-	 * other criteria, record the final matrix for application.  Otherwise,
-	 * the matrix is an identity matrix since the push operation will
-	 * keep going. */
-	int tree_depth = *(int *)tdepth;
-	if (is_push_leaf(dp, tree_depth, s)) {
-	    if (comb_leaf->tr_l.tl_mat) {
-		bn_mat_mul(idp.mat, *((mat_t *)cm), comb_leaf->tr_l.tl_mat);
-	    } else {
-		MAT_COPY(idp.mat, *((mat_t *)cm));
-	    }
-	} else {
-	    MAT_IDN(idp.mat);
-	}
-    } else {
-	/* In a survey of objects we are not pushing, we need to evaluate
-	 * the object in isolation (i.e. using its global position, not the
-	 * instance position.)  If we're evaluating a push operation,
-	 * we're considering the instance with its evaluated matrix. */
-	MAT_IDN(idp.mat);
-    }
-
-    if (s->s_i.find(idp) == s->s_i.end())
-	s->s_i.insert(idp);
-}
-
-static void
-process_comb(struct db_i *dbip, struct directory *dp, int depth, mat_t *curr_mat, void *data)
-{
-    struct rt_db_internal intern;
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	return;
-    }
-    struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-    if (comb->tree)
-	db_tree_funcleaf(dbip, comb, comb->tree, visit_comb_memb, data, (void *)curr_mat, (void *)&depth, NULL);
-    rt_db_free_internal(&intern);
-    struct push_state *s = (struct push_state *)data;
-    if (s->verbosity) {
-	bu_log("Processed comb (depth: %d): %s\n", depth, dp->d_namep);
     }
 }
 
@@ -584,8 +524,14 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // push operations would have on the comb trees and solids.
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
-	if (dp != RT_DIR_NULL)
-	    push_walk(dbip, dp, 0, &rt_uniresource, 0, &m, &s);
+	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
+	    combtree_i tnew;
+	    tnew.dp = dp;
+	    tnew.ts_tol = s.tol;
+	    tnew.push_obj = true;
+	    s.ct.push_back(tnew);
+	    push_walk(dbip, dp, s.ct.size()-1, &rt_uniresource, 0, &m, &s);
+	}
     }
 
     /* Sanity - if we didn't end up with m back at the identity matrix,
