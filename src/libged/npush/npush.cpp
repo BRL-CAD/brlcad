@@ -91,62 +91,12 @@ class dp_i {
 	}
 };
 
-static void
-tree_instances(struct db_i *dbip, union tree *tp, std::set<dp_i> &t)
-{
-    struct directory *dp;
-    if (!tp)
-	return;
-    RT_CHECK_DBI(dbip);
-    RT_CK_TREE(tp);
-    switch (tp->tr_op) {
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    /* fall through */
-	    tree_instances(dbip, tp->tr_b.tb_right, t);
-	    goto treefall;
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-treefall:
-	    /* fall through */
-	    tree_instances(dbip, tp->tr_b.tb_left, t);
-	    break;
-	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-		return;
-	    } else {
-		dp_i ndp;
-		ndp.dp = dp;
-		if (tp->tr_l.tl_mat) {
-		    MAT_COPY(ndp.mat, tp->tr_l.tl_mat);
-		} else {
-		    MAT_IDN(ndp.mat);
-		}
-		t.insert(ndp);
-		break;
-	    }
-
-	default:
-	    bu_log("_db_comb_get_children: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("_db_comb_get_children\n");
-    }
-}
-
 class combtree_i {
     public:
 	struct directory *dp;
 	std::set<dp_i> t;
 	const struct bn_tol *ts_tol;
 	bool push_obj = true;
-
-	combtree_i(struct db_i *dbip, struct rt_comb_internal *comb)
-	{
-	    if (!db_tree_nleaves(comb->tree)) return;
-	    tree_instances(dbip, comb->tree, t);
-	};
 
 	bool operator<(const combtree_i &o) const {
 	    if (dp < o.dp) return true;
@@ -236,31 +186,34 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s)
 }
 
 static void
+process_comb(struct db_i *dbip,
+	struct directory *dp,
+	int depth,
+	mat_t *curr_mat,
+	void *data);
+
+static void
 push_walk(struct db_i *dbip,
-	    struct directory *dp,
-	    int combtree_ind,
-	    void (*comb_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
-	    void (*leaf_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
-	    struct resource *resp,
-	    int depth,
-	    mat_t *curr_mat,
-	    void *client_data);
+	struct directory *dp,
+	int combtree_ind,
+	struct resource *resp,
+	int depth,
+	mat_t *curr_mat,
+	void *client_data);
 
 static void
 push_walk_subtree(struct db_i *dbip,
-	            struct directory *cdp,
+	            struct directory *parent_dp,
 		    int combtree_ind,
 		    union tree *tp,
-		    void (*comb_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
-		    void (*leaf_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
 		    struct resource *resp,
 		    int depth,
 		    mat_t *curr_mat,
 		    void *client_data)
 {
     struct directory *dp;
+    combtree_i tnew;
     struct push_state *s = (struct push_state *)client_data;
-    //combtree_i &tinst = s->ct[combtree_ind];
     mat_t om, nm;
 
     if (!tp)
@@ -290,24 +243,44 @@ push_walk_subtree(struct db_i *dbip,
 	    bn_mat_mul(*curr_mat, om, nm);    
 
 	    if (is_push_leaf(dp, depth, s)) {
-		bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", cdp->d_namep, dp->d_namep);
-		if (!(dp->d_flags & RT_DIR_COMB) && (!depth || depth+1 <= s->max_depth)) {
-		    // If dp is a solid, we're not depth limited, and the solid supports it we apply
-		    // the matrix to the primitive itself.  The comb dp_i instance will use the IDN matrix.
+
+		// Leaf without parent means no work to do
+		if (!parent_dp)
+		    return;
+
+		if (!s->survey) {
+		    if (!(dp->d_flags & RT_DIR_COMB) && (!s->max_depth || depth+1 <= s->max_depth)) {
+			// If dp is a solid, we're not depth limited, and the solid supports it we apply
+			// the matrix to the primitive itself.  The comb dp_i instance will use the IDN matrix.
+			bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		    } else {
+			// Else, the matrix we've accumulated to this point, plus tl_mat from this instance,
+			// becomes the final state of the push on this branch and is applied to the comb dp_i
+			// instance instead of the IDN matrix.
+			bu_log("Comb pushed leaf instance (applied matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		    }
 		} else {
-		    // Else, the matrix we've accumulated to this point, plus tl_mat from this instance,
-		    // becomes the final state of the push on this branch and is applied to the comb dp_i
-		    // instance instead of the IDN matrix.
+		    // Survey entry just uses what's in tl_mat without alteration.
+		    bu_log("Survey leaf: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 		}
 		return;
+	    }
+
+	    if (!s->survey) {
+		// If we're continuing, this is not the termination point of the
+		// push - the matrix becomes an IDN matrix for this comb instance,
+		// and the matrix continues down the branch.
+		bu_log("Comb pushed instance (need IDN matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
 	    } else {
-		// This is not the termination point of the push - the matrix becomes an IDN matrix for
-		// this comb instance, and the matrix continues down the branch.
-		bu_log("Comb pushed instance (need IDN matrix) : %s->%s\n", cdp->d_namep, dp->d_namep);
+		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 	    }
 
 	    /* Process branch. */
-	    push_walk(dbip, dp, combtree_ind + 1, comb_func, leaf_func, resp, depth, curr_mat, client_data);
+	    tnew.dp = dp;
+	    tnew.ts_tol = s->tol;
+	    tnew.push_obj = !(s->survey);
+	    s->ct.push_back(tnew);
+	    push_walk(dbip, dp, combtree_ind + 1, resp, depth, curr_mat, client_data);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -317,8 +290,8 @@ push_walk_subtree(struct db_i *dbip,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    push_walk_subtree(dbip, cdp, combtree_ind, tp->tr_b.tb_left, comb_func, leaf_func, resp, depth, curr_mat, client_data);
-	    push_walk_subtree(dbip, cdp, combtree_ind, tp->tr_b.tb_right, comb_func, leaf_func, resp, depth, curr_mat, client_data);
+	    push_walk_subtree(dbip, parent_dp, combtree_ind, tp->tr_b.tb_left, resp, depth, curr_mat, client_data);
+	    push_walk_subtree(dbip, parent_dp, combtree_ind, tp->tr_b.tb_right, resp, depth, curr_mat, client_data);
 	    break;
 	default:
 	    bu_log("push_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -330,8 +303,6 @@ static void
 push_walk(struct db_i *dbip,
 	    struct directory *dp,
 	    int combtree_ind,
-	    void (*comb_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
-	    void (*leaf_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
 	    struct resource *resp,
 	    int depth,
 	    mat_t *curr_mat,
@@ -342,7 +313,7 @@ push_walk(struct db_i *dbip,
 	RT_CK_RESOURCE(resp);
     }
 
-    if ((!dp) || (!comb_func && !leaf_func)) {
+    if (!dp) {
 	return; /* nothing to do */
     }
 
@@ -355,21 +326,11 @@ push_walk(struct db_i *dbip,
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	push_walk_subtree(dbip, dp, combtree_ind, comb->tree, comb_func, leaf_func, resp, depth+1, curr_mat, client_data);
+	push_walk_subtree(dbip, dp, combtree_ind, comb->tree, resp, depth+1, curr_mat, client_data);
 	rt_db_free_internal(&in);
 
 	/* Finally, the combination itself */
-	if (comb_func)
-	    comb_func(dbip, dp, depth, curr_mat, client_data);
-
-    } else if (dp->d_flags & RT_DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
-
-	if (leaf_func)
-	    leaf_func(dbip, dp, depth, curr_mat, client_data);
-
-    } else {
-
-	bu_log("push_walk:  %s is neither COMB nor SOLID?\n", dp->d_namep);
+	process_comb(dbip, dp, depth, curr_mat, client_data);
 
     }
 }
@@ -530,7 +491,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL)
-	    push_walk(dbip, dp, 0, process_comb, NULL, &rt_uniresource, 0, &m, &s);
+	    push_walk(dbip, dp, 0, &rt_uniresource, 0, &m, &s);
     }
 
     /* Sanity - if we didn't end up with m back at the identity matrix,
@@ -552,7 +513,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < tops_cnt; i++) {
 	struct directory *dp = all_paths[i];
 	if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
-	    push_walk(dbip, dp, 0, process_comb, NULL, &rt_uniresource, 0, &m, &s);
+	    push_walk(dbip, dp, 0, &rt_uniresource, 0, &m, &s);
     }
     bu_free(all_paths, "free db_ls output");
 
