@@ -52,10 +52,23 @@ class dp_i {
 	std::string iname;
 	const struct bn_tol *ts_tol;
 	bool push_obj = true;
+	bool apply_to_solid = false;
 
 	bool operator<(const dp_i &o) const {
 	    if (dp < o.dp) return true;
 	    if (o.dp < dp) return false;
+	    // The application of the matrix to the solid may matter
+	    // when distinguishing dp_i instances, but only if one
+	    // of the matrices involved is non-IDN - otherwise, the
+	    // matrix applications are no-ops and we don't want them
+	    // to prompt multiple instances of objects.
+	    if (apply_to_solid != o.apply_to_solid) {
+		if (!bn_mat_is_equal(mat, bn_mat_identity, ts_tol) ||
+			!bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol)) {
+		    if (apply_to_solid && !o.apply_to_solid)
+		       	return true;
+		}
+	    }
 	    /* If the dp doesn't tell us, check the matrix. */
 	    if (!bn_mat_is_equal(mat, o.mat, ts_tol)) {
 		for (int i = 0; i < 16; i++) {
@@ -69,6 +82,11 @@ class dp_i {
 
 	bool operator=(const dp_i &o) const {
 	    if (dp != o.dp) return false;
+	    if (apply_to_solid != o.apply_to_solid) {
+		if (!bn_mat_is_equal(mat, bn_mat_identity, ts_tol) ||
+		       	!bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol))
+		    return false;
+	    }
 	    return bn_mat_is_equal(mat, o.mat, ts_tol);
 	}
 };
@@ -177,6 +195,10 @@ struct push_state {
     int max_depth = 0;
     bool stop_at_regions = false;
     const struct bn_tol *tol;
+
+    /* Containers for intermediate combtree structures being
+     * built up during the push walk. */
+    std::vector<combtree_i> ct;
 };
 
 // TODO - terminate non-survey walk according to leaf criteria for
@@ -216,6 +238,7 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s)
 static void
 push_walk(struct db_i *dbip,
 	    struct directory *dp,
+	    int combtree_ind,
 	    void (*comb_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
 	    void (*leaf_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
 	    struct resource *resp,
@@ -225,6 +248,8 @@ push_walk(struct db_i *dbip,
 
 static void
 push_walk_subtree(struct db_i *dbip,
+	            struct directory *cdp,
+		    int combtree_ind,
 		    union tree *tp,
 		    void (*comb_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
 		    void (*leaf_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
@@ -235,6 +260,7 @@ push_walk_subtree(struct db_i *dbip,
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
+    //combtree_i &tinst = s->ct[combtree_ind];
     mat_t om, nm;
 
     if (!tp)
@@ -252,23 +278,36 @@ push_walk_subtree(struct db_i *dbip,
 
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
-
-	    if (is_push_leaf(dp, depth, s)) {
-		return;
-	    }
-
+	
 	    /* Update current matrix state to reflect the new branch of
-	     * the tree we are about to go down. */
+	     * the tree. */
 	    MAT_COPY(om, *curr_mat);
 	    if (tp->tr_l.tl_mat) {
 		MAT_COPY(nm, tp->tr_l.tl_mat);
 	    } else {
 		MAT_IDN(nm);
 	    }
-	    bn_mat_mul(*curr_mat, om, nm);
+	    bn_mat_mul(*curr_mat, om, nm);    
+
+	    if (is_push_leaf(dp, depth, s)) {
+		bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", cdp->d_namep, dp->d_namep);
+		if (!(dp->d_flags & RT_DIR_COMB) && (!depth || depth+1 <= s->max_depth)) {
+		    // If dp is a solid, we're not depth limited, and the solid supports it we apply
+		    // the matrix to the primitive itself.  The comb dp_i instance will use the IDN matrix.
+		} else {
+		    // Else, the matrix we've accumulated to this point, plus tl_mat from this instance,
+		    // becomes the final state of the push on this branch and is applied to the comb dp_i
+		    // instance instead of the IDN matrix.
+		}
+		return;
+	    } else {
+		// This is not the termination point of the push - the matrix becomes an IDN matrix for
+		// this comb instance, and the matrix continues down the branch.
+		bu_log("Comb pushed instance (need IDN matrix) : %s->%s\n", cdp->d_namep, dp->d_namep);
+	    }
 
 	    /* Process branch. */
-	    push_walk(dbip, dp, comb_func, leaf_func, resp, depth, curr_mat, client_data);
+	    push_walk(dbip, dp, combtree_ind + 1, comb_func, leaf_func, resp, depth, curr_mat, client_data);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -278,8 +317,8 @@ push_walk_subtree(struct db_i *dbip,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    push_walk_subtree(dbip, tp->tr_b.tb_left, comb_func, leaf_func, resp, depth, curr_mat, client_data);
-	    push_walk_subtree(dbip, tp->tr_b.tb_right, comb_func, leaf_func, resp, depth, curr_mat, client_data);
+	    push_walk_subtree(dbip, cdp, combtree_ind, tp->tr_b.tb_left, comb_func, leaf_func, resp, depth, curr_mat, client_data);
+	    push_walk_subtree(dbip, cdp, combtree_ind, tp->tr_b.tb_right, comb_func, leaf_func, resp, depth, curr_mat, client_data);
 	    break;
 	default:
 	    bu_log("push_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -290,6 +329,7 @@ push_walk_subtree(struct db_i *dbip,
 static void
 push_walk(struct db_i *dbip,
 	    struct directory *dp,
+	    int combtree_ind,
 	    void (*comb_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
 	    void (*leaf_func) (struct db_i *, struct directory *, int depth, mat_t *curr_mat, void *),
 	    struct resource *resp,
@@ -315,7 +355,7 @@ push_walk(struct db_i *dbip,
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	push_walk_subtree(dbip, comb->tree, comb_func, leaf_func, resp, depth+1, curr_mat, client_data);
+	push_walk_subtree(dbip, dp, combtree_ind, comb->tree, comb_func, leaf_func, resp, depth+1, curr_mat, client_data);
 	rt_db_free_internal(&in);
 
 	/* Finally, the combination itself */
@@ -415,24 +455,6 @@ process_comb(struct db_i *dbip, struct directory *dp, int depth, mat_t *curr_mat
 }
 
 static void
-process_solid(struct db_i *dbip, struct directory *dp, int depth, mat_t *UNUSED(curr_mat), void *data)
-{
-    if (!depth)
-	return;
-
-    struct rt_db_internal intern;
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	return;
-    }
-    rt_db_free_internal(&intern);
-    struct push_state *s = (struct push_state *)data;
-    if (s->verbosity) {
-	bu_log("Processed solid (depth: %d): %s\n", depth, dp->d_namep);
-    }
-}
-
-
-static void
 npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
     char *option_help = bu_opt_describe(d, NULL);
     bu_vls_sprintf(str, "Usage: npush [options] obj\n");
@@ -508,7 +530,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL)
-	    push_walk(dbip, dp, process_comb, process_solid, &rt_uniresource, 0, &m, &s);
+	    push_walk(dbip, dp, 0, process_comb, NULL, &rt_uniresource, 0, &m, &s);
     }
 
     /* Sanity - if we didn't end up with m back at the identity matrix,
@@ -530,7 +552,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < tops_cnt; i++) {
 	struct directory *dp = all_paths[i];
 	if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
-	    push_walk(dbip, dp, process_comb, process_solid, &rt_uniresource, 0, &m, &s);
+	    push_walk(dbip, dp, 0, process_comb, NULL, &rt_uniresource, 0, &m, &s);
     }
     bu_free(all_paths, "free db_ls output");
 
