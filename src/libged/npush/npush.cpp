@@ -136,6 +136,8 @@ class combtree_i {
  * times we have encountered each dp during processing. */
 struct push_state {
     bool survey = false;
+    bool valid_push = true;
+    std::string problem_obj;
     std::set<std::string> target_objs;
     std::set<dp_i> s_i;
     std::map<struct directory *, int> s_c;
@@ -183,6 +185,83 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s)
 	return true;
 
     return false;
+}
+
+static void
+validate_walk(struct db_i *dbip,
+	struct directory *dp,
+	void *client_data);
+
+static void
+validate_walk_subtree(struct db_i *dbip,
+		    union tree *tp,
+		    void *client_data)
+{
+    struct directory *dp;
+    struct push_state *s = (struct push_state *)client_data;
+
+    if (!tp || !s->valid_push)
+	return;
+
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+
+	case OP_DB_LEAF:
+
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+		return;
+	
+	    if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
+		s->valid_push = false;
+		s->problem_obj = std::string(dp->d_namep);
+		return;
+	    }
+
+	    if (!(dp->d_flags & RT_DIR_COMB)) {
+		return;
+	    }
+	    validate_walk(dbip, dp, client_data);
+	    break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    validate_walk_subtree(dbip, tp->tr_b.tb_left, client_data);
+	    validate_walk_subtree(dbip, tp->tr_b.tb_right, client_data);
+	    break;
+	default:
+	    bu_log("validate_walk_subtree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("validate_walk_subtree: unrecognized operator\n");
+    }
+}
+
+static void
+validate_walk(struct db_i *dbip,
+	    struct directory *dp,
+	    void *client_data)
+{
+    struct push_state *s = (struct push_state *)client_data;
+    RT_CK_DBI(dbip);
+
+    if (!dp || !s->valid_push) {
+	return; /* nothing to do */
+    }
+
+    if (dp->d_flags & RT_DIR_COMB) {
+
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+
+	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+	validate_walk_subtree(dbip, comb->tree, client_data);
+	rt_db_free_internal(&in);
+
+    }
 }
 
 static void
@@ -488,11 +567,21 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	s.target_objs.insert(std::string(argv[i]));
     }
 
-    // TODO - either need to validate that no target_obj is underneath another target obj,
-    // or fully process the first target obj before moving on to the second.  Otherwise
-    // multiple push operations may collide.
 
+    // Validate that no target_obj is underneath another target obj. Otherwise,
+    // multiple push operations may collide.
     std::set<std::string>::iterator s_it;
+    for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
+	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
+	validate_walk(dbip, dp, &s);
+	if (!s.valid_push) {
+	    bu_vls_printf(gedp->ged_result_str, "%s has another specified target object (%s), below it.", dp->d_namep, s.problem_obj.c_str());
+	    return GED_ERROR;
+	}
+    }
+
+    // Do a preliminary walk down the push objects to determine what impact the
+    // push operations would have on the comb trees and solids.
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL)
