@@ -381,7 +381,7 @@ push_walk_subtree(struct db_i *dbip,
 		MAT_COPY(*curr_mat, om);
 		return;
 	    } else {
-		// If we're continuing, this is not the termination point of a
+		// If this isn't a push leaf, this is not the termination point of a
 		// push - the matrix becomes an IDN matrix for this comb instance,
 		// and the matrix continues down the branch.
 		if (!survey) { 
