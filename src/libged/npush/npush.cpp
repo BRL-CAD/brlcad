@@ -589,6 +589,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // Comb tree editing will have to propagate back up the tree until a comb
     // is reached that is not used elsewhere in the database - if a new comb
     // must replace an old one, that change must be propagated to ensure locality.
+    //
+    // Even without locality, new comb introductions need to be propagated back
+    // "up" the comb tree to see if any additional parent combs no longer have
+    // unique trees.  The termination criteria ("ready to alter trees and objects")
+    // would be when iterative propagation of such changes no longer introduces
+    // additional new non-unique comb trees.
 
 
     // Once the survey walk is complete, iterate over s_i and count how many
