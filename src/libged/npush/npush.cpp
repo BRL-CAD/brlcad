@@ -145,11 +145,12 @@ struct push_state {
     std::set<std::string> target_objs;
     std::set<dp_i> s_i;
     std::set<combtree_i> t_i;
-    std::map<struct directory *, int> s_c;
     int verbosity = 0;
     int max_depth = 0;
     bool stop_at_regions = false;
     const struct bn_tol *tol;
+
+    std::map<struct directory *, std::set<struct directory *>> comb_parents;
 
     /* Containers for intermediate combtree structures being
      * built up during the push walk. */
@@ -309,6 +310,10 @@ push_walk_subtree(struct db_i *dbip,
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
+	    if (dp->d_flags & RT_DIR_COMB) {
+		s->comb_parents[dp].insert(parent_dp);
+	    }
+
 	    /* Update current matrix state to reflect the new branch of
 	     * the tree. */
 	    MAT_COPY(om, *curr_mat);
@@ -360,6 +365,13 @@ push_walk_subtree(struct db_i *dbip,
 
 		if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
 		    s->ct[combtree_ind].t.insert(dnew);
+
+		// TODO - We actually need to continue here if we have a comb,
+		// in order to build awareness of non-pushed comb instances
+		// when we are depth limiting.  If a pushed matrix changes a
+		// comb definition, but the same comb is in use elsewhere in
+		// the tree below the max push depth, the altered comb will
+		// need to be copied.
 		return;
 	    } else {
 		// If we're continuing, this is not the termination point of a
@@ -500,8 +512,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     struct push_state s;
     s.verbosity = verbosity;
     s.tol = &gedp->ged_wdbp->wdb_tol;
-    mat_t m;
-    MAT_IDN(m);
     for (int i = 0; i < argc; i++) {
 	s.target_objs.insert(std::string(argv[i]));
     }
@@ -521,6 +531,8 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     // Do a preliminary walk down the push objects to determine what impact the
     // push operations would have on the comb trees and solids.
+    mat_t m;
+    MAT_IDN(m);
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
@@ -595,16 +607,22 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // unique trees.  The termination criteria ("ready to alter trees and objects")
     // would be when iterative propagation of such changes no longer introduces
     // additional new non-unique comb trees.
-
+    // 
+    // First thought - for each comb db, store a set of its "parent" dps.  Then,
+    // when a comb must be renamed, check its parents' instances for any uses
+    // of the comb other than the one being renamed (i.e. any instances where
+    // another matrix is being applied.)  If other instances exist, a new combtree
+    // instance for the parent is needed and the propagation continues.
 
     // Once the survey walk is complete, iterate over s_i and count how many
     // instances of each dp are present.  Any dp with multiple instances can't
     // be pushed without a copy being made, as the dp instances represent
     // multiple volumes in space.
+    std::map<struct directory *, int> s_c;
     std::set<dp_i>::iterator si_it;
     for (si_it = s.s_i.begin(); si_it != s.s_i.end(); si_it++) {
 	const dp_i &dpi = *si_it;
-	s.s_c[dpi.dp]++;
+	s_c[dpi.dp]++;
     }
 
     std::map<struct directory *, std::vector<dp_i>> dpref;
@@ -612,7 +630,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (si_it = s.s_i.begin(); si_it != s.s_i.end(); si_it++) {
     	const dp_i *dpi = &(*si_it);
 	if (dpi->push_obj) {
-	    if (s.s_c[dpi->dp] > 1) {
+	    if (s_c[dpi->dp] > 1) {
 		// We don't need (or particularly want) to rename the first instance,
 		// particularly if that instance is an IDN case.  The dp_i sorting
 		// should put any IDN instance at the beginning, so when processing
