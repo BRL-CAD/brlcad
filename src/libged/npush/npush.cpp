@@ -585,6 +585,10 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     	const dp_i *dpi = &(*si_it);
 	if (dpi->push_obj) {
 	    if (s.s_c[dpi->dp] > 1) {
+		// TODO - this isn't necessarily true... actual check should
+		// be if matrix isn't different from the original object matrix
+		// (IDN or otherwise) - it's possible a non-IDN matrix gets pushed
+		// to be IDN and we still need a rename...
 		if (!bn_mat_is_equal(dpi->mat, bn_mat_identity, s.tol)) {
 		    dpref[dpi->dp].push_back(*dpi);
 		}
