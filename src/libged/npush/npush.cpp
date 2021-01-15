@@ -139,7 +139,6 @@ class combtree_i {
  * recognize when a push would create a conflict) we keep track of how many
  * times we have encountered each dp during processing. */
 struct push_state {
-    bool survey = false;
     bool valid_push = true;
     std::string problem_obj;
     std::set<std::string> target_objs;
@@ -160,11 +159,11 @@ struct push_state {
 // TODO - terminate non-survey walk according to leaf criteria for
 // push operations - depth, region, etc.
 static bool
-is_push_leaf(struct directory *dp, int depth, struct push_state *s)
+is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
 {
     if (!dp || !s || depth < 0) return true;
 
-    if (s->survey) {
+    if (survey) {
 	// In a survey, if a leaf is one of the originally specified objects,
 	// we're done - below such an object push logic is active.  A survey
 	// needs to find objects not otherwise considered by the push.
@@ -272,9 +271,9 @@ static void
 push_walk(struct db_i *dbip,
 	struct directory *dp,
 	int combtree_ind,
-	struct resource *resp,
 	int depth,
 	mat_t *curr_mat,
+	bool survey,
 	void *client_data);
 
 static void
@@ -282,9 +281,9 @@ push_walk_subtree(struct db_i *dbip,
 	            struct directory *parent_dp,
 		    int combtree_ind,
 		    union tree *tp,
-		    struct resource *resp,
 		    int depth,
 		    mat_t *curr_mat,
+		    bool survey,
 		    void *client_data)
 {
     struct directory *dp;
@@ -299,9 +298,6 @@ push_walk_subtree(struct db_i *dbip,
 
     RT_CHECK_DBI(dbip);
     RT_CK_TREE(tp);
-    if (resp) {
-	RT_CK_RESOURCE(resp);
-    }
 
     switch (tp->tr_op) {
 
@@ -341,20 +337,20 @@ push_walk_subtree(struct db_i *dbip,
 	    // Define the instance container
 	    dnew.dp = dp;
 	    dnew.ts_tol = s->tol;
-	    dnew.push_obj = !(s->survey);
-	    if (!s->survey) {
+	    dnew.push_obj = !(survey);
+	    if (!survey) {
 		MAT_COPY(dnew.mat, *curr_mat);
 	    } else {
 		MAT_COPY(dnew.mat, nm);
 	    }
 
-	    if (is_push_leaf(dp, depth, s)) {
+	    if (is_push_leaf(dp, depth, s, survey)) {
 
 		// Leaf without parent means no work to do
 		if (!parent_dp)
 		    return;
 
-		if (!s->survey) {
+		if (!survey) {
 		    if (!(dp->d_flags & RT_DIR_COMB) && (!s->max_depth || depth+1 <= s->max_depth)) {
 			// If dp is a solid, we're not depth limited, and the solid supports it we apply
 			// the matrix to the primitive itself.  The comb dp_i instance will use the IDN matrix.
@@ -377,13 +373,13 @@ push_walk_subtree(struct db_i *dbip,
 		// If we're continuing, this is not the termination point of a
 		// push - the matrix becomes an IDN matrix for this comb instance,
 		// and the matrix continues down the branch.
-		if (!s->survey) { 
+		if (!survey) { 
 		    bu_log("Comb pushed instance (IDN matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
 		    MAT_IDN(dnew.mat);
 		}
 	    }
 
-	    if (s->survey) { 
+	    if (survey) { 
 		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 	    }
 	    if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
@@ -392,9 +388,9 @@ push_walk_subtree(struct db_i *dbip,
 	    /* Process branch's tree */
 	    tnew.dp = dp;
 	    tnew.ts_tol = s->tol;
-	    tnew.push_obj = !(s->survey);
+	    tnew.push_obj = !(survey);
 	    s->ct.push_back(tnew);
-	    push_walk(dbip, dp, s->ct.size()-1, resp, depth, curr_mat, client_data);
+	    push_walk(dbip, dp, s->ct.size()-1, depth, curr_mat, survey, client_data);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -404,8 +400,8 @@ push_walk_subtree(struct db_i *dbip,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    push_walk_subtree(dbip, parent_dp, combtree_ind, tp->tr_b.tb_left, resp, depth, curr_mat, client_data);
-	    push_walk_subtree(dbip, parent_dp, combtree_ind, tp->tr_b.tb_right, resp, depth, curr_mat, client_data);
+	    push_walk_subtree(dbip, parent_dp, combtree_ind, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
+	    push_walk_subtree(dbip, parent_dp, combtree_ind, tp->tr_b.tb_right, depth, curr_mat, survey, client_data);
 	    break;
 	default:
 	    bu_log("push_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -417,15 +413,12 @@ static void
 push_walk(struct db_i *dbip,
 	    struct directory *dp,
 	    int combtree_ind,
-	    struct resource *resp,
 	    int depth,
 	    mat_t *curr_mat,
+	    bool survey,
 	    void *client_data)
 {
     RT_CK_DBI(dbip);
-    if (resp) {
-	RT_CK_RESOURCE(resp);
-    }
 
     if (!dp) {
 	return; /* nothing to do */
@@ -436,11 +429,11 @@ push_walk(struct db_i *dbip,
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, dp, dbip, NULL, resp) < 0)
+	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	push_walk_subtree(dbip, dp, combtree_ind, comb->tree, resp, depth+1, curr_mat, client_data);
+	push_walk_subtree(dbip, dp, combtree_ind, comb->tree, depth+1, curr_mat, survey, client_data);
 	rt_db_free_internal(&in);
     }
 }
@@ -541,7 +534,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    tnew.ts_tol = s.tol;
 	    tnew.push_obj = true;
 	    s.ct.push_back(tnew);
-	    push_walk(dbip, dp, s.ct.size()-1, &rt_uniresource, 0, &m, &s);
+	    push_walk(dbip, dp, s.ct.size()-1, 0, &m, false, &s);
 	}
     }
 
@@ -557,13 +550,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
      * information will be needed to know if any given matrix push is self
      * contained as-is or would require an object copy+rename to be isolated.
      */
-    s.survey = true;
     struct directory **all_paths;
     int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
     for (int i = 0; i < tops_cnt; i++) {
 	struct directory *dp = all_paths[i];
 	if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
-	    push_walk(dbip, dp, 0, &rt_uniresource, 0, &m, &s);
+	    push_walk(dbip, dp, 0, 0, &m, true, &s);
     }
     bu_free(all_paths, "free db_ls output");
 
