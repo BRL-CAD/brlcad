@@ -44,11 +44,6 @@ class dp_i {
     public:
 	struct directory *dp;
 	mat_t mat;
-	// TODO - for combs, need to store local copies of the comb trees in
-	// the instances - some pushes may alter the trees of combs in one
-	// branch of a parent tree but not another, and in those cases we're
-	// going to have to duplicate combs to preserve local-only impact.
-	// Need to think about how to detect that and handle it...
 	std::string iname;
 	const struct bn_tol *ts_tol;
 	bool push_obj = true;
@@ -71,6 +66,15 @@ class dp_i {
 	    }
 	    /* If the dp doesn't tell us, check the matrix. */
 	    if (!bn_mat_is_equal(mat, o.mat, ts_tol)) {
+		// We want IDN matrices to be less than any others,
+		// regardless of the numerics.
+		int tidn = bn_mat_is_equal(mat, bn_mat_identity, ts_tol);
+		int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol);
+		if (tidn && !oidn) return true;
+		if (oidn && !tidn) return false;
+
+		// If we don't have an IDN matrix involved, fall back on
+		// numerical sorting
 		for (int i = 0; i < 16; i++) {
 		    if (mat[i] < o.mat[i]) {
 			return true;
@@ -570,6 +574,15 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::cout << "all set size: " << icnt << "\n";
     std::cout << "instance set size: " << s.s_i.size() << "\n";
 
+    // Any combs that have more than one associated tree indicate that the comb
+    // needs to be duplicated to express both trees.  This has potential
+    // implications for parent combs if those parents are used outside the push
+    // tree - if they are, they can't be edited without global implications.
+    // Comb tree editing will have to propagate back up the tree until a comb
+    // is reached that is not used elsewhere in the database - if a new comb
+    // must replace an old one, that change must be propagated to ensure locality.
+
+
     // Once the survey walk is complete, iterate over s_i and count how many
     // instances of each dp are present.  Any dp with multiple instances can't
     // be pushed without a copy being made, as the dp instances represent
@@ -579,19 +592,19 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	const dp_i &dpi = *si_it;
 	s.s_c[dpi.dp]++;
     }
+
     std::map<struct directory *, std::vector<dp_i>> dpref;
     std::set<dp_i> bpush;
     for (si_it = s.s_i.begin(); si_it != s.s_i.end(); si_it++) {
     	const dp_i *dpi = &(*si_it);
 	if (dpi->push_obj) {
 	    if (s.s_c[dpi->dp] > 1) {
-		// TODO - this isn't necessarily true... actual check should
-		// be if matrix isn't different from the original object matrix
-		// (IDN or otherwise) - it's possible a non-IDN matrix gets pushed
-		// to be IDN and we still need a rename...
-		if (!bn_mat_is_equal(dpi->mat, bn_mat_identity, s.tol)) {
-		    dpref[dpi->dp].push_back(*dpi);
-		}
+		// We don't need (or particularly want) to rename the first instance,
+		// particularly if that instance is an IDN case.  The dp_i sorting
+		// should put any IDN instance at the beginning, so when processing
+		// the vectors created by this logic we need to start at index 1 to
+		// skip the IDN rename.
+		dpref[dpi->dp].push_back(*dpi);
 	    } else {
 		if (!bn_mat_is_equal(dpi->mat, bn_mat_identity, s.tol))
 		    bpush.insert(*dpi);
@@ -600,7 +613,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     }
     std::map<struct directory *, std::vector<dp_i>>::iterator d_it;
     for (d_it = dpref.begin(); d_it != dpref.end(); d_it++) {
-	for (size_t i = 0; i < d_it->second.size(); i++) {
+	for (size_t i = 1; i < d_it->second.size(); i++) {
 	    dp_i &sd = d_it->second[i];
 	    std::string nname = std::string(d_it->first->d_namep) + std::string("_") + std::to_string(i);
 	    sd.iname = nname;
@@ -612,7 +625,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	std::cout << "Need renaming:\n"; 
 	for (d_it = dpref.begin(); d_it != dpref.end(); d_it++) {
 	    std::cout << d_it->first->d_namep << ":\n";
-	    for (size_t i = 0; i < d_it->second.size(); i++) {
+	    for (size_t i = 1; i < d_it->second.size(); i++) {
 		dp_i &dpi = d_it->second[i];
 		std::cout << dpi.iname << "\n";
 		if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
@@ -633,7 +646,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
- 
+
 
     return GED_OK;
 }
