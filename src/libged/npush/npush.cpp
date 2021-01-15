@@ -362,12 +362,23 @@ push_walk_subtree(struct db_i *dbip,
 		if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
 		    s->ct[combtree_ind].t.insert(dnew);
 
-		// TODO - We actually need to continue here if we have a comb,
-		// in order to build awareness of non-pushed comb instances
-		// when we are depth limiting.  If a pushed matrix changes a
-		// comb definition, but the same comb is in use elsewhere in
-		// the tree below the max push depth, the altered comb will
-		// need to be copied.
+		// Even though this is a leaf, we need to continue if we have a
+		// comb, in order to build awareness of non-pushed comb
+		// instances when we are depth limiting.  If a pushed matrix
+		// changes a comb definition, but the same comb is in use
+		// elsewhere in the tree below the max push depth, the altered
+		// comb will need to be copied.
+		if (dp->d_flags & RT_DIR_COMB) {
+		    /* Process branch's tree */
+		    tnew.dp = dp;
+		    tnew.ts_tol = s->tol;
+		    tnew.push_obj = false;
+		    s->ct.push_back(tnew);
+		    push_walk(dbip, dp, s->ct.size()-1, depth, curr_mat, true, client_data);
+		}
+
+		/* Done with branch - put back the old matrix state */
+		MAT_COPY(*curr_mat, om);
 		return;
 	    } else {
 		// If we're continuing, this is not the termination point of a
@@ -628,6 +639,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 		// should put any IDN instance at the beginning, so when processing
 		// the vectors created by this logic we need to start at index 1 to
 		// skip the IDN rename.
+		//
+		// TODO - think about the case where an IDN matrix is the result of
+		// the push, but elsewhere in the tree (unaltered by the push) a non-IDN
+		// instance of the referenced object survives unaltered.  In that case,
+		// the original unaltered instance should retain the name and the IDN
+		// instance does need to be renamed...
 		dpref[dpi->dp].push_back(*dpi);
 	    } else {
 		if (!bn_mat_is_equal(dpi->mat, bn_mat_identity, s.tol))
