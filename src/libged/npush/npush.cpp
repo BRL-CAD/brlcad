@@ -561,10 +561,13 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Iterate over unique combtrees and build a set of unique instances */
     std::set<combtree_i>::iterator tr_it;
+    size_t icnt = 0;
     for (tr_it = s.t_i.begin(); tr_it != s.t_i.end(); tr_it++) {
 	const combtree_i &t = *tr_it;
 	s.s_i.insert(t.t.begin(), t.t.end());
+	icnt += t.t.size();
     }
+    std::cout << "all set size: " << icnt << "\n";
     std::cout << "instance set size: " << s.s_i.size() << "\n";
 
     // Once the survey walk is complete, iterate over s_i and count how many
@@ -582,7 +585,9 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     	const dp_i *dpi = &(*si_it);
 	if (dpi->push_obj) {
 	    if (s.s_c[dpi->dp] > 1) {
-		dpref[dpi->dp].push_back(*dpi);
+		if (!bn_mat_is_equal(dpi->mat, bn_mat_identity, s.tol)) {
+		    dpref[dpi->dp].push_back(*dpi);
+		}
 	    } else {
 		if (!bn_mat_is_equal(dpi->mat, bn_mat_identity, s.tol))
 		    bpush.insert(*dpi);
