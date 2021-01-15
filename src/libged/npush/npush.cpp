@@ -565,14 +565,22 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Iterate over unique combtrees and build a set of unique instances */
     std::set<combtree_i>::iterator tr_it;
+    std::map<struct directory *, int> t_cnt;
     size_t icnt = 0;
     for (tr_it = s.t_i.begin(); tr_it != s.t_i.end(); tr_it++) {
 	const combtree_i &t = *tr_it;
 	s.s_i.insert(t.t.begin(), t.t.end());
 	icnt += t.t.size();
+	t_cnt[t.dp]++;
     }
     std::cout << "all set size: " << icnt << "\n";
     std::cout << "instance set size: " << s.s_i.size() << "\n";
+    std::map<struct directory *, int>::iterator ti_it;
+    for (ti_it = t_cnt.begin(); ti_it != t_cnt.end(); ti_it++) {
+	if (ti_it->second > 1) {
+	    bu_log("Comb %s has %d different trees\n", ti_it->first->d_namep, ti_it->second);
+	}
+    }
 
     // Any combs that have more than one associated tree indicate that the comb
     // needs to be duplicated to express both trees.  This has potential
