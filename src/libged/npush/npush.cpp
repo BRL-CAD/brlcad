@@ -213,7 +213,6 @@ struct push_state {
     bool valid_push = true;
     std::string problem_obj;
     std::set<std::string> target_objs;
-    std::set<dp_i> s_i;
     std::set<combtree_i> t_i;
     int verbosity = 0;
     int max_depth = 0;
@@ -650,17 +649,18 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::cout << "tree set size: " << s.t_i.size() << "\n";
 
     /* Iterate over unique combtrees and build a set of unique instances */
+    std::set<dp_i> s_i;
     std::set<combtree_i>::iterator tr_it;
     std::map<struct directory *, int> t_cnt;
     size_t icnt = 0;
     for (tr_it = s.t_i.begin(); tr_it != s.t_i.end(); tr_it++) {
 	const combtree_i &t = *tr_it;
-	s.s_i.insert(t.t.begin(), t.t.end());
+	s_i.insert(t.t.begin(), t.t.end());
 	icnt += t.t.size();
 	t_cnt[t.dp]++;
     }
     std::cout << "all set size: " << icnt << "\n";
-    std::cout << "instance set size: " << s.s_i.size() << "\n";
+    std::cout << "instance set size: " << s_i.size() << "\n";
     std::map<struct directory *, int>::iterator ti_it;
     for (ti_it = t_cnt.begin(); ti_it != t_cnt.end(); ti_it++) {
 	if (ti_it->second > 1) {
@@ -694,14 +694,14 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // multiple volumes in space.
     std::map<struct directory *, int> s_c;
     std::set<dp_i>::iterator si_it;
-    for (si_it = s.s_i.begin(); si_it != s.s_i.end(); si_it++) {
+    for (si_it = s_i.begin(); si_it != s_i.end(); si_it++) {
 	const dp_i &dpi = *si_it;
 	s_c[dpi.dp]++;
     }
 
     std::map<struct directory *, std::vector<dp_i>> dpref;
     std::set<dp_i> bpush;
-    for (si_it = s.s_i.begin(); si_it != s.s_i.end(); si_it++) {
+    for (si_it = s_i.begin(); si_it != s_i.end(); si_it++) {
     	const dp_i *dpi = &(*si_it);
 	if (dpi->push_obj) {
 	    if (s_c[dpi->dp] > 1) {
