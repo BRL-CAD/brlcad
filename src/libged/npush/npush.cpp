@@ -35,23 +35,63 @@
 
 #include "../ged_private.h"
 
-/* When it comes to push operations, the notion of what constitutes a unique
- * instance is defined as the combination of the object and its associated
- * parent matrix. Because the dp may be used under multiple matrices, for some
- * push operations it will be necessary to generate a new unique name to refer
- * to instances - we store those names with the instances for convenience. */
+/* Database objects (struct directory) are unique in a database, but those
+ * unique objects may be reused by multiple distinct comb tree instances.
+ * When pushing matrices, the atomic unit of interest is not the database
+ * object but those comb tree instances.
+ *
+ * The .g file format does not store such instances as discrete objects - they
+ * exist as tree elements of the comb object tree definitions, consisting of a
+ * reference to a directory object and a matrix associated with that instance
+ * (if no explicit matrix is present, an implicit identity (IDN) matrix is
+ * assumed.)
+ *
+ * For the purposes of matrix pushing, we need to think about these instances
+ * as distinct atomic objects.  In order to do so, we define a C++ class that
+ * encapsulates the necessary information and a < operator that allows for
+ * insertion of instances into C++ sets (which offer sorting and a uniqueness
+ * guarantee.)
+ */
 class dp_i {
     public:
-	struct directory *dp;
-	mat_t mat;
-	std::string iname;
-	const struct bn_tol *ts_tol;
-	bool push_obj = true;
-	bool apply_to_solid = false;
+	struct directory *dp;  // Instance database object
+	mat_t mat;             // Instance matrix
 
+	std::string iname;     // Container to hold instance name, if needed
+	const struct bn_tol *ts_tol;  // Tolerance to use for matrix comparisons
+
+	bool push_obj = true;  // Flag to determine if this instance is being pushed
+
+	// If an instance is being pushed, there is one step that can be taken
+	// beyond simply propagating the matrix down the tree - the solid
+	// associated with the instance can have its parameters updated to
+	// reflect the application of the matrix.  This completely "clears" all
+	// matrix applications from the comb tree instance.
+	bool apply_to_solid = false;  
+
+	// The key to the dp_i class is the less than operator, which is what
+	// allows C++ sets to distinguish between separate instances with the
+	// same dp pointer.  The first check is that dp pointer - if the current
+	// and other dp do not match, the sorting criteria is obvious.  Likewise,
+	// if one instance is instructed in the push to apply the matrix to a
+	// solid and another is not, even if they would otherwise be identical
+	// instances, it is necessary to distinguish them since those two
+	// definitions require different comb tree instances to represent.
+	//
+	// If instance definitions DO match in other respects, the uniqueness
+	// rests on the similarity of their matrices.  If they are equal within
+	// tolerance, the instances are equal as well.
+	//
+	// One additional refinement is made to the sorting for processing
+	// convenience - we make sure that any IDN instance is less than any
+	// non-IDN matrix in sorting behavior, even if the numerics of the
+	// matrices wouldn't otherwise reach that determination.
 	bool operator<(const dp_i &o) const {
+
+	    // First, check dp
 	    if (dp < o.dp) return true;
 	    if (o.dp < dp) return false;
+
 	    // The application of the matrix to the solid may matter
 	    // when distinguishing dp_i instances, but only if one
 	    // of the matrices involved is non-IDN - otherwise, the
@@ -64,27 +104,32 @@ class dp_i {
 		       	return true;
 		}
 	    }
-	    /* If the dp doesn't tell us, check the matrix. */
+
+	    /* If the dp doesn't tell us and the solid application doesn't tell
+	     * us, check the matrix. */
 	    if (!bn_mat_is_equal(mat, o.mat, ts_tol)) {
-		// We want IDN matrices to be less than any others,
-		// regardless of the numerics.
+		// We want IDN matrices to be less than any others, regardless
+		// of the numerics.
 		int tidn = bn_mat_is_equal(mat, bn_mat_identity, ts_tol);
 		int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol);
 		if (tidn && !oidn) return true;
 		if (oidn && !tidn) return false;
 
 		// If we don't have an IDN matrix involved, fall back on
-		// numerical sorting
+		// numerical sorting to order the instances
 		for (int i = 0; i < 16; i++) {
 		    if (mat[i] < o.mat[i]) {
 			return true;
 		    }
 		}
 	    }
+
+	    /* All attempt to find non-equalities failed */
 	    return false;
 	}
 
-	bool operator=(const dp_i &o) const {
+	/* For convenience, we also define an equality operator */
+	bool operator==(const dp_i &o) const {
 	    if (dp != o.dp) return false;
 	    if (apply_to_solid != o.apply_to_solid) {
 		if (!bn_mat_is_equal(mat, bn_mat_identity, ts_tol) ||
@@ -95,42 +140,68 @@ class dp_i {
 	}
 };
 
+/* Just as we need database instance objects as atomic units for pushing, we
+ * need a way to identify unique comb definitions that might be produced as a
+ * consequence of partial pushes.  If a comb object winds up with two or more
+ * different tree definitions at different points in the database due to
+ * different pushes on different branches, we need to be able to detect that
+ * and respond accordingly.  So, just as we defined the dp_i class to encapsulate
+ * the notion of a database object instance, we define a combtree instance class
+ * to encapsulate the definition and ordering logic of a comb tree.
+ *
+ * For these purposes, we're not concerned with the boolean set operations
+ * associated with the tree instance.  Nor are we concerned about the set
+ * theory equation defined by the tree.  Neither of those components of the
+ * tree are impacted by any push operation - it is the matrix and the object
+ * which (may) change during a push.  Consequently, only those elements are
+ * important for this particular instance definition.  A long as a tree
+ * continues to point to an object that correctly defines the volume bound by
+ * the original instance, the tree remains equivalent even if the matrix and/or
+ * name of the particular object pointed to by the tree instance changes.
+ */
 class combtree_i {
     public:
-	struct directory *dp;
-	std::set<dp_i> t;
-	const struct bn_tol *ts_tol;
-	bool push_obj = true;
+	struct directory *dp; // Directory pointer of comb associated with comb tree
+	std::set<dp_i> t;     // Database object instances in comb tree.
 
+	const struct bn_tol *ts_tol;  // Tolerance used for matrix comparisons
+
+	bool push_obj = true;  // Flag determining whether this tree instance is pushed
+
+
+	// As with dp_i, the key to the combtree_i class is the less than
+	// operator, which is what allows C++ sets to distinguish between
+	// separate instances with the same associated comb dp pointer.  The
+	// first check is that dp pointer - if the current and other dp do not
+	// match, the sorting criteria is the comb dp.
+	//
+	// If the combs match, we move on to the more difficult question of
+	// comparing the trees.  For this we take advantage of the C++ property
+	// of ordered dp_i sets - if the trees are identical, they will be
+	// identically sorted.  If not, the first non-matching instance is
+	// used to do the sorting.
 	bool operator<(const combtree_i &o) const {
+
+	    // Easy case - check trees' parent combs
 	    if (dp < o.dp) return true;
 	    if (o.dp < dp) return false;
+
 	    /* If the dp doesn't tell us, check children in tree. */
-	    std::set<dp_i>::iterator c_it;
-	    std::set<dp_i>::iterator o_it;
-	    /* dp_i sets are sorted.  Find the first non-matching instance,
-	     * and compare them */
+	    std::set<dp_i>::iterator c_it, o_it;
+
+	    /* Find the first non-matching instance in the tree sets, and
+	     * compare them.  Iterate over all instances in the current
+	     * tree: */
 	    for (c_it = t.begin(); c_it != t.end(); c_it++) {
-		std::set<dp_i>::iterator oi_it;
 		for (o_it = o.t.begin(); o_it != o.t.end(); o_it++) {
-		    if (o_it->dp > c_it->dp)
-			break;
-		    oi_it = o_it;
-		}
-		if (oi_it->dp != c_it->dp) {
-		    return (c_it->dp < oi_it->dp);
-		}
-		if (!bn_mat_is_equal(c_it->mat, oi_it->mat, ts_tol)) {
-		    for (int i = 0; i < 16; i++) {
-			if (c_it->mat[i] < oi_it->mat[i]) {
-			    return true;
-			}
-		    }
+		    if (*c_it == *o_it)
+			continue;
+		    return (*c_it < *o_it);
 		}
 	    }
-	    // If everything checked out, check the set sizes - smaller is <
-	    if (t.size() < o.t.size()) return true;
 
+	    // If everything else checked out, check the set sizes - smaller is <
+	    if (t.size() < o.t.size()) return true;
 	    return false;
 	}
 };
