@@ -239,8 +239,16 @@ struct push_state {
 
 };
 
-// TODO - terminate non-survey walk according to leaf criteria for
-// push operations - depth, region, etc.
+/* Tree walks in a push operation have one of two roles - either calculating
+ * the matrix needed for the push operations and identifying the leaves of the
+ * push, or surveying the tree to identify potential conflicts.  The two roles
+ * require different leaf tests, but may be present in the same tree walk - if
+ * there is a depth limit in place, the deeper portions of the tree walk
+ * continue as that portion of the tree must be checked for conflicts.
+ *
+ * To make this practical, this test has a state flag - survey - which the tree
+ * walk can pass in to change the testing behavior.
+ */
 static bool
 is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
 {
@@ -273,6 +281,14 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
     return false;
 }
 
+
+/* This set of walking functions does a preliminary check to ensure there are no
+ * nested specifications of push objects supplied to the push command, in the case
+ * where a user supplies multiple root objects to pushed.  Once an invalidity is
+ * found, these routines abort and record the invalidity.
+ *
+ * This is for ease of implementation and performance, but can be adjusted to do
+ * a more comprehensive review if that proves worthwhile. */
 static void
 validate_walk(struct db_i *dbip,
 	struct directory *dp,
@@ -350,6 +366,10 @@ validate_walk(struct db_i *dbip,
     }
 }
 
+
+/* The primary walking routine, responsible for collecting information about
+ * tree states.  Used for both a push walk and survey of the overall database.
+ * */
 static void
 push_walk(struct db_i *dbip,
 	struct directory *dp,
@@ -531,6 +551,10 @@ push_walk(struct db_i *dbip,
 	rt_db_free_internal(&in);
     }
 }
+
+
+
+
 
 static void
 npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
