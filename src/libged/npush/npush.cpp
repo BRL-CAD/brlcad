@@ -210,20 +210,33 @@ class combtree_i {
  * recognize when a push would create a conflict) we keep track of how many
  * times we have encountered each dp during processing. */
 struct push_state {
+
+    /* Variables used for initial validity checking of specified push
+     * object(s).  target_objects are user specified - if objects are
+     * specified that are below other target objects, flag valid_push
+     * is set to false. */
     bool valid_push = true;
-    std::string problem_obj;
     std::set<std::string> target_objs;
-    std::set<combtree_i> t_i;
-    int verbosity = 0;
+
+    /* User-supplied flags controlling tree walking behavior */
     int max_depth = 0;
     bool stop_at_regions = false;
-    const struct bn_tol *tol;
 
+    /* Primary containers holding information gathered during tree walk */
+    std::set<combtree_i> t_i;
     std::map<struct directory *, std::set<struct directory *>> comb_parents;
 
     /* Containers for intermediate combtree structures being
      * built up during the push walk. */
     std::vector<combtree_i> ct;
+   
+    /* Tolerance to be used for matrix comparisons */ 
+    const struct bn_tol *tol;
+
+    /* Debugging related data and variables */
+    int verbosity = 0;
+    std::string problem_obj;
+
 };
 
 // TODO - terminate non-survey walk according to leaf criteria for
