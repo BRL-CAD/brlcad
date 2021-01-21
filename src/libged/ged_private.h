@@ -181,14 +181,6 @@ GED_EXPORT void vls_col_eol(struct bu_vls *str);
 GED_EXPORT extern int edarb_facedef(void *data, int argc, const char *argv[]);
 
 /* defined in ged.c */
-GED_EXPORT extern void _ged_print_node(struct ged *gedp,
-			    struct directory *dp,
-			    size_t pathpos,
-			    int indentSize,
-			    char prefix,
-			    unsigned flags,
-			    int displayDepth,
-			    int currdisplayDepth);
 GED_EXPORT extern struct db_i *_ged_open_dbip(const char *filename,
 				   int existing_only);
 
