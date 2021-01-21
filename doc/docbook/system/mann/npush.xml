@@ -275,9 +275,99 @@ sph_010/
   <para>
     Note that neither option alters the parameters of primitive shapes.
   </para>
-  
+
+  <para>
+    Worse still is a case where multiple copies of identical objects are referenced at multiple levels.
+    Consider the following example:
+  </para>
+  <literallayout>
+sph_016/
+	u [M1] sph16a/R
+		u [M2] sph16_1/
+			u sph16.c/
+				u sph16.s
+		u sph16_1/
+			u sph16.c/
+				u sph16.s
+	u [M3] sph16a/R
+		u [M4] sph16_1/
+			u sph16.c/
+				u sph16.s
+		u sph16_1/
+			u sph16.c/
+				u sph16.s
+  </literallayout>
+  <para>
+    If we push to depth 3, we end up with four different versions of the sph16.c tree: 
+  </para>
+  <literallayout>
+sph_016/
+	u sph16a/R
+		u sph16_1/
+			u [M12] sph16.c/
+				u sph16.s
+		u sph16_1/
+			u [M1] sph16.c/
+				u sph16.s
+	u sph16a/R
+		u sph16_1/
+			u [M34] sph16.c/
+				u sph16.s
+		u sph16_1/
+			u [M3] sph16.c/
+				u sph16.s
+  </literallayout>
+  <para>
+    The first stage of the answer is to create three new combinations and redefine the sph16a tree:
+  </para>
+  <literallayout>
+sph_016/
+	u sph16a/R
+		u sph16_1_01/
+			u [M12] sph16.c/
+				u sph16.s
+		u sph16_1/
+			u [M1] sph16.c/
+				u sph16.s
+	u sph16a/R
+		u sph16_1_02/
+			u [M34] sph16.c/
+				u sph16.s
+		u sph16_1_03/
+			u [M3] sph16.c/
+				u sph16.s
+  </literallayout>
+  <para>
+    That addresses sph16_1, but the tree updates to sph16a created a new problem:   now we have
+    two different versions of the sph16a tree.  To resolve that problem, we must create a new
+    comb to replace one of the conflicting sph16a instances and redefine the sph_016 tree:
+  </para>
+  <literallayout>
+sph_016/
+	u sph16a/R
+		u sph16_1_01/
+			u [M12] sph16.c/
+				u sph16.s
+		u sph16_1/
+			u [M1] sph16.c/
+				u sph16.s
+	u sph16a_01/R
+		u sph16_1_02/
+			u [M34] sph16.c/
+				u sph16.s
+		u sph16_1_03/
+			u [M3] sph16.c/
+				u sph16.s
+  </literallayout>
+  <para>
+    Unlike sph16a and sph16_1, sph_016 has not seen any changes to its volumetric definition.  sph_016
+    is the "top level" object specified for this push, and as such constitutes a reliable termination point for
+    any need to propagate tree changes.  Even if any combs elsewhere in the database reference sph_016,
+    they will not see any volumetric changes as a consequence of the operation and do not need to redefine
+    their trees to preserve original sph_016 trees for external use in copies of sph_016.
+  </para>
   </refsection>
- 
+  
   <refsection xml:id="search_options"><title>OPTIONS</title>
 
     <variablelist remap="TP">
