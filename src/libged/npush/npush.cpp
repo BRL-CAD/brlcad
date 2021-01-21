@@ -407,15 +407,26 @@ push_walk_subtree(struct db_i *dbip,
 
 	case OP_DB_LEAF:
 
+	    // Don't consider the leaf it if doesn't exist (TODO - is this always
+	    // what we want to do when pushing?)
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
+	    // When we finalize the database after identifying all unique tree
+	    // instances, we may need to propagate new tree definitions back up
+	    // tree paths as trees have new instance references added.  If we
+	    // are depth limited in pushing combs may have local definition
+	    // changes introduced that will in turn require new definitions in
+	    // parent combs.  To make it easier to propagate such changes, we
+	    // assemble a map of child to parent relationships during the
+	    // initial walk.
 	    if (dp->d_flags & RT_DIR_COMB) {
 		s->comb_parents[dp].insert(parent_dp);
 	    }
 
 	    /* Update current matrix state to reflect the new branch of
-	     * the tree. */
+	     * the tree. Either we have a local matrix, or we have an
+	     * implicit IDN matrix. */
 	    MAT_COPY(om, *curr_mat);
 	    if (tp->tr_l.tl_mat) {
 		MAT_COPY(nm, tp->tr_l.tl_mat);
@@ -425,16 +436,15 @@ push_walk_subtree(struct db_i *dbip,
 	    bn_mat_mul(*curr_mat, om, nm);    
 
 	    if (s->verbosity) {
-		if (tp->tr_l.tl_mat) {
-		    bu_log("Found comb entry: %s[M]\n", dp->d_namep);
-		} else {
-		    bu_log("Found comb entry: %s\n", dp->d_namep);
-		}
-		if (s->verbosity > 1) {
-		    bu_vls_sprintf(&title, "%s matrix", tp->tr_l.tl_name);
-		    if (!bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol))
+		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
+		    bu_log("Found %s->[M]%s\n", parent_dp->d_namep, dp->d_namep);
+		    if (s->verbosity > 1) {
+			bu_vls_sprintf(&title, "%s matrix", tp->tr_l.tl_name);
 			bn_mat_print(bu_vls_cstr(&title), *curr_mat);
-		    bu_vls_free(&title);
+			bu_vls_free(&title);
+		    }
+		} else {
+		    bu_log("Found %s->%s\n", parent_dp->d_namep, dp->d_namep);
 		}
 	    }
 
@@ -469,8 +479,9 @@ push_walk_subtree(struct db_i *dbip,
 		// entry as being part of the tree.  (Note that we're not concerned with the
 		// boolean set aspects of the tree's definition here, only unique volumes in
 		// space, so this set does not exactly mimic the original comb tree structure.)
-		if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
+		if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end()) {
 		    s->ct[combtree_ind].t.insert(dnew);
+		}
 
 		// Even though this is a leaf, we need to continue if we have a
 		// comb, in order to build awareness of non-pushed comb
@@ -484,6 +495,9 @@ push_walk_subtree(struct db_i *dbip,
 		    tnew.ts_tol = s->tol;
 		    tnew.push_obj = false;
 		    s->ct.push_back(tnew);
+		    if (s->verbosity > 1 && !survey) {
+			bu_log("Switching from push to survey - non-shape leaf %s->%s found\n", parent_dp->d_namep, dp->d_namep);
+		    }
 		    push_walk(dbip, dp, s->ct.size()-1, depth, curr_mat, true, client_data);
 		}
 
@@ -495,16 +509,18 @@ push_walk_subtree(struct db_i *dbip,
 		// push - the matrix becomes an IDN matrix for this comb instance,
 		// and the matrix continues down the branch.
 		if (!survey) { 
-		    bu_log("Comb pushed instance (IDN matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		    if (s->verbosity > 1)
+			bu_log("Pushed comb instance (IDN matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
 		    MAT_IDN(dnew.mat);
 		}
 	    }
 
-	    if (survey) { 
+	    if (survey && s->verbosity > 1) { 
 		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 	    }
-	    if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
+	    if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end()) {
 		s->ct[combtree_ind].t.insert(dnew);
+	    }
 
 	    /* Process branch's tree */
 	    tnew.dp = dp;
@@ -780,7 +796,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     if (dpref.size()) {
 	std::cout << "Need renaming:\n"; 
 	for (d_it = dpref.begin(); d_it != dpref.end(); d_it++) {
-	    std::cout << d_it->first->d_namep << ":\n";
+	    std::cout << d_it->first->d_namep;
+	    if (d_it->second.size() > 1) {
+		std::cout << ":\n";
+	    } else {
+		std::cout << "\n";
+	    }
 	    for (size_t i = 1; i < d_it->second.size(); i++) {
 		dp_i &dpi = d_it->second[i];
 		std::cout << dpi.iname << "\n";
