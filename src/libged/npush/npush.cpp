@@ -221,6 +221,7 @@ struct push_state {
     /* User-supplied flags controlling tree walking behavior */
     int max_depth = 0;
     bool stop_at_regions = false;
+    bool stop_at_shapes = false;
 
     /* Primary containers holding information gathered during tree walk */
     std::set<combtree_i> t_i;
@@ -454,14 +455,20 @@ push_walk_subtree(struct db_i *dbip,
 		    return;
 
 		if (!survey) {
-		    if (!(dp->d_flags & RT_DIR_COMB) && (!s->max_depth || depth+1 <= s->max_depth)) {
-			// If dp is a solid, we're not depth limited, and the solid supports it we apply
-			// the matrix to the primitive itself.  The comb dp_i instance will use the IDN matrix.
+		    if (!(dp->d_flags & RT_DIR_COMB) && (!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
+			// If dp is a solid, we're not depth limited, we're not
+			// stopping above shapes, and the solid supports it we
+			// apply the matrix to the primitive itself.  The comb
+			// reference will use the IDN matrix.
 			bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", parent_dp->d_namep, dp->d_namep);
 			dnew.apply_to_solid = true;
 		    }
 		}
 
+		// If we haven't already inserted an identical instance, record this new
+		// entry as being part of the tree.  (Note that we're not concerned with the
+		// boolean set aspects of the tree's definition here, only unique volumes in
+		// space, so this set does not exactly mimic the original comb tree structure.)
 		if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end())
 		    s->ct[combtree_ind].t.insert(dnew);
 
