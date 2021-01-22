@@ -787,8 +787,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 		    }
 
 		    // If verbosity is enabled, itemize the failures
+		    struct bu_vls imat = BU_VLS_INIT_ZERO;
 		    bu_vls_printf(&msgs, "Conflicting instance: %s->%s:\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
-		    // TODO - print matrix
+		    bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, &imat);
+		    bu_vls_printf(&msgs, "%s", bu_vls_cstr(&imat));
+		    bu_vls_free(&imat);
 		}
 	    }
 	}
