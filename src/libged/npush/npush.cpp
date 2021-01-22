@@ -806,6 +806,10 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (i_it = i_cnt.begin(); i_it != i_cnt.end(); i_it++) {
 	if (i_it->second.size() == 1)
 	    continue;
+	// TODO At the moment, don't rename the first object in the list.  A better approach
+	// would be to set an "external" flag in the dp_i, do a preliminary scan to look
+	// for the presence of such a dp_i in the set, and start at 0 with logic for
+	// skipping any dp_i instances with that flag set...
 	for (size_t i = 1; i < i_it->second.size(); i++) {
 	    dp_i &dpi = uniq_instances[i];
 	    // TODO - validate new name as unique in the .g file before
@@ -816,16 +820,27 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Clear the set and repopulate it, so any lookups into the set will find
-    // dp_i containers containing any names the above logic has assigned.
+    // dp_i containers containing any inames the above logic may have assigned.
     instset.clear();
     instset.insert(uniq_instances.begin(), uniq_instances.end());
 
-    // Any combs that have more than one associated tree indicate that the comb
-    // needs to be duplicated to express both trees.  These changes may need to
-    // be propagated back "up" the comb tree if any additional parent combs no
-    // longer have unique trees as a consequence of instances being pointed to
-    // new comb copies.
-
+    // Having identified all unique instances, it is now time to build the pushed
+    // tree by walking a file time and updating combs and primitives accordingly.
+    //
+    // Step one is to iterate over the instances.  If a new iname has been assigned,
+    // the existing object needs to be copied under the new name.  Once all db objects
+    // needed are in place (in unaltered form) the updating operations are:
+    //
+    // For each instance in the comb tree, try to find the corresponding dp_i
+    // in the instset (matrix + dp find search - create a dp_i to supply to find, capture
+    // the iterator of the search result.  If not == end(), it will have the dp_i with
+    // the new iname, if such a name has been assigned). If an iname is assigned
+    // for the dp_i, update name.  If the instance is a push_obj, assign
+    // IDN matrix, unless dp_i is identified as a leaf - in that case,
+    // assign the dp_i matrix.  If the leaf is a solid and the flag is set,
+    // assign IDN matrix and update solid parameters.
+    //
+    // Check the existing push and xpush codes for how to alter the comb trees.
 
     std::map<struct directory *, std::vector<dp_i>> dpref;
     std::set<dp_i> bpush;
