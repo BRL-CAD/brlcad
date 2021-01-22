@@ -825,11 +825,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     instset.insert(uniq_instances.begin(), uniq_instances.end());
 
     // Having identified all unique instances, it is now time to build the pushed
-    // tree by walking a file time and updating combs and primitives accordingly.
+    // tree.
     //
-    // Step one is to iterate over the instances.  If a new iname has been assigned,
-    // the existing object needs to be copied under the new name.  Once all db objects
-    // needed are in place (in unaltered form) the updating operations are:
+    // Step one is to iterate over the instances.  If a new iname has been
+    // assigned, the existing object needs to be copied under the new name.
+    // Once all db objects needed are in place (in unaltered form) we walk a
+    // final time and updating combs and primitives accordingly.
     //
     // For each instance in the comb tree, try to find the corresponding dp_i
     // in the instset (matrix + dp find search - create a dp_i to supply to find, capture
@@ -840,7 +841,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // assign the dp_i matrix.  If the leaf is a solid and the flag is set,
     // assign IDN matrix and update solid parameters.
     //
-    // Check the existing push and xpush codes for how to alter the comb trees.
+    // TODO: Check the existing push and xpush codes for how to alter the comb trees.
 
     std::map<struct directory *, std::vector<dp_i>> dpref;
     std::set<dp_i> bpush;
