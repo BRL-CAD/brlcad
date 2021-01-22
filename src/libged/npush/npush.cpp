@@ -814,8 +814,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    dp_i &dpi = uniq_instances[i];
 	    // TODO - validate new name as unique in the .g file before
 	    // going with it...
-	    dpi.iname = std::string(i_it->first->d_namep) + std::string("_") + std::to_string(i);
-	    std::cout << "New name: " << dpi.iname << "\n";
+	    dpi.iname = std::string(dpi.dp->d_namep) + std::string("_") + std::to_string(i);
+
+	    // TODO - there's a problem here - these don't line up, which indicates a problem
+	    // with the assembly of i_cnt?...
+	    std::cout << i_it->first->d_namep << "->" << dpi.parent_dp->d_namep << "->" << dpi.dp->d_namep << "\n";
 	}
     }
 
@@ -831,7 +834,15 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // assigned, the existing object needs to be copied under the new name.
     // Once all db objects needed are in place (in unaltered form) we walk a
     // final time and updating combs and primitives accordingly.
-    //
+    std::set<dp_i>::iterator in_it;
+    for (in_it = instset.begin(); in_it != instset.end(); in_it++) {
+	const dp_i &dpi = *in_it;
+	//if (!dpi.push_obj)
+	//   continue;
+	if (dpi.iname.length())
+	    std::cout << "Copy " << dpi.dp->d_namep << " to " << dpi.iname << "\n";
+    }
+
     // For each instance in the comb tree, try to find the corresponding dp_i
     // in the instset (matrix + dp find search - create a dp_i to supply to find, capture
     // the iterator of the search result.  If not == end(), it will have the dp_i with
