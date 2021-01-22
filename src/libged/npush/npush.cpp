@@ -25,8 +25,10 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <set>
 #include <map>
+#include <queue>
 #include <string>
 #include <vector>
 
@@ -55,9 +57,10 @@
 class dp_i {
     public:
 	struct directory *dp;  // Instance database object
+	struct directory *parent_dp;  // Parent object
 	mat_t mat;             // Instance matrix
 
-	std::string iname;     // Container to hold instance name, if needed
+	std::string iname = std::string();     // Container to hold instance name, if needed
 	const struct bn_tol *ts_tol;  // Tolerance to use for matrix comparisons
 
 	bool push_obj = true;  // Flag to determine if this instance is being pushed
@@ -224,7 +227,6 @@ struct push_state {
     bool stop_at_shapes = false;
 
     /* Primary containers holding information gathered during tree walk */
-    std::set<combtree_i> t_i;
     std::map<struct directory *, std::set<struct directory *>> comb_parents;
 
     /* Containers for intermediate combtree structures being
@@ -394,6 +396,7 @@ push_walk_subtree(struct db_i *dbip,
     struct bu_vls title = BU_VLS_INIT_ZERO;
     combtree_i tnew;
     dp_i dnew;
+    dnew.parent_dp = parent_dp;
     struct push_state *s = (struct push_state *)client_data;
     mat_t om, nm;
 
@@ -690,6 +693,10 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
      * also characterize all unique object instances in the database.  That
      * information will be needed to know if any given matrix push is self
      * contained as-is or would require an object copy+rename to be isolated.
+     *
+     * TODO - this needs to be only be enabled with an option, so we can
+     * replicate current (unsafe) push behavior that doesn't take cognizance of
+     * the .g contents beyond the specified push tree.
      */
     struct directory **all_paths;
     int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
@@ -701,46 +708,106 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     bu_free(all_paths, "free db_ls output");
 
 
-    /* Build a set of unique combtrees */
-    std::cout << "tree vect size: " << s.ct.size() << "\n";
-    for (size_t i = 0; i < s.ct.size(); i++) {
-	s.t_i.insert(s.ct[i]);
-    }
-    std::cout << "tree set size: " << s.t_i.size() << "\n";
+    /* Build a set of unique combtrees, and create a vector from that set.  The
+     * former guarantees uniqueness, the latter is simpler to work with when it
+     * comes to manipulating elements (which may be necessary in later steps.)
+     * We do this now so instance iterations can be simpler, but we also need
+     * the final names of unique instances before we will know what updates are
+     * needed to trees - hence those instances must be identified first. */
+    std::set<combtree_i> treeset(s.ct.begin(), s.ct.end());
+    std::vector<combtree_i> uniq_trees(treeset.size());
+    std::copy(treeset.begin(), treeset.end(), uniq_trees.begin());
+    treeset.clear();
 
-    /* Iterate over unique combtrees and build a set of unique instances */
-    std::set<dp_i> s_i;
-    std::set<combtree_i>::iterator tr_it;
-    std::map<struct directory *, int> t_cnt;
-    size_t icnt = 0;
-    for (tr_it = s.t_i.begin(); tr_it != s.t_i.end(); tr_it++) {
-	const combtree_i &t = *tr_it;
-	s_i.insert(t.t.begin(), t.t.end());
-	icnt += t.t.size();
-	t_cnt[t.dp]++;
+    std::cout << "tree vect size: " << s.ct.size() << "\n";
+    std::cout << "unique tree cnt: " << uniq_trees.size() << "\n";
+
+    /* We do know enough now, however, to build up information about unique
+     * trees associated with each comb dp.  This is how we will identify
+     * combinations that require copies, and may potentially propagate new
+     * trees up their chains. */
+    std::map<struct directory *, std::vector<size_t>> t_cnt;
+    for (size_t i = 0; i < uniq_trees.size(); i++) {
+	t_cnt[uniq_trees[i].dp].push_back(i);
     }
-    std::cout << "all set size: " << icnt << "\n";
-    std::cout << "instance set size: " << s_i.size() << "\n";
-    std::map<struct directory *, int>::iterator ti_it;
+
+    // Temporary debugging - print status of unique tree check
+    std::map<struct directory *, std::vector<size_t>>::iterator ti_it;
     for (ti_it = t_cnt.begin(); ti_it != t_cnt.end(); ti_it++) {
-	if (ti_it->second > 1) {
-	    bu_log("Comb %s has %d different trees\n", ti_it->first->d_namep, ti_it->second);
+	struct directory *cdp = ti_it->first;
+	if (ti_it->second.size() > 1) {
+	    bu_log("Comb %s has %zd different trees\n", cdp->d_namep, ti_it->second.size());
 	}
     }
 
+    // Iterate over combtrees and build a set of unique instances.
+    std::set<dp_i> s_i;
+    size_t icnt = 0;
+    for (size_t i = 0; i < uniq_trees.size(); i++) {
+	s_i.insert(uniq_trees[i].t.begin(), uniq_trees[i].t.end());
+	icnt += uniq_trees[i].t.size();
+    }
+    std::vector<dp_i> uniq_instances(s_i.size());
+    std::copy(s_i.begin(), s_i.end(), uniq_instances.begin());
+    s_i.clear();
+
+
+    std::cout << "all set size: " << icnt << "\n";
+    std::cout << "instance set size: " << s_i.size() << "\n";
+
+
+    // Iterate over unique instances and count how many instances of each dp
+    // are present.  Any dp with multiple associated instances can't be pushed
+    // without a copy being made, as the unique dp instances represent multiple
+    // distinct volumes in space.
+    std::map<struct directory *, std::vector<size_t>> i_cnt;
+    for (size_t i = 0; i < uniq_instances.size(); i++) {
+	i_cnt[uniq_instances[i].dp].push_back(i);
+    }
+
+    // If we don't have force-push on, and we have non-unique mapping between
+    // dp pointers and instances, we can't proceed.
+    if (!xpush) {
+	bool conflict = false;
+	struct bu_vls msgs = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < uniq_instances.size(); i++) {
+	    const dp_i &dpi = uniq_instances[i];
+	    if (dpi.push_obj) {
+		if (i_cnt[dpi.dp].size() > 1) {
+
+		    // This is the condition where xpush is needed - we can't
+		    // proceed.
+		    conflict = true;
+
+		    // If we're not being verbose, the first failure means we
+		    // can just immediately bail.
+		    if (!verbosity) {
+			bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
+			return GED_ERROR;
+		    }
+
+		    // If verbosity is enabled, itemize the failures
+		    bu_vls_printf(&msgs, "Conflicting instance: %s->%s:\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+		    // TODO - print matrix
+		}
+	    }
+	}
+	if (conflict) {
+	    bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
+	    bu_vls_free(&msgs);
+	    return GED_ERROR;
+	}
+	bu_vls_free(&msgs);
+    }
+ 
+
+
+
     // Any combs that have more than one associated tree indicate that the comb
-    // needs to be duplicated to express both trees.  This has potential
-    // implications for parent combs if those parents are used outside the push
-    // tree - if they are, they can't be edited without global implications.
-    // Comb tree editing will have to propagate back up the tree until a comb
-    // is reached that is not used elsewhere in the database - if a new comb
-    // must replace an old one, that change must be propagated to ensure locality.
-    //
-    // Even without locality, new comb introductions need to be propagated back
-    // "up" the comb tree to see if any additional parent combs no longer have
-    // unique trees.  The termination criteria ("ready to alter trees and objects")
-    // would be when iterative propagation of such changes no longer introduces
-    // additional new non-unique comb trees.
+    // needs to be duplicated to express both trees.  These changes may need to
+    // be propagated back "up" the comb tree if any additional parent combs no
+    // longer have unique trees as a consequence of instances being pointed to
+    // new comb copies.
     // 
     // First thought - for each comb db, store a set of its "parent" dps.  Then,
     // when a comb must be renamed, check its parents' instances for any uses
@@ -748,23 +815,16 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // another matrix is being applied.)  If other instances exist, a new combtree
     // instance for the parent is needed and the propagation continues.
 
-    // Once the survey walk is complete, iterate over s_i and count how many
-    // instances of each dp are present.  Any dp with multiple instances can't
-    // be pushed without a copy being made, as the dp instances represent
-    // multiple volumes in space.
-    std::map<struct directory *, int> s_c;
-    std::set<dp_i>::iterator si_it;
-    for (si_it = s_i.begin(); si_it != s_i.end(); si_it++) {
-	const dp_i &dpi = *si_it;
-	s_c[dpi.dp]++;
-    }
+
+
+
 
     std::map<struct directory *, std::vector<dp_i>> dpref;
     std::set<dp_i> bpush;
-    for (si_it = s_i.begin(); si_it != s_i.end(); si_it++) {
-    	const dp_i *dpi = &(*si_it);
-	if (dpi->push_obj) {
-	    if (s_c[dpi->dp] > 1) {
+    for (size_t i = 0; i < uniq_instances.size(); i++) {
+	const dp_i &dpi = uniq_instances[i];
+	if (dpi.push_obj) {
+	    if (i_cnt[dpi.dp].size() > 1) {
 		// We don't need (or particularly want) to rename the first instance,
 		// particularly if that instance is an IDN case.  The dp_i sorting
 		// should put any IDN instance at the beginning, so when processing
@@ -776,10 +836,10 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 		// instance of the referenced object survives unaltered.  In that case,
 		// the original unaltered instance should retain the name and the IDN
 		// instance does need to be renamed...
-		dpref[dpi->dp].push_back(*dpi);
+		dpref[dpi.dp].push_back(dpi);
 	    } else {
-		if (!bn_mat_is_equal(dpi->mat, bn_mat_identity, s.tol))
-		    bpush.insert(*dpi);
+		if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol))
+		    bpush.insert(dpi);
 	    }
 	}
     }
