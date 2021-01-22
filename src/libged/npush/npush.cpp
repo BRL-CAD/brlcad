@@ -717,7 +717,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::set<combtree_i> treeset(s.ct.begin(), s.ct.end());
     std::vector<combtree_i> uniq_trees(treeset.size());
     std::copy(treeset.begin(), treeset.end(), uniq_trees.begin());
-    treeset.clear();
 
     std::cout << "tree vect size: " << s.ct.size() << "\n";
     std::cout << "unique tree cnt: " << uniq_trees.size() << "\n";
@@ -741,19 +740,18 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Iterate over combtrees and build a set of unique instances.
-    std::set<dp_i> s_i;
+    std::set<dp_i> instset;
     size_t icnt = 0;
     for (size_t i = 0; i < uniq_trees.size(); i++) {
-	s_i.insert(uniq_trees[i].t.begin(), uniq_trees[i].t.end());
+	instset.insert(uniq_trees[i].t.begin(), uniq_trees[i].t.end());
 	icnt += uniq_trees[i].t.size();
     }
-    std::vector<dp_i> uniq_instances(s_i.size());
-    std::copy(s_i.begin(), s_i.end(), uniq_instances.begin());
-    s_i.clear();
+    std::vector<dp_i> uniq_instances(instset.size());
+    std::copy(instset.begin(), instset.end(), uniq_instances.begin());
 
 
     std::cout << "all set size: " << icnt << "\n";
-    std::cout << "instance set size: " << s_i.size() << "\n";
+    std::cout << "instance set size: " << instset.size() << "\n";
 
 
     // Iterate over unique instances and count how many instances of each dp
@@ -802,24 +800,31 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_vls_free(&msgs);
     }
- 
 
+    // Assign new names for the instances we will be creating
+    std::map<struct directory *, std::vector<size_t>>::iterator i_it;
+    for (i_it = i_cnt.begin(); i_it != i_cnt.end(); i_it++) {
+	if (i_it->second.size() == 1)
+	    continue;
+	for (size_t i = 1; i < i_it->second.size(); i++) {
+	    dp_i &dpi = uniq_instances[i];
+	    // TODO - validate new name as unique in the .g file before
+	    // going with it...
+	    dpi.iname = std::string(i_it->first->d_namep) + std::string("_") + std::to_string(i);
+	    std::cout << "New name: " << dpi.iname << "\n";
+	}
+    }
 
+    // Clear the set and repopulate it, so any lookups into the set will find
+    // dp_i containers containing any names the above logic has assigned.
+    instset.clear();
+    instset.insert(uniq_instances.begin(), uniq_instances.end());
 
     // Any combs that have more than one associated tree indicate that the comb
     // needs to be duplicated to express both trees.  These changes may need to
     // be propagated back "up" the comb tree if any additional parent combs no
     // longer have unique trees as a consequence of instances being pointed to
     // new comb copies.
-    // 
-    // First thought - for each comb db, store a set of its "parent" dps.  Then,
-    // when a comb must be renamed, check its parents' instances for any uses
-    // of the comb other than the one being renamed (i.e. any instances where
-    // another matrix is being applied.)  If other instances exist, a new combtree
-    // instance for the parent is needed and the propagation continues.
-
-
-
 
 
     std::map<struct directory *, std::vector<dp_i>> dpref;
