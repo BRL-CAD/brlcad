@@ -796,7 +796,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	if (conflict) {
-	    bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
+	    bu_vls_printf(gedp->ged_result_str, "%s\nOperation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.", bu_vls_cstr(&msgs));
 	    bu_vls_free(&msgs);
 	    return GED_ERROR;
 	}
