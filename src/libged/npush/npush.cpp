@@ -64,6 +64,7 @@ class dp_i {
 	const struct bn_tol *ts_tol;  // Tolerance to use for matrix comparisons
 
 	bool push_obj = true;  // Flag to determine if this instance is being pushed
+	bool is_leaf = false;  // Flag to determine if this instance is a push leaf
 
 	// If an instance is being pushed, there is one step that can be taken
 	// beyond simply propagating the matrix down the tree - the solid
@@ -463,6 +464,9 @@ push_walk_subtree(struct db_i *dbip,
 
 	    if (is_push_leaf(dp, depth, s, survey)) {
 
+		// Flag as leaf
+		dnew.is_leaf = true;
+
 		// Leaf without parent means no work to do
 		if (!parent_dp)
 		    return;
@@ -508,14 +512,14 @@ push_walk_subtree(struct db_i *dbip,
 		MAT_COPY(*curr_mat, om);
 		return;
 	    } else {
-		// If this isn't a push leaf, this is not the termination point of a
-		// push - the matrix becomes an IDN matrix for this comb instance,
-		// and the matrix continues down the branch.
-		if (!survey) { 
-		    if (s->verbosity > 1)
-			bu_log("Pushed comb instance (IDN matrix) : %s->%s\n", parent_dp->d_namep, dp->d_namep);
-		    MAT_IDN(dnew.mat);
+		// If this isn't a push leaf, this is not the termination point
+		// of a push - the matrix ultimately applied will be an IDN
+		// matrix, but the current tree matrix is recorded to allow
+		// instance lookups later in processing.
+		if (!survey && s->verbosity > 1) {
+		    bu_log("Pushed comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 		}
+		dnew.is_leaf = false;
 	    }
 
 	    if (survey && s->verbosity > 1) { 
@@ -811,14 +815,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	// for the presence of such a dp_i in the set, and start at 0 with logic for
 	// skipping any dp_i instances with that flag set...
 	for (size_t i = 1; i < i_it->second.size(); i++) {
-	    dp_i &dpi = uniq_instances[i];
+	    dp_i &dpi = uniq_instances[i_it->second[i]];
+	    if (!dpi.push_obj)
+		continue;
 	    // TODO - validate new name as unique in the .g file before
 	    // going with it...
 	    dpi.iname = std::string(dpi.dp->d_namep) + std::string("_") + std::to_string(i);
-
-	    // TODO - there's a problem here - these don't line up, which indicates a problem
-	    // with the assembly of i_cnt?...
-	    std::cout << i_it->first->d_namep << "->" << dpi.parent_dp->d_namep << "->" << dpi.dp->d_namep << "\n";
 	}
     }
 
@@ -837,8 +839,8 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::set<dp_i>::iterator in_it;
     for (in_it = instset.begin(); in_it != instset.end(); in_it++) {
 	const dp_i &dpi = *in_it;
-	//if (!dpi.push_obj)
-	//   continue;
+	if (!dpi.push_obj)
+	   continue;
 	if (dpi.iname.length())
 	    std::cout << "Copy " << dpi.dp->d_namep << " to " << dpi.iname << "\n";
     }
