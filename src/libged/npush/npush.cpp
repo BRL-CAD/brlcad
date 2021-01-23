@@ -834,8 +834,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     //
     // Step one is to iterate over the instances.  If a new iname has been
     // assigned, the existing object needs to be copied under the new name.
-    // Once all db objects needed are in place (in unaltered form) we walk a
-    // final time and updating combs and primitives accordingly.
     std::set<dp_i>::iterator in_it;
     for (in_it = instset.begin(); in_it != instset.end(); in_it++) {
 	const dp_i &dpi = *in_it;
@@ -845,6 +843,9 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    std::cout << "Copy " << dpi.dp->d_namep << " to " << dpi.iname << "\n";
     }
 
+    // Once all db objects needed are in place (in unaltered form) we walk a
+    // final time and updating combs and primitives accordingly.
+    //
     // For each instance in the comb tree, try to find the corresponding dp_i
     // in the instset (matrix + dp find search - create a dp_i to supply to find, capture
     // the iterator of the search result.  If not == end(), it will have the dp_i with
@@ -853,6 +854,13 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // IDN matrix, unless dp_i is identified as a leaf - in that case,
     // assign the dp_i matrix.  If the leaf is a solid and the flag is set,
     // assign IDN matrix and update solid parameters.
+    //
+    // The details of this final tree walk are critically important - if a tree leaf
+    // has a new iname, that name is what the tree walk must use for processing the
+    // branch - NOT the original name in the tree instance.  This is why the final
+    // tree walk can't proceed until all the objects are in place - the db_lookup
+    // and internal representation queries of the tree walk must all succeed, even
+    // if the internal trees and parameters still need to be updated.
     //
     // TODO: Check the existing push and xpush codes for how to alter the comb trees.
 
