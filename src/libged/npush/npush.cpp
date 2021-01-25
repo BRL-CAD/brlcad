@@ -158,6 +158,7 @@ struct push_state {
     int max_depth = 0;
     bool stop_at_regions = false;
     bool stop_at_shapes = false;
+    bool dry_run = false;
 
     /* Containers for instance structures being built up during the push walk.
      * We do not need to duplicate these - the combination of matrix and dp
@@ -569,6 +570,8 @@ write_walk_subtree(struct db_i *dbip,
 	    // to the new object, and walk down the new comb tree.  If another
 	    // portion of the walk has already taken care of the iname object,
 	    // don't recreate it.
+	    if ((*dpii).iname.length())
+		bu_log("Copy %s->%s to %s\n", parent_dp->d_namep, (*dpii).dp->d_namep, (*dpii).iname.c_str());
 
 
 	    // If this is a push leaf, set final matrix, else set IDN and keep
@@ -586,8 +589,12 @@ write_walk_subtree(struct db_i *dbip,
 	    }
 
 	    if (dpii->is_leaf) {
-		bu_log("Found leaf\n");
-		bu_log("%s: is leaf\n", dp->d_namep);
+		if ((*dpii).iname.length()){
+		    bu_log("%s: is leaf\n", (*dpii).iname.c_str());
+		} else {
+		    bu_log("%s: is leaf\n", dp->d_namep);
+		}
+		bn_mat_print(tp->tr_l.tl_name, (*dpii).mat);
 
 		/* Done with branch - put back the old matrix state */
 		MAT_COPY(*curr_mat, om);
@@ -597,7 +604,6 @@ write_walk_subtree(struct db_i *dbip,
 		// If this isn't a push leaf, this is not the termination point
 		// of a push - apply IDN matrix
 		bu_log("%s: Apply IDN\n", dp->d_namep);
-		bn_mat_print(tp->tr_l.tl_name, *curr_mat);
 	    }
 
 	    /* Process branch's tree */
@@ -721,6 +727,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     s.max_depth = max_depth;
     s.stop_at_regions = (to_regions) ? true : false;
     s.stop_at_shapes = (to_solids) ? true : false;
+    s.dry_run = (dry_run) ? true : false;
     for (int i = 0; i < argc; i++) {
 	s.target_objs.insert(std::string(argv[i]));
     }
@@ -880,6 +887,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    // New names for copies are only required if we have non-unique mappings between directory
+    // pointers and instances.
+    //
+    // This mechanism is convenient, because it is general - it handles both local (in-push)
+    // and non-local (global check, if enabled) instances and only generates new names for objects
+    // that will be pushed, without trying to rename "inactive" instances.
     std::map<struct directory *, std::vector<size_t>>::iterator i_it;
     for (i_it = i_cnt.begin(); i_it != i_cnt.end(); i_it++) {
 	if (i_it->second.size() == 1)
