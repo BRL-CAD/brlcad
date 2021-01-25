@@ -326,7 +326,6 @@ push_walk_subtree(struct db_i *dbip,
 		    void *client_data)
 {
     struct directory *dp;
-    struct bu_vls title = BU_VLS_INIT_ZERO;
     dp_i dnew;
     dnew.parent_dp = parent_dp;
     struct push_state *s = (struct push_state *)client_data;
@@ -370,13 +369,11 @@ push_walk_subtree(struct db_i *dbip,
 	    }
 	    bn_mat_mul(*curr_mat, om, nm);    
 
-	    if (s->verbosity) {
+	    if (s->verbosity > 2) {
 		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
 		    bu_log("Found %s->[M]%s\n", parent_dp->d_namep, dp->d_namep);
-		    if (s->verbosity > 1) {
-			bu_vls_sprintf(&title, "%s matrix", tp->tr_l.tl_name);
-			bn_mat_print(bu_vls_cstr(&title), *curr_mat);
-			bu_vls_free(&title);
+		    if (s->verbosity > 3) {
+			bn_mat_print(tp->tr_l.tl_name, *curr_mat);
 		    }
 		} else {
 		    bu_log("Found %s->%s\n", parent_dp->d_namep, dp->d_namep);
@@ -408,7 +405,9 @@ push_walk_subtree(struct db_i *dbip,
 			// stopping above shapes, and the solid supports it we
 			// apply the matrix to the primitive itself.  The comb
 			// reference will use the IDN matrix.
-			bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", parent_dp->d_namep, dp->d_namep);
+			if (s->verbosity > 2) {
+			    bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", parent_dp->d_namep, dp->d_namep);
+			}
 			dnew.apply_to_solid = true;
 		    }
 		}
@@ -443,13 +442,13 @@ push_walk_subtree(struct db_i *dbip,
 		// of a push - the matrix ultimately applied will be an IDN
 		// matrix, but the current tree matrix is recorded to allow
 		// instance lookups later in processing.
-		if (!survey && s->verbosity > 1) {
+		if (!survey && s->verbosity > 2) {
 		    bu_log("Pushed comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 		}
 		dnew.is_leaf = false;
 	    }
 
-	    if (survey && s->verbosity > 1) { 
+	    if (survey && s->verbosity > 2) { 
 		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 	    }
 	    if (s->instances.find(dnew) == s->instances.end()) {
@@ -675,24 +674,30 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 			if (reported.find(dpi.dp) != reported.end())
 			    continue;
 			reported.insert(dpi.dp);
-			bu_vls_printf(&msgs, "Conflicting instances found: %s->%s:\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
-			for (size_t j = 0; j < i_cnt[dpi.dp].size(); j++) {
-			    const dp_i &dpc = uniq_instances[i_cnt[dpi.dp][j]];
-			    // If verbosity is enabled, itemize the failures
-			    struct bu_vls imat = BU_VLS_INIT_ZERO;
-			    struct bu_vls ititle = BU_VLS_INIT_ZERO;
-			    const char *title0 = "First instance";
-			    if (j == 0) {
-				bu_vls_printf(&ititle, "%s", title0);
-			    } else {
-				bu_vls_printf(&ititle, "Instance #%zd", j);
+			if (s.verbosity > 1) {
+			    bu_vls_printf(&msgs, "Conflicting instances found: %s->%s:\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+			} else {
+			    bu_vls_printf(&msgs, "Conflicting instances found: %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+			}
+			if (s.verbosity > 1) {
+			    for (size_t j = 0; j < i_cnt[dpi.dp].size(); j++) {
+				const dp_i &dpc = uniq_instances[i_cnt[dpi.dp][j]];
+				// If verbosity is enabled, itemize the failures
+				struct bu_vls imat = BU_VLS_INIT_ZERO;
+				struct bu_vls ititle = BU_VLS_INIT_ZERO;
+				const char *title0 = "Initial instance";
+				if (j == 0) {
+				    bu_vls_printf(&ititle, "%s", title0);
+				} else {
+				    bu_vls_printf(&ititle, "Conflicting Instance #%zd", j);
+				}
+				if (!dpc.push_obj) {
+				    bu_vls_printf(&ititle, " (non-local)");
+				}
+				bn_mat_print_vls(bu_vls_cstr(&ititle), dpc.mat, &imat);
+				bu_vls_printf(&msgs, "%s", bu_vls_cstr(&imat));
+				bu_vls_free(&imat);
 			    }
-			    if (!dpc.push_obj) {
-				bu_vls_printf(&ititle, " (non-local)");
-			    }
-			    bn_mat_print_vls(bu_vls_cstr(&ititle), dpc.mat, &imat);
-			    bu_vls_printf(&msgs, "%s", bu_vls_cstr(&imat));
-			    bu_vls_free(&imat);
 			}
 		    }
 		}
