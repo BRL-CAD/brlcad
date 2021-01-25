@@ -663,17 +663,40 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 			bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
 			return GED_ERROR;
 		    }
-
-		    // If verbosity is enabled, itemize the failures
-		    struct bu_vls imat = BU_VLS_INIT_ZERO;
-		    bu_vls_printf(&msgs, "Conflicting instance: %s->%s:\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
-		    bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, &imat);
-		    bu_vls_printf(&msgs, "%s", bu_vls_cstr(&imat));
-		    bu_vls_free(&imat);
 		}
 	    }
 	}
 	if (conflict) {
+	    std::set<struct directory *> reported;
+	    for (size_t i = 0; i < uniq_instances.size(); i++) {
+		const dp_i &dpi = uniq_instances[i];
+		if (dpi.push_obj) {
+		    if (i_cnt[dpi.dp].size() > 1) {
+			if (reported.find(dpi.dp) != reported.end())
+			    continue;
+			reported.insert(dpi.dp);
+			bu_vls_printf(&msgs, "Conflicting instances found: %s->%s:\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+			for (size_t j = 0; j < i_cnt[dpi.dp].size(); j++) {
+			    const dp_i &dpc = uniq_instances[i_cnt[dpi.dp][j]];
+			    // If verbosity is enabled, itemize the failures
+			    struct bu_vls imat = BU_VLS_INIT_ZERO;
+			    struct bu_vls ititle = BU_VLS_INIT_ZERO;
+			    const char *title0 = "First instance";
+			    if (j == 0) {
+				bu_vls_printf(&ititle, "%s", title0);
+			    } else {
+				bu_vls_printf(&ititle, "Instance #%zd", j);
+			    }
+			    if (!dpc.push_obj) {
+				bu_vls_printf(&ititle, " (non-local)");
+			    }
+			    bn_mat_print_vls(bu_vls_cstr(&ititle), dpc.mat, &imat);
+			    bu_vls_printf(&msgs, "%s", bu_vls_cstr(&imat));
+			    bu_vls_free(&imat);
+			}
+		    }
+		}
+	    }
 	    bu_vls_printf(gedp->ged_result_str, "%s\nOperation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.", bu_vls_cstr(&msgs));
 	    bu_vls_free(&msgs);
 	    return GED_ERROR;
@@ -681,7 +704,20 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&msgs);
     }
 
-    // Assign new names for the instances we will be creating
+    // We need to assign new names for the instances we will be creating.  Because we need these
+    // names to not collide with any existing database names (or each other) we build up a set
+    // of the current names:
+    std::set<std::string> dbnames;
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_namep) {
+		std::string dpn(dp->d_namep);
+		dbnames.insert(dpn);
+	    }
+	}
+    }
+
     std::map<struct directory *, std::vector<size_t>>::iterator i_it;
     for (i_it = i_cnt.begin(); i_it != i_cnt.end(); i_it++) {
 	if (i_it->second.size() == 1)
@@ -694,9 +730,19 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    dp_i &dpi = uniq_instances[i_it->second[i]];
 	    if (!dpi.push_obj)
 		continue;
-	    // TODO - validate new name as unique in the .g file before
-	    // going with it...
-	    dpi.iname = std::string(dpi.dp->d_namep) + std::string("_") + std::to_string(i);
+	    int ilabel = i;
+	    std::string iname = std::string(dpi.dp->d_namep) + std::string("_") + std::to_string(ilabel);
+	    while (dbnames.find(iname) != dbnames.end() && ilabel < INT_MAX) {
+		ilabel++;
+		iname = std::string(dpi.dp->d_namep) + std::string("_") + std::to_string(ilabel);
+	    }
+	    if (ilabel == INT_MAX) {
+		// Strange name generation failure...
+		bu_vls_printf(gedp->ged_result_str, "Unable to generate valid push name for %s\n", dpi.dp->d_namep);
+		return GED_ERROR;
+	    }
+	    dbnames.insert(iname);
+	    dpi.iname = iname;
 	}
     }
 
