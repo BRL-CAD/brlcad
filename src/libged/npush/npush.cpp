@@ -680,9 +680,9 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 			    bu_vls_printf(&msgs, "Conflicting instances found: %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
 			}
 			if (s.verbosity > 1) {
+			    // If verbosity is high enough, itemize the instances causing the failure
 			    for (size_t j = 0; j < i_cnt[dpi.dp].size(); j++) {
 				const dp_i &dpc = uniq_instances[i_cnt[dpi.dp][j]];
-				// If verbosity is enabled, itemize the failures
 				struct bu_vls imat = BU_VLS_INIT_ZERO;
 				struct bu_vls ititle = BU_VLS_INIT_ZERO;
 				const char *title0 = "Initial instance";
@@ -727,15 +727,24 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (i_it = i_cnt.begin(); i_it != i_cnt.end(); i_it++) {
 	if (i_it->second.size() == 1)
 	    continue;
-	// TODO At the moment, don't rename the first object in the list.  A better approach
-	// would be to set an "external" flag in the dp_i, do a preliminary scan to look
-	// for the presence of such a dp_i in the set, and start at 0 with logic for
-	// skipping any dp_i instances with that flag set...
-	for (size_t i = 1; i < i_it->second.size(); i++) {
+
+	// If we have anything we're NOT pushing, that means we need to rename
+	// all the push objects.
+	bool have_nopush = false;
+	for (size_t i = 0; i < i_it->second.size(); i++) {
+	    dp_i &dpi = uniq_instances[i_it->second[i]];
+	    if (!dpi.push_obj)
+		have_nopush = true;
+	}
+	// Don't rename the first object in the list if we're pushing all of
+	// the instances, since there is no need to rename it to avoid a
+	// conflict - we're renaming everything else.
+	int ilabel = 0;
+	size_t istart = (have_nopush) ? 0 : 1;
+	for (size_t i = istart; i < i_it->second.size(); i++) {
 	    dp_i &dpi = uniq_instances[i_it->second[i]];
 	    if (!dpi.push_obj)
 		continue;
-	    int ilabel = i;
 	    std::string iname = std::string(dpi.dp->d_namep) + std::string("_") + std::to_string(ilabel);
 	    while (dbnames.find(iname) != dbnames.end() && ilabel < INT_MAX) {
 		ilabel++;
@@ -766,8 +775,17 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	const dp_i &dpi = *in_it;
 	if (!dpi.push_obj)
 	   continue;
-	if (dpi.iname.length())
+	if (dpi.iname.length()) {
 	    std::cout << "Copy " << dpi.dp->d_namep << " to " << dpi.iname << "\n";
+	    if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		bn_mat_print("applied", dpi.mat);
+	    }
+	} else {
+	    if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		std::cout << "Push " << dpi.dp->d_namep << "\n";
+		bn_mat_print("applied", dpi.mat);
+	    }
+	}
     }
 
     // Once all db objects needed are in place (in unaltered form) we walk a
@@ -790,72 +808,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // if the internal trees and parameters still need to be updated.
     //
     // TODO: Check the existing push and xpush codes for how to alter the comb trees.
-
-    std::map<struct directory *, std::vector<dp_i>> dpref;
-    std::set<dp_i> bpush;
-    for (size_t i = 0; i < uniq_instances.size(); i++) {
-	const dp_i &dpi = uniq_instances[i];
-	if (dpi.push_obj) {
-	    if (i_cnt[dpi.dp].size() > 1) {
-		// We don't need (or particularly want) to rename the first instance,
-		// particularly if that instance is an IDN case.  The dp_i sorting
-		// should put any IDN instance at the beginning, so when processing
-		// the vectors created by this logic we need to start at index 1 to
-		// skip the IDN rename.
-		//
-		// TODO - think about the case where an IDN matrix is the result of
-		// the push, but elsewhere in the tree (unaltered by the push) a non-IDN
-		// instance of the referenced object survives unaltered.  In that case,
-		// the original unaltered instance should retain the name and the IDN
-		// instance does need to be renamed...
-		dpref[dpi.dp].push_back(dpi);
-	    } else {
-		if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol))
-		    bpush.insert(dpi);
-	    }
-	}
-    }
-    std::map<struct directory *, std::vector<dp_i>>::iterator d_it;
-    for (d_it = dpref.begin(); d_it != dpref.end(); d_it++) {
-	for (size_t i = 1; i < d_it->second.size(); i++) {
-	    dp_i &sd = d_it->second[i];
-	    std::string nname = std::string(d_it->first->d_namep) + std::string("_") + std::to_string(i);
-	    sd.iname = nname;
-	}
-    }
-
-    // See what we've got...
-    if (dpref.size()) {
-	std::cout << "Need renaming:\n"; 
-	for (d_it = dpref.begin(); d_it != dpref.end(); d_it++) {
-	    std::cout << d_it->first->d_namep;
-	    if (d_it->second.size() > 1) {
-		std::cout << ":\n";
-	    } else {
-		std::cout << "\n";
-	    }
-	    for (size_t i = 1; i < d_it->second.size(); i++) {
-		dp_i &dpi = d_it->second[i];
-		std::cout << dpi.iname << "\n";
-		if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-		    bn_mat_print(dpi.dp->d_namep, dpi.mat);
-		}
-	    }
-	}
-    }
-
-    if (bpush.size()) {
-	std::cout << "Push:\n"; 
-	std::set<dp_i>::iterator b_it;
-	for (b_it = bpush.begin(); b_it != bpush.end(); b_it++) {
-	    const dp_i &dpi = *b_it;
-	    if (!bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-		std::cout << dpi.dp->d_namep << "\n";
-		bn_mat_print(dpi.dp->d_namep, dpi.mat);
-	    }
-	}
-    }
-
 
     return GED_OK;
 }
