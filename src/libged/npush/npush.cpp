@@ -161,9 +161,6 @@ struct push_state {
     bool stop_at_regions = false;
     bool stop_at_shapes = false;
 
-    /* Primary containers holding information gathered during tree walk */
-    std::map<struct directory *, std::set<struct directory *>> comb_parents;
-
     /* Containers for instance structures being
      * built up during the push walk. */
     std::set<dp_i> instances;
@@ -345,18 +342,6 @@ push_walk_subtree(struct db_i *dbip,
 	    // what we want to do when pushing?)
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
-
-	    // When we finalize the database after identifying all unique tree
-	    // instances, we may need to propagate new tree definitions back up
-	    // tree paths as trees have new instance references added.  If we
-	    // are depth limited in pushing combs may have local definition
-	    // changes introduced that will in turn require new definitions in
-	    // parent combs.  To make it easier to propagate such changes, we
-	    // assemble a map of child to parent relationships during the
-	    // initial walk.
-	    if (dp->d_flags & RT_DIR_COMB) {
-		s->comb_parents[dp].insert(parent_dp);
-	    }
 
 	    /* Update current matrix state to reflect the new branch of
 	     * the tree. Either we have a local matrix, or we have an
@@ -731,6 +716,9 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     struct push_state s;
     s.verbosity = verbosity;
     s.tol = &gedp->ged_wdbp->wdb_tol;
+    s.max_depth = max_depth;
+    s.stop_at_regions = (to_regions) ? true : false;
+    s.stop_at_shapes = (to_solids) ? true : false;
     for (int i = 0; i < argc; i++) {
 	s.target_objs.insert(std::string(argv[i]));
     }
