@@ -144,72 +144,6 @@ class dp_i {
 	}
 };
 
-/* Just as we need database instance objects as atomic units for pushing, we
- * need a way to identify unique comb definitions that might be produced as a
- * consequence of partial pushes.  If a comb object winds up with two or more
- * different tree definitions at different points in the database due to
- * different pushes on different branches, we need to be able to detect that
- * and respond accordingly.  So, just as we defined the dp_i class to encapsulate
- * the notion of a database object instance, we define a combtree instance class
- * to encapsulate the definition and ordering logic of a comb tree.
- *
- * For these purposes, we're not concerned with the boolean set operations
- * associated with the tree instance.  Nor are we concerned about the set
- * theory equation defined by the tree.  Neither of those components of the
- * tree are impacted by any push operation - it is the matrix and the object
- * which (may) change during a push.  Consequently, only those elements are
- * important for this particular instance definition.  A long as a tree
- * continues to point to an object that correctly defines the volume bound by
- * the original instance, the tree remains equivalent even if the matrix and/or
- * name of the particular object pointed to by the tree instance changes.
- */
-class combtree_i {
-    public:
-	struct directory *dp; // Directory pointer of comb associated with comb tree
-	std::set<dp_i> t;     // Database object instances in comb tree.
-
-	const struct bn_tol *ts_tol;  // Tolerance used for matrix comparisons
-
-	bool push_obj = true;  // Flag determining whether this tree instance is pushed
-
-
-	// As with dp_i, the key to the combtree_i class is the less than
-	// operator, which is what allows C++ sets to distinguish between
-	// separate instances with the same associated comb dp pointer.  The
-	// first check is that dp pointer - if the current and other dp do not
-	// match, the sorting criteria is the comb dp.
-	//
-	// If the combs match, we move on to the more difficult question of
-	// comparing the trees.  For this we take advantage of the C++ property
-	// of ordered dp_i sets - if the trees are identical, they will be
-	// identically sorted.  If not, the first non-matching instance is
-	// used to do the sorting.
-	bool operator<(const combtree_i &o) const {
-
-	    // Easy case - check trees' parent combs
-	    if (dp < o.dp) return true;
-	    if (o.dp < dp) return false;
-
-	    /* If the dp doesn't tell us, check children in tree. */
-	    std::set<dp_i>::iterator c_it, o_it;
-
-	    /* Find the first non-matching instance in the tree sets, and
-	     * compare them.  Iterate over all instances in the current
-	     * tree: */
-	    for (c_it = t.begin(); c_it != t.end(); c_it++) {
-		for (o_it = o.t.begin(); o_it != o.t.end(); o_it++) {
-		    if (*c_it == *o_it)
-			continue;
-		    return (*c_it < *o_it);
-		}
-	    }
-
-	    // If everything else checked out, check the set sizes - smaller is <
-	    if (t.size() < o.t.size()) return true;
-	    return false;
-	}
-};
-
 /* Container to hold information during tree walk.  To generate names (or
  * recognize when a push would create a conflict) we keep track of how many
  * times we have encountered each dp during processing. */
@@ -230,9 +164,9 @@ struct push_state {
     /* Primary containers holding information gathered during tree walk */
     std::map<struct directory *, std::set<struct directory *>> comb_parents;
 
-    /* Containers for intermediate combtree structures being
+    /* Containers for instance structures being
      * built up during the push walk. */
-    std::vector<combtree_i> ct;
+    std::set<dp_i> instances;
    
     /* Tolerance to be used for matrix comparisons */ 
     const struct bn_tol *tol;
@@ -377,7 +311,6 @@ validate_walk(struct db_i *dbip,
 static void
 push_walk(struct db_i *dbip,
 	struct directory *dp,
-	int combtree_ind,
 	int depth,
 	mat_t *curr_mat,
 	bool survey,
@@ -386,7 +319,6 @@ push_walk(struct db_i *dbip,
 static void
 push_walk_subtree(struct db_i *dbip,
 	            struct directory *parent_dp,
-		    int combtree_ind,
 		    union tree *tp,
 		    int depth,
 		    mat_t *curr_mat,
@@ -395,7 +327,6 @@ push_walk_subtree(struct db_i *dbip,
 {
     struct directory *dp;
     struct bu_vls title = BU_VLS_INIT_ZERO;
-    combtree_i tnew;
     dp_i dnew;
     dnew.parent_dp = parent_dp;
     struct push_state *s = (struct push_state *)client_data;
@@ -483,11 +414,11 @@ push_walk_subtree(struct db_i *dbip,
 		}
 
 		// If we haven't already inserted an identical instance, record this new
-		// entry as being part of the tree.  (Note that we're not concerned with the
+		// entry.  (Note that we're not concerned with the
 		// boolean set aspects of the tree's definition here, only unique volumes in
 		// space, so this set does not exactly mimic the original comb tree structure.)
-		if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end()) {
-		    s->ct[combtree_ind].t.insert(dnew);
+		if (s->instances.find(dnew) == s->instances.end()) {
+		    s->instances.insert(dnew);
 		}
 
 		// Even though this is a leaf, we need to continue if we have a
@@ -498,14 +429,10 @@ push_walk_subtree(struct db_i *dbip,
 		// comb will need to be copied.
 		if (dp->d_flags & RT_DIR_COMB) {
 		    /* Process branch's tree */
-		    tnew.dp = dp;
-		    tnew.ts_tol = s->tol;
-		    tnew.push_obj = false;
-		    s->ct.push_back(tnew);
 		    if (s->verbosity > 1 && !survey) {
 			bu_log("Switching from push to survey - non-shape leaf %s->%s found\n", parent_dp->d_namep, dp->d_namep);
 		    }
-		    push_walk(dbip, dp, s->ct.size()-1, depth, curr_mat, true, client_data);
+		    push_walk(dbip, dp, depth, curr_mat, true, client_data);
 		}
 
 		/* Done with branch - put back the old matrix state */
@@ -525,16 +452,12 @@ push_walk_subtree(struct db_i *dbip,
 	    if (survey && s->verbosity > 1) { 
 		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 	    }
-	    if (s->ct[combtree_ind].t.find(dnew) == s->ct[combtree_ind].t.end()) {
-		s->ct[combtree_ind].t.insert(dnew);
+	    if (s->instances.find(dnew) == s->instances.end()) {
+		s->instances.insert(dnew);
 	    }
 
 	    /* Process branch's tree */
-	    tnew.dp = dp;
-	    tnew.ts_tol = s->tol;
-	    tnew.push_obj = !(survey);
-	    s->ct.push_back(tnew);
-	    push_walk(dbip, dp, s->ct.size()-1, depth, curr_mat, survey, client_data);
+	    push_walk(dbip, dp, depth, curr_mat, survey, client_data);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -544,8 +467,8 @@ push_walk_subtree(struct db_i *dbip,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    push_walk_subtree(dbip, parent_dp, combtree_ind, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
-	    push_walk_subtree(dbip, parent_dp, combtree_ind, tp->tr_b.tb_right, depth, curr_mat, survey, client_data);
+	    push_walk_subtree(dbip, parent_dp, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
+	    push_walk_subtree(dbip, parent_dp, tp->tr_b.tb_right, depth, curr_mat, survey, client_data);
 	    break;
 	default:
 	    bu_log("push_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -556,7 +479,6 @@ push_walk_subtree(struct db_i *dbip,
 static void
 push_walk(struct db_i *dbip,
 	    struct directory *dp,
-	    int combtree_ind,
 	    int depth,
 	    mat_t *curr_mat,
 	    bool survey,
@@ -577,7 +499,7 @@ push_walk(struct db_i *dbip,
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	push_walk_subtree(dbip, dp, combtree_ind, comb->tree, depth+1, curr_mat, survey, client_data);
+	push_walk_subtree(dbip, dp, comb->tree, depth+1, curr_mat, survey, client_data);
 	rt_db_free_internal(&in);
     }
 }
@@ -677,12 +599,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
-	    combtree_i tnew;
-	    tnew.dp = dp;
-	    tnew.ts_tol = s.tol;
-	    tnew.push_obj = true;
-	    s.ct.push_back(tnew);
-	    push_walk(dbip, dp, s.ct.size()-1, 0, &m, false, &s);
+	    push_walk(dbip, dp, 0, &m, false, &s);
 	}
     }
 
@@ -707,56 +624,13 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < tops_cnt; i++) {
 	struct directory *dp = all_paths[i];
 	if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
-	    push_walk(dbip, dp, 0, 0, &m, true, &s);
+	    push_walk(dbip, dp, 0, &m, true, &s);
     }
     bu_free(all_paths, "free db_ls output");
 
-
-    /* Build a set of unique combtrees, and create a vector from that set.  The
-     * former guarantees uniqueness, the latter is simpler to work with when it
-     * comes to manipulating elements (which may be necessary in later steps.)
-     * We do this now so instance iterations can be simpler, but we also need
-     * the final names of unique instances before we will know what updates are
-     * needed to trees - hence those instances must be identified first. */
-    std::set<combtree_i> treeset(s.ct.begin(), s.ct.end());
-    std::vector<combtree_i> uniq_trees(treeset.size());
-    std::copy(treeset.begin(), treeset.end(), uniq_trees.begin());
-
-    std::cout << "tree vect size: " << s.ct.size() << "\n";
-    std::cout << "unique tree cnt: " << uniq_trees.size() << "\n";
-
-    /* We do know enough now, however, to build up information about unique
-     * trees associated with each comb dp.  This is how we will identify
-     * combinations that require copies, and may potentially propagate new
-     * trees up their chains. */
-    std::map<struct directory *, std::vector<size_t>> t_cnt;
-    for (size_t i = 0; i < uniq_trees.size(); i++) {
-	t_cnt[uniq_trees[i].dp].push_back(i);
-    }
-
-    // Temporary debugging - print status of unique tree check
-    std::map<struct directory *, std::vector<size_t>>::iterator ti_it;
-    for (ti_it = t_cnt.begin(); ti_it != t_cnt.end(); ti_it++) {
-	struct directory *cdp = ti_it->first;
-	if (ti_it->second.size() > 1) {
-	    bu_log("Comb %s has %zd different trees\n", cdp->d_namep, ti_it->second.size());
-	}
-    }
-
-    // Iterate over combtrees and build a set of unique instances.
-    std::set<dp_i> instset;
-    size_t icnt = 0;
-    for (size_t i = 0; i < uniq_trees.size(); i++) {
-	instset.insert(uniq_trees[i].t.begin(), uniq_trees[i].t.end());
-	icnt += uniq_trees[i].t.size();
-    }
-    std::vector<dp_i> uniq_instances(instset.size());
-    std::copy(instset.begin(), instset.end(), uniq_instances.begin());
-
-
-    std::cout << "all set size: " << icnt << "\n";
-    std::cout << "instance set size: " << instset.size() << "\n";
-
+    // Create a vector of unique instances for easier manipulation.
+    std::vector<dp_i> uniq_instances(s.instances.size());
+    std::copy(s.instances.begin(), s.instances.end(), uniq_instances.begin());
 
     // Iterate over unique instances and count how many instances of each dp
     // are present.  Any dp with multiple associated instances can't be pushed
@@ -826,8 +700,8 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     // Clear the set and repopulate it, so any lookups into the set will find
     // dp_i containers containing any inames the above logic may have assigned.
-    instset.clear();
-    instset.insert(uniq_instances.begin(), uniq_instances.end());
+    s.instances.clear();
+    s.instances.insert(uniq_instances.begin(), uniq_instances.end());
 
     // Having identified all unique instances, it is now time to build the pushed
     // tree.
@@ -835,7 +709,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // Step one is to iterate over the instances.  If a new iname has been
     // assigned, the existing object needs to be copied under the new name.
     std::set<dp_i>::iterator in_it;
-    for (in_it = instset.begin(); in_it != instset.end(); in_it++) {
+    for (in_it = s.instances.begin(); in_it != s.instances.end(); in_it++) {
 	const dp_i &dpi = *in_it;
 	if (!dpi.push_obj)
 	   continue;
