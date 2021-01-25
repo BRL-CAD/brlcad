@@ -591,10 +591,13 @@ write_walk_subtree(struct db_i *dbip,
 	    if (dpii->is_leaf) {
 		if ((*dpii).iname.length()){
 		    bu_log("%s: is leaf\n", (*dpii).iname.c_str());
+		    bn_mat_print("to be applied", (*dpii).mat);
 		} else {
 		    bu_log("%s: is leaf\n", dp->d_namep);
+		    bn_mat_print("to be applied", (*dpii).mat);
 		}
-		bn_mat_print(tp->tr_l.tl_name, (*dpii).mat);
+		if ((*dpii).apply_to_solid)
+		    bu_log("Push to solid parameters\n");
 
 		/* Done with branch - put back the old matrix state */
 		MAT_COPY(*curr_mat, om);
