@@ -529,7 +529,8 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     int max_depth = 0;
     int verbosity = 0;
     int local_changes_only = 0;
-    struct bu_opt_desc d[10];
+    int dry_run = 0;
+    struct bu_opt_desc d[11];
     BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,  "Print help and exit");
     BU_OPT(d[1], "?", "",          "",   NULL,         &print_help,  "");
     BU_OPT(d[2], "v", "verbosity",  "",  &bu_opt_incr_long, &verbosity,     "Increase output verbosity (multiple specifications of -v increase verbosity)");
@@ -539,8 +540,9 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[6], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
     BU_OPT(d[7], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
     BU_OPT(d[8], "L", "local", "",       NULL,  &local_changes_only,   "Ensure push operations do not impact geometry outside the specified trees.");
+    BU_OPT(d[8], "D", "dry-run", "",       NULL,  &dry_run,   "Calculate the changes but do not apply them.");
 
-    BU_OPT_NULL(d[9]);
+    BU_OPT_NULL(d[10]);
 
     /* Skip command name */
     argc--; argv++;
@@ -773,11 +775,27 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::set<dp_i>::iterator in_it;
     for (in_it = s.instances.begin(); in_it != s.instances.end(); in_it++) {
 	const dp_i &dpi = *in_it;
-	if (!dpi.push_obj)
-	   continue;
-	if (dpi.iname.length()) {
-	    std::cout << "Copy " << dpi.dp->d_namep << " to " << dpi.iname << "\n";
+	if (!dpi.push_obj || !dpi.iname.length())
+	    continue;
+	if (s.verbosity > 1) {
+	    bu_log("Copy %s to %s\n", dpi.dp->d_namep, dpi.iname.c_str());
 	}
+
+	struct bu_external external;
+	if (db_get_external(&external, dpi.dp, gedp->ged_wdbp->dbip)) {
+	    bu_vls_printf(gedp->ged_result_str, "Error - unable to read %s\n", dpi.dp->d_namep);
+	    if (!dry_run)
+		return GED_ERROR;
+	}
+	if (!dry_run) {
+	    if (wdb_export_external(gedp->ged_wdbp, &external, dpi.iname.c_str(),
+			dpi.dp->d_flags,  dpi.dp->d_minor_type) < 0) {
+		bu_free_external(&external);
+		bu_vls_printf(gedp->ged_result_str, "Failed to write new object (%s) to database.\n", dpi.iname.c_str());
+		return GED_ERROR;
+	    }
+	}
+	bu_free_external(&external);
     }
 
     // Once all db objects needed are in place (in unaltered form) we walk a
