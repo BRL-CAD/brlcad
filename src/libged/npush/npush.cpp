@@ -777,14 +777,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	   continue;
 	if (dpi.iname.length()) {
 	    std::cout << "Copy " << dpi.dp->d_namep << " to " << dpi.iname << "\n";
-	    if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-		bn_mat_print("applied", dpi.mat);
-	    }
-	} else {
-	    if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-		std::cout << "Push " << dpi.dp->d_namep << "\n";
-		bn_mat_print("applied", dpi.mat);
-	    }
 	}
     }
 
@@ -808,7 +800,28 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // if the internal trees and parameters still need to be updated.
     //
     // TODO: Check the existing push and xpush codes for how to alter the comb trees.
-
+    for (in_it = s.instances.begin(); in_it != s.instances.end(); in_it++) {
+	const dp_i &dpi = *in_it;
+	if (!dpi.push_obj)
+	   continue;
+	if (dpi.iname.length()) {
+	    if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
+		std::cout << dpi.iname << " tree edited && matrix to IDN\n";
+	    }
+	    if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		std::cout << dpi.iname << "\n";
+		bn_mat_print("applied", dpi.mat);
+	    }
+	} else {
+	    if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
+		std::cout << dpi.dp->d_namep << " matrix to IDN\n";
+	    }
+	    if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		std::cout << dpi.dp->d_namep << "\n";
+		bn_mat_print("applied", dpi.mat);
+	    }
+	}
+    }
     return GED_OK;
 }
 
