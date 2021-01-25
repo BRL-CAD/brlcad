@@ -144,15 +144,13 @@ class dp_i {
 	}
 };
 
-/* Container to hold information during tree walk.  To generate names (or
- * recognize when a push would create a conflict) we keep track of how many
- * times we have encountered each dp during processing. */
+/* Container to hold information during tree walk. */
 struct push_state {
 
     /* Variables used for initial validity checking of specified push
-     * object(s).  target_objects are user specified - if objects are
-     * specified that are below other target objects, flag valid_push
-     * is set to false. */
+     * object(s).  The target_objects set is user specified - if objects are
+     * specified that are below other target objects, flag valid_push is set to
+     * false and the user gets an error report. */
     bool valid_push = true;
     std::set<std::string> target_objs;
 
@@ -161,11 +159,15 @@ struct push_state {
     bool stop_at_regions = false;
     bool stop_at_shapes = false;
 
-    /* Containers for instance structures being
-     * built up during the push walk. */
+    /* Containers for instance structures being built up during the push walk.
+     * We do not need to duplicate these - the combination of matrix and dp
+     * uniquely identifies a volume in space - so the C++ set container is used
+     * to ensure we end up with the set of just unique dp instances after tree
+     * walking. */
     std::set<dp_i> instances;
    
-    /* Tolerance to be used for matrix comparisons */ 
+    /* Tolerance to be used for matrix comparisons.  Typically comes from the
+     * database tolerances. */ 
     const struct bn_tol *tol;
 
     /* Debugging related data and variables */
@@ -739,20 +741,21 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // Do a preliminary walk down the push objects to determine what impact the
     // push operations would have on the comb trees and solids.
     mat_t m;
-    MAT_IDN(m);
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
+	    MAT_IDN(m);
 	    push_walk(dbip, dp, 0, &m, false, &s);
+
+	    /* Sanity - if we didn't end up with m back at the identity matrix,
+	     * something went wrong with the walk */
+	    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->ged_wdbp->wdb_tol)) {
+		bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk down %s finished with non-IDN matrix.\n", dp->d_namep);
+		return GED_ERROR;
+	    }
 	}
     }
 
-    /* Sanity - if we didn't end up with m back at the identity matrix,
-     * something went wrong with the walk */
-    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->ged_wdbp->wdb_tol)) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk finished with non-IDN matrix.\n");
-	return GED_ERROR;
-    }
 
     if (local_changes_only) {
 	/* Because pushes have potentially global consequences, we provide an
@@ -776,10 +779,10 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::vector<dp_i> uniq_instances(s.instances.size());
     std::copy(s.instances.begin(), s.instances.end(), uniq_instances.begin());
 
-    // Iterate over unique instances and count how many instances of each dp
-    // are present.  Any dp with multiple associated instances can't be pushed
-    // without a copy being made, as the unique dp instances represent multiple
-    // distinct volumes in space.
+    // Iterate over unique instances and build sets of indices to instances
+    // sharing a common directory pointer.  Any dp with multiple associated
+    // instances can't be pushed without a copy being made, as the unique dp
+    // instances represent multiple distinct volumes in space.
     std::map<struct directory *, std::vector<size_t>> i_cnt;
     for (size_t i = 0; i < uniq_instances.size(); i++) {
 	i_cnt[uniq_instances[i].dp].push_back(i);
@@ -792,56 +795,67 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	struct bu_vls msgs = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < uniq_instances.size(); i++) {
 	    const dp_i &dpi = uniq_instances[i];
-	    if (dpi.push_obj) {
-		if (i_cnt[dpi.dp].size() > 1) {
 
-		    // This is the condition where xpush is needed - we can't
-		    // proceed.
-		    conflict = true;
+	    // If we're not looking at a push object, or the dp mapping is
+	    // unique, we don't need a force push for this case.
+	    if (!dpi.push_obj || i_cnt[dpi.dp].size() < 2) {
+		continue;
+	    }
 
-		    // If we're not being verbose, the first failure means we
-		    // can just immediately bail.
-		    if (!verbosity) {
-			bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
-			return GED_ERROR;
-		    }
-		}
+	    // Push object with multiple mappings - this is the condition where
+	    // xpush is needed.  Since force is not enabled, we can't proceed.
+	    conflict = true;
+
+	    // If we're not being verbose, the first failure means we can just
+	    // immediately bail.
+	    if (!verbosity) {
+		bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
+		return GED_ERROR;
 	    }
 	}
 	if (conflict) {
+	    // If we haven't already bailed, verbosity settings indicate the user
+	    // will want more information about the precise nature of the failure.
 	    std::set<struct directory *> reported;
 	    for (size_t i = 0; i < uniq_instances.size(); i++) {
 		const dp_i &dpi = uniq_instances[i];
-		if (dpi.push_obj) {
-		    if (i_cnt[dpi.dp].size() > 1) {
-			if (reported.find(dpi.dp) != reported.end())
-			    continue;
-			reported.insert(dpi.dp);
-			if (s.verbosity > 1) {
-			    bu_vls_printf(&msgs, "Conflicting instances found: %s->%s:\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+		// If not a problem case, skip
+		if (!dpi.push_obj || i_cnt[dpi.dp].size() < 2) {
+		    continue;
+		}
+
+		// If we have already reported on this dp's conflicts, skip
+		if (reported.find(dpi.dp) != reported.end())
+		    continue;
+
+		// Reporting - mark so we don't repeat later
+		reported.insert(dpi.dp);
+
+		// Handle various verbosity settings
+		if (s.verbosity > 1) {
+		    bu_vls_printf(&msgs, "Conflicting instances found: %s->%s:\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+		} else {
+		    bu_vls_printf(&msgs, "Conflicting instances found: %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+		}
+		// Itemize the instances causing the failure (potentially quite
+		// verbose, so require a higher verbosity setting for this...)
+		if (s.verbosity > 1) {
+		    for (size_t j = 0; j < i_cnt[dpi.dp].size(); j++) {
+			const dp_i &dpc = uniq_instances[i_cnt[dpi.dp][j]];
+			struct bu_vls imat = BU_VLS_INIT_ZERO;
+			struct bu_vls ititle = BU_VLS_INIT_ZERO;
+			const char *title0 = "Initial instance";
+			if (j == 0) {
+			    bu_vls_printf(&ititle, "%s", title0);
 			} else {
-			    bu_vls_printf(&msgs, "Conflicting instances found: %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+			    bu_vls_printf(&ititle, "Conflicting Instance #%zd", j);
 			}
-			if (s.verbosity > 1) {
-			    // If verbosity is high enough, itemize the instances causing the failure
-			    for (size_t j = 0; j < i_cnt[dpi.dp].size(); j++) {
-				const dp_i &dpc = uniq_instances[i_cnt[dpi.dp][j]];
-				struct bu_vls imat = BU_VLS_INIT_ZERO;
-				struct bu_vls ititle = BU_VLS_INIT_ZERO;
-				const char *title0 = "Initial instance";
-				if (j == 0) {
-				    bu_vls_printf(&ititle, "%s", title0);
-				} else {
-				    bu_vls_printf(&ititle, "Conflicting Instance #%zd", j);
-				}
-				if (!dpc.push_obj) {
-				    bu_vls_printf(&ititle, " (non-local)");
-				}
-				bn_mat_print_vls(bu_vls_cstr(&ititle), dpc.mat, &imat);
-				bu_vls_printf(&msgs, "%s", bu_vls_cstr(&imat));
-				bu_vls_free(&imat);
-			    }
+			if (!dpc.push_obj) {
+			    bu_vls_printf(&ititle, " (non-local)");
 			}
+			bn_mat_print_vls(bu_vls_cstr(&ititle), dpc.mat, &imat);
+			bu_vls_printf(&msgs, "%s", bu_vls_cstr(&imat));
+			bu_vls_free(&imat);
 		    }
 		}
 	    }
