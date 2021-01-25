@@ -504,7 +504,160 @@ push_walk(struct db_i *dbip,
 }
 
 
+/* This is the walk that is responsible for actually altering the database */
+static void
+write_walk(struct db_i *dbip,
+	struct directory *dp,
+	int depth,
+	mat_t *curr_mat,
+	void *client_data);
 
+static void
+write_walk_subtree(struct db_i *dbip,
+	            struct directory *parent_dp,
+		    union tree *tp,
+		    int depth,
+		    mat_t *curr_mat,
+		    void *client_data)
+{
+    struct directory *dp;
+    dp_i dnew;
+    dnew.parent_dp = parent_dp;
+    struct push_state *s = (struct push_state *)client_data;
+    mat_t om, nm;
+    std::set<dp_i>::iterator dpii;
+    dp_i ldpi;
+    std::set<dp_i>::iterator i_it;
+
+    if (!tp)
+	return;
+
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+
+	case OP_DB_LEAF:
+
+	    // Don't consider the leaf it if doesn't exist (TODO - is this always
+	    // what we want to do when pushing?)
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+		return;
+
+	    /* Update current matrix state to reflect the new branch of
+	     * the tree. Either we have a local matrix, or we have an
+	     * implicit IDN matrix. */
+	    MAT_COPY(om, *curr_mat);
+	    if (tp->tr_l.tl_mat) {
+		MAT_COPY(nm, tp->tr_l.tl_mat);
+	    } else {
+		MAT_IDN(nm);
+	    }
+	    bn_mat_mul(*curr_mat, om, nm);    
+
+	    // Look up the dpi for this comb+curr_mat combination.
+	    ldpi.dp = dp;
+	    MAT_COPY(ldpi.mat, *curr_mat);
+	    ldpi.ts_tol = s->tol;
+	    if (!(dp->d_flags & RT_DIR_COMB) && (!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
+		ldpi.apply_to_solid = true;
+	    }
+	    dpii = s->instances.find(ldpi);
+	    if (dpii == s->instances.end()) {
+		bu_log("Error - no instance found: %s->%s!\n", parent_dp->d_namep, dp->d_namep);
+		bn_mat_print(tp->tr_l.tl_name, *curr_mat);
+		for (i_it = s->instances.begin(); i_it != s->instances.end(); i_it++) {
+		    const dp_i &ddpi = *i_it;
+		    if (ddpi.dp == dp) {
+			bn_mat_print(tp->tr_l.tl_name, ddpi.mat);
+			if (ddpi.iname.length())
+			    bu_log("iname: %s\n", ddpi.iname.c_str());
+		    }
+		}
+		return;
+	    }
+
+	    // If this is a push_obj that has an iname, we need to copy
+	    // the tp->tr_l.tl_name object, update the reference to point
+	    // to the new object, and walk down the new comb tree.  If another
+	    // portion of the walk has already taken care of the iname object,
+	    // don't recreate it.
+
+
+	    // If this is a push leaf, set final matrix, else set IDN and keep
+	    // walking down.
+
+	    if (s->verbosity > 2) {
+		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
+		    bu_log("Found %s->[M]%s\n", parent_dp->d_namep, dp->d_namep);
+		    if (s->verbosity > 3) {
+			bn_mat_print(tp->tr_l.tl_name, *curr_mat);
+		    }
+		} else {
+		    bu_log("Found %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		}
+	    }
+
+	    if (dpii->is_leaf) {
+		bu_log("Found leaf\n");
+		bu_log("%s: is leaf\n", dp->d_namep);
+
+		/* Done with branch - put back the old matrix state */
+		MAT_COPY(*curr_mat, om);
+
+		return;
+	    } else {
+		// If this isn't a push leaf, this is not the termination point
+		// of a push - apply IDN matrix
+		bu_log("%s: Apply IDN\n", dp->d_namep);
+		bn_mat_print(tp->tr_l.tl_name, *curr_mat);
+	    }
+
+	    /* Process branch's tree */
+	    write_walk(dbip, dp, depth, curr_mat, client_data);
+
+	    /* Done with branch - put back the old matrix state */
+	    MAT_COPY(*curr_mat, om);
+	    break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    write_walk_subtree(dbip, parent_dp, tp->tr_b.tb_left, depth, curr_mat, client_data);
+	    write_walk_subtree(dbip, parent_dp, tp->tr_b.tb_right, depth, curr_mat, client_data);
+	    break;
+	default:
+	    bu_log("write_walk_subtree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("write_walk_subtree: unrecognized operator\n");
+    }
+}
+
+static void
+write_walk(struct db_i *dbip,
+	struct directory *dp,
+	int depth,
+	mat_t *curr_mat,
+	void *client_data)
+{
+    RT_CK_DBI(dbip);
+
+    if (!dp) {
+	return; /* nothing to do */
+    }
+
+    if (dp->d_flags & RT_DIR_COMB) {
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+
+	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+	write_walk_subtree(dbip, dp, comb->tree, depth + 1, curr_mat, client_data);
+	rt_db_free_internal(&in);
+    }
+}
 
 
 static void
@@ -781,6 +934,15 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_log("Copy %s to %s\n", dpi.dp->d_namep, dpi.iname.c_str());
 	}
 
+	struct rt_db_internal intern;
+	if (rt_db_get_internal(&intern, dpi.dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Error - unable to read %s\n", dpi.dp->d_namep);
+	    if (!dry_run)
+		return GED_ERROR;
+
+	}
+
+
 	struct bu_external external;
 	if (db_get_external(&external, dpi.dp, gedp->ged_wdbp->dbip)) {
 	    bu_vls_printf(gedp->ged_result_str, "Error - unable to read %s\n", dpi.dp->d_namep);
@@ -800,6 +962,16 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     // Once all db objects needed are in place (in unaltered form) we walk a
     // final time and updating combs and primitives accordingly.
+    for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
+	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
+	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
+	    MAT_IDN(m);
+	    write_walk(dbip, dp, 0, &m, &s);
+	}
+    }
+    return GED_OK;
+
+
     //
     // For each instance in the comb tree, try to find the corresponding dp_i
     // in the instset (matrix + dp find search - create a dp_i to supply to find, capture
