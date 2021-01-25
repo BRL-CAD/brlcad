@@ -529,7 +529,8 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     int to_solids = 0;
     int max_depth = 0;
     int verbosity = 0;
-    struct bu_opt_desc d[9];
+    int local_changes_only = 0;
+    struct bu_opt_desc d[10];
     BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,  "Print help and exit");
     BU_OPT(d[1], "?", "",          "",   NULL,         &print_help,  "");
     BU_OPT(d[2], "v", "verbosity",  "",  &bu_opt_incr_long, &verbosity,     "Increase output verbosity (multiple specifications of -v increase verbosity)");
@@ -538,8 +539,9 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[5], "r", "regions",   "",   NULL,         &to_regions,  "Halt push at regions (matrix will be above region reference)");
     BU_OPT(d[6], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
     BU_OPT(d[7], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
+    BU_OPT(d[8], "L", "local", "",       NULL,  &local_changes_only,   "Ensure push operations do not impact geometry outside the specified trees.");
 
-    BU_OPT_NULL(d[8]);
+    BU_OPT_NULL(d[9]);
 
     /* Skip command name */
     argc--; argv++;
@@ -610,23 +612,23 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* Because pushes have potentially global consequences, we must
-     * also characterize all unique object instances in the database.  That
-     * information will be needed to know if any given matrix push is self
-     * contained as-is or would require an object copy+rename to be isolated.
-     *
-     * TODO - this needs to be only be enabled with an option, so we can
-     * replicate current (unsafe) push behavior that doesn't take cognizance of
-     * the .g contents beyond the specified push tree.
-     */
-    struct directory **all_paths;
-    int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
-    for (int i = 0; i < tops_cnt; i++) {
-	struct directory *dp = all_paths[i];
-	if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
-	    push_walk(dbip, dp, 0, &m, true, &s);
+    if (local_changes_only) {
+	/* Because pushes have potentially global consequences, we provide an
+	 * option that records ALL unique object instances in the database.
+	 * That information will allow the push operation to tell if any given
+	 * matrix push is self contained as-is or would require an object
+	 * copy+rename to avoid changing geometry elsewhere in the .g database's
+	 * trees.
+	 */
+	struct directory **all_paths;
+	int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+	for (int i = 0; i < tops_cnt; i++) {
+	    struct directory *dp = all_paths[i];
+	    if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
+		push_walk(dbip, dp, 0, &m, true, &s);
+	}
+	bu_free(all_paths, "free db_ls output");
     }
-    bu_free(all_paths, "free db_ls output");
 
     // Create a vector of unique instances for easier manipulation.
     std::vector<dp_i> uniq_instances(s.instances.size());
