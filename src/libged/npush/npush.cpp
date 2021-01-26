@@ -488,25 +488,23 @@ push_walk(struct directory *dp,
 
 /* This is the walk that is responsible for actually altering the database */
 static void
-write_walk(struct db_i *dbip,
-	struct directory *dp,
+write_walk(
+	const dp_i &dpi,
 	int depth,
 	mat_t *curr_mat,
 	void *client_data);
 
 static void
-write_walk_subtree(struct db_i *dbip,
-	            struct directory *parent_dp,
+write_walk_subtree(
+	            const dp_i &parent_dpi,
 		    union tree *tp,
 		    int depth,
 		    mat_t *curr_mat,
 		    void *client_data)
 {
     struct directory *dp;
-    struct bu_external external;
-    dp_i dnew;
-    dnew.parent_dp = parent_dp;
     struct push_state *s = (struct push_state *)client_data;
+    struct bu_external external;
     mat_t om, nm;
     std::set<dp_i>::iterator dpii;
     dp_i ldpi;
@@ -515,7 +513,6 @@ write_walk_subtree(struct db_i *dbip,
     if (!tp)
 	return;
 
-    RT_CHECK_DBI(dbip);
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
@@ -524,7 +521,7 @@ write_walk_subtree(struct db_i *dbip,
 
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
 	    /* Update current matrix state to reflect the new branch of
@@ -536,7 +533,7 @@ write_walk_subtree(struct db_i *dbip,
 	    } else {
 		MAT_IDN(nm);
 	    }
-	    bn_mat_mul(*curr_mat, om, nm);    
+	    bn_mat_mul(*curr_mat, om, nm);
 
 	    // Look up the dpi for this comb+curr_mat combination.
 	    ldpi.dp = dp;
@@ -547,7 +544,7 @@ write_walk_subtree(struct db_i *dbip,
 	    }
 	    dpii = s->instances.find(ldpi);
 	    if (dpii == s->instances.end()) {
-		bu_log("Error - no instance found: %s->%s!\n", parent_dp->d_namep, dp->d_namep);
+		bu_log("Error - no instance found: %s->%s!\n", parent_dpi.dp->d_namep, dp->d_namep);
 		bn_mat_print(tp->tr_l.tl_name, *curr_mat);
 		for (i_it = s->instances.begin(); i_it != s->instances.end(); i_it++) {
 		    const dp_i &ddpi = *i_it;
@@ -566,8 +563,8 @@ write_walk_subtree(struct db_i *dbip,
 	    // portion of the walk has already taken care of the iname object,
 	    // don't recreate it.
 	    if ((*dpii).iname.length()) {
-		if ((dp=db_lookup(dbip, (*dpii).iname.c_str(), LOOKUP_QUIET)) == RT_DIR_NULL) {
-		    bu_log("Copy %s->%s to %s\n", parent_dp->d_namep, (*dpii).dp->d_namep, (*dpii).iname.c_str());
+		if ((dp=db_lookup(s->wdbp->dbip, (*dpii).iname.c_str(), LOOKUP_QUIET)) == RT_DIR_NULL) {
+		    bu_log("Copy %s->%s to %s\n", parent_dpi.dp->d_namep, (*dpii).dp->d_namep, (*dpii).iname.c_str());
 		    if (db_get_external(&external, (*dpii).dp, s->wdbp->dbip)) {
 			bu_log("Error - unable to read %s\n", (*dpii).dp->d_namep);
 			if (!s->dry_run)
@@ -583,7 +580,7 @@ write_walk_subtree(struct db_i *dbip,
 		    }
 		    bu_free_external(&external);
 		    if (!s->dry_run) {
-			if ((dp=db_lookup(dbip, (*dpii).iname.c_str(), LOOKUP_NOISY)) == RT_DIR_NULL) {
+			if ((dp=db_lookup(s->wdbp->dbip, (*dpii).iname.c_str(), LOOKUP_NOISY)) == RT_DIR_NULL) {
 			    bu_log("Failed to write new object (%s) to database.\n", (*dpii).iname.c_str());
 			    return;
 			}
@@ -598,12 +595,12 @@ write_walk_subtree(struct db_i *dbip,
 
 	    if (s->verbosity > 2) {
 		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
-		    bu_log("Found %s->[M]%s\n", parent_dp->d_namep, dp->d_namep);
+		    bu_log("Found %s->[M]%s\n", parent_dpi.dp->d_namep, dp->d_namep);
 		    if (s->verbosity > 3) {
 			bn_mat_print(tp->tr_l.tl_name, *curr_mat);
 		    }
 		} else {
-		    bu_log("Found %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		    bu_log("Found %s->%s\n", parent_dpi.dp->d_namep, dp->d_namep);
 		}
 	    }
 
@@ -633,7 +630,7 @@ write_walk_subtree(struct db_i *dbip,
 	    }
 
 	    /* Process branch's tree */
-	    write_walk(dbip, dp, depth, curr_mat, client_data);
+	    write_walk(*dpii, depth, curr_mat, client_data);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -643,8 +640,8 @@ write_walk_subtree(struct db_i *dbip,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    write_walk_subtree(dbip, parent_dp, tp->tr_b.tb_left, depth, curr_mat, client_data);
-	    write_walk_subtree(dbip, parent_dp, tp->tr_b.tb_right, depth, curr_mat, client_data);
+	    write_walk_subtree(parent_dpi, tp->tr_b.tb_left, depth, curr_mat, client_data);
+	    write_walk_subtree(parent_dpi, tp->tr_b.tb_right, depth, curr_mat, client_data);
 	    break;
 	default:
 	    bu_log("write_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -653,27 +650,22 @@ write_walk_subtree(struct db_i *dbip,
 }
 
 static void
-write_walk(struct db_i *dbip,
-	struct directory *dp,
+write_walk(
+	const dp_i &dpi,
 	int depth,
 	mat_t *curr_mat,
 	void *client_data)
 {
-    RT_CK_DBI(dbip);
-
-    if (!dp) {
-	return; /* nothing to do */
-    }
-
-    if (dp->d_flags & RT_DIR_COMB) {
+    struct push_state *s = (struct push_state *)client_data;
+    if (dpi.dp->d_flags & RT_DIR_COMB) {
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(&in, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	write_walk_subtree(dbip, dp, comb->tree, depth + 1, curr_mat, client_data);
+	write_walk_subtree(dpi, comb->tree, depth + 1, curr_mat, client_data);
 	rt_db_free_internal(&in);
     }
 }
@@ -998,7 +990,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
 	    MAT_IDN(m);
-	    write_walk(dbip, dp, 0, &m, &s);
+	    dp_i ldpi;
+	    ldpi.dp = dp;
+	    MAT_IDN(ldpi.mat);
+	    ldpi.ts_tol = s.tol;
+	    write_walk(ldpi, 0, &m, &s);
 	}
     }
     return GED_OK;
