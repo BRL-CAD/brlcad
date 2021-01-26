@@ -49,10 +49,12 @@
  * assumed.)
  *
  * For the purposes of matrix pushing, we need to think about these instances
- * as distinct atomic objects.  In order to do so, we define a C++ class that
- * encapsulates the necessary information and a < operator that allows for
- * insertion of instances into C++ sets (which offer sorting and a uniqueness
- * guarantee.)
+ * as distinct atomic objects, whose uniqueness is defined not by the directory
+ * pointer itself or by the instance in any given tree, but the combination of
+ * the directory pointer and the positioning matrix.  In order to do so, we
+ * define a C++ class that encapsulates the necessary information and a <
+ * operator that allows for insertion of instances into C++ sets (which offer
+ * sorting and a uniqueness guarantee.)
  */
 class dp_i {
     public:
@@ -71,7 +73,7 @@ class dp_i {
 	// associated with the instance can have its parameters updated to
 	// reflect the application of the matrix.  This completely "clears" all
 	// matrix applications from the comb tree instance.
-	bool apply_to_solid = false;  
+	bool apply_to_solid = false;
 
 	// The key to the dp_i class is the less than operator, which is what
 	// allows C++ sets to distinguish between separate instances with the
@@ -153,7 +155,6 @@ struct push_state {
      * false and the user gets an error report. */
     bool valid_push = true;
     std::set<std::string> target_objs;
-    struct rt_wdb *wdbp;
 
     /* User-supplied flags controlling tree walking behavior */
     int max_depth = 0;
@@ -167,10 +168,13 @@ struct push_state {
      * to ensure we end up with the set of just unique dp instances after tree
      * walking. */
     std::set<dp_i> instances;
-   
+
     /* Tolerance to be used for matrix comparisons.  Typically comes from the
-     * database tolerances. */ 
+     * database tolerances. */
     const struct bn_tol *tol;
+
+    /* Database information */
+    struct rt_wdb *wdbp;
 
     /* Debugging related data and variables */
     int verbosity = 0;
@@ -178,16 +182,9 @@ struct push_state {
 
 };
 
-/* Tree walks in a push operation have one of two roles - either calculating
- * the matrix needed for the push operations and identifying the leaves of the
- * push, or surveying the tree to identify potential conflicts.  The two roles
- * require different leaf tests, but may be present in the same tree walk - if
- * there is a depth limit in place, the deeper portions of the tree walk
- * continue as that portion of the tree must be checked for conflicts.
- *
- * To make this practical, this test has a state flag - survey - which the tree
- * walk can pass in to change the testing behavior.
- */
+/* Tree walks terminate at leaves.  However, what constitutes a leaf is not always
+ * the same, depending on the specific stage of the push operation we are in.
+ * is_push_leaf encapsulates the various possibilities. */
 static bool
 is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
 {
@@ -223,11 +220,11 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
 
 /* This set of walking functions does a preliminary check to ensure there are no
  * nested specifications of push objects supplied to the push command, in the case
- * where a user supplies multiple root objects to pushed.  Once an invalidity is
- * found, these routines abort and record the invalidity.
+ * where a user supplies multiple root objects to pushed.
  *
- * This is for ease of implementation and performance, but can be adjusted to do
- * a more comprehensive review if that proves worthwhile. */
+ * Once an invalidity is found, these routines abort and record the invalidity.
+ * This is for ease of implementation and performance, but can be adjusted to
+ * do a more comprehensive review if that proves worthwhile. */
 static void
 validate_walk(struct db_i *dbip,
 	struct directory *dp,
@@ -252,7 +249,7 @@ validate_walk_subtree(struct db_i *dbip,
 
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
-	
+
 	    if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
 		s->valid_push = false;
 		s->problem_obj = std::string(dp->d_namep);
@@ -286,9 +283,8 @@ validate_walk(struct db_i *dbip,
     struct push_state *s = (struct push_state *)client_data;
     RT_CK_DBI(dbip);
 
-    if (!dp || !s->valid_push) {
+    if (!dp || !s->valid_push)
 	return; /* nothing to do */
-    }
 
     if (dp->d_flags & RT_DIR_COMB) {
 
@@ -310,21 +306,19 @@ validate_walk(struct db_i *dbip,
  * tree states.  Used for both a push walk and survey of the overall database.
  * */
 static void
-push_walk(struct db_i *dbip,
-	struct directory *dp,
+push_walk(struct directory *dp,
 	int depth,
 	mat_t *curr_mat,
 	bool survey,
 	void *client_data);
 
 static void
-push_walk_subtree(struct db_i *dbip,
-	            struct directory *parent_dp,
-		    union tree *tp,
-		    int depth,
-		    mat_t *curr_mat,
-		    bool survey,
-		    void *client_data)
+push_walk_subtree(struct directory *parent_dp,
+	union tree *tp,
+	int depth,
+	mat_t *curr_mat,
+	bool survey,
+	void *client_data)
 {
     struct directory *dp;
     dp_i dnew;
@@ -335,7 +329,7 @@ push_walk_subtree(struct db_i *dbip,
     if (!tp)
 	return;
 
-    RT_CHECK_DBI(dbip);
+    RT_CHECK_DBI(s->wdbp->dbip);
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
@@ -344,7 +338,7 @@ push_walk_subtree(struct db_i *dbip,
 
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
 	    /* Update current matrix state to reflect the new branch of
@@ -420,7 +414,7 @@ push_walk_subtree(struct db_i *dbip,
 		    if (s->verbosity > 1 && !survey) {
 			bu_log("Switching from push to survey - non-shape leaf %s->%s found\n", parent_dp->d_namep, dp->d_namep);
 		    }
-		    push_walk(dbip, dp, depth, curr_mat, true, client_data);
+		    push_walk(dp, depth, curr_mat, true, client_data);
 		}
 
 		/* Done with branch - put back the old matrix state */
@@ -437,7 +431,7 @@ push_walk_subtree(struct db_i *dbip,
 		dnew.is_leaf = false;
 	    }
 
-	    if (survey && s->verbosity > 2) { 
+	    if (survey && s->verbosity > 2) {
 		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
 	    }
 	    if (s->instances.find(dnew) == s->instances.end()) {
@@ -445,7 +439,7 @@ push_walk_subtree(struct db_i *dbip,
 	    }
 
 	    /* Process branch's tree */
-	    push_walk(dbip, dp, depth, curr_mat, survey, client_data);
+	    push_walk(dp, depth, curr_mat, survey, client_data);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -455,8 +449,8 @@ push_walk_subtree(struct db_i *dbip,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    push_walk_subtree(dbip, parent_dp, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
-	    push_walk_subtree(dbip, parent_dp, tp->tr_b.tb_right, depth, curr_mat, survey, client_data);
+	    push_walk_subtree(parent_dp, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
+	    push_walk_subtree(parent_dp, tp->tr_b.tb_right, depth, curr_mat, survey, client_data);
 	    break;
 	default:
 	    bu_log("push_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -465,14 +459,13 @@ push_walk_subtree(struct db_i *dbip,
 }
 
 static void
-push_walk(struct db_i *dbip,
-	    struct directory *dp,
-	    int depth,
-	    mat_t *curr_mat,
-	    bool survey,
-	    void *client_data)
+push_walk(struct directory *dp,
+	int depth,
+	mat_t *curr_mat,
+	bool survey,
+	void *client_data)
 {
-    RT_CK_DBI(dbip);
+    struct push_state *s = (struct push_state *)client_data;
 
     if (!dp) {
 	return; /* nothing to do */
@@ -483,11 +476,11 @@ push_walk(struct db_i *dbip,
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(&in, dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	push_walk_subtree(dbip, dp, comb->tree, depth+1, curr_mat, survey, client_data);
+	push_walk_subtree(dp, comb->tree, depth+1, curr_mat, survey, client_data);
 	rt_db_free_internal(&in);
     }
 }
@@ -786,7 +779,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
 	    MAT_IDN(m);
-	    push_walk(dbip, dp, 0, &m, false, &s);
+	    push_walk(dp, 0, &m, false, &s);
 
 	    /* Sanity - if we didn't end up with m back at the identity matrix,
 	     * something went wrong with the walk */
@@ -811,7 +804,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	for (int i = 0; i < tops_cnt; i++) {
 	    struct directory *dp = all_paths[i];
 	    if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
-		push_walk(dbip, dp, 0, &m, true, &s);
+		push_walk(dp, 0, &m, true, &s);
 	}
 	bu_free(all_paths, "free db_ls output");
     }
