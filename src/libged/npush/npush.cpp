@@ -505,7 +505,6 @@ write_walk_subtree(
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
-    struct bu_external external;
     mat_t om, nm;
     std::set<dp_i>::iterator dpii;
     dp_i ldpi;
@@ -558,81 +557,21 @@ write_walk_subtree(
 		return;
 	    }
 
-	    // If this is a push_obj that has an iname, we need to copy
-	    // the tp->tr_l.tl_name object, update the reference to point
-	    // to the new object, and walk down the new comb tree.  If another
-	    // portion of the walk has already taken care of the iname object,
-	    // don't recreate it.
-	    //
-	    if ((*dpii).iname.length()) {
-		dp = db_lookup(s->wdbp->dbip, (*dpii).iname.c_str(), LOOKUP_QUIET);
-		if (dp == RT_DIR_NULL) {
-		    bu_log("Copy %s->%s to %s\n", parent_dpi.dp->d_namep, (*dpii).dp->d_namep, (*dpii).iname.c_str());
-		    if (db_get_external(&external, (*dpii).dp, s->wdbp->dbip)) {
-			bu_log("Error - unable to read %s\n", (*dpii).dp->d_namep);
-			if (!s->dry_run)
-			    return;
-		    }
-		    if (!s->dry_run) {
-			if (wdb_export_external(s->wdbp, &external, (*dpii).iname.c_str(),
-				    (*dpii).dp->d_flags,  (*dpii).dp->d_minor_type) < 0) {
-			    bu_free_external(&external);
-			    bu_log("Failed to write new object (%s) to database.\n", (*dpii).iname.c_str());
-			    return;
-			}
-		    }
-		    bu_free_external(&external);
-		    if (!s->dry_run) {
-			if ((dp=db_lookup(s->wdbp->dbip, (*dpii).iname.c_str(), LOOKUP_NOISY)) == RT_DIR_NULL) {
-			    bu_log("Failed to write new object (%s) to database.\n", (*dpii).iname.c_str());
-			    return;
-			}
-		    } else {
-			dp = (*dpii).dp;
-		    }
-		}
-	    }
-
 	    // If this is a push leaf, set final matrix, else set IDN and keep
 	    // walking down.
+	    if (dpii->is_leaf && !dpii->apply_to_solid) {
+	    } else {
+	    }
 
 	    if (s->verbosity > 2) {
 		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
 		    bu_log("Found %s->[M]%s\n", parent_dpi.dp->d_namep, dp->d_namep);
-		    if (s->verbosity > 3) {
-			bn_mat_print(tp->tr_l.tl_name, *curr_mat);
-		    }
 		} else {
 		    bu_log("Found %s->%s\n", parent_dpi.dp->d_namep, dp->d_namep);
 		}
 	    }
 
-	    if (dpii->is_leaf) {
-		if ((*dpii).iname.length()){
-		    if (s->verbosity > 2)
-			bu_log("%s: is leaf\n", (*dpii).iname.c_str());
-		    if (s->verbosity > 3)
-			bn_mat_print("to be applied", (*dpii).mat);
-		} else {
-		    if (s->verbosity > 2)
-			bu_log("%s: is leaf\n", dp->d_namep);
-		    if (s->verbosity > 3)
-			bn_mat_print("to be applied", (*dpii).mat);
-		}
-		if ((*dpii).apply_to_solid && s->verbosity > 2)
-		    bu_log("Matrix pushed to solid parameters\n");
-
-		/* Done with branch - put back the old matrix state */
-		MAT_COPY(*curr_mat, om);
-
-		return;
-	    } else {
-		// If this isn't a push leaf, this is not the termination point
-		// of a push - apply IDN matrix
-		bu_log("%s: Apply IDN\n", dp->d_namep);
-	    }
-
-	    /* Process branch's tree */
+	    /* Process */
 	    write_walk(*dpii, depth, curr_mat, client_data);
 
 	    /* Done with branch - put back the old matrix state */
@@ -661,6 +600,9 @@ write_walk(
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
+
+    // TODO - may need a dp_i flag to set once we've processed an instance, to avoid repeating
+
     if (dpi.dp->d_flags & RT_DIR_COMB) {
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
@@ -673,8 +615,8 @@ write_walk(
 	write_walk_subtree(dpi, comb->tree, depth + 1, curr_mat, &tree_altered, client_data);
 
 	// If we didn't alter this comb tree, we're done.
-	if (!tree_altered)
-	    return;
+	//if (!tree_altered)
+	 //   return;
 
 	// If we DID alter the comb tree (typically we will), we have to get
 	// the new tree on to disk.  If this instance has an iname, we are not
@@ -706,6 +648,64 @@ write_walk(
 	}
 
 	rt_db_free_internal(&in);
+    } else {
+	// If we're not copying the solid and not applying a matrix, we're done
+	if (!dpi.iname.length() && !bn_mat_is_identity(dpi.mat))
+	    return;
+
+	bu_log("Process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+	struct rt_db_internal intern;
+	if (dpi.apply_to_solid) {
+	    // If there is a non-IDN matrix, this is where we apply it
+	    if (s->verbosity > 3 && !bn_mat_is_identity(dpi.mat)) {
+		bn_mat_print(dpi.dp->d_namep, dpi.mat);
+		bn_mat_print("curr_mat", *curr_mat);
+	    }
+	    if (rt_db_get_internal(&intern, dpi.dp, s->wdbp->dbip, dpi.mat, &rt_uniresource) < 0) {
+		bu_log("Read error fetching '%s'\n", dpi.dp->d_namep);
+		return;
+	    }
+	} else {
+	    // If there is a non-IDN matrix, this is where we apply it
+	    if (rt_db_get_internal(&intern, dpi.dp, s->wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+		bu_log("Read error fetching '%s'\n", dpi.dp->d_namep);
+		return;
+	    }
+	}
+	RT_CK_DB_INTERNAL(&intern);
+
+	if (dpi.iname.length()) {
+	    // If we have an iname, we need a new directory pointer.
+	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
+	    if (dp != RT_DIR_NULL) {
+		// If we've already created this, we're done
+		rt_db_free_internal(&intern);
+		return;
+	    }
+	    if (!s->dry_run) {
+		dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&intern.idb_type);
+		if (dp == RT_DIR_NULL) {
+		    bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
+		    return;
+		}
+	    }
+	    if (s->verbosity)
+		bu_log("Write solid %s contents\n", dpi.iname.c_str());
+	} else {
+	    if (s->verbosity)
+		bu_log("Write solid %s contents\n", dpi.dp->d_namep);
+
+	    dp = dpi.dp;
+	}
+	
+	if (!s->dry_run) {
+	    if (rt_db_put_internal(dp, s->wdbp->dbip, &intern, s->wdbp->wdb_resp) < 0) {
+		bu_log("Unable to store %s to the database", dp->d_namep);
+		return;
+	    }
+	}
+
+	rt_db_free_internal(&intern);
     }
 }
 
