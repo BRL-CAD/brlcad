@@ -61,6 +61,7 @@ class dp_i {
 	struct directory *dp;  // Instance database object
 	struct directory *parent_dp;  // Parent object
 	mat_t mat;             // Instance matrix
+	size_t ind;
 
 	std::string iname = std::string();     // Container to hold instance name, if needed
 	const struct bn_tol *ts_tol;  // Tolerance to use for matrix comparisons
@@ -175,6 +176,9 @@ struct push_state {
 
     /* Database information */
     struct rt_wdb *wdbp;
+
+    /* Processing info */
+    std::set<size_t> processed;
 
     /* Debugging related data and variables */
     int verbosity = 0;
@@ -557,18 +561,42 @@ write_walk_subtree(
 		return;
 	    }
 
-	    // If this is a push leaf, set final matrix, else set IDN and keep
-	    // walking down.
-	    if (dpii->is_leaf && !dpii->apply_to_solid) {
-	    } else {
-	    }
-
 	    if (s->verbosity > 2) {
 		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
 		    bu_log("Found %s->[M]%s\n", parent_dpi.dp->d_namep, dp->d_namep);
 		} else {
 		    bu_log("Found %s->%s\n", parent_dpi.dp->d_namep, dp->d_namep);
 		}
+	    }
+
+	    // Comb tree edit:  if this is a push leaf, set final matrix, else
+	    // set IDN and keep walking down.
+	    if (dpii->is_leaf && !dpii->apply_to_solid) {
+		if (tp->tr_l.tl_mat) {
+		    if (!bn_mat_is_equal(tp->tr_l.tl_mat, dpii->mat, s->tol)) {
+			MAT_COPY(tp->tr_l.tl_mat, dpii->mat);
+			(*tree_altered) = true;
+		    }
+		} else {
+		    if (!bn_mat_is_identity(dpii->mat)) {
+			tp->tr_l.tl_mat = bn_mat_dup(dpii->mat);
+			(*tree_altered) = true;
+		    }
+		}
+	    } else {
+		if (tp->tr_l.tl_mat) {
+		    // IDN matrix
+		    bu_free(tp->tr_l.tl_mat, "free mat");
+		    tp->tr_l.tl_mat = NULL;
+		    (*tree_altered) = true;
+		}
+	    }
+
+	    // Comb tree edit:  if we have an iname, update the tree name.
+	    if (dpii->iname.length()) {
+		bu_free(tp->tr_l.tl_name, "free old name");
+		tp->tr_l.tl_name = bu_strdup(dpii->iname.c_str());
+		(*tree_altered) = true;
 	    }
 
 	    /* Process */
@@ -601,7 +629,14 @@ write_walk(
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
 
-    // TODO - may need a dp_i flag to set once we've processed an instance, to avoid repeating
+    // If we have already seen this specific instance, don't
+    // process again
+    if (s->processed.find(dpi.ind) != s->processed.end())
+	return;
+
+    // We will now be processing - set flag
+    s->processed.insert(dpi.ind);
+
 
     if (dpi.dp->d_flags & RT_DIR_COMB) {
 	struct rt_db_internal in;
@@ -850,6 +885,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // instances represent multiple distinct volumes in space.
     std::map<struct directory *, std::vector<size_t>> i_cnt;
     for (size_t i = 0; i < uniq_instances.size(); i++) {
+	uniq_instances[i].ind = i;
 	i_cnt[uniq_instances[i].dp].push_back(i);
     }
 
