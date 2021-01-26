@@ -500,6 +500,7 @@ write_walk_subtree(
 		    union tree *tp,
 		    int depth,
 		    mat_t *curr_mat,
+		    bool *tree_altered,
 		    void *client_data)
 {
     struct directory *dp;
@@ -562,8 +563,10 @@ write_walk_subtree(
 	    // to the new object, and walk down the new comb tree.  If another
 	    // portion of the walk has already taken care of the iname object,
 	    // don't recreate it.
+	    //
 	    if ((*dpii).iname.length()) {
-		if ((dp=db_lookup(s->wdbp->dbip, (*dpii).iname.c_str(), LOOKUP_QUIET)) == RT_DIR_NULL) {
+		dp = db_lookup(s->wdbp->dbip, (*dpii).iname.c_str(), LOOKUP_QUIET);
+		if (dp == RT_DIR_NULL) {
 		    bu_log("Copy %s->%s to %s\n", parent_dpi.dp->d_namep, (*dpii).dp->d_namep, (*dpii).iname.c_str());
 		    if (db_get_external(&external, (*dpii).dp, s->wdbp->dbip)) {
 			bu_log("Error - unable to read %s\n", (*dpii).dp->d_namep);
@@ -640,8 +643,8 @@ write_walk_subtree(
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    write_walk_subtree(parent_dpi, tp->tr_b.tb_left, depth, curr_mat, client_data);
-	    write_walk_subtree(parent_dpi, tp->tr_b.tb_right, depth, curr_mat, client_data);
+	    write_walk_subtree(parent_dpi, tp->tr_b.tb_left, depth, curr_mat, tree_altered, client_data);
+	    write_walk_subtree(parent_dpi, tp->tr_b.tb_right, depth, curr_mat, tree_altered, client_data);
 	    break;
 	default:
 	    bu_log("write_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -656,16 +659,52 @@ write_walk(
 	mat_t *curr_mat,
 	void *client_data)
 {
+    struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
     if (dpi.dp->d_flags & RT_DIR_COMB) {
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
+	bool tree_altered = false;
 
 	if (rt_db_get_internal5(&in, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	write_walk_subtree(dpi, comb->tree, depth + 1, curr_mat, client_data);
+	write_walk_subtree(dpi, comb->tree, depth + 1, curr_mat, &tree_altered, client_data);
+
+	// If we didn't alter this comb tree, we're done.
+	if (!tree_altered)
+	    return;
+
+	// If we DID alter the comb tree (typically we will), we have to get
+	// the new tree on to disk.  If this instance has an iname, we are not
+	// updating the existing object but instead creating a new one.
+	if (dpi.iname.length()) {
+	    // New name, new dp
+	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
+	    if (dp != RT_DIR_NULL) {
+		// If we've already created this, we're done
+		rt_db_free_internal(&in);
+		return;
+	    }
+	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in.idb_type);
+	    if (dp == RT_DIR_NULL) {
+		bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
+		return;
+	    }
+	} else {
+	    // We're editing the existing tree - reuse dp
+	    dp = dpi.dp;
+	}
+
+	if (s->verbosity)
+	    bu_log("Write comb %s contents\n", dp->d_namep);
+
+	if (rt_db_put_internal(dp, s->wdbp->dbip, &in, s->wdbp->wdb_resp) < 0) {
+	    bu_log("Unable to store %s to the database", dp->d_namep);
+	    return;
+	}
+
 	rt_db_free_internal(&in);
     }
 }
