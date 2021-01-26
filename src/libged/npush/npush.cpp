@@ -153,6 +153,7 @@ struct push_state {
      * false and the user gets an error report. */
     bool valid_push = true;
     std::set<std::string> target_objs;
+    struct rt_wdb *wdbp;
 
     /* User-supplied flags controlling tree walking behavior */
     int max_depth = 0;
@@ -509,6 +510,7 @@ write_walk_subtree(struct db_i *dbip,
 		    void *client_data)
 {
     struct directory *dp;
+    struct bu_external external;
     dp_i dnew;
     dnew.parent_dp = parent_dp;
     struct push_state *s = (struct push_state *)client_data;
@@ -570,9 +572,33 @@ write_walk_subtree(struct db_i *dbip,
 	    // to the new object, and walk down the new comb tree.  If another
 	    // portion of the walk has already taken care of the iname object,
 	    // don't recreate it.
-	    if ((*dpii).iname.length())
-		bu_log("Copy %s->%s to %s\n", parent_dp->d_namep, (*dpii).dp->d_namep, (*dpii).iname.c_str());
-
+	    if ((*dpii).iname.length()) {
+		if ((dp=db_lookup(dbip, (*dpii).iname.c_str(), LOOKUP_QUIET)) == RT_DIR_NULL) {
+		    bu_log("Copy %s->%s to %s\n", parent_dp->d_namep, (*dpii).dp->d_namep, (*dpii).iname.c_str());
+		    if (db_get_external(&external, (*dpii).dp, s->wdbp->dbip)) {
+			bu_log("Error - unable to read %s\n", (*dpii).dp->d_namep);
+			if (!s->dry_run)
+			    return;
+		    }
+		    if (!s->dry_run) {
+			if (wdb_export_external(s->wdbp, &external, (*dpii).iname.c_str(),
+				    (*dpii).dp->d_flags,  (*dpii).dp->d_minor_type) < 0) {
+			    bu_free_external(&external);
+			    bu_log("Failed to write new object (%s) to database.\n", (*dpii).iname.c_str());
+			    return;
+			}
+		    }
+		    bu_free_external(&external);
+		    if (!s->dry_run) {
+			if ((dp=db_lookup(dbip, (*dpii).iname.c_str(), LOOKUP_NOISY)) == RT_DIR_NULL) {
+			    bu_log("Failed to write new object (%s) to database.\n", (*dpii).iname.c_str());
+			    return;
+			}
+		    } else {
+			dp = (*dpii).dp;
+		    }
+		}
+	    }
 
 	    // If this is a push leaf, set final matrix, else set IDN and keep
 	    // walking down.
@@ -590,14 +616,18 @@ write_walk_subtree(struct db_i *dbip,
 
 	    if (dpii->is_leaf) {
 		if ((*dpii).iname.length()){
-		    bu_log("%s: is leaf\n", (*dpii).iname.c_str());
-		    bn_mat_print("to be applied", (*dpii).mat);
+		    if (s->verbosity > 2)
+			bu_log("%s: is leaf\n", (*dpii).iname.c_str());
+		    if (s->verbosity > 3)
+			bn_mat_print("to be applied", (*dpii).mat);
 		} else {
-		    bu_log("%s: is leaf\n", dp->d_namep);
-		    bn_mat_print("to be applied", (*dpii).mat);
+		    if (s->verbosity > 2)
+			bu_log("%s: is leaf\n", dp->d_namep);
+		    if (s->verbosity > 3)
+			bn_mat_print("to be applied", (*dpii).mat);
 		}
-		if ((*dpii).apply_to_solid)
-		    bu_log("Push to solid parameters\n");
+		if ((*dpii).apply_to_solid && s->verbosity > 2)
+		    bu_log("Matrix pushed to solid parameters\n");
 
 		/* Done with branch - put back the old matrix state */
 		MAT_COPY(*curr_mat, om);
@@ -731,6 +761,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     s.stop_at_regions = (to_regions) ? true : false;
     s.stop_at_shapes = (to_solids) ? true : false;
     s.dry_run = (dry_run) ? true : false;
+    s.wdbp = gedp->ged_wdbp;
     for (int i = 0; i < argc; i++) {
 	s.target_objs.insert(std::string(argv[i]));
     }
@@ -938,48 +969,38 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     s.instances.clear();
     s.instances.insert(uniq_instances.begin(), uniq_instances.end());
 
-    // Having identified all unique instances, it is now time to build the pushed
-    // tree.
-    //
-    // Step one is to iterate over the instances.  If a new iname has been
-    // assigned, the existing object needs to be copied under the new name.
-    std::set<dp_i>::iterator in_it;
-    for (in_it = s.instances.begin(); in_it != s.instances.end(); in_it++) {
-	const dp_i &dpi = *in_it;
-	if (!dpi.push_obj || !dpi.iname.length())
-	    continue;
-	if (s.verbosity > 1) {
-	    bu_log("Copy %s to %s\n", dpi.dp->d_namep, dpi.iname.c_str());
-	}
-
-	struct rt_db_internal intern;
-	if (rt_db_get_internal(&intern, dpi.dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Error - unable to read %s\n", dpi.dp->d_namep);
-	    if (!dry_run)
-		return GED_ERROR;
-
-	}
-
-
-	struct bu_external external;
-	if (db_get_external(&external, dpi.dp, gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(gedp->ged_result_str, "Error - unable to read %s\n", dpi.dp->d_namep);
-	    if (!dry_run)
-		return GED_ERROR;
-	}
-	if (!dry_run) {
-	    if (wdb_export_external(gedp->ged_wdbp, &external, dpi.iname.c_str(),
-			dpi.dp->d_flags,  dpi.dp->d_minor_type) < 0) {
-		bu_free_external(&external);
-		bu_vls_printf(gedp->ged_result_str, "Failed to write new object (%s) to database.\n", dpi.iname.c_str());
-		return GED_ERROR;
+    // For debugging purposes, with a high enough verbosity print out the state
+    // of the instances set ahead of the final tree walk so we know what to
+    // expect.
+    if (s.verbosity > 4) {
+	std::set<dp_i>::iterator in_it;
+	bu_log("\n\n\nDirectory pointer instance set (final state before application walk):\n\n");
+	for (in_it = s.instances.begin(); in_it != s.instances.end(); in_it++) {
+	    const dp_i &dpi = *in_it;
+	    if (!dpi.push_obj)
+		continue;
+	    if (dpi.iname.length()) {
+		if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
+		    bu_log("%s tree edited && matrix to IDN\n", dpi.iname.c_str());
+		}
+		if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		    bu_log("%s\n", dpi.iname.c_str());
+		    bn_mat_print("applied", dpi.mat);
+		}
+	    } else {
+		if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
+		    bu_log("%s matrix to IDN\n", dpi.dp->d_namep);
+		}
+		if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		    bu_log("%s\n", dpi.dp->d_namep);
+		    bn_mat_print("applied", dpi.mat);
+		}
 	    }
 	}
-	bu_free_external(&external);
     }
 
-    // Once all db objects needed are in place (in unaltered form) we walk a
-    // final time and updating combs and primitives accordingly.
+
+    // Walk a final time and updating combs and primitives accordingly.
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
@@ -990,7 +1011,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 
 
-    //
     // For each instance in the comb tree, try to find the corresponding dp_i
     // in the instset (matrix + dp find search - create a dp_i to supply to find, capture
     // the iterator of the search result.  If not == end(), it will have the dp_i with
@@ -1008,28 +1028,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // if the internal trees and parameters still need to be updated.
     //
     // TODO: Check the existing push and xpush codes for how to alter the comb trees.
-    for (in_it = s.instances.begin(); in_it != s.instances.end(); in_it++) {
-	const dp_i &dpi = *in_it;
-	if (!dpi.push_obj)
-	   continue;
-	if (dpi.iname.length()) {
-	    if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
-		std::cout << dpi.iname << " tree edited && matrix to IDN\n";
-	    }
-	    if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-		std::cout << dpi.iname << "\n";
-		bn_mat_print("applied", dpi.mat);
-	    }
-	} else {
-	    if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
-		std::cout << dpi.dp->d_namep << " matrix to IDN\n";
-	    }
-	    if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-		std::cout << dpi.dp->d_namep << "\n";
-		bn_mat_print("applied", dpi.mat);
-	    }
-	}
-    }
     return GED_OK;
 }
 
