@@ -495,7 +495,11 @@ push_walk(struct directory *dp,
 }
 
 
-/* This is the walk that is responsible for actually altering the database */
+/* This is the walk that is responsible for actually altering the database.
+ *
+ * TODO - I think this walk can be consolidated with the push_walk logic,
+ * since we can't alter the database until after this walk is complete
+ * anyway... */
 static void
 write_walk(
 	const dp_i &dpi,
