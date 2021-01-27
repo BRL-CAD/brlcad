@@ -727,38 +727,42 @@ write_walk(
 	    bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
 	}
 
-	struct rt_db_internal intern;
+	struct rt_db_internal *in;
+	BU_GET(in, struct rt_db_internal);
 	if (dpi.apply_to_solid) {
 	    // If there is a non-IDN matrix, this is where we apply it
 	    if (s->verbosity > 3 && !bn_mat_is_identity(dpi.mat)) {
 		bn_mat_print(dpi.dp->d_namep, dpi.mat);
 		bn_mat_print("curr_mat", *curr_mat);
 	    }
-	    if (rt_db_get_internal(&intern, dpi.dp, s->wdbp->dbip, dpi.mat, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(in, dpi.dp, s->wdbp->dbip, dpi.mat, &rt_uniresource) < 0) {
 		bu_log("Read error fetching '%s'\n", dpi.dp->d_namep);
 		return;
 	    }
 	} else {
 	    // If there is a non-IDN matrix, this is where we apply it
-	    if (rt_db_get_internal(&intern, dpi.dp, s->wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(in, dpi.dp, s->wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 		bu_log("Read error fetching '%s'\n", dpi.dp->d_namep);
 		return;
 	    }
 	}
-	RT_CK_DB_INTERNAL(&intern);
+	RT_CK_DB_INTERNAL(in);
 
 	if (dpi.iname.length()) {
 	    // If we have an iname, we need a new directory pointer.
 	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
 	    if (dp != RT_DIR_NULL) {
 		// If we've already created this, we're done
-		rt_db_free_internal(&intern);
+		rt_db_free_internal(in);
+		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
 	    if (!s->dry_run) {
-		dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&intern.idb_type);
+		dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
 		if (dp == RT_DIR_NULL) {
 		    bu_log("Unable to add %s to the database directory\n", dpi.iname.c_str());
+		    rt_db_free_internal(in);
+		    BU_PUT(in, struct rt_db_internal);
 		    return;
 		}
 	    }
@@ -772,15 +776,8 @@ write_walk(
 	}
 
 	if (!s->dry_run) {
-	    if (rt_db_put_internal(dp, s->wdbp->dbip, &intern, s->wdbp->wdb_resp) < 0) {
-		bu_log("Unable to store %s to the database\n", dp->d_namep);
-		return;
-	    } else {
-		bu_log("Wrote solid %s to the database\n", dp->d_namep);
-	    }
+	    s->updated[dp] = in;
 	}
-
-	rt_db_free_internal(&intern);
 
     }
 }
