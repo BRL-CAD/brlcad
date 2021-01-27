@@ -179,6 +179,7 @@ struct push_state {
 
     /* Processing info */
     std::set<size_t> processed;
+    std::map<struct directory *, struct rt_db_internal *> updated;
 
     /* Debugging related data and variables */
     int verbosity = 0;
@@ -639,19 +640,33 @@ write_walk(
 
 
     if (dpi.dp->d_flags & RT_DIR_COMB) {
-	struct rt_db_internal in;
+
+	if (dpi.iname.length()) {
+	    bu_log("comb walk: %s\n", dpi.iname.c_str());
+	} else {
+	    bu_log("comb walk: %s\n", dpi.dp->d_namep);
+	}
+
+	struct rt_db_internal *in;
 	struct rt_comb_internal *comb;
 	bool tree_altered = false;
+	BU_GET(in, struct rt_db_internal);
 
-	if (rt_db_get_internal5(&in, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(in, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	    BU_PUT(in, struct rt_db_internal);
 	    return;
+	}
 
-	comb = (struct rt_comb_internal *)in.idb_ptr;
+	comb = (struct rt_comb_internal *)in->idb_ptr;
 	write_walk_subtree(dpi, comb->tree, depth + 1, curr_mat, &tree_altered, client_data);
 
 	// If we didn't alter this comb tree, we're done.
-	//if (!tree_altered)
-	 //   return;
+	if (!tree_altered) {
+	    bu_log("unaltered\n");
+	    rt_db_free_internal(in);
+	    BU_PUT(in, struct rt_db_internal);
+	    return;
+	}
 
 	// If we DID alter the comb tree (typically we will), we have to get
 	// the new tree on to disk.  If this instance has an iname, we are not
@@ -661,12 +676,15 @@ write_walk(
 	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
 	    if (dp != RT_DIR_NULL) {
 		// If we've already created this, we're done
-		rt_db_free_internal(&in);
+		rt_db_free_internal(in);
+		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
-	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in.idb_type);
+	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
 	    if (dp == RT_DIR_NULL) {
 		bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
+		rt_db_free_internal(in);
+		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
 	} else {
@@ -677,18 +695,19 @@ write_walk(
 	if (s->verbosity)
 	    bu_log("Write comb %s contents\n", dp->d_namep);
 
-	if (rt_db_put_internal(dp, s->wdbp->dbip, &in, s->wdbp->wdb_resp) < 0) {
-	    bu_log("Unable to store %s to the database", dp->d_namep);
-	    return;
-	}
+	s->updated[dp] = in;
 
-	rt_db_free_internal(&in);
     } else {
 	// If we're not copying the solid and not applying a matrix, we're done
 	if (!dpi.iname.length() && !bn_mat_is_identity(dpi.mat))
 	    return;
 
-	bu_log("Process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+	if (dpi.iname.length()) {
+	    bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.iname.c_str());
+	} else {
+	    bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+	}
+
 	struct rt_db_internal intern;
 	if (dpi.apply_to_solid) {
 	    // If there is a non-IDN matrix, this is where we apply it
@@ -1072,27 +1091,20 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    write_walk(ldpi, 0, &m, &s);
 	}
     }
+
+    std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
+    for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
+	struct directory *dp = u_it->first;
+	struct rt_db_internal *in = u_it->second;
+	if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
+	    bu_log("Unable to store %s to the database", dp->d_namep);
+	}
+	rt_db_free_internal(in);
+	BU_PUT(in, struct rt_db_internal);
+    }
+
     return GED_OK;
 
-
-    // For each instance in the comb tree, try to find the corresponding dp_i
-    // in the instset (matrix + dp find search - create a dp_i to supply to find, capture
-    // the iterator of the search result.  If not == end(), it will have the dp_i with
-    // the new iname, if such a name has been assigned). If an iname is assigned
-    // for the dp_i, update name.  If the instance is a push_obj, assign
-    // IDN matrix, unless dp_i is identified as a leaf - in that case,
-    // assign the dp_i matrix.  If the leaf is a solid and the flag is set,
-    // assign IDN matrix and update solid parameters.
-    //
-    // The details of this final tree walk are critically important - if a tree leaf
-    // has a new iname, that name is what the tree walk must use for processing the
-    // branch - NOT the original name in the tree instance.  This is why the final
-    // tree walk can't proceed until all the objects are in place - the db_lookup
-    // and internal representation queries of the tree walk must all succeed, even
-    // if the internal trees and parameters still need to be updated.
-    //
-    // TODO: Check the existing push and xpush codes for how to alter the comb trees.
-    return GED_OK;
 }
 
 extern "C" {
