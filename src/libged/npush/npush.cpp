@@ -718,7 +718,7 @@ write_walk(
     } else {
 
 	// If we're not copying the solid and not applying a matrix, we're done
-	if (!dpi.iname.length() && !bn_mat_is_identity(dpi.mat))
+	if (!dpi.iname.length() && bn_mat_is_identity(dpi.mat))
 	    return;
 
 	if (dpi.iname.length()) {
@@ -758,7 +758,7 @@ write_walk(
 	    if (!s->dry_run) {
 		dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&intern.idb_type);
 		if (dp == RT_DIR_NULL) {
-		    bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
+		    bu_log("Unable to add %s to the database directory\n", dpi.iname.c_str());
 		    return;
 		}
 	    }
@@ -773,8 +773,10 @@ write_walk(
 
 	if (!s->dry_run) {
 	    if (rt_db_put_internal(dp, s->wdbp->dbip, &intern, s->wdbp->wdb_resp) < 0) {
-		bu_log("Unable to store %s to the database", dp->d_namep);
+		bu_log("Unable to store %s to the database\n", dp->d_namep);
 		return;
+	    } else {
+		bu_log("Wrote solid %s to the database\n", dp->d_namep);
 	    }
 	}
 
