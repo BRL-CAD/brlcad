@@ -343,12 +343,14 @@ memfree:
 	if (local_state[i].right_name) bu_free((void *)local_state[i].right_name, "right name");
 	/*BU_PUT(state[i].resp, struct resource);*/
     }
-    bu_free(state, "free state containers");
-    bu_free(local_state, "free state containers");
-    bu_free(resp, "free resources");
+
     if (rtip) {
 	rt_free_rti(rtip);
     }
+
+    bu_free(state, "free state containers");
+    bu_free(local_state, "free state containers");
+    bu_free(resp, "free resources");
 
     return ret;
 }
