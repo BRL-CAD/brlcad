@@ -654,9 +654,6 @@ write_walk(
 	    bu_log("comb walk: %s\n", dpi.dp->d_namep);
 	}
 
-	// TODO - sph_014 test is exposing a problem  - looks like there is still a difference
-	// in the push and write walks?
-
 	/* Read only copy of comb tree - use for steering the walk */
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
