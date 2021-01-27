@@ -549,13 +549,18 @@ write_walk_subtree(
 	    dpii = s->instances.find(ldpi);
 	    if (dpii == s->instances.end()) {
 		bu_log("Error - no instance found: %s->%s!\n", parent_dpi.dp->d_namep, dp->d_namep);
-		bn_mat_print(tp->tr_l.tl_name, *curr_mat);
+		dpii = s->instances.find(ldpi);
+		bn_mat_print("curr_mat", *curr_mat);
+		if (dpii->apply_to_solid)
+		    bu_log("apply_to_solid set\n");
 		for (i_it = s->instances.begin(); i_it != s->instances.end(); i_it++) {
 		    const dp_i &ddpi = *i_it;
 		    if (ddpi.dp == dp) {
 			bn_mat_print(tp->tr_l.tl_name, ddpi.mat);
 			if (ddpi.iname.length())
 			    bu_log("iname: %s\n", ddpi.iname.c_str());
+			if (ddpi.apply_to_solid)
+			    bu_log("apply_to_solid set\n");
 		    }
 		}
 		return;
@@ -643,6 +648,9 @@ write_walk(
 	} else {
 	    bu_log("comb walk: %s\n", dpi.dp->d_namep);
 	}
+
+	// TODO - sph_014 test is exposing a problem  - looks like there is still a difference
+	// in the push and write walks?
 
 	/* Read only copy of comb tree - use for steering the walk */
 	struct rt_db_internal intern;
