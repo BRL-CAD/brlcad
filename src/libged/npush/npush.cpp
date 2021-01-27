@@ -104,11 +104,13 @@ class dp_i {
 	    // of the matrices involved is non-IDN - otherwise, the
 	    // matrix applications are no-ops and we don't want them
 	    // to prompt multiple instances of objects.
-	    if (apply_to_solid != o.apply_to_solid) {
-		if (!bn_mat_is_equal(mat, bn_mat_identity, ts_tol) ||
-			!bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol)) {
-		    if (apply_to_solid && !o.apply_to_solid)
-		       	return true;
+	    if (!(dp->d_flags & RT_DIR_COMB)) {
+		if (apply_to_solid != o.apply_to_solid) {
+		    if (!bn_mat_is_equal(mat, bn_mat_identity, ts_tol) ||
+			    !bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol)) {
+			if (apply_to_solid && !o.apply_to_solid)
+			    return true;
+		    }
 		}
 	    }
 
@@ -127,6 +129,9 @@ class dp_i {
 		for (int i = 0; i < 16; i++) {
 		    if (mat[i] < o.mat[i]) {
 			return true;
+		    }
+		    if (mat[i] > o.mat[i]) {
+			return false;
 		    }
 		}
 	    }
