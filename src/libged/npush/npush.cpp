@@ -354,7 +354,7 @@ push_walk_subtree(struct directory *parent_dp,
 	    } else {
 		MAT_IDN(nm);
 	    }
-	    bn_mat_mul(*curr_mat, om, nm);    
+	    bn_mat_mul(*curr_mat, om, nm);
 
 	    if (s->verbosity > 2) {
 		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
@@ -502,6 +502,7 @@ static void
 write_walk_subtree(
 	            const dp_i &parent_dpi,
 		    union tree *tp,
+		    union tree *wtp,
 		    int depth,
 		    mat_t *curr_mat,
 		    bool *tree_altered,
@@ -509,10 +510,9 @@ write_walk_subtree(
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
+    std::set<dp_i>::iterator dpii, i_it;
     mat_t om, nm;
-    std::set<dp_i>::iterator dpii;
     dp_i ldpi;
-    std::set<dp_i>::iterator i_it;
 
     if (!tp)
 	return;
@@ -569,33 +569,40 @@ write_walk_subtree(
 		}
 	    }
 
+	    /* Tree editing operations - form the tree that will be used in the final
+	     * output of this comb object.  These operations should use the writable
+	     * tree (wtp) to ensure we don't cause any inadvertent issues with the
+	     * tree walk.  (If it can be proven that this can never happen we could
+	     * edit directly on the original tp, but until that's certain working on
+	     * a copy of the tree is safer. */
+
 	    // Comb tree edit:  if this is a push leaf, set final matrix, else
 	    // set IDN and keep walking down.
 	    if (dpii->is_leaf && !dpii->apply_to_solid) {
-		if (tp->tr_l.tl_mat) {
-		    if (!bn_mat_is_equal(tp->tr_l.tl_mat, dpii->mat, s->tol)) {
-			MAT_COPY(tp->tr_l.tl_mat, dpii->mat);
+		if (wtp->tr_l.tl_mat) {
+		    if (!bn_mat_is_equal(wtp->tr_l.tl_mat, dpii->mat, s->tol)) {
+			MAT_COPY(wtp->tr_l.tl_mat, dpii->mat);
 			(*tree_altered) = true;
 		    }
 		} else {
 		    if (!bn_mat_is_identity(dpii->mat)) {
-			tp->tr_l.tl_mat = bn_mat_dup(dpii->mat);
+			wtp->tr_l.tl_mat = bn_mat_dup(dpii->mat);
 			(*tree_altered) = true;
 		    }
 		}
 	    } else {
-		if (tp->tr_l.tl_mat) {
+		if (wtp->tr_l.tl_mat) {
 		    // IDN matrix
-		    bu_free(tp->tr_l.tl_mat, "free mat");
-		    tp->tr_l.tl_mat = NULL;
+		    bu_free(wtp->tr_l.tl_mat, "free mat");
+		    wtp->tr_l.tl_mat = NULL;
 		    (*tree_altered) = true;
 		}
 	    }
 
 	    // Comb tree edit:  if we have an iname, update the tree name.
 	    if (dpii->iname.length()) {
-		bu_free(tp->tr_l.tl_name, "free old name");
-		tp->tr_l.tl_name = bu_strdup(dpii->iname.c_str());
+		bu_free(wtp->tr_l.tl_name, "free old name");
+		wtp->tr_l.tl_name = bu_strdup(dpii->iname.c_str());
 		(*tree_altered) = true;
 	    }
 
@@ -610,8 +617,8 @@ write_walk_subtree(
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    write_walk_subtree(parent_dpi, tp->tr_b.tb_left, depth, curr_mat, tree_altered, client_data);
-	    write_walk_subtree(parent_dpi, tp->tr_b.tb_right, depth, curr_mat, tree_altered, client_data);
+	    write_walk_subtree(parent_dpi, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth, curr_mat, tree_altered, client_data);
+	    write_walk_subtree(parent_dpi, tp->tr_b.tb_right, wtp->tr_b.tb_right, depth, curr_mat, tree_altered, client_data);
 	    break;
 	default:
 	    bu_log("write_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -637,18 +644,29 @@ write_walk(
 	    bu_log("comb walk: %s\n", dpi.dp->d_namep);
 	}
 
-	struct rt_db_internal *in;
+	/* Read only copy of comb tree - use for steering the walk */
+	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	bool tree_altered = false;
-	BU_GET(in, struct rt_db_internal);
+	if (rt_db_get_internal5(&intern, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	    return;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
+	/* Copy of comb tree for editing - use for recording new tree */
+	struct rt_db_internal *in;
+	struct rt_comb_internal *wcomb;
+	BU_GET(in, struct rt_db_internal);
 	if (rt_db_get_internal5(in, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0) {
 	    BU_PUT(in, struct rt_db_internal);
 	    return;
 	}
+	wcomb = (struct rt_comb_internal *)in->idb_ptr;
 
-	comb = (struct rt_comb_internal *)in->idb_ptr;
-	write_walk_subtree(dpi, comb->tree, depth + 1, curr_mat, &tree_altered, client_data);
+	write_walk_subtree(dpi, comb->tree, wcomb->tree, depth + 1, curr_mat, &tree_altered, client_data);
+
+	// Read-only copy is done
+	rt_db_free_internal(&intern);
 
 	// If we didn't alter this comb tree, we're done.
 	if (!tree_altered) {
@@ -742,7 +760,7 @@ write_walk(
 
 	    dp = dpi.dp;
 	}
-	
+
 	if (!s->dry_run) {
 	    if (rt_db_put_internal(dp, s->wdbp->dbip, &intern, s->wdbp->wdb_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
@@ -789,7 +807,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[6], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
     BU_OPT(d[7], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
     BU_OPT(d[8], "L", "local", "",       NULL,  &local_changes_only,   "Ensure push operations do not impact geometry outside the specified trees.");
-    BU_OPT(d[8], "D", "dry-run", "",       NULL,  &dry_run,   "Calculate the changes but do not apply them.");
+    BU_OPT(d[9], "D", "dry-run", "",       NULL,  &dry_run,   "Calculate the changes but do not apply them.");
 
     BU_OPT_NULL(d[10]);
 
