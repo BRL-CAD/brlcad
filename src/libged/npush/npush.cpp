@@ -178,7 +178,6 @@ struct push_state {
     struct rt_wdb *wdbp;
 
     /* Processing info */
-    std::set<size_t> processed;
     std::map<struct directory *, struct rt_db_internal *> updated;
 
     /* Debugging related data and variables */
@@ -630,15 +629,6 @@ write_walk(
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
 
-    // If we have already seen this specific instance, don't
-    // process again
-    if (s->processed.find(dpi.ind) != s->processed.end())
-	return;
-
-    // We will now be processing - set flag
-    s->processed.insert(dpi.ind);
-
-
     if (dpi.dp->d_flags & RT_DIR_COMB) {
 
 	if (dpi.iname.length()) {
@@ -698,6 +688,7 @@ write_walk(
 	s->updated[dp] = in;
 
     } else {
+
 	// If we're not copying the solid and not applying a matrix, we're done
 	if (!dpi.iname.length() && !bn_mat_is_identity(dpi.mat))
 	    return;
@@ -760,6 +751,7 @@ write_walk(
 	}
 
 	rt_db_free_internal(&intern);
+
     }
 }
 
