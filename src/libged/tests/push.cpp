@@ -157,23 +157,31 @@ main(int argc, const char **argv)
 	char *gobj = bu_strdup(oname.c_str());
 	gargv[gargc-2] = gobj;
 	ged_npush(gedp, gargc - 1, (const char **)gargv);
+	bu_free(gobj, "free objname");
+	gargv[gargc-2] = NULL;
     }
 
-    // To avoid problems with bu_argv_free, make sure the last two
-    // entires are not pointing to something else.
+    // To avoid problems with bu_argv_free, make very sure the last two entires
+    // are not pointing to something else.
     gargv[gargc-2] = NULL;
     gargv[gargc-1] = NULL;
     bu_argv_free((size_t)gargc, gargv);
 
     // dbconcat the control file into the current database, with a prefix
+    const char *dbcargv[4];
+    dbcargv[0] = "dbconcat";
+    dbcargv[1] = argv[0];
+    dbcargv[2] = "ctrl_";
+    dbcargv[3] = NULL;
+    ged_concat(gedp, 3, (const char **)dbcargv);
 
-
-    // TODO - depending on the test, we want to check that the ext toplevels
-    // that exist either are or are not altered.  This will probably have to
-    // be baked into a user option that specifies the test type.
+    // object names may not be identical - what we are concerned with is
+    // that the geometry shapes remain unchanged from what is expected (or,
+    // in a few specific cases, we check that differences are found.)
+    // Use the libged raytracing based gdiff to check this.
 
     // Remove the copy of the .g file
-    std::remove(bu_vls_cstr(&gfile));
+    //std::remove(bu_vls_cstr(&gfile));
 
     // Clean up
     bu_vls_free(&gfile);
