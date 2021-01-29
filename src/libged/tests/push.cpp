@@ -24,6 +24,12 @@
  * TODO - see if a version of this can be added to the npush command itself as
  * a -V (structural validate) option - (or -VV for both volumetric and
  * structural validation).
+ *
+ * Ideally, should have -V take an optional argument so we can compare to an
+ * existing tree instead of keeping out the target tree.
+ *
+ * Note that -V would be incompatible with the dry-run option, since the point
+ * is to evaluate the final generated geometry.
  */
 
 #include "common.h"
