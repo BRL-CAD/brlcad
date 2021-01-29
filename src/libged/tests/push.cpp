@@ -267,7 +267,6 @@ main(int argc, const char **argv)
 	ss << "sph_";
 	ss << std::setfill('0') << std::setw(3) << i;
 	std::string oname = ss.str();
-	std::cout << oname << "\n";
 	char *gobj = bu_strdup(oname.c_str());
 	gargv[gargc-2] = gobj;
 	char **av = bu_argv_dup(gargc-1, (const char **)gargv);

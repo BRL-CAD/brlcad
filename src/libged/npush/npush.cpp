@@ -495,20 +495,18 @@ push_walk(struct directory *dp,
 }
 
 
-/* This is the walk that is responsible for actually altering the database.
- *
- * TODO - I think this walk can be consolidated with the push_walk logic,
- * since we can't alter the database until after this walk is complete
- * anyway... */
+/* Now that instances are uniquely defined (and inames assigned to those
+ * instances where needed) analyze the comb trees to finalize what needs to be
+ * updated and/or created to finalize the proper comb tree references. */
 static void
-write_walk(
+tree_update_walk(
 	const dp_i &dpi,
 	int depth,
 	mat_t *curr_mat,
 	void *client_data);
 
 static void
-write_walk_subtree(
+tree_update_walk_subtree(
 	            const dp_i &parent_dpi,
 		    union tree *tp,
 		    union tree *wtp,
@@ -621,7 +619,7 @@ write_walk_subtree(
 	    }
 
 	    /* Process */
-	    write_walk(*dpii, depth, curr_mat, client_data);
+	    tree_update_walk(*dpii, depth, curr_mat, client_data);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -631,17 +629,17 @@ write_walk_subtree(
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    write_walk_subtree(parent_dpi, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth, curr_mat, tree_altered, client_data);
-	    write_walk_subtree(parent_dpi, tp->tr_b.tb_right, wtp->tr_b.tb_right, depth, curr_mat, tree_altered, client_data);
+	    tree_update_walk_subtree(parent_dpi, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth, curr_mat, tree_altered, client_data);
+	    tree_update_walk_subtree(parent_dpi, tp->tr_b.tb_right, wtp->tr_b.tb_right, depth, curr_mat, tree_altered, client_data);
 	    break;
 	default:
-	    bu_log("write_walk_subtree: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("write_walk_subtree: unrecognized operator\n");
+	    bu_log("tree_update_walk_subtree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("tree_update_walk_subtree: unrecognized operator\n");
     }
 }
 
 static void
-write_walk(
+tree_update_walk(
 	const dp_i &dpi,
 	int depth,
 	mat_t *curr_mat,
@@ -651,12 +649,6 @@ write_walk(
     struct push_state *s = (struct push_state *)client_data;
 
     if (dpi.dp->d_flags & RT_DIR_COMB) {
-
-	if (dpi.iname.length()) {
-	    bu_log("comb walk: %s\n", dpi.iname.c_str());
-	} else {
-	    bu_log("comb walk: %s\n", dpi.dp->d_namep);
-	}
 
 	/* Read only copy of comb tree - use for steering the walk */
 	struct rt_db_internal intern;
@@ -677,14 +669,14 @@ write_walk(
 	}
 	wcomb = (struct rt_comb_internal *)in->idb_ptr;
 
-	write_walk_subtree(dpi, comb->tree, wcomb->tree, depth + 1, curr_mat, &tree_altered, client_data);
+	// Walk one tree copy, while recording updates in the other one
+	tree_update_walk_subtree(dpi, comb->tree, wcomb->tree, depth + 1, curr_mat, &tree_altered, client_data);
 
 	// Read-only copy is done
 	rt_db_free_internal(&intern);
 
-	// If we didn't alter this comb tree, we're done.
+	// If we didn't alter the working comb tree, we're done.
 	if (!tree_altered) {
-	    bu_log("unaltered\n");
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
 	    return;
@@ -693,15 +685,31 @@ write_walk(
 	// If we DID alter the comb tree (typically we will), we have to get
 	// the new tree on to disk.  If this instance has an iname, we are not
 	// updating the existing object but instead creating a new one.
+	//
+	// At this point in processing, we can either rely on the uniqueness
+	// of the dp->instance mapping (vanilla push) or we use the inames to
+	// create new dp objects - i.e., at this point, we have enough information
+	// to make a unique 1-1 mapping between a struct directory pointer and
+	// the object information needed for a pushed object instance.
 	if (dpi.iname.length()) {
+
 	    // New name, new dp
 	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
+
 	    if (dp != RT_DIR_NULL) {
-		// If we've already created this, we're done
+		// If we've already created the dp, we don't need to do so
+		// again.  Theoretically this might happen if two separate
+		// branches of tree walking happen to produce the same instance
+		// in their trees.
 		rt_db_free_internal(in);
 		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
+
+	    // Haven't already created this particular instance dp - proceed,
+	    // but don't (yet) alter the database by writing the internal
+	    // contents. That will be done with all other file changes at the
+	    // end of processing.
 	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
 	    if (dp == RT_DIR_NULL) {
 		bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
@@ -714,9 +722,6 @@ write_walk(
 	    dp = dpi.dp;
 	}
 
-	if (s->verbosity)
-	    bu_log("Write comb %s contents\n", dp->d_namep);
-
 	s->updated[dp] = in;
 
     } else {
@@ -725,10 +730,12 @@ write_walk(
 	if (!dpi.iname.length() && bn_mat_is_identity(dpi.mat))
 	    return;
 
-	if (dpi.iname.length()) {
-	    bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.iname.c_str());
-	} else {
-	    bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+	if (s->verbosity > 3) {
+	    if (dpi.iname.length()) {
+		bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.iname.c_str());
+	    } else {
+		bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+	    }
 	}
 
 	struct rt_db_internal *in;
@@ -779,9 +786,7 @@ write_walk(
 	    dp = dpi.dp;
 	}
 
-	if (!s->dry_run) {
-	    s->updated[dp] = in;
-	}
+	s->updated[dp] = in;
 
     }
 }
@@ -1102,25 +1107,45 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    // Walk a final time and updating combs and primitives accordingly.
+    // Walk a final time to characterize the state of the comb trees in light
+    // of the changes made to handle pushed information.
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
+	    // All walks start with an identity matrix.
 	    MAT_IDN(m);
+	    // We are now working with instances, not the raw directory
+	    // pointers.  Because by definition the top level object is an
+	    // identity matrix object, we initialize a dp_i with the identity
+	    // form of the object to "seed" the tree walk.
 	    dp_i ldpi;
 	    ldpi.dp = dp;
 	    MAT_IDN(ldpi.mat);
 	    ldpi.ts_tol = s.tol;
-	    write_walk(ldpi, 0, &m, &s);
+
+	    // Start the walk.
+	    tree_update_walk(ldpi, 0, &m, &s);
 	}
     }
 
+    /* We now know everything we need.  For combs and primitives that have updates
+     * or are being newly created apply those changes to the .g file.  Because this
+     * step is destructive, it is carried out only after all characterization steps
+     * are complete in order to avoid any risk of changing what is being analyzed
+     * mid-stream.  (Problems of that nature are not always simple to observe, and
+     * can be *very* difficult to debug.) */
     std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
     for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
 	struct directory *dp = u_it->first;
 	struct rt_db_internal *in = u_it->second;
-	if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
-	    bu_log("Unable to store %s to the database", dp->d_namep);
+	if (!s.dry_run) {
+	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
+		bu_log("Unable to store %s to the database", dp->d_namep);
+	    }
+	} else {
+	    // Delete the directory pointers we set up - dry run, so we're not
+	    // actually creating the objects.
+	    db_dirdelete(gedp->ged_wdbp->dbip, dp);
 	}
 	rt_db_free_internal(in);
 	BU_PUT(in, struct rt_db_internal);
