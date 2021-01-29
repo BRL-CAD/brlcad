@@ -270,7 +270,9 @@ main(int argc, const char **argv)
 	std::cout << oname << "\n";
 	char *gobj = bu_strdup(oname.c_str());
 	gargv[gargc-2] = gobj;
-	ged_npush(gedp, gargc - 1, (const char **)gargv);
+	char **av = bu_argv_dup(gargc-1, (const char **)gargv);
+	ged_npush(gedp, gargc - 1, (const char **)av);
+	bu_argv_free((size_t)gargc-1, av);
 	bu_free(gobj, "free objname");
 	gargv[gargc-2] = NULL;
     }
