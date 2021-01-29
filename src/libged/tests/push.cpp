@@ -21,6 +21,9 @@
  *
  * Testing logic for the push command.
  *
+ * TODO - see if a version of this can be added to the npush command itself as
+ * a -V (structural validate) option - (or -VV for both volumetric and
+ * structural validation).
  */
 
 #include "common.h"
