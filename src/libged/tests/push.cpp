@@ -310,19 +310,27 @@ main(int argc, const char **argv)
 	char *gobj = bu_strdup(oname.c_str());
 	std::string cname = std::string("ctrl_") + oname;
 	char *cobj = bu_strdup(cname.c_str());
+	std::cout << "\nChecking: " << cobj << " and " << gobj << ":\n";
 	gdiffargv[1] = cobj;
 	gdiffargv[2] = gobj;
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	ged_gdiff(gedp, 3, (const char **)gdiffargv);
 	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
-	    std::cout << cobj << " and " << gobj << " define different volumes\n";
+	    std::cout << "***VOL DIFF***\n";
 	    have_diff_vol = true;
+	} else {
+	    std::cout << "VOL match\n";
 	}
 	struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, cobj, LOOKUP_NOISY);
 	struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, gobj, LOOKUP_NOISY);
-	check_walk(&have_diff_struct, gedp->ged_wdbp->dbip, dp1, dp2);
-	if (have_diff_struct)
-	    std::cout << cobj << " and " << gobj << " differ structurally\n";
+	bool sdiff = false;
+	check_walk(&sdiff, gedp->ged_wdbp->dbip, dp1, dp2);
+	if (sdiff) {
+	    have_diff_struct = true;
+	    std::cout << "***STRUCT DIFF***\n";
+	} else {
+	    std::cout << "STRUCT match\n";
+	}
 	bu_free(cobj, "ctrl objname");
 	bu_free(gobj, "push objname");
     }
@@ -339,7 +347,10 @@ main(int argc, const char **argv)
     bu_vls_free(&wdir);
 
     if (have_diff_vol || have_diff_struct) {
+	bu_log("Found differences.\n");
 	return -1;
+    } else {
+	bu_log("Push results match.\n");
     }
 
     return 0;
