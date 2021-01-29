@@ -37,7 +37,119 @@
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/str.h"
+#include "rt/db_diff.h"
 #include "ged.h"
+
+/* Push checking is a bit quirky - we want to check matrices and tree structure in
+ * comb instances, but not instance names.  We also need to compare solid leaves,
+ * but not names.  The following is a custom routine for this purpose */
+static void check_walk(bool *diff, struct db_i *dbip, struct directory *dp1, struct directory *dp2);
+static void
+check_walk_subtree(bool *diff, struct db_i *dbip, union tree *tp1, union tree *tp2)
+{
+    bool idn1, idn2;
+    struct directory *dp1, *dp2;
+
+    if (!diff)
+       	return;
+
+    if ((!tp1 && tp2) || (tp1 && !tp2)) {
+	(*diff) = true;
+	return;
+    }
+
+    if (tp1->tr_op != tp2->tr_op) {
+	(*diff) = true;
+	return;
+    }
+
+    switch (tp1->tr_op) {
+	case OP_DB_LEAF:
+	    idn1 = (!tp1->tr_l.tl_mat || bn_mat_is_identity(tp1->tr_l.tl_mat));
+	    idn2 = (!tp2->tr_l.tl_mat || bn_mat_is_identity(tp2->tr_l.tl_mat));
+	    if (idn1 != idn2) {
+		(*diff) = true;
+		return;
+	    }
+	    if (tp1->tr_l.tl_mat && tp2->tr_l.tl_mat) {
+		if (!bn_mat_is_equal(tp1->tr_l.tl_mat, tp2->tr_l.tl_mat, &dbip->dbi_wdbp->wdb_tol)) {
+		    (*diff) = true;
+		    return;
+		}
+	    }
+
+	    dp1 = db_lookup(dbip, tp1->tr_l.tl_name, LOOKUP_NOISY);
+	    dp2 = db_lookup(dbip, tp2->tr_l.tl_name, LOOKUP_NOISY);
+
+	    check_walk(diff, dbip, dp1, dp2);
+
+	    break;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    check_walk_subtree(diff, dbip, tp1->tr_b.tb_left, tp2->tr_b.tb_left);
+	    check_walk_subtree(diff, dbip, tp1->tr_b.tb_right, tp2->tr_b.tb_right);
+	    break;
+	default:
+	    bu_log("check_walk_subtree: unrecognized operator %d\n", tp1->tr_op);
+	    bu_bomb("check_walk_subtree: unrecognized operator\n");
+    }
+}
+
+static void
+check_walk(bool *diff,
+	struct db_i *dbip,
+	struct directory *dp1,
+	struct directory *dp2)
+{
+    if ((!dp1 && !dp2) || !diff || (*diff)) {
+	return; /* nothing to do */
+    }
+    if ((dp1 == RT_DIR_NULL && dp2 != RT_DIR_NULL) || (dp1 != RT_DIR_NULL && dp2 == RT_DIR_NULL)) {
+	*diff = true;
+	return;
+    }
+    if (dp1 == RT_DIR_NULL && dp2 == RT_DIR_NULL) {
+	return;
+    }
+    if (dp1->d_flags != dp2->d_flags) {
+	*diff = true;
+	return;
+    }
+
+    if (dp1->d_flags & RT_DIR_COMB) {
+
+	struct rt_db_internal in1, in2;
+	struct rt_comb_internal *comb1, *comb2;
+
+	if (rt_db_get_internal5(&in1, dp1, dbip, NULL, &rt_uniresource) < 0) {
+	    *diff = true;
+	    return;
+	}
+
+	if (rt_db_get_internal5(&in2, dp2, dbip, NULL, &rt_uniresource) < 0) {
+	    *diff = true;
+	    return;
+	}
+
+	comb1 = (struct rt_comb_internal *)in1.idb_ptr;
+	comb2 = (struct rt_comb_internal *)in2.idb_ptr;
+	check_walk_subtree(diff, dbip, comb1->tree, comb2->tree);
+	rt_db_free_internal(&in1);
+	rt_db_free_internal(&in2);
+
+	return;
+    }
+
+    /* If we have two solids, use db_diff_dp */
+    int dr = db_diff_dp(dbip, dbip, dp1, dp2, &dbip->dbi_wdbp->wdb_tol, DB_COMPARE_ALL, NULL);
+    if (dr != DIFF_UNCHANGED) {
+	std::cout << "solids " << dp1->d_namep << " and " << dp2->d_namep << " differ\n";
+	*diff = true;
+    }
+}
+
 
 static void
 npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
@@ -146,6 +258,8 @@ main(int argc, const char **argv)
     // Make sure our reference counts are up to date
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
+    // TODO - cache the initial list of tops objects - should not change,
+    // regardless of what push operations are used
 
     // Perform the specified push operation on all example objects
     for (size_t i = 0; i <= 16; i++) {
@@ -167,6 +281,9 @@ main(int argc, const char **argv)
     gargv[gargc-1] = NULL;
     bu_argv_free((size_t)gargc, gargv);
 
+    // TODO - re-read tops objects, compare lists - should match
+
+
     // dbconcat the control file into the current database, with a prefix
     const char *dbcargv[4];
     dbcargv[0] = "dbconcat";
@@ -175,18 +292,53 @@ main(int argc, const char **argv)
     dbcargv[3] = NULL;
     ged_concat(gedp, 3, (const char **)dbcargv);
 
-    // object names may not be identical - what we are concerned with is
-    // that the geometry shapes remain unchanged from what is expected (or,
-    // in a few specific cases, we check that differences are found.)
-    // Use the libged raytracing based gdiff to check this.
+    // object names may not be identical - what we are concerned with is that
+    // the geometry shapes remain unchanged from what is expected (or, in a few
+    // specific cases, we check that differences are found.) Use the libged
+    // raytracing based gdiff and a parallel tree walk to check this.
+    bool have_diff_vol = false;
+    bool have_diff_struct = false;
+    const char *gdiffargv[4];
+    gdiffargv[0] = "gdiff";
+    for (size_t i = 0; i <= 16; i++) {
+	std::ostringstream ss;
+	ss << "sph_";
+	ss << std::setfill('0') << std::setw(3) << i;
+	std::string oname = ss.str();
+	char *gobj = bu_strdup(oname.c_str());
+	std::string cname = std::string("ctrl_") + oname;
+	char *cobj = bu_strdup(cname.c_str());
+	gdiffargv[1] = cobj;
+	gdiffargv[2] = gobj;
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	ged_gdiff(gedp, 3, (const char **)gdiffargv);
+	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
+	    std::cout << cobj << " and " << gobj << " define different volumes\n";
+	    have_diff_vol = true;
+	}
+	struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, cobj, LOOKUP_NOISY);
+	struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, gobj, LOOKUP_NOISY);
+	check_walk(&have_diff_struct, gedp->ged_wdbp->dbip, dp1, dp2);
+	if (have_diff_struct)
+	    std::cout << cobj << " and " << gobj << " differ structurally\n";
+	bu_free(cobj, "ctrl objname");
+	bu_free(gobj, "push objname");
+    }
 
-    // Remove the copy of the .g file
-    //std::remove(bu_vls_cstr(&gfile));
+
+    if (!have_diff_vol && !have_diff_struct) {
+	// Remove the copy of the .g file
+	//std::remove(bu_vls_cstr(&gfile));
+    }
 
     // Clean up
     bu_vls_free(&gfile);
     bu_vls_free(&gbasename);
     bu_vls_free(&wdir);
+
+    if (have_diff_vol || have_diff_struct) {
+	return -1;
+    }
 
     return 0;
 }
