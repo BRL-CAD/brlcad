@@ -21,6 +21,7 @@
  *
  * The push command.
  *
+ * TODO - depth limiting pushes aren't working yet...
  */
 
 #include "common.h"
