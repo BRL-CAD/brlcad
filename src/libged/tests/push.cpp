@@ -49,117 +49,6 @@
 #include "rt/db_diff.h"
 #include "ged.h"
 
-/* Push checking is a bit quirky - we want to check matrices and tree structure in
- * comb instances, but not instance names.  We also need to compare solid leaves,
- * but not names.  The following is a custom routine for this purpose */
-static void check_walk(bool *diff, struct db_i *dbip, struct directory *dp1, struct directory *dp2);
-static void
-check_walk_subtree(bool *diff, struct db_i *dbip, union tree *tp1, union tree *tp2)
-{
-    bool idn1, idn2;
-    struct directory *dp1, *dp2;
-
-    if (!diff)
-       	return;
-
-    if ((!tp1 && tp2) || (tp1 && !tp2)) {
-	(*diff) = true;
-	return;
-    }
-
-    if (tp1->tr_op != tp2->tr_op) {
-	(*diff) = true;
-	return;
-    }
-
-    switch (tp1->tr_op) {
-	case OP_DB_LEAF:
-	    idn1 = (!tp1->tr_l.tl_mat || bn_mat_is_identity(tp1->tr_l.tl_mat));
-	    idn2 = (!tp2->tr_l.tl_mat || bn_mat_is_identity(tp2->tr_l.tl_mat));
-	    if (idn1 != idn2) {
-		(*diff) = true;
-		return;
-	    }
-	    if (tp1->tr_l.tl_mat && tp2->tr_l.tl_mat) {
-		if (!bn_mat_is_equal(tp1->tr_l.tl_mat, tp2->tr_l.tl_mat, &dbip->dbi_wdbp->wdb_tol)) {
-		    (*diff) = true;
-		    return;
-		}
-	    }
-
-	    dp1 = db_lookup(dbip, tp1->tr_l.tl_name, LOOKUP_NOISY);
-	    dp2 = db_lookup(dbip, tp2->tr_l.tl_name, LOOKUP_NOISY);
-
-	    check_walk(diff, dbip, dp1, dp2);
-
-	    break;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    check_walk_subtree(diff, dbip, tp1->tr_b.tb_left, tp2->tr_b.tb_left);
-	    check_walk_subtree(diff, dbip, tp1->tr_b.tb_right, tp2->tr_b.tb_right);
-	    break;
-	default:
-	    bu_log("check_walk_subtree: unrecognized operator %d\n", tp1->tr_op);
-	    bu_bomb("check_walk_subtree: unrecognized operator\n");
-    }
-}
-
-static void
-check_walk(bool *diff,
-	struct db_i *dbip,
-	struct directory *dp1,
-	struct directory *dp2)
-{
-    if ((!dp1 && !dp2) || !diff || (*diff)) {
-	return; /* nothing to do */
-    }
-    if ((dp1 == RT_DIR_NULL && dp2 != RT_DIR_NULL) || (dp1 != RT_DIR_NULL && dp2 == RT_DIR_NULL)) {
-	*diff = true;
-	return;
-    }
-    if (dp1 == RT_DIR_NULL && dp2 == RT_DIR_NULL) {
-	return;
-    }
-    if (dp1->d_flags != dp2->d_flags) {
-	*diff = true;
-	return;
-    }
-
-    if (dp1->d_flags & RT_DIR_COMB) {
-
-	struct rt_db_internal in1, in2;
-	struct rt_comb_internal *comb1, *comb2;
-
-	if (rt_db_get_internal5(&in1, dp1, dbip, NULL, &rt_uniresource) < 0) {
-	    *diff = true;
-	    return;
-	}
-
-	if (rt_db_get_internal5(&in2, dp2, dbip, NULL, &rt_uniresource) < 0) {
-	    *diff = true;
-	    return;
-	}
-
-	comb1 = (struct rt_comb_internal *)in1.idb_ptr;
-	comb2 = (struct rt_comb_internal *)in2.idb_ptr;
-	check_walk_subtree(diff, dbip, comb1->tree, comb2->tree);
-	rt_db_free_internal(&in1);
-	rt_db_free_internal(&in2);
-
-	return;
-    }
-
-    /* If we have two solids, use db_diff_dp */
-    int dr = db_diff_dp(dbip, dbip, dp1, dp2, &dbip->dbi_wdbp->wdb_tol, DB_COMPARE_ALL, NULL);
-    if (dr != DIFF_UNCHANGED) {
-	std::cout << "solids " << dp1->d_namep << " and " << dp2->d_namep << " differ\n";
-	*diff = true;
-    }
-}
-
-
 static void
 npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
     char *option_help = bu_opt_describe(d, NULL);
@@ -329,20 +218,21 @@ main(int argc, const char **argv)
 	} else {
 	    std::cout << "VOL match\n";
 	}
-	struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, cobj, LOOKUP_NOISY);
-	struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, gobj, LOOKUP_NOISY);
-	bool sdiff = false;
-	check_walk(&sdiff, gedp->ged_wdbp->dbip, dp1, dp2);
-	if (sdiff) {
-	    have_diff_struct = true;
+	gdiffargv[1] = "-S";
+	gdiffargv[2] = cobj;
+	gdiffargv[3] = gobj;
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	ged_gdiff(gedp, 4, (const char **)gdiffargv);
+	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
 	    std::cout << "***STRUCT DIFF***\n";
+	    have_diff_struct = true;
 	} else {
 	    std::cout << "STRUCT match\n";
 	}
+
 	bu_free(cobj, "ctrl objname");
 	bu_free(gobj, "push objname");
     }
-
 
     if (!have_diff_vol && !have_diff_struct) {
 	// Remove the copy of the .g file
