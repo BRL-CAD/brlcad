@@ -768,14 +768,12 @@ tree_update_walk(
 		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
-	    if (!s->dry_run) {
-		dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
-		if (dp == RT_DIR_NULL) {
-		    bu_log("Unable to add %s to the database directory\n", dpi.iname.c_str());
-		    rt_db_free_internal(in);
-		    BU_PUT(in, struct rt_db_internal);
-		    return;
-		}
+	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
+	    if (dp == RT_DIR_NULL) {
+		bu_log("Unable to add %s to the database directory\n", dpi.iname.c_str());
+		rt_db_free_internal(in);
+		BU_PUT(in, struct rt_db_internal);
+		return;
 	    }
 	    if (s->verbosity)
 		bu_log("Write solid %s contents\n", dpi.iname.c_str());
