@@ -189,6 +189,7 @@ struct push_state {
     /* Debugging related data and variables */
     int verbosity = 0;
     std::string problem_obj;
+    bool walk_error = false;
 
 };
 
@@ -531,6 +532,11 @@ tree_update_walk_subtree(
 
 	case OP_DB_LEAF:
 
+	    // If we're too deep, we're no longer creating instances to manipulate
+	    if (s->max_depth && (depth > s->max_depth)) {
+		return;
+	    }
+
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
 	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
@@ -571,6 +577,7 @@ tree_update_walk_subtree(
 			    bu_log("apply_to_solid set\n");
 		    }
 		}
+		s->walk_error = true;
 		return;
 	    }
 
@@ -630,8 +637,8 @@ tree_update_walk_subtree(
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    tree_update_walk_subtree(parent_dpi, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth, curr_mat, tree_altered, client_data);
-	    tree_update_walk_subtree(parent_dpi, tp->tr_b.tb_right, wtp->tr_b.tb_right, depth, curr_mat, tree_altered, client_data);
+	    tree_update_walk_subtree(parent_dpi, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth+1, curr_mat, tree_altered, client_data);
+	    tree_update_walk_subtree(parent_dpi, tp->tr_b.tb_right, wtp->tr_b.tb_right, depth+1, curr_mat, tree_altered, client_data);
 	    break;
 	default:
 	    bu_log("tree_update_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -1127,13 +1134,23 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
+    if (s.walk_error) {
+	bu_vls_printf(gedp->ged_result_str, "Fatal error preparing new trees\n");
+	for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
+	    struct rt_db_internal *in = u_it->second;
+	    rt_db_free_internal(in);
+	    BU_PUT(in, struct rt_db_internal);
+	}
+	return GED_ERROR;
+    }
+
     /* We now know everything we need.  For combs and primitives that have updates
      * or are being newly created apply those changes to the .g file.  Because this
      * step is destructive, it is carried out only after all characterization steps
      * are complete in order to avoid any risk of changing what is being analyzed
      * mid-stream.  (Problems of that nature are not always simple to observe, and
      * can be *very* difficult to debug.) */
-    std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
     for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
 	struct directory *dp = u_it->first;
 	struct rt_db_internal *in = u_it->second;
