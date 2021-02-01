@@ -234,6 +234,67 @@ main(int argc, const char **argv)
 	bu_free(gobj, "push objname");
     }
 
+    // We also check, when they exist, _ext trees for expected results.  What
+    // we expect depends on the type of push - if -L is set we expect no
+    // differences, without -L there are expected structural differences.
+    for (size_t i = 0; i <= 16; i++) {
+	std::ostringstream ss;
+	ss << "sph_";
+	ss << std::setfill('0') << std::setw(3) << i;
+	ss << "_ext";
+	std::string oname = ss.str();
+	if (db_lookup(gedp->ged_wdbp->dbip, oname.c_str(), LOOKUP_QUIET) == RT_DIR_NULL) {
+	    continue;
+	}
+	char *gobj = bu_strdup(oname.c_str());
+	std::string cname = std::string("ctrl_") + oname;
+	char *cobj = bu_strdup(cname.c_str());
+	std::cout << "\nChecking: " << cobj << " and " << gobj << ":\n";
+	gdiffargv[1] = cobj;
+	gdiffargv[2] = gobj;
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	ged_gdiff(gedp, 3, (const char **)gdiffargv);
+	if (local_changes_only) {
+	    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
+		std::cout << "***VOL DIFF***\n";
+		have_diff_vol = true;
+	    } else {
+		std::cout << "VOL match\n";
+	    }
+	} else {
+	    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
+		std::cout << "Expected VOL difference\n";
+	    } else {
+		std::cout << "***ERROR: ext VOL MATCH***\n";
+		have_diff_vol = true;
+	    }
+	}
+	gdiffargv[1] = "-S";
+	gdiffargv[2] = cobj;
+	gdiffargv[3] = gobj;
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	ged_gdiff(gedp, 4, (const char **)gdiffargv);
+	if (local_changes_only) {
+	    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
+		std::cout << "***STRUCT DIFF***\n";
+		have_diff_struct = true;
+	    } else {
+		std::cout << "STRUCT match\n";
+	    }
+	} else {
+	    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
+		std::cout << "Expected STRUCT difference\n";
+	    } else {
+		std::cout << "***ERROR: ext STRUCT MATCH***\n";
+		have_diff_struct = true;
+	    }
+	}
+	bu_free(cobj, "ctrl objname");
+	bu_free(gobj, "push objname");
+    }
+
+
+
     if (!have_diff_vol && !have_diff_struct) {
 	// Remove the copy of the .g file
 	//std::remove(bu_vls_cstr(&gfile));
