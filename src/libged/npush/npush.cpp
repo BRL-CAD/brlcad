@@ -532,15 +532,11 @@ tree_update_walk_subtree(
 
 	case OP_DB_LEAF:
 
-	    // If we're too deep, we're no longer creating instances to manipulate
-	    if (s->max_depth && (depth > s->max_depth)) {
-		return;
-	    }
-
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
 	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
+
 
 	    /* Update current matrix state to reflect the new branch of
 	     * the tree. Either we have a local matrix, or we have an
@@ -624,6 +620,20 @@ tree_update_walk_subtree(
 		bu_free(wtp->tr_l.tl_name, "free old name");
 		wtp->tr_l.tl_name = bu_strdup(dpii->iname.c_str());
 		(*tree_altered) = true;
+	    }
+
+
+	    // If we're at max depth, we're done creating instances to manipulate
+	    // on this tree branch.
+	    if (s->max_depth && (depth == s->max_depth)) {
+		return;
+	    }
+
+	    /* If we're stopping at regions and this is a region, we're done. */
+	    if ((dp->d_flags & RT_DIR_REGION) && s->stop_at_regions) {
+		/* Done with branch - put back the old matrix state */
+		MAT_COPY(*curr_mat, om);
+		return;
 	    }
 
 	    /* Process */
