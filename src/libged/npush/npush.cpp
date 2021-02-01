@@ -100,28 +100,13 @@ class dp_i {
 	    if (dp < o.dp) return true;
 	    if (o.dp < dp) return false;
 
-	    // The application of the matrix to the solid may matter
-	    // when distinguishing dp_i instances, but only if one
-	    // of the matrices involved is non-IDN - otherwise, the
-	    // matrix applications are no-ops and we don't want them
-	    // to prompt multiple instances of objects.
-	    if (!(dp->d_flags & RT_DIR_COMB)) {
-		if (apply_to_solid != o.apply_to_solid) {
-		    if (!bn_mat_is_equal(mat, bn_mat_identity, ts_tol) ||
-			    !bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol)) {
-			if (apply_to_solid && !o.apply_to_solid)
-			    return true;
-		    }
-		}
-	    }
-
-	    /* If the dp doesn't tell us and the solid application doesn't tell
-	     * us, check the matrix. */
+	    /* If the dp doesn't tell us, check the matrix. */
+	    int tidn, oidn;
 	    if (!bn_mat_is_equal(mat, o.mat, ts_tol)) {
 		// We want IDN matrices to be less than any others, regardless
 		// of the numerics.
-		int tidn = bn_mat_is_equal(mat, bn_mat_identity, ts_tol);
-		int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol);
+		tidn = bn_mat_is_equal(mat, bn_mat_identity, ts_tol);
+		oidn = bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol);
 		if (tidn && !oidn) return true;
 		if (oidn && !tidn) return false;
 
@@ -135,6 +120,16 @@ class dp_i {
 			return false;
 		    }
 		}
+	    }
+
+	    // The application of the matrix to the solid may matter
+	    // when distinguishing dp_i instances, but only if one
+	    // of the matrices involved is non-IDN - otherwise, the
+	    // matrix applications are no-ops and we don't want them
+	    // to prompt multiple instances of objects.
+	    if (!(dp->d_flags & RT_DIR_COMB)) {
+		if ((!tidn || !oidn) && (apply_to_solid && !o.apply_to_solid))
+		    return true;
 	    }
 
 	    /* All attempt to find non-equalities failed */
