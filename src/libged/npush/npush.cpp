@@ -548,7 +548,6 @@ tree_update_walk_subtree(
 	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
-
 	    /* Update current matrix state to reflect the new branch of
 	     * the tree. Either we have a local matrix, or we have an
 	     * implicit IDN matrix. */
@@ -705,15 +704,16 @@ tree_update_walk(
 	rt_db_free_internal(&intern);
 
 	// If we didn't alter the working comb tree, we're done.
-	if (!tree_altered) {
+	if (!tree_altered && !dpi.iname.length()) {
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
 	    return;
 	}
 
-	// If we DID alter the comb tree (typically we will), we have to get
-	// the new tree on to disk.  If this instance has an iname, we are not
-	// updating the existing object but instead creating a new one.
+	// If we DID alter the comb tree (typically we will) or we have an
+	// iname, we have to get the new tree on to disk.  If this instance has
+	// an iname, we are not updating the existing object but instead
+	// creating a new one.
 	//
 	// At this point in processing, we can either rely on the uniqueness
 	// of the dp->instance mapping (vanilla push) or we use the inames to
@@ -1174,6 +1174,9 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
      * can be *very* difficult to debug.) */
     for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
 	struct directory *dp = u_it->first;
+	if (s.verbosity > 4) {
+	    bu_log("Writing %s to database\n", dp->d_namep);
+	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
 	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
