@@ -156,12 +156,14 @@ class dp_i {
 /* Container to hold information during tree walk. */
 struct push_state {
 
-    /* Variables used for initial validity checking of specified push
-     * object(s).  The target_objects set is user specified - if objects are
-     * specified that are below other target objects, flag valid_push is set to
-     * false and the user gets an error report. */
+    /* Variables used for validity checking of specified push object(s).  The
+     * target_objects set is user specified - if objects are specified that are
+     * below other target objects, flag valid_push is set to false and the user
+     * gets an error report. */
     bool valid_push = true;
     std::set<std::string> target_objs;
+    std::set<std::string> initial_missing;
+    bool final_check = false;
 
     /* User-supplied flags controlling tree walking behavior */
     int max_depth = 0;
@@ -258,13 +260,27 @@ validate_walk_subtree(struct db_i *dbip,
 
 	case OP_DB_LEAF:
 
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+		if (s->final_check) {
+		    // If we didn't spot this object as missing in the beginning, it indicates
+		    // a problem with the push
+		    if (s->initial_missing.find(std::string(tp->tr_l.tl_name)) == s->initial_missing.end()) {
+			s->valid_push = false;
+		    }
+		} else {
+		    // This instance is referencing a non-existent object from the beginning,
+		    // so its absence won't indicate a problem with the push later
+		    s->initial_missing.insert(std::string(tp->tr_l.tl_name));
+		}
 		return;
+	    }
 
-	    if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
-		s->valid_push = false;
-		s->problem_obj = std::string(dp->d_namep);
-		return;
+	    if (!s->final_check) {
+		if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
+		    s->valid_push = false;
+		    s->problem_obj = std::string(dp->d_namep);
+		    return;
+		}
 	    }
 
 	    if (!(dp->d_flags & RT_DIR_COMB)) {
@@ -1175,6 +1191,19 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	rt_db_free_internal(in);
 	BU_PUT(in, struct rt_db_internal);
+    }
+
+    // We've written to the database - everything should be finalized now.  Do a final
+    // validation check.
+    s.valid_push = true;
+    s.final_check = true;
+    for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
+	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
+	validate_walk(dbip, dp, &s);
+    }
+    if (!s.valid_push) {
+	bu_vls_printf(gedp->ged_result_str, "failed to generate one or more objects listed in pushed trees.");
+	return GED_ERROR;
     }
 
     return GED_OK;
