@@ -912,6 +912,16 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    // Build an initial list of tops objects in the .g file.  Push operations
+    // should not alter this top level list - any changes indicate a problem
+    // with the logic.
+    struct directory **all_paths;
+    int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+    std::set<std::string> tops1;
+    for (int i = 0; i < tops_cnt; i++) {
+	tops1.insert(std::string(all_paths[i]->d_namep));
+    }
+
     // Do a preliminary walk down the push objects to determine what impact the
     // push operations would have on the comb trees and solids.
     mat_t m;
@@ -925,6 +935,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	     * something went wrong with the walk */
 	    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->ged_wdbp->wdb_tol)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk down %s finished with non-IDN matrix.\n", dp->d_namep);
+		bu_free(all_paths, "free db_ls output");
 		return GED_ERROR;
 	    }
 	}
@@ -939,15 +950,14 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	 * copy+rename to avoid changing geometry elsewhere in the .g database's
 	 * trees.
 	 */
-	struct directory **all_paths;
-	int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
 	for (int i = 0; i < tops_cnt; i++) {
 	    struct directory *dp = all_paths[i];
 	    if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
 		push_walk(dp, 0, &m, true, &s);
 	}
-	bu_free(all_paths, "free db_ls output");
     }
+    // We're done with the tops dps now - free the array.
+    bu_free(all_paths, "free db_ls output");
 
     // Create a vector of unique instances for easier manipulation.
     std::vector<dp_i> uniq_instances(s.instances.size());
@@ -1204,8 +1214,34 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    return GED_OK;
+    // Writing done - update nref again to reflect changes
+    db_update_nref(dbip, &rt_uniresource);
 
+    // Repeat the db_ls call and verify it is consistent.
+    struct directory **final_paths;
+    int final_tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &final_paths);
+    std::set<std::string> tops2;
+    for (int i = 0; i < final_tops_cnt; i++) {
+	tops2.insert(std::string(final_paths[i]->d_namep));
+    }
+    bu_free(final_paths, "free db_ls output");
+
+    // Report any differences
+    std::set<std::string> removed_tops, added_tops;
+    std::set_difference(tops1.begin(), tops1.end(), tops2.begin(), tops2.end(), std::inserter(removed_tops, removed_tops.end()));
+    std::set_difference(tops2.begin(), tops2.end(), tops1.begin(), tops1.end(), std::inserter(added_tops, added_tops.end()));
+    for (s_it = removed_tops.begin(); s_it != removed_tops.end(); s_it++) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is no longer a tops object\n", (*s_it).c_str());
+    }
+    for (s_it = added_tops.begin(); s_it != added_tops.end(); s_it++) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is now a tops object\n", (*s_it).c_str());
+    }
+
+    if (removed_tops.size() || added_tops.size()) {
+	return GED_ERROR;
+    }
+
+    return GED_OK;
 }
 
 extern "C" {
