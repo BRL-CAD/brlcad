@@ -849,11 +849,11 @@ tree_update_walk(
 	if (!dpi.iname.length() && bn_mat_is_identity(dpi.mat))
 	    return;
 
-	if (s->verbosity > 3) {
+	if (s->verbosity > 3 && s->msgs) {
 	    if (dpi.iname.length()) {
-		bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.iname.c_str());
+		bu_vls_printf(s->msgs, "Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.iname.c_str());
 	    } else {
-		bu_log("Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
+		bu_vls_printf(s->msgs, "Solid process %s->%s\n", dpi.parent_dp->d_namep, dpi.dp->d_namep);
 	    }
 	}
 
@@ -861,18 +861,36 @@ tree_update_walk(
 	BU_GET(in, struct rt_db_internal);
 	if (dpi.apply_to_solid) {
 	    // If there is a non-IDN matrix, this is where we apply it
-	    if (s->verbosity > 3 && !bn_mat_is_identity(dpi.mat)) {
-		bn_mat_print(dpi.dp->d_namep, dpi.mat);
-		bn_mat_print("curr_mat", *curr_mat);
+	    // First step, check for validity.
+	    if (bn_mat_ck(dpi.dp->d_namep, dpi.mat) < 0) {
+		if (s->msgs) {
+		    char *ps = db_path_to_string(dfp);
+		    bu_vls_printf(s->msgs, "%s: attempting to apply a matrix that does does not preserve axis perpendicularity to solid %s\n", ps, dpi.dp->d_namep);
+		    bu_free(ps, "path string");
+		}
+		BU_PUT(in, struct rt_db_internal);
+		s->walk_error = true;
+		return;
+	    }
+
+	    if (s->verbosity > 3 && !bn_mat_is_identity(dpi.mat) && s->msgs) {
+		bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, s->msgs);
+		bn_mat_print_vls("curr_mat", *curr_mat, s->msgs);
 	    }
 	    if (rt_db_get_internal(in, dpi.dp, s->wdbp->dbip, dpi.mat, &rt_uniresource) < 0) {
-		bu_log("Read error fetching '%s'\n", dpi.dp->d_namep);
+		if (s->msgs)
+		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
+		BU_PUT(in, struct rt_db_internal);
+		s->walk_error = true;
 		return;
 	    }
 	} else {
 	    // If there is a non-IDN matrix, this is where we apply it
 	    if (rt_db_get_internal(in, dpi.dp, s->wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-		bu_log("Read error fetching '%s'\n", dpi.dp->d_namep);
+		if (s->msgs)
+		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
+		BU_PUT(in, struct rt_db_internal);
+		s->walk_error = true;
 		return;
 	    }
 	}
@@ -889,16 +907,18 @@ tree_update_walk(
 	    }
 	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
 	    if (dp == RT_DIR_NULL) {
-		bu_log("Unable to add %s to the database directory\n", dpi.iname.c_str());
+		if (s->msgs)
+		    bu_vls_printf(s->msgs, "Unable to add %s to the database directory\n", dpi.iname.c_str());
 		rt_db_free_internal(in);
 		BU_PUT(in, struct rt_db_internal);
+		s->walk_error = true;
 		return;
 	    }
-	    if (s->verbosity)
-		bu_log("Write solid %s contents\n", dpi.iname.c_str());
+	    if (s->verbosity > 1 && s->msgs)
+		bu_vls_printf(s->msgs, "Write solid %s contents\n", dpi.iname.c_str());
 	} else {
-	    if (s->verbosity)
-		bu_log("Write solid %s contents\n", dpi.dp->d_namep);
+	    if (s->verbosity > 1 && s->msgs)
+		bu_vls_printf(s->msgs, "Write solid %s contents\n", dpi.dp->d_namep);
 
 	    dp = dpi.dp;
 	}
@@ -1079,6 +1099,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
+
     // We're done with the tops dps now - free the array.
     bu_free(all_paths, "free db_ls output");
 
@@ -1302,22 +1323,17 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
+    // If anything went wrong, there's no point in going any further.
     if (s.walk_error) {
 	bu_vls_printf(gedp->ged_result_str, "Fatal error preparing new trees\n");
-	for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
-	    struct rt_db_internal *in = u_it->second;
+	std::map<struct directory *, struct rt_db_internal *>::iterator uf_it;
+	for (uf_it = s.updated.begin(); uf_it != s.updated.end(); uf_it++) {
+	    struct rt_db_internal *in = uf_it->second;
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
 	}
 	return GED_ERROR;
     }
-
-    /* TODO - test rt_db_put_internal by writing out every object to a tmp name
-     * to ensure the matrix can be successfully applied.  We want to "fail safe"
-     * so we need to test the writes first before we start altering anything extant
-     * in the .g file. */
-
 
     /* We now know everything we need.  For combs and primitives that have updates
      * or are being newly created apply those changes to the .g file.  Because this
@@ -1325,6 +1341,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
      * are complete in order to avoid any risk of changing what is being analyzed
      * mid-stream.  (Problems of that nature are not always simple to observe, and
      * can be *very* difficult to debug.) */
+    std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
     for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
 	struct directory *dp = u_it->first;
 	if (s.verbosity > 4) {
