@@ -156,9 +156,6 @@ main(int argc, const char **argv)
     // Make sure our reference counts are up to date
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
-    // TODO - cache the initial list of tops objects - should not change,
-    // regardless of what push operations are used
-
     // Perform the specified push operation on all example objects
     for (size_t i = 0; i <= 16; i++) {
 	std::ostringstream ss;
@@ -179,9 +176,6 @@ main(int argc, const char **argv)
     gargv[gargc-2] = NULL;
     gargv[gargc-1] = NULL;
     bu_argv_free((size_t)gargc, gargv);
-
-    // TODO - re-read tops objects, compare lists - should match
-
 
     // dbconcat the control file into the current database, with a prefix
     const char *dbcargv[4];
@@ -238,6 +232,8 @@ main(int argc, const char **argv)
     // we expect depends on the type of push - if -L is set we expect no
     // differences, without -L there are expected structural differences.
     for (size_t i = 0; i <= 16; i++) {
+	bool dvol = false;
+	bool dstruct = false;
 	std::ostringstream ss;
 	ss << "sph_";
 	ss << std::setfill('0') << std::setw(3) << i;
@@ -254,45 +250,50 @@ main(int argc, const char **argv)
 	gdiffargv[2] = gobj;
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	ged_gdiff(gedp, 3, (const char **)gdiffargv);
-	if (local_changes_only) {
-	    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
-		std::cout << "***VOL DIFF***\n";
-		have_diff_vol = true;
-	    } else {
-		std::cout << "VOL match\n";
-	    }
-	} else {
-	    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
-		std::cout << "Expected VOL difference\n";
-	    } else {
-		std::cout << "***ERROR: ext VOL MATCH***\n";
-		have_diff_vol = true;
-	    }
+	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
+	    dvol = true;
 	}
 	gdiffargv[1] = "-S";
 	gdiffargv[2] = cobj;
 	gdiffargv[3] = gobj;
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	ged_gdiff(gedp, 4, (const char **)gdiffargv);
-	if (local_changes_only) {
-	    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
-		std::cout << "***STRUCT DIFF***\n";
+	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
+	    dstruct = true;
+	}
+	// Whether we expect a differences depends on the options.  There
+	// is only one condition in which we expect ext changes: local
+	// protection disabled and xpush enabled:
+	if (!local_changes_only && xpush) {
+	    if (!dvol) {
+		std::cout << "ERROR: expected volume change not found\n";
+		have_diff_vol = true;
+	    } else {
+		std::cout << "VOL expected change\n";
+	    }
+	    if (!dstruct) {
+		std::cout << "ERROR: expected struct change not found\n";
+		have_diff_struct = true;
+	    } else {
+		std::cout << "STRUCT expected change\n";
+	    }
+	} else {
+	    if (dvol) {
+		std::cout << "ERROR: unexpected volume change\n";
+		have_diff_vol = true;
+	    } else {
+		std::cout << "VOL match\n";
+	    }
+	    if (dstruct) {
+		std::cout << "ERROR: unexpected struct change\n";
 		have_diff_struct = true;
 	    } else {
 		std::cout << "STRUCT match\n";
-	    }
-	} else {
-	    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
-		std::cout << "Expected STRUCT difference\n";
-	    } else {
-		std::cout << "***ERROR: ext STRUCT MATCH***\n";
-		have_diff_struct = true;
 	    }
 	}
 	bu_free(cobj, "ctrl objname");
 	bu_free(gobj, "push objname");
     }
-
 
 
     if (!have_diff_vol && !have_diff_struct) {
