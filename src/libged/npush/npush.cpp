@@ -21,7 +21,6 @@
  *
  * The push command.
  *
- * TODO - depth limiting pushes aren't working yet...
  */
 
 #include "common.h"
@@ -907,7 +906,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	validate_walk(dbip, dp, &s);
 	if (!s.valid_push) {
-	    bu_vls_printf(gedp->ged_result_str, "%s has another specified target object (%s), below it.", dp->d_namep, s.problem_obj.c_str());
+	    if (BU_STR_EQUAL(dp->d_namep, s.problem_obj.c_str())) {
+		bu_vls_printf(gedp->ged_result_str, "cyclic path found: %s is below %s", dp->d_namep, s.problem_obj.c_str());
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "%s has another specified target object (%s), below it.", dp->d_namep, s.problem_obj.c_str());
+	    }
 	    return GED_ERROR;
 	}
     }
@@ -1175,6 +1178,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	return GED_ERROR;
     }
+
+    /* TODO - test rt_db_put_internal by writing out every object to a tmp name
+     * to ensure the matrix can be successfully applied.  We want to "fail safe"
+     * so we need to test the writes first before we start altering anything extant
+     * in the .g file. */
+
 
     /* We now know everything we need.  For combs and primitives that have updates
      * or are being newly created apply those changes to the .g file.  Because this
