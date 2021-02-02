@@ -58,13 +58,12 @@
  */
 class dp_i {
     public:
-	struct directory *dp;  // Instance database object
-	struct directory *parent_dp;  // Parent object
-	mat_t mat;             // Instance matrix
-	size_t ind;
-
-	std::string iname = std::string();     // Container to hold instance name, if needed
-	const struct bn_tol *ts_tol;  // Tolerance to use for matrix comparisons
+	struct directory *dp;              // Instance database object
+	struct directory *parent_dp;       // Parent object
+	mat_t mat;                         // Instance matrix
+	size_t ind;                        // Used for debugging
+	std::string iname = std::string(); // Container to hold instance name, if needed
+	const struct bn_tol *tol;       // Tolerance to use for matrix comparisons
 
 	bool push_obj = true;  // Flag to determine if this instance is being pushed
 	bool is_leaf = false;  // Flag to determine if this instance is a push leaf
@@ -101,11 +100,11 @@ class dp_i {
 
 	    /* If the dp doesn't tell us, check the matrix. */
 	    int tidn, oidn;
-	    if (!bn_mat_is_equal(mat, o.mat, ts_tol)) {
+	    if (!bn_mat_is_equal(mat, o.mat, tol)) {
 		// We want IDN matrices to be less than any others, regardless
 		// of the numerics.
-		tidn = bn_mat_is_equal(mat, bn_mat_identity, ts_tol);
-		oidn = bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol);
+		tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);
+		oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
 		if (tidn && !oidn) return true;
 		if (oidn && !tidn) return false;
 
@@ -139,11 +138,11 @@ class dp_i {
 	bool operator==(const dp_i &o) const {
 	    if (dp != o.dp) return false;
 	    if (apply_to_solid != o.apply_to_solid) {
-		if (!bn_mat_is_equal(mat, bn_mat_identity, ts_tol) ||
-		       	!bn_mat_is_equal(o.mat, bn_mat_identity, ts_tol))
+		if (!bn_mat_is_equal(mat, bn_mat_identity, tol) ||
+		       	!bn_mat_is_equal(o.mat, bn_mat_identity, tol))
 		    return false;
 	    }
-	    return bn_mat_is_equal(mat, o.mat, ts_tol);
+	    return bn_mat_is_equal(mat, o.mat, tol);
 	}
 };
 
@@ -153,41 +152,39 @@ struct push_state {
     /* Variables used for validity checking of specified push object(s).  The
      * target_objects set is user specified - if objects are specified that are
      * below other target objects, flag valid_push is set to false and the user
-     * gets an error report. */
-    bool valid_push = true;
-    std::set<std::string> target_objs;
-    std::set<std::string> initial_missing;
+     * gets an error report.  Conveniently, that mechanism will also recognize
+     * and reject cyclic trees. */
     bool final_check = false;
-    std::string msgs;
+    bool valid_push = true;
+    bool walk_error = false;
+    std::set<std::string> initial_missing;
+    std::set<std::string> target_objs;
+    struct bu_vls *msgs = NULL;
+    std::string problem_obj;
 
     /* User-supplied flags controlling tree walking behavior */
-    int max_depth = 0;
+    bool dry_run = false;
     bool stop_at_regions = false;
     bool stop_at_shapes = false;
-    bool dry_run = false;
+    int max_depth = 0;
+    int verbosity = 0;
 
     /* Containers for instance structures being built up during the push walk.
      * We do not need to duplicate these - the combination of matrix and dp
-     * uniquely identifies a volume in space - so the C++ set container is used
-     * to ensure we end up with the set of just unique dp instances after tree
-     * walking. */
+     * uniquely identifies a volume in space.  The C++ set container is used
+     * to ensure we end up with one unique dp_i per instance. */
     std::set<dp_i> instances;
 
     /* Tolerance to be used for matrix comparisons.  Typically comes from the
      * database tolerances. */
-    const struct bn_tol *tol;
+    const struct bn_tol *tol = NULL;
 
     /* Database information */
-    struct rt_wdb *wdbp;
+    struct rt_wdb *wdbp = RT_WDB_NULL;
 
-    /* Processing info */
+    /* Container for finalized database objects, used to assemble and
+     * store them prior to the database writing step. */
     std::map<struct directory *, struct rt_db_internal *> updated;
-
-    /* Debugging related data and variables */
-    int verbosity = 0;
-    std::string problem_obj;
-    bool walk_error = false;
-
 };
 
 /* Tree walks terminate at leaves.  However, what constitutes a leaf is not always
@@ -226,9 +223,24 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
 }
 
 
-/* This set of walking functions does a preliminary check to ensure there are no
- * nested specifications of push objects supplied to the push command, in the case
- * where a user supplies multiple root objects to pushed.
+/* There are a variety of situations, both due to invalid user inputs and to
+ * problems with tree processing, that can result in errors.
+ *
+ * This set of walking functions encapsulates a series of checks used at various
+ * stages of the process:
+ *
+ * 1.  A preliminary check to ensure there are no nested specifications of push
+ *     objects supplied to the push command, in the case where a user supplies
+ *     multiple root objects to pushed.
+ *
+ * 2.  A check to ensure the logic hasn't created any tree instances that don't
+ *     refer to real database objects.  This works in two stages - the initial
+ *     pass, performed as part of the initial validation walk, records any
+ *     references that were missing to begin with.  A second pass at the end
+ *     checks for any new missing references.
+ *
+ * The "mode" of the validation (beginning checks or end checks) is controlled
+ * by the "final_check" flag in the push_state container.
  *
  * Once an invalidity is found, these routines abort and record the invalidity.
  * This is for ease of implementation and performance, but can be adjusted to
@@ -276,11 +288,12 @@ validate_walk_subtree(struct db_i *dbip,
 	    if (!s->final_check) {
 		if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
 		    s->valid_push = false;
-		    char *ps = db_path_to_string(dfp);
-		    std::string msg = std::string(ps) + std::string(": top level push object ") + std::string(dp->d_namep) + std::string(" is below top level object ") + std::string(dfp->fp_names[0]->d_namep) + std::string("\n");
-		    s->msgs = msg;
+		    if (s->msgs) {
+			char *ps = db_path_to_string(dfp);
+			bu_vls_printf(s->msgs, "W1[%s]: user specified push object %s is below user specified push object %s\n", ps, DB_FULL_PATH_CUR_DIR(dfp)->d_namep, dfp->fp_names[0]->d_namep);
+			bu_free(ps, "path string");
+		    }
 		    s->problem_obj = std::string(dp->d_namep);
-		    bu_free(ps, "path string");
 		    DB_FULL_PATH_POP(dfp);
 		    return;
 		}
@@ -325,9 +338,19 @@ validate_walk(struct db_i *dbip,
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0)
+	// Load the comb.  In the validation stage, if we can't do this report
+	// an error.
+	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0) {
+	    if (s->msgs) {
+		char *ps = db_path_to_string(dfp);
+		bu_vls_printf(s->msgs, "W1[%s]: rt_db_get_internal5 failure reading comb %s\n", ps, DB_FULL_PATH_CUR_DIR(dfp)->d_namep);
+		bu_free(ps, "path string");
+	    }
+	    s->valid_push = false;
 	    return;
+	}
 
+	// Have comb, proceed to walk tree
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	validate_walk_subtree(dbip, dfp, comb->tree, client_data);
 	rt_db_free_internal(&in);
@@ -336,9 +359,12 @@ validate_walk(struct db_i *dbip,
 }
 
 
-/* The primary walking routine, responsible for collecting information about
- * tree states.  Used for both a push walk and survey of the overall database.
- * */
+/* push_walk is responsible for identifying the set of instances we will use in
+ * push operations, as well as characterizing other parts of the database which
+ * may (depending on user settings) require awareness on the part of the
+ * processing routines to keep unrelated parts of the .g file isolated from
+ * push-related changes.
+ */
 static void
 push_walk(struct db_full_path *dfp,
 	int depth,
@@ -355,11 +381,17 @@ push_walk_subtree(
 	bool survey,
 	void *client_data)
 {
-    struct directory *dp;
-    dp_i dnew;
-    dnew.parent_dp = DB_FULL_PATH_CUR_DIR(dfp);
-    struct push_state *s = (struct push_state *)client_data;
     mat_t om, nm;
+    struct push_state *s = (struct push_state *)client_data;
+    struct directory *dp;
+
+    dp_i dnew;
+
+    // Note - instances aren't actually defined in terms of the name or dp of
+    // their parent - it is theoretically possible to have an instance with
+    // multiple parent combs - but typically knowing the parent is the simplest
+    // way to find/inspect information related to an instance in the database.
+    dnew.parent_dp = DB_FULL_PATH_CUR_DIR(dfp);
 
     if (!tp)
 	return;
@@ -387,22 +419,33 @@ push_walk_subtree(
 	    }
 	    bn_mat_mul(*curr_mat, om, nm);
 
-	    if (s->verbosity > 2) {
+	    /* Depending on use verbosity settings, report various information about
+	     * the current state of the tree walk */
+	    if (s->verbosity > 2 && s->msgs) {
 		char *ps = db_path_to_string(dfp);
 		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
-		    bu_log("Found %s->[M]%s\n", ps, dp->d_namep);
+		    bu_vls_printf(s->msgs, "W2[%s]: found [M]%s\n", ps, dp->d_namep);
 		    if (s->verbosity > 3) {
-			bn_mat_print(tp->tr_l.tl_name, *curr_mat);
+			struct bu_vls title = BU_VLS_INIT_ZERO;
+			bu_vls_sprintf(&title, "W2[%s]: %s instance matrix", ps, dp->d_namep);
+			bn_mat_print_vls(bu_vls_cstr(&title), *curr_mat, s->msgs);
+			bu_vls_free(&title);
 		    }
 		} else {
-		    bu_log("Found %s->%s\n", ps, dp->d_namep);
+		    bu_vls_printf(s->msgs, "W2[%s]: found %s\n", ps, dp->d_namep);
+		}
+		if (s->verbosity > 3) {
+		    struct bu_vls title = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&title, "W2[%s]: %s current overall path matrix", ps, dp->d_namep);
+		    bn_mat_print_vls(bu_vls_cstr(&title), *curr_mat, s->msgs);
+		    bu_vls_free(&title);
 		}
 		bu_free(ps, "path string");
 	    }
 
-	    // Define the instance container
+	    // Define the instance container for the (potentially) new instance.
 	    dnew.dp = dp;
-	    dnew.ts_tol = s->tol;
+	    dnew.tol = s->tol;
 	    dnew.push_obj = !(survey);
 	    if (!survey) {
 		MAT_COPY(dnew.mat, *curr_mat);
@@ -410,6 +453,8 @@ push_walk_subtree(
 		MAT_COPY(dnew.mat, nm);
 	    }
 
+	    // A "push leaf" is the termination point below which we will not
+	    // propagate changes encoded in matrices.
 	    if (is_push_leaf(dp, depth, s, survey)) {
 
 		// Flag as leaf
@@ -419,27 +464,36 @@ push_walk_subtree(
 		if (!DB_FULL_PATH_LEN(dfp))
 		    return;
 
-		if (!survey) {
-		    if (!(dp->d_flags & RT_DIR_COMB) && (!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
-			// If dp is a solid, we're not depth limited, we're not
-			// stopping above shapes, and the solid supports it we
-			// apply the matrix to the primitive itself.  The comb
-			// reference will use the IDN matrix.
-			if (s->verbosity > 2) {
-			    char *ps = db_path_to_string(dfp);
-			    bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", ps, dp->d_namep);
-			    bu_free(ps, "path string");
-			}
-			dnew.apply_to_solid = true;
+		// If dp is a solid, we're not depth limited, we're not
+		// stopping above shapes, and the solid supports it we apply
+		// the matrix to the primitive itself.  The comb reference will
+		// use the IDN matrix.
+		if (!survey && !(dp->d_flags & RT_DIR_COMB) &&
+			(!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
+		    if (s->verbosity > 2 && s->msgs) {
+			char *ps = db_path_to_string(dfp);
+			bu_vls_printf(s->msgs, "W2[%s]: push leaf (finalize matrix or solid params): %s\n", ps, dp->d_namep);
+			bu_free(ps, "path string");
 		    }
+		    dnew.apply_to_solid = true;
 		}
 
-		// If we haven't already inserted an identical instance, record this new
-		// entry.  (Note that we're not concerned with the
-		// boolean set aspects of the tree's definition here, only unique volumes in
-		// space, so this set does not exactly mimic the original comb tree structure.)
+		// If we haven't already inserted an identical instance, record
+		// this new entry.  (Note that we're not concerned with the
+		// boolean set aspects of the tree's definition here, only
+		// unique volumes in space, so the instance set does not
+		// exactly mimic the original comb tree structure.)
 		if (s->instances.find(dnew) == s->instances.end()) {
 		    s->instances.insert(dnew);
+		    if (s->verbosity > 3 && s->msgs) {
+			struct bu_vls title = BU_VLS_INIT_ZERO;
+			char *ps = db_path_to_string(dfp);
+			bu_vls_printf(s->msgs, "W2[%s]: %s is a new unique instance\n", ps, dp->d_namep);
+			bu_vls_sprintf(&title, "W2[%s]: instance matrix", ps);
+			bn_mat_print_vls(bu_vls_cstr(&title), dnew.mat, s->msgs);
+			bu_vls_free(&title);
+			bu_free(ps, "path string");
+		    }
 		}
 
 		// Even though this is a leaf, we need to continue if we have a
@@ -450,9 +504,9 @@ push_walk_subtree(
 		// comb will need to be copied.
 		if (dp->d_flags & RT_DIR_COMB) {
 		    /* Process branch's tree */
-		    if (s->verbosity > 1 && !survey) {
+		    if (!survey && s->verbosity > 4 && s->msgs) {
 			char *ps = db_path_to_string(dfp);
-			bu_log("Switching from push to survey - non-shape leaf %s->%s found\n", ps, dp->d_namep);
+			bu_vls_printf(s->msgs, "W2[%s]: switching from push to survey - non-shape leaf %s found\n", ps, dp->d_namep);
 			bu_free(ps, "path string");
 		    }
 		    db_add_node_to_full_path(dfp, dp);
@@ -468,21 +522,31 @@ push_walk_subtree(
 		// of a push - the matrix ultimately applied will be an IDN
 		// matrix, but the current tree matrix is recorded to allow
 		// instance lookups later in processing.
-		if (!survey && s->verbosity > 2) {
+		if (!survey && s->msgs && s->verbosity > 4) {
 		    char *ps = db_path_to_string(dfp);
-		    bu_log("Pushed comb instance: %s->%s\n", ps, dp->d_namep);
+		    bu_vls_printf(s->msgs, "W2[%s]: pushed comb instance %s\n", ps, dp->d_namep);
 		    bu_free(ps, "path string");
 		}
 		dnew.is_leaf = false;
 	    }
 
-	    if (survey && s->verbosity > 2) {
+	    if (survey && s->msgs && s->verbosity > 4) {
 		char *ps = db_path_to_string(dfp);
-		bu_log("Survey comb instance: %s->%s\n", ps, dp->d_namep);
+		bu_vls_printf(s->msgs, "W2[%s]: survey comb instance %s\n", ps, dp->d_namep);
 		bu_free(ps, "path string");
 	    }
+
 	    if (s->instances.find(dnew) == s->instances.end()) {
 		s->instances.insert(dnew);
+		if (s->verbosity > 3 && s->msgs) {
+		    struct bu_vls title = BU_VLS_INIT_ZERO;
+		    char *ps = db_path_to_string(dfp);
+		    bu_vls_printf(s->msgs, "W2[%s]: %s is a new unique instance\n", ps, dp->d_namep);
+		    bu_vls_sprintf(&title, "W2[%s]: instance matrix", ps);
+		    bn_mat_print_vls(bu_vls_cstr(&title), dnew.mat, s->msgs);
+		    bu_vls_free(&title);
+		    bu_free(ps, "path string");
+		}
 	    }
 
 	    /* Process branch's tree */
@@ -591,7 +655,7 @@ tree_update_walk_subtree(
 	    // Look up the dpi for this comb+curr_mat combination.
 	    ldpi.dp = dp;
 	    MAT_COPY(ldpi.mat, *curr_mat);
-	    ldpi.ts_tol = s->tol;
+	    ldpi.tol = s->tol;
 	    if (!(dp->d_flags & RT_DIR_COMB) && (!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
 		ldpi.apply_to_solid = true;
 	    }
@@ -921,6 +985,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     s.stop_at_shapes = (to_solids) ? true : false;
     s.dry_run = (dry_run) ? true : false;
     s.wdbp = gedp->ged_wdbp;
+    s.msgs = gedp->ged_result_str;
     for (int i = 0; i < argc; i++) {
 	s.target_objs.insert(std::string(argv[i]));
     }
@@ -940,7 +1005,6 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	db_add_node_to_full_path(dfp, dp);
 	validate_walk(dbip, dfp, &s);
 	if (!s.valid_push) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", s.msgs.c_str());
 	    if (BU_STR_EQUAL(dp->d_namep, s.problem_obj.c_str())) {
 		bu_vls_printf(gedp->ged_result_str, "NOTE: cyclic path found: %s is below itself", dp->d_namep);
 	    }
@@ -966,10 +1030,9 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // push operations would have on the comb trees and solids.
     mat_t m;
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
+	MAT_IDN(m);
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
-	    MAT_IDN(m);
-
 	    struct db_full_path *dfp;
 	    BU_GET(dfp, struct db_full_path);
 	    db_full_path_init(dfp);
@@ -1181,7 +1244,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // For debugging purposes, with a high enough verbosity print out the state
     // of the instances set ahead of the final tree walk so we know what to
     // expect.
-    if (s.verbosity > 4) {
+    if (s.verbosity > 4 && s.msgs) {
 	std::set<dp_i>::iterator in_it;
 	bu_log("\n\n\nDirectory pointer instance set (final state before application walk):\n\n");
 	for (in_it = s.instances.begin(); in_it != s.instances.end(); in_it++) {
@@ -1190,19 +1253,19 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    if (dpi.iname.length()) {
 		if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
-		    bu_log("%s tree edited && matrix to IDN\n", dpi.iname.c_str());
+		    bu_vls_printf(s.msgs, "%s tree edited && matrix to IDN\n", dpi.iname.c_str());
 		}
 		if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-		    bu_log("%s\n", dpi.iname.c_str());
-		    bn_mat_print("applied", dpi.mat);
+		    bu_vls_printf(s.msgs, "%s\n", dpi.iname.c_str());
+		    bn_mat_print_vls("applied", dpi.mat, s.msgs);
 		}
 	    } else {
 		if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
-		    bu_log("%s matrix to IDN\n", dpi.dp->d_namep);
+		    bu_vls_printf(s.msgs, "%s matrix to IDN\n", dpi.dp->d_namep);
 		}
 		if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
-		    bu_log("%s\n", dpi.dp->d_namep);
-		    bn_mat_print("applied", dpi.mat);
+		    bu_vls_printf(s.msgs, "%s\n", dpi.dp->d_namep);
+		    bn_mat_print_vls("applied", dpi.mat, s.msgs);
 		}
 	    }
 	}
@@ -1223,7 +1286,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    dp_i ldpi;
 	    ldpi.dp = dp;
 	    MAT_IDN(ldpi.mat);
-	    ldpi.ts_tol = s.tol;
+	    ldpi.tol = s.tol;
 
 	    struct db_full_path *dfp;
 	    BU_GET(dfp, struct db_full_path);
