@@ -340,14 +340,15 @@ validate_walk(struct db_i *dbip,
  * tree states.  Used for both a push walk and survey of the overall database.
  * */
 static void
-push_walk(struct directory *dp,
+push_walk(struct db_full_path *dfp,
 	int depth,
 	mat_t *curr_mat,
 	bool survey,
 	void *client_data);
 
 static void
-push_walk_subtree(struct directory *parent_dp,
+push_walk_subtree(
+	struct db_full_path *dfp,
 	union tree *tp,
 	int depth,
 	mat_t *curr_mat,
@@ -356,7 +357,6 @@ push_walk_subtree(struct directory *parent_dp,
 {
     struct directory *dp;
     dp_i dnew;
-    dnew.parent_dp = parent_dp;
     struct push_state *s = (struct push_state *)client_data;
     mat_t om, nm;
 
@@ -387,14 +387,16 @@ push_walk_subtree(struct directory *parent_dp,
 	    bn_mat_mul(*curr_mat, om, nm);
 
 	    if (s->verbosity > 2) {
+		char *ps = db_path_to_string(dfp);
 		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
-		    bu_log("Found %s->[M]%s\n", parent_dp->d_namep, dp->d_namep);
+		    bu_log("Found %s->[M]%s\n", ps, dp->d_namep);
 		    if (s->verbosity > 3) {
 			bn_mat_print(tp->tr_l.tl_name, *curr_mat);
 		    }
 		} else {
-		    bu_log("Found %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		    bu_log("Found %s->%s\n", ps, dp->d_namep);
 		}
+		bu_free(ps, "path string");
 	    }
 
 	    // Define the instance container
@@ -413,7 +415,7 @@ push_walk_subtree(struct directory *parent_dp,
 		dnew.is_leaf = true;
 
 		// Leaf without parent means no work to do
-		if (!parent_dp)
+		if (!DB_FULL_PATH_LEN(dfp))
 		    return;
 
 		if (!survey) {
@@ -423,7 +425,9 @@ push_walk_subtree(struct directory *parent_dp,
 			// apply the matrix to the primitive itself.  The comb
 			// reference will use the IDN matrix.
 			if (s->verbosity > 2) {
-			    bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", parent_dp->d_namep, dp->d_namep);
+			    char *ps = db_path_to_string(dfp);
+			    bu_log("Push leaf (finalize matrix or solid params): %s->%s\n", ps, dp->d_namep);
+			    bu_free(ps, "path string");
 			}
 			dnew.apply_to_solid = true;
 		    }
@@ -446,9 +450,13 @@ push_walk_subtree(struct directory *parent_dp,
 		if (dp->d_flags & RT_DIR_COMB) {
 		    /* Process branch's tree */
 		    if (s->verbosity > 1 && !survey) {
-			bu_log("Switching from push to survey - non-shape leaf %s->%s found\n", parent_dp->d_namep, dp->d_namep);
+			char *ps = db_path_to_string(dfp);
+			bu_log("Switching from push to survey - non-shape leaf %s->%s found\n", ps, dp->d_namep);
+			bu_free(ps, "path string");
 		    }
-		    push_walk(dp, depth, curr_mat, true, client_data);
+		    db_add_node_to_full_path(dfp, dp);
+		    push_walk(dfp, depth, curr_mat, true, client_data);
+		    DB_FULL_PATH_POP(dfp);
 		}
 
 		/* Done with branch - put back the old matrix state */
@@ -460,20 +468,26 @@ push_walk_subtree(struct directory *parent_dp,
 		// matrix, but the current tree matrix is recorded to allow
 		// instance lookups later in processing.
 		if (!survey && s->verbosity > 2) {
-		    bu_log("Pushed comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		    char *ps = db_path_to_string(dfp);
+		    bu_log("Pushed comb instance: %s->%s\n", ps, dp->d_namep);
+		    bu_free(ps, "path string");
 		}
 		dnew.is_leaf = false;
 	    }
 
 	    if (survey && s->verbosity > 2) {
-		bu_log("Survey comb instance: %s->%s\n", parent_dp->d_namep, dp->d_namep);
+		char *ps = db_path_to_string(dfp);
+		bu_log("Survey comb instance: %s->%s\n", ps, dp->d_namep);
+		bu_free(ps, "path string");
 	    }
 	    if (s->instances.find(dnew) == s->instances.end()) {
 		s->instances.insert(dnew);
 	    }
 
 	    /* Process branch's tree */
-	    push_walk(dp, depth, curr_mat, survey, client_data);
+	    db_add_node_to_full_path(dfp, dp);
+	    push_walk(dfp, depth, curr_mat, survey, client_data);
+	    DB_FULL_PATH_POP(dfp);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -483,8 +497,8 @@ push_walk_subtree(struct directory *parent_dp,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    push_walk_subtree(parent_dp, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
-	    push_walk_subtree(parent_dp, tp->tr_b.tb_right, depth, curr_mat, survey, client_data);
+	    push_walk_subtree(dfp, tp->tr_b.tb_left, depth, curr_mat, survey, client_data);
+	    push_walk_subtree(dfp, tp->tr_b.tb_right, depth, curr_mat, survey, client_data);
 	    break;
 	default:
 	    bu_log("push_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -493,7 +507,7 @@ push_walk_subtree(struct directory *parent_dp,
 }
 
 static void
-push_walk(struct directory *dp,
+push_walk(struct db_full_path *dfp,
 	int depth,
 	mat_t *curr_mat,
 	bool survey,
@@ -501,20 +515,20 @@ push_walk(struct directory *dp,
 {
     struct push_state *s = (struct push_state *)client_data;
 
-    if (!dp) {
+    if (!dfp) {
 	return; /* nothing to do */
     }
 
-    if (dp->d_flags & RT_DIR_COMB) {
+    if (DB_FULL_PATH_CUR_DIR(dfp)->d_flags & RT_DIR_COMB) {
 
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(dfp), s->wdbp->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	push_walk_subtree(dp, comb->tree, depth+1, curr_mat, survey, client_data);
+	push_walk_subtree(dfp, comb->tree, depth+1, curr_mat, survey, client_data);
 	rt_db_free_internal(&in);
     }
 }
@@ -955,7 +969,16 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
 	    MAT_IDN(m);
-	    push_walk(dp, 0, &m, false, &s);
+
+	    struct db_full_path *dfp;
+	    BU_GET(dfp, struct db_full_path);
+	    db_full_path_init(dfp);
+	    db_add_node_to_full_path(dfp, dp);
+
+	    push_walk(dfp, 0, &m, false, &s);
+
+	    db_free_full_path(dfp);
+	    BU_PUT(dfp, struct db_full_path);
 
 	    /* Sanity - if we didn't end up with m back at the identity matrix,
 	     * something went wrong with the walk */
@@ -978,8 +1001,19 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	 */
 	for (int i = 0; i < tops_cnt; i++) {
 	    struct directory *dp = all_paths[i];
-	    if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end())
-		push_walk(dp, 0, &m, true, &s);
+	    if (s.target_objs.find(std::string(dp->d_namep)) == s.target_objs.end()) {
+		MAT_IDN(m);
+
+		struct db_full_path *dfp;
+		BU_GET(dfp, struct db_full_path);
+		db_full_path_init(dfp);
+		db_add_node_to_full_path(dfp, dp);
+
+		push_walk(dfp, 0, &m, true, &s);
+
+		db_free_full_path(dfp);
+		BU_PUT(dfp, struct db_full_path);
+	    }
 	}
     }
     // We're done with the tops dps now - free the array.
