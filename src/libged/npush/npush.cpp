@@ -357,6 +357,7 @@ push_walk_subtree(
 {
     struct directory *dp;
     dp_i dnew;
+    dnew.parent_dp = DB_FULL_PATH_CUR_DIR(dfp);
     struct push_state *s = (struct push_state *)client_data;
     mat_t om, nm;
 
@@ -540,6 +541,7 @@ push_walk(struct db_full_path *dfp,
 static void
 tree_update_walk(
 	const dp_i &dpi,
+	struct db_full_path *dfp,
 	int depth,
 	mat_t *curr_mat,
 	void *client_data);
@@ -547,6 +549,7 @@ tree_update_walk(
 static void
 tree_update_walk_subtree(
 	            const dp_i &parent_dpi,
+		    struct db_full_path *dfp,
 		    union tree *tp,
 		    union tree *wtp,
 		    int depth,
@@ -594,31 +597,25 @@ tree_update_walk_subtree(
 	    }
 	    dpii = s->instances.find(ldpi);
 	    if (dpii == s->instances.end()) {
-		bu_log("Error - no instance found: %s->%s!\n", parent_dpi.dp->d_namep, dp->d_namep);
+		char *ps = db_path_to_string(dfp);
+		bu_log("%s: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
 		dpii = s->instances.find(ldpi);
 		bn_mat_print("curr_mat", *curr_mat);
 		if (dpii->apply_to_solid)
-		    bu_log("apply_to_solid set\n");
+		    bu_log("%s: apply_to_solid set\n", ps);
 		for (i_it = s->instances.begin(); i_it != s->instances.end(); i_it++) {
 		    const dp_i &ddpi = *i_it;
 		    if (ddpi.dp == dp) {
 			bn_mat_print(tp->tr_l.tl_name, ddpi.mat);
 			if (ddpi.iname.length())
-			    bu_log("iname: %s\n", ddpi.iname.c_str());
+			    bu_log("%s: iname: %s\n", ps, ddpi.iname.c_str());
 			if (ddpi.apply_to_solid)
-			    bu_log("apply_to_solid set\n");
+			    bu_log("%s: apply_to_solid set\n", ps);
 		    }
 		}
+		bu_free(ps, "path string");
 		s->walk_error = true;
 		return;
-	    }
-
-	    if (s->verbosity > 2) {
-		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
-		    bu_log("Found %s->[M]%s\n", parent_dpi.dp->d_namep, dp->d_namep);
-		} else {
-		    bu_log("Found %s->%s\n", parent_dpi.dp->d_namep, dp->d_namep);
-		}
 	    }
 
 	    /* Tree editing operations - form the tree that will be used in the final
@@ -673,7 +670,9 @@ tree_update_walk_subtree(
 	    }
 
 	    /* Process */
-	    tree_update_walk(*dpii, depth, curr_mat, client_data);
+	    db_add_node_to_full_path(dfp, dp);
+	    tree_update_walk(*dpii, dfp, depth, curr_mat, client_data);
+	    DB_FULL_PATH_POP(dfp);
 
 	    /* Done with branch - put back the old matrix state */
 	    MAT_COPY(*curr_mat, om);
@@ -683,8 +682,8 @@ tree_update_walk_subtree(
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    tree_update_walk_subtree(parent_dpi, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth+1, curr_mat, tree_altered, client_data);
-	    tree_update_walk_subtree(parent_dpi, tp->tr_b.tb_right, wtp->tr_b.tb_right, depth+1, curr_mat, tree_altered, client_data);
+	    tree_update_walk_subtree(parent_dpi, dfp, tp->tr_b.tb_left, wtp->tr_b.tb_left, depth+1, curr_mat, tree_altered, client_data);
+	    tree_update_walk_subtree(parent_dpi, dfp, tp->tr_b.tb_right, wtp->tr_b.tb_right, depth+1, curr_mat, tree_altered, client_data);
 	    break;
 	default:
 	    bu_log("tree_update_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -695,6 +694,7 @@ tree_update_walk_subtree(
 static void
 tree_update_walk(
 	const dp_i &dpi,
+	struct db_full_path *dfp,
 	int depth,
 	mat_t *curr_mat,
 	void *client_data)
@@ -724,7 +724,7 @@ tree_update_walk(
 	wcomb = (struct rt_comb_internal *)in->idb_ptr;
 
 	// Walk one tree copy, while recording updates in the other one
-	tree_update_walk_subtree(dpi, comb->tree, wcomb->tree, depth + 1, curr_mat, &tree_altered, client_data);
+	tree_update_walk_subtree(dpi, dfp, comb->tree, wcomb->tree, depth + 1, curr_mat, &tree_altered, client_data);
 
 	// Read-only copy is done
 	rt_db_free_internal(&intern);
@@ -1027,6 +1027,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // sharing a common directory pointer.  Any dp with multiple associated
     // instances can't be pushed without a copy being made, as the unique dp
     // instances represent multiple distinct volumes in space.
+    //
+    // Note: we assign the index to the instance because it has proven useful
+    // in debugging sorting behaviors for the dp_i class - if the initial
+    // insert had one answer but a subsequent set rebuild produces another,
+    // the index can help diagnose this.
     std::map<struct directory *, std::vector<size_t>> i_cnt;
     for (size_t i = 0; i < uniq_instances.size(); i++) {
 	uniq_instances[i].ind = i;
@@ -1220,8 +1225,17 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    MAT_IDN(ldpi.mat);
 	    ldpi.ts_tol = s.tol;
 
+	    struct db_full_path *dfp;
+	    BU_GET(dfp, struct db_full_path);
+	    db_full_path_init(dfp);
+	    db_add_node_to_full_path(dfp, dp);
+
 	    // Start the walk.
-	    tree_update_walk(ldpi, 0, &m, &s);
+	    tree_update_walk(ldpi, dfp, 0, &m, &s);
+
+	    db_free_full_path(dfp);
+	    BU_PUT(dfp, struct db_full_path);
+
 	}
     }
 
