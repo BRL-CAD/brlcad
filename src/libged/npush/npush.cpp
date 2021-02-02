@@ -158,6 +158,7 @@ struct push_state {
     std::set<std::string> target_objs;
     std::set<std::string> initial_missing;
     bool final_check = false;
+    std::string msgs;
 
     /* User-supplied flags controlling tree walking behavior */
     int max_depth = 0;
@@ -234,11 +235,12 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
  * do a more comprehensive review if that proves worthwhile. */
 static void
 validate_walk(struct db_i *dbip,
-	struct directory *dp,
+	struct db_full_path *dfp,
 	void *client_data);
 
 static void
 validate_walk_subtree(struct db_i *dbip,
+	            struct db_full_path *dfp,
 		    union tree *tp,
 		    void *client_data)
 {
@@ -269,26 +271,37 @@ validate_walk_subtree(struct db_i *dbip,
 		return;
 	    }
 
+	    db_add_node_to_full_path(dfp, dp);
+
 	    if (!s->final_check) {
 		if (s->target_objs.find(std::string(dp->d_namep)) != s->target_objs.end()) {
 		    s->valid_push = false;
+		    char *ps = db_path_to_string(dfp);
+		    std::string msg = std::string(ps) + std::string(": top level push object ") + std::string(dp->d_namep) + std::string(" is below top level object ") + std::string(dfp->fp_names[0]->d_namep) + std::string("\n");
+		    s->msgs = msg;
 		    s->problem_obj = std::string(dp->d_namep);
+		    bu_free(ps, "path string");
+		    DB_FULL_PATH_POP(dfp);
 		    return;
 		}
 	    }
 
 	    if (!(dp->d_flags & RT_DIR_COMB)) {
+		DB_FULL_PATH_POP(dfp);
 		return;
 	    }
-	    validate_walk(dbip, dp, client_data);
+
+	    validate_walk(dbip, dfp, client_data);
+
+	    DB_FULL_PATH_POP(dfp);
 	    break;
 
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    validate_walk_subtree(dbip, tp->tr_b.tb_left, client_data);
-	    validate_walk_subtree(dbip, tp->tr_b.tb_right, client_data);
+	    validate_walk_subtree(dbip, dfp, tp->tr_b.tb_left, client_data);
+	    validate_walk_subtree(dbip, dfp, tp->tr_b.tb_right, client_data);
 	    break;
 	default:
 	    bu_log("validate_walk_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -298,25 +311,25 @@ validate_walk_subtree(struct db_i *dbip,
 
 static void
 validate_walk(struct db_i *dbip,
-	    struct directory *dp,
+	    struct db_full_path *dfp,
 	    void *client_data)
 {
     struct push_state *s = (struct push_state *)client_data;
     RT_CK_DBI(dbip);
 
-    if (!dp || !s->valid_push)
+    if (!dfp || !s->valid_push)
 	return; /* nothing to do */
 
-    if (dp->d_flags & RT_DIR_COMB) {
+    if (DB_FULL_PATH_CUR_DIR(dfp)->d_flags & RT_DIR_COMB) {
 
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	validate_walk_subtree(dbip, comb->tree, client_data);
+	validate_walk_subtree(dbip, dfp, comb->tree, client_data);
 	rt_db_free_internal(&in);
 
     }
@@ -904,15 +917,25 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::set<std::string>::iterator s_it;
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
-	validate_walk(dbip, dp, &s);
-	if (!s.valid_push) {
-	    if (BU_STR_EQUAL(dp->d_namep, s.problem_obj.c_str())) {
-		bu_vls_printf(gedp->ged_result_str, "cyclic path found: %s is below %s", dp->d_namep, s.problem_obj.c_str());
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "%s has another specified target object (%s), below it.", dp->d_namep, s.problem_obj.c_str());
-	    }
+	if (dp == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
+	struct db_full_path *dfp;
+	BU_GET(dfp, struct db_full_path);
+	db_full_path_init(dfp);
+	db_add_node_to_full_path(dfp, dp);
+	validate_walk(dbip, dfp, &s);
+	if (!s.valid_push) {
+	    bu_vls_printf(gedp->ged_result_str, "%s", s.msgs.c_str());
+	    if (BU_STR_EQUAL(dp->d_namep, s.problem_obj.c_str())) {
+		bu_vls_printf(gedp->ged_result_str, "NOTE: cyclic path found: %s is below itself", dp->d_namep);
+	    }
+	    db_free_full_path(dfp);
+	    BU_PUT(dfp, struct db_full_path);
+	    return GED_ERROR;
+	}
+	db_free_full_path(dfp);
+	BU_PUT(dfp, struct db_full_path);
     }
 
     // Build an initial list of tops objects in the .g file.  Push operations
@@ -1216,7 +1239,13 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     s.final_check = true;
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
-	validate_walk(dbip, dp, &s);
+	struct db_full_path *dfp;
+	BU_GET(dfp, struct db_full_path);
+	db_full_path_init(dfp);
+	db_add_node_to_full_path(dfp, dp);
+	validate_walk(dbip, dfp, &s);
+	db_free_full_path(dfp);
+	BU_PUT(dfp, struct db_full_path);
     }
     if (!s.valid_push) {
 	bu_vls_printf(gedp->ged_result_str, "failed to generate one or more objects listed in pushed trees.");
