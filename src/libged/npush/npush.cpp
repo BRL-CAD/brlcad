@@ -98,13 +98,14 @@ class dp_i {
 	    if (dp < o.dp) return true;
 	    if (o.dp < dp) return false;
 
-	    /* If the dp doesn't tell us, check the matrix. */
-	    int tidn, oidn;
+	    // Important for multiple tests to know if matrices are IDN
+	    int tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);;
+	    int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
+
+	    /* If the dp didn't resolve the question, check the matrix. */
 	    if (!bn_mat_is_equal(mat, o.mat, tol)) {
 		// We want IDN matrices to be less than any others, regardless
 		// of the numerics.
-		tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);
-		oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
 		if (tidn && !oidn) return true;
 		if (oidn && !tidn) return false;
 
