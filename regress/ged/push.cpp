@@ -1,4 +1,4 @@
-/*                    P U S H . C P P
+/*                  R E G R E S S _ P U S H . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020 United States Government as represented by
@@ -20,16 +20,6 @@
 /** @file push.cpp
  *
  * Testing logic for the push command.
- *
- * TODO - see if a version of this can be added to the npush command itself as
- * a -V (structural validate) option - (or -VV for both volumetric and
- * structural validation).
- *
- * Ideally, should have -V take an optional argument so we can compare to an
- * existing tree instead of keeping out the target tree.
- *
- * Note that -V would be incompatible with the dry-run option, since the point
- * is to evaluate the final generated geometry.
  */
 
 #include "common.h"
@@ -46,13 +36,12 @@
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/str.h"
-#include "rt/db_diff.h"
 #include "ged.h"
 
 static void
-npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
+regress_push_usage(struct bu_vls *str, struct bu_opt_desc *d) {
     char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(str, "Usage: ged_push_test [options] control.g working.g\n");
+    bu_vls_sprintf(str, "Usage: regress_push [options] control.g working.g\n");
     bu_vls_printf(str, "\nRuns the specified push configuration on a series of pre-defined objects in the working.g file, then compares the results to those from the control.g file.\n  \n");
     if (option_help) {
 	bu_vls_printf(str, "Options:\n%s\n", option_help);
@@ -101,10 +90,10 @@ main(int argc, const char **argv)
     argc = opt_ret;
 
     if (argc != 2 || print_help) {
-	struct bu_vls npush_help = BU_VLS_INIT_ZERO;
-	npush_usage(&npush_help, d);
-	bu_log("%s", bu_vls_cstr(&npush_help));
-	bu_vls_free(&npush_help);
+	struct bu_vls push_help = BU_VLS_INIT_ZERO;
+	regress_push_usage(&push_help, d);
+	bu_log("%s", bu_vls_cstr(&push_help));
+	bu_vls_free(&push_help);
 	return -1;
     }
 
@@ -120,25 +109,6 @@ main(int argc, const char **argv)
 	bu_exit(1, "%s does not exist", argv[1]);
     }
 
-    struct bu_vls wdir = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&wdir, "%s", bu_dir(NULL, 0, BU_DIR_CURR, NULL));
-    struct bu_vls gbasename = BU_VLS_INIT_ZERO;
-    if (!bu_path_component(&gbasename, argv[1], BU_PATH_BASENAME)) {
-	bu_vls_free(&wdir);
-	bu_exit(1, "Could not identify basename in geometry file path \"%s\"", argv[1]);
-    }
-    struct bu_vls gfile = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&gfile, "%s_push", bu_vls_cstr(&gbasename));
-
-    // Put a copy of the non-control .g file in the working directory
-    std::ifstream sgfile(argv[1], std::ios::binary);
-    std::ofstream dgfile;
-    const char *ofile = bu_dir(NULL, 0, bu_vls_cstr(&wdir), bu_vls_cstr(&gfile), NULL);
-    dgfile.open(ofile, std::ios::binary);
-    dgfile << sgfile.rdbuf();
-    dgfile.close();
-    sgfile.close();
-
     // Adjust the duplicate argv copy for ged purposes.
     bu_free(gargv[0], "free copy of argv[0]");
     bu_free(gargv[gargc-2], "free copy of argv[argc-1]");
@@ -148,9 +118,9 @@ main(int argc, const char **argv)
     gargv[gargc-1] = NULL;
 
     // All set - open up the .g file and go to work.
-    struct ged *gedp = ged_open("db", bu_vls_cstr(&gfile), 1);
+    struct ged *gedp = ged_open("db", argv[1], 1);
     if (gedp == GED_NULL) {
-	bu_exit(1, "Failed to open \"%s\" ", bu_vls_cstr(&gbasename));
+	bu_exit(1, "Failed to open \"%s\" ", argv[1]);
     }
 
     // Make sure our reference counts are up to date
@@ -303,9 +273,6 @@ main(int argc, const char **argv)
 
     // Clean up
     ged_close(gedp);
-    bu_vls_free(&gfile);
-    bu_vls_free(&gbasename);
-    bu_vls_free(&wdir);
 
     if (have_diff_vol || have_diff_struct) {
 	bu_log("Found differences.\n");
