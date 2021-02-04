@@ -18,10 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* check thread safety history of gqa + plot calls (pl_color)
-  UPDATE - breakage was identified as having been introduced
-  during the libbu semaphore system update circa commit r73078
-
 * dbconcat corrupted database / failed. created a top-level comb with
   invalid "1_[subcomb]/" to be created that result in error messages
   during any db listing (e.g., tops).  workaround was to manually edit
@@ -30,6 +26,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* check thread safety history of gqa + plot calls (pl_color)
+  UPDATE - breakage was identified as having been introduced
+  during the libbu semaphore system update circa commit r73078
 
 * The following will be removed from MGED's menu bar (unused
   features, can be accomplished another way, or will be exposed
