@@ -863,6 +863,28 @@ tree_update_walk(
 	if (dpi.apply_to_solid) {
 	    // If there is a non-IDN matrix, this is where we apply it
 	    // First step, check for validity.
+	    //
+	    // Note: tor has a specific restriction in that it needs a uniform
+	    // matrix - if I'm deciphering the code in rt_tor_import5
+	    // correctly, it handles this by simply ignoring a non-conforming
+	    // matrix on import.  As currently implemented, this limitation
+	    // applies whether the matrix is above the torus in a given tree or
+	    // an attempt is made to apply the matrix directly to the solid's
+	    // parameters.
+	    //
+	    // Because the same bn_mat_is_non_unif matrix is ignored for a tor
+	    // regardless of where the problem matrix is in the tree, trying to
+	    // apply this matrix to the tor is not currently considered a
+	    // "failure" - previously a "push" operation on such a tor would
+	    // complete, clear the matrix from the tree, and simply skip
+	    // applying the updates to the torus.  This certainly is a failure
+	    // to make the specified changes to the torus, but since the desired
+	    // shape was never achieved in the tree with or without the matrix
+	    // above it, the geometry the raytracer reports has not changed and
+	    // the realized shape pre and post push is consistent.
+	    //
+	    // Accordingly, we're deliberately NOT checking for the tor+non_unif
+	    // case in this validation step.
 	    if (bn_mat_ck(dpi.dp->d_namep, dpi.mat) < 0) {
 		if (s->msgs) {
 		    char *ps = db_path_to_string(dfp);
@@ -873,6 +895,7 @@ tree_update_walk(
 		s->walk_error = true;
 		return;
 	    }
+
 
 	    if (s->verbosity > 3 && !bn_mat_is_identity(dpi.mat) && s->msgs) {
 		bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, s->msgs);
