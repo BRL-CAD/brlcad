@@ -109,7 +109,7 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
     bu_free(xdata->n_vec, "x vec inputs");
     bu_free(xdata->n_p, "x p inputs");
     if (ret < 0) {
-	ret = 0;
+	count = ret;
 	goto memfree;
     }
 
@@ -179,7 +179,6 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
 /*
     bu_log("ray cnt: %d\n", count);
 */
-    return count;
 
 memfree:
     /* Free memory not stored in tables */
@@ -189,7 +188,7 @@ memfree:
     if (xdata) BU_PUT(xdata, struct rt_pattern_data);
     if (ydata) BU_PUT(ydata, struct rt_pattern_data);
     if (zdata) BU_PUT(zdata, struct rt_pattern_data);
-    return ret;
+    return count;
 }
 
 /* TODO - consolidate with above */
@@ -488,6 +487,7 @@ analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct 
 
     bu_parallel(segfilter_gen_worker, ncpus, (void *)state);
 
+    bu_free(local_state, "local state");
     bu_free(state, "state");
 
     return;

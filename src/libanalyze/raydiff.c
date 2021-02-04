@@ -197,7 +197,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     int count = 0;
     struct rt_i *rtip = NULL;
     int ncpus = bu_avail_cpus();
-    fastf_t *rays;
+    fastf_t *rays = NULL;
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
     struct raydiff_container *local_state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "local state");
     struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
@@ -336,12 +336,25 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 memfree:
     /* Free memory not stored in tables */
     for (i = 0; i < ncpus+1; i++) {
-	if (local_state[i].left != NULL) BU_PUT(local_state[i].left, struct bu_ptbl);
-	if (local_state[i].right != NULL) BU_PUT(local_state[i].right, struct bu_ptbl);
-	if (local_state[i].both != NULL) BU_PUT(local_state[i].both, struct bu_ptbl);
+	if (local_state[i].left != NULL) {
+	    bu_ptbl_free(local_state[i].left);
+	    BU_PUT(local_state[i].left, struct bu_ptbl);
+	}
+	if (local_state[i].right != NULL) {
+	    bu_ptbl_free(local_state[i].right);
+	    BU_PUT(local_state[i].right, struct bu_ptbl);
+	}
+	if (local_state[i].both != NULL) {
+	    bu_ptbl_free(local_state[i].both);
+	    BU_PUT(local_state[i].both, struct bu_ptbl);
+	}
 	if (local_state[i].left_name)  bu_free((void *)local_state[i].left_name, "left name");
 	if (local_state[i].right_name) bu_free((void *)local_state[i].right_name, "right name");
 	/*BU_PUT(state[i].resp, struct resource);*/
+    }
+
+    if (rays) {
+	bu_free(rays, "rays");
     }
 
     if (rtip) {

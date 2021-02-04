@@ -302,6 +302,7 @@ main(int argc, const char **argv)
     }
 
     // Clean up
+    ged_close(gedp);
     bu_vls_free(&gfile);
     bu_vls_free(&gbasename);
     bu_vls_free(&wdir);
