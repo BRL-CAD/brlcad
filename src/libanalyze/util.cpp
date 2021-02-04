@@ -81,7 +81,8 @@ analyze_gen_worker(int cpu, void *ptr)
 extern "C" int
 analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol)
 {
-    int ret, count;
+    int ret = 0;
+    int count = 0;
     point_t mid;
     struct rt_pattern_data *xdata = NULL;
     struct rt_pattern_data *ydata = NULL;
