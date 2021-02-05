@@ -338,6 +338,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		bu_semaphore_release(BU_SEM_GENERAL);
 	    }
 	    if (state->plot_volume) {
+		bu_semaphore_acquire(state->sem_plot);
 		if (ap->a_user & 1) {
 		    pl_color(state->plot_volume, 128, 255, 192);  /* pale green */
 		} else {
@@ -345,6 +346,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		}
 
 		pdv_3line(state->plot_volume, pt, opt);
+		bu_semaphore_acquire(state->sem_plot);
 	    }
 	}
 
@@ -1402,6 +1404,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     /* initialize some stuff */
     state->sem_worker = bu_semaphore_register("analyze_sem_worker");
     state->sem_stats = bu_semaphore_register("analyze_sem_stats");
+    state->sem_plot = bu_semaphore_register("analyze_sem_plot");
     allocate_region_data(state, names);
     grid.refine_flag = 0;
     shoot_rays(state);

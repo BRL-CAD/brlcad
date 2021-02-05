@@ -27,10 +27,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* check thread safety history of gqa + plot calls (pl_color)
-  UPDATE - breakage was identified as having been introduced
-  during the libbu semaphore system update circa commit r73078
-
 * The following will be removed from MGED's menu bar (unused
   features, can be accomplished another way, or will be exposed
   only as lower level settings when there are sensible defaults

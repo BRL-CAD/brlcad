@@ -18,11 +18,11 @@ BRLCAD_ADD_TEST(NAME gqa_plot_verify COMMAND bn_plot3 -b "${GQA_PFILE}")
 set_property(TEST gqa_plot_verify PROPERTY DEPENDS gqa_plot)
 DISTCLEAN("${GQA_PFILE}")
 
-#set(GQA_MULTI_PFILE "${CMAKE_CURRENT_BINARY_DIR}/ovlpmulti_overlaps.plot3")
-#BRLCAD_ADD_TEST(NAME gqa_plot_multithreaded COMMAND gqa -Ao -p ovlpmulti_ "${GQA_GFILE}" ovlp)
-#BRLCAD_ADD_TEST(NAME gqa_plot_verify_multithreaded COMMAND bn_plot3 -b "${GQA_MULTI_PFILE}")
-#set_property(TEST gqa_plot_verify_multithreaded PROPERTY DEPENDS gqa_plot_multithreaded)
-#DISTCLEAN("${GQA_MULTI_PFILE}")
+set(GQA_MULTI_PFILE "${CMAKE_CURRENT_BINARY_DIR}/ovlpmulti_overlaps.plot3")
+BRLCAD_ADD_TEST(NAME gqa_plot_multithreaded COMMAND gqa -Ao -p ovlpmulti_ "${GQA_GFILE}" ovlp)
+BRLCAD_ADD_TEST(NAME gqa_plot_verify_multithreaded COMMAND bn_plot3 -b "${GQA_MULTI_PFILE}")
+set_property(TEST gqa_plot_verify_multithreaded PROPERTY DEPENDS gqa_plot_multithreaded)
+DISTCLEAN("${GQA_MULTI_PFILE}")
 
 
 CMAKEFILES(CMakeLists.txt)
