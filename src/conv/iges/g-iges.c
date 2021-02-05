@@ -612,9 +612,6 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	} else if (mode == TRIMMED_SURF_MODE)
 	    dp->d_uses = (-nmgregion_to_tsurf(dp->d_namep, r, fp_dir, fp_param));
 
-	/* NMG region is no longer necessary */
-	nmg_kr(r);
-
 	if (multi_file) {
 	    char copy_buffer[CP_BUF_SIZE] = {0};
 
