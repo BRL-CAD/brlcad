@@ -387,6 +387,11 @@ if(BRLCAD_TCL_BUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tclTomMath.h")
   DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tclTomMathDecls.h")
 
+  # Files generated on the Mac
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/Tcl-Info.plist")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/Tclsh-Info.plist")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/include/tclConfig.h")
+
   # Group the targets in Visual Studio project files
   SetTargetFolder(tclsh "Third Party Executables")
   SetTargetFolder(tcl "Third Party Libraries")
