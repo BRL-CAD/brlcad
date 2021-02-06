@@ -1,7 +1,7 @@
 /*                       R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

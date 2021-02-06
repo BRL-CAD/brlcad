@@ -1,7 +1,7 @@
 /*                        S C A N N E R . R E
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright (c) 1990 The Regents of the University of California.
