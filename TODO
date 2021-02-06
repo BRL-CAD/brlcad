@@ -18,14 +18,14 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * dbconcat corrupted database / failed. created a top-level comb with
   invalid "1_[subcomb]/" to be created that result in error messages
   during any db listing (e.g., tops).  workaround was to manually edit
   the comb and remove the 1_ and / on the entries.
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * The following will be removed from MGED's menu bar (unused
   features, can be accomplished another way, or will be exposed
