@@ -2,7 +2,7 @@
 #                    B R L M A N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2020 United States Government as represented by
+# Copyright (c) 2006-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ bind $w <q> ::exit
 if {[info exists ::man_file]} {
     $w select $man_file
 } else {
-    set intro_file [file join [bu_brlcad_root "share/$::data_dir"] mann/Introduction.html]
+    set intro_file [file join [bu_dir doc] html mann Introduction.html]
     $w loadPage $intro_file
 }
 

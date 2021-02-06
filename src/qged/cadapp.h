@@ -1,7 +1,7 @@
 /*                        C A D A P P . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,11 +58,6 @@ class CADApp : public QApplication
 	int opendb(QString filename);
 	void closedb();
 
-	// TODO - need to update this to use the gsh dynamic lookup mechanism.
-	// Moreover, the command itself really needs to be able to tell the
-	// application whether it might update the database, view, etc. rather
-	// than hard-coding that in each GUI...
-	int register_command(QString cmdname, ged_func_ptr func, QString role = QString());
 	int register_gui_command(QString cmdname, gui_cmd_ptr func, QString role = QString());
 	int exec_command(QString *command, QString *result);
 
@@ -84,13 +79,9 @@ class CADApp : public QApplication
 	struct ged *ged_pointer;
 	QString current_file;
 	int interaction_mode;  // 0 = view, 1 = instance edit, 2 = primitive edit
-	QMap<QString, ged_func_ptr> cmd_map;
 	QMap<QString, gui_cmd_ptr> gui_cmd_map;
 	QMap<QString, gui_cmd_ptr> preprocess_cmd_map;
 	QMap<QString, gui_cmd_ptr> postprocess_cmd_map;
-	QSet<QString> edit_cmds;  // Commands that potentially change the database contents */
-	QSet<QString> view_cmds;  // Commands that potentially change the view, but not the database contents */
-
 };
 
 QString import_db(QString filename);

@@ -119,6 +119,7 @@ AUTO.
 set(REGEX_PREFIX_STR "brl_")
 THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libregex/regex.h")
 SetTargetFolder(regex "Third Party Libraries")
 SetTargetFolder(regex-static "Third Party Libraries")
 if (NOT BRLCAD_REGEX_BUILD)
@@ -143,6 +144,8 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 set(Z_PREFIX_STR "brl_")
 THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ENABLE_ZLIB ENABLE_LIBZ)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libz/zconf.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libz/zlib.h")
 SetTargetFolder(zlib "Third Party Libraries")
 SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
@@ -243,10 +246,16 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng-config")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng${CMAKE_SHARED_LIBRARY_SUFFIX}")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng16-config")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng16.pc")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/scripts/genchk.cmake")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/scripts/genout.cmake")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/scripts/gensrc.cmake")
 DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpng.pc)
 DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpng-config)
 DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpng${CMAKE_SHARED_LIBRARY_SUFFIX})
 DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpng${CMAKE_STATIC_LIBRARY_SUFFIX})
+
 # Other PNG options to mark as advanced
 mark_as_advanced(PNGARG)
 mark_as_advanced(PNG_DEBUG)
@@ -288,6 +297,7 @@ if(BRLCAD_UTAHRLE_BUILD)
   SetTargetFolder(utahrle "Third Party Libraries")
   SetTargetFolder(utahrle-static "Third Party Libraries")
   set(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
+  set(UTAHRLE_INCLUDE_DIRS "${UTAH_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
   set(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
@@ -332,6 +342,11 @@ endif(BRLCAD_ENABLE_AQUA)
 TCL_RESET_VARS()
 TK_RESET_VARS()
 
+# The new FindTCL needs to be told to look for Tk
+if(BRLCAD_ENABLE_TK)
+  set(TCL_ENABLE_TK ON)
+endif(BRLCAD_ENABLE_TK)
+
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
 provided with BRL-CAD's source code.  Default is AUTO, responsive to
@@ -364,6 +379,18 @@ if(BRLCAD_TCL_BUILD)
   # Let Distclean know it will have work to do
   DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tcl8")
   DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tcl8.6")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tcl.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tclDecls.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tclOO.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tclOODecls.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tclPlatDecls.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tclTomMath.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tclTomMathDecls.h")
+
+  # Files generated on the Mac
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/Tcl-Info.plist")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/Tclsh-Info.plist")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/include/tclConfig.h")
 
   # Group the targets in Visual Studio project files
   SetTargetFolder(tclsh "Third Party Executables")
@@ -453,14 +480,19 @@ if(BRLCAD_TK_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man3")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/mann")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/library/Makefile")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/wish.exe.manifest")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tk8.6")
   DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tk8.6.10")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tk.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tkDecls.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/tkPlatDecls.h")
 
   # Group the targets in Visual Studio project files
   SetTargetFolder(wish "Third Party Executables")
   SetTargetFolder(tk "Third Party Libraries")
   SetTargetFolder(tkstub "Third Party Libraries")
+  SetTargetFolder(Tk_pkgIndex "Third Party Libraries")
 
 elseif(BRLCAD_ENABLE_TK)
 
@@ -531,7 +563,11 @@ if(BRLCAD_ITCL_BUILD)
   set(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
   set(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
   set(ITCL_VERSION "${ITCL_VER}" CACHE STRING "ITCL_VERSION" FORCE)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VER}")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/itcl${ITCL_VER}")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/itcl.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/itclDecls.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/itclInt.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/itclIntDecls.h")
   SetTargetFolder(itcl "Third Party Libraries")
   SetTargetFolder(itclstub "Third Party Libraries")
   SetTargetFolder(itcl_pkgIndex "Third Party Libraries")
@@ -564,7 +600,9 @@ if(BRLCAD_ITK_BUILD)
   # does not handle C library settings.
   set(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
   set(ITK_VERSION "3.4" CACHE STRING "ITK_VERSION" FORCE)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itk${ITK_VER}")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/itk${ITK_VER}")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/itk.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/itkDecls.h")
 else(BRLCAD_ITK_BUILD)
   # We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
   set(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
@@ -575,6 +613,7 @@ else(BRLCAD_ITK_BUILD)
 endif(BRLCAD_ITK_BUILD)
 mark_as_advanced(ITK_VERSION)
 mark_as_advanced(ITK_LIBRARY)
+CONFIG_H_APPEND(BRLCAD "#cmakedefine ITK_VERSION	\"${ITK_VERSION}\"\n")
 
 set(iwidgets_ALIASES ENABLE_IWIDGETS)
 set(iwidgets_DESCRIPTION "
@@ -591,6 +630,7 @@ THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TK_WISH}" "tcl;tk;itcl;itk" "BRLCAD
 if(BRLCAD_IWIDGETS_BUILD)
   set(IWIDGETS_VERSION "${IWIDGETS_VER}" CACHE STRING "IWIDGETS_VERSION" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/iwidgets/pkgIndex.tcl")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/iwidgets/iwidgets.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Iwidgets${IWIDGETS_VER}")
 ELSE(BRLCAD_IWIDGETS_BUILD)
   set(IWIDGETS_VERSION "${IWIDGETS_PACKAGE_VERSION}" CACHE STRING "IWIDGETS_VERSION" FORCE)
@@ -673,21 +713,6 @@ if(BRLCAD_OPENNURBS_BUILD)
   BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
 endif(BRLCAD_OPENNURBS_BUILD)
 
-# Screened Poisson Reconstruction Library
-set(spsr_DESCRIPTION "
-Option for enabling and disabling compilation of the Screened Poisson
-Surface Reconstruction library provided with BRL-CAD's source code.
-Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
-and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(libspsr SPSR SPSR spsr_DESCRIPTION ALIASES
-  ENABLE_SPSR FLAGS NOSYS)
-if(BRLCAD_SPSR_BUILD)
-  SetTargetFolder(PoissonRecon "Third Party Executables")
-  SetTargetFolder(SurfaceTrimmer "Third Party Executables")
-  SetTargetFolder(SPSR "Third Party Libraries")
-  SetTargetFolder(SPSR-static "Third Party Libraries")
-endif(BRLCAD_SPSR_BUILD)
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 #=== LIBBSON ==================================================
@@ -736,8 +761,9 @@ set(IS_SUBBUILD ON)
 set(SC_BUILD_SCHEMAS "" CACHE STRING "Disable schema builds for BRL-CAD" FORCE)
 # Lots of "libraries" associated with stepcode - use "stepcode" as the
 # stand-in for the build target var.
-THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION REQUIRED_VARS LEMON_EXECUTABLE
-  PERPLEX_EXECUTABLE BRLCAD_LEVEL3 ALIASES ${sc_ALIASES} RESET_VARS
+THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION
+  REQUIRED_VARS LEMON_EXECUTABLE PERPLEX_EXECUTABLE BRLCAD_LEVEL3 BRLCAD_ENABLE_STEP
+  ALIASES ${sc_ALIASES} RESET_VARS
   EXP2CXX_EXEC EXP2CXX_EXECUTABLE_TARGET FLAGS NOSYS)
 if(BRLCAD_SC_BUILD)
   set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)
@@ -745,8 +771,11 @@ if(BRLCAD_SC_BUILD)
   mark_as_advanced(EXP2CXX_EXEC)
   mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/ExpParser_expparse/expparse.y")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/express_md5gen.cmake")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/express_verify.cmake")
 endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SC_BUILD_TYPE)
@@ -796,25 +825,6 @@ if(BRLCAD_ENABLE_GECODE)
   endif(BRLCAD_GECODE_BUILD)
 endif(BRLCAD_ENABLE_GECODE)
 
-# VDSlib - A View-Dependent Simplification and Rendering Library For
-# the moment, this is marked NOSYS - it's possible that some Debian
-# systems would have 0.9 of vdslib installed, but it's unmaintained
-# and we're likely to be making changes.  If our own copy of VDSlib
-# ever spins back off into its own project, revisit the NOSYS
-set(libvds_DESCRIPTION "
-Option for enabling and disabling compilation of the libvds triangle
-simplification library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-")
-THIRD_PARTY(libvds VDS vds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
-set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
-mark_as_advanced(LIBVDS_INCLUDE_DIR)
-SetTargetFolder(vds "Third Party Libraries")
-SetTargetFolder(vds-static "Third Party Libraries")
-
-
 # OpenSceneGraph Libraries
 set(openscenegraph_DESCRIPTION "
 Option for enabling and disabling compilation of the OpenSceneGraph
@@ -861,22 +871,6 @@ else(BRLCAD_OSG_BUILD)
   endif (BRLCAD_ENABLE_OSG)
 endif(BRLCAD_OSG_BUILD)
 
-# gdiam
-set(gdiam_DESCRIPTION "
-Option for enabling and disabling compilation of the libgdiam approximate
-tight bounding box library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-")
-THIRD_PARTY(libgdiam GDIAM gdiam gdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
-set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
-mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
-SetTargetFolder(gdiam "Third Party Libraries")
-SetTargetFolder(gdiam-static "Third Party Libraries")
-mark_as_advanced(GDIAM_LIBRARIES)
-mark_as_advanced(GDIAM_INCLUDE_DIRS)
-
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code
 # becomes sufficiently useful, Adaptagrams will be integrated.  In the
@@ -894,12 +888,26 @@ mark_as_advanced(GDIAM_INCLUDE_DIRS)
 #endif(BRLCAD_LEVEL2)
 
 # Poly2Tri CDT library
+# Note - this really should be embedded as part of libbg - it is simple, can be
+# compiled as part of libbg with a few source adjustments, and there is an API
+# for this feature exposed by libbg.  The only reason it is still maintained as
+# a separate library is the fast cdt feature of libbrep, which is using this
+# API directly instead of going through libbg.  Care will have to be taken when
+# making that shift, and it may even be that we'll discover a need to adjust the
+# libbg API in doing so to avoid performance issues.  We should eventually
+# address those issues though, if for no other reason than to discourage other
+# direct uses of this API instead of bg_nested_polygon_triangulate.
+#
+# May also want to investigate https://github.com/MetricPanda/fast-poly2tri, but
+# the removal of Steiner point insertion would probably need to be addressed...
 add_subdirectory(poly2tri)
 include("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist")
 CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
 DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile")
 set(P2T_LIBRARY "poly2tri" CACHE STRING "Poly2Tri library" FORCE)
+set(POLY2TRI_LIBRARIES "poly2tri" CACHE STRING "Poly2Tri library" FORCE)
 set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
+set(POLY2TRI_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
 SetTargetFolder(poly2tri "Third Party Libraries")
 SetTargetFolder(poly2tri-static "Third Party Libraries")
 mark_as_advanced(P2T_LIBRARY)
@@ -965,6 +973,9 @@ if(BRLCAD_GDAL_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/gdal/cpl_config.h")
   SetTargetFolder(gdal "Third Party Libraries/GDAL")
   SetTargetFolder(gdal-static "Third Party Libraries/GDAL")
+else(BRLCAD_GDAL_BUILD)
+  set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIRS}" CACHE STRING "libgdal includes" FORCE)
+  set(GDAL_LIBRARIES "${GDAL_LIBRARY}" CACHE STRING "libgdal" FORCE)
 endif(BRLCAD_GDAL_BUILD)
 mark_as_advanced(GDAL_CONFIG)
 mark_as_advanced(GDAL_INCLUDE_DIR)

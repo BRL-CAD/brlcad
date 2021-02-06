@@ -1,10 +1,10 @@
 #!/bin/bash
-find . -type f ! -path "*/misc/*" ! -path "*/src/other/stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Date:[^$;"]*/$Date/' {} \;
-find . -type f ! -path "*/misc/*" ! -path "*/src/other/stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Header:[^$;"]*/$Header/' {} \;
-find . -type f ! -path "*/misc/*" ! -path "*/src/other/stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Id:[^$;"]*/$Id/' {} \;
-find . -type f ! -path "*/misc/*" ! -path "*/src/other/stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Log:[^$;"]*/$Log/' {} \;
-find . -type f ! -path "*/misc/*" ! -path "*/src/other/stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Revision:[^$;"]*/$Revision/' {} \;
-find . -type f ! -path "*/misc/*" ! -path "*/src/other/stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Source:[^$;"]*/$Source/' {} \;
+find . -type f ! -path "*/misc/*" ! -path "*/src/superbuild/stepcode/*" ! -path "*/src/other/*stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Date:[^$;"]*/$Date/' {} \;
+find . -type f ! -path "*/misc/*" ! -path "*/src/superbuild/stepcode/*" ! -path "*/src/other/*stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Header:[^$;"]*/$Header/' {} \;
+find . -type f ! -path "*/misc/*" ! -path "*/src/superbuild/stepcode/*" ! -path "*/src/other/*stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Id:[^$;"]*/$Id/' {} \;
+find . -type f ! -path "*/misc/*" ! -path "*/src/superbuild/stepcode/*" ! -path "*/src/other/*stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Log:[^$;"]*/$Log/' {} \;
+find . -type f ! -path "*/misc/*" ! -path "*/src/superbuild/stepcode/*" ! -path "*/src/other/*stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Revision:[^$;"]*/$Revision/' {} \;
+find . -type f ! -path "*/misc/*" ! -path "*/src/superbuild/stepcode/*" ! -path "*/src/other/*stepcode/*" ! -path "*/src/other/step/*" ! -path "*/src/conv/step/*" ! -path "*/ap242.exp" -exec sed -i 's/$Source:[^$;"]*/$Source/' {} \;
 find . -type f -path "*/re2c/*" -exec sed -i 's/$Date:[^$;"]*/$Date/' {} \;
 find . -type f -path "*/re2c/*" -exec sed -i 's/$Header:[^$;"]*/$Header/' {} \;
 find . -type f -path "*/re2c/*" -exec sed -i 's/$Id:[^$;"]*/$Id/' {} \;

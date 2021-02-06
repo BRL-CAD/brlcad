@@ -1,7 +1,7 @@
 #             O V E R L A P F I L E T O O L . T C L
 # BRL-CAD
 #
-# Copyright (c) 2018-2020 United States Government as represented by
+# Copyright (c) 2018-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -21,9 +21,8 @@
 #
 # Description -
 #
-# This is the Overlaps File tool. Which creates a new overlaps file
-# for the checker tool.
-# 
+# This is the Overlaps File tool.
+#
 
 package require Tk
 package require Itcl
@@ -58,9 +57,6 @@ package provide OverlapFileTool 1.0
 	variable _entryObjs
 	variable _statusText
 	variable _progressValue
-
-	method runCheckOverlapsAE { obj } {}
-	method runCheckOverlapsTriple { obj } {}
 
 	method sortPairs {} {}
 	method rmDupPairs {} {}
@@ -186,7 +182,8 @@ body OverlapFileTool::runTools { } {
     # get _objs from list
     set _objs ""
     foreach obj [$itk_component(objectsList) get 0 end] {
-	append _objs " " $obj
+	set objn [string trim $obj "/"]
+	append _objs $objn
     }
     # check if user passed the objects list
     if { [llength $_objs] == 0 } {
@@ -199,13 +196,26 @@ body OverlapFileTool::runTools { } {
     $itk_component(objectsEntry) configure -state disabled
     $this configure -cursor watch
 
-    # run checkoverlaps for all the specified objects
-    if { [string length $_objs] > 0 } {
-	$this runCheckOverlapsAE $_objs
-	$this runCheckOverlapsTriple $_objs
+    # delete any previous overlaps files in the db directory
+    set db_path [eval opendb]
+    set dir [file dirname $db_path]
+    set name [file tail $db_path]
+    set ol_dir [file join $dir "${name}.ck"]
+    set filename [file join $dir "${name}.ck" "ck.${name}.overlaps"]
+    file delete -force -- $ol_dir
+
+    # run overlaps check for all the specified objects
+    if { [catch {exec [file join [bu_dir bin] gchecker] $db_path $_objs}] } {
+	set gcmd "[file join [bu_dir bin] gchecker] $db_path $_objs"
+	puts "gchecker run failed: $gcmd"
     }
+
     # check for the count of overlaps detected
-    set ov_count [llength $pairsList]
+    set fp [open $filename r]
+    set ldata [read $fp]
+    set ov_count [llength [split $ldata "\n"]]
+    incr ov_count -1
+
     if { $ov_count == 0 } {
 	tk_messageBox -type ok -title "No Overlaps Found" -message "No Overlaps Found"
 	$itk_component(buttonGo) configure -state normal
@@ -218,27 +228,6 @@ body OverlapFileTool::runTools { } {
 
     puts "\nCount of overlaps: $ov_count\n"
 
-    # process the overlap pairs
-    $this sortPairs
-    $this rmDupPairs
-
-    # delete any previous overlaps files in the db directory
-    set db_path [eval opendb]
-    set dir [file dirname $db_path]
-    set name [file tail $db_path]
-    set ol_dir [file join $dir "${name}.ck"]
-    set filename [file join $dir "${name}.ck" "ck.${name}.overlaps"]
-    file delete -force -- $ol_dir
-
-    # create new folder
-    file mkdir $ol_dir
-    # write the overlaps file
-    set fp [open $filename w+]
-    foreach pair [lsort -decreasing -real -index 2 $overlapsList] {
-	#puts $pair
-	puts $fp $pair
-    }
-    close $fp
     puts "\nOverlaps file saved: $filename"
 
     # run checker tool
@@ -527,70 +516,7 @@ body OverlapFileTool::sortPairs { } {
     set pairsList [lsort $pairsList]
 }
 
-# runCheckOverlapsTriple
-#
-# runs the check overlaps command for the passed object
-# in triple grid mode
-#
-body OverlapFileTool::runCheckOverlapsTriple { obj } {
-    set cmd "check overlaps -g1mm,1mm -q $obj"
-    set _statusText "Running $cmd"
-    if [ catch {set check_list [eval $cmd]} ] {
-	set check_list {}
-    }
-    set lines [split $check_list \n]
-    foreach line $lines {
-	regexp {<(.*),.(.*)>: ([0-9]*).* (.*).mm} $line full left right count depth
-	if { [info exists full] == 0 } {
-	    continue
-	}
-	set size [expr $count * $depth]
-	# swaps the region names by comparing lexicographically
-	if { [string compare $left $right] > 0 } {
-	    lappend pairsList [list $right $left $size]
-	} else {
-	    lappend pairsList [list $left $right $size]
-	}
-	# unset $full for next line
-	unset full
-    }
-    set _progressValue 90
-}
 
-# runCheckOverlapsAE
-#
-# runs the check overlaps command for the passed object
-# 16 times for different combinations of az/el values
-# in single grid mode
-#
-body OverlapFileTool::runCheckOverlapsAE { obj } {
-    for { set az 0}  {$az < 180} {incr az 45} {
-	for { set el 0}  {$el < 180} {incr el 45} {
-	    set cmd "check overlaps -G1024 -a$az -e$el -q $obj"
-	    set _statusText "Running $cmd"
-	    incr _progressValue 4
-	    if [catch {set check_list [eval $cmd]}] {
-		set check_list {}
-	    }
-	    set lines [split $check_list \n]
-	    foreach line $lines {
-		regexp {<(.*),.(.*)>: ([0-9]*).* (.*).mm} $line full left right count depth
-		if { [info exists full] == 0 } {
-		    continue
-		}
-		set size [expr $count * $depth]
-		# swaps the region names by comparing lexicographically
-		if { [string compare $left $right] > 0 } {
-		    lappend pairsList [list $right $left $size]
-		} else {
-		    lappend pairsList [list $left $right $size]
-		}
-		# unset $full for next line
-		unset full
-	    }
-	}
-    }
-}
 ###########
 # end private methods
 ###########

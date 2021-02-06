@@ -1,7 +1,7 @@
 /*                         B I G D B . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@
 #include "common.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "bu.h"
 #include "raytrace.h"
@@ -87,17 +88,39 @@ main(int ac, char *av[])
 
     /* bu_log("using %s temp file\n", filename); */
 
-    title = (char *)bu_malloc(sz * 2, "test allocation");
-    bu_free(title, "test allocation");
-    
+    /* make sure we don't overflow */
+    BU_ASSERT((uint64_t)sz < (uint64_t)(SIZE_MAX/2));
+    BU_ASSERT(sz > strlen("123......321")+1);
+
+    /* intentionally using malloc so we can halt the test if this
+     * system will let us allocate enough memory.
+     *
+     * unfortunately, librt currently re-allocates a title 9 times in
+     * the process of writing it to disk, keeping what appears to be 5
+     * of them in memory at the same time.
+     */
+#define MULTIPLIER 5
+    title = (char *)malloc(sz * MULTIPLIER);
+    if (!title) {
+	bu_log("WARNING: unable to allocate %zu MB\n", (sz * MULTIPLIER) / (1024 * 1024));
+	bu_exit(123, "Aborting test.\n");
+    }
+    free(title);
+
     title = (char *)bu_malloc(sz, "title");
     memset(title, ' ', sz);
-    title[0] = '3';
+    title[0] = '1';
     title[1] = '2';
-    title[2] = '1';
-    title[sz-4] = '1';
+    title[2] = '3';
+    title[3] = '.';
+    title[4] = '.';
+    title[5] = '.';
+    title[sz-7] = '.';
+    title[sz-6] = '.';
+    title[sz-5] = '.';
+    title[sz-4] = '3';
     title[sz-3] = '2';
-    title[sz-2] = '3';
+    title[sz-2] = '1';
     title[sz-1] = '\0';
 
     /* bu_log("setting title to %ld == %ld chars long (%c%c%c <> %c%c%c)\n", strlen(title), sz-1, title[0], title[1], title[2], title[sz-4], title[sz-3], title[sz-2]); */

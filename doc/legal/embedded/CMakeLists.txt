@@ -10,6 +10,7 @@ set(embedded_licenses
   clipper.txt
   db_faa-info.txt
   db_nist-info.txt
+  damlev.txt
   dehumanize.txt
   delaunator.txt
   DejaVu_Fonts.txt
@@ -17,11 +18,12 @@ set(embedded_licenses
   Eigen.txt
   fnmatch.txt
   fontstash.txt
+  fort.txt
   gct.txt
   gecode.txt
   gdal_gcv_plugin1.txt
   gdal_gcv_plugin2.txt
-  glm.txt
+  gdiam.txt
   halfedge.txt
   humanize.txt
   hv3.txt
@@ -69,6 +71,7 @@ set(embedded_licenses
   tkcon.txt
   tri_pt.txt
   uce_dirent.txt
+  vds.txt
   whereami.txt
   winmmap.txt
   x24.txt

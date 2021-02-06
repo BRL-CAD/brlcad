@@ -1,7 +1,7 @@
 #               P I C T U R E T Y P E F . I T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -227,14 +227,14 @@ namespace eval RtWizard {
 	   if {[string length $filename] > 0 } {
 	       set output_generated 0
 	       if {[file extension $filename] == ".png"} {
-		  if { [catch {exec [file join [bu_brlcad_root bin] fb-png] -w $w -n $h -F $fb $filename}] } {
+		  if { [catch {exec [file join [bu_dir bin] fb-png] -w $w -n $h -F $fb $filename}] } {
 		      set output_generated 0
 		  } else {
 		      set output_generated 1
 		  }
 	       }
 	       if {!$output_generated} {
-		   if { [ catch {exec [file join [bu_brlcad_root bin] fb-pix] -w $w -n $h -F $fb $filename} ] } {
+		   if { [ catch {exec [file join [bu_dir bin] fb-pix] -w $w -n $h -F $fb $filename} ] } {
 		       set output_generated 0
 		   } else {
 		       set output_generated 1

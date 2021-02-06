@@ -1,7 +1,7 @@
 #                   D B U P G R A D E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2020 United States Government as represented by
+# Copyright (c) 1998-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -286,7 +286,7 @@ proc dbupgrade {args} {
     }
 
     # dbupgrade converts the original database to the current db format
-    set dbupgrade_cmd [file join [bu_brlcad_root "bin"] dbupgrade]
+    set dbupgrade_cmd [file join [bu_dir bin] dbupgrade]
     catch {exec "$dbupgrade_cmd" "$db_orig" "$dbname"} ret
 
     if {![file exists "$dbname"]} {

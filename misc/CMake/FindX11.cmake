@@ -1,7 +1,7 @@
 #                   F I N D X 1 1 . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2020 United States Government as represented by
+# Copyright (c) 2011-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -169,7 +169,7 @@ if(UNIX)
       set(64BIT_DIRS ${64BIT_DIRS} /usr/lib/X11 /usr/lib)
     endif(EXISTS "/usr/lib32" OR NOT EXISTS "/usr/lib64")
   else(SEARCH_64BIT)
-    set(32BIT_DIRS "/usr/lib32/X11;/usr/lib32;/usr/lib/i386-linux-gnu")
+    set(32BIT_DIRS "/usr/lib32/X11;/usr/lib32;/usr/lib/i386-linux-gnu;/usr/lib/arm-linux-gnueabihf")
     if(EXISTS "/usr/lib64" OR NOT EXISTS "/usr/lib32")
       set(32BIT_DIRS ${32BIT_DIRS} /usr/lib/X11 /usr/lib)
     endif(EXISTS "/usr/lib64" OR NOT EXISTS "/usr/lib32")

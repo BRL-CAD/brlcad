@@ -1,0 +1,103 @@
+%include {
+#include "bu.h"
+#include <assert.h>
+#include "dplot_reader.h"
+}
+
+%destructor statement_list {
+    $$.n = data->ssx_count;
+}
+
+%stack_overflow {
+    fprintf(stderr, "Parser stack overflow. Last token was %d\n", yypMinor->yy0.n);
+}
+
+%syntax_error {
+    fprintf(stderr, "Syntax error. Last token (type %d) was %d. Ignoring "
+	    "input tokens until valid input is found.\n", yymajor, yyminor.yy0.n);
+}
+
+%parse_failure {
+    fprintf(stderr, "Parsing failed. Parser has reset.\n");
+}
+
+%token_type {token_t}
+%extra_argument {struct dplot_data *data}
+
+%token_prefix {TOKEN_}
+
+%type count {int}
+%type index {int}
+
+start_symbol ::= statement_list.
+
+statement_list ::= /* empty */.
+statement_list ::= statement_list statement.
+
+statement ::= surface_counts EOL.
+statement ::= ssx_info EOL.
+statement ::= linked_curve_count EOL.
+statement ::= split_face_count EOL.
+statement ::= split_face_info EOL.
+
+surface_counts ::= SURFACES count(C1) count(C2). {
+    data->brep1_surface_count = C1;
+    data->brep2_surface_count = C2;
+}
+
+ssx_info ::= SSX index(SURF_IDX1) index(SURF_IDX2) count(EVENTS) count(CRV_COUNT1) count(CRV_COUNT2) count(B1_ISO) count(ISO) isocsx_event_counts. {
+    struct ssx *ssx;
+    BU_GET(ssx, struct ssx);
+
+    ssx->brep1_surface = SURF_IDX1;
+    ssx->brep2_surface = SURF_IDX2;
+    ssx->final_curve_events = EVENTS;
+    ssx->face1_clipped_curves = CRV_COUNT1;
+    ssx->face2_clipped_curves = CRV_COUNT2;
+    ssx->intersecting_brep1_isocurves = B1_ISO;
+    ssx->intersecting_isocurves = ISO;
+    BU_LIST_INIT(&ssx->isocsx_list);
+
+    /* move the list of event counts from the tmp location to this ssx
+     * instance
+     */
+    BU_LIST_APPEND_LIST(&ssx->isocsx_list, &data->isocsx_list);
+
+    BU_LIST_PUSH(&data->ssx_list, &ssx->l);
+    ++data->ssx_count;
+}
+
+isocsx_event_counts ::= /* empty */.
+
+isocsx_event_counts ::= isocsx_event_counts count(C). {
+    struct isocsx *isocsx;
+    BU_GET(isocsx, struct isocsx);
+
+    isocsx->events = C;
+    BU_LIST_INIT(&isocsx->l);
+
+    BU_LIST_PUSH(&data->isocsx_list, &isocsx->l);
+}
+
+linked_curve_count ::= LINKED_CURVES count(COUNT). {
+    data->linked_curve_count = COUNT;
+}
+
+split_face_count ::= SPLIT_FACES count(SPLIT_FACES). {
+    data->split_face_count = SPLIT_FACES;
+    data->face = (struct split_face *)bu_malloc(SPLIT_FACES *
+	sizeof(struct split_face), "split face array");
+}
+
+split_face_info ::= SPLIT_FACE index(I) count(OUTER_COUNT) count(INNER_COUNT). {
+    data->face[I].outerloop_curves = OUTER_COUNT;
+    data->face[I].innerloop_curves = INNER_COUNT;
+}
+
+count(C) ::= NONNEGATIVE_INT(N). {
+    C = N.n;
+}
+
+index(I) ::= NONNEGATIVE_INT(N). {
+    I = N.n;
+}

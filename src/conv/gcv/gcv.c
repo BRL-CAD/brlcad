@@ -1,7 +1,7 @@
 /*                           G C V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -300,9 +300,8 @@ file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
     if (bu_file_exists(argv[0], NULL)) {
 	if (msg) {
-	    bu_vls_sprintf(msg, "Error - file %s already exists!\n", argv[0]);
+	    bu_vls_sprintf(msg, "Note - file %s already exists, appending conversion output\n", argv[0]);
 	}
-	return -1;
     }
 
     if (file_set)

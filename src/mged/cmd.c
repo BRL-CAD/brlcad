@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1779,7 +1779,6 @@ cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, con
     return TCL_OK;
 
 }
-
 
 /**
  * "tol" displays current settings

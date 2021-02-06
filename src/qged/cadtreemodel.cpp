@@ -1,7 +1,7 @@
 /*                C A D T R E E M O D E L . C X X
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -413,7 +413,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    db_find_subtree(ret, name, tp->tr_b.tb_right, dbip, depth, max_depth, combinternals, traverse_func);
-	    break;
+	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
@@ -718,6 +718,9 @@ bool CADTreeModel::canFetchMore(const QModelIndex &idx) const
 {
     CADTreeNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return false;
+    if (rowCount(idx)) {
+	return false;
+    }
     if (curr_node->node_dp->d_flags & RT_DIR_COMB) {
 	return true;
     }

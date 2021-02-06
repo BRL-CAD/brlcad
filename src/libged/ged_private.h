@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -181,14 +181,6 @@ GED_EXPORT void vls_col_eol(struct bu_vls *str);
 GED_EXPORT extern int edarb_facedef(void *data, int argc, const char *argv[]);
 
 /* defined in ged.c */
-GED_EXPORT extern void _ged_print_node(struct ged *gedp,
-			    struct directory *dp,
-			    size_t pathpos,
-			    int indentSize,
-			    char prefix,
-			    unsigned flags,
-			    int displayDepth,
-			    int currdisplayDepth);
 GED_EXPORT extern struct db_i *_ged_open_dbip(const char *filename,
 				   int existing_only);
 
@@ -553,6 +545,24 @@ GED_EXPORT extern void _ged_vls_col_pr4v(struct bu_vls *vls,
  */
 GED_EXPORT extern struct directory ** _ged_getspace(struct db_i *dbip,
 					 size_t num_entries);
+
+
+#if 0
+/**
+ * Characterize a path specification (search command style).
+ *
+ * Return flags characterizing the path specifier, as defined below:
+ */
+#define GED_PATHSPEC_INVALID   1ULL << 1
+#define GED_PATHSPEC_SPECIFIC  1ULL << 2
+#define GED_PATHSPEC_LOCAL     1ULL << 3
+#define GED_PATHSPEC_FLAT      1ULL << 4
+
+GED_EXPORT extern unsigned long long
+_ged_characterize_path_spec(struct bu_vls *normalized,
+	struct ged *gedp, const char *pathspec
+	);
+#endif
 
 /**
  * Routine for generic command help printing.

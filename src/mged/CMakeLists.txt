@@ -54,7 +54,7 @@ if (HAVE_WINDOWS_H)
 endif (HAVE_WINDOWS_H)
 
 
-set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY} ${WS2_32_LIBRARY} ${OPENGL32_LIBRARY})
+set(mged_libs libtclcad libged libwdb libdm libnmg ${WS2_32_LIBRARY} ${OPENGL32_LIBRARY})
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
 endif(TARGET libtermio)

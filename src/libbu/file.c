@@ -1,7 +1,7 @@
 /*                         F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,6 +71,17 @@ bu_file_exists(const char *path, int *fd)
 	}
 	/* FAIL */
 	return 0;
+    }
+
+    /* stdin is special case */
+    if (BU_STR_EQUAL(path, "-")) {
+	if (fd) {
+	    *fd = fileno(stdin);
+	}
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	    bu_log("YES\n");
+	}
+	return 1;
     }
 
     /* capture file descriptor if requested */
@@ -180,7 +191,8 @@ int
 bu_file_same(const char *fn1, const char *fn2)
 {
     int ret = 0;
-    char *rp1, *rp2;
+    char *rp1 = NULL;
+    char *rp2 = NULL;
 
     if (UNLIKELY(!fn1 || !fn2)) {
 	return 0;
@@ -188,6 +200,11 @@ bu_file_same(const char *fn1, const char *fn2)
 
     if (UNLIKELY(fn1[0] == '\0' || fn2[0] == '\0')) {
 	return 0;
+    }
+
+    /* stdin is a special case */
+    if (BU_STR_EQUAL(fn1, fn2) && BU_STR_EQUAL(fn1, "-")) {
+	return 1;
     }
 
     if (!bu_file_exists(fn1, NULL) || !bu_file_exists(fn2, NULL)) {

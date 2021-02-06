@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="STATFORMAT" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <refmeta>
+    <refentrytitle>STAT</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>stat</refname>
+    <refpurpose>
+      report information about objects in a BRL-CAD database
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>stat</command>
+      <arg choice="opt" rep="norepeat">-h</arg>
+      <arg choice="opt" rep="norepeat">-?</arg>
+      <arg choice="opt" rep="norepeat">-r</arg>
+      <arg choice="opt" rep="norepeat">-F <replaceable>string</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-C <replaceable>type1[,type2]...</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-S <replaceable>type1[,type2]...</replaceable></arg>
+      <arg choice="req">glob pattern</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  
+  <refsection xml:id="stat_overview"><info><title>Overview</title></info>
+
+  <para>
+    The GED <command>stat</command> command reports information about objects in
+    a BRL-CAD .g file.  It produces a tabular output, with options for user configurability
+    and sorting.
+  </para>
+
+  <para>
+    Available types reflect geometry object data:
+
+    <table frame="all"> <title>STAT Information Keys - Core Object Info</title>
+    <tgroup cols="2">
+      <colspec colwidth="1in" colname="c1"/>
+      <colspec colwidth="4in" colname="c2"/>
+      <tbody>
+	<row> <entry>name</entry> <entry>Object database name (for example, "primitive.s")</entry> </row>
+	<row> <entry>uses</entry> <entry>Number of uses, from instancing</entry> </row>
+	<row> <entry>size</entry> <entry>Size of database object</entry> </row>
+	<row> <entry>refs</entry> <entry>Number of times object is referenced by COMBs</entry> </row>
+	<row> <entry>flags</entry> <entry>Flags</entry> </row>
+	<row> <entry>major_type</entry> <entry>Object major type</entry> </row>
+	<row> <entry>minor_type</entry> <entry>Object minor type</entry> </row>
+	<row> <entry>type</entry> <entry>Object type (short name)</entry> </row>
+      </tbody>
+    </tgroup>
+    </table>
+  </para>
+    
+  <para>
+    In addition to the above standard keys, attributes may also be specified.  If the desired attribute happens
+    to have the same name as one of the above standard keys, the prefix "attr:" may be added to denote an attribute.
+  </para>
+  </refsection>
+
+  <refsection xml:id="search_options"><title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-h or -?</emphasis></term>
+        <listitem>
+          <para>
+            Print help and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-r</emphasis></term>
+        <listitem>
+          <para>
+            Print raw values, instead of human friendly strings (for example, 5195952 for a size instead of 5.0M).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-F</emphasis></term>
+        <listitem>
+          <para>
+            Specify <command>search</command> style filters to trim down what is reported in <command>stat</command> output.
+          </para>
+        </listitem>
+      </varlistentry>
+       <varlistentry>
+        <term><emphasis remap="B" role="bold">-C</emphasis></term>
+        <listitem>
+          <para>
+            Supply a comma separated list of column specifiers or attribute keys to define the table layout for <command>stat</command>.
+          </para>
+        </listitem>
+       </varlistentry>
+        <varlistentry>
+        <term><emphasis remap="B" role="bold">-S</emphasis></term>
+        <listitem>
+          <para>
+            Supply a comma separated list of column specifiers or attribute keys to specify a sorting priority for <command>stat</command>.
+	    Priority is left to right - sorting will be performed first based on the leftmost specifier, and subsequent specifiers
+	    will be used to resolve any ties.  To reverse the ordering decisions for a given column, prefix the specifier with a "!"
+	    character.
+          </para>
+        </listitem>
+	</varlistentry>
+    </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+    <example><title>Default Output</title>
+      <para>
+        <userinput>stat *</userinput>
+      </para>
+      <literallayout>
+ Object Name             uses   References   Flags   Type     Size 
+----------------------- ------ ------------ ------- -------- ------
+ Default                 0      1            2       comb     288B 
+ NIST_MBE_PMI_7-10.3dm   0      0            2       comb     264B 
+ Solid1.r                0      1            6       region   280B 
+ Solid1.r.s              0      1            1       brep     859K 
+ Solid1_2.r              0      1            6       region   280B 
+ Solid1_2.r.s            0      1            1       brep     672K 
+ Solid1_3.r              0      1            6       region   280B 
+ Solid1_3.r.s            0      1            1       brep     431K 
+ Solid1_4.r              0      1            6       region   280B 
+ Solid1_4.r.s            0      1            1       brep     771K 
+ _GLOBAL                 0      0            8                96B 
+      </literallayout>
+    </example>
+
+    <example><title>Sorting by Size</title>
+      <para>
+        <userinput>stat -S "size" *</userinput>
+      </para>
+      <literallayout>
+ Object Name             uses   References   Flags   Type     Size 
+----------------------- ------ ------------ ------- -------- ------
+ _GLOBAL                 0      0            8                96B  
+ NIST_MBE_PMI_7-10.3dm   0      0            2       comb     264B 
+ Solid1_2.r              0      1            6       region   280B 
+ Solid1_3.r              0      1            6       region   280B 
+ Solid1.r                0      1            6       region   280B 
+ Solid1_4.r              0      1            6       region   280B 
+ Default                 0      1            2       comb     288B 
+ Solid1_3.r.s            0      1            1       brep     431K 
+ Solid1_2.r.s            0      1            1       brep     672K 
+ Solid1_4.r.s            0      1            1       brep     771K 
+ Solid1.r.s              0      1            1       brep     859K 
+      </literallayout>
+    </example>
+
+    <example><title>Sorting by Size, Reversed Order</title>
+      <para>
+        <userinput>stat -S "!size" *</userinput>
+      </para>
+      <literallayout>
+ Object Name             uses   References   Flags   Type     Size 
+----------------------- ------ ------------ ------- -------- ------
+ Solid1.r.s              0      1            1       brep     859K 
+ Solid1_4.r.s            0      1            1       brep     771K 
+ Solid1_2.r.s            0      1            1       brep     672K 
+ Solid1_3.r.s            0      1            1       brep     431K 
+ Default                 0      1            2       comb     288B 
+ Solid1_3.r              0      1            6       region   280B 
+ Solid1.r                0      1            6       region   280B 
+ Solid1_2.r              0      1            6       region   280B 
+ Solid1_4.r              0      1            6       region   280B 
+ NIST_MBE_PMI_7-10.3dm   0      0            2       comb     264B 
+ _GLOBAL                 0      0            8                96B 
+      </literallayout>
+    </example>
+
+     <example><title>Filtering by Type</title>
+      <para>
+        <userinput>stat -F "-type brep" *</userinput>
+      </para>
+      <literallayout>
+ Object Name    uses   References   Flags   Type   Size 
+-------------- ------ ------------ ------- ------ ------
+ Solid1.r.s     0      1            1       brep   859K 
+ Solid1_2.r.s   0      1            1       brep   672K 
+ Solid1_3.r.s   0      1            1       brep   431K 
+ Solid1_4.r.s   0      1            1       brep   771K
+      </literallayout>
+     </example>
+
+     <example><title>Custom Columns</title>
+      <para>
+        <userinput>stat -C "name,type,size,color" *</userinput>
+      </para>
+      <literallayout>
+ Object Name             Type     Size   color       
+----------------------- -------- ------ -------------
+ Default                 comb     288B   0/0/0       
+ NIST_MBE_PMI_7-10.3dm   comb     264B   0/0/0       
+ Solid1.r                region   280B   153/231/254 
+ Solid1.r.s              brep     859K               
+ Solid1_2.r              region   280B   255/206/142 
+ Solid1_2.r.s            brep     672K               
+ Solid1_3.r              region   280B   237/255/168 
+ Solid1_3.r.s            brep     431K               
+ Solid1_4.r              region   280B   178/178/178 
+ Solid1_4.r.s            brep     771K               
+ _GLOBAL                          96B                
+      </literallayout>
+     </example>
+    
+  </refsection>
+  
+</refentry>

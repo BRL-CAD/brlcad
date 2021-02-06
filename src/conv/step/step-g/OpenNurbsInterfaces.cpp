@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,26 @@
 
 #include "common.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  if GCC_PREREQ(8,0)
+#    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  endif
+#endif
+
 #include "opennurbs.h"
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 #include "sdai.h"
 class SDAI_Application_instance;

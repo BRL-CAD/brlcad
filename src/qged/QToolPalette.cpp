@@ -1,7 +1,7 @@
 /*                Q T O O L P A L E T T E . C X X
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,7 +95,6 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     button_layout->setContentsMargins(0,0,0,0);
     button_container->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     button_container->setLayout(button_layout);
-    button_container->show();
     control_container = new QWidget();
     control_layout = new QVBoxLayout();
     control_layout->setSpacing(0);
@@ -104,7 +103,6 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     control_container->setMinimumHeight(icon_height);
     control_container->setMinimumWidth(icon_width);
     control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    control_container->show();
 
     splitter->addWidget(button_container);
     splitter->setStretchFactor(0, 1);

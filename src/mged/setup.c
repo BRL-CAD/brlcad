@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -235,6 +235,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"nmg_fix_normals", cmd_ged_plain_wrapper, ged_nmg_fix_normals},
     {"nmg_simplify", cmd_ged_plain_wrapper, ged_nmg_simplify},
     {"nmg", cmd_ged_plain_wrapper, ged_nmg},
+    {"npush", cmd_ged_plain_wrapper, ged_npush},
     {"o_rotate", f_be_o_rotate, GED_FUNC_PTR_NULL},
     {"o_scale", f_be_o_scale, GED_FUNC_PTR_NULL},
     {"oed", cmd_oed, GED_FUNC_PTR_NULL},
@@ -334,6 +335,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"solids_on_ray", cmd_ged_plain_wrapper, ged_solids_on_ray},
     {"srot", f_be_s_rotate, GED_FUNC_PTR_NULL},
     {"sscale", f_be_s_scale, GED_FUNC_PTR_NULL},
+    {"stat", cmd_ged_plain_wrapper, ged_stat},
     {"status", f_status, GED_FUNC_PTR_NULL},
     {"stuff_str", cmd_stuff_str, GED_FUNC_PTR_NULL},
     {"summary", cmd_ged_plain_wrapper, ged_summary},
@@ -425,7 +427,7 @@ mged_setup(Tcl_Interp **interpreter)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
-    const char *name = bu_argv0_full_path();
+    const char *name = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
 
     /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
     if (name) {

@@ -1,7 +1,7 @@
 #             C O M P I L E R F L A G S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2020 United States Government as represented by
+# Copyright (c) 2011-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -160,14 +160,16 @@ endmacro(ADD_NEW_FLAG)
 
 # This macro tests for a specified C or C++ compiler flag, setting the
 # result in the specified variable.
-macro(CHECK_COMPILER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
-  if("${FLAG_LANG}" STREQUAL "C")
-    CHECK_C_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
-  endif("${FLAG_LANG}" STREQUAL "C")
-  if("${FLAG_LANG}" STREQUAL "CXX")
-    CHECK_CXX_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
-  endif("${FLAG_LANG}" STREQUAL "CXX")
-endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
+if(NOT COMMAND CHECK_COMPILER_FLAG)
+  macro(CHECK_COMPILER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
+    if("${FLAG_LANG}" STREQUAL "C")
+      CHECK_C_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
+    endif("${FLAG_LANG}" STREQUAL "C")
+    if("${FLAG_LANG}" STREQUAL "CXX")
+      CHECK_CXX_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
+    endif("${FLAG_LANG}" STREQUAL "CXX")
+  endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
+endif(NOT COMMAND CHECK_COMPILER_FLAG)
 
 
 # Synopsis:  CHECK_FLAG(LANG flag [BUILD_TYPES type1 type2 ...] [GROUPS group1 group2 ...] [VARS var1 var2 ...] )

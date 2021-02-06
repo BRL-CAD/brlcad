@@ -1,7 +1,7 @@
 /*                           G S H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ main(int argc, const char **argv)
 
     if (argc == 0 || !argv) return -1;
 
-    /* Let bu_brlcad_root and friends know where we are */
+    /* Let libbu know where we are */
     bu_setprogname(argv[0]);
 
     /* Done with program name */
@@ -249,9 +249,17 @@ main(int argc, const char **argv)
 
 	/* If we're not opening or closing, and we have an active gedp,
 	 * make a standard libged call */
-	ged_exec(gedp, ac, (const char **)av);
-	printf("%s\n", bu_vls_cstr(gedp->ged_result_str));
-	bu_vls_trunc(gedp->ged_result_str, 0);
+	if (ged_cmd_valid(av[0], NULL)) {
+	    const char *ccmd = NULL;
+	    int edist = ged_cmd_lookup(&ccmd, av[0]);
+	    if (edist) {
+		printf("Command %s not found, did you mean %s (edit distance %d)?\n", av[0], ccmd, edist);
+	    }
+	} else {
+	    ged_exec(gedp, ac, (const char **)av);
+	    printf("%s\n", bu_vls_cstr(gedp->ged_result_str));
+	    bu_vls_trunc(gedp->ged_result_str, 0);
+	}
 #if 0
 	int (*func)(struct ged *, int, char *[]);
 	*(void **)(&func) = bu_dlsym(libged, av[0]);

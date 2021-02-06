@@ -1,7 +1,7 @@
 /*                        B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1480,9 +1480,11 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 extern "C" {
     struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
     const struct ged_cmd brep_cmd = { &brep_cmd_impl };
-    const struct ged_cmd *brep_cmds[] = { &brep_cmd,  NULL };
+    struct ged_cmd_impl dplot_cmd_impl = { "dplot", ged_dplot_core, GED_CMD_DEFAULT };
+    const struct ged_cmd dplot_cmd = { &dplot_cmd_impl };
+    const struct ged_cmd *brep_cmds[] = { &brep_cmd, &dplot_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 2 };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {

@@ -1,7 +1,7 @@
 /*          O R T H O G R A P H I C C A M E R A . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,7 @@
 #include "common.h"
 
 #include "OrthographicCamera.h"
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
+#include <cmath>
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -41,17 +40,24 @@
 
 OrthographicCamera::OrthographicCamera() = default;
 
-glm::mat4 OrthographicCamera::modelViewMatrix() const {
-    auto rotationMatrixAroundX = glm::rotate(glm::radians(angleAroundAxes.x), axisX);
-    auto rotationMatrixAroundY = glm::rotate(glm::radians(angleAroundAxes.y), axisY);
-    auto rotationMatrixAroundZ = glm::rotate(glm::radians(angleAroundAxes.z), axisZ);
-    auto rotationMatrix = rotationMatrixAroundX * rotationMatrixAroundY * rotationMatrixAroundZ;
+QMatrix4x4 OrthographicCamera::modelViewMatrix() const {
+    QMatrix4x4 rotationMatrixAroundX;
+    rotationMatrixAroundX.rotate(angleAroundAxes.x(), axisX);
+    QMatrix4x4 rotationMatrixAroundY;
+    rotationMatrixAroundY.rotate(angleAroundAxes.y(), axisY);
+    QMatrix4x4 rotationMatrixAroundZ;
+    rotationMatrixAroundZ.rotate(angleAroundAxes.z(), axisZ);
+    QMatrix4x4 rotationMatrix = rotationMatrixAroundX * rotationMatrixAroundY * rotationMatrixAroundZ;
+    rotationMatrix.translate(-eyePosition);
 
-    return glm::translate(rotationMatrix, eyePosition);
+    return rotationMatrix;
 }
 
-glm::mat4 OrthographicCamera::projectionMatrix() const {
-    return glm::ortho(-zoom * w / h, zoom * w / h, -zoom, zoom, nearPlane, farPlane);
+QMatrix4x4 OrthographicCamera::projectionMatrix() const {
+    QMatrix4x4 ret;
+    ret.ortho(-(verticalSpan/2) * w / h, (verticalSpan/2) * w / h, -verticalSpan/2, verticalSpan/2, nearPlane, farPlane);
+
+    return ret;
 }
 
 void OrthographicCamera::setWH(float w, float h) {
@@ -64,14 +70,14 @@ void OrthographicCamera::processRotateRequest(const int &deltaX, const int &delt
         return;
     }
 
-    float deltaAngleX = float(deltaX) / h;
-    float deltaAngleY = float(deltaY) / h;
+    const float deltaAngleX = float(deltaX) / h;
+    const float deltaAngleY = float(deltaY) / h;
     if (thirdAxis) {
-        angleAroundAxes.y += deltaAngleX * eyeRotationPerMouseDelta;
+        angleAroundAxes.setY(angleAroundAxes.y() + deltaAngleX * eyeRotationPerMouseDelta);
     } else {
-        angleAroundAxes.z += deltaAngleX * eyeRotationPerMouseDelta;
+        angleAroundAxes.setZ(angleAroundAxes.z() + deltaAngleX * eyeRotationPerMouseDelta);
     }
-    angleAroundAxes.x += deltaAngleY * eyeRotationPerMouseDelta;
+    angleAroundAxes.setX(angleAroundAxes.x() + deltaAngleY * eyeRotationPerMouseDelta);
 
 }
 
@@ -80,23 +86,51 @@ void OrthographicCamera::processMoveRequest(const int &deltaX, const int &deltaY
         return;
     }
 
-    auto rotationMatrixAroundZ = glm::rotate(glm::radians(-angleAroundAxes.z), axisZ);
-    auto rotationMatrixAroundY = glm::rotate(glm::radians(-angleAroundAxes.y), axisY);
-    auto rotationMatrixAroundX = glm::rotate(glm::radians(-angleAroundAxes.x), axisX);
-    auto rotationMatrix = rotationMatrixAroundZ * rotationMatrixAroundY * rotationMatrixAroundX;
+    QMatrix4x4 rotationMatrixAroundZ;
+    rotationMatrixAroundZ.rotate(-angleAroundAxes.z(), axisZ);
+    QMatrix4x4 rotationMatrixAroundY;
+    rotationMatrixAroundY.rotate(-angleAroundAxes.y(), axisY);
+    QMatrix4x4 rotationMatrixAroundX;
+    rotationMatrixAroundX.rotate(-angleAroundAxes.x(), axisX);
+    QMatrix4x4 rotationMatrix = rotationMatrixAroundZ * rotationMatrixAroundY * rotationMatrixAroundX;
 
-    glm::vec3 cameraRightDirection(rotationMatrix * glm::vec4(axisX, 1.0));
-    eyePosition += float(deltaX) * eyeMovementPerMouseDelta * cameraRightDirection * zoom;
+    QVector3D cameraRightDirection(rotationMatrix * axisX);
+    eyePosition -= static_cast<float>(deltaX) * eyeMovementPerMouseDelta * cameraRightDirection * verticalSpan;
 
-    glm::vec3 cameraUpDirection(rotationMatrix * glm::vec4(axisY, 1.0));
-    eyePosition -= float(deltaY) * eyeMovementPerMouseDelta * cameraUpDirection * zoom;
+    QVector3D cameraUpDirection(rotationMatrix * axisY);
+    eyePosition += static_cast<float>(deltaY) * eyeMovementPerMouseDelta * cameraUpDirection * verticalSpan;
 }
 
 void OrthographicCamera::processZoomRequest(const int &deltaWheelAngle) {
     float zoomFactor = 1 - zoomFactorMultiplier * float(deltaWheelAngle);
-    zoom = pow(zoom, zoomFactor);
-    if (zoom < zoomLowerBound) zoom = zoomLowerBound;
+    verticalSpan = pow(verticalSpan, zoomFactor);
+    if (verticalSpan < zoomLowerBound) verticalSpan = zoomLowerBound;
 }
+
+QMatrix4x4 OrthographicCamera::modelViewMatrixNoTranslate() const {
+    QMatrix4x4 rotationMatrixAroundX;
+    rotationMatrixAroundX.rotate(angleAroundAxes.x(), axisX);
+    QMatrix4x4 rotationMatrixAroundY;
+    rotationMatrixAroundY.rotate(angleAroundAxes.y(), axisY);
+    QMatrix4x4 rotationMatrixAroundZ;
+    rotationMatrixAroundZ.rotate(angleAroundAxes.z(), axisZ);
+    QMatrix4x4 rotationMatrix = rotationMatrixAroundX * rotationMatrixAroundY * rotationMatrixAroundZ;
+    return rotationMatrix;
+}
+
+
+void OrthographicCamera::setEyePosition(float x, float y, float z)
+{
+    eyePosition.setX(x);
+    eyePosition.setY(y);
+    eyePosition.setZ(z);
+}
+
+QVector3D OrthographicCamera::getEyePosition()
+{
+    return eyePosition;
+}
+
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop

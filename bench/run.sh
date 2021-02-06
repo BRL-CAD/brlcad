@@ -2,7 +2,7 @@
 #                          R U N . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,34 +68,31 @@ fi
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
-# Windows has a special NUL device instead of /dev/null
-if test -e /dev/null ; then
-    export NUL=/dev/null
-else
-    export NUL=NUL
-fi
-
 # commands that this script expects
 for __cmd in echo pwd ; do
-    echo "test" | $__cmd > $NUL 2>&1
+    out=`echo "test" | $__cmd 2>&1`
     if test ! x$? = x0 ; then
 	echo "INTERNAL ERROR: $__cmd command is required"
+	echo "                (output was [$out])"
 	exit 1
     fi
 done
-echo "test" | grep "test" > $NUL 2>&1
+out=`echo "test" | grep "test" 2>&1`
 if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: grep command is required"
+    echo "                (output was [$out])"
     exit 1
 fi
-echo "test" | tr "test" "test" > $NUL 2>&1
+out=`echo "test" | tr "test" "test" 2>&1`
 if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: tr command is required"
+    echo "                (output was [$out])"
     exit 1
 fi
-echo "test" | sed "s/test/test/" > $NUL 2>&1
+out=`echo "test" | sed "s/test/test/" 2>&1`
 if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: sed command is required"
+    echo "                (output was [$out])"
     exit 1
 fi
 
@@ -398,12 +395,14 @@ fi
 
 # where to write results
 LOGFILE=run-$$-benchmark.log
-touch "$LOGFILE"
+if test -e $LOGFILE ; then
+    echo "WARNING: $LOGFILE already exists.  Appending."
+else
+    touch "$LOGFILE"
+fi
 if test ! -w "$LOGFILE" ; then
-    if test "x$LOGFILE" != "x/dev/null" -a "x$LOGFILE" != "xNUL" ; then
-	echo "ERROR: Unable to log to $LOGFILE"
-    fi
-    LOGFILE=$NUL
+    echo "WARNING: Unable to log to $LOGFILE"
+    LOGFILE=
 fi
 
 VERBOSE_ECHO=:
@@ -422,7 +421,13 @@ fi
 $ECHO "B R L - C A D   B E N C H M A R K"
 $ECHO "================================="
 $ECHO "Running $THIS on `date`"
-$ECHO "Logging output to $LOGFILE"
+if test "x$LOGFILE" != "x" ; then
+    $ECHO "Logging output to $LOGFILE"
+elif test "x$QUIET" != "x" ; then
+    $ECHO "Logging output to STDOUT"
+else
+    $ECHO "Logging output is OFF"
+fi
 $ECHO "`uname -a 2>&1`"
 $ECHO
 
@@ -591,11 +596,11 @@ else
     $ECHO "Using [$ELP] for ELP"
 fi
 
-# prevent git shell and msys2 from expanding -F/dev/debug
+# stop git shell & msys2 arg manipulation
 export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="-F/dev/debug"
 
 # sanity check: make sure $RT runs
-eval \"$RT\" -s1 -F/dev/debug \"${DB}/moss.g\" LIGHT > $NUL 2>&1
+out=`eval \"$RT\" -s1 -F/dev/debug \"${DB}/moss.g\" LIGHT 2>&1`
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
@@ -603,23 +608,27 @@ if test ! "x${ret}" = "x0" ; then
     "$RT"
     $ECHO
     $ECHO "ERROR:  RT does not seem to work as expected"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
 # sanity check: make sure $CMP runs
-eval \"$CMP\" $NUL $NUL > $NUL 2>&1
+out=`eval \"$CMP\" - - 2>&1 <<EOF
+EOF`
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  CMP does not seem to work as expected"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
 # sanity check: make sure $ELP runs
-eval \"$ELP\" 0 > $NUL 2>&1
+out=`eval \"$ELP\" 0 2>&1`
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"
+    $ECHO "        (returned $ret, output was [$out])"
     exit 2
 fi
 
@@ -679,7 +688,8 @@ $ECHO
 
 
 # if expr works, let the user know about how long this might take
-if test "x`expr 1 - 1 2>$NUL`" = "x0" ; then
+zero=`expr 1 - 1 2>&1`
+if test "x$zero" = "x0" ; then
     mintime="`expr 6 \* $TIMEFRAME`"
     if test $mintime -lt 1 ; then
 	mintime=0 # zero is okay
@@ -701,6 +711,7 @@ if test "x`expr 1 - 1 2>$NUL`" = "x0" ; then
     $ECHO
 else
     $ECHO "WARNING: expr is unavailable, unable to compute statistics"
+    $ECHO "         (output of 1 - 1 was [$zero])"
     $ECHO
 fi
 
@@ -867,13 +878,13 @@ sqrt ( ) {
     if test "x$sqrt_number" = "x" ; then
 	$ECHO "ERROR: cannot compute the square root of nothing" 1>&2
 	exit 1
-    elif test $sqrt_number -lt 0 > $NUL 2>&1 ; then
+    elif test $sqrt_number -lt 0 ; then
 	$ECHO "ERROR: square root of negative numbers is only in your imagination" 1>&2
 	exit 1
     fi
 
     sqrt_have_dc=yes
-    echo "1 1 + p" | dc >$NUL 2>&1
+    out=`echo "1 1 + p" | dc 2>&1`
     if test ! x$? = x0 ; then
 	sqrt_have_dc=no
     fi
@@ -883,7 +894,7 @@ sqrt ( ) {
 	sqrt_root=`echo "$sqrt_number v p" | dc`
     else
 	sqrt_have_bc=yes
-	echo "1 + 1" | bc >$NUL 2>&1
+	out=`echo "1 + 1" | bc 2>&1`
 	if test ! "x$?" = "x0" ; then
 	    sqrt_have_bc=no
 	fi
@@ -1130,7 +1141,7 @@ EOF
 	ls -la *.pix*
     fi
     $VERBOSE_ECHO "DEBUG: $CMP $PIX/${bench_testname}.pix ${bench_testname}.pix"
-    cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1`"
+    cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1 | grep pixels`"
     ret=$?
 
     $ECHO "$cmp_result"
@@ -1233,13 +1244,13 @@ perf ( ) {
 
     # see if we have a calculator
     perf_have_dc=yes
-    echo "1 1 + p" | dc >$NUL 2>&1
+    out=`echo "1 1 + p" | dc 2>&1`
     if test ! x$? = x0 ; then
 	perf_have_dc=no
     fi
 
     perf_have_bc=yes
-    echo "1 + 1" | bc >$NUL 2>&1
+    out=`echo "1 + 1" | bc 2>&1`
     if test ! x$? = x0 ; then
 	perf_have_bc=no
     fi

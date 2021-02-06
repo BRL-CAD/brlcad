@@ -2715,6 +2715,14 @@ rt -s 512 -F :1
             </row>
             <row>
               <entry>
+                N
+              </entry>
+              <entry>
+                shoot a ray with nirt
+              </entry>
+            </row>
+            <row>
+              <entry>
                 &lt; F1 &gt;
               </entry>
               <entry>

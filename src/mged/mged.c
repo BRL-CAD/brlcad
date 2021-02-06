@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,6 +47,10 @@
 
 #ifdef HAVE_POLL_H
 #  include <poll.h>
+#endif
+
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
 #endif
 
 #include "bio.h"
@@ -1112,6 +1116,15 @@ main(int argc, char *argv[])
 	}
     }
 
+    /* Change the working directory to BU_DIR_HOME if we are invoking
+     * without any arguments. */
+    if (argc == 1) {
+	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
+	if (homed && chdir(homed)) {
+	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
+	}
+    }
+
     /* skip the args and invocation name */
     argc -= bu_optind;
     argv += bu_optind;
@@ -1474,9 +1487,9 @@ main(int argc, char *argv[])
 		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;
-		const char *archer = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
 		const char *archer_trans;
 		Tcl_DStringInit(&temp);
+		const char *archer = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "archer", "archer_launch.tcl", NULL);
 		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
 		tclcad_set_argv(INTERP, argc, (const char **)argv);
 		status = Tcl_EvalFile(INTERP, archer_trans);
@@ -2507,8 +2520,9 @@ mged_finish(int exitcode)
     Tcl_Release((ClientData)INTERP);
 
     ged_close(GEDP);
-    if (GEDP->ged_io_data)
-	BU_PUT(GEDP->ged_io_data, struct tclcad_io_data);
+    if (GEDP->ged_io_data) {
+	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
+    }
     if (GEDP)
 	BU_PUT(GEDP, struct ged);
 
@@ -2732,6 +2746,14 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     } else {
 	/* Opened existing database file */
 
+	/* If dbi_version < 0, file isn't a valid .g file - don't proceed */
+	if (DBIP->dbi_version < 0) {
+	    bu_free(DBIP->dbi_filename, "free filename");
+	    DBIP = DBI_NULL;
+	    Tcl_AppendResult(interpreter, "opendb:  ", argv[1], " is not a valid database\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
 	/* Scan geometry database and build in-memory directory */
 	(void)db_dirbuild(DBIP);
     }
@@ -2804,8 +2826,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
     GEDP->ged_interp = (void *)interpreter;
     GEDP->ged_interp_eval = &mged_db_search_callback;
-    struct tclcad_io_data *t_iod;
-    BU_GET(t_iod, struct tclcad_io_data);
+    struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
     t_iod->interp = interpreter;
     GEDP->ged_io_data = t_iod;
@@ -2870,7 +2891,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&cmd, 0);
-	bu_vls_printf(&cmd, "opendb_callback %s", DBIP->dbi_filename);
+	bu_vls_printf(&cmd, "opendb_callback {%s}", DBIP->dbi_filename);
 	(void)Tcl_Eval(interpreter, bu_vls_addr(&cmd));
 
 	bu_vls_strcpy(&cmd, "local2base");
@@ -2951,8 +2972,9 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    if (GEDP->ged_io_data)
-	BU_PUT(GEDP->ged_io_data, struct tclcad_io_data);
+    if (GEDP->ged_io_data) {
+	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
+    }
     ged_close(GEDP);
     BU_PUT(GEDP, struct ged);
 
@@ -2968,8 +2990,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
     GEDP->ged_interp = (void *)interpreter;
     GEDP->ged_interp_eval = &mged_db_search_callback;
-    struct tclcad_io_data *t_iod;
-    BU_GET(t_iod, struct tclcad_io_data);
+    struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
     t_iod->interp = interpreter;
     GEDP->ged_io_data = t_iod;

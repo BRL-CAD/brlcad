@@ -1,7 +1,7 @@
 /*                          I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,9 @@
 #endif
 
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/path.h"
+#include "bu/vls.h"
 #include "bn.h"
 #include "dm.h"
 #include "raytrace.h"
@@ -87,13 +90,38 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     if (library_initialized(0))
 	return TCL_OK;
 
+    /* Tcl_Init needs init.tcl.  It can be tricky to find init.tcl - help out,
+     * if we can.  Per the Tcl_Init() definition in generic/tclInterp.c in the
+     * Tcl source code, setting tcl_library is the recommended way for embedding
+     * applications to assist Tcl_Init in finding this file... */
+    char libdir[MAXPATHLEN] = {0};
+    bu_dir(libdir, MAXPATHLEN, BU_DIR_LIB, NULL);
+    if (strlen(libdir)) {
+	struct bu_vls lib_path = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&lib_path, "%s%ctcl%s/init.tcl", libdir, BU_DIR_SEPARATOR, TCL_VERSION);
+	if (bu_file_exists(bu_vls_cstr(&lib_path), NULL)) {
+	    struct bu_vls initpath = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&lib_path, "%s%ctcl%s", libdir, BU_DIR_SEPARATOR, TCL_VERSION);
+	    bu_vls_printf(&initpath, "set tcl_library {%s}", bu_vls_cstr(&lib_path));
+	    if (Tcl_Eval(interp, bu_vls_addr(&initpath))) {
+		bu_log("Problem initializing tcl_library to init.tcl path: Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    }
+	    bu_vls_free(&initpath);
+	}
+	bu_vls_free(&lib_path);
+    }
+
     if (Tcl_Init(interp) == TCL_ERROR) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Tcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
     if (init_gui) {
 #ifdef HAVE_TK
 	if (Tk_Init(interp) == TCL_ERROR) {
+	    if (tlog)
+		bu_vls_printf(tlog, "Tk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
 #endif
@@ -103,7 +131,7 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     tclcad_auto_path(interp);
 
     /* Initialize [incr Tcl] */
-    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+    if (Tcl_Eval(interp, "package require Itcl 3") != TCL_OK) {
 	if (tlog)
 	    bu_vls_printf(tlog, "Itcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
@@ -112,7 +140,7 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     /* Initialize [incr Tk] */
     if (init_gui) {
 #ifdef HAVE_TK
-	if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+	if (Tcl_Eval(interp, "package require Itk 3") != TCL_OK) {
 	    if (tlog)
 	       	bu_vls_printf(tlog, "Itk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;

@@ -35,7 +35,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 # Set CMake project name
 project(GDAL)
@@ -234,11 +234,13 @@ if (NOT PROBE_PTHREAD_H)
   if (PROBE_PTHREAD_H_CLOCKID_T)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dclockid_t=clock_t -pthread")
-    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
   endif (PROBE_PTHREAD_H_CLOCKID_T)
 endif (NOT PROBE_PTHREAD_H)
+
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads)
+
 if(CMAKE_USE_PTHREADS_INIT)
   set(CPL_MULTIPROC_PTHREAD 1)
   include(CheckSymbolExists)
@@ -358,7 +360,7 @@ foreach(frmt ${OGR_FORMATS})
   set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
 endforeach(frmt ${OGR_FORMATS})
 
-set(gdal_libs ${PROJ4_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(gdal_libs ${PROJ4_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES} Threads::Threads)
 set(lib_list M DL ICONV)
 foreach(ll ${lib_list})
   if(${ll}_LIBRARY)

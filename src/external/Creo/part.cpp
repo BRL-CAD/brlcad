@@ -1,7 +1,7 @@
 /*                   P A R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2020 United States Government as represented by
+ * Copyright (c) 2017-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -515,7 +515,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     ProMdlMdlnameGet(model, wname);
     ProWstringToString(pname, wname);
 
-    creo_log(cinfo, MSG_DEBUG, "Tessellating part %s...", pname);
+    creo_log(cinfo, MSG_DEBUG, "Tessellating part %s...\n", pname);
 
     /* Tessellate part, going from coarse to fine tessellation */
     for (int i = 0; i <= cinfo->max_to_min_steps; ++i) {

@@ -1,6 +1,6 @@
 if(BRLCAD_ENABLE_BULLET)
   BRLCAD_ADDEXEC(simulate_test "simulate_test.cpp" "libged" TEST)
-  add_test(NAME simulate_test COMMAND simulate_test)
+  BRLCAD_ADD_TEST(NAME simulate_test COMMAND simulate_test)
 endif(BRLCAD_ENABLE_BULLET)
 
 CMAKEFILES(simulate_test.cpp)

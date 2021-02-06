@@ -1,7 +1,7 @@
 #                      F B P A G E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -444,20 +444,20 @@ namespace eval RtWizard {
 		 [string match $screenOnly "false"] } {
 	    # Will be generating a file - need in-memory fb
 	    set port 0
-	    while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $port } error ] } {
+	    while { ! [catch {exec [file join [bu_dir bin] fbclear] -F $port } error ] } {
 		if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $fbserv_port is already in use."}
 		incr port
 	    }
-	    catch {exec [file join [bu_brlcad_root bin] fbserv] -w $width -n $height $port /dev/mem &} pid
+	    catch {exec [file join [bu_dir bin] fbserv] -w $width -n $height $port /dev/mem &} pid
 	    # Give the fbserv time to fire up
 	    after 1000
-	    exec [file join [bu_brlcad_root bin] fbclear] -F $port 0 0 0
+	    exec [file join [bu_dir bin] fbclear] -F $port 0 0 0
 
 	    set ::RtWizard::wizard_state(fbserv_port) $port
 	    set ::RtWizard::wizard_state(pid) $pid
 	    return "$port $pid"
 	}
-	set binpath [bu_brlcad_root "bin"]
+	set binpath [bu_dir bin]
 	#
 	# Create an on-screen buffer
 	#

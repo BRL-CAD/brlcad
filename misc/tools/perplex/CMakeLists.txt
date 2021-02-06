@@ -2,7 +2,7 @@
 #
 # Perplex - re2c scanner input generator
 #
-# Copyright (c) 2012-2020 United States Government as represented by
+# Copyright (c) 2012-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 project(PERPLEX)
 

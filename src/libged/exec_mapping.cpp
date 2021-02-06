@@ -1,7 +1,7 @@
 /*                    E X E C _ M A P P I N G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,11 +31,24 @@
 
 #include "ged.h"
 
+/* For this file, we need to undefine stat if defined so the command template
+ * doesn't end up being expanded with the defined version of the string.
+ * Without this we end up with ged__stati64 on Windows, instead of ged_stat.
+ *
+ * If this happens for other commands, the solution will be similar - the
+ * purpose of this function is just to expand templates into definitions to
+ * call ged_cmd_valid and ged_exec, not to actually execute any other
+ * functions; it should be safe to undef them here.
+ */
+#undef stat
+
+
 #define GED_CMD_HELPER1(x, y) x##y
 #define GED_CMD(x) \
 	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
 	{ \
 	    const char *fname = #x ; \
+	    const char *argv0 = argv[0] ; \
 	    int vret = ged_cmd_valid(argv[0], fname); \
 	    if (vret) { \
 		argv[0] = fname; \
@@ -44,8 +57,10 @@
 	    if (vret) { \
 		ret |= GED_UNKNOWN; \
 	    } \
+	    argv[0] = argv0; \
 	    return ret; \
 	} \
+
 
 GED_CMD(3ptarb)
 GED_CMD(E)
@@ -114,6 +129,7 @@ GED_CMD(debugnmg)
 GED_CMD(decompose)
 GED_CMD(delay)
 GED_CMD(dir2ae)
+GED_CMD(dplot)
 GED_CMD(draw)
 GED_CMD(dsp)
 GED_CMD(dump)
@@ -229,6 +245,7 @@ GED_CMD(nmg)
 GED_CMD(nmg_collapse)
 GED_CMD(nmg_fix_normals)
 GED_CMD(nmg_simplify)
+GED_CMD(npush)
 GED_CMD(ocenter)
 GED_CMD(orient)
 GED_CMD(orientation)
@@ -320,6 +337,7 @@ GED_CMD(solid_report)
 GED_CMD(solids)
 GED_CMD(solids_on_ray)
 GED_CMD(sphgroup)
+GED_CMD(stat)
 GED_CMD(summary)
 GED_CMD(sv)
 GED_CMD(sync)

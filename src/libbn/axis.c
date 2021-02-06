@@ -1,7 +1,7 @@
 /*                          A X I S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@
 void
 tp_3axis(FILE *fp,		/**< output file */
 	 char *string,		/**< label for axis */
-	 fastf_t *origin,	/**< simple 3d point */
-	 fastf_t *rot,		/**< rotation angle */
+	 point_t origin,	/**< simple 3d point */
+	 mat_t rot,		/**< rotation angle */
 	 double length,		/**< length of axis */
 	 int ccw,    		/**< 0=clockwise, !0=counter clockwise (ccw) */
 	 int ndigits,		/**< # digits wide */

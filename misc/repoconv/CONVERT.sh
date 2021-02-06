@@ -212,6 +212,9 @@ cd ../repowork && mkdir build && cd build && cmake .. && make -j5 && cd ../../re
 mkdir brlcad_final.git && cd brlcad_final.git && git init
 cat ../brlcad_final.fi | git fast-import
 
+# Rename master to newer default branch naming convention "main"
+git branch -m master main
+
 # Compress the fast-import - by default, it is unoptimized
 git gc --aggressive
 git reflog expire --expire-unreachable=now --all
@@ -228,5 +231,5 @@ tar -czf brlcad_final.tar.gz brlcad_final.git
 # cd brlcad_final.git
 # git remote add origin git@github.com:BRL-CAD/BRL-CAD.git
 # git push --all -u origin
-
+# git push --follow-tags
 

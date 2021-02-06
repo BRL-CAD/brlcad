@@ -10,6 +10,45 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2020-xx-xx  Release 7.32.2                                     ---
+----------------------------------------------------------------------
+
+* fixed GQA multithreaded plotting file corruption - Cliff Yapp
+* added -v verbosity option to MGED tree command - Cliff Yapp
+* updated Archer to set cwd=HOME when run without args - Cliff Yapp
+* updated rtwizard to set cwd=HOME when run without args - Cliff Yapp
+* updated MGED to set cwd=HOME when run without args - Cliff Yapp
+* fixed reporting of MGED "vars" command - Cliff Yapp
+* updated MGED to not open non-.g-files as databases - Cliff Yapp
+* fixed problems with command I/O management in MGED - Cliff Yapp
+* added decimation control examples to facetize man page - Cliff Yapp
+* changed gcv converter to append to existing .g files - Cliff Yapp
+* removed obscure MGED menu entries for unused features - Cliff Yapp
+* fixed crash when trying to shade invalid breps - Cliff Yapp
+* changed 'mvall' to rename all refs even w/ no object - Sean Morrison
+* fixed MGED search command crash on empty database - Sean Morrison
+* improved performance calculating BoT bounding boxes - Vikram Atreya
+* fixed MGED crash closing multiple rt views on Windows - Cliff Yapp
+* fixed 'n' key binding override with MGED key forwarding - Cliff Yapp
+* fixed mged crash when there are no display managers - Sean Morrison
+* added pixcmp -n length flag for subset comparisons - Sean Morrison
+* added pixcmp -s same and -d different printing flags - Sean Morrison
+* updated non-shape objects list for search shape filter - Cliff Yapp
+* added volume type to search -type filters - Cliff Yapp
+* applied shorter default title in fast4-g conversions - Cliff Yapp
+* improved pixcmp support for subset image comparisons - Sean Morrison
+* added subtract subcommand to MGED analyze command - Cliff Yapp
+* added intersect subcommand to MGED analyze command - Cliff Yapp
+* added summarize subcommand to MGED analyze command - Cliff Yapp
+* added quiet (-q) flag to MGED kill command - Cliff Yapp
+* added MGED stat command for reporting of object info - Cliff Yapp
+* corrected examples in gdiff man page - Cliff Yapp
+* fixed help message for -F option on gdiff command - Cliff Yapp
+* fixed mged -c bomb attaching to graphical displays - Sean Morrison
+* fixed titlebar bug opening .g with filename spaces - Sean Morrison
+* added a new 'N' graphics window keybinding to run nirt - Cliff Yapp
+
+----------------------------------------------------------------------
 --- 2020-09-14  Release 7.32.0                                     ---
 ----------------------------------------------------------------------
 
@@ -143,9 +182,9 @@ infrastructure with BRL-CAD's imminent migration to Git.
 	- Sean Morrison, Cliff Yapp
 * added a copy subcommand to MGED's attr command - Cliff Yapp
 * fixed a locking condition in MGED's rtcheck command - Cliff Yapp
-* added support for >=< prefixes for mater -d get options Cliff Yapp
+* added support for >=< prefixes for mater -d get options - Cliff Yapp
 * fixed brlman lookup location of html manual pages - Cliff Yapp
-* fixed rt -t top-to-bottom parallel rendering option  Sean Morrison
+* fixed rt -t top-to-bottom parallel rendering option - Sean Morrison
 * added a 'flip' normals command to MGED's brep command - Cliff Yapp
 * added rtweight support for in-.g density information - Cliff Yapp
 * improved usability of vol primitives w/ missing data - Sean Morrison
@@ -387,7 +426,7 @@ performance ray tracing pipeline.
 * fixed patch-g tool and E command infinite loop bug - Sean Morrison
 * improved NMG ray tracing fault tolerance - Sean Morrison
 * added 3dm-g support for layers and names - Keith Bowman
-* fixed color/shader preservation issue with 3dm-g importer - Jon Engbert
+* fixed issue preserving color/shader info with 3dm-g - Jon Engbert
 * added 3dm-g support for mesh objects - Jon Engbert
 * added csg implicit hierarchy conversion to brep command - Cliff Yapp
 * fixed crash in clone when told to make zero copies - Cliff Yapp
@@ -401,7 +440,7 @@ performance ray tracing pipeline.
 * removed any-png.sh - use pix tools - Sean Morrison
 * removed librtserver interface - Cliff Yapp
 * removed MGED per_line command - Sean Morrison
-* updated MGED tops command: default to -g -u behavior- Sean Morrison
+* updated MGED tops command: default to -g -u behavior - Sean Morrison
 * removed MGED -n option; use -c instead - Sean Morrison
 * removed MGED commands pl, pov and polybinout - Sean Morrison
 * removed UtahRLE image tools - Cliff Yapp

@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -4135,14 +4135,14 @@ sedit(void)
 		RT_VOL_CK_MAGIC(vol);
 
 		if (inpara == 3) {
-		    if (stat(vol->file, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of file ", vol->file, (char *)NULL);
+		    if (stat(vol->name, &stat_buf)) {
+			Tcl_AppendResult(INTERP, "Cannot get status of file ", vol->name, (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * es_para[2] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", vol->file,
+			Tcl_AppendResult(INTERP, "File (", vol->name,
 					 ") is too small, set file name first", (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
@@ -4220,7 +4220,7 @@ sedit(void)
 
 		RT_VOL_CK_MAGIC(vol);
 
-		fname = get_file_name(vol->file);
+		fname = get_file_name(vol->name);
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
@@ -4239,7 +4239,7 @@ sedit(void)
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
-		    bu_strlcpy(vol->file, fname, RT_VOL_NAME_LEN);
+		    bu_strlcpy(vol->name, fname, RT_VOL_NAME_LEN);
 		}
 
 		break;

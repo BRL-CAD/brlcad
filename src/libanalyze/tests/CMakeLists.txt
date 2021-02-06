@@ -7,8 +7,8 @@ BRLCAD_ADDEXEC(analyze_nhit nhit.cpp "libanalyze;libbu" TEST_USESDATA)
 #####################################
 BRLCAD_ADDEXEC(analyze_densities density.cpp "libanalyze;libbu" TEST)
 
-add_test(NAME analyze_densities_null        COMMAND analyze_densities)
-add_test(NAME analyze_densities_std        COMMAND analyze_densities std)
+BRLCAD_ADD_TEST(NAME analyze_densities_null        COMMAND analyze_densities)
+BRLCAD_ADD_TEST(NAME analyze_densities_std        COMMAND analyze_densities std)
 
 
 CMAKEFILES(raydiff.g)

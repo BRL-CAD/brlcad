@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 # set CMake project name
 project(DEBUG2C)

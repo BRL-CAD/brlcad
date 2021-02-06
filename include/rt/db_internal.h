@@ -1,7 +1,7 @@
 /*                   D B _ I N T E R N A L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,9 @@ struct rt_db_internal {
 
 /**
  * Get an object from the database, and convert it into its internal
- * representation.
+ * (i.e., unserialized in-memory) representation.  Applies the
+ * provided matrix transform only to the in-memory internal being
+ * returned.
  *
  * Returns -
  * <0 On error

@@ -1,7 +1,7 @@
 /*            O R T H O G R A P H I C C A M E R A . H
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,14 +24,13 @@
 #define RT3_OrthographicCAMERA_H
 
 
-#include <glm/detail/type_mat4x4.hpp>
 #include "Camera.h"
 
 
 class OrthographicCamera : public Camera {
 private:
-    const glm::vec3 initialEyePosition = glm::vec3(0.0f, 0.0f, 0.0f);
-    const glm::vec3 initialAngleAroundAxes = glm::vec3(295.0f, 0.0f, 235.0f);
+    const QVector3D initialEyePosition = QVector3D(0.0f, 0.0f, 0.0f);
+    const QVector3D initialAngleAroundAxes = QVector3D(295.0f, 0.0f, 235.0f);
 
     const float nearPlane = -2000000.0f;
     const float farPlane = 2000000.0f;
@@ -41,9 +40,9 @@ private:
     const float zoomLowerBound = 0.00001;
     const int mouseMaxDrag = 500;
 
-    glm::vec3 angleAroundAxes = initialAngleAroundAxes; // Camera direction in degrees
-    float zoom = 600;
-    glm::vec3 eyePosition = initialEyePosition; // Camera coordinates
+    QVector3D angleAroundAxes = initialAngleAroundAxes; // Camera direction in degrees
+    float verticalSpan = 600;
+    QVector3D eyePosition = initialEyePosition; // Camera coordinates
     float w = 400, h = 400;         // Display width and height.
 
 public:
@@ -57,9 +56,13 @@ public:
 
     void processZoomRequest(const int &deltaWheelAngle) override;
 
-    glm::mat4 modelViewMatrix() const override;
+    QMatrix4x4 modelViewMatrix() const ;
+    QMatrix4x4 modelViewMatrixNoTranslate() const ;
 
-    glm::mat4 projectionMatrix() const override;
+    QMatrix4x4 projectionMatrix() const ;
+
+    void setEyePosition(float x, float y, float z) ;
+    QVector3D getEyePosition();
 };
 
 
