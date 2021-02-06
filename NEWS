@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2020-xx-xx  Release 7.32.2                                     ---
+--- 2021-02-06  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
 * fixed OSX g-iges crash due to improper memory freeing - Cliff Yapp
