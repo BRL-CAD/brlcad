@@ -1,7 +1,7 @@
 /*                        G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -348,7 +348,7 @@ struct rt_ebm_internal {
 #define RT_VOL_NAME_LEN 128
 struct rt_vol_internal {
     uint32_t magic;
-    char file[RT_VOL_NAME_LEN];
+    char name[RT_VOL_NAME_LEN];
     /* NOTE: [xyz]dim/lo/hi cannot be size_t until rel8 as they are
      * written out to disk via bu_vls_struct_print() as 32-bit ints.
      */
@@ -359,6 +359,10 @@ struct rt_vol_internal {
     uint32_t hi;	/**< @brief High threshold */
     vect_t cellsize;	/**< @brief ideal coords: size of each cell */
     mat_t mat;		/**< @brief convert local coords to model space */
+    struct rt_db_internal *bip; /* @brief db object for data*/
+#define RT_VOL_SRC_FILE 'f'
+#define RT_VOL_SRC_OBJ 'o'
+    char datasrc;/**< @brief which type of data source */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     unsigned char *map;
 };

@@ -20,8 +20,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SOBOLSEQ_H
-#define SOBOLSEQ_H
+#ifndef SOBOLDATA_H
+#define SOBOLDATA_H
 
 #include "common.h"
 
@@ -879,4 +879,4 @@ static const uint32_t sobol_minit[MAXDEG+1][MAXDIM-1] = {
      6737,2995,7235,7713,973,4821,2377,1673,1,6541}
 };
 
-#endif
+#endif /* SOBOLDATA_H */

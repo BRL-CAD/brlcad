@@ -1,7 +1,7 @@
 
 if (SH_EXEC AND TARGET mged AND TARGET asc2g)
 
-  add_test(NAME regress-solids COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/solids.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_ADD_TEST(NAME regress-solids COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/solids.sh" ${CMAKE_SOURCE_DIR})
   BRLCAD_REGRESSION_TEST(regress-solids "rt;asc2g;asc2pix;pixdiff;pix-png;png-pix" TEST_DEFINED)
 
 endif (SH_EXEC AND TARGET mged AND TARGET asc2g)

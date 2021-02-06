@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2020 United States Government as represented by
+ * Copyright (c) 1996-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ bn_atan2(double y, double x)
 
 
 void
-bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
+bn_mat_mul(mat_t o, const mat_t a, const mat_t b)
 {
     o[ 0] = a[ 0] * b[ 0] + a[ 1] * b[ 4] + a[ 2] * b[ 8] + a[ 3] * b[12];
     o[ 1] = a[ 0] * b[ 1] + a[ 1] * b[ 5] + a[ 2] * b[ 9] + a[ 3] * b[13];
@@ -146,7 +146,7 @@ bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
 
 
 void
-bn_mat_mul2(register const mat_t i, register mat_t o)
+bn_mat_mul2(const mat_t i, mat_t o)
 {
     mat_t temp;
 
@@ -182,10 +182,7 @@ bn_mat_mul4(
 
 
 void
-bn_matXvec(
-    register vect_t ov,
-    register const mat_t im,
-    register const vect_t iv)
+bn_matXvec(hvect_t ov, const mat_t im, const hvect_t iv)
 {
     register int eo = 0;	/* Position in output vector */
     register int em = 0;	/* Position in input matrix */
@@ -204,7 +201,7 @@ bn_matXvec(
 
 
 void
-bn_mat_inv(register mat_t output, const mat_t input)
+bn_mat_inv(mat_t output, const mat_t input)
 {
     if (bn_mat_inverse(output, input) == 0) {
 
@@ -219,7 +216,7 @@ bn_mat_inv(register mat_t output, const mat_t input)
 
 
 int
-bn_mat_inverse(register mat_t output, const mat_t input)
+bn_mat_inverse(mat_t output, const mat_t input)
 {
     register int i, j;	/* Indices */
     int k;		/* Indices */
@@ -307,7 +304,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 
 
 void
-bn_vtoh_move(register vect_t h, register const vect_t v)
+bn_vtoh_move(vect_t h, const vect_t v)
 {
     VMOVE(h, v);
     h[W] = 1.0;
@@ -315,7 +312,7 @@ bn_vtoh_move(register vect_t h, register const vect_t v)
 
 
 void
-bn_htov_move(register vect_t v, register const vect_t h)
+bn_htov_move(vect_t v, const vect_t h)
 {
     register fastf_t inv;
 
@@ -333,14 +330,14 @@ bn_htov_move(register vect_t v, register const vect_t h)
 
 
 void
-bn_mat_trn(mat_t om, register const mat_t im)
+bn_mat_trn(mat_t om, const mat_t im)
 {
     MAT_TRANSPOSE(om, im);
 }
 
 
 void
-bn_mat_ae(register fastf_t *m, double azimuth, double elev)
+bn_mat_ae(mat_t m, double azimuth, double elev)
 {
     double sin_az, sin_el;
     double cos_az, cos_el;
@@ -394,8 +391,8 @@ bn_aet_vec(
     fastf_t *az,
     fastf_t *el,
     fastf_t *twist,
-    fastf_t *vec_ae,
-    fastf_t *vec_twist,
+    vect_t vec_ae,
+    vect_t vec_twist,
     fastf_t accuracy)
 {
     vect_t zero_twist, ninety_twist;
@@ -458,11 +455,7 @@ bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
 
 
 void
-bn_mat_angles(
-    register fastf_t *mat,
-    double alpha_in,
-    double beta_in,
-    double ggamma_in)
+bn_mat_angles(mat_t mat, double alpha_in, double beta_in, double ggamma_in)
 {
     double alpha, beta, ggamma;
     double calpha, cbeta, cgamma;
@@ -568,8 +561,8 @@ void
 bn_eigen2x2(
     fastf_t *val1,
     fastf_t *val2,
-    fastf_t *vec1,
-    fastf_t *vec2,
+    vect_t vec1,
+    vect_t vec2,
     fastf_t a,
     fastf_t b,
     fastf_t c)
@@ -723,7 +716,7 @@ bn_mat_fromto(
 
 
 void
-bn_mat_xrot(fastf_t *m, double sinx, double cosx)
+bn_mat_xrot(mat_t m, double sinx, double cosx)
 {
     m[0] = 1.0;
     m[1] = 0.0;
@@ -746,7 +739,7 @@ bn_mat_xrot(fastf_t *m, double sinx, double cosx)
 
 
 void
-bn_mat_yrot(fastf_t *m, double siny, double cosy)
+bn_mat_yrot(mat_t m, double siny, double cosy)
 {
     m[0] = cosy;
     m[1] = 0.0;
@@ -769,7 +762,7 @@ bn_mat_yrot(fastf_t *m, double siny, double cosy)
 
 
 void
-bn_mat_zrot(fastf_t *m, double sinz, double cosz)
+bn_mat_zrot(mat_t m, double sinz, double cosz)
 {
     m[0] = cosz;
     m[1] = -sinz;
@@ -847,7 +840,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 
 
 void
-bn_vec_ortho(register vect_t out, register const vect_t in)
+bn_vec_ortho(vect_t out, const vect_t in)
 {
     register int j, k;
     register fastf_t f;

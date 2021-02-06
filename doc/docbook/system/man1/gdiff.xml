@@ -119,22 +119,22 @@ A eto.s
 
   <example><title>Alternate Diffing Result Outputs</title>
   <para>
-    The <option>v</option> provides various styles of output, as follows:
+    The <option>v</option> and <option>q</option> options provide various styles of output, as follows:
   </para>
   <para>
-    <option>-v 0</option> (no output except the return code):
+    <option>-qq</option> (no output except the return code):
     <literallayout>
       <computeroutput>
-	<prompt>~:</prompt><userinput> gdiff -v 0 moss.g moss2.g</userinput>
+	<prompt>~:</prompt><userinput> gdiff -qq moss.g moss2.g</userinput>
       </computeroutput>
     </literallayout>
   </para>
 
   <para>
-    <option>-v 1</option>:
+    <option>-q</option>:
     <literallayout>
       <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 1 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -q moss.g moss2.g</userinput>
 Added:
 tgc_new.s, eto.s
 
@@ -149,10 +149,10 @@ platform.r, ellipse.s, light.r, _GLOBAL, cone.s, cone.r, box.s, tor.r
   </para>
 
   <para>
-    <option>-v 2</option> (default):
+    (default):
     <literallayout>
       <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 2 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff moss.g moss2.g</userinput>
 M platform.r
 M ellipse.s
 M light.r
@@ -170,10 +170,10 @@ A eto.s
   </para>
 
   <para>
-    <option>-v 3</option>:
+    <option>-v</option>:
     <literallayout>
       <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 3 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v moss.g moss2.g</userinput>
 - "platform.r" tree(p): l platform.s
 + "platform.r" tree(p): - {l platform.s} {l cone.s}
 - "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
@@ -205,16 +205,17 @@ A tgc_new.s
 A eto.s
       </computeroutput>
     </literallayout>
-    Verbosity 3 is a more detailed version of the previous setting, with each parameter in the modified objects reported in detail.  '-' lines
-    show what was removed for a given attribute or parameter, and '+' lines contain the data that replaced them.
+    The first elevated verbosity level is a more detailed version of the previous setting, with
+    each parameter in the modified objects reported in detail.  '-' lines show what was removed
+    for a given attribute or parameter, and '+' lines contain the data that replaced them.
   </para>
 
 
   <para>
-    <option>-v 4</option>:
+    <option>-vv</option>:
     <literallayout>
       <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 4 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -vv moss.g moss2.g</userinput>
 - "platform.r" tree(p): l platform.s
 + "platform.r" tree(p): - {l platform.s} {l cone.s}
 - "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
@@ -261,7 +262,7 @@ A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988
 A "eto.s" DB5_MINORTYPE(p): eto
       </computeroutput>
     </literallayout>
-    Verbosity 4 is a fully detailed diff that contains all information added or removed.
+    The second elevation of the verbosity level is a fully detailed diff that contains all information added or removed.
   </para>
 
 </example>
@@ -323,7 +324,7 @@ all.g
   difference constitutes "too small" is up to the user - in this example, we will use 30 millimeters:
   <literallayout>
     <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 3 -t 30.0 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v -t 30.0 moss.g moss2.g</userinput>
 - "platform.r" tree(p): l platform.s
 + "platform.r" tree(p): - {l platform.s} {l cone.s}
 - "light.r" tree(p): l LIGHT
@@ -363,7 +364,7 @@ A eto.s
   Note that this option will work at all levels of verbosity:
   <literallayout>
     <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 4 -F "-type eto" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -vv -F "-type eto" moss.g moss2.g</userinput>
 A "eto.s" r_d(p): 1.724149328000026404339451
 A "eto.s" r(p): 13.79319462400021123471561
 A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
@@ -381,7 +382,7 @@ A "eto.s" DB5_MINORTYPE(p): eto
   filter with ell types added to the accepted list produces the following:
   <literallayout>
     <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 4 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -vv -F "-type eto -or -type ell" moss.g moss2.g</userinput>
 - "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
 + "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
 - "ellipse.s" A(p): 14.87607192992999927128039 0 0
@@ -404,7 +405,7 @@ A "eto.s" DB5_MINORTYPE(p): eto
   If we now add the tolerance filter, we see ellipse.s is filtered out:
   <literallayout>
     <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 4 -t 30.0 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -vv -t 30.0 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
 D "LIGHT" C(p): 0 0 2.539999961852999810218989
 D "LIGHT" B(p): 0 2.539999961852999810218989 0
 D "LIGHT" A(p): 2.539999961852999810218989 0 0
@@ -481,7 +482,7 @@ A(R) ellipse2.r
   To delve deeper into the nature of the changes, we increase the verbosity with the <option>v</option> option:
   <literallayout>
     <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v 3 moss2.g moss.g moss3.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v moss2.g moss.g moss3.g</userinput>
 M(L) "platform.r" tree(p): - {l platform.s} {l cone.s}
 M(L) "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
 M(L) "ellipse.s" A(p): 5.559274328313033919357622 0 0
@@ -534,7 +535,7 @@ C ell.s
   However, closer inspection reveals that this conflict is different than the one reported above for the eto.s object:
   <literallayout>
     <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v3 ell_1.g ell_0.g ell_2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v ell_1.g ell_0.g ell_2.g</userinput>
 C(LM!=RM) ell.s
     </computeroutput>
   </literallayout>
@@ -543,7 +544,7 @@ C(LM!=RM) ell.s
   parameters.  Indeed a full verbosity inspection:
   <literallayout>
     <computeroutput>
-<prompt>~:</prompt><userinput> gdiff -v4 ell_1.g ell_0.g ell_2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -vv ell_1.g ell_0.g ell_2.g</userinput>
 M(R) "ell.s" C(p): 0 0 300
 C(A) "ell.s" B(p): 0 500 0
 C(L) "ell.s" B(p): 0 510 0
@@ -645,7 +646,7 @@ CONFLICT(light.r).left/R      tgc_new.s
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2014-2020 by the United States
+<para>This software is Copyright (c) 2014-2021 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

@@ -23,7 +23,7 @@ set(LIBRTUIF_SOURCES
   worker.c
   )
 
-BRLCAD_ADDLIB(librtuif "${LIBRTUIF_SOURCES}" "${M_LIBRARY}" STATIC NO_INSTALL)
+BRLCAD_ADDLIB(librtuif "${LIBRTUIF_SOURCES}" "librt;${M_LIBRARY}" STATIC NO_INSTALL)
 
 if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
@@ -31,7 +31,7 @@ endif(BRLCAD_ENABLE_OPENCL)
 
 if(MPI_C_LIBRARIES AND BRLCAD_ENABLE_MPI)
   set(RT_STD_LIBS
-    ${CMAKE_THREAD_LIBS_INIT}
+    Threads::Threads
     ${MPI_C_LIBRARIES}
     librt
     libnmg
@@ -41,7 +41,7 @@ if(MPI_C_LIBRARIES AND BRLCAD_ENABLE_MPI)
     )
 else()
   set(RT_STD_LIBS
-    ${CMAKE_THREAD_LIBS_INIT}
+    Threads::Threads
     librt
     libnmg
     liboptical
@@ -54,12 +54,12 @@ BRLCAD_ADDDATA(rtexample.c sample_applications)
 
 BRLCAD_ADDEXEC(rtexample "rtexample.c" "librt;libdm;liboptical;libicv" NO_INSTALL)
 
-BRLCAD_ADDEXEC(reshoot "reshoot.c" "${CMAKE_THREAD_LIBS_INIT};librt;libdm;liboptical;libicv")
+BRLCAD_ADDEXEC(reshoot "reshoot.c" "Threads::Threads;librt;libdm;liboptical;libicv")
 
 BRLCAD_ADDEXEC(rtshot "rtshot.c" "${RT_STD_LIBS};libdm")
 ADD_TARGET_DEPS(rtshot dm_plugins)
 
-BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "${CMAKE_THREAD_LIBS_INIT};librt;libdm;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "Threads::Threads;librt;libdm;liboptical;libicv;${M_LIBRARY}")
 ADD_TARGET_DEPS(rtscale dm_plugins)
 
 BRLCAD_ADDEXEC(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${RT_STD_LIBS};libdm")

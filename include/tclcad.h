@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -518,12 +518,15 @@ TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu
  * Tcl specific I/O handlers
  */
 struct tclcad_io_data {
-	Tcl_Channel chan_stdin;
-    Tcl_Channel chan_stdout;
-    Tcl_Channel chan_stderr;
     Tcl_Interp *interp;
     int io_mode;
+    void *state;
 };
+TCLCAD_EXPORT struct tclcad_io_data *
+tclcad_create_io_data();
+TCLCAD_EXPORT void
+tclcad_destroy_io_data(struct tclcad_io_data *d);
+
 TCLCAD_EXPORT void
 tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data);
 TCLCAD_EXPORT void

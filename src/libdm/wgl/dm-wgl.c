@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
 #include "tk.h"
 /* needed for TkWinGetHWND() */
-#include "TkWinInt.h"
+#include "tkWinInt.h"
 
 #undef VMIN		/* is used in vmath.h, too */
 

@@ -1,0 +1,42 @@
+#include "bu.h"
+#include "dplot_reader.h"
+enum {INITIAL, normal};
+%%
+<> => normal { continue; }
+
+<normal> {
+"surfaces" {
+    return TOKEN_SURFACES;
+}
+
+"ssx" {
+    return TOKEN_SSX;
+}
+
+"linkedcurves" {
+    return TOKEN_LINKED_CURVES;
+}
+
+"splitfaces" {
+    return TOKEN_SPLIT_FACES;
+}
+
+"splitface" {
+    return TOKEN_SPLIT_FACE;
+}
+
+[0-9]|[1-9][0-9]+ {
+    data->token_data.n = 0;
+    bu_sscanf(yytext, "%d", &data->token_data.n);
+    return TOKEN_NONNEGATIVE_INT;
+}
+
+[\n]+ {
+    return TOKEN_EOL;
+}
+
+[^] {
+    /* ignore */
+    continue;
+}
+}

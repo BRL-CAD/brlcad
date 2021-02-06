@@ -1,7 +1,7 @@
 /*                   D B _ F U L L P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -257,13 +257,13 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
     int type;
     const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
 
-    if (!full_path)
+    if (!full_path || full_path->fp_len == 0)
 	return;
 
     BU_CK_VLS(vls);
     RT_CK_FULL_PATH(full_path);
 
-    if (!full_path->fp_names[0]) {
+    if (full_path->fp_names == NULL) {
 	bu_vls_strcat(vls, "**NULL**");
 	return;
     }

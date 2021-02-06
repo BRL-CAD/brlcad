@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1339,7 +1339,8 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
     struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
     int count = 0;
     int retcode = 0;
-    int read_failed = 0;
+    int read_failed_stderr = 0;
+    int read_failed_stdout = 0;
     char line[RT_MAXLINE+1] = {0};
 
     if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
@@ -1350,19 +1351,22 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
     struct ged *gedp = rrtp->gedp;
 
     /* Get data from rt */
-    if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
-	if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
-	    read_failed = 1;
-	}
+    if (rrtp->stderr_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+	read_failed_stderr = 1;
+    }
+    if (rrtp->stdout_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
+	read_failed_stdout = 1;
     }
 
-    if (read_failed) {
+    if (read_failed_stderr || read_failed_stdout) {
 	int aborted;
 
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (gedp->ged_delete_io_handler) {
-	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
-	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
+	    if (rrtp->stderr_active)
+		(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
+	    if (rrtp->stdout_active)
+		(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
 	}
 
 
@@ -1485,6 +1489,9 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 
     BU_GET(run_rtp, struct ged_subprocess);
     run_rtp->magic = GED_CMD_MAGIC;
+    run_rtp->stdin_active = 0;
+    run_rtp->stdout_active = 0;
+    run_rtp->stderr_active = 0;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;
@@ -1494,7 +1501,6 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
-	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDOUT, _ged_rt_output_handler, (void *)run_rtp);
     }
     return GED_OK;
 }
@@ -2036,6 +2042,98 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
     return GED_OK;
 }
 
+#if 0
+
+// TODO - need to generalize the path specifier parsing per notes in TODO.  This is a first
+// cut at recasting what search is using now, which doesn't implement the full resolving logic.
+
+int
+_ged_characterize_pathspec(struct bu_vls *normalized, struct ged *gedp, const char *pathspec)
+{
+    struct bu_vls np = BU_VLS_INIT_ZERO;
+    int flags = 0;
+
+    // Start with nothing - if we get a valid answer we'll print it
+    if (normalized) {
+	bu_vls_trunc(normalized, 0);
+    }
+
+    if (!pathspec)
+       	return GED_PATHSPEC_INVALID;
+
+    if (BU_STR_EQUAL(pathspec, "/"))
+	return flags;
+
+    if (BU_STR_EQUAL(pathspec, ".")) {
+	flags |= GED_PATHSPEC_LOCAL;
+	return flags;
+    }
+
+    if (BU_STR_EQUAL(pathspec, "|")) {
+	flags |= GED_PATHSPEC_FLAT;
+	return flags;
+    }
+
+    bu_vls_sprintf(&np, "%s", pathspec);
+    if (bu_vls_cstr(&np)[0] == '|') {
+	flags |= GED_PATHSPEC_FLAT;
+	bu_vls_nibble(&np, 1);
+    }
+    if (BU_STR_EQUAL(bu_vls_cstr(&np), "/")) {
+	bu_vls_free(&np);
+	return flags;
+    }
+
+    if (BU_STR_EQUAL(bu_vls_cstr(&np), ".")) {
+	flags |= GED_PATHSPEC_LOCAL;
+	bu_vls_free(&np);
+	return flags;
+    }
+
+    if (bu_vls_cstr(&np)[0] != '/')
+	flags |= GED_PATHSPEC_LOCAL;
+
+    const char *bu_norm = bu_path_normalize(bu_vls_cstr(&np));
+
+    if (bu_norm && !BU_STR_EQUAL(bu_norm , "/")) {
+	struct bu_vls tmp = BU_VLS_INIT_ZERO;
+	char *tbasename = bu_path_basename(bu_vls_cstr(&np), NULL);
+	bu_vls_sprintf(&tmp, "%s", tbasename);
+	bu_free(tbasename, "free bu_path_basename string (caller's responsibility per bu/log.h)");
+	bu_vls_sprintf(&np, "%s", bu_vls_cstr(&tmp));
+	bu_vls_free(&tmp);
+    } else {
+	bu_vls_sprintf(&np, "%s", "/");
+    }
+
+    // If we've gotten this far, normalizing to nothing is considered invalid.
+    if (!bu_vls_strlen(&np)) {
+	bu_vls_free(&np);
+	return GED_PATHSPEC_INVALID;
+    }
+
+    // If we reduced to the root fullpath, we're done
+    if (BU_STR_EQUAL(bu_vls_cstr(&np), "/")) {
+	bu_vls_free(&np);
+	return flags;
+    }
+
+    /* We've handled the toplevel special cases.  If we got here, we have a specific
+     * path - now the only question is whether that path is valid */
+    flags |= GED_PATHSPEC_SPECIFIC;
+    struct directory *path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&np), LOOKUP_QUIET);
+    if (path_dp == RT_DIR_NULL) {
+	flags = GED_PATHSPEC_INVALID;
+    } else {
+	if (normalized)
+	    bu_vls_sprintf(normalized, "%s", bu_vls_cstr(&np));
+    }
+    bu_vls_free(&np);
+
+    return flags;
+}
+
+#endif
 
 
 /*

@@ -1,7 +1,7 @@
 /*                     D M - O S G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -688,7 +688,7 @@ osgl_open(void *vinterp, int argc, const char **argv)
 	return DM_NULL;
     }
     privvars->fontNormal = FONS_INVALID;
-    privvars->fontNormal = fonsAddFont(privvars->fs, "sans", bu_brlcad_root("share/fonts/ProFont.ttf", 0));
+    privvars->fontNormal = fonsAddFont(privvars->fs, "sans", bu_dir(NULL, 0, BU_DIR_DATA, "fonts", "ProFont.ttf", NULL));
 
     /* This is the applications display list offset */
     dmp->i->dm_displaylist = glGenLists(0);

@@ -1,7 +1,7 @@
 #            T H I R D P A R T Y _ T C L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2020 United States Government as represented by
+# Copyright (c) 2011-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -246,10 +246,10 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
     set(${PKGNAME_UPPER}_FOUND_STATUS ${${PKGNAME_UPPER}_FOUND})
 
     # 1.  If we have no wish command, we fail immediately.
-    if("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND")
+    if("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND" OR TARGET "${wishcmd}")
       message(WARNING "Test for ${pkgname} failed - no tclsh/wish command available for testing!")
       set(${PKGNAME_UPPER}_TEST_FAIL 1)
-    endif("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND")
+    endif("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND" OR TARGET "${wishcmd}")
 
     # 2.  We have wish - now things get interesting.  Write out
     # a Tcl script to probe for information on the package we're
@@ -258,6 +258,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
       set(CURRENT_TCL_PACKAGE_NAME ${pkgname})
       set(pkg_test_file "${CMAKE_BINARY_DIR}/CMakeTmp/${pkgname}_version.tcl")
       configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/tcltest.tcl.in" ${pkg_test_file} @ONLY)
+      DISTCLEAN("${pkg_test_file}")
       EXEC_PROGRAM(${wishcmd} ARGS ${pkg_test_file} OUTPUT_VARIABLE EXECOUTPUT)
       file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION" pkgversion)
       string(REGEX REPLACE "\n" "" ${PKGNAME_UPPER}_PACKAGE_VERSION ${pkgversion})

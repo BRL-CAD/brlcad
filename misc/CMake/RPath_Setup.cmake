@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,16 +55,16 @@ if(NOT COMMAND cmake_set_rpath)
       # location relative to the loading file's path if the installed version is
       # not present.  How to do so is platform specific.
       if(NOT APPLE)
-	set(CMAKE_INSTALL_RPATH "${BRLCAD_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}" PARENT_SCOPE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}" PARENT_SCOPE)
       else(NOT APPLE)
-	set(CMAKE_INSTALL_RPATH "${BRLCAD_INSTALL_PREFIX}/${LIB_DIR};@loader_path/../${LIB_DIR}" PARENT_SCOPE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader_path/../${LIB_DIR}" PARENT_SCOPE)
       endif(NOT APPLE)
 
       # On OSX, we need to set INSTALL_NAME_DIR instead of RPATH for CMake < 3.0
       # http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
       # http://www.cmake.org/cmake/help/v3.2/policy/CMP0042.html
       if ("${CMAKE_VERSION}" VERSION_LESS 3.0)
-	set(CMAKE_INSTALL_NAME_DIR "${BRLCAD_INSTALL_PREFIX}/${LIB_DIR}" PARENT_SCOPE)
+	set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" PARENT_SCOPE)
       endif ("${CMAKE_VERSION}" VERSION_LESS 3.0)
 
       # Add the automatically determined parts of the RPATH which point to

@@ -1,7 +1,7 @@
 /*                     G D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -283,7 +283,7 @@ main(int argc, const char **argv)
     BU_OPT(d[3],  "d", "deleted",    "",        NULL,              &state->return_removed,   "Report deleted objects");
     BU_OPT(d[4],  "m", "modified",   "",        NULL,              &state->return_changed,   "Report modified objects");
     BU_OPT(d[5],  "u", "unchanged",  "",        NULL,              &state->return_unchanged, "Report unchanged objects");
-    BU_OPT(d[6],  "F", "filter",     "string",  &bu_opt_vls,       state->search_filter,     "Report unchanged objects");
+    BU_OPT(d[6],  "F", "filter",     "string",  &bu_opt_vls,       state->search_filter,     "Specify filter to use on results");
     BU_OPT(d[7],  "M", "merge-file", "merge.g", &bu_opt_vls,       state->merge_file,        "Specify merge file");
     BU_OPT(d[8],  "t", "tolerance",  "#",       &bu_opt_fastf_t,   &state->diff_tol->dist,   "numerical distance tolerance for same/different decisions (RT_LEN_TOL is default)");
     BU_OPT(d[9],  "v", "verbosity",  "",        &bu_opt_incr_long, &state->verbosity,        "increase output verbosity (multiple specifications of -v increase verbosity more)");

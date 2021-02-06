@@ -2,7 +2,7 @@
  * BRL-CAD
  *
  * Copyright (c) 2013 Tom Browder
- * Copyright (c) 2017-2020 United States Government as represented by the U.S. Army
+ * Copyright (c) 2017-2021 United States Government as represented by the U.S. Army
  * Research Laboratory.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,13 +42,13 @@
 #include <stdexcept>
 
 /* GDAL headers */
-#include <gdal.h>
-#include <gdalwarper.h>
-#include <gdal_utils.h>
-#include <cpl_conv.h>
-#include <cpl_string.h>
-#include <cpl_multiproc.h>
-#include <ogr_spatialref.h>
+#include "gdal.h"
+#include "gdalwarper.h"
+#include "gdal_utils.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "cpl_multiproc.h"
+#include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
 #include "bu/app.h"

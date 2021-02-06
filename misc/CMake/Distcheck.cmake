@@ -1,7 +1,7 @@
 #                 D I S T C H E C K . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2020 United States Government as represented by
+# Copyright (c) 2012-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   # Set up the script that will be used to verify the source archives
   configure_file("${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake")
 
   # Define the repository verification build target
   add_custom_target(distcheck-repo_verify
@@ -135,6 +136,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
       # Based on the build command, generate a distcheck target definition from the template
       configure_file(${distcheck_template_file} "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake" @ONLY)
+      DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake")
       include("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake")
 
       # Keep track of the distcheck targets

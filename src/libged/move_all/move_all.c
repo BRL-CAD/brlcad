@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,12 +44,13 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct bu_ptbl stack;
+    size_t moved = 0;
 
-    /* rename the record itself */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old_name, LOOKUP_NOISY)) == RT_DIR_NULL)
-	return GED_ERROR;
+    /* check the old_name source and new_name target */
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+    dp = db_lookup(gedp->ged_wdbp->dbip, old_name, LOOKUP_NOISY);
+
+    if (dp && db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: already exists", new_name);
 	return GED_ERROR;
     }
@@ -57,56 +58,65 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     /* if this was a sketch, we need to look for all the extrude
      * objects that might use it.
      *
-     * This has to be done here, before we rename the (possible) sketch object
-     * because the extrude will do a rt_db_get on the sketch when we call
-     * rt_db_get_internal on it.
+     * This has to be done here, before we rename the (possible)
+     * sketch object because the extrude will do a rt_db_get on the
+     * sketch when we call rt_db_get_internal on it.
      */
-    if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
-	dp->d_minor_type == DB5_MINORTYPE_BRLCAD_SKETCH) {
-
+    if (dp
+	&& dp->d_major_type == DB5_MAJORTYPE_BRLCAD
+	&& dp->d_minor_type == DB5_MINORTYPE_BRLCAD_SKETCH)
+    {
 	struct directory *dirp;
 
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dirp = gedp->ged_wdbp->dbip->dbi_Head[i]; dirp != RT_DIR_NULL; dirp = dirp->d_forw) {
+		struct rt_extrude_internal *extrude;
 
-		if (dirp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
-		    dirp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
-		    struct rt_extrude_internal *extrude;
-
-		    if (rt_db_get_internal(&intern, dirp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-			bu_log("Can't get extrude %s?\n", dirp->d_namep);
-			continue;
-		    }
-		    extrude = (struct rt_extrude_internal *)intern.idb_ptr;
-		    RT_EXTRUDE_CK_MAGIC(extrude);
-
-		    if (BU_STR_EQUAL(extrude->sketch_name, old_name)) {
-			if (nflag) {
-			    bu_vls_printf(gedp->ged_result_str, "%s ", dirp->d_namep);
-			    rt_db_free_internal(&intern);
-			} else {
-			    bu_free(extrude->sketch_name, "sketch name");
-			    extrude->sketch_name = bu_strdup(new_name);
-
-			    if (rt_db_put_internal(dirp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-				bu_log("oops\n");
-			    }
-			}
-		    } else
-			rt_db_free_internal(&intern);
+		if (dirp->d_major_type != DB5_MAJORTYPE_BRLCAD || \
+		    dirp->d_minor_type != DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+		    continue;
 		}
+
+		if (rt_db_get_internal(&intern, dirp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		    bu_log("WARNING: Can't get extrude %s?\n", dirp->d_namep);
+		    continue;
+		}
+
+		extrude = (struct rt_extrude_internal *)intern.idb_ptr;
+		RT_EXTRUDE_CK_MAGIC(extrude);
+
+		if (!BU_STR_EQUAL(extrude->sketch_name, old_name)) {
+		    rt_db_free_internal(&intern);
+		    continue;
+		}
+
+		if (nflag) {
+		    bu_vls_printf(gedp->ged_result_str, "%s ", dirp->d_namep);
+		    rt_db_free_internal(&intern);
+		    continue;
+		}
+
+		bu_free(extrude->sketch_name, "sketch name");
+		extrude->sketch_name = bu_strdup(new_name);
+
+		if (rt_db_put_internal(dirp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		    bu_log("INTERNAL ERROR: unable to write sketch [%s] during mvall\n", new_name);
+		} else {
+		    moved++;
+		}
+		rt_db_free_internal(&intern);
 	    }
 	}
     }
 
-    if (!nflag) {
+    if (!nflag && dp) {
 	/* Change object name in the directory. */
 	if (db_rename(gedp->ged_wdbp->dbip, dp, new_name) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting", new_name);
 	    return GED_ERROR;
 	}
 
-	/* Change name in the file */
+	/* Change object name on disk */
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return GED_ERROR;
@@ -116,10 +126,10 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return GED_ERROR;
 	}
+	moved++;
     }
 
     bu_ptbl_init(&stack, 64, "combination stack for wdb_mvall_cmd");
-
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
@@ -128,10 +138,14 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		union tree *comb_leaf;
 		int done=0;
 
-		if (!(dp->d_flags & RT_DIR_COMB)) continue;
-		if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) continue;
+		if (!(dp->d_flags & RT_DIR_COMB))
+		    continue;
+		if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+		    continue;
+
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		bu_ptbl_reset(&stack);
+
 		/* visit each leaf in the combination */
 		comb_leaf = comb->tree;
 		if (comb_leaf) {
@@ -159,13 +173,15 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		rt_db_free_internal(&intern);
 	    } else {
 		int comb_mvall_status = db_comb_mvall(dp, gedp->ged_wdbp->dbip, old_name, new_name, &stack);
-		if (!comb_mvall_status) continue;
+		if (!comb_mvall_status)
+		    continue;
 		if (comb_mvall_status == 2) {
 		    bu_ptbl_free(&stack);
 		    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 		    return GED_ERROR;
 		}
 	    }
+	    moved++;
 	}
     }
 
@@ -208,6 +224,11 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	    free((void *)dupstr);
 	    bu_vls_free(&new_path);
 	}
+    }
+
+    if (!moved) {
+	bu_log("ERROR: move %s to %s: no such object or reference\n", old_name, new_name);
+	return GED_ERROR;
     }
 
     return GED_OK;

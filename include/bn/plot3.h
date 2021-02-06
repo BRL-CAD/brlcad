@@ -1,7 +1,7 @@
 /*                         P L O T 3 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,6 @@
 #include "bu/color.h"
 #include "bu/file.h"
 #include "bn/defines.h"
-#include "bn/plot3.h"
 
 __BEGIN_DECLS
 
@@ -231,6 +230,9 @@ BN_EXPORT extern void pdv_3ray(FILE *fp,
 			       const point_t pt,
 			       const vect_t dir,
 			       double t);
+
+
+BN_EXPORT extern int plot3_invalid(FILE *fp, int mode);
 
 /*
  *  The following routines are taken from the BRL TIG-PACK

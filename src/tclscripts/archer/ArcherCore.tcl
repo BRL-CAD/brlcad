@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2020 United States Government as represented by
+# Copyright (c) 2002-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1091,7 +1091,7 @@ namespace eval ArcherCore {
 	set env(DISPLAY) ":0"
     }
 
-    set mImgDir [file join [bu_brlcad_root "share/tclscripts"] archer images]
+    set mImgDir [file join [bu_dir data] tclscripts archer images]
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]

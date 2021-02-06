@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1169,13 +1169,14 @@ rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 int
 rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
-    struct rt_arbn_internal *arbn;
-    unsigned char *c;
-    int len;
-    size_t i, j;
-    long val;
-    fastf_t *new_planes;
-    fastf_t *array;
+    struct rt_arbn_internal *arbn = NULL;
+    unsigned char *c = NULL;
+    int len = 0;
+    size_t i = 0;
+    size_t j = 0;
+    long val = 0;
+    fastf_t *new_planes = NULL;
+    fastf_t *array = NULL;
 
     RT_CK_DB_INTERNAL(intern);
 

@@ -20,7 +20,7 @@ if (TARGET libtclcad)
   endif (HAVE_WINDOWS_H)
 
 
-  BRLCAD_ADDEXEC(rtwizard "${RTWIZARD_SRCS}" "libtclcad;librt;libdm;liboptical;libicv;${ITCL_LIBRARY};${ITK_LIBRARY};${CMAKE_THREAD_LIBS_INIT};${M_LIBRARY}")
+  BRLCAD_ADDEXEC(rtwizard "${RTWIZARD_SRCS}" "libtclcad;librt;libdm;liboptical;libicv;Threads::Threads;${M_LIBRARY}")
   ADD_TARGET_DEPS(rtwizard rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb tkpng dm_plugins)
   foreach(item ${tclindex_target_list})
     add_dependencies(rtwizard ${item})

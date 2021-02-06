@@ -131,6 +131,7 @@ set(mann_EN
   nirt.xml
   nmg_collapse.xml
   nmg_simplify.xml
+  npush.xml
   oed.xml
   opendb.xml
   orientation.xml
@@ -195,6 +196,7 @@ set(mann_EN
   size.xml
   solids.xml
   sph-part.xml
+  stat.xml
   status.xml
   summary.xml
   sv.xml

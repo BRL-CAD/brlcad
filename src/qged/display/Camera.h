@@ -1,7 +1,7 @@
 /*                        C A M E R A . H
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,22 +23,26 @@
 #define RT3_CAMERABK_H
 
 
-#include <glm/detail/type_mat4x4.hpp>
+#include <QMatrix4x4>
+#include <QVector3D>
 
 
 class Camera {
 public:
-    glm::vec3  axisX = glm::vec3(1.0f,0.0f,0.0f);
-    glm::vec3  axisY = glm::vec3(0.0f,1.0f,0.0f);
-    glm::vec3  axisZ = glm::vec3(0.0f,0.0f,1.0f);
+    QVector3D  axisX = QVector3D(1.0f,0.0f,0.0f);
+    QVector3D  axisY = QVector3D(0.0f,1.0f,0.0f);
+    QVector3D  axisZ = QVector3D(0.0f,0.0f,1.0f);
 
     virtual void setWH(float w, float h) = 0;
     virtual void processMoveRequest(const int &deltaX, const int &deltaY) = 0;
     virtual void processRotateRequest(const int & deltaX, const int & deltaY, const bool& thirdAxis) = 0;
     virtual void processZoomRequest(const int & deltaWheelAngle) = 0;
 
-    virtual glm::mat4 modelViewMatrix() const = 0;
-    virtual glm::mat4 projectionMatrix() const = 0;
+    virtual QMatrix4x4 modelViewMatrix() const = 0;
+    virtual QMatrix4x4 modelViewMatrixNoTranslate() const = 0;
+    virtual QMatrix4x4 projectionMatrix() const = 0;
+
+    virtual void setEyePosition(float x, float y, float z) = 0;
 
 };
 

@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -190,31 +190,24 @@
 
 
 /**
+ * shorthand placed before a function _definition_ indicating to some
+ * compilers that it should inline most of the function calls within
+ * the function.  this should be used sparingly on functions that are
+ * demonstrably hot, as indicated by a profiler.
+ */
+#ifdef HAVE_FLATTEN_ATTRIBUTE
+#  define _BU_ATTR_FLATTEN __attribute__((flatten))
+#else
+#  define _BU_ATTR_FLATTEN
+#endif
+
+/**
  * This macro is used to take the 'C' function name, and convert it at
  * compile time to the FORTRAN calling convention.
  *
  * Lower case, with a trailing underscore.
  */
 #define BU_FORTRAN(lc, uc) lc ## _
-
-
-/**
- * @def BU_ASSERT(eqn)
- * Quick and easy macros to generate an informative error message and
- * abort execution if the specified condition does not hold true.
- *
- */
-#ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation) (void)(_equation)
-#else
-#  define BU_ASSERT(_equation)	\
-    if (UNLIKELY(!(_equation))) { \
-	const char *_equation_buf = #_equation; \
-	bu_log("BU_ASSERT(%s), failed, file %s, line %d\n", \
-	       _equation_buf, __FILE__, __LINE__); \
-	bu_bomb("BU_ASSERT failure\n"); \
-    }
-#endif
 
 
 /** @} */

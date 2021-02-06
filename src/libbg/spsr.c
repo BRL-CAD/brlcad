@@ -1,7 +1,7 @@
 /*                         S P S R . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
-#include "../other/libspsr/Src/SPSR.h"
+#include "./spsr/SPSR.h"
 
 struct c_vert {
     point_t p;

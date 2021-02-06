@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -648,7 +648,7 @@ WDB_EXPORT extern int mk_hrt(struct rt_wdb *fp, const char *name, const point_t 
 /**
  * 3-D Volume primitive.
  */
-WDB_EXPORT extern int mk_vol(struct rt_wdb *fp, const char *name, const char *file,
+WDB_EXPORT extern int mk_vol(struct rt_wdb *fp, const char *name, char datasrc, const char *file,
 			     size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi,
 			     const vect_t cellsize, const matp_t mat);
 

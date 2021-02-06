@@ -1,10 +1,10 @@
 # nmg_mk testing
 BRLCAD_ADDEXEC(nmg_mk nmg_mk.c "libnmg" TEST)
-add_test(NAME nmg_mk COMMAND nmg_mk)
+BRLCAD_ADD_TEST(NAME nmg_mk COMMAND nmg_mk)
 
 # nmg_copy testing
 BRLCAD_ADDEXEC(nmg_copy nmg_copy.c "libnmg" TEST)
-add_test(NAME nmg_copy COMMAND nmg_copy)
+BRLCAD_ADD_TEST(NAME nmg_copy COMMAND nmg_copy)
 
 CMAKEFILES(CMakeLists.txt)
 

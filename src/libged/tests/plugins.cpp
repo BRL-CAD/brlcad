@@ -1,7 +1,7 @@
 /*                        P L U G I N S . C
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,17 +44,19 @@ main(int ac, char *av[]) {
 
     gbp = ged_open("db", av[1], 1);
 
-    const char * const *ged_cmds = NULL;
-    size_t ged_cmd_cnt = ged_cmd_list(&ged_cmds);
+    const char * const *cmds = NULL;
+    size_t cmds_cnt = ged_cmd_list(&cmds);
 
-    for (size_t i = 0; i < ged_cmd_cnt; i++) {
-	bu_log("%s\n", ged_cmds[i]);
+    bu_log("%s\n", ged_init_msgs());
+
+    for (size_t i = 0; i < cmds_cnt; i++) {
+	bu_log("%s\n", cmds[i]);
     }
 
 #if 0
-    for (size_t i = 0; i < ged_cmd_cnt; i++) {
-	bu_log("ged_execing %s\n", ged_cmds[i]);
-	ged_exec(gbp, 1, (const char **)&ged_cmds[i]);
+    for (size_t i = 0; i < cmds_cnt; i++) {
+	bu_log("ged_execing %s\n", cmds[i]);
+	ged_exec(gbp, 1, (const char **)&cmds[i]);
     }
 #endif
 
@@ -417,8 +419,8 @@ main(int ac, char *av[]) {
 	}
 	// Also add libged's list in case there are any
 	// we missed calling out explicitly above...
-	for (size_t i = 0; i < ged_cmd_cnt; i++) {
-	    cmd_set.insert(std::string(ged_cmds[i]));
+	for (size_t i = 0; i < cmds_cnt; i++) {
+	    cmd_set.insert(std::string(cmds[i]));
 	}
 
 	std::set<std::string>::iterator cs_it;

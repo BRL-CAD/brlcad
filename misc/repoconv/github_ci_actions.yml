@@ -1,173 +1,118 @@
+# For information about available platforms for testing, see:
 #
-#  This logic defines cross platform build testing for BRL-CAD using
-#  Github's "Actions" mechanism.
-#
-#  We define a setup similar to https://github.com/cristianadam/HelloWorld/
-#
-#  Github has a time limit on these tests, and we also don't want to stress the
-#  system too heavily (particularly if we want to run them per-commit.)   For
-#  testing purposes we're currently using distcheck, but for eventual
-#  production use we need to change our build targets to something more
-#  streamlined.  It is probably also worth disabling step and gdal based
-#  features for the standard tests, as those compilation pieces are quite
-#  expensive - they should probably be regulated to something like a once-a-day
-#  test.
-#
-#  TODO - figure out how to schedule chron based jobs as well as the per
-#  commit tests below, so we can define rarer but progressively more
-#  comprehensive and heaver test runs.
-#
-#  TODO - figure out if we can generate actual release binaries from the
-#  artifacts of these builds.
-#
+# https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners
 
 name: BRL-CAD
 
 on: [push]
 
 jobs:
-  build:
-    #
-    #  Define a matrix of the operating system and compiler combinations
-    #  we want to build against.
-    #
-    #  Note that for Windows the vcvars64.bat script is important - that
-    #  is what sets up environment variables to make sure we get the 64
-    #  bit version of the compiler and libraries.  See:
-    #  https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
-    #
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
+  windows:
+    name: Windows Latest MSVC
+    runs-on: windows-latest
     strategy:
-      fail-fast: false
-      matrix:
-        config:
-        - {
-            name: "Windows Latest MSVC", artifact: "Windows-MSVC.tar.xz",
-            os: windows-latest,
-            cc: "cl", cxx: "cl",
-            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-          }
-        - {
-            name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
-            os: ubuntu-20.04,
-            cc: "gcc", cxx: "g++"
-          }
-        - {
-            name: "macOS Latest Clang", artifact: "macOS.tar.xz",
-            os: macos-latest,
-            cc: "clang", cxx: "clang++"
-          }
-
-    #
-    #  For each platform, we need to checkout the git repository,
-    #  and run CMake.
-    #
-    #  The logic below uses the approach demonstrated by Cristian Adam
-    #  which takes CMake's scripting mode (-P) and passes in from stdin
-    #  a script that incorporates values defined in the YAML environment.
-    #
-    #  Windows in particular needs the environment set up for compilation,
-    #  so the script recognizes when it is in that environment and
-    #  operates accordingly.
-    #
+      fail-fast: true
     steps:
-    - uses: actions/checkout@v1
-    - uses: lukka/get-cmake@latest
-    - uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
 
-    - name: Configure
-      shell: cmake -P {0}
-      run: |
-        set(ENV{CC} ${{ matrix.config.cc }})
-        set(ENV{CXX} ${{ matrix.config.cxx }})
+      - name: Setup - Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
 
-          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-          execute_process(
-          COMMAND "${{ matrix.config.environment_script }}" && set
-          OUTPUT_FILE environment_script_output.txt
-          )
-          file(STRINGS environment_script_output.txt output_lines)
-          foreach(line IN LISTS output_lines)
-            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-            endif()
-          endforeach()
-        endif()
+      - name: Checkout
+        uses: actions/checkout@v2
 
-        set(path_separator ":")
-        if ("${{ runner.os }}" STREQUAL "Windows")
-          set(path_separator ";")
-        endif()
-        set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+      - name: Add github workspace to path
+        # https://github.community/t/deprecated-add-path/136621
+        run: echo "$ENV{GITHUB_WORKSPACE}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
-        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-        execute_process(
-          COMMAND cmake
-            -S .
-            -B build
-            -D ENABLE_ALL=ON
-            -D CMAKE_BUILD_TYPE=Release
-            -D CMAKE_VERBOSE_DISTCHECK=ON
-          RESULT_VARIABLE result
-        )
-        else()
-        execute_process(
-          COMMAND cmake
-            -S .
-            -G Ninja
-            -B build
-            -D ENABLE_ALL=ON
-            -D CMAKE_BUILD_TYPE=Release
-            -D CMAKE_VERBOSE_DISTCHECK=ON
-          RESULT_VARIABLE result
-        )
-        endif()
-        if (NOT result EQUAL 0)
-          message(FATAL_ERROR "Bad exit status")
-        endif()
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.2
 
-    #
-    #  As with the configure stage, the build uses CMake's scripting mode (-P)
-    #  and passes a script in on stdin.
-    #
-    #  Windows needs the environment set up for compilation - paths for the
-    #  compilation are not set up by default in command line environments,
-    #  unlike most Unix-like systems.  Accordingly the script recognizes when
-    #  it is on Windows and executes the necessary setup code.
-    #
-    - name: Build
-      shell: cmake -P {0}
-      run: |
-        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-          file(STRINGS environment_script_output.txt output_lines)
-          foreach(line IN LISTS output_lines)
-            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-            endif()
-          endforeach()
-        endif()
+      - name: Add cl.exe to PATH
+        uses: ilammy/msvc-dev-cmd@v1
 
-        set(path_separator ":")
-        if ("${{ runner.os }}" STREQUAL "Windows")
-          set(path_separator ";")
-        endif()
-        set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -D CMAKE_C_COMPILER="cl.exe" -D CMAKE_CXX_COMPILER="cl.exe" -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -DEXT_BUILD_VERBOSE=ON
+          #cmake -S . -B build -D ENABLE_ALL=ON
+          powershell Write-VolumeCache C
+          powershell Write-VolumeCache D
 
-        if ("${{ runner.os }}" STREQUAL "Windows")
-           execute_process(
-             COMMAND cmake --build build -j 1 --config Release --target ALL_BUILD
-             COMMAND cmake --build build -j 1 --config Release --target check
-             RESULT_VARIABLE result
-           )
-        else ("${{ runner.os }}" STREQUAL "Windows")
-           execute_process(
-             COMMAND cmake --build build --verbose --config Release --target all
-             COMMAND cmake --build build --verbose --config Release --target check
-             RESULT_VARIABLE result
-           )
-        endif ("${{ runner.os }}" STREQUAL "Windows")
-        if (NOT result EQUAL 0)
-          message(FATAL_ERROR "Bad exit status")
-        endif()
+      - name: Build
+        #run: cd build && ninja -j1 -v STEPCODE_BLD && cd src/other/ext/STEPCODE_BLD-prefix/src/STEPCODE_BLD-build && ninja clean && ninja -j1 -v
+        #run: cmake --build build --config Release --target STEPCODE_BLD && cd build/src/other/ext/STEPCODE_BLD-prefix/src/STEPCODE_BLD-build && msbuild ALL_BUILD.vcxproj -t:clean && msbuild ALL_BUILD.vcxproj -v:diag
+        run: cd build && ninja -j1 -v
+        #run: cmake --build build --config Release --target package
+
+#     - name: Upload Package
+#       uses: actions/upload-artifact@v2
+#       with:
+#         name: BRLCAD_Windows
+#         path: ${{ github.workspace }}/build/BRL-CAD*exe
+
+  linux:
+    name: Ubuntu Latest GCC
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup - Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -DEXT_BUILD_VERBOSE=ON
+
+      - name: Build
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cmake --build build --config Release --target package
+
+#     - name: Upload Package
+#       uses: actions/upload-artifact@v2
+#       with:
+#         name: BRLCAD_Linux
+#         path: ${{ github.workspace }}/build/BRL-CAD*gz
+
+  osx:
+    name: macOS Latest Clang
+    runs-on: macos-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup - Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          export CC=clang
+          export CXX=clang++
+          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -DEXT_BUILD_VERBOSE=ON
+
+      - name: Build
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cmake --build build --config Release --target package
+
+#     - name: Upload Package
+#       uses: actions/upload-artifact@v2
+#       with:
+#         name: BRLCAD_OSX
+#         path: ${{ github.workspace }}/build/BRL-CAD*gz
+
 

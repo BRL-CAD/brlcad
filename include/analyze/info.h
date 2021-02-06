@@ -1,7 +1,7 @@
 /*                           I N F O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ __BEGIN_DECLS
 struct region_pair {
     struct bu_list l;
     union {
-	char *name;
+	const char *name;
 	struct region *r1;
     } r;
     struct region *r2;

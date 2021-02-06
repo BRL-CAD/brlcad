@@ -2,7 +2,7 @@
 #                   M O R P H E D I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2007-2020 United States Government as represented by
+# Copyright (c) 2007-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 # the next line restarts using bwish \
     exec $BWISH "$0" "$@"
 
-set brlcad_path [bu_brlcad_root bin]
+set brlcad_path [bu_dir bin]
 set PIXFB [file join $brlcad_path pix-fb]
 set PIXMORPH [file join $brlcad_path pixmorph]
 

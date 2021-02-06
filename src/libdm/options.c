@@ -1,7 +1,7 @@
 /*                       O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2020 United States Government as represented by
+ * Copyright (c) 1999-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,9 @@ int
 dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, const char **argv)
 {
     int c;
+
+    if (argc < 1 || !argv)
+	return 0;
 
     char **av = bu_argv_dup(argc, argv);
 

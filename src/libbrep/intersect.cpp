@@ -1,7 +1,7 @@
 /*                  I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,8 @@
  *
  * Implementation of intersection routines openNURBS left out.
  *
+ * Additional documentation can be found in the "NURBS Boolean Evaluation
+ * Development Guide" docbook article (bool_eval_development.html).
  */
 
 #include "common.h"
@@ -38,41 +40,14 @@
 #include "brep/defines.h"
 #include "brep/intersect.h"
 #include "brep/util.h"
+#include "debug_plot.h"
 #include "brep_except.h"
+#include "brep_defines.h"
 
+extern DebugPlot *dplot;
 
 // Whether to output the debug messages about b-rep intersections.
 static int DEBUG_BREP_INTERSECT = 0;
-
-// The maximal depth for subdivision - trade-off between accuracy and
-// performance.
-#define NR_MAX_DEPTH 8
-#define MAX_PCI_DEPTH NR_MAX_DEPTH
-#define MAX_PSI_DEPTH NR_MAX_DEPTH
-#define MAX_CCI_DEPTH NR_MAX_DEPTH
-#define MAX_CSI_DEPTH NR_MAX_DEPTH
-#define MAX_SSI_DEPTH NR_MAX_DEPTH
-
-
-// We make the default tolerance for PSI the same as that of curve and
-// surface intersections defined by openNURBS (see opennurbs_curve.h
-// and opennurbs_surface.h).
-#define NR_DEFAULT_TOLERANCE 0.001
-#define PCI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-#define PSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-#define CCI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-#define CSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-#define SSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-
-// Used to prevent an infinite loop in the unlikely event that we
-// can't provide a good starting point for the Newton-Raphson
-// Iteration.
-#define NR_MAX_ITERATIONS 100
-#define PCI_MAX_ITERATIONS NR_MAX_ITERATIONS
-#define PSI_MAX_ITERATIONS NR_MAX_ITERATIONS
-#define CCI_MAX_ITERATIONS NR_MAX_ITERATIONS
-#define CSI_MAX_ITERATIONS NR_MAX_ITERATIONS
-#define SSI_MAX_ITERATIONS NR_MAX_ITERATIONS
 
 class XEventProxy {
 public:
@@ -2556,10 +2531,29 @@ newton_ssi(double &uA, double &vA, double &uB, double &vB, const ON_Surface *sur
     return (pointA.DistanceTo(pointB) < isect_tol) && !std::isnan(uA) && !std::isnan(vA) && !std::isnan(uB) & !std::isnan(vB);
 }
 
+// if curve end is greater than tol distance from pt, append a linear
+// segment to the curve so it extends to the pt
+HIDDEN void
+extend_curve_end_to_pt(ON_Curve *&curve, ON_3dPoint pt, double tol)
+{
+    ON_NurbsCurve *nc = curve->NurbsCurve();
+    if (nc->PointAtEnd().DistanceTo(pt) > tol) {
+	ON_LineCurve line_bridge(nc->PointAtEnd(), pt);
+
+	ON_NurbsCurve bridge;
+	if (line_bridge.GetNurbForm(bridge)) {
+	    nc->Append(bridge);
+	}
+	delete curve;
+	curve = nc;
+    }
+}
 
 HIDDEN ON_Curve *
 link_curves(ON_Curve *&c1, ON_Curve *&c2)
 {
+    extend_curve_end_to_pt(c1, c2->PointAtStart(), ON_ZERO_TOLERANCE);
+
     ON_NurbsCurve *nc1 = c1->NurbsCurve();
     ON_NurbsCurve *nc2 = c2->NurbsCurve();
     if (nc1 && nc2) {
@@ -2578,6 +2572,16 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
     return NULL;
 }
 
+// if curve start and end are within tolerance, append a linear
+// segment to the curve to close it completely so it passes
+// IsClosed() tests
+HIDDEN void
+fill_gap_if_closed(ON_Curve *&curve, double tol)
+{
+    if (curve->PointAtStart().DistanceTo(curve->PointAtEnd()) <= tol) {
+	extend_curve_end_to_pt(curve, curve->PointAtStart(), ON_ZERO_TOLERANCE);
+    }
+}
 
 struct OverlapSegment {
     ON_Curve *m_curve3d, *m_curveA, *m_curveB;
@@ -2969,17 +2973,10 @@ is_curve_on_overlap_boundary(
     bool ret = false;
 
     if (iso.overlap_t[0] < iso.overlap_t[1]) {
-	bool at_first_knot = iso.src.knot.IsFirst();
-	bool at_last_knot = iso.src.knot.IsLast();
-	bool closed_at_iso = surf1->IsClosed(1 - iso.src.knot.dir) != 0;
+	int location = isocurve_surface_overlap_location(iso, surf1, surf2,
+		surf2_tree, isect_tol, isect_tol1);
 
-	ret = true;
-	if (closed_at_iso || (!at_first_knot && !at_last_knot)) {
-	    int location = isocurve_surface_overlap_location(iso, surf1,
-							     surf2, surf2_tree, isect_tol, isect_tol1);
-
-	    ret = (location == ON_OVERLAP_BOUNDARY);
-	}
+	ret = (location == ON_OVERLAP_BOUNDARY);
     }
     return ret;
 }
@@ -3513,6 +3510,7 @@ set_ssx_event_from_curves(
 HIDDEN void
 find_overlap_boundary_curves(
     ON_SimpleArray<OverlapSegment *> &overlaps,
+    ON_ClassArray<ON_SSX_EVENT> &csx_events,
     ON_3dPointArray &isocurve_3d,
     ON_2dPointArray &isocurveA_2d,
     ON_2dPointArray &isocurveB_2d,
@@ -3554,6 +3552,9 @@ find_overlap_boundary_curves(
 	    ON_Intersect(surf1_isocurve, surf2, events, isect_tol,
 			 overlap_tol, 0, 0, 0, &overlap2d);
 
+	    dplot->IsoCSX(events, surf1_isocurve, is_surfA_iso);
+	    dplot->WriteLog();
+
 	    append_csx_event_points(isocurve_3d, isocurve2_2d, events);
 
 	    for (int k = 0; k < events.Count(); k++) {
@@ -3575,6 +3576,36 @@ find_overlap_boundary_curves(
 		    if (curve_on_overlap_boundary) {
 			append_overlap_segments(overlaps, iso, overlap2d[k],
 						surf1);
+		    } else {
+			// the intersection isn't part of a
+			// surface-surface overlap, but we want it all
+			// the same
+			ON_SimpleArray<OverlapSegment *> tmp_overlaps;
+
+			append_overlap_segments(tmp_overlaps, iso, overlap2d[k], surf1);
+
+			for (int l = 0; l < tmp_overlaps.Count(); ++l) {
+			    ON_SSX_EVENT ssx_event;
+
+			    int ret = set_ssx_event_from_curves(ssx_event,
+				    tmp_overlaps[l]->m_curve3d,
+				    tmp_overlaps[l]->m_curveA,
+				    tmp_overlaps[l]->m_curveB, surfA, surfB);
+			    if (ret != 0) {
+				bu_log("warning: reverse failed.");
+			    }
+			    csx_events.Append(ssx_event);
+
+			    // set the curves to NULL so they aren't
+			    // deleted by destructors
+			    tmp_overlaps[l]->m_curve3d = NULL;
+			    tmp_overlaps[l]->m_curveA = NULL;
+			    tmp_overlaps[l]->m_curveB = NULL;
+
+			    ssx_event.m_curve3d = NULL;
+			    ssx_event.m_curveA = NULL;
+			    ssx_event.m_curveB = NULL;
+			}
 		    }
 		}
 	    }
@@ -3735,11 +3766,24 @@ ON_Intersect(const ON_Surface *surfA,
     ON_2dPointArray curve_uvA, curve_uvB, tmp_curve_uvA, tmp_curve_uvB;
 
     ON_SimpleArray<OverlapSegment *> overlaps;
-    find_overlap_boundary_curves(overlaps, tmp_curvept, tmp_curve_uvA,
+    ON_ClassArray<ON_SSX_EVENT> csx_events;
+
+    find_overlap_boundary_curves(overlaps, csx_events, tmp_curvept, tmp_curve_uvA,
 				 tmp_curve_uvB, surfA, surfB, treeA, treeB, isect_tol, isect_tolA,
 				 isect_tolB, overlap_tol);
+
     split_overlaps_at_intersections(overlaps, surfA, surfB, treeA, treeB,
 				    isect_tol, isect_tolA, isect_tolB);
+
+    // add csx_events
+    for (int i = 0; i < csx_events.Count(); ++i) {
+	x.Append(csx_events[i]);
+
+	// set the curves to NULL so they aren't deleted by destructor
+	csx_events[i].m_curve3d = NULL;
+	csx_events[i].m_curveA = NULL;
+	csx_events[i].m_curveB = NULL;
+    }
 
     // find the neighbors for every overlap segment
     ON_SimpleArray<bool> start_linked(overlaps.Count()), end_linked(overlaps.Count());
@@ -3875,6 +3919,9 @@ ON_Intersect(const ON_Surface *surfA,
 		delete overlaps[j];
 		overlaps[j] = NULL;
 	    }
+	    fill_gap_if_closed(overlaps[i]->m_curve3d, isect_tol);
+	    fill_gap_if_closed(overlaps[i]->m_curveA, isect_tolA);
+	    fill_gap_if_closed(overlaps[i]->m_curveB, isect_tolB);
 	}
     }
 

@@ -1,7 +1,7 @@
 /*                         R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     args = argc + 7 + 2 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    bin = bu_brlcad_root("bin", 1);
+    bin = bu_dir(NULL, 0, BU_DIR_BIN, NULL);
     if (bin) {
 	snprintf(rt, 256, "%s/%s", bin, argv[0]);
     }

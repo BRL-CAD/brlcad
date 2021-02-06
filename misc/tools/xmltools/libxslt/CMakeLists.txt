@@ -76,10 +76,12 @@ SET(LIBXSLT_VERSION_NUMBER 10126)
 SET(LIBXSLT_VERSION_EXTRA "-BRLCAD")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/config.h)
+	${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/config.h)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/config.h")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/xsltconfig.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/xsltconfig.h)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/xsltconfig.h")
 
 SET(libxslt_srcs
   src/attributes.c

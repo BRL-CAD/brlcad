@@ -1,0 +1,60 @@
+Notes about development with the Github hosting platform.
+
+--------------------------------------------------------------------------------
+Using Github Actions to iteratively debug problems.
+
+Github's runners (build platforms for it's Actions CI system) offer a way to
+test platforms we don't otherwise have access to.  Sometimes, if we need to
+iteratively test inputs being supplied to tools on those platforms to diagnose
+a problem, the full configure/build/test cycle can be a very slow way to
+proceed.
+
+A way forward in this case is to create a temporary local repository with a
+checking of the binary version of BRL-CAD used for the specific platform in
+question, along with test inputs and an action defined to run the specific test
+in question. (REMEMBER - github repos are public, so only define and use inputs
+suitable for public consumption!)
+
+For the below example, we created a repository with the Windows binary install
+and a README file explaining what the test is doing:
+
+-rw-rw-r--   1 user user    72 Sep 23 17:52 README
+drwxrwxr-x   3 user user 12288 Sep 24 07:41 bin
+drwxrwxr-x   4 user user  4096 Sep 23 17:49 libexec
+drwxrwxr-x  13 user user  4096 Sep 23 17:50 lib
+drwxrwxr-x   5 user user  4096 Sep 23 17:49 include
+drwxrwxr-x  16 user user  4096 Sep 23 17:50 share
+drwxrwxr-x   8 user user  4096 Sep 24 07:42 .git
+drwxrwxr-x   3 user user  4096 Sep 23 17:53 .github
+
+Then, in the .github/workflows directory we create a .yml file to trigger the
+test whenever we push a change.  For this example we were wanting to test the
+benchmark script, so we create a .github/workflows/benchmark.yml file with the
+following contents:
+
+name: benchhmark
+on: [push]
+jobs:
+  bench:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#adding-a-system-path
+      - run: echo '::add-path::{C:\Program Files\Git\bin}'
+      - run: sh.exe ./bin/benchmark run
+
+This allowed developers to iteratively adjust the bin/benchmark shell script
+and test the results in the compilation Windows environment, *without* having
+to perform the full compilation cycle on Windows each time.  Once a working
+benchmark script was identified it was added back to the primary repository and
+the test repo deleted.
+
+--------------------------------------------------------------------------------
+Debugging flags can be added to the actions environment for a given repo:
+
+https://github.community/t/ci-access-to-shell-session/17250
+
+(Note:  the "Secrets" label is misleading in this particular case - that is
+the mechanism by which the values are introduced into the runner environment,
+but there are no actual secrets contained in the values of the debugging
+variables.)

@@ -1,7 +1,7 @@
 /*                         S I M D . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+// TODO - investigate https://github.com/google/cpu_features and the approach
+// suggested by William Tambellini on the eigen mailing list to build multiple
+// dynamic math libs to be loaded at run-time based on which features we can
+// take advantage of on that platform...
 
 #include "common.h"
 #include "bu/simd.h"
