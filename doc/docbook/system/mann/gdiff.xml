@@ -103,6 +103,18 @@
 	  </para>
 	</listitem>
       </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-S</emphasis></term>
+	<listitem>
+	  <para>
+	    The "S" option enables a completely different difference testing mode - rather than using rays
+	    to interrogate geometries, it checks tree structures, matrices and leaf objects.  It deliberately
+	    does <emphasis>not</emphasis> check object names, in order to compare the actual volumetric
+	    definitions of the trees.  Since there is no ray sampling, this option will not currently produce any
+	    visual output.
+	  </para>
+	</listitem>
+      </varlistentry>
     </variablelist>
 
   </refsection>

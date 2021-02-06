@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed GQA multithreaded plotting file corruption - Cliff Yapp
+* added -S structural diff option to MGED gdiff command - Cliff Yapp
 * added -v verbosity option to MGED tree command - Cliff Yapp
 * added -? option to MGED which command - Cliff Yapp
 * updated Archer to set cwd=HOME when run without args - Cliff Yapp
