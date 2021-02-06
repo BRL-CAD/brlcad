@@ -26,6 +26,7 @@ changes made.  See document footer for additional details.
 * removed obscure MGED menu entries for unused features - Cliff Yapp
 * fixed crash when trying to shade invalid breps - Cliff Yapp
 * changed 'mvall' to rename all refs even w/ no object - Sean Morrison
+* updated MGED Overlap GUI to run reliably on Windows - Cliff Yapp
 * fixed MGED search command crash on empty database - Sean Morrison
 * improved performance calculating BoT bounding boxes - Vikram Atreya
 * fixed MGED crash closing multiple rt views on Windows - Cliff Yapp
