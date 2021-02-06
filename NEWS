@@ -25,6 +25,7 @@ changes made.  See document footer for additional details.
 * changed gcv converter to append to existing .g files - Cliff Yapp
 * removed obscure MGED menu entries for unused features - Cliff Yapp
 * fixed crash when trying to shade invalid breps - Cliff Yapp
+* improved librt CPU timer behavior - Cliff Yapp
 * fixed example in saveview manual page - Sean Morrison
 * added support for in-database vol primitive data - Sumagna Das
 * changed 'mvall' to rename all refs even w/ no object - Sean Morrison
