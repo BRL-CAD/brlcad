@@ -1,3 +1,85 @@
+2021-02-06 16:22  starseeker
+
+	* [r78203] include/conf/PATCH, misc/debian/changelog:
+	  Update version numbers
+
+2021-02-06 16:18  starseeker
+
+	* [r78202] NEWS:
+	  g-iges change is in principle user visible - fixed crash running
+	  regression test on OSX.
+
+2021-02-06 16:15  starseeker
+
+	* [r78201] doc/docbook/system/mann/gdiff.xml:
+	  gdiff -S also checks boolean operations
+
+2021-02-06 16:13  starseeker
+
+	* [r78200] NEWS, doc/docbook/system/mann/gdiff.xml:
+	  Document the -S option added to libged's gdiff command.
+
+2021-02-06 16:05  starseeker
+
+	* [r78199] NEWS:
+	  Note addition of -? option to which in r78052
+
+2021-02-06 15:57  starseeker
+
+	* [r78198] NEWS:
+	  Whoops, redundant item
+
+2021-02-06 15:50  starseeker
+
+	* [r78197] NEWS:
+	  Note fixes to libtclcad command I/O that were causing problems
+	  (particularly on OSX, but almost certainly elsewhere as well.)
+
+2021-02-06 15:41  starseeker
+
+	* [r78196] NEWS:
+	  Note work on librt timer code
+	  
+	  This is borderline - certain timing outputs may change now
+	  that we are making more of an effort to use the CPU timers
+	  when the API says we are, but it's not clear that there will
+	  be significant user visible implications.
+	  
+	  If timing answer change that will be potentially significant,
+	  so going ahead and noting in NEWS to provide some visibility.
+
+2021-02-06 15:33  starseeker
+
+	* [r78195] NEWS:
+	  User visible - Sean fixed example in the saveview man page.
+
+2021-02-06 15:28  starseeker
+
+	* [r78194] NEWS:
+	  Note Sumagna Das's patch #556 adding in-database support for vol
+	  primitive data.
+
+2021-02-06 15:21  starseeker
+
+	* [r78193] NEWS:
+	  Note change of MGED Overlap GUI to using gchecker tool behind the
+	  scenes for more reliable execution on Windows.
+
+2021-02-06 15:03  starseeker
+
+	* [r78192] BUGS:
+	  semaphore protection appears to fix the gqa invalid plot3 issue
+
+2021-02-06 14:45  starseeker
+
+	* [r78191] TODO:
+	  quick check of dbconcat m35 into ktank seems to work?
+
+2021-02-06 14:41  starseeker
+
+	* [r78190] ChangeLog:
+	  Update ChangeLog with commits through 78187.
+
 2021-02-05 23:51  starseeker
         * [r78187]  **many files**:
 	  Update copyright statements to year 2021 per sh/copyright.sh script
