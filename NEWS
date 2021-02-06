@@ -19,6 +19,7 @@ changes made.  See document footer for additional details.
 * updated rtwizard to set cwd=HOME when run without args - Cliff Yapp
 * updated MGED to set cwd=HOME when run without args - Cliff Yapp
 * fixed reporting of MGED "vars" command - Cliff Yapp
+* fixed MGED I/O when running GED subcommands - Cliff Yapp
 * updated MGED to not open non-.g-files as databases - Cliff Yapp
 * fixed problems with command I/O management in MGED - Cliff Yapp
 * added decimation control examples to facetize man page - Cliff Yapp
