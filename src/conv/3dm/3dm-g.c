@@ -41,13 +41,10 @@ find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const c
     const struct bu_ptbl * const filters = gcv_list_filters();
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
-	const struct gcv_filter *e = (*entry);
-	if (e->filter_type != filter_type) continue;
-	if ((e->mime_context == BU_MIME_MODEL) && (e->mime_type == (int)mime_type)) return e;
-	if ((e->mime_context == BU_MIME_MODEL) && (e->mime_type == -1)) {
-	   if ((e->data_supported && data && (*e->data_supported)(data)))
-	       return e;
-	}
+	bu_mime_model_t emt = (*entry)->mime_type;
+	if ((*entry)->filter_type != filter_type) continue;
+	if ( (emt != BU_MIME_MODEL_AUTO) && (emt == mime_type)) return *entry;
+	if ( (emt == BU_MIME_MODEL_AUTO) && ((*entry)->data_supported && data && (*(*entry)->data_supported)(data)) ) return *entry;
     }
     return NULL;
 }

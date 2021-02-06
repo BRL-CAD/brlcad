@@ -283,7 +283,7 @@ vrml_can_read(const char *source_path)
 
 extern "C" {
     struct gcv_filter gcv_conv_vrml_read =
-    {"VRML Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_VRML, BU_MIME_MODEL, vrml_can_read, NULL, NULL, vrml_read};
+    {"VRML Reader", GCV_FILTER_READ, BU_MIME_MODEL_VRML, vrml_can_read, NULL, NULL, vrml_read};
 }
 
 
