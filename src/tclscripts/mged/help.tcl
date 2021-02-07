@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #==============================================================================
 
 # This command causes helplib.tcl to get read in.
-source [file join [bu_brlcad_root "share/tclscripts"] "helplib.tcl"]
+source [file join [bu_dir data] "tclscripts" "helplib.tcl"]
 helplib
 
 set mged_help_data(?)		{{}	{summary of available mged commands}}

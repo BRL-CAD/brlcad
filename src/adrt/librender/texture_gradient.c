@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ G R A D I E N T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2020 United States Government as represented by
+ * Copyright (c) 2002-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

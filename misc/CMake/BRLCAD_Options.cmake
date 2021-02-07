@@ -1,7 +1,7 @@
 #             B R L C A D _ O P T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2020 United States Government as represented by
+# Copyright (c) 2011-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -133,7 +133,7 @@ endfunction(OPTION_RESOLVE_ALIASES)
 # Write documentation description for BRL-CAD options
 function(WRITE_OPTION_DESCRIPTION opt opt_ALIASES opt_DESCRIPTION)
 
-  set(ofile "${CMAKE_BINARY_DIR}/OPTIONS")
+  set(ofile "${CMAKE_BINARY_DIR}/BRLCAD_OPTIONS")
 
   file(APPEND "${ofile}" "\n--- ${opt} ---\n")
   file(APPEND "${ofile}" "${${opt_DESCRIPTION}}")

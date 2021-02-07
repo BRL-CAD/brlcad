@@ -1,7 +1,7 @@
 /*                       D B _ D I F F . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #define RT_DB_DIFF_H
 
 #include "common.h"
+#include "bu/avs.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
 #include "rt/defines.h"

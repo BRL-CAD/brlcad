@@ -1,7 +1,7 @@
 /*                 B R E P I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ bool PointInTriangle(
 
 bool PointInPolyline(
     const ON_3dPoint& P,
-    const ON_Polyline pline,
+    const ON_Polyline& pline,
     double tol
     )
 {

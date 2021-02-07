@@ -1,7 +1,7 @@
 /*                     C O M M A N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -707,6 +707,7 @@ static struct to_cmdtab ged_cmds[] = {
     {"nmg_collapse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_collapse},
     {"nmg_fix_normals",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_fix_normals},
     {"nmg_simplify",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_simplify},
+    {"npush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_npush},
     {"ocenter",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ocenter},
     {"open",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_reopen},
     {"orient",	"quat", 6, to_view_func_plus, ged_orient},

@@ -1,7 +1,7 @@
 /*                    E X E C _ M A P P I N G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,6 +48,7 @@
 	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
 	{ \
 	    const char *fname = #x ; \
+	    const char *argv0 = argv[0] ; \
 	    int vret = ged_cmd_valid(argv[0], fname); \
 	    if (vret) { \
 		argv[0] = fname; \
@@ -56,6 +57,7 @@
 	    if (vret) { \
 		ret |= GED_UNKNOWN; \
 	    } \
+	    argv[0] = argv0; \
 	    return ret; \
 	} \
 
@@ -243,6 +245,7 @@ GED_CMD(nmg)
 GED_CMD(nmg_collapse)
 GED_CMD(nmg_fix_normals)
 GED_CMD(nmg_simplify)
+GED_CMD(npush)
 GED_CMD(ocenter)
 GED_CMD(orient)
 GED_CMD(orientation)

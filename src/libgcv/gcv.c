@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,13 @@ _gcv_brlcad_write(struct gcv_context *context,
 		  const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
 		  const char *dest_path)
 {
-    struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
+    struct rt_wdb * out_wdbp = NULL;
+    if (!bu_file_exists(dest_path, NULL)) {
+	out_wdbp = wdb_fopen(dest_path);
+    } else {
+	struct db_i *dbip = db_open(dest_path, DB_OPEN_READWRITE);
+	out_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+    }
 
     if (!out_wdbp) {
 	bu_log("wdb_fopen() failed for '%s'\n", dest_path);
@@ -125,11 +131,11 @@ _gcv_brlcad_can_write(const char *data)
 
 /* TODO - implement a BRL-CAD "valid file" test function...) */
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, BU_MIME_MODEL, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, BU_MIME_MODEL, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void
@@ -347,23 +353,8 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 HIDDEN const char *
 _gcv_plugins_get_path(void)
 {
-    const char *brlcad_libs_path;
-    struct bu_vls buffer;
-    const char *result;
-
-    /* LIBGCV_PLUGINS_PATH is where the plugin dir resides, defined via cppflag */
-    brlcad_libs_path = bu_brlcad_dir(LIBGCV_PLUGINS_PATH, 0);
-
-    if (!brlcad_libs_path)
-	return NULL;
-
-    bu_vls_init(&buffer);
-    /* LIBGCV_PLUGINS_DIRECTORY is the name of the plugin dir, defined via cppflag */
-    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
-		   LIBGCV_PLUGINS_DIRECTORY);
-    result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
-    bu_vls_free(&buffer);
-
+    const char *pdir = bu_dir(NULL, 0, BU_DIR_LIBEXEC, LIBGCV_PLUGINS_DIRECTORY, NULL);
+    const char *result = bu_strdup(pdir);
     return result;
 }
 

@@ -1,7 +1,7 @@
 /*                         P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,12 +37,14 @@ main(int argc, const char *argv[])
     int print_help = 0;
     int binary_mode = 0;
     int text_mode = 0;
+    int expect_invalid = 0;
     int mode = -1;
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",   "",  NULL, &print_help,  "Print help and exit");
-    BU_OPT(d[1], "b", "binary", "",  NULL, &binary_mode, "Process plot file as binary plot data (default)");
-    BU_OPT(d[2], "t", "text",   "",  NULL, &text_mode,   "Process plot file as text plot data");
-    BU_OPT_NULL(d[3]);
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h", "help",    "",  NULL, &print_help,     "Print help and exit");
+    BU_OPT(d[1], "b", "binary",  "",  NULL, &binary_mode,    "Process plot file as binary plot data (default)");
+    BU_OPT(d[2], "t", "text",    "",  NULL, &text_mode,      "Process plot file as text plot data");
+    BU_OPT(d[3], "i", "invalid", "",  NULL, &expect_invalid, "Expect to detect an invalid file");
+    BU_OPT_NULL(d[4]);
 
     bu_setprogname(argv[0]);
 
@@ -75,10 +77,19 @@ main(int argc, const char *argv[])
 
     ret = plot3_invalid(fp, mode);
 
-    if (ret) {
-	bu_log("INVALID: %s\n", argv[0]);
+    if (expect_invalid) {
+	if (ret) {
+	    bu_log("INVALID (expected): %s\n", argv[0]);
+	} else {
+	    bu_log("VALID (unexpected): %s\n", argv[0]);
+	}
+	ret = (ret) ? 0 : 1;
     } else {
-	bu_log("VALID:   %s\n", argv[0]);
+	if (ret) {
+	    bu_log("INVALID: %s\n", argv[0]);
+	} else {
+	    bu_log("VALID:   %s\n", argv[0]);
+	}
     }
 
     return ret;

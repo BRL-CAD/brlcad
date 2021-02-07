@@ -64,15 +64,11 @@ if (BRLCAD_ENABLE_TCL)
     libbn
     libbu
     ${TCL_LIBRARY}
-    ${ITCL_LIBRARY}
     ${TCLCAD_XLIBS}
     )
   if (TK_LIBRARY)
     set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})
   endif (TK_LIBRARY)
-  if (ITK_LIBRARY)
-    set(TCLCAD_LIBS ${TCLCAD_LIBS} ${ITK_LIBRARY})
-  endif (ITK_LIBRARY)
 
   BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_LIBS}")
   set_target_properties(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
@@ -85,6 +81,13 @@ if (BRLCAD_ENABLE_TCL)
 
   # For anyone to do anything with tclcad, we need the libged plugins
   add_dependencies(libtclcad ged_plugins)
+
+  set(STAGE_TGTS tcl_stage tk_stage itcl_stage itk_stage iwidgets_stage)
+  foreach(tgt ${STAGE_TGTS})
+    if (TARGET ${tgt})
+      add_dependencies(libtclcad ${tgt})
+    endif (TARGET ${tgt})
+  endforeach(tgt ${STAGE_TGTS})
 
 endif (BRLCAD_ENABLE_TCL)
 

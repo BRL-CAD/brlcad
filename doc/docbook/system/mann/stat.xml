@@ -105,7 +105,7 @@
           <para>
             Supply a comma separated list of column specifiers or attribute keys to specify a sorting priority for <command>stat</command>.
 	    Priority is left to right - sorting will be performed first based on the leftmost specifier, and subsequent specifiers
-	    will be used to resolve any ties.  To revers the ordering decisions for a given column, prefix the specifier with a "!"
+	    will be used to resolve any ties.  To reverse the ordering decisions for a given column, prefix the specifier with a "!"
 	    character.
           </para>
         </listitem>

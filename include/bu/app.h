@@ -1,7 +1,7 @@
 /*                          A P P . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ __BEGIN_DECLS
  * identified but should never return NULL.  this routine is not
  * thread-safe.
  */
-BU_EXPORT extern const char *bu_argv0_full_path(void);
+DEPRECATED BU_EXPORT extern const char *bu_argv0_full_path(void);
 
 /**
  * Routine for obtaining the current working directory.
@@ -204,7 +204,7 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
  */
-BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
+DEPRECATED BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
 
 /**
  * @brief
@@ -224,7 +224,7 @@ BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly)
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
  */
-BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
+DEPRECATED BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 
 
 typedef enum {

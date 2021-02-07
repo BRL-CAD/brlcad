@@ -1143,6 +1143,14 @@ BRLCAD_ADD_TEST(NAME bn_vlist_cmd_cnt_15 COMMAND bn_test vlist 15)
 BRLCAD_ADD_TEST(NAME bn_vlist_cmd_cnt_45 COMMAND bn_test vlist 45)
 BRLCAD_ADD_TEST(NAME bn_vlist_cmd_cnt_500 COMMAND bn_test vlist 500)
 
+#
+#  *************** plot3.c ***************
+#
+#  Tests to detect validity/invalidity of plot3 files
+#
+BRLCAD_ADD_TEST(NAME bn_plot3_valid COMMAND bn_plot3 -b "${CMAKE_CURRENT_SOURCE_DIR}/valid.plot3")
+BRLCAD_ADD_TEST(NAME bn_plot3_invalid COMMAND bn_plot3 -i -b "${CMAKE_CURRENT_SOURCE_DIR}/invalid.plot3")
+
 CMAKEFILES(
   CMakeLists.txt
   bntester.dat

@@ -1,7 +1,7 @@
 /*                         L I N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -453,7 +453,6 @@ _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int 
     BU_ALLOC(pc, struct bu_ptbl);
     if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
 	ret = GED_ERROR;
-	bu_ptbl_free(pc);
 	bu_free(pc, "pc table");
     } else {
 	for (i = 0; i < BU_PTBL_LEN(pc); i++) {

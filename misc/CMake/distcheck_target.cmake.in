@@ -1,7 +1,7 @@
 #       D I S T C H E C K _ T A R G E T . C M A K E . I N
 # BRL-CAD
 #
-# Copyright (c) 2012-2020 United States Government as represented by
+# Copyright (c) 2012-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,10 @@
 ###
 set(check_distcheck
 "file(GLOB_RECURSE BUILD_DIR_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${build_dir}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${build_dir}/*\")
+# Ninja keeps a running log in .ninja_log - if we're using ninja itself to run the
+# tests, we can't clear this file. Ignore it, as it's not a sign of a problem with
+# the clean logic.
+list(REMOVE_ITEM BUILD_DIR_CONTENTS .ninja_log)
 if(BUILD_DIR_CONTENTS)
   message(\"Files present after distclean in ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${build_dir}:\")
   foreach(filename \${BUILD_DIR_CONTENTS})

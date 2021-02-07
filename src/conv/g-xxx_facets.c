@@ -1,7 +1,7 @@
 /*                  G - X X X _ F A C E T S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2020 United States Government as represented by
+ * Copyright (c) 2003-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

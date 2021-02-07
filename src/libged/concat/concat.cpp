@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -281,6 +281,10 @@ copy_object(struct ged *gedp,
 		      new_name.c_str());
 	return GED_ERROR;
     }
+
+    /* db_diradd doesn't produce the correct major type for binary objects -
+     * make sure they match. */
+    new_dp->d_major_type = input_dp->d_major_type;
 
     if (rt_db_put_internal(new_dp, curr_dbip, &ip, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str,

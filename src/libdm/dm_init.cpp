@@ -1,7 +1,7 @@
 /*                     D M _ I N I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,6 +168,8 @@ libdm_init(void)
 
 
     }
+    bu_argv_free(nfiles, filenames);
+    bu_vls_free(&plugin_pattern);
 
     dm_backends = (void *)&dm_map;
 
