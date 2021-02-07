@@ -1,7 +1,7 @@
 /*                       G C V _ A P I . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -140,12 +140,14 @@ struct gcv_filter {
     const enum gcv_filter_type filter_type;
 
     /* If we have a specific model type this converter is known to
-     * handle, call it out here.
+     * handle, call it out here.  Use BU_MIME_MODEL_UNKNOWN if
+     * 'filter_type' is GCV_FILTER_FILTER or if the plugin is a
+     * multi-format I/O plugin.
      *
-     * Use mime_type = -1 if the plugin is a multi-format I/O plugin.
+     * FIXME: input/output plugins conceivably could be something
+     * other than geometry (e.g., png input or csv output).
      */
-    const int mime_type;
-    const bu_mime_context_t mime_context;
+    const bu_mime_model_t mime_type;
 
     /* For plugins supporting multiple file types, call this to
      * process them.

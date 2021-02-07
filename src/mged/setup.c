@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -235,6 +235,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"nmg_fix_normals", cmd_ged_plain_wrapper, ged_nmg_fix_normals},
     {"nmg_simplify", cmd_ged_plain_wrapper, ged_nmg_simplify},
     {"nmg", cmd_ged_plain_wrapper, ged_nmg},
+    {"npush", cmd_ged_plain_wrapper, ged_npush},
     {"o_rotate", f_be_o_rotate, GED_FUNC_PTR_NULL},
     {"o_scale", f_be_o_scale, GED_FUNC_PTR_NULL},
     {"oed", cmd_oed, GED_FUNC_PTR_NULL},

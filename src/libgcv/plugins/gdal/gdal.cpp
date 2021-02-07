@@ -2,7 +2,7 @@
  * BRL-CAD
  *
  * Copyright (c) 2013 Tom Browder
- * Copyright (c) 2017-2020 United States Government as represented by the U.S. Army
+ * Copyright (c) 2017-2021 United States Government as represented by the U.S. Army
  * Research Laboratory.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -430,7 +430,7 @@ gdal_read_free_opts(void *options_data)
 extern "C"
 {
     struct gcv_filter gcv_conv_gdal_read =
-    {"GDAL Reader", GCV_FILTER_READ, -1, BU_MIME_UNKNOWN, gdal_can_read, gdal_read_create_opts, gdal_read_free_opts, gdal_read};
+    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, gdal_can_read, gdal_read_create_opts, gdal_read_free_opts, gdal_read};
 
     static const struct gcv_filter * const filters[] = {&gcv_conv_gdal_read, NULL};
     const struct gcv_plugin gcv_plugin_info_s = { filters };

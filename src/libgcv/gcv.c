@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,11 +131,11 @@ _gcv_brlcad_can_write(const char *data)
 
 /* TODO - implement a BRL-CAD "valid file" test function...) */
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, BU_MIME_MODEL, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, BU_MIME_MODEL, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void

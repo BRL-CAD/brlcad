@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2020 United States Government as represented by
+ * Copyright (c) 2016-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,7 +96,7 @@ decimate_filter(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
 
 static const struct gcv_filter gcv_filter_decimate =
-{"Decimate", GCV_FILTER_FILTER, BU_MIME_MODEL_UNKNOWN, BU_MIME_UNKNOWN, NULL, NULL, NULL, decimate_filter};
+{"Decimate", GCV_FILTER_FILTER, BU_MIME_MODEL_UNKNOWN, NULL, NULL, NULL, decimate_filter};
 
 static const struct gcv_filter * const filters[] = {&gcv_filter_decimate, NULL};
 const struct gcv_plugin gcv_plugin_info_s = {filters};

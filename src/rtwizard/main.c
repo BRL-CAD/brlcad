@@ -1,7 +1,7 @@
 /*                        M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,11 @@
  */
 
 #include "common.h"
-#include "string.h"
+#include <string.h>
+
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
+#endif
 
 #include "tcl.h"
 
@@ -989,6 +993,15 @@ main(int argc, char **argv)
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
+
+    /* Change the working directory to BU_DIR_HOME if we are invoking
+     * without any arguments. */
+    if (argc == 1) {
+	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
+	if (homed && chdir(homed)) {
+	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
+	}
+    }
 
     /* Skip first arg */
     argv++; argc--;

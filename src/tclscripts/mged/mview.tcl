@@ -1,7 +1,7 @@
 #                       M V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -249,7 +249,7 @@ proc releasemv { id } {
 
     # If all the windows are gone, we're closing the application
     if { !$mged_gui($id,show_cmd) && !$mged_gui($id,show_dm)} {
-	quit -f
+	exit
     }
 }
 

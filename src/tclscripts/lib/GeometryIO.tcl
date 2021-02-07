@@ -1,7 +1,7 @@
 #               G E O M E T R Y I O . T C L
 # BRL-CAD
 #
-# Copyright (c) 2014-2020 United States Government as represented by
+# Copyright (c) 2014-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

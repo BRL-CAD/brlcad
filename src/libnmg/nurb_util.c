@@ -1,7 +1,7 @@
 /*                     N U R B _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

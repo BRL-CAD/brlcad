@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1447,6 +1447,7 @@ BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac &
 #BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
 if(MSVC)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_WINDOWS_H 1\n")
+  set(HAVE_WINDOWS_H 1)
 endif(MSVC)
 
 

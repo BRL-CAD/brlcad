@@ -1,7 +1,7 @@
 #     B R L C A D _ I N S T A L L _ P R E F I X . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2020 United States Government as represented by
+# Copyright (c) 2020-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

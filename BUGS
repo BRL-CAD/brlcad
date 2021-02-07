@@ -15,9 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* gqa command is generating invalid plot3 files in multithreaded
-  mode.
-
 * fbclear -c appears to hang indefinitely inside pkg_bwaitfor,
   possible protocol mismatch or capability removed/changed in fbserv.
 

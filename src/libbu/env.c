@@ -1,7 +1,7 @@
 /*                        E N V . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without

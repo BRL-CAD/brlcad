@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -135,6 +135,7 @@ struct cstate {
 
     int sem_lists;
     int sem_worker;
+    int sem_plot;
 
     /* sem_worker protects this */
     int v;         /* indicates how many "grid_size" steps in the v direction have been taken */
@@ -794,8 +795,10 @@ _gqa_overlap(struct application *ap,
     VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
     if (plot_overlaps) {
+	bu_semaphore_acquire(state->sem_plot);
 	pl_color(plot_overlaps, V3ARGS(overlap_color));
 	pdv_3line(plot_overlaps, ihit, ohit);
+	bu_semaphore_release(state->sem_plot);
     }
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
@@ -811,8 +814,10 @@ _gqa_overlap(struct application *ap,
 	bu_semaphore_release(state->sem_lists);
 
 	if (plot_overlaps) {
+	    bu_semaphore_acquire(state->sem_plot);
 	    pl_color(plot_overlaps, V3ARGS(overlap_color));
 	    pdv_3line(plot_overlaps, ihit, ohit);
+	    bu_semaphore_release(state->sem_plot);
 	}
     } else {
 	bu_semaphore_acquire(state->sem_worker);
@@ -867,8 +872,10 @@ void _gqa_exposed_air(struct application *ap,
     bu_semaphore_release(state->sem_lists);
 
     if (plot_expair) {
+	bu_semaphore_acquire(state->sem_plot);
 	pl_color(plot_expair, V3ARGS(expAir_color));
 	pdv_3line(plot_expair, pt, opt);
+	bu_semaphore_release(state->sem_plot);
     }
 }
 
@@ -962,8 +969,10 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 			vect_t gapEnd;
 			VJOIN1(gapEnd, pt, -gap_dist, ap->a_ray.r_dir);
 
+			bu_semaphore_acquire(state->sem_plot);
 			pl_color(plot_gaps, V3ARGS(gap_color));
 			pdv_3line(plot_gaps, pt, gapEnd);
+			bu_semaphore_release(state->sem_plot);
 		    }
 		}
 	    }
@@ -1121,6 +1130,7 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    if (plot_volume) {
 		VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
+		bu_semaphore_acquire(state->sem_plot);
 		if (ap->a_user & 1) {
 		    pl_color(plot_volume, V3ARGS(gap_color));
 		} else {
@@ -1128,6 +1138,7 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		}
 
 		pdv_3line(plot_volume, pt, opt);
+		bu_semaphore_release(state->sem_plot);
 	    }
 	}
 
@@ -1148,8 +1159,10 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		d *= 0.25;
 		VJOIN1(aapt, pt, d, ap->a_ray.r_dir);
 
+		bu_semaphore_acquire(state->sem_plot);
 		pl_color(plot_adjair, V3ARGS(adjAir_color));
 		pdv_3line(plot_adjair, pt, aapt);
+		bu_semaphore_release(state->sem_plot);
 	    }
 	}
 
@@ -2411,6 +2424,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     state.sem_worker = bu_semaphore_register("gqa_sem_worker");
     state.sem_stats = bu_semaphore_register("gqa_sem_stats");
     state.sem_lists = bu_semaphore_register("gqa_sem_lists");
+    state.sem_plot = bu_semaphore_register("gqa_sem_plot");
     state.rtip = rtip;
     state.first = 1;
     allocate_per_region_data(&state, start_objs, argc, argv);

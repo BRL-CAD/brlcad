@@ -59,6 +59,35 @@ You may want to produce an NSIS installer.  If so, locate a target
 named PACKAGE and run it.  The end result should be an .exe file
 capable of installing BRL-CAD.
 
+Debugging with Visual Studio
+----------------------------
+
+For most compilation environments, BRL-CAD defines a Debug build
+configuration which disables optimizations and a Release build that
+enables them - although Debug builds are generally easier to use when
+tracking down problems, both configurations keep debugging information.
+This allows for easier diagnosis of problems in real-world use, as
+well as diagnosis of issues that occur only when optimizations are
+enabled.
+
+MSVC and Windows present a more complicated situation. On that platform,
+Debug versions of applications are not redistributable:
+https://docs.microsoft.com/en-us/cpp/windows/determining-which-dlls-to-redistribute
+
+As a consequence the default BRL-CAD build configuration for Release
+(unlike other platforms) does not support debugging.
+
+If it is necessary to debug a Release mode specific issue on Windows,
+extra steps are needed.  Users of CMake may be familiar with the build
+configuration RelWithDebInfo, which is normally disabled for BRL-CAD
+builds - debugging a Release-mode-only problem is exactly the situation
+in which this build configuration is needed.
+
+To re-enable the availability of RelWithDebInfo for BRL-CAD builds, set
+the compilation variable ENABLE_ALL_CONFIG_TYPES to ON - once set,
+BRL-CAD's configure will no longer eliminate CMake build types other
+than Debug and Release.
+
 Working with MSI files
 ----------------------
 

@@ -1,7 +1,7 @@
 /*                  R H I N O _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2020 United States Government as represented by
+ * Copyright (c) 2016-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -980,7 +980,7 @@ rhino_can_read(const char *source_path)
 
 
 struct gcv_filter gcv_conv_rhino_read = {
-    "Rhino Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_VND_RHINO, BU_MIME_MODEL, rhino_can_read,
+    "Rhino Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, rhino_can_read,
     NULL, NULL, rhino_read
 };
 
