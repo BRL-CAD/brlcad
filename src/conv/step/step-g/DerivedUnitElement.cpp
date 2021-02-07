@@ -1,7 +1,7 @@
 /*          D E R I V E D U N I T E L E M E N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
