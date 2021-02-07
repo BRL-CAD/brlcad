@@ -1,7 +1,7 @@
 /*                       U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright 2001 softSurfer, 2012 Dan Sunday

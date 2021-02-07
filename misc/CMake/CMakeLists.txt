@@ -1,10 +1,16 @@
 set(cmake_ignore_files
+  BRLCAD_Build_Types.cmake
+  BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
+  BRLCAD_Environment_Setup.cmake
+  BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake
   BRLCAD_Regress_Util.cmake
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
+  BRLCAD_Test_Wrappers.cmake
+  BRLCAD_User_Options.cmake
   BRLCAD_Util.cmake
   CMakeLists.txt
   CheckCInline.cmake
@@ -35,13 +41,14 @@ set(cmake_ignore_files
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
+  FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
-  FindSSE.cmake
   FindSTL.cmake
   FindShellDeps.cmake
+  FindSTEPCODE.cmake
   FindTBB.cmake
   FindTCL.cmake
   FindUTAHRLE.cmake
@@ -95,8 +102,9 @@ set(cmake_ignore_files
   multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
-  scripts/timestamp.cmake
   scripts/printtime.cmake
+  scripts/timestamp.cmake
+  scripts/tcl_mkindex.cmake
   )
 CMAKEFILES(${cmake_ignore_files})
 

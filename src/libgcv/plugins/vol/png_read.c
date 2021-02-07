@@ -1,7 +1,7 @@
 /*                      P N G _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ HIDDEN int png_can_read(const char * data)
 
 
 const struct gcv_filter gcv_conv_png_read = {
-    "PNG Reader", GCV_FILTER_READ, (int)BU_MIME_IMAGE_PNG, BU_MIME_IMAGE, png_can_read,
+    "PNG Reader", GCV_FILTER_READ, BU_MIME_MODEL_UNKNOWN, png_can_read,
     create_opts, free_opts, png_read
 };
 

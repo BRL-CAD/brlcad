@@ -18,55 +18,28 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Update libgcv plugin installation location - now that its
-  available, they belong with the other plugins in libexec
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+* dbconcat corrupted database / failed. created a top-level comb with
+  invalid "1_[subcomb]/" to be created that result in error messages
+  during any db listing (e.g., tops).  workaround was to manually edit
+  the comb and remove the 1_ and / on the entries.
 
 * The following will be removed from MGED's menu bar (unused
   features, can be accomplished another way, or will be exposed
   only as lower level settings when there are sensible defaults
   that are seldom changed.)
 
-  ViewRing menu and entries.
-  Modes->Persistent Sweep Rectangle
-  Modes->Collaborate
-  Modes->Rateknobs
   Modes->Display Lists
   Misc->Keystroke Forwarding
   Misc->Depth Cueing
   Misc->Z Buffer
   Misc->Lighting
-  Settings->Mouse Behavior->Sweep Raytrace-Rectangle
-  Settings->Mouse Behavior->Sweep Paint-Rectangle
-  Settings->Mouse Behavior->Sweep Zoom-Rectangle
-  Settings->Apply To->Local Panes
-  Settings->Apply To->Listed Panes
-  Settings->Framebuffer->Rectangle Area
-
-* The embedded framebuffer for the X display manager is not working
-  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
-  to XFlush after X24_blit.  Better solution is to replace the X
-  dm/fb with a cross platform software rasterizing solution of some
-  sort.
-
-* Implement new behavior for quit command in MGED - if bu_subprocess
-  commands are running, by default refuse to quit and print out a
-  list of currently running processes and instructions on how to abort
-  them.  Implement a -f option to forcibly quite even if there are
-  subprocesses running, and (perhaps) a --wait option to quite after
-  all subprocesses complete.
-
-  Also of interest in this context (but not critical for the basic
-  functionality) is designing a general mechanism or protocol for
-  applications to communicate progress back to bu_subprocess.
 
 * implement uv-mapping callback so we can texture-map BoT, NMG, and
   NURBS geometry
-
-* check thread safety history of gqa + plot calls (pl_color)
-
-* mged> nirt -? needs to provide help
-
-* mged> nirt -f fmt doesn't seem to work at all
 
 * modify libfb's default memory buffer allocation to be dynamic
 
@@ -78,59 +51,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * attribute normalization is drastically slowing down
   region creation - need to fix or back out
-
-* g-obj not exporting colors
-
-* finish testing of libbu bu_dir API and matching bu_dir TCL function.
-  bu_dir bin and lib don't work when the MGED prompt's working directory
-  is changed to (e.g.) the user's home directory.
-  bu_brlcad_root and bu_brlcad_data will need verbose deprecation process.
-
-* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_*
-  functions that currently rely on it to take that path as a
-  parameter from the calling application.  The library shouldn't be
-  responsible for managing that path - there are too many issues
-  with doing so.  The current approach fixes some concerns but
-  breaks if an application changes its notion of the current working
-  directory after initialization, for example.
-
-* tree command shouldn't infinite loop when encountering a cyclic
-  path - need to print a warning and stop walking.  Requries full
-  path awareness in tree command walk.
-
-  Consider implementing a corollary to FTS instead of dirent for
-  simplified tree traversal with cyclic awareness.
-
-  https://keramida.wordpress.com/2009/07/05/fts3-or-avoiding-to-reinvent-the-wheel/
-
-* move the rt_*_timer timing facilities to libbu and rework to allow
-  contexts, allowing for more than one timer to be active.  Make sure
-  the old librt API can be obsoleted cleanly.
-
-* check that dbconcat supports objects created with the bo cmd
-
-* libgcv should add objects to an existing .g if one is specified
-  as the output target - right now it's overwriting the old file
-
-* consolidate dbconcat, clone, make_name, and any other .g I/O
-  routines that need to autogenerate names to use the new
-  bu_vls_incr/bu_vls_simplify functions.
-
-* rename zlib and libpng when building bundled to avoid conflicting
-  with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
-  with name z_brlcad (perhaps as a post-compile rename custom command)
-  and png_brlcad respectively.
-
-* investigate possibility of using simple, compact libs
-  like miniz and lodepng to replace the complexity of
-  managing zlib and libpng in src/other.  These have been
-  a source of ongoing annoyance, particularly (but not
-  exclusively) on OSX.
-
-* f_dbopen in MGED doesn't seem to be reporting failure
-  if a non-.g file is fed to opendb.  That doesn't seem
-  right... shouldn't the open process completely fail
-  if the file isn't a valid .g?
 
 * add regression test for directional light sources
 
@@ -162,17 +82,60 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
 
+* tree command shouldn't infinite loop when encountering a cyclic
+  path - need to print a warning and stop walking.  Requries full
+  path awareness in tree command walk.
+
+  Consider implementing a corollary to FTS instead of dirent for
+  simplified tree traversal with cyclic awareness.
+
+  https://keramida.wordpress.com/2009/07/05/fts3-or-avoiding-to-reinvent-the-wheel/
+
+* bounding box reduction command
+
+* consolidate dbconcat, clone, make_name, and any other .g I/O
+  routines that need to autogenerate names to use the new
+  bu_vls_incr/bu_vls_simplify functions.
+
+* g-obj not exporting colors
+
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
 
+* mged> nirt -? needs to provide help
 
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
+* mged> nirt -f fmt doesn't seem to work at all
 
+* move the rt_*_timer timing facilities to libbu and rework to allow
+  contexts, allowing for more than one timer to be active.  Make sure
+  the old librt API can be obsoleted cleanly.
+
+* investigate problems with struct parsing running the MGED
+  "vars" command - most visible on OpenBSD, but Linux valgrind can
+  also see issues.
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* gdiff in mged appears to be broken?  get "no primitives found" on
+  second comb when specifying two combs (gdiff comb1 comb2).
+  UPDATE - this appears to be a consequence of how gdiff internally
+  implements its raytrace diffing.  The "fix" would be to separately
+  raytrace each object and post-process the line segments, rather
+  than drawing up everything at once - the latter has problems if
+  part or all of comb2 is shared with comb1.  A workaround is to
+  keep out comb2 and dbconcat it back in, then gdiff comb1 with the
+  imported tree.
+
+* pixscale doesn't seem to handle stdin (due to bu_seek) for very
+  long
+
+* The embedded framebuffer for the X display manager is not working
+  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
+  to XFlush after X24_blit.  Better solution is to replace the X
+  dm/fb with a cross platform software rasterizing solution of some
+  sort.
 
 * extract a skin or other exterior surface for a given model.  3 options:
   1. Implement a "shrinkwrap" feature that calculates a concave hull
@@ -201,7 +164,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   * make rtarea display a cross-hair and perhaps coordinates for the
     center of area if run from within mged.
 
-=======
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
     verbose option for the more detailed hiearchical report that is
@@ -237,7 +199,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * procedural studio box generation allowing for specification of size,
   shape, material, and lighting characteristics
 
->>>>>>> .r77755
 * verify all of the src/util utilities behave correctly on Windows
   with respect to mode (i.e. correctly using setmode/O_BINARY when
   performing file I/O.)
@@ -547,11 +508,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   + bu_for() specifies iterations of a loop body to be executed in
   parallel.  This would be a way to easily parallelize existing code
   without needing to create wrapper functions for bu_parallel().
-
-* Now that we have >3.0 CMake required, look into replacing our custom
-  time stamping code in favor of using  the CMake time stamp mechanism.
-  Also get rid of the fallback in src/libgcv/plugins/CMakeLists.txt
-  (and any others that have crept in over the years...)
 
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)

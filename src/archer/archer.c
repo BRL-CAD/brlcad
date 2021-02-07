@@ -1,7 +1,7 @@
 /*                       A R C H E R  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2020 United States Government as represented by
+ * Copyright (c) 2005-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,10 @@
 #include "common.h"
 
 #include <string.h>
+
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
+#endif
 
 #include "bresource.h"
 #include "bnetwork.h"
@@ -66,6 +70,17 @@ main(int argc, const char **argv)
 
     /* initialize progname for run-tim resource finding */
     bu_setprogname(argv[0]);
+
+    /* Change the working directory to BU_DIR_HOME if we are invoking
+     * without any arguments. */
+    if (argc == 1) {
+	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
+	if (homed && chdir(homed)) {
+	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
+	}
+    }
+
+    /* initialize Tcl args */
     bu_vls_sprintf(&tcl_cmd, "set argv0 %s", argv[0]);
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     bu_vls_sprintf(&tcl_cmd, "set ::no_bwish 1");
@@ -95,7 +110,7 @@ main(int argc, const char **argv)
     }
     bu_vls_free(&tlog);
 
-    archer_tcl = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
+    archer_tcl = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "archer", "archer_launch.tcl", NULL);
     Tcl_DStringInit(&temp);
     fullname = Tcl_TranslateFileName(interp, archer_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);

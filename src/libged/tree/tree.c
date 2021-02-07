@@ -1,7 +1,7 @@
 /*                         T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,211 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <limits.h>
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
-
+#include "bu/sort.h"
 
 #include "../ged_private.h"
+
+static int
+_tree_cmp_attr(const void *p1, const void *p2, void *UNUSED(arg))
+{
+    return bu_strcmp(((struct bu_attribute_value_pair *)p1)->name,
+		     ((struct bu_attribute_value_pair *)p2)->name);
+}
+
+static void
+_tree_print_node(struct ged *gedp,
+		struct directory *dp,
+		size_t pathpos,
+		int indentSize,
+		char opprefix,
+		unsigned flags,
+		int displayDepth,
+		int currdisplayDepth,
+		int verbosity,
+		int mprefix)
+{
+    size_t i;
+    const char *mlabel = "[M]";
+    struct directory *nextdp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    unsigned aflag = (flags & _GED_TREE_AFLAG);
+    unsigned cflag = (flags & _GED_TREE_CFLAG);
+    struct bu_vls tmp_str = BU_VLS_INIT_ZERO;
+
+    /* cflag = don't show shapes, so return if this is not a combination */
+    if (cflag && !(dp->d_flags & RT_DIR_COMB)) {
+	return;
+    }
+
+    /* set up spacing from the left margin */
+    for (i = 0; i < pathpos; i++) {
+	if (indentSize < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "\t");
+	    if (aflag)
+		bu_vls_printf(&tmp_str, "\t");
+
+	} else {
+	    int j;
+	    for (j = 0; j < indentSize; j++) {
+		bu_vls_printf(gedp->ged_result_str, " ");
+		if (aflag)
+		    bu_vls_printf(&tmp_str, " ");
+	    }
+	}
+    }
+
+    /* add the prefix if desired */
+    if (mprefix) {
+	bu_vls_printf(gedp->ged_result_str, "%s ", mlabel);
+    }
+    if (opprefix) {
+	bu_vls_printf(gedp->ged_result_str, "%c ", opprefix);
+	if (aflag)
+	    bu_vls_printf(&tmp_str, " ");
+    }
+
+    /* now the object name */
+    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
+
+    /* suffix name if appropriate */
+    /* Output Comb and Region flags (-F?) */
+    if (dp->d_flags & RT_DIR_COMB)
+	bu_vls_printf(gedp->ged_result_str, "/");
+    if (dp->d_flags & RT_DIR_REGION)
+	bu_vls_printf(gedp->ged_result_str, "R");
+
+    bu_vls_printf(gedp->ged_result_str, "\n");
+
+    /* output attributes if any and if desired */
+    if (aflag) {
+	struct bu_attribute_value_set avs;
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	    /* need a bombing macro or set an error code here: return GED_ERROR; */
+	    bu_vls_free(&tmp_str);
+	    return;
+	}
+
+	/* FIXME: manually list all the attributes, if any.  should be
+	 * calling ged_attr() show so output formatting is consistent.
+	 */
+	if (avs.count) {
+	    struct bu_attribute_value_pair *avpp;
+	    int max_attr_name_len = 0;
+
+	    /* sort attribute-value set array by attribute name */
+	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _tree_cmp_attr, NULL);
+
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		int len = (int)strlen(avpp->name);
+		if (len > max_attr_name_len) {
+		    max_attr_name_len = len;
+		}
+	    }
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		bu_vls_printf(gedp->ged_result_str, "%s       @ %-*.*s    %s\n",
+			      tmp_str.vls_str,
+			      max_attr_name_len, max_attr_name_len,
+			      avpp->name, avpp->value);
+	    }
+	}
+	bu_vls_free(&tmp_str);
+    }
+
+    if (!(dp->d_flags & RT_DIR_COMB))
+	return;
+
+    /*
+     * This node is a combination (e.g., a directory).
+     * Process all the arcs (e.g., directory members).
+     */
+
+    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
+	return;
+    }
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+    if (comb->tree) {
+	size_t node_count;
+	size_t actual_count;
+	struct rt_tree_array *rt_tree_array;
+
+	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+	    db_non_union_push(comb->tree, &rt_uniresource);
+	    if (db_ck_v4gift_tree(comb->tree) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
+		return;
+	    }
+	}
+	node_count = db_tree_nleaves(comb->tree);
+	if (node_count > 0) {
+	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
+							      sizeof(struct rt_tree_array), "tree list");
+	    actual_count = (struct rt_tree_array *)db_flatten_tree(
+		rt_tree_array, comb->tree, OP_UNION,
+		1, &rt_uniresource) - rt_tree_array;
+	    BU_ASSERT(actual_count == node_count);
+	    comb->tree = TREE_NULL;
+	} else {
+	    actual_count = 0;
+	    rt_tree_array = NULL;
+	}
+
+	for (i = 0; i < actual_count; i++) {
+	    char op;
+
+	    switch (rt_tree_array[i].tl_op) {
+		case OP_UNION:
+		    op = DB_OP_UNION;
+		    break;
+		case OP_INTERSECT:
+		    op = DB_OP_INTERSECT;
+		    break;
+		case OP_SUBTRACT:
+		    op = DB_OP_SUBTRACT;
+		    break;
+		default:
+		    op = '?';
+		    break;
+	    }
+
+	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		size_t j;
+
+		for (j = 0; j < pathpos+1; j++)
+		    bu_vls_printf(gedp->ged_result_str, "\t");
+
+		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->ged_wdbp->wdb_tol))
+		    bu_vls_printf(gedp->ged_result_str, "%s ", mlabel);
+		bu_vls_printf(gedp->ged_result_str, "%c ", op);
+		bu_vls_printf(gedp->ged_result_str, "%s\n", rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    } else {
+
+		int domprefix = 0;
+		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->ged_wdbp->wdb_tol)) {
+		    domprefix = 1;
+		}
+
+		if (currdisplayDepth < displayDepth) {
+		    _tree_print_node(gedp, nextdp, pathpos+1, indentSize, op, flags, displayDepth, currdisplayDepth+1, verbosity, domprefix);
+		}
+	    }
+	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+	}
+	if (rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
+    }
+    rt_db_free_internal(&intern);
+}
+
 
 
 /*
@@ -52,6 +249,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
     int indentSize = -1;
     int displayDepth = INT_MAX;
     int c;
+    int verbosity = 0;
     FILE *fdout = NULL;
     char *buffer = NULL;
 #define WHOARGVMAX 256
@@ -67,7 +265,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "d:i:o:ca")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "d:i:o:cav")) != -1) {
 	switch (c) {
 	    case 'i':
 		indentSize = atoi(bu_optarg);
@@ -95,6 +293,9 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 		      fclose(fdout);
 		    return GED_ERROR;
 		}
+		break;
+	    case 'v':
+		verbosity++;
 		break;
 	    case '?':
 	    default:
@@ -129,7 +330,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "\n");
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
-	_ged_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0);
+	_tree_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0, verbosity, 0);
     }
 
     if (buffer) {

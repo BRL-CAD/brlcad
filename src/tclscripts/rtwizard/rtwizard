@@ -2,7 +2,7 @@
 #                    R T W I Z A R D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2020 United States Government as represented by
+# Copyright (c) 2006-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -118,12 +118,12 @@ if {[info exists ::use_gui]} {
    }
    # Check whether the framebuffer already exists.  If it does, and if
    # it was specified on the command line, go with it.
-   if { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error ] && $error == 12} {
-      catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
+   if { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error ] && $error == 12} {
+      catch {exec [file join [bu_dir bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
       if {[info exists pid]} {
 	set fbserv_pid $pid
 	# Wait a few milliseconds to make sure fbserv has completed its work and is available
-	while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12} {after 300}
+	while { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12} {after 300}
       } else {
 	if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) failed!"}
 	incr ::RtWizard::wizard_state(fbserv_port)
@@ -133,14 +133,14 @@ if {[info exists ::use_gui]} {
    # If we didn't have a pre-specified port number and the default didn't work, start counting up
    if { ! $port_number_specified && ! [info exists fbserv_pid] } {
        incr ::RtWizard::wizard_state(fbserv_port)
-       while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $::RtWizard::wizard_state(fbserv_port) } error ] } {
+       while { ! [catch {exec [file join [bu_dir bin] fbclear] -F $::RtWizard::wizard_state(fbserv_port) } error ] } {
 	     if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
 	     incr ::RtWizard::wizard_state(fbserv_port)
        }
-      catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
+      catch {exec [file join [bu_dir bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
       set fbserv_pid $pid
       # Wait a few milliseconds to make sure fbserv has completed its work and is available
-      while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12 } {after 300}
+      while { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12 } {after 300}
    }
 
    # Either we're using a specified view model, or we're deducing one based on user options
@@ -223,11 +223,11 @@ if {[info exists ::use_gui]} {
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-	 exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
+	 exec [file join [bu_dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
 	 set output_generated 1
       }
       if {!$output_generated} {
-	 exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
+	 exec [file join [bu_dir bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
 	 set output_generated 1
       }
 

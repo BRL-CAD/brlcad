@@ -1,7 +1,7 @@
 /*                           D I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -303,7 +303,8 @@ path_append(struct bu_vls *vp, const char *buf)
  *
  * @return boolean on whether a match was found.
  */
-static int
+// TODO - this can be static once bu_brlcad_root is removed
+int
 _bu_dir_join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
     size_t llen, rlen;
@@ -420,7 +421,7 @@ _bu_dir_brlcad_root(const char *rhs, int fail_quietly)
     char where[MAX_WHERE_SIZE] = {0};
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-	bu_log("bu_brlcad_root: searching for [%s]\n", rhs?rhs:"");
+	bu_log("_bu_dir_brlcad_root: searching for [%s]\n", rhs?rhs:"");
     }
 
     /* BRLCAD_ROOT environment variable if set */

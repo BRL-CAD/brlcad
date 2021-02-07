@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2020 United States Government as represented by
+ * Copyright (c) 1987-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

@@ -1,7 +1,7 @@
 /*                     O B J _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2020 United States Government as represented by
+ * Copyright (c) 1996-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -567,7 +567,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 }
 
 const struct gcv_filter gcv_conv_obj_write = {
-    "OBJ Writer", GCV_FILTER_WRITE, (int)BU_MIME_MODEL_OBJ, BU_MIME_MODEL, NULL,
+    "OBJ Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_OBJ, NULL,
     obj_write_create_opts, obj_write_free_opts, obj_write
 };
 

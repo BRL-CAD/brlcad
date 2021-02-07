@@ -1,7 +1,7 @@
 /*                       U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,7 +81,8 @@ analyze_gen_worker(int cpu, void *ptr)
 extern "C" int
 analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol)
 {
-    int ret, count;
+    int ret = 0;
+    int count = 0;
     point_t mid;
     struct rt_pattern_data *xdata = NULL;
     struct rt_pattern_data *ydata = NULL;
@@ -109,7 +110,7 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
     bu_free(xdata->n_vec, "x vec inputs");
     bu_free(xdata->n_p, "x p inputs");
     if (ret < 0) {
-	ret = 0;
+	count = ret;
 	goto memfree;
     }
 
@@ -179,7 +180,6 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
 /*
     bu_log("ray cnt: %d\n", count);
 */
-    return count;
 
 memfree:
     /* Free memory not stored in tables */
@@ -189,7 +189,7 @@ memfree:
     if (xdata) BU_PUT(xdata, struct rt_pattern_data);
     if (ydata) BU_PUT(ydata, struct rt_pattern_data);
     if (zdata) BU_PUT(zdata, struct rt_pattern_data);
-    return ret;
+    return count;
 }
 
 /* TODO - consolidate with above */
@@ -488,6 +488,7 @@ analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct 
 
     bu_parallel(segfilter_gen_worker, ncpus, (void *)state);
 
+    bu_free(local_state, "local state");
     bu_free(state, "state");
 
     return;

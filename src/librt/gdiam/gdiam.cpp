@@ -1428,7 +1428,7 @@ void   verify_convex_hull( vec_point_2d  & in, vec_point_2d  & ch )
                                     *( in[ ind ] ) ) ) {
                  area = Area( *( ch[ jnd ] ), *( ch[ jnd + 1 ] ),
                               *( in[ ind ] ) );
-                 if  ( fabs( area ) < 1e-12 )
+                 if  ( fabsl( area ) < 1e-12 )
                      continue;
                  printf( "Failure in progress!\n\n" );
                  print_pnt( ch[ jnd ] );
