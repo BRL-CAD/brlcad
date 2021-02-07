@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,9 @@
 #  pragma clang diagnostic push
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  if GCC_PREREQ(8,0)
+#    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  endif
 #endif
 
 #include "opennurbs.h"

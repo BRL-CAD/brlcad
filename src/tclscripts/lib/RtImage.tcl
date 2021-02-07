@@ -1,7 +1,7 @@
 #                          R T I M A G E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2020 United States Government as represented by
+# Copyright (c) 1998-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ proc rtimage {rtimage_dict} {
     set tmod [list [file join $dir $pid\_bwmod.bw] ]
     set tbwpix [list [file join $dir $pid\_bwpix.pix] ]
 
-    set binpath [bu_brlcad_root "bin"]
+    set binpath [bu_dir bin]
 
     if {[llength $_color_objects]} {
 	set have_color_objects 1

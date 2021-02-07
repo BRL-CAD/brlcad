@@ -1,59 +1,102 @@
-#               F I N D N E T P B M . C M A K E
-# BRL-CAD
-#
-# Copyright (c) 2011-2020 United States Government as represented by
-# the U.S. Army Research Laboratory.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following
-# disclaimer in the documentation and/or other materials provided
-# with the distribution.
-#
-# 3. The name of the author may not be used to endorse or promote
-# products derived from this software without specific prior written
-# permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
-# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-###
-# - Find netpbm library and headers
-#
-# The following variables are set:
-#
-#  NETPBM_LIBRARIES      - libnetpbm
-#  NETPBM_INCLUDE_DIRS   - where to find ppm.h, pam.h, pbm.h, etc.
-#  NETPBM_FOUND          - True if libnetpbm and header found.
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
+# file Copyright.txt or https://cmake.org/licensing for details.
 
-find_path(NETPBM_INCLUDE_DIR pam.h)
-find_library(NETPBM_LIBRARY NAMES netpbm)
+#[=======================================================================[.rst:
+FindNETPBM
+--------
+
+Find the native NETPBM includes and library.
+
+IMPORTED Targets
+^^^^^^^^^^^^^^^^
+
+This module defines :prop_tgt:`IMPORTED` target ``NETPBM::NETPBM``, if
+NETPBM has been found.
+
+Result Variables
+^^^^^^^^^^^^^^^^
+
+This module defines the following variables:
+
+::
+
+  NETPBM_INCLUDE_DIRS   - where to find pam.h, etc.
+  NETPBM_LIBRARIES      - List of libraries when using netpbm.
+  NETPBM_FOUND          - True if netpbm found.
+
+Hints
+^^^^^
+
+A user may set ``NETPBM_ROOT`` to a netpbm installation root to tell this
+module where to look.
+#]=======================================================================]
+
+set(_NETPBM_SEARCHES)
+
+# Search NETPBM_ROOT first if it is set.
+if(NETPBM_ROOT)
+  set(_NETPBM_SEARCH_ROOT PATHS ${NETPBM_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _NETPBM_SEARCHES _NETPBM_SEARCH_ROOT)
+endif()
+
+# Normal search.
+set(_NETPBM_x86 "(x86)")
+set(_NETPBM_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/netpbm"
+          "$ENV{ProgramFiles${_NETPBM_x86}}/netpbm")
+unset(_NETPBM_x86)
+list(APPEND _NETPBM_SEARCHES _NETPBM_SEARCH_NORMAL)
+
+set(NETPBM_NAMES netpbm)
+
+# Try each search configuration.
+foreach(search ${_NETPBM_SEARCHES})
+  find_path(NETPBM_INCLUDE_DIR NAMES pam.h ${${search}} PATH_SUFFIXES include include/netpbm netpbm)
+endforeach()
+
+# Allow NETPBM_LIBRARY to be set manually, as the location of the netpbm library
+if(NOT NETPBM_LIBRARY)
+  foreach(search ${_NETPBM_SEARCHES})
+    find_library(NETPBM_LIBRARY NAMES ${NETPBM_NAMES} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
+  endforeach()
+endif()
+
+unset(NETPBM_NAMES)
+
+mark_as_advanced(NETPBM_INCLUDE_DIR)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(NETPBM DEFAULT_MSG NETPBM_LIBRARY NETPBM_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(NETPBM REQUIRED_VARS NETPBM_LIBRARY NETPBM_INCLUDE_DIR)
 
-IF (NETPBM_FOUND)
-  set(NETPBM_INCLUDE_DIRS ${NETPBM_INCLUDE_DIR})
-  set(NETPBM_LIBRARIES    ${NETPBM_LIBRARY})
+if(NETPBM_FOUND)
+    set(NETPBM_INCLUDE_DIRS ${NETPBM_INCLUDE_DIR})
+
+    if(NOT NETPBM_LIBRARIES)
+      set(NETPBM_LIBRARIES ${NETPBM_LIBRARY})
+    endif()
+
+    if(NOT TARGET NETPBM::NETPBM)
+      add_library(NETPBM::NETPBM UNKNOWN IMPORTED)
+      set_target_properties(NETPBM::NETPBM PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${NETPBM_INCLUDE_DIRS}")
+
+      if(NETPBM_LIBRARY_RELEASE)
+        set_property(TARGET NETPBM::NETPBM APPEND PROPERTY
+          IMPORTED_CONFIGURATIONS RELEASE)
+        set_target_properties(NETPBM::NETPBM PROPERTIES
+          IMPORTED_LOCATION_RELEASE "${NETPBM_LIBRARY_RELEASE}")
+      endif()
+
+      if(NETPBM_LIBRARY_DEBUG)
+        set_property(TARGET NETPBM::NETPBM APPEND PROPERTY
+          IMPORTED_CONFIGURATIONS DEBUG)
+        set_target_properties(NETPBM::NETPBM PROPERTIES
+          IMPORTED_LOCATION_DEBUG "${NETPBM_LIBRARY_DEBUG}")
+      endif()
+
+      if(NOT NETPBM_LIBRARY_RELEASE AND NOT NETPBM_LIBRARY_DEBUG)
+        set_property(TARGET NETPBM::NETPBM APPEND PROPERTY
+          IMPORTED_LOCATION "${NETPBM_LIBRARY}")
+      endif()
+    endif()
 endif()
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8

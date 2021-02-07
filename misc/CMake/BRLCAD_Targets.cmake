@@ -1,7 +1,7 @@
 #              B R L C A D _ T A R G E T S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2020 United States Government as represented by
+# Copyright (c) 2011-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -220,8 +220,9 @@ endfunction(GET_FLAGS_AND_DEFINITIONS)
 
 # Determine the language for a target
 
-# For simplicity, always set compile definitions and compile flags on files rather
-# than build targets (less logic, simplifies dealing with OBJECT libraries.)
+# For simplicity, always set compile definitions and compile flags on
+# files rather than build targets (less logic, simplifies dealing with
+# OBJECT libraries.)
 function(SET_FLAGS_AND_DEFINITIONS srcslist)
 
   cmake_parse_arguments(S "NO_STRICT_CXX" "TARGET" "CFLAGS;CXXFLAGS;DEFINES" ${ARGN})
@@ -315,8 +316,9 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist}")
 
-  # Add the executable.  If the caller indicates this is a GUI type executable,
-  # add the correct flag for Visual Studio building (where it matters)
+  # Add the executable.  If the caller indicates this is a GUI type
+  # executable, add the correct flag for Visual Studio building (where
+  # it matters)
   if(E_GUI)
     add_executable(${execname} WIN32 ${srcslist})
   else(E_GUI)
@@ -377,8 +379,8 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   endif(E_NO_INSTALL OR E_TEST)
 
 
-  # Set the folder property (used in programs such as Visual Studio to organize
-  # build targets.
+  # Set the folder property (used in programs such as Visual Studio to
+  # organize build targets.
   if(E_NO_INSTALL AND NOT E_FOLDER)
     set(SUBFOLDER "/Build Only")
   endif(E_NO_INSTALL AND NOT E_FOLDER)
@@ -397,15 +399,15 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
 
-#-----------------------------------------------------------------------------
-# Library function handles both shared and static libs, so one "BRLCAD_ADDLIB"
-# statement will cover both automatically
+#---------------------------------------------------------------------
+# Library function handles both shared and static libs, so one
+# "BRLCAD_ADDLIB" statement will cover both automatically
 function(BRLCAD_ADDLIB libname srcslist libslist)
 
   cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
-  # The naming convention used for variables is the upper case of the library
-  # name, without the lib prefix.
+  # The naming convention used for variables is the upper case of the
+  # library name, without the lib prefix.
   string(REPLACE "lib" "" LOWERCORE "${libname}")
   string(TOUPPER ${LOWERCORE} UPPER_CORE)
 
@@ -425,7 +427,8 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   # Local copy of srcslist in case manipulation is needed
   set(lsrcslist ${srcslist})
 
-  # If we're going to have a specified subfolder, prepare the appropriate string:
+  # If we're going to have a specified subfolder, prepare the
+  # appropriate string:
   if(L_FOLDER)
     set(SUBFOLDER "/${L_FOLDER}")
   endif(L_FOLDER)
@@ -448,6 +451,20 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
 
+    # If the library depends on other targets in this build, not just system
+    # libraries, make sure the object targets depends them as well.  In
+    # principle this isn't always required - object compilation may be
+    # independent of the dependencies needed at link time - but if compilation
+    # DOES depends on those targets having first performed some action (like
+    # staging a header in an expected location) NOT setting this dependency
+    # explicitly will eventually cause build failures.
+    #
+    # Without setting the OBJECT dependencies, success in the above case would
+    # depend on whether or not the high level build ordering happened to run
+    # the required targets before performing this step.  That failure mode is
+    # semi-random and intermittent (top level build ordering without explicit
+    # dependencies varies depending on -j flag values) making it hard to debug.
+    # Ask me how I know.
     if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       foreach(ll ${libslist})
 	if (TARGET ${ll})
@@ -503,7 +520,8 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     endif(TARGET ${pt} AND ${pt} MATCHES "^lib*")
   endforeach(pt ${possible_targets})
 
-  # Now that we have both the sources lists and the build targets, assign flags
+  # Now that we have both the sources lists and the build targets,
+  # assign flags
   SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}"
     TARGET ${libname}
     CFLAGS "${L_C_FLAGS}"
@@ -513,6 +531,12 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   # Extra static lib specific work
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+    # We need to make sure the target depends on any targets in the libslist
+    foreach(ll ${libslist})
+      if (TARGET ${ll})
+	add_dependencies(${libstatic} ${ll})
+      endif (TARGET ${ll})
+    endforeach(ll ${libslist})
     set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
     VALIDATE_STYLE("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
     if(NOT L_NO_INSTALL)
@@ -541,36 +565,48 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
 endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 
-#-----------------------------------------------------------------------------
-# For situations when a local 3rd party library (say, zlib) has been chosen in
-# preference to a system version of that library, it is important to ensure
-# that the local header(s) get included before the system headers.  Normally
-# this is handled by explicitly specifying the local include paths (which,
-# being explicitly specified and non-standard, are checked prior to default
-# system locations) but there are some situations (macports being a classic
-# example) where *other* "non-standard" installed copies of libraries may
-# exist and be found if those directories are included ahead of the desired
+#---------------------------------------------------------------------
+# For situations when a local 3rd party library (say, zlib) has been
+# chosen in preference to a system version of that library, it is
+# important to ensure that the local header(s) get included before the
+# system headers.  Normally this is handled by explicitly specifying
+# the local include paths (which, being explicitly specified and
+# non-standard, are checked prior to default system locations) but
+# there are some situations (macports being a classic example) where
+# *other* "non-standard" installed copies of libraries may exist and
+# be found if those directories are included ahead of the desired
 # local copy.  An observed case:
 #
 # 1.  macports is installed on OSX
-# 2.  X11 is found in macports, X11 directories are set to /usr/macports based paths
-# 3.  These paths are mixed into the general include path lists for some BRL-CAD libs.
-# 4.  Because these paths are a) non-standard and b) contain zlib.h they result
-#     in "system" versions of zlib present in macports being found first even when
-#     the local zlib is enabled, if the macports paths happen to appear in the
-#     include directory list before the local zlib include paths.
 #
-# To mitigate this problem, BRL-CAD library include directories are sorted
-# according to the following hierarchy (using gcc's left-to-right search
-# order as a basis: http://gcc.gnu.org/onlinedocs/cpp/Search-Path.html):
+# 2.  X11 is found in macports, X11 directories are set to
+#     /usr/macports based paths
 #
-# 1.  If CMAKE_CURRENT_BINARY_DIR or CMAKE_CURRENT_SOURCE_DIR are in the
-#     include list, they come first.
-# 2.  If BRLCAD_BINARY_DIR/include or BRLCAD_SOURCE_DIR/include are present,
-#     they come second.
-# 3.  For remaining paths, if the "root" path matches the BRLCAD_SOURCE_DIR
-#     or BRLCAD_BINARY_DIR paths, they are appended.
+# 3.  These paths are mixed into the general include path lists for
+#     some BRL-CAD libs.
+#
+# 4.  Because these paths are a) non-standard and b) contain zlib.h
+#     they result in "system" versions of zlib present in macports
+#     being found first even when the local zlib is enabled, if the
+#     macports paths happen to appear in the include directory list
+#     before the local zlib include paths.
+#
+# To mitigate this problem, BRL-CAD library include directories are
+# sorted according to the following hierarchy (using gcc's
+# left-to-right search order as a basis:
+# http://gcc.gnu.org/onlinedocs/cpp/Search-Path.html):
+#
+# 1.  If CMAKE_CURRENT_BINARY_DIR or CMAKE_CURRENT_SOURCE_DIR are in
+#     the include list, they come first.
+#
+# 2.  If BRLCAD_BINARY_DIR/include or BRLCAD_SOURCE_DIR/include are
+#     present, they come second.
+#
+# 3.  For remaining paths, if the "root" path matches the
+#     BRLCAD_SOURCE_DIR or BRLCAD_BINARY_DIR paths, they are appended.
+#
 # 4.  Any remaining paths are appended.
+#
 function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   if(${DIR_LIST})
     set(ORDERED_ELEMENTS "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${BRLCAD_BINARY_DIR}/include" "${BRLCAD_SOURCE_DIR}/include")
@@ -628,19 +664,21 @@ function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   endif(${DIR_LIST})
 endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 
-#-----------------------------------------------------------------------------
-# Wrapper to properly include directories for a BRL-CAD build.  Handles the
-# SYSTEM option to the include_directories command, as well as calling the
-# sort function.
+#---------------------------------------------------------------------
+# Wrapper to properly include directories for a BRL-CAD build.
+# Handles the SYSTEM option to the include_directories command, as
+# well as calling the sort function.
 function(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
-  # TODO - We don't want parent directories values augmenting DIR_LIST for
-  # subsequent targets - if we're calling this, we're taking full control of
-  # all inclusions for all targets in this and subsequent directories.  We
-  # should probably use the target level INCLUDE_DIRECTORIES property and
-  # stop setting include_directories on entire directories all together
-  # for maximal precision and minimum surprises...
-  #set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
+  # TODO - We don't want parent directories values augmenting DIR_LIST
+  # for subsequent targets - if we're calling this, we're taking full
+  # control of all inclusions for all targets in this and subsequent
+  # directories.  We should probably use the target level
+  # INCLUDE_DIRECTORIES property and stop setting include_directories
+  # on entire directories all together for maximal precision and
+  # minimum surprises...
+  #
+  # set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 
   set(INCLUDE_DIRS ${${DIR_LIST}})
   if(INCLUDE_DIRS)
@@ -656,15 +694,6 @@ function(BRLCAD_INCLUDE_DIRS DIR_LIST)
       IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
     endif (NOT IS_LOCAL)
     if("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
-      # Unfortunately, a bug in the CMake SYSTEM option to
-      # include_directories requires that these variables
-      # be explicitly set on OSX until we can require CMake
-      # version 3.6 - see
-      # https://public.kitware.com/Bug/view.php?id=15953
-      if(APPLE)
-	set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
-	set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
-      endif(APPLE)
       if("${inc_dir}" MATCHES "other")
 	include_directories(SYSTEM ${inc_dir})
       else("${inc_dir}" MATCHES "other")
@@ -677,11 +706,12 @@ function(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
 endfunction(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
-#-----------------------------------------------------------------------------
-# Wrapper to handle include directories specific to libraries.  Removes
-# duplicates and makes sure the <LIB>_INCLUDE_DIRS list is in the cache
-# immediately, so it can be used by other libraries.  These lists are not
-# intended as toplevel user settable options so mark as advanced.
+#---------------------------------------------------------------------
+# Wrapper to handle include directories specific to libraries.
+# Removes duplicates and makes sure the <LIB>_INCLUDE_DIRS list is in
+# the cache immediately, so it can be used by other libraries.  These
+# lists are not intended as toplevel user settable options so mark as
+# advanced.
 function(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
   string(TOUPPER ${libname} LIB_UPPER)
 
@@ -694,27 +724,29 @@ function(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
 endfunction(BRLCAD_LIB_INCLUDE_DIRS)
 
 
-#-----------------------------------------------------------------------------
-# Files needed by BRL-CAD need to be both installed and copied into the
-# correct locations in the build directories to allow executables to run
-# at build time.  Ideally, we would like any error messages returned when
-# running from the build directory to direct back to the copies of files in
-# the source tree, since those are the ones that should be edited.
-# On platforms that support symlinks, this is possible - build directory
-# "copies" of files are symlinks to the source tree version.  On platforms
-# without symlink support, we are forced to copy the files into place in
-# the build directories.  In both cases we have a build target that is
-# triggered if source files are edited in order to allow the build system
-# to take further actions (for example, re-generating tclIndex and pkgIndex.tcl
-# files when the source .tcl files change).
+#---------------------------------------------------------------------
+# Files needed by BRL-CAD need to be both installed and copied into
+# the correct locations in the build directories to allow executables
+# to run at build time.  Ideally, we would like any error messages
+# returned when running from the build directory to direct back to the
+# copies of files in the source tree, since those are the ones that
+# should be edited.  On platforms that support symlinks, this is
+# possible - build directory "copies" of files are symlinks to the
+# source tree version.  On platforms without symlink support, we are
+# forced to copy the files into place in the build directories.  In
+# both cases we have a build target that is triggered if source files
+# are edited in order to allow the build system to take further
+# actions (for example, re-generating tclIndex and pkgIndex.tcl files
+# when the source .tcl files change).
 #
-# Because BRLCAD_MANAGE_FILES defines custom commands and specifies the files it is
-# to copy/symlink as dependencies, there is a potential for file names to
-# conflict with build target names. (This has actually been observed with
-# MSVC - our file INSTALL in the toplevel source directory conflicts with the
-# MSVC target named INSTALL.) To avoid conflicts and make the dependencies
-# of the custom commands robust we supply full file paths as dependencies to
-# the file copying custom commands.
+# Because BRLCAD_MANAGE_FILES defines custom commands and specifies
+# the files it is to copy/symlink as dependencies, there is a
+# potential for file names to conflict with build target names. (This
+# has actually been observed with MSVC - our file INSTALL in the
+# toplevel source directory conflicts with the MSVC target named
+# INSTALL.) To avoid conflicts and make the dependencies of the custom
+# commands robust we supply full file paths as dependencies to the
+# file copying custom commands.
 
 function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
@@ -728,14 +760,14 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     CMAKE_PARSE_ARGUMENTS(${VAR_PREFIX} "EXEC" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 2)
 
-  # Handle both a list of one or more files and variable holding a list of files -
-  # find out what we've got.
+  # Handle both a list of one or more files and variable holding a
+  # list of files - find out what we've got.
   NORMALIZE_FILE_LIST("${inputdata}" RLIST datalist FPLIST fullpath_datalist TARGET targetname)
 
   # Identify the source files for CMake
   CMAKEFILES(${datalist})
 
-  #-----------------------------------------------------------------------------
+  #-------------------------------------------------------------------
   # Some of the more advanced build system features in BRL-CAD's CMake
   # build need to know whether symlink support is present on the
   # current OS - go ahead and do this test up front, caching the
@@ -757,13 +789,14 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
   endif(NOT DEFINED HAVE_SYMLINK)
 
-  # Now that the input data and target names are in order, define the custom
-  # commands needed for build directory data copying on this platform (per
-  # symlink test results.)
+  # Now that the input data and target names are in order, define the
+  # custom commands needed for build directory data copying on this
+  # platform (per symlink test results.)
 
   if(HAVE_SYMLINK)
 
-    # Make sure the target directory exists (symlinks need the target directory already in place)
+    # Make sure the target directory exists (symlinks need the target
+    # directory already in place)
     if(NOT CMAKE_CONFIGURATION_TYPES)
       execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${targetdir}")
     else(NOT CMAKE_CONFIGURATION_TYPES)
@@ -773,10 +806,11 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif(NOT CMAKE_CONFIGURATION_TYPES)
 
-    # Using symlinks - in this case, the custom command doesn't actually have to
-    # do the work every time the source file changes - once established, the symlink
-    # will behave correctly.  That being the case, we just go ahead and establish the
-    # symlinks in the configure stage.
+    # Using symlinks - in this case, the custom command doesn't
+    # actually have to do the work every time the source file changes
+    # - once established, the symlink will behave correctly.  That
+    # being the case, we just go ahead and establish the symlinks in
+    # the configure stage.
     foreach(filename ${fullpath_datalist})
       get_filename_component(ITEM_NAME ${filename} NAME)
       if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -798,9 +832,10 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
       endif (NOT EXISTS ${filename})
     endforeach (filename ${listing})
 
-    # The custom command is still necessary - since it depends on the original source files,
-    # this will be the trigger that tells other commands depending on this data that
-    # they need to re-run one one of the source files is changed.
+    # The custom command is still necessary - since it depends on the
+    # original source files, this will be the trigger that tells other
+    # commands depending on this data that they need to re-run when
+    # one of the source files is changed.
     add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel"
       COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel"
@@ -832,13 +867,15 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
       )
   endif(HAVE_SYMLINK)
 
-  # Define the target and add it to this directories list of data targets
+  # Define the target and add it to this directories list of data
+  # targets
   add_custom_target(${targetname}_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel")
   set_target_properties(${targetname}_cp PROPERTIES FOLDER "BRL-CAD File Copying")
   BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" ${targetname}_cp)
 
-  # Because the target name for managed files is likely cryptic, we add a dependency to the managed_files target
-  # so this poriton of the logic can be referenced
+  # Because the target name for managed files is likely cryptic, we
+  # add a dependency to the managed_files target so this poriton of
+  # the logic can be referenced
   add_dependencies(managed_files ${targetname}_cp)
 
   # Set the FOLDER property.  If the target has supplied a folder, use
@@ -849,8 +886,9 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     set_target_properties(${targetname}_cp PROPERTIES FOLDER "BRL-CAD File Setup/${${VAR_PREFIX}_FOLDER}")
   endif("${${VAR_PREFIX}_FOLDER}" STREQUAL "")
 
-  # Add outputs to the distclean rules - this is consistent regardless of what type the output
-  # file is, symlink or copy.  Just need to handle the single and multiconfig cases.
+  # Add outputs to the distclean rules - this is consistent regardless
+  # of what type the output file is, symlink or copy.  Just need to
+  # handle the single and multiconfig cases.
   foreach(filename ${fullpath_datalist})
     get_filename_component(ITEM_NAME "${filename}" NAME)
     if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -863,8 +901,9 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     endif(NOT CMAKE_CONFIGURATION_TYPES)
   endforeach(filename ${fullpath_datalist})
 
-  # The installation rule relates only to the original source directory copy, and so doesn't
-  # need to explicitly concern itself with configurations.
+  # The installation rule relates only to the original source
+  # directory copy, and so doesn't need to explicitly concern itself
+  # with configurations.
   if(${VAR_PREFIX}_EXEC)
     install(PROGRAMS ${datalist} DESTINATION ${targetdir})
   else(${VAR_PREFIX}_EXEC)
@@ -874,8 +913,8 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
 endfunction(BRLCAD_MANAGE_FILES)
 
 #-----------------------------------------------------------------------------
-# Specific uses of the BRLCAD_MANAGED_FILES functionality - these cover most
-# of the common cases in BRL-CAD.
+# Specific uses of the BRLCAD_MANAGED_FILES functionality - these
+# cover most of the common cases in BRL-CAD.
 
 function(BRLCAD_ADDDATA datalist targetdir)
   BRLCAD_MANAGE_FILES(${datalist} ${DATA_DIR}/${targetdir})
@@ -894,52 +933,57 @@ endfunction(ADD_MAN_PAGES)
 
 
 #-----------------------------------------------------------------------------
-# The default operational mode of Regression tests is to be executed by a
-# parent CMake script, which captures the I/O from the test and stores it in an
-# individual log file named after the test.  By default, a custom command and
-# CTest add_test command are set up to run a configured script.  If TEST_SCRIPT
-# is provided specifying a particular script file that is used, otherwise the
-# convention of ${testname}.cmake.in in the current source directory is assumed
-# to specify the input test script.
+# The default operational mode of Regression tests is to be executed
+# by a parent CMake script, which captures the I/O from the test and
+# stores it in an individual log file named after the test.  By
+# default, a custom command and CTest add_test command are set up to
+# run a configured script.  If TEST_SCRIPT is provided specifying a
+# particular script file that is used, otherwise the convention of
+# ${testname}.cmake.in in the current source directory is assumed to
+# specify the input test script.
 #
 # Particularly when configuration dependent builds are in play, a test
-# executable's location needs special handling to ensure the scripts run the
-# correct version of a program.  The standard mechanism is to specify the CMake
-# target name of the executable by supplying it via the EXEC option and then
-# pass the output of $<TARGET_FILE:${${testname}_EXEC}> to the running CMake
-# script. (Note that the script must in turn post-process this value to unquote
-# it in case of special characters in pathnames.)
+# executable's location needs special handling to ensure the scripts
+# run the correct version of a program.  The standard mechanism is to
+# specify the CMake target name of the executable by supplying it via
+# the EXEC option and then pass the output of
+# $<TARGET_FILE:${${testname}_EXEC}> to the running CMake
+# script. (Note that the script must in turn post-process this value
+# to unquote it in case of special characters in pathnames.)
 #
-# To allow for more customized test execution, the option TEST_DEFINED may be
-# passed to the function to instruct it to skip all setup for add_test and
-# custom command definitions.  It is the callers responsibility to define an
-# appropriately named test with add_test - BRLCAD_REGRESSION_TEST in this mode
-# will then perform only the specific build target definition and subsequent
-# steps for wiring the test into the higher level commands.
+# To allow for more customized test execution, the option TEST_DEFINED
+# may be passed to the function to instruct it to skip all setup for
+# add_test and custom command definitions.  It is the callers
+# responsibility to define an appropriately named test with add_test -
+# BRLCAD_REGRESSION_TEST in this mode will then perform only the
+# specific build target definition and subsequent steps for wiring the
+# test into the higher level commands.
 #
 # Standard actions for all regression targets:
 #
-# 1.  A custom build target with the pattern regress-${testname} is defined
-#     to allow for individual execution of the regression test with
-#     "make ${testname}"
+# 1.  A custom build target with the pattern regress-${testname} is
+#     defined to allow for individual execution of the regression test
+#     with "make ${testname}"
 #
-# 2.  A label is added identifying the test as a regression test so the top
-#     level commands "make check" and "make regress" know this particular
-#     tests is one of the tests they are supposed to execute.
+# 2.  A label is added identifying the test as a regression test so
+#     the top level commands "make check" and "make regress" know this
+#     particular tests is one of the tests they are supposed to
+#     execute.
 #
-# 3.  Any dependencies in ${depends_list} are added as build requirements to
-#     the regress and check targets.  This ensures that (unlike "make test"
-#     and CTest itself) when those targets are built the dependencies of the
-#     tests are built first.  (A default CTest run prior to building will
-#     result in all tests failing.)
+# 3.  Any dependencies in ${depends_list} are added as build
+#     requirements to the regress and check targets.  This ensures
+#     that (unlike "make test" and CTest itself) when those targets
+#     are built the dependencies of the tests are built first.  (A
+#     default CTest run prior to building will result in all tests
+#     failing.)
 #
 # 4.  If the keyword "STAND_ALONE" is passed in, a ${testname} target
-#     is defined but no other connections are made between that target and the
-#     agglomeration targets.
+#     is defined but no other connections are made between that target
+#     and the agglomeration targets.
 #
-# 5.  If a TIMEOUT argument is passed, a specific timeout tiem is set on the
-#     test. Otherwise, a default is assigned to ensure no test runs
-#     indefinitely.
+# 5.  If a TIMEOUT argument is passed, a specific timeout tiem is set
+#     on the test. Otherwise, a default is assigned to ensure no test
+#     runs indefinitely.
 
 function(BRLCAD_REGRESSION_TEST testname depends_list)
 
@@ -980,20 +1024,21 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
     add_dependencies(${testname} ${depends_list})
   endif (depends_list)
 
-  # Make sure we at least get this into the regression test folder - local
-  # subdirectories may override this if they have more specific locations
-  # they want to use.
+  # Make sure we at least get this into the regression test folder -
+  # local subdirectories may override this if they have more specific
+  # locations they want to use.
   if (${testname}_STAND_ALONE)
     set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
   else (${testname}_STAND_ALONE)
     set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/regress")
   endif (${testname}_STAND_ALONE)
 
-  # In Visual Studio, none of the regress build targets are added to the default build.
+  # In Visual Studio, none of the regress build targets are added to
+  # the default build.
   set_target_properties(${testname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
-  # Group any test not excluded by the STAND_ALONE flag with the other regression tests by
-  # assigning a standard label
+  # Group any test not excluded by the STAND_ALONE flag with the other
+  # regression tests by assigning a standard label
   if (NOT ${testname}_STAND_ALONE)
     set_tests_properties(${testname} PROPERTIES LABELS "Regression")
   else (NOT ${testname}_STAND_ALONE)

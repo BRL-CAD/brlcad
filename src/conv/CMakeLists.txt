@@ -61,10 +61,10 @@ endif(BRLCAD_ENABLE_TCL)
 BRLCAD_ADDEXEC(g-dot g-dot.c "libged;libbu")
 
 BRLCAD_ADDEXEC(g-dxf dxf/g-dxf.c "librt;libgcv;libnmg;libbu")
-add_dependencies(g-dxf libgcv_plugins)
+add_dependencies(g-dxf gcv_plugins)
 
 BRLCAD_ADDEXEC(g-egg g-egg.c "libwdb;libgcv;libnmg")
-add_dependencies(g-egg libgcv_plugins)
+add_dependencies(g-egg gcv_plugins)
 
 BRLCAD_ADDEXEC(g-nff g-nff.c "libwdb;libnmg;${M_LIBRARY}")
 
@@ -81,7 +81,7 @@ BRLCAD_ADDEXEC(off-g off/off-g.c "libwdb;librt;libnmg;libbu")
 BRLCAD_ADDEXEC(stl-g stl/stl-g.c "libwdb;librt;libbu;${WINSOCK_LIB}")
 
 BRLCAD_ADDEXEC(g-stl stl/g-stl.c "librt;libgcv;libnmg;libbu;${WINSOCK_LIB}")
-add_dependencies(g-stl libgcv_plugins)
+add_dependencies(g-stl gcv_plugins)
 
 BRLCAD_ADDEXEC(g4-g5 g4-g5.c "librt;libbu" NO_INSTALL)
 

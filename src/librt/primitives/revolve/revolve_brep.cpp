@@ -1,7 +1,7 @@
 /*                    R E V O L V E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -217,11 +217,11 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		{
-		    ON_3dPointArray bezpoints = ON_3dPointArray(bsg->degree + 1);
+		    ON_3dPointArray bezpoints(bsg->degree + 1);
 		    for (int j = 0; j < bsg->degree + 1; j++) {
 			bezpoints.Append((*b)->m_V[bsg->ctl_points[j]].Point());
 		    }
-		    ON_BezierCurve bez3d = ON_BezierCurve((const ON_3dPointArray)bezpoints);
+		    ON_BezierCurve bez3d = ON_BezierCurve(bezpoints);
 		    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
 		    bez3d.GetNurbForm(*beznurb3d);
 		    beznurb3d->SetDomain(0.0, 1.0);

@@ -396,7 +396,7 @@ void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeig
 							if( stillOwner )
 							{
 								// We only need to pass the iso-vertex down if the edge it lies on is adjacent to a coarser leaf
-								bool isNeeded;
+								bool isNeeded = false;
 								switch( o )
 								{
 								case 0: isNeeded = ( neighborKey.neighbors[depth].neighbors[1][2*y][1]==NULL || neighborKey.neighbors[depth].neighbors[1][2*y][2*z]==NULL || neighborKey.neighbors[depth].neighbors[1][1][2*z]==NULL ) ; break;

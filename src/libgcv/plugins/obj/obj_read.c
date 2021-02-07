@@ -1,7 +1,7 @@
 /*                      O B J _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -3604,7 +3604,7 @@ obj_can_read(const char *source_path)
 
 
 static const struct gcv_filter gcv_conv_obj_read = {
-    "OBJ Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_OBJ, BU_MIME_MODEL, obj_can_read,
+    "OBJ Reader", GCV_FILTER_READ, BU_MIME_MODEL_OBJ, obj_can_read,
     obj_read_create_opts, obj_read_free_opts, obj_read
 };
 

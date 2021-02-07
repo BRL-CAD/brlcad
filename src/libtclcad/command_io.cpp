@@ -1,7 +1,7 @@
 /*                  C O M M A N D _ I O . C P P
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,6 +79,17 @@ tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_fun
     if (fdp) {
 	struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
 	Tcl_CreateFileHandler(*fdp, t_iod->io_mode, callback, (ClientData)data);
+	switch (d) {
+	    case BU_PROCESS_STDIN:
+		p->stdin_active = 1;
+		break;
+	    case BU_PROCESS_STDOUT:
+		p->stdout_active = 1;
+		break;
+	    case BU_PROCESS_STDERR:
+		p->stderr_active = 1;
+		break;
+	}
     }
 }
 
@@ -91,6 +102,17 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
     if (fdp) {
 	Tcl_DeleteFileHandler(*fdp);
 	close(*fdp);
+    }
+    switch (d) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 0;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 0;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 0;
+	    break;
     }
 }
 
@@ -118,18 +140,21 @@ tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_fun
     if (fdp) {
 	switch (d) {
 	    case BU_PROCESS_STDIN:
+		p->stdin_active = 1;
 		if (!pchan->cstdin) {
 		    pchan->cstdin = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
 		    Tcl_CreateChannelHandler(pchan->cstdin, t_iod->io_mode, callback, (ClientData)data);
 		}
 		break;
 	    case BU_PROCESS_STDOUT:
+		p->stdout_active = 1;
 		if (!pchan->cstdout) {
 		    pchan->cstdout = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
 		    Tcl_CreateChannelHandler(pchan->cstdout, t_iod->io_mode, callback, (ClientData)data);
 		}
 		break;
 	    case BU_PROCESS_STDERR:
+		p->stderr_active = 1;
 		if (!pchan->cstderr) {
 		    pchan->cstderr = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
 		    Tcl_CreateChannelHandler(pchan->cstderr, t_iod->io_mode, callback, (ClientData)data);
@@ -152,7 +177,7 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 	return;
     }
     pchan = (*pmap)[p];
-    if (!pchan->cstdin && !pchan->cstdout && !pchan->cstdout) {
+    if (!pchan->cstdin && !pchan->cstdout && !pchan->cstderr) {
 	// All subprocess channels destroyed; we're done with the I/O from this subprocess, clean up
 	BU_PUT(pchan, struct tclcad_process_channels);
 	pmap->erase(p);
@@ -160,25 +185,28 @@ tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 
     switch (d) {
 	case BU_PROCESS_STDIN:
-	    if (pchan->cstdin) {
+	    if (p->stdin_active && pchan->cstdin) {
 		Tcl_DeleteChannelHandler(pchan->cstdin, NULL, (ClientData)NULL);
 		Tcl_Close(t_iod->interp, pchan->cstdin);
 		pchan->cstdin = NULL;
 	    }
+	    p->stdin_active = 0;
 	    break;
 	case BU_PROCESS_STDOUT:
-	    if (pchan->cstdout) {
+	    if (p->stdout_active && pchan->cstdout) {
 		Tcl_DeleteChannelHandler(pchan->cstdout, NULL, (ClientData)NULL);
 		Tcl_Close(t_iod->interp, pchan->cstdout);
 		pchan->cstdout = NULL;
 	    }
+	    p->stdout_active = 0;
 	    break;
 	case BU_PROCESS_STDERR:
-	    if (pchan->cstderr) {
+	    if (p->stderr_active && pchan->cstderr) {
 		Tcl_DeleteChannelHandler(pchan->cstderr, NULL, (ClientData)NULL);
 		Tcl_Close(t_iod->interp, pchan->cstderr);
 		pchan->cstderr = NULL;
 	    }
+	    p->stderr_active = 0;
 	    break;
     }
 }

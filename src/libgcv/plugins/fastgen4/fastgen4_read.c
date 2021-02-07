@@ -1,7 +1,7 @@
 /*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2978,7 +2978,7 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 
 
 static const struct gcv_filter gcv_conv_fastgen4_read = {
-    "FASTGEN4 Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_VND_FASTGEN, BU_MIME_MODEL, NULL,
+    "FASTGEN4 Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_FASTGEN, NULL,
     fastgen4_create_opts, fastgen4_free_opts, fastgen4_read
 };
 

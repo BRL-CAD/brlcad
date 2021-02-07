@@ -1,7 +1,7 @@
 /*                    V R M L _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2020 United States Government as represented by
+ * Copyright (c) 1995-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1377,7 +1377,7 @@ out:
 }
 
 static const struct gcv_filter gcv_conv_vrml_write = {
-    "VRML Writer", GCV_FILTER_WRITE, (int)BU_MIME_MODEL_VRML, BU_MIME_MODEL, NULL,
+    "VRML Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VRML, NULL,
     vrml_write_create_opts, vrml_write_free_opts, vrml_write
 };
 

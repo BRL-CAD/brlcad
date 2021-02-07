@@ -1,7 +1,7 @@
 #                          R T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -579,7 +579,7 @@ proc do_fbclear { id } {
 	set blue 0
     }
 
-    set fbclear [file join [bu_brlcad_root "bin"] fbclear]
+    set fbclear [file join [bu_dir bin] fbclear]
     set result [catch { exec $fbclear -F $rt_control($id,cooked_dest)\
 			    $red $green $blue & } rt_error]
 

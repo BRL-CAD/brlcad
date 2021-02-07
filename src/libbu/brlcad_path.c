@@ -1,7 +1,7 @@
 /*                   B R L C A D _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
+
+#include "whereami.h"
 
 #include "bu/app.h"
 #include "bu/debug.h"
@@ -200,11 +202,14 @@ bu_brlcad_dir(const char *dirkey, int fail_quietly)
     return NULL;
 }
 
+extern int _bu_dir_join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where);
+
 const char *
 bu_brlcad_root(const char *rhs, int fail_quietly)
 {
     static char result[MAXPATHLEN] = {0};
     const char *lhs;
+    int length, dirname_length;
     struct bu_vls searched = BU_VLS_INIT_ZERO;
     char where[MAX_WHERE_SIZE] = {0};
 
@@ -229,28 +234,35 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     }
 
     /* run-time path identification */
-    lhs = bu_argv0_full_path();
-    snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [UNKNOWN]\n");
-    if (lhs) {
-	char *dirpath;
-	char *real_path = bu_file_realpath(lhs, NULL);
-	dirpath = bu_path_dirname(real_path);
-	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	bu_free(dirpath, "free bu_path_dirname");
-	dirpath = bu_path_dirname(real_path);
-	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	bu_free(dirpath, "free bu_path_dirname");
-	if (join_path(result, real_path, rhs, &searched, where)) {
-	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		bu_log("Found: Run-time path identification [%s]\n", result);
+    length = wai_getExecutablePath(NULL, 0, &dirname_length);
+    if (length > 0) {
+	char *plhs  = (char *)bu_calloc(length+1, sizeof(char), "program path");
+	wai_getExecutablePath(plhs, length, &dirname_length);
+	plhs[length] = '\0';
+	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [UNKNOWN]\n");
+	if (strlen(plhs)) {
+	    char *dirpath;
+	    char *real_path = bu_file_realpath(plhs, NULL);
+	    dirpath = bu_path_dirname(real_path);
+	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	    bu_free(dirpath, "free bu_path_dirname");
+	    dirpath = bu_path_dirname(real_path);
+	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	    bu_free(dirpath, "free bu_path_dirname");
+	    if (_bu_dir_join_path(result, real_path, rhs, &searched, where)) {
+		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		    bu_log("Found: Run-time path identification [%s]\n", result);
+		}
+		bu_vls_free(&searched);
+		bu_free(real_path, "free real_path");
+		bu_free(plhs, "free plhs");
+		return result;
 	    }
-	    bu_vls_free(&searched);
 	    bu_free(real_path, "free real_path");
-	    return result;
+	} else {
+	    bu_vls_strcat(&searched, where);
 	}
-	bu_free(real_path, "free real_path");
-    } else {
-	bu_vls_strcat(&searched, where);
+	bu_free(plhs, "free plhs");
     }
 
     /* BRLCAD_ROOT compile-time path */

@@ -1,7 +1,7 @@
 #                  S H A D E R E D I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2020 United States Government as represented by
+# Copyright (c) 2006-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1017,7 +1017,7 @@
 		foreach s { 0 1 2 3 4 5 6 7 8 9 } {
 		    set lightImages(light_i${i}_v${v}_s${s}) \
 			[image create photo -file \
-			     [file join [bu_brlcad_root "share/tclscripts"] archer images l_i${i}_v${v}_s${s}.gif]]
+			     [file join [bu_dir data] tclscripts archer images l_i${i}_v${v}_s${s}.gif]]
 		}
 	    }
 	}

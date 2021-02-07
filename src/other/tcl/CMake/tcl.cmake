@@ -36,6 +36,14 @@ MACRO(CHECK_C_FLAG flag)
    ENDIF(${UPPER_FLAG}_COMPILER_FLAG)
 ENDMACRO()
 
+# Wrappers for include file checks
+MACRO(TCL_CHECK_INCLUDE_FILE filename var)
+	CHECK_INCLUDE_FILE(${filename} ${var})
+	IF(${var})
+		add_definitions(-D${var}=1)
+	ENDIF(${var})
+ENDMACRO(TCL_CHECK_INCLUDE_FILE)
+
 MACRO(TCL_CHECK_INCLUDE_FILE_USABILITY filename var)
 	CHECK_INCLUDE_FILE(${filename} ${var})
 	IF(${var})

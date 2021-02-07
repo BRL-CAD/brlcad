@@ -1,7 +1,7 @@
 /*                         P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -791,7 +791,7 @@ read_short(FILE *fp, int cnt, int mode)
 static int
 read_ieee(FILE *fp, int cnt, int mode)
 {
-    int ret;
+    size_t ret;
     if (mode == PL_OUTPUT_MODE_BINARY) {
 	for (int i = 0; i < cnt; i++) {
 	    char inbuf[SIZEOF_NETWORK_DOUBLE];
@@ -804,7 +804,7 @@ read_ieee(FILE *fp, int cnt, int mode)
     if (mode == PL_OUTPUT_MODE_TEXT) {
 	double val;
 	for (int i = 0; i < cnt; i++) {
-	    ret = fscanf(fp, "%lf", &val);
+	    ret = (size_t)fscanf(fp, "%lf", &val);
 	    if (ret != 1)
 		return 1;
 	}

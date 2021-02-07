@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -201,8 +201,8 @@ main(int argc, char *argv[])
 
     FILE *f1 = NULL;
     FILE *f2 = NULL;
-    struct stat sf1 = {0};
-    struct stat sf2 = {0};
+    struct stat sf1;
+    struct stat sf2;
 
     size_t matching = 0;
     size_t off1 = 0;

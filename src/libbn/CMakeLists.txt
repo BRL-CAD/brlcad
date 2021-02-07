@@ -32,7 +32,7 @@ set(LIBBN_SOURCES
   rand.c
   randsph.c
   scale.c
-  sobolseq.c
+  sobol.c
   sphmap.c
   str.c
   symbol.c
