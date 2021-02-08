@@ -45,6 +45,26 @@ blob_parse_data(git_blob_data *cd, std::ifstream &infile)
     line.erase(0, 5);  // Remove "data " prefix
     cd->length = std::stoi(line);
     cd->offset = infile.tellg();
+
+#if 0
+    // Detect binary blobs (in case we ever want to try post-processing
+    // of text blobs
+    int cc = 0;
+    char c;
+    bool bfile = false;
+    while (!infile.eof() && infile >> std::noskipws >> c && cc < 500) {
+	if (c == '\0') {
+	    bfile = true;
+	    break;
+	}
+	cc++;
+    }
+    if (bfile) {
+	std::cout << "Binary blob\n";
+    }
+    infile.clear();
+#endif
+
     long offset = cd->offset + cd->length;
     infile.seekg(offset);
     return 0;
