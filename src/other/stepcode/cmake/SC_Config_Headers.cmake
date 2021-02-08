@@ -78,7 +78,7 @@ int main() {return !(f() == f());}
 endif(SC_ENABLE_CXX11)
 
 # Now that all the tests are done, configure the sc_cf.h file:
-configure_file(${CMAKE_SOURCE_DIR}/include/sc_cf.h.in ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h.gen)
+configure_file(${SC_SOURCE_DIR}/include/sc_cf.h.in ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h.gen)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h.gen ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h)
 
 # Local Variables:
