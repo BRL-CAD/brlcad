@@ -115,8 +115,8 @@ enum type_enum {
 /* typedefs */
 /************/
 
-typedef struct TypeHead_ * TypeHead;
-typedef struct TypeBody_ * TypeBody;
+typedef struct TypeHead_ *TypeHead;
+typedef struct TypeBody_ *TypeBody;
 typedef enum type_enum  TypeType;
 
 /* provide a replacement for Class */
@@ -140,7 +140,7 @@ typedef enum type_enum  Class;
 
 struct TypeHead_ {
     Type head;          /**< if we are a defined type this is who we point to */
-    struct TypeBody_ * body;    /**< true type, ignoring defined types */
+    struct TypeBody_ *body;     /**< true type, ignoring defined types */
 #if 0
     /* if we are concerned about memory (over time) uncomment this and */
     /* other references to refcount in parser and TYPEresolve.  It is */
@@ -151,7 +151,7 @@ struct TypeHead_ {
 
 struct TypeBody_ {
 #if 1
-    struct TypeHead_ * head;    /**< for debugging only */
+    struct TypeHead_ *head;     /**< for debugging only */
 #endif
     enum type_enum type;        /**< bits describing this type, int, real, etc */
     struct {
@@ -159,7 +159,12 @@ struct TypeBody_ {
         unsigned optional   : 1;
         unsigned fixed      : 1;
         unsigned shared     : 1; /**< type is shared */
-        unsigned repeat     : 1; /**< expression is a repeat count*/
+        unsigned repeat     : 1; /**< Expression is the number of repetitions of the previous Expression
+                                   * 10303-11:2004 production #203
+                                   *   element = expression [ ':' repetition ] .
+                                   * TODO exp2cxx and exp2py do not use this! Are all use cases handled by libexppp?
+                                   */
+        unsigned var        : 1; /** denotes variable marked 'VAR' - i.e. one where changes are propagated back to the caller */
         unsigned encoded    : 1; /**< encoded string */
     } flags;
     Type base;      /**< underlying base type if any can also contain true type if this type is a type reference */
@@ -169,7 +174,7 @@ struct TypeBody_ {
     Linked_List list;   /**< used by select_types and composed types, such as for a list of entities in an instance */
     Expression upper;
     Expression lower;
-    struct Scope_ * entity;     /**< only used by entity types */
+    struct Scope_ *entity;      /**< only used by entity types */
 };
 
 /********************/
@@ -189,7 +194,7 @@ extern SC_EXPRESS_EXPORT Type Type_Boolean;
 extern SC_EXPRESS_EXPORT Type Type_Enumeration;
 extern SC_EXPRESS_EXPORT Type Type_Expression;
 extern SC_EXPRESS_EXPORT Type Type_Aggregate;
-extern SC_EXPRESS_EXPORT Type Type_Integer;
+extern SC_EXPRESS_EXPORT Type Type_Repeat;
 extern SC_EXPRESS_EXPORT Type Type_Integer;
 extern SC_EXPRESS_EXPORT Type Type_Number;
 extern SC_EXPRESS_EXPORT Type Type_Real;
@@ -212,16 +217,14 @@ extern SC_EXPRESS_EXPORT Type Type_Bag_Of_Generic;
 extern SC_EXPRESS_EXPORT struct freelist_head TYPEHEAD_fl;
 extern SC_EXPRESS_EXPORT struct freelist_head TYPEBODY_fl;
 
-extern SC_EXPRESS_EXPORT Error ERROR_corrupted_type;
-
 /******************************/
 /* macro function definitions */
 /******************************/
 
-#define TYPEHEAD_new()      (struct TypeHead_ *)MEM_new(&TYPEHEAD_fl)
-#define TYPEHEAD_destroy(x) MEM_destroy(&TYPEHEAD_fl,(Freelist *)(Generic)x)
-#define TYPEBODY_new()      (struct TypeBody_ *)MEM_new(&TYPEBODY_fl)
-#define TYPEBODY_destroy(x) MEM_destroy(&TYPEBODY_fl,(Freelist *)(Generic)x)
+#define TYPEHEAD_new()      (struct TypeHead_ *)ALLOC_new(&TYPEHEAD_fl)
+#define TYPEHEAD_destroy(x) ALLOC_destroy(&TYPEHEAD_fl,(Freelist *)x)
+#define TYPEBODY_new()      (struct TypeBody_ *)ALLOC_new(&TYPEBODY_fl)
+#define TYPEBODY_destroy(x) ALLOC_destroy(&TYPEBODY_fl,(Freelist *)x)
 
 #define TYPEis(t)       ((t)->u.type->body->type)
 #define TYPEis_identifier(t)    ((t)->u.type->body->type == identifier_)
@@ -288,20 +291,20 @@ extern SC_EXPRESS_EXPORT Error ERROR_corrupted_type;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Type TYPEcreate_partial PROTO( ( struct Symbol_ *, Scope ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate_partial(struct Symbol_ *, Scope);
 
-extern SC_EXPRESS_EXPORT Type TYPEcreate PROTO( ( enum type_enum ) );
-extern SC_EXPRESS_EXPORT Type TYPEcreate_from_body_anonymously PROTO( ( TypeBody ) );
-extern SC_EXPRESS_EXPORT Type TYPEcreate_name PROTO( ( struct Symbol_ * ) );
-extern SC_EXPRESS_EXPORT Type TYPEcreate_nostab PROTO( ( struct Symbol_ *, Scope, char ) );
-extern SC_EXPRESS_EXPORT TypeBody TYPEBODYcreate PROTO( ( enum type_enum ) );
-extern SC_EXPRESS_EXPORT void TYPEinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void TYPEcleanup PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate(enum type_enum);
+extern SC_EXPRESS_EXPORT Type TYPEcreate_from_body_anonymously(TypeBody);
+extern SC_EXPRESS_EXPORT Type TYPEcreate_name(struct Symbol_ *);
+extern SC_EXPRESS_EXPORT Type TYPEcreate_nostab(struct Symbol_ *, Scope, char);
+extern SC_EXPRESS_EXPORT TypeBody TYPEBODYcreate(enum type_enum);
+extern SC_EXPRESS_EXPORT void TYPEinitialize(void);
+extern SC_EXPRESS_EXPORT void TYPEcleanup(void);
 
-extern SC_EXPRESS_EXPORT bool TYPEinherits_from PROTO( ( Type, enum type_enum ) );
-extern SC_EXPRESS_EXPORT Type TYPEget_nonaggregate_base_type PROTO( ( Type ) );
+extern SC_EXPRESS_EXPORT bool TYPEinherits_from(Type, enum type_enum);
+extern SC_EXPRESS_EXPORT Type TYPEget_nonaggregate_base_type(Type);
 
-extern SC_EXPRESS_EXPORT Type TYPEcreate_user_defined_type PROTO( ( Type, Scope, struct Symbol_ * ) );
-extern SC_EXPRESS_EXPORT Type TYPEcreate_user_defined_tag PROTO( ( Type, Scope, struct Symbol_ * ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate_user_defined_type(Type, Scope, struct Symbol_ *);
+extern SC_EXPRESS_EXPORT Type TYPEcreate_user_defined_tag(Type, Scope, struct Symbol_ *);
 
 #endif    /*  TYPE_H  */

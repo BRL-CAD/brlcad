@@ -25,16 +25,17 @@
  * context of a sub w/ >1 super, in which case we build a combo-CList and
  * may need to check if all sub-CLists matched the multi-sub, C.)
  */
-bool OrList::hit( char * nm ) {
-    EntList * child = getChild( choice );
+bool OrList::hit(char *nm)
+{
+    EntList *child = getChild(choice);
 
-    if( child ) {
+    if(child) {
         // I.e., if we have a choice selected, check it only.
-        return ( child->hit( nm ) );
+        return (child->hit(nm));
     } else {
         child = childList;
-        while( child ) {
-            if( child->viable > UNSATISFIED && child->hit( nm ) ) {
+        while(child) {
+            if(child->viable > UNSATISFIED && child->hit(nm)) {
                 // See MultList::hit() on why we must skip UNSATs.
                 return true;
             }
@@ -47,12 +48,13 @@ bool OrList::hit( char * nm ) {
 /**
  * Unmarks all the nodes of ents marked by the descendants of this.
  */
-void OrList::unmarkAll( EntNode * ents ) {
-    EntList * child;
+void OrList::unmarkAll(EntNode *ents)
+{
+    EntList *child;
 
-    if( ( child = getChild( choice ) ) != NULL ) {
+    if((child = getChild(choice)) != NULL) {
         // choice = the last selected path which we'll now undo.
-        child->unmarkAll( ents );
+        child->unmarkAll(ents);
     }
 }
 
@@ -62,15 +64,16 @@ void OrList::unmarkAll( EntNode * ents ) {
  * LISTEND.  If choice was set to LISTEND before calling aC(), we reset
  * choice to choice1, and search again.
  */
-bool OrList::acceptChoice( EntNode * ents ) {
-    EntList * child;
+bool OrList::acceptChoice(EntNode *ents)
+{
+    EntList *child;
 
-    if( choice == LISTEND ) {
+    if(choice == LISTEND) {
         choice = choice1;
     }
-    child = getChild( choice );
-    while( child ) {
-        if( child->viable >= MATCHSOME && child->acceptChoice( ents ) ) {
+    child = getChild(choice);
+    while(child) {
+        if(child->viable >= MATCHSOME && child->acceptChoice(ents)) {
             // acceptChoice() returns true if we marked something.
             return true;
         }

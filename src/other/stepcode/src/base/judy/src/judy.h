@@ -32,27 +32,7 @@
 //  judy_prv:   retrieve the cell pointer for the prev string in the array.
 //  judy_del:   delete the key and cell for the current stack entry.
 
-/* Import/Export flags for base. */
-#if defined(_WIN32)
-# define COMPILER_DLLEXPORT __declspec(dllexport)
-# define COMPILER_DLLIMPORT __declspec(dllimport)
-#else
-# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
-# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
-#endif
-
-
-#ifndef SC_BASE_EXPORT
-# if defined(SC_BASE_DLL_EXPORTS) && defined(SC_BASE_DLL_IMPORTS)
-#  error "Only SC_BASE_DLL_EXPORTS or SC_BASE_DLL_IMPORTS can be defined, not both."
-# elif defined(SC_BASE_DLL_EXPORTS)
-#  define SC_BASE_EXPORT COMPILER_DLLEXPORT
-# elif defined(SC_BASE_DLL_IMPORTS)
-#  define SC_BASE_EXPORT COMPILER_DLLIMPORT
-# else
-#  define SC_BASE_EXPORT
-# endif
-#endif
+#include "sc_export.h"
 
 #if defined(__LP64__)      || \
     defined(__x86_64__)    || \
@@ -116,7 +96,7 @@ enum JUDY_types {
 };
 
 typedef struct {
-    void * seg;               // next used allocator
+    void *seg;                // next used allocator
     unsigned int next;        // next available offset
 } JudySeg;
 
@@ -128,8 +108,8 @@ typedef struct {
 
 typedef struct {
     JudySlot root[1];         // root of judy array
-    void ** reuse[8];         // reuse judy blocks
-    JudySeg * seg;            // current judy allocator
+    void **reuse[8];          // reuse judy blocks
+    JudySeg *seg;             // current judy allocator
     unsigned int level;       // current height of stack
     unsigned int max;         // max height of stack
     unsigned int depth;       // number of Integers in a key, or zero for string keys
@@ -153,41 +133,41 @@ int Found = 0;
 extern "C" {
 #endif
 
-    /// open a new judy array returning a judy object.
-    SC_BASE_EXPORT Judy * judy_open( unsigned int max, unsigned int depth );
+/// open a new judy array returning a judy object.
+SC_BASE_EXPORT Judy *judy_open(unsigned int max, unsigned int depth);
 
-    /// close an open judy array, freeing all memory.
-    SC_BASE_EXPORT void judy_close( Judy * judy );
+/// close an open judy array, freeing all memory.
+SC_BASE_EXPORT void judy_close(Judy *judy);
 
-    /// clone an open judy array, duplicating the stack.
-    SC_BASE_EXPORT Judy * judy_clone( Judy * judy );
+/// clone an open judy array, duplicating the stack.
+SC_BASE_EXPORT Judy *judy_clone(Judy *judy);
 
-    /// allocate data memory within judy array for external use.
-    SC_BASE_EXPORT void * judy_data( Judy * judy, unsigned int amt );
+/// allocate data memory within judy array for external use.
+SC_BASE_EXPORT void *judy_data(Judy *judy, unsigned int amt);
 
-    /// insert a key into the judy array, return cell pointer.
-    SC_BASE_EXPORT JudySlot * judy_cell( Judy * judy, const unsigned char * buff, unsigned int max );
+/// insert a key into the judy array, return cell pointer.
+SC_BASE_EXPORT JudySlot *judy_cell(Judy *judy, const unsigned char *buff, unsigned int max);
 
-    /// retrieve the cell pointer greater than or equal to given key
-    SC_BASE_EXPORT JudySlot * judy_strt( Judy * judy, const unsigned char * buff, unsigned int max );
+/// retrieve the cell pointer greater than or equal to given key
+SC_BASE_EXPORT JudySlot *judy_strt(Judy *judy, const unsigned char *buff, unsigned int max);
 
-    /// retrieve the cell pointer, or return NULL for a given key.
-    SC_BASE_EXPORT JudySlot * judy_slot( Judy * judy, const unsigned char * buff, unsigned int max );
+/// retrieve the cell pointer, or return NULL for a given key.
+SC_BASE_EXPORT JudySlot *judy_slot(Judy *judy, const unsigned char *buff, unsigned int max);
 
-    /// retrieve the string value for the most recent judy query.
-    SC_BASE_EXPORT unsigned int judy_key( Judy * judy, unsigned char * buff, unsigned int max );
+/// retrieve the string value for the most recent judy query.
+SC_BASE_EXPORT unsigned int judy_key(Judy *judy, unsigned char *buff, unsigned int max);
 
-    /// retrieve the cell pointer for the last string in the array.
-    SC_BASE_EXPORT JudySlot * judy_end( Judy * judy );
+/// retrieve the cell pointer for the last string in the array.
+SC_BASE_EXPORT JudySlot *judy_end(Judy *judy);
 
-    /// retrieve the cell pointer for the next string in the array.
-    SC_BASE_EXPORT JudySlot * judy_nxt( Judy * judy );
+/// retrieve the cell pointer for the next string in the array.
+SC_BASE_EXPORT JudySlot *judy_nxt(Judy *judy);
 
-    /// retrieve the cell pointer for the prev string in the array.
-    SC_BASE_EXPORT JudySlot * judy_prv( Judy * judy );
+/// retrieve the cell pointer for the prev string in the array.
+SC_BASE_EXPORT JudySlot *judy_prv(Judy *judy);
 
-    /// delete the key and cell for the current stack entry.
-    SC_BASE_EXPORT JudySlot * judy_del( Judy * judy );
+/// delete the key and cell for the current stack entry.
+SC_BASE_EXPORT JudySlot *judy_del(Judy *judy);
 
 #ifdef __cplusplus
 }

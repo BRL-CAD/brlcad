@@ -5,6 +5,7 @@
 
 #must be ran from scl/build_matrix
 
+from __future__ import print_function
 from xml.etree import ElementTree as ET
 import os
 from datetime import date
@@ -49,7 +50,7 @@ def find_xml():
         if str(date.today().year) in dirname:
             i += 1
             if i > 1:
-                print "Too many directories, exiting"
+                print("Too many directories, exiting")
                 exit(1)
             xml = os.path.join("Testing", dirname, "Test.xml")
     return xml
@@ -58,31 +59,31 @@ def find_wiki():
     #find wiki and matrix file, issue 'git pull'
     wikipath = os.path.abspath("../../wiki-scl")
     if not os.path.isdir(os.path.join(wikipath,".git")):
-        print "Can't find wiki or not a git repo"
+        print("Can't find wiki or not a git repo")
         exit(1)
     p = subprocess.call(["git", "pull", "origin"], cwd=wikipath)
     if not p == 0:
-        print "'git pull' exited with error"
+        print("'git pull' exited with error")
         exit(1)
     matrix = os.path.join(wikipath, "Schema-build-matrix.md")
     if not os.path.isfile(matrix):
-        print "Matrix file doesn't exist or isn't a file"
+        print("Matrix file doesn't exist or isn't a file")
         exit(1)
     return wikipath,matrix
 
 def git_push(path,f):
     p = subprocess.call(["git", "add", f], cwd=path)
     if not p == 0:
-        print "'git add' exited with error"
+        print("'git add' exited with error")
         exit(1)
     msg = date.today().__str__() + " - schema matrix updated by update-matrix.py"
     p = subprocess.call(["git", "commit", "-m", msg ], cwd=path)
     if not p == 0:
-        print "'git commit' exited with error"
+        print("'git commit' exited with error")
         exit(1)
     p = subprocess.call(["git", "push", "origin"], cwd=path)
     if not p == 0:
-        print "'git push' exited with error"
+        print("'git push' exited with error")
         exit(1)
 
 
@@ -98,8 +99,8 @@ def read_tests(xml):
     # read all <Test>s in xml, create mixed html/markdown
     try:
         tree = ET.parse(xml)
-    except Exception, inst:
-        print "Unexpected error opening %s: %s" % (xml, inst)
+    except Exception as inst:
+        print("Unexpected error opening %s: %s" % (xml, inst))
         return
 
     root = tree.getroot()

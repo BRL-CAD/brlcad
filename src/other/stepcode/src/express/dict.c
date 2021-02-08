@@ -33,42 +33,34 @@
  * Initial revision
  */
 
-#include <sc_memmgr.h>
 #include "express/dict.h"
 #include "express/object.h"
 #include "express/expbasic.h"
 
-char DICT_type; /* set as a side-effect of DICT lookup routines */
-/* to type of object found */
+char DICT_type; /**< set to type of object found, as a side-effect of DICT lookup routines */
 
-static Error    ERROR_duplicate_decl;
-static Error    ERROR_duplicate_decl_diff_file;
-
-void DICTprint( Dictionary dict ) {
+void DICTprint(Dictionary dict)
+{
     Element e;
     DictionaryEntry de;
 
-    HASHlistinit( dict, &de );
+    HASHlistinit(dict, &de);
 
-    while( 0 != ( e = ( HASHlist( &de ) ) ) ) {
-        printf( "key <%s>  data <%s>  line <%d>  <\"%c\" %s>  <%s>\n",
+    while(0 != (e = (HASHlist(&de)))) {
+        fprintf(stderr, "key <%s>  data <%s>  line <%d>  <\"%c\" %s>  <%s>\n",
                 e->key, e->data, e->symbol->line, e->type,
-                OBJget_type( e->type ), e->symbol->filename );
+                OBJget_type(e->type), e->symbol->filename);
     }
 }
 
 /** Initialize the Dictionary module */
-void DICTinitialize( void ) {
-    ERROR_duplicate_decl = ERRORcreate(
-                               "Redeclaration of %s.  Previous declaration was on line %d.", SEVERITY_ERROR );
-    ERROR_duplicate_decl_diff_file = ERRORcreate(
-                                         "Redeclaration of %s.  Previous declaration was on line %d in file %s.", SEVERITY_ERROR );
+void DICTinitialize(void)
+{
 }
 
 /** Clean up the Dictionary module */
-void DICTcleanup( void ) {
-    ERRORdestroy( ERROR_duplicate_decl );
-    ERRORdestroy( ERROR_duplicate_decl_diff_file );
+void DICTcleanup(void)
+{
 }
 
 /**
@@ -76,7 +68,8 @@ void DICTcleanup( void ) {
  * error directly if there is a duplicate value.
  * \return 0 on success, 1 on failure
  */
-int DICTdefine( Dictionary dict, char * name, Generic obj, Symbol * sym, char type ) {
+int DICTdefine(Dictionary dict, char *name, void *obj, Symbol *sym, char type)
+{
     struct Element_ new, *old;
 
     new.key = name;
@@ -84,8 +77,8 @@ int DICTdefine( Dictionary dict, char * name, Generic obj, Symbol * sym, char ty
     new.symbol = sym;
     new.type = type;
 
-    if( 0 == ( old = HASHsearch( dict, &new, HASH_INSERT ) ) ) {
-        return( 0 );
+    if(0 == (old = HASHsearch(dict, &new, HASH_INSERT))) {
+        return(0);
     }
 
     /* allow multiple definitions of an enumeration id in its
@@ -98,20 +91,20 @@ int DICTdefine( Dictionary dict, char * name, Generic obj, Symbol * sym, char ty
      * to have the same name. To fix this, I replaced the
      * || with && in the else-if below.
      */
-    if( ( type == OBJ_ENUM ) && ( old->type == OBJ_ENUM ) ) {
+    if((type == OBJ_ENUM) && (old->type == OBJ_ENUM)) {
         /* if we're adding an enum, but we've already seen one */
         /* (and only one enum), mark it ambiguous */
-        DICTchange_type( old, OBJ_AMBIG_ENUM );
-    } else if( ( type != OBJ_ENUM ) && ( !IS_ENUM( old->type ) ) ) {
+        DICTchange_type(old, OBJ_AMBIG_ENUM);
+    } else if((type != OBJ_ENUM) && (!IS_ENUM(old->type))) {
         /* if we're adding a non-enum, and we've  *
          * already added a non-enum, complain     */
-        if( sym->filename == old->symbol->filename ) {
-            ERRORreport_with_symbol( ERROR_duplicate_decl, sym, name, old->symbol->line );
+        if(sym->filename == old->symbol->filename) {
+            ERRORreport_with_symbol(DUPLICATE_DECL, sym, name, old->symbol->line);
         } else {
-            ERRORreport_with_symbol( ERROR_duplicate_decl_diff_file, sym, name, old->symbol->line, old->symbol->filename );
+            ERRORreport_with_symbol(DUPLICATE_DECL_DIFF_FILE, sym, name, old->symbol->line, old->symbol->filename);
         }
-        experrc = ERROR_subordinate_failed;
-        return( 1 );
+        ERRORreport(SUBORDINATE_FAILED);
+        return(1);
     }
     return 0;
 }
@@ -122,9 +115,10 @@ int DICTdefine( Dictionary dict, char * name, Generic obj, Symbol * sym, char ty
  * ENUMERATION OF ( A, A ) which has happened!
  * This is the way DICTdefine used to look before enumerations gained
  * their unusual behavior with respect to scoping and visibility rules
- * \sa DICTdefine
+ * \sa DICTdefine()
  */
-int DICT_define( Dictionary dict, char * name, Generic obj, Symbol * sym, char type ) {
+int DICT_define(Dictionary dict, char *name, void *obj, Symbol *sym, char type)
+{
     struct Element_ e, *e2;
 
     e.key = name;
@@ -132,17 +126,17 @@ int DICT_define( Dictionary dict, char * name, Generic obj, Symbol * sym, char t
     e.symbol = sym;
     e.type = type;
 
-    if( 0 == ( e2 = HASHsearch( dict, &e, HASH_INSERT ) ) ) {
-        return( 0 );
+    if(0 == (e2 = HASHsearch(dict, &e, HASH_INSERT))) {
+        return(0);
     }
 
-    if( sym->filename == e2->symbol->filename ) {
-        ERRORreport_with_symbol( ERROR_duplicate_decl, sym, name, e2->symbol->line );
+    if(sym->filename == e2->symbol->filename) {
+        ERRORreport_with_symbol(DUPLICATE_DECL, sym, name, e2->symbol->line);
     } else {
-        ERRORreport_with_symbol( ERROR_duplicate_decl_diff_file, sym, name, e2->symbol->line, e2->symbol->filename );
+        ERRORreport_with_symbol(DUPLICATE_DECL_DIFF_FILE, sym, name, e2->symbol->line, e2->symbol->filename);
     }
-    experrc = ERROR_subordinate_failed;
-    return( 1 );
+    ERRORreport(SUBORDINATE_FAILED);
+    return(1);
 }
 
 /**
@@ -152,11 +146,12 @@ int DICT_define( Dictionary dict, char * name, Generic obj, Symbol * sym, char t
     Changed to return void, since the hash code frees the element, there
     is no way to return (without godawful casting) the generic itself.
 */
-void DICTundefine( Dictionary dict, char * name ) {
+void DICTundefine(Dictionary dict, char *name)
+{
     struct Element_ e;
 
     e.key = name;
-    HASHsearch( dict, &e, HASH_DELETE );
+    HASHsearch(dict, &e, HASH_DELETE);
 }
 
 /**
@@ -164,44 +159,47 @@ void DICTundefine( Dictionary dict, char * name ) {
 ** \param name name to look up
 ** \return the value found, NULL if not found
 */
-Generic DICTlookup( Dictionary dictionary, char * name ) {
+void *DICTlookup(Dictionary dictionary, char *name)
+{
     struct Element_ e, *ep;
 
-    if( !dictionary ) {
+    if(!dictionary) {
         return 0;
     }
 
     e.key = name;
-    ep = HASHsearch( dictionary, &e, HASH_FIND );
-    if( ep ) {
+    ep = HASHsearch(dictionary, &e, HASH_FIND);
+    if(ep) {
         DICT_type = ep->type;
-        return( ep->data );
+        return(ep->data);
     }
-    return( NULL );
+    return(NULL);
 }
 
 /** like DICTlookup but returns symbol, too
- * \sa DICTlookup
+ * \sa DICTlookup()
  */
-Generic DICTlookup_symbol( Dictionary dictionary, char * name, Symbol ** sym ) {
+void *DICTlookup_symbol(Dictionary dictionary, char *name, Symbol **sym)
+{
     struct Element_ e, *ep;
 
-    if( !dictionary ) {
+    if(!dictionary) {
         return 0;
     }
 
     e.key = name;
-    ep = HASHsearch( dictionary, &e, HASH_FIND );
-    if( ep ) {
+    ep = HASHsearch(dictionary, &e, HASH_FIND);
+    if(ep) {
         DICT_type = ep->type;
         *sym = ep->symbol;
-        return( ep->data );
+        return(ep->data);
     }
-    return( NULL );
+    return(NULL);
 }
 
-Generic DICTdo( DictionaryEntry * dict_entry ) {
-    if( 0 == HASHlist( dict_entry ) ) {
+void *DICTdo(DictionaryEntry *dict_entry)
+{
+    if(0 == HASHlist(dict_entry)) {
         return 0;
     }
 

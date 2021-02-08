@@ -19,8 +19,9 @@
 #include <sc_memmgr.h>
 
 // inserts after existNode
-void GenNodeList::InsertAfter( GenericNode * newNode,
-                               GenericNode * existNode ) {
+void GenNodeList::InsertAfter(GenericNode *newNode,
+                              GenericNode *existNode)
+{
     newNode->next = existNode->next;
     newNode->next->prev = newNode;
 
@@ -29,8 +30,9 @@ void GenNodeList::InsertAfter( GenericNode * newNode,
 }
 
 // inserts before existNode
-void GenNodeList::InsertBefore( GenericNode * newNode,
-                                GenericNode * existNode ) {
+void GenNodeList::InsertBefore(GenericNode *newNode,
+                               GenericNode *existNode)
+{
     existNode->prev->next = newNode;
     newNode->prev = existNode->prev;
 
@@ -39,26 +41,29 @@ void GenNodeList::InsertBefore( GenericNode * newNode,
 }
 
 // inserts before the head node
-void GenNodeList::Append( GenericNode * node ) {
-    InsertBefore( node, head );
+void GenNodeList::Append(GenericNode *node)
+{
+    InsertBefore(node, head);
 }
 
 void
-GenNodeList::Remove( GenericNode * node ) {
-    if( node != head ) {
+GenNodeList::Remove(GenericNode *node)
+{
+    if(node != head) {
         node->next->prev = node->prev;
         node->prev->next = node->next;
         node->next = 0;
         node->prev = 0;
     }
 }
-void GenNodeList::ClearEntries() {
+void GenNodeList::ClearEntries()
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "GenNodeList::ClearEntries()\n";
-    GenericNode * gnPrev = head->Next();
-    GenericNode * gn = gnPrev->Next();
+    GenericNode *gnPrev = head->Next();
+    GenericNode *gn = gnPrev->Next();
 
-    while( gnPrev != head ) {
+    while(gnPrev != head) {
         gnPrev->prev = 0;
         gnPrev->next = 0;
         gnPrev = gn;
@@ -68,14 +73,15 @@ void GenNodeList::ClearEntries() {
     head->prev = head;
 }
 
-void GenNodeList::DeleteEntries() {
+void GenNodeList::DeleteEntries()
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "GenNodeList::DeleteEntries()\n";
-    GenericNode * gnPrev = head->Next();
-    GenericNode * gn;
+    GenericNode *gnPrev = head->Next();
+    GenericNode *gn;
     head->next = 0;
 
-    while( gnPrev != head ) {
+    while(gnPrev != head) {
         gn = gnPrev->Next();
         delete gnPrev;
         gnPrev = gn;

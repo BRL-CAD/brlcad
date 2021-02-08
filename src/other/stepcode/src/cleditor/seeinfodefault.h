@@ -25,23 +25,26 @@ class DisplayNodelist;
 
 #include <editordefines.h>
 
-class SC_EDITOR_EXPORT seeInfo : public DisplayNode {
+class SC_EDITOR_EXPORT seeInfo : public DisplayNode
+{
     public:
-        seeInfo( MgrNode * node,
-                 SDAI_Application_instance * se,
-                 DisplayNodeList * dnl, displayStateEnum displaySt = mappedWrite );
+        seeInfo(MgrNode *node,
+                SDAI_Application_instance *se,
+                DisplayNodeList *dnl, displayStateEnum displaySt = mappedWrite);
 
-        void * GetSEE()      {
+        void *GetSEE()
+        {
             return see;
         }
 };
 
-inline seeInfo::seeInfo( MgrNode * node, SDAI_Application_instance * se,
-                         DisplayNodeList * dnl, displayStateEnum displaySt ) {
+inline seeInfo::seeInfo(MgrNode *node, SDAI_Application_instance *se,
+                        DisplayNodeList *dnl, displayStateEnum displaySt)
+{
     mn = node;
     see = 0;
     displayState = displaySt;
-    dnl->Append( this );
+    dnl->Append(this);
 }
 
 #endif

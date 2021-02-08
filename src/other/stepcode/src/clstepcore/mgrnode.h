@@ -19,15 +19,24 @@
 class GenericNode;
 class DisplayNode;
 #include <sdai.h>
-//class SDAI_Application_instance;
 
 #include <gennode.h>
 #include <gennodelist.h>
-//#include <gennode.inline.h>
 
 #include <editordefines.h>
 
 class InstMgr;
+
+class SC_CORE_EXPORT MgrNodeBase : public GenericNode
+{
+    public:
+        virtual inline SDAI_Application_instance *GetSTEPentity()
+        {
+            abort();
+            return NULL;
+        };
+        virtual ~MgrNodeBase() {};
+};
 
 //////////////////////////////////////////////////////////////////////////////
 // class MgrNode
@@ -35,7 +44,8 @@ class InstMgr;
 // the DisplayNode, and removes itself from any list it is in.
 //////////////////////////////////////////////////////////////////////////////
 
-class SC_CORE_EXPORT MgrNode : public GenericNode {
+class SC_CORE_EXPORT MgrNode : public MgrNodeBase
+{
         friend class GenNodeList;
         friend class MgrNodeList;
         friend class InstMgr;
@@ -48,93 +58,100 @@ class SC_CORE_EXPORT MgrNode : public GenericNode {
         stateEnum currState;
 
         // SDAI_Application_instance this node is representing info for
-        SDAI_Application_instance  * se;
+        SDAI_Application_instance   *se;
         // this is the index (in the InstMgr master array) of the ptr to
         //   this node.
         int arrayIndex;
 
         // display info (SEE, etc) for this node
-        DisplayNode * di;
+        DisplayNode *di;
 
     public:
         // used for sentinel node on lists of MgrNodes
         MgrNode();
-        MgrNode( SDAI_Application_instance * se );
+        MgrNode(SDAI_Application_instance *se);
         // 'listState' ==
         //  completeSE - if reading valid exchange file
         //  incompleteSE or completeSE - if reading working session file
         //  newSE - if instance is created by user using editor (probe)
-        MgrNode( SDAI_Application_instance * se, stateEnum listState );
-        MgrNode( SDAI_Application_instance * se, stateEnum listState, MgrNodeList * list );
+        MgrNode(SDAI_Application_instance *se, stateEnum listState);
+        MgrNode(SDAI_Application_instance *se, stateEnum listState, MgrNodeList *list);
         virtual ~MgrNode();
 
 // STATE LIST OPERATIONS
-        int MgrNodeListMember( stateEnum s )  {
-            return ( currState == s );
+        int MgrNodeListMember(stateEnum s)
+        {
+            return (currState == s);
         }
-        stateEnum  CurrState()      {
+        stateEnum  CurrState()
+        {
             return  currState;
         }
         // returns next or prev member variables
         // i.e. next or previous node on curr state list
         // searches current list for fileId
-        MgrNode * StateFindFileId( int fileId );
+        MgrNode *StateFindFileId(int fileId);
 
         // deletes from previous cmd list,
         //  & puts on cmd list cmdList
-        int ChangeList( MgrNodeList * cmdList );
-        int ChangeState( stateEnum s );
+        int ChangeList(MgrNodeList *cmdList);
+        int ChangeState(stateEnum s);
 
         // Removes from current list.
         //  Called before adding to diff list or when destructor is called.
         void Remove();
 
 // DISPLAY LIST OPERATIONS
-        void * SEE();
+        void *SEE();
 
         displayStateEnum DisplayState();
-        int IsDisplayState( displayStateEnum ds );
+        int IsDisplayState(displayStateEnum ds);
 
         // returns next or prev member variables
         // i.e. next or previous node on display state list
-        GenericNode * NextDisplay();
-        GenericNode * PrevDisplay();
+        GenericNode *NextDisplay();
+        GenericNode *PrevDisplay();
 
         // deletes from previous cmd list,
         //  & puts on cmd list cmdList
-        int ChangeList( DisplayNodeList * cmdList );
+        int ChangeList(DisplayNodeList *cmdList);
         // deletes from previous display list, assigns ds to
         //  displayState & puts on list dsList
-        int ChangeState( displayStateEnum ds );
+        int ChangeState(displayStateEnum ds);
 
 //  might not want these three? since it won't actually map them?
-        void MapModifiable( DisplayNodeList * dnList );
-        void MapViewable( DisplayNodeList * dnList );
-        void UnMap( DisplayNodeList * dnList );
+        void MapModifiable(DisplayNodeList *dnList);
+        void MapViewable(DisplayNodeList *dnList);
+        void UnMap(DisplayNodeList *dnList);
 
 // ACCESS FUNCTIONS
         int GetFileId();
-        SDAI_Application_instance  * GetApplication_instance() {
+        SDAI_Application_instance   *GetApplication_instance()
+        {
             return se;
         }
-        DisplayNode *& displayNode() {
+        DisplayNode *&displayNode()
+        {
             return di;
         }
-        int ArrayIndex()        {
+        int ArrayIndex()
+        {
             return arrayIndex;
         }
-        void ArrayIndex( int index )  {
+        void ArrayIndex(int index)
+        {
             arrayIndex = index;
         }
 
         // OBSOLETE
-        SDAI_Application_instance  * GetSTEPentity()   {
+        SDAI_Application_instance   *GetSTEPentity()
+        {
             return se;
         }
     protected:
 
     private:
-        void Init( SDAI_Application_instance * s, stateEnum listState, MgrNodeList * list );
+        void Init(SDAI_Application_instance *s, stateEnum listState, MgrNodeList *list);
 };
 
 //////////////////////////////////////////////////////////////////////////////

@@ -101,7 +101,7 @@
 /*****************/
 
 #include <sc_export.h>
-#include "memory.h"
+#include "alloc.h"
 
 /************/
 /* typedefs */
@@ -116,14 +116,14 @@ typedef unsigned long Address;
 /****************/
 
 typedef struct Element_ {
-    char    *    key;
-    char    *    data;
-    struct Element_ * next;
-    Symbol  *  symbol; /**< for debugging hash conflicts */
+    char        *key;
+    char        *data;
+    struct Element_ *next;
+    Symbol    *symbol; /**< for debugging hash conflicts */
     char       type;   /**< user-supplied type */
-} * Element;
+} *Element;
 
-typedef Element * Segment;
+typedef Element *Segment;
 
 typedef struct Hash_Table_ {
 #if 0
@@ -136,7 +136,7 @@ typedef struct Hash_Table_ {
     unsigned int    MinLoadFactor;
     unsigned int    MaxLoadFactor;
     Segment Directory[DIRECTORY_SIZE];
-} * Hash_Table;
+} *Hash_Table;
 
 typedef struct {
     unsigned int i;  /**< segment index (i think) */
@@ -183,23 +183,22 @@ This change only seems to have affected hash.h and hash.c
 #define DIV(x,y)        ((x) >> (y))
 #define MOD(x,y)        ((x) & ((y)-1))
 
-#define HASH_Table_new()    (struct Hash_Table_ *)MEM_new(&HASH_Table_fl)
-#define HASH_Table_destroy(x)   MEM_destroy(&HASH_Table_fl,(Freelist *)(Generic)x)
-#define HASH_Element_new()  (struct Element_ *)MEM_new(&HASH_Element_fl)
-#define HASH_Element_destroy(x) MEM_destroy(&HASH_Element_fl,(Freelist *)(char *)x)
-
+#define HASH_Table_new()    (struct Hash_Table_ *)ALLOC_new(&HASH_Table_fl)
+#define HASH_Table_destroy(x)   ALLOC_destroy(&HASH_Table_fl,(Freelist *)x)
+#define HASH_Element_new()  (struct Element_ *)ALLOC_new(&HASH_Element_fl)
+#define HASH_Element_destroy(x) ALLOC_destroy(&HASH_Element_fl,(Freelist *)(char *)x)
 
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void HASHinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT Hash_Table   HASHcreate PROTO( ( unsigned ) );
-extern SC_EXPRESS_EXPORT Hash_Table   HASHcopy PROTO( ( Hash_Table ) );
-extern SC_EXPRESS_EXPORT void HASHdestroy PROTO( ( Hash_Table ) );
-extern SC_EXPRESS_EXPORT Element  HASHsearch PROTO( ( Hash_Table, Element, Action ) );
-extern SC_EXPRESS_EXPORT void HASHlistinit PROTO( ( Hash_Table, HashEntry * ) );
-extern SC_EXPRESS_EXPORT void HASHlistinit_by_type PROTO( ( Hash_Table, HashEntry *, char ) );
-extern SC_EXPRESS_EXPORT Element  HASHlist PROTO( ( HashEntry * ) );
+extern SC_EXPRESS_EXPORT void HASHinitialize(void);
+extern SC_EXPRESS_EXPORT Hash_Table   HASHcreate(unsigned);
+extern SC_EXPRESS_EXPORT Hash_Table   HASHcopy(Hash_Table);
+extern SC_EXPRESS_EXPORT void HASHdestroy(Hash_Table);
+extern SC_EXPRESS_EXPORT Element  HASHsearch(Hash_Table, Element, Action);
+extern SC_EXPRESS_EXPORT void HASHlistinit(Hash_Table, HashEntry *);
+extern SC_EXPRESS_EXPORT void HASHlistinit_by_type(Hash_Table, HashEntry *, char);
+extern SC_EXPRESS_EXPORT Element  HASHlist(HashEntry *);
 
 #endif /*HASH_H*/

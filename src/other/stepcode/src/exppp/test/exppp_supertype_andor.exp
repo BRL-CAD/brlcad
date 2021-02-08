@@ -1,0 +1,38 @@
+(* reported as issue #318
+ENTITY Detailed_topological_model_element
+   ABSTRACT SUPERTYPE OF (ONEOF (
+                        CONNECTED_EDGE_SET,
+                        CONNECTED_FACE_SET,
+                        EDGE,
+                        FACE,
+                        FACE_BOUND,
+                        VERTEX,(           --paren missing in output
+                        LOOP
+                        ANDOR
+                        PATH)))            --paren missing in output
+  SUBTYPE OF (Representation_item);
+END_ENTITY;
+*)
+
+SCHEMA supertype_andor;
+
+ENTITY DTME
+  ABSTRACT SUPERTYPE OF (ONEOF (
+    VERTEX,
+    (LOOP
+     ANDOR
+     PATH)
+  ));
+END_ENTITY;
+
+ENTITY VERTEX
+  SUBTYPE OF (DTME);
+END_ENTITY;
+ENTITY LOOP
+  SUBTYPE OF (DTME);
+END_ENTITY;
+ENTITY PATH
+  SUBTYPE OF (DTME);
+END_ENTITY;
+
+END_SCHEMA;

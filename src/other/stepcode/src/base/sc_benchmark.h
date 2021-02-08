@@ -5,24 +5,23 @@
 #include "sc_export.h"
 
 #ifdef __cplusplus
-#include <iostream>
-#include <string>
+#include <iosfwd>
 
 #include "sc_memmgr.h"
 extern "C" {
 #endif
 
-    typedef struct {
-        long virtMemKB, physMemKB, userMilliseconds, sysMilliseconds;
-    } benchVals;
+typedef struct {
+    long virtMemKB, physMemKB, userMilliseconds, sysMilliseconds;
+} benchVals;
 
-    /** return a benchVals struct with four current statistics for this process:
-     * virtual and physical memory use in kb,
-     * user and system cpu time in ms
-     *
-     * not yet implemented for OSX or Windows.
-     */
-    SC_BASE_EXPORT benchVals getMemAndTime( );
+/** return a benchVals struct with four current statistics for this process:
+ * virtual and physical memory use in kb,
+ * user and system cpu time in ms
+ *
+ * not yet implemented for OSX or Windows.
+ */
+SC_BASE_EXPORT benchVals getMemAndTime();
 
 #ifdef __cplusplus
 }
@@ -37,30 +36,31 @@ extern "C" {
  *
  * depends on getMemAndTime() above - may not work on all platforms.
  */
-class SC_BASE_EXPORT benchmark {
+
+class SC_BASE_EXPORT benchmark
+{
     protected:
         benchVals initialVals, laterVals;
-        std::ostream & ostr;
-        std::string descr;
         bool debug, stopped;
+        char *benchVals_str = NULL;
+
     public:
-        benchmark( std::string description = "", bool debugMessages = true, std::ostream & o_stream = std::cout );
+        benchmark(bool debugMessages = true);
 
         /// if 'stopped' is false, uses str(true) to print to ostream
-        ~benchmark( );
-        void reset( );
-        void reset( std::string description );
-        benchVals get( );
-        void stop( );
+        ~benchmark();
+        void reset();
+        benchVals get();
+        void stop();
 
         /// converts data member 'laterVals' into a string and returns it
-        std::string str( );
+        const char *str();
 
         /// outputs result of str() on ostream 'ostr'
-        void out( );
+        void out();
 
         /// converts 'bv' into a string, prefixed by data member 'descr'
-        std::string str( const benchVals & bv );
+        const char *str(const benchVals &bv);
 };
 
 

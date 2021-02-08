@@ -14,47 +14,54 @@
 
 #include <sc_export.h>
 
-class SC_CORE_EXPORT SingleLinkList  {
-
-        // node which represents the value is contained in the subclass
-        //  since it may have different types for different lists
-
+/** Base class for a singly-linked list.
+ * \sa SingleLinkNode
+ *
+ * node which represents the value is contained in the subclass
+ * since it may have different types for different lists
+ */
+class SC_CORE_EXPORT SingleLinkList
+{
     protected:
-
-        class  SingleLinkNode  * head;
-        SingleLinkNode  * tail;
-
+        class  SingleLinkNode   *head;
+        SingleLinkNode   *tail;
     public:
-
-        virtual SingleLinkNode * NewNode();
-        virtual void AppendNode( SingleLinkNode * );
-        virtual void DeleteNode( SingleLinkNode * );
+        virtual SingleLinkNode *NewNode();
+        virtual void AppendNode(SingleLinkNode *);
+        virtual void DeleteNode(SingleLinkNode *);
 
         virtual void Empty();
-        virtual void DeleteFollowingNodes( SingleLinkNode * );
-        virtual SingleLinkNode * GetHead() const;
+        virtual void DeleteFollowingNodes(SingleLinkNode *);
+        virtual SingleLinkNode *GetHead() const;
 
         int EntryCount() const;
 
         SingleLinkList();
         virtual ~SingleLinkList();
+};
 
-}
-;
-
-
-class SC_CORE_EXPORT SingleLinkNode {
+/** Base class for nodes of a single-linked list.
+ * \sa SingleLinkList
+ */
+class SC_CORE_EXPORT SingleLinkNode
+{
         friend class SingleLinkList;
-    protected:
-
     public:
-        SingleLinkList * owner;
-        SingleLinkNode * next;
+        SingleLinkList *owner;
+        SingleLinkNode *next;
 
-        virtual SingleLinkNode * NextNode() const;
-        SingleLinkNode() : owner( 0 ), next( 0 )  { }
-        virtual ~SingleLinkNode() { }
+        virtual SingleLinkNode *NextNode() const
+        {
+            return next;
+        }
 
+        SingleLinkNode() : owner(0), next(0)
+        {
+        }
+
+        virtual ~SingleLinkNode()
+        {
+        }
 };
 
 #endif

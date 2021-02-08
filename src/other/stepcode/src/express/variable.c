@@ -83,59 +83,35 @@
  *
  */
 
-#include <sc_memmgr.h>
 #include <stdlib.h>
+
 #include "express/variable.h"
 #include "express/object.h"
-char * opcode_print( Op_Code o );
-
-struct freelist_head VAR_fl;
-
-Symbol * VAR_get_symbol( Generic v ) {
-    return( &( ( Variable )v )->name->symbol );
-}
+char *opcode_print(Op_Code o);
 
 /** Initialize the Variable module. */
-void VARinitialize() {
-    MEMinitialize( &VAR_fl, sizeof( struct Variable_ ), 100, 50 );
-    /*  OBJcreate(OBJ_VARIABLE,VAR_get_symbol,"variable",OBJ_UNUSED_BITS);*/
-    OBJcreate( OBJ_VARIABLE, VAR_get_symbol, "variable", OBJ_VARIABLE_BITS );
+void VARinitialize()
+{
 }
 
 /** VARget_simple_name
  * returns simple name of variable
  * for example, if var is named SELF\xxx.yyy, return yyy
  */
-extern char * VARget_simple_name( Variable v ) {
-    Expression e = VARget_name( v );
+extern char *VARget_simple_name(Variable v)
+{
+    Expression e = VARget_name(v);
 
-    while( TYPEis_expression( EXPget_type( e ) ) ) {
-        switch( e->e.op_code ) {
+    while(TYPEis_expression(EXPget_type(e))) {
+        switch(e->e.op_code) {
             case OP_DOT:
             case OP_GROUP:
                 e = e->e.op2;
                 break;
             default:
-                fprintf( stderr, "unexpected op_code (%s) encountered in variable name expression\n", opcode_print( e->e.op_code ) );
+                fprintf(stderr, "unexpected op_code (%s) encountered in variable name expression\n", opcode_print(e->e.op_code));
                 abort();
         }
     }
-    return EXPget_name( e );
-}
-
-/**  VARcreate
-** \param name name of variable to create
-** \param type type of new variable
-** \return the Variable created
-** Create and return a new variable.
-**
-** \note The reference class of the variable is, by default,
-**      dynamic.  Special flags associated with the variable
-**      (e.g., optional) are initially false.
-*/
-Variable VARcreate( Expression name, Type type ) {
-    Variable v = VAR_new();
-    v->name = name;
-    v->type = type;
-    return v;
+    return EXPget_name(e);
 }

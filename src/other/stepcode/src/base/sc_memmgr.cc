@@ -15,21 +15,22 @@
 /**
     sc_memmgr_error definition
 */
-class sc_memmgr_error {
+class sc_memmgr_error
+{
     private:
         std::string _srcfile;
         unsigned int _srcline;
         unsigned int _occurences;
     public:
-        sc_memmgr_error( const std::string & file, const unsigned int line );
-        sc_memmgr_error( const sc_memmgr_error & rhs );
-        ~sc_memmgr_error( void );
+        sc_memmgr_error(const std::string &file, const unsigned int line);
+        sc_memmgr_error(const sc_memmgr_error &rhs);
+        ~sc_memmgr_error(void);
 
-        bool operator<( const sc_memmgr_error & rhs ) const;
+        bool operator<(const sc_memmgr_error &rhs) const;
 
-        std::string getsrcfile( void ) const;
-        unsigned int getsrcline( void ) const;
-        unsigned int getoccurences( void ) const;
+        std::string getsrcfile(void) const;
+        unsigned int getsrcline(void) const;
+        unsigned int getoccurences(void) const;
 };
 
 typedef std::set<sc_memmgr_error>              sc_memmgr_errors;
@@ -38,24 +39,25 @@ typedef std::set<sc_memmgr_error>::iterator    sc_memmgr_error_iterator;
 /**
     sc_memmgr_record definition
 */
-class sc_memmgr_record {
+class sc_memmgr_record
+{
     private:
-        void * _addr;
+        void *_addr;
         size_t _size;
         std::string _srcfile;
         unsigned int _srcline;
     public:
-        sc_memmgr_record( void * addr, size_t size, const char * file, const unsigned int line );
-        sc_memmgr_record( void * addr );
-        sc_memmgr_record( const sc_memmgr_record & rhs );
-        ~sc_memmgr_record( void );
+        sc_memmgr_record(void *addr, size_t size, const char *file, const unsigned int line);
+        sc_memmgr_record(void *addr);
+        sc_memmgr_record(const sc_memmgr_record &rhs);
+        ~sc_memmgr_record(void);
 
-        bool operator<( const sc_memmgr_record & rhs ) const;
+        bool operator<(const sc_memmgr_record &rhs) const;
 
-        void * getaddr( void ) const;
-        size_t getsize( void ) const;
-        std::string getsrcfile( void ) const;
-        unsigned int getsrcline( void ) const;
+        void *getaddr(void) const;
+        size_t getsize(void) const;
+        std::string getsrcfile(void) const;
+        unsigned int getsrcline(void) const;
 };
 
 typedef std::set<sc_memmgr_record>           sc_memmgr_records;
@@ -66,7 +68,8 @@ typedef std::set<sc_memmgr_record>::iterator sc_memmgr_record_iterator;
 /**
     sc_memmgr definition
 */
-class sc_memmgr {
+class sc_memmgr
+{
     private:
 #ifdef SC_MEMMGR_ENABLE_CHECKS
         bool _record_insert_busy, _record_erase_busy;
@@ -81,12 +84,12 @@ class sc_memmgr {
 #endif /* SC_MEMMGR_ENABLE_CHECKS */
     protected:
     public:
-        sc_memmgr( void );
-        ~sc_memmgr( void );
+        sc_memmgr(void);
+        ~sc_memmgr(void);
 
-        void * allocate( size_t size, const char * file, const int line );
-        void * reallocate( void * addr, size_t size, const char * file, const int line );
-        void   deallocate( void * addr, const char * file, const int line );
+        void *allocate(size_t size, const char *file, const int line);
+        void *reallocate(void *addr, size_t size, const char *file, const int line);
+        void   deallocate(void *addr, const char *file, const int line);
 };
 
 /**
@@ -102,20 +105,24 @@ sc_memmgr memmgr;
 */
 extern "C" {
 
-    void * sc_malloc_fn( unsigned int size, const char * file, const int line ) {
-        return memmgr.allocate( size, file, line );
+    void *sc_malloc_fn(unsigned int size, const char *file, const int line)
+    {
+        return memmgr.allocate(size, file, line);
     }
 
-    void * sc_calloc_fn( unsigned int count, unsigned int size, const char * file, const int line ) {
-        return memmgr.allocate( count * size, file, line );
+    void *sc_calloc_fn(unsigned int count, unsigned int size, const char *file, const int line)
+    {
+        return memmgr.allocate(count * size, file, line);
     }
 
-    void * sc_realloc_fn( void * addr, unsigned int size, const char * file, const int line ) {
-        return memmgr.reallocate( addr, size, file, line );
+    void *sc_realloc_fn(void *addr, unsigned int size, const char *file, const int line)
+    {
+        return memmgr.reallocate(addr, size, file, line);
     }
 
-    void sc_free_fn( void * addr ) {
-        memmgr.deallocate( addr, "", 0 );
+    void sc_free_fn(void *addr)
+    {
+        memmgr.deallocate(addr, "", 0);
     }
 
 }
@@ -123,22 +130,26 @@ extern "C" {
 /**
     c++ memory operators implementation
 */
-void * sc_operator_new( size_t size, const char * file, const int line ) {
-    return memmgr.allocate( size, file, line );
+void *sc_operator_new(size_t size, const char *file, const int line)
+{
+    return memmgr.allocate(size, file, line);
 }
 
-void sc_operator_delete( void * addr, const char * file, const int line ) {
-    memmgr.deallocate( addr, file, line );
+void sc_operator_delete(void *addr, const char *file, const int line)
+{
+    memmgr.deallocate(addr, file, line);
 }
 
-void sc_operator_delete( void * addr ) {
-    memmgr.deallocate( addr, "", 0 );
+void sc_operator_delete(void *addr)
+{
+    memmgr.deallocate(addr, "", 0);
 }
 
 /**
     sc_memmgr implementation
 */
-sc_memmgr::sc_memmgr( void ) {
+sc_memmgr::sc_memmgr(void)
+{
 #ifdef SC_MEMMGR_ENABLE_CHECKS
     _record_insert_busy = false;
     _record_erase_busy = false;
@@ -159,28 +170,29 @@ sc_memmgr::sc_memmgr( void ) {
         All records still present when sc_memmgr instance is destroyed can be considered as
         memory leaks.
 */
-sc_memmgr::~sc_memmgr( void ) {
+sc_memmgr::~sc_memmgr(void)
+{
 #ifdef SC_MEMMGR_ENABLE_CHECKS
     sc_memmgr_record_iterator irecord;
     sc_memmgr_errors errors;
     sc_memmgr_error_iterator ierror;
 
     // Check if total allocated equals total deallocated
-    if( _allocated_total != _deallocated_total ) {
+    if(_allocated_total != _deallocated_total) {
         // todo: generate warning for possible memory leaks, enable full memory leak checking
-        printf( "sc_memmgr warning: Possible memory leaks detected (%d of %d bytes)\n", _allocated_total - _deallocated_total, _allocated_total );
+        fprintf(stderr, "sc_memmgr warning: Possible memory leaks detected (%d of %d bytes)\n", _allocated_total - _deallocated_total, _allocated_total);
     }
 
     // Compact leaks into an error list to prevent same leak being reported multiple times.
     _record_insert_busy = true;
     _record_erase_busy = true;
-    for( irecord = _records.begin();
+    for(irecord = _records.begin();
             irecord != _records.end();
-            irecord ++ ) {
-        sc_memmgr_error error( irecord->getsrcfile(), irecord->getsrcline() );
-        ierror = errors.find( error );
-        if( ierror == errors.end() ) {
-            errors.insert( error );
+            irecord ++) {
+        sc_memmgr_error error(irecord->getsrcfile(), irecord->getsrcline());
+        ierror = errors.find(error);
+        if(ierror == errors.end()) {
+            errors.insert(error);
         }
         //else
         //    ierror->occurences ++;
@@ -189,11 +201,11 @@ sc_memmgr::~sc_memmgr( void ) {
     _record_erase_busy = false;
 
     // Loop through memory leaks to generate/buffer errors
-    for( ierror = errors.begin();
+    for(ierror = errors.begin();
             ierror != errors.end();
-            ierror ++ ) {
+            ierror ++) {
         // todo: generate error for memory leak
-        printf( "sc_memmgr warning: Possible memory leak in %s line %d\n", ierror->getsrcfile().c_str(), ierror->getsrcline() );
+        fprintf(stderr, "sc_memmgr warning: Possible memory leak in %s line %d\n", ierror->getsrcfile().c_str(), ierror->getsrcline());
     }
 
     // Clear remaining records
@@ -204,14 +216,15 @@ sc_memmgr::~sc_memmgr( void ) {
 #endif /* SC_MEMMGR_ENABLE_CHECKS */
 }
 
-void * sc_memmgr::allocate( size_t size, const char * file, const int line ) {
-    void * addr;
+void *sc_memmgr::allocate(size_t size, const char *file, const int line)
+{
+    void *addr;
 
     // Allocate
-    addr = malloc( size );
-    if( addr == NULL ) {
+    addr = malloc(size);
+    if(addr == NULL) {
         // todo: error allocation failed
-        printf( "sc_memmgr error: Memory allocation failed in %s line %d\n", file, line );
+        fprintf(stderr, "sc_memmgr error: Memory allocation failed in %s line %d\n", file, line);
     }
 
     // Some stl implementations (for example debian gcc) use the new operator to construct
@@ -219,15 +232,15 @@ void * sc_memmgr::allocate( size_t size, const char * file, const int line ) {
     // for this operation, this would result in an infinite loop. This is fixed by the
     // _record_insert_busy flag.
 #ifdef SC_MEMMGR_ENABLE_CHECKS
-    if( !_record_insert_busy ) {
+    if(!_record_insert_busy) {
         // Store record for this allocation
         _record_insert_busy = true;
-        _records.insert( sc_memmgr_record( addr, size, file, line ) );
+        _records.insert(sc_memmgr_record(addr, size, file, line));
         _record_insert_busy = false;
 
         // Update stats
         _allocated += size;
-        if( _allocated > _maximum_allocated ) {
+        if(_allocated > _maximum_allocated) {
             _maximum_allocated = _allocated;
         }
         _allocated_total += size;
@@ -237,16 +250,17 @@ void * sc_memmgr::allocate( size_t size, const char * file, const int line ) {
     return addr;
 }
 
-void * sc_memmgr::reallocate( void * addr, size_t size, const char * file, const int line ) {
+void *sc_memmgr::reallocate(void *addr, size_t size, const char *file, const int line)
+{
 #ifdef SC_MEMMGR_ENABLE_CHECKS
     sc_memmgr_record_iterator record;
 
-    if( !_record_insert_busy ) {
+    if(!_record_insert_busy) {
         // Find record of previous allocation/reallocation
-        record = _records.find( sc_memmgr_record( addr ) );
-        if( record == _records.end() ) {
+        record = _records.find(sc_memmgr_record(addr));
+        if(record == _records.end()) {
             // todo: error reallocating memory not allocated?
-            printf( "sc_memmgr warning: Reallocation of not allocated memory at %s line %d\n", file, line );
+            fprintf(stderr, "sc_memmgr warning: Reallocation of not allocated memory at %s line %d\n", file, line);
         } else {
             // Update stats
             _allocated -= record->getsize();
@@ -254,29 +268,29 @@ void * sc_memmgr::reallocate( void * addr, size_t size, const char * file, const
 
             // Erase previous allocation/reallocation
             _record_erase_busy = true;
-            _records.erase( record );
+            _records.erase(record);
             _record_erase_busy = false;
         }
     }
 #endif /* SC_MEMMGR_ENABLE_CHECKS */
 
     // Reallocate
-    addr = realloc( addr, size );
-    if( addr == NULL ) {
+    addr = realloc(addr, size);
+    if(addr == NULL) {
         // todo: error reallocation failed
-        printf( "sc_memmgr error: Reallocation failed at %s line %d\n", file, line );
+        fprintf(stderr, "sc_memmgr error: Reallocation failed at %s line %d\n", file, line);
     }
 
 #ifdef SC_MEMMGR_ENABLE_CHECKS
-    if( !_record_insert_busy ) {
+    if(!_record_insert_busy) {
         // Store record for this reallocation
         _record_insert_busy = true;
-        _records.insert( sc_memmgr_record( addr, size, file, line ) );
+        _records.insert(sc_memmgr_record(addr, size, file, line));
         _record_insert_busy = false;
 
         // Update stats
         _allocated += size;
-        if( _allocated > _maximum_allocated ) {
+        if(_allocated > _maximum_allocated) {
             _maximum_allocated = _allocated;
         }
         _allocated_total += size;
@@ -287,16 +301,17 @@ void * sc_memmgr::reallocate( void * addr, size_t size, const char * file, const
     return addr;
 }
 
-void sc_memmgr::deallocate( void * addr, const char * file, const int line ) {
+void sc_memmgr::deallocate(void *addr, const char *file, const int line)
+{
 #ifdef SC_MEMMGR_ENABLE_CHECKS
     sc_memmgr_record_iterator record;
 
-    if( !_record_erase_busy ) {
+    if(!_record_erase_busy) {
         // Find record of previous allocation/reallocation
-        record = _records.find( sc_memmgr_record( addr ) );
-        if( record == _records.end() ) {
+        record = _records.find(sc_memmgr_record(addr));
+        if(record == _records.end()) {
             // todo: error free called for not allocated memory?
-            printf( "sc_memmgr warning: Deallocate of not allocated memory at %s line %d\n", file, line );
+            fprintf(stderr, "sc_memmgr warning: Deallocate of not allocated memory at %s line %d\n", file, line);
         } else {
             // Update stats
             _allocated -= record->getsize();
@@ -304,98 +319,117 @@ void sc_memmgr::deallocate( void * addr, const char * file, const int line ) {
 
             // Erase record
             _record_erase_busy = true;
-            _records.erase( record );
+            _records.erase(record);
             _record_erase_busy = false;
         }
     }
+#else
+    (void) file; // quell unused param warnings
+    (void) line;
 #endif /* SC_MEMMGR_ENABLE_CHECKS */
 
     // Deallocate
-    free( addr );
+    free(addr);
 }
 
 #ifdef SC_MEMMGR_ENABLE_CHECKS
 /**
     sc_memmgr_error implementation
 */
-sc_memmgr_error::sc_memmgr_error( const std::string & file, const unsigned int line ) {
+sc_memmgr_error::sc_memmgr_error(const std::string &file, const unsigned int line)
+{
     _srcfile = file;
     _srcline = line;
     _occurences = 1;
 }
 
-sc_memmgr_error::sc_memmgr_error( const sc_memmgr_error & rhs ) {
+sc_memmgr_error::sc_memmgr_error(const sc_memmgr_error &rhs)
+{
     _srcfile = rhs._srcfile;
     _srcline = rhs._srcline;
     _occurences = rhs._occurences;
 }
 
-sc_memmgr_error::~sc_memmgr_error( void ) {
+sc_memmgr_error::~sc_memmgr_error(void)
+{
 }
 
-bool sc_memmgr_error::operator<( const sc_memmgr_error & rhs ) const {
-    if( _srcfile == rhs._srcfile ) {
+bool sc_memmgr_error::operator<(const sc_memmgr_error &rhs) const
+{
+    if(_srcfile == rhs._srcfile) {
         return _srcline < rhs._srcline;
     }
     return _srcfile < rhs._srcfile;
 }
 
-std::string sc_memmgr_error::getsrcfile( void ) const {
+std::string sc_memmgr_error::getsrcfile(void) const
+{
     return _srcfile;
 }
 
-unsigned int sc_memmgr_error::getsrcline( void ) const {
+unsigned int sc_memmgr_error::getsrcline(void) const
+{
     return _srcline;
 }
 
-unsigned int sc_memmgr_error::getoccurences( void ) const {
+unsigned int sc_memmgr_error::getoccurences(void) const
+{
     return _occurences;
 }
 
 /**
     sc_memmgr_record implementation
 */
-sc_memmgr_record::sc_memmgr_record( void * addr, size_t size, const char * file, const unsigned int line ) {
+sc_memmgr_record::sc_memmgr_record(void *addr, size_t size, const char *file, const unsigned int line)
+{
     _addr = addr;
     _size = size;
     _srcfile = file;
     _srcline = line;
 }
 
-sc_memmgr_record::sc_memmgr_record( void * addr ) {
+sc_memmgr_record::sc_memmgr_record(void *addr)
+{
     _addr = addr;
     _size = 0;
     _srcfile = "";
     _srcline = -1;
 }
 
-sc_memmgr_record::sc_memmgr_record( const sc_memmgr_record & rhs ) {
+sc_memmgr_record::sc_memmgr_record(const sc_memmgr_record &rhs)
+{
     _addr = rhs._addr;
     _size = rhs._size;
     _srcfile = rhs._srcfile;
     _srcline = rhs._srcline;
 }
 
-sc_memmgr_record::~sc_memmgr_record( void ) {
+sc_memmgr_record::~sc_memmgr_record(void)
+{
 }
 
-bool sc_memmgr_record::operator<( const sc_memmgr_record & rhs ) const {
+bool sc_memmgr_record::operator<(const sc_memmgr_record &rhs) const
+{
     return _addr < rhs._addr;
 }
 
-void * sc_memmgr_record::getaddr( void ) const {
+void *sc_memmgr_record::getaddr(void) const
+{
     return _addr;
 }
 
-size_t sc_memmgr_record::getsize( void ) const {
+size_t sc_memmgr_record::getsize(void) const
+{
     return _size;
 }
 
-std::string sc_memmgr_record::getsrcfile( void ) const {
+std::string sc_memmgr_record::getsrcfile(void) const
+{
     return _srcfile;
 }
 
-unsigned int sc_memmgr_record::getsrcline( void ) const {
+unsigned int sc_memmgr_record::getsrcline(void) const
+{
     return _srcline;
 }
 

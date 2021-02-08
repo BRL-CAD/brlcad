@@ -1,5 +1,27 @@
 STEPcode -- http://github.com/stepcode/stepcode -- http://stepcode.org
 ************************************************************************
+Release 0.8 (December, 2014)
+
+New since v0.7:
+* handle diamond inheritance, derived Attributes
+* rename fedex_python, fedex_plus to exp2py, exp2cxx
+* many changes to the pretty printer, due to use in reformatting draft
+    and IS schemas (Thanks Tom!)
+* parser was also changed due to errors caught while pretty printing
+   - we can be much more confident that the parser is correct now
+* fix incorrect quoting of timestamp in p21 header
+* fix various copy constructors and ShallowCopy() members
+* split generated code into many small files
+   - far easier to open generated code in editors
+   - support more compilers
+   - small files are combined (via #include statements) into a few
+     large files for faster "unitary" builds, if the compiler can handle it
+   - unitary builds are faster than the previous builds
+* most compiler warnings fixed
+* performance fixes and other changes from BRL-CAD
+* finally, all tests pass!
+
+************************************************************************
 Release 0.7 (April, 2013)
 
 New since v0.6:
@@ -154,7 +176,7 @@ There were also some issues with the configure script and some
 makefiles which are addressed, as well as a new macro that is at 
 least required for gcc.
 
-Remaing problem: The p21 file scanner of SCL currently 
+Remaining problem: The p21 file scanner of SCL currently 
 does not allow for comments within the parameter list of 
 data records. Only comments outside of data records are 
 accepted.
@@ -230,7 +252,7 @@ the TD for label.
 
 - Fixed the casting operator for the class representing EXPRESS
 enumeration types. It was returning the last element of the enum type
-as the the default when the enum was unset. This choice predated enums
+as the default when the enum was unset. This choice predated enums
 having an unset enum value. It now returns <enum_name>_unset as the
 default when the enum is unset.
 
@@ -772,7 +794,7 @@ When this case of multiple inheritance is encountered attributes are
 duplicated.  This case of multiple inheritance may possibly be
 avoided by modifying the EXPRESS schema by breaking some links in the 
 inheritance hierarchy.  This will not have an adverse affect on the
-implemementation.  The user may choose to use the current or previous
+implementation.  The user may choose to use the current or previous
 method of handling multiple inheritance.  The current method is the
 default behavior.  The previous method is obtained by supplying the 
 -s (or -S) option with the exp2cxx code generator or the mkProbe
@@ -965,7 +987,7 @@ the attribute value field in the entity editor.
 If there wasn't a value in the attribute previously, then the field will 
 contain just the type specifier, e.g., Str1() if Str1 is the type selected.
 
-If a value exists in the field, it is modified to accomodate the new 
+If a value exists in the field, it is modified to accommodate the new 
 specifier.  This means the following:
  o  If the value in the field starts with a single-quote ('), it is 
         assumed to be a string literal, and is completely wrapped in the new 

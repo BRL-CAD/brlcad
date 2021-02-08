@@ -48,7 +48,7 @@ class unit_vector(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument a is mantatory and can not be set to None')
+				raise AssertionError('Argument a is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._a = REAL(value)
 			else:
@@ -62,7 +62,7 @@ class unit_vector(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument b is mantatory and can not be set to None')
+				raise AssertionError('Argument b is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._b = REAL(value)
 			else:
@@ -76,7 +76,7 @@ class unit_vector(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument c is mantatory and can not be set to None')
+				raise AssertionError('Argument c is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._c = REAL(value)
 			else:

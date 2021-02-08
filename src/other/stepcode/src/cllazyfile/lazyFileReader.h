@@ -24,38 +24,50 @@ class headerSectionReader;
 
 ///read an exchange file of any supported type (currently only p21)
 ///for use only from within lazyInstMgr
-class SC_LAZYFILE_EXPORT lazyFileReader {
+class SC_LAZYFILE_EXPORT lazyFileReader
+{
     protected:
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::string _fileName;
-        lazyInstMgr * _parent;
-        headerSectionReader * _header;
+        lazyInstMgr *_parent;
+        headerSectionReader *_header;
         std::ifstream _file;
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
         fileTypeEnum _fileType;
         fileID _fileID;
 
         void initP21();
 
         ///TODO detect file type; for now, assume all are Part 21
-        void detectType() {
+        void detectType()
+        {
             _fileType = Part21;
         }
     public:
-        fileID ID() const {
+        fileID ID() const
+        {
             return _fileID;
         }
-        instancesLoaded_t * getHeaderInstances();
+        instancesLoaded_t *getHeaderInstances();
 
-        lazyFileReader( std::string fname, lazyInstMgr * i, fileID fid );
+        lazyFileReader(std::string fname, lazyInstMgr *i, fileID fid);
         ~lazyFileReader();
 
-        fileTypeEnum type() const {
+        fileTypeEnum type() const
+        {
             return _fileType;
         }
-        lazyInstMgr * getInstMgr() const {
+        lazyInstMgr *getInstMgr() const
+        {
             return _parent;
         }
 
-        bool needKW( const char * kw );
+        bool needKW(const char *kw);
 };
 
 #endif //LAZYFILEREADER_H

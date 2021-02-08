@@ -21,7 +21,7 @@
 #include "sc_cf.h"
 #include <sc_export.h>
 
-extern const char * SCLversion;
+extern const char *SCLversion;
 
 #include <ctype.h>
 #include <string>
@@ -38,9 +38,10 @@ typedef std::string Express_id;
 class TypeDescriptor;
 class EntityDescriptor;
 class SelectTypeDescriptor;
-class InstMgr;
+class InstMgrBase;
 
 #include "STEPattributeList.h"
+#include "STEPinvAttrList.h"
 
 class STEPattributeList;
 class STEPattribute;
@@ -150,9 +151,9 @@ enum SDAI_Error_id {
     SDAI_sdaiSY_ERR  = 1000    // Underlying system error
 };
 
-typedef char * SDAI_Time_stamp;
-typedef char * SDAI_Entity_name;
-typedef char * SDAI_Schema_name;
+typedef char *SDAI_Time_stamp;
+typedef char *SDAI_Entity_name;
+typedef char *SDAI_Schema_name;
 
 #include <sdaiString.h>
 
@@ -200,7 +201,7 @@ SELECT
 #include <sdaiSelect.h>
 
 class SDAI_Model_contents;
-typedef SDAI_Model_contents * SDAI_Model_contents_ptr;
+typedef SDAI_Model_contents *SDAI_Model_contents_ptr;
 typedef SDAI_Model_contents_ptr SDAI_Model_contents_var;
 
 #include <sdaiModel_contents_list.h>
@@ -212,21 +213,23 @@ typedef SDAI_Model_contents_ptr SDAI_Model_contents_var;
 
 //  ENTITY
 extern SC_CORE_EXPORT SDAI_Application_instance NilSTEPentity;
+//FIXME why 3 of these? remove 2?
+//in libexpress, ENTITY_NULL is also used but refers to something different
 #define ENTITY_NULL        &NilSTEPentity
 #define NULL_ENTITY        &NilSTEPentity
 #define S_ENTITY_NULL        &NilSTEPentity
 
 
 typedef SDAI_Application_instance STEPentity;
-typedef SDAI_Application_instance * STEPentity_ptr;
+typedef SDAI_Application_instance *STEPentity_ptr;
 typedef STEPentity_ptr STEPentity_var;
 
-typedef SDAI_Application_instance * STEPentityPtr;
-typedef SDAI_Application_instance * STEPentityH;
+typedef SDAI_Application_instance *STEPentityPtr;
+typedef SDAI_Application_instance *STEPentityH;
 
 extern SC_CORE_EXPORT SDAI_Application_instance *
-ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
-               InstMgr * instances, int addFileId );
+ReadEntityRef(istream &in, ErrorDescriptor *err, const char *tokenList,
+              InstMgrBase *instances, int addFileId);
 
 #define SdaiInteger SDAI_Integer
 #define SdaiReal SDAI_Real
@@ -243,21 +246,23 @@ ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
 /******************************************************************************
 AGGREGATE TYPES
 
-    Aggregate types are accessed generically.  (There are not seperate
+    Aggregate types are accessed generically.  (There are not separate
     classes for the different types of aggregates.)  Aggregates are
     implemented through the STEPaggregate class.
 
 ******************************************************************************/
 
-inline SDAI_BOOLEAN * create_BOOLEAN() {
+inline SDAI_BOOLEAN *create_BOOLEAN()
+{
     return new SDAI_BOOLEAN ;
 }
 
-inline SDAI_LOGICAL * create_LOGICAL() {
+inline SDAI_LOGICAL *create_LOGICAL()
+{
     return new SDAI_LOGICAL ;
 }
 
 // below is outdated
-typedef SDAI_Select * SdaiSelectH;
+typedef SDAI_Select *SdaiSelectH;
 
 #endif

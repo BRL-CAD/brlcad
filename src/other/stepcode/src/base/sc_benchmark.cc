@@ -3,8 +3,8 @@
 #include "sc_benchmark.h"
 #include "sc_memmgr.h"
 
-#ifdef __WIN32__
-#include <Windows.h>
+#ifdef _WIN32
+#include <windows.h>
 #include <psapi.h>
 #else
 #include <sys/time.h>
@@ -12,6 +12,8 @@
 #include <unistd.h>
 #endif
 
+#include <assert.h>
+#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -20,11 +22,12 @@
 #include <ios>
 
 /// mem values in kb, times in ms (granularity may be higher than 1ms)
-benchVals getMemAndTime( ) {
+benchVals getMemAndTime()
+{
     benchVals vals;
 #ifdef __linux__
     // adapted from http://stackoverflow.com/questions/669438/how-to-get-memory-usage-at-run-time-in-c
-    std::ifstream stat_stream( "/proc/self/stat", std::ios_base::in );
+    std::ifstream stat_stream("/proc/self/stat", std::ios_base::in);
 
     // dummy vars for leading entries in stat that we don't care about
     std::string pid, comm, state, ppid, pgrp, session, tty_nr;
@@ -41,20 +44,21 @@ benchVals getMemAndTime( ) {
                 >> utime >> stime >> cutime >> cstime >> priority >> nice
                 >> O >> itrealvalue >> starttime >> vsize >> rss; // don't care about the rest
 
-    long page_size_kb = sysconf( _SC_PAGE_SIZE ) / 1024; // in case x86-64 is configured to use 2MB pages
+    long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;   // in case x86-64 is configured to use 2MB pages
     vals.physMemKB  = rss * page_size_kb;
-    vals.virtMemKB  = ( vsize / 1024 ) - vals.physMemKB;
-    vals.userMilliseconds = ( utime * 1000 ) / sysconf( _SC_CLK_TCK );
-    vals.sysMilliseconds  = ( stime * 1000 ) / sysconf( _SC_CLK_TCK );
+    vals.virtMemKB  = (vsize / 1024) - vals.physMemKB;
+    vals.userMilliseconds = (utime * 1000) / sysconf(_SC_CLK_TCK);
+    vals.sysMilliseconds  = (stime * 1000) / sysconf(_SC_CLK_TCK);
 #elif defined(__APPLE__)
     // http://stackoverflow.com/a/1911863/382458
-#elif defined(__WIN32__)
+#elif defined(_WIN32)
     // http://stackoverflow.com/a/282220/382458 and http://stackoverflow.com/a/64166/382458
     PROCESS_MEMORY_COUNTERS MemoryCntrs;
     FILETIME CreationTime, ExitTime, KernelTime, UserTime;
     long page_size_kb = 1024;
+    ULARGE_INTEGER kTime, uTime;
 
-    if( GetProcessMemoryInfo( GetCurrentProcess(), &MemoryCntrs, sizeof( MemoryCntrs ) ) ) {
+    if(GetProcessMemoryInfo(GetCurrentProcess(), &MemoryCntrs, sizeof(MemoryCntrs))) {
         vals.physMemKB = MemoryCntrs.PeakWorkingSetSize / page_size_kb;
         vals.virtMemKB = MemoryCntrs.PeakPagefileUsage / page_size_kb;
     } else {
@@ -62,9 +66,12 @@ benchVals getMemAndTime( ) {
         vals.virtMemKB = 0;
     }
 
-    if( GetProcessTimes( GetCurrentProcess(), &CreationTime, &ExitTime, &KernelTime, &UserTime ) ) {
-        vals.userMilliseconds = ( long )( ( ( ULARGE_INTEGER * ) &UserTime )->QuadPart / 100000L );
-        vals.sysMilliseconds = ( long )( ( ( ULARGE_INTEGER * ) &KernelTime )->QuadPart / 100000L );
+    if(GetProcessTimes(GetCurrentProcess(), &CreationTime, &ExitTime, &KernelTime, &UserTime)) {
+        assert(sizeof(FILETIME) == sizeof(ULARGE_INTEGER));
+        memcpy(&kTime, &KernelTime, sizeof(FILETIME));
+        memcpy(&uTime, &UserTime, sizeof(FILETIME));
+        vals.userMilliseconds = (long)(uTime.QuadPart / 100000L);
+        vals.sysMilliseconds = (long)(kTime.QuadPart / 100000L);
     } else {
         vals.userMilliseconds = 0;
         vals.sysMilliseconds = 0;
@@ -77,33 +84,40 @@ benchVals getMemAndTime( ) {
 
 // ---------------------   benchmark class   ---------------------
 
-benchmark::benchmark( std::string description, bool debugMessages, std::ostream & o_stream ): ostr( o_stream ),
-    descr( description ), debug( debugMessages ), stopped( false ) {
-    initialVals = getMemAndTime( );
+benchmark::benchmark(bool debugMessages): debug(debugMessages), stopped(false)
+{
+    initialVals = getMemAndTime();
 }
 
-benchmark::~benchmark() {
-    if( !stopped ) {
-        stop( );
-        if( debug ) {
-            ostr << "benchmark::~benchmark(): stop was not called before destructor!" << std::endl;
+benchmark::~benchmark()
+{
+    if(!stopped) {
+        stop();
+        if(debug) {
+            std::cerr << "benchmark::~benchmark(): stop was not called before destructor!" << std::endl;
         }
-        out( );
+        out();
+    }
+    if(benchVals_str) {
+        free((void *)benchVals_str);
+        benchVals_str = NULL;
     }
 }
 
-void benchmark::stop( ) {
-    if( stopped ) {
+void benchmark::stop()
+{
+    if(stopped) {
         std::cerr << "benchmark::stop(): tried to stop a benchmark that was already stopped!" << std::endl;
     } else {
-        laterVals = getMemAndTime( );
+        laterVals = getMemAndTime();
         stopped = true;
     }
 }
 
-benchVals benchmark::get( ) {
-    if( !stopped ) {
-        laterVals = getMemAndTime( );
+benchVals benchmark::get()
+{
+    if(!stopped) {
+        laterVals = getMemAndTime();
     }
     benchVals delta;
     delta.physMemKB = laterVals.physMemKB - initialVals.physMemKB;
@@ -112,34 +126,41 @@ benchVals benchmark::get( ) {
     delta.userMilliseconds = laterVals.userMilliseconds - initialVals.userMilliseconds;
 
     //If vm is negative, the memory had been requested before initialVals was set. Don't count it
-    if( delta.virtMemKB < 0 ) {
+    if(delta.virtMemKB < 0) {
         delta.physMemKB -= delta.virtMemKB;
         delta.virtMemKB = 0;
     }
     return delta;
 }
 
-void benchmark::reset( std::string description ) {
-    descr = description;
-    reset();
-}
-void benchmark::reset( ) {
+void benchmark::reset()
+{
     stopped = false;
     initialVals = getMemAndTime();
 }
 
-std::string benchmark::str( ) {
-    return str( get( ) );
+const char *benchmark::str()
+{
+    return str(get());
 }
 
-void benchmark::out() {
-    ostr << str( ) << std::endl;
+void benchmark::out()
+{
+    std::cout << str() << std::endl;
 }
 
-std::string benchmark::str( const benchVals & bv ) {
+const char *benchmark::str(const benchVals &bv)
+{
     std::stringstream ss;
-    ss << descr << " Physical memory: " << bv.physMemKB << "kb; Virtual memory: " << bv.virtMemKB;
+    ss << " Physical memory: " << bv.physMemKB << "kb; Virtual memory: " << bv.virtMemKB;
     ss << "kb; User CPU time: " << bv.userMilliseconds << "ms; System CPU time: " << bv.sysMilliseconds << "ms";
-    return ss.str();
+    if(benchVals_str) {
+        free((void *)benchVals_str);
+        benchVals_str = NULL;
+    }
+    benchVals_str = (char *)calloc(ss.str().length() + 1, sizeof(char));
+    snprintf(benchVals_str, ss.str().length(), "%s", ss.str().c_str());
+    benchVals_str[ss.str().length()] = '\0';
+    return benchVals_str;
 }
 

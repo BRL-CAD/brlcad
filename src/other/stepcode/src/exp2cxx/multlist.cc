@@ -20,37 +20,38 @@ MultList::~MultList()
  * Deletes the childList of this, before this is deleted.
  */
 {
-    EntList * child = childList, *nxt;
+    EntList *child = childList, *nxt;
 
-    while( child ) {
+    while(child) {
         nxt = child->next;
         delete child;
         child = nxt;
     }
 }
 
-void MultList::setLevel( int l )
+void MultList::setLevel(int l)
 /*
  * Sets this's level, and tells all its children to set their level to our
  * level +1.
  */
 {
-    EntList * child = childList;
+    EntList *child = childList;
 
     level = l;
-    for( ; child != NULL; child = child->next ) {
-        child->setLevel( l + 1 );
+    for(; child != NULL; child = child->next) {
+        child->setLevel(l + 1);
     }
 }
 
-int MultList::getMaxLevel() {
-    EntList * child = childList;
+int MultList::getMaxLevel()
+{
+    EntList *child = childList;
     int maxLevel, childLevel;
 
     maxLevel = level;
-    while( child ) {
+    while(child) {
         childLevel = child->getMaxLevel();
-        if( childLevel > maxLevel ) {
+        if(childLevel > maxLevel) {
             maxLevel = childLevel;
         }
         child = child->next;
@@ -59,15 +60,15 @@ int MultList::getMaxLevel() {
     return maxLevel;
 }
 
-int MultList::contains( const char * nm )
+int MultList::contains(const char *nm)
 /*
  * Check if one of this's descendants matches nm.
  */
 {
-    EntList * child = childList;
+    EntList *child = childList;
 
-    while( child ) {
-        if( child->contains( nm ) ) {
+    while(child) {
+        if(child->contains(nm)) {
             return TRUE;
         }
         child = child->next;
@@ -75,15 +76,15 @@ int MultList::contains( const char * nm )
     return FALSE;
 }
 
-int MultList::hit( const char * nm )
+int MultList::hit(const char *nm)
 /*
  * Check if one of our descendants matches nm.
  */
 {
-    EntList * child = childList;
+    EntList *child = childList;
 
-    while( child ) {
-        if( child->viable > UNSATISFIED && child->hit( nm ) ) {
+    while(child) {
+        if(child->viable > UNSATISFIED && child->hit(nm)) {
             // For most child->join types ruling out UNSATs just saves us
             // trouble - we know nm won't be hit since child didn't hit any-
             // thing.  If child->join = AND, we must skip child.  One of its
@@ -96,7 +97,7 @@ int MultList::hit( const char * nm )
     return FALSE;
 }
 
-int MultList::isDependent( const char * ent )
+int MultList::isDependent(const char *ent)
 /*
  * Can one of our descendants tell us that entity ent can or cannot be
  * instantiated independently (i.e., not as a complex entity with external
@@ -107,14 +108,14 @@ int MultList::isDependent( const char * ent )
  * Dependent().
  */
 {
-    EntList * child = childList;
+    EntList *child = childList;
     int result = DONT_KNOW, retval;
 
-    while( child ) {
-        if( ( retval = child->isDependent( ent ) ) == FALSE ) {
+    while(child) {
+        if((retval = child->isDependent(ent)) == FALSE) {
             return FALSE;
         }
-        if( retval == TRUE ) {
+        if(retval == TRUE) {
             // If child tells us that ent must be created together with another
             // leaf node (e.g., child is an AndList AND'ing ent + ent_b), save
             // the result.  Don't return TRUE yet because a later child may
@@ -129,7 +130,7 @@ int MultList::isDependent( const char * ent )
     // either DONT_KNOW or TRUE if we got here
 }
 
-int AndList::isDependent( const char * ent )
+int AndList::isDependent(const char *ent)
 /*
  * Tells us if entity ent cannot be instantiated independently.  Say ent
  * A is a supertype of ( B AND C ).  Neither B nor C can be instantiated
@@ -140,7 +141,7 @@ int AndList::isDependent( const char * ent )
  * if nothing can be determined, it returns DONT_KNOW.
  */
 {
-    if( supertype ) {
+    if(supertype) {
         // If we're a supertype, we have to make one exception.  Normally if
         // we're an AND of A & B and ent = A, we'd be able to conclude that A
         // requires ext mapping.  But here, the first child of the AND is a
@@ -149,7 +150,7 @@ int AndList::isDependent( const char * ent )
         // we skip the first child.  We then continue to check if among the
         // subtypes of A there are children requiring ext mapping (such as B
         // AND C).
-        return ( childList->next->isDependent( ent ) );
+        return (childList->next->isDependent(ent));
         // NOTE - actually the algorithm for a supertype is more complex.  We
         // did not address here the possibility that ent = the super (A).  In
         // such a case, if A is non-abstract, then by def it can be instanti-
@@ -173,8 +174,8 @@ int AndList::isDependent( const char * ent )
     // Next possibility:  We don't represent a supertype.  Thus, if we have >1
     // child and ent is one of them, it can only be created by being AND'ed
     // with at least 1 other child.
-    if( numchildren > 1 ) {
-        if( contains( ent ) ) {
+    if(numchildren > 1) {
+        if(contains(ent)) {
             return TRUE;
         }
         return DONT_KNOW;
@@ -183,36 +184,36 @@ int AndList::isDependent( const char * ent )
     // If we have 1 child only, just move on.  At this point, the fact that
     // we're an AND didn't go very far in telling us that our children are
     // dependent on one another since we only *have* one child.
-    return ( childList->isDependent( ent ) );
+    return (childList->isDependent(ent));
 }
 
-EntList * MultList::getChild( int num )
+EntList *MultList::getChild(int num)
 /*
  * Returns a pointer to the num'th child of MultList.
  */
 {
-    EntList * child = childList;
+    EntList *child = childList;
     int j;
 
-    if( num < 0 || num >= numchildren ) {
+    if(num < 0 || num >= numchildren) {
         // Check for error situations (shouldn't normally occur):
         return NULL;
     }
-    for( j = 0; j < num; j++, child = child->next ) {
+    for(j = 0; j < num; j++, child = child->next) {
         ;
     }
     return child;
 }
 
-void MultList::appendList( EntList * ent )
+void MultList::appendList(EntList *ent)
 /*
  * Appends a new entry into this's childList.  The siblings of ent (ent->
  * next ...) are automatically also appended.
  */
 {
-    EntList * prv;
+    EntList *prv;
 
-    if( numchildren == 0 ) {
+    if(numchildren == 0) {
         childList = ent;
     } else {
         prv = getLast();
@@ -222,21 +223,21 @@ void MultList::appendList( EntList * ent )
     numchildren += ent->siblings();
 }
 
-EntList * MultList::copyList( EntList * ent )
+EntList *MultList::copyList(EntList *ent)
 /*
  * Makes a copy of ent (and its children if it's a MultList) and appends it
  * to the end of our list.
  */
 {
-    EntList * newlist = 0, *child;
+    EntList *newlist = 0, *child;
 
-    switch( ent->join ) {
+    switch(ent->join) {
         case SIMPLE:
-            newlist = new SimpleList( ( dynamic_cast< SimpleList * >(ent) )->Name() );            
+            newlist = new SimpleList((dynamic_cast< SimpleList * >(ent))->Name());
             break;
         case AND:
             newlist = new AndList;
-            ( ( AndList * )newlist )->supertype = ( dynamic_cast< AndList * >(ent) )->supertype;
+            ((AndList *)newlist)->supertype = (dynamic_cast< AndList * >(ent))->supertype;
             break;
         case OR:
             newlist = new OrList;
@@ -245,29 +246,29 @@ EntList * MultList::copyList( EntList * ent )
             newlist = new AndOrList;
             break;
     };
-    appendList( newlist );
-    if( ent->multiple() ) {
+    appendList(newlist);
+    if(ent->multiple()) {
         // For the multlists, we must recurse for all their children:
-        child = ( dynamic_cast< MultList * >(ent) )->childList;        
-        while( child ) {
-            ( dynamic_cast< MultList * >(newlist) )->copyList( child );        
+        child = (dynamic_cast< MultList * >(ent))->childList;
+        while(child) {
+            (dynamic_cast< MultList * >(newlist))->copyList(child);
             child = child->next;
         }
     }
     return newlist;
 }
 
-void MultList::unmarkAll( EntNode * ents )
+void MultList::unmarkAll(EntNode *ents)
 /*
  * Unmarks all nodes of ents marked by any of the descendants of this.
  * This function is invoked by AndList and AndOrList.  It is redefined for
  * OrList.
  */
 {
-    EntList * child = childList;
+    EntList *child = childList;
 
-    while( child != NULL ) {
-        child->unmarkAll( ents );
+    while(child != NULL) {
+        child->unmarkAll(ents);
         child = child->next;
     }
 }
@@ -278,15 +279,15 @@ void MultList::reset()
  * each child's reset function.
  */
 {
-    EntList * child;
+    EntList *child;
 
     viable = UNKNOWN;
-    for( child = childList; child; child = child->next ) {
+    for(child = childList; child; child = child->next) {
         child->reset();
     }
 }
 
-void JoinList::setViableVal( EntNode * ents )
+void JoinList::setViableVal(EntNode *ents)
 /*
  * Sets this's viable value based on the value of its children.  This is
  * called at the end of matchNonOR() and matchOR() to determine the result
@@ -298,22 +299,22 @@ void JoinList::setViableVal( EntNode * ents )
  * worry about coming across them down here.
  */
 {
-    EntList * child = childList;
+    EntList *child = childList;
 
     viable = UNKNOWN;
     // Start viable at UNKNOWN.  This is default val and the lowest enum val.
 
-    while( child != NULL ) {
-        if( child->viable == UNKNOWN ) {
+    while(child != NULL) {
+        if(child->viable == UNKNOWN) {
             viable = UNKNOWN;
             return;
         }
-        if( child->viable > viable ) {
+        if(child->viable > viable) {
             viable = child->viable;
         }
         child = child->next;
     }
-    if( viable == MATCHALL && !ents->allMarked() ) {
+    if(viable == MATCHALL && !ents->allMarked()) {
         // There are some situations where this may happen - a child claims
         // MATCHALL while that is not the case.  If child #2 was checked and
         // later child #1 was unmarked (because we tried its OR's and ran into
@@ -322,21 +323,21 @@ void JoinList::setViableVal( EntNode * ents )
     }
 }
 
-int JoinList::acceptChoice( EntNode * ents )
+int JoinList::acceptChoice(EntNode *ents)
 /*
  * Accept the path we're a part of:  Mark all nodes of ents we can.  Mark
  * value will = mark (either MARK or ORMARK).  Return TRUE if we mark any-
  * thing; FALSE otherwise.
  */
 {
-    EntList * child;
+    EntList *child;
     int result = FALSE;
 
-    for( child = childList; child != NULL; child = child->next ) {
-        if( child->viable >= MATCHSOME ) {
+    for(child = childList; child != NULL; child = child->next) {
+        if(child->viable >= MATCHSOME) {
             // Only mark children which have new nodes they can mark.  (This
             // condition is important.  Sometimes, there will be children who
-            // can mark but whose vaiable val = SATISFIED.  This will be the
+            // can mark but whose variable val = SATISFIED.  This will be the
             // case if there's another EntList with higher priority which can
             // also mark this node.  (For example, if an AND has an OR and a
             // SIMPLE child, the SIMPLE wins so that we'll have fewer OR
@@ -344,7 +345,7 @@ int JoinList::acceptChoice( EntNode * ents )
             // EntList we won't mark with a conditional which may be undone
             // later.)  Thus, our test here is - is this child the one who
             // MATCHSOME'd when we originally went through the hierarchy.)
-            result = child->acceptChoice( ents ) || result;
+            result = child->acceptChoice(ents) || result;
             // (NOTE - must run acceptChoice() first in above line.  If result
             // were TRUE and we ||'ed it with acceptChoice(), aC() would never
             // be run.)
@@ -353,17 +354,17 @@ int JoinList::acceptChoice( EntNode * ents )
     return result;
 }
 
-int MultList::prevKnown( EntList * desc )
+int MultList::prevKnown(EntList *desc)
 /*
  * Specialized function to test that none of the children prior to desc
  * (a pointer to one of the EntLists of childList) have viable = UNKNOWN.
  * Used in MatchNonORs() (see).
  */
 {
-    EntList * child = childList;
+    EntList *child = childList;
 
-    while( child != NULL && child != desc ) {
-        if( child->viable == UNKNOWN ) {
+    while(child != NULL && child != desc) {
+        if(child->viable == UNKNOWN) {
             return FALSE;
         }
         child = child->next;

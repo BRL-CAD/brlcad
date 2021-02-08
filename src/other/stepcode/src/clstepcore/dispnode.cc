@@ -29,28 +29,32 @@ class StepEntityEditor;
 // 2) delete the StepEntityEditor window
 // To see an example of this function used with the Data Probe look in
 // ../clprobe-ui/StepEntEditor.cc  Look at DeleteSEE() and ~StepEntityEditor().
-extern void DeleteSEE( StepEntityEditor * se );
+extern void DeleteSEE(StepEntityEditor *se);
 
-DisplayNode::~DisplayNode() {
+DisplayNode::~DisplayNode()
+{
     Remove();
-    if( see ) {
-        DeleteSEE( ( StepEntityEditor * )see );
+    if(see) {
+        DeleteSEE((StepEntityEditor *)see);
 //DAS PORT need the cast from void* DeleteSEE(see);
     }
 }
 
-void DisplayNode::Remove() {
+void DisplayNode::Remove()
+{
     GenericNode::Remove();
 // DON'T DO THIS!!    displayState = noMapState;
 }
 
-int DisplayNode::ChangeState( displayStateEnum s ) {
+int DisplayNode::ChangeState(displayStateEnum s)
+{
     displayState = s;
     return 1;
 }
 
-int DisplayNode::ChangeList( DisplayNodeList * cmdList ) {
+int DisplayNode::ChangeList(DisplayNodeList *cmdList)
+{
     Remove();
-    cmdList->Append( this );
+    cmdList->Append(this);
     return 1;
 }

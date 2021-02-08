@@ -45,7 +45,7 @@
 
 #include <sc_export.h>
 #include "basic.h"  /* get basic definitions */
-#include "memory.h"
+#include "alloc.h"
 
 /************/
 /* typedefs */
@@ -58,8 +58,8 @@ typedef struct Symbol_ Symbol;
 /***************************/
 
 struct Symbol_ {
-    char * name;
-    char * filename;
+    char *name;
+    const char *filename;
     int line;
     char resolved;
 };
@@ -78,8 +78,8 @@ extern SC_EXPRESS_EXPORT struct freelist_head SYMBOL_fl;
 /* macro function definitions */
 /******************************/
 
-#define SYMBOL_new()        (struct Symbol_ *)MEM_new(&SYMBOL_fl)
-#define SYMBOL_destroy(x)   MEM_destroy(&SYMBOL_fl,(Freelist *)(Generic)x)
+#define SYMBOL_new()        (struct Symbol_ *)ALLOC_new(&SYMBOL_fl)
+#define SYMBOL_destroy(x)   ALLOC_destroy(&SYMBOL_fl,(Freelist *)x)
 
 #define SYMBOLset(obj)      obj->symbol.line = yylineno; \
                 obj->symbol.filename = current_filename
@@ -88,7 +88,7 @@ extern SC_EXPRESS_EXPORT struct freelist_head SYMBOL_fl;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT void SYMBOLinitialize PROTO( ( void ) );
-SC_EXPRESS_EXPORT Symbol * SYMBOLcreate( char * name, int line, char * filename );
+extern SC_EXPRESS_EXPORT void SYMBOLinitialize(void);
+SC_EXPRESS_EXPORT Symbol *SYMBOLcreate(char *name, int line, const char *filename);
 
 #endif    /*  SYMBOL_H  */

@@ -38,7 +38,6 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
 #include "express/alg.h"
 #include "express/object.h"
 #include "express/schema.h"
@@ -49,10 +48,11 @@ struct freelist_head RULE_fl;
 struct freelist_head PROC_fl;
 struct freelist_head WHERE_fl;
 
-Scope ALGcreate( char type ) {
-    Scope s = SCOPEcreate( type );
+Scope ALGcreate(char type)
+{
+    Scope s = SCOPEcreate(type);
 
-    switch( type ) {
+    switch(type) {
         case OBJ_PROCEDURE:
             s->u.proc = PROC_new();
             break;
@@ -73,24 +73,14 @@ Scope ALGcreate( char type ) {
 ** Description: Initialize the Algorithm module.
 */
 
-Symbol * WHERE_get_symbol( Generic w ) {
-    return( ( ( Where )w )->label );
-}
-
 /** Initialize the Algorithm module. */
-void ALGinitialize( void ) {
-    MEMinitialize( &FUNC_fl, sizeof( struct Function_ ),  100, 50 );
-    MEMinitialize( &RULE_fl, sizeof( struct Rule_ ),      100, 50 );
-    MEMinitialize( &PROC_fl, sizeof( struct Procedure_ ), 100, 50 );
-    MEMinitialize( &WHERE_fl, sizeof( struct Where_ ),    100, 50 );
-    OBJcreate( OBJ_RULE, SCOPE_get_symbol, "rule", OBJ_UNUSED_BITS );
-    OBJcreate( OBJ_PROCEDURE, SCOPE_get_symbol, "procedure", OBJ_PROCEDURE_BITS );
-    OBJcreate( OBJ_FUNCTION, SCOPE_get_symbol, "function", OBJ_FUNCTION_BITS );
-    OBJcreate( OBJ_WHERE, WHERE_get_symbol, "where", OBJ_WHERE_BITS );
+void ALGinitialize(void)
+{
 }
 
-void ALGput_full_text( Scope s, int start, int end ) {
-    switch( s->type ) {
+void ALGput_full_text(Scope s, int start, int end)
+{
+    switch(s->type) {
         case OBJ_FUNCTION:
             s->u.func->text.filename = s->symbol.filename;
             s->u.func->text.start = start;

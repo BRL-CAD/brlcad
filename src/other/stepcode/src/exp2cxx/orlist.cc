@@ -13,7 +13,7 @@
 #include "complexSupport.h"
 #include <sc_memmgr.h>
 
-int OrList::hit( const char * nm )
+int OrList::hit(const char *nm)
 /*
  * Check if we matched nm.  We have two possibilities here:  If we have a
  * choice selected, we only check the selected choice.  Say we're an OR
@@ -27,15 +27,15 @@ int OrList::hit( const char * nm )
  * may need to check if all sub-CLists matched the multi-sub, C.)
  */
 {
-    EntList * child = getChild( choice );
+    EntList *child = getChild(choice);
 
-    if( child ) {
+    if(child) {
         // I.e., if we have a choice selected, check it only.
-        return ( child->hit( nm ) );
+        return (child->hit(nm));
     } else {
         child = childList;
-        while( child ) {
-            if( child->viable > UNSATISFIED && child->hit( nm ) ) {
+        while(child) {
+            if(child->viable > UNSATISFIED && child->hit(nm)) {
                 // See MultList::hit() on why we must skip UNSATs.
                 return TRUE;
             }
@@ -45,20 +45,20 @@ int OrList::hit( const char * nm )
     return FALSE;
 }
 
-void OrList::unmarkAll( EntNode * ents )
+void OrList::unmarkAll(EntNode *ents)
 /*
  * Unmarks all the nodes of ents marked by the descendants of this.
  */
 {
-    EntList * child;
+    EntList *child;
 
-    if( ( child = getChild( choice ) ) != NULL ) {
+    if((child = getChild(choice)) != NULL) {
         // choice = the last selected path which we'll now undo.
-        child->unmarkAll( ents );
+        child->unmarkAll(ents);
     }
 }
 
-int OrList::acceptChoice( EntNode * ents )
+int OrList::acceptChoice(EntNode *ents)
 /*
  * Accepts the first choice of our childList which marks any unmarked
  * nodes.  If none of our current choices mark anything, choice is set to
@@ -66,14 +66,14 @@ int OrList::acceptChoice( EntNode * ents )
  * choice to choice1, and search again.
  */
 {
-    EntList * child;
+    EntList *child;
 
-    if( choice == LISTEND ) {
+    if(choice == LISTEND) {
         choice = choice1;
     }
-    child = getChild( choice );
-    while( child ) {
-        if( child->viable >= MATCHSOME && child->acceptChoice( ents ) ) {
+    child = getChild(choice);
+    while(child) {
+        if(child->viable >= MATCHSOME && child->acceptChoice(ents)) {
             // acceptChoice() returns TRUE if we marked something.
             return TRUE;
         }

@@ -51,8 +51,8 @@ extern unsigned int PennyOff;
 extern unsigned long long PennyMerge;
 
 typedef struct {
-    void * buff;       // record pointer in input file map
-    void * next;       // duplicate chain
+    void *buff;        // record pointer in input file map
+    void *next;        // duplicate chain
 } PennySort;
 
 #endif //SORT_H

@@ -50,7 +50,7 @@ class weld(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument composition is mantatory and can not be set to None')
+				raise AssertionError('Argument composition is mandatory and can not be set to None')
 			if not check_type(value,STRING):
 				self._composition = STRING(value)
 			else:
@@ -80,7 +80,7 @@ class glue(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument composition is mantatory and can not be set to None')
+				raise AssertionError('Argument composition is mandatory and can not be set to None')
 			if not check_type(value,STRING):
 				self._composition = STRING(value)
 			else:
@@ -94,7 +94,7 @@ class glue(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument solvent is mantatory and can not be set to None')
+				raise AssertionError('Argument solvent is mandatory and can not be set to None')
 			if not check_type(value,STRING):
 				self._solvent = STRING(value)
 			else:
@@ -128,7 +128,7 @@ class wall_mounting(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument mounting is mantatory and can not be set to None')
+				raise AssertionError('Argument mounting is mandatory and can not be set to None')
 			if not check_type(value,STRING):
 				self._mounting = STRING(value)
 			else:
@@ -142,7 +142,7 @@ class wall_mounting(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument on is mantatory and can not be set to None')
+				raise AssertionError('Argument on is mandatory and can not be set to None')
 			if not check_type(value,STRING):
 				self._on = STRING(value)
 			else:
@@ -156,7 +156,7 @@ class wall_mounting(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument using is mantatory and can not be set to None')
+				raise AssertionError('Argument using is mandatory and can not be set to None')
 			if not check_type(value,attachment_method):
 				self._using = attachment_method(value)
 			else:
@@ -186,7 +186,7 @@ class screw(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument body_length is mantatory and can not be set to None')
+				raise AssertionError('Argument body_length is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._body_length = REAL(value)
 			else:
@@ -200,7 +200,7 @@ class screw(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument pitch is mantatory and can not be set to None')
+				raise AssertionError('Argument pitch is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._pitch = REAL(value)
 			else:
@@ -230,7 +230,7 @@ class nail(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument body_length is mantatory and can not be set to None')
+				raise AssertionError('Argument body_length is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._body_length = REAL(value)
 			else:
@@ -244,7 +244,7 @@ class nail(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument head_area is mantatory and can not be set to None')
+				raise AssertionError('Argument head_area is mandatory and can not be set to None')
 			if not check_type(value,REAL):
 				self._head_area = REAL(value)
 			else:

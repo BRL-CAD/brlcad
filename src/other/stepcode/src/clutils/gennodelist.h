@@ -26,30 +26,33 @@
 // as its head, you need to call DeleteEntries().
 //////////////////////////////////////////////////////////////////////////////
 
-class SC_UTILS_EXPORT GenNodeList {
+class SC_UTILS_EXPORT GenNodeList
+{
     public:
-        GenNodeList( GenericNode * headNode );
-        virtual ~GenNodeList() {
+        GenNodeList(GenericNode *headNode);
+        virtual ~GenNodeList()
+        {
             delete head;
         }
 
-        GenericNode * GetHead()  {
+        GenericNode *GetHead()
+        {
             return head;
         }
 
         virtual void ClearEntries();
         virtual void DeleteEntries();
         // deletes node from its previous list & appends
-        virtual void Append( GenericNode * node );
+        virtual void Append(GenericNode *node);
         // deletes newNode from its previous list & inserts in
         //  relation to existNode
-        virtual void InsertAfter( GenericNode * newNode, GenericNode * existNode );
-        virtual void InsertBefore( GenericNode * newNode, GenericNode * existNode );
+        virtual void InsertAfter(GenericNode *newNode, GenericNode *existNode);
+        virtual void InsertBefore(GenericNode *newNode, GenericNode *existNode);
 
-        virtual void Remove( GenericNode * node );
+        virtual void Remove(GenericNode *node);
 
     protected:
-        GenericNode * head;
+        GenericNode *head;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -58,7 +61,8 @@ class SC_UTILS_EXPORT GenNodeList {
 //  other classes) that aren't in this file
 //////////////////////////////////////////////////////////////////////////////
 
-inline GenNodeList::GenNodeList( GenericNode * headNode ) {
+inline GenNodeList::GenNodeList(GenericNode *headNode)
+{
     head = headNode;
     head->next = head;
     head->prev = head;

@@ -1,9 +1,20 @@
 #ifndef LAZYTYPES_H
 #define LAZYTYPES_H
 
+#include "sc_cf.h"
+
 #include <iostream>
 #include <vector>
+#include <set>
+
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#else
+#if defined(_MSC_VER) && _MSC_VER < 1600
+typedef unsigned __int64 uint64_t;
+typedef unsigned __int16 uint16_t;
+#endif
+#endif
 
 #include "judyLArray.h"
 #include "judySArray.h"
@@ -18,8 +29,8 @@ enum fileTypeEnum { Part21, Part28 };
 // enum loadingEnum { immediate, lazy };
 
 typedef uint64_t instanceID;  ///< the number assigned to an instance in the file
-typedef int16_t sectionID;   ///< globally unique index of a sectionReader in a sectionReaderVec_t
-typedef int16_t fileID;      ///< the index of a lazyFileReader in a lazyFileReaderVec_t. Can be inferred from a sectionID
+typedef uint16_t sectionID;   ///< globally unique index of a sectionReader in a sectionReaderVec_t
+typedef uint16_t fileID;      ///< the index of a lazyFileReader in a lazyFileReaderVec_t. Can be inferred from a sectionID
 
 /** store 16 bits of section id and 48 of instance offset into one 64-bit int
  * use thus:
@@ -35,6 +46,8 @@ typedef uint64_t positionAndSection;
 
 typedef std::vector< instanceID > instanceRefs;
 
+typedef std::set< instanceID > instanceSet;
+
 //TODO: create a "unique instance id" from the sectionID and instanceID, and use it everywhere?
 
 /** This struct contains all the information necessary to locate an instance. It is primarily
@@ -42,7 +55,7 @@ typedef std::vector< instanceID > instanceRefs;
  * situations, so the information should be kept up-to-date.
  */
 typedef struct {
-    long begin;
+    long begin; ///< this is the result of tellg() before reading the instanceID; there may be whitespace or comments, but nothing else.
     instanceID instance;
     sectionID section;
     /* bool modified; */ /* this will be useful when writing instances - if an instance is
@@ -52,8 +65,8 @@ typedef struct {
 /// used when populating the instance type map \sa lazyInstMgr::_instanceTypeMMap
 typedef struct {
     lazyInstanceLoc loc;
-    const char * name;
-    instanceRefs * refs;
+    const char *name;
+    instanceRefs *refs;
 } namedLazyInstance;
 
 // instanceRefs - map between an instanceID and instances that refer to it

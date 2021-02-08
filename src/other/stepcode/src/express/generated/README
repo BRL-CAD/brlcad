@@ -5,8 +5,7 @@ lexing and parsing logic.
 
 DO NOT EDIT THESE FILES.  They are machine generated and should not be modified
 directly - bugs in these files need to be fixed in either the
-Perplex/RE2C/Lemon input files or the tools themselves.  Directly changing
-these files will result in a build failure.
+Perplex/RE2C/Lemon input files or the tools themselves.
 
 If changes need to be made, the correct approach is:
 
@@ -14,12 +13,4 @@ If changes need to be made, the correct approach is:
 2.  make any necessary fixes to the input files and/or the generator tools.
 3.  run the build, and copy the new generated expscan and expparse c and h
     files to this directory.
-4.  run the build target "express_md5gen" to generate a new verification_info.cmake
-    file, and copy that file into this directory as well.
 
-The verification_info.cmake file in this directory is used by CMake to protect
-the integrity of the generated files.
-
-If iterative debugging is necessary, set the cmake configure variable
-DEBUGGING_GENERATED_SOURCES to avoid having to update generated sources and md5
-sums each time an input file is changed.

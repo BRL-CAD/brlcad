@@ -1,5 +1,7 @@
 #define CLASSES_MISC_C
+#define _POSIX_C_SOURCE 200809L /* for strdup */
 #include <stdlib.h>
+#include <string.h>
 #include "classes.h"
 /*******************************************************************
 ** FedEx parser output module for generating C++  class definitions
@@ -19,11 +21,10 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 *******************************************************************/
 
 extern int multiple_inheritance;
-/*extern int corba_binding; */
 
 /******************************************************************
 **      The following functions will be used        ***
-***     through out the the program exp2python      ***/
+***     throughout the program exp2python           ***/
 
 
 /******************************************************************
@@ -35,11 +36,12 @@ extern int multiple_inheritance;
  ** Status:  started 12/1
  ******************************************************************/
 const char *
-CheckWord( const char * word ) {
+CheckWord(const char *word)
+{
 #ifdef NOT_USING_SDAI_BINDING
     /*  obsolete with proposed c++ binding  */
 
-    static char * reserved_words [] = {
+    static char *reserved_words [] = {
         "application_marker",  "asm",   "attributes", "auto",
         "break",    "case", "char", "class",    "const",    "continue",
         "default",  "delete",   "do",   "double",
@@ -53,32 +55,30 @@ CheckWord( const char * word ) {
         "union",    "unsigned",
         "val",  "virtual",  "void", "volatile"
     };
-    int nwords = ( sizeof reserved_words / sizeof reserved_words[0] );
+    int nwords = (sizeof reserved_words / sizeof reserved_words[0]);
     int cond,
         i,
         low = 0,
         high = nwords - 1;
 
     /*  word is obviously not in list, if it is longer than any of the words in the list  */
-    if( strlen( word ) > 12 ) {
-        return ( word );
+    if(strlen(word) > 18) {
+        return (word);
     }
 
-    while( low <= high ) {
-        i = ( low + high ) / 2;
-        if( ( cond = strcmp( word, reserved_words [i] ) ) < 0 ) {
+    while(low <= high) {
+        i = (low + high) / 2;
+        if((cond = strcmp(word, reserved_words [i])) < 0) {
             high = i - 1;
-        } else if( cond > 0 ) {
+        } else if(cond > 0) {
             low = i + 1;
         } else { /*  word is a reserved word, capitalize it  */
-            printf( "** warning: reserved word  %s  ", word );
-            *( word + 0 ) = toupper( *( word + 0 ) );
-            printf( "is changed to  %s **\n", word );
-
+            fprintf(stderr, "Warning: reserved word %s capitalized\n", word);
+            *word = toupper(*word);
         }
     }
 #endif
-    return ( word );
+    return (word);
 
 }
 
@@ -94,355 +94,288 @@ CheckWord( const char * word ) {
  ******************************************************************/
 
 char
-ToLower( char c ) {
-    if( isupper( c ) ) {
-        return ( tolower( c ) );
+ToLower(char c)
+{
+    if(isupper(c)) {
+        return (tolower(c));
     } else {
-        return ( c );
+        return (c);
     }
 
 }
 
 char
-ToUpper( char c ) {
-    if( islower( c ) ) {
-        return ( toupper( c ) );
+ToUpper(char c)
+{
+    if(islower(c)) {
+        return (toupper(c));
     } else {
-        return ( c );
+        return (c);
     }
 }
 
 const char *
-StrToLower( const char * word ) {
+StrToLower(const char *word)
+{
     static char newword [MAX_LEN];
     int i = 0;
-    if( !word ) {
+    if(!word) {
         return 0;
     }
-    while( word [i] != '\0' ) {
-        newword [i] = ToLower( word [i] );
+    while(word [i] != '\0') {
+        newword [i] = ToLower(word [i]);
         ++i;
     }
     newword [i] = '\0';
-    return ( newword )    ;
+    return (newword)    ;
 
 }
 
-const char *
-StrToUpper( const char * word ) {
+const char *StrToUpper(const char *word)
+{
     static char newword [MAX_LEN];
     int i = 0;
-    char ToUpper( char c );
+    char ToUpper(char c);
 
-    while( word [i] != '\0' ) {
-        newword [i] = ToUpper( word [i] );
+    while(word [i] != '\0') {
+        newword [i] = ToUpper(word [i]);
         ++i;
 
     }
     newword [i] = '\0';
-    return ( newword );
+    return (newword);
 }
 
-const char *
-StrToConstant( const char * word ) {
+const char *StrToConstant(const char *word)
+{
     static char newword [MAX_LEN];
     int i = 0;
 
-    while( word [i] != '\0' ) {
-        if( word [i] == '/' || word [i] == '.' ) {
+    while(word [i] != '\0') {
+        if(word [i] == '/' || word [i] == '.') {
             newword [i] = '_';
         } else {
-            newword [i] = ToUpper( word [i] );
+            newword [i] = ToUpper(word [i]);
         }
         ++i;
 
     }
     newword [i] = '\0';
-    return ( newword );
+    return (newword);
 }
 
-/******************************************************************
- ** Procedure:  FILEcreate
- ** Description:  creates a file for c++ with header definitions
- ** Parameters:  filename
- ** Returns:  FILE* pointer to file created or NULL
- ** Side Effects:  creates a file with name filename
- ** Status:  complete
- ******************************************************************/
+/** creates a file for python */
+FILE *FILEcreate(const char *filename)
+{
+    FILE *file;
 
-FILE *
-FILEcreate( const char * filename ) {
-    FILE * file;
-    //const char * fn;
-
-    if( ( file = fopen( filename, "w" ) ) == NULL ) {
-        printf( "**Error in SCHEMAprint:  unable to create file %s ** \n", filename );
-        return ( NULL );
+    if((file = fopen(filename, "w")) == NULL) {
+        fprintf(stderr, "Error in SCHEMAprint:  unable to create file %s\n", filename);
+        return (NULL);
     }
 
-    //fprintf( file, "#ifndef  %s\n", fn = StrToConstant( filename ) );
-    //fprintf( file, "#define  %s\n", fn );
-
-    fprintf( file, "# This file was generated by exp2python.  You probably don't want to edit\n" );
-    fprintf( file, "# it since your modifications will be lost if exp2python is used to\n" );
-    fprintf( file, "# regenerate it.\n" );
-    return ( file );
+    fprintf(file, "# This file was generated by exp2python.  You probably don't want to edit\n");
+    fprintf(file, "# it since your modifications will be lost if exp2python is used to\n");
+    fprintf(file, "# regenerate it.\n");
+    return (file);
 
 }
 
-/******************************************************************
- ** Procedure:  FILEclose
- ** Description:  closes a file opened with FILEcreate
- ** Parameters:  FILE*  file  --  pointer to file to close
- ** Returns:
- ** Side Effects:
- ** Status:  complete
- ******************************************************************/
-
-void
-FILEclose( FILE * file ) {
-    fclose( file );
+/** closes a file opened with FILEcreate */
+void FILEclose(FILE *file)
+{
+    fclose(file);
 }
 
 
-/******************************************************************
- ** Procedure:  isAggregate
- ** Parameters:  Attribute a
- ** Returns:  int   indicates whether the attribute is an aggregate
- ** Description:    indicates whether the attribute is an aggregate
- ** Side Effects:  none
- ** Status:  complete 1/15/91
- ******************************************************************/
-
-int
-isAggregate( Variable a ) {
-    return( TYPEinherits_from( VARget_type( a ), aggregate_ ) );
+/** indicates whether the attribute is an aggregate */
+int isAggregate(Variable a)
+{
+    return(TYPEinherits_from(VARget_type(a), aggregate_));
 }
 
-int
-isAggregateType( const Type t ) {
-    return( TYPEinherits_from( t, aggregate_ ) );
+/** indicates whether the type is an aggregate type */
+int isAggregateType(const Type t)
+{
+    return(TYPEinherits_from(t, aggregate_));
 }
 
-
-
-/******************************************************************
- ** Procedure:  TypeName
- ** Parameters:  Type t
- ** Returns:  name of type as defined in SDAI C++ binding  4-Nov-1993
- ** Status:   4-Nov-1993
- ******************************************************************/
-const char *
-TypeName( Type t ) {
-}
-
-/******************************************************************
- ** Procedure:  ClassName
- ** Parameters:  const char * oldname
- ** Returns:  temporary copy of name suitable for use as a class name
- ** Side Effects:  erases the name created by a previous call to this function
- ** Status:  complete
- ******************************************************************/
-
-const char *
-ClassName( const char * oldname ) {
+/** returns temporary copy of name suitable for use as a class name
+ *
+ * each call erases the name created by a previous call to this function
+ */
+const char *ClassName(const char *oldname)
+{
     int i = 0, j = 0;
     static char newname [BUFSIZ];
-    if( !oldname ) {
-        return ( "" );
+    if(!oldname) {
+        return ("");
     }
-
-
-    strcpy( newname, ENTITYCLASS_PREFIX )    ;
-    j = strlen( ENTITYCLASS_PREFIX )    ;
-    newname [j] = ToUpper( oldname [i] );
+    strcpy(newname, ENTITYCLASS_PREFIX)    ;
+    j = strlen(ENTITYCLASS_PREFIX)    ;
+    newname [j] = ToUpper(oldname [i]);
     ++i;
     ++j;
-    while( oldname [i] != '\0' ) {
-        newname [j] = ToLower( oldname [i] );
-        /*  if (oldname [i] == '_')  */
-        /*  character is '_'    */
-        /*      newname [++j] = ToUpper (oldname [++i]);*/
+    while(oldname [i] != '\0') {
+        newname [j] = ToLower(oldname [i]);
         ++i;
         ++j;
     }
     newname [j] = '\0';
-    return ( newname );
+    return (newname);
 }
 
-const char *
-ENTITYget_CORBAname( Entity ent ) {
-    static char newname [BUFSIZ];
-    strcpy( newname, ENTITYget_name( ent ) );
-    newname[0] = ToUpper( newname [0] );
-    return newname;
+/** returns the name of the c++ class representing the entity */
+const char *ENTITYget_classname(Entity ent)
+{
+    const char *oldname = ENTITYget_name(ent);
+    return (ClassName(oldname));
 }
 
-/******************************************************************
- ** Procedure:  ENTITYget_classname
- ** Parameters:  Entity ent
- ** Returns:  the name of the c++ class representing the entity
- ** Status:  complete
- ******************************************************************/
-
-const char *
-ENTITYget_classname( Entity ent ) {
-    const char * oldname = ENTITYget_name( ent );
-    return ( ClassName( oldname ) );
-}
-
-/******************************************************************
- ** Procedure:  PrettyTmpName (char * oldname)
- ** Procedure:  PrettyNewName (char * oldname)
- ** Parameters:  oldname
- ** Returns:  a new capitalized name
- ** Description:  creates a new name with first character's in caps
- ** Side Effects:  PrettyNewName allocates memory for the new name
- ** Status:   OK  7-Oct-1992 kcm
- ******************************************************************/
-const char *
-PrettyTmpName( const char * oldname ) {
+/** returns a new capitalized name, in internal static buffer */
+const char *PrettyTmpName(const char *oldname)
+{
     int i = 0;
     static char newname [BUFSIZ];
     newname [0] = '\0';
-    while( ( oldname [i] != '\0' ) && ( i < BUFSIZ ) ) {
-        newname [i] = ToLower( oldname [i] );
-        if( oldname [i] == '_' ) { /*  character is '_'   */
+    while((oldname [i] != '\0') && (i < BUFSIZ)) {
+        newname [i] = ToLower(oldname [i]);
+        if(oldname [i] == '_') {   /*  character is '_'   */
             ++i;
-            newname [i] = ToUpper( oldname [i] );
+            newname [i] = ToUpper(oldname [i]);
         }
-        if( oldname [i] != '\0' ) {
+        if(oldname [i] != '\0') {
             ++i;
         }
     }
 
-    newname [0] = ToUpper( oldname [0] );
+    newname [0] = ToUpper(oldname [0]);
     newname [i] = '\0';
     return newname;
 }
 
-/* This function is out of date DAS */
-const char *
-EnumName( const char * oldname ) {
+/** This function is out of date DAS */
+const char *EnumName(const char *oldname)
+{
     int j = 0;
     static char newname [MAX_LEN];
-    if( !oldname ) {
-        return ( "" );
+    if(!oldname) {
+        return ("");
     }
 
-    strcpy( newname, ENUM_PREFIX )    ;
-    j = strlen( ENUM_PREFIX )    ;
-    newname [j] = ToUpper( oldname [0] );
-    strncpy( newname + j + 1, StrToLower( oldname + 1 ), MAX_LEN - j );
-    j = strlen( newname );
+    strcpy(newname, ENUM_PREFIX)    ;
+    j = strlen(ENUM_PREFIX)    ;
+    newname [j] = ToUpper(oldname [0]);
+    strncpy(newname + j + 1, StrToLower(oldname + 1), MAX_LEN - j);
+    j = strlen(newname);
     newname [j] = '\0';
-    return ( newname );
+    return (newname);
 }
 
-const char *
-SelectName( const char * oldname ) {
+const char *SelectName(const char *oldname)
+{
     int j = 0;
     static char newname [MAX_LEN];
-    if( !oldname ) {
-        return ( "" );
+    if(!oldname) {
+        return ("");
     }
 
-    strcpy( newname, TYPE_PREFIX );
-    newname [0] = ToUpper( newname [0] );
-    j = strlen( TYPE_PREFIX );
-    newname [j] = ToUpper( oldname [0] );
-    strncpy( newname + j + 1, StrToLower( oldname + 1 ), MAX_LEN - j );
-    j = strlen( newname );
+    strcpy(newname, TYPE_PREFIX);
+    newname [0] = ToUpper(newname [0]);
+    j = strlen(TYPE_PREFIX);
+    newname [j] = ToUpper(oldname [0]);
+    strncpy(newname + j + 1, StrToLower(oldname + 1), MAX_LEN - j);
+    j = strlen(newname);
     newname [j] = '\0';
-    return ( newname );
+    return (newname);
 }
 
-const char *
-FirstToUpper( const char * word ) {
+const char *FirstToUpper(const char *word)
+{
     static char newword [MAX_LEN];
 
-    strncpy( newword, word, MAX_LEN );
-    newword[0] = ToUpper( newword[0] );
-    return ( newword );
+    strncpy(newword, word, MAX_LEN);
+    newword[0] = ToUpper(newword[0]);
+    return (newword);
 }
 
-/* return fundamental type but as the string which corresponds to */
-/* the appropriate type descriptor */
-/* if report_reftypes is true, report REFERENCE_TYPE when appropriate */
-const char *
-FundamentalType( const Type t, int report_reftypes ) {
-    if( report_reftypes && TYPEget_head( t ) ) {
-        return( "REFERENCE_TYPE" );
+/** return fundamental type but as the string which corresponds to
+ * the appropriate type descriptor
+ * if report_reftypes is true, report REFERENCE_TYPE when appropriate
+ */
+const char *FundamentalType(const Type t, int report_reftypes)
+{
+    if(report_reftypes && TYPEget_head(t)) {
+        return("REFERENCE_TYPE");
     }
-    switch( TYPEget_body( t )->type ) {
+    switch(TYPEget_body(t)->type) {
         case integer_:
-            return( "INTEGER" );
+            return("INTEGER");
         case real_:
-            return( "REAL" );
+            return("REAL");
         case string_:
-            return( "STRING" );
+            return("STRING");
         case binary_:
-            return( "BINARY" );
+            return("BINARY");
         case boolean_:
-            return( "BOOLEAN" );
+            return("BOOLEAN");
         case logical_:
-            return( "LOGICAL" );
+            return("LOGICAL");
         case number_:
-            return( "NUMBER" );
+            return("NUMBER");
         case generic_:
-            return( "GENERIC_TYPE" );
+            return("GENERIC_TYPE");
         case aggregate_:
-            return( "AGGREGATE_" );
+            return("AGGREGATE_");
         case array_:
-            return( "ARRAY_TYPE" );
+            return("ARRAY_TYPE");
         case bag_:
-            return( "BAG_TYPE" );
+            return("BAG_TYPE");
         case set_:
-            return( "'SET_TYPE not implemented'" );
+            return("'SET_TYPE not implemented'");
         case list_:
-            return( "'LIST TYPE Not implemented'" );
+            return("'LIST TYPE Not implemented'");
         case entity_:
-            return( "INSTANCE" );
+            return("INSTANCE");
         case enumeration_:
-            return( "ENUMERATION" );
+            return("ENUMERATION");
         case select_:
-            return ( "SELECT" );
+            return ("SELECT");
         default:
-            return( "UNKNOWN_TYPE" );
+            return("UNKNOWN_TYPE");
     }
 }
 
-/* this actually gets you the name of the variable that will be generated to
-   be a TypeDescriptor or subtype of TypeDescriptor to represent Type t in
-   the dictionary. */
-
-const char *
-TypeDescriptorName( Type t ) {
+/** this actually gets you the name of the variable that will be generated to
+ * be a TypeDescriptor or subtype of TypeDescriptor to represent Type t in
+ * the dictionary.
+ */
+const char *TypeDescriptorName(Type t)
+{
     static char b [BUFSIZ];
     Schema parent = t->superscope;
     /* NOTE - I corrected a prev bug here in which the *current* schema was
     ** passed to this function.  Now we take "parent" - the schema in which
     ** Type t was defined - which was actually used to create t's name. DAR */
-
-    if( !parent ) {
-        parent = TYPEget_body( t )->entity->superscope;
+    if(!parent) {
+        parent = TYPEget_body(t)->entity->superscope;
         /* This works in certain cases that don't work otherwise (basically a
         ** kludge).  For some reason types which are really entity choices of
         ** a select have no superscope value, but their super may be tracked
         ** by following through the entity they reference, as above. */
     }
 
-    sprintf( b, "%s%s%s", SCHEMAget_name( parent ), TYPEprefix( t ),
-             TYPEget_name( t ) );
+    sprintf(b, "%s%s%s", SCHEMAget_name(parent), TYPEprefix(t),
+            TYPEget_name(t));
     return b;
 }
 
-/* this gets you the name of the type of TypeDescriptor (or subtype) that a
-   variable generated to represent Type t would be an instance of. */
-
-const char *
-GetTypeDescriptorName( Type t ) {
-    switch( TYPEget_body( t )->type ) {
+/** this gets you the name of the type of TypeDescriptor (or subtype) that a
+ * variable generated to represent Type t would be an instance of.
+ */
+const char *GetTypeDescriptorName(Type t)
+{
+    switch(TYPEget_body(t)->type) {
         case aggregate_:
             return "AggrTypeDescriptor";
 
@@ -477,17 +410,17 @@ GetTypeDescriptorName( Type t ) {
         case generic_:
             return "TypeDescriptor";
         default:
-            printf( "Error in %s, line %d: type %d not handled by switch statement.", __FILE__, __LINE__, TYPEget_body( t )->type );
+            fprintf(stderr, "Error in %s, line %d: type %d not handled by switch statement.", __FILE__, __LINE__, TYPEget_body(t)->type);
             abort();
     }
 }
 
-int
-ENTITYhas_explicit_attributes( Entity e ) {
-    Linked_List l = ENTITYget_attributes( e );
+int ENTITYhas_explicit_attributes(Entity e)
+{
+    Linked_List l = ENTITYget_attributes(e);
     int cnt = 0;
-    LISTdo( l, a, Variable )
-    if( VARget_initializer( a ) == EXPRESSION_NULL ) {
+    LISTdo(l, a, Variable)
+    if(VARget_initializer(a) == EXPRESSION_NULL) {
         ++cnt;
     }
     LISTod;
@@ -495,22 +428,22 @@ ENTITYhas_explicit_attributes( Entity e ) {
 
 }
 
-Entity
-ENTITYput_superclass( Entity entity ) {
+Entity ENTITYput_superclass(Entity entity)
+{
 #define ENTITYget_type(e)  ((e)->u.entity->type)
 
-    Linked_List l = ENTITYget_supertypes( entity );
+    Linked_List l = ENTITYget_supertypes(entity);
     EntityTag tag;
 
-    if( ! LISTempty( l ) ) {
+    if(! LISTempty(l)) {
         Entity super = 0;
 
-        if( multiple_inheritance ) {
+        if(multiple_inheritance) {
             Linked_List list = 0;
-            list = ENTITYget_supertypes( entity );
-            if( ! LISTempty( list ) ) {
+            list = ENTITYget_supertypes(entity);
+            if(! LISTempty(list)) {
                 /* assign superclass to be the first one on the list of parents */
-                super = ( Entity )LISTpeek_first( list );
+                super = (Entity)LISTpeek_first(list);
             }
         } else {
             Entity ignore = 0;
@@ -518,52 +451,53 @@ ENTITYput_superclass( Entity entity ) {
             /* find the first parent that has attributes (in the parent or any of its
             ancestors).  Make super point at that parent and print warnings for
              all the rest of the parents. DAS */
-            LISTdo( l, e, Entity )
-            /*  if there's no super class yet,
-            or if the entity super class [the variable] super is pointing at
-            doesn't have any attributes: make super point at the current parent.
-            As soon as the parent pointed to by super has attributes, stop
-            assigning super and print ignore messages for the remaining parents.
-            */
-            if( ( ! super ) || ( ! ENTITYhas_explicit_attributes( super ) ) ) {
-                ignore = super;
-                super = e;
-                ++ super_cnt;
-            }  else {
-                ignore = e;
+            LISTdo(l, e, Entity) {
+                /*  if there's no super class yet,
+                or if the entity super class [the variable] super is pointing at
+                doesn't have any attributes: make super point at the current parent.
+                As soon as the parent pointed to by super has attributes, stop
+                assigning super and print ignore messages for the remaining parents.
+                */
+                if((! super) || (! ENTITYhas_explicit_attributes(super))) {
+                    ignore = super;
+                    super = e;
+                    ++ super_cnt;
+                }  else {
+                    ignore = e;
+                }
+                if(ignore) {
+                    printf("WARNING:  multiple inheritance not implemented.\n");
+                    printf("\tin ENTITY %s\n\tSUPERTYPE %s IGNORED.\n\n",
+                           ENTITYget_name(entity), ENTITYget_name(e));
+                }
             }
-            if( ignore ) {
-                printf( "WARNING:  multiple inheritance not implemented.\n" );
-                printf( "\tin ENTITY %s\n\tSUPERTYPE %s IGNORED.\n\n",
-                        ENTITYget_name( entity ), ENTITYget_name( e ) );
-            }
-            LISTod;
+            LISTod
         }
-
-        tag = ( EntityTag ) malloc( sizeof( struct EntityTag_ ) );
+        tag = (EntityTag) malloc(sizeof(struct EntityTag_));
         tag -> superclass = super;
-        TYPEput_clientData( ENTITYget_type( entity ), tag );
+        TYPEput_clientData(ENTITYget_type(entity), tag);
         return super;
     }
     return 0;
 }
 
-Entity
-ENTITYget_superclass( Entity entity ) {
+Entity ENTITYget_superclass(Entity entity)
+{
     EntityTag tag;
-    tag = TYPEget_clientData( ENTITYget_type( entity ) );
-    return ( tag ? tag -> superclass : 0 );
+    tag = TYPEget_clientData(ENTITYget_type(entity));
+    return (tag ? tag -> superclass : 0);
 }
 
-void ENTITYget_first_attribs( Entity entity, Linked_List result ) {
+void ENTITYget_first_attribs(Entity entity, Linked_List result)
+{
     Linked_List supers;
 
-    LISTdo( ENTITYget_attributes( entity ), attr, Generic )
-    LISTadd_last( result, attr );
+    LISTdo(ENTITYget_attributes(entity), attr, void *)
+    LISTadd_last(result, attr);
     LISTod;
-    supers = ENTITYget_supertypes( entity );
-    if( supers ) {
-        ENTITYget_first_attribs( ( Entity )LISTget_first( supers ), result );
+    supers = ENTITYget_supertypes(entity);
+    if(supers) {
+        ENTITYget_first_attribs((Entity)LISTget_first(supers), result);
     }
 }
 
@@ -597,56 +531,55 @@ void ENTITYget_first_attribs( Entity entity, Linked_List result ) {
 ** // tell it to be * for reading and writing
 **/
 
-Variable
-VARis_type_shifter( Variable a ) {
-    char * temp;
+Variable VARis_type_shifter(Variable a)
+{
+    char *temp;
 
-    if( VARis_derived( a ) || VARget_inverse( a ) ) {
+    if(VARis_derived(a) || VARget_inverse(a)) {
         return 0;
     }
 
-    temp = EXPRto_string( VARget_name( a ) );
-    if( ! strncmp( StrToLower( temp ), "self\\", 5 ) ) {
+    temp = strdup(VARget_name(a)->symbol.name);
+    if(! strncmp(StrToLower(temp), "self\\", 5)) {
         /*    a is a type shifter */
-        free( temp );
+        free(temp);
         return a;
     }
-    free( temp );
+    free(temp);
     return 0;
 }
 
-Variable
-VARis_overrider( Entity e, Variable a ) {
+Variable VARis_overrider(Entity e, Variable a)
+{
 
     Variable other;
-    char * tmp;
+    char *tmp;
 
-    tmp = VARget_simple_name( a );
+    tmp = VARget_simple_name(a);
 
-    LISTdo( ENTITYget_supertypes( e ), s, Entity )
-    if( ( other = ENTITYget_named_attribute( s, tmp ) )
-            && other != a ) {
+    LISTdo(ENTITYget_supertypes(e), s, Entity)
+    if((other = ENTITYget_named_attribute(s, tmp))
+            && other != a) {
         return other;
     }
     LISTod;
     return 0;
 }
 
-Type
-TYPEget_ancestor( Type t )
-/*
+/**
  * For a renamed type, returns the original (ancestor) type from which t
  * descends.  Return NULL if t is top level.
  */
+Type TYPEget_ancestor(Type t)
 {
     Type i = t;
 
-    if( !TYPEget_head( i ) ) {
+    if(!TYPEget_head(i)) {
         return NULL;
     }
 
-    while( TYPEget_head( i ) ) {
-        i = TYPEget_head( i );
+    while(TYPEget_head(i)) {
+        i = TYPEget_head(i);
     }
 
     return i;

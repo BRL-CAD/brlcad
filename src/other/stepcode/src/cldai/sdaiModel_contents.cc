@@ -4,76 +4,91 @@
 
 /////////    SDAI_Model_contents_instances
 
-SDAI_Model_contents_instances::SDAI_Model_contents_instances( ) {
+SDAI_Model_contents_instances::SDAI_Model_contents_instances()
+{
 }
 
-SDAI_Model_contents_instances ::~SDAI_Model_contents_instances() {
+SDAI_Model_contents_instances ::~SDAI_Model_contents_instances()
+{
 }
 
 /////////    SDAI_Model_contents
 
-SDAI_Model_contents::SDAI_Model_contents( ) {
+SDAI_Model_contents::SDAI_Model_contents()
+{
 }
 
-SDAI_Model_contents ::~SDAI_Model_contents() {
+SDAI_Model_contents ::~SDAI_Model_contents()
+{
 }
 
 //    const Entity_instance__set_var instances() const;
 //const SDAIAGGRH(Set, EntityInstanceH) Instances() const;
 SDAI_Model_contents_instances_ptr
-SDAI_Model_contents::instances_() {
+SDAI_Model_contents::instances_()
+{
     return &_instances;
 }
 
 SDAI_Model_contents_instances_ptr
-SDAI_Model_contents::instances_() const {
-    return ( const SDAI_Model_contents_instances_ptr ) &_instances;
+SDAI_Model_contents::instances_() const
+{
+    return (SDAI_Model_contents_instances_ptr) &_instances;
 }
 
 SDAI_Entity_extent__set_var
-SDAI_Model_contents::folders_() {
+SDAI_Model_contents::folders_()
+{
     return &_folders;
 }
 
 SDAI_Entity_extent__set_var
-SDAI_Model_contents::folders_() const {
-    return ( const SDAI_Entity_extent__set_var )&_folders;
+SDAI_Model_contents::folders_() const
+{
+    return (SDAI_Entity_extent__set_var)&_folders;
 }
 
 SDAI_Entity_extent__set_var
-SDAI_Model_contents::populated_folders_() {
+SDAI_Model_contents::populated_folders_()
+{
     return &_populated_folders;
 }
 
 SDAI_Entity_extent__set_var
-SDAI_Model_contents::populated_folders_() const {
-    return ( const SDAI_Entity_extent__set_var )&_populated_folders;
+SDAI_Model_contents::populated_folders_() const
+{
+    return (SDAI_Entity_extent__set_var)&_populated_folders;
 }
 
-SDAI_PID_DA_ptr
-SDAI_Model_contents::get_object_pid( const SDAI_DAObject_ptr & d )
-const {
+SDAI_PID_DA_ptr SDAI_Model_contents::get_object_pid(const SDAI_DAObject_ptr &d) const
+{
+    std::cerr << __FILE__ << ":" << __LINE__ << " - SDAI_Model_contents::get_object_pid() unimplemented!" << std::endl;
+    (void) d; //unused
     return 0;
 }
 
-SDAI_DAObject_ptr
-SDAI_Model_contents::lookup( const SDAI_PID_DA_ptr & p ) const {
+SDAI_DAObject_ptr SDAI_Model_contents::lookup(const SDAI_PID_DA_ptr &p) const
+{
+    std::cerr << __FILE__ << ":" << __LINE__ << " - SDAI_Model_contents::lookup() unimplemented!" << std::endl;
+    (void) p; //unused
     return 0;
 }
 
-SDAI_DAObject_ptr
-SDAI_Model_contents::CreateEntityInstance( const char * Type ) {
+SDAI_DAObject_ptr SDAI_Model_contents::CreateEntityInstance(const char *Type)
+{
+    std::cerr << __FILE__ << ":" << __LINE__ << " - SDAI_Model_contents::CreateEntityInstance() unimplemented!" << std::endl;
+    (void) Type; //unused
     return 0;
 }
 
-void
-SDAI_Model_contents::AddInstance( const SDAI_DAObject_SDAI_ptr & appInst ) {
-    _instances.contents_()->Append( appInst );
+void SDAI_Model_contents::AddInstance(const SDAI_DAObject_SDAI_ptr &appInst)
+{
+    _instances.contents_()->Append(appInst);
 }
 
-void
-SDAI_Model_contents::RemoveInstance( SDAI_DAObject_SDAI_ptr & appInst ) {
-    _instances.contents_()->Remove( _instances.contents_()->Index( appInst ) );
+void SDAI_Model_contents::RemoveInstance(SDAI_DAObject_SDAI_ptr &appInst)
+{
+    _instances.contents_()->Remove(_instances.contents_()->Index(appInst));
 }
 
 
@@ -81,19 +96,23 @@ SDAI_Model_contents::RemoveInstance( SDAI_DAObject_SDAI_ptr & appInst ) {
 #if 0 // for now
 
 Any_var
-SDAI_Model_contents::GetEntity_extent( const std::string & entityName ) {
+SDAI_Model_contents::GetEntity_extent(const std::string &entityName)
+{
 }
 
 const Any_var
-SDAI_Model_contents::GetEntity_extent( const std::string & entityName ) const {
+SDAI_Model_contents::GetEntity_extent(const std::string &entityName) const
+{
 }
 
 Any_var
-SDAI_Model_contents::GetEntity_extent( const Entity_ptr & ep ) {
+SDAI_Model_contents::GetEntity_extent(const Entity_ptr &ep)
+{
 }
 
 const Any_var
-SDAI_Model_contents::GetEntity_extent( const Entity_ptr & ep ) const {
+SDAI_Model_contents::GetEntity_extent(const Entity_ptr &ep) const
+{
 }
 
 #endif

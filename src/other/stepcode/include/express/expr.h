@@ -88,10 +88,10 @@ typedef enum {
 } Op_Code;
 
 typedef struct Qualified_Attr   Qualified_Attr;
-typedef struct Expression_ * Expression;
+typedef struct Expression_ *Expression;
 typedef Expression      Ary_Expression, One_Of_Expression, Identifier,
         Literal;
-typedef struct Query_    *   Query;
+typedef struct Query_       *Query;
 typedef One_Of_Expression   Function_Call;
 typedef Ary_Expression      Ternary_Expression, Binary_Expression,
         Unary_Expression;
@@ -116,9 +116,9 @@ typedef Literal         Aggregate_Literal, Integer_Literal,
 /* expression types */
 
 struct Qualified_Attr {
-    struct Expression_ * complex;   /**< complex entity instance */
-    Symbol * entity;
-    Symbol * attribute;
+    struct Expression_ *complex;    /**< complex entity instance */
+    Symbol *entity;
+    Symbol *attribute;
 };
 
 struct Op_Subexpression {
@@ -132,22 +132,22 @@ struct Query_ {
     Variable local;
     Expression aggregate;   /**< set from which to test */
     Expression expression;  /**< logical expression */
-    struct Scope_ * scope;
+    struct Scope_ *scope;
 };
 
 struct Funcall {
-    struct Scope_ * function; /**< can also be an entity because entities can be called as functions */
+    struct Scope_ *function;  /**< can also be an entity because entities can be called as functions */
     Linked_List list;
 };
 
 union expr_union {
     int integer;
-    float real;
-    char * attribute;   /**< inverse .... for 'attr' */
-    char * binary;
+    double real;
+    char *attribute;    /**< inverse .... for 'attr' */
+    char *binary;
     int logical;
     bool boolean;
-    struct Query_ * query;
+    struct Query_ *query;
     struct Funcall funcall;
 
     /* if etype == aggregate, list of expressions */
@@ -158,7 +158,7 @@ union expr_union {
                              * initializer in local vars, or
                              * enumeration tags
                              * or oneof value */
-    struct Scope_ * entity; /**< used by subtype exp, group expr
+    struct Scope_ *entity; /**< used by subtype exp, group expr
                               * and self expr, some funcall's and any
                               * expr that results in an entity */
     Variable variable;  /**< attribute reference */
@@ -177,8 +177,8 @@ struct Expression_ {
 
 /** indexed by the op enumeration values */
 struct EXPop_entry {
-    char * token;       /**< literal token, e.g., "<>" */
-    Type( *resolve ) PROTO( ( Expression, struct Scope_ * ) );
+    char *token;        /**< literal token, e.g., "<>" */
+    Type(*resolve)(Expression, struct Scope_ *);
 };
 
 /********************/
@@ -193,11 +193,6 @@ extern SC_EXPRESS_EXPORT Expression  LITERAL_PI;
 extern SC_EXPRESS_EXPORT Expression  LITERAL_ZERO;
 extern SC_EXPRESS_EXPORT Expression  LITERAL_ONE;
 
-extern SC_EXPRESS_EXPORT Error ERROR_bad_qualification;
-extern SC_EXPRESS_EXPORT Error ERROR_integer_expression_expected;
-extern SC_EXPRESS_EXPORT Error ERROR_implicit_downcast;
-extern SC_EXPRESS_EXPORT Error ERROR_ambig_implicit_downcast;
-
 extern SC_EXPRESS_EXPORT struct freelist_head EXP_fl;
 extern SC_EXPRESS_EXPORT struct freelist_head OP_fl;
 extern SC_EXPRESS_EXPORT struct freelist_head QUERY_fl;
@@ -207,14 +202,14 @@ extern SC_EXPRESS_EXPORT struct freelist_head QUAL_ATTR_fl;
 /* macro function definitions */
 /******************************/
 
-#define EXP_new()   (struct Expression_ *)MEM_new(&EXP_fl)
-#define EXP_destroy(x)  MEM_destroy(&EXP_fl,(Freelist *)(Generic)x)
-#define OP_new()    (struct Op_Subexpression *)MEM_new(&OP_fl)
-#define OP_destroy(x)   MEM_destroy(&OP_fl,(Freelist *)(Generic)x)
-#define QUERY_new() (struct Query_ *)MEM_new(&QUERY_fl)
-#define QUERY_destroy(x) MEM_destroy(&QUERY_fl,(Freelist *)(Generic)x)
-#define QUAL_ATTR_new() (struct Qualified_Attr *)MEM_new(&QUAL_ATTR_fl)
-#define QUAL_ATTR_destroy(x) MEM_destroy(&QUAL_ATTR_fl,(Freelist *)(Generic)x)
+#define EXP_new()   (struct Expression_ *)ALLOC_new(&EXP_fl)
+#define EXP_destroy(x)  ALLOC_destroy(&EXP_fl,(Freelist *)x)
+#define OP_new()    (struct Op_Subexpression *)ALLOC_new(&OP_fl)
+#define OP_destroy(x)   ALLOC_destroy(&OP_fl,(Freelist *)x)
+#define QUERY_new() (struct Query_ *)ALLOC_new(&QUERY_fl)
+#define QUERY_destroy(x) ALLOC_destroy(&QUERY_fl,(Freelist *)x)
+#define QUAL_ATTR_new() (struct Qualified_Attr *)ALLOC_new(&QUAL_ATTR_fl)
+#define QUAL_ATTR_destroy(x) ALLOC_destroy(&QUAL_ATTR_fl,(Freelist *)x)
 
 #define EXPget_name(e)          ((e)->symbol.name)
 #define ENUMget_name(e)         ((e)->symbol.name)
@@ -254,16 +249,18 @@ extern SC_EXPRESS_EXPORT struct freelist_head QUAL_ATTR_fl;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Expression   EXPcreate PROTO( ( Type ) );
-extern SC_EXPRESS_EXPORT Expression   EXPcreate_simple PROTO( ( Type ) );
-extern SC_EXPRESS_EXPORT Expression   EXPcreate_from_symbol PROTO( ( Type, Symbol * ) );
-extern SC_EXPRESS_EXPORT Expression   UN_EXPcreate PROTO( ( Op_Code, Expression ) );
-extern SC_EXPRESS_EXPORT Expression   BIN_EXPcreate PROTO( ( Op_Code, Expression, Expression ) );
-extern SC_EXPRESS_EXPORT Expression   TERN_EXPcreate PROTO( ( Op_Code, Expression, Expression, Expression ) );
-extern SC_EXPRESS_EXPORT Expression   QUERYcreate PROTO( ( Symbol *, Expression ) );
-extern SC_EXPRESS_EXPORT void     EXPinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void     EXPcleanup PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT Type     EXPtype PROTO( ( Expression, struct Scope_ * ) );
-extern SC_EXPRESS_EXPORT int      EXPget_integer_value PROTO( ( Expression ) );
+extern SC_EXPRESS_EXPORT Expression   EXPcreate(Type);
+extern SC_EXPRESS_EXPORT Expression   EXPcreate_simple(Type);
+extern SC_EXPRESS_EXPORT Expression   EXPcreate_from_symbol(Type, Symbol *);
+extern SC_EXPRESS_EXPORT Expression   UN_EXPcreate(Op_Code, Expression);
+extern SC_EXPRESS_EXPORT Expression   BIN_EXPcreate(Op_Code, Expression, Expression);
+extern SC_EXPRESS_EXPORT Expression   TERN_EXPcreate(Op_Code, Expression, Expression, Expression);
+extern SC_EXPRESS_EXPORT Expression   QUERYcreate(Symbol *, Expression);
+extern SC_EXPRESS_EXPORT void     EXPinitialize(void);
+extern SC_EXPRESS_EXPORT void     EXPcleanup(void);
+extern SC_EXPRESS_EXPORT Type     EXPtype(Expression, struct Scope_ *);
+extern SC_EXPRESS_EXPORT int      EXPget_integer_value(Expression);
+
+Type EXPresolve_op_dot(Expression, Scope);
 
 #endif /*EXPRESSION_H*/

@@ -51,8 +51,8 @@
 //  SYNOPSIS
 //       int sc_getopt(int argc, char *argv[], char *optstring)
 //
-//       extern char *optarg;
-//       extern int optind;
+//       extern char *sc_optarg;
+//       extern int sc_optind;
 //
 //  DESCRIPTION
 //       The sc_getopt() function parses the command line arguments. Its
@@ -67,21 +67,21 @@
 //
 //       optstring is a string of recognized option letters;  if a letter
 //       is followed by a colon, the option is expected to have an argument
-//       that may or may not be separated from it by white space.  optarg
+//       that may or may not be separated from it by white space.  sc_optarg
 //       is set to point to the start of the option argument on return from
 //       sc_getopt.
 //
 //       Option letters may be combined, e.g., "-ab" is equivalent to
 //       "-a -b".  Option letters are case sensitive.
 //
-//       sc_getopt places in the external variable optind the argv index
-//       of the next argument to be processed.  optind is initialized
+//       sc_getopt places in the external variable sc_optind the argv index
+//       of the next argument to be processed.  sc_optind is initialized
 //       to 0 before the first call to sc_getopt.
 //
 //       When all options have been processed (i.e., up to the first
-//       non-option argument), sc_getopt returns EOF, optarg will point
-//       to the argument, and optind will be set to the argv index of
-//       the argument.  If there are no non-option arguments, optarg
+//       non-option argument), sc_getopt returns EOF, sc_optarg will point
+//       to the argument, and sc_optind will be set to the argv index of
+//       the argument.  If there are no non-option arguments, sc_optarg
 //       will be set to NULL.
 //
 //       The special option "--" may be used to delimit the end of the
@@ -127,14 +127,14 @@
 //                       break;
 //
 //                   case _T('n'):
-//                       TRACE(_T("option n: value=%d\n"), atoi(optarg));
+//                       TRACE(_T("option n: value=%d\n"), atoi(sc_optarg));
 //                       //
 //                       // do something with value here
 //                       //
 //                       break;
 //
 //                   case _T('?'):
-//                       TRACE(_T("ERROR: illegal option %s\n"), argv[optind-1]);
+//                       TRACE(_T("ERROR: illegal option %s\n"), argv[sc_optind-1]);
 //                       return FALSE;
 //                       break;
 //
@@ -152,59 +152,60 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-char  * optarg;        // global argument pointer
-int     optind = 0;     // global argv index
+char   *sc_optarg;        // global argument pointer
+int     sc_optind = 0;     // global argv index
 
-int sc_getopt( int argc, char * argv[], char * optstring ) {
-    static char * next = NULL;
-    if( optind == 0 ) {
+int sc_getopt(int argc, char *argv[], char *optstring)
+{
+    static char *next = NULL;
+    if(sc_optind == 0) {
         next = NULL;
     }
 
-    optarg = NULL;
+    sc_optarg = NULL;
 
-    if( next == NULL || *next == '\0' ) {
-        if( optind == 0 ) {
-            optind++;
+    if(next == NULL || *next == '\0') {
+        if(sc_optind == 0) {
+            sc_optind++;
         }
 
-        if( optind >= argc || argv[optind][0] != '-' || argv[optind][1] == '\0' ) {
-            optarg = NULL;
-            if( optind < argc ) {
-                optarg = argv[optind];
+        if(sc_optind >= argc || argv[sc_optind][0] != '-' || argv[sc_optind][1] == '\0') {
+            sc_optarg = NULL;
+            if(sc_optind < argc) {
+                sc_optarg = argv[sc_optind];
             }
             return EOF;
         }
 
-        if( strcmp( argv[optind], "--" ) == 0 ) {
-            optind++;
-            optarg = NULL;
-            if( optind < argc ) {
-                optarg = argv[optind];
+        if(strcmp(argv[sc_optind], "--") == 0) {
+            sc_optind++;
+            sc_optarg = NULL;
+            if(sc_optind < argc) {
+                sc_optarg = argv[sc_optind];
             }
             return EOF;
         }
 
-        next = argv[optind];
+        next = argv[sc_optind];
         next++;     // skip past -
-        optind++;
+        sc_optind++;
     }
 
     char c = *next++;
-    char * cp = strchr( optstring, c );
+    char *cp = strchr(optstring, c);
 
-    if( cp == NULL || c == ':' ) {
+    if(cp == NULL || c == ':') {
         return '?';
     }
 
     cp++;
-    if( *cp == ':' ) {
-        if( *next != '\0' ) {
-            optarg = next;
+    if(*cp == ':') {
+        if(*next != '\0') {
+            sc_optarg = next;
             next = NULL;
-        } else if( optind < argc ) {
-            optarg = argv[optind];
-            optind++;
+        } else if(sc_optind < argc) {
+            sc_optarg = argv[sc_optind];
+            sc_optind++;
         } else {
             return '?';
         }

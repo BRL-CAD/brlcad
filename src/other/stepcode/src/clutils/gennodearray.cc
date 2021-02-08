@@ -20,70 +20,79 @@
 
 #ifndef HAVE_MEMMOVE
 extern "C" {
-    extern void * memmove( void *, const void *, size_t );
+    extern void *memmove(void *, const void *, size_t);
 }
 #endif
 
-GenericNode::GenericNode() {
+GenericNode::GenericNode()
+{
     next = 0;
     prev = 0;
 }
 
-GenericNode::~GenericNode() {
+GenericNode::~GenericNode()
+{
     Remove();
 }
 
-GenNodeArray::GenNodeArray( int defaultSize ) {
+GenNodeArray::GenNodeArray(int defaultSize)
+{
     _bufsize = defaultSize;
     _buf = new GenericNode*[_bufsize];
-    memset( _buf, 0, _bufsize * sizeof( GenericNode * ) );
+    memset(_buf, 0, _bufsize * sizeof(GenericNode *));
     _count = 0;
 }
 
-GenNodeArray::~GenNodeArray() {
+GenNodeArray::~GenNodeArray()
+{
     delete [] _buf;
 }
 
-int GenNodeArray::Index( GenericNode ** gn ) {
-    return ( ( gn - _buf ) / sizeof( GenericNode * ) );
+int GenNodeArray::Index(GenericNode **gn)
+{
+    return ((gn - _buf) / sizeof(GenericNode *));
 }
 
-void GenNodeArray::Append( GenericNode * gn ) {
-    Insert( gn, _count );
+void GenNodeArray::Append(GenericNode *gn)
+{
+    Insert(gn, _count);
 }
 
-int GenNodeArray::Insert( GenericNode * gn ) {
-    return Insert( gn, _count );
+int GenNodeArray::Insert(GenericNode *gn)
+{
+    return Insert(gn, _count);
 }
 
 void
-GenNodeArray::Check( int index ) {
-    GenericNode ** newbuf;
+GenNodeArray::Check(int index)
+{
+    GenericNode **newbuf;
 
-    if( index >= _bufsize ) {
-        _bufsize = ( index + 1 ) * 2;
+    if(index >= _bufsize) {
+        _bufsize = (index + 1) * 2;
         newbuf = new GenericNode*[_bufsize];
 
-        memset( newbuf, 0, _bufsize * sizeof( GenericNode * ) );
-        memmove( newbuf, _buf, _count * sizeof( GenericNode * ) );
+        memset(newbuf, 0, _bufsize * sizeof(GenericNode *));
+        memmove(newbuf, _buf, _count * sizeof(GenericNode *));
         delete [] _buf;
         _buf = newbuf;
     }
 }
 
 int
-GenNodeArray::Insert( GenericNode * gn, int index ) {
-    const GenericNode ** spot;
-    index = ( index < 0 ) ? _count : index;
+GenNodeArray::Insert(GenericNode *gn, int index)
+{
+    const GenericNode **spot;
+    index = (index < 0) ? _count : index;
 
-    if( index < _count ) {
-        Check( _count + 1 );
-        spot = ( const GenericNode ** )&_buf[index];
-        memmove( spot + 1, spot, ( _count - index )*sizeof( GenericNode * ) );
+    if(index < _count) {
+        Check(_count + 1);
+        spot = (const GenericNode **)&_buf[index];
+        memmove(spot + 1, spot, (_count - index)*sizeof(GenericNode *));
 
     } else {
-        Check( index );
-        spot = ( const GenericNode ** )&_buf[index];
+        Check(index);
+        spot = (const GenericNode **)&_buf[index];
     }
     *spot = gn;
     ++_count;
@@ -91,35 +100,39 @@ GenNodeArray::Insert( GenericNode * gn, int index ) {
 }
 
 void
-GenNodeArray::Remove( int index ) {
-    if( 0 <= index && index < _count ) {
+GenNodeArray::Remove(int index)
+{
+    if(0 <= index && index < _count) {
         --_count;
-        const GenericNode ** spot = ( const GenericNode ** )&_buf[index];
-        memmove( spot, spot + 1, ( _count - index )*sizeof( GenericNode * ) );
+        const GenericNode **spot = (const GenericNode **)&_buf[index];
+        memmove(spot, spot + 1, (_count - index)*sizeof(GenericNode *));
         _buf[_count] = 0;
     }
 }
 
-void GenNodeArray::ClearEntries() {
+void GenNodeArray::ClearEntries()
+{
     int i;
-    for( i = 0 ; i < _count; i++ ) {
+    for(i = 0 ; i < _count; i++) {
         _buf[i] = 0;
     }
     _count = 0;
 }
 
-void GenNodeArray::DeleteEntries() {
+void GenNodeArray::DeleteEntries()
+{
     int i;
-    for( i = 0 ; i < _count; i++ ) {
-        delete( _buf[i] );
+    for(i = 0 ; i < _count; i++) {
+        delete(_buf[i]);
     }
     _count = 0;
 }
 
 
-int GenNodeArray::Index( GenericNode * gn ) {
-    for( int i = 0; i < _count; ++i ) {
-        if( _buf[i] == gn ) {
+int GenNodeArray::Index(GenericNode *gn)
+{
+    for(int i = 0; i < _count; ++i) {
+        if(_buf[i] == gn) {
             return i;
         }
     }

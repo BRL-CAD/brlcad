@@ -43,7 +43,7 @@ class point(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument arr_real is mantatory and can not be set to None')
+				raise AssertionError('Argument arr_real is mandatory and can not be set to None')
 			if not check_type(value,ARRAY(1,3,'REAL', scope = schema_scope)):
 				self._arr_real = ARRAY(value)
 			else:
@@ -57,7 +57,7 @@ class point(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument arr_string is mantatory and can not be set to None')
+				raise AssertionError('Argument arr_string is mandatory and can not be set to None')
 			if not check_type(value,ARRAY(1,3,'STRING', scope = schema_scope)):
 				self._arr_string = ARRAY(value)
 			else:
@@ -71,7 +71,7 @@ class point(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument arr_integer is mantatory and can not be set to None')
+				raise AssertionError('Argument arr_integer is mandatory and can not be set to None')
 			if not check_type(value,ARRAY(1,None,'INTEGER', scope = schema_scope)):
 				self._arr_integer = ARRAY(value)
 			else:

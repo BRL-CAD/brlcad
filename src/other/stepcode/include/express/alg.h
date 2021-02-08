@@ -50,10 +50,10 @@
 /* typedefs */
 /************/
 
-typedef struct Scope_ * Procedure;
-typedef struct Scope_ * Function;
-typedef struct Scope_ * Rule;
-typedef struct Where_ * Where;
+typedef struct Scope_ *Procedure;
+typedef struct Scope_ *Function;
+typedef struct Scope_ *Rule;
+typedef struct Where_ *Where;
 
 /***************************/
 /* hidden type definitions */
@@ -63,13 +63,13 @@ typedef struct Where_ * Where;
  * As each (real) call is resolved, the tag->type is temporarily borrowed
  */
 struct tag {
-    char * name;
+    char *name;
     Type type;
 };
 
 /** location of fulltext of algorithm in source file */
 struct FullText {
-    char * filename;
+    const char *filename;
     unsigned int start, end;
 };
 
@@ -101,7 +101,7 @@ struct Rule_ {
 
 /** define a where clause */
 struct Where_ {
-    Symbol   *   label;
+    Symbol      *label;
     Expression  expr;
 };
 
@@ -119,16 +119,16 @@ extern SC_EXPRESS_EXPORT struct freelist_head WHERE_fl;
 /* macro function definitions */
 /******************************/
 
-#define ALG_new()   (struct Algorithm *)MEM_new(&ALG_fl);
-#define ALG_destroy(x)  MEM_destroy(&ALG_fl,(Freelist *)(Generic)x)
-#define FUNC_new()  (struct Function_ *)MEM_new(&FUNC_fl)
-#define FUNC_destroy(x) MEM_destroy(&FUNC_fl,(Freelist *)(Generic)x)
-#define RULE_new()  (struct Rule_ *)MEM_new(&RULE_fl)
-#define RULE_destroy(x) MEM_destroy(&RULE_fl,(Freelist *)(Generic)x)
-#define PROC_new()  (struct Procedure_ *)MEM_new(&PROC_fl)
-#define PROC_destroy(x) MEM_destroy(&PROC_fl,(Freelist *)(Generic)x)
-#define WHERE_new() (struct Where_ *)MEM_new(&WHERE_fl)
-#define WHERE_destroy(x) MEM_destroy(&WHERE_fl,(Freelist *)(Generic)x)
+#define ALG_new()   (struct Algorithm *)ALLOC_new(&ALG_fl);
+#define ALG_destroy(x)  ALLOC_destroy(&ALG_fl,(Freelist *)x)
+#define FUNC_new()  (struct Function_ *)ALLOC_new(&FUNC_fl)
+#define FUNC_destroy(x) ALLOC_destroy(&FUNC_fl,(Freelist *)x)
+#define RULE_new()  (struct Rule_ *)ALLOC_new(&RULE_fl)
+#define RULE_destroy(x) ALLOC_destroy(&RULE_fl,(Freelist *)x)
+#define PROC_new()  (struct Procedure_ *)ALLOC_new(&PROC_fl)
+#define PROC_destroy(x) ALLOC_destroy(&PROC_fl,(Freelist *)x)
+#define WHERE_new() (struct Where_ *)ALLOC_new(&WHERE_fl)
+#define WHERE_destroy(x) ALLOC_destroy(&WHERE_fl,(Freelist *)x)
 
 #define ALGput_name(algorithm, name)    SCOPEput_name(algorithm,name)
 #define ALGget_name(algorithm)      SCOPEget_name(algorithm)
@@ -161,8 +161,8 @@ extern SC_EXPRESS_EXPORT struct freelist_head WHERE_fl;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Scope    ALGcreate PROTO( ( char ) );
-extern SC_EXPRESS_EXPORT void     ALGinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void     ALGput_full_text PROTO( ( Scope, int, int ) );
+extern SC_EXPRESS_EXPORT Scope    ALGcreate(char);
+extern SC_EXPRESS_EXPORT void     ALGinitialize(void);
+extern SC_EXPRESS_EXPORT void     ALGput_full_text(Scope, int, int);
 
 #endif /* ALGORITHM_H */

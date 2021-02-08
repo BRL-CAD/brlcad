@@ -105,27 +105,25 @@
  *
  */
 
-#include <sc_memmgr.h>
 #include <assert.h>
-#include <string.h>
 #include <stdlib.h>
-#include "express/hash.h"
+#include <string.h>
 
-struct freelist_head HASH_Table_fl;
-struct freelist_head HASH_Element_fl;
+#include "sc_memmgr.h"
+#include "express/hash.h"
 
 /*
 ** Internal routines
 */
 
-static_inline Address   HASHhash( char *, Hash_Table );
-static void     HASHexpand_table( Hash_Table );
+static inline Address   HASHhash(char *, Hash_Table);
+static void     HASHexpand_table(Hash_Table);
 
 /*
 ** Local data
 */
 
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
 static long     HashAccesses, HashCollisions;
 # endif
 
@@ -134,17 +132,13 @@ static long     HashAccesses, HashCollisions;
 */
 
 void
-HASHinitialize() {
-    if( HASH_Table_fl.size_elt == 0 ) {
-        MEMinitialize( &HASH_Table_fl, sizeof( struct Hash_Table_ ), 50, 50 );
-    }
-    if( HASH_Element_fl.size_elt == 0 ) {
-        MEMinitialize( &HASH_Element_fl, sizeof( struct Element_ ), 500, 100 );
-    }
+HASHinitialize()
+{
 }
 
 Hash_Table
-HASHcreate( unsigned count ) {
+HASHcreate(unsigned count)
+{
     unsigned    i;
     Hash_Table  table;
 
@@ -153,10 +147,10 @@ HASHcreate( unsigned count ) {
     ** minimum SEGMENT_SIZE, then convert into segments.
     */
     i = SEGMENT_SIZE;
-    while( i < count ) {
+    while(i < count) {
         i <<= 1;
     }
-    count = DIV( i, SEGMENT_SIZE_SHIFT );
+    count = DIV(i, SEGMENT_SIZE_SHIFT);
 
     table = HASH_Table_new();
 #if 0
@@ -166,32 +160,33 @@ HASHcreate( unsigned count ) {
     /*
     ** Allocate initial 'i' segments of buckets
     */
-    for( i = 0; i < count; i++ )
-        CALLOC( table->Directory[i], SEGMENT_SIZE, Element )
+    for(i = 0; i < count; i++)
+        CALLOC(table->Directory[i], SEGMENT_SIZE, Element)
         /*,   "segment in HASHcreate");*/
 
         table->SegmentCount = count;
-    table->maxp = MUL( count, SEGMENT_SIZE_SHIFT );
+    table->maxp = MUL(count, SEGMENT_SIZE_SHIFT);
     table->MinLoadFactor = 1;
     table->MaxLoadFactor = MAX_LOAD_FACTOR;
-# if HASH_DEBUG
-    fprintf( stderr,
-             "[HASHcreate] table %x count %d maxp %d SegmentCount %d\n",
-             table,
-             count,
-             table->maxp,
-             table->SegmentCount );
+# ifdef HASH_DEBUG
+    fprintf(stderr,
+            "[HASHcreate] table %x count %d maxp %d SegmentCount %d\n",
+            table,
+            count,
+            table->maxp,
+            table->SegmentCount);
 # endif
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
     HashAccesses = HashCollisions = 0;
 # endif
-    return( table );
+    return(table);
 }
 
 /* initialize pointer to beginning of hash table so we can step through it */
 /* on repeated calls to HASHlist - DEL */
 void
-HASHlistinit( Hash_Table table, HashEntry * he ) {
+HASHlistinit(Hash_Table table, HashEntry *he)
+{
     he->i = he->j = 0;
     he->p = 0;
     he->table = table;
@@ -202,7 +197,8 @@ HASHlistinit( Hash_Table table, HashEntry * he ) {
 }
 
 void
-HASHlistinit_by_type( Hash_Table table, HashEntry * he, char type ) {
+HASHlistinit_by_type(Hash_Table table, HashEntry *he, char type)
+{
     he->i = he->j = 0;
     he->p = 0;
     he->table = table;
@@ -215,25 +211,27 @@ HASHlistinit_by_type( Hash_Table table, HashEntry * he, char type ) {
 #if 0
 /* if you don't step to the end, you can clear the flag this way */
 void
-HASHlistend( HashEntry * he ) {
+HASHlistend(HashEntry *he)
+{
     he->table->in_use = 0;
 }
 #endif
 
 /* provide a way to step through the hash */
 Element
-HASHlist( HashEntry * he ) {
+HASHlist(HashEntry *he)
+{
     int i2 = he->i;
     int j2 = he->j;
     Segment s;
 
     he->e = 0;
 
-    for( he->i = i2; he->i < he->table->SegmentCount; he->i++ ) {
+    for(he->i = i2; he->i < he->table->SegmentCount; he->i++) {
         /* test probably unnecessary    */
-        if( ( s = he->table->Directory[he->i] ) != NULL ) {
-            for( he->j = j2; he->j < SEGMENT_SIZE; he->j++ ) {
-                if( !he->p ) {
+        if((s = he->table->Directory[he->i]) != NULL) {
+            for(he->j = j2; he->j < SEGMENT_SIZE; he->j++) {
+                if(!he->p) {
                     he->p = s[he->j];
                 }
 
@@ -242,22 +240,22 @@ HASHlist( HashEntry * he ) {
                    for he->p
                  */
 retry:
-                if( he->p ) {
-                    if( ( he->type != '*' ) &&
-                            ( he->type != he->p->type ) ) {
+                if(he->p) {
+                    if((he->type != '*') &&
+                            (he->type != he->p->type)) {
                         he->p = he->p->next;
                         goto retry;
                     }
-                    if( he->e ) {
-                        return( he->e );
+                    if(he->e) {
+                        return(he->e);
                     }
                     he->e = he->p;
                     he->p = he->p->next;
                 }
 
                 /* avoid incrementing he->j by returning here */
-                if( he->p ) {
-                    return( he->e );
+                if(he->p) {
+                    return(he->e);
                 }
             }
             j2 = 0;
@@ -267,55 +265,58 @@ retry:
 #if 0
     he->table->in_use = 0;
 #endif
-    return( he->e );
+    return(he->e);
 }
 
 #if 0
 /* this verifies no one else is walking through the table that we might screw up */
 /* it should be called before adding, deleting or destroying a table */
-HASH_in_use( Hash_Table table, char * action ) {
-    fprintf( stderr, "HASH: attempted to %s but hash table in use\n", action );
+HASH_in_use(Hash_Table table, char *action)
+{
+    fprintf(stderr, "HASH: attempted to %s but hash table in use\n", action);
 }
 #endif
 
 void
-HASHdestroy( Hash_Table table ) {
+HASHdestroy(Hash_Table table)
+{
     Segment s;
     Element p, q;
 
-    if( table != HASH_NULL ) {
+    if(table != HASH_NULL) {
         unsigned int i, j;
 #if 0
-        if( table->in_use ) {
-            HASH_in_use( table, "destroy hash table" );
+        if(table->in_use) {
+            HASH_in_use(table, "destroy hash table");
         }
 #endif
-        for( i = 0; i < table->SegmentCount; i++ ) {
+        for(i = 0; i < table->SegmentCount; i++) {
             /* test probably unnecessary    */
-            if( ( s = table->Directory[i] ) != NULL ) {
-                for( j = 0; j < SEGMENT_SIZE; j++ ) {
+            if((s = table->Directory[i]) != NULL) {
+                for(j = 0; j < SEGMENT_SIZE; j++) {
                     p = s[j];
-                    while( p != NULL ) {
+                    while(p != NULL) {
                         q = p->next;
-                        HASH_Element_destroy( p );
+                        HASH_Element_destroy(p);
                         p = q;
                     }
                 }
-                sc_free( table->Directory[i] );
+                sc_free(table->Directory[i]);
             }
         }
-        HASH_Table_destroy( table );
-# if HASH_STATISTICS && HASH_DEBUG
-        fprintf( stderr,
-                 "[hdestroy] Accesses %ld Collisions %ld\n",
-                 HashAccesses,
-                 HashCollisions );
+        HASH_Table_destroy(table);
+# if defined(HASH_STATISTICS) && defined(HASH_DEBUG)
+        fprintf(stderr,
+                "[hdestroy] Accesses %ld Collisions %ld\n",
+                HashAccesses,
+                HashCollisions);
 # endif
     }
 }
 
 Element
-HASHsearch( Hash_Table table, Element item, Action action ) {
+HASHsearch(Hash_Table table, Element item, Action action)
+{
     Address h;
     Segment CurrentSegment;
     int     SegmentIndex;
@@ -324,18 +325,18 @@ HASHsearch( Hash_Table table, Element item, Action action ) {
     Element q;
     Element deleteme;
 
-    assert( table != HASH_NULL ); /* Kinder really than return(NULL); */
-# if HASH_STATISTICS
+    assert(table != HASH_NULL);   /* Kinder really than return(NULL); */
+# ifdef HASH_STATISTICS
     HashAccesses++;
 # endif
-    h = HASHhash( item->key, table );
-    SegmentDir = DIV( h, SEGMENT_SIZE_SHIFT );
-    SegmentIndex = MOD( h, SEGMENT_SIZE );
+    h = HASHhash(item->key, table);
+    SegmentDir = DIV(h, SEGMENT_SIZE_SHIFT);
+    SegmentIndex = MOD(h, SEGMENT_SIZE);
     /*
     ** valid segment ensured by HASHhash()
     */
     CurrentSegment = table->Directory[SegmentDir];
-    assert( CurrentSegment != NULL ); /* bad failure if tripped   */
+    assert(CurrentSegment != NULL);   /* bad failure if tripped   */
     p = CurrentSegment + SegmentIndex;
     q = *p;
     /*
@@ -344,42 +345,42 @@ HASHsearch( Hash_Table table, Element item, Action action ) {
     **  p = &element, and
     **  q = element
     */
-    while( q != NULL && strcmp( q->key, item->key ) ) {
+    while(q != NULL && strcmp(q->key, item->key)) {
         p = &q->next;
         q = *p;
-# if HASH_STATISTICS
+# ifdef HASH_STATISTICS
         HashCollisions++;
 # endif
     }
     /* at this point, we have either found the element or it doesn't exist */
-    switch( action ) {
+    switch(action) {
         case HASH_FIND:
-            return( ( Element )q );
+            return((Element)q);
         case HASH_DELETE:
-            if( !q ) {
-                return( 0 );
+            if(!q) {
+                return(0);
             }
             /* at this point, element exists and action == DELETE */
 #if 0
-            if( table->in_use ) {
-                HASH_in_use( table, "insert element" );
+            if(table->in_use) {
+                HASH_in_use(table, "insert element");
             }
 #endif
             deleteme = q;
             *p = q->next;
             /*STRINGfree(deleteme->key);*/
-            HASH_Element_destroy( deleteme );
+            HASH_Element_destroy(deleteme);
             --table->KeyCount;
-            return( deleteme ); /* of course, user shouldn't deref this! */
+            return(deleteme);   /* of course, user shouldn't deref this! */
         case HASH_INSERT:
             /* if trying to insert it (twice), let them know */
-            if( q != NULL ) {
-                return( q );    /* was return(0);!!!!!?!?! */
+            if(q != NULL) {
+                return(q);      /* was return(0);!!!!!?!?! */
             }
 
 #if 0
-            if( table->in_use ) {
-                HASH_in_use( table, "delete element" );
+            if(table->in_use) {
+                HASH_in_use(table, "delete element");
             }
 #endif
             /* at this point, element does not exist and action == INSERT */
@@ -398,64 +399,63 @@ HASHsearch( Hash_Table table, Element item, Action action ) {
             /*
             ** table over-full?
             */
-            if( ++table->KeyCount / MUL( table->SegmentCount, SEGMENT_SIZE_SHIFT ) > table->MaxLoadFactor ) {
-                HASHexpand_table( table );    /* doesn't affect q   */
+            if(++table->KeyCount / MUL(table->SegmentCount, SEGMENT_SIZE_SHIFT) > table->MaxLoadFactor) {
+                HASHexpand_table(table);      /* doesn't affect q   */
             }
     }
-    return( ( Element )0 ); /* was return (Element)q */
+    return((Element)0);     /* was return (Element)q */
 }
 
 /*
 ** Internal routines
 */
 
-static_inline
-Address
-HASHhash( char * Key, Hash_Table table ) {
+static inline Address HASHhash(char *Key, Hash_Table table)
+{
     Address     h, address;
-    register unsigned char * k = ( unsigned char * )Key;
+    register unsigned char *k = (unsigned char *)Key;
 
     h = 0;
     /*
     ** Convert string to integer
     */
     /*SUPPRESS 112*/
-    while( *k )
+    assert(Key);
+    while(*k)
         /*SUPPRESS 8*/ { /*SUPPRESS 112*/
-        h = h * PRIME1 ^ ( *k++ - ' ' );
+        h = h * PRIME1 ^ (*k++ - ' ');
     }
     h %= PRIME2;
-    address = MOD( h, table->maxp );
-    if( address < table->p ) {
-        address = MOD( h, ( table->maxp << 1 ) );    /* h % (2*table->maxp) */
+    address = MOD(h, table->maxp);
+    if(address < table->p) {
+        address = MOD(h, (table->maxp << 1));        /* h % (2*table->maxp) */
     }
-    return( address );
+    return(address);
 }
 
-static
-void
-HASHexpand_table( Hash_Table table ) {
+static void HASHexpand_table(Hash_Table table)
+{
     Segment OldSegment, NewSegment;
     Element Current, *Previous, *LastOfNew;
 
-    if( table->maxp + table->p < MUL( DIRECTORY_SIZE, SEGMENT_SIZE_SHIFT ) ) {
+    if(table->maxp + table->p < MUL(DIRECTORY_SIZE, SEGMENT_SIZE_SHIFT)) {
         Address NewAddress;
         int OldSegmentIndex, NewSegmentIndex;
         int OldSegmentDir, NewSegmentDir;
         /*
         ** Locate the bucket to be split
         */
-        OldSegmentDir = DIV( table->p, SEGMENT_SIZE_SHIFT );
+        OldSegmentDir = DIV(table->p, SEGMENT_SIZE_SHIFT);
         OldSegment = table->Directory[OldSegmentDir];
-        OldSegmentIndex = MOD( table->p, SEGMENT_SIZE );
+        OldSegmentIndex = MOD(table->p, SEGMENT_SIZE);
         /*
         ** Expand address space; if necessary create a new segment
         */
         NewAddress = table->maxp + table->p;
-        NewSegmentDir = DIV( NewAddress, SEGMENT_SIZE_SHIFT );
-        NewSegmentIndex = MOD( NewAddress, SEGMENT_SIZE );
-        if( NewSegmentIndex == 0 ) {
-            CALLOC( table->Directory[NewSegmentDir], SEGMENT_SIZE, Element );
+        NewSegmentDir = DIV(NewAddress, SEGMENT_SIZE_SHIFT);
+        NewSegmentIndex = MOD(NewAddress, SEGMENT_SIZE);
+        if(NewSegmentIndex == 0) {
+            CALLOC(table->Directory[NewSegmentDir], SEGMENT_SIZE, Element);
         }
         /*  "segment in HASHexpand_table");*/
         NewSegment = table->Directory[NewSegmentDir];
@@ -463,7 +463,7 @@ HASHexpand_table( Hash_Table table ) {
         ** Adjust state variables
         */
         table->p++;
-        if( table->p == table->maxp ) {
+        if(table->p == table->maxp) {
             table->maxp <<= 1;  /* table->maxp *= 2 */
             table->p = 0;
         }
@@ -475,8 +475,8 @@ HASHexpand_table( Hash_Table table ) {
         Current = *Previous;
         LastOfNew = &NewSegment[NewSegmentIndex];
         *LastOfNew = NULL;
-        while( Current != NULL ) {
-            if( HASHhash( Current->key, table ) == NewAddress ) {
+        while(Current != NULL) {
+            if(HASHhash(Current->key, table) == NewAddress) {
                 /*
                 ** Attach it to the end of the new chain
                 */
@@ -504,16 +504,17 @@ HASHexpand_table( Hash_Table table ) {
 /* But then, it isn't called when objects are inserted/deleted so this seems */
 /* reasonable - DEL */
 Hash_Table
-HASHcopy( Hash_Table oldtable ) {
+HASHcopy(Hash_Table oldtable)
+{
     Hash_Table newtable;
     Segment s, s2;
-    Element * pp;   /* old element */
-    Element * qq;   /* new element */
-    int i, j;
+    Element *pp;    /* old element */
+    Element *qq;    /* new element */
+    unsigned int i, j;
 
     newtable = HASH_Table_new();
-    for( i = 0; i < oldtable->SegmentCount; i++ ) {
-        CALLOC( newtable->Directory[i], SEGMENT_SIZE, Element );
+    for(i = 0; i < oldtable->SegmentCount; i++) {
+        CALLOC(newtable->Directory[i], SEGMENT_SIZE, Element);
         /*    "segment in HASHcopy");*/
     }
 
@@ -524,54 +525,55 @@ HASHcopy( Hash_Table oldtable ) {
     newtable->MaxLoadFactor = oldtable->MaxLoadFactor;
     newtable->KeyCount  = oldtable->KeyCount;
 
-    for( i = 0; i < oldtable->SegmentCount; i++ ) {
+    for(i = 0; i < oldtable->SegmentCount; i++) {
         /* test probably unnecessary */
-        if( ( s = oldtable->Directory[i] ) != NULL ) {
+        if((s = oldtable->Directory[i]) != NULL) {
             s2 = newtable->Directory[i];
-            for( j = 0; j < SEGMENT_SIZE; j++ ) {
+            for(j = 0; j < SEGMENT_SIZE; j++) {
                 qq = &s2[j];
-                for( pp = &s[j]; *pp; pp = &( *pp )->next ) {
+                for(pp = &s[j]; *pp; pp = &(*pp)->next) {
                     *qq = HASH_Element_new();
                     /*      (*qq)->key = STRINGcopy((*pp)->key);*/
                     /* I really doubt it is necessary to copy the key!!! */
-                    ( *qq )->key = ( *pp )->key;
-                    ( *qq )->data = ( *pp )->data;
-                    ( *qq )->symbol = ( *pp )->symbol;
-                    ( *qq )->type = ( *pp )->type;
-                    ( *qq )->next = NULL;
-                    qq = &( ( *qq )->next );
+                    (*qq)->key = (*pp)->key;
+                    (*qq)->data = (*pp)->data;
+                    (*qq)->symbol = (*pp)->symbol;
+                    (*qq)->type = (*pp)->type;
+                    (*qq)->next = NULL;
+                    qq = &((*qq)->next);
                 }
             }
         }
     }
-    return( newtable );
+    return(newtable);
 }
 
 /* following code is for testing hash package */
 #ifdef HASHTEST
 struct Element e1, e2, e3, *e;
-struct Hash_Table * t;
+struct Hash_Table *t;
 HashEntry he;
 
-main() {
+main()
+{
     e1.key = "foo";
-    e1.data = ( char * )1;
+    e1.data = (char *)1;
     e2.key = "bar";
-    e2.data = ( char * )2;
+    e2.data = (char *)2;
     e3.key = "herschel";
-    e3.data = ( char * )3;
+    e3.data = (char *)3;
 
-    t = HASHcreate( 100 );
-    e = HASHsearch( t, &e1, HASH_INSERT );
-    e = HASHsearch( t, &e2, HASH_INSERT );
-    e = HASHsearch( t, &e3, HASH_INSERT );
-    HASHlistinit( t, &he );
-    for( ;; ) {
-        e = HASHlist( &he );
-        if( !e ) {
-            exit( 0 );
+    t = HASHcreate(100);
+    e = HASHsearch(t, &e1, HASH_INSERT);
+    e = HASHsearch(t, &e2, HASH_INSERT);
+    e = HASHsearch(t, &e3, HASH_INSERT);
+    HASHlistinit(t, &he);
+    for(;;) {
+        e = HASHlist(&he);
+        if(!e) {
+            exit(0);
         }
-        printf( "found key %s, data %d\n", e->key, ( int )e->data );
+        fprintf(stderr, "found key %s, data %d\n", e->key, (int)e->data);
     }
 }
 #endif

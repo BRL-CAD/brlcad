@@ -19,75 +19,7 @@ YYSTYPE yylval;
      * Revision 1.23  1997/11/14 17:09:04  libes
      * allow multiple group references
      *
-     * Revision 1.22  1997/01/21 19:35:43  dar
-     * made C++ compatible
-     *
-     * Revision 1.21  1995/06/08  22:59:59  clark
-     * bug fixes
-     *
-     * Revision 1.20  1995/04/08  21:06:07  clark
-     * WHERE rule resolution bug fixes, take 2
-     *
-     * Revision 1.19  1995/04/08  20:54:18  clark
-     * WHERE rule resolution bug fixes
-     *
-     * Revision 1.19  1995/04/08  20:49:08  clark
-     * WHERE
-     *
-     * Revision 1.18  1995/04/05  13:55:40  clark
-     * CADDETC preval
-     *
-     * Revision 1.17  1995/03/09  18:43:47  clark
-     * various fixes for caddetc - before interface clause changes
-     *
-     * Revision 1.16  1994/11/29  20:55:58  clark
-     * fix inline comment bug
-     *
-     * Revision 1.15  1994/11/22  18:32:39  clark
-     * Part 11 IS; group reference
-     *
-     * Revision 1.14  1994/11/10  19:20:03  clark
-     * Update to IS
-     *
-     * Revision 1.13  1994/05/11  19:50:00  libes
-     * numerous fixes
-     *
-     * Revision 1.12  1993/10/15  18:47:26  libes
-     * CADDETC certified
-     *
-     * Revision 1.10  1993/03/19  20:53:57  libes
-     * one more, with feeling
-     *
-     * Revision 1.9  1993/03/19  20:39:51  libes
-     * added unique to parameter types
-     *
-     * Revision 1.8  1993/02/16  03:17:22  libes
-     * reorg'd alg bodies to not force artificial begin/ends
-     * added flag to differentiate parameters in scopes
-     * rewrote query to fix scope handling
-     * added support for Where type
-     *
-     * Revision 1.7  1993/01/19  22:44:17  libes
-     * *** empty log message ***
-     *
-     * Revision 1.6  1992/08/27  23:36:35  libes
-     * created fifo for new schemas that are parsed
-     * connected entity list to create of oneof
-     *
-     * Revision 1.5  1992/08/18  17:11:36  libes
-     * rm'd extraneous error messages
-     *
-     * Revision 1.4  1992/06/08  18:05:20  libes
-     * prettied up interface to print_objects_when_running
-     *
-     * Revision 1.3  1992/05/31  23:31:13  libes
-     * implemented ALIAS resolution
-     *
-     * Revision 1.2  1992/05/31  08:30:54  libes
-     * multiple files
-     *
-     * Revision 1.1  1992/05/28  03:52:25  libes
-     * Initial revision
+     * ** 22 older revision log records removed 3 January 2014 **
      */
 
 #include "express/symbol.h"
@@ -98,22 +30,28 @@ YYSTYPE yylval;
 #include "express/entity.h"
 #include "express/resolve.h"
 #include "expscan.h"
+#include <float.h>
 
     extern int print_objects_while_running;
 
-    int tag_count;	/* use this to count tagged GENERIC types in the formal */
-    /* argument lists.  Gross, but much easier to do it this */
-    /* way then with the 'help' of yacc. */
-    /* Set it to -1 to indicate that tags cannot be defined, */
-    /* only used (outside of formal parameter list, i.e. for */
-    /* return types).  Hey, as long as */
-    /* there's a gross hack sitting around, we might as well */
-    /* milk it for all it's worth!  -snc */
+    int tag_count;    /**< use this to count tagged GENERIC types in the formal
+                         * argument lists.  Gross, but much easier to do it this
+                         * way then with the 'help' of yacc. Set it to -1 to
+                         * indicate that tags cannot be defined, only used
+                         * (outside of formal parameter list, i.e. for return
+                         * types). Hey, as long as there's a gross hack sitting
+                         * around, we might as well milk it for all it's worth!
+                         *   - snc
+                         */
 
-    Express yyexpresult;	/* hook to everything built by parser */
+    int local_var_count; /**< used to keep LOCAL variables in order
+                            * used in combination with Variable.offset
+                            */
 
-    Symbol *interface_schema;	/* schema of interest in use/ref clauses */
-    void (*interface_func)();	/* func to attach rename clauses */
+    Express yyexpresult;    /* hook to everything built by parser */
+
+    Symbol *interface_schema;    /* schema of interest in use/ref clauses */
+    void (*interface_func)();    /* func to attach rename clauses */
 
     /* record schemas found in a single parse here, allowing them to be */
     /* differentiated from other schemas parsed earlier */
@@ -121,44 +59,41 @@ YYSTYPE yylval;
 
     void SCANskip_to_end_schema(perplex_t scanner);
 
-    int	yylineno;
-
-
-    static void	yyerror(const char*, char *string);
+    int yylineno;
 
     bool yyeof = false;
 
-#define MAX_SCOPE_DEPTH	20	/* max number of scopes that can be nested */
+#define MAX_SCOPE_DEPTH    20    /* max number of scopes that can be nested */
 
     static struct scope {
         struct Scope_ *this_;
-        char type;	/* one of OBJ_XXX */
-        struct scope *pscope;	/* pointer back to most recent scope */
+        char type;    /* one of OBJ_XXX */
+        struct scope *pscope;    /* pointer back to most recent scope */
         /* that has a printable name - for better */
         /* error messages */
     } scopes[MAX_SCOPE_DEPTH], *scope;
 #define CURRENT_SCOPE (scope->this_)
 #define PREVIOUS_SCOPE ((scope-1)->this_)
 #define CURRENT_SCHEMA (scope->this_->u.schema)
-#define CURRENT_SCOPE_NAME		(OBJget_symbol(scope->pscope->this_,scope->pscope->type)->name)
-#define CURRENT_SCOPE_TYPE_PRINTABLE	(OBJget_type(scope->pscope->type))
+#define CURRENT_SCOPE_NAME        (OBJget_symbol(scope->pscope->this_,scope->pscope->type)->name)
+#define CURRENT_SCOPE_TYPE_PRINTABLE    (OBJget_type(scope->pscope->type))
 
     /* ths = new scope to enter */
     /* sym = name of scope to enter into parent.  Some scopes (i.e., increment) */
     /*       are not named, in which case sym should be 0 */
-    /*	 This is useful for when a diagnostic is printed, an earlier named */
-    /* 	 scoped can be used */
+    /*     This is useful for when a diagnostic is printed, an earlier named */
+    /*      scoped can be used */
     /* typ = type of scope */
 #define PUSH_SCOPE(ths,sym,typ) \
-	if (sym) DICTdefine(scope->this_->symbol_table,(sym)->name,(Generic)ths,sym,typ);\
-	ths->superscope = scope->this_; \
-	scope++;		\
-	scope->type = typ;	\
-	scope->pscope = (sym?scope:(scope-1)->pscope); \
-	scope->this_ = ths; \
-	if (sym) { \
-		ths->symbol = *(sym); \
-	}
+    if (sym) DICTdefine(scope->this_->symbol_table,(sym)->name,(Generic)ths,sym,typ);\
+    ths->superscope = scope->this_; \
+    scope++;        \
+    scope->type = typ;    \
+    scope->pscope = (sym?scope:(scope-1)->pscope); \
+    scope->this_ = ths; \
+    if (sym) { \
+        ths->symbol = *(sym); \
+    }
 #define POP_SCOPE() scope--
 
     /* PUSH_SCOPE_DUMMY just pushes the scope stack with nothing actually on it */
@@ -169,7 +104,7 @@ YYSTYPE yylval;
     /* bother to get pushed so fix them this way */
 #define SCOPEadd_super(ths) ths->superscope = scope->this_;
 
-#define ERROR(code)	ERRORreport(code, yylineno)
+#define ERROR(code)    ERRORreport(code, yylineno)
 
 void parserInitState()
 {
@@ -188,172 +123,171 @@ void parserInitState()
 
 %destructor statement_list {
     if (parseData.scanner == NULL) {
-	$$.string = (char*)NULL;
+    $$.string = (char*)NULL;
     }
 }
 
-%type case_action			{ Case_Item }
-%type case_otherwise			{ Case_Item }
-%type entity_body			{ struct entity_body }
+%type case_action            { Case_Item }
+%type case_otherwise            { Case_Item }
+%type entity_body            { struct entity_body }
 
-%type aggregate_init_element		{ Expression }
-%type aggregate_initializer		{ Expression }
-%type assignable			{ Expression }
-%type attribute_decl			{ Expression }
-%type by_expression			{ Expression }
-%type constant				{ Expression }
-%type expression			{ Expression }
-%type function_call			{ Expression }
-%type general_ref			{ Expression }
-%type group_ref				{ Expression }
-%type identifier			{ Expression }
-%type initializer			{ Expression }
-%type interval				{ Expression }
-%type literal				{ Expression }
-%type local_initializer			{ Expression }
-%type precision_spec			{ Expression }
-%type query_expression			{ Expression }
-%type query_start			{ Expression }
-%type simple_expression			{ Expression }
-%type unary_expression			{ Expression }
-%type supertype_expression		{ Expression }
-%type until_control			{ Expression }
-%type while_control			{ Expression }
+%type aggregate_init_element        { Expression }
+%type aggregate_initializer        { Expression }
+%type assignable            { Expression }
+%type attribute_decl            { Expression }
+%type by_expression            { Expression }
+%type constant                { Expression }
+%type expression            { Expression }
+%type function_call            { Expression }
+%type general_ref            { Expression }
+%type group_ref                { Expression }
+%type identifier            { Expression }
+%type initializer            { Expression }
+%type interval                { Expression }
+%type literal                { Expression }
+%type local_initializer            { Expression }
+%type precision_spec            { Expression }
+%type query_expression            { Expression }
+%type query_start            { Expression }
+%type simple_expression            { Expression }
+%type unary_expression            { Expression }
+%type supertype_expression        { Expression }
+%type until_control            { Expression }
+%type while_control            { Expression }
 
-%type function_header			{ Integer }
-%type fh_lineno				{ Integer }
-%type rule_header			{ Integer }
-%type rh_start				{ Integer }
-%type rh_get_line			{ Integer }
-%type procedure_header			{ Integer }
-%type ph_get_line			{ Integer }
+%type function_header            { Integer }
+%type fh_lineno                { Integer }
+%type rule_header            { Integer }
+%type rh_start                { Integer }
+%type rh_get_line            { Integer }
+%type procedure_header            { Integer }
+%type ph_get_line            { Integer }
 
-%type action_body			{ Linked_List }
-%type actual_parameters			{ Linked_List }
-%type aggregate_init_body		{ Linked_List }
-%type explicit_attr_list		{ Linked_List }
-%type case_action_list			{ Linked_List }
-%type case_block			{ Linked_List }
-%type case_labels			{ Linked_List }
-%type where_clause_list			{ Linked_List }
-%type derive_decl			{ Linked_List }
-%type explicit_attribute		{ Linked_List }
-%type expression_list			{ Linked_List }
-%type formal_parameter			{ Linked_List }
-%type formal_parameter_list		{ Linked_List }
-%type formal_parameter_rep		{ Linked_List }
-%type id_list				{ Linked_List }
-%type defined_type_list			{ Linked_List }
-%type nested_id_list			{ Linked_List }
+%type action_body            { Linked_List }
+%type actual_parameters            { Linked_List }
+%type aggregate_init_body        { Linked_List }
+%type explicit_attr_list        { Linked_List }
+%type case_action_list            { Linked_List }
+%type case_block            { Linked_List }
+%type case_labels            { Linked_List }
+%type where_clause_list            { Linked_List }
+%type derive_decl            { Linked_List }
+%type explicit_attribute        { Linked_List }
+%type expression_list            { Linked_List }
+%type formal_parameter            { Linked_List }
+%type formal_parameter_list        { Linked_List }
+%type formal_parameter_rep        { Linked_List }
+%type id_list                { Linked_List }
+%type defined_type_list            { Linked_List }
+%type nested_id_list            { Linked_List }
 /*repeat_control_list*/
-%type statement_rep			{ Linked_List }
-%type subtype_decl			{ Linked_List }
-%type where_rule			{ Linked_List }
-%type where_rule_OPT			{ Linked_List }
-%type supertype_expression_list		{ Linked_List }
-%type labelled_attrib_list_list		{ Linked_List }
-%type labelled_attrib_list		{ Linked_List }
-%type inverse_attr_list			{ Linked_List }
+%type statement_rep            { Linked_List }
+%type subtype_decl            { Linked_List }
+%type where_rule            { Linked_List }
+%type where_rule_OPT            { Linked_List }
+%type supertype_expression_list        { Linked_List }
+%type labelled_attrib_list_list        { Linked_List }
+%type labelled_attrib_list        { Linked_List }
+%type inverse_attr_list            { Linked_List }
 
-%type inverse_clause			{ Linked_List }
-%type attribute_decl_list		{ Linked_List }
-%type derived_attribute_rep		{ Linked_List }
-%type unique_clause			{ Linked_List }
-%type rule_formal_parameter_list	{ Linked_List }
-%type qualified_attr_list		{ Linked_List }
+%type inverse_clause            { Linked_List }
+%type attribute_decl_list        { Linked_List }
+%type derived_attribute_rep        { Linked_List }
+%type unique_clause            { Linked_List }
+%type rule_formal_parameter_list    { Linked_List }
+%type qualified_attr_list        { Linked_List }
 /* remove labelled_attrib_list if this works */
 
-%type rel_op			{ Op_Code }
+%type rel_op            { Op_Code }
 
-%type optional_or_unique	{ struct type_flags }
-%type optional_fixed		{ struct type_flags }
-%type optional			{ struct type_flags }
-%type var			{ struct type_flags }
-%type unique			{ struct type_flags }
+%type optional_or_unique    { struct type_flags }
+%type optional_fixed        { struct type_flags }
+%type optional            { struct type_flags }
+%type var            { struct type_flags }
+%type unique            { struct type_flags }
 
-%type qualified_attr		{ Qualified_Attr* }
+%type qualified_attr        { Expression }
 
-%type qualifier			{ struct qualifier }
+%type qualifier            { struct qualifier }
 
-%type alias_statement		{ Statement }
-%type assignment_statement	{ Statement }
-%type case_statement		{ Statement }
-%type compound_statement	{ Statement }
-%type escape_statement		{ Statement }
-%type if_statement		{ Statement }
-%type proc_call_statement	{ Statement }
-%type repeat_statement		{ Statement }
-%type return_statement		{ Statement }
-%type skip_statement		{ Statement }
-%type statement			{ Statement }
+%type alias_statement        { Statement }
+%type assignment_statement    { Statement }
+%type case_statement        { Statement }
+%type compound_statement    { Statement }
+%type escape_statement        { Statement }
+%type if_statement        { Statement }
+%type proc_call_statement    { Statement }
+%type repeat_statement        { Statement }
+%type return_statement        { Statement }
+%type skip_statement        { Statement }
+%type statement            { Statement }
 
-%type subsuper_decl		{ struct subsuper_decl }
+%type subsuper_decl        { struct subsuper_decl }
 
-%type supertype_decl		{ struct subtypes }
-%type supertype_factor		{ struct subtypes }
+%type supertype_decl        { struct subtypes }
+%type supertype_factor        { struct subtypes }
 
-%type function_id		{ Symbol* }
-%type procedure_id		{ Symbol* }
+%type function_id        { Symbol* }
+%type procedure_id        { Symbol* }
 
-%type attribute_type		{ Type }
-%type defined_type		{ Type }
-%type parameter_type		{ Type }
-%type generic_type		{ Type }
+%type attribute_type        { Type }
+%type defined_type        { Type }
+%type parameter_type        { Type }
+%type generic_type        { Type }
 
-%type basic_type		{ TypeBody }
-%type select_type		{ TypeBody }
-%type aggregate_type		{ TypeBody }
-%type aggregation_type		{ TypeBody }
-%type array_type		{ TypeBody }
-%type bag_type			{ TypeBody }
-%type conformant_aggregation	{ TypeBody }
-%type list_type			{ TypeBody }
-%type set_type			{ TypeBody }
+%type basic_type        { TypeBody }
+%type select_type        { TypeBody }
+%type aggregate_type        { TypeBody }
+%type aggregation_type        { TypeBody }
+%type array_type        { TypeBody }
+%type bag_type            { TypeBody }
+%type conformant_aggregation    { TypeBody }
+%type list_type            { TypeBody }
+%type set_type            { TypeBody }
 
-%type set_or_bag_of_entity	{ struct type_either }
-%type type			{ struct type_either }
+%type set_or_bag_of_entity    { struct type_either }
+%type type            { struct type_either }
 
-%type cardinality_op		{ struct upper_lower }
-%type index_spec		{ struct upper_lower }
-%type limit_spec		{ struct upper_lower }
+%type cardinality_op        { struct upper_lower }
+%type bound_spec        { struct upper_lower }
 
-%type inverse_attr		{ Variable }
-%type derived_attribute		{ Variable }
-%type rule_formal_parameter	{ Variable }
+%type inverse_attr        { Variable }
+%type derived_attribute        { Variable }
+%type rule_formal_parameter    { Variable }
 
-%type where_clause		{ Where }
+%type where_clause        { Where }
 
 
-%left	TOK_EQUAL
-	TOK_GREATER_EQUAL
-	TOK_GREATER_THAN
-	TOK_IN
-	TOK_INST_EQUAL
-	TOK_INST_NOT_EQUAL
-	TOK_LESS_EQUAL
-	TOK_LESS_THAN
-	TOK_LIKE TOK_NOT_EQUAL.  
+%left    TOK_EQUAL
+    TOK_GREATER_EQUAL
+    TOK_GREATER_THAN
+    TOK_IN
+    TOK_INST_EQUAL
+    TOK_INST_NOT_EQUAL
+    TOK_LESS_EQUAL
+    TOK_LESS_THAN
+    TOK_LIKE TOK_NOT_EQUAL.
 
-%left	TOK_MINUS
-	TOK_PLUS
-	TOK_OR
-	TOK_XOR.
+%left    TOK_MINUS
+    TOK_PLUS
+    TOK_OR
+    TOK_XOR.
 
-%left	TOK_DIV
-	TOK_MOD
-	TOK_REAL_DIV
-	TOK_TIMES
-	TOK_AND
-	TOK_ANDOR
-	TOK_CONCAT_OP.
+%left    TOK_DIV
+    TOK_MOD
+    TOK_REAL_DIV
+    TOK_TIMES
+    TOK_AND
+    TOK_ANDOR
+    TOK_CONCAT_OP.
 
 %right TOK_EXP.
 
 %left TOK_NOT.
 
-%nonassoc	TOK_DOT
-		TOK_BACKSLASH
-		TOK_LEFT_BRACKET.
+%nonassoc    TOK_DOT
+        TOK_BACKSLASH
+        TOK_LEFT_BRACKET.
 
 %start_symbol express_file
 
@@ -379,7 +313,7 @@ action_body_item(A) ::= local_decl(B).
 }
 
 /* this corresponds to 'algorithm_head' in N14-ese but it should be rewritten
- * to force declarationsfollowed by constants followed by local_decls
+ * to force declarations followed by constants followed by local_decls
  */
 action_body_item_rep ::= /* NULL item */.
 action_body_item_rep(A) ::= action_body_item(B) action_body_item_rep.
@@ -429,19 +363,19 @@ aggregate_init_element(A) ::= expression(B).
 aggregate_init_body(A) ::= aggregate_init_element(B).
 {
     A = LISTcreate();
-    LISTadd(A, (Generic)B);
+    LISTadd_last(A, (Generic)B);
 }
 aggregate_init_body(A) ::= aggregate_init_element(B) TOK_COLON expression(C).
 {
     A = LISTcreate();
-    LISTadd(A, (Generic)B);
+    LISTadd_last(A, (Generic)B);
 
-    LISTadd(A, (Generic)C);
+    LISTadd_last(A, (Generic)C);
 
-    B->type->u.type->body->flags.repeat = 1;
+    C->type = Type_Repeat;
 }
 aggregate_init_body(A) ::= aggregate_init_body(B) TOK_COMMA
-			    aggregate_init_element(C).
+                aggregate_init_element(C).
 { 
     A = B;
 
@@ -449,14 +383,14 @@ aggregate_init_body(A) ::= aggregate_init_body(B) TOK_COMMA
 
 }
 aggregate_init_body(A) ::= aggregate_init_body(B) TOK_COMMA
-			    aggregate_init_element(C) TOK_COLON expression(D).
+                aggregate_init_element(C) TOK_COLON expression(D).
 {
     A = B;
 
     LISTadd_last(A, (Generic)C);
     LISTadd_last(A, (Generic)D);
 
-    C->type->u.type->body->flags.repeat = 1;
+    D->type = Type_Repeat;
 }
 
 aggregate_type(A) ::= TOK_AGGREGATE TOK_OF parameter_type(B).
@@ -468,12 +402,12 @@ aggregate_type(A) ::= TOK_AGGREGATE TOK_OF parameter_type(B).
         Symbol sym;
         sym.line = yylineno;
         sym.filename = current_filename;
-        ERRORreport_with_symbol(ERROR_unlabelled_param_type, &sym,
-	    CURRENT_SCOPE_NAME);
+        ERRORreport_with_symbol(UNLABELLED_PARAM_TYPE, &sym,
+        CURRENT_SCOPE_NAME);
     }
 }
 aggregate_type(A) ::= TOK_AGGREGATE TOK_COLON TOK_IDENTIFIER(B) TOK_OF
-		       parameter_type(C).
+               parameter_type(C).
 {
     Type t = TYPEcreate_user_defined_tag(C, CURRENT_SCOPE, B.symbol);
 
@@ -503,8 +437,8 @@ aggregation_type(A) ::= set_type(B).
 }
 
 alias_statement(A) ::= TOK_ALIAS TOK_IDENTIFIER(B) TOK_FOR general_ref(C)
-			semicolon alias_push_scope statement_rep(D)
-			TOK_END_ALIAS semicolon.
+            semicolon alias_push_scope statement_rep(D)
+            TOK_END_ALIAS semicolon.
 {
     Expression e = EXPcreate_from_symbol(Type_Attribute, B.symbol);
     Variable v = VARcreate(e, Type_Unknown);
@@ -512,7 +446,7 @@ alias_statement(A) ::= TOK_ALIAS TOK_IDENTIFIER(B) TOK_FOR general_ref(C)
     v->initializer = C; 
 
     DICTdefine(CURRENT_SCOPE->symbol_table, B.symbol->name, (Generic)v,
-	    B.symbol, OBJ_VARIABLE);
+        B.symbol, OBJ_VARIABLE);
     A = ALIAScreate(CURRENT_SCOPE, v, D);
 
     POP_SCOPE();
@@ -524,8 +458,8 @@ alias_push_scope ::= /* subroutine */.
     PUSH_SCOPE(s, (Symbol *)0, OBJ_ALIAS);
 }
 
-array_type(A) ::= TOK_ARRAY index_spec(B) TOK_OF optional_or_unique(C)
-		   attribute_type(D).
+array_type(A) ::= TOK_ARRAY bound_spec(B) TOK_OF optional_or_unique(C)
+           attribute_type(D).
 {
     A = TYPEBODYcreate(array_);
 
@@ -548,7 +482,7 @@ assignable(A) ::= identifier(B).
 }
 
 assignment_statement(A) ::= assignable(B) TOK_ASSIGNMENT expression(C)
-			    semicolon.
+                semicolon.
 { 
     A = ASSIGNcreate(B, C);
 }
@@ -578,7 +512,7 @@ explicit_attr_list(A) ::= explicit_attr_list(B) explicit_attribute(C).
     LISTadd_last(A, (Generic)C); 
 }
 
-bag_type(A) ::= TOK_BAG limit_spec(B) TOK_OF attribute_type(C).
+bag_type(A) ::= TOK_BAG bound_spec(B) TOK_OF attribute_type(C).
 {
     A = TYPEBODYcreate(bag_);
     A->base = C;
@@ -655,7 +589,7 @@ by_expression(A) ::= TOK_BY expression(B).
 }
 
 cardinality_op(A) ::= TOK_LEFT_CURL expression(B) TOK_COLON expression(C)
-		       TOK_RIGHT_CURL.
+               TOK_RIGHT_CURL.
 {
     A.lower_limit = B;
     A.upper_limit = C;
@@ -715,7 +649,7 @@ case_otherwise(A) ::= TOK_OTHERWISE TOK_COLON statement(B).
 }
 
 case_statement(A) ::= TOK_CASE expression(B) TOK_OF case_block(C) TOK_END_CASE
-		      semicolon.
+              semicolon.
 {
     A = CASEcreate(B, C);
 }
@@ -746,7 +680,7 @@ constant_body ::= identifier(A) TOK_COLON attribute_type(B) TOK_ASSIGNMENT
     v->initializer = C;
     v->flags.constant = 1;
     DICTdefine(CURRENT_SCOPE->symbol_table, A->symbol.name, (Generic)v,
-	&A->symbol, OBJ_VARIABLE);
+    &A->symbol, OBJ_VARIABLE);
 }
 
 constant_body_list ::= /* NULL */.
@@ -756,7 +690,7 @@ constant_body_list(A) ::= constant_body(B) constant_body_list.
 }
 
 constant_decl(A) ::= TOK_CONSTANT(B) constant_body_list TOK_END_CONSTANT
-		     semicolon.
+             semicolon.
 {
     A = B;
 }
@@ -788,7 +722,7 @@ derive_decl(A) ::= TOK_DERIVE derived_attribute_rep(B).
 }
 
 derived_attribute(A) ::= attribute_decl(B) TOK_COLON attribute_type(C)
-			 initializer(D) semicolon.
+             initializer(D) semicolon.
 {
     A = VARcreate(B, C);
     A->initializer = D;
@@ -807,14 +741,14 @@ derived_attribute_rep(A) ::= derived_attribute_rep(B) derived_attribute(C).
 }
 
 entity_body(A) ::= explicit_attr_list(B) derive_decl(C) inverse_clause(D)
-		   unique_clause(E) where_rule_OPT(F).
+           unique_clause(E) where_rule_OPT(F).
 {
     A.attributes = B;
     /* this is flattened out in entity_decl - DEL */
     LISTadd_last(A.attributes, (Generic)C);
 
     if (D != LIST_NULL) {
-	LISTadd_last(A.attributes, (Generic)D);
+    LISTadd_last(A.attributes, (Generic)D);
     }
 
     A.unique = E;
@@ -822,15 +756,15 @@ entity_body(A) ::= explicit_attr_list(B) derive_decl(C) inverse_clause(D)
 }
 
 entity_decl ::= entity_header subsuper_decl(A) semicolon entity_body(B)
-		TOK_END_ENTITY semicolon.
+        TOK_END_ENTITY semicolon.
 {
     CURRENT_SCOPE->u.entity->subtype_expression = A.subtypes;
     CURRENT_SCOPE->u.entity->supertype_symbols = A.supertypes;
-    LISTdo (B.attributes, l, Linked_List)
-	LISTdo (l, a, Variable)
-	    ENTITYadd_attribute(CURRENT_SCOPE, a);
-	LISTod;
-    LISTod;
+    LISTdo( B.attributes, l, Linked_List ) {
+        LISTdo_n( l, a, Variable, b ) {
+            ENTITYadd_attribute(CURRENT_SCOPE, a);
+        } LISTod;
+    } LISTod;
     CURRENT_SCOPE->u.entity->abstract = A.abstract;
     CURRENT_SCOPE->u.entity->unique = B.unique;
     CURRENT_SCOPE->where = B.where;
@@ -842,7 +776,7 @@ entity_header ::= TOK_ENTITY TOK_IDENTIFIER(A).
     Entity e = ENTITYcreate(A.symbol);
 
     if (print_objects_while_running & OBJ_ENTITY_BITS) {
-	fprintf(stdout, "parse: %s (entity)\n", A.symbol->name);
+    fprintf( stderr, "parse: %s (entity)\n", A.symbol->name);
     }
 
     PUSH_SCOPE(e, A.symbol, OBJ_ENTITY);
@@ -886,6 +820,16 @@ escape_statement(A) ::= TOK_ESCAPE semicolon.
     A = STATEMENT_ESCAPE;
 }
 
+/* 10303-11:2004 production 177
+ * attribute_decl = attribute_id | redeclared_attribute .
+ *
+ * also
+ * 178 attribute_id = simple_id .
+ * 279 redeclared_attribute = qualified_attribute [ RENAMED attribute_id ] .
+ * 275 qualified_attribute = SELF group_qualifier attribute_qualifier .
+ *
+ * NOTE - production 279 isn't implemented
+ */
 attribute_decl(A) ::= TOK_IDENTIFIER(B).
 {
     A = EXPcreate(Type_Attribute);
@@ -893,7 +837,7 @@ attribute_decl(A) ::= TOK_IDENTIFIER(B).
     SYMBOL_destroy(B.symbol);
 }
 attribute_decl(A) ::= TOK_SELF TOK_BACKSLASH TOK_IDENTIFIER(B) TOK_DOT
-		      TOK_IDENTIFIER(C).
+              TOK_IDENTIFIER(C).
 {
     A = EXPcreate(Type_Expression);
     A->e.op1 = EXPcreate(Type_Expression);
@@ -914,7 +858,7 @@ attribute_decl_list(A) ::= attribute_decl(B).
 
 }
 attribute_decl_list(A) ::= attribute_decl_list(B) TOK_COMMA
-			   attribute_decl(C).
+               attribute_decl(C).
 {
     A = B;
     LISTadd_last(A, (Generic)C);
@@ -930,15 +874,15 @@ optional(A) ::= TOK_OPTIONAL.
 }
 
 explicit_attribute(A) ::= attribute_decl_list(B) TOK_COLON optional(C)
-		       attribute_type(D) semicolon.
+               attribute_type(D) semicolon.
 {
     Variable v;
 
     LISTdo_links (B, attr)
-	v = VARcreate((Expression)attr->data, D);
-	v->flags.optional = C.optional;
-	v->flags.attribute = true;
-	attr->data = (Generic)v;
+    v = VARcreate((Expression)attr->data, D);
+    v->flags.optional = C.optional;
+    v->flags.attribute = true;
+    attr->data = (Generic)v;
     LISTod;
 
     A = B;
@@ -1047,7 +991,7 @@ simple_expression(A) ::= unary_expression(B).
     A = B;
 }
 simple_expression(A) ::= simple_expression(B) TOK_CONCAT_OP
-			 simple_expression(C).
+             simple_expression(C).
 {
     yyerrok;
 
@@ -1109,11 +1053,11 @@ expression_list(A) ::= expression_list(B) TOK_COMMA expression(C).
 
 var(A) ::= /* NULL */.
 {
-    A.var = 1;
+    A.var = 0;
 }
 var(A) ::= TOK_VAR.
 {
-    A.var = 0;
+    A.var = 1;
 }
 
 formal_parameter(A) ::= var(B) id_list(C) TOK_COLON parameter_type(D).
@@ -1128,7 +1072,7 @@ formal_parameter(A) ::= var(B) id_list(C) TOK_COLON parameter_type(D).
 
     e = EXPcreate_from_symbol(Type_Attribute, tmp);
     v = VARcreate(e, D);
-    v->flags.optional = B.var;
+    v->flags.var = B.var; /* NOTE this was flags.optional... ?! */
     v->flags.parameter = true;
     param->data = (Generic)v;
 
@@ -1144,7 +1088,7 @@ formal_parameter_list(A) ::= /* no parameters */.
     A = LIST_NULL;
 }
 formal_parameter_list(A) ::= TOK_LEFT_PAREN formal_parameter_rep(B)
-			     TOK_RIGHT_PAREN.
+                 TOK_RIGHT_PAREN.
 {
     A = B;
 
@@ -1156,7 +1100,7 @@ formal_parameter_rep(A) ::= formal_parameter(B).
 
 }
 formal_parameter_rep(A) ::= formal_parameter_rep(B) semicolon
-			    formal_parameter(C).
+                formal_parameter(C).
 {
     A = B;
     LISTadd_all(A, C);
@@ -1190,7 +1134,7 @@ function_call(A) ::= function_id(B) actual_parameters(C).
 }
 
 function_decl ::= function_header(A) action_body(B) TOK_END_FUNCTION
-		  semicolon.
+          semicolon.
 {
     FUNCput_body(CURRENT_SCOPE, B);
     ALGput_full_text(CURRENT_SCOPE, A, SCANtell());
@@ -1198,7 +1142,7 @@ function_decl ::= function_header(A) action_body(B) TOK_END_FUNCTION
 }
 
 function_header(A) ::= fh_lineno(B) fh_push_scope fh_plist TOK_COLON
-		       parameter_type(C) semicolon.
+               parameter_type(C) semicolon.
 { 
     Function f = CURRENT_SCOPE;
 
@@ -1216,7 +1160,7 @@ fh_push_scope ::= TOK_IDENTIFIER(A).
     Function f = ALGcreate(OBJ_FUNCTION);
     tag_count = 0;
     if (print_objects_while_running & OBJ_FUNCTION_BITS) {
-        fprintf(stdout, "parse: %s (function)\n", A.symbol->name);
+        fprintf( stderr, "parse: %s (function)\n", A.symbol->name);
     }
     PUSH_SCOPE(f, A.symbol, OBJ_FUNCTION);
 }
@@ -1227,7 +1171,7 @@ fh_plist ::= formal_parameter_list(A).
     f->u.func->parameters = A;
     f->u.func->pcount = LISTget_length(A);
     f->u.func->tag_count = tag_count;
-    tag_count = -1;	/* done with parameters, no new tags can be defined */
+    tag_count = -1;     /* done with parameters, no new tags can be defined */
 }
 
 function_id(A) ::= TOK_IDENTIFIER(B).
@@ -1246,14 +1190,14 @@ conformant_aggregation(A) ::= aggregate_type(B).
 
 }
 conformant_aggregation(A) ::= TOK_ARRAY TOK_OF optional_or_unique(B)
-			      parameter_type(C).
+                  parameter_type(C).
 {
     A = TYPEBODYcreate(array_);
     A->flags.optional = B.optional;
     A->flags.unique = B.unique;
     A->base = C;
 }
-conformant_aggregation(A) ::= TOK_ARRAY index_spec(B) TOK_OF
+conformant_aggregation(A) ::= TOK_ARRAY bound_spec(B) TOK_OF
     optional_or_unique(C) parameter_type(D).
 {
     A = TYPEBODYcreate(array_);
@@ -1269,7 +1213,7 @@ conformant_aggregation(A) ::= TOK_BAG TOK_OF parameter_type(B).
     A->base = B;
 
 }
-conformant_aggregation(A) ::= TOK_BAG index_spec(B) TOK_OF parameter_type(C).
+conformant_aggregation(A) ::= TOK_BAG bound_spec(B) TOK_OF parameter_type(C).
 {
     A = TYPEBODYcreate(bag_);
     A->base = C;
@@ -1283,8 +1227,8 @@ conformant_aggregation(A) ::= TOK_LIST TOK_OF unique(B) parameter_type(C).
     A->base = C;
 
 }
-conformant_aggregation(A) ::= TOK_LIST index_spec(B) TOK_OF unique(C)
-			      parameter_type(D).
+conformant_aggregation(A) ::= TOK_LIST bound_spec(B) TOK_OF unique(C)
+                  parameter_type(D).
 {
     A = TYPEBODYcreate(list_);
     A->base = D;
@@ -1297,7 +1241,7 @@ conformant_aggregation(A) ::= TOK_SET TOK_OF parameter_type(B).
     A = TYPEBODYcreate(set_);
     A->base = B;
 }
-conformant_aggregation(A) ::= TOK_SET index_spec(B) TOK_OF parameter_type(C).
+conformant_aggregation(A) ::= TOK_SET bound_spec(B) TOK_OF parameter_type(C).
 {
     A = TYPEBODYcreate(set_);
     A->base = C;
@@ -1313,8 +1257,8 @@ generic_type(A) ::= TOK_GENERIC.
         Symbol sym;
         sym.line = yylineno;
         sym.filename = current_filename;
-        ERRORreport_with_symbol(ERROR_unlabelled_param_type, &sym,
-	    CURRENT_SCOPE_NAME);
+        ERRORreport_with_symbol(UNLABELLED_PARAM_TYPE, &sym,
+        CURRENT_SCOPE_NAME);
     }
 }
 generic_type(A) ::= TOK_GENERIC TOK_COLON TOK_IDENTIFIER(B).
@@ -1360,7 +1304,7 @@ identifier(A) ::= TOK_IDENTIFIER(B).
 }
 
 if_statement(A) ::= TOK_IF expression(B) TOK_THEN statement_rep(C) TOK_END_IF
-		    semicolon.
+            semicolon.
 {
     A = CONDcreate(B, C, STATEMENT_LIST_NULL);
 }
@@ -1376,7 +1320,7 @@ include_directive ::= TOK_INCLUDE TOK_STRING_LITERAL(A) semicolon.
 }
 
 increment_control ::= TOK_IDENTIFIER(A) TOK_ASSIGNMENT expression(B) TOK_TO
-		      expression(C) by_expression(D).
+              expression(C) by_expression(D).
 {
     Increment i = INCR_CTLcreate(A.symbol, B, C, D);
 
@@ -1386,25 +1330,21 @@ increment_control ::= TOK_IDENTIFIER(A) TOK_ASSIGNMENT expression(B) TOK_TO
     PUSH_SCOPE(i, (Symbol *)0, OBJ_INCREMENT);
 }
 
-index_spec(A) ::= TOK_LEFT_BRACKET expression(B) TOK_COLON expression(C)
-		  TOK_RIGHT_BRACKET.
-{
-    A.lower_limit = B;
-    A.upper_limit = C;
-}
-
 initializer(A) ::= TOK_ASSIGNMENT expression(B).
 {
     A = B;
 }
 
+/* 10303-11:2004 production 259
+ * named_type_or_rename = named_types [ AS ( entity_id | type_id ) ] .
+ */
 rename ::= TOK_IDENTIFIER(A).
 {
-    (*interface_func)(CURRENT_SCOPE, interface_schema, A, A);
+    (*interface_func)(CURRENT_SCOPE, interface_schema, A.symbol, A.symbol);
 }
 rename ::= TOK_IDENTIFIER(A) TOK_AS TOK_IDENTIFIER(B).
 {
-    (*interface_func)(CURRENT_SCOPE, interface_schema, A, B);
+    (*interface_func)(CURRENT_SCOPE, interface_schema, A.symbol, B.symbol);
 }
 
 rename_list(A) ::= rename(B).
@@ -1416,6 +1356,9 @@ rename_list(A) ::= rename_list(B) TOK_COMMA rename.
     A = B;
 }
 
+/* 10303-11:2004 production 336
+ * use_clause = USE FROM schema_ref [ ’(’ named_type_or_rename { ’,’ named_type_or_rename } ’)’ ] ’;’ .
+ */
 parened_rename_list ::= TOK_LEFT_PAREN rename_list TOK_RIGHT_PAREN.  
 
 reference_clause ::= TOK_REFERENCE TOK_FROM TOK_IDENTIFIER(A) semicolon.
@@ -1424,7 +1367,7 @@ reference_clause ::= TOK_REFERENCE TOK_FROM TOK_IDENTIFIER(A) semicolon.
         CURRENT_SCHEMA->ref_schemas = LISTcreate();
     }
 
-    LISTadd(CURRENT_SCHEMA->ref_schemas, (Generic)A.symbol);
+    LISTadd_last(CURRENT_SCHEMA->ref_schemas, (Generic)A.symbol);
 }
 reference_clause(A) ::= reference_head(B) parened_rename_list semicolon.
 {
@@ -1443,7 +1386,7 @@ use_clause ::= TOK_USE TOK_FROM TOK_IDENTIFIER(A) semicolon.
         CURRENT_SCHEMA->use_schemas = LISTcreate();
     }
 
-    LISTadd(CURRENT_SCHEMA->use_schemas, (Generic)A.symbol);
+    LISTadd_last(CURRENT_SCHEMA->use_schemas, (Generic)A.symbol);
 }
 use_clause(A) ::= use_head(B) parened_rename_list semicolon.
 {
@@ -1467,15 +1410,15 @@ interface_specification(A) ::= reference_clause(B).
 
 interface_specification_list ::= /*NULL*/.
 interface_specification_list(A) ::= interface_specification_list(B)
-				    interface_specification.
+                    interface_specification.
 {
     A = B;
 }
 
 interval(A) ::= TOK_LEFT_CURL simple_expression(B) rel_op(C)
-		simple_expression(D) rel_op(E) simple_expression(F) right_curl.
+        simple_expression(D) rel_op(E) simple_expression(F) right_curl.
 {
-    Expression	tmp1, tmp2;
+    Expression    tmp1, tmp2;
 
     A = (Expression)0;
     tmp1 = BIN_EXPcreate(C, B, D);
@@ -1497,7 +1440,7 @@ set_or_bag_of_entity(A) ::= TOK_SET TOK_OF defined_type(B).
     A.body->base = B;
 
 }
-set_or_bag_of_entity(A) ::= TOK_SET limit_spec(B) TOK_OF defined_type(C).
+set_or_bag_of_entity(A) ::= TOK_SET bound_spec(B) TOK_OF defined_type(C).
 {
     A.type = 0; 
     A.body = TYPEBODYcreate(set_);
@@ -1505,7 +1448,7 @@ set_or_bag_of_entity(A) ::= TOK_SET limit_spec(B) TOK_OF defined_type(C).
     A.body->upper = B.upper_limit;
     A.body->lower = B.lower_limit;
 }
-set_or_bag_of_entity(A) ::= TOK_BAG limit_spec(B) TOK_OF defined_type(C).
+set_or_bag_of_entity(A) ::= TOK_BAG bound_spec(B) TOK_OF defined_type(C).
 {
     A.type = 0;
     A.body = TYPEBODYcreate(bag_);
@@ -1520,6 +1463,9 @@ set_or_bag_of_entity(A) ::= TOK_BAG TOK_OF defined_type(B).
     A.body->base = B;
 }
 
+/* 10303-11:2004 production 249
+ * inverse_clause = INVERSE inverse_attr { inverse_attr } .
+ */
 inverse_attr_list(A) ::= inverse_attr(B).
 {
     A = LISTcreate();
@@ -1531,26 +1477,29 @@ inverse_attr_list(A) ::= inverse_attr_list(B) inverse_attr(C).
     LISTadd_last(A, (Generic)C);
 }
 
-inverse_attr(A) ::= TOK_IDENTIFIER(B) TOK_COLON set_or_bag_of_entity(C)
-		    TOK_FOR TOK_IDENTIFIER(D) semicolon.
+/* 10303-11:2004 production 248
+ * inverse_attr = attribute_decl ’:’ [ ( SET | BAG ) [ bound_spec ] OF ] entity_ref FOR [ entity_ref ’.’ ] attribute_ref ’;’ .
+ *
+ * NOTE - production 279 (RENAMED attr) isn't implemented
+ */
+inverse_attr(A) ::= attribute_decl(B) TOK_COLON set_or_bag_of_entity(C)
+            TOK_FOR TOK_IDENTIFIER(D) semicolon.
 {
-    Expression e = EXPcreate(Type_Attribute);
-
-    e->symbol = *B.symbol;
-    SYMBOL_destroy(B.symbol);
-
     if (C.type) {
-        A = VARcreate(e, C.type);
+        A = VARcreate(B, C.type);
     } else {
         Type t = TYPEcreate_from_body_anonymously(C.body);
         SCOPEadd_super(t);
-        A = VARcreate(e, t);
+        A = VARcreate(B, t);
     }
 
     A->flags.attribute = true;
     A->inverse_symbol = D.symbol;
 }
 
+/* 10303-11:2004 production 249
+ * inverse_clause = INVERSE inverse_attr { inverse_attr } .
+ */
 inverse_clause(A) ::= /*NULL*/.
 {
     A = LIST_NULL;
@@ -1560,14 +1509,15 @@ inverse_clause(A) ::= TOK_INVERSE inverse_attr_list(B).
     A = B;
 }
 
-limit_spec(A) ::= TOK_LEFT_BRACKET expression(B) TOK_COLON expression(C)
-		  TOK_RIGHT_BRACKET.
+/* 10303-11:2004 production 185 bound_spec = '[' bound_1 ':' bound_2 ']' . */
+bound_spec(A) ::= TOK_LEFT_BRACKET expression(B) TOK_COLON expression(C)
+          TOK_RIGHT_BRACKET.
 {
     A.lower_limit = B;
     A.upper_limit = C;
 }
 
-list_type(A) ::= TOK_LIST limit_spec(B) TOK_OF unique(C) attribute_type(D).
+list_type(A) ::= TOK_LIST bound_spec(B) TOK_OF unique(C) attribute_type(D).
 {
     A = TYPEBODYcreate(list_);
     A->base = D;
@@ -1587,21 +1537,28 @@ literal(A) ::= TOK_INTEGER_LITERAL(B).
     if (B.iVal == 0) {
         A = LITERAL_ZERO;
     } else if (B.iVal == 1) {
-	A = LITERAL_ONE;
+    A = LITERAL_ONE;
     } else {
-	A = EXPcreate_simple(Type_Integer);
-	A->u.integer = (int)B.iVal;
-	resolved_all(A);
+    A = EXPcreate_simple(Type_Integer);
+    A->u.integer = (int)B.iVal;
+    resolved_all(A);
     }
 }
 literal(A) ::= TOK_REAL_LITERAL(B).
 {
-    if (B.rVal == 0.0) {
-	A = LITERAL_ZERO;
+    /* if rVal (a double) is nonzero and has magnitude <= the smallest non-denormal float, print a warning */
+    if( ( fabs( B.rVal ) <= FLT_MIN ) && ( fabs( B.rVal ) > 0 ) ) {
+        Symbol sym;
+        sym.line = yylineno;
+        sym.filename = current_filename;
+        ERRORreport_with_symbol(WARN_SMALL_REAL, &sym, B.rVal );
+    }
+    if( fabs( B.rVal ) < DBL_MIN ) {
+        A = LITERAL_ZERO;
     } else {
-	A = EXPcreate_simple(Type_Real);
-	A->u.real = B.rVal;
-	resolved_all(A);
+        A = EXPcreate_simple(Type_Real);
+        A->u.real = B.rVal;
+        resolved_all(A);
     }
 }
 literal(A) ::= TOK_STRING_LITERAL(B).
@@ -1649,13 +1606,13 @@ local_variable ::= id_list(A) TOK_COLON parameter_type(B) semicolon.
     e = EXPcreate(Type_Attribute);
     e->symbol = *sym; SYMBOL_destroy(sym);
     v = VARcreate(e, B);
-    DICTdefine(CURRENT_SCOPE->symbol_table, e->symbol.name, (Generic)v,
-	&e->symbol, OBJ_VARIABLE);
+    v->offset = local_var_count++;
+    DICTdefine(CURRENT_SCOPE->symbol_table, e->symbol.name, (Generic)v, &e->symbol, OBJ_VARIABLE);
     LISTod;
     LISTfree(A);
 }
-local_variable ::= id_list(A) TOK_COLON parameter_type(B) local_initializer(C)
-		   semicolon.
+
+local_variable ::= id_list(A) TOK_COLON parameter_type(B) local_initializer(C) semicolon.
 {
     Expression e;
     Variable v;
@@ -1663,9 +1620,10 @@ local_variable ::= id_list(A) TOK_COLON parameter_type(B) local_initializer(C)
     e = EXPcreate(Type_Attribute);
     e->symbol = *sym; SYMBOL_destroy(sym);
     v = VARcreate(e, B);
+    v->offset = local_var_count++;
     v->initializer = C;
     DICTdefine(CURRENT_SCOPE->symbol_table, e->symbol.name, (Generic)v,
-	&e->symbol, OBJ_VARIABLE);
+    &e->symbol, OBJ_VARIABLE);
     LISTod;
     LISTfree(A);
 }
@@ -1676,14 +1634,15 @@ local_body(A) ::= local_variable(B) local_body.
     A = B;
 }
 
-local_decl ::= TOK_LOCAL allow_generic_types local_body TOK_END_LOCAL semicolon disallow_generic_types.
+local_decl ::= TOK_LOCAL local_decl_rules_on local_body TOK_END_LOCAL semicolon local_decl_rules_off.
 
-allow_generic_types ::= /* subroutine */.
+local_decl_rules_on ::= /* subroutine */.
 {
     tag_count = 0; /* don't signal an error if we find a generic_type */
+    local_var_count = 0; /* used to keep local var decl's in the same order */
 }
 
-disallow_generic_types ::= /* subroutine */.
+local_decl_rules_off ::= /* subroutine */.
 {
     tag_count = -1; /* signal an error if we find a generic_type */
 }
@@ -1698,7 +1657,7 @@ defined_type(A) ::= TOK_IDENTIFIER(B).
 defined_type_list(A) ::= defined_type(B).
 {
     A = LISTcreate();
-    LISTadd(A, (Generic)B);
+    LISTadd_last(A, (Generic)B);
 
 }
 defined_type_list(A) ::= defined_type_list(B) TOK_COMMA defined_type(C).
@@ -1779,7 +1738,7 @@ proc_call_statement(A) ::= procedure_id(B) semicolon.
 }
 
 procedure_decl ::= procedure_header(A) action_body(B) TOK_END_PROCEDURE
-		   semicolon.
+           semicolon.
 {
     PROCput_body(CURRENT_SCOPE, B);
     ALGput_full_text(CURRENT_SCOPE, A, SCANtell());
@@ -1787,13 +1746,13 @@ procedure_decl ::= procedure_header(A) action_body(B) TOK_END_PROCEDURE
 }
 
 procedure_header(A) ::= TOK_PROCEDURE ph_get_line(B) ph_push_scope
-			formal_parameter_list(C) semicolon.
+            formal_parameter_list(C) semicolon.
 {
     Procedure p = CURRENT_SCOPE;
     p->u.proc->parameters = C;
     p->u.proc->pcount = LISTget_length(C);
     p->u.proc->tag_count = tag_count;
-    tag_count = -1;	/* done with parameters, no new tags can be defined */
+    tag_count = -1;    /* done with parameters, no new tags can be defined */
     A = B;
 }
 
@@ -1803,7 +1762,7 @@ ph_push_scope ::= TOK_IDENTIFIER(A).
     tag_count = 0;
 
     if (print_objects_while_running & OBJ_PROCEDURE_BITS) {
-	fprintf(stdout, "parse: %s (procedure)\n", A.symbol->name);
+    fprintf( stderr, "parse: %s (procedure)\n", A.symbol->name);
     }
 
     PUSH_SCOPE(p, A.symbol, OBJ_PROCEDURE);
@@ -1845,17 +1804,21 @@ qualifier(A) ::= TOK_BACKSLASH TOK_IDENTIFIER(B). [TOK_NOT]
     A.expr->e.op2->symbol = *B.symbol;
     SYMBOL_destroy(B.symbol);
 }
+
+/* 10303-11:2004 production 239   index_qualifier = '[' index_1 [ ':' index_2 ] ']' . */
 qualifier(A) ::= TOK_LEFT_BRACKET simple_expression(B) TOK_RIGHT_BRACKET.
 {
     A.expr = A.first = BIN_EXPcreate(OP_ARRAY_ELEMENT, (Expression)0,
-	(Expression)0);
+    (Expression)0);
     A.expr->e.op2 = B;
 }
+
+/* 10303-11:2004 production 239   index_qualifier = '[' index_1 [ ':' index_2 ] ']' . */
 qualifier(A) ::= TOK_LEFT_BRACKET simple_expression(B) TOK_COLON
-		 simple_expression(C) TOK_RIGHT_BRACKET.
+         simple_expression(C) TOK_RIGHT_BRACKET.
 {
     A.expr = A.first = TERN_EXPcreate(OP_SUBCOMPONENT, (Expression)0,
-	(Expression)0, (Expression)0);
+    (Expression)0, (Expression)0);
     A.expr->e.op2 = B;
     A.expr->e.op3 = C;
 }
@@ -1868,7 +1831,7 @@ query_expression(A) ::= query_start(B) expression(C) TOK_RIGHT_PAREN.
 }
 
 query_start(A) ::= TOK_QUERY TOK_LEFT_PAREN TOK_IDENTIFIER(B) TOK_ALL_IN
-		   expression(C) TOK_SUCH_THAT.
+           expression(C) TOK_SUCH_THAT.
 {
     A = QUERYcreate(B.symbol, C);
     SYMBOL_destroy(B.symbol);
@@ -1910,8 +1873,8 @@ rel_op(A) ::= TOK_INST_NOT_EQUAL.
 
 /* repeat_statement causes a scope creation if an increment_control exists */
 repeat_statement(A) ::= TOK_REPEAT increment_control while_control(B)
-			until_control(C) semicolon statement_rep(D)
-			TOK_END_REPEAT semicolon.
+            until_control(C) semicolon statement_rep(D)
+            TOK_END_REPEAT semicolon.
 {
     A = LOOPcreate(CURRENT_SCOPE, B, C, D);
 
@@ -1919,7 +1882,7 @@ repeat_statement(A) ::= TOK_REPEAT increment_control while_control(B)
     POP_SCOPE();
 }
 repeat_statement(A) ::= TOK_REPEAT while_control(B) until_control(C) semicolon
-			statement_rep(D) TOK_END_REPEAT semicolon.
+            statement_rep(D) TOK_END_REPEAT semicolon.
 {
     A = LOOPcreate((struct Scope_ *)0, B, C, D);
 }
@@ -1929,7 +1892,7 @@ return_statement(A) ::= TOK_RETURN semicolon.
     A = RETcreate((Expression)0);
 }
 return_statement(A) ::= TOK_RETURN TOK_LEFT_PAREN expression(B) TOK_RIGHT_PAREN
-			semicolon.
+            semicolon.
 {
     A = RETcreate(B);
 }
@@ -1940,7 +1903,7 @@ right_curl ::= TOK_RIGHT_CURL.
 }
 
 rule_decl ::= rule_header(A) action_body(B) where_rule(C) TOK_END_RULE
-	      semicolon.
+          semicolon.
 {
     RULEput_body(CURRENT_SCOPE, B);
     RULEput_where(CURRENT_SCOPE, C);
@@ -1966,23 +1929,23 @@ rule_formal_parameter(A) ::= TOK_IDENTIFIER(B).
 
     /* link it in to the current scope's dict */
     DICTdefine(CURRENT_SCOPE->symbol_table, B.symbol->name, (Generic)A,
-	B.symbol, OBJ_VARIABLE);
+    B.symbol, OBJ_VARIABLE);
 }
 
 rule_formal_parameter_list(A) ::= rule_formal_parameter(B).
 {
     A = LISTcreate();
-    LISTadd(A, (Generic)B); 
+    LISTadd_last(A, (Generic)B); 
 }
 rule_formal_parameter_list(A) ::= rule_formal_parameter_list(B) TOK_COMMA
-				  rule_formal_parameter(C).
+                  rule_formal_parameter(C).
 {
     A = B;
     LISTadd_last(A, (Generic)C);
 }
 
 rule_header(A) ::= rh_start(B) rule_formal_parameter_list(C) TOK_RIGHT_PAREN
-		   semicolon.
+           semicolon.
 {
     CURRENT_SCOPE->u.rule->parameters = C;
 
@@ -1990,12 +1953,12 @@ rule_header(A) ::= rh_start(B) rule_formal_parameter_list(C) TOK_RIGHT_PAREN
 }
 
 rh_start(A) ::= TOK_RULE rh_get_line(B) TOK_IDENTIFIER(C) TOK_FOR
-		TOK_LEFT_PAREN.
+        TOK_LEFT_PAREN.
 {
     Rule r = ALGcreate(OBJ_RULE);
 
     if (print_objects_while_running & OBJ_RULE_BITS) {
-	fprintf(stdout, "parse: %s (rule)\n", C.symbol->name);
+    fprintf( stderr, "parse: %s (rule)\n", C.symbol->name);
     }
 
     PUSH_SCOPE(r, C.symbol, OBJ_RULE);
@@ -2031,21 +1994,21 @@ schema_header ::= TOK_SCHEMA TOK_IDENTIFIER(A) semicolon.
     Schema schema = ( Schema ) DICTlookup(CURRENT_SCOPE->symbol_table, A.symbol->name);
 
     if (print_objects_while_running & OBJ_SCHEMA_BITS) {
-	fprintf(stdout, "parse: %s (schema)\n", A.symbol->name);
+    fprintf( stderr, "parse: %s (schema)\n", A.symbol->name);
     }
 
     if (EXPRESSignore_duplicate_schemas && schema) {
-	SCANskip_to_end_schema(parseData.scanner);
-	PUSH_SCOPE_DUMMY();
+    SCANskip_to_end_schema(parseData.scanner);
+    PUSH_SCOPE_DUMMY();
     } else {
-	schema = SCHEMAcreate();
-	LISTadd_last(PARSEnew_schemas, (Generic)schema);
-	PUSH_SCOPE(schema, A.symbol, OBJ_SCHEMA);
+    schema = SCHEMAcreate();
+    LISTadd_last(PARSEnew_schemas, (Generic)schema);
+    PUSH_SCOPE(schema, A.symbol, OBJ_SCHEMA);
     }
 }
 
 select_type(A) ::= TOK_SELECT TOK_LEFT_PAREN defined_type_list(B)
-		   TOK_RIGHT_PAREN.
+           TOK_RIGHT_PAREN.
 {
     A = TYPEBODYcreate(select_);
     A->list = B;
@@ -2056,7 +2019,7 @@ semicolon ::= TOK_SEMICOLON.
     yyerrok;
 }
 
-set_type(A) ::= TOK_SET limit_spec(B) TOK_OF attribute_type(C).
+set_type(A) ::= TOK_SET bound_spec(B) TOK_OF attribute_type(C).
 {
     A = TYPEBODYcreate(set_);
     A->base = C;
@@ -2170,13 +2133,13 @@ supertype_decl(A) ::= TOK_ABSTRACT TOK_SUPERTYPE.
     A.abstract = true;
 }
 supertype_decl(A) ::= TOK_SUPERTYPE TOK_OF TOK_LEFT_PAREN
-		      supertype_expression(B) TOK_RIGHT_PAREN.
+              supertype_expression(B) TOK_RIGHT_PAREN.
 {
     A.subtypes = B;
     A.abstract = false;
 }
 supertype_decl(A) ::= TOK_ABSTRACT TOK_SUPERTYPE TOK_OF TOK_LEFT_PAREN
-		      supertype_expression(B) TOK_RIGHT_PAREN.
+              supertype_expression(B) TOK_RIGHT_PAREN.
 {
     A.subtypes = B;
     A.abstract = true;
@@ -2191,7 +2154,7 @@ supertype_expression(A) ::= supertype_expression(B) TOK_AND supertype_factor(C).
     A = BIN_EXPcreate(OP_AND, B, C.subtypes);
 }
 supertype_expression(A) ::= supertype_expression(B) TOK_ANDOR
-			    supertype_factor(C).
+                supertype_factor(C).
 {
     A = BIN_EXPcreate(OP_ANDOR, B, C.subtypes);
 }
@@ -2202,7 +2165,7 @@ supertype_expression_list(A) ::= supertype_expression(B).
     LISTadd_last(A, (Generic)B);
 }
 supertype_expression_list(A) ::= supertype_expression_list(B) TOK_COMMA
-				 supertype_expression(C).
+                 supertype_expression(C).
 {
     LISTadd_last(B, (Generic)C);
     A = B;
@@ -2213,7 +2176,7 @@ supertype_factor(A) ::= identifier(B).
     A.subtypes = B;
 }
 supertype_factor(A) ::= oneof_op TOK_LEFT_PAREN supertype_expression_list(B)
-			TOK_RIGHT_PAREN.
+            TOK_RIGHT_PAREN.
 {
     A.subtypes = EXPcreate(Type_Oneof);
     A.subtypes->u.list = B;
@@ -2339,17 +2302,15 @@ unique(A) ::= TOK_UNIQUE.
     A.unique = 1;
 }
 
-qualified_attr(A) ::= TOK_IDENTIFIER(B).
+/* 10303-11:2004 production 275
+ * qualified_attribute = SELF group_qualifier attribute_qualifier .
+ *
+ * NOTE rule 279 doesn't seem to be implemented
+ * redeclared_attribute = qualified_attribute [ RENAMED attribute_id ] .
+ */
+qualified_attr(A) ::= attribute_decl(B).
 {
-    A = QUAL_ATTR_new();
-    A->attribute = B.symbol;
-}
-qualified_attr(A) ::= TOK_SELF TOK_BACKSLASH TOK_IDENTIFIER(B) TOK_DOT
-		      TOK_IDENTIFIER(C).
-{
-    A = QUAL_ATTR_new();
-    A->entity = B.symbol;
-    A->attribute = C.symbol;
+    A = B;
 }
 
 qualified_attr_list(A) ::= qualified_attr(B).
@@ -2369,7 +2330,7 @@ labelled_attrib_list(A) ::= qualified_attr_list(B) semicolon.
     A = B;
 }
 labelled_attrib_list(A) ::= TOK_IDENTIFIER(B) TOK_COLON qualified_attr_list(C)
-			    semicolon.
+                semicolon.
 {
     LISTadd_first(C, (Generic)B.symbol); 
     A = C;
@@ -2382,7 +2343,7 @@ labelled_attrib_list_list(A) ::= labelled_attrib_list(B).
     LISTadd_last(A, (Generic)B);
 }
 labelled_attrib_list_list(A) ::= labelled_attrib_list_list(B)
-				 labelled_attrib_list(C).
+                 labelled_attrib_list(C).
 {
     LISTadd_last(B, (Generic)C);
     A = B;
@@ -2419,17 +2380,17 @@ where_clause(A) ::= TOK_IDENTIFIER(B) TOK_COLON expression(C) semicolon.
     A->expr = C;
 
     if (!CURRENT_SCOPE->symbol_table) {
-	CURRENT_SCOPE->symbol_table = DICTcreate(25);
+    CURRENT_SCOPE->symbol_table = DICTcreate(25);
     }
 
     DICTdefine(CURRENT_SCOPE->symbol_table, B.symbol->name, (Generic)A,
-	B.symbol, OBJ_WHERE);
+    B.symbol, OBJ_WHERE);
 }
 
 where_clause_list(A) ::= where_clause(B).
 {
     A = LISTcreate();
-    LISTadd(A, (Generic)B);
+    LISTadd_last(A, (Generic)B);
 }
 where_clause_list(A) ::= where_clause_list(B) where_clause(C).
 {
@@ -2463,18 +2424,23 @@ while_control(A) ::= TOK_WHILE expression(B).
 %syntax_error {
     Symbol sym;
 
+    (void) yymajor; /* quell unused param warning */
+    (void) yyminor;
     yyerrstatus++;
 
     sym.line = yylineno;
     sym.filename = current_filename;
 
-    ERRORreport_with_symbol(ERROR_syntax, &sym, "",
-	CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
+    ERRORreport_with_symbol(SYNTAX, &sym, "Syntax error",
+    CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
 }
 
 %stack_size 0
 
 %stack_overflow {
     fprintf(stderr, "Express parser experienced stack overflow.\n");
-    fprintf(stderr, "Last token had value %x\n", yypMinor->yy0.val);
+    /* 
+     * fprintf(stderr, "Last token had value %x\n", yypMinor->yy0.val);
+     * fprintf(stderr, "Last token had value %x\n", yypParser->yytos->minor.yy0.val);
+     */
 }

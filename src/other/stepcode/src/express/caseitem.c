@@ -29,15 +29,13 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
 #include "express/caseitem.h"
 
-struct freelist_head CASE_IT_fl;
 
 /** Initialize the Case Item module. */
 void
-CASE_ITinitialize( void ) {
-    MEMinitialize( &CASE_IT_fl, sizeof( struct Case_Item_ ), 500, 100 );
+CASE_ITinitialize(void)
+{
 }
 
 /**
@@ -50,10 +48,11 @@ CASE_ITinitialize( void ) {
 ** \note If the 'labels' parameter is LIST_NULL, a case item
 ** matching in the default case is created.
 */
-Case_Item CASE_ITcreate( Linked_List labels, Statement statement ) {
+Case_Item CASE_ITcreate(Linked_List labels, Statement statement)
+{
     struct Case_Item_ *s = CASE_IT_new();
 
     s->labels = labels;
     s->action = statement;
-    return( s );
+    return(s);
 }

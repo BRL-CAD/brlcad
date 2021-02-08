@@ -58,7 +58,7 @@ class TestINTEGER(unittest.TestCase):
     
     def test_type(self):
         a = INTEGER(5)
-        self.assertTrue(type(a) == INTEGER)
+        self.assertTrue(isinstance(a, INTEGER))
     
     def test_inherit_from_NUMBER(self):
         a = INTEGER(6)
@@ -70,7 +70,7 @@ class TestINTEGER(unittest.TestCase):
         b = INTEGER(3)
         c = a*b
         self.assertEqual(c,6)
-        self.assertTrue(type(c) == int)
+        self.assertTrue(isinstance(c, int))
     
     def test_create_from_string_exception(self):
         '''
@@ -103,7 +103,7 @@ class TestREAL(unittest.TestCase):
     
     def test_type(self):
         a = REAL(5)
-        self.assertTrue(type(a) == REAL)
+        self.assertTrue(isinstance(a, REAL))
     
     def test_inherit_from_NUMBER(self):
         a = REAL(4.5)
@@ -115,13 +115,13 @@ class TestREAL(unittest.TestCase):
         b = REAL(2)
         c = a*b
         self.assertEqual(c,3)
-        self.assertTrue(type(c) == float)
+        self.assertTrue(isinstance(c, float))
     
     def test_REAL_INTEGER_ops(self):
         a = REAL(5.5)
         b = INTEGER(3)
         self.assertEqual(a+b,8.5)
-        self.assertTrue(type(a+b) == float)
+        self.assertTrue(isinstance(a+b, float))
         
     def test_create_from_string_exception(self):
         '''
@@ -217,7 +217,7 @@ class TestARRAY(unittest.TestCase):
             self.fail('ExpectedException not thrown')
     
     def test_array_optional(self):
-        # if OPTIONAL is not set explicitely to True
+        # if OPTIONAL is not set explicitly to True
         # then each value must be set
         a = ARRAY(1,3,REAL)
         try:

@@ -35,34 +35,44 @@ enum  FileTypeCode {
     WORKING_SESSION =  2
 };
 
-class SC_EDITOR_EXPORT STEPfile {
+class SC_EDITOR_EXPORT STEPfile
+{
     protected:
         //data members
 
-        InstMgr & _instances;
-        Registry & _reg;
+        InstMgr &_instances;
+        Registry &_reg;
 
-        InstMgr & instances()  {
+        InstMgr &instances()
+        {
             return _instances;
         }
-        Registry & reg() {
+        Registry &reg()
+        {
             return _reg;
         }
         int _fileIdIncr;   ///< Increment value to be added to FileId Numbers on input
 
 //header information
-        InstMgr * _headerInstances;
-        Registry * _headerRegistry;
+        InstMgr *_headerInstances;
+        Registry *_headerRegistry;
 
         int _headerId;     ///< STEPfile_id given to SDAI_Application_instance from header section
 
 //file information
-        DirObj * _currentDir;
+        DirObj *_currentDir;
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::string _fileName;
 
         //the following are used to compute read/write progress
         std::ifstream::pos_type _iFileSize; ///< input file size
         std::ifstream::pos_type _iFileCurrentPosition; ///< input file position (from ifstream::tellg())
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
         bool _iFileStage1Done; ///< set immediately before ReadData1() returns
         int _oFileInstsWritten; ///< number of instances that have been written
 
@@ -92,146 +102,162 @@ class SC_EDITOR_EXPORT STEPfile {
 //file type information
         FileTypeCode _fileType;
         char ENTITY_NAME_DELIM;
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable: 4251 )
+#endif
         std::string FILE_DELIM;
         std::string END_FILE_DELIM;
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 //public member functions
     public:
 
 //public access to member variables
 //header information
-        InstMgr * HeaderInstances() {
+        InstMgr *HeaderInstances()
+        {
             return _headerInstances;
         }
-        const Registry * HeaderRegistry() {
+        const Registry *HeaderRegistry()
+        {
             return _headerRegistry;
         }
 // to create header instances
-        SDAI_Application_instance * HeaderDefaultFileName();
-        SDAI_Application_instance * HeaderDefaultFileDescription();
-        SDAI_Application_instance * HeaderDefaultFileSchema();
+        SDAI_Application_instance *HeaderDefaultFileName();
+        SDAI_Application_instance *HeaderDefaultFileDescription();
+        SDAI_Application_instance *HeaderDefaultFileSchema();
 
 //file information
-        std::string FileName() const {
+        std::string FileName() const
+        {
             return _fileName;
         }
-        std::string SetFileName( const std::string name = "" );
-        std::string TruncFileName( const std::string name ) const;
+        std::string SetFileName(const std::string name = "");
+        std::string TruncFileName(const std::string name) const;
         float GetReadProgress() const;
         float GetWriteProgress() const;
 
 //error information
-        ErrorDescriptor & Error() { /* const */
+        ErrorDescriptor &Error()    /* const */
+        {
             return _error;
         }
-        int ErrorCount() const  {
+        int ErrorCount() const
+        {
             return _errorCount;
         }
-        int WarningCount() const {
+        int WarningCount() const
+        {
             return _warningCount;
         }
-        Severity AppendEntityErrorMsg( ErrorDescriptor * e );
+        Severity AppendEntityErrorMsg(ErrorDescriptor *e);
 
 //version information
-        FileTypeCode FileType() const   {
+        FileTypeCode FileType() const
+        {
             return _fileType;
         }
-        void FileType( FileTypeCode ft ) {
+        void FileType(FileTypeCode ft)
+        {
             _fileType = ft;
         }
-        int SetFileType( FileTypeCode ft = VERSION_CURRENT );
+        int SetFileType(FileTypeCode ft = VERSION_CURRENT);
 
 //Reading and Writing
-        Severity ReadExchangeFile( const std::string filename = "", bool useTechCor = 1 );
-        Severity AppendExchangeFile( const std::string filename = "", bool useTechCor = 1 );
+        Severity ReadExchangeFile(const std::string filename = "", bool useTechCor = 1);
+        Severity AppendExchangeFile(const std::string filename = "", bool useTechCor = 1);
 
-        Severity ReadWorkingFile( const std::string filename = "", bool useTechCor = 1 );
-        Severity AppendWorkingFile( const std::string filename = "", bool useTechCor = 1 );
+        Severity ReadWorkingFile(const std::string filename = "", bool useTechCor = 1);
+        Severity AppendWorkingFile(const std::string filename = "", bool useTechCor = 1);
 
-        Severity AppendFile( istream * in, bool useTechCor = 1 ) ;
+        Severity AppendFile(istream *in, bool useTechCor = 1) ;
 
-        Severity WriteExchangeFile( ostream & out, int validate = 1,
-                                    int clearError = 1, int writeComments = 1 );
-        Severity WriteExchangeFile( const std::string filename = "", int validate = 1,
-                                    int clearError = 1, int writeComments = 1 );
-        Severity WriteValuePairsFile( ostream & out, int validate = 1,
-                                      int clearError = 1,
-                                      int writeComments = 1, int mixedCase = 1 );
+        Severity WriteExchangeFile(ostream &out, int validate = 1,
+                                   int clearError = 1, int writeComments = 1);
+        Severity WriteExchangeFile(const std::string filename = "", int validate = 1,
+                                   int clearError = 1, int writeComments = 1);
+        Severity WriteValuePairsFile(ostream &out, int validate = 1,
+                                     int clearError = 1,
+                                     int writeComments = 1, int mixedCase = 1);
 
-        Severity WriteWorkingFile( ostream & out, int clearError = 1,
-                                   int writeComments = 1 );
-        Severity WriteWorkingFile( const std::string filename = "", int clearError = 1,
-                                   int writeComments = 1 );
+        Severity WriteWorkingFile(ostream &out, int clearError = 1,
+                                  int writeComments = 1);
+        Severity WriteWorkingFile(const std::string filename = "", int clearError = 1,
+                                  int writeComments = 1);
 
-        stateEnum EntityWfState( char c );
+        stateEnum EntityWfState(char c);
 
         void Renumber();
 
 //constructors
-        STEPfile( Registry & r, InstMgr & i, const std::string filename = "", bool strict = true );
+        STEPfile(Registry &r, InstMgr &i, const std::string filename = "", bool strict = true);
         virtual ~STEPfile();
 
     protected:
 //member functions
         std::string schemaName(); /**< Returns and copies out schema name from header instances.
                                              Called by ReadExchangeFile */
-        istream * OpenInputFile( const std::string filename = "" );
-        void CloseInputFile( istream * in );
+        istream *OpenInputFile(const std::string filename = "");
+        void CloseInputFile(istream *in);
 
-        Severity ReadHeader( istream & in );
+        Severity ReadHeader(istream &in);
 
-        Severity HeaderVerifyInstances( InstMgr * im );
-        void HeaderMergeInstances( InstMgr * im );
+        Severity HeaderVerifyInstances(InstMgr *im);
+        void HeaderMergeInstances(InstMgr *im);
 
-        int HeaderId( int increment = 1 );
-        int HeaderId( const char * nm = "\0" );
+        int HeaderId(int increment = 1);
+        int HeaderId(const char *nm = "\0");
 
-        int ReadData1( istream & in ); /**< First pass, to create instances */
-        int ReadData2( istream & in, bool useTechCor = true ); /**< Second pass, to read instances */
+        int ReadData1(istream &in);    /**< First pass, to create instances */
+        int ReadData2(istream &in, bool useTechCor = true);    /**< Second pass, to read instances */
 
 // obsolete
-        int ReadWorkingData1( istream & in );
-        int ReadWorkingData2( istream & in, bool useTechCor = true );
+        int ReadWorkingData1(istream &in);
+        int ReadWorkingData2(istream &in, bool useTechCor = true);
 
-        void ReadRestOfFile( istream & in );
+        void ReadRestOfFile(istream &in);
 
         /// create instance - used by ReadData1()
-        SDAI_Application_instance  *  CreateInstance( istream & in, ostream & out );
+        SDAI_Application_instance    *CreateInstance(istream &in, ostream &out);
         /// create complex instance - used by CreateInstance()
-        SDAI_Application_instance  * CreateSubSuperInstance( istream & in, int fileid,
-                ErrorDescriptor & );
+        SDAI_Application_instance   *CreateSubSuperInstance(istream &in, int fileid,
+                ErrorDescriptor &);
 
         // read the instance - used by ReadData2()
-        SDAI_Application_instance  * ReadInstance( istream & in, ostream & out,
-                std::string & cmtStr, bool useTechCor = true );
+        SDAI_Application_instance   *ReadInstance(istream &in, ostream &out,
+                std::string &cmtStr, bool useTechCor = true);
 
         ///  reading scopes are still incomplete, CreateScopeInstances and ReadScopeInstances are stubs
-        Severity CreateScopeInstances( istream & in, SDAI_Application_instance_ptr  ** scopelist );
-        Severity ReadScopeInstances( istream & in );
+        Severity CreateScopeInstances(istream &in, SDAI_Application_instance_ptr   **scopelist);
+        Severity ReadScopeInstances(istream &in);
 //    Severity ReadSubSuperInstance(istream& in);
 
-        int FindDataSection( istream & in );
-        int FindHeaderSection( istream & in );
+        int FindDataSection(istream &in);
+        int FindHeaderSection(istream &in);
 
 // writing working session files
-        void WriteWorkingData( ostream & out, int writeComments = 1 );
+        void WriteWorkingData(ostream &out, int writeComments = 1);
 
 //called by WriteExchangeFile
-        ofstream * OpenOutputFile( const std::string filename = "" );
-        void CloseOutputFile( ostream * out );
+        ofstream *OpenOutputFile(const std::string filename = "");
+        void CloseOutputFile(ostream *out);
 
-        void WriteHeader( ostream & out );
-        void WriteHeaderInstance( SDAI_Application_instance * obj, ostream & out );
-        void WriteHeaderInstanceFileName( ostream & out );
-        void WriteHeaderInstanceFileDescription( ostream & out );
-        void WriteHeaderInstanceFileSchema( ostream & out );
+        void WriteHeader(ostream &out);
+        void WriteHeaderInstance(SDAI_Application_instance *obj, ostream &out);
+        void WriteHeaderInstanceFileName(ostream &out);
+        void WriteHeaderInstanceFileDescription(ostream &out);
+        void WriteHeaderInstanceFileSchema(ostream &out);
 
-        void WriteData( ostream & out, int writeComments = 1 );
-        void WriteValuePairsData( ostream & out, int writeComments = 1,
-                                  int mixedCase = 1 );
+        void WriteData(ostream &out, int writeComments = 1);
+        void WriteValuePairsData(ostream &out, int writeComments = 1,
+                                 int mixedCase = 1);
 
-        int IncrementFileId( int fileid );
-        int FileIdIncr() {
+        int IncrementFileId(int fileid);
+        int FileIdIncr()
+        {
             return _fileIdIncr;
         }
         void SetFileIdIncrement();

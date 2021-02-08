@@ -26,7 +26,8 @@
 // The class SDAI_Model_contents_instances shall implement convenience functions by
 // SDAI_Model_contents in this part of ISO 10303
 
-class SC_DAI_EXPORT SDAI_Model_contents_instances : public SDAI_DAObject {
+class SC_DAI_EXPORT SDAI_Model_contents_instances : public SDAI_DAObject
+{
     public:
 
         SDAI_DAObject__set _instances;
@@ -36,11 +37,13 @@ class SC_DAI_EXPORT SDAI_Model_contents_instances : public SDAI_DAObject {
 
         // This function shall return the set of DAObjects contained in
         // the receiver.
-        SDAI_DAObject__set_var contents_() {
+        SDAI_DAObject__set_var contents_()
+        {
             return &_instances;
         }
-        SDAI_DAObject__set_var contents_() const {
-            return ( const SDAI_DAObject__set_var ) &_instances;
+        SDAI_DAObject__set_var contents_() const
+        {
+            return (SDAI_DAObject__set_var) &_instances;
         }
 
 };
@@ -52,7 +55,8 @@ SDAI_Model_contents_instances_var;
 
 // Model_contents_ptr def pushed ahead of #include for Entity_extent
 
-class SC_DAI_EXPORT SDAI_Model_contents : public SDAI_Session_instance {
+class SC_DAI_EXPORT SDAI_Model_contents : public SDAI_Session_instance
+{
 
 //friend class SDAI_Model;
 
@@ -89,9 +93,9 @@ class SC_DAI_EXPORT SDAI_Model_contents : public SDAI_Session_instance {
         SDAI_Entity_extent__set_var populated_folders_();
 
         SDAI_PID_DA_ptr
-        get_object_pid( const SDAI_DAObject_ptr & d ) const;
+        get_object_pid(const SDAI_DAObject_ptr &d) const;
 
-        SDAI_DAObject_ptr lookup( const SDAI_PID_DA_ptr & p ) const;
+        SDAI_DAObject_ptr lookup(const SDAI_PID_DA_ptr &p) const;
 
         /*
            SDAI operation declarations
@@ -103,10 +107,10 @@ class SC_DAI_EXPORT SDAI_Model_contents : public SDAI_Session_instance {
 //  private:
     public: // for now at least
         SDAI_DAObject_ptr
-        CreateEntityInstance( const char * Type );
+        CreateEntityInstance(const char *Type);
 
         // until we find out what this should really be in the spec
-        void AddInstance( const SDAI_DAObject_SDAI_ptr & appInst );
+        void AddInstance(const SDAI_DAObject_SDAI_ptr &appInst);
 //    void AddInstance(const Entity_instance_ptr& entityHandle);
         //void AddInstance(EntityInstanceH& entityHandle);
         /* Function:
@@ -131,7 +135,7 @@ class SC_DAI_EXPORT SDAI_Model_contents : public SDAI_Session_instance {
          */
 
         // until we find out what this should really be in the spec
-        void RemoveInstance( SDAI_DAObject_SDAI_ptr & appInst );
+        void RemoveInstance(SDAI_DAObject_SDAI_ptr &appInst);
 //    void RemoveInstance(Entity_instance_ptr& entityHandle);
         //void RemoveInstance(EntityInstanceH& entityHandle);
         /* Function
@@ -162,10 +166,10 @@ class SC_DAI_EXPORT SDAI_Model_contents : public SDAI_Session_instance {
          */
 #ifdef SDAI_CPP_LATE_BINDING
 #if 0 // for now
-        Any_var GetEntity_extent( const std::string & entityName );
-        const Any_var GetEntity_extent( const std::string & entityName ) const;
-        Any_var GetEntity_extent( const Entity_ptr & ep );
-        const Any_var GetEntity_extent( const Entity_ptr & ep ) const;
+        Any_var GetEntity_extent(const std::string &entityName);
+        const Any_var GetEntity_extent(const std::string &entityName) const;
+        Any_var GetEntity_extent(const Entity_ptr &ep);
+        const Any_var GetEntity_extent(const Entity_ptr &ep) const;
 #endif
         /* Function:
            The GetEntity_extent function shall retrieve an entity folder from

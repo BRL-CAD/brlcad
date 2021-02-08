@@ -24,15 +24,18 @@
 #include <iostream>
 #include "sc_memmgr.h"
 
-void * MgrNode::SEE() {
-    return ( di ? di->SEE() : 0 );
+void *MgrNode::SEE()
+{
+    return (di ? di->SEE() : 0);
 }
 
-int MgrNode::GetFileId() {
-    return ( se ? se->GetFileId() : -1 );
+int MgrNode::GetFileId()
+{
+    return (se ? se->GetFileId() : -1);
 }
 
-void MgrNode::Remove() {
+void MgrNode::Remove()
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::Remove()\n";
 //    if(debug_level >= PrintValues)
@@ -42,34 +45,36 @@ void MgrNode::Remove() {
 }
 
 // searches current list for fileId
-MgrNode * MgrNode::StateFindFileId( int fileId ) {
+MgrNode *MgrNode::StateFindFileId(int fileId)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::StateFindFileId()\n";
-    MgrNode * startNode = this;
-    if( startNode->GetFileId() == fileId ) {
+    MgrNode *startNode = this;
+    if(startNode->GetFileId() == fileId) {
         return this;
     } else {
         // mn is really a MgrNode
-        MgrNode * mn = ( MgrNode * )( startNode->Next() );
-        while( mn != startNode ) {
-            if( mn->GetFileId() == fileId ) {
-                return ( MgrNode * )mn;
+        MgrNode *mn = (MgrNode *)(startNode->Next());
+        while(mn != startNode) {
+            if(mn->GetFileId() == fileId) {
+                return (MgrNode *)mn;
             }
-            mn = ( ( MgrNode * )mn->Next() );
+            mn = ((MgrNode *)mn->Next());
         }
-        return ( MgrNode * )0;
+        return (MgrNode *)0;
     }
 }
 
-MgrNode::~MgrNode() {
+MgrNode::~MgrNode()
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::~MgrNode()\n";
 //    if(debug_level >= PrintValues)
 //  cout << "MgrNode::this : '" << this << "'\n";
-    if( se ) {
+    if(se) {
         delete se;
     }
-    if( di ) {
+    if(di) {
         delete di;
     }
 //    GenericNode::Remove(); // this is called by default.
@@ -77,23 +82,26 @@ MgrNode::~MgrNode() {
 
 ///////////////////// class MgrNode Display Functions /////////////////////////
 
-displayStateEnum MgrNode::DisplayState() {
+displayStateEnum MgrNode::DisplayState()
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::DisplayState()\n";
-    return ( di ? di->DisplayState() : noMapState );
+    return (di ? di->DisplayState() : noMapState);
 }
 
-int MgrNode::IsDisplayState( displayStateEnum ds ) {
+int MgrNode::IsDisplayState(displayStateEnum ds)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::IsDisplayState()\n";
-    return ( di ? di->DisplayListMember( ds ) : 0 );
+    return (di ? di->DisplayListMember(ds) : 0);
 }
 
-GenericNode * MgrNode::NextDisplay() {
+GenericNode *MgrNode::NextDisplay()
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::NextDisplay()\n";
 //    return (di ? ((DisplayNode *)di->Next()) : (DisplayNode *)0);
-    if( di ) {
+    if(di) {
 //  GenericNode *dn = di->Next();
 //  return (DisplayNode *)dn;
 //      return (DisplayNode *)(di->Next());
@@ -103,11 +111,12 @@ GenericNode * MgrNode::NextDisplay() {
     }
 }
 
-GenericNode * MgrNode::PrevDisplay() {
+GenericNode *MgrNode::PrevDisplay()
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::PrevDisplay()\n";
 //    return (di ? ((DisplayNode *)di->Prev()) : 0);
-    if( di ) {
+    if(di) {
         return di->Prev();
     } else {
         return 0;
@@ -117,30 +126,34 @@ GenericNode * MgrNode::PrevDisplay() {
 // STATE LIST OPERATIONS
 
 // deletes from previous cmd list & puts on cmd list cmdList
-int MgrNode::ChangeList( DisplayNodeList * cmdList ) {
-    if( !di ) {
-        di = new class DisplayNode( this );
+int MgrNode::ChangeList(DisplayNodeList *cmdList)
+{
+    if(!di) {
+        di = new class DisplayNode(this);
     }
-    return di->ChangeList( cmdList );
+    return di->ChangeList(cmdList);
 }
 
 // deletes from previous cmd list & puts on cmd list cmdList
-int MgrNode::ChangeList( MgrNodeList * cmdList ) {
+int MgrNode::ChangeList(MgrNodeList *cmdList)
+{
     Remove();
-    cmdList->Append( this );
+    cmdList->Append(this);
     return 1;
 }
 
-int MgrNode::ChangeState( displayStateEnum s ) {
+int MgrNode::ChangeState(displayStateEnum s)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::ChangeState()\n";
-    if( di ) {
-        return di->ChangeState( s );
+    if(di) {
+        return di->ChangeState(s);
     }
     return 0;
 }
 
-int MgrNode::ChangeState( stateEnum s ) {
+int MgrNode::ChangeState(stateEnum s)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::ChangeState()\n";
     currState = s;
@@ -148,57 +161,62 @@ int MgrNode::ChangeState( stateEnum s ) {
     return 1;
 }
 
-void MgrNode::Init( SDAI_Application_instance * s,
-                    stateEnum listState,
-                    MgrNodeList * list ) {
+void MgrNode::Init(SDAI_Application_instance *s,
+                   stateEnum listState,
+                   MgrNodeList *list)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::Init()\n";
     se = s;
     arrayIndex = -1;
     di = 0;
     currState = listState;
-    if( list ) {
-        list->Append( this );
+    if(list) {
+        list->Append(this);
     }
 }
 
 // used for sentinel node on lists of MgrNodes
-MgrNode::MgrNode() {
+MgrNode::MgrNode()
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::MgrNode()\n";
 //    if(debug_level >= PrintValues)
 //  cout << "MgrNode::this : '" << this << "'\n";
-    Init( 0, noStateSE, 0 );
+    Init(0, noStateSE, 0);
 }
 
-MgrNode::MgrNode( SDAI_Application_instance * StepEntPtr ) {
+MgrNode::MgrNode(SDAI_Application_instance *StepEntPtr)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::MgrNode()\n";
 //    if(debug_level >= PrintValues)
 //  cout << "MgrNode::this : '" << this << "'\n";
-    Init( StepEntPtr, noStateSE, 0 );
+    Init(StepEntPtr, noStateSE, 0);
 }
 
 // 'listState' ==
 //  completeSE - if reading valid exchange file
 //  incompleteSE or completeSE - if reading working session file
 //  newSE - if instance is created by user using editor (probe)
-MgrNode::MgrNode( SDAI_Application_instance * StepEntPtr, stateEnum listState ) {
+MgrNode::MgrNode(SDAI_Application_instance *StepEntPtr, stateEnum listState)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::MgrNode()\n";
 //    if(debug_level >= PrintValues)
 //  cout << "MgrNode::this : '" << this << "'\n";
-    Init( StepEntPtr, listState, 0 );
+    Init(StepEntPtr, listState, 0);
 }
 // 'listState' ==
 //  completeSE - if reading valid exchange file
 //  incompleteSE or completeSE - if reading working session file
 //  newSE - if instance is created by user using editor (probe)
-MgrNode::MgrNode( SDAI_Application_instance * StepEntPtr, stateEnum listState, MgrNodeList * list ) {
+MgrNode::MgrNode(SDAI_Application_instance *StepEntPtr, stateEnum listState, MgrNodeList *list)
+{
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::MgrNode()\n";
 //    if(debug_level >= PrintValues)
 //  cout << "MgrNode::this : '" << this << "'\n";
-    Init( StepEntPtr, listState, list );
+    Init(StepEntPtr, listState, list);
 
 }

@@ -96,10 +96,10 @@
 typedef enum { HASH_FIND, HASH_INSERT, HASH_DELETE } Action;
 
 struct Element {
-    char      *      key;
-    void      *      data;
-    struct Element * next;
-    struct Symbol  * symbol;   //for debugging hash conflicts
+    char            *key;
+    void            *data;
+    struct Element *next;
+    struct Symbol   *symbol;   //for debugging hash conflicts
     char            type;      //user-supplied type
 };
 
@@ -112,16 +112,16 @@ struct Hash_Table {
     unsigned int    MaxLoadFactor;
 #define DIRECTORY_SIZE        256
 #define DIRECTORY_SIZE_SHIFT    8    // log2(DIRECTORY_SIZE)
-    struct Element ** Directory[DIRECTORY_SIZE];
+    struct Element **Directory[DIRECTORY_SIZE];
 };
 
 typedef struct {
     unsigned int i;         // segment index (i think)
     unsigned int j;         // key index in segment (ditto)
-    struct Element * p;     // usually the next element to be returned
-    struct Hash_Table * table;
+    struct Element *p;      // usually the next element to be returned
+    struct Hash_Table *table;
     char type;
-    struct Element * e;   /* originally thought of as a place for */
+    struct Element *e;    /* originally thought of as a place for */
     /* the caller of HASHlist to temporarily stash the return value */
     /* to allow the caller (i.e., DICTdo) to be macroized, but now */
     /* conveniently used by HASHlist, which both stores the ultimate */
@@ -132,15 +132,15 @@ typedef struct {
 extern "C" {
 #endif
 
-    SC_UTILS_EXPORT struct Hash_Table * SC_HASHcreate( unsigned );
-    SC_UTILS_EXPORT void               SC_HASHinitialize( void );
-    SC_UTILS_EXPORT void       *       SC_HASHfind( struct Hash_Table *,  char * );
-    SC_UTILS_EXPORT void               SC_HASHinsert( struct Hash_Table *, char *, void * );
-    SC_UTILS_EXPORT void               SC_HASHdestroy( struct Hash_Table * );
-    SC_UTILS_EXPORT struct Element  *  SC_HASHsearch( struct Hash_Table *, const struct Element *, Action );
-    SC_UTILS_EXPORT void               SC_HASHlistinit( struct Hash_Table *, HashEntry * );
-    SC_UTILS_EXPORT void               SC_HASHlistinit_by_type( struct Hash_Table *, HashEntry *, char );
-    SC_UTILS_EXPORT struct Element  *  SC_HASHlist( HashEntry * );
+SC_UTILS_EXPORT struct Hash_Table *SC_HASHcreate(unsigned);
+SC_UTILS_EXPORT void               SC_HASHinitialize(void);
+SC_UTILS_EXPORT void              *SC_HASHfind(struct Hash_Table *,  char *);
+SC_UTILS_EXPORT void               SC_HASHinsert(struct Hash_Table *, char *, void *);
+SC_UTILS_EXPORT void               SC_HASHdestroy(struct Hash_Table *);
+SC_UTILS_EXPORT struct Element    *SC_HASHsearch(struct Hash_Table *, const struct Element *, Action);
+SC_UTILS_EXPORT void               SC_HASHlistinit(struct Hash_Table *, HashEntry *);
+SC_UTILS_EXPORT void               SC_HASHlistinit_by_type(struct Hash_Table *, HashEntry *, char);
+SC_UTILS_EXPORT struct Element    *SC_HASHlist(HashEntry *);
 
 #ifdef __cplusplus
 }

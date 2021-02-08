@@ -80,58 +80,61 @@
 
 #include <sc_trace_fprintf.h>
 
-extern void print_fedex_version( void );
+extern void print_fedex_version(void);
 
-static void exp2cxx_usage( void ) {
-    fprintf( stderr, "usage: %s [-s|-S] [-a|-A] [-c|-C] [-L] [-v] [-d # | -d 9 -l nnn -u nnn] [-n] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
-    fprintf( stderr, "where\t-s or -S uses only single inheritance in the generated C++ classes\n" );
-    fprintf( stderr, "\t-a or -A generates the early bound access functions for entity classes the old way (without an underscore)\n" );
-    fprintf( stderr, "\t-c or -C generates C++ classes for use with CORBA (Orbix)\n" );
-    fprintf( stderr, "\t-L prints logging code in the generated C++ classes\n" );
-    fprintf( stderr, "\t-v produces the version description below\n" );
-    fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
-    fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
-    fprintf( stderr, "\t-n do not pause for internal errors (useful with delta script)\n" );
-    fprintf( stderr, "\t-w warning enable\n" );
-    fprintf( stderr, "\t-i warning ignore\n" );
-    fprintf( stderr, "and <warning> is one of:\n" );
-    fprintf( stderr, "\tnone\n\tall\n" );
-    LISTdo( ERRORwarnings, opt, Error_Warning )
-    fprintf( stderr, "\t%s\n", opt->name );
-    LISTod
-    fprintf( stderr, "and <object_type> is one or more of:\n" );
-    fprintf( stderr, "	e	entity\n" );
-    fprintf( stderr, "	p	procedure\n" );
-    fprintf( stderr, "	r	rule\n" );
-    fprintf( stderr, "	f	function\n" );
-    fprintf( stderr, "	t	type\n" );
-    fprintf( stderr, "	s	schema or file\n" );
-    fprintf( stderr, "	#	pass #\n" );
-    fprintf( stderr, "	E	everything (all of the above)\n" );
+static void exp2cxx_usage(void)
+{
+    char *warnings_help_msg = ERRORget_warnings_help("\t", "\n");
+    fprintf(stderr, "usage: %s [-s|-S] [-a|-A] [-L] [-v] [-d # | -d 9 -l nnn -u nnn] [-n] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name);
+    fprintf(stderr, "where\t-s or -S uses only single inheritance in the generated C++ classes\n");
+    fprintf(stderr, "\t-a or -A generates the early bound access functions for entity classes the old way (without an underscore)\n");
+    fprintf(stderr, "\t-L prints logging code in the generated C++ classes\n");
+    fprintf(stderr, "\t-v produces the version description below\n");
+    fprintf(stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n");
+    fprintf(stderr, "\t-p turns on printing when processing certain objects (see below)\n");
+    fprintf(stderr, "\t-n do not pause for internal errors (useful with delta script)\n");
+    fprintf(stderr, "\t-w warning enable\n");
+    fprintf(stderr, "\t-i warning ignore\n");
+    fprintf(stderr, "and <warning> is one of:\n");
+    fprintf(stderr, "\tnone\n\tall\n");
+    fprintf(stderr, "%s", warnings_help_msg);
+    fprintf(stderr, "and <object_type> is one or more of:\n");
+    fprintf(stderr, "	e	entity\n");
+    fprintf(stderr, "	p	procedure\n");
+    fprintf(stderr, "	r	rule\n");
+    fprintf(stderr, "	f	function\n");
+    fprintf(stderr, "	t	type\n");
+    fprintf(stderr, "	s	schema or file\n");
+    fprintf(stderr, "	#	pass #\n");
+    fprintf(stderr, "	E	everything (all of the above)\n");
     print_fedex_version();
-    exit( 2 );
+    exit(2);
 }
 
-int Handle_FedPlus_Args( int, char * );
-void print_file( Express );
+int Handle_FedPlus_Args(int, char *);
+void print_file(Express);
 
-void resolution_success( void ) {
-    printf( "Resolution successful.  Writing C++ output...\n" );
+void resolution_success(void)
+{
+    printf("Resolution successful.  Writing C++ output...\n");
 }
 
-int success( Express model ) {
-    printf( "Finished writing files.\n" );
-    return( 0 );
+int success(Express model)
+{
+    (void) model; /* unused */
+    printf("Finished writing files.\n");
+    return(0);
 }
 
 /* This function is called from main() which is part of the NIST Express
    Toolkit.  It assigns 2 pointers to functions which are called in main() */
-void EXPRESSinit_init( void ) {
+void EXPRESSinit_init(void)
+{
     EXPRESSbackend = print_file;
     EXPRESSsucceed = success;
     EXPRESSgetopt = Handle_FedPlus_Args;
     /* so the function getopt (see man 3 getopt) will not report an error */
-    strcat( EXPRESSgetopt_options, "sSlLcCaA" );
+    strcat(EXPRESSgetopt_options, "sSlLaA");
     ERRORusage_function = exp2cxx_usage;
 }
 

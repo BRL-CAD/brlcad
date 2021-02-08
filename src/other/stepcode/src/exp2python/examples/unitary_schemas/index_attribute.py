@@ -50,7 +50,7 @@ class shape_aspect(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument name is mantatory and can not be set to None')
+				raise AssertionError('Argument name is mandatory and can not be set to None')
 			if not check_type(value,label):
 				self._name = label(value)
 			else:
@@ -64,7 +64,7 @@ class shape_aspect(BaseEntityClass):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument of_shape is mantatory and can not be set to None')
+				raise AssertionError('Argument of_shape is mandatory and can not be set to None')
 			if not check_type(value,product_definition_shape):
 				self._of_shape = product_definition_shape(value)
 			else:
@@ -98,7 +98,7 @@ class general_datum_reference(shape_aspect):
 		def fset( self, value ):
 		# Mandatory argument
 			if value==None:
-				raise AssertionError('Argument base is mantatory and can not be set to None')
+				raise AssertionError('Argument base is mandatory and can not be set to None')
 			if not check_type(value,datum_or_common_datum):
 				self._base = datum_or_common_datum(value)
 			else:

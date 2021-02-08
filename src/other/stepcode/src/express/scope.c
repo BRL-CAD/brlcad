@@ -1,15 +1,16 @@
 
 
-/** **********************************************************************
-** Module:  Scope \file scope.c
-** This module implements a hierarchical (i.e., scoped)
-**  symbol table.  The symbol table can store definitions of entities,
-**  types, algorithms, and variables, as well as containing a list
-**  of subscopes.
-** Constants:
-**  SCOPE_NULL  - the null scope
-**
-************************************************************************/
+/**
+ * Module:  Scope \file scope.c
+ *
+ *  This module implements a hierarchical (i.e., scoped)
+ *  symbol table.  The symbol table can store definitions of entities,
+ *  types, algorithms, and variables, as well as containing a list
+ *  of subscopes.
+ *
+ * Constants:
+ *  SCOPE_NULL  - the null scope
+ */
 
 /*
  * This software was developed by U.S. Government employees as part of
@@ -38,73 +39,72 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <sc_memmgr.h>
 #define SCOPE_C
 #include "express/scope.h"
 #include "express/resolve.h"
 
-Symbol * SCOPE_get_symbol( Generic s ) {
-    return( &( ( Scope )s )->symbol );
+void SCOPEinitialize(void)
+{
 }
 
-void SCOPEinitialize( void ) {
-    OBJcreate( OBJ_SCHEMA, SCOPE_get_symbol, "schema", OBJ_SCHEMA_BITS );
-    MEMinitialize( &SCOPE_fl, sizeof( struct Scope_ ), 100, 50 );
-}
-
-/**  SCOPE_get_entities
- * \sa SCOPEget_entities
+/**
+ * \sa SCOPEget_entities()
  */
-void SCOPE_get_entities( Scope scope, Linked_List result ) {
+void SCOPE_get_entities(Scope scope, Linked_List result)
+{
     DictionaryEntry de;
-    Generic x;
+    void *x;
 
-    DICTdo_type_init( scope->symbol_table, &de, OBJ_ENTITY );
-    while( 0 != ( x = DICTdo( &de ) ) ) {
-        LISTadd_last( result, x );
+    DICTdo_type_init(scope->symbol_table, &de, OBJ_ENTITY);
+    while(0 != (x = DICTdo(&de))) {
+        LISTadd_last(result, x);
     }
 }
 
-/**  SCOPE_get_functions
- * \sa SCOPEget_functions
+/**
+ * \sa SCOPEget_functions()
  */
-void SCOPE_get_functions( Scope scope, Linked_List result ) {
+void SCOPE_get_functions(Scope scope, Linked_List result)
+{
     DictionaryEntry de;
-    Generic x;
+    void *x;
 
-    DICTdo_type_init( scope->symbol_table, &de, OBJ_FUNCTION );
-    while( 0 != ( x = DICTdo( &de ) ) ) {
-        LISTadd_last( result, x );
+    DICTdo_type_init(scope->symbol_table, &de, OBJ_FUNCTION);
+    while(0 != (x = DICTdo(&de))) {
+        LISTadd_last(result, x);
     }
 }
-/**  SCOPE_get_functions
- * \sa SCOPEget_functions
+/**
+ * \sa SCOPE_get_functions()
  */
-Linked_List SCOPEget_functions( Scope scope ) {
+Linked_List SCOPEget_functions(Scope scope)
+{
     Linked_List result = LISTcreate();
-    SCOPE_get_functions( scope, result );
-    return( result );
+    SCOPE_get_functions(scope, result);
+    return(result);
 }
 
-/**  SCOPE_get_rules
- * \sa SCOPEget_rules
+/**
+ * \sa SCOPEget_rules()
  */
-void SCOPE_get_rules( Scope scope, Linked_List result ) {
+void SCOPE_get_rules(Scope scope, Linked_List result)
+{
     DictionaryEntry de;
-    Generic x;
+    void *x;
 
-    DICTdo_type_init( scope->symbol_table, &de, OBJ_RULE );
-    while( 0 != ( x = DICTdo( &de ) ) ) {
-        LISTadd_last( result, x );
+    DICTdo_type_init(scope->symbol_table, &de, OBJ_RULE);
+    while(0 != (x = DICTdo(&de))) {
+        LISTadd_last(result, x);
     }
 }
-/**  SCOPE_get_functions
- * \sa SCOPEget_functions
+/**
+ * \sa SCOPE_get_rules()
  */
-Linked_List SCOPEget_rules( Scope scope ) {
+Linked_List SCOPEget_rules(Scope scope)
+{
     Linked_List result = LISTcreate();
-    SCOPE_get_rules( scope, result );
-    return( result );
+    SCOPE_get_rules(scope, result);
+    return(result);
 }
 
 
@@ -118,28 +118,30 @@ Linked_List SCOPEget_rules( Scope scope ) {
  **  SCOPEget_entities_superclass_order(), and should be used whenever
  **  the order of the entities on the list is not important.
  */
-Linked_List SCOPEget_entities( Scope scope ) {
+Linked_List SCOPEget_entities(Scope scope)
+{
     Linked_List result = LISTcreate();
-    SCOPE_get_entities( scope, result );
-    return( result );
+    SCOPE_get_entities(scope, result);
+    return(result);
 }
 
 /**
- * \sa SCOPEget_entities_superclass_order
+ * \sa SCOPEget_entities_superclass_order()
  */
-void SCOPE_dfs( Dictionary symbols, Entity root, Linked_List result ) {
+void SCOPE_dfs(Dictionary symbols, Entity root, Linked_List result)
+{
     Entity ent;
 
-    if( ( ENTITYget_mark( root ) != ENTITY_MARK ) ) {
-        ENTITYput_mark( root, ENTITY_MARK );
-        LISTdo( ENTITYget_supertypes( root ), super, Entity )
+    if((ENTITYget_mark(root) != ENTITY_MARK)) {
+        ENTITYput_mark(root, ENTITY_MARK);
+        LISTdo(ENTITYget_supertypes(root), super, Entity)
         /* if super explicitly defined in scope, recurse. */
         /* this chops out USEd and REFd entities */
-        if( ( ent = ( Entity )DICTlookup( symbols, ENTITYget_name( super ) ) ) != ENTITY_NULL ) {
-            SCOPE_dfs( symbols, ent, result );
+        if((ent = (Entity)DICTlookup(symbols, ENTITYget_name(super))) != ENTITY_NULL) {
+            SCOPE_dfs(symbols, ent, result);
         }
         LISTod
-        LISTadd_last( result, ( Generic )root );
+        LISTadd_last(result, root);
     }
 }
 
@@ -150,16 +152,17 @@ void SCOPE_dfs( Dictionary symbols, Entity root, Linked_List result ) {
  ** Retrieve a list of the entities defined locally in a scope.
  **
  ** \note The list returned is ordered such that an entity appears before all of its subtypes.
- ** \sa SCOPEget_entities
+ ** \sa SCOPEget_entities()
  */
-Linked_List SCOPEget_entities_superclass_order( Scope scope ) {
+Linked_List SCOPEget_entities_superclass_order(Scope scope)
+{
     Linked_List result;
     DictionaryEntry de;
 
     result = LISTcreate();
     ++ENTITY_MARK;
-    SCOPEdo_entities( scope, e, de )
-    SCOPE_dfs( scope->symbol_table, e, result );
+    SCOPEdo_entities(scope, e, de)
+    SCOPE_dfs(scope->symbol_table, e, result);
     SCOPEod;
     return result;
 }
@@ -169,20 +172,20 @@ Linked_List SCOPEget_entities_superclass_order( Scope scope ) {
  * note that object found is not actually checked, only because
  * caller is in a better position to describe the error with context
  */
-Generic SCOPEfind( Scope scope, char * name, int type ) {
-    extern Generic SCOPE_find( Scope , char *, int );
+void *SCOPEfind(Scope scope, char *name, int type)
+{
     extern Dictionary EXPRESSbuiltins;  /* procedures/functions */
-    Generic x;
+    void *x;
 
     __SCOPE_search_id++;
 
-    x = SCOPE_find( scope, name, type );
-    if( x ) {
+    x = SCOPE_find(scope, name, type);
+    if(x) {
         return x;
     }
 
-    if( type & ( SCOPE_FIND_FUNCTION | SCOPE_FIND_PROCEDURE ) ) {
-        x = DICTlookup( EXPRESSbuiltins, name );
+    if(type & (SCOPE_FIND_FUNCTION | SCOPE_FIND_PROCEDURE)) {
+        x = DICTlookup(EXPRESSbuiltins, name);
     }
     return x;
 }
@@ -193,57 +196,58 @@ Generic SCOPEfind( Scope scope, char * name, int type ) {
  * the supertype/subtype hierarchy
  * EH???  -> lookup an object when the current scope is not a schema
  */
-Generic SCOPE_find( Scope scope, char * name, int type ) {
-    Generic result;
-    Rename * rename;
+void *SCOPE_find(Scope scope, char *name, int type)
+{
+    void *result;
+    Rename *rename;
 
-    if( scope->search_id == __SCOPE_search_id ) {
+    if(scope->search_id == __SCOPE_search_id) {
         return 0;
     }
     scope->search_id = __SCOPE_search_id;
 
     /* go up the superscopes, looking for object */
-    while( 1 ) {
+    while(1) {
         /* first look up locally */
-        result = DICTlookup( scope->symbol_table, name );
-        if( result && OBJtype_is_oneof( DICT_type, type ) ) {
+        result = DICTlookup(scope->symbol_table, name);
+        if(result && OBJtype_is_oneof(DICT_type, type)) {
             return result;
         }
-        if( scope->type == OBJ_SCHEMA ) {
+        if(scope->type == OBJ_SCHEMA) {
             break;
         }
 
         scope = scope->superscope;
     }
 
-    if( type & ( SCOPE_FIND_ENTITY | SCOPE_FIND_TYPE ) ) {
+    if(type & (SCOPE_FIND_ENTITY | SCOPE_FIND_TYPE)) {
         /* Occurs in a fully USE'd schema? */
-        LISTdo( scope->u.schema->use_schemas, schema, Schema )
+        LISTdo(scope->u.schema->use_schemas, schema, Schema)
         /* follow chain'd USEs */
-        if( schema == 0 ) {
+        if(schema == 0) {
             continue;
         }
-        result = SCOPE_find( schema, name, type );
-        if( result ) {
-            return( result );
+        result = SCOPE_find(schema, name, type);
+        if(result) {
+            return(result);
         }
         LISTod;
 
         /* Occurs in a partially USE'd schema? */
-        rename = ( Rename * )DICTlookup( scope->u.schema->usedict, name );
-        if( rename ) {
+        rename = (Rename *)DICTlookup(scope->u.schema->usedict, name);
+        if(rename) {
             DICT_type = rename->type;
-            return( rename->object );
+            return(rename->object);
         }
     }
 
     /* Occurs in a fully REF'd schema? */
-    LISTdo( scope->u.schema->ref_schemas, schema, Schema )
-    if( schema == 0 ) {
+    LISTdo(scope->u.schema->ref_schemas, schema, Schema)
+    if(schema == 0) {
         continue;
     }
-    result = DICTlookup( schema->symbol_table, name );
-    if( result ) {
+    result = DICTlookup(schema->symbol_table, name);
+    if(result) {
         return result;
     } else {
         continue;    /* try another schema */
@@ -251,10 +255,10 @@ Generic SCOPE_find( Scope scope, char * name, int type ) {
     LISTod;
 
     /* Occurs in a partially REF'd schema? */
-    rename = ( Rename * )DICTlookup( scope->u.schema->refdict, name );
-    if( rename ) {
+    rename = (Rename *)DICTlookup(scope->u.schema->refdict, name);
+    if(rename) {
         DICT_type = rename->type;
-        return( rename->object );
+        return(rename->object);
     }
 
     return 0;

@@ -15,21 +15,23 @@
 #include "express/express.h"
 
 void
-print_schemas( Express model ) {
+print_schemas(Express model)
+{
     DictionaryEntry de;
     Schema s;
 
-    printf( "File: %s\n  ", model->u.express->filename );
+    printf("File: %s\n  ", model->u.express->filename);
 
-    DICTdo_init( model->symbol_table, &de );
-    while( 0 != ( s = DICTdo( &de ) ) ) {
-        printf( "%s", s->symbol.name );
+    DICTdo_init(model->symbol_table, &de);
+    while(0 != (s = (Schema) DICTdo(&de))) {
+        printf("%s", s->symbol.name);
     }
-    printf( "\n" );
-    exit( 0 );
+    printf("\n");
+    exit(0);
 }
 
-void EXPRESSinit_init() {
+void EXPRESSinit_init()
+{
     EXPRESSbackend = print_schemas;
 }
 

@@ -1,12 +1,12 @@
-/** \file inverse_attr.cc
-** 1-Jul-2012
-** Test inverse attributes; uses a tiny schema similar to a subset of IFC2x3
-**
-*/
+/** \file inverse_attr3.cc
+ * Oct 2013
+ * Test inverse attributes; uses a tiny schema similar to a subset of IFC2x3
+ *
+ * This test originally used STEPfile, which didn't work. Fixing STEPfile would have been very difficult, it uses lazyInstMgr now.
+ */
 #include <sc_cf.h>
-extern void SchemaInit( class Registry & );
-#include "sc_version_string.h"
-#include <STEPfile.h>
+#include <lazyInstMgr.h>
+#include <lazyRefs.h>
 #include <sdai.h>
 #include <STEPattribute.h>
 #include <ExpDict.h>
@@ -14,45 +14,59 @@ extern void SchemaInit( class Registry & );
 #include <errordesc.h>
 #include <algorithm>
 #include <string>
+#include <superInvAttrIter.h>
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 #include <sc_getopt.h>
 #include "schema.h"
 
-int main( int argc, char * argv[] ) {
-    Registry  registry( SchemaInit );
-    InstMgr   instance_list;
-    STEPfile  sfile( registry, instance_list, "", false );
-    if( argc != 2 ) {
-        exit( EXIT_FAILURE );
+int main(int argc, char *argv[])
+{
+    int exitStatus = EXIT_SUCCESS;
+    if(argc != 2) {
+        cerr << "Wrong number of args!" << endl;
+        exit(EXIT_FAILURE);
     }
-    sfile.ReadExchangeFile( argv[1] );
+    lazyInstMgr lim;
+    lim.initRegistry(SchemaInit);
 
-    if( sfile.Error().severity() <= SEVERITY_INCOMPLETE ) {
-        sfile.Error().PrintContents( cout );
-        exit( EXIT_FAILURE );
-    }
+    lim.openFile(argv[1]);
+
 //find attributes
-    SdaiWindow * instance = ( SdaiWindow * ) instance_list.GetApplication_instance( "window" );
-    if( !instance ) {
-        cout << "NULL" << endl;
-        exit( EXIT_FAILURE );
+    instanceTypes_t::cvector *insts = lim.getInstances("window");
+    if(!insts || insts->empty()) {
+        cout << "No window instances found!" << endl;
+        exit(EXIT_FAILURE);
+    }
+    SdaiWindow *instance = dynamic_cast< SdaiWindow * >(lim.loadInstance(insts->at(0)));
+    if(!instance) {
+        cout << "Problem loading instance" << endl;
+        exit(EXIT_FAILURE);
     }
     cout << "instance #" << instance->StepFileId() << endl;
 
-    /* The inverse could be set with
-     *    const Inverse_attribute * ia =...;
-     *    const EntityDescriptor * inv_ed = reg.FindEntity( ia->inverted_entity_id_() );
-     *    instance->isdefinedby_(inv_ed);
-     */
-    EntityAggregate * aggr = instance->isdefinedby_();
-    if( aggr ) {
-        cout << aggr->EntryCount() << endl;
+    SDAI_Application_instance::iAMap_t::value_type v = instance->getInvAttr("isdefinedby");
+    iAstruct attr = v.second; //instance->getInvAttr(ia);
+    if(attr.a && attr.a->EntryCount()) {
+        cout << "Map: found " << attr.a->EntryCount() << " inverse references." << endl;
+    } else {
+        cout << "Map: found no inverse references. ias " << (void *) &(v.second) << ", ia " << (void *) v.first << endl;
+        exitStatus = EXIT_FAILURE;
+    }
+
+    EntityAggregate *aggr = instance->isdefinedby_();  //should be filled in when the file is loaded? not sure how to do it using STEPfile...
+    if(attr.a != aggr) {
+        cout << "Error! got different EntityAggregate's when using map vs method" << endl;
+        exitStatus = EXIT_FAILURE;
+    }
+    if(aggr && aggr->EntryCount()) {
+        cout << "Found " << aggr->EntryCount() << " inverse references." << endl;
     } else {
         cout << "inverse attr is not defined" << endl;
-        exit( EXIT_FAILURE );
+        exitStatus = EXIT_FAILURE;
     }
-    exit( EXIT_SUCCESS );
+    exit(exitStatus);
 }
 

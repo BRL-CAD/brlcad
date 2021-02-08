@@ -15,10 +15,10 @@
 #include <sc_memmgr.h>
 
 // Local function prototypes:
-static EntList * firstCandidate( EntList * );
-static EntList * nextCandidate( EntList * );
+static EntList *firstCandidate(EntList *);
+static EntList *nextCandidate(EntList *);
 
-MatchType MultList::tryNext( EntNode * ents )
+MatchType MultList::tryNext(EntNode *ents)
 /*
  * Loops backwards through the children of this, recursively searching for
  * alternate solutions (i.e., OR's which have alternate paths we haven't
@@ -31,15 +31,15 @@ MatchType MultList::tryNext( EntNode * ents )
  */
 {
     MatchType retval;
-    EntList * child = getLast();
+    EntList *child = getLast();
 
-    child = firstCandidate( child );
-    while( child != NULL ) {
-        if( ( retval = ( dynamic_cast< MultList * >(child) )->tryNext( ents ) ) == MATCHALL ) {
+    child = firstCandidate(child);
+    while(child != NULL) {
+        if((retval = (dynamic_cast< MultList * >(child))->tryNext(ents)) == MATCHALL) {
             // We're done - a good solution was found.
             return MATCHALL;
         }
-        if( retval == NEWCHOICE ) {
+        if(retval == NEWCHOICE) {
             // If a new viable choice was found below, we must now reset all
             // later OR's to their first choice.  (That's what acceptChoice()
             // does when choice = LISTEND.)  This is necessary so that we can
@@ -47,83 +47,83 @@ MatchType MultList::tryNext( EntNode * ents )
             // first reset all our children, and then return NEWCHOICE so that
             // our parent (if exists) will also know to reset all its later OR
             // children.
-            while( ( child = nextCandidate( child ) ) != NULL ) {
-                if( child->acceptChoice( ents ) && ents->allMarked() ) {
+            while((child = nextCandidate(child)) != NULL) {
+                if(child->acceptChoice(ents) && ents->allMarked()) {
                     return MATCHALL;
                 }
             }
             return NEWCHOICE;
         }
-        child = firstCandidate( child->prev );
+        child = firstCandidate(child->prev);
     }
     // If we got here, we didn't find any new OR choices:
     return NOMORE;
 }
 
-static EntList * firstCandidate( EntList * child )
+static EntList *firstCandidate(EntList *child)
 /*
  * Finds an EntList from child's list which may have an OR with more
  * choices below it.  The acceptable choices are described in commenting
  * below.
  */
 {
-    EntList * ent = child->lastNot( SIMPLE );
+    EntList *ent = child->lastNot(SIMPLE);
 
-    while( ent != NULL ) {
-        if( ent->viableVal() >= MATCHSOME ) {
+    while(ent != NULL) {
+        if(ent->viableVal() >= MATCHSOME) {
             // Return any non-SIMPLE ent where viable >= MATCHSOME.  We even
             // want to check an OR where numChoices = 1, because it may have
             // an OR descendant with more choices.
             return ent;
         }
-        ent = ent->prevNot( SIMPLE );
+        ent = ent->prevNot(SIMPLE);
     }
     return ent;
 }
 
-static EntList * nextCandidate( EntList * child )
+static EntList *nextCandidate(EntList *child)
 /*
  * Same as prev function, searches forwards from ent after child.
  */
 {
-    EntList * ent = child->nextNot( SIMPLE );
+    EntList *ent = child->nextNot(SIMPLE);
 
-    while( ent != NULL ) {
-        if( ent->viableVal() >= MATCHSOME ) {
+    while(ent != NULL) {
+        if(ent->viableVal() >= MATCHSOME) {
             return ent;
         }
-        ent = ent->nextNot( SIMPLE );
+        ent = ent->nextNot(SIMPLE);
     }
     return ent;
 }
 
-MatchType OrList::tryNext( EntNode * ents )
+MatchType OrList::tryNext(EntNode *ents)
 /*
  * Tries out the next choice of this.  Basic algorithm is to first recurse
  * to check for other solutions in the descendants of the current choice,
  * and then to try our next choice.
  */
 {
-    EntList * child;
+    EntList *child;
 
 
-    if( choice == LISTEND ) {
+    if(choice == LISTEND) {
         // if we've already exhausted all the choices in this OR,
         return NOMORE;
     }
 
     // First try other choices of descendants of current choice:
-    child = getChild( choice );
-    if( child->multiple() ) {
-    	MatchType retval;
+    child = getChild(choice);
+    if(child->multiple()) {
+        MatchType retval;
         // I.e., if there are (or may be) more choices within the current
         // choice, try those first.  We must be sure to exhaust all choices in
         // our descendants before moving on.
-        retval = ( dynamic_cast< MultList * >(child) )->tryNext( ents );        
-        if( retval == MATCHALL ) {
+        retval = (dynamic_cast< MultList * >(child))->tryNext(ents);
+        if(retval == MATCHALL) {
             return MATCHALL;
         }
-        if( retval == NEWCHOICE ) {
+        if(retval == NEWCHOICE) {
             // I.e., we found a next choice to go to, return so that the
             // EntLists on the higher levels (if there are) can retry all the
             // later choices with the new choice we just found.  Otherwise,
@@ -134,8 +134,8 @@ MatchType OrList::tryNext( EntNode * ents )
 
     // No other choices among our descendants.  Look for new choice at our
     // level:
-    child->unmarkAll( ents );
-    if( choiceCount == 1 ) {
+    child->unmarkAll(ents);
+    if(choiceCount == 1) {
         // Quick way to determine that there won't be any more choices here.
         // (Also, it's nec. to unmark now, as we did above before returning and
         // before the calling tryNext() tries earlier OR's - see notes, 11/12.)
@@ -144,8 +144,8 @@ MatchType OrList::tryNext( EntNode * ents )
     }
 
     // Otherwise, try our next:
-    if( acceptNextChoice( ents ) ) {
-        if( ents->allMarked() ) {
+    if(acceptNextChoice(ents)) {
+        if(ents->allMarked()) {
             return MATCHALL;
         }
         return NEWCHOICE;

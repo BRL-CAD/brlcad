@@ -19,105 +19,142 @@
 
 #ifdef  SC_LOGGING
 #include <fstream.h>
-extern ofstream * logStream;
+extern ofstream *logStream;
 #endif
 
 /**********
     (member) functions for the select class SDAI_Select
 **********/
-SDAI_Select::SDAI_Select( const SelectTypeDescriptor * s,
-                          const TypeDescriptor * td )
-    : _type( s ), underlying_type( td ) {
+SDAI_Select::SDAI_Select(const SelectTypeDescriptor *s,
+                         const TypeDescriptor *td)
+    : _type(s), underlying_type(td)
+{
 #ifdef SC_LOGGING
     *logStream << "Exiting SDAI_Select constructor." << endl;
 #endif
 }
 
-SDAI_Select::~SDAI_Select() {
+SDAI_Select::SDAI_Select(const SDAI_Select &other)
+{
+    underlying_type = other.underlying_type;
+    base_type = other.base_type;
+    _type = other._type;
+#ifdef SC_LOGGING
+    *logStream << "Exiting SDAI_Select constructor." << endl;
+#endif
 }
 
-Severity SDAI_Select::severity() const {
+SDAI_Select::~SDAI_Select()
+{
+}
+
+SDAI_Select &SDAI_Select::operator=(const SDAI_Select &other)
+{
+    if(&other != this) {
+        _error = other._error;
+        _type = other._type;
+        base_type = other.base_type;
+        underlying_type = other.underlying_type;
+        val = other.val;
+    }
+    return *this;
+}
+
+Severity SDAI_Select::severity() const
+{
     return _error.severity();
 }
 
-Severity  SDAI_Select::severity( Severity s ) {
-    return _error.severity( s );
+Severity  SDAI_Select::severity(Severity s)
+{
+    return _error.severity(s);
 }
 
-std::string SDAI_Select::Error() {
+std::string SDAI_Select::Error()
+{
     return _error.DetailMsg();
 }
 
-void SDAI_Select::Error( const char * e ) {
-    _error.DetailMsg( e );
+void SDAI_Select::Error(const char *e)
+{
+    _error.DetailMsg(e);
 }
 
-void  SDAI_Select::ClearError() {
+void  SDAI_Select::ClearError()
+{
     _error.ClearErrorMsg();
 }
 
 const TypeDescriptor *
-SDAI_Select::CanBe( const char * n ) const {
-    return _type -> CanBe( n );
+SDAI_Select::CanBe(const char *n) const
+{
+    return _type -> CanBe(n);
 }
 
 
 const TypeDescriptor *
-SDAI_Select::CanBe( BASE_TYPE bt ) const {
-    const TypeDescLinkNode * tdn =
-        ( const TypeDescLinkNode * ) _type -> GetElements().GetHead();
-    const TypeDescriptor * td = tdn -> TypeDesc();
+SDAI_Select::CanBe(BASE_TYPE bt) const
+{
+    const TypeDescLinkNode *tdn =
+        (const TypeDescLinkNode *) _type -> GetElements().GetHead();
+    const TypeDescriptor *td = tdn -> TypeDesc();
     BASE_TYPE bt_thisnode;
 
-    while( tdn )  {
+    while(tdn)  {
         td = tdn -> TypeDesc();
-        if( ( ( bt_thisnode = td -> NonRefType() ) == bt ) ||
-                ( bt == AGGREGATE_TYPE && ( ( bt_thisnode == ARRAY_TYPE ) ||
-                                            ( bt_thisnode == LIST_TYPE ) ||
-                                            ( bt_thisnode == SET_TYPE ) ||
-                                            ( bt_thisnode == BAG_TYPE ) ) ) ) {
+        if(((bt_thisnode = td -> NonRefType()) == bt) ||
+                (bt == AGGREGATE_TYPE && ((bt_thisnode == ARRAY_TYPE) ||
+                                          (bt_thisnode == LIST_TYPE) ||
+                                          (bt_thisnode == SET_TYPE) ||
+                                          (bt_thisnode == BAG_TYPE)))) {
             return td;    // they are the same
         }
-        tdn = ( TypeDescLinkNode * )( tdn -> NextNode() );
+        tdn = (TypeDescLinkNode *)(tdn -> NextNode());
     }
     return 0;
 }
 
 const TypeDescriptor *
-SDAI_Select::CanBe( const TypeDescriptor * td ) const {
-    return _type -> CanBe( td );
+SDAI_Select::CanBe(const TypeDescriptor *td) const
+{
+    return _type -> CanBe(td);
 }
 
 const TypeDescriptor *
-SDAI_Select::CanBeSet( const char * n, const char * schnm ) const {
-    return _type -> CanBeSet( n, schnm );
+SDAI_Select::CanBeSet(const char *n, const char *schnm) const
+{
+    return _type -> CanBeSet(n, schnm);
 }
 
 int
-SDAI_Select::IsUnique( const BASE_TYPE bt ) const {
-    if( bt == ARRAY_TYPE ||
+SDAI_Select::IsUnique(const BASE_TYPE bt) const
+{
+    if(bt == ARRAY_TYPE ||
             bt == LIST_TYPE ||
             bt == BAG_TYPE ||
-            bt == SET_TYPE ) {
-        return ( ( _type->UniqueElements() ) & AGGREGATE_TYPE );
+            bt == SET_TYPE) {
+        return ((_type->UniqueElements()) & AGGREGATE_TYPE);
     } else {
-        return ( ( _type->UniqueElements() ) & bt );
+        return ((_type->UniqueElements()) & bt);
     }
 }
 
 
-SDAI_String SDAI_Select::UnderlyingTypeName() const {
+SDAI_String SDAI_Select::UnderlyingTypeName() const
+{
     return underlying_type -> Name();
 }
 
-const TypeDescriptor  * SDAI_Select::CurrentUnderlyingType() const {
+const TypeDescriptor   *SDAI_Select::CurrentUnderlyingType() const
+{
     return underlying_type;
 }
 
 const TypeDescriptor *
-SDAI_Select::SetUnderlyingType( const TypeDescriptor * td ) {
+SDAI_Select::SetUnderlyingType(const TypeDescriptor *td)
+{
     //  don\'t do anything if the descriptor is bad
-    if( !td || !( _type -> CanBe( td ) ) ) {
+    if(!td || !(_type -> CanBe(td))) {
         return 0;
     }
 
@@ -126,45 +163,49 @@ SDAI_Select::SetUnderlyingType( const TypeDescriptor * td ) {
     return underlying_type = td;
 }
 
-bool SDAI_Select::exists() const {
+bool SDAI_Select::exists() const
+{
     return underlying_type != NULL;
 }
 
-void SDAI_Select::nullify() {
+void SDAI_Select::nullify()
+{
     underlying_type = 0;
 }
 
-Severity SDAI_Select::SelectValidLevel( const char * attrValue, ErrorDescriptor * err,
-                                        InstMgr * im, int clearError ) {
-    SDAI_Select * tmp = NewSelect();
+Severity SDAI_Select::SelectValidLevel(const char *attrValue, ErrorDescriptor *err,
+                                       InstMgrBase *im)
+{
+    SDAI_Select *tmp = NewSelect();
     Severity s = SEVERITY_NULL;
 
-    istringstream strtmp( attrValue );
-    s = tmp -> STEPread( strtmp, err, im );
+    istringstream strtmp(attrValue);
+    s = tmp -> STEPread(strtmp, err, im);
     delete tmp;
     return s;
 }
 
-Severity SDAI_Select::StrToVal( const char * Val, const char * selectType,
-                                ErrorDescriptor * err, InstMgr * instances ) {
-    severity( SEVERITY_NULL );
-    if( SetUnderlyingType( CanBe( selectType ) ) )
+Severity SDAI_Select::StrToVal(const char *Val, const char *selectType,
+                               ErrorDescriptor *err, InstMgrBase *instances)
+{
+    severity(SEVERITY_NULL);
+    if(SetUnderlyingType(CanBe(selectType)))
 
         //  the underlying type is set to a valid type
         // call read on underlying type in subclass
 
-        switch( base_type )  {
+        switch(base_type)  {
             case ENTITY_TYPE: {
-                STEPentity * tmp =
-                    ReadEntityRef( Val, err, ",)", instances, 0 );
-                if( tmp && ( tmp != ENTITY_NULL ) ) {
-                    AssignEntity( tmp );
+                STEPentity *tmp =
+                    ReadEntityRef(Val, err, ",)", instances, 0);
+                if(tmp && (tmp != ENTITY_NULL)) {
+                    AssignEntity(tmp);
                     return severity();
                 } else {
                     err->AppendToDetailMsg(
-                        "Reference to entity that is not a valid type for SELECT.\n" );
+                        "Reference to entity that is not a valid type for SELECT.\n");
                     nullify();
-                    err->GreaterSeverity( SEVERITY_WARNING );
+                    err->GreaterSeverity(SEVERITY_WARNING);
                     return SEVERITY_WARNING;
                 }
             }
@@ -180,9 +221,9 @@ Severity SDAI_Select::StrToVal( const char * Val, const char * selectType,
             case SELECT_TYPE:
             case BOOLEAN_TYPE:
             case LOGICAL_TYPE: {
-                err->GreaterSeverity( StrToVal_content( Val, instances ) );
-                if( _error.severity() != SEVERITY_NULL ) {
-                    err->AppendFromErrorArg( &_error );
+                err->GreaterSeverity(StrToVal_content(Val, instances));
+                if(_error.severity() != SEVERITY_NULL) {
+                    err->AppendFromErrorArg(&_error);
                 }
                 return err->severity();
             }
@@ -193,10 +234,10 @@ Severity SDAI_Select::StrToVal( const char * Val, const char * selectType,
             case REAL_TYPE:
             case INTEGER_TYPE:
             default: {
-                istringstream strtmp( Val );
-                err->GreaterSeverity( STEPread_content( strtmp ) );
-                if( _error.severity() != SEVERITY_NULL ) {
-                    err->AppendFromErrorArg( &_error );
+                istringstream strtmp(Val);
+                err->GreaterSeverity(STEPread_content(strtmp));
+                if(_error.severity() != SEVERITY_NULL) {
+                    err->AppendFromErrorArg(&_error);
                 }
                 return err->severity();
             }
@@ -207,9 +248,10 @@ Severity SDAI_Select::StrToVal( const char * Val, const char * selectType,
 /** updated to Technical Corrigendum. DAS 2/4/97
  * This function does the following:
  */
-Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
-                                InstMgr * instances, const char * utype,
-                                int addFileId, const char * currSch ) {
+Severity SDAI_Select::STEPread(istream &in, ErrorDescriptor *err,
+                               InstMgrBase *instances, const char *utype,
+                               int addFileId, const char *currSch)
+{
     char c = '\0';
     std::string tmp;
 
@@ -222,23 +264,23 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
     /**
     ** This section of code is used to read a value belonging to a select
     ** contained in another select. If you have read the text part of the
-    ** TYPED_PARAMETER and it needs to fall down thru some levels of contained
+    ** TYPED_PARAMETER and it needs to fall down through some levels of contained
     ** select types, then the text is passed down to each select in the utype
     ** parameter as STEPread is called on each contained select type.DAS 2/4/97
     */
-    if( utype ) {
-        if( SetUnderlyingType( CanBeSet( utype, currSch ) ) ) {
+    if(utype) {
+        if(SetUnderlyingType(CanBeSet(utype, currSch))) {
             //  assign the value to the underlying type
             in >> ws; // skip white space
-            if( ( underlying_type->Type() == REFERENCE_TYPE ) &&
-                    ( underlying_type->NonRefType() == sdaiSELECT ) ) {
+            if((underlying_type->Type() == REFERENCE_TYPE) &&
+                    (underlying_type->NonRefType() == sdaiSELECT)) {
                 // See comments below for a similar code segment.
-                STEPread_content( in, instances, 0, addFileId, currSch );
+                STEPread_content(in, instances, 0, addFileId, currSch);
             } else {
-                STEPread_content( in, instances, utype, addFileId, currSch );
+                STEPread_content(in, instances, utype, addFileId, currSch);
             }
-            err->AppendToDetailMsg( Error() );
-            err->GreaterSeverity( severity() );
+            err->AppendToDetailMsg(Error());
+            err->GreaterSeverity(severity());
         }
         return err->severity();
     }
@@ -263,11 +305,11 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
     ** will cause the contained Select STEPread function to read it. DAS 2/4/97
     */
 
-    if( isalpha( c ) ) { //  case B
+    if(isalpha(c)) {     //  case B
         int eot = 0; // end of token flag
         //  token is a type name - get the type
-        while( ( c != '(' ) && in.good() ) {
-            if( !eot && !( eot = isspace( c ) ) )
+        while((c != '(') && in.good()) {
+            if(!eot && !(eot = isspace(c)))
                 // as long as eot hasn\'t been reached keep appending
             {
                 tmp += c;
@@ -276,7 +318,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
         }
 
         //  check for valid type and set the underlying type
-        if( SetUnderlyingType( CanBeSet( tmp.c_str(), currSch ) ) ) {
+        if(SetUnderlyingType(CanBeSet(tmp.c_str(), currSch))) {
             /**
             ** Assign the value to the underlying type.  CanBeSet() is a
             ** slightly modified CanBe().  It ensures that a renamed select
@@ -287,8 +329,8 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
             ** case if "selX" appears first and is what we just read.
             */
             in >> ws; // skip white space
-            if( ( underlying_type->Type() == REFERENCE_TYPE ) &&
-                    ( underlying_type->NonRefType() == sdaiSELECT ) ) {
+            if((underlying_type->Type() == REFERENCE_TYPE) &&
+                    (underlying_type->NonRefType() == sdaiSELECT)) {
                 /**
                  * This means (1) that the underlying type is itself a select
                 ** (cond 2), and (2) it's not defined in the EXPRESS as a
@@ -303,7 +345,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
                 ** would appear (according to TC) and we already read the value
                 ** of sel1.  If so, we pass the already-read value down.
                  */
-                STEPread_content( in, instances, 0, addFileId, currSch );
+                STEPread_content(in, instances, 0, addFileId, currSch);
             } else {
                 /**
                 ** In most cases (see above note), we've already read the value
@@ -311,19 +353,19 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
                 ** This also handles all other cases? other than the if part
                 ** above and elements of type entity ref?
                 */
-                STEPread_content( in, instances, tmp.c_str(), addFileId,
-                                  currSch );
+                STEPread_content(in, instances, tmp.c_str(), addFileId,
+                                 currSch);
                 // STEPread_content uses the ErrorDesc data member from the
                 // SDAI_Select class
             }
-            err->AppendToDetailMsg( Error() );
-            err->GreaterSeverity( severity() );
+            err->AppendToDetailMsg(Error());
+            err->GreaterSeverity(severity());
             in >> ws >> c;
-            if( c != ')' ) {
+            if(c != ')') {
                 err->AppendToDetailMsg(
-                    "Bad data or missing closing ')' for SELECT type.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
-                in.putback( c );
+                    "Bad data or missing closing ')' for SELECT type.\n");
+                err->GreaterSeverity(SEVERITY_WARNING);
+                in.putback(c);
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
@@ -334,16 +376,16 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
 #endif
             return err->severity();
         } else { // ERROR  -- the type wasn't one of the choices
-            if( !in.good() ) {
-                err->GreaterSeverity( SEVERITY_INPUT_ERROR );
+            if(!in.good()) {
+                err->GreaterSeverity(SEVERITY_INPUT_ERROR);
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_INPUT_ERROR;
             } else {
                 err->AppendToDetailMsg(
-                    "The type name for the SELECT type is not valid.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
+                    "The type name for the SELECT type is not valid.\n");
+                err->GreaterSeverity(SEVERITY_WARNING);
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
@@ -360,10 +402,10 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
     */
 
     else { /// case A
-        switch( c ) {
+        switch(c) {
             case '$':
                 nullify();
-                err->GreaterSeverity( SEVERITY_INCOMPLETE );
+                err->GreaterSeverity(SEVERITY_INCOMPLETE);
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
@@ -372,9 +414,9 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
             case ',':
             case '\0':
                 // ERROR  IN INPUT
-                in.putback( c );
-                err->AppendToDetailMsg( "No value found for SELECT type.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
+                in.putback(c);
+                err->AppendToDetailMsg("No value found for SELECT type.\n");
+                err->GreaterSeverity(SEVERITY_WARNING);
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
@@ -382,44 +424,44 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
 
             case '.': // assign enum
                 base_type = ENUM_TYPE;
-                err->AppendToDetailMsg( "Invalid Enumeration, Logical, or Boolean value in SELECT type.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
+                err->AppendToDetailMsg("Invalid Enumeration, Logical, or Boolean value in SELECT type.\n");
+                err->GreaterSeverity(SEVERITY_WARNING);
                 break;
-                // set the underlying type
-                // call STEPread
-                // return
+            // set the underlying type
+            // call STEPread
+            // return
 
             case '\'': // assign string
                 base_type = STRING_TYPE;
-                err->AppendToDetailMsg( "Invalid String value in SELECT type.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
+                err->AppendToDetailMsg("Invalid String value in SELECT type.\n");
+                err->GreaterSeverity(SEVERITY_WARNING);
                 break;
 
             case '"': // assign string
                 base_type = BINARY_TYPE;
-                err->AppendToDetailMsg( "Invalid Binary value in SELECT type.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
+                err->AppendToDetailMsg("Invalid Binary value in SELECT type.\n");
+                err->GreaterSeverity(SEVERITY_WARNING);
                 break;
 
             case '#':
                 base_type = ENTITY_TYPE;
                 break;
-                // call STEPread_reference
-                // set the underlying type
+            // call STEPread_reference
+            // set the underlying type
 
-                // assign entity
-                // read the reference
-                // match type to underlying type
-                // assign the value
-                // set the underlying type
+            // assign entity
+            // read the reference
+            // match type to underlying type
+            // assign the value
+            // set the underlying type
 
             case '(': {
-                err->AppendToDetailMsg( "Invalid aggregate value in SELECT type.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
+                err->AppendToDetailMsg("Invalid aggregate value in SELECT type.\n");
+                err->GreaterSeverity(SEVERITY_WARNING);
                 char n;
                 in >> n;
-                in.putback( n );
-                if( isalpha( n ) ) {
+                in.putback(n);
+                if(isalpha(n)) {
                     base_type = SELECT_TYPE;
                 } else {
                     base_type = AGGREGATE_TYPE;
@@ -438,9 +480,9 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
             case '8':
             case '9':
             case '-':
-                err->AppendToDetailMsg( "Invalid Integer or Real value in SELECT type.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
-                if( CanBe( REAL_TYPE ) ) {
+                err->AppendToDetailMsg("Invalid Integer or Real value in SELECT type.\n");
+                err->GreaterSeverity(SEVERITY_WARNING);
+                if(CanBe(REAL_TYPE)) {
                     base_type = REAL_TYPE;
                 } else {
                     base_type = INTEGER_TYPE;
@@ -450,54 +492,54 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
             default:
                 // ambiguous - ERROR:  underlying type should have been set
                 err->AppendToDetailMsg(
-                    "type for SELECT could not be determined from value.\n" );
+                    "type for SELECT could not be determined from value.\n");
                 nullify();
-                in.putback( c );
-                err->GreaterSeverity( SEVERITY_WARNING );
+                in.putback(c);
+                err->GreaterSeverity(SEVERITY_WARNING);
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_WARNING;
         }
 
-        in.putback( c );
+        in.putback(c);
 
         // now the type descriptor should be derivable from the base_type
 
         // if it's not issue a warning
-        if( _type && !( IsUnique( base_type ) ) )  {
-            err->AppendToDetailMsg( "Value for SELECT will be assigned to first possible choice.\n" );
-            err->GreaterSeverity( SEVERITY_USERMSG );
+        if(_type && !(IsUnique(base_type)))  {
+            err->AppendToDetailMsg("Value for SELECT will be assigned to first possible choice.\n");
+            err->GreaterSeverity(SEVERITY_USERMSG);
         }
 
-        if( base_type == ENTITY_TYPE ) {
-            // you don\'t know if this is an ENTITY or a SELECT
+        if(base_type == ENTITY_TYPE) {
+            // you don't know if this is an ENTITY or a SELECT
             // have to do this here - not in STEPread_content
-            STEPentity * tmp =
-                ReadEntityRef( in, err, ",)", instances, addFileId );
-            if( tmp && ( tmp != ENTITY_NULL ) && AssignEntity( tmp ) ) {
+            STEPentity *temp =
+                ReadEntityRef(in, err, ",)", instances, addFileId);
+            if(temp && (temp != ENTITY_NULL) && AssignEntity(temp)) {
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_NULL;
             } else {
                 err->AppendToDetailMsg(
-                    "Reference to entity that is not a valid type for SELECT.\n" );
+                    "Reference to entity that is not a valid type for SELECT.\n");
                 nullify();
-                err->GreaterSeverity( SEVERITY_WARNING );
+                err->GreaterSeverity(SEVERITY_WARNING);
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_WARNING;
             }
-        } else if( SetUnderlyingType( CanBe( base_type ) ) ) {
-            STEPread_content( in, instances, 0, addFileId );
+        } else if(SetUnderlyingType(CanBe(base_type))) {
+            STEPread_content(in, instances, 0, addFileId);
         }
 
-        else { // ERROR  -- the type wasn\'t one of the choices
+        else { // ERROR  -- the type wasn't one of the choices
             err->AppendToDetailMsg(
-                "The type of the SELECT type is not valid.\n" );
-            err->GreaterSeverity( SEVERITY_WARNING );
+                "The type of the SELECT type is not valid.\n");
+            err->GreaterSeverity(SEVERITY_WARNING);
 #ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
@@ -513,24 +555,25 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
 
 
 /// updated to Technical Corrigendum DAS Feb 4, 1997
-void SDAI_Select::STEPwrite( ostream & out, const char * currSch )  const {
-    if( !exists() ) {
+void SDAI_Select::STEPwrite(ostream &out, const char *currSch)  const
+{
+    if(!exists()) {
         out << "$";
         return;
     }
-    switch( underlying_type->NonRefType() ) {
+    switch(underlying_type->NonRefType()) {
         case sdaiINSTANCE: {
-            STEPwrite_content( out );
+            STEPwrite_content(out);
             break;
         }
         case sdaiSELECT: { // The name of a select is never written DAS 1/31/97
-            if( underlying_type->Type() == REFERENCE_TYPE ) {
+            if(underlying_type->Type() == REFERENCE_TYPE) {
                 std::string s;
-                out << StrToUpper( underlying_type->Name( currSch ), s ) << "(";
-                STEPwrite_content( out, currSch );
+                out << StrToUpper(underlying_type->Name(currSch), s) << "(";
+                STEPwrite_content(out, currSch);
                 out << ")";
             } else {
-                STEPwrite_content( out, currSch );
+                STEPwrite_content(out, currSch);
             }
             break;
         }
@@ -547,7 +590,7 @@ void SDAI_Select::STEPwrite( ostream & out, const char * currSch )  const {
         case BAG_TYPE:
         case SET_TYPE:
         case LIST_TYPE: {
-            STEPwrite_verbose( out, currSch );
+            STEPwrite_verbose(out, currSch);
             break;
         }
         case REFERENCE_TYPE: // this should never happen? DAS
@@ -557,26 +600,30 @@ void SDAI_Select::STEPwrite( ostream & out, const char * currSch )  const {
     }
 }
 
-void SDAI_Select::STEPwrite_verbose( ostream & out, const char * currSch ) const {
+void SDAI_Select::STEPwrite_verbose(ostream &out, const char *currSch) const
+{
     std::string tmp;
-    out << StrToUpper( CurrentUnderlyingType()->Name( currSch ), tmp ) << "(";
-    STEPwrite_content( out );
+    out << StrToUpper(CurrentUnderlyingType()->Name(currSch), tmp) << "(";
+    STEPwrite_content(out);
     out << ")";
 }
 
-const char * SDAI_Select::STEPwrite( std::string & s, const char * currSch )  const {
+const char *SDAI_Select::STEPwrite(std::string &s, const char *currSch)  const
+{
     ostringstream buf;
-    STEPwrite( buf, currSch );
+    STEPwrite(buf, currSch);
     buf << ends;  // add the terminating \0 char
     s = buf.str();
-    return const_cast<char *>( s.c_str() );
+    return const_cast<char *>(s.c_str());
 }
 
-int SDAI_Select::set_null() {
+bool SDAI_Select::set_null()
+{
     nullify();
-    return 1;
+    return true;
 }
 
-int SDAI_Select::is_null() {
-    return ( !exists() );
+bool SDAI_Select::is_null()
+{
+    return (!exists());
 }
