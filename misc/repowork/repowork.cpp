@@ -127,6 +127,128 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
     return 0;
 }
 
+/* There are two potential cases - assigning a previously unassigned svn rev, and
+ * fixing an erroneously assigned rev.  Handle both. */
+int
+git_update_svnrevs(git_fi_data *s, std::string &svn_rev_map)
+{
+
+    if (!s->have_sha1s) {
+	std::cerr << "Fatal - sha1 SVN rev updating requested, but don't have original sha1 ids - redo fast-export with the --show-original-ids option.\n";
+	exit(1);
+    }
+
+    // read map
+    std::ifstream infile(svn_rev_map, std::ifstream::binary);
+    if (!infile.good()) {
+	std::cerr << "Could not open svn_rev_map file: " << svn_rev_map << "\n";
+	exit(-1);
+    }
+
+    std::map<std::string, int> rmap;
+
+    std::string line;
+    while (std::getline(infile, line)) {
+	// Skip empty lines
+	if (!line.length()) {
+	    continue;
+	}
+
+	size_t spos = line.find_first_of(";");
+	if (spos == std::string::npos) {
+	    std::cerr << "Invalid sha1;rev map line!: " << line << "\n";
+	    exit(-1);
+	}
+
+	std::string id1 = line.substr(0, spos);
+	std::string id2 = line.substr(spos+1, std::string::npos);
+	int rev = std::stoi(id2);
+
+	std::cout << "sha1: \"" << id1 << "\" -> rev: \"" << rev << "\n";
+	rmap[id1] = rev;
+    }
+
+    infile.close();
+
+    // Iterate over the commits looking for note commits.  If we find one,
+    // find its associated blob with data, read it, find the associated
+    // commit, and stash it in a string in that container.
+    for (size_t i = 0; i < s->commits.size(); i++) {
+
+	if (!s->commits[i].id.sha1.length()) {
+	    continue;
+	}
+
+	if (rmap.find(s->commits[i].id.sha1) == rmap.end()) {
+	    continue;
+	}
+
+	int nrev = rmap[s->commits[i].id.sha1];
+	s->commits[i].svn_id = nrev;
+	// Store the id->sha1 relationship for potential later use
+	if (s->commits[i].id.sha1.length()) {
+	    s->rev_to_sha1[s->commits[i].svn_id] = s->commits[i].id.sha1;
+	    std::cout << "Assigning new SVN rev " << nrev << " to " << s->commits[i].id.sha1 << "\n";
+	}
+
+	// Update the message
+	std::stringstream ss(s->commits[i].commit_msg);
+	std::string nmsg, cline;
+	bool srev = false;
+	while (std::getline(ss, cline, '\n')) {
+	    if (srev) {
+		// Already done - just put the rest back on the msg,
+		// as long as it's not an old svn revision line;
+		std::regex svnrevline("^svn:revision:([0-9]+).*");
+		bool srmatch = std::regex_match(cline, svnrevline);
+		if (!srmatch) {
+		    nmsg.append(cline);
+		    nmsg.append("\n");
+		}
+		continue;
+	    }
+	    std::regex svnline("^svn:.*");
+	    bool smatch = std::regex_match(cline, svnline);
+	    if (smatch) {
+		std::string nrevline = std::string("svn:revision:") + std::to_string(nrev);
+		nmsg.append(nrevline);
+		nmsg.append("\n");
+
+		std::regex svnrevline("^svn:revision:([0-9]+).*");
+		bool srmatch = std::regex_match(cline, svnrevline);
+		if (!srmatch) {
+		    // svn line is not the rev - we're not replacing it
+		    nmsg.append(cline);
+		    nmsg.append("\n");
+		}
+		srev = true;
+		continue;
+	    }
+	    std::regex cvsline("^cvs:.*");
+	    bool cmatch = std::regex_match(cline, cvsline);
+	    if (cmatch) {
+		int nrev = rmap[s->commits[i].id.sha1];
+		std::string nrevline = std::string("svn:revision:") + std::to_string(nrev);
+		nmsg.append(nrevline);
+		nmsg.append("\n");
+		nmsg.append(cline);
+		nmsg.append("\n");
+		srev = true;
+		continue;
+	    }
+	    nmsg.append(cline);
+	    nmsg.append("\n");
+	}
+
+	s->commits[i].commit_msg = nmsg;
+
+    }
+
+    return 0;
+}
+
+
+
 int
 git_map_emails(git_fi_data *s, std::string &email_map)
 {
@@ -519,6 +641,7 @@ main(int argc, char *argv[])
     std::string repo_path;
     std::string email_map;
     std::string svn_map;
+    std::string svn_rev_map;
     std::string cvs_auth_map;
     std::string cvs_branch_map;
     std::string keymap;
@@ -535,6 +658,7 @@ main(int argc, char *argv[])
 	options.add_options()
 	    ("e,email-map", "Specify replacement username+email mappings (one map per line, format is commit-id-1;commit-id-2)", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("s,svn-map", "Specify svn rev -> committer map (one mapping per line, format is commit-rev name)", cxxopts::value<std::vector<std::string>>(), "map file")
+	    ("svn-revs", "Specify git sha1 -> svn rev map (one mapping per line, format is sha1 commit-rev)", cxxopts::value<std::vector<std::string>>(), "map file")
 
 	    ("cvs-auth-map", "msg&time -> cvs author map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
 	    ("cvs-branch-map", "msg&time -> cvs branch map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
@@ -607,6 +731,12 @@ main(int argc, char *argv[])
 	{
 	    auto& ff = result["keymap"].as<std::vector<std::string>>();
 	    keymap = ff[0];
+	}
+
+	if (result.count("svn-revs"))
+	{
+	    auto& ff = result["svn-revs"].as<std::vector<std::string>>();
+	    svn_rev_map = ff[0];
 	}
 
 	if (result.count("width"))
@@ -692,6 +822,11 @@ main(int argc, char *argv[])
     if (id_file.length()) {
 	// Handle rebuild info
 	git_id_rebuild_commits(&fi_data, id_file, repo_path, children_file);
+    }
+
+    if (svn_rev_map.length()) {
+	// Handle svn rev assignments
+	git_update_svnrevs(&fi_data, svn_rev_map);
     }
 
     fi_data.wrap_width = cwidth;

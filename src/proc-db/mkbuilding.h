@@ -1,7 +1,7 @@
 /*                    M K B U I L D I N G . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2020 United States Government as represented by
+ * Copyright (c) 2009-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

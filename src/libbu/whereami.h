@@ -24,6 +24,10 @@
 
 #include "common.h"
 
+/* NOTE - this is only included so we can BU_EXPORT getExecutablePath for
+ * libbu's testing - whereami should NOT be considered public libbu API */
+#include "bu/defines.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,7 +58,7 @@ extern "C" {
  * @return the length of the executable path on success (without a terminal NUL
  * character), otherwise `-1`
  */
-WAI_FUNCSPEC
+BU_EXPORT WAI_FUNCSPEC
 int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length);
 
 /**

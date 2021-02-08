@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,6 +129,9 @@ struct ged_subprocess {
     void *chan;
     int aborted;
     struct ged *gedp;
+    int stdin_active;
+    int stdout_active;
+    int stderr_active;
 };
 
 /* FIXME: should be private */

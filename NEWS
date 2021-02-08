@@ -10,10 +10,34 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2020-xx-xx  Release 7.32.2                                     ---
+--- 2021-XX-XX  Release 7.32.4                                     ---
 ----------------------------------------------------------------------
 
+
+----------------------------------------------------------------------
+--- 2021-02-06  Release 7.32.2                                     ---
+----------------------------------------------------------------------
+
+* fixed OSX g-iges crash due to improper memory freeing - Cliff Yapp
+* fixed GQA multithreaded plotting file corruption - Cliff Yapp
+* added -S structural diff option to MGED gdiff command - Cliff Yapp
+* added -v verbosity option to MGED tree command - Cliff Yapp
+* added -? option to MGED which command - Cliff Yapp
+* updated Archer to set cwd=HOME when run without args - Cliff Yapp
+* updated rtwizard to set cwd=HOME when run without args - Cliff Yapp
+* updated MGED to set cwd=HOME when run without args - Cliff Yapp
+* fixed reporting of MGED "vars" command - Cliff Yapp
+* updated MGED to not open non-.g-files as databases - Cliff Yapp
+* fixed MGED I/O when running GED subcommands - Cliff Yapp
+* added decimation control examples to facetize man page - Cliff Yapp
+* changed gcv converter to append to existing .g files - Cliff Yapp
+* removed obscure MGED menu entries for unused features - Cliff Yapp
+* fixed crash when trying to shade invalid breps - Cliff Yapp
+* improved librt CPU timer behavior - Cliff Yapp
+* fixed example in saveview manual page - Sean Morrison
+* added support for in-database vol primitive data - Sumagna Das
 * changed 'mvall' to rename all refs even w/ no object - Sean Morrison
+* updated MGED Overlap GUI to run reliably on Windows - Cliff Yapp
 * fixed MGED search command crash on empty database - Sean Morrison
 * improved performance calculating BoT bounding boxes - Vikram Atreya
 * fixed MGED crash closing multiple rt views on Windows - Cliff Yapp

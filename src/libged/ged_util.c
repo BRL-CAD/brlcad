@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1339,7 +1339,8 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
     struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
     int count = 0;
     int retcode = 0;
-    int read_failed = 0;
+    int read_failed_stderr = 0;
+    int read_failed_stdout = 0;
     char line[RT_MAXLINE+1] = {0};
 
     if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
@@ -1350,19 +1351,22 @@ _ged_rt_output_handler(void *clientData, int UNUSED(mask))
     struct ged *gedp = rrtp->gedp;
 
     /* Get data from rt */
-    if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
-	if (bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
-	    read_failed = 1;
-	}
+    if (rrtp->stderr_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+	read_failed_stderr = 1;
+    }
+    if (rrtp->stdout_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
+	read_failed_stdout = 1;
     }
 
-    if (read_failed) {
+    if (read_failed_stderr || read_failed_stdout) {
 	int aborted;
 
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (gedp->ged_delete_io_handler) {
-	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
-	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
+	    if (rrtp->stderr_active)
+		(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
+	    if (rrtp->stdout_active)
+		(*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
 	}
 
 
@@ -1485,6 +1489,9 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 
     BU_GET(run_rtp, struct ged_subprocess);
     run_rtp->magic = GED_CMD_MAGIC;
+    run_rtp->stdin_active = 0;
+    run_rtp->stdout_active = 0;
+    run_rtp->stderr_active = 0;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;
@@ -1494,7 +1501,6 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
-	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDOUT, _ged_rt_output_handler, (void *)run_rtp);
     }
     return GED_OK;
 }

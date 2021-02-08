@@ -65,7 +65,7 @@ endif (WIN32)
 
 #-----------------------------------------------------------------------------
 # Set CMake module path
-list(APPEND CMAKE_MODULE_PATH "${TCL_SOURCE_DIR}/CMake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../tcl/CMake")
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
@@ -150,7 +150,7 @@ add_definitions(-DTCL_THREADS=1)
 # Tcl/Tk's normal build system uses autotools macros, referred to as the
 # TEA system.  An attempt to duplicate the required functionality from
 # TEA is found in tcl.cmake
-include(${TCL_SOURCE_DIR}/CMake/tcl.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/CMake/tcl.cmake)
 
 #------------------------------------------------------------------------
 # Call the LINK_LIBS macro to get M_LIBRARY properly defined (TEA

@@ -1,7 +1,7 @@
 /*                           G S H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ main(int argc, const char **argv)
 
     if (argc == 0 || !argv) return -1;
 
-    /* Let bu_brlcad_root and friends know where we are */
+    /* Let libbu know where we are */
     bu_setprogname(argv[0]);
 
     /* Done with program name */

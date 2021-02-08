@@ -1,6 +1,6 @@
 #=============================================================================
 #
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2021 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # All rights reserved.
 #
@@ -37,38 +37,23 @@
 #============================================================
 function(TCL_PKGINDEX target pkgname pkgversion)
 
-  # Identify the shared library suffix to be used
-  set(lname ${CMAKE_SHARED_LIBRARY_PREFIX}${target}${CMAKE_SHARED_LIBRARY_SUFFIX})
-
-  # Create a "working" pkgIndex.tcl file that will allow
-  # the package to work from the build directory
-  set(lld_install "${LIB_DIR}")
+  set(INST_DIR "${LIB_DIR}")
   if(MSVC)
-    set(lld_install "${BIN_DIR}")
+    set(INST_DIR "${BIN_DIR}")
   endif(MSVC)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    set(lld_build "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-    set(bpkgindex "${CMAKE_BINARY_DIR}/lib/${pkgname}${pkgversion}/pkgIndex.tcl")
-    file(WRITE "${bpkgindex}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${lld_build}\" ${lname}] ${pkgname}]")
-    DISTCLEAN("${CMAKE_BINARY_DIR}/lib/${pkgname}${pkgversion}")
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      set(bpkgindex "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/${pkgname}${pkgversion}/pkgIndex.tcl")
-      set(lld_build "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
-      if(MSVC)
-	set(lld_build "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
-      endif(MSVC)
-      file(WRITE "${bpkgindex}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${lld_build}\" ${lname}] ${pkgname}]")
-      DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/${pkgname}${pkgversion})
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
 
-  # Create the file Tcl will use once installed
-  set(ipkgindex "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl")
-  file(WRITE "${ipkgindex}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir .. .. \"${lld_install}\" ${lname}] ${pkgname}]")
-  install(FILES "${ipkgindex}" DESTINATION lib/${pkgname}${pkgversion})
-  DISTCLEAN("${ipkgindex}")
+  set(WORKING_PKGFILE ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${LIB_DIR}/${pkgname}${pkgversion}/pkgIndex.tcl)
+  set(INSTALL_PKGFILE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
+
+  add_custom_command(OUTPUT ${WORKING_PKGFILE} ${INSTALL_PKGFILE}
+    COMMAND ${CMAKE_COMMAND} -DWORKING_PKGFILE="${WORKING_PKGFILE}" -DINSTALL_PKGFILE="${INSTALL_PKGFILE}" -DTF_NAME="$<TARGET_FILE_NAME:${target}>" -DTF_DIR="$<TARGET_FILE_DIR:${target}>" -Dpkgname="${pkgname}" -Dpkgversion="${pkgversion}" -DINST_DIR="${INST_DIR}" -P ${BRLCAD_CMAKE_DIR}/scripts/tcl_mkindex.cmake
+    )
+  add_custom_target(${pkgname}_pkgIndex ALL DEPENDS ${WORKING_PKGFILE} ${INSTALL_PKGFILE})
+
+  install(FILES ${INSTALL_PKGFILE} DESTINATION ${LIB_DIR}/${pkgname}${pkgversion})
+
+  DISTCLEAN("${WORKING_PKGFILE}")
+  DISTCLEAN("${INSTALL_PKGFILE}")
 
 endfunction(TCL_PKGINDEX)
 

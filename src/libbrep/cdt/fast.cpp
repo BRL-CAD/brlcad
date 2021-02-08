@@ -1,7 +1,7 @@
 /*                   B R E P _ C D T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1944,17 +1944,19 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     if (!brep->IsValid(&tl)) {
 	//for now try to draw even if it's invalid, but report if the
 	//user is listening
-	if (vls && wstr.Length() > 0) {
-	    ON_String onstr = ON_String(wstr);
-	    const char *isvalidinfo = onstr.Array();
-	    bu_vls_strcat(vls, "brep (");
-	    bu_vls_strcat(vls, solid_name);
-	    bu_vls_strcat(vls, ") is NOT valid:");
-	    bu_vls_strcat(vls, isvalidinfo);
-	} else {
-	    bu_vls_strcat(vls, "brep (");
-	    bu_vls_strcat(vls, solid_name);
-	    bu_vls_strcat(vls, ") is NOT valid.");
+	if (vls) {
+	    if (wstr.Length() > 0) {
+		ON_String onstr = ON_String(wstr);
+		const char *isvalidinfo = onstr.Array();
+		bu_vls_strcat(vls, "brep (");
+		bu_vls_strcat(vls, solid_name);
+		bu_vls_strcat(vls, ") is NOT valid:");
+		bu_vls_strcat(vls, isvalidinfo);
+	    } else {
+		bu_vls_strcat(vls, "brep (");
+		bu_vls_strcat(vls, solid_name);
+		bu_vls_strcat(vls, ") is NOT valid.");
+	    }
 	}
     }
 

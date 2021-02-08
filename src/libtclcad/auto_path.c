@@ -1,7 +1,7 @@
 /*                       A U T O _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -149,16 +149,18 @@ tclcad_auto_path(Tcl_Interp *interp)
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
+#ifdef ITCL_VERSION
 	bu_vls_sprintf(&buffer, "itcl%s", ITCL_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
+#endif
 
 #ifdef HAVE_TK
 	bu_vls_sprintf(&buffer, "tk%s", TK_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
-	bu_vls_sprintf(&buffer, "itk%s", ITCL_VERSION);
+	bu_vls_sprintf(&buffer, "itk%s", ITK_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
@@ -214,13 +216,15 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_vls_sprintf(&buffer, "tclscripts%clod", BU_DIR_SEPARATOR);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&data_subpaths, (long *)p);
+
+	bu_vls_free(&buffer);
     }
 
     // First off, see what's in BU_DIR_LIB.
     char libdir[MAXPATHLEN] = {0};
-    struct bu_vls lib_path = BU_VLS_INIT_ZERO;
     bu_dir(libdir, MAXPATHLEN, BU_DIR_LIB, NULL);
     {
+	struct bu_vls lib_path = BU_VLS_INIT_ZERO;
 	struct bu_ptbl found_subpaths = BU_PTBL_INIT_ZERO;
 	if (strlen(libdir)) {
 	    // Have a library directory, see what's in it
@@ -239,17 +243,22 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    // better...
 	    for (size_t i = 0; i < BU_PTBL_LEN(&found_subpaths); i++) {
 		bu_ptbl_rm(&lib_subpaths, BU_PTBL_GET(&found_subpaths, i));
+		// Since lib_subpaths cleanup won't be seeing this string,
+		// we need to free it now.
+		char *str = (char *)BU_PTBL_GET(&found_subpaths, i);
+		bu_free(str, "subpath string");
 	    }
 	}
+	bu_vls_free(&lib_path);
 	bu_ptbl_free(&found_subpaths);
     }
 
     // Now that we've looked for the libs, handle the data dirs.
-    struct bu_vls data_path = BU_VLS_INIT_ZERO;
     char datadir[MAXPATHLEN] = {0};
     bu_dir(datadir, MAXPATHLEN, BU_DIR_DATA, NULL);
     if (strlen(datadir)) {
 	// Have a directory, see what's in it
+	struct bu_vls data_path = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < BU_PTBL_LEN(&data_subpaths); i++) {
 	    const char *fname = (const char *)BU_PTBL_GET(&data_subpaths, i);
 	    bu_vls_sprintf(&data_path, "%s%c%s", datadir, BU_DIR_SEPARATOR, fname);
@@ -261,6 +270,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		bu_log("Warning: data path %s is not present in directory %s\n", fname, datadir);
 	    }
 	}
+	bu_vls_free(&data_path);
     }
 
     /* Iterate over the paths set and modify the real Tcl auto_path */

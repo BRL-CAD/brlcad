@@ -1,7 +1,7 @@
 /*                         X P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -260,6 +260,12 @@ Copy_solid(struct ged *gedp,
 
     RT_CK_DIR(dp);
 
+    /*
+    struct rt_i *rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    if (rt_gettree(rtip, dp->d_namep) < 0) return NULL;
+    rt_free_rti(rtip);
+    */
+
     if (!(dp->d_flags & RT_DIR_SOLID)) {
 	bu_vls_printf(gedp->ged_result_str, "Copy_solid: %s is not a solid!!!!\n", dp->d_namep);
 	return RT_DIR_NULL;
@@ -415,9 +421,6 @@ Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
 
 
 static struct directory *Copy_object(struct ged *gedp, struct directory *dp, fastf_t *xform);
-
-static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4));
-
 
 int
 ged_xpush_core(struct ged *gedp, int argc, const char *argv[])

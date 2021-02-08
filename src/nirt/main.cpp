@@ -1,7 +1,7 @@
 /*                      M A I N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ list_formats(struct nirt_io_data *io_data, char ***names)
     struct bu_vls fl = BU_VLS_INIT_ZERO;
 
     /* get a nirt directory listing */
-    bu_vls_printf(&nfp, "%s", bu_brlcad_root("share/nirt", 0));
+    bu_vls_printf(&nfp, "%s", bu_dir(NULL, 0, BU_DIR_DATA, "nirt", NULL));
     files = bu_file_list(bu_vls_addr(&nfp), suffix, &filearray);
     if (names)
 	*names = filearray;
@@ -233,7 +233,7 @@ enqueue_format(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
     if (!file.is_open()) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_root("share/nirt", 0), argv[0]);
+	bu_vls_printf(&str, "%s/%s.nrt", bu_dir(NULL, 0, BU_DIR_DATA, "nirt", NULL), argv[0]);
 	file.open(bu_vls_addr(&str));
 	bu_vls_free(&str);
 
@@ -644,7 +644,7 @@ main(int argc, const char **argv)
 	bu_vls_printf(&launch_cmd, "%s", argv[argc-1]);
     }
 
-    /* Let bu_brlcad_root and friends know where we are */
+    /* Let libbu know where we are */
     bu_setprogname(argv[0]);
 
     argv++; argc--;

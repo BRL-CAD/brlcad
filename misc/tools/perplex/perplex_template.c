@@ -1,7 +1,7 @@
 /*              P E R P L E X _ T E M P L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright (c) 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@ int PERPLEX_PUBLIC_LEXER;
 /*              S C A N N E R _ T E M P L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright (c) 1990 The Regents of the University of California.

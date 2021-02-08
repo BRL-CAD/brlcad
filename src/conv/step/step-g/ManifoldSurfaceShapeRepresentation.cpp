@@ -1,7 +1,7 @@
 /* M A N I F O L D S U R F A C E S H A P E R E P R E S E N T A T I O N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

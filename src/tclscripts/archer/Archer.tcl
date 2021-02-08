@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2020 United States Government as represented by
+# Copyright (c) 2002-2021 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -37,13 +37,7 @@ namespace eval Archer {
     set extraMgedCommands ""
     set corePluginInit ""
 
-    set pluginsdir [file join [bu_brlcad_root "share/plugins"] archer]
-    if {![file exists $pluginsdir]} {
-	# searching 'src' is only necessary for items installed to a
-	# different hierarchy.
-	set pluginsdir [file join [bu_brlcad_root "src"] archer plugins]
-    }
-
+    set pluginsdir [file join [bu_dir data] plugins archer]
     foreach plugin_type {Core Commands} {
 	if {[file exists [file join $pluginsdir $plugin_type]]} {
 	    set savePwd [pwd]
@@ -679,14 +673,7 @@ package provide Archer 1.0
     set pwd [::pwd]
 
     # developer & user plugins
-    set pluginPath [file join [bu_brlcad_root "share/plugins"] archer]
-    if { ![file exists $pluginPath] } {
-	# try a source dir invocation
-
-	# searching 'src' is only necessary for items installed to a
-	# different hierarchy.
-	set pluginPath [file join [bu_brlcad_root "src"] archer plugins]
-    }
+    set pluginPath [file join [bu_dir data] plugins archer]
     if { ![file exists $pluginPath] } {
 	# give up on loading any plugins
 	return
@@ -2422,7 +2409,7 @@ package provide Archer 1.0
     } {}
 
     # About Info
-    set imgfile [file join [bu_brlcad_root "share/tclscripts"] archer images aboutArcher.png]
+    set imgfile [file join [bu_dir data] tclscripts archer images aboutArcher.png]
     set aboutImg [image create photo -file $imgfile]
     itk_component add aboutInfo {
 	::ttk::label $itk_component(aboutDialogTabs).aboutInfo \
@@ -2440,7 +2427,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set brlcadLicenseFile [file join [bu_brlcad_root "share"] COPYING]
+    set brlcadLicenseFile [file join [bu_dir data] COPYING]
     if {![catch {open $brlcadLicenseFile "r"} fd]} {
 	set brlcadLicenseInfo [read $fd]
 	close $fd
@@ -2459,7 +2446,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set ackFile [file join [bu_brlcad_root "share/doc"] archer_ack.txt]
+    set ackFile [file join [bu_dir doc] archer_ack.txt]
     if {![catch {open $ackFile "r"} fd]} {
 	set ackInfo [read $fd]
 	close $fd
@@ -2471,8 +2458,7 @@ package provide Archer 1.0
 	::frame $itk_component(aboutDialogTabs).mikeInfo
     } {}
 
-    # try installed, uninstalled
-    set imgfile [file join [bu_brlcad_root "share/tclscripts"] mged mike-tux.png]
+    set imgfile [file join [bu_dir data] tclscripts mged mike-tux.png]
     set mikeImg [image create photo -file $imgfile]
     itk_component add mikePic {
 	::label $itk_component(mikeF).pic \
@@ -2500,7 +2486,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set mikeInfoFile [file join [bu_brlcad_root "share/tclscripts"] mged mike-dedication.txt]
+    set mikeInfoFile [file join [bu_dir data] tclscripts mged mike-dedication.txt]
     if {![catch {open $mikeInfoFile "r"} fd]} {
 	set mikeInfo [read -nonewline $fd]
 	close $fd
@@ -2538,7 +2524,7 @@ proc Archer::get_html_data {helpfile} {
 
 proc Archer::get_html_man_data {cmdname} {
     global archer_help_data
-    set help_fd [open [file join [bu_brlcad_root "share/doc/html"] mann $cmdname.html]]
+    set help_fd [open [file join [bu_dir doc] html mann $cmdname.html]]
     set archer_help_data [read $help_fd]
     close $help_fd
 }
@@ -2561,7 +2547,7 @@ proc Archer::html_help_display {me} {
     if {[catch {regexp {(home://blank)(.+)} $origurl match prefix tempurl} msg]} {
 	tk_messageBox -message "html_help_display: regexp failed, msg - $msg"
     }
-    set url [bu_brlcad_root "share/doc/html"]
+    set url [file join [bu_dir doc] html]
     append url $tempurl
     get_html_data $url
     $htmlviewer reset
@@ -2570,7 +2556,7 @@ proc Archer::html_help_display {me} {
 
 
 proc Archer::mkHelpTkImage {file} {
-    set fullpath [file join [bu_brlcad_root "share/doc/html"] manuals $file]
+    set fullpath [file join [bu_dir doc] html manuals $file]
     set name [image create photo -file $fullpath]
     return [list $name [list image delete $name]]
 }
@@ -2614,8 +2600,8 @@ proc title_node_handler {node} {
     set tlparent [$itk_component(archerHelp) childsite]
 
 
-    if {[file exists [file join [bu_brlcad_root "share/doc/html"] books BRL-CAD_Tutorial_Series-VolumeI.html]] &&
-	[file exists [file join [bu_brlcad_root "share/doc/html"] toc.html]] } {
+    if {[file exists [file join [bu_dir doc] html books BRL-CAD_Tutorial_Series-VolumeI.html]] &&
+	[file exists [file join [bu_dir doc] html toc.html]] } {
 
 	# Table of Contents
 	itk_component add archerHelpToC {
@@ -2628,7 +2614,7 @@ proc title_node_handler {node} {
 	set docstoclist [::hv3::hv3 $docstoc.htmlview -width 250 -requestcmd Archer::html_help_display]
 	set docstochtml [$docstoclist html]
 	$docstochtml configure -parsemode html
-	set help_fd [lindex [list [file join [bu_brlcad_root "share/doc/html"] toc.html]] 0]
+	set help_fd [lindex [list [file join [bu_dir doc] html toc.html]] 0]
 	get_html_data $help_fd
 	$docstochtml parse $archer_help_data
 
@@ -2656,7 +2642,7 @@ proc title_node_handler {node} {
 	set htmlviewer [$hv3htmlviewer html]
 	$htmlviewer configure -parsemode html
 	$htmlviewer configure -imagecmd Archer::mkHelpTkImage
-	set help_fd [lindex [list [file join [bu_brlcad_root "share/doc/html"] books BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
+	set help_fd [lindex [list [file join [bu_dir doc] html books BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
 	get_html_data $help_fd
 	$htmlviewer parse $archer_help_data
 
