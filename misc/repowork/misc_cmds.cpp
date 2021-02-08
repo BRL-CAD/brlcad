@@ -119,8 +119,7 @@ parse_progress(git_fi_data *fi_data, std::ifstream &infile)
     std::string line;
     std::getline(infile, line);
 
-    // For the moment, we don't support progresss so this never works...
-    std::cerr << "Unsupported command \"progress\" - ignored\n";
+    std::cerr << line << "\n";
 
     return 0;
 }
