@@ -47,6 +47,7 @@ bool skip_dercs(std::string &npath) {
     if (npath.find("/misc/") != std::string::npos) return true;
     if (npath.find("/src/other/step") != std::string::npos) return true;
     if (npath.find("/src/conv/step") != std::string::npos) return true;
+    if (npath.find("/src/other/ext/stepcode") != std::string::npos) return true;
     if (npath.find("/ap242.exp") != std::string::npos) return true;
     return false;
 }
