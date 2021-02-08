@@ -707,6 +707,7 @@ static struct to_cmdtab ged_cmds[] = {
     {"nmg_collapse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_collapse},
     {"nmg_fix_normals",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_fix_normals},
     {"nmg_simplify",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_simplify},
+    {"npush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_npush},
     {"ocenter",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ocenter},
     {"open",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_reopen},
     {"orient",	"quat", 6, to_view_func_plus, ged_orient},

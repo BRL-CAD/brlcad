@@ -88,7 +88,10 @@ fill_buffer(int y)
     size_t ret;
 
     buf_start = y - buflines/2;
-    if (buf_start < 0) buf_start = 0;
+    if (buf_start < 0)
+	buf_start = 0;
+
+    /* bu_log("filepos is %zu, buf_start is %zu, scanlen is %zu\n", (size_t)file_pos, (size_t)buf_start, (size_t)scanlen); */
 
     if (file_pos != buf_start * scanlen) {
 	if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
@@ -276,7 +279,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 
 		/* Make sure we have this row in the buffer */
 		bufy = l - buf_start;
-		if (bufy < 0 || bufy >= buflines) {
+		if (bufy < 0 || bufy >= buflines-1) {
 		    fill_buffer(l);
 		    bufy = l - buf_start;
 		}

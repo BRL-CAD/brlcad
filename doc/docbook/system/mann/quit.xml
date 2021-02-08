@@ -22,22 +22,12 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-<para>
-  Ends the MGED process. Note that there is no write database
-  command in MGED. All changes are made to the database as the
-  user performs	them. Therefore, a <command>quit</command>
-  command will not restore the database to its pre-edited
-  state. This is a synonym for the <command>q</command>
-  command.
-</para>
+  <para>Ends the MGED process. Note that there is no write database
+	command in MGED. All changes are made to the database as the user performs
+	them. Therefore, a <command>quit</command> command will not restore the database to its pre-edited state.
+	This is a synonym for the <command>q</command> command.
 
-<para>
-  By default, the quit command will not exit if there are
-  active subprocess commands running.  To exit regardless
-  of those commands, add the <option>f</option> option to
-  force quitting.
-</para>
-
+    </para>
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>

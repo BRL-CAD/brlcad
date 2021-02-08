@@ -112,6 +112,9 @@ struct current_state {
     double *m_len;
     unsigned long *shots;
 
+    /* Plot file I/O protection */
+    int sem_plot;
+
     vect_t u_dir;  	/* direction of U vector for "current view" */
     vect_t v_dir;  	/* direction of V vector for "current view" */
     long steps[3]; 	/* this is per-dimension, not per-view */

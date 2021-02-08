@@ -18,13 +18,14 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* check thread safety history of gqa + plot calls (pl_color)
-  UPDATE - breakage was identified as having been introduced
-  during the libbu semaphore system update circa commit r73078
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* dbconcat corrupted database / failed. created a top-level comb with
+  invalid "1_[subcomb]/" to be created that result in error messages
+  during any db listing (e.g., tops).  workaround was to manually edit
+  the comb and remove the 1_ and / on the entries.
 
 * The following will be removed from MGED's menu bar (unused
   features, can be accomplished another way, or will be exposed
@@ -116,6 +117,19 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* gdiff in mged appears to be broken?  get "no primitives found" on
+  second comb when specifying two combs (gdiff comb1 comb2).
+  UPDATE - this appears to be a consequence of how gdiff internally
+  implements its raytrace diffing.  The "fix" would be to separately
+  raytrace each object and post-process the line segments, rather
+  than drawing up everything at once - the latter has problems if
+  part or all of comb2 is shared with comb1.  A workaround is to
+  keep out comb2 and dbconcat it back in, then gdiff comb1 with the
+  imported tree.
+
+* pixscale doesn't seem to handle stdin (due to bu_seek) for very
+  long
 
 * The embedded framebuffer for the X display manager is not working
   with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries

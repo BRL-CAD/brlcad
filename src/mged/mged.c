@@ -49,6 +49,10 @@
 #  include <poll.h>
 #endif
 
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
+#endif
+
 #include "bio.h"
 #include "bsocket.h"
 
@@ -1109,6 +1113,15 @@ main(int argc, char *argv[])
 		/* fall through */
 	    case 'h':
 		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
+	}
+    }
+
+    /* Change the working directory to BU_DIR_HOME if we are invoking
+     * without any arguments. */
+    if (argc == 1) {
+	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
+	if (homed && chdir(homed)) {
+	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
 	}
     }
 

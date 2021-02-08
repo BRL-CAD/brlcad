@@ -27,6 +27,7 @@
 #define RT_DB_DIFF_H
 
 #include "common.h"
+#include "bu/avs.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
 #include "rt/defines.h"

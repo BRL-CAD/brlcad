@@ -1464,6 +1464,7 @@ BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac &
 #BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
 if(MSVC)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_WINDOWS_H 1\n")
+  set(HAVE_WINDOWS_H 1)
 endif(MSVC)
 
 

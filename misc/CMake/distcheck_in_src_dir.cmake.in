@@ -41,6 +41,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-initstat.cma
 
 set(final_status_script
 "file(GLOB_RECURSE SOURCE_ARCHIVE_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}/*\")
+list(REMOVE_ITEM SOURCE_ARCHIVE_CONTENTS .ninja_log)
 file(WRITE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/final_src_contents.txt\" \"\${SOURCE_ARCHIVE_CONTENTS}\")")
 
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-finalstat.cmake" "${final_status_script}")

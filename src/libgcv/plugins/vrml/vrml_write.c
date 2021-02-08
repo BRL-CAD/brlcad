@@ -1377,7 +1377,7 @@ out:
 }
 
 static const struct gcv_filter gcv_conv_vrml_write = {
-    "VRML Writer", GCV_FILTER_WRITE, (int)BU_MIME_MODEL_VRML, BU_MIME_MODEL, NULL,
+    "VRML Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VRML, NULL,
     vrml_write_create_opts, vrml_write_free_opts, vrml_write
 };
 

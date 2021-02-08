@@ -660,7 +660,7 @@ stl_can_read(const char *data)
 
 
 static const struct gcv_filter gcv_conv_stl_read = {
-    "STL Reader", GCV_FILTER_READ, (int)BU_MIME_MODEL_STL, BU_MIME_MODEL, stl_can_read,
+    "STL Reader", GCV_FILTER_READ, BU_MIME_MODEL_STL, stl_can_read,
     stl_read_create_opts, stl_read_free_opts, stl_read
 };
 
