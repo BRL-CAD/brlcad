@@ -164,7 +164,7 @@ include/express/symbol.h
 include/express/type.h
 include/express/variable.h
 include/ordered_attrs.h
-include/sc_cf_cmake.h.in
+include/sc_cf.h.in
 include/sc_export.h
 include/sc_stdbool.h
 lcov.cmake
