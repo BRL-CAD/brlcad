@@ -127,8 +127,9 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
     return 0;
 }
 
-/* There are two potential cases - assigning a previously unassigned svn rev, and
- * fixing an erroneously assigned rev.  Handle both. */
+/* There are three potential cases - assigning a previously unassigned svn rev,
+ * fixing an erroneously assigned rev, and removing an erroneously assigned rev
+ * with no direct mapping. */
 int
 git_update_svnrevs(git_fi_data *s, std::string &svn_rev_map)
 {
@@ -162,7 +163,7 @@ git_update_svnrevs(git_fi_data *s, std::string &svn_rev_map)
 
 	std::string id1 = line.substr(0, spos);
 	std::string id2 = line.substr(spos+1, std::string::npos);
-	int rev = std::stoi(id2);
+	int rev = (id2.length()) ? std::stoi(id2) : -1;
 
 	std::cout << "sha1: \"" << id1 << "\" -> rev: \"" << rev << "\n";
 	rmap[id1] = rev;
@@ -184,11 +185,13 @@ git_update_svnrevs(git_fi_data *s, std::string &svn_rev_map)
 	}
 
 	int nrev = rmap[s->commits[i].id.sha1];
-	s->commits[i].svn_id = nrev;
-	// Store the id->sha1 relationship for potential later use
-	if (s->commits[i].id.sha1.length()) {
-	    s->rev_to_sha1[s->commits[i].svn_id] = s->commits[i].id.sha1;
-	    std::cout << "Assigning new SVN rev " << nrev << " to " << s->commits[i].id.sha1 << "\n";
+	if (nrev > 0) {
+	    s->commits[i].svn_id = nrev;
+	    // Store the id->sha1 relationship for potential later use
+	    if (s->commits[i].id.sha1.length()) {
+		s->rev_to_sha1[s->commits[i].svn_id] = s->commits[i].id.sha1;
+		std::cout << "Assigning new SVN rev " << nrev << " to " << s->commits[i].id.sha1 << "\n";
+	    }
 	}
 
 	// Update the message
@@ -210,16 +213,18 @@ git_update_svnrevs(git_fi_data *s, std::string &svn_rev_map)
 	    std::regex svnline("^svn:.*");
 	    bool smatch = std::regex_match(cline, svnline);
 	    if (smatch) {
-		std::string nrevline = std::string("svn:revision:") + std::to_string(nrev);
-		nmsg.append(nrevline);
-		nmsg.append("\n");
-
-		std::regex svnrevline("^svn:revision:([0-9]+).*");
-		bool srmatch = std::regex_match(cline, svnrevline);
-		if (!srmatch) {
-		    // svn line is not the rev - we're not replacing it
-		    nmsg.append(cline);
+		if (nrev > 0) {
+		    std::string nrevline = std::string("svn:revision:") + std::to_string(nrev);
+		    nmsg.append(nrevline);
 		    nmsg.append("\n");
+
+		    std::regex svnrevline("^svn:revision:([0-9]+).*");
+		    bool srmatch = std::regex_match(cline, svnrevline);
+		    if (!srmatch) {
+			// svn line is not the rev - we're not replacing it
+			nmsg.append(cline);
+			nmsg.append("\n");
+		    }
 		}
 		srev = true;
 		continue;
