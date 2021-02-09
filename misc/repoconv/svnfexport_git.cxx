@@ -109,7 +109,7 @@ write_branches_list()
 }
 
 
-void read_cached_rev_sha1s()
+void read_cached_rev_sha1s(int startrev)
 {
     std::ifstream infile("rev_gsha1s.txt");
     if (!infile.good()) return;
@@ -122,7 +122,8 @@ void read_cached_rev_sha1s()
 	std::string rev_str = line.substr(0, spos);
 	std::string gsha1 = line.substr(spos+1, std::string::npos);
 	long int rev = std::stol(rev_str);
-	rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = gsha1;
+	if (rev <= startrev)
+	    rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = gsha1;
 	//std::cout << branch << "," << rev << " -> " << gsha1 << "\n";
     }
 }

@@ -118,7 +118,7 @@ int main(int argc, const char **argv)
     }
 
     /* Read in previously defined rev -> sha1 map, if any */
-    read_cached_rev_sha1s();
+    read_cached_rev_sha1s(starting_rev);
 
     /* Read in pre-existing blob sha1s from git */
     load_blob_sha1s();
