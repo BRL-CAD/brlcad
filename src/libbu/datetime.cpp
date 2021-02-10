@@ -92,7 +92,7 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 int64_t
 bu_gettime(void)
 {
-    auto etime =std::chrono::high_resolution_clock::now().time_since_epoch();
+    auto etime =std::chrono::system_clock::now().time_since_epoch();
     auto mtime = std::chrono::duration_cast<std::chrono::microseconds>(etime);
     int64_t msec = mtime.count();
     return msec;
