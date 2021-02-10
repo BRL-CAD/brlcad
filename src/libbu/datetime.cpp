@@ -1,4 +1,4 @@
-/*                         D A T E T I M E . C
+/*                       D A T E T I M E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2013-2021 United States Government as represented by
@@ -20,18 +20,9 @@
 
 #include "common.h"
 
-#include <time.h>
 #include <string.h>
 
-#ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#ifdef HAVE_SCHED_H
-#  include <sched.h>
-#endif
+#include <chrono>
 
 #include "bio.h"
 
@@ -89,12 +80,12 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 
     /* put the UTC time in the desired ISO format: "yyyy-mm-ddThh:mm:ssZ" */
     bu_vls_sprintf(vls_gmtime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-		   loctime.tm_year + 1900,
-		   loctime.tm_mon + 1,
-		   loctime.tm_mday,
-		   loctime.tm_hour,
-		   loctime.tm_min,
-		   loctime.tm_sec);
+	    loctime.tm_year + 1900,
+	    loctime.tm_mon + 1,
+	    loctime.tm_mday,
+	    loctime.tm_hour,
+	    loctime.tm_min,
+	    loctime.tm_sec);
 }
 
 
@@ -105,43 +96,17 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 int64_t
 bu_gettime(void)
 {
-#ifdef HAVE_SYS_TIME_H
-
-    struct timeval nowTime;
-
-    gettimeofday(&nowTime, NULL);
-    return ((int64_t)nowTime.tv_sec * (int64_t)1000000
-	    + (int64_t)nowTime.tv_usec);
-
-#else /* HAVE_SYS_TIME_H */
-#  ifdef HAVE_WINDOWS_H
-
-    FILETIME ft;
-    ULARGE_INTEGER ut;
-    long long nowTime;
-    GetSystemTimePreciseAsFileTime(&ft);
-    ut.LowPart = ft.dwLowDateTime;
-    ut.HighPart = ft.dwHighDateTime;
-    /* https://support.microsoft.com/en-us/help/167296/how-to-convert-a-unix-time-t-to-a-win32-filetime-or-systemtime */
-    nowTime = (ut.QuadPart - 116444736000000000)/10;
-    return nowTime;
-
-#  else /* HAVE_WINDOWS_H */
-#    warning "bu_gettime() implementation missing for this machine type"
-    bu_log("WARNING, no bu_gettime implementation for this machine type.\n");
-    return -1;
-
-#  endif /* HAVE_WINDOWS_H */
-#endif /* HAVE_SYS_TIME_H */
+    auto etime =std::chrono::high_resolution_clock::now().time_since_epoch();
+    auto mtime = std::chrono::duration_cast<std::chrono::microseconds>(etime);
+    int64_t msec = mtime.count();
+    return msec;
 }
 
-
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
