@@ -33,10 +33,6 @@
 
 #include "y2038/time64.h"
 
-/* for strict c90 */
-#ifndef HAVE_DECL_GETTIMEOFDAY
-extern int gettimeofday(struct timeval *, void *);
-#endif
 
 int BU_SEM_DATETIME;
 
