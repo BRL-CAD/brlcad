@@ -46,6 +46,10 @@
 #include <QMainWindow>
 #undef Success
 #include <QGLWidget>
+#ifndef ENABLE_QTADS
+#  undef Success
+#  include <QDockWidget>
+#endif
 #undef Success
 #include <QMenu>
 #undef Success
@@ -112,6 +116,10 @@ class BRLCAD_MainWindow : public QMainWindow
 	ads::CDockWidget *console_dock;
 	ads::CDockWidget *tree_dock;
 	ads::CDockWidget *panel_dock;
+#else
+	QDockWidget *console_dock;
+	QDockWidget *tree_dock;
+	QDockWidget *panel_dock;
 #endif
 
 	CADConsole *console;

@@ -128,6 +128,70 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     //userpropview->setMinimumHeight(340);
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
     ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
+
+#else
+
+     // Set up Display canvas
+    canvas = new Display();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
+    setCentralWidget(canvas);
+
+
+    // Define dock layout
+    console_dock = new QDockWidget("Console", this);
+    addDockWidget(Qt::BottomDockWidgetArea, console_dock);
+    console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
+    view_menu->addAction(console_dock->toggleViewAction());
+
+    tree_dock = new QDockWidget("Hierarchy", this);
+    addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
+    tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(tree_dock->toggleViewAction());
+
+    panel_dock = new QDockWidget("Edit Panel", this);
+    addDockWidget(Qt::RightDockWidgetArea, panel_dock);
+    panel_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(panel_dock->toggleViewAction());
+
+    /* Because the console usually doesn't need a huge amount of
+     * horizontal space and the tree can use all the vertical space
+     * it can get, give the bottom corners to the left/right docks */
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+
+
+    /***** Create and add the widgets that inhabit the dock *****/
+
+    /* Console */
+    console = new CADConsole(console_dock);
+    console_dock->setWidget(console);
+
+    /* Geometry Tree */
+    treemodel = new CADTreeModel();
+    treeview = new CADTreeView(tree_dock);
+    tree_dock->setWidget(treeview);
+    treeview->setModel(treemodel);
+    treeview->setItemDelegate(new GObjectDelegate());
+    treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    treeview->header()->setStretchLastSection(true);
+    QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
+    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), treemodel, SLOT(update_selected_node_relationships(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treemodel, SLOT(expand_tree_node_relationships(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treemodel, SLOT(close_tree_node_relationships(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(customContextMenuRequested(const QPoint&)), treeview, SLOT(context_menu(const QPoint&)));
+    treemodel->populate(DBI_NULL);
+    ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
+
+    /* Edit panel */
+    panel = new CADAccordion(panel_dock);
+    panel_dock->setWidget(panel);
+
+    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->stdpropmodel, SLOT(refresh(const QModelIndex &)));
+
+    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
+    ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
+
 #endif
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
