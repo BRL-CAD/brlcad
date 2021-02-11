@@ -41,12 +41,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     connect(cad_open, SIGNAL(triggered()), this, SLOT(open_file()));
     file_menu->addAction(cad_open);
 
-#ifdef ENABLE_QTADS
-    cad_save_settings = new QAction("Save Settings", this);
-    connect(cad_save_settings, SIGNAL(triggered()), this, SLOT(save_settings()));
-    file_menu->addAction(cad_save_settings);
-#endif
-
     cad_exit = new QAction("Exit", this);
     connect(cad_exit, SIGNAL(triggered()), this, SLOT(close()));
     file_menu->addAction(cad_exit);
@@ -56,80 +50,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     menuBar()->addSeparator();
 
     help_menu = menuBar()->addMenu("Help");
-
-
-#ifdef ENABLE_QTADS
-    // Define dock layout
-    ads::CDockManager::setConfigFlags(ads::CDockManager::HideSingleCentralWidgetTitleBar);
-    dock = new ads::CDockManager(this);
-
-    // TODO - set up our own with the proper values...
-    dock->setStyleSheet("");
-
-
-    // Set up OpenGL canvas
-    view_dock = new ads::CDockWidget("Scene");
-    view_menu->addAction(view_dock->toggleViewAction());
-//    canvas = new QGLWidget();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
-    canvas = new BRLCADDisplay();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
-    canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    canvas->setMinimumSize(512,512);
-    view_dock->setWidget(canvas, ads::CDockWidget::eInsertMode::ForceNoScrollArea);
-    view_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
-    view_dock->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    view_dock->setMinimumSize(512,512);
-    auto *CentralDockArea = dock->setCentralWidget(view_dock);
-    CentralDockArea->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
-
-    /* Console */
-    console_dock = new ads::CDockWidget("Console");
-    view_menu->addAction(console_dock->toggleViewAction());
-    console = new CADConsole(console_dock);
-    console_dock->setWidget(console);
-    console_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
-    dock->addDockWidget(ads::BottomDockWidgetArea, console_dock);
-
-   /* Geometry Tree */
-    tree_dock = new ads::CDockWidget("Hierarchy");
-    view_menu->addAction(tree_dock->toggleViewAction());
-    treemodel = new CADTreeModel();
-    treeview = new CADTreeView(tree_dock);
-    tree_dock->setWidget(treeview);
-    tree_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
-    treeview->setModel(treemodel);
-    treeview->setItemDelegate(new GObjectDelegate());
-    treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    treeview->header()->setStretchLastSection(true);
-    QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
-    QObject::connect((CADApp *)qApp, SIGNAL(db_change()), canvas, SLOT(onDatabaseOpen()));
-    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), treemodel, SLOT(update_selected_node_relationships(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treemodel, SLOT(expand_tree_node_relationships(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treemodel, SLOT(close_tree_node_relationships(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(customContextMenuRequested(const QPoint&)), treeview, SLOT(context_menu(const QPoint&)));
-    treemodel->populate(DBI_NULL);
-    ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
-    dock->addDockWidget(ads::LeftDockWidgetArea, tree_dock);
-
-    /* Edit panel */
-    panel_dock = new ads::CDockWidget("Edit Panel");
-    view_menu->addAction(panel_dock->toggleViewAction());
-    panel = new CADAccordion(panel_dock);
-    panel_dock->setWidget(panel);
-    panel_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
-    dock->addDockWidget(ads::RightDockWidgetArea, panel_dock);
-
-    /***** Create and add the widgets that inhabit the dock *****/
-
-    //stdpropview->setMinimumHeight(340);
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->stdpropmodel, SLOT(refresh(const QModelIndex &)));
-
-    //userpropview->setMinimumHeight(340);
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
-    ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
-
-#else
 
      // Set up Display canvas
     canvas = new BRLCADDisplay();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
@@ -196,7 +116,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
     ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
 
-#endif
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
     //panel->setUniqueVisibility(1);
@@ -237,30 +156,6 @@ BRLCAD_MainWindow::open_file()
 	}
     }
 }
-
-#ifdef ENABLE_QTADS
-void
-BRLCAD_MainWindow::save_settings()
-{
-    QSettings Settings("Settings.ini", QSettings::IniFormat);
-    Settings.setValue("mainWindow/Geometry", this->saveGeometry());
-    Settings.setValue("mainWindow/State", this->saveState());
-    Settings.setValue("mainWindow/DockingState", dock->saveState());
-}
-
-void
-BRLCAD_MainWindow::restore_settings()
-{
-    if (bu_file_exists("Settings.ini", NULL)) {
-	QSettings Settings("Settings.ini", QSettings::IniFormat);
-	this->restoreGeometry(Settings.value("mainWindow/Geometry").toByteArray());
-	this->restoreState(Settings.value("mainWindow/State").toByteArray());
-	dock->restoreState(Settings.value("mainWindow/DockingState").toByteArray());
-    } else {
-	this->resize(1100, 800);
-    }
-}
-#endif
 
 /*
  * Local Variables:

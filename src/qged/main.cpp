@@ -46,8 +46,6 @@
 #include <QCommandLineParser>
 #undef Success
 #include <QApplication>
-#undef Success
-#include <QX11Info>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -97,18 +95,8 @@ int main(int argc, char *argv[])
 	}
     }
 
-#ifdef Q_WS_X11
-  if(!QX11Info::isCompositingManagerRunning()) {
-      bu_log("Compositing not available, falling back on simpler docking system\n");
-  }
-#endif
-
-#ifndef ENABLE_QTADS
     // TODO - this needs to be a setting that is saved and restored
     mainWin.resize(1100, 800);
-#else
-    mainWin.restore_settings();
-#endif
 
     // Set up the command prompt's commands
     cad_register_commands(&app);

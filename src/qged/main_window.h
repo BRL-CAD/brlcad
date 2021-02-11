@@ -46,10 +46,8 @@
 #include <QMainWindow>
 #undef Success
 #include <QGLWidget>
-#ifndef ENABLE_QTADS
-#  undef Success
-#  include <QDockWidget>
-#endif
+#undef Success
+#include <QDockWidget>  // TODO may want to enhance this for our purposes...
 #undef Success
 #include <QMenu>
 #undef Success
@@ -73,10 +71,6 @@
 #  pragma clang diagnostic pop
 #endif
 
-#ifdef ENABLE_QTADS
-#  include "qtads/DockManager.h"
-#  include "qtads/DockAreaWidget.h"
-#endif
 #include "cadconsole.h"
 #include "cadtreemodel.h"
 #include "cadaccordion.h"
@@ -87,40 +81,22 @@ class BRLCAD_MainWindow : public QMainWindow
     Q_OBJECT
     public:
 	BRLCAD_MainWindow();
-#ifdef ENABLE_QTADS
-	void restore_settings();
-#endif
 
 	BRLCADDisplay *canvas;
 
     private slots:
 	void open_file();
-#ifdef ENABLE_QTADS
-	void save_settings();
-#endif
 
     private:
 	QMenu *file_menu;
 	QAction *cad_open;
-#ifdef ENABLE_QTADS
-	QAction *cad_save_settings;
-	QAction *cad_restore_settings;
-#endif
 	QAction *cad_exit;
 	QMenu *view_menu;
 	QMenu *help_menu;
 
-#ifdef ENABLE_QTADS
-	ads::CDockManager *dock;
-	ads::CDockWidget *view_dock;
-	ads::CDockWidget *console_dock;
-	ads::CDockWidget *tree_dock;
-	ads::CDockWidget *panel_dock;
-#else
 	QDockWidget *console_dock;
 	QDockWidget *tree_dock;
 	QDockWidget *panel_dock;
-#endif
 
 	CADConsole *console;
 	CADTreeModel *treemodel;
