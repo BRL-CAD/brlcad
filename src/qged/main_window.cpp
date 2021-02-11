@@ -133,6 +133,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
      // Set up Display canvas
     canvas = new Display();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
+    canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    canvas->setMinimumSize(512,512);
+
     setCentralWidget(canvas);
 
 
@@ -174,6 +177,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     treeview->header()->setStretchLastSection(true);
     QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
+    QObject::connect((CADApp *)qApp, SIGNAL(db_change()), canvas, SLOT(onDatabaseOpen()));
     QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
     QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), treemodel, SLOT(update_selected_node_relationships(const QModelIndex &)));
