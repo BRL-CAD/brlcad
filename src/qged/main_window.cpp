@@ -41,9 +41,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     connect(cad_open, SIGNAL(triggered()), this, SLOT(open_file()));
     file_menu->addAction(cad_open);
 
+#ifdef ENABLE_QTADS
     cad_save_settings = new QAction("Save Settings", this);
     connect(cad_save_settings, SIGNAL(triggered()), this, SLOT(save_settings()));
     file_menu->addAction(cad_save_settings);
+#endif
 
     cad_exit = new QAction("Exit", this);
     connect(cad_exit, SIGNAL(triggered()), this, SLOT(close()));
@@ -56,6 +58,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     help_menu = menuBar()->addMenu("Help");
 
 
+#ifdef ENABLE_QTADS
     // Define dock layout
     ads::CDockManager::setConfigFlags(ads::CDockManager::HideSingleCentralWidgetTitleBar);
     dock = new ads::CDockManager(this);
@@ -125,6 +128,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     //userpropview->setMinimumHeight(340);
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
     ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
+#endif
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
     //panel->setUniqueVisibility(1);
@@ -166,6 +170,7 @@ BRLCAD_MainWindow::open_file()
     }
 }
 
+#ifdef ENABLE_QTADS
 void
 BRLCAD_MainWindow::save_settings()
 {
@@ -187,6 +192,7 @@ BRLCAD_MainWindow::restore_settings()
 	this->resize(1100, 800);
     }
 }
+#endif
 
 /*
  * Local Variables:

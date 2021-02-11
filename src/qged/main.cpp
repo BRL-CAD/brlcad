@@ -95,9 +95,12 @@ int main(int argc, char *argv[])
 	}
     }
 
+#ifndef ENABLE_QTADS
     // TODO - this needs to be a setting that is saved and restored
-    //mainWin.resize(1100, 800);
+    mainWin.resize(1100, 800);
+#else
     mainWin.restore_settings();
+#endif
 
     // Set up the command prompt's commands
     cad_register_commands(&app);
