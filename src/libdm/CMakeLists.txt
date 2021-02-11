@@ -100,6 +100,11 @@ set(libdm_ignore_files
   null/dm-Null.h
   include/private.h
   include/calltable.h
+  fontstash/LICENSE.fontstash
+  fontstash/README.md
+  fontstash/fontstash.h
+  fontstash/glfontstash.h
+  fontstash/stb_truetype.h
   )
 CMAKEFILES(${libdm_ignore_files})
 

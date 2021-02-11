@@ -73,11 +73,6 @@ CMAKEFILES(
   osg-test.cpp
   osg_bob.cpp
   osg_fb_manipulator.h
-  fontstash/LICENSE.fontstash
-  fontstash/README.md
-  fontstash/fontstash.h
-  fontstash/glfontstash.h
-  fontstash/stb_truetype.h
   )
 
 # Local Variables:
