@@ -91,7 +91,7 @@ class BRLCAD_MainWindow : public QMainWindow
 	void restore_settings();
 #endif
 
-	Display *canvas;
+	BRLCADDisplay *canvas;
 
     private slots:
 	void open_file();

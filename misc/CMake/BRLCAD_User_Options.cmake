@@ -212,12 +212,19 @@ mark_as_advanced(BRLCAD_ENABLE_STEP)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
 if (BRLCAD_ENABLE_QT)
-  # TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
-  find_package(Qt5Widgets QUIET)
+
+  find_package(X11)
+  if (X11_FOUND)
+    find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL X11Extras REQUIRED)
+  else ()
+    find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL REQUIRED)
+  endif()
+
   if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
     message("QT interface requested, but QT5 is not found - disabling")
     set(BRLCAD_ENABLE_QT OFF)
   endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
 endif (BRLCAD_ENABLE_QT)
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)

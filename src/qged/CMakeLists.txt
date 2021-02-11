@@ -8,9 +8,13 @@ if(BRLCAD_ENABLE_QT)
     ${RT_INCLUDE_DIRS}
     ${BU_INCLUDE_DIRS}
     ${Qt5Widgets_INCLUDE_DIRS}
+    ${Qt5X11Extras_INCLUDE_DIRS}
     )
 
-  add_definitions(${Qt5Widgets_DEFINITIONS})
+  add_definitions(
+    ${Qt5Widgets_DEFINITIONS}
+    ${Qt5X11Extras_DEFINITIONS}
+    )
 endif(BRLCAD_ENABLE_QT)
 
 add_subdirectory(qtads)
@@ -84,12 +88,12 @@ if(BRLCAD_ENABLE_QT)
   QT5_ADD_RESOURCES(cad_qrc cadresources.qrc)
 
   add_executable(qged ${qged_srcs} ${moc_srcs} ${cad_qrc})
-  qt5_use_modules(qged Widgets OpenGL)
-if (BRLCAD_ENABLE_QTADS)
-  target_link_libraries(qged libbu librt libged qtadvanceddocking ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
-else (BRLCAD_ENABLE_QTADS)
-  target_link_libraries(qged libbu librt libged ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
-endif (BRLCAD_ENABLE_QTADS)
+  if (X11_FOUND)
+    qt5_use_modules(qged Widgets OpenGL X11Extras)
+  else (X11_FOUND)
+    qt5_use_modules(qged Widgets OpenGL)
+  endif (X11_FOUND)
+  target_link_libraries(qged libbu librt libged qtadvanceddocking ${OPENGL_LIBRARIES})
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}

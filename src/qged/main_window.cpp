@@ -71,7 +71,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     view_dock = new ads::CDockWidget("Scene");
     view_menu->addAction(view_dock->toggleViewAction());
 //    canvas = new QGLWidget();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
-    canvas = new Display();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
+    canvas = new BRLCADDisplay();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
     canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     canvas->setMinimumSize(512,512);
     view_dock->setWidget(canvas, ads::CDockWidget::eInsertMode::ForceNoScrollArea);
@@ -132,7 +132,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 #else
 
      // Set up Display canvas
-    canvas = new Display();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
+    canvas = new BRLCADDisplay();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
     canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     canvas->setMinimumSize(512,512);
 
