@@ -76,6 +76,11 @@ qt_setup(struct fb *ifp, int width, int height)
 
     qi->qapp = new QApplication(argc, argv);
 
+    QSurfaceFormat fmt;
+    fmt.setDepthBufferSize(24);
+    fmt.setSamples(4);
+    QSurfaceFormat::setDefaultFormat(fmt);
+
     qi->glc = new QOpenGLWidget();
     qi->glc->resize(width, height);
     qi->glc->show();
