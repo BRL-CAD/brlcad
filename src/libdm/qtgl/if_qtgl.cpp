@@ -233,9 +233,10 @@ fb_clipper(struct fb *ifp)
 int
 qtgl_configureWindow(struct fb *ifp, int width, int height)
 {
-    if (width == QTGL(ifp)->win_width &&
-	height == QTGL(ifp)->win_height)
-	return 1;
+    int getmem = 0;
+
+    if (!QTGL(ifp)->mi_memwidth)
+	getmem = 1;
 
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
@@ -247,6 +248,10 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
     ifp->i->if_yzoom = 1;
     ifp->i->if_xcenter = width/2;
     ifp->i->if_ycenter = height/2;
+
+    if (!getmem && width == QTGL(ifp)->win_width &&
+	height == QTGL(ifp)->win_height)
+	return 1;
 
     qtgl_getmem(ifp);
     fb_clipper(ifp);
@@ -306,6 +311,8 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 	qt_destroy(qi);
 	return -1;
     }
+
+    qtgl_configureWindow(ifp, width, height);
 
     return 0;
 
