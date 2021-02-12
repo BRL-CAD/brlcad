@@ -23,6 +23,8 @@
  *
  * An OpenGL framebuffer using Qt.
  *
+ * TODO - study https://stackoverflow.com/a/23230099
+ *
  */
 /** @} */
 
@@ -78,7 +80,6 @@ qt_setup(struct fb *ifp, int width, int height)
 
     QSurfaceFormat fmt;
     fmt.setDepthBufferSize(24);
-    fmt.setSamples(4);
     QSurfaceFormat::setDefaultFormat(fmt);
 
     qi->glc = new QOpenGLWidget();
