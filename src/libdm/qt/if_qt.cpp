@@ -1409,9 +1409,11 @@ struct fb qt_interface =  { &qt_interface_impl };
 #ifdef DM_PLUGIN
 static const struct fb_plugin finfo = { &qt_interface };
 
+extern "C" {
 COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
 {
     return &finfo;
+}
 }
 #endif
 
@@ -1425,9 +1427,9 @@ QMainWindow::QMainWindow(struct fb *fbp, QImage *img, QWindow *win)
     , m_update_pending(false)
 {
     m_backingStore = new QBackingStore(this);
-    create();
     image = img;
     ifp = fbp;
+    create();
 }
 
 QMainWindow::~QMainWindow()

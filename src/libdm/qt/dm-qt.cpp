@@ -319,8 +319,9 @@ qt_sendRepaintEvent(struct dm *dmp)
  *
  */
 extern "C" struct dm *
-qt_open(void *vinterp, int argc, const char **argv)
+qt_open(void *UNUSED(vinterp), int UNUSED(argc), const char **UNUSED(argv))
 {
+#if 0
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
     static int count = 0;
     //int make_square = -1;
@@ -503,6 +504,8 @@ qt_open(void *vinterp, int argc, const char **argv)
     Tcl_DoWhenIdle(IdleCall, NULL);
 #endif
     return dmp;
+#endif
+    return NULL;
 }
 
 /**
@@ -535,7 +538,7 @@ qt_close(struct dm *dmp)
     bu_free((void *)dmp->i, "qt_close: dmp impl");
     bu_free((void *)dmp, "qt_close: dmp");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 int
