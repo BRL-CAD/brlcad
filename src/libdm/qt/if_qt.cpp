@@ -1479,6 +1479,7 @@ void QMainWindow::renderNow()
 
     render(&painter);
 
+    painter.end();
     m_backingStore->endPaint();
     m_backingStore->flush(rect);
 }
