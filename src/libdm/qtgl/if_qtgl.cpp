@@ -54,6 +54,8 @@ struct qtglinfo {
 
     int mi_memwidth;            /* width of scanline in if_mem */
 
+    int texid;
+
     int alive;
 };
 
@@ -100,38 +102,6 @@ qt_destroy(struct qtglinfo *qi)
 {
     delete qi->glc;
     delete qi->qapp;
-}
-
-
-/*
- * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
- * rectangle of the frame buffer
- */
-HIDDEN void
-qtgl_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
-{
-    struct fb_clip *clp;
-
-    clp = &(QTGL(ifp)->clip);
-
-    if (xbase > clp->xpixmax || ybase > clp->ypixmax)
-	return;
-    if (xbase < clp->xpixmin)
-	xbase = clp->xpixmin;
-    if (ybase < clp->ypixmin)
-	ybase = clp->ypixmin;
-
-    if ((xbase + npix -1) > clp->xpixmax)
-	npix = clp->xpixmax - xbase + 1;
-    if ((ybase + nlines - 1) > clp->ypixmax)
-	nlines = clp->ypixmax - ybase + 1;
-
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, QTGL(ifp)->mi_memwidth);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
-
-    glRasterPos2i(xbase, ybase);
-    glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *) ifp->i->if_mem);
 }
 
 
@@ -256,7 +226,40 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
     qtgl_getmem(ifp);
     fb_clipper(ifp);
 
+    QTGL(ifp)->glc->makeCurrent();
+
+    glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
+
+    glDisable(GL_LIGHTING);
+
     glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, -1, 1);
+    glMatrixMode (GL_MODELVIEW);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    glColor3f(1,1,1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, QTGL(ifp)->texid);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
+    glTexCoord2d(0, 1); glVertex3f(0, QTGL(ifp)->win_height, 0);
+    glTexCoord2d(1, 0); glVertex3f(QTGL(ifp)->win_width, 0, 0);
+    glTexCoord2d(1, 1); glVertex3f(QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0);
+
+    glEnd();
+
+
     return 0;
 }
 
@@ -554,7 +557,6 @@ qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
     glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
-    qtgl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
     glFlush();
 
     QTGL(ifp)->glc->update();
@@ -717,16 +719,6 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
 	    break;
     }
 
-#if 0
-    QTGL(ifp)->glc->makeCurrent();
-    if (xstart + count < (size_t)ifp->i->if_width) {
-	qtgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
-    } else {
-	/* Normal case -- multi-pixel write */
-	qtgl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
-    }
-    //glFlush();
-#endif
     QTGL(ifp)->glc->update();
 
     return ret;
@@ -768,8 +760,6 @@ qtgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
 	}
     }
 
-    QTGL(ifp)->glc->makeCurrent();
-    qtgl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
     QTGL(ifp)->glc->update();
 
     return width*height;
@@ -811,8 +801,6 @@ qtgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 	}
     }
 
-    QTGL(ifp)->glc->makeCurrent();
-    qtgl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
     QTGL(ifp)->glc->update();
 
     return width*height;
@@ -915,14 +903,26 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glLoadIdentity();
 
     glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
-    qtgl_xmit_scanlines(ifp, y, h, x, w);
-    glMatrixMode(GL_PROJECTION);
+
+    glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
+
+    glDisable(GL_LIGHTING);
+
+    glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
+
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, w, h, 0, -1, 1);
     glPopMatrix();
+
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(mm);
-
-    glFlush();
 
     QTGL(ifp)->glc->update();
 
