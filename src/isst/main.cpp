@@ -70,6 +70,8 @@ int main(int argc, char *argv[])
 
     TIENET_BUFFER_SIZE(app.buffer_image, (uint32_t)(3 * app.camera.w * app.camera.h));
 
+    app.texid = 0;
+
     mainWin.canvas->makeCurrent();
     glClearColor (0.0, 0, 0.0, 1);
     glBindTexture (GL_TEXTURE_2D, app.texid);
@@ -93,6 +95,8 @@ int main(int argc, char *argv[])
 
     VSETALL(app.camera.pos, app.tie->radius);
     VMOVE(app.camera.focus, app.tie->mid);
+
+    render_phong_init(&app.camera.render, NULL);
 
     render_camera_prep(&app.camera);
     render_camera_render(&app.camera, app.tie, &tile, &app.buffer_image);
