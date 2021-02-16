@@ -659,9 +659,9 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
     ret = 0;
 
     unsigned char *cp;
-    int ybase;
+    //int ybase;
 
-    ybase = ystart;
+    //ybase = ystart;
     cp = (unsigned char *)(pixelp);
 
     while (pix_count) {
@@ -717,6 +717,7 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
 	    break;
     }
 
+#if 0
     QTGL(ifp)->glc->makeCurrent();
     if (xstart + count < (size_t)ifp->i->if_width) {
 	qtgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
@@ -724,7 +725,8 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
 	/* Normal case -- multi-pixel write */
 	qtgl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
     }
-    glFlush();
+    //glFlush();
+#endif
     QTGL(ifp)->glc->update();
 
     return ret;
