@@ -49,8 +49,8 @@ isstGL::paintEvent(QPaintEvent*)
 
     render_camera_render(&camera, tie, &tile, &buffer_image);
 
-#if 0
     QImage *image = new QImage(buffer_image.data, camera.w, camera.h, QImage::Format_RGB888);
+#if 0
     if (!image->save("file.png"))
 	printf("save failed!\n");
 #endif
