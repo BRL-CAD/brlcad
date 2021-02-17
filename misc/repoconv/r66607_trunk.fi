@@ -357,6 +357,6 @@ svn:account:tbrowder2
 Note: r66607 was a commit made in SVN to multiple branches,
 which is why this SVN commit ID occurs on both trunk and
 attr-extension-mods.
-from 0db52ee174c4fc27bbbabb44b9a912d41f9d01bc
+from 1aa2d67de770df277bfebbcaebfdf6171e9b5eff
 M 100644 8d1f0f552497321dc557aec00001827574916774 include/bu/defines.h
 
