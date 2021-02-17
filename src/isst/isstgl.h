@@ -28,6 +28,9 @@
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
+#include <QPainter>
+#include <QImage>
+
 extern "C" {
 #include "rt/tie.h"
 #include "adrt.h"
@@ -44,6 +47,8 @@ class isstGL : public QOpenGLWidget
 	struct tie_s *tie = NULL; // From parent app
 
 	void render();
+
+	void paintEvent(QPaintEvent*) override;
 
 #if 0
     protected:

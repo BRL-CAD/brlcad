@@ -39,6 +39,26 @@ isstGL::isstGL()
     render_camera_init(&camera, bu_avail_cpus());
 }
 
+// https://stackoverflow.com/a/51666467
+void
+isstGL::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+
+    TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
+
+    render_camera_render(&camera, tie, &tile, &buffer_image);
+
+#if 0
+    QImage *image = new QImage(buffer_image.data, camera.w, camera.h, QImage::Format_RGB888);
+    if (!image->save("file.png"))
+	printf("save failed!\n");
+#endif
+
+    painter.drawImage(this->rect(), *image);
+}
+
+
 void
 isstGL::render()
 {
