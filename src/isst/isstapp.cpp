@@ -285,10 +285,7 @@ ISSTApp::load_g(const char *filename, int argc, const char *argv[])
     d.dbip = dbip;
 
     BU_ALLOC(tie, struct tie_s);
-    TIENET_BUFFER_INIT(buffer_image);
-    render_camera_init(&camera, bu_avail_cpus());
     d.cur_tie = this->tie;
-
 
     BN_CK_TOL(tree_state.ts_tol);
     BG_CK_TESS_TOL(tree_state.ts_ttol);

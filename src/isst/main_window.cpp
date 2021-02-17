@@ -43,7 +43,8 @@ ISST_MainWindow::ISST_MainWindow()
     file_menu->addAction(isst_exit);
 
     // Set up Display canvas
-    canvas = new QOpenGLWidget();
+    //canvas = new QOpenGLWidget();
+    canvas = new isstGL();
     canvas->setMinimumSize(512,512);
     setCentralWidget(canvas);
 

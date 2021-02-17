@@ -54,10 +54,6 @@ class ISSTApp : public QApplication
 
 	struct tie_s *tie;
 	struct adrt_mesh_s *meshes;
-	struct render_camera_s camera;
-	tienet_buffer_t buffer_image;
-	void *texdata;
-	int texid;
 
 	struct tie_s *cur_tie;
 	struct db_i *dbip;

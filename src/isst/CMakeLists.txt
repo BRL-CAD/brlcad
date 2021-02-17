@@ -20,11 +20,13 @@ set(isst_srcs
   main.cpp
   main_window.cpp
   isstapp.cpp
+  isstgl.cpp
   )
 
 set(moc_headers
   main_window.h
   isstapp.h
+  isstgl.h
   )
 
 if(BRLCAD_ENABLE_QT)

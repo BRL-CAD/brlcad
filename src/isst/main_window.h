@@ -35,6 +35,7 @@
 #include <QAction>
 #include <QStatusBar>
 #include <QFileDialog>
+#include "isstgl.h"
 
 class ISST_MainWindow : public QMainWindow
 {
@@ -42,7 +43,7 @@ class ISST_MainWindow : public QMainWindow
     public:
 	ISST_MainWindow();
 
-	QOpenGLWidget *canvas;
+	isstGL *canvas;
 
     private slots:
 	void open_file();

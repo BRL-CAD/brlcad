@@ -55,64 +55,62 @@ int main(int argc, char *argv[])
 
     // TODO - this needs to be a setting that is saved and restored
     mainWin.resize(1100, 800);
-    app.camera.w = 1100;
-    app.camera.h = 800;
+    mainWin.canvas->camera.w = 1100;
+    mainWin.canvas->camera.h = 800;
+    mainWin.canvas->tie = app.tie;
 
     mainWin.show();
 
-    app.camera.type = RENDER_CAMERA_PERSPECTIVE;
-    app.camera.fov = 25;
 
-    struct camera_tile_s tile;
-    tile.format = RENDER_CAMERA_BIT_DEPTH_24;
-    tile.size_x = 1100;
-    tile.size_y = 800;
+    mainWin.canvas->tile.size_x = 1100;
+    mainWin.canvas->tile.size_y = 800;
 
-    TIENET_BUFFER_SIZE(app.buffer_image, (uint32_t)(3 * app.camera.w * app.camera.h));
 
-    app.texid = 0;
 
-    mainWin.canvas->makeCurrent();
-    glClearColor (0.0, 0, 0.0, 1);
-    glBindTexture (GL_TEXTURE_2D, app.texid);
+    //mainWin.canvas->makeCurrent();
+
+    QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
+    if (!f)
+	bu_log("no current functions\n");
+
+    TIENET_BUFFER_SIZE(mainWin.canvas->buffer_image, (uint32_t)(3 * mainWin.canvas->camera.w * mainWin.canvas->camera.h));
+
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    app.texdata = malloc(app.camera.w * app.camera.h * 3);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, app.camera.w, app.camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, app.texdata);
+    mainWin.canvas->texdata = malloc(mainWin.canvas->camera.w * mainWin.canvas->camera.h * 3);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, mainWin.canvas->camera.w, mainWin.canvas->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, mainWin.canvas->texdata);
     glDisable(GL_LIGHTING);
-
-    glViewport(0,0, app.camera.w, app.camera.h);
+    glViewport(0,0, mainWin.canvas->camera.w, mainWin.canvas->camera.h);
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
-    glOrtho(0, app.camera.w, app.camera.h, 0, -1, 1);
+    glOrtho(0, mainWin.canvas->camera.w, mainWin.canvas->camera.h, 0, -1, 1);
     glMatrixMode (GL_MODELVIEW);
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    app.buffer_image.ind = 0;
+    mainWin.canvas->buffer_image.ind = 0;
 
-    VSETALL(app.camera.pos, app.tie->radius);
-    VMOVE(app.camera.focus, app.tie->mid);
+    VSETALL(mainWin.canvas->camera.pos, app.tie->radius);
+    VMOVE(mainWin.canvas->camera.focus, app.tie->mid);
 
-    render_phong_init(&app.camera.render, NULL);
+    render_phong_init(&mainWin.canvas->camera.render, NULL);
 
-    render_camera_prep(&app.camera);
-    render_camera_render(&app.camera, app.tie, &tile, &app.buffer_image);
+    render_camera_prep(&mainWin.canvas->camera);
+    render_camera_render(&mainWin.canvas->camera, app.tie, &mainWin.canvas->tile, &mainWin.canvas->buffer_image);
 
     glClear(GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     glColor3f(1,1,1);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, app.texid);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, app.camera.w, app.camera.h, GL_RGB, GL_UNSIGNED_BYTE, app.buffer_image.data + sizeof(camera_tile_t));
+    glBindTexture(GL_TEXTURE_2D, mainWin.canvas->texid);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mainWin.canvas->camera.w, mainWin.canvas->camera.h, GL_RGB, GL_UNSIGNED_BYTE, mainWin.canvas->buffer_image.data + sizeof(camera_tile_t));
     glBegin(GL_TRIANGLE_STRIP);
 
     glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
-    glTexCoord2d(0, 1); glVertex3f(0, app.camera.h, 0);
-    glTexCoord2d(1, 0); glVertex3f(app.camera.w, 0, 0);
-    glTexCoord2d(1, 1); glVertex3f(app.camera.w, app.camera.h, 0);
+    glTexCoord2d(0, 1); glVertex3f(0, mainWin.canvas->camera.h, 0);
+    glTexCoord2d(1, 0); glVertex3f(mainWin.canvas->camera.w, 0, 0);
+    glTexCoord2d(1, 1); glVertex3f(mainWin.canvas->camera.w, mainWin.canvas->camera.h, 0);
 
     glEnd();
     glFlush();
