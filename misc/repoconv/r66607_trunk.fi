@@ -1,4 +1,5 @@
 blob
+original-oid 8d1f0f552497321dc557aec00001827574916774
 data 10790
 /*                      D E F I N E S . H
  * BRL-CAD
@@ -344,7 +345,7 @@ typedef double fastf_t;
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-commit refs/heads/main
+commit refs/heads/rel-7-30-2-1
 author Thomas Browder <tom.browder@gmail.com> 1447894408 +0000
 committer Thomas Browder <tom.browder@gmail.com> 1447894408 +0000
 data 227

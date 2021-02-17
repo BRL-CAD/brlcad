@@ -157,7 +157,7 @@ commit_parse_merge(git_commit_data *cd, std::ifstream &infile)
 	return 0;
     }
     std::cerr << "TODO - unsupported \"merge\" specifier: " << line << "\n";
-    ret = git_parse_commitish(merge_id, cd->s, line);
+    git_parse_commitish(merge_id, cd->s, line);
     exit(EXIT_FAILURE);
 }
 
@@ -187,7 +187,7 @@ commit_parse_filecopy(git_commit_data *cd, std::ifstream &infile)
 	return -1;
     }
     size_t qpos = line.find_first_of("\"");
-    if (spos != std::string::npos) {
+    if (qpos != std::string::npos) {
     	std::cerr << "quoted path specifiers currently unsupported:" << line << "\n";
 	exit(EXIT_FAILURE);
     }
@@ -368,12 +368,112 @@ parse_commit(git_fi_data *fi_data, std::ifstream &infile)
     return 0;
 }
 
+int
+parse_splice_commit(git_fi_data *fi_data, std::ifstream &infile)
+{
+    //std::cout << "Found command: commit\n";
+
+    git_commit_data gcd;
+    gcd.s = fi_data;
+
+    // Tell the commit where it will be in the vector - this
+    // uniquely identifies this specific commit, regardless of
+    // its sha1.
+    gcd.id.index = fi_data->commits.size() + fi_data->splice_commits.size();
+
+    std::map<std::string, commitcmd_t> cmdmap;
+    // Commit info modification commands
+    cmdmap[std::string("author")] = commit_parse_author;
+    cmdmap[std::string("commit ")] = commit_parse_commit; // Note - need space after commit to avoid matching committer!
+    cmdmap[std::string("committer")] = commit_parse_committer;
+    cmdmap[std::string("data")] = commit_parse_data;
+    cmdmap[std::string("encoding")] = commit_parse_encoding;
+    cmdmap[std::string("from")] = commit_parse_from;
+    cmdmap[std::string("mark")] = commit_parse_mark;
+    cmdmap[std::string("merge")] = commit_parse_merge;
+    cmdmap[std::string("original-oid")] = commit_parse_original_oid;
+
+    // tree modification commands
+    cmdmap[std::string("C ")] = commit_parse_filecopy;
+    cmdmap[std::string("D ")] = commit_parse_filedelete;
+    cmdmap[std::string("M ")] = commit_parse_filemodify;
+    cmdmap[std::string("N ")] = commit_parse_notemodify;
+    cmdmap[std::string("R ")] = commit_parse_filerename;
+    cmdmap[std::string("deleteall")] = commit_parse_deleteall;
+
+    std::string line;
+    size_t offset = infile.tellg();
+    int commit_done = 0;
+    while (!commit_done && std::getline(infile, line)) {
+
+	commitcmd_t cc = commit_find_cmd(line, cmdmap);
+
+	// If we found a command, process it.  Otherwise, we are done
+	// with the commit and need to clean up.
+	if (cc) {
+	    //std::cout << "commit line: " << line << "\n";
+	    infile.seekg(offset);
+	    (*cc)(&gcd, infile);
+	    offset = infile.tellg();
+	} else {
+	    // Whatever was on that line, it's not a commit input.
+	    // Reset input to allow the parent routine to deal with
+	    // it, and return.
+	    infile.seekg(offset);
+	    commit_done = 1;
+	}
+    }
+
+    gcd.id.mark = fi_data->next_mark(gcd.id.mark);
+    fi_data->mark_to_index[gcd.id.mark] = gcd.id.index;
+
+    //std::cout << "commit new mark: " << gcd.id.mark << "\n";
+
+    // Add the commit to the data
+    fi_data->splice_commits.push_back(gcd);
+
+    // Mark the original commit as having a splice, so we will
+    // be able to write this out in the correct order for the
+    // fi file.
+    if (gcd.from.index < (long)fi_data->commits.size()) {
+	git_commit_data &oc = fi_data->commits[gcd.from.index];
+	fi_data->splice_map[oc.id.mark] = gcd.id.mark;
+    } else {
+	std::cerr << "TODO: Multi-commit splices\n";
+	exit(1);
+    }
+
+    // For any commits that listed oc as their from commit, they
+    // now need to be updated to reference the new one instead.
+    for (size_t i = 0; i < fi_data->commits.size(); i++) {
+	git_commit_data &c = fi_data->commits[i];
+	if (c.from.index == gcd.from.index) {
+	    std::cout << "Updating from id of " << c.id.sha1 << "\n";
+	    c.from = gcd.id;
+	}
+    }
+
+    return 0;
+}
+
+
+
+
 void
 write_op(std::ofstream &outfile, git_op *o)
 {
     switch (o->type) {
 	case filemodify:
-	    outfile << "M " << o->mode << " :" << o->dataref.mark << " " << o->path << "\n";
+	    if (o->dataref.mark > -1) {
+		outfile << "M " << o->mode << " :" << o->dataref.mark << " " << o->path << "\n";
+	    } else {
+		if (o->dataref.sha1.length()) {
+		outfile << "M " << o->mode << " " << o->dataref.sha1 << " " << o->path << "\n";
+		} else {
+		    std::cerr << "Invalid filemodify dataref: " << o->dataref.mark << "," << o->dataref.sha1 << "\n";
+		    exit(1);
+		}
+	    }
 	    break;
 	case filedelete:
 	    outfile << "D " << o->path << "\n";
@@ -514,7 +614,6 @@ commit_msg(git_commit_data *c)
 	    //std::cout << "Found author: " << c->s->key2cvsauthor[key] << "\n";
 	    if (!have_ret) {
 		cvsmsg.append("\n");
-		have_ret = 1;
 	    }
 	    std::string svnname = std::string("svn:account:") + c->s->key2cvsauthor[key];
 	    std::string cvsaccount = std::string("cvs:account:") + c->s->key2cvsauthor[key];
@@ -534,7 +633,7 @@ commit_msg(git_commit_data *c)
 }
 
 int
-write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
+write_commit(std::ofstream &outfile, git_commit_data *c, git_fi_data *d, std::ifstream &infile)
 {
     if (!infile.good()) {
         return -1;
@@ -596,7 +695,13 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
     outfile << nmsg;
 
     if (c->from.mark != -1) {
-	outfile << "from :" << c->from.mark << "\n";
+	// Check to see if a commit was spliced in between this commit and its from commit.
+	if (d->splice_map.find(c->from.mark) != d->splice_map.end()) {
+	    git_commit_data &cd = d->splice_commits[c->from.mark];
+	    outfile << "from :" << cd.id.mark << "\n";
+	} else {
+	    outfile << "from :" << c->from.mark << "\n";
+	}
     }
     for (size_t i = 0; i < c->merges.size(); i++) {
 	outfile << "merge :" << c->merges[i].mark << "\n";
@@ -627,6 +732,20 @@ write_commit(std::ofstream &outfile, git_commit_data *c, std::ifstream &infile)
 	}
     }
     outfile << "\n";
+
+    // If there is a splice commit that follows this one, write it out now.
+    if (d->splice_map.find(c->id.mark) != d->splice_map.end()) {
+	std::cout << "Found splice commit to follow " << c->id.sha1 << "\n";
+	long s1 = d->mark_to_index[d->splice_map[c->id.mark]];
+	long scind = s1 - d->commits.size();
+	if (scind < 0) {
+	    std::cerr << "Couldn't find splice commit\n";
+	    exit(1);
+	}
+	git_commit_data *sc = &d->splice_commits[scind];
+	write_commit(outfile, sc, d, infile);
+    }
+
     return 0;
 }
 

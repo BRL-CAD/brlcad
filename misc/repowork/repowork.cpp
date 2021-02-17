@@ -11,6 +11,8 @@
  *
  */
 
+#include <filesystem>
+
 #include "cxxopts.hpp"
 #include "repowork.h"
 
@@ -637,9 +639,60 @@ parse_fi_file(git_fi_data *fi_data, std::ifstream &infile)
 }
 
 int
+parse_splice_fi_file(git_fi_data *fi_data, std::ifstream &infile)
+{
+    std::map<std::string, gitcmd_t> cmdmap;
+    cmdmap[std::string("alias")] = parse_alias;
+    cmdmap[std::string("blob")] = parse_blob;
+    cmdmap[std::string("cat-blob")] = parse_cat_blob;
+    cmdmap[std::string("checkpoint")] = parse_checkpoint;
+    cmdmap[std::string("commit ")] = parse_splice_commit;
+    cmdmap[std::string("done")] = parse_done;
+    cmdmap[std::string("feature")] = parse_feature;
+    cmdmap[std::string("get-mark")] = parse_get_mark;
+    cmdmap[std::string("ls")] = parse_ls;
+    cmdmap[std::string("option")] = parse_option;
+    cmdmap[std::string("progress")] = parse_progress;
+    cmdmap[std::string("reset")] = parse_reset;
+    cmdmap[std::string("tag")] = parse_tag;
+
+    size_t offset = infile.tellg();
+    std::string line;
+    std::map<std::string, gitcmd_t>::iterator c_it;
+    while (std::getline(infile, line)) {
+	// Skip empty lines
+	if (!line.length()) {
+	    offset = infile.tellg();
+	    continue;
+	}
+
+	gitcmd_t gc = gitit_find_cmd(line, cmdmap);
+	if (!gc) {
+	    //std::cerr << "Unsupported command!\n";
+	    offset = infile.tellg();
+	    continue;
+	}
+
+	// If we found a command, process it
+	//std::cout << "line: " << line << "\n";
+	// some commands have data on the command line - reset seek so the
+	// callback can process it
+	infile.seekg(offset);
+	(*gc)(fi_data, infile);
+	offset = infile.tellg();
+    }
+
+
+    return 0;
+}
+
+
+int
 main(int argc, char *argv[])
 {
     git_fi_data fi_data;
+    bool splice_commits = false;
+    bool no_blobs = false;
     bool collapse_notes = false;
     bool wrap_commit_lines = false;
     bool trim_whitespace = false;
@@ -675,6 +728,9 @@ main(int argc, char *argv[])
 
 	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "path")
 	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
+	    ("no-blobs", "Write only commits in output .fi file.", cxxopts::value<bool>(no_blobs))
+
+	    ("splice-commits", "Look for git fast-import files in a 'splices' directory and insert them into the history.", cxxopts::value<bool>(splice_commits))
 
 	    ("rebuild-ids", "Specify commits (revision number or SHA1) to rebuild.  Requires git-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
 	    ("rebuild-ids-children", "File with output of \"git rev-list --children --all\" - needed for processing rebuild-ids", cxxopts::value<std::vector<std::string>>(), "file")
@@ -840,18 +896,38 @@ main(int argc, char *argv[])
 
     infile.close();
 
+    // If we have any splice commits, parse and insert them.
+    if (splice_commits) {
+	std::filesystem::path ip = std::string(argv[1]);
+	std::filesystem::path aip = std::filesystem::absolute(ip);
+	std::filesystem::path pip = aip.parent_path();
+	pip /= "splices";
+	if (!std::filesystem::exists(pip)) {
+	    std::cerr << "Warning - splices enabled but " << pip << " is not present on the filesystem.\n";
+	} else {
+	    for (const auto& de : std::filesystem::recursive_directory_iterator(pip)) {
+		std::cout << "Processing " << de.path().string() << "\n";
+		std::ifstream sfile(de.path(), std::ifstream::binary);
+		int ret = parse_splice_fi_file(&fi_data, sfile);
+		sfile.close();
+	    }
+	}
+    }
+
     std::ifstream ifile(argv[1], std::ifstream::binary);
     std::ofstream ofile(argv[2], std::ios::out | std::ios::binary);
-    ofile << "progress Writing blobs...\n";
-    for (size_t i = 0; i < fi_data.blobs.size(); i++) {
-	write_blob(ofile, &fi_data.blobs[i], ifile);
-	if ( !(i % 1000) ) {
-	    ofile << "progress blob " << i << " of " << fi_data.blobs.size() << "\n";
+    if (!no_blobs) {
+	ofile << "progress Writing blobs...\n";
+	for (size_t i = 0; i < fi_data.blobs.size(); i++) {
+	    write_blob(ofile, &fi_data.blobs[i], ifile);
+	    if ( !(i % 1000) ) {
+		ofile << "progress blob " << i << " of " << fi_data.blobs.size() << "\n";
+	    }
 	}
     }
     ofile << "progress Writing commits...\n";
     for (size_t i = 0; i < fi_data.commits.size(); i++) {
-	write_commit(ofile, &fi_data.commits[i], ifile);
+	write_commit(ofile, &fi_data.commits[i], &fi_data, ifile);
 	if ( !(i % 1000) ) {
 	    ofile << "progress commit " << i << " of " << fi_data.commits.size() << "\n";
 	}

@@ -4,6 +4,10 @@ cmake_minimum_required(VERSION 3.1.3)
 # set CMake project name
 project(repowork)
 
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 add_definitions(-g)
 
 include_directories(
