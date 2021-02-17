@@ -99,6 +99,10 @@ int main(int argc, char *argv[])
     render_camera_prep(&mainWin.canvas->camera);
     render_camera_render(&mainWin.canvas->camera, app.tie, &mainWin.canvas->tile, &mainWin.canvas->buffer_image);
 
+    QImage *image = new QImage(mainWin.canvas->buffer_image.data, mainWin.canvas->camera.w, mainWin.canvas->camera.h, QImage::Format_RGB888);
+    if (!image->save("file.png"))
+	printf("save failed!\n");
+
     glClear(GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     glColor3f(1,1,1);
