@@ -43,6 +43,7 @@ class isstGL : public QOpenGLWidget
 {
     public:
 	isstGL();
+	~isstGL();
 
 	struct tie_s *tie = NULL; // From parent app
 
@@ -59,7 +60,7 @@ class isstGL : public QOpenGLWidget
 	struct camera_tile_s tile;
 	tienet_buffer_t buffer_image;
 	void *texdata = NULL;
-	GLuint texid;
+	GLuint texid = 0;
 };
 
 #endif /* ISSTGL_H */

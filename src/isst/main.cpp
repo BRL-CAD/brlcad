@@ -55,35 +55,17 @@ int main(int argc, char *argv[])
 
     // TODO - this needs to be a setting that is saved and restored
     mainWin.resize(1100, 800);
-    mainWin.canvas->camera.w = 1100;
-    mainWin.canvas->camera.h = 800;
-    mainWin.canvas->tile.size_x = 1100;
-    mainWin.canvas->tile.size_y = 800;
 
+    // The OpenGL widget manages the rendering, so let it know about the
+    // TIE data structure associated with the current model
     mainWin.canvas->tie = app.tie;
 
-    TIENET_BUFFER_SIZE(mainWin.canvas->buffer_image, (uint32_t)(3 * mainWin.canvas->camera.w * mainWin.canvas->camera.h));
-    mainWin.canvas->buffer_image.ind = 0;
-
+    // Initialize the camera position
     VSETALL(mainWin.canvas->camera.pos, app.tie->radius);
     VMOVE(mainWin.canvas->camera.focus, app.tie->mid);
 
-    render_phong_init(&mainWin.canvas->camera.render, NULL);
-
+    // Draw the window
     mainWin.show();
-
-    // Set up the texture data.  TODO - this seems to work on Linux, but may
-    // need to resize texdata in the resize callback...  not sure if we're
-    // "getting away" with this...  also not clear it should be needed with the
-    // painter approach to drawing the image, but without this resizing crashed
-    // fairly quickly...
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    mainWin.canvas->texdata = malloc(mainWin.canvas->camera.w * mainWin.canvas->camera.h * 3);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, mainWin.canvas->camera.w, mainWin.canvas->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, mainWin.canvas->texdata);
-
-    mainWin.canvas->update();
 
     return app.exec();
 }

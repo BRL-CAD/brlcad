@@ -31,6 +31,7 @@
 isstGL::isstGL()
 {
     TIENET_BUFFER_INIT(buffer_image);
+    texdata = realloc(texdata, camera.w * camera.h * 3);
 
     tile.format = RENDER_CAMERA_BIT_DEPTH_24;
 
@@ -44,6 +45,13 @@ isstGL::isstGL()
     camera.type = RENDER_CAMERA_PERSPECTIVE;
     camera.fov = 25;
     render_camera_init(&camera, bu_avail_cpus());
+    render_phong_init(&camera.render, NULL);
+}
+
+isstGL::~isstGL()
+{
+    TIENET_BUFFER_FREE(buffer_image);
+    free(texdata);
 }
 
 void
@@ -78,8 +86,14 @@ isstGL::resizeGL(int w, int h)
     tile.size_x = camera.w;
     tile.size_y = camera.h;
 
+    // Set up the raytracing image buffer
     TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
+
+    // Set up the corresponding texture memory in OpenGL.
     texdata = realloc(texdata, camera.w * camera.h * 3);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
 }
 
