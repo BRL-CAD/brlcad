@@ -38,6 +38,10 @@ ISST_MainWindow::ISST_MainWindow()
     connect(isst_open, SIGNAL(triggered()), this, SLOT(open_file()));
     file_menu->addAction(isst_open);
 
+    isst_save_settings = new QAction("Save Settings", this);
+    connect(isst_save_settings, SIGNAL(triggered()), this, SLOT(write_settings()));
+    file_menu->addAction(isst_save_settings);
+
     isst_exit = new QAction("Exit", this);
     connect(isst_exit, SIGNAL(triggered()), this, SLOT(close()));
     file_menu->addAction(isst_exit);
@@ -69,6 +73,26 @@ ISST_MainWindow::open_file()
 	}
     }
 }
+
+
+void ISST_MainWindow::readSettings()
+{
+    QSettings settings("BRL-CAD", "ISST");
+
+    settings.beginGroup("ISST_MainWindow");
+    resize(settings.value("size", QSize(1100, 800)).toSize());
+    settings.endGroup();
+}
+
+void ISST_MainWindow::write_settings()
+{
+    QSettings settings("BRL-CAD", "ISST");
+
+    settings.beginGroup("ISST_MainWindow");
+    settings.setValue("size", size());
+    settings.endGroup();
+}
+
 
 /*
  * Local Variables:

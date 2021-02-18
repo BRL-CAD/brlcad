@@ -24,6 +24,7 @@
  */
 
 #include <iostream>
+#include <QSettings>
 
 #include "main_window.h"
 #include "isstapp.h"
@@ -33,9 +34,18 @@
 
 int main(int argc, char *argv[])
 {
+
     bu_setprogname(argv[0]);
 
     ISSTApp app(argc, argv);
+    app.setOrganizationName("BRL-CAD");
+    app.setOrganizationDomain("brlcad.org");
+    app.setApplicationName("ISST");
+
+    app.w.readSettings();
+
+    QSettings isstsettings("BRL-CAD", "ISST");
+    std::cout << "Reading settings from " << isstsettings.fileName().toStdString() << "\n";
 
     argc--; argv++;
 
@@ -45,9 +55,6 @@ int main(int argc, char *argv[])
 	argc--; argv++;
 	app.load_g(filename, argc, (const char **)argv);
     }
-
-    // TODO - this needs to be a setting that is saved and restored
-    app.w.resize(800, 600);
 
     // Draw the window
     app.w.show();

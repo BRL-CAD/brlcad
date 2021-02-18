@@ -35,6 +35,7 @@
 #include <QAction>
 #include <QStatusBar>
 #include <QFileDialog>
+#include <QSettings>
 #include "isstgl.h"
 
 class ISST_MainWindow : public QMainWindow
@@ -43,17 +44,19 @@ class ISST_MainWindow : public QMainWindow
     public:
 	ISST_MainWindow();
 
+	void readSettings();
+
 	isstGL *canvas;
 
     private slots:
 	void open_file();
+	void write_settings();
 
     private:
 	QMenu *file_menu;
 	QAction *isst_open;
+	QAction *isst_save_settings;
 	QAction *isst_exit;
-
-	QString db_file;
 };
 
 #endif /* ISST_MAINWINDOW_H */
