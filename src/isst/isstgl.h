@@ -47,6 +47,9 @@ class isstGL : public QOpenGLWidget
 	struct render_camera_s camera;
 	int resolution = 20;
 
+	vect_t camera_pos_init;
+	vect_t camera_focus_init;
+
     protected:
 	void resizeGL(int w, int h) override;
 	void paintGL() override;

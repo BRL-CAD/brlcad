@@ -45,6 +45,10 @@ ISSTApp::load_g(const char *filename, int argc, const char *argv[])
     VSETALL(w.canvas->camera.pos, g.tie->radius);
     VMOVE(w.canvas->camera.focus, g.tie->mid);
 
+    // Record the initial settings for use in subsequent calculations
+    VSETALL(w.canvas->camera_pos_init, g.tie->radius);
+    VMOVE(w.canvas->camera_focus_init, g.tie->mid);
+
     return 0;
 }
 
