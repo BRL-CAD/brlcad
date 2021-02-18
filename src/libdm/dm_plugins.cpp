@@ -251,6 +251,7 @@ dm_default_type()
 	    continue;
 	}
 	ret = b;
+	break;
     }
     if (!ret)
 	ret = "nu";
