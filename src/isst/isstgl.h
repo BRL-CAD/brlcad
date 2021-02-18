@@ -60,6 +60,7 @@ class isstGL : public QOpenGLWidget
 	struct camera_tile_s tile;
 	tienet_buffer_t buffer_image;
 	void *texdata = NULL;
+	long texdata_size = 0;
 	GLuint texid = 0;
 };
 

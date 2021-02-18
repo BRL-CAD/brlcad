@@ -32,6 +32,7 @@ isstGL::isstGL()
 {
     TIENET_BUFFER_INIT(buffer_image);
     texdata = realloc(texdata, camera.w * camera.h * 3);
+    texdata_size = camera.w * camera.h;
 
     tile.format = RENDER_CAMERA_BIT_DEPTH_24;
 
@@ -90,7 +91,10 @@ isstGL::resizeGL(int w, int h)
     TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
 
     // Set up the corresponding texture memory in OpenGL.
-    texdata = realloc(texdata, camera.w * camera.h * 3);
+    if (texdata_size < camera.w * camera.h) {
+	texdata_size = camera.w * camera.h;
+	texdata = realloc(texdata, camera.w * camera.h * 3);
+    }
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
