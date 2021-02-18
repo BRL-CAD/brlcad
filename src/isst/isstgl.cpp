@@ -24,6 +24,7 @@
  */
 
 #include <QOpenGLWidget>
+#include <QKeyEvent>
 
 #include "bu/parallel.h"
 #include "isstgl.h"
@@ -47,6 +48,8 @@ isstGL::isstGL()
     camera.fov = 25;
     render_camera_init(&camera, bu_avail_cpus());
     render_phong_init(&camera.render, NULL);
+
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 isstGL::~isstGL()
@@ -58,6 +61,30 @@ isstGL::~isstGL()
 void
 isstGL::paintGL()
 {
+    if (rescaled) {
+	rescaled = 0;
+
+	if (resolution_factor == 0) {
+	    camera.w = tile.size_x = width();
+	    camera.h = tile.size_y = height();
+	} else {
+	    camera.w = tile.size_x = resolution_factor;
+	    camera.h = tile.size_y = camera.w * height() / width();
+	}
+
+	// Set up the raytracing image buffer
+	TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
+
+	if (texdata_size < camera.w * camera.h) {
+	    texdata_size = camera.w * camera.h;
+	    texdata = realloc(texdata, camera.w * camera.h * 3);
+	}
+	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+    }
+
     // IMPORTANT - this reset is necessary or the resultant image will
     // not display correctly in the buffer.
     buffer_image.ind = 0;
@@ -67,11 +94,15 @@ isstGL::paintGL()
     render_camera_render(&camera, tie, &tile, &buffer_image);
 
     // Get the rendered buffer displayed: https://stackoverflow.com/a/51666467
-    QImage *image = new QImage(buffer_image.data, camera.w, camera.h, QImage::Format_RGB888);
+    //
+    // TODO - not sure why the offset of 12 is needed on the data, but zooming to course
+    // pixel levels shows the problem clearly (it is present at full resolution as well,
+    // just less obvious...
+    QImage *image = new QImage(buffer_image.data + 12, camera.w, camera.h, QImage::Format_RGB888);
     QPainter painter(this);
     painter.drawImage(this->rect(), *image);
 
-#if 0
+#if 1
     // If we need to debug the above, we can write out an image
     if (!image->save("file.png"))
 	printf("save failed!\n");
@@ -82,10 +113,13 @@ isstGL::paintGL()
 void
 isstGL::resizeGL(int w, int h)
 {
-    camera.w = w;
-    camera.h = h;
-    tile.size_x = camera.w;
-    tile.size_y = camera.h;
+    if (resolution_factor == 0) {
+	camera.w = tile.size_x = w;
+	camera.h = tile.size_y = h;
+    } else {
+	camera.w = tile.size_x = resolution_factor;
+	camera.h = tile.size_y = camera.w * h / w;
+    }
 
     // Set up the raytracing image buffer
     TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
@@ -100,6 +134,35 @@ isstGL::resizeGL(int w, int h)
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
 }
+
+
+void isstGL::keyPressEvent(QKeyEvent *k) {
+    //QString kstr = QKeySequence(k->key()).toString();
+    //bu_log("%s\n", kstr.toStdString().c_str());
+    switch (k->key()) {
+	case '=':
+	    bu_log("Key_Equal\n");
+	    resolution++;
+	    CLAMP(resolution, 1, 20);
+	    resolution_factor = (resolution == 20) ? 0 : lrint(floor(width() * .05 * resolution));
+	    rescaled = 1;
+	    update();
+	    return;
+	    break;
+	case '-':
+	    bu_log("Key_hyphen\n");
+	    resolution--;
+	    CLAMP(resolution, 1, 20);
+	    resolution_factor = (resolution == 20) ? 0 : lrint(floor(height() * .05 * resolution));
+	    rescaled = 1;
+	    update();
+	    return;
+	    break;
+    }
+    QOpenGLWidget::keyPressEvent(k);
+}
+
+
 
 // Local Variables:
 // tab-width: 8

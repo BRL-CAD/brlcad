@@ -46,22 +46,23 @@ class isstGL : public QOpenGLWidget
 	~isstGL();
 
 	struct tie_s *tie = NULL; // From parent app
-
-	void render();
-
+	struct render_camera_s camera;
+	int resolution = 20;
 
     protected:
 	void resizeGL(int w, int h) override;
 	void paintGL() override;
 
+	void keyPressEvent(QKeyEvent *k) override;
 
-    public:
-	struct render_camera_s camera;
+    private:
 	struct camera_tile_s tile;
 	tienet_buffer_t buffer_image;
 	void *texdata = NULL;
 	long texdata_size = 0;
 	GLuint texid = 0;
+	int resolution_factor = 0;
+	int rescaled = 0;
 };
 
 #endif /* ISSTGL_H */

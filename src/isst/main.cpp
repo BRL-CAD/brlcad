@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     }
 
     // TODO - this needs to be a setting that is saved and restored
-    mainWin.resize(1100, 800);
+    mainWin.resize(800, 600);
 
     // The OpenGL widget manages the rendering, so let it know about the
     // TIE data structure associated with the current model
