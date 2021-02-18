@@ -55,7 +55,7 @@ isstGL::isstGL()
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
     // resolution scaling, rotation, etc.
-    setFocusPolicy(Qt::StrongFocus);
+    setFocusPolicy(Qt::WheelFocus);
 }
 
 isstGL::~isstGL()
