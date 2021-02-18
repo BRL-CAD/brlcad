@@ -93,12 +93,12 @@ isstGL::paintGL()
     render_camera_prep(&camera);
     render_camera_render(&camera, tie, &tile, &buffer_image);
 
-    // Get the rendered buffer displayed: https://stackoverflow.com/a/51666467
-    //
-    // TODO - not sure why the offset of 12 is needed on the data, but zooming to course
-    // pixel levels shows the problem clearly (it is present at full resolution as well,
-    // just less obvious...
-    QImage *image = new QImage(buffer_image.data + 12, camera.w, camera.h, QImage::Format_RGB888);
+    // Set up a QImage with the rendered output.  Note - sizeof(camera_tile_t)
+    // offset copied from glTexSubImage2D setup in Tcl/Tk gui.  Without it, the
+    // image is offset to the right in the OpenGL display.
+    QImage *image = new QImage(buffer_image.data + sizeof(camera_tile_t), camera.w, camera.h, QImage::Format_RGB888);
+
+    // Get the QImage version of the buffer displayed: https://stackoverflow.com/a/51666467
     QPainter painter(this);
     painter.drawImage(this->rect(), *image);
 
