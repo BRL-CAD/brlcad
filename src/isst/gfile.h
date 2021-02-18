@@ -1,4 +1,4 @@
-/*                      I S S T A P P . C X X
+/*                       G F I L E . H
  * BRL-ISST
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,37 +17,44 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadapp.cxx
+/** @file cadapp.h
  *
- * Application level data and functionality implementations.
+ *  Manage database objects
  *
  */
 
-#include <QFileInfo>
-#include <QFile>
-#include <QPlainTextEdit>
-#include <QTextStream>
-#include "isstapp.h"
+#ifndef GFILE_H
+#define GFILE_H
 
-int
-ISSTApp::load_g(const char *filename, int argc, const char *argv[])
-{
-    if (g.load_g(filename, argc, argv)) {
-	w.statusBar()->showMessage("open failed");
-	return -1;
-    }
+#include <QObject>
+#include <QString>
 
-    // The OpenGL widget manages the rendering, so let it know about the
-    // TIE data structure associated with the current model
-    w.canvas->tie = g.tie;
+extern "C" {
+#include "bn/tol.h"
+#include "raytrace.h"
 
-    // Initialize the camera position
-    VSETALL(w.canvas->camera.pos, g.tie->radius);
-    VMOVE(w.canvas->camera.focus, g.tie->mid);
-
-    return 0;
+#include "rt/tie.h"
+#include "adrt.h"
+#include "adrt_struct.h"
 }
 
+class GFile : public QObject
+{
+    Q_OBJECT
+
+    public:
+	int load_g(const char *filename, int argc, const char **argv);
+	void closedb();
+
+	struct tie_s *tie;
+	struct adrt_mesh_s *meshes;
+	struct db_i *dbip;
+	TIE_3 **tribuf;
+
+	QString current_file;
+};
+
+#endif // GFILE_H
 
 /*
  * Local Variables:

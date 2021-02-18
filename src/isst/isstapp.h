@@ -31,15 +31,8 @@
 #include <QObject>
 #include <QString>
 
-extern "C" {
-#include "bn/tol.h"
-#include "raytrace.h"
-
-#include "rt/tie.h"
-#include "adrt.h"
-#include "adrt_struct.h"
-#include "librender/camera.h"
-}
+#include "gfile.h"
+#include "main_window.h"
 
 class ISSTApp : public QApplication
 {
@@ -50,16 +43,9 @@ class ISSTApp : public QApplication
 	~ISSTApp() {};
 
 	int load_g(const char *filename, int argc, const char **argv);
-	void closedb();
 
-	struct tie_s *tie;
-	struct adrt_mesh_s *meshes;
-
-	struct tie_s *cur_tie;
-	struct db_i *dbip;
-	TIE_3 **tribuf;
-
-	QString current_file;
+	ISST_MainWindow w;
+	GFile g;
 };
 
 #endif // ISSTAPP_H

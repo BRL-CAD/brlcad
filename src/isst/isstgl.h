@@ -33,8 +33,6 @@
 
 extern "C" {
 #include "rt/tie.h"
-#include "adrt.h"
-#include "adrt_struct.h"
 #include "librender/camera.h"
 }
 

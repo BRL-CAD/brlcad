@@ -17,6 +17,7 @@ endif(BRLCAD_ENABLE_QT)
 # want to run the automatic moc logic for all of them.
 
 set(isst_srcs
+  gfile.cpp
   main.cpp
   main_window.cpp
   isstapp.cpp
@@ -24,6 +25,7 @@ set(isst_srcs
   )
 
 set(moc_headers
+  gfile.h
   main_window.h
   isstapp.h
   isstgl.h

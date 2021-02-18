@@ -102,7 +102,7 @@ isstGL::paintGL()
     QPainter painter(this);
     painter.drawImage(this->rect(), *image);
 
-#if 1
+#if 0
     // If we need to debug the above, we can write out an image
     if (!image->save("file.png"))
 	printf("save failed!\n");
@@ -141,7 +141,6 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
     //bu_log("%s\n", kstr.toStdString().c_str());
     switch (k->key()) {
 	case '=':
-	    bu_log("Key_Equal\n");
 	    resolution++;
 	    CLAMP(resolution, 1, 20);
 	    resolution_factor = (resolution == 20) ? 0 : lrint(floor(width() * .05 * resolution));
@@ -150,7 +149,6 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
 	    return;
 	    break;
 	case '-':
-	    bu_log("Key_hyphen\n");
 	    resolution--;
 	    CLAMP(resolution, 1, 20);
 	    resolution_factor = (resolution == 20) ? 0 : lrint(floor(height() * .05 * resolution));
