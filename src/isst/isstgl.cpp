@@ -41,7 +41,7 @@ isstGL::isstGL()
 
 // https://stackoverflow.com/a/51666467
 void
-isstGL::paintEvent(QPaintEvent*)
+isstGL::paintGL()
 {
     QPainter painter(this);
 
