@@ -35,19 +35,18 @@ ISST_MainWindow::ISST_MainWindow()
     // Create Menus
     file_menu = menuBar()->addMenu("File");
     isst_open = new QAction("Open", this);
-    connect(isst_open, SIGNAL(triggered()), this, SLOT(open_file()));
+    connect(isst_open, &QAction::triggered, this, &ISST_MainWindow::open_file);
     file_menu->addAction(isst_open);
 
     isst_save_settings = new QAction("Save Settings", this);
-    connect(isst_save_settings, SIGNAL(triggered()), this, SLOT(write_settings()));
+    connect(isst_save_settings, &QAction::triggered, this, &ISST_MainWindow::write_settings);
     file_menu->addAction(isst_save_settings);
 
     isst_exit = new QAction("Exit", this);
-    connect(isst_exit, SIGNAL(triggered()), this, SLOT(close()));
+    connect(isst_exit, &QAction::triggered , this, &ISST_MainWindow::close);
     file_menu->addAction(isst_exit);
 
     // Set up Display canvas
-    //canvas = new QOpenGLWidget();
     canvas = new isstGL();
     canvas->setMinimumSize(512,512);
     setCentralWidget(canvas);
