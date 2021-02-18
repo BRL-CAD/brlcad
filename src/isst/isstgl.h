@@ -48,11 +48,11 @@ class isstGL : public QOpenGLWidget
 
 	void render();
 
-	void paintEvent(QPaintEvent*) override;
 
-#if 0
     protected:
+	void paintEvent(QPaintEvent*) override;
 	void resizeGL(int w, int h) override;
+#if 0
 	void paintGL() override;
 #endif
 

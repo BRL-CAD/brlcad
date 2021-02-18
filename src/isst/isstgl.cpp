@@ -45,13 +45,6 @@ isstGL::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
 
-    camera.w = width();
-    camera.h = height();
-    tile.size_x = camera.w;
-    tile.size_y = camera.h;
-
-    TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
-
     // IMPORTANT - this reset is necessary or the resultant image will
     // not display correctly in the buffer.
     buffer_image.ind = 0;
@@ -70,58 +63,17 @@ isstGL::paintEvent(QPaintEvent*)
 
 
 void
-isstGL::render()
+isstGL::resizeGL(int w, int h)
 {
+    camera.w = w;
+    camera.h = h;
+    tile.size_x = camera.w;
+    tile.size_y = camera.h;
+
     TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
-    texid = 0;
-    if (texdata)
-	free(texdata);
-    makeCurrent();
-    glGenTextures(1, &texid);
 
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    texdata = malloc(camera.w * camera.h * 3);
+    texdata = realloc(texdata, camera.w * camera.h * 3);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
-    glDisable(GL_LIGHTING);
-    glViewport(0,0, camera.w, camera.h);
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, camera.w, camera.h, 0, -1, 1);
-    glMatrixMode (GL_MODELVIEW);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    buffer_image.ind = 0;
-
-    VSETALL(camera.pos, tie->radius);
-    VMOVE(camera.focus, tie->mid);
-
-    render_phong_init(&camera.render, NULL);
-
-    render_camera_prep(&camera);
-    render_camera_render(&camera, tie, &tile, &buffer_image);
-
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-    glColor3f(1,1,1);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texid);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, camera.w, camera.h, GL_RGB, GL_UNSIGNED_BYTE, buffer_image.data + sizeof(camera_tile_t));
-    glBegin(GL_TRIANGLE_STRIP);
-
-    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
-    glTexCoord2d(0, 1); glVertex3f(0, camera.h, 0);
-    glTexCoord2d(1, 0); glVertex3f(camera.w, 0, 0);
-    glTexCoord2d(1, 1); glVertex3f(camera.w, camera.h, 0);
-
-    glEnd();
-    glFlush();
-    doneCurrent();
-
 }
 
 // Local Variables:
