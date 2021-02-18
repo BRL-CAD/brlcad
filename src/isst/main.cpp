@@ -57,38 +57,12 @@ int main(int argc, char *argv[])
     mainWin.resize(1100, 800);
     mainWin.canvas->camera.w = 1100;
     mainWin.canvas->camera.h = 800;
-    mainWin.canvas->tie = app.tie;
-
-    mainWin.show();
-
-
     mainWin.canvas->tile.size_x = 1100;
     mainWin.canvas->tile.size_y = 800;
 
-
-
-    //mainWin.canvas->makeCurrent();
-
-    QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
-    if (!f)
-	bu_log("no current functions\n");
+    mainWin.canvas->tie = app.tie;
 
     TIENET_BUFFER_SIZE(mainWin.canvas->buffer_image, (uint32_t)(3 * mainWin.canvas->camera.w * mainWin.canvas->camera.h));
-
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    mainWin.canvas->texdata = malloc(mainWin.canvas->camera.w * mainWin.canvas->camera.h * 3);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, mainWin.canvas->camera.w, mainWin.canvas->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, mainWin.canvas->texdata);
-    glDisable(GL_LIGHTING);
-    glViewport(0,0, mainWin.canvas->camera.w, mainWin.canvas->camera.h);
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, mainWin.canvas->camera.w, mainWin.canvas->camera.h, 0, -1, 1);
-    glMatrixMode (GL_MODELVIEW);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
     mainWin.canvas->buffer_image.ind = 0;
 
     VSETALL(mainWin.canvas->camera.pos, app.tie->radius);
@@ -96,30 +70,21 @@ int main(int argc, char *argv[])
 
     render_phong_init(&mainWin.canvas->camera.render, NULL);
 
-    render_camera_prep(&mainWin.canvas->camera);
-    render_camera_render(&mainWin.canvas->camera, app.tie, &mainWin.canvas->tile, &mainWin.canvas->buffer_image);
+    mainWin.show();
 
-    QImage *image = new QImage(mainWin.canvas->buffer_image.data, mainWin.canvas->camera.w, mainWin.canvas->camera.h, QImage::Format_RGB888);
-    if (!image->save("file.png"))
-	printf("save failed!\n");
-
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-    glColor3f(1,1,1);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, mainWin.canvas->texid);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mainWin.canvas->camera.w, mainWin.canvas->camera.h, GL_RGB, GL_UNSIGNED_BYTE, mainWin.canvas->buffer_image.data + sizeof(camera_tile_t));
-    glBegin(GL_TRIANGLE_STRIP);
-
-    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
-    glTexCoord2d(0, 1); glVertex3f(0, mainWin.canvas->camera.h, 0);
-    glTexCoord2d(1, 0); glVertex3f(mainWin.canvas->camera.w, 0, 0);
-    glTexCoord2d(1, 1); glVertex3f(mainWin.canvas->camera.w, mainWin.canvas->camera.h, 0);
-
-    glEnd();
-    glFlush();
+    // Set up the texture data.  TODO - this seems to work on Linux, but may
+    // need to resize texdata in the resize callback...  not sure if we're
+    // "getting away" with this...  also not clear it should be needed with the
+    // painter approach to drawing the image, but without this resizing crashed
+    // fairly quickly...
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    mainWin.canvas->texdata = malloc(mainWin.canvas->camera.w * mainWin.canvas->camera.h * 3);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, mainWin.canvas->camera.w, mainWin.canvas->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, mainWin.canvas->texdata);
 
     mainWin.canvas->update();
+
     return app.exec();
 }
 
