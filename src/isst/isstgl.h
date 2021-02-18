@@ -61,6 +61,7 @@ class isstGL : public QOpenGLWidget
 	GLuint texid = 0;
 	int resolution_factor = 0;
 	int rescaled = 0;
+	int do_render = 1;
 };
 
 #endif /* ISSTGL_H */

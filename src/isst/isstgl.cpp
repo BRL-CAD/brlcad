@@ -31,24 +31,30 @@
 
 isstGL::isstGL()
 {
+    // Initialize texture buffer
     TIENET_BUFFER_INIT(buffer_image);
     texdata = realloc(texdata, camera.w * camera.h * 3);
     texdata_size = camera.w * camera.h;
 
-    tile.format = RENDER_CAMERA_BIT_DEPTH_24;
-
-    // If these are not initialized, output pixel placement in the buffer may
-    // be randomly offset - you may see no image, or an image in the wrong
-    // place (or it may happen to work if the values happen to be zero
-    // anyway...)
+    // Initialize TIE tile
+    //
+    // Note:  If orig_x and orig_Y are not initialized, output pixel placement
+    // in the buffer may be randomly offset - you may see no image, or an image
+    // in the wrong place (or it may happen to work if the values happen to be
+    // zero anyway...)
     tile.orig_x = 0;
     tile.orig_y = 0;
+    tile.format = RENDER_CAMERA_BIT_DEPTH_24;
 
+    // Initialize TIE camera
     camera.type = RENDER_CAMERA_PERSPECTIVE;
     camera.fov = 25;
     render_camera_init(&camera, bu_avail_cpus());
     render_phong_init(&camera.render, NULL);
 
+    // This is an important Qt setting for interactivity - it allowing key
+    // bindings to propagate to this widget and trigger actions such as
+    // resolution scaling, rotation, etc.
     setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -61,37 +67,40 @@ isstGL::~isstGL()
 void
 isstGL::paintGL()
 {
-    if (rescaled) {
-	rescaled = 0;
+    if (rescaled || do_render) {
+	if (rescaled) {
+	    rescaled = 0;
 
-	if (resolution_factor == 0) {
-	    camera.w = tile.size_x = width();
-	    camera.h = tile.size_y = height();
-	} else {
-	    camera.w = tile.size_x = resolution_factor;
-	    camera.h = tile.size_y = camera.w * height() / width();
+	    if (resolution_factor == 0) {
+		camera.w = tile.size_x = width();
+		camera.h = tile.size_y = height();
+	    } else {
+		camera.w = tile.size_x = resolution_factor;
+		camera.h = tile.size_y = camera.w * height() / width();
+	    }
+
+	    // Set up the raytracing image buffer
+	    TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
+
+	    if (texdata_size < camera.w * camera.h) {
+		texdata_size = camera.w * camera.h;
+		texdata = realloc(texdata, camera.w * camera.h * 3);
+	    }
+	    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+	    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
 	}
 
-	// Set up the raytracing image buffer
-	TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
+	// IMPORTANT - this reset is necessary or the resultant image will
+	// not display correctly in the buffer.
+	buffer_image.ind = 0;
 
-	if (texdata_size < camera.w * camera.h) {
-	    texdata_size = camera.w * camera.h;
-	    texdata = realloc(texdata, camera.w * camera.h * 3);
-	}
-	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+	// Core TIE render
+	do_render = 0;
+	render_camera_prep(&camera);
+	render_camera_render(&camera, tie, &tile, &buffer_image);
     }
-
-    // IMPORTANT - this reset is necessary or the resultant image will
-    // not display correctly in the buffer.
-    buffer_image.ind = 0;
-
-    // Core TIE render
-    render_camera_prep(&camera);
-    render_camera_render(&camera, tie, &tile, &buffer_image);
 
     // Set up a QImage with the rendered output.  Note - sizeof(camera_tile_t)
     // offset copied from glTexSubImage2D setup in Tcl/Tk gui.  Without it, the
@@ -113,6 +122,7 @@ isstGL::paintGL()
 void
 isstGL::resizeGL(int w, int h)
 {
+    // Translated from Tcl/Tk ISST logic for resolution adjustment
     if (resolution_factor == 0) {
 	camera.w = tile.size_x = w;
 	camera.h = tile.size_y = h;
@@ -133,6 +143,11 @@ isstGL::resizeGL(int w, int h)
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+
+    // We don't want every paint operation to do a full re-render, so we must
+    // specify the cases that need it.  resize is definitely one of the ones
+    // that does.
+    do_render = 1;
 }
 
 
@@ -140,6 +155,8 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
     //QString kstr = QKeySequence(k->key()).toString();
     //bu_log("%s\n", kstr.toStdString().c_str());
     switch (k->key()) {
+	// Increase setting controlling raytracing grid density.
+	// Maximum is one raytraced pixel per window pixel
 	case '=':
 	    resolution++;
 	    CLAMP(resolution, 1, 20);
@@ -148,6 +165,8 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
 	    update();
 	    return;
 	    break;
+	// Decrease setting controlling raytracing grid density.
+	// Minimum is clamped - too course and the image is meaningless
 	case '-':
 	    resolution--;
 	    CLAMP(resolution, 1, 20);
