@@ -33,32 +33,35 @@ isstGL::isstGL()
     TIENET_BUFFER_INIT(buffer_image);
 
     tile.format = RENDER_CAMERA_BIT_DEPTH_24;
+    tile.orig_x = 0;
+    tile.orig_y = 0;
 
     camera.type = RENDER_CAMERA_PERSPECTIVE;
     camera.fov = 25;
     render_camera_init(&camera, bu_avail_cpus());
 }
 
-// https://stackoverflow.com/a/51666467
 void
 isstGL::paintGL()
 {
-    QPainter painter(this);
-
     // IMPORTANT - this reset is necessary or the resultant image will
     // not display correctly in the buffer.
     buffer_image.ind = 0;
 
+    // Core TIE render
     render_camera_prep(&camera);
     render_camera_render(&camera, tie, &tile, &buffer_image);
 
+    // Get the rendered buffer displayed: https://stackoverflow.com/a/51666467
     QImage *image = new QImage(buffer_image.data, camera.w, camera.h, QImage::Format_RGB888);
+    QPainter painter(this);
+    painter.drawImage(this->rect(), *image);
+
 #if 0
+    // If we need to debug the above, we can write out an image
     if (!image->save("file.png"))
 	printf("save failed!\n");
 #endif
-
-    painter.drawImage(this->rect(), *image);
 }
 
 
@@ -71,7 +74,6 @@ isstGL::resizeGL(int w, int h)
     tile.size_y = camera.h;
 
     TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
-
     texdata = realloc(texdata, camera.w * camera.h * 3);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
 }

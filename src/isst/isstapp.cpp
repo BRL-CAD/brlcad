@@ -332,6 +332,7 @@ ISSTApp::load_g(const char *filename, int argc, const char *argv[])
 void
 ISSTApp::closedb()
 {
+    bu_free(tie, "free tie");
     current_file.clear();
 }
 
