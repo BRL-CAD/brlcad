@@ -29,10 +29,10 @@ set(moc_headers
   isstgl.h
   )
 
-if(BRLCAD_ENABLE_QT)
+if(BRLCAD_ENABLE_QT AND NOT BRLCAD_ENABLE_TCL)
   QT5_WRAP_CPP(moc_srcs ${moc_headers})
   BRLCAD_ADDEXEC(isst "${isst_srcs};${moc_srcs}" "libbu;librt;libgcv;librender;${OPENGL_LIBRARIES};Qt5::Core;Qt5::Widgets;Qt5::OpenGL")
-endif(BRLCAD_ENABLE_QT)
+endif(BRLCAD_ENABLE_QT AND NOT BRLCAD_ENABLE_TCL)
 
 set(isst_ignore_srcs
   CMakeLists.txt
