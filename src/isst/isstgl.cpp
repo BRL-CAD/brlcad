@@ -45,8 +45,18 @@ isstGL::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
 
+    camera.w = width();
+    camera.h = height();
+    tile.size_x = camera.w;
+    tile.size_y = camera.h;
+
     TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
 
+    // IMPORTANT - this reset is necessary or the resultant image will
+    // not display correctly in the buffer.
+    buffer_image.ind = 0;
+
+    render_camera_prep(&camera);
     render_camera_render(&camera, tie, &tile, &buffer_image);
 
     QImage *image = new QImage(buffer_image.data, camera.w, camera.h, QImage::Format_RGB888);
