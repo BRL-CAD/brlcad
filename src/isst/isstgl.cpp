@@ -33,6 +33,11 @@ isstGL::isstGL()
     TIENET_BUFFER_INIT(buffer_image);
 
     tile.format = RENDER_CAMERA_BIT_DEPTH_24;
+
+    // If these are not initialized, output pixel placement in the buffer may
+    // be randomly offset - you may see no image, or an image in the wrong
+    // place (or it may happen to work if the values happen to be zero
+    // anyway...)
     tile.orig_x = 0;
     tile.orig_y = 0;
 
