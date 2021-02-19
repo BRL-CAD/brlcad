@@ -1,0 +1,115 @@
+GET MIRROR OF SF
+rsync --verbose --recursive --links --perms --times --update --compress svn.code.sf.net::p/brlcad/code svn.sfmirror
+
+NUMBER OF COMMITS ON TRUNK AND IN GIT
+svn log ~/brlcad.trunk > svn.log
+agua:brlcad_conv11 morrison$ grep '^r[0-9]' svn.log | awk '{print $1}' | sed 's/^r//g' | sort -n > svn.commits
+wc 68500   68500  399948
+grep '^r[0-9]* |' svn.log | awk '{print $1}' | sed 's/^r//g' | sort -n > svn.commits2
+wc 68487   68487  399870
+
+git --follow . > git.follow.log
+
+git log --all > git.log
+agua:brlcad_conv11 morrison$ grep -A2 svn:revision git.log | grep -v account | perl -0777 -p -e 's/\n    [cs]v[sn]:branch:/ branch /g' | perl -0777 -p -e 's/--\n//g' | grep trunk | awk '{print $1}' | cut -f3 -d: | sort -n > git.commits
+wc
+   67967   67967  397262
+wc of all git commits is ~69291 (smoe extra commits from cvs redux without svn)
+
+GET LIST OF DIFFERENT COMMITS
+diff -u svn.commits git.commits | grep '^-[0-9]' | sed 's/-//g' > commits.missing
+# 720 commits missing
+diff -u svn.commits2 git.commits | grep '^-[0-9]' | sed 's/-//g' > commits.missing2
+536 missing
+499 missing per tags (thus 37 mistagged)
+
+svn says
+#331 empty log message (possibly merges via git show, retrying with git diff)
+#796 Initial revision
+
+GETTING EMPTY LOG MESSAGES
+grep -C4 "empty log message" git.log  | tr  '\n' ';' | perl -0777 -p -e 's/Author:/\nAuthor:/g' | grep branch:trunk|grep -v ':revision:' |less
+
+GET ALL SVN LOG MESSAGES FOR MISSING COMMITS
+cat commits.missing | while read i ; do echo $i ; svn log -r$i ~/brlcad.trunk ; done >> commits.missing.logs
+cat commits.missing2 | while read i ; do if ! test -f diffs.svn.sans/$i.log ; then svn log -c$i ~/brlcad.trunk | tee diffs.svn.sans/$i.log ; fi ; done
+for i in diffs.svn.sans/*.log ; do echo $i ; if ! test -f ${i}.sans.log ; then tail +4 $i | perl -0777 -pe 's/[-[:space:]]*//g' > ${i}.sans.log ; fi ; done
+cat commits.missing2 | while read i ; do echo $i ; if ! test -f diffs.svn.sans/$i.files ; then svn diff --ignore-properties -c$i ~/brlcad.trunk | grep '^[-+][-+][-+] ' | grep -v "nonexistent" | awk '{print $1, $2}' | sed 's/\/Users\/morrison\/brlcad.trunk\///g' | sort > diffs.svn.sans/$i.files ; fi ; done
+
+GET ALL GIT LOG MESSAGES
+grep "^commit " git.log | awk '{print $2}' | while read i ; do echo -n "$i " ; if ! test -f diffs.git.sans/${i}.log ; then git log --format="%B" ${i}^! | tee diffs.git.sans/${i}.log ; fi ; done
+for i in diffs.git.sans/*.log ; do echo $i ; if ! test -f ${i}.sans.log ; then cat $i | grep -v '^cvs:' | grep -v '^svn:' | perl -0777 -pe 's/[-[:space:]]*//g' > ${i}.sans.log ; fi ; done
+grep "^commit " git.log | awk '{print $2}' | while read i ; do echo -n "$i " ; if ! test -f diffs.git.sans/${i}.files ; then git show ${i}^! | grep '^[-+][-+][-+] ' | grep -v '/dev/null' | sed 's/--- a\//--- /g' | sed 's/+++ b\//+++ /g' | sort > diffs.git.sans/${i}.files ; fi ; done
+
+CATEGORIZE THE TYPES OF COMMITS THAT COULDN'T BE FOUND
+cat commits.missing | while read i ; do echo -n "$i ... " ; log="`svn log -r$i ~/brlcad.trunk`" ; if test "x`echo $log | grep \"New repository\"`" = "x" -a "x`echo $log | grep \"Initial revision\"`" = "x" ; then if test "x`echo $log | grep \"empty log message\"`" = "x" ; then echo "kept" ; echo "$log" >> commits.missing.logs.kept ; else echo "empty" ; echo "$log" >> commits.missing.logs.empty ; fi ; else echo "skipped" ; fi ; done > commits.missing.transcript
+cat commits.missing2 | while read i ; do echo -n "$i ... " ; log="`cat diffs.svn.sans/$i.log`" ; if test "x`echo $log | grep \"New repository\"`" = "x" -a "x`echo $log | grep \"Initial revision\"`" = "x" ; then if test "x`echo $log | grep \"empty log message\"`" = "x" ; then echo "MISSING" ; echo "$log" >> commits.missing.logs.kept2 ; else echo "EMPTY" ; echo "$log" >> commits.missing.logs.empty2 ; fi ; else echo "SKIP" ; fi ; done | tee commits.missing.transcript2
+
+CAPTURE SVN MD5 SUMS OF DIFF, LOG, AND FILES
+cat commits.missing | while read i ; do echo -n "$i " ; log="`svn diff --ignore-properties -c$i ~/brlcad.trunk | grep \"^[-+][^-+]\"`" ; echo -n "`echo \"$log\"|wc | awk '{print $1}'` " ; echo "$log" > diffs/${i}.diff ; echo "$log" | md5 ; done | tee svn.md5.missing
+cat commits.missing2 | while read i ; do echo $i log `md5 diffs.svn.sans/$i.log.sans.log` ; echo $i files `md5 diffs.svn.sans/$i.files` ; echo $i diff `md5 diffs.svn.sans/$i.diff` ; done | tee svn.md5.missing2
+
+CAPTURE GIT MD5 SUMS OF DIFF
+grep "^commit " git.log | awk '{print $2}' | while read i ; do echo -n "$i " ; log="`git diff ${i}^! | grep \"^[-+][^-+]\"`" ; echo -n "`echo \"$log\"|wc | awk '{print $1}'` " ; echo "$log" > diffs.git/${i}.diff ; echo "$log" | md5 ; done | tee git.md5.all
+grep "^commit " git.log | awk '{print $2}' | while read i ; do echo $i log `md5 diffs.git.sans/$i.log.sans.log` ; echo $i files `md5 diffs.git.sans/$i.files` ; echo $i diff `md5 diffs.git.sans/$i.diff` ; done | tee git.md5.all2
+
+COMPARE THEM
+cat svn.md5.missing | while read line ; do i=`echo $line | awk '{print $1}'` ; svnmd5=`echo $line | awk '{print $3}'` ; echo -n "$i ... " ; if test "x$svnmd5" = "xd41d8cd98f00b204e9800998ecf8427e" ; then echo "EMPTY" ; else grep $svnmd5 git.md5 || echo "NOT FOUND" ; fi ; done | tee svn.to.git
+# cat svn.md5.missing2 | while read line ; do i=`echo $line | awk '{print $1}'` ; type=`echo $line | awk '{print $2}'` ; md5=`echo $line | awk '{print $6}'` ; if test "x$md5" = "xd41d8cd98f00b204e9800998ecf8427e" ; then echo "$i $type EMPTY" ; else echo "$i $type `grep $md5 git.md5.all2 | grep $type || echo "NOT FOUND"`" ; fi ; done | tee svn.to.git2
+./compare_missing.sh writes out svn.to.git2
+
+found 64 commits still not matching -- some due to embedded tab expansions in comparison
+found 135-18=117 missing on second (better) svn.to.git2 pass
+
+19282     svn:revision:19282
+19283     svn:revision:19283
+19289     svn:revision:19289
+19720     svn:revision:19720
+19757     svn:revision:19757
+19759     svn:revision:19759
+19761     svn:revision:19761
+19777     svn:revision:19777
+19797     svn:revision:19797
+19798     svn:revision:19798
+19839     svn:revision:19839
+33147     svn:revision:33147
+45236     svn:revision:45236
+51428     svn:revision:51428
+54352     svn:revision:54352
+64428     svn:revision:64428
+66607     svn:revision:66607
+66794     svn:revision:66794
+
+for i in * ; do echo $i ; cat $i | LC_ALL=C sed 's/[[:space:]]*//g' > ../diffs.svn.sans/$i ; done
+for i in diffs.svn.sans/* ; do /bin/echo `echo $i | tr '/' '.' | cut -f4 -d.` `wc -l $i | awk '{print $1}'` `md5 $i | awk '{print $4}'` ; done | sort -n > svn.sans.missing.md5
+
+for i in * ; do echo $i ; cat $i | LC_ALL=C sed 's/[[:space:]]*//g' > ../diffs.git.sans/$i ; done
+for i in diffs.git.sans/* ; do /bin/echo `echo $i | tr '/' '.' | cut -f4 -d.` `wc -l $i | awk '{print $1}'` `md5 $i | awk '{print $4}'` ; done | sort -n > git.sans.md5
+
+cat svn.sans.missing.md5 | while read line ; do i=`echo $line | awk '{print $1}'` ; svnmd5=`echo $line | awk '{print $3}'` ; echo -n "$i ... " ; if test "x$svnmd5" = "xd41d8cd98f00b204e9800998ecf8427e" ; then echo "EMPTY" ; else grep $svnmd5 git.sans.md5 || echo "NOT FOUND" ; fi ; done | tee svn.to.git3
+
+manually edited svn.to.git3 -> mappings.txt and mappings2.txt
+cat mappings2.txt | grep NOT | while read line ; do rev=`echo $line | awk '{print $1}'` ; if grep -q "${rev}\$" git.all_revision_tags ; then echo "found $rev" ; else echo "did not find $rev" ; fi ; done
+
+
+# EXTRACTED ALL SVN COMMITS
+seq 1 78156 | while read i ; do if ! test -f diffs.svn.all/$i.log ; then svn log -c$i ~/brlcad.github/brlcad.mirror | tee diffs.svn.all/$i.log ; fi ; done
+for i in diffs.svn.all/*.log ; do echo $i ; if ! test -f ${i}.sans.log ; then tail +4 $i | perl -0777 -pe 's/[-[:space:]]*//g' > ${i}.sans.log ; fi ; done
+seq 1 78156 | while read i ; do echo $i ; if ! test -f diffs.svn.all/$i.files ; then svn diff --ignore-properties -c$i ~/brlcad.github/brlcad.mirror | grep '^[-+][-+][-+] ' | grep -v "nonexistent" | awk '{print $1, $2}' | sed 's/\/Users\/morrison\/brlcad.github\/brlcad.mirror\///g' | sort > diffs.svn.all/$i.files ; fi ; done
+seq 1 78156 | while read i ; do echo -n "$i " ; log="`svn diff --ignore-properties -c$i ~/brlcad.github/brlcad.mirror | grep \"^[-+][^-+]\"`" ; echo -n "`echo \"$log\"|wc | awk '{print $1}'` " ; echo "$log" > diffs.svn.all/${i}.diff ; echo "$log" | md5 ; done | tee svn.md5.all
+seq 1 78156 | while read i ; do echo $i log `md5 diffs.svn.all/$i.log.sans.log` ; echo $i files `md5 diffs.svn.all/$i.files` ; echo $i diff `md5 diffs.svn.all/$i.diff` ; done | tee svn.md5.all2
+./compare_all.sh
+cd diffs.svn.all ;; for i in *.diff ; do echo $i ; cat $i | LC_ALL=C sed 's/[[:space:]]*//g' > ../diffs.svn.all.sans/$i ; done ;; mv ../diffs.svn.all.sans/* . ;; rmdir ../diffs.svn.all.sans
+
+# FIND TAGGINGS FOR ALL TRUNK COMMITS
+for i in `cat svn.commits2` ; do echo -n $i ; grep "revision:${i}$" -C3 git.log | grep :branch: ; done | tee trunk_tags_in_git.log
+grep ":revision:" -C3 git.log > git.revision.log
+log="`cat git.revision.log`" ; for i in `cat svn.commits2` ; do match="`echo \"$log\" | grep \":revision:${i}$\" -C3`" ; if test "x$match" = "x" ; then echo "$i REV:NOT:FOUND" ; else branch="`echo \"$match\" | grep :branch:`" ; if test "x$branch" = "x" ; then echo "$i BRANCH:NOT:FOUND" ; else echo "$i $branch" ; fi ; fi ; done | tee trunk_tags_in_git2.log
+
+# GET LIST OF MISSING COMMITS TO MULTIPLE BRANCHES
+diff -u a commits.missing2 | grep '^+' | cut -f2 -d+ | while read rev; do if test "x$rev" = "x" ; then continue ; fi ; echo -n "$rev " ; svn diff -c$rev svn+ssh://brlcad@svn.code.sf.net/p/brlcad/code 2>&1 | grep "^[-+][-+][-+] " | grep -e "\(branches\|trunk\|tags\)" | cut -f2,3 -d/ | sed 's/trunk.*/trunk/g' | sort | uniq | tr '\n' ' ' ; echo "" ; done | tee multiple_branches.log
+
+# IDENTIFY WHAT SVN SAYS THE COMMIT MODIFIED , GET LIST OF ALL COMMITS TO MULTIPLE BRANCHES
+rev=1 ; while test $rev -lt 78155 ; do echo -n "$rev " ; svn diff -c$rev file:///Users/morrison/brlcad.github/sfmirror | grep "^[-+][-+][-+] " | grep -e "\(branches\|trunk\|tags\)" | cut -f2,3 -d/ | sed 's/trunk.*/trunk/g' | sort | uniq | tr '\n' ' ' ; echo "" ; rev="`expr $rev + 1`" ; done | tee all_branches.log
+rev=1 ; while test $rev -lt 78155 ; do echo -n "$rev " ; svn diff -c$rev file:///Users/morrison/brlcad.github/svn.sfmirror/code | grep "^Index: " | sed 's/Index: //g' | cut -f1,2,3 -d/ | sed 's/trunk.*/trunk/g' | sort | uniq | tr '\n' ' ' ; echo "" ; rev="`expr $rev + 1`" ; done | tee all_branches2.log
+
