@@ -252,7 +252,7 @@ set(misc_ignore_files
   repoconv/svnfexport_svn.cxx
   repoconv/sync_commit.sh
   repoconv/sync_commit_trunk.sh
-  repoconv/tagcommits.txt
+  repoconv/tag_commits.txt
   repoconv/tagmap.sh
   repoconv/terra.dsp
   repoconv/verify/cvs.sh
