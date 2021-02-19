@@ -54,6 +54,11 @@ https://github.com/Sarcasm/run-clang-format
 Possibly useful notes for OSX/Windows users:
 https://stackoverflow.com/questions/8904327/case-sensitivity-in-git
 
+########################################################
+Once we're on github, this is handy given the number of branches we have in the main repo:
+
+https://stackoverflow.com/questions/379081/track-all-remote-git-branches-as-local-branches
+
 
 ################# .gitconfig helpers ###################
 
