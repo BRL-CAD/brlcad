@@ -86,7 +86,7 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 	std::string note((std::istreambuf_iterator<char>(n)), std::istreambuf_iterator<char>());
 
 	// Replace git style branch name for master with SVN style name
-	std::regex mstr_regex("svn:branch:master");
+	std::regex mstr_regex("svn:branch:master$");
 	std::string note_fixed = std::regex_replace(note, mstr_regex, "svn:branch:trunk");
 
 	// Write the message to the commit's string;
@@ -130,7 +130,7 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 }
 
 int
-git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_branch_map)
+git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_branch_map, std::string &tag_list)
 {
 
     if (!s->have_sha1s) {
@@ -147,6 +147,11 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
     std::ifstream infile_branches(svn_branch_map, std::ifstream::binary);
     if (svn_branch_map.length() && !infile_branches.good()) {
 	std::cerr << "Could not open svn_branch_map file: " << svn_branch_map << "\n";
+	exit(-1);
+    }
+    std::ifstream infile_tag_list(tag_list, std::ifstream::binary);
+    if (tag_list.length() && !infile_tag_list.good()) {
+	std::cerr << "Could not open tag_list file: " << tag_list << "\n";
 	exit(-1);
     }
 
@@ -202,6 +207,32 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	infile_branches.close();
     }
 
+    std::set<std::string> tag_sha1s;
+    if (infile_tag_list.good()) {
+	std::string line;
+	while (std::getline(infile_tag_list, line)) {
+	    // Skip anything the wrong length
+	    if (line.length() != 40) {
+		continue;
+	    }
+	    tag_sha1s.insert(line);
+	    std::cout << "tag sha1: " << line << "\n";
+	    bool valid = false;
+	    for (size_t i = 0; i < s->commits.size(); i++) {
+		if (s->commits[i].id.sha1 == line) {
+		    valid = true;
+		    break;
+		}
+	    }
+	    if (!valid) {
+		std::cout << "INVALID sha1 supplied for tag!\n";
+	    }
+	}
+
+	infile_tag_list.close();
+    }
+
+
 
     // Iterate over the commits looking for note commits.  If we find one,
     // find its associated blob with data, read it, find the associated
@@ -213,10 +244,11 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	}
 
 	int nrev = -2;
-	bool sb = false;
+	bool sb = (bmap.find(s->commits[i].id.sha1) != bmap.end());
+	bool do_tag = (tag_sha1s.find(s->commits[i].id.sha1) != tag_sha1s.end());
 	std::string sbranch;
 
-	if (rmap.find(s->commits[i].id.sha1) == rmap.end() && bmap.find(s->commits[i].id.sha1) == bmap.end()) {
+	if ((rmap.find(s->commits[i].id.sha1) == rmap.end()) && !sb && !do_tag) {
 	    continue;
 	}
 
@@ -224,9 +256,8 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	    nrev = rmap[s->commits[i].id.sha1];
 	}
 
-	if (bmap.find(s->commits[i].id.sha1) != bmap.end()) {
+	if (sb) {
 	    sbranch = bmap[s->commits[i].id.sha1];
-	    sb = true;
 	}
 
 	if (nrev > 0) {
@@ -311,15 +342,33 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 		    if (sbranch.length()) {
 			// If we're adding/replacing rather than eliminating
 			// the branch line, add it now.
-			std::string nbranchline = std::string("svn:branch:") + sbranch;
-			nmsg.append(nbranchline);
+			if (do_tag) {
+			    std::string nbranchline = std::string("svn:tag:") + sbranch;
+			    nmsg.append(nbranchline);
+			} else {
+			    std::string nbranchline = std::string("svn:branch:") + sbranch;
+			    nmsg.append(nbranchline);
+			}
 			nmsg.append("\n");
+			wbranch = true;
 		    }
-		    wbranch = true;
 		    if (sbmatch) {
 			// Replacing/removing existing branch line, no more to be done.
 			continue;
 		    }
+		}
+	    }
+
+	    if (do_tag) {
+		std::regex svnbranchline("^svn:branch:.*");
+		bool sbmatch = std::regex_match(cline, svnbranchline);
+		if (sbmatch) {
+		    std::string tagname = cline.substr(11, std::string::npos);
+		    std::cout << "branch->tag " << s->commits[i].id.sha1 << "," << tagname << "\n";
+		    std::string nbranchline = std::string("svn:tag:") + tagname;
+		    nmsg.append(nbranchline);
+		    nmsg.append("\n");
+		    continue;
 		}
 	    }
 
@@ -782,6 +831,7 @@ main(int argc, char *argv[])
     std::string svn_map;
     std::string svn_rev_map;
     std::string svn_branch_map;
+    std::string svn_branches_to_tags;
     std::string cvs_auth_map;
     std::string cvs_branch_map;
     std::string keymap;
@@ -800,6 +850,7 @@ main(int argc, char *argv[])
 	    ("s,svn-map", "Specify svn rev -> committer map (one mapping per line, format is commit-rev name)", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("svn-revs", "Specify git sha1 -> svn rev map (one mapping per line, format is sha1;[commit-rev])", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("svn-branches", "Specify git sha1 -> svn branch (one mapping per line, format is sha1;[branch])", cxxopts::value<std::vector<std::string>>(), "map file")
+	    ("svn-branches-to-tags", "Specify git sha1 list that was committed to tags, not branches", cxxopts::value<std::vector<std::string>>(), "sha1 list")
 
 	    ("cvs-auth-map", "msg&time -> cvs author map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
 	    ("cvs-branch-map", "msg&time -> cvs branch map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
@@ -887,6 +938,12 @@ main(int argc, char *argv[])
 	{
 	    auto& ff = result["svn-branches"].as<std::vector<std::string>>();
 	    svn_branch_map = ff[0];
+	}
+
+	if (result.count("svn-branches-to-tags"))
+	{
+	    auto& ff = result["svn-branches-to-tags"].as<std::vector<std::string>>();
+	    svn_branches_to_tags = ff[0];
 	}
 
 	if (result.count("width"))
@@ -982,7 +1039,7 @@ main(int argc, char *argv[])
 
     if (svn_rev_map.length() || svn_branch_map.length()) {
 	// Handle svn rev assignments
-	git_update_svnnotes(&fi_data, svn_rev_map, svn_branch_map);
+	git_update_svnnotes(&fi_data, svn_rev_map, svn_branch_map, svn_branches_to_tags);
     }
 
     fi_data.wrap_width = cwidth;
