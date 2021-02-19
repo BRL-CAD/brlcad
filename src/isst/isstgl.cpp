@@ -174,6 +174,19 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
 }
 
 
+void isstGL::mouseMoveEvent(QMouseEvent *e) {
+
+    bu_log("(%d,%d)\n", e->x(), e->y());
+    if (x_prev > -INT_MAX && y_prev > -INT_MAX) {
+	bu_log("Delta: (%d,%d)\n", e->x() - x_prev, e->y() - y_prev);
+    }
+
+    x_prev = e->x();
+    y_prev = e->y();
+
+    QOpenGLWidget::mouseMoveEvent(e);
+}
+
 void isstGL::save_image() {
     QImage image = this->grabFramebuffer();
     image.save("file.png");

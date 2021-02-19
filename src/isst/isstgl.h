@@ -62,6 +62,7 @@ class isstGL : public QOpenGLWidget
 	void paintGL() override;
 
 	void keyPressEvent(QKeyEvent *k) override;
+	void mouseMoveEvent(QMouseEvent *e) override;
 
     private:
 	struct camera_tile_s tile;
@@ -72,6 +73,9 @@ class isstGL : public QOpenGLWidget
 	int resolution_factor = 0;
 	int rescaled = 0;
 	int do_render = 1;
+
+	int x_prev = -INT_MAX;
+	int y_prev = -INT_MAX;
 };
 
 #endif /* ISSTGL_H */
