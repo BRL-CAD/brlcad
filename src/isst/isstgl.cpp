@@ -105,17 +105,11 @@ isstGL::paintGL()
     // Set up a QImage with the rendered output.  Note - sizeof(camera_tile_t)
     // offset copied from glTexSubImage2D setup in Tcl/Tk gui.  Without it, the
     // image is offset to the right in the OpenGL display.
-    QImage *image = new QImage(buffer_image.data + sizeof(camera_tile_t), camera.w, camera.h, QImage::Format_RGB888);
+    QImage image(buffer_image.data + sizeof(camera_tile_t), camera.w, camera.h, QImage::Format_RGB888);
 
     // Get the QImage version of the buffer displayed: https://stackoverflow.com/a/51666467
     QPainter painter(this);
-    painter.drawImage(this->rect(), *image);
-
-#if 0
-    // If we need to debug the above, we can write out an image
-    if (!image->save("file.png"))
-	printf("save failed!\n");
-#endif
+    painter.drawImage(this->rect(), image);
 }
 
 
@@ -180,6 +174,10 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
 }
 
 
+void isstGL::save_image() {
+    QImage image = this->grabFramebuffer();
+    image.save("file.png");
+}
 
 // Local Variables:
 // tab-width: 8

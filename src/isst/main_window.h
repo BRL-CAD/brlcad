@@ -51,10 +51,12 @@ class ISST_MainWindow : public QMainWindow
     private slots:
 	void open_file();
 	void write_settings();
+	void save_image();
 
     private:
 	QMenu *file_menu;
 	QAction *isst_open;
+	QAction *isst_save_image;
 	QAction *isst_save_settings;
 	QAction *isst_exit;
 };

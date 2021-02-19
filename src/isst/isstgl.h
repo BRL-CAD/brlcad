@@ -19,7 +19,12 @@
  */
 /** @file isstgl.h
  *
- * Brief description
+ * OpenGL widget wrapper encoding the information specific to the
+ * TIE raytracing view.
+ *
+ * TODO:  Look at f_knob, knob_rot, mged_vrot_syz, mged_rot, etc.
+ * to determine how MGED is doing its mouse x,y delta to view
+ * manipulation translation logic.
  *
  */
 
@@ -46,6 +51,8 @@ class isstGL : public QOpenGLWidget
 	struct tie_s *tie = NULL; // From parent app
 	struct render_camera_s camera;
 	int resolution = 20;
+
+	void save_image();
 
 	vect_t camera_pos_init;
 	vect_t camera_focus_init;

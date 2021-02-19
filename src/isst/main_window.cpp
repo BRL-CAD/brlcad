@@ -38,6 +38,10 @@ ISST_MainWindow::ISST_MainWindow()
     connect(isst_open, &QAction::triggered, this, &ISST_MainWindow::open_file);
     file_menu->addAction(isst_open);
 
+    isst_save_image = new QAction("Save Image", this);
+    connect(isst_save_image, &QAction::triggered, this, &ISST_MainWindow::save_image);
+    file_menu->addAction(isst_save_image);
+
     isst_save_settings = new QAction("Save Settings", this);
     connect(isst_save_settings, &QAction::triggered, this, &ISST_MainWindow::write_settings);
     file_menu->addAction(isst_save_settings);
@@ -91,6 +95,12 @@ void ISST_MainWindow::write_settings()
     settings.setValue("size", size());
     settings.endGroup();
 }
+
+void ISST_MainWindow::save_image()
+{
+    canvas->save_image();
+}
+
 
 
 /*
