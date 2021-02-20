@@ -445,14 +445,11 @@ git_update_svnnotes(git_fi_data *s,
 		}
 	    }
 
-	    if (revnum == 19673) {
-		std::cout << "revnum: " << revnum << "\n";
-	    }
-	    if (cmatch && revnum > 0 && rev_bset[revnum].size()) {
-	    	std::regex cvsbranchline("^cvs:branch:.*");
+	    if (cmatch) {
+		std::regex cvsbranchline("^cvs:branch:.*");
 		bool sbmatch = std::regex_match(cline, cvsbranchline);
 		if (sbmatch) {
-		    if (!wcvsbranch) {
+		    if (revnum > 0 && rev_bset[revnum].size() && !wcvsbranch) {
 			std::set<std::string>::iterator s_it;
 			for (s_it = rev_bset[revnum].begin(); s_it != rev_bset[revnum].end(); s_it++) {
 			    std::string nbranchline = std::string("cvs:branch:") + *s_it;
