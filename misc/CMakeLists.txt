@@ -208,6 +208,7 @@ set(misc_ignore_files
   repoconv/domap.sh
   repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
+  repoconv/cvs_svn_branches.txt
   repoconv/gitattributes
   repoconv/github_ci_actions.yml
   repoconv/gitignore.tar.gz
