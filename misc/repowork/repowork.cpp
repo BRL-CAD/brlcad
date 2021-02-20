@@ -12,9 +12,26 @@
  */
 
 #include <filesystem>
+#include <iostream>
+#include <sstream>
+#include <locale>
 
 #include "cxxopts.hpp"
 #include "repowork.h"
+
+
+// https://stackoverflow.com/a/5607650
+struct schars: std::ctype<char> {
+    schars(): std::ctype<char>(get_table()) {}
+    static std::ctype_base::mask const* get_table() {
+        static const std::ctype<char>::mask *const_table= std::ctype<char>::classic_table();
+        static std::ctype<char>::mask cmask[std::ctype<char>::table_size];
+        std::memcpy(cmask, const_table, std::ctype<char>::table_size * sizeof(std::ctype<char>::mask));
+        cmask[';'] = std::ctype_base::space;
+        return &cmask[0];
+    }
+};
+
 
 int
 git_parse_commitish(git_commitish &gc, git_fi_data *s, std::string line)
@@ -130,7 +147,9 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
 }
 
 int
-git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_branch_map, std::string &tag_list)
+git_update_svnnotes(git_fi_data *s,
+       	std::string &svn_rev_map, std::string &svn_branch_map,
+       	std::string &tag_list, std::string &revs_branches)
 {
 
     if (!s->have_sha1s) {
@@ -144,17 +163,6 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	std::cerr << "Could not open svn_rev_map file: " << svn_rev_map << "\n";
 	exit(-1);
     }
-    std::ifstream infile_branches(svn_branch_map, std::ifstream::binary);
-    if (svn_branch_map.length() && !infile_branches.good()) {
-	std::cerr << "Could not open svn_branch_map file: " << svn_branch_map << "\n";
-	exit(-1);
-    }
-    std::ifstream infile_tag_list(tag_list, std::ifstream::binary);
-    if (tag_list.length() && !infile_tag_list.good()) {
-	std::cerr << "Could not open tag_list file: " << tag_list << "\n";
-	exit(-1);
-    }
-
     std::map<std::string, int> rmap;
     if (infile_revs.good()) {
 	std::string line;
@@ -181,7 +189,11 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	infile_revs.close();
     }
 
-
+    std::ifstream infile_branches(svn_branch_map, std::ifstream::binary);
+    if (svn_branch_map.length() && !infile_branches.good()) {
+	std::cerr << "Could not open svn_branch_map file: " << svn_branch_map << "\n";
+	exit(-1);
+    }
     std::map<std::string, std::string> bmap;
     if (infile_branches.good()) {
 	std::string line;
@@ -207,6 +219,11 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	infile_branches.close();
     }
 
+    std::ifstream infile_tag_list(tag_list, std::ifstream::binary);
+    if (tag_list.length() && !infile_tag_list.good()) {
+	std::cerr << "Could not open tag_list file: " << tag_list << "\n";
+	exit(-1);
+    }
     std::set<std::string> tag_sha1s;
     if (infile_tag_list.good()) {
 	std::string line;
@@ -232,6 +249,50 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	infile_tag_list.close();
     }
 
+    std::ifstream infile_revs_branches(revs_branches, std::ifstream::binary);
+    if (revs_branches.length() && !infile_revs_branches.good()) {
+	std::cerr << "Could not open revs_branches file: " << revs_branches << "\n";
+	exit(-1);
+    }
+    std::map<long int, std::set<std::string>> rev_bset;
+    if (infile_revs_branches.good()) {
+	std::string line;
+	while (std::getline(infile_revs_branches, line)) {
+
+
+	    size_t spos = line.find_first_of(":");
+	    if (spos == std::string::npos) {
+		std::cerr << "Invalid sha1;branch map line!: " << line << "\n";
+		exit(-1);
+	    }
+
+	    std::string rev_str = line.substr(0, spos);
+	    int rev = (rev_str.length()) ? std::stoi(rev_str) : -1;
+	    if (rev < 0) continue;
+	    std::string branches = line.substr(spos+1, std::string::npos);
+
+	    // If no branches, nothing to do
+	    if (!branches.length()) {
+		continue;
+	    }
+
+	    // Split into a vector, since there may be more than one branch
+	    std::stringstream ss(branches);
+	    std::ostringstream oss;
+	    ss.imbue(std::locale(std::locale(), new schars()));
+	    std::istream_iterator<std::string> b_begin(ss);
+	    std::istream_iterator<std::string> b_end;
+	    std::vector<std::string> branches_array(b_begin, b_end);
+	    std::copy(branches_array.begin(), branches_array.end(), std::ostream_iterator<std::string>(oss, "\n"));
+	    for (size_t i = 0; i < branches_array.size(); i++) {
+		rev_bset[rev].insert(branches_array[i]);
+	    }
+	}
+
+	std::cout << "Found " << rev_bset.size() << " revision->branch mappings\n";
+
+	infile_revs_branches.close();
+    }
 
 
     // Iterate over the commits looking for note commits.  If we find one,
@@ -243,12 +304,13 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	    continue;
 	}
 
+	long revnum = -1;
 	int nrev = -2;
 	bool sb = (bmap.find(s->commits[i].id.sha1) != bmap.end());
 	bool do_tag = (tag_sha1s.find(s->commits[i].id.sha1) != tag_sha1s.end());
 	std::string sbranch;
 
-	if ((rmap.find(s->commits[i].id.sha1) == rmap.end()) && !sb && !do_tag) {
+	if ((rmap.find(s->commits[i].id.sha1) == rmap.end()) && !sb && !do_tag && !rev_bset.size()) {
 	    continue;
 	}
 
@@ -266,6 +328,7 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	    if (s->commits[i].id.sha1.length()) {
 		s->rev_to_sha1[s->commits[i].svn_id] = s->commits[i].id.sha1;
 		std::cout << "Assigning new SVN rev " << nrev << " to " << s->commits[i].id.sha1 << "\n";
+		revnum = nrev;
 	    }
 	}
 
@@ -274,6 +337,8 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 	std::string nmsg, cline;
 	bool srev = false;
 	bool wbranch = false;
+	bool wcvsbranch = false;
+
 	while (std::getline(ss, cline, '\n')) {
 	    std::regex svnline("^svn:.*");
 	    bool smatch = std::regex_match(cline, svnline);
@@ -287,6 +352,14 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 		nmsg.append(cline);
 		nmsg.append("\n");
 		continue;
+	    }
+
+	    if (srmatch) {
+		std::smatch svnidvar;
+		if (std::regex_search(cline, svnidvar, svnrevline)) {
+		    std::string svn_id = std::string(svnidvar[1]);
+		    revnum = std::stol(svn_id);
+		}
 	    }
 
 	    // If we're handling an SVN revision, there are a number of possible
@@ -368,6 +441,26 @@ git_update_svnnotes(git_fi_data *s, std::string &svn_rev_map, std::string &svn_b
 		    std::string nbranchline = std::string("svn:tag:") + tagname;
 		    nmsg.append(nbranchline);
 		    nmsg.append("\n");
+		    continue;
+		}
+	    }
+
+	    if (revnum == 19673) {
+		std::cout << "revnum: " << revnum << "\n";
+	    }
+	    if (cmatch && revnum > 0 && rev_bset[revnum].size()) {
+	    	std::regex cvsbranchline("^cvs:branch:.*");
+		bool sbmatch = std::regex_match(cline, cvsbranchline);
+		if (sbmatch) {
+		    if (!wcvsbranch) {
+			std::set<std::string>::iterator s_it;
+			for (s_it = rev_bset[revnum].begin(); s_it != rev_bset[revnum].end(); s_it++) {
+			    std::string nbranchline = std::string("cvs:branch:") + *s_it;
+			    nmsg.append(nbranchline);
+			    nmsg.append("\n");
+			}
+			wcvsbranch = true;
+		    }
 		    continue;
 		}
 	    }
@@ -832,6 +925,7 @@ main(int argc, char *argv[])
     std::string svn_rev_map;
     std::string svn_branch_map;
     std::string svn_branches_to_tags;
+    std::string rev_branches;
     std::string cvs_auth_map;
     std::string cvs_branch_map;
     std::string keymap;
@@ -851,6 +945,7 @@ main(int argc, char *argv[])
 	    ("svn-revs", "Specify git sha1 -> svn rev map (one mapping per line, format is sha1;[commit-rev])", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("svn-branches", "Specify git sha1 -> svn branch (one mapping per line, format is sha1;[branch])", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("svn-branches-to-tags", "Specify git sha1 list that was committed to tags, not branches", cxxopts::value<std::vector<std::string>>(), "sha1 list")
+	    ("rev-branches", "Specify rev -> branch sets", cxxopts::value<std::vector<std::string>>(), "map")
 
 	    ("cvs-auth-map", "msg&time -> cvs author map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
 	    ("cvs-branch-map", "msg&time -> cvs branch map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
@@ -938,6 +1033,12 @@ main(int argc, char *argv[])
 	{
 	    auto& ff = result["svn-branches"].as<std::vector<std::string>>();
 	    svn_branch_map = ff[0];
+	}
+
+	if (result.count("rev-branches"))
+	{
+	    auto& ff = result["rev-branches"].as<std::vector<std::string>>();
+	    rev_branches = ff[0];
 	}
 
 	if (result.count("svn-branches-to-tags"))
@@ -1038,8 +1139,8 @@ main(int argc, char *argv[])
     }
 
     if (svn_rev_map.length() || svn_branch_map.length()) {
-	// Handle svn rev assignments
-	git_update_svnnotes(&fi_data, svn_rev_map, svn_branch_map, svn_branches_to_tags);
+	// Handle svn note alterations
+	git_update_svnnotes(&fi_data, svn_rev_map, svn_branch_map, svn_branches_to_tags, rev_branches);
     }
 
     fi_data.wrap_width = cwidth;
