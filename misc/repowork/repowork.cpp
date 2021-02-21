@@ -146,6 +146,12 @@ git_unpack_notes(git_fi_data *s, std::ifstream &infile, std::string &repo_path)
     return 0;
 }
 
+// TODO: need to change how we're doing this.  Need multiple passes:
+//
+// 1.  Assign SVN commit numbers
+// 2.  SVN branch->tag label updates
+// 3.  General SVN revs->branches update
+// 4.  Specific CVS era SVN branch assignment corrections (for when we can peg specific Git commits to specific SVN branches.)
 int
 git_update_svnnotes(git_fi_data *s,
        	std::string &svn_rev_map, std::string &svn_branch_map,
