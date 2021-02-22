@@ -198,11 +198,13 @@ git_update_svn_revs(git_fi_data *s, std::string &svn_rev_map)
 	long nrev =  rmap[s->commits[i].id.sha1];
 	s->commits[i].svn_id = nrev;
 
-	std::cout << "Assigning new SVN rev " << nrev << " to " << s->commits[i].id.sha1 << "\n";
+	if (nrev > 0) {
+	    std::cout << "Assigning new SVN rev " << nrev << " to " << s->commits[i].id.sha1 << "\n";
 
-	// Note:  this isn't guaranteed to be unique...  setting it mostly for
-	// the cases where it is.
-	s->rev_to_sha1[s->commits[i].svn_id] = s->commits[i].id.sha1;
+	    // Note:  this isn't guaranteed to be unique...  setting it mostly for
+	    // the cases where it is.
+	    s->rev_to_sha1[s->commits[i].svn_id] = s->commits[i].id.sha1;
+	}
 
 	// Update the message
 	std::stringstream ss(s->commits[i].commit_msg);
@@ -242,9 +244,11 @@ git_update_svn_revs(git_fi_data *s, std::string &svn_rev_map)
 		// the existing one, inserting a new line before the
 		// current non-revision svn line, or skipping if the
 		// nrev value is -1.
-		std::string nrevline = std::string("svn:revision:") + std::to_string(nrev);
-		nmsg.append(nrevline);
-		nmsg.append("\n");
+		if (nrev > 0) {
+		    std::string nrevline = std::string("svn:revision:") + std::to_string(nrev);
+		    nmsg.append(nrevline);
+		    nmsg.append("\n");
+		}
 		// Any further svn:revision lines will be skipped - for
 		// now at least, one to a commit.
 		srev = true;
