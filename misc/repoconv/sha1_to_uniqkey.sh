@@ -42,7 +42,7 @@ fi
 
 cd $old_repo
 
-rm -f sha1s_orig ukeys nkeys mapped_keys
+rm -f sha1s_orig ukeys nkeys mapped_keys map.sed
 while read p; do
   SHA1=$(echo "$p" | awk -F';' '{print $1}')
   if [ "$SHA1" != "" ]
@@ -64,10 +64,10 @@ while read p; do
 	  echo "Timestamp: $TSMP"
 	  echo "Branches MD5: $BMD5"
 	  echo "Diff MD5: $DIFFKEY"
-	  echo "$TSMP;$BMD5;$DIFFKEY" >> $CWD/ukeys
+	  echo "$SHA1;$TSMP;$BMD5;$DIFFKEY" >> $CWD/ukeys
   fi
-  echo "" >> $CWD/ukeys
 done < $input_file
+echo "" >> $CWD/ukeys
 
 cd $new_repo
 
@@ -76,9 +76,10 @@ echo "Mapping from $old_repo SHA1 keys to $new_repo SHA1 keys:"
 echo ""
 
 while read p; do
-  TSMP=$(echo "$p" | awk -F';' '{print $1}')
-  BMD5=$(echo "$p" | awk -F';' '{print $2}')
-  DIFFKEY=$(echo "$p" | awk -F';' '{print $3}')
+  OSHA1=$(echo "$p" | awk -F';' '{print $1}')
+  TSMP=$(echo "$p" | awk -F';' '{print $2}')
+  BMD5=$(echo "$p" | awk -F';' '{print $3}')
+  DIFFKEY=$(echo "$p" | awk -F';' '{print $4}')
   pwd
   echo "Searching for: $TSMP   $BMD5   $DIFFKEY"
   git log --all --since $TSMP --until $TSMP --pretty=format:"%H" > $CWD/nkeys
@@ -100,7 +101,7 @@ while read p; do
 		  if [ "$NDIFFKEY" == "$DIFFKEY" ]
 		  then
 			  echo "	MATCH"
-			  echo $d >> $CWD/mapped_keys
+			  echo "s/$OSHA1/$d/g" >> $CWD/map.sed
 		  fi
 		  rm $CWD/keytmp
 	  fi
@@ -109,3 +110,6 @@ while read p; do
 done < $CWD/ukeys
 
 cd $CWD
+cp $input_file $output_file
+sed -i -f map.sed $output_file
+
