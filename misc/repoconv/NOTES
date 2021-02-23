@@ -331,3 +331,23 @@ http://esr.ibiblio.org/?p=6792
 http://esr.ibiblio.org/?p=8607
 https://gitlab.com/ideasman42/blender-git-migration/
 
+
+################################################################################
+Note: The files svn_rev_updates.txt, tag_commits.txt, and branch_corrections.txt
+assume a repository produced by the version of repowork at SVN r76568  (i.e.
+their sha1 keys assume the output produced by the following options at that
+version - newer versions have a processing difference that's not been fixed yet
+that doesn't keep the line between the message and the footer):
+
+./repowork -t -e email_fixups.txt \
+        -n -r cvs_git \
+        -s rev_map \
+        --keymap msgtime_sha1_map --cvs-auth-map key_authormap --cvs-branch-map key_branchmap \
+        brlcad_raw.fi brlcad_final.fi
+
+This setup isn't ideal:  between needing the older revision and the cvs branch
+map assignments setting their incorrect info...  Ideally we would just skip them,
+but it would mean re-keying all of the information in those files to a new set of
+SHA1 keys manually...
+
+
