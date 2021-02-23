@@ -350,4 +350,20 @@ map assignments setting their incorrect info...  Ideally we would just skip them
 but it would mean re-keying all of the information in those files to a new set of
 SHA1 keys manually...
 
+###############################################################################
+Handy scripts for getting local svn info quickly:
+
+List files associated with a commit, either from a specific branch or the
+whole of the repo:
+#!/bin/bash
+if [ "$#" -eq 2 ]; then
+svn diff -c$1 file:///home/user/brlcad_repo/brlcad/branches/$2|grep ^Index
+fi
+if [ "$#" -eq 1 ]; then
+svn diff -c$1 file:///home/user/brlcad_repo/brlcad|grep ^Index
+fi
+
+Get log message associated with a commit:
+#!/bin/bash
+svn log -c$1 file:///home/user/brlcad_repo
 
