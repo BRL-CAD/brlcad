@@ -556,6 +556,75 @@ git_set_tag_labels(git_fi_data *s, std::string &tag_list)
 }
 
 int
+git_remove_commits(git_fi_data *s, std::string &remove_commits)
+{
+    if (!s->have_sha1s) {
+	std::cerr << "Fatal - commit removal requested, but don't have original sha1 ids - redo fast-export with the --show-original-ids option.\n";
+	exit(1);
+    }
+
+    std::ifstream infile_remove_commits(remove_commits, std::ifstream::binary);
+    if (remove_commits.length() && !infile_remove_commits.good()) {
+	std::cerr << "Could not open remove_commits file: " << remove_commits << "\n";
+	exit(-1);
+    }
+    std::set<std::string> remove_sha1s;
+    if (infile_remove_commits.good()) {
+	std::string line;
+	while (std::getline(infile_remove_commits, line)) {
+	    // Skip anything the wrong length
+	    if (line.length() != 40) {
+		continue;
+	    }
+	    remove_sha1s.insert(line);
+	    std::cout << "remove sha1: " << line << "\n";
+	    bool valid = false;
+	    for (size_t i = 0; i < s->commits.size(); i++) {
+		if (s->commits[i].id.sha1 == line) {
+		    valid = true;
+		    break;
+		}
+	    }
+	    if (!valid) {
+		std::cout << "INVALID sha1 supplied for removal!\n";
+	    }
+	}
+
+	infile_remove_commits.close();
+    }
+
+
+    std::set<std::string>::iterator r_it;
+    for (r_it = remove_sha1s.begin(); r_it != remove_sha1s.end(); r_it++) {
+	git_commitish rfrom;
+	git_commitish rish;
+	for (size_t i = 0; i < s->commits.size(); i++) {
+	    if (s->commits[i].id.sha1 == *r_it) {
+		rfrom = s->commits[i].from;
+		rish = s->commits[i].id;
+		s->commits[i].skip_commit = true;
+		break;
+	    }
+	}
+	// Update any references
+	for (size_t i = 0; i < s->commits.size(); i++) {
+	    if (s->commits[i].from == rish) {
+		std::cout << *r_it << " removal: updating from commit for " << s->commits[i].id.sha1 << "\n";
+		s->commits[i].from = rfrom;
+	    }
+	    for (size_t j = 0; j < s->commits[i].merges.size(); j++) {
+		if (s->commits[i].merges[j] == rish) {
+		    std::cout << *r_it << " removal: updating merge commit for " << s->commits[i].id.sha1 << "\n";
+		    s->commits[i].merges[j] = rfrom;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+int
 git_map_emails(git_fi_data *s, std::string &email_map)
 {
     // read map
@@ -995,12 +1064,14 @@ main(int argc, char *argv[])
     bool collapse_notes = false;
     bool wrap_commit_lines = false;
     bool trim_whitespace = false;
+    bool list_empty = false;
     std::string repo_path;
     std::string email_map;
     std::string svn_map;
     std::string svn_rev_map;
     std::string svn_branch_map;
     std::string svn_branches_to_tags;
+    std::string remove_commits;
     std::string correct_branches;
     std::string cvs_auth_map;
     std::string cvs_branch_map;
@@ -1022,6 +1093,7 @@ main(int argc, char *argv[])
 	    ("svn-branches", "Specify [git sha1|rev] -> svn branch (one mapping per line, format is key:[branch;branch])", cxxopts::value<std::vector<std::string>>(), "map file")
 	    ("svn-branches-to-tags", "Specify git sha1 list that was committed to tags, not branches", cxxopts::value<std::vector<std::string>>(), "sha1 list")
 	    ("correct-branches", "Specify rev -> branch sets (key;[branch;branch].  Will override svn-branches assignments.)", cxxopts::value<std::vector<std::string>>(), "map")
+	    ("remove-commits", "Specify sha1 list of commits to remove from history", cxxopts::value<std::vector<std::string>>(), "list_file")
 
 	    ("cvs-auth-map", "msg&time -> cvs author map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
 	    ("cvs-branch-map", "msg&time -> cvs branch map (needs sha1->key map)", cxxopts::value<std::vector<std::string>>(), "file")
@@ -1034,6 +1106,7 @@ main(int argc, char *argv[])
 	    ("r,repo", "Original git repository path (must support running git log)", cxxopts::value<std::vector<std::string>>(), "path")
 	    ("n,collapse-notes", "Take any git-notes contents and append them to regular commit messages.", cxxopts::value<bool>(collapse_notes))
 	    ("no-blobs", "Write only commits in output .fi file.", cxxopts::value<bool>(no_blobs))
+	    ("list-empty", "Print out information about empty commits.", cxxopts::value<bool>(list_empty))
 
 	    ("splice-commits", "Look for git fast-import files in a 'splices' directory and insert them into the history.", cxxopts::value<bool>(splice_commits))
 
@@ -1115,6 +1188,12 @@ main(int argc, char *argv[])
 	{
 	    auto& ff = result["correct-branches"].as<std::vector<std::string>>();
 	    correct_branches = ff[0];
+	}
+
+	if (result.count("remove-commits"))
+	{
+	    auto& ff = result["remove-commits"].as<std::vector<std::string>>();
+	    remove_commits = ff[0];
 	}
 
 	if (result.count("svn-branches-to-tags"))
@@ -1209,9 +1288,25 @@ main(int argc, char *argv[])
 	git_map_svn_committers(&fi_data, svn_map);
     }
 
+    if (list_empty) {
+	for (size_t i = 0; i < fi_data.commits.size(); i++) {
+	    if (fi_data.commits[i].commit_msg.length() && !fi_data.commits[i].fileops.size()) {
+		if (fi_data.commits[i].id.sha1.length()) {
+		    std::cout << "Empty commit(" << fi_data.commits[i].id.sha1 << "): " << fi_data.commits[i].commit_msg << "\n";
+		} else {
+		    std::cout << "Empty commit: " << fi_data.commits[i].commit_msg << "\n";
+		}
+	    }
+	}
+    }
+
     if (id_file.length()) {
 	// Handle rebuild info
 	git_id_rebuild_commits(&fi_data, id_file, repo_path, children_file);
+    }
+
+    if (remove_commits.length()) {
+	git_remove_commits(&fi_data, remove_commits);
     }
 
     ////////////////////////////////////////////////////

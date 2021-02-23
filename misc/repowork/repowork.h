@@ -38,6 +38,13 @@ class git_commitish {
 	long mark  = -1;  // globally unique numerical identifier
 	std::string sha1 = std::string(); // Original sha1 or part thereof, if available.  If the commit is modified this string should be invalidated.
 	std::string ref = std::string(); //  branch reference or other Git reference
+
+	bool operator==(const git_commitish &o) const {
+	    if (index == o.index) return true;
+	    if (mark == o.mark) return true;
+	    if (sha1 == o.sha1) return true;
+	    return false;
+	}
 };
 
 
@@ -94,6 +101,10 @@ class git_commit_data {
 	// Resets are order dependent - treat them as pseudo-commits for
 	// storage purpose, but they are written differently
 	int reset_commit = 0;
+
+
+	// If this commit is to be removed, set this flag
+	bool skip_commit = false;
 
 	// Special purpose entries for assigning an additional line
 	// to the existing notes-based info to id SVN usernames

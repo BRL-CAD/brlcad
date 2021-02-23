@@ -639,6 +639,9 @@ write_commit(std::ofstream &outfile, git_commit_data *c, git_fi_data *d, std::if
         return -1;
     }
 
+    if (c->skip_commit)
+	return 0;
+
     // If this is a reset commit, it's handled quite differently
     if (c->reset_commit) {
 	outfile << "reset " << c->branch << "\n";
