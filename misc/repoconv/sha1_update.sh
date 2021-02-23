@@ -44,7 +44,7 @@ cd $old_repo
 
 rm -f sha1s_orig ukeys nkeys mapped_keys map.sed
 while read p; do
-  SHA1=$(echo "$p" | awk -F';' '{print $1}')
+  SHA1=$(echo "$p" | awk -F'[;:]' '{print $1}')
   if [ "$SHA1" != "" ]
   then
 	  echo $SHA1 >> $CWD/sha1s_orig
