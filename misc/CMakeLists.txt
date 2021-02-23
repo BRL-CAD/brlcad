@@ -215,7 +215,7 @@ set(misc_ignore_files
   repoconv/manual_merge_info.tar.gz
   repoconv/md5.hpp
   repoconv/sha1.hpp
-  repoconv/sha1_to_uniqkey.sh
+  repoconv/sha1_update.sh
   repoconv/svn2git/README
   repoconv/svn2git/archive_branches.sh
   repoconv/svn2git/rules
