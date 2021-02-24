@@ -249,6 +249,7 @@ set(misc_ignore_files
   repoconv/svn_msgs.cxx
   repoconv/svn_rev_updates.txt
   repoconv/branch_corrections.txt
+  repoconv/remove_commits.txt
   repoconv/svnfexport.cxx
   repoconv/svnfexport_git.cxx
   repoconv/svnfexport_svn.cxx
