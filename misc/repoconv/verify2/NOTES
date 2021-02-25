@@ -1,0 +1,53 @@
+Checking into some commit quirks flagged by this logic:
+
+14807 - the commit date and message match 6d6d9077d96b7c851b9d98271aeaa1daeb2b34d2, which is where the
+SVN label is currently set.  The contents, however, do not match what SVN reports.  (They do match
+73d4caa899113a2e28b401b616d1d44832a0bd52, which also matches - and is assigned r14726.)
+
+Resolution - leaving as is
+
+
+
+18992 - unassigned in git.  The commit that looks like it has these contents is tagged as 18993
+(67c46ada661fdab789632885c34bf77a277962db).  However, 18993 in SVN is a properties commit.
+
+Resolution - update 67c46ada661 to 18992
+
+
+19261 - unassigned in git.  In SVN this is a "manufactured" commit.  The commit identified as being
+a content match for 19261 is 06c6b8ddb02c633f596585538b708924d75c6f0b, which is labeled with r19275.
+r19275 has the "libtclhooks" commit message in SVN.
+
+Resolution - leaving as is
+
+
+19762 - unassigned in git.  Commit with matching content is identified as 19763, which appears to be
+the same patch.
+
+Resolution - leaving as is - this looks like it may be the result of a cvs-fast-export processing difference.
+
+
+19936 - This commit in SVN adds a file.  The corresponding Git commit adding the file is
+b5e3e3f1b3fff8b526b80295b8deea35712afc79, which is tagged as 19937.  In SVN 19937 is a property change,
+and 19936 is a generated commit to create a branch.
+
+Resolution - leaving as is - Git output is functionally equivalent and looks cleaner.
+
+
+4737 - flagged as being a match for 4072c1d01d61f24eb4045225a86b6f80d613aea1, which is tagged as 4829.
+4737 is a cvs2svn generated commit adding the file, and 4829 is an SVN property change.
+
+Resolution - leaving as is.
+
+
+4800 - The Git diff and the SVN diff do the same thing in different ways - no issue.
+
+
+4984 - The Git diff and the SVN diff do the same thing in different ways - no issue.
+
+
+7879 - Adds a file to a branch.  Git commit b5f00fd6639a1f11aa28c5e4dbcb628499b8d467 has the change,
+with a better commit message, which apparently serves for trunk and the branch.  Tagged as r7878, which
+corresponds to the commit on trunk.
+
+Resolution - leave as is.
