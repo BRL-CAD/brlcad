@@ -53,21 +53,19 @@ while read p; do
 		then
 			ssdeep -b svndiff 2>/dev/null > svndiff.hash
 			SCORE=$(ssdeep -bm svndiff.hash gitdiff 2>/dev/null|cut -c 37-)
-			if [ "$SCORE" == "" ]
+			if [ "$SCORE" != "" ]
 			then
-				cat svndiff | sort > svndiffsort
-				cat gitdiff | sort > gitdiffsort
-				mv svndiffsort svndiff
-				mv gitdiffsort gitdiff
-				comm -12 svndiff gitdiff > commonlines
-				SVNWC=$(wc -c svndiff|awk '{print $1}')
-				GITWC=$(wc -c gitdiff|awk '{print $1}')
-				COMMWC=$(wc -c commonlines|awk '{print $1}')
-				echo "ssdeep check failed, using line comparison fallback..."
-				echo "SVN:Git:common line counts: $SVNWC:$GITWC:$COMMWC"
-			else
 				echo "Similarity score (100->0):$SCORE"
 			fi
+			cat svndiff | sort > svndiffsort
+			cat gitdiff | sort > gitdiffsort
+			mv svndiffsort svndiff
+			mv gitdiffsort gitdiff
+			comm -12 svndiff gitdiff > commonlines
+			SVNWC=$(wc -c svndiff|awk '{print $1}')
+			GITWC=$(wc -c gitdiff|awk '{print $1}')
+			COMMWC=$(wc -c commonlines|awk '{print $1}')
+			echo "SVN:Git:common line counts: $SVNWC:$GITWC:$COMMWC"
 		else
 			echo "DIFFERENCE: Non-empty SVN diff but empty git diff"
 		fi
