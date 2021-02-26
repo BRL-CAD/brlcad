@@ -1,3 +1,11 @@
+Useful trick for sorting these by revision rather than sha1:
+
+sort -n -t ';' -k2
+
+
+
+
+
 Checking into some commit quirks flagged by this logic:
 
 14807 - the commit date and message match 6d6d9077d96b7c851b9d98271aeaa1daeb2b34d2, which is where the
