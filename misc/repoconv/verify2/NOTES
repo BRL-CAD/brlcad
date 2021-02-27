@@ -3,7 +3,7 @@ Useful trick for sorting these by revision rather than sha1:
 sort -n -t ';' -k2
 
 
-
+Note:  d04f31e55b1e5be029173b2c13061d2151034b8b does not seem to have a corresponding SVN commit (Initial version of incrtcl).
 
 
 Checking into some commit quirks flagged by this logic:
