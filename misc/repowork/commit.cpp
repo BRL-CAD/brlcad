@@ -456,7 +456,63 @@ parse_splice_commit(git_fi_data *fi_data, std::ifstream &infile)
     return 0;
 }
 
+int
+parse_replace_commit(git_fi_data *fi_data, std::ifstream &infile)
+{
+    // First, find the existing commit for this sha1.  If we don't
+    // have that, we're out of business.
+    if (fi_data->sha1_to_mark.find(fi_data->replace_sha1) == fi_data->sha1_to_mark.end()) {
+	std::cerr << "Trying to process unknown replacement sha1 " << fi_data->replace_sha1 << "\n";
+	return -1;
+    }
+    int index = fi_data->mark_to_index[fi_data->sha1_to_mark[fi_data->replace_sha1]];
+    git_commit_data &gcd = fi_data->commits[index];
 
+    std::map<std::string, commitcmd_t> cmdmap;
+    // Commit info modification commands
+    cmdmap[std::string("author")] = commit_parse_author;
+    cmdmap[std::string("commit ")] = commit_parse_commit; // Note - need space after commit to avoid matching committer!
+    cmdmap[std::string("committer")] = commit_parse_committer;
+    cmdmap[std::string("data")] = commit_parse_data;
+    cmdmap[std::string("encoding")] = commit_parse_encoding;
+    cmdmap[std::string("from")] = commit_parse_from;
+    cmdmap[std::string("mark")] = commit_parse_mark;
+    cmdmap[std::string("merge")] = commit_parse_merge;
+    cmdmap[std::string("original-oid")] = commit_parse_original_oid;
+
+    // tree modification commands
+    cmdmap[std::string("C ")] = commit_parse_filecopy;
+    cmdmap[std::string("D ")] = commit_parse_filedelete;
+    cmdmap[std::string("M ")] = commit_parse_filemodify;
+    cmdmap[std::string("N ")] = commit_parse_notemodify;
+    cmdmap[std::string("R ")] = commit_parse_filerename;
+    cmdmap[std::string("deleteall")] = commit_parse_deleteall;
+
+    std::string line;
+    size_t offset = infile.tellg();
+    int commit_done = 0;
+    while (!commit_done && std::getline(infile, line)) {
+
+	commitcmd_t cc = commit_find_cmd(line, cmdmap);
+
+	// If we found a command, process it.  Otherwise, we are done
+	// with the commit and need to clean up.
+	if (cc) {
+	    //std::cout << "commit line: " << line << "\n";
+	    infile.seekg(offset);
+	    (*cc)(&gcd, infile);
+	    offset = infile.tellg();
+	} else {
+	    // Whatever was on that line, it's not a commit input.
+	    // Reset input to allow the parent routine to deal with
+	    // it, and return.
+	    infile.seekg(offset);
+	    commit_done = 1;
+	}
+    }
+
+    return 0;
+}
 
 
 void

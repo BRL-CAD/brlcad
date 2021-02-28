@@ -203,6 +203,9 @@ class git_fi_data {
 	std::map<std::string, std::string> key2cvsauthor;
 	std::map<std::string, std::string> key2cvsbranch;
 
+	// If processing a replacement operation, need to know which commit
+	// to target
+	std::string replace_sha1;
     private:
 	long mark = -1;
 };
@@ -211,6 +214,7 @@ extern int git_parse_commitish(git_commitish &gc, git_fi_data *s, std::string li
 extern int parse_blob(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_commit(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_splice_commit(git_fi_data *fi_data, std::ifstream &infile);
+extern int parse_replace_commit(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_reset(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_tag(git_fi_data *fi_data, std::ifstream &infile);
 

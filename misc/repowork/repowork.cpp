@@ -1054,12 +1054,59 @@ parse_splice_fi_file(git_fi_data *fi_data, std::ifstream &infile)
     return 0;
 }
 
+int
+parse_replace_fi_file(git_fi_data *fi_data, std::ifstream &infile)
+{
+    std::map<std::string, gitcmd_t> cmdmap;
+    cmdmap[std::string("alias")] = parse_alias;
+    cmdmap[std::string("blob")] = parse_blob;
+    cmdmap[std::string("cat-blob")] = parse_cat_blob;
+    cmdmap[std::string("checkpoint")] = parse_checkpoint;
+    cmdmap[std::string("commit ")] = parse_replace_commit;
+    cmdmap[std::string("done")] = parse_done;
+    cmdmap[std::string("feature")] = parse_feature;
+    cmdmap[std::string("get-mark")] = parse_get_mark;
+    cmdmap[std::string("ls")] = parse_ls;
+    cmdmap[std::string("option")] = parse_option;
+    cmdmap[std::string("progress")] = parse_progress;
+    cmdmap[std::string("reset")] = parse_reset;
+    cmdmap[std::string("tag")] = parse_tag;
+
+    size_t offset = infile.tellg();
+    std::string line;
+    std::map<std::string, gitcmd_t>::iterator c_it;
+    while (std::getline(infile, line)) {
+	// Skip empty lines
+	if (!line.length()) {
+	    offset = infile.tellg();
+	    continue;
+	}
+
+	gitcmd_t gc = gitit_find_cmd(line, cmdmap);
+	if (!gc) {
+	    //std::cerr << "Unsupported command!\n";
+	    offset = infile.tellg();
+	    continue;
+	}
+
+	// If we found a command, process it
+	//std::cout << "line: " << line << "\n";
+	// some commands have data on the command line - reset seek so the
+	// callback can process it
+	infile.seekg(offset);
+	(*gc)(fi_data, infile);
+	offset = infile.tellg();
+    }
+
+    return 0;
+}
 
 int
 main(int argc, char *argv[])
 {
     git_fi_data fi_data;
     bool splice_commits = false;
+    bool replace_commits = false;
     bool no_blobs = false;
     bool collapse_notes = false;
     bool wrap_commit_lines = false;
@@ -1109,6 +1156,7 @@ main(int argc, char *argv[])
 	    ("list-empty", "Print out information about empty commits.", cxxopts::value<bool>(list_empty))
 
 	    ("splice-commits", "Look for git fast-import files in a 'splices' directory and insert them into the history.", cxxopts::value<bool>(splice_commits))
+	    ("replace-commits", "Look for git fast-import files in a 'replace' directory and overwrite.  File of fast import file should be sha1 of target commit to replace.", cxxopts::value<bool>(replace_commits))
 
 	    ("rebuild-ids", "Specify commits (revision number or SHA1) to rebuild.  Requires git-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
 	    ("rebuild-ids-children", "File with output of \"git rev-list --children --all\" - needed for processing rebuild-ids", cxxopts::value<std::vector<std::string>>(), "file")
@@ -1235,7 +1283,7 @@ main(int argc, char *argv[])
 
     int ret = parse_fi_file(&fi_data, infile);
 
-    if (splice_commits && !fi_data.have_sha1s) {
+    if ((replace_commits || splice_commits) && !fi_data.have_sha1s) {
 	std::cerr << "Fatal - sha1 SVN rev updating requested, but don't have original sha1 ids - redo fast-export with the --show-original-ids option.\n";
 	exit(1);
     }
@@ -1333,6 +1381,28 @@ main(int argc, char *argv[])
     fi_data.trim_whitespace = trim_whitespace;
 
     infile.close();
+
+
+    // If we have any replace commits, parse and overwrite.
+    if (replace_commits) {
+
+	std::filesystem::path ip = std::string(argv[1]);
+	std::filesystem::path aip = std::filesystem::absolute(ip);
+	std::filesystem::path pip = aip.parent_path();
+	pip /= "replace";
+	if (!std::filesystem::exists(pip)) {
+	    std::cerr << "Warning - splices enabled but " << pip << " is not present on the filesystem.\n";
+	} else {
+	    for (const auto& de : std::filesystem::recursive_directory_iterator(pip)) {
+		std::cout << "Processing " << de.path().string() << "\n";
+		std::ifstream sfile(de.path(), std::ifstream::binary);
+		fi_data.replace_sha1 = de.path().filename().string();
+		int ret = parse_replace_fi_file(&fi_data, sfile);
+		sfile.close();
+	    }
+	}
+    }
+
 
     // If we have any splice commits, parse and insert them.
     if (splice_commits) {
