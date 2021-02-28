@@ -1,0 +1,12 @@
+commit refs/heads/cjohnson-mac-hack
+author Christopher Johnson <cjohnson@brlcad.org> 625826935 +0000
+committer Phillip Dykstra <phil@pdykstra.com> 625826935 +0000
+data 88
+Chris Johnson's Mac Hack
+
+svn:revision:3698
+cvs:branch:unlabeled-9.7.1
+cvs:account:phil
+from df207709f5474f88155bf37d91a9dd855ad02f53
+deleteall
+M 100644 8684ce993e973b87c057cb7bad43a84c71ffe704 libfb/if_X.c
