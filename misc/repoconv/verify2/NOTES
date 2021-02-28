@@ -65,6 +65,51 @@ Resolution - leave as is.
 commit didn't make the cvs->svn jump, but did get recorded in git.
 
 
+250b57ecc2a4d24bececd3c77aba95e814376389 - doesn't seem to have a matching SVN commit
+
+cd2a4b7fbb9f31c78a7002039fc5acd89efc6932 - doesn't seem to have a matching SVN commit
+
+c204302c788238eea235783e6c2be0cabace3d78 - doesn't seem to have a matching SVN commit
+
+b8bd49360c64e81e7a05dcaddf2aa31a00785584 - doesn't seem to have a matching SVN commit
+
+99084ce1bf722d0cd87e286ec42912016b2b12c5 - trunk SVN circa 19545 doesn't have a libitcl directory
+
+510035faed01759ccdc8f61d22a36ba8238a114a - trunk SVN circa 19355 doesn't have a libitcl directory
+
+b7bbd039d8add110f7ff84e8db91b5703dd16a49 - trunk SVN circa 19340 doesn't have a libitcl directory
+
+056021ffa476bfa40e7a8307bc758f0d418df092 - trunk SVN circa 18983 doesn't have a libitcl directory
+
+0b3a9dcc203bcffcf30b04db05acd945fb5cbcf6 - trunk SVN circa 18925 doesn't have a libitcl directory
+
+2090923f990f4542040e0e82297d8e693317199a - trunk SVN circa 18869 doesn't have a libitcl directory
+
+c98d05897317e2b5fb2efb987f12644ec4d57c21 - trunk SVN circa 18392 doesn't have a libitcl directory
+
+The following appear to be similar missing-libitcl-dir-in-SVN issues:
+
+6ba28bc197cd1ccd777a19c3b508f0e359af6339
+1965307c7d3bfe21c26822051faf6e52d9766359
+57e39aebb555e242530456cac09dee7d125f88dd
+6d18af3bc89e030ed7384cb60db8b7d61fcb65d5
+d7dde7e82018a1c88401bb36f38d98f02553e5ed
+bd95a1317ea88a16453f30e83ede58f464a16e92
+4fc5a41b58ee97e8d4f4633e881ad473ac608c04
+eb3a2afbc5d4f5f636dad1cecb70ddd54848aee7
+b7e30be018dcdca82bc8700e27c6115854b2b20c
+9a026cdb0fa2f9fed696d61f63744c526b628f51
+1170365016910605530fb5d39133acaed716b7e3
+4f5f4023546b6b3b766ad3207fb853e818b1de1b
+ae464fadce31471a5b6ca71f521ad62589223aef
+c3314d00dccb8812c2e7d3b98f7930c937f17e24
+321c5f18ed60653b89a472f49270b4953a8b3cc3
+b54a7c5cf2e2b416c0c1b9ab22d2e8eff0bb0098
+0f52b4eba514c813dc64b99c03853896ee5fcd37
+be1900dba53a0d3bc82747bc9761502f1e4b0e80
+
+
+
 
 
 df5a981a54d93aec7322503c0ce322eb157bf538;714
