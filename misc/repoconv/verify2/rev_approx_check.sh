@@ -86,5 +86,7 @@ while read i; do
 			echo "both diffs empty"
 		fi
 	fi
+	echo ""
+	echo ""
 done < $input_file
 
