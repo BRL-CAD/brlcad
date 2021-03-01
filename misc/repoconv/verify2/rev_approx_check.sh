@@ -38,7 +38,7 @@ cat $input_file |sort -n > intmp
 mv intmp $input_file
 while read i; do
 	REV=$i
-	echo "$REV:"
+	svn log -c$REV file://$SVNREPO
 	cd $GITREPO
 	git log --all --grep="^svn:revision:$REV$" --pretty=format:"%H" > rev_shas.txt
 	echo "" >> rev_shas.txt
@@ -47,7 +47,6 @@ while read i; do
 		SHA1=$i
 		if [ "$SHA1" != "" ]
 		then
-			echo "$SHA1"
 			git diff $SHA1^! ':(exclude).gitignore' |grep "^[-+].*"|grep -v "[-][-][-]" | grep -v "+++" | grep -v "^[-]$"|grep -v "^+$" >> diffcontents.txt
 		fi
 	done < rev_shas.txt
