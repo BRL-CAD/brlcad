@@ -59,6 +59,8 @@ while read i; do
 	then
 		if [ -s gitdiff ]
 		then
+			md5sum svndiff
+			md5sum gitdiff
 			ssdeep -b svndiff 2>/dev/null > svndiff.hash
 			SCORE=$(ssdeep -bm svndiff.hash gitdiff 2>/dev/null|cut -c 37-)
 			if [ "$SCORE" != "" ]
@@ -85,5 +87,5 @@ while read i; do
 			echo "both diffs empty"
 		fi
 	fi
-done < revs.txt
+done < $input_file
 
