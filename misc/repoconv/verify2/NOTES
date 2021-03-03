@@ -108,6 +108,44 @@ b54a7c5cf2e2b416c0c1b9ab22d2e8eff0bb0098
 0f52b4eba514c813dc64b99c03853896ee5fcd37
 be1900dba53a0d3bc82747bc9761502f1e4b0e80
 
+The ordering of the Release_4.4 commits seems to be a
+bit different in Git, producing a delta for r10560
+
+10610 and 10611 match in diffs, but seem to produce
+checkout differences in that general commit range.
+Suspect commit ordering issue.
+
+18892 is a commit message match, but not a content match.
+
+The following commits have different timestamps in git
+than in SVN, which results in some differing files in
+checkout due to the order in which changes are applied.
+r8417
+r8895
+r10839
+r11518
+r12513
+r12559
+r13400
+r13401
+r14529
+r14789
+r14921
+r17645
+r18545
+r21546
+r23110
+r23111
+
+
+
+
+Following were assigned slightly different sets of files
+in Git vs SVN, resulting in checkout differences:
+r9015
+r9058
+r10209
+
 
 
 
