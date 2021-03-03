@@ -514,6 +514,73 @@ parse_replace_commit(git_fi_data *fi_data, std::ifstream &infile)
     return 0;
 }
 
+int
+parse_add_commit(git_fi_data *fi_data, std::ifstream &infile)
+{
+    //std::cout << "Found command: commit\n";
+
+    git_commit_data gcd;
+    gcd.s = fi_data;
+
+    // Tell the commit where it will be in the vector - this
+    // uniquely identifies this specific commit, regardless of
+    // its sha1.
+    gcd.id.index = fi_data->commits.size();
+
+    std::map<std::string, commitcmd_t> cmdmap;
+    // Commit info modification commands
+    cmdmap[std::string("author")] = commit_parse_author;
+    cmdmap[std::string("commit ")] = commit_parse_commit; // Note - need space after commit to avoid matching committer!
+    cmdmap[std::string("committer")] = commit_parse_committer;
+    cmdmap[std::string("data")] = commit_parse_data;
+    cmdmap[std::string("encoding")] = commit_parse_encoding;
+    cmdmap[std::string("from")] = commit_parse_from;
+    cmdmap[std::string("mark")] = commit_parse_mark;
+    cmdmap[std::string("merge")] = commit_parse_merge;
+    cmdmap[std::string("original-oid")] = commit_parse_original_oid;
+
+    // tree modification commands
+    cmdmap[std::string("C ")] = commit_parse_filecopy;
+    cmdmap[std::string("D ")] = commit_parse_filedelete;
+    cmdmap[std::string("M ")] = commit_parse_filemodify;
+    cmdmap[std::string("N ")] = commit_parse_notemodify;
+    cmdmap[std::string("R ")] = commit_parse_filerename;
+    cmdmap[std::string("deleteall")] = commit_parse_deleteall;
+
+    std::string line;
+    size_t offset = infile.tellg();
+    int commit_done = 0;
+    while (!commit_done && std::getline(infile, line)) {
+
+	commitcmd_t cc = commit_find_cmd(line, cmdmap);
+
+	// If we found a command, process it.  Otherwise, we are done
+	// with the commit and need to clean up.
+	if (cc) {
+	    //std::cout << "commit line: " << line << "\n";
+	    infile.seekg(offset);
+	    (*cc)(&gcd, infile);
+	    offset = infile.tellg();
+	} else {
+	    // Whatever was on that line, it's not a commit input.
+	    // Reset input to allow the parent routine to deal with
+	    // it, and return.
+	    infile.seekg(offset);
+	    commit_done = 1;
+	}
+    }
+
+    gcd.id.mark = fi_data->next_mark(gcd.id.mark);
+    fi_data->mark_to_index[gcd.id.mark] = gcd.id.index;
+
+    //std::cout << "commit new mark: " << gcd.id.mark << "\n";
+
+    // Add the commit to the data
+    fi_data->commits.push_back(gcd);
+
+    return 0;
+}
+
 
 void
 write_op(std::ofstream &outfile, git_op *o)

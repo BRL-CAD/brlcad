@@ -215,6 +215,7 @@ extern int parse_blob(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_commit(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_splice_commit(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_replace_commit(git_fi_data *fi_data, std::ifstream &infile);
+extern int parse_add_commit(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_reset(git_fi_data *fi_data, std::ifstream &infile);
 extern int parse_tag(git_fi_data *fi_data, std::ifstream &infile);
 

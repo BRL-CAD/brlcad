@@ -1102,11 +1102,62 @@ parse_replace_fi_file(git_fi_data *fi_data, std::ifstream &infile)
 }
 
 int
+parse_add_fi_file(git_fi_data *fi_data, std::ifstream &infile)
+{
+    std::map<std::string, gitcmd_t> cmdmap;
+    cmdmap[std::string("alias")] = parse_alias;
+    cmdmap[std::string("blob")] = parse_blob;
+    cmdmap[std::string("cat-blob")] = parse_cat_blob;
+    cmdmap[std::string("checkpoint")] = parse_checkpoint;
+    cmdmap[std::string("commit ")] = parse_add_commit;
+    cmdmap[std::string("done")] = parse_done;
+    cmdmap[std::string("feature")] = parse_feature;
+    cmdmap[std::string("get-mark")] = parse_get_mark;
+    cmdmap[std::string("ls")] = parse_ls;
+    cmdmap[std::string("option")] = parse_option;
+    cmdmap[std::string("progress")] = parse_progress;
+    cmdmap[std::string("reset")] = parse_reset;
+    cmdmap[std::string("tag")] = parse_tag;
+
+    size_t offset = infile.tellg();
+    std::string line;
+    std::map<std::string, gitcmd_t>::iterator c_it;
+    while (std::getline(infile, line)) {
+	// Skip empty lines
+	if (!line.length()) {
+	    offset = infile.tellg();
+	    continue;
+	}
+
+	gitcmd_t gc = gitit_find_cmd(line, cmdmap);
+	if (!gc) {
+	    //std::cerr << "Unsupported command!\n";
+	    offset = infile.tellg();
+	    continue;
+	}
+
+	// If we found a command, process it
+	//std::cout << "line: " << line << "\n";
+	// some commands have data on the command line - reset seek so the
+	// callback can process it
+	infile.seekg(offset);
+	(*gc)(fi_data, infile);
+	offset = infile.tellg();
+    }
+
+
+    return 0;
+}
+
+
+
+int
 main(int argc, char *argv[])
 {
     git_fi_data fi_data;
     bool splice_commits = false;
     bool replace_commits = false;
+    bool add_commits = false;
     bool no_blobs = false;
     bool collapse_notes = false;
     bool wrap_commit_lines = false;
@@ -1157,6 +1208,7 @@ main(int argc, char *argv[])
 
 	    ("splice-commits", "Look for git fast-import files in a 'splices' directory and insert them into the history.", cxxopts::value<bool>(splice_commits))
 	    ("replace-commits", "Look for git fast-import files in a 'replace' directory and overwrite.  File of fast import file should be sha1 of target commit to replace.", cxxopts::value<bool>(replace_commits))
+	    ("add-commits", "Look for git fast-import files in an 'add' directory and add to history.  Unlike splice commits, these are not being inserted into existing commit streams.", cxxopts::value<bool>(add_commits))
 
 	    ("rebuild-ids", "Specify commits (revision number or SHA1) to rebuild.  Requires git-repo be set as well.  Needs --show-original-ids information in fast import file", cxxopts::value<std::vector<std::string>>(), "file")
 	    ("rebuild-ids-children", "File with output of \"git rev-list --children --all\" - needed for processing rebuild-ids", cxxopts::value<std::vector<std::string>>(), "file")
@@ -1283,7 +1335,7 @@ main(int argc, char *argv[])
 
     int ret = parse_fi_file(&fi_data, infile);
 
-    if ((replace_commits || splice_commits) && !fi_data.have_sha1s) {
+    if ((replace_commits || splice_commits || add_commits) && !fi_data.have_sha1s) {
 	std::cerr << "Fatal - sha1 SVN rev updating requested, but don't have original sha1 ids - redo fast-export with the --show-original-ids option.\n";
 	exit(1);
     }
@@ -1403,8 +1455,27 @@ main(int argc, char *argv[])
 	}
     }
 
+    // If we have any additional commits, parse and insert them.
+    if (add_commits) {
 
-    // If we have any splice commits, parse and insert them.
+	std::filesystem::path ip = std::string(argv[1]);
+	std::filesystem::path aip = std::filesystem::absolute(ip);
+	std::filesystem::path pip = aip.parent_path();
+	pip /= "add";
+	if (!std::filesystem::exists(pip)) {
+	    std::cerr << "Warning - adds enabled but " << pip << " is not present on the filesystem.\n";
+	} else {
+	    for (const auto& de : std::filesystem::recursive_directory_iterator(pip)) {
+		std::cout << "Processing " << de.path().string() << "\n";
+		std::ifstream sfile(de.path(), std::ifstream::binary);
+		int ret = parse_add_fi_file(&fi_data, sfile);
+		sfile.close();
+	    }
+	}
+    }
+
+    // If we have any splice commits, parse and insert them.  (Note - this comes last, for
+    // bookkeeping reasons.)
     if (splice_commits) {
 
 	std::filesystem::path ip = std::string(argv[1]);
