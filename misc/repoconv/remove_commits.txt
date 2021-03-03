@@ -48,6 +48,16 @@ b69b560bfad3e517485cbed6f9ef6c0e893a27ce # No-op among similar commit msg cvs-fa
 93f11839e27976820f0c47477d3de3f9f1bcc4e4 # RCS header changes, no commit message, now a no-op
 8f7f999bd6c61446f24c5117d0f0a1dc1d83c10c # RCS header changes, no commit message, now a no-op
 
+
+# Spurious branch deletes
+004ec0ae439f0ca3c814d22a46957012cd8fb239
+f206b315ca475d3a3e55e98ec42d772c6b05baee
+cbff64617866cc3fc2b25db15cd610e651561958
+87bc784daf7f15cc8d9c9fa980a934a98a17de95
+720f9b9b75588e35d3cce0f9f5b802abea2259ab
+d748c2ea214b699008563e18f5a7105de39faba9
+
+
 # The following are all empty commits of the form "file N was initially added on branch M"
 
 ea9c83e50fa49cdad8dc0bb114f618abb6f69f0c
