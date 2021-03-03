@@ -28,10 +28,12 @@ then
 			svn checkout -r$REV file://$SVNREPO/brlcad/branches/$BRANCH@$REV r$REV  1>/dev/null 2>/dev/null
 			BRANCHDIR="r$REV/$BRANCH"
 		fi
-		DIFFSTATUS=$(diff --no-dereference -qrw -I '$Id' -I '$Revision' -I'$Header' -I'$Sour  ce' -I'$Date' -I'$Log' -I'$Locker' --exclude ".cvsignore" --exclude ".gitignore" --exclude "terra.dsp" --exclude   ".git" --exclude ".svn" --exclude "saxon65.jar" --exclude "xalan27.jar" g$REV $BRANCHDIR > r$REV.diff)
+		find g$REV/ -empty -delete
+		find $BRANCHDIR/ -empty -delete
+		DIFFSTATUS=$(diff --no-dereference -qrw -I '$Id' -I '$Revision' -I'$Header' -I'$Sour  ce' -I'$Date' -I'$Log' -I'$Locker' --exclude ".cvsignore" --exclude ".gitignore" --exclude "terra.dsp" --exclude   ".git" --exclude ".svn" --exclude "saxon65.jar" --exclude "xalan27.jar" --exclude "cup.g" --exclude "Cup.g" --exclude "xm4.asc" --exclude "dde1.1" --exclude "reg1.0" --exclude "libitcl" --exclude "cvs2cl.pl" --exclude "mug.jpg" --exclude "alias-pix.txt" g$REV $BRANCHDIR > r$REV.diff)
 		if [ -s r$REV.diff ]
 		then
-			echo "$REV: difference found\n"
+			echo "$REV: difference found"
 		else
 			rm r$REV.diff
 		fi
@@ -43,4 +45,3 @@ else
 	cd $CWD
 fi
 rm -rf g$REV
-
