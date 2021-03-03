@@ -1,0 +1,11 @@
+commit refs/heads/VendorARL
+author Christopher Sean Morrison <brlcad@gmail.com> 1208356820 +0000
+committer Christopher Sean Morrison <brlcad@gmail.com> 1208356820 +0000
+data 152
+remove branches that have no meaning and are for 3rd-party dependencies (svn branch delete)
+
+svn:revision:30687
+svn:branch:VendorARL
+svn:account:brlcad
+from 3ae8ba18979d70dec061ba95a37c867fcb864e5a
+
