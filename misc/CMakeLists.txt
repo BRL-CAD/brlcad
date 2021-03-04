@@ -105,7 +105,6 @@ set(misc_ignore_files
   profont/readme.txt
   uncpowerplant2g.sh
   repoconv/29886-note-template.fi
-  repoconv/r66607_trunk.fi
   repoconv/CONVERT.sh
   repoconv/NOTES
   repoconv/RESUME.sh
