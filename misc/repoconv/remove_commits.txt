@@ -1,3 +1,5 @@
+# To prepare for processing:
+# cat remove_commits.txt | awk -F"#" '{print $1}' | awk '{gsub(/[ ]+$/,""); print $0}' |awk NF
 
 52036a8b4569b8ffe90e2e8fb0b43f5ed36ba040 # SVN property change
 908505f8729b4ff7668d91680abc5a70f9c051e1 # No-op among similar commit msg cvs-fast-export commits
