@@ -57,6 +57,17 @@ cbff64617866cc3fc2b25db15cd610e651561958
 720f9b9b75588e35d3cce0f9f5b802abea2259ab
 d748c2ea214b699008563e18f5a7105de39faba9
 
+# Collapsed branches in Git conversion resulting in multiple semi-duplicate empty commits on single branch
+68aeb784b3ee698c854878c190eb4b229b88e1fe
+c0737a9252506872ce5ce6cd14207f7c375741da
+
+# It looks like this was read as a branch delete and re-creation, so it got a branch delete
+# commit.  That's not how it works or displays in Git, which is actually cleaner - remove
+# the empty branch delete commit
+f828d1c0b1f6e68879a1bdecb2c58d1dc9a9207b
+
+# Spurious trunk branch empty commit associated with branch removal
+797d0138514136e2e95b0dfa1cc7d2e774fef2ab
 
 # The following are all empty commits of the form "file N was initially added on branch M"
 
