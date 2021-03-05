@@ -59,6 +59,7 @@ grep "^commit " git.log | awk '{print $2}' | while read i ; do echo $i ; git dif
 
 for i in `grep "^commit " git.log | awk '{print $2}'` ; do p="`cat parallel`" ; if test $p -lt 8 ; then git diff ${i}^! | grep "^[-+][^-+]" | sort | LC_ALL=C sed 's/[[:space:]]*//g' | sort > diffs.git.sans/${i}.diff.new & ; else echo 0 > parallel ; git diff ${i}^! | grep "^[-+][^-+]" | sort | LC_ALL=C sed 's/[[:space:]]*//g' | sort > diffs.git.sans/${i}.diff.new ; fi ; done
 
+for i in `cat diffs_to_redo | sed 's/.*\///g' | cut -d. -f1` ; do p="`cat parallel`" ; if test $p -lt 8 ; then echo $i ; git diff ${i}^! | grep "^[-+][^-+]" | sort | sed 's/[[:space:]]*//g' | sort > diffs.git.sans/${i}.diff & ; else echo 0 > parallel ; git diff ${i}^! | grep "^[-+][^-+]" | sort | sed 's/[[:space:]]*//g' | sort > diffs.git.sans/${i}.diff ; fi ; done
 
 CALCULATE GIT MD5
 for i in `grep "^commit " git.log | cut -f2 -d' '` ; do echo $i log `md5 diffs.git.sans/$i.log` ; echo $i files `md5 diffs.git.sans/$i.files` ; echo $i diff `md5 diffs.git.sans/$i.diff` ; done | tee git.md5
@@ -136,7 +137,7 @@ for i in `seq 1 78233` ; do echo $i log `md5 diffs.svn.sans/$i.log` ; echo $i fi
 # DO THE COMPARISON
 cat svn.md5 | ./compare_all.sh | tee svn.to.git2
 cat svn.md5.16000 | ./compare_parallel.sh | tee svn.to.git3.16000
-
+cat svn.md5 | ./compare_parallel.sh | tee svn.to.git4
 
 # CONVERT NON-SANS DIFFS TO SANS
 cd diffs.svn.all ;; for i in *.diff ; do echo $i ; cat $i | LC_ALL=C sed 's/[[:space:]]*//g' > ../diffs.svn.all.sans/$i ; done ;; mv ../diffs.svn.all.sans/* . ;; rmdir ../diffs.svn.all.sans
@@ -146,6 +147,8 @@ for i in `cat svn.commits2` ; do echo -n $i ; grep "revision:${i}$" -C3 git.log 
 grep ":revision:" -C3 git.log > git.revision.log
 log="`cat git.revision.log`" ; for i in `cat svn.commits2` ; do match="`echo \"$log\" | grep \":revision:${i}$\" -C3`" ; if test "x$match" = "x" ; then echo "$i REV:NOT:FOUND" ; else branch="`echo \"$match\" | grep :branch:`" ; if test "x$branch" = "x" ; then echo "$i BRANCH:NOT:FOUND" ; else echo "$i $branch" ; fi ; fi ; done | tee trunk_tags_in_git2.log
 
+for i in `cat svn.commits2` ; do gl="`grep \"revision:${i} \" git.1.log`"; if test "x$gl" = "x" ; then echo "$i MISSING" ; else echo -n "$i" ; echo "$gl" | while read line ; do echo -n " `echo $line | awk '{print $2}'`" ; done ; echo "" ; fi ;  done | tee svn.to.git5.trunk_mappings
+
 # GET LIST OF MISSING COMMITS TO MULTIPLE BRANCHES
 diff -u a commits.missing2 | grep '^+' | cut -f2 -d+ | while read rev; do if test "x$rev" = "x" ; then continue ; fi ; echo -n "$rev " ; svn diff -c$rev svn+ssh://brlcad@svn.code.sf.net/p/brlcad/code 2>&1 | grep "^[-+][-+][-+] " | grep -e "\(branches\|trunk\|tags\)" | cut -f2,3 -d/ | sed 's/trunk.*/trunk/g' | sort | uniq | tr '\n' ' ' ; echo "" ; done | tee multiple_branches.log
 
@@ -154,11 +157,11 @@ rev=1 ; while test $rev -lt 78155 ; do echo -n "$rev " ; svn diff -c$rev file://
 rev=1 ; while test $rev -lt 78155 ; do echo -n "$rev " ; svn diff -c$rev file:///Users/morrison/brlcad.github/svn.sfmirror/code | grep "^Index: " | sed 's/Index: //g' | cut -f1,2,3 -d/ | sed 's/trunk.*/trunk/g' | sort | uniq | tr '\n' ' ' ; echo "" ; rev="`expr $rev + 1`" ; done | tee all_branches2.log
 
 
-cat svn.to.git3 | grep -E '[0-9]{1,5} '|wc
+cat svn.to.git3 | grep -E '[0-9]{1,5} '| cut -f1 -d' ' | sort | uniq | wc
 cat svn.to.git3 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v -i empty | less
 cat svn.to.git3 | grep -v -i empty | grep -v PERFECT | grep -v " NOT FOUND" | grep -v " LOG MATCH" | grep -v " FILE MATCH" | grep -v " LOG+FILE MATCH" | grep -v " LOG+FILE+DIFF MATCH" | grep -v " LOG+DIFF MATCH" | grep -v "FILE+DIFF"
 
-78819 commits
+77564 unique commits
 -6874 PERFECT MATCH
 -----
 71945
@@ -176,5 +179,73 @@ cat svn.to.git3 | grep -v -i empty | grep -v PERFECT | grep -v " NOT FOUND" | gr
    24 FILE+DIFF MATCH
     5 FILE MATCH (5 mismatch?)
     0 DIFF MATCH
+
+
+# find multiple matches
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| cut -f1 -d' ' | sort | uniq -c | sort -nr | awk '$1 > 1' | awk '{print $2}' | while read rev ; do grep "^$rev " svn.to.git5 ; done > svn.to.git5.multiple_matches
+
+323 commits duplicated
+    1188 duplicate lines
+
+# fixed multiline taggings, verified, counted number of unique commits
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| cut -f1 -d' ' | sort | uniq | wc
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep PERFECT | wc
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep "NOT FOUND" | wc
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep "EMPTY" | wc
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep "LOG+FILE+DIFF MATCH" | cut -f1 -d' ' | sort | uniq -c | sort -nr | wc
+
+# unique matching log+file+diff
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep "LOG+FILE+DIFF MATCH" | grep -v MISMATCH | grep -v NOT | cut -f1 -d' ' | sort | uniq -c | sort -nr | wc
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep "LOG+FILE+DIFF MATCH" | grep "NOT TAGGED" | wc
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep "LOG+FILE+DIFF MATCH" | grep "MISMATCH" | wc
+
+# unique matching log+file
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep "LOG+FILE MATCH" | grep -v MISMATCH | grep -v NOT | cut -f1 -d' ' | sort | uniq -c | sort -nr | wc
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep "LOG+FILE MATCH" | grep NOT | wc
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep "LOG+FILE MATCH" | grep NOT | cut -f1 -d' ' | sort | uniq -c | sort -nr | wc
+
+# unique matching log+diff
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep -v "LOG+FILE MATCH" | grep "LOG+DIFF MATCH" | cut -f1 -d' ' | sort | uniq -c | sort -nr | wc
+
+# unique matching file+diff
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep -v "LOG+FILE MATCH" | grep -v "LOG+DIFF MATCH" | grep -v "LOG MATCH" | grep -v "FILE+DIFF MATCH" | cut -f1 -d' ' | sort | uniq -c | sort -nr | less
+
+# unique matching diff
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep -v "LOG+FILE MATCH" | grep -v "LOG+DIFF MATCH" | grep "DIFF MATCH" | cut -f1 -d' ' | sort | uniq -c | sort -nr | less
+
+# unique matching file (none)
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep -v "LOG+FILE MATCH" | grep -v "LOG+DIFF MATCH" | grep "FILE MATCH" | cut -f1 -d' ' | sort | uniq -c | sort -nr | wc 
+
+# unique matching log
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep -v "LOG+FILE MATCH" | grep -v "LOG+DIFF MATCH" | grep "LOG MATCH" | cut -f1 -d' ' | sort | uniq -c | sort -nr | wc 
+cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" | grep -v "EMPTY" | grep -v "LOG+FILE+DIFF MATCH" |  grep -v "LOG+FILE MATCH" | grep -v "LOG+DIFF MATCH" | grep "LOG MATCH" | grep NOT | awk 'NF > 7 && NF < 23' | less
+
+ 78233 total unique commits
+-10544 PERFECT MATCH
+- 9356 NOT FOUND (branch changes)
+-  939 EMPTY (prop changes)
+-50807 LOG+FILE+DIFF (matching)
+       167 LOG+FILE+DIFF MATCH but not tagged (all UNIQUE)
+       141 MISMATCH or duplicated candidates
+- 5001 LOG+FILE (matching)
+       38 LOG+FILE MATCH but not tagged (13 UNIQUE)
+       776 MISMATCH or duplicated candidates
+-  180 LOG+DIFF (matching)
+-   29 FILE+DIFF (matching)
+-   30 DIFF (matching)
+-    0 FILE (matching)
+- 1117 LOG (matching)
+       90 MATCH but not tagged (all UNIQUE)
+       350 MISMATCH or duplicated candidates
+------
+   229 unaccounted for in mismatches not tagged
+  - 90 LOG not tagged
+  - 13 LOG+FILE not tagged
+  -167 LOG+FILE+DIFF not tagged
+------
+   -41 dupes not excluded properly (oops)
+
+
+ 68611 trunk commits
 
 
