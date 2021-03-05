@@ -257,5 +257,9 @@ for i in `cat svn.to.git5.trunk_lookups | awk '{print $1}'` ; do echo -n "$i " ;
   -443 found in svn_rev_updates.txt
 ------
     48 remaining
-
+   -40 propset changes
+   - 2 intentionally ignored juju
+   - 6 manually located
+======
+     0
 
