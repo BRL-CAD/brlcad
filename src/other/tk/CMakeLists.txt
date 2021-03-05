@@ -670,7 +670,7 @@ endif (NOT WIN32)
 
 if (MSVC)
   set(TK_SRCS ${TK_SRCS} win/rc/tk.rc)
-  set(CMAKE_RC_FLAGS /i${CMAKE_CURRENT_BINARY_DIR})
+  #set(CMAKE_RC_FLAGS /i${CMAKE_CURRENT_BINARY_DIR})
 endif (MSVC)
 
 if (X11_INCLUDE_DIR)
