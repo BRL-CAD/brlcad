@@ -246,6 +246,16 @@ cat svn.to.git5 | grep -E '[0-9]{1,5} '| grep -v PERFECT | grep -v "NOT FOUND" |
    -41 dupes not excluded properly (oops)
 
 
- 68611 trunk commits
+for i in `cat svn.to.git5.trunk_lookups | awk '{print $1}'` ; do echo -n "$i " ; grep -E ";$i$" ~/brlcad.trunk/misc/repoconv/svn_rev_updates.txt || echo "NOT FOUND" ; done | grep -v NOT | awk 'NF > 1' | less
+for i in `cat svn.to.git5.trunk_lookups | awk '{print $1}'` ; do echo -n "$i " ; grep -E ";$i$" ~/brlcad.trunk/misc/repoconv/svn_rev_updates.txt || echo "NOT FOUND" ; done | grep NOT | wc
+
+ 68592 trunk commits
+-68074 tagged
+------
+   499 MISSING
+  -  8 manually verified / resolved
+  -443 found in svn_rev_updates.txt
+------
+    48 remaining
 
 
