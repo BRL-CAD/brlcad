@@ -71,6 +71,11 @@ f828d1c0b1f6e68879a1bdecb2c58d1dc9a9207b
 # Spurious trunk branch empty commit associated with branch removal
 797d0138514136e2e95b0dfa1cc7d2e774fef2ab
 
+# Branch creation and immediate deletion (wrong location, no content)
+03fe6a9fecc8a9ee1e69ad26dcc2b084ebd3066e
+ad46e8627acf59ec3cbae0d65f0a687f54710f8b
+
+
 # The following are all empty commits of the form "file N was initially added on branch M"
 
 ea9c83e50fa49cdad8dc0bb114f618abb6f69f0c
