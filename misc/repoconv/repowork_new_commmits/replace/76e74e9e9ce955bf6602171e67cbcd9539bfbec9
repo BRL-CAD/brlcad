@@ -1,0 +1,18 @@
+commit refs/heads/rel-4-5
+original-oid 76e74e9e9ce955bf6602171e67cbcd9539bfbec9
+author Robert Parker <unacknowledged@users.noreply.github.com> 875050606 +0000
+committer Robert Parker <unacknowledged@users.noreply.github.com> 875050606 +0000
+data 102
+*** empty log message ***
+
+svn:revision:14320
+svn:revision:14321
+cvs:account:bparker
+cvs:branch:trunk
+from 76e74e9e9ce955bf6602171e67cbcd9539bfbec9
+M 100644 856b24ccffb26615abab6fe4ccb80813de4b4ba1 libfb/fb_generic.c
+M 100644 4c60b0d22d9878082e9d827b16a5830112d45c02 libfb/if_X24.c
+M 100644 c729cbdd7f1c063fe761ec2ffe0778a7b18d3d30 libtkGLX/Cakefile
+M 100644 265638489744be7f5c5c61c2889bbe016eec609e libtkGLX/descnames.h
+M 100644 f9e92db11dc4187e77fb0107589faf4af5060ef0 libtkGLX/tkGLXwin.c
+

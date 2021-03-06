@@ -1,0 +1,15 @@
+commit refs/heads/rel-4-5
+original-oid fc9e5a26cba18a926c644a4e2bb4b321855f2a88
+author Michael John Muuss <mike@brlcad.org> 841298075 +0000
+committer Michael John Muuss <mike@brlcad.org> 841298075 +0000
+data 81
+ispar.c
+
+svn:revision:12424
+svn:revision:12425
+cvs:account:mike
+cvs:branch:trunk
+from 797b1a435e7beca7c5b6e9c57a617c87ab84cf35
+M 100644 c1ad0767e44a68f2baf11debffc122dc54c970ae h/bu.h
+M 100644 90e1dc60ae1f68028ac72ec57151c7b6ec393729 libbu/ispar.c
+

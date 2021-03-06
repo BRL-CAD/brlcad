@@ -1,0 +1,30 @@
+commit refs/heads/rel-4-4
+original-oid f9fd3ad956d23e854df73294083cb37ef3c2f341
+author Glenn Durfee <gdurfee@gmail.com> 776573312 +0000
+committer Glenn Durfee <gdurfee@gmail.com> 776573312 +0000
+data 96
+Added include of conf.h
+
+svn:revision:9011
+svn:revision:9012
+cvs:account:gdurf
+cvs:branch:trunk
+from d28d7275f34c7f518f04c2d4e8c16a47efae0d80
+M 100644 84d314a568887817ed0e56de03088e809a6315b5 rt/shade.c
+M 100644 34a81f411ea67572f912381f4f3bffaed3389b57 rt/viewcell.c
+M 100644 c32ab9efd8fa583cb088eddf1c7dbff2f86f5ec5 rt/viewcheck.c
+M 100644 58adde3db74d51062000d8e2aa4ab7bf25a3c5f1 rt/viewdir.c
+M 100644 19f3b7f6a4cbca55a4474ae1b6f673278fe03601 rt/viewdummy.c
+M 100644 646bfe63a734bcc73a43bba8047d5ae76b39e047 rt/viewfrac.c
+M 100644 e38bfac5868105642b30523971ad3c9df76b97ce rt/viewg3.c
+M 100644 b93c81deaafb6b5734f4768fd9df5c94bc78deab rt/viewhide.c
+M 100644 63a9a060c49c761d0271f3fc54fa3062700709c5 rt/viewpp.c
+M 100644 ac6939eb8d9a6f222256e567dc3c705c51836129 rt/viewrad.c
+M 100644 aef9241646e1742ae32f02f3ac80706ab8accc6c rt/viewrange.c
+M 100644 80d1276cee3cadbaee53d91c1ac7e11ef8b9c7e2 rt/viewray.c
+M 100644 55ce51c4ad76ccb7d328a233a34595ffcb01e72c rt/viewscat.c
+M 100644 dd19f23e3d63095931090755a36a8db09121da94 rt/viewweight.c
+M 100644 e538d1c7e20126c4b000c73836cd25c1385c9c32 rt/viewxray.c
+M 100644 241058f4b9c80c2ff2769eb0bf7b0a784e0756b4 rt/worker.c
+M 100644 fe3571073416abe1f9f8e97566e11ca3512fdb27 rt/wray.c
+

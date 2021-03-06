@@ -1,0 +1,15 @@
+commit refs/heads/rel-4-5
+original-oid eb0179c08aefd8ea90697c42eba31244e4904eed
+author Paul Stay <stay@brlcad.org> 811602223 +0000
+committer Paul Stay <stay@brlcad.org> 811602223 +0000
+data 99
+*** empty log message ***
+
+svn:revision:11406
+svn:revision:11407
+cvs:account:stay
+cvs:branch:trunk
+from 9c96511b2438ef23f3026e9bc650686fb8c05aba
+M 100644 38ca21b4c1e3de9103375a3579ea9940c956d76d librt/nurb_plot.c
+M 100644 a270558623e431e76f18d8e374155aa0da643ea1 librt/nurb_trim_util.c
+

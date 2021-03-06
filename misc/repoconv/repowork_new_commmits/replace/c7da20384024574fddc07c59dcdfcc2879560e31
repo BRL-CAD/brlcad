@@ -1,0 +1,15 @@
+commit refs/heads/rel-1-10
+original-oid c7da20384024574fddc07c59dcdfcc2879560e31
+author Michael John Muuss <mike@brlcad.org> 524312780 +0000
+committer Michael John Muuss <mike@brlcad.org> 524312780 +0000
+data 93
+overhaul for VMB manual
+
+svn:revision:858
+svn:revision:859
+cvs:account:mike
+cvs:branch:trunk
+from ec6a81331cf5edc078a538a42dc1f5081e44f8f0
+M 100644 0f58c0d455000ea9e1f72bb19f43d88887466ada liborle/liborle.3
+
+
