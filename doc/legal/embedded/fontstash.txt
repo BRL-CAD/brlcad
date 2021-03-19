@@ -14,5 +14,5 @@ freely, subject to the following restrictions:
    misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 
-file:/src/libdm/osgl/fontstash/fontstash.h
-file:/src/libdm/osgl/fontstash/glfontstash.h
+file:/src/libdm/fontstash/fontstash.h
+file:/src/libdm/fontstash/glfontstash.h

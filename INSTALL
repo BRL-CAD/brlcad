@@ -135,21 +135,11 @@ INSTALLING FROM SOURCE
 There are a couple of ways to obtain the BRL-CAD sources, usually via
 one of the following starting points:
 
-  1) from a SVN checkout/export, or
+  1) from a Git checkout, or
   2) from a source distribution tarball
 
-Using the latest SVN sources is recommended where possible since it
-will have the latest changes.  See the corresponding section below for
-details on how to install from either starting point.
-
-
-Starting From a SVN Checkout/Export:
-
-With CMake, there is no longer any difference between building from
-a subversion checkout and a tarball--follow the Source Distribution
-instructions below.
-
-Starting From a Source Distribution:
+Using the latest Git sources is recommended where possible since it
+will have the latest changes.
 
 There are many different ways to build BRL-CAD and depending on what
 you need/want will determine which configuration options you should

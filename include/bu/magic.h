@@ -198,6 +198,7 @@ __BEGIN_DECLS
 #define FB_X24_MAGIC			0x58324642 /**< X2FB */
 #define FB_TK_MAGIC			0x544b4642 /**< TKFB */
 #define FB_QT_MAGIC			0x51544642 /**< QTFB */
+#define FB_QTGL_MAGIC			0x51474642 /**< QGFB */
 #define FB_DEBUG_MAGIC			0x44424642 /**< DBFB */
 #define FB_DISK_MAGIC			0x44494642 /**< STFB */
 #define FB_STK_MAGIC			0x53544642 /**< STFB */

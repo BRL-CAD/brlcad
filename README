@@ -3,16 +3,12 @@
 		       http://brlcad.org/
 
 BRL-CAD is a powerful cross-platform open source combinatorial
-Constructive Solid Geometry (CSG) solid modeling system that includes
-an interactive 3D solid geometry editor, a network-distributed
-symmetric multiprocessing high-performance ray-tracer,
-network-distributed framebuffer support, image and signal-processing
-tools, ray-tracing support for rendering and geometric analysis,
-path-tracing and photon mapping support for realistic image synthesis,
-animation capabilities, ray-tracing and numerical processing
-libraries, a system performance analysis benchmark suite, an embedded
-scripting interface, and a robust high-performance geometric
-representation and analysis library.
+solid modeling system that includes an interactive 3D solid geometry
+editor, a network-distributed symmetric multiprocessing (SMP)
+high-performance ray-tracer with support for rendering and geometric
+analysis, image and signal-processing tools, a system performance
+analysis benchmark suite, a flexible geometry scripting interface, 
+and a high-performance geometric representation and analysis library.
 
 
 TABLE OF CONTENTS
@@ -26,8 +22,6 @@ TABLE OF CONTENTS
   Bug Reports/Feature Requests
   Distribution Details
   Background Information
-  Future Events
-  Getting Help
 
 
 GETTING STARTED
@@ -118,60 +112,32 @@ comparing the results of the benchmark tests in more detail.
 COMMUNICATION
 -------------
 
-You are invited to participate in the InterNet (aka "ARPANET")
-electronic mailing list on the BRL-CAD software.  There are various
-BRL-CAD mailing lists available on the project website at
-http://sourceforge.net/mail/?group_id=105292 including three
+There are various BRL-CAD mailing lists available including three
 developer-oriented lists, a user list, and a read-only news
-announcement list.  See the posted archives to get a feel for the
-volume of list traffic for each list and to read/search past
-discussions.
+announcement list:
 
-On-line web forums are likewise available on the project site at
-http://sourceforge.net/forum/?group_id=105292
+  http://sourceforge.net/mail/?group_id=105292 
 
-A variety of information on BRL-CAD is available via the
-World-Wide-Web.  Papers, documentation, and the software repository
-may be found at:
+For interactive discussion, there is Zulip chat and IRC available:
 
-  http://brlcad.org
-
-In addition to the above, there is an official BRL-CAD IRC channel on
-the Freenode network that may be reached by joining #brlcad on
-irc.freenode.net connecting via port 6667.  For first-time users,
-there is a web-based IRC client available for certain browsers at:
-
-  http://irc.brlcad.org
-
-IRC is the preferred method of communication to interact with the
-BRL-CAD developers, to get involved with the project, obtain support,
-or provide direct feedback.
+  https://brlcad.zulipchat.com
+  https://brlcad.org/wiki/IRC
 
 
 BUG REPORTS AND FEATURE REQUESTS
 --------------------------------
 
-Please report any bugs encountered to the project bug tracker at
-http://sourceforge.net/tracker/?group_id=105292&atid=640802
+Please submit all bugs, support requests, and feature requests to:
 
-Similarly, please post any request for feature enhancements or support
-request to http://sourceforge.net/tracker/?group_id=105292&atid=640805
-and http://sourceforge.net/tracker/?group_id=105292&atid=640803
-respectively.
+  https://github.com/BRL-CAD/brlcad/issues
 
 
 DISTRIBUTION DETAILS
 --------------------
 
-BRL-CAD is freely available and distributed in both binary and source
-code form through the BRL-CAD project website on Sourceforge:
+BRL-CAD is available via Git or Subversion checkout from:
 
-  http://sf.net/projects/brlcad/
-
-The package is similarly available via a Subversion repository.  To
-obtain the latest, follow the directions for anonymous checkout at:
-
-  http://sourceforge.net/svn/?group_id=105292
+https://github.com/BRL-CAD/brlcad
 
 There is also a paid-for full-service support distribution available
 for those interested through SURVICE Engineering, Inc., and the
@@ -238,38 +204,6 @@ distributed in binary and source code form as free open source
 software (FOSS), provided under Open Source Initiative (OSI) approved
 license terms.  BRL-CAD was released as open source in December 2004.
 See the COPYING file for more details.
-
-
-FUTURE EVENTS
--------------
-
-It is expected that new releases of BRL-CAD will be issued
-approximately once a month.  A new release is scheduled for
-distribution at the beginning of every month, usually being posted
-sometime within the first week of every month.
-
-Depending on need, demand, and activity, additional releases may also
-be made.  The additional releases will be heavily dependent upon the
-level of user involvement and contributions in particular.
-Information about new releases will be routinely provided by
-electronic mail to recipients of this software as well as to the
-BRL-CAD NEWS mailing list:
-
-  http://sourceforge.net/mail/?group_id=105292
-
-Periodically, training and user group meetings are provided with
-announcements similarly posted to the BRL-CAD NEWS mailing list.
-Several BRL-CAD developers also regularly attend the ACM Siggraph
-conference, the ACM Solid and Physical Modeling conference, and other
-similar conferences, conventions, and symposiums as well.
-
-
-GETTING HELP
-------------
-
-Feel free to direct any unanswered questions relating to BRL-CAD via
-e-mail or to any of the other contact means described above in the
-COMMUNICATIONS section of this document.
 
 Best Wishes,
 The BRL-CAD Development Team

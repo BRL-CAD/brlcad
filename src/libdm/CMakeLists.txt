@@ -46,6 +46,7 @@ add_subdirectory(osgl)
 add_subdirectory(plot)
 add_subdirectory(postscript)
 add_subdirectory(qt)
+add_subdirectory(qtgl)
 add_subdirectory(tk)
 add_subdirectory(txt)
 add_subdirectory(wgl)
@@ -100,6 +101,11 @@ set(libdm_ignore_files
   null/dm-Null.h
   include/private.h
   include/calltable.h
+  fontstash/LICENSE.fontstash
+  fontstash/README.md
+  fontstash/fontstash.h
+  fontstash/glfontstash.h
+  fontstash/stb_truetype.h
   )
 CMAKEFILES(${libdm_ignore_files})
 

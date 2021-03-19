@@ -33,11 +33,11 @@ class DisplayManager;
 class GeometryRenderer;
 
 
-class Display : public QOpenGLWidget{
+class BRLCADDisplay : public QOpenGLWidget{
 
 Q_OBJECT
 public:
-    Display();
+    BRLCADDisplay();
 
     Camera *camera;
     void onDatabaseUpdated();

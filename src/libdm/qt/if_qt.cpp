@@ -44,26 +44,25 @@
 extern struct fb qt_interface;
 
 class QMainWindow: public QWindow {
+    public:
+	QMainWindow(struct fb *ifp, QImage *image, QWindow *parent = 0);
+	~QMainWindow();
 
-public:
-    QMainWindow(struct fb *ifp, QImage *image, QWindow *parent = 0);
-    ~QMainWindow();
+	virtual void render(QPainter *painter);
+	public slots:
+	    void renderNow();
 
-    virtual void render(QPainter *painter);
-public slots:
-    void renderNow();
+    protected:
+	bool event(QEvent *event);
 
-protected:
-    bool event(QEvent *event);
+	void resizeEvent(QResizeEvent *event);
+	void exposeEvent(QExposeEvent *event);
 
-    void resizeEvent(QResizeEvent *event);
-    void exposeEvent(QExposeEvent *event);
-
-private:
-    struct fb *ifp;
-    QImage *image;
-    QBackingStore *m_backingStore;
-    bool m_update_pending;
+    private:
+	struct fb *ifp;
+	QImage *image;
+	QBackingStore *m_backingStore;
+	bool m_update_pending;
 };
 
 struct qtinfo {
@@ -138,11 +137,11 @@ static struct modeflags {
     const char *help;
 } modeflags[] = {
     { 'l',	MODE1_MASK, MODE1_LINGERING,
-      "Lingering window" },
+	"Lingering window" },
     { 't',	MODE1_MASK, MODE1_TRANSIENT,
-      "Transient window" },
+	"Transient window" },
     { 's',  MODE10_MASK, MODE10_SHARED,
-      "Use shared memory backing store" },
+	"Use shared memory backing store" },
     { '\0', 0, 0, "" },
 };
 
@@ -316,7 +315,7 @@ qt_updstate(struct fb *ifp)
 	 *    y coordinate.
 	 */
 	qi->qi_xbt = qi->qi_qheight - (bt_h + (avail - want - 1) *
-				       ifp->i->if_yzoom) - 1;
+		ifp->i->if_yzoom) - 1;
 	qi->qi_ibt_h = ifp->i->if_yzoom;
 	qi->qi_ibt = 0;
     }
@@ -352,7 +351,7 @@ qt_updstate(struct fb *ifp)
 	 *    coordinate equal to the width of the image minus 1.
 	 */
 	qi->qi_xrt = qi->qi_qwidth - (rt_w + (avail - want - 1) *
-				      ifp->i->if_xzoom) - 1;
+		ifp->i->if_xzoom) - 1;
 	qi->qi_irt_w = ifp->i->if_xzoom;
 	qi->qi_irt = qi->qi_iwidth - 1;
     }
@@ -422,7 +421,7 @@ qt_configureWindow(struct fb *ifp, int width, int height)
     free(qi->qi_pix);
 
     if ((qi->qi_pix = (unsigned char *) calloc((width + 1) * (height + 1) * sizeof(RGBpixel),
-	sizeof(char))) == NULL) {
+		    sizeof(char))) == NULL) {
 	fb_log("qt_open_existing: pix malloc failed");
     }
 
@@ -531,7 +530,7 @@ qt_update(struct fb *ifp, int x1, int y1, int w, int h)
      * quadrant IV, opix _decreases_.
      */
     ip = &(qi->qi_mem[(y1 * qi->qi_iwidth + x1) *
-				 sizeof (RGBpixel)]);
+	    sizeof (RGBpixel)]);
     op = &qi->qi_pix[oy * qi->qi_image->bytesPerLine() + ox];
 
     for (y = y1; y <= y2; y++) {
@@ -591,7 +590,7 @@ qt_update(struct fb *ifp, int x1, int y1, int w, int h)
 
     if (qi->alive == 0) {
 	qi->qi_painter->drawImage(ox, oy - xht + 1, *qi->qi_image, ox, oy - xht + 1, xwd, xht);
-     }
+    }
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
@@ -645,8 +644,8 @@ qt_wmap(struct fb *ifp, const ColorMap *cmp)
 
 	for (i = 0; i < 256; i++)
 	    if (map->cm_red[i] >> 8 != i ||
-		map->cm_green[i] >> 8 != i ||
-		map->cm_blue[i] >> 8 != i) {
+		    map->cm_green[i] >> 8 != i ||
+		    map->cm_blue[i] >> 8 != i) {
 		nonlin = 1;
 		break;
 	    }
@@ -693,7 +692,7 @@ qt_setup(struct fb *ifp, int width, int height)
     qi->qapp = new QApplication(argc, argv);
 
     if ((qi->qi_pix = (unsigned char *) calloc(width * height * sizeof(RGBpixel),
-	sizeof(char))) == NULL) {
+		    sizeof(char))) == NULL) {
 	fb_log("qt_open: pix malloc failed");
     }
 
@@ -786,7 +785,7 @@ qt_open(struct fb *ifp, const char *file, int width, int height)
     ifp->i->if_ycenter = height/2;
 
     if ((qi = (struct qtinfo *)calloc(1, sizeof(struct qtinfo))) ==
-	NULL) {
+	    NULL) {
 	fb_log("qt_open: qtinfo malloc failed\n");
 	return -1;
     }
@@ -887,7 +886,7 @@ _qt_open_existing(struct fb *ifp, int width, int height, void *qapp, void *qwin,
     ifp->i->if_ycenter = height/2;
 
     if ((qi = (struct qtinfo *)calloc(1, sizeof(struct qtinfo))) ==
-	NULL) {
+	    NULL) {
 	fb_log("qt_open: qtinfo malloc failed\n");
 	return -1;
     }
@@ -922,7 +921,7 @@ _qt_open_existing(struct fb *ifp, int width, int height, void *qapp, void *qwin,
     qi->qapp = (QApplication *)qapp;
 
     if ((qi->qi_pix = (unsigned char *) calloc(width * height * sizeof(RGBpixel),
-	sizeof(char))) == NULL) {
+		    sizeof(char))) == NULL) {
 	fb_log("qt_open_existing: pix malloc failed");
     }
 
@@ -1055,7 +1054,7 @@ qt_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count
 
     /* Save it in 24bit backing store */
     memcpy(&(qi->qi_mem[(y * qi->qi_iwidth + x) * sizeof(RGBpixel)]),
-	   pixelp, count * sizeof(RGBpixel));
+	    pixelp, count * sizeof(RGBpixel));
 
     if (qi->alive == 0) {
 	if (*qi->drawFb == 0)
@@ -1085,15 +1084,15 @@ qt_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
     /* bypass if no change */
     if (ifp->i->if_xcenter == xcenter && ifp->i->if_ycenter == ycenter
-	&& ifp->i->if_xzoom == xcenter && ifp->i->if_yzoom == ycenter)
+	    && ifp->i->if_xzoom == xcenter && ifp->i->if_yzoom == ycenter)
 	return 0;
 
     /* check bounds */
     if (xcenter < 0 || xcenter >= qi->qi_iwidth
-	|| ycenter < 0 || ycenter >= qi->qi_iheight)
+	    || ycenter < 0 || ycenter >= qi->qi_iheight)
 	return -1;
     if (xzoom <= 0 || xzoom >= qi->qi_iwidth/2
-	|| yzoom <= 0 || yzoom >= qi->qi_iheight/2)
+	    || yzoom <= 0 || yzoom >= qi->qi_iheight/2)
 	return -1;
 
     ifp->i->if_xcenter = xcenter;
@@ -1169,13 +1168,13 @@ qt_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned 
     if (xmin == 0 && width == qi->qi_iwidth) {
 	/* We can do it all in one copy */
 	memcpy(pp, &(qi->qi_mem[ymin * qi->qi_iwidth *
-				sizeof (RGBpixel)]),
-	       width * height * sizeof (RGBpixel));
+		    sizeof (RGBpixel)]),
+		width * height * sizeof (RGBpixel));
     } else {
 	/* Need to do individual lines */
 	int ht = height;
 	unsigned char *p = &(qi->qi_mem[(ymin * qi->qi_iwidth + xmin) *
-					sizeof (RGBpixel)]);
+		sizeof (RGBpixel)]);
 
 	while (ht--) {
 	    memcpy(pp, p, width * sizeof (RGBpixel));
@@ -1208,12 +1207,12 @@ qt_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const un
     if (xmin == 0 && width == qi->qi_iwidth) {
 	/* We can do it all in one copy */
 	memcpy(&(qi->qi_mem[ymin * qi->qi_iwidth * sizeof (RGBpixel)]),
-	       pp, width * height * sizeof (RGBpixel));
+		pp, width * height * sizeof (RGBpixel));
     } else {
 	/* Need to do individual lines */
 	int ht = height;
 	unsigned char *p = &(qi->qi_mem[(ymin * qi->qi_iwidth + xmin) *
-					sizeof (RGBpixel)]);
+		sizeof (RGBpixel)]);
 
 	while (ht--) {
 	    memcpy(p, pp, width * sizeof (RGBpixel));
@@ -1235,11 +1234,11 @@ qt_help(struct fb *ifp)
     fb_log("Description: %s\n", qt_interface.i->if_type);
     fb_log("Device: %s\n", ifp->i->if_name);
     fb_log("Max width/height: %d %d\n",
-	   qt_interface.i->if_max_width,
-	   qt_interface.i->if_max_height);
+	    qt_interface.i->if_max_width,
+	    qt_interface.i->if_max_height);
     fb_log("Default width/height: %d %d\n",
-	   qt_interface.i->if_width,
-	   qt_interface.i->if_height);
+	    qt_interface.i->if_width,
+	    qt_interface.i->if_height);
     fb_log("Useful for Benchmarking/Debugging\n");
     return 0;
 }
@@ -1293,7 +1292,7 @@ qt_handle_event(struct fb *ifp, QEvent *event)
 
 			    cp = &(qi->qi_mem[(isy*qi->qi_iwidth + ix)*3]);
 			    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-				   ix, isy, cp[0], cp[1], cp[2]);
+				    ix, isy, cp[0], cp[1], cp[2]);
 
 			    break;
 			}
@@ -1409,9 +1408,11 @@ struct fb qt_interface =  { &qt_interface_impl };
 #ifdef DM_PLUGIN
 static const struct fb_plugin finfo = { &qt_interface };
 
-COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
-{
-    return &finfo;
+extern "C" {
+    COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
+    {
+	return &finfo;
+    }
 }
 #endif
 
@@ -1421,13 +1422,13 @@ COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
  */
 
 QMainWindow::QMainWindow(struct fb *fbp, QImage *img, QWindow *win)
-    : QWindow(win)
+: QWindow(win)
     , m_update_pending(false)
 {
     m_backingStore = new QBackingStore(this);
-    create();
     image = img;
     ifp = fbp;
+    create();
 }
 
 QMainWindow::~QMainWindow()
@@ -1477,6 +1478,7 @@ void QMainWindow::renderNow()
 
     render(&painter);
 
+    painter.end();
     m_backingStore->endPaint();
     m_backingStore->flush(rect);
 }
