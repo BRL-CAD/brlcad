@@ -33,16 +33,43 @@ set(OUTPUT_FILES
   "${CBDIR}/fastgen_unix.g"
   "${CBDIR}/fastgen_dos.g"
   "${CBDIR}/fastgen.fast4"
+  "${CBDIR}/fastgen_unix.fast4"
+  "${CBDIR}/fastgen_dos.fast4"
   )
 foreach(of ${OUTPUT_FILES})
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
 endforeach(of ${OUTPUT_FILES})
 
+# Make sure nothing unexpected produces identical files.  The Unix
+# and DOS line endings should be visible to diff
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E tar xvf "${CSDIR}/fastgen_unix.tbz2"
+  RESULT_VARIABLE fastgen_result OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  WORKING_DIRECTORY "${CBDIR}")
+file(APPEND "${LOGFILE}" "${fastgen_log}")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E tar xvf "${CSDIR}/fastgen_dos.tbz2"
+  OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  WORKING_DIRECTORY "${CBDIR}")
+file(APPEND "${LOGFILE}" "${fastgen_log}")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E compare_files "${CBDIR}/fastgen_dos.fast4" "${CBDIR}/fastgen_unix.fast4"
+  RESULT_VARIABLE fastgen_result OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  WORKING_DIRECTORY "${CBDIR}")
+file(APPEND "${LOGFILE}" "${fastgen_log}")
+if (NOT "${fastgen_result}")
+  message(FATAL_ERROR "Unix and DOS versions of FASTGEN input files are identical!\n")
+endif (NOT "${fastgen_result}")
+
 # Start with the file using standard UNIX line endings
-file(APPEND "${LOGFILE}" "Converting ${CSDIR}/fastgen_box.fast4 (UNIX line endings):\n")
+file(APPEND "${LOGFILE}" "Converting fastgen_unix.fast4 (UNIX line endings):\n")
 # We need the titles of the .g files to be the same for gdiff comparison, so
 # copy the file into a "standard" position
-execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${CSDIR}/fastgen_box.fast4" "${CBDIR}/fastgen.fast4")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E copy "${CBDIR}/fastgen_unix.fast4" "${CBDIR}/fastgen.fast4"
+  RESULT_VARIABLE fastgen_result OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  WORKING_DIRECTORY "${CBDIR}")
+file(APPEND "${LOGFILE}" "${fastgen_log}")
 execute_process(
   COMMAND "${FAST4G}" "${CBDIR}/fastgen.fast4" "${CBDIR}/fastgen_unix.g"
   RESULT_VARIABLE fastgen_result OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
@@ -53,18 +80,27 @@ if(EXISTS "${CBDIR}/fastgen_unix.g")
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/fastgen.fast4")
 else(EXISTS "${CBDIR}/fastgen_unix.g")
   file(APPEND "${LOGFILE}" "Failure: ${fastgen_result}")
-  message(FATAL_ERROR "Unable to convert ${CSDIR}/fastgen_box.fast4 to ${CBDIR}/fastgen_unix.g with ${FAST4G}, aborting.\nSee ${LOGFILE} for more details.")
+  message(FATAL_ERROR "Unable to convert ${CBDIR}/fastgen.fast4 (fastgen_unix.fast4) to ${CBDIR}/fastgen_unix.g with ${FAST4G}, aborting.\nSee ${LOGFILE} for more details.")
 endif(EXISTS "${CBDIR}/fastgen_unix.g")
 
 
 # Now the conversion with DOS line endings
-file(APPEND "${LOGFILE}" "\nConverting ${CSDIR}/fastgen_dos.fast4 (DOS line endings):\n")
+file(APPEND "${LOGFILE}" "\nConverting fastgen_dos.fast4 (DOS line endings):\n")
 # We need the titles of the .g files to be the same for gdiff comparison, so
-# copy the file into a "standard" position
-execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${CSDIR}/fastgen_dos.fast4" "${CBDIR}/fastgen.fast4")
+# copy the file into a "standard" position.  As we have just processed the unix
+# version, remove it first to be sure there is no problem with staging the new one.
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/fastgen.fast4"
+  OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  WORKING_DIRECTORY "${CBDIR}")
+file(APPEND "${LOGFILE}" "${fastgen_log}")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E copy "${CBDIR}/fastgen_dos.fast4" "${CBDIR}/fastgen.fast4"
+  OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  WORKING_DIRECTORY "${CBDIR}")
+file(APPEND "${LOGFILE}" "${fastgen_log}")
 execute_process(
   COMMAND "${FAST4G}" "${CBDIR}/fastgen.fast4" "${CBDIR}/fastgen_dos.g"
-  OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
   RESULT_VARIABLE fastgen_result OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
   )
 file(APPEND "${LOGFILE}" "${fastgen_log}")
@@ -73,7 +109,7 @@ if(EXISTS "${CBDIR}/fastgen_dos.g")
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/fastgen.fast4")
 else(EXISTS "${CBDIR}/fastgen_dos.g")
   file(APPEND "${LOGFILE}" "Failure: ${fastgen_result}")
-  message(FATAL_ERROR "Unable to convert ${CSDIR}/fastgen_dos.fast4 to ${CBDIR}/fastgen_dos.g with ${BDIR}/fast4-g${EXE}, aborting.\nSee ${LOGFILE} for more details.")
+  message(FATAL_ERROR "Unable to convert ${CBDIR}/fastgen.fast4 (fastgen_dos.fast4) to ${CBDIR}/fastgen_dos.g with ${BDIR}/fast4-g${EXE}, aborting.\nSee ${LOGFILE} for more details.")
 endif(EXISTS "${CBDIR}/fastgen_dos.g")
 
 
