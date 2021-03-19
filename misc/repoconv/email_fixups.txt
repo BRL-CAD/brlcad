@@ -1,6 +1,0 @@
-Ben Poole <bpoolio@gmail.com>;Ben Poole <benmpoole@gmail.com>
-Carl Moore <carlm0404@gmail.com>;Carl Moore <cmoore@brlcad.org>
-Daniel Rossberg <drossberg@users.noreply.github.com>;Daniel Rossberg <33295041+drossberg@users.noreply.github.com>
-Jason Owens <jlowenz@brlcad.org>;Jason Owens <github.jlowenz@xoxy.net>
-John Grosh <jgrosh@brlcad.org>;John Grosh <grosh1@llnl.gov>
-Phillip Dykstra <phil@brlcad.org>;Phillip Dykstra <phil@pdykstra.com>
