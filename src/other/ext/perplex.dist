@@ -1,0 +1,44 @@
+set(perplex_ignore_files
+CMakeLists.txt
+README.lemon
+README.re2c
+lemon.c
+lempar.c
+perplex/mbo_getopt.cpp
+perplex/mbo_getopt.h
+perplex/parser.y
+perplex/perplex.cpp
+perplex/perplex.h
+perplex/perplex_template.c
+perplex/scanner.re
+perplex/token_type.h
+re2c/actions.cc
+re2c/basics.h
+re2c/bootstrap/scanner.cc
+re2c/code.cc
+re2c/code.h
+re2c/code_names.h
+re2c/config.h.in
+re2c/dfa.cc
+re2c/dfa.h
+re2c/globals.h
+re2c/ins.h
+re2c/main.cc
+re2c/mbo_getopt.cc
+re2c/mbo_getopt.h
+re2c/parser.yy
+re2c/re.h
+re2c/re2c_parser.h
+re2c/scanner.h
+re2c/scanner.re
+re2c/stream_lc.h
+re2c/substr.cc
+re2c/substr.h
+re2c/token.h
+re2c/translate.cc
+)
+
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(perplex_ignore_files perplex)
+endif (COMMAND CMAKEFILES_IN_DIR)
+
