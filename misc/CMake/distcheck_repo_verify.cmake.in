@@ -83,6 +83,7 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
       message("${GIT_STDERR}")
     endif (RETVAL)
 
+
     # Check whether Git is reporting modified files.
     execute_process(COMMAND ${GIT_EXEC} status --porcelain --ignored
       WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@"
@@ -95,11 +96,23 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
     # Apparently can get an empty list entry from GIT_STDOUT - remove any empty
     # entries so CMake won't complain.
     list(REMOVE_ITEM "" GIT_STATUS)
+    string(REPLACE "\n" ";" GIT_STATUS "${GIT_STATUS}")
     foreach(ITEM ${GIT_STATUS})
       if(${ITEM} MATCHES "^\\?\\?")
 	string(REGEX REPLACE "^[?][?][\\t\\ ]*" "" item_path "${ITEM}")
 	list(REMOVE_ITEM GIT_FILES ${item_path})
+      elseif(${ITEM} MATCHES "^D ")
+	# If Git has staged a file for deletion, ignore it unless a
+	# file with that name is still present in the tree
+	string(REGEX REPLACE "^D[ ][\\t\\ ]*" "" item_path "${ITEM}")
+	if (NOT EXISTS "@CMAKE_SOURCE_DIR@/${item_path}")
+	  list(REMOVE_ITEM GIT_FILES ${item_path})
+	else (NOT EXISTS "@CMAKE_SOURCE_DIR@/${item_path}")
+	  message("\nFile ${item_path} is staged for deletion by Git, but still exists in working tree.")
+	endif (NOT EXISTS "@CMAKE_SOURCE_DIR@/${item_path}")
       else(${ITEM} MATCHES "^\\?\\?")
+	string(REGEX REPLACE "^[ ]M[\\t\\ ]*" "" item_path "${ITEM}")
+	message("\nModified file: ${item_path}")
 	set(GIT_TREE_MODIFIED 1)
       endif(${ITEM} MATCHES "^\\?\\?")
     endforeach(ITEM ${GIT_STATUS})
