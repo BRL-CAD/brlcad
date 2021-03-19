@@ -1,0 +1,184 @@
+-------------------------------------------------------------------------------
+		  Mime types and Current Git checkouts
+-------------------------------------------------------------------------------
+
+    SVN had an explicit per-file mime-type property that identified for the
+checkout process whether a file was to be treated as binary (i.e. written from
+the VCS to the filesystem unaltered) or text (line endings for text files are
+updated to match the platform's specific convention.  Git does not have such a
+per-file property.
+
+    One of the consequences of this change is that files in Git which would
+have been written out unaltered in an SVN checkout may now be altered - for
+text files, LF and CRLF line endings will be set at checkout.  Ordinarily this
+is the desired behavior (which is why it is the Git default) but on rare
+occasions it may be necessary to ensure that a "text" file always has the same
+line endings, regardless of the current platform's default.  Practical examples
+include regression tests checking for correct behavior with files using either
+UNIX or DOS line endings on all platforms, and files storing serialized data
+that should remain fixed (such as the .fi files associated with BRL-CAD's
+svn->git conversion process.)
+
+    One possible approach to this problem is to define a .gitattributes file
+in BRL-CAD's root directory and define patterns to match specific files we
+know need to be treated in this fashion.  We have opted not to take this
+approach, as there is too much risk of patterns being defined that have
+unintentional (and not necessarily obvious) side effects.  Plausible scenarios
+include defining patterns that match files they were not intended to match and
+stale patterns lingering in the .gitattributes file after they are no longer
+needed for their original purpose.
+
+    The recommended way to address this issue in BRL-CAD is to compress a
+"text" file that should keep its original line endings and use CMake's ability
+to de-compress it at build time into the build directory to present the file in
+the correct state.  There are a couple different ways this can be achieved.
+Let's take a hypothetical file BFILE and see how it would be processed:
+
+0.  Common preliminary step - compress the file.  The archive file will be a binary
+file in the repository, and so remain unaltered:
+
+user@machine:~/brlcad$ cmake -E tar cjf BFILE.tbz2 BFILE
+
+
+Option 1: configure-time setup:
+
+    This technique is simpler, but has a drawback:  if the BFILE archive is
+updated the configure step will need to be re-run.  Use this approach when the
+simplicity of the build logic is a net win compared to the potential cost of
+reconfiguring, such as example data files that are unlikely to be changed
+frequently.  In the CMakeLists.txt file, define the following execute_process
+step:
+
+execute_process(
+   COMMAND "${CMAKE_COMMAND}" -E tar xvf "${CMAKE_CURRENT_SOURCE_DIR}/BFILE.tbz2")
+   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+   )
+
+    All subsequent build logic that refers to BFILE should then refer to the
+uncompressed BFILE located at "${CMAKE_CURRENT_BINARY_DIR}/BFILE".  The output
+BFILE should also be listed for cleanup with the DISTCLEAN command, since no
+build logic will know that this file is an output file:
+
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BFILE")
+
+
+Option 2: build-time setup:
+
+   For files that may change with more frequency, or are slow to process and
+shouldn't be part of the serial configure process, custom commands can be used
+to defer the setup process until build time.
+
+   Creating files at build time has some nuances, particularly if the output
+file is to be used by other build targets.
+
+   For files that do not need to be part of subsequent build steps the
+following pattern will work:
+
+add_custom_command(
+   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/BFILE"
+   COMMAND ${CMAKE_COMMAND}" -E tar xvf "${CMAKE_CURRENT_SOURCE_DIR}/BFILE.tbz2"
+   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/BFILE.tbz2"
+   )
+add_custom_target(BFILE-setup ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/BFILE")
+
+   When a file DOES need to be part of a subsequent build process, more care is
+needed.  Particularly when building in parallel, using the above approach a
+generated file may be only partially prepared (i.e. it exists and the
+dependency is "satisfied" but is not fully written) when a subsequent build
+step attempts to read it.  When this happens it tends to cause any number of
+non-reproducible, cryptic and/or subtle problems.  For C/C++ source
+compilations, this can manifest as a compilation failure with invalid inputs.
+However, by the time the user goes to inspect the file reporting errors the I/O
+operations have completed and everything looks fine (indeed a subsequent
+invocation of the same build step will usually succeed, because the fully
+realized file is now present.)
+
+   The recommended approach is a two stage custom command - the first
+doing the work of setting up the file, and the second creating a sentinel file.
+Then a custom target depending on the sentinel file is defined for subsequent
+targets to reference as a dependency:
+
+add_custom_command(
+   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/BFILE"
+   COMMAND ${CMAKE_COMMAND}" -E tar xvf "${CMAKE_CURRENT_SOURCE_DIR}/BFILE.tbz2"
+   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/BFILE.tbz2"
+   )
+add_custom_command(
+   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/BFILE.done"
+   COMMAND ${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/BFILE.done"
+   DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/BFILE"
+   )
+add_custom_target(BFILE-setup DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/BFILE.done")
+
+The sentinel file acting as a second stage in the process allows for a proper
+completion of the original file I/O, which is why build targets should depend
+on the custom target (BFILE-setup) - it will order dependencies to prevent
+compilation attempts with partially completed files:
+
+set(TARGET_SRCS
+   file1.c
+   file2.c
+   "${CMAKE_CURRENT_BINARY_DIR}/BFILE"
+   )
+add_executable(prog ${TARGET_SRCS})
+add_dependencies(prog BFILE-setup)
+
+-------------------------------------------------------------------------------
+                     Mime types and historical checkouts
+-------------------------------------------------------------------------------
+
+  For post-conversion checkouts problems can be addressed in-repository with
+the above techniques, but for historical tree states (which we can't change)
+this is a thornier issue.  The most likely scenarios are on Windows, which is
+generally the only platform which will alter a significant number of file
+contents at checkout.  (Problem cases will most likely be rare, but it isn't
+possible to anticipate all situations.)
+
+    To achieve checkouts of older repository that don't alter specific files'
+contents, the .git/info/attributes file may be temporarily introduced into a
+repository checkout.  File matching patterns may be defined to alter how git
+treats specific sets of files, and because the .git/info/attributes file is not
+part of the working tree it will apply to ANY git checkout operations in that
+repository.  Let's say, for example, that the user needs to make a checkout of
+the rel-7-32-2 tag with the fast-import files from the Git conversion (many of
+which are simple enough to qualify as text files and would thus get unintended
+changes) intact.  To do this the steps would be:
+
+A.  Clone the repository, make a copy and confirm a clean tree state
+
+user@machine:~$ git clone https://github.com/BRL-CAD/brlcad
+user@machine:~$ cp -r brlcad brlcad_raw
+user@machine:~$ cd brlcad && git checkout rel-7-32-2
+user@machine:~$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+
+B.  Instruct Git to always treat files matching the *.fi pattern as binary
+
+user@machine:~$ echo "*.fi binary" > .git/info/attributes
+
+C.  Repopulate the checkout using the new attributes:
+
+user@machine:~$ rm -rf * && git reset --hard
+
+D.  Confirm which files changed as a consequence of the attribute update:
+
+user@machine:~$ cd ..
+user@machine:~$ diff -rq brlcad_raw brlcad
+
+    Note that the user will need to be careful when defining attributes pattern
+matches.  Unexpected matches can be a source of considerable trouble, which is
+why the "clean" copy of the repository is retained and the results of the
+attribute-guided checkout explicitly inspected.
+
+    Once the user has completed the work requiring the gitattributes file, it
+should be either removed or renamed to render it inactive.  If it remains in
+the .git/info/attributes location, it will continue to be active in subsequent
+development and may produce unexpected results in normal work.
+
+user@machine:~$ cd brlcad && rm .git/info/attributes
+
