@@ -210,6 +210,7 @@ set(misc_ignore_files
   repoconv/cvs_svn_branches.txt
   repoconv/domap.sh
   repoconv/email_fixups.txt
+  repoconv/git_svn_filemap.sh
   repoconv/gitattributes
   repoconv/github_ci_actions.yml
   repoconv/gitignore.tar.gz
@@ -273,6 +274,7 @@ set(misc_ignore_files
   repoconv/tag_commits.txt
   repoconv/tagmap.sh
   repoconv/terra.dsp
+  repoconv/tkhtml_git_svn_map.sh
   repoconv/verify/cvs.sh
   repoconv/verify/cvs_repaired/sphflake.pix,v
   repoconv/verify/cxxopts.hpp
