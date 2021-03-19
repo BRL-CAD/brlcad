@@ -107,9 +107,13 @@ set(misc_ignore_files
   repoconv/29886-note-template.fi
   repoconv/CONVERT.sh
   repoconv/NOTES
+  repoconv/REPO.NOTES
   repoconv/RESUME.sh
+  repoconv/account-map
+  repoconv/account-map_svnfexport.txt
   repoconv/audit_merges/audit_merges.cxx
   repoconv/audit_merges/commit_list.txt
+  repoconv/branch_corrections.txt
   repoconv/checkout_dercs.sh
   repoconv/common_structs.h
   repoconv/custom/29937-blob.fi
@@ -199,20 +203,34 @@ set(misc_ignore_files
   repoconv/custom/r29886_cvs_svn_rel-5-1-branch_sync.fi
   repoconv/custom/r29886_cvs_svn_trunk_sync.fi
   repoconv/custom/r29886_tags.fi
-  repoconv/account-map
-  repoconv/account-map_svnfexport.txt
   repoconv/cvs_authormap
   repoconv/cvs_authormap_svnfexport.txt
   repoconv/cvs_info.sh
-  repoconv/domap.sh
-  repoconv/email_fixups.txt
   repoconv/cvs_repaired/sphflake.pix,v
   repoconv/cvs_svn_branches.txt
+  repoconv/domap.sh
+  repoconv/email_fixups.txt
   repoconv/gitattributes
   repoconv/github_ci_actions.yml
   repoconv/gitignore.tar.gz
   repoconv/manual_merge_info.tar.gz
   repoconv/md5.hpp
+  repoconv/process.sh
+  repoconv/remove_commits.txt
+  repoconv/repowork_new_commmits/add/VendorARL_del.fi
+  repoconv/repowork_new_commmits/replace/11077485329842c81213eab68006fe5d58b5925f
+  repoconv/repowork_new_commmits/replace/67c46ada661fdab789632885c34bf77a277962db
+  repoconv/repowork_new_commmits/replace/7092929c41c2613c9bfe74eb8735ae87be9af3a2
+  repoconv/repowork_new_commmits/replace/76e74e9e9ce955bf6602171e67cbcd9539bfbec9
+  repoconv/repowork_new_commmits/replace/a098425430db227021617976961e6b51ce5569cb
+  repoconv/repowork_new_commmits/replace/a7c85f280677d70b8eef9aadf79302736ed26ffc
+  repoconv/repowork_new_commmits/replace/c7da20384024574fddc07c59dcdfcc2879560e31
+  repoconv/repowork_new_commmits/replace/e6417be98f27d570d863744f566f5aaf738abbe6
+  repoconv/repowork_new_commmits/replace/eb0179c08aefd8ea90697c42eba31244e4904eed
+  repoconv/repowork_new_commmits/replace/f5a1b0037fec2927cba073d118db24cdbd681975
+  repoconv/repowork_new_commmits/replace/f9fd3ad956d23e854df73294083cb37ef3c2f341
+  repoconv/repowork_new_commmits/replace/fc9e5a26cba18a926c644a4e2bb4b321855f2a88
+  repoconv/repowork_new_commmits/splices/r66607_trunk.fi
   repoconv/sha1.hpp
   repoconv/sha1_update.sh
   repoconv/svn2git/README
@@ -247,8 +265,6 @@ set(misc_ignore_files
   repoconv/svn_map_commit_revs.cxx
   repoconv/svn_msgs.cxx
   repoconv/svn_rev_updates.txt
-  repoconv/branch_corrections.txt
-  repoconv/remove_commits.txt
   repoconv/svnfexport.cxx
   repoconv/svnfexport_git.cxx
   repoconv/svnfexport_svn.cxx
@@ -266,6 +282,24 @@ set(misc_ignore_files
   repoconv/verify/svn_de-rcs.cxx
   repoconv/verify/verify.cpp
   repoconv/verify/verify.sh
+  repoconv/verify2/NOTES
+  repoconv/verify2/approximate_check.sh
+  repoconv/verify2/check.cxx
+  repoconv/verify2/checkout_check_parallel.sh
+  repoconv/verify2/find.sh
+  repoconv/verify2/find_date.sh
+  repoconv/verify2/find_initial.sh
+  repoconv/verify2/git_info.sh
+  repoconv/verify2/git_only.sh
+  repoconv/verify2/git_revsets.sh
+  repoconv/verify2/git_svn_map.sh
+  repoconv/verify2/hand_mapped.txt
+  repoconv/verify2/maps.cxx
+  repoconv/verify2/rev_approx_check.sh
+  repoconv/verify2/svn_diffs.sh
+  repoconv/verify2/svn_logs.sh
+  repoconv/verify2/svn_noncad.sh
+  repoconv/verify2/synth_tags.txt
   repowork/COPYING
   repowork/README
   repowork/blob.cpp

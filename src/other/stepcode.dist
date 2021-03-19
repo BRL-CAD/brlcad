@@ -133,6 +133,7 @@ example/ap203min/CMakeLists.txt
 example/ap203min/ExternalProjectBuild/CMakeLists.txt
 example/ap203min/ExternalProjectBuild/cmake/External_STEPCode.cmake
 example/ap203min/ap203min.cpp
+example/ap203min/include/sc_cf.h.in
 include/CMakeLists.txt
 include/exppp/exppp.h
 include/express/alg.h
