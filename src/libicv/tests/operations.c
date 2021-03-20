@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     int inx=0, iny=0;
     char *operation = NULL;
     icv_image_t *bif1, *bif2, *out_bif;
-    bu_mime_image_t format = BU_MIME_IMAGE_AUTO;
+    bu_mime_context_t format = BU_MIME_IMAGE_AUTO;
 
     bu_setprogname(argv[0]);
 

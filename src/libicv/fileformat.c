@@ -51,7 +51,7 @@
  * return the string as as return type (making the int type be an int*
  * argument instead that gets set).
  */
-bu_mime_image_t
+bu_mime_context_t
 icv_guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
@@ -83,7 +83,7 @@ icv_guess_file_format(const char *filename, char *trimmedname)
 /* begin public functions */
 
 icv_image_t *
-icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height)
+icv_read(const char *filename, bu_mime_context_t format, size_t width, size_t height)
 {
     if (format == BU_MIME_IMAGE_AUTO) {
 	/* do some voodoo with the file magic or something... */
@@ -109,7 +109,7 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
 
 
 int
-icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
+icv_write(icv_image_t *bif, const char *filename, bu_mime_context_t format)
 {
     /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
