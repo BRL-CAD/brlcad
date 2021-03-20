@@ -1,24 +1,5 @@
 # create sc_cf.h
 
-# Take the sc config file template as the starting point for
-# sc_cf.h.in - scripts may need to append to the template, so
-# it is read into memory initially.
-set(CONFIG_H_FILE ${SC_BINARY_DIR}/include/sc_cf.h.in)
-set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
-set(CMAKE_CURRENT_PROJECT SC)
-define_property(GLOBAL PROPERTY SC_CONFIG_H_CONTENTS BRIEF_DOCS "config.h.in contents" FULL_DOCS "config.h.in contents for SC project")
-if(NOT COMMAND CONFIG_H_APPEND)
-  macro(CONFIG_H_APPEND PROJECT_NAME NEW_CONTENTS)
-    if(PROJECT_NAME)
-      get_property(${PROJECT_NAME}_CONFIG_H_CONTENTS GLOBAL PROPERTY ${PROJECT_NAME}_CONFIG_H_CONTENTS)
-      set(${PROJECT_NAME}_CONFIG_H_FILE_CONTENTS "${${PROJECT_NAME}_CONFIG_H_CONTENTS}${NEW_CONTENTS}")
-      set_property(GLOBAL PROPERTY ${PROJECT_NAME}_CONFIG_H_CONTENTS "${${PROJECT_NAME}_CONFIG_H_FILE_CONTENTS}")
-    endif(PROJECT_NAME)
-  endmacro(CONFIG_H_APPEND NEW_CONTENTS)
-endif(NOT COMMAND CONFIG_H_APPEND)
-file(READ ${SC_SOURCE_DIR}/include/sc_cf_cmake.h.in CONFIG_H_FILE_CONTENTS)
-CONFIG_H_APPEND(SC "${CONFIG_H_FILE_CONTENTS}")
-
 include(CheckLibraryExists)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
@@ -97,9 +78,8 @@ int main() {return !(f() == f());}
 endif(SC_ENABLE_CXX11)
 
 # Now that all the tests are done, configure the sc_cf.h file:
-get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY SC_CONFIG_H_CONTENTS)
-file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
-configure_file(${CONFIG_H_FILE} ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h)
+configure_file(${CMAKE_SOURCE_DIR}/include/sc_cf.h.in ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h.gen)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h.gen ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h)
 
 # Local Variables:
 # tab-width: 8
