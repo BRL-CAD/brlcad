@@ -1,0 +1,4 @@
+Version 1.0.1 (2014-06-24)
+--------------------------
+* Fixed a casting bug in perplex_template.c. Benign on most systems, but
+  triggered a warning from some compilers.

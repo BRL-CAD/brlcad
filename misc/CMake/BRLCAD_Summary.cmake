@@ -246,9 +246,14 @@ function(BRLCAD_Summary)
   set(BRLCAD_TK_BUILD_LABEL "Compile Tk ")
   set(BRLCAD_INCRTCL_BUILD_LABEL "Compile Itcl/Itk ")
   set(BRLCAD_IWIDGETS_BUILD_LABEL "Compile Iwidgets ")
+  set(BRLCAD_TKHTML_BUILD_LABEL "Compile Tkhtml ")
+  set(BRLCAD_TKPNG_BUILD_LABEL "Compile tkpng ")
+  set(BRLCAD_TKTABLE_BUILD_LABEL "Compile Tktable ")
   set(BRLCAD_PNG_BUILD_LABEL "Compile libpng ")
   set(BRLCAD_REGEX_BUILD_LABEL "Compile libregex ")
   set(BRLCAD_ZLIB_BUILD_LABEL "Compile zlib ")
+  set(BRLCAD_UTAHRLE_BUILD_LABEL "Compile Utah Raster Toolkit ")
+  set(BRLCAD_OPENNURBS_BUILD_LABEL "Compile openNURBS ")
   set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
   set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
   set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
@@ -271,7 +276,8 @@ function(BRLCAD_Summary)
 
   # Make sets to use for iteration over all report items
   set(BUILD_REPORT_ITEMS
-    TCL TK INCRTCL IWIDGETS PNG REGEX ZLIB SC)
+    TCL TK INCRTCL IWIDGETS TKHTML TKTABLE PNG REGEX ZLIB
+    UTAHRLE OPENNURBS SC)
 
   set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL
@@ -353,18 +359,18 @@ function(BRLCAD_Summary)
 
   # Set state messages for standard components
   foreach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
-    get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other/ext DEFINITION BRLCAD_${ITEM}_BUILD)
-    get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_${ITEM}_NOTFOUND)
+    get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_BUILD)
+    get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_NOTFOUND)
     if("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
       set(BRLCAD_${ITEM}_BUILD "OFF!")
     endif("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
   endforeach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
 
   # IncrTcl is both ITCL and ITK - handle the various possibilities here
-  get_directory_property(BRLCAD_ITCL_BUILD DIRECTORY src/other/ext DEFINITION	BRLCAD_ITCL_BUILD)
-  get_directory_property(BRLCAD_ITK_BUILD DIRECTORY src/other/ext DEFINITION BRLCAD_ITK_BUILD)
-  get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_ITCL_NOTFOUND)
-  get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_ITK_NOTFOUND)
+  get_directory_property(BRLCAD_ITCL_BUILD DIRECTORY src/other DEFINITION	BRLCAD_ITCL_BUILD)
+  get_directory_property(BRLCAD_ITK_BUILD DIRECTORY src/other DEFINITION BRLCAD_ITK_BUILD)
+  get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_ITCL_NOTFOUND)
+  get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_ITK_NOTFOUND)
   if(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
     set(BRLCAD_INCRTCL_BUILD ON)
   else(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)

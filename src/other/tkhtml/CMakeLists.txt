@@ -1,3 +1,11 @@
+# Minimum required version of CMake
+cmake_minimum_required(VERSION 3.12)
+
+# set CMake project name
+project(TKHTML)
+
+find_package(TCL)
+
 if (TK_SYSTEM_GRAPHICS MATCHES "x11")
   find_package(X11)
 endif (TK_SYSTEM_GRAPHICS MATCHES "x11")
@@ -9,21 +17,6 @@ include_directories(
   ${TK_INCLUDE_PATH}
   ${X11_INCLUDE_DIR}
   )
-
-if (CMAKE_CONFIGURATION_TYPES)
-	set(CMAKE_BINARY_ROOT "${CMAKE_BINARY_DIR}/$<CONFIG>")
-else (CMAKE_CONFIGURATION_TYPES)
-	set(CMAKE_BINARY_ROOT "${CMAKE_BINARY_DIR}")
-endif (CMAKE_CONFIGURATION_TYPES)
-
-if(NOT SHARED_DIR)
-  if(NOT WIN32)
-    set(SHARED_DIR lib)
-  else(NOT WIN32)
-    set(SHARED_DIR bin)
-  endif(NOT WIN32)
-endif(NOT SHARED_DIR)
-
 
 set(TKHTML_PKGNAME Tkhtml)
 set(TKHTML_PKGVERSION "3.0")
@@ -81,6 +74,13 @@ set(TKHTML_SRCS
   src/swproc.c
   )
 
+if (NOT LIB_DIR)
+  if (NOT WIN32)
+    set(LIB_DIR lib)
+  else (NOT WIN32)
+    set(LIB_DIR bin)
+  endif (NOT WIN32)
+endif (NOT LIB_DIR)
 
 add_library(Tkhtml SHARED ${TKHTML_SRCS})
 if (TK_SYSTEM_GRAPHICS MATCHES "aqua")
@@ -99,13 +99,8 @@ install(TARGETS Tkhtml
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
 
-# Create pkgIndex.tcl files
-file(GENERATE
-	OUTPUT "${CMAKE_BINARY_ROOT}/${LIB_DIR}/${TKHTML_PKGNAME}${TKHTML_PKGVERSION}/pkgIndex.tcl"
-  CONTENT "
-package ifneeded Tkhtml ${TKHTML_PKGVERSION} [list load [file join $dir ../../${SHARED_DIR} $<TARGET_FILE_NAME:Tkhtml>] Tkhtml]
-")
-install(FILES "${CMAKE_BINARY_ROOT}/${LIB_DIR}/${TKHTML_PKGNAME}${TKHTML_PKGVERSION}/pkgIndex.tcl" DESTINATION ${LIB_DIR}/${TKHTML_PKGNAME}${TKHTML_PKGVERSION})
+include(TCL_PKGINDEX.cmake)
+TCL_PKGINDEX(Tkhtml ${TKHTML_PKGNAME} ${TKHTML_PKGVERSION})
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkhtml.n

@@ -350,33 +350,17 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 # Based on the options, define libraries as either stand-alone builds
 # or dependencies on OBJECT library builds
 if(NOT USE_OBJECT_LIBS)
- 
   if(BUILD_SHARED_LIBS)
     add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
     if(MSVC)
       set_property(TARGET openNURBS APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_EXPORTS")
     endif(MSVC)
   endif(BUILD_SHARED_LIBS)
-
   if(BUILD_STATIC_LIBS)
     add_library(openNURBS-static STATIC ${OPENNURBS_SOURCES})
-    if(TARGET zlib_stage)
-      add_dependencies(openNURBS-static zlib_stage)
-    endif(TARGET zlib_stage)
   endif(BUILD_STATIC_LIBS)
-
 else(NOT USE_OBJECT_LIBS)
-
   add_library(openNURBS-obj OBJECT ${OPENNURBS_SOURCES})
-
-  # For build ordering, if we are linking to another build target make sure
-  # the object build depends on that target
-  foreach(DEP ${OPENNURBS_LINKLIBRARIES})
-    if(TARGET ${DEP})
-      add_dependencies(openNURBS-obj ${DEP})
-    endif(TARGET ${DEP})
-  endforeach(DEP ${OPENNURBS_LINKLIBRARIES})
-
   if(BUILD_SHARED_LIBS)
     add_library(openNURBS SHARED $<TARGET_OBJECTS:openNURBS-obj>)
     if(MSVC)
@@ -385,9 +369,6 @@ else(NOT USE_OBJECT_LIBS)
   endif(BUILD_SHARED_LIBS)
   if(BUILD_STATIC_LIBS)
     add_library(openNURBS-static STATIC $<TARGET_OBJECTS:openNURBS-obj>)
-    if(TARGET zlib_stage)
-      add_dependencies(openNURBS-static zlib_stage)
-    endif(TARGET zlib_stage)
   endif(BUILD_STATIC_LIBS)
 endif(NOT USE_OBJECT_LIBS)
 

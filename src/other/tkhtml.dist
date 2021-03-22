@@ -2,6 +2,7 @@ set(tkhtml_ignore_files
 CMakeLists.txt
 COPYING
 README
+TCL_PKGINDEX.cmake
 doc/html.man
 doc/macros.tcl
 doc/tkhtml_requirements.tcl

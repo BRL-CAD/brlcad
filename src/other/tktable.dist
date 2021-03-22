@@ -20,5 +20,5 @@ license.txt
 mac/mac_tkTable.mcp.xml
 mac/mac_tkTable.r
 mac/mac_tkTable_prefix.h
-tktable_hdr.cxx
+misc/tkTable_header.tcl
 )

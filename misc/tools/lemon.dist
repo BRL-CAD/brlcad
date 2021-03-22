@@ -1,0 +1,6 @@
+set(lemon_ignore_files
+CMakeLists.txt
+README
+lemon.c
+lempar.c
+)

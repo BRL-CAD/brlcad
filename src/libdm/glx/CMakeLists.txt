@@ -26,9 +26,6 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
 
   add_definitions(-DDM_PLUGIN)
 
-  if (X11_Xrender_LIB)
-    list(APPEND X11_LIBRARIES ${X11_Xrender_LIB})
-  endif (X11_Xrender_LIB)
 
   dm_plugin_library(dm-ogl SHARED ${OGL_SRCS})
   target_link_libraries(dm-ogl libdm libbu ${X11_LIBRARIES} ${OPENGL_LIBRARIES} ${TCL_LIBRARY} ${TK_LIBRARY})
