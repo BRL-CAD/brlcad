@@ -134,6 +134,7 @@ if (BRLCAD_ENABLE_TCL)
     ExternalProject_Target(SHARED itcl ITCL_BLD ${ITCL_INSTDIR}
       itcl${ITCL_VERSION}/${ITCL_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
       SUBDIR  itcl${ITCL_VERSION}
+      RPATH
       )
 
     ExternalProject_Target(STATIC itclstub ITCL_BLD ${ITCL_INSTDIR}

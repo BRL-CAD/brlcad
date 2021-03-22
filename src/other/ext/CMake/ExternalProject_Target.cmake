@@ -249,6 +249,7 @@ endfunction(ET_Origin_Path)
 # /usr/bin/baz -> bin/baz
 # /usr/bin/mypkg/baz -> bin/mypkg/baz
 #
+find_program(CHRPATH_EXEC chrpath)
 function(ET_RPath OFILE)
   get_filename_component(OFPATH "${OFILE}" DIRECTORY)
   get_filename_component(RRPATH "${CMAKE_INSTALL_PREFIX}/${OFPATH}" REALPATH)
@@ -272,7 +273,16 @@ function(ET_RPath OFILE)
     execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BUILD_RPATH}\" \"\${WPATH}\")
     execute_process(COMMAND install_name_tool -add_rpath \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
-  else (APPLE)
+  elseif (CHRPATH_EXEC)
+    # Looks like CMake's built in RPATH logic isn't quite enough for our
+    # purposes here - it leaves the build RPATH in place even after assigning
+    # the new path.
+    # TODO Need to bundle chrpath so we can reliably do this...
+    install(CODE "
+    set(WPATH \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\")
+    execute_process(COMMAND chrpath -r \"${NEW_RPATH}\" \"\${WPATH}\")
+    ")
+  else ()
     install(CODE "
     file(RPATH_CHANGE
       FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\"
