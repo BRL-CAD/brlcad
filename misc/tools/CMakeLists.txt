@@ -106,6 +106,19 @@ SetTargetFolder(xml "Third Party Libraries")
 SetTargetFolder(xslt "Third Party Libraries")
 SetTargetFolder(exslt "Third Party Libraries")
 
+# Used to set/update RPATH values on certain platforms
+set(chrpath_DESCRIPTION "
+Option for enabling and disabling compilation of the chrpath
+rpath updating utility provided with BRL-CAD's source distribution.
+Used during compilation to alter low level properties of shared
+libraries and executables.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY_EXECUTABLE(chrpath CHRPATH chrpath REQUIRED "BRLCAD_EXTRADOCS_VALIDATE;BRLCAD_LEVEL1" ALIASES "ENABLE_CHRPATH" DESCRIPTION chrpath_DESCRIPTION)
+SetTargetFolder(chrpath "Compilation Utilities")
+
+
 # env2c - Scanner to generate a list of environment variables used by
 # source code
 THIRD_PARTY_EXECUTABLE(env2c ENV2C env2c REQUIRED "BRLCAD_LEVEL2" NOSYS)

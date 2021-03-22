@@ -1,0 +1,18 @@
+Geoffrey Keating <geoffk@ozemail.com.au>
+  Implemented first version of chrpath.c based on first version of
+  killrpath.
+Peeter Joot <peeterj@ca.ibm.com>
+  Implemented first version of killrpath.c.
+Petter Reinholdtsen <pere@hungry.com>
+  Collected both implementations and made userfriendly wrapper.
+Javier Serrano Polo <jasp00@terra.es>
+  Made it arch-independent so it can be used for cross-development.
+
+With patches from:
+
+Darren Salt <linux@youmustbejoking.demon.co.uk>
+David Hull <hull@paracel.com> 
+Bradford W. Johnson <bradford@math.umn.edu>
+Thomas Anders <anders@hmi.de>
+Tollef Fog Heen <tfheen@debian.org>
+Eric S. Raymond <esr@thyrsus.com>

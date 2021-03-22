@@ -249,7 +249,7 @@ endfunction(ET_Origin_Path)
 # /usr/bin/baz -> bin/baz
 # /usr/bin/mypkg/baz -> bin/mypkg/baz
 #
-find_program(CHRPATH_EXEC chrpath)
+find_program(CHRPATH_EXECUTABLE chrpath)
 function(ET_RPath OFILE)
   get_filename_component(OFPATH "${OFILE}" DIRECTORY)
   get_filename_component(RRPATH "${CMAKE_INSTALL_PREFIX}/${OFPATH}" REALPATH)
@@ -276,14 +276,14 @@ function(ET_RPath OFILE)
     execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BUILD_RPATH}\" \"\${WPATH}\")
     execute_process(COMMAND install_name_tool -add_rpath \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
-  elseif (CHRPATH_EXEC)
+  elseif (CHRPATH_EXECUTABLE)
     # Looks like CMake's built in RPATH logic isn't quite enough for our
     # purposes here - it leaves the build RPATH in place even after assigning
     # the new path.
     # TODO Need to bundle chrpath so we can reliably do this...
     install(CODE "
     set(WPATH \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\")
-    execute_process(COMMAND chrpath -r \"${NEW_RPATH}\" \"\${WPATH}\")
+    execute_process(COMMAND ${CHRPATH_EXECUTABLE} -r \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
   else ()
     install(CODE "
@@ -400,6 +400,9 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
       # Perform RPath magic
       if (E_RPATH)
+	if (TARGET "${CHRPATH_EXECUTABLE_TARGET}")
+	  add_dependencies(${etarg} ${CHRPATH_EXECUTABLE_TARGET})
+	endif (TARGET "${CHRPATH_EXECUTABLE_TARGET}")
 	ET_RPath("${SHARED_DIR}/${fname}")
       endif (E_RPATH)
 
