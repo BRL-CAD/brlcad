@@ -89,7 +89,7 @@ HIDDEN int png_can_read(const char * data)
 
 
 const struct gcv_filter gcv_conv_png_read = {
-    "PNG Reader", GCV_FILTER_READ, BU_MIME_MODEL_UNKNOWN, png_can_read,
+    "PNG Reader", GCV_FILTER_READ, BU_MIME_IMAGE_PNG, png_can_read,
     create_opts, free_opts, png_read
 };
 

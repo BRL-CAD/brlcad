@@ -206,7 +206,7 @@ parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, 
 
     /* If we have an explicit option, that overrides any other format specifiers */
     if (opt) {
-	type_int = bu_file_mime(opt, BU_MIME_MODEL);
+	type_int = bu_file_mime(opt, BU_MIME_AUTO);
 	type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_context_t)type_int;
 	if (type == BU_MIME_MODEL_UNKNOWN) {
 	    /* Have prefix, but doesn't result in a known format - that's an error */
@@ -223,7 +223,7 @@ parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, 
 	 * find out if it maps to a valid type */
 	if (type == BU_MIME_MODEL_UNKNOWN && format) {
 	    /* Yes - see if the prefix specifies a model format */
-	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_MODEL);
+	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_AUTO);
 	    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_context_t)type_int;
 	    if (type == BU_MIME_MODEL_UNKNOWN) {
 		/* Have prefix, but doesn't result in a known format - that's an error */
@@ -238,7 +238,7 @@ parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, 
     /* If we don't already have a type and we were passed a format string, give it a try */
     if (type == BU_MIME_MODEL_UNKNOWN && format && bu_vls_strlen(&format_cpy) > 0) {
 	bu_vls_sprintf(format, "%s", bu_vls_addr(&format_cpy));
-	type_int = bu_file_mime(bu_vls_addr(&format_cpy), BU_MIME_MODEL);
+	type_int = bu_file_mime(bu_vls_addr(&format_cpy), BU_MIME_AUTO);
 	type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_context_t)type_int;
 	if (type == BU_MIME_MODEL_UNKNOWN) {
 	    /* Have prefix, but doesn't result in a known format - that's an error */
@@ -252,7 +252,7 @@ parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, 
     /* If we have no prefix or the prefix didn't map to a model type, try file extension */
     if (type == BU_MIME_MODEL_UNKNOWN && extract_path(&path, input)) {
 	if (bu_path_component(format, bu_vls_addr(&path), BU_PATH_EXT)) {
-	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_MODEL);
+	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_AUTO);
 	    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_context_t)type_int;
 	    if (type == BU_MIME_MODEL_UNKNOWN) {
 		/* Have file extension, but doesn't result in a known format - that's an error */
@@ -320,7 +320,7 @@ model_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
 
-    type_int = bu_file_mime(argv[0], BU_MIME_MODEL);
+    type_int = bu_file_mime(argv[0], BU_MIME_AUTO);
     type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_context_t)type_int;
     if (type == BU_MIME_MODEL_UNKNOWN) {
 	if (msg) {
@@ -385,16 +385,16 @@ do_conversion(
 	    if (!out_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == out_type))
 		out_filter = *entry;
 	    if (!out_filter && (emt == BU_MIME_MODEL_AUTO) &&
-		((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_MODEL)))) {
+		((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_AUTO)))) {
 		out_filter = *entry;
 	    }
 	}
     }
 
     if (!in_filter)
-	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, BU_MIME_MODEL));
+	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, BU_MIME_AUTO));
     if (!out_filter)
-	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, BU_MIME_MODEL));
+	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, BU_MIME_AUTO));
     if (!in_filter || !out_filter)
 	return 0;
 
@@ -663,8 +663,8 @@ main(int ac, const char **av)
     /* If we've gotten this far, we know enough to try to convert. Until we
      * hook in conversion calls to libgcv, print a summary of the option
      * parsing results for debugging. */
-    in_fmt = bu_file_mime_str((int)in_type, BU_MIME_MODEL);
-    out_fmt = bu_file_mime_str((int)out_type, BU_MIME_MODEL);
+    in_fmt = bu_file_mime_str((int)in_type, BU_MIME_AUTO);
+    out_fmt = bu_file_mime_str((int)out_type, BU_MIME_AUTO);
     if (in_fmt) {
 	bu_log("Input file format: %s\n", in_fmt);
     } else {
