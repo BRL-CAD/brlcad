@@ -38,8 +38,8 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
     set(tclindex_outdir "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir}")
     add_custom_command(
       OUTPUT ${tclindex_outdir}/${outfile}
-      COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir}
-      DEPENDS btclsh ${data_target_list} ${tcl_files}
+      COMMAND ${TCL_TCLSH} ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir}
+      DEPENDS ${TCL_TCLSH} ${data_target_list} ${tcl_files}
       )
 
     # Install logic for index file.
