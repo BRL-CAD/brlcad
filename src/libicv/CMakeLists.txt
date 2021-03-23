@@ -25,6 +25,9 @@ set(LIBICV_SOURCES
   )
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARIES};${NETPBM_LIBRARY}")
+if (TARGET png_stage)
+  add_dependencies(libicv png_stage)
+endif (TARGET png_stage)
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET netpbm OR HIDE_INTERNAL_SYMBOLS_EXT)
