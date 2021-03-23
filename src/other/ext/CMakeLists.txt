@@ -199,6 +199,7 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 find_program(CHRPATH_EXECUTABLE chrpath)
 if (NOT CHRPATH_EXECUTABLE)
   add_subdirectory(chrpath)
+  set(CHRPATH_EXECUTABLE "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${BIN_DIR}/chrpath")
 endif (NOT CHRPATH_EXECUTABLE)
 set(CHRPATH_FILES
   chrpath/AUTHORS

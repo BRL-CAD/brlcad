@@ -285,7 +285,7 @@ function(ET_RPath OFILE)
     # chrpath utility rather than CMake's internal support.
     install(CODE "
     set(WPATH \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\")
-    execute_process(COMMAND ${CHRPATH_EXECUTABLE} -r \"${NEW_RPATH}\" \"\${WPATH}\")
+    execute_process(COMMAND \"${CHRPATH_EXECUTABLE}\" -r \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
   else ()
     # If we have no better choices, go with CMake's internal support.  If this ever matures
