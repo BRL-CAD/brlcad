@@ -58,9 +58,6 @@ set(mged_libs libtclcad libged libwdb libdm libnmg ${WS2_32_LIBRARY} ${OPENGL32_
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
 endif(TARGET libtermio)
-if (ITK_LIBRARY)
-  set(mged_libs ${mged_libs} ${ITK_LIBRARY})
-endif (ITK_LIBRARY)
 
 # Ideally we'd build as GUI for Windows to avoid the command window popping up,
 # but I'm not sure if that would be a problem for scripting with mged.exe on
@@ -94,6 +91,14 @@ if (BRLCAD_ENABLE_TCL)
   foreach(item ${tclindex_target_list})
     add_dependencies(mged ${item})
   endforeach(item ${tclindex_target_list})
+
+  # stage targets
+  set(stgts tcl tk itcl itk iwidgets)
+  foreach(ST ${stgts})
+    if (TARGET ${ST}_stage)
+      add_dependencies(mged ${ST}_stage)
+    endif (TARGET ${ST}_stage)
+  endforeach(ST ${stgts})
 
   # MGED is one of the programs that gets a start menu entry
   set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
