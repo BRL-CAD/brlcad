@@ -277,15 +277,21 @@ function(ET_RPath OFILE)
     execute_process(COMMAND install_name_tool -add_rpath \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
   elseif (CHRPATH_EXECUTABLE)
-    # Looks like CMake's built in RPATH logic isn't quite enough for our
-    # purposes here - it leaves the build RPATH in place even after assigning
-    # the new path.
-    # TODO Need to bundle chrpath so we can reliably do this...
+    # Specifying the RPATH to subbuilds is producing final paths saving both the build
+    # and the install rpath.  I'm not 100% sure why, but it's looking like CMake's internal
+    # logic creating cmake_install.cmake files is appending the build path to the ":"
+    # suffixed RPATHs, and I've so far not found a combination of settings that will disable
+    # that behavior without ditching RPATH setting completely.  The result will work but
+    # but produces a messy "final" RPATH configuration.  To get cleaner results, use the
+    # chrpath utility rather than CMake's internal support.
     install(CODE "
     set(WPATH \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\")
     execute_process(COMMAND ${CHRPATH_EXECUTABLE} -r \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
   else ()
+    # If we have no better choices, go with CMake's internal support.  If this ever matures
+    # we will want to use it exclusively in lieu of the above platform specific tools, but
+    # as of 2021-03 I can't get reliable or clean results using only the internal options.
     install(CODE "
     file(RPATH_CHANGE
       FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\"
