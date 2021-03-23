@@ -213,7 +213,7 @@ endfunction(ET_target_props)
 
 # For a given path, calculate the $ORIGIN style path needed relative
 # to CMAKE_INSTALL_PREFIX
-function(ET_Origin_Path POPATH INIT_PATH)
+function(ET_Origin_Path POPATH PRPATH INIT_PATH)
 
   get_filename_component(CPATH "${INIT_PATH}" REALPATH)
   set(RELDIRS)
@@ -233,6 +233,7 @@ function(ET_Origin_Path POPATH INIT_PATH)
   set(FPATH "${FPATH}${RELDIRS}")
 
   set(${POPATH} ${FPATH} PARENT_SCOPE)
+  set(${PRPATH} ${RELDIRS} PARENT_SCOPE)
 endfunction(ET_Origin_Path)
 
 # Mimic the magic of the CMake install(TARGETS) form of the install command.
@@ -253,11 +254,11 @@ function(ET_RPath OFILE)
   get_filename_component(OFPATH "${OFILE}" DIRECTORY)
   get_filename_component(RRPATH "${CMAKE_INSTALL_PREFIX}/${OFPATH}" REALPATH)
   set(OPATH)
-  ET_Origin_Path(OPATH "${RRPATH}")
+  ET_Origin_Path(OPATH LRPATH "${RRPATH}")
   # For RPATH purposes, BIN_DIR -> LIB_DIR
-  set(OPATH_ORIG "${OPATH}")
   string(REPLACE "${BIN_DIR}" "${LIB_DIR}" OPATH "${OPATH}")
-  string(REPLACE "${OPATH_ORIG}" "${OPATH}" RRPATH "${RRPATH}")
+  string(REPLACE "${BIN_DIR}" "${LIB_DIR}" LBPATH "${LRPATH}")
+  string(REGEX REPLACE "${LRPATH}$" "${LBPATH}" RRPATH "${RRPATH}")
   if (NOT APPLE)
     set(NEW_RPATH "$ENV{DESTDIR}${RRPATH}:$ORIGIN/${OPATH}")
   else (NOT APPLE)
