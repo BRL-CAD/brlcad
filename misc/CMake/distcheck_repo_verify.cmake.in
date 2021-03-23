@@ -85,7 +85,7 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
 
 
     # Check whether Git is reporting modified files.
-    execute_process(COMMAND ${GIT_EXEC} status --porcelain --ignored
+    execute_process(COMMAND ${GIT_EXEC} status --porcelain
       WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@"
       OUTPUT_VARIABLE GIT_STDOUT
       ERROR_VARIABLE GIT_STDERR)
