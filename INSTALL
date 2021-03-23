@@ -552,18 +552,6 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_XMLLINT
 
 
---- BRLCAD_CHRPATH ---
-
-Option for enabling and disabling compilation of the chrpath
-rpath updating utility provided with BRL-CAD's source distribution.
-Used during compilation to alter low level properties of shared
-libraries and executables.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_CHRPATH
-
-
 
 *** Note - Do not add or edit configuration option descriptions and alias
    lists in this file - those entries are auto-generated from information in

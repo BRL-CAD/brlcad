@@ -138,10 +138,6 @@ do
                                   shift;;
      --disable-xmllint)                options="$options -DBRLCAD_XMLLINT=SYSTEM";
                                   shift;;
-     --enable-chrpath)                options="$options -DBRLCAD_CHRPATH=BUNDLED";
-                                  shift;;
-     --disable-chrpath)                options="$options -DBRLCAD_CHRPATH=SYSTEM";
-                                  shift;;
      --prefix=*)   	          inputstr=$1;
 				  options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";
 				  shift;;

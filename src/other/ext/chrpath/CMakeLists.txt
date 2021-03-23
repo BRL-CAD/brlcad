@@ -30,7 +30,8 @@ check_function_exists(getopt_long HAVE_GETOPT_LONG)
 
 set(SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P})
 
-configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/config.h")
 
 set(CHRPATH_SRCS
   chrpath.c
@@ -39,9 +40,11 @@ set(CHRPATH_SRCS
   main.c
   )
 
-add_executable(chrpath ${CHRPATH_SRCS})
-set_target_properties(chrpath PROPERTIES FOLDER "Compilation Utilities")
-set_property(TARGET chrpath APPEND PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
+if (NOT MSVC AND NOT APPLE)
+  add_executable(chrpath ${CHRPATH_SRCS})
+  set_target_properties(chrpath PROPERTIES FOLDER "Compilation Utilities")
+  set_property(TARGET chrpath APPEND PROPERTY COMPILE_DEFINITIONS HAVE_CONFIG_H)
+endif (NOT MSVC AND NOT APPLE)
 
 # Local Variables:
 # tab-width: 8

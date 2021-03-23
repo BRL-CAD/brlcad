@@ -192,6 +192,28 @@ if(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 
+# chrpath is used to set/update RPATH values on certain platforms.
+# Build a copy if we don't already have it and we're not on Windows
+# or Mac.  If we're going to use it, it needs to be defined before
+# we start setting up the external targets.
+find_program(CHRPATH_EXECUTABLE chrpath)
+if (NOT CHRPATH_EXECUTABLE)
+  add_subdirectory(chrpath)
+endif (NOT CHRPATH_EXECUTABLE)
+set(CHRPATH_FILES
+  chrpath/AUTHORS
+  chrpath/CMakeLists.txt
+  chrpath/COPYING
+  chrpath/README
+  chrpath/chrpath.c
+  chrpath/config.h.in
+  chrpath/elf.c
+  chrpath/killrpath.c
+  chrpath/main.c
+  chrpath/protos.h
+  )
+CMAKEFILES(${CHRPATH_FILES})
+
 # BRL-CAD defines some additional custom targets used to manage the outputs of
 # ExternalProject_Add targets.
 # Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized

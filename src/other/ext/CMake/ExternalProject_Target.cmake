@@ -249,7 +249,6 @@ endfunction(ET_Origin_Path)
 # /usr/bin/baz -> bin/baz
 # /usr/bin/mypkg/baz -> bin/mypkg/baz
 #
-find_program(CHRPATH_EXECUTABLE chrpath)
 function(ET_RPath OFILE)
   get_filename_component(OFPATH "${OFILE}" DIRECTORY)
   get_filename_component(RRPATH "${CMAKE_INSTALL_PREFIX}/${OFPATH}" REALPATH)
