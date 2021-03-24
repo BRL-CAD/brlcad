@@ -97,6 +97,7 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
 
   if (NOT TARGET ${etarg}_stage)
     add_custom_target(${etarg}_stage ALL)
+    set_target_properties(${etarg}_stage PROPERTIES FOLDER "ExternalProjectTargets")
   endif (NOT TARGET ${etarg}_stage)
 
   set(ALL_TOUT)
