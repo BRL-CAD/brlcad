@@ -145,7 +145,8 @@ jobs:
       - name: Build
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake --build build --config Release --target check
+          ninja -j1
+          #cmake --build build --config Release --target check
           cmake --build build --config Release --target package
 
         # For the moment the space demands are too extreme to enable this
