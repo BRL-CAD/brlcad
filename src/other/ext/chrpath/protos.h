@@ -1,8 +1,8 @@
 #ifndef PROTOS_H
 #define PROTOS_H
 
-#include <byteswap.h>
 #include <elf.h>
+#include "bswap.h"
 #include "config.h"
 
 #ifdef WORDS_BIGENDIAN

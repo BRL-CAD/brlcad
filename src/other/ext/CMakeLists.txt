@@ -206,6 +206,7 @@ set(CHRPATH_FILES
   chrpath/CMakeLists.txt
   chrpath/COPYING
   chrpath/README
+  chrpath/bswap.h
   chrpath/chrpath.c
   chrpath/config.h.in
   chrpath/elf.c
