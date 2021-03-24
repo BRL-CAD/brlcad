@@ -277,17 +277,18 @@ function(ET_RPath OFILE)
     execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BUILD_RPATH}\" \"\${WPATH}\")
     execute_process(COMMAND install_name_tool -add_rpath \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
-  elseif (CHRPATH_EXECUTABLE)
+  elseif (PATCHELF_EXECUTABLE)
     # Specifying the RPATH to subbuilds is producing final paths saving both the build
     # and the install rpath.  I'm not 100% sure why, but it's looking like CMake's internal
     # logic creating cmake_install.cmake files is appending the build path to the ":"
     # suffixed RPATHs, and I've so far not found a combination of settings that will disable
     # that behavior without ditching RPATH setting completely.  The result will work but
     # but produces a messy "final" RPATH configuration.  To get cleaner results, use the
-    # chrpath utility rather than CMake's internal support.
+    # patchelf utility rather than CMake's internal support.
     install(CODE "
     set(WPATH \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\")
-    execute_process(COMMAND \"${CHRPATH_EXECUTABLE}\" -r \"${NEW_RPATH}\" \"\${WPATH}\")
+    execute_process(COMMAND \"${PATCHELF_EXECUTABLE}\" --remove-rpath \"\${WPATH}\")
+    execute_process(COMMAND \"${PATCHELF_EXECUTABLE}\" --set-rpath \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
   else ()
     # If we have no better choices, go with CMake's internal support.  If this ever matures
