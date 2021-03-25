@@ -97,6 +97,7 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
 
   if (NOT TARGET ${etarg}_stage)
     add_custom_target(${etarg}_stage ALL)
+    set_target_properties(${etarg}_stage PROPERTIES FOLDER "ExternalProjectTargets")
   endif (NOT TARGET ${etarg}_stage)
 
   set(ALL_TOUT)
@@ -129,6 +130,7 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
   if (ALL_TOUT)
     string(MD5 UKEY "${ALL_TOUT}")
     add_custom_target(${etarg}_${UKEY} ALL DEPENDS ${ALL_TOUT})
+    set_target_properties(${etarg}_${UKEY} PROPERTIES FOLDER "ExternalProjectTargets")
     add_dependencies(${etarg}_stage ${etarg}_${UKEY})
   endif (ALL_TOUT)
 
@@ -213,7 +215,7 @@ endfunction(ET_target_props)
 
 # For a given path, calculate the $ORIGIN style path needed relative
 # to CMAKE_INSTALL_PREFIX
-function(ET_Origin_Path POPATH INIT_PATH)
+function(ET_Origin_Path POPATH PRPATH INIT_PATH)
 
   get_filename_component(CPATH "${INIT_PATH}" REALPATH)
   set(RELDIRS)
@@ -233,6 +235,7 @@ function(ET_Origin_Path POPATH INIT_PATH)
   set(FPATH "${FPATH}${RELDIRS}")
 
   set(${POPATH} ${FPATH} PARENT_SCOPE)
+  set(${PRPATH} ${RELDIRS} PARENT_SCOPE)
 endfunction(ET_Origin_Path)
 
 # Mimic the magic of the CMake install(TARGETS) form of the install command.
@@ -253,7 +256,11 @@ function(ET_RPath OFILE)
   get_filename_component(OFPATH "${OFILE}" DIRECTORY)
   get_filename_component(RRPATH "${CMAKE_INSTALL_PREFIX}/${OFPATH}" REALPATH)
   set(OPATH)
-  ET_Origin_Path(OPATH "${RRPATH}")
+  ET_Origin_Path(OPATH LRPATH "${RRPATH}")
+  # For RPATH purposes, BIN_DIR -> LIB_DIR
+  string(REPLACE "${BIN_DIR}" "${LIB_DIR}" OPATH "${OPATH}")
+  string(REPLACE "${BIN_DIR}" "${LIB_DIR}" LBPATH "${LRPATH}")
+  string(REGEX REPLACE "${LRPATH}$" "${LBPATH}" RRPATH "${RRPATH}")
   if (NOT APPLE)
     set(NEW_RPATH "$ENV{DESTDIR}${RRPATH}:$ORIGIN/${OPATH}")
   else (NOT APPLE)
@@ -272,7 +279,23 @@ function(ET_RPath OFILE)
     execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BUILD_RPATH}\" \"\${WPATH}\")
     execute_process(COMMAND install_name_tool -add_rpath \"${NEW_RPATH}\" \"\${WPATH}\")
     ")
-  else (APPLE)
+  elseif (PATCHELF_EXECUTABLE)
+    # Specifying the RPATH to subbuilds is producing final paths saving both the build
+    # and the install rpath.  I'm not 100% sure why, but it's looking like CMake's internal
+    # logic creating cmake_install.cmake files is appending the build path to the ":"
+    # suffixed RPATHs, and I've so far not found a combination of settings that will disable
+    # that behavior without ditching RPATH setting completely.  The result will work but
+    # but produces a messy "final" RPATH configuration.  To get cleaner results, use the
+    # patchelf utility rather than CMake's internal support.
+    install(CODE "
+    set(WPATH \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\")
+    execute_process(COMMAND \"${PATCHELF_EXECUTABLE}\" --remove-rpath \"\${WPATH}\")
+    execute_process(COMMAND \"${PATCHELF_EXECUTABLE}\" --set-rpath \"${NEW_RPATH}\" \"\${WPATH}\")
+    ")
+  else ()
+    # If we have no better choices, go with CMake's internal support.  If this ever matures
+    # we will want to use it exclusively in lieu of the above platform specific tools, but
+    # as of 2021-03 I can't get reliable or clean results using only the internal options.
     install(CODE "
     file(RPATH_CHANGE
       FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OFILE}\"
@@ -387,6 +410,9 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
       # Perform RPath magic
       if (E_RPATH)
+	if (TARGET "${CHRPATH_EXECUTABLE_TARGET}")
+	  add_dependencies(${etarg} ${CHRPATH_EXECUTABLE_TARGET})
+	endif (TARGET "${CHRPATH_EXECUTABLE_TARGET}")
 	ET_RPath("${SHARED_DIR}/${fname}")
       endif (E_RPATH)
 
@@ -462,6 +488,7 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
   if (TOUT)
     if (NOT TARGET ${etarg}_stage)
       add_custom_target(${etarg}_stage ALL DEPENDS ${TOUT})
+      set_target_properties(${etarg}_stage PROPERTIES FOLDER "ExternalProjectTargets")
     else (NOT TARGET ${etarg}_stage)
       add_dependencies(${etarg}_stage ${TOUT})
     endif (NOT TARGET ${etarg}_stage)

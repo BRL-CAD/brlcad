@@ -32,6 +32,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
   if (NOT TARGET tcl_replace)
     configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx @ONLY)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+    set_target_properties(tcl_replace PROPERTIES FOLDER "Compilation Utilities")
   endif (NOT TARGET tcl_replace)
 
   set(TK_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/tk)

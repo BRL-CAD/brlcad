@@ -169,6 +169,7 @@ endif(NOT DEFINED EXTPROJ_VERBOSE)
 # set before configuring this file.
 configure_file(${BDEPS_CMAKE_DIR}/rpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 add_executable(rpath_replace ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
+set_target_properties(rpath_replace PROPERTIES FOLDER "Compilation Utilities")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 
 # Independent projects with their own build systems (potentially not CMake
@@ -180,6 +181,7 @@ include(ExternalProject)
 # CMAKE_INSTALL_PREFIX are finalized before generating this file!
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CMake/buildpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 add_executable(buildpath_replace ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
+set_target_properties(buildpath_replace PROPERTIES FOLDER "Compilation Utilities")
 # TODO - remove once we require CMake >=3.14
 # Until we can require CMake 3.14 for generator expressions in install(CODE), force
 # the location of buildpath_replace to a known location in all cases
@@ -191,6 +193,26 @@ if(CMAKE_CONFIGURATION_TYPES)
   endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
 endif(CMAKE_CONFIGURATION_TYPES)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
+
+# patchelf is used to set/update RPATH values on certain platforms.
+# Build a copy if we don't already have it and we're not on Windows
+# or Mac.  If we're going to use it, it needs to be defined before
+# we start setting up the external targets.
+find_program(PATCHELF_EXECUTABLE patchelf)
+if (NOT PATCHELF_EXECUTABLE)
+  add_subdirectory(patchelf)
+  set(PATCHELF_EXECUTABLE "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${BIN_DIR}/patchelf")
+  if (TARGET patchelf)
+    set_target_properties(patchelf PROPERTIES FOLDER "Compilation Utilities")
+  endif (TARGET patchelf)
+endif (NOT PATCHELF_EXECUTABLE)
+set(PATCHELF_FILES
+  patchelf/CMakeLists.txt
+  patchelf/COPYING
+  patchelf/patchelf.cc
+  patchelf/elf.h
+  )
+CMAKEFILES(${PATCHELF_FILES})
 
 # BRL-CAD defines some additional custom targets used to manage the outputs of
 # ExternalProject_Add targets.

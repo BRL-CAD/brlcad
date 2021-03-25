@@ -107,6 +107,7 @@ if (BRLCAD_ENABLE_TK)
     ExternalProject_Target(SHARED itk ITK_BLD ${ITK_INSTDIR}
       itk${ITK_VERSION}/${ITK_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
       SUBDIR itk${ITK_VERSION}
+      RPATH
       )
 
     ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${INCLUDE_DIR}
