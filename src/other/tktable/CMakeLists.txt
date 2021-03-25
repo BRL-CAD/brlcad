@@ -47,6 +47,7 @@ ENDIF(WIN32)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TKTABLE_CFLAGS}")
 
 add_executable(tktable_hdr tktable_hdr.cxx)
+set_target_properties(tktable_hdr PROPERTIES FOLDER "Compilation Utilities")
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h

@@ -45,6 +45,7 @@ if (BRLCAD_TCL_BUILD)
   if (NOT TARGET tcl_replace)
     configure_file(${BDEPS_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx @ONLY)
     add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+    set_target_properties(tcl_replace PROPERTIES FOLDER "Compilation Utilities")
   endif (NOT TARGET tcl_replace)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
 
