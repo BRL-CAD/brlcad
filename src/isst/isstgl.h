@@ -41,6 +41,32 @@ extern "C" {
 #include "librender/camera.h"
 }
 
+class isstGL;
+
+class TIERenderer : public QObject, protected QOpenGLFunctions
+{
+    Q_OBJECT
+    public:
+	TIERenderer(isstGL *w);
+	~TIERenderer();
+
+	void render();
+
+	void resize();
+
+	tienet_buffer_t buffer_image;
+
+    private:
+	struct camera_tile_s tile;
+	void *texdata = NULL;
+	long texdata_size = 0;
+	GLuint texid = 0;
+
+	bool m_init = false;
+
+	isstGL *m_w;
+};
+
 // Use QOpenGLFunctions so we don't have to prefix all OpenGL calls with "f->"
 class isstGL : public QOpenGLWidget
 {
@@ -65,17 +91,14 @@ class isstGL : public QOpenGLWidget
 	void mouseMoveEvent(QMouseEvent *e) override;
 
     private:
-	struct camera_tile_s tile;
-	tienet_buffer_t buffer_image;
-	void *texdata = NULL;
-	long texdata_size = 0;
-	GLuint texid = 0;
 	int resolution_factor = 0;
 	int rescaled = 0;
 	int do_render = 1;
 
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
+
+	TIERenderer *m_renderer;
 };
 
 #endif /* ISSTGL_H */
