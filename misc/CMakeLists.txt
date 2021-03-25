@@ -24,16 +24,16 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
   file(REMOVE ${CMAKE_BINARY_DIR}/misc/brlcad-config)
   install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${BIN_DIR})
 else(NOT CMAKE_CONFIGURATION_TYPES)
+  configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config @ONLY)
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/misc/brlcad-config @ONLY)
-    file(COPY ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/misc/brlcad-config
+    file(COPY ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config
       DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
       FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
       GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/brlcad-config)
-    file(REMOVE ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/misc/brlcad-config)
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/brlcad-config)
   install(PROGRAMS ${CMAKE_BINARY_DIR}/\${BUILD_TYPE}/bin/brlcad-config DESTINATION ${BIN_DIR})
 endif(NOT CMAKE_CONFIGURATION_TYPES)
 
