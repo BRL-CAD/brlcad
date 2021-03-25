@@ -59,6 +59,7 @@ void TIERenderer::resize()
     m_w->makeCurrent();
     if (!m_init) {
 	initializeOpenGLFunctions();
+	m_init = true;
     }
 
     // Set tile size
@@ -115,6 +116,11 @@ isstGL::~isstGL()
 void
 isstGL::paintGL()
 {
+    if (!m_init) {
+	initializeOpenGLFunctions();
+	m_init = true;
+    }
+
     if (rescaled || do_render) {
 	if (rescaled) {
 	    rescaled = 0;

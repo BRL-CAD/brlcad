@@ -68,7 +68,7 @@ class TIERenderer : public QObject, protected QOpenGLFunctions
 };
 
 // Use QOpenGLFunctions so we don't have to prefix all OpenGL calls with "f->"
-class isstGL : public QOpenGLWidget
+class isstGL : public QOpenGLWidget, protected QOpenGLFunctions
 {
     public:
 	isstGL();
@@ -98,6 +98,7 @@ class isstGL : public QOpenGLWidget
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
 
+	bool m_init = false;
 	TIERenderer *m_renderer;
 };
 
