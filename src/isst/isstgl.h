@@ -55,12 +55,12 @@ class TIERenderer : public QObject, protected QOpenGLFunctions
 	void resize();
 
 	tienet_buffer_t buffer_image;
+	GLuint texid = 0;
 
     private:
 	struct camera_tile_s tile;
 	void *texdata = NULL;
 	long texdata_size = 0;
-	GLuint texid = 0;
 
 	bool m_init = false;
 

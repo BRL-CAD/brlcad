@@ -73,6 +73,7 @@ void TIERenderer::resize()
 	texdata = realloc(texdata, m_w->camera.w * m_w->camera.h * 3);
     }
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, m_w->camera.w, m_w->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
@@ -132,6 +133,33 @@ isstGL::paintGL()
 	m_renderer->render();
     }
 
+    glDisable(GL_LIGHTING);
+
+    glViewport(0,0, width(), height());
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, width(), height(), 0, -1, 1);
+    glMatrixMode (GL_MODELVIEW);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    glColor3f(1,1,1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, m_renderer->texid);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, camera.w, camera.h, GL_RGB, GL_UNSIGNED_BYTE, m_renderer->buffer_image.data + sizeof(camera_tile_t));
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
+    glTexCoord2d(0, 1); glVertex3f(0, height(), 0);
+    glTexCoord2d(1, 0); glVertex3f(width(), 0, 0);
+    glTexCoord2d(1, 1); glVertex3f(width(), height(), 0);
+
+    glEnd();
+
+
+#if 0
     // Set up a QImage with the rendered output.  Note - sizeof(camera_tile_t)
     // offset copied from glTexSubImage2D setup in Tcl/Tk gui.  Without it, the
     // image is offset to the right in the OpenGL display.
@@ -140,6 +168,7 @@ isstGL::paintGL()
     // Get the QImage version of the buffer displayed: https://stackoverflow.com/a/51666467
     QPainter painter(this);
     painter.drawImage(this->rect(), image);
+#endif
 }
 
 
