@@ -55,6 +55,7 @@ class DMRenderer : public QObject, protected QOpenGLFunctions
 	~DMRenderer();
 
 	void resize();
+	struct dm *dmp = NULL;
 
 	// Thread management
 	void lockRenderer() { m_renderMutex.lock(); }
@@ -78,6 +79,7 @@ class DMRenderer : public QObject, protected QOpenGLFunctions
 	bool m_init = false;
 	dmGL *m_w;
 
+
 	// Threading variables
 	QMutex m_renderMutex;
 	QMutex m_grabMutex;
@@ -96,6 +98,8 @@ class dmGL : public QOpenGLWidget
 	void save_image();
 
 	struct bview *v;
+	struct dm *dmp;
+
     protected:
 	void paintEvent(QPaintEvent *) override { }
 

@@ -85,6 +85,10 @@ void DMRenderer::render()
     if (!m_init) {
 	initializeOpenGLFunctions();
 	m_init = true;
+	if (!dmp) {
+	    const char *acmd = "attach";
+	    dmp = dm_open((void *)m_w, "qtgl", 1, &acmd);
+	}
     }
 
     // TODO - libdm drawing calls
