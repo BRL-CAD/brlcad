@@ -50,6 +50,8 @@ class DM_MainWindow : public QMainWindow
 	pqConsoleWidget *console;
 	dmGL *canvas;
 
+	struct ged *gedp;
+
     public slots:
 	void run_cmd(const QString &command);
 

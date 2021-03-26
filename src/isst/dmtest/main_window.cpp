@@ -87,7 +87,37 @@ DM_MainWindow::open_file()
 void
 DM_MainWindow::run_cmd(const QString &command)
 {
-    console->printString(command);
+    if (!gedp) {
+	console->printString("No database open");
+	console->prompt("$ ");
+	return;
+    }
+    // make an argv array
+    struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&ged_prefixed, "%s", command.toStdString().c_str());
+    char *input = bu_strdup(bu_vls_addr(&ged_prefixed));
+    bu_vls_free(&ged_prefixed);
+    char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
+    int ac = bu_argv_from_string(av, strlen(input), input);
+
+    if (ged_cmd_valid(av[0], NULL)) {
+	const char *ccmd = NULL;
+	int edist = ged_cmd_lookup(&ccmd, av[0]);
+	if (edist) {
+	    struct bu_vls msg = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&msg, "Command %s not found, did you mean %s (edit distance %d)?\n", av[0], ccmd, edist);
+	    console->printString(bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	}
+    } else {
+	ged_exec(gedp, ac, (const char **)av);
+	console->printString(bu_vls_cstr(gedp->ged_result_str));
+	bu_vls_trunc(gedp->ged_result_str, 0);
+    }
+
+    bu_free(input, "input copy");
+    bu_free(av, "input argv");
+
     console->prompt("$ ");
 }
 

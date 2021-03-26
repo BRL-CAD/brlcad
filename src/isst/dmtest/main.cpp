@@ -53,10 +53,11 @@ int main(int argc, char *argv[])
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
     // If we have command line arguments, process them
-    if (argc > 1) {
+    if (argc) {
 	const char *filename = argv[0];
 	argc--; argv++;
 	app.load_g(filename, argc, (const char **)argv);
+	app.w.gedp = app.gedp;
     }
 
     // This is an illustration of how to force an exact size for
