@@ -23,6 +23,8 @@
  *
  */
 
+#include "GL/glu.h"
+
 #include <QOpenGLWidget>
 #include <QKeyEvent>
 #include <QGuiApplication> // for qGuiApp
@@ -88,11 +90,47 @@ void DMRenderer::render()
 	if (!dmp) {
 	    const char *acmd = "attach";
 	    dmp = dm_open((void *)m_w, "qtgl", 1, &acmd);
+	    m_w->gedp->ged_dmp = (void *)dmp;
 	}
     }
 
     // TODO - libdm drawing calls
+    glViewport(0, 0, m_w->width(), m_w->height());
+    if (bu_list_len(m_w->gedp->ged_gdp->gd_headDisplay)) {
+	unsigned char geometry_default_color[] = { 255, 0, 0 };
+	dm_draw_display_list(dmp, m_w->gedp->ged_gdp->gd_headDisplay,
+		1.0, m_w->gedp->ged_gvp->gv_isize, 255, 0, 0, 1,
+		0, 0, geometry_default_color, 1, 0);
+    }
 
+    /* The above drawing isn't yet working - draw the example triangle
+     * to ensure that the context is working as expected... */
+    // Clear color buffer
+    glViewport(0, 0, m_w->width(), m_w->height());
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Select and setup the projection matrix
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(65.0f, (GLfloat)m_w->width()/(GLfloat)m_w->height(), 1.0f, 100.0f);
+
+    // Select and setup the modelview matrix
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glRotatef(-90, 1,0,0);
+    glTranslatef(0,0,-1.0f);
+
+    // Draw a colorful triangle
+    glTranslatef(0.0f, 14.0f, 0.0f);
+    glBegin(GL_TRIANGLES);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(-5.0f, 0.0f, -4.0f);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(5.0f, 0.0f, -4.0f);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f, 6.0f);
+    glEnd();
 
     // Make no context current on this thread and move the QOpenGLWidget's
     // context back to the gui thread.

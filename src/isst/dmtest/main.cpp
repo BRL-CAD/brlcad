@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
 	argc--; argv++;
 	app.load_g(filename, argc, (const char **)argv);
 	app.w.gedp = app.gedp;
+	app.w.canvas->gedp = app.gedp;
     }
 
     // This is an illustration of how to force an exact size for

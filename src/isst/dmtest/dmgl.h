@@ -97,8 +97,9 @@ class dmGL : public QOpenGLWidget
 
 	void save_image();
 
-	struct bview *v;
-	struct dm *dmp;
+	struct bview *v = NULL;
+	struct ged *gedp = NULL;
+	struct dm *dmp = NULL;
 
     protected:
 	void paintEvent(QPaintEvent *) override { }
