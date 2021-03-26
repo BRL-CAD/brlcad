@@ -63,20 +63,12 @@ TIERenderer::~TIERenderer()
 
 void TIERenderer::resize()
 {
-    int w = m_w->width();
-    int h = m_w->height();
-    // Zero size == nothing to do
-    if (!w || !h)
-	return;
-
-    if (scaled) {
-	changed = true;
-	scaled = false;
-    }
-
     // If something changed, we need to re-render - otherwise, no-op
     if (!changed)
 	return;
+
+    int w = m_w->width();
+    int h = m_w->height();
 
     // Translated from Tcl/Tk ISST logic for resolution adjustment
     if (resolution_factor == 0) {
@@ -134,6 +126,23 @@ void TIERenderer::render()
     if (m_exiting)
 	return;
 
+    int w = m_w->width();
+    int h = m_w->height();
+    // Zero size == nothing to do
+    if (!w || !h)
+	return;
+
+    if (scaled) {
+	changed = true;
+	scaled = false;
+    }
+
+    if (!changed) {
+	// Avoid a hot spin
+	usleep(10000);
+	return;
+    }
+
     // Since we're in a separate rendering thread, there is
     // some preliminary work we need to do before proceeding
     // with OpenGL calls
@@ -161,44 +170,42 @@ void TIERenderer::render()
     // Ready for actual OpenGL calls.
     resize();
 
-    if (changed) {
 
-	changed = false;
+    changed = false;
 
-	// IMPORTANT - this reset is necessary or the resultant image will
-	// not display correctly in the buffer.
-	buffer_image.ind = 0;
+    // IMPORTANT - this reset is necessary or the resultant image will
+    // not display correctly in the buffer.
+    buffer_image.ind = 0;
 
-	// Core TIE render
-	render_camera_prep(&camera);
-	render_camera_render(&camera, tie, &tile, &buffer_image);
+    // Core TIE render
+    render_camera_prep(&camera);
+    render_camera_render(&camera, tie, &tile, &buffer_image);
 
-	glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHTING);
 
-	glViewport(0,0, m_w->width(), m_w->height());
-	glMatrixMode (GL_PROJECTION);
-	glLoadIdentity ();
-	glOrtho(0, m_w->width(), m_w->height(), 0, -1, 1);
-	glMatrixMode (GL_MODELVIEW);
+    glViewport(0,0, m_w->width(), m_w->height());
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, m_w->width(), m_w->height(), 0, -1, 1);
+    glMatrixMode (GL_MODELVIEW);
 
-	glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-	glClear(GL_DEPTH_BUFFER_BIT);
-	glLoadIdentity();
-	glColor3f(1,1,1);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texid);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, camera.w, camera.h, GL_RGB, GL_UNSIGNED_BYTE, buffer_image.data + sizeof(camera_tile_t));
-	glBegin(GL_TRIANGLE_STRIP);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    glColor3f(1,1,1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texid);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, camera.w, camera.h, GL_RGB, GL_UNSIGNED_BYTE, buffer_image.data + sizeof(camera_tile_t));
+    glBegin(GL_TRIANGLE_STRIP);
 
-	glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
-	glTexCoord2d(0, 1); glVertex3f(0, m_w->height(), 0);
-	glTexCoord2d(1, 0); glVertex3f(m_w->width(), 0, 0);
-	glTexCoord2d(1, 1); glVertex3f(m_w->width(), m_w->height(), 0);
+    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
+    glTexCoord2d(0, 1); glVertex3f(0, m_w->height(), 0);
+    glTexCoord2d(1, 0); glVertex3f(m_w->width(), 0, 0);
+    glTexCoord2d(1, 1); glVertex3f(m_w->width(), m_w->height(), 0);
 
-	glEnd();
+    glEnd();
 
-    }
 
     // Make no context current on this thread and move the QOpenGLWidget's
     // context back to the gui thread.
@@ -208,6 +215,9 @@ void TIERenderer::render()
     // Schedule composition. Note that this will use QueuedConnection, meaning
     // that update() will be invoked on the gui thread.
     QMetaObject::invokeMethod(m_w, "update");
+
+    // Avoid a hot spin
+    usleep(10000);
 }
 
 isstGL::isstGL(QWidget *parent)
