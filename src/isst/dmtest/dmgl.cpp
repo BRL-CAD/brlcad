@@ -94,15 +94,26 @@ void DMRenderer::render()
 	}
     }
 
-    // TODO - libdm drawing calls
     glViewport(0, 0, m_w->width(), m_w->height());
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+#if 1
+    // TODO - libdm drawing calls
     if (bu_list_len(m_w->gedp->ged_gdp->gd_headDisplay)) {
+
+	matp_t mat = m_w->gedp->ged_gvp->gv_model2view;
+	dm_loadmatrix(dmp, mat, 0);
+
 	unsigned char geometry_default_color[] = { 255, 0, 0 };
 	dm_draw_display_list(dmp, m_w->gedp->ged_gdp->gd_headDisplay,
 		1.0, m_w->gedp->ged_gvp->gv_isize, 255, 0, 0, 1,
 		0, 0, geometry_default_color, 1, 0);
     }
+#endif
 
+#if 0
     /* The above drawing isn't yet working - draw the example triangle
      * to ensure that the context is working as expected... */
     // Clear color buffer
@@ -113,6 +124,7 @@ void DMRenderer::render()
     // Select and setup the projection matrix
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+
     gluPerspective(65.0f, (GLfloat)m_w->width()/(GLfloat)m_w->height(), 1.0f, 100.0f);
 
     // Select and setup the modelview matrix
@@ -131,6 +143,7 @@ void DMRenderer::render()
     glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(0.0f, 0.0f, 6.0f);
     glEnd();
+#endif
 
     // Make no context current on this thread and move the QOpenGLWidget's
     // context back to the gui thread.

@@ -37,6 +37,10 @@ int main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
+    QSurfaceFormat format;
+    format.setDepthBufferSize(16);
+    QSurfaceFormat::setDefaultFormat(format);
+
     DMApp app(argc, argv);
     app.setOrganizationName("BRL-CAD");
     app.setOrganizationDomain("brlcad.org");
