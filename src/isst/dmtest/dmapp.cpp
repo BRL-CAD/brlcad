@@ -37,6 +37,9 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
 	return -1;
     }
 
+    // Let the GED commands know what bview to use
+    gedp->ged_gvp = w.canvas->v;
+
     return 0;
 }
 

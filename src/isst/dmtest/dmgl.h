@@ -39,7 +39,6 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
-#include <QElapsedTimer>
 
 extern "C" {
 #include "dm.h"
@@ -81,7 +80,6 @@ class DMRenderer : public QObject, protected QOpenGLFunctions
 
 	// Threading variables
 	QMutex m_renderMutex;
-	QElapsedTimer m_elapsed;
 	QMutex m_grabMutex;
 	QWaitCondition m_grabCond;
 };
@@ -97,6 +95,7 @@ class dmGL : public QOpenGLWidget
 
 	void save_image();
 
+	struct bview *v;
     protected:
 	void paintEvent(QPaintEvent *) override { }
 

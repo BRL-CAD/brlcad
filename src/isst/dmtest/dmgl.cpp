@@ -106,6 +106,9 @@ void DMRenderer::render()
 dmGL::dmGL(QWidget *parent)
     : QOpenGLWidget(parent)
 {
+    BU_GET(v, struct bview);
+    ged_view_init(v);
+
     connect(this, &QOpenGLWidget::aboutToCompose, this, &dmGL::onAboutToCompose);
     connect(this, &QOpenGLWidget::frameSwapped, this, &dmGL::onFrameSwapped);
     connect(this, &QOpenGLWidget::aboutToResize, this, &dmGL::onAboutToResize);
@@ -136,6 +139,7 @@ dmGL::~dmGL()
     m_thread->quit();
     m_thread->wait();
     delete m_thread;
+    BU_PUT(v, struct bview);
 }
 
 void dmGL::onAboutToCompose()

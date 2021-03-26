@@ -49,6 +49,9 @@ int main(int argc, char *argv[])
 
     argc--; argv++;
 
+    /* FIXME: To draw, we need to init this LIBRT global */
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
     // If we have command line arguments, process them
     if (argc > 1) {
 	const char *filename = argv[0];

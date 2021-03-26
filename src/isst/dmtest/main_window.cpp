@@ -21,6 +21,7 @@
  *
  */
 
+#include <QSplitter>
 #include "main_window.h"
 #include "dmapp.h"
 
@@ -53,8 +54,14 @@ DM_MainWindow::DM_MainWindow()
     // Set up Display canvas
     canvas = new dmGL();
     canvas->setMinimumSize(512,512);
-    setCentralWidget(canvas);
+    console = new pqConsoleWidget(this);
+    console->prompt("$ ");
+    QSplitter *wgrp = new QSplitter(Qt::Vertical, this);
+    setCentralWidget(wgrp);
+    wgrp->addWidget(canvas);
+    wgrp->addWidget(console);
 
+    QObject::connect(this->console, &pqConsoleWidget::executeCommand, this, &DM_MainWindow::run_cmd);
 }
 
 void
@@ -77,6 +84,12 @@ DM_MainWindow::open_file()
     }
 }
 
+void
+DM_MainWindow::run_cmd(const QString &command)
+{
+    console->printString(command);
+    console->prompt("$ ");
+}
 
 void DM_MainWindow::readSettings()
 {

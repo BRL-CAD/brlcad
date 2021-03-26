@@ -30,7 +30,7 @@
 #include <QApplication>
 #include <QObject>
 #include <QString>
-
+#include "pqConsoleWidget.h"
 #include "ged.h"
 #include "main_window.h"
 

@@ -36,6 +36,7 @@
 #include <QStatusBar>
 #include <QFileDialog>
 #include <QSettings>
+#include "pqConsoleWidget.h"
 #include "dmgl.h"
 
 class DM_MainWindow : public QMainWindow
@@ -46,7 +47,11 @@ class DM_MainWindow : public QMainWindow
 
 	void readSettings();
 
+	pqConsoleWidget *console;
 	dmGL *canvas;
+
+    public slots:
+	void run_cmd(const QString &command);
 
     private slots:
 	void open_file();
