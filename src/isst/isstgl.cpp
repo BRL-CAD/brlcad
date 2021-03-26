@@ -25,6 +25,7 @@
 
 #include <QOpenGLWidget>
 #include <QKeyEvent>
+#include <QGuiApplication> // for qGuiApp
 
 #include "bu/parallel.h"
 #include "isstgl.h"
@@ -60,8 +61,23 @@ TIERenderer::~TIERenderer()
     free(texdata);
 }
 
-void TIERenderer::resize(int w, int h)
+void TIERenderer::resize()
 {
+    int w = m_w->width();
+    int h = m_w->height();
+    // Zero size == nothing to do
+    if (!w || !h)
+	return;
+
+    if (scaled) {
+	changed = true;
+	scaled = false;
+    }
+
+    // If something changed, we need to re-render - otherwise, no-op
+    if (!changed)
+	return;
+
     // Translated from Tcl/Tk ISST logic for resolution adjustment
     if (resolution_factor == 0) {
 	camera.w = w;
@@ -71,15 +87,10 @@ void TIERenderer::resize(int w, int h)
 	camera.h = camera.w * h / w;
     }
 
-    m_w->makeCurrent();
-    if (!m_init) {
-	initializeOpenGLFunctions();
-	m_init = true;
-    }
-
     // Set tile size
     tile.size_x = camera.w;
     tile.size_y = camera.h;
+
 
     // Set up the raytracing image buffer
     TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
@@ -88,6 +99,9 @@ void TIERenderer::resize(int w, int h)
 	texdata_size = camera.w * camera.h;
 	texdata = realloc(texdata, camera.w * camera.h * 3);
     }
+
+    // Set up the TeXImage2D buffer that will hold the results of the raytrace
+    // for OpenGL
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -102,6 +116,7 @@ void TIERenderer::res_incr()
     resolution++;
     CLAMP(resolution, 1, 20);
     resolution_factor = (resolution == 20) ? 0 : lrint(floor(m_w->width() * .05 * resolution));
+    scaled = true;
 }
 
 void TIERenderer::res_decr()
@@ -111,23 +126,110 @@ void TIERenderer::res_decr()
     resolution--;
     CLAMP(resolution, 1, 20);
     resolution_factor = (resolution == 20) ? 0 : lrint(floor(m_w->height() * .05 * resolution));
+    scaled = true;
 }
 
 void TIERenderer::render()
 {
-    // IMPORTANT - this reset is necessary or the resultant image will
-    // not display correctly in the buffer.
-    buffer_image.ind = 0;
+    if (m_exiting)
+	return;
 
-    // Core TIE render
-    render_camera_prep(&camera);
-    render_camera_render(&camera, tie, &tile, &buffer_image);
+    // Since we're in a separate rendering thread, there is
+    // some preliminary work we need to do before proceeding
+    // with OpenGL calls
+    QOpenGLContext *ctx = m_w->context();
+    if (!ctx) // QOpenGLWidget not yet initialized
+	return;
+    // Grab the context.
+    m_grabMutex.lock();
+    emit contextWanted();
+    m_grabCond.wait(&m_grabMutex);
+    QMutexLocker lock(&m_renderMutex);
+    m_grabMutex.unlock();
+    if (m_exiting)
+	return;
+    Q_ASSERT(ctx->thread() == QThread::currentThread());
+
+
+    // Have context, initialize if necessary
+    m_w->makeCurrent();
+    if (!m_init) {
+	initializeOpenGLFunctions();
+	m_init = true;
+    }
+
+    // Ready for actual OpenGL calls.
+    resize();
+
+    if (changed) {
+
+	changed = false;
+
+	// IMPORTANT - this reset is necessary or the resultant image will
+	// not display correctly in the buffer.
+	buffer_image.ind = 0;
+
+	// Core TIE render
+	render_camera_prep(&camera);
+	render_camera_render(&camera, tie, &tile, &buffer_image);
+
+	glDisable(GL_LIGHTING);
+
+	glViewport(0,0, m_w->width(), m_w->height());
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity ();
+	glOrtho(0, m_w->width(), m_w->height(), 0, -1, 1);
+	glMatrixMode (GL_MODELVIEW);
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	glColor3f(1,1,1);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texid);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, camera.w, camera.h, GL_RGB, GL_UNSIGNED_BYTE, buffer_image.data + sizeof(camera_tile_t));
+	glBegin(GL_TRIANGLE_STRIP);
+
+	glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
+	glTexCoord2d(0, 1); glVertex3f(0, m_w->height(), 0);
+	glTexCoord2d(1, 0); glVertex3f(m_w->width(), 0, 0);
+	glTexCoord2d(1, 1); glVertex3f(m_w->width(), m_w->height(), 0);
+
+	glEnd();
+
+    }
+
+    // Make no context current on this thread and move the QOpenGLWidget's
+    // context back to the gui thread.
+    m_w->doneCurrent();
+    ctx->moveToThread(qGuiApp->thread());
+
+    // Schedule composition. Note that this will use QueuedConnection, meaning
+    // that update() will be invoked on the gui thread.
+    QMetaObject::invokeMethod(m_w, "update");
 }
 
-isstGL::isstGL()
+isstGL::isstGL(QWidget *parent)
+    : QOpenGLWidget(parent)
 {
+    connect(this, &QOpenGLWidget::aboutToCompose, this, &isstGL::onAboutToCompose);
+    connect(this, &QOpenGLWidget::frameSwapped, this, &isstGL::onFrameSwapped);
+    connect(this, &QOpenGLWidget::aboutToResize, this, &isstGL::onAboutToResize);
+    connect(this, &QOpenGLWidget::resized, this, &isstGL::onResized);
+
+    m_thread = new QThread;
+
     // Create the renderer
     m_renderer = new TIERenderer(this);
+    m_renderer->moveToThread(m_thread);
+    connect(m_thread, &QThread::finished, m_renderer, &QObject::deleteLater);
+
+    // Let isstGL know to trigger the renderer
+    connect(this, &isstGL::renderRequested, m_renderer, &TIERenderer::render);
+    connect(m_renderer, &TIERenderer::contextWanted, this, &isstGL::grabContext);
+
+    m_thread->start();
 
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
@@ -137,7 +239,47 @@ isstGL::isstGL()
 
 isstGL::~isstGL()
 {
-    delete m_renderer;
+    m_renderer->prepareExit();
+    m_thread->quit();
+    m_thread->wait();
+    delete m_thread;
+}
+
+void isstGL::onAboutToCompose()
+{
+    // We are on the gui thread here. Composition is about to
+    // begin. Wait until the render thread finishes.
+    m_renderer->lockRenderer();
+}
+
+void isstGL::onFrameSwapped()
+{
+    m_renderer->unlockRenderer();
+    // Assuming a blocking swap, our animation is driven purely by the
+    // vsync in this example.
+    emit renderRequested();
+}
+
+void isstGL::onAboutToResize()
+{
+    m_renderer->lockRenderer();
+}
+
+void isstGL::onResized()
+{
+    m_renderer->changed = true;
+    m_renderer->unlockRenderer();
+}
+
+void isstGL::grabContext()
+{
+    if (m_renderer->m_exiting)
+	return;
+    m_renderer->lockRenderer();
+    QMutexLocker lock(m_renderer->grabMutex());
+    context()->moveToThread(m_thread);
+    m_renderer->grabCond()->wakeAll();
+    m_renderer->unlockRenderer();
 }
 
 void
@@ -152,75 +294,11 @@ isstGL::set_tie(struct tie_s *in_tie)
     // Record the initial settings for use in subsequent calculations
     VSETALL(m_renderer->camera_pos_init, m_renderer->tie->radius);
     VMOVE(m_renderer->camera_focus_init, m_renderer->tie->mid);
+
+    // Having just loaded a new TIE scene,
+    // we need a new image
+    emit renderRequested();
 }
-
-void
-isstGL::paintGL()
-{
-    if (!m_init) {
-	initializeOpenGLFunctions();
-	m_init = true;
-    }
-
-    if (rescaled || do_render) {
-	if (rescaled) {
-	    rescaled = 0;
-	    m_renderer->resize(width(), height());
-	}
-	do_render = 0;
-	m_renderer->render();
-    }
-
-    glDisable(GL_LIGHTING);
-
-    glViewport(0,0, width(), height());
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, width(), height(), 0, -1, 1);
-    glMatrixMode (GL_MODELVIEW);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-    glColor3f(1,1,1);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, m_renderer->texid);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_renderer->camera.w, m_renderer->camera.h, GL_RGB, GL_UNSIGNED_BYTE, m_renderer->buffer_image.data + sizeof(camera_tile_t));
-    glBegin(GL_TRIANGLE_STRIP);
-
-    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
-    glTexCoord2d(0, 1); glVertex3f(0, height(), 0);
-    glTexCoord2d(1, 0); glVertex3f(width(), 0, 0);
-    glTexCoord2d(1, 1); glVertex3f(width(), height(), 0);
-
-    glEnd();
-
-
-#if 0
-    // Set up a QImage with the rendered output.  Note - sizeof(camera_tile_t)
-    // offset copied from glTexSubImage2D setup in Tcl/Tk gui.  Without it, the
-    // image is offset to the right in the OpenGL display.
-    QImage image(m_renderer->buffer_image.data + sizeof(camera_tile_t), camera.w, camera.h, QImage::Format_RGB888);
-
-    // Get the QImage version of the buffer displayed: https://stackoverflow.com/a/51666467
-    QPainter painter(this);
-    painter.drawImage(this->rect(), image);
-#endif
-}
-
-
-void
-isstGL::resizeGL(int w, int h)
-{
-    m_renderer->resize(w, h);
-
-    // We don't want every paint operation to do a full re-render, so we must
-    // specify the cases that need it.  resize is definitely one of the ones
-    // that does.
-    do_render = 1;
-}
-
 
 void isstGL::keyPressEvent(QKeyEvent *k) {
     //QString kstr = QKeySequence(k->key()).toString();
@@ -228,13 +306,13 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
     switch (k->key()) {
 	case '=':
 	    m_renderer->res_incr();
-	    rescaled = 1;
+	    emit renderRequested();
 	    update();
 	    return;
 	    break;
 	case '-':
 	    m_renderer->res_decr();
-	    rescaled = 1;
+	    emit renderRequested();
 	    update();
 	    return;
 	    break;

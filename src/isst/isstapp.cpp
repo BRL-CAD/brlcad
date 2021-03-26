@@ -1,4 +1,4 @@
-/*                      I S S T A P P . C X X
+/*                      I S S T A P P . C P P
  * BRL-ISST
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -23,10 +23,6 @@
  *
  */
 
-#include <QFileInfo>
-#include <QFile>
-#include <QPlainTextEdit>
-#include <QTextStream>
 #include "isstapp.h"
 
 int

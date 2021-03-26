@@ -36,6 +36,11 @@
 #include <QPainter>
 #include <QImage>
 
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
+#include <QElapsedTimer>
+
 extern "C" {
 #include "rt/tie.h"
 #include "librender/camera.h"
@@ -50,40 +55,59 @@ class TIERenderer : public QObject, protected QOpenGLFunctions
 	TIERenderer(isstGL *w);
 	~TIERenderer();
 
+	void resize();
+
+	// Thread management
+	void lockRenderer() { m_renderMutex.lock(); }
+	void unlockRenderer() { m_renderMutex.unlock(); }
+	QMutex *grabMutex() { return &m_grabMutex; }
+	QWaitCondition *grabCond() { return &m_grabCond; }
+	void prepareExit() { m_exiting = true; m_grabCond.wakeAll(); }
+
+    signals:
+	void contextWanted();
+
+    public slots:
 	void render();
-
-	void resize(int w, int h);
-
 	void res_incr();
 	void res_decr();
 
-	tienet_buffer_t buffer_image;
-	GLuint texid = 0;
-
-
-	struct render_camera_s camera;
+    public:
 	struct tie_s *tie = NULL; // From parent app
+	struct render_camera_s camera;
 	vect_t camera_pos_init;
 	vect_t camera_focus_init;
+	bool changed = true;
+	bool m_exiting = false;
 
     private:
 	struct camera_tile_s tile;
 	void *texdata = NULL;
 	long texdata_size = 0;
-
+	tienet_buffer_t buffer_image;
+	GLuint texid = 0;
 	int resolution = 20;
 	int resolution_factor = 0;
 
 	bool m_init = false;
-
 	isstGL *m_w;
+
+	bool scaled = false;
+
+	// Threading variables
+	QMutex m_renderMutex;
+	QElapsedTimer m_elapsed;
+	QMutex m_grabMutex;
+	QWaitCondition m_grabCond;
 };
 
 // Use QOpenGLFunctions so we don't have to prefix all OpenGL calls with "f->"
-class isstGL : public QOpenGLWidget, protected QOpenGLFunctions
+class isstGL : public QOpenGLWidget
 {
+    Q_OBJECT
+
     public:
-	isstGL();
+	explicit isstGL(QWidget *parent = nullptr);
 	~isstGL();
 
 	void set_tie(struct tie_s *in_tie);
@@ -91,20 +115,28 @@ class isstGL : public QOpenGLWidget, protected QOpenGLFunctions
 	void save_image();
 
     protected:
-	void resizeGL(int w, int h) override;
-	void paintGL() override;
+	void paintEvent(QPaintEvent *) override { }
 
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
 
-    private:
-	int rescaled = 0;
-	int do_render = 1;
+    signals:
+      void renderRequested();
 
+    public slots:
+      void grabContext();
+
+    private slots:
+      void onAboutToCompose();
+      void onFrameSwapped();
+      void onAboutToResize();
+      void onResized();
+
+    private:
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
 
-	bool m_init = false;
+	QThread *m_thread;
 	TIERenderer *m_renderer;
 };
 
