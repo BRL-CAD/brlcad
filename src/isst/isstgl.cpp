@@ -32,10 +32,16 @@
 TIERenderer::TIERenderer(isstGL *w)
     : m_w(w)
 {
+   // Initialize TIE camera
+    camera.type = RENDER_CAMERA_PERSPECTIVE;
+    camera.fov = 25;
+    render_camera_init(&camera, bu_avail_cpus());
+    render_phong_init(&camera.render, NULL);
+
     // Initialize texture buffer
     TIENET_BUFFER_INIT(buffer_image);
-    texdata = realloc(texdata, m_w->camera.w * m_w->camera.h * 3);
-    texdata_size = m_w->camera.w * m_w->camera.h;
+    texdata = realloc(texdata, camera.w * camera.h * 3);
+    texdata_size = camera.w * camera.h;
 
     // Initialize TIE tile
     //
@@ -54,8 +60,17 @@ TIERenderer::~TIERenderer()
     free(texdata);
 }
 
-void TIERenderer::resize()
+void TIERenderer::resize(int w, int h)
 {
+    // Translated from Tcl/Tk ISST logic for resolution adjustment
+    if (resolution_factor == 0) {
+	camera.w = w;
+	camera.h = h;
+    } else {
+	camera.w = resolution_factor;
+	camera.h = camera.w * h / w;
+    }
+
     m_w->makeCurrent();
     if (!m_init) {
 	initializeOpenGLFunctions();
@@ -63,21 +78,39 @@ void TIERenderer::resize()
     }
 
     // Set tile size
-    tile.size_x = m_w->camera.w;
-    tile.size_y = m_w->camera.h;
+    tile.size_x = camera.w;
+    tile.size_y = camera.h;
 
     // Set up the raytracing image buffer
-    TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * m_w->camera.w * m_w->camera.h));
+    TIENET_BUFFER_SIZE(buffer_image, (uint32_t)(3 * camera.w * camera.h));
 
-    if (texdata_size < m_w->camera.w * m_w->camera.h) {
-	texdata_size = m_w->camera.w * m_w->camera.h;
-	texdata = realloc(texdata, m_w->camera.w * m_w->camera.h * 3);
+    if (texdata_size < camera.w * camera.h) {
+	texdata_size = camera.w * camera.h;
+	texdata = realloc(texdata, camera.w * camera.h * 3);
     }
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, m_w->camera.w, m_w->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, camera.w, camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+}
+
+void TIERenderer::res_incr()
+{
+    // Increase setting controlling raytracing grid density.
+    // Maximum is one raytraced pixel per window pixel
+    resolution++;
+    CLAMP(resolution, 1, 20);
+    resolution_factor = (resolution == 20) ? 0 : lrint(floor(m_w->width() * .05 * resolution));
+}
+
+void TIERenderer::res_decr()
+{
+    // Decrease setting controlling raytracing grid density.
+    // Minimum is clamped - too course and the image is meaningless
+    resolution--;
+    CLAMP(resolution, 1, 20);
+    resolution_factor = (resolution == 20) ? 0 : lrint(floor(m_w->height() * .05 * resolution));
 }
 
 void TIERenderer::render()
@@ -87,18 +120,12 @@ void TIERenderer::render()
     buffer_image.ind = 0;
 
     // Core TIE render
-    render_camera_prep(&m_w->camera);
-    render_camera_render(&m_w->camera, m_w->tie, &tile, &buffer_image);
+    render_camera_prep(&camera);
+    render_camera_render(&camera, tie, &tile, &buffer_image);
 }
 
 isstGL::isstGL()
 {
-   // Initialize TIE camera
-    camera.type = RENDER_CAMERA_PERSPECTIVE;
-    camera.fov = 25;
-    render_camera_init(&camera, bu_avail_cpus());
-    render_phong_init(&camera.render, NULL);
-
     // Create the renderer
     m_renderer = new TIERenderer(this);
 
@@ -114,6 +141,20 @@ isstGL::~isstGL()
 }
 
 void
+isstGL::set_tie(struct tie_s *in_tie)
+{
+    m_renderer->tie = in_tie;
+
+    // Initialize the camera position
+    VSETALL(m_renderer->camera.pos, m_renderer->tie->radius);
+    VMOVE(m_renderer->camera.focus, m_renderer->tie->mid);
+
+    // Record the initial settings for use in subsequent calculations
+    VSETALL(m_renderer->camera_pos_init, m_renderer->tie->radius);
+    VMOVE(m_renderer->camera_focus_init, m_renderer->tie->mid);
+}
+
+void
 isstGL::paintGL()
 {
     if (!m_init) {
@@ -124,16 +165,7 @@ isstGL::paintGL()
     if (rescaled || do_render) {
 	if (rescaled) {
 	    rescaled = 0;
-
-	    if (resolution_factor == 0) {
-		camera.w = width();
-		camera.h = height();
-	    } else {
-		camera.w = resolution_factor;
-		camera.h = camera.w * height() / width();
-	    }
-
-	    m_renderer->resize();
+	    m_renderer->resize(width(), height());
 	}
 	do_render = 0;
 	m_renderer->render();
@@ -154,7 +186,7 @@ isstGL::paintGL()
     glColor3f(1,1,1);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, m_renderer->texid);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, camera.w, camera.h, GL_RGB, GL_UNSIGNED_BYTE, m_renderer->buffer_image.data + sizeof(camera_tile_t));
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_renderer->camera.w, m_renderer->camera.h, GL_RGB, GL_UNSIGNED_BYTE, m_renderer->buffer_image.data + sizeof(camera_tile_t));
     glBegin(GL_TRIANGLE_STRIP);
 
     glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
@@ -181,16 +213,7 @@ isstGL::paintGL()
 void
 isstGL::resizeGL(int w, int h)
 {
-    // Translated from Tcl/Tk ISST logic for resolution adjustment
-    if (resolution_factor == 0) {
-	camera.w = w;
-	camera.h = h;
-    } else {
-	camera.w = resolution_factor;
-	camera.h = camera.w * h / w;
-    }
-
-    m_renderer->resize();
+    m_renderer->resize(w, h);
 
     // We don't want every paint operation to do a full re-render, so we must
     // specify the cases that need it.  resize is definitely one of the ones
@@ -203,22 +226,14 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
     //QString kstr = QKeySequence(k->key()).toString();
     //bu_log("%s\n", kstr.toStdString().c_str());
     switch (k->key()) {
-	// Increase setting controlling raytracing grid density.
-	// Maximum is one raytraced pixel per window pixel
 	case '=':
-	    resolution++;
-	    CLAMP(resolution, 1, 20);
-	    resolution_factor = (resolution == 20) ? 0 : lrint(floor(width() * .05 * resolution));
+	    m_renderer->res_incr();
 	    rescaled = 1;
 	    update();
 	    return;
 	    break;
-	// Decrease setting controlling raytracing grid density.
-	// Minimum is clamped - too course and the image is meaningless
 	case '-':
-	    resolution--;
-	    CLAMP(resolution, 1, 20);
-	    resolution_factor = (resolution == 20) ? 0 : lrint(floor(height() * .05 * resolution));
+	    m_renderer->res_decr();
 	    rescaled = 1;
 	    update();
 	    return;

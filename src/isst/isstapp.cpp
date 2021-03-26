@@ -39,15 +39,7 @@ ISSTApp::load_g(const char *filename, int argc, const char *argv[])
 
     // The OpenGL widget manages the rendering, so let it know about the
     // TIE data structure associated with the current model
-    w.canvas->tie = g.tie;
-
-    // Initialize the camera position
-    VSETALL(w.canvas->camera.pos, g.tie->radius);
-    VMOVE(w.canvas->camera.focus, g.tie->mid);
-
-    // Record the initial settings for use in subsequent calculations
-    VSETALL(w.canvas->camera_pos_init, g.tie->radius);
-    VMOVE(w.canvas->camera_focus_init, g.tie->mid);
+    w.canvas->set_tie(g.tie);
 
     return 0;
 }

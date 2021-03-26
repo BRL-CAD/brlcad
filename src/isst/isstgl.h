@@ -52,15 +52,27 @@ class TIERenderer : public QObject, protected QOpenGLFunctions
 
 	void render();
 
-	void resize();
+	void resize(int w, int h);
+
+	void res_incr();
+	void res_decr();
 
 	tienet_buffer_t buffer_image;
 	GLuint texid = 0;
+
+
+	struct render_camera_s camera;
+	struct tie_s *tie = NULL; // From parent app
+	vect_t camera_pos_init;
+	vect_t camera_focus_init;
 
     private:
 	struct camera_tile_s tile;
 	void *texdata = NULL;
 	long texdata_size = 0;
+
+	int resolution = 20;
+	int resolution_factor = 0;
 
 	bool m_init = false;
 
@@ -74,14 +86,9 @@ class isstGL : public QOpenGLWidget, protected QOpenGLFunctions
 	isstGL();
 	~isstGL();
 
-	struct tie_s *tie = NULL; // From parent app
-	struct render_camera_s camera;
-	int resolution = 20;
+	void set_tie(struct tie_s *in_tie);
 
 	void save_image();
-
-	vect_t camera_pos_init;
-	vect_t camera_focus_init;
 
     protected:
 	void resizeGL(int w, int h) override;
@@ -91,7 +98,6 @@ class isstGL : public QOpenGLWidget, protected QOpenGLFunctions
 	void mouseMoveEvent(QMouseEvent *e) override;
 
     private:
-	int resolution_factor = 0;
 	int rescaled = 0;
 	int do_render = 1;
 
