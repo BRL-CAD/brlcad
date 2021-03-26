@@ -44,9 +44,6 @@ set(isst_ignore_srcs
 
 CMAKEFILES(${isst_ignore_srcs})
 
-# Temporarily add Qt example programs while we're figuring this out
-add_subdirectory(qtexamples)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake
