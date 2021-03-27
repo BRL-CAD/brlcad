@@ -102,6 +102,7 @@ class dmGL : public QOpenGLWidget
 	struct dm *dmp = NULL;
 
 	unsigned long long prev_vhash = 0;
+	unsigned long long prev_lhash = 0;
 
     protected:
 	void paintEvent(QPaintEvent *) override { }

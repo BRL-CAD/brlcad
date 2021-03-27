@@ -114,13 +114,20 @@ DM_MainWindow::run_cmd(const QString &command)
 	ged_exec(gedp, ac, (const char **)av);
 	console->printString(bu_vls_cstr(gedp->ged_result_str));
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	 unsigned long long vhash = bview_hash(canvas->v);
-	 if (vhash != canvas->prev_vhash) {
-	     std::cout << "prev_vhash: " << canvas->prev_vhash << "\n";
-	     std::cout << "vhash: " << vhash << "\n";
-	     canvas->prev_vhash = vhash;
-	     canvas->changed();
-	 }
+	unsigned long long vhash = bview_hash(canvas->v);
+	if (vhash != canvas->prev_vhash) {
+	    std::cout << "prev_vhash: " << canvas->prev_vhash << "\n";
+	    std::cout << "vhash: " << vhash << "\n";
+	    canvas->prev_vhash = vhash;
+	    canvas->changed();
+	}
+	unsigned long long lhash = dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	if (lhash != canvas->prev_lhash) {
+	    std::cout << "prev_lhash: " << canvas->prev_lhash << "\n";
+	    std::cout << "lhash: " << lhash << "\n";
+	    canvas->prev_lhash = lhash;
+	    canvas->changed();
+	}
     }
 
     bu_free(input, "input copy");

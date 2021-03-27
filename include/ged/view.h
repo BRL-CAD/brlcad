@@ -151,6 +151,8 @@ GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_pol
 
 GED_EXPORT extern struct bview * ged_find_view(struct ged *gedp, const char *key);
 
+GED_EXPORT extern unsigned long long dl_hash(struct display_list *dl);
+
 // TODO - this (and probably the grid logic too) belong at the libdm level - they're operating
 // on the bview, rather than the ged level data...
 GED_EXPORT extern int ged_snap_to_lines(struct ged *gedp, fastf_t *vx, fastf_t *vy);
