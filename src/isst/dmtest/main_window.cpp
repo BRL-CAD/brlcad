@@ -58,6 +58,10 @@ DM_MainWindow::DM_MainWindow()
     console = new pqConsoleWidget(this);
     console->prompt("$ ");
     QSplitter *wgrp = new QSplitter(Qt::Vertical, this);
+    // With the drawing window we do better not to trigger continual redrawing
+    // - it's a heavy drawing load and seems to cause occasional issues with
+    // the wrong thread trying to grab the OpenGL context
+    wgrp->setOpaqueResize(false);
     setCentralWidget(wgrp);
     wgrp->addWidget(canvas);
     wgrp->addWidget(console);
