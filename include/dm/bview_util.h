@@ -38,6 +38,16 @@ __BEGIN_DECLS
 
 DM_EXPORT void bview_update(struct bview *gvp);
 
+/* Return 1 if the visible contents differ
+ * Return 2 if visible content is the same but settings differ
+ * Return 3 if content is the same but user data, dmp or callbacks differ
+ * Return -1 if one or more of the views is NULL
+ * Else return 0 */
+DM_EXPORT int bview_differ(struct bview *v1, struct bview *v2);
+
+/* Return -1 if sync fails, else 0 */
+//DM_EXPORT int bview_sync(struct bview *dest, struct bview *src);
+
 __END_DECLS
 
 /** @} */
