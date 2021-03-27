@@ -31,6 +31,7 @@
 
 extern "C" {
 #include "bu/parallel.h"
+#include "dm/bview_util.h"
 #include "ged.h"
 }
 #include "dmgl.h"
@@ -100,7 +101,9 @@ void DMRenderer::render()
 
 
 #if 1
-    // TODO - libdm drawing calls
+    // TODO - need to set changed flag f gd_headDisplay list is altered - right
+    // now, view is only updated if bview changes, which obviously isn't
+    // correct...
     if (bu_list_len(m_w->gedp->ged_gdp->gd_headDisplay)) {
 
 	matp_t mat = m_w->gedp->ged_gvp->gv_model2view;
@@ -110,6 +113,8 @@ void DMRenderer::render()
 	dm_draw_display_list(dmp, m_w->gedp->ged_gdp->gd_headDisplay,
 		1.0, m_w->gedp->ged_gvp->gv_isize, 255, 0, 0, 1,
 		0, 0, geometry_default_color, 1, 0);
+
+	changed = false;
     }
 #endif
 

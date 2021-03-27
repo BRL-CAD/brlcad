@@ -101,6 +101,8 @@ class dmGL : public QOpenGLWidget
 	struct ged *gedp = NULL;
 	struct dm *dmp = NULL;
 
+	unsigned long long prev_vhash = 0;
+
     protected:
 	void paintEvent(QPaintEvent *) override { }
 
@@ -112,6 +114,11 @@ class dmGL : public QOpenGLWidget
 
     public slots:
       void grabContext();
+      void changed() {
+	  // TODO - this almost certainly needs some sort of mutex
+	  // protections...
+	  m_renderer->changed = true;
+      }
 
     private slots:
       void onAboutToCompose();
