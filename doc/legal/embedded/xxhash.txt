@@ -31,4 +31,4 @@ You can contact the author at:
   - xxHash homepage: https://www.xxhash.com
   - xxHash source repository: https://github.com/Cyan4973/xxHash
 
-file:/src/libdm/xxhash.h
+file:/include/xxhash.h
