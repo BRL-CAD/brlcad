@@ -74,6 +74,7 @@ set(embedded_licenses
   whereami.txt
   winmmap.txt
   x24.txt
+  xxhash.txt
   y2038.txt
   )
 

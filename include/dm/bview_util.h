@@ -45,6 +45,10 @@ DM_EXPORT void bview_update(struct bview *gvp);
  * Else return 0 */
 DM_EXPORT int bview_differ(struct bview *v1, struct bview *v2);
 
+/* Return a hash of the contents of the bview container.  Returns 0 on
+ * failure. */
+DM_EXPORT unsigned long long bview_hash(struct bview *v);
+
 /* Return -1 if sync fails, else 0 */
 //DM_EXPORT int bview_sync(struct bview *dest, struct bview *src);
 

@@ -105,6 +105,7 @@ set(libdm_ignore_files
   fontstash/fontstash.h
   fontstash/glfontstash.h
   fontstash/stb_truetype.h
+  xxhash.h
   )
 CMAKEFILES(${libdm_ignore_files})
 
