@@ -103,15 +103,49 @@ void DMRenderer::render()
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// We're going to start drawing - clear the flag.
+	// If anything changes while we're drawing, we need
+	// to draw again, so this clearing should come before
+	// the actual draw operation.
+	dm_set_dirty(dmp, 0);
+
+
+	// TODO - we are faced with a conundrum.  gd_headDisplay contains the
+	// actual geometry to be drawn by libdm, but it is also manipulated by
+	// a number of libged commands.  For the drawing thread to work
+	// successfully while doing its work, we can't have vlist contents
+	// being manipulated by commands at the same time.  Our options are:
+	//
+	// 1.  Block GED command execution until the current render is done -
+	// either hardcode select commands (current libtclcad approach), build
+	// a similar set by scanning the source code, or all commands (poor
+	// usability).
+	//
+	// 2.  Change gd_headDisplay and struct solid.  Create a pool of solids
+	// which are pointed to by headDisplay entries, and alter any libged
+	// commands manipulating vlists to use an existing solid from the pool
+	// or create a new one if none are queued, rather than operating on an
+	// existing solid in headDisplay.  Then adjust the dl drawing routines
+	// to take not gd_headDisplay but a separate bu_ptbl of struct solid
+	// pointers which will be created from gd_headDisplay at draw time.
+	// After drawing is complete, compare gd_headDisplay against the
+	// pointers in the bu_ptbl and put any struct solids not actively
+	// pointed to by gd_headDisplay into the pool after releasing their
+	// vlists.  In this fashion libdm will not have any struct solid data
+	// changed out from under it, but libged commands will still be able to
+	// manipulate the libged headDisplay list.  The hashing mechanism will (at
+	// least in theory) be able to detect changes in the display list and
+	// set the dm_dirty flag.
+	//
+	// This would be a fairly heavy left, as libged, libtclcad and mged all
+	// access gd_headDisplay...
 	matp_t mat = m_w->gedp->ged_gvp->gv_model2view;
 	dm_loadmatrix(dmp, mat, 0);
-
 	unsigned char geometry_default_color[] = { 255, 0, 0 };
 	dm_draw_display_list(dmp, m_w->gedp->ged_gdp->gd_headDisplay,
 		1.0, m_w->gedp->ged_gvp->gv_isize, 255, 0, 0, 1,
 		0, 0, geometry_default_color, 1, 0);
 
-	dm_set_dirty(dmp, 0);
     }
 
     // Make no context current on this thread and move the QOpenGLWidget's
