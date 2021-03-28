@@ -1904,7 +1904,7 @@ XXH32_finalize(xxh_u32 h32, const xxh_u8* ptr, size_t len, XXH_alignment align)
  * @brief The implementation for @ref XXH32().
  *
  * @param input seed data Directly passed from @ref XXH32().
- * @param input len seed data length Directly passed from @ref XXH32().
+ * @param len seed data length Directly passed from @ref XXH32().
  * @param align Whether @p input is aligned.
  * @return The calculated hash.
  */
