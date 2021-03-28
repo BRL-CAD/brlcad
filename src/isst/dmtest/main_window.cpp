@@ -123,14 +123,14 @@ DM_MainWindow::run_cmd(const QString &command)
 	    std::cout << "prev_vhash: " << canvas->prev_vhash << "\n";
 	    std::cout << "vhash: " << vhash << "\n";
 	    canvas->prev_vhash = vhash;
-	    canvas->changed();
+	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
 	unsigned long long lhash = dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 	if (lhash != canvas->prev_lhash) {
 	    std::cout << "prev_lhash: " << canvas->prev_lhash << "\n";
 	    std::cout << "lhash: " << lhash << "\n";
 	    canvas->prev_lhash = lhash;
-	    canvas->changed();
+	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
     }
 

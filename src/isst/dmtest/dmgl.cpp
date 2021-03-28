@@ -60,7 +60,7 @@ void DMRenderer::render()
     if (!w || !h)
 	return;
 
-    if (!changed) {
+    if (m_init && !dm_get_dirty((struct dm *)m_w->gedp->ged_dmp)) {
 	// Avoid a hot spin
 	usleep(10000);
 	return;
@@ -92,19 +92,16 @@ void DMRenderer::render()
 	    const char *acmd = "attach";
 	    dmp = dm_open((void *)m_w, "qtgl", 1, &acmd);
 	    m_w->gedp->ged_dmp = (void *)dmp;
+	    dm_set_vp(dmp, &m_w->gedp->ged_gvp->gv_scale);
+	    dm_configure_win(dmp, 0);
+	    dm_set_dirty(dmp, 1);
 	}
     }
 
-    glViewport(0, 0, m_w->width(), m_w->height());
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-#if 1
-    // TODO - need to set changed flag f gd_headDisplay list is altered - right
-    // now, view is only updated if bview changes, which obviously isn't
-    // correct...
-    if (bu_list_len(m_w->gedp->ged_gdp->gd_headDisplay)) {
+    if (dm_get_dirty(dmp)) {
+	// TODO - dm should be doing this...
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	matp_t mat = m_w->gedp->ged_gvp->gv_model2view;
 	dm_loadmatrix(dmp, mat, 0);
@@ -114,41 +111,8 @@ void DMRenderer::render()
 		1.0, m_w->gedp->ged_gvp->gv_isize, 255, 0, 0, 1,
 		0, 0, geometry_default_color, 1, 0);
 
-	changed = false;
+	dm_set_dirty(dmp, 0);
     }
-#endif
-
-#if 0
-    /* The above drawing isn't yet working - draw the example triangle
-     * to ensure that the context is working as expected... */
-    // Clear color buffer
-    glViewport(0, 0, m_w->width(), m_w->height());
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // Select and setup the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    gluPerspective(65.0f, (GLfloat)m_w->width()/(GLfloat)m_w->height(), 1.0f, 100.0f);
-
-    // Select and setup the modelview matrix
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glRotatef(-90, 1,0,0);
-    glTranslatef(0,0,-1.0f);
-
-    // Draw a colorful triangle
-    glTranslatef(0.0f, 14.0f, 0.0f);
-    glBegin(GL_TRIANGLES);
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex3f(-5.0f, 0.0f, -4.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(5.0f, 0.0f, -4.0f);
-    glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(0.0f, 0.0f, 6.0f);
-    glEnd();
-#endif
 
     // Make no context current on this thread and move the QOpenGLWidget's
     // context back to the gui thread.
@@ -224,7 +188,8 @@ void dmGL::onAboutToResize()
 
 void dmGL::onResized()
 {
-    m_renderer->changed = true;
+    dm_configure_win((struct dm *)gedp->ged_dmp, 0);
+    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
     m_renderer->unlockRenderer();
 }
 

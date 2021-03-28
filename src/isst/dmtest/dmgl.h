@@ -72,7 +72,6 @@ class DMRenderer : public QObject, protected QOpenGLFunctions
 
     public:
 	struct tie_s *tie = NULL; // From parent app
-	bool changed = true;
 	bool m_exiting = false;
 
     private:
@@ -115,11 +114,6 @@ class dmGL : public QOpenGLWidget
 
     public slots:
       void grabContext();
-      void changed() {
-	  // TODO - this almost certainly needs some sort of mutex
-	  // protections...
-	  m_renderer->changed = true;
-      }
 
     private slots:
       void onAboutToCompose();
