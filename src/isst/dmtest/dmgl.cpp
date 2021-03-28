@@ -229,11 +229,32 @@ void dmGL::keyPressEvent(QKeyEvent *k) {
 
 void dmGL::mouseMoveEvent(QMouseEvent *e) {
 
-    bu_log("(%d,%d)\n", e->x(), e->y());
-    if (x_prev > -INT_MAX && y_prev > -INT_MAX) {
-	bu_log("Delta: (%d,%d)\n", e->x() - x_prev, e->y() - y_prev);
+    if (x_prev == -INT_MAX) {
+	x_prev = e->x();
+	y_prev = e->y();
+	return;
     }
 
+    if (!gedp || !gedp->ged_dmp)
+	return;
+
+    bu_log("(%d,%d)\n", e->x(), e->y());
+    bu_log("Delta: (%d,%d)\n", e->x() - x_prev, e->y() - y_prev);
+
+    // Start following MGED's mouse motions to see how it handles view
+    // updates.  The trail starts at doevent.c's motion_event_handler,
+    // which in turn generates a command fed to f_knob.
+    fastf_t dx = (fastf_t)(x_prev - e->x());
+    fastf_t dy = (fastf_t)(y_prev - e->y());
+    fastf_t fx =  dx / (fastf_t)width() * 2.0;
+    fastf_t fy = -dy / (fastf_t)height() / dm_get_aspect((struct dm *)gedp->ged_dmp) * 2.0;
+    bu_log("fx,fy: (%f,%f)\n", fx, fy);
+    double base2local = gedp->ged_wdbp->dbip->dbi_base2local;
+    fastf_t kx = fx * gedp->ged_gvp->gv_scale*base2local;
+    fastf_t ky = fy * gedp->ged_gvp->gv_scale*base2local;
+    bu_log("kx,ky: (%f,%f)\n", kx, ky);
+
+    // Current positions are the new previous positions
     x_prev = e->x();
     y_prev = e->y();
 
