@@ -915,7 +915,7 @@ struct XXH64_state_s {
    XXH64_hash_t reserved64;   /*!< Reserved field. Do not read or write to it, it may be removed. */
 };   /* typedef'd to XXH64_state_t */
 
-#if defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)   /* C11+ */
+#if defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && !defined(_MSC_VER)  /* C11+ */
 #  include <stdalign.h>
 #  define XXH_ALIGN(n)      alignas(n)
 #elif defined(__GNUC__)
@@ -1903,7 +1903,8 @@ XXH32_finalize(xxh_u32 h32, const xxh_u8* ptr, size_t len, XXH_alignment align)
  * @internal
  * @brief The implementation for @ref XXH32().
  *
- * @param input, len, seed Directly passed from @ref XXH32().
+ * @param input seed data Directly passed from @ref XXH32().
+ * @param input len seed data length Directly passed from @ref XXH32().
  * @param align Whether @p input is aligned.
  * @return The calculated hash.
  */
@@ -3217,7 +3218,8 @@ XXH_mult32to64(xxh_u64 x, xxh_u64 y)
  * Uses `__uint128_t` and `_umul128` if available, otherwise uses a scalar
  * version.
  *
- * @param lhs, rhs The 64-bit integers to be multiplied
+ * @param lhs 64-bit integer to be multiplied
+ * @param rhs 64-bit integer to be multiplied
  * @return The 128-bit result represented in an @ref XXH128_hash_t.
  */
 static XXH128_hash_t
@@ -3335,7 +3337,8 @@ XXH_mult64to128(xxh_u64 lhs, xxh_u64 rhs)
  * The reason for the separate function is to prevent passing too many structs
  * around by value. This will hopefully inline the multiply, but we don't force it.
  *
- * @param lhs, rhs The 64-bit integers to multiply
+ * @param lhs 64-bit integer to multiply
+ * @param rhs 64-bit integer to multiply
  * @return The low 64 bits of the product XOR'd by the high 64 bits.
  * @see XXH_mult64to128()
  */
