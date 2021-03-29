@@ -1549,7 +1549,7 @@ struct bu_structparse gl_vparse[] = {
     {"%V",  1, "log",              gl_MV_O(log),             gl_logfile_hook, NULL, NULL },
     {"%g",  1, "bound",            gl_MV_O(bound),           gl_bound_hook, NULL, NULL },
     {"%d",  1, "useBound",         gl_MV_O(boundFlag),       gl_bound_flag_hook, NULL, NULL },
-    {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"",    0, (char *)0,          0,                        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 /*

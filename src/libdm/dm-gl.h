@@ -111,7 +111,7 @@ struct gl_vars {
     struct gl_internal_vars i;
 };
 
-extern struct bu_structparse gl_vparse[];
+DMGL_EXPORT extern struct bu_structparse gl_vparse[];
 
 DMGL_EXPORT extern void glvars_init(struct dm *dmp);
 

@@ -27,6 +27,13 @@ set(LIBDMGL_SRCS
 if (BRLCAD_ENABLE_OPENGL)
   BRLCAD_ADDLIB(libdm_gl "${LIBDMGL_SRCS}" "libbn;libbu;${OPENGL_LIBRARIES}")
   set_target_properties(libdm_gl PROPERTIES VERSION 20.0.1 SOVERSION 20)
+  if(HIDE_INTERNAL_SYMBOLS)
+    set_property(TARGET libdm_gl APPEND PROPERTY COMPILE_DEFINITIONS "DMGL_DLL_EXPORTS")
+    if (TARGET libdm_gl-obj)
+      set_property(TARGET libdm_gl-obj APPEND PROPERTY COMPILE_DEFINITIONS "DMGL_DLL_EXPORTS")
+    endif (TARGET libdm_gl-obj)
+  endif(HIDE_INTERNAL_SYMBOLS)
+
 endif (BRLCAD_ENABLE_OPENGL)
 
 add_custom_command(
