@@ -1146,6 +1146,7 @@ struct dm_impl dm_tk_impl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     null_doevent,
     null_openFb,
     NULL,

@@ -296,6 +296,12 @@ null_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 int
+null_SwapBuffers(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+int
 null_doevent(struct dm *UNUSED(dmp), void *UNUSED(clientData), void *UNUSED(eventPtr))
 {
     return 0;
@@ -348,6 +354,7 @@ struct dm_impl dm_null_impl = {
     null_getDisplayImage,
     null_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     null_doevent,
     null_openFb,
     NULL,

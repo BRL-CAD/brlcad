@@ -59,8 +59,6 @@ struct dm_vars {
  */
 struct dm_impl {
     struct dm *(*dm_open)(void *interp, int argc, const char *argv[]);
-    // TODO - dm_open currently does both new windows and existing windows - rework
-    // to operate like framebuffer API and separate them.
     int (*dm_close)(struct dm *dmp);
     int (*dm_viable)(const char *dpy_string);
     int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
@@ -99,6 +97,7 @@ struct dm_impl {
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);  /**< @brief (0,0) is upper left pixel */
     int (*dm_reshape)(struct dm *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm *dmp);
+    int (*dm_SwapBuffers)(struct dm *dmp);
     int (*dm_doevent)(struct dm *dmp, void *clientData, void *eventPtr);
     int (*dm_openFb)(struct dm *dmp);
     int (*dm_get_internal)(struct dm *dmp);

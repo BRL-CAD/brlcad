@@ -142,6 +142,7 @@ HIDDEN int ogl_genDLists(struct dm *dmp, size_t range);
 HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
 HIDDEN int ogl_reshape(struct dm *dmp, int width, int height);
 HIDDEN int ogl_makeCurrent(struct dm *dmp);
+HIDDEN int ogl_SwapBuffers(struct dm *dmp);
 
 
 static fastf_t default_viewscale = 1000.0;
@@ -190,7 +191,6 @@ HIDDEN int
 ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
-    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     if (dmp->i->dm_debugLevel == 1)
 	bu_log("ogl_setBGColor()\n");
 
@@ -203,7 +203,9 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
     mvars->i.b = b / 255.0;
 
     if (mvars->doublebuffer) {
-	glXSwapBuffers(pubvars->dpy, pubvars->win);
+	if (dmp->i->dm_SwapBuffers) {
+	    (*dmp->i->dm_SwapBuffers)(dmp);
+	}
 	glClearColor(mvars->i.r, mvars->i.g, mvars->i.b, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
@@ -407,6 +409,20 @@ ogl_makeCurrent(struct dm *dmp)
 	bu_log("ogl_makeCurrent: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
+
+    return BRLCAD_OK;
+}
+
+
+HIDDEN int
+ogl_SwapBuffers(struct dm *dmp)
+{
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("ogl_SwapBuffers()\n");
+
+    glXSwapBuffers(pubvars->dpy, pubvars->win);
 
     return BRLCAD_OK;
 }
@@ -1302,7 +1318,6 @@ ogl_drawBegin(struct dm *dmp)
 HIDDEN int
 ogl_drawEnd(struct dm *dmp)
 {
-    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -1329,7 +1344,9 @@ ogl_drawEnd(struct dm *dmp)
     }
 
     if (mvars->doublebuffer) {
-	glXSwapBuffers(pubvars->dpy, pubvars->win);
+	if (dmp->i->dm_SwapBuffers) {
+	    (*dmp->i->dm_SwapBuffers)(dmp);
+	}
 
 	if (dmp->i->dm_clearBufferAfter) {
 	    /* give Graphics pipe time to work */
@@ -3022,6 +3039,7 @@ struct dm_impl dm_ogl_impl = {
     ogl_getDisplayImage, /* display to image function */
     ogl_reshape,
     ogl_makeCurrent,
+    ogl_SwapBuffers,
     ogl_doevent,
     ogl_openFb,
     ogl_get_internal,

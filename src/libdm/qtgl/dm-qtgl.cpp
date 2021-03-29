@@ -2255,6 +2255,7 @@ struct dm_impl dm_qtgl_impl = {
     qtgl_getDisplayImage, /* display to image function */
     qtgl_reshape,
     qtgl_makeCurrent,
+    null_SwapBuffers,
     qtgl_doevent,
     qtgl_openFb,
     qtgl_get_internal,

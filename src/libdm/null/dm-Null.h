@@ -195,6 +195,10 @@ null_makeCurrent(struct dm *dmp);
 
 
 DM_NULL_EXPORT extern int
+null_SwapBuffers(struct dm *dmp);
+
+
+DM_NULL_EXPORT extern int
 null_doevent(struct dm *dmp, void *clientData, void *eventPtr);
 
 

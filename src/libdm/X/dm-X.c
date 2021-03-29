@@ -2109,6 +2109,7 @@ struct dm_impl dm_X_impl = {
     X_getDisplayImage, /* display to image function */
     X_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     X_doevent,
     X_openFb,
     NULL,

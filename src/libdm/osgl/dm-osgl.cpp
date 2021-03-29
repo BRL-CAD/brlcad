@@ -2697,6 +2697,7 @@ struct dm_impl dm_osgl_impl = {
     osgl_getDisplayImage, /* display to image function */
     osgl_reshape,
     osgl_makeCurrent,
+    NULL,
     osgl_doevent,
     osgl_openFb,
     osgl_get_internal,

@@ -343,6 +343,12 @@ txt_makeCurrent(struct dm *UNUSED(dmp))
     return 0;
 }
 
+HIDDEN int
+txt_SwapBuffers(struct dm *UNUSED(dmp))
+{
+    bu_log("SwapBuffers called\n");
+    return 0;
+}
 
 HIDDEN int
 txt_doevent(struct dm *UNUSED(dmp), void *UNUSED(vclientData), void *UNUSED(veventPtr))
@@ -399,6 +405,7 @@ struct dm_impl dm_txt_impl = {
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,
+    txt_SwapBuffers,
     txt_doevent,
     txt_openFb,
     NULL,

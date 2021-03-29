@@ -1787,6 +1787,17 @@ wgl_makeCurrent(struct dm *dmp)
 }
 
 HIDDEN int
+wgl_SwapBuffers(struct dm *dmp)
+{
+    if (dmp->i->dm_debugLevel)
+	bu_log("wgl_SwapBuffers()\n");
+
+    SwapBuffers(((struct dm_wglvars *)dmp->i->dm_vars.pub_vars)->hdc);
+
+    return BRLCAD_OK;
+}
+
+HIDDEN int
 wgl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 {
     XEvent *eventPtr= (XEvent *)veventPtr;
@@ -2331,6 +2342,7 @@ struct dm_impl dm_wgl_impl = {
     wgl_getDisplayImage,	/* display to image function */
     wgl_reshape,
     wgl_makeCurrent,
+    wgl_SwapBuffers,
     wgl_doevent,
     wgl_openFb,
     wgl_get_internal,
