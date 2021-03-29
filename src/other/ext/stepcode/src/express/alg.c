@@ -43,10 +43,6 @@
 #include "express/schema.h"
 
 struct freelist_head ALG_fl;
-struct freelist_head FUNC_fl;
-struct freelist_head RULE_fl;
-struct freelist_head PROC_fl;
-struct freelist_head WHERE_fl;
 
 Scope ALGcreate(char type)
 {
