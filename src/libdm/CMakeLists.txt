@@ -11,12 +11,23 @@ set(DM_INCLUDE_DIRS
   )
 
 # local includes
-set(DM_LOCAL_INCLUDE_DIRS 
+set(DM_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/libbg
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
+
+# Many of the backends use the same OpenGL drawing logic for much of their
+# functionality.  If OpenGL support is available, We encapsulate the common
+# elements of this logic in a libdm-gl library used by those plugins.
+set(LIBDMGL_SRCS
+  dm-gl.c
+  )
+if (BRLCAD_ENABLE_OPENGL)
+  BRLCAD_ADDLIB(libdm_gl "${LIBDMGL_SRCS}" "libbn;libbu;${OPENGL_LIBRARIES}")
+  set_target_properties(libdm_gl PROPERTIES VERSION 20.0.1 SOVERSION 20)
+endif (BRLCAD_ENABLE_OPENGL)
 
 add_custom_command(
   OUTPUT "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
@@ -86,6 +97,7 @@ set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_S
 BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libicv;libbu;libpkg;${OPENGL_LIBRARIES};${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+
 if (TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif (TARGET profont_ProFont_ttf_cp)
@@ -96,6 +108,8 @@ set(libdm_ignore_files
   CMakeLists.txt
   README
   TODO
+  dm-gl.c
+  dm-gl.h
   if_TEMPLATE.c
   null/dm-Null.h
   include/private.h
