@@ -180,7 +180,7 @@ ogl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
 void
 ogl_fogHint(struct dm *dmp, int fastfog)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
     mvars->fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
@@ -189,9 +189,8 @@ ogl_fogHint(struct dm *dmp, int fastfog)
 HIDDEN int
 ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
-    struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel == 1)
 	bu_log("ogl_setBGColor()\n");
 
@@ -199,17 +198,13 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
     dmp->i->dm_bg[1] = g;
     dmp->i->dm_bg[2] = b;
 
-    privars->r = r / 255.0;
-    privars->g = g / 255.0;
-    privars->b = b / 255.0;
+    mvars->i.r = r / 255.0;
+    mvars->i.g = g / 255.0;
+    mvars->i.b = b / 255.0;
 
     if (mvars->doublebuffer) {
-	glXSwapBuffers(pubvars->dpy,
-		       pubvars->win);
-	glClearColor(privars->r,
-		     privars->g,
-		     privars->b,
-		     0.0);
+	glXSwapBuffers(pubvars->dpy, pubvars->win);
+	glClearColor(mvars->i.r, mvars->i.g, mvars->i.b, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
@@ -368,7 +363,7 @@ ogl_reshape(struct dm *dmp, int width, int height)
 {
     GLint mm;
 
-    struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
 
     dmp->i->dm_height = height;
     dmp->i->dm_width = width;
@@ -384,10 +379,7 @@ ogl_reshape(struct dm *dmp, int width, int height)
 
     glViewport(0, 0, dmp->i->dm_width, dmp->i->dm_height);
 
-    glClearColor(privars->r,
-		 privars->g,
-		 privars->b,
-		 0.0);
+    glClearColor(mvars->i.r, mvars->i.g,  mvars->i.b, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
@@ -447,7 +439,7 @@ ogl_configureWin(struct dm *dmp, int force)
 HIDDEN int
 ogl_setLight(struct dm *dmp, int lighting_on)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
     if (dmp->i->dm_debugLevel)
 	bu_log("ogl_setLight()\n");
 
@@ -487,7 +479,7 @@ HIDDEN XVisualInfo *
 ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int tries, baddepth;
     int num, i, j;
@@ -711,7 +703,7 @@ ogl_open(void *vinterp, int argc, const char **argv)
     Display *tmp_dpy = (Display *)NULL;
     struct dm *dmp = NULL;
     struct dm_impl *dmpi = NULL;
-    struct modifiable_ogl_vars *mvars = NULL;
+    struct ogl_vars *mvars = NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
@@ -752,7 +744,7 @@ ogl_open(void *vinterp, int argc, const char **argv)
     privvars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
 
     dmp->i->dm_get_internal(dmp);
-    mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    mvars = (struct ogl_vars *)dmp->i->m_vars;
 
     dmp->i->dm_vp = &default_viewscale;
 
@@ -1058,7 +1050,7 @@ Done:
 int
 ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp1->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp1->i->m_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp1->i->dm_vars.priv_vars;
     GLfloat backgnd[4];
     GLfloat vf;
@@ -1207,13 +1199,13 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-	glGetDoublev(GL_PROJECTION_MATRIX, ((struct modifiable_ogl_vars *)dmp2->i->m_vars)->i.faceplate_mat);
+	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->i->m_vars)->i.faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity();
-	((struct modifiable_ogl_vars *)dmp2->i->m_vars)->i.faceFlag = 1; /* faceplate matrix is on top of stack */
+	((struct ogl_vars *)dmp2->i->m_vars)->i.faceFlag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
 	dm_make_current(dmp2);
@@ -1230,8 +1222,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 HIDDEN int
 ogl_drawBegin(struct dm *dmp)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
 
     GLfloat fogdepth;
 
@@ -1262,10 +1253,7 @@ ogl_drawBegin(struct dm *dmp)
 
     /* clear back buffer */
     if (!dmp->i->dm_clearBufferAfter && mvars->doublebuffer) {
-	glClearColor(privars->r,
-		     privars->g,
-		     privars->b,
-		     0.0);
+	glClearColor(mvars->i.r, mvars->i.g, mvars->i.b, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
@@ -1315,8 +1303,7 @@ HIDDEN int
 ogl_drawEnd(struct dm *dmp)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
 
     if (dmp->i->dm_debugLevel)
 	bu_log("ogl_drawEnd\n");
@@ -1342,15 +1329,11 @@ ogl_drawEnd(struct dm *dmp)
     }
 
     if (mvars->doublebuffer) {
-	glXSwapBuffers(pubvars->dpy,
-		       pubvars->win);
+	glXSwapBuffers(pubvars->dpy, pubvars->win);
 
 	if (dmp->i->dm_clearBufferAfter) {
 	    /* give Graphics pipe time to work */
-	    glClearColor(privars->r,
-			 privars->g,
-			 privars->b,
-			 0.0);
+	    glClearColor(mvars->i.r, mvars->i.g, mvars->i.b, 0.0);
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
     }
@@ -1496,7 +1479,7 @@ ogl_loadPMatrix(struct dm *dmp, fastf_t *mat)
     fastf_t *mptr;
     GLfloat gtmat[16];
 
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
 
     glMatrixMode(GL_PROJECTION);
 
@@ -1547,8 +1530,7 @@ ogl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 HIDDEN int
 ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
 
     register struct bn_vlist *tvp;
     register int first;
@@ -1572,9 +1554,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
     glPolygonOffset(1.0, 1.0);
 
     /* Set color to background color for drawing polygons. */
-    glColor3f(privars->r,
-	      privars->g,
-	      privars->b);
+    glColor3f(mvars->i.r, mvars->i.g, mvars->i.b);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -2002,7 +1982,7 @@ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **d
 HIDDEN int
 ogl_normal(struct dm *dmp)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
 
     if (dmp->i->dm_debugLevel)
 	bu_log("ogl_normal\n");
@@ -2296,7 +2276,7 @@ HIDDEN int
 ogl_setTransparency(struct dm *dmp,
 		    int transparency_on)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
     if (dmp->i->dm_debugLevel)
 	bu_log("ogl_setTransparency()\n");
 
@@ -2336,7 +2316,7 @@ ogl_setDepthMask(struct dm *dmp,
 HIDDEN int
 ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
     if (dmp->i->dm_debugLevel)
 	bu_log("ogl_setZBuffer:\n");
 
@@ -2458,7 +2438,7 @@ ogl_openFb(struct dm *dmp)
 {
     struct fb_platform_specific *fb_ps;
     struct ogl_fb_info *ofb_ps;
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct ogl_vars *mvars = (struct ogl_vars *)dmp->i->m_vars;
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
 
@@ -2479,10 +2459,10 @@ ogl_openFb(struct dm *dmp)
 int
 ogl_get_internal(struct dm *dmp)
 {
-    struct modifiable_ogl_vars *mvars = NULL;
+    struct ogl_vars *mvars = NULL;
     if (!dmp->i->m_vars) {
-	BU_GET(dmp->i->m_vars, struct modifiable_ogl_vars);
-	mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+	BU_GET(dmp->i->m_vars, struct ogl_vars);
+	mvars = (struct ogl_vars *)dmp->i->m_vars;
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
     }
@@ -2492,11 +2472,11 @@ ogl_get_internal(struct dm *dmp)
 int
 ogl_put_internal(struct dm *dmp)
 {
-    struct modifiable_ogl_vars *mvars = NULL;
+    struct ogl_vars *mvars = NULL;
     if (dmp->i->m_vars) {
-	mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+	mvars = (struct ogl_vars *)dmp->i->m_vars;
 	bu_vls_free(&(mvars->log));
-	BU_PUT(dmp->i->m_vars, struct modifiable_ogl_vars);
+	BU_PUT(dmp->i->m_vars, struct ogl_vars);
     }
     return 0;
 }
@@ -2508,7 +2488,7 @@ Ogl_colorchange(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     if (mvars->cueing_on) {
 	glEnable(GL_FOG);
     } else {
@@ -2525,7 +2505,7 @@ ogl_zclip_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
@@ -2549,7 +2529,7 @@ ogl_debug_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
 
     dm_debug(dmp, mvars->debug);
@@ -2565,7 +2545,7 @@ ogl_logfile_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
 
     dm_logfile(dmp, bu_vls_addr(&mvars->log));
@@ -2580,7 +2560,7 @@ ogl_bound_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
 
     dmp->i->dm_bound = mvars->bound;
@@ -2595,7 +2575,7 @@ ogl_bound_flag_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
 
     dmp->i->dm_boundFlag = mvars->boundFlag;
@@ -2610,7 +2590,7 @@ ogl_zbuffer_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
@@ -2626,7 +2606,7 @@ ogl_lighting_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
@@ -2642,7 +2622,7 @@ ogl_transparency_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
@@ -2658,7 +2638,7 @@ ogl_fog_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    struct ogl_vars *mvars = (struct ogl_vars *)base;
     struct dm *dmp = mvars->this_dm;
 
     dm_fogHint(dmp, mvars->fastfog);

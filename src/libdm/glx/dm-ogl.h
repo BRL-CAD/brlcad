@@ -68,14 +68,15 @@
 
 extern struct dm dm_ogl;
 
-#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
+#define Ogl_MV_O(_m) offsetof(struct ogl_vars, _m)
 
-struct ogl_common_vars {
+struct ogl_internal_vars {
     int faceFlag;
     GLdouble faceplate_mat[16];
+    GLclampf r, g, b;
 };
 
-struct modifiable_ogl_vars {
+struct ogl_vars {
     struct dm *this_dm;
     int cueing_on;
     int zclipping_on;
@@ -92,17 +93,15 @@ struct modifiable_ogl_vars {
     struct bu_vls log;
     double bound;
     int boundFlag;
-    struct ogl_common_vars i;
+    struct ogl_internal_vars i;
 };
 
-
+/* Private, platform specific OpenGL variables */
 struct pogl_vars {
     GLXContext glxc;
-    int *perspective_mode;
     int fontOffset;
     int ovec;		/* Old color map entry number */
     char is_direct;
-    GLclampf r, g, b;
 };
 
 struct dm_glxvars {
