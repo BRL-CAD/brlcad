@@ -74,6 +74,21 @@ struct gl_internal_vars {
     int faceFlag;
     GLdouble faceplate_mat[16];
     GLclampf r, g, b;
+
+    fastf_t default_viewscale;
+    double xlim_view;  /* args for glOrtho*/
+    double ylim_view;
+
+    /* lighting parameters */
+    float amb_three[4];
+    float light0_position[4];
+    float light0_diffuse[4];
+    float wireColor[4];
+    float ambientColor[4];
+    float specularColor[4];
+    float diffuseColor[4];
+    float backDiffuseColorDark[4];
+    float backDiffuseColorLight[4];
 };
 
 struct gl_vars {
@@ -97,6 +112,9 @@ struct gl_vars {
 };
 
 extern struct bu_structparse gl_vparse[];
+
+DMGL_EXPORT extern void glvars_init(struct dm *dmp);
+
 DMGL_EXPORT extern int gl_beginDList(struct dm *dmp, unsigned int list);
 DMGL_EXPORT extern int gl_debug(struct dm *dmp, int vl);
 DMGL_EXPORT extern int gl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);

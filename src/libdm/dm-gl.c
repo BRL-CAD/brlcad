@@ -59,22 +59,6 @@
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-fastf_t default_viewscale = 1000.0;
-double xlim_view = 1.0;	/* args for glOrtho*/
-double ylim_view = 1.0;
-
-/* lighting parameters */
-float amb_three[] = {0.3, 0.3, 0.3, 1.0};
-
-float light0_position[] = {0.0, 0.0, 1.0, 0.0};
-float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
-float wireColor[4];
-float ambientColor[4];
-float specularColor[4];
-float diffuseColor[4];
-float backDiffuseColorDark[4];
-float backDiffuseColorLight[4];
-
 void gl_printmat(struct bu_vls *tmp_vls, fastf_t *mat) {
     bu_vls_printf(tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
     bu_vls_printf(tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
@@ -89,6 +73,26 @@ void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
     bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[3], m[7], m[11], m[15]);
 }
 
+void glvars_init(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    mvars->i.default_viewscale = 1000.0;
+    mvars->i.xlim_view = 1.0;
+    mvars->i.ylim_view = 1.0;
+    mvars->i.amb_three[0] = 0.3;
+    mvars->i.amb_three[1] = 0.3;
+    mvars->i.amb_three[2] = 0.3;
+    mvars->i.amb_three[3] = 1.0;
+    mvars->i.light0_position[0] = 0.0;
+    mvars->i.light0_position[1] = 0.0;
+    mvars->i.light0_position[2] = 1.0;
+    mvars->i.light0_position[3] = 0.0;
+    /* Initialize to white */
+    mvars->i.light0_diffuse[0] = 1.0;
+    mvars->i.light0_diffuse[1] = 1.0;
+    mvars->i.light0_diffuse[2] = 1.0;
+    mvars->i.light0_diffuse[3] = 1.0;
+}
 
 void gl_fogHint(struct dm *dmp, int fastfog)
 {
@@ -149,7 +153,7 @@ int gl_reshape(struct dm *dmp, int width, int height)
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+    glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
     glMatrixMode(mm);
 
     return 0;
@@ -175,11 +179,11 @@ int gl_setLight(struct dm *dmp, int lighting_on)
 	else
 	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, mvars->i.amb_three);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, mvars->i.light0_diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, mvars->i.light0_diffuse);
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -294,7 +298,7 @@ int gl_drawEnd(struct dm *dmp)
     if (dmp->i->dm_light) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+	glLightfv(GL_LIGHT0, GL_POSITION, mvars->i.light0_position);
     }
 
     if (mvars->doublebuffer) {
@@ -458,12 +462,12 @@ int gl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 	if (mvars->i.faceFlag) {
 	    glPopMatrix();
 	    glLoadIdentity();
-	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+	    glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
 	    glPushMatrix();
 	    glLoadMatrixd(mvars->i.faceplate_mat);
 	} else {
 	    glLoadIdentity();
-	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+	    glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
 	}
 
 	return BRLCAD_OK;
@@ -589,7 +593,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
     /* Last, draw wireframe/edges. */
 
     /* Set color to wireColor for drawing wireframe/edges */
-    glColor3f(wireColor[0], wireColor[1], wireColor[2]);
+    glColor3f(mvars->i.wireColor[0], mvars->i.wireColor[1], mvars->i.wireColor[2]);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -666,6 +670,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
 int gl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     struct bn_vlist *tvp;
     register int first;
     register int mflag = 1;
@@ -704,7 +709,7 @@ int gl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 		    if (dmp->i->dm_light && mflag) {
 			mflag = 0;
-			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
@@ -747,21 +752,21 @@ int gl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    if (dmp->i->dm_light && mflag) {
 			mflag = 0;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
-			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
 
 			switch (dmp->i->dm_light) {
 			    case 1:
 				break;
 			    case 2:
-				glMaterialfv(GL_BACK, GL_DIFFUSE, diffuseColor);
+				glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
 				break;
 			    case 3:
-				glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorDark);
+				glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
 				break;
 			    default:
-				glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorLight);
+				glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
 				break;
 			}
 
@@ -1001,13 +1006,15 @@ int gl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2
 
 int gl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    return drawLine3D(dmp, pt1, pt2, "gl_drawLine3D()\n", wireColor);
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    return drawLine3D(dmp, pt1, pt2, "gl_drawLine3D()\n", mvars->i.wireColor);
 }
 
 
 int gl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
-    return drawLines3D(dmp, npoints, points, sflag, "gl_drawLine3D()\n", wireColor);
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    return drawLines3D(dmp, npoints, points, sflag, "gl_drawLine3D()\n", mvars->i.wireColor);
 }
 
 
@@ -1084,15 +1091,16 @@ int gl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 
 int gl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     dmp->i->dm_fg[0] = r;
     dmp->i->dm_fg[1] = g;
     dmp->i->dm_fg[2] = b;
 
     /* wireColor gets the full rgb */
-    wireColor[0] = r / 255.0;
-    wireColor[1] = g / 255.0;
-    wireColor[2] = b / 255.0;
-    wireColor[3] = transparency;
+    mvars->i.wireColor[0] = r / 255.0;
+    mvars->i.wireColor[1] = g / 255.0;
+    mvars->i.wireColor[2] = b / 255.0;
+    mvars->i.wireColor[3] = transparency;
 
     if (strict) {
 	glColor3ub((GLubyte)r, (GLubyte)g, (GLubyte)b);
@@ -1101,34 +1109,34 @@ int gl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned cha
 	if (dmp->i->dm_light) {
 	    /* Ambient = .2, Diffuse = .6, Specular = .2 */
 
-	    ambientColor[0] = wireColor[0] * 0.2;
-	    ambientColor[1] = wireColor[1] * 0.2;
-	    ambientColor[2] = wireColor[2] * 0.2;
-	    ambientColor[3] = wireColor[3];
+	    mvars->i.ambientColor[0] = mvars->i.wireColor[0] * 0.2;
+	    mvars->i.ambientColor[1] = mvars->i.wireColor[1] * 0.2;
+	    mvars->i.ambientColor[2] = mvars->i.wireColor[2] * 0.2;
+	    mvars->i.ambientColor[3] = mvars->i.wireColor[3];
 
-	    specularColor[0] = ambientColor[0];
-	    specularColor[1] = ambientColor[1];
-	    specularColor[2] = ambientColor[2];
-	    specularColor[3] = ambientColor[3];
+	    mvars->i.specularColor[0] = mvars->i.ambientColor[0];
+	    mvars->i.specularColor[1] = mvars->i.ambientColor[1];
+	    mvars->i.specularColor[2] = mvars->i.ambientColor[2];
+	    mvars->i.specularColor[3] = mvars->i.ambientColor[3];
 
-	    diffuseColor[0] = wireColor[0] * 0.6;
-	    diffuseColor[1] = wireColor[1] * 0.6;
-	    diffuseColor[2] = wireColor[2] * 0.6;
-	    diffuseColor[3] = wireColor[3];
+	    mvars->i.diffuseColor[0] = mvars->i.wireColor[0] * 0.6;
+	    mvars->i.diffuseColor[1] = mvars->i.wireColor[1] * 0.6;
+	    mvars->i.diffuseColor[2] = mvars->i.wireColor[2] * 0.6;
+	    mvars->i.diffuseColor[3] = mvars->i.wireColor[3];
 
-	    backDiffuseColorDark[0] = wireColor[0] * 0.3;
-	    backDiffuseColorDark[1] = wireColor[1] * 0.3;
-	    backDiffuseColorDark[2] = wireColor[2] * 0.3;
-	    backDiffuseColorDark[3] = wireColor[3];
+	    mvars->i.backDiffuseColorDark[0] = mvars->i.wireColor[0] * 0.3;
+	    mvars->i.backDiffuseColorDark[1] = mvars->i.wireColor[1] * 0.3;
+	    mvars->i.backDiffuseColorDark[2] = mvars->i.wireColor[2] * 0.3;
+	    mvars->i.backDiffuseColorDark[3] = mvars->i.wireColor[3];
 
-	    backDiffuseColorLight[0] = wireColor[0] * 0.9;
-	    backDiffuseColorLight[1] = wireColor[1] * 0.9;
-	    backDiffuseColorLight[2] = wireColor[2] * 0.9;
-	    backDiffuseColorLight[3] = wireColor[3];
+	    mvars->i.backDiffuseColorLight[0] = mvars->i.wireColor[0] * 0.9;
+	    mvars->i.backDiffuseColorLight[1] = mvars->i.wireColor[1] * 0.9;
+	    mvars->i.backDiffuseColorLight[2] = mvars->i.wireColor[2] * 0.9;
+	    mvars->i.backDiffuseColorLight[3] = mvars->i.wireColor[3];
 
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
 	} else {
 	    glColor3ub((GLubyte)r,  (GLubyte)g,  (GLubyte)b);
 	}
@@ -1170,6 +1178,7 @@ int gl_logfile(struct dm *dmp, const char *filename)
 
 int gl_setWinBounds(struct dm *dmp, fastf_t *w)
 {
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     GLint mm;
 
     if (dmp->i->dm_debugLevel)
@@ -1186,7 +1195,7 @@ int gl_setWinBounds(struct dm *dmp, fastf_t *w)
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+    glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
     glPushMatrix();
     glMatrixMode(mm);
 
