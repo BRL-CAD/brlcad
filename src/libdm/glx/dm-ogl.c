@@ -1432,7 +1432,9 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	    /* R eye */
 	    glViewport(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
 	    glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
-	    ogl_drawString2D(dmp, "R", 0.986, 0.0, 0, 1);
+	    if (dmp->i->dm_drawString2D) {
+		(*dmp->i->dm_drawString2D)(dmp, "R", 0.986, 0.0, 0, 1);
+	    }
 	    break;
 	case 2:
 	    /* L eye */
