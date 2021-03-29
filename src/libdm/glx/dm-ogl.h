@@ -87,12 +87,12 @@ struct modifiable_ogl_vars {
     struct bu_vls log;
     double bound;
     int boundFlag;
+    int faceFlag;
 };
 
 struct ogl_vars {
     GLXContext glxc;
     GLdouble faceplate_mat[16];
-    int face_flag;
     int *perspective_mode;
     int fontOffset;
     int ovec;		/* Old color map entry number */

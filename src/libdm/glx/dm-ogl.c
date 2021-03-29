@@ -1046,7 +1046,7 @@ Done:
     glLoadIdentity();
     glPushMatrix();
     glLoadIdentity();
-    privvars->face_flag = 1;	/* faceplate matrix is on top of stack */
+    mvars->faceFlag = 1;	/* faceplate matrix is on top of stack */
 
     ogl_setZBuffer(dmp, dmp->i->dm_zbuffer);
     ogl_setLight(dmp, dmp->i->dm_light);
@@ -1139,7 +1139,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity();
-	privars->face_flag = 1; /* faceplate matrix is on top of stack */
+	mvars->faceFlag = 1;	/* faceplate matrix is on top of stack */
 
 	/* destroy old context */
 	dm_make_current(dmp1);
@@ -1213,7 +1213,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity();
-	((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
+	((struct modifiable_ogl_vars *)dmp2->i->m_vars)->faceFlag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
 	dm_make_current(dmp2);
@@ -1269,12 +1269,12 @@ ogl_drawBegin(struct dm *dmp)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    if (privars->face_flag) {
+    if (mvars->faceFlag) {
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
-	privars->face_flag = 0;
+	mvars->faceFlag = 0;
 	if (mvars->cueing_on) {
 	    glEnable(GL_FOG);
 	    /*XXX Need to do something with Viewscale */
@@ -1496,12 +1496,13 @@ ogl_loadPMatrix(struct dm *dmp, fastf_t *mat)
     fastf_t *mptr;
     GLfloat gtmat[16];
 
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
     glMatrixMode(GL_PROJECTION);
 
     if (mat == (fastf_t *)NULL) {
-	if (privars->face_flag) {
+	if (mvars->faceFlag) {
 	    glPopMatrix();
 	    glLoadIdentity();
 	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
@@ -2021,14 +2022,14 @@ ogl_normal(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-    if (!privars->face_flag) {
+    if (!mvars->faceFlag) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadMatrixd(privars->faceplate_mat);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
-	privars->face_flag = 1;
+	mvars->faceFlag = 1;
 	if (mvars->cueing_on)
 	    glDisable(GL_FOG);
 	if (dmp->i->dm_light)
