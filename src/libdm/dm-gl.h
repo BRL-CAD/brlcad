@@ -170,8 +170,7 @@ DMGL_EXPORT extern void gl_printmat(struct bu_vls *tmp_vls, fastf_t *mat);
 DMGL_EXPORT extern void gl_transparency_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 DMGL_EXPORT extern void gl_zbuffer_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 DMGL_EXPORT extern void gl_zclip_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
-#if 0
-#endif
+
 #endif /* DM_OGL_H */
 
 /** @} */
