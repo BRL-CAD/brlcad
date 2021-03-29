@@ -436,13 +436,7 @@ ogl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 HIDDEN int
 ogl_configureWin(struct dm *dmp, int force)
 {
-    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
-    if (!glXMakeCurrent(pubvars->dpy,
-			pubvars->win,
-			privars->glxc)) {
-	bu_log("ogl_configureWin: Couldn't make context current\n");
+    if (dm_make_current(dmp) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
 
@@ -1002,8 +996,7 @@ Done:
 
     Tk_MapWindow(pubvars->xtkwin);
 
-    if (!glXMakeCurrent(pubvars->dpy, pubvars->win, privvars->glxc)) {
-	bu_log("ogl_open: Couldn't make context current\n");
+    if (dm_make_current(dmp) != BRLCAD_OK) {
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
@@ -1089,9 +1082,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    return BRLCAD_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->win,
-			    privars->glxc)) {
+	if (dm_make_current(dmp1) != BRLCAD_OK) {
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    privars->glxc = old_glxContext;
 
@@ -1151,7 +1142,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	privars->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy, None, NULL);
+	dm_make_current(dmp1);
 	glXDestroyContext(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy, old_glxContext);
     } else {
 	/* dmp1 will share its display lists with dmp2 */
@@ -1176,9 +1167,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    return BRLCAD_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->win,
-			    ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc)) {
+	if (dm_make_current(dmp2) != BRLCAD_OK) {
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
 
@@ -1227,7 +1216,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy, None, NULL);
+	dm_make_current(dmp2);
 	glXDestroyContext(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy, old_glxContext);
     }
 
@@ -1241,7 +1230,6 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 HIDDEN int
 ogl_drawBegin(struct dm *dmp)
 {
-    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
@@ -1268,13 +1256,9 @@ ogl_drawBegin(struct dm *dmp)
     }
 
 
-
-    if (!glXMakeCurrent(pubvars->dpy,
-			pubvars->win,
-			privars->glxc)) {
-	bu_log("ogl_drawBegin: Couldn't make context current\n");
-	return BRLCAD_ERROR;
-    }
+    if (!dm_make_current(dmp) == BRLCAD_OK) {
+	    return BRLCAD_ERROR;
+	}
 
     /* clear back buffer */
     if (!dmp->i->dm_clearBufferAfter && mvars->doublebuffer) {
