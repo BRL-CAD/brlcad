@@ -41,31 +41,6 @@
 #include "tk.h"
 #define HAVE_X11_TYPES 1
 
-#include "bu/vls.h"
-
-#define CMAP_BASE 40
-
-/* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
-#define GED2IRIS(x)	(((float)(x))*0.00048828125)
-
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {    \
-        _shift = 24 - _shift;                           \
-        switch (_shift) {                               \
-            case 0:                                     \
-                _mask >>= 24;                           \
-                break;                                  \
-            case 8:                                     \
-                _mask >>= 8;                            \
-                break;                                  \
-            case 16:                                    \
-                _mask <<= 8;                            \
-                break;                                  \
-            case 24:                                    \
-                _mask <<= 24;                           \
-                break;                                  \
-        }                                               \
-    }
-
 extern struct dm dm_ogl;
 
 /* Private, platform specific OpenGL variables */
@@ -89,12 +64,6 @@ struct dm_glxvars {
     int devbuttonpress;
     int devbuttonrelease;
 };
-
-__BEGIN_DECLS
-
-extern void ogl_fogHint();
-
-__END_DECLS
 
 #endif /* DM_OGL_H */
 
