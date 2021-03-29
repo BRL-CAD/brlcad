@@ -31,7 +31,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
   endif (X11_Xrender_LIB)
 
   dm_plugin_library(dm-ogl SHARED ${OGL_SRCS})
-  target_link_libraries(dm-ogl libdm_gl libdm libbu ${X11_LIBRARIES} ${OPENGL_LIBRARIES} ${TCL_LIBRARY} ${TK_LIBRARY})
+  target_link_libraries(dm-ogl libdmgl libdm libbu ${X11_LIBRARIES} ${OPENGL_LIBRARIES} ${TCL_LIBRARY} ${TK_LIBRARY})
   set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-ogl "${OGL_SRCS}")
 
