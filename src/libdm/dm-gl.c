@@ -30,11 +30,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
