@@ -110,9 +110,6 @@ extern void *fb_backends;
 
 __BEGIN_DECLS
 
-int
-drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
-
 DM_EXPORT extern struct fb remote_interface; /* not in list[] */
 
 /* Always included */

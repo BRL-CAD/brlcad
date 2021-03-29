@@ -124,7 +124,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	/* This is the applications display list offset */
 	dmp1->i->dm_displaylist = ((struct wgl_vars *)dmp1->i->dm_vars.priv_vars)->fontOffset + 128;
 
-	wgl_setBGColor(dmp1, 0, 0, 0);
+	gl_setBGColor(dmp1, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (mvars->doublebuffer)
@@ -200,7 +200,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	((struct wgl_vars *)dmp2->i->dm_vars.priv_vars)->fontOffset = ((struct wgl_vars *)dmp1->i->dm_vars.priv_vars)->fontOffset;
 	dmp2->i->dm_displaylist = dmp1->i->dm_displaylist;
 
-	wgl_setBGColor(dmp2, 0, 0, 0);
+	gl_setBGColor(dmp2, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (mvars->doublebuffer)
@@ -398,7 +398,7 @@ wgl_configureWin_guts(struct dm *dmp,
 	dmp->i->dm_width == (xwa.right-xwa.left))
 	return BRLCAD_OK;
 
-    wgl_reshape(dmp, xwa.right-xwa.left, xwa.bottom-xwa.top);
+    gl_reshape(dmp, xwa.right-xwa.left, xwa.bottom-xwa.top);
 
     /* First time through, load a font or quit */
     if (pubvars->fontstruct == NULL) {
@@ -846,6 +846,25 @@ wgl_event_cmp(struct dm *dmp, dm_event_t type, int event)
     };
 }
 
+struct bu_structparse wgl_vparse[] = {
+    {"%d",  1, "depthcue",         gl_MV_O(cueing_on),       gl_colorchange, NULL, NULL },
+    {"%d",  1, "zclip",            gl_MV_O(zclipping_on),    gl_zclip_hook, NULL, NULL },
+    {"%d",  1, "zbuffer",          gl_MV_O(zbuffer_on),      gl_zbuffer_hook, NULL, NULL },
+    {"%d",  1, "lighting",         gl_MV_O(lighting_on),     gl_lighting_hook, NULL, NULL },
+    {"%d",  1, "transparency",     gl_MV_O(transparency_on), gl_transparency_hook, NULL, NULL },
+    {"%d",  1, "fastfog",          gl_MV_O(fastfog),         gl_fog_hook, NULL, NULL },
+    {"%g",  1, "density",          gl_MV_O(fogdensity),      dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_zbuf",         gl_MV_O(zbuf),            dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_rgb",          gl_MV_O(rgb),             dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_doublebuffer", gl_MV_O(doublebuffer),    dm_generic_hook, NULL, NULL },
+    {"%d",  1, "depth",            gl_MV_O(depth),           dm_generic_hook, NULL, NULL },
+    {"%d",  1, "debug",            gl_MV_O(debug),           gl_debug_hook, NULL, NULL },
+    {"%V",  1, "log",              gl_MV_O(log),             gl_logfile_hook, NULL, NULL },
+    {"%g",  1, "bound",            gl_MV_O(bound),           gl_bound_hook, NULL, NULL },
+    {"%d",  1, "useBound",         gl_MV_O(boundFlag),       gl_bound_flag_hook, NULL, NULL },
+    {"",    0, (char *)0,          0,                        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
 /* Forward declare for dm_wgl_impl */
 struct dm *wgl_open(void *vinterp, int argc, char *argv[]);
 
@@ -941,7 +960,7 @@ struct dm_impl dm_wgl_impl = {
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    gl_vparse,
+    wgl_vparse,
     FB_NULL,
     0				/* Tcl interpreter */
 };
@@ -1164,7 +1183,7 @@ wgl_open(void *vinterp, int argc, char *argv[])
     /* This is the applications display list offset */
     dmp->i->dm_displaylist = privars->fontOffset + 128;
 
-    wgl_setBGColor(dmp, 0, 0, 0);
+    gl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (mvars->doublebuffer)
