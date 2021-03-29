@@ -27,11 +27,18 @@
 #define DM_GL_H
 
 #include "common.h"
+
+#include "bio.h"
+
 #include "vmath.h"
 #include "bu.h"
 #include "bn/vlist.h"
 #include "dm/bview.h"
 #include "dm.h"
+
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
 
 #ifndef DMGL_EXPORT
 #  if defined(DMGL_DLL_EXPORTS) && defined(DMGL_DLL_IMPORTS)

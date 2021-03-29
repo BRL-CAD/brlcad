@@ -18,49 +18,6 @@ set(DM_LOCAL_INCLUDE_DIRS
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
-# Many of the backends use the same OpenGL drawing logic for much of their
-# functionality.  If OpenGL support is available, We encapsulate the common
-# elements of this logic in a libdm-gl library used by those plugins.
-set(LIBDMGL_SRCS
-  dm-gl.c
-  )
-if (BRLCAD_ENABLE_OPENGL)
-  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libbn;libbu;${OPENGL_LIBRARIES}")
-  set_target_properties(libdmgl PROPERTIES VERSION 20.0.1 SOVERSION 20)
-endif (BRLCAD_ENABLE_OPENGL)
-
-add_custom_command(
-  OUTPUT "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
-  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
-  )
-add_custom_target(dm_plugins_sentinel
-  DEPENDS ${CMAKE_BINARY_DIR}/dm_plugins.sentinel
-  )
-set_target_properties(dm_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/dm")
-
-function(dm_plugin_library name)
-  add_library(${name} ${ARGN})
-  add_dependencies(dm_plugins_sentinel ${name})
-endfunction(dm_plugin_library name)
-
-# This target is supplied so applications wanting to run libdm
-# commands at build time can depend on the plugins being built as well as
-# libdm itself (otherwise LIBGED commands might fail due to their plugins not
-# yet having been built.)
-add_custom_target(dm_plugins ALL DEPENDS dm_plugins_sentinel)
-set_target_properties(dm_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
-
-# Backend implementations
-add_subdirectory(X)
-add_subdirectory(glx)
-add_subdirectory(osgl)
-add_subdirectory(plot)
-add_subdirectory(postscript)
-add_subdirectory(qtgl)
-add_subdirectory(tk)
-add_subdirectory(txt)
-add_subdirectory(wgl)
-
 # Main libdm library
 set(LIBDM_SRCS
   null/dm-Null.c
@@ -96,11 +53,54 @@ set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL
 set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libicv;libbu;libpkg;${OPENGL_LIBRARIES};${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
-
 if (TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif (TARGET profont_ProFont_ttf_cp)
+
+
+# Many of the backends use the same OpenGL drawing logic for much of their
+# functionality.  If OpenGL support is available, We encapsulate the common
+# elements of this logic in a libdmgl library used by those plugins.
+set(LIBDMGL_SRCS
+  dm-gl.c
+  )
+if (BRLCAD_ENABLE_OPENGL)
+  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_LIBRARIES}")
+  set_target_properties(libdmgl PROPERTIES VERSION 20.0.1 SOVERSION 20)
+endif (BRLCAD_ENABLE_OPENGL)
+
+
+add_custom_command(
+  OUTPUT "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
+  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
+  )
+add_custom_target(dm_plugins_sentinel
+  DEPENDS ${CMAKE_BINARY_DIR}/dm_plugins.sentinel
+  )
+set_target_properties(dm_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/dm")
+
+function(dm_plugin_library name)
+  add_library(${name} ${ARGN})
+  add_dependencies(dm_plugins_sentinel ${name})
+endfunction(dm_plugin_library name)
+
+# This target is supplied so applications wanting to run libdm
+# commands at build time can depend on the plugins being built as well as
+# libdm itself (otherwise LIBGED commands might fail due to their plugins not
+# yet having been built.)
+add_custom_target(dm_plugins ALL DEPENDS dm_plugins_sentinel)
+set_target_properties(dm_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
+
+# Backend implementations
+add_subdirectory(X)
+add_subdirectory(glx)
+add_subdirectory(osgl)
+add_subdirectory(plot)
+add_subdirectory(postscript)
+add_subdirectory(qtgl)
+add_subdirectory(tk)
+add_subdirectory(txt)
+add_subdirectory(wgl)
 
 add_subdirectory(tests)
 
