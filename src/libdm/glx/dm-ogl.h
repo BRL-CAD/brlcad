@@ -70,6 +70,11 @@ extern struct dm dm_ogl;
 
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
+struct ogl_common_vars {
+    int faceFlag;
+    GLdouble faceplate_mat[16];
+};
+
 struct modifiable_ogl_vars {
     struct dm *this_dm;
     int cueing_on;
@@ -87,12 +92,12 @@ struct modifiable_ogl_vars {
     struct bu_vls log;
     double bound;
     int boundFlag;
-    int faceFlag;
+    struct ogl_common_vars i;
 };
 
-struct ogl_vars {
+
+struct pogl_vars {
     GLXContext glxc;
-    GLdouble faceplate_mat[16];
     int *perspective_mode;
     int fontOffset;
     int ovec;		/* Old color map entry number */
