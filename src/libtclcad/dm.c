@@ -2704,7 +2704,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	if ((dmp = dm_open((void *)interp, type, ac, av)) == DM_NULL) {
+	if ((dmp = dm_open(NULL, (void *)interp, type, ac, av)) == DM_NULL) {
 	    if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
 

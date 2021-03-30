@@ -70,7 +70,7 @@ static int plot_close(struct dm *dmp);
  *
  */
 struct dm *
-plot_open(void *vinterp, int argc, const char *argv[])
+plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;

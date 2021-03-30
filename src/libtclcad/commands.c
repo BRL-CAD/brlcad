@@ -4554,7 +4554,7 @@ to_new_view(struct ged *gedp,
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	new_gdvp->dmp = (void *)dm_open((void *)current_top->to_interp, type, ac, av);
+	new_gdvp->dmp = (void *)dm_open(NULL, (void *)current_top->to_interp, type, ac, av);
 	if ((struct dm *)new_gdvp->dmp == DM_NULL) {
 	    bu_ptbl_free(new_gdvp->callbacks);
 	    BU_PUT(new_gdvp->callbacks, struct bu_ptbl);

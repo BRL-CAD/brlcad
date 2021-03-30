@@ -68,7 +68,7 @@ extern "C" {
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-static struct dm *qtgl_open(void *ctx, int argc, const char **argv);
+static struct dm *qtgl_open(void *ctx, void *interp, int argc, const char **argv);
 static int qtgl_close(struct dm *dmp);
 static int qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 static int qtgl_configureWin(struct dm *dmp, int force);
@@ -156,7 +156,7 @@ qtgl_viable(const char *UNUSED(dpy_string))
  *
  */
 struct dm *
-qtgl_open(void *ctx, int argc, const char **argv)
+qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];

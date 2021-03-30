@@ -105,7 +105,7 @@ HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-struct dm *ogl_open(void *vinterp, int argc, const char **argv);
+struct dm *ogl_open(void *ctx, void *vinterp, int argc, const char **argv);
 HIDDEN int ogl_close(struct dm *dmp);
 HIDDEN int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_configureWin_guts(struct dm *dmp, int force);
@@ -523,7 +523,7 @@ ogl_viable(const char *dpy_string)
  *
  */
 struct dm *
-ogl_open(void *vinterp, int argc, const char **argv)
+ogl_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];

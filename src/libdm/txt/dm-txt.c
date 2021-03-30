@@ -35,7 +35,7 @@
 extern struct dm dm_txt;
 
 struct dm *
-txt_open(void *interp, int argc, const char **argv)
+txt_open(void *UNUSED(ctx), void *interp, int argc, const char **argv)
 {
     struct dm *dmp;
 

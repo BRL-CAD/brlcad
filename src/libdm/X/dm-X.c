@@ -444,7 +444,7 @@ X_viable(const char *dpy_string)
  *
  */
 struct dm *
-X_open(void *vinterp, int argc, const char **argv)
+X_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
     static int count = 0;

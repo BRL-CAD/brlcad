@@ -58,7 +58,7 @@ struct dm_vars {
  * Tk information...
  */
 struct dm_impl {
-    struct dm *(*dm_open)(void *interp, int argc, const char *argv[]);
+    struct dm *(*dm_open)(void *ctx, void *interp, int argc, const char *argv[]);
     int (*dm_close)(struct dm *dmp);
     int (*dm_viable)(const char *dpy_string);
     int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */

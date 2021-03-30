@@ -156,7 +156,8 @@ DM_EXPORT extern const char *dm_version(void);
 /* Plugin related functions */
 DM_EXPORT extern int dm_valid_type(const char *name, const char *dpy_string);
 DM_EXPORT const char * dm_init_msgs();
-DM_EXPORT extern struct dm *dm_open(void *interp,
+DM_EXPORT extern struct dm *dm_open(void *ctx,
+	                     void *interp,
 			     const char *type,
 			     int argc,
 			     const char *argv[]);

@@ -43,10 +43,10 @@
 
 
 extern "C" struct dm *
-dm_open(void *interp, const char *type, int argc, const char *argv[])
+dm_open(void *ctx, void *interp, const char *type, int argc, const char *argv[])
 {
     if (BU_STR_EQUIV(type, "nu") || BU_STR_EQUIV(type, "null")) {
-	return dm_null.i->dm_open(interp, argc, argv);
+	return dm_null.i->dm_open(ctx , interp, argc, argv);
     }
 
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
@@ -58,7 +58,7 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     }
 
     const struct dm *d = d_it->second;
-    struct dm *dmp = d->i->dm_open(interp, argc, argv);
+    struct dm *dmp = d->i->dm_open(ctx, interp, argc, argv);
     return dmp;
 }
 

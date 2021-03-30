@@ -33,7 +33,7 @@
 #include "../include/private.h"
 
 struct dm *
-null_open(void *interp, int UNUSED(argc), const char **UNUSED(argv))
+null_open(void *UNUSED(ctx), void *interp, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm *dmp = DM_NULL;
 

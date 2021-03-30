@@ -90,7 +90,7 @@ void DMRenderer::render()
 	m_init = true;
 	if (!dmp) {
 	    const char *acmd = "attach";
-	    dmp = dm_open((void *)m_w, "qtgl", 1, &acmd);
+	    dmp = dm_open((void *)m_w, NULL, "qtgl", 1, &acmd);
 	    m_w->gedp->ged_dmp = (void *)dmp;
 	    dm_set_vp(dmp, &m_w->gedp->ged_gvp->gv_scale);
 	    dm_configure_win(dmp, 0);
