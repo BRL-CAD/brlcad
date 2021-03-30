@@ -184,7 +184,7 @@ QModelIndex CADTreeView::selected()
 void CADTreeView::expand_path(QString path)
 {
     int i = 0;
-    QStringList path_items = path.split("/", QString::SkipEmptyParts);
+    QStringList path_items = path.split("/", Qt::SkipEmptyParts);
     CADTreeModel *view_model = (CADTreeModel *)model();
     QList<CADTreeNode*> *tree_children = &(view_model->m_root->children);
     while (i < path_items.size()) {
