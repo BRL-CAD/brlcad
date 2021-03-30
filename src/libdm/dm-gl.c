@@ -217,7 +217,7 @@ int gl_drawBegin(struct dm *dmp)
     }
 
 
-    if (!dm_make_current(dmp) == BRLCAD_OK) {
+    if (dm_make_current(dmp) != BRLCAD_OK) {
 	    return BRLCAD_ERROR;
 	}
 

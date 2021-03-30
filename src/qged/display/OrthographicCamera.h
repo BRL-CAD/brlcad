@@ -56,12 +56,12 @@ public:
 
     void processZoomRequest(const int &deltaWheelAngle) override;
 
-    QMatrix4x4 modelViewMatrix() const ;
-    QMatrix4x4 modelViewMatrixNoTranslate() const ;
+    QMatrix4x4 modelViewMatrix() const override;
+    QMatrix4x4 modelViewMatrixNoTranslate() const override;
 
-    QMatrix4x4 projectionMatrix() const ;
+    QMatrix4x4 projectionMatrix() const override;
 
-    void setEyePosition(float x, float y, float z) ;
+    void setEyePosition(float x, float y, float z) override;
     QVector3D getEyePosition();
 };
 
