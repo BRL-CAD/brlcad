@@ -90,7 +90,7 @@ void ConsoleInput::DoCommand()
     setMinimumHeight(document()->size().height());
 
     // Emit the command - up to the application to run it and return results
-    QStringList command_items = command.split(" ", Qt::SkipEmptyParts);
+    QStringList command_items = command.split(" ", QString::SkipEmptyParts);
     if (command_items.count() > 0)
 	new_log->command = command_items.at(0);
     emit parent_console->executeCommand(command, new_log);

@@ -238,7 +238,7 @@ void cad_register_commands(CADApp *app)
 int search_postprocess(QString *results, CADApp *app)
 {
     Q_UNUSED(app);
-    QStringList result_items = results->split("\n", Qt::SkipEmptyParts);
+    QStringList result_items = results->split("\n", QString::SkipEmptyParts);
     QStringList formatted_results;
 
     if (QString(results->at(0)) != QString("/")) return 1;

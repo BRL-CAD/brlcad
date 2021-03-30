@@ -164,7 +164,7 @@ CADApp::exec_command(QString *command, QString *result)
 
     if (ged_pointer != GED_NULL && command && command->length() > 0) {
 
-	QStringList command_items = lcommand.split(" ", Qt::SkipEmptyParts);
+	QStringList command_items = lcommand.split(" ", QString::SkipEmptyParts);
 
 	QString cargv0 = command_items.at(0);
 
