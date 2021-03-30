@@ -60,7 +60,7 @@ void DMRenderer::render()
     if (!w || !h)
 	return;
 
-    if (m_init && !dm_get_dirty((struct dm *)m_w->gedp->ged_dmp)) {
+    if (m_init && (!m_w->gedp || !dm_get_dirty((struct dm *)m_w->gedp->ged_dmp))) {
 	// Avoid a hot spin
 	usleep(10000);
 	return;
@@ -91,8 +91,10 @@ void DMRenderer::render()
 	if (!dmp) {
 	    const char *acmd = "attach";
 	    dmp = dm_open((void *)m_w, NULL, "qtgl", 1, &acmd);
-	    m_w->gedp->ged_dmp = (void *)dmp;
-	    dm_set_vp(dmp, &m_w->gedp->ged_gvp->gv_scale);
+	    if (m_w->gedp) {
+		m_w->gedp->ged_dmp = (void *)dmp;
+		dm_set_vp(dmp, &m_w->gedp->ged_gvp->gv_scale);
+	    }
 	    dm_configure_win(dmp, 0);
 	    dm_set_dirty(dmp, 1);
 	}
@@ -139,12 +141,14 @@ void DMRenderer::render()
 	//
 	// This would be a fairly heavy left, as libged, libtclcad and mged all
 	// access gd_headDisplay...
-	matp_t mat = m_w->gedp->ged_gvp->gv_model2view;
-	dm_loadmatrix(dmp, mat, 0);
-	unsigned char geometry_default_color[] = { 255, 0, 0 };
-	dm_draw_display_list(dmp, m_w->gedp->ged_gdp->gd_headDisplay,
-		1.0, m_w->gedp->ged_gvp->gv_isize, 255, 0, 0, 1,
-		0, 0, geometry_default_color, 1, 0);
+	if (m_w->gedp) {
+	    matp_t mat = m_w->gedp->ged_gvp->gv_model2view;
+	    dm_loadmatrix(dmp, mat, 0);
+	    unsigned char geometry_default_color[] = { 255, 0, 0 };
+	    dm_draw_display_list(dmp, m_w->gedp->ged_gdp->gd_headDisplay,
+		    1.0, m_w->gedp->ged_gvp->gv_isize, 255, 0, 0, 1,
+		    0, 0, geometry_default_color, 1, 0);
+	}
 
     }
 
@@ -222,8 +226,10 @@ void dmGL::onAboutToResize()
 
 void dmGL::onResized()
 {
-    dm_configure_win((struct dm *)gedp->ged_dmp, 0);
-    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+    if (gedp && gedp->ged_dmp) {
+	dm_configure_win((struct dm *)gedp->ged_dmp, 0);
+	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+    }
     m_renderer->unlockRenderer();
 }
 
