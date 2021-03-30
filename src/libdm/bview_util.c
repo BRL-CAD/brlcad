@@ -872,6 +872,83 @@ bview_hash(struct bview *v)
     return (unsigned long long)hash_val;
 }
 
+// TODO - support constraints
+int
+_bview_rot(struct bview *v, int dx, int dy, point_t keypoint, unsigned long long UNUSED(flags))
+{
+    if (!v)
+	return 0;
+
+    point_t rot_pt;
+    point_t new_origin;
+    mat_t viewchg, viewchginv;
+    point_t new_cent_view;
+    point_t new_cent_model;
+
+    fastf_t rdx = (fastf_t)dx * 0.25;
+    fastf_t rdy = (fastf_t)dy * 0.25;
+    mat_t newrot, newinv;
+    bn_mat_angles(newrot, rdx, rdy, 0);
+    bn_mat_inv(newinv, newrot);
+    MAT4X3PNT(rot_pt, v->gv_model2view, keypoint);  /* point to rotate around */
+
+    bn_mat_xform_about_pnt(viewchg, newrot, rot_pt);
+    bn_mat_inv(viewchginv, viewchg);
+    VSET(new_origin, 0.0, 0.0, 0.0);
+    MAT4X3PNT(new_cent_view, viewchginv, new_origin);
+    MAT4X3PNT(new_cent_model, v->gv_view2model, new_cent_view);
+    MAT_DELTAS_VEC_NEG(v->gv_center, new_cent_model);
+
+    /* Update the rotation component of the model2view matrix */
+    bn_mat_mul2(newrot, v->gv_rotation); /* pure rotation */
+
+    /* gv_rotation is updated, now sync other bview values */
+    bview_update(v);
+
+    return 1;
+}
+
+int
+_bview_trans(struct bview *v, int UNUSED(dx), int UNUSED(dy), point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
+{
+    if (!v)
+	return 0;
+
+
+    return 0;
+}
+int
+_bview_scale(struct bview *v, int UNUSED(dx), int UNUSED(dy), point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
+{
+    if (!v)
+	return 0;
+
+
+    return 0;
+}
+
+int
+bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsigned long long flags)
+{
+    if (mode == BVIEW_ADC)
+	return -1;
+
+    if (flags == BVIEW_IDLE)
+	return 0;
+
+    if (flags & BVIEW_ROT)
+	return _bview_rot(v, dx, dy, keypoint, flags);
+
+    if (flags & BVIEW_TRANS)
+	return _bview_trans(v, dx, dy, keypoint, flags);
+
+    if (flags & BVIEW_SCALE)
+	return _bview_scale(v, dx, dy, keypoint, flags);
+
+    return 0;
+}
+
+
 /*
  * Local Variables:
  * tab-width: 8
