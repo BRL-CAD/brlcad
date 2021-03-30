@@ -281,6 +281,27 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
 	return;
     }
 
+    if (e->modifiers().testFlag(Qt::ControlModifier)) {
+	bu_log("Ctrl\n");
+    }
+
+    if (e->modifiers().testFlag(Qt::ShiftModifier)) {
+	bu_log("Shift\n");
+    }
+
+    if (e->buttons().testFlag(Qt::LeftButton)) {
+	bu_log("Left\n");
+    }
+
+    if (e->buttons().testFlag(Qt::MiddleButton)) {
+	bu_log("Middle\n");
+    }
+
+    if (e->buttons().testFlag(Qt::RightButton)) {
+	bu_log("Right\n");
+    }
+
+
     //bu_log("(%d,%d)\n", e->x(), e->y());
     //bu_log("Delta: (%d,%d)\n", e->x() - x_prev, e->y() - y_prev);
 
@@ -310,10 +331,19 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
     QOpenGLWidget::mouseMoveEvent(e);
 }
 
+void dmGL::wheelEvent(QWheelEvent *e) {
+    QPoint delta = e->angleDelta();
+    bu_log("Delta: %d\n", delta.y());
+
+    QOpenGLWidget::wheelEvent(e);
+}
 
 void dmGL::mouseReleaseEvent(QMouseEvent *e) {
+    // To avoid an abrupt jump in scene motion the next time movement is
+    // started with the mouse, after we release we return to the default state.
     x_prev = -INT_MAX;
     y_prev = -INT_MAX;
+
     QOpenGLWidget::mouseReleaseEvent(e);
 }
 

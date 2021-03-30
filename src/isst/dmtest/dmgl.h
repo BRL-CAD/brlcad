@@ -109,6 +109,7 @@ class dmGL : public QOpenGLWidget
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
 	void mouseReleaseEvent(QMouseEvent *e) override;
+	void wheelEvent(QWheelEvent *e) override;
 
     signals:
       void renderRequested();
