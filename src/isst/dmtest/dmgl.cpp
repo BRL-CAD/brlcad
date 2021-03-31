@@ -62,7 +62,7 @@ void DMRenderer::render()
 
     if (m_init && (!m_w->gedp || !dm_get_dirty((struct dm *)m_w->gedp->ged_dmp))) {
 	// Avoid a hot spin
-	usleep(10000);
+	QThread::usleep(10000);
 	return;
     }
 
@@ -162,7 +162,7 @@ void DMRenderer::render()
     QMetaObject::invokeMethod(m_w, "update");
 
     // Avoid a hot spin
-    usleep(10000);
+    QThread::usleep(10000);
 }
 
 dmGL::dmGL(QWidget *parent)
