@@ -37,7 +37,8 @@
 #include <QFileDialog>
 #include <QSettings>
 #include "pqConsoleWidget.h"
-#include "dmgl.h"
+#include "dmgls.h"
+#include "dmglt.h"
 
 class DM_MainWindow : public QMainWindow
 {
@@ -47,10 +48,11 @@ class DM_MainWindow : public QMainWindow
 
 	void readSettings();
 
-	pqConsoleWidget *console;
-	dmGL *canvas;
+	pqConsoleWidget *console = NULL;
+	dmGL *canvas = NULL;
+	dmGLT *canvast = NULL;
 
-	struct ged *gedp;
+	struct ged *gedp = NULL;
 
     public slots:
 	void run_cmd(const QString &command);

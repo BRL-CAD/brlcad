@@ -66,27 +66,45 @@ int main(int argc, char *argv[])
 	    argc--; argv++;
 	    app.load_g(filename, argc, (const char **)argv);
 	    app.w->gedp = app.gedp;
-	    app.w->canvas->gedp = app.gedp;
+	    if (app.w->canvas)
+		app.w->canvas->gedp = app.gedp;
+	    if (app.w->canvast)
+		app.w->canvast->gedp = app.gedp;
 	}
     }
 
     // This is an illustration of how to force an exact size for
     // the OpenGL canvas.  Useful when we need a framebuffer window
     // to exactly match a specified size.
-    QSize cminsize = app.w->canvas->minimumSize();
-    QSize cmaxsize = app.w->canvas->maximumSize();
-    app.w->canvas->setMinimumSize(1100,800);
-    app.w->canvas->setMaximumSize(1100,800);
-    app.w->canvas->updateGeometry();
-
+    QSize cminsize, cmaxsize;
+    if (app.w->canvas) {
+	cminsize = app.w->canvas->minimumSize();
+	cmaxsize = app.w->canvas->maximumSize();
+	app.w->canvas->setMinimumSize(1100,800);
+	app.w->canvas->setMaximumSize(1100,800);
+	app.w->canvas->updateGeometry();
+    }
+    if (app.w->canvast) {
+	cminsize = app.w->canvast->minimumSize();
+	cmaxsize = app.w->canvast->maximumSize();
+	app.w->canvast->setMinimumSize(1100,800);
+	app.w->canvast->setMaximumSize(1100,800);
+	app.w->canvast->updateGeometry();
+    }
     // Draw the window
     app.w->show();
 
     // Having forced the size we wanted, restore the original settings
     // to allow for subsequent change (if it would have been allowed
     // by the original settings.)
-    app.w->canvas->setMinimumSize(cminsize);
-    app.w->canvas->setMaximumSize(cmaxsize);
+    if (app.w->canvas) {
+	app.w->canvas->setMinimumSize(cminsize);
+	app.w->canvas->setMaximumSize(cmaxsize);
+    }
+    if (app.w->canvast) {
+	app.w->canvast->setMinimumSize(cminsize);
+	app.w->canvast->setMaximumSize(cmaxsize);
+    }
 
     return app.exec();
 }

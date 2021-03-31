@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmgl.h
+/** @file dmglt.h
  *
  * OpenGL widget wrapper encoding the information specific to the
  * DM raytracing view.
@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef DMGL_H
-#define DMGL_H
+#ifndef DMGLT_H
+#define DMGLT_H
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -45,14 +45,14 @@ extern "C" {
 #include "ged.h"
 }
 
-class dmGL;
+class dmGLT;
 
-class DMRenderer : public QObject, protected QOpenGLFunctions
+class DMRendererT : public QObject, protected QOpenGLFunctions
 {
     Q_OBJECT
     public:
-	DMRenderer(dmGL *w);
-	~DMRenderer();
+	DMRendererT(dmGLT *w);
+	~DMRendererT();
 
 	void resize();
 	struct dm *dmp = NULL;
@@ -76,7 +76,7 @@ class DMRenderer : public QObject, protected QOpenGLFunctions
 
     private:
 	bool m_init = false;
-	dmGL *m_w;
+	dmGLT *m_w;
 
 
 	// Threading variables
@@ -86,13 +86,13 @@ class DMRenderer : public QObject, protected QOpenGLFunctions
 };
 
 // Use QOpenGLFunctions so we don't have to prefix all OpenGL calls with "f->"
-class dmGL : public QOpenGLWidget
+class dmGLT : public QOpenGLWidget
 {
     Q_OBJECT
 
     public:
-	explicit dmGL(QWidget *parent = nullptr, int ut = 0);
-	~dmGL();
+	explicit dmGLT(QWidget *parent = nullptr);
+	~dmGLT();
 
 	void save_image();
 
@@ -103,22 +103,8 @@ class dmGL : public QOpenGLWidget
 	unsigned long long prev_vhash = 0;
 	unsigned long long prev_lhash = 0;
 
-	QThread *m_thread = NULL;
-
     protected:
-#ifdef __APPLE__
-	void paintEvent(QPaintEvent *e) override {
-#else
-	void paintEvent(QPaintEvent *) override {
-#endif
-	    if (!m_thread && m_renderer) {
-#ifdef __APPLE__
-		QOpenGLWidget::paintEvent(e);
-#endif
-		m_renderer->render();
-	    }
-	}
-	void paintGL() override;
+	void paintEvent(QPaintEvent *) override { }
 
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
@@ -141,10 +127,11 @@ class dmGL : public QOpenGLWidget
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
 
-	DMRenderer *m_renderer;
+	QThread *m_thread = NULL;
+	DMRendererT *m_renderer;
 };
 
-#endif /* DMGL_H */
+#endif /* DMGLT_H */
 
 // Local Variables:
 // tab-width: 8

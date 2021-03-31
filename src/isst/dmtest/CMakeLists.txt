@@ -21,14 +21,16 @@ set(dm_srcs
   main.cpp
   main_window.cpp
   dmapp.cpp
-  dmgl.cpp
+  dmgls.cpp
+  dmglt.cpp
   ../../qged/pqConsoleWidget.cpp
   )
 
 set(dm_moc_headers
   main_window.h
   dmapp.h
-  dmgl.h
+  dmgls.h
+  dmglt.h
   ../../qged/pqConsoleWidget.h
   )
 

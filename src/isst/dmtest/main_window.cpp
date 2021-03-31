@@ -53,8 +53,14 @@ DM_MainWindow::DM_MainWindow(int render_thread)
     file_menu->addAction(g_exit);
 
     // Set up Display canvas
-    canvas = new dmGL(this, render_thread);
-    canvas->setMinimumSize(512,512);
+    if (!render_thread) {
+	canvas = new dmGL();
+	canvas->setMinimumSize(512,512);
+    } else {
+	canvast = new dmGLT();
+	canvast->setMinimumSize(512,512);
+	bu_log("Using rendering thread\n");
+    }
     console = new pqConsoleWidget(this);
     console->prompt("$ ");
     QSplitter *wgrp = new QSplitter(Qt::Vertical, this);
@@ -63,7 +69,10 @@ DM_MainWindow::DM_MainWindow(int render_thread)
     // the wrong thread trying to grab the OpenGL context
     wgrp->setOpaqueResize(false);
     setCentralWidget(wgrp);
-    wgrp->addWidget(canvas);
+    if (canvas)
+	wgrp->addWidget(canvas);
+    if (canvast)
+	wgrp->addWidget(canvast);
     wgrp->addWidget(console);
 
     QObject::connect(this->console, &pqConsoleWidget::executeCommand, this, &DM_MainWindow::run_cmd);
@@ -118,21 +127,39 @@ DM_MainWindow::run_cmd(const QString &command)
 	ged_exec(gedp, ac, (const char **)av);
 	console->printString(bu_vls_cstr(gedp->ged_result_str));
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	unsigned long long vhash = bview_hash(canvas->v);
-	if (vhash != canvas->prev_vhash) {
-	    std::cout << "prev_vhash: " << canvas->prev_vhash << "\n";
-	    std::cout << "vhash: " << vhash << "\n";
-	    canvas->prev_vhash = vhash;
-	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    canvas->update();
+	if (canvas) {
+	    unsigned long long vhash = bview_hash(canvas->v);
+	    if (vhash != canvas->prev_vhash) {
+		std::cout << "prev_vhash: " << canvas->prev_vhash << "\n";
+		std::cout << "vhash: " << vhash << "\n";
+		canvas->prev_vhash = vhash;
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+	    unsigned long long lhash = dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	    if (lhash != canvas->prev_lhash) {
+		std::cout << "prev_lhash: " << canvas->prev_lhash << "\n";
+		std::cout << "lhash: " << lhash << "\n";
+		canvas->prev_lhash = lhash;
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+	    if (dm_get_dirty((struct dm *)gedp->ged_dmp))
+		canvas->update();
 	}
-	unsigned long long lhash = dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-	if (lhash != canvas->prev_lhash) {
-	    std::cout << "prev_lhash: " << canvas->prev_lhash << "\n";
-	    std::cout << "lhash: " << lhash << "\n";
-	    canvas->prev_lhash = lhash;
-	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    canvas->update();
+	if (canvast) {
+	    unsigned long long vhash = bview_hash(canvast->v);
+	    if (vhash != canvast->prev_vhash) {
+		std::cout << "prev_vhash: " << canvast->prev_vhash << "\n";
+		std::cout << "vhash: " << vhash << "\n";
+		canvast->prev_vhash = vhash;
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+	    unsigned long long lhash = dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	    if (lhash != canvast->prev_lhash) {
+		std::cout << "prev_lhash: " << canvast->prev_lhash << "\n";
+		std::cout << "lhash: " << lhash << "\n";
+		canvast->prev_lhash = lhash;
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
 	}
     }
 
@@ -162,7 +189,10 @@ void DM_MainWindow::write_settings()
 
 void DM_MainWindow::save_image()
 {
-    canvas->save_image();
+    if (canvas)
+	canvas->save_image();
+    if (canvast)
+	canvast->save_image();
 }
 
 

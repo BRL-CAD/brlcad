@@ -1,4 +1,4 @@
-/*                      D M G L . C P P
+/*                      D M G L T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmgl.cpp
+/** @file dmglt.cpp
  *
  * Brief description
  *
@@ -34,22 +34,22 @@ extern "C" {
 #include "dm/bview_util.h"
 #include "ged.h"
 }
-#include "dmgl.h"
+#include "dmglt.h"
 
-DMRenderer::DMRenderer(dmGL *w)
+DMRendererT::DMRendererT(dmGLT *w)
     : m_w(w)
 {
 }
 
-DMRenderer::~DMRenderer()
+DMRendererT::~DMRendererT()
 {
 }
 
-void DMRenderer::resize()
+void DMRendererT::resize()
 {
 }
 
-void DMRenderer::render()
+void DMRendererT::render()
 {
     if (m_exiting)
 	return;
@@ -66,24 +66,22 @@ void DMRenderer::render()
 	return;
     }
 
-    // If we're in a separate rendering thread, there is
+    // Since we're in a separate rendering thread, there is
     // some preliminary work we need to do before proceeding
     // with OpenGL calls
-    QOpenGLContext *ctx;
-    if (m_w->m_thread) {
-	ctx = m_w->context();
-	if (!ctx) // QOpenGLWidget not yet initialized
-	    return;
-	// Grab the context.
-	m_grabMutex.lock();
-	emit contextWanted();
-	m_grabCond.wait(&m_grabMutex);
-	QMutexLocker lock(&m_renderMutex);
-	m_grabMutex.unlock();
-	if (m_exiting)
-	    return;
-	Q_ASSERT(ctx->thread() == QThread::currentThread());
-    }
+    QOpenGLContext *ctx = m_w->context();
+    if (!ctx) // QOpenGLWidget not yet initialized
+	return;
+    // Grab the context.
+    m_grabMutex.lock();
+    emit contextWanted();
+    m_grabCond.wait(&m_grabMutex);
+    QMutexLocker lock(&m_renderMutex);
+    m_grabMutex.unlock();
+    if (m_exiting)
+	return;
+    Q_ASSERT(ctx->thread() == QThread::currentThread());
+
 
     // Have context, initialize if necessary
     m_w->makeCurrent();
@@ -154,54 +152,42 @@ void DMRenderer::render()
 
     }
 
-    if (m_w->m_thread) {
-	// Make no context current on this thread and move the QOpenGLWidget's
-	// context back to the gui thread.
-	m_w->doneCurrent();
-	ctx->moveToThread(qGuiApp->thread());
+    // Make no context current on this thread and move the QOpenGLWidget's
+    // context back to the gui thread.
+    m_w->doneCurrent();
+    ctx->moveToThread(qGuiApp->thread());
 
-	// Schedule composition. Note that this will use QueuedConnection, meaning
-	// that update() will be invoked on the gui thread.
-	QMetaObject::invokeMethod(m_w, "update");
-    }
+    // Schedule composition. Note that this will use QueuedConnection, meaning
+    // that update() will be invoked on the gui thread.
+    QMetaObject::invokeMethod(m_w, "update");
 
     // Avoid a hot spin
     QThread::usleep(10000);
 }
 
-dmGL::dmGL(QWidget *parent, int ut)
+dmGLT::dmGLT(QWidget *parent)
     : QOpenGLWidget(parent)
 {
     BU_GET(v, struct bview);
     ged_view_init(v);
 
-    // onResized has work do with or without using a rendering thread
-    connect(this, &QOpenGLWidget::resized, this, &dmGL::onResized);
+    connect(this, &QOpenGLWidget::aboutToCompose, this, &dmGLT::onAboutToCompose);
+    connect(this, &QOpenGLWidget::frameSwapped, this, &dmGLT::onFrameSwapped);
+    connect(this, &QOpenGLWidget::aboutToResize, this, &dmGLT::onAboutToResize);
+    connect(this, &QOpenGLWidget::resized, this, &dmGLT::onResized);
 
-    if (ut) {
-	connect(this, &QOpenGLWidget::aboutToCompose, this, &dmGL::onAboutToCompose);
-	connect(this, &QOpenGLWidget::frameSwapped, this, &dmGL::onFrameSwapped);
-	connect(this, &QOpenGLWidget::aboutToResize, this, &dmGL::onAboutToResize);
-
-	m_thread = new QThread;
-
-	bu_log("Using render thread\n");
-    }
+    m_thread = new QThread;
 
     // Create the renderer
-    m_renderer = new DMRenderer(this);
+    m_renderer = new DMRendererT(this);
+    m_renderer->moveToThread(m_thread);
+    connect(m_thread, &QThread::finished, m_renderer, &QObject::deleteLater);
 
-    // If using a separate rendering thread, do setup
-    if (m_thread) {
-	m_renderer->moveToThread(m_thread);
-	connect(m_thread, &QThread::finished, m_renderer, &QObject::deleteLater);
+    // Let dmGLT know to trigger the renderer
+    connect(this, &dmGLT::renderRequested, m_renderer, &DMRendererT::render);
+    connect(m_renderer, &DMRendererT::contextWanted, this, &dmGLT::grabContext);
 
-	// Let dmGL know to trigger the renderer
-	connect(this, &dmGL::renderRequested, m_renderer, &DMRenderer::render);
-	connect(m_renderer, &DMRenderer::contextWanted, this, &dmGL::grabContext);
-
-	m_thread->start();
-    }
+    m_thread->start();
 
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
@@ -209,76 +195,56 @@ dmGL::dmGL(QWidget *parent, int ut)
     setFocusPolicy(Qt::WheelFocus);
 }
 
-dmGL::~dmGL()
+dmGLT::~dmGLT()
 {
-    if (m_thread) {
-	m_renderer->prepareExit();
-	m_thread->quit();
-	m_thread->wait();
-	delete m_thread;
-    }
+    m_renderer->prepareExit();
+    m_thread->quit();
+    m_thread->wait();
+    delete m_thread;
     BU_PUT(v, struct bview);
 }
 
-void dmGL::onAboutToCompose()
+void dmGLT::onAboutToCompose()
 {
     // We are on the gui thread here. Composition is about to
     // begin. Wait until the render thread finishes.
-    if (m_thread) {
-	m_renderer->lockRenderer();
-    }
+    m_renderer->lockRenderer();
 }
 
-void dmGL::onFrameSwapped()
+void dmGLT::onFrameSwapped()
 {
-    if (m_thread) {
-	m_renderer->unlockRenderer();
-	// Assuming a blocking swap, our animation is driven purely by the
-	// vsync in this example.
-	emit renderRequested();
-    }
+    m_renderer->unlockRenderer();
+    // Assuming a blocking swap, our animation is driven purely by the
+    // vsync in this example.
+    emit renderRequested();
 }
 
-void dmGL::onAboutToResize()
+void dmGLT::onAboutToResize()
 {
-    if (m_thread) {
-	m_renderer->lockRenderer();
-    }
+    m_renderer->lockRenderer();
 }
 
-void dmGL::onResized()
+void dmGLT::onResized()
 {
     if (gedp && gedp->ged_dmp) {
 	dm_configure_win((struct dm *)gedp->ged_dmp, 0);
 	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
     }
-    if (m_thread) {
-	m_renderer->unlockRenderer();
-    }
+    m_renderer->unlockRenderer();
 }
 
-void dmGL::grabContext()
+void dmGLT::grabContext()
 {
-    if (m_thread) {
-	if (m_renderer->m_exiting)
-	    return;
-	m_renderer->lockRenderer();
-	QMutexLocker lock(m_renderer->grabMutex());
-	context()->moveToThread(m_thread);
-	m_renderer->grabCond()->wakeAll();
-	m_renderer->unlockRenderer();
-    }
+    if (m_renderer->m_exiting)
+	return;
+    m_renderer->lockRenderer();
+    QMutexLocker lock(m_renderer->grabMutex());
+    context()->moveToThread(m_thread);
+    m_renderer->grabCond()->wakeAll();
+    m_renderer->unlockRenderer();
 }
 
-void dmGL::paintGL() {
-    if (!m_thread && m_renderer) {
-	m_renderer->render();
-    } else {
-	QOpenGLWidget::paintGL();
-    }
-}
-
-void dmGL::keyPressEvent(QKeyEvent *k) {
+void dmGLT::keyPressEvent(QKeyEvent *k) {
     //QString kstr = QKeySequence(k->key()).toString();
     //bu_log("%s\n", kstr.toStdString().c_str());
 #if 0
@@ -301,7 +267,7 @@ void dmGL::keyPressEvent(QKeyEvent *k) {
 }
 
 
-void dmGL::mouseMoveEvent(QMouseEvent *e) {
+void dmGLT::mouseMoveEvent(QMouseEvent *e) {
 
     if (x_prev == -INT_MAX) {
 	x_prev = e->x();
@@ -355,11 +321,7 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
     if (bview_adjust(v, -dy, -dx, center, BVIEW_VIEW, BVIEW_ROT)) {
 	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	 if (m_thread) {
-	     emit renderRequested();
-	 } else {
-	     update();
-	 }
+	 emit renderRequested();
     }
 
     // Current positions are the new previous positions
@@ -369,14 +331,14 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
     QOpenGLWidget::mouseMoveEvent(e);
 }
 
-void dmGL::wheelEvent(QWheelEvent *e) {
+void dmGLT::wheelEvent(QWheelEvent *e) {
     QPoint delta = e->angleDelta();
     bu_log("Delta: %d\n", delta.y());
 
     QOpenGLWidget::wheelEvent(e);
 }
 
-void dmGL::mouseReleaseEvent(QMouseEvent *e) {
+void dmGLT::mouseReleaseEvent(QMouseEvent *e) {
     // To avoid an abrupt jump in scene motion the next time movement is
     // started with the mouse, after we release we return to the default state.
     x_prev = -INT_MAX;
@@ -385,7 +347,7 @@ void dmGL::mouseReleaseEvent(QMouseEvent *e) {
     QOpenGLWidget::mouseReleaseEvent(e);
 }
 
-void dmGL::save_image() {
+void dmGLT::save_image() {
     QImage image = this->grabFramebuffer();
     image.save("file.png");
 }
