@@ -118,7 +118,7 @@ qtgl_configureWin(struct dm *dmp, int UNUSED(force))
     if (!privars->fs) {
 	privars->fs = glfonsCreate(512, 512, FONS_ZERO_TOPLEFT);
 	if (privars->fs == NULL) {
-	    bu_log("dm-osgl: Failed to create font stash");
+	    bu_log("dm-qtgl: Failed to create font stash");
 	    return BRLCAD_ERROR;
 	}
 	privars->fontNormal = FONS_INVALID;
