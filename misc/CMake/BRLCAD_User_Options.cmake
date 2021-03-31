@@ -216,15 +216,6 @@ option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
 mark_as_advanced(BRLCAD_ENABLE_OSG)
 
 if(APPLE)
-  # On OSX Tk has to be off in this case, since we don't yet work with Aqua
-  # Tk, and this won't work with X11 Tk.  However, if we're enabling Qt on
-  # OSX we need the native OpenGL and presumably the focus is on testing Qt
-  # apps...
-  if (BRLCAD_ENABLE_QT)
-    set(OPENGL_USE_AQUA ON CACHE STRING "Qt on OSX - need Aqua OpenGL" FORCE)
-    set(BRLCAD_ENABLE_TK OFF CACHE STRING "Qt on OSX - need Aqua OpenGL" FORCE)
-  endif (BRLCAD_ENABLE_QT)
-
   if(BRLCAD_ENABLE_OSG AND NOT BRLCAD_ENABLE_AQUA)
     set(OSG_WINDOWING_SYSTEM "X11" CACHE STRING "Use X11" FORCE)
   endif(BRLCAD_ENABLE_OSG AND NOT BRLCAD_ENABLE_AQUA)

@@ -79,7 +79,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
   QT5_ADD_RESOURCES(cad_qrc cadresources.qrc)
 
   add_executable(qged ${qged_srcs} ${moc_srcs} ${cad_qrc})
-  target_link_libraries(qged libbu librt libged Qt5::Widgets Qt5::OpenGL OpenGL::OpenGL)
+  target_link_libraries(qged libbu librt libged Qt5::Widgets Qt5::OpenGL ${OPENGL_opengl_LIBRARY})
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}

@@ -40,6 +40,10 @@
 #  include <GL/gl.h>
 #endif
 
+#ifdef HAVE_OPENGL_GL_H
+#  include <OpenGL/gl.h>
+#endif
+
 #ifndef DMGL_EXPORT
 #  if defined(DMGL_DLL_EXPORTS) && defined(DMGL_DLL_IMPORTS)
 #    error "Only DMGL_DLL_EXPORTS or DMGL_DLL_IMPORTS can be defined, not both."

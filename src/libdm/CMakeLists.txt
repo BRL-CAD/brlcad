@@ -6,7 +6,7 @@ set(DM_INCLUDE_DIRS
   ${BN_INCLUDE_DIRS}
   ${ICV_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
-  ${X11_INCLUDE_DIR}
+  ${OPENGL_INCLUDE_DIR}
   ${PNG_INCLUDE_DIRS}
   )
 
@@ -66,7 +66,7 @@ set(LIBDMGL_SRCS
   )
 if (BRLCAD_ENABLE_OPENGL)
   find_package(OpenGL)
-  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_LIBRARIES}")
+  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_opengl_LIBRARY}")
   set_target_properties(libdmgl PROPERTIES VERSION 20.0.1 SOVERSION 20)
 endif (BRLCAD_ENABLE_OPENGL)
 

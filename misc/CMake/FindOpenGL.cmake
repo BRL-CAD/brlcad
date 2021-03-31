@@ -176,6 +176,8 @@ elseif (APPLE)
   find_path(OPENGL_INCLUDE_DIR OpenGL/gl.h DOC "Include for OpenGL on OS X")
   list(APPEND _OpenGL_REQUIRED_VARS OPENGL_INCLUDE_DIR)
 
+  set(OPENGL_USING_FRAMEWORK ON CACHE BOOL "Using OpenGL Framework on OS X")
+
   list(APPEND _OpenGL_CACHE_VARS
     OPENGL_INCLUDE_DIR
     OPENGL_gl_LIBRARY

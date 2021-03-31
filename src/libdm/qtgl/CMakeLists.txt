@@ -23,7 +23,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
   dm_plugin_library(dm-qtgl SHARED ${QTGL_SRCS})
   target_link_libraries(dm-qtgl libdmgl libdm libbu Qt5::Core Qt5::Widgets
-    Qt5::OpenGL OpenGL::OpenGL)
+    Qt5::OpenGL ${OPENGL_opengl_LIBRARY})
   set_property(TARGET dm-qtgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-qtgl "${QTGL_SRCS}")
 

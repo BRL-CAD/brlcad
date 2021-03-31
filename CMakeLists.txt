@@ -1508,12 +1508,16 @@ BRLCAD_CHECK_DIRNAME()
 
 # OpenGL headers
 if(BRLCAD_ENABLE_OPENGL)
+  find_package(OpenGL)
   if(OPENGL_INCLUDE_DIR_GL)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GL_H 1\n")
   endif(OPENGL_INCLUDE_DIR_GL)
   if(OPENGL_INCLUDE_DIR_GLX)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GLX_H 1\n")
   endif(OPENGL_INCLUDE_DIR_GLX)
+  if(OPENGL_USING_FRAMEWORK)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_OPENGL_GL_H 1\n")
+  endif(OPENGL_USING_FRAMEWORK)
 endif(BRLCAD_ENABLE_OPENGL)
 
 # may have the header, but ensure it works in pedantic mode (gcc bug)
