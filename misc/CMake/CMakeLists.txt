@@ -30,7 +30,6 @@ set(cmake_ignore_files
   FindBSON.cmake
   FindFontconfig.cmake
   FindGECODE.cmake
-  FindGL.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
   FindNETPBM.cmake
@@ -38,6 +37,7 @@ set(cmake_ignore_files
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
+  FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake

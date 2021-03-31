@@ -5,7 +5,7 @@ set(QTGL_SRCS
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
-  find_package(GL)
+  find_package(OpenGL)
   find_package(Qt5 COMPONENTS Core Widgets OpenGL)
 
   include_directories(
@@ -13,8 +13,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include
     ${BU_INCLUDE_DIRS}
-    ${OPENGL_INCLUDE_DIR_GL}
-    ${OPENGL_INCLUDE_DIR_GLX}
+    ${OPENGL_INCLUDE_DIR}
     )
 
   set_property(SOURCE dm-qtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
@@ -24,7 +23,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
   dm_plugin_library(dm-qtgl SHARED ${QTGL_SRCS})
   target_link_libraries(dm-qtgl libdmgl libdm libbu Qt5::Core Qt5::Widgets
-      Qt5::OpenGL ${OPENGL_LIBRARIES})
+    Qt5::OpenGL OpenGL::OpenGL)
   set_property(TARGET dm-qtgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-qtgl "${QTGL_SRCS}")
 

@@ -164,26 +164,12 @@ if(BRLCAD_ENABLE_X11)
   set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
 endif(BRLCAD_ENABLE_X11)
 
-# Enable features requiring OPENGL
-# Be smart about this - if we don't have X11 or Aqua and we're not on Windows,
-# we're non-graphical and that means OpenGL is a no-go.  The Windows version
-# would have to be some sort of option for the WIN32 graphics layer?  Should
-# probably think about that... for now, on Win32 don't try OpenGL if Tk is off.
-# That'll hold until we get a non-Tk based GUI - then setting non-graphical on
-# Windows will take more thought.
-if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  set(OPENGL_FOUND OFF)
-  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
-else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  include(FindGL)
-endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-
 set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
 Enable support for OpenGL based Display Managers in BRL-CAD.
 Default depends on whether OpenGL is successfully detected -
 if it is, default is to enable.
 ")
-BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
+BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ON
   TYPE BOOL
   ALIASES ENABLE_OPENGL
   DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)

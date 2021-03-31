@@ -38,13 +38,7 @@ DM_EXPORT void dm_generic_hook(const struct bu_structparse *sdp, const char *nam
 
 DM_EXPORT int dm_validXType(const char *dpy_string, const char *name);
 
-DM_EXPORT int drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
-
-DM_EXPORT int drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
-
 DM_EXPORT int draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
-
-DM_EXPORT int drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor);
 
 DM_EXPORT void flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
 

@@ -7,7 +7,7 @@ if(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OSG)
 
   # Make sure we know about required components
   find_package(X11)
-  find_package(GL)
+  find_package(OpenGL)
   #find_package(OpenThreads)
   #find_package(OpenSceneGraph)
   find_package(TCL)
@@ -20,8 +20,7 @@ if(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OSG)
     ${BU_INCLUDE_DIRS}
     ${RT_INCLUDE_DIRS}
     ${X11_INCLUDE_DIR}
-    ${OPENGL_INCLUDE_DIR_GL}
-    ${OPENGL_INCLUDE_DIR_GLX}
+    ${OPENGL_INCLUDE_DIR}
     ${TCL_INCLUDE_PATH}
     ${TK_INCLUDE_PATH}
     ${OPENTHREADS_INCLUDE_DIR}
@@ -29,7 +28,7 @@ if(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OSG)
     )
 
   set(OSGL_LIBRARIES
-    ${OPENGL_LIBRARIES}
+    OpenGL::OpenGL
     ${TCL_LIBRARY}
     ${TK_LIBRARY}
     ${OSG_LIBRARY}

@@ -122,6 +122,10 @@ DMGL_EXPORT extern struct bu_structparse gl_vparse[];
 
 DMGL_EXPORT extern void glvars_init(struct dm *dmp);
 
+DMGL_EXPORT extern int drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
+DMGL_EXPORT extern int drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
+DMGL_EXPORT extern int drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor);
+
 DMGL_EXPORT extern int gl_beginDList(struct dm *dmp, unsigned int list);
 DMGL_EXPORT extern int gl_debug(struct dm *dmp, int vl);
 DMGL_EXPORT extern int gl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
