@@ -270,6 +270,14 @@ void dmGL::grabContext()
     }
 }
 
+void dmGL::paintGL() {
+    if (!m_thread && m_renderer) {
+	m_renderer->render();
+    } else {
+	QOpenGLWidget::paintGL();
+    }
+}
+
 void dmGL::keyPressEvent(QKeyEvent *k) {
     //QString kstr = QKeySequence(k->key()).toString();
     //bu_log("%s\n", kstr.toStdString().c_str());

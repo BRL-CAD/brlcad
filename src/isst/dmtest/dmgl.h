@@ -106,11 +106,19 @@ class dmGL : public QOpenGLWidget
 	QThread *m_thread = NULL;
 
     protected:
+#ifdef __APPLE__
+	void paintEvent(QPaintEvent *e) override {
+#else
 	void paintEvent(QPaintEvent *) override {
+#endif
 	    if (!m_thread && m_renderer) {
+#ifdef __APPLE__
+		QOpenGLWidget::paintEvent(e);
+#endif
 		m_renderer->render();
 	    }
-       	}
+	}
+	void paintGL() override;
 
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
