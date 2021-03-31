@@ -47,6 +47,9 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
     ${XOPENGL_glu_LIBRARY}
     ${XOPENGL_gldispatch_LIBRARY}
     )
+  if (XOPENGL_gldispatch_LIBRARY)
+    set(XOPENGL_LIBS ${XOPENGL_LIBS} ${XOPENGL_gldispatch_LIBRARY})
+  endif (XOPENGL_gldispatch_LIBRARY)
 
   dm_plugin_library(dm-ogl SHARED ${OGL_SRCS})
   target_link_libraries(dm-ogl libdm libbu ${X11_LIBRARIES} ${XOPENGL_LIBS} ${TCL_LIBRARY} ${TK_LIBRARY})
