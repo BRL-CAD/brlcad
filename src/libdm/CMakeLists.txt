@@ -66,7 +66,15 @@ set(LIBDMGL_SRCS
   )
 if (BRLCAD_ENABLE_OPENGL)
   find_package(OpenGL)
-  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_opengl_LIBRARY}")
+
+  if (OPENGL_opengl_LIBRARY)
+    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
+  endif (OPENGL_opengl_LIBRARY)
+  if (OPENGL_gl_LIBRARY)
+    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
+  endif (OPENGL_gl_LIBRARY)
+
+  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_LIBS}")
   set_target_properties(libdmgl PROPERTIES VERSION 20.0.1 SOVERSION 20)
 endif (BRLCAD_ENABLE_OPENGL)
 
