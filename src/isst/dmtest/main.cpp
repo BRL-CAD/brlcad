@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain("brlcad.org");
     app.setApplicationName("DM");
 
-    app.w.readSettings();
+    app.w->readSettings();
 
     QSettings dmsettings("BRL-CAD", "DM");
     std::cout << "Reading settings from " << dmsettings.fileName().toStdString() << "\n";
@@ -58,30 +58,35 @@ int main(int argc, char *argv[])
 
     // If we have command line arguments, process them
     if (argc) {
-	const char *filename = argv[0];
-	argc--; argv++;
-	app.load_g(filename, argc, (const char **)argv);
-	app.w.gedp = app.gedp;
-	app.w.canvas->gedp = app.gedp;
+	if (BU_STR_EQUAL(argv[0], "-t")) {
+	    argc--; argv++;
+	}
+	if (argc) {
+	    const char *filename = argv[0];
+	    argc--; argv++;
+	    app.load_g(filename, argc, (const char **)argv);
+	    app.w->gedp = app.gedp;
+	    app.w->canvas->gedp = app.gedp;
+	}
     }
 
     // This is an illustration of how to force an exact size for
     // the OpenGL canvas.  Useful when we need a framebuffer window
     // to exactly match a specified size.
-    QSize cminsize = app.w.canvas->minimumSize();
-    QSize cmaxsize = app.w.canvas->maximumSize();
-    app.w.canvas->setMinimumSize(1100,800);
-    app.w.canvas->setMaximumSize(1100,800);
-    app.w.canvas->updateGeometry();
+    QSize cminsize = app.w->canvas->minimumSize();
+    QSize cmaxsize = app.w->canvas->maximumSize();
+    app.w->canvas->setMinimumSize(1100,800);
+    app.w->canvas->setMaximumSize(1100,800);
+    app.w->canvas->updateGeometry();
 
     // Draw the window
-    app.w.show();
+    app.w->show();
 
     // Having forced the size we wanted, restore the original settings
     // to allow for subsequent change (if it would have been allowed
     // by the original settings.)
-    app.w.canvas->setMinimumSize(cminsize);
-    app.w.canvas->setMaximumSize(cmaxsize);
+    app.w->canvas->setMinimumSize(cminsize);
+    app.w->canvas->setMaximumSize(cmaxsize);
 
     return app.exec();
 }

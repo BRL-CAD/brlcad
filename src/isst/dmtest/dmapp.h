@@ -39,12 +39,18 @@ class DMApp : public QApplication
     Q_OBJECT
 
     public:
-	DMApp(int &argc, char *argv[]) :QApplication(argc, argv) {};
+	DMApp(int &argc, char *argv[]) :QApplication(argc, argv) {
+	    if (argc && BU_STR_EQUAL(argv[1], "-t")) {
+		w = new DM_MainWindow(1);
+	    } else {
+		w = new DM_MainWindow(0);
+	    }
+	};
 	~DMApp() {};
 
 	int load_g(const char *filename, int argc, const char **argv);
 
-	DM_MainWindow w;
+	DM_MainWindow *w;
 	struct ged *gedp;
 };
 

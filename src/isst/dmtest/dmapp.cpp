@@ -33,12 +33,12 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
 
     gedp = ged_open("db", filename, 1);
     if (!gedp) {
-	w.statusBar()->showMessage("open failed");
+	w->statusBar()->showMessage("open failed");
 	return -1;
     }
 
     // Let the GED commands know what bview to use
-    gedp->ged_gvp = w.canvas->v;
+    gedp->ged_gvp = w->canvas->v;
 
     return 0;
 }

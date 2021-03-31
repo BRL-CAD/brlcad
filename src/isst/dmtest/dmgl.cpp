@@ -66,22 +66,24 @@ void DMRenderer::render()
 	return;
     }
 
-    // Since we're in a separate rendering thread, there is
+    // If we're in a separate rendering thread, there is
     // some preliminary work we need to do before proceeding
     // with OpenGL calls
-    QOpenGLContext *ctx = m_w->context();
-    if (!ctx) // QOpenGLWidget not yet initialized
-	return;
-    // Grab the context.
-    m_grabMutex.lock();
-    emit contextWanted();
-    m_grabCond.wait(&m_grabMutex);
-    QMutexLocker lock(&m_renderMutex);
-    m_grabMutex.unlock();
-    if (m_exiting)
-	return;
-    Q_ASSERT(ctx->thread() == QThread::currentThread());
-
+    QOpenGLContext *ctx;
+    if (m_w->m_thread) {
+	ctx = m_w->context();
+	if (!ctx) // QOpenGLWidget not yet initialized
+	    return;
+	// Grab the context.
+	m_grabMutex.lock();
+	emit contextWanted();
+	m_grabCond.wait(&m_grabMutex);
+	QMutexLocker lock(&m_renderMutex);
+	m_grabMutex.unlock();
+	if (m_exiting)
+	    return;
+	Q_ASSERT(ctx->thread() == QThread::currentThread());
+    }
 
     // Have context, initialize if necessary
     m_w->makeCurrent();
@@ -152,42 +154,54 @@ void DMRenderer::render()
 
     }
 
-    // Make no context current on this thread and move the QOpenGLWidget's
-    // context back to the gui thread.
-    m_w->doneCurrent();
-    ctx->moveToThread(qGuiApp->thread());
+    if (m_w->m_thread) {
+	// Make no context current on this thread and move the QOpenGLWidget's
+	// context back to the gui thread.
+	m_w->doneCurrent();
+	ctx->moveToThread(qGuiApp->thread());
 
-    // Schedule composition. Note that this will use QueuedConnection, meaning
-    // that update() will be invoked on the gui thread.
-    QMetaObject::invokeMethod(m_w, "update");
+	// Schedule composition. Note that this will use QueuedConnection, meaning
+	// that update() will be invoked on the gui thread.
+	QMetaObject::invokeMethod(m_w, "update");
+    }
 
     // Avoid a hot spin
     QThread::usleep(10000);
 }
 
-dmGL::dmGL(QWidget *parent)
+dmGL::dmGL(QWidget *parent, int ut)
     : QOpenGLWidget(parent)
 {
     BU_GET(v, struct bview);
     ged_view_init(v);
 
-    connect(this, &QOpenGLWidget::aboutToCompose, this, &dmGL::onAboutToCompose);
-    connect(this, &QOpenGLWidget::frameSwapped, this, &dmGL::onFrameSwapped);
-    connect(this, &QOpenGLWidget::aboutToResize, this, &dmGL::onAboutToResize);
+    // onResized has work do with or without using a rendering thread
     connect(this, &QOpenGLWidget::resized, this, &dmGL::onResized);
 
-    m_thread = new QThread;
+    if (ut) {
+	connect(this, &QOpenGLWidget::aboutToCompose, this, &dmGL::onAboutToCompose);
+	connect(this, &QOpenGLWidget::frameSwapped, this, &dmGL::onFrameSwapped);
+	connect(this, &QOpenGLWidget::aboutToResize, this, &dmGL::onAboutToResize);
+
+	m_thread = new QThread;
+
+	bu_log("Using render thread\n");
+    }
 
     // Create the renderer
     m_renderer = new DMRenderer(this);
-    m_renderer->moveToThread(m_thread);
-    connect(m_thread, &QThread::finished, m_renderer, &QObject::deleteLater);
 
-    // Let dmGL know to trigger the renderer
-    connect(this, &dmGL::renderRequested, m_renderer, &DMRenderer::render);
-    connect(m_renderer, &DMRenderer::contextWanted, this, &dmGL::grabContext);
+    // If using a separate rendering thread, do setup
+    if (m_thread) {
+	m_renderer->moveToThread(m_thread);
+	connect(m_thread, &QThread::finished, m_renderer, &QObject::deleteLater);
 
-    m_thread->start();
+	// Let dmGL know to trigger the renderer
+	connect(this, &dmGL::renderRequested, m_renderer, &DMRenderer::render);
+	connect(m_renderer, &DMRenderer::contextWanted, this, &dmGL::grabContext);
+
+	m_thread->start();
+    }
 
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
@@ -197,10 +211,12 @@ dmGL::dmGL(QWidget *parent)
 
 dmGL::~dmGL()
 {
-    m_renderer->prepareExit();
-    m_thread->quit();
-    m_thread->wait();
-    delete m_thread;
+    if (m_thread) {
+	m_renderer->prepareExit();
+	m_thread->quit();
+	m_thread->wait();
+	delete m_thread;
+    }
     BU_PUT(v, struct bview);
 }
 
@@ -208,20 +224,26 @@ void dmGL::onAboutToCompose()
 {
     // We are on the gui thread here. Composition is about to
     // begin. Wait until the render thread finishes.
-    m_renderer->lockRenderer();
+    if (m_thread) {
+	m_renderer->lockRenderer();
+    }
 }
 
 void dmGL::onFrameSwapped()
 {
-    m_renderer->unlockRenderer();
-    // Assuming a blocking swap, our animation is driven purely by the
-    // vsync in this example.
-    emit renderRequested();
+    if (m_thread) {
+	m_renderer->unlockRenderer();
+	// Assuming a blocking swap, our animation is driven purely by the
+	// vsync in this example.
+	emit renderRequested();
+    }
 }
 
 void dmGL::onAboutToResize()
 {
-    m_renderer->lockRenderer();
+    if (m_thread) {
+	m_renderer->lockRenderer();
+    }
 }
 
 void dmGL::onResized()
@@ -230,18 +252,22 @@ void dmGL::onResized()
 	dm_configure_win((struct dm *)gedp->ged_dmp, 0);
 	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
     }
-    m_renderer->unlockRenderer();
+    if (m_thread) {
+	m_renderer->unlockRenderer();
+    }
 }
 
 void dmGL::grabContext()
 {
-    if (m_renderer->m_exiting)
-	return;
-    m_renderer->lockRenderer();
-    QMutexLocker lock(m_renderer->grabMutex());
-    context()->moveToThread(m_thread);
-    m_renderer->grabCond()->wakeAll();
-    m_renderer->unlockRenderer();
+    if (m_thread) {
+	if (m_renderer->m_exiting)
+	    return;
+	m_renderer->lockRenderer();
+	QMutexLocker lock(m_renderer->grabMutex());
+	context()->moveToThread(m_thread);
+	m_renderer->grabCond()->wakeAll();
+	m_renderer->unlockRenderer();
+    }
 }
 
 void dmGL::keyPressEvent(QKeyEvent *k) {
@@ -321,7 +347,11 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
     if (bview_adjust(v, -dy, -dx, center, BVIEW_VIEW, BVIEW_ROT)) {
 	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	 emit renderRequested();
+	 if (m_thread) {
+	     emit renderRequested();
+	 } else {
+	     update();
+	 }
     }
 
     // Current positions are the new previous positions

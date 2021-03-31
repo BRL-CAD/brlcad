@@ -91,7 +91,7 @@ class dmGL : public QOpenGLWidget
     Q_OBJECT
 
     public:
-	explicit dmGL(QWidget *parent = nullptr);
+	explicit dmGL(QWidget *parent = nullptr, int ut = 0);
 	~dmGL();
 
 	void save_image();
@@ -103,8 +103,14 @@ class dmGL : public QOpenGLWidget
 	unsigned long long prev_vhash = 0;
 	unsigned long long prev_lhash = 0;
 
+	QThread *m_thread = NULL;
+
     protected:
-	void paintEvent(QPaintEvent *) override { }
+	void paintEvent(QPaintEvent *) override {
+	    if (!m_thread && m_renderer) {
+		m_renderer->render();
+	    }
+       	}
 
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
@@ -127,7 +133,6 @@ class dmGL : public QOpenGLWidget
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
 
-	QThread *m_thread;
 	DMRenderer *m_renderer;
 };
 

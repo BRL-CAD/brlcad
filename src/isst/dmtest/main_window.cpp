@@ -26,7 +26,7 @@
 #include "main_window.h"
 #include "dmapp.h"
 
-DM_MainWindow::DM_MainWindow()
+DM_MainWindow::DM_MainWindow(int render_thread)
 {
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when
@@ -53,7 +53,7 @@ DM_MainWindow::DM_MainWindow()
     file_menu->addAction(g_exit);
 
     // Set up Display canvas
-    canvas = new dmGL();
+    canvas = new dmGL(this, render_thread);
     canvas->setMinimumSize(512,512);
     console = new pqConsoleWidget(this);
     console->prompt("$ ");
@@ -124,6 +124,7 @@ DM_MainWindow::run_cmd(const QString &command)
 	    std::cout << "vhash: " << vhash << "\n";
 	    canvas->prev_vhash = vhash;
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    canvas->update();
 	}
 	unsigned long long lhash = dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 	if (lhash != canvas->prev_lhash) {
@@ -131,6 +132,7 @@ DM_MainWindow::run_cmd(const QString &command)
 	    std::cout << "lhash: " << lhash << "\n";
 	    canvas->prev_lhash = lhash;
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    canvas->update();
 	}
     }
 

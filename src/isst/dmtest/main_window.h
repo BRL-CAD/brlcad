@@ -43,7 +43,7 @@ class DM_MainWindow : public QMainWindow
 {
     Q_OBJECT
     public:
-	DM_MainWindow();
+	DM_MainWindow(int render_thread = 0);
 
 	void readSettings();
 
