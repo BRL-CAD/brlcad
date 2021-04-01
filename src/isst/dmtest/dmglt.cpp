@@ -23,8 +23,6 @@
  *
  */
 
-#include "GL/glu.h"
-
 #include <QOpenGLWidget>
 #include <QKeyEvent>
 #include <QGuiApplication> // for qGuiApp
