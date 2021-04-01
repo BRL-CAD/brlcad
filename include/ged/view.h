@@ -69,9 +69,6 @@ GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, str
 
 GED_EXPORT extern int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, int csoltab);
 
-/* defined in ged.c */
-GED_EXPORT extern void ged_view_init(struct bview *gvp);
-
 /* defined in grid.c */
 GED_EXPORT extern int ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy);
 GED_EXPORT extern void ged_view_center_linesnap(struct ged *gedp);

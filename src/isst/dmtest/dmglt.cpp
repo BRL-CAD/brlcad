@@ -167,7 +167,7 @@ dmGLT::dmGLT(QWidget *parent)
     : QOpenGLWidget(parent)
 {
     BU_GET(v, struct bview);
-    ged_view_init(v);
+    bview_init(v);
 
     connect(this, &QOpenGLWidget::aboutToCompose, this, &dmGLT::onAboutToCompose);
     connect(this, &QOpenGLWidget::frameSwapped, this, &dmGLT::onFrameSwapped);

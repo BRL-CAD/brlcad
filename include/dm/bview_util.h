@@ -37,6 +37,10 @@
 
 __BEGIN_DECLS
 
+/* Set default values for a bview. */
+DM_EXPORT extern void bview_init(struct bview *v);
+
+/* Sync values within the bview, perform callbacks if any are defined */
 DM_EXPORT extern void bview_update(struct bview *gvp);
 
 /* Return 1 if the visible contents differ

@@ -35,6 +35,7 @@ extern "C" {
 }
 
 #include "bu.h"
+#include "dm/bview_util.h"
 #include "ged.h"
 
 #define DEFAULT_GSH_PROMPT "g> "
@@ -97,7 +98,7 @@ main(int argc, const char **argv)
     /* Need a view for commands that expect a view */
     struct bview *gsh_view;
     BU_GET(gsh_view, struct bview);
-    ged_view_init(gsh_view);
+    bview_init(gsh_view);
 
     /* See if we've been told to pre-load a specific .g file. */
     if (argc) {

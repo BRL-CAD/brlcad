@@ -35,6 +35,101 @@
 #include "xxhash.h"
 
 void
+bview_init(struct bview *gvp)
+{
+    if (!gvp)
+	return;
+
+    gvp->magic = BVIEW_MAGIC;
+
+    gvp->gv_scale = 500.0;
+    gvp->gv_i_scale = gvp->gv_scale;
+    gvp->gv_a_scale = 1.0 - gvp->gv_scale / gvp->gv_i_scale;
+    gvp->gv_size = 2.0 * gvp->gv_scale;
+    gvp->gv_isize = 1.0 / gvp->gv_size;
+    VSET(gvp->gv_aet, 35.0, 25.0, 0.0);
+    VSET(gvp->gv_eye_pos, 0.0, 0.0, 1.0);
+    MAT_IDN(gvp->gv_rotation);
+    MAT_IDN(gvp->gv_center);
+    VSETALL(gvp->gv_keypoint, 0.0);
+    gvp->gv_coord = 'v';
+    gvp->gv_rotate_about = 'v';
+    gvp->gv_minMouseDelta = -20;
+    gvp->gv_maxMouseDelta = 20;
+    gvp->gv_rscale = 0.4;
+    gvp->gv_sscale = 2.0;
+
+    gvp->gv_adc.a1 = 45.0;
+    gvp->gv_adc.a2 = 45.0;
+    VSET(gvp->gv_adc.line_color, 255, 255, 0);
+    VSET(gvp->gv_adc.tick_color, 255, 255, 255);
+
+    VSET(gvp->gv_grid.anchor, 0.0, 0.0, 0.0);
+    gvp->gv_grid.res_h = 1.0;
+    gvp->gv_grid.res_v = 1.0;
+    gvp->gv_grid.res_major_h = 5;
+    gvp->gv_grid.res_major_v = 5;
+    VSET(gvp->gv_grid.color, 255, 255, 255);
+
+    gvp->gv_rect.draw = 0;
+    gvp->gv_rect.pos[0] = 128;
+    gvp->gv_rect.pos[1] = 128;
+    gvp->gv_rect.dim[0] = 256;
+    gvp->gv_rect.dim[1] = 256;
+    VSET(gvp->gv_rect.color, 255, 255, 255);
+
+    gvp->gv_view_axes.draw = 0;
+    VSET(gvp->gv_view_axes.axes_pos, 0.85, -0.85, 0.0);
+    gvp->gv_view_axes.axes_size = 0.2;
+    gvp->gv_view_axes.line_width = 0;
+    gvp->gv_view_axes.pos_only = 1;
+    VSET(gvp->gv_view_axes.axes_color, 255, 255, 255);
+    VSET(gvp->gv_view_axes.label_color, 255, 255, 0);
+    gvp->gv_view_axes.triple_color = 1;
+
+    gvp->gv_model_axes.draw = 0;
+    VSET(gvp->gv_model_axes.axes_pos, 0.0, 0.0, 0.0);
+    gvp->gv_model_axes.axes_size = 2.0;
+    gvp->gv_model_axes.line_width = 0;
+    gvp->gv_model_axes.pos_only = 0;
+    VSET(gvp->gv_model_axes.axes_color, 255, 255, 255);
+    VSET(gvp->gv_model_axes.label_color, 255, 255, 0);
+    gvp->gv_model_axes.triple_color = 0;
+    gvp->gv_model_axes.tick_enabled = 1;
+    gvp->gv_model_axes.tick_length = 4;
+    gvp->gv_model_axes.tick_major_length = 8;
+    gvp->gv_model_axes.tick_interval = 100;
+    gvp->gv_model_axes.ticks_per_major = 10;
+    gvp->gv_model_axes.tick_threshold = 8;
+    VSET(gvp->gv_model_axes.tick_color, 255, 255, 0);
+    VSET(gvp->gv_model_axes.tick_major_color, 255, 0, 0);
+
+    gvp->gv_center_dot.gos_draw = 0;
+    VSET(gvp->gv_center_dot.gos_line_color, 255, 255, 0);
+
+    gvp->gv_prim_labels.gos_draw = 0;
+    VSET(gvp->gv_prim_labels.gos_text_color, 255, 255, 0);
+
+    gvp->gv_view_params.gos_draw = 0;
+    VSET(gvp->gv_view_params.gos_text_color, 255, 255, 0);
+
+    gvp->gv_view_scale.gos_draw = 0;
+    VSET(gvp->gv_view_scale.gos_line_color, 255, 255, 0);
+    VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
+
+    gvp->gv_data_vZ = 1.0;
+
+    /* FIXME: this causes the shaders.sh regression to fail */
+    /* _ged_mat_aet(gvp); */
+
+    // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
+    gvp->gv_snap_tol_factor = 10;
+    gvp->gv_snap_lines = 0;
+
+    bview_update(gvp);
+}
+
+void
 bview_update(struct bview *gvp)
 {
     vect_t work, work1;
@@ -918,13 +1013,38 @@ _bview_trans(struct bview *v, int UNUSED(dx), int UNUSED(dy), point_t UNUSED(key
     return 0;
 }
 int
-_bview_scale(struct bview *v, int UNUSED(dx), int UNUSED(dy), point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
+_bview_scale(struct bview *v, int UNUSED(dx), int dy, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
 {
-    if (!v)
+    if (!v || !v->gv_height)
 	return 0;
 
+    double f = (double)dy/(double)v->gv_height;
+    v->gv_a_scale += f;
+    if (-SMALL_FASTF < v->gv_a_scale && v->gv_a_scale < SMALL_FASTF) {
+	v->gv_scale = v->gv_i_scale;
+    } else {
+	if (v->gv_a_scale > 0) {
+	    /* positive - scale i_Viewscale by values in [0.0, 1.0] range */
+	    v->gv_scale = v->gv_i_scale * (1.0 - v->gv_a_scale);
+	} else {
+	    /* negative - scale i_Viewscale by values in [1.0, 10.0] range */
+	    v->gv_scale = v->gv_i_scale * (1.0 + (v->gv_a_scale * -9.0));
+	}
+    }
 
-    return 0;
+    if (v->gv_scale < BVIEW_MINVIEWSIZE) {
+	v->gv_scale = BVIEW_MINVIEWSIZE;
+    }
+    if (v->gv_scale < BVIEW_MINVIEWSCALE)
+	v->gv_scale = BVIEW_MINVIEWSCALE;
+
+    v->gv_size = 2.0 * v->gv_scale;
+    v->gv_isize = 1.0 / v->gv_size;
+
+    /* scale factors are set, now sync other bview values */
+    bview_update(v);
+
+    return 1;
 }
 
 int

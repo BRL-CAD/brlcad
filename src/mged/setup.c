@@ -31,9 +31,10 @@
 #include <string.h>
 
 /* common headers */
+#include "vmath.h"
 #include "bu/app.h"
 #include "bn.h"
-#include "vmath.h"
+#include "dm/bview_util.h"
 #include "tclcad.h"
 #include "ged.h"
 
@@ -457,7 +458,7 @@ mged_setup(Tcl_Interp **interpreter)
     BU_ALLOC(view_state->vs_gvp, struct bview);
     BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bview callbacks");
-    ged_view_init(view_state->vs_gvp);
+    bview_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
     view_state->vs_gvp->gv_clientData = (void *)view_state;

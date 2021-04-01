@@ -38,7 +38,7 @@ dmGL::dmGL(QWidget *parent)
     : QOpenGLWidget(parent)
 {
     BU_GET(v, struct bview);
-    ged_view_init(v);
+    bview_init(v);
 
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
@@ -127,7 +127,9 @@ void dmGL::keyPressEvent(QKeyEvent *k) {
 }
 
 
-void dmGL::mouseMoveEvent(QMouseEvent *e) {
+void dmGL::mouseMoveEvent(QMouseEvent *e)
+{
+    unsigned long long view_flags = BVIEW_IDLE;
 
     if (x_prev == -INT_MAX) {
 	x_prev = e->x();
@@ -141,16 +143,22 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
 	return;
     }
 
-    if (e->modifiers().testFlag(Qt::ControlModifier)) {
-	bu_log("Ctrl\n");
-    }
-
-    if (e->modifiers().testFlag(Qt::ShiftModifier)) {
-	bu_log("Shift\n");
-    }
-
     if (e->buttons().testFlag(Qt::LeftButton)) {
 	bu_log("Left\n");
+	view_flags = BVIEW_ROT;
+
+	if (e->modifiers().testFlag(Qt::ControlModifier)) {
+	    bu_log("Ctrl+Left\n");
+	}
+
+	if (e->modifiers().testFlag(Qt::ShiftModifier)) {
+	    bu_log("Shift+Left\n");
+	}
+
+	if (e->modifiers().testFlag(Qt::ShiftModifier) && e->modifiers().testFlag(Qt::ControlModifier)) {
+	    bu_log("Ctrl+Shift+Left\n");
+	    view_flags = BVIEW_SCALE;
+	}
     }
 
     if (e->buttons().testFlag(Qt::MiddleButton)) {
@@ -171,6 +179,11 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
     int dx = x_prev - e->x();
     int dy = y_prev - e->y();
 
+    // Let bview know what the current view width and height are, in
+    // case the dx/dy mouse translations need that information
+    v->gv_width = width();
+    v->gv_height = height();
+
     // TODO - the key point and the mode/flags are all hardcoded
     // right now, but eventually for shift grips they will need to
     // respond to the various mod keys.  The intent is to set flags
@@ -179,7 +192,7 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
     point_t center;
     MAT_DELTAS_GET_NEG(center, v->gv_center);
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-    if (bview_adjust(v, -dy, -dx, center, BVIEW_VIEW, BVIEW_ROT)) {
+    if (bview_adjust(v, -dy, -dx, center, BVIEW_VIEW, view_flags)) {
 	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	 update();
     }
@@ -193,7 +206,18 @@ void dmGL::mouseMoveEvent(QMouseEvent *e) {
 
 void dmGL::wheelEvent(QWheelEvent *e) {
     QPoint delta = e->angleDelta();
-    bu_log("Delta: %d\n", delta.y());
+    int incr = delta.y() / 8;
+
+    // Let bview know what the current view width and height are, in
+    // case the dx/dy mouse translations need that information
+    v->gv_width = width();
+    v->gv_height = height();
+
+    point_t origin = VINIT_ZERO;
+    if (bview_adjust(v, 0, incr, origin, BVIEW_VIEW, BVIEW_SCALE)) {
+	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	 update();
+    }
 
     QOpenGLWidget::wheelEvent(e);
 }

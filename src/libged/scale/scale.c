@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "dm/bview.h"
+
 #include "../ged_private.h"
 
 
@@ -54,8 +56,8 @@ ged_scale_core(struct ged *gedp, int argc, const char *argv[])
     /* scale the view */
     gedp->ged_gvp->gv_scale *= sf1;
 
-    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSIZE)
-	gedp->ged_gvp->gv_scale = RT_MINVIEWSIZE;
+    if (gedp->ged_gvp->gv_scale < BVIEW_MINVIEWSIZE)
+	gedp->ged_gvp->gv_scale = BVIEW_MINVIEWSIZE;
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     bview_update(gedp->ged_gvp);

@@ -30,11 +30,9 @@
 #include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
+#include "dm/bview.h"
 
 __BEGIN_DECLS
-
-#define RT_MINVIEWSIZE 0.0001
-#define RT_MINVIEWSCALE 0.00005
 
 /**
  * Normally, librt doesn't have a concept of a "display" of the
@@ -45,6 +43,10 @@ __BEGIN_DECLS
  *
  * **TODO** this structure is NOT in final form and should not be
  * relied upon.
+ *
+ * **TODO** see if we can fold into struct bview, which is a better
+ * conceptual fit.  bview.h, despite being in the dm directory, is
+ * intended to be a library independent definition of a view.
  */
 struct rt_view_info {
     struct bu_list *vhead;

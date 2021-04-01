@@ -43,6 +43,9 @@
 /** @{ */
 /** @file bview.h */
 
+#define BVIEW_MINVIEWSIZE 0.0001
+#define BVIEW_MINVIEWSCALE 0.00005
+
 #ifndef UP
 #  define UP 0
 #endif
@@ -198,6 +201,8 @@ struct bview_other_state {
 struct bview {
     uint32_t			magic;         /**< @brief magic number */
     struct bu_vls               gv_name;
+    fastf_t                     gv_i_scale;
+    fastf_t                     gv_a_scale;    /**< @brief absolute scale */
     fastf_t                     gv_scale;
     fastf_t                     gv_size;                /**< @brief  2.0 * scale */
     fastf_t                     gv_isize;               /**< @brief  1.0 / size */
@@ -215,6 +220,8 @@ struct bview {
     mat_t                       gv_pmat;                /**< @brief  perspective matrix */
     void                        (*gv_callback)();       /**< @brief  called in ged_view_update with gvp and gv_clientData */
     void *                      gv_clientData;          /**< @brief  passed to gv_callback */
+    int				gv_width;
+    int				gv_height;
     fastf_t                     gv_prevMouseX;
     fastf_t                     gv_prevMouseY;
     fastf_t                     gv_minMouseDelta;
