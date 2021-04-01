@@ -37,13 +37,13 @@ static int
 image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
+    bu_mime_context_t type = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_context_t *set_type = (bu_mime_context_t *)set_mime;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
 
     type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
+    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_context_t)type_int;
     if (type == BU_MIME_IMAGE_UNKNOWN) {
 	if (msg) {
 	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
@@ -70,7 +70,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     struct icv_image *bif = NULL;	/**< icv image container for saving images */
     struct dm *dmp = NULL;
     struct fb *fbp = NULL;
-    bu_mime_image_t type = BU_MIME_IMAGE_AUTO;
+    bu_mime_context_t type = BU_MIME_IMAGE_AUTO;
     static char usage[] = "Usage: screengrab [-h] [-F] [--format fmt] [file.img]\n";
 
     struct bu_opt_desc d[4];

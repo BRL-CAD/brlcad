@@ -70,13 +70,13 @@ int
 image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
+    bu_mime_context_t type = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_context_t *set_type = (bu_mime_context_t *)set_mime;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
 
     type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
+    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_context_t)type_int;
     if (type == BU_MIME_IMAGE_UNKNOWN) {
 	if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
 	return -1;
@@ -95,8 +95,8 @@ main(int ac, const char **av)
     size_t height = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
-    static bu_mime_image_t in_type = BU_MIME_IMAGE_UNKNOWN;
-    static bu_mime_image_t out_type = BU_MIME_IMAGE_UNKNOWN;
+    static bu_mime_context_t in_type = BU_MIME_IMAGE_UNKNOWN;
+    static bu_mime_context_t out_type = BU_MIME_IMAGE_UNKNOWN;
     static char *in_path_str = NULL;
     static char *out_path_str = NULL;
     int need_help = 0;
@@ -214,7 +214,7 @@ main(int ac, const char **av)
 	    ret = 1;
 	} else {
 	    if (bu_path_component(&c, bu_vls_addr(&in_path), BU_PATH_EXT)) {
-		in_type = (bu_mime_image_t)bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
+		in_type = (bu_mime_context_t)bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
 	    } else {
 		bu_vls_printf(&slog, "No input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
 		ret = 1;
@@ -229,7 +229,7 @@ main(int ac, const char **av)
 	    ret = 1;
 	} else {
 	    if (bu_path_component(&c, bu_vls_addr(&out_path), BU_PATH_EXT)) {
-		out_type = (bu_mime_image_t)bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
+		out_type = (bu_mime_context_t)bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
 	    } else {
 		bu_vls_printf(&slog, "No output file image type specified - need either a specified output image type or a path that provides MIME information.\n");
 		ret = 1;

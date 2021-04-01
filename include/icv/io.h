@@ -83,7 +83,7 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * Returns 1 if an image size was identified, zero otherwise.
  *
  */
-ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
+ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_size, bu_mime_context_t type, size_t *widthp, size_t *heightp);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be
@@ -108,7 +108,7 @@ ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_
  * program.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height);
+ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_context_t format, size_t width, size_t height);
 
 /**
  * Saves Image to a file or streams to stdout in respective format
@@ -120,7 +120,7 @@ ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t fo
  * @param format Specific format of the file to be written.
  * @return on success 0, on failure -1 with log messages.
  */
-ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_image_t format);
+ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_context_t format);
 
 /**
  * Write an image line to the data of ICV struct. Can handle unsigned

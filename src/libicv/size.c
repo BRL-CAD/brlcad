@@ -170,7 +170,7 @@ struct paper_size paper_sizes[] = {
 size_t dpi_array[] = {72, 96, 150, 300, 2540, 4000, 0};
 
 int
-icv_image_size(const char *name, size_t udpi, size_t file_size, bu_mime_image_t img_type, size_t *widthp, size_t *heightp)
+icv_image_size(const char *name, size_t udpi, size_t file_size, bu_mime_context_t img_type, size_t *widthp, size_t *heightp)
 {
     struct xy_size *sp;
     struct paper_size *ps;

@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     int inx=0, iny=0;
     int outx=0, outy=0;
     icv_image_t *bif;
-    bu_mime_image_t format = BU_MIME_IMAGE_AUTO;
+    bu_mime_context_t format = BU_MIME_IMAGE_AUTO;
     int urx, ury, ulx, uly, llx, lly, lrx, lry;
     int ret;
 
