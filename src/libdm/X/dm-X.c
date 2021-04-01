@@ -1494,7 +1494,7 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 
 HIDDEN int
-X_getDisplayImage(struct dm *dmp, unsigned char **image)
+X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
 {
     XImage *ximage_p;
     unsigned char **rows;
@@ -1512,6 +1512,10 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     int green_bits;
     int blue_bits;
 
+    if (flip) {
+	bu_log("X: flipping unimplemented for this backend\n");
+	return BRLCAD_ERROR;
+    }
 
     ximage_p = XGetImage(((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->dpy,
 			 ((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->win,

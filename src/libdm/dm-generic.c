@@ -553,10 +553,10 @@ dm_set_perspective(struct dm *dmp, fastf_t perspective)
 }
 
 int
-dm_get_display_image(struct dm *dmp, unsigned char **image)
+dm_get_display_image(struct dm *dmp, unsigned char **image, int flip)
 {
     if (!dmp || !image) return 0;
-    return dmp->i->dm_getDisplayImage(dmp, image);
+    return dmp->i->dm_getDisplayImage(dmp, image, flip);
 }
 
 int

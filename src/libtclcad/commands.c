@@ -4854,7 +4854,6 @@ to_pix(struct ged *gedp,
     unsigned char *pixels;
     static int bytes_per_pixel = 3;
     int i = 0;
-    int width = 0;
     int height = 0;
     int make_ret = 0;
     int bytes_per_line;
@@ -4892,7 +4891,6 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    width = dm_get_width((struct dm *)gdvp->dmp);
     height = dm_get_height((struct dm *)gdvp->dmp);
 
     make_ret = dm_make_current((struct dm *)gdvp->dmp);
@@ -4902,10 +4900,11 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
-    glReadBuffer(GL_FRONT);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    if (dm_get_display_image((struct dm *)gdvp->dmp, &pixels, 0) != BRLCAD_OK) {
+    	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't get display image\n", argv[0]);
+	fclose(fp);
+	return GED_ERROR;
+    }
 
     for (i = 0; i < height; ++i) {
 	scanline = (unsigned char *)(pixels + (i*bytes_per_line));
@@ -5000,10 +4999,12 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
-    glReadBuffer(GL_FRONT);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    if (dm_get_display_image((struct dm *)gdvp->dmp, &pixels, 0) != BRLCAD_OK) {
+    	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't get display image\n", argv[0]);
+	fclose(fp);
+	return GED_ERROR;
+    }
+
     rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 
     for (i = 0; i < height; ++i)

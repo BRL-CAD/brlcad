@@ -276,7 +276,7 @@ null_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
 
 
 int
-null_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+null_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image), int UNUSED(flip))
 {
     return 0;
 }

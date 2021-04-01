@@ -171,7 +171,7 @@ null_genDLists(struct dm *dmp, size_t range);
 
 
 DM_NULL_EXPORT extern int
-null_getDisplayImage(struct dm *dmp, unsigned char **image);
+null_getDisplayImage(struct dm *dmp, unsigned char **image, int flip);
 
 
 DM_NULL_EXPORT extern int

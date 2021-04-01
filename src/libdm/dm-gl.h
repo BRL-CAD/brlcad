@@ -36,6 +36,8 @@
 #include "dm/bview.h"
 #include "dm.h"
 
+#define GL_SILENCE_DEPRECATION 1
+
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
@@ -149,7 +151,7 @@ DMGL_EXPORT extern int gl_draw_obj(struct dm *dmp, struct display_list *obj);
 DMGL_EXPORT extern int gl_endDList(struct dm *dmp);
 DMGL_EXPORT extern int gl_freeDLists(struct dm *dmp, unsigned int list, int range);
 DMGL_EXPORT extern int gl_genDLists(struct dm *dmp, size_t range);
-DMGL_EXPORT extern int gl_getDisplayImage(struct dm *dmp, unsigned char **image);
+DMGL_EXPORT extern int gl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip);
 DMGL_EXPORT extern int gl_get_internal(struct dm *dmp);
 DMGL_EXPORT extern int gl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 DMGL_EXPORT extern int gl_loadPMatrix(struct dm *dmp, fastf_t *mat);

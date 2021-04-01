@@ -227,7 +227,7 @@ DM_EXPORT extern int dm_get_zclip(struct dm *dmp);
 DM_EXPORT extern void dm_set_zclip(struct dm *dmp, int zclip);
 DM_EXPORT extern int dm_get_perspective(struct dm *dmp);
 DM_EXPORT extern void dm_set_perspective(struct dm *dmp, fastf_t perspective);
-DM_EXPORT extern int dm_get_display_image(struct dm *dmp, unsigned char **image);
+DM_EXPORT extern int dm_get_display_image(struct dm *dmp, unsigned char **image, int flip);
 DM_EXPORT extern int dm_gen_dlists(struct dm *dmp, size_t range);
 DM_EXPORT extern int dm_begin_dlist(struct dm *dmp, unsigned int list);
 DM_EXPORT extern int dm_draw_dlist(struct dm *dmp, unsigned int list);
