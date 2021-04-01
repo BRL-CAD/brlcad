@@ -37,10 +37,13 @@
 
 BRLCAD_ADDEXEC(dm_test dm_test.c "libdm;libbu" TEST)
 
-if (BRLCAD_ENABLE_TK)
+#TODO - these should be portable without X11, but we need to set up the Tk Xlib
+# and provide an appropriate include first...
+if (BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_X11)
   include_directories(
     ${TCL_INCLUDE_PATH}
     ${TK_INCLUDE_PATH}
+    ${X11_INCLUDE_DIR}
     )
 
   BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
