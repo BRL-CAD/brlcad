@@ -126,6 +126,54 @@ void dmGL::keyPressEvent(QKeyEvent *k) {
     QOpenGLWidget::keyPressEvent(k);
 }
 
+void dmGL::mousePressEvent(QMouseEvent *e) {
+
+    // If we're intending the mouse motion to do the work,
+    // then the press has to be a no-op.  If we're going
+    // to do configurable key bindings, this will take some
+    // thought - if we want unmodded left button to be a
+    // rotation, and Ctrl+Left to do something else, these
+    // checks are all going to have to be exact-flag-combo-only
+    // actions.
+    if (e->modifiers()) {
+	QOpenGLWidget::mousePressEvent(e);
+	return;
+    }
+
+    int dx = 0;
+    int dy = 0;
+    unsigned long long view_flags = BVIEW_IDLE;
+
+    // Let bview know what the current view width and height are, in
+    // case the dx/dy mouse translations need that information
+    v->gv_width = width();
+    v->gv_height = height();
+
+    if (e->buttons().testFlag(Qt::LeftButton)) {
+	bu_log("Press Left\n");
+	view_flags = BVIEW_SCALE;
+	dy = -100;
+    }
+    if (e->buttons().testFlag(Qt::RightButton)) {
+	bu_log("Press Right\n");
+	view_flags = BVIEW_SCALE;
+	dy = 100;
+    }
+    if (e->buttons().testFlag(Qt::MiddleButton)) {
+	bu_log("Press Middle\n");
+    }
+
+    point_t center;
+    MAT_DELTAS_GET_NEG(center, v->gv_center);
+    VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
+    if (bview_adjust(v, dx, dy, center, BVIEW_VIEW, view_flags)) {
+	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	update();
+    }
+
+
+    QOpenGLWidget::mousePressEvent(e);
+}
 
 void dmGL::mouseMoveEvent(QMouseEvent *e)
 {
@@ -145,14 +193,15 @@ void dmGL::mouseMoveEvent(QMouseEvent *e)
 
     if (e->buttons().testFlag(Qt::LeftButton)) {
 	bu_log("Left\n");
-	view_flags = BVIEW_ROT;
 
 	if (e->modifiers().testFlag(Qt::ControlModifier)) {
 	    bu_log("Ctrl+Left\n");
+	    view_flags = BVIEW_ROT;
 	}
 
 	if (e->modifiers().testFlag(Qt::ShiftModifier)) {
 	    bu_log("Shift+Left\n");
+	    view_flags = BVIEW_TRANS;
 	}
 
 	if (e->modifiers().testFlag(Qt::ShiftModifier) && e->modifiers().testFlag(Qt::ControlModifier)) {
@@ -169,20 +218,16 @@ void dmGL::mouseMoveEvent(QMouseEvent *e)
 	bu_log("Right\n");
     }
 
-
-    //bu_log("(%d,%d)\n", e->x(), e->y());
-    //bu_log("Delta: (%d,%d)\n", e->x() - x_prev, e->y() - y_prev);
-
-    // Start following MGED's mouse motions to see how it handles view
-    // updates.  The trail starts at doevent.c's motion_event_handler,
-    // which in turn generates a command fed to f_knob.
-    int dx = x_prev - e->x();
-    int dy = y_prev - e->y();
-
     // Let bview know what the current view width and height are, in
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
+
+    // Start following MGED's mouse motions to see how it handles view
+    // updates.  The trail starts at doevent.c's motion_event_handler,
+    // which in turn generates a command fed to f_knob.
+    int dx = e->x() - x_prev;
+    int dy = e->y() - y_prev;
 
     // TODO - the key point and the mode/flags are all hardcoded
     // right now, but eventually for shift grips they will need to
@@ -192,7 +237,7 @@ void dmGL::mouseMoveEvent(QMouseEvent *e)
     point_t center;
     MAT_DELTAS_GET_NEG(center, v->gv_center);
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-    if (bview_adjust(v, -dy, -dx, center, BVIEW_VIEW, view_flags)) {
+    if (bview_adjust(v, dx, dy, center, BVIEW_VIEW, view_flags)) {
 	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	 update();
     }
@@ -223,6 +268,7 @@ void dmGL::wheelEvent(QWheelEvent *e) {
 }
 
 void dmGL::mouseReleaseEvent(QMouseEvent *e) {
+
     // To avoid an abrupt jump in scene motion the next time movement is
     // started with the mouse, after we release we return to the default state.
     x_prev = -INT_MAX;

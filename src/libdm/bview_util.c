@@ -1004,13 +1004,28 @@ _bview_rot(struct bview *v, int dx, int dy, point_t keypoint, unsigned long long
 }
 
 int
-_bview_trans(struct bview *v, int UNUSED(dx), int UNUSED(dy), point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
+_bview_trans(struct bview *v, int dx, int dy, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
 {
     if (!v)
 	return 0;
+    fastf_t aspect = (fastf_t)v->gv_width / (fastf_t)v->gv_height;
+    fastf_t fx = (fastf_t)dx / (fastf_t)v->gv_width * 2.0;
+    fastf_t fy = -dy / (fastf_t)v->gv_height / aspect * 2.0;
 
+    vect_t tt;
+    point_t delta;
+    point_t work;
+    point_t vc, nvc;
 
-    return 0;
+    VSET(tt, fx, fy, 0);
+    MAT4X3PNT(work, v->gv_view2model, tt);
+    MAT_DELTAS_GET_NEG(vc, v->gv_center);
+    VSUB2(delta, work, vc);
+    VSUB2(nvc, vc, delta);
+    MAT_DELTAS_VEC_NEG(v->gv_center, nvc);
+    bview_update(v);
+
+    return 1;
 }
 int
 _bview_scale(struct bview *v, int UNUSED(dx), int dy, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
@@ -1056,8 +1071,9 @@ bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsign
     if (flags == BVIEW_IDLE)
 	return 0;
 
+    // TODO - figure out why these need to be flipped for qdm to do the right thing...
     if (flags & BVIEW_ROT)
-	return _bview_rot(v, dx, dy, keypoint, flags);
+	return _bview_rot(v, dy, dx, keypoint, flags);
 
     if (flags & BVIEW_TRANS)
 	return _bview_trans(v, dx, dy, keypoint, flags);
