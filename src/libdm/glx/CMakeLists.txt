@@ -10,8 +10,6 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
 
   include("${CMAKE_CURRENT_SOURCE_DIR}/FindGLX.cmake")
 
-  BRLCAD_INCLUDE_FILE(GL/glx.h HAVE_GL_GLX_H)
-
   # Since ogl uses an X11 OpenGL and that may differ from the overall standard
   # system OpenGL in use, build in the libdmgl logic rather than risking
   # conflicting OpenGL linkages.
@@ -53,6 +51,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
   dm_plugin_library(dm-ogl SHARED ${OGL_SRCS})
   target_link_libraries(dm-ogl libdm libbu ${X11_LIBRARIES} ${XOPENGL_LIBS} ${TCL_LIBRARY} ${TK_LIBRARY})
   set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+  set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_GL_GLX_H)
   VALIDATE_STYLE(dm-ogl "${OGL_SRCS}")
 
   PLUGIN_SETUP(dm-ogl dm)
