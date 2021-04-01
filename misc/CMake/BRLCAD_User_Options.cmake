@@ -164,12 +164,13 @@ if(BRLCAD_ENABLE_X11)
   set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
 endif(BRLCAD_ENABLE_X11)
 
+find_package(OpenGL)
 set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
 Enable support for OpenGL based Display Managers in BRL-CAD.
 Default depends on whether OpenGL is successfully detected -
 if it is, default is to enable.
 ")
-BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ON
+BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
   TYPE BOOL
   ALIASES ENABLE_OPENGL
   DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)
