@@ -45,6 +45,8 @@ extern "C" {
 #include "ged.h"
 }
 
+#include "bindings.h"
+
 class dmGLT;
 
 class DMRendererT : public QObject, protected QOpenGLFunctions

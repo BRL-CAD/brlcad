@@ -18,6 +18,7 @@ endif(BRLCAD_ENABLE_QT)
 # want to run the automatic moc logic for all of them.
 
 set(dm_srcs
+  bindings.cpp
   main.cpp
   main_window.cpp
   dmapp.cpp
@@ -27,6 +28,7 @@ set(dm_srcs
   )
 
 set(dm_moc_headers
+  bindings.h
   main_window.h
   dmapp.h
   dmgls.h

@@ -34,6 +34,8 @@ extern "C" {
 #include "ged.h"
 }
 
+#include "bindings.h"
+
 // Use QOpenGLFunctions so we don't have to prefix all OpenGL calls with "f->"
 class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
 {
