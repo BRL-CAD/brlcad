@@ -274,7 +274,7 @@ struct bview_solid_data {
     fastf_t transparency;
     int dmode;
     int hiddenLine;
-    void *freesolid;
+    void *free_scene_obj;
 };
 
 #endif /* DM_BVIEW_H */

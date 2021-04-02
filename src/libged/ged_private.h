@@ -159,7 +159,7 @@ struct _ged_client_data {
     fastf_t transparency;
     int dmode;
     int hiddenLine;
-    struct bview_scene_obj *freesolid;
+    struct bview_scene_obj *free_scene_obj;
     /* bigE related members */
     struct application *ap;
     struct bu_ptbl leaf_list;
@@ -219,7 +219,7 @@ GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state
 GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
 GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
-GED_EXPORT void dl_zap(struct ged *gedp, struct bview_scene_obj *freesolid);
+GED_EXPORT void dl_zap(struct ged *gedp, struct bview_scene_obj *free_scene_obj);
 GED_EXPORT int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 GED_EXPORT void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 GED_EXPORT void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);

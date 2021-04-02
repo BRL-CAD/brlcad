@@ -201,7 +201,7 @@ struct ged {
     /** for catching log messages */
     struct bu_vls		*ged_log;
 
-    struct bview_scene_obj                *freesolid;  /* For now this is a struct bview_scene_obj, but longer term that may not always be true */
+    struct bview_scene_obj                *free_scene_obj;  /* For now this is a struct bview_scene_obj, but longer term that may not always be true */
     struct bu_ptbl              free_solids; /**< @brief  solid structures available for reuse */
 
     /* @todo: add support for returning an array of objects, not just a

@@ -53,7 +53,7 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    dl_zap(gedp, gedp->freesolid);
+    dl_zap(gedp, gedp->free_scene_obj);
 
     return GED_OK;
 }

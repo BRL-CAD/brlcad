@@ -2009,7 +2009,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
     dgcdp->wireframe_color_override = 0;
     dgcdp->transparency = 0;
     dgcdp->dmode = _GED_BOOL_EVAL;
-    dgcdp->freesolid = gedp->freesolid;
+    dgcdp->free_scene_obj = gedp->free_scene_obj;
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */

@@ -177,11 +177,11 @@ ged_free(struct ged *gedp)
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
-	    // TODO - FREE_BVIEW_SCENE_OBJ macro is stashing on the freesolid list, not
+	    // TODO - FREE_BVIEW_SCENE_OBJ macro is stashing on the free_scene_obj list, not
 	    // BU_PUT-ing the solid objects themselves - is that what we expect
 	    // when doing ged_free?  I.e., is ownership of the free solid list
 	    // with the struct ged or with the application as a whole?  We're
-	    // BU_PUT-ing gedp->freesolid - above why just that one?
+	    // BU_PUT-ing gedp->free_scene_obj - above why just that one?
 #if 0
 	    struct bview_scene_obj *sp = (struct bview_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
 	    RT_FREE_VLIST(&(sp->s_vlist));
@@ -212,18 +212,18 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
-    // TODO - replace freesolid with free_solids ptbl
+    // TODO - replace free_scene_obj with free_solids ptbl
     {
 	struct bview_scene_obj *nsp;
-	sp = BU_LIST_NEXT(bview_scene_obj, &gedp->freesolid->l);
-	while (BU_LIST_NOT_HEAD(sp, &gedp->freesolid->l)) {
+	sp = BU_LIST_NEXT(bview_scene_obj, &gedp->free_scene_obj->l);
+	while (BU_LIST_NOT_HEAD(sp, &gedp->free_scene_obj->l)) {
 	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
 	    BU_LIST_DEQUEUE(&((sp)->l));
-	    FREE_BVIEW_SCENE_OBJ(sp, &gedp->freesolid->l);
+	    FREE_BVIEW_SCENE_OBJ(sp, &gedp->free_scene_obj->l);
 	    sp = nsp;
 	}
     }
-    BU_PUT(gedp->freesolid, struct bview_scene_obj);
+    BU_PUT(gedp->free_scene_obj, struct bview_scene_obj);
 
     free_object_selections(gedp->ged_selections);
     bu_hash_destroy(gedp->ged_selections);
@@ -270,10 +270,10 @@ ged_init(struct ged *gedp)
     gedp->ged_selections = bu_hash_create(32);
 
     /* init the solid list */
-    struct bview_scene_obj *freesolid;
-    BU_GET(freesolid, struct bview_scene_obj);
-    BU_LIST_INIT(&freesolid->l);
-    gedp->freesolid = freesolid;
+    struct bview_scene_obj *free_scene_obj;
+    BU_GET(free_scene_obj, struct bview_scene_obj);
+    BU_LIST_INIT(&free_scene_obj->l);
+    gedp->free_scene_obj = free_scene_obj;
 
     /* TODO: If we're init-ing the list here, does that mean the gedp has
      * ownership of all solid objects created and stored here, and should we

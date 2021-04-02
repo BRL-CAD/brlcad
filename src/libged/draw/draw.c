@@ -614,8 +614,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	/* default transparency - opaque */
 	dgcdp.transparency = 1.0;
 
-	/* freesolid */
-	dgcdp.freesolid = gedp->freesolid;
+	/* free_scene_obj */
+	dgcdp.free_scene_obj = gedp->free_scene_obj;
 
 	enable_fastpath = 0;
 
@@ -857,7 +857,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bview_data.transparency= dgcdp.transparency;
 		    bview_data.dmode = dgcdp.dmode;
 		    bview_data.hiddenLine = dgcdp.hiddenLine;
-		    bview_data.freesolid = (void *)gedp->freesolid;
+		    bview_data.free_scene_obj = (void *)gedp->free_scene_obj;
 
 		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 		    bview_data.gdlp = dgcdp.gdlp;
