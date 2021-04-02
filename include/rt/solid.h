@@ -89,14 +89,6 @@ struct solid  {
 #define FOR_ALL_SOLIDS(p, hp)  \
     for (BU_LIST_FOR(p, solid, hp))
 
-#define FOR_REST_OF_SOLIDS(p1, p2, hp) \
-    for (BU_LIST_PFOR(p1, p2, solid, hp))
-
-#define BU_LIST_PFOR(p1, p2, structure, hp) \
-    (p1)=BU_LIST_PNEXT(structure, p2); \
-    BU_LIST_NOT_HEAD(p1, hp);\
-    (p1)=BU_LIST_PNEXT(structure, p1)
-
 #endif /* RT_SOLID_H */
 
 /** @} */
