@@ -2263,7 +2263,7 @@ HIDDEN int
 osgl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
     struct bview_scene_obj *sp;
-    FOR_ALL_SOLIDS(sp, &obj->dl_headSolid) {
+    FOR_ALL_SOLIDS(sp, &obj->dl_head_scene_obj) {
 	if (sp->s_dlist == 0)
 	    sp->s_dlist = dm_gen_dlists(dmp, 1);
 

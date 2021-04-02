@@ -267,7 +267,7 @@ edit_com(int argc,
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    initial_blank_screen = 0;
 	    break;
 	}
@@ -463,7 +463,7 @@ edit_com(int argc,
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	    if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 		non_empty = 1;
 		break;
 	    }
@@ -984,7 +984,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    int a_new_match;
 
 	    if (exact && nm_pieces != sp->s_fullpath.fp_len)
@@ -1127,7 +1127,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    is_empty = 0;
 	    break;
 	}

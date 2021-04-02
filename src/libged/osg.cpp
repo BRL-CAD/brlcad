@@ -166,7 +166,7 @@ _ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_head_scene_obj) {
 	    if (sp->s_hiddenLine) {
 		_osgLoadHiddenSolid(geode, sp);
 	    } else {

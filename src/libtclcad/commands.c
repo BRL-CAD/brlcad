@@ -6479,7 +6479,7 @@ HIDDEN void
 to_create_vlist_callback(struct display_list *gdlp)
 {
     struct bview_scene_obj *sp;
-    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
+    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	to_create_vlist_callback_solid(sp);
     }
 }

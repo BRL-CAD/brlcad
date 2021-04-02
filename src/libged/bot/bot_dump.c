@@ -1351,7 +1351,7 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
     for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
 	struct bview_scene_obj *sp;
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    struct directory *dp;
 	    struct rt_db_internal intern;
 	    struct rt_bot_internal *bot;

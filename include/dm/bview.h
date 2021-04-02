@@ -57,7 +57,7 @@ struct display_list {
     struct bu_list      l;
     void               *dl_dp;                 /* Normally this will be a struct directory pointer */
     struct bu_vls       dl_path;
-    struct bu_list      dl_headSolid;          /**< @brief  head of solid list for this object */
+    struct bu_list      dl_head_scene_obj;          /**< @brief  head of scene obj list for this display list */
     int                 dl_wflag;
 };
 

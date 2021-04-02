@@ -218,7 +218,7 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-		for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
+		for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 		    if (LAST_SOLID(sp) != dp) continue;
 		    if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) continue;
 		    vp = BU_LIST_LAST(bn_vlist, &(sp->s_vlist));

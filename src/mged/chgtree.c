@@ -146,7 +146,7 @@ find_solid_with_path(struct db_full_path *pathp)
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!db_identical_full_paths(pathp, &sp->s_fullpath)) continue;
 
 	    /* Paths are the same */
@@ -212,7 +212,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -247,7 +247,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Patterned after ill_common() ... */
     illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN(modelchanges);	/* No changes yet */

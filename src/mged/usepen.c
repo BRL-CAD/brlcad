@@ -65,7 +65,7 @@ illuminate(int y) {
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    /* Only consider solids which are presently in view */
 	    if (sp->s_flag == UP) {
 		if (count-- == 0) {
@@ -129,7 +129,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	sp = illump;
 	sp->s_iflag = DOWN;
 	if (argc == 1 || *argv[1] == 'f') {
-	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_headSolid)) {
+	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
 		if (BU_LIST_NEXT_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
 		    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
@@ -137,18 +137,18 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 
-		sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_headSolid);
+		sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
 	    } else
 		sp = BU_LIST_PNEXT(bview_scene_obj, sp);
 	} else if (*argv[1] == 'b') {
-	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_headSolid)) {
+	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
 		if (BU_LIST_PREV_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
 		    gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
-		sp = BU_LIST_PREV(bview_scene_obj, &gdlp->dl_headSolid);
+		sp = BU_LIST_PREV(bview_scene_obj, &gdlp->dl_head_scene_obj);
 	    } else
 		sp = BU_LIST_PLAST(bview_scene_obj, sp);
 	} else {
@@ -281,7 +281,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    for (j = 0; j <= (size_t)ipathpos; j++) {
 		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
 		    DB_FULL_PATH_GET(&illump->s_fullpath, j))

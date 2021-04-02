@@ -1466,7 +1466,7 @@ int gl_genDLists(struct dm *dmp, size_t range)
 int gl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
     struct bview_scene_obj *sp;
-    for (BU_LIST_FOR(sp, bview_scene_obj, &obj->dl_headSolid)) {
+    for (BU_LIST_FOR(sp, bview_scene_obj, &obj->dl_head_scene_obj)) {
 	if (sp->s_dlist == 0)
 	    sp->s_dlist = dm_gen_dlists(dmp, 1);
 

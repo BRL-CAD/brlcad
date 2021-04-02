@@ -191,7 +191,7 @@ dl_hash(struct display_list *dl)
 	XXH64_update(state, bu_vls_cstr(&gdlp->dl_path), bu_vls_strlen(&gdlp->dl_path));
 	XXH64_update(state, &gdlp->dl_wflag, sizeof(int));
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    XXH64_update(state, &sp->s_size, sizeof(fastf_t));
 	    XXH64_update(state, &sp->s_csize, sizeof(fastf_t));
 	    XXH64_update(state, &sp->s_center, sizeof(vect_t));
