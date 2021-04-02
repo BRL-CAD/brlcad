@@ -65,22 +65,22 @@ ged_find_view(struct ged *gedp, const char *key)
 }
 
 void
-ged_push_solid(struct ged *gedp, struct solid *sp)
+ged_push_solid(struct ged *gedp, struct bview_scene_obj *sp)
 {
     RT_FREE_VLIST(&(sp->s_vlist));
     sp->s_fullpath.fp_len = 0; // Don't free memory, but implicitly clear contents
     bu_ptbl_ins(&gedp->free_solids, (long *)sp);
 }
 
-struct solid *
+struct bview_scene_obj *
 ged_pop_solid(struct ged *gedp)
 {
-    struct solid *sp = NULL;
+    struct bview_scene_obj *sp = NULL;
     if (BU_PTBL_LEN(&gedp->free_solids)) {
-	sp = (struct solid *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
+	sp = (struct bview_scene_obj *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
 	bu_ptbl_rm(&gedp->free_solids, (long *)sp);
     } else {
-	BU_ALLOC(sp, struct solid); // from GET_SOLID in rt/solid.h
+	BU_ALLOC(sp, struct bview_scene_obj); // from GET_BVIEW_SCENE_OBJ in rt/solid.h
 	db_full_path_init(&(sp)->s_fullpath);
     }
     return sp;

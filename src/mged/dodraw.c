@@ -71,7 +71,7 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
  * Also finds s_vlen;
  */
 static void
-mged_bound_solid(struct solid *sp)
+mged_bound_solid(struct bview_scene_obj *sp)
 {
     point_t bmin, bmax;
     size_t length = 0;
@@ -105,14 +105,14 @@ mged_bound_solid(struct solid *sp)
  * This routine must be prepared to run in parallel.
  */
 void
-drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp)
+drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bview_scene_obj *existing_sp)
 {
     struct display_list *gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	GET_SOLID(sp, &GEDP->freesolid->l);
+	GET_BVIEW_SCENE_OBJ(sp, &GEDP->freesolid->l);
 	BU_LIST_APPEND(&GEDP->freesolid->l, &((sp)->l) );
 	sp->s_dlist = 0;
     } else {
@@ -183,7 +183,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
  * 0 OK
  */
 int
-replot_original_solid(struct solid *sp)
+replot_original_solid(struct bview_scene_obj *sp)
 {
     struct rt_db_internal intern;
     struct directory *dp;
@@ -227,7 +227,7 @@ replot_original_solid(struct solid *sp)
  */
 int
 replot_modified_solid(
-    struct solid *sp,
+    struct bview_scene_obj *sp,
     struct rt_db_internal *ip,
     const mat_t mat)
 {
@@ -275,7 +275,7 @@ replot_modified_solid(
 void
 add_solid_path_to_result(
     Tcl_Interp *interp,
-    struct solid *sp)
+    struct bview_scene_obj *sp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
 

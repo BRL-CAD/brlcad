@@ -2664,7 +2664,7 @@ replot_editing_solid(void)
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     mat_t mat;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     struct directory *illdp;
 
     if (!illump) {
@@ -2677,7 +2677,7 @@ replot_editing_solid(void)
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	    if (LAST_SOLID(sp) == illdp) {
 		(void)db_path_to_mat(DBIP, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 		(void)replot_modified_solid(sp, &es_int, mat);
@@ -7478,7 +7478,7 @@ oedit_apply(int continue_editing)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
      */
@@ -7529,7 +7529,7 @@ oedit_apply(int continue_editing)
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	    if (sp->s_iflag == DOWN)
 		continue;
 	    (void)replot_original_solid(sp);
@@ -7549,7 +7549,7 @@ oedit_accept(void)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
 
     if (DBIP == DBI_NULL)
 	return;
@@ -7561,7 +7561,7 @@ oedit_accept(void)
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 		if (sp->s_iflag == DOWN)
 		    continue;
 		(void)replot_original_solid(sp);
@@ -7804,13 +7804,13 @@ sedit_reject(void)
     {
 	struct display_list *gdlp;
 	struct display_list *next_gdlp;
-	struct solid *sp;
+	struct bview_scene_obj *sp;
 
 	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 		if (LAST_SOLID(sp) == LAST_SOLID(illump))
 		    (void)replot_original_solid(sp);
 	    }

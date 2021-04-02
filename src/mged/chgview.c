@@ -850,8 +850,8 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct directory *dp;
-    struct solid *sp;
-    struct solid *lastfound = NULL;
+    struct bview_scene_obj *sp;
+    struct bview_scene_obj *lastfound = NULL;
     int i, j;
     int nmatch;
     int c;
@@ -984,7 +984,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	    int a_new_match;
 
 	    if (exact && nm_pieces != sp->s_fullpath.fp_len)

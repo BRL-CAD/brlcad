@@ -528,7 +528,7 @@ HIDDEN int to_zclip(struct ged *gedp,
 
 /* Utility Functions */
 
-HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
+HIDDEN void to_create_vlist_callback_solid(struct bview_scene_obj *gdlp);
 HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
 HIDDEN void to_destroy_vlist_callback(unsigned int dlist, int range);
 HIDDEN void to_rt_end_callback_internal(int aborted);
@@ -6435,7 +6435,7 @@ to_zclip(struct ged *gedp,
 /*************************** Local Utility Functions ***************************/
 
 HIDDEN void
-to_create_vlist_callback_solid(struct solid *sp)
+to_create_vlist_callback_solid(struct bview_scene_obj *sp)
 {
     struct bview *gdvp;
     int first = 1;
@@ -6478,8 +6478,8 @@ to_create_vlist_callback_solid(struct solid *sp)
 HIDDEN void
 to_create_vlist_callback(struct display_list *gdlp)
 {
-    struct solid *sp;
-    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+    struct bview_scene_obj *sp;
+    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	to_create_vlist_callback_solid(sp);
     }
 }

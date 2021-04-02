@@ -1349,9 +1349,9 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
     MAT_IDN(mat);
 
     for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
-	struct solid *sp;
+	struct bview_scene_obj *sp;
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	    struct directory *dp;
 	    struct rt_db_internal intern;
 	    struct rt_bot_internal *bot;

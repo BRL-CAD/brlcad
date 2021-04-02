@@ -1129,7 +1129,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 
 HIDDEN void
 dmo_drawSolid(struct dm_obj *dmop,
-	      struct solid *sp)
+	      struct bview_scene_obj *sp)
 {
     if (sp->s_iflag == UP)
 	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_transparency);
@@ -1234,7 +1234,7 @@ HIDDEN int
 dmo_drawSList(struct dm_obj *dmop,
 	      struct bu_list *hsp)
 {
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     int linestyle = -1;
 
     if (!dmop)
@@ -1242,7 +1242,7 @@ dmo_drawSList(struct dm_obj *dmop,
 
     if (dmop->dmo_dmp->i->dm_transparency) {
 	/* First, draw opaque stuff */
-	FOR_ALL_SOLIDS(sp, hsp) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, hsp)) {
 	    if (sp->s_transparency < 1.0)
 		continue;
 
@@ -1258,7 +1258,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	dm_set_depth_mask(dmop->dmo_dmp, 0);
 
 	/* Second, draw transparent stuff */
-	FOR_ALL_SOLIDS(sp, hsp) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, hsp)) {
 	    /* already drawn above */
 	    if (ZERO(sp->s_transparency - 1.0))
 		continue;
@@ -1275,7 +1275,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	dm_set_depth_mask(dmop->dmo_dmp, 1);
     } else {
 
-	FOR_ALL_SOLIDS(sp, hsp) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, hsp)) {
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
 		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->i->dm_lineWidth, linestyle);

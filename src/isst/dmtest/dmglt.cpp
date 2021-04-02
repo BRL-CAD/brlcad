@@ -121,17 +121,17 @@ void DMRendererT::render()
 	// a similar set by scanning the source code, or all commands (poor
 	// usability).
 	//
-	// 2.  Change gd_headDisplay and struct solid.  Create a pool of solids
+	// 2.  Change gd_headDisplay and struct bview_scene_obj.  Create a pool of solids
 	// which are pointed to by headDisplay entries, and alter any libged
 	// commands manipulating vlists to use an existing solid from the pool
 	// or create a new one if none are queued, rather than operating on an
 	// existing solid in headDisplay.  Then adjust the dl drawing routines
-	// to take not gd_headDisplay but a separate bu_ptbl of struct solid
+	// to take not gd_headDisplay but a separate bu_ptbl of struct bview_scene_obj
 	// pointers which will be created from gd_headDisplay at draw time.
 	// After drawing is complete, compare gd_headDisplay against the
-	// pointers in the bu_ptbl and put any struct solids not actively
+	// pointers in the bu_ptbl and put any struct bview_scene_objs not actively
 	// pointed to by gd_headDisplay into the pool after releasing their
-	// vlists.  In this fashion libdm will not have any struct solid data
+	// vlists.  In this fashion libdm will not have any struct bview_scene_obj data
 	// changed out from under it, but libged commands will still be able to
 	// manipulate the libged headDisplay list.  The hashing mechanism will (at
 	// least in theory) be able to detect changes in the display list and

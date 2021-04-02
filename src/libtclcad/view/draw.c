@@ -68,7 +68,7 @@ key_matches_paths(struct bu_hash_tbl *t, void *udata)
 }
 
 static void
-go_draw_solid(struct bview *gdvp, struct solid *sp)
+go_draw_solid(struct bview *gdvp, struct bview_scene_obj *sp)
 {
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     struct ged *gedp = tvd->gedp;
@@ -120,7 +120,7 @@ go_draw_dlist(struct bview *gdvp)
 {
     register struct display_list *gdlp;
     register struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     int line_style = -1;
     struct dm *dmp = (struct dm *)gdvp->dmp;
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
@@ -132,7 +132,7 @@ go_draw_dlist(struct bview *gdvp)
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 		if (sp->s_transparency < 1.0)
 		    continue;
 
@@ -155,7 +155,7 @@ go_draw_dlist(struct bview *gdvp)
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 		/* already drawn above */
 		if (ZERO(sp->s_transparency - 1.0))
 		    continue;
@@ -178,7 +178,7 @@ go_draw_dlist(struct bview *gdvp)
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 		if (line_style != sp->s_soldash) {
 		    line_style = sp->s_soldash;
 		    (void)dm_set_line_attr(dmp, dm_get_linewidth(dmp), line_style);
@@ -359,7 +359,7 @@ to_edit_redraw(struct ged *gedp,
 	for (i = 0; i < subpath.fp_len; ++i) {
 	    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-		register struct solid *curr_sp;
+		register struct bview_scene_obj *curr_sp;
 
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
@@ -368,10 +368,10 @@ to_edit_redraw(struct ged *gedp,
 		    continue;
 		}
 
-		FOR_ALL_SOLIDS(curr_sp, &gdlp->dl_headSolid) {
+		for (BU_LIST_FOR(curr_sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 		    if (db_full_path_search(&curr_sp->s_fullpath, subpath.fp_names[i])) {
 			struct display_list *last_gdlp;
-			struct solid *sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
+			struct bview_scene_obj *sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_headSolid);
 			struct bu_vls mflag = BU_VLS_INIT_ZERO;
 			struct bu_vls xflag = BU_VLS_INIT_ZERO;
 			char *av[5] = {0};

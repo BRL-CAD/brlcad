@@ -38,7 +38,7 @@
 
 
 struct display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
-struct solid *illump = NULL;	/* == 0 if none, else points to ill. solid */
+struct bview_scene_obj *illump = NULL;	/* == 0 if none, else points to ill. solid */
 int ipathpos = 0;	/* path index of illuminated element */
 
 
@@ -52,7 +52,7 @@ illuminate(int y) {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     int count;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
 
     /*
      * Divide the mouse into 'mged_curr_dm->dm_ndrawn' VERTICAL
@@ -65,7 +65,7 @@ illuminate(int y) {
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	    /* Only consider solids which are presently in view */
 	    if (sp->s_flag == UP) {
 		if (count-- == 0) {
@@ -94,7 +94,7 @@ int
 f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct display_list *gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -137,9 +137,9 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 
-		sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
+		sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_headSolid);
 	    } else
-		sp = BU_LIST_PNEXT(solid, sp);
+		sp = BU_LIST_PNEXT(bview_scene_obj, sp);
 	} else if (*argv[1] == 'b') {
 	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
@@ -148,9 +148,9 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		else
 		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
-		sp = BU_LIST_PREV(solid, &gdlp->dl_headSolid);
+		sp = BU_LIST_PREV(bview_scene_obj, &gdlp->dl_headSolid);
 	    } else
-		sp = BU_LIST_PLAST(solid, sp);
+		sp = BU_LIST_PLAST(bview_scene_obj, sp);
 	} else {
 	    Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -220,7 +220,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     char *cp;
     size_t j;
     int illum_only = 0;
@@ -281,7 +281,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	    for (j = 0; j <= (size_t)ipathpos; j++) {
 		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
 		    DB_FULL_PATH_GET(&illump->s_fullpath, j))

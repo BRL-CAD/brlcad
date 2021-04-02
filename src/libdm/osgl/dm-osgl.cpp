@@ -2262,7 +2262,7 @@ osgl_genDLists(struct dm *dmp, size_t range)
 HIDDEN int
 osgl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     FOR_ALL_SOLIDS(sp, &obj->dl_headSolid) {
 	if (sp->s_dlist == 0)
 	    sp->s_dlist = dm_gen_dlists(dmp, 1);

@@ -445,9 +445,9 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 
 			(void)dm_make_current(dlp1->dm_dmp);
 			(void)dm_free_dlists(dlp1->dm_dmp,
-				      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
-				      BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
-				      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
+				      BU_LIST_FIRST(bview_scene_obj, &gdlp->dl_headSolid)->s_dlist,
+				      BU_LIST_LAST(bview_scene_obj, &gdlp->dl_headSolid)->s_dlist -
+				      BU_LIST_FIRST(bview_scene_obj, &gdlp->dl_headSolid)->s_dlist + 1);
 
 			gdlp = next_gdlp;
 		    }

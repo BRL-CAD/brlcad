@@ -778,7 +778,7 @@ dm_get_mvars(struct dm *dmp)
  * and into libdm. */
 static int
 dm_drawSolid(struct dm *dmp,
-	     struct solid *sp,
+	     struct bview_scene_obj *sp,
 	     short r,
 	     short g,
 	     short b,
@@ -830,7 +830,7 @@ dm_draw_display_list(struct dm *dmp,
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     fastf_t ratio;
     int ndrawn = 0;
     int opaque = 0;
@@ -840,7 +840,7 @@ dm_draw_display_list(struct dm *dmp,
     while (BU_LIST_NOT_HEAD(gdlp, dl)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	    if (solids_down) sp->s_flag = DOWN;              /* Not drawn yet */
 
 	    /* If part of object edit, will be drawn below */

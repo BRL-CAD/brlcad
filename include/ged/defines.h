@@ -86,7 +86,7 @@ typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 /* Callback related definitions */
 typedef void (*ged_io_func_t)(void *, int);
 typedef void (*ged_refresh_func_t)(void *);
-typedef void (*ged_create_vlist_solid_func_t)(struct solid *);
+typedef void (*ged_create_vlist_solid_func_t)(struct bview_scene_obj *);
 typedef void (*ged_create_vlist_display_list_func_t)(struct display_list *);
 typedef void (*ged_destroy_vlist_func_t)(unsigned int, int);
 struct ged_callback_state;
@@ -201,7 +201,7 @@ struct ged {
     /** for catching log messages */
     struct bu_vls		*ged_log;
 
-    struct solid                *freesolid;  /* For now this is a struct solid, but longer term that may not always be true */
+    struct bview_scene_obj                *freesolid;  /* For now this is a struct bview_scene_obj, but longer term that may not always be true */
     struct bu_ptbl              free_solids; /**< @brief  solid structures available for reuse */
 
     /* @todo: add support for returning an array of objects, not just a
@@ -255,7 +255,7 @@ struct ged {
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
-    void			(*ged_create_vlist_solid_callback)(struct solid *);	/**< @brief  function to call after creating a vlist to create display list for solid */
+    void			(*ged_create_vlist_solid_callback)(struct bview_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
     void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 

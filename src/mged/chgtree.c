@@ -131,14 +131,14 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 }
 
 
-struct solid *
+struct bview_scene_obj *
 find_solid_with_path(struct db_full_path *pathp)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     int count = 0;
-    struct solid *ret = (struct solid *)NULL;
+    struct bview_scene_obj *ret = (struct bview_scene_obj *)NULL;
 
     RT_CK_FULL_PATH(pathp);
 
@@ -146,7 +146,7 @@ find_solid_with_path(struct db_full_path *pathp)
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_headSolid)) {
 	    if (!db_identical_full_paths(pathp, &sp->s_fullpath)) continue;
 
 	    /* Paths are the same */
@@ -247,7 +247,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Patterned after ill_common() ... */
     illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_headSolid);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN(modelchanges);	/* No changes yet */

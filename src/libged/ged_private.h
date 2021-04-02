@@ -105,7 +105,7 @@ struct ged_callback_state {
  */
 GED_EXPORT extern void ged_refresh_cb(struct ged *);
 GED_EXPORT extern void ged_output_handler_cb(struct ged *, char *);
-GED_EXPORT extern void ged_create_vlist_solid_cb(struct ged *, struct solid *);
+GED_EXPORT extern void ged_create_vlist_solid_cb(struct ged *, struct bview_scene_obj *);
 GED_EXPORT extern void ged_create_vlist_display_list_cb(struct ged *, struct display_list *);
 GED_EXPORT extern void ged_destroy_vlist_cb(struct ged *, unsigned int, int);
 GED_EXPORT extern void ged_io_handler_cb(struct ged *, void *, int);
@@ -159,7 +159,7 @@ struct _ged_client_data {
     fastf_t transparency;
     int dmode;
     int hiddenLine;
-    struct solid *freesolid;
+    struct bview_scene_obj *freesolid;
     /* bigE related members */
     struct application *ap;
     struct bu_ptbl leaf_list;
@@ -219,7 +219,7 @@ GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state
 GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
 GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
-GED_EXPORT void dl_zap(struct ged *gedp, struct solid *freesolid);
+GED_EXPORT void dl_zap(struct ged *gedp, struct bview_scene_obj *freesolid);
 GED_EXPORT int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 GED_EXPORT void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 GED_EXPORT void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
@@ -660,8 +660,8 @@ GED_EXPORT extern int ged_view_snap(struct ged *gedp, int argc, const char *argv
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
 
-GED_EXPORT extern void ged_push_solid(struct ged *gedp, struct solid *sp);
-GED_EXPORT extern struct solid *ged_pop_solid(struct ged *gedp);
+GED_EXPORT extern void ged_push_solid(struct ged *gedp, struct bview_scene_obj *sp);
+GED_EXPORT extern struct bview_scene_obj *ged_pop_solid(struct ged *gedp);
 
 __END_DECLS
 
