@@ -255,7 +255,7 @@ struct ged {
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
-    void			(*ged_create_vlist_solid_callback)(struct bview_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
+    void			(*ged_create_vlist_scene_obj_callback)(struct bview_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
     void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 

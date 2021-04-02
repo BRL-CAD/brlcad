@@ -1274,7 +1274,7 @@ to_open_tcl(ClientData UNUSED(clientData),
 
     top->to_gedp->ged_output_handler = to_output_handler;
     top->to_gedp->ged_refresh_handler = to_refresh_handler;
-    top->to_gedp->ged_create_vlist_solid_callback = to_create_vlist_callback_solid;
+    top->to_gedp->ged_create_vlist_scene_obj_callback = to_create_vlist_callback_solid;
     top->to_gedp->ged_create_vlist_display_list_callback = to_create_vlist_callback;
     top->to_gedp->ged_destroy_vlist_callback = to_destroy_vlist_callback;
 

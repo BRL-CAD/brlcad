@@ -93,7 +93,7 @@ __BEGIN_DECLS
 struct ged_callback_state {
     int ged_refresh_handler_cnt;
     int ged_output_handler_cnt;
-    int ged_create_vlist_solid_callback_cnt;
+    int ged_create_vlist_scene_obj_callback_cnt;
     int ged_create_vlist_display_list_callback_cnt;
     int ged_destroy_vlist_callback_cnt;
     int ged_io_handler_callback_cnt;
