@@ -724,7 +724,7 @@ be_accept()
 	dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
-	illump = SOLID_NULL;
+	illump = NULL;
 	mged_color_soltab();
 	(void)chg_state(ST_S_EDIT, ST_VIEW, "Edit Accept");
     }  else if (STATE == ST_O_EDIT) {
@@ -737,7 +737,7 @@ be_accept()
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
-	illump = SOLID_NULL;
+	illump = NULL;
 	mged_color_soltab();
 	(void)chg_state(ST_O_EDIT, ST_VIEW, "Edit Accept");
     } else {
@@ -803,7 +803,7 @@ be_reject()
     edobj = 0;
     es_edflag = -1;
     illum_gdlp = GED_DISPLAY_LIST_NULL;
-    illump = SOLID_NULL;		/* None selected */
+    illump = NULL;		/* None selected */
 
     /* Clear illumination flags */
     dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);

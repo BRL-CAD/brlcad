@@ -77,7 +77,7 @@ create_text_overlay(struct bu_vls *vp)
      * Check if the illuminated solid still exists or it has been killed
      * before Accept was clicked.
      */
-    if (es_edflag >= 0 && illump != SOLID_NULL) {
+    if (es_edflag >= 0 && illump != NULL) {
 	dp = LAST_SOLID(illump);
 
 	bu_vls_strcat(vp, "** SOLID -- ");
@@ -238,7 +238,7 @@ dotitles(struct bu_vls *overlay_vls)
 
     /* Set the Tcl variables to the appropriate values. */
 
-    if (illump != SOLID_NULL) {
+    if (illump != NULL) {
 	struct bu_vls path_lhs = BU_VLS_INIT_ZERO;
 	struct bu_vls path_rhs = BU_VLS_INIT_ZERO;
 	struct directory *dp;
@@ -416,7 +416,7 @@ dotitles(struct bu_vls *overlay_vls)
 	/*
 	 * Print information about object illuminated
 	 */
-	if (illump != SOLID_NULL &&
+	if (illump != NULL &&
 	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
 	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
 		if (i == (size_t)ipathpos  &&  STATE == ST_O_PATH) {
@@ -580,7 +580,7 @@ dotitles(struct bu_vls *overlay_vls)
 	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
-    if (illump != SOLID_NULL) {
+    if (illump != NULL) {
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    bu_vls_trunc(&vls, 0);
 

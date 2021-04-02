@@ -202,7 +202,7 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return TCL_ERROR;
     }
 
-    sp = SOLID_NULL;
+    sp = NULL;
 
     mode = -1;
     if (argc > 2)

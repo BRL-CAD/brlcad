@@ -238,7 +238,7 @@ replot_modified_solid(
 
     BU_LIST_INIT(&vhead);
 
-    if (sp == SOLID_NULL) {
+    if (sp == NULL) {
 	Tcl_AppendResult(INTERP, "replot_modified_solid() sp==NULL?\n", (char *)NULL);
 	return -1;
     }

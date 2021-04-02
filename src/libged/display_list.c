@@ -1280,7 +1280,7 @@ dl_zap(struct ged *gedp, struct solid *freesolid)
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct solid *sp = SOLID_NULL;
+    struct solid *sp = NULL;
     struct display_list *gdlp = NULL;
     struct bu_ptbl dls = BU_PTBL_INIT_ZERO;
     struct directory *dp = RT_DIR_NULL;

@@ -851,7 +851,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     struct display_list *next_gdlp;
     struct directory *dp;
     struct solid *sp;
-    struct solid *lastfound = SOLID_NULL;
+    struct solid *lastfound = NULL;
     int i, j;
     int nmatch;
     int c;

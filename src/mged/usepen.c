@@ -38,7 +38,7 @@
 
 
 struct display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
-struct solid *illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
+struct solid *illump = NULL;	/* == 0 if none, else points to ill. solid */
 int ipathpos = 0;	/* path index of illuminated element */
 
 
