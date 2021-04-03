@@ -65,6 +65,8 @@ struct ged_bview_data {
     struct db_full_path s_fullpath;
     void *u_data;
 };
+/* Check ged_bview data associated with a display list */
+GED_EXPORT extern unsigned long long ged_bview_hash(struct display_list *dl);
 
 
 /* defined in display_list.c */
