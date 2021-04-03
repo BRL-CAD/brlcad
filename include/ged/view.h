@@ -66,7 +66,7 @@ struct ged_bview_data {
     void *u_data;
 };
 /* Check ged_bview data associated with a display list */
-GED_EXPORT extern unsigned long long ged_bview_hash(struct display_list *dl);
+GED_EXPORT extern unsigned long long ged_dl_hash(struct display_list *dl);
 
 
 /* defined in display_list.c */
@@ -155,8 +155,6 @@ GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
 
 GED_EXPORT extern struct bview * ged_find_view(struct ged *gedp, const char *key);
-
-GED_EXPORT extern unsigned long long dl_hash(struct display_list *dl);
 
 // TODO - this (and probably the grid logic too) belong at the libdm level - they're operating
 // on the bview, rather than the ged level data...

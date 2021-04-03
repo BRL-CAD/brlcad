@@ -104,6 +104,7 @@ class dmGLT : public QOpenGLWidget
 
 	unsigned long long prev_vhash = 0;
 	unsigned long long prev_lhash = 0;
+	unsigned long long prev_ghash = 0;
 
     protected:
 	void paintEvent(QPaintEvent *) override { }

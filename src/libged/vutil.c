@@ -168,7 +168,7 @@ _ged_do_tra(struct ged *gedp,
 }
 
 unsigned long long
-ged_bview_hash(struct display_list *dl)
+ged_dl_hash(struct display_list *dl)
 {
     if (!dl)
 	return 0;
@@ -202,68 +202,6 @@ ged_bview_hash(struct display_list *dl)
 		XXH64_update(state, &dp->d_namep, strlen(dp->d_namep));
 	    }
 	}
-	gdlp = next_gdlp;
-    }
-
-    hash_val = XXH64_digest(state);
-    XXH64_freeState(state);
-
-    return (unsigned long long)hash_val;
-}
-
-unsigned long long
-dl_hash(struct display_list *dl)
-{
-    if (!dl)
-	return 0;
-
-    XXH64_hash_t hash_val;
-    XXH64_state_t *state;
-    state = XXH64_createState();
-    if (!state)
-	return 0;
-    XXH64_reset(state, 0);
-
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
-
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)dl);
-    while (BU_LIST_NOT_HEAD(gdlp, dl)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	XXH64_update(state, bu_vls_cstr(&gdlp->dl_path), bu_vls_strlen(&gdlp->dl_path));
-	XXH64_update(state, &gdlp->dl_wflag, sizeof(int));
-
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    XXH64_update(state, &sp->s_size, sizeof(fastf_t));
-	    XXH64_update(state, &sp->s_csize, sizeof(fastf_t));
-	    XXH64_update(state, &sp->s_center, sizeof(vect_t));
-	    struct bn_vlist *tvp;
-	    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)&sp->s_vlist)->l)) {
-		XXH64_update(state, &tvp->nused, sizeof(size_t));
-		XXH64_update(state, &tvp->cmd, sizeof(int[BN_VLIST_CHUNK]));
-		XXH64_update(state, &tvp->pt, sizeof(point_t[BN_VLIST_CHUNK]));
-	    }
-	    XXH64_update(state, &sp->s_vlen, sizeof(int));
-	    XXH64_update(state, &sp->s_flag, sizeof(char));
-	    XXH64_update(state, &sp->s_iflag, sizeof(char));
-	    XXH64_update(state, &sp->s_soldash, sizeof(char));
-	    XXH64_update(state, &sp->s_Eflag, sizeof(char));
-	    XXH64_update(state, &sp->s_uflag, sizeof(char));
-	    XXH64_update(state, &sp->s_dflag, sizeof(char));
-	    XXH64_update(state, &sp->s_cflag, sizeof(char));
-	    XXH64_update(state, &sp->s_wflag, sizeof(char));
-	    XXH64_update(state, &sp->s_basecolor, sizeof(unsigned char[3]));
-	    XXH64_update(state, &sp->s_color, sizeof(unsigned char[3]));
-	    XXH64_update(state, &sp->s_regionid, sizeof(short));
-	    XXH64_update(state, &sp->s_dlist, sizeof(unsigned int));
-	    XXH64_update(state, &sp->s_transparency, sizeof(fastf_t));
-	    XXH64_update(state, &sp->s_dmode, sizeof(int));
-	    XXH64_update(state, &sp->s_hiddenLine, sizeof(int));
-	    XXH64_update(state, &sp->s_mat, sizeof(mat_t));
-	}
-
 	gdlp = next_gdlp;
     }
 

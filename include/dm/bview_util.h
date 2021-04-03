@@ -50,9 +50,11 @@ DM_EXPORT extern void bview_update(struct bview *gvp);
  * Else return 0 */
 DM_EXPORT extern int bview_differ(struct bview *v1, struct bview *v2);
 
-/* Return a hash of the contents of the bview container.  Returns 0 on
- * failure. */
+/* Return a hash of the contents of the bview container.  Returns 0 on failure. */
 DM_EXPORT extern unsigned long long bview_hash(struct bview *v);
+
+/* Return a hash of the contents of a display list.  Returns 0 on failure. */
+DM_EXPORT extern unsigned long long bview_dl_hash(struct display_list *dl);
 
 /* Return -1 if sync fails, else 0 */
 //DM_EXPORT extern int bview_sync(struct bview *dest, struct bview *src);

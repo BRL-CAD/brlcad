@@ -135,11 +135,18 @@ DM_MainWindow::run_cmd(const QString &command)
 		canvas->prev_vhash = vhash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
-	    unsigned long long lhash = dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	    unsigned long long lhash = bview_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 	    if (lhash != canvas->prev_lhash) {
 		std::cout << "prev_lhash: " << canvas->prev_lhash << "\n";
 		std::cout << "lhash: " << lhash << "\n";
 		canvas->prev_lhash = lhash;
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+	    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	    if (lhash != canvas->prev_ghash) {
+		std::cout << "prev_ghash: " << canvas->prev_ghash << "\n";
+		std::cout << "ghash: " << ghash << "\n";
+		canvas->prev_ghash = ghash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
 	    if (dm_get_dirty((struct dm *)gedp->ged_dmp))
@@ -153,11 +160,18 @@ DM_MainWindow::run_cmd(const QString &command)
 		canvast->prev_vhash = vhash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
-	    unsigned long long lhash = dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	    unsigned long long lhash = bview_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 	    if (lhash != canvast->prev_lhash) {
 		std::cout << "prev_lhash: " << canvast->prev_lhash << "\n";
 		std::cout << "lhash: " << lhash << "\n";
 		canvast->prev_lhash = lhash;
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+	    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	    if (lhash != canvast->prev_ghash) {
+		std::cout << "prev_ghash: " << canvast->prev_ghash << "\n";
+		std::cout << "ghash: " << ghash << "\n";
+		canvast->prev_ghash = ghash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
 	}
