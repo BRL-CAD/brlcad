@@ -70,11 +70,15 @@ void dmGL::paintGL()
 	if (!dmp) {
 	    const char *acmd = "attach";
 	    dmp = dm_open((void *)this, NULL, "qtgl", 1, &acmd);
+	    if (!dmp)
+		return;
 	    if (gedp) {
 		gedp->ged_dmp = (void *)dmp;
+		bu_ptbl_ins(gedp->ged_all_dmp, (long int *)dmp);
 		dm_set_vp(dmp, &gedp->ged_gvp->gv_scale);
 	    }
 	    dm_configure_win(dmp, 0);
+	    dm_set_pathname(dmp, "QTDM");
 	}
     }
 

@@ -167,8 +167,6 @@ ged_free(struct ged *gedp)
     // Note - it is the caller's responsibility to have freed any data
     // associated with the ged or its views in the u_data pointers.
     //
-    // Since libged does not link libdm, it's also the responsibility of the
-    // caller to close any display managers associated with the view.
     struct bview *gdvp;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
@@ -178,6 +176,14 @@ ged_free(struct ged *gedp)
 	bu_free((void *)gdvp, "bview");
     }
     bu_ptbl_free(&gedp->ged_views);
+
+    /* Since libged does not link libdm, it's also the responsibility of the
+     * caller to close any display managers.  Client also frees the display
+     * managers - we just take care of the table.  If the caller is not
+     * otherwise tracking the dmp instances, they need to clean them up before
+     * calling ged_free */
+    bu_ptbl_free(gedp->ged_all_dmp);
+    BU_PUT(gedp->ged_all_dmp, struct bu_ptbl);
 
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 
@@ -301,6 +307,9 @@ ged_init(struct ged *gedp)
     /* Out of the gate we don't have display managers or views */
     gedp->ged_gvp = GED_VIEW_NULL;
     gedp->ged_dmp = NULL;
+    gedp->ged_all_dmp = NULL;
+    BU_GET(gedp->ged_all_dmp, struct bu_ptbl);
+    bu_ptbl_init(gedp->ged_all_dmp, 8, "display managers");
 
     /* ? */
     gedp->ged_output_script = NULL;

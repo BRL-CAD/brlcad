@@ -208,6 +208,7 @@ DM_EXPORT extern int dm_get_stereo(struct dm *dmp);
 DM_EXPORT extern int dm_set_win_bounds(struct dm *dmp, fastf_t *w);
 DM_EXPORT extern int dm_configure_win(struct dm *dmp, int force);
 DM_EXPORT extern struct bu_vls *dm_get_pathname(struct dm *dmp);
+DM_EXPORT extern void dm_set_pathname(struct dm *dmp, const char *pname);
 DM_EXPORT extern struct bu_vls *dm_get_dname(struct dm *dmp);
 DM_EXPORT extern const char *dm_get_name(const struct dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_tkname(struct dm *dmp);

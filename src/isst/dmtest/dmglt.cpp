@@ -89,11 +89,15 @@ void DMRendererT::render()
 	if (!dmp) {
 	    const char *acmd = "attach";
 	    dmp = dm_open((void *)m_w, NULL, "qtgl", 1, &acmd);
+	    if (!dmp)
+		return;
 	    if (m_w->gedp) {
 		m_w->gedp->ged_dmp = (void *)dmp;
+		bu_ptbl_ins(m_w->gedp->ged_all_dmp, (long int *)dmp);
 		dm_set_vp(dmp, &m_w->gedp->ged_gvp->gv_scale);
 	    }
 	    dm_configure_win(dmp, 0);
+	    dm_set_pathname(dmp, "QtDMT");
 	    dm_set_dirty(dmp, 1);
 	}
     }

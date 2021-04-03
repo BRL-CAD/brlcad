@@ -399,6 +399,13 @@ dm_get_pathname(struct dm *dmp)
     return &(dmp->i->dm_pathName);
 }
 
+void
+dm_set_pathname(struct dm *dmp, const char *pname)
+{
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
+    bu_vls_sprintf(&(dmp->i->dm_pathName), "%s", pname);
+}
+
 const char *
 dm_get_name(const struct dm *dmp)
 {
