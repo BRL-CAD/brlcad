@@ -33,7 +33,6 @@
 #include "bu/color.h"
 #include "bn/plot3.h"
 
-#include "rt/solid.h"
 #include "ged.h"
 #include "./ged_private.h"
 

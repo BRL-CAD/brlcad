@@ -60,7 +60,7 @@
 #include "ged.h"
 #include "tclcad.h"
 
-#include "rt/solid.h"
+#include "dm/bview.h"
 #include "dm.h"
 #include "dm/bview_util.h"
 

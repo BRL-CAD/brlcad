@@ -45,7 +45,7 @@
 #include "./dm-plot.h"
 #include "../null/dm-Null.h"
 
-#include "rt/solid.h"
+#include "dm/bview.h"
 #include "bn/plot3.h"
 
 #include "../include/private.h"

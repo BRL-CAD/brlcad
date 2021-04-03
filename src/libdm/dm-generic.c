@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "dm.h"
-#include "rt/solid.h"
+#include "dm/bview.h"
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 

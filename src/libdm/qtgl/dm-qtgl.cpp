@@ -43,7 +43,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-#include "rt/solid.h"
+#include "dm/bview.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"

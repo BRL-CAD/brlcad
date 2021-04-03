@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-#include "rt/solid.h"
+#include "dm/bview.h"
 #include "dm.h"
 #include "./dm-gl.h"
 #include "./include/private.h"

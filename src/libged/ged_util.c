@@ -83,7 +83,7 @@ ged_pop_scene_obj(struct ged *gedp)
 	sp = (struct bview_scene_obj *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
 	bu_ptbl_rm(&gedp->free_solids, (long *)sp);
     } else {
-	BU_ALLOC(sp, struct bview_scene_obj); // from GET_BVIEW_SCENE_OBJ in rt/solid.h
+	BU_ALLOC(sp, struct bview_scene_obj); // from GET_BVIEW_SCENE_OBJ in dm/bview.h
 	struct ged_bview_data *bdata;
 	BU_GET(bdata, struct ged_bview_data);
 	db_full_path_init(&bdata->s_fullpath);

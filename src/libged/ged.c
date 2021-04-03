@@ -46,7 +46,7 @@
 #include "raytrace.h"
 #include "bn/plot3.h"
 
-#include "rt/solid.h"
+#include "dm/bview.h"
 
 #include "./ged_private.h"
 #include "./qray.h"

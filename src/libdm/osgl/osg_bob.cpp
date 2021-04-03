@@ -30,7 +30,7 @@
 
 #include "ged.h"
 #include "tk.h"
-#include "rt/solid.h"
+#include "dm/bview.h"
 #include "dm.h"
 #include "dm-osgl.h"
 #include "../glx/dm-ogl.h"

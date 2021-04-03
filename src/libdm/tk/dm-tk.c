@@ -60,7 +60,7 @@
 #include "./dm-tk.h"
 #include "../null/dm-Null.h"
 #include "../include/private.h"
-#include "rt/solid.h"
+#include "dm/bview.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 

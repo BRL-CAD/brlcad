@@ -35,7 +35,7 @@
 #include "bu/vls.h"
 #include "dm/bview.h"
 #include "rt/search.h"
-#include "rt/solid.h"
+#include "dm/bview.h"
 
 __BEGIN_DECLS
 
