@@ -15,6 +15,8 @@ BRLCAD_LIB_INCLUDE_DIRS(bview BVIEW_INCLUDE_DIRS BVIEW_LOCAL_INCLUDE_DIRS)
 
 # Main libbview library
 set(LIBBVIEW_SRCS
+  diff.c
+  hash.c
   util.c
   )
 BRLCAD_ADDLIB(libbview "${LIBBVIEW_SRCS}" "libbg;libbn;libbu")
