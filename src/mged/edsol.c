@@ -2683,12 +2683,12 @@ replot_editing_solid(void)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_u_data)
-		return;
-	    bdata = (struct ged_bview_data *)sp->s_u_data;
-	    if (LAST_SOLID(bdata) == illdp) {
-		(void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
-		(void)replot_modified_solid(sp, &es_int, mat);
+	    if (sp->s_u_data) {
+		bdata = (struct ged_bview_data *)sp->s_u_data;
+		if (LAST_SOLID(bdata) == illdp) {
+		    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+		    (void)replot_modified_solid(sp, &es_int, mat);
+		}
 	    }
 	}
 
@@ -7498,7 +7498,7 @@ oedit_apply(int continue_editing)
     mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
     mat_t tempm;
 
-    if (!illump->s_u_data)
+    if (!illump || !illump->s_u_data)
 	return;
     struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
@@ -7690,9 +7690,6 @@ sedit_apply(int accept_flag)
     if (!illump) {
 	return TCL_OK;
     }
-    if (!illump->s_u_data)
-	return TCL_ERROR;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
     if (lu_copy) {
 	struct model *m;
@@ -7703,6 +7700,9 @@ sedit_apply(int accept_flag)
     }
 
     /* write editing changes out to disc */
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
     dp = LAST_SOLID(bdata);
     if (!dp) {
 	/* sanity check, unexpected error */
@@ -8928,7 +8928,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    if (!illump->s_u_data)
+    if (illump || !illump->s_u_data)
 	return TCL_ERROR;
     struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
@@ -9106,7 +9106,7 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     es_eu = (struct edgeuse *)NULL;
 
     /* read in a fresh copy */
-    if (!illump->s_u_data)
+    if (!illump || !illump->s_u_data)
 	return TCL_ERROR;
     struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),

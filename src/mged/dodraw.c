@@ -167,10 +167,10 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	sp->s_iflag = DOWN;
 	sp->s_soldash = dashflag;
 	sp->s_Eflag = 0;	/* This is a solid */
-	if (!sp->s_u_data)
-	    return;
-	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
-	db_dup_full_path(&bdata->s_fullpath, pathp);
+	if (sp->s_u_data) {
+	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    db_dup_full_path(&bdata->s_fullpath, pathp);
+	}
 	if (tsp)
 	    sp->s_regionid = tsp->ts_regionid;
     }

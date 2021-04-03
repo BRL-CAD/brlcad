@@ -95,6 +95,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 {
     struct display_list *gdlp;
     struct bview_scene_obj *sp;
+    struct ged_bview_data *bdata = NULL;
 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -111,11 +112,10 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	return TCL_OK;
     }
 
-    if (!illump->s_u_data)
-	return TCL_ERROR;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    if (illump != NULL && illump->s_u_data != NULL)
+	bdata = (struct ged_bview_data *)illump->s_u_data;
 
-    if (STATE == ST_O_PATH) {
+    if (STATE == ST_O_PATH && bdata) {
 	if (argc == 1 || *argv[1] == 'f') {
 	    ++ipathpos;
 	    if ((size_t)ipathpos >= bdata->s_fullpath.fp_len)
@@ -229,6 +229,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     size_t j;
     int illum_only = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct ged_bview_data *bdata = NULL;
 
     CHECK_DBI_NULL;
 
@@ -257,7 +258,8 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     if (!illump->s_u_data)
 	return TCL_ERROR;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+
+    bdata = (struct ged_bview_data *)illump->s_u_data;
 
     if ((cp = strchr(argv[1], '/')) != NULL) {
 	struct directory *d0, *d1;

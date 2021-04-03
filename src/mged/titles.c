@@ -77,10 +77,7 @@ create_text_overlay(struct bu_vls *vp)
      * Check if the illuminated solid still exists or it has been killed
      * before Accept was clicked.
      */
-    if (es_edflag >= 0 && illump != NULL) {
-
-	if (!illump->s_u_data)
-	    return;
+    if (es_edflag >= 0 && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
 	dp = LAST_SOLID(bdata);
@@ -102,9 +99,7 @@ create_text_overlay(struct bu_vls *vp)
     }
 
     /* display path info for object editing also */
-    if (STATE == ST_O_EDIT && illump != NULL) {
-	if (!illump->s_u_data)
-	    return;
+    if (STATE == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
 	bu_vls_strcat(vp, "** PATH --  ");
@@ -247,10 +242,7 @@ dotitles(struct bu_vls *overlay_vls)
 
     /* Set the Tcl variables to the appropriate values. */
 
-    if (illump != NULL) {
-
-	if (!illump->s_u_data)
-	    return;
+    if (illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
 	struct bu_vls path_lhs = BU_VLS_INIT_ZERO;
@@ -430,11 +422,9 @@ dotitles(struct bu_vls *overlay_vls)
 	/*
 	 * Print information about object illuminated
 	 */
-	if (illump != NULL &&
+	if (illump != NULL && illump->s_u_data != NULL &&
 	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
 
-	    if (!illump->s_u_data)
-		return;
 	    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
 	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
@@ -599,10 +589,8 @@ dotitles(struct bu_vls *overlay_vls)
 	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
-    if (illump != NULL) {
+    if (illump != NULL && illump->s_u_data != NULL) {
 
-	if (!illump->s_u_data)
-	    return;
 	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
