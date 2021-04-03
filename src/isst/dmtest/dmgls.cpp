@@ -137,7 +137,7 @@ void dmGL::mousePressEvent(QMouseEvent *e) {
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADmouseMoveEvent(v, x_prev, y_prev, e)) {
+    if (CADmousePressEvent(v, x_prev, y_prev, e)) {
 	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	update();
     }
