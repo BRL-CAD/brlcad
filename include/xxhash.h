@@ -451,7 +451,7 @@ XXH_PUBLIC_API void XXH32_copyState(XXH32_state_t* dst_state, const XXH32_state_
  * @pre
  *   @p statePtr must not be `NULL`.
  *
- * @return @ref XXH_OK on success, @ref XXH_ERROR on failure.
+ * @return XXH_OK on success, XXH_ERROR on failure.
  */
 XXH_PUBLIC_API XXH_errorcode XXH32_reset  (XXH32_state_t* statePtr, XXH32_hash_t seed);
 
@@ -471,7 +471,7 @@ XXH_PUBLIC_API XXH_errorcode XXH32_reset  (XXH32_state_t* statePtr, XXH32_hash_t
  *   readable, contiguous memory. However, if @p length is `0`, @p input may be
  *   `NULL`. In C++, this also must be *TriviallyCopyable*.
  *
- * @return @ref XXH_OK on success, @ref XXH_ERROR on failure.
+ * @return XXH_OK on success, @ref XXH_ERROR on failure.
  */
 XXH_PUBLIC_API XXH_errorcode XXH32_update (XXH32_state_t* statePtr, const void* input, size_t length);
 
