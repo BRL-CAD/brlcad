@@ -1201,6 +1201,9 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_POLY_CIRCLE_MODE;
 
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
     fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
     fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
@@ -1273,6 +1276,9 @@ to_poly_cont_build_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_POLY_CONTOUR_MODE;
+
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 
     fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
     fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
@@ -1634,6 +1640,9 @@ to_poly_ell_mode_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_POLY_ELLIPSE_MODE;
 
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
     fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
     fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
@@ -1803,6 +1812,9 @@ to_poly_rect_mode_func(Tcl_Interp *interp,
 	gdvp->gv_mode = TCLCAD_POLY_SQUARE_MODE;
     else
 	gdvp->gv_mode = TCLCAD_POLY_RECTANGLE_MODE;
+
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 
     fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
     fy = screen_to_view_y((struct dm *)gdvp->dmp, y);

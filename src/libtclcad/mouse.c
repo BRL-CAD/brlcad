@@ -106,6 +106,9 @@ to_mouse_append_pnt_common(struct ged *gedp,
     y = screen_to_view_y((struct dm *)gdvp->dmp, y);
     VSET(view, x, y, 0.0);
 
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
     gedp->ged_gvp = gdvp;
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
@@ -2156,6 +2159,9 @@ to_mouse_poly_circ_func(Tcl_Interp *interp,
     fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
     fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
 
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
 	snapped = ged_snap_to_lines(gedp, &fx, &fy);
@@ -2467,6 +2473,9 @@ to_mouse_poly_ell_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
 
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
     fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
     fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
     int snapped = 0;
@@ -2651,6 +2660,10 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
 
     fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
     fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
 	snapped = ged_snap_to_lines(gedp, &fx, &fy);

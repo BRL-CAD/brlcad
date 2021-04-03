@@ -32,7 +32,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/bview.h"
+#include "bview/defines.h"
 #include "./include/private.h"
 
 void

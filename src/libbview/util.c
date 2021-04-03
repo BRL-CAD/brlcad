@@ -30,8 +30,8 @@
 #include "bu/str.h"
 #include "bn/mat.h"
 #include "bn/vlist.h"
-#include "dm/defines.h"
-#include "dm/bview_util.h"
+#include "bview/defines.h"
+#include "bview/util.h"
 #define XXH_INLINE_ALL
 #include "xxhash.h"
 

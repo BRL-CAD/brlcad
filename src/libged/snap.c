@@ -155,12 +155,18 @@ _find_close_isect(struct ged_cp_info *s, point_t *p)
 static double
 line_tol_sq(struct ged *gedp, struct bview_data_line_state *gdlsp)
 {
-    if (!gedp->ged_dmp) {
+    if (!gedp->ged_gvp)
 	return 100*100;
-    }
-    double width = dm_get_width((struct dm *)gedp->ged_dmp);
-    double height = dm_get_height((struct dm *)gedp->ged_dmp);
-    double lavg = (width + height) * 0.5;
+
+    // TODO - make sure calling applications update these values from
+    // the display manager info before command execution...
+    int width = gedp->ged_gvp->gv_width;
+    int height = gedp->ged_gvp->gv_height;
+
+    if (!width || !height)
+	return 100*100;
+
+    double lavg = ((double)width + (double)height) * 0.5;
     double lwidth = (gdlsp->gdls_line_width) ? gdlsp->gdls_line_width : 1;
     double lratio = lwidth/lavg;
     double lrsize = gedp->ged_gvp->gv_size * lratio * gedp->ged_gvp->gv_snap_tol_factor;

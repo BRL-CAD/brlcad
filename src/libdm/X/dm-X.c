@@ -63,7 +63,7 @@
 #include "./fb_X.h"
 #include "./dm-X.h"
 
-#include "dm/bview.h"
+#include "bview/defines.h"
 
 #include "../include/private.h"
 

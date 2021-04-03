@@ -23,41 +23,40 @@
  * Functions related to bview.h
  *
  */
-#ifndef DM_BVIEW_UTIL_H
-#define DM_BVIEW_UTIL_H
+#ifndef BVIEW_UTIL_H
+#define BVIEW_UTIL_H
 
 #include "common.h"
 #include "bn/tol.h"
 #include "dm/defines.h"
-#include "dm/bview.h"
-#include "dm/bview_util.h"
+#include "bview/defines.h"
 
 /** @{ */
-/** @file bview_util.h */
+/** @file bview/util.h */
 
 __BEGIN_DECLS
 
 /* Set default values for a bview. */
-DM_EXPORT extern void bview_init(struct bview *v);
+BVIEW_EXPORT extern void bview_init(struct bview *v);
 
 /* Sync values within the bview, perform callbacks if any are defined */
-DM_EXPORT extern void bview_update(struct bview *gvp);
+BVIEW_EXPORT extern void bview_update(struct bview *gvp);
 
 /* Return 1 if the visible contents differ
  * Return 2 if visible content is the same but settings differ
  * Return 3 if content is the same but user data, dmp or callbacks differ
  * Return -1 if one or more of the views is NULL
  * Else return 0 */
-DM_EXPORT extern int bview_differ(struct bview *v1, struct bview *v2);
+BVIEW_EXPORT extern int bview_differ(struct bview *v1, struct bview *v2);
 
 /* Return a hash of the contents of the bview container.  Returns 0 on failure. */
-DM_EXPORT extern unsigned long long bview_hash(struct bview *v);
+BVIEW_EXPORT extern unsigned long long bview_hash(struct bview *v);
 
 /* Return a hash of the contents of a display list.  Returns 0 on failure. */
-DM_EXPORT extern unsigned long long bview_dl_hash(struct display_list *dl);
+BVIEW_EXPORT extern unsigned long long bview_dl_hash(struct display_list *dl);
 
 /* Return -1 if sync fails, else 0 */
-//DM_EXPORT extern int bview_sync(struct bview *dest, struct bview *src);
+//BVIEW_EXPORT extern int bview_sync(struct bview *dest, struct bview *src);
 
 
 /* View manipulations fall into several categories - we define flags which can
@@ -82,13 +81,13 @@ DM_EXPORT extern unsigned long long bview_dl_hash(struct display_list *dl);
 
 /* Update a view in response to X,Y coordinate changes as generated
  * by a graphical interface's mouse motion. */
-DM_EXPORT extern int bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsigned long long flags);
+BVIEW_EXPORT extern int bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsigned long long flags);
 
 __END_DECLS
 
 /** @} */
 
-#endif /* DM_BVIEW_UTIL_H */
+#endif /* BVIEW_UTIL_H */
 
 /*
  * Local Variables:

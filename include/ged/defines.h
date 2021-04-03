@@ -33,9 +33,9 @@
 #include "bu/list.h"
 #include "bu/process.h"
 #include "bu/vls.h"
-#include "dm/bview.h"
+#include "bview/defines.h"
 #include "rt/search.h"
-#include "dm/bview.h"
+#include "bview/defines.h"
 
 __BEGIN_DECLS
 

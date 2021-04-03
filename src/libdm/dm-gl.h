@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "bu.h"
 #include "bn/vlist.h"
-#include "dm/bview.h"
+#include "bview/defines.h"
 #include "dm.h"
 
 #define GL_SILENCE_DEPRECATION 1

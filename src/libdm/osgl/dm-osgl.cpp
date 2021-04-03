@@ -73,7 +73,7 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
-#include "dm/bview.h"
+#include "bview/defines.h"
 
 #include "./fb_osgl.h"
 #include "./dm-osgl.h"

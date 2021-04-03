@@ -30,7 +30,7 @@
 #include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
-#include "dm/bview.h"
+#include "bview/defines.h"
 
 __BEGIN_DECLS
 

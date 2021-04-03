@@ -60,9 +60,9 @@
 #include "ged.h"
 #include "tclcad.h"
 
-#include "dm/bview.h"
+#include "bview/defines.h"
 #include "dm.h"
-#include "dm/bview_util.h"
+#include "bview/util.h"
 
 #include "icv/io.h"
 #include "icv/ops.h"
@@ -3733,6 +3733,9 @@ to_idle_mode(struct ged *gedp,
     {
 	const char *av[3];
 
+	gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
 	gedp->ged_gvp = gdvp;
 	av[0] = "grid";
 	av[1] = "vsnap";
@@ -5819,6 +5822,9 @@ to_snap_view(struct ged *gedp,
     fvx = vx;
     fvy = vy;
 
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
     gedp->ged_gvp = gdvp;
     if (!gedp->ged_gvp->gv_snap_lines && !gedp->ged_gvp->gv_grid.snap) {
 	bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
@@ -6293,6 +6299,9 @@ to_vslew(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (gdvp->gv_grid.snap) {
+
+	    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 
 	    gedp->ged_gvp = gdvp;
 	    av[0] = "grid";

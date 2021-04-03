@@ -1,8 +1,8 @@
-set(dm_headers
+set(bview_headers
   defines.h
   util.h
   )
-BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm)
+BRLCAD_MANAGE_FILES(bview_headers ${INCLUDE_DIR}/brlcad/bview)
 
 CMAKEFILES(CMakeLists.txt)
 

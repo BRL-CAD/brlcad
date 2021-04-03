@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-#include "dm/bview_util.h"
+#include "bview/util.h"
 #include "ged.h"
 
 HIDDEN int

@@ -29,7 +29,7 @@
 
 extern "C" {
 #include "bu/parallel.h"
-#include "dm/bview_util.h"
+#include "bview/util.h"
 #include "ged.h"
 }
 #include "dmglt.h"

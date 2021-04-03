@@ -35,13 +35,24 @@
 #include "common.h"
 #include "bu/list.h"
 #include "bu/vls.h"
-#include "bu/observer.h"
 #include "bu/ptbl.h"
 #include "bg/polygon_types.h"
 #include "vmath.h"
 
 /** @{ */
 /** @file bview.h */
+
+#ifndef BVIEW_EXPORT
+#  if defined(BVIEW_DLL_EXPORTS) && defined(BVIEW_DLL_IMPORTS)
+#    error "Only BVIEW_DLL_EXPORTS or BVIEW_DLL_IMPORTS can be defined, not both."
+#  elif defined(BVIEW_DLL_EXPORTS)
+#    define BVIEW_EXPORT COMPILER_DLLEXPORT
+#  elif defined(BVIEW_DLL_IMPORTS)
+#    define BVIEW_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define BVIEW_EXPORT
+#  endif
+#endif
 
 #define BVIEW_MINVIEWSIZE 0.0001
 #define BVIEW_MINVIEWSCALE 0.00005

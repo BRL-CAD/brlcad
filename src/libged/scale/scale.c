@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "dm/bview.h"
+#include "bview/defines.h"
 
 #include "../ged_private.h"
 

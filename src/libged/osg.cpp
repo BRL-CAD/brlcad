@@ -29,7 +29,7 @@
 #include "common.h"
 
 #include "ged.h"
-#include "dm/bview.h"
+#include "bview/defines.h"
 #include <assert.h>
 
 #include <osg/Geode>

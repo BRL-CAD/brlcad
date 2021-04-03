@@ -46,7 +46,7 @@
 
 #include "common.h"
 
-#include "dm/bview.h"
+#include "bview/defines.h"
 #include "raytrace.h"
 #include "analyze.h"
 #include "ged/defines.h"

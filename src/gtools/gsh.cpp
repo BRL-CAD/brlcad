@@ -35,7 +35,7 @@ extern "C" {
 }
 
 #include "bu.h"
-#include "dm/bview_util.h"
+#include "bview/util.h"
 #include "ged.h"
 
 #define DEFAULT_GSH_PROMPT "g> "

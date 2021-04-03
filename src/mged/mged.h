@@ -77,7 +77,7 @@
 #include "./menu.h"
 
 /* Needed to define struct bview_scene_obj */
-#include "dm/bview.h"
+#include "bview/defines.h"
 
 #include "./mged_dm.h" /* _view_state */
 

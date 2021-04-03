@@ -1,7 +1,7 @@
-/*                      B I N D I N G S . H
+/*                        B V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 2021 United States Government as represented by
+ * Copyright (c) 1993-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,23 +17,33 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bindings.h
- *
- * CAD specific logic for use in Qt event binding overrides.
+/** @addtogroup libbview */
+/** @{ */
+/** @file bview.h
  *
  */
 
-#include <QKeyEvent>
-#include <QMouseEvent>
-#include <QWheelEvent>
+#ifndef BVIEW_H
+#define BVIEW_H
 
-#include "bview/defines.h"
+#include "common.h"
 
-int CADkeyPressEvent(struct bview *v, int x_prev, int y_prev, QKeyEvent *k);
+#include "vmath.h"
+#include "bu/vls.h"
+#include "bn.h"
 
-int CADmousePressEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
+#include "./bview/defines.h"
+#include "./bview/util.h"
 
-int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
+#endif /* BVIEW_H */
 
-int CADwheelEvent(struct bview *v, QWheelEvent *e);
-
+/** @} */
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

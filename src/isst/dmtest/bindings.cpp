@@ -24,8 +24,8 @@
  */
 
 extern "C" {
-#include "dm/bview.h"
-#include "dm/bview_util.h"
+#include "bview/defines.h"
+#include "bview/util.h"
 }
 
 #include "bindings.h"

@@ -37,7 +37,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
-#include "dm/bview_util.h"
+#include "bview/util.h"
 #include "ged.h"
 
 __BEGIN_DECLS

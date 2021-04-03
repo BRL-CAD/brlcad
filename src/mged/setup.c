@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bn.h"
-#include "dm/bview_util.h"
+#include "bview/util.h"
 #include "tclcad.h"
 #include "ged.h"
 

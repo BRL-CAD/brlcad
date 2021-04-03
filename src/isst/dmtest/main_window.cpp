@@ -22,7 +22,7 @@
  */
 
 #include <QSplitter>
-#include "dm/bview_util.h"
+#include "bview/util.h"
 #include "main_window.h"
 #include "dmapp.h"
 
