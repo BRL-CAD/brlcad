@@ -432,7 +432,6 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     int arg;
     const char *new_cmd[3];
     struct rt_db_internal intern;
-    struct directory *outdp = RT_DIR_NULL;
     struct ged_bview_data *bdata = NULL;
 
     if (GEDP == GED_NULL)
@@ -448,6 +447,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     if (STATE == ST_S_EDIT) {
 	/* solid edit mode */
 	/* apply es_mat editing to parameters */
+	struct directory *outdp = RT_DIR_NULL;
 	transform_editing_solid(&intern, es_mat, &es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bview_data *)illump->s_u_data;
@@ -464,6 +464,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
     }  else if (STATE == ST_O_EDIT) {
 	mat_t newmat;
+	struct directory *outdp = RT_DIR_NULL;
 
 	/* object edit mode */
 	if (illump->s_Eflag) {
