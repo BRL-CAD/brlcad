@@ -358,6 +358,7 @@ f_mouse(
     int argc,
     const char *argv[])
 {
+    struct ged_bview_data *bdata = NULL;
     vect_t mousevec;		/* float pt -1..+1 mouse pos vect */
     int isave;
     int up;
@@ -374,9 +375,8 @@ f_mouse(
 	return TCL_ERROR;
     }
 
-    if (!illump->s_u_data)
-	return TCL_ERROR;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    if (illump && illump->s_u_data)
+	bdata = (struct ged_bview_data *)illump->s_u_data;
 
     up = atoi(argv[1]);
     xpos = atoi(argv[2]);
@@ -464,8 +464,9 @@ f_mouse(
 	     * Convert DT position to path element select
 	     */
 	    isave = ipathpos;
-	    ipathpos = bdata->s_fullpath.fp_len-1 - (
-		(ypos+(int)GED_MAX) * (bdata->s_fullpath.fp_len) / (int)GED_RANGE);
+	    if (bdata)
+		ipathpos = bdata->s_fullpath.fp_len-1 - (
+			(ypos+(int)GED_MAX) * (bdata->s_fullpath.fp_len) / (int)GED_RANGE);
 	    if (ipathpos != isave)
 		view_state->vs_flag = 1;
 	    return TCL_OK;
