@@ -23,6 +23,13 @@
  *
  */
 
+// TODO - bview currently conflates scene and camera concepts - for example,
+// data axes and polygons are properly scene objects being viewed by the
+// camera, but at the moment they're directly part of the bview struct.
+//
+// The plan is to address this, so until this notice is removed the bview data
+// structure and related data structures should be considered in flux.
+
 #ifndef BVIEW_H
 #define BVIEW_H
 
