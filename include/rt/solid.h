@@ -73,35 +73,10 @@ struct bview_scene_obj  {
     char s_Eflag;		/**< @brief  flag - not a solid but an "E'd" region */
     short s_regionid;		/**< @brief  region ID */
     mat_t s_mat;		/**< @brief mat to use for internal lookup */
-    struct db_full_path s_fullpath;
 
     /* User data to associate with this view object */
     void *s_u_data;
 };
-
-#define GET_BVIEW_SCENE_OBJ(p, fp) { \
-	if (BU_LIST_IS_EMPTY(fp)) { \
-	    BU_ALLOC((p), struct bview_scene_obj); \
-	    db_full_path_init(&(p)->s_fullpath); \
-	} else { \
-	    p = BU_LIST_NEXT(bview_scene_obj, fp); \
-	    BU_LIST_DEQUEUE(&((p)->l)); \
-	    (p)->s_fullpath.fp_len = 0; \
-	} \
-	BU_LIST_INIT( &((p)->s_vlist) ); }
-
-#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
-	BU_LIST_APPEND(fp, &((p)->l)); \
-	RT_FREE_VLIST(&((p)->s_vlist)); }
-
-#define FOR_ALL_BVIEW_SCENE_OBJS(p, hp)  \
-    for (BU_LIST_FOR(p, bview_scene_obj, hp))
-
-
-
-/** Obtain the last node (the solid) on the path */
-#define LAST_SOLID(_sp)	DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
-#define FIRST_SOLID(_sp)	((_sp)->s_fullpath.fp_names[0])
 
 #endif /* RT_SOLID_H */
 

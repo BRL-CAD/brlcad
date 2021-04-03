@@ -219,7 +219,10 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 		for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-		    if (LAST_SOLID(sp) != dp) continue;
+		    if (!sp->s_u_data)
+			continue;
+		    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		    if (LAST_SOLID(bdata) != dp) continue;
 		    if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) continue;
 		    vp = BU_LIST_LAST(bn_vlist, &(sp->s_vlist));
 		    VMOVE(sav_start, vp->pt[vp->nused-1]);

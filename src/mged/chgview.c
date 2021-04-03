@@ -986,20 +986,23 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
 	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    int a_new_match;
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
 
-	    if (exact && nm_pieces != sp->s_fullpath.fp_len)
+	    if (exact && nm_pieces != bdata->s_fullpath.fp_len)
 		continue;
 
 	    /* XXX Could this make use of db_full_path_subset()? */
 	    if (nmatch == 0 || nmatch != ri) {
-		i = sp->s_fullpath.fp_len - 1;
+		i = bdata->s_fullpath.fp_len - 1;
 
-		if (DB_FULL_PATH_GET(&sp->s_fullpath, i) == dp) {
+		if (DB_FULL_PATH_GET(&bdata->s_fullpath, i) == dp) {
 		    a_new_match = 1;
 		    j = nm_pieces - 1;
 
 		    for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
-			sname = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep;
+			sname = DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep;
 
 			if ((*sname != *(path_piece[j]))
 			    || !BU_STR_EQUAL(sname, path_piece[j])) {

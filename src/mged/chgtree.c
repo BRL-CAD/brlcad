@@ -147,7 +147,11 @@ find_solid_with_path(struct db_full_path *pathp)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!db_identical_full_paths(pathp, &sp->s_fullpath)) continue;
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+
+	    if (!db_identical_full_paths(pathp, &bdata->s_fullpath)) continue;
 
 	    /* Paths are the same */
 	    illum_gdlp = gdlp;

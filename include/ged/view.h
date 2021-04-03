@@ -61,6 +61,12 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
+struct ged_bview_data {
+    struct db_full_path s_fullpath;
+    void *u_data;
+};
+
+
 /* defined in display_list.c */
 GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
 GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);

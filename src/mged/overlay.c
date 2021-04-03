@@ -101,7 +101,10 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    for (BU_LIST_FOR(s, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-		if (db_full_path_search(&s->s_fullpath, dp)) {
+		if (!s->s_u_data)
+		    continue;
+		struct ged_bview_data *bdata = (struct ged_bview_data *)s->s_u_data;
+		if (db_full_path_search(&bdata->s_fullpath, dp)) {
 		    rt_label_vlist_verts(vbp, &s->s_vlist, mat, scale, base2local);
 		}
 	    }
@@ -241,7 +244,10 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
         while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
             next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
             for (BU_LIST_FOR(s, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-                if (db_full_path_search(&s->s_fullpath, dp)) {
+		if (!s->s_u_data)
+		    continue;
+		struct ged_bview_data *bdata = (struct ged_bview_data *)s->s_u_data;
+                if (db_full_path_search(&bdata->s_fullpath, dp)) {
                     get_face_list(m, &f_list);
                     rt_label_vlist_faces(vbp, &f_list, mat, scale, base2local);
                 }

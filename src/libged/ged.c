@@ -51,6 +51,11 @@
 #include "./ged_private.h"
 #include "./qray.h"
 
+#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); \
+    RT_FREE_VLIST(&((p)->s_vlist)); }
+
+
 /* TODO:  Ew.  Globals. Make this go away... */
 struct ged *_ged_current_gedp;
 vect_t _ged_eye_model;

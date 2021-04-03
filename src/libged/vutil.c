@@ -202,14 +202,17 @@ dl_hash(struct display_list *dl)
 		XXH64_update(state, &tvp->pt, sizeof(point_t[BN_VLIST_CHUNK]));
 	    }
 	    XXH64_update(state, &sp->s_vlen, sizeof(int));
-	    XXH64_update(state, &sp->s_fullpath.fp_len, sizeof(size_t));
-	    XXH64_update(state, &sp->s_fullpath.fp_maxlen, sizeof(size_t));
-	    for (size_t i = 0; i < DB_FULL_PATH_LEN(&sp->s_fullpath); i++) {
-		// In principle we should check all of struct directory
-		// contents, but names are unique in the database and should
-		// suffice for this purpose - we care if the path has changed.
-		struct directory *dp = DB_FULL_PATH_GET(&sp->s_fullpath, i);
-		XXH64_update(state, &dp->d_namep, strlen(dp->d_namep));
+	    if (sp->s_u_data) {
+		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		XXH64_update(state, &bdata->s_fullpath.fp_len, sizeof(size_t));
+		XXH64_update(state, &bdata->s_fullpath.fp_maxlen, sizeof(size_t));
+		for (size_t i = 0; i < DB_FULL_PATH_LEN(&bdata->s_fullpath); i++) {
+		    // In principle we should check all of struct directory
+		    // contents, but names are unique in the database and should
+		    // suffice for this purpose - we care if the path has changed.
+		    struct directory *dp = DB_FULL_PATH_GET(&bdata->s_fullpath, i);
+		    XXH64_update(state, &dp->d_namep, strlen(dp->d_namep));
+		}
 	    }
 	    //XXH64_update(state, &sp->s_fullpath, sizeof(struct db_full_path));
 	    XXH64_update(state, &sp->s_flag, sizeof(char));

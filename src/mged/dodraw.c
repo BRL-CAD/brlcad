@@ -33,6 +33,23 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
+#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+          if (BU_LIST_IS_EMPTY(fp)) { \
+              BU_ALLOC((p), struct bview_scene_obj); \
+              struct ged_bview_data *bdata; \
+              BU_GET(bdata, struct ged_bview_data); \
+              db_full_path_init(&bdata->s_fullpath); \
+              (p)->s_u_data = (void *)bdata; \
+          } else { \
+              p = BU_LIST_NEXT(bview_scene_obj, fp); \
+              BU_LIST_DEQUEUE(&((p)->l)); \
+              if ((p)->s_u_data) { \
+                  struct ged_bview_data *bdata = (struct ged_bview_data *)(p)->s_u_data; \
+                  bdata->s_fullpath.fp_len = 0; \
+              } \
+          } \
+          BU_LIST_INIT( &((p)->s_vlist) ); }
+
 void
 cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 {
@@ -150,7 +167,10 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	sp->s_iflag = DOWN;
 	sp->s_soldash = dashflag;
 	sp->s_Eflag = 0;	/* This is a solid */
-	db_dup_full_path(&sp->s_fullpath, pathp);
+	if (!sp->s_u_data)
+	    return;
+	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	db_dup_full_path(&bdata->s_fullpath, pathp);
 	if (tsp)
 	    sp->s_regionid = tsp->ts_regionid;
     }
@@ -192,13 +212,16 @@ replot_original_solid(struct bview_scene_obj *sp)
     if (DBIP == DBI_NULL)
 	return 0;
 
-    dp = LAST_SOLID(sp);
+    if (!sp->s_u_data)
+	return 0;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    dp = LAST_SOLID(bdata);
     if (sp->s_Eflag) {
 	Tcl_AppendResult(INTERP, "replot_original_solid(", dp->d_namep,
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	return -1;
     }
-    (void)db_path_to_mat(DBIP, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     if (rt_db_get_internal(&intern, dp, DBIP, mat, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, dp->d_namep, ":  solid import failure\n", (char *)NULL);
@@ -257,7 +280,10 @@ replot_modified_solid(
     transform_editing_solid(&intern, mat, ip, 0);
 
     if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
-	Tcl_AppendResult(INTERP, LAST_SOLID(sp)->d_namep,
+	if (!sp->s_u_data)
+	    return -1;
+	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
 			 ": re-plot failure\n", (char *)NULL);
 	return -1;
     }
@@ -278,8 +304,10 @@ add_solid_path_to_result(
     struct bview_scene_obj *sp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-
-    db_path_to_vls(&str, &sp->s_fullpath);
+    if (!sp->s_u_data)
+	return;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    db_path_to_vls(&str, &bdata->s_fullpath);
     Tcl_AppendResult(interp, bu_vls_addr(&str), " ", NULL);
     bu_vls_free(&str);
 }

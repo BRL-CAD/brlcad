@@ -79,7 +79,11 @@ go_draw_solid(struct bview *gdvp, struct bview_scene_obj *sp)
     mat_t save_mat, edit_model2view;
     struct path_match_data data;
 
-    data.s_fpath = &sp->s_fullpath;
+    if (!sp->s_u_data)
+	return;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+
+    data.s_fpath = &bdata->s_fullpath;
     data.dbip = gedp->ged_wdbp->dbip;
     entry = key_matches_paths(tgd->go_edited_paths, &data);
 
@@ -369,7 +373,12 @@ to_edit_redraw(struct ged *gedp,
 		}
 
 		for (BU_LIST_FOR(curr_sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-		    if (db_full_path_search(&curr_sp->s_fullpath, subpath.fp_names[i])) {
+
+		    if (!curr_sp->s_u_data)
+			continue;
+		    struct ged_bview_data *bdata = (struct ged_bview_data *)curr_sp->s_u_data;
+
+		    if (db_full_path_search(&bdata->s_fullpath, subpath.fp_names[i])) {
 			struct display_list *last_gdlp;
 			struct bview_scene_obj *sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
 			struct bu_vls mflag = BU_VLS_INIT_ZERO;

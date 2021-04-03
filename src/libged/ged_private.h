@@ -660,8 +660,8 @@ GED_EXPORT extern int ged_view_snap(struct ged *gedp, int argc, const char *argv
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
 
-GED_EXPORT extern void ged_push_solid(struct ged *gedp, struct bview_scene_obj *sp);
-GED_EXPORT extern struct bview_scene_obj *ged_pop_solid(struct ged *gedp);
+GED_EXPORT extern void ged_push_scene_obj(struct ged *gedp, struct bview_scene_obj *sp);
+GED_EXPORT extern struct bview_scene_obj *ged_pop_scene_obj(struct ged *gedp);
 
 __END_DECLS
 

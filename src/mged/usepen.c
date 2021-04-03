@@ -111,15 +111,19 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	return TCL_OK;
     }
 
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+
     if (STATE == ST_O_PATH) {
 	if (argc == 1 || *argv[1] == 'f') {
 	    ++ipathpos;
-	    if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
+	    if ((size_t)ipathpos >= bdata->s_fullpath.fp_len)
 		ipathpos = 0;
 	} else if (*argv[1] == 'b') {
 	    --ipathpos;
 	    if (ipathpos < 0)
-		ipathpos = illump->s_fullpath.fp_len-1;
+		ipathpos = bdata->s_fullpath.fp_len-1;
 	} else {
 	    Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -251,6 +255,10 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     if (not_state(ST_O_PATH, "Object Edit matrix pick"))
 	return TCL_ERROR;
 
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+
     if ((cp = strchr(argv[1], '/')) != NULL) {
 	struct directory *d0, *d1;
 	if ((d1 = db_lookup(DBIP, cp+1, LOOKUP_NOISY)) == RT_DIR_NULL)
@@ -259,9 +267,9 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	if ((d0 = db_lookup(DBIP, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 	/* Find arc on illump path which runs from d0 to d1 */
-	for (j=1; j < illump->s_fullpath.fp_len; j++) {
-	    if (DB_FULL_PATH_GET(&illump->s_fullpath, j-1) != d0) continue;
-	    if (DB_FULL_PATH_GET(&illump->s_fullpath, j-0) != d1) continue;
+	for (j=1; j < bdata->s_fullpath.fp_len; j++) {
+	    if (DB_FULL_PATH_GET(&bdata->s_fullpath, j-1) != d0) continue;
+	    if (DB_FULL_PATH_GET(&bdata->s_fullpath, j-0) != d1) continue;
 	    ipathpos = j;
 	    goto got;
 	}
@@ -272,8 +280,8 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     } else {
 	ipathpos = atoi(argv[1]);
 	if (ipathpos < 0) ipathpos = 0;
-	else if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
-	    ipathpos = illump->s_fullpath.fp_len-1;
+	else if ((size_t)ipathpos >= bdata->s_fullpath.fp_len)
+	    ipathpos = bdata->s_fullpath.fp_len-1;
     }
  got:
     /* Include all solids with same tree top */
@@ -282,9 +290,12 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bview_data *bdatas = (struct ged_bview_data *)sp->s_u_data;
 	    for (j = 0; j <= (size_t)ipathpos; j++) {
-		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
-		    DB_FULL_PATH_GET(&illump->s_fullpath, j))
+		if (DB_FULL_PATH_GET(&bdatas->s_fullpath, j) !=
+		    DB_FULL_PATH_GET(&bdata->s_fullpath, j))
 		    break;
 	    }
 	    /* Only accept if top of tree is identical */
@@ -362,6 +373,10 @@ f_mouse(
 
 	return TCL_ERROR;
     }
+
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
     up = atoi(argv[1]);
     xpos = atoi(argv[2]);
@@ -449,8 +464,8 @@ f_mouse(
 	     * Convert DT position to path element select
 	     */
 	    isave = ipathpos;
-	    ipathpos = illump->s_fullpath.fp_len-1 - (
-		(ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
+	    ipathpos = bdata->s_fullpath.fp_len-1 - (
+		(ypos+(int)GED_MAX) * (bdata->s_fullpath.fp_len) / (int)GED_RANGE);
 	    if (ipathpos != isave)
 		view_state->vs_flag = 1;
 	    return TCL_OK;
