@@ -32,7 +32,8 @@
 #include "bn/vlist.h"
 #include "bview/defines.h"
 #include "bview/util.h"
-#define XXH_INLINE_ALL
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
 static void
