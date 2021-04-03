@@ -556,6 +556,9 @@ bview_differ(struct bview *v1, struct bview *v2)
 
     /* Now the real work starts - check the contents.  First up are
      * any settings which potentially impact visible data */
+    BVIEW_NDIFF(1,gv_i_scale);
+    BVIEW_NDIFF(1,gv_a_scale);
+    BVIEW_NDIFF(1,gv_scale);
     BVIEW_NDIFF(1,gv_scale);
     BVIEW_NDIFF(1,gv_size);
     BVIEW_NDIFF(1,gv_isize);
@@ -572,7 +575,8 @@ bview_differ(struct bview *v1, struct bview *v2)
     BVIEW_MDIFF(1,gv_view2model);
     BVIEW_MDIFF(1,gv_pmat);
 
-
+    BVIEW_NDIFF(1,gv_width);
+    BVIEW_NDIFF(1,gv_height);
     BVIEW_NDIFF(1,gv_prevMouseX);
     BVIEW_NDIFF(1,gv_prevMouseY);
     BVIEW_NDIFF(1,gv_minMouseDelta);
@@ -971,6 +975,9 @@ bview_hash(struct bview *v)
 	return 0;
     XXH64_reset(state, 0);
 
+    // Deliberately not checking name - a rename doesn't change the view
+    XXH64_update(state, &v->gv_i_scale, sizeof(fastf_t));
+    XXH64_update(state, &v->gv_a_scale, sizeof(fastf_t));
     XXH64_update(state, &v->gv_scale, sizeof(fastf_t));
     XXH64_update(state, &v->gv_size, sizeof(fastf_t));
     XXH64_update(state, &v->gv_isize, sizeof(fastf_t));
@@ -986,6 +993,8 @@ bview_hash(struct bview *v)
     XXH64_update(state, &v->gv_pmodel2view, sizeof(mat_t));
     XXH64_update(state, &v->gv_view2model, sizeof(mat_t));
     XXH64_update(state, &v->gv_pmat, sizeof(mat_t));
+    XXH64_update(state, &v->gv_width, sizeof(int));
+    XXH64_update(state, &v->gv_height, sizeof(int));
     XXH64_update(state, &v->gv_prevMouseX, sizeof(fastf_t));
     XXH64_update(state, &v->gv_prevMouseY, sizeof(fastf_t));
     XXH64_update(state, &v->gv_minMouseDelta, sizeof(fastf_t));
