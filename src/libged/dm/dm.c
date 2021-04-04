@@ -35,6 +35,10 @@
 
 #include "../ged_private.h"
 
+#ifndef COMMA
+#  define COMMA ','
+#endif
+
 #define HELPFLAG "--print-help"
 #define PURPOSEFLAG "--print-purpose"
 
@@ -60,6 +64,36 @@ _dm_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *
     return 0;
 }
 
+struct dm *
+_dm_name_lookup(struct _ged_dm_info *gd, const char *dm_name)
+{
+    struct dm *cdmp = NULL;
+    if (!gd) {
+	return NULL;
+    }
+    if (!dm_name || !strlen(dm_name)) {
+	bu_vls_printf(gd->gedp->ged_result_str, ": no DM specified and no current DM set in GED\n");
+	return NULL;
+    }
+    if (!gd->gedp->ged_all_dmp || !BU_PTBL_LEN(gd->gedp->ged_all_dmp)) {
+	bu_vls_printf(gd->gedp->ged_result_str, ": no DMs defined in GED\n");
+	return NULL;
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(gd->gedp->ged_all_dmp); i++) {
+	struct dm *ndmp = (struct dm *)BU_PTBL_GET(gd->gedp->ged_all_dmp, i);
+	if (BU_STR_EQUAL(dm_name, bu_vls_cstr(dm_get_pathname(ndmp)))) {
+	    cdmp = ndmp;
+	    break;
+	}
+    }
+    if (!cdmp) {
+	bu_vls_printf(gd->gedp->ged_result_str, ": no DM with name %s found\n", dm_name);
+    }
+
+    return cdmp;
+}
+
+
 int
 _dm_cmd_type(void *ds, int argc, const char **argv)
 {
@@ -74,26 +108,14 @@ _dm_cmd_type(void *ds, int argc, const char **argv)
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
 
     struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
-    if (!cdmp && !argc) {
-	bu_vls_printf(gd->gedp->ged_result_str, ": no DM specified and no current DM set in GED\n");
-	return GED_ERROR;
-    }
-    if (!cdmp && (!gd->gedp->ged_all_dmp || !BU_PTBL_LEN(gd->gedp->ged_all_dmp))) {
-	bu_vls_printf(gd->gedp->ged_result_str, ": no DMs defined in GED\n");
-	return GED_ERROR;
-    }
-    if (argc) {
-	for (size_t i = 0; i < BU_PTBL_LEN(gd->gedp->ged_all_dmp); i++) {
-	    struct dm *ndmp = (struct dm *)BU_PTBL_GET(gd->gedp->ged_all_dmp, i);
-	    if (BU_STR_EQUAL(argv[0], bu_vls_cstr(dm_get_pathname(ndmp)))) {
-		cdmp = ndmp;
-		break;
-	    }
+    if (!cdmp) {
+	cdmp = _dm_name_lookup(gd, argv[0]);
+	if (!cdmp) {
+	    return GED_ERROR;
 	}
     }
-
     bu_vls_printf(gd->gedp->ged_result_str, "%s\n", dm_get_type(cdmp));
-    return GED_ERROR;
+    return GED_OK;
 }
 
 int
@@ -108,14 +130,14 @@ _dm_cmd_initmsg(void *ds, int argc, const char **argv)
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
 
     bu_vls_printf(gd->gedp->ged_result_str, "%s\n", dm_init_msgs());
-    return GED_ERROR;
+    return GED_OK;
 }
 
 int
 _dm_cmd_list(void *ds, int argc, const char **argv)
 {
     const char *usage_string = "dm [options] list";
-    const char *purpose_string = "list display managers known to GED.";
+    const char *purpose_string = "list display manager instances known to GED.";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
@@ -131,7 +153,11 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
     for (size_t i = 0; i < BU_PTBL_LEN(gd->gedp->ged_all_dmp); i++) {
 	struct dm *ndmp = (struct dm *)BU_PTBL_GET(gd->gedp->ged_all_dmp, i);
 	if (gd->verbosity) {
-	    bu_vls_printf(gd->gedp->ged_result_str, "%s (%s)\n", bu_vls_cstr(dm_get_pathname(ndmp)), dm_get_type(ndmp));
+	    if (ndmp == (struct dm *)gd->gedp->ged_dmp) {
+		bu_vls_printf(gd->gedp->ged_result_str, "*%s (%s)\n", bu_vls_cstr(dm_get_pathname(ndmp)), dm_get_type(ndmp));
+	    } else {
+		bu_vls_printf(gd->gedp->ged_result_str, " %s (%s)\n", bu_vls_cstr(dm_get_pathname(ndmp)), dm_get_type(ndmp));
+	    }
 	} else {
 	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(dm_get_pathname(ndmp)));
 	}
@@ -140,11 +166,76 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
     return GED_OK;
 }
 
+int
+_dm_cmd_get(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "dm [options] get [--dm name] [var]";
+    const char *purpose_string = "report value(s) set to dm variables. With empty var, report all values.";
+    if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct bu_vls dm_name = BU_VLS_INIT_ZERO;
+
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "d", "dm", "name", &bu_opt_vls, &dm_name, "dm instance to use when reporting");
+    BU_OPT_NULL(d[1]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+
+    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+
+    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    if (!cdmp) {
+	cdmp = _dm_name_lookup(gd, bu_vls_cstr(&dm_name));
+	if (!cdmp) {
+	    bu_vls_free(&dm_name);
+	    return GED_ERROR;
+	}
+    }
+
+    if (!ac) {
+	// Report all vars
+	struct bu_vls rstr = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&rstr, "Display Manager %s (type %s) internal variables", bu_vls_cstr(dm_get_pathname(cdmp)), dm_get_dm_name(cdmp));
+	struct bu_structparse *dmparse = dm_get_vparse(cdmp);
+	void *mvars = dm_get_mvars(cdmp);
+	if (dmparse && mvars) {
+	    bu_vls_struct_print2(gd->gedp->ged_result_str, bu_vls_addr(&rstr), dmparse, (const char *)mvars);
+	}
+	bu_vls_free(&rstr);
+	return GED_OK;
+    }
+
+    struct bu_structparse *dmparse = dm_get_vparse(cdmp);
+    void *mvars = dm_get_mvars(cdmp);
+    if (!dmparse || !mvars) {
+	// No variables to report
+	return GED_OK;
+    }
+
+    for (int i = 0; i < ac; i++) {
+	if (gd->verbosity) {
+	    bu_vls_printf(gd->gedp->ged_result_str, "%s=", argv[i]);
+	    bu_vls_struct_item_named(gd->gedp->ged_result_str, dmparse, argv[i], (const char *)mvars, COMMA);
+	} else {
+	    bu_vls_struct_item_named(gd->gedp->ged_result_str, dmparse, argv[i], (const char *)mvars, COMMA);
+	}
+	if (i < ac - 1) {
+	    bu_vls_printf(gd->gedp->ged_result_str, "\n");
+	}
+    }
+
+    return GED_ERROR;
+}
 
 const struct bu_cmdtab _dm_cmds[] = {
     { "initmsg",         _dm_cmd_initmsg},
     { "type",            _dm_cmd_type},
     { "list",            _dm_cmd_list},
+    { "get",             _dm_cmd_get},
     { (char *)NULL,      NULL}
 };
 

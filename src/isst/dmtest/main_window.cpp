@@ -124,6 +124,8 @@ DM_MainWindow::run_cmd(const QString &command)
 	    bu_vls_free(&msg);
 	}
     } else {
+	// TODO - need to add hashing to check the dm variables as well (i.e. if lighting
+	// was turned on/off by the dm command...)
 	ged_exec(gedp, ac, (const char **)av);
 	console->printString(bu_vls_cstr(gedp->ged_result_str));
 	bu_vls_trunc(gedp->ged_result_str, 0);

@@ -284,27 +284,38 @@ struct bview {
     fastf_t                     gv_sscale;
     int                         gv_mode;
     int                         gv_zclip;
-    struct bview_adc_state      gv_adc;
-    struct bview_axes_state     gv_model_axes;
-    struct bview_axes_state     gv_view_axes;
-    struct bview_data_arrow_state gv_data_arrows;
+
+
+    // TODO - these are all special types of non-.g-obj scene objects.  Need
+    // to figure out how to generalize the concept of view object to handle
+    // these...  currently much of the mouse interactive logic seems to live in
+    // libtclcad, which won't work as a generic solution.  Can we do special
+    // case manipulative functions similar to bview_adjust for these data
+    // types?  We want the dx, dy mouse interpretations to live with the object
+    // definition or close to it, ideally...
+    struct bview_adc_state              gv_adc;
+    struct bview_axes_state             gv_model_axes;
+    struct bview_axes_state             gv_view_axes;
+    struct bview_data_arrow_state       gv_data_arrows;
     struct bview_data_axes_state        gv_data_axes;
-    struct bview_data_label_state gv_data_labels;
-    struct bview_data_line_state  gv_data_lines;
-    bview_data_polygon_state      gv_data_polygons;
-    struct bview_data_arrow_state gv_sdata_arrows;
+    struct bview_data_label_state       gv_data_labels;
+    struct bview_data_line_state        gv_data_lines;
+    bview_data_polygon_state            gv_data_polygons;
+    struct bview_data_arrow_state       gv_sdata_arrows;
     struct bview_data_axes_state        gv_sdata_axes;
-    struct bview_data_label_state gv_sdata_labels;
-    struct bview_data_line_state  gv_sdata_lines;
+    struct bview_data_label_state       gv_sdata_labels;
+    struct bview_data_line_state        gv_sdata_lines;
+    bview_data_polygon_state            gv_sdata_polygons;
+    struct bview_grid_state             gv_grid;
+    struct bview_other_state            gv_center_dot;
+    struct bview_other_state            gv_prim_labels;
+    struct bview_other_state            gv_view_params;
+    struct bview_other_state            gv_view_scale;
+    struct bview_interactive_rect_state gv_rect;
+
     int                           gv_snap_lines;
     double 			  gv_snap_tol_factor;
-    bview_data_polygon_state      gv_sdata_polygons;
-    struct bview_grid_state     gv_grid;
-    struct bview_other_state      gv_center_dot;
-    struct bview_other_state      gv_prim_labels;
-    struct bview_other_state      gv_view_params;
-    struct bview_other_state      gv_view_scale;
-    struct bview_interactive_rect_state         gv_rect;
+
     int                         gv_adaptive_plot;
     int                         gv_redraw_on_zoom;
     int                         gv_x_samples;
