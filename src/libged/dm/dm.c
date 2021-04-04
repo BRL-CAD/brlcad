@@ -44,7 +44,7 @@
 
 struct _ged_dm_info {
     struct ged *gedp;
-    int verbosity;
+    long verbosity;
     const struct bu_cmdtab *cmds;
     struct bu_opt_desc *gopts;
 };
@@ -231,11 +231,79 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
     return GED_ERROR;
 }
 
+int
+_dm_cmd_set(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "dm [options] set [--dm name] key val";
+    const char *purpose_string = "assign value to dm variable, if it exists.";
+    if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct bu_vls dm_name = BU_VLS_INIT_ZERO;
+
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "d", "dm", "name", &bu_opt_vls, &dm_name, "dm instance to use when reporting");
+    BU_OPT_NULL(d[1]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+
+    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+
+    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    if (!cdmp) {
+	cdmp = _dm_name_lookup(gd, bu_vls_cstr(&dm_name));
+	if (!cdmp) {
+	    bu_vls_free(&dm_name);
+	    return GED_ERROR;
+	}
+    }
+
+    if (ac != 2) {
+	bu_vls_printf(gd->gedp->ged_result_str, ": invalid argument count - need key and value");
+	return GED_ERROR;
+    }
+
+    struct bu_structparse *dmparse = dm_get_vparse(cdmp);
+    void *mvars = dm_get_mvars(cdmp);
+    if (!dmparse || !mvars) {
+	// No variables to set
+	bu_vls_printf(gd->gedp->ged_result_str, "display manager has not associated variables\n");
+	return GED_ERROR;
+    }
+
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+    int ret;
+    bu_vls_printf(&tmp_vls, "%s=\"%s\"", argv[0], argv[1]);
+    ret = bu_struct_parse(&tmp_vls, dmparse, (char *)mvars, NULL);
+    bu_vls_free(&tmp_vls);
+    if (ret < 0) {
+	bu_vls_printf(gd->gedp->ged_result_str, ": unable to set %s", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (gd->verbosity) {
+	if (gd->verbosity > 1) {
+	    bu_vls_printf(gd->gedp->ged_result_str, "%s=", argv[0]);
+	    bu_vls_struct_item_named(gd->gedp->ged_result_str, dmparse, argv[0], (const char *)mvars, COMMA);
+	} else {
+	    bu_vls_struct_item_named(gd->gedp->ged_result_str, dmparse, argv[0], (const char *)mvars, COMMA);
+	}
+    }
+
+    return GED_OK;
+}
+
+
+
 const struct bu_cmdtab _dm_cmds[] = {
     { "initmsg",         _dm_cmd_initmsg},
     { "type",            _dm_cmd_type},
     { "list",            _dm_cmd_list},
     { "get",             _dm_cmd_get},
+    { "set",             _dm_cmd_set},
     { (char *)NULL,      NULL}
 };
 
@@ -314,8 +382,8 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 
     // See if we have any high level options set
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",    "",      NULL,                 &help,         "Print help");
-    BU_OPT(d[1], "v", "verbose", "",      NULL,                 &gd.verbosity, "Verbose output");
+    BU_OPT(d[0], "h", "help",    "",  NULL,               &help,         "Print help");
+    BU_OPT(d[1], "v", "verbose", "",  &bu_opt_incr_long,  &gd.verbosity, "Verbose output");
     BU_OPT_NULL(d[2]);
 
     gd.gopts = d;
