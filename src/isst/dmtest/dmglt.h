@@ -102,6 +102,7 @@ class dmGLT : public QOpenGLWidget
 	struct ged *gedp = NULL;
 	struct dm *dmp = NULL;
 
+	unsigned long long prev_dhash = 0;
 	unsigned long long prev_vhash = 0;
 	unsigned long long prev_lhash = 0;
 	unsigned long long prev_ghash = 0;

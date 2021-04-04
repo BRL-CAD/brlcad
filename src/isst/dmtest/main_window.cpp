@@ -130,6 +130,13 @@ DM_MainWindow::run_cmd(const QString &command)
 	console->printString(bu_vls_cstr(gedp->ged_result_str));
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	if (canvas) {
+	    unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
+	    if (dhash != canvas->prev_dhash) {
+		std::cout << "prev_dhash: " << canvas->prev_dhash << "\n";
+		std::cout << "dhash: " << dhash << "\n";
+		canvas->prev_dhash = dhash;
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
 	    unsigned long long vhash = bview_hash(canvas->v);
 	    if (vhash != canvas->prev_vhash) {
 		std::cout << "prev_vhash: " << canvas->prev_vhash << "\n";
@@ -145,7 +152,7 @@ DM_MainWindow::run_cmd(const QString &command)
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
 	    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-	    if (lhash != canvas->prev_ghash) {
+	    if (ghash != canvas->prev_ghash) {
 		std::cout << "prev_ghash: " << canvas->prev_ghash << "\n";
 		std::cout << "ghash: " << ghash << "\n";
 		canvas->prev_ghash = ghash;
@@ -155,6 +162,13 @@ DM_MainWindow::run_cmd(const QString &command)
 		canvas->update();
 	}
 	if (canvast) {
+	    unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
+	    if (dhash != canvast->prev_dhash) {
+		std::cout << "prev_dhash: " << canvast->prev_dhash << "\n";
+		std::cout << "dhash: " << dhash << "\n";
+		canvast->prev_dhash = dhash;
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
 	    unsigned long long vhash = bview_hash(canvast->v);
 	    if (vhash != canvast->prev_vhash) {
 		std::cout << "prev_vhash: " << canvast->prev_vhash << "\n";
@@ -170,7 +184,7 @@ DM_MainWindow::run_cmd(const QString &command)
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
 	    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-	    if (lhash != canvast->prev_ghash) {
+	    if (ghash != canvast->prev_ghash) {
 		std::cout << "prev_ghash: " << canvast->prev_ghash << "\n";
 		std::cout << "ghash: " << ghash << "\n";
 		canvast->prev_ghash = ghash;

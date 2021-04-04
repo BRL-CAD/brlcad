@@ -27,9 +27,13 @@
 
 #include <string.h>
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
+
 #include "vmath.h"
-#include "dm.h"
 #include "bview/defines.h"
+#include "dm.h"
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
@@ -777,6 +781,140 @@ dm_get_mvars(struct dm *dmp)
     return dmp->i->m_vars;
 }
 
+void
+_bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, const char *base)
+{
+    const struct bu_structparse *sdp;
+    char *loc;
+    int lastoff = -1;
+    for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
+	/* Skip alternate keywords for same value */
+	if (lastoff == (int)sdp->sp_offset)
+	    continue;
+	lastoff = (int)sdp->sp_offset;
+	loc = (char *)(base + sdp->sp_offset);
+
+	switch (sdp->sp_fmt[1]) {
+	    case 'c':
+	    case 's':
+		if (sdp->sp_count == 1) {
+		    if (*loc != '\0')
+			XXH64_update(state, loc, strlen((char *)loc));
+		} else {
+		    XXH64_update(state, loc, strlen((char *)loc));
+		}
+		break;
+	    case 'V':
+		{
+		    struct bu_vls *vls = (struct bu_vls *)loc;
+		    XXH64_update(state, bu_vls_cstr(vls), bu_vls_strlen(vls));
+		}
+		break;
+	    case 'i':
+		{
+		    register size_t i = sdp->sp_count;
+		    register short *sp = (short *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*sp++), sizeof(short));
+		}
+		break;
+	    case 'd':
+		{
+		    register size_t i = sdp->sp_count;
+		    register int *dp = (int *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(int));
+		}
+		break;
+	    case 'f':
+		{
+		    register size_t i = sdp->sp_count;
+		    register fastf_t *dp = (fastf_t *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(fastf_t));
+		}
+		break;
+	    case 'g':
+		{
+		    register size_t i = sdp->sp_count;
+		    register double *dp = (double *)loc;
+		    while (--i > 0) {
+			XXH64_update(state, &(*dp++), sizeof(fastf_t));
+		    }
+		    break;
+		}
+	    case 'x':
+		{
+		    register size_t i = sdp->sp_count;
+		    register int *dp = (int *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(int));
+		}
+		break;
+	    case 'p':
+		BU_ASSERT(sdp->sp_count == 1);
+		_bu_structparse_hash(state, (struct bu_structparse *)sdp->sp_offset, base);
+		break;
+	    default:
+		break;
+	}
+    }
+}
+
+unsigned long long
+dm_hash(struct dm *dmp)
+{
+    if (!dmp)
+	return 0;
+
+    XXH64_hash_t hash_val;
+    XXH64_state_t *state;
+    state = XXH64_createState();
+    if (!state)
+	return 0;
+    XXH64_reset(state, 0);
+
+    // Note:  deliberately not checking names - a rename doesn't change the dm.
+    // Also deliberately not checking dirty flag - that's usually what we're
+    // using this hash to set or not set.
+    XXH64_update(state, &dmp->i->dm_stereo, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_bound, sizeof(double));
+    XXH64_update(state, &dmp->i->dm_boundFlag, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_width, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_height, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_lineWidth, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_lineStyle, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_aspect, sizeof(fastf_t));
+    XXH64_update(state, &dmp->i->dm_bg, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_fg, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_clipmin, sizeof(vect_t));
+    XXH64_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));
+    XXH64_update(state, &dmp->i->dm_perspective, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_light, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_transparency, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_depthMask, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_zbuffer, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_zclip, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_fontsize, sizeof(int));
+
+    if (dmp->i->fbp) {
+	// TODO - check for framebuffer changes as well...
+    }
+
+    // Also check for changes in backend specific values by iterating
+    // using the structparse.
+    struct bu_structparse *pt = dm_get_vparse(dmp);
+    void *mvars = dm_get_mvars(dmp);
+    if (pt && mvars) {
+	_bu_structparse_hash(state, pt, (const char *)mvars);
+    }
+
+
+    hash_val = XXH64_digest(state);
+    XXH64_freeState(state);
+
+    return (unsigned long long)hash_val;
+}
 
 /* Routines for drawing based on a list of display_list
  * structures.  This will probably need to be a struct dm

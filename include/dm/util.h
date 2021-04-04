@@ -34,6 +34,8 @@
 
 __BEGIN_DECLS
 
+DM_EXPORT unsigned long long dm_hash(struct dm *dmp);
+
 DM_EXPORT void dm_generic_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 
 DM_EXPORT int dm_validXType(const char *dpy_string, const char *name);
