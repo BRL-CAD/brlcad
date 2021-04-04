@@ -66,6 +66,7 @@ class DMRendererT : public QObject, protected QOpenGLFunctions
 	QWaitCondition *grabCond() { return &m_grabCond; }
 	void prepareExit() { m_exiting = true; m_grabCond.wakeAll(); }
 
+	bool m_init = false;
     signals:
 	void contextWanted();
 
@@ -77,7 +78,6 @@ class DMRendererT : public QObject, protected QOpenGLFunctions
 	bool m_exiting = false;
 
     private:
-	bool m_init = false;
 	dmGLT *m_w;
 
 
@@ -106,6 +106,7 @@ class dmGLT : public QOpenGLWidget
 	unsigned long long prev_vhash = 0;
 	unsigned long long prev_lhash = 0;
 	unsigned long long prev_ghash = 0;
+	bool scale_init = false;
 
     protected:
 	void paintEvent(QPaintEvent *) override { }

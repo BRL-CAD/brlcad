@@ -130,6 +130,14 @@ DM_MainWindow::run_cmd(const QString &command)
 	console->printString(bu_vls_cstr(gedp->ged_result_str));
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	if (canvas) {
+	    if (!canvas->scale_init && bu_list_len(gedp->ged_gdp->gd_headDisplay)) {
+		const char *aav[2];
+		aav[0] = "autoview";
+		aav[1] = NULL;
+		ged_autoview(gedp, 1, (const char **)aav);
+		canvas->v->gv_i_scale = canvas->v->gv_scale;
+		canvas->scale_init = true;
+	    }
 	    unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	    if (dhash != canvas->prev_dhash) {
 		std::cout << "prev_dhash: " << canvas->prev_dhash << "\n";
@@ -160,8 +168,21 @@ DM_MainWindow::run_cmd(const QString &command)
 	    }
 	    if (dm_get_dirty((struct dm *)gedp->ged_dmp))
 		canvas->update();
+	    if (!bu_list_len(gedp->ged_gdp->gd_headDisplay)) {
+		canvas->scale_init = false;
+	    }
 	}
 	if (canvast) {
+	    if (!canvast->scale_init && bu_list_len(gedp->ged_gdp->gd_headDisplay)) {
+		const char *aav[2];
+		aav[0] = "autoview";
+		aav[1] = NULL;
+		ged_autoview(gedp, 1, (const char **)aav);
+		canvast->v->gv_i_scale = canvast->v->gv_scale;
+		canvast->scale_init = true;
+	    }
+	    if (!canvast->scale_init)
+		canvast->v->gv_i_scale = canvast->v->gv_scale;
 	    unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	    if (dhash != canvast->prev_dhash) {
 		std::cout << "prev_dhash: " << canvast->prev_dhash << "\n";
@@ -189,6 +210,9 @@ DM_MainWindow::run_cmd(const QString &command)
 		std::cout << "ghash: " << ghash << "\n";
 		canvast->prev_ghash = ghash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+	    if (!bu_list_len(gedp->ged_gdp->gd_headDisplay)) {
+		canvast->scale_init = false;
 	    }
 	}
     }

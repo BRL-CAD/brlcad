@@ -56,6 +56,9 @@ class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
 	unsigned long long prev_lhash = 0;
 	unsigned long long prev_ghash = 0;
 
+	bool m_init = false;
+	bool scale_init = false;
+
     protected:
 	void paintGL() override;
 	void resizeGL(int w, int h) override;
@@ -67,7 +70,6 @@ class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
 	void wheelEvent(QWheelEvent *e) override;
 
     private:
-	bool m_init = false;
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
 };
