@@ -58,6 +58,8 @@ bview_init(struct bview *gvp)
     gvp->gv_rscale = 0.4;
     gvp->gv_sscale = 2.0;
 
+    gvp->gv_cleared = 1;
+
     gvp->gv_adc.a1 = 45.0;
     gvp->gv_adc.a2 = 45.0;
     VSET(gvp->gv_adc.line_color, 255, 255, 0);
@@ -246,25 +248,13 @@ _bview_trans(struct bview *v, int dx, int dy, point_t UNUSED(keypoint), unsigned
 
     return 1;
 }
-int
-_bview_scale(struct bview *v, int UNUSED(dx), int dy, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
-{
-    if (!v || !v->gv_height)
-	return 0;
 
-    double f = (double)dy/(double)v->gv_height;
-    v->gv_a_scale += f;
-    if (-SMALL_FASTF < v->gv_a_scale && v->gv_a_scale < SMALL_FASTF) {
-	v->gv_scale = v->gv_i_scale;
-    } else {
-	if (v->gv_a_scale > 0) {
-	    /* positive - scale i_Viewscale by values in [0.0, 1.0] range */
-	    v->gv_scale = v->gv_i_scale * (1.0 - v->gv_a_scale);
-	} else {
-	    /* negative - scale i_Viewscale by values in [1.0, 10.0] range */
-	    v->gv_scale = v->gv_i_scale * (1.0 + (v->gv_a_scale * -9.0));
-	}
-    }
+int
+_bview_scale(struct bview *v, int sensitivity, int factor, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
+{
+    double f = (double)factor/(double)sensitivity;
+
+    v->gv_scale = v->gv_scale * (1.0 - f);
 
     if (v->gv_scale < BVIEW_MINVIEWSIZE) {
 	v->gv_scale = BVIEW_MINVIEWSIZE;

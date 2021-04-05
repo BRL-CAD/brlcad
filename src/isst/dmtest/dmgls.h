@@ -57,7 +57,6 @@ class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
 	unsigned long long prev_ghash = 0;
 
 	bool m_init = false;
-	bool scale_init = false;
 
     protected:
 	void paintGL() override;

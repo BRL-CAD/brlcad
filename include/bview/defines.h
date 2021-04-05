@@ -284,6 +284,7 @@ struct bview {
     fastf_t                     gv_sscale;
     int                         gv_mode;
     int                         gv_zclip;
+    int                         gv_cleared;
 
 
     // TODO - these are all special types of non-.g-obj scene objects.  Need

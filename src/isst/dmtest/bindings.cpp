@@ -74,7 +74,7 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
 	return 0;
     }
 
-    int dx = 0;
+    int dx = 1000;
     int dy = 0;
     unsigned long long view_flags = BVIEW_IDLE;
 
@@ -165,9 +165,11 @@ int CADwheelEvent(struct bview *v, QWheelEvent *e)
 
     QPoint delta = e->angleDelta();
     int incr = delta.y() / 8;
+    int dx = 1000;
+    int dy = (incr > 0) ? 10 : -10;
 
     point_t origin = VINIT_ZERO;
-    return bview_adjust(v, 0, incr, origin, BVIEW_VIEW, BVIEW_SCALE);
+    return bview_adjust(v, dx, dy, origin, BVIEW_VIEW, BVIEW_SCALE);
 
 }
 

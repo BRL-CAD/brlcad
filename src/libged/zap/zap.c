@@ -55,6 +55,14 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 
     dl_zap(gedp, gedp->free_scene_obj);
 
+    /* The application may need to adjust itself when the view
+     * is cleared.  Since the blast command may immediately
+     * re-populate the display list, we set a flag in the view
+     * to inform the app a zap operation has taken place. */
+    if (gedp->ged_gvp) {
+	gedp->ged_gvp->gv_cleared = 1;
+    }
+
     return GED_OK;
 }
 
