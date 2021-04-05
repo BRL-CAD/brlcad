@@ -139,12 +139,15 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
 	bu_log("Right\n");
     }
 
-    // Start following MGED's mouse motions to see how it handles view
-    // updates.  The trail starts at doevent.c's motion_event_handler,
-    // which in turn generates a command fed to f_knob.
     int dx = e->x() - x_prev;
     int dy = e->y() - y_prev;
 
+    if (view_flags == BVIEW_SCALE) {
+	int mdelta = (fabs(dx) > fabs(dy)) ? dx : -dy;
+	double f = (double)mdelta/(double)v->gv_height;
+	dy = (int)(2 * f * 1000);
+	dx = 1000;
+    }
 
     // TODO - the key point and the mode/flags are all hardcoded
     // right now, but eventually for shift grips they will need to
@@ -166,7 +169,7 @@ int CADwheelEvent(struct bview *v, QWheelEvent *e)
     QPoint delta = e->angleDelta();
     int incr = delta.y() / 8;
     int dx = 1000;
-    int dy = (incr > 0) ? 10 : -10;
+    int dy = (incr > 0) ? 20 : -20;
 
     point_t origin = VINIT_ZERO;
     return bview_adjust(v, dx, dy, origin, BVIEW_VIEW, BVIEW_SCALE);
