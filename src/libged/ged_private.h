@@ -110,8 +110,16 @@ GED_EXPORT extern void ged_create_vlist_display_list_cb(struct ged *, struct dis
 GED_EXPORT extern void ged_destroy_vlist_cb(struct ged *, unsigned int, int);
 GED_EXPORT extern void ged_io_handler_cb(struct ged *, void *, int);
 
-
-
+struct ged_solid_data {
+    struct display_list *gdlp;
+    int draw_solid_lines_only;
+    int wireframe_color_override;
+    int wireframe_color[3];
+    fastf_t transparency;
+    int dmode;
+    int hiddenLine;
+    void *free_scene_obj;
+};
 
 struct _ged_funtab {
     char *ft_name;

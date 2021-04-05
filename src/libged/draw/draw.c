@@ -848,7 +848,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
-		    struct bview_solid_data bview_data;
+		    struct ged_solid_data bview_data;
 		    bview_data.draw_solid_lines_only = dgcdp.draw_solid_lines_only;
 		    bview_data.wireframe_color_override = dgcdp.wireframe_color_override;
 		    bview_data.wireframe_color[0]= dgcdp.wireframe_color[0];

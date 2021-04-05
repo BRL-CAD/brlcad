@@ -1009,7 +1009,7 @@ append_solid_to_display_list(
     point_t min, max;
     struct bview_scene_obj *sp;
     union tree *curtree;
-    struct bview_solid_data *bview_data = (struct bview_solid_data *)client_data;
+    struct ged_solid_data *bview_data = (struct ged_solid_data *)client_data;
 
     RT_CK_DB_INTERNAL(ip);
     BG_CK_TESS_TOL(tsp->ts_ttol);

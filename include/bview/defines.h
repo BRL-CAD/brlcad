@@ -107,6 +107,9 @@ struct bview_scene_obj  {
     void *s_u_data;
 };
 
+/* A display list corresponds (typically) to a database object.  It is composed of one
+ * or more scene objects, which can be manipulated independently but collectively make
+ * up the displayed representation of an object. */
 struct display_list {
     struct bu_list      l;
     void               *dl_dp;                 /* Normally this will be a struct directory pointer */
@@ -329,18 +332,6 @@ struct bview {
     void                        *dmp;  /* Display manager pointer, if one is associated with this view */
     void                        *u_data; /* Caller data associated with this view */
     struct bu_ptbl *callbacks;
-};
-
-
-struct bview_solid_data {
-    struct display_list *gdlp;
-    int draw_solid_lines_only;
-    int wireframe_color_override;
-    int wireframe_color[3];
-    fastf_t transparency;
-    int dmode;
-    int hiddenLine;
-    void *free_scene_obj;
 };
 
 #endif /* DM_BVIEW_H */
