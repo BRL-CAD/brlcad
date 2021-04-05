@@ -427,6 +427,7 @@ bview_differ(struct bview *v1, struct bview *v2)
     BVIEW_NDIFF(1,gv_sscale);
     BVIEW_NDIFF(1,gv_mode);
     BVIEW_NDIFF(1,gv_zclip);
+    BVIEW_NDIFF(1,gv_cleared);
 
     // More complex containers have their own check routines
     BVIEW_CDIFF(1, _bview_adc_state_differ, gv_adc);

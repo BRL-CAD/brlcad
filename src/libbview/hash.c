@@ -397,6 +397,7 @@ bview_hash(struct bview *v)
     XXH64_update(state, &v->gv_sscale, sizeof(fastf_t));
     XXH64_update(state, &v->gv_mode, sizeof(int));
     XXH64_update(state, &v->gv_zclip, sizeof(int));
+    XXH64_update(state, &v->gv_cleared, sizeof(int));
     _bview_adc_state_hash(state, &v->gv_adc);
     _bview_axes_state_hash(state, &v->gv_model_axes);
     _bview_axes_state_hash(state, &v->gv_view_axes);
