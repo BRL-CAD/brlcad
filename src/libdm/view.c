@@ -319,7 +319,7 @@ dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vm
 }
 
 void
-dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d, double base2local, double local2base)
+dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, double base2local, double local2base)
 {
     struct dm *dmp = (struct dm *)v->dmp;
     int width = dm_get_width(dmp);
@@ -360,11 +360,11 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d, d
 	dm_draw_labels(dmp, &v->gv_sdata_labels, v->gv_model2view);
 
     /* Draw labels */
-    if (v->gv_prim_labels.gos_draw) {
-	for (int i = 0; i < d->prim_label_list_size; ++i) {
+    if (wdbp && vd && v->gv_prim_labels.gos_draw) {
+	for (int i = 0; i < vd->prim_label_list_size; ++i) {
 	    dm_draw_prim_labels(dmp,
 			   wdbp,
-			   bu_vls_cstr(&d->prim_label_list[i]),
+			   bu_vls_cstr(&vd->prim_label_list[i]),
 			   v->gv_model2view,
 			   v->gv_prim_labels.gos_text_color,
 			   NULL, NULL);

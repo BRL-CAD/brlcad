@@ -79,6 +79,7 @@ void dmGL::paintGL()
 	    }
 	    dm_configure_win(dmp, 0);
 	    dm_set_pathname(dmp, "QTDM");
+	    v->dmp = dmp;
 	}
     }
 
@@ -97,6 +98,7 @@ void dmGL::paintGL()
 	dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay,
 		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
 		0, 0, geometry_default_color, 1, 0);
+	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip->dbi_local2base);
     }
 }
 

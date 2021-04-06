@@ -99,6 +99,7 @@ void DMRendererT::render()
 	    dm_configure_win(dmp, 0);
 	    dm_set_pathname(dmp, "QtDMT");
 	    dm_set_dirty(dmp, 1);
+	    m_w->v->dmp = dmp;
 	}
     }
 
@@ -150,6 +151,7 @@ void DMRendererT::render()
 	dm_draw_display_list(dmp, m_w->gedp->ged_gdp->gd_headDisplay,
 		1.0, m_w->gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
 		0, 0, geometry_default_color, 1, 0);
+	dm_draw_viewobjs(m_w->gedp->ged_wdbp, m_w->v, NULL, m_w->gedp->ged_wdbp->dbip->dbi_base2local, m_w->gedp->ged_wdbp->dbip->dbi_local2base);
     }
 
 }
