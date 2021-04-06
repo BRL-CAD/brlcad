@@ -229,6 +229,8 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     dmp->i->dm_aspect = 1.0;
 
     /* initialize modifiable variables */
+    mvars->depth = 24;
+    mvars->zbuf = 1;
     mvars->rgb = 1;
     mvars->doublebuffer = 1;
     mvars->fastfog = 1;
