@@ -76,6 +76,17 @@
 #include "cadaccordion.h"
 #include <display/Display.h>
 
+// https://stackoverflow.com/q/44707344/2037687
+class QBDockWidget : public QDockWidget
+{
+    Q_OBJECT
+
+    public:
+	QBDockWidget(const QString &title, QWidget *parent);
+    public slots:
+       void toWindow(bool floating);
+};
+
 class BRLCAD_MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -94,9 +105,9 @@ class BRLCAD_MainWindow : public QMainWindow
 	QMenu *view_menu;
 	QMenu *help_menu;
 
-	QDockWidget *console_dock;
-	QDockWidget *tree_dock;
-	QDockWidget *panel_dock;
+	QBDockWidget *console_dock;
+	QBDockWidget *tree_dock;
+	QBDockWidget *panel_dock;
 
 	CADConsole *console;
 	CADTreeModel *treemodel;

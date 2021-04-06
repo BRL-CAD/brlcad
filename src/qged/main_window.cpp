@@ -27,6 +27,26 @@
 #include "cadapp.h"
 #include "cadaccordion.h"
 
+QBDockWidget::QBDockWidget(const QString &title, QWidget *parent)
+    : QDockWidget(title, parent)
+{
+}
+
+void QBDockWidget::toWindow(bool floating)
+{
+    if (floating) {
+	setWindowFlags(
+		Qt::CustomizeWindowHint |
+                Qt::Window |
+                Qt::WindowMinimizeButtonHint |
+                Qt::WindowMaximizeButtonHint |
+		Qt::WindowCloseButtonHint
+		);
+	// undo "setWindowFlags" hiding the widget
+	show();
+    }
+}
+
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
@@ -60,20 +80,23 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
 
     // Define dock layout
-    console_dock = new QDockWidget("Console", this);
+    console_dock = new QBDockWidget("Console", this);
     addDockWidget(Qt::BottomDockWidgetArea, console_dock);
     console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
     view_menu->addAction(console_dock->toggleViewAction());
+    connect(console_dock, &QBDockWidget::topLevelChanged, console_dock, &QBDockWidget::toWindow); 
 
-    tree_dock = new QDockWidget("Hierarchy", this);
+    tree_dock = new QBDockWidget("Hierarchy", this);
     addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
     tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(tree_dock->toggleViewAction());
+    connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow); 
 
-    panel_dock = new QDockWidget("Edit Panel", this);
+    panel_dock = new QBDockWidget("Edit Panel", this);
     addDockWidget(Qt::RightDockWidgetArea, panel_dock);
     panel_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(panel_dock->toggleViewAction());
+    connect(panel_dock, &QBDockWidget::topLevelChanged, panel_dock, &QBDockWidget::toWindow); 
 
     /* Because the console usually doesn't need a huge amount of
      * horizontal space and the tree can use all the vertical space
