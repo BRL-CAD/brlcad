@@ -1998,15 +1998,15 @@ to_mouse_otranslate(struct ged *gedp,
     if (0 < bu_vls_strlen(&tvd->gdv_edit_motion_delta_callback)) {
 	const char *path_string = argv[2];
 	vect_t dvec;
-	struct path_edit_params *params = (struct path_edit_params *)bu_hash_get(tgd->go_edited_paths,
+	struct dm_path_edit_params *params = (struct dm_path_edit_params *)bu_hash_get(tgd->go_dmv.edited_paths,
 										 (uint8_t *)path_string,
 										 sizeof(char) * strlen(path_string) + 1);
 
 	if (!params) {
-	    BU_GET(params, struct path_edit_params);
+	    BU_GET(params, struct dm_path_edit_params);
 	    params->edit_mode = gdvp->gv_mode;
 	    params->dx = params->dy = 0.0;
-	    (void)bu_hash_set(tgd->go_edited_paths,
+	    (void)bu_hash_set(tgd->go_dmv.edited_paths,
 			      (uint8_t *)path_string,
 			      sizeof(char) * strlen(path_string) + 1, (void *)params);
 	}
@@ -2074,7 +2074,7 @@ go_mouse_poly_circ(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_mouse_poly_circ_func(interp, gedp, gdvp, argc, argv, usage);
@@ -2251,7 +2251,7 @@ go_mouse_poly_cont(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_mouse_poly_cont_func(interp, gedp, gdvp, argc, argv, usage);
@@ -2391,7 +2391,7 @@ go_mouse_poly_ell(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_mouse_poly_ell_func(interp, gedp, gdvp, argc, argv, usage);
@@ -2576,7 +2576,7 @@ go_mouse_poly_rect(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_mouse_poly_rect_func(interp, gedp, gdvp, argc, argv, usage);

@@ -36,6 +36,7 @@
 
 #include "./dm/defines.h"
 #include "./dm/util.h"
+#include "./dm/view.h"
 
 __BEGIN_DECLS
 

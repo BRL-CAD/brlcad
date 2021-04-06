@@ -109,7 +109,6 @@ extern int to_blast(struct ged *gedp,
 		    int maxargs);
 
 /* Faceplate */
-extern void go_draw_faceplate(struct ged *gedp, struct bview *gdvp);
 extern int to_faceplate(struct ged *gedp,
 			int argc,
 			const char *argv[],

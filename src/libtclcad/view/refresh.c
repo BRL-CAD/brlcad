@@ -143,7 +143,7 @@ to_refresh_view(struct bview *gdvp)
 	return;
 
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-    if (!tgd->go_refresh_on)
+    if (!tgd->go_dmv.refresh_on)
 	return;
 
     if (to_is_viewable(gdvp))
@@ -227,7 +227,7 @@ to_refresh_on(struct ged *gedp,
 
     /* Get refresh_on state */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_refresh_on);
+	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dmv.refresh_on);
 	return GED_OK;
     }
 
@@ -237,7 +237,7 @@ to_refresh_on(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    tgd->go_refresh_on = on;
+    tgd->go_dmv.refresh_on = on;
 
     return GED_OK;
 }

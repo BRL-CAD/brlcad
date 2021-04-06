@@ -51,6 +51,7 @@ set(LIBDM_SRCS
   options.c
   rect.c
   scale.c
+  view.c
   vers.c
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)

@@ -141,16 +141,9 @@ struct tclcad_ged_data {
     // These are view related, but appear to be intended as global across all
     // views associated with the gedp - that is why they are here and not in
     // tclcad_view_data.
-    struct bu_hash_tbl	*go_edited_paths;
     struct bu_vls	go_rt_end_callback;
     int                 go_rt_end_callback_cnt;
-    int			go_dlist_on;
-    int			go_refresh_on;
-
-    // TODO - these really shouldn't be libtclcad specific... we don't want to
-    // depend on Tcl for label primitives...
-    struct bu_vls	*go_prim_label_list;
-    int			go_prim_label_list_size;
+    struct dm_view_data go_dmv;
 };
 
 // Data specific to an individual view rather than the geometry database

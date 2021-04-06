@@ -1135,8 +1135,8 @@ to_deleteProc(ClientData clientData)
 	    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gedp->u_data;
 	    bu_vls_free(&tgd->go_rt_end_callback);
 	    bu_vls_free(&tgd->go_more_args_callback);
-	    free_path_edit_params(tgd->go_edited_paths);
-	    bu_hash_destroy(tgd->go_edited_paths);
+	    free_path_edit_params(tgd->go_dmv.edited_paths);
+	    bu_hash_destroy(tgd->go_dmv.edited_paths);
 	    BU_PUT(tgd, struct tclcad_ged_data);
 	    top->to_gedp->u_data = NULL;
 	}
@@ -1288,9 +1288,9 @@ to_open_tcl(ClientData UNUSED(clientData),
     tgd->go_rt_end_callback_cnt = 0;
     bu_vls_init(&tgd->go_more_args_callback);
     tgd->go_more_args_callback_cnt = 0;
-    tgd->go_edited_paths = bu_hash_create(0);
+    tgd->go_dmv.edited_paths = bu_hash_create(0);
     tgd->gedp = top->to_gedp;
-    tgd->go_refresh_on = 1;
+    tgd->go_dmv.refresh_on = 1;
     gedp->u_data = (void *)tgd;
 
     bu_vls_strcpy(&top->to_gedp->go_name, argv[1]);
@@ -1800,7 +1800,7 @@ go_data_move(Tcl_Interp *UNUSED(interp),
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_data_move_func(gedp, gdvp, argc, argv, usage);
@@ -2203,7 +2203,7 @@ go_data_move_object_mode(Tcl_Interp *UNUSED(interp),
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_data_move_object_mode_func(gedp, gdvp, argc, argv, usage);
@@ -2295,7 +2295,7 @@ go_data_move_point_mode(Tcl_Interp *UNUSED(interp),
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_data_move_point_mode_func(gedp, gdvp, argc, argv, usage);
@@ -2386,7 +2386,7 @@ go_data_pick(struct ged *gedp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_data_pick_func(gedp, gdvp, argc, argv, usage);
@@ -3120,7 +3120,7 @@ to_dlist_on(struct ged *gedp,
 
     /* Get dlist_on state */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dlist_on);
+	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dmv.dlist_on);
 	return GED_OK;
     }
 
@@ -3130,7 +3130,7 @@ to_dlist_on(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    tgd->go_dlist_on = on;
+    tgd->go_dmv.dlist_on = on;
 
     return GED_OK;
 }
@@ -3593,7 +3593,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
     struct redraw_edited_path_data *data;
     int ret, dmode = 0;
     struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
-    struct path_edit_params *params;
+    struct dm_path_edit_params *params;
     struct bu_hash_entry *entry = bu_hash_next(t, NULL);
 
     while (entry) {
@@ -3603,7 +3603,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 
 	data = (struct redraw_edited_path_data *)udata;
 
-	params = (struct path_edit_params *)bu_hash_value(entry, NULL);
+	params = (struct dm_path_edit_params *)bu_hash_value(entry, NULL);
 	if (params->edit_mode == TCLCAD_OTRANSLATE_MODE) {
 	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 	    struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
@@ -3761,11 +3761,11 @@ to_idle_mode(struct ged *gedp,
     data.gdvp = gdvp;
     data.need_refresh = &need_refresh;
 
-    redraw_edited_paths(tgd->go_edited_paths, &data);
+    redraw_edited_paths(tgd->go_dmv.edited_paths, &data);
 
-    free_path_edit_params(tgd->go_edited_paths);
-    bu_hash_destroy(tgd->go_edited_paths);
-    tgd->go_edited_paths = bu_hash_create(0);
+    free_path_edit_params(tgd->go_dmv.edited_paths);
+    bu_hash_destroy(tgd->go_dmv.edited_paths);
+    tgd->go_dmv.edited_paths = bu_hash_create(0);
     Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {
@@ -6453,7 +6453,7 @@ to_create_vlist_callback_solid(struct bview_scene_obj *sp)
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
-	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
+	if (tgd->go_dmv.dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 
@@ -6502,7 +6502,7 @@ to_destroy_vlist_callback(unsigned int dlist, int range)
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
-	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
+	if (tgd->go_dmv.dlist_on && to_is_viewable(gdvp)) {
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 	    (void)dm_free_dlists((struct dm *)gdvp->dmp, dlist, range);
 	}
