@@ -23,8 +23,185 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "bview/defines.h"
-#include "dm/defines.h"
 #include "dm.h"
+
+void
+dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
+{
+    register int i;
+    int saveLineWidth;
+    int saveLineStyle;
+
+    if (gdasp->gdas_num_points < 1)
+	return;
+
+    saveLineWidth = dm_get_linewidth(dmp);
+    saveLineStyle = dm_get_linestyle(dmp);
+
+    /* set color */
+    (void)dm_set_fg(dmp,
+		    gdasp->gdas_color[0],
+		    gdasp->gdas_color[1],
+		    gdasp->gdas_color[2], 1, 1.0);
+
+    /* set linewidth */
+    (void)dm_set_line_attr(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
+
+    (void)dm_draw_lines_3d(dmp,
+			   gdasp->gdas_num_points,
+			   gdasp->gdas_points, 0);
+
+    for (i = 0; i < gdasp->gdas_num_points; i += 2) {
+	point_t points[16];
+	point_t A, B;
+	point_t BmA;
+	point_t offset;
+	point_t perp1, perp2;
+	point_t a_base;
+	point_t a_pt1, a_pt2, a_pt3, a_pt4;
+
+	VMOVE(A, gdasp->gdas_points[i]);
+	VMOVE(B, gdasp->gdas_points[i+1]);
+	VSUB2(BmA, B, A);
+
+	VUNITIZE(BmA);
+	VSCALE(offset, BmA, -gdasp->gdas_tip_length * sf);
+
+	bn_vec_perp(perp1, BmA);
+	VUNITIZE(perp1);
+
+	VCROSS(perp2, BmA, perp1);
+	VUNITIZE(perp2);
+
+	VSCALE(perp1, perp1, gdasp->gdas_tip_width * sf);
+	VSCALE(perp2, perp2, gdasp->gdas_tip_width * sf);
+
+	VADD2(a_base, B, offset);
+	VADD2(a_pt1, a_base, perp1);
+	VADD2(a_pt2, a_base, perp2);
+	VSUB2(a_pt3, a_base, perp1);
+	VSUB2(a_pt4, a_base, perp2);
+
+	VMOVE(points[0], B);
+	VMOVE(points[1], a_pt1);
+	VMOVE(points[2], B);
+	VMOVE(points[3], a_pt2);
+	VMOVE(points[4], B);
+	VMOVE(points[5], a_pt3);
+	VMOVE(points[6], B);
+	VMOVE(points[7], a_pt4);
+	VMOVE(points[8], a_pt1);
+	VMOVE(points[9], a_pt2);
+	VMOVE(points[10], a_pt2);
+	VMOVE(points[11], a_pt3);
+	VMOVE(points[12], a_pt3);
+	VMOVE(points[13], a_pt4);
+	VMOVE(points[14], a_pt4);
+	VMOVE(points[15], a_pt1);
+
+	(void)dm_draw_lines_3d(dmp, 16, points, 0);
+    }
+
+    /* Restore the line attributes */
+    (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
+}
+
+#define DM_DRAW_POLY(_dmp, _gdpsp, _i, _last_poly, _mode) {	\
+	size_t _j; \
+	\
+	/* set color */ \
+	(void)dm_set_fg((_dmp), \
+			(_gdpsp)->gdps_polygons.polygon[_i].gp_color[0], \
+			(_gdpsp)->gdps_polygons.polygon[_i].gp_color[1], \
+			(_gdpsp)->gdps_polygons.polygon[_i].gp_color[2], \
+			1, 1.0);					\
+	\
+	for (_j = 0; _j < (_gdpsp)->gdps_polygons.polygon[_i].num_contours; ++_j) { \
+	    size_t _last = (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].num_points-1; \
+	    int _line_style; \
+	    \
+	    /* always draw holes using segmented lines */ \
+	    if ((_gdpsp)->gdps_polygons.polygon[_i].hole[_j]) { \
+		_line_style = 1; \
+	    } else { \
+		_line_style = (_gdpsp)->gdps_polygons.polygon[_i].gp_line_style; \
+	    } \
+	    \
+	    /* set the linewidth and linestyle for polygon i, contour j */	\
+	    (void)dm_set_line_attr((_dmp), \
+				   (_gdpsp)->gdps_polygons.polygon[_i].gp_line_width, \
+				   _line_style); \
+	    \
+	    (void)dm_draw_lines_3d((_dmp),				\
+				   (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].num_points, \
+				   (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point, 1); \
+	    \
+	    if (_mode != DM_POLY_CONTOUR_MODE || _i != _last_poly || (_gdpsp)->gdps_cflag == 0) { \
+		(void)dm_draw_line_3d((_dmp),				\
+				      (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point[_last], \
+				      (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point[0]); \
+	    } \
+	}}
+
+
+void
+dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
+{
+    register size_t i, last_poly;
+    int saveLineWidth;
+    int saveLineStyle;
+
+    if (gdpsp->gdps_polygons.num_polygons < 1)
+	return;
+
+    saveLineWidth = dm_get_linewidth(dmp);
+    saveLineStyle = dm_get_linestyle(dmp);
+
+    last_poly = gdpsp->gdps_polygons.num_polygons - 1;
+    for (i = 0; i < gdpsp->gdps_polygons.num_polygons; ++i) {
+	if (i == gdpsp->gdps_target_polygon_i)
+	    continue;
+
+	DM_DRAW_POLY(dmp, gdpsp, i, last_poly, mode);
+    }
+
+    /* draw the target poly last */
+    DM_DRAW_POLY(dmp, gdpsp, gdpsp->gdps_target_polygon_i, last_poly, mode);
+
+    /* Restore the line attributes */
+    (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
+}
+
+void
+dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp)
+{
+    int saveLineWidth;
+    int saveLineStyle;
+
+    if (gdlsp->gdls_num_points < 1)
+	return;
+
+    saveLineWidth = dm_get_linewidth(dmp);
+    saveLineStyle = dm_get_linestyle(dmp);
+
+    /* set color */
+    (void)dm_set_fg(dmp,
+		    gdlsp->gdls_color[0],
+		    gdlsp->gdls_color[1],
+		    gdlsp->gdls_color[2], 1, 1.0);
+
+    /* set linewidth */
+    (void)dm_set_line_attr(dmp, gdlsp->gdls_line_width, 0);  /* solid lines */
+
+    (void)dm_draw_lines_3d(dmp,
+			   gdlsp->gdls_num_points,
+			   gdlsp->gdls_points, 0);
+
+    /* Restore the line attributes */
+    (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
+}
+
+
 
 void
 dm_draw_faceplate(struct bview *v, double base2local, double local2base)
@@ -120,6 +297,80 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
     /* Draw rect */
     if (v->gv_rect.draw && v->gv_rect.line_width)
 	dm_draw_rect((struct dm *)v->dmp, &v->gv_rect);
+}
+
+void
+dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
+{
+    /* set color */
+    (void)dm_set_fg(dmp,
+		    gdlsp->gdls_color[0],
+		    gdlsp->gdls_color[1],
+		    gdlsp->gdls_color[2], 1, 1.0);
+
+    for (int i = 0; i < gdlsp->gdls_num_labels; ++i) {
+	point_t vpoint;
+
+	MAT4X3PNT(vpoint, m2vmat,
+		  gdlsp->gdls_points[i]);
+	(void)dm_draw_string_2d(dmp, gdlsp->gdls_labels[i],
+				vpoint[X], vpoint[Y], 0, 1);
+    }
+}
+
+void
+dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d, double base2local, double local2base)
+{
+    struct dm *dmp = (struct dm *)v->dmp;
+    int width = dm_get_width(dmp);
+    fastf_t sf = (fastf_t)(v->gv_size) / (fastf_t)width;
+
+    if (v->gv_data_arrows.gdas_draw)
+	dm_draw_arrows(dmp, &v->gv_data_arrows, sf);
+
+    if (v->gv_sdata_arrows.gdas_draw)
+	dm_draw_arrows(dmp, &v->gv_sdata_arrows, sf);
+
+    if (v->gv_data_axes.draw)
+	dm_draw_data_axes(dmp, sf, &v->gv_data_axes);
+
+    if (v->gv_sdata_axes.draw)
+	dm_draw_data_axes(dmp, sf, &v->gv_sdata_axes);
+
+    if (v->gv_data_lines.gdls_draw)
+	dm_draw_lines(dmp, &v->gv_data_lines);
+
+    if (v->gv_sdata_lines.gdls_draw)
+	dm_draw_lines(dmp, &v->gv_sdata_lines);
+
+    if (v->gv_data_polygons.gdps_draw)
+	dm_draw_polys(dmp, &v->gv_data_polygons, v->gv_mode);
+
+    if (v->gv_sdata_polygons.gdps_draw)
+	dm_draw_polys(dmp, &v->gv_sdata_polygons, v->gv_mode);
+
+    /* Restore to non-rotated, full brightness */
+    (void)dm_normal(dmp);
+    dm_draw_faceplate(v, base2local, local2base);
+
+    if (v->gv_data_labels.gdls_draw)
+	dm_draw_labels(dmp, &v->gv_data_labels, v->gv_model2view);
+
+    if (v->gv_sdata_labels.gdls_draw)
+	dm_draw_labels(dmp, &v->gv_sdata_labels, v->gv_model2view);
+
+    /* Draw labels */
+    if (v->gv_prim_labels.gos_draw) {
+	for (int i = 0; i < d->prim_label_list_size; ++i) {
+	    dm_draw_prim_labels(dmp,
+			   wdbp,
+			   bu_vls_cstr(&d->prim_label_list[i]),
+			   v->gv_model2view,
+			   v->gv_prim_labels.gos_text_color,
+			   NULL, NULL);
+	}
+    }
+
 }
 
 /*

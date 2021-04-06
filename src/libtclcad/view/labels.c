@@ -313,27 +313,6 @@ bad:
     return GED_ERROR;
 }
 
-void
-go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
-{
-    register int i;
-
-    /* set color */
-    (void)dm_set_fg(dmp,
-		    gdlsp->gdls_color[0],
-		    gdlsp->gdls_color[1],
-		    gdlsp->gdls_color[2], 1, 1.0);
-
-    for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
-	point_t vpoint;
-
-	MAT4X3PNT(vpoint, m2vmat,
-		  gdlsp->gdls_points[i]);
-	(void)dm_draw_string_2d(dmp, gdlsp->gdls_labels[i],
-				vpoint[X], vpoint[Y], 0, 1);
-    }
-}
-
 int
 to_prim_label(struct ged *gedp,
 	      int argc,

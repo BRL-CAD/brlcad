@@ -543,7 +543,7 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 
 int
-dm_draw_labels(struct dm *dmp,
+dm_draw_prim_labels(struct dm *dmp,
 	       struct rt_wdb *wdbp,
 	       const char *name,
 	       mat_t viewmat,

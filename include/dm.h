@@ -129,7 +129,7 @@ DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 				   fastf_t base2local);
 
 /* labels.c */
-DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
+DM_EXPORT extern int dm_draw_prim_labels(struct dm *dmp,
 				    struct rt_wdb *wdbp,
 				    const char *name,
 				    mat_t viewmat,
