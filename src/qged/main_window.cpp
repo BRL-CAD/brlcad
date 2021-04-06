@@ -55,6 +55,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     // of this particular setup, but it sure is an annoying one...
     menuBar()->setNativeMenuBar(false);
 
+    // Redrawing the main canvas may be expensive when docking and undocking -
+    // disable animation to minimize window drawing operations:
+    // https://stackoverflow.com/a/17885699/2037687
+    setAnimated(false);
+
     // Create Menus
     file_menu = menuBar()->addMenu("File");
     cad_open = new QAction("Open", this);
