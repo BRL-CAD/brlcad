@@ -372,11 +372,6 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
-	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
-	return GED_ERROR;
-    }
-
     // We know we're the dm command - start processing args
     argc--; argv++;
 
@@ -393,6 +388,11 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
     if (!ac || help) {
 	_dm_cmd_help(&gd, 0, NULL);
 	return GED_OK;
+    }
+
+    if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
+	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
+	return GED_ERROR;
     }
 
     int ret;

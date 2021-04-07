@@ -11,6 +11,7 @@ set(VIEW_SRCS
   #data_lines.c
   center.cpp
   eye.c
+  faceplate.c
   quat.c
   size.c
   snap.c

@@ -37,6 +37,7 @@ GED_EXPORT extern int ged_ypr_core(struct ged *gedp, int argc, const char **argv
 GED_EXPORT extern int ged_aet_core(struct ged *gedp, int argc, const char **argv);
 GED_EXPORT extern int ged_center_core(struct ged *gedp, int argc, const char **argv);
 GED_EXPORT extern int ged_eye_core(struct ged *gedp, int argc, const char **argv);
+GED_EXPORT extern int ged_faceplate_core(struct ged *gedp, int argc, const char **argv);
 GED_EXPORT extern int ged_size_core(struct ged *gedp, int argc, const char **argv);
 
 __END_DECLS

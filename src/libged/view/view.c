@@ -76,6 +76,10 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_eye_core(gedp, argc-1, argv+1);
     }
 
+    if (BU_STR_EQUAL(argv[1], "faceplate")) {
+	return ged_faceplate_core(gedp, argc-1, argv+1);
+    }
+
     if (BU_STR_EQUAL(argv[1], "size")) {
 	return ged_size_core(gedp, argc-1, argv+1);
     }
