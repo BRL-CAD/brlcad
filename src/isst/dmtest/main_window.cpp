@@ -123,6 +123,8 @@ DM_MainWindow::run_cmd(const QString &command)
     } else {
 	// TODO - need to add hashing to check the dm variables as well (i.e. if lighting
 	// was turned on/off by the dm command...)
+	canvas->prev_dhash = dm_hash((struct dm *)gedp->ged_dmp);
+	canvas->prev_vhash = bview_hash(canvas->v);
 	ged_exec(gedp, ac, (const char **)av);
 	console->printString(bu_vls_cstr(gedp->ged_result_str));
 	bu_vls_trunc(gedp->ged_result_str, 0);
@@ -135,6 +137,10 @@ DM_MainWindow::run_cmd(const QString &command)
 		canvas->v->gv_cleared = 0;
 		bview_update(canvas->v);
 	    }
+	    std::chrono::time_point<std::chrono::steady_clock> stime, etime, htimes, htimee;
+	    int sectime;
+	    stime = std::chrono::steady_clock::now();
+	    htimes = std::chrono::steady_clock::now();
 	    unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	    if (dhash != canvas->prev_dhash) {
 		std::cout << "prev_dhash: " << canvas->prev_dhash << "\n";
@@ -142,6 +148,10 @@ DM_MainWindow::run_cmd(const QString &command)
 		canvas->prev_dhash = dhash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
+	    htimee = std::chrono::steady_clock::now();
+	    sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
+	    bu_log("DM state hash (sec): %d\n", sectime);
+	    htimes = std::chrono::steady_clock::now();
 	    unsigned long long vhash = bview_hash(canvas->v);
 	    if (vhash != canvas->prev_vhash) {
 		std::cout << "prev_vhash: " << canvas->prev_vhash << "\n";
@@ -149,13 +159,25 @@ DM_MainWindow::run_cmd(const QString &command)
 		canvas->prev_vhash = vhash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
+	    htimee = std::chrono::steady_clock::now();
+	    sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
+	    bu_log("View hash (sec): %d\n", sectime);
+
+	    htimes = std::chrono::steady_clock::now();
+	    unsigned long long lhash = bu_list_len(gedp->ged_gdp->gd_headDisplay);
+#if 0
 	    unsigned long long lhash = bview_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+#endif
 	    if (lhash != canvas->prev_lhash) {
 		std::cout << "prev_lhash: " << canvas->prev_lhash << "\n";
 		std::cout << "lhash: " << lhash << "\n";
 		canvas->prev_lhash = lhash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
+	    htimee = std::chrono::steady_clock::now();
+	    sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
+	    bu_log("Display list hash (sec): %d\n", sectime);
+	    htimes = std::chrono::steady_clock::now();
 	    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 	    if (ghash != canvas->prev_ghash) {
 		std::cout << "prev_ghash: " << canvas->prev_ghash << "\n";
@@ -163,6 +185,12 @@ DM_MainWindow::run_cmd(const QString &command)
 		canvas->prev_ghash = ghash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
+	    htimee = std::chrono::steady_clock::now();
+	    etime = std::chrono::steady_clock::now();
+	    sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
+	    bu_log("Display list hash (GED data)(sec): %d\n", sectime);
+	    sectime = std::chrono::duration_cast<std::chrono::seconds>(etime - stime).count();
+	    bu_log("All hashes (sec): %d\n", sectime);
 	    if (dm_get_dirty((struct dm *)gedp->ged_dmp))
 		canvas->update();
 	}
