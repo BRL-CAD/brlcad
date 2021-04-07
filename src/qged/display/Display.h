@@ -23,6 +23,7 @@
 #ifndef RT3_DISPLAY_H
 #define RT3_DISPLAY_H
 
+#include <QTimer>
 #include <QtWidgets/QOpenGLWidget>
 #include "Camera.h"
 #include "AxesRenderer.h"
@@ -48,6 +49,8 @@ public:
 
 protected:
     void resizeGL(int w, int h) override;
+
+
     void paintGL() override;
 
     void mousePressEvent(QMouseEvent *event) override;
@@ -55,6 +58,13 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void keyPressEvent(QKeyEvent *k) override ;
+    void resizeEvent(QResizeEvent *e) override;
+
+private slots:
+    void enableResize() {
+	    setUpdatesEnabled(true);
+	    repaint();
+    };
 
 private:
     int w = 400;
@@ -73,6 +83,8 @@ private:
     GeometryRenderer * geometryRenderer;
     AxesRenderer * axesRenderer;
     std::vector<Renderable*> renderers;
+
+    QTimer *resizeTimer;
 
 public slots:
     void onDatabaseOpen();

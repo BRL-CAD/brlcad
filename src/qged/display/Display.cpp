@@ -50,10 +50,22 @@ BRLCADDisplay::BRLCADDisplay() {
     geometryRenderer = new GeometryRenderer(displayManager);
     axesRenderer = new AxesRenderer();
 
+    resizeTimer = new QTimer(this);
+    resizeTimer->setSingleShot(true);
+    resizeTimer->setInterval(1); 
+    connect(resizeTimer, SIGNAL(timeout()), SLOT(enableResize()));
+
     renderers.push_back(geometryRenderer);
     renderers.push_back(axesRenderer);
 }
 
+void
+BRLCADDisplay::resizeEvent(QResizeEvent *e)
+{
+    resizeTimer->start();
+    //setUpdatesEnabled(false);
+    QOpenGLWidget::resizeEvent(e);
+}
 
 void BRLCADDisplay::resizeGL(int w, int h) {
     camera->setWH(w,h);
