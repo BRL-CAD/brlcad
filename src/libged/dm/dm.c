@@ -296,8 +296,6 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     return GED_OK;
 }
 
-
-
 const struct bu_cmdtab _dm_cmds[] = {
     { "initmsg",         _dm_cmd_initmsg},
     { "type",            _dm_cmd_type},
@@ -306,54 +304,6 @@ const struct bu_cmdtab _dm_cmds[] = {
     { "set",             _dm_cmd_set},
     { (char *)NULL,      NULL}
 };
-
-int
-_dm_cmd_help(void *ds, int argc, const char **argv)
-{
-    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
-    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
-	bu_vls_printf(gd->gedp->ged_result_str, "dm [options] subcommand [args]\n");
-	if (gd->gopts) {
-	    char *option_help = bu_opt_describe(gd->gopts, NULL);
-	    if (option_help) {
-		bu_vls_printf(gd->gedp->ged_result_str, "Options:\n%s\n", option_help);
-		bu_free(option_help, "help str");
-	    }
-	}
-	bu_vls_printf(gd->gedp->ged_result_str, "Available subcommands:\n");
-	const struct bu_cmdtab *ctp = NULL;
-	int ret;
-	const char *helpflag[2];
-	helpflag[1] = PURPOSEFLAG;
-	size_t maxcmdlen = 0;
-	for (ctp = gd->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
-	}
-	for (ctp = gd->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    bu_vls_printf(gd->gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) +   2, " ");
-	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
-		helpflag[0] = ctp->ct_name;
-		bu_cmd(gd->cmds, 2, helpflag, 0, (void *)gd, &ret);
-	    } else {
-		bu_vls_printf(gd->gedp->ged_result_str, "print help and exit\n");
-	    }
-	}
-    } else {
-	int ret;
-	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
-	helpargv[0] = argv[0];
-	helpargv[1] = HELPFLAG;
-	for (int i = 1; i < argc; i++) {
-	    helpargv[i+1] = argv[i];
-	}
-	bu_cmd(gd->cmds, argc+1, helpargv, 0, (void *)gd, &ret);
-	bu_free(helpargv, "help argv");
-	return ret;
-    }
-
-    return GED_OK;
-}
-
 
 int
 ged_dm_core(struct ged *gedp, int argc, const char *argv[])
@@ -386,7 +336,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
     int ac = bu_opt_parse(NULL, argc, argv, d);
 
     if (!ac || help) {
-	_dm_cmd_help(&gd, 0, NULL);
+	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_dm_cmds, "dm", "[options] subcommand [args]", &gd, 0, NULL);
 	return GED_OK;
     }
 

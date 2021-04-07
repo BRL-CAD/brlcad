@@ -31,6 +31,7 @@
 #include <time.h>
 
 #include "bu/avs.h"
+#include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bg/spsr.h"
 #include "bg/trimesh.h"
@@ -88,6 +89,10 @@ __BEGIN_DECLS
 #define GED_CREATE_VLIST_SOLID_FUNC_NULL ((ged_create_vlist_solid_func_t)0)
 #define GED_CREATE_VLIST_DISPLAY_LIST_FUNC_NULL ((ged_create_vlist_display_list_func_t)0)
 #define GED_DESTROY_VLIST_FUNC_NULL ((ged_destroy_vlist_func_t)0)
+
+/* Common flags used by multiple GED commands for help printing */
+#define HELPFLAG "--print-help"
+#define PURPOSEFLAG "--print-purpose"
 
 // Private bookkeeping structure used by callback handlers
 struct ged_callback_state {
@@ -670,6 +675,11 @@ GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char
 
 GED_EXPORT extern void ged_push_scene_obj(struct ged *gedp, struct bview_scene_obj *sp);
 GED_EXPORT extern struct bview_scene_obj *ged_pop_scene_obj(struct ged *gedp);
+
+GED_EXPORT extern int
+_ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds,
+	const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv);
+
 
 __END_DECLS
 

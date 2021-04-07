@@ -40,7 +40,9 @@
 
 
 #include "bu/app.h"
+#include "bu/cmd.h"
 #include "bu/file.h"
+#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/str.h"
@@ -49,6 +51,57 @@
 
 #include "ged.h"
 #include "./ged_private.h"
+
+int
+_ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv)
+{
+    if (!gedp || !gopts || !cmds || !cmdname)
+	return GED_ERROR;
+
+    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
+	bu_vls_printf(gedp->ged_result_str, "%s %s\n", cmdname, cmdargs);
+	if (gopts) {
+	    char *option_help = bu_opt_describe(gopts, NULL);
+	    if (option_help) {
+		bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
+		bu_free(option_help, "help str");
+	    }
+	}
+	bu_vls_printf(gedp->ged_result_str, "Available subcommands:\n");
+	const struct bu_cmdtab *ctp = NULL;
+	int ret;
+	const char *helpflag[2];
+	helpflag[1] = PURPOSEFLAG;
+	size_t maxcmdlen = 0;
+	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
+	}
+	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    bu_vls_printf(gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) +   2, " ");
+	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
+		helpflag[0] = ctp->ct_name;
+		bu_cmd(cmds, 2, helpflag, 0, gd, &ret);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "print help and exit\n");
+	    }
+	}
+    } else {
+	int ret;
+	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
+	helpargv[0] = argv[0];
+	helpargv[1] = HELPFLAG;
+	for (int i = 1; i < argc; i++) {
+	    helpargv[i+1] = argv[i];
+	}
+	bu_cmd(cmds, argc+1, helpargv, 0, gd, &ret);
+	bu_free(helpargv, "help argv");
+	return ret;
+    }
+
+    return GED_OK;
+}
+
+
 
 struct bview *
 ged_find_view(struct ged *gedp, const char *key)
