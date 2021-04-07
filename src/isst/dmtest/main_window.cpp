@@ -125,6 +125,17 @@ DM_MainWindow::run_cmd(const QString &command)
 	// was turned on/off by the dm command...)
 	canvas->prev_dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	canvas->prev_vhash = bview_hash(canvas->v);
+	canvas->prev_lhash = bu_list_len(gedp->ged_gdp->gd_headDisplay);
+
+	// Clear the edit flags (TODO - really should only do this for objects active in
+	// the scene...)
+	struct directory *dp;
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		dp->edit_flag = 0;
+	    }
+	}
+
 	ged_exec(gedp, ac, (const char **)av);
 	console->printString(bu_vls_cstr(gedp->ged_result_str));
 	bu_vls_trunc(gedp->ged_result_str, 0);
@@ -164,13 +175,24 @@ DM_MainWindow::run_cmd(const QString &command)
 	    bu_log("View hash (sec): %d\n", sectime);
 
 	    htimes = std::chrono::steady_clock::now();
-	    unsigned long long lhash = bu_list_len(gedp->ged_gdp->gd_headDisplay);
 #if 0
 	    unsigned long long lhash = bview_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 #endif
-	    if (lhash != canvas->prev_lhash) {
+	    // TODO - this should be a hash of scene object names...
+	    unsigned long long lhash = bu_list_len(gedp->ged_gdp->gd_headDisplay);
+	    unsigned long long lhash_edit = lhash;
+	    for (int i = 0; i < RT_DBNHASH; i++) {
+		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    if (dp->edit_flag) {
+			bu_log("%s edited.  TODO - update scene object\n", dp->d_namep);
+		    }
+		    lhash_edit += dp->edit_flag;
+		    dp->edit_flag = 0;
+		}
+	    }
+	    if (lhash_edit != canvas->prev_lhash) {
 		std::cout << "prev_lhash: " << canvas->prev_lhash << "\n";
-		std::cout << "lhash: " << lhash << "\n";
+		std::cout << "lhash: " << lhash_edit << "\n";
 		canvas->prev_lhash = lhash;
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }

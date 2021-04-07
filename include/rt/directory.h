@@ -73,6 +73,7 @@ struct directory {
     unsigned char d_minor_type; /**< @brief object minor type */
     struct bu_list d_use_hd;    /**< @brief heads list of uses (struct soltab l2) */
     char d_shortname[16];       /**< @brief Stash short names locally */
+    int edit_flag;              /**< @brief flag for views to indicate change to object */
     void *u_data;		/**< @brief void pointer hook for user data. user is responsible for freeing. */
 };
 #define RT_DIR_NULL     ((struct directory *)0)
