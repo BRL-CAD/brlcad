@@ -227,6 +227,7 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     pubvars->devbuttonpress = 0;
     pubvars->devbuttonrelease = 0;
     dmp->i->dm_aspect = 1.0;
+    dmp->i->dm_fontsize = 20;
 
     /* initialize modifiable variables */
     mvars->depth = 24;
@@ -301,18 +302,54 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 static int
 qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
 	bu_log("qtgl_drawString2D()\n");
 
-    if (use_aspect)
-	glRasterPos2f(x, y * dmp->i->dm_aspect);
-    else
-	glRasterPos2f(x, y);
+    if (privars->fontNormal != FONS_INVALID) {
 
-    glListBase(privars->fontOffset);
-    glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
+	/* First, we set the position using glRasterPos2f like ogl does */
+	if (use_aspect)
+	    glRasterPos2f(x, y * dmp->i->dm_aspect);
+	else
+	    glRasterPos2f(x, y);
 
+	/* Next, we set up for fontstash */
+	fastf_t font_size = dm_get_fontsize(dmp);
+	int blend_state = glIsEnabled(GL_BLEND);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Fontstash does not work in OpenGL raster coordinates,
+	// so we need the view and the coordinates in window
+	// XY coordinates.
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
+	GLfloat pos[4];
+	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+	fastf_t coord_x = pos[0];
+	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
+	//printf("%f:%f,%f:%f\n",x, coord_x, y, coord_y);
+
+	// Have info and OpenGL state, do the text drawing
+	fonsSetFont(privars->fs, privars->fontNormal);
+	unsigned int color = glfonsRGBA(dmp->i->dm_fg[0], dmp->i->dm_fg[1], dmp->i->dm_fg[2], 255);
+	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
+	fonsSetColor(privars->fs, color);
+	fonsDrawText(privars->fs, coord_x, coord_y, str, NULL);
+
+	// Done with text, put matrices back
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+
+	if (!blend_state) glDisable(GL_BLEND);
+
+	glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+    }
     return BRLCAD_OK;
 }
 
