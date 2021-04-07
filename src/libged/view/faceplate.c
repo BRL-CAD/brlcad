@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "bview.h"
@@ -67,11 +68,12 @@ _fp_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *
     return 0;
 }
 
+
 int
-_fp_cmd_list(void *ds, int argc, const char **argv)
+_fp_cmd_center_dot(void *ds, int argc, const char **argv)
 {
-    const char *usage_string = "fp [options] list";
-    const char *purpose_string = "list elements which can be controlled.";
+    const char *usage_string = "faceplate [options] center_dot [0|1] [color r/g/b]";
+    const char *purpose_string = "Enable/disable center dot and set its color.";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
@@ -80,15 +82,61 @@ _fp_cmd_list(void *ds, int argc, const char **argv)
 
     struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
     struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
 
-    bu_vls_printf(gedp->ged_result_str, "TODO");
+    if (!argc) {
+	if (gd->verbosity) {
+	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_center_dot.gos_draw,
+		    v->gv_center_dot.gos_line_color[0], v->gv_center_dot.gos_line_color[1],
+		    v->gv_center_dot.gos_line_color[2]);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_center_dot.gos_draw);
+	}
+	return GED_OK;
+    }
+
+    if (argc == 1) {
+	if (BU_STR_EQUAL("1", argv[0])) {
+	    v->gv_center_dot.gos_draw = 1;
+	    return GED_OK;
+	}
+	if (BU_STR_EQUAL("0", argv[0])) {
+	    v->gv_center_dot.gos_draw = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (argc > 1) {
+	if (!BU_STR_EQUAL("color", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
+	    return GED_ERROR;
+	}
+	argc--; argv++;
+	struct bu_color c;
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	if (bu_opt_color(&msg, argc, argv, &c) == -1) {
+	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
+	}
+	int *cls = (int *)(v->gv_center_dot.gos_line_color);
+	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
+	return GED_OK;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
 
     return GED_OK;
 }
 
 
 const struct bu_cmdtab _fp_cmds[] = {
-    { "list",            _fp_cmd_list},
+    { "center_dot",      _fp_cmd_center_dot},
+    //{ "grid",            _fp_cmd_grid},
+    //{ "model_axes",      _fp_cmd_model_axes},
+    //{ "params",          _fp_cmd_params},
+    //{ "scale",           _fp_cmd_scale},
+    //{ "view_axes",       _fp_cmd_view_axes},
     { (char *)NULL,      NULL}
 };
 
