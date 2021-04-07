@@ -23,7 +23,6 @@ set(dm_srcs
   main_window.cpp
   dmapp.cpp
   dmgls.cpp
-  dmglt.cpp
   ../../qged/pqConsoleWidget.cpp
   )
 
@@ -32,7 +31,6 @@ set(dm_moc_headers
   main_window.h
   dmapp.h
   dmgls.h
-  dmglt.h
   ../../qged/pqConsoleWidget.h
   )
 

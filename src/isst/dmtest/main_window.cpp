@@ -26,7 +26,7 @@
 #include "main_window.h"
 #include "dmapp.h"
 
-DM_MainWindow::DM_MainWindow(int render_thread)
+DM_MainWindow::DM_MainWindow()
 {
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when
@@ -53,14 +53,9 @@ DM_MainWindow::DM_MainWindow(int render_thread)
     file_menu->addAction(g_exit);
 
     // Set up Display canvas
-    if (!render_thread) {
-	canvas = new dmGL();
-	canvas->setMinimumSize(512,512);
-    } else {
-	canvast = new dmGLT();
-	canvast->setMinimumSize(512,512);
-	bu_log("Using rendering thread\n");
-    }
+    canvas = new dmGL();
+    canvas->setMinimumSize(512,512);
+
     console = new pqConsoleWidget(this);
     console->prompt("$ ");
     QSplitter *wgrp = new QSplitter(Qt::Vertical, this);
@@ -71,8 +66,6 @@ DM_MainWindow::DM_MainWindow(int render_thread)
     setCentralWidget(wgrp);
     if (canvas)
 	wgrp->addWidget(canvas);
-    if (canvast)
-	wgrp->addWidget(canvast);
     wgrp->addWidget(console);
 
     QObject::connect(this->console, &pqConsoleWidget::executeCommand, this, &DM_MainWindow::run_cmd);
@@ -101,14 +94,14 @@ DM_MainWindow::open_file()
 void
 DM_MainWindow::run_cmd(const QString &command)
 {
+    if (BU_STR_EQUAL(command.toStdString().c_str(), "q"))
+	bu_exit(0, "exit");
+
     if (!gedp) {
 	console->printString("No database open");
 	console->prompt("$ ");
 	return;
     }
-
-    if (BU_STR_EQUAL(command.toStdString().c_str(), "q"))
-	bu_exit(0, "exit");
 
     // make an argv array
     struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
@@ -173,44 +166,6 @@ DM_MainWindow::run_cmd(const QString &command)
 	    if (dm_get_dirty((struct dm *)gedp->ged_dmp))
 		canvas->update();
 	}
-	if (canvast) {
-	    if (canvast->v->gv_cleared) {
-		const char *aav[2];
-		aav[0] = "autoview";
-		aav[1] = NULL;
-		ged_autoview(gedp, 1, (const char **)aav);
-		canvast->v->gv_cleared = 0;
-		bview_update(canvast->v);
-	    }
-	    unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
-	    if (dhash != canvast->prev_dhash) {
-		std::cout << "prev_dhash: " << canvast->prev_dhash << "\n";
-		std::cout << "dhash: " << dhash << "\n";
-		canvast->prev_dhash = dhash;
-		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    }
-	    unsigned long long vhash = bview_hash(canvast->v);
-	    if (vhash != canvast->prev_vhash) {
-		std::cout << "prev_vhash: " << canvast->prev_vhash << "\n";
-		std::cout << "vhash: " << vhash << "\n";
-		canvast->prev_vhash = vhash;
-		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    }
-	    unsigned long long lhash = bview_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-	    if (lhash != canvast->prev_lhash) {
-		std::cout << "prev_lhash: " << canvast->prev_lhash << "\n";
-		std::cout << "lhash: " << lhash << "\n";
-		canvast->prev_lhash = lhash;
-		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    }
-	    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-	    if (ghash != canvast->prev_ghash) {
-		std::cout << "prev_ghash: " << canvast->prev_ghash << "\n";
-		std::cout << "ghash: " << ghash << "\n";
-		canvast->prev_ghash = ghash;
-		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    }
-	}
     }
 
     bu_free(input, "input copy");
@@ -241,8 +196,6 @@ void DM_MainWindow::save_image()
 {
     if (canvas)
 	canvas->save_image();
-    if (canvast)
-	canvast->save_image();
 }
 
 

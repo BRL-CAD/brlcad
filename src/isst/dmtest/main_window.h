@@ -38,19 +38,17 @@
 #include <QSettings>
 #include "pqConsoleWidget.h"
 #include "dmgls.h"
-#include "dmglt.h"
 
 class DM_MainWindow : public QMainWindow
 {
     Q_OBJECT
     public:
-	DM_MainWindow(int render_thread = 0);
+	DM_MainWindow();
 
 	void readSettings();
 
 	pqConsoleWidget *console = NULL;
 	dmGL *canvas = NULL;
-	dmGLT *canvast = NULL;
 
 	struct ged *gedp = NULL;
 

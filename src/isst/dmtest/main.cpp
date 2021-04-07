@@ -58,19 +58,12 @@ int main(int argc, char *argv[])
 
     // If we have command line arguments, process them
     if (argc) {
-	if (BU_STR_EQUAL(argv[0], "-t")) {
-	    argc--; argv++;
-	}
-	if (argc) {
-	    const char *filename = argv[0];
-	    argc--; argv++;
-	    app.load_g(filename, argc, (const char **)argv);
-	    app.w->gedp = app.gedp;
-	    if (app.w->canvas)
-		app.w->canvas->gedp = app.gedp;
-	    if (app.w->canvast)
-		app.w->canvast->gedp = app.gedp;
-	}
+	const char *filename = argv[0];
+	argc--; argv++;
+	app.load_g(filename, argc, (const char **)argv);
+	app.w->gedp = app.gedp;
+	if (app.w->canvas)
+	    app.w->canvas->gedp = app.gedp;
     }
 
     // This is an illustration of how to force an exact size for
@@ -84,13 +77,7 @@ int main(int argc, char *argv[])
 	app.w->canvas->setMaximumSize(1100,800);
 	app.w->canvas->updateGeometry();
     }
-    if (app.w->canvast) {
-	cminsize = app.w->canvast->minimumSize();
-	cmaxsize = app.w->canvast->maximumSize();
-	app.w->canvast->setMinimumSize(1100,800);
-	app.w->canvast->setMaximumSize(1100,800);
-	app.w->canvast->updateGeometry();
-    }
+
     // Draw the window
     app.w->show();
 
@@ -100,10 +87,6 @@ int main(int argc, char *argv[])
     if (app.w->canvas) {
 	app.w->canvas->setMinimumSize(cminsize);
 	app.w->canvas->setMaximumSize(cmaxsize);
-    }
-    if (app.w->canvast) {
-	app.w->canvast->setMinimumSize(cminsize);
-	app.w->canvast->setMaximumSize(cmaxsize);
     }
 
     return app.exec();
