@@ -143,7 +143,7 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
     int dy = e->y() - y_prev;
 
     if (view_flags == BVIEW_SCALE) {
-	int mdelta = (fabs(dx) > fabs(dy)) ? dx : -dy;
+	int mdelta = (abs(dx) > abs(dy)) ? dx : -dy;
 	double f = (double)mdelta/(double)v->gv_height;
 	dy = (int)(2 * f * 1000);
 	dx = 1000;
