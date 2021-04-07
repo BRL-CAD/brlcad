@@ -101,8 +101,7 @@ void dmGL::paintGL()
 		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
 		0, 0, geometry_default_color, 1, 0);
 
-	// Test of faceplate drawing
-	v->gv_view_axes.draw = 1;
+	// Faceplate drawing
 	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip->dbi_local2base);
 	// Unlike Tcl/Tk (apparently) we need to undo the dm_normal matrix
 	// manipulations called within dm_draw_viewobjs or the wireframe isn't

@@ -152,6 +152,12 @@ void DMRendererT::render()
 		1.0, m_w->gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
 		0, 0, geometry_default_color, 1, 0);
 	dm_draw_viewobjs(m_w->gedp->ged_wdbp, m_w->v, NULL, m_w->gedp->ged_wdbp->dbip->dbi_base2local, m_w->gedp->ged_wdbp->dbip->dbi_local2base);
+
+	// Temporary hack...
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
     }
 
 }

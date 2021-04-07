@@ -180,7 +180,7 @@ DM_MainWindow::run_cmd(const QString &command)
 		aav[1] = NULL;
 		ged_autoview(gedp, 1, (const char **)aav);
 		canvast->v->gv_cleared = 0;
-		bview_update(canvas->v);
+		bview_update(canvast->v);
 	    }
 	    unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	    if (dhash != canvast->prev_dhash) {

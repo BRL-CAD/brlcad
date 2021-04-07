@@ -129,14 +129,209 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
     return GED_OK;
 }
 
+int
+_fp_cmd_scale(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "faceplate [options] scale [0|1] [color r/g/b]";
+    const char *purpose_string = "Enable/disable scale and set its color.";
+    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
+
+    if (!argc) {
+	if (gd->verbosity) {
+	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_view_scale.gos_draw,
+		    v->gv_view_scale.gos_line_color[0], v->gv_view_scale.gos_line_color[1],
+		    v->gv_view_scale.gos_line_color[2]);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_view_scale.gos_draw);
+	}
+	return GED_OK;
+    }
+
+    if (argc == 1) {
+	if (BU_STR_EQUAL("1", argv[0])) {
+	    v->gv_view_scale.gos_draw = 1;
+	    return GED_OK;
+	}
+	if (BU_STR_EQUAL("0", argv[0])) {
+	    v->gv_view_scale.gos_draw = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (argc > 1) {
+	if (!BU_STR_EQUAL("color", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
+	    return GED_ERROR;
+	}
+	argc--; argv++;
+	struct bu_color c;
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	if (bu_opt_color(&msg, argc, argv, &c) == -1) {
+	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
+	}
+	int *cls = (int *)(v->gv_view_scale.gos_line_color);
+	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
+	return GED_OK;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
+
+    return GED_OK;
+}
+
+int
+_fp_cmd_params(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "faceplate [options] params [0|1] [color r/g/b]";
+    const char *purpose_string = "Enable/disable params and set its color.";
+    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
+
+    if (!argc) {
+	if (gd->verbosity) {
+	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_view_params.gos_draw,
+		    v->gv_view_params.gos_text_color[0], v->gv_view_params.gos_text_color[1],
+		    v->gv_view_params.gos_text_color[2]);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_view_params.gos_draw);
+	}
+	return GED_OK;
+    }
+
+    if (argc == 1) {
+	if (BU_STR_EQUAL("1", argv[0])) {
+	    v->gv_view_params.gos_draw = 1;
+	    return GED_OK;
+	}
+	if (BU_STR_EQUAL("0", argv[0])) {
+	    v->gv_view_params.gos_draw = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (argc > 1) {
+	if (!BU_STR_EQUAL("color", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
+	    return GED_ERROR;
+	}
+	argc--; argv++;
+	struct bu_color c;
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	if (bu_opt_color(&msg, argc, argv, &c) == -1) {
+	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
+	}
+	int *cls = (int *)(v->gv_view_params.gos_text_color);
+	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
+	return GED_OK;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
+
+    return GED_OK;
+}
+
+int
+_fp_cmd_view_axes(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "faceplate [options] view_axes [0|1]";
+    const char *purpose_string = "Enable/disable view_axes.";
+    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
+
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "%d", v->gv_view_axes.draw);
+	return GED_OK;
+    }
+
+    if (argc == 1) {
+	if (BU_STR_EQUAL("1", argv[0])) {
+	    v->gv_view_axes.draw = 1;
+	    return GED_OK;
+	}
+	if (BU_STR_EQUAL("0", argv[0])) {
+	    v->gv_view_axes.draw = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
+
+    return GED_OK;
+}
+
+int
+_fp_cmd_model_axes(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "faceplate [options] model_axes [0|1]";
+    const char *purpose_string = "Enable/disable model_axes.";
+    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
+
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "%d", v->gv_model_axes.draw);
+	return GED_OK;
+    }
+
+    if (argc == 1) {
+	if (BU_STR_EQUAL("1", argv[0])) {
+	    v->gv_model_axes.draw = 1;
+	    return GED_OK;
+	}
+	if (BU_STR_EQUAL("0", argv[0])) {
+	    v->gv_model_axes.draw = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
+
+    return GED_OK;
+}
 
 const struct bu_cmdtab _fp_cmds[] = {
     { "center_dot",      _fp_cmd_center_dot},
     //{ "grid",            _fp_cmd_grid},
-    //{ "model_axes",      _fp_cmd_model_axes},
-    //{ "params",          _fp_cmd_params},
-    //{ "scale",           _fp_cmd_scale},
-    //{ "view_axes",       _fp_cmd_view_axes},
+    { "model_axes",      _fp_cmd_model_axes},
+    { "params",          _fp_cmd_params},
+    { "scale",           _fp_cmd_scale},
+    { "view_axes",       _fp_cmd_view_axes},
     { (char *)NULL,      NULL}
 };
 
