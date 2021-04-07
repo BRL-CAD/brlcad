@@ -75,11 +75,16 @@ null_drawEnd(struct dm *UNUSED(dmp))
 
 
 int
-null_normal(struct dm *UNUSED(dmp))
+null_hud_begin(struct dm *UNUSED(dmp))
 {
     return 0;
 }
 
+int
+null_hud_end(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
 
 int
 null_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
@@ -320,7 +325,8 @@ struct dm_impl dm_null_impl = {
     null_viable,
     null_drawBegin,
     null_drawEnd,
-    null_normal,
+    null_hud_begin,
+    null_hud_end,
     null_loadMatrix,
     null_loadPMatrix,
     null_drawString2D,

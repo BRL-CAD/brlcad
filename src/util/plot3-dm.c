@@ -185,7 +185,7 @@ refresh() {
 	    }
     }
 
-    dm_normal(dmp);
+    dm_hud_begin(dmp);
     dm_draw_end(dmp);
 }
 

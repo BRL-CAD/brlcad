@@ -1201,18 +1201,24 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **dat
 }
 
 
-/**
- * Restore the display processor to a normal mode of operation (i.e.,
- * not scaled, rotated, displaced, etc.).
- */
 HIDDEN int
-X_normal(struct dm *dmp)
+X_hud_begin(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
 	bu_log("X_normal()\n");
 
     return BRLCAD_OK;
 }
+
+HIDDEN int
+X_hud_end(struct dm *dmp)
+{
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_normal()\n");
+
+    return BRLCAD_OK;
+}
+
 
 
 /**
@@ -2079,7 +2085,8 @@ struct dm_impl dm_X_impl = {
     X_viable,
     X_drawBegin,
     X_drawEnd,
-    X_normal,
+    X_hud_begin,
+    X_hud_end,
     X_loadMatrix,
     null_loadPMatrix,
     X_drawString2D,

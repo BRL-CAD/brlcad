@@ -194,8 +194,6 @@ int gl_drawBegin(struct dm *dmp)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
-    GLfloat fogdepth;
-
     if (dmp->i->dm_debugLevel) {
 	bu_log("gl_drawBegin\n");
     }
@@ -227,26 +225,13 @@ int gl_drawBegin(struct dm *dmp)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    if (mvars->i.faceFlag) {
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-	mvars->i.faceFlag = 0;
-	if (mvars->cueing_on) {
-	    glEnable(GL_FOG);
-	    /*XXX Need to do something with Viewscale */
-	    fogdepth = 2.2 * (*dmp->i->dm_vp); /* 2.2 is heuristic */
-	    glFogf(GL_FOG_END, fogdepth);
-	    fogdepth = (GLfloat) (0.5*mvars->fogdensity/
-				  (*dmp->i->dm_vp));
-	    glFogf(GL_FOG_DENSITY, fogdepth);
-	    glFogi(GL_FOG_MODE, dmp->i->dm_perspective ? GL_EXP : GL_LINEAR);
-	}
-	if (dmp->i->dm_light) {
-	    glEnable(GL_LIGHTING);
-	}
-    }
+    // In case we were left in a faceplace matrix state, clear it.
+    //
+    // TODO - not all display environments will tolerate being left in the HUD
+    // state - Qt, for example, will not properly display solid wireframes in
+    // that case.  Leaving this here for now, but we really need to take care
+    // of this immediately after we're done drawing faceplate...
+    dm_hud_end(dmp);
 
     if (dmp->i->dm_debugLevel == 3) {
 	GLfloat m[16];
@@ -454,16 +439,8 @@ int gl_loadPMatrix(struct dm *dmp, fastf_t *mat)
     glMatrixMode(GL_PROJECTION);
 
     if (mat == (fastf_t *)NULL) {
-	if (mvars->i.faceFlag) {
-	    glPopMatrix();
-	    glLoadIdentity();
-	    glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
-	    glPushMatrix();
-	    glLoadMatrixd(mvars->i.faceplate_mat);
-	} else {
-	    glLoadIdentity();
-	    glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
-	}
+	glLoadIdentity();
+	glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
 
 	return BRLCAD_OK;
     }
@@ -939,28 +916,11 @@ int gl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void 
 
 
 /*
- * Restore the display processor to a normal mode of operation
- * (i.e., not scaled, rotated, displaced, etc.).
+ * Prepare for drawing a Head-Up Display (HUD).
  */
-int gl_normal(struct dm *dmp)
+int gl_hud_begin(struct dm *dmp)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_normal\n");
-
-    if (dmp->i->dm_debugLevel == 3) {
-	GLfloat m[16];
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&tmp_vls, "beginning of gl_normal view matrix = \n");
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_vls_printf(&tmp_vls, "beginning of gl_normal projection matrix = \n");
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
 
     if (!mvars->i.faceFlag) {
 	glMatrixMode(GL_PROJECTION);
@@ -976,18 +936,35 @@ int gl_normal(struct dm *dmp)
 	    glDisable(GL_LIGHTING);
     }
 
-    if (dmp->i->dm_debugLevel == 3) {
-	GLfloat m[16];
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&tmp_vls, "end of gl_normal view matrix = \n");
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_vls_printf(&tmp_vls, "end of gl_normal projection matrix = \n");
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
+    return BRLCAD_OK;
+}
+
+int gl_hud_end(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    GLfloat fogdepth;
+
+    if (mvars->i.faceFlag) {
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+	mvars->i.faceFlag = 0;
+	if (mvars->cueing_on) {
+	    glEnable(GL_FOG);
+	    /*XXX Need to do something with Viewscale */
+	    fogdepth = 2.2 * (*dmp->i->dm_vp); /* 2.2 is heuristic */
+	    glFogf(GL_FOG_END, fogdepth);
+	    fogdepth = (GLfloat) (0.5*mvars->fogdensity/
+		    (*dmp->i->dm_vp));
+	    glFogf(GL_FOG_DENSITY, fogdepth);
+	    glFogi(GL_FOG_MODE, dmp->i->dm_perspective ? GL_EXP : GL_LINEAR);
+	}
+	if (dmp->i->dm_light) {
+	    glEnable(GL_LIGHTING);
+	}
+   }
 
     return BRLCAD_OK;
 }

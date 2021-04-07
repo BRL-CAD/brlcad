@@ -2398,7 +2398,7 @@ refresh(void)
 
 
 		    /* Restore to non-rotated, full brightness */
-		    dm_normal(DMP);
+		    dm_hud_begin(DMP);
 
 		    /* only if not doing overlay */
 		    if (!mged_variables->mv_fb ||

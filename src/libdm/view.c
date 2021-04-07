@@ -349,8 +349,9 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     if (v->gv_sdata_polygons.gdps_draw)
 	dm_draw_polys(dmp, &v->gv_sdata_polygons, v->gv_mode);
 
-    /* Restore to non-rotated, full brightness */
-    (void)dm_normal(dmp);
+    /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
+    (void)dm_hud_begin(dmp);
+
     dm_draw_faceplate(v, base2local, local2base);
 
     if (v->gv_data_labels.gdls_draw)
@@ -370,6 +371,9 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 			   NULL, NULL);
 	}
     }
+
+    /* Restore non-HUD settings. */
+    (void)dm_hud_end(dmp);
 
 }
 

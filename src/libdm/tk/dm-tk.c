@@ -678,12 +678,8 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
 }
 
 
-/*
- * Restore the display processor to a normal mode of operation
- * (i.e., not scaled, rotated, displaced, etc.).
- */
 HIDDEN int
-tk_normal(struct dm *dmp)
+tk_hud_begin(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
 	bu_log("tk_normal()\n");
@@ -691,6 +687,14 @@ tk_normal(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+HIDDEN int
+tk_hud_end(struct dm *dmp)
+{
+    if (dmp->i->dm_debugLevel)
+	bu_log("tk_normal()\n");
+
+    return BRLCAD_OK;
+}
 
 /*
  * Output a string into the displaylist.
@@ -1112,7 +1116,8 @@ struct dm_impl dm_tk_impl = {
     tk_viable,
     tk_drawBegin,
     tk_drawEnd,
-    tk_normal,
+    tk_hud_begin,
+    tk_hud_end,
     tk_loadMatrix,
     null_loadPMatrix,
     tk_drawString2D,

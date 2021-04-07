@@ -89,12 +89,18 @@ txt_drawEnd(struct dm *UNUSED(dmp))
 
 
 HIDDEN int
-txt_normal(struct dm *UNUSED(dmp))
+txt_hud_begin(struct dm *UNUSED(dmp))
 {
-    bu_log("normal called\n");
+    bu_log("hud_begin called\n");
     return 0;
 }
 
+HIDDEN int
+txt_hud_end(struct dm *UNUSED(dmp))
+{
+    bu_log("hud_end called\n");
+    return 0;
+}
 
 HIDDEN int
 txt_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
@@ -371,7 +377,8 @@ struct dm_impl dm_txt_impl = {
     txt_viable,
     txt_drawBegin,
     txt_drawEnd,
-    txt_normal,
+    txt_hud_begin,
+    txt_hud_end,
     txt_loadMatrix,
     txt_loadPMatrix,
     txt_drawString2D,

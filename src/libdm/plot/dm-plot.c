@@ -483,12 +483,17 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **
 }
 
 
-/**
- * Restore the display processor to a normal mode of operation (i.e.,
- * not scaled, rotated, displaced, etc.).  Turns off windowing.
- */
 HIDDEN int
-plot_normal(struct dm *dmp)
+plot_hud_begin(struct dm *dmp)
+{
+    if (!dmp)
+	return BRLCAD_ERROR;
+
+    return BRLCAD_OK;
+}
+
+HIDDEN int
+plot_hud_end(struct dm *dmp)
 {
     if (!dmp)
 	return BRLCAD_ERROR;
@@ -672,7 +677,8 @@ struct dm_impl dm_plot_impl = {
     plot_viable,
     plot_drawBegin,
     plot_drawEnd,
-    plot_normal,
+    plot_hud_begin,
+    plot_hud_end,
     plot_loadMatrix,
     null_loadPMatrix,
     plot_drawString2D,

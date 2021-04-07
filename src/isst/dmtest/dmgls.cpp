@@ -103,29 +103,6 @@ void dmGL::paintGL()
 
 	// Faceplate drawing
 	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip->dbi_local2base);
-	// Unlike Tcl/Tk (apparently) we need to undo the dm_normal matrix
-	// manipulations called within dm_draw_viewobjs or the wireframe isn't
-	// visible in the final result.  dm_normal looks like it may be
-	// mis-named if it's the HUD setup, it should be named that and have a
-	// corresponding function for restoring (i.e. the steps below).
-	//
-	// At a guess, Qt is doing some management behind the scenes, which is
-	// being messed with by the dm_normal matrix manipulations.  Looking
-	// around the code, gl_drawBegin does these two matrix pops based on
-	// faceFlag which is probably what puts things back for the more
-	// vanilla behavior of our Tcl/Tk OpenGL windows.   (We'll probably
-	// also need to fix GL_LIGHTING and fog for the same reasons...)
-	//
-	// It will need testing, but I suspect the proper way to do this is to
-	// make wrappers for just the drawing routines that need these and set
-	// them locally, rather than sticking them in gl_drawBegin.  As long as
-	// no parent code was doing anything with the OpenGL context we could
-	// get away with that, but this test suggests that's no longer the
-	// case.
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
 
 	dm_draw_end(dmp);
     }

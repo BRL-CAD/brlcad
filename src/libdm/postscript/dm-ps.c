@@ -560,19 +560,24 @@ ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
 }
 
 
-/*
- * Restore the display processor to a normal mode of operation
- * (i.e., not scaled, rotated, displaced, etc.).
- * Turns off windowing.
- */
 HIDDEN int
-ps_normal(struct dm *dmp)
+ps_hud_begin(struct dm *dmp)
 {
     if (!dmp)
 	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
 }
+
+HIDDEN int
+ps_hud_end(struct dm *dmp)
+{
+    if (!dmp)
+	return BRLCAD_ERROR;
+
+    return BRLCAD_OK;
+}
+
 
 
 /*
@@ -741,7 +746,8 @@ struct dm_impl dm_ps_impl = {
     ps_viable,
     ps_drawBegin,
     ps_drawEnd,
-    ps_normal,
+    ps_hud_begin,
+    ps_hud_end,
     ps_loadMatrix,
     null_loadPMatrix,
     ps_drawString2D,

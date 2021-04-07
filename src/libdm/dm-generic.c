@@ -628,10 +628,16 @@ dm_draw_end(struct dm *dmp)
     return dmp->i->dm_drawEnd(dmp);
 }
 int
-dm_normal(struct dm *dmp)
+dm_hud_begin(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_normal(dmp);
+    return dmp->i->dm_hud_begin(dmp);
+}
+int
+dm_hud_end(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_hud_end(dmp);
 }
 int
 dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye)

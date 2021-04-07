@@ -63,7 +63,8 @@ struct dm_impl {
     int (*dm_viable)(const char *dpy_string);
     int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
     int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */
-    int (*dm_normal)(struct dm *dmp);
+    int (*dm_hud_begin)(struct dm *dmp);
+    int (*dm_hud_end)(struct dm *dmp);
     int (*dm_loadMatrix)(struct dm *dmp, fastf_t *mat, int which_eye);
     int (*dm_loadPMatrix)(struct dm *dmp, fastf_t *mat);
     int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */

@@ -240,7 +240,8 @@ DM_EXPORT extern int dm_draw_vlist_hidden_line(struct dm *dmp, struct bn_vlist *
 DM_EXPORT extern int dm_set_line_attr(struct dm *dmp, int width, int style);
 DM_EXPORT extern int dm_draw_begin(struct dm *dmp);
 DM_EXPORT extern int dm_draw_end(struct dm *dmp);
-DM_EXPORT extern int dm_normal(struct dm *dmp);
+DM_EXPORT extern int dm_hud_begin(struct dm *dmp);
+DM_EXPORT extern int dm_hud_end(struct dm *dmp);
 DM_EXPORT extern int dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye);
 DM_EXPORT extern int dm_loadpmatrix(struct dm *dmp, fastf_t *mat);
 DM_EXPORT extern int dm_draw_string_2d(struct dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect);

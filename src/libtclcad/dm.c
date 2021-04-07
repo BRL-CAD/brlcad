@@ -935,7 +935,7 @@ dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop || !dmop->interp)
 	return BRLCAD_ERROR;
 
-    return dm_normal(dmop->dmo_dmp);
+    return dm_hud_begin(dmop->dmo_dmp);
 }
 
 
