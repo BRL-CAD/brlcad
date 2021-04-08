@@ -25,6 +25,9 @@
 #include "bview/util.h"
 #include "main_window.h"
 #include "dmapp.h"
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
 
 DM_MainWindow::DM_MainWindow()
 {
@@ -91,6 +94,116 @@ DM_MainWindow::open_file()
     }
 }
 
+static unsigned long long
+dl_name_hash(struct ged *gedp)
+{
+    if (!BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay))
+	return 0;
+
+    XXH64_hash_t hash_val;
+    XXH64_state_t *state;
+    state = XXH64_createState();
+    if (!state)
+	return 0;
+    XXH64_reset(state, 0);
+
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	struct bview_scene_obj *sp;
+	struct bview_scene_obj *nsp;
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
+	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    if (sp->s_u_data) {
+		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
+		    struct directory *dp = bdata->s_fullpath.fp_names[i];
+		    XXH64_update(state, dp->d_namep, strlen(dp->d_namep));
+		}
+	    }
+	    sp = nsp;
+	}
+	gdlp = next_gdlp;
+    }
+
+    hash_val = XXH64_digest(state);
+    XXH64_freeState(state);
+
+    return (unsigned long long)hash_val;
+}
+
+static unsigned long long
+dl_update(struct ged *gedp)
+{
+    unsigned long long hincr = 0;
+    if (!BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay))
+	return 0;
+
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	struct bview_scene_obj *sp;
+	struct bview_scene_obj *nsp;
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
+	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    if (sp->s_u_data) {
+		int changed = 0;
+		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
+		    struct directory *dp = bdata->s_fullpath.fp_names[i];
+		    if (dp->edit_flag) {
+			// db object along path was edited - we
+			// need to update the object's info
+			bu_log("%s edited.  TODO - update scene object\n", dp->d_namep);
+			changed = 1;
+			hincr++;
+			break;
+		    }
+		}
+		if (changed) {
+		    char *spath = db_path_to_string(&bdata->s_fullpath);
+		    const char *av[3];
+		    av[0] = "draw";
+		    av[1] = spath;
+		    av[2] = NULL;
+		    ged_draw(gedp, 2, av);
+		}
+	    }
+	    sp = nsp;
+	}
+	gdlp = next_gdlp;
+    }
+    // Updating done - clear all edit flags
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	struct bview_scene_obj *sp;
+	struct bview_scene_obj *nsp;
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
+	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    if (sp->s_u_data) {
+		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
+		    struct directory *dp = bdata->s_fullpath.fp_names[i];
+		    dp->edit_flag = 0;
+		}
+	    }
+	    sp = nsp;
+	}
+	gdlp = next_gdlp;
+    }
+
+
+    return hincr;
+}
+
 void
 DM_MainWindow::run_cmd(const QString &command)
 {
@@ -125,7 +238,7 @@ DM_MainWindow::run_cmd(const QString &command)
 	// was turned on/off by the dm command...)
 	canvas->prev_dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	canvas->prev_vhash = bview_hash(canvas->v);
-	canvas->prev_lhash = bu_list_len(gedp->ged_gdp->gd_headDisplay);
+	canvas->prev_lhash = dl_name_hash(gedp);
 
 	// Clear the edit flags (TODO - really should only do this for objects active in
 	// the scene...)
@@ -148,9 +261,11 @@ DM_MainWindow::run_cmd(const QString &command)
 		canvas->v->gv_cleared = 0;
 		bview_update(canvas->v);
 	    }
+
 	    std::chrono::time_point<std::chrono::steady_clock> stime, etime, htimes, htimee;
 	    int sectime;
 	    stime = std::chrono::steady_clock::now();
+
 	    htimes = std::chrono::steady_clock::now();
 	    unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	    if (dhash != canvas->prev_dhash) {
@@ -162,6 +277,7 @@ DM_MainWindow::run_cmd(const QString &command)
 	    htimee = std::chrono::steady_clock::now();
 	    sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
 	    bu_log("DM state hash (sec): %d\n", sectime);
+
 	    htimes = std::chrono::steady_clock::now();
 	    unsigned long long vhash = bview_hash(canvas->v);
 	    if (vhash != canvas->prev_vhash) {
@@ -175,21 +291,9 @@ DM_MainWindow::run_cmd(const QString &command)
 	    bu_log("View hash (sec): %d\n", sectime);
 
 	    htimes = std::chrono::steady_clock::now();
-#if 0
-	    unsigned long long lhash = bview_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-#endif
-	    // TODO - this should be a hash of scene object names...
-	    unsigned long long lhash = bu_list_len(gedp->ged_gdp->gd_headDisplay);
+	    unsigned long long lhash = dl_name_hash(gedp);
 	    unsigned long long lhash_edit = lhash;
-	    for (int i = 0; i < RT_DBNHASH; i++) {
-		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		    if (dp->edit_flag) {
-			bu_log("%s edited.  TODO - update scene object\n", dp->d_namep);
-		    }
-		    lhash_edit += dp->edit_flag;
-		    dp->edit_flag = 0;
-		}
-	    }
+	    lhash_edit += dl_update(gedp);
 	    if (lhash_edit != canvas->prev_lhash) {
 		std::cout << "prev_lhash: " << canvas->prev_lhash << "\n";
 		std::cout << "lhash: " << lhash_edit << "\n";
@@ -199,6 +303,7 @@ DM_MainWindow::run_cmd(const QString &command)
 	    htimee = std::chrono::steady_clock::now();
 	    sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
 	    bu_log("Display list hash (sec): %d\n", sectime);
+
 	    htimes = std::chrono::steady_clock::now();
 	    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 	    if (ghash != canvas->prev_ghash) {
@@ -208,9 +313,10 @@ DM_MainWindow::run_cmd(const QString &command)
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
 	    htimee = std::chrono::steady_clock::now();
-	    etime = std::chrono::steady_clock::now();
 	    sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
 	    bu_log("Display list hash (GED data)(sec): %d\n", sectime);
+
+	    etime = std::chrono::steady_clock::now();
 	    sectime = std::chrono::duration_cast<std::chrono::seconds>(etime - stime).count();
 	    bu_log("All hashes (sec): %d\n", sectime);
 	    if (dm_get_dirty((struct dm *)gedp->ged_dmp))
