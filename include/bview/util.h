@@ -83,6 +83,14 @@ BVIEW_EXPORT extern unsigned long long bview_dl_hash(struct display_list *dl);
  * by a graphical interface's mouse motion. */
 BVIEW_EXPORT extern int bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsigned long long flags);
 
+
+/* Beginning extraction of the core of libtclcad view object manipulation logic.
+ * The following functions will initially be pretty straightforward mappings
+ * from libtclcad, and will likely evolve over time. */
+
+BVIEW_EXPORT extern void bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
+
+
 __END_DECLS
 
 /** @} */

@@ -294,6 +294,24 @@ bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsign
 }
 
 
+void
+bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y)
+{
+    if (!v)
+	return;
+
+    if (fx) {
+	fastf_t tx = x / (fastf_t)v->gv_width * 2.0 - 1.0;
+	(*fx) = tx;
+    }
+
+    if (fy) {
+	fastf_t aspect = (fastf_t)v->gv_width / (fastf_t)v->gv_height;
+	fastf_t ty = (y / (fastf_t)v->gv_height * -2.0 + 1.0) / aspect;
+	(*fy) = ty;
+    }
+}
+
 /*
  * Local Variables:
  * tab-width: 8

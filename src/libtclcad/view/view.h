@@ -167,8 +167,6 @@ extern void to_refresh_all_views(struct tclcad_obj *top);
 extern void to_refresh_view(struct bview *gdvp);
 
 /* Util */
-extern fastf_t screen_to_view_x(struct dm *dmp, fastf_t x);
-extern fastf_t screen_to_view_y(struct dm *dmp, fastf_t y);
 extern int to_is_viewable(struct bview *gdvp);
 
 /*

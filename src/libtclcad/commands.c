@@ -5674,8 +5674,9 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gv_view2model, view);
 
@@ -5724,8 +5725,9 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(view));
