@@ -32,6 +32,13 @@
 
 __BEGIN_DECLS
 
+struct _ged_view_info {
+    struct ged *gedp;
+    int verbosity;
+    const struct bu_cmdtab *cmds;
+    struct bu_opt_desc *gopts;
+};
+
 GED_EXPORT extern int ged_quat_core(struct ged *gedp, int argc, const char **argv);
 GED_EXPORT extern int ged_ypr_core(struct ged *gedp, int argc, const char **argv);
 GED_EXPORT extern int ged_aet_core(struct ged *gedp, int argc, const char **argv);

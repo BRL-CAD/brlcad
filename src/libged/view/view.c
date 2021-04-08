@@ -29,9 +29,258 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmd.h"
+#include "bu/vls.h"
+
 #include "../ged_private.h"
 #include "./ged_view.h"
 
+static int
+_view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gd->gedp->ged_result_str, "%s\n%s\n", us, ps);
+	return 1;
+    }
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gd->gedp->ged_result_str, "%s\n", ps);
+	return 1;
+    }
+    return 0;
+}
+
+int
+_view_cmd_aet(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] aet [vals]";
+    const char *purpose_string = "get/set azimuth/elevation/twist of view";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_aet_core(gd->gedp, argc, argv);
+}
+
+int
+_view_cmd_center(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] center [vals]";
+    const char *purpose_string = "get/set view center";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_center_core(gd->gedp, argc, argv);
+}
+
+int
+_view_cmd_eye(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] eye [vals]";
+    const char *purpose_string = "get/set view eye point";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_eye_core(gd->gedp, argc, argv);
+}
+
+int
+_view_cmd_faceplate(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] faceplate [vals]";
+    const char *purpose_string = "manage faceplate view elements";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_faceplate_core(gd->gedp, argc, argv);
+}
+
+int
+_view_cmd_lines(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] lines [options] [args]";
+    const char *purpose_string = "manipulate view lines";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_view_data_lines(gd->gedp, argc, argv);
+}
+
+int
+_view_cmd_polygons(void *bs, int argc, const char **argv)
+{
+    //struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] polygons [options] [args]";
+    const char *purpose_string = "manipulate view polygons";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+}
+
+int
+_view_cmd_quat(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] quat [vals]";
+    const char *purpose_string = "get/set quaternion of view";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_quat_core(gd->gedp, argc, argv);
+}
+
+int
+_view_cmd_selections(void *bs, int argc, const char **argv)
+{
+    //struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] selections [options] [args]";
+    const char *purpose_string = "manipulate view selections";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+}
+
+int
+_view_cmd_size(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] size [vals]";
+    const char *purpose_string = "get/set view size";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_size_core(gd->gedp, argc, argv);
+}
+
+int
+_view_cmd_snap(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] snap [vals]";
+    const char *purpose_string = "snap to view elements";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_view_snap(gd->gedp, argc, argv);
+}
+
+int
+_view_cmd_ypr(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] ypr [vals]";
+    const char *purpose_string = "get/set yaw/pitch/roll of view";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return ged_ypr_core(gd->gedp, argc, argv);
+}
+
+const struct bu_cmdtab _view_cmds[] = {
+    { "ae",         _view_cmd_aet},
+    { "aet",        _view_cmd_aet},
+    { "center",     _view_cmd_center},
+    { "eye",        _view_cmd_eye},
+    { "faceplate",  _view_cmd_faceplate},
+    { "lines",      _view_cmd_lines},
+    { "polygons",   _view_cmd_polygons},
+    { "quat",       _view_cmd_quat},
+    { "selections", _view_cmd_selections},
+    { "size",       _view_cmd_size},
+    { "snap",       _view_cmd_snap},
+    { "ypr",        _view_cmd_ypr},
+    { (char *)NULL,      NULL}
+};
+
+int
+ged_view_core(struct ged *gedp, int argc, const char *argv[])
+{
+    int help = 0;
+    struct _ged_view_info gd;
+    gd.gedp = gedp;
+    gd.cmds = _view_cmds;
+    gd.verbosity = 0;
+
+    // Sanity
+    if (UNLIKELY(!gedp || !argc || !argv)) {
+	return GED_ERROR;
+    }
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    // We know we're the dm command - start processing args
+    argc--; argv++;
+
+    // See if we have any high level options set
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",    "",  NULL,               &help,         "Print help");
+    BU_OPT(d[1], "v", "verbose", "",  &bu_opt_incr_long,  &gd.verbosity, "Verbose output");
+    BU_OPT_NULL(d[2]);
+
+    gd.gopts = d;
+
+    // High level options are only defined prior to the subcommand
+    int cmd_pos = -1;
+    for (int i = 0; i < argc; i++) {
+	if (bu_cmd_valid(_view_cmds, argv[i]) == BRLCAD_OK) {
+	    cmd_pos = i;
+	    break;
+	}
+    }
+
+    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
+    (void)bu_opt_parse(NULL, acnt, argv, d);
+
+    if (help) {
+	if (cmd_pos >= 0) {
+	    argc = argc - cmd_pos;
+	    argv = &argv[cmd_pos];
+	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, argc, argv);
+	} else {
+	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
+	}
+	return GED_OK;
+    }
+
+    // Must have a subcommand
+    if (cmd_pos == -1) {
+	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
+	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
+	return GED_ERROR;
+    }
+
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
+	return GED_ERROR;
+    }
+
+    int ret;
+    if (bu_cmd(_view_cmds, argc, argv, 0, (void *)&gd, &ret) == BRLCAD_OK) {
+	return ret;
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+    }
+
+    return GED_ERROR;
+}
 
 int
 ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
@@ -97,13 +346,14 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
 struct ged_cmd_impl view_func_cmd_impl = {"view_func", ged_view_func_core, GED_CMD_DEFAULT};
 const struct ged_cmd view_func_cmd = { &view_func_cmd_impl };
 
-struct ged_cmd_impl view_cmd_impl = {"view", ged_view_func_core, GED_CMD_DEFAULT};
+struct ged_cmd_impl view_cmd_impl = {"view", ged_view_core, GED_CMD_DEFAULT};
 const struct ged_cmd view_cmd = { &view_cmd_impl };
 
 struct ged_cmd_impl quat_cmd_impl = {"quat", ged_quat_core, GED_CMD_DEFAULT};
