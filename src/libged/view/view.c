@@ -353,8 +353,11 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 struct ged_cmd_impl view_func_cmd_impl = {"view_func", ged_view_func_core, GED_CMD_DEFAULT};
 const struct ged_cmd view_func_cmd = { &view_func_cmd_impl };
 
-struct ged_cmd_impl view_cmd_impl = {"view", ged_view_core, GED_CMD_DEFAULT};
+struct ged_cmd_impl view_cmd_impl = {"view", ged_view_func_core, GED_CMD_DEFAULT};
 const struct ged_cmd view_cmd = { &view_cmd_impl };
+
+struct ged_cmd_impl view2_cmd_impl = {"view2", ged_view_core, GED_CMD_DEFAULT};
+const struct ged_cmd view2_cmd = { &view2_cmd_impl };
 
 struct ged_cmd_impl quat_cmd_impl = {"quat", ged_quat_core, GED_CMD_DEFAULT};
 const struct ged_cmd quat_cmd = { &quat_cmd_impl };
@@ -389,6 +392,7 @@ const struct ged_cmd sdata_lines_cmd = { &sdata_lines_cmd_impl };
 const struct ged_cmd *view_cmds[] = {
     &view_func_cmd,
     &view_cmd,
+    &view2_cmd,
     &quat_cmd,
     &ypr_cmd,
     &aet_cmd,
@@ -402,7 +406,7 @@ const struct ged_cmd *view_cmds[] = {
     NULL
 };
 
-static const struct ged_plugin pinfo = { GED_API,  view_cmds, 12 };
+static const struct ged_plugin pinfo = { GED_API,  view_cmds, 13 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
