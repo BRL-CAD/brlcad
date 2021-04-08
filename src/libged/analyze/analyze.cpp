@@ -580,12 +580,61 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+extern "C" int
+_analyze_cmd_help(void *bs, int argc, const char **argv)
+{
+    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
+    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
+	bu_vls_printf(gc->gedp->ged_result_str, "analyze [options] subcommand [args]\n");
+	if (gc->gopts) {
+	    char *option_help = bu_opt_describe(gc->gopts, NULL);
+	    if (option_help) {
+		bu_vls_printf(gc->gedp->ged_result_str, "Options:\n%s\n", option_help);
+		bu_free(option_help, "help str");
+	    }
+	}
+	bu_vls_printf(gc->gedp->ged_result_str, "Available subcommands:\n");
+	const struct bu_cmdtab *ctp = NULL;
+	int ret;
+	const char *helpflag[2];
+	helpflag[1] = PURPOSEFLAG;
+	size_t maxcmdlen = 0;
+	for (ctp = gc->cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
+	}
+	for (ctp = gc->cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    bu_vls_printf(gc->gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) +   2, " ");
+	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
+		helpflag[0] = ctp->ct_name;
+		bu_cmd(gc->cmds, 2, helpflag, 0, (void *)gc, &ret);
+	    } else {
+		bu_vls_printf(gc->gedp->ged_result_str, "print help and exit\n");
+	    }
+	}
+    } else {
+	int ret;
+	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
+	helpargv[0] = argv[0];
+	helpargv[1] = HELPFLAG;
+	for (int i = 1; i < argc; i++) {
+	    helpargv[i+1] = argv[i];
+	}
+	bu_cmd(gc->cmds, argc+1, helpargv, 0, (void *)gc, &ret);
+	bu_free(helpargv, "help argv");
+	return ret;
+    }
+
+    return GED_OK;
+}
+
+
 const struct bu_cmdtab _analyze_cmds[] = {
       { "summarize",           _analyze_cmd_summarize},
       { "intersect",           _analyze_cmd_intersect},
       { "subtract",            _analyze_cmd_subtract},
       { (char *)NULL,      NULL}
   };
+
 
 extern "C" int
 ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
@@ -613,7 +662,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     gc->gopts = d;
 
     if (argc == 1) {
-	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_analyze_cmds, "analyze", "[options] subcommand [args]", &gc, 0, NULL);
+	_analyze_cmd_help(gc, 0, NULL);
 	_analyze_info_destroy(gc);
 	return GED_OK;
     }
@@ -635,9 +684,9 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 	if (cmd_pos >= 0) {
 	    argc = argc - cmd_pos;
 	    argv = &argv[cmd_pos];
-	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_analyze_cmds, "analyze", "[options] subcommand [args]", &gc, argc, argv);
+	    _analyze_cmd_help(gc, argc, argv);
 	} else {
-	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_analyze_cmds, "analyze", "[options] subcommand [args]", &gc, 0, NULL);
+	    _analyze_cmd_help(gc, 0, NULL);
 	}
 	_analyze_info_destroy(gc);
 	return GED_OK;
