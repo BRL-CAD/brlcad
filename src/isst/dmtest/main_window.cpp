@@ -160,7 +160,6 @@ dl_update(struct ged *gedp)
 		    if (dp->edit_flag) {
 			// db object along path was edited - we
 			// need to update the object's info
-			bu_log("%s edited.  TODO - update scene object\n", dp->d_namep);
 			changed = 1;
 			hincr++;
 			break;
@@ -168,11 +167,13 @@ dl_update(struct ged *gedp)
 		}
 		if (changed) {
 		    char *spath = db_path_to_string(&bdata->s_fullpath);
+		    bu_log("redrawing %s\n", spath);
 		    const char *av[3];
 		    av[0] = "draw";
 		    av[1] = spath;
 		    av[2] = NULL;
 		    ged_draw(gedp, 2, av);
+		    bu_free(spath, "free spath");
 		}
 	    }
 	    sp = nsp;
