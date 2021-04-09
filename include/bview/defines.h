@@ -269,52 +269,88 @@ struct bview_other_state {
     int gos_text_color[3];
 };
 
+/* Until we can make everything a view object (probably not practical as long
+ * as libtclcad is doing things the current way) we're going to have to have
+ * some awareness of whether we're interacting with a view object like lines or
+ * polygons vs. a .g database object's representative view or a transient
+ * element like a nirt shotline visual. */
+enum bview_selection_mode {
+    BVIEW_VIEW, // Default - manipulate the view
+    BVIEW_DB,   // Database or custom objects (anything with a bview_scene_obj structure)
+    BVIEW_ASC,  // Angle distance cursor
+    BVIEW_DATA_ARROWS,
+    BVIEW_DATA_LINES,
+    BVIEW_DATA_LABELS,
+    BVIEW_DATA_POLYGONS,
+    BVIEW_INTERACTIVE_RECT
+};
+struct bview_selection_state {
+    enum bview_selection_mode m;
+    struct bu_ptbl s;
+};
+
+
 struct bview {
-    uint32_t			magic;         /**< @brief magic number */
-    struct bu_vls               gv_name;
-    fastf_t                     gv_i_scale;
-    fastf_t                     gv_a_scale;    /**< @brief absolute scale */
-    fastf_t                     gv_scale;
-    fastf_t                     gv_size;                /**< @brief  2.0 * scale */
-    fastf_t                     gv_isize;               /**< @brief  1.0 / size */
-    fastf_t                     gv_perspective;         /**< @brief  perspective angle */
-    vect_t                      gv_aet;
-    vect_t                      gv_eye_pos;             /**< @brief  eye position */
-    vect_t                      gv_keypoint;
-    char                        gv_coord;               /**< @brief  coordinate system */
-    char                        gv_rotate_about;        /**< @brief  indicates what point rotations are about */
-    mat_t                       gv_rotation;
-    mat_t                       gv_center;
-    mat_t                       gv_model2view;
-    mat_t                       gv_pmodel2view;
-    mat_t                       gv_view2model;
-    mat_t                       gv_pmat;                /**< @brief  perspective matrix */
-    void                        (*gv_callback)();       /**< @brief  called in ged_view_update with gvp and gv_clientData */
-    void *                      gv_clientData;          /**< @brief  passed to gv_callback */
-    int				gv_width;
-    int				gv_height;
-    fastf_t                     gv_base2local;
-    fastf_t                     gv_prevMouseX;
-    fastf_t                     gv_prevMouseY;
-    fastf_t                     gv_minMouseDelta;
-    fastf_t                     gv_maxMouseDelta;
-    fastf_t                     gv_rscale;
-    fastf_t                     gv_sscale;
-    int                         gv_mode;
-    int                         gv_zclip;
-    int                         gv_cleared;
+    uint32_t	  magic;             /**< @brief magic number */
+    struct bu_vls gv_name;
+    fastf_t       gv_i_scale;
+    fastf_t       gv_a_scale;        /**< @brief absolute scale */
+    fastf_t       gv_scale;
+    fastf_t       gv_size;           /**< @brief  2.0 * scale */
+    fastf_t       gv_isize;          /**< @brief  1.0 / size */
+    fastf_t       gv_perspective;    /**< @brief  perspective angle */
+    vect_t        gv_aet;
+    vect_t        gv_eye_pos;        /**< @brief  eye position */
+    vect_t        gv_keypoint;
+    char          gv_coord;          /**< @brief  coordinate system */
+    char          gv_rotate_about;   /**< @brief  indicates what point rotations are about */
+    mat_t         gv_rotation;
+    mat_t         gv_center;
+    mat_t         gv_model2view;
+    mat_t         gv_pmodel2view;
+    mat_t         gv_view2model;
+    mat_t         gv_pmat;           /**< @brief  perspective matrix */
+    void          (*gv_callback)();  /**< @brief  called in ged_view_update with gvp and gv_clientData */
+    void *        gv_clientData;     /**< @brief  passed to gv_callback */
+    int		  gv_width;
+    int		  gv_height;
+    fastf_t       gv_base2local;
+    fastf_t       gv_prevMouseX;
+    fastf_t       gv_prevMouseY;
+    fastf_t       gv_minMouseDelta;
+    fastf_t       gv_maxMouseDelta;
+    fastf_t       gv_rscale;
+    fastf_t       gv_sscale;
+    int           gv_mode;
+    int           gv_zclip;
+    int           gv_cleared;
+    int           gv_snap_lines;
+    double 	  gv_snap_tol_factor;
+    int           gv_adaptive_plot;
+    int           gv_redraw_on_zoom;
+    int           gv_x_samples;
+    int           gv_y_samples;
+    fastf_t       gv_point_scale;
+    fastf_t       gv_curve_scale;
+    fastf_t       gv_data_vZ;
+    size_t        gv_bot_threshold;
+    int		  gv_hidden;
 
+    // Faceplate elements fall into two general categories: those which are
+    // interactively adjusted (in a geometric sense) and those which are not.
+    // The non-interactive are generally just enabled or disabled:
+    struct bview_axes_state     gv_model_axes;
+    struct bview_axes_state     gv_view_axes;
+    struct bview_grid_state     gv_grid;
+    struct bview_other_state    gv_center_dot;
+    struct bview_other_state    gv_view_params;
+    struct bview_other_state    gv_view_scale;
 
-    // TODO - these are all special types of non-.g-obj scene objects.  Need
-    // to figure out how to generalize the concept of view object to handle
-    // these...  currently much of the mouse interactive logic seems to live in
-    // libtclcad, which won't work as a generic solution.  Can we do special
-    // case manipulative functions similar to bview_adjust for these data
-    // types?  We want the dx, dy mouse interpretations to live with the object
-    // definition or close to it, ideally...
+    // More complex are the view elements not corresponding to geometry objects
+    // but editable by the user.  These are selectable, but because they are
+    // not view objects which elements are part of the current selection set
+    // must be handled differently.
     struct bview_adc_state              gv_adc;
-    struct bview_axes_state             gv_model_axes;
-    struct bview_axes_state             gv_view_axes;
     struct bview_data_arrow_state       gv_data_arrows;
     struct bview_data_axes_state        gv_data_axes;
     struct bview_data_label_state       gv_data_labels;
@@ -325,25 +361,9 @@ struct bview {
     struct bview_data_label_state       gv_sdata_labels;
     struct bview_data_line_state        gv_sdata_lines;
     bview_data_polygon_state            gv_sdata_polygons;
-    struct bview_grid_state             gv_grid;
-    struct bview_other_state            gv_center_dot;
     struct bview_other_state            gv_prim_labels;
-    struct bview_other_state            gv_view_params;
-    struct bview_other_state            gv_view_scale;
     struct bview_interactive_rect_state gv_rect;
 
-    int                           gv_snap_lines;
-    double 			  gv_snap_tol_factor;
-
-    int                         gv_adaptive_plot;
-    int                         gv_redraw_on_zoom;
-    int                         gv_x_samples;
-    int                         gv_y_samples;
-    fastf_t                     gv_point_scale;
-    fastf_t                     gv_curve_scale;
-    fastf_t                     gv_data_vZ;
-    size_t                      gv_bot_threshold;
-    int			        gv_hidden;
     void                        *dmp;  /* Display manager pointer, if one is associated with this view */
     void                        *u_data; /* Caller data associated with this view */
     struct bu_ptbl *callbacks;
