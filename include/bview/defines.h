@@ -275,14 +275,14 @@ struct bview_other_state {
  * polygons vs. a .g database object's representative view or a transient
  * element like a nirt shotline visual. */
 enum bview_selection_mode {
-    BVIEW_VIEW, // Default - manipulate the view
-    BVIEW_DB,   // Database or custom objects (anything with a bview_scene_obj structure)
-    BVIEW_ASC,  // Angle distance cursor
-    BVIEW_DATA_ARROWS,
-    BVIEW_DATA_LINES,
-    BVIEW_DATA_LABELS,
-    BVIEW_DATA_POLYGONS,
-    BVIEW_INTERACTIVE_RECT
+    BVIEW_VIEW_DEFAULT, // Default - manipulate the view
+    BVIEW_VIEW_DB,      // Database or custom objects (anything with a bview_scene_obj structure)
+    BVIEW_VIEW_ADC,     // Angle distance cursor
+    BVIEW_VIEW_DATA_ARROWS,
+    BVIEW_VIEW_DATA_LINES,
+    BVIEW_VIEW_DATA_LABELS,
+    BVIEW_VIEW_DATA_POLYGONS,
+    BVIEW_VIEW_INTERACTIVE_RECT
 };
 struct bview_selection_state {
     enum bview_selection_mode m;
@@ -350,6 +350,7 @@ struct bview {
     // but editable by the user.  These are selectable, but because they are
     // not view objects which elements are part of the current selection set
     // must be handled differently.
+    struct bview_selection_state        gv_select;
     struct bview_adc_state              gv_adc;
     struct bview_data_arrow_state       gv_data_arrows;
     struct bview_data_axes_state        gv_data_axes;

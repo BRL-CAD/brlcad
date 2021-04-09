@@ -35,7 +35,7 @@
 #include "../ged_private.h"
 #include "./ged_view.h"
 
-static int
+int
 _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -116,19 +116,6 @@ _view_cmd_lines(void *bs, int argc, const char **argv)
 }
 
 int
-_view_cmd_polygons(void *bs, int argc, const char **argv)
-{
-    //struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    const char *usage_string = "view [options] polygons [options] [args]";
-    const char *purpose_string = "manipulate view polygons";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
-
-    return GED_ERROR;
-}
-
-int
 _view_cmd_quat(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -144,10 +131,65 @@ _view_cmd_quat(void *bs, int argc, const char **argv)
 int
 _view_cmd_selections(void *bs, int argc, const char **argv)
 {
-    //struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     const char *usage_string = "view [options] selections [options] [args]";
     const char *purpose_string = "manipulate view selections";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct bview *v = gd->gedp->ged_gvp;
+    if (!v) {
+	bu_vls_printf(gd->gedp->ged_result_str, "no current view selected\n");
+	return GED_ERROR;
+    }
+
+    if (!argc) {
+	switch (v->gv_select.m) {
+	    case BVIEW_VIEW_DEFAULT:
+		bu_vls_printf(gd->gedp->ged_result_str, "VIEW (Default)\n");
+		return GED_OK;
+	    case BVIEW_VIEW_DB:
+		bu_vls_printf(gd->gedp->ged_result_str, "DB (Scene Object)\n");
+		return GED_OK;
+	    case BVIEW_VIEW_ADC:
+		bu_vls_printf(gd->gedp->ged_result_str, "ADC (Angle/Distance Cursor)\n");
+		return GED_OK;
+	    case BVIEW_VIEW_DATA_ARROWS:
+		bu_vls_printf(gd->gedp->ged_result_str, "DATA_ARROWS\n");
+		return GED_OK;
+	    case BVIEW_VIEW_DATA_LINES:
+		bu_vls_printf(gd->gedp->ged_result_str, "DATA_LINES\n");
+		return GED_OK;
+	    case BVIEW_VIEW_DATA_LABELS:
+		bu_vls_printf(gd->gedp->ged_result_str, "DATA_LABELS\n");
+		return GED_OK;
+	    case BVIEW_VIEW_DATA_POLYGONS:
+		bu_vls_printf(gd->gedp->ged_result_str, "POLYGON (Polygon #%zd, point #%zd)", v->gv_data_polygons.gdps_curr_polygon_i, v->gv_data_polygons.gdps_curr_point_i);
+		if (v->gv_mode == BVIEW_POLY_CIRCLE_MODE) {
+		    bu_vls_printf(gd->gedp->ged_result_str, " (Circle)\n");
+		} else {
+		    bu_vls_printf(gd->gedp->ged_result_str, "\n");
+		}
+		return GED_OK;
+	    case BVIEW_VIEW_INTERACTIVE_RECT:
+		bu_vls_printf(gd->gedp->ged_result_str, "INTERACTIVE_RECT (Interactive Rectangle)\n");
+		return GED_OK;
+	    default:
+		bu_vls_printf(gd->gedp->ged_result_str, "unknown view selection mode\n");
+		return GED_ERROR;
+	}
+    }
+
+    if (BU_STR_EQUAL(argv[0], "clear") || BU_STR_EQUAL(argv[0], "VIEW")) {
+	v->gv_select.m = BVIEW_VIEW_DEFAULT;
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "POLYGON")) {
+	v->gv_select.m = BVIEW_VIEW_DATA_POLYGONS;
 	return GED_OK;
     }
 

@@ -45,6 +45,7 @@ __BEGIN_DECLS
 
 BVIEW_EXPORT extern int bview_add_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y);
 
+BVIEW_EXPORT extern int bview_update_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y);
 
 __END_DECLS
 
