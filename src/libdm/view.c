@@ -136,7 +136,7 @@ dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
 				   (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].num_points, \
 				   (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point, 1); \
 	    \
-	    if (_mode != DM_POLY_CONTOUR_MODE || _i != _last_poly || (_gdpsp)->gdps_cflag == 0) { \
+	    if (_mode != BVIEW_POLY_CONTOUR_MODE || _i != _last_poly || (_gdpsp)->gdps_cflag == 0) { \
 		(void)dm_draw_line_3d((_dmp),				\
 				      (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point[_last], \
 				      (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point[0]); \

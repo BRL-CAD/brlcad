@@ -1,5 +1,6 @@
 set(bview_headers
   defines.h
+  polygons.h
   util.h
   )
 BRLCAD_MANAGE_FILES(bview_headers ${INCLUDE_DIR}/brlcad/bview)

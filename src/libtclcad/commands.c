@@ -3714,7 +3714,7 @@ to_idle_mode(struct ged *gedp,
 	need_refresh = 1;
     }
 
-    if (mode != DM_POLY_CONTOUR_MODE ||
+    if (mode != BVIEW_POLY_CONTOUR_MODE ||
 	    gdvp->gv_data_polygons.gdps_cflag == 0)
     {
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;

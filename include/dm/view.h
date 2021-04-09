@@ -45,8 +45,6 @@
 #ifndef DM_VIEW_H
 #define DM_VIEW_H
 
-#define DM_POLY_CONTOUR_MODE 16
-
 __BEGIN_DECLS
 
 struct dm_path_edit_params {
