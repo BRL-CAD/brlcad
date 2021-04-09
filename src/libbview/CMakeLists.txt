@@ -18,6 +18,7 @@ set(LIBBVIEW_SRCS
   diff.c
   hash.c
   polygons.c
+  snap.c
   util.c
   )
 BRLCAD_ADDLIB(libbview "${LIBBVIEW_SRCS}" "libbg;libbn;libbu")

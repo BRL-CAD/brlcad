@@ -30,6 +30,7 @@
 
 
 #include "vmath.h"
+#include "bview.h"
 
 #include "../ged_private.h"
 
@@ -42,7 +43,7 @@ grid_vsnap(struct ged *gedp)
 
     MAT_DELTAS_GET_NEG(model_pt, gedp->ged_gvp->gv_center);
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    ged_snap_to_grid(gedp, &view_pt[X], &view_pt[Y]);
+    bview_snap_grid_2d(gedp->ged_gvp, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_pt);
     bview_update(gedp->ged_gvp);

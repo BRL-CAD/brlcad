@@ -114,10 +114,10 @@ to_mouse_append_pnt_common(struct ged *gedp,
     gedp->ged_gvp = gdvp;
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &view[X], &view[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &view[X], &view[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &view[X], &view[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &view[X], &view[Y]);
     }
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -2176,10 +2176,10 @@ to_mouse_poly_circ_func(Tcl_Interp *interp,
 
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fx, &fy);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &fx, &fy);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fx, &fy);
+	bview_snap_grid_2d(gedp->ged_gvp, &fx, &fy);
     }
 
     bu_vls_printf(&plist, "{0 ");
@@ -2493,10 +2493,10 @@ to_mouse_poly_ell_func(Tcl_Interp *interp,
 
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fx, &fy);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &fx, &fy);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fx, &fy);
+	bview_snap_grid_2d(gedp->ged_gvp, &fx, &fy);
     }
 
     bu_vls_printf(&plist, "{0 ");
@@ -2677,10 +2677,10 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
 
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fx, &fy);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &fx, &fy);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fx, &fy);
+	bview_snap_grid_2d(gedp->ged_gvp, &fx, &fy);
     }
 
 

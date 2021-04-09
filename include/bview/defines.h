@@ -28,6 +28,17 @@
  * types between otherwise independent libraries (libdm and libged, for
  * example).
  *
+ *
+ * NEXT STEPS:  get a selection set for the view organized, add commands that
+ * allow the view2 command to create(view) and select (view or solid) objects,
+ * and figure out how to allow per-object xy handling callbacks.  (The latter
+ * will probably in the end be how we implement primitive editing as well...)
+ *
+ * Test case will be the polygon circle - create and resize.  May want to
+ * switch the container being used from a raw array to a bu_ptbl...  eventually
+ * would probably be better to have polygons be first class view scene
+ * objects...
+ *
  */
 #ifndef DM_BVIEW_H
 #define DM_BVIEW_H
@@ -282,6 +293,7 @@ struct bview {
     void *                      gv_clientData;          /**< @brief  passed to gv_callback */
     int				gv_width;
     int				gv_height;
+    fastf_t                     gv_base2local;
     fastf_t                     gv_prevMouseX;
     fastf_t                     gv_prevMouseY;
     fastf_t                     gv_minMouseDelta;

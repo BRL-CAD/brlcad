@@ -683,60 +683,6 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
     return GED_OK;
 }
 
-int
-ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
-{
-    int nh, nv;		/* whole grid units */
-    point_t view_pt;
-    point_t view_grid_anchor;
-    fastf_t grid_units_h;		/* eventually holds only fractional horizontal grid units */
-    fastf_t grid_units_v;		/* eventually holds only fractional vertical grid units */
-    fastf_t sf;
-    fastf_t inv_sf;
-
-    if (gedp->ged_gvp == GED_VIEW_NULL)
-	return 0;
-
-    if (ZERO(gedp->ged_gvp->gv_grid.res_h) ||
-	ZERO(gedp->ged_gvp->gv_grid.res_v))
-	return 0;
-
-    sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;
-    inv_sf = 1 / sf;
-
-    VSET(view_pt, *vx, *vy, 0.0);
-    VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
-
-    MAT4X3PNT(view_grid_anchor, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_grid.anchor);
-    VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
-
-    grid_units_h = (view_grid_anchor[X] - view_pt[X]) / (gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    grid_units_v = (view_grid_anchor[Y] - view_pt[Y]) / (gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    nh = grid_units_h;
-    nv = grid_units_v;
-
-    grid_units_h -= nh;		/* now contains only the fraction part */
-    grid_units_v -= nv;		/* now contains only the fraction part */
-
-    if (grid_units_h <= -0.5)
-	*vx = view_grid_anchor[X] - ((nh - 1) * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    else if (0.5 <= grid_units_h)
-	*vx = view_grid_anchor[X] - ((nh + 1) * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    else
-	*vx = view_grid_anchor[X] - (nh * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-
-    if (grid_units_v <= -0.5)
-	*vy = view_grid_anchor[Y] - ((nv - 1) * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    else if (0.5 <= grid_units_v)
-	*vy = view_grid_anchor[Y] - ((nv + 1) * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    else
-	*vy = view_grid_anchor[Y] - (nv * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-
-    *vx *= inv_sf;
-    *vy *= inv_sf;
-
-    return 1;
-}
 
 int
 ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t rmat)

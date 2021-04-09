@@ -79,16 +79,13 @@ bview_add_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
     bview_screen_to_view(v, &fx, &fy, x, y);
 
 
-#if 0
-    // TODO - translate these routines down to bview...
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fx, &fy);
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fx, &fy);
+	bview_snap_grid_2d(v, &fx, &fy);
     }
-#endif
 
     VSET(v_pt, fx, fy, v->gv_data_vZ);
 
@@ -129,16 +126,14 @@ bview_update_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
     v->gv_prevMouseY = y;
     bview_screen_to_view(v, &fx, &fy, x, y);
 
-#if 0
-    // TODO - translate these routines down to bview...
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fx, &fy);
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fx, &fy);
+	bview_snap_grid_2d(v, &fx, &fy);
     }
-#endif
+
     VSET(v_pt, fx, fy, v->gv_data_vZ);
     VSUB2(vdiff, v_pt, ps->gdps_prev_point);
     r = MAGNITUDE(vdiff);

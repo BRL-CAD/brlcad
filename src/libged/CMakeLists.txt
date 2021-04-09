@@ -45,7 +45,6 @@ set(LIBGED_SOURCES
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
-  snap.c
   trace.c
   track.c
   translate_extrude.c

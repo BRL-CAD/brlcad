@@ -77,10 +77,6 @@ GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, str
 
 GED_EXPORT extern int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, int csoltab);
 
-/* defined in grid.c */
-GED_EXPORT extern int ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy);
-GED_EXPORT extern void ged_view_center_linesnap(struct ged *gedp);
-
 /**
  * Grid utility command.
  */
@@ -155,10 +151,6 @@ GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
 
 GED_EXPORT extern struct bview * ged_find_view(struct ged *gedp, const char *key);
-
-// TODO - this (and probably the grid logic too) belong at the libdm level - they're operating
-// on the bview, rather than the ged level data...
-GED_EXPORT extern int ged_snap_to_lines(struct ged *gedp, fastf_t *vx, fastf_t *vy);
 
 __END_DECLS
 

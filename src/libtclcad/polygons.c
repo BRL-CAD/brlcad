@@ -1170,10 +1170,10 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &v_pt[X], &v_pt[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);
@@ -1244,10 +1244,10 @@ to_poly_cont_build_func(Tcl_Interp *interp,
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &v_pt[X], &v_pt[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);
@@ -1605,10 +1605,10 @@ to_poly_ell_mode_func(Tcl_Interp *interp,
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &v_pt[X], &v_pt[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);
@@ -1776,10 +1776,10 @@ to_poly_rect_mode_func(Tcl_Interp *interp,
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &v_pt[X], &v_pt[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);

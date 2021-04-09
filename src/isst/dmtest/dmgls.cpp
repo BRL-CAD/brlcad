@@ -127,7 +127,7 @@ void dmGL::keyPressEvent(QKeyEvent *k) {
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
-
+    v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (CADkeyPressEvent(v, x_prev, y_prev, k)) {
 	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
@@ -148,6 +148,7 @@ void dmGL::mousePressEvent(QMouseEvent *e) {
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
+    v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (CADmousePressEvent(v, x_prev, y_prev, e)) {
 	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
@@ -168,6 +169,7 @@ void dmGL::mouseMoveEvent(QMouseEvent *e)
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
+    v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (CADmouseMoveEvent(v, x_prev, y_prev, e)) {
 	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
@@ -192,6 +194,7 @@ void dmGL::wheelEvent(QWheelEvent *e) {
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
+    v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (CADwheelEvent(v, e)) {
 	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);

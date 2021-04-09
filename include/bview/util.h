@@ -83,6 +83,17 @@ BVIEW_EXPORT extern unsigned long long bview_dl_hash(struct display_list *dl);
  * by a graphical interface's mouse motion. */
 BVIEW_EXPORT extern int bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsigned long long flags);
 
+/* Snap sample 2D point to lines active in the view */
+BVIEW_EXPORT extern int bview_snap_lines_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
+
+/* Snap sample 2D point to grid active in the view */
+BVIEW_EXPORT extern int bview_snap_grid_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
+
+/* Snap sample 3D point to lines active in the view */
+BVIEW_EXPORT extern int bview_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p);
+
+
+BVIEW_EXPORT extern void bview_view_center_linesnap(struct bview *v);
 
 /* Beginning extraction of the core of libtclcad view object manipulation logic.
  * The following functions will initially be pretty straightforward mappings
