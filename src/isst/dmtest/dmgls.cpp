@@ -155,6 +155,8 @@ void dmGL::mousePressEvent(QMouseEvent *e) {
 	update();
     }
 
+    bu_log("X,Y: %d, %d\n", e->x(), e->y());
+
     QOpenGLWidget::mousePressEvent(e);
 }
 

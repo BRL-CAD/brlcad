@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "bview.h"
@@ -37,6 +38,66 @@
 #include "../ged_private.h"
 #include "./ged_view.h"
 
+int
+_poly_cmd_draw(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view polygons draw [0|1]";
+    const char *purpose_string = "toggle view polygons";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", gedp->ged_gvp->gv_data_polygons.gdps_draw);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1 || (val != 0 && val != 1)) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    gedp->ged_gvp->gv_data_polygons.gdps_draw = val;
+
+    return GED_OK;
+}
+
+int
+_poly_cmd_color(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    bview_data_polygon_state *ps = &gedp->ged_gvp->gv_data_polygons;
+    const char *usage_string = "view polygons color [r/g/b]";
+    const char *purpose_string = "show set polygons color";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", ps->gdps_color[0], ps->gdps_color[1], ps->gdps_color[2]);
+	return GED_ERROR;
+    }
+    struct bu_color val;
+    if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    bu_color_to_rgb_ints(&val, &ps->gdps_color[0], &ps->gdps_color[1], &ps->gdps_color[2]);
+
+    return GED_OK;
+}
 int
 _poly_cmd_create(void *bs, int argc, const char **argv)
 {
@@ -112,6 +173,8 @@ _poly_cmd_update(void *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _poly_cmds[] = {
+    { "draw",       _poly_cmd_draw},
+    { "color",      _poly_cmd_color},
     { "create",     _poly_cmd_create},
     { "update",     _poly_cmd_update},
     { (char *)NULL,      NULL}
