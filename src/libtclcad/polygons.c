@@ -44,44 +44,6 @@
  */
 #define CLIPPER_MAX 1518500249
 
-
-/* These functions should be macros */
-static void
-to_polygon_free(struct bg_polygon *gpp)
-{
-    register size_t j;
-
-    if (gpp->num_contours == 0)
-	return;
-
-    for (j = 0; j < gpp->num_contours; ++j)
-	if (gpp->contour[j].num_points > 0)
-	    bu_free((void *)gpp->contour[j].point, "contour points");
-
-    bu_free((void *)gpp->contour, "contour");
-    bu_free((void *)gpp->hole, "hole");
-    gpp->num_contours = 0;
-}
-
-
-static void
-to_polygons_free(struct bg_polygons *gpp)
-{
-    register size_t i;
-
-    if (gpp->num_polygons == 0)
-	return;
-
-    for (i = 0; i < gpp->num_polygons; ++i) {
-	to_polygon_free(&gpp->polygon[i]);
-    }
-
-    bu_free((void *)gpp->polygon, "data polygons");
-    gpp->polygon = (struct bg_polygon *)0;
-    gpp->num_polygons = 0;
-}
-
-
 static int
 to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct bview *gdvp, struct bg_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
 {
@@ -637,12 +599,12 @@ to_data_polygons_func(Tcl_Interp *interp,
 			       gdpsp->gdps_view2model);
 
 	/* Free the target polygon */
-	to_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
+	bg_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
 
 	/* When using defaults, the clip polygon is assumed to be temporary and is removed after clipping */
 	if (argc == 2) {
 	    /* Free the clip polygon */
-	    to_polygon_free(&gdpsp->gdps_polygons.polygon[j]);
+	    bg_polygon_free(&gdpsp->gdps_polygons.polygon[j]);
 
 	    /* No longer need space for the clip polygon */
 	    --gdpsp->gdps_polygons.num_polygons;
@@ -843,7 +805,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    }
 	    polygon_ac = ac;
 
-	    to_polygons_free(&gdpsp->gdps_polygons);
+	    bg_polygons_free(&gdpsp->gdps_polygons);
 	    gdpsp->gdps_target_polygon_i = 0;
 
 	    if (polygon_ac < 1) {
@@ -893,7 +855,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    return GED_ERROR;
 	}
 
-	to_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
+	bg_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
 
 	/* Not doing a struct copy to avoid overwriting the color, line width and line style. */
 	gdpsp->gdps_polygons.polygon[i].num_contours = gp.num_contours;

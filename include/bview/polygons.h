@@ -36,6 +36,7 @@
 
 __BEGIN_DECLS
 
+
 // Note - for these functions it is important that the bview
 // gv_width and gv_height values are current!  I.e.:
 //
