@@ -113,8 +113,8 @@ struct bview_scene_obj  {
 
     /* Database object related info */
     int s_represents_dbobj;
-    char s_Eflag;		/**< @brief  flag - not a solid but an "E'd" region */
-    short s_regionid;		/**< @brief  region ID */
+    char s_Eflag;		/**< @brief  flag - not a solid but an "E'd" region (MGED ONLY)*/
+    short s_regionid;		/**< @brief  region ID (MGED ONLY)*/
     mat_t s_mat;		/**< @brief mat to use for internal lookup */
 
     /* User data to associate with this view object */
