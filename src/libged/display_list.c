@@ -956,7 +956,8 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
     rt_db_free_internal(ip);
 
     if (ret < 0) {
-	bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath)->d_namep);
+	if (DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath))
+	    bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath)->d_namep);
 
 	return -1;
     }
