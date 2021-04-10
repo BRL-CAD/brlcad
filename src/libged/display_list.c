@@ -913,7 +913,8 @@ solid_point_spacing_for_view(
 
 
 static fastf_t
-draw_solid_wireframe(struct bview_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp)
+draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i *dbip,
+       	const struct bn_tol *tol, const struct bg_tess_tol *ttol)
 {
     int ret;
     struct bu_list vhead;
@@ -936,7 +937,7 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct db_i *dbip, struct db_tr
     if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 
 	info.vhead = &vhead;
-	info.tol = tsp->ts_tol;
+	info.tol = tol;
 	info.bot_threshold = (gvp) ? gvp->gv_bot_threshold : 0;
 
 	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
@@ -949,8 +950,7 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct db_i *dbip, struct db_tr
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
 	info.bot_threshold = (gvp) ? gvp->gv_bot_threshold : 0;
-	ret = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-		tsp->ts_tol, &info);
+	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, &info);
     }
 
     rt_db_free_internal(ip);
@@ -976,7 +976,7 @@ redraw_solid(struct bview_scene_obj *sp, struct db_i *dbip, struct db_tree_state
 	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
 	    RT_FREE_VLIST(&sp->s_vlist);
 	}
-	return draw_solid_wireframe(sp, dbip, tsp, gvp);
+	return draw_solid_wireframe(sp, gvp, dbip, tsp->ts_tol, tsp->ts_ttol);
     }
     return 0;
 }
