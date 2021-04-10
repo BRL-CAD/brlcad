@@ -78,6 +78,26 @@
 #  define DOWN 1
 #endif
 
+/* Note that it is possible for a view object to be
+ * view-only but also based off of database object data.
+ * Evaluated shaded objects would be an example, as
+ * would NIRT solid shotline visualizations or overlap
+ * visualizations.
+ *
+ * The distinction between objects (lines, labels, etc.)
+ * defined as bview_scene_obj VIEW ONLY objects and the
+ * faceplate elements is objects defined this way DO
+ * exist in the 3D scene, and will move as 3D elements
+ * when the view is manipulated.  Faceplate elements
+ * exist only in the HUD.
+ */
+#define BVIEW_DBOBJ_BASED    0x01
+#define BVIEW_VIEWONLY       0x02
+#define BVIEW_LINES          0x04
+#define BVIEW_ARROWS         0x08
+#define BVIEW_LABELS         0x10
+#define BVIEW_POLYGONS       0x20
+
 struct bview_scene_obj  {
     struct bu_list l;
 
@@ -111,8 +131,23 @@ struct bview_scene_obj  {
     /* View object name */
     struct bu_vls name;
 
+
+    /* View-only object data storage (s_vlist is used for
+     * db objects vlists) */
+    unsigned long long s_typeflags;  /**<@brief type of scene object */
+#if 0
+    // TODO - figure out how we want to represent these.  We'll
+    // have to leave the old data structures and containers for
+    // libtclcad, but if we want something else as a container
+    // here...
+    struct bview_data_arrow_state arrows;
+    struct bview_data_axes_state  axes;
+    struct bview_data_label_state labels;
+    struct bview_data_line_state  lines;
+    bview_data_polygon_state      polygons;
+#endif
+
     /* Database object related info */
-    int s_represents_dbobj;
     char s_Eflag;		/**< @brief  flag - not a solid but an "E'd" region (MGED ONLY)*/
     short s_regionid;		/**< @brief  region ID (MGED ONLY)*/
     mat_t s_mat;		/**< @brief mat to use for internal lookup */
