@@ -128,6 +128,8 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     }
 
     bview_add_circle(gedp->ged_gvp, &gedp->ged_gvp->gv_data_polygons, x, y);
+    int ind = gedp->ged_gvp->gv_data_polygons.gdps_polygons.num_polygons - 1;
+    bu_vls_printf(gedp->ged_result_str, "%d\n", ind);
 
     return GED_OK;
 }
