@@ -496,6 +496,9 @@ _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_
 
     if (db_string_to_path(&subpath, dbip, path) == 0) {
 	gdlp = BU_LIST_NEXT(display_list, hdlp);
+
+	// Zero out the worked flag so we can tell which scene
+	// objects have been processed.
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    gdlp->dl_wflag = 0;
 	    gdlp = BU_LIST_PNEXT(display_list, gdlp);

@@ -78,41 +78,84 @@
 #  define DOWN 1
 #endif
 
-/* Note that it is possible for a view object to be
- * view-only but also based off of database object data.
- * Evaluated shaded objects would be an example, as
- * would NIRT solid shotline visualizations or overlap
- * visualizations.
+/* Note that it is possible for a view object to be view-only (not
+ * corresponding directly to the wireframe of a database shape) but also based
+ * off of database data.  Evaluated shaded objects would be an example, as
+ * would NIRT solid shotline visualizations or overlap visualizations.  The
+ * categorizations for the various types of bview_scene_obj objects would be:
  *
- * The distinction between objects (lines, labels, etc.)
- * defined as bview_scene_obj VIEW ONLY objects and the
- * faceplate elements is objects defined this way DO
- * exist in the 3D scene, and will move as 3D elements
- * when the view is manipulated.  Faceplate elements
- * exist only in the HUD.
+ * solid wireframe/triangles (obj.s):  BVIEW_DBOBJ_BASED
+ * rtcheck overlap visual:             BVIEW_DBOBJ_BASED & BVIEW_VIEWONLY
+ * polygon/line/label:                 BVIEW_VIEWONLY
+ *
+ * The distinction between objects (lines, labels, etc.) defined as
+ * bview_scene_obj VIEW ONLY objects and the faceplate elements is objects
+ * defined this way DO exist in the 3D scene, and will move as 3D elements when
+ * the view is manipulated.  Faceplate elements exist only in the HUD and are
+ * not bview_scene_obj objects.
+
+ * TODO - not sure yet, but label text may always display parallel to the view
+ * plane...
  */
 #define BVIEW_DBOBJ_BASED    0x01
 #define BVIEW_VIEWONLY       0x02
 #define BVIEW_LINES          0x04
-#define BVIEW_ARROWS         0x08
 #define BVIEW_LABELS         0x10
 #define BVIEW_POLYGONS       0x20
+
+/* Lines and arrows are both expressed as line segs.  For non-arrows, tip
+ * length and width are 0 */
+struct bview_line_seg {
+    point_t   p1;                  /* in model coordinates */
+    point_t   p2;                  /* in model coordinates */
+    int       arrow_tip_length;
+    int       arrow_tip_width;
+};
+
+/* TODO - this needs to express most/all of the annotation data, since this is
+ * probably ultimately how we will visualize them. */
+struct bview_label {
+    int         size;
+    struct bu_vls label;
+    point_t     p;
+};
+
+/* TODO - bg_polygon stores 3D points.  Is vZ used to set the point Z? */
+struct bview_polygon {
+    int                 cflag;             /* contour flag */
+    size_t              curr_point_i;
+    fastf_t             vZ;
+    struct bg_polygon   polygon;
+};
+
+// TODO - right now, display_lists are used to group bview_scene_obj objects.
+//
+// Could we change this so that bview_scene_obj objects support lists of child
+// objects, and avoid the need for a separate display_list type?
 
 struct bview_scene_obj  {
     struct bu_list l;
 
+    /* View object name */
+    struct bu_vls name;
+
     /* Display properties */
     char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */
     char s_iflag;	        /**< @brief  UP = illuminated, DOWN = regular */
+
+    char s_wflag;		/**< @brief  work flag - used by various libged and Tcl functions */
+
     char s_soldash;		/**< @brief  solid/dashed line flag */
-    char s_uflag;		/**< @brief  1 - the user specified the color */
-    char s_dflag;		/**< @brief  1 - s_basecolor is derived from the default */
-    char s_cflag;		/**< @brief  1 - use the default color */
-    char s_wflag;		/**< @brief  work flag */
-    unsigned char s_basecolor[3];	/**< @brief  color from containing region */
-    unsigned char s_color[3];	/**< @brief  color to draw as */
-    fastf_t s_transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] */
     int s_hiddenLine;         	/**< @brief  1 - hidden line */
+
+    char s_dflag;		/**< @brief  1 - s_basecolor is derived from the default */
+    unsigned char s_basecolor[3];	/**< @brief  color from containing region */
+
+    char s_uflag;		/**< @brief  1 - the user specified the color */
+    char s_cflag;		/**< @brief  1 - use the default color */
+    unsigned char s_color[3];	/**< @brief  color to draw as */
+
+    fastf_t s_transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] */
     int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
 				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 				 *	      2 - shaded (booleans NOT evaluated)
@@ -128,24 +171,14 @@ struct bview_scene_obj  {
     vect_t s_center;		/**< @brief  Center point of solid, in model space */
 
 
-    /* View object name */
-    struct bu_vls name;
-
-
-    /* View-only object data storage (s_vlist is used for
-     * db objects vlists) */
+    /* View-only object data storage.  The type flags will tell the drawing
+     * routines which data to use to draw */
     unsigned long long s_typeflags;  /**<@brief type of scene object */
-#if 0
-    // TODO - figure out how we want to represent these.  We'll
-    // have to leave the old data structures and containers for
-    // libtclcad, but if we want something else as a container
-    // here...
-    struct bview_data_arrow_state arrows;
-    struct bview_data_axes_state  axes;
-    struct bview_data_label_state labels;
-    struct bview_data_line_state  lines;
-    bview_data_polygon_state      polygons;
-#endif
+    int s_line_width;          /* in pixels */
+    // NOTE - rework s_soldash to encompass line_style from polygons
+    struct bview_line_seg line_data;
+    struct bview_label label_data;
+    struct bview_polygon polygon_data;
 
     /* Database object related info */
     char s_Eflag;		/**< @brief  flag - not a solid but an "E'd" region (MGED ONLY)*/
