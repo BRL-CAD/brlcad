@@ -147,7 +147,7 @@ struct bview_scene_obj  {
 
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data */
     void *s_i_data;  /**< @brief custom view data (bview_line_seg, bview_label, bview_polyon, etc) */
-    int (*s_update_callback)(struct bview_scene_obj *);  /**< @brief custom update/generator for s_vlist */
+    int (*s_update_callback)(struct bview_scene_obj *, int x, int y);  /**< @brief custom update/generator for s_vlist */
 
     /* Actual 3D geometry data and information */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
@@ -163,7 +163,7 @@ struct bview_scene_obj  {
 
     char s_wflag;		/**< @brief  work flag - used by various libged and Tcl functions */
 
-    char s_soldash;		/**< @brief  solid/dashed line flag */
+    int s_soldash;		/**< @brief  solid/dashed line flag */
     int s_hiddenLine;         	/**< @brief  1 - hidden line */
 
     char s_dflag;		/**< @brief  1 - s_basecolor is derived from the default */

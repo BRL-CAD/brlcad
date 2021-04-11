@@ -152,6 +152,13 @@ dl_update(struct ged *gedp)
 	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
 	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    // TODO - this core logic should probably become the default
+	    // solid object s_update_callback function's standard viewing mode
+	    // routine (when interactively editing primitives a.l.a. MGED's
+	    // sedit mode, something else is needed since primitive parameters
+	    // are supposed to change in response to mouse motions...  for
+	    // normal checking we only need to redraw if the dbio layer asserts
+	    // a command changed something).
 	    if (sp->s_u_data) {
 		int changed = 0;
 		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
