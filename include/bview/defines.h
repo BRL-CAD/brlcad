@@ -133,11 +133,29 @@ struct bview_polygon {
 // Could we change this so that bview_scene_obj objects support lists of child
 // objects, and avoid the need for a separate display_list type?
 
+struct bview;
+
 struct bview_scene_obj  {
     struct bu_list l;
 
     /* View object name */
-    struct bu_vls name;
+    struct bu_vls s_uuid;       /**< @brief object name (should be unique) */
+    mat_t s_mat;		/**< @brief mat to use for internal lookup */
+
+    /* Associated bview */
+    struct bview *s_v;
+
+    /* Knowledge of how to create/update s_vlist and the other 3D geometry data */
+    void *s_i_data;  /**< @brief custom view data (bview_line_seg, bview_label, bview_polyon, etc) */
+    int (*s_update_callback)(struct bview_scene_obj *);  /**< @brief custom update/generator for s_vlist */
+
+    /* Actual 3D geometry data and information */
+    struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
+    int s_vlen;			/**< @brief  Number of actual cmd[] entries in vlist */
+    unsigned int s_dlist;	/**< @brief  display list index */
+    fastf_t s_size;		/**< @brief  Distance across solid, in model space */
+    fastf_t s_csize;		/**< @brief  Dist across clipped solid (model space) */
+    vect_t s_center;		/**< @brief  Center point of solid, in model space */
 
     /* Display properties */
     char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */
@@ -162,28 +180,9 @@ struct bview_scene_obj  {
 				 *	      3 - shaded (booleans evaluated)
 				 */
 
-    /* Actual 3D geometry data and information */
-    struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
-    int s_vlen;			/**< @brief  Number of actual cmd[] entries in vlist */
-    unsigned int s_dlist;	/**< @brief  display list index */
-    fastf_t s_size;		/**< @brief  Distance across solid, in model space */
-    fastf_t s_csize;		/**< @brief  Dist across clipped solid (model space) */
-    vect_t s_center;		/**< @brief  Center point of solid, in model space */
-
-
-    /* View-only object data storage.  The type flags will tell the drawing
-     * routines which data to use to draw */
-    unsigned long long s_typeflags;  /**<@brief type of scene object */
-    int s_line_width;          /* in pixels */
-    // NOTE - rework s_soldash to encompass line_style from polygons
-    struct bview_line_seg line_data;
-    struct bview_label label_data;
-    struct bview_polygon polygon_data;
-
     /* Database object related info */
     char s_Eflag;		/**< @brief  flag - not a solid but an "E'd" region (MGED ONLY)*/
     short s_regionid;		/**< @brief  region ID (MGED ONLY)*/
-    mat_t s_mat;		/**< @brief mat to use for internal lookup */
 
     /* User data to associate with this view object */
     void *s_u_data;
