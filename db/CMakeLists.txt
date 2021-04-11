@@ -62,6 +62,7 @@ function(ADD_G_TARGET in_model folder)
     # Define the target
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
+      COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}"
       COMMAND ${CMAKE_COMMAND} -DEXEC=$<TARGET_FILE:3dm-g> -P "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake"
       DEPENDS 3dm-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
