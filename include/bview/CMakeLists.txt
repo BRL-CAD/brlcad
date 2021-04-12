@@ -1,5 +1,6 @@
 set(bview_headers
   defines.h
+  events.h
   polygons.h
   util.h
   )

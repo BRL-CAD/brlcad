@@ -94,7 +94,7 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
 
     point_t center;
     MAT_DELTAS_GET_NEG(center, v->gv_center);
-    return bview_adjust(v, dx, dy, center, BVIEW_VIEW, view_flags);
+    return bview_adjust(v, dx, dy, center, 0, view_flags);
 
 }
 
@@ -156,7 +156,7 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
     // do the correct math.
     point_t center;
     MAT_DELTAS_GET_NEG(center, v->gv_center);
-    return bview_adjust(v, dx, dy, center, BVIEW_VIEW, view_flags);
+    return bview_adjust(v, dx, dy, center, 0, view_flags);
 
 }
 
@@ -172,7 +172,7 @@ int CADwheelEvent(struct bview *v, QWheelEvent *e)
     int dy = (incr > 0) ? 20 : -20;
 
     point_t origin = VINIT_ZERO;
-    return bview_adjust(v, dx, dy, origin, BVIEW_VIEW, BVIEW_SCALE);
+    return bview_adjust(v, dx, dy, origin, 0, BVIEW_SCALE);
 
 }
 

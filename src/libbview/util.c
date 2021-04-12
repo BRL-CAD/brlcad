@@ -27,6 +27,8 @@
 #include <string.h>
 #include "vmath.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bn/mat.h"
 #include "bn/vlist.h"
@@ -127,6 +129,11 @@ bview_init(struct bview *gvp)
     gvp->gv_snap_tol_factor = 10;
     gvp->gv_snap_lines = 0;
 
+    BU_GET(gvp->gv_scene_objs, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_scene_objs, 8, "scene_objs init");
+    BU_GET(gvp->gv_selected, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_selected, 8, "scene_objs init");
+
     bview_update(gvp);
 }
 
@@ -186,6 +193,23 @@ bview_update(struct bview *gvp)
 	}
 
     }
+}
+
+int
+bview_update_selected(struct bview *gvp)
+{
+    int ret = 0;
+    if (!gvp)
+	return 0;
+
+    for(size_t i = 0; i < BU_PTBL_LEN(gvp->gv_selected); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gvp->gv_selected, i);
+	if (s->s_update_callback) {
+	    ret += (*s->s_update_callback)(s);
+	}
+    }
+
+    return (ret > 0) ? 1 : 0;
 }
 
 // TODO - support constraints
@@ -272,11 +296,8 @@ _bview_scale(struct bview *v, int sensitivity, int factor, point_t UNUSED(keypoi
 }
 
 int
-bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsigned long long flags)
+bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int UNUSED(mode), unsigned long long flags)
 {
-    if (mode == BVIEW_ADC)
-	return -1;
-
     if (flags == BVIEW_IDLE)
 	return 0;
 

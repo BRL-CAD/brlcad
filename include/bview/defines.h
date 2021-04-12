@@ -121,7 +121,12 @@ struct bview_label {
 };
 
 /* TODO - bg_polygon stores 3D points.  Is vZ used to set the point Z? */
+#define BVIEW_POLYGON_GENERAL 0
+#define BVIEW_POLYGON_CIRCLE 1
+#define BVIEW_POLYGON_ELLIPSE 2
+#define BVIEW_POLYGON_RECTANGLE 3
 struct bview_polygon {
+    int                 type;
     int                 cflag;             /* contour flag */
     size_t              curr_point_i;
     fastf_t             vZ;
@@ -142,12 +147,15 @@ struct bview_scene_obj  {
     struct bu_vls s_uuid;       /**< @brief object name (should be unique) */
     mat_t s_mat;		/**< @brief mat to use for internal lookup */
 
-    /* Associated bview */
+    /* Associated bview.  Note that scene objects are not assigned uniquely to
+     * one view.  This value may be changed by the application in a multi-view
+     * scenario as an object is edited from multiple different views, to supply
+     * the necessary view context for editing. */
     struct bview *s_v;
 
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data */
     void *s_i_data;  /**< @brief custom view data (bview_line_seg, bview_label, bview_polyon, etc) */
-    int (*s_update_callback)(struct bview_scene_obj *, int x, int y);  /**< @brief custom update/generator for s_vlist */
+    int (*s_update_callback)(struct bview_scene_obj *);  /**< @brief custom update/generator for s_vlist */
 
     /* Actual 3D geometry data and information */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
@@ -183,6 +191,9 @@ struct bview_scene_obj  {
     /* Database object related info */
     char s_Eflag;		/**< @brief  flag - not a solid but an "E'd" region (MGED ONLY)*/
     short s_regionid;		/**< @brief  region ID (MGED ONLY)*/
+
+    /* Child objects of this object */
+    struct bu_ptbl children;
 
     /* User data to associate with this view object */
     void *s_u_data;
@@ -336,35 +347,23 @@ struct bview_other_state {
     int gos_text_color[3];
 };
 
-/* Until we can make everything a view object (probably not practical as long
- * as libtclcad is doing things the current way) we're going to have to have
- * some awareness of whether we're interacting with a view object like lines or
- * polygons vs. a .g database object's representative view or a transient
- * element like a nirt shotline visual. */
-enum bview_selection_mode {
-    BVIEW_VIEW_DEFAULT, // Default - manipulate the view
-    BVIEW_VIEW_DB,      // Database or custom objects (anything with a bview_scene_obj structure)
-    BVIEW_VIEW_ADC,     // Angle distance cursor
-    BVIEW_VIEW_DATA_ARROWS,
-    BVIEW_VIEW_DATA_LINES,
-    BVIEW_VIEW_DATA_LABELS,
-    BVIEW_VIEW_DATA_POLYGONS,
-    BVIEW_VIEW_INTERACTIVE_RECT
-};
-struct bview_selection_state {
-    enum bview_selection_mode m;
-    struct bu_ptbl s;
-};
-
-
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
     struct bu_vls gv_name;
+
+    /* Size info */
     fastf_t       gv_i_scale;
     fastf_t       gv_a_scale;        /**< @brief absolute scale */
     fastf_t       gv_scale;
     fastf_t       gv_size;           /**< @brief  2.0 * scale */
     fastf_t       gv_isize;          /**< @brief  1.0 / size */
+    int		  gv_width;
+    int		  gv_height;
+    fastf_t       gv_base2local;
+    fastf_t       gv_rscale;
+    fastf_t       gv_sscale;
+
+    /* Camera info */
     fastf_t       gv_perspective;    /**< @brief  perspective angle */
     vect_t        gv_aet;
     vect_t        gv_eye_pos;        /**< @brief  eye position */
@@ -377,17 +376,18 @@ struct bview {
     mat_t         gv_pmodel2view;
     mat_t         gv_view2model;
     mat_t         gv_pmat;           /**< @brief  perspective matrix */
-    void          (*gv_callback)();  /**< @brief  called in ged_view_update with gvp and gv_clientData */
-    void *        gv_clientData;     /**< @brief  passed to gv_callback */
-    int		  gv_width;
-    int		  gv_height;
-    fastf_t       gv_base2local;
+
+    /* Keyboard/mouse info */
     fastf_t       gv_prevMouseX;
     fastf_t       gv_prevMouseY;
+    int           gv_mouse_x;
+    int           gv_mouse_y;
+    char          gv_key;
+    unsigned long gv_mod_flags;
     fastf_t       gv_minMouseDelta;
     fastf_t       gv_maxMouseDelta;
-    fastf_t       gv_rscale;
-    fastf_t       gv_sscale;
+
+    /* Settings */
     int           gv_mode;
     int           gv_zclip;
     int           gv_cleared;
@@ -413,11 +413,16 @@ struct bview {
     struct bview_other_state    gv_view_params;
     struct bview_other_state    gv_view_scale;
 
+
+    // Container for storing bview_scene_obj elements unique to this
+    // view (labels, polygons, etc.)
+    struct bu_ptbl                      *gv_scene_objs;
+
     // More complex are the view elements not corresponding to geometry objects
     // but editable by the user.  These are selectable, but because they are
     // not view objects which elements are part of the current selection set
     // must be handled differently.
-    struct bview_selection_state        gv_select;
+    struct bu_ptbl                      *gv_selected;
     struct bview_adc_state              gv_adc;
     struct bview_data_arrow_state       gv_data_arrows;
     struct bview_data_axes_state        gv_data_axes;
@@ -432,9 +437,12 @@ struct bview {
     struct bview_other_state            gv_prim_labels;
     struct bview_interactive_rect_state gv_rect;
 
-    void                        *dmp;  /* Display manager pointer, if one is associated with this view */
-    void                        *u_data; /* Caller data associated with this view */
+    /* Callback, external data */
+    void          (*gv_callback)();  /**< @brief  called in ged_view_update with gvp and gv_clientData */
+    void           *gv_clientData;   /**< @brief  passed to gv_callback */
     struct bu_ptbl *callbacks;
+    void           *dmp;             /* Display manager pointer, if one is associated with this view */
+    void           *u_data;          /* Caller data associated with this view */
 };
 
 #endif /* DM_BVIEW_H */

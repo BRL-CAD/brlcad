@@ -42,6 +42,9 @@ BVIEW_EXPORT extern void bview_init(struct bview *v);
 /* Sync values within the bview, perform callbacks if any are defined */
 BVIEW_EXPORT extern void bview_update(struct bview *gvp);
 
+/* Update objects in the selection set (if any) and their children */
+BVIEW_EXPORT extern int bview_update_selected(struct bview *gvp);
+
 /* Return 1 if the visible contents differ
  * Return 2 if visible content is the same but settings differ
  * Return 3 if content is the same but user data, dmp or callbacks differ
@@ -57,14 +60,6 @@ BVIEW_EXPORT extern unsigned long long bview_dl_hash(struct display_list *dl);
 
 /* Return -1 if sync fails, else 0 */
 //BVIEW_EXPORT extern int bview_sync(struct bview *dest, struct bview *src);
-
-
-/* View manipulations fall into several categories - we define flags which can
- * be combined to specify various modes. */
-#define BVIEW_VIEW       0
-#define BVIEW_MODEL      1
-#define BVIEW_EDIT       2
-#define BVIEW_ADC        3
 
 /* Note that some of these are mutually exclusive as far as producing any
  * changes - a simultaneous constraint in X and Y, for example, results in a
