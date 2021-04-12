@@ -679,6 +679,12 @@ GED_EXPORT extern int
 _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds,
 	const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv);
 
+GED_EXPORT extern int
+_ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds,
+	const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv,
+       	int help, int cmd_pos);
+
+
 
 __END_DECLS
 

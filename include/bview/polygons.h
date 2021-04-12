@@ -43,9 +43,9 @@ __BEGIN_DECLS
 //  v->gv_width  = dm_get_width((struct dm *)v->dmp);
 //  v->gv_height = dm_get_height((struct dm *)v->dmp);
 
-BVIEW_EXPORT extern int bview_add_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y);
+BVIEW_EXPORT extern struct bview_scene_obj *bview_create_circle(struct bview *v, int x, int y);
 
-BVIEW_EXPORT extern int bview_update_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y);
+BVIEW_EXPORT extern int bview_update_circle(struct bview_scene_obj *s);
 
 __END_DECLS
 

@@ -36,49 +36,29 @@
 #include "bview/util.h"
 #include "bview/polygons.h"
 
-void
-bview_polygon_free(struct bg_polygon *gpp)
-{
-    register size_t j;
-
-    if (gpp->num_contours == 0)
-	return;
-
-    for (j = 0; j < gpp->num_contours; ++j)
-	if (gpp->contour[j].num_points > 0)
-	    bu_free((void *)gpp->contour[j].point, "contour points");
-
-    bu_free((void *)gpp->contour, "contour");
-    bu_free((void *)gpp->hole, "hole");
-    gpp->num_contours = 0;
-}
-
-
 /* Oof.  Followed the logic down the chain to_poly_circ_mode_func ->
  * to_data_polygons_func -> to_extract_contours_av to get what are hopefully
  * all the pieces needed to seed a circle at an XY point. */
-int
-bview_add_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
+struct bview_scene_obj *
+bview_create_circle(struct bview *v, int x, int y)
 {
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
+    struct bview_scene_obj *s;
+    BU_GET(s, struct bview_scene_obj);
+    s->s_v = v;
 
-    ps->gdps_scale = v->gv_scale;
-    VMOVE(ps->gdps_origin, v->gv_center);
-    MAT_COPY(ps->gdps_rotation, v->gv_rotation);
-    MAT_COPY(ps->gdps_model2view, v->gv_model2view);
-    MAT_COPY(ps->gdps_view2model, v->gv_view2model);
+    struct bview_polygon *p;
+    BU_GET(p, struct bview_polygon);
+    p->type = BVIEW_POLYGON_CIRCLE;
+    s->s_i_data = (void *)p;
+    s->s_update_callback = &bview_update_circle;
 
+    // Let the view know these are now the previous x,y points
     v->gv_prevMouseX = x;
     v->gv_prevMouseY = y;
-    // TODO - setting this because libtclcad does, but wouldn't it be
-    // better to have the polygon itself retain the knowledge of what
-    // type of shape it is?
-    v->gv_mode = BVIEW_POLY_CIRCLE_MODE;
 
+    // If snapping is active, handle it
+    fastf_t fx, fy;
     bview_screen_to_view(v, &fx, &fy, x, y);
-
-
     int snapped = 0;
     if (v->gv_snap_lines) {
 	snapped = bview_snap_lines_2d(v, &fx, &fy);
@@ -87,34 +67,29 @@ bview_add_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
 	bview_snap_grid_2d(v, &fx, &fy);
     }
 
+    point_t v_pt, m_pt;
     VSET(v_pt, fx, fy, v->gv_data_vZ);
-
     MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
-    VMOVE(ps->gdps_prev_point, v_pt);
+    VMOVE(p->prev_point, v_pt);
 
-    size_t i = ps->gdps_polygons.num_polygons;
-    ++ps->gdps_polygons.num_polygons;
-    ps->gdps_polygons.polygon = (struct bg_polygon *)bu_realloc(ps->gdps_polygons.polygon, ps->gdps_polygons.num_polygons * sizeof(struct bg_polygon), "realloc polygon");
-    struct bg_polygon *gpp = &ps->gdps_polygons.polygon[i];
-    gpp->num_contours = 1;
-    gpp->hole = (int *)bu_calloc(1, sizeof(int), "hole");
-    gpp->contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "contour");
-    gpp->contour[0].num_points = 3;
-    gpp->contour[0].point = (point_t *)bu_calloc(3, sizeof(point_t), "point");
-    gpp->hole[0] = 0;
+    p->polygon.num_contours = 1;
+    p->polygon.hole = (int *)bu_calloc(1, sizeof(int), "hole");
+    p->polygon.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "contour");
+    p->polygon.contour[0].num_points = 3;
+    p->polygon.contour[0].point = (point_t *)bu_calloc(3, sizeof(point_t), "point");
+    p->polygon.hole[0] = 0;
     for (int j = 0; j < 3; j++) {
-	VMOVE(gpp->contour[0].point[j], m_pt);
+	VMOVE(p->polygon.contour[0].point[j], m_pt);
     }
-    VMOVE(ps->gdps_polygons.polygon[i].gp_color, ps->gdps_color);
-    ps->gdps_polygons.polygon[i].gp_line_style = ps->gdps_line_style;
-    ps->gdps_polygons.polygon[i].gp_line_width = ps->gdps_line_width;
 
-    return 0;
+    return s;
 }
 
 int
-bview_update_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
+bview_update_circle(struct bview_scene_obj *s)
 {
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
     fastf_t curr_fx, curr_fy;
     fastf_t fx, fy;
     fastf_t r, arc;
@@ -122,9 +97,8 @@ bview_update_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
     point_t v_pt;
     vect_t vdiff;
 
-    v->gv_prevMouseX = x;
-    v->gv_prevMouseY = y;
-    bview_screen_to_view(v, &fx, &fy, x, y);
+    struct bview *v = s->s_v;
+    bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y);
 
     int snapped = 0;
     if (v->gv_snap_lines) {
@@ -135,7 +109,7 @@ bview_update_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
     }
 
     VSET(v_pt, fx, fy, v->gv_data_vZ);
-    VSUB2(vdiff, v_pt, ps->gdps_prev_point);
+    VSUB2(vdiff, v_pt, p->prev_point);
     r = MAGNITUDE(vdiff);
 
     /* use a variable number of segments based on the size of the
@@ -144,7 +118,6 @@ bview_update_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
      * results in segments approximately 4 pixels in length.
      *
      * circumference / 4 = PI * diameter / 4
-     *
      */
     nsegs = M_PI_2 * r * v->gv_scale;
 
@@ -163,21 +136,22 @@ bview_update_circle(struct bview *v, bview_data_polygon_state *ps, int x, int y)
     for (n = 0; n < nsegs; ++n) {
 	fastf_t ang = n * arc;
 
-	curr_fx = cos(ang*DEG2RAD) * r + ps->gdps_prev_point[X];
-	curr_fy = sin(ang*DEG2RAD) * r + ps->gdps_prev_point[Y];
+	curr_fx = cos(ang*DEG2RAD) * r + p->prev_point[X];
+	curr_fy = sin(ang*DEG2RAD) * r + p->prev_point[Y];
 	VSET(v_pt, curr_fx, curr_fy, v->gv_data_vZ);
 	MAT4X3PNT(gpp->contour[0].point[n], v->gv_view2model, v_pt);
     }
 
-    int cind = ps->gdps_curr_polygon_i;
-    bg_polygon_free(&ps->gdps_polygons.polygon[cind]);
+    bg_polygon_free(&p->polygon);
 
     /* Not doing a struct copy to avoid overwriting the color, line width and line style. */
-    ps->gdps_polygons.polygon[cind].num_contours = gp.num_contours;
-    ps->gdps_polygons.polygon[cind].hole = gp.hole;
-    ps->gdps_polygons.polygon[cind].contour = gp.contour;
+    p->polygon.num_contours = gp.num_contours;
+    p->polygon.hole = gp.hole;
+    p->polygon.contour = gp.contour;
 
-    return 0;
+    /* Updated */
+    s->s_changed = 1;
+    return 1;
 }
 
 /*

@@ -40,6 +40,7 @@ struct _ged_view_info {
 };
 GED_EXPORT extern int _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 GED_EXPORT extern int _view_cmd_polygons(void *bs, int argc, const char **argv);
+GED_EXPORT extern int _view_cmd_objs(void *bs, int argc, const char **argv);
 
 
 GED_EXPORT extern int ged_quat_core(struct ged *gedp, int argc, const char **argv);

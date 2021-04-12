@@ -197,6 +197,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "eye",        _view_cmd_eye},
     { "faceplate",  _view_cmd_faceplate},
     { "lines",      _view_cmd_lines},
+    { "objs",       _view_cmd_objs},
     { "polygons",   _view_cmd_polygons},
     { "quat",       _view_cmd_quat},
     { "selections", _view_cmd_selections},

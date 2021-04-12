@@ -12,6 +12,7 @@ set(VIEW_SRCS
   center.cpp
   eye.c
   faceplate.c
+  objs.c
   polygons.c
   quat.c
   size.c

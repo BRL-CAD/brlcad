@@ -39,66 +39,6 @@
 #include "./ged_view.h"
 
 int
-_poly_cmd_draw(void *bs, int argc, const char **argv)
-{
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct ged *gedp = gd->gedp;
-    const char *usage_string = "view polygons draw [0|1]";
-    const char *purpose_string = "toggle view polygons";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
-
-    argc--; argv++;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d\n", gedp->ged_gvp->gv_data_polygons.gdps_draw);
-	return GED_ERROR;
-    }
-    int val;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1 || (val != 0 && val != 1)) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
-    }
-
-    gedp->ged_gvp->gv_data_polygons.gdps_draw = val;
-
-    return GED_OK;
-}
-
-int
-_poly_cmd_color(void *bs, int argc, const char **argv)
-{
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct ged *gedp = gd->gedp;
-    bview_data_polygon_state *ps = &gedp->ged_gvp->gv_data_polygons;
-    const char *usage_string = "view polygons color [r/g/b]";
-    const char *purpose_string = "show set polygons color";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
-
-    argc--; argv++;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", ps->gdps_color[0], ps->gdps_color[1], ps->gdps_color[2]);
-	return GED_ERROR;
-    }
-    struct bu_color val;
-    if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
-    }
-
-    bu_color_to_rgb_ints(&val, &ps->gdps_color[0], &ps->gdps_color[1], &ps->gdps_color[2]);
-
-    return GED_OK;
-}
-int
 _poly_cmd_create(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -127,58 +67,16 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    bview_add_circle(gedp->ged_gvp, &gedp->ged_gvp->gv_data_polygons, x, y);
-    int ind = gedp->ged_gvp->gv_data_polygons.gdps_polygons.num_polygons - 1;
-    bu_vls_printf(gedp->ged_result_str, "%d\n", ind);
-
-    return GED_OK;
-}
-
-int
-_poly_cmd_update(void *bs, int argc, const char **argv)
-{
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct ged *gedp = gd->gedp;
-    const char *usage_string = "view polygons update # x y";
-    const char *purpose_string = "resize polygons";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
-
-    argc--; argv++;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
-    }
-    int ind, x, y;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&ind) != 1 || ind < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
-    }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
-    }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
-    }
-
-    gedp->ged_gvp->gv_data_polygons.gdps_curr_polygon_i = ind;
-
-    bview_update_circle(gedp->ged_gvp, &gedp->ged_gvp->gv_data_polygons, x, y);
+    struct bview_scene_obj *s = bview_create_circle(gedp->ged_gvp, x, y);
+    bu_vls_init(&s->s_uuid);
+    bu_vls_printf(&s->s_uuid, "polygon_%zd", BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs));
+    bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
 
     return GED_OK;
 }
 
 const struct bu_cmdtab _poly_cmds[] = {
-    { "draw",       _poly_cmd_draw},
-    { "color",      _poly_cmd_color},
     { "create",     _poly_cmd_create},
-    { "update",     _poly_cmd_update},
     { (char *)NULL,      NULL}
 };
 
@@ -223,32 +121,7 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
     (void)bu_opt_parse(NULL, acnt, argv, d);
 
-    if (help) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
-	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_poly_cmds, "view polygons", "[options] subcommand [args]", gd, argc, argv);
-	} else {
-	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_poly_cmds, "view polygons", "[options] subcommand [args]", gd, 0, NULL);
-	}
-	return GED_OK;
-    }
-
-    // Must have a subcommand
-    if (cmd_pos == -1) {
-	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
-	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_poly_cmds, "view polygons", "[options] subcommand [args]", gd, 0, NULL);
-	return GED_ERROR;
-    }
-
-    int ret;
-    if (bu_cmd(_poly_cmds, argc, argv, 0, (void *)gd, &ret) == BRLCAD_OK) {
-	return ret;
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
-    }
-
-    return GED_ERROR;
+    return _ged_subcmd_exec(gedp, d, _poly_cmds, "view obj polygons", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
 }
 
 /*

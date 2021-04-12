@@ -101,7 +101,40 @@ _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
     return GED_OK;
 }
 
+int
+_ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv, int help, int cmd_pos)
+{
+    if (!gedp || !gopts || !cmds || !cmdname)
+	return GED_ERROR;
 
+    if (help) {
+	if (cmd_pos >= 0) {
+	    argc = argc - cmd_pos;
+	    argv = &argv[cmd_pos];
+	    _ged_subcmd_help(gedp, gopts, cmds, cmdname, cmdargs, gd, argc, argv);
+	} else {
+	    _ged_subcmd_help(gedp, gopts, cmds, cmdname, cmdargs, gd, 0, NULL);
+	}
+	return GED_OK;
+    }
+
+    // Must have a subcommand
+    if (cmd_pos == -1) {
+	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
+	_ged_subcmd_help(gedp, gopts, cmds, cmdname, cmdargs, gd, 0, NULL);
+	return GED_ERROR;
+    }
+
+    int ret;
+    if (bu_cmd(cmds, argc, argv, 0, (void *)gd, &ret) == BRLCAD_OK) {
+	return ret;
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+    }
+
+
+    return GED_OK;
+}
 
 struct bview *
 ged_find_view(struct ged *gedp, const char *key)

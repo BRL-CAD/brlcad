@@ -129,6 +129,7 @@ struct bview_polygon {
     int                 type;
     int                 cflag;             /* contour flag */
     size_t              curr_point_i;
+    point_t             prev_point;
     fastf_t             vZ;
     struct bg_polygon   polygon;
 };
@@ -170,6 +171,7 @@ struct bview_scene_obj  {
     char s_iflag;	        /**< @brief  UP = illuminated, DOWN = regular */
 
     char s_wflag;		/**< @brief  work flag - used by various libged and Tcl functions */
+    char s_changed;		/**< @brief  changed flag - set by s_update_callback if a change occurred */
 
     int s_soldash;		/**< @brief  solid/dashed line flag */
     int s_hiddenLine;         	/**< @brief  1 - hidden line */
