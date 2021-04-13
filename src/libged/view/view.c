@@ -103,19 +103,6 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
 }
 
 int
-_view_cmd_lines(void *bs, int argc, const char **argv)
-{
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    const char *usage_string = "view [options] lines [options] [args]";
-    const char *purpose_string = "manipulate view lines";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
-
-    return ged_view_data_lines(gd->gedp, argc, argv);
-}
-
-int
 _view_cmd_quat(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -196,7 +183,6 @@ const struct bu_cmdtab _view_cmds[] = {
     { "center",     _view_cmd_center},
     { "eye",        _view_cmd_eye},
     { "faceplate",  _view_cmd_faceplate},
-    { "lines",      _view_cmd_lines},
     { "obj",        _view_cmd_objs},
     { "quat",       _view_cmd_quat},
     { "selections", _view_cmd_selections},

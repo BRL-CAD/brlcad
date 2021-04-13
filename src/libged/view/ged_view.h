@@ -41,6 +41,7 @@ struct _ged_view_info {
     struct bview_scene_obj *s;
 };
 GED_EXPORT extern int _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
+GED_EXPORT extern int _view_cmd_lines(void *bs, int argc, const char **argv);
 GED_EXPORT extern int _view_cmd_polygons(void *bs, int argc, const char **argv);
 GED_EXPORT extern int _view_cmd_objs(void *bs, int argc, const char **argv);
 

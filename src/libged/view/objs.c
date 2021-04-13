@@ -171,6 +171,7 @@ const struct bu_cmdtab _obj_cmds[] = {
     //{ "info",       _objs_cmd_info},
     { "update",     _objs_cmd_update},
     { "color",      _objs_cmd_color},
+    { "line",       _view_cmd_lines},
     { "polygon",    _view_cmd_polygons},
     { (char *)NULL,      NULL}
 };
@@ -182,8 +183,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
 
-    const char *usage_string = "view [options] objs [options] [args]";
-    const char *purpose_string = "manipulate view polygons";
+    const char *usage_string = "view [options] obj [options] [args]";
+    const char *purpose_string = "manipulate view objects";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -219,7 +220,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     if (!ac && cmd_pos < 0 && !help) {
 	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
 	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
-	    bu_vls_printf(gd->gedp->ged_result_str, "%s", bu_vls_cstr(&s->s_uuid));
+	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	}
 	return GED_OK;
     }
@@ -242,7 +243,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     }
 
     return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_obj_cmds,
-	    "view objs", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
+	    "view obj", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
 }
 
 /*
