@@ -50,7 +50,7 @@ bview_create_circle(struct bview *v, int x, int y)
     BU_GET(p, struct bview_polygon);
     p->type = BVIEW_POLYGON_CIRCLE;
     s->s_i_data = (void *)p;
-    s->s_update_callback = &bview_update_circle;
+    s->s_update_callback = &bview_update_polygon;
 
     // Let the view know these are now the previous x,y points
     v->gv_prevMouseX = x;
@@ -152,6 +152,16 @@ bview_update_circle(struct bview_scene_obj *s)
     /* Updated */
     s->s_changed = 1;
     return 1;
+}
+
+int
+bview_update_polygon(struct bview_scene_obj *s)
+{
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    if (p->type == BVIEW_POLYGON_CIRCLE)
+	return bview_update_circle(s);
+
+    return 0;
 }
 
 /*

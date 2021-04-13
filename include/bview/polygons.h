@@ -45,7 +45,7 @@ __BEGIN_DECLS
 
 BVIEW_EXPORT extern struct bview_scene_obj *bview_create_circle(struct bview *v, int x, int y);
 
-BVIEW_EXPORT extern int bview_update_circle(struct bview_scene_obj *s);
+BVIEW_EXPORT extern int bview_update_polygon(struct bview_scene_obj *s);
 
 __END_DECLS
 
