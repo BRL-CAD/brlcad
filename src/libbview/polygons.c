@@ -106,6 +106,10 @@ bview_create_circle(struct bview *v, int x, int y)
     struct bview_polygon *p;
     BU_GET(p, struct bview_polygon);
     p->type = BVIEW_POLYGON_CIRCLE;
+    s->s_line_width = 1;
+    s->s_color[0] = 255;
+    s->s_color[1] = 255;
+    s->s_color[2] = 0;
     s->s_i_data = (void *)p;
     s->s_update_callback = &bview_update_polygon;
 

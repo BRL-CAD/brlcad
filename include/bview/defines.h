@@ -173,6 +173,7 @@ struct bview_scene_obj  {
     char s_wflag;		/**< @brief  work flag - used by various libged and Tcl functions */
     char s_changed;		/**< @brief  changed flag - set by s_update_callback if a change occurred */
 
+    int s_line_width;		/**< @brief  current line width */
     int s_soldash;		/**< @brief  solid/dashed line flag */
     int s_hiddenLine;         	/**< @brief  1 - hidden line */
 

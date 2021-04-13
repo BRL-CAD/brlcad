@@ -293,6 +293,39 @@ _bview_interactive_rect_state_hash(XXH64_state_t *state, struct bview_interactiv
     XXH64_update(state, &v->aspect, sizeof(fastf_t));
 }
 
+void
+bview_scene_obj_hash(XXH64_state_t *state, struct bview_scene_obj *s)
+{
+    XXH64_update(state, &s->s_size, sizeof(fastf_t));
+    XXH64_update(state, &s->s_csize, sizeof(fastf_t));
+    XXH64_update(state, &s->s_center, sizeof(vect_t));
+    struct bn_vlist *tvp;
+    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)&s->s_vlist)->l)) {
+	XXH64_update(state, &tvp->nused, sizeof(size_t));
+	XXH64_update(state, &tvp->cmd, sizeof(int[BN_VLIST_CHUNK]));
+	XXH64_update(state, &tvp->pt, sizeof(point_t[BN_VLIST_CHUNK]));
+    }
+    XXH64_update(state, &s->s_vlen, sizeof(int));
+    XXH64_update(state, &s->s_flag, sizeof(char));
+    XXH64_update(state, &s->s_iflag, sizeof(char));
+    XXH64_update(state, &s->s_line_width, sizeof(int));
+    XXH64_update(state, &s->s_soldash, sizeof(char));
+    XXH64_update(state, &s->s_Eflag, sizeof(char));
+    XXH64_update(state, &s->s_uflag, sizeof(char));
+    XXH64_update(state, &s->s_dflag, sizeof(char));
+    XXH64_update(state, &s->s_cflag, sizeof(char));
+    XXH64_update(state, &s->s_wflag, sizeof(char));
+    XXH64_update(state, &s->s_changed, sizeof(int));
+    XXH64_update(state, &s->s_basecolor, sizeof(unsigned char[3]));
+    XXH64_update(state, &s->s_color, sizeof(unsigned char[3]));
+    XXH64_update(state, &s->s_regionid, sizeof(short));
+    XXH64_update(state, &s->s_dlist, sizeof(unsigned int));
+    XXH64_update(state, &s->s_transparency, sizeof(fastf_t));
+    XXH64_update(state, &s->s_dmode, sizeof(int));
+    XXH64_update(state, &s->s_hiddenLine, sizeof(int));
+    XXH64_update(state, &s->s_mat, sizeof(mat_t));
+}
+
 unsigned long long
 bview_dl_hash(struct display_list *dl)
 {
@@ -318,32 +351,7 @@ bview_dl_hash(struct display_list *dl)
 	XXH64_update(state, &gdlp->dl_wflag, sizeof(int));
 
 	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    XXH64_update(state, &sp->s_size, sizeof(fastf_t));
-	    XXH64_update(state, &sp->s_csize, sizeof(fastf_t));
-	    XXH64_update(state, &sp->s_center, sizeof(vect_t));
-	    struct bn_vlist *tvp;
-	    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)&sp->s_vlist)->l)) {
-		XXH64_update(state, &tvp->nused, sizeof(size_t));
-		XXH64_update(state, &tvp->cmd, sizeof(int[BN_VLIST_CHUNK]));
-		XXH64_update(state, &tvp->pt, sizeof(point_t[BN_VLIST_CHUNK]));
-	    }
-	    XXH64_update(state, &sp->s_vlen, sizeof(int));
-	    XXH64_update(state, &sp->s_flag, sizeof(char));
-	    XXH64_update(state, &sp->s_iflag, sizeof(char));
-	    XXH64_update(state, &sp->s_soldash, sizeof(char));
-	    XXH64_update(state, &sp->s_Eflag, sizeof(char));
-	    XXH64_update(state, &sp->s_uflag, sizeof(char));
-	    XXH64_update(state, &sp->s_dflag, sizeof(char));
-	    XXH64_update(state, &sp->s_cflag, sizeof(char));
-	    XXH64_update(state, &sp->s_wflag, sizeof(char));
-	    XXH64_update(state, &sp->s_basecolor, sizeof(unsigned char[3]));
-	    XXH64_update(state, &sp->s_color, sizeof(unsigned char[3]));
-	    XXH64_update(state, &sp->s_regionid, sizeof(short));
-	    XXH64_update(state, &sp->s_dlist, sizeof(unsigned int));
-	    XXH64_update(state, &sp->s_transparency, sizeof(fastf_t));
-	    XXH64_update(state, &sp->s_dmode, sizeof(int));
-	    XXH64_update(state, &sp->s_hiddenLine, sizeof(int));
-	    XXH64_update(state, &sp->s_mat, sizeof(mat_t));
+	    bview_scene_obj_hash(state, sp);
 	}
 
 	gdlp = next_gdlp;
@@ -428,6 +436,16 @@ bview_hash(struct bview *v)
     XXH64_update(state, &v->gv_data_vZ, sizeof(fastf_t));
     XXH64_update(state, &v->gv_bot_threshold, sizeof(size_t));
     XXH64_update(state, &v->gv_hidden, sizeof(int));
+
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
+	long *p = BU_PTBL_GET(v->gv_selected, i);
+	XXH64_update(state, p, sizeof(long *));
+    }
+
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+	bview_scene_obj_hash(state, s);
+    }
 
     hash_val = XXH64_digest(state);
     XXH64_freeState(state);

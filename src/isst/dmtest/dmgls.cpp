@@ -112,6 +112,8 @@ void dmGL::resizeGL(int, int)
 {
     if (gedp && gedp->ged_dmp) {
 	dm_configure_win((struct dm *)gedp->ged_dmp, 0);
+	gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gedp->ged_dmp);
+	gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gedp->ged_dmp);
 	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
     }
 }
