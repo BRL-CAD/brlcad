@@ -349,6 +349,20 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     if (v->gv_sdata_polygons.gdps_draw)
 	dm_draw_polys(dmp, &v->gv_sdata_polygons, v->gv_mode);
 
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+	if (s->s_update_callback)
+	    (*s->s_update_callback)(s);
+	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
+	// Draw any child objects
+	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
+	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
+	    if (s_c->s_update_callback)
+		(*s_c->s_update_callback)(s_c);
+	    dm_draw_vlist(dmp, (struct bn_vlist *)&s_c->s_vlist);
+	}
+    }
+
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
     (void)dm_hud_begin(dmp);
 

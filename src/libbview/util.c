@@ -134,6 +134,8 @@ bview_init(struct bview *gvp)
     BU_GET(gvp->gv_selected, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_selected, 8, "scene_objs init");
 
+    BU_LIST_INIT(&gvp->gv_vlfree);
+
     bview_update(gvp);
 }
 

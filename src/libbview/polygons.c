@@ -36,6 +36,62 @@
 #include "bview/util.h"
 #include "bview/polygons.h"
 
+void
+bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int close)
+{
+    if (!s || !c || !s->s_v || !c->num_points)
+	return;
+
+    BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_LINE_MOVE);
+    for (size_t i = 0; i < c->num_points; i++) {
+	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[i], BN_VLIST_LINE_DRAW);
+    }
+    if (close)
+	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_LINE_DRAW);
+}
+
+void
+bview_polygon_vlist(struct bview_scene_obj *s)
+{
+    if (!s)
+	return;
+
+    // free old s->s_vlist
+    BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+	BN_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+	// TODO - free bview_scene_obj itself (ptbls, etc.)
+    }
+
+
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    BU_LIST_INIT(&(s->s_vlist));
+
+    for (size_t i = 0; i < p->polygon.num_contours; ++i) {
+	/* Draw holes using segmented lines.  Since vlists don't have a style
+	 * command for that, we make child scene objects for the holes. */
+	if (p->polygon.hole[i]) {
+	    struct bview_scene_obj *s_c;
+	    BU_GET(s_c, struct bview_scene_obj);
+	    BU_LIST_INIT(&(s_c->s_vlist));
+	    s_c->s_soldash = 1;
+	    s_c->s_color[0] = s->s_color[0];
+	    s_c->s_color[1] = s->s_color[1];
+	    s_c->s_color[2] = s->s_color[2];
+	    bview_polygon_contour(s_c, &p->polygon.contour[i], 1);
+	    bu_ptbl_ins(&s->children, (long *)s_c);
+	    continue;
+	}
+
+	// TODO - figure out when we're not supposed to close and flag accordingly...
+	// contour mode looks like it is probably used while building up a polyline
+	// to become a close polygon?
+	bview_polygon_contour(s, &p->polygon.contour[i], 1);
+    }
+}
+
 /* Oof.  Followed the logic down the chain to_poly_circ_mode_func ->
  * to_data_polygons_func -> to_extract_contours_av to get what are hopefully
  * all the pieces needed to seed a circle at an XY point. */
@@ -45,6 +101,7 @@ bview_create_circle(struct bview *v, int x, int y)
     struct bview_scene_obj *s;
     BU_GET(s, struct bview_scene_obj);
     s->s_v = v;
+    BU_LIST_INIT(&(s->s_vlist));
 
     struct bview_polygon *p;
     BU_GET(p, struct bview_polygon);
@@ -144,13 +201,16 @@ bview_update_circle(struct bview_scene_obj *s)
 
     bg_polygon_free(&p->polygon);
 
-    /* Not doing a struct copy to avoid overwriting the color, line width and line style. */
+    /* Not doing a struct copy to avoid overwriting other properties. */
     p->polygon.num_contours = gp.num_contours;
     p->polygon.hole = gp.hole;
     p->polygon.contour = gp.contour;
 
+    /* Have new polygon, now update view object vlist */
+    bview_polygon_vlist(s);
+
     /* Updated */
-    s->s_changed = 1;
+    s->s_changed++;
     return 1;
 }
 

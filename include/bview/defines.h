@@ -420,6 +420,9 @@ struct bview {
     // view (labels, polygons, etc.)
     struct bu_ptbl                      *gv_scene_objs;
 
+    // Available bn_vlist entities to recycle before allocating new.
+    struct bu_list      gv_vlfree;     /**< @brief  head of bn_vlist freelist */
+
     // More complex are the view elements not corresponding to geometry objects
     // but editable by the user.  These are selectable, but because they are
     // not view objects which elements are part of the current selection set
