@@ -218,6 +218,12 @@ DM_MainWindow::run_cmd(const QString &command)
     if (BU_STR_EQUAL(command.toStdString().c_str(), "q"))
 	bu_exit(0, "exit");
 
+    if (BU_STR_EQUAL(command.toStdString().c_str(), "clear")) {
+	console->clear();
+	console->prompt("$ ");
+	return;
+    }
+
     if (!gedp) {
 	console->printString("No database open");
 	console->prompt("$ ");
