@@ -53,22 +53,13 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview *v = gedp->ged_gvp;
-    struct bview_scene_obj *s = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
-	struct bview_scene_obj *c = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&c->s_uuid), argv[0])) {
-	    s = c;
-	    break;
-	}
-    }
-
-    if (!s) {
-	bu_vls_printf(gedp->ged_result_str, "Unknown object %s\n", argv[0]);
+    struct bview_scene_obj *s = gd->s;
+    if (!gd->s) {
+	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return GED_ERROR;
     }
 
-    if (argc == 1) {
+    if (argc == 0) {
 	if (s->s_flag == UP) {
 	    bu_vls_printf(gedp->ged_result_str, "UP\n");
 	} else {
@@ -77,11 +68,11 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    if (BU_STR_EQUAL(argv[1], "DOWN")) {
+    if (BU_STR_EQUAL(argv[0], "DOWN")) {
 	s->s_flag = DOWN;
 	return GED_OK;
     }
-    if (BU_STR_EQUAL(argv[1], "UP")) {
+    if (BU_STR_EQUAL(argv[0], "UP")) {
 	s->s_flag = UP;
 	return GED_OK;
     }
@@ -105,27 +96,18 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview *v = gedp->ged_gvp;
-    struct bview_scene_obj *s = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
-	struct bview_scene_obj *c = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&c->s_uuid), argv[0])) {
-	    s = c;
-	    break;
-	}
-    }
-
-    if (!s) {
-	bu_vls_printf(gedp->ged_result_str, "Unknown object %s\n", argv[0]);
+    struct bview_scene_obj *s = gd->s;
+    if (!gd->s) {
+	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return GED_ERROR;
     }
 
-    if (argc == 1) {
+    if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", s->s_color[0], s->s_color[1], s->s_color[2]);
 	return GED_ERROR;
     }
     struct bu_color val;
-    if (bu_opt_color(NULL, 1, (const char **)&argv[1], (void *)&val) != 1) {
+    if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return GED_ERROR;
     }
@@ -150,38 +132,31 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if ((argc != 1) && (argc != 3)) {
+    struct bview_scene_obj *s = gd->s;
+    if (!gd->s) {
+	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
+	return GED_ERROR;
+    }
+
+
+    if (argc && (argc != 2)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
 	return GED_ERROR;
     }
 
     struct bview *v = gedp->ged_gvp;
-    if (argc > 1) {
+    if (argc) {
 	int x, y;
-	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
+	if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&x) != 1 || x < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return GED_ERROR;
 	}
-	if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
+	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&y) != 1 || y < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 	v->gv_mouse_x = x;
 	v->gv_mouse_y = y;
-    }
-
-    struct bview_scene_obj *s = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
-	struct bview_scene_obj *c = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&c->s_uuid), argv[0])) {
-	    s = c;
-	    break;
-	}
-    }
-
-    if (!s) {
-	bu_vls_printf(gedp->ged_result_str, "Unknown object %s\n", argv[0]);
-	return GED_ERROR;
     }
 
     s->s_changed = 0;
@@ -193,6 +168,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _obj_cmds[] = {
     { "draw",       _objs_cmd_draw},
+    //{ "info",       _objs_cmd_info},
     { "update",     _objs_cmd_update},
     { "color",      _objs_cmd_color},
     { "polygon",    _view_cmd_polygons},
@@ -238,13 +214,31 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
     int ac = bu_opt_parse(NULL, acnt, argv, d);
 
+    // If we're not wanting help and we have no subcommand, list defined view objects
+    struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
-	struct bview *v = gedp->ged_gvp;
 	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
 	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
 	    bu_vls_printf(gd->gedp->ged_result_str, "%s", bu_vls_cstr(&s->s_uuid));
 	}
 	return GED_OK;
+    }
+
+    // We need a name, even if it doesn't exist yet.  Check if it does, since subcommands
+    // will react differently based on that status.
+    if (ac != 1) {
+	bu_vls_printf(gd->gedp->ged_result_str, "need view object name");
+	return GED_ERROR;
+    }
+    gd->vobj = argv[0];
+    gd->s = NULL;
+    argc--; argv++;
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+	if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
+	    gd->s = s;
+	    break;
+	}
     }
 
     return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_obj_cmds,

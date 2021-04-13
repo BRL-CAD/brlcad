@@ -37,6 +37,8 @@ struct _ged_view_info {
     int verbosity;
     const struct bu_cmdtab *cmds;
     struct bu_opt_desc *gopts;
+    const char *vobj;
+    struct bview_scene_obj *s;
 };
 GED_EXPORT extern int _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 GED_EXPORT extern int _view_cmd_polygons(void *bs, int argc, const char **argv);

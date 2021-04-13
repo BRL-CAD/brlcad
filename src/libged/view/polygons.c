@@ -39,12 +39,12 @@
 #include "./ged_view.h"
 
 int
-_poly_cmd_create(void *bs, int argc, const char **argv)
+_poly_cmd_circle(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view polygons create x y";
-    const char *purpose_string = "create view polygon";
+    const char *usage_string = "view obj <objname> polygon circle x y";
+    const char *purpose_string = "create circular view polygon";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -52,6 +52,12 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
+        return GED_ERROR;
+    }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
@@ -67,16 +73,16 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    struct bview_scene_obj *s = bview_create_circle(gedp->ged_gvp, x, y);
+    s = bview_create_circle(gedp->ged_gvp, x, y);
     bu_vls_init(&s->s_uuid);
-    bu_vls_printf(&s->s_uuid, "polygon_%zd", BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs));
+    bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
     bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
 
     return GED_OK;
 }
 
 const struct bu_cmdtab _poly_cmds[] = {
-    { "create",     _poly_cmd_create},
+    { "circle",          _poly_cmd_circle},
     { (char *)NULL,      NULL}
 };
 
@@ -97,6 +103,7 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
 	return GED_ERROR;
     }
+
 
     // We know we're the polygons command - start processing args
     argc--; argv++;
