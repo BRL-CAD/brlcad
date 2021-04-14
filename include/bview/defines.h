@@ -130,6 +130,9 @@ struct bview_label {
 struct bview_polygon {
     int                 type;
     int                 cflag;             /* contour flag */
+    int                 sflag;             /* point select flag */
+    int                 mflag;             /* point move flag */
+    int                 aflag;             /* point append flag */
     size_t              curr_point_i;
     point_t             prev_point;
     fastf_t             vZ;
