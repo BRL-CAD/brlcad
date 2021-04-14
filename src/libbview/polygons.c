@@ -218,12 +218,149 @@ bview_update_circle(struct bview_scene_obj *s)
     return 1;
 }
 
+struct bview_scene_obj *
+bview_create_ellipse(struct bview *v, int x, int y)
+{
+    struct bview_scene_obj *s;
+    BU_GET(s, struct bview_scene_obj);
+    s->s_v = v;
+    BU_LIST_INIT(&(s->s_vlist));
+
+    struct bview_polygon *p;
+    BU_GET(p, struct bview_polygon);
+    p->type = BVIEW_POLYGON_ELLIPSE;
+    s->s_line_width = 1;
+    s->s_color[0] = 255;
+    s->s_color[1] = 255;
+    s->s_color[2] = 0;
+    s->s_i_data = (void *)p;
+    s->s_update_callback = &bview_update_polygon;
+
+    // Let the view know these are now the previous x,y points
+    v->gv_prevMouseX = x;
+    v->gv_prevMouseY = y;
+
+    // If snapping is active, handle it
+    fastf_t fx, fy;
+    bview_screen_to_view(v, &fx, &fy, x, y);
+    int snapped = 0;
+    if (v->gv_snap_lines) {
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
+    }
+    if (!snapped && v->gv_grid.snap) {
+	bview_snap_grid_2d(v, &fx, &fy);
+    }
+
+    point_t v_pt, m_pt;
+    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
+    VMOVE(p->prev_point, v_pt);
+
+    p->polygon.num_contours = 1;
+    p->polygon.hole = (int *)bu_calloc(1, sizeof(int), "hole");
+    p->polygon.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "contour");
+    p->polygon.contour[0].num_points = 4;
+    p->polygon.contour[0].point = (point_t *)bu_calloc(4, sizeof(point_t), "point");
+    p->polygon.hole[0] = 0;
+    for (int j = 0; j < 4; j++) {
+	VMOVE(p->polygon.contour[0].point[j], m_pt);
+    }
+
+    return s;
+}
+
+int
+bview_update_ellipse(struct bview_scene_obj *s)
+{
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    fastf_t fx, fy;
+
+    struct bview *v = s->s_v;
+    bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y);
+
+    int snapped = 0;
+    if (v->gv_snap_lines) {
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
+    }
+    if (!snapped && v->gv_grid.snap) {
+	bview_snap_grid_2d(v, &fx, &fy);
+    }
+
+
+    fastf_t a, b, arc;
+    point_t ellout;
+    point_t A, B;
+    int nsegs, n;
+
+    a = fx - p->prev_point[X];
+    b = fy - p->prev_point[Y];
+
+    /*
+     * For angle alpha, compute surface point as
+     *
+     * V + cos(alpha) * A + sin(alpha) * B
+     *
+     * note that sin(alpha) is cos(90-alpha).
+     */
+
+    VSET(A, a, 0, v->gv_data_vZ);
+    VSET(B, 0, b, v->gv_data_vZ);
+
+    /* use a variable number of segments based on the size of the
+     * circle being created so small circles have few segments and
+     * large ones are nice and smooth.  select a chord length that
+     * results in segments approximately 4 pixels in length.
+     *
+     * circumference / 4 = PI * diameter / 4
+     *
+     */
+    nsegs = M_PI_2 * FMAX(a, b) * v->gv_scale;
+
+    if (nsegs < 32)
+	nsegs = 32;
+
+    struct bg_polygon gp;
+    struct bg_polygon *gpp = &gp;
+    gpp->num_contours = 1;
+    gpp->hole = (int *)bu_calloc(1, sizeof(int), "hole");;
+    gpp->contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "contour");
+    gpp->contour[0].num_points = nsegs;
+    gpp->contour[0].point = (point_t *)bu_calloc(nsegs, sizeof(point_t), "point");
+
+    arc = 360.0 / nsegs;
+    for (n = 0; n < nsegs; ++n) {
+	fastf_t cosa = cos(n * arc * DEG2RAD);
+	fastf_t sina = sin(n * arc * DEG2RAD);
+
+	VJOIN2(ellout, p->prev_point, cosa, A, sina, B);
+	MAT4X3PNT(gpp->contour[0].point[n], v->gv_view2model, ellout);
+    }
+
+    bg_polygon_free(&p->polygon);
+
+    /* Not doing a struct copy to avoid overwriting other properties. */
+    p->polygon.num_contours = gp.num_contours;
+    p->polygon.hole = gp.hole;
+    p->polygon.contour = gp.contour;
+
+    /* Have new polygon, now update view object vlist */
+    bview_polygon_vlist(s);
+
+    /* Updated */
+    s->s_changed++;
+    return 1;
+}
+
 int
 bview_update_polygon(struct bview_scene_obj *s)
 {
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
     if (p->type == BVIEW_POLYGON_CIRCLE)
 	return bview_update_circle(s);
+    if (p->type == BVIEW_POLYGON_ELLIPSE)
+	return bview_update_ellipse(s);
+
 
     return 0;
 }

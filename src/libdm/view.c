@@ -471,6 +471,11 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	    dm_set_fg(dmp, s_c->s_color[0], s_c->s_color[1], s_c->s_color[2], 1, 1.0);
 	    dm_set_line_attr(dmp, s_c->s_line_width, s_c->s_soldash);
 	    dm_draw_vlist(dmp, (struct bn_vlist *)&s_c->s_vlist);
+	    // Generally arrow settings on child objects are going to be set as part
+	    // of the drawing scheme.  If there are cases where we want to control this
+	    // manually we'll have to come up with a syntax to specify child objects of
+	    // top level scene objects - we don't want these to be top level.
+	    dm_add_arrows(dmp, s);
 	}
     }
 
