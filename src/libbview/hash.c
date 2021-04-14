@@ -309,6 +309,9 @@ bview_scene_obj_hash(XXH64_state_t *state, struct bview_scene_obj *s)
     XXH64_update(state, &s->s_flag, sizeof(char));
     XXH64_update(state, &s->s_iflag, sizeof(char));
     XXH64_update(state, &s->s_line_width, sizeof(int));
+    XXH64_update(state, &s->s_arrow, sizeof(int));
+    XXH64_update(state, &s->s_arrow_tip_length, sizeof(fastf_t));
+    XXH64_update(state, &s->s_arrow_tip_width, sizeof(fastf_t));
     XXH64_update(state, &s->s_soldash, sizeof(char));
     XXH64_update(state, &s->s_Eflag, sizeof(char));
     XXH64_update(state, &s->s_uflag, sizeof(char));

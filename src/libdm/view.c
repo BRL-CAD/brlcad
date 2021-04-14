@@ -26,6 +26,99 @@
 #include "dm.h"
 
 void
+dm_draw_arrow(struct dm *dmp, point_t A, point_t B, fastf_t tip_length, fastf_t tip_width, fastf_t sf)
+{
+    point_t points[16];
+    point_t BmA;
+    point_t offset;
+    point_t perp1, perp2;
+    point_t a_base;
+    point_t a_pt1, a_pt2, a_pt3, a_pt4;
+
+    VSUB2(BmA, B, A);
+
+    VUNITIZE(BmA);
+    VSCALE(offset, BmA, -tip_length * sf);
+
+    bn_vec_perp(perp1, BmA);
+    VUNITIZE(perp1);
+
+    VCROSS(perp2, BmA, perp1);
+    VUNITIZE(perp2);
+
+    VSCALE(perp1, perp1, tip_width * sf);
+    VSCALE(perp2, perp2, tip_width * sf);
+
+    VADD2(a_base, B, offset);
+    VADD2(a_pt1, a_base, perp1);
+    VADD2(a_pt2, a_base, perp2);
+    VSUB2(a_pt3, a_base, perp1);
+    VSUB2(a_pt4, a_base, perp2);
+
+    VMOVE(points[0], B);
+    VMOVE(points[1], a_pt1);
+    VMOVE(points[2], B);
+    VMOVE(points[3], a_pt2);
+    VMOVE(points[4], B);
+    VMOVE(points[5], a_pt3);
+    VMOVE(points[6], B);
+    VMOVE(points[7], a_pt4);
+    VMOVE(points[8], a_pt1);
+    VMOVE(points[9], a_pt2);
+    VMOVE(points[10], a_pt2);
+    VMOVE(points[11], a_pt3);
+    VMOVE(points[12], a_pt3);
+    VMOVE(points[13], a_pt4);
+    VMOVE(points[14], a_pt4);
+    VMOVE(points[15], a_pt1);
+
+    (void)dm_draw_lines_3d(dmp, 16, points, 0);
+}
+
+// Draw an arrow head for each MOVE+LAST_DRAW paring
+void
+dm_add_arrows(struct dm *dmp, struct bview_scene_obj *s)
+{
+    struct bn_vlist *vp = (struct bn_vlist *)&s->s_vlist;
+    struct bn_vlist *tvp;
+    point_t A, B;
+    int pcnt = 0;
+    if (!s->s_arrow)
+	return;
+    if (NEAR_ZERO(s->s_arrow_tip_length, SMALL_FASTF) || NEAR_ZERO(s->s_arrow_tip_width, SMALL_FASTF))
+       return;	
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
+	for (int i = 0; i < nused; i++, cmd++, pt++) {
+	    pcnt++;
+	    switch (*cmd) {
+		case BN_VLIST_LINE_MOVE:
+		    if (pcnt > 1) {
+			// We have a move and more than one point - add an arrow
+			// to the A -> B segment at B
+			dm_draw_arrow(dmp, A, B, s->s_arrow_tip_length, s->s_arrow_tip_width, 1.0);
+		    }
+		    VMOVE(B,*pt);
+		    break;
+		case BN_VLIST_LINE_DRAW:
+		    VMOVE(A,B);
+		    VMOVE(B,*pt);
+		    break;
+		default:
+		    // For these purposes, we're only interested in lines
+		    break;
+	    }
+
+	}
+    }
+    // Get the last pairing
+    if (pcnt > 1)
+	dm_draw_arrow(dmp, A, B, s->s_arrow_tip_length, s->s_arrow_tip_width, 1.0);
+}
+
+void
 dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
 {
     register int i;
@@ -371,6 +464,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
 	dm_set_line_attr(dmp, s->s_line_width, s->s_soldash);
 	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
+	dm_add_arrows(dmp, s);
 	// Draw any child objects
 	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);

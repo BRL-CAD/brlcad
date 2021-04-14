@@ -175,6 +175,9 @@ struct bview_scene_obj  {
 
     int s_line_width;		/**< @brief  current line width */
     int s_soldash;		/**< @brief  solid/dashed line flag */
+    int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
+    fastf_t s_arrow_tip_length; /**< @brief  arrow tip length */
+    fastf_t s_arrow_tip_width;  /**< @brief  arrow tip width */
     int s_hiddenLine;         	/**< @brief  1 - hidden line */
 
     char s_dflag;		/**< @brief  1 - s_basecolor is derived from the default */

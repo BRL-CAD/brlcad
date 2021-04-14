@@ -43,7 +43,7 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view objs draw name [0|1]";
+    const char *usage_string = "view objs name draw [0|1]";
     const char *purpose_string = "toggle view polygons";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -65,7 +65,7 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "DOWN\n");
 	}
-	return GED_ERROR;
+	return GED_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "DOWN")) {
@@ -86,7 +86,7 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view objs color name [r/g/b]";
+    const char *usage_string = "view objs name color [r/g/b]";
     const char *purpose_string = "show/set obj color";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -104,7 +104,7 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
 
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", s->s_color[0], s->s_color[1], s->s_color[2]);
-	return GED_ERROR;
+	return GED_OK;
     }
     struct bu_color val;
     if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
@@ -115,6 +115,70 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
     bu_color_to_rgb_chars(&val, s->s_color);
 
     return GED_OK;
+}
+
+int
+_objs_cmd_arrow(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view objs name arrow [0|1] [width [#]] [length [#]]";
+    const char *purpose_string = "toggle arrow drawing, for those objects that support it";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!gd->s) {
+	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
+	return GED_ERROR;
+    }
+
+    if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", s->s_arrow);
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "0")) {
+	s->s_arrow = 0;
+	return GED_OK;
+    }
+    if (BU_STR_EQUAL(argv[0], "1")) {
+	s->s_arrow = 1;
+	return GED_OK;
+    }
+    if (BU_STR_EQUAL(argv[0], "width"))  {
+	if (argc == 2) {
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_arrow_tip_width) != 1) {
+		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+		return GED_ERROR;
+	    }
+	    return GED_OK;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%f\n", s->s_arrow_tip_width);
+	    return GED_OK;
+	}
+    }
+
+    if (BU_STR_EQUAL(argv[0], "length"))  {
+	if (argc == 2) {
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_arrow_tip_length) != 1) {
+		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+		return GED_ERROR;
+	    }
+	    return GED_OK;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%f\n", s->s_arrow_tip_length);
+	    return GED_OK;
+	}
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+    return GED_ERROR;
 }
 
 int
@@ -171,6 +235,7 @@ const struct bu_cmdtab _obj_cmds[] = {
     //{ "info",       _objs_cmd_info},
     { "update",     _objs_cmd_update},
     { "color",      _objs_cmd_color},
+    { "arrow",      _objs_cmd_arrow},
     { "line",       _view_cmd_lines},
     { "polygon",    _view_cmd_polygons},
     { (char *)NULL,      NULL}
