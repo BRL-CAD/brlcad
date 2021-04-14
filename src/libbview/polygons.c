@@ -352,6 +352,151 @@ bview_update_ellipse(struct bview_scene_obj *s)
     return 1;
 }
 
+struct bview_scene_obj *
+bview_create_rectangle(struct bview *v, int x, int y)
+{
+    struct bview_scene_obj *s;
+    BU_GET(s, struct bview_scene_obj);
+    s->s_v = v;
+    BU_LIST_INIT(&(s->s_vlist));
+
+    struct bview_polygon *p;
+    BU_GET(p, struct bview_polygon);
+    p->type = BVIEW_POLYGON_RECTANGLE;
+    s->s_line_width = 1;
+    s->s_color[0] = 255;
+    s->s_color[1] = 255;
+    s->s_color[2] = 0;
+    s->s_i_data = (void *)p;
+    s->s_update_callback = &bview_update_polygon;
+
+    // Let the view know these are now the previous x,y points
+    v->gv_prevMouseX = x;
+    v->gv_prevMouseY = y;
+
+    // If snapping is active, handle it
+    fastf_t fx, fy;
+    bview_screen_to_view(v, &fx, &fy, x, y);
+    int snapped = 0;
+    if (v->gv_snap_lines) {
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
+    }
+    if (!snapped && v->gv_grid.snap) {
+	bview_snap_grid_2d(v, &fx, &fy);
+    }
+
+    point_t v_pt, m_pt;
+    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
+    VMOVE(p->prev_point, v_pt);
+
+    p->polygon.num_contours = 1;
+    p->polygon.hole = (int *)bu_calloc(1, sizeof(int), "hole");
+    p->polygon.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "contour");
+    p->polygon.contour[0].num_points = 4;
+    p->polygon.contour[0].point = (point_t *)bu_calloc(4, sizeof(point_t), "point");
+    p->polygon.hole[0] = 0;
+    for (int j = 0; j < 4; j++) {
+	VMOVE(p->polygon.contour[0].point[j], m_pt);
+    }
+
+    return s;
+}
+
+int
+bview_update_rectangle(struct bview_scene_obj *s)
+{
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    fastf_t fx, fy;
+
+    struct bview *v = s->s_v;
+    bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y);
+
+    int snapped = 0;
+    if (v->gv_snap_lines) {
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
+    }
+    if (!snapped && v->gv_grid.snap) {
+	bview_snap_grid_2d(v, &fx, &fy);
+    }
+
+    point_t v_pt;
+    MAT4X3PNT(p->polygon.contour[0].point[0], v->gv_view2model, p->prev_point);
+    VSET(v_pt, p->prev_point[X], fy, v->gv_data_vZ);
+    MAT4X3PNT(p->polygon.contour[0].point[1], v->gv_view2model, v_pt);
+    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    MAT4X3PNT(p->polygon.contour[0].point[2], v->gv_view2model, v_pt);
+    VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
+    MAT4X3PNT(p->polygon.contour[0].point[3], v->gv_view2model, v_pt);
+
+    /* Polygon updated, now update view object vlist */
+    bview_polygon_vlist(s);
+
+    /* Updated */
+    s->s_changed++;
+    return 1;
+}
+
+struct bview_scene_obj *
+bview_create_square(struct bview *v, int x, int y)
+{
+    struct bview_scene_obj *s = bview_create_rectangle(v, x, y);
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    p->type = BVIEW_POLYGON_SQUARE;
+    return s;
+}
+
+int
+bview_update_square(struct bview_scene_obj *s)
+{
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    fastf_t fx, fy;
+
+    struct bview *v = s->s_v;
+    bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y);
+
+    int snapped = 0;
+    if (v->gv_snap_lines) {
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
+    }
+    if (!snapped && v->gv_grid.snap) {
+	bview_snap_grid_2d(v, &fx, &fy);
+    }
+
+    fastf_t dx = fx - p->prev_point[X];
+    fastf_t dy = fy - p->prev_point[Y];
+
+    if (fabs(dx) > fabs(dy)) {
+	if (dy < 0.0)
+	    fy = p->prev_point[Y] - fabs(dx);
+	else
+	    fy = p->prev_point[Y] + fabs(dx);
+    } else {
+	if (dx < 0.0)
+	    fx = p->prev_point[X] - fabs(dy);
+	else
+	    fx = p->prev_point[X] + fabs(dy);
+    }
+
+    point_t v_pt;
+    MAT4X3PNT(p->polygon.contour[0].point[0], v->gv_view2model, p->prev_point);
+    VSET(v_pt, p->prev_point[X], fy, v->gv_data_vZ);
+    MAT4X3PNT(p->polygon.contour[0].point[1], v->gv_view2model, v_pt);
+    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    MAT4X3PNT(p->polygon.contour[0].point[2], v->gv_view2model, v_pt);
+    VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
+    MAT4X3PNT(p->polygon.contour[0].point[3], v->gv_view2model, v_pt);
+
+    /* Polygon updated, now update view object vlist */
+    bview_polygon_vlist(s);
+
+    /* Updated */
+    s->s_changed++;
+    return 1;
+}
+
 int
 bview_update_polygon(struct bview_scene_obj *s)
 {
@@ -360,7 +505,10 @@ bview_update_polygon(struct bview_scene_obj *s)
 	return bview_update_circle(s);
     if (p->type == BVIEW_POLYGON_ELLIPSE)
 	return bview_update_ellipse(s);
-
+    if (p->type == BVIEW_POLYGON_RECTANGLE)
+	return bview_update_rectangle(s);
+    if (p->type == BVIEW_POLYGON_SQUARE)
+	return bview_update_rectangle(s);
 
     return 0;
 }
