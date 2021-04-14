@@ -110,6 +110,14 @@ public:
 	  return this->font();
   }
 
+  void mouseReleaseEvent(QMouseEvent* e)
+  {
+     QPlainTextEdit::mouseReleaseEvent(e);
+     this->updateCommandBuffer();
+     return;
+  }
+
+
   void keyPressEvent(QKeyEvent* e)
   {
     QTextCursor text_cursor = this->textCursor();
