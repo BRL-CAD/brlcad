@@ -75,6 +75,10 @@ _poly_cmd_circle(void *bs, int argc, const char **argv)
 	    return GED_ERROR;
 	}
 	s = bview_create_polygon_circle(gedp->ged_gvp, x, y);
+	if (!s) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
+	    return GED_ERROR;
+	}
 	bu_vls_init(&s->s_uuid);
 	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
 	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
@@ -136,6 +140,10 @@ _poly_cmd_ellipse(void *bs, int argc, const char **argv)
 	    return GED_ERROR;
 	}
 	s = bview_create_polygon_ellipse(gedp->ged_gvp, x, y);
+	if (!s) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
+	    return GED_ERROR;
+	}
 	bu_vls_init(&s->s_uuid);
 	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
 	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
@@ -197,6 +205,10 @@ _poly_cmd_rectangle(void *bs, int argc, const char **argv)
 	    return GED_ERROR;
 	}
 	s = bview_create_polygon_rectangle(gedp->ged_gvp, x, y);
+	if (!s) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
+	    return GED_ERROR;
+	}
 	bu_vls_init(&s->s_uuid);
 	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
 	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
@@ -258,6 +270,10 @@ _poly_cmd_square(void *bs, int argc, const char **argv)
 	    return GED_ERROR;
 	}
 	s = bview_create_polygon_square(gedp->ged_gvp, x, y);
+	if (!s) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
+	    return GED_ERROR;
+	}
 	bu_vls_init(&s->s_uuid);
 	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
 	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
@@ -318,6 +334,10 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     }
 
     s = bview_create_polygon(gedp->ged_gvp, x, y);
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
+	return GED_ERROR;
+    }
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
     bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);

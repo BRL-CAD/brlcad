@@ -103,15 +103,6 @@
 #define BVIEW_LABELS         0x10
 #define BVIEW_POLYGONS       0x20
 
-/* Lines and arrows are both expressed as line segs.  For non-arrows, tip
- * length and width are 0 */
-struct bview_line_seg {
-    point_t   p1;                  /* in model coordinates */
-    point_t   p2;                  /* in model coordinates */
-    int       arrow_tip_length;
-    int       arrow_tip_width;
-};
-
 /* TODO - this needs to express most/all of the annotation data, since this is
  * probably ultimately how we will visualize them. */
 struct bview_label {

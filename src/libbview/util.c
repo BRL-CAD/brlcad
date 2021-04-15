@@ -317,11 +317,14 @@ bview_adjust(struct bview *v, int dx, int dy, point_t keypoint, int UNUSED(mode)
 }
 
 
-void
+int
 bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y)
 {
     if (!v)
-	return;
+	return -1;
+
+    if (!v->gv_width || !v->gv_height)
+	return -1;
 
     if (fx) {
 	fastf_t tx = x / (fastf_t)v->gv_width * 2.0 - 1.0;
@@ -333,6 +336,8 @@ bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf
 	fastf_t ty = (y / (fastf_t)v->gv_height * -2.0 + 1.0) / aspect;
 	(*fy) = ty;
     }
+
+    return 0;
 }
 
 /*

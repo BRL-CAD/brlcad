@@ -113,7 +113,11 @@ bview_create_polygon(struct bview *v, int x, int y)
 
     // If snapping is active, handle it
     fastf_t fx, fy;
-    bview_screen_to_view(v, &fx, &fy, x, y);
+    if (bview_screen_to_view(v, &fx, &fy, x, y) < 0) {
+	BU_PUT(p, struct bview_polygon);
+	BU_PUT(s, struct bview_scene_obj);
+	return NULL;
+    }
     int snapped = 0;
     if (v->gv_snap_lines) {
 	snapped = bview_snap_lines_2d(v, &fx, &fy);
@@ -165,7 +169,11 @@ bview_create_polygon_circle(struct bview *v, int x, int y)
 
     // If snapping is active, handle it
     fastf_t fx, fy;
-    bview_screen_to_view(v, &fx, &fy, x, y);
+    if (bview_screen_to_view(v, &fx, &fy, x, y) < 0) {
+	BU_PUT(p, struct bview_polygon);
+	BU_PUT(s, struct bview_scene_obj);
+	return NULL;
+    }
     int snapped = 0;
     if (v->gv_snap_lines) {
 	snapped = bview_snap_lines_2d(v, &fx, &fy);
@@ -205,7 +213,8 @@ bview_update_polygon_circle(struct bview_scene_obj *s)
     vect_t vdiff;
 
     struct bview *v = s->s_v;
-    bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y);
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
@@ -288,7 +297,9 @@ bview_create_polygon_ellipse(struct bview *v, int x, int y)
 
     // If snapping is active, handle it
     fastf_t fx, fy;
-    bview_screen_to_view(v, &fx, &fy, x, y);
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
+
     int snapped = 0;
     if (v->gv_snap_lines) {
 	snapped = bview_snap_lines_2d(v, &fx, &fy);
@@ -323,7 +334,8 @@ bview_update_polygon_ellipse(struct bview_scene_obj *s)
     fastf_t fx, fy;
 
     struct bview *v = s->s_v;
-    bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y);
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
@@ -422,7 +434,9 @@ bview_create_polygon_rectangle(struct bview *v, int x, int y)
 
     // If snapping is active, handle it
     fastf_t fx, fy;
-    bview_screen_to_view(v, &fx, &fy, x, y);
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
+
     int snapped = 0;
     if (v->gv_snap_lines) {
 	snapped = bview_snap_lines_2d(v, &fx, &fy);
@@ -457,7 +471,8 @@ bview_update_polygon_rectangle(struct bview_scene_obj *s)
     fastf_t fx, fy;
 
     struct bview *v = s->s_v;
-    bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y);
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
@@ -501,7 +516,8 @@ bview_update_polygon_square(struct bview_scene_obj *s)
     fastf_t fx, fy;
 
     struct bview *v = s->s_v;
-    bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y);
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {

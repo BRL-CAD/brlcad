@@ -90,12 +90,14 @@ BVIEW_EXPORT extern int bview_snap_lines_3d(point_t *out_pt, struct bview *v, po
 
 BVIEW_EXPORT extern void bview_view_center_linesnap(struct bview *v);
 
-/* Beginning extraction of the core of libtclcad view object manipulation logic.
- * The following functions will initially be pretty straightforward mappings
- * from libtclcad, and will likely evolve over time. */
+/* Beginning extraction of the core of libtclcad view object manipulation
+ * logic.  The following functions will initially be pretty straightforward
+ * mappings from libtclcad, and will likely evolve over time.
+ */
 
-BVIEW_EXPORT extern void bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
-
+/* Return -1 if width and/or height are unset (and hence a meaningful
+ * calculation is impossible), else 0. */
+BVIEW_EXPORT extern int bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
 __END_DECLS
 
