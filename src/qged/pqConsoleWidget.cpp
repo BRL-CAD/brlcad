@@ -117,6 +117,22 @@ public:
      return;
   }
 
+  void insertFromMimeData(const QMimeData * s)
+  {
+    QTextCursor text_cursor = this->textCursor();
+
+    // Set to true if the cursor overlaps the history area
+    const bool history_area =
+      text_cursor.anchor() < this->InteractivePosition
+      || text_cursor.position() < this->InteractivePosition;
+
+    // Avoid pasting into history
+    if (history_area) {
+       return;
+    }
+
+    QPlainTextEdit::insertFromMimeData(s);
+  }
 
   void keyPressEvent(QKeyEvent* e)
   {
