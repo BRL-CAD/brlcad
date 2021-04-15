@@ -110,13 +110,6 @@ public:
 	  return this->font();
   }
 
-  void mouseReleaseEvent(QMouseEvent* e)
-  {
-     QPlainTextEdit::mouseReleaseEvent(e);
-     this->updateCommandBuffer();
-     return;
-  }
-
   void insertFromMimeData(const QMimeData * s)
   {
     QTextCursor text_cursor = this->textCursor();
@@ -132,6 +125,9 @@ public:
     }
 
     QPlainTextEdit::insertFromMimeData(s);
+
+    // The text changed - make sure the command buffer knows
+    this->updateCommandBuffer();
   }
 
   void keyPressEvent(QKeyEvent* e)
