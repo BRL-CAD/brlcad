@@ -26,6 +26,7 @@ set_target_properties(libbview PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(libbg_ignore_files
   CMakeLists.txt
+  TODO
   )
 CMAKEFILES(${libbview_ignore_files})
 

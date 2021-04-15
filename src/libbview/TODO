@@ -1,0 +1,15 @@
+implement general polygon creation and manipulation (point append, select, move)
+
+migrate clipping of two or more polygons
+
+implement labels
+
+implement data axes
+
+implement interactive rectangle
+
+determine how to manage interactive rect, adc (view object or faceplate?  If latter, how to handle custom mouse reactions?)
+
+implement xy selection via projected view plane bounding polygons of scene obj vlists (minimally convex hull,
+better would be concave hull.)  Alternative method would be snapping to closest projected line seg.
+
