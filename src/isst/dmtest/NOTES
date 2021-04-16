@@ -1,0 +1,21 @@
+Even if we can get a Tcl/Tk free stack working fully, users will need an option
+for a Tcl prompt if we are going to support .mgedrc customizations.
+
+May be worth exploring whether we can get away with using just the minimal
+bootstrap version of jimtcl's library:
+
+https://github.com/msteveb/jimtcl
+
+The script make-bootstrap-jim can produce a single .c file:
+
+./make-bootstrap-jim > jimtcl0.c
+
+This file can in turn be compiled to a shared lib in CMake with:
+
+add_library(jimtcl0 SHARED jimtcl0.c)
+target_compile_definitions(jimtcl0 PUBLIC JIM_BOOTSTRAP_LIB_ONLY)
+
+Would need to be tested, but if it can provide a MGED-style Tcl prompt that is
+sufficient for scripting purposes and loading .mgedrc files it would be a far
+simpler integration than the all-up libtcl build...
+
