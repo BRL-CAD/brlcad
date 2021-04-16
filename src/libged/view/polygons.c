@@ -74,7 +74,7 @@ _poly_cmd_circle(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
 	    return GED_ERROR;
 	}
-	s = bview_create_polygon_circle(gedp->ged_gvp, x, y);
+	s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_CIRCLE, x, y);
 	if (!s) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	    return GED_ERROR;
@@ -139,7 +139,7 @@ _poly_cmd_ellipse(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
 	    return GED_ERROR;
 	}
-	s = bview_create_polygon_ellipse(gedp->ged_gvp, x, y);
+	s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_ELLIPSE, x, y);
 	if (!s) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	    return GED_ERROR;
@@ -204,7 +204,7 @@ _poly_cmd_rectangle(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
 	    return GED_ERROR;
 	}
-	s = bview_create_polygon_rectangle(gedp->ged_gvp, x, y);
+	s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_RECTANGLE, x, y);
 	if (!s) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	    return GED_ERROR;
@@ -269,7 +269,7 @@ _poly_cmd_square(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
 	    return GED_ERROR;
 	}
-	s = bview_create_polygon_square(gedp->ged_gvp, x, y);
+	s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_SQUARE, x, y);
 	if (!s) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	    return GED_ERROR;
@@ -333,7 +333,7 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    s = bview_create_polygon(gedp->ged_gvp, x, y);
+    s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_GENERAL, x, y);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;

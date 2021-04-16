@@ -78,6 +78,14 @@
 #  define DOWN 1
 #endif
 
+/* TODO - this needs to express most/all of the annotation data, since this is
+ * probably ultimately how we will visualize them. */
+struct bview_label {
+    int         size;
+    struct bu_vls label;
+    point_t     p;
+};
+
 /* Note that it is possible for a view object to be view-only (not
  * corresponding directly to the wireframe of a database shape) but also based
  * off of database data.  Evaluated shaded objects would be an example, as
@@ -103,33 +111,6 @@
 #define BVIEW_LABELS         0x10
 #define BVIEW_POLYGONS       0x20
 
-/* TODO - this needs to express most/all of the annotation data, since this is
- * probably ultimately how we will visualize them. */
-struct bview_label {
-    int         size;
-    struct bu_vls label;
-    point_t     p;
-};
-
-/* TODO - bg_polygon stores 3D points.  Is vZ used to set the point Z? */
-#define BVIEW_POLYGON_CONTOUR 0
-#define BVIEW_POLYGON_GENERAL 1
-#define BVIEW_POLYGON_CIRCLE 2
-#define BVIEW_POLYGON_ELLIPSE 3
-#define BVIEW_POLYGON_RECTANGLE 4
-#define BVIEW_POLYGON_SQUARE 5
-struct bview_polygon {
-    int                 type;
-    int                 cflag;             /* contour flag */
-    int                 sflag;             /* point select flag */
-    int                 mflag;             /* point move flag */
-    int                 aflag;             /* point append flag */
-    size_t              curr_point_i;
-    point_t             prev_point;
-    fastf_t             vZ;
-    struct bg_polygon   polygon;
-};
-
 // TODO - right now, display_lists are used to group bview_scene_obj objects.
 //
 // Could we change this so that bview_scene_obj objects support lists of child
@@ -140,7 +121,8 @@ struct bview;
 struct bview_scene_obj  {
     struct bu_list l;
 
-    /* View object name */
+    /* View object name and type id */
+    unsigned long long s_type_flags;
     struct bu_vls s_uuid;       /**< @brief object name (should be unique) */
     mat_t s_mat;		/**< @brief mat to use for internal lookup */
 

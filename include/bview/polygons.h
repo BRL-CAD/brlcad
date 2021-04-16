@@ -36,18 +36,31 @@
 
 __BEGIN_DECLS
 
+/* TODO - bg_polygon stores 3D points.  Is vZ used to set the point Z? */
+#define BVIEW_POLYGON_CONTOUR 0
+#define BVIEW_POLYGON_GENERAL 1
+#define BVIEW_POLYGON_CIRCLE 2
+#define BVIEW_POLYGON_ELLIPSE 3
+#define BVIEW_POLYGON_RECTANGLE 4
+#define BVIEW_POLYGON_SQUARE 5
+struct bview_polygon {
+    int                 type;
+    int                 cflag;             /* contour flag */
+    int                 sflag;             /* point select flag */
+    int                 mflag;             /* point move flag */
+    int                 aflag;             /* point append flag */
+    size_t              curr_point_i;
+    point_t             prev_point;
+    fastf_t             vZ;
+    struct bg_polygon   polygon;
+};
 
 // Note - for these functions it is important that the bview
 // gv_width and gv_height values are current!  I.e.:
 //
 //  v->gv_width  = dm_get_width((struct dm *)v->dmp);
 //  v->gv_height = dm_get_height((struct dm *)v->dmp);
-
-BVIEW_EXPORT extern struct bview_scene_obj *bview_create_polygon_circle(struct bview *v, int x, int y);
-BVIEW_EXPORT extern struct bview_scene_obj *bview_create_polygon_ellipse(struct bview *v, int x, int y);
-BVIEW_EXPORT extern struct bview_scene_obj *bview_create_polygon_rectangle(struct bview *v, int x, int y);
-BVIEW_EXPORT extern struct bview_scene_obj *bview_create_polygon_square(struct bview *v, int x, int y);
-BVIEW_EXPORT extern struct bview_scene_obj *bview_create_polygon(struct bview *v, int x, int y);
+BVIEW_EXPORT extern struct bview_scene_obj *bview_create_polygon(struct bview *v, int type, int x, int y);
 BVIEW_EXPORT extern int bview_update_polygon(struct bview_scene_obj *s);
 
 __END_DECLS

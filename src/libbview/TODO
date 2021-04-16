@@ -13,3 +13,13 @@ determine how to manage interactive rect, adc (view object or faceplate?  If lat
 implement xy selection via projected view plane bounding polygons of scene obj vlists (minimally convex hull,
 better would be concave hull.)  Alternative method would be snapping to closest projected line seg.
 
+
+Note - need a way for object types (polygon and solid wireframe, custom view
+objs, etc.) to get a type id that can be assigned to the bview_scene_obj to
+allow algorithms like boolean clipping to operate on all view objects of the
+same type.  Could view object types be loaded as plugins and registered like
+libged commands?  Maybe hash themselves (the .so file) and use that as their
+unique type identifier?
+
+For now just hard code various types, and maybe reserve lower number ranges
+for built in types, but eventually we'll need something more...
