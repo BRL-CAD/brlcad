@@ -545,8 +545,23 @@ int
 bview_update_general_polygon(struct bview_scene_obj *s)
 {
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL)
+    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
 	return 0;
+
+    if (p->aflag) {
+	bview_append_polygon_pt(s);
+	return 0;
+    }
+
+    if (p->sflag) {
+	bview_select_polygon_pt(s);
+	return 0;
+    }
+
+    if (p->mflag) {
+	bview_move_polygon_pt(s);
+	return 0;
+    }
 
     return 0;
 }
