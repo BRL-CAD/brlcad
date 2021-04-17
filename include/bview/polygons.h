@@ -49,7 +49,8 @@ struct bview_polygon {
     int                 sflag;             /* point select flag */
     int                 mflag;             /* point move flag */
     int                 aflag;             /* point append flag */
-    size_t              curr_point_i;
+    long                curr_contour_i;
+    long                curr_point_i;
     point_t             prev_point;
     fastf_t             vZ;
     struct bg_polygon   polygon;

@@ -102,6 +102,8 @@ bview_create_polygon(struct bview *v, int type, int x, int y)
     struct bview_polygon *p;
     BU_GET(p, struct bview_polygon);
     p->type = type;
+    p->curr_contour_i = -1;
+    p->curr_point_i = -1;
     s->s_line_width = 1;
     s->s_color[0] = 255;
     s->s_color[1] = 255;
@@ -154,6 +156,141 @@ bview_create_polygon(struct bview *v, int type, int x, int y)
     }
 
     return s;
+}
+
+int
+bview_append_polygon_pt(struct bview_scene_obj *s)
+{
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
+	return -1;
+
+    if (p->curr_contour_i < 0)
+	return -1;
+
+    fastf_t fx, fy;
+
+    struct bview *v = s->s_v;
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
+
+    int snapped = 0;
+    if (v->gv_snap_lines) {
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
+    }
+    if (!snapped && v->gv_grid.snap) {
+	bview_snap_grid_2d(v, &fx, &fy);
+    }
+
+    point_t v_pt;
+    VSET(v_pt, fx, fy, v->gv_data_vZ);
+
+    struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
+    c->num_points++;
+    c->point = (point_t *)bu_realloc(c->point,c->num_points * sizeof(point_t), "realloc contour points");
+    MAT4X3PNT(c->point[c->num_points-1], v->gv_view2model, v_pt);
+
+    if (c->num_points > 2) {
+	p->type = BVIEW_POLYGON_GENERAL;
+    }
+
+    return 0;
+}
+
+int
+bview_select_polygon_pt(struct bview_scene_obj *s)
+{
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
+	return -1;
+
+    fastf_t fx, fy;
+
+    struct bview *v = s->s_v;
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
+
+    int snapped = 0;
+    if (v->gv_snap_lines) {
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
+    }
+    if (!snapped && v->gv_grid.snap) {
+	bview_snap_grid_2d(v, &fx, &fy);
+    }
+
+    point_t v_pt, m_pt;
+    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
+
+
+    // If a contour is selected, restrict our closest point candidates to
+    // that contour's points
+    double dist_min_sq = DBL_MAX;
+    long closest_ind = -1;
+    long closest_contour = -1;
+    if (p->curr_contour_i >= 0) {
+	struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
+	closest_contour = p->curr_contour_i;
+	for (size_t i = 0; i < c->num_points; i++) {
+	    double dcand = DIST_PNT_PNT_SQ(c->point[i], m_pt);
+	    if (dcand < dist_min_sq) {
+		closest_ind = (long)i;
+		dist_min_sq = dcand;
+	    }
+	}
+    } else {
+	for (size_t j = 0; j < p->polygon.num_contours; j++) {
+	    struct bg_poly_contour *c = &p->polygon.contour[j];
+	    for (size_t i = 0; i < c->num_points; i++) {
+		double dcand = DIST_PNT_PNT_SQ(c->point[i], m_pt);
+		if (dcand < dist_min_sq) {
+		    closest_ind = (long)i;
+		    closest_contour = (long)j;
+		    dist_min_sq = dcand;
+		}
+	    }
+	}
+    }
+
+    p->curr_point_i = closest_ind;
+    p->curr_contour_i = closest_contour;
+
+    return 0;
+}
+
+int
+bview_move_polygon_pt(struct bview_scene_obj *s)
+{
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
+	return -1;
+
+    // Need to have a point selected before we can move
+    if (p->curr_point_i < 0 || p->curr_contour_i < 0)
+	return -1;
+
+    fastf_t fx, fy;
+
+    struct bview *v = s->s_v;
+    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
+
+    int snapped = 0;
+    if (v->gv_snap_lines) {
+	snapped = bview_snap_lines_2d(v, &fx, &fy);
+    }
+    if (!snapped && v->gv_grid.snap) {
+	bview_snap_grid_2d(v, &fx, &fy);
+    }
+
+    point_t v_pt, m_pt;
+    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
+
+    struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
+    VMOVE(c->point[p->curr_point_i], m_pt);
+
+    return 0;
 }
 
 /* Oof.  Followed the logic down the chain to_poly_circ_mode_func ->
@@ -426,7 +563,7 @@ bview_update_polygon(struct bview_scene_obj *s)
 	return bview_update_polygon_rectangle(s);
     if (p->type == BVIEW_POLYGON_SQUARE)
 	return bview_update_polygon_square(s);
-    if (p->type != BVIEW_POLYGON_GENERAL)
+    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
 	return 0;
     return bview_update_general_polygon(s);
 }
