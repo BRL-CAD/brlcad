@@ -62,7 +62,6 @@ CMAKEFILES(
   CMakeLists.txt
   FindGLX.cmake
   ${OGL_SRCS}
-  dm-glx.h
   dm-ogl.h
   fb_ogl.h
   )
