@@ -1500,7 +1500,7 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 
 HIDDEN int
-X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
+X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
     XImage *ximage_p;
     unsigned char **rows;
@@ -1520,6 +1520,11 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
 
     if (flip) {
 	bu_log("X: flipping unimplemented for this backend\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (alpha) {
+	bu_log("X: alpha support unimplemented for this backend\n");
 	return BRLCAD_ERROR;
     }
 

@@ -1462,7 +1462,7 @@ int gl_draw_obj(struct dm *dmp, struct display_list *obj)
     return 0;
 }
 
-int gl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
+int gl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
     unsigned char *idata;
     int width;
@@ -1471,16 +1471,24 @@ int gl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
     width = dmp->i->dm_width;
     height = dmp->i->dm_height;
 
-    idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
-
-    glReadBuffer(GL_FRONT);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
-    *image = idata;
+    if (!alpha) {
+	idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
+	glReadBuffer(GL_FRONT);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
+	*image = idata;
+    } else {
+	idata = (unsigned char*)bu_calloc(height * width * 4, sizeof(unsigned char), "rgba data");
+	glReadBuffer(GL_FRONT);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, idata);
+	*image = idata;
+    }
     if (flip)
-	flip_display_image_vertically(*image, width, height);
+	flip_display_image_vertically(*image, width, height, alpha);
 
     return BRLCAD_OK; /* caller will need to bu_free(idata, "image data"); */
+
 }
 
 int gl_get_internal(struct dm *dmp)

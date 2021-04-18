@@ -4903,7 +4903,7 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (dm_get_display_image((struct dm *)gdvp->dmp, &pixels, 0) != BRLCAD_OK) {
+    if (dm_get_display_image((struct dm *)gdvp->dmp, &pixels, 0, 0) != BRLCAD_OK) {
     	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't get display image\n", argv[0]);
 	fclose(fp);
 	return GED_ERROR;
@@ -5002,7 +5002,7 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (dm_get_display_image((struct dm *)gdvp->dmp, &pixels, 0) != BRLCAD_OK) {
+    if (dm_get_display_image((struct dm *)gdvp->dmp, &pixels, 0, 0) != BRLCAD_OK) {
     	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't get display image\n", argv[0]);
 	fclose(fp);
 	return GED_ERROR;

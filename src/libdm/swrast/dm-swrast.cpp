@@ -214,6 +214,8 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     }
     privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     privars->v = (struct bview *)ctx;
+    // Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend
+    // was switched to RGBA to make it easier to display the output
     privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);
     int width = (!privars->v->gv_width) ? 512 : privars->v->gv_width;
     int height = (!privars->v->gv_height) ? 512 : privars->v->gv_height;
@@ -435,47 +437,6 @@ swrast_write_image(struct bu_vls *UNUSED(msgs), FILE *UNUSED(fp), struct dm *UNU
     return -1;
 }
 
-// Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend
-// was switched to RGBA to make it easier to display the output, but that also means that
-// libdmgl's RGB getDisplayImage and the image flipping function (which also assumes RGB
-// data) won't work.  Define RGBA variations for the OSMesa backend.
-int swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
-{
-    unsigned char *idata;
-    int width;
-    int height;
-
-    width = dmp->i->dm_width;
-    height = dmp->i->dm_height;
-
-    idata = (unsigned char*)bu_calloc(height * width * 4, sizeof(unsigned char), "rgba data");
-
-    glReadBuffer(GL_FRONT);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, idata);
-    *image = idata;
-    if (flip) {
-	// Flip manually using an RGBA variation of the math from:
-	// https://github.com/vallentin/GLCollection/blob/master/screenshot.cpp
-	//
-	// Unfortunately OpenGL doesn't provide a built-in way to handle this:
-	// https://www.opengl.org/archives/resources/features/KilgardTechniques/oglpitfall/
-	for (int y = 0; y < height / 2; ++y) {
-	    for (int x = 0; x < width; ++x) {
-		int top = (x + y * width) * 4;
-		int bottom = (x + (height - y - 1) * width) * 4;
-		char rgba[4];
-		memcpy(rgba, *image + top, sizeof(rgba));
-		memcpy(*image + top, *image + bottom, sizeof(rgba));
-		memcpy(*image + bottom, rgba, sizeof(rgba));
-	    }
-	}
-    }
-
-    return BRLCAD_OK; /* caller will need to bu_free(idata, "image data"); */
-}
-
-
 int
 swrast_event_cmp(struct dm *dmp, dm_event_t type, int event)
 {
@@ -534,7 +495,7 @@ struct dm_impl dm_swrast_impl = {
     gl_freeDLists,
     gl_genDLists,
     gl_draw_obj,
-    swrast_getDisplayImage, /* display to image function */
+    gl_getDisplayImage, /* display to image function */
     gl_reshape,
     swrast_makeCurrent,
     null_SwapBuffers,

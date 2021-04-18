@@ -109,7 +109,7 @@ void dmSW::paintEvent(QPaintEvent *e)
 
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;
-    if (dm_get_display_image(dmp, &dm_image, 1)) {
+    if (dm_get_display_image(dmp, &dm_image, 1, 1)) {
 	return;
     }
     QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBA8888);
@@ -337,11 +337,12 @@ void dmSW::mouseReleaseEvent(QMouseEvent *e) {
 void dmSW::save_image() {
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;
-    if (dm_get_display_image(dmp, &dm_image, 1)) {
+    if (dm_get_display_image(dmp, &dm_image, 1, 1)) {
 	return;
     }
-    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGB888);
-    image.save("file.png");
+    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBA8888);
+    QImage img32 = image.convertToFormat(QImage::Format_RGB32);
+    img32.save("file.png");
 }
 
 // Local Variables:

@@ -47,10 +47,11 @@ draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2)
 
 
 void
-flip_display_image_vertically(unsigned char *image, size_t width, size_t height)
+flip_display_image_vertically(unsigned char *image, size_t width, size_t height, int alpha)
 {
     size_t i, j;
-    size_t row_bytes = width * 3 * sizeof(unsigned char);
+    int psize = (!alpha) ? 3 : 4;
+    size_t row_bytes = width * psize * sizeof(unsigned char);
     size_t img_bytes = row_bytes * height;
     unsigned char *inv_img = (unsigned char *)bu_malloc(img_bytes,
 	    "inverted image");

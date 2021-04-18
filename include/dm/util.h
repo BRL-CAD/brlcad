@@ -42,7 +42,7 @@ DM_EXPORT int dm_validXType(const char *dpy_string, const char *name);
 
 DM_EXPORT int draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
 
-DM_EXPORT void flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
+DM_EXPORT void flip_display_image_vertically(unsigned char *image, size_t width, size_t height, int alpha);
 
 DM_EXPORT extern int _fb_disk_enable;
 

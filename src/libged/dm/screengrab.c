@@ -131,7 +131,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	bytes_per_pixel = 3;
 	bytes_per_line = dm_get_width(dmp) * bytes_per_pixel;
 
-	dm_get_display_image(dmp, &idata, 1);
+	dm_get_display_image(dmp, &idata, 1, 0);
 	if (!idata) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: display manager did not return image data.", argv[1]);
 	    return GED_ERROR;

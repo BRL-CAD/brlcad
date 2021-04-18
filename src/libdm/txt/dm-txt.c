@@ -327,9 +327,9 @@ txt_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
 
 
 HIDDEN int
-txt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image), int flip)
+txt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image), int flip, int alpha)
 {
-    bu_log("getDisplayImage called (flip: %d)\n", flip);
+    bu_log("getDisplayImage called (flip: %d, alpha: %d)\n", flip, alpha);
     return 0;
 }
 
