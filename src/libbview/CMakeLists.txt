@@ -24,7 +24,7 @@ set(LIBBVIEW_SRCS
 BRLCAD_ADDLIB(libbview "${LIBBVIEW_SRCS}" "libbg;libbn;libbu")
 set_target_properties(libbview PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-set(libbg_ignore_files
+set(libbview_ignore_files
   CMakeLists.txt
   TODO
   )
