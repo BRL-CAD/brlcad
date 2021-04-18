@@ -1046,7 +1046,6 @@ dm_draw_display_list(struct dm *dmp,
     return ndrawn;
 }
 
-
 /*
  * Local Variables:
  * mode: C

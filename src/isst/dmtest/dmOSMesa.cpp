@@ -1,4 +1,4 @@
-/*                      D M G L S . C P P
+/*                      D M O S M E S A . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,13 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmgl.cpp
+/** @file dmOSMesa.cpp
  *
  * Brief description
  *
  */
 
-#include <QOpenGLWidget>
+#define USE_MGL_NAMESPACE 1
+
 #include <QKeyEvent>
 #include <QGuiApplication> // for qGuiApp
 
@@ -33,13 +34,29 @@ extern "C" {
 #include "dm.h"
 #include "ged.h"
 }
-#include "dmgl.h"
+#include "dmOSMesa.h"
 
-dmGL::dmGL(QWidget *parent)
-    : QOpenGLWidget(parent)
+dmOSMesa::dmOSMesa(QWidget *parent)
+    : QWidget(parent)
 {
     BU_GET(v, struct bview);
     bview_init(v);
+
+    // Since this isn't a "proper" OpenGL context,
+    // we don't have to wait until after things are
+    // initialized to set up
+    const char *acmd = "attach";
+    dmp = dm_open((void *)this, NULL, "qtosmesa", 1, &acmd);
+    if (!dmp)
+	return;
+    dm_configure_win(dmp, 0);
+    dm_set_pathname(dmp, "QTDM");
+    dm_set_zbuffer(dmp, 1);
+
+    fastf_t windowbounds[6] = { -1, 1, -1, 1, (int)GED_MIN, (int)GED_MAX };
+    dm_set_win_bounds(dmp, windowbounds);
+
+    v->dmp = dmp;
 
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
@@ -47,61 +64,33 @@ dmGL::dmGL(QWidget *parent)
     setFocusPolicy(Qt::WheelFocus);
 }
 
-dmGL::~dmGL()
+dmOSMesa::~dmOSMesa()
 {
     BU_PUT(v, struct bview);
 }
 
-
-void dmGL::paintGL()
+void dmOSMesa::paintEvent(QPaintEvent *e)
 {
-    int w = width();
-    int h = height();
-    // Zero size == nothing to do
-    if (!w || !h)
-	return;
-
-    if (!gedp) {
-	return;
-    }
-
-    if (!m_init) {
-	initializeOpenGLFunctions();
-	m_init = true;
-	if (!dmp) {
-	    const char *acmd = "attach";
-	    dmp = dm_open((void *)this, NULL, "qtgl", 1, &acmd);
-	    if (!dmp)
-		return;
-	    if (gedp) {
-		gedp->ged_dmp = (void *)dmp;
-		bu_ptbl_ins(gedp->ged_all_dmp, (long int *)dmp);
-		dm_set_vp(dmp, &gedp->ged_gvp->gv_scale);
-	    }
-	    dm_configure_win(dmp, 0);
-	    dm_set_pathname(dmp, "QTDM");
-	    dm_set_zbuffer(dmp, 1);
-
-	    fastf_t windowbounds[6] = { -1, 1, -1, 1, (int)GED_MIN, (int)GED_MAX };
-	    dm_set_win_bounds(dmp, windowbounds);
-
-	    v->dmp = dmp;
-	}
-    }
-
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     // Go ahead and set the flag, but (unlike the rendering thread
     // implementation) we need to do the draw routine every time in paintGL, or
     // we end up with unrendered frames.
     dm_set_dirty(dmp, 0);
 
     if (gedp) {
+	if (!m_init) {
+	    gedp->ged_dmp = (void *)dmp;
+	    bu_ptbl_ins(gedp->ged_all_dmp, (long int *)dmp);
+	    dm_set_vp(dmp, &gedp->ged_gvp->gv_scale);
+	    dm_configure_win((struct dm *)gedp->ged_dmp, 0);
+	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gedp->ged_dmp);
+	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gedp->ged_dmp);
+	    m_init = true;
+	}
+
 	matp_t mat = gedp->ged_gvp->gv_model2view;
 	dm_loadmatrix(dmp, mat, 0);
 	unsigned char geometry_default_color[] = { 255, 0, 0 };
-        dm_draw_begin(dmp);
+	dm_draw_begin(dmp);
 	dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay,
 		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
 		0, 0, geometry_default_color, 1, 0);
@@ -111,9 +100,21 @@ void dmGL::paintGL()
 
 	dm_draw_end(dmp);
     }
+
+    // Set up a QImage with the rendered output..
+    unsigned char *dm_image;
+    if (dm_get_display_image(dmp, &dm_image, 1)) {
+	return;
+    }
+    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGB888);
+    image.save("file.png");
+    QPainter painter(this);
+    painter.drawImage(this->rect(), image);
+    e->accept();
+    bu_free(dm_image, "copy of backend image");
 }
 
-void dmGL::resizeGL(int, int)
+void dmOSMesa::resizeEvent(QResizeEvent *e)
 {
     if (gedp && gedp->ged_dmp) {
 	dm_configure_win((struct dm *)gedp->ged_dmp, 0);
@@ -121,9 +122,10 @@ void dmGL::resizeGL(int, int)
 	gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gedp->ged_dmp);
 	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
     }
+    QWidget::resizeEvent(e);
 }
 
-void dmGL::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
+void dmOSMesa::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     if (ged_cmd_valid(argv[0], NULL)) {
 	const char *ccmd = NULL;
@@ -224,10 +226,10 @@ void dmGL::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 }
 
 
-void dmGL::keyPressEvent(QKeyEvent *k) {
+void dmOSMesa::keyPressEvent(QKeyEvent *k) {
 
     if (!gedp || !gedp->ged_dmp) {
-	QOpenGLWidget::keyPressEvent(k);
+	QWidget::keyPressEvent(k);
 	return;
     }
 
@@ -242,13 +244,13 @@ void dmGL::keyPressEvent(QKeyEvent *k) {
 	update();
     }
 
-    QOpenGLWidget::keyPressEvent(k);
+    QWidget::keyPressEvent(k);
 }
 
-void dmGL::mousePressEvent(QMouseEvent *e) {
+void dmOSMesa::mousePressEvent(QMouseEvent *e) {
 
     if (!gedp || !gedp->ged_dmp) {
-	QOpenGLWidget::mousePressEvent(e);
+	QWidget::mousePressEvent(e);
 	return;
     }
 
@@ -265,13 +267,13 @@ void dmGL::mousePressEvent(QMouseEvent *e) {
 
     bu_log("X,Y: %d, %d\n", e->x(), e->y());
 
-    QOpenGLWidget::mousePressEvent(e);
+    QWidget::mousePressEvent(e);
 }
 
-void dmGL::mouseMoveEvent(QMouseEvent *e)
+void dmOSMesa::mouseMoveEvent(QMouseEvent *e)
 {
     if (!gedp || !gedp->ged_dmp) {
-	QOpenGLWidget::mouseMoveEvent(e);
+	QWidget::mouseMoveEvent(e);
 	return;
     }
 
@@ -290,13 +292,13 @@ void dmGL::mouseMoveEvent(QMouseEvent *e)
     x_prev = e->x();
     y_prev = e->y();
 
-    QOpenGLWidget::mouseMoveEvent(e);
+    QWidget::mouseMoveEvent(e);
 }
 
-void dmGL::wheelEvent(QWheelEvent *e) {
+void dmOSMesa::wheelEvent(QWheelEvent *e) {
 
     if (!gedp || !gedp->ged_dmp) {
-	QOpenGLWidget::wheelEvent(e);
+	QWidget::wheelEvent(e);
 	return;
     }
 
@@ -311,21 +313,26 @@ void dmGL::wheelEvent(QWheelEvent *e) {
 	 update();
     }
 
-    QOpenGLWidget::wheelEvent(e);
+    QWidget::wheelEvent(e);
 }
 
-void dmGL::mouseReleaseEvent(QMouseEvent *e) {
+void dmOSMesa::mouseReleaseEvent(QMouseEvent *e) {
 
     // To avoid an abrupt jump in scene motion the next time movement is
     // started with the mouse, after we release we return to the default state.
     x_prev = -INT_MAX;
     y_prev = -INT_MAX;
 
-    QOpenGLWidget::mouseReleaseEvent(e);
+    QWidget::mouseReleaseEvent(e);
 }
 
-void dmGL::save_image() {
-    QImage image = this->grabFramebuffer();
+void dmOSMesa::save_image() {
+    // Set up a QImage with the rendered output..
+    unsigned char *dm_image;
+    if (dm_get_display_image(dmp, &dm_image, 1)) {
+	return;
+    }
+    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGB888);
     image.save("file.png");
 }
 

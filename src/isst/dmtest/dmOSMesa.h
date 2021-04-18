@@ -1,4 +1,4 @@
-/*                        D M G L S . H
+/*                        D M O S M E S A . H
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,34 +17,33 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmgl.h
+/** @file dmOSMesa.h
  *
  */
 
-#ifndef DMGL_H
-#define DMGL_H
+#ifndef DMOSMESA_H
+#define DMOSMESA_H
 
-#include <QOpenGLWidget>
-#include <QOpenGLFunctions>
-#include <QPainter>
+#define USE_MGL_NAMESPACE 1
+
 #include <QImage>
+#include <QPainter>
+#include <QWidget>
 
 extern "C" {
-#include "bu/vls.h"
 #include "dm.h"
 #include "ged.h"
 }
 
 #include "bindings.h"
 
-// Use QOpenGLFunctions so we don't have to prefix all OpenGL calls with "f->"
-class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
+class dmOSMesa : public QWidget
 {
     Q_OBJECT
 
     public:
-	explicit dmGL(QWidget *parent = nullptr);
-	~dmGL();
+	explicit dmOSMesa(QWidget *parent = nullptr);
+	~dmOSMesa();
 
 	void save_image();
 
@@ -57,13 +56,13 @@ class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
 	unsigned long long prev_lhash = 0;
 	unsigned long long prev_ghash = 0;
 
-	bool m_init = false;
-
 	void ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
+	bool m_init = false;
+
     protected:
-	void paintGL() override;
-	void resizeGL(int w, int h) override;
+	void paintEvent(QPaintEvent *e) override;
+	void resizeEvent(QResizeEvent *e) override;
 
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
@@ -76,7 +75,7 @@ class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
 	int y_prev = -INT_MAX;
 };
 
-#endif /* DMGL_H */
+#endif /* DMOSMESA_H */
 
 // Local Variables:
 // tab-width: 8

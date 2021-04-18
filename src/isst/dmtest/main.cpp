@@ -31,6 +31,7 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/str.h"
 
 int main(int argc, char *argv[])
 {
@@ -58,12 +59,21 @@ int main(int argc, char *argv[])
 
     // If we have command line arguments, process them
     if (argc) {
-	const char *filename = argv[0];
-	argc--; argv++;
-	app.load_g(filename, argc, (const char **)argv);
-	app.w->gedp = app.gedp;
-	if (app.w->canvas)
-	    app.w->canvas->gedp = app.gedp;
+	if (BU_STR_EQUAL(argv[0], "-s")) {
+	    // If we had a -s option it was handled in app creation.
+	    // Eventually this should be done properly with bu_opt...
+	    argc--; argv++;
+	}
+	if (argc) {
+	    const char *filename = argv[0];
+	    argc--; argv++;
+	    app.load_g(filename, argc, (const char **)argv);
+	    app.w->gedp = app.gedp;
+	    if (app.w->canvas)
+		app.w->canvas->gedp = app.gedp;
+	    if (app.w->canvas_sw)
+		app.w->canvas_sw->gedp = app.gedp;
+	}
     }
 
     // This is an illustration of how to force an exact size for
@@ -77,6 +87,13 @@ int main(int argc, char *argv[])
 	app.w->canvas->setMaximumSize(1100,800);
 	app.w->canvas->updateGeometry();
     }
+    if (app.w->canvas_sw) {
+	cminsize = app.w->canvas_sw->minimumSize();
+	cmaxsize = app.w->canvas_sw->maximumSize();
+	app.w->canvas_sw->setMinimumSize(1100,800);
+	app.w->canvas_sw->setMaximumSize(1100,800);
+	app.w->canvas_sw->updateGeometry();
+    }
 
     // Draw the window
     app.w->show();
@@ -87,6 +104,10 @@ int main(int argc, char *argv[])
     if (app.w->canvas) {
 	app.w->canvas->setMinimumSize(cminsize);
 	app.w->canvas->setMaximumSize(cmaxsize);
+    }
+    if (app.w->canvas_sw) {
+	app.w->canvas_sw->setMinimumSize(cminsize);
+	app.w->canvas_sw->setMaximumSize(cmaxsize);
     }
 
     return app.exec();

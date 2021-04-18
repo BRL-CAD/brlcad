@@ -36,6 +36,8 @@
 #include "ged.h"
 #include "./ged_private.h"
 
+#include "xxhash.h"
+
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
 #define GET_BVIEW_SCENE_OBJ(p, fp) { \
@@ -2586,6 +2588,124 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
         gdlp = next_gdlp;
     }
 
+}
+
+unsigned long long
+dl_name_hash(struct ged *gedp)
+{
+    if (!BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay))
+	return 0;
+
+    XXH64_hash_t hash_val;
+    XXH64_state_t *state;
+    state = XXH64_createState();
+    if (!state)
+	return 0;
+    XXH64_reset(state, 0);
+
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	struct bview_scene_obj *sp;
+	struct bview_scene_obj *nsp;
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
+	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    if (sp->s_u_data) {
+		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
+		    struct directory *dp = bdata->s_fullpath.fp_names[i];
+		    XXH64_update(state, dp->d_namep, strlen(dp->d_namep));
+		}
+	    }
+	    sp = nsp;
+	}
+	gdlp = next_gdlp;
+    }
+
+    hash_val = XXH64_digest(state);
+    XXH64_freeState(state);
+
+    return (unsigned long long)hash_val;
+}
+
+unsigned long long
+dl_update(struct ged *gedp)
+{
+    unsigned long long hincr = 0;
+    if (!BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay))
+	return 0;
+
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	struct bview_scene_obj *sp;
+	struct bview_scene_obj *nsp;
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
+	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    // TODO - this core logic should probably become the default
+	    // solid object s_update_callback function's standard viewing mode
+	    // routine (when interactively editing primitives a.l.a. MGED's
+	    // sedit mode, something else is needed since primitive parameters
+	    // are supposed to change in response to mouse motions...  for
+	    // normal checking we only need to redraw if the dbio layer asserts
+	    // a command changed something).
+	    if (sp->s_u_data) {
+		int changed = 0;
+		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
+		    struct directory *dp = bdata->s_fullpath.fp_names[i];
+		    if (dp->edit_flag) {
+			// db object along path was edited - we
+			// need to update the object's info
+			changed = 1;
+			hincr++;
+			break;
+		    }
+		}
+		if (changed) {
+		    char *spath = db_path_to_string(&bdata->s_fullpath);
+		    bu_log("redrawing %s\n", spath);
+		    const char *av[3];
+		    av[0] = "draw";
+		    av[1] = spath;
+		    av[2] = NULL;
+		    ged_draw(gedp, 2, av);
+		    bu_free(spath, "free spath");
+		}
+	    }
+	    sp = nsp;
+	}
+	gdlp = next_gdlp;
+    }
+    // Updating done - clear all edit flags
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	struct bview_scene_obj *sp;
+	struct bview_scene_obj *nsp;
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
+	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    if (sp->s_u_data) {
+		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
+		    struct directory *dp = bdata->s_fullpath.fp_names[i];
+		    dp->edit_flag = 0;
+		}
+	    }
+	    sp = nsp;
+	}
+	gdlp = next_gdlp;
+    }
+
+
+    return hincr;
 }
 
 /*
