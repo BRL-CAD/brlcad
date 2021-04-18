@@ -119,6 +119,27 @@ _dm_cmd_type(void *ds, int argc, const char **argv)
 }
 
 int
+_dm_cmd_types(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "dm [options] types";
+    const char *purpose_string = "list supported display manager types";
+    if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+
+    struct bu_vls list = BU_VLS_INIT_ZERO;
+    dm_list_types(&list, "\n");
+    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&list));
+    bu_vls_free(&list);
+
+    return GED_OK;
+}
+
+int
 _dm_cmd_initmsg(void *ds, int argc, const char **argv)
 {
     const char *usage_string = "dm [options] initmsg";
@@ -187,6 +208,13 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
 
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
 
+    struct ged *gedp = gd->gedp;
+    if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
+	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
+	return GED_ERROR;
+    }
+
+
     struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
     if (!cdmp) {
 	cdmp = _dm_name_lookup(gd, bu_vls_cstr(&dm_name));
@@ -252,6 +280,12 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
 
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
 
+    struct ged *gedp = gd->gedp;
+    if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
+	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
+	return GED_ERROR;
+    }
+
     struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
     if (!cdmp) {
 	cdmp = _dm_name_lookup(gd, bu_vls_cstr(&dm_name));
@@ -299,6 +333,7 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
 const struct bu_cmdtab _dm_cmds[] = {
     { "initmsg",         _dm_cmd_initmsg},
     { "type",            _dm_cmd_type},
+    { "types",           _dm_cmd_types},
     { "list",            _dm_cmd_list},
     { "get",             _dm_cmd_get},
     { "set",             _dm_cmd_set},
@@ -338,11 +373,6 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
     if (!ac || help) {
 	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_dm_cmds, "dm", "[options] subcommand [args]", &gd, 0, NULL);
 	return GED_OK;
-    }
-
-    if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
-	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
-	return GED_ERROR;
     }
 
     int ret;
