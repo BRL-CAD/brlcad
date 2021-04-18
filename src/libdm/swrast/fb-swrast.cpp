@@ -1,4 +1,4 @@
-/*                     I F _ Q T G L . C P P
+/*                   I F _ S W R A S T . C P P
  * BRL-CAD
  *
  * Copyright (c) 1989-2021 United States Government as represented by
@@ -19,9 +19,9 @@
  */
 /** @addtogroup libstruct fb */
 /** @{ */
-/** @file if_qtgl.cpp
+/** @file fb-swrast.cpp
  *
- * An OpenGL framebuffer using Qt.
+ * A Software Rasterizer based OpenGL framebuffer.
  *
  * TODO - study https://stackoverflow.com/a/23230099
  *
@@ -33,17 +33,16 @@
 
 #include "bu/app.h"
 
-#include "./fb-qtosmesa.h"
+#include "./fb-swrast.h"
 extern "C" {
 #include "../include/private.h"
 }
 
 extern "C" {
-extern struct fb qtgl_interface;
+extern struct fb swrast_interface;
 }
 
-struct qtglinfo {
-    QApplication *qapp = NULL;
+struct swrastinfo {
     //QOpenGLWidget *glc = NULL;
     struct fb_clip clip;        /* current view clipping */
 
@@ -60,7 +59,7 @@ struct qtglinfo {
 };
 
 #define if_mem u2.p		/* shared memory pointer */
-#define QTGL(ptr) ((struct qtglinfo *)((ptr)->i->u6.p))
+#define QTGL(ptr) ((struct swrastinfo *)((ptr)->i->u6.p))
 #define QTGLL(ptr) ((ptr)->i->u6.p)     /* left hand side version */
 
 
@@ -70,43 +69,27 @@ struct qtglinfo {
 static int
 qt_setup(struct fb *ifp, int width, int height)
 {
-    struct qtglinfo *qi = QTGL(ifp);
-    int argc = 1;
-    char *argv[] = {(char *)"Frame buffer"};
+    struct swrastinfo *qi = QTGL(ifp);
     FB_CK_FB(ifp->i);
 
     qi->win_width = qi->vp_width = width;
     qi->win_height = qi->vp_width = height;
 
-    qi->qapp = new QApplication(argc, argv);
-
-    //QSurfaceFormat fmt;
-    //fmt.setDepthBufferSize(24);
-    //QSurfaceFormat::setDefaultFormat(fmt);
-
     //qi->glc = new QOpenGLWidget();
     //qi->glc->resize(width, height);
     //qi->glc->show();
-
-#if 0
-    while(!qi->glc->isExposed()) {
-	qi->qapp->processEvents();
-    }
-#endif
 
     return 0;
 }
 
 static void
-qt_destroy(struct qtglinfo *qi)
+qt_destroy(struct swrastinfo *UNUSED(qi))
 {
-    //delete qi->glc;
-    delete qi->qapp;
 }
 
 
 HIDDEN int
-qtgl_getmem(struct fb *ifp)
+swrast_getmem(struct fb *ifp)
 {
     int pixsize;
     int size;
@@ -124,7 +107,7 @@ qtgl_getmem(struct fb *ifp)
 
 	sp = (char *)calloc(1, size);
 	if (sp == 0) {
-	    fb_log("qtgl_getmem: frame buffer memory malloc failed\n");
+	    fb_log("swrast_getmem: frame buffer memory malloc failed\n");
 	    goto fail;
 	}
 	goto success;
@@ -136,7 +119,7 @@ success:
     return 0;
 fail:
     if ((sp = (char *)calloc(1, size)) == NULL) {
-	fb_log("qtgl_getmem:  malloc failure\n");
+	fb_log("swrast_getmem:  malloc failure\n");
 	return -1;
     }
     goto success;
@@ -201,7 +184,7 @@ fb_clipper(struct fb *ifp)
     }
 
 int
-qtgl_configureWindow(struct fb *ifp, int width, int height)
+swrast_configureWindow(struct fb *ifp, int width, int height)
 {
     int getmem = 0;
 
@@ -223,7 +206,7 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
 	height == QTGL(ifp)->win_height)
 	return 1;
 
-    qtgl_getmem(ifp);
+    swrast_getmem(ifp);
     fb_clipper(ifp);
 
     //QTGL(ifp)->glc->makeCurrent();
@@ -265,18 +248,18 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
 
 
 HIDDEN void
-qtgl_do_event(struct fb *UNUSED(ifp))
+swrast_do_event(struct fb *UNUSED(ifp))
 {
     //QTGL(ifp)->glc->update();
 }
 
 HIDDEN int
-fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
+fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp->i);
 
-    if ((ifp->i->u6.p = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
-	fb_log("fb_qtgl_open:  qtglinfo malloc failed\n");
+    if ((ifp->i->u6.p = (char *)calloc(1, sizeof(struct swrastinfo))) == NULL) {
+	fb_log("fb_swrast_open:  swrastinfo malloc failed\n");
 	return -1;
     }
 
@@ -292,19 +275,19 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     if (height > ifp->i->if_max_height)
 	ifp->i->if_height = ifp->i->if_max_height;
 
-    /* initialize window state variables before calling qtgl_getmem */
+    /* initialize window state variables before calling swrast_getmem */
     ifp->i->if_xzoom = 1;	/* for zoom fakeout */
     ifp->i->if_yzoom = 1;	/* for zoom fakeout */
     ifp->i->if_xcenter = width/2;
     ifp->i->if_ycenter = height/2;
 
     /* Allocate memory, potentially with a screen repaint */
-    if (qtgl_getmem(ifp) < 0)
+    if (swrast_getmem(ifp) < 0)
 	return -1;
 
-    struct qtglinfo *qi = new struct qtglinfo;
+    struct swrastinfo *qi = new struct swrastinfo;
     if (qi == NULL) {
-	fb_log("qt_open: qtglinfo malloc failed\n");
+	fb_log("qt_open: swrastinfo malloc failed\n");
 	return -1;
     }
     QTGLL(ifp) = (char *)qi;
@@ -315,7 +298,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 	return -1;
     }
 
-    qtgl_configureWindow(ifp, width, height);
+    swrast_configureWindow(ifp, width, height);
 
     return 0;
 
@@ -324,7 +307,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 #if 0
 
 int
-_qtgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *traits)
+_swrast_open_existing(struct fb *ifp, int width, int height, void *glc, void *traits)
 {
     /*
      * Allocate extension memory sections,
@@ -332,11 +315,11 @@ _qtgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *trai
      */
 
     if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo))) == NULL) {
-	fb_log("fb_qtgl_open:  wininfo malloc failed\n");
+	fb_log("fb_swrast_open:  wininfo malloc failed\n");
 	return -1;
     }
-    if ((QTGLL(ifp) = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
-	fb_log("fb_qtgl_open:  qtglinfo malloc failed\n");
+    if ((QTGLL(ifp) = (char *)calloc(1, sizeof(struct swrastinfo))) == NULL) {
+	fb_log("fb_swrast_open:  swrastinfo malloc failed\n");
 	return -1;
     }
 
@@ -348,18 +331,18 @@ _qtgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *trai
 
     QTGL(ifp)->cursor_on = 1;
 
-    /* initialize window state variables before calling qtgl_getmem */
+    /* initialize window state variables before calling swrast_getmem */
     ifp->i->if_xzoom = 1;	/* for zoom fakeout */
     ifp->i->if_yzoom = 1;	/* for zoom fakeout */
     ifp->i->if_xcenter = width/2;
     ifp->i->if_ycenter = height/2;
 
     /* Allocate memory, potentially with a screen repaint */
-    if (qtgl_getmem(ifp) < 0)
+    if (swrast_getmem(ifp) < 0)
 	return -1;
 
 
-    ++qtgl_nwindows;
+    ++swrast_nwindows;
 
     QTGL(ifp)->alive = 1;
     QTGL(ifp)->firstTime = 1;
@@ -372,12 +355,12 @@ _qtgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *trai
 #endif
 
 HIDDEN struct fb_platform_specific *
-qtgl_get_fbps(uint32_t magic)
+swrast_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
-    struct qtgl_fb_info *data = NULL;
+    struct swrast_fb_info *data = NULL;
     BU_GET(fb_ps, struct fb_platform_specific);
-    BU_GET(data, struct qtgl_fb_info);
+    BU_GET(data, struct swrast_fb_info);
     fb_ps->magic = magic;
     fb_ps->data = data;
     return fb_ps;
@@ -385,25 +368,25 @@ qtgl_get_fbps(uint32_t magic)
 
 
 HIDDEN void
-qtgl_put_fbps(struct fb_platform_specific *fbps)
+swrast_put_fbps(struct fb_platform_specific *fbps)
 {
-    BU_CKMAG(fbps, FB_QTGL_MAGIC, "qtgl framebuffer");
-    BU_PUT(fbps->data, struct qtgl_fb_info);
+    BU_CKMAG(fbps, FB_QTGL_MAGIC, "swrast framebuffer");
+    BU_PUT(fbps->data, struct swrast_fb_info);
     BU_PUT(fbps, struct fb_platform_specific);
     return;
 }
 
 HIDDEN int
-qtgl_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *fb_p)
+swrast_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *fb_p)
 {
-    BU_CKMAG(fb_p, FB_QTGL_MAGIC, "qtgl framebuffer");
-    //return _qtgl_open_existing(ifp, width, height, qtgl_internal->glc, qtgl_internal->traits);
+    BU_CKMAG(fb_p, FB_QTGL_MAGIC, "swrast framebuffer");
+    //return _swrast_open_existing(ifp, width, height, swrast_internal->glc, swrast_internal->traits);
     return 0;
 }
 
 
 HIDDEN int
-qtgl_flush(struct fb *UNUSED(ifp))
+swrast_flush(struct fb *UNUSED(ifp))
 {
     glFlush();
     return 0;
@@ -411,23 +394,18 @@ qtgl_flush(struct fb *UNUSED(ifp))
 
 
 HIDDEN int
-fb_qtgl_close(struct fb *ifp)
+fb_swrast_close(struct fb *UNUSED(ifp))
 {
-    struct qtglinfo *qi = QTGL(ifp);
+    //struct swrastinfo *qi = QTGL(ifp);
 
-    /* if a window was created wait for user input and process events */
-    if (qi->qapp) {
-	return qi->qapp->exec();
-	qt_destroy(qi);
-    }
 
     return 0;
 }
 
 int
-qtgl_close_existing(struct fb *ifp)
+swrast_close_existing(struct fb *ifp)
 {
-    struct qtglinfo *qi = QTGL(ifp);
+    struct swrastinfo *qi = QTGL(ifp);
     //qi->glc = NULL;
     qi->alive = 0;
     return 0;
@@ -437,9 +415,9 @@ qtgl_close_existing(struct fb *ifp)
  * Handle any pending input events
  */
 HIDDEN int
-qtgl_poll(struct fb *ifp)
+swrast_poll(struct fb *ifp)
 {
-    qtgl_do_event(ifp);
+    swrast_do_event(ifp);
 
     if (QTGL(ifp)->alive)
 	return 0;
@@ -451,14 +429,14 @@ qtgl_poll(struct fb *ifp)
  * Free memory resources and close.
  */
 HIDDEN int
-qtgl_free(struct fb *ifp)
+swrast_free(struct fb *ifp)
 {
     if (FB_DEBUG)
-	printf("entering qtgl_free\n");
+	printf("entering swrast_free\n");
 
     /* Close the framebuffer */
     if (FB_DEBUG)
-	printf("qtgl_free: All done...goodbye!\n");
+	printf("swrast_free: All done...goodbye!\n");
 
     if (ifp->i->if_mem != NULL) {
 	/* free up memory associated with image */
@@ -475,15 +453,15 @@ qtgl_free(struct fb *ifp)
 
 
 HIDDEN int
-qtgl_clear(struct fb *ifp, unsigned char *pp)
+swrast_clear(struct fb *ifp, unsigned char *pp)
 {
     struct fb_pixel bg;
-    struct fb_pixel *qtglp;
+    struct fb_pixel *swrastp;
     int cnt;
     int y;
 
     if (FB_DEBUG)
-	printf("entering qtgl_clear\n");
+	printf("entering swrast_clear\n");
 
     /* Set clear colors */
     if (pp != RGBPIXEL_NULL) {
@@ -500,9 +478,9 @@ qtgl_clear(struct fb *ifp, unsigned char *pp)
 
     /* Flood rectangle in memory */
     for (y = 0; y < ifp->i->if_height; y++) {
-	qtglp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+0)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+0)*sizeof(struct fb_pixel) ];
 	for (cnt = ifp->i->if_width-1; cnt >= 0; cnt--) {
-	    *qtglp++ = bg;	/* struct copy */
+	    *swrastp++ = bg;	/* struct copy */
 	}
     }
 
@@ -521,12 +499,12 @@ qtgl_clear(struct fb *ifp, unsigned char *pp)
 
 
 HIDDEN int
-qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+swrast_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct fb_clip *clp;
 
     if (FB_DEBUG)
-	printf("entering qtgl_view\n");
+	printf("entering swrast_view\n");
 
     if (xzoom < 1) xzoom = 1;
     if (yzoom < 1) yzoom = 1;
@@ -566,10 +544,10 @@ qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-qtgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+swrast_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (FB_DEBUG)
-	printf("entering qtgl_getview\n");
+	printf("entering swrast_getview\n");
 
     *xcenter = ifp->i->if_xcenter;
     *ycenter = ifp->i->if_ycenter;
@@ -582,16 +560,16 @@ qtgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 /* read count pixels into pixelp starting at x, y */
 HIDDEN ssize_t
-qtgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+swrast_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
     size_t scan_count;	/* # pix on this scanline */
     unsigned char *cp;
     ssize_t ret;
-    struct fb_pixel *qtglp;
+    struct fb_pixel *swrastp;
 
     if (FB_DEBUG)
-	printf("entering qtgl_read\n");
+	printf("entering swrast_read\n");
 
     if (x < 0 || x >= ifp->i->if_width ||
 	y < 0 || y >= ifp->i->if_height)
@@ -609,14 +587,14 @@ qtgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	else
 	    scan_count = count;
 
-	qtglp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
 
 	n = scan_count;
 	while (n) {
-	    cp[RED] = qtglp->red;
-	    cp[GRN] = qtglp->green;
-	    cp[BLU] = qtglp->blue;
-	    qtglp++;
+	    cp[RED] = swrastp->red;
+	    cp[GRN] = swrastp->green;
+	    cp[BLU] = swrastp->blue;
+	    swrastp++;
 	    cp += 3;
 	    n--;
 	}
@@ -633,7 +611,7 @@ qtgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 /* write count pixels from pixelp starting at xstart, ystart */
 HIDDEN ssize_t
-qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
+swrast_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     int x;
     int y;
@@ -644,7 +622,7 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
     FB_CK_FB(ifp->i);
 
     if (FB_DEBUG)
-	printf("entering qtgl_write\n");
+	printf("entering swrast_write\n");
 
     /* fast exit cases */
     pix_count = count;
@@ -668,7 +646,7 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
 
     while (pix_count) {
 	size_t n;
-	struct fb_pixel *qtglp;
+	struct fb_pixel *swrastp;
 
 	if (y >= ifp->i->if_height)
 	    break;
@@ -678,36 +656,36 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
 	else
 	    scan_count = pix_count;
 
-	qtglp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
 
 	n = scan_count;
 	if ((n & 3) != 0) {
 	    /* This code uses 60% of all CPU time */
 	    while (n) {
 		/* alpha channel is always zero */
-		qtglp->red   = cp[RED];
-		qtglp->green = cp[GRN];
-		qtglp->blue  = cp[BLU];
-		qtglp++;
+		swrastp->red   = cp[RED];
+		swrastp->green = cp[GRN];
+		swrastp->blue  = cp[BLU];
+		swrastp++;
 		cp += 3;
 		n--;
 	    }
 	} else {
 	    while (n) {
 		/* alpha channel is always zero */
-		qtglp[0].red   = cp[RED+0*3];
-		qtglp[0].green = cp[GRN+0*3];
-		qtglp[0].blue  = cp[BLU+0*3];
-		qtglp[1].red   = cp[RED+1*3];
-		qtglp[1].green = cp[GRN+1*3];
-		qtglp[1].blue  = cp[BLU+1*3];
-		qtglp[2].red   = cp[RED+2*3];
-		qtglp[2].green = cp[GRN+2*3];
-		qtglp[2].blue  = cp[BLU+2*3];
-		qtglp[3].red   = cp[RED+3*3];
-		qtglp[3].green = cp[GRN+3*3];
-		qtglp[3].blue  = cp[BLU+3*3];
-		qtglp += 4;
+		swrastp[0].red   = cp[RED+0*3];
+		swrastp[0].green = cp[GRN+0*3];
+		swrastp[0].blue  = cp[BLU+0*3];
+		swrastp[1].red   = cp[RED+1*3];
+		swrastp[1].green = cp[GRN+1*3];
+		swrastp[1].blue  = cp[BLU+1*3];
+		swrastp[2].red   = cp[RED+2*3];
+		swrastp[2].green = cp[GRN+2*3];
+		swrastp[2].blue  = cp[BLU+2*3];
+		swrastp[3].red   = cp[RED+3*3];
+		swrastp[3].green = cp[GRN+3*3];
+		swrastp[3].blue  = cp[BLU+3*3];
+		swrastp += 4;
 		cp += 3*4;
 		n -= 4;
 	    }
@@ -731,15 +709,15 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
  * separately.
  */
 HIDDEN int
-qtgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+swrast_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int x;
     int y;
     unsigned char *cp;
-    struct fb_pixel *qtglp;
+    struct fb_pixel *swrastp;
 
     if (FB_DEBUG)
-	printf("entering qtgl_writerect\n");
+	printf("entering swrast_writerect\n");
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
@@ -749,13 +727,13 @@ qtgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
-	qtglp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
 	    /* alpha channel is always zero */
-	    qtglp->red   = cp[RED];
-	    qtglp->green = cp[GRN];
-	    qtglp->blue  = cp[BLU];
-	    qtglp++;
+	    swrastp->red   = cp[RED];
+	    swrastp->green = cp[GRN];
+	    swrastp->blue  = cp[BLU];
+	    swrastp++;
 	    cp += 3;
 	}
     }
@@ -772,15 +750,15 @@ qtgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
  * separately.
  */
 HIDDEN int
-qtgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+swrast_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int x;
     int y;
     unsigned char *cp;
-    struct fb_pixel *qtglp;
+    struct fb_pixel *swrastp;
 
     if (FB_DEBUG)
-	printf("entering qtgl_bwwriterect\n");
+	printf("entering swrast_bwwriterect\n");
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
@@ -790,14 +768,14 @@ qtgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
-	qtglp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
 	    int val;
 	    /* alpha channel is always zero */
-	    qtglp->red   = (val = *cp++);
-	    qtglp->green = val;
-	    qtglp->blue  = val;
-	    qtglp++;
+	    swrastp->red   = (val = *cp++);
+	    swrastp->green = val;
+	    swrastp->blue  = val;
+	    swrastp++;
 	}
     }
 
@@ -808,10 +786,10 @@ qtgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 
 
 HIDDEN int
-qtgl_rmap(struct fb *UNUSED(ifp), ColorMap *UNUSED(cmp))
+swrast_rmap(struct fb *UNUSED(ifp), ColorMap *UNUSED(cmp))
 {
     if (FB_DEBUG)
-	printf("entering qtgl_rmap\n");
+	printf("entering swrast_rmap\n");
 #if 0
     /* Just parrot back the stored colormap */
     for (i = 0; i < 256; i++) {
@@ -825,17 +803,17 @@ qtgl_rmap(struct fb *UNUSED(ifp), ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-qtgl_wmap(struct fb *UNUSED(ifp), const ColorMap *UNUSED(cmp))
+swrast_wmap(struct fb *UNUSED(ifp), const ColorMap *UNUSED(cmp))
 {
     if (FB_DEBUG)
-	printf("entering qtgl_wmap\n");
+	printf("entering swrast_wmap\n");
 
     return 0;
 }
 
 
 HIDDEN int
-qtgl_help(struct fb *ifp)
+swrast_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", ifp->i->if_type);
     fb_log("Device: %s\n", ifp->i->if_name);
@@ -845,14 +823,14 @@ qtgl_help(struct fb *ifp)
     fb_log("Default width height: %d %d\n",
 	   ifp->i->if_width,
 	   ifp->i->if_height);
-    fb_log("Usage: /dev/qtgl\n");
+    fb_log("Usage: /dev/swrast\n");
 
     return 0;
 }
 
 
 HIDDEN int
-qtgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+swrast_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp->i);
 
@@ -864,16 +842,16 @@ qtgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbi
 
 
 HIDDEN int
-qtgl_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+swrast_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
 
-    fb_log("qtgl_cursor\n");
+    fb_log("swrast_cursor\n");
     return 0;
 }
 
 
 int
-qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
+swrast_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
     int mm;
     struct fb_clip *clp;
@@ -931,40 +909,40 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 
 
 /* This is the ONLY thing that we normally "export" */
-struct fb_impl qtgl_interface_impl =
+struct fb_impl swrast_interface_impl =
 {
     0,			/* magic number slot */
     FB_QTGL_MAGIC,
-    fb_qtgl_open,	/* open device */
-    qtgl_open_existing,    /* existing device_open */
-    qtgl_close_existing,    /* existing device_close */
-    qtgl_get_fbps,         /* get platform specific memory */
-    qtgl_put_fbps,         /* free platform specific memory */
-    fb_qtgl_close,	/* close device */
-    qtgl_clear,		/* clear device */
-    qtgl_read,		/* read pixels */
-    qtgl_write,		/* write pixels */
-    qtgl_rmap,		/* read colormap */
-    qtgl_wmap,		/* write colormap */
-    qtgl_view,		/* set view */
-    qtgl_getview,	/* get view */
-    qtgl_setcursor,	/* define cursor */
-    qtgl_cursor,		/* set cursor */
+    fb_swrast_open,	/* open device */
+    swrast_open_existing,    /* existing device_open */
+    swrast_close_existing,    /* existing device_close */
+    swrast_get_fbps,         /* get platform specific memory */
+    swrast_put_fbps,         /* free platform specific memory */
+    fb_swrast_close,	/* close device */
+    swrast_clear,		/* clear device */
+    swrast_read,		/* read pixels */
+    swrast_write,		/* write pixels */
+    swrast_rmap,		/* read colormap */
+    swrast_wmap,		/* write colormap */
+    swrast_view,		/* set view */
+    swrast_getview,	/* get view */
+    swrast_setcursor,	/* define cursor */
+    swrast_cursor,		/* set cursor */
     fb_sim_getcursor,	/* get cursor */
     fb_sim_readrect,	/* read rectangle */
-    qtgl_writerect,	/* write rectangle */
+    swrast_writerect,	/* write rectangle */
     fb_sim_bwreadrect,
-    qtgl_bwwriterect,	/* write rectangle */
-    qtgl_configureWindow,
-    qtgl_refresh,
-    qtgl_poll,		/* process events */
-    qtgl_flush,		/* flush output */
-    qtgl_free,		/* free resources */
-    qtgl_help,		/* help message */
+    swrast_bwwriterect,	/* write rectangle */
+    swrast_configureWindow,
+    swrast_refresh,
+    swrast_poll,		/* process events */
+    swrast_flush,		/* flush output */
+    swrast_free,		/* free resources */
+    swrast_help,		/* help message */
     bu_strdup("OpenSceneGraph OpenGL"),	/* device description */
     FB_XMAXSCREEN,		/* max width */
     FB_YMAXSCREEN,		/* max height */
-    bu_strdup("/dev/qtgl"),		/* short device name */
+    bu_strdup("/dev/swrast"),		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */
     -1,			/* select file desc */
@@ -990,10 +968,10 @@ struct fb_impl qtgl_interface_impl =
 };
 
 extern "C" {
-struct fb qtgl_interface = { &qtgl_interface_impl };
+struct fb swrast_interface = { &swrast_interface_impl };
 
 #ifdef DM_PLUGIN
-static const struct fb_plugin finfo = { &qtgl_interface };
+static const struct fb_plugin finfo = { &swrast_interface };
 
 extern "C" {
 COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()

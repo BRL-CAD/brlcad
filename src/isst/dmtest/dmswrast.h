@@ -1,4 +1,4 @@
-/*                        D M O S M E S A . H
+/*                        D M S W R A S T . H
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmOSMesa.h
+/** @file dmswrast.h
  *
  */
 
-#ifndef DMOSMESA_H
-#define DMOSMESA_H
+#ifndef DMSWRAST_H
+#define DMSWRAST_H
 
 #define USE_MGL_NAMESPACE 1
 
@@ -37,13 +37,13 @@ extern "C" {
 
 #include "bindings.h"
 
-class dmOSMesa : public QWidget
+class dmSW : public QWidget
 {
     Q_OBJECT
 
     public:
-	explicit dmOSMesa(QWidget *parent = nullptr);
-	~dmOSMesa();
+	explicit dmSW(QWidget *parent = nullptr);
+	~dmSW();
 
 	void save_image();
 
@@ -75,7 +75,7 @@ class dmOSMesa : public QWidget
 	int y_prev = -INT_MAX;
 };
 
-#endif /* DMOSMESA_H */
+#endif /* DMSWRAST_H */
 
 // Local Variables:
 // tab-width: 8

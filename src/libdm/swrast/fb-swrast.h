@@ -1,4 +1,4 @@
-/*                      F B _ Q T G L . H
+/*                      F B - S W R A S T . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -19,21 +19,15 @@
  */
 /** @addtogroup libfb */
 /** @{*/
-/** @file fb_qtgl.h
- *
- * This is NOT public API for libfb, and is not guaranteed to be stable from
- * one release to the next.
- *
+/** @file fb-swrast.h
  */
 /** @} */
 
 #include "common.h"
 
-#include <QApplication>
 #include "OSMesa/osmesa.h"
 
-struct qtgl_fb_info {
-    QApplication *qapp;
+struct swrast_fb_info {
     OSMesaContext *glc;
 };
 

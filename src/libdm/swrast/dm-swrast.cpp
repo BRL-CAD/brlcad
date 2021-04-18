@@ -1,4 +1,4 @@
-/*                      D M - Q T G L . C P P
+/*                    D M - S W R A S T . C P P
  * BRL-CAD
  *
  * Copyright (c) 1988-2021 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libdm/dm-ogl.c
+/** @file libdm/dm-swrast.c
  *
- * A Qt OpenGL Display Manager.
+ * A Software Rasterizer based OpenGL Display Manager.
  *
  */
 
@@ -33,9 +33,6 @@
 #include "OSMesa/gl.h"
 #include "OSMesa/osmesa.h"
 
-#include <QEvent>
-#include <QtWidgets/QOpenGLWidget>
-
 #undef VMIN		/* is used in vmath.h, too */
 
 extern "C" {
@@ -47,8 +44,8 @@ extern "C" {
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
 }
-#include "./fb-qtosmesa.h"
-#include "./dm-qtosmesa.h"
+#include "./fb-swrast.h"
+#include "./dm-swrast.h"
 
 #include "../include/private.h"
 
@@ -67,22 +64,27 @@ extern "C" {
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-static struct dm *qtosmesa_open(void *ctx, void *interp, int argc, const char **argv);
-static int qtosmesa_close(struct dm *dmp);
-static int qtosmesa_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-static int qtosmesa_configureWin(struct dm *dmp, int force);
-static int qtosmesa_makeCurrent(struct dm *dmp);
+static struct dm *swrast_open(void *ctx, void *interp, int argc, const char **argv);
+static int swrast_close(struct dm *dmp);
+static int swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+static int swrast_configureWin(struct dm *dmp, int force);
+static int swrast_makeCurrent(struct dm *dmp);
 
 
 static int
-qtosmesa_makeCurrent(struct dm *dmp)
+swrast_makeCurrent(struct dm *dmp)
 {
-    struct qtosmesa_vars *privars = (struct qtosmesa_vars *)dmp->i->dm_vars.priv_vars;
+    struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+ 
+    if (!pv || !pv->ctx || !pv->v) {
+	bu_log("swrast_configureWin: Couldn't make context current\n");
+	return BRLCAD_ERROR;
+    }
 
     if (dmp->i->dm_debugLevel)
-	bu_log("qtosmesa_makeCurrent()\n");
+	bu_log("swrast_makeCurrent()\n");
 
-    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, privars->b_width, privars->b_height)) {
+    if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE, pv->v->gv_width, pv->v->gv_height)) {
 	bu_log("OSMesaMakeCurrent failed!\n");
 	return BRLCAD_ERROR;
     }
@@ -91,64 +93,52 @@ qtosmesa_makeCurrent(struct dm *dmp)
 }
 
 static int
-qtosmesa_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
+swrast_doevent(struct dm *UNUSED(dmp), void *UNUSED(vclientData), void *UNUSED(veventPtr))
 {
-    QEvent *eventPtr= (QEvent *)veventPtr;
-    if (eventPtr->type() == QEvent::Expose) {
-	(void)dm_make_current(dmp);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	dm_set_dirty(dmp, 1);
-	return BRLCAD_OK;
-    }
     /* allow further processing of this event */
     return BRLCAD_OK;
 }
 
 static int
-qtosmesa_configureWin(struct dm *dmp, int UNUSED(force))
+swrast_configureWin(struct dm *dmp, int UNUSED(force))
 {
-    struct qtosmesa_vars *privars = (struct qtosmesa_vars *)dmp->i->dm_vars.priv_vars;
+    struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (!privars || !privars->ctx || !privars->qw) {
-	bu_log("qtosmesa_configureWin: Couldn't make context current\n");
+    if (!pv || !pv->ctx || !pv->v) {
+	bu_log("swrast_configureWin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
 
-    int width = privars->qw->width();
-    int height = privars->qw->height();
-
+    int width = pv->v->gv_width;
+    int height = pv->v->gv_height;
 
     if (!width || !height) {
-	bu_log("qtosmesa_configureWin: Zero sized window\n");
+	bu_log("swrast_configureWin: Zero sized window\n");
 	return BRLCAD_ERROR;
     }
 
-    if (privars->b_width != width || privars->b_height != height) {
-	privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
-	privars->b_width = width;
-	privars->b_height = height;
-    }
-    if (!privars->os_b) {
-	bu_log("qtosmesa_configureWin: render buffer allocation failed\n");
+    pv->os_b = bu_realloc(pv->os_b, width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
+    if (!pv->os_b) {
+	bu_log("swrast_configureWin: render buffer allocation failed\n");
 	return BRLCAD_ERROR;
     }
 
-    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, privars->b_width, privars->b_height)) {
+    if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE, width, height)) {
 	bu_log("OSMesaMakeCurrent failed!\n");
 	return BRLCAD_ERROR;
     }
 
-    gl_reshape(dmp, privars->b_width, privars->b_height);
+    gl_reshape(dmp, width, height);
 
     /* this is where font information is set up, if not already done */
-    if (!privars->fs) {
-	privars->fs = glfonsCreate(512, 512, FONS_ZERO_TOPLEFT);
-	if (privars->fs == NULL) {
-	    bu_log("dm-qtosmesa: Failed to create font stash");
+    if (!pv->fs) {
+	pv->fs = glfonsCreate(512, 512, FONS_ZERO_TOPLEFT);
+	if (pv->fs == NULL) {
+	    bu_log("dm-swrast: Failed to create font stash");
 	    return BRLCAD_ERROR;
 	}
-	privars->fontNormal = FONS_INVALID;
-	privars->fontNormal = fonsAddFont(privars->fs, "sans", bu_dir(NULL, 0, BU_DIR_DATA, "fonts", "ProFont.ttf", NULL));
+	pv->fontNormal = FONS_INVALID;
+	pv->fontNormal = fonsAddFont(pv->fs, "sans", bu_dir(NULL, 0, BU_DIR_DATA, "fonts", "ProFont.ttf", NULL));
     }
 
     return BRLCAD_OK;
@@ -158,15 +148,15 @@ qtosmesa_configureWin(struct dm *dmp, int UNUSED(force))
  * Gracefully release the display.
  */
 int
-qtosmesa_close(struct dm *dmp)
+swrast_close(struct dm *dmp)
 {
-    struct qtosmesa_vars *privars = (struct qtosmesa_vars *)dmp->i->dm_vars.priv_vars;
-    bu_free(privars->os_b, "OSMesa rendering buffer");
+    struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    bu_free(pv->os_b, "OSMesa rendering buffer");
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
-    bu_free(dmp->i->dm_vars.priv_vars, "qtosmesa_close: qtosmesa_vars");
-    bu_free(dmp->i->dm_vars.pub_vars, "qtosmesa_close: dm_qtvars");
+    bu_free(dmp->i->dm_vars.priv_vars, "swrast_close: swrast_vars");
+    bu_free(dmp->i->dm_vars.pub_vars, "swrast_close: dm_swvars");
     BU_PUT(dmp->i, struct dm_impl);
     BU_PUT(dmp, struct dm);
 
@@ -174,7 +164,7 @@ qtosmesa_close(struct dm *dmp)
 }
 
 int
-qtosmesa_viable(const char *UNUSED(dpy_string))
+swrast_viable(const char *UNUSED(dpy_string))
 {
     return 1;
 }
@@ -184,7 +174,7 @@ qtosmesa_viable(const char *UNUSED(dpy_string))
  *
  */
 struct dm *
-qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
+swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
@@ -193,14 +183,14 @@ qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     struct dm *dmp = NULL;
     struct dm_impl *dmpi = NULL;
     struct gl_vars *mvars = NULL;
-    struct dm_qtvars *pubvars = NULL;
-    struct qtosmesa_vars *privars = NULL;
+    struct dm_swvars *pubvars = NULL;
+    struct swrast_vars *privars = NULL;
 
     BU_GET(dmp, struct dm);
     dmp->magic = DM_MAGIC;
 
     BU_GET(dmpi, struct dm_impl);
-    *dmpi = *dm_qtosmesa.i; /* struct copy */
+    *dmpi = *dm_swrast.i; /* struct copy */
     dmp->i = dmpi;
 
     dmp->i->dm_lineWidth = 1;
@@ -209,31 +199,29 @@ qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     dmp->i->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->i->dm_log));
 
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_qtvars);
+    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_swvars);
     if (dmp->i->dm_vars.pub_vars == (void *)NULL) {
-	bu_free(dmp, "qtosmesa_open: dmp");
+	bu_free(dmp, "swrast_open: dmp");
 	return DM_NULL;
     }
-    pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
+    pubvars = (struct dm_swvars *)dmp->i->dm_vars.pub_vars;
 
-    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct qtosmesa_vars);
+    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct swrast_vars);
     if (dmp->i->dm_vars.priv_vars == (void *)NULL) {
-	bu_free(dmp->i->dm_vars.pub_vars, "qtosmesa_open: dmp->i->dm_vars.pub_vars");
-	bu_free(dmp, "qtosmesa_open: dmp");
+	bu_free(dmp->i->dm_vars.pub_vars, "swrast_open: dmp->i->dm_vars.pub_vars");
+	bu_free(dmp, "swrast_open: dmp");
 	return DM_NULL;
     }
-    privars = (struct qtosmesa_vars *)dmp->i->dm_vars.priv_vars;
-    privars->qw = (QWidget *)ctx;
+    privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    privars->v = (struct bview *)ctx;
     privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);
-    int width = (!privars->qw->width()) ? 512 : privars->qw->width();
-    int height = (!privars->qw->height()) ? 512 : privars->qw->height();
+    int width = (!privars->v->gv_width) ? 512 : privars->v->gv_width;
+    int height = (!privars->v->gv_height) ? 512 : privars->v->gv_height;
     privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
-    privars->b_width = width;
-    privars->b_height = height;
-    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, privars->b_width, privars->b_height)) {
+    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, width, height)) {
 	bu_log("OSMesaMakeCurrent failed!\n");
-	bu_free(dmp->i->dm_vars.pub_vars, "qtosmesa_open: dmp->i->dm_vars.pub_vars");
-	bu_free(dmp, "qtosmesa_open: dmp");
+	bu_free(dmp->i->dm_vars.pub_vars, "swrast_open: dmp->i->dm_vars.pub_vars");
+	bu_free(dmp, "swrast_open: dmp");
 	return DM_NULL;
     }
 
@@ -250,7 +238,7 @@ qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
     if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
-	bu_vls_printf(&dmp->i->dm_pathName, ".dm_qtosmesa%d", count);
+	bu_vls_printf(&dmp->i->dm_pathName, ".dm_swrast%d", count);
     ++count;
     if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
 	char *dp;
@@ -283,7 +271,7 @@ qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->bound = dmp->i->dm_bound;
     mvars->boundFlag = dmp->i->dm_boundFlag;
 
-    /* this is important so that qtosmesa_configureWin knows to set the font */
+    /* this is important so that swrast_configureWin knows to set the font */
     privars->fs = NULL;
 
 
@@ -301,7 +289,7 @@ qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 	glDrawBuffer(GL_FRONT);
 
     /* do viewport, ortho commands and initialize font */
-    (void)qtosmesa_configureWin(dmp, 1);
+    (void)swrast_configureWin(dmp, 1);
 
     /* Lines will be solid when stippling disabled, dashed when enabled*/
     glLineStipple(1, 0xCF33);
@@ -340,12 +328,12 @@ qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
  * The starting position of the beam is as specified.
  */
 static int
-qtosmesa_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    struct qtosmesa_vars *privars = (struct qtosmesa_vars *)dmp->i->dm_vars.priv_vars;
+    struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
-	bu_log("qtosmesa_drawString2D()\n");
+	bu_log("swrast_drawString2D()\n");
 
     if (privars->fontNormal != FONS_INVALID) {
 
@@ -394,55 +382,55 @@ qtosmesa_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int
 }
 
 int
-qtosmesa_openFb(struct dm *dmp)
+swrast_openFb(struct dm *dmp)
 {
     struct fb_platform_specific *fb_ps;
-    //struct qtosmesa_fb_info *ofb_ps;
-    //struct qtosmesa_vars *privars = (struct qtosmesa_vars *)dmp->i->dm_vars.priv_vars;
+    //struct swrast_fb_info *ofb_ps;
+    //struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
 
-    fb_ps = fb_get_platform_specific(FB_QTGL_MAGIC);
-    //ofb_ps = (struct qtosmesa_fb_info *)fb_ps->data;
+    fb_ps = fb_get_platform_specific(FB_OSGL_MAGIC);
+    //ofb_ps = (struct swrast_fb_info *)fb_ps->data;
     //ofb_ps->glc = privars->qw;
-    dmp->i->fbp = fb_open_existing("qtosmesa", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    dmp->i->fbp = fb_open_existing("swrast", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;
 }
 
 int
-qtosmesa_geometry_request(struct dm *dmp, int UNUSED(width), int UNUSED(height))
+swrast_geometry_request(struct dm *dmp, int UNUSED(width), int UNUSED(height))
 {
     if (!dmp) return -1;
-    //Tk_GeometryRequest(((struct dm_qtvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    //Tk_GeometryRequest(((struct dm_swvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
     return 0;
 }
 
-#define QTVARS_MV_O(_m) offsetof(struct dm_qtvars, _m)
+#define SWVARS_MV_O(_m) offsetof(struct dm_swvars, _m)
 
-struct bu_structparse dm_qtvars_vparse[] = {
-    {"%d",      1,      "devmotionnotify",      QTVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",      1,      "devbuttonpress",       QTVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",      1,      "devbuttonrelease",     QTVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+struct bu_structparse dm_swvars_vparse[] = {
+    {"%d",      1,      "devmotionnotify",      SWVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonpress",       SWVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonrelease",     SWVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 int
-qtosmesa_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
+swrast_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
 {
     if (!dmp || !result) return -1;
     if (!key) {
         // Print all current vars
-        bu_vls_struct_print2(result, "dm internal GLX variables", dm_qtvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
+        bu_vls_struct_print2(result, "dm internal GLX variables", dm_swvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
         return 0;
     }
     // Print specific var
-    bu_vls_struct_item_named(result, dm_qtvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
+    bu_vls_struct_item_named(result, dm_swvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
     return 0;
 }
 
 
 // TODO - this and getDisplayImage need to be consolidated...
 int
-qtosmesa_write_image(struct bu_vls *UNUSED(msgs), FILE *UNUSED(fp), struct dm *UNUSED(dmp))
+swrast_write_image(struct bu_vls *UNUSED(msgs), FILE *UNUSED(fp), struct dm *UNUSED(dmp))
 {
     return -1;
 }
@@ -451,7 +439,7 @@ qtosmesa_write_image(struct bu_vls *UNUSED(msgs), FILE *UNUSED(fp), struct dm *U
 // was switched to RGBA to make it easier to display the output, but that also means that
 // libdmgl's RGB getDisplayImage and the image flipping function (which also assumes RGB
 // data) won't work.  Define RGBA variations for the OSMesa backend.
-int osmesa_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
+int swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
 {
     unsigned char *idata;
     int width;
@@ -489,9 +477,9 @@ int osmesa_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
 
 
 int
-qtosmesa_event_cmp(struct dm *dmp, dm_event_t type, int event)
+swrast_event_cmp(struct dm *dmp, dm_event_t type, int event)
 {
-    struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_swvars *pubvars = (struct dm_swvars *)dmp->i->dm_vars.pub_vars;
     switch (type) {
 	case DM_MOTION_NOTIFY:
 	    return (event == pubvars->devmotionnotify) ? 1 : 0;
@@ -508,17 +496,17 @@ qtosmesa_event_cmp(struct dm *dmp, dm_event_t type, int event)
     };
 }
 
-struct dm_impl dm_qtosmesa_impl = {
-    qtosmesa_open,
-    qtosmesa_close,
-    qtosmesa_viable,
+struct dm_impl dm_swrast_impl = {
+    swrast_open,
+    swrast_close,
+    swrast_viable,
     gl_drawBegin,
     gl_drawEnd,
     gl_hud_begin,
     gl_hud_end,
     gl_loadMatrix,
     gl_loadPMatrix,
-    qtosmesa_drawString2D,
+    swrast_drawString2D,
     gl_drawLine2D,
     gl_drawLine3D,
     gl_drawLines3D,
@@ -532,7 +520,7 @@ struct dm_impl dm_qtosmesa_impl = {
     gl_setFGColor,
     gl_setBGColor,
     gl_setLineAttr,
-    qtosmesa_configureWin,
+    swrast_configureWin,
     gl_setWinBounds,
     gl_setLight,
     gl_setTransparency,
@@ -546,31 +534,31 @@ struct dm_impl dm_qtosmesa_impl = {
     gl_freeDLists,
     gl_genDLists,
     gl_draw_obj,
-    osmesa_getDisplayImage, /* display to image function */
+    swrast_getDisplayImage, /* display to image function */
     gl_reshape,
-    qtosmesa_makeCurrent,
+    swrast_makeCurrent,
     null_SwapBuffers,
-    qtosmesa_doevent,
-    qtosmesa_openFb,
+    swrast_doevent,
+    swrast_openFb,
     gl_get_internal,
     gl_put_internal,
-    qtosmesa_geometry_request,
-    qtosmesa_internal_var,
-    qtosmesa_write_image,
+    swrast_geometry_request,
+    swrast_internal_var,
+    swrast_write_image,
     NULL,
     NULL,
-    qtosmesa_event_cmp,
+    swrast_event_cmp,
     gl_fogHint,
-    NULL, //qtosmesa_share_dlist,
+    NULL, //swrast_share_dlist,
     0,
-    1,				/* is graphical */
-    "Qt",                       /* uses Qt graphics system */
+    1,				/* is graphical (sort of...) */
+    "osmesa",                   /* uses OSMesa software rasterizer */
     1,				/* has displaylist */
     0,                          /* no stereo by default */
     1.0,			/* zoom-in limit */
     1,				/* bound flag */
-    "qtosmesa",
-    "Qt Windows with OSMesa swrast graphics",
+    "swrast",
+    "OSMesa swrast graphics",
     1, /* top */
     0, /* width */
     0, /* height */
@@ -606,10 +594,10 @@ struct dm_impl dm_qtosmesa_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_qtosmesa = { DM_MAGIC, &dm_qtosmesa_impl };
+struct dm dm_swrast = { DM_MAGIC, &dm_swrast_impl };
 
 #ifdef DM_PLUGIN
-static const struct dm_plugin pinfo = { DM_API, &dm_qtosmesa };
+static const struct dm_plugin pinfo = { DM_API, &dm_swrast };
 extern "C" {
 COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {

@@ -1,4 +1,4 @@
-/*                      D M O S M E S A . C P P
+/*                      D M S W R A S T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmOSMesa.cpp
+/** @file dmswrast.cpp
  *
  * Brief description
  *
@@ -34,23 +34,27 @@ extern "C" {
 #include "dm.h"
 #include "ged.h"
 }
-#include "dmOSMesa.h"
+#include "dmswrast.h"
 
-dmOSMesa::dmOSMesa(QWidget *parent)
+dmSW::dmSW(QWidget *parent)
     : QWidget(parent)
 {
     BU_GET(v, struct bview);
     bview_init(v);
 
+    // swrast will need to know the window size
+    v->gv_width = width();
+    v->gv_height = height();
+
     // Since this isn't a "proper" OpenGL context,
     // we don't have to wait until after things are
     // initialized to set up
     const char *acmd = "attach";
-    dmp = dm_open((void *)this, NULL, "qtosmesa", 1, &acmd);
+    dmp = dm_open((void *)v, NULL, "swrast", 1, &acmd);
     if (!dmp)
 	return;
     dm_configure_win(dmp, 0);
-    dm_set_pathname(dmp, "QTDM");
+    dm_set_pathname(dmp, "SWDM");
     dm_set_zbuffer(dmp, 1);
 
     fastf_t windowbounds[6] = { -1, 1, -1, 1, (int)GED_MIN, (int)GED_MAX };
@@ -64,12 +68,12 @@ dmOSMesa::dmOSMesa(QWidget *parent)
     setFocusPolicy(Qt::WheelFocus);
 }
 
-dmOSMesa::~dmOSMesa()
+dmSW::~dmSW()
 {
     BU_PUT(v, struct bview);
 }
 
-void dmOSMesa::paintEvent(QPaintEvent *e)
+void dmSW::paintEvent(QPaintEvent *e)
 {
     // Go ahead and set the flag, but (unlike the rendering thread
     // implementation) we need to do the draw routine every time in paintGL, or
@@ -81,9 +85,11 @@ void dmOSMesa::paintEvent(QPaintEvent *e)
 	    gedp->ged_dmp = (void *)dmp;
 	    bu_ptbl_ins(gedp->ged_all_dmp, (long int *)dmp);
 	    dm_set_vp(dmp, &gedp->ged_gvp->gv_scale);
-	    dm_configure_win((struct dm *)gedp->ged_dmp, 0);
+	    dm_set_width((struct dm *)gedp->ged_dmp, width());
+	    dm_set_height((struct dm *)gedp->ged_dmp, height());
 	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gedp->ged_dmp);
 	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gedp->ged_dmp);
+	    dm_configure_win((struct dm *)gedp->ged_dmp, 0);
 	    m_init = true;
 	}
 
@@ -114,18 +120,20 @@ void dmOSMesa::paintEvent(QPaintEvent *e)
     QWidget::paintEvent(e);
 }
 
-void dmOSMesa::resizeEvent(QResizeEvent *e)
+void dmSW::resizeEvent(QResizeEvent *e)
 {
+    QWidget::resizeEvent(e);
     if (gedp && gedp->ged_dmp) {
+	dm_set_width((struct dm *)gedp->ged_dmp, width());
+	dm_set_height((struct dm *)gedp->ged_dmp, height());
+	gedp->ged_gvp->gv_width = width();
+	gedp->ged_gvp->gv_height = height();
 	dm_configure_win((struct dm *)gedp->ged_dmp, 0);
-	gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gedp->ged_dmp);
-	gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gedp->ged_dmp);
 	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
     }
-    QWidget::resizeEvent(e);
 }
 
-void dmOSMesa::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
+void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     if (ged_cmd_valid(argv[0], NULL)) {
 	const char *ccmd = NULL;
@@ -226,7 +234,7 @@ void dmOSMesa::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 }
 
 
-void dmOSMesa::keyPressEvent(QKeyEvent *k) {
+void dmSW::keyPressEvent(QKeyEvent *k) {
 
     if (!gedp || !gedp->ged_dmp) {
 	QWidget::keyPressEvent(k);
@@ -247,7 +255,7 @@ void dmOSMesa::keyPressEvent(QKeyEvent *k) {
     QWidget::keyPressEvent(k);
 }
 
-void dmOSMesa::mousePressEvent(QMouseEvent *e) {
+void dmSW::mousePressEvent(QMouseEvent *e) {
 
     if (!gedp || !gedp->ged_dmp) {
 	QWidget::mousePressEvent(e);
@@ -270,7 +278,7 @@ void dmOSMesa::mousePressEvent(QMouseEvent *e) {
     QWidget::mousePressEvent(e);
 }
 
-void dmOSMesa::mouseMoveEvent(QMouseEvent *e)
+void dmSW::mouseMoveEvent(QMouseEvent *e)
 {
     if (!gedp || !gedp->ged_dmp) {
 	QWidget::mouseMoveEvent(e);
@@ -295,7 +303,7 @@ void dmOSMesa::mouseMoveEvent(QMouseEvent *e)
     QWidget::mouseMoveEvent(e);
 }
 
-void dmOSMesa::wheelEvent(QWheelEvent *e) {
+void dmSW::wheelEvent(QWheelEvent *e) {
 
     if (!gedp || !gedp->ged_dmp) {
 	QWidget::wheelEvent(e);
@@ -316,7 +324,7 @@ void dmOSMesa::wheelEvent(QWheelEvent *e) {
     QWidget::wheelEvent(e);
 }
 
-void dmOSMesa::mouseReleaseEvent(QMouseEvent *e) {
+void dmSW::mouseReleaseEvent(QMouseEvent *e) {
 
     // To avoid an abrupt jump in scene motion the next time movement is
     // started with the mouse, after we release we return to the default state.
@@ -326,7 +334,7 @@ void dmOSMesa::mouseReleaseEvent(QMouseEvent *e) {
     QWidget::mouseReleaseEvent(e);
 }
 
-void dmOSMesa::save_image() {
+void dmSW::save_image() {
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;
     if (dm_get_display_image(dmp, &dm_image, 1)) {

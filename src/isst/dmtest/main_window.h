@@ -39,7 +39,7 @@
 #include <QSettings>
 #include "pqConsoleWidget.h"
 #include "dmgl.h"
-#include "dmOSMesa.h"
+#include "dmswrast.h"
 
 class DM_MainWindow : public QMainWindow
 {
@@ -51,7 +51,7 @@ class DM_MainWindow : public QMainWindow
 
 	pqConsoleWidget *console = NULL;
 	dmGL *canvas = NULL;
-	dmOSMesa *canvas_sw = NULL;
+	dmSW *canvas_sw = NULL;
 
 	struct ged *gedp = NULL;
 

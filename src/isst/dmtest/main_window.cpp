@@ -58,7 +58,7 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
 	canvas->setMinimumSize(512,512);
     }
     if (canvas_type == 1) {
-	canvas_sw = new dmOSMesa(this);
+	canvas_sw = new dmSW(this);
 	canvas_sw->setMinimumSize(512,512);
     }
 

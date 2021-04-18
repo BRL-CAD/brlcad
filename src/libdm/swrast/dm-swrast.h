@@ -1,4 +1,4 @@
-/*                    D M - Q T O S M E S A . H
+/*                    D M - S W R A S T . H
  * BRL-CAD
  *
  * Copyright (c) 1993-2021 United States Government as represented by
@@ -19,12 +19,12 @@
  */
 /** @addtogroup libstruct dm */
 /** @{ */
-/** @file dm-qtosmesa.h
+/** @file dm-swrast.h
  *
  */
 
-#ifndef DM_QTOSMESA_H
-#define DM_QTOSMESA_H
+#ifndef DM_SWRAST_H
+#define DM_SWRAST_H
 
 #include "common.h"
 
@@ -32,10 +32,7 @@ extern "C" {
 #include "OSMesa/gl.h"
 #include "OSMesa/osmesa.h"
 
-#ifdef __cplusplus
-#include <QWidget>
-#endif
-
+#include "bview.h"
 
 /* For portable text in OpenGL, use fontstash */
 #if defined(__GNUC__) && !defined(__clang__)
@@ -64,16 +61,12 @@ extern "C" {
 #endif
 }
 
-extern struct dm dm_qtosmesa;
+extern struct dm dm_swrast;
 
-struct qtosmesa_vars {
-#ifdef __cplusplus
-    QWidget *qw;
-#endif
+struct swrast_vars {
+    struct bview *v;
     OSMesaContext ctx;
     void *os_b;
-    int b_width;
-    int b_height;
     struct FONScontext *fs;
     int fontNormal;
     int fontOffset;
@@ -82,13 +75,13 @@ struct qtosmesa_vars {
     char is_direct;
 };
 
-struct dm_qtvars {
+struct dm_swvars {
     int devmotionnotify;
     int devbuttonpress;
     int devbuttonrelease;
 };
 
-#endif /* DM_QTOSMESA_H */
+#endif /* DM_SWRAST_H */
 
 /** @} */
 /*

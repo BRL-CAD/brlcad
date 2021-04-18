@@ -101,8 +101,8 @@ int main(int argc, char *argv[])
     // If we're trying to use system OpenGL and it doesn't work, fall
     // back on the software option
     if (app.w->canvas && !app.w->canvas->isValid()) {
-	bu_log("System OpenGL Canvas didn't work, falling back on OSMesa\n");
-	app.w->canvas_sw = new dmOSMesa(app.w);
+	bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
+	app.w->canvas_sw = new dmSW(app.w);
 	app.w->canvas_sw->setMinimumSize(512,512);
 	app.w->canvas_sw->gedp = app.w->canvas->gedp;
 	app.w->wgrp->replaceWidget(0, app.w->canvas_sw);
