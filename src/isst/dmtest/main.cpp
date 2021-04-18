@@ -98,6 +98,19 @@ int main(int argc, char *argv[])
     // Draw the window
     app.w->show();
 
+    // If we're trying to use system OpenGL and it doesn't work, fall
+    // back on the software option
+    if (app.w->canvas && !app.w->canvas->isValid()) {
+	bu_log("System OpenGL Canvas didn't work, falling back on OSMesa\n");
+	app.w->canvas_sw = new dmOSMesa(app.w);
+	app.w->canvas_sw->setMinimumSize(512,512);
+	app.w->canvas_sw->gedp = app.w->canvas->gedp;
+	app.w->wgrp->replaceWidget(0, app.w->canvas_sw);
+	app.gedp->ged_gvp = app.w->canvas_sw->v;
+	delete app.w->canvas;
+	app.w->canvas = NULL;
+    }
+
     // Having forced the size we wanted, restore the original settings
     // to allow for subsequent change (if it would have been allowed
     // by the original settings.)

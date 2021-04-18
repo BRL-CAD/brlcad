@@ -33,6 +33,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QAction>
+#include <QSplitter>
 #include <QStatusBar>
 #include <QFileDialog>
 #include <QSettings>
@@ -53,6 +54,8 @@ class DM_MainWindow : public QMainWindow
 	dmOSMesa *canvas_sw = NULL;
 
 	struct ged *gedp = NULL;
+
+	QSplitter *wgrp;
 
     public slots:
 	void run_cmd(const QString &command);
