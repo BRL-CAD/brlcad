@@ -4,8 +4,6 @@ cmake_minimum_required(VERSION 3.12)
 # Set CMake project name
 project(OSMESA)
 
-add_definitions(-g)
-
 # Tell CMake where to look for local CMake modules
 list(APPEND CMAKE_MODULE_PATH "${OSMESA_SOURCE_DIR}/CMake")
 
@@ -37,6 +35,9 @@ check_include_files(endian.h HAVE_ENDIAN_H)
 if (HAVE_ENDIAN_H)
   add_definitions(-DPTHREADS)
 endif (HAVE_ENDIAN_H)
+
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
 
 include(CheckFunctionExists)
 # TODO - check for the following
