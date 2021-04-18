@@ -69,19 +69,6 @@ dmOSMesa::~dmOSMesa()
     BU_PUT(v, struct bview);
 }
 
-#include "svpng.h"
-static void
-write_png(const char *filename, unsigned char *buffer, int width, int height)
-{
-   FILE *f = fopen( filename, "wb" );
-   if (f) {
-        svpng(f, width, height, buffer, 0);
-
-      fclose(f);
-   }
-}
-
-
 void dmOSMesa::paintEvent(QPaintEvent *e)
 {
     // Go ahead and set the flag, but (unlike the rendering thread
@@ -119,11 +106,10 @@ void dmOSMesa::paintEvent(QPaintEvent *e)
     if (dm_get_display_image(dmp, &dm_image, 1)) {
 	return;
     }
-    write_png("frame.png", dm_image, dm_get_width(dmp), dm_get_height(dmp));
-    //QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGB888);
-    QImage image("frame.png");
+    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBA8888);
+    QImage img32 = image.convertToFormat(QImage::Format_RGB32);
     QPainter painter(this);
-    painter.drawImage(this->rect(), image);
+    painter.drawImage(this->rect(), img32);
     bu_free(dm_image, "copy of backend image");
     QWidget::paintEvent(e);
 }

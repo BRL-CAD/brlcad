@@ -124,7 +124,7 @@ qtosmesa_configureWin(struct dm *dmp, int UNUSED(force))
     }
 
     if (privars->b_width != width || privars->b_height != height) {
-	privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*3, "OSMesa rendering buffer");
+	privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
 	privars->b_width = width;
 	privars->b_height = height;
     }
@@ -224,10 +224,10 @@ qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     }
     privars = (struct qtosmesa_vars *)dmp->i->dm_vars.priv_vars;
     privars->qw = (QWidget *)ctx;
-    privars->ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, NULL);
+    privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);
     int width = (!privars->qw->width()) ? 512 : privars->qw->width();
     int height = (!privars->qw->height()) ? 512 : privars->qw->height();
-    privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*3, "OSMesa rendering buffer");
+    privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
     privars->b_width = width;
     privars->b_height = height;
     if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, privars->b_width, privars->b_height)) {
@@ -447,6 +447,47 @@ qtosmesa_write_image(struct bu_vls *UNUSED(msgs), FILE *UNUSED(fp), struct dm *U
     return -1;
 }
 
+// Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend
+// was switched to RGBA to make it easier to display the output, but that also means that
+// libdmgl's RGB getDisplayImage and the image flipping function (which also assumes RGB
+// data) won't work.  Define RGBA variations for the OSMesa backend.
+int osmesa_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
+{
+    unsigned char *idata;
+    int width;
+    int height;
+
+    width = dmp->i->dm_width;
+    height = dmp->i->dm_height;
+
+    idata = (unsigned char*)bu_calloc(height * width * 4, sizeof(unsigned char), "rgba data");
+
+    glReadBuffer(GL_FRONT);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, idata);
+    *image = idata;
+    if (flip) {
+	// Flip manually using an RGBA variation of the math from:
+	// https://github.com/vallentin/GLCollection/blob/master/screenshot.cpp
+	//
+	// Unfortunately OpenGL doesn't provide a built-in way to handle this:
+	// https://www.opengl.org/archives/resources/features/KilgardTechniques/oglpitfall/
+	for (int y = 0; y < height / 2; ++y) {
+	    for (int x = 0; x < width; ++x) {
+		int top = (x + y * width) * 4;
+		int bottom = (x + (height - y - 1) * width) * 4;
+		char rgba[4];
+		memcpy(rgba, *image + top, sizeof(rgba));
+		memcpy(*image + top, *image + bottom, sizeof(rgba));
+		memcpy(*image + bottom, rgba, sizeof(rgba));
+	    }
+	}
+    }
+
+    return BRLCAD_OK; /* caller will need to bu_free(idata, "image data"); */
+}
+
+
 int
 qtosmesa_event_cmp(struct dm *dmp, dm_event_t type, int event)
 {
@@ -505,7 +546,7 @@ struct dm_impl dm_qtosmesa_impl = {
     gl_freeDLists,
     gl_genDLists,
     gl_draw_obj,
-    gl_getDisplayImage, /* display to image function */
+    osmesa_getDisplayImage, /* display to image function */
     gl_reshape,
     qtosmesa_makeCurrent,
     null_SwapBuffers,
