@@ -173,6 +173,22 @@ mark_as_advanced(POLY2TRI_INCLUDE_DIRS)
 include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
 CMAKEFILES_IN_DIR(gct_ignore_files gct)
 
+# OSMesa Library
+add_subdirectory(libosmesa)
+SetTargetFolder(libosmesa "Third Party Libraries")
+SetTargetFolder(libosmesa-static "Third Party Libraries")
+SetTargetFolder(libosmesa-obj "Third Party Libraries")
+set(OSMESA_LIBRARY libosmesa CACHE STRING "Require opennurbs libraries" FORCE)
+set(OSMESA_LIBRARIES libosmesa CACHE STRING "Require opennurbs libraries" FORCE)
+set(OSMESA_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libosmesa/include" CACHE STRING "Require osmesa header includes" FORCE)
+set(OSMESA_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/libosmesa/include" CACHE STRING "Require osmesa header includes" FORCE)
+mark_as_advanced(OSMESA_LIBRARY)
+mark_as_advanced(OSMESA_LIBRARIES)
+mark_as_advanced(OSMESA_INCLUDE_DIR)
+mark_as_advanced(OSMESA_INCLUDE_DIRS)
+include("${CMAKE_CURRENT_SOURCE_DIR}/libosmesa.dist")
+CMAKEFILES_IN_DIR(libosmesa_ignore_files libosmesa)
+
 # linenoise is used by applications directly
 include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
 CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)

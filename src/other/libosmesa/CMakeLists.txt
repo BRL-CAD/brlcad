@@ -42,6 +42,10 @@ include(CheckFunctionExists)
 # TODO - check for the following
 add_definitions(-DHAVE_TIMESPEC_GET=1)
 
+# Don't want to conflict with system OpenGL, so enable the
+# mangling headers to produce mgl prefixing
+add_definitions(-DUSE_MGL_NAMESPACE)
+
 add_subdirectory(src)
 add_subdirectory(examples)
 
