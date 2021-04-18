@@ -72,6 +72,8 @@ struct qtosmesa_vars {
 #endif
     OSMesaContext ctx;
     void *os_b;
+    int b_width;
+    int b_height;
     struct FONScontext *fs;
     int fontNormal;
     int fontOffset;

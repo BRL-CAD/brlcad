@@ -82,10 +82,7 @@ qtosmesa_makeCurrent(struct dm *dmp)
     if (dmp->i->dm_debugLevel)
 	bu_log("qtosmesa_makeCurrent()\n");
 
-    int width = (!privars->qw->width()) ? 512 : privars->qw->width();
-    int height = (!privars->qw->height()) ? 512 : privars->qw->height();
-
-    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, width, height)) {
+    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, privars->b_width, privars->b_height)) {
 	bu_log("OSMesaMakeCurrent failed!\n");
 	return BRLCAD_ERROR;
     }
@@ -117,23 +114,31 @@ qtosmesa_configureWin(struct dm *dmp, int UNUSED(force))
 	return BRLCAD_ERROR;
     }
 
-    if (!privars->qw->width() || !privars->qw->height()) {
+    int width = privars->qw->width();
+    int height = privars->qw->height();
+
+
+    if (!width || !height) {
 	bu_log("qtosmesa_configureWin: Zero sized window\n");
 	return BRLCAD_ERROR;
     }
 
-    privars->os_b = bu_realloc(privars->os_b, privars->qw->width() * privars->qw->height() * sizeof(GLfloat)*4, "OSMesa rendering buffer");
+    if (privars->b_width != width || privars->b_height != height) {
+	privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*3, "OSMesa rendering buffer");
+	privars->b_width = width;
+	privars->b_height = height;
+    }
     if (!privars->os_b) {
 	bu_log("qtosmesa_configureWin: render buffer allocation failed\n");
 	return BRLCAD_ERROR;
     }
 
-    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, privars->qw->width(), privars->qw->height())) {
+    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, privars->b_width, privars->b_height)) {
 	bu_log("OSMesaMakeCurrent failed!\n");
 	return BRLCAD_ERROR;
     }
 
-    gl_reshape(dmp, privars->qw->width(), privars->qw->height());
+    gl_reshape(dmp, privars->b_width, privars->b_height);
 
     /* this is where font information is set up, if not already done */
     if (!privars->fs) {
@@ -219,11 +224,13 @@ qtosmesa_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     }
     privars = (struct qtosmesa_vars *)dmp->i->dm_vars.priv_vars;
     privars->qw = (QWidget *)ctx;
-    privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);
+    privars->ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, NULL);
     int width = (!privars->qw->width()) ? 512 : privars->qw->width();
     int height = (!privars->qw->height()) ? 512 : privars->qw->height();
-    privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLfloat)*4, "OSMesa rendering buffer");
-    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, width, height)) {
+    privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*3, "OSMesa rendering buffer");
+    privars->b_width = width;
+    privars->b_height = height;
+    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, privars->b_width, privars->b_height)) {
 	bu_log("OSMesaMakeCurrent failed!\n");
 	bu_free(dmp->i->dm_vars.pub_vars, "qtosmesa_open: dmp->i->dm_vars.pub_vars");
 	bu_free(dmp, "qtosmesa_open: dmp");

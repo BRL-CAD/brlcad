@@ -107,7 +107,6 @@ void dmOSMesa::paintEvent(QPaintEvent *e)
 	return;
     }
     QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGB888);
-    image.save("file.png");
     QPainter painter(this);
     painter.drawImage(this->rect(), image);
     e->accept();
