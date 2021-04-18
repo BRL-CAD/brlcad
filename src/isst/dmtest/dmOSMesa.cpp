@@ -74,18 +74,7 @@ static void
 write_png(const char *filename, unsigned char *buffer, int width, int height)
 {
    FILE *f = fopen( filename, "wb" );
-
    if (f) {
-        for (int y = 0; y < height / 2; ++y) {
-            for (int x = 0; x < width; ++x) {
-                int top = (x + y * width) * 3;
-                int bottom = (x + (height - y - 1) * width) * 3;
-                char rgb[3];
-                memcpy(rgb, buffer + top, sizeof(rgb));
-                memcpy(buffer + top, buffer + bottom, sizeof(rgb));
-                memcpy(buffer + bottom, rgb, sizeof(rgb));
-            }
-        }
         svpng(f, width, height, buffer, 0);
 
       fclose(f);
@@ -131,11 +120,12 @@ void dmOSMesa::paintEvent(QPaintEvent *e)
 	return;
     }
     write_png("frame.png", dm_image, dm_get_width(dmp), dm_get_height(dmp));
-    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGB888);
+    //QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGB888);
+    QImage image("frame.png");
     QPainter painter(this);
     painter.drawImage(this->rect(), image);
-    e->accept();
     bu_free(dm_image, "copy of backend image");
+    QWidget::paintEvent(e);
 }
 
 void dmOSMesa::resizeEvent(QResizeEvent *e)
