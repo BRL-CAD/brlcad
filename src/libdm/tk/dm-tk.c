@@ -60,7 +60,7 @@
 #include "./dm-tk.h"
 #include "../null/dm-Null.h"
 #include "../include/private.h"
-#include "rt/solid.h"
+#include "bview/defines.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -1151,6 +1151,7 @@ struct dm_impl dm_tk_impl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     null_doevent,
     null_openFb,
     NULL,

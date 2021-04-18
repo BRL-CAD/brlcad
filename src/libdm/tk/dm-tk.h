@@ -27,69 +27,30 @@
 #define DM_TK_H
 
 #include "common.h"
-
-#include "OSMesa/gl.h"
-#include "OSMesa/osmesa.h"
-
 #include "tk.h"
-#define HAVE_X11_TYPES 1
-
-#include "bu/vls.h"
 
 #define CMAP_BASE 40
+#define CUBE_DIMENSION 6
+#define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
+#define ColormapNull (Colormap *)NULL
 
-/* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
-#define GED2IRIS(x)	(((float)(x))*0.00048828125)
-
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {    \
-        _shift = 24 - _shift;                           \
-        switch (_shift) {                               \
-            case 0:                                     \
-                _mask >>= 24;                           \
-                break;                                  \
-            case 8:                                     \
-                _mask >>= 8;                            \
-                break;                                  \
-            case 16:                                    \
-                _mask <<= 8;                            \
-                break;                                  \
-            case 24:                                    \
-                _mask <<= 24;                           \
-                break;                                  \
-        }                                               \
-    }
+#define INIT_XCOLOR(c) memset((c), 0, sizeof(XColor))
 
 extern struct dm dm_tk;
 
-#define Tk_MV_O(_m) offsetof(struct modifiable_tk_vars, _m)
-
-struct modifiable_tk_vars {
-    struct dm *this_dm;
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-
 struct tk_vars {
-    OSMesaContext glxc;
-    Tk_PhotoHandle dm_img;
-    void *buf;
-    GLdouble faceplate_mat[16];
-    int face_flag;
-    int *perspective_mode;
-    GLclampf r, g, b;
+    GC gc;
+    Pixmap pix;
+    fastf_t *xmat;
+    mat_t mod_mat;		/* default model transformation matrix */
+    mat_t disp_mat;		/* display transformation matrix */
+    int is_trueColor;
+    unsigned long bd, bg, fg;   /* color of border, background, foreground */
+    unsigned long pixels[NUM_PIXELS];
+    int tkfontset;
+    Tk_Font tkfontstruct;
+    fastf_t ppmm_x;		/* pixel per mm in x */
+    fastf_t ppmm_y;		/* pixel per mm in y */
 };
 
 struct dm_tkvars {
@@ -98,19 +59,13 @@ struct dm_tkvars {
     Tk_Window top;
     Tk_Window xtkwin;
     int depth;
+    Colormap cmap;
     int devmotionnotify;
     int devbuttonpress;
     int devbuttonrelease;
 };
 
-__BEGIN_DECLS
-
-extern void tk_fogHint();
-
-__END_DECLS
-
 #endif /* DM_TK_H */
-
 /** @} */
 /*
  * Local Variables:
