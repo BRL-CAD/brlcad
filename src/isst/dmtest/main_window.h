@@ -37,7 +37,7 @@
 #include <QFileDialog>
 #include <QSettings>
 #include "pqConsoleWidget.h"
-#include "dmgls.h"
+#include "dmgl.h"
 
 class DM_MainWindow : public QMainWindow
 {

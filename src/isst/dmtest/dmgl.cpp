@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmgls.cpp
+/** @file dmgl.cpp
  *
  * Brief description
  *
@@ -32,7 +32,7 @@ extern "C" {
 #include "bview/util.h"
 #include "ged.h"
 }
-#include "dmgls.h"
+#include "dmgl.h"
 
 dmGL::dmGL(QWidget *parent)
     : QOpenGLWidget(parent)
