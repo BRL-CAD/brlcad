@@ -223,6 +223,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 {
     const char **av;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
+    struct ged_bview_data *bdata = NULL;
 
     if (GEDP == GED_NULL)
 	return TCL_OK;
@@ -235,10 +236,13 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
-	    av[1] = (const char *)LAST_SOLID(illump)->d_namep;
-	    av[argc] = (const char *)NULL;
-	    (void)(*ctp->ged_func)(GEDP, argc, (const char **)av);
-	    Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
+	    if (illump && illump->s_u_data) {
+		bdata = (struct ged_bview_data *)illump->s_u_data;
+		av[1] = (const char *)LAST_SOLID(bdata)->d_namep;
+		av[argc] = (const char *)NULL;
+		(void)(*ctp->ged_func)(GEDP, argc, (const char **)av);
+		Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
+	    }
 	    bu_free((void *)av, "cmd_ged_info_wrapper: av");
 	} else {
 	    (void)(*ctp->ged_func)(GEDP, argc, (const char **)argv);
@@ -428,7 +432,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     int arg;
     const char *new_cmd[3];
     struct rt_db_internal intern;
-    struct directory *outdp;
+    struct ged_bview_data *bdata = NULL;
 
     if (GEDP == GED_NULL)
 	return TCL_OK;
@@ -443,8 +447,12 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     if (STATE == ST_S_EDIT) {
 	/* solid edit mode */
 	/* apply es_mat editing to parameters */
+	struct directory *outdp = RT_DIR_NULL;
 	transform_editing_solid(&intern, es_mat, &es_int, 0);
-	outdp = LAST_SOLID(illump);
+	if (illump && illump->s_u_data) {
+	    bdata = (struct ged_bview_data *)illump->s_u_data;
+	    outdp = LAST_SOLID(bdata);
+	}
 
 	if (argc < 2) {
 	    Tcl_AppendResult(interpreter, "You are in Primitive Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
@@ -456,6 +464,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
     }  else if (STATE == ST_O_EDIT) {
 	mat_t newmat;
+	struct directory *outdp = RT_DIR_NULL;
 
 	/* object edit mode */
 	if (illump->s_Eflag) {
@@ -468,7 +477,10 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	/* apply es_mat and modelchanges editing to parameters */
 	bn_mat_mul(newmat, modelchanges, es_mat);
 	transform_editing_solid(&intern, newmat, &es_int, 0);
-	outdp = LAST_SOLID(illump);
+	if (illump && illump->s_u_data) {
+	    bdata = (struct ged_bview_data *)illump->s_u_data;
+	    outdp = LAST_SOLID(bdata);
+	}
 
 	if (argc < 2) {
 	    Tcl_AppendResult(interpreter, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
@@ -1856,7 +1868,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	    if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 		non_empty = 1;
 		break;
 	    }

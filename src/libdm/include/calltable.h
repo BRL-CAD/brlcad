@@ -58,14 +58,13 @@ struct dm_vars {
  * Tk information...
  */
 struct dm_impl {
-    struct dm *(*dm_open)(void *interp, int argc, const char *argv[]);
-    // TODO - dm_open currently does both new windows and existing windows - rework
-    // to operate like framebuffer API and separate them.
+    struct dm *(*dm_open)(void *ctx, void *interp, int argc, const char *argv[]);
     int (*dm_close)(struct dm *dmp);
     int (*dm_viable)(const char *dpy_string);
     int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
     int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */
-    int (*dm_normal)(struct dm *dmp);
+    int (*dm_hud_begin)(struct dm *dmp);
+    int (*dm_hud_end)(struct dm *dmp);
     int (*dm_loadMatrix)(struct dm *dmp, fastf_t *mat, int which_eye);
     int (*dm_loadPMatrix)(struct dm *dmp, fastf_t *mat);
     int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
@@ -96,9 +95,10 @@ struct dm_impl {
     int (*dm_freeDLists)(struct dm *dmp, unsigned int list, int range);
     int (*dm_genDLists)(struct dm *dmp, size_t range);
     int (*dm_draw_obj)(struct dm *dmp, struct display_list *obj);
-    int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);  /**< @brief (0,0) is upper left pixel */
+    int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image, int flip);  /**< @brief (0,0) is upper left pixel */
     int (*dm_reshape)(struct dm *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm *dmp);
+    int (*dm_SwapBuffers)(struct dm *dmp);
     int (*dm_doevent)(struct dm *dmp, void *clientData, void *eventPtr);
     int (*dm_openFb)(struct dm *dmp);
     int (*dm_get_internal)(struct dm *dmp);

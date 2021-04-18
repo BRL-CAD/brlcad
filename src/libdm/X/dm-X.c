@@ -63,7 +63,7 @@
 #include "./fb_X.h"
 #include "./dm-X.h"
 
-#include "rt/solid.h"
+#include "bview/defines.h"
 
 #include "../include/private.h"
 
@@ -444,7 +444,7 @@ X_viable(const char *dpy_string)
  *
  */
 struct dm *
-X_open(void *vinterp, int argc, const char **argv)
+X_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
     static int count = 0;
@@ -1201,18 +1201,24 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **dat
 }
 
 
-/**
- * Restore the display processor to a normal mode of operation (i.e.,
- * not scaled, rotated, displaced, etc.).
- */
 HIDDEN int
-X_normal(struct dm *dmp)
+X_hud_begin(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
 	bu_log("X_normal()\n");
 
     return BRLCAD_OK;
 }
+
+HIDDEN int
+X_hud_end(struct dm *dmp)
+{
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_normal()\n");
+
+    return BRLCAD_OK;
+}
+
 
 
 /**
@@ -1494,7 +1500,7 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 
 HIDDEN int
-X_getDisplayImage(struct dm *dmp, unsigned char **image)
+X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip)
 {
     XImage *ximage_p;
     unsigned char **rows;
@@ -1512,6 +1518,10 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     int green_bits;
     int blue_bits;
 
+    if (flip) {
+	bu_log("X: flipping unimplemented for this backend\n");
+	return BRLCAD_ERROR;
+    }
 
     ximage_p = XGetImage(((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->dpy,
 			 ((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->win,
@@ -2075,7 +2085,8 @@ struct dm_impl dm_X_impl = {
     X_viable,
     X_drawBegin,
     X_drawEnd,
-    X_normal,
+    X_hud_begin,
+    X_hud_end,
     X_loadMatrix,
     null_loadPMatrix,
     X_drawString2D,
@@ -2109,6 +2120,7 @@ struct dm_impl dm_X_impl = {
     X_getDisplayImage, /* display to image function */
     X_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     X_doevent,
     X_openFb,
     NULL,

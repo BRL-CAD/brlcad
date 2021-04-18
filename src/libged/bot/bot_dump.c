@@ -47,7 +47,7 @@
 
 #include "raytrace.h"
 
-#include "dm/bview.h"
+#include "bview/defines.h"
 #include "dm.h"
 
 #include "../ged_private.h"
@@ -1349,42 +1349,46 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
     MAT_IDN(mat);
 
     for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
-	struct solid *sp;
+	struct bview_scene_obj *sp;
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    struct directory *dp;
-	    struct rt_db_internal intern;
-	    struct rt_bot_internal *bot;
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+		struct directory *dp;
+		struct rt_db_internal intern;
+		struct rt_bot_internal *bot;
 
-	    dp = sp->s_fullpath.fp_names[sp->s_fullpath.fp_len-1];
+		if (!sp->s_u_data)
+		    continue;
+		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
 
-	    /* get the internal form */
-	    ret = rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
+		dp = bdata->s_fullpath.fp_names[bdata->s_fullpath.fp_len-1];
 
-	    if (ret < 0) {
-		bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);
-		continue;
-	    }
+		/* get the internal form */
+		ret = rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
 
-	    if (ret != ID_BOT) {
-		bu_log("%s is not a bot (ignored)\n", dp->d_namep);
+		if (ret < 0) {
+		    bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);
+		    continue;
+		}
+
+		if (ret != ID_BOT) {
+		    bu_log("%s is not a bot (ignored)\n", dp->d_namep);
+		    rt_db_free_internal(&intern);
+		    continue;
+		}
+
+		/* Write out object color */
+		if (out_type == OTYPE_OBJ) {
+		    (*red) = sp->s_color[0];
+		    (*green) = sp->s_color[1];
+		    (*blue) = sp->s_color[2];
+		    (*alpha) = sp->s_transparency;
+		}
+
+		bot = (struct rt_bot_internal *)intern.idb_ptr;
+		_ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, dbip->dbi_filename);
 		rt_db_free_internal(&intern);
-		continue;
 	    }
-
-	    /* Write out object color */
-	    if (out_type == OTYPE_OBJ) {
-		(*red) = sp->s_color[0];
-		(*green) = sp->s_color[1];
-		(*blue) = sp->s_color[2];
-		(*alpha) = sp->s_transparency;
-	    }
-
-	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, dbip->dbi_filename);
-	    rt_db_free_internal(&intern);
 	}
-    }
 
 }
 

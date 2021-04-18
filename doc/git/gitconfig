@@ -1,0 +1,140 @@
+# The following is an example .gitconfig file that defines and explains
+# a number of settings potentially useful to BRL-CAD developers.
+#
+# Some of the aliases make use of specific BRL-CAD information encoded
+# in the commit messages, while others are more generic settings that
+# are recommended for BRL-CAD repository usage.
+
+#****************************************************************************#
+# Standard user configuration block - customize with your information.
+# Users may also want to consider conditional includes for different
+# identities depending on what repository they are working in:
+# https://stackoverflow.com/a/43654115
+#****************************************************************************#
+[user]
+	name = First Last
+	email = 000000+username@users.noreply.github.com
+
+#****************************************************************************#
+# Aliases define convenience commands that can be used on the command
+# line with git, much as you would any normal git subcommand.
+#****************************************************************************#
+[alias]
+	#---------------------------------------------------------------------------------#
+	# General utility aliases
+	#---------------------------------------------------------------------------------#
+
+	# Find the commit where a file was added
+	added = log --diff-filter=A --follow --
+
+	# Get commit counts per committer (https://stackoverflow.com/a/9839491)
+	ccount = shortlog -s -n --all
+
+	# Compact log that also prints out stat summaries of how much individual
+	# files changed.  A good way to hunt for commits that altered particular
+	# portions of the source tree
+	lstat = log --oneline --stat
+
+	# A useful command for viewing the topology of the repository - see:
+	# https://stackoverflow.com/questions/1838873/visualizing-branch-topology-in-git
+	topo = log --graph --all --oneline --simplify-by-decoration
+
+	# churn: show log of files that have many changes
+	#
+	#   * Written by (Corey Haines)[http://coreyhaines.com/]
+	#   * Scriptified by Gary Bernhardt
+	#   * Obtained from https://github.com/garybernhardt/dotfiles/blob/master/bin/git-churn
+	#   * Edited for GitAlias.com repo by Joel Parker Henderson
+	#   * Comments by Mislav http://mislav.uniqpath.com/2014/02/hidden-documentation/
+	# Show churn for whole repo:
+	#
+	#   $ git churn
+	#
+	# Show churn for specific directories:
+	#
+	#   $ git churn app lib
+	#
+	# Show churn for a time range:
+	#
+	#   $ git churn --since=1-month-ago
+	#
+	# These are all standard arguments to `git log`.
+	#
+	# It's possible to get valuable insight from history of a project not only
+	# by viewing individual commits, but by analyzing sets of changes as a whole.
+	# For instance, `git churn` compiles stats about which files change the most.
+	#
+	# For example, to see where work on an app was focused on in the past month:
+	#
+	#     $ git churn --since=1-month-ago app/ | tail
+	#
+	# This can also highlight potential problems with technical debt in a project.
+	# A specific file changing too often is generally a red flag, since it probably
+	# means the file either needed to be frequently fixed for bugs, or the file
+	# holds too much responsibility and should be split into smaller units.
+	#
+	# Similar methods of history analysis can be employed to see which people were
+	# responsible recently for development of a certain part of the codebase.
+	#
+	# For instance, to see who contributed most to the API part of an application:
+	#
+	#    $ git log --format='%an' --since=1-month-ago app/controllers/api/ | \
+		#      sort | uniq -c | sort -rn | head
+	#
+	#    109 Alice Anderson
+	#    13 Bob Brown
+	#    7 Carol Clark
+	#
+	churn = !"f() { git log --all --find-copies --find-renames --name-only --format='format:' \"$@\" | awk 'NF{a[$0]++}END{for(i in a){print a[i], i}}' | sort -rn;};f"
+
+	#---------------------------------------------------------------------------------#
+	# Compatibility/utility aliases for Subversion
+	#---------------------------------------------------------------------------------#
+	co = checkout
+	up = pull
+	info = "!f() { \
+		git remote show origin | grep 'Fetch\\|HEAD' ; \
+		git log -1 --pretty='format:  %as %h %s' ; \
+		}; f"
+
+	# Print log messages for all Git commits associated with a particular SVN commit.
+	lrev = "!f() { \
+		if [ x$1 != x ] ; then \
+		git log --all --grep svn:revision:$1$; \
+		else \
+		echo Need revision number; \
+		fi; \
+		}; f"
+
+	# Git commits do not natively store their origination branch, so it is not possible after
+	# sufficient numbers of merges to and from branches to know which commit in each branch's
+	# history originated on that branch.  SVN, however, DID know which branch its commits
+	# originated on, and that information is encoded in the commit notes.  Accordingly, we
+	# can use that key to inspect the historical commit history of SVN branches.
+	logb = "!f() { \
+		if [ x$1 != x ] ; then \
+		CURRBRANCH=$1; \
+		else \
+		CURRBRANCH=\"$(git rev-parse --abbrev-ref HEAD)\"; \
+		fi; \
+		if [ x$CURRBRANCH != xmain ] ; then \
+		git log --all --show-notes --grep=\"svn:branch:$CURRBRANCH$\"; \
+		else \
+		git log --all --show-notes --grep=\"svn:branch:trunk$\"; \
+		fi; \
+		}; f"
+
+
+#****************************************************************************#
+# Tool settings
+#****************************************************************************#
+# Git can take advantage of graphical merging tools, such as https://meldmerge.org/
+[merge]
+	tool = meld
+
+# Set the graphical tool used by "git difftool -g"
+[diff]
+	guitool = meld
+
+# -*- mode: gitconfig; -*-
+# vim: set filetype=gitconfig:

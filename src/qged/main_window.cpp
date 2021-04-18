@@ -27,6 +27,26 @@
 #include "cadapp.h"
 #include "cadaccordion.h"
 
+QBDockWidget::QBDockWidget(const QString &title, QWidget *parent)
+    : QDockWidget(title, parent)
+{
+}
+
+void QBDockWidget::toWindow(bool floating)
+{
+    if (floating) {
+	setWindowFlags(
+		Qt::CustomizeWindowHint |
+                Qt::Window |
+                Qt::WindowMinimizeButtonHint |
+                Qt::WindowMaximizeButtonHint |
+		Qt::WindowCloseButtonHint
+		);
+	// undo "setWindowFlags" hiding the widget
+	show();
+    }
+}
+
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
@@ -35,15 +55,16 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     // of this particular setup, but it sure is an annoying one...
     menuBar()->setNativeMenuBar(false);
 
+    // Redrawing the main canvas may be expensive when docking and undocking -
+    // disable animation to minimize window drawing operations:
+    // https://stackoverflow.com/a/17885699/2037687
+    setAnimated(false);
+
     // Create Menus
     file_menu = menuBar()->addMenu("File");
     cad_open = new QAction("Open", this);
     connect(cad_open, SIGNAL(triggered()), this, SLOT(open_file()));
     file_menu->addAction(cad_open);
-
-    cad_save_settings = new QAction("Save Settings", this);
-    connect(cad_save_settings, SIGNAL(triggered()), this, SLOT(save_settings()));
-    file_menu->addAction(cad_save_settings);
 
     cad_exit = new QAction("Exit", this);
     connect(cad_exit, SIGNAL(triggered()), this, SLOT(close()));
@@ -55,44 +76,50 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
     help_menu = menuBar()->addMenu("Help");
 
-
-    // Define dock layout
-    ads::CDockManager::setConfigFlags(ads::CDockManager::HideSingleCentralWidgetTitleBar);
-    dock = new ads::CDockManager(this);
-
-    // TODO - set up our own with the proper values...
-    dock->setStyleSheet("");
-
-
-    // Set up OpenGL canvas
-    view_dock = new ads::CDockWidget("Scene");
-    view_menu->addAction(view_dock->toggleViewAction());
-//    canvas = new QGLWidget();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
-    canvas = new Display();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
+     // Set up Display canvas
+    canvas = new BRLCADDisplay();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
     canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     canvas->setMinimumSize(512,512);
-    view_dock->setWidget(canvas, ads::CDockWidget::eInsertMode::ForceNoScrollArea);
-    view_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
-    view_dock->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    view_dock->setMinimumSize(512,512);
-    auto *CentralDockArea = dock->setCentralWidget(view_dock);
-    CentralDockArea->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+
+    setCentralWidget(canvas);
+
+
+    // Define dock layout
+    console_dock = new QBDockWidget("Console", this);
+    addDockWidget(Qt::BottomDockWidgetArea, console_dock);
+    console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
+    view_menu->addAction(console_dock->toggleViewAction());
+    connect(console_dock, &QBDockWidget::topLevelChanged, console_dock, &QBDockWidget::toWindow); 
+
+    tree_dock = new QBDockWidget("Hierarchy", this);
+    addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
+    tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(tree_dock->toggleViewAction());
+    connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow); 
+
+    panel_dock = new QBDockWidget("Edit Panel", this);
+    addDockWidget(Qt::RightDockWidgetArea, panel_dock);
+    panel_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(panel_dock->toggleViewAction());
+    connect(panel_dock, &QBDockWidget::topLevelChanged, panel_dock, &QBDockWidget::toWindow); 
+
+    /* Because the console usually doesn't need a huge amount of
+     * horizontal space and the tree can use all the vertical space
+     * it can get, give the bottom corners to the left/right docks */
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+
+
+    /***** Create and add the widgets that inhabit the dock *****/
 
     /* Console */
-    console_dock = new ads::CDockWidget("Console");
-    view_menu->addAction(console_dock->toggleViewAction());
     console = new CADConsole(console_dock);
     console_dock->setWidget(console);
-    console_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
-    dock->addDockWidget(ads::BottomDockWidgetArea, console_dock);
 
-   /* Geometry Tree */
-    tree_dock = new ads::CDockWidget("Hierarchy");
-    view_menu->addAction(tree_dock->toggleViewAction());
+    /* Geometry Tree */
     treemodel = new CADTreeModel();
     treeview = new CADTreeView(tree_dock);
     tree_dock->setWidget(treeview);
-    tree_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
     treeview->setModel(treemodel);
     treeview->setItemDelegate(new GObjectDelegate());
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -107,24 +134,16 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QObject::connect(treeview, SIGNAL(customContextMenuRequested(const QPoint&)), treeview, SLOT(context_menu(const QPoint&)));
     treemodel->populate(DBI_NULL);
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
-    dock->addDockWidget(ads::LeftDockWidgetArea, tree_dock);
 
     /* Edit panel */
-    panel_dock = new ads::CDockWidget("Edit Panel");
-    view_menu->addAction(panel_dock->toggleViewAction());
     panel = new CADAccordion(panel_dock);
     panel_dock->setWidget(panel);
-    panel_dock->setMinimumSizeHintMode(ads::CDockWidget::MinimumSizeHintFromContent);
-    dock->addDockWidget(ads::RightDockWidgetArea, panel_dock);
 
-    /***** Create and add the widgets that inhabit the dock *****/
-
-    //stdpropview->setMinimumHeight(340);
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->stdpropmodel, SLOT(refresh(const QModelIndex &)));
 
-    //userpropview->setMinimumHeight(340);
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
     ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
+
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
     //panel->setUniqueVisibility(1);
@@ -163,28 +182,6 @@ BRLCAD_MainWindow::open_file()
 	} else {
 	    statusBar()->showMessage(fileName);
 	}
-    }
-}
-
-void
-BRLCAD_MainWindow::save_settings()
-{
-    QSettings Settings("Settings.ini", QSettings::IniFormat);
-    Settings.setValue("mainWindow/Geometry", this->saveGeometry());
-    Settings.setValue("mainWindow/State", this->saveState());
-    Settings.setValue("mainWindow/DockingState", dock->saveState());
-}
-
-void
-BRLCAD_MainWindow::restore_settings()
-{
-    if (bu_file_exists("Settings.ini", NULL)) {
-	QSettings Settings("Settings.ini", QSettings::IniFormat);
-	this->restoreGeometry(Settings.value("mainWindow/Geometry").toByteArray());
-	this->restoreState(Settings.value("mainWindow/State").toByteArray());
-	dock->restoreState(Settings.value("mainWindow/DockingState").toByteArray());
-    } else {
-	this->resize(1100, 800);
     }
 }
 

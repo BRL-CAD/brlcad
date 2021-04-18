@@ -1,0 +1,71 @@
+          Following the History of Individual Files in Git
+
+Because git does not explicitly track file rename data (see, for example,
+https://stackoverflow.com/q/5743739/2037687) we need to use somewhat
+unintuitive means to follow the history of individual files in Git.  In
+order of increasing difficulty:
+
+1.  The first tool to try is:
+
+$ git log --follow
+
+Although this is not perfect, in many cases it can deduce the file's history
+and track it past renames.
+
+In some cases we have observed odd results with --follow.  The file
+src/conv/iges/iges.h, for example is tracked back successfully until follow
+encounters a portion of the history where the file was removed and re-added a
+few commits later.  The expected result for --follow in that situation would be
+to halt (this is what happens for iges.c in the same file, for example) but for
+iges.h at least some versions of git keep going and begin quickly reporting
+spurious commits that clearly do not pertain to iges.h at all.
+
+2.  If git log --follow does not succeed, either because of a break in the
+file's presence in the repo or some other issue, the next step to try is to use
+a path based log search:
+
+$ git log -- "**/iges.h"
+
+(Note that the quotes are important.)  This reports all the commits with an
+iges.h file involved.  This can be very effective when file names are
+unambiguous - it succeeds fully for iges.h, even reporting history before the
+"break" in its presence in the tree.  However, because it is path based, it
+faces two significant limitations - if many files in the repository have the
+same name it may report commits pertaining to similarly named files that are
+not the item of interest for the current search, and it cannot report history
+if the file name changed too radically for a pattern to pick it out.
+
+3.  A renamed file which also has radically changed content is a "worst case"
+for following Git file history.  In the extreme limit (rename with total
+content replacement) there is nothing that can be done, because recognizing a
+relationship between the old file and the new would require metadata Git simply
+does not store.  However, if the file contents have something which constitutes
+a recognizably distinct search key, git grep does offer one other possibility
+for manual identification of a lost history thread.
+
+Let us suppose that the iges.h header had been called "IGES.h" prior to its
+removal and addition.  If that had been the case, none of the above searches
+would have identified it.  However, by examining the contents of the
+last known version of the header, we know there was a text string "I G E S . H"
+in the file.  If this string was present in older versions of the file, we
+can look to see if any older files contain it.  We start at the SHA1 of the
+last commit known to contain the file, and pull a number of hashes using git
+log from the local history to check for the target string (these checks are
+slow, since you are grepping a large set of files for each commit, so you either
+want to start small and only go further back as needed, or plan for a long run
+in advance:
+
+$ git grep -F "I G E S . H" $(git log -5 --pretty=format:"%H" 3408f5ba122027)
+
+3408f5ba1220271623a90b3740eb43abe06a857a:src/conv/iges/iges.h:/*                          I G E S . H
+b6414214c3cdd7e883be1d5f3cd19f9102deb9ec:src/iges/IGES.h:/*                          I G E S . H
+
+(Note that this output is simulated, since in the real repository the file name
+did not change.)
+
+We see that an older commit was indeed found several commits back with our
+search key, and grep has reported a new path for us: src/iges/IGES.h
+
+We can then resume git log --follow from a checkout of b6414214c using the new
+path, or use git log -- "**/IGES.h" to look for the new file's history.
+

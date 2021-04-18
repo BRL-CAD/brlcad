@@ -41,7 +41,7 @@
 #define DM_SOLID_LINE 0
 #define DM_DASHED_LINE 1
 
-DisplayManager::DisplayManager(Display *display) : display(display) {
+DisplayManager::DisplayManager(BRLCADDisplay *display) : display(display) {
     setFGColor(0,0,0, 1);
     glLineStipple(1, 0xCF33);
 }

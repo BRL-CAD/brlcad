@@ -3,6 +3,7 @@ add_subdirectory(bu)
 add_subdirectory(bn)
 add_subdirectory(bg)
 add_subdirectory(brep)
+add_subdirectory(bview)
 add_subdirectory(dm)
 add_subdirectory(gcv)
 add_subdirectory(ged)
@@ -24,6 +25,7 @@ set(public_hdrs
   brlcad.i
   bsocket.h
   bu.h
+  bview.h
   common.h
   dm.h
   fft.h
@@ -64,6 +66,7 @@ set(include_misc
   conf/PATCH
   conf/make.vbs
   config_win.h.in
+  xxhash.h
   )
 CMAKEFILES(${include_misc})
 

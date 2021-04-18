@@ -22,6 +22,10 @@ if {![file exists \"$arg/pkgIndex.tcl\"]} {
 # Wrap the logic needed for defining build targets that generate
 # tclIndex and pkgIndex.tcl files
 
+# Reset list of tclIndex targets, so we can build up a clean list
+# each time for dependency purposes
+set(tclindex_target_list "" CACHE STRING "clear tclindex target list" FORCE)
+
 macro(general_tcl_index_BUILD cmd outfile targetdir)
   if (BRLCAD_ENABLE_TCL)
     # normalize so we can use it as a name
@@ -34,12 +38,23 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
     # change, since both pkgIndex and tclIndex are going to scan the directory
     file(GLOB tcl_files "*.tcl")
 
-    # command that builds the index when the dependency is resolved
+    # Command that builds the index when the dependency is resolved.  We need
+    # to use btclsh here to generate files correctly for Archer, but btclsh
+    # will try to read the files we are generating.  As long as they are in a
+    # valid state this is fine, but in parallel building it is possible for one
+    # btclsh to try to read the partial output of another.  To avoid this, we
+    # make each new target depend on all previous targets, so they are forced
+    # execute one at a time.
     set(tclindex_outdir "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir}")
     add_custom_command(
       OUTPUT ${tclindex_outdir}/${outfile}
       COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir}
-      DEPENDS btclsh ${data_target_list} ${tcl_files}
+      DEPENDS btclsh ${data_target_list} ${tcl_files} ${tclindex_target_list}
+      )
+    add_custom_command(
+      OUTPUT ${tclindex_outdir}/${outfile}.done
+      COMMAND "${CMAKE_COMMAND}" -E touch ${tclindex_outdir}/${outfile}.done
+      DEPENDS ${tclindex_outdir}/${outfile}
       )
 
     # Install logic for index file.
@@ -56,12 +71,11 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
     endif(CMAKE_CONFIGURATION_TYPES)
 
     # convenience target
-    add_custom_target(${name}_${cmd}.tcl ALL DEPENDS ${tclindex_outdir}/${outfile})
+    add_custom_target(${name}_${cmd}.tcl ALL DEPENDS ${tclindex_outdir}/${outfile}.done)
     set_target_properties(${name}_${cmd}.tcl PROPERTIES FOLDER "BRL-CAD Tcl Scripts")
 
     # Maintain a list of all tclindex targets for dependency purposes
     set(tclindex_target_list ${tclindex_target_list} ${name}_${cmd}.tcl)
-    list(REMOVE_DUPLICATES tclindex_target_list)
     set(tclindex_target_list "${tclindex_target_list}" CACHE STRING "tclindex target list" FORCE)
 
   endif (BRLCAD_ENABLE_TCL)

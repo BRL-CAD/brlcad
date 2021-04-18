@@ -1,0 +1,26 @@
+SCHEMA cant_resolve;
+
+(* derived from LongForm25IsoIec, a schema in PLIB Part 25 *)
+
+-- has trouble with in_parameters in this fn
+FUNCTION correct_parameters_for_explicit_program(its_value: controlled_entity_instance_value ) : BOOLEAN;
+  IF (QUERY(in_p <* its_value.in_parameters | NOT ('NO.VALUE' IN TYPEOF(in_p))) = []) THEN
+    RETURN (TRUE);
+  END_IF;
+END_FUNCTION;
+
+-- substituting plib_entity_instance_value for this in the fn makes the problem go away
+TYPE controlled_entity_instance_value = SELECT (plib_entity_instance_value); END_TYPE;
+
+-- no error without representation_reference here
+TYPE plib_entity_instance_value = SELECT (program_reference, representation_reference); END_TYPE;
+
+ENTITY class_extension_external_item; END_ENTITY;
+
+ENTITY representation_reference SUBTYPE OF (class_extension_external_item); END_ENTITY;
+
+ENTITY program_reference SUBTYPE OF (class_extension_external_item);
+    in_parameters :  LIST OF string;
+END_ENTITY;
+
+END_SCHEMA;

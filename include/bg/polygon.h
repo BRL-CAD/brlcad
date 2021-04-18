@@ -83,6 +83,10 @@ bg_clip_polygons(
 	);
 
 
+BG_EXPORT void bg_polygon_free(struct bg_polygon *gpp);
+BG_EXPORT void bg_polygons_free(struct bg_polygons *gpp);
+
+
 /********************************
  * Operations on 2D point types *
  ********************************/

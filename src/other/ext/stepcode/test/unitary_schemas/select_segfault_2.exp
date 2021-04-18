@@ -1,0 +1,20 @@
+-- bug exposed by an AP242 file
+SCHEMA select_segfault_2;
+ENTITY drc SUBTYPE OF ( gdr ); END_ENTITY;
+
+ENTITY gdr
+    ABSTRACT SUPERTYPE OF ( ONEOF ( DRC ) )
+    SUBTYPE OF (sa);
+    base: docd;
+END_ENTITY;
+
+ENTITY sa SUPERTYPE OF (ONEOF (gdr)); END_ENTITY;
+
+TYPE docd = SELECT ( cdl, d ); END_TYPE;
+TYPE cdl = LIST[2:?] OF dre; END_TYPE;
+TYPE d = REAL; END_TYPE;
+ENTITY dre;
+    id: REAL;
+END_ENTITY;
+
+END_SCHEMA;

@@ -60,7 +60,7 @@ go_data_labels(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     ret = to_data_labels_func(interp, gedp, gdvp, argc, argv);
@@ -313,27 +313,6 @@ bad:
     return GED_ERROR;
 }
 
-void
-go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
-{
-    register int i;
-
-    /* set color */
-    (void)dm_set_fg(dmp,
-		    gdlsp->gdls_color[0],
-		    gdlsp->gdls_color[1],
-		    gdlsp->gdls_color[2], 1, 1.0);
-
-    for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
-	point_t vpoint;
-
-	MAT4X3PNT(vpoint, m2vmat,
-		  gdlsp->gdls_points[i]);
-	(void)dm_draw_string_2d(dmp, gdlsp->gdls_labels[i],
-				vpoint[X], vpoint[Y], 0, 1);
-    }
-}
-
 int
 to_prim_label(struct ged *gedp,
 	      int argc,
@@ -349,23 +328,23 @@ to_prim_label(struct ged *gedp,
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Free the previous list of primitives scheduled for labeling */
-    if (tgd->go_prim_label_list_size) {
-	for (i = 0; i < tgd->go_prim_label_list_size; ++i)
-	    bu_vls_free(&tgd->go_prim_label_list[i]);
-	bu_free((void *)tgd->go_prim_label_list, "prim_label");
-	tgd->go_prim_label_list = (struct bu_vls *)0;
+    if (tgd->go_dmv.prim_label_list_size) {
+	for (i = 0; i < tgd->go_dmv.prim_label_list_size; ++i)
+	    bu_vls_free(&tgd->go_dmv.prim_label_list[i]);
+	bu_free((void *)tgd->go_dmv.prim_label_list, "prim_label");
+	tgd->go_dmv.prim_label_list = (struct bu_vls *)0;
     }
 
     /* Set the list of primitives scheduled for labeling */
-    tgd->go_prim_label_list_size = argc - 1;
-    if (tgd->go_prim_label_list_size < 1)
+    tgd->go_dmv.prim_label_list_size = argc - 1;
+    if (tgd->go_dmv.prim_label_list_size < 1)
 	return GED_OK;
 
-    tgd->go_prim_label_list = (struct bu_vls *)bu_calloc(tgd->go_prim_label_list_size,
+    tgd->go_dmv.prim_label_list = (struct bu_vls *)bu_calloc(tgd->go_dmv.prim_label_list_size,
 									 sizeof(struct bu_vls), "prim_label");
-    for (i = 0; i < tgd->go_prim_label_list_size; ++i) {
-	bu_vls_init(&tgd->go_prim_label_list[i]);
-	bu_vls_printf(&tgd->go_prim_label_list[i], "%s", argv[i+1]);
+    for (i = 0; i < tgd->go_dmv.prim_label_list_size; ++i) {
+	bu_vls_init(&tgd->go_dmv.prim_label_list[i]);
+	bu_vls_printf(&tgd->go_dmv.prim_label_list[i], "%s", argv[i+1]);
     }
 
     return GED_OK;

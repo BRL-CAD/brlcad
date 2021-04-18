@@ -36,6 +36,7 @@
 
 #include "./dm/defines.h"
 #include "./dm/util.h"
+#include "./dm/view.h"
 
 __BEGIN_DECLS
 
@@ -128,7 +129,7 @@ DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 				   fastf_t base2local);
 
 /* labels.c */
-DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
+DM_EXPORT extern int dm_draw_prim_labels(struct dm *dmp,
 				    struct rt_wdb *wdbp,
 				    const char *name,
 				    mat_t viewmat,
@@ -156,7 +157,8 @@ DM_EXPORT extern const char *dm_version(void);
 /* Plugin related functions */
 DM_EXPORT extern int dm_valid_type(const char *name, const char *dpy_string);
 DM_EXPORT const char * dm_init_msgs();
-DM_EXPORT extern struct dm *dm_open(void *interp,
+DM_EXPORT extern struct dm *dm_open(void *ctx,
+	                     void *interp,
 			     const char *type,
 			     int argc,
 			     const char *argv[]);
@@ -207,6 +209,7 @@ DM_EXPORT extern int dm_get_stereo(struct dm *dmp);
 DM_EXPORT extern int dm_set_win_bounds(struct dm *dmp, fastf_t *w);
 DM_EXPORT extern int dm_configure_win(struct dm *dmp, int force);
 DM_EXPORT extern struct bu_vls *dm_get_pathname(struct dm *dmp);
+DM_EXPORT extern void dm_set_pathname(struct dm *dmp, const char *pname);
 DM_EXPORT extern struct bu_vls *dm_get_dname(struct dm *dmp);
 DM_EXPORT extern const char *dm_get_name(const struct dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_tkname(struct dm *dmp);
@@ -226,7 +229,7 @@ DM_EXPORT extern int dm_get_zclip(struct dm *dmp);
 DM_EXPORT extern void dm_set_zclip(struct dm *dmp, int zclip);
 DM_EXPORT extern int dm_get_perspective(struct dm *dmp);
 DM_EXPORT extern void dm_set_perspective(struct dm *dmp, fastf_t perspective);
-DM_EXPORT extern int dm_get_display_image(struct dm *dmp, unsigned char **image);
+DM_EXPORT extern int dm_get_display_image(struct dm *dmp, unsigned char **image, int flip);
 DM_EXPORT extern int dm_gen_dlists(struct dm *dmp, size_t range);
 DM_EXPORT extern int dm_begin_dlist(struct dm *dmp, unsigned int list);
 DM_EXPORT extern int dm_draw_dlist(struct dm *dmp, unsigned int list);
@@ -237,7 +240,8 @@ DM_EXPORT extern int dm_draw_vlist_hidden_line(struct dm *dmp, struct bn_vlist *
 DM_EXPORT extern int dm_set_line_attr(struct dm *dmp, int width, int style);
 DM_EXPORT extern int dm_draw_begin(struct dm *dmp);
 DM_EXPORT extern int dm_draw_end(struct dm *dmp);
-DM_EXPORT extern int dm_normal(struct dm *dmp);
+DM_EXPORT extern int dm_hud_begin(struct dm *dmp);
+DM_EXPORT extern int dm_hud_end(struct dm *dmp);
 DM_EXPORT extern int dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye);
 DM_EXPORT extern int dm_loadpmatrix(struct dm *dmp, fastf_t *mat);
 DM_EXPORT extern int dm_draw_string_2d(struct dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect);

@@ -232,6 +232,24 @@ RT_EXPORT extern int db_wrap_v5_external(struct bu_external *ep,
 					 const char *name);
 
 
+
+/**
+ * Given an external representation of a database object, convert
+ * it into its internal representation.
+ *
+ * Returns -
+ * <0 On error
+ * id On success.
+ */
+RT_EXPORT extern int
+rt_db_external5_to_internal5(
+    struct rt_db_internal *ip,
+    const struct bu_external *ep,
+    const char *name,
+    const struct db_i *dbip,
+    const mat_t mat,
+    struct resource *resp);
+
 /**
  * Get an object from the database, and convert it into its internal
  * representation.

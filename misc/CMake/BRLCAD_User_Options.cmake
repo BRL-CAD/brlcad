@@ -164,26 +164,17 @@ if(BRLCAD_ENABLE_X11)
   set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
 endif(BRLCAD_ENABLE_X11)
 
-# Enable features requiring OPENGL
-# Be smart about this - if we don't have X11 or Aqua and we're not on Windows,
-# we're non-graphical and that means OpenGL is a no-go.  The Windows version
-# would have to be some sort of option for the WIN32 graphics layer?  Should
-# probably think about that... for now, on Win32 don't try OpenGL if Tk is off.
-# That'll hold until we get a non-Tk based GUI - then setting non-graphical on
-# Windows will take more thought.
-if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  set(OPENGL_FOUND OFF)
-  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
-else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  include(FindGL)
-endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-
+find_package(OpenGL)
+set(BRLCAD_ENABLE_OPENGL_DEFAULT OFF)
+if (OPENGL_FOUND)
+  set(BRLCAD_ENABLE_OPENGL_DEFAULT ON)
+endif (OPENGL_FOUND)
 set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
 Enable support for OpenGL based Display Managers in BRL-CAD.
 Default depends on whether OpenGL is successfully detected -
 if it is, default is to enable.
 ")
-BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
+BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${BRLCAD_ENABLE_OPENGL_DEFAULT}
   TYPE BOOL
   ALIASES ENABLE_OPENGL
   DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)
@@ -212,12 +203,14 @@ mark_as_advanced(BRLCAD_ENABLE_STEP)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
 if (BRLCAD_ENABLE_QT)
-  # TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
-  find_package(Qt5Widgets QUIET)
+
+  find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL)
+
   if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
     message("QT interface requested, but QT5 is not found - disabling")
     set(BRLCAD_ENABLE_QT OFF)
   endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
 endif (BRLCAD_ENABLE_QT)
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
@@ -226,11 +219,12 @@ mark_as_advanced(Qt5Gui_DIR)
 # Enable features requiring OpenSceneGraph
 option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
 mark_as_advanced(BRLCAD_ENABLE_OSG)
-if(BRLCAD_ENABLE_OSG)
-  if(APPLE AND NOT BRLCAD_ENABLE_AQUA)
+
+if(APPLE)
+  if(BRLCAD_ENABLE_OSG AND NOT BRLCAD_ENABLE_AQUA)
     set(OSG_WINDOWING_SYSTEM "X11" CACHE STRING "Use X11" FORCE)
-  endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
-endif(BRLCAD_ENABLE_OSG)
+  endif(BRLCAD_ENABLE_OSG AND NOT BRLCAD_ENABLE_AQUA)
+endif(APPLE)
 
 # Enable features requiring GCT
 option(BRLCAD_ENABLE_GCT "Enable features requiring GCT" ON)

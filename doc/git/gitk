@@ -1,0 +1,34 @@
+# By default, gitk will not do line wrapping on Git commit messages.
+#
+# This does not work well for BRL-CAD commit messages, which generally are
+# not line wrapped in their original form.
+#
+# It is recommended that users set the following setting in their gitk
+# config file:
+
+set wrapcomment word
+
+# Generally, this file will be located at one of the following locations:
+# ~/.config/git/gitk
+# ~/.gitk
+# %USERPROFILE%/.gitk  (Windows)
+#
+# (See https://stackoverflow.com/a/37648244)
+
+
+
+# A note about how gitk displays diffs (per https://stackoverflow.com/a/3194397):
+#
+# "By default gitk does the same thing as the --cc option to git diff and
+# compresses the merge to only show diff chunks that don't come directly from
+# one or other parent."
+#
+# "The easiest way to view the full diff between a parent of a merge and the
+# merge commit is to select the parent (normal click) and from the context menu
+# on the merge commit (right/alternate click menu) select "Diff selected ->
+# this"."
+#
+# This can be a little startling coming from an SVN background, since by
+# default it looks like SVN merge commits are either no-ops or a tiny subset of
+# the full diff applied.
+

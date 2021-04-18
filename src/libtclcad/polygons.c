@@ -31,6 +31,7 @@
 
 #include "common.h"
 
+#include "bview.h"
 #include "tclcad.h"
 
 /* Private headers */
@@ -42,44 +43,6 @@
  * Probably should be sqrt(2^63 -1)
  */
 #define CLIPPER_MAX 1518500249
-
-
-/* These functions should be macros */
-static void
-to_polygon_free(struct bg_polygon *gpp)
-{
-    register size_t j;
-
-    if (gpp->num_contours == 0)
-	return;
-
-    for (j = 0; j < gpp->num_contours; ++j)
-	if (gpp->contour[j].num_points > 0)
-	    bu_free((void *)gpp->contour[j].point, "contour points");
-
-    bu_free((void *)gpp->contour, "contour");
-    bu_free((void *)gpp->hole, "hole");
-    gpp->num_contours = 0;
-}
-
-
-static void
-to_polygons_free(struct bg_polygons *gpp)
-{
-    register size_t i;
-
-    if (gpp->num_polygons == 0)
-	return;
-
-    for (i = 0; i < gpp->num_polygons; ++i) {
-	to_polygon_free(&gpp->polygon[i]);
-    }
-
-    bu_free((void *)gpp->polygon, "data polygons");
-    gpp->polygon = (struct bg_polygon *)0;
-    gpp->num_polygons = 0;
-}
-
 
 static int
 to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct bview *gdvp, struct bg_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
@@ -110,7 +73,7 @@ to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct bview *gdvp,
 	point_ac = ac;
 
 	/* point_ac includes a hole flag */
-	if (mode != TCLCAD_POLY_CONTOUR_MODE && point_ac < 4) {
+	if (mode != BVIEW_POLY_CONTOUR_MODE && point_ac < 4) {
 	    bu_vls_printf(gedp->ged_result_str, "There must be at least 3 points per contour");
 	    Tcl_Free((char *)point_av);
 	    return GED_ERROR;
@@ -636,12 +599,12 @@ to_data_polygons_func(Tcl_Interp *interp,
 			       gdpsp->gdps_view2model);
 
 	/* Free the target polygon */
-	to_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
+	bg_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
 
 	/* When using defaults, the clip polygon is assumed to be temporary and is removed after clipping */
 	if (argc == 2) {
 	    /* Free the clip polygon */
-	    to_polygon_free(&gdpsp->gdps_polygons.polygon[j]);
+	    bg_polygon_free(&gdpsp->gdps_polygons.polygon[j]);
 
 	    /* No longer need space for the clip polygon */
 	    --gdpsp->gdps_polygons.num_polygons;
@@ -842,7 +805,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    }
 	    polygon_ac = ac;
 
-	    to_polygons_free(&gdpsp->gdps_polygons);
+	    bg_polygons_free(&gdpsp->gdps_polygons);
 	    gdpsp->gdps_target_polygon_i = 0;
 
 	    if (polygon_ac < 1) {
@@ -892,7 +855,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    return GED_ERROR;
 	}
 
-	to_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
+	bg_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
 
 	/* Not doing a struct copy to avoid overwriting the color, line width and line style. */
 	gdpsp->gdps_polygons.polygon[i].num_contours = gp.num_contours;
@@ -1024,7 +987,7 @@ go_data_polygons(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     ret = to_data_polygons_func(interp, gedp, gdvp, argc, argv);
@@ -1103,7 +1066,7 @@ go_poly_circ_mode(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_poly_circ_mode_func(interp, gedp, gdvp, argc, argv, usage);
@@ -1199,17 +1162,18 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_mode = TCLCAD_POLY_CIRCLE_MODE;
+    gdvp->gv_mode = BVIEW_POLY_CIRCLE_MODE;
 
-    fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &fx, &fy, x, y);
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &v_pt[X], &v_pt[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);
@@ -1272,17 +1236,18 @@ to_poly_cont_build_func(Tcl_Interp *interp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_mode = TCLCAD_POLY_CONTOUR_MODE;
+    gdvp->gv_mode = BVIEW_POLY_CONTOUR_MODE;
 
-    fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &fx, &fy, x, y);
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &v_pt[X], &v_pt[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);
@@ -1376,7 +1341,7 @@ go_poly_cont_build(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_poly_cont_build_func(interp, gedp, gdvp, argc, argv, usage, 0);
@@ -1450,7 +1415,7 @@ go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_poly_cont_build_end_func(gdvp, argc, argv);
@@ -1536,7 +1501,7 @@ go_poly_ell_mode(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_poly_ell_mode_func(interp, gedp, gdvp, argc, argv, usage);
@@ -1634,15 +1599,16 @@ to_poly_ell_mode_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseY = y;
     gdvp->gv_mode = TCLCAD_POLY_ELLIPSE_MODE;
 
-    fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &fx, &fy, x, y);
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &v_pt[X], &v_pt[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);
@@ -1693,7 +1659,7 @@ go_poly_rect_mode(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_poly_rect_mode_func(interp, gedp, gdvp, argc, argv, usage);
@@ -1804,15 +1770,16 @@ to_poly_rect_mode_func(Tcl_Interp *interp,
     else
 	gdvp->gv_mode = TCLCAD_POLY_RECTANGLE_MODE;
 
-    fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &fx, &fy, x, y);
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &v_pt[X], &v_pt[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);

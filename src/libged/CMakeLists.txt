@@ -45,7 +45,6 @@ set(LIBGED_SOURCES
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
-  snap.c
   trace.c
   track.c
   translate_extrude.c
@@ -96,7 +95,7 @@ if (BRLCAD_ENABLE_OPENVDB)
   set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libdm;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbview;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
@@ -175,6 +174,7 @@ add_subdirectory(debugnmg)
 add_subdirectory(decompose)
 add_subdirectory(delay)
 add_subdirectory(dir2ae)
+add_subdirectory(dm)
 add_subdirectory(draw)
 add_subdirectory(dsp)
 add_subdirectory(dump)
@@ -310,7 +310,6 @@ add_subdirectory(rtwizard)
 add_subdirectory(savekey)
 add_subdirectory(saveview)
 add_subdirectory(scale)
-add_subdirectory(screengrab)
 add_subdirectory(search)
 add_subdirectory(select)
 add_subdirectory(set_output_script)

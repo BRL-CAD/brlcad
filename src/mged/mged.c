@@ -73,7 +73,7 @@
 #include "raytrace.h"
 #include "libtermio.h"
 #include "rt/db4.h"
-#include "dm/bview_util.h"
+#include "bview/util.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -2398,7 +2398,7 @@ refresh(void)
 
 
 		    /* Restore to non-rotated, full brightness */
-		    dm_normal(DMP);
+		    dm_hud_begin(DMP);
 
 		    /* only if not doing overlay */
 		    if (!mged_variables->mv_fb ||
@@ -2819,7 +2819,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GED_INIT(GEDP, ged_wdbp);
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
-    GEDP->ged_create_vlist_solid_callback = createDListSolid;
+    GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
     GEDP->ged_create_vlist_display_list_callback = createDListAll;
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;
@@ -2983,7 +2983,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     ged_init(GEDP);
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
-    GEDP->ged_create_vlist_solid_callback = createDListSolid;
+    GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
     GEDP->ged_create_vlist_display_list_callback = createDListAll;
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;

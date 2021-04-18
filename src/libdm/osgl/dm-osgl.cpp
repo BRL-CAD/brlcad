@@ -73,7 +73,7 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
-#include "rt/solid.h"
+#include "bview/defines.h"
 
 #include "./fb_osgl.h"
 #include "./dm-osgl.h"
@@ -2262,8 +2262,8 @@ osgl_genDLists(struct dm *dmp, size_t range)
 HIDDEN int
 osgl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
-    struct solid *sp;
-    FOR_ALL_SOLIDS(sp, &obj->dl_headSolid) {
+    struct bview_scene_obj *sp;
+    FOR_ALL_SOLIDS(sp, &obj->dl_head_scene_obj) {
 	if (sp->s_dlist == 0)
 	    sp->s_dlist = dm_gen_dlists(dmp, 1);
 
@@ -2697,6 +2697,7 @@ struct dm_impl dm_osgl_impl = {
     osgl_getDisplayImage, /* display to image function */
     osgl_reshape,
     osgl_makeCurrent,
+    NULL,
     osgl_doevent,
     osgl_openFb,
     osgl_get_internal,

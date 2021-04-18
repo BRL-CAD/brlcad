@@ -924,6 +924,17 @@ d2.r
       </para>
     </example>
 
+    <example><title>Finding all regions containing an intersection of obj2</title>
+
+      <para>
+	<userinput>search |/ -maxdepth 0 -type region -above ( -name obj2 -bool + ) </userinput>
+      </para>
+      <para>
+	Prints all regions immediately above obj2 where obj2 is included using an intersection
+	operation.
+      </para>
+    </example>
+
     <example><title>Finding all Plate-Mode BoT Objects</title>
 
       <para>

@@ -29,7 +29,7 @@ __BEGIN_DECLS
 
 /* TODO - find another, more appropriate home for these... may just have to
  * duplicate the logic in libdm and libged */
-#include "dm/bview.h"
+#include "bview/defines.h"
 BN_EXPORT void adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
 BN_EXPORT void adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
 BN_EXPORT void adc_view_to_adc_grid(struct bview_adc_state *adcs, mat_t model2view);

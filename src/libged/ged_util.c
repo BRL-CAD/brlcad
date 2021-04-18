@@ -40,7 +40,9 @@
 
 
 #include "bu/app.h"
+#include "bu/cmd.h"
 #include "bu/file.h"
+#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/str.h"
@@ -49,6 +51,90 @@
 
 #include "ged.h"
 #include "./ged_private.h"
+
+int
+_ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv)
+{
+    if (!gedp || !gopts || !cmds || !cmdname)
+	return GED_ERROR;
+
+    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
+	bu_vls_printf(gedp->ged_result_str, "%s %s\n", cmdname, cmdargs);
+	if (gopts) {
+	    char *option_help = bu_opt_describe(gopts, NULL);
+	    if (option_help) {
+		bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
+		bu_free(option_help, "help str");
+	    }
+	}
+	bu_vls_printf(gedp->ged_result_str, "Available subcommands:\n");
+	const struct bu_cmdtab *ctp = NULL;
+	int ret;
+	const char *helpflag[2];
+	helpflag[1] = PURPOSEFLAG;
+	size_t maxcmdlen = 0;
+	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
+	}
+	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    bu_vls_printf(gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) +   2, " ");
+	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
+		helpflag[0] = ctp->ct_name;
+		bu_cmd(cmds, 2, helpflag, 0, gd, &ret);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "print help and exit\n");
+	    }
+	}
+    } else {
+	int ret;
+	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
+	helpargv[0] = argv[0];
+	helpargv[1] = HELPFLAG;
+	for (int i = 1; i < argc; i++) {
+	    helpargv[i+1] = argv[i];
+	}
+	bu_cmd(cmds, argc+1, helpargv, 0, gd, &ret);
+	bu_free(helpargv, "help argv");
+	return ret;
+    }
+
+    return GED_OK;
+}
+
+int
+_ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv, int help, int cmd_pos)
+{
+    if (!gedp || !gopts || !cmds || !cmdname)
+	return GED_ERROR;
+
+    if (help) {
+	if (cmd_pos >= 0) {
+	    argc = argc - cmd_pos;
+	    argv = &argv[cmd_pos];
+	    _ged_subcmd_help(gedp, gopts, cmds, cmdname, cmdargs, gd, argc, argv);
+	} else {
+	    _ged_subcmd_help(gedp, gopts, cmds, cmdname, cmdargs, gd, 0, NULL);
+	}
+	return GED_OK;
+    }
+
+    // Must have a subcommand
+    if (cmd_pos == -1) {
+	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
+	_ged_subcmd_help(gedp, gopts, cmds, cmdname, cmdargs, gd, 0, NULL);
+	return GED_ERROR;
+    }
+
+    int ret;
+    if (bu_cmd(cmds, argc, argv, 0, (void *)gd, &ret) == BRLCAD_OK) {
+	return ret;
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+    }
+
+
+    return GED_OK;
+}
 
 struct bview *
 ged_find_view(struct ged *gedp, const char *key)
@@ -65,23 +151,29 @@ ged_find_view(struct ged *gedp, const char *key)
 }
 
 void
-ged_push_solid(struct ged *gedp, struct solid *sp)
+ged_push_scene_obj(struct ged *gedp, struct bview_scene_obj *sp)
 {
     RT_FREE_VLIST(&(sp->s_vlist));
-    sp->s_fullpath.fp_len = 0; // Don't free memory, but implicitly clear contents
+    if (sp->s_u_data) {
+	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	bdata->s_fullpath.fp_len = 0; // Don't free memory, but implicitly clear contents
+    }
     bu_ptbl_ins(&gedp->free_solids, (long *)sp);
 }
 
-struct solid *
-ged_pop_solid(struct ged *gedp)
+struct bview_scene_obj *
+ged_pop_scene_obj(struct ged *gedp)
 {
-    struct solid *sp = NULL;
+    struct bview_scene_obj *sp = NULL;
     if (BU_PTBL_LEN(&gedp->free_solids)) {
-	sp = (struct solid *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
+	sp = (struct bview_scene_obj *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
 	bu_ptbl_rm(&gedp->free_solids, (long *)sp);
     } else {
-	BU_ALLOC(sp, struct solid); // from GET_SOLID in rt/solid.h
-	db_full_path_init(&(sp)->s_fullpath);
+	BU_ALLOC(sp, struct bview_scene_obj); // from GET_BVIEW_SCENE_OBJ in bview/defines.h
+	struct ged_bview_data *bdata;
+	BU_GET(bdata, struct ged_bview_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
     }
     return sp;
 }
@@ -624,60 +716,6 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
     return GED_OK;
 }
 
-int
-ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
-{
-    int nh, nv;		/* whole grid units */
-    point_t view_pt;
-    point_t view_grid_anchor;
-    fastf_t grid_units_h;		/* eventually holds only fractional horizontal grid units */
-    fastf_t grid_units_v;		/* eventually holds only fractional vertical grid units */
-    fastf_t sf;
-    fastf_t inv_sf;
-
-    if (gedp->ged_gvp == GED_VIEW_NULL)
-	return 0;
-
-    if (ZERO(gedp->ged_gvp->gv_grid.res_h) ||
-	ZERO(gedp->ged_gvp->gv_grid.res_v))
-	return 0;
-
-    sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;
-    inv_sf = 1 / sf;
-
-    VSET(view_pt, *vx, *vy, 0.0);
-    VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
-
-    MAT4X3PNT(view_grid_anchor, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_grid.anchor);
-    VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
-
-    grid_units_h = (view_grid_anchor[X] - view_pt[X]) / (gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    grid_units_v = (view_grid_anchor[Y] - view_pt[Y]) / (gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    nh = grid_units_h;
-    nv = grid_units_v;
-
-    grid_units_h -= nh;		/* now contains only the fraction part */
-    grid_units_v -= nv;		/* now contains only the fraction part */
-
-    if (grid_units_h <= -0.5)
-	*vx = view_grid_anchor[X] - ((nh - 1) * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    else if (0.5 <= grid_units_h)
-	*vx = view_grid_anchor[X] - ((nh + 1) * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    else
-	*vx = view_grid_anchor[X] - (nh * gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-
-    if (grid_units_v <= -0.5)
-	*vy = view_grid_anchor[Y] - ((nv - 1) * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    else if (0.5 <= grid_units_v)
-	*vy = view_grid_anchor[Y] - ((nv + 1) * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    else
-	*vy = view_grid_anchor[Y] - (nv * gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-
-    *vx *= inv_sf;
-    *vy *= inv_sf;
-
-    return 1;
-}
 
 int
 ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t rmat)

@@ -47,6 +47,8 @@
 #undef Success
 #include <QGLWidget>
 #undef Success
+#include <QDockWidget>  // TODO may want to enhance this for our purposes...
+#undef Success
 #include <QMenu>
 #undef Success
 #include <QMenuBar>
@@ -69,40 +71,43 @@
 #  pragma clang diagnostic pop
 #endif
 
-#include "qtads/DockManager.h"
-#include "qtads/DockAreaWidget.h"
 #include "cadconsole.h"
 #include "cadtreemodel.h"
 #include "cadaccordion.h"
 #include <display/Display.h>
+
+// https://stackoverflow.com/q/44707344/2037687
+class QBDockWidget : public QDockWidget
+{
+    Q_OBJECT
+
+    public:
+	QBDockWidget(const QString &title, QWidget *parent);
+    public slots:
+       void toWindow(bool floating);
+};
 
 class BRLCAD_MainWindow : public QMainWindow
 {
     Q_OBJECT
     public:
 	BRLCAD_MainWindow();
-	void restore_settings();
 
-	Display *canvas;
+	BRLCADDisplay *canvas;
 
     private slots:
 	void open_file();
-	void save_settings();
 
     private:
 	QMenu *file_menu;
 	QAction *cad_open;
-	QAction *cad_save_settings;
-	QAction *cad_restore_settings;
 	QAction *cad_exit;
 	QMenu *view_menu;
 	QMenu *help_menu;
 
-	ads::CDockManager *dock;
-	ads::CDockWidget *view_dock;
-	ads::CDockWidget *console_dock;
-	ads::CDockWidget *tree_dock;
-	ads::CDockWidget *panel_dock;
+	QBDockWidget *console_dock;
+	QBDockWidget *tree_dock;
+	QBDockWidget *panel_dock;
 
 	CADConsole *console;
 	CADTreeModel *treemodel;

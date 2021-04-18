@@ -34,10 +34,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-#---------------------------------------------------------------------
-# "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
-# "make unit"  runs all the unit tests.
 
+# "make unit"  runs all the unit tests.
 # To build the required targets for testing in the style of GNU Autotools "make
 # check") we define "unit" and "check" targets per
 # http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test

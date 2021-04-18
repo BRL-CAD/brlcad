@@ -48,6 +48,9 @@
 
 #define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
 
+#define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
+#define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
+
 #define AMM_IDLE 0
 #define AMM_ROT 1
 #define AMM_TRAN 2

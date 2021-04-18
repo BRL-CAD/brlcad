@@ -60,9 +60,9 @@
 #include "ged.h"
 #include "tclcad.h"
 
-#include "rt/solid.h"
+#include "bview/defines.h"
 #include "dm.h"
-#include "dm/bview_util.h"
+#include "bview/util.h"
 
 #include "icv/io.h"
 #include "icv/ops.h"
@@ -528,7 +528,7 @@ HIDDEN int to_zclip(struct ged *gedp,
 
 /* Utility Functions */
 
-HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
+HIDDEN void to_create_vlist_callback_solid(struct bview_scene_obj *gdlp);
 HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
 HIDDEN void to_destroy_vlist_callback(unsigned int dlist, int range);
 HIDDEN void to_rt_end_callback_internal(int aborted);
@@ -1135,8 +1135,8 @@ to_deleteProc(ClientData clientData)
 	    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)top->to_gedp->u_data;
 	    bu_vls_free(&tgd->go_rt_end_callback);
 	    bu_vls_free(&tgd->go_more_args_callback);
-	    free_path_edit_params(tgd->go_edited_paths);
-	    bu_hash_destroy(tgd->go_edited_paths);
+	    free_path_edit_params(tgd->go_dmv.edited_paths);
+	    bu_hash_destroy(tgd->go_dmv.edited_paths);
 	    BU_PUT(tgd, struct tclcad_ged_data);
 	    top->to_gedp->u_data = NULL;
 	}
@@ -1274,7 +1274,7 @@ to_open_tcl(ClientData UNUSED(clientData),
 
     top->to_gedp->ged_output_handler = to_output_handler;
     top->to_gedp->ged_refresh_handler = to_refresh_handler;
-    top->to_gedp->ged_create_vlist_solid_callback = to_create_vlist_callback_solid;
+    top->to_gedp->ged_create_vlist_scene_obj_callback = to_create_vlist_callback_solid;
     top->to_gedp->ged_create_vlist_display_list_callback = to_create_vlist_callback;
     top->to_gedp->ged_destroy_vlist_callback = to_destroy_vlist_callback;
 
@@ -1288,9 +1288,9 @@ to_open_tcl(ClientData UNUSED(clientData),
     tgd->go_rt_end_callback_cnt = 0;
     bu_vls_init(&tgd->go_more_args_callback);
     tgd->go_more_args_callback_cnt = 0;
-    tgd->go_edited_paths = bu_hash_create(0);
+    tgd->go_dmv.edited_paths = bu_hash_create(0);
     tgd->gedp = top->to_gedp;
-    tgd->go_refresh_on = 1;
+    tgd->go_dmv.refresh_on = 1;
     gedp->u_data = (void *)tgd;
 
     bu_vls_strcpy(&top->to_gedp->go_name, argv[1]);
@@ -1800,7 +1800,7 @@ go_data_move(Tcl_Interp *UNUSED(interp),
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_data_move_func(gedp, gdvp, argc, argv, usage);
@@ -2203,7 +2203,7 @@ go_data_move_object_mode(Tcl_Interp *UNUSED(interp),
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_data_move_object_mode_func(gedp, gdvp, argc, argv, usage);
@@ -2295,7 +2295,7 @@ go_data_move_point_mode(Tcl_Interp *UNUSED(interp),
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_data_move_point_mode_func(gedp, gdvp, argc, argv, usage);
@@ -2386,7 +2386,7 @@ go_data_pick(struct ged *gedp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_data_pick_func(gedp, gdvp, argc, argv, usage);
@@ -3120,7 +3120,7 @@ to_dlist_on(struct ged *gedp,
 
     /* Get dlist_on state */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dlist_on);
+	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dmv.dlist_on);
 	return GED_OK;
     }
 
@@ -3130,7 +3130,7 @@ to_dlist_on(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    tgd->go_dlist_on = on;
+    tgd->go_dmv.dlist_on = on;
 
     return GED_OK;
 }
@@ -3593,7 +3593,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
     struct redraw_edited_path_data *data;
     int ret, dmode = 0;
     struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
-    struct path_edit_params *params;
+    struct dm_path_edit_params *params;
     struct bu_hash_entry *entry = bu_hash_next(t, NULL);
 
     while (entry) {
@@ -3603,7 +3603,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 
 	data = (struct redraw_edited_path_data *)udata;
 
-	params = (struct path_edit_params *)bu_hash_value(entry, NULL);
+	params = (struct dm_path_edit_params *)bu_hash_value(entry, NULL);
 	if (params->edit_mode == TCLCAD_OTRANSLATE_MODE) {
 	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 	    struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
@@ -3714,7 +3714,7 @@ to_idle_mode(struct ged *gedp,
 	need_refresh = 1;
     }
 
-    if (mode != TCLCAD_POLY_CONTOUR_MODE ||
+    if (mode != BVIEW_POLY_CONTOUR_MODE ||
 	    gdvp->gv_data_polygons.gdps_cflag == 0)
     {
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -3732,6 +3732,9 @@ to_idle_mode(struct ged *gedp,
 	     mode == TCLCAD_CONSTRAINED_TRANSLATE_MODE))
     {
 	const char *av[3];
+
+	gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 
 	gedp->ged_gvp = gdvp;
 	av[0] = "grid";
@@ -3758,11 +3761,11 @@ to_idle_mode(struct ged *gedp,
     data.gdvp = gdvp;
     data.need_refresh = &need_refresh;
 
-    redraw_edited_paths(tgd->go_edited_paths, &data);
+    redraw_edited_paths(tgd->go_dmv.edited_paths, &data);
 
-    free_path_edit_params(tgd->go_edited_paths);
-    bu_hash_destroy(tgd->go_edited_paths);
-    tgd->go_edited_paths = bu_hash_create(0);
+    free_path_edit_params(tgd->go_dmv.edited_paths);
+    bu_hash_destroy(tgd->go_dmv.edited_paths);
+    tgd->go_dmv.edited_paths = bu_hash_create(0);
     Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {
@@ -4554,7 +4557,7 @@ to_new_view(struct ged *gedp,
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	new_gdvp->dmp = (void *)dm_open((void *)current_top->to_interp, type, ac, av);
+	new_gdvp->dmp = (void *)dm_open(NULL, (void *)current_top->to_interp, type, ac, av);
 	if ((struct dm *)new_gdvp->dmp == DM_NULL) {
 	    bu_ptbl_free(new_gdvp->callbacks);
 	    BU_PUT(new_gdvp->callbacks, struct bu_ptbl);
@@ -4582,7 +4585,7 @@ to_new_view(struct ged *gedp,
     new_gdvp->u_data = (void *)tvd;
 
     bu_vls_printf(&new_gdvp->gv_name, "%s", argv[name_index]);
-    ged_view_init(new_gdvp);
+    bview_init(new_gdvp);
     bu_ptbl_ins(&current_top->to_gedp->ged_views, (long *)new_gdvp);
 
     new_gdvp->gv_point_scale = 1.0;
@@ -4854,7 +4857,6 @@ to_pix(struct ged *gedp,
     unsigned char *pixels;
     static int bytes_per_pixel = 3;
     int i = 0;
-    int width = 0;
     int height = 0;
     int make_ret = 0;
     int bytes_per_line;
@@ -4892,7 +4894,6 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    width = dm_get_width((struct dm *)gdvp->dmp);
     height = dm_get_height((struct dm *)gdvp->dmp);
 
     make_ret = dm_make_current((struct dm *)gdvp->dmp);
@@ -4902,10 +4903,11 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
-    glReadBuffer(GL_FRONT);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    if (dm_get_display_image((struct dm *)gdvp->dmp, &pixels, 0) != BRLCAD_OK) {
+    	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't get display image\n", argv[0]);
+	fclose(fp);
+	return GED_ERROR;
+    }
 
     for (i = 0; i < height; ++i) {
 	scanline = (unsigned char *)(pixels + (i*bytes_per_line));
@@ -5000,10 +5002,12 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
-    glReadBuffer(GL_FRONT);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    if (dm_get_display_image((struct dm *)gdvp->dmp, &pixels, 0) != BRLCAD_OK) {
+    	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't get display image\n", argv[0]);
+	fclose(fp);
+	return GED_ERROR;
+    }
+
     rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 
     for (i = 0; i < height; ++i)
@@ -5670,8 +5674,9 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gv_view2model, view);
 
@@ -5720,8 +5725,9 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(view));
@@ -5818,6 +5824,9 @@ to_snap_view(struct ged *gedp,
     fvx = vx;
     fvy = vy;
 
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
     gedp->ged_gvp = gdvp;
     if (!gedp->ged_gvp->gv_snap_lines && !gedp->ged_gvp->gv_grid.snap) {
 	bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
@@ -5826,10 +5835,10 @@ to_snap_view(struct ged *gedp,
 
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fvx, &fvy);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &fvx, &fvy);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fvx, &fvy);
+	bview_snap_grid_2d(gedp->ged_gvp, &fvx, &fvy);
     }
 
     bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
@@ -6293,6 +6302,9 @@ to_vslew(struct ged *gedp,
     if (ret == GED_OK) {
 	if (gdvp->gv_grid.snap) {
 
+	    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+
 	    gedp->ged_gvp = gdvp;
 	    av[0] = "grid";
 	    av[1] = "vsnap";
@@ -6301,7 +6313,7 @@ to_vslew(struct ged *gedp,
 	}
 
 	if (gedp->ged_gvp->gv_snap_lines) {
-	    ged_view_center_linesnap(gedp);
+	    bview_view_center_linesnap(gedp->ged_gvp);
 	}
 
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
@@ -6434,7 +6446,7 @@ to_zclip(struct ged *gedp,
 /*************************** Local Utility Functions ***************************/
 
 HIDDEN void
-to_create_vlist_callback_solid(struct solid *sp)
+to_create_vlist_callback_solid(struct bview_scene_obj *sp)
 {
     struct bview *gdvp;
     int first = 1;
@@ -6443,7 +6455,7 @@ to_create_vlist_callback_solid(struct solid *sp)
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
-	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
+	if (tgd->go_dmv.dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 
@@ -6477,8 +6489,8 @@ to_create_vlist_callback_solid(struct solid *sp)
 HIDDEN void
 to_create_vlist_callback(struct display_list *gdlp)
 {
-    struct solid *sp;
-    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+    struct bview_scene_obj *sp;
+    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	to_create_vlist_callback_solid(sp);
     }
 }
@@ -6492,7 +6504,7 @@ to_destroy_vlist_callback(unsigned int dlist, int range)
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
-	if (tgd->go_dlist_on && to_is_viewable(gdvp)) {
+	if (tgd->go_dmv.dlist_on && to_is_viewable(gdvp)) {
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 	    (void)dm_free_dlists((struct dm *)gdvp->dmp, dlist, range);
 	}

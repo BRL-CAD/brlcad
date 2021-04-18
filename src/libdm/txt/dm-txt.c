@@ -35,7 +35,7 @@
 extern struct dm dm_txt;
 
 struct dm *
-txt_open(void *interp, int argc, const char **argv)
+txt_open(void *UNUSED(ctx), void *interp, int argc, const char **argv)
 {
     struct dm *dmp;
 
@@ -89,12 +89,18 @@ txt_drawEnd(struct dm *UNUSED(dmp))
 
 
 HIDDEN int
-txt_normal(struct dm *UNUSED(dmp))
+txt_hud_begin(struct dm *UNUSED(dmp))
 {
-    bu_log("normal called\n");
+    bu_log("hud_begin called\n");
     return 0;
 }
 
+HIDDEN int
+txt_hud_end(struct dm *UNUSED(dmp))
+{
+    bu_log("hud_end called\n");
+    return 0;
+}
 
 HIDDEN int
 txt_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
@@ -321,9 +327,9 @@ txt_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
 
 
 HIDDEN int
-txt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+txt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image), int flip)
 {
-    bu_log("getDisplayImage called\n");
+    bu_log("getDisplayImage called (flip: %d)\n", flip);
     return 0;
 }
 
@@ -343,6 +349,12 @@ txt_makeCurrent(struct dm *UNUSED(dmp))
     return 0;
 }
 
+HIDDEN int
+txt_SwapBuffers(struct dm *UNUSED(dmp))
+{
+    bu_log("SwapBuffers called\n");
+    return 0;
+}
 
 HIDDEN int
 txt_doevent(struct dm *UNUSED(dmp), void *UNUSED(vclientData), void *UNUSED(veventPtr))
@@ -365,7 +377,8 @@ struct dm_impl dm_txt_impl = {
     txt_viable,
     txt_drawBegin,
     txt_drawEnd,
-    txt_normal,
+    txt_hud_begin,
+    txt_hud_end,
     txt_loadMatrix,
     txt_loadPMatrix,
     txt_drawString2D,
@@ -399,6 +412,7 @@ struct dm_impl dm_txt_impl = {
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,
+    txt_SwapBuffers,
     txt_doevent,
     txt_openFb,
     NULL,
