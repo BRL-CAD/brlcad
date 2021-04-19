@@ -330,6 +330,111 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     return GED_OK;
 }
 
+int
+_dm_cmd_attach(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "dm [options] attach type [name]";
+    const char *purpose_string = "create a DM of the specified type";
+    if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bu_vls dm_name = BU_VLS_INIT_ZERO;
+
+    if (argc != 1 && argc != 2) {
+	bu_vls_printf(gd->gedp->ged_result_str, "Usage: %s", usage_string);
+	return GED_ERROR;
+    }
+
+    if (argc == 1) {
+	// No name - generate one
+	bu_vls_sprintf(&dm_name, "%s-0", argv[0]);
+	int exists = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_all_dmp); i++) {
+	    struct dm *ndmp = (struct dm *)BU_PTBL_GET(gedp->ged_all_dmp, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(ndmp)), bu_vls_cstr(&dm_name))) {
+		exists = 1;
+	    }
+	}
+	int tries = 0;
+	while (exists && tries < 100) {
+	    bu_vls_incr(&dm_name, NULL, "0:0:0:0:-", NULL, NULL);
+	    exists = 0;
+	    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_all_dmp); i++) {
+		struct dm *ndmp = (struct dm *)BU_PTBL_GET(gedp->ged_all_dmp, i);
+		if (BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(ndmp)), bu_vls_cstr(&dm_name))) {
+		    exists = 1;
+		}
+	    }
+	    tries++;
+	}
+	if (tries == 100) {
+	    bu_vls_printf(gedp->ged_result_str, "unable to generate DM name");
+	    bu_vls_free(&dm_name);
+	    return GED_ERROR;
+	}
+    } else {
+	// Have name - see if it already exists
+	bu_vls_sprintf(&dm_name, "%s", argv[1]);
+	int exists = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_all_dmp); i++) {
+	    struct dm *ndmp = (struct dm *)BU_PTBL_GET(gedp->ged_all_dmp, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(ndmp)), bu_vls_cstr(&dm_name))) {
+		exists = 1;
+	    }
+	}
+	if (exists) {
+	    bu_vls_printf(gedp->ged_result_str, "DM %s already exists", bu_vls_cstr(&dm_name));
+	    bu_vls_free(&dm_name);
+	    return GED_ERROR;
+	}
+    }
+
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, "GED has no view defined, can't establish DM");
+	bu_vls_free(&dm_name);
+	return GED_ERROR;
+    } else {
+	// Make sure the view width and height are non-zero if we're in a
+	// "headless" mode without a graphical display
+	if (!gedp->ged_gvp->gv_width) {
+	    gedp->ged_gvp->gv_width = 512;
+	}
+	if (!gedp->ged_gvp->gv_height) {
+	    gedp->ged_gvp->gv_height = 512;
+	}
+    }
+
+    if (!gedp->ged_ctx) {
+	gedp->ged_ctx = (void *)gedp->ged_gvp;
+    }
+
+    const char *acmd = "attach";
+    struct dm *dmp = dm_open(gedp->ged_ctx, gedp->ged_interp, argv[0], 1, &acmd);
+    if (!dmp) {
+	bu_vls_printf(gedp->ged_result_str, "failed to create DM %s", bu_vls_cstr(&dm_name));
+	return GED_ERROR;
+    }
+
+    dm_set_vp(dmp, &gedp->ged_gvp->gv_scale);
+    dm_configure_win(dmp, 0);
+    dm_set_pathname(dmp, bu_vls_cstr(&dm_name));
+    dm_set_zbuffer(dmp, 1);
+    gedp->ged_gvp->dmp = dmp;
+    fastf_t windowbounds[6] = { -1, 1, -1, 1, (int)GED_MIN, (int)GED_MAX };
+    dm_set_win_bounds(dmp, windowbounds);
+
+    bu_ptbl_ins(gedp->ged_all_dmp, (long *)dmp);
+    if (!gedp->ged_dmp)
+	gedp->ged_dmp = dmp;
+
+    return GED_OK;
+}
+
 const struct bu_cmdtab _dm_cmds[] = {
     { "initmsg",         _dm_cmd_initmsg},
     { "type",            _dm_cmd_type},
@@ -337,6 +442,7 @@ const struct bu_cmdtab _dm_cmds[] = {
     { "list",            _dm_cmd_list},
     { "get",             _dm_cmd_get},
     { "set",             _dm_cmd_set},
+    { "attach",          _dm_cmd_attach},
     { (char *)NULL,      NULL}
 };
 

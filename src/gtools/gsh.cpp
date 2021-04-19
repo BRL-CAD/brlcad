@@ -35,7 +35,8 @@ extern "C" {
 }
 
 #include "bu.h"
-#include "bview/util.h"
+#include "bview.h"
+#include "dm.h"
 #include "ged.h"
 
 #define DEFAULT_GSH_PROMPT "g> "
@@ -173,6 +174,11 @@ main(int argc, const char **argv)
      * */
 
     /* Start the interactive loop */
+    unsigned long long prev_dhash = 0;
+    unsigned long long prev_vhash = 0;
+    unsigned long long prev_lhash = 0;
+    unsigned long long prev_ghash = 0;
+
     while ((line = linenoise(gpmpt)) != NULL) {
 
 	bu_vls_sprintf(&iline, "%s", line);
@@ -193,6 +199,15 @@ main(int argc, const char **argv)
 	if (BU_STR_EQUAL(bu_vls_addr(&iline), "q")) goto done;
 	if (BU_STR_EQUAL(bu_vls_addr(&iline), "quit")) goto done;
 	if (BU_STR_EQUAL(bu_vls_addr(&iline), "exit")) goto done;
+
+	/* Looks like we'll be running a GED command - stash the state
+	 * of the view info */
+	if (gedp->ged_dmp) {
+	    prev_dhash = (gedp->ged_dmp) ? dm_hash((struct dm *)gedp->ged_dmp) : 0;
+	    prev_vhash = bview_hash(gedp->ged_gvp);
+	    prev_lhash = dl_name_hash(gedp);
+	    prev_ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	}
 
 	/* OK, try a GED command - make an argv array from the input line */
 	struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
@@ -260,6 +275,45 @@ main(int argc, const char **argv)
 	    ged_exec(gedp, ac, (const char **)av);
 	    printf("%s\n", bu_vls_cstr(gedp->ged_result_str));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
+
+	    // The command ran, see if the display needs updating
+	    if (gedp->ged_dmp) {
+		struct dm *dmp = (struct dm *)gedp->ged_dmp;
+		struct bview *v = gedp->ged_gvp;
+		unsigned long long dhash = dm_hash(dmp);
+		unsigned long long vhash = bview_hash(gedp->ged_gvp);
+		unsigned long long lhash = dl_name_hash(gedp);
+		unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+		unsigned long long lhash_edit = lhash;
+		lhash_edit += dl_update(gedp);
+		if (dhash != prev_dhash) {
+		    dm_set_dirty(dmp, 1);
+		}
+		if (vhash != prev_vhash) {
+		    dm_set_dirty(dmp, 1);
+		}
+		if (lhash_edit != prev_lhash) {
+		    dm_set_dirty(dmp, 1);
+		}
+		if (ghash != prev_ghash) {
+		    dm_set_dirty(dmp, 1);
+		}
+		if (dm_get_dirty(dmp)) {
+		    matp_t mat = gedp->ged_gvp->gv_model2view;
+		    dm_loadmatrix(dmp, mat, 0);
+		    unsigned char geometry_default_color[] = { 255, 0, 0 };
+		    dm_draw_begin(dmp);
+		    dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay,
+			    1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
+			    0, 0, geometry_default_color, 1, 0);
+
+		    // Faceplate drawing
+		    dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip->dbi_local2base);
+
+		    dm_draw_end(dmp);
+		}
+	    }
+
 	}
 #if 0
 	int (*func)(struct ged *, int, char *[]);

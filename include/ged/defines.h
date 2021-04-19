@@ -284,6 +284,7 @@ struct ged {
     // bview.h gv_callback (only used by MGED?)
     // db_search_callback_t
 
+    void *ged_ctx; /* Temporary - do not rely on when designing new functionality */
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 

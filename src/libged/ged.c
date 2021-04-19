@@ -315,6 +315,8 @@ ged_init(struct ged *gedp)
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
 
+    gedp->ged_ctx = NULL;
+    gedp->ged_interp = NULL;
 }
 
 
