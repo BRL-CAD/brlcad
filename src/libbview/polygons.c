@@ -194,6 +194,12 @@ bview_append_polygon_pt(struct bview_scene_obj *s)
 	p->type = BVIEW_POLYGON_GENERAL;
     }
 
+    /* Have new polygon, now update view object vlist */
+    bview_polygon_vlist(s);
+
+    /* Updated */
+    s->s_changed++;
+
     return 0;
 }
 
@@ -289,6 +295,12 @@ bview_move_polygon_pt(struct bview_scene_obj *s)
 
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     VMOVE(c->point[p->curr_point_i], m_pt);
+
+    /* Have new polygon, now update view object vlist */
+    bview_polygon_vlist(s);
+
+    /* Updated */
+    s->s_changed++;
 
     return 0;
 }

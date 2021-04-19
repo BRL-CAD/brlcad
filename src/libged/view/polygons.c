@@ -362,6 +362,7 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     struct bview_scene_obj *s = gd->s;
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
 
     if (argc != 2 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
@@ -375,6 +376,9 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return GED_ERROR;
 	}
+	p->curr_contour_i = contour_ind;
+    } else {
+	p->curr_contour_i = 0;
     }
     int x,y;
     if (bu_opt_int(NULL, 1, (const char **)&argv[ioffset], (void *)&x) != 1 || x < 0) {
@@ -386,7 +390,6 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
     p->curr_contour_i = contour_ind;
     p->sflag = 1;
     p->mflag = 0;
@@ -405,7 +408,7 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> polygon append x y";
+    const char *usage_string = "view obj <objname> polygon append [contour] x y";
     const char *purpose_string = "append point to polygon";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -416,22 +419,34 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     struct bview_scene_obj *s = gd->s;
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
 
-    if (argc != 2) {
+    if (argc != 2 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
 	return GED_ERROR;
     }
+    int ioffset = 0;
+    int contour_ind = -1;
+    if (argc == 3) {
+	ioffset++;
+	if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&contour_ind) != 1 || contour_ind < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	    return GED_ERROR;
+	}
+	p->curr_contour_i = contour_ind;
+    } else {
+	p->curr_contour_i = 0;
+    }
     int x,y;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&x) != 1 || x < 0) {
+    if (bu_opt_int(NULL, 1, (const char **)&argv[ioffset], (void *)&x) != 1 || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return GED_ERROR;
     }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&y) != 1 || y < 0) {
+    if (bu_opt_int(NULL, 1, (const char **)&argv[ioffset+1], (void *)&y) != 1 || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
     p->sflag = 0;
     p->mflag = 0;
     p->aflag = 1;
