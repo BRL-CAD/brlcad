@@ -23,7 +23,7 @@ add_definitions(-DDM_PLUGIN)
 add_definitions(-DUSE_MGL_NAMESPACE)
 
 dm_plugin_library(dm-swrast SHARED ${SWRAST_SRCS})
-target_link_libraries(dm-swrast libdmgl libdm libbu osmesa)
+target_link_libraries(dm-swrast libdm libbu osmesa)
 set_property(TARGET dm-swrast APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H OSMESA)
 VALIDATE_STYLE(dm-swrast "${SWRAST_SRCS}")
 
