@@ -77,6 +77,9 @@ plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     Tcl_Obj *obj;
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
+    if (!interp)
+	return NULL;
+
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
 
