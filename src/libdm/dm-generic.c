@@ -32,6 +32,7 @@
 #include "xxhash.h"
 
 #include "vmath.h"
+#include "bu/time.h"
 #include "bview/defines.h"
 #include "dm.h"
 #include "./include/private.h"
@@ -619,6 +620,7 @@ int
 dm_draw_begin(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
+    dmp->start_time = bu_gettime();
     return dmp->i->dm_drawBegin(dmp);
 }
 int

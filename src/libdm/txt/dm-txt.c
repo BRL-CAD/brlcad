@@ -44,6 +44,7 @@ txt_open(void *UNUSED(ctx), void *interp, int argc, const char **argv)
 
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp->i, struct dm_impl);
 
@@ -469,7 +470,7 @@ struct dm_impl dm_txt_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_txt = { DM_MAGIC, &dm_txt_impl };
+struct dm dm_txt = { DM_MAGIC, &dm_txt_impl, 0 };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_txt };

@@ -82,6 +82,7 @@ plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp->i, struct dm_impl);
 
@@ -772,7 +773,7 @@ struct dm_impl dm_plot_impl = {
     NULL			/* Tcl interpreter */
 };
 
-struct dm dm_plot = { DM_MAGIC, &dm_plot_impl };
+struct dm dm_plot = { DM_MAGIC, &dm_plot_impl, 0 };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_plot };

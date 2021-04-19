@@ -559,6 +559,7 @@ ogl_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 
     BU_GET(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_GET(dmpi, struct dm_impl);
     *dmpi = *dm_ogl.i; /* struct copy */
@@ -1519,7 +1520,7 @@ struct dm_impl dm_ogl_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_ogl = { DM_MAGIC, &dm_ogl_impl };
+struct dm dm_ogl = { DM_MAGIC, &dm_ogl_impl, 0 };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_ogl };

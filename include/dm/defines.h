@@ -57,6 +57,7 @@ struct dm_impl;
 struct dm {
     uint32_t magic;
     struct dm_impl *i;
+    int64_t start_time;  // time of last dm_draw_begin call
 };
 
 struct dm_plugin {

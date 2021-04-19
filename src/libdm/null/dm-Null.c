@@ -39,6 +39,7 @@ null_open(void *UNUSED(ctx), void *interp, int UNUSED(argc), const char **UNUSED
 
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp->i, struct dm_impl);
 
@@ -417,7 +418,7 @@ struct dm_impl dm_null_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_null = { DM_MAGIC, &dm_null_impl };
+struct dm dm_null = { DM_MAGIC, &dm_null_impl, 0 };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { &dm_null };

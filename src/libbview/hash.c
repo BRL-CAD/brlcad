@@ -430,6 +430,7 @@ bview_hash(struct bview *v)
     _bview_other_state_hash(state, &v->gv_view_params);
     _bview_other_state_hash(state, &v->gv_view_scale);
     _bview_interactive_rect_state_hash(state, &v->gv_rect);
+    XXH64_update(state, &v->gv_fps, sizeof(int));
     XXH64_update(state, &v->gv_adaptive_plot, sizeof(int));
     XXH64_update(state, &v->gv_redraw_on_zoom, sizeof(int));
     XXH64_update(state, &v->gv_x_samples, sizeof(int));

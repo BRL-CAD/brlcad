@@ -83,6 +83,7 @@ ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp->i, struct dm_impl);
 
@@ -842,7 +843,7 @@ struct dm_impl dm_ps_impl = {
 };
 
 
-struct dm dm_ps = { DM_MAGIC, &dm_ps_impl };
+struct dm dm_ps = { DM_MAGIC, &dm_ps_impl, 0 };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_ps };

@@ -120,6 +120,9 @@ bview_init(struct bview *gvp)
     VSET(gvp->gv_view_scale.gos_line_color, 255, 255, 0);
     VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
 
+    gvp->gv_fps = 0;
+    gvp->gv_frametime = 1;
+
     gvp->gv_data_vZ = 0.0;
 
     /* FIXME: this causes the shaders.sh regression to fail */

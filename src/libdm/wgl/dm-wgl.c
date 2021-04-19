@@ -996,6 +996,7 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
 
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
     BU_ALLOC(dmp->i, struct dm_impl);
 
     *dmp->i = dm_wgl_impl; /* struct copy */
@@ -1250,7 +1251,7 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
     return dmp;
 }
 
-struct dm dm_wgl = { DM_MAGIC, &dm_wgl_impl };
+struct dm dm_wgl = { DM_MAGIC, &dm_wgl_impl, 0 };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_wgl };

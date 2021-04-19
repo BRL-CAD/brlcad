@@ -188,6 +188,7 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 
     BU_GET(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_GET(dmpi, struct dm_impl);
     *dmpi = *dm_swrast.i; /* struct copy */
@@ -555,7 +556,7 @@ struct dm_impl dm_swrast_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_swrast = { DM_MAGIC, &dm_swrast_impl };
+struct dm dm_swrast = { DM_MAGIC, &dm_swrast_impl, 0 };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_swrast };

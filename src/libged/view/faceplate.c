@@ -130,6 +130,50 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
 }
 
 int
+_fp_cmd_fps(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "faceplate [options] fps [0|1]";
+    const char *purpose_string = "Enable/disable frames-per-second";
+    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
+
+    if (!argc) {
+	if (gd->verbosity) {
+	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_center_dot.gos_draw,
+		    v->gv_center_dot.gos_line_color[0], v->gv_center_dot.gos_line_color[1],
+		    v->gv_center_dot.gos_line_color[2]);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_center_dot.gos_draw);
+	}
+	return GED_OK;
+    }
+
+    if (argc == 1) {
+	if (BU_STR_EQUAL("1", argv[0])) {
+	    v->gv_fps = 1;
+	    return GED_OK;
+	}
+	if (BU_STR_EQUAL("0", argv[0])) {
+	    v->gv_fps = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
+
+    return GED_OK;
+}
+
+int
 _fp_cmd_scale(void *ds, int argc, const char **argv)
 {
     const char *usage_string = "faceplate [options] scale [0|1] [color r/g/b]";
@@ -328,6 +372,7 @@ _fp_cmd_model_axes(void *ds, int argc, const char **argv)
 const struct bu_cmdtab _fp_cmds[] = {
     { "center_dot",      _fp_cmd_center_dot},
     //{ "grid",            _fp_cmd_grid},
+    { "fps",             _fp_cmd_fps},
     { "model_axes",      _fp_cmd_model_axes},
     { "params",          _fp_cmd_params},
     { "scale",           _fp_cmd_scale},

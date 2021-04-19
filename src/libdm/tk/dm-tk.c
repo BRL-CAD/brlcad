@@ -101,6 +101,7 @@ tk_open(void *vinterp, int argc, const char **argv)
 
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp_impl, struct dm_impl);
 
@@ -1208,7 +1209,7 @@ struct dm_impl dm_tk_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_tk = { DM_MAGIC, &dm_tk_impl };
+struct dm dm_tk = { DM_MAGIC, &dm_tk_impl, 0 };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_tk };

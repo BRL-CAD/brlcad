@@ -396,7 +396,8 @@ struct bview {
     struct bview_other_state    gv_center_dot;
     struct bview_other_state    gv_view_params;
     struct bview_other_state    gv_view_scale;
-
+    int                         gv_fps; // Display Frames-Per-Second metric
+    double                      gv_frametime;
 
     // Container for storing bview_scene_obj elements unique to this
     // view (labels, polygons, etc.)

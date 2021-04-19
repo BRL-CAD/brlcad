@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include "bu/time.h"
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "bview/defines.h"
@@ -375,6 +376,28 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 			v->gv_view_params.gos_text_color[2],
 			1, 1.0);
 	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
+	bu_vls_free(&vls);
+    }
+
+    /* Frames per second */
+    if (v->gv_fps) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	int width = dm_get_width((struct dm *)v->dmp);
+	int height = dm_get_height((struct dm *)v->dmp);
+	int64_t elapsed_time = bu_gettime() - ((struct dm *)v->dmp)->start_time;
+	/* Only use reasonable measurements */
+	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
+	    /* Smoothly transition to new speed */
+	    v->gv_frametime = 0.9 * v->gv_frametime + 0.1 * elapsed_time / 1000000LL;
+	}
+	bu_vls_printf(&vls, "FPS:%.2f", 1/v->gv_frametime);
+	// TODO - set up separate FPS color
+	(void)dm_set_fg((struct dm *)v->dmp,
+			v->gv_view_params.gos_text_color[0],
+			v->gv_view_params.gos_text_color[1],
+			v->gv_view_params.gos_text_color[2],
+			1, 1.0);
+	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_cstr(&vls), -1.0 + 10.0/(double)width, 1.0 - 40.0/(double)height, 10, 0);
 	bu_vls_free(&vls);
     }
 
