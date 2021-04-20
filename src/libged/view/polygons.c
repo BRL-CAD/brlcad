@@ -106,59 +106,6 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 }
 
 int
-_poly_cmd_update(void *bs, int argc, const char **argv)
-{
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> polygon update x y";
-    const char *purpose_string = "update shape constrained polygon types";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
-
-    argc--; argv++;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    struct bview_scene_obj *s = gd->s;
-    if (!s) {
-	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
-	return GED_ERROR;
-    }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
-	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
-	return GED_ERROR;
-    }
-
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
-    }
-    int x,y;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
-    }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
-    }
-
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type == BVIEW_POLYGON_GENERAL) {
-	return GED_OK;
-    }
-
-    s->s_v->gv_mouse_x = x;
-    s->s_v->gv_mouse_y = y;
-
-    (*s->s_update_callback)(s);
-
-    return GED_OK;
-}
-
-
-int
 _poly_cmd_select(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -546,7 +493,6 @@ _poly_cmd_viewsnap(void *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _poly_cmds[] = {
     { "create",          _poly_cmd_create},
-    { "update",          _poly_cmd_update},
     { "select",          _poly_cmd_select},
     { "move",            _poly_cmd_move},
     { "append",          _poly_cmd_append},
