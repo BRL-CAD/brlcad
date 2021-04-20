@@ -39,279 +39,112 @@
 #include "./ged_view.h"
 
 int
-_poly_cmd_circle(void *bs, int argc, const char **argv)
+_poly_cmd(void *bs, int argc, const char **argv, int type, const char *usage_string)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int x,y;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	return GED_ERROR;
+    }
+    if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "create")) {
+	if (s) {
+	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
+	    return GED_ERROR;
+	}
+	s = bview_create_polygon(gedp->ged_gvp, type , x, y);
+	if (!s) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
+	    return GED_ERROR;
+	}
+	bu_vls_init(&s->s_uuid);
+	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
+	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
+
+	// Stash view info
+	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+	bview_sync(&p->v, gedp->ged_gvp);
+
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "update")) {
+	if (!s) {
+	    bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+	    return GED_ERROR;
+	}
+
+	s->s_v->gv_mouse_x = x;
+	s->s_v->gv_mouse_y = y;
+
+	(*s->s_update_callback)(s);
+	return GED_OK;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
+    return GED_ERROR;
+}
+
+int
+_poly_cmd_circle(void *bs, int argc, const char **argv)
+{
     const char *usage_string = "view obj <objname> polygon circle [create|update] x y";
     const char *purpose_string = "create circular view polygon";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
-    argc--; argv++;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    struct bview_scene_obj *s = gd->s;
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
-    }
-    int x,y;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
-    }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "create")) {
-	if (s) {
-	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
-	    return GED_ERROR;
-	}
-	s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_CIRCLE, x, y);
-	if (!s) {
-	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
-	    return GED_ERROR;
-	}
-	bu_vls_init(&s->s_uuid);
-	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
-
-	// Stash view info
-	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-	bview_sync(&p->v, gedp->ged_gvp);
-
-	return GED_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "update")) {
-	if (!s) {
-	    bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
-	    return GED_ERROR;
-	}
-
-	s->s_v->gv_mouse_x = x;
-	s->s_v->gv_mouse_y = y;
-
-	(*s->s_update_callback)(s);
-	return GED_OK;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
-    return GED_ERROR;
+    return _poly_cmd(bs, argc, argv, BVIEW_POLYGON_CIRCLE, usage_string);
 }
 
 int
 _poly_cmd_ellipse(void *bs, int argc, const char **argv)
 {
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct ged *gedp = gd->gedp;
     const char *usage_string = "view obj <objname> polygon ellipse [create|update] x y";
     const char *purpose_string = "create circular view polygon";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
-    argc--; argv++;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    struct bview_scene_obj *s = gd->s;
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
-    }
-    int x,y;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
-    }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "create")) {
-	if (s) {
-	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
-	    return GED_ERROR;
-	}
-	s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_ELLIPSE, x, y);
-	if (!s) {
-	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
-	    return GED_ERROR;
-	}
-	bu_vls_init(&s->s_uuid);
-	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
-
-	// Stash view info
-	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-	bview_sync(&p->v, gedp->ged_gvp);
-
-	return GED_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "update")) {
-	if (!s) {
-	    bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
-	    return GED_ERROR;
-	}
-
-	s->s_v->gv_mouse_x = x;
-	s->s_v->gv_mouse_y = y;
-
-	(*s->s_update_callback)(s);
-	return GED_OK;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
-    return GED_ERROR;
+    return _poly_cmd(bs, argc, argv, BVIEW_POLYGON_ELLIPSE, usage_string);
 }
 
 int
 _poly_cmd_rectangle(void *bs, int argc, const char **argv)
 {
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct ged *gedp = gd->gedp;
     const char *usage_string = "view obj <objname> polygon rectangle [create|update] x y";
     const char *purpose_string = "create circular view polygon";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
-
-    argc--; argv++;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    struct bview_scene_obj *s = gd->s;
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
-    }
-    int x,y;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
-    }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "create")) {
-	if (s) {
-	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
-	    return GED_ERROR;
-	}
-	s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_RECTANGLE, x, y);
-	if (!s) {
-	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
-	    return GED_ERROR;
-	}
-	bu_vls_init(&s->s_uuid);
-	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
-
-	// Stash view info
-	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-	bview_sync(&p->v, gedp->ged_gvp);
-
-	return GED_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "update")) {
-	if (!s) {
-	    bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
-	    return GED_ERROR;
-	}
-
-	s->s_v->gv_mouse_x = x;
-	s->s_v->gv_mouse_y = y;
-
-	(*s->s_update_callback)(s);
-	return GED_OK;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
-    return GED_ERROR;
+    
+    return _poly_cmd(bs, argc, argv, BVIEW_POLYGON_RECTANGLE, usage_string);
 }
 
 int
 _poly_cmd_square(void *bs, int argc, const char **argv)
 {
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct ged *gedp = gd->gedp;
     const char *usage_string = "view obj <objname> polygon square [create|update] x y";
     const char *purpose_string = "create circular view polygon";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
-    argc--; argv++;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    struct bview_scene_obj *s = gd->s;
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
-    }
-    int x,y;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
-    }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "create")) {
-	if (s) {
-	    bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
-	    return GED_ERROR;
-	}
-	s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_SQUARE, x, y);
-	if (!s) {
-	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
-	    return GED_ERROR;
-	}
-	bu_vls_init(&s->s_uuid);
-	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
-
-	// Stash view info
-	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-	bview_sync(&p->v, gedp->ged_gvp);
-
-	return GED_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "update")) {
-	if (!s) {
-	    bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
-	    return GED_ERROR;
-	}
-
-	s->s_v->gv_mouse_x = x;
-	s->s_v->gv_mouse_y = y;
-
-	(*s->s_update_callback)(s);
-	return GED_OK;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
-    return GED_ERROR;
+    return _poly_cmd(bs, argc, argv, BVIEW_POLYGON_SQUARE, usage_string);
 }
 
 int

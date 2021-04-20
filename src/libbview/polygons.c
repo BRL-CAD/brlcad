@@ -162,11 +162,16 @@ bview_create_polygon(struct bview *v, int type, int x, int y)
     p->polygon.hole = (int *)bu_calloc(1, sizeof(int), "hole");
     p->polygon.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "contour");
     p->polygon.contour[0].num_points = pcnt;
+    p->polygon.contour[0].closed = 1;
     p->polygon.contour[0].point = (point_t *)bu_calloc(pcnt, sizeof(point_t), "point");
     p->polygon.hole[0] = 0;
     for (int i = 0; i < pcnt; i++) {
 	VMOVE(p->polygon.contour[0].point[i], m_pt);
     }
+
+    // Only the general polygon isn't closed out of the gate
+    if (type == BVIEW_POLYGON_GENERAL)
+	p->polygon.contour[0].closed = 0;
 
     /* Have new polygon, now update view object vlist */
     bview_polygon_vlist(s);
@@ -376,6 +381,7 @@ bview_update_polygon_circle(struct bview_scene_obj *s)
     gpp->hole = (int *)bu_calloc(1, sizeof(int), "hole");;
     gpp->contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "contour");
     gpp->contour[0].num_points = nsegs;
+    gpp->contour[0].closed = 1;
     gpp->contour[0].point = (point_t *)bu_calloc(nsegs, sizeof(point_t), "point");
 
     arc = 360.0 / nsegs;
@@ -462,6 +468,7 @@ bview_update_polygon_ellipse(struct bview_scene_obj *s)
     gpp->hole = (int *)bu_calloc(1, sizeof(int), "hole");;
     gpp->contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "contour");
     gpp->contour[0].num_points = nsegs;
+    gpp->contour[0].closed = 1;
     gpp->contour[0].point = (point_t *)bu_calloc(nsegs, sizeof(point_t), "point");
 
     arc = 360.0 / nsegs;
@@ -516,6 +523,7 @@ bview_update_polygon_rectangle(struct bview_scene_obj *s)
     MAT4X3PNT(p->polygon.contour[0].point[2], v->gv_view2model, v_pt);
     VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
     MAT4X3PNT(p->polygon.contour[0].point[3], v->gv_view2model, v_pt);
+    p->polygon.contour[0].closed = 1;
 
     /* Polygon updated, now update view object vlist */
     bview_polygon_vlist(s);
@@ -568,6 +576,7 @@ bview_update_polygon_square(struct bview_scene_obj *s)
     MAT4X3PNT(p->polygon.contour[0].point[2], v->gv_view2model, v_pt);
     VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
     MAT4X3PNT(p->polygon.contour[0].point[3], v->gv_view2model, v_pt);
+    p->polygon.contour[0].closed = 1;
 
     /* Polygon updated, now update view object vlist */
     bview_polygon_vlist(s);
