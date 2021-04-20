@@ -37,16 +37,21 @@
 #include "bview/polygons.h"
 
 void
-bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int close)
+bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c)
 {
-    if (!s || !c || !s->s_v || c->num_points < 2)
+    if (!s || !c || !s->s_v)
 	return;
+
+    if (c->num_points == 1) {
+	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_POINT_DRAW);
+	return;
+    }
 
     BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_LINE_MOVE);
     for (size_t i = 0; i < c->num_points; i++) {
 	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[i], BN_VLIST_LINE_DRAW);
     }
-    if (close)
+    if (c->closed)
 	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_LINE_DRAW);
 }
 
@@ -80,12 +85,12 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	    s_c->s_color[0] = s->s_color[0];
 	    s_c->s_color[1] = s->s_color[1];
 	    s_c->s_color[2] = s->s_color[2];
-	    bview_polygon_contour(s_c, &p->polygon.contour[i], 1);
+	    bview_polygon_contour(s_c, &p->polygon.contour[i]);
 	    bu_ptbl_ins(&s->children, (long *)s_c);
 	    continue;
 	}
 
-	bview_polygon_contour(s, &p->polygon.contour[i], !p->aflag);
+	bview_polygon_contour(s, &p->polygon.contour[i]);
     }
 }
 
@@ -155,6 +160,12 @@ bview_create_polygon(struct bview *v, int type, int x, int y)
 	VMOVE(p->polygon.contour[0].point[i], m_pt);
     }
 
+    /* Have new polygon, now update view object vlist */
+    bview_polygon_vlist(s);
+
+    /* updated */
+    s->s_changed++;
+
     return s;
 }
 
@@ -162,7 +173,7 @@ int
 bview_append_polygon_pt(struct bview_scene_obj *s)
 {
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
+    if (p->type != BVIEW_POLYGON_GENERAL)
 	return -1;
 
     if (p->curr_contour_i < 0)
@@ -190,10 +201,6 @@ bview_append_polygon_pt(struct bview_scene_obj *s)
     c->point = (point_t *)bu_realloc(c->point,c->num_points * sizeof(point_t), "realloc contour points");
     MAT4X3PNT(c->point[c->num_points-1], v->gv_view2model, v_pt);
 
-    if (c->num_points > 2) {
-	p->type = BVIEW_POLYGON_GENERAL;
-    }
-
     /* Have new polygon, now update view object vlist */
     bview_polygon_vlist(s);
 
@@ -207,7 +214,7 @@ int
 bview_select_polygon_pt(struct bview_scene_obj *s)
 {
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
+    if (p->type != BVIEW_POLYGON_GENERAL)
 	return -1;
 
     fastf_t fx, fy;
@@ -268,7 +275,7 @@ int
 bview_move_polygon_pt(struct bview_scene_obj *s)
 {
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
+    if (p->type != BVIEW_POLYGON_GENERAL)
 	return -1;
 
     // Need to have a point selected before we can move
@@ -379,6 +386,7 @@ bview_update_polygon_circle(struct bview_scene_obj *s)
 
     /* Updated */
     s->s_changed++;
+
     return 1;
 }
 
@@ -463,6 +471,7 @@ bview_update_polygon_ellipse(struct bview_scene_obj *s)
 
     /* Updated */
     s->s_changed++;
+
     return 1;
 }
 
@@ -499,6 +508,7 @@ bview_update_polygon_rectangle(struct bview_scene_obj *s)
 
     /* Updated */
     s->s_changed++;
+
     return 1;
 }
 
@@ -550,6 +560,7 @@ bview_update_polygon_square(struct bview_scene_obj *s)
 
     /* Updated */
     s->s_changed++;
+
     return 1;
 }
 
@@ -557,23 +568,26 @@ int
 bview_update_general_polygon(struct bview_scene_obj *s)
 {
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
+    if (p->type != BVIEW_POLYGON_GENERAL)
 	return 0;
 
     if (p->aflag) {
-	bview_append_polygon_pt(s);
-	return 0;
+	return bview_append_polygon_pt(s);
     }
 
     if (p->sflag) {
-	bview_select_polygon_pt(s);
-	return 0;
+	return bview_select_polygon_pt(s);
     }
 
     if (p->mflag) {
-	bview_move_polygon_pt(s);
-	return 0;
+	return bview_move_polygon_pt(s);
     }
+
+    /* Polygon updated, now update view object vlist */
+    bview_polygon_vlist(s);
+
+    /* Updated */
+    s->s_changed++;
 
     return 0;
 }
@@ -590,7 +604,7 @@ bview_update_polygon(struct bview_scene_obj *s)
 	return bview_update_polygon_rectangle(s);
     if (p->type == BVIEW_POLYGON_SQUARE)
 	return bview_update_polygon_square(s);
-    if (p->type != BVIEW_POLYGON_GENERAL && p->type != BVIEW_POLYGON_CONTOUR)
+    if (p->type != BVIEW_POLYGON_GENERAL)
 	return 0;
     return bview_update_general_polygon(s);
 }

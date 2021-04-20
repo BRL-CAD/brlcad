@@ -37,12 +37,11 @@
 __BEGIN_DECLS
 
 /* TODO - bg_polygon stores 3D points.  Is vZ used to set the point Z? */
-#define BVIEW_POLYGON_CONTOUR 0
-#define BVIEW_POLYGON_GENERAL 1
-#define BVIEW_POLYGON_CIRCLE 2
-#define BVIEW_POLYGON_ELLIPSE 3
-#define BVIEW_POLYGON_RECTANGLE 4
-#define BVIEW_POLYGON_SQUARE 5
+#define BVIEW_POLYGON_GENERAL 0
+#define BVIEW_POLYGON_CIRCLE 1
+#define BVIEW_POLYGON_ELLIPSE 2
+#define BVIEW_POLYGON_RECTANGLE 3
+#define BVIEW_POLYGON_SQUARE 4
 struct bview_polygon {
     int                 type;
     int                 cflag;             /* contour flag */
@@ -53,6 +52,12 @@ struct bview_polygon {
     long                curr_point_i;
     point_t             prev_point;
     fastf_t             vZ;
+
+    /* We stash the view state on creation, so we know how to return
+     * to it for future 2D alterations */
+    struct bview v;
+
+    /* Actual polygon info */
     struct bg_polygon   polygon;
 };
 

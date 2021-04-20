@@ -42,6 +42,7 @@ typedef enum { bg_Union, bg_Difference, bg_Intersection, bg_Xor } bg_clip_t;
 struct bg_poly_contour {
     size_t    num_points;
     point_t   *point;               /* in model coordinates */
+    int       closed;
 };
 
 struct bg_polygon {

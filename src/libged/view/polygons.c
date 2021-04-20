@@ -61,11 +61,11 @@ _poly_cmd_circle(void *bs, int argc, const char **argv)
     }
     int x,y;
     if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return GED_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -82,6 +82,10 @@ _poly_cmd_circle(void *bs, int argc, const char **argv)
 	bu_vls_init(&s->s_uuid);
 	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
 	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
+
+	// Stash view info
+	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+	bview_sync(&p->v, gedp->ged_gvp);
 
 	return GED_OK;
     }
@@ -126,11 +130,11 @@ _poly_cmd_ellipse(void *bs, int argc, const char **argv)
     }
     int x,y;
     if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return GED_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -147,6 +151,10 @@ _poly_cmd_ellipse(void *bs, int argc, const char **argv)
 	bu_vls_init(&s->s_uuid);
 	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
 	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
+
+	// Stash view info
+	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+	bview_sync(&p->v, gedp->ged_gvp);
 
 	return GED_OK;
     }
@@ -191,11 +199,11 @@ _poly_cmd_rectangle(void *bs, int argc, const char **argv)
     }
     int x,y;
     if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return GED_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -212,6 +220,10 @@ _poly_cmd_rectangle(void *bs, int argc, const char **argv)
 	bu_vls_init(&s->s_uuid);
 	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
 	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
+
+	// Stash view info
+	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+	bview_sync(&p->v, gedp->ged_gvp);
 
 	return GED_OK;
     }
@@ -256,11 +268,11 @@ _poly_cmd_square(void *bs, int argc, const char **argv)
     }
     int x,y;
     if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return GED_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[2], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -277,6 +289,10 @@ _poly_cmd_square(void *bs, int argc, const char **argv)
 	bu_vls_init(&s->s_uuid);
 	bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
 	bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
+
+	// Stash view info
+	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+	bview_sync(&p->v, gedp->ged_gvp);
 
 	return GED_OK;
     }
@@ -342,6 +358,10 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
     bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
 
+    // Stash view info
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    bview_sync(&p->v, gedp->ged_gvp);
+
     return GED_OK;
 }
 
@@ -382,11 +402,11 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
     }
     int x,y;
     if (bu_opt_int(NULL, 1, (const char **)&argv[ioffset], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset]);
 	return GED_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[ioffset+1], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset+1]);
 	return GED_ERROR;
     }
 
@@ -439,11 +459,11 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
     }
     int x,y;
     if (bu_opt_int(NULL, 1, (const char **)&argv[ioffset], (void *)&x) != 1 || x < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset]);
 	return GED_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[ioffset+1], (void *)&y) != 1 || y < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset+1]);
 	return GED_ERROR;
     }
 
@@ -527,6 +547,127 @@ _poly_cmd_clear(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+int
+_poly_cmd_close(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> polygon close [ind]";
+    const char *purpose_string = "contour -> polygon";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    int ind = -1;
+    if (argc == 2) {
+	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&ind) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	    return GED_ERROR;
+	}
+	if (ind < 0 || ind > 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	    return GED_ERROR;
+	}
+    }
+
+   if (ind < 0) {
+       // Close all contours
+       for (size_t i = 0; i < p->polygon.num_contours; i++) {
+	   p->polygon.contour[i].closed = 1;
+       }
+   } else {
+       p->polygon.contour[ind].closed = 1;
+   } 
+
+    p->sflag = 0;
+    p->mflag = 0;
+    p->aflag = 0;
+
+    bview_update_polygon(s);
+
+    return GED_OK;
+}
+
+int
+_poly_cmd_open(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> polygon open [ind]";
+    const char *purpose_string = "polygon -> contour";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    int ind = -1;
+    if (argc == 2) {
+	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&ind) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	    return GED_ERROR;
+	}
+	if (ind < 0 || ind > 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
+	    return GED_ERROR;
+	}
+    }
+
+   if (ind < 0) {
+       // Open all contours
+       for (size_t i = 0; i < p->polygon.num_contours; i++) {
+	   p->polygon.contour[i].closed = 0;
+       }
+   } else {
+       p->polygon.contour[ind].closed = 0;
+   } 
+
+    p->sflag = 0;
+    p->mflag = 0;
+    p->aflag = 0;
+
+    bview_update_polygon(s);
+
+    return GED_OK;
+}
+
+int
+_poly_cmd_viewsnap(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> polygon";
+    const char *purpose_string = "set view to match that used for polygon creation";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    // Set view info
+    bview_sync(gedp->ged_gvp, &p->v);
+    bview_update(gedp->ged_gvp);
+
+    return GED_OK;
+}
+
 const struct bu_cmdtab _poly_cmds[] = {
     { "circle",          _poly_cmd_circle},
     { "ellipse",         _poly_cmd_ellipse},
@@ -537,6 +678,9 @@ const struct bu_cmdtab _poly_cmds[] = {
     { "move",            _poly_cmd_move},
     { "append",          _poly_cmd_append},
     { "clear",           _poly_cmd_clear},
+    { "close",           _poly_cmd_close},
+    { "open",            _poly_cmd_open},
+    { "viewsnap",        _poly_cmd_viewsnap},
     { (char *)NULL,      NULL}
 };
 

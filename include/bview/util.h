@@ -39,6 +39,9 @@ __BEGIN_DECLS
 /* Set default values for a bview. */
 BVIEW_EXPORT extern void bview_init(struct bview *v);
 
+/* Copy the size and camera info (deliberately not a full copy of all view state) */
+BVIEW_EXPORT extern void bview_sync(struct bview *dest, struct bview *src);
+
 /* Sync values within the bview, perform callbacks if any are defined */
 BVIEW_EXPORT extern void bview_update(struct bview *gvp);
 
@@ -57,9 +60,6 @@ BVIEW_EXPORT extern unsigned long long bview_hash(struct bview *v);
 
 /* Return a hash of the contents of a display list.  Returns 0 on failure. */
 BVIEW_EXPORT extern unsigned long long bview_dl_hash(struct display_list *dl);
-
-/* Return -1 if sync fails, else 0 */
-//BVIEW_EXPORT extern int bview_sync(struct bview *dest, struct bview *src);
 
 /* Note that some of these are mutually exclusive as far as producing any
  * changes - a simultaneous constraint in X and Y, for example, results in a
