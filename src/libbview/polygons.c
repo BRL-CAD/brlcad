@@ -37,12 +37,12 @@
 #include "bview/polygons.h"
 
 void
-bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int curr_c, int curr_i)
+bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int curr_c, int curr_i, int do_pnt)
 {
     if (!s || !c || !s->s_v)
 	return;
 
-    if (c->num_points == 1) {
+    if (do_pnt) {
 	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_POINT_DRAW);
 	return;
     }
@@ -79,12 +79,26 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 
 
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    int type = p->type;
 
     BU_LIST_INIT(&(s->s_vlist));
 
     for (size_t i = 0; i < p->polygon.num_contours; ++i) {
 	/* Draw holes using segmented lines.  Since vlists don't have a style
 	 * command for that, we make child scene objects for the holes. */
+	int pcnt = p->polygon.contour[i].num_points;
+	int do_pnt = 0;
+	if (pcnt == 1)
+	    do_pnt = 1;
+	if (type == BVIEW_POLYGON_CIRCLE && pcnt == 3)
+	    do_pnt = 1;
+	if (type == BVIEW_POLYGON_ELLIPSE && pcnt == 4)
+	    do_pnt = 1;
+	if (type == BVIEW_POLYGON_RECTANGLE && pcnt == 4)
+	    do_pnt = 1;
+	if (type == BVIEW_POLYGON_SQUARE && pcnt == 4)
+	    do_pnt = 1;
+
 	if (p->polygon.hole[i]) {
 	    struct bview_scene_obj *s_c;
 	    BU_GET(s_c, struct bview_scene_obj);
@@ -93,12 +107,12 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	    s_c->s_color[0] = s->s_color[0];
 	    s_c->s_color[1] = s->s_color[1];
 	    s_c->s_color[2] = s->s_color[2];
-	    bview_polygon_contour(s_c, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i);
+	    bview_polygon_contour(s_c, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
 	    bu_ptbl_ins(&s->children, (long *)s_c);
 	    continue;
 	}
 
-	bview_polygon_contour(s, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i);
+	bview_polygon_contour(s, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
     }
 }
 
