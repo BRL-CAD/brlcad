@@ -646,6 +646,7 @@ int gl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     struct bn_vlist *tvp;
     register int first;
     register int mflag = 1;
+    GLfloat pointSize = 0.0;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLfloat originalPointSize, originalLineWidth;
     GLdouble m[16];
@@ -654,6 +655,8 @@ int gl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
+
+    pointSize = originalPointSize;
 
     if (dmp->i->dm_debugLevel == 1)
 	bu_log("gl_drawVList()\n");
@@ -786,6 +789,9 @@ int gl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 #if ENABLE_POINT_SMOOTH
 		    glEnable(GL_POINT_SMOOTH);
 #endif
+		    if (pointSize > 0.0) {
+			glPointSize(pointSize);
+		    }
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
@@ -799,7 +805,7 @@ int gl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		}
 		case BN_VLIST_POINT_SIZE:
 		    {
-		    GLfloat pointSize = (GLfloat)(*pt)[0];
+		    pointSize = (GLfloat)(*pt)[0];
 		    if (pointSize > 0.0) {
 			glPointSize(pointSize);
 		    }
