@@ -1,4 +1,4 @@
-/*                      D M G L S . C P P
+/*                      D M G L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -29,6 +29,7 @@
 
 extern "C" {
 #include "bu/parallel.h"
+#include "bu/ptbl.h"
 #include "bview/util.h"
 #include "dm.h"
 #include "ged.h"
@@ -152,7 +153,7 @@ void dmGL::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	ged_exec(gedp, argc, argv);
 	if (msg)
 	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
-	if (v->gv_cleared) {
+	if (v->gv_cleared && (!v->gv_scene_objs || !BU_PTBL_LEN(v->gv_scene_objs))) {
 	    const char *aav[2];
 	    aav[0] = "autoview";
 	    aav[1] = NULL;

@@ -541,6 +541,8 @@ _poly_cmd_clear(void *bs, int argc, const char **argv)
     p->sflag = 0;
     p->mflag = 0;
     p->aflag = 0;
+    p->curr_contour_i = 0;
+    p->curr_point_i = -1;
 
     bview_update_polygon(s);
 

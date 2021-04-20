@@ -162,7 +162,7 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	ged_exec(gedp, argc, argv);
 	if (msg)
 	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
-	if (v->gv_cleared) {
+	if (v->gv_cleared && (!v->gv_scene_objs || !BU_PTBL_LEN(v->gv_scene_objs))) {
 	    const char *aav[2];
 	    aav[0] = "autoview";
 	    aav[1] = NULL;

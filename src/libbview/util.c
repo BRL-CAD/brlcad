@@ -142,6 +142,8 @@ bview_init(struct bview *gvp)
     bview_update(gvp);
 }
 
+// TODO - investigate saveview/loadview logic, see if anything
+// makes sense to move here
 void
 bview_sync(struct bview *dest, struct bview *src)
 {

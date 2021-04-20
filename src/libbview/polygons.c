@@ -37,7 +37,7 @@
 #include "bview/polygons.h"
 
 void
-bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c)
+bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int curr_c, int curr_i)
 {
     if (!s || !c || !s->s_v)
 	return;
@@ -53,6 +53,14 @@ bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c)
     }
     if (c->closed)
 	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_LINE_DRAW);
+
+    if (curr_c && curr_i >= 0) {
+	point_t psize;
+	VSET(psize, 10, 0, 0);
+	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BN_VLIST_LINE_MOVE);
+	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, psize, BN_VLIST_POINT_SIZE);
+	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BN_VLIST_POINT_DRAW);
+    }
 }
 
 void
@@ -85,12 +93,12 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	    s_c->s_color[0] = s->s_color[0];
 	    s_c->s_color[1] = s->s_color[1];
 	    s_c->s_color[2] = s->s_color[2];
-	    bview_polygon_contour(s_c, &p->polygon.contour[i]);
+	    bview_polygon_contour(s_c, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i);
 	    bu_ptbl_ins(&s->children, (long *)s_c);
 	    continue;
 	}
 
-	bview_polygon_contour(s, &p->polygon.contour[i]);
+	bview_polygon_contour(s, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i);
     }
 }
 
@@ -267,6 +275,12 @@ bview_select_polygon_pt(struct bview_scene_obj *s)
 
     p->curr_point_i = closest_ind;
     p->curr_contour_i = closest_contour;
+
+    /* Have new polygon, now update view object vlist */
+    bview_polygon_vlist(s);
+
+    /* Updated */
+    s->s_changed++;
 
     return 0;
 }
