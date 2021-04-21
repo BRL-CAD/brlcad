@@ -1130,6 +1130,20 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
  */
 BN_EXPORT extern int bn_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts);
 
+/**
+ * @brief
+ * Find the closest U,V point on the plane p to 3d point pt.
+ */
+BN_EXPORT extern int bn_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt);
+
+/**
+ * @brief
+ * Return the 3D point on the plane at parametric coordinates u, v.
+ */
+BN_EXPORT extern int bn_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v);
+
+
+
 __END_DECLS
 
 #endif  /* BN_PLANE_H */
