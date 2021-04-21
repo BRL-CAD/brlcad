@@ -491,14 +491,90 @@ _poly_cmd_viewsnap(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+int
+_poly_cmd_import(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> polygon import <sketchname>";
+    const char *purpose_string = "import polygon from sketch";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    return GED_OK;
+}
+
+int
+_poly_cmd_export(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> polygon export <sketchname>";
+    const char *purpose_string = "export polygon to sketch";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    return GED_OK;
+}
+
+int
+_poly_cmd_fill(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <obj1> polygon fill 0|1";
+    const char *purpose_string = "use lines to visualize polygon interior";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    return GED_OK;
+}
+
+int
+_poly_cmd_csg(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <obj1> polygon csg <u|-|+> <obj2>";
+    const char *purpose_string = "replace obj1's polygon with the result of obj2 u/-/+ obj1";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    return GED_OK;
+}
+
 const struct bu_cmdtab _poly_cmds[] = {
-    { "create",          _poly_cmd_create},
-    { "select",          _poly_cmd_select},
-    { "move",            _poly_cmd_move},
     { "append",          _poly_cmd_append},
     { "clear",           _poly_cmd_clear},
     { "close",           _poly_cmd_close},
+    { "create",          _poly_cmd_create},
+    { "csg",             _poly_cmd_csg},
+    { "export",          _poly_cmd_export},
+    { "fill",            _poly_cmd_fill},
+    { "import",          _poly_cmd_import},
+    { "move",            _poly_cmd_move},
     { "open",            _poly_cmd_open},
+    { "select",          _poly_cmd_select},
     { "viewsnap",        _poly_cmd_viewsnap},
     { (char *)NULL,      NULL}
 };
@@ -544,6 +620,11 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
 
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
     (void)bu_opt_parse(NULL, acnt, argv, d);
+
+    if (help) {
+	_ged_cmd_help(gedp, usage_string, d);
+	return GED_HELP;
+    }
 
     return _ged_subcmd_exec(gedp, d, _poly_cmds, "view obj <objname>", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
 }
