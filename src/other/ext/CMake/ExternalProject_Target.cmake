@@ -52,6 +52,13 @@ file(COPY \"\${SRC}\" DESTINATION \"\${DDIR}\")
 # path.  This is key, because it allows the add_custom_command to be aware that
 # it needs to execute the correct copy command for a current configuration at build
 # time.
+#
+# NOTE - CMake 3.20 added support to add_custom_command's OUTPUT for a limited set
+# of generator expressions:
+# https://cmake.org/cmake/help/v3.20/command/add_custom_command.html
+# Would be a while before we can require that version, and would need testing on
+# multiple platforms, but in principle that would be the right way to avoid the
+# dependence on $<CONFIG> and CMAKE_CFG_INTDIR matching.
 function(fcfgcpy ftype outvar extproj root ofile dir tfile)
   string(REPLACE "${CMAKE_BINARY_DIR}/" "" rdir "${dir}")
   if (CMAKE_CONFIGURATION_TYPES)
