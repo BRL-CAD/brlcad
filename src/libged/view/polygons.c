@@ -492,6 +492,94 @@ _poly_cmd_viewsnap(void *bs, int argc, const char **argv)
 }
 
 int
+_poly_cmd_area(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> polygon area";
+    const char *purpose_string = "report polygon area";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+int
+_poly_cmd_overlap(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <obj1> polygon overlap <obj2>";
+    const char *purpose_string = "report if two polygons overlap";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
+	return GED_ERROR;
+    }
+
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    // Look up the polygon to check for overlaps
+    struct bview *v = gedp->ged_gvp;
+    struct bview_scene_obj *s2 = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
+        struct bview_scene_obj *stest = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+        if (BU_STR_EQUAL(argv[0], bu_vls_cstr(&stest->s_uuid))) {
+            s2 = stest;
+            break;
+        }
+    }
+    if (!s2) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", argv[0]);
+	return GED_ERROR;
+    }
+    if (!(s2->s_type_flags & BVIEW_VIEWONLY) || !(s2->s_type_flags & BVIEW_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "%s is not a view polygon.\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    // Have two polygons.  Check for overlaps, using the origin view of the
+    // obj1 polygon.
+    struct bview_polygon *polyA = (struct bview_polygon *)s->s_i_data;
+    struct bview_polygon *polyB = (struct bview_polygon *)s2->s_i_data;
+
+    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &gedp->ged_wdbp->wdb_tol, polyA->v.gv_scale);
+
+    bu_vls_printf(gedp->ged_result_str, "%d", ovlp);
+
+    return GED_OK;
+}
+
+int
 _poly_cmd_import(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -524,6 +612,15 @@ _poly_cmd_export(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
+	return GED_ERROR;
+    }
     return GED_OK;
 }
 
@@ -542,6 +639,15 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
+	return GED_ERROR;
+    }
     return GED_OK;
 }
 
@@ -560,11 +666,21 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
+	return GED_ERROR;
+    }
     return GED_OK;
 }
 
 const struct bu_cmdtab _poly_cmds[] = {
     { "append",          _poly_cmd_append},
+    { "area",            _poly_cmd_area},
     { "clear",           _poly_cmd_clear},
     { "close",           _poly_cmd_close},
     { "create",          _poly_cmd_create},
@@ -574,6 +690,7 @@ const struct bu_cmdtab _poly_cmds[] = {
     { "import",          _poly_cmd_import},
     { "move",            _poly_cmd_move},
     { "open",            _poly_cmd_open},
+    { "overlap",         _poly_cmd_overlap},
     { "select",          _poly_cmd_select},
     { "viewsnap",        _poly_cmd_viewsnap},
     { (char *)NULL,      NULL}
