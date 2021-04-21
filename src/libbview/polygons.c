@@ -94,10 +94,16 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	    do_pnt = 1;
 	if (type == BVIEW_POLYGON_ELLIPSE && pcnt == 4)
 	    do_pnt = 1;
-	if (type == BVIEW_POLYGON_RECTANGLE && pcnt == 4)
+	if (type == BVIEW_POLYGON_RECTANGLE) {
+	    if (NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[1]), SMALL_FASTF) &&
+		NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[2]), SMALL_FASTF))
 	    do_pnt = 1;
-	if (type == BVIEW_POLYGON_SQUARE && pcnt == 4)
+	}
+	if (type == BVIEW_POLYGON_SQUARE) {
+	    if (NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[1]), SMALL_FASTF) &&
+		NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[2]), SMALL_FASTF))
 	    do_pnt = 1;
+	}
 
 	if (p->polygon.hole[i]) {
 	    struct bview_scene_obj *s_c;
