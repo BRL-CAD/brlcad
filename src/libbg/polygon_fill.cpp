@@ -111,7 +111,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	c->num_points = 2;
 	c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
 	V2JOIN2(c->point[0], bcenter, fabs(line_spacing), per, ldiag*0.51, lseg);
-	V2JOIN2(c->point[0], bcenter, fabs(line_spacing), per, -ldiag*0.51, lseg);
+	V2JOIN2(c->point[1], bcenter, fabs(line_spacing), per, -ldiag*0.51, lseg);
     }
 
     // step 2
@@ -122,7 +122,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	c->num_points = 2;
 	c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
 	V2JOIN2(c->point[0], bcenter, fabs(line_spacing), per, ldiag*0.51, lseg);
-	V2JOIN2(c->point[0], bcenter, fabs(line_spacing), per, -ldiag*0.51, lseg);
+	V2JOIN2(c->point[1], bcenter, fabs(line_spacing), per, -ldiag*0.51, lseg);
     }
 
     /* Take the generated lines and apply a clipper intersect using the 2D
