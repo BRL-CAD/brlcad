@@ -515,6 +515,13 @@ _poly_cmd_area(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
+
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    double area = bg_find_polygon_area(&p->polygon, CLIPPER_MAX,
+	                               p->v.gv_model2view, p->v.gv_scale);
+
+    bu_vls_printf(gedp->ged_result_str, "%g", area * gedp->ged_wdbp->dbip->dbi_base2local);
     return GED_OK;
 }
 

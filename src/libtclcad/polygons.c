@@ -31,18 +31,13 @@
 
 #include "common.h"
 
+#include "bg/polygon.h"
 #include "bview.h"
 #include "tclcad.h"
 
 /* Private headers */
 #include "./tclcad_private.h"
 #include "./view/view.h"
-
-/*
- * Weird upper limit from clipper ---> sqrt(2^63 -1)/2
- * Probably should be sqrt(2^63 -1)
- */
-#define CLIPPER_MAX 1518500249
 
 static int
 to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct bview *gdvp, struct bg_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)

@@ -43,6 +43,12 @@ __BEGIN_DECLS
  * to get all the related logic in the same place so it is clearer what we do
  * and don't have, and make what we do have easier to reuse. */
 
+/*
+ * Weird upper limit from clipper ---> sqrt(2^63 -1)/2
+ * Probably should be sqrt(2^63 -1)
+ */
+#define CLIPPER_MAX 1518500249
+
 BG_EXPORT fastf_t
 bg_find_polygon_area(
 	struct bg_polygon *gpoly,
