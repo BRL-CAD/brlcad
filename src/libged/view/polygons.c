@@ -34,6 +34,7 @@
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "bview.h"
+#include "bg/polygon.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -928,7 +929,7 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <obj1> polygon fill [dirx diry delta]";
+    const char *usage_string = "view obj <obj1> polygon fill [dx dy spacing]";
     const char *purpose_string = "use lines to visualize polygon interior";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -968,7 +969,12 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     }
 
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    ged_polygon_fill_segments(gedp, &p->polygon, vdir, vdelta);
+    struct bg_polygon *fill = bg_polygon_fill_segments(&p->polygon, vdir, vdelta);
+
+    struct bview_scene_obj *s_c;
+    BU_GET(s_c, struct bview_scene_obj);
+    BU_LIST_INIT(&(s_c->s_vlist));
+    s_c->s_i_data = (void *)fill;
 
     return GED_OK;
 }

@@ -1119,6 +1119,13 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
 				     const plane_t planes[],
 				     const size_t pl_count);
 
+
+/**
+ * @brief
+ * Given an origin and a normal, create a plane_t.
+ */
+BN_EXPORT extern int bn_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
+
 /**
  * @brief
  * Calculates the best fit plane for a set of points

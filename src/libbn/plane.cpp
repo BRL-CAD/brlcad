@@ -2528,6 +2528,21 @@ bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
     return 1;
 }
 
+extern "C" int
+bn_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
+{
+    if (!p)
+	return -1;
+    vect_t unrml;
+    VMOVE(unrml, nrml);
+    VUNITIZE(nrml);
+    (*p)[0] = unrml[0];
+    (*p)[1] = unrml[1];
+    (*p)[2] = unrml[2];
+    (*p)[3] = -(unrml[0]*pt[0] + unrml[1]*pt[1] + unrml[2]*pt[2]);
+    return 0;
+}
+
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 // http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
 extern "C" int
