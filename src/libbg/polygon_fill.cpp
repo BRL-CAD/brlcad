@@ -97,11 +97,14 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 
     // Construct the first contour (center line) first as it is not mirrored
     struct bg_poly_contour *c = &poly_lines.contour[0];
+    vect2d_t p2d1, p2d2;
     poly_lines.hole[0] = 0;
     c->num_points = 2;
     c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
-    V2JOIN1(c->point[0], bcenter, ldiag*0.51, lseg);
-    V2JOIN1(c->point[1], bcenter, -ldiag*0.51, lseg);
+    V2JOIN1(p2d1, bcenter, ldiag*0.51, lseg);
+    V2JOIN1(p2d2, bcenter, -ldiag*0.51, lseg);
+    VSET(c->point[0], p2d1[0], p2d1[1], 0);
+    VSET(c->point[1], p2d2[0], p2d2[1], 0);
 
     // step 1
     V2SET(per, -line_slope[1], line_slope[0]);
@@ -110,8 +113,10 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	c = &poly_lines.contour[i];
 	c->num_points = 2;
 	c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
-	V2JOIN2(c->point[0], bcenter, fabs(line_spacing), per, ldiag*0.51, lseg);
-	V2JOIN2(c->point[1], bcenter, fabs(line_spacing), per, -ldiag*0.51, lseg);
+	V2JOIN2(p2d1, bcenter, fabs(line_spacing), per, ldiag*0.51, lseg);
+	V2JOIN2(p2d2, bcenter, fabs(line_spacing), per, -ldiag*0.51, lseg);
+	VSET(c->point[0], p2d1[0], p2d1[1], 0);
+	VSET(c->point[1], p2d2[0], p2d2[1], 0);
     }
 
     // step 2
@@ -121,8 +126,10 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	c = &poly_lines.contour[i+dir_step_cnt];
 	c->num_points = 2;
 	c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
-	V2JOIN2(c->point[0], bcenter, fabs(line_spacing), per, ldiag*0.51, lseg);
-	V2JOIN2(c->point[1], bcenter, fabs(line_spacing), per, -ldiag*0.51, lseg);
+	V2JOIN2(p2d1, bcenter, fabs(line_spacing), per, ldiag*0.51, lseg);
+	V2JOIN2(p2d2, bcenter, fabs(line_spacing), per, -ldiag*0.51, lseg);
+	VSET(c->point[0], p2d1[0], p2d1[1], 0);
+	VSET(c->point[1], p2d2[0], p2d2[1], 0);
     }
 
     /* Take the generated lines and apply a clipper intersect using the 2D
