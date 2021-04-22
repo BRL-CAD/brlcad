@@ -971,10 +971,13 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
     struct bg_polygon *fill = bg_polygon_fill_segments(&p->polygon, vdir, vdelta);
 
+    // TODO - add fill polygon as a child scene obj (it will most likely have
+    // different colors, so we can't just add it to the parent.)
     struct bview_scene_obj *s_c;
     BU_GET(s_c, struct bview_scene_obj);
     BU_LIST_INIT(&(s_c->s_vlist));
     s_c->s_i_data = (void *)fill;
+    // TODO - set type, etc.  Does the fill need to be a full bview_polygon?
 
     return GED_OK;
 }
@@ -1059,6 +1062,15 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     polyA->polygon.num_contours = cp->num_contours;
     polyA->polygon.hole = cp->hole;
     polyA->polygon.contour = cp->contour;
+    // TODO - need to figure out if clipper results are open/closed...  may
+    // need the experimental clipper to do that right (it returns open lines
+    // separately, IIRC.)  For now, assume everything's closed and manage the
+    // fill polygons separately...
+    for (size_t i = 0; i < polyA->polygon.num_contours; i++) {
+	polyA->polygon.contour[i].closed = 1;
+    }
+    // clipper results are always general polygons
+    polyA->type = BVIEW_POLYGON_GENERAL;
 
     BU_PUT(cp, struct bg_polygon);
     bview_update_polygon(s);
