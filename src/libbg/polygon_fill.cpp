@@ -33,9 +33,6 @@
 #include "bn/plane.h" /* bn_fit_plane */
 #include "bg/polygon.h"
 
-/* TODO - this approach to fill segments requires a newer version of clipper than
- * the one we currently have bundled... */
-
 /* Note - line_slope encodes the fill line slope as a vector.  Doing it as a
  * this way instead of a single number allows us to handle vertical lines (i.e.
  * infinite slope) cleanly */
@@ -106,6 +103,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     vect2d_t p2d1, p2d2;
     poly_lines.hole[0] = 0;
     c->num_points = 2;
+    c->open = 1;
     c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
     V2JOIN1(p2d1, bcenter, ldiag*0.51, lseg);
     V2JOIN1(p2d2, bcenter, -ldiag*0.51, lseg);
@@ -118,6 +116,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     for (int i = 1; i < dir_step_cnt+1; ++i) {
 	c = &poly_lines.contour[i];
 	c->num_points = 2;
+	c->open = 1;
 	c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
 	V2JOIN2(p2d1, bcenter, fabs(line_spacing) * i, per, ldiag*0.51, lseg);
 	V2JOIN2(p2d2, bcenter, fabs(line_spacing) * i, per, -ldiag*0.51, lseg);
@@ -131,18 +130,12 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     for (int i = 1+dir_step_cnt; i < step_cnt; ++i) {
 	c = &poly_lines.contour[i];
 	c->num_points = 2;
+	c->open = 1;
 	c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
 	V2JOIN2(p2d1, bcenter, fabs(line_spacing) * (i - dir_step_cnt), per, ldiag*0.51, lseg);
 	V2JOIN2(p2d2, bcenter, fabs(line_spacing) * (i - dir_step_cnt), per, -ldiag*0.51, lseg);
 	VSET(c->point[0], p2d1[0], p2d1[1], 0);
 	VSET(c->point[1], p2d2[0], p2d2[1], 0);
-    }
-
-    for (size_t i = 0; i < poly_lines.num_contours; i++) {
-	struct bu_vls fname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&fname, "fill_lines_%ld.plot3", i);
-	bg_polygon_plot(bu_vls_cstr(&fname), poly_lines.contour[i].point, poly_lines.contour[i].num_points, 0, 0, 255);
-	bu_vls_free(&fname);
     }
 
     /* Take the generated lines and apply a clipper intersect using the 2D
@@ -160,6 +153,13 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     bg_polygon_free(&poly_lines);
     bg_polygon_free(&poly_2d);
 
+    for (size_t i = 0; i < fpoly->num_contours; i++) {
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "fpoly%ld.plot3", i);
+	bg_polygon_plot(bu_vls_cstr(&fname), fpoly->contour[i].point, fpoly->contour[i].num_points, 0, 0, 255);
+	bu_vls_free(&fname);
+    }
+
     /* Use bn_plane_pt_at to produce the final 3d fill line polygon */
     struct bg_polygon *poly_fill;
     BU_GET(poly_fill, struct bg_polygon);
@@ -168,6 +168,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     poly_fill->contour = (struct bg_poly_contour *)bu_calloc(fpoly->num_contours, sizeof(struct bg_poly_contour), "f_contour");
     for (size_t i = 0; i < fpoly->num_contours; ++i) {
 	poly_fill->hole[i] = fpoly->hole[i];
+	poly_fill->contour[i].open = 1;
 	poly_fill->contour[i].num_points = fpoly->contour[i].num_points;
 	poly_fill->contour[i].point = (point_t *)bu_calloc(fpoly->contour[i].num_points, sizeof(point_t), "f_point");
 	for (size_t j = 0; j < fpoly->contour[i].num_points; ++j) {
