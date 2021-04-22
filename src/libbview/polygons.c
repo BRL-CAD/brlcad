@@ -113,6 +113,7 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	    s_c->s_color[0] = s->s_color[0];
 	    s_c->s_color[1] = s->s_color[1];
 	    s_c->s_color[2] = s->s_color[2];
+	    s_c->s_v = s->s_v;
 	    bview_polygon_contour(s_c, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
 	    bu_ptbl_ins(&s->children, (long *)s_c);
 	    continue;
@@ -131,6 +132,7 @@ bview_create_polygon(struct bview *v, int type, int x, int y)
     s->s_type_flags |= BVIEW_VIEWONLY;
     s->s_type_flags |= BVIEW_POLYGONS;
     BU_LIST_INIT(&(s->s_vlist));
+    BU_PTBL_INIT(&s->children);
 
     struct bview_polygon *p;
     BU_GET(p, struct bview_polygon);
