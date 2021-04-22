@@ -60,7 +60,9 @@
 #elif defined(__clang__)
 #  pragma clang diagnostic push /* start new diagnostic pragma */
 #  pragma clang diagnostic ignored "-Wfloat-equal"
-#  pragma clang diagnostic ignored "-Wdeprecated-copy"
+#  if (__clang_major__ >= 10)
+#     pragma clang diagnostic ignored "-Wdeprecated-copy"
+#  endif
 #endif
 
 namespace ClipperLib {
