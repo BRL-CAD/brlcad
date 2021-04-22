@@ -495,7 +495,7 @@ load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct b
 static struct bg_polygon *
 extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, matp_t mat, fastf_t vZ)
 {
-    size_t j, k, n;
+    size_t j, n;
     size_t num_contours = clipper_polytree.Total();
     struct bg_polygon *outp;
     mat_t idmat = MAT_INIT_IDN;
@@ -515,7 +515,7 @@ extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, matp_t mat, fastf_t 
 	point_t vpoint;
 	ClipperLib::Path &path = polynode->Contour;
 
-	outp->hole[n] = 0;
+	outp->hole[n] = polynode->IsHole();
 	outp->contour[n].num_points = path.size();
 	outp->contour[n].open = polynode->IsOpen();
 	outp->contour[n].point = (point_t *)bu_calloc(outp->contour[n].num_points, sizeof(point_t), "point");
@@ -532,31 +532,6 @@ extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, matp_t mat, fastf_t 
 	}
 
 	++n;
-	for (j = 0; j < polynode->Childs.size(); ++j) {
-	    ClipperLib::PolyNode *cnode = polynode->Childs[j];
-	    if (!cnode->IsHole()) {
-		bu_log("Clipper extraction error: unsupported child polynode type\n");
-		continue;
-	    }
-	    ClipperLib::Path &cpath = cnode->Contour;
-	    outp->hole[n] = 1;
-	    outp->contour[n].num_points = cpath.size();
-	    outp->contour[n].open = cnode->IsOpen();
-	    outp->contour[n].point = (point_t *)bu_calloc(outp->contour[n].num_points, sizeof(point_t), "point");
-	    for (k = 0; k < outp->contour[n].num_points; ++k) {
-		VSET(vpoint, (fastf_t)(cpath[k].X) * sf, (fastf_t)(cpath[k].Y) * sf, vZ);
-
-		/* Convert to model coordinates */
-		if (mat) {
-		    MAT4X3PNT(outp->contour[n].point[k], mat, vpoint);
-		} else {
-		    MAT4X3PNT(outp->contour[n].point[k], idmat, vpoint);
-		}
-	    }
-
-	    ++n;
-	}
-
 	polynode = polynode->GetNext();
     }
 
