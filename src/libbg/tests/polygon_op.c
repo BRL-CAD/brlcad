@@ -102,14 +102,14 @@ main(int argc, const char **argv)
     union_expected.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "c1 points");
     union_expected.contour[0].num_points = 8;
     union_expected.contour[0].point = (point_t *)bu_calloc(8, sizeof(point_t), "union_expected.contour[0] points");
-    VSET(union_expected.contour[0].point[0],  0,  5,  0);
-    VSET(union_expected.contour[0].point[1],  0,  3,  0);
-    VSET(union_expected.contour[0].point[2], -3,  3,  0);
-    VSET(union_expected.contour[0].point[3], -3, -3,  0);
-    VSET(union_expected.contour[0].point[4],  3, -3,  0);
-    VSET(union_expected.contour[0].point[5],  3,  0,  0);
-    VSET(union_expected.contour[0].point[6],  4,  0,  0);
-    VSET(union_expected.contour[0].point[7],  4,  5,  0);
+    VSET(union_expected.contour[0].point[0],  3,  0,  0);
+    VSET(union_expected.contour[0].point[1],  4,  0,  0);
+    VSET(union_expected.contour[0].point[2],  4,  5,  0);
+    VSET(union_expected.contour[0].point[3],  0,  5,  0);
+    VSET(union_expected.contour[0].point[4],  0,  3,  0);
+    VSET(union_expected.contour[0].point[5], -3,  3,  0);
+    VSET(union_expected.contour[0].point[6], -3, -3,  0);
+    VSET(union_expected.contour[0].point[7],  3, -3,  0);
 
     /* Calculate union and compare it with the expected result */
     struct bg_polygon *ur = bg_clip_polygon(bg_Union, &p1, &p2, 1.0, NULL, NULL);
@@ -125,12 +125,12 @@ main(int argc, const char **argv)
     difference_expected.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "c1 points");
     difference_expected.contour[0].num_points = 6;
     difference_expected.contour[0].point = (point_t *)bu_calloc(6, sizeof(point_t), "difference_expected.contour[0] points");
-    VSET(difference_expected.contour[0].point[0], -3,  3,  0);
-    VSET(difference_expected.contour[0].point[1], -3, -3,  0);
-    VSET(difference_expected.contour[0].point[2],  3, -3,  0);
-    VSET(difference_expected.contour[0].point[3],  3,  0,  0);
-    VSET(difference_expected.contour[0].point[4],  0,  0,  0);
-    VSET(difference_expected.contour[0].point[5],  0,  3,  0);
+    VSET(difference_expected.contour[0].point[0],  3,  0,  0);
+    VSET(difference_expected.contour[0].point[1],  0,  0,  0);
+    VSET(difference_expected.contour[0].point[2],  0,  3,  0);
+    VSET(difference_expected.contour[0].point[3], -3,  3,  0);
+    VSET(difference_expected.contour[0].point[4], -3, -3,  0);
+    VSET(difference_expected.contour[0].point[5],  3, -3,  0);
 
     /* Calculate difference and compare it with the expected result */
     struct bg_polygon *dr = bg_clip_polygon(bg_Difference, &p1, &p2, 1.0, NULL, NULL);
@@ -145,10 +145,10 @@ main(int argc, const char **argv)
     intersection_expected.contour = (struct bg_poly_contour *)bu_calloc(1, sizeof(struct bg_poly_contour), "c1 points");
     intersection_expected.contour[0].num_points = 4;
     intersection_expected.contour[0].point = (point_t *)bu_calloc(4, sizeof(point_t), "intersection_expected.contour[0] points");
-    VSET(intersection_expected.contour[0].point[0],  0,  3,  0);
-    VSET(intersection_expected.contour[0].point[1],  0,  0,  0);
-    VSET(intersection_expected.contour[0].point[2],  3,  0,  0);
-    VSET(intersection_expected.contour[0].point[3],  3,  3,  0);
+    VSET(intersection_expected.contour[0].point[0],  3,  3,  0);
+    VSET(intersection_expected.contour[0].point[1],  0,  3,  0);
+    VSET(intersection_expected.contour[0].point[2],  0,  0,  0);
+    VSET(intersection_expected.contour[0].point[3],  3,  0,  0);
 
     /* Calculate intersection and compare it with the expected result */
     struct bg_polygon *ir = bg_clip_polygon(bg_Intersection, &p1, &p2, 1.0, NULL, NULL);
