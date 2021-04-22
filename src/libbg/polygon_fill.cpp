@@ -150,9 +150,6 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	return NULL;
     }
 
-    bg_polygon_free(&poly_lines);
-    bg_polygon_free(&poly_2d);
-
     for (size_t i = 0; i < fpoly->num_contours; i++) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "fpoly%ld.plot3", i);
@@ -164,7 +161,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     struct bg_polygon *poly_fill;
     BU_GET(poly_fill, struct bg_polygon);
     poly_fill->num_contours = fpoly->num_contours;
-    poly_fill->hole = (int *)bu_calloc(fpoly->num_contours, sizeof(int), "hole");;
+    poly_fill->hole = (int *)bu_calloc(fpoly->num_contours, sizeof(int), "hole");
     poly_fill->contour = (struct bg_poly_contour *)bu_calloc(fpoly->num_contours, sizeof(struct bg_poly_contour), "f_contour");
     for (size_t i = 0; i < fpoly->num_contours; ++i) {
 	poly_fill->hole[i] = fpoly->hole[i];
@@ -172,12 +169,23 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	poly_fill->contour[i].num_points = fpoly->contour[i].num_points;
 	poly_fill->contour[i].point = (point_t *)bu_calloc(fpoly->contour[i].num_points, sizeof(point_t), "f_point");
 	for (size_t j = 0; j < fpoly->contour[i].num_points; ++j) {
-	    bn_plane_pt_at(&poly_fill->contour[i].point[j], pl, fpoly->contour[i].point[i][0], fpoly->contour[i].point[i][1]);
+	    bn_plane_pt_at(&poly_fill->contour[i].point[j], pl, fpoly->contour[i].point[j][0], fpoly->contour[i].point[j][1]);
 	}
     }
 
-    bg_polygon_free(poly_fill);
-    BU_PUT(poly_fill, struct bg_polygon);
+    for (size_t i = 0; i < poly_fill->num_contours; i++) {
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "poly3d%ld.plot3", i);
+	bg_polygon_plot(bu_vls_cstr(&fname), poly_fill->contour[i].point, poly_fill->contour[i].num_points, 0, 0, 255);
+	bu_vls_free(&fname);
+    }
+
+
+
+    bg_polygon_free(&poly_lines);
+    bg_polygon_free(&poly_2d);
+    bg_polygon_free(fpoly);
+    BU_PUT(fpoly, struct bg_polygon);
 
     return poly_fill;
 }

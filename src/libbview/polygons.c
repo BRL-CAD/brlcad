@@ -30,6 +30,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bn/mat.h"
+#include "bn/tol.h"
 #include "bn/vlist.h"
 #include "bg/polygon.h"
 #include "bview/defines.h"
@@ -60,6 +61,53 @@ bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int 
 	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, psize, BN_VLIST_POINT_SIZE);
 	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BN_VLIST_POINT_DRAW);
+    }
+}
+
+void
+bview_fill_polygon(struct bview_scene_obj *s)
+{
+    if (!s)
+	return;
+
+    // free old fill, if present
+    struct bview_scene_obj *fobj = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
+	    fobj = s_c;
+	    BN_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+	    break;
+	}
+    }
+
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+
+    if (p->fill_delta < BN_TOL_DIST) {
+	return;
+    }
+
+    struct bg_polygon *fill = bg_polygon_fill_segments(&p->polygon, p->fill_dir, p->fill_delta);
+    if (!fill)
+	return;
+
+    // Got fill, create lines
+    if (!fobj) {
+	BU_GET(fobj, struct bview_scene_obj);
+	BU_LIST_INIT(&(fobj->s_vlist));
+	bu_vls_init(&fobj->s_uuid);
+	bu_vls_sprintf(&fobj->s_uuid, "fill");
+	// TODO - support custom color
+	fobj->s_color[0] = 0;
+	fobj->s_color[1] = 0;
+	fobj->s_color[2] = 255;
+	fobj->s_line_width = 1;
+	fobj->s_soldash = 0;
+	fobj->s_v = s->s_v;
+	bu_ptbl_ins(&s->children, (long *)fobj);
+    }
+    for (size_t i = 0; i < fill->num_contours; i++) {
+	bview_polygon_contour(fobj, &fill->contour[i], 0, -1, 0);
     }
 }
 
@@ -109,6 +157,7 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	    struct bview_scene_obj *s_c;
 	    BU_GET(s_c, struct bview_scene_obj);
 	    BU_LIST_INIT(&(s_c->s_vlist));
+	    BU_VLS_INIT(&(s_c->s_uuid));
 	    s_c->s_soldash = 1;
 	    s_c->s_color[0] = s->s_color[0];
 	    s_c->s_color[1] = s->s_color[1];
@@ -121,6 +170,11 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 
 	bview_polygon_contour(s, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
     }
+
+    if (p->fill_flag) {
+	bview_fill_polygon(s);
+    }
+
 }
 
 struct bview_scene_obj *

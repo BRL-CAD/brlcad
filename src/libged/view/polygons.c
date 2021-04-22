@@ -949,6 +949,13 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
+    if (argc == 1 && BU_STR_EQUAL(argv[0], "0")) {
+	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+	p->fill_flag = 0;
+	bview_update_polygon(s);
+	return GED_OK;
+    }
+
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
 	return GED_ERROR;
@@ -969,15 +976,10 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     }
 
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    struct bg_polygon *fill = bg_polygon_fill_segments(&p->polygon, vdir, vdelta);
-
-    // TODO - add fill polygon as a child scene obj (it will most likely have
-    // different colors, so we can't just add it to the parent.)
-    struct bview_scene_obj *s_c;
-    BU_GET(s_c, struct bview_scene_obj);
-    BU_LIST_INIT(&(s_c->s_vlist));
-    s_c->s_i_data = (void *)fill;
-    // TODO - set type, etc.  Does the fill need to be a full bview_polygon?
+    p->fill_flag = 1;
+    V2MOVE(p->fill_dir, vdir);
+    p->fill_delta = vdelta;
+    bview_update_polygon(s);
 
     return GED_OK;
 }

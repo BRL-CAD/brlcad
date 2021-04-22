@@ -47,6 +47,9 @@ struct bview_polygon {
     int                 sflag;             /* point select flag */
     int                 mflag;             /* point move flag */
     int                 aflag;             /* point append flag */
+    int                 fill_flag;         /* set to shade the interior */
+    vect2d_t            fill_dir;
+    fastf_t             fill_delta;
     long                curr_contour_i;
     long                curr_point_i;
     point_t             prev_point;
