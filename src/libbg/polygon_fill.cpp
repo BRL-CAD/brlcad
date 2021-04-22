@@ -33,6 +33,9 @@
 #include "bn/plane.h" /* bn_fit_plane */
 #include "bg/polygon.h"
 
+/* TODO - this approach to fill segments requires a newer version of clipper than
+ * the one we currently have bundled... */
+
 /* Note - line_slope encodes the fill line slope as a vector.  Doing it as a
  * this way instead of a single number allows us to handle vertical lines (i.e.
  * infinite slope) cleanly */
