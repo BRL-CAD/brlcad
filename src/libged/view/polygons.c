@@ -384,10 +384,10 @@ _poly_cmd_close(void *bs, int argc, const char **argv)
    if (ind < 0) {
        // Close all contours
        for (size_t i = 0; i < p->polygon.num_contours; i++) {
-	   p->polygon.contour[i].closed = 1;
+	   p->polygon.contour[i].open = 0;
        }
    } else {
-       p->polygon.contour[ind].closed = 1;
+       p->polygon.contour[ind].open = 0;
    }
 
     p->sflag = 0;
@@ -445,10 +445,10 @@ _poly_cmd_open(void *bs, int argc, const char **argv)
    if (ind < 0) {
        // Open all contours
        for (size_t i = 0; i < p->polygon.num_contours; i++) {
-	   p->polygon.contour[i].closed = 0;
+	   p->polygon.contour[i].open = 1;
        }
    } else {
-       p->polygon.contour[ind].closed = 0;
+       p->polygon.contour[ind].open = 1;
    }
 
     p->sflag = 0;
@@ -734,7 +734,7 @@ end:
 	    ++npoints;
 
 	p->polygon.contour[j].num_points = npoints;
-	p->polygon.contour[j].closed = 1;
+	p->polygon.contour[j].open = 0;
 	p->polygon.contour[j].point = (point_t *)bu_calloc(npoints, sizeof(point_t), "gpc_point");
 
 	while (BU_LIST_NON_EMPTY(&curr_cnode->head)) {
@@ -1062,13 +1062,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     polyA->polygon.num_contours = cp->num_contours;
     polyA->polygon.hole = cp->hole;
     polyA->polygon.contour = cp->contour;
-    // TODO - need to figure out if clipper results are open/closed...  may
-    // need the experimental clipper to do that right (it returns open lines
-    // separately, IIRC.)  For now, assume everything's closed and manage the
-    // fill polygons separately...
-    for (size_t i = 0; i < polyA->polygon.num_contours; i++) {
-	polyA->polygon.contour[i].closed = 1;
-    }
+
     // clipper results are always general polygons
     polyA->type = BVIEW_POLYGON_GENERAL;
 

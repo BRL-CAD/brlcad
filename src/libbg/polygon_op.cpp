@@ -39,7 +39,7 @@ fastf_t
 bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
 {
     size_t j, k, n;
-    ClipperLib::Polygon poly;
+    ClipperLib::Path poly;
     fastf_t area = 0.0;
 
     if (NEAR_ZERO(sf, SMALL_FASTF))
@@ -445,7 +445,7 @@ static fastf_t
 load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg_polygon *gpoly, fastf_t sf, matp_t mat)
 {
     size_t j, k, n;
-    ClipperLib::Polygon curr_poly;
+    ClipperLib::Path curr_poly;
     fastf_t vZ = 1.0;
     mat_t idmat = MAT_INIT_IDN;
 
@@ -468,7 +468,7 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg
 	}
 
 	try {
-	    clipper.AddPolygon(curr_poly, ptype);
+	    clipper.AddPath(curr_poly, ptype, !gpoly->contour[j].open);
 	} catch (...) {
 	    bu_log("Exception thrown by clipper\n");
 	}
@@ -493,68 +493,77 @@ load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct b
  * Process/extract the clipper_polys into a struct bg_polygon.
  */
 static struct bg_polygon *
-extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t vZ)
+extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, matp_t mat, fastf_t vZ)
 {
-    size_t i, j, k, n;
-    size_t num_contours = 0;
-    struct bg_polygon *result_poly;
+    size_t j, k, n;
+    size_t num_contours = clipper_polytree.Total();
+    struct bg_polygon *outp;
     mat_t idmat = MAT_INIT_IDN;
 
-    /* Count up the number of contours. */
-    for (i = 0; i < clipper_polys.size(); ++i)
-	/* Add the outer and the holes */
-	num_contours += clipper_polys[i].holes.size() + 1;
-
-    BU_ALLOC(result_poly, struct bg_polygon);
-    result_poly->num_contours = num_contours;
+    BU_ALLOC(outp, struct bg_polygon);
+    outp->num_contours = num_contours;
 
     if (num_contours < 1)
-	return result_poly;
+	return outp;
 
-    result_poly->hole = (int *)bu_calloc(num_contours, sizeof(int), "hole");
-    result_poly->contour = (struct bg_poly_contour *)bu_calloc(num_contours, sizeof(struct bg_poly_contour), "contour");
+    outp->hole = (int *)bu_calloc(num_contours, sizeof(int), "hole");
+    outp->contour = (struct bg_poly_contour *)bu_calloc(num_contours, sizeof(struct bg_poly_contour), "contour");
 
+    ClipperLib::PolyNode *polynode = clipper_polytree.GetFirst();
     n = 0;
-    for (i = 0; i < clipper_polys.size(); ++i) {
+    while (polynode) {
 	point_t vpoint;
+	ClipperLib::Path &path = polynode->Contour;
 
-	result_poly->hole[n] = 0;
-	result_poly->contour[n].num_points = clipper_polys[i].outer.size();
-	result_poly->contour[n].point =
-	    (point_t *)bu_calloc(result_poly->contour[n].num_points,
-				 sizeof(point_t), "point");
+	outp->hole[n] = 0;
+	outp->contour[n].num_points = path.size();
+	outp->contour[n].open = polynode->IsOpen();
+	outp->contour[n].point = (point_t *)bu_calloc(outp->contour[n].num_points, sizeof(point_t), "point");
 
-	for (j = 0; j < result_poly->contour[n].num_points; ++j) {
-	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, vZ);
+	for (j = 0; j < outp->contour[n].num_points; ++j) {
+	    VSET(vpoint, (fastf_t)(path[j].X) * sf, (fastf_t)(path[j].Y) * sf, vZ);
 
 	    /* Convert to model coordinates */
 	    if (mat) {
-		MAT4X3PNT(result_poly->contour[n].point[j], mat, vpoint);
+		MAT4X3PNT(outp->contour[n].point[j], mat, vpoint);
 	    } else {
-		MAT4X3PNT(result_poly->contour[n].point[j], idmat, vpoint);
+		MAT4X3PNT(outp->contour[n].point[j], idmat, vpoint);
 	    }
 	}
 
 	++n;
-	for (j = 0; j < clipper_polys[i].holes.size(); ++j) {
-	    result_poly->hole[n] = 1;
-	    result_poly->contour[n].num_points = clipper_polys[i].holes[j].size();
-	    result_poly->contour[n].point =
-		(point_t *)bu_calloc(result_poly->contour[n].num_points,
-				     sizeof(point_t), "point");
-
-	    for (k = 0; k < result_poly->contour[n].num_points; ++k) {
-		VSET(vpoint, (fastf_t)(clipper_polys[i].holes[j][k].X) * sf, (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf, vZ);
+	for (j = 0; j < polynode->Childs.size(); ++j) {
+	    ClipperLib::PolyNode *cnode = polynode->Childs[j];
+	    if (!cnode->IsHole()) {
+		bu_log("Clipper extraction error: unsupported child polynode type\n");
+		continue;
+	    }
+	    ClipperLib::Path &cpath = cnode->Contour;
+	    outp->hole[n] = 1;
+	    outp->contour[n].num_points = cpath.size();
+	    outp->contour[n].open = cnode->IsOpen();
+	    outp->contour[n].point = (point_t *)bu_calloc(outp->contour[n].num_points, sizeof(point_t), "point");
+	    for (k = 0; k < outp->contour[n].num_points; ++k) {
+		VSET(vpoint, (fastf_t)(cpath[k].X) * sf, (fastf_t)(cpath[k].Y) * sf, vZ);
 
 		/* Convert to model coordinates */
-		MAT4X3PNT(result_poly->contour[n].point[k], mat, vpoint);
+		if (mat) {
+		    MAT4X3PNT(outp->contour[n].point[k], mat, vpoint);
+		} else {
+		    MAT4X3PNT(outp->contour[n].point[k], idmat, vpoint);
+		}
 	    }
 
 	    ++n;
 	}
+
+	polynode = polynode->GetNext();
     }
 
-    return result_poly;
+    // In case we had to skip any contours, finalize the num_contours value.
+    outp->num_contours = n;
+
+    return outp;
 }
 
 
@@ -564,7 +573,7 @@ bg_clip_polygon(bg_clip_t op, struct bg_polygon *subj, struct bg_polygon *clip, 
     fastf_t inv_sf;
     fastf_t vZ;
     ClipperLib::Clipper clipper;
-    ClipperLib::ExPolygons result_clipper_polys;
+    ClipperLib::PolyTree result_clipper_polys;
     ClipperLib::ClipType ctOp;
 
     /* need to scale the points up/down and then convert to/from long64 */
@@ -607,7 +616,7 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
     fastf_t inv_sf;
     fastf_t vZ;
     ClipperLib::Clipper clipper;
-    ClipperLib::ExPolygons result_clipper_polys;
+    ClipperLib::PolyTree result_clipper_polys;
     ClipperLib::ClipType ctOp;
 
     /* need to scale the points up/down and then convert to/from long64 */
