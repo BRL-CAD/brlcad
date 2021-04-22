@@ -53,16 +53,12 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push /* start new diagnostic pragma */
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
-#  pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #  if (__GNUC__ >= 8)
 #    pragma GCC diagnostic ignored "-Wclass-memaccess"
 #  endif
 #elif defined(__clang__)
 #  pragma clang diagnostic push /* start new diagnostic pragma */
 #  pragma clang diagnostic ignored "-Wfloat-equal"
-#  if (__clang_major__ >= 10)
-#     pragma clang diagnostic ignored "-Wdeprecated-copy"
-#  endif
 #endif
 
 namespace ClipperLib {
@@ -286,6 +282,13 @@ namespace ClipperLib {
 	    {
 		lo = (ulong64)val;
 		if (val < 0) hi = -1; else hi = 0;
+		return *this;
+	    }
+
+	    Int128& operator = (const Int128 &val)
+	    {
+		lo = val.lo;
+		hi = val.hi;
 		return *this;
 	    }
 
