@@ -135,10 +135,10 @@ namespace ClipperLib {
     enum JoinType {jtSquare, jtRound, jtMiter};
     enum EndType {etClosedPolygon, etClosedLine, etOpenButt, etOpenSquare, etOpenRound};
 
-    class BG_EXPORT PolyNode;
+    class PolyNode;
     typedef std::vector< PolyNode* > PolyNodes;
 
-    class BG_EXPORT PolyNode
+    class PolyNode
     {
 	public:
 	    PolyNode();
@@ -162,7 +162,7 @@ namespace ClipperLib {
 	    friend class ClipperOffset;
     };
 
-    class BG_EXPORT PolyTree: public PolyNode
+    class PolyTree: public PolyNode
     {
 	public:
 	    ~PolyTree(){ Clear(); };
@@ -175,29 +175,29 @@ namespace ClipperLib {
 	    friend class Clipper; //to access AllNodes
     };
 
-    BG_EXPORT bool Orientation(const Path &poly);
-    BG_EXPORT double Area(const Path &poly);
-    BG_EXPORT int PointInPolygon(const IntPoint &pt, const Path &path);
+    bool Orientation(const Path &poly);
+    double Area(const Path &poly);
+    int PointInPolygon(const IntPoint &pt, const Path &path);
 
-    BG_EXPORT void SimplifyPolygon(const Path &in_poly, Paths &out_polys, PolyFillType fillType = pftEvenOdd);
-    BG_EXPORT void SimplifyPolygons(const Paths &in_polys, Paths &out_polys, PolyFillType fillType = pftEvenOdd);
-    BG_EXPORT void SimplifyPolygons(Paths &polys, PolyFillType fillType = pftEvenOdd);
+    void SimplifyPolygon(const Path &in_poly, Paths &out_polys, PolyFillType fillType = pftEvenOdd);
+    void SimplifyPolygons(const Paths &in_polys, Paths &out_polys, PolyFillType fillType = pftEvenOdd);
+    void SimplifyPolygons(Paths &polys, PolyFillType fillType = pftEvenOdd);
 
-    BG_EXPORT void CleanPolygon(const Path& in_poly, Path& out_poly, double distance = 1.415);
-    BG_EXPORT void CleanPolygon(Path& poly, double distance = 1.415);
-    BG_EXPORT void CleanPolygons(const Paths& in_polys, Paths& out_polys, double distance = 1.415);
-    BG_EXPORT void CleanPolygons(Paths& polys, double distance = 1.415);
+    void CleanPolygon(const Path& in_poly, Path& out_poly, double distance = 1.415);
+    void CleanPolygon(Path& poly, double distance = 1.415);
+    void CleanPolygons(const Paths& in_polys, Paths& out_polys, double distance = 1.415);
+    void CleanPolygons(Paths& polys, double distance = 1.415);
 
-    BG_EXPORT void MinkowskiSum(const Path& pattern, const Path& path, Paths& solution, bool pathIsClosed);
-    BG_EXPORT void MinkowskiSum(const Path& pattern, const Paths& paths, Paths& solution, bool pathIsClosed);
-    BG_EXPORT void MinkowskiDiff(const Path& poly1, const Path& poly2, Paths& solution);
+    void MinkowskiSum(const Path& pattern, const Path& path, Paths& solution, bool pathIsClosed);
+    void MinkowskiSum(const Path& pattern, const Paths& paths, Paths& solution, bool pathIsClosed);
+    void MinkowskiDiff(const Path& poly1, const Path& poly2, Paths& solution);
 
-    BG_EXPORT void PolyTreeToPaths(const PolyTree& polytree, Paths& paths);
-    BG_EXPORT void ClosedPathsFromPolyTree(const PolyTree& polytree, Paths& paths);
-    BG_EXPORT void OpenPathsFromPolyTree(PolyTree& polytree, Paths& paths);
+    void PolyTreeToPaths(const PolyTree& polytree, Paths& paths);
+    void ClosedPathsFromPolyTree(const PolyTree& polytree, Paths& paths);
+    void OpenPathsFromPolyTree(PolyTree& polytree, Paths& paths);
 
-    BG_EXPORT void ReversePath(Path& p);
-    BG_EXPORT void ReversePaths(Paths& p);
+    void ReversePath(Path& p);
+    void ReversePaths(Paths& p);
 
     struct IntRect { cInt left; cInt top; cInt right; cInt bottom; };
 
@@ -222,7 +222,7 @@ namespace ClipperLib {
     //ClipperBase is the ancestor to the Clipper class. It should not be
     //instantiated directly. This class simply abstracts the conversion of sets of
     //polygon coordinates into edge objects that are stored in a LocalMinima list.
-    class BG_EXPORT ClipperBase
+    class ClipperBase
     {
 	public:
 	    ClipperBase();
@@ -265,7 +265,7 @@ namespace ClipperLib {
     };
     //------------------------------------------------------------------------------
 
-    class BG_EXPORT Clipper : public virtual ClipperBase
+    class Clipper : public virtual ClipperBase
     {
 	public:
 	    Clipper(int initOptions = 0);
@@ -362,7 +362,7 @@ namespace ClipperLib {
     };
     //------------------------------------------------------------------------------
 
-    class BG_EXPORT ClipperOffset
+    class ClipperOffset
     {
 	public:
 	    ClipperOffset(double miterLimit = 2.0, double roundPrecision = 0.25);
@@ -393,7 +393,7 @@ namespace ClipperLib {
     };
     //------------------------------------------------------------------------------
 
-    class BG_EXPORT clipperException : public std::exception
+    class clipperException : public std::exception
     {
 	public:
 	    clipperException(const char* description): m_descr(description) {}
