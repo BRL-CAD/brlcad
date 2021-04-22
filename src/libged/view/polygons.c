@@ -1003,6 +1003,66 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
+
+    if (argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    bg_clip_t op = bg_Union;
+    char c = argv[0][0];
+    switch (c) {
+	case 'u':
+	    op = bg_Union;
+	    break;
+	case '-':
+	    op = bg_Difference;
+	    break;
+	case '+':
+	    op = bg_Intersection;
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "Invalid boolean operator \"%s\"\n", argv[0]);
+	    break;
+    }
+
+    // Look up the polygon to check for overlaps
+    struct bview *v = gedp->ged_gvp;
+    struct bview_scene_obj *s2 = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
+        struct bview_scene_obj *stest = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+        if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_uuid))) {
+            s2 = stest;
+            break;
+        }
+    }
+    if (!s2) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", argv[0]);
+	return GED_ERROR;
+    }
+    if (!(s2->s_type_flags & BVIEW_VIEWONLY) || !(s2->s_type_flags & BVIEW_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "%s is not a view polygon.\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    // Have two polygons.  Check for overlaps, using the origin view of the
+    // obj1 polygon.
+    struct bview_polygon *polyA = (struct bview_polygon *)s->s_i_data;
+    struct bview_polygon *polyB = (struct bview_polygon *)s2->s_i_data;
+
+    struct bg_polygon *cp = bg_clip_polygon(op, &polyA->polygon, &polyB->polygon, CLIPPER_MAX, polyA->v.gv_model2view, polyA->v.gv_view2model);
+
+    if (!cp)
+	return GED_ERROR;
+
+    bg_polygon_free(&polyA->polygon);
+    polyA->polygon.num_contours = cp->num_contours;
+    polyA->polygon.hole = cp->hole;
+    polyA->polygon.contour = cp->contour;
+
+    BU_PUT(cp, struct bg_polygon);
+    bview_update_polygon(s);
+
     return GED_OK;
 }
 
