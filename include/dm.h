@@ -245,6 +245,7 @@ DM_EXPORT extern int dm_hud_end(struct dm *dmp);
 DM_EXPORT extern int dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye);
 DM_EXPORT extern int dm_loadpmatrix(struct dm *dmp, fastf_t *mat);
 DM_EXPORT extern int dm_draw_string_2d(struct dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect);
+DM_EXPORT extern int dm_string_bbox_2d(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect);
 DM_EXPORT extern int dm_draw_line_2d(struct dm *dmp, fastf_t x1, fastf_t y1_2d, fastf_t x2, fastf_t y2);
 DM_EXPORT extern int dm_draw_line_3d(struct dm *dmp, point_t pt1, point_t pt2);
 DM_EXPORT extern int dm_draw_lines_3d(struct dm *dmp, int npoints, point_t *points, int sflag);

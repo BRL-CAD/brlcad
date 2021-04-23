@@ -67,6 +67,7 @@ extern "C" {
 static struct dm *swrast_open(void *ctx, void *interp, int argc, const char **argv);
 static int swrast_close(struct dm *dmp);
 static int swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+static int swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 static int swrast_configureWin(struct dm *dmp, int force);
 static int swrast_makeCurrent(struct dm *dmp);
 
@@ -384,6 +385,58 @@ swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int U
     return BRLCAD_OK;
 }
 
+static int
+swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+{
+    struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    if (dmp->i->dm_debugLevel)
+	bu_log("qtgl_drawString2D()\n");
+
+    if (privars->fontNormal != FONS_INVALID) {
+
+	/* First, we set the position using glRasterPos2f like ogl does */
+	if (use_aspect)
+	    glRasterPos2f(x, y * dmp->i->dm_aspect);
+	else
+	    glRasterPos2f(x, y);
+
+	/* Next, we set up for fontstash */
+	fastf_t font_size = dm_get_fontsize(dmp);
+
+	// Fontstash does not work in OpenGL raster coordinates,
+	// so we need the view and the coordinates in window
+	// XY coordinates.
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
+	GLfloat pos[4];
+	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+	fastf_t coord_x = pos[0];
+	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
+
+	// Have info and OpenGL state, proceed
+	fonsSetFont(privars->fs, privars->fontNormal);
+	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
+
+	float bounds[4];
+	int width = fonsTextBounds(privars->fs, coord_x, coord_y, str, NULL, (float *)bounds);
+	bu_log("%s bounds: min(%f,%f) max(%f,%f)\n", str, bounds[0], bounds[1], bounds[2], bounds[3]);
+	bu_log("%s width %d\n", str, width);
+
+	// Done with text, put matrices back
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+
+	if (bmin)
+	    V2SET(*bmin, bounds[0], bounds[1]);
+	if (bmax)
+	    V2SET(*bmax, bounds[2], bounds[3]);
+    }
+    return BRLCAD_OK;
+}
+
 int
 swrast_openFb(struct dm *dmp)
 {
@@ -469,7 +522,7 @@ struct dm_impl dm_swrast_impl = {
     gl_loadMatrix,
     gl_loadPMatrix,
     swrast_drawString2D,
-    null_String2DBBox,
+    swrast_String2DBBox,
     gl_drawLine2D,
     gl_drawLine3D,
     gl_drawLines3D,
