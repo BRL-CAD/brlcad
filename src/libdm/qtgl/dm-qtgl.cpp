@@ -342,6 +342,14 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 	fonsSetColor(privars->fs, color);
 	fonsDrawText(privars->fs, coord_x, coord_y, str, NULL);
 
+#if 0
+	// Debugging - see what the bounds are:
+	float bounds[4];
+	int width = fonsTextBounds(privars->fs, coord_x, coord_y, str, NULL, (float *)bounds);
+	bu_log("%s bounds: min(%f,%f) max(%f,%f)\n", str, bounds[0], bounds[1], bounds[2], bounds[3]);
+	bu_log("%s width %d\n", str, width);
+#endif
+
 	// Done with text, put matrices back
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
