@@ -416,6 +416,102 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 }
 
 void
+dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
+{
+    struct bview_label *l = (struct bview_label *)s->s_i_data;
+
+    /* set color */
+    (void)dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
+
+    point_t vpoint;
+    MAT4X3PNT(vpoint, s->s_v->gv_model2view, l->p);
+    (void)dm_draw_string_2d(dmp, bu_vls_cstr(&l->label), vpoint[X], vpoint[Y], 0, 1);
+
+    if (!l->line_flag)
+	return;
+
+    // Want a line - figure out where to anchor it
+    vect2d_t bmin = V2INIT_ZERO;
+    vect2d_t bmax = V2INIT_ZERO;
+    if (dm_string_bbox_2d(dmp, &bmin, &bmax, "X", vpoint[X], vpoint[Y], 1, 1) != BRLCAD_OK) {
+	return;
+    }
+    bu_log("bmin: %f,%f, bmax: %f,%f\n", bmin[0], bmin[1], bmax[0], bmax[1]);
+
+    vect2d_t bmid;
+    bmid[0] = (bmax[0] - bmin[0]) * 0.5 + bmin[0];
+    bmid[1] = (bmax[1] - bmin[1]) * 0.5 + bmin[1];
+    bu_log("bmid: %f,%f\n", bmid[0], bmid[1]);
+
+    vect2d_t anchor;
+    if (l->anchor == BVIEW_ANCHOR_AUTO) {
+	fastf_t xvals[3];
+	fastf_t yvals[3];
+	xvals[0] = bmin[0];
+	xvals[1] = bmid[0];
+	xvals[2] = bmax[0];
+	yvals[0] = bmin[1];
+	yvals[1] = bmid[1];
+	yvals[2] = bmax[1];
+	fastf_t closest_dist = MAX_FASTF;
+	for (int i = 0; i < 3; i++) {
+	    for (int j = 0; j < 3; j++) {
+		point_t l3d, mpt;
+		VSET(l3d, xvals[i], yvals[j], 0);
+		MAT4X3PNT(mpt, s->s_v->gv_model2view, l3d);
+		double dsq = DIST_PNT_PNT_SQ(mpt, l->target);
+		if (dsq < closest_dist) {
+		    V2SET(anchor, xvals[i], yvals[j]);
+		    closest_dist = dsq;
+		}
+	    }
+	}
+    } else {
+	switch (l->anchor) {
+	    case BVIEW_ANCHOR_BOTTOM_LEFT:
+		V2SET(anchor, bmin[0], bmin[1]);
+		break;
+	    case BVIEW_ANCHOR_BOTTOM_CENTER:
+		V2SET(anchor, bmid[0], bmin[1]);
+		break;
+	    case BVIEW_ANCHOR_BOTTOM_RIGHT:
+		V2SET(anchor, bmax[0], bmin[1]);
+		break;
+	    case BVIEW_ANCHOR_MIDDLE_LEFT:
+		V2SET(anchor, bmin[0], bmid[1]);
+		break;
+	    case BVIEW_ANCHOR_MIDDLE_CENTER:
+		V2SET(anchor, bmid[0], bmid[1]);
+		break;
+	    case BVIEW_ANCHOR_MIDDLE_RIGHT:
+		V2SET(anchor, bmax[0], bmid[1]);
+		break;
+	    case BVIEW_ANCHOR_TOP_LEFT:
+		V2SET(anchor, bmin[0], bmax[1]);
+		break;
+	    case BVIEW_ANCHOR_TOP_CENTER:
+		V2SET(anchor, bmid[0], bmax[1]);
+		break;
+	    case BVIEW_ANCHOR_TOP_RIGHT:
+		V2SET(anchor, bmax[0], bmax[1]);
+		break;
+	    default:
+		bu_log("Unhandled anchor case: %d\n", l->anchor);
+		return;
+	}
+    }
+    point_t l3d, mpt;
+    VSET(l3d, anchor[0], anchor[1], 0);
+    MAT4X3PNT(mpt, s->s_v->gv_view2model, l3d);
+
+    if (l->arrow) {
+	dm_draw_arrow(dmp, mpt, l->target, s->s_arrow_tip_length, s->s_arrow_tip_width, 1.0);
+    } else {
+	dm_draw_line_3d(dmp, mpt, l->target);
+    }
+}
+
+void
 dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
 {
     /* set color */
@@ -495,6 +591,9 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	    // manually we'll have to come up with a syntax to specify child objects of
 	    // top level scene objects - we don't want these to be top level.
 	    dm_add_arrows(dmp, s);
+	    if (s_c->s_type_flags & BVIEW_LABELS) {
+		dm_draw_label(dmp, s);
+	    }
 	}
 	// Draw primary wireframe.  TODO - drawing children first may not
 	// always be the desired behavior - might need interior and exterior
@@ -503,6 +602,9 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	dm_set_line_attr(dmp, s->s_line_width, s->s_soldash);
 	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
 	dm_add_arrows(dmp, s);
+	if (s->s_type_flags & BVIEW_LABELS) {
+	    dm_draw_label(dmp, s);
+	}
     }
 
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */

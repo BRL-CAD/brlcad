@@ -78,12 +78,24 @@
 #  define DOWN 1
 #endif
 
-/* TODO - this needs to express most/all of the annotation data, since this is
- * probably ultimately how we will visualize them. */
+#define BVIEW_ANCHOR_AUTO          0
+#define BVIEW_ANCHOR_BOTTOM_LEFT   1
+#define BVIEW_ANCHOR_BOTTOM_CENTER 2
+#define BVIEW_ANCHOR_BOTTOM_RIGHT  3
+#define BVIEW_ANCHOR_MIDDLE_LEFT   4
+#define BVIEW_ANCHOR_MIDDLE_CENTER 5
+#define BVIEW_ANCHOR_MIDDLE_RIGHT  6
+#define BVIEW_ANCHOR_TOP_LEFT      7
+#define BVIEW_ANCHOR_TOP_CENTER    8
+#define BVIEW_ANCHOR_TOP_RIGHT     9
 struct bview_label {
-    int         size;
+    int           size;
     struct bu_vls label;
-    point_t     p;
+    point_t       p;         // 3D base of label text
+    int           line_flag; // If 1, draw a line from label anchor to target
+    point_t       target;
+    int           anchor;    // Either closest candidate to target (AUTO), or fixed
+    int           arrow;     // If 1, use an arrow indicating direction from label to target
 };
 
 /* Note that it is possible for a view object to be view-only (not

@@ -148,14 +148,6 @@ dm_draw_axes(struct dm		        *dmp,
 
 	/* draw the X label */
 	dm_draw_string_2d(dmp, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1);
-
-#if 0
-	vect2d_t bmin = V2INIT_ZERO;
-	vect2d_t bmax = V2INIT_ZERO;
-	if (dm_string_bbox_2d(dmp, &bmin, &bmax, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1) == BRLCAD_OK) {
-	    bu_log("bmin: %f,%f, bmax: %f,%f\n", bmin[0], bmin[1], bmax[0], bmax[1]);
-	}
-#endif
     } else
 	/* set axes color */
 	dm_set_fg(dmp, bnasp->axes_color[0], bnasp->axes_color[1], bnasp->axes_color[2], 1, 1.0);
