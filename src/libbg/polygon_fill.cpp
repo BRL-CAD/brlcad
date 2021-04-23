@@ -73,7 +73,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	}
     }
 
-    bg_polygon_plot("fill_mask.plot3", poly_2d.contour[0].point, poly_2d.contour[0].num_points, 255, 255, 0);
+    //bg_polygon_plot("fill_mask.plot3", poly_2d.contour[0].point, poly_2d.contour[0].num_points, 255, 255, 0);
 
     /* Generate lines with desired slope - enough to cover the bounding box with the
      * desired pattern.  Add these lines as non-closed contours into a bg_polygon.
@@ -151,12 +151,14 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	return NULL;
     }
 
+#if 0
     for (size_t i = 0; i < fpoly->num_contours; i++) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "fpoly%ld.plot3", i);
 	bg_polygon_plot(bu_vls_cstr(&fname), fpoly->contour[i].point, fpoly->contour[i].num_points, 0, 0, 255);
 	bu_vls_free(&fname);
     }
+#endif
 
     /* Use bn_plane_pt_at to produce the final 3d fill line polygon */
     struct bg_polygon *poly_fill;
@@ -174,14 +176,14 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	}
     }
 
+#if 0
     for (size_t i = 0; i < poly_fill->num_contours; i++) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "poly3d%ld.plot3", i);
 	bg_polygon_plot(bu_vls_cstr(&fname), poly_fill->contour[i].point, poly_fill->contour[i].num_points, 0, 0, 255);
 	bu_vls_free(&fname);
     }
-
-
+#endif
 
     bg_polygon_free(&poly_lines);
     bg_polygon_free(&poly_2d);
