@@ -446,7 +446,7 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
     bmid[1] = (bmax[1] - bmin[1]) * 0.5 + bmin[1];
     bu_log("bmid: %f,%f\n", bmid[0], bmid[1]);
 
-    vect2d_t anchor;
+    vect2d_t anchor = V2INIT_ZERO;
     if (l->anchor == BVIEW_ANCHOR_AUTO) {
 	fastf_t xvals[3];
 	fastf_t yvals[3];
