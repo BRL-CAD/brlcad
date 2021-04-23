@@ -89,6 +89,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     bcenter[1] = (b2d_max[1] - b2d_min[1]) * 0.5 + b2d_min[1];
     fastf_t ldiag = DIST_PNT2_PNT2(b2d_max, b2d_min);
     V2MOVE(lseg, line_slope);
+    lseg[0] = -1 * lseg[0]; // Looks like the projection flips this...
     V2UNITIZE(lseg);
     int dir_step_cnt = (int)(0.5*ldiag / fabs(line_spacing) + 1);
     int step_cnt = 2*dir_step_cnt - 1; // center line is not repeated
@@ -111,7 +112,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     VSET(c->point[1], p2d2[0], p2d2[1], 0);
 
     // step 1
-    V2SET(per, -line_slope[1], line_slope[0]);
+    V2SET(per, -lseg[1], lseg[0]);
     V2UNITIZE(per);
     for (int i = 1; i < dir_step_cnt+1; ++i) {
 	c = &poly_lines.contour[i];
@@ -125,7 +126,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     }
 
     // step 2
-    V2SET(per, line_slope[1], -line_slope[0]);
+    V2SET(per, lseg[1], -lseg[0]);
     V2UNITIZE(per);
     for (int i = 1+dir_step_cnt; i < step_cnt; ++i) {
 	c = &poly_lines.contour[i];

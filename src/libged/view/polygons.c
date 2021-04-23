@@ -966,11 +966,11 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return GED_ERROR;
     }
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&vdir[1]) != 1) {
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&vdir[1]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return GED_ERROR;
     }
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&vdelta) != 1) {
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&vdelta) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return GED_ERROR;
     }
