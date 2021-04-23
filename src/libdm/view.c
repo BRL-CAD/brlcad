@@ -484,10 +484,6 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
 	if (s->s_flag == DOWN)
 	    continue;
-	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
-	dm_set_line_attr(dmp, s->s_line_width, s->s_soldash);
-	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
-	dm_add_arrows(dmp, s);
 	// Draw any child objects
 	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
@@ -500,6 +496,13 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	    // top level scene objects - we don't want these to be top level.
 	    dm_add_arrows(dmp, s);
 	}
+	// Draw primary wireframe.  TODO - drawing children first may not
+	// always be the desired behavior - might need interior and exterior
+	// children tables to provide some control
+	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
+	dm_set_line_attr(dmp, s->s_line_width, s->s_soldash);
+	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
+	dm_add_arrows(dmp, s);
     }
 
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
