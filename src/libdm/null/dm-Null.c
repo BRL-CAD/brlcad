@@ -107,6 +107,11 @@ null_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSE
     return 0;
 }
 
+int
+null_String2DBBox(struct dm *UNUSED(dmp), vect2d_t *UNUSED(bmin), vect2d_t *UNUSED(bmax), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
+{
+    return 0;
+}
 
 int
 null_drawLine2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1), fastf_t UNUSED(x_2), fastf_t UNUSED(y_2))
@@ -331,6 +336,7 @@ struct dm_impl dm_null_impl = {
     null_loadMatrix,
     null_loadPMatrix,
     null_drawString2D,
+    null_String2DBBox,
     null_drawLine2D,
     null_drawLine3D,
     null_drawLines3D,

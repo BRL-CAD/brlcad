@@ -1122,6 +1122,7 @@ struct dm_impl dm_tk_impl = {
     tk_loadMatrix,
     null_loadPMatrix,
     tk_drawString2D,
+    null_String2DBBox,
     tk_drawLine2D,
     tk_drawLine3D,
     tk_drawLines3D,

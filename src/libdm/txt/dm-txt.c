@@ -128,6 +128,14 @@ txt_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED
 
 
 HIDDEN int
+txt_String2DBBox(struct dm *UNUSED(dmp), vect2d_t *UNUSED(bmin), vect2d_t *UNUSED(bmax), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
+{
+    bu_log("String2DBBox called\n");
+    return 0;
+}
+
+
+HIDDEN int
 txt_drawLine2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1), fastf_t UNUSED(x_2), fastf_t UNUSED(y_2))
 {
     bu_log("drawLine2D called\n");
@@ -383,6 +391,7 @@ struct dm_impl dm_txt_impl = {
     txt_loadMatrix,
     txt_loadPMatrix,
     txt_drawString2D,
+    txt_String2DBBox,
     txt_drawLine2D,
     txt_drawLine3D,
     txt_drawLines3D,

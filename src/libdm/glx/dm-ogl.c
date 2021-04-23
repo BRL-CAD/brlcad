@@ -1433,6 +1433,7 @@ struct dm_impl dm_ogl_impl = {
     gl_loadMatrix,
     gl_loadPMatrix,
     ogl_drawString2D,
+    null_String2DBBox,
     gl_drawLine2D,
     gl_drawLine3D,
     gl_drawLines3D,

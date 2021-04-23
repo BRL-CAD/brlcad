@@ -686,6 +686,7 @@ struct dm_impl dm_plot_impl = {
     plot_loadMatrix,
     null_loadPMatrix,
     plot_drawString2D,
+    null_String2DBBox,
     plot_drawLine2D,
     plot_drawLine3D,
     plot_drawLines3D,

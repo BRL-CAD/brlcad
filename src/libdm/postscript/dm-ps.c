@@ -755,6 +755,7 @@ struct dm_impl dm_ps_impl = {
     ps_loadMatrix,
     null_loadPMatrix,
     ps_drawString2D,
+    null_String2DBBox,
     ps_drawLine2D,
     ps_drawLine3D,
     ps_drawLines3D,

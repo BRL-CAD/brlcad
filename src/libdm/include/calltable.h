@@ -68,6 +68,7 @@ struct dm_impl {
     int (*dm_loadMatrix)(struct dm *dmp, fastf_t *mat, int which_eye);
     int (*dm_loadPMatrix)(struct dm *dmp, fastf_t *mat);
     int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
+    int (*dm_String2DBBox)(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int size, int use_aspect); /**< @brief Returns screen X,Y coordinates */
     int (*dm_drawLine2D)(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);	/**< @brief formerly dmr_2d_line */
     int (*dm_drawLine3D)(struct dm *dmp, point_t pt1, point_t pt2);
     int (*dm_drawLines3D)(struct dm *dmp, int npoints, point_t *points, int sflag);
