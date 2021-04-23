@@ -437,9 +437,11 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
     // Want a line - figure out where to anchor it
     vect2d_t bmin = V2INIT_ZERO;
     vect2d_t bmax = V2INIT_ZERO;
+    (void)dm_hud_begin(dmp);
     if (dm_string_bbox_2d(dmp, &bmin, &bmax, "X", vpoint[X], vpoint[Y], 1, 1) != BRLCAD_OK) {
 	return;
     }
+    (void)dm_hud_end(dmp);
     bu_log("bmin: %f,%f, bmax: %f,%f\n", bmin[0], bmin[1], bmax[0], bmax[1]);
 
     vect2d_t bmid;
