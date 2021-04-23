@@ -193,6 +193,10 @@ bview_create_polygon(struct bview *v, int type, int x, int y)
     p->type = type;
     p->curr_contour_i = -1;
     p->curr_point_i = -1;
+
+    // Save the current view for later processing
+    bview_sync(&p->v, s->s_v);
+
     s->s_line_width = 1;
     s->s_color[0] = 255;
     s->s_color[1] = 255;
@@ -288,7 +292,8 @@ bview_append_polygon_pt(struct bview_scene_obj *s)
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     c->num_points++;
     c->point = (point_t *)bu_realloc(c->point,c->num_points * sizeof(point_t), "realloc contour points");
-    MAT4X3PNT(c->point[c->num_points-1], v->gv_view2model, v_pt);
+    // Use the polygon's view context for actually adding the point
+    MAT4X3PNT(c->point[c->num_points-1], p->v.gv_view2model, v_pt);
 
     /* Have new polygon, now update view object vlist */
     bview_polygon_vlist(s);
@@ -393,7 +398,8 @@ bview_move_polygon_pt(struct bview_scene_obj *s)
 
     point_t v_pt, m_pt;
     VSET(v_pt, fx, fy, v->gv_data_vZ);
-    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
+    // Use the polygon's view context for actually moving the point
+    MAT4X3PNT(m_pt, p->v.gv_view2model, v_pt);
 
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     VMOVE(c->point[p->curr_point_i], m_pt);
@@ -467,7 +473,8 @@ bview_update_polygon_circle(struct bview_scene_obj *s)
 	curr_fx = cos(ang*DEG2RAD) * r + p->prev_point[X];
 	curr_fy = sin(ang*DEG2RAD) * r + p->prev_point[Y];
 	VSET(v_pt, curr_fx, curr_fy, v->gv_data_vZ);
-	MAT4X3PNT(gpp->contour[0].point[n], v->gv_view2model, v_pt);
+	// Use the polygon's view context for actually adding the points
+	MAT4X3PNT(gpp->contour[0].point[n], p->v.gv_view2model, v_pt);
     }
 
     bg_polygon_free(&p->polygon);
@@ -553,7 +560,8 @@ bview_update_polygon_ellipse(struct bview_scene_obj *s)
 	fastf_t sina = sin(n * arc * DEG2RAD);
 
 	VJOIN2(ellout, p->prev_point, cosa, A, sina, B);
-	MAT4X3PNT(gpp->contour[0].point[n], v->gv_view2model, ellout);
+	// Use the polygon's view context for actually adding the points
+	MAT4X3PNT(gpp->contour[0].point[n], p->v.gv_view2model, ellout);
     }
 
     bg_polygon_free(&p->polygon);
@@ -591,14 +599,15 @@ bview_update_polygon_rectangle(struct bview_scene_obj *s)
 	bview_snap_grid_2d(v, &fx, &fy);
     }
 
+    // Use the polygon's view context for actually adjusting the points
     point_t v_pt;
-    MAT4X3PNT(p->polygon.contour[0].point[0], v->gv_view2model, p->prev_point);
+    MAT4X3PNT(p->polygon.contour[0].point[0], p->v.gv_view2model, p->prev_point);
     VSET(v_pt, p->prev_point[X], fy, v->gv_data_vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[1], v->gv_view2model, v_pt);
+    MAT4X3PNT(p->polygon.contour[0].point[1], p->v.gv_view2model, v_pt);
     VSET(v_pt, fx, fy, v->gv_data_vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[2], v->gv_view2model, v_pt);
+    MAT4X3PNT(p->polygon.contour[0].point[2], p->v.gv_view2model, v_pt);
     VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[3], v->gv_view2model, v_pt);
+    MAT4X3PNT(p->polygon.contour[0].point[3], p->v.gv_view2model, v_pt);
     p->polygon.contour[0].open = 0;
 
     /* Polygon updated, now update view object vlist */
@@ -617,6 +626,7 @@ bview_update_polygon_square(struct bview_scene_obj *s)
 
     fastf_t fx, fy;
 
+     // Use the polygon's view context
     struct bview *v = s->s_v;
     if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
@@ -644,14 +654,15 @@ bview_update_polygon_square(struct bview_scene_obj *s)
 	    fx = p->prev_point[X] + fabs(dy);
     }
 
+    // Use the polygon's view context for actually adjusting the points
     point_t v_pt;
-    MAT4X3PNT(p->polygon.contour[0].point[0], v->gv_view2model, p->prev_point);
+    MAT4X3PNT(p->polygon.contour[0].point[0], p->v.gv_view2model, p->prev_point);
     VSET(v_pt, p->prev_point[X], fy, v->gv_data_vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[1], v->gv_view2model, v_pt);
+    MAT4X3PNT(p->polygon.contour[0].point[1], p->v.gv_view2model, v_pt);
     VSET(v_pt, fx, fy, v->gv_data_vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[2], v->gv_view2model, v_pt);
+    MAT4X3PNT(p->polygon.contour[0].point[2], p->v.gv_view2model, v_pt);
     VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[3], v->gv_view2model, v_pt);
+    MAT4X3PNT(p->polygon.contour[0].point[3], p->v.gv_view2model, v_pt);
     p->polygon.contour[0].open = 0;
 
     /* Polygon updated, now update view object vlist */

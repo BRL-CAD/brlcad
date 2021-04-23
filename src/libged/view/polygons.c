@@ -100,10 +100,6 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
     bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
 
-    // Stash view info
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    bview_sync(&p->v, gedp->ged_gvp);
-
     return GED_OK;
 }
 
@@ -488,6 +484,40 @@ _poly_cmd_viewsnap(void *bs, int argc, const char **argv)
     // Set view info
     struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
     bview_sync(gedp->ged_gvp, &p->v);
+    bview_update(gedp->ged_gvp);
+
+    return GED_OK;
+}
+
+int
+_poly_cmd_to_curr_view(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> polygon";
+    const char *purpose_string = "set view to match that used for polygon creation";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
+	return GED_ERROR;
+    }
+
+    // Set view info
+    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    bview_sync(&p->v, gedp->ged_gvp);
+    bview_update_polygon(s);
     bview_update(gedp->ged_gvp);
 
     return GED_OK;
@@ -1088,6 +1118,7 @@ const struct bu_cmdtab _poly_cmds[] = {
     { "open",            _poly_cmd_open},
     { "overlap",         _poly_cmd_overlap},
     { "select",          _poly_cmd_select},
+    { "to_curr_view",    _poly_cmd_to_curr_view},
     { "viewsnap",        _poly_cmd_viewsnap},
     { (char *)NULL,      NULL}
 };
