@@ -236,6 +236,7 @@ const struct bu_cmdtab _obj_cmds[] = {
     { "update",     _objs_cmd_update},
     { "color",      _objs_cmd_color},
     { "arrow",      _objs_cmd_arrow},
+    { "label",      _view_cmd_labels},
     { "line",       _view_cmd_lines},
     { "polygon",    _view_cmd_polygons},
     { (char *)NULL,      NULL}
