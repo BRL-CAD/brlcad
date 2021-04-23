@@ -39,6 +39,9 @@
 	# https://stackoverflow.com/questions/1838873/visualizing-branch-topology-in-git
 	topo = log --graph --all --oneline --simplify-by-decoration
 
+	# Show the diff between a sha1 and its immediate parent
+	pdiff = !"f() { git diff $@ $@^1 ;};f"
+
 	# churn: show log of files that have many changes
 	#
 	#   * Written by (Corey Haines)[http://coreyhaines.com/]
