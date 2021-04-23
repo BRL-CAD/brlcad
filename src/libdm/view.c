@@ -24,6 +24,7 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "bview/defines.h"
+#include "bview/util.h"
 #include "dm.h"
 
 void
@@ -460,8 +461,11 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
 	for (int i = 0; i < 3; i++) {
 	    for (int j = 0; j < 3; j++) {
 		point_t l3d, mpt;
-		VSET(l3d, xvals[i], yvals[j], 0);
-		MAT4X3PNT(mpt, s->s_v->gv_model2view, l3d);
+		if (bview_screen_to_view(s->s_v, &l3d[0], &l3d[1], (int)xvals[i], (int)yvals[j]) < 0) {
+		    return;
+		}
+		l3d[2] = 0;
+		MAT4X3PNT(mpt, s->s_v->gv_view2model, l3d);
 		double dsq = DIST_PNT_PNT_SQ(mpt, l->target);
 		if (dsq < closest_dist) {
 		    V2SET(anchor, xvals[i], yvals[j]);
@@ -504,7 +508,7 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
 	}
     }
     point_t l3d, mpt;
-    VSET(l3d, anchor[0], anchor[1], 0);
+    bview_screen_to_view(s->s_v, &l3d[0], &l3d[1], (int)anchor[0], (int)anchor[1]);
     MAT4X3PNT(mpt, s->s_v->gv_view2model, l3d);
 
     if (l->arrow) {

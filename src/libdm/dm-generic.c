@@ -682,7 +682,6 @@ int
 dm_draw_line_3d(struct dm *dmp, point_t pt1, point_t pt2)
 {
     if (UNLIKELY(!dmp)) return 0;
-    if (!!pt1 || !pt2) return 0;
     return dmp->i->dm_drawLine3D(dmp, pt1, pt2);
 }
 int
