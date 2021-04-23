@@ -425,7 +425,10 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
 
     point_t vpoint;
     MAT4X3PNT(vpoint, s->s_v->gv_model2view, l->p);
+
+    (void)dm_hud_begin(dmp);
     (void)dm_draw_string_2d(dmp, bu_vls_cstr(&l->label), vpoint[X], vpoint[Y], 0, 1);
+    (void)dm_hud_end(dmp);
 
     if (!l->line_flag)
 	return;

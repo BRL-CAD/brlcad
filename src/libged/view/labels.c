@@ -64,21 +64,27 @@ _label_cmd_create(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
     point_t p;
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&(p[0])) != 1) {
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&(p[0])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return GED_ERROR;
     }
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&(p[1])) != 1) {
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&(p[1])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return GED_ERROR;
     }
 
     if (argc == 4 || argc == 7) {
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&(p[2])) != 1) {
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(p[2])) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
 	    return GED_ERROR;
 	}
     } else {
+	fastf_t fx, fy;
+	if (bview_screen_to_view(gedp->ged_gvp, &fx, &fy, (int)p[0], (int)p[1]) < 0) {
+	    return GED_ERROR;
+	}
+	p[0] = fx;
+	p[1] = fy;
 	p[2] = 0;
 	point_t tp;
 	VMOVE(tp, p);
@@ -119,9 +125,12 @@ _label_cmd_create(void *bs, int argc, const char **argv)
     s->s_v = gedp->ged_gvp;
     BU_LIST_INIT(&(s->s_vlist));
     BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BN_VLIST_LINE_MOVE);
+    VSET(s->s_color, 255, 255, 0);
 
     struct bview_label *l;
     BU_GET(l, struct bview_label);
+    BU_VLS_INIT(&l->label);
+    bu_vls_sprintf(&l->label, "%s", argv[0]);
     VMOVE(l->p, p);
     if (argc == 6 || argc == 7) {
 	VMOVE(l->target, target);
