@@ -1,0 +1,14 @@
+Release 8 notes:
+
+Idea:  For every primitive written out to a .g database, include as a standard
+component a version id so (for example) we can have multiple different versions
+of brep data storage, and have the libg I/O system be able to handle it (or
+skip it) cleanly.  db_upgrade would take an older .g and assign version 1 to
+all existing primitives writing out the new version.  A downgrade would either
+down-convert (if possible) or skip and report when version 1 isn't an option.
+This would make .g files backwards incompatible since the on-disk serialization
+would change for every object, but with versioning it should (hopefully) be the
+last time we would need to do that.
+
+Idea:  Reorder the ad-hoc list of librt primitive ids to be grouped by
+mathematical surface order.  Minor, but would make that code a bit cleaner.

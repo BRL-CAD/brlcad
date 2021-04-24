@@ -2094,6 +2094,8 @@ set(toplevel_DOCFILES
   )
 BRLCAD_ADDDATA(toplevel_DOCFILES ".")
 
+CMAKEFILES(REL8.txt)
+
 # Now that everything is configured, print a summary of the build
 # settings.
 if(NOT BRLCAD_DISABLE_SUMMARY)
