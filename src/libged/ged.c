@@ -46,10 +46,15 @@
 #include "raytrace.h"
 #include "bn/plot3.h"
 
-#include "rt/solid.h"
+#include "bview/defines.h"
 
 #include "./ged_private.h"
 #include "./qray.h"
+
+#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); \
+    RT_FREE_VLIST(&((p)->s_vlist)); }
+
 
 /* TODO:  Ew.  Globals. Make this go away... */
 struct ged *_ged_current_gedp;
@@ -150,7 +155,7 @@ free_object_selections(struct bu_hash_tbl *t)
 void
 ged_free(struct ged *gedp)
 {
-    struct solid *sp;
+    struct bview_scene_obj *sp;
 
     if (gedp == GED_NULL)
 	return;
@@ -162,8 +167,6 @@ ged_free(struct ged *gedp)
     // Note - it is the caller's responsibility to have freed any data
     // associated with the ged or its views in the u_data pointers.
     //
-    // Since libged does not link libdm, it's also the responsibility of the
-    // caller to close any display managers associated with the view.
     struct bview *gdvp;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
@@ -174,16 +177,24 @@ ged_free(struct ged *gedp)
     }
     bu_ptbl_free(&gedp->ged_views);
 
+    /* Since libged does not link libdm, it's also the responsibility of the
+     * caller to close any display managers.  Client also frees the display
+     * managers - we just take care of the table.  If the caller is not
+     * otherwise tracking the dmp instances, they need to clean them up before
+     * calling ged_free */
+    bu_ptbl_free(gedp->ged_all_dmp);
+    BU_PUT(gedp->ged_all_dmp, struct bu_ptbl);
+
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
-	    // TODO - FREE_SOLID macro is stashing on the freesolid list, not
+	    // TODO - FREE_BVIEW_SCENE_OBJ macro is stashing on the free_scene_obj list, not
 	    // BU_PUT-ing the solid objects themselves - is that what we expect
 	    // when doing ged_free?  I.e., is ownership of the free solid list
 	    // with the struct ged or with the application as a whole?  We're
-	    // BU_PUT-ing gedp->freesolid - above why just that one?
+	    // BU_PUT-ing gedp->free_scene_obj - above why just that one?
 #if 0
-	    struct solid *sp = (struct solid *)BU_PTBL_GET(&gedp->free_solids, i);
+	    struct bview_scene_obj *sp = (struct bview_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
 	    RT_FREE_VLIST(&(sp->s_vlist));
 #endif
 	}
@@ -212,18 +223,18 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
-    // TODO - replace freesolid with free_solids ptbl
+    // TODO - replace free_scene_obj with free_solids ptbl
     {
-	struct solid *nsp;
-	sp = BU_LIST_NEXT(solid, &gedp->freesolid->l);
-	while (BU_LIST_NOT_HEAD(sp, &gedp->freesolid->l)) {
-	    nsp = BU_LIST_PNEXT(solid, sp);
+	struct bview_scene_obj *nsp;
+	sp = BU_LIST_NEXT(bview_scene_obj, &gedp->free_scene_obj->l);
+	while (BU_LIST_NOT_HEAD(sp, &gedp->free_scene_obj->l)) {
+	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
 	    BU_LIST_DEQUEUE(&((sp)->l));
-	    FREE_SOLID(sp, &gedp->freesolid->l);
+	    FREE_BVIEW_SCENE_OBJ(sp, &gedp->free_scene_obj->l);
 	    sp = nsp;
 	}
     }
-    BU_PUT(gedp->freesolid, struct solid);
+    BU_PUT(gedp->free_scene_obj, struct bview_scene_obj);
 
     free_object_selections(gedp->ged_selections);
     bu_hash_destroy(gedp->ged_selections);
@@ -270,15 +281,15 @@ ged_init(struct ged *gedp)
     gedp->ged_selections = bu_hash_create(32);
 
     /* init the solid list */
-    struct solid *freesolid;
-    BU_GET(freesolid, struct solid);
-    BU_LIST_INIT(&freesolid->l);
-    gedp->freesolid = freesolid;
+    struct bview_scene_obj *free_scene_obj;
+    BU_GET(free_scene_obj, struct bview_scene_obj);
+    BU_LIST_INIT(&free_scene_obj->l);
+    gedp->free_scene_obj = free_scene_obj;
 
     /* TODO: If we're init-ing the list here, does that mean the gedp has
      * ownership of all solid objects created and stored here, and should we
      * then free them when ged_free is called? (don't appear to be currently,
-     * just calling FREE_SOLID which doesn't de-allocate... */
+     * just calling FREE_BVIEW_SCENE_OBJ which doesn't de-allocate... */
     BU_PTBL_INIT(&gedp->free_solids);
 
     /* Initialize callbacks */
@@ -286,7 +297,7 @@ ged_init(struct ged *gedp)
     gedp->ged_refresh_handler = NULL;
     gedp->ged_refresh_clientdata = NULL;
     gedp->ged_output_handler = NULL;
-    gedp->ged_create_vlist_solid_callback = NULL;
+    gedp->ged_create_vlist_scene_obj_callback = NULL;
     gedp->ged_create_vlist_display_list_callback = NULL;
     gedp->ged_destroy_vlist_callback = NULL;
     gedp->ged_create_io_handler = NULL;
@@ -296,105 +307,16 @@ ged_init(struct ged *gedp)
     /* Out of the gate we don't have display managers or views */
     gedp->ged_gvp = GED_VIEW_NULL;
     gedp->ged_dmp = NULL;
+    gedp->ged_all_dmp = NULL;
+    BU_GET(gedp->ged_all_dmp, struct bu_ptbl);
+    bu_ptbl_init(gedp->ged_all_dmp, 8, "display managers");
 
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
 
-}
-
-
-void
-ged_view_init(struct bview *gvp)
-{
-    if (gvp == GED_VIEW_NULL)
-	return;
-
-    gvp->magic = BVIEW_MAGIC;
-
-    gvp->gv_scale = 500.0;
-    gvp->gv_size = 2.0 * gvp->gv_scale;
-    gvp->gv_isize = 1.0 / gvp->gv_size;
-    VSET(gvp->gv_aet, 35.0, 25.0, 0.0);
-    VSET(gvp->gv_eye_pos, 0.0, 0.0, 1.0);
-    MAT_IDN(gvp->gv_rotation);
-    MAT_IDN(gvp->gv_center);
-    VSETALL(gvp->gv_keypoint, 0.0);
-    gvp->gv_coord = 'v';
-    gvp->gv_rotate_about = 'v';
-    gvp->gv_minMouseDelta = -20;
-    gvp->gv_maxMouseDelta = 20;
-    gvp->gv_rscale = 0.4;
-    gvp->gv_sscale = 2.0;
-
-    gvp->gv_adc.a1 = 45.0;
-    gvp->gv_adc.a2 = 45.0;
-    VSET(gvp->gv_adc.line_color, 255, 255, 0);
-    VSET(gvp->gv_adc.tick_color, 255, 255, 255);
-
-    VSET(gvp->gv_grid.anchor, 0.0, 0.0, 0.0);
-    gvp->gv_grid.res_h = 1.0;
-    gvp->gv_grid.res_v = 1.0;
-    gvp->gv_grid.res_major_h = 5;
-    gvp->gv_grid.res_major_v = 5;
-    VSET(gvp->gv_grid.color, 255, 255, 255);
-
-    gvp->gv_rect.draw = 0;
-    gvp->gv_rect.pos[0] = 128;
-    gvp->gv_rect.pos[1] = 128;
-    gvp->gv_rect.dim[0] = 256;
-    gvp->gv_rect.dim[1] = 256;
-    VSET(gvp->gv_rect.color, 255, 255, 255);
-
-    gvp->gv_view_axes.draw = 0;
-    VSET(gvp->gv_view_axes.axes_pos, 0.85, -0.85, 0.0);
-    gvp->gv_view_axes.axes_size = 0.2;
-    gvp->gv_view_axes.line_width = 0;
-    gvp->gv_view_axes.pos_only = 1;
-    VSET(gvp->gv_view_axes.axes_color, 255, 255, 255);
-    VSET(gvp->gv_view_axes.label_color, 255, 255, 0);
-    gvp->gv_view_axes.triple_color = 1;
-
-    gvp->gv_model_axes.draw = 0;
-    VSET(gvp->gv_model_axes.axes_pos, 0.0, 0.0, 0.0);
-    gvp->gv_model_axes.axes_size = 2.0;
-    gvp->gv_model_axes.line_width = 0;
-    gvp->gv_model_axes.pos_only = 0;
-    VSET(gvp->gv_model_axes.axes_color, 255, 255, 255);
-    VSET(gvp->gv_model_axes.label_color, 255, 255, 0);
-    gvp->gv_model_axes.triple_color = 0;
-    gvp->gv_model_axes.tick_enabled = 1;
-    gvp->gv_model_axes.tick_length = 4;
-    gvp->gv_model_axes.tick_major_length = 8;
-    gvp->gv_model_axes.tick_interval = 100;
-    gvp->gv_model_axes.ticks_per_major = 10;
-    gvp->gv_model_axes.tick_threshold = 8;
-    VSET(gvp->gv_model_axes.tick_color, 255, 255, 0);
-    VSET(gvp->gv_model_axes.tick_major_color, 255, 0, 0);
-
-    gvp->gv_center_dot.gos_draw = 0;
-    VSET(gvp->gv_center_dot.gos_line_color, 255, 255, 0);
-
-    gvp->gv_prim_labels.gos_draw = 0;
-    VSET(gvp->gv_prim_labels.gos_text_color, 255, 255, 0);
-
-    gvp->gv_view_params.gos_draw = 0;
-    VSET(gvp->gv_view_params.gos_text_color, 255, 255, 0);
-
-    gvp->gv_view_scale.gos_draw = 0;
-    VSET(gvp->gv_view_scale.gos_line_color, 255, 255, 0);
-    VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
-
-    gvp->gv_data_vZ = 1.0;
-
-    /* FIXME: this causes the shaders.sh regression to fail */
-    /* _ged_mat_aet(gvp); */
-
-    // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
-    gvp->gv_snap_tol_factor = 10;
-    gvp->gv_snap_lines = 0;
-
-    bview_update(gvp);
+    gedp->ged_ctx = NULL;
+    gedp->ged_interp = NULL;
 }
 
 
@@ -560,15 +482,15 @@ ged_output_handler_cb(struct ged *gedp, char *str)
 }
 
 void
-ged_create_vlist_solid_cb(struct ged *gedp, struct solid *s)
+ged_create_vlist_solid_cb(struct ged *gedp, struct bview_scene_obj *s)
 {
-    if (gedp->ged_create_vlist_solid_callback != GED_CREATE_VLIST_SOLID_FUNC_NULL) {
-	gedp->ged_cbs->ged_create_vlist_solid_callback_cnt++;
-	if (gedp->ged_cbs->ged_create_vlist_solid_callback_cnt > 1) {
-	    bu_log("Warning - recursive call of gedp->ged_create_vlist_solid_callback!\n");
+    if (gedp->ged_create_vlist_scene_obj_callback != GED_CREATE_VLIST_SOLID_FUNC_NULL) {
+	gedp->ged_cbs->ged_create_vlist_scene_obj_callback_cnt++;
+	if (gedp->ged_cbs->ged_create_vlist_scene_obj_callback_cnt > 1) {
+	    bu_log("Warning - recursive call of gedp->ged_create_vlist_scene_obj_callback!\n");
 	}
-	(*gedp->ged_create_vlist_solid_callback)(s);
-	gedp->ged_cbs->ged_create_vlist_solid_callback_cnt--;
+	(*gedp->ged_create_vlist_scene_obj_callback)(s);
+	gedp->ged_cbs->ged_create_vlist_scene_obj_callback_cnt--;
     }
 }
 

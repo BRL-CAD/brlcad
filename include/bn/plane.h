@@ -1119,6 +1119,13 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
 				     const plane_t planes[],
 				     const size_t pl_count);
 
+
+/**
+ * @brief
+ * Given an origin and a normal, create a plane_t.
+ */
+BN_EXPORT extern int bn_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
+
 /**
  * @brief
  * Calculates the best fit plane for a set of points
@@ -1129,6 +1136,20 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
  * Returns a center point and a normal direction for the plane
  */
 BN_EXPORT extern int bn_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts);
+
+/**
+ * @brief
+ * Find the closest U,V point on the plane p to 3d point pt.
+ */
+BN_EXPORT extern int bn_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt);
+
+/**
+ * @brief
+ * Return the 3D point on the plane at parametric coordinates u, v.
+ */
+BN_EXPORT extern int bn_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v);
+
+
 
 __END_DECLS
 

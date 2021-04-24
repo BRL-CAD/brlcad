@@ -1,4 +1,7 @@
-if(BRLCAD_ENABLE_QT)
+if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
+
+  find_package(OpenGL)
+
   include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -7,22 +10,16 @@ if(BRLCAD_ENABLE_QT)
     ${GED_INCLUDE_DIRS}
     ${RT_INCLUDE_DIRS}
     ${BU_INCLUDE_DIRS}
-    ${Qt5Widgets_INCLUDE_DIRS}
+    ${OPENGL_INCLUDE_DIR}
     )
 
-  add_definitions(${Qt5Widgets_DEFINITIONS})
-endif(BRLCAD_ENABLE_QT)
-
-add_subdirectory(qtads)
+endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
 # NOTE: We can't use the CMake global values for automoc et. al.
 # because most of BRL-CAD's targets are not Qt targets.  We don't
 # want to run the automatic moc logic for all of them.
 
-
-include_directories(
-        "display"
-        )
+include_directories("display")
 
 set(qged_srcs
   main.cpp
@@ -77,19 +74,26 @@ set(moc_headers
   display/DisplayManager.h
   )
 
-if(BRLCAD_ENABLE_QT)
+if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
+
+  if (OPENGL_opengl_LIBRARY)
+    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
+  endif (OPENGL_opengl_LIBRARY)
+  if (OPENGL_gl_LIBRARY)
+    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
+  endif (OPENGL_gl_LIBRARY)
+
   QT5_WRAP_CPP(moc_srcs ${moc_headers})
   QT5_ADD_RESOURCES(cad_qrc cadresources.qrc)
 
   add_executable(qged ${qged_srcs} ${moc_srcs} ${cad_qrc})
-  qt5_use_modules(qged Widgets OpenGL)
-  target_link_libraries(qged libbu librt libged qtadvanceddocking ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
+  target_link_libraries(qged libbu librt libged Qt5::Widgets Qt5::OpenGL ${OPENGL_LIBS})
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-endif(BRLCAD_ENABLE_QT)
+endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
 CMAKEFILES(${qged_srcs})
 CMAKEFILES(${moc_headers})

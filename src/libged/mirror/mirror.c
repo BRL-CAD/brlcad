@@ -24,7 +24,7 @@
  */
 
 #include "bu/getopt.h"
-#include "dm/bview_util.h"
+#include "bview/util.h"
 #include "ged.h"
 
 

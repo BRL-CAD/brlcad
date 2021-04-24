@@ -49,6 +49,7 @@
 #include "wdb.h"
 
 #include "./ged_bot.h"
+#include "../ged_private.h"
 
 int
 _bot_obj_setup(struct _ged_bot_info *gb, const char *name)
@@ -382,53 +383,6 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
 }
 
 
-extern "C" int
-_bot_cmd_help(void *bs, int argc, const char **argv)
-{
-    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
-    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
-	bu_vls_printf(gb->gedp->ged_result_str, "bot [options] <objname> subcommand [args]\n");
-	if (gb->gopts) {
-	    char *option_help = bu_opt_describe(gb->gopts, NULL);
-	    if (option_help) {
-		bu_vls_printf(gb->gedp->ged_result_str, "Options:\n%s\n", option_help);
-		bu_free(option_help, "help str");
-	    }
-	}
-	bu_vls_printf(gb->gedp->ged_result_str, "Available subcommands:\n");
-	const struct bu_cmdtab *ctp = NULL;
-	int ret;
-	const char *helpflag[2];
-	helpflag[1] = PURPOSEFLAG;
-	size_t maxcmdlen = 0;
-	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
-	}
-	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) + 2, " ");
-	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
-		helpflag[0] = ctp->ct_name;
-		bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
-	    } else {
-		bu_vls_printf(gb->gedp->ged_result_str, "print help and exit\n");
-	    }
-	}
-    } else {
-	int ret;
-	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
-	helpargv[0] = argv[0];
-	helpargv[1] = HELPFLAG;
-	for (int i = 1; i < argc; i++) {
-	    helpargv[i+1] = argv[i];
-	}
-	bu_cmd(gb->cmds, argc+1, helpargv, 0, (void *)gb, &ret);
-	bu_free(helpargv, "help argv");
-	return ret;
-    }
-
-    return GED_OK;
-}
-
 const struct bu_cmdtab _bot_cmds[] = {
     { "extrude",    _bot_cmd_extrude},
     { "get",        _bot_cmd_get},
@@ -481,8 +435,12 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
 
     gb.gopts = d;
 
+    const char *b_args = "[options] <objname> subcommand [args]";
+    const struct bu_cmdtab *bcmds = (const struct bu_cmdtab *)_bot_cmds;
+    struct bu_opt_desc *boptd = (struct bu_opt_desc *)d;
+
     if (!argc) {
-    	_bot_cmd_help(&gb, 0, NULL);
+	_ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
 	return GED_OK;
     }
 
@@ -503,9 +461,9 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
 	if (cmd_pos >= 0) {
 	    argc = argc - cmd_pos;
 	    argv = &argv[cmd_pos];
-	    _bot_cmd_help(&gb, argc, argv);
+	    _ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, argc, argv);
 	} else {
-	    _bot_cmd_help(&gb, 0, NULL);
+	    _ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
 	}
 	return GED_OK;
     }
@@ -513,12 +471,12 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     // Must have a subcommand
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
-	_bot_cmd_help(&gb, 0, NULL);
+	_ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
 	return GED_ERROR;
     }
 
     if (opt_ret < 0) {
-	_bot_cmd_help(&gb, 0, NULL);
+	_ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
 	return GED_ERROR;
     }
 

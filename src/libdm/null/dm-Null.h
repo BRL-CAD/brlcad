@@ -75,6 +75,10 @@ null_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int siz
 
 
 DM_NULL_EXPORT extern int
+null_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+
+
+DM_NULL_EXPORT extern int
 null_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);
 
 
@@ -171,7 +175,7 @@ null_genDLists(struct dm *dmp, size_t range);
 
 
 DM_NULL_EXPORT extern int
-null_getDisplayImage(struct dm *dmp, unsigned char **image);
+null_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha);
 
 
 DM_NULL_EXPORT extern int
@@ -192,6 +196,10 @@ null_reshape(struct dm *dmp, int width, int height);
 
 DM_NULL_EXPORT extern int
 null_makeCurrent(struct dm *dmp);
+
+
+DM_NULL_EXPORT extern int
+null_SwapBuffers(struct dm *dmp);
 
 
 DM_NULL_EXPORT extern int

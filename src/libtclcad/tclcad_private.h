@@ -40,13 +40,6 @@ __BEGIN_DECLS
 extern struct tclcad_obj HeadTclcadObj;
 extern struct tclcad_obj *current_top;
 
-struct path_edit_params {
-    int edit_mode;
-    double dx;
-    double dy;
-    mat_t edit_mat;
-};
-
 /**
  * function returns truthfully whether the library has been
  * initialized.  calling this routine with setit true considers the

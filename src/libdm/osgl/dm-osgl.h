@@ -72,14 +72,14 @@ extern "C" {
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
-#include "./fontstash/fontstash.h"
+#include "../fontstash/fontstash.h"
 #endif
 #if defined(__clang__)
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 #define GLFONTSTASH_IMPLEMENTATION
 
-#include "./fontstash/glfontstash.h"
+#include "../fontstash/glfontstash.h"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop

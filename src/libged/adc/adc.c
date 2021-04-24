@@ -71,32 +71,31 @@ HIDDEN void
 adc_usage(struct bu_vls *vp, const char *name)
 {
     bu_vls_printf(vp, "Usage: %s \n", name);
-    bu_vls_printf(vp, "%s", " adc vname                           toggle display of angle/distance cursor\n");
-    bu_vls_printf(vp, "%s", " adc vname vars                      print a list of all variables (i.e. var = val)\n");
-    bu_vls_printf(vp, "%s", " adc vname draw [0|1]                set or get the draw parameter\n");
-    bu_vls_printf(vp, "%s", " adc vname a1   [#]                  set or get angle1\n");
-    bu_vls_printf(vp, "%s", " adc vname a2   [#]                  set or get angle2\n");
-    bu_vls_printf(vp, "%s", " adc vname dst  [#]                  set or get radius (distance) of tick\n");
-    bu_vls_printf(vp, "%s", " adc vname odst [#]                  set or get radius (distance) of tick (+-2047)\n");
-    bu_vls_printf(vp, "%s", " adc vname hv   [# #]                set or get position (grid coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc vname xyz  [# # #]              set or get position (model coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc vname x [#]                     set or get horizontal position (+-2047)\n");
-    bu_vls_printf(vp, "%s", " adc vname y [#]                     set or get vertical position (+-2047)\n");
-    bu_vls_printf(vp, "%s", " adc vname dh #                      add to horizontal position (grid coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc vname dv #                      add to vertical position (grid coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc vname dx #                      add to X position (model coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc vname dy #                      add to Y position (model coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc vname dz #                      add to Z position (model coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc vname anchor_pos [0|1]          anchor ADC to current position in model coordinates\n");
-    bu_vls_printf(vp, "%s", " adc vname anchor_a1  [0|1]          anchor angle1 to go through anchorpoint_a1\n");
-    bu_vls_printf(vp, "%s", " adc vname anchor_a2  [0|1]          anchor angle2 to go through anchorpoint_a2\n");
-    bu_vls_printf(vp, "%s", " adc vname anchor_dst [0|1]          anchor tick distance to go through anchorpoint_dst\n");
-    bu_vls_printf(vp, "%s", " adc vname anchorpoint_a1  [# # #]   set or get anchor point for angle1\n");
-    bu_vls_printf(vp, "%s", " adc vname anchorpoint_a2  [# # #]   set or get anchor point for angle2\n");
-    bu_vls_printf(vp, "%s", " adc vname anchorpoint_dst [# # #]   set or get anchor point for tick distance\n");
-    bu_vls_printf(vp, "%s", " adc vname -i                        any of the above appropriate commands will interpret parameters as increments\n");
-    bu_vls_printf(vp, "%s", " adc vname reset                     reset angles, location, and tick distance\n");
-    bu_vls_printf(vp, "%s", " adc vname help                      prints this help message\n");
+    bu_vls_printf(vp, "%s", " adc vars                      print a list of all variables (i.e. var = val)\n");
+    bu_vls_printf(vp, "%s", " adc draw [0|1]                set or get the draw parameter\n");
+    bu_vls_printf(vp, "%s", " adc a1   [#]                  set or get angle1\n");
+    bu_vls_printf(vp, "%s", " adc a2   [#]                  set or get angle2\n");
+    bu_vls_printf(vp, "%s", " adc dst  [#]                  set or get radius (distance) of tick\n");
+    bu_vls_printf(vp, "%s", " adc odst [#]                  set or get radius (distance) of tick (+-2047)\n");
+    bu_vls_printf(vp, "%s", " adc hv   [# #]                set or get position (grid coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc xyz  [# # #]              set or get position (model coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc x [#]                     set or get horizontal position (+-2047)\n");
+    bu_vls_printf(vp, "%s", " adc y [#]                     set or get vertical position (+-2047)\n");
+    bu_vls_printf(vp, "%s", " adc dh #                      add to horizontal position (grid coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc dv #                      add to vertical position (grid coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc dx #                      add to X position (model coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc dy #                      add to Y position (model coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc dz #                      add to Z position (model coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc anchor_pos [0|1]          anchor ADC to current position in model coordinates\n");
+    bu_vls_printf(vp, "%s", " adc anchor_a1  [0|1]          anchor angle1 to go through anchorpoint_a1\n");
+    bu_vls_printf(vp, "%s", " adc anchor_a2  [0|1]          anchor angle2 to go through anchorpoint_a2\n");
+    bu_vls_printf(vp, "%s", " adc anchor_dst [0|1]          anchor tick distance to go through anchorpoint_dst\n");
+    bu_vls_printf(vp, "%s", " adc anchorpoint_a1  [# # #]   set or get anchor point for angle1\n");
+    bu_vls_printf(vp, "%s", " adc anchorpoint_a2  [# # #]   set or get anchor point for angle2\n");
+    bu_vls_printf(vp, "%s", " adc anchorpoint_dst [# # #]   set or get anchor point for tick distance\n");
+    bu_vls_printf(vp, "%s", " adc -i                        any of the above appropriate commands will interpret parameters as increments\n");
+    bu_vls_printf(vp, "%s", " adc reset                     reset angles, location, and tick distance\n");
+    bu_vls_printf(vp, "%s", " adc help                      prints this help message\n");
 }
 
 

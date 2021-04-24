@@ -8,9 +8,13 @@ include_directories(
 
 set(VIEW_SRCS
   aet.c
-  #data_lines.c
   center.cpp
   eye.c
+  faceplate.c
+  labels.c
+  lines.c
+  objs.c
+  polygons.c
   quat.c
   size.c
   snap.c

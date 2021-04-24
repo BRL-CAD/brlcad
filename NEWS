@@ -13,6 +13,11 @@ changes made.  See document footer for additional details.
 --- 2021-XX-XX  Release 7.32.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed overlay support for drawing multiple files - Cliff Yapp
+* fixed file creation for tire command - Cliff Yapp
+* fixed mixing object and full path searches in MGED - Cliff Yapp
+* fixed launching of ISST graphical viewer - Cliff Yapp
+* updated stepcode to latest upstream version - Cliff Yapp
 
 ----------------------------------------------------------------------
 --- 2021-02-06  Release 7.32.2                                     ---

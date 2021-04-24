@@ -29,8 +29,6 @@
 #include "tclcad.h"
 
 /* Arrows */
-extern void go_dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
-
 extern int to_data_arrows(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
@@ -93,7 +91,6 @@ extern int to_view_axes(struct ged *gedp,
 
 /* Draw */
 extern void go_draw(struct bview *gdvp);
-extern void go_draw_other(struct ged *gedp, struct bview *gdvp);
 extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 extern int to_redraw(struct ged *gedp,
 		     int argc,
@@ -109,7 +106,6 @@ extern int to_blast(struct ged *gedp,
 		    int maxargs);
 
 /* Faceplate */
-extern void go_draw_faceplate(struct ged *gedp, struct bview *gdvp);
 extern int to_faceplate(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -119,7 +115,6 @@ extern int to_faceplate(struct ged *gedp,
 
 
 /* Labels */
-extern void go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);
 extern int to_data_labels(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
@@ -139,7 +134,6 @@ extern int to_prim_label(struct ged *gedp,
 			 int maxargs);
 
 /* Lines */
-void go_dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp);
 int to_data_lines(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -173,8 +167,6 @@ extern void to_refresh_all_views(struct tclcad_obj *top);
 extern void to_refresh_view(struct bview *gdvp);
 
 /* Util */
-extern fastf_t screen_to_view_x(struct dm *dmp, fastf_t x);
-extern fastf_t screen_to_view_y(struct dm *dmp, fastf_t y);
 extern int to_is_viewable(struct bview *gdvp);
 
 /*

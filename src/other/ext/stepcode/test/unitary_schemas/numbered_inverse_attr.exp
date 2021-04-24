@@ -1,0 +1,23 @@
+-- derived from pdm schema 12
+-- for debugging exp2cxx inverse attr numbering
+SCHEMA numbered_inverse_attr;
+ENTITY application_context;
+  application : STRING;
+  DERIVE
+   description : STRING := 'teststring';
+   id : INTEGER := 1234;
+  INVERSE
+   context_elements : SET[1:?] OF application_context_element FOR
+                      frame_of_reference;
+--   WHERE
+--    wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+--    wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'ID_ATTRIBUTE.IDENTIFIED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY application_context_element
+(*  SUPERTYPE OF (ONEOF(product_concept_context,product_context,
+                product_definition_context))*);
+  name : STRING;
+  frame_of_reference : application_context;
+ END_ENTITY;
+END_SCHEMA;

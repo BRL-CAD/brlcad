@@ -308,6 +308,9 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     if (db_version(dbip) < 5) {
 	size_t ngran;
 
+	// db_put_external5 can't do it, so set the flag here
+	dp->edit_flag = 1;
+
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {
 	    if (dp->d_addr != RT_DIR_PHONY_ADDR) {

@@ -60,6 +60,7 @@ set(LIBBG_SOURCES
   lseg_pt.c
   obr.c
   polygon.c
+  polygon_fill.cpp
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c

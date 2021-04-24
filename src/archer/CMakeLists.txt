@@ -33,6 +33,14 @@ if(BRLCAD_ENABLE_TK)
     add_dependencies(archer ${item})
   endforeach(item ${tclindex_target_list})
 
+  # stage targets
+  set(stgts tcl tk itcl itk iwidgets)
+  foreach(ST ${stgts})
+    if (TARGET ${ST}_stage)
+      add_dependencies(archer ${ST}_stage)
+    endif (TARGET ${ST}_stage)
+  endforeach(ST ${stgts})
+
   # Archer is one of the programs that gets a start menu entry
   set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:archer>"
     PROPERTY CPACK_START_MENU_SHORTCUTS "Archer ${BRLCAD_VERSION}"

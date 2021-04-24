@@ -38,7 +38,7 @@
 
 
 struct display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
-struct solid *illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
+struct bview_scene_obj *illump = NULL;	/* == 0 if none, else points to ill. solid */
 int ipathpos = 0;	/* path index of illuminated element */
 
 
@@ -52,7 +52,7 @@ illuminate(int y) {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     int count;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
 
     /*
      * Divide the mouse into 'mged_curr_dm->dm_ndrawn' VERTICAL
@@ -65,7 +65,7 @@ illuminate(int y) {
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    /* Only consider solids which are presently in view */
 	    if (sp->s_flag == UP) {
 		if (count-- == 0) {
@@ -94,7 +94,8 @@ int
 f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct display_list *gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
+    struct ged_bview_data *bdata = NULL;
 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -111,15 +112,18 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	return TCL_OK;
     }
 
-    if (STATE == ST_O_PATH) {
+    if (illump != NULL && illump->s_u_data != NULL)
+	bdata = (struct ged_bview_data *)illump->s_u_data;
+
+    if (STATE == ST_O_PATH && bdata) {
 	if (argc == 1 || *argv[1] == 'f') {
 	    ++ipathpos;
-	    if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
+	    if ((size_t)ipathpos >= bdata->s_fullpath.fp_len)
 		ipathpos = 0;
 	} else if (*argv[1] == 'b') {
 	    --ipathpos;
 	    if (ipathpos < 0)
-		ipathpos = illump->s_fullpath.fp_len-1;
+		ipathpos = bdata->s_fullpath.fp_len-1;
 	} else {
 	    Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -129,7 +133,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	sp = illump;
 	sp->s_iflag = DOWN;
 	if (argc == 1 || *argv[1] == 'f') {
-	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_headSolid)) {
+	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
 		if (BU_LIST_NEXT_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
 		    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
@@ -137,20 +141,20 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 
-		sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
+		sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
 	    } else
-		sp = BU_LIST_PNEXT(solid, sp);
+		sp = BU_LIST_PNEXT(bview_scene_obj, sp);
 	} else if (*argv[1] == 'b') {
-	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_headSolid)) {
+	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
 		if (BU_LIST_PREV_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
 		    gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
-		sp = BU_LIST_PREV(solid, &gdlp->dl_headSolid);
+		sp = BU_LIST_PREV(bview_scene_obj, &gdlp->dl_head_scene_obj);
 	    } else
-		sp = BU_LIST_PLAST(solid, sp);
+		sp = BU_LIST_PLAST(bview_scene_obj, sp);
 	} else {
 	    Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -220,11 +224,12 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     char *cp;
     size_t j;
     int illum_only = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct ged_bview_data *bdata = NULL;
 
     CHECK_DBI_NULL;
 
@@ -251,6 +256,11 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     if (not_state(ST_O_PATH, "Object Edit matrix pick"))
 	return TCL_ERROR;
 
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+
+    bdata = (struct ged_bview_data *)illump->s_u_data;
+
     if ((cp = strchr(argv[1], '/')) != NULL) {
 	struct directory *d0, *d1;
 	if ((d1 = db_lookup(DBIP, cp+1, LOOKUP_NOISY)) == RT_DIR_NULL)
@@ -259,9 +269,9 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	if ((d0 = db_lookup(DBIP, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 	/* Find arc on illump path which runs from d0 to d1 */
-	for (j=1; j < illump->s_fullpath.fp_len; j++) {
-	    if (DB_FULL_PATH_GET(&illump->s_fullpath, j-1) != d0) continue;
-	    if (DB_FULL_PATH_GET(&illump->s_fullpath, j-0) != d1) continue;
+	for (j=1; j < bdata->s_fullpath.fp_len; j++) {
+	    if (DB_FULL_PATH_GET(&bdata->s_fullpath, j-1) != d0) continue;
+	    if (DB_FULL_PATH_GET(&bdata->s_fullpath, j-0) != d1) continue;
 	    ipathpos = j;
 	    goto got;
 	}
@@ -272,8 +282,8 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     } else {
 	ipathpos = atoi(argv[1]);
 	if (ipathpos < 0) ipathpos = 0;
-	else if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
-	    ipathpos = illump->s_fullpath.fp_len-1;
+	else if ((size_t)ipathpos >= bdata->s_fullpath.fp_len)
+	    ipathpos = bdata->s_fullpath.fp_len-1;
     }
  got:
     /* Include all solids with same tree top */
@@ -281,10 +291,13 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bview_data *bdatas = (struct ged_bview_data *)sp->s_u_data;
 	    for (j = 0; j <= (size_t)ipathpos; j++) {
-		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
-		    DB_FULL_PATH_GET(&illump->s_fullpath, j))
+		if (DB_FULL_PATH_GET(&bdatas->s_fullpath, j) !=
+		    DB_FULL_PATH_GET(&bdata->s_fullpath, j))
 		    break;
 	    }
 	    /* Only accept if top of tree is identical */
@@ -347,6 +360,7 @@ f_mouse(
     int argc,
     const char *argv[])
 {
+    struct ged_bview_data *bdata = NULL;
     vect_t mousevec;		/* float pt -1..+1 mouse pos vect */
     int isave;
     int up;
@@ -362,6 +376,9 @@ f_mouse(
 
 	return TCL_ERROR;
     }
+
+    if (illump && illump->s_u_data)
+	bdata = (struct ged_bview_data *)illump->s_u_data;
 
     up = atoi(argv[1]);
     xpos = atoi(argv[2]);
@@ -449,8 +466,9 @@ f_mouse(
 	     * Convert DT position to path element select
 	     */
 	    isave = ipathpos;
-	    ipathpos = illump->s_fullpath.fp_len-1 - (
-		(ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
+	    if (bdata)
+		ipathpos = bdata->s_fullpath.fp_len-1 - (
+			(ypos+(int)GED_MAX) * (bdata->s_fullpath.fp_len) / (int)GED_RANGE);
 	    if (ipathpos != isave)
 		view_state->vs_flag = 1;
 	    return TCL_OK;

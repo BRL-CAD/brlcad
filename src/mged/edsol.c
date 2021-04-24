@@ -2542,10 +2542,13 @@ init_sedit(void)
     }
 
     /* Read solid description into es_int */
-    if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+    if (!illump->s_u_data)
+	return;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "init_sedit(",
-			 LAST_SOLID(illump)->d_namep,
+			 LAST_SOLID(bdata)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
 	rt_db_free_internal(&es_int);
 	return;				/* FAIL */
@@ -2586,7 +2589,7 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2618,7 +2621,7 @@ init_sedit(void)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "begin_edit_callback ");
-	db_path_to_vls(&vls, &illump->s_fullpath);
+	db_path_to_vls(&vls, &bdata->s_fullpath);
 	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
@@ -2664,23 +2667,28 @@ replot_editing_solid(void)
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     mat_t mat;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     struct directory *illdp;
 
     if (!illump) {
 	return;
     }
-
-    illdp = LAST_SOLID(illump);
+    if (!illump->s_u_data)
+	return;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    illdp = LAST_SOLID(bdata);
 
     gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    if (LAST_SOLID(sp) == illdp) {
-		(void)db_path_to_mat(DBIP, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
-		(void)replot_modified_solid(sp, &es_int, mat);
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (sp->s_u_data) {
+		bdata = (struct ged_bview_data *)sp->s_u_data;
+		if (LAST_SOLID(bdata) == illdp) {
+		    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+		    (void)replot_modified_solid(sp, &es_int, mat);
+		}
 	    }
 	}
 
@@ -7391,10 +7399,13 @@ init_oedit_guts(void)
     }
 
     /* Not an evaluated region - just a regular path ending in a solid */
-    if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+    if (!illump->s_u_data)
+	return;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "init_oedit(",
-			 LAST_SOLID(illump)->d_namep,
+			 LAST_SOLID(bdata)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
 	rt_db_free_internal(&es_int);
 	button(BE_REJECT);
@@ -7413,7 +7424,7 @@ init_oedit_guts(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7478,7 +7489,7 @@ oedit_apply(int continue_editing)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
      */
@@ -7487,14 +7498,18 @@ oedit_apply(int continue_editing)
     mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
     mat_t tempm;
 
+    if (!illump || !illump->s_u_data)
+	return;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+
     switch (ipathpos) {
 	case 0:
-	    moveHobj(DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos),
+	    moveHobj(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 		     modelchanges);
 	    break;
 	case 1:
-	    moveHinstance(DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos-1),
-			  DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos),
+	    moveHinstance(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
+			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 			  modelchanges);
 	    break;
 	default:
@@ -7503,15 +7518,15 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_path_to_mat(DBIP, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
+	    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
 	    bn_mat_mul(tempm, modelchanges, topm);
 	    bn_mat_mul(deltam, inv_topm, tempm);
 
-	    moveHinstance(DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos-1),
-			  DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos),
+	    moveHinstance(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
+			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 			  deltam);
 	    break;
     }
@@ -7529,7 +7544,7 @@ oedit_apply(int continue_editing)
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (sp->s_iflag == DOWN)
 		continue;
 	    (void)replot_original_solid(sp);
@@ -7549,7 +7564,7 @@ oedit_accept(void)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
 
     if (DBIP == DBI_NULL)
 	return;
@@ -7561,7 +7576,7 @@ oedit_accept(void)
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (sp->s_iflag == DOWN)
 		    continue;
 		(void)replot_original_solid(sp);
@@ -7685,7 +7700,10 @@ sedit_apply(int accept_flag)
     }
 
     /* write editing changes out to disc */
-    dp = LAST_SOLID(illump);
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    dp = LAST_SOLID(bdata);
     if (!dp) {
 	/* sanity check, unexpected error */
 	return TCL_ERROR;
@@ -7736,10 +7754,10 @@ sedit_apply(int accept_flag)
     } else {
 	/* XXX hack to restore es_int after rt_db_put_internal blows it away */
 	/* Read solid description into es_int again! Gaak! */
-	if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+	if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			       DBIP, NULL, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(INTERP, "sedit_apply(",
-			     LAST_SOLID(illump)->d_namep,
+			     LAST_SOLID(bdata)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
 	    rt_db_free_internal(&es_int);
 	    return TCL_ERROR;
@@ -7804,14 +7822,20 @@ sedit_reject(void)
     {
 	struct display_list *gdlp;
 	struct display_list *next_gdlp;
-	struct solid *sp;
+	struct bview_scene_obj *sp;
+	if (!illump->s_u_data)
+	    return;
+	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
 
 	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-		if (LAST_SOLID(sp) == LAST_SOLID(illump))
+	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+		if (!sp->s_u_data)
+		    continue;
+		struct ged_bview_data *bdatas = (struct ged_bview_data *)sp->s_u_data;
+		if (LAST_SOLID(bdatas) == LAST_SOLID(bdata))
 		    (void)replot_original_solid(sp);
 	    }
 
@@ -8904,6 +8928,10 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
+    if (illump || !illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+
     if (argc == 1) {
 	struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
@@ -8918,7 +8946,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
 	pnto = Tcl_NewObj();
 	/* insert solid name, type and parameters */
-	Tcl_AppendStringsToObj(pnto, LAST_SOLID(illump)->d_namep, " ",
+	Tcl_AppendStringsToObj(pnto, LAST_SOLID(bdata)->d_namep, " ",
 			       Tcl_GetStringFromObj(pto, (int *)0), (char *)0);
 
 	Tcl_SetObjResult(interp, pnto);
@@ -8951,7 +8979,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	db_path_to_vls(&str, &illump->s_fullpath);
+	db_path_to_vls(&str, &bdata->s_fullpath);
 	Tcl_AppendStringsToObj(pnto, bu_vls_addr(&str), NULL);
 	bu_vls_free(&str);
     }
@@ -9078,10 +9106,13 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     es_eu = (struct edgeuse *)NULL;
 
     /* read in a fresh copy */
-    if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+    if (!illump || !illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "sedit_reset(",
-			 LAST_SOLID(illump)->d_namep,
+			 LAST_SOLID(bdata)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
 	return TCL_ERROR;				/* FAIL */
     }
@@ -9191,9 +9222,13 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
     CHECK_DBI_NULL;
     oedit_apply(UP); /* apply changes, but continue editing */
 
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);

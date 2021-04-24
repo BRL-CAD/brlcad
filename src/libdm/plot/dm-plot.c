@@ -45,7 +45,7 @@
 #include "./dm-plot.h"
 #include "../null/dm-Null.h"
 
-#include "rt/solid.h"
+#include "bview/defines.h"
 #include "bn/plot3.h"
 
 #include "../include/private.h"
@@ -70,15 +70,19 @@ static int plot_close(struct dm *dmp);
  *
  */
 struct dm *
-plot_open(void *vinterp, int argc, const char *argv[])
+plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;
     Tcl_Obj *obj;
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
+    if (!interp)
+	return NULL;
+
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp->i, struct dm_impl);
 
@@ -483,12 +487,17 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **
 }
 
 
-/**
- * Restore the display processor to a normal mode of operation (i.e.,
- * not scaled, rotated, displaced, etc.).  Turns off windowing.
- */
 HIDDEN int
-plot_normal(struct dm *dmp)
+plot_hud_begin(struct dm *dmp)
+{
+    if (!dmp)
+	return BRLCAD_ERROR;
+
+    return BRLCAD_OK;
+}
+
+HIDDEN int
+plot_hud_end(struct dm *dmp)
 {
     if (!dmp)
 	return BRLCAD_ERROR;
@@ -672,10 +681,12 @@ struct dm_impl dm_plot_impl = {
     plot_viable,
     plot_drawBegin,
     plot_drawEnd,
-    plot_normal,
+    plot_hud_begin,
+    plot_hud_end,
     plot_loadMatrix,
     null_loadPMatrix,
     plot_drawString2D,
+    null_String2DBBox,
     plot_drawLine2D,
     plot_drawLine3D,
     plot_drawLines3D,
@@ -706,6 +717,7 @@ struct dm_impl dm_plot_impl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     null_doevent,
     null_openFb,
     NULL,
@@ -762,7 +774,7 @@ struct dm_impl dm_plot_impl = {
     NULL			/* Tcl interpreter */
 };
 
-struct dm dm_plot = { DM_MAGIC, &dm_plot_impl };
+struct dm dm_plot = { DM_MAGIC, &dm_plot_impl, 0 };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_plot };

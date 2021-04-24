@@ -185,7 +185,7 @@ refresh() {
 	    }
     }
 
-    dm_normal(dmp);
+    dm_hud_begin(dmp);
     dm_draw_end(dmp);
 }
 
@@ -1049,7 +1049,7 @@ X_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = dm_open(INTERP, "X", 3, av)) == DM_NULL) {
+    if ((dmp = dm_open(NULL, INTERP, "X", 3, av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1075,7 +1075,7 @@ Ogl_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = dm_open(INTERP, "ogl", 3, (const char **)av)) == DM_NULL) {
+    if ((dmp = dm_open(NULL, INTERP, "ogl", 3, (const char **)av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }

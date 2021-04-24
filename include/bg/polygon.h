@@ -43,7 +43,13 @@ __BEGIN_DECLS
  * to get all the related logic in the same place so it is clearer what we do
  * and don't have, and make what we do have easier to reuse. */
 
-BG_EXPORT fastf_t
+/*
+ * Weird upper limit from clipper ---> sqrt(2^63 -1)/2
+ * Probably should be sqrt(2^63 -1)
+ */
+#define CLIPPER_MAX 1518500249
+
+BG_EXPORT extern fastf_t
 bg_find_polygon_area(
 	struct bg_polygon *gpoly,
 	fastf_t sf,
@@ -51,7 +57,7 @@ bg_find_polygon_area(
 	fastf_t size
 	);
 
-BG_EXPORT int
+BG_EXPORT extern int
 bg_polygons_overlap(
 	struct bg_polygon *polyA,
 	struct bg_polygon *polyB,
@@ -61,7 +67,7 @@ bg_polygons_overlap(
 	);
 
 /* model2view and view2model may be NULL, if the polygons are coplanar */
-BG_EXPORT struct bg_polygon *
+BG_EXPORT extern struct bg_polygon *
 bg_clip_polygon(
 	bg_clip_t op,
        	struct bg_polygon *subj,
@@ -72,7 +78,7 @@ bg_clip_polygon(
 	);
 
 /* model2view and view2model may be NULL, if the polygons are coplanar */
-BG_EXPORT struct bg_polygon *
+BG_EXPORT extern struct bg_polygon *
 bg_clip_polygons(
 	bg_clip_t op,
        	struct bg_polygons *subj,
@@ -81,6 +87,12 @@ bg_clip_polygons(
        	matp_t model2view,
        	matp_t view2model
 	);
+
+BG_EXPORT extern struct bg_polygon *
+bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t line_spacing);
+
+BG_EXPORT extern void bg_polygon_free(struct bg_polygon *gpp);
+BG_EXPORT extern void bg_polygons_free(struct bg_polygons *gpp);
 
 
 /********************************

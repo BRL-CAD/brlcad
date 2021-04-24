@@ -810,7 +810,7 @@ DOCUMENTATION
 BRL-CAD has extensive documentation in various formats and presently
 maintained in various locations.  It is an on-going desire and goal of
 the project to have all documentation located along with the source
-code in our Subversion (SVN) repository.
+code in our Git repository.
 
 In line with that goal and where beneficial, a large portion of the
 tutorial documentation is being converted to the DocBook XML format.
@@ -920,27 +920,27 @@ gdb> backtrace
 PATCH SUBMISSION GUIDELINES
 ---------------------------
 
-To contribute to BRL-CAD, begin by submitting modifications to the
-patches section at http://sf.net/projects/brlcad/.  Patches in the
-unified diff format (diff -u) are generally preferred when modifying
-existing source or other text files.  Otherwise, contributors are
-welcome to submit their changes in full to the patches tracker as
-compressed file attachments.
+To contribute to BRL-CAD, begin by submitting pull requests to the
+Github project at https://github.com/BRL-CAD/brlcad.
 
-All text patches should be submitted in the unified diff format where
-it's feasible to create one either using SVN or using the unmodified
-original file.  This is generally the "-u" option to diff, and is also
-supported by the SVN diff command:
+For an introduction to the standard Github workflow for forking and
+submitting pull requests, see:
 
-  svn diff > mychanges.patch
+https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project
+https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/working-with-forks
 
-Where possible, patch files should be generated against the latest
-sources available to make it easier to review and apply the changes.
-If a modification involves the addition or removal of files, those
-files can be provided separately with instructions on where they
-belong (or what should be removed).  If SVN cannot be used, please
-provide the complete release and build number of the files you worked
-with.
+While working in your fork to prepare your pull request, remember to
+frequently sync with upstream sources.  BRL-CAD uses an active main
+branch for most of its ongoing work, so this syncing process is
+particularly important when working with BRL-CAD.  Patches need to be
+based on the latest sources and avoid reverting improvements that have
+been added to the upstream sources since your fork was created.
+
+Although the Github pull request based workflow is recommended and
+preferred, if for any reason you cannot use Github you may also
+submit "git format-patch" patches through other channels.  See:
+
+https://git-scm.com/docs/git-format-patch
 
 ANY MODIFICATIONS THAT ARE PROVIDED MUST NOT MODIFY OR CONFLICT WITH
 THE EXISTING "COPYING" FILE DISTRIBUTION REQUIREMENTS.  This means
@@ -949,7 +949,8 @@ asked to only provide patches that may legally be incorporated into
 BRL-CAD under the existing distribution provisions described in the
 COPYING file.
 
-Patches that are difficult to apply are difficult to accept.
+Patches that are difficult to apply and/or review are difficult to
+accept.
 
 
 BUGS & UNEXPECTED BEHAVIOR
@@ -957,9 +958,9 @@ BUGS & UNEXPECTED BEHAVIOR
 
 When a bug or unexpected behavior is encountered that cannot be
 quickly fixed, it needs to be documented in our BUGS file or more
-formally reported to the SourceForge bug tracker at:
+formally reported to the Github issues tracker at:
 
-http://sourceforge.net/tracker/?atid=640802&group_id=105292&func=browse
+https://github.com/BRL-CAD/brlcad/issues
 
 The tracker is the main source for user-reported bugs and/or any
 issues that require significant discussion or benefit from having
@@ -989,7 +990,7 @@ access to be granted:
 
 3) Join the brlcad-devel developer mailing list, introduce yourself.
 
-4) Create a SourceForge account, submit at least two patches that
+4) Create a Github account, submit at least pull requests that
 demonstrate competency with our coding style, apply flawlessly, and
 provide some significant improvement.
 
@@ -1256,17 +1257,53 @@ Release steps are as follows:
     echo "Release preparations are under way.  Trunk sources merged to the RELEASE branch will be reviewed for sync to STABLE and release tagging.  Please help test by compiling distcheck-full and running benchmark, mged, and archer." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
 
 #####################################################################
-# 01: Sync trunk to RELEASE branch.
+# 01: Sync main to RELEASE branch.
 
-    # NON-AUTO: Review the log and obtain the last trunk merge
-    # revision number from comments.
-    svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE | grep -E 'r[0-9]{5}'
-    PREV=[[last_trunk_rev]]
-    echo "PREV=$PREV"
+    git clone git@github.com:BRL-CAD/brlcad.git
+    cd brlcad
+    git checkout RELEASE
+    git merge main
 
-    svn co https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE brlcad.RELEASE
-    cd brlcad.RELEASE
-    svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@HEAD .
+    # NON-AUTO:  The merge may succeed without conflicts.  If
+    # not, you will see the message:
+    #
+    # Automatic merge failed; fix conflicts and then commit the result.
+    #
+    # To see what the problem was, use git status:
+
+    git status
+    On branch RELEASE
+    Your branch is ahead of 'origin/RELEASE' by 1 commit.
+      (use "git push" to publish your local commits)
+
+    You have unmerged paths.
+      (fix conflicts and run "git commit")
+      (use "git merge --abort" to abort the merge)
+
+    Changes to be committed:
+            [list of cleanly merged changes]
+
+    Unmerged paths:
+      (use "git add <file>..." to mark resolution)
+	    [list of conflict files]
+
+    # The unmerged files must be inspected and their final form
+    # decided upon.  This can be done manually by editing the
+    # files to put them in their desired final state and using
+    # "git add" to mark them resolved, but it is usually more
+    # convenient and less error prone to use the git mergetool
+    # command with one of a number of tools designed for merge
+    # work.  For users new to this process practicing on a
+    # throw-away copy of the repository is recommended before
+    # doing a merge in earnest.
+    #
+    # See https://git-scm.com/docs/git-mergetool for details
+    #
+    # Some commonly used mergetool options:
+    # [meld]    https://meldmerge.org/help/resolving-conflicts.html
+    # [vimdiff] https://gist.github.com/karenyyng/f19ff75c60f18b4b8149
+
+    git mergetool
 
 #####################################################################
 # 02: Test the merge.
@@ -1288,12 +1325,16 @@ Release steps are as follows:
     cd .. && rm -rf .build
 
 #####################################################################
-# 03: Commit the merge.
+# 03: Commit the merge (if necessary) and push.
 
-    CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
-    echo "CURR=$CURR"
+    # If merge conflict resolution was needed, make a merge commit:
+    MSHA1=$(git log -1 main --pretty=format:"%h")a
+    echo $MSHA1
+    git commit -m "merge of main $MSHA1 to RELEASE branch"
 
-    svn commit -m "merge of trunk to RELEASE branch, r$PREV through r$CURR"
+    # Whether or not their was a conflict, let upstream know what
+    # has changed
+    git push
 
 #####################################################################
 # 04: Reprioritize or address remaining TODO items.
@@ -1321,11 +1362,14 @@ Release steps are as follows:
 #####################################################################
 # 07: Update ChangeLog.  Use the YYYY-MM-DD of previous NEWS entry.
 
+    TODO - if we want GNU style changelogs, more work will be needed
+    as there's not an out of the box solution...
+
     LAST=`grep -E "\--- [0-9]{4}-[0-9]{2}-[0-9]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
     echo "LAST=$LAST"
-    LAST=r57446
-    svn2cl --break-before-msg --include-rev --stdout -r HEAD:{$LAST} > ChangeLog
-    svn commit -m "update log with commits through $LAST" ChangeLog
+    git log --since=$LAST > ChangeLog
+    git add ChangeLog
+    git commit -m "Update log with commits since $LAST"
 
 #####################################################################
 # 08: Run distcheck-full on at least two platforms.
@@ -1335,19 +1379,21 @@ Release steps are as follows:
 #####################################################################
 # 09: Sync RELEASE to STABLE branch:
 
-    # Update the NEWS release date for the current release to today's date
+    # NON-AUTO: Update the NEWS release date for the current release to today's date
+    git add NEWS
+    MAJOR=`awk '{print $1}' include/conf/MAJOR`
+    MINOR=`awk '{print $1}' include/conf/MINOR`
+    PATCH=`awk '{print $1}' include/conf/PATCH`
+    UTCDATE=$(date -u)
+    git commit -m "Finalize $MAJOR.$MINOR.$PATCH release date ($UTCDATE)"
 
-    # NON-AUTO: Review the log and obtain the last merge revision
-    # number from comments.
-    svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | less
-    PREV=[[last_trunk_rev]]
-	### OR ###
-    PREV=`svn log --xml --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
-    echo "PREV=$PREV"
+    # merge RELEASE into STABLE.
+    git checkout STABLE
+    git merge --strategy-option theirs RELEASE
 
-    # merge that range of changes into STABLE
-    svn co https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
-    svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE@HEAD .
+    # NON-AUTO:  Resolve any conflicts as before, although note that
+    # the intent is usually for STABLE to match RELEASE so normally
+    # the resolution will be to make STABLE match the state of RELEASE
 
 #####################################################################
 # 10: Test the merge.
@@ -1358,10 +1404,14 @@ Release steps are as follows:
 #####################################################################
 # 11: Commit the merge.
 
-    CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
-    echo "CURR=$CURR"
+    # If merge conflict resolution was needed, make a merge commit:
+    RSHA1=$(git log -1 RELEASE --pretty=format:"%h")a
+    echo $RSHA1
+    git commit -m "merge of RELEASE $RSHA1 to STABLE branch"
 
-    svn commit -m "merging RELEASE branch to STABLE branch, r$PREV through r$CURR"
+    # Whether or not their was a conflict, let upstream know what
+    # has changed
+    git push
 
 #####################################################################
 # 12: Tag the release using "rel-MAJOR-MINOR-PATCH" format:
@@ -1370,7 +1420,9 @@ Release steps are as follows:
     MINOR=`awk '{print $1}' include/conf/MINOR`
     PATCH=`awk '{print $1}' include/conf/PATCH`
     echo "Tagging rel-$MAJOR-$MINOR-$PATCH"
-    svn cp https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE https://svn.code.sf.net/p/brlcad/code/brlcad/tags/rel-$MAJOR-$MINOR-$PATCH
+    UTCDATE=$(date -u)
+    git tag -a rel-$MAJOR-$MINOR-$PATCH -m "Tag rel-$MAJOR-$MINOR-$PATCH ($UTCDATE)"
+    git push origin rel-$MAJOR-$MINOR-$PATCH
 
 #####################################################################
 # 13: Increment and commit the next BRL-CAD release numbers to SVN.
@@ -1385,19 +1437,31 @@ Release steps are as follows:
     perl -pi -e "s/Release [0-9]+\.[0-9]+\.[0-9]+/Release $MAJOR.$MINOR.$NEXT/" README
     EXPR="s/(@---[[:space:]@-]*[0-9]{4}-)([0-9]{2}-[0-9]{2})([[:space:]]*Release[[:space:]]*${MAJOR}\.${MINOR}\.)(${PATCH})([[:space:]@-]*-@)/\$1XX-XX\${3}${NEXT}\$5@* TBD@@\1\2\3\4\5/"
     cat NEWS | tr '\n' '@' | perl -pi -e "$EXPR" | tr '@' '\n' > NEWS
-    svn commit -m "bump to next development revision after tagging the $MAJOR.$MINOR.$PATCH release" ../include/conf/PATCH
+    git add include/conf/PATCH README NEWS
+    git commit -m "Bump to next development revision after tagging the $MAJOR.$MINOR.$PATCH release"
+    git push
 
 #####################################################################
 # 14: Sync RELEASE changes back to trunk.
 
-    # Work-in-progress
+    git checkout main
+    git merge RELEASE
+
+    # NON-AUTO - resolve any conflicts
+
+    # If merge conflict resolution was needed, make a merge commit:
+    RSHA1=$(git log -1 RELEASE --pretty=format:"%h")a
+    echo $RSHA1
+    git commit -m "merge of RELEASE $RSHA1 to main branch"
+
+    git push
 
 #####################################################################
 # 15: Obtain a tagged version of the sources from the repository, make
 # final distribution tarballs:
 
-    svn checkout https://svn.code.sf.net/p/brlcad/code/brlcad/tags/rel-$MAJOR-$MINOR-$PATCH brlcad-$MAJOR.$MINOR.$PATCH
-    cd brlcad-$MAJOR.$MINOR.$PATCH-build && mkdir .build && cd .build
+    git checkout rel-$MAJOR-$MINOR-$PATCH
+    mkdir .build && cd .build
     cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck-full
 
 #####################################################################
@@ -1405,7 +1469,7 @@ Release steps are as follows:
 # tarballs to create binaries.
 
     # create a shell session and source dir
-    SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
+    SFUSERNAME=username
     echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
     ssh -v $SFUSERNAME,brlcad@shell.sf.net create
     ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"

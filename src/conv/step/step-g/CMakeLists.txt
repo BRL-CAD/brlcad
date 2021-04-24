@@ -1,14 +1,14 @@
 set(AP203_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${OPENNURBS_INCLUDE_DIRS}
+  ${OPENNURBS_INCLUDE_DIR}
   ${STEPCODE_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(AP203_INCLUDE_DIRS)
 
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap203/ap203.exp)
 add_definitions(-DAP203)
 #set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
 #add_definitions(-DAP203e2)

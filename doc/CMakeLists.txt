@@ -210,6 +210,11 @@ CMAKEFILES(
   CMakeLists.txt
   STARTERS
   STRATEGY
+  git/check.yml
+  git/gitconfig
+  git/gitk
+  git/history.txt
+  git/mime_types.txt
   notes/bsd_semaphore_bug.txt
   notes/cmake_paths/CMakeLists.txt
   notes/cmake_paths/README.txt

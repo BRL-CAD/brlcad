@@ -29,7 +29,7 @@
 #include "common.h"
 
 #include "ged.h"
-#include "rt/solid.h"
+#include "bview/defines.h"
 #include <assert.h>
 
 #include <osg/Geode>
@@ -53,7 +53,7 @@ struct osg_stuff {
 };
 
 HIDDEN void
-_osgLoadHiddenSolid(osg::Geode *geode, struct solid *sp)
+_osgLoadHiddenSolid(osg::Geode *geode, struct bview_scene_obj *sp)
 {
     register struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
     osg::Vec3dArray* vertices;
@@ -61,7 +61,7 @@ _osgLoadHiddenSolid(osg::Geode *geode, struct solid *sp)
 
 
 HIDDEN void
-_osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices, osg::Vec3dArray *normals, struct solid *sp)
+_osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices, osg::Vec3dArray *normals, struct bview_scene_obj *sp)
 {
     struct bn_vlist *tvp;
     int first;
@@ -151,7 +151,7 @@ _ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
 {
     register struct display_list *gdlp;
     register struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     struct osg_stuff *osp = (struct osg_stuff *)osgData;
 
     bu_log("_ged_osgLoadScene: part B\n");
@@ -166,7 +166,7 @@ _ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_head_scene_obj) {
 	    if (sp->s_hiddenLine) {
 		_osgLoadHiddenSolid(geode, sp);
 	    } else {

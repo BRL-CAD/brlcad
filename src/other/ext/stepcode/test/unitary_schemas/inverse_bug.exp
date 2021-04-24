@@ -1,0 +1,22 @@
+-- portion of IFC2X3_TC1.exp
+SCHEMA inverse_bug;
+
+ENTITY IfcFeatureElementAddition
+ SUBTYPE OF (IfcFeatureElement);
+ INVERSE
+    ProjectsElements : IfcRelProjectsElement FOR RelatedFeatureElement; --error about this
+END_ENTITY;
+
+ENTITY IfcFeatureElement
+ SUBTYPE OF (IfcElement);
+END_ENTITY;
+
+ENTITY IfcRelProjectsElement;
+    RelatingElement : IfcElement;
+    RelatedFeatureElement : IfcFeatureElementAddition;
+END_ENTITY;
+
+ENTITY IfcElement;
+  Tag : OPTIONAL INTEGER;
+END_ENTITY;
+END_SCHEMA;

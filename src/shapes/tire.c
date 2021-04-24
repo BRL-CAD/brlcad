@@ -63,7 +63,7 @@ int main(int ac, char *av[])
 
     /* Close database */
     wdb_close(db_fp);
-    if (ret) {
+    if (ret & GED_ERROR) {
 	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
     } else

@@ -27,9 +27,14 @@
 
 #include <string.h>
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
+
 #include "vmath.h"
+#include "bu/time.h"
+#include "bview/defines.h"
 #include "dm.h"
-#include "rt/solid.h"
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
@@ -399,6 +404,13 @@ dm_get_pathname(struct dm *dmp)
     return &(dmp->i->dm_pathName);
 }
 
+void
+dm_set_pathname(struct dm *dmp, const char *pname)
+{
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
+    bu_vls_sprintf(&(dmp->i->dm_pathName), "%s", pname);
+}
+
 const char *
 dm_get_name(const struct dm *dmp)
 {
@@ -553,10 +565,10 @@ dm_set_perspective(struct dm *dmp, fastf_t perspective)
 }
 
 int
-dm_get_display_image(struct dm *dmp, unsigned char **image)
+dm_get_display_image(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
     if (!dmp || !image) return 0;
-    return dmp->i->dm_getDisplayImage(dmp, image);
+    return dmp->i->dm_getDisplayImage(dmp, image, flip, alpha);
 }
 
 int
@@ -608,6 +620,7 @@ int
 dm_draw_begin(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
+    dmp->start_time = bu_gettime();
     return dmp->i->dm_drawBegin(dmp);
 }
 int
@@ -617,10 +630,16 @@ dm_draw_end(struct dm *dmp)
     return dmp->i->dm_drawEnd(dmp);
 }
 int
-dm_normal(struct dm *dmp)
+dm_hud_begin(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_normal(dmp);
+    return dmp->i->dm_hud_begin(dmp);
+}
+int
+dm_hud_end(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_hud_end(dmp);
 }
 int
 dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye)
@@ -641,6 +660,19 @@ dm_draw_string_2d(struct dm *dmp, const char *str, fastf_t x,  fastf_t y, int si
     return dmp->i->dm_drawString2D(dmp, str, x, y, size, use_aspect);
 }
 int
+dm_string_bbox_2d(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)
+{
+    if (!dmp || !str) return 0;
+    int ret = dmp->i->dm_String2DBBox(dmp, bmin, bmax, str, x, y, size, use_aspect);
+    if (!bmin || !bmax || ret != BRLCAD_OK) {
+	return 0;
+    }
+    if ((*bmin)[0] > 0 && (*bmin)[1] > 0 && (*bmax)[0] > 0 && (*bmax)[1] > 0) {
+	return BRLCAD_OK;
+    }
+    return BRLCAD_ERROR;
+}
+int
 dm_draw_line_2d(struct dm *dmp, fastf_t x1, fastf_t y1_2d, fastf_t x2, fastf_t y2)
 {
     if (UNLIKELY(!dmp)) return 0;
@@ -650,7 +682,6 @@ int
 dm_draw_line_3d(struct dm *dmp, point_t pt1, point_t pt2)
 {
     if (UNLIKELY(!dmp)) return 0;
-    if (!!pt1 || !pt2) return 0;
     return dmp->i->dm_drawLine3D(dmp, pt1, pt2);
 }
 int
@@ -770,6 +801,140 @@ dm_get_mvars(struct dm *dmp)
     return dmp->i->m_vars;
 }
 
+void
+_bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, const char *base)
+{
+    const struct bu_structparse *sdp;
+    char *loc;
+    int lastoff = -1;
+    for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
+	/* Skip alternate keywords for same value */
+	if (lastoff == (int)sdp->sp_offset)
+	    continue;
+	lastoff = (int)sdp->sp_offset;
+	loc = (char *)(base + sdp->sp_offset);
+
+	switch (sdp->sp_fmt[1]) {
+	    case 'c':
+	    case 's':
+		if (sdp->sp_count == 1) {
+		    if (*loc != '\0')
+			XXH64_update(state, loc, strlen((char *)loc));
+		} else {
+		    XXH64_update(state, loc, strlen((char *)loc));
+		}
+		break;
+	    case 'V':
+		{
+		    struct bu_vls *vls = (struct bu_vls *)loc;
+		    XXH64_update(state, bu_vls_cstr(vls), bu_vls_strlen(vls));
+		}
+		break;
+	    case 'i':
+		{
+		    register size_t i = sdp->sp_count;
+		    register short *sp = (short *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*sp++), sizeof(short));
+		}
+		break;
+	    case 'd':
+		{
+		    register size_t i = sdp->sp_count;
+		    register int *dp = (int *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(int));
+		}
+		break;
+	    case 'f':
+		{
+		    register size_t i = sdp->sp_count;
+		    register fastf_t *dp = (fastf_t *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(fastf_t));
+		}
+		break;
+	    case 'g':
+		{
+		    register size_t i = sdp->sp_count;
+		    register double *dp = (double *)loc;
+		    while (--i > 0) {
+			XXH64_update(state, &(*dp++), sizeof(fastf_t));
+		    }
+		    break;
+		}
+	    case 'x':
+		{
+		    register size_t i = sdp->sp_count;
+		    register int *dp = (int *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(int));
+		}
+		break;
+	    case 'p':
+		BU_ASSERT(sdp->sp_count == 1);
+		_bu_structparse_hash(state, (struct bu_structparse *)sdp->sp_offset, base);
+		break;
+	    default:
+		break;
+	}
+    }
+}
+
+unsigned long long
+dm_hash(struct dm *dmp)
+{
+    if (!dmp)
+	return 0;
+
+    XXH64_hash_t hash_val;
+    XXH64_state_t *state;
+    state = XXH64_createState();
+    if (!state)
+	return 0;
+    XXH64_reset(state, 0);
+
+    // Note:  deliberately not checking names - a rename doesn't change the dm.
+    // Also deliberately not checking dirty flag - that's usually what we're
+    // using this hash to set or not set.
+    XXH64_update(state, &dmp->i->dm_stereo, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_bound, sizeof(double));
+    XXH64_update(state, &dmp->i->dm_boundFlag, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_width, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_height, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_lineWidth, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_lineStyle, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_aspect, sizeof(fastf_t));
+    XXH64_update(state, &dmp->i->dm_bg, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_fg, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_clipmin, sizeof(vect_t));
+    XXH64_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));
+    XXH64_update(state, &dmp->i->dm_perspective, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_light, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_transparency, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_depthMask, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_zbuffer, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_zclip, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_fontsize, sizeof(int));
+
+    if (dmp->i->fbp) {
+	// TODO - check for framebuffer changes as well...
+    }
+
+    // Also check for changes in backend specific values by iterating
+    // using the structparse.
+    struct bu_structparse *pt = dm_get_vparse(dmp);
+    void *mvars = dm_get_mvars(dmp);
+    if (pt && mvars) {
+	_bu_structparse_hash(state, pt, (const char *)mvars);
+    }
+
+
+    hash_val = XXH64_digest(state);
+    XXH64_freeState(state);
+
+    return (unsigned long long)hash_val;
+}
 
 /* Routines for drawing based on a list of display_list
  * structures.  This will probably need to be a struct dm
@@ -778,7 +943,7 @@ dm_get_mvars(struct dm *dmp)
  * and into libdm. */
 static int
 dm_drawSolid(struct dm *dmp,
-	     struct solid *sp,
+	     struct bview_scene_obj *sp,
 	     short r,
 	     short g,
 	     short b,
@@ -830,7 +995,7 @@ dm_draw_display_list(struct dm *dmp,
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bview_scene_obj *sp;
     fastf_t ratio;
     int ndrawn = 0;
     int opaque = 0;
@@ -840,7 +1005,7 @@ dm_draw_display_list(struct dm *dmp,
     while (BU_LIST_NOT_HEAD(gdlp, dl)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (solids_down) sp->s_flag = DOWN;              /* Not drawn yet */
 
 	    /* If part of object edit, will be drawn below */
@@ -894,7 +1059,6 @@ dm_draw_display_list(struct dm *dmp,
 
     return ndrawn;
 }
-
 
 /*
  * Local Variables:

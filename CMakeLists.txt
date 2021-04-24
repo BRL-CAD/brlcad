@@ -106,6 +106,15 @@ list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
 
 
 #---------------------------------------------------------------------
+# We definitely do not want a .gitattributes files present, as it is
+# a potential source of subtle problems.  Bail with an explanation if
+# it is found to be present.
+if (EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
+  message(FATAL_ERROR "\nBRL-CAD does not use a .gitattributes file in its repository.  This is intended to prevent subtle errors from creeping in due to inadvertant pattern matches.  See ${BRLCAD_SOURCE_DIR}/doc/git/mime_types.txt for an in-depth discussion of the recommended alternatives to use for the problems .gitattributes is intended to address.\n")
+endif (EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
+
+
+#---------------------------------------------------------------------
 # Setup and checks related to system environment settings.  Some of
 # these impact search results needed to set default options, so we
 # do this early in the process.
@@ -142,6 +151,11 @@ if(NOT EXISTS ${BRLCAD_CNT_FILE})
 else(NOT EXISTS ${BRLCAD_CNT_FILE})
   set(BRLCAD_PRINT_MSGS 0)
 endif(NOT EXISTS ${BRLCAD_CNT_FILE})
+
+# Now that we know whether or not we're supposed to, print the CMake verison
+if(BRLCAD_PRINT_MSGS)
+  message(STATUS "CMake version: ${CMAKE_VERSION}")
+endif(BRLCAD_PRINT_MSGS)
 
 #---------------------------------------------------------------------
 # Define an option to use OBJECT libraries.  If we are building with object
@@ -256,12 +270,31 @@ include(BRLCAD_Install_Prefix)
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 # Documentation of these options is available at
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
+if (NOT COMMAND std_build_rpath)
+  include(RPath_Setup)
+endif (NOT COMMAND std_build_rpath)
 
-# TODO - once we've shifted to function invocation rather than having
-# our logic execute on load, this "include" step will probably be
-# consolidated into one large include...
-include(RPath_Setup)
-cmake_set_rpath()
+# We want the full RPATH set in the build tree so we can run programs without
+# needing to set LD_LIBRARY_PATH
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+
+# We DON'T want the final install directory RPATH set in the build directory
+# - it should only be set to the installation value when actually installed.
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# Add the automatically determined parts of the RPATH which point to
+# directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Set RPATH value to use when installing.  This should be set to always
+# prefer the version in the installed path when possible, but fall back on a
+# location relative to the loading file's path if the installed version is
+# not present.  How to do so is platform specific.
+relative_rpath(RELPATH)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
+
+std_build_rpath()
+
 
 #---------------------------------------------------------------------
 # We need compiler support for certain C and C++ standards when we
@@ -511,6 +544,10 @@ if(BRLCAD_PRINT_MSGS)
   message("*     Stage 3 of 9 - Check for Compiler Characteristics   *")
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
+
+# TODO - the Ninja single config generator in Release build uses the O3
+# and other optimization flags, but they don't seem to make it to the
+# step-g sources in MultiConfig release build???
 
 # load our compiler testing macro definitions
 include(CompilerFlags)
@@ -1225,12 +1262,6 @@ endif(BRLCAD_PRINT_MSGS)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
-if(CMAKE_THREAD_LIBS_INIT)
-  message("Using threading library: ${CMAKE_THREAD_LIBS_INIT}")
-else(CMAKE_THREAD_LIBS_INIT)
-  message("Using threading from system library")
-endif(CMAKE_THREAD_LIBS_INIT)
-
 # By default, the Threads package doesn't stash any of its values in
 # cache.  This is inconvenient for debugging, so we set them ourselves.
 set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} CACHE STRING "Threads")
@@ -1385,6 +1416,7 @@ BRLCAD_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
 BRLCAD_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
 BRLCAD_INCLUDE_FILE(getopt.h HAVE_GETOPT_H)
+BRLCAD_INCLUDE_FILE(GL/gl.h HAVE_GL_GL_H)
 BRLCAD_INCLUDE_FILE(gl/device.h HAVE_GL_DEVICE_H)
 BRLCAD_INCLUDE_FILE(gl/glext.h HAVE_GL_GLEXT_H)
 BRLCAD_INCLUDE_FILE(gl/wglext.h HAVE_GL_WGLEXT_H)
@@ -1476,12 +1508,16 @@ BRLCAD_CHECK_DIRNAME()
 
 # OpenGL headers
 if(BRLCAD_ENABLE_OPENGL)
+  find_package(OpenGL)
   if(OPENGL_INCLUDE_DIR_GL)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GL_H 1\n")
   endif(OPENGL_INCLUDE_DIR_GL)
   if(OPENGL_INCLUDE_DIR_GLX)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GLX_H 1\n")
   endif(OPENGL_INCLUDE_DIR_GLX)
+  if(OPENGL_USING_FRAMEWORK)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_OPENGL_GL_H 1\n")
+  endif(OPENGL_USING_FRAMEWORK)
 endif(BRLCAD_ENABLE_OPENGL)
 
 # may have the header, but ensure it works in pedantic mode (gcc bug)
@@ -1939,24 +1975,24 @@ if (NOT BRLCAD_LEVEL2)
   set(BRLCAD_ENABLE_TCL OFF CACHE BOOL "Disabled due to level 1 build" FORCE)
 endif (NOT BRLCAD_LEVEL2)
 
-# At the start, clear the src/other subdirs list so repeated
+# Before we head into src/other and misc/tools, store all the build
+# flags that have been built up.  It's hard to be sure what will and
+# won't be set in those directories, so make sure we can restore the
+# BRL-CAD flags for the actual BRL-CAD subdirectories.
+CACHE_BUILD_FLAGS(_BRLCAD)
+
+# At the start, clear the misc/tools subdirs list so repeated
 # configures will correctly add the required directories
-set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
-mark_as_advanced(SRC_OTHER_ADDED_DIRS)
+set(MISC_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+mark_as_advanced(MISC_ADDED_DIRS)
 
-function(SetTargetFolder targetname folder)
-  if(TARGET ${targetname})
-    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
-  endif(TARGET ${targetname})
-endfunction(SetTargetFolder)
-
-# Load some CMake macros to handle the special case of third party libraries.
-include(ThirdParty)
+# The first order of business is the ext projects
+add_subdirectory(src/other/ext)
 
 # Add misc/tools for tools that are used in BRL-CAD's build process
 # but are not otherwise usable in BRL-CAD (due to licensing, design
 # intent, etc.)  misc/tools must be handled before src/other because
-# some of src/other's projects need tools from misc/tools.
+# some of src/other's projects may need tools from misc/tools.
 add_subdirectory(misc/tools)
 
 # Now that we've done the system tests with BRL-CAD's compile flags,
@@ -1970,14 +2006,17 @@ add_subdirectory(src/other)
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
 
-# Restore BRL-CAD configurations, if necessary
-if(NOT ENABLE_ALL_CONFIG_TYPES)
-  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-endif(NOT ENABLE_ALL_CONFIG_TYPES)
-
-
+# Define some Tcl related variables for libtclcad
+if(BRLCAD_ITCL_BUILD)
+  CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
+endif(BRLCAD_ITCL_BUILD)
+if(BRLCAD_ITK_BUILD)
+  CONFIG_H_APPEND(BRLCAD "#cmakedefine ITK_VERSION \"${ITK_VERSION}\"\n")
+endif(BRLCAD_ITK_BUILD)
+if(DEFINED IWIDGETS_VERSION)
+  set(IWIDGETS_VERSION "4.1.1")
+  CONFIG_H_APPEND(BRLCAD "#cmakedefine IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
+endif(DEFINED IWIDGETS_VERSION)
 
 if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
@@ -2264,7 +2303,17 @@ if(NOT BRLCAD_IS_SUBBUILD)
   CREATE_DISTCHECK(no_object "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DUSE_OBJECT_LIBS=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
-  CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
+  # The odd pathnames test cannot work with bundled autoconf builds, so disable
+  # if any of them have set the flag.  This isn't perfect, since a configure
+  # with BRLCAD_BUNDLED_LIBS= BUNDLED will disable this test even if a viable
+  # system component is present.  However, the complexity/fragility of
+  # attempting to stash the system detections when we want the variables set to
+  # the bundled versions outweighs the minor benefit of trying harder to enable
+  # this test (which may or may not be viable anyway depending on system
+  # component availability.)
+  if (NOT BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
+    CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED ${BRLCAD_DISABLE_ODD_PATHNAMES_FLAGS}" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
+  endif (NOT BRLCAD_DISABLE_ODD_PATHNAMES_TEST)
   CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "install" distcheck_in_src_dir.cmake.in)
 
   # Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets

@@ -36,7 +36,7 @@
 
 class DisplayManager{
 public:
-    explicit DisplayManager(Display *display);
+    explicit DisplayManager(BRLCADDisplay *display);
 
     // most of the methods below correspond to a method with a similar name from libdm
     void drawVList(bn_vlist *vp);
@@ -57,7 +57,7 @@ public:
     void loadPMatrix(const GLfloat *m);
 
 private:
-    Display *display;
+    BRLCADDisplay *display;
 
     int dmLight = 1;
     bool dmTransparency = false;

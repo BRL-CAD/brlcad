@@ -614,8 +614,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	/* default transparency - opaque */
 	dgcdp.transparency = 1.0;
 
-	/* freesolid */
-	dgcdp.freesolid = gedp->freesolid;
+	/* free_scene_obj */
+	dgcdp.free_scene_obj = gedp->free_scene_obj;
 
 	enable_fastpath = 0;
 
@@ -848,7 +848,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
-		    struct bview_solid_data bview_data;
+		    struct ged_solid_data bview_data;
 		    bview_data.draw_solid_lines_only = dgcdp.draw_solid_lines_only;
 		    bview_data.wireframe_color_override = dgcdp.wireframe_color_override;
 		    bview_data.wireframe_color[0]= dgcdp.wireframe_color[0];
@@ -857,7 +857,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bview_data.transparency= dgcdp.transparency;
 		    bview_data.dmode = dgcdp.dmode;
 		    bview_data.hiddenLine = dgcdp.hiddenLine;
-		    bview_data.freesolid = (void *)gedp->freesolid;
+		    bview_data.free_scene_obj = (void *)gedp->free_scene_obj;
 
 		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 		    bview_data.gdlp = dgcdp.gdlp;
@@ -1230,7 +1230,7 @@ ged_ev_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 int
-ged_redraw(struct ged *gedp, int argc, const char *argv[])
+ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     struct display_list *gdlp;
@@ -1318,6 +1318,9 @@ const struct ged_cmd e_cmd = { &e_cmd_impl };
 struct ged_cmd_impl ev_cmd_impl = {"ev", ged_ev_core, GED_CMD_DEFAULT};
 const struct ged_cmd ev_cmd = { &ev_cmd_impl };
 
+struct ged_cmd_impl redraw_cmd_impl = {"redraw", ged_redraw_core, GED_CMD_DEFAULT};
+const struct ged_cmd redraw_cmd = { &redraw_cmd_impl };
+
 extern int ged_loadview_core(struct ged *gedp, int argc, const char *argv[]);
 struct ged_cmd_impl loadview_cmd_impl = {"loadview", ged_loadview_core, GED_CMD_DEFAULT};
 const struct ged_cmd loadview_cmd = { &loadview_cmd_impl };
@@ -1326,9 +1329,9 @@ extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
 struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
 const struct ged_cmd preview_cmd = { &preview_cmd_impl };
 
-const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &loadview_cmd, &preview_cmd, NULL };
+const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 5 };
+static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 6 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

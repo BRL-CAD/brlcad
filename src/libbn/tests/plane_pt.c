@@ -173,6 +173,43 @@ test_bn_make_plane_3pnts(int argc, char **argv)
     return (expected_return != actual_return);
 }
 
+static int
+test_bn_plane_closest_pt(int argc, char **argv)
+{
+    point_t p = VINIT_ZERO;
+    plane_t plane = HINIT_ZERO;
+
+    argc--;argv++;
+    argc--;argv++;
+
+    if (argc != 2) {
+	bu_exit(1, "ERROR: input format is Nx,Ny,Nz,Nw Px,Py,Pz\n");
+    }
+
+    sscanf(argv[0], "%lf,%lf,%lf,%lf", &plane[0], &plane[1], &plane[2], &plane[3]);
+    sscanf(argv[1], "%lf,%lf,%lf", &p[X], &p[Y], &p[Z]);
+
+    fastf_t u, v;
+    point_t npt;
+    if (bn_plane_closest_pt(&u, &v, plane, p)) {
+	bu_log("closest pt calculation failed\n");
+	return -1;
+    }
+    if (bn_plane_pt_at(&npt, plane, u, v)) {
+	bu_log("pt at u,v calculation failed\n");
+	return -1;
+    }
+
+    if (!VNEAR_EQUAL(p, npt, VUNITIZE_TOL)) {
+	bu_log("point differs after calculations!\n");
+	bu_log("original : %.15f %.15f %.15f\n", V3ARGS(p));
+	bu_log("post-calc: %.15f %.15f %.15f\n", V3ARGS(npt));
+	return -1;
+    }
+
+    return 0;
+}
+
 
 int
 plane_pt_main(int argc, char *argv[])
@@ -184,7 +221,7 @@ plane_pt_main(int argc, char *argv[])
     }
 
     sscanf(argv[1], "%d", &function_num);
-    if (function_num < 1 || function_num > 5)
+    if (function_num < 1 || function_num > 6)
 	function_num = 0;
 
     switch (function_num) {
@@ -198,6 +235,8 @@ plane_pt_main(int argc, char *argv[])
 	    return test_bn_distsq_pnt3_lseg3_v2(argc, argv);
 	case 5:
 	    return test_bn_make_plane_3pnts(argc, argv);
+	case 6:
+	    return test_bn_plane_closest_pt(argc, argv);
     }
     return 1;
 }

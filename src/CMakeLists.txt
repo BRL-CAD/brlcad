@@ -34,6 +34,7 @@ set(level_1_dirs
 # programs.
 
 set(level_2_dirs
+  libbview
   libpkg
   libgcv
   libanalyze
@@ -75,6 +76,7 @@ set(level_3_dirs
   # as dependencies for the targets in these directories
   tclscripts
   adrt
+  isst
   rtwizard
   archer
   mged

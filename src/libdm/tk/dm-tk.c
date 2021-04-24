@@ -60,7 +60,7 @@
 #include "./dm-tk.h"
 #include "../null/dm-Null.h"
 #include "../include/private.h"
-#include "rt/solid.h"
+#include "bview/defines.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -101,6 +101,7 @@ tk_open(void *vinterp, int argc, const char **argv)
 
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp_impl, struct dm_impl);
 
@@ -678,12 +679,8 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
 }
 
 
-/*
- * Restore the display processor to a normal mode of operation
- * (i.e., not scaled, rotated, displaced, etc.).
- */
 HIDDEN int
-tk_normal(struct dm *dmp)
+tk_hud_begin(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
 	bu_log("tk_normal()\n");
@@ -691,6 +688,14 @@ tk_normal(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+HIDDEN int
+tk_hud_end(struct dm *dmp)
+{
+    if (dmp->i->dm_debugLevel)
+	bu_log("tk_normal()\n");
+
+    return BRLCAD_OK;
+}
 
 /*
  * Output a string into the displaylist.
@@ -1112,10 +1117,12 @@ struct dm_impl dm_tk_impl = {
     tk_viable,
     tk_drawBegin,
     tk_drawEnd,
-    tk_normal,
+    tk_hud_begin,
+    tk_hud_end,
     tk_loadMatrix,
     null_loadPMatrix,
     tk_drawString2D,
+    null_String2DBBox,
     tk_drawLine2D,
     tk_drawLine3D,
     tk_drawLines3D,
@@ -1146,6 +1153,7 @@ struct dm_impl dm_tk_impl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     null_doevent,
     null_openFb,
     NULL,
@@ -1202,7 +1210,7 @@ struct dm_impl dm_tk_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_tk = { DM_MAGIC, &dm_tk_impl };
+struct dm dm_tk = { DM_MAGIC, &dm_tk_impl, 0 };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_tk };

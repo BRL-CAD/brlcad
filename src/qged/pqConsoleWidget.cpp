@@ -110,6 +110,26 @@ public:
 	  return this->font();
   }
 
+  void insertFromMimeData(const QMimeData * s)
+  {
+    QTextCursor text_cursor = this->textCursor();
+
+    // Set to true if the cursor overlaps the history area
+    const bool history_area =
+      text_cursor.anchor() < this->InteractivePosition
+      || text_cursor.position() < this->InteractivePosition;
+
+    // Avoid pasting into history
+    if (history_area) {
+       return;
+    }
+
+    QPlainTextEdit::insertFromMimeData(s);
+
+    // The text changed - make sure the command buffer knows
+    this->updateCommandBuffer();
+  }
+
   void keyPressEvent(QKeyEvent* e)
   {
     QTextCursor text_cursor = this->textCursor();

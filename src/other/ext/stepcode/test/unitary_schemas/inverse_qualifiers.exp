@@ -1,0 +1,66 @@
+-- ../242_arm_lf.exp:3268: --ERROR PE062:  in entity assembly_component
+
+SCHEMA inverse_problem;
+
+(* DERIVED FROM
+  $Id: arm_lf.exp,v 1.22 2013/03/05 14:34:57 thomasrthurman Exp $
+  ISO TC184/SC4/WG12 N8322 - ISO/TS 10303-442 AP242 managed model based 3d engineering - EXPRESS ARM Long form
+*)
+
+  TYPE product_view_definition_or_reference = STRING;
+  END_TYPE; -- product_view_definition_or_reference
+
+  ENTITY product_view_definition;
+      id                          : OPTIONAL STRING;
+      name                        : OPTIONAL STRING;
+      additional_characterization : OPTIONAL STRING;
+  END_ENTITY; -- product_view_definition
+
+  ENTITY product_occurrence_definition_relationship
+    ABSTRACT SUPERTYPE;
+      relating_view : product_view_definition_or_reference;
+      related_view  : product_view_definition_or_reference;
+  END_ENTITY; -- product_occurrence_definition_relationship
+
+  ENTITY assembly_component_relationship
+    SUBTYPE OF ( product_occurrence_definition_relationship );
+      location_indicator : OPTIONAL STRING;
+  END_ENTITY; -- assembly_component_relationship
+
+  ENTITY definition_based_product_occurrence
+    SUBTYPE OF ( product_occurrence );
+  END_ENTITY; -- definition_based_product_occurrence
+
+  ENTITY single_instance
+    SUBTYPE OF ( product_occurrence );
+  END_ENTITY; -- single_instance
+
+  ENTITY part_occurrence_shape
+    SUBTYPE OF ( item_shape );
+  END_ENTITY; -- part_occurrence_shape
+
+  ENTITY assembly_component
+    SUBTYPE OF ( definition_based_product_occurrence,
+        part_occurrence_shape );
+    INVERSE
+      SELF\product_occurrence.occurrence_contexts : SET [1 : ?] OF
+                                                        assembly_component_relationship FOR
+                                                        related_view;
+  END_ENTITY; -- assembly_component
+
+  ENTITY item_shape;
+      id          : OPTIONAL STRING;
+      description : OPTIONAL STRING;
+  END_ENTITY; -- item_shape
+
+  ENTITY product_occurrence
+    ABSTRACT SUPERTYPE OF ( ONEOF ( single_instance ) AND ONEOF (
+        definition_based_product_occurrence ) )
+    SUBTYPE OF ( product_view_definition );
+    INVERSE
+      occurrence_contexts : SET [0 : ?] OF
+                                product_occurrence_definition_relationship FOR
+                               related_view;
+  END_ENTITY; -- product_occurrence
+
+END_SCHEMA; -- inverse_problem

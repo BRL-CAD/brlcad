@@ -50,7 +50,6 @@ set(embedded_licenses
   pstdint.txt
   qsort.txt
   QFlowLayout.txt
-  QtADS.txt
   QuickHull.txt
   realpath.txt
   rply.txt
@@ -75,6 +74,7 @@ set(embedded_licenses
   whereami.txt
   winmmap.txt
   x24.txt
+  xxhash.txt
   y2038.txt
   )
 

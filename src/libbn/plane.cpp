@@ -1,4 +1,4 @@
-/*                         P L A N E . C
+/*                       P L A N E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2021 United States Government as represented by
@@ -2528,6 +2528,21 @@ bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
     return 1;
 }
 
+extern "C" int
+bn_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
+{
+    if (!p)
+	return -1;
+    vect_t unrml;
+    VMOVE(unrml, nrml);
+    VUNITIZE(nrml);
+    (*p)[0] = unrml[0];
+    (*p)[1] = unrml[1];
+    (*p)[2] = unrml[2];
+    (*p)[3] = -(unrml[0]*pt[0] + unrml[1]*pt[1] + unrml[2]*pt[2]);
+    return 0;
+}
+
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 // http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
 extern "C" int
@@ -2568,6 +2583,108 @@ bn_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts)
     return 0;
 }
 
+/* Translate the OpenNURBS algorithm to VMATH types */
+extern "C" int
+bn_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt)
+{
+    if (!u || !v)
+	return -1;
+
+    point_t origin;
+    vect_t xaxis, yaxis, zaxis;
+    VSET(zaxis, p[0], p[1], p[2]);
+    fastf_t x, y, z, d;
+    x = fabs(p[0]);
+    y = fabs(p[1]);
+    z = fabs(p[2]);
+    d = 0.0;
+    if ( y >= x && y >= z ) {
+	d = x;
+	x = y;
+	y = d;
+    } else if ( z >= x && z >= y ) {
+	d = x;
+	x = z;
+	z = d;
+    }
+    if ( x > SMALL_FASTF ) {
+	y /= x;
+	z /= x;
+	d = x*sqrt(1.0 + y*y + z*z);
+    } else if ( x > 0.0 && x < MAX_FASTF ) {
+	d = x;
+    }
+
+    if (d < 0 || NEAR_ZERO(d, SMALL_FASTF))
+	return -1;
+
+    VMOVE(origin, zaxis);
+    VSCALE(origin, origin, -1/d*p[3]);
+    VUNITIZE(zaxis);
+    bn_vec_perp(xaxis, zaxis);
+    VUNITIZE(xaxis);
+    VCROSS(yaxis, zaxis, xaxis);
+    VUNITIZE(yaxis);
+    vect_t vc;
+    VSUB2(vc, pt, origin);
+
+    *u = VDOT(vc, xaxis);
+    *v = VDOT(vc, yaxis);
+
+    return 0;
+}
+
+/* Translate the OpenNURBS algorithm to VMATH types */
+extern "C" int
+bn_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v)
+{
+    if (!pt)
+	return -1;
+
+    point_t origin;
+    vect_t xaxis, yaxis, zaxis;
+    VSET(zaxis, p[0], p[1], p[2]);
+    fastf_t x, y, z, d;
+    x = fabs(p[0]);
+    y = fabs(p[1]);
+    z = fabs(p[2]);
+    d = 0.0;
+    if ( y >= x && y >= z ) {
+	d = x;
+	x = y;
+	y = d;
+    } else if ( z >= x && z >= y ) {
+	d = x;
+	x = z;
+	z = d;
+    }
+    if ( x > SMALL_FASTF ) {
+	y /= x;
+	z /= x;
+	d = x*sqrt(1.0 + y*y + z*z);
+    } else if ( x > 0.0 && x < MAX_FASTF ) {
+	d = x;
+    }
+
+    if (d < 0 || NEAR_ZERO(d, SMALL_FASTF))
+	return -1;
+
+    VMOVE(origin, zaxis);
+    VSCALE(origin, origin, -1/d*p[3]);
+    VUNITIZE(zaxis);
+    bn_vec_perp(xaxis, zaxis);
+    VUNITIZE(xaxis);
+    VCROSS(yaxis, zaxis, xaxis);
+    VUNITIZE(yaxis);
+
+    VSCALE(xaxis, xaxis, u);
+    VSCALE(yaxis, yaxis, v);
+    VADD2(origin, origin, xaxis);
+    VADD2(origin, origin, yaxis);
+    VMOVE(*pt, origin);
+
+    return 0;
+}
 
 /** @} */
 /*

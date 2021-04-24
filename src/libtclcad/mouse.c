@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include "bu/path.h"
+#include "bview.h"
 #include "tclcad.h"
 
 /* Private headers */
@@ -102,17 +103,21 @@ to_mouse_append_pnt_common(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
+
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 
     gedp->ged_gvp = gdvp;
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &view[X], &view[Y]);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &view[X], &view[Y]);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &view[X], &view[Y]);
+	bview_snap_grid_2d(gedp->ged_gvp, &view[X], &view[Y]);
     }
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -190,8 +195,9 @@ to_mouse_brep_selection_append(struct ged *gedp,
     gdvp->gv_prevMouseY = screen_pt[Y];
 
     /* convert screen point to model-space start point and direction */
-    view_pt[X] = screen_to_view_x((struct dm *)gdvp->dmp, screen_pt[X]);
-    view_pt[Y] = screen_to_view_y((struct dm *)gdvp->dmp, screen_pt[Y]);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &view_pt[X], &view_pt[Y], screen_pt[X], screen_pt[Y]);
     view_pt[Z] = 1.0;
 
     MAT4X3PNT(model_pt, gdvp->gv_view2model, view_pt);
@@ -296,13 +302,15 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     }
 
     /* convert screen-space delta to model-space delta */
-    view_start[X] = screen_to_view_x((struct dm *)gdvp->dmp, gdvp->gv_prevMouseX);
-    view_start[Y] = screen_to_view_y((struct dm *)gdvp->dmp, gdvp->gv_prevMouseY);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &view_start[X], &view_start[Y], gdvp->gv_prevMouseX, gdvp->gv_prevMouseY);
     view_start[Z] = 1;
     MAT4X3PNT(model_start, gdvp->gv_view2model, view_start);
 
-    view_end[X] = screen_to_view_x((struct dm *)gdvp->dmp, screen_end[X]);
-    view_end[Y] = screen_to_view_y((struct dm *)gdvp->dmp, screen_end[Y]);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &view_end[X], &view_end[Y], screen_end[X], screen_end[Y]);
     view_end[Z] = 1;
     MAT4X3PNT(model_end, gdvp->gv_view2model, view_end);
 
@@ -604,8 +612,9 @@ to_mouse_find_arb_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -665,8 +674,9 @@ to_mouse_find_bot_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -725,8 +735,9 @@ to_mouse_find_bot_pnt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -786,8 +797,9 @@ to_mouse_find_metaball_pnt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gv_view2model, view);
 
@@ -848,8 +860,9 @@ to_mouse_find_pipe_pnt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    y = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &x, &y, x, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gv_view2model, view);
 
@@ -921,8 +934,9 @@ to_mouse_joint_select(
     gdvp->gv_prevMouseY = screen_pt[Y];
 
     /* convert screen point to model-space start point and direction */
-    view_pt[X] = screen_to_view_x((struct dm *)gdvp->dmp, screen_pt[X]);
-    view_pt[Y] = screen_to_view_y((struct dm *)gdvp->dmp, screen_pt[Y]);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &view_pt[X], &view_pt[Y], screen_pt[X], screen_pt[Y]);
     view_pt[Z] = 1.0;
 
     MAT4X3PNT(model_pt, gdvp->gv_view2model, view_pt);
@@ -1025,13 +1039,15 @@ to_mouse_joint_selection_translate(
     }
 
     /* convert screen-space delta to model-space delta */
-    view_start[X] = screen_to_view_x((struct dm *)gdvp->dmp, gdvp->gv_prevMouseX);
-    view_start[Y] = screen_to_view_y((struct dm *)gdvp->dmp, gdvp->gv_prevMouseY);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &view_start[X], &view_start[Y], gdvp->gv_prevMouseX, gdvp->gv_prevMouseY);
     view_start[Z] = 1;
     MAT4X3PNT(model_start, gdvp->gv_view2model, view_start);
 
-    view_end[X] = screen_to_view_x((struct dm *)gdvp->dmp, screen_end[X]);
-    view_end[Y] = screen_to_view_y((struct dm *)gdvp->dmp, screen_end[Y]);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &view_end[X], &view_end[Y], screen_end[X], screen_end[Y]);
     view_end[Z] = 1;
     MAT4X3PNT(model_end, gdvp->gv_view2model, view_end);
 
@@ -1448,8 +1464,9 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 	MAT4X3PNT(view, gdvp->gv_model2view, &botip->vertices[vertex_i*3]);
 	MAT_COPY(v2m_mat, gdvp->gv_view2model);
 
-	dx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-	dy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+	gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+	bview_screen_to_view(gdvp, &dx, &dy, x, y);
 	dz = view[Z];
 
 	rt_db_free_internal(&intern);
@@ -1995,15 +2012,15 @@ to_mouse_otranslate(struct ged *gedp,
     if (0 < bu_vls_strlen(&tvd->gdv_edit_motion_delta_callback)) {
 	const char *path_string = argv[2];
 	vect_t dvec;
-	struct path_edit_params *params = (struct path_edit_params *)bu_hash_get(tgd->go_edited_paths,
+	struct dm_path_edit_params *params = (struct dm_path_edit_params *)bu_hash_get(tgd->go_dmv.edited_paths,
 										 (uint8_t *)path_string,
 										 sizeof(char) * strlen(path_string) + 1);
 
 	if (!params) {
-	    BU_GET(params, struct path_edit_params);
+	    BU_GET(params, struct dm_path_edit_params);
 	    params->edit_mode = gdvp->gv_mode;
 	    params->dx = params->dy = 0.0;
-	    (void)bu_hash_set(tgd->go_edited_paths,
+	    (void)bu_hash_set(tgd->go_dmv.edited_paths,
 			      (uint8_t *)path_string,
 			      sizeof(char) * strlen(path_string) + 1, (void *)params);
 	}
@@ -2071,7 +2088,7 @@ go_mouse_poly_circ(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_mouse_poly_circ_func(interp, gedp, gdvp, argc, argv, usage);
@@ -2153,15 +2170,16 @@ to_mouse_poly_circ_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
 
-    fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &fx, &fy, x, y);
 
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fx, &fy);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &fx, &fy);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fx, &fy);
+	bview_snap_grid_2d(gedp->ged_gvp, &fx, &fy);
     }
 
     bu_vls_printf(&plist, "{0 ");
@@ -2245,7 +2263,7 @@ go_mouse_poly_cont(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_mouse_poly_cont_func(interp, gedp, gdvp, argc, argv, usage);
@@ -2325,8 +2343,9 @@ to_mouse_poly_cont_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
 
-    fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &fx, &fy, x, y);
     VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
 
     MAT4X3PNT(m_pt, gdvp->gv_view2model, v_pt);
@@ -2385,7 +2404,7 @@ go_mouse_poly_ell(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_mouse_poly_ell_func(interp, gedp, gdvp, argc, argv, usage);
@@ -2467,14 +2486,17 @@ to_mouse_poly_ell_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
 
-    fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &fx, &fy, x, y);
+
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fx, &fy);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &fx, &fy);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fx, &fy);
+	bview_snap_grid_2d(gedp->ged_gvp, &fx, &fy);
     }
 
     bu_vls_printf(&plist, "{0 ");
@@ -2567,7 +2589,7 @@ go_mouse_poly_rect(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     return to_mouse_poly_rect_func(interp, gedp, gdvp, argc, argv, usage);
@@ -2649,14 +2671,16 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
 
-    fx = screen_to_view_x((struct dm *)gdvp->dmp, x);
-    fy = screen_to_view_y((struct dm *)gdvp->dmp, y);
+    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    bview_screen_to_view(gdvp, &fx, &fy, x, y);
+
     int snapped = 0;
     if (gedp->ged_gvp->gv_snap_lines) {
-	snapped = ged_snap_to_lines(gedp, &fx, &fy);
+	snapped = bview_snap_lines_2d(gedp->ged_gvp, &fx, &fy);
     }
     if (!snapped && gedp->ged_gvp->gv_grid.snap) {
-	ged_snap_to_grid(gedp, &fx, &fy);
+	bview_snap_grid_2d(gedp->ged_gvp, &fx, &fy);
     }
 
 

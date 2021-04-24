@@ -45,7 +45,7 @@
 #include "./dm-ps.h"
 #include "../null/dm-Null.h"
 
-#include "rt/solid.h"
+#include "bview/defines.h"
 
 #include "../include/private.h"
 
@@ -71,15 +71,19 @@ static int ps_close(struct dm *dmp);
  *
  */
 struct dm *
-ps_open(void *vinterp, int argc, const char *argv[])
+ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;
     Tcl_Obj *obj;
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
+    if (!interp)
+	return NULL;
+
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp->i, struct dm_impl);
 
@@ -560,19 +564,24 @@ ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
 }
 
 
-/*
- * Restore the display processor to a normal mode of operation
- * (i.e., not scaled, rotated, displaced, etc.).
- * Turns off windowing.
- */
 HIDDEN int
-ps_normal(struct dm *dmp)
+ps_hud_begin(struct dm *dmp)
 {
     if (!dmp)
 	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
 }
+
+HIDDEN int
+ps_hud_end(struct dm *dmp)
+{
+    if (!dmp)
+	return BRLCAD_ERROR;
+
+    return BRLCAD_OK;
+}
+
 
 
 /*
@@ -741,10 +750,12 @@ struct dm_impl dm_ps_impl = {
     ps_viable,
     ps_drawBegin,
     ps_drawEnd,
-    ps_normal,
+    ps_hud_begin,
+    ps_hud_end,
     ps_loadMatrix,
     null_loadPMatrix,
     ps_drawString2D,
+    null_String2DBBox,
     ps_drawLine2D,
     ps_drawLine3D,
     ps_drawLines3D,
@@ -775,6 +786,7 @@ struct dm_impl dm_ps_impl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     null_doevent,
     null_openFb,
     NULL,
@@ -832,7 +844,7 @@ struct dm_impl dm_ps_impl = {
 };
 
 
-struct dm dm_ps = { DM_MAGIC, &dm_ps_impl };
+struct dm dm_ps = { DM_MAGIC, &dm_ps_impl, 0 };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_ps };

@@ -91,7 +91,7 @@ mged_dm_init(struct mged_dm *o_dm,
     /* register application provided routines */
     cmd_hook = dm_commands;
 
-    if ((DMP = dm_open((void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    if ((DMP = dm_open(NULL, (void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */

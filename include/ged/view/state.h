@@ -108,6 +108,10 @@ GED_EXPORT extern int ged_rect(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_keypoint(struct ged *gedp, int argc, const char *argv[]);
 
 
+GED_EXPORT extern unsigned long long dl_name_hash(struct ged *gedp);
+
+GED_EXPORT extern unsigned long long dl_update(struct ged *gedp);
+
 
 __END_DECLS
 

@@ -127,7 +127,7 @@ Y2038_EXPORT Time64_T   timelocal64   (struct TM *);
 #endif
 
 #ifdef __cplusplus
-  };
+  }
 #endif
 
 #endif

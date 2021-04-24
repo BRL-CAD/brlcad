@@ -30,7 +30,7 @@
 #include "bn.h"
 #include "vmath.h"
 #include "dm.h"
-#include "dm/bview.h"
+#include "bview/defines.h"
 #include "./include/private.h"
 
 static void

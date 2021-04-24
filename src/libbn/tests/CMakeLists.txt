@@ -175,6 +175,12 @@ BRLCAD_ADD_TEST(NAME bn_plane_mk_plane_3pts_fail_collinear_2 COMMAND bn_test pla
 BRLCAD_ADD_TEST(NAME bn_plane_mk_plane_3pts_fail_collinear_3 COMMAND bn_test plane_pt 5 -10,-10,-10 0,0,0 5,5,5 -1)
 BRLCAD_ADD_TEST(NAME bn_plane_mk_plane_3pts_succeed          COMMAND bn_test plane_pt 5 -10,-10,-10 7,3,8 19,4,2 0)
 
+# For function #5 (bn_mk_plane_3pts), the <args> format is as follows:
+#
+#  A,B,C,D Px,Py,Pz
+#
+#  A-D are plane equation parameters, and P is the test point.
+BRLCAD_ADD_TEST(NAME bn_plane_pt_project  COMMAND bn_test plane_pt 6 1,2,3,4 5.345220032350307,-3.124899935299395,-4.687349902949093)
 
 # For COMMAND bn_test plane_dist, the input format is as follows:
 #

@@ -517,7 +517,7 @@ ill_common(void) {
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -531,7 +531,7 @@ ill_common(void) {
     }
 
     illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
     illump->s_iflag = UP;
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
@@ -724,7 +724,7 @@ be_accept()
 	dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
-	illump = SOLID_NULL;
+	illump = NULL;
 	mged_color_soltab();
 	(void)chg_state(ST_S_EDIT, ST_VIEW, "Edit Accept");
     }  else if (STATE == ST_O_EDIT) {
@@ -737,7 +737,7 @@ be_accept()
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
-	illump = SOLID_NULL;
+	illump = NULL;
 	mged_color_soltab();
 	(void)chg_state(ST_O_EDIT, ST_VIEW, "Edit Accept");
     } else {
@@ -803,7 +803,7 @@ be_reject()
     edobj = 0;
     es_edflag = -1;
     illum_gdlp = GED_DISPLAY_LIST_NULL;
-    illump = SOLID_NULL;		/* None selected */
+    illump = NULL;		/* None selected */
 
     /* Clear illumination flags */
     dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
