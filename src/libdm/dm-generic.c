@@ -663,14 +663,7 @@ int
 dm_string_bbox_2d(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)
 {
     if (!dmp || !str) return 0;
-    int ret = dmp->i->dm_String2DBBox(dmp, bmin, bmax, str, x, y, size, use_aspect);
-    if (!bmin || !bmax || ret != BRLCAD_OK) {
-	return 0;
-    }
-    if ((*bmin)[0] > 0 && (*bmin)[1] > 0 && (*bmax)[0] > 0 && (*bmax)[1] > 0) {
-	return BRLCAD_OK;
-    }
-    return BRLCAD_ERROR;
+    return dmp->i->dm_String2DBBox(dmp, bmin, bmax, str, x, y, size, use_aspect);
 }
 int
 dm_draw_line_2d(struct dm *dmp, fastf_t x1, fastf_t y1_2d, fastf_t x2, fastf_t y2)
