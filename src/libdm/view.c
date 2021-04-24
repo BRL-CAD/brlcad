@@ -427,14 +427,7 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
     point_t vpoint;
     MAT4X3PNT(vpoint, s->s_v->gv_model2view, l->p);
 
-    (void)dm_hud_begin(dmp);
-    (void)dm_draw_string_2d(dmp, bu_vls_cstr(&l->label), vpoint[X], vpoint[Y], 0, 1);
-    (void)dm_hud_end(dmp);
-
-    if (!l->line_flag)
-	return;
-
-    // Want a line - figure out where to anchor it
+    // Check that we can calculate the bbox before drawing
     vect2d_t bmin = V2INIT_ZERO;
     vect2d_t bmax = V2INIT_ZERO;
     (void)dm_hud_begin(dmp);
@@ -443,6 +436,15 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
     }
     (void)dm_hud_end(dmp);
     bu_log("bmin: %f,%f, bmax: %f,%f\n", bmin[0], bmin[1], bmax[0], bmax[1]);
+
+
+    // Have bbox - go ahead and write the label
+    (void)dm_hud_begin(dmp);
+    (void)dm_draw_string_2d(dmp, bu_vls_cstr(&l->label), vpoint[X], vpoint[Y], 0, 1);
+    (void)dm_hud_end(dmp);
+
+    if (!l->line_flag)
+	return;
 
     vect2d_t bmid;
     bmid[0] = (bmax[0] - bmin[0]) * 0.5 + bmin[0];
