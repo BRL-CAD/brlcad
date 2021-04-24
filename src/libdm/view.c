@@ -427,93 +427,96 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
     point_t vpoint;
     MAT4X3PNT(vpoint, s->s_v->gv_model2view, l->p);
 
-    // Check that we can calculate the bbox before drawing
+    // Check that we can calculate the bbox before drawing text
     vect2d_t bmin = V2INIT_ZERO;
     vect2d_t bmax = V2INIT_ZERO;
     (void)dm_hud_begin(dmp);
-    if (dm_string_bbox_2d(dmp, &bmin, &bmax, bu_vls_cstr(&l->label), vpoint[X], vpoint[Y], 1, 1) != BRLCAD_OK) {
-	return;
-    }
+    int txt_ok = dm_string_bbox_2d(dmp, &bmin, &bmax, bu_vls_cstr(&l->label), vpoint[X], vpoint[Y], 1, 1);
     (void)dm_hud_end(dmp);
-    bu_log("bmin: %f,%f, bmax: %f,%f\n", bmin[0], bmin[1], bmax[0], bmax[1]);
-
 
     // Have bbox - go ahead and write the label
-    (void)dm_hud_begin(dmp);
-    (void)dm_draw_string_2d(dmp, bu_vls_cstr(&l->label), vpoint[X], vpoint[Y], 0, 1);
-    (void)dm_hud_end(dmp);
+    if (txt_ok == BRLCAD_OK) {
+	(void)dm_hud_begin(dmp);
+	(void)dm_draw_string_2d(dmp, bu_vls_cstr(&l->label), vpoint[X], vpoint[Y], 0, 1);
+	(void)dm_hud_end(dmp);
+    }
 
     if (!l->line_flag)
 	return;
 
-    vect2d_t bmid;
-    bmid[0] = (bmax[0] - bmin[0]) * 0.5 + bmin[0];
-    bmid[1] = (bmax[1] - bmin[1]) * 0.5 + bmin[1];
-    bu_log("bmid: %f,%f\n", bmid[0], bmid[1]);
+    point_t l3d, mpt;
 
-    vect2d_t anchor = V2INIT_ZERO;
-    if (l->anchor == BVIEW_ANCHOR_AUTO) {
-	fastf_t xvals[3];
-	fastf_t yvals[3];
-	xvals[0] = bmin[0];
-	xvals[1] = bmid[0];
-	xvals[2] = bmax[0];
-	yvals[0] = bmin[1];
-	yvals[1] = bmid[1];
-	yvals[2] = bmax[1];
-	fastf_t closest_dist = MAX_FASTF;
-	for (int i = 0; i < 3; i++) {
-	    for (int j = 0; j < 3; j++) {
-		point_t l3d, mpt;
-		if (bview_screen_to_view(s->s_v, &l3d[0], &l3d[1], (int)xvals[i], (int)yvals[j]) < 0) {
-		    return;
-		}
-		l3d[2] = 0;
-		MAT4X3PNT(mpt, s->s_v->gv_view2model, l3d);
-		double dsq = DIST_PNT_PNT_SQ(mpt, l->target);
-		if (dsq < closest_dist) {
-		    V2SET(anchor, xvals[i], yvals[j]);
-		    closest_dist = dsq;
+    if (txt_ok == BRLCAD_OK) {
+	vect2d_t bmid;
+	bmid[0] = (bmax[0] - bmin[0]) * 0.5 + bmin[0];
+	bmid[1] = (bmax[1] - bmin[1]) * 0.5 + bmin[1];
+	bu_log("bmid: %f,%f\n", bmid[0], bmid[1]);
+
+	vect2d_t anchor = V2INIT_ZERO;
+	if (l->anchor == BVIEW_ANCHOR_AUTO) {
+	    fastf_t xvals[3];
+	    fastf_t yvals[3];
+	    xvals[0] = bmin[0];
+	    xvals[1] = bmid[0];
+	    xvals[2] = bmax[0];
+	    yvals[0] = bmin[1];
+	    yvals[1] = bmid[1];
+	    yvals[2] = bmax[1];
+	    fastf_t closest_dist = MAX_FASTF;
+	    for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+		    point_t t3d, tpt;
+		    if (bview_screen_to_view(s->s_v, &t3d[0], &t3d[1], (int)xvals[i], (int)yvals[j]) < 0) {
+			return;
+		    }
+		    t3d[2] = 0;
+		    MAT4X3PNT(tpt, s->s_v->gv_view2model, t3d);
+		    double dsq = DIST_PNT_PNT_SQ(tpt, l->target);
+		    if (dsq < closest_dist) {
+			V2SET(anchor, xvals[i], yvals[j]);
+			closest_dist = dsq;
+		    }
 		}
 	    }
+	} else {
+	    switch (l->anchor) {
+		case BVIEW_ANCHOR_BOTTOM_LEFT:
+		    V2SET(anchor, bmin[0], bmin[1]);
+		    break;
+		case BVIEW_ANCHOR_BOTTOM_CENTER:
+		    V2SET(anchor, bmid[0], bmin[1]);
+		    break;
+		case BVIEW_ANCHOR_BOTTOM_RIGHT:
+		    V2SET(anchor, bmax[0], bmin[1]);
+		    break;
+		case BVIEW_ANCHOR_MIDDLE_LEFT:
+		    V2SET(anchor, bmin[0], bmid[1]);
+		    break;
+		case BVIEW_ANCHOR_MIDDLE_CENTER:
+		    V2SET(anchor, bmid[0], bmid[1]);
+		    break;
+		case BVIEW_ANCHOR_MIDDLE_RIGHT:
+		    V2SET(anchor, bmax[0], bmid[1]);
+		    break;
+		case BVIEW_ANCHOR_TOP_LEFT:
+		    V2SET(anchor, bmin[0], bmax[1]);
+		    break;
+		case BVIEW_ANCHOR_TOP_CENTER:
+		    V2SET(anchor, bmid[0], bmax[1]);
+		    break;
+		case BVIEW_ANCHOR_TOP_RIGHT:
+		    V2SET(anchor, bmax[0], bmax[1]);
+		    break;
+		default:
+		    bu_log("Unhandled anchor case: %d\n", l->anchor);
+		    return;
+	    }
 	}
+	bview_screen_to_view(s->s_v, &l3d[0], &l3d[1], (int)anchor[0], (int)anchor[1]);
+	MAT4X3PNT(mpt, s->s_v->gv_view2model, l3d);
     } else {
-	switch (l->anchor) {
-	    case BVIEW_ANCHOR_BOTTOM_LEFT:
-		V2SET(anchor, bmin[0], bmin[1]);
-		break;
-	    case BVIEW_ANCHOR_BOTTOM_CENTER:
-		V2SET(anchor, bmid[0], bmin[1]);
-		break;
-	    case BVIEW_ANCHOR_BOTTOM_RIGHT:
-		V2SET(anchor, bmax[0], bmin[1]);
-		break;
-	    case BVIEW_ANCHOR_MIDDLE_LEFT:
-		V2SET(anchor, bmin[0], bmid[1]);
-		break;
-	    case BVIEW_ANCHOR_MIDDLE_CENTER:
-		V2SET(anchor, bmid[0], bmid[1]);
-		break;
-	    case BVIEW_ANCHOR_MIDDLE_RIGHT:
-		V2SET(anchor, bmax[0], bmid[1]);
-		break;
-	    case BVIEW_ANCHOR_TOP_LEFT:
-		V2SET(anchor, bmin[0], bmax[1]);
-		break;
-	    case BVIEW_ANCHOR_TOP_CENTER:
-		V2SET(anchor, bmid[0], bmax[1]);
-		break;
-	    case BVIEW_ANCHOR_TOP_RIGHT:
-		V2SET(anchor, bmax[0], bmax[1]);
-		break;
-	    default:
-		bu_log("Unhandled anchor case: %d\n", l->anchor);
-		return;
-	}
+	VMOVE(mpt, l->p);
     }
-    point_t l3d, mpt;
-    bview_screen_to_view(s->s_v, &l3d[0], &l3d[1], (int)anchor[0], (int)anchor[1]);
-    MAT4X3PNT(mpt, s->s_v->gv_view2model, l3d);
 
     if (l->arrow) {
 	dm_draw_arrow(dmp, mpt, l->target, s->s_arrow_tip_length, s->s_arrow_tip_width, 1.0);

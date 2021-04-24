@@ -394,11 +394,24 @@ swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *
 
     if (privars->fontNormal != FONS_INVALID) {
 
-	/* First, we set the position using glRasterPos2f like ogl does */
+	/* Stash the previous raster position */
+	GLfloat rasterpos[4];
+	glGetFloatv(GL_CURRENT_RASTER_POSITION, rasterpos);
+
+	/* Try to set the new position using glRasterPos2f like ogl does */
 	if (use_aspect)
 	    glRasterPos2f(x, y * dmp->i->dm_aspect);
 	else
 	    glRasterPos2f(x, y);
+
+	/* Check if this position is valid.  If it is not, no text
+	 * will be drawn and there are no bounds to return */
+	GLboolean valid = 1;
+	glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+	if (!valid) {
+	    glRasterPos3f(rasterpos[0], rasterpos[1], rasterpos[2]);
+	    return BRLCAD_ERROR;
+	}
 
 	/* Next, we set up for fontstash */
 	fastf_t font_size = dm_get_fontsize(dmp);
