@@ -37,13 +37,13 @@ static int
 image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
-    bu_mime_context_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_context_t *set_type = (bu_mime_context_t *)set_mime;
+    long type = BU_MIME_IMAGE_UNKNOWN;
+    long *set_type = (long *)set_mime;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
 
     type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_context_t)type_int;
+    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (long)type_int;
     if (type == BU_MIME_IMAGE_UNKNOWN) {
 	if (msg) {
 	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
@@ -59,7 +59,7 @@ image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 int
 ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 {
-    bu_mime_context_t type = BU_MIME_IMAGE_UNKNOWN;
+    long type = BU_MIME_IMAGE_UNKNOWN;
     double size = 0.0;
     int clear = 0;
     int height = 0;  /* may need to specify for some formats (such as PIX) */
@@ -218,7 +218,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    struct bu_vls c = BU_VLS_INIT_ZERO;
 	    if (bu_path_component(&c, file_name, BU_PATH_EXT)) {
 		int itype = bu_file_mime(bu_vls_cstr(&c), BU_MIME_IMAGE);
-		type = (bu_mime_context_t)itype;
+		type = (long)itype;
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
 		bu_vls_free(&c);

@@ -26,7 +26,7 @@
 #include "bu.h"
 
 int
-test_ext(const char *str, bu_mime_context context, int expected)
+test_ext(const char *str, long context, int expected)
 {
     int status = 0;
     int type = bu_file_mime(str, context);
@@ -59,7 +59,7 @@ main(int ac, char *av[])
     if (context >= BU_MIME_UNKNOWN)
 	return -1;
 
-    return test_ext(av[1], (bu_mime_context)context, expected);
+    return test_ext(av[1], (long)context, expected);
 }
 
 

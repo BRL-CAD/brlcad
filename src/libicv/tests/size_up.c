@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
     int inx=0, iny=0;
     int outx=0, outy=0;
     icv_image_t *bif;
-    bu_mime_context_t format = BU_MIME_IMAGE_AUTO;
+    long format = BU_MIME_IMAGE_AUTO;
     ICV_RESIZE_METHOD method = ICV_RESIZE_NINTERP;
 
     bu_setprogname(argv[0]);

@@ -56,7 +56,7 @@ __BEGIN_DECLS
  * was found.  It is the responsibility of the caller to cast
  * the return int to the correct mime_CONTEXT_t type.
  */
-BU_EXPORT extern int bu_file_mime(const char *ext, bu_mime_context context);
+BU_EXPORT extern int bu_file_mime(const char *ext, long context);
 
 
 /**
@@ -67,7 +67,7 @@ BU_EXPORT extern int bu_file_mime(const char *ext, bu_mime_context context);
  * containing the extensions if a result was found.
  * It is the responsibility of the caller to free the returned string.
  */
-BU_EXPORT extern const char *bu_file_mime_ext(int t, bu_mime_context context);
+BU_EXPORT extern const char *bu_file_mime_ext(int t, long context);
 
 
 /**
@@ -78,7 +78,7 @@ BU_EXPORT extern const char *bu_file_mime_ext(int t, bu_mime_context context);
  * returns NULL if no match was found, or a string if a result was found.
  * It is the responsibility of the caller to free the returned string.
  */
-BU_EXPORT extern const char *bu_file_mime_str(int t, bu_mime_context context);
+BU_EXPORT extern const char *bu_file_mime_str(int t, long context);
 
 
 /**

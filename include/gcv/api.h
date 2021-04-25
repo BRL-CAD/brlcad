@@ -147,7 +147,7 @@ struct gcv_filter {
      * FIXME: input/output plugins conceivably could be something
      * other than geometry (e.g., png input or csv output).
      */
-    const bu_mime_context_t mime_type;
+    const long mime_type;
 
     /* For plugins supporting multiple file types, call this to
      * process them.
