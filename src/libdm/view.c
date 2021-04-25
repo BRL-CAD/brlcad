@@ -606,7 +606,10 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	    // top level scene objects - we don't want these to be top level.
 	    dm_add_arrows(dmp, s);
 
-	    // TODO - setup axes drawing
+	    if (s_c->s_type_flags & BVIEW_AXES) {
+		struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+		dm_draw_axes(dmp, s->s_v->gv_size, s->s_v->gv_rotation, a);
+	    }
 
 	    if (s_c->s_type_flags & BVIEW_LABELS) {
 		dm_draw_label(dmp, s);
@@ -620,7 +623,10 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
 	dm_add_arrows(dmp, s);
 
-	// TODO - setup axes drawing
+	if (s->s_type_flags & BVIEW_AXES) {
+	    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+	    dm_draw_axes(dmp, s->s_v->gv_size, s->s_v->gv_rotation, a);
+	}
 
 	if (s->s_type_flags & BVIEW_LABELS) {
 	    dm_draw_label(dmp, s);

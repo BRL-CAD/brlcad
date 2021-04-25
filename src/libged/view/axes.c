@@ -82,6 +82,9 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
     struct bview_axes *l;
     BU_GET(l, struct bview_axes);
     VMOVE(l->axes_pos, p);
+    l->line_width = 1;
+    l->axes_size = 10;
+    VSET(l->axes_color, 255, 255, 0);
     s->s_i_data = (void *)l;
 
     s->s_type_flags |= BVIEW_VIEWONLY;
