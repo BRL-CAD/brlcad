@@ -100,8 +100,408 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+int
+_axes_cmd_pos(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes pos x y z";
+    const char *purpose_string = "adjust axes position";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_size(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes size #";
+    const char *purpose_string = "adjust axes size";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_linewidth(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes linewidth #";
+    const char *purpose_string = "adjust axes line width";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_pos_only(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes pos_only 0|1";
+    const char *purpose_string = "enable/disable axes decorations";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_axes_color(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes color r g b";
+    const char *purpose_string = "set color of axes";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_label(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes label 0|1";
+    const char *purpose_string = "enable/disable text labels for axes";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_label_color(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes label_color r g b";
+    const char *purpose_string = "set color of text labels for axes";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_triple_color(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes triple_color 0|1";
+    const char *purpose_string = "enable/disable tri-color mode for axes coloring";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_tick(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes tick 0|1";
+    const char *purpose_string = "enable/disable axes tick drawing";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_tick_length(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes tick_length #";
+    const char *purpose_string = "set tick length";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_tick_major_length(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes tick_major_length #";
+    const char *purpose_string = "set tick major length";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_tick_interval(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes tick_interval #";
+    const char *purpose_string = "set tick interval";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_ticks_per_major(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes ticks_per_major #";
+    const char *purpose_string = "set ticks per major";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_tick_threshold(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes tick_threshold #";
+    const char *purpose_string = "set tick threshold";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_tick_color(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes tick_color r g b";
+    const char *purpose_string = "set color of ticks";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+int
+_axes_cmd_tick_major_color(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <objname> axes tick_major_color r g b";
+    const char *purpose_string = "set tick_major_color";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
 const struct bu_cmdtab _axes_cmds[] = {
-    { "create",          _axes_cmd_create},
+    { "create",            _axes_cmd_create},
+    { "pos",               _axes_cmd_pos},
+    { "size",              _axes_cmd_size},
+    { "line_width",        _axes_cmd_linewidth},
+    { "pos_only",          _axes_cmd_pos_only},
+    { "axes_color",        _axes_cmd_axes_color},
+    { "label",             _axes_cmd_label},
+    { "label_color",       _axes_cmd_label_color},
+    { "triple_color",      _axes_cmd_triple_color},
+    { "tick",              _axes_cmd_tick},
+    { "tick_length",       _axes_cmd_tick_length},
+    { "tick_major_length", _axes_cmd_tick_major_length},
+    { "tick_interval",     _axes_cmd_tick_interval},
+    { "ticks_per_major",   _axes_cmd_ticks_per_major},
+    { "tick_threshold",    _axes_cmd_tick_threshold},
+    { "tick_color",        _axes_cmd_tick_color},
+    { "tick_major_color",  _axes_cmd_tick_major_color},
     { (char *)NULL,      NULL}
 };
 
