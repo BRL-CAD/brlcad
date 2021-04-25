@@ -61,22 +61,16 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
         return GED_ERROR;
     }
 
-    if (argc != 4) {
+    if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
 	return GED_ERROR;
     }
     point_t p;
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&(p[0])) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
-    }
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&(p[1])) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
-	return GED_ERROR;
-    }
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(p[2])) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
-	return GED_ERROR;
+    for (int i = 0; i < 3; i++) {
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[i], (void *)&(p[i])) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[i]);
+	    return GED_ERROR;
+	}
     }
 
     BU_GET(s, struct bview_scene_obj);
@@ -105,7 +99,7 @@ _axes_cmd_pos(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes pos x y z";
+    const char *usage_string = "view obj <objname> axes pos [x y z]";
     const char *purpose_string = "adjust axes position";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -120,6 +114,28 @@ _axes_cmd_pos(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+    if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%f %f %f\n", V3ARGS(a->axes_pos));
+	return GED_OK;
+    }
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    point_t p;
+    for (int i = 0; i < 3; i++) {
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[i], (void *)&(p[i])) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[i]);
+	    return GED_ERROR;
+	}
+    }
+
+    VMOVE(a->axes_pos, p);
 
     return GED_OK;
 }
@@ -129,7 +145,7 @@ _axes_cmd_size(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes size #";
+    const char *usage_string = "view obj <objname> axes size [#]";
     const char *purpose_string = "adjust axes size";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -144,6 +160,27 @@ _axes_cmd_size(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%f\n", a->axes_size);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    fastf_t val;
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    a->axes_size = val;
 
     return GED_OK;
 }
@@ -153,7 +190,7 @@ _axes_cmd_linewidth(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes linewidth #";
+    const char *usage_string = "view obj <objname> axes linewidth [#]";
     const char *purpose_string = "adjust axes line width";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -168,6 +205,32 @@ _axes_cmd_linewidth(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->line_width);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (val < 1) {
+	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 1\n");
+	return GED_ERROR;
+    }
+
+    a->line_width = val;
 
     return GED_OK;
 }
@@ -177,7 +240,7 @@ _axes_cmd_pos_only(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes pos_only 0|1";
+    const char *usage_string = "view obj <objname> axes pos_only [0|1]";
     const char *purpose_string = "enable/disable axes decorations";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -193,6 +256,30 @@ _axes_cmd_pos_only(void *bs, int argc, const char **argv)
         return GED_ERROR;
     }
 
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->pos_only);
+	return GED_OK;
+    }
+
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    val = (val) ? 1 : 0;
+
+    a->pos_only = val;
+
     return GED_OK;
 }
 
@@ -201,8 +288,8 @@ _axes_cmd_axes_color(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes color r g b";
-    const char *purpose_string = "set color of axes";
+    const char *usage_string = "view obj <objname> axes color [r/g/b]";
+    const char *purpose_string = "get/set color of axes";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -216,6 +303,30 @@ _axes_cmd_axes_color(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->axes_color[0], a->axes_color[1], a->axes_color[2]);
+	return GED_OK;
+    }
+
+    // For color need either 1 or 3 non-subcommand args
+    if (argc != 1 && argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    struct bu_color c;
+    int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
+    if (opt_ret != 1 && opt_ret != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
+	return GED_ERROR;
+    }
+
+    bu_color_to_rgb_ints(&c, &a->axes_color[0], &a->axes_color[1], &a->axes_color[2]);
 
     return GED_OK;
 }
@@ -225,7 +336,7 @@ _axes_cmd_label(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes label 0|1";
+    const char *usage_string = "view obj <objname> axes label [0|1]";
     const char *purpose_string = "enable/disable text labels for axes";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -240,6 +351,29 @@ _axes_cmd_label(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->label_flag);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    val = (val) ? 1 : 0;
+
+    a->label_flag = val;
 
     return GED_OK;
 }
@@ -249,8 +383,8 @@ _axes_cmd_label_color(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes label_color r g b";
-    const char *purpose_string = "set color of text labels for axes";
+    const char *usage_string = "view obj <objname> axes label_color [r/g/b]";
+    const char *purpose_string = "get/set color of text labels for axes";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -264,6 +398,32 @@ _axes_cmd_label_color(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+    if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->label_color[0], a->label_color[1], a->label_color[2]);
+	return GED_OK;
+    }
+
+    // For color need either 1 or 3 non-subcommand args
+    if (argc != 1 && argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    struct bu_color c;
+    int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
+    if (opt_ret != 1 && opt_ret != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
+	return GED_ERROR;
+    }
+
+    bu_color_to_rgb_ints(&c, &a->label_color[0], &a->label_color[1], &a->label_color[2]);
+
 
     return GED_OK;
 }
@@ -273,7 +433,7 @@ _axes_cmd_triple_color(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes triple_color 0|1";
+    const char *usage_string = "view obj <objname> axes triple_color [0|1]";
     const char *purpose_string = "enable/disable tri-color mode for axes coloring";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -288,6 +448,29 @@ _axes_cmd_triple_color(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->triple_color);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    val = (val) ? 1 : 0;
+
+    a->triple_color = val;
 
     return GED_OK;
 }
@@ -297,7 +480,7 @@ _axes_cmd_tick(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes tick 0|1";
+    const char *usage_string = "view obj <objname> axes tick [0|1]";
     const char *purpose_string = "enable/disable axes tick drawing";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -312,6 +495,29 @@ _axes_cmd_tick(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_enabled);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    val = (val) ? 1 : 0;
+
+    a->tick_enabled = val;
 
     return GED_OK;
 }
@@ -321,8 +527,8 @@ _axes_cmd_tick_length(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes tick_length #";
-    const char *purpose_string = "set tick length";
+    const char *usage_string = "view obj <objname> axes tick_length [#]";
+    const char *purpose_string = "get/set tick length";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -336,6 +542,32 @@ _axes_cmd_tick_length(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_length);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (val < 1) {
+	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 1\n");
+	return GED_ERROR;
+    }
+
+    a->tick_length = val;
 
     return GED_OK;
 }
@@ -345,8 +577,8 @@ _axes_cmd_tick_major_length(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes tick_major_length #";
-    const char *purpose_string = "set tick major length";
+    const char *usage_string = "view obj <objname> axes tick_major_length [#]";
+    const char *purpose_string = "get/set tick major length";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -360,6 +592,32 @@ _axes_cmd_tick_major_length(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_major_length);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (val < 1) {
+	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 1\n");
+	return GED_ERROR;
+    }
+
+    a->tick_major_length = val;
 
     return GED_OK;
 }
@@ -369,8 +627,8 @@ _axes_cmd_tick_interval(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes tick_interval #";
-    const char *purpose_string = "set tick interval";
+    const char *usage_string = "view obj <objname> axes tick_interval [#]";
+    const char *purpose_string = "get/set tick interval";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -384,6 +642,27 @@ _axes_cmd_tick_interval(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%f\n", a->tick_interval);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    fastf_t val;
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    a->tick_interval = val;
 
     return GED_OK;
 }
@@ -393,8 +672,8 @@ _axes_cmd_ticks_per_major(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes ticks_per_major #";
-    const char *purpose_string = "set ticks per major";
+    const char *usage_string = "view obj <objname> axes ticks_per_major [#]";
+    const char *purpose_string = "get/set ticks per major";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -408,6 +687,32 @@ _axes_cmd_ticks_per_major(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->ticks_per_major);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (val < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 0\n");
+	return GED_ERROR;
+    }
+
+    a->ticks_per_major = val;
 
     return GED_OK;
 }
@@ -417,8 +722,8 @@ _axes_cmd_tick_threshold(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes tick_threshold #";
-    const char *purpose_string = "set tick threshold";
+    const char *usage_string = "view obj <objname> axes tick_threshold [#]";
+    const char *purpose_string = "get/set tick threshold";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -432,6 +737,32 @@ _axes_cmd_tick_threshold(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_threshold);
+	return GED_OK;
+    }
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+    int val;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (val < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 0\n");
+	return GED_ERROR;
+    }
+
+    a->tick_threshold = val;
 
     return GED_OK;
 }
@@ -441,8 +772,8 @@ _axes_cmd_tick_color(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes tick_color r g b";
-    const char *purpose_string = "set color of ticks";
+    const char *usage_string = "view obj <objname> axes tick_color [r/g/b]";
+    const char *purpose_string = "get/set color of ticks";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -456,6 +787,31 @@ _axes_cmd_tick_color(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->tick_color[0], a->tick_color[1], a->tick_color[2]);
+	return GED_OK;
+    }
+
+    // For color need either 1 or 3 non-subcommand args
+    if (argc != 1 && argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    struct bu_color c;
+    int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
+    if (opt_ret != 1 && opt_ret != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
+	return GED_ERROR;
+    }
+
+    bu_color_to_rgb_ints(&c, &a->tick_color[0], &a->tick_color[1], &a->tick_color[2]);
+
 
     return GED_OK;
 }
@@ -465,8 +821,8 @@ _axes_cmd_tick_major_color(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes tick_major_color r g b";
-    const char *purpose_string = "set tick_major_color";
+    const char *usage_string = "view obj <objname> axes tick_major_color [r/g/b]";
+    const char *purpose_string = "get/set tick_major_color";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -480,6 +836,30 @@ _axes_cmd_tick_major_color(void *bs, int argc, const char **argv)
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
+    if (!(s->s_type_flags & BVIEW_AXES)) {
+        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
+        return GED_ERROR;
+    }
+    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+     if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->tick_major_color[0], a->tick_major_color[1], a->tick_major_color[2]);
+	return GED_OK;
+    }
+
+    // For color need either 1 or 3 non-subcommand args
+    if (argc != 1 && argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    struct bu_color c;
+    int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
+    if (opt_ret != 1 && opt_ret != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
+	return GED_ERROR;
+    }
+
+    bu_color_to_rgb_ints(&c, &a->tick_major_color[0], &a->tick_major_color[1], &a->tick_major_color[2]);
 
     return GED_OK;
 }
