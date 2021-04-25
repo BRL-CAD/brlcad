@@ -8,6 +8,7 @@ include_directories(
 
 set(VIEW_SRCS
   aet.c
+  axes.c
   center.cpp
   eye.c
   faceplate.c

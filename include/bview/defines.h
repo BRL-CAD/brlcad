@@ -98,6 +98,28 @@ struct bview_label {
     int           arrow;     // If 1, use an arrow indicating direction from label to target
 };
 
+
+struct bview_axes {
+    int       draw;
+    point_t   axes_pos;             /* in model coordinates */
+    fastf_t   axes_size;            /* in view coordinates */
+    int       line_width;           /* in pixels */
+    int       pos_only;
+    int       axes_color[3];
+    int       label_flag;
+    int       label_color[3];
+    int       triple_color;
+    int       tick_enabled;
+    int       tick_length;          /* in pixels */
+    int       tick_major_length;    /* in pixels */
+    fastf_t   tick_interval;        /* in mm */
+    int       ticks_per_major;
+    int       tick_threshold;
+    int       tick_color[3];
+    int       tick_major_color[3];
+};
+
+
 /* Note that it is possible for a view object to be view-only (not
  * corresponding directly to the wireframe of a database shape) but also based
  * off of database data.  Evaluated shaded objects would be an example, as
@@ -110,17 +132,17 @@ struct bview_label {
  *
  * The distinction between objects (lines, labels, etc.) defined as
  * bview_scene_obj VIEW ONLY objects and the faceplate elements is objects
- * defined this way DO exist in the 3D scene, and will move as 3D elements when
- * the view is manipulated.  Faceplate elements exist only in the HUD and are
- * not bview_scene_obj objects.
-
- * TODO - not sure yet, but label text may always display parallel to the view
- * plane...
+ * defined as bview_scene_obj objects DO exist in the 3D scene, and will move
+ * as 3D elements when the view is manipulated (although label text is drawn
+ * parallel to the view plane.)  Faceplate elements exist ONLY in the HUD and
+ * are not managed as bview_scene_obj objects - they will not move with view
+ * manipulation.
  */
 #define BVIEW_DBOBJ_BASED    0x01
 #define BVIEW_VIEWONLY       0x02
 #define BVIEW_LINES          0x04
-#define BVIEW_LABELS         0x10
+#define BVIEW_LABELS         0x08
+#define BVIEW_AXES           0x10
 #define BVIEW_POLYGONS       0x20
 
 // TODO - right now, display_lists are used to group bview_scene_obj objects.

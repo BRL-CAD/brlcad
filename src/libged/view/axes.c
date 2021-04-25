@@ -1,4 +1,4 @@
-/*                        L A B E L S . C
+/*                        A X E S . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2021 United States Government as represented by
@@ -19,7 +19,9 @@
  */
 /** @file libged/view/labels.c
  *
- * Commands for view labels.
+ * Commands for scene data axes (the faceplate axes for showing view XYZ
+ * coordinate systems is handled separately - these are axes defined as data in
+ * the 3D scene.)
  *
  */
 
@@ -39,12 +41,12 @@
 #include "./ged_view.h"
 
 int
-_label_cmd_create(void *bs, int argc, const char **argv)
+_axes_cmd_create(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> label create text x y [z] [px py pz]";
-    const char *purpose_string = "start a label at point x,y,[z], possibly targeting point px,py,pz";
+    const char *usage_string = "view obj <objname> axes create x y z";
+    const char *purpose_string = "define data axes at point x,y,z";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -59,7 +61,7 @@ _label_cmd_create(void *bs, int argc, const char **argv)
         return GED_ERROR;
     }
 
-    if (argc != 3 && argc != 4 && argc != 6 && argc != 7) {
+    if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
 	return GED_ERROR;
     }
@@ -72,53 +74,9 @@ _label_cmd_create(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return GED_ERROR;
     }
-
-    if (argc == 4 || argc == 7) {
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(p[2])) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
-	    return GED_ERROR;
-	}
-    } else {
-	fastf_t fx, fy;
-	if (bview_screen_to_view(gedp->ged_gvp, &fx, &fy, (int)p[0], (int)p[1]) < 0) {
-	    return GED_ERROR;
-	}
-	p[0] = fx;
-	p[1] = fy;
-	p[2] = 0;
-	point_t tp;
-	VMOVE(tp, p);
-	MAT4X3PNT(p, gedp->ged_gvp->gv_view2model, tp);
-    }
-    point_t target;
-    if (argc == 6) {
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(target[0])) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
-	    return GED_ERROR;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[4], (void *)&(target[1])) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[4]);
-	    return GED_ERROR;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[5], (void *)&(target[2])) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[5]);
-	    return GED_ERROR;
-	}
-    }
-
-    if (argc == 7) {
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[4], (void *)&(target[0])) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[4]);
-	    return GED_ERROR;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[5], (void *)&(target[1])) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[5]);
-	    return GED_ERROR;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[6], (void *)&(target[2])) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[6]);
-	    return GED_ERROR;
-	}
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(p[2])) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
+	return GED_ERROR;
     }
 
     BU_GET(s, struct bview_scene_obj);
@@ -127,19 +85,13 @@ _label_cmd_create(void *bs, int argc, const char **argv)
     BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BN_VLIST_LINE_MOVE);
     VSET(s->s_color, 255, 255, 0);
 
-    struct bview_label *l;
-    BU_GET(l, struct bview_label);
-    BU_VLS_INIT(&l->label);
-    bu_vls_sprintf(&l->label, "%s", argv[0]);
-    VMOVE(l->p, p);
-    if (argc == 6 || argc == 7) {
-	VMOVE(l->target, target);
-	l->line_flag = 1;
-    }
+    struct bview_axes *l;
+    BU_GET(l, struct bview_axes);
+    VMOVE(l->axes_pos, p);
     s->s_i_data = (void *)l;
 
     s->s_type_flags |= BVIEW_VIEWONLY;
-    s->s_type_flags |= BVIEW_LABELS;
+    s->s_type_flags |= BVIEW_AXES;
 
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
@@ -148,21 +100,21 @@ _label_cmd_create(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-const struct bu_cmdtab _label_cmds[] = {
-    { "create",          _label_cmd_create},
+const struct bu_cmdtab _axes_cmds[] = {
+    { "create",          _axes_cmd_create},
     { (char *)NULL,      NULL}
 };
 
 int
-_view_cmd_labels(void *bs, int argc, const char **argv)
+_view_cmd_axes(void *bs, int argc, const char **argv)
 {
     int help = 0;
     int s_version = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
 
-    const char *usage_string = "view obj [options] label [options] [args]";
-    const char *purpose_string = "create/manipulate view labels";
+    const char *usage_string = "view obj [options] axes [options] [args]";
+    const char *purpose_string = "create/manipulate view axes";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
@@ -172,7 +124,7 @@ _view_cmd_labels(void *bs, int argc, const char **argv)
     }
 
 
-    // We know we're the labels command - start processing args
+    // We know we're the axes command - start processing args
     argc--; argv++;
 
     // See if we have any high level options set
@@ -186,7 +138,7 @@ _view_cmd_labels(void *bs, int argc, const char **argv)
     // High level options are only defined prior to the subcommand
     int cmd_pos = -1;
     for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_label_cmds, argv[i]) == BRLCAD_OK) {
+	if (bu_cmd_valid(_axes_cmds, argv[i]) == BRLCAD_OK) {
 	    cmd_pos = i;
 	    break;
 	}
@@ -195,7 +147,7 @@ _view_cmd_labels(void *bs, int argc, const char **argv)
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
     (void)bu_opt_parse(NULL, acnt, argv, d);
 
-    return _ged_subcmd_exec(gedp, d, _label_cmds, "view obj label", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
+    return _ged_subcmd_exec(gedp, d, _axes_cmds, "view obj axes", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
 }
 
 /*
