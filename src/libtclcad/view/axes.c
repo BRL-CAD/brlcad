@@ -36,7 +36,7 @@
 int
 to_axes(struct ged *gedp,
 	struct bview *gdvp,
-	struct bview_axes_state *gasp,
+	struct bview_axes *gasp,
 	int argc,
 	const char *argv[],
 	const char *usage)

@@ -368,7 +368,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     int lineWidth;
     int posOnly;
     int tripleColor;
-    struct bview_axes_state bnas;
+    struct bview_axes bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -383,7 +383,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    memset(&bnas, 0, sizeof(struct bview_axes_state));
+    memset(&bnas, 0, sizeof(struct bview_axes));
 
     if (dmo_parseAxesArgs(argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
@@ -810,7 +810,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     int tickColor[3];
     int majorTickColor[3];
     int tickThreshold;
-    struct bview_axes_state bnas;
+    struct bview_axes bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -842,7 +842,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
 
-    memset(&bnas, 0, sizeof(struct bview_axes_state));
+    memset(&bnas, 0, sizeof(struct bview_axes));
     VMOVE(bnas.axes_pos, viewAxesPos);
     bnas.axes_size = axesSize;
     VMOVE(bnas.axes_color, axesColor);

@@ -115,7 +115,7 @@ _bview_adc_state_differ(struct bview_adc_state *v1, struct bview_adc_state *v2)
 }
 
 static int
-_bview_axes_state_differ(struct bview_axes_state *v1, struct bview_axes_state *v2)
+_bview_axes_differ(struct bview_axes *v1, struct bview_axes *v2)
 {
     /* First, do sanity checks */
     if (!v1 && !v2)
@@ -129,6 +129,7 @@ _bview_axes_state_differ(struct bview_axes_state *v1, struct bview_axes_state *v
     BVIEW_NDIFF(1,line_width);
     BVIEW_NDIFF(1,pos_only);
     BVIEW_IVDIFF(1,axes_color);
+    BVIEW_NDIFF(1,label_flag);
     BVIEW_IVDIFF(1,label_color);
     BVIEW_NDIFF(1,triple_color);
     BVIEW_NDIFF(1,tick_enabled);
@@ -431,8 +432,8 @@ bview_differ(struct bview *v1, struct bview *v2)
 
     // More complex containers have their own check routines
     BVIEW_CDIFF(1, _bview_adc_state_differ, gv_adc);
-    BVIEW_CDIFF(1, _bview_axes_state_differ, gv_model_axes);
-    BVIEW_CDIFF(1, _bview_axes_state_differ, gv_view_axes);
+    BVIEW_CDIFF(1, _bview_axes_differ, gv_model_axes);
+    BVIEW_CDIFF(1, _bview_axes_differ, gv_view_axes);
     BVIEW_CDIFF(1, _bview_data_arrow_state_differ, gv_data_arrows);
     BVIEW_CDIFF(1, _bview_data_axes_state_differ, gv_data_axes);
     BVIEW_CDIFF(1, _bview_data_label_state_differ, gv_data_labels);

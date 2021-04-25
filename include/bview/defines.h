@@ -99,6 +99,10 @@ struct bview_label {
 };
 
 
+/* Note - this container holds information both for data axes and for
+ * the more elaborate visuals associated with the Archer style model axes.
+ * The latter is a superset of the former, so there should be no need for
+ * a separate data type. */
 struct bview_axes {
     int       draw;
     point_t   axes_pos;             /* in model coordinates */
@@ -253,25 +257,6 @@ struct bview_adc_state {
     int         line_width;
 };
 
-struct bview_axes_state {
-    int       draw;
-    point_t   axes_pos;             /* in model coordinates */
-    fastf_t   axes_size;            /* in view coordinates */
-    int       line_width;           /* in pixels */
-    int       pos_only;
-    int       axes_color[3];
-    int       label_color[3];
-    int       triple_color;
-    int       tick_enabled;
-    int       tick_length;          /* in pixels */
-    int       tick_major_length;    /* in pixels */
-    fastf_t   tick_interval;        /* in mm */
-    int       ticks_per_major;
-    int       tick_threshold;
-    int       tick_color[3];
-    int       tick_major_color[3];
-};
-
 struct bview_data_axes_state {
     int       draw;
     int       color[3];
@@ -424,8 +409,8 @@ struct bview {
     // Faceplate elements fall into two general categories: those which are
     // interactively adjusted (in a geometric sense) and those which are not.
     // The non-interactive are generally just enabled or disabled:
-    struct bview_axes_state     gv_model_axes;
-    struct bview_axes_state     gv_view_axes;
+    struct bview_axes           gv_model_axes;
+    struct bview_axes           gv_view_axes;
     struct bview_grid_state     gv_grid;
     struct bview_other_state    gv_center_dot;
     struct bview_other_state    gv_view_params;

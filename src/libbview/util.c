@@ -87,6 +87,7 @@ bview_init(struct bview *gvp)
     gvp->gv_view_axes.line_width = 0;
     gvp->gv_view_axes.pos_only = 1;
     VSET(gvp->gv_view_axes.axes_color, 255, 255, 255);
+    gvp->gv_view_axes.label_flag = 1;
     VSET(gvp->gv_view_axes.label_color, 255, 255, 0);
     gvp->gv_view_axes.triple_color = 1;
 
@@ -96,6 +97,7 @@ bview_init(struct bview *gvp)
     gvp->gv_model_axes.line_width = 0;
     gvp->gv_model_axes.pos_only = 0;
     VSET(gvp->gv_model_axes.axes_color, 255, 255, 255);
+    gvp->gv_model_axes.label_flag = 1;
     VSET(gvp->gv_model_axes.label_color, 255, 255, 0);
     gvp->gv_model_axes.triple_color = 0;
     gvp->gv_model_axes.tick_enabled = 1;

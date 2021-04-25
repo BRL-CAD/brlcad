@@ -605,6 +605,9 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	    // manually we'll have to come up with a syntax to specify child objects of
 	    // top level scene objects - we don't want these to be top level.
 	    dm_add_arrows(dmp, s);
+
+	    // TODO - setup axes drawing
+
 	    if (s_c->s_type_flags & BVIEW_LABELS) {
 		dm_draw_label(dmp, s);
 	    }
@@ -616,6 +619,9 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	dm_set_line_attr(dmp, s->s_line_width, s->s_soldash);
 	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
 	dm_add_arrows(dmp, s);
+
+	// TODO - setup axes drawing
+
 	if (s->s_type_flags & BVIEW_LABELS) {
 	    dm_draw_label(dmp, s);
 	}

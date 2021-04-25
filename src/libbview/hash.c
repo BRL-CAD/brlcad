@@ -68,7 +68,7 @@ _bview_adc_state_hash(XXH64_state_t *state, struct bview_adc_state *v)
 }
 
 static void
-_bview_axes_state_hash(XXH64_state_t *state, struct bview_axes_state *v)
+_bview_axes_hash(XXH64_state_t *state, struct bview_axes *v)
 {
     /* First, do sanity checks */
     if (!v || !state)
@@ -410,8 +410,8 @@ bview_hash(struct bview *v)
     XXH64_update(state, &v->gv_zclip, sizeof(int));
     XXH64_update(state, &v->gv_cleared, sizeof(int));
     _bview_adc_state_hash(state, &v->gv_adc);
-    _bview_axes_state_hash(state, &v->gv_model_axes);
-    _bview_axes_state_hash(state, &v->gv_view_axes);
+    _bview_axes_hash(state, &v->gv_model_axes);
+    _bview_axes_hash(state, &v->gv_view_axes);
     _bview_data_arrow_state_hash(state, &v->gv_data_arrows);
     _bview_data_axes_state_hash(state, &v->gv_data_axes);
     _bview_data_label_state_hash(state, &v->gv_data_labels);

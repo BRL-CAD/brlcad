@@ -104,7 +104,7 @@ void
 dm_draw_axes(struct dm		        *dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
-	     struct bview_axes_state 	*bnasp)
+	     struct bview_axes	 	*bnasp)
 {
     fastf_t halfAxesSize;		/* half the length of an axis */
     fastf_t xlx, xly;			/* X axis label position */
@@ -147,7 +147,8 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, 255, 0, 0, 1, 1.0);
 
 	/* draw the X label */
-	dm_draw_string_2d(dmp, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1);
+	if (bnasp->label_flag)
+	    dm_draw_string_2d(dmp, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1);
     } else
 	/* set axes color */
 	dm_set_fg(dmp, bnasp->axes_color[0], bnasp->axes_color[1], bnasp->axes_color[2], 1, 1.0);
@@ -178,7 +179,8 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, 0, 255, 0, 1, 1.0);
 
 	/* draw the Y label */
-	dm_draw_string_2d(dmp, "Y", ylx + bnasp->axes_pos[X], yly + bnasp->axes_pos[Y], 1, 1);
+	if (bnasp->label_flag)
+	    dm_draw_string_2d(dmp, "Y", ylx + bnasp->axes_pos[X], yly + bnasp->axes_pos[Y], 1, 1);
     }
 
     /* draw Y axis with x/y offsets */
@@ -207,7 +209,8 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, 0, 0, 255, 1, 1.0);
 
 	/* draw the Z label */
-	dm_draw_string_2d(dmp, "Z", zlx + bnasp->axes_pos[X], zly + bnasp->axes_pos[Y], 1, 1);
+	if (bnasp->label_flag)
+	    dm_draw_string_2d(dmp, "Z", zlx + bnasp->axes_pos[X], zly + bnasp->axes_pos[Y], 1, 1);
     }
 
     /* draw Z axis with x/y offsets */
@@ -219,9 +222,11 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, bnasp->label_color[0], bnasp->label_color[1], bnasp->label_color[2], 1, 1.0);
 
 	/* draw axes strings/labels with x/y offsets */
-	dm_draw_string_2d(dmp, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1);
-	dm_draw_string_2d(dmp, "Y", ylx + bnasp->axes_pos[X], yly + bnasp->axes_pos[Y], 1, 1);
-	dm_draw_string_2d(dmp, "Z", zlx + bnasp->axes_pos[X], zly + bnasp->axes_pos[Y], 1, 1);
+	if (bnasp->label_flag) {
+	    dm_draw_string_2d(dmp, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1);
+	    dm_draw_string_2d(dmp, "Y", ylx + bnasp->axes_pos[X], yly + bnasp->axes_pos[Y], 1, 1);
+	    dm_draw_string_2d(dmp, "Z", zlx + bnasp->axes_pos[X], zly + bnasp->axes_pos[Y], 1, 1);
+	}
     }
 
     if (bnasp->tick_enabled) {
