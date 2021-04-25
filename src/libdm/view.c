@@ -320,7 +320,7 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	VSCALE(map, v->gv_model_axes.axes_pos, local2base);
 	MAT4X3PNT(v->gv_model_axes.axes_pos, v->gv_model2view, map);
 
-	dm_draw_axes((struct dm *)v->dmp,
+	dm_draw_hud_axes((struct dm *)v->dmp,
 		     v->gv_size,
 		     v->gv_rotation,
 		     &v->gv_model_axes);
@@ -339,7 +339,7 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	height = dm_get_height((struct dm *)v->dmp);
 	inv_aspect = (fastf_t)height / (fastf_t)width;
 	v->gv_view_axes.axes_pos[Y] = save_ypos * inv_aspect;
-	dm_draw_axes((struct dm *)v->dmp,
+	dm_draw_hud_axes((struct dm *)v->dmp,
 		     v->gv_size,
 		     v->gv_rotation,
 		     &v->gv_view_axes);
@@ -611,7 +611,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 		// TODO - dm_draw_axes is specific to faceplate drawing
 		// conditions - that's why there's a separate data axes
 		// drawing routine.  Need to decide how to manage this.
-		dm_draw_axes(dmp, s->s_v->gv_size, s->s_v->gv_rotation, a);
+		dm_draw_hud_axes(dmp, s->s_v->gv_size, s->s_v->gv_rotation, a);
 	    }
 
 	    if (s_c->s_type_flags & BVIEW_LABELS) {
@@ -629,7 +629,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	if (s->s_type_flags & BVIEW_AXES) {
 	    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
 	    // TODO - dm_draw_routines is faceplate (HUD) specific...
-	    dm_draw_axes(dmp, s->s_v->gv_size, s->s_v->gv_rotation, a);
+	    dm_draw_hud_axes(dmp, s->s_v->gv_size, s->s_v->gv_rotation, a);
 	}
 
 	if (s->s_type_flags & BVIEW_LABELS) {

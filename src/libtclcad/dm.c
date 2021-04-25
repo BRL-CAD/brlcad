@@ -401,7 +401,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     bnas.pos_only = posOnly;
     bnas.triple_color = tripleColor;
 
-    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
+    dm_draw_hud_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
     return BRLCAD_OK;
@@ -859,7 +859,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     VMOVE(bnas.tick_major_color, majorTickColor);
     bnas.tick_threshold = tickThreshold;
 
-    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
+    dm_draw_hud_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
     return BRLCAD_OK;

@@ -123,7 +123,7 @@ draw_e_axes()
     VMOVE(gas.label_color, color_scheme->cs_edit_axes_label1);
     gas.line_width = axes_state->ax_edit_linewidth1;
 
-    dm_draw_axes(DMP, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
+    dm_draw_hud_axes(DMP, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 
     memset(&gas, 0, sizeof(struct bview_axes));
     gas.label_flag = 1;
@@ -134,7 +134,7 @@ draw_e_axes()
     gas.line_width = axes_state->ax_edit_linewidth2;
 
     bn_mat_mul(rot_mat, view_state->vs_gvp->gv_rotation, acc_rot_sol);
-    dm_draw_axes(DMP, view_state->vs_gvp->gv_size, rot_mat, &gas);
+    dm_draw_hud_axes(DMP, view_state->vs_gvp->gv_size, rot_mat, &gas);
 }
 
 
@@ -156,7 +156,7 @@ draw_m_axes()
     VMOVE(gas.label_color, color_scheme->cs_model_axes_label);
     gas.line_width = axes_state->ax_model_linewidth;
 
-    dm_draw_axes(DMP, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
+    dm_draw_hud_axes(DMP, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 }
 
 
@@ -179,7 +179,7 @@ draw_v_axes()
     VMOVE(gas.label_color, color_scheme->cs_view_axes_label);
     gas.line_width = axes_state->ax_view_linewidth;
 
-    dm_draw_axes(DMP, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
+    dm_draw_hud_axes(DMP, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 }
 
 

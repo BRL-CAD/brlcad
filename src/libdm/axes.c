@@ -101,7 +101,7 @@ dm_draw_data_axes(struct dm *dmp,
 }
 
 void
-dm_draw_axes(struct dm		        *dmp,
+dm_draw_hud_axes(struct dm		        *dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
 	     struct bview_axes	 	*bnasp)
