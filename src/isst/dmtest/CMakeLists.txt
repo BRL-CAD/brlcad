@@ -53,6 +53,7 @@ endif(BRLCAD_ENABLE_QT)
 set(dm_ignore_srcs
   CMakeLists.txt
   NOTES
+  qdm_tests.txt
   ${dm_srcs}
   ${dm_moc_headers}
   )

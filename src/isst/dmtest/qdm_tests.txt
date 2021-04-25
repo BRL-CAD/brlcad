@@ -1,0 +1,73 @@
+view2 obj c1 polygon create 530 400 circle
+view2 obj c1 update 600 300
+view2 obj e1 polygon create 730 400 ell
+view2 obj e1 update 600 150
+view2 obj c1 draw DOWN
+view2 obj r1 polygon create 200 200 rectangle
+view2 obj r1 update 400 300
+view2 obj s1 polygon create 600 300 sq
+view2 obj s1 update 500 500
+view2 obj s1 color 0/255/0
+view2 obj r1 draw DOWN
+view2 obj g1 polygon create 600 200
+view2 obj g1 polygon append 400 150
+view2 obj g1 polygon append 400 650
+view2 obj g1 polygon append 600 550
+view2 obj g1 polygon close
+view2 obj g1 polygon select 400 700
+view2 obj g1 polygon move 100 600
+view2 obj g1 polygon clear
+view2 obj g1 draw DOWN
+view2 obj c1 draw UP
+view2 obj c1 polygon append 600 500
+
+view2 obj s1 polygon create 600 300 sq
+view2 obj s1 update 500 500
+view2 obj s2 polygon create 300 100 sq
+view2 obj s2 update 400 350
+view2 obj s1 polygon csg - s2
+view2 obj s2 draw DOWN
+view2 obj s1 draw DOWN
+
+view2 obj bc1 polygon create 530 400 circle
+view2 obj bc1 update 600 300
+view2 obj bs1 polygon create 600 300 sq
+view2 obj bs1 update 500 500
+view2 obj bs1 polygon csg - bc1
+view2 obj bc1 draw DOWN
+view2 obj bs1 draw DOWN
+
+view2 obj bc2 polygon create 530 400 circle
+view2 obj bc2 update 600 300
+view2 obj bs2 polygon create 600 300 sq
+view2 obj bs2 update 500 500
+view2 obj bc2 polygon csg - bs2
+view2 obj bs2 draw DOWN
+
+
+view2 obj s1 polygon create 330 220 sq
+view2 obj s1 update 740 625
+view2 obj s2 polygon create 420 315 sq
+view2 obj s2 update 630 510
+view2 obj s1 polygon csg - s2
+view2 obj s2 draw DOWN
+view2 obj s1 polygon fill 1 10 10
+
+
+
+view2 obj c1 polygon create 530 400 circle
+view2 obj c1 update 600 300
+view2 obj c1 polygon fill 1 10 10
+
+
+view2 obj l1 label create Label1 330 200
+
+view2 obj l2 label create LIGHT 330 200 20.1576 -13.526 8
+view2 obj l2 label create LIGHT 110.41 -32.2352 90.4497 20.1576 -13.526 8
+
+
+view2 obj a1 axes create 1 1 1
+view2 obj a1 axes axes_color
+view2 obj a1 axes axes_color 0/0/255
+view2 obj a1 axes axes_color
+
