@@ -607,15 +607,11 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	    dm_add_arrows(dmp, s);
 
 	    if (s_c->s_type_flags & BVIEW_AXES) {
-		struct bview_axes *a = (struct bview_axes *)s->s_i_data;
-		// TODO - dm_draw_axes is specific to faceplate drawing
-		// conditions - that's why there's a separate data axes
-		// drawing routine.  Need to decide how to manage this.
-		dm_draw_hud_axes(dmp, s->s_v->gv_size, s->s_v->gv_rotation, a);
+		dm_draw_scene_axes(dmp, s_c);
 	    }
 
 	    if (s_c->s_type_flags & BVIEW_LABELS) {
-		dm_draw_label(dmp, s);
+		dm_draw_label(dmp, s_c);
 	    }
 	}
 	// Draw primary wireframe.  TODO - drawing children first may not
@@ -627,9 +623,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	dm_add_arrows(dmp, s);
 
 	if (s->s_type_flags & BVIEW_AXES) {
-	    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
-	    // TODO - dm_draw_routines is faceplate (HUD) specific...
-	    dm_draw_hud_axes(dmp, s->s_v->gv_size, s->s_v->gv_rotation, a);
+	    dm_draw_scene_axes(dmp, s);
 	}
 
 	if (s->s_type_flags & BVIEW_LABELS) {

@@ -106,7 +106,7 @@ struct bview_label {
 struct bview_axes {
     int       draw;
     point_t   axes_pos;             /* in model coordinates */
-    fastf_t   axes_size;            /* in view coordinates */
+    fastf_t   axes_size;            /* in view coordinates for HUD drawing-mode axes */
     int       line_width;           /* in pixels */
     int       pos_only;
     int       axes_color[3];

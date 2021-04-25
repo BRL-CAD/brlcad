@@ -106,6 +106,9 @@ DM_EXPORT extern void dm_draw_data_axes(struct dm *dmp,
 					fastf_t viewSize,
 					struct bview_data_axes_state *bndasp);
 
+DM_EXPORT extern void dm_draw_scene_axes(struct dm *dmp, struct bview_scene_obj *s);
+
+
 DM_EXPORT extern void dm_draw_hud_axes(struct dm *dmp,
 				   fastf_t viewSize,
 				   const mat_t rmat,
