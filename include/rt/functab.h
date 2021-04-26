@@ -267,7 +267,7 @@ struct rt_functab {
 
     /** generate struct bview_scene_obj labels for the primitive */
     int (*ft_labels)(struct bu_ptbl *labels, const struct rt_db_internal *ip);
-#define RTFUNCTAB_FUNC_LABEL_CAST(_func) ((int (*)(struct bu_ptbl *, const struct rt_db_internal *)((void (*)(void))_func))
+#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((int (*)(struct bu_ptbl *, const struct rt_db_internal *))((void (*)(void))_func))
 
 };
 
