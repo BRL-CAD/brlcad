@@ -139,6 +139,7 @@ _axes_cmd_pos(void *bs, int argc, const char **argv)
     }
 
     VMOVE(a->axes_pos, p);
+    s->s_changed++;
 
     return GED_OK;
 }
@@ -184,6 +185,7 @@ _axes_cmd_size(void *bs, int argc, const char **argv)
     }
 
     a->axes_size = val;
+    s->s_changed++;
 
     return GED_OK;
 }
@@ -234,6 +236,7 @@ _axes_cmd_linewidth(void *bs, int argc, const char **argv)
     }
 
     a->line_width = val;
+    s->s_changed++;
 
     return GED_OK;
 }
@@ -282,6 +285,7 @@ _axes_cmd_axes_color(void *bs, int argc, const char **argv)
     }
 
     bu_color_to_rgb_ints(&c, &a->axes_color[0], &a->axes_color[1], &a->axes_color[2]);
+    s->s_changed++;
 
     return GED_OK;
 }
