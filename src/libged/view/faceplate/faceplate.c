@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/size.c
+/** @file libged/faceplate/faceplate.c
  *
  * Controls for view elements (center dot, model axes, view axes,
  * etc.) that are built into BRL-CAD views.
@@ -36,8 +36,9 @@
 #include "bu/vls.h"
 #include "bview.h"
 
-#include "../ged_private.h"
-#include "./ged_view.h"
+#include "../../ged_private.h"
+#include "../ged_view.h"
+#include "./faceplate.h"
 
 #ifndef COMMA
 #  define COMMA ','
@@ -286,82 +287,6 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	int *cls = (int *)(v->gv_view_params.gos_text_color);
 	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
 	return GED_OK;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
-
-    return GED_OK;
-}
-
-int
-_fp_cmd_view_axes(void *ds, int argc, const char **argv)
-{
-    const char *usage_string = "faceplate [options] view_axes [0|1]";
-    const char *purpose_string = "Enable/disable view_axes.";
-    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
-
-    argc--; argv++;
-
-    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
-    struct ged *gedp = gd->gedp;
-    struct bview *v = gedp->ged_gvp;
-
-    if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "%d", v->gv_view_axes.draw);
-	return GED_OK;
-    }
-
-    if (argc == 1) {
-	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_view_axes.draw = 1;
-	    return GED_OK;
-	}
-	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_view_axes.draw = 0;
-	    return GED_OK;
-	}
-	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
-	return GED_ERROR;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
-
-    return GED_OK;
-}
-
-int
-_fp_cmd_model_axes(void *ds, int argc, const char **argv)
-{
-    const char *usage_string = "faceplate [options] model_axes [0|1]";
-    const char *purpose_string = "Enable/disable model_axes.";
-    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
-
-    argc--; argv++;
-
-    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
-    struct ged *gedp = gd->gedp;
-    struct bview *v = gedp->ged_gvp;
-
-    if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "%d", v->gv_model_axes.draw);
-	return GED_OK;
-    }
-
-    if (argc == 1) {
-	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_model_axes.draw = 1;
-	    return GED_OK;
-	}
-	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_model_axes.draw = 0;
-	    return GED_OK;
-	}
-	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
-	return GED_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid command\n");

@@ -11,7 +11,8 @@ set(VIEW_SRCS
   axes.c
   center.cpp
   eye.c
-  faceplate.c
+  faceplate/axes.c
+  faceplate/faceplate.c
   labels.c
   lines.c
   objs.c
@@ -34,6 +35,7 @@ CMAKEFILES(
   CMakeLists.txt
   ${VIEW_SRCS}
   ged_view.h
+  faceplate/faceplate.h
   )
 
 # Local Variables:

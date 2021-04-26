@@ -108,8 +108,11 @@ struct bview_axes {
     point_t   axes_pos;             /* in model coordinates */
     fastf_t   axes_size;            /* in view coordinates for HUD drawing-mode axes */
     int       line_width;           /* in pixels */
-    int       pos_only;
     int       axes_color[3];
+
+    /* The following are (currently) only used when drawing
+     * the faceplace HUD axes */
+    int       pos_only;
     int       label_flag;
     int       label_color[3];
     int       triple_color;
