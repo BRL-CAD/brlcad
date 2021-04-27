@@ -1998,10 +1998,10 @@ rt_ell_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     bu_vls_sprintf(&l[1]->label, "A");
     VADD2(l[1]->p, ell->v, ell->a);
 
-    bu_vls_sprintf(&l[1]->label, "B");
+    bu_vls_sprintf(&l[2]->label, "B");
     VADD2(l[2]->p, ell->v, ell->b);
 
-    bu_vls_sprintf(&l[1]->label, "C");
+    bu_vls_sprintf(&l[3]->label, "C");
     VADD2(l[3]->p, ell->v, ell->c);
 
 }

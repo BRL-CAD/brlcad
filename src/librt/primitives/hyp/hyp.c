@@ -1388,6 +1388,52 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
     }
 }
 
+void
+rt_hyp_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hyp);
+
+    // Set up the containers
+    struct bview_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, hyp->hyp_Vi);
+
+    bu_vls_sprintf(&l[1]->label, "H");
+    VADD2(l[1]->p, hyp->hyp_Vi, hyp->hyp_Hi);
+
+    bu_vls_sprintf(&l[2]->label, "A");
+    VADD2(l[2]->p, hyp->hyp_Vi, hyp->hyp_A);
+
+    bu_vls_sprintf(&l[3]->label, "B");
+    vect_t vB;
+    VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
+    VUNITIZE(vB);
+    VSCALE(vB, vB, hyp->hyp_b);
+    VADD2(l[3]->p, hyp->hyp_Vi, vB);
+
+}
 
 /*
  * Local Variables:

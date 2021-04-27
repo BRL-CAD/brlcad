@@ -1131,6 +1131,45 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     return 0;
 }
 
+void
+rt_cline_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    struct rt_cline_internal *cline = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cline);
+
+    // Set up the containers
+    struct bview_label *l[2];
+    for (int i = 0; i < 2; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    // Do the specific data assignments for each label
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, cline->v);
+
+    bu_vls_sprintf(&l[0]->label, "H");
+    VADD2(l[1]->p, cline->v, cline->h);
+
+}
+
 
 /** @} */
 /*

@@ -1703,6 +1703,54 @@ rpc_is_valid(struct rt_rpc_internal *rpc)
     return 1;
 }
 
+void
+rt_rpc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(rpc);
+
+    // Set up the containers
+    struct bview_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, rpc->rpc_V);
+
+    bu_vls_sprintf(&l[1]->label, "B");
+    VADD2(l[1]->p, rpc->rpc_V, rpc->rpc_B);
+
+    bu_vls_sprintf(&l[2]->label, "H");
+    VADD2(l[2]->p, rpc->rpc_V, rpc->rpc_H);
+
+    bu_vls_sprintf(&l[3]->label, "r");
+    vect_t Ru;
+    VCROSS(Ru, rpc->rpc_B, rpc->rpc_H);
+    VUNITIZE(Ru);
+    VSCALE(Ru, Ru, rpc->rpc_r);
+    VADD2(l[3]->p, rpc->rpc_V, Ru);
+}
+
+
 /*
  * Local Variables:
  * mode: C

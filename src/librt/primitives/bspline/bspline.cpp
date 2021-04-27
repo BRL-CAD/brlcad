@@ -1434,8 +1434,8 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
     return 0;			/* OK */
 }
 
-void
-rt_bspline_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+extern "C" void
+rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

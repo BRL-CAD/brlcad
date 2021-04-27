@@ -1877,6 +1877,55 @@ rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
     VADD3(*cent, fcent, hhcent, cvcent);
 }
 
+void
+rt_part_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(part);
+
+    // Set up the containers
+    struct bview_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, part->part_V);
+
+    bu_vls_sprintf(&l[1]->label, "H");
+    VADD2(l[1]->p, part->part_V, part->part_H);
+
+    bu_vls_sprintf(&l[2]->label, "v");
+    vect_t Ru, ortho;
+    VMOVE(Ru, part->part_H);
+    VUNITIZE(Ru);
+    bn_vec_ortho(ortho, Ru);
+    VSCALE(l[2]->p, ortho, part->part_vrad);
+    VADD2(l[2]->p, part->part_V, l[2]->p);
+
+    bu_vls_sprintf(&l[3]->label, "h");
+    VSCALE(l[3]->p, ortho, part->part_hrad);
+    VADD3(l[3]->p, part->part_V, part->part_H, l[3]->p);
+}
+
 /*
  * Local Variables:
  * mode: C

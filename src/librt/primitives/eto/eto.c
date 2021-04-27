@@ -1650,6 +1650,67 @@ eto_is_valid(struct rt_eto_internal *eto)
     return 1;
 }
 
+void
+rt_eto_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    // Set up the containers
+    struct bview_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, eto->eto_V);
+
+    fastf_t ch, cv, dh, dv, cmag, phi;
+    vect_t Au, Nu;
+
+    VMOVE(Nu, eto->eto_N);
+    VUNITIZE(Nu);
+    bn_vec_ortho(Au, Nu);
+    VUNITIZE(Au);
+
+    cmag = MAGNITUDE(eto->eto_C);
+    /* get horizontal and vertical components of C and Rd */
+    cv = VDOT(eto->eto_C, Nu);
+    ch = sqrt(cmag*cmag - cv*cv);
+    /* angle between C and Nu */
+    phi = acos(cv / cmag);
+    dv = -eto->eto_rd * sin(phi);
+    dh = eto->eto_rd * cos(phi);
+
+    bu_vls_sprintf(&l[1]->label, "C");
+    VJOIN2(l[1]->p, eto->eto_V, eto->eto_r+ch, Au, cv, Nu);
+
+    bu_vls_sprintf(&l[2]->label, "D");
+    VJOIN2(l[2]->p, eto->eto_V, eto->eto_r+dh, Au, dv, Nu);
+
+    bu_vls_sprintf(&l[3]->label, "r");
+    VJOIN1(l[3]->p, eto->eto_V, eto->eto_r, Au);
+
+}
+
 /** @} */
 /*
  * Local Variables:

@@ -2527,6 +2527,8 @@ rt_arb_find_e_nearest_pt2(int *edge,
 void
 rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
+    int i;
+
     if (!labels || !ip)
 	return;
 
@@ -2538,7 +2540,7 @@ rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
 
     // Set up the containers
     struct bview_label *l[8];
-    for (int i = 0; i < arbType; i++) {
+    for (i = 0; i < arbType; i++) {
 	struct bview_scene_obj *s;
 	struct bview_label *la;
 	BU_GET(s, struct bview_scene_obj);
@@ -2557,9 +2559,41 @@ rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     }
 
     // Do the specific data assignments for each label
-    for (int i = 0; i < arbType; i++) {
-	bu_vls_sprintf(&l[i]->label, "%d", i+1);
-	VMOVE(l[i]->p, arb->pt[i]);
+    switch (arbType) {
+	case ARB8:
+	    for (i=0; i<8; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    break;
+	case ARB7:
+	    for (i=0; i<7; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    break;
+	case ARB6:
+	    for (i=0; i<5; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    bu_vls_sprintf(&l[5]->label, "6");
+	    VMOVE(l[5]->p, arb->pt[6]);
+	    break;
+	case ARB5:
+	    for (i=0; i<5; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    break;
+	case ARB4:
+	    for (i=0; i<3; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    bu_vls_sprintf(&l[3]->label, "4");
+	    VMOVE(l[3]->p, arb->pt[4]);
+	    break;
     }
 
 }

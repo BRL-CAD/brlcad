@@ -2045,6 +2045,62 @@ rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
     VJOIN1(*cent, apex, dist_C, unit_vec);
 }
 
+void
+rt_ehy_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    // Set up the containers
+    struct bview_label *l[5];
+    for (int i = 0; i < 5; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, ehy->ehy_V);
+
+    bu_vls_sprintf(&l[1]->label, "H");
+    VADD2(l[1]->p, ehy->ehy_V, ehy->ehy_H);
+
+    bu_vls_sprintf(&l[2]->label, "A");
+    vect_t A;
+    VSCALE(A, ehy->ehy_Au, ehy->ehy_r1);
+    VADD2(l[2]->p, ehy->ehy_V, A);
+
+    bu_vls_sprintf(&l[3]->label, "B");
+    vect_t B;
+    VCROSS(B, ehy->ehy_Au, ehy->ehy_H);
+    VUNITIZE(B);
+    VSCALE(B, B, ehy->ehy_r2);
+    VADD2(l[3]->p, ehy->ehy_V, B);
+
+    bu_vls_sprintf(&l[4]->label, "c");
+    VMOVE(l[4]->p, ehy->ehy_H);
+    VUNITIZE(l[4]->p);
+    VSCALE(l[4]->p, l[4]->p, MAGNITUDE(ehy->ehy_H) + ehy->ehy_c);
+    VADD2(l[4]->p, ehy->ehy_V, l[4]->p);
+
+}
+
 
 /** @} */
 /*
