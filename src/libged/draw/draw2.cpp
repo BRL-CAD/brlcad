@@ -39,6 +39,9 @@
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    const struct bn_tol *tol = &gedp->ged_wdbp->wdb_tol;
+    const struct bg_tess_tol *ttol = &gedp->ged_wdbp->wdb_ttol;
     static const char *usage = "objname";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -54,7 +57,42 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    return GED_OK;
+    /* Look up object.  NOTE: for testing simplicity this is just an object lookup
+     * right now, but it needs to walk the tree and do the full-path instance creation.
+     * Note also that view objects aren't what we want to report with a "who" return,
+     * so we'll need to track the list of drawn paths independently. */
+    struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_NOISY);
+    if (dp == RT_DIR_NULL)
+	return GED_ERROR;
+    struct rt_db_internal dbintern;
+    struct rt_db_internal *ip = &dbintern;
+    mat_t idn;
+    MAT_IDN(idn);
+    int ret = rt_db_get_internal(ip, dp, dbip, idn, &rt_uniresource);
+    if (ret < 0 || !ip->idb_meth->ft_plot)
+	return GED_ERROR;
+
+    // Have database object, make scene object
+    struct bview_scene_obj *s;
+    BU_GET(s, struct bview_scene_obj);
+    BU_LIST_INIT(&(s->s_vlist));
+    s->s_v = gedp->ged_gvp;
+    s->s_type_flags |= BVIEW_DBOBJ_BASED;
+    s->s_i_data = (void *)dp;
+    VSET(s->s_color, 255, 0, 0);
+
+    // Get wireframe
+    struct rt_view_info info;
+    info.bot_threshold = gedp->ged_gvp->gv_bot_threshold;
+    ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+
+    // Add object to scene
+    bu_ptbl_ins(s->s_v->gv_scene_objs, (long *)s);
+
+    // Increment changed flag
+    s->s_changed++;
+
+    return (ret < 0) ? GED_ERROR : GED_OK;
 }
 
 /*
