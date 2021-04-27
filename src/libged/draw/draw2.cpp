@@ -76,18 +76,25 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     struct bview_scene_obj *s;
     BU_GET(s, struct bview_scene_obj);
     BU_LIST_INIT(&(s->s_vlist));
+    BU_PTBL_INIT(&s->children);
     s->s_v = gedp->ged_gvp;
     s->s_type_flags |= BVIEW_DBOBJ_BASED;
     s->s_i_data = (void *)dp;
     VSET(s->s_color, 255, 0, 0);
 
+    // Add object to scene
+    bu_ptbl_ins(s->s_v->gv_scene_objs, (long *)s);
+
     // Get wireframe
     struct rt_view_info info;
     info.bot_threshold = gedp->ged_gvp->gv_bot_threshold;
     ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+    if (ret < 0)
+	return GED_ERROR;
 
-    // Add object to scene
-    bu_ptbl_ins(s->s_v->gv_scene_objs, (long *)s);
+    // Draw labels
+    if (ip->idb_meth->ft_labels)
+	ret = ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
 
     // Increment changed flag
     s->s_changed++;
