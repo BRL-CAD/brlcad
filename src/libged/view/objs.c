@@ -43,7 +43,7 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view objs name draw [0|1]";
+    const char *usage_string = "view obj name draw [0|1]";
     const char *purpose_string = "toggle view polygons";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -82,11 +82,41 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
 }
 
 int
+_objs_cmd_delete(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj name delete";
+    const char *purpose_string = "delete view object";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BVIEW_VIEWONLY)) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s is associated with a database object - use 'erase2' cmd to clear\n", gd->vobj);
+	return GED_ERROR;
+    }
+    bu_ptbl_rm(gedp->ged_gvp->gv_scene_objs, (long *)s);
+    bview_scene_obj_free(s);
+    BU_PUT(s, struct bview_scene_obj);
+
+    return GED_OK;
+}
+int
 _objs_cmd_color(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view objs name color [r/g/b]";
+    const char *usage_string = "view obj name color [r/g/b]";
     const char *purpose_string = "show/set obj color";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -122,7 +152,7 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view objs name arrow [0|1] [width [#]] [length [#]]";
+    const char *usage_string = "view obj name arrow [0|1] [width [#]] [length [#]]";
     const char *purpose_string = "toggle arrow drawing, for those objects that support it";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -186,7 +216,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view objs update name [x y]";
+    const char *usage_string = "view obj update name [x y]";
     const char *purpose_string = "update object";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -232,6 +262,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _obj_cmds[] = {
     { "draw",       _objs_cmd_draw},
+    { "del",        _objs_cmd_delete},
     //{ "info",       _objs_cmd_info},
     { "update",     _objs_cmd_update},
     { "color",      _objs_cmd_color},
@@ -267,7 +298,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 
     gd->gopts = d;
 
-    // We know we're the objs command - start processing args
+    // We know we're the obj command - start processing args
     argc--; argv++;
 
     // High level options are only defined prior to the subcommand

@@ -99,6 +99,9 @@ BVIEW_EXPORT extern void bview_view_center_linesnap(struct bview *v);
  * calculation is impossible), else 0. */
 BVIEW_EXPORT extern int bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
+/* Free the object contents, including all child objects */
+BVIEW_EXPORT extern void bview_scene_obj_free(struct bview_scene_obj *s);
+
 __END_DECLS
 
 /** @} */

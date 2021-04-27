@@ -7,15 +7,16 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-erase SHARED erase.c)
+ged_plugin_library(ged-erase SHARED erase.c erase2.c)
 target_link_libraries(ged-erase libged libbu)
 set_property(TARGET ged-erase APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-erase erase.c)
+VALIDATE_STYLE(ged-erase erase.c erase2.c)
 PLUGIN_SETUP(ged-erase ged)
 
 CMAKEFILES(
   CMakeLists.txt
   erase.c
+  erase2.c
   )
 
 # Local Variables:

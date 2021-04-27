@@ -380,6 +380,29 @@ bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf
     return 0;
 }
 
+void
+bview_scene_obj_free(struct bview_scene_obj *s)
+{
+    // handle children
+    if (BU_PTBL_IS_INITIALIZED(&s->children)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+	    bview_scene_obj_free(s_c);
+	    BU_PUT(s_c, struct bview_scene_obj);
+	}
+    }
+
+    // free vlist
+    if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
+	BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    }
+
+    // free child table
+    if (BU_PTBL_IS_INITIALIZED(&s->children)) {
+	bu_ptbl_free(&s->children);
+    }
+}
+
 /*
  * Local Variables:
  * tab-width: 8
