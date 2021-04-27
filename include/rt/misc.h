@@ -74,6 +74,7 @@ RT_EXPORT extern int rt_generic_xform(struct rt_db_internal     *op,
 				      int                       avail,
 				      struct db_i               *dbip);
 RT_EXPORT extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+RT_EXPORT extern int rt_generic_labels(struct bu_ptbl *labels, const struct rt_db_internal *intern);
 
 
 __END_DECLS

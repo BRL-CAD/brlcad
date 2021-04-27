@@ -1766,37 +1766,6 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
     VMOVE(*cent,tip->v);
 }
 
-void
-rt_tor_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip)
-{
-    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
-    RT_TOR_CK_MAGIC(tor);
-
-    if (!labels)
-	return;
-
-    {
-	struct bview_scene_obj *s;
-	BU_GET(s, struct bview_scene_obj);
-	BU_LIST_INIT(&(s->s_vlist));
-	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, tor->v, BN_VLIST_LINE_MOVE);
-	VSET(s->s_color, 255, 255, 0);
-
-	struct bview_label *l;
-	BU_GET(l, struct bview_label);
-	BU_VLS_INIT(&l->label);
-	bu_vls_sprintf(&l->label, "V");
-	VMOVE(l->p, tor->v);
-
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
-
-	s->s_i_data = (void *)l;
-	bu_ptbl_ins(labels, (long *)s);
-    }
-}
-
-
 /*
  * Local Variables:
  * mode: C
