@@ -253,7 +253,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_generic_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tor_labels) /* label */
     },
 
     {

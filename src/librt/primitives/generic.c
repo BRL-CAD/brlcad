@@ -192,54 +192,6 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
 
 /**
- * This is the generic routine to create view scene labels for those solid
- * types which are fully described by their ft_parsetab entry.
- *
- * TODO - will need some way (callbacks in the structparse table perhaps?) to
- * produce 3D point locations for various parameters.
- */
-int
-rt_generic_labels(struct bu_ptbl *labels, const struct rt_db_internal *intern)
-{
-    const struct bu_structparse *parsetab = NULL;
-    const struct rt_functab *ftp;
-
-    RT_CK_DB_INTERNAL(intern);
-    ftp = intern->idb_meth;
-    RT_CK_FUNCTAB(ftp);
-
-    parsetab = ftp->ft_parsetab;
-    if (!parsetab) {
-	return BRLCAD_ERROR;
-    }
-
-    const struct bu_structparse *sdp;
-    for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
-	bu_log("%s", sdp->sp_name);
-
-	struct bview_scene_obj *s;
-	BU_GET(s, struct bview_scene_obj);
-	BU_LIST_INIT(&(s->s_vlist));
-	//BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, tor->v, BN_VLIST_LINE_MOVE);
-	VSET(s->s_color, 255, 255, 0);
-
-	struct bview_label *l;
-	BU_GET(l, struct bview_label);
-	BU_VLS_INIT(&l->label);
-	bu_vls_sprintf(&l->label, "%s", sdp->sp_name);
-	//VMOVE(l->p, tor->v);
-
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
-
-	s->s_i_data = (void *)l;
-	bu_ptbl_ins(labels, (long *)s);
-    }
-
-    return BRLCAD_OK;
-}
-
-/**
  * This one assumes that making all the parameters null is fine.
  */
 void
