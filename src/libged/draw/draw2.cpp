@@ -89,12 +89,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_view_info info;
     info.bot_threshold = gedp->ged_gvp->gv_bot_threshold;
     ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
-    if (ret < 0)
-	return GED_ERROR;
 
     // Draw labels
     if (ip->idb_meth->ft_labels)
-	ret = ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
+	ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
 
     // Increment changed flag
     s->s_changed++;
