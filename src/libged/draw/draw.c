@@ -1329,9 +1329,13 @@ extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
 struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
 const struct ged_cmd preview_cmd = { &preview_cmd_impl };
 
-const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
+extern int ged_draw2_core(struct ged *gedp, int argc, const char *argv[]);
+struct ged_cmd_impl draw2_cmd_impl = {"draw2", ged_draw2_core, GED_CMD_DEFAULT};
+const struct ged_cmd draw2_cmd = { &draw2_cmd_impl };
 
-static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 6 };
+const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, &draw2_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 7 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

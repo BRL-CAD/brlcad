@@ -1769,31 +1769,50 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 void
 rt_tor_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip)
 {
+    if (!labels || !ip)
+	return;
+
     struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
-    if (!labels)
-	return;
-
-    {
+    // Set up the containers
+    struct bview_label *l[4];
+    for (int i = 0; i < 4; i++) {
 	struct bview_scene_obj *s;
+	struct bview_label *la;
 	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+
 	BU_LIST_INIT(&(s->s_vlist));
-	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, tor->v, BN_VLIST_LINE_MOVE);
 	VSET(s->s_color, 255, 255, 0);
-
-	struct bview_label *l;
-	BU_GET(l, struct bview_label);
-	BU_VLS_INIT(&l->label);
-	bu_vls_sprintf(&l->label, "V");
-	VMOVE(l->p, tor->v);
-
 	s->s_type_flags |= BVIEW_DBOBJ_BASED;
 	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
 
-	s->s_i_data = (void *)l;
+	l[i] = la;
 	bu_ptbl_ins(labels, (long *)s);
     }
+
+    // Do the specific data assignments for each label
+    fastf_t r3, r4;
+    vect_t adir;
+    bn_vec_ortho(adir, tor->h);
+    r3 = tor->r_a - tor->r_h;
+    r4 = tor->r_a + tor->r_h;
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, tor->v);
+
+    bu_vls_sprintf(&l[1]->label, "I");
+    VJOIN1(l[1]->p, tor->v, r3, adir);
+
+    bu_vls_sprintf(&l[2]->label, "O");
+    VJOIN1(l[2]->p, tor->v, r4, adir);
+
+    bu_vls_sprintf(&l[3]->label, "H");
+    VJOIN1(l[3]->p, tor->v, tor->r_a, adir);
+    VADD2(l[3]->p, l[3]->p, tor->h);
 }
 
 
