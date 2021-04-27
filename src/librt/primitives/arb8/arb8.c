@@ -2524,6 +2524,46 @@ rt_arb_find_e_nearest_pt2(int *edge,
     return 0;
 }
 
+void
+rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    const struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    int arbType = rt_arb_std_type(ip, &arb_tol);
+
+    // Set up the containers
+    struct bview_label *l[8];
+    for (int i = 0; i < arbType; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    // Do the specific data assignments for each label
+    for (int i = 0; i < arbType; i++) {
+	bu_vls_sprintf(&l[i]->label, "%d", i+1);
+	VMOVE(l[i]->p, arb->pt[i]);
+    }
+
+}
+
 
 /** @} */
 

@@ -964,6 +964,42 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+void
+rt_ars_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    /*XXX Needs work - doesn't really represent the ARS data well... */
+
+    struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
+    RT_ARS_CK_MAGIC(ars);
+
+    // Set up the containers
+    struct bview_label *l[2];
+    int lcnt = 1;
+    for (int i = 0; i < lcnt; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, ars->curves[0]);
+
+}
 
 /** @} */
 /*

@@ -3425,6 +3425,52 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 }
 
+void
+rt_tgc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!labels || !ip)
+	return;
+
+    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tgc);
+
+    // Set up the containers
+    struct bview_label *l[5];
+    for (int i = 0; i < 5; i++) {
+	struct bview_scene_obj *s;
+	struct bview_label *la;
+	BU_GET(s, struct bview_scene_obj);
+	BU_GET(la, struct bview_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags |= BVIEW_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+	bu_ptbl_ins(labels, (long *)s);
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, tgc->v);
+
+    bu_vls_sprintf(&l[1]->label, "A");
+    VADD2(l[1]->p, tgc->v, tgc->a);
+
+    bu_vls_sprintf(&l[2]->label, "B");
+    VADD2(l[2]->p, tgc->v, tgc->b);
+
+    bu_vls_sprintf(&l[3]->label, "C");
+    VADD3(l[3]->p, tgc->v, tgc->h, tgc->c);
+
+    bu_vls_sprintf(&l[4]->label, "D");
+    VADD3(l[4]->p, tgc->v, tgc->h, tgc->d);
+}
+
 
 /*
  * Local Variables:

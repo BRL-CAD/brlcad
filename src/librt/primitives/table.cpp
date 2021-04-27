@@ -80,7 +80,7 @@ extern "C" {
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
     extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op); \
     extern int rt_##name##_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version); \
-    extern int rt_##name##_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip)
+    extern int rt_##name##_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -300,7 +300,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels) /* label */
     },
 
     {
@@ -347,7 +347,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels) /* label */
     },
 
     {
@@ -676,7 +676,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_sph_labels) /* label */
     },
 
     {
