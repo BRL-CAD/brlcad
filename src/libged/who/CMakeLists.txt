@@ -16,6 +16,7 @@ PLUGIN_SETUP(ged-who ged)
 CMAKEFILES(
   CMakeLists.txt
   who.c
+  who2.cpp
   )
 
 # Local Variables:
