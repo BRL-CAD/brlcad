@@ -67,30 +67,30 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     printUsage = 0;
     if (argc == 1 && BU_STR_EQUAL(argv[0], "on")) {
 	/* lod on */
-	gvp->gv_adaptive_plot = 1;
+	gvp->gvs.adaptive_plot = 1;
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "off")) {
 	/* lod off */
-	gvp->gv_adaptive_plot = 0;
+	gvp->gvs.adaptive_plot = 0;
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
 	/* lod enabled - return on state */
-	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gvs.adaptive_plot);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {
 		if (argc == 2) {
 		    /* lod scale points - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_point_scale);
+		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gvs.point_scale);
 		} else {
 		    /* lod scale points f - set value */
-		    gvp->gv_point_scale = atof(argv[2]);
+		    gvp->gvs.point_scale = atof(argv[2]);
 		}
 	    } else if (BU_STR_EQUAL(argv[1], "curves")) {
 		if (argc == 2) {
 		    /* lod scale curves - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_curve_scale);
+		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gvs.curve_scale);
 		} else {
 		    /* lod scale curves f - set value */
-		    gvp->gv_curve_scale = atof(argv[2]);
+		    gvp->gvs.curve_scale = atof(argv[2]);
 		}
 	    } else {
 		printUsage = 1;
@@ -102,7 +102,7 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 	printUsage = 1;
 	if (argc == 1) {
 	    /* lod redraw - return current value */
-	    if (gvp->gv_redraw_on_zoom) {
+	    if (gvp->gvs.redraw_on_zoom) {
 		bu_vls_printf(gedp->ged_result_str, "onzoom");
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "off");
@@ -111,11 +111,11 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 	} else if (argc == 2) {
 	    if (BU_STR_EQUAL(argv[1], "off")) {
 		/* lod redraw off */
-		gvp->gv_redraw_on_zoom = 0;
+		gvp->gvs.redraw_on_zoom = 0;
 		printUsage = 0;
 	    } else if (BU_STR_EQUAL(argv[1], "onzoom")) {
 		/* lod redraw onzoom */
-		gvp->gv_redraw_on_zoom = 1;
+		gvp->gvs.redraw_on_zoom = 1;
 		printUsage = 0;
 	    }
 	}

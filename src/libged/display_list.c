@@ -766,7 +766,7 @@ view_avg_size(struct bview *gvp)
 {
     fastf_t view_aspect, x_size, y_size;
 
-    view_aspect = (fastf_t)gvp->gv_x_samples / gvp->gv_y_samples;
+    view_aspect = (fastf_t)gvp->gvs.x_samples / gvp->gvs.y_samples;
     x_size = gvp->gv_size;
     y_size = x_size / view_aspect;
 
@@ -779,7 +779,7 @@ view_avg_sample_spacing(struct bview *gvp)
     fastf_t avg_view_size, avg_view_samples;
 
     avg_view_size = view_avg_size(gvp);
-    avg_view_samples = (gvp->gv_x_samples + gvp->gv_y_samples) / 2.0;
+    avg_view_samples = (gvp->gvs.x_samples + gvp->gvs.y_samples) / 2.0;
 
     return avg_view_size / avg_view_samples;
 }
@@ -939,22 +939,22 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
 	return -1;
     }
 
-    if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+    if (gvp && gvp->gvs.adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 
 	info.vhead = &vhead;
 	info.tol = tol;
-	info.bot_threshold = (gvp) ? gvp->gv_bot_threshold : 0;
+	info.bot_threshold = (gvp) ? gvp->gvs.bot_threshold : 0;
 
 	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
 
 	info.curve_spacing = sp->s_size / 2.0;
 
-	info.point_spacing /= gvp->gv_point_scale;
-	info.curve_spacing /= gvp->gv_curve_scale;
+	info.point_spacing /= gvp->gvs.point_scale;
+	info.curve_spacing /= gvp->gvs.curve_scale;
 
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
-	info.bot_threshold = (gvp) ? gvp->gv_bot_threshold : 0;
+	info.bot_threshold = (gvp) ? gvp->gvs.bot_threshold : 0;
 	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, &info);
     }
 

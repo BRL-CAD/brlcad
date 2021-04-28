@@ -97,7 +97,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Get wireframe
     struct rt_view_info info;
-    info.bot_threshold = gedp->ged_gvp->gv_bot_threshold;
+    info.bot_threshold = gedp->ged_gvp->gvs.bot_threshold;
     ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
 
     // Draw labels

@@ -293,6 +293,24 @@ _bview_interactive_rect_state_hash(XXH64_state_t *state, struct bview_interactiv
     XXH64_update(state, &v->aspect, sizeof(fastf_t));
 }
 
+static void
+_bview_settings_hash(XXH64_state_t *state, struct bview_settings *v)
+{
+    /* First, do sanity checks */
+    if (!v || !state)
+	return;
+
+    XXH64_update(state, &v->mode, sizeof(int));
+    XXH64_update(state, &v->adaptive_plot, sizeof(int));
+    XXH64_update(state, &v->redraw_on_zoom, sizeof(int));
+    XXH64_update(state, &v->x_samples, sizeof(int));
+    XXH64_update(state, &v->y_samples, sizeof(int));
+    XXH64_update(state, &v->point_scale, sizeof(fastf_t));
+    XXH64_update(state, &v->curve_scale, sizeof(fastf_t));
+    XXH64_update(state, &v->bot_threshold, sizeof(size_t));
+    XXH64_update(state, &v->hidden, sizeof(int));
+}
+
 void
 bview_scene_obj_hash(XXH64_state_t *state, struct bview_scene_obj *s)
 {
@@ -406,7 +424,7 @@ bview_hash(struct bview *v)
     XXH64_update(state, &v->gv_maxMouseDelta, sizeof(fastf_t));
     XXH64_update(state, &v->gv_rscale, sizeof(fastf_t));
     XXH64_update(state, &v->gv_sscale, sizeof(fastf_t));
-    XXH64_update(state, &v->gv_mode, sizeof(int));
+    _bview_settings_hash(state, &v->gvs);
     XXH64_update(state, &v->gv_zclip, sizeof(int));
     XXH64_update(state, &v->gv_cleared, sizeof(int));
     _bview_adc_state_hash(state, &v->gv_adc);
@@ -431,15 +449,7 @@ bview_hash(struct bview *v)
     _bview_other_state_hash(state, &v->gv_view_scale);
     _bview_interactive_rect_state_hash(state, &v->gv_rect);
     XXH64_update(state, &v->gv_fps, sizeof(int));
-    XXH64_update(state, &v->gv_adaptive_plot, sizeof(int));
-    XXH64_update(state, &v->gv_redraw_on_zoom, sizeof(int));
-    XXH64_update(state, &v->gv_x_samples, sizeof(int));
-    XXH64_update(state, &v->gv_y_samples, sizeof(int));
-    XXH64_update(state, &v->gv_point_scale, sizeof(fastf_t));
-    XXH64_update(state, &v->gv_curve_scale, sizeof(fastf_t));
     XXH64_update(state, &v->gv_data_vZ, sizeof(fastf_t));
-    XXH64_update(state, &v->gv_bot_threshold, sizeof(size_t));
-    XXH64_update(state, &v->gv_hidden, sizeof(int));
 
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
 	long *p = BU_PTBL_GET(v->gv_selected, i);

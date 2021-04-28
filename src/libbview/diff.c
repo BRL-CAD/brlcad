@@ -388,6 +388,27 @@ _bview_interactive_rect_state_differ(struct bview_interactive_rect_state *v1, st
     return 0;
 }
 
+static int
+_bview_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
+{
+    /* First, do sanity checks */
+    if (!v1 && !v2)
+	return -1;
+    if ((v1 && !v2) || (!v1 && v2))
+	return -1;
+
+    BVIEW_NDIFF(1,mode);
+    BVIEW_NDIFF(1,adaptive_plot);
+    BVIEW_NDIFF(1,redraw_on_zoom);
+    BVIEW_NDIFF(1,x_samples);
+    BVIEW_NDIFF(1,y_samples);
+    BVIEW_NDIFF(1,point_scale);
+    BVIEW_NDIFF(1,curve_scale);
+    BVIEW_NDIFF(1,bot_threshold);
+    BVIEW_NDIFF(1,hidden);
+
+    return 0;
+}
 int
 bview_differ(struct bview *v1, struct bview *v2)
 {
@@ -426,11 +447,9 @@ bview_differ(struct bview *v1, struct bview *v2)
     BVIEW_NDIFF(1,gv_maxMouseDelta);
     BVIEW_NDIFF(1,gv_rscale);
     BVIEW_NDIFF(1,gv_sscale);
-    BVIEW_NDIFF(1,gv_mode);
-    BVIEW_NDIFF(1,gv_zclip);
-    BVIEW_NDIFF(1,gv_cleared);
 
     // More complex containers have their own check routines
+    BVIEW_CDIFF(1, _bview_settings_differ, gvs);
     BVIEW_CDIFF(1, _bview_adc_state_differ, gv_adc);
     BVIEW_CDIFF(1, _bview_axes_differ, gv_model_axes);
     BVIEW_CDIFF(1, _bview_axes_differ, gv_view_axes);
@@ -443,8 +462,6 @@ bview_differ(struct bview *v1, struct bview *v2)
     BVIEW_CDIFF(1, _bview_data_axes_state_differ, gv_sdata_axes);
     BVIEW_CDIFF(1, _bview_data_label_state_differ, gv_sdata_labels);
     BVIEW_CDIFF(1, _bview_data_line_state_differ, gv_sdata_lines);
-    BVIEW_NDIFF(1,gv_snap_lines);
-    BVIEW_NDIFF(1,gv_snap_tol_factor);
     BVIEW_CDIFF(1, _bview_data_polygon_state_differ, gv_sdata_polygons);
     BVIEW_CDIFF(1, _bview_grid_state_differ, gv_grid);
     BVIEW_CDIFF(1, _bview_other_state_differ, gv_center_dot);
@@ -453,15 +470,11 @@ bview_differ(struct bview *v1, struct bview *v2)
     BVIEW_CDIFF(1, _bview_other_state_differ, gv_view_scale);
     BVIEW_CDIFF(1, _bview_interactive_rect_state_differ, gv_rect);
 
-    BVIEW_NDIFF(1,gv_adaptive_plot);
-    BVIEW_NDIFF(2,gv_redraw_on_zoom);
-    BVIEW_NDIFF(1,gv_x_samples);
-    BVIEW_NDIFF(1,gv_y_samples);
-    BVIEW_NDIFF(1,gv_point_scale);
-    BVIEW_NDIFF(1,gv_curve_scale);
+    BVIEW_NDIFF(1,gv_snap_lines);
+    BVIEW_NDIFF(1,gv_snap_tol_factor);
+    BVIEW_NDIFF(1,gv_cleared);
+    BVIEW_NDIFF(1,gv_zclip);
     BVIEW_NDIFF(1,gv_data_vZ);
-    BVIEW_NDIFF(1,gv_bot_threshold);
-    BVIEW_NDIFF(1,gv_hidden);
 
     BVIEW_DIFF(3,gv_callback);
     BVIEW_DIFF(3,gv_clientData);

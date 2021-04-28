@@ -2018,7 +2018,7 @@ to_mouse_otranslate(struct ged *gedp,
 
 	if (!params) {
 	    BU_GET(params, struct dm_path_edit_params);
-	    params->edit_mode = gdvp->gv_mode;
+	    params->edit_mode = gdvp->gvs.mode;
 	    params->dx = params->dy = 0.0;
 	    (void)bu_hash_set(tgd->go_dmv.edited_paths,
 			      (uint8_t *)path_string,
@@ -2684,7 +2684,7 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
     }
 
 
-    if (gdvp->gv_mode == TCLCAD_POLY_SQUARE_MODE) {
+    if (gdvp->gvs.mode == TCLCAD_POLY_SQUARE_MODE) {
 	fastf_t dx, dy;
 
 	dx = fx - gdpsp->gdps_prev_point[X];

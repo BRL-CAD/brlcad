@@ -127,6 +127,20 @@ struct bview_axes {
 };
 
 
+// Many settings have defaults at the view level, and may be overridden for
+// individual scene objects.
+struct bview_settings {
+    int           mode;
+    int           adaptive_plot;
+    int           redraw_on_zoom;
+    int           x_samples;
+    int           y_samples;
+    fastf_t       point_scale;
+    fastf_t       curve_scale;
+    size_t        bot_threshold;
+    int		  hidden;
+};
+
 /* Note that it is possible for a view object to be view-only (not
  * corresponding directly to the wireframe of a database shape) but also based
  * off of database data.  Evaluated shaded objects would be an example, as
@@ -394,20 +408,12 @@ struct bview {
     fastf_t       gv_maxMouseDelta;
 
     /* Settings */
-    int           gv_mode;
-    int           gv_zclip;
-    int           gv_cleared;
+    struct bview_settings gvs;
     int           gv_snap_lines;
     double 	  gv_snap_tol_factor;
-    int           gv_adaptive_plot;
-    int           gv_redraw_on_zoom;
-    int           gv_x_samples;
-    int           gv_y_samples;
-    fastf_t       gv_point_scale;
-    fastf_t       gv_curve_scale;
+    int           gv_cleared;
+    int           gv_zclip;
     fastf_t       gv_data_vZ;
-    size_t        gv_bot_threshold;
-    int		  gv_hidden;
 
     // Faceplate elements fall into two general categories: those which are
     // interactively adjusted (in a geometric sense) and those which are not.

@@ -693,10 +693,10 @@ dm_var_init(struct mged_dm *target_dm)
 
     *view_state->vs_gvp = *target_dm->dm_view_state->vs_gvp;	/* struct copy */
     view_state->vs_gvp->gv_clientData = (void *)view_state;
-    view_state->vs_gvp->gv_adaptive_plot = 0;
-    view_state->vs_gvp->gv_redraw_on_zoom = 0;
-    view_state->vs_gvp->gv_point_scale = 1.0;
-    view_state->vs_gvp->gv_curve_scale = 1.0;
+    view_state->vs_gvp->gvs.adaptive_plot = 0;
+    view_state->vs_gvp->gvs.redraw_on_zoom = 0;
+    view_state->vs_gvp->gvs.point_scale = 1.0;
+    view_state->vs_gvp->gvs.curve_scale = 1.0;
     view_state->vs_rc = 1;
     view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
 
