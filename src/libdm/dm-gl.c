@@ -1456,12 +1456,12 @@ int gl_draw_obj(struct dm *dmp, struct display_list *obj)
 	(void)dm_make_current(dmp);
 	(void)dm_begin_dlist(dmp, sp->s_dlist);
 	if (sp->s_iflag == UP)
-	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os.s_transparency);
+	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os.transparency);
 	else
 	    (void)dm_set_fg(dmp,
 		    (unsigned char)sp->s_color[0],
 		    (unsigned char)sp->s_color[1],
-		    (unsigned char)sp->s_color[2], 0, sp->s_os.s_transparency);
+		    (unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
 	(void)dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist);
 	(void)dm_end_dlist(dmp);
     }

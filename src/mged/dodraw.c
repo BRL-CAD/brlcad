@@ -151,28 +151,28 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
      */
     if (!existing_sp) {
 	/* Take note of the base color */
-	sp->s_uflag = 0;
+	sp->s_old.s_uflag = 0;
 	if (tsp) {
 	    if (tsp->ts_mater.ma_color_valid) {
-		sp->s_dflag = 0;	/* color specified in db */
+		sp->s_old.s_dflag = 0;	/* color specified in db */
 	    } else {
-		sp->s_dflag = 1;	/* default color */
+		sp->s_old.s_dflag = 1;	/* default color */
 	    }
 	    /* Copy into basecolor anyway, to prevent black */
-	    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.0;
-	    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.0;
-	    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.0;
+	    sp->s_old.s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.0;
+	    sp->s_old.s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.0;
+	    sp->s_old.s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.0;
 	}
-	sp->s_cflag = 0;
+	sp->s_old.s_cflag = 0;
 	sp->s_iflag = DOWN;
 	sp->s_soldash = dashflag;
-	sp->s_Eflag = 0;	/* This is a solid */
+	sp->s_old.s_Eflag = 0;	/* This is a solid */
 	if (sp->s_u_data) {
 	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
 	    db_dup_full_path(&bdata->s_fullpath, pathp);
 	}
 	if (tsp)
-	    sp->s_regionid = tsp->ts_regionid;
+	    sp->s_old.s_regionid = tsp->ts_regionid;
     }
 
     createDListSolid(sp);
@@ -216,7 +216,7 @@ replot_original_solid(struct bview_scene_obj *sp)
 	return 0;
     struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
     dp = LAST_SOLID(bdata);
-    if (sp->s_Eflag) {
+    if (sp->s_old.s_Eflag) {
 	Tcl_AppendResult(INTERP, "replot_original_solid(", dp->d_namep,
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	return -1;

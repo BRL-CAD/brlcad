@@ -601,15 +601,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.vs.draw_non_subtract_only = 0;
 	dgcdp.vs.shade_per_vertex_normals = 0;
 	dgcdp.vs.draw_edge_uses = 0;
-	dgcdp.vs.wireframe_color_override = 0;
+	dgcdp.vs.color_override = 0;
 	dgcdp.fastpath_count = 0;
 	dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
 	dgcdp.vs.bot_threshold = 0;
 
 	/* default color - red */
-	dgcdp.vs.wireframe_color[0] = 255;
-	dgcdp.vs.wireframe_color[1] = 0;
-	dgcdp.vs.wireframe_color[2] = 0;
+	dgcdp.vs.color[0] = 255;
+	dgcdp.vs.color[1] = 0;
+	dgcdp.vs.color[2] = 0;
 
 	/* default transparency - opaque */
 	dgcdp.vs.transparency = 1.0;
@@ -677,10 +677,10 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			if (g < 0 || g > 255) g = 255;
 			if (b < 0 || b > 255) b = 255;
 
-			dgcdp.vs.wireframe_color_override = 1;
-			dgcdp.vs.wireframe_color[0] = r;
-			dgcdp.vs.wireframe_color[1] = g;
-			dgcdp.vs.wireframe_color[2] = b;
+			dgcdp.vs.color_override = 1;
+			dgcdp.vs.color[0] = r;
+			dgcdp.vs.color[1] = g;
+			dgcdp.vs.color[2] = b;
 		    }
 		    break;
 		case 'h':
@@ -850,10 +850,10 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		for (i = 0; i < argc; ++i) {
 		    struct ged_solid_data bview_data;
 		    bview_data.draw_solid_lines_only = dgcdp.vs.draw_solid_lines_only;
-		    bview_data.wireframe_color_override = dgcdp.vs.wireframe_color_override;
-		    bview_data.wireframe_color[0]= dgcdp.vs.wireframe_color[0];
-		    bview_data.wireframe_color[1]= dgcdp.vs.wireframe_color[1];
-		    bview_data.wireframe_color[2]= dgcdp.vs.wireframe_color[2];
+		    bview_data.wireframe_color_override = dgcdp.vs.color_override;
+		    bview_data.wireframe_color[0]= dgcdp.vs.color[0];
+		    bview_data.wireframe_color[1]= dgcdp.vs.color[1];
+		    bview_data.wireframe_color[2]= dgcdp.vs.color[2];
 		    bview_data.transparency= dgcdp.vs.transparency;
 		    bview_data.dmode = dgcdp.vs.dmode;
 		    bview_data.hiddenLine = dgcdp.vs.hiddenLine;

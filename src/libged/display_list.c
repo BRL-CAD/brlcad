@@ -584,20 +584,20 @@ color_soltab(struct bview_scene_obj *sp)
 {
     const struct mater *mp;
 
-    sp->s_cflag = 0;
+    sp->s_old.s_cflag = 0;
 
     /* the user specified the color, so use it */
-    if (sp->s_uflag) {
-	sp->s_color[0] = sp->s_basecolor[0];
-	sp->s_color[1] = sp->s_basecolor[1];
-	sp->s_color[2] = sp->s_basecolor[2];
+    if (sp->s_old.s_uflag) {
+	sp->s_color[0] = sp->s_old.s_basecolor[0];
+	sp->s_color[1] = sp->s_old.s_basecolor[1];
+	sp->s_color[2] = sp->s_old.s_basecolor[2];
 
 	return;
     }
 
     for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	if (sp->s_regionid <= mp->mt_high &&
-		sp->s_regionid >= mp->mt_low) {
+	if (sp->s_old.s_regionid <= mp->mt_high &&
+		sp->s_old.s_regionid >= mp->mt_low) {
 	    sp->s_color[0] = mp->mt_r;
 	    sp->s_color[1] = mp->mt_g;
 	    sp->s_color[2] = mp->mt_b;
@@ -615,13 +615,13 @@ color_soltab(struct bview_scene_obj *sp)
      */
 
     /* use wireframe_default_color */
-    if (sp->s_dflag)
-	sp->s_cflag = 1;
+    if (sp->s_old.s_dflag)
+	sp->s_old.s_cflag = 1;
 
     /* Be conservative and copy color anyway, to avoid black */
-    sp->s_color[0] = sp->s_basecolor[0];
-    sp->s_color[1] = sp->s_basecolor[1];
-    sp->s_color[2] = sp->s_basecolor[2];
+    sp->s_color[0] = sp->s_old.s_basecolor[0];
+    sp->s_color[1] = sp->s_old.s_basecolor[1];
+    sp->s_color[2] = sp->s_old.s_basecolor[2];
 }
 
 
@@ -661,10 +661,10 @@ solid_set_color_info(
 {
     unsigned char bcolor[3] = {255, 0, 0}; /* default */
 
-    sp->s_uflag = 0;
-    sp->s_dflag = 0;
+    sp->s_old.s_uflag = 0;
+    sp->s_old.s_dflag = 0;
     if (wireframe_color_override) {
-	sp->s_uflag = 1;
+	sp->s_old.s_uflag = 1;
 
 	bcolor[RED] = wireframe_color_override[RED];
 	bcolor[GRN] = wireframe_color_override[GRN];
@@ -675,13 +675,13 @@ solid_set_color_info(
 	    bcolor[GRN] = tsp->ts_mater.ma_color[GRN] * 255.0;
 	    bcolor[BLU] = tsp->ts_mater.ma_color[BLU] * 255.0;
 	} else {
-	    sp->s_dflag = 1;
+	    sp->s_old.s_dflag = 1;
 	}
     }
 
-    sp->s_basecolor[RED] = bcolor[RED];
-    sp->s_basecolor[GRN] = bcolor[GRN];
-    sp->s_basecolor[BLU] = bcolor[BLU];
+    sp->s_old.s_basecolor[RED] = bcolor[RED];
+    sp->s_old.s_basecolor[GRN] = bcolor[GRN];
+    sp->s_old.s_basecolor[BLU] = bcolor[BLU];
 
     color_soltab(sp);
 }
@@ -739,16 +739,16 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     sp->s_flag = DOWN;
     sp->s_iflag = DOWN;
     sp->s_soldash = dashflag;
-    sp->s_Eflag = 0;
+    sp->s_old.s_Eflag = 0;
 
     if (tsp) {
-	sp->s_regionid = tsp->ts_regionid;
+	sp->s_old.s_regionid = tsp->ts_regionid;
     }
 
     solid_set_color_info(sp, wireframe_color_override, tsp);
 
     sp->s_dlist = 0;
-    sp->s_os.s_transparency = dgcdp->vs.transparency;
+    sp->s_os.transparency = dgcdp->vs.transparency;
     sp->s_os.s_dmode = dgcdp->vs.dmode;
     sp->s_os.s_hiddenLine = dgcdp->vs.hiddenLine;
 
@@ -1101,8 +1101,8 @@ append_solid_to_display_list(
         sp->s_soldash = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
     }
 
-    sp->s_Eflag = 0;
-    sp->s_regionid = tsp->ts_regionid;
+    sp->s_old.s_Eflag = 0;
+    sp->s_old.s_regionid = tsp->ts_regionid;
 
     if (ip->idb_type == ID_GRIP) {
         float mater_color[3];
@@ -1160,7 +1160,7 @@ append_solid_to_display_list(
     }
 
     sp->s_dlist = 0;
-    sp->s_os.s_transparency = bview_data->transparency;
+    sp->s_os.transparency = bview_data->transparency;
     sp->s_os.s_dmode = bview_data->dmode;
     sp->s_os.s_hiddenLine = bview_data->hiddenLine;
     MAT_COPY(sp->s_mat, tsp->ts_mat);
@@ -1237,19 +1237,19 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 
     sp->s_iflag = DOWN;
     sp->s_soldash = 0;
-    sp->s_Eflag = 1;            /* Can't be solid edited! */
-    sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
-    sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
-    sp->s_color[2] = sp->s_basecolor[2] = (rgb) & 0xFF;
-    sp->s_regionid = 0;
+    sp->s_old.s_Eflag = 1;            /* Can't be solid edited! */
+    sp->s_color[0] = sp->s_old.s_basecolor[0] = (rgb>>16) & 0xFF;
+    sp->s_color[1] = sp->s_old.s_basecolor[1] = (rgb>> 8) & 0xFF;
+    sp->s_color[2] = sp->s_old.s_basecolor[2] = (rgb) & 0xFF;
+    sp->s_old.s_regionid = 0;
     sp->s_dlist = 0;
 
-    sp->s_uflag = 0;
-    sp->s_dflag = 0;
-    sp->s_cflag = 0;
-    sp->s_wflag = 0;
+    sp->s_old.s_uflag = 0;
+    sp->s_old.s_dflag = 0;
+    sp->s_old.s_cflag = 0;
+    sp->s_old.s_wflag = 0;
 
-    sp->s_os.s_transparency = transparency;
+    sp->s_os.transparency = transparency;
     sp->s_os.s_dmode = dmode;
 
     /* Solid successfully drawn, add to linked list of solid structs */
@@ -1340,7 +1340,7 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    sp->s_wflag = wflag;
+	    sp->s_old.s_wflag = wflag;
 	}
 
 	gdlp = next_gdlp;
@@ -1433,7 +1433,7 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
 		    bu_vls_printf(vls, "%d", _GED_HIDDEN_LINE);
 	    } else {
 		if (both)
-		    bu_vls_printf(vls, "%d %g", sp->s_os.s_dmode, sp->s_os.s_transparency);
+		    bu_vls_printf(vls, "%d %g", sp->s_os.s_dmode, sp->s_os.transparency);
 		else
 		    bu_vls_printf(vls, "%d", sp->s_os.s_dmode);
 	    }
@@ -2169,17 +2169,17 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 			    sp->s_center[Y]*dbip->dbi_base2local,
 			    sp->s_center[Z]*dbip->dbi_base2local,
 			    sp->s_size*dbip->dbi_base2local);
-		    bu_vls_printf(vls, "reg=%d\n", sp->s_regionid);
+		    bu_vls_printf(vls, "reg=%d\n", sp->s_old.s_regionid);
 		    bu_vls_printf(vls, "  basecolor=(%d, %d, %d) color=(%d, %d, %d)%s%s%s\n",
-			    sp->s_basecolor[0],
-			    sp->s_basecolor[1],
-			    sp->s_basecolor[2],
+			    sp->s_old.s_basecolor[0],
+			    sp->s_old.s_basecolor[1],
+			    sp->s_old.s_basecolor[2],
 			    sp->s_color[0],
 			    sp->s_color[1],
 			    sp->s_color[2],
-			    sp->s_uflag?" U":"",
-			    sp->s_dflag?" D":"",
-			    sp->s_cflag?" C":"");
+			    sp->s_old.s_uflag?" U":"",
+			    sp->s_old.s_dflag?" D":"",
+			    sp->s_old.s_cflag?" C":"");
 
 		    if (lvl <= 1)
 			continue;
@@ -2579,7 +2579,7 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
 		continue;
 
 	    /* found a match */
-	    sp->s_os.s_transparency = transparency;
+	    sp->s_os.transparency = transparency;
 
 	}
 

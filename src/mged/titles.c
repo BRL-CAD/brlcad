@@ -107,7 +107,7 @@ create_text_overlay(struct bu_vls *vp)
 	bu_vls_strcat(vp, ": ");
 
 	/* print the evaluated (path) solid parameters */
-	if (illump->s_Eflag == 0) {
+	if (illump->s_old.s_Eflag == 0) {
 	    mat_t new_mat;
 	    /* NOT an evaluated region */
 	    /* object edit option selected */
@@ -341,7 +341,7 @@ dotitles(struct bu_vls *overlay_vls)
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (es_edflag >= 0 || (STATE == ST_O_EDIT && illump->s_Eflag == 0)) {
+    if (es_edflag >= 0 || (STATE == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */
@@ -462,7 +462,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    mmenu_display(y);
 
 	    /* print parameter locations on screen */
-	    if (STATE == ST_O_EDIT && illump->s_Eflag) {
+	    if (STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
 		/* region is a processed region */
 		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
 		xloc = (int)(temp[X]*GED_MAX);

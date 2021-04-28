@@ -100,12 +100,12 @@ go_draw_solid(struct bview *gdvp, struct bview_scene_obj *sp)
 	dm_draw_dlist(dmp, sp->s_dlist);
     } else {
 	if (sp->s_iflag == UP)
-	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os.s_transparency);
+	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os.transparency);
 	else
 	    (void)dm_set_fg(dmp,
 			    (unsigned char)sp->s_color[0],
 			    (unsigned char)sp->s_color[1],
-			    (unsigned char)sp->s_color[2], 0, sp->s_os.s_transparency);
+			    (unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
 
 	if (sp->s_os.s_hiddenLine) {
 	    (void)dm_draw_vlist_hidden_line(dmp, (struct bn_vlist *)&sp->s_vlist);
@@ -137,7 +137,7 @@ go_draw_dlist(struct bview *gdvp)
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-		if (sp->s_os.s_transparency < 1.0)
+		if (sp->s_os.transparency < 1.0)
 		    continue;
 
 		if (line_style != sp->s_soldash) {
@@ -161,7 +161,7 @@ go_draw_dlist(struct bview *gdvp)
 
 	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
 		/* already drawn above */
-		if (ZERO(sp->s_os.s_transparency - 1.0))
+		if (ZERO(sp->s_os.transparency - 1.0))
 		    continue;
 
 		if (line_style != sp->s_soldash) {
@@ -263,7 +263,7 @@ to_edit_redraw(struct ged *gedp,
 			    av[arg++] = "-h";
 			} else {
 			    bu_vls_printf(&mflag, "-m%d", sp->s_os.s_dmode);
-			    bu_vls_printf(&xflag, "-x%f", sp->s_os.s_transparency);
+			    bu_vls_printf(&xflag, "-x%f", sp->s_os.transparency);
 			    av[arg++] = bu_vls_addr(&mflag);
 			    av[arg++] = bu_vls_addr(&xflag);
 			}

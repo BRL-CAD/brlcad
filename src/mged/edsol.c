@@ -2535,7 +2535,7 @@ init_sedit(void)
     /*
      * Check for a processed region or other illegal solid.
      */
-    if (illump->s_Eflag) {
+    if (illump->s_old.s_Eflag) {
 	Tcl_AppendResult(INTERP,
 			 "Unable to Solid_Edit a processed region;  select a primitive instead\n", (char *)NULL);
 	return;
@@ -7389,7 +7389,7 @@ init_oedit_guts(void)
     /*
      * Check for a processed region
      */
-    if (illump->s_Eflag) {
+    if (illump->s_old.s_Eflag) {
 	/* Have a processed (E'd) region - NO key solid.
 	 * Use the 'center' as the key
 	 */

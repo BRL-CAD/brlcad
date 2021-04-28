@@ -1381,7 +1381,7 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
 		    (*red) = sp->s_color[0];
 		    (*green) = sp->s_color[1];
 		    (*blue) = sp->s_color[2];
-		    (*alpha) = sp->s_os.s_transparency;
+		    (*alpha) = sp->s_os.transparency;
 		}
 
 		bot = (struct rt_bot_internal *)intern.idb_ptr;

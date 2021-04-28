@@ -467,7 +467,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	struct directory *outdp = RT_DIR_NULL;
 
 	/* object edit mode */
-	if (illump->s_Eflag) {
+	if (illump->s_old.s_Eflag) {
 	    Tcl_AppendResult(interpreter, "Cannot find inside of a processed (E'd) region\n",
 			     (char *)NULL);
 	    (void)signal(SIGINT, SIG_IGN);

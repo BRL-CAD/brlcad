@@ -108,7 +108,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_Eflag && sp->s_soldash != 0) {
+	    if (!sp->s_old.s_Eflag && sp->s_soldash != 0) {
 		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&vls, "help area");

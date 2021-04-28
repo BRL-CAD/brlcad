@@ -266,12 +266,12 @@ createDListSolid(struct bview_scene_obj *sp)
 	    (void)dm_make_current(DMP);
 	    (void)dm_begin_dlist(DMP, sp->s_dlist);
 	    if (sp->s_iflag == UP)
-		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_os.s_transparency);
+		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_os.transparency);
 	    else
 		(void)dm_set_fg(DMP,
 			(unsigned char)sp->s_color[0],
 			(unsigned char)sp->s_color[1],
-			(unsigned char)sp->s_color[2], 0, sp->s_os.s_transparency);
+			(unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
 	    (void)dm_draw_vlist(DMP, (struct bn_vlist *)&sp->s_vlist);
 	    (void)dm_end_dlist(DMP);
 	}
