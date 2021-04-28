@@ -1,4 +1,4 @@
-/*                         E R A S E . C
+/*                         E R A S E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/erase.c
+/** @file libged/erase.cpp
  *
  * The erase command.
  *
@@ -35,7 +35,7 @@
  * Erase objects from the display.
  *
  */
-int
+extern "C" int
 ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[object(s)]";
