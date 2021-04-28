@@ -1132,12 +1132,12 @@ dmo_drawSolid(struct dm_obj *dmop,
 	      struct bview_scene_obj *sp)
 {
     if (sp->s_iflag == UP)
-	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_transparency);
+	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_os.s_transparency);
     else
 	dm_set_fg(dmop->dmo_dmp,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
-		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+		       (unsigned char)sp->s_color[2], 0, sp->s_os.s_transparency);
     dm_draw_vlist(dmop->dmo_dmp, (struct bn_vlist *)&sp->s_vlist);
 }
 
@@ -1243,7 +1243,7 @@ dmo_drawSList(struct dm_obj *dmop,
     if (dmop->dmo_dmp->i->dm_transparency) {
 	/* First, draw opaque stuff */
 	for (BU_LIST_FOR(sp, bview_scene_obj, hsp)) {
-	    if (sp->s_transparency < 1.0)
+	    if (sp->s_os.s_transparency < 1.0)
 		continue;
 
 	    if (linestyle != sp->s_soldash) {
@@ -1260,7 +1260,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	/* Second, draw transparent stuff */
 	for (BU_LIST_FOR(sp, bview_scene_obj, hsp)) {
 	    /* already drawn above */
-	    if (ZERO(sp->s_transparency - 1.0))
+	    if (ZERO(sp->s_os.s_transparency - 1.0))
 		continue;
 
 	    if (linestyle != sp->s_soldash) {

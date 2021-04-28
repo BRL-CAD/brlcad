@@ -748,9 +748,9 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     solid_set_color_info(sp, wireframe_color_override, tsp);
 
     sp->s_dlist = 0;
-    sp->s_transparency = dgcdp->transparency;
-    sp->s_dmode = dgcdp->dmode;
-    sp->s_hiddenLine = dgcdp->hiddenLine;
+    sp->s_os.s_transparency = dgcdp->transparency;
+    sp->s_os.s_dmode = dgcdp->dmode;
+    sp->s_os.s_hiddenLine = dgcdp->hiddenLine;
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
@@ -977,7 +977,7 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
 int
 redraw_solid(struct bview_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp)
 {
-    if (sp->s_dmode == _GED_WIREFRAME) {
+    if (sp->s_os.s_dmode == _GED_WIREFRAME) {
 	/* replot wireframe */
 	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
 	    RT_FREE_VLIST(&sp->s_vlist);
@@ -1160,9 +1160,9 @@ append_solid_to_display_list(
     }
 
     sp->s_dlist = 0;
-    sp->s_transparency = bview_data->transparency;
-    sp->s_dmode = bview_data->dmode;
-    sp->s_hiddenLine = bview_data->hiddenLine;
+    sp->s_os.s_transparency = bview_data->transparency;
+    sp->s_os.s_dmode = bview_data->dmode;
+    sp->s_os.s_hiddenLine = bview_data->hiddenLine;
     MAT_COPY(sp->s_mat, tsp->ts_mat);
 
     /* append solid to display list */
@@ -1249,8 +1249,8 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     sp->s_cflag = 0;
     sp->s_wflag = 0;
 
-    sp->s_transparency = transparency;
-    sp->s_dmode = dmode;
+    sp->s_os.s_transparency = transparency;
+    sp->s_os.s_dmode = dmode;
 
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->dl_head_scene_obj.back, &sp->l);
@@ -1426,16 +1426,16 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
 
 
 	    /* found a match */
-	    if (sp->s_hiddenLine) {
+	    if (sp->s_os.s_hiddenLine) {
 		if (both)
 		    bu_vls_printf(vls, "%d 1", _GED_HIDDEN_LINE);
 		else
 		    bu_vls_printf(vls, "%d", _GED_HIDDEN_LINE);
 	    } else {
 		if (both)
-		    bu_vls_printf(vls, "%d %g", sp->s_dmode, sp->s_transparency);
+		    bu_vls_printf(vls, "%d %g", sp->s_os.s_dmode, sp->s_os.s_transparency);
 		else
-		    bu_vls_printf(vls, "%d", sp->s_dmode);
+		    bu_vls_printf(vls, "%d", sp->s_os.s_dmode);
 	    }
 
 	    return 1;
@@ -2579,7 +2579,7 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
 		continue;
 
 	    /* found a match */
-	    sp->s_transparency = transparency;
+	    sp->s_os.s_transparency = transparency;
 
 	}
 

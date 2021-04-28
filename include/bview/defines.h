@@ -139,6 +139,19 @@ struct bview_settings {
     fastf_t       curve_scale;
     size_t        bot_threshold;
     int		  hidden;
+
+    int s_line_width;		/**< @brief  current line width */
+    fastf_t s_arrow_tip_length; /**< @brief  arrow tip length */
+    fastf_t s_arrow_tip_width;  /**< @brief  arrow tip width */
+    int s_hiddenLine;         	/**< @brief  1 - hidden line */
+    unsigned char s_color[3];	/**< @brief  color to draw as */
+
+    fastf_t s_transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] */
+    int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
+				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
+				 *	      2 - shaded (booleans NOT evaluated)
+				 *	      3 - shaded (booleans evaluated)
+				 */
 };
 
 /* Note that it is possible for a view object to be view-only (not
@@ -206,28 +219,20 @@ struct bview_scene_obj  {
     char s_wflag;		/**< @brief  work flag - used by various libged and Tcl functions */
     char s_changed;		/**< @brief  changed flag - set by s_update_callback if a change occurred */
 
-    int s_line_width;		/**< @brief  current line width */
-    int s_soldash;		/**< @brief  solid/dashed line flag */
-    int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
-    fastf_t s_arrow_tip_length; /**< @brief  arrow tip length */
-    fastf_t s_arrow_tip_width;  /**< @brief  arrow tip width */
-    int s_hiddenLine;         	/**< @brief  1 - hidden line */
-
     char s_dflag;		/**< @brief  1 - s_basecolor is derived from the default */
     unsigned char s_basecolor[3];	/**< @brief  color from containing region */
-
     char s_uflag;		/**< @brief  1 - the user specified the color */
     char s_cflag;		/**< @brief  1 - use the default color */
     unsigned char s_color[3];	/**< @brief  color to draw as */
 
-    fastf_t s_transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] */
-    int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
-				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
-				 *	      2 - shaded (booleans NOT evaluated)
-				 *	      3 - shaded (booleans evaluated)
-				 */
+    int s_soldash;		/**< @brief  solid/dashed line flag */
+    int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
 
-    /* Database object related info */
+    /* Scene object settings which also (potentially) have global defaults but
+     * may be overridden locally */
+    struct bview_settings s_os;
+
+   /* Database object related info */
     char s_Eflag;		/**< @brief  flag - not a solid but an "E'd" region (MGED ONLY)*/
     short s_regionid;		/**< @brief  region ID (MGED ONLY)*/
 

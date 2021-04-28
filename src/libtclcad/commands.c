@@ -6467,14 +6467,14 @@ to_create_vlist_callback_solid(struct bview_scene_obj *sp)
 	    (void)dm_begin_dlist((struct dm *)gdvp->dmp, sp->s_dlist);
 
 	    if (sp->s_iflag == UP)
-		(void)dm_set_fg((struct dm *)gdvp->dmp, 255, 255, 255, 0, sp->s_transparency);
+		(void)dm_set_fg((struct dm *)gdvp->dmp, 255, 255, 255, 0, sp->s_os.s_transparency);
 	    else
 		(void)dm_set_fg((struct dm *)gdvp->dmp,
 			(unsigned char)sp->s_color[0],
 			(unsigned char)sp->s_color[1],
-			(unsigned char)sp->s_color[2], 0, sp->s_transparency);
+			(unsigned char)sp->s_color[2], 0, sp->s_os.s_transparency);
 
-	    if (sp->s_hiddenLine) {
+	    if (sp->s_os.s_hiddenLine) {
 		(void)dm_draw_vlist_hidden_line((struct dm *)gdvp->dmp, (struct bn_vlist *)&sp->s_vlist);
 	    } else {
 		(void)dm_draw_vlist((struct dm *)gdvp->dmp, (struct bn_vlist *)&sp->s_vlist);

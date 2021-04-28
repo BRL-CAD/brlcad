@@ -309,6 +309,12 @@ _bview_settings_hash(XXH64_state_t *state, struct bview_settings *v)
     XXH64_update(state, &v->curve_scale, sizeof(fastf_t));
     XXH64_update(state, &v->bot_threshold, sizeof(size_t));
     XXH64_update(state, &v->hidden, sizeof(int));
+    XXH64_update(state, &v->s_line_width, sizeof(int));
+    XXH64_update(state, &v->s_arrow_tip_length, sizeof(fastf_t));
+    XXH64_update(state, &v->s_arrow_tip_width, sizeof(fastf_t));
+    XXH64_update(state, &v->s_transparency, sizeof(fastf_t));
+    XXH64_update(state, &v->s_dmode, sizeof(int));
+    XXH64_update(state, &v->s_hiddenLine, sizeof(int));
 }
 
 void
@@ -326,10 +332,7 @@ bview_scene_obj_hash(XXH64_state_t *state, struct bview_scene_obj *s)
     XXH64_update(state, &s->s_vlen, sizeof(int));
     XXH64_update(state, &s->s_flag, sizeof(char));
     XXH64_update(state, &s->s_iflag, sizeof(char));
-    XXH64_update(state, &s->s_line_width, sizeof(int));
     XXH64_update(state, &s->s_arrow, sizeof(int));
-    XXH64_update(state, &s->s_arrow_tip_length, sizeof(fastf_t));
-    XXH64_update(state, &s->s_arrow_tip_width, sizeof(fastf_t));
     XXH64_update(state, &s->s_soldash, sizeof(char));
     XXH64_update(state, &s->s_Eflag, sizeof(char));
     XXH64_update(state, &s->s_uflag, sizeof(char));
@@ -341,10 +344,8 @@ bview_scene_obj_hash(XXH64_state_t *state, struct bview_scene_obj *s)
     XXH64_update(state, &s->s_color, sizeof(unsigned char[3]));
     XXH64_update(state, &s->s_regionid, sizeof(short));
     XXH64_update(state, &s->s_dlist, sizeof(unsigned int));
-    XXH64_update(state, &s->s_transparency, sizeof(fastf_t));
-    XXH64_update(state, &s->s_dmode, sizeof(int));
-    XXH64_update(state, &s->s_hiddenLine, sizeof(int));
     XXH64_update(state, &s->s_mat, sizeof(mat_t));
+    _bview_settings_hash(state, &s->s_os);
 }
 
 unsigned long long

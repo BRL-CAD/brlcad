@@ -87,8 +87,8 @@ dm_add_arrows(struct dm *dmp, struct bview_scene_obj *s)
     int pcnt = 0;
     if (!s->s_arrow)
 	return;
-    if (NEAR_ZERO(s->s_arrow_tip_length, SMALL_FASTF) || NEAR_ZERO(s->s_arrow_tip_width, SMALL_FASTF))
-       return;	
+    if (NEAR_ZERO(s->s_os.s_arrow_tip_length, SMALL_FASTF) || NEAR_ZERO(s->s_os.s_arrow_tip_width, SMALL_FASTF))
+       return;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -100,7 +100,7 @@ dm_add_arrows(struct dm *dmp, struct bview_scene_obj *s)
 		    if (pcnt > 1) {
 			// We have a move and more than one point - add an arrow
 			// to the A -> B segment at B
-			dm_draw_arrow(dmp, A, B, s->s_arrow_tip_length, s->s_arrow_tip_width, 1.0);
+			dm_draw_arrow(dmp, A, B, s->s_os.s_arrow_tip_length, s->s_os.s_arrow_tip_width, 1.0);
 		    }
 		    VMOVE(B,*pt);
 		    break;
@@ -117,7 +117,7 @@ dm_add_arrows(struct dm *dmp, struct bview_scene_obj *s)
     }
     // Get the last pairing
     if (pcnt > 1)
-	dm_draw_arrow(dmp, A, B, s->s_arrow_tip_length, s->s_arrow_tip_width, 1.0);
+	dm_draw_arrow(dmp, A, B, s->s_os.s_arrow_tip_length, s->s_os.s_arrow_tip_width, 1.0);
 }
 
 void
@@ -519,7 +519,7 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
     }
 
     if (l->arrow) {
-	dm_draw_arrow(dmp, mpt, l->target, s->s_arrow_tip_length, s->s_arrow_tip_width, 1.0);
+	dm_draw_arrow(dmp, mpt, l->target, s->s_os.s_arrow_tip_length, s->s_os.s_arrow_tip_width, 1.0);
     } else {
 	dm_draw_line_3d(dmp, mpt, l->target);
     }
@@ -598,7 +598,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
 	    dm_set_fg(dmp, s_c->s_color[0], s_c->s_color[1], s_c->s_color[2], 1, 1.0);
-	    dm_set_line_attr(dmp, s_c->s_line_width, s_c->s_soldash);
+	    dm_set_line_attr(dmp, s_c->s_os.s_line_width, s_c->s_soldash);
 	    dm_draw_vlist(dmp, (struct bn_vlist *)&s_c->s_vlist);
 	    // Generally arrow settings on child objects are going to be set as part
 	    // of the drawing scheme.  If there are cases where we want to control this
@@ -618,7 +618,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	// always be the desired behavior - might need interior and exterior
 	// children tables to provide some control
 	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
-	dm_set_line_attr(dmp, s->s_line_width, s->s_soldash);
+	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
 	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
 	dm_add_arrows(dmp, s);
 

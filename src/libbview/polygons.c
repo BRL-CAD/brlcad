@@ -101,7 +101,7 @@ bview_fill_polygon(struct bview_scene_obj *s)
 	fobj->s_color[0] = 0;
 	fobj->s_color[1] = 0;
 	fobj->s_color[2] = 255;
-	fobj->s_line_width = 1;
+	fobj->s_os.s_line_width = 1;
 	fobj->s_soldash = 0;
 	fobj->s_v = s->s_v;
 	bu_ptbl_ins(&s->children, (long *)fobj);
@@ -197,7 +197,7 @@ bview_create_polygon(struct bview *v, int type, int x, int y)
     // Save the current view for later processing
     bview_sync(&p->v, s->s_v);
 
-    s->s_line_width = 1;
+    s->s_os.s_line_width = 1;
     s->s_color[0] = 255;
     s->s_color[1] = 255;
     s->s_color[2] = 0;
