@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <set>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,6 +43,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[object(s)]";
     const char *cmdName = argv[0];
     struct bview *v = gedp->ged_gvp;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -64,23 +67,55 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     /* skip past cmd */
     argc--; argv++;
 
-    int rmcnt = 0;
-    for (size_t i = 0; i < (size_t)argc; ++i) {
-	for (size_t j = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs); j++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, j);
-	    if (BU_STR_EQUAL(argv[i], bu_vls_cstr(&s->s_uuid))) {
-		bu_ptbl_rm(gedp->ged_gvp->gv_scene_objs, (long *)s);
-		bview_scene_obj_free(s);
-		BU_PUT(s, struct bview_scene_obj);
-		rmcnt++;
-		break;
-	    }
+    /* Build the processing sets */
+    std::set<struct bview_scene_obj *> to_clear;
+    std::set<struct bview_scene_obj *> all_objs;
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+	if (s->s_type_flags & BVIEW_DBOBJ_BASED) {
+	    if (!s->s_u_data)
+		continue;
+	    all_objs.insert(s);
 	}
     }
 
-    if (rmcnt != argc) {
-	bu_vls_printf(gedp->ged_result_str, "%d objects specified for removal, but only removed %d", argc, rmcnt);
-	return GED_ERROR;
+    /* For each supplied path, check the scene objects against it for matches */
+    std::set<struct bview_scene_obj *>::iterator s_it;
+    for (size_t i = 0; i < (size_t)argc; ++i) {
+	struct db_full_path fp;
+	db_full_path_init(&fp);
+	int ret = db_string_to_path(&fp, dbip, argv[i]);
+	if (ret < 0) {
+	    // Validate path.  We postpone actual scene object removal until all
+	    // paths supplied have successfully validated, so we don't end up
+	    // with partial removals
+	    db_free_full_path(&fp);
+	    bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
+	    return GED_ERROR;
+	}
+	for (s_it = all_objs.begin(); s_it != all_objs.end(); s_it++) {
+	    struct bview_scene_obj *s = *s_it;
+	    struct ged_bview_data *bdata = (struct ged_bview_data *)s->s_u_data;
+	    // Anything below the supplied path in the hierarchy is removed
+	    if (db_full_path_match_top(&fp, &bdata->s_fullpath)) {
+		to_clear.insert(s);
+	    }
+	}
+	// Anything already flagged for removal doesn't need to be checked against
+	// other paths
+	for (s_it = to_clear.begin(); s_it != to_clear.end(); s_it++) {
+	    struct bview_scene_obj *s = *s_it;
+	    all_objs.erase(s);
+	}
+	db_free_full_path(&fp);
+    }
+
+    // Built up the removal set - now clear from table
+    for (s_it = to_clear.begin(); s_it != to_clear.end(); s_it++) {
+	struct bview_scene_obj *s = *s_it;
+	bu_ptbl_rm(gedp->ged_gvp->gv_scene_objs, (long *)s);
+	bview_scene_obj_free(s);
+	BU_PUT(s, struct bview_scene_obj);
     }
 
     return GED_OK;

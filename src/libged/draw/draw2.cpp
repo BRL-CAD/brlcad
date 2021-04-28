@@ -42,7 +42,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const struct bn_tol *tol = &gedp->ged_wdbp->wdb_tol;
     const struct bg_tess_tol *ttol = &gedp->ged_wdbp->wdb_ttol;
-    static const char *usage = "objname";
+    static const char *usage = "path";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -61,14 +61,22 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
      * right now, but it needs to walk the tree and do the full-path instance creation.
      * Note also that view objects aren't what we want to report with a "who" return,
      * so we'll need to track the list of drawn paths independently. */
-    struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_NOISY);
-    if (dp == RT_DIR_NULL)
+    struct ged_bview_data *bdata;
+    BU_GET(bdata, struct ged_bview_data);
+    db_full_path_init(&bdata->s_fullpath);
+    int ret = db_string_to_path(&bdata->s_fullpath, dbip, argv[1]);
+    if (ret < 0) {
+	db_free_full_path(&bdata->s_fullpath);
+	BU_PUT(bdata, struct ged_bview_data);
 	return GED_ERROR;
+    }
+
+    // Make sure we can get info from it...
     struct rt_db_internal dbintern;
     struct rt_db_internal *ip = &dbintern;
     mat_t idn;
     MAT_IDN(idn);
-    int ret = rt_db_get_internal(ip, dp, dbip, idn, &rt_uniresource);
+    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath), dbip, idn, &rt_uniresource);
     if (ret < 0 || !ip->idb_meth->ft_plot)
 	return GED_ERROR;
 
@@ -81,8 +89,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_sprintf(&s->s_uuid, "%s", argv[1]);
     s->s_v = gedp->ged_gvp;
     s->s_type_flags |= BVIEW_DBOBJ_BASED;
-    s->s_i_data = (void *)dp;
     VSET(s->s_color, 255, 0, 0);
+    s->s_u_data = (void *)bdata;
 
     // Add object to scene
     bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
