@@ -748,9 +748,9 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     solid_set_color_info(sp, wireframe_color_override, tsp);
 
     sp->s_dlist = 0;
-    sp->s_os.s_transparency = dgcdp->transparency;
-    sp->s_os.s_dmode = dgcdp->dmode;
-    sp->s_os.s_hiddenLine = dgcdp->hiddenLine;
+    sp->s_os.s_transparency = dgcdp->vs.transparency;
+    sp->s_os.s_dmode = dgcdp->vs.dmode;
+    sp->s_os.s_hiddenLine = dgcdp->vs.hiddenLine;
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);

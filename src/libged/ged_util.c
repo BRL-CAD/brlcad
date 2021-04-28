@@ -1086,12 +1086,12 @@ void
 _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp)
 {
 
-    if (dgcdp->wireframe_color_override) {
+    if (dgcdp->vs.wireframe_color_override) {
 	unsigned char wcolor[3];
 
-	wcolor[0] = (unsigned char)dgcdp->wireframe_color[0];
-	wcolor[1] = (unsigned char)dgcdp->wireframe_color[1];
-	wcolor[2] = (unsigned char)dgcdp->wireframe_color[2];
+	wcolor[0] = (unsigned char)dgcdp->vs.wireframe_color[0];
+	wcolor[1] = (unsigned char)dgcdp->vs.wireframe_color[1];
+	wcolor[2] = (unsigned char)dgcdp->vs.wireframe_color[2];
 	dl_add_path(dashflag, vhead, pathp, tsp, wcolor, dgcdp);
     } else {
 	dl_add_path(dashflag, vhead, pathp, tsp, NULL, dgcdp);

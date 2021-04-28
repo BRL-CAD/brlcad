@@ -38,6 +38,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "bview/defines.h"
 #include "bview/util.h"
 #include "ged.h"
 
@@ -154,24 +155,8 @@ struct _ged_client_data {
     uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
     struct ged *gedp;
     struct display_list *gdlp;
-    int wireframe_color_override;
-    int wireframe_color[3];
-    int draw_nmg_only;
-    int nmg_triangulate;
-    int draw_wireframes;
-    int draw_normals;
-    int draw_solid_lines_only;
-    int draw_no_surfaces;
-    int draw_non_subtract_only;
-    int shade_per_vertex_normals;
-    int draw_edge_uses;
     int fastpath_count;			/* statistics */
-    int do_not_draw_nmg_solids_during_debugging;
     struct bn_vlblock *draw_edge_uses_vbp;
-    int shaded_mode_override;
-    fastf_t transparency;
-    int dmode;
-    int hiddenLine;
     struct bview_scene_obj *free_scene_obj;
     /* bigE related members */
     struct application *ap;
@@ -184,6 +169,7 @@ struct _ged_client_data {
     int num_halfs;
     int autoview;
     size_t bot_threshold;
+    struct bview_settings vs;
 };
 
 

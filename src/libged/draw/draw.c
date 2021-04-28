@@ -65,8 +65,8 @@ draw_forced_wireframe(
     /* draw the path with the given client data, but force wireframe mode */
     struct _ged_client_data dgcd = *dgcdp;
     dgcd.gedp->ged_gdp->gd_shaded_mode = 0;
-    dgcd.shaded_mode_override = _GED_SHADED_MODE_UNSET;
-    dgcd.dmode = _GED_WIREFRAME;
+    dgcd.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
+    dgcd.vs.dmode = _GED_WIREFRAME;
 
     av[0] = db_path_to_string(pathp);
     av[1] = (char *)0;
@@ -130,10 +130,10 @@ draw_check_leaf(struct db_tree_state *tsp,
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
-    if (dgcdp->draw_non_subtract_only && (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER)))
+    if (dgcdp->vs.draw_non_subtract_only && (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER)))
 	return curtree;
 
-    switch (dgcdp->dmode) {
+    switch (dgcdp->vs.dmode) {
 	case _GED_SHADED_MODE_BOTS:
 	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 		(ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT   ||
@@ -334,7 +334,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
 		}
-		if (dgcdp->draw_wireframes) {
+		if (dgcdp->vs.draw_wireframes) {
 		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_pg_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
@@ -346,7 +346,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
 		}
-		if (dgcdp->draw_wireframes) {
+		if (dgcdp->vs.draw_wireframes) {
 		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_bot_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
@@ -358,7 +358,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_BREP %s\n", dp->d_namep);
 		}
-		if (dgcdp->draw_wireframes) {
+		if (dgcdp->vs.draw_wireframes) {
 		    (void)rt_brep_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_brep_plot_poly(&vhead, pathp, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
@@ -475,7 +475,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     if (curtree->tr_op == OP_NOP) return curtree;
 
     failed = 1;
-    if (!dgcdp->draw_nmg_only) {
+    if (!dgcdp->vs.draw_nmg_only) {
 
 	failed = process_boolean(curtree, tsp, pathp, dgcdp);
 	if (failed) {
@@ -491,12 +491,12 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     r = curtree->tr_d.td_r;
     NMG_CK_REGION(r);
 
-    if (dgcdp->do_not_draw_nmg_solids_during_debugging && r) {
+    if (dgcdp->vs.do_not_draw_nmg_solids_during_debugging && r) {
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
 
-    if (dgcdp->nmg_triangulate) {
+    if (dgcdp->vs.nmg_triangulate) {
 	failed = process_triangulation(tsp, pathp, dgcdp);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
@@ -509,27 +509,27 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	/* Convert NMG to vlist */
 	NMG_CK_REGION(r);
 
-	if (dgcdp->draw_wireframes) {
+	if (dgcdp->vs.draw_wireframes) {
 	    /* Draw in vector form */
 	    style = NMG_VLIST_STYLE_VECTOR;
 	} else {
 	    /* Default -- draw polygons */
 	    style = NMG_VLIST_STYLE_POLYGON;
 	}
-	if (dgcdp->draw_normals) {
+	if (dgcdp->vs.draw_normals) {
 	    style |= NMG_VLIST_STYLE_VISUALIZE_NORMALS;
 	}
-	if (dgcdp->shade_per_vertex_normals) {
+	if (dgcdp->vs.shade_per_vertex_normals) {
 	    style |= NMG_VLIST_STYLE_USE_VU_NORMALS;
 	}
-	if (dgcdp->draw_no_surfaces) {
+	if (dgcdp->vs.draw_no_surfaces) {
 	    style |= NMG_VLIST_STYLE_NO_SURFACES;
 	}
 	nmg_r_to_vlist(&vhead, r, style, &RTG.rtg_vlfree);
 
 	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 
-	if (dgcdp->draw_edge_uses) {
+	if (dgcdp->vs.draw_edge_uses) {
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, &RTG.rtg_vlfree);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
@@ -592,27 +592,27 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    dgcdp.autoview = 0;
 
 	/* Initial values for options, must be reset each time */
-	dgcdp.draw_nmg_only = 0;	/* no booleans */
-	dgcdp.nmg_triangulate = 1;
-	dgcdp.draw_wireframes = 0;
-	dgcdp.draw_normals = 0;
-	dgcdp.draw_solid_lines_only = 0;
-	dgcdp.draw_no_surfaces = 0;
-	dgcdp.draw_non_subtract_only = 0;
-	dgcdp.shade_per_vertex_normals = 0;
-	dgcdp.draw_edge_uses = 0;
-	dgcdp.wireframe_color_override = 0;
+	dgcdp.vs.draw_nmg_only = 0;	/* no booleans */
+	dgcdp.vs.nmg_triangulate = 1;
+	dgcdp.vs.draw_wireframes = 0;
+	dgcdp.vs.draw_normals = 0;
+	dgcdp.vs.draw_solid_lines_only = 0;
+	dgcdp.vs.draw_no_surfaces = 0;
+	dgcdp.vs.draw_non_subtract_only = 0;
+	dgcdp.vs.shade_per_vertex_normals = 0;
+	dgcdp.vs.draw_edge_uses = 0;
+	dgcdp.vs.wireframe_color_override = 0;
 	dgcdp.fastpath_count = 0;
-	dgcdp.shaded_mode_override = _GED_SHADED_MODE_UNSET;
-	dgcdp.bot_threshold = 0;
+	dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
+	dgcdp.vs.bot_threshold = 0;
 
 	/* default color - red */
-	dgcdp.wireframe_color[0] = 255;
-	dgcdp.wireframe_color[1] = 0;
-	dgcdp.wireframe_color[2] = 0;
+	dgcdp.vs.wireframe_color[0] = 255;
+	dgcdp.vs.wireframe_color[1] = 0;
+	dgcdp.vs.wireframe_color[2] = 0;
 
 	/* default transparency - opaque */
-	dgcdp.transparency = 1.0;
+	dgcdp.vs.transparency = 1.0;
 
 	/* free_scene_obj */
 	dgcdp.free_scene_obj = gedp->free_scene_obj;
@@ -624,38 +624,38 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oRL:M")) != -1) {
 	    switch (c) {
 		case 'u':
-		    dgcdp.draw_edge_uses = 1;
+		    dgcdp.vs.draw_edge_uses = 1;
 		    break;
 		case 's':
-		    dgcdp.draw_solid_lines_only = 1;
+		    dgcdp.vs.draw_solid_lines_only = 1;
 		    break;
 		case 't':
 		    nmg_use_tnurbs = 1;
 		    break;
 		case 'v':
-		    dgcdp.shade_per_vertex_normals = 1;
+		    dgcdp.vs.shade_per_vertex_normals = 1;
 		    break;
 		case 'w':
-		    dgcdp.draw_wireframes = 1;
+		    dgcdp.vs.draw_wireframes = 1;
 		    break;
 		case 'S':
-		    dgcdp.draw_no_surfaces = 1;
-		    dgcdp.draw_non_subtract_only = 1;
+		    dgcdp.vs.draw_no_surfaces = 1;
+		    dgcdp.vs.draw_non_subtract_only = 1;
 		    break;
 		case 'T':
-		    dgcdp.nmg_triangulate = 0;
+		    dgcdp.vs.nmg_triangulate = 0;
 		    break;
 		case 'n':
-		    dgcdp.draw_normals = 1;
+		    dgcdp.vs.draw_normals = 1;
 		    break;
 		case 'P':
 		    ncpu = atoi(bu_optarg);
 		    break;
 		case 'q':
-		    dgcdp.do_not_draw_nmg_solids_during_debugging = 1;
+		    dgcdp.vs.do_not_draw_nmg_solids_during_debugging = 1;
 		    break;
 		case 'd':
-		    dgcdp.draw_nmg_only = 1;
+		    dgcdp.vs.draw_nmg_only = 1;
 		    break;
 		case 'f':
 		    enable_fastpath = 1;
@@ -677,49 +677,49 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			if (g < 0 || g > 255) g = 255;
 			if (b < 0 || b > 255) b = 255;
 
-			dgcdp.wireframe_color_override = 1;
-			dgcdp.wireframe_color[0] = r;
-			dgcdp.wireframe_color[1] = g;
-			dgcdp.wireframe_color[2] = b;
+			dgcdp.vs.wireframe_color_override = 1;
+			dgcdp.vs.wireframe_color[0] = r;
+			dgcdp.vs.wireframe_color[1] = g;
+			dgcdp.vs.wireframe_color[2] = b;
 		    }
 		    break;
 		case 'h':
-		    dgcdp.hiddenLine = 1;
-		    dgcdp.shaded_mode_override = _GED_SHADED_MODE_ALL;
+		    dgcdp.vs.hiddenLine = 1;
+		    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
 		    break;
 		case 'm':
-		    dgcdp.shaded_mode_override = atoi(bu_optarg);
+		    dgcdp.vs.shaded_mode_override = atoi(bu_optarg);
 
-		    switch (dgcdp.shaded_mode_override) {
+		    switch (dgcdp.vs.shaded_mode_override) {
 			case 0:
-			    dgcdp.shaded_mode_override = _GED_WIREFRAME;
+			    dgcdp.vs.shaded_mode_override = _GED_WIREFRAME;
 			    break;
 			case 1:
-			    dgcdp.shaded_mode_override = _GED_SHADED_MODE_BOTS;
+			    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_BOTS;
 			    break;
 			case 2:
-			    dgcdp.shaded_mode_override = _GED_SHADED_MODE_ALL;
+			    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
 			    break;
 			case 3:
-			    dgcdp.shaded_mode_override = _GED_SHADED_MODE_EVAL;
+			    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_EVAL;
 			    break;
 			default:
-			    if (dgcdp.shaded_mode_override < 0) {
-				dgcdp.shaded_mode_override = _GED_SHADED_MODE_UNSET;
+			    if (dgcdp.vs.shaded_mode_override < 0) {
+				dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
 			    } else {
-				dgcdp.shaded_mode_override = _GED_SHADED_MODE_ALL;
+				dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
 			    }
 		    }
 		    break;
 		case 'x':
-		    dgcdp.transparency = atof(bu_optarg);
+		    dgcdp.vs.transparency = atof(bu_optarg);
 
 		    /* clamp it to [0, 1] */
-		    if (dgcdp.transparency < 0.0)
-			dgcdp.transparency = 0.0;
+		    if (dgcdp.vs.transparency < 0.0)
+			dgcdp.vs.transparency = 0.0;
 
-		    if (1.0 < dgcdp.transparency)
-			dgcdp.transparency = 1.0;
+		    if (1.0 < dgcdp.vs.transparency)
+			dgcdp.vs.transparency = 1.0;
 
 		    break;
 		case 'R':
@@ -762,15 +762,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	switch (kind) {
 	    case _GED_DRAW_WIREFRAME:
-		dgcdp.dmode = _GED_WIREFRAME;
-		if (dgcdp.shaded_mode_override != _GED_SHADED_MODE_UNSET) {
-		    dgcdp.dmode = dgcdp.shaded_mode_override;
+		dgcdp.vs.dmode = _GED_WIREFRAME;
+		if (dgcdp.vs.shaded_mode_override != _GED_SHADED_MODE_UNSET) {
+		    dgcdp.vs.dmode = dgcdp.vs.shaded_mode_override;
 		} else if (gedp->ged_gdp->gd_shaded_mode) {
-		    dgcdp.dmode = gedp->ged_gdp->gd_shaded_mode;
+		    dgcdp.vs.dmode = gedp->ged_gdp->gd_shaded_mode;
 		}
 		break;
 	    case _GED_DRAW_NMG_POLY:
-		dgcdp.dmode = _GED_BOOL_EVAL;
+		dgcdp.vs.dmode = _GED_BOOL_EVAL;
 		break;
 	}
 
@@ -799,9 +799,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	     * If shaded_mode is _GED_SHADED_MODE_ALL, everything except pipe solids
 	     * are drawn as shaded polygons.
 	     */
-	    if (dgcdp.dmode == _GED_SHADED_MODE_BOTS ||
-		dgcdp.dmode == _GED_SHADED_MODE_ALL  ||
-		dgcdp.dmode == _GED_SHADED_MODE_EVAL)
+	    if (dgcdp.vs.dmode == _GED_SHADED_MODE_BOTS ||
+		dgcdp.vs.dmode == _GED_SHADED_MODE_ALL  ||
+		dgcdp.vs.dmode == _GED_SHADED_MODE_EVAL)
 	    {
 		struct _ged_client_data dgcdp_save;
 
@@ -814,15 +814,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		    dgcdp_save = dgcdp;
 
-		    if (dgcdp.dmode == _GED_SHADED_MODE_EVAL) {
+		    if (dgcdp.vs.dmode == _GED_SHADED_MODE_EVAL) {
 			ret = plot_shaded_eval(gedp, argv[i], &dgcdp);
 			if (ret == GED_OK) {
 			    continue;
 			}
 			/* if evaluated shading failed, fall back to "all" mode */
 			dgcdp.gedp->ged_gdp->gd_shaded_mode = 0;
-			dgcdp.shaded_mode_override = _GED_SHADED_MODE_ALL;
-			dgcdp.dmode = _GED_SHADED_MODE_ALL;
+			dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
+			dgcdp.vs.dmode = _GED_SHADED_MODE_ALL;
 		    }
 
 		    av[0] = (char *)argv[i];
@@ -849,14 +849,14 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
 		    struct ged_solid_data bview_data;
-		    bview_data.draw_solid_lines_only = dgcdp.draw_solid_lines_only;
-		    bview_data.wireframe_color_override = dgcdp.wireframe_color_override;
-		    bview_data.wireframe_color[0]= dgcdp.wireframe_color[0];
-		    bview_data.wireframe_color[1]= dgcdp.wireframe_color[1];
-		    bview_data.wireframe_color[2]= dgcdp.wireframe_color[2];
-		    bview_data.transparency= dgcdp.transparency;
-		    bview_data.dmode = dgcdp.dmode;
-		    bview_data.hiddenLine = dgcdp.hiddenLine;
+		    bview_data.draw_solid_lines_only = dgcdp.vs.draw_solid_lines_only;
+		    bview_data.wireframe_color_override = dgcdp.vs.wireframe_color_override;
+		    bview_data.wireframe_color[0]= dgcdp.vs.wireframe_color[0];
+		    bview_data.wireframe_color[1]= dgcdp.vs.wireframe_color[1];
+		    bview_data.wireframe_color[2]= dgcdp.vs.wireframe_color[2];
+		    bview_data.transparency= dgcdp.vs.transparency;
+		    bview_data.dmode = dgcdp.vs.dmode;
+		    bview_data.hiddenLine = dgcdp.vs.hiddenLine;
 		    bview_data.free_scene_obj = (void *)gedp->free_scene_obj;
 
 		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
@@ -903,7 +903,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    ret = dl_redraw(gdlp, gedp, dgcdp.draw_non_subtract_only);
+		    ret = dl_redraw(gdlp, gedp, dgcdp.vs.draw_non_subtract_only);
 		    if (ret < 0) {
 			/* restore view bot threshold */
 			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gvs.bot_threshold = threshold_cached;
@@ -923,7 +923,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    {
 		nmg_model = nmg_mm();
 		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
-		if (dgcdp.draw_edge_uses) {
+		if (dgcdp.vs.draw_edge_uses) {
 		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
 		    dgcdp.draw_edge_uses_vbp = rt_vlblock_init();
 		}
@@ -947,7 +947,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       (void *)&dgcdp);
 		}
 
-		if (dgcdp.draw_edge_uses) {
+		if (dgcdp.vs.draw_edge_uses) {
 		    _ged_cvt_vlblock_to_solids(gedp, dgcdp.draw_edge_uses_vbp, "_EDGEUSES_", 0);
 		    bn_vlblock_free(dgcdp.draw_edge_uses_vbp);
 		    dgcdp.draw_edge_uses_vbp = (struct bn_vlblock *)NULL;

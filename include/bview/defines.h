@@ -130,6 +130,7 @@ struct bview_axes {
 // Many settings have defaults at the view level, and may be overridden for
 // individual scene objects.
 struct bview_settings {
+    // bview opts
     int           mode;
     int           adaptive_plot;
     int           redraw_on_zoom;
@@ -140,6 +141,7 @@ struct bview_settings {
     size_t        bot_threshold;
     int		  hidden;
 
+    // scene_obj settings
     int s_line_width;		/**< @brief  current line width */
     fastf_t s_arrow_tip_length; /**< @brief  arrow tip length */
     fastf_t s_arrow_tip_width;  /**< @brief  arrow tip width */
@@ -152,6 +154,24 @@ struct bview_settings {
 				 *	      2 - shaded (booleans NOT evaluated)
 				 *	      3 - shaded (booleans evaluated)
 				 */
+
+    // draw command opts in _ged_client_data
+    int wireframe_color_override;
+    int wireframe_color[3];
+    int draw_nmg_only;
+    int nmg_triangulate;
+    int draw_wireframes;
+    int draw_normals;
+    int draw_solid_lines_only;
+    int draw_no_surfaces;
+    int draw_non_subtract_only;
+    int shade_per_vertex_normals;
+    int draw_edge_uses;
+    int do_not_draw_nmg_solids_during_debugging;
+    int shaded_mode_override;
+    fastf_t transparency;
+    int dmode;
+    int hiddenLine;
 };
 
 /* Note that it is possible for a view object to be view-only (not
