@@ -627,15 +627,16 @@ clt_init(void)
             "eto_shot.cl",
             "sph_shot.cl",
             "ebm_shot.cl",
+	    "arbn_shot.cl",
 	    "part_shot.cl",
             "rec_shot.cl",
             "tgc_shot.cl",
             "tor_shot.cl",
             "rhc_shot.cl",
             "rpc_shot.cl",
-            "hrt_shot.cl",
 	    "superell_shot.cl",
-        "hyp_shot.cl",
+	    "hyp_shot.cl",
+	    "hrt_shot.cl",
 
             "rt.cl",
         };
@@ -697,6 +698,7 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 	case ID_REC:		size = clt_rec_pack(pool, stp);	break;
 	case ID_SPH:		size = clt_sph_pack(pool, stp);	break;
 	case ID_EBM:		size = clt_ebm_pack(pool, stp);	break;
+	case ID_ARBN:		size = clt_arbn_pack(pool, stp);break;
 	case ID_PARTICLE:	size = clt_part_pack(pool, stp);break;
 	case ID_EHY:		size = clt_ehy_pack(pool, stp);	break;
 	case ID_ARS:
@@ -705,9 +707,9 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 	case ID_ETO:		size = clt_eto_pack(pool, stp); break;
 	case ID_RHC:		size = clt_rhc_pack(pool, stp); break;
 	case ID_RPC:		size = clt_rpc_pack(pool, stp); break;
-	case ID_HRT:		size = clt_hrt_pack(pool, stp); break;
 	case ID_SUPERELL:	size = clt_superell_pack(pool, stp); break;
-    case ID_HYP:        size = clt_hyp_pack(pool, stp); break;
+	case ID_HYP:		size = clt_hyp_pack(pool, stp);	break;
+	case ID_HRT:		size = clt_hrt_pack(pool, stp); break;
 	default:		size = 0;			break;
     }
     return size;

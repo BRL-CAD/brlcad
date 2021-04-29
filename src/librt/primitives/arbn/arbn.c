@@ -46,6 +46,39 @@
 #include "raytrace.h"
 #include "../../librt_private.h"
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_arbn_specific {
+    cl_int neqn;
+    cl_int padding;
+
+    cl_double eqn[];
+};
+
+size_t
+clt_arbn_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct rt_arbn_internal *arb =
+        (struct rt_arbn_internal *)stp->st_specific;
+    struct clt_arbn_specific *args;
+
+    cl_int j;
+
+    size_t size = sizeof(*args);
+    size += sizeof(cl_double)*4*arb->neqn;
+
+    args = (struct clt_arbn_specific*)bu_pool_alloc(pool, 1, size);
+
+    args->neqn = arb->neqn;
+
+    for(j = 0; j < args->neqn; ++j)
+	HMOVE(args->eqn+4*j, arb->eqn[j]);
+
+    return size;
+}
+#endif /* USE_OPENCL */
+
+
 /**
  * Calculate a bounding RPP for an ARBN
  */

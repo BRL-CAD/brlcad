@@ -115,6 +115,7 @@ rt_in_rpp2(const double3 pt, const double3 invdir,
 #define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
 #define ID_EBM          12      /**< @brief Extruded bitmap solid */
+#define ID_ARBN         14      /**< @brief ARB with N faces */
 #define ID_PARTICLE     16      /**< @brief Particle system solid */
 #define ID_RPC          17      /**< @brief Right Parabolic Cylinder [TGC special] */
 #define ID_RHC          18      /**< @brief Right Hyperbolic Cylinder [TGC special] */
@@ -127,6 +128,7 @@ rt_in_rpp2(const double3 pt, const double3 invdir,
 #define ID_HRT          43      /**< @brief Heart */
 
 
+
 inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, const int id, global const void *args)
 {
     switch (id) {
@@ -137,6 +139,7 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_REC:	return rec_shot(res, r_pt, r_dir, idx, args);
     case ID_SPH:	return sph_shot(res, r_pt, r_dir, idx, args);
     case ID_EBM:	return ebm_shot(res, r_pt, r_dir, idx, args);
+    case ID_ARBN:	return arbn_shot(res, r_pt, r_dir, idx, args);
     case ID_PARTICLE:	return part_shot(res, r_pt, r_dir, idx, args);
     case ID_EHY:	return ehy_shot(res, r_pt, r_dir, idx, args);
     case ID_ARS:
@@ -163,6 +166,7 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_EHY:	ehy_norm(hitp, r_pt, r_dir, args);	break;
     case ID_SPH:	sph_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EBM:	ebm_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_ARBN:	arbn_norm(hitp, r_pt, r_dir, args);	break;
     case ID_PARTICLE:	part_norm(hitp, r_pt, r_dir, args);	break;
     case ID_ARS:
     case ID_BOT:	bot_norm(hitp, r_pt, r_dir, args);	break;

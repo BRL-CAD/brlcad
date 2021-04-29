@@ -280,6 +280,7 @@ set(librt_ignored_files
   primitives/solver.cl
 
   primitives/arb8/arb8_shot.cl
+  primitives/arbn/arbn_shot.cl
   primitives/bot/bot_shot.cl
   primitives/ebm/ebm_shot.cl
   primitives/ehy/ehy_shot.cl
@@ -330,6 +331,7 @@ set(CL_FILES
   primitives/solver.cl
 
   primitives/arb8/arb8_shot.cl
+  primitives/arbn/arbn_shot.cl
   primitives/bot/bot_shot.cl
   primitives/ebm/ebm_shot.cl
   primitives/ehy/ehy_shot.cl
