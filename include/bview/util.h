@@ -42,6 +42,9 @@ BVIEW_EXPORT extern void bview_init(struct bview *v);
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BVIEW_EXPORT extern void bview_sync(struct bview *dest, struct bview *src);
 
+/* Copy settings (potentially) common to the view and scene objects */
+BVIEW_EXPORT extern void bview_settings_sync(struct bview_settings *dest, struct bview_settings *src);
+
 /* Sync values within the bview, perform callbacks if any are defined */
 BVIEW_EXPORT extern void bview_update(struct bview *gvp);
 

@@ -237,6 +237,34 @@ bview_update(struct bview *gvp)
     }
 }
 
+void
+bview_settings_sync(struct bview_settings *dest, struct bview_settings *src)
+{
+    dest->mode = src->mode;
+    dest->hidden = src->hidden;
+    dest->s_line_width = src->s_line_width;
+    dest->s_arrow_tip_length = src->s_arrow_tip_length;
+    dest->s_arrow_tip_width = src->s_arrow_tip_width;
+    dest->s_hiddenLine = src->s_hiddenLine;
+    dest->transparency = src->transparency;
+    dest->s_dmode = src->s_dmode;
+    dest->color_override = src->color_override;
+    VMOVE(dest->color, src->color);
+    dest->dmode = src->dmode;
+    dest->shaded_mode_override = src->shaded_mode_override;
+    dest->hiddenLine = src->hiddenLine;
+    dest->draw_wireframes = src->draw_wireframes;
+    dest->draw_solid_lines_only = src->draw_solid_lines_only;
+    dest->draw_non_subtract_only = src->draw_non_subtract_only;
+    dest->adaptive_plot = src->adaptive_plot;
+    dest->redraw_on_zoom = src->redraw_on_zoom;
+    dest->x_samples = src->x_samples;
+    dest->y_samples = src->y_samples;
+    dest->point_scale = src->point_scale;
+    dest->curve_scale = src->curve_scale;
+    dest->bot_threshold = src->bot_threshold;
+}
+
 int
 bview_update_selected(struct bview *gvp)
 {

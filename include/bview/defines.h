@@ -129,6 +129,9 @@ struct bview_axes {
 
 // Many settings have defaults at the view level, and may be overridden for
 // individual scene objects.
+//
+// TODO - once this settles down, it will probably warrant a bu_structparse
+// for value setting
 struct bview_settings {
     // bview opts
     int           mode;  // TODO - related to dmode, s_dmode, shaded_mode_override?

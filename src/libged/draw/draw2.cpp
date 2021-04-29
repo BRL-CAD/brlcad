@@ -40,6 +40,7 @@
 struct draw_data_t {
     struct db_i *dbip;
     struct bview *v;
+    struct bview_settings *vs;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
 };
@@ -238,8 +239,32 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	db_path_to_vls(&s->s_uuid, path);
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
+	bview_settings_sync(&s->s_os, dd->vs);
 	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	VSET(s->s_color, 255, 0, 0);
+
+	// If the color was not overridden at either the global view level or the
+	// command line options, analyze the info from along the path to determine
+	// the color of the current solid.
+	//
+	// TODO - we don't need the overhead of making npath here - it may be
+	// worth either incorporating the checks into our own tree walk to
+	// track the current color, or making a more focused function in librt
+	// like the one that constructs the matrix from the path...
+	if (!s->s_os.color_override) {
+	    struct db_tree_state tsp = rt_initial_tree_state;
+	    tsp.ts_resp = &rt_uniresource;
+	    tsp.ts_dbip = dd->dbip;
+	    struct db_full_path npath;
+	    db_full_path_init(&npath);
+	    if (!db_follow_path(&tsp, &npath, path, 0, 0)) {
+		s->s_color[0] = tsp.ts_mater.ma_color[0] * 255.0;
+		s->s_color[1] = tsp.ts_mater.ma_color[1] * 255.0;
+		s->s_color[2] = tsp.ts_mater.ma_color[2] * 255.0;
+	    }
+	    db_free_full_path(&npath);
+	} else {
+	    VMOVE(s->s_color, s->s_os.color);
+	}
 
 	// Stash the information needed for a draw update callback
 	struct draw_update_data_t *ud;
@@ -269,6 +294,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     static const char *usage = "path";
+    struct bview_settings vs;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -282,6 +308,15 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
+
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
+	return GED_ERROR;
+    }
+
+    /* Option defaults come from the current view, but may be overridden for
+     * the purposes of the current draw command by command line options. */
+    bview_settings_sync(&vs, &gedp->ged_gvp->gvs);
 
     /* Look up object.  NOTE: for testing simplicity this is just an object lookup
      * right now, but it needs to walk the tree and do the full-path instance creation.
@@ -308,6 +343,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     struct draw_data_t dd;
     dd.dbip = gedp->ged_wdbp->dbip;
     dd.v = gedp->ged_gvp;
+    dd.vs = &vs;
     dd.tol = &gedp->ged_wdbp->wdb_tol;
     dd.ttol = &gedp->ged_wdbp->wdb_ttol;
 
