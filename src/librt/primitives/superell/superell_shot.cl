@@ -2,12 +2,12 @@
 
 
 struct superell_specific {
-    double superell_SoR[16];		/* matrix for local coordinate system, Scale(Rotate(V))*/
-    double superell_invRSSR[16];	/* invR(Scale(Scale(Rot(V)))) */
     double superell_V[3];		/* Vector to center of superellipsoid */
     double superell_invmsAu;		/* 1.0 / |Au|^2 */
     double superell_invmsBu;		/* 1.0 / |Bu|^2 */
     double superell_invmsCu;		/* 1.0 / |Cu|^2 */
+    double superell_SoR[16];		/* matrix for local coordinate system, Scale(Rotate(V))*/
+    double superell_invRSSR[16];	/* invR(Scale(Scale(Rot(V)))) */
     double superell_e;			/* east-west curvature power */
 };
 
@@ -20,7 +20,7 @@ int superell_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, con
     double equation[3];			// equation of superell to be solved
     bn_complex_t complexRoot[4];	// roots returned from poly solver
     double realRoot[4];			// real ray distance values
-    int i, j;
+    short i, j;
 
     /* translate ray point */
     translated = r_pt - vload3(0, superell->superell_V);
