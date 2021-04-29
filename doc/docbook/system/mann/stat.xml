@@ -24,6 +24,7 @@
       <arg choice="opt" rep="norepeat">-F <replaceable>string</replaceable></arg>
       <arg choice="opt" rep="norepeat">-C <replaceable>type1[,type2]...</replaceable></arg>
       <arg choice="opt" rep="norepeat">-S <replaceable>type1[,type2]...</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-o <replaceable>filename</replaceable></arg>
       <arg choice="req">glob pattern</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -107,6 +108,14 @@
 	    Priority is left to right - sorting will be performed first based on the leftmost specifier, and subsequent specifiers
 	    will be used to resolve any ties.  To reverse the ordering decisions for a given column, prefix the specifier with a "!"
 	    character.
+          </para>
+        </listitem>
+	</varlistentry>
+	<varlistentry>
+        <term><emphasis remap="B" role="bold">-o</emphasis></term>
+        <listitem>
+          <para>
+            Write output to <emphasis>filename</emphasis> instead of the command prompt.
           </para>
         </listitem>
 	</varlistentry>
