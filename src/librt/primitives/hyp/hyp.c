@@ -114,6 +114,49 @@ const struct bu_structparse rt_hyp_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_hyp_specific {
+    cl_double hyp_V[3];	/* scaled vector to hyp origin */
+
+    cl_double hyp_Hunit[3];	/* unit H vector */
+    cl_double hyp_Aunit[3];	/* unit vector along semi-major axis */
+    cl_double hyp_Bunit[3];	/* unit vector, H x A, semi-minor axis */
+    cl_double hyp_Hmag;	/* scaled height of hyperboloid */
+
+    cl_double hyp_rx;
+    cl_double hyp_ry;	/* hyp_r* store coeffs */
+    cl_double hyp_rz;
+
+    cl_double hyp_bounds;	/* const used to check if a ray hits the top/bottom surfaces */
+};
+
+size_t
+clt_hyp_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct hyp_specific *hyp =
+        (struct hyp_specific *)stp->st_specific;
+    struct clt_hyp_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_hyp_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->hyp_V, hyp->hyp_V);
+    VMOVE(args->hyp_Hunit, hyp->hyp_Hunit);
+    VMOVE(args->hyp_Aunit, hyp->hyp_Aunit);
+    VMOVE(args->hyp_Bunit, hyp->hyp_Bunit);
+    args->hyp_Hmag = hyp->hyp_Hmag;
+    args->hyp_rx = hyp->hyp_rx;
+    args->hyp_ry = hyp->hyp_ry;
+    args->hyp_rz = hyp->hyp_rz;
+    args->hyp_bounds = hyp->hyp_bounds;
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
+
 /**
  * Create a bounding RPP for an hyp
  */

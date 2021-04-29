@@ -169,6 +169,7 @@ RT_DECLARE_INTERFACE(rhc);
 RT_DECLARE_INTERFACE(rpc);
 RT_DECLARE_INTERFACE(hrt);
 RT_DECLARE_INTERFACE(superell);
+RT_DECLARE_INTERFACE(hyp);
 
 extern int bot_shot(RESULT_TYPE *res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args);
 extern void bot_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const uchar *args);

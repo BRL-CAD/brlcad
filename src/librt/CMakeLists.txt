@@ -287,6 +287,7 @@ set(librt_ignored_files
   primitives/epa/epa_shot.cl
   primitives/eto/eto_shot.cl
   primitives/hrt/hrt_shot.cl
+  primitives/hyp/hyp_shot.cl
   primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/rhc/rhc_shot.cl
@@ -336,6 +337,7 @@ set(CL_FILES
   primitives/epa/epa_shot.cl
   primitives/eto/eto_shot.cl
   primitives/hrt/hrt_shot.cl
+  primitives/hyp/hyp_shot.cl
   primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/rhc/rhc_shot.cl
