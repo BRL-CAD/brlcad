@@ -634,6 +634,7 @@ clt_init(void)
             "rhc_shot.cl",
             "rpc_shot.cl",
             "hrt_shot.cl",
+	    "superell_shot.cl",
 
             "rt.cl",
         };
@@ -704,6 +705,7 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 	case ID_RHC:		size = clt_rhc_pack(pool, stp); break;
 	case ID_RPC:		size = clt_rpc_pack(pool, stp); break;
 	case ID_HRT:		size = clt_hrt_pack(pool, stp); break;
+	case ID_SUPERELL:	size = clt_superell_pack(pool, stp); break;
 	default:		size = 0;			break;
     }
     return size;

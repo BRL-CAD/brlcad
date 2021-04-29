@@ -172,6 +172,39 @@ struct superell_specific {
 };
 #define SUPERELL_NULL ((struct superell_specific *)0)
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_superell_specific {
+    cl_double superell_SoR[16]; /* matrix for local coordinate system, Scale(Rotate(V))*/
+    cl_double superell_invRSSR[16]; /* invR(Scale(Scale(Rot(V)))) */
+    cl_double superell_V[3]; /* Vector to center of superellipsoid */
+    cl_double superell_invmsAu; /* 1.0 / |Au|^2 */
+    cl_double superell_invmsBu; /* 1.0 / |Bu|^2 */
+    cl_double superell_invmsCu; /* 1.0 / |Cu|^2 */
+    cl_double superell_e;
+};
+
+size_t
+clt_superell_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct superell_specific *superell =
+        (struct superell_specific *)stp->st_specific;
+    struct clt_superell_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_superell_specific*)bu_pool_alloc(pool, 1, size);
+
+    MAT_COPY(args->superell_SoR, superell->superell_SoR);
+    MAT_COPY(args->superell_invRSSR, superell->superell_invRSSR);
+    VMOVE(args->superell_V, superell->superell_V);
+    args->superell_invmsAu = superell->superell_invmsAu;
+    args->superell_invmsBu = superell->superell_invmsBu;
+    args->superell_invmsCu = superell->superell_invmsCu;
+    args->superell_e = superell->superell_e;
+    return size;
+}
+#endif /* USE_OPENCL */
+
 /**
  * Calculate a bounding RPP for a superell
  */

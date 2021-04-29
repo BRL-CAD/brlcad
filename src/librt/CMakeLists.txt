@@ -292,6 +292,7 @@ set(librt_ignored_files
   primitives/rhc/rhc_shot.cl
   primitives/rpc/rpc_shot.cl
   primitives/sph/sph_shot.cl
+  primitives/superell/superell_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
 
@@ -340,6 +341,7 @@ set(CL_FILES
   primitives/rhc/rhc_shot.cl
   primitives/rpc/rpc_shot.cl
   primitives/sph/sph_shot.cl
+  primitives/superell/superell_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
   )
