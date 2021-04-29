@@ -475,7 +475,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     if (curtree->tr_op == OP_NOP) return curtree;
 
     failed = 1;
-    if (!dgcdp->vs.draw_nmg_only) {
+    if (!dgcdp->draw_nmg_only) {
 
 	failed = process_boolean(curtree, tsp, pathp, dgcdp);
 	if (failed) {
@@ -491,12 +491,12 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     r = curtree->tr_d.td_r;
     NMG_CK_REGION(r);
 
-    if (dgcdp->vs.do_not_draw_nmg_solids_during_debugging && r) {
+    if (dgcdp->do_not_draw_nmg_solids_during_debugging && r) {
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
 
-    if (dgcdp->vs.nmg_triangulate) {
+    if (dgcdp->nmg_triangulate) {
 	failed = process_triangulation(tsp, pathp, dgcdp);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
@@ -516,20 +516,20 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    /* Default -- draw polygons */
 	    style = NMG_VLIST_STYLE_POLYGON;
 	}
-	if (dgcdp->vs.draw_normals) {
+	if (dgcdp->draw_normals) {
 	    style |= NMG_VLIST_STYLE_VISUALIZE_NORMALS;
 	}
-	if (dgcdp->vs.shade_per_vertex_normals) {
+	if (dgcdp->shade_per_vertex_normals) {
 	    style |= NMG_VLIST_STYLE_USE_VU_NORMALS;
 	}
-	if (dgcdp->vs.draw_no_surfaces) {
+	if (dgcdp->draw_no_surfaces) {
 	    style |= NMG_VLIST_STYLE_NO_SURFACES;
 	}
 	nmg_r_to_vlist(&vhead, r, style, &RTG.rtg_vlfree);
 
 	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 
-	if (dgcdp->vs.draw_edge_uses) {
+	if (dgcdp->draw_edge_uses) {
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, &RTG.rtg_vlfree);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
@@ -592,15 +592,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    dgcdp.autoview = 0;
 
 	/* Initial values for options, must be reset each time */
-	dgcdp.vs.draw_nmg_only = 0;	/* no booleans */
-	dgcdp.vs.nmg_triangulate = 1;
+	dgcdp.draw_nmg_only = 0;	/* no booleans */
+	dgcdp.nmg_triangulate = 1;
 	dgcdp.vs.draw_wireframes = 0;
-	dgcdp.vs.draw_normals = 0;
+	dgcdp.draw_normals = 0;
 	dgcdp.vs.draw_solid_lines_only = 0;
-	dgcdp.vs.draw_no_surfaces = 0;
+	dgcdp.draw_no_surfaces = 0;
 	dgcdp.vs.draw_non_subtract_only = 0;
-	dgcdp.vs.shade_per_vertex_normals = 0;
-	dgcdp.vs.draw_edge_uses = 0;
+	dgcdp.shade_per_vertex_normals = 0;
+	dgcdp.draw_edge_uses = 0;
 	dgcdp.vs.color_override = 0;
 	dgcdp.fastpath_count = 0;
 	dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
@@ -624,7 +624,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oRL:M")) != -1) {
 	    switch (c) {
 		case 'u':
-		    dgcdp.vs.draw_edge_uses = 1;
+		    dgcdp.draw_edge_uses = 1;
 		    break;
 		case 's':
 		    dgcdp.vs.draw_solid_lines_only = 1;
@@ -633,29 +633,29 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    nmg_use_tnurbs = 1;
 		    break;
 		case 'v':
-		    dgcdp.vs.shade_per_vertex_normals = 1;
+		    dgcdp.shade_per_vertex_normals = 1;
 		    break;
 		case 'w':
 		    dgcdp.vs.draw_wireframes = 1;
 		    break;
 		case 'S':
-		    dgcdp.vs.draw_no_surfaces = 1;
+		    dgcdp.draw_no_surfaces = 1;
 		    dgcdp.vs.draw_non_subtract_only = 1;
 		    break;
 		case 'T':
-		    dgcdp.vs.nmg_triangulate = 0;
+		    dgcdp.nmg_triangulate = 0;
 		    break;
 		case 'n':
-		    dgcdp.vs.draw_normals = 1;
+		    dgcdp.draw_normals = 1;
 		    break;
 		case 'P':
 		    ncpu = atoi(bu_optarg);
 		    break;
 		case 'q':
-		    dgcdp.vs.do_not_draw_nmg_solids_during_debugging = 1;
+		    dgcdp.do_not_draw_nmg_solids_during_debugging = 1;
 		    break;
 		case 'd':
-		    dgcdp.vs.draw_nmg_only = 1;
+		    dgcdp.draw_nmg_only = 1;
 		    break;
 		case 'f':
 		    enable_fastpath = 1;
@@ -732,7 +732,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			if (cp) {
 			    t = atoi(cp);
 			    if (t >= 0) {
-				dgcdp.bot_threshold = (size_t)t;
+				dgcdp.vs.bot_threshold = (size_t)t;
 			    } else {
 				bu_vls_printf(gedp->ged_result_str, "invalid -L argument: %s\n", cp);
 				--drawtrees_depth;
@@ -893,7 +893,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		}
 
 		/* Set the view threshold */
-		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gvs.bot_threshold = dgcdp.bot_threshold;
+		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gvs.bot_threshold = dgcdp.vs.bot_threshold;
 
 		/* calculate plot vlists for solids of each draw path */
 		for (i = 0; i < argc; ++i) {
@@ -923,7 +923,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    {
 		nmg_model = nmg_mm();
 		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
-		if (dgcdp.vs.draw_edge_uses) {
+		if (dgcdp.draw_edge_uses) {
 		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
 		    dgcdp.draw_edge_uses_vbp = rt_vlblock_init();
 		}
@@ -947,7 +947,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       (void *)&dgcdp);
 		}
 
-		if (dgcdp.vs.draw_edge_uses) {
+		if (dgcdp.draw_edge_uses) {
 		    _ged_cvt_vlblock_to_solids(gedp, dgcdp.draw_edge_uses_vbp, "_EDGEUSES_", 0);
 		    bn_vlblock_free(dgcdp.draw_edge_uses_vbp);
 		    dgcdp.draw_edge_uses_vbp = (struct bn_vlblock *)NULL;

@@ -169,17 +169,6 @@ struct bview_settings {
     fastf_t       curve_scale;
     size_t        bot_threshold;
 
-
-    // Debugging plotting specific options.  These don't actually belong with
-    // the drawing routines at all - they are analogous to the brep debugging
-    // plotting routines, and belong with nmg/bot/etc. plot subcommands.
-    int draw_nmg_only;
-    int nmg_triangulate;
-    int draw_normals;
-    int draw_no_surfaces;
-    int shade_per_vertex_normals;
-    int draw_edge_uses;
-    int do_not_draw_nmg_solids_during_debugging;
 };
 
 

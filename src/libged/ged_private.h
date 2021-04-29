@@ -158,6 +158,9 @@ struct _ged_client_data {
     int fastpath_count;			/* statistics */
     struct bn_vlblock *draw_edge_uses_vbp;
     struct bview_scene_obj *free_scene_obj;
+
+
+
     /* bigE related members */
     struct application *ap;
     struct bu_ptbl leaf_list;
@@ -168,7 +171,19 @@ struct _ged_client_data {
     int do_polysolids;
     int num_halfs;
     int autoview;
-    size_t bot_threshold;
+
+    // Debugging plotting specific options.  These don't actually belong with
+    // the drawing routines at all - they are analogous to the brep debugging
+    // plotting routines, and belong with nmg/bot/etc. plot subcommands.
+    int draw_nmg_only;
+    int nmg_triangulate;
+    int draw_normals;
+    int draw_no_surfaces;
+    int shade_per_vertex_normals;
+    int draw_edge_uses;
+    int do_not_draw_nmg_solids_during_debugging;
+
+
     struct bview_settings vs;
 };
 
