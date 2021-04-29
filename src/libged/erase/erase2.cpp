@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ged/view/state.h"
 
 #include "../ged_private.h"
 
@@ -73,8 +74,6 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs); i++) {
 	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
 	if (s->s_type_flags & BVIEW_DBOBJ_BASED) {
-	    if (!s->s_u_data)
-		continue;
 	    all_objs.insert(s);
 	}
     }
@@ -95,9 +94,9 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	for (s_it = all_objs.begin(); s_it != all_objs.end(); s_it++) {
 	    struct bview_scene_obj *s = *s_it;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)s->s_u_data;
+	    struct draw_update_data_t *dd = (struct draw_update_data_t *)s->s_i_data;
 	    // Anything below the supplied path in the hierarchy is removed
-	    if (db_full_path_match_top(&fp, &bdata->s_fullpath)) {
+	    if (db_full_path_match_top(&fp, &dd->fp)) {
 		to_clear.insert(s);
 	    }
 	}
