@@ -159,9 +159,12 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    }
 	}
 
+	size_t scene_cnt = BU_PTBL_LEN(v->gv_scene_objs);
+
 	ged_exec(gedp, argc, argv);
 	if (msg)
 	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
+
 	if (v->gv_cleared && (!v->gv_scene_objs || !BU_PTBL_LEN(v->gv_scene_objs))) {
 	    const char *aav[2];
 	    aav[0] = "autoview";
@@ -170,64 +173,38 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    v->gv_cleared = 0;
 	    bview_update(v);
 	}
-
-	std::chrono::time_point<std::chrono::steady_clock> stime, etime, htimes, htimee;
-	int sectime;
-	stime = std::chrono::steady_clock::now();
-
-	htimes = std::chrono::steady_clock::now();
 	unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	if (dhash != prev_dhash) {
-	    std::cout << "prev_dhash: " << prev_dhash << "\n";
-	    std::cout << "dhash: " << dhash << "\n";
-	    prev_dhash = dhash;
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
-	htimee = std::chrono::steady_clock::now();
-	sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
-	bu_log("DM state hash (sec): %d\n", sectime);
-
-	htimes = std::chrono::steady_clock::now();
 	unsigned long long vhash = bview_hash(v);
 	if (vhash != prev_vhash) {
-	    std::cout << "prev_vhash: " << prev_vhash << "\n";
-	    std::cout << "vhash: " << vhash << "\n";
-	    prev_vhash = vhash;
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
-	htimee = std::chrono::steady_clock::now();
-	sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
-	bu_log("View hash (sec): %d\n", sectime);
 
-	htimes = std::chrono::steady_clock::now();
+	/* Note - these are for the display_list drawing list, which isn't
+	 * being used for the newer command forms.  It is needed, however,
+	 * for the older draw command changes to show up */
 	unsigned long long lhash = dl_name_hash(gedp);
 	unsigned long long lhash_edit = lhash;
 	lhash_edit += dl_update(gedp);
 	if (lhash_edit != prev_lhash) {
-	    std::cout << "prev_lhash: " << prev_lhash << "\n";
-	    std::cout << "lhash: " << lhash_edit << "\n";
-	    prev_lhash = lhash;
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
-	htimee = std::chrono::steady_clock::now();
-	sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
-	bu_log("Display list hash (sec): %d\n", sectime);
-
-	htimes = std::chrono::steady_clock::now();
 	unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 	if (ghash != prev_ghash) {
-	    std::cout << "prev_ghash: " << prev_ghash << "\n";
-	    std::cout << "ghash: " << ghash << "\n";
 	    prev_ghash = ghash;
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
-	htimee = std::chrono::steady_clock::now();
-	sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
-	bu_log("Display list hash (GED data)(sec): %d\n", sectime);
 
+	// TODO - do the polygon update and other view element vlist updates here as well, for consistency.
+	// This is quite basic right now, but delaying the actual geometry generation step until after the
+	// object set is defined sets the stage for things like parallel vlist generation (or facetization
+	// and point generation, for that matter) down the road.
+	//
 	// For db obj view list objects, check the dp edit flags
-	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs); i++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_scene_objs, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
 	    // If we're anything other than a non-view-only database object, this update call is wrong.
 	    if (s->s_type_flags != BVIEW_DBOBJ_BASED)
 		continue;
@@ -243,9 +220,15 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
 
-	etime = std::chrono::steady_clock::now();
-	sectime = std::chrono::duration_cast<std::chrono::seconds>(etime - stime).count();
-	bu_log("All hashes (sec): %d\n", sectime);
+	// If we're doing autoview call it
+	if (!scene_cnt && BU_PTBL_LEN(v->gv_scene_objs) && v->gv_autoview) {
+	    const char *aav[2];
+	    aav[0] = "autoview2";
+	    aav[1] = NULL;
+	    ged_exec(gedp, 1, (const char **)aav);
+	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	}
+
 	if (dm_get_dirty((struct dm *)gedp->ged_dmp))
 	    update();
     }

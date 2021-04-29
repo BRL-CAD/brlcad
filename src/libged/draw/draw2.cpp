@@ -318,6 +318,16 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
      * the purposes of the current draw command by command line options. */
     bview_settings_sync(&vs, &gedp->ged_gvp->gvs);
 
+
+    /* TODO - unless the options specifically tell us to turn off autoview,
+     * enable it. Unlike older draw draw2 delays the generation of the geometry
+     * so the application can manage the process better.  This means that we
+     * have to persist the autoview suppression flag into the parent view state.
+     * If we're coming around for another draw command, we're going to want
+     * this on for the eventual drawing process unless the options say
+     * otherwise.  */
+    gedp->ged_gvp->gv_autoview = 1;
+
     /* Look up object.  NOTE: for testing simplicity this is just an object lookup
      * right now, but it needs to walk the tree and do the full-path instance creation.
      * Note also that view objects aren't what we want to report with a "who" return,

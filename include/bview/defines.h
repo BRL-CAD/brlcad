@@ -440,6 +440,7 @@ struct bview {
     int           gv_cleared;
     int           gv_zclip;
     fastf_t       gv_data_vZ;
+    int           gv_autoview;
 
     // Faceplate elements fall into two general categories: those which are
     // interactively adjusted (in a geometric sense) and those which are not.

@@ -126,6 +126,7 @@ bview_init(struct bview *gvp)
     gvp->gv_frametime = 1;
 
     gvp->gv_data_vZ = 0.0;
+    gvp->gv_autoview = 1;
 
     /* FIXME: this causes the shaders.sh regression to fail */
     /* _ged_mat_aet(gvp); */
