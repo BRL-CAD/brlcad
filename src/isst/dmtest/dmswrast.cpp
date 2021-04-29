@@ -225,6 +225,24 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	sectime = std::chrono::duration_cast<std::chrono::seconds>(htimee - htimes).count();
 	bu_log("Display list hash (GED data)(sec): %d\n", sectime);
 
+	// For db obj view list objects, check the dp edit flags
+	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs); i++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_scene_objs, i);
+	    // If we're anything other than a non-view-only database object, this update call is wrong.
+	    if (s->s_type_flags != BVIEW_DBOBJ_BASED)
+		continue;
+	    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+	    int changed = 0;
+	    for (size_t j = 0; j < d->fp.fp_len; j++) {
+		dp = d->fp.fp_names[j];
+		changed += dp->edit_flag;
+	    }
+	    if (!changed)
+		continue;
+	    (*s->s_update_callback)(s);
+	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	}
+
 	etime = std::chrono::steady_clock::now();
 	sectime = std::chrono::duration_cast<std::chrono::seconds>(etime - stime).count();
 	bu_log("All hashes (sec): %d\n", sectime);

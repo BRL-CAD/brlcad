@@ -29,9 +29,20 @@
 #define GED_VIEW_STATE_H
 
 #include "common.h"
+#include "bn/tol.h"
+#include "rt/db_fullpath.h"
+#include "rt/db_instance.h"
 #include "ged/defines.h"
 
 __BEGIN_DECLS
+
+struct draw_update_data_t {
+    struct db_i *dbip;
+    struct db_full_path fp;
+    const struct bn_tol *tol;
+    const struct bg_tess_tol *ttol;
+};
+
 
 /* Defined in vutil.c */
 GED_EXPORT extern void ged_view_update(struct bview *gvp);

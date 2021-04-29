@@ -34,21 +34,12 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 
+#include "ged/view/state.h"
 #include "../ged_private.h"
 
 struct draw_data_t {
     struct db_i *dbip;
     struct bview *v;
-    const struct bn_tol *tol;
-    const struct bg_tess_tol *ttol;
-};
-
-// If possible don't use gedp for the update callback, since
-// we most likely eventually want the update functions to
-// live at lower levels...
-struct draw_update_data_t {
-    struct db_i *dbip;
-    struct db_full_path fp;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
 };
@@ -260,7 +251,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ud->ttol = dd->ttol;
 	s->s_i_data = (void *)ud;
 
-	// TODO - set update callback function
+	// set update callback function
 	s->s_update_callback = &_ged_update_db_path;
 
 	// Create the initial data
