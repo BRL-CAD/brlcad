@@ -550,7 +550,6 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
     cl_program *programs;
     cl_int error;
     cl_uint i;
-    char file[MAXPATHLEN] = {0};
     char path[MAXPATHLEN] = {0};
 
     programs = (cl_program*)bu_calloc(count, sizeof(cl_program), "programs");
