@@ -403,7 +403,7 @@ void do_segp(RESULT_TYPE *res, const uint idx,
 
 
 __kernel void
-do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
+do_pixel(global uchar *pixels, const uchar2 o, const int cur_pixel,
 	 const int last_pixel, const int width, global float *rand_halftab,
 	 const uint randhalftabsize, const uchar3 background,const uchar3 nonbackground,
 	 const double airdensity, const double3 haze, const double gamma,
@@ -544,14 +544,8 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
 
     if (o.s0 != o.s1) {
 	/* write color */
-	global uchar *colorp = (global uchar*)pixels+id*o.s2+o.s0;
+	global uchar *colorp = (global uchar*)pixels+id*o.s1+o.s0;
 	vstore3(rgb, 0, colorp);
-    }
-    if (o.s1 != o.s2) {
-	/* write depth */
-	ulong depth = bu_cv_htond(as_ulong(hitp->hit_dist));
-	global ulong *depthp = (global ulong*)pixels+id*o.s2+o.s1;
-	*depthp = depth;
     }
 }
 #else
@@ -625,7 +619,7 @@ store_segs(RESULT_TYPE segs, global uint *h,
 }
 
 __kernel void
-shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *head_partition,
+shade_segs(global uchar *pixels, const uchar2 o, RESULT_TYPE segs, global uint *head_partition,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,
@@ -768,14 +762,8 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 
     if (o.s0 != o.s1) {
 	/* write color */
-	global uchar *colorp = (global uchar*)pixels+id*o.s2+o.s0;
+	global uchar *colorp = (global uchar*)pixels+id*o.s1+o.s0;
 	vstore3(rgb, 0, colorp);
-    }
-    if (o.s1 != o.s2) {
-	/* write depth */
-	ulong depth = bu_cv_htond(as_ulong(hitp.hit_dist));
-	global ulong *depthp = (global ulong*)pixels+id*o.s2+o.s1;
-	*depthp = depth;
     }
 }
 #endif
