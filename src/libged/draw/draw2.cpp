@@ -54,18 +54,63 @@ struct draw_update_data_t {
 };
 
 
+// This is the generic "just create/update the view geometry" logic - for
+// editing operations, which will have custom visuals and updating behavior,
+// we'll need primitive specific callbacks (which really will almost certainly
+// belong (like the labels logic) in the rt functab...)
+int
+_ged_update_db_path(struct bview_scene_obj *s)
+{
+    /* Validate */
+    if (!s)
+	return 0;
 
-/**
- * A generic traversal function maintaining awareness of the full path
- * to a given object.
- *
- * TODO - we need more than search does - we also need the matrix to be
- * maintained and passed down (see npush).
- */
-HIDDEN void
+    /* Set up drawing info */
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    struct db_i *dbip = d->dbip;
+    struct db_full_path *fp = &d->fp;
+    const struct bn_tol *tol = d->tol;
+    const struct bg_tess_tol *ttol = d->ttol;
+
+    // Clear out existing vlist, if there is one...
+    BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+        struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+        BN_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+        // TODO - free child bview_scene_obj itself (ptbls, etc.)
+    }
+
+    // Get the matrix
+    mat_t mat;
+    MAT_IDN(mat);
+    if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+	return 0;
+    }
+
+    // Make sure we can get the internal form
+    struct rt_db_internal dbintern;
+    struct rt_db_internal *ip = &dbintern;
+    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, &rt_uniresource);
+    if (ret < 0 || !ip->idb_meth->ft_plot)
+	return 0;
+
+    // Get wireframe
+    struct rt_view_info info;
+    info.bot_threshold = s->s_v->gvs.bot_threshold;
+    ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+
+    // Draw label
+    if (ip->idb_meth->ft_labels)
+	ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
+
+
+    return 1;
+}
+
+static void
 db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *tp, mat_t *curr_mat,
-			 void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
-			 void *client_data)
+	void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
+	void *client_data)
 {
     mat_t om, nm;
     struct directory *dp;
@@ -150,7 +195,7 @@ db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *t
  * db_full_path structure.  This list is then used for further
  * processing and filtering by the search routines.
  */
-HIDDEN void
+static void
 db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 {
     struct directory *dp;
@@ -216,35 +261,13 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	s->s_i_data = (void *)ud;
 
 	// TODO - set update callback function
+	s->s_update_callback = &_ged_update_db_path;
 
-
-	// Increment changed flag.  Note in particular that we do not actually do
-	// the drawing operations here - that is the job of the update callback,
-	// invoked by the application when it initiates a drawing operation.  This
-	// flag is incremented to ensure the application knows this object needs
-	// to be processed.
-	s->s_changed++;
+	// Create the initial data
+	_ged_update_db_path(s);
 
 	// Add object to scene
 	bu_ptbl_ins(dd->v->gv_scene_objs, (long *)s);
-
-	// (TODO - the following belongs in the update callback...)
-
-	// Make sure we can get the internal form
-	struct rt_db_internal dbintern;
-	struct rt_db_internal *ip = &dbintern;
-	int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(path), dd->dbip, *curr_mat, &rt_uniresource);
-	if (ret < 0 || !ip->idb_meth->ft_plot)
-	    return;
-
-	// Get wireframe
-	struct rt_view_info info;
-	info.bot_threshold = dd->v->gvs.bot_threshold;
-	ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, dd->ttol, dd->tol, &info);
-
-	// Draw label
-	if (ip->idb_meth->ft_labels)
-	    ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
 
     }
 }
