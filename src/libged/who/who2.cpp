@@ -30,29 +30,32 @@
 #include "bu/malloc.h"
 #include "ged.h"
 
-
+// Need to process deepest to shallowest, so we don't get bit by starting at a
+// high level path - we need to check the deepest parent, and build up from the
+// bottom.  Below sorting criteria need to be defined to sort such that we
+// return the deepest paths as the begin() of the set.
 struct dfp_cmp {
     bool operator() (struct db_full_path *fp, struct db_full_path *o) const {
 	// First, check length
 	if (fp->fp_len != o->fp_len) {
-	    return (fp->fp_len < o->fp_len);
+	    return (fp->fp_len > o->fp_len);
 	}
 
 	// If length is the same, check the dp contents
 	for (size_t i = 0; i < fp->fp_len; i++) {
 	    if (fp->fp_names[i] != o->fp_names[i]) {
-		return (fp->fp_names[i] < o->fp_names[i]);
+		return (fp->fp_names[i] > o->fp_names[i]);
 	    }
 	}
 
 	// If we have boolean flags, try those...
 	if ((fp->fp_bool && !o->fp_bool) || (!fp->fp_bool && o->fp_bool)) {
-	    return (fp->fp_bool < o->fp_bool);
+	    return (fp->fp_bool > o->fp_bool);
 	}
 	if (fp->fp_bool) {
 	    for (size_t i = 0; i < fp->fp_len; i++) {
 		if (fp->fp_bool[i] != o->fp_bool[i]) {
-		    return (fp->fp_bool[i] < o->fp_bool[i]);
+		    return (fp->fp_bool[i] > o->fp_bool[i]);
 		}
 	    }
 	}
@@ -68,15 +71,11 @@ struct dfp_cmp {
  * Usage:
  * who
  *
+ * We need to figure out which parent combs (if any) are fully realized by
+ * having all their child solid objects drawn, and return those shorter paths
+ * rather than listing out all the solids - that's the most useful output for
+ * the user, although it's a lot harder.
  */
-
-// TODO - analyze DB scene objects - they will each have full paths
-// corresponding to a solid.  We need to figure out which parent combs (if any)
-// are fully realized by having all their child solid objects drawn, and return
-// those shorter paths rather than listing out all the solids - that's the most
-// useful output for the user, although it's a lot harder.  (The current logic
-// doesn't do it after a full-path erase has been applied, as near as I can
-// tell...)
 extern "C" int
 ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -118,45 +117,123 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	bu_free(fp, "path string");
     }
 
-    // TODO - need to process deepest to shallowest, so we don't get bit by
-    // starting at a high level path - we need to check the deepest parent, and
-    // build up from the bottom.  Make sure the dbfp class's sorting results in
-    // the longest path always returning from begin()
+    std::set<struct db_full_path *, dfp_cmp> finalized;
     while (s->size()) {
 	struct db_full_path *fp = *s->begin();
-	s->erase(s->begin());
 
-	// if fp_len == 1, this is a top level object and its finalized -
+	// We'll be checking the parent of fp, but we want
+	// fp to be part of the comparison set.  Make a copy
+	// to serve as the parent path.
+	struct db_full_path *pp;
+	BU_GET(pp, struct db_full_path);
+	db_full_path_init(pp);
+	db_dup_full_path(pp, fp);
+	DB_FULL_PATH_POP(pp);
+
+	// if pp_len == 0, fp is a top level object and its finalized -
 	// add it to the final set.
-
-	// If we have a deeper path: pop the last path off of fp, and get
-	// the list of immediate children from the new current dir comb.
-	// For each of those children, construct the full path and see if
-	// it is present in s.  If all child paths are present in s, the
-	// parent is fully realized in the scene and all child paths may
-	// be deleted.  The shorter path is then added to snext.  If all
-	// child paths are NOT present in s, they are all finalized since
-	// their immediate parent is not fully realized in the scene and
-	// they themselves are the drawn object instances.
-	//
-	// If s is not empty after this process, we have more paths from
-	// other sources to process, and we continue in a similar fashion.
-	DB_FULL_PATH_POP(fp);
-
-	if (fp->fp_len) {
-	    if (snext->find(fp) == snext->end()) {
-		snext->insert(fp);
-	    } else {
-		db_free_full_path(fp);
-		BU_PUT(fp, struct db_full_path);
+	if (!pp->fp_len) {
+	    s->erase(fp);
+	    finalized.insert(fp);
+	    db_free_full_path(pp);
+	    BU_PUT(pp, struct db_full_path);
+	} else {
+	    // If we have a deeper path:
+	    // 1. get the list of immediate children from pp;
+	    struct directory **children = NULL;
+	    struct rt_db_internal in;
+	    struct rt_comb_internal *comb;
+	    if (rt_db_get_internal(&in, DB_FULL_PATH_CUR_DIR(pp), gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+		finalized.insert(fp);
+		db_free_full_path(pp);
+		BU_PUT(pp, struct db_full_path);
 	    }
+	    comb = (struct rt_comb_internal *)in.idb_ptr;
+	    db_comb_children(gedp->ged_wdbp->dbip, comb, &children, NULL, NULL);
+
+	    // For all children, see if the path is in s
+	    int i = 0;
+	    int not_found = 0;
+	    struct directory *dp =  children[0];
+	    while (dp != RT_DIR_NULL) {
+		db_add_node_to_full_path(pp, dp);
+		char *str = db_path_to_string(pp);
+		if (BU_STR_EQUAL(str, "/all.g/tor.r")) {
+		}
+		if (s->find(pp) == s->end()) {
+		    not_found = 1;
+		    bu_log("%s not found\n", str);
+		    DB_FULL_PATH_POP(pp);
+		    break;
+		}
+		DB_FULL_PATH_POP(pp);
+		i++;
+		dp = children[i];
+	    }
+	    i = 0;
+	    dp =  children[0];
+
+	    // If all child paths are present in s, the parent is fully
+	    // realized in the scene and all child paths may be deleted.  The
+	    // shorter path is then added to snext.  If all child paths are NOT
+	    // present in s, they are all finalized since their immediate
+	    // parent is not fully realized in the scene and they themselves
+	    // are the drawn object instances.
+	    if (not_found) {
+		while (dp != RT_DIR_NULL) {
+		    db_add_node_to_full_path(pp, dp);
+		    s_it = s->find(pp);
+		    if (s_it != s->end()) {
+			finalized.insert(*s_it);
+			s->erase(s_it);
+		    }
+		    DB_FULL_PATH_POP(pp);
+		    i++;
+		    dp = children[i];
+		}
+		db_free_full_path(pp);
+		BU_PUT(pp, struct db_full_path);
+	    } else {
+		while (dp != RT_DIR_NULL) {
+		    db_add_node_to_full_path(pp, dp);
+		    s_it = s->find(pp);
+		    // Children are not required to be unique in a comb, so we
+		    // need to make sure we've not already deleted this
+		    // particular child path from the set.
+		    if (s_it != s->end()) {
+			struct db_full_path *op = *s_it;
+			s->erase(s_it);
+			db_free_full_path(op);
+			BU_PUT(op, struct db_full_path);
+		    }
+		    DB_FULL_PATH_POP(pp);
+		    i++;
+		    dp = children[i];
+		}
+		snext->insert(pp);
+	    }
+	    bu_free(children, "free children struct directory ptr array");
 	}
 
+	// If s is not empty after this process, we have more paths from other
+	// sources to process, and we continue in a similar fashion.  Otherwise,
+	// swap snext in for s to see if we have new parents to check.
 	if (!s->size()) {
 	    std::set<struct db_full_path *, dfp_cmp> *tmp = s;
 	    s = snext;
 	    snext = tmp;
 	}
+    }
+
+    // Whatever ended up in finalized is what we report
+    while (finalized.size()) {
+	struct db_full_path *fp = *finalized.begin();
+	finalized.erase(finalized.begin());
+	char *sfp = db_path_to_string(fp);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", sfp);
+	bu_free(sfp, "path string");
+	db_free_full_path(fp);
+	BU_PUT(fp, struct db_full_path);
     }
 
     return GED_OK;
