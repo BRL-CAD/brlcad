@@ -28,6 +28,7 @@
 #include <set>
 
 #include "bu/malloc.h"
+#include "bu/str.h"
 #include "ged.h"
 
 // Need to process deepest to shallowest, so we don't get bit by starting at a
@@ -44,7 +45,7 @@ struct dfp_cmp {
 	// If length is the same, check the dp contents
 	for (size_t i = 0; i < fp->fp_len; i++) {
 	    if (!BU_STR_EQUAL(fp->fp_names[i]->d_namep, o->fp_names[i]->d_namep)) {
-		return (strcmp(fp->fp_names[i]->d_namep, o->fp_names[i]->d_namep) > 0);
+		return (bu_strcmp(fp->fp_names[i]->d_namep, o->fp_names[i]->d_namep) > 0);
 	    }
 	}
 	return (strcmp(fp->fp_names[fp->fp_len-1]->d_namep, o->fp_names[fp->fp_len-1]->d_namep) > 0);
@@ -164,6 +165,7 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 		    not_found = 1;
 		    bu_log("%s not found\n", str);
 		    bu_free(str, "str");
+		    DB_FULL_PATH_POP(pp);
 		    break;
 		}
 		bu_free(str, "str");
