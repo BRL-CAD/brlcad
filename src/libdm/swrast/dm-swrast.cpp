@@ -433,9 +433,10 @@ swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *
 	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
 
 	float bounds[4];
-	int width = fonsTextBounds(privars->fs, coord_x, coord_y, str, NULL, (float *)bounds);
-	bu_log("%s bounds: min(%f,%f) max(%f,%f)\n", str, bounds[0], bounds[1], bounds[2], bounds[3]);
-	bu_log("%s width %d\n", str, width);
+	fonsTextBounds(privars->fs, coord_x, coord_y, str, NULL, (float *)bounds);
+	//int width = fonsTextBounds(privars->fs, coord_x, coord_y, str, NULL, (float *)bounds);
+	//bu_log("%s bounds: min(%f,%f) max(%f,%f)\n", str, bounds[0], bounds[1], bounds[2], bounds[3]);
+	//bu_log("%s width %d\n", str, width);
 
 	// Done with text, put matrices back
 	glPopMatrix();
