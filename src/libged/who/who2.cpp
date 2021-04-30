@@ -43,25 +43,11 @@ struct dfp_cmp {
 
 	// If length is the same, check the dp contents
 	for (size_t i = 0; i < fp->fp_len; i++) {
-	    if (fp->fp_names[i] != o->fp_names[i]) {
-		return (fp->fp_names[i] > o->fp_names[i]);
+	    if (!BU_STR_EQUAL(fp->fp_names[i]->d_namep, o->fp_names[i]->d_namep)) {
+		return (strcmp(fp->fp_names[i]->d_namep, o->fp_names[i]->d_namep) > 0);
 	    }
 	}
-
-	// If we have boolean flags, try those...
-	if ((fp->fp_bool && !o->fp_bool) || (!fp->fp_bool && o->fp_bool)) {
-	    return (fp->fp_bool > o->fp_bool);
-	}
-	if (fp->fp_bool) {
-	    for (size_t i = 0; i < fp->fp_len; i++) {
-		if (fp->fp_bool[i] != o->fp_bool[i]) {
-		    return (fp->fp_bool[i] > o->fp_bool[i]);
-		}
-	    }
-	}
-
-	// All checks done - they look the same
-	return false;
+	return (strcmp(fp->fp_names[fp->fp_len-1]->d_namep, o->fp_names[fp->fp_len-1]->d_namep) > 0);
     }
 };
 
@@ -110,14 +96,20 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    std::set<std::string> drawn;
     std::set<struct db_full_path *, dfp_cmp>::iterator s_it;
     for (s_it = s->begin(); s_it != s->end(); s_it++) {
-	char *fp = db_path_to_string(*s_it);
-	bu_log("%zd %s\n", (*s_it)->fp_len, fp);
-	bu_free(fp, "path string");
+	struct db_full_path *fp = *s_it;
+	char *sfp = db_path_to_string(fp);
+	bu_log("%zd %s\n", (*s_it)->fp_len, sfp);
+	if (!(DB_FULL_PATH_CUR_DIR(fp)->d_flags & RT_DIR_COMB)) {
+	    // By definition, solids are fully drawn
+	    drawn.insert(std::string(sfp));
+	}
+	bu_free(sfp, "path string");
     }
 
-    std::set<struct db_full_path *, dfp_cmp> finalized;
+    std::set<std::string> finalized;
     while (s->size()) {
 	struct db_full_path *fp = *s->begin();
 
@@ -130,42 +122,51 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	db_dup_full_path(pp, fp);
 	DB_FULL_PATH_POP(pp);
 
+	char *ppstr = db_path_to_string(pp);
+	bu_log("Checking children of %s\n", ppstr);
+	bu_free(ppstr, "ppstr");
+
 	// if pp_len == 0, fp is a top level object and its finalized -
 	// add it to the final set.
 	if (!pp->fp_len) {
 	    s->erase(fp);
-	    finalized.insert(fp);
+	    char *str = db_path_to_string(fp);
+	    finalized.insert(std::string(str));
+	    bu_free(str, "str");
 	    db_free_full_path(pp);
 	    BU_PUT(pp, struct db_full_path);
+	    db_free_full_path(fp);
+	    BU_PUT(fp, struct db_full_path);
 	} else {
-	    // If we have a deeper path:
-	    // 1. get the list of immediate children from pp;
+	    // If we have a deeper path get the list of immediate children from pp:
 	    struct directory **children = NULL;
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
 	    if (rt_db_get_internal(&in, DB_FULL_PATH_CUR_DIR(pp), gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
-		finalized.insert(fp);
+		char *str = db_path_to_string(fp);
+		finalized.insert(std::string(str));
+		bu_free(str, "str");
 		db_free_full_path(pp);
 		BU_PUT(pp, struct db_full_path);
 	    }
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
 	    db_comb_children(gedp->ged_wdbp->dbip, comb, &children, NULL, NULL);
 
-	    // For all children, see if the path is in s
+	    // For all children, see if the path is in s, snext or finalized. If it is
+	    // present in any of those it is drawn.
 	    int i = 0;
 	    int not_found = 0;
 	    struct directory *dp =  children[0];
 	    while (dp != RT_DIR_NULL) {
 		db_add_node_to_full_path(pp, dp);
 		char *str = db_path_to_string(pp);
-		if (BU_STR_EQUAL(str, "/all.g/tor.r")) {
-		}
-		if (s->find(pp) == s->end()) {
+		if (drawn.find(std::string(str)) == drawn.end()) {
 		    not_found = 1;
 		    bu_log("%s not found\n", str);
-		    DB_FULL_PATH_POP(pp);
+		    bu_free(str, "str");
 		    break;
 		}
+		bu_free(str, "str");
 		DB_FULL_PATH_POP(pp);
 		i++;
 		dp = children[i];
@@ -173,27 +174,34 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	    i = 0;
 	    dp =  children[0];
 
-	    // If all child paths are present in s, the parent is fully
-	    // realized in the scene and all child paths may be deleted.  The
-	    // shorter path is then added to snext.  If all child paths are NOT
-	    // present in s, they are all finalized since their immediate
-	    // parent is not fully realized in the scene and they themselves
-	    // are the drawn object instances.
+	    // If all child paths are present in s or snext, the parent is
+	    // fully realized in the scene.  If all child paths are NOT present
+	    // in s, those that are present are all finalized since their
+	    // immediate parent is not fully realized in the scene and they
+	    // themselves are the drawn object instances.
 	    if (not_found) {
+		// Not fully realized
 		while (dp != RT_DIR_NULL) {
 		    db_add_node_to_full_path(pp, dp);
-		    s_it = s->find(pp);
-		    if (s_it != s->end()) {
-			finalized.insert(*s_it);
-			s->erase(s_it);
+		    char *str = db_path_to_string(pp);
+		    if (drawn.find(std::string(str)) != drawn.end()) {
+			// We have a path that is drawn, in a comb not fully
+			// drawn.  Finalize it and remove it from processing
+			bu_log("finalizing partial path: %s\n", str);
+			finalized.insert(std::string(str));
+			s->erase(pp);
+			snext->erase(pp);
 		    }
+		    bu_free(str, "str");
 		    DB_FULL_PATH_POP(pp);
 		    i++;
 		    dp = children[i];
 		}
-		db_free_full_path(pp);
-		BU_PUT(pp, struct db_full_path);
+		// Children handled - we're done processing this branch of the tree
+		s->erase(pp);
+		snext->erase(pp);
 	    } else {
+		// Fully realized
 		while (dp != RT_DIR_NULL) {
 		    db_add_node_to_full_path(pp, dp);
 		    s_it = s->find(pp);
@@ -210,9 +218,23 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 		    i++;
 		    dp = children[i];
 		}
-		snext->insert(pp);
+		if (BU_STR_EQUAL(db_path_to_string(pp), "/component/bed/r1064")) {
+		    bu_log("about to get weird\n");
+		}
+		char *fstr = db_path_to_string(pp);
+		drawn.insert(std::string(fstr));
+		bu_free(fstr, "fstr");
+		bu_log("inserting fully realized comb: %s\n", db_path_to_string(pp));
+		struct db_full_path *npp;
+		BU_GET(npp, struct db_full_path);
+		db_full_path_init(npp);
+		db_dup_full_path(npp, pp);
+		snext->insert(npp);
 	    }
 	    bu_free(children, "free children struct directory ptr array");
+
+	    db_free_full_path(pp);
+	    BU_PUT(pp, struct db_full_path);
 	}
 
 	// If s is not empty after this process, we have more paths from other
@@ -227,13 +249,8 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Whatever ended up in finalized is what we report
     while (finalized.size()) {
-	struct db_full_path *fp = *finalized.begin();
+	bu_vls_printf(gedp->ged_result_str, "%s\n", finalized.begin()->c_str());
 	finalized.erase(finalized.begin());
-	char *sfp = db_path_to_string(fp);
-	bu_vls_printf(gedp->ged_result_str, "%s\n", sfp);
-	bu_free(sfp, "path string");
-	db_free_full_path(fp);
-	BU_PUT(fp, struct db_full_path);
     }
 
     return GED_OK;
