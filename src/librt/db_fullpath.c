@@ -728,10 +728,18 @@ db_full_path_color(
 	int inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
 
 	if (rt_material_head()) {
+	    // TODO - if region_id is set but region flag isn't, do we still
+	    // use rt_material_head to color?
+	    int region_id = -1;
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val) {
-		int region_id = 0;
 		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
+		// If we have a region flag but no region_id, for color table
+		// purposes treat the region_id as 0
+		region_id = 0;
+	    }
+	    if (region_id >= 0) {
 		// If we have both a region_id and an rt_material_head table, that is (?) highest precedence
 		// for color?
 		const struct mater *mp;
