@@ -230,9 +230,11 @@ struct bview_scene_obj  {
      * the necessary view context for editing. */
     struct bview *s_v;
 
-    /* Knowledge of how to create/update s_vlist and the other 3D geometry data */
+    /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
+     * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bview_line_seg, bview_label, bview_polyon, etc) */
     int (*s_update_callback)(struct bview_scene_obj *);  /**< @brief custom update/generator for s_vlist */
+    void (*s_free_callback)(struct bview_scene_obj *);  /**< @brief free any info stored in s_i_data */
 
     /* Actual 3D geometry data and information */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */

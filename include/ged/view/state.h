@@ -36,6 +36,8 @@
 
 __BEGIN_DECLS
 
+// TODO - once this settles down, give it a magic number so we can type
+// check it after a void cast
 struct draw_update_data_t {
     struct db_i *dbip;
     struct db_full_path fp;

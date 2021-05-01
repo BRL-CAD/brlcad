@@ -50,7 +50,7 @@ struct draw_data_t {
 // editing operations, which will have custom visuals and updating behavior,
 // we'll need primitive specific callbacks (which really will almost certainly
 // belong (like the labels logic) in the rt functab...)
-int
+static int
 _ged_update_db_path(struct bview_scene_obj *s)
 {
     /* Validate */
@@ -91,14 +91,30 @@ _ged_update_db_path(struct bview_scene_obj *s)
     info.bot_threshold = s->s_v->gvs.bot_threshold;
     ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
 
+#if 0
     // Draw label
     if (ip->idb_meth->ft_labels)
 	ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
-
+#endif
 
     return 1;
 }
 
+static void
+_ged_free_draw_data(struct bview_scene_obj *s)
+{
+    /* Validate */
+    if (!s)
+	return;
+
+    /* free drawing info */
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    if (!d)
+	return;
+    db_full_path_init(&d->fp);
+    BU_PUT(d, struct draw_update_data_t);
+    s->s_i_data = NULL;
+}
 static void
 db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *tp, mat_t *curr_mat,
 	void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
@@ -247,6 +263,10 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// the color of the current solid.
 	if (!s->s_os.color_override) {
 	    struct bu_color c;
+	    // TODO - this works, but checks attributes all along the path.
+	    // Since we're tree walking, we can save work by tracking this same
+	    // info as we're walking the tree. That way we don't have to
+	    // re-examine parent dp attrs each time.
 	    db_full_path_color(&c, path, dd->dbip, &rt_uniresource);
 	    int rgb[3];
 	    bu_color_to_rgb_ints(&c, &rgb[0], &rgb[1], &rgb[2]);
@@ -265,15 +285,15 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ud->ttol = dd->ttol;
 	s->s_i_data = (void *)ud;
 
-	// set update callback function
+	// set up callback functions
 	s->s_update_callback = &_ged_update_db_path;
+	s->s_free_callback = &_ged_free_draw_data;
 
 	// Create the initial data
-	_ged_update_db_path(s);
+	(*s->s_update_callback)(s);
 
 	// Add object to scene
 	bu_ptbl_ins(dd->v->gv_scene_objs, (long *)s);
-
     }
 }
 

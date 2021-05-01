@@ -421,6 +421,10 @@ bview_scene_obj_free(struct bview_scene_obj *s)
 	}
     }
 
+    // If we have a callback for the internal data, use it
+    if (s->s_free_callback)
+	(*s->s_free_callback)(s);
+
     // free vlist
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
 	BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
