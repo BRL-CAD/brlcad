@@ -206,9 +206,6 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 
     is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, 1);
 
-    bu_log("MIN: %f %f %f\n", V3ARGS(min));
-    bu_log("MAX: %f %f %f\n", V3ARGS(max));
-
     if (is_empty) {
 	/* Nothing is in view */
 	VSETALL(radial, 1000.0);
