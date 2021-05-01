@@ -12,3 +12,11 @@ last time we would need to do that.
 
 Idea:  Reorder the ad-hoc list of librt primitive ids to be grouped by
 mathematical surface order.  Minor, but would make that code a bit cleaner.
+
+Remove the global region_id based material table (rt_material_head and related
+code).  There are other ways to achieve this result (search -exec assignment of
+colors, for example) and it's not an intuitive mechanism for folks who don't
+know where/how to look for it.  db_upgrade can be updated to do the attr color
+assignments to produce a .g that doesn't need it, so there will be a clear and
+automatic migration path as well.
+
