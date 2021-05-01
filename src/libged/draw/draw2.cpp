@@ -245,23 +245,12 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// If the color was not overridden at either the global view level or the
 	// command line options, analyze the info from along the path to determine
 	// the color of the current solid.
-	//
-	// TODO - we don't need the overhead of making npath here - it may be
-	// worth either incorporating the checks into our own tree walk to
-	// track the current color, or making a more focused function in librt
-	// like the one that constructs the matrix from the path...
 	if (!s->s_os.color_override) {
-	    struct db_tree_state tsp = rt_initial_tree_state;
-	    tsp.ts_resp = &rt_uniresource;
-	    tsp.ts_dbip = dd->dbip;
-	    struct db_full_path npath;
-	    db_full_path_init(&npath);
-	    if (!db_follow_path(&tsp, &npath, path, 0, 0)) {
-		s->s_color[0] = tsp.ts_mater.ma_color[0] * 255.0;
-		s->s_color[1] = tsp.ts_mater.ma_color[1] * 255.0;
-		s->s_color[2] = tsp.ts_mater.ma_color[2] * 255.0;
-	    }
-	    db_free_full_path(&npath);
+	    struct bu_color c;
+	    db_full_path_color(&c, path, dd->dbip, &rt_uniresource);
+	    int rgb[3];
+	    bu_color_to_rgb_ints(&c, &rgb[0], &rgb[1], &rgb[2]);
+	    VMOVE(s->s_color, rgb);
 	} else {
 	    VMOVE(s->s_color, s->s_os.color);
 	}

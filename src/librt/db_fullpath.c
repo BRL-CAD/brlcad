@@ -33,6 +33,8 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/color.h"
+#include "bu/opt.h"
 #include "raytrace.h"
 
 
@@ -686,6 +688,95 @@ db_path_to_mat(
     return (ret < 0) ? 0 : 1;
 }
 
+// NOTE - this will probably wind up being expensive enough that we'll
+// still want to track it through the draw tree walk - the point of this
+// function is to a) let us get the information locally when we're NOT
+// doing a tree walk and b) concisely and clearly outline ALL the rules
+// for setting object color.
+//
+// See if we can just use the attributes - not sure if we need to crack
+// the comb, but it's possible (particularly if attributes aren't synced)
+void
+db_full_path_color(
+	struct bu_color *c,
+	struct db_full_path *pathp,
+	struct db_i *dbip,
+	struct resource *UNUSED(resp))
+{
+    RT_CHECK_DBI(dbip);
+    RT_CK_FULL_PATH(pathp);
+
+    if (!c)
+	return;
+
+    // If nothing else is found, the color is set to the default
+    unsigned char rgb_default[3] = {255, 0, 0};
+    bu_color_from_rgb_chars(c, rgb_default);
+
+    // Things we have to check for:
+    //
+    // 1. region_id attribute (only with region flag?) + rt_material_head table (see color_soltab)
+    // 2. color attribute
+    // 3. rgb attribute
+    // 4. inherit attribute - if set, children don't override parent
+    for (size_t i = 0; i < pathp->fp_len; i++) {
+	int have_color = 0;
+	struct bu_attribute_value_set c_avs;
+	db5_get_attributes(dbip, &c_avs, pathp->fp_names[i]);
+
+	// Inherit flag tells us whether this dp overrides its children
+	int inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+
+	if (rt_material_head()) {
+	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
+	    if (region_id_val) {
+		int region_id = 0;
+		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+		// If we have both a region_id and an rt_material_head table, that is (?) highest precedence
+		// for color?
+		const struct mater *mp;
+		for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		    if (region_id > mp->mt_high || region_id < mp->mt_low) {
+			continue;
+		    }
+		    unsigned char mt[3];
+		    mt[0] = mp->mt_r;
+		    mt[1] = mp->mt_g;
+		    mt[2] = mp->mt_b;
+		    bu_color_from_rgb_chars(c, mt);
+		}
+		// TODO - do we stop only if we have a color with inherit?
+		if (have_color && inherit) {
+		    // Inherit flag set, no point checking child nodes
+		    bu_avs_free(&c_avs);
+		    return;
+		} else {
+		    continue;
+		}
+	    }
+
+	}
+
+	// If we aren't overridden by region_id, check for locally set colors
+	const char *color_val = bu_avs_get(&c_avs, "color");
+	if (!color_val) {
+	    color_val = bu_avs_get(&c_avs, "rgb");
+	}
+	if (color_val) {
+	    bu_opt_color(NULL, 1, &color_val, (void *)c);
+	    have_color = 1;
+	}
+
+	bu_avs_free(&c_avs);
+
+	// If we have inherit (TODO - do we also have to have a non-default
+	// color?), there's no point in checking children for more settings -
+	// they will not override.
+	if (have_color && inherit)
+	    return;
+    }
+
+}
 
 /** @} */
 /*

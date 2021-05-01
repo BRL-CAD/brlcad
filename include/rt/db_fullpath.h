@@ -25,6 +25,7 @@
 
 #include "vmath.h"
 
+#include "bu/color.h"
 #include "bu/vls.h"
 #include "rt/defines.h"
 
@@ -242,6 +243,18 @@ RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
 				    mat_t mat, /* result */
 				    int depth, /* number of arcs */
 				    struct resource *resp);
+
+/**
+ * Determine the color operative at the current directory pointer (the leaf
+ * node) of the path according to available information and rules.
+ *
+ * If nothing can be determined default color is set.
+ */
+RT_EXPORT extern void db_full_path_color(struct bu_color *c,
+				         struct db_full_path *pathp,
+				         struct db_i *dbip,
+				         struct resource *resp);
+
 
 /** @} */
 
