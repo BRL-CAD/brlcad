@@ -37,14 +37,6 @@
 #include "ged/view/state.h"
 #include "../ged_private.h"
 
-struct draw_data_t {
-    struct db_i *dbip;
-    struct bview *v;
-    struct bview_settings *vs;
-    const struct bn_tol *tol;
-    const struct bg_tess_tol *ttol;
-};
-
 
 // This is the generic "just create/update the view geometry" logic - for
 // editing operations, which will have custom visuals and updating behavior,
@@ -75,14 +67,14 @@ _ged_update_db_path(struct bview_scene_obj *s)
     // Get the matrix
     mat_t mat;
     MAT_IDN(mat);
-    if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+    if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, d->res)) {
 	return 0;
     }
 
     // Make sure we can get the internal form
     struct rt_db_internal dbintern;
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, &rt_uniresource);
+    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, d->res);
     if (ret < 0 || !ip->idb_meth->ft_plot)
 	return 0;
 
@@ -90,6 +82,11 @@ _ged_update_db_path(struct bview_scene_obj *s)
     struct rt_view_info info;
     info.bot_threshold = s->s_v->gvs.bot_threshold;
     ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+
+
+    // TODO - update s_size, s_csize, and s_center...  If obj bbox based, may differ
+    // from the vlist bbox which can impact how autoview interprets this object for
+    // resizing purposes.
 
 #if 0
     // Draw label
@@ -115,6 +112,16 @@ _ged_free_draw_data(struct bview_scene_obj *s)
     BU_PUT(d, struct draw_update_data_t);
     s->s_i_data = NULL;
 }
+
+/* Data for tree walk */
+struct draw_data_t {
+    struct db_i *dbip;
+    struct bview *v;
+    struct bview_settings *vs;
+    const struct bn_tol *tol;
+    const struct bg_tess_tol *ttol;
+};
+
 static void
 db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *tp, mat_t *curr_mat,
 	void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
@@ -283,6 +290,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ud->dbip = dd->dbip;
 	ud->tol = dd->tol;
 	ud->ttol = dd->ttol;
+	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view...
 	s->s_i_data = (void *)ud;
 
 	// set up callback functions

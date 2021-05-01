@@ -227,7 +227,9 @@ struct bview_scene_obj  {
     /* Associated bview.  Note that scene objects are not assigned uniquely to
      * one view.  This value may be changed by the application in a multi-view
      * scenario as an object is edited from multiple different views, to supply
-     * the necessary view context for editing. */
+     * the necessary view context for editing. If the object needs to retain
+     * knowledge of its original/creation view, it should save that info
+     * internally in its s_i_data container. */
     struct bview *s_v;
 
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
