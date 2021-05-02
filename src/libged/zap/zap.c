@@ -48,12 +48,32 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc != 1) {
+    if (argc != 1 && argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
     dl_zap(gedp, gedp->free_scene_obj);
+
+
+    /* New scene objects can also be cleared */
+    for (long i = (long)BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs) - 1; i >= 0; i--) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_scene_objs, i);
+	if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
+	    if (!(s->s_type_flags & BVIEW_DBOBJ_BASED)) {
+		bu_ptbl_rm(gedp->ged_gvp->gv_scene_objs, (long *)s);
+		bview_scene_obj_free(s);
+		BU_PUT(s, struct bview_scene_obj);
+	    }
+	} else {
+	    if (s->s_type_flags & BVIEW_DBOBJ_BASED) {
+		bu_ptbl_rm(gedp->ged_gvp->gv_scene_objs, (long *)s);
+		bview_scene_obj_free(s);
+		BU_PUT(s, struct bview_scene_obj);
+	    }
+	}
+    }
+
 
     /* The application may need to adjust itself when the view
      * is cleared.  Since the blast command may immediately
