@@ -388,7 +388,9 @@ static void update_input_ptrs( GLcontext *ctx, GLuint start )
       GLvector4f *vptr = VB->AttribPtr[a[j].attrib];
 
       if (vtx->emit != choose_emit_func) {
-	 assert(a[j].inputstride == vptr->stride);
+	 // if start == 0, vptr->stride won't change a[j].inputptr - don't
+	 // assert fail in that case since stride has no impact
+	 assert((a[j].inputstride == vptr->stride || start == 0));
 	 assert(a[j].inputsize == vptr->size);
       }
 
