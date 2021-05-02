@@ -268,6 +268,68 @@ struct bview_scene_obj  {
     void *s_u_data;
 };
 
+/* bview_scene_groups (one level above scene objects, conceptually equivalent
+ * to display_list) are used to capture the intent of drawing commands.  For
+ * example, in the scenario where a draw command is used to visualize a comb
+ * with sub-combs a and b:
+ *
+ * ged> draw comb
+ *
+ * The drawing code will check the proposed group against existing groups,
+ * adding and removing accordingly.  It will then walk the hierarchy and create
+ * bview_scene_obj instances for all solids below comb/a and comb/b as children
+ * of the scene group.  Note that since we specified "comb" as the drawn
+ * object, if comb/b is removed from comb and comb/c is added, we would expect
+ * comb's displayed view to be updated to reflect its current structure.  If,
+ * however, we instead did the original visualization with the commands:
+ *
+ * ged> draw comb/a
+ * ged> draw comb/b
+ *
+ * The same solids would be drawn, but conceptually the comb itself is not
+ * drawn - the two instances are.  If comb/b is removed and comb/c added, we
+ * would not expect comb/c to be drawn since we never drew either that instance
+ * or its parent comb.
+ *
+ * However, if comb/a and comb/b are drawn and then comb is drawn, the new comb
+ * scene group will replace both the comb/a and comb/b groups since they are now
+ * part of a higher level object being drawn.  If comb is drawn and comb/a is
+ * subsequently drawn, it will be a no-op since "comb" is already covering that
+ * case.
+ *
+ * The rule with bview_scene_group instances is their children must specify a
+ * fully realized entity - if the s_name is "/comb/a" then everything below
+ * /comb/a is drawn.  If /comb/a/obj1.s is erased, new bview_scene_group
+ * entities will be needed to reflect the partial nature of /comb/a in the
+ * visualization.  That requirement also propagates back up the tree. If a has
+ * obj1.s and obj2.s below it, and /comb/a/obj1.s is erased, an original
+ * "/comb" scene group will be replaced by new scene groups: /comb/a/obj2.s and
+ * /comb/b.  Note that if /comb/a/obj1.s is subsequently drawn in isolation,
+ * the scene groups will not collapse back to a single comb group - the user
+ * will not at that point have explicitly issued instructions to draw comb as a
+ * whole, even though all the individual elements have been drawn.  A "view
+ * simplify" command should probably be added to support collapsing to the
+ * simplest available option automatically in that situation.
+ *
+ * Note that the above rule is for explicit erasure from the drawn scene group
+ * - if the structure of /comb/a is changed the drawn object is still "comb"
+ * and the solid children of the existing group are updated to reflect the
+ * current state of comb, rather than introducing new scene groups.
+ *
+ * Much like point_t and vect_t, the distinction between a group and an
+ * individual object is largely semantic rather than a question of different
+ * data storage.  A group just uses the bview_scene_obj container to store
+ * group-wide default settings, and g.children holds the individual
+ * bview_scene_obj entries corresponding to the solids.  A bview_scene_obj
+ * should always map to a solid - a group may specify a solid but more
+ * typically will reference the root of a CSG tree and have solids below it.
+ * We define them to have different types only to help keep straight in the
+ * code what is a conceptually a group and what is an individual scene object.
+ */
+struct bview_scene_group {
+    struct bview_scene_obj g;
+};
+
 /* A display list corresponds (typically) to a database object.  It is composed of one
  * or more scene objects, which can be manipulated independently but collectively make
  * up the displayed representation of an object. */
@@ -397,6 +459,11 @@ struct bview_other_state {
     int gos_text_color[3];
 };
 
+struct bview_obj_internal;
+struct bview_obj_cache {
+    struct bview_obj_internal *i;
+};
+
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
     struct bu_vls gv_name;
@@ -464,6 +531,7 @@ struct bview {
 
     // Available bn_vlist entities to recycle before allocating new.
     struct bu_list      gv_vlfree;     /**< @brief  head of bn_vlist freelist */
+    struct bview_obj_cache gv_cache;
 
     // More complex are the view elements not corresponding to geometry objects
     // but editable by the user.  These are selectable, but because they are
