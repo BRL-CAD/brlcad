@@ -525,9 +525,11 @@ struct bview {
     int                         gv_fps; // Display Frames-Per-Second metric
     double                      gv_frametime;
 
+    // Container for db object groups (may come from GED)
+    struct bu_ptbl                      *gv_db_grps;
     // Container for storing bview_scene_obj elements unique to this
     // view (labels, polygons, etc.)
-    struct bu_ptbl                      *gv_scene_objs;
+    struct bu_ptbl                      *gv_view_objs;
 
     // Available bn_vlist entities to recycle before allocating new.
     struct bu_list      gv_vlfree;     /**< @brief  head of bn_vlist freelist */

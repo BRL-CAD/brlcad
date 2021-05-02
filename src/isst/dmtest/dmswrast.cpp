@@ -23,6 +23,8 @@
  *
  */
 
+/* TODO - support gv_db_grps */
+
 #define USE_MGL_NAMESPACE 1
 
 #include <QKeyEvent>
@@ -159,13 +161,13 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    }
 	}
 
-	size_t scene_cnt = BU_PTBL_LEN(v->gv_scene_objs);
+	size_t scene_cnt = BU_PTBL_LEN(v->gv_view_objs);
 
 	ged_exec(gedp, argc, argv);
 	if (msg)
 	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
 
-	if (v->gv_cleared && (!v->gv_scene_objs || !BU_PTBL_LEN(v->gv_scene_objs))) {
+	if (v->gv_cleared && (!v->gv_view_objs || !BU_PTBL_LEN(v->gv_view_objs))) {
 	    const char *aav[2];
 	    aav[0] = "autoview";
 	    aav[1] = NULL;
@@ -203,8 +205,8 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// and point generation, for that matter) down the road.
 	//
 	// For db obj view list objects, check the dp edit flags
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	    // If we're anything other than a non-view-only database object, this update call is wrong.
 	    if (s->s_type_flags != BVIEW_DBOBJ_BASED)
 		continue;
@@ -221,7 +223,7 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
 
 	// If we're doing autoview call it
-	if (!scene_cnt && BU_PTBL_LEN(v->gv_scene_objs) && v->gv_autoview) {
+	if (!scene_cnt && BU_PTBL_LEN(v->gv_view_objs) && v->gv_autoview) {
 	    const char *aav[2];
 	    aav[0] = "autoview2";
 	    aav[1] = NULL;

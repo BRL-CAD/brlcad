@@ -92,7 +92,7 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
 
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-    bu_ptbl_ins(gedp->ged_gvp->gv_scene_objs, (long *)s);
+    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)s);
 
     return GED_OK;
 }

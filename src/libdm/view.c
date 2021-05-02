@@ -590,8 +590,8 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     }
 
     // Draw view objects
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	if (s->s_flag == DOWN)
 	    continue;
 	// Draw any child objects

@@ -105,7 +105,7 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s is associated with a database object - use 'erase2' cmd to clear\n", gd->vobj);
 	return GED_ERROR;
     }
-    bu_ptbl_rm(gedp->ged_gvp->gv_scene_objs, (long *)s);
+    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
     bview_scene_obj_free(s);
     BU_PUT(s, struct bview_scene_obj);
 
@@ -316,8 +316,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     // If we're not wanting help and we have no subcommand, list defined view objects
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	}
 	return GED_OK;
@@ -332,8 +332,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     gd->vobj = argv[0];
     gd->s = NULL;
     argc--; argv++;
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
 	    gd->s = s;
 	    break;

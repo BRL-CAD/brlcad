@@ -135,8 +135,10 @@ bview_init(struct bview *gvp)
     gvp->gv_snap_tol_factor = 10;
     gvp->gv_snap_lines = 0;
 
-    BU_GET(gvp->gv_scene_objs, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_scene_objs, 8, "scene_objs init");
+    BU_GET(gvp->gv_db_grps, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_db_grps, 8, "db_objs init");
+    BU_GET(gvp->gv_view_objs, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_view_objs, 8, "view_objs init");
     BU_GET(gvp->gv_selected, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_selected, 8, "scene_objs init");
 

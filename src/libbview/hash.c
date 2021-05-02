@@ -457,8 +457,8 @@ bview_hash(struct bview *v)
 	XXH64_update(state, p, sizeof(long *));
     }
 
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_scene_objs); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	bview_scene_obj_hash(state, s);
     }
 

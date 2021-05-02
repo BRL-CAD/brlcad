@@ -85,7 +85,36 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
 
-    struct bu_ptbl *so = gedp->ged_gvp->gv_scene_objs;
+    struct bu_ptbl *so = gedp->ged_gvp->gv_db_grps;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(so, i);
+	for (size_t j = 0; i < BU_PTBL_LEN(&g->g.children); j++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, j);
+	    is_empty = 0;
+	    struct bn_vlist *tvp;
+	    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s->s_vlist))->l)) {
+		int k;
+		int nused = tvp->nused;
+		int *cmd = tvp->cmd;
+		point_t *pt = tvp->pt;
+		for (k = 0; k < nused; k++, cmd++, pt++) {
+		    VMINMAX(min, max, *pt);
+		}
+	    }
+	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
+		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, k);
+		for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s_c->s_vlist))->l)) {
+		    int nused = tvp->nused;
+		    int *cmd = tvp->cmd;
+		    point_t *pt = tvp->pt;
+		    for (int l = 0; l < nused; l++, cmd++, pt++) {
+			VMINMAX(min, max, *pt);
+		    }
+		}
+	    }
+	}
+    }
+    so = gedp->ged_gvp->gv_view_objs;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(so, i);
 	if (s->s_type_flags != BVIEW_DBOBJ_BASED && s->s_type_flags != BVIEW_POLYGONS)

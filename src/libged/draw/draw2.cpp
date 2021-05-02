@@ -116,8 +116,8 @@ _ged_free_draw_data(struct bview_scene_obj *s)
 /* Data for tree walk */
 struct draw_data_t {
     struct db_i *dbip;
+    struct bview_scene_group *g;
     struct bview *v;
-    struct bview_settings *vs;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
 };
@@ -262,7 +262,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	db_path_to_vls(&s->s_uuid, path);
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
-	bview_settings_sync(&s->s_os, dd->vs);
+	bview_settings_sync(&s->s_os, &dd->g->g.s_os);
 	s->s_type_flags |= BVIEW_DBOBJ_BASED;
 
 	// If the color was not overridden at either the global view level or the
@@ -300,8 +300,8 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Create the initial data
 	(*s->s_update_callback)(s);
 
-	// Add object to scene
-	bu_ptbl_ins(dd->v->gv_scene_objs, (long *)s);
+	// Add object to scene group
+	bu_ptbl_ins(&dd->g->g.children, (long *)s);
     }
 }
 
@@ -370,9 +370,24 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     struct draw_data_t dd;
     dd.dbip = gedp->ged_wdbp->dbip;
     dd.v = gedp->ged_gvp;
-    dd.vs = &vs;
     dd.tol = &gedp->ged_wdbp->wdb_tol;
     dd.ttol = &gedp->ged_wdbp->wdb_ttol;
+
+    struct bview_scene_group *g;
+    // TODO - need to see if we need a new group, are replacing
+    // existing groups, or if we have already drawn this and
+    // just need to update.
+    BU_GET(g, struct bview_scene_group);
+    BU_LIST_INIT(&(g->g.s_vlist));
+    BU_PTBL_INIT(&g->g.children);
+    BU_VLS_INIT(&g->g.s_name);
+    db_path_to_vls(&g->g.s_name, &fp);
+    BU_VLS_INIT(&g->g.s_uuid);
+    db_path_to_vls(&g->g.s_uuid, &fp);
+    bview_settings_sync(&g->g.s_os, &vs);
+    bu_ptbl_ins(dd.v->gv_db_grps, (long *)g);
+
+    dd.g = g;
 
     // Walk the tree to build up the set of scene objects
     db_fullpath_draw(&fp, &mat, (void *)&dd);

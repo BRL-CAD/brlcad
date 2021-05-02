@@ -71,8 +71,9 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     /* Build the processing sets */
     std::set<struct bview_scene_obj *> to_clear;
     std::set<struct bview_scene_obj *> all_objs;
-    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_scene_objs, i);
+    // TODO - need to process gv_db_grps, rather than gv_view_objs
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	if (s->s_type_flags & BVIEW_DBOBJ_BASED) {
 	    all_objs.insert(s);
 	}
@@ -112,7 +113,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // Built up the removal set - now clear from table
     for (s_it = to_clear.begin(); s_it != to_clear.end(); s_it++) {
 	struct bview_scene_obj *s = *s_it;
-	bu_ptbl_rm(gedp->ged_gvp->gv_scene_objs, (long *)s);
+	bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
 	bview_scene_obj_free(s);
 	BU_PUT(s, struct bview_scene_obj);
     }

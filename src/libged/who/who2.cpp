@@ -63,6 +63,7 @@ struct dfp_cmp {
  * rather than listing out all the solids - that's the most useful output for
  * the user, although it's a lot harder.
  */
+/* TODO - support gv_db_grps */
 extern "C" int
 ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -91,8 +92,8 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     std::set<std::string> not_drawn;
     std::set<std::string> drawn;
     std::set<std::string> finalized;
-    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_scene_objs); i++) {
-	struct bview_scene_obj *sobj = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_scene_objs, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	struct bview_scene_obj *sobj = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
 	if (sobj->s_type_flags & BVIEW_DBOBJ_BASED) {
 	    struct draw_update_data_t *ud = (struct draw_update_data_t *)sobj->s_i_data;
 
