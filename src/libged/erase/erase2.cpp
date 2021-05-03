@@ -373,7 +373,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
-	    struct db_full_path *fp = *f_it;;
+	    struct db_full_path *fp = *f_it;
 	    if (db_full_path_match_top(fp, &gfp)) {
 		// Easy case.  Drawn path is equal to or below hierarchy of
 		// specified path - just clear it

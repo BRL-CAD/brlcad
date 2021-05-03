@@ -310,7 +310,6 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bview_scene_group *g = NULL;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     static const char *usage = "path";
     struct bview_settings vs;
@@ -319,11 +318,13 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
 
+    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc < 2) {
+    if (!argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -350,114 +351,140 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
      * otherwise.  */
     gedp->ged_gvp->gv_autoview = 1;
 
-    /* See what we've got. */
-    struct db_full_path fp;
-    db_full_path_init(&fp);
-    int ret = db_string_to_path(&fp, dbip, argv[1]);
-    if (ret < 0) {
-	db_free_full_path(&fp);
+
+    /* Validate that the supplied args are current, valid paths.  If not, bail */
+    std::set<struct db_full_path *> fps;
+    std::set<struct db_full_path *>::iterator f_it;
+    for (size_t i = 0; i < (size_t)argc; ++i) {
+	struct db_full_path *fp;
+	BU_GET(fp, struct db_full_path);
+	db_full_path_init(fp);
+	int ret = db_string_to_path(fp, dbip, argv[i]);
+	if (ret < 0) {
+	    // Invalid path
+	    db_free_full_path(fp);
+	    bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
+	}
+	fps.insert(fp);
+    }
+    if (fps.size() != (size_t)argc) {
+	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
+	    struct db_full_path *fp = *f_it;
+	    db_free_full_path(fp);
+	    BU_PUT(fp, struct db_full_path);
+	}
 	return GED_ERROR;
     }
+
 
     // Check the already drawn paths to see if the proposed new path impacts them.
     struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
-    std::set<struct bview_scene_group *> clear;
-    std::set<struct bview_scene_group *>::iterator g_it;
-    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
-	struct db_full_path gfp;
-	db_full_path_init(&gfp);
-	ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
-	if (ret < 0) {
-	    // If this fails eliminate the invalid path from sg...
-	    clear.insert(cg);
-	    db_free_full_path(&gfp);
-	    continue;
-	}
-	// Two conditions to check for here:
-	// 1.  proposed draw path is a top match for existing path
-	if (db_full_path_match_top(&fp, &gfp)) {
-	    // New path will replace this path - clear it
-	    clear.insert(cg);
-	    db_free_full_path(&gfp);
-	    continue;
-	}
-	// 2.  existing path is a top match encompassing the proposed path
-	if (db_full_path_match_top(&gfp, &fp)) {
-	    // Already drawn - replace just the children of g that match this
-	    // path to update their contents
-	    g = cg;
-	    db_free_full_path(&gfp);
-	    continue;
-	}
-    }
 
-    if (g) {
-	// remove children that match fp - we will be adding new versions to g to update it,
-	// rather than creating a new one.
-	std::set<struct bview_scene_obj *> sclear;
-	std::set<struct bview_scene_obj *>::iterator s_it;
-	for (size_t i = 0; i < BU_PTBL_LEN(&g->g.children); i++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, i);
+    for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
+	struct bview_scene_group *g = NULL;
+	struct db_full_path *fp = *f_it;
+
+	// Get the "seed" matrix from the path - everything we draw at or below the path
+	// will be positioned using it
+	mat_t mat;
+	MAT_IDN(mat);
+	// TODO - get resource from somewhere other than rt_uniresource
+	if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+	    db_free_full_path(fp);
+	    BU_PUT(fp, struct db_full_path);
+	    continue;
+	}
+
+	std::set<struct bview_scene_group *> clear;
+	std::set<struct bview_scene_group *>::iterator g_it;
+	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
 	    struct db_full_path gfp;
 	    db_full_path_init(&gfp);
-	    db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
-	    if (db_full_path_match_top(&gfp, &fp)) {
-		sclear.insert(s);
+	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
+	    if (ret < 0) {
+		// If this fails eliminate the invalid path from sg...
+		clear.insert(cg);
+		db_free_full_path(&gfp);
+		continue;
+	    }
+	    // Two conditions to check for here:
+	    // 1.  proposed draw path is a top match for existing path
+	    if (db_full_path_match_top(fp, &gfp)) {
+		// New path will replace this path - clear it
+		clear.insert(cg);
+		db_free_full_path(&gfp);
+		continue;
+	    }
+	    // 2.  existing path is a top match encompassing the proposed path
+	    if (db_full_path_match_top(&gfp, fp)) {
+		// Already drawn - replace just the children of g that match this
+		// path to update their contents
+		g = cg;
+		db_free_full_path(&gfp);
+		continue;
 	    }
 	}
-	for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
-	    struct bview_scene_obj *s = *s_it;
-	    bu_ptbl_rm(&g->g.children, (long *)s);
-	    bview_scene_obj_free(s);
-	    BU_PUT(s, struct bview_scene_obj);
+
+	if (g) {
+	    // remove children that match fp - we will be adding new versions to g to update it,
+	    // rather than creating a new one.
+	    std::set<struct bview_scene_obj *> sclear;
+	    std::set<struct bview_scene_obj *>::iterator s_it;
+	    for (size_t i = 0; i < BU_PTBL_LEN(&g->g.children); i++) {
+		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, i);
+		struct db_full_path gfp;
+		db_full_path_init(&gfp);
+		db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
+		if (db_full_path_match_top(&gfp, fp)) {
+		    sclear.insert(s);
+		}
+	    }
+	    for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
+		struct bview_scene_obj *s = *s_it;
+		bu_ptbl_rm(&g->g.children, (long *)s);
+		bview_scene_obj_free(s);
+		BU_PUT(s, struct bview_scene_obj);
+	    }
+	} else {
+	    // Create new group
+	    BU_GET(g, struct bview_scene_group);
+	    BU_LIST_INIT(&(g->g.s_vlist));
+	    BU_PTBL_INIT(&g->g.children);
+	    BU_VLS_INIT(&g->g.s_name);
+	    db_path_to_vls(&g->g.s_name, fp);
+	    BU_VLS_INIT(&g->g.s_uuid);
+	    db_path_to_vls(&g->g.s_uuid, fp);
+	    bview_settings_sync(&g->g.s_os, &vs);
+	    bu_ptbl_ins(gedp->ged_gvp->gv_db_grps, (long *)g);
 	}
-    } else {
-	// Create new group
-	BU_GET(g, struct bview_scene_group);
-	BU_LIST_INIT(&(g->g.s_vlist));
-	BU_PTBL_INIT(&g->g.children);
-	BU_VLS_INIT(&g->g.s_name);
-	db_path_to_vls(&g->g.s_name, &fp);
-	BU_VLS_INIT(&g->g.s_uuid);
-	db_path_to_vls(&g->g.s_uuid, &fp);
-	bview_settings_sync(&g->g.s_os, &vs);
-	bu_ptbl_ins(gedp->ged_gvp->gv_db_grps, (long *)g);
-    }
 
-    if (clear.size()) {
-	// Clear anything superseded by the new path
-	for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
-	    struct bview_scene_group *cg = *g_it;
-	    bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
-	    bview_scene_obj_free(&cg->g);
-	    BU_PUT(cg, struct bview_scene_group);
+	if (clear.size()) {
+	    // Clear anything superseded by the new path
+	    for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
+		struct bview_scene_group *cg = *g_it;
+		bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
+		bview_scene_obj_free(&cg->g);
+		BU_PUT(cg, struct bview_scene_group);
+	    }
 	}
+
+
+	// Prepare tree walking data container
+	struct draw_data_t dd;
+	dd.dbip = gedp->ged_wdbp->dbip;
+	dd.v = gedp->ged_gvp;
+	dd.tol = &gedp->ged_wdbp->wdb_tol;
+	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
+	dd.g = g;
+
+	// Walk the tree to build up the set of scene objects
+	db_fullpath_draw(fp, &mat, (void *)&dd);
+
+	// Done with path
+	db_free_full_path(fp);
+	BU_PUT(fp, struct db_full_path);
     }
-
-
-    // Get the "seed" matrix from the path - everything we draw at or below the path
-    // will be positioned using it
-    mat_t mat;
-    MAT_IDN(mat);
-    if (!db_path_to_mat(dbip, &fp, mat, fp.fp_len-1, &rt_uniresource)) {
-	db_free_full_path(&fp);
-	return GED_ERROR;
-    }
-
-    // Prepare tree walking data container
-    struct draw_data_t dd;
-    dd.dbip = gedp->ged_wdbp->dbip;
-    dd.v = gedp->ged_gvp;
-    dd.tol = &gedp->ged_wdbp->wdb_tol;
-    dd.ttol = &gedp->ged_wdbp->wdb_ttol;
-    dd.g = g;
-
-    // Walk the tree to build up the set of scene objects
-    db_fullpath_draw(&fp, &mat, (void *)&dd);
-
-    // Done with path
-    db_free_full_path(&fp);
 
     // Scene objects are created and stored in gv_scene_objs. The application
     // may now call each object's update callback to generate wireframes,
