@@ -1,4 +1,4 @@
-/*                         A U T O V I E W . C
+/*                       A U T O V I E W . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/autoview.c
+/** @file libged/autoview.cpp
  *
  * The autoview command.
  *
@@ -34,8 +34,8 @@
  * autoview
  *
  */
-int
-ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
+extern "C" int
+ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 {
     int is_empty = 1;
     vect_t min, max;
@@ -74,19 +74,91 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 
     /* set the default if unset or insane */
     if (factor < SQRT_SMALL_FASTF) {
-	factor = 2.0; /* 2 is half the view */
+	factor = 1.0; /* 2 is half the view */
     }
 
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
-    is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, 1);
+    /* calculate the bounding for all solids and polygons being displayed
+     * TODO - add a flag to autoview all view objects of any type, but that's
+     * probably not going to be what we want in all cases... */
+    VSETALL(min,  INFINITY);
+    VSETALL(max, -INFINITY);
+
+    struct bu_ptbl *so = gedp->ged_gvp->gv_db_grps;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(so, i);
+	for (size_t j = 0; j < BU_PTBL_LEN(&g->g.children); j++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, j);
+	    is_empty = 0;
+	    struct bn_vlist *tvp;
+	    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s->s_vlist))->l)) {
+		int k;
+		int nused = tvp->nused;
+		int *cmd = tvp->cmd;
+		point_t *pt = tvp->pt;
+		for (k = 0; k < nused; k++, cmd++, pt++) {
+		    VMINMAX(min, max, *pt);
+		}
+	    }
+	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
+		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, k);
+		for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s_c->s_vlist))->l)) {
+		    int nused = tvp->nused;
+		    int *cmd = tvp->cmd;
+		    point_t *pt = tvp->pt;
+		    for (int l = 0; l < nused; l++, cmd++, pt++) {
+			VMINMAX(min, max, *pt);
+		    }
+		}
+	    }
+	}
+    }
+    so = gedp->ged_gvp->gv_view_objs;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(so, i);
+	if (s->s_type_flags != BVIEW_DBOBJ_BASED && s->s_type_flags != BVIEW_POLYGONS)
+	    continue;
+	is_empty = 0;
+	struct bn_vlist *tvp;
+	for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s->s_vlist))->l)) {
+	    int k;
+	    int nused = tvp->nused;
+	    int *cmd = tvp->cmd;
+	    point_t *pt = tvp->pt;
+	    for (k = 0; k < nused; k++, cmd++, pt++) {
+		VMINMAX(min, max, *pt);
+	    }
+	}
+	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
+	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
+	    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s_c->s_vlist))->l)) {
+		int k;
+		int nused = tvp->nused;
+		int *cmd = tvp->cmd;
+		point_t *pt = tvp->pt;
+		for (k = 0; k < nused; k++, cmd++, pt++) {
+		    VMINMAX(min, max, *pt);
+		}
+	    }
+	}
+    }
 
     if (is_empty) {
 	/* Nothing is in view */
 	VSETALL(radial, 1000.0);
     } else {
+	vect_t r1, r2;
 	VADD2SCALE(center, max, min, 0.5);
-	VSUB2(radial, max, center);
+	VSCALE(max, max, 2);
+	VSCALE(min, min, 0.5);
+	VSUB2(r1, max, center);
+	VSUB2(r2, min, center);
+	if (MAGSQ(r1) > MAGSQ(r2)) {
+	    VMOVE(radial, r1);
+	} else {
+	    VMOVE(radial, r2);
+	}
     }
 
     /* make sure it's not inverted */
@@ -108,26 +180,6 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
-
-
-#ifdef GED_PLUGIN
-#include "../include/plugin.h"
-struct ged_cmd_impl autoview_cmd_impl = { "autoview", ged_autoview_core, GED_CMD_DEFAULT };
-const struct ged_cmd autoview_cmd = { &autoview_cmd_impl };
-
-extern int ged_autoview2_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl autoview2_cmd_impl = { "autoview2", ged_autoview2_core, GED_CMD_DEFAULT };
-const struct ged_cmd autoview2_cmd = { &autoview2_cmd_impl };
-
-const struct ged_cmd *autoview_cmds[] = { &autoview_cmd, &autoview2_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  autoview_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:
