@@ -457,6 +457,11 @@ bview_hash(struct bview *v)
 	XXH64_update(state, p, sizeof(long *));
     }
 
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
+	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	bview_scene_obj_hash(state, &g->g);
+    }
+
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
 	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	bview_scene_obj_hash(state, s);

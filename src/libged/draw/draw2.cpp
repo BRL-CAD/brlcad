@@ -371,7 +371,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
 	if (ret < 0) {
 	    // If this fails eliminate the invalid path from sg...
-	    clear.insert(g);
+	    clear.insert(cg);
 	    db_free_full_path(&gfp);
 	    continue;
 	}
@@ -379,7 +379,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	// 1.  proposed draw path is a top match for existing path
 	if (db_full_path_match_top(&fp, &gfp)) {
 	    // New path will replace this path - clear it
-	    clear.insert(g);
+	    clear.insert(cg);
 	    db_free_full_path(&gfp);
 	    continue;
 	}
@@ -430,7 +430,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	// Clear anything superseded by the new path
 	for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
 	    struct bview_scene_group *cg = *g_it;
-	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)cg);
+	    bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
 	    bview_scene_obj_free(&cg->g);
 	    BU_PUT(cg, struct bview_scene_group);
 	}

@@ -55,7 +55,15 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 
     dl_zap(gedp, gedp->free_scene_obj);
 
-    /* TODO - support gv_db_grps */
+    struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+    if (argc == 1 && sg) {
+	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
+	    bview_scene_obj_free(&cg->g);
+	    BU_PUT(cg, struct bview_scene_group);
+	}
+	bu_ptbl_reset(sg);
+    }
 
     /* If -v specified, view objects are to be cleared */
     if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {

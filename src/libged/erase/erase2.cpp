@@ -34,6 +34,267 @@
 
 #include "../ged_private.h"
 
+// Need to process deepest to shallowest, so we don't get bit by starting at a
+// high level path - we need to check the deepest parent, and build up from the
+// bottom.  Below sorting criteria need to be defined to sort such that we
+// return the deepest paths as the begin() of the set.
+struct dfp_cmp {
+    bool operator() (struct db_full_path *fp, struct db_full_path *o) const {
+	// First, check length
+	if (fp->fp_len != o->fp_len) {
+	    return (fp->fp_len > o->fp_len);
+	}
+
+	// If length is the same, check the dp contents
+	for (size_t i = 0; i < fp->fp_len; i++) {
+	    if (!BU_STR_EQUAL(fp->fp_names[i]->d_namep, o->fp_names[i]->d_namep)) {
+		return (bu_strcmp(fp->fp_names[i]->d_namep, o->fp_names[i]->d_namep) > 0);
+	    }
+	}
+	return (bu_strcmp(fp->fp_names[fp->fp_len-1]->d_namep, o->fp_names[fp->fp_len-1]->d_namep) > 0);
+    }
+};
+
+void
+new_scene_objs(struct bview *v, struct db_i *dbip, struct bu_ptbl *solids)
+{
+    struct bu_vls pvls = BU_VLS_INIT_ZERO;
+    std::set<struct db_full_path *, dfp_cmp> s1, s2;
+    std::set<struct db_full_path *, dfp_cmp> *s, *snext;
+    s = &s1;
+    snext = &s2;
+
+    // Seed the sets with what we know to be drawn.  At this stage,
+    // we don't yet know of anything that is not drawn.  We put the
+    // known drawn objects into the drawn set, and queue their parents
+    // for checking.
+    std::set<std::string> not_drawn;
+    std::set<std::string> drawn;
+    std::set<struct db_full_path *> finalized;
+    for (size_t i = 0; i < BU_PTBL_LEN(solids); i++) {
+	struct bview_scene_obj *sobj = (struct bview_scene_obj *)BU_PTBL_GET(solids, i);
+	struct draw_update_data_t *ud = (struct draw_update_data_t *)sobj->s_i_data;
+	drawn.insert(std::string(bu_vls_cstr(&sobj->s_name)));
+
+	// The parent needs to be characterized, if there is one.
+	if (ud->fp.fp_len == 1) {
+	    // If there isn't anything above the current dp (such as a
+	    // solid with no hierarchy is drawn) it's a finalized object
+	    struct db_full_path *fpp;
+	    BU_GET(fpp, struct db_full_path);
+	    db_full_path_init(fpp);
+	    db_dup_full_path(fpp, &ud->fp);
+	    finalized.insert(fpp);
+	} else {
+	    // Have path depth - get the parent and queue it up
+	    struct db_full_path *fp;
+	    BU_GET(fp, struct db_full_path);
+	    db_full_path_init(fp);
+	    db_dup_full_path(fp, &ud->fp);
+	    DB_FULL_PATH_POP(fp);
+	    if (s->find(fp) == s->end()) {
+		s->insert(fp);
+	    } else {
+		db_free_full_path(fp);
+		BU_PUT(fp, struct db_full_path);
+	    }
+	}
+    }
+
+    // Main characterization loop
+    size_t longest = (s->size()) ? (*s->begin())->fp_len : 0;
+    while (s->size()) {
+	struct db_full_path *pp = *s->begin();
+	s->erase(s->begin());
+
+	// If we already know it's not drawn, don't process again
+	bu_vls_trunc(&pvls, 0);
+	db_path_to_vls(&pvls, pp);
+	if (not_drawn.find(std::string(bu_vls_cstr(&pvls))) != not_drawn.end()) {
+	    db_free_full_path(pp);
+	    BU_PUT(pp, struct db_full_path);
+	    if (!s->size()) {
+		std::set<struct db_full_path *, dfp_cmp> *tmp = s;
+		s = snext;
+		snext = tmp;
+		longest = (s->size()) ? (*s->begin())->fp_len : 0;
+	    }
+	    continue;
+	}
+
+	// If pp is shorter than the longest paths of this cycle, defer it
+	// until the next round.  Longer paths need to be fully processed
+	// before we can correctly characterize shorter ones, and it may happen
+	// that a shorter path queues a parent that's also a parent in a longer
+	// path path before we're ready for it.
+	if (pp->fp_len < longest) {
+	    snext->insert(pp);
+	    if (!s->size()) {
+		std::set<struct db_full_path *, dfp_cmp> *tmp = s;
+		s = snext;
+		snext = tmp;
+		longest = (s->size()) ? (*s->begin())->fp_len : 0;
+	    }
+	    continue;
+	}
+
+	// Get the list of immediate children from pp:
+	struct directory **children = NULL;
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+	if (rt_db_get_internal(&in, DB_FULL_PATH_CUR_DIR(pp), dbip, NULL, &rt_uniresource) < 0) {
+	    not_drawn.insert(std::string(bu_vls_cstr(&pvls)));
+	    db_free_full_path(pp);
+	    BU_PUT(pp, struct db_full_path);
+	    if (!s->size()) {
+		std::set<struct db_full_path *, dfp_cmp> *tmp = s;
+		s = snext;
+		snext = tmp;
+		longest = (s->size()) ? (*s->begin())->fp_len : 0;
+	    }
+	    continue;
+	}
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+	db_comb_children(dbip, comb, &children, NULL, NULL);
+
+	int i = 0;
+	int not_found = 0;
+	struct directory *dp =  children[0];
+	while (dp != RT_DIR_NULL) {
+	    db_add_node_to_full_path(pp, dp);
+	    bu_vls_trunc(&pvls, 0);
+	    db_path_to_vls(&pvls, pp);
+	    if (drawn.find(std::string(bu_vls_cstr(&pvls))) == drawn.end()) {
+		// This path is not drawn.  That means the parent comb is also
+		// not (fully) drawn.
+		not_found = 1;
+	    }
+	    i++;
+	    dp = children[i];
+	    DB_FULL_PATH_POP(pp);
+	}
+
+	// If everything is good, this is a drawn path.  Flag it and insert its
+	// parent into the next queue.
+	if (!not_found) {
+	    bu_vls_trunc(&pvls, 0);
+	    db_path_to_vls(&pvls, pp);
+	    drawn.insert(std::string(bu_vls_cstr(&pvls)));
+	    if (pp->fp_len == 1) {
+		// Fully drawn, no parent - finalize
+		struct db_full_path *fpp;
+		BU_GET(fpp, struct db_full_path);
+		db_full_path_init(fpp);
+		db_dup_full_path(fpp, pp);
+		finalized.insert(fpp);
+	    } else {
+		DB_FULL_PATH_POP(pp);
+		bu_vls_trunc(&pvls, 0);
+		db_path_to_vls(&pvls, pp);
+		if (pp->fp_len && snext->find(pp) == snext->end()) {
+		    struct db_full_path *npp;
+		    BU_GET(npp, struct db_full_path);
+		    db_full_path_init(npp);
+		    db_dup_full_path(npp, pp);
+		    snext->insert(npp);
+		}
+	    }
+	    db_free_full_path(pp);
+	    BU_PUT(pp, struct db_full_path);
+	} else {
+	    // If we had a not_found path, we need to finalize any child paths
+	    // that are drawn - that is the terminating condition for walking
+	    // back up paths.
+	    i = 0;
+	    dp = children[0];
+	    bu_vls_trunc(&pvls, 0);
+	    db_path_to_vls(&pvls, pp);
+
+	    while (dp != RT_DIR_NULL) {
+		db_add_node_to_full_path(pp, dp);
+		bu_vls_trunc(&pvls, 0);
+		db_path_to_vls(&pvls, pp);
+		if (drawn.find(std::string(bu_vls_cstr(&pvls))) != drawn.end()) {
+		    // This path is drawn - finalize
+		    struct db_full_path *fpp;
+		    BU_GET(fpp, struct db_full_path);
+		    db_full_path_init(fpp);
+		    db_dup_full_path(fpp, pp);
+		    finalized.insert(fpp);
+		}
+		DB_FULL_PATH_POP(pp);
+		i++;
+		dp = children[i];
+	    }
+	    // Handled the children - the parent classifies as not_drawn
+	    bu_vls_trunc(&pvls, 0);
+	    db_path_to_vls(&pvls, pp);
+	    not_drawn.insert(std::string(bu_vls_cstr(&pvls)));
+	    db_free_full_path(pp);
+	    BU_PUT(pp, struct db_full_path);
+	}
+
+	bu_free(children, "free children struct directory ptr array");
+
+
+	// If s is not empty after this process, we have more paths from other
+	// sources to process, and we continue in a similar fashion.  Otherwise,
+	// swap snext in for s to see if we have new parents to check.
+	if (!s->size()) {
+	    std::set<struct db_full_path *, dfp_cmp> *tmp = s;
+	    s = snext;
+	    snext = tmp;
+	    longest = (s->size()) ? (*s->begin())->fp_len : 0;
+	}
+    }
+
+    // Now we place the solids in new containers.
+    std::set<struct bview_scene_obj *> sset;
+    std::set<struct bview_scene_obj *>::iterator ss_it;
+    for (size_t i = 0; i < BU_PTBL_LEN(solids); i++) {
+	struct bview_scene_obj *sobj = (struct bview_scene_obj *)BU_PTBL_GET(solids, i);
+	sset.insert(sobj);
+    }
+    while (finalized.size()) {
+	struct db_full_path *fp = *finalized.begin();
+	finalized.erase(finalized.begin());
+
+	// Make the new group container
+	struct bview_scene_group *g;
+	BU_GET(g, struct bview_scene_group);
+	BU_LIST_INIT(&(g->g.s_vlist));
+	BU_PTBL_INIT(&g->g.children);
+
+	bu_vls_trunc(&pvls, 0);
+	db_path_to_vls(&pvls, fp);
+	BU_VLS_INIT(&g->g.s_name);
+	bu_vls_sprintf(&g->g.s_name, "%s", bu_vls_cstr(&pvls));
+	BU_VLS_INIT(&g->g.s_uuid);
+	bu_vls_sprintf(&g->g.s_uuid, "%s", bu_vls_cstr(&pvls));
+
+	bu_ptbl_ins(v->gv_db_grps, (long *)g);
+
+	// Populate.  Each solid will go into one container
+	std::set<struct bview_scene_obj *> used;
+	for (ss_it = sset.begin(); ss_it != sset.end(); ss_it++) {
+	    struct bview_scene_obj *sobj = *ss_it;
+	    struct draw_update_data_t *ud = (struct draw_update_data_t *)sobj->s_i_data;
+	    if (db_full_path_match_top(fp, &ud->fp)) {
+		bu_ptbl_ins(&g->g.children, (long *)sobj);
+		used.insert(sobj);
+	    }
+	}
+	for (ss_it = used.begin(); ss_it != used.end(); ss_it++) {
+	    sset.erase(*ss_it);
+	}
+
+	db_free_full_path(fp);
+	BU_PUT(fp, struct db_full_path);
+    }
+}
+
+
+
 /*
  * Erase objects from the display.
  *
@@ -68,57 +329,136 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     /* skip past cmd */
     argc--; argv++;
 
-    /* Build the processing sets */
-    std::set<struct bview_scene_obj *> to_clear;
-    std::set<struct bview_scene_obj *> all_objs;
-    // TODO - need to process gv_db_grps, rather than gv_view_objs
-    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
-	if (s->s_type_flags & BVIEW_DBOBJ_BASED) {
-	    all_objs.insert(s);
+    /* Validate that the supplied args are current, valid paths.  If not, bail */
+    std::set<struct db_full_path *> fps;
+    std::set<struct db_full_path *>::iterator f_it;
+    for (size_t i = 0; i < (size_t)argc; ++i) {
+	struct db_full_path *fp;
+	BU_GET(fp, struct db_full_path);
+	db_full_path_init(fp);
+	int ret = db_string_to_path(fp, dbip, argv[i]);
+	if (ret < 0) {
+	    // Invalid path
+	    db_free_full_path(fp);
+	    bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
 	}
+	fps.insert(fp);
+    }
+    if (fps.size() != (size_t)argc) {
+	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
+	    struct db_full_path *fp = *f_it;
+	    db_free_full_path(fp);
+	    BU_PUT(fp, struct db_full_path);
+	}
+	return GED_ERROR;
     }
 
-    /* For each supplied path, check the scene objects against it for matches */
-    std::set<struct bview_scene_obj *>::iterator s_it;
-    for (size_t i = 0; i < (size_t)argc; ++i) {
-	struct db_full_path fp;
-	db_full_path_init(&fp);
-	int ret = db_string_to_path(&fp, dbip, argv[i]);
+    // Check the supplied paths against the drawn paths.  If they are equal or
+    // if the supplied path contains a drawn path, then we just completely
+    // eliminate the group.  If the supplied path is a subset of a drawn path,
+    // we're removing only part of the group and have to split the drawn path.
+    struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+    std::set<struct bview_scene_group *> clear;
+    std::set<struct bview_scene_group *> split;
+    std::set<struct bview_scene_group *>::iterator g_it;
+    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
+	struct db_full_path gfp;
+	db_full_path_init(&gfp);
+	int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
 	if (ret < 0) {
-	    // Validate path.  We postpone actual scene object removal until all
-	    // paths supplied have successfully validated, so we don't end up
-	    // with partial removals
-	    db_free_full_path(&fp);
-	    bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
-	    return GED_ERROR;
+	    // If path generation fails, just eliminate it as invalid
+	    clear.insert(cg);
+	    db_free_full_path(&gfp);
+	    continue;
 	}
-	for (s_it = all_objs.begin(); s_it != all_objs.end(); s_it++) {
-	    struct bview_scene_obj *s = *s_it;
-	    struct draw_update_data_t *dd = (struct draw_update_data_t *)s->s_i_data;
-	    // Anything below the supplied path in the hierarchy is removed
-	    if (db_full_path_match_top(&fp, &dd->fp)) {
-		to_clear.insert(s);
+	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
+	    struct db_full_path *fp = *f_it;;
+	    if (db_full_path_match_top(fp, &gfp)) {
+		// Easy case.  Drawn path is equal to or below hierarchy of
+		// specified path - just clear it
+		clear.insert(cg);
+		db_free_full_path(&gfp);
+		break;
+	    }
+	    if (db_full_path_match_top(&gfp, fp)) {
+		// The hard case - we're erasing only part of this group, so
+		// we need to split it up into new groups.
+		split.insert(cg);
+		db_free_full_path(&gfp);
+		break;
 	    }
 	}
-	// Anything already flagged for removal doesn't need to be checked against
-	// other paths
-	for (s_it = to_clear.begin(); s_it != to_clear.end(); s_it++) {
-	    struct bview_scene_obj *s = *s_it;
-	    all_objs.erase(s);
+    }
+
+    // If any paths ended up in clear, there's no need to split them even if that
+    // would have been the consequence of another path specifier
+    for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
+	split.erase(*g_it);
+    }
+
+    // Do the straight-up removals
+    for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
+	struct bview_scene_group *cg = *g_it;
+	bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
+	bview_scene_obj_free(&cg->g);
+	BU_PUT(cg, struct bview_scene_group);
+    }
+
+    // Now, the splits.  Each split group will be replaced with one or more new
+    // groups with a subset of the parent group's objects.  Consequently, we
+    // don't free the group's children - just the group container itself.
+    //
+    // First step - remove the solid children corresponding to the removed
+    // paths so g->g.children matches the set of solids to be drawn (it will at
+    // that point be an invalid scene group but will be a suitable input for
+    // the next stage.)
+    for (g_it = split.begin(); g_it != split.end(); g_it++) {
+	struct bview_scene_group *cg = *g_it;
+    	struct db_full_path gfp;
+	db_full_path_init(&gfp);
+	db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
+	std::set<struct bview_scene_obj *> sclear;
+	std::set<struct bview_scene_obj *>::iterator s_it;
+	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
+	    struct db_full_path *fp = *f_it;
+	    if (db_full_path_match_top(&gfp, fp)) {
+		for (size_t i = 0; i < BU_PTBL_LEN(&cg->g.children); i++) {
+		    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g.children, i);
+		    struct db_full_path sfp;
+		    db_full_path_init(&sfp);
+		    int ret = db_string_to_path(&sfp, dbip, bu_vls_cstr(&s->s_name));
+		    if (ret < 0) {
+			// If path generation fails, just eliminate it as invalid
+			sclear.insert(s);
+			db_free_full_path(&sfp);
+			continue;
+		    }
+		    if (db_full_path_match_top(fp, &sfp)) {
+			sclear.insert(s);
+		    }
+		    db_free_full_path(&sfp);
+		    continue;
+		}
+	    }
 	}
-	db_free_full_path(&fp);
+	for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
+	    struct bview_scene_obj *s = *s_it;
+	    bu_ptbl_rm(&cg->g.children, (long *)s);
+	    bview_scene_obj_free(s);
+	    BU_PUT(s, struct bview_scene_obj);
+	}
     }
 
-    // Built up the removal set - now clear from table
-    for (s_it = to_clear.begin(); s_it != to_clear.end(); s_it++) {
-	struct bview_scene_obj *s = *s_it;
-	bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
-	bview_scene_obj_free(s);
-	BU_PUT(s, struct bview_scene_obj);
-    }
+    // Now, generate the new scene groups based on the solid objects still active.
+   for (g_it = split.begin(); g_it != split.end(); g_it++) {
+	struct bview_scene_group *cg = *g_it;
+	bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
+	new_scene_objs(gedp->ged_gvp, dbip, &cg->g.children);
+	BU_PUT(cg, struct bview_scene_group);
+   }
 
-    return GED_OK;
+   return GED_OK;
 }
 
 /*
