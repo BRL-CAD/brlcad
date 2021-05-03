@@ -330,66 +330,55 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     argc--; argv++;
 
     /* Validate that the supplied args are current, valid paths.  If not, bail */
-    std::set<struct db_full_path *> fps;
-    std::set<struct db_full_path *>::iterator f_it;
-    for (size_t i = 0; i < (size_t)argc; ++i) {
-	struct db_full_path *fp;
-	BU_GET(fp, struct db_full_path);
-	db_full_path_init(fp);
-	int ret = db_string_to_path(fp, dbip, argv[i]);
-	if (ret < 0) {
-	    // Invalid path
-	    db_free_full_path(fp);
-	    bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
-	}
-	fps.insert(fp);
-    }
-    if (fps.size() != (size_t)argc) {
-	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
-	    struct db_full_path *fp = *f_it;
-	    db_free_full_path(fp);
-	    BU_PUT(fp, struct db_full_path);
-	}
-	return GED_ERROR;
-    }
 
     // Check the supplied paths against the drawn paths.  If they are equal or
     // if the supplied path contains a drawn path, then we just completely
     // eliminate the group.  If the supplied path is a subset of a drawn path,
     // we're removing only part of the group and have to split the drawn path.
+    //
+    // The operation we want to employ here is db_full_path_match_top, but at
+    // this stage of erase processing we don't know that either the supplied
+    // or the drawn paths are valid.  Anything that is invalid is erased, but
+    // until it is we can't turn strings into paths reliably.  So we use the
+    // bu_vls_strncmp function, and prepend a "/" character in the case whare a
+    // user supplies a name without the path prefix.
+    //
     struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
     std::set<struct bview_scene_group *> clear;
     std::set<struct bview_scene_group *> split;
     std::set<struct bview_scene_group *>::iterator g_it;
-    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
-	struct db_full_path gfp;
-	db_full_path_init(&gfp);
-	int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
-	if (ret < 0) {
-	    // If path generation fails, just eliminate it as invalid
-	    clear.insert(cg);
-	    db_free_full_path(&gfp);
-	    continue;
+    struct bu_vls upath = BU_VLS_INIT_ZERO;
+    for (int i = 0; i < argc; ++i) {
+	bu_vls_sprintf(&upath, "%s", argv[i]);
+	if (argv[i][0] != '/') {
+	    bu_vls_prepend(&upath, "/");
 	}
-	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
-	    struct db_full_path *fp = *f_it;
-	    if (db_full_path_match_top(fp, &gfp)) {
-		// Easy case.  Drawn path is equal to or below hierarchy of
-		// specified path - just clear it
-		clear.insert(cg);
-		db_free_full_path(&gfp);
-		break;
-	    }
-	    if (db_full_path_match_top(&gfp, fp)) {
-		// The hard case - we're erasing only part of this group, so
-		// we need to split it up into new groups.
-		split.insert(cg);
-		db_free_full_path(&gfp);
-		break;
+	for (size_t j = 0; j < BU_PTBL_LEN(sg); j++) {
+	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, j);
+	    if (bu_vls_strlen(&upath) > bu_vls_strlen(&cg->g.s_name)) {
+		if (bu_vls_strncmp(&upath, &cg->g.s_name, bu_vls_strlen(&cg->g.s_name)) == 0) {
+		    // The hard case - upath matches all of sname.  We're
+		    // erasing a part of the sname group, so we need to split
+		    // it up into new groups.
+		    split.insert(cg);
+
+		    // We may be clearing multiple paths, but only one path per
+		    // input path should end up split, so we can stop checking
+		    // this path now.
+		    break;
+		}
+	    } else {
+		if (bu_vls_strncmp(&upath, &cg->g.s_name, bu_vls_strlen(&upath)) == 0) {
+		    // Easy case.  Drawn path (s_name) is equal to or below
+		    // hierarchy of specified upath, so it will be subsumed in
+		    // upath - just clear it.  This may happen to multiple
+		    // paths, so we don't stop the check if we find a match.
+		    clear.insert(cg);
+		}
 	    }
 	}
     }
+    bu_vls_free(&upath);
 
     // If any paths ended up in clear, there's no need to split them even if that
     // would have been the consequence of another path specifier
@@ -415,29 +404,23 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // the next stage.)
     for (g_it = split.begin(); g_it != split.end(); g_it++) {
 	struct bview_scene_group *cg = *g_it;
-    	struct db_full_path gfp;
-	db_full_path_init(&gfp);
-	db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
 	std::set<struct bview_scene_obj *> sclear;
 	std::set<struct bview_scene_obj *>::iterator s_it;
-	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
-	    struct db_full_path *fp = *f_it;
-	    if (db_full_path_match_top(&gfp, fp)) {
-		for (size_t i = 0; i < BU_PTBL_LEN(&cg->g.children); i++) {
-		    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g.children, i);
-		    struct db_full_path sfp;
-		    db_full_path_init(&sfp);
-		    int ret = db_string_to_path(&sfp, dbip, bu_vls_cstr(&s->s_name));
-		    if (ret < 0) {
-			// If path generation fails, just eliminate it as invalid
-			sclear.insert(s);
-			db_free_full_path(&sfp);
-			continue;
-		    }
-		    if (db_full_path_match_top(fp, &sfp)) {
+	for (int i = 0; i < argc; ++i) {
+	    bu_vls_sprintf(&upath, "%s", argv[i]);
+	    if (argv[i][0] != '/') {
+		bu_vls_prepend(&upath, "/");
+	    }
+	    // Select the scene groups that contain upath in their hierarchy (i.e. s_name
+	    // is a full subset of upath)
+	    if (bu_vls_strncmp(&upath, &cg->g.s_name, bu_vls_strlen(&cg->g.s_name)) == 0) {
+		for (size_t j = 0; j < BU_PTBL_LEN(&cg->g.children); j++) {
+		    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g.children, j);
+		    // For the solids in cg, any that are below upath in the hierarchy
+		    // (that is, upath is a full subset of s_name) are being erased.
+		    if (bu_vls_strncmp(&upath, &s->s_name, bu_vls_strlen(&upath)) == 0) {
 			sclear.insert(s);
 		    }
-		    db_free_full_path(&sfp);
 		    continue;
 		}
 	    }
