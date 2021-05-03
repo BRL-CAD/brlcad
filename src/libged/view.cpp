@@ -32,7 +32,7 @@
 
 // TODO - do the polygon update and other view element vlist updates here as well, for consistency.
 extern "C" int
-ged_view_update(struct ged *gedp)
+ged_view_update(struct ged *gedp, size_t prev_scene_cnt)
 {
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct bview *v = gedp->ged_gvp;
@@ -76,7 +76,16 @@ ged_view_update(struct ged *gedp)
 	bu_vls_free(&opath);
     }
 
-    int ret = regen.size();
+    int ret = (int)regen.size();
+    size_t scene_cnt = BU_PTBL_LEN(v->gv_db_grps) + BU_PTBL_LEN(v->gv_view_objs);
+
+    if ((!prev_scene_cnt && scene_cnt) && v->gv_autoview) {
+	const char *av[2];
+	av[0] = "autoview2";
+	av[1] = NULL;
+	ged_exec(gedp, 1, (const char **)av);
+	ret++;
+    }
 
     return ret;
 }

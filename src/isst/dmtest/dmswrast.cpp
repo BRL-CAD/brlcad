@@ -161,7 +161,7 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    }
 	}
 
-	size_t scene_cnt = BU_PTBL_LEN(v->gv_view_objs);
+	size_t scene_cnt = BU_PTBL_LEN(v->gv_db_grps) + BU_PTBL_LEN(v->gv_view_objs);
 
 	ged_exec(gedp, argc, argv);
 	if (msg)
@@ -201,16 +201,7 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	// For db obj view list objects, check the dp edit flags and do any necessary
 	// redrawing.
-	if (ged_view_update(gedp) > 0) {
-	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	}
-
-	// If we're doing autoview call it
-	if (!scene_cnt && (BU_PTBL_LEN(v->gv_db_grps) || BU_PTBL_LEN(v->gv_view_objs)) && v->gv_autoview) {
-	    const char *aav[2];
-	    aav[0] = "autoview2";
-	    aav[1] = NULL;
-	    ged_exec(gedp, 1, (const char **)aav);
+	if (ged_view_update(gedp, scene_cnt) > 0) {
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
 
