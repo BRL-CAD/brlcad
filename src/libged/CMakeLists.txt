@@ -49,6 +49,7 @@ set(LIBGED_SOURCES
   track.c
   translate_extrude.c
   translate_tgc.c
+  view.cpp
   vutil.c
   view/data_lines.c
   wdb_importFg4Section.c

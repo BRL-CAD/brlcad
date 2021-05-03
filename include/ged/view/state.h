@@ -48,7 +48,7 @@ struct draw_update_data_t {
 
 
 /* Defined in vutil.c */
-GED_EXPORT extern void ged_view_update(struct bview *gvp);
+GED_EXPORT extern int ged_view_update(struct ged *gedp);
 
 /**
  * Erase all currently displayed geometry and draw the specified object(s)

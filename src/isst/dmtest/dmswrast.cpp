@@ -199,26 +199,9 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
 
-	// TODO - do the polygon update and other view element vlist updates here as well, for consistency.
-	// This is quite basic right now, but delaying the actual geometry generation step until after the
-	// object set is defined sets the stage for things like parallel vlist generation (or facetization
-	// and point generation, for that matter) down the road.
-	//
-	// For db obj view list objects, check the dp edit flags
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
-	    // If we're anything other than a non-view-only database object, this update call is wrong.
-	    if (s->s_type_flags != BVIEW_DBOBJ_BASED)
-		continue;
-	    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-	    int changed = 0;
-	    for (size_t j = 0; j < d->fp.fp_len; j++) {
-		dp = d->fp.fp_names[j];
-		changed += dp->edit_flag;
-	    }
-	    if (!changed)
-		continue;
-	    (*s->s_update_callback)(s);
+	// For db obj view list objects, check the dp edit flags and do any necessary
+	// redrawing.
+	if (ged_view_update(gedp) > 0) {
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
 
