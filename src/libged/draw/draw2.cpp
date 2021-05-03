@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <set>
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -309,6 +311,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
+    struct bview_scene_group *g = NULL;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     static const char *usage = "path";
     struct bview_settings vs;
@@ -336,6 +339,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     bview_settings_sync(&vs, &gedp->ged_gvp->gvs);
 
 
+    /* TODO - process command line args into vs with bu_opt */
+
+
     /* TODO - unless the options specifically tell us to turn off autoview,
      * enable it. Unlike older draw draw2 delays the generation of the geometry
      * so the application can manage the process better.  This means that we
@@ -345,10 +351,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
      * otherwise.  */
     gedp->ged_gvp->gv_autoview = 1;
 
-    /* Look up object.  NOTE: for testing simplicity this is just an object lookup
-     * right now, but it needs to walk the tree and do the full-path instance creation.
-     * Note also that view objects aren't what we want to report with a "who" return,
-     * so we'll need to track the list of drawn paths independently. */
+    /* See what we've got. */
     struct db_full_path fp;
     db_full_path_init(&fp);
     int ret = db_string_to_path(&fp, dbip, argv[1]);
@@ -356,6 +359,83 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	db_free_full_path(&fp);
 	return GED_ERROR;
     }
+
+    // Check the already drawn paths to see if the proposed new path impacts them.
+    struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+    std::set<struct bview_scene_group *> clear;
+    std::set<struct bview_scene_group *>::iterator g_it;
+    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
+	struct db_full_path gfp;
+	db_full_path_init(&gfp);
+	ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
+	if (ret < 0) {
+	    // If this fails eliminate the invalid path from sg...
+	    clear.insert(g);
+	    db_free_full_path(&gfp);
+	    continue;
+	}
+	// Two conditions to check for here:
+	// 1.  proposed draw path is a top match for existing path
+	if (db_full_path_match_top(&fp, &gfp)) {
+	    // New path will replace this path - clear it
+	    clear.insert(g);
+	    db_free_full_path(&gfp);
+	    continue;
+	}
+	// 2.  existing path is a top match encompassing the proposed path
+	if (db_full_path_match_top(&gfp, &fp)) {
+	    // Already drawn - replace just the children of g that match this
+	    // path to update their contents
+	    g = cg;
+	    db_free_full_path(&gfp);
+	    continue;
+	}
+    }
+
+    if (g) {
+	// remove children that match fp - we will be adding new versions to g to update it,
+	// rather than creating a new one.
+	std::set<struct bview_scene_obj *> sclear;
+	std::set<struct bview_scene_obj *>::iterator s_it;
+	for (size_t i = 0; i < BU_PTBL_LEN(&g->g.children); i++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, i);
+	    struct db_full_path gfp;
+	    db_full_path_init(&gfp);
+	    db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
+	    if (db_full_path_match_top(&gfp, &fp)) {
+		sclear.insert(s);
+	    }
+	}
+	for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
+	    struct bview_scene_obj *s = *s_it;
+	    bu_ptbl_rm(&g->g.children, (long *)s);
+	    bview_scene_obj_free(s);
+	    BU_PUT(s, struct bview_scene_obj);
+	}
+    } else {
+	// Create new group
+	BU_GET(g, struct bview_scene_group);
+	BU_LIST_INIT(&(g->g.s_vlist));
+	BU_PTBL_INIT(&g->g.children);
+	BU_VLS_INIT(&g->g.s_name);
+	db_path_to_vls(&g->g.s_name, &fp);
+	BU_VLS_INIT(&g->g.s_uuid);
+	db_path_to_vls(&g->g.s_uuid, &fp);
+	bview_settings_sync(&g->g.s_os, &vs);
+	bu_ptbl_ins(gedp->ged_gvp->gv_db_grps, (long *)g);
+    }
+
+    if (clear.size()) {
+	// Clear anything superseded by the new path
+	for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
+	    struct bview_scene_group *cg = *g_it;
+	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)cg);
+	    bview_scene_obj_free(&cg->g);
+	    BU_PUT(cg, struct bview_scene_group);
+	}
+    }
+
 
     // Get the "seed" matrix from the path - everything we draw at or below the path
     // will be positioned using it
@@ -372,21 +452,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     dd.v = gedp->ged_gvp;
     dd.tol = &gedp->ged_wdbp->wdb_tol;
     dd.ttol = &gedp->ged_wdbp->wdb_ttol;
-
-    struct bview_scene_group *g;
-    // TODO - need to see if we need a new group, are replacing
-    // existing groups, or if we have already drawn this and
-    // just need to update.
-    BU_GET(g, struct bview_scene_group);
-    BU_LIST_INIT(&(g->g.s_vlist));
-    BU_PTBL_INIT(&g->g.children);
-    BU_VLS_INIT(&g->g.s_name);
-    db_path_to_vls(&g->g.s_name, &fp);
-    BU_VLS_INIT(&g->g.s_uuid);
-    db_path_to_vls(&g->g.s_uuid, &fp);
-    bview_settings_sync(&g->g.s_os, &vs);
-    bu_ptbl_ins(dd.v->gv_db_grps, (long *)g);
-
     dd.g = g;
 
     // Walk the tree to build up the set of scene objects

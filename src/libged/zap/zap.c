@@ -57,30 +57,21 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 
     /* TODO - support gv_db_grps */
 
-    /* New scene objects can also be cleared */
-    for (long i = (long)BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs) - 1; i >= 0; i--) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
-	if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
-	    if (!(s->s_type_flags & BVIEW_DBOBJ_BASED)) {
-		bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
-		bview_scene_obj_free(s);
-		BU_PUT(s, struct bview_scene_obj);
-	    }
-	} else {
-	    if (s->s_type_flags & BVIEW_DBOBJ_BASED) {
-		bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
-		bview_scene_obj_free(s);
-		BU_PUT(s, struct bview_scene_obj);
-	    }
+    /* If -v specified, view objects are to be cleared */
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
+	for (long i = (long)BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs) - 1; i >= 0; i--) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
+	    bview_scene_obj_free(s);
+	    BU_PUT(s, struct bview_scene_obj);
 	}
     }
-
 
     /* The application may need to adjust itself when the view
      * is cleared.  Since the blast command may immediately
      * re-populate the display list, we set a flag in the view
      * to inform the app a zap operation has taken place. */
-    if (gedp->ged_gvp) {
+    if (gedp->ged_gvp && !BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs)) {
 	gedp->ged_gvp->gv_cleared = 1;
     }
 
