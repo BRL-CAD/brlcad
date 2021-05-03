@@ -686,30 +686,6 @@ solid_set_color_info(
     color_soltab(sp);
 }
 
-/**
- *  * Compute the min, max, and center points of the solid.
- *   */
-static void
-bound_solid(struct bview_scene_obj *sp)
-{
-    point_t bmin, bmax;
-    int cmd;
-    VSET(bmin, INFINITY, INFINITY, INFINITY);
-    VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-    cmd = bn_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL);
-    if (cmd) {
-	bu_log("unknown vlist op %d\n", cmd);
-    }
-    sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
-    sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
-    sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
-
-    sp->s_size = bmax[X] - bmin[X];
-    V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
-    V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
-}
-
-
 static void
 solid_append_vlist(struct bview_scene_obj *sp, struct bn_vlist *vlist)
 {
@@ -732,7 +708,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
     solid_append_vlist(sp, (struct bn_vlist *)vhead);
 
-    bound_solid(sp);
+    bview_scene_obj_bound(sp);
 
     db_dup_full_path(&bdata->s_fullpath, pathp);
 
@@ -1082,7 +1058,7 @@ append_solid_to_display_list(
 
         solid_append_vlist(sp, (struct bn_vlist *)&vhead);
 
-        bound_solid(sp);
+        bview_scene_obj_bound(sp);
 
         while (BU_LIST_WHILE(vp, bn_vlist, &(sp->s_vlist))) {
             BU_LIST_DEQUEUE(&vp->l);
@@ -1228,7 +1204,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 	solid_append_vlist(sp, (struct bn_vlist *)vhead);
 	BU_LIST_INIT(vhead);
     }
-    bound_solid(sp);
+    bview_scene_obj_bound(sp);
 
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&bdata->s_fullpath, dp);

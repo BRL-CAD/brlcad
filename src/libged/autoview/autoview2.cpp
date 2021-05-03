@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include "bu/opt.h"
 #include "dm.h"
 #include "../ged_private.h"
 
@@ -37,6 +38,7 @@
 extern "C" int
 ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 {
+    static const char *usage = "[options] [scale]";
     int is_empty = 1;
     vect_t min, max;
     vect_t center = VINIT_ZERO;
@@ -54,17 +56,38 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc > 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s [scale]", argv[0]);
+
+    int all_view_objs = 0;
+    int use_vlists = 0;
+    int print_help = 0;
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",      "",  NULL,  &print_help,    "Print help and exit");
+    BU_OPT(d[1], "",  "all",       "",  NULL,  &all_view_objs, "Bound all non-faceplate view objects");
+    BU_OPT_NULL(d[2]);
+
+    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    argc = opt_ret;
+
+    if (argc && argc != 1) {
+	_ged_cmd_help(gedp, usage, d);
 	return GED_ERROR;
     }
 
     /* parse the optional scale argument */
-    if (argc > 1) {
+    if (argc) {
 	double scale = 0.0;
-	int ret = sscanf(argv[1], "%lf", &scale);
+	int ret = sscanf(argv[0], "%lf", &scale);
 	if (ret != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ERROR: Expecting floating point scale value after %s\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Expecting floating point scale value\n");
 	    return GED_ERROR;
 	}
 	if (scale > 0.0) {
@@ -79,59 +102,71 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
-    /* calculate the bounding for all solids and polygons being displayed
-     * TODO - add a flag to autoview all view objects of any type, but that's
-     * probably not going to be what we want in all cases... */
+    /* calculate the bounding for all solids and polygons being displayed */
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
 
     struct bu_ptbl *so = gedp->ged_gvp->gv_db_grps;
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(so, i);
-	for (size_t j = 0; j < BU_PTBL_LEN(&g->g.children); j++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, j);
-	    is_empty = 0;
-	    struct bn_vlist *tvp;
-	    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s->s_vlist))->l)) {
-		int k;
-		int nused = tvp->nused;
-		int *cmd = tvp->cmd;
-		point_t *pt = tvp->pt;
-		for (k = 0; k < nused; k++, cmd++, pt++) {
-		    VMINMAX(min, max, *pt);
-		}
-	    }
-	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
-		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, k);
-		for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s_c->s_vlist))->l)) {
-		    int nused = tvp->nused;
-		    int *cmd = tvp->cmd;
-		    point_t *pt = tvp->pt;
-		    for (int l = 0; l < nused; l++, cmd++, pt++) {
-			VMINMAX(min, max, *pt);
+    if (!use_vlists) {
+	vect_t minus, plus;
+	for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	    struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(so, i);
+	    for (size_t j = 0; j < BU_PTBL_LEN(&g->g.children); j++) {
+		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, j);
+		bview_scene_obj_bound(s);
+		is_empty = 0;
+		minus[X] = s->s_center[X] - s->s_size;
+		minus[Y] = s->s_center[Y] - s->s_size;
+		minus[Z] = s->s_center[Z] - s->s_size;
+		VMIN(min, minus);
+		plus[X] = s->s_center[X] + s->s_size;
+		plus[Y] = s->s_center[Y] + s->s_size;
+		plus[Z] = s->s_center[Z] + s->s_size;
+		VMAX(max, plus);
+
+		for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
+		    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, k);
+		    struct bn_vlist *tvp;
+		    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s_c->s_vlist))->l)) {
+			int nused = tvp->nused;
+			int *cmd = tvp->cmd;
+			point_t *pt = tvp->pt;
+			for (int l = 0; l < nused; l++, cmd++, pt++) {
+			    VMINMAX(min, max, *pt);
+			}
 		    }
 		}
+
 	    }
 	}
     }
+
+    // When it comes to view-only objects, only include those that are db object based, polygons
+    // or labels, unless the flag to consider all objects is set.
     so = gedp->ged_gvp->gv_view_objs;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(so, i);
-	if (s->s_type_flags != BVIEW_DBOBJ_BASED && s->s_type_flags != BVIEW_POLYGONS)
-	    continue;
-	is_empty = 0;
-	struct bn_vlist *tvp;
-	for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s->s_vlist))->l)) {
-	    int k;
-	    int nused = tvp->nused;
-	    int *cmd = tvp->cmd;
-	    point_t *pt = tvp->pt;
-	    for (k = 0; k < nused; k++, cmd++, pt++) {
-		VMINMAX(min, max, *pt);
-	    }
+	if (!all_view_objs) {
+	    if (!(s->s_type_flags & BVIEW_DBOBJ_BASED) &&
+		    !(s->s_type_flags & BVIEW_POLYGONS) &&
+		    !(s->s_type_flags & BVIEW_LABELS))
+		continue;
 	}
+	bview_scene_obj_bound(s);
+	is_empty = 0;
+	vect_t minus, plus;
+	minus[X] = s->s_center[X] - s->s_size;
+	minus[Y] = s->s_center[Y] - s->s_size;
+	minus[Z] = s->s_center[Z] - s->s_size;
+	VMIN(min, minus);
+	plus[X] = s->s_center[X] + s->s_size;
+	plus[Y] = s->s_center[Y] + s->s_size;
+	plus[Z] = s->s_center[Z] + s->s_size;
+	VMAX(max, plus);
+
 	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
+	    struct bn_vlist *tvp;
 	    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s_c->s_vlist))->l)) {
 		int k;
 		int nused = tvp->nused;
@@ -148,17 +183,8 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	/* Nothing is in view */
 	VSETALL(radial, 1000.0);
     } else {
-	vect_t r1, r2;
 	VADD2SCALE(center, max, min, 0.5);
-	VSCALE(max, max, 2);
-	VSCALE(min, min, 0.5);
-	VSUB2(r1, max, center);
-	VSUB2(r2, min, center);
-	if (MAGSQ(r1) > MAGSQ(r2)) {
-	    VMOVE(radial, r1);
-	} else {
-	    VMOVE(radial, r2);
-	}
+	VSUB2(radial, max, center);
     }
 
     /* make sure it's not inverted */

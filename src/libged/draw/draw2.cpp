@@ -86,9 +86,8 @@ _ged_update_db_path(struct bview_scene_obj *s)
     ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
 
 
-    // TODO - update s_size, s_csize, and s_center...  If obj bbox based, may differ
-    // from the vlist bbox which can impact how autoview interprets this object for
-    // resizing purposes.
+    // Update s_size and s_center
+    bview_scene_obj_bound(s);
 
 #if 0
     // Draw label
