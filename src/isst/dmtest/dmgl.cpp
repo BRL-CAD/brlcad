@@ -214,7 +214,7 @@ void dmGL::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
 
 	// If we're doing autoview call it
-	if (!scene_cnt && BU_PTBL_LEN(v->gv_view_objs) && v->gv_autoview) {
+	if (!scene_cnt && (BU_PTBL_LEN(v->gv_db_grps) || BU_PTBL_LEN(v->gv_view_objs)) && v->gv_autoview) {
 	    const char *aav[2];
 	    aav[0] = "autoview2";
 	    aav[1] = NULL;
