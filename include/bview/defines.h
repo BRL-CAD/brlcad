@@ -250,7 +250,7 @@ struct bview_scene_obj  {
     char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */
     char s_iflag;	        /**< @brief  UP = illuminated, DOWN = regular */
     unsigned char s_color[3];	/**< @brief  color to draw as */
-    int s_soldash;		/**< @brief  solid/dashed line flag */
+    int s_soldash;		/**< @brief  solid/dashed line flag: 0 = solid, 1 = dashed*/
     int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
     int s_changed;		/**< @brief  changed flag - set by s_update_callback if a change occurred */
 

@@ -144,6 +144,7 @@ struct draw_data_t {
     struct bview_scene_obj *free_scene_obj;
     struct bu_color c;
     int color_inherit;
+    int curr_op;
 };
 
 static void
@@ -269,6 +270,10 @@ db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		}
 		bn_mat_mul(*curr_mat, om, nm);
 
+
+		/* Drawing may be impacted by boolean status */
+		dd->curr_op = bool_val;
+
 		// Stash current color settings and see if we're getting new ones
 		int inherit_old = dd->color_inherit;
 		struct bu_color oc;
@@ -368,6 +373,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
 	bview_settings_sync(&s->s_os, &dd->g->g->s_os);
+	s->s_soldash = (dd->curr_op == 4) ? 1 : 0;
 	s->s_type_flags |= BVIEW_DBOBJ_BASED;
 
 	int rgb[3];
@@ -650,6 +656,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
 	dd.free_scene_obj = gedp->free_scene_obj;
 	dd.color_inherit = 0;
+	dd.curr_op = 2; // Default to union
 	if (vs.color_override) {
 	    bu_color_from_rgb_chars(&dd.c, vs.color);
 	} else {
