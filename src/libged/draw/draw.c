@@ -65,7 +65,6 @@ draw_forced_wireframe(
     /* draw the path with the given client data, but force wireframe mode */
     struct _ged_client_data dgcd = *dgcdp;
     dgcd.gedp->ged_gdp->gd_shaded_mode = 0;
-    dgcd.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
     dgcd.vs.s_dmode = _GED_WIREFRAME;
 
     av[0] = db_path_to_string(pathp);
@@ -564,6 +563,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int ac = 1;
     char *av[3];
     int threshold_cached = 0;
+    int shaded_mode_override = _GED_SHADED_MODE_UNSET;
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
 
@@ -603,7 +603,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.draw_edge_uses = 0;
 	dgcdp.vs.color_override = 0;
 	dgcdp.fastpath_count = 0;
-	dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
 	dgcdp.vs.bot_threshold = 0;
 
 	/* default color - red */
@@ -685,29 +684,29 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		case 'h':
 		    dgcdp.vs.s_hiddenLine = 1;
-		    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
+		    shaded_mode_override = _GED_SHADED_MODE_ALL;
 		    break;
 		case 'm':
-		    dgcdp.vs.shaded_mode_override = atoi(bu_optarg);
+		    shaded_mode_override = atoi(bu_optarg);
 
-		    switch (dgcdp.vs.shaded_mode_override) {
+		    switch (shaded_mode_override) {
 			case 0:
-			    dgcdp.vs.shaded_mode_override = _GED_WIREFRAME;
+			    shaded_mode_override = _GED_WIREFRAME;
 			    break;
 			case 1:
-			    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_BOTS;
+			    shaded_mode_override = _GED_SHADED_MODE_BOTS;
 			    break;
 			case 2:
-			    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
+			    shaded_mode_override = _GED_SHADED_MODE_ALL;
 			    break;
 			case 3:
-			    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_EVAL;
+			    shaded_mode_override = _GED_SHADED_MODE_EVAL;
 			    break;
 			default:
-			    if (dgcdp.vs.shaded_mode_override < 0) {
-				dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
+			    if (shaded_mode_override < 0) {
+				shaded_mode_override = _GED_SHADED_MODE_UNSET;
 			    } else {
-				dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
+				shaded_mode_override = _GED_SHADED_MODE_ALL;
 			    }
 		    }
 		    break;
@@ -763,8 +762,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	switch (kind) {
 	    case _GED_DRAW_WIREFRAME:
 		dgcdp.vs.s_dmode = _GED_WIREFRAME;
-		if (dgcdp.vs.shaded_mode_override != _GED_SHADED_MODE_UNSET) {
-		    dgcdp.vs.s_dmode = dgcdp.vs.shaded_mode_override;
+		if (shaded_mode_override != _GED_SHADED_MODE_UNSET) {
+		    dgcdp.vs.s_dmode = shaded_mode_override;
 		} else if (gedp->ged_gdp->gd_shaded_mode) {
 		    dgcdp.vs.s_dmode = gedp->ged_gdp->gd_shaded_mode;
 		}
@@ -821,7 +820,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			}
 			/* if evaluated shading failed, fall back to "all" mode */
 			dgcdp.gedp->ged_gdp->gd_shaded_mode = 0;
-			dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
+			shaded_mode_override = _GED_SHADED_MODE_ALL;
 			dgcdp.vs.s_dmode = _GED_SHADED_MODE_ALL;
 		    }
 

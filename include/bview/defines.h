@@ -151,8 +151,6 @@ struct bview_settings {
     int color_override;
     unsigned char color[3];	/**< @brief  color to draw as */
 
-    int shaded_mode_override;
-
     int draw_wireframes;
     int draw_solid_lines_only;
     int draw_non_subtract_only;
