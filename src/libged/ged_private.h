@@ -171,6 +171,7 @@ struct _ged_client_data {
     int do_polysolids;
     int num_halfs;
     int autoview;
+    int nmg_fast_wireframe_draw;
 
     // Debugging plotting specific options.  These don't actually belong with
     // the drawing routines at all - they are analogous to the brep debugging

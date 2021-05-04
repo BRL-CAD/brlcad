@@ -333,7 +333,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
 		}
-		if (dgcdp->vs.draw_wireframes) {
+		if (dgcdp->nmg_fast_wireframe_draw) {
 		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_pg_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
@@ -345,7 +345,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
 		}
-		if (dgcdp->vs.draw_wireframes) {
+		if (dgcdp->nmg_fast_wireframe_draw) {
 		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_bot_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
@@ -357,7 +357,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_BREP %s\n", dp->d_namep);
 		}
-		if (dgcdp->vs.draw_wireframes) {
+		if (dgcdp->nmg_fast_wireframe_draw) {
 		    (void)rt_brep_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_brep_plot_poly(&vhead, pathp, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
@@ -508,7 +508,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	/* Convert NMG to vlist */
 	NMG_CK_REGION(r);
 
-	if (dgcdp->vs.draw_wireframes) {
+	if (dgcdp->nmg_fast_wireframe_draw) {
 	    /* Draw in vector form */
 	    style = NMG_VLIST_STYLE_VECTOR;
 	} else {
@@ -594,7 +594,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	/* Initial values for options, must be reset each time */
 	dgcdp.draw_nmg_only = 0;	/* no booleans */
 	dgcdp.nmg_triangulate = 1;
-	dgcdp.vs.draw_wireframes = 0;
+	dgcdp.nmg_fast_wireframe_draw = 0;
 	dgcdp.draw_normals = 0;
 	dgcdp.vs.draw_solid_lines_only = 0;
 	dgcdp.draw_no_surfaces = 0;
@@ -635,7 +635,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgcdp.shade_per_vertex_normals = 1;
 		    break;
 		case 'w':
-		    dgcdp.vs.draw_wireframes = 1;
+		    dgcdp.nmg_fast_wireframe_draw = 1;
 		    break;
 		case 'S':
 		    dgcdp.draw_no_surfaces = 1;

@@ -251,7 +251,6 @@ bview_settings_sync(struct bview_settings *dest, struct bview_settings *src)
     dest->s_dmode = src->s_dmode;
     dest->color_override = src->color_override;
     VMOVE(dest->color, src->color);
-    dest->draw_wireframes = src->draw_wireframes;
     dest->draw_solid_lines_only = src->draw_solid_lines_only;
     dest->draw_non_subtract_only = src->draw_non_subtract_only;
     dest->adaptive_plot = src->adaptive_plot;
