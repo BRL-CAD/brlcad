@@ -57,6 +57,10 @@
 // editing operations, which will have custom visuals and updating behavior,
 // we'll need primitive specific callbacks (which really will almost certainly
 // belong (like the labels logic) in the rt functab...)
+//
+// Note that this function shouldn't be called when doing tree walks, since
+// it does extra work to determine the current matrix and the tree walk will
+// already be tracking that.
 static int
 _ged_update_db_path(struct bview_scene_obj *s)
 {
@@ -93,11 +97,13 @@ _ged_update_db_path(struct bview_scene_obj *s)
     if (ret < 0 || !ip->idb_meth->ft_plot)
 	return 0;
 
+    // TODO - call correct vlist method based on mode
     // Get wireframe
     struct rt_view_info info;
     info.bot_threshold = s->s_v->gvs.bot_threshold;
     ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
 
+    // TODO - confirm color
 
     // Update s_size and s_center
     bview_scene_obj_bound(s);
@@ -132,9 +138,12 @@ struct draw_data_t {
     struct db_i *dbip;
     struct bview_scene_group *g;
     struct bview *v;
+    struct bview_settings *vs;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
     struct bview_scene_obj *free_scene_obj;
+    int rgb[3];
+    int color_inherit;
 };
 
 static void
@@ -315,7 +324,20 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	s->s_free_callback = &_ged_free_draw_data;
 
 	// Create the initial data
-	(*s->s_update_callback)(s);
+	struct rt_db_internal dbintern;
+	struct rt_db_internal *ip = &dbintern;
+	int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&ud->fp), ud->dbip, *curr_mat, ud->res);
+	if (ret < 0 || !ip->idb_meth->ft_plot)
+	    return;
+
+	// TODO - call correct vlist method based on mode
+	// Get wireframe
+	struct rt_view_info info;
+	info.bot_threshold = s->s_v->gvs.bot_threshold;
+	ip->idb_meth->ft_plot(&s->s_vlist, ip, ud->ttol, ud->tol, &info);
+
+	// Update s_size and s_center
+	bview_scene_obj_bound(s);
 
 	// Add object to scene group
 	bu_ptbl_ins(&dd->g->g->children, (long *)s);
@@ -561,6 +583,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	dd.tol = &gedp->ged_wdbp->wdb_tol;
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
 	dd.free_scene_obj = gedp->free_scene_obj;
+	dd.color_inherit = 0;
+	VSET(dd.rgb, 255, 0, 0);
+	dd.vs = &vs;
 	dd.g = g;
 
 	// Walk the tree to build up the set of scene objects
