@@ -962,9 +962,16 @@ dm_drawSolid(struct dm *dmp,
 	sp->s_flag = UP;
 	ndrawn++;
     } else {
-	if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
-	    sp->s_flag = UP;
-	    ndrawn++;
+	if (sp->s_os.s_dmode == 4) {
+	    if (dm_draw_vlist_hidden_line(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+	    	sp->s_flag = UP;
+		ndrawn++;
+	    }
+	} else {
+	    if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+		sp->s_flag = UP;
+		ndrawn++;
+	    }
 	}
     }
 
