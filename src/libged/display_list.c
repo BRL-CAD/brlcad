@@ -725,7 +725,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
     sp->s_dlist = 0;
     sp->s_os.transparency = dgcdp->vs.transparency;
-    sp->s_os.s_dmode = dgcdp->vs.dmode;
+    sp->s_os.s_dmode = dgcdp->vs.s_dmode;
     sp->s_os.s_hiddenLine = dgcdp->vs.hiddenLine;
 
     /* append solid to display list */

@@ -2008,7 +2008,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
     dgcdp->do_polysolids = 0;
     dgcdp->vs.color_override = 0;
     dgcdp->vs.transparency = 0;
-    dgcdp->vs.dmode = _GED_BOOL_EVAL;
+    dgcdp->vs.s_dmode = _GED_BOOL_EVAL;
     dgcdp->free_scene_obj = gedp->free_scene_obj;
 
     /* Parse options. */

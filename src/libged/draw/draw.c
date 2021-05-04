@@ -66,7 +66,7 @@ draw_forced_wireframe(
     struct _ged_client_data dgcd = *dgcdp;
     dgcd.gedp->ged_gdp->gd_shaded_mode = 0;
     dgcd.vs.shaded_mode_override = _GED_SHADED_MODE_UNSET;
-    dgcd.vs.dmode = _GED_WIREFRAME;
+    dgcd.vs.s_dmode = _GED_WIREFRAME;
 
     av[0] = db_path_to_string(pathp);
     av[1] = (char *)0;
@@ -133,7 +133,7 @@ draw_check_leaf(struct db_tree_state *tsp,
     if (dgcdp->vs.draw_non_subtract_only && (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER)))
 	return curtree;
 
-    switch (dgcdp->vs.dmode) {
+    switch (dgcdp->vs.s_dmode) {
 	case _GED_SHADED_MODE_BOTS:
 	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 		(ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT   ||
@@ -762,15 +762,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	switch (kind) {
 	    case _GED_DRAW_WIREFRAME:
-		dgcdp.vs.dmode = _GED_WIREFRAME;
+		dgcdp.vs.s_dmode = _GED_WIREFRAME;
 		if (dgcdp.vs.shaded_mode_override != _GED_SHADED_MODE_UNSET) {
-		    dgcdp.vs.dmode = dgcdp.vs.shaded_mode_override;
+		    dgcdp.vs.s_dmode = dgcdp.vs.shaded_mode_override;
 		} else if (gedp->ged_gdp->gd_shaded_mode) {
-		    dgcdp.vs.dmode = gedp->ged_gdp->gd_shaded_mode;
+		    dgcdp.vs.s_dmode = gedp->ged_gdp->gd_shaded_mode;
 		}
 		break;
 	    case _GED_DRAW_NMG_POLY:
-		dgcdp.vs.dmode = _GED_BOOL_EVAL;
+		dgcdp.vs.s_dmode = _GED_BOOL_EVAL;
 		break;
 	}
 
@@ -799,9 +799,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	     * If shaded_mode is _GED_SHADED_MODE_ALL, everything except pipe solids
 	     * are drawn as shaded polygons.
 	     */
-	    if (dgcdp.vs.dmode == _GED_SHADED_MODE_BOTS ||
-		dgcdp.vs.dmode == _GED_SHADED_MODE_ALL  ||
-		dgcdp.vs.dmode == _GED_SHADED_MODE_EVAL)
+	    if (dgcdp.vs.s_dmode == _GED_SHADED_MODE_BOTS ||
+		dgcdp.vs.s_dmode == _GED_SHADED_MODE_ALL  ||
+		dgcdp.vs.s_dmode == _GED_SHADED_MODE_EVAL)
 	    {
 		struct _ged_client_data dgcdp_save;
 
@@ -814,7 +814,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		    dgcdp_save = dgcdp;
 
-		    if (dgcdp.vs.dmode == _GED_SHADED_MODE_EVAL) {
+		    if (dgcdp.vs.s_dmode == _GED_SHADED_MODE_EVAL) {
 			ret = plot_shaded_eval(gedp, argv[i], &dgcdp);
 			if (ret == GED_OK) {
 			    continue;
@@ -822,7 +822,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			/* if evaluated shading failed, fall back to "all" mode */
 			dgcdp.gedp->ged_gdp->gd_shaded_mode = 0;
 			dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
-			dgcdp.vs.dmode = _GED_SHADED_MODE_ALL;
+			dgcdp.vs.s_dmode = _GED_SHADED_MODE_ALL;
 		    }
 
 		    av[0] = (char *)argv[i];
@@ -855,7 +855,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bview_data.wireframe_color[1]= dgcdp.vs.color[1];
 		    bview_data.wireframe_color[2]= dgcdp.vs.color[2];
 		    bview_data.transparency= dgcdp.vs.transparency;
-		    bview_data.dmode = dgcdp.vs.dmode;
+		    bview_data.dmode = dgcdp.vs.s_dmode;
 		    bview_data.hiddenLine = dgcdp.vs.hiddenLine;
 		    bview_data.free_scene_obj = (void *)gedp->free_scene_obj;
 

@@ -252,7 +252,6 @@ bview_settings_sync(struct bview_settings *dest, struct bview_settings *src)
     dest->s_dmode = src->s_dmode;
     dest->color_override = src->color_override;
     VMOVE(dest->color, src->color);
-    dest->dmode = src->dmode;
     dest->shaded_mode_override = src->shaded_mode_override;
     dest->hiddenLine = src->hiddenLine;
     dest->draw_wireframes = src->draw_wireframes;

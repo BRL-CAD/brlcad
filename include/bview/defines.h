@@ -153,7 +153,6 @@ struct bview_settings {
     int color_override;
     unsigned char color[3];	/**< @brief  color to draw as */
 
-    int dmode;
     int shaded_mode_override;
 
     int hiddenLine;             // TODO - consolidate with s_hiddenLine
