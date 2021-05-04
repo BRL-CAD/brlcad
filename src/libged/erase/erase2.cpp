@@ -67,6 +67,18 @@ struct dfp_cmp {
     }
 };
 
+// TODO - I think Bob's approach may be simpler and better - take the split
+// path, get its parent, get all the children of that parent except the one
+// being erased, make new groups for those children, and recategorize all the
+// solids into the new groups. May have to do this iteratively if multiple
+// paths erase different pieces of the same original group.
+//
+// This code takes the opposite approach - remove all the solids that are
+// cleared by all erase operations, and then build up to find the fully drawn
+// combs to form new groups.  It was originally implemented for who without
+// reference to bview_scene_group containers and so didn't have the top-down
+// data available. That said, this does seem to work so don't remove it until
+// a better working solution is demonstrated.
 void
 new_scene_objs(struct bview *v, struct db_i *dbip, struct bu_ptbl *solids, struct bview_scene_obj *free_scene_obj)
 {
