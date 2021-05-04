@@ -545,6 +545,38 @@ dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vm
 }
 
 void
+dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
+{
+    if (s->s_flag == DOWN)
+	return;
+
+    // Draw children. TODO - drawing children first may not
+    // always be the desired behavior - might need interior and exterior
+    // children tables to provide some control
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+	dm_draw_scene_obj(dmp, s_c);
+    }
+
+    // Draw primary wireframe.
+    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
+
+    dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
+
+    dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
+
+    dm_add_arrows(dmp, s);
+
+    if (s->s_type_flags & BVIEW_AXES) {
+	dm_draw_scene_axes(dmp, s);
+    }
+
+    if (s->s_type_flags & BVIEW_LABELS) {
+	dm_draw_label(dmp, s);
+    }
+}
+
+void
 dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, double base2local, double local2base)
 {
     struct dm *dmp = (struct dm *)v->dmp;
@@ -592,91 +624,13 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     // Draw geometry view objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
-	if (g->g->s_flag == DOWN)
-	    continue;
-	// Draw any child objects
-	for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g->children, j);
-	    // Draw any child objects
-	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
-		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, k);
-		dm_set_fg(dmp, s_c->s_color[0], s_c->s_color[1], s_c->s_color[2], 1, 1.0);
-		dm_set_line_attr(dmp, s_c->s_os.s_line_width, s_c->s_soldash);
-		dm_draw_vlist(dmp, (struct bn_vlist *)&s_c->s_vlist);
-		// Generally arrow settings on child objects are going to be set as part
-		// of the drawing scheme.  If there are cases where we want to control this
-		// manually we'll have to come up with a syntax to specify child objects of
-		// top level scene objects - we don't want these to be top level.
-		dm_add_arrows(dmp, s);
-
-		if (s_c->s_type_flags & BVIEW_AXES) {
-		    dm_draw_scene_axes(dmp, s_c);
-		}
-
-		if (s_c->s_type_flags & BVIEW_LABELS) {
-		    dm_draw_label(dmp, s_c);
-		}
-	    }
-
-	    // Draw primary wireframe.  TODO - drawing children first may not
-	    // always be the desired behavior - might need interior and exterior
-	    // children tables to provide some control
-	    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
-	    dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
-	    dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
-	    dm_add_arrows(dmp, s);
-
-	    if (s->s_type_flags & BVIEW_AXES) {
-		dm_draw_scene_axes(dmp, s);
-	    }
-
-	    if (s->s_type_flags & BVIEW_LABELS) {
-		dm_draw_label(dmp, s);
-	    }
-	}
+	dm_draw_scene_obj(dmp, g->g);
     }
-
 
     // Draw view-only objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
 	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
-	if (s->s_flag == DOWN)
-	    continue;
-	// Draw any child objects
-	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
-	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
-	    dm_set_fg(dmp, s_c->s_color[0], s_c->s_color[1], s_c->s_color[2], 1, 1.0);
-	    dm_set_line_attr(dmp, s_c->s_os.s_line_width, s_c->s_soldash);
-	    dm_draw_vlist(dmp, (struct bn_vlist *)&s_c->s_vlist);
-	    // Generally arrow settings on child objects are going to be set as part
-	    // of the drawing scheme.  If there are cases where we want to control this
-	    // manually we'll have to come up with a syntax to specify child objects of
-	    // top level scene objects - we don't want these to be top level.
-	    dm_add_arrows(dmp, s);
-
-	    if (s_c->s_type_flags & BVIEW_AXES) {
-		dm_draw_scene_axes(dmp, s_c);
-	    }
-
-	    if (s_c->s_type_flags & BVIEW_LABELS) {
-		dm_draw_label(dmp, s_c);
-	    }
-	}
-	// Draw primary wireframe.  TODO - drawing children first may not
-	// always be the desired behavior - might need interior and exterior
-	// children tables to provide some control
-	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
-	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
-	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
-	dm_add_arrows(dmp, s);
-
-	if (s->s_type_flags & BVIEW_AXES) {
-	    dm_draw_scene_axes(dmp, s);
-	}
-
-	if (s->s_type_flags & BVIEW_LABELS) {
-	    dm_draw_label(dmp, s);
-	}
+	dm_draw_scene_obj(dmp, s);
     }
 
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
