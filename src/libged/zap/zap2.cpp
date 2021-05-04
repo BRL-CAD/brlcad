@@ -30,6 +30,17 @@
 
 #include "../ged_private.h"
 
+#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+    if (BU_LIST_IS_EMPTY(fp)) { \
+	BU_ALLOC((p), struct bview_scene_obj); \
+    } else { \
+	p = BU_LIST_NEXT(bview_scene_obj, fp); \
+	BU_LIST_DEQUEUE(&((p)->l)); \
+    } \
+    BU_LIST_INIT( &((p)->s_vlist) ); }
+
+#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); }
 
 /*
  * Erase all currently displayed geometry
@@ -57,7 +68,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1 && sg) {
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
-	    bview_scene_obj_free(&cg->g);
+	    bview_scene_obj_free(cg->g, gedp->free_scene_obj);
+	    FREE_BVIEW_SCENE_OBJ(cg->g, &gedp->free_scene_obj->l);
 	    BU_PUT(cg, struct bview_scene_group);
 	}
 	bu_ptbl_reset(sg);
@@ -68,8 +80,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	for (long i = (long)BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs) - 1; i >= 0; i--) {
 	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
 	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
-	    bview_scene_obj_free(s);
-	    BU_PUT(s, struct bview_scene_obj);
+	    bview_scene_obj_free(s, gedp->free_scene_obj);
+	    FREE_BVIEW_SCENE_OBJ(s, &gedp->free_scene_obj->l);
 	}
     }
 

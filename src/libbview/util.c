@@ -411,15 +411,18 @@ bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf
     return 0;
 }
 
+#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); }
+
 void
-bview_scene_obj_free(struct bview_scene_obj *s)
+bview_scene_obj_free(struct bview_scene_obj *s, struct bview_scene_obj *free_scene_obj)
 {
     // handle children
     if (BU_PTBL_IS_INITIALIZED(&s->children)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
-	    bview_scene_obj_free(s_c);
-	    BU_PUT(s_c, struct bview_scene_obj);
+	    bview_scene_obj_free(s_c, free_scene_obj);
+	    FREE_BVIEW_SCENE_OBJ(s_c, &free_scene_obj->l);
 	}
     }
 

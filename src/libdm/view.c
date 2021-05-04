@@ -592,11 +592,11 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     // Draw geometry view objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
-	if (g->g.s_flag == DOWN)
+	if (g->g->s_flag == DOWN)
 	    continue;
 	// Draw any child objects
-	for (size_t j = 0; j < BU_PTBL_LEN(&g->g.children); j++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, j);
+	for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g->children, j);
 	    // Draw any child objects
 	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
 		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, k);

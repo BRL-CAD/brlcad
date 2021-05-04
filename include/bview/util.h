@@ -103,7 +103,7 @@ BVIEW_EXPORT extern void bview_view_center_linesnap(struct bview *v);
 BVIEW_EXPORT extern int bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
 /* Free the object contents, including all child objects */
-BVIEW_EXPORT extern void bview_scene_obj_free(struct bview_scene_obj *s);
+BVIEW_EXPORT extern void bview_scene_obj_free(struct bview_scene_obj *s, struct bview_scene_obj *free_scene_obj);
 
 /* Compute the min, max, and center points of the scene object. */
 BVIEW_EXPORT extern void bview_scene_obj_bound(struct bview_scene_obj *s);

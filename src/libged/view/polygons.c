@@ -91,7 +91,7 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    s = bview_create_polygon(gedp->ged_gvp, type, x, y);
+    s = bview_create_polygon(gedp->ged_gvp, type, x, y, gedp->free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;
@@ -677,7 +677,7 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
     }
 
     // Have a sketch - create an empty polygon
-    s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_GENERAL, 0, 0);
+    s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_GENERAL, 0, 0, gedp->free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;

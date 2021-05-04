@@ -264,6 +264,9 @@ struct bview_scene_obj  {
     /* Child objects of this object */
     struct bu_ptbl children;
 
+    /* Container for reusing bview_scene_obj allocations */
+    struct bview_scene_obj *free_scene_obj;
+
     /* User data to associate with this view object */
     void *s_u_data;
 };
@@ -327,7 +330,7 @@ struct bview_scene_obj  {
  * code what is a conceptually a group and what is an individual scene object.
  */
 struct bview_scene_group {
-    struct bview_scene_obj g;
+    struct bview_scene_obj *g;
 };
 
 /* A display list corresponds (typically) to a database object.  It is composed of one

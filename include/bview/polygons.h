@@ -67,7 +67,7 @@ struct bview_polygon {
 //
 //  v->gv_width  = dm_get_width((struct dm *)v->dmp);
 //  v->gv_height = dm_get_height((struct dm *)v->dmp);
-BVIEW_EXPORT extern struct bview_scene_obj *bview_create_polygon(struct bview *v, int type, int x, int y);
+BVIEW_EXPORT extern struct bview_scene_obj *bview_create_polygon(struct bview *v, int type, int x, int y, struct bview_scene_obj *free_scene_obj);
 BVIEW_EXPORT extern int bview_update_polygon(struct bview_scene_obj *s);
 
 __END_DECLS

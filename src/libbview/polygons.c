@@ -37,6 +37,18 @@
 #include "bview/util.h"
 #include "bview/polygons.h"
 
+#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+    if (BU_LIST_IS_EMPTY(fp)) { \
+       BU_ALLOC((p), struct bview_scene_obj); \
+    } else { \
+       p = BU_LIST_NEXT(bview_scene_obj, fp); \
+       BU_LIST_DEQUEUE(&((p)->l)); \
+    } \
+    BU_LIST_INIT( &((p)->s_vlist) ); }
+
+#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); }
+
 void
 bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int curr_c, int curr_i, int do_pnt)
 {
@@ -93,7 +105,8 @@ bview_fill_polygon(struct bview_scene_obj *s)
 
     // Got fill, create lines
     if (!fobj) {
-	BU_GET(fobj, struct bview_scene_obj);
+	GET_BVIEW_SCENE_OBJ(fobj, &s->free_scene_obj->l);
+	fobj->free_scene_obj = s->free_scene_obj;
 	BU_LIST_INIT(&(fobj->s_vlist));
 	bu_vls_init(&fobj->s_uuid);
 	bu_vls_sprintf(&fobj->s_uuid, "fill");
@@ -155,7 +168,8 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 
 	if (p->polygon.hole[i]) {
 	    struct bview_scene_obj *s_c;
-	    BU_GET(s_c, struct bview_scene_obj);
+	    GET_BVIEW_SCENE_OBJ(s_c, &s->free_scene_obj->l);
+	    s_c->free_scene_obj = s->free_scene_obj;
 	    BU_LIST_INIT(&(s_c->s_vlist));
 	    BU_VLS_INIT(&(s_c->s_uuid));
 	    s_c->s_soldash = 1;
@@ -178,10 +192,11 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 }
 
 struct bview_scene_obj *
-bview_create_polygon(struct bview *v, int type, int x, int y)
+bview_create_polygon(struct bview *v, int type, int x, int y, struct bview_scene_obj *free_scene_obj)
 {
     struct bview_scene_obj *s;
-    BU_GET(s, struct bview_scene_obj);
+    GET_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
+    s->free_scene_obj = free_scene_obj;
     s->s_v = v;
     s->s_type_flags |= BVIEW_VIEWONLY;
     s->s_type_flags |= BVIEW_POLYGONS;

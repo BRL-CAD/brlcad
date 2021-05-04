@@ -111,8 +111,8 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	vect_t minus, plus;
 	for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	    struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(so, i);
-	    for (size_t j = 0; j < BU_PTBL_LEN(&g->g.children); j++) {
-		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, j);
+	    for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
+		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g->children, j);
 		bview_scene_obj_bound(s);
 		is_empty = 0;
 		minus[X] = s->s_center[X] - s->s_size;

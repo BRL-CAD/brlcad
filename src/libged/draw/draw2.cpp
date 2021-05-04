@@ -39,6 +39,17 @@
 #include "ged/view/state.h"
 #include "../ged_private.h"
 
+#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+        if (BU_LIST_IS_EMPTY(fp)) { \
+            BU_ALLOC((p), struct bview_scene_obj); \
+        } else { \
+            p = BU_LIST_NEXT(bview_scene_obj, fp); \
+            BU_LIST_DEQUEUE(&((p)->l)); \
+        } \
+        BU_LIST_INIT( &((p)->s_vlist) ); }
+
+#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+        BU_LIST_APPEND(fp, &((p)->l)); }
 
 // This is the generic "just create/update the view geometry" logic - for
 // editing operations, which will have custom visuals and updating behavior,
@@ -121,6 +132,7 @@ struct draw_data_t {
     struct bview *v;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
+    struct bview_scene_obj *free_scene_obj;
 };
 
 static void
@@ -216,6 +228,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 {
     struct directory *dp;
     struct draw_data_t *dd= (struct draw_data_t *)client_data;
+    struct bview_scene_obj *free_scene_obj = dd->free_scene_obj;
     RT_CK_FULL_PATH(path);
     RT_CK_DBI(dd->dbip);
 
@@ -254,7 +267,8 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
 	// Have database object, make scene object
 	struct bview_scene_obj *s;
-	BU_GET(s, struct bview_scene_obj);
+	GET_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
+	s->free_scene_obj = free_scene_obj;
 	BU_LIST_INIT(&(s->s_vlist));
 	BU_PTBL_INIT(&s->children);
 	BU_VLS_INIT(&s->s_name);
@@ -263,7 +277,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	db_path_to_vls(&s->s_uuid, path);
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
-	bview_settings_sync(&s->s_os, &dd->g->g.s_os);
+	bview_settings_sync(&s->s_os, &dd->g->g->s_os);
 	s->s_type_flags |= BVIEW_DBOBJ_BASED;
 
 	// If the color was not overridden at either the global view level or the
@@ -302,57 +316,117 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	(*s->s_update_callback)(s);
 
 	// Add object to scene group
-	bu_ptbl_ins(&dd->g->g.children, (long *)s);
+	bu_ptbl_ins(&dd->g->g->children, (long *)s);
     }
+}
+
+static int
+draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
+{
+    struct bview_settings *vs = (struct bview_settings *)data;
+    struct bu_color c;
+    int ret = bu_opt_color(msg, argc, argv, (void *)&c);
+    if (ret == 1 || ret == 3) {
+	vs->color_override = 1;
+	bu_color_to_rgb_chars(&c, vs->color);
+    }
+    return ret;
 }
 
 
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
-    static const char *usage = "path";
-    struct bview_settings vs;
-
+    int print_help = 0;
+    static const char *usage = "[options] path1 [path2 ...]";
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
 
-    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+    /* skip command name argv[0] */
+    argc-=(argc>0); argv+=(argc>0);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
+    /* If we have no view, we have no way to draw */
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
 	return GED_ERROR;
+    }
+
+    struct bview_settings vs;
+    int drawing_modes[5] = {-1, 0, 0, 0, 0};
+    struct bu_opt_desc d[15];
+    BU_OPT(d[0],  "h", "help",          "",                 NULL,       &print_help,  "Print help and exit");
+    BU_OPT(d[1],  "?", "",              "",                 NULL,       &print_help,  "");
+    BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
+    BU_OPT(d[3],   "", "wireframe",     "",                 NULL, &drawing_modes[1],  "Draw using only wireframes (mode = 0)");
+    BU_OPT(d[4],   "", "shaded",        "",                 NULL, &drawing_modes[2],  "Shade bots and polysolids (mode = 1)");
+    BU_OPT(d[5],   "", "shaded-all",    "",                 NULL, &drawing_modes[3],  "Shade all solids, not evaluated (mode = 2)");
+    BU_OPT(d[6],  "E", "evaluate",      "",                 NULL, &drawing_modes[4],  "Shade and evaluate booleans (mode = 3)");
+    BU_OPT(d[7],  "t", "transparency", "#",      &bu_opt_fastf_t,  &vs.transparency,  "Set transparency level in drawing");
+    BU_OPT(d[8],   "", "hidden-line",   "",                 NULL,  &vs.s_hiddenLine,  "Draw using hidden lines (TODO - is this a drawing mode?)");
+    BU_OPT(d[9],  "L", "lod",           "",                 NULL, &vs.adaptive_plot,  "Enable view adaptive Level of Detail plotting");
+    BU_OPT(d[10],  "", "adaptive",      "",                 NULL, &vs.adaptive_plot,  "");
+    BU_OPT(d[11], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
+    BU_OPT(d[12], "C", "color",         "r/g/b", &draw_opt_color, &vs,                 "Override object colors");
+    BU_OPT(d[13],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
+    BU_OPT_NULL(d[14]);
+
+    /* If no args, must be wanting help */
+    if (!argc) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_OK;
     }
 
     /* Option defaults come from the current view, but may be overridden for
      * the purposes of the current draw command by command line options. */
     bview_settings_sync(&vs, &gedp->ged_gvp->gvs);
 
+    /* Process command line args into vs with bu_opt */
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
-    /* TODO - process command line args into vs with bu_opt */
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    // Drawing modes may be set either by -m or by the more verbose options,
+    // with the latter taking precedence if both are set.
+    int have_override = 0;
+    for (int i = 1; i < 5; i++) {
+	if (drawing_modes[i]) {
+	    have_override++;
+	}
+    }
+    if (have_override > 1 || (have_override &&  drawing_modes[0] > -1)) {
+	bu_vls_printf(gedp->ged_result_str, "Multiple view modes specified\n");
+	return GED_ERROR;
+    }
+    if (have_override) {
+	for (int i = 1; i < 5; i++) {
+	    if (drawing_modes[i]) {
+		drawing_modes[0] = i - 1;
+		break;
+	    }
+	}
+    }
+    if (drawing_modes[0] > -1) {
+	vs.s_dmode = drawing_modes[0];
+    }
 
 
-    /* TODO - unless the options specifically tell us to turn off autoview,
-     * enable it. Unlike older draw draw2 delays the generation of the geometry
-     * so the application can manage the process better.  This means that we
-     * have to persist the autoview suppression flag into the parent view state.
-     * If we're coming around for another draw command, we're going to want
-     * this on for the eventual drawing process unless the options say
-     * otherwise.  */
-    gedp->ged_gvp->gv_autoview = 1;
+    // Abbreviations for convenience
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+    struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
 
+    // Whatever is left after argument processing are the potential draw paths
+    argc = opt_ret;
 
-    /* Validate that the supplied args are current, valid paths.  If not, bail */
+    /* Validate that the supplied args are current, valid paths in the
+     * database.  If one or more are not, bail */
     std::set<struct db_full_path *> fps;
     std::set<struct db_full_path *>::iterator f_it;
     for (size_t i = 0; i < (size_t)argc; ++i) {
@@ -376,10 +450,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-
     // Check the already drawn paths to see if the proposed new path impacts them.
-    struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
-
     for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
 	struct bview_scene_group *g = NULL;
 	struct db_full_path *fp = *f_it;
@@ -401,7 +472,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
 	    struct db_full_path gfp;
 	    db_full_path_init(&gfp);
-	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g.s_name));
+	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g->s_name));
 	    if (ret < 0) {
 		// If this fails eliminate the invalid path from sg...
 		clear.insert(cg);
@@ -431,8 +502,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    // rather than creating a new one.
 	    std::set<struct bview_scene_obj *> sclear;
 	    std::set<struct bview_scene_obj *>::iterator s_it;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&g->g.children); i++) {
-		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g.children, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&g->g->children); i++) {
+		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g->children, i);
 		struct db_full_path gfp;
 		db_full_path_init(&gfp);
 		db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
@@ -442,20 +513,22 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
 		struct bview_scene_obj *s = *s_it;
-		bu_ptbl_rm(&g->g.children, (long *)s);
-		bview_scene_obj_free(s);
-		BU_PUT(s, struct bview_scene_obj);
+		bu_ptbl_rm(&g->g->children, (long *)s);
+		bview_scene_obj_free(s, free_scene_obj);
+		FREE_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
 	    }
 	} else {
 	    // Create new group
 	    BU_GET(g, struct bview_scene_group);
-	    BU_LIST_INIT(&(g->g.s_vlist));
-	    BU_PTBL_INIT(&g->g.children);
-	    BU_VLS_INIT(&g->g.s_name);
-	    db_path_to_vls(&g->g.s_name, fp);
-	    BU_VLS_INIT(&g->g.s_uuid);
-	    db_path_to_vls(&g->g.s_uuid, fp);
-	    bview_settings_sync(&g->g.s_os, &vs);
+	    GET_BVIEW_SCENE_OBJ(g->g, &free_scene_obj->l);
+	    g->g->free_scene_obj = free_scene_obj;
+	    BU_LIST_INIT(&(g->g->s_vlist));
+	    BU_PTBL_INIT(&g->g->children);
+	    BU_VLS_INIT(&g->g->s_name);
+	    db_path_to_vls(&g->g->s_name, fp);
+	    BU_VLS_INIT(&g->g->s_uuid);
+	    db_path_to_vls(&g->g->s_uuid, fp);
+	    bview_settings_sync(&g->g->s_os, &vs);
 	    bu_ptbl_ins(gedp->ged_gvp->gv_db_grps, (long *)g);
 	}
 
@@ -464,7 +537,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
 		struct bview_scene_group *cg = *g_it;
 		bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
-		bview_scene_obj_free(&cg->g);
+		bview_scene_obj_free(cg->g, free_scene_obj);
+		FREE_BVIEW_SCENE_OBJ(cg->g, &free_scene_obj->l);
 		BU_PUT(cg, struct bview_scene_group);
 	    }
 	}
@@ -476,6 +550,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	dd.v = gedp->ged_gvp;
 	dd.tol = &gedp->ged_wdbp->wdb_tol;
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
+	dd.free_scene_obj = gedp->free_scene_obj;
 	dd.g = g;
 
 	// Walk the tree to build up the set of scene objects
