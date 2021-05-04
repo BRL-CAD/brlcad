@@ -142,9 +142,78 @@ struct draw_data_t {
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
     struct bview_scene_obj *free_scene_obj;
-    int rgb[3];
+    struct bu_color c;
     int color_inherit;
 };
+
+static void
+_tree_color(struct directory *dp, struct draw_data_t *dd)
+{
+    struct bu_attribute_value_set c_avs;
+
+    // Easy answer - if we're overridden, dd color is already set.
+    if (dd->g->g->s_os.color_override)
+	return;
+
+    // Not overridden by settings.  Next question - are we under an inherit?
+    // If so, dd color is already set.
+    if (dd->color_inherit)
+	return;
+
+    // Need attributes for the rest of this
+    db5_get_attributes(dd->dbip, &c_avs, dp);
+
+    // No inherit.  Do we have a region material table?
+    if (rt_material_head() != MATER_NULL) {
+	// If we do, do we have a region id?
+	bu_log("material head\n");
+	int region_id = -1;
+	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
+	if (region_id_val) {
+	    bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+	} else if (dp->d_flags & RT_DIR_REGION) {
+	    // If we have a region flag but no region_id, for color table
+	    // purposes treat the region_id as 0
+	    region_id = 0;
+	}
+	if (region_id >= 0) {
+	    const struct mater *mp;
+	    int material_color = 0;
+	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		if (region_id > mp->mt_high || region_id < mp->mt_low) {
+		    continue;
+		}
+		unsigned char mt[3];
+		mt[0] = mp->mt_r;
+		mt[1] = mp->mt_g;
+		mt[2] = mp->mt_b;
+		bu_color_from_rgb_chars(&dd->c, mt);
+		material_color = 1;
+	    }
+	    if (material_color) {
+		// Have answer from color table
+		bu_avs_free(&c_avs);
+		return;
+	    }
+	}
+    }
+
+    // Material table didn't give us the answer - do we have a color or
+    // rgb attribute?
+    const char *color_val = bu_avs_get(&c_avs, "color");
+    if (!color_val) {
+	color_val = bu_avs_get(&c_avs, "rgb");
+    }
+    if (color_val) {
+	bu_opt_color(NULL, 1, &color_val, (void *)&dd->c);
+    }
+
+    // Check for an inherit flag
+    dd->color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+
+    // Done with attributes
+    bu_avs_free(&c_avs);
+}
 
 static void
 db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *tp, mat_t *curr_mat,
@@ -200,6 +269,12 @@ db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		}
 		bn_mat_mul(*curr_mat, om, nm);
 
+		// Stash current color settings and see if we're getting new ones
+		int inherit_old = dd->color_inherit;
+		struct bu_color oc;
+		HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
+		_tree_color(dp, dd);
+
 		// Two things may prevent further processing - a hidden dp, or
 		// a cyclic path.  Can check either here or in traverse_func -
 		// just do it here since otherwise the logic would have to be
@@ -213,9 +288,12 @@ db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		    }
 		}
 
-		/* Done with branch - restore path, put back the old matrix state */
+		/* Done with branch - restore path, put back the old matrix state,
+		 * and restore previous color settings */
 		DB_FULL_PATH_POP(path);
 		MAT_COPY(*curr_mat, om);
+		dd->color_inherit = inherit_old;
+		HSET(dd->c.buc_rgb, oc.buc_rgb[0], oc.buc_rgb[1], oc.buc_rgb[2], oc.buc_rgb[3]);
 
 		return;
 	    }
@@ -261,6 +339,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
+
 	db_fullpath_draw_subtree(path, OP_UNION, comb->tree, curr_mat, db_fullpath_draw, client_data);
 	rt_db_free_internal(&in);
     } else {
@@ -291,22 +370,9 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	bview_settings_sync(&s->s_os, &dd->g->g->s_os);
 	s->s_type_flags |= BVIEW_DBOBJ_BASED;
 
-	// If the color was not overridden at either the global view level or the
-	// command line options, analyze the info from along the path to determine
-	// the color of the current solid.
-	if (!s->s_os.color_override) {
-	    struct bu_color c;
-	    // TODO - this works, but checks attributes all along the path.
-	    // Since we're tree walking, we can save work by tracking this same
-	    // info as we're walking the tree. That way we don't have to
-	    // re-examine parent dp attrs each time.
-	    db_full_path_color(&c, path, dd->dbip, &rt_uniresource);
-	    int rgb[3];
-	    bu_color_to_rgb_ints(&c, &rgb[0], &rgb[1], &rgb[2]);
-	    VMOVE(s->s_color, rgb);
-	} else {
-	    VMOVE(s->s_color, s->s_os.color);
-	}
+	int rgb[3];
+	bu_color_to_rgb_ints(&dd->c, &rgb[0], &rgb[1], &rgb[2]);
+	VMOVE(s->s_color, rgb);
 
 	// Stash the information needed for a draw update callback
 	struct draw_update_data_t *ud;
@@ -584,7 +650,15 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
 	dd.free_scene_obj = gedp->free_scene_obj;
 	dd.color_inherit = 0;
-	VSET(dd.rgb, 255, 0, 0);
+	if (vs.color_override) {
+	    bu_color_from_rgb_chars(&dd.c, vs.color);
+	} else {
+	    unsigned char dc[3];
+	    dc[0] = 255;
+	    dc[1] = 0;
+	    dc[2] = 0;
+	    bu_color_from_rgb_chars(&dd.c, dc);
+	}
 	dd.vs = &vs;
 	dd.g = g;
 
