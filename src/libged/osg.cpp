@@ -167,7 +167,7 @@ _ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_head_scene_obj) {
-	    if (sp->s_hiddenLine) {
+	    if (sp->s_dmode == 4) {
 		_osgLoadHiddenSolid(geode, sp);
 	    } else {
 		osg::Geometry* geom = new osg::Geometry();

@@ -312,7 +312,6 @@ _bview_settings_hash(XXH64_state_t *state, struct bview_settings *v)
     XXH64_update(state, &v->s_arrow_tip_width, sizeof(fastf_t));
     XXH64_update(state, &v->transparency, sizeof(fastf_t));
     XXH64_update(state, &v->s_dmode, sizeof(int));
-    XXH64_update(state, &v->s_hiddenLine, sizeof(int));
 }
 
 void

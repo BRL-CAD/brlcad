@@ -6475,7 +6475,7 @@ to_create_vlist_callback_solid(struct bview_scene_obj *sp)
 			(unsigned char)sp->s_color[1],
 			(unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
 
-	    if (sp->s_os.s_hiddenLine) {
+	    if (sp->s_os.s_dmode == 4) {
 		(void)dm_draw_vlist_hidden_line((struct dm *)gdvp->dmp, (struct bn_vlist *)&sp->s_vlist);
 	    } else {
 		(void)dm_draw_vlist((struct dm *)gdvp->dmp, (struct bn_vlist *)&sp->s_vlist);

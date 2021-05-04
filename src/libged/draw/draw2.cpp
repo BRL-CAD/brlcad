@@ -459,7 +459,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct bview_settings vs;
-    int drawing_modes[5] = {-1, 0, 0, 0, 0};
+    int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[15];
     BU_OPT(d[0],  "h", "help",          "",                 NULL,       &print_help,  "Print help and exit");
     BU_OPT(d[1],  "?", "",              "",                 NULL,       &print_help,  "");
@@ -469,7 +469,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[5],   "", "shaded-all",    "",                 NULL, &drawing_modes[3],  "Shade all solids, not evaluated (mode = 2)");
     BU_OPT(d[6],  "E", "evaluate",      "",                 NULL, &drawing_modes[4],  "Shade and evaluate booleans (mode = 3)");
     BU_OPT(d[7],  "t", "transparency", "#",      &bu_opt_fastf_t,  &vs.transparency,  "Set transparency level in drawing");
-    BU_OPT(d[8],   "", "hidden-line",   "",                 NULL,  &vs.s_hiddenLine,  "Draw using hidden lines (TODO - is this a drawing mode?)");
+    BU_OPT(d[8],   "", "hidden-line",   "",                 NULL, &drawing_modes[5],  "Draw using hidden lines (TODO - is this a drawing mode?)");
     BU_OPT(d[9],  "L", "lod",           "",                 NULL, &vs.adaptive_plot,  "Enable view adaptive Level of Detail plotting");
     BU_OPT(d[10],  "", "adaptive",      "",                 NULL, &vs.adaptive_plot,  "");
     BU_OPT(d[11], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
@@ -498,7 +498,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // Drawing modes may be set either by -m or by the more verbose options,
     // with the latter taking precedence if both are set.
     int have_override = 0;
-    for (int i = 1; i < 5; i++) {
+    for (int i = 1; i < 6; i++) {
 	if (drawing_modes[i]) {
 	    have_override++;
 	}
@@ -508,7 +508,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
     if (have_override) {
-	for (int i = 1; i < 5; i++) {
+	for (int i = 1; i < 6; i++) {
 	    if (drawing_modes[i]) {
 		drawing_modes[0] = i - 1;
 		break;

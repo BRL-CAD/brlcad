@@ -107,7 +107,7 @@ go_draw_solid(struct bview *gdvp, struct bview_scene_obj *sp)
 			    (unsigned char)sp->s_color[1],
 			    (unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
 
-	if (sp->s_os.s_hiddenLine) {
+	if (sp->s_os.s_dmode == 4) {
 	    (void)dm_draw_vlist_hidden_line(dmp, (struct bn_vlist *)&sp->s_vlist);
 	} else {
 	    (void)dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist);
@@ -259,7 +259,7 @@ to_edit_redraw(struct ged *gedp,
 			int arg = 0;
 
 			av[arg++] = (char *)argv[0];
-			if (sp->s_os.s_hiddenLine) {
+			if (sp->s_os.s_dmode == 4) {
 			    av[arg++] = "-h";
 			} else {
 			    bu_vls_printf(&mflag, "-m%d", sp->s_os.s_dmode);

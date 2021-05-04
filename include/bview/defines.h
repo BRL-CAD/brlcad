@@ -138,13 +138,12 @@ struct bview_settings {
     int s_line_width;		/**< @brief  current line width */
     fastf_t s_arrow_tip_length; /**< @brief  arrow tip length */
     fastf_t s_arrow_tip_width;  /**< @brief  arrow tip width */
-    int s_hiddenLine;         	/**< @brief  1 - hidden line - TODO - this is really a drawing mode */
-
     fastf_t transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] */
     int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
 				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 				 *	      2 - shaded (booleans NOT evaluated)
 				 *	      3 - shaded (booleans evaluated)
+				 *	      4 - hidden line
 				 */
 
     // draw command opts in _ged_client_data

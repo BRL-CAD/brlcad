@@ -123,7 +123,6 @@ struct ged_solid_data {
     int wireframe_color[3];
     fastf_t transparency;
     int dmode;
-    int hiddenLine;
     void *free_scene_obj;
 };
 

@@ -726,7 +726,6 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     sp->s_dlist = 0;
     sp->s_os.transparency = dgcdp->vs.transparency;
     sp->s_os.s_dmode = dgcdp->vs.s_dmode;
-    sp->s_os.s_hiddenLine = dgcdp->vs.s_hiddenLine;
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
@@ -1138,7 +1137,6 @@ append_solid_to_display_list(
     sp->s_dlist = 0;
     sp->s_os.transparency = bview_data->transparency;
     sp->s_os.s_dmode = bview_data->dmode;
-    sp->s_os.s_hiddenLine = bview_data->hiddenLine;
     MAT_COPY(sp->s_mat, tsp->ts_mat);
 
     /* append solid to display list */
@@ -1402,7 +1400,7 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
 
 
 	    /* found a match */
-	    if (sp->s_os.s_hiddenLine) {
+	    if (sp->s_os.s_dmode == 4) {
 		if (both)
 		    bu_vls_printf(vls, "%d 1", _GED_HIDDEN_LINE);
 		else

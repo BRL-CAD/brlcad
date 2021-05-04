@@ -246,7 +246,6 @@ bview_settings_sync(struct bview_settings *dest, struct bview_settings *src)
     dest->s_line_width = src->s_line_width;
     dest->s_arrow_tip_length = src->s_arrow_tip_length;
     dest->s_arrow_tip_width = src->s_arrow_tip_width;
-    dest->s_hiddenLine = src->s_hiddenLine;
     dest->transparency = src->transparency;
     dest->s_dmode = src->s_dmode;
     dest->color_override = src->color_override;

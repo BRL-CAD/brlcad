@@ -152,6 +152,15 @@ draw_check_leaf(struct db_tree_state *tsp,
 	    } else {
 		draw_forced_wireframe(pathp, dgcdp);
 	    }
+	    break;
+	case _GED_HIDDEN_LINE:
+	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+		ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE)
+	    {
+		plot_shaded(tsp, pathp, ip, dgcdp);
+	    } else {
+		draw_forced_wireframe(pathp, dgcdp);
+	    }
 
 	    break;
     }
@@ -683,8 +692,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    }
 		    break;
 		case 'h':
-		    dgcdp.vs.s_hiddenLine = 1;
-		    shaded_mode_override = _GED_SHADED_MODE_ALL;
+		    shaded_mode_override = _GED_HIDDEN_LINE;
 		    break;
 		case 'm':
 		    shaded_mode_override = atoi(bu_optarg);
@@ -701,6 +709,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			    break;
 			case 3:
 			    shaded_mode_override = _GED_SHADED_MODE_EVAL;
+			    break;
+			case 4:
+			    shaded_mode_override = _GED_HIDDEN_LINE;
 			    break;
 			default:
 			    if (shaded_mode_override < 0) {
@@ -800,7 +811,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	     */
 	    if (dgcdp.vs.s_dmode == _GED_SHADED_MODE_BOTS ||
 		dgcdp.vs.s_dmode == _GED_SHADED_MODE_ALL  ||
-		dgcdp.vs.s_dmode == _GED_SHADED_MODE_EVAL)
+		dgcdp.vs.s_dmode == _GED_SHADED_MODE_EVAL ||
+		dgcdp.vs.s_dmode == _GED_HIDDEN_LINE)
 	    {
 		struct _ged_client_data dgcdp_save;
 
@@ -855,7 +867,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bview_data.wireframe_color[2]= dgcdp.vs.color[2];
 		    bview_data.transparency= dgcdp.vs.transparency;
 		    bview_data.dmode = dgcdp.vs.s_dmode;
-		    bview_data.hiddenLine = dgcdp.vs.s_hiddenLine;
 		    bview_data.free_scene_obj = (void *)gedp->free_scene_obj;
 
 		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
