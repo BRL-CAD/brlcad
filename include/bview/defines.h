@@ -153,7 +153,6 @@ struct bview_settings {
 
     int shaded_mode_override;
 
-    int hiddenLine;             // TODO - consolidate with s_hiddenLine
     int draw_wireframes;
     int draw_solid_lines_only;
     int draw_non_subtract_only;

@@ -684,7 +684,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    }
 		    break;
 		case 'h':
-		    dgcdp.vs.hiddenLine = 1;
+		    dgcdp.vs.s_hiddenLine = 1;
 		    dgcdp.vs.shaded_mode_override = _GED_SHADED_MODE_ALL;
 		    break;
 		case 'm':
@@ -856,7 +856,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bview_data.wireframe_color[2]= dgcdp.vs.color[2];
 		    bview_data.transparency= dgcdp.vs.transparency;
 		    bview_data.dmode = dgcdp.vs.s_dmode;
-		    bview_data.hiddenLine = dgcdp.vs.hiddenLine;
+		    bview_data.hiddenLine = dgcdp.vs.s_hiddenLine;
 		    bview_data.free_scene_obj = (void *)gedp->free_scene_obj;
 
 		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
