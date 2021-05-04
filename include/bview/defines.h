@@ -133,8 +133,6 @@ struct bview_axes {
 // TODO - once this settles down, it will probably warrant a bu_structparse
 // for value setting
 struct bview_settings {
-    // bview opts
-    int		  hidden; // TODO - related to s_hiddenLine, hiddenLine?
 
     // scene_obj settings
     int s_line_width;		/**< @brief  current line width */
@@ -514,6 +512,7 @@ struct bview {
     int           gv_zclip;
     fastf_t       gv_data_vZ;
     int           gv_autoview;
+    int		  gv_hide;          // libtclcad setting for hiding view - unused?
 
     // Faceplate elements fall into two general categories: those which are
     // interactively adjusted (in a geometric sense) and those which are not.

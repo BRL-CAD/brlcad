@@ -404,7 +404,6 @@ _bview_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
     BVIEW_NDIFF(1,point_scale);
     BVIEW_NDIFF(1,curve_scale);
     BVIEW_NDIFF(1,bot_threshold);
-    BVIEW_NDIFF(1,hidden);
 
     return 0;
 }

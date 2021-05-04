@@ -3531,7 +3531,8 @@ to_handle_expose(struct ged *gedp,
     return to_handle_refresh(gedp, argv[1]);
 }
 
-
+// TODO - does this do anything?  It sscanfs the value into hide_view,
+// but then doesn't do anything with it...
 HIDDEN int
 to_hide_view(struct ged *gedp,
 	int argc,
@@ -3564,7 +3565,7 @@ to_hide_view(struct ged *gedp,
 
     /* return the hide view setting */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gvs.hidden);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_hide);
 	return GED_OK;
     }
 

@@ -307,7 +307,6 @@ _bview_settings_hash(XXH64_state_t *state, struct bview_settings *v)
     XXH64_update(state, &v->point_scale, sizeof(fastf_t));
     XXH64_update(state, &v->curve_scale, sizeof(fastf_t));
     XXH64_update(state, &v->bot_threshold, sizeof(size_t));
-    XXH64_update(state, &v->hidden, sizeof(int));
     XXH64_update(state, &v->s_line_width, sizeof(int));
     XXH64_update(state, &v->s_arrow_tip_length, sizeof(fastf_t));
     XXH64_update(state, &v->s_arrow_tip_width, sizeof(fastf_t));
