@@ -134,7 +134,6 @@ struct bview_axes {
 // for value setting
 struct bview_settings {
     // bview opts
-    int           mode;  // TODO - related to dmode, s_dmode, shaded_mode_override?
     int		  hidden; // TODO - related to s_hiddenLine, hiddenLine?
 
     // scene_obj settings
@@ -509,6 +508,7 @@ struct bview {
 
     /* Settings */
     struct bview_settings gvs;
+    int           gv_polygon_mode;  // libtclcad polygon modes
     int           gv_snap_lines;
     double 	  gv_snap_tol_factor;
     int           gv_cleared;

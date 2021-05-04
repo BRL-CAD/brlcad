@@ -300,7 +300,6 @@ _bview_settings_hash(XXH64_state_t *state, struct bview_settings *v)
     if (!v || !state)
 	return;
 
-    XXH64_update(state, &v->mode, sizeof(int));
     XXH64_update(state, &v->adaptive_plot, sizeof(int));
     XXH64_update(state, &v->redraw_on_zoom, sizeof(int));
     XXH64_update(state, &v->x_samples, sizeof(int));

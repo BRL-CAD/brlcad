@@ -243,7 +243,6 @@ bview_update(struct bview *gvp)
 void
 bview_settings_sync(struct bview_settings *dest, struct bview_settings *src)
 {
-    dest->mode = src->mode;
     dest->hidden = src->hidden;
     dest->s_line_width = src->s_line_width;
     dest->s_arrow_tip_length = src->s_arrow_tip_length;

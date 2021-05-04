@@ -397,7 +397,6 @@ _bview_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
     if ((v1 && !v2) || (!v1 && v2))
 	return -1;
 
-    BVIEW_NDIFF(1,mode);
     BVIEW_NDIFF(1,adaptive_plot);
     BVIEW_NDIFF(1,redraw_on_zoom);
     BVIEW_NDIFF(1,x_samples);
