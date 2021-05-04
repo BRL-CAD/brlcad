@@ -356,6 +356,57 @@ db_pr_full_path(const char *msg, const struct db_full_path *pathp)
 
 }
 
+static void
+_db_comb_child_test(int *status, const struct db_i *dbip, union tree *tp, struct directory *dp)
+{
+    if (!tp) return;
+
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    _db_comb_child_test(status, dbip, tp->tr_b.tb_right, dp);
+	    /* fall through */
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    _db_comb_child_test(status, dbip, tp->tr_b.tb_left, dp);
+	    break;
+	case OP_DB_LEAF:
+	    if (db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET) == dp) {
+		(*status) = 1;
+	    }
+	    break;
+	default:
+	    bu_log("_db_comb_child_test: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("_db_comb_child_test\n");
+    }
+}
+
+static int
+db_comb_is_child(const struct db_i *dbip, struct directory *cdp, struct directory *dp)
+{
+    RT_CK_DBI(dbip);
+
+    if (!(cdp->d_flags & RT_DIR_COMB))
+	return 0;
+
+    struct rt_db_internal in;
+    struct rt_comb_internal *comb;
+    if (rt_db_get_internal(&in, cdp, dbip, NULL, &rt_uniresource) < 0)
+	return 0;
+    comb = (struct rt_comb_internal *)in.idb_ptr;
+    RT_CK_COMB(comb);
+
+    int is_child = 0;
+    _db_comb_child_test(&is_child, dbip, comb->tree, dp);
+    rt_db_free_internal(&in);
+    return is_child;
+}
 
 int
 db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
@@ -420,10 +471,23 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	    *slashp = '\0';
 	}
 	if ((dp = db_lookup(dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_log("db_string_to_path() of '%s' failed on '%s'\n",
-		   str, cp);
+	    bu_log("db_string_to_path() of '%s' failed on '%s'\n", str, cp);
 	    ret = -1; /* FAILED */
 	    /* Fall through, storing null dp in this location */
+	} else {
+	    // db_lookup isn't enough by itself - we also need to check that
+	    // the parent comb (if there is one) does in fact contain this dp
+	    if (nslash > 0 && pp->fp_names[nslash -1] != RT_DIR_NULL) {
+		if (!db_comb_is_child(dbip, pp->fp_names[nslash -1], dp)) {
+		    // NOT falling through here, since we do have a dp but it's
+		    // not under the parent
+		    bu_log("db_string_to_path() failed: '%s' is not a child of '%s'\n", dp->d_namep, pp->fp_names[nslash -1]->d_namep);
+		    pp->fp_names[nslash++] = RT_DIR_NULL;
+		    cp = slashp+1;
+		    ret = -1; /* FAILED */
+		    continue;
+		}
+	    }
 	}
 	pp->fp_names[nslash++] = dp;
 	cp = slashp+1;
