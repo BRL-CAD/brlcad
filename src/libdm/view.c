@@ -607,19 +607,13 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     if (v->gv_sdata_polygons.gdps_draw)
 	dm_draw_polys(dmp, &v->gv_sdata_polygons, v->gvs.mode);
 
+#if 0
     // Update selections (if any)
-
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
 	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_selected, i);
-	if (s->s_update_callback)
-	    (*s->s_update_callback)(s);
-	// Update any child objects
-	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
-	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
-	    if (s_c->s_update_callback)
-		(*s_c->s_update_callback)(s_c);
-	}
+	// TODO - set illum flag or otherwise visually indicate what is selected
     }
+#endif
 
     // Draw geometry view objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {

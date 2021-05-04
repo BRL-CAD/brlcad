@@ -34,9 +34,11 @@
 #include "bsocket.h"
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/opt.h"
+#include "bu/sort.h"
 
 #include "ged/view/state.h"
+#include "../alphanum.h"
 #include "../ged_private.h"
 
 #define GET_BVIEW_SCENE_OBJ(p, fp) { \
@@ -334,6 +336,13 @@ draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
 }
 
 
+static int
+alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
+    struct bview_scene_group *ga = *(struct bview_scene_group **)a;
+    struct bview_scene_group *gb = *(struct bview_scene_group **)b;
+    return alphanum_impl(bu_vls_cstr(&ga->g->s_name), bu_vls_cstr(&gb->g->s_name), NULL);
+}
+
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -438,6 +447,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    // Invalid path
 	    db_free_full_path(fp);
 	    bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
+	    continue;
 	}
 	fps.insert(fp);
     }
@@ -561,7 +571,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	BU_PUT(fp, struct db_full_path);
     }
 
-    // Scene objects are created and stored in gv_scene_objs. The application
+    // Sort
+    bu_sort(BU_PTBL_BASEADDR(gedp->ged_gvp->gv_db_grps), BU_PTBL_LEN(gedp->ged_gvp->gv_db_grps), sizeof(struct bview_scene_group *), alphanum_cmp, NULL);
+
+    // Scene objects are created and stored in gv_db_grps. The application
     // may now call each object's update callback to generate wireframes,
     // triangles, etc. for that object based on current settings.  It is then
     // the job of the dm to display the scene objects supplied by the view.

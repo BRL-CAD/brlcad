@@ -38,7 +38,8 @@
 #include "../alphanum.h"
 #include "../ged_private.h"
 
-bool alphanum_cmp(const std::string& a, const std::string& b) {
+static bool
+alphanum_cmp(const std::string& a, const std::string& b) {
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
 
