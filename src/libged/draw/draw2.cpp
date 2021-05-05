@@ -84,6 +84,8 @@ _prim_tess(struct bview_scene_obj *s, struct rt_db_internal *ip)
     return 0;
 }
 
+extern "C" int draw_m3(struct bview_scene_obj *s);
+
 static void
 _scene_obj_geom(struct bview_scene_obj *s)
 {
@@ -94,6 +96,14 @@ _scene_obj_geom(struct bview_scene_obj *s)
     const struct bg_tess_tol *ttol = d->ttol;
     struct rt_view_info info;
     info.bot_threshold = s->s_v->gvs.bot_threshold;
+
+    /* Mode 3 is unique - it evaluates an object rather than visualizing
+     * its solids */
+    if (s->s_os.s_dmode == 3) {
+	draw_m3(s);
+	bview_scene_obj_bound(s);
+	return;
+    }
 
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
@@ -161,6 +171,8 @@ _scene_obj_geom(struct bview_scene_obj *s)
 	    break;
 	case 3:
 	    // Shaded and evaluated
+	    bu_log("Error - got too deep into _scene_obj_draw routine with drawing mode 3\n");
+	    return;
 	    break;
 	case 4:
 	    // Hidden line - generate polygonal forms, fall back to
@@ -765,6 +777,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
+
 	// Prepare tree walking data container
 	struct draw_data_t dd;
 	dd.dbip = gedp->ged_wdbp->dbip;
@@ -782,6 +795,34 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	dd.vs = &vs;
 	dd.g = g;
 
+	// In drawing mode 3 (bigE) we are producing an evaluated shape,
+	// rather than iterating to get the solids
+	if (vs.s_dmode == 3) {
+	    if (vs.color_override) {
+		VMOVE(g->g->s_color, vs.color);
+	    } else {
+		bu_color_to_rgb_chars(&c, g->g->s_color);
+	    }
+	    struct draw_update_data_t *ud;
+	    BU_GET(ud, struct draw_update_data_t);
+	    db_full_path_init(&ud->fp);
+	    db_dup_full_path(&ud->fp, fp);
+	    ud->dbip = dd.dbip;
+	    ud->tol = dd.tol;
+	    ud->ttol = dd.ttol;
+	    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view...
+	    g->g->s_i_data = (void *)ud;
+	    g->g->s_update_callback = &_ged_update_db_path;
+	    g->g->s_free_callback = &_ged_free_draw_data;
+	    g->g->s_v = dd.v;
+
+	    _scene_obj_geom(g->g);
+
+	    // Done with path
+	    db_free_full_path(fp);
+	    BU_PUT(fp, struct db_full_path);
+	    continue;
+	}
 	// Walk the tree to build up the set of scene objects
 	db_fullpath_draw(fp, &mat, (void *)&dd);
 

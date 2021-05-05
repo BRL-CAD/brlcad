@@ -10,6 +10,7 @@ set(DRAW_SRCS
   draw.c
   draw2.cpp
   loadview.c
+  m3.c
   preview.c
   )
 
