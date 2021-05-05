@@ -564,7 +564,11 @@ dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
 
 	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
 
-	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
+	if (s->s_os.s_dmode == 4) {
+	    dm_draw_vlist_hidden_line(dmp, (struct bn_vlist *)&s->s_vlist);
+	} else {
+	    dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
+	}
 
 	dm_add_arrows(dmp, s);
     }
