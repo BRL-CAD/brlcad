@@ -205,17 +205,17 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[0], "orientation")) {
 	int mode = INT_MAX;
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
-	if (BU_STR_EQUIV(argv[2], "none") || BU_STR_EQUIV(argv[2], "unoriented")) {
+	if (BU_STR_EQUIV(argv[2], "none") || BU_STR_EQUIV(argv[2], "unoriented") || BU_STR_EQUIV(argv[2], "no")) {
 	    mode = RT_BOT_UNORIENTED;
 	}
-	if (BU_STR_EQUIV(argv[2], "ccw") || BU_STR_EQUIV(argv[2], "counterclockwise")) {
+	if (BU_STR_EQUIV(argv[2], "ccw") || BU_STR_EQUIV(argv[2], "counterclockwise") || BU_STR_EQUIV(argv[2], "rh")) {
 	    mode = RT_BOT_CCW;
 	}
-	if (BU_STR_EQUIV(argv[2], "cw") || BU_STR_EQUIV(argv[2], "clockwise")) {
+	if (BU_STR_EQUIV(argv[2], "cw") || BU_STR_EQUIV(argv[2], "clockwise") || BU_STR_EQUIV(argv[2], "lh") {
 	    mode = RT_BOT_CW;
 	}
 	if (mode == INT_MAX) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "Possible orientations are: none ccw cw");
+	    bu_vls_printf(gb->gedp->ged_result_str, "Possible orientations are: none (no), ccw (rh), and cw (lh)");
 	    return GED_ERROR;
 	}
 	bot->orientation = mode;
