@@ -558,14 +558,16 @@ dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
 	dm_draw_scene_obj(dmp, s_c);
     }
 
-    // Draw primary wireframe.
-    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
+    if (bu_list_len(&s->s_vlist)) {
+	// Draw primary wireframe.
+	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
 
-    dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
+	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
 
-    dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
+	dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
 
-    dm_add_arrows(dmp, s);
+	dm_add_arrows(dmp, s);
+    }
 
     if (s->s_type_flags & BVIEW_AXES) {
 	dm_draw_scene_axes(dmp, s);
@@ -618,6 +620,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     // Draw geometry view objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	bu_log("Draw %s\n", bu_vls_cstr(&g->g->s_name));
 	dm_draw_scene_obj(dmp, g->g);
     }
 
