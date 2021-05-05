@@ -36,6 +36,7 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
+#include "nmg.h"
 
 #include "ged/view/state.h"
 #include "../alphanum.h"
@@ -52,6 +53,138 @@
 
 #define FREE_BVIEW_SCENE_OBJ(p, fp) { \
         BU_LIST_APPEND(fp, &((p)->l)); }
+
+static int
+_prim_tess(struct bview_scene_obj *s, struct rt_db_internal *ip)
+{
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    struct db_full_path *fp = &d->fp;
+    const struct bn_tol *tol = d->tol;
+    const struct bg_tess_tol *ttol = d->ttol;
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+    RT_CK_DB_INTERNAL(ip);
+    RT_CK_DIR(dp);
+    BN_CK_TOL(tol);
+    BG_CK_TESS_TOL(ttol);
+    if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
+	bu_log("ERROR(%s): tessellation support not available\n", dp->d_namep);
+	return -1;
+    }
+
+    struct model *m = nmg_mm();
+    struct nmgregion *r = (struct nmgregion *)NULL;
+    if (ip->idb_meth->ft_tessellate(&r, m, ip, ttol, tol) < 0) {
+	bu_log("ERROR(%s): tessellation failure\n", dp->d_namep);
+	return -1;
+    }
+
+    NMG_CK_REGION(r);
+    nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, &s->s_v->gv_vlfree);
+    nmg_km(m);
+    return 0;
+}
+
+static void
+_scene_obj_geom(struct bview_scene_obj *s)
+{
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    struct db_i *dbip = d->dbip;
+    struct db_full_path *fp = &d->fp;
+    const struct bn_tol *tol = d->tol;
+    const struct bg_tess_tol *ttol = d->ttol;
+    struct rt_view_info info;
+    info.bot_threshold = s->s_v->gvs.bot_threshold;
+
+    struct rt_db_internal dbintern;
+    struct rt_db_internal *ip = &dbintern;
+    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, s->s_mat, d->res);
+    if (ret < 0)
+	return;
+
+    // If we don't have a BRL-CAD type, see if we've got a plot routine
+    if (ip->idb_major_type != DB5_MAJORTYPE_BRLCAD) {
+	if (ip->idb_meth->ft_plot) {
+	    ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+	}
+	goto geom_done;
+    }
+
+    // At least for the moment, we don't try anything fancy with pipes
+    if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_PIPE) {
+	if (ip->idb_meth->ft_plot) {
+	    ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+	    s->s_os.s_dmode = 0;
+	}
+	goto geom_done;
+    }
+
+    // For anything other than mode 0, we call specific routines for
+    // some of the primitives
+    if (s->s_os.s_dmode > 0) {
+	switch (ip->idb_minor_type) {
+	    case DB5_MINORTYPE_BRLCAD_BOT:
+		(void)rt_bot_plot_poly(&s->s_vlist, ip, ttol, tol);
+		goto geom_done;
+		break;
+	    case DB5_MINORTYPE_BRLCAD_POLY:
+		(void)rt_pg_plot_poly(&s->s_vlist, ip, ttol, tol);
+		goto geom_done;
+		break;
+	    case DB5_MINORTYPE_BRLCAD_BREP:
+		(void)rt_brep_plot_poly(&s->s_vlist, fp, ip, ttol, tol, NULL);
+		goto geom_done;
+		break;
+	    default:
+		break;
+	}
+    }
+
+    // Now the more general cases
+    switch (s->s_os.s_dmode) {
+	case 0:
+	case 1:
+	    // Get wireframe (for mode 1, all the non-wireframes are handled
+	    // by the above BOT/POLY/BREP cases
+	    if (ip->idb_meth->ft_plot) {
+		ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+		s->s_os.s_dmode = 0;
+	    }
+	    break;
+	case 2:
+	    // Shade everything except pipe, don't evaluate, fall
+	    // back to wireframe in case of failure
+	    if (_prim_tess(s, ip) < 0 && ip->idb_meth->ft_plot) {
+		ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+		s->s_os.s_dmode = 0;
+	    }
+	    break;
+	case 3:
+	    // Shaded and evaluated
+	    break;
+	case 4:
+	    // Hidden line - generate polygonal forms, fall back to
+	    // un-hidden wireframe in case of failure
+	    if (_prim_tess(s, ip) < 0 && ip->idb_meth->ft_plot) {
+		ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+		s->s_os.s_dmode = 0;
+	    }
+	    break;
+	default:
+	    // Default to wireframe
+	    if (ip->idb_meth->ft_plot) {
+		ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+	    }
+	    break;
+    }
+
+    // Update s_size and s_center
+    bview_scene_obj_bound(s);
+
+geom_done:
+
+    rt_db_free_internal(&dbintern);
+}
+
 
 // This is the generic "just create/update the view geometry" logic - for
 // editing operations, which will have custom visuals and updating behavior,
@@ -72,8 +205,6 @@ _ged_update_db_path(struct bview_scene_obj *s)
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_i *dbip = d->dbip;
     struct db_full_path *fp = &d->fp;
-    const struct bn_tol *tol = d->tol;
-    const struct bg_tess_tol *ttol = d->ttol;
 
     // Clear out existing vlist, if there is one...
     BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
@@ -90,18 +221,8 @@ _ged_update_db_path(struct bview_scene_obj *s)
 	return 0;
     }
 
-    // Make sure we can get the internal form
-    struct rt_db_internal dbintern;
-    struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, d->res);
-    if (ret < 0 || !ip->idb_meth->ft_plot)
-	return 0;
-
-    // TODO - call correct vlist method based on mode
-    // Get wireframe
-    struct rt_view_info info;
-    info.bot_threshold = s->s_v->gvs.bot_threshold;
-    ret = ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+    // Get the correct geometry for the mode
+    _scene_obj_geom(s);
 
     // TODO - confirm color
 
@@ -372,6 +493,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	db_path_to_vls(&s->s_uuid, path);
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
+	MAT_COPY(s->s_mat, *curr_mat);
 	bview_settings_sync(&s->s_os, &dd->g->g->s_os);
 	s->s_soldash = (dd->curr_op == 4) ? 1 : 0;
 	s->s_type_flags |= BVIEW_DBOBJ_BASED;
@@ -395,21 +517,8 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	s->s_update_callback = &_ged_update_db_path;
 	s->s_free_callback = &_ged_free_draw_data;
 
-	// Create the initial data
-	struct rt_db_internal dbintern;
-	struct rt_db_internal *ip = &dbintern;
-	int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&ud->fp), ud->dbip, *curr_mat, ud->res);
-	if (ret < 0 || !ip->idb_meth->ft_plot)
-	    return;
-
-	// TODO - call correct vlist method based on mode
-	// Get wireframe
-	struct rt_view_info info;
-	info.bot_threshold = s->s_v->gvs.bot_threshold;
-	ip->idb_meth->ft_plot(&s->s_vlist, ip, ud->ttol, ud->tol, &info);
-
-	// Update s_size and s_center
-	bview_scene_obj_bound(s);
+	// Call correct vlist method based on mode
+	_scene_obj_geom(s);
 
 	// Add object to scene group
 	bu_ptbl_ins(&dd->g->g->children, (long *)s);
@@ -570,6 +679,17 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
+	// Similarly, get an initial color from the path, if we're not overridden
+	struct bu_color c;
+	if (!vs.color_override) {
+	    unsigned char dc[3];
+	    dc[0] = 255;
+	    dc[1] = 0;
+	    dc[2] = 0;
+	    bu_color_from_rgb_chars(&c, dc);
+	    db_full_path_color(&c, fp, dbip, &rt_uniresource);
+	}
+
 	std::set<struct bview_scene_group *> clear;
 	std::set<struct bview_scene_group *>::iterator g_it;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
@@ -647,7 +767,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-
 	// Prepare tree walking data container
 	struct draw_data_t dd;
 	dd.dbip = gedp->ged_wdbp->dbip;
@@ -660,11 +779,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	if (vs.color_override) {
 	    bu_color_from_rgb_chars(&dd.c, vs.color);
 	} else {
-	    unsigned char dc[3];
-	    dc[0] = 255;
-	    dc[1] = 0;
-	    dc[2] = 0;
-	    bu_color_from_rgb_chars(&dd.c, dc);
+	    HSET(dd.c.buc_rgb, c.buc_rgb[0], c.buc_rgb[1], c.buc_rgb[2], c.buc_rgb[3]);
 	}
 	dd.vs = &vs;
 	dd.g = g;
