@@ -211,7 +211,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	if (BU_STR_EQUIV(argv[2], "ccw") || BU_STR_EQUIV(argv[2], "counterclockwise") || BU_STR_EQUIV(argv[2], "rh")) {
 	    mode = RT_BOT_CCW;
 	}
-	if (BU_STR_EQUIV(argv[2], "cw") || BU_STR_EQUIV(argv[2], "clockwise") || BU_STR_EQUIV(argv[2], "lh") {
+	if (BU_STR_EQUIV(argv[2], "cw") || BU_STR_EQUIV(argv[2], "clockwise") || BU_STR_EQUIV(argv[2], "lh")) {
 	    mode = RT_BOT_CW;
 	}
 	if (mode == INT_MAX) {
