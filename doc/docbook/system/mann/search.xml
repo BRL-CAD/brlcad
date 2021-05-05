@@ -329,7 +329,7 @@ d2.r
 		  </row>
 		  <row>
 		    <entry>bot</entry>
-		    <entry>mode, orient, V, F, T</entry>
+		    <entry>mode[surf,volume,plate,plate_nocos], orient[no,lh,rh], V, F, T</entry>
 		  </row>
 		  <row>
 		    <entry>cline</entry>
