@@ -96,6 +96,7 @@ _scene_obj_geom(struct bview_scene_obj *s)
     info.bot_threshold = s->s_v->gvs.bot_threshold;
 
     struct rt_db_internal dbintern;
+    RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
     int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, s->s_mat, d->res);
     if (ret < 0)
@@ -119,7 +120,7 @@ _scene_obj_geom(struct bview_scene_obj *s)
     }
 
     // For anything other than mode 0, we call specific routines for
-    // some of the primitives
+    // some of the primitives.
     if (s->s_os.s_dmode > 0) {
 	switch (ip->idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_BOT:
@@ -497,10 +498,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	bview_settings_sync(&s->s_os, &dd->g->g->s_os);
 	s->s_soldash = (dd->curr_op == 4) ? 1 : 0;
 	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-
-	int rgb[3];
-	bu_color_to_rgb_ints(&dd->c, &rgb[0], &rgb[1], &rgb[2]);
-	VMOVE(s->s_color, rgb);
+	bu_color_to_rgb_chars(&dd->c, s->s_color);
 
 	// Stash the information needed for a draw update callback
 	struct draw_update_data_t *ud;
