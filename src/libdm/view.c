@@ -560,7 +560,7 @@ dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
 
     if (bu_list_len(&s->s_vlist)) {
 	// Draw primary wireframe.
-	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
+	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, 1.0);
 
 	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
 
