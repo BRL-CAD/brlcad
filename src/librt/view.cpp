@@ -170,9 +170,9 @@ solid_point_spacing(struct bview *gvp, fastf_t solid_width)
  */
 extern "C" fastf_t
 rt_solid_point_spacing_for_view(
-        struct bview_scene_obj *sp,
         struct rt_db_internal *ip,
-        struct bview *gvp)
+	struct rt_view_info *vi
+	)
 {
     fastf_t point_spacing = 0.0;
 
@@ -194,11 +194,11 @@ rt_solid_point_spacing_for_view(
 
                 avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
                 avg_diameter /= 2.0;
-                point_spacing = solid_point_spacing(gvp, avg_diameter);
+                point_spacing = solid_point_spacing(vi->v, avg_diameter);
             }
                 break;
             case DB5_MINORTYPE_BRLCAD_BOT:
-                point_spacing = view_avg_sample_spacing(gvp);
+                point_spacing = view_avg_sample_spacing(vi->v);
                 break;
             case DB5_MINORTYPE_BRLCAD_BREP: {
                 struct rt_brep_internal *bi;
@@ -207,15 +207,15 @@ rt_solid_point_spacing_for_view(
                 bi = (struct rt_brep_internal *)ip->idb_ptr;
                 RT_BREP_CK_MAGIC(bi);
 
-                point_spacing = solid_point_spacing(gvp,
+                point_spacing = solid_point_spacing(vi->v,
                         brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
             }
                 break;
             default:
-                point_spacing = solid_point_spacing(gvp, sp->s_size);
+                point_spacing = solid_point_spacing(vi->v, vi->s_size);
         }
     } else {
-        point_spacing = solid_point_spacing(gvp, sp->s_size);
+        point_spacing = solid_point_spacing(vi->v, vi->s_size);
     }
 
     return point_spacing;

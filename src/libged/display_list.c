@@ -763,8 +763,11 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
 	info.vhead = &vhead;
 	info.tol = tol;
 	info.bot_threshold = (gvp) ? gvp->gvs.bot_threshold : 0;
+	info.v = gvp;
+	info.s_size = sp->s_size;
+	info.point_scale = gvp->gvs.point_scale;
 
-	info.point_spacing = rt_solid_point_spacing_for_view(sp, ip, gvp);
+	info.point_spacing = rt_solid_point_spacing_for_view(ip, &info);
 
 	info.curve_spacing = sp->s_size / 2.0;
 

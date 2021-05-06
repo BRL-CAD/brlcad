@@ -59,6 +59,10 @@ struct rt_view_info {
      * smoother (more accurate) plot curves.
      */
     fastf_t point_spacing;
+    struct bview *v;
+    fastf_t s_size;
+    fastf_t point_scale;
+
 
     /** The average distance between plotted surface curves.
      * Smaller spacing means more curves are drawn, increasing the overall
@@ -162,9 +166,8 @@ struct rt_selection_operation {
  * which case, this function could be removed. */
 RT_EXPORT extern fastf_t
 rt_solid_point_spacing_for_view(
-          struct bview_scene_obj *sp,
           struct rt_db_internal *ip,
-          struct bview *gvp);
+          struct rt_view_info *vi);
 
 
 __END_DECLS
