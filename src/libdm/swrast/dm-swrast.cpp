@@ -604,8 +604,8 @@ struct dm_impl dm_swrast_impl = {
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
+    1,				/* no lighting */
+    1,				/* transparency */
     1,				/* depth buffer is writable */
     1,				/* zbuffer */
     0,				/* no zclipping */
