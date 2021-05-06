@@ -467,8 +467,6 @@ bview_differ(struct bview *v1, struct bview *v2)
 
     BVIEW_NDIFF(1,adaptive_plot);
     BVIEW_NDIFF(1,redraw_on_zoom);
-    BVIEW_NDIFF(1,x_samples);
-    BVIEW_NDIFF(1,y_samples);
     BVIEW_NDIFF(1,point_scale);
     BVIEW_NDIFF(1,curve_scale);
     BVIEW_NDIFF(1,bot_threshold);

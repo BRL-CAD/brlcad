@@ -3185,8 +3185,8 @@ to_dplot(struct ged *gedp,
 	for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	    gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	    if (to_is_viewable(gdvp)) {
-		gedp->ged_gvp->x_samples = dm_get_width((struct dm *)gdvp->dmp);
-		gedp->ged_gvp->y_samples = dm_get_height((struct dm *)gdvp->dmp);
+		gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+		gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 	    }
 	}
 
@@ -3257,8 +3257,8 @@ to_dplot(struct ged *gedp,
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (to_is_viewable(gdvp)) {
-	    gedp->ged_gvp->x_samples = dm_get_width((struct dm *)gdvp->dmp);
-	    gedp->ged_gvp->y_samples = dm_get_height((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 	}
     }
     to_refresh_all_views(current_top);

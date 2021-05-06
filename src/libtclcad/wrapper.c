@@ -64,8 +64,8 @@ to_autoview_func(struct ged *gedp,
     for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (to_is_viewable(gdvp)) {
-	    gedp->ged_gvp->x_samples = dm_get_width((struct dm *)gdvp->dmp);
-	    gedp->ged_gvp->y_samples = dm_get_height((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 	}
     }
 
@@ -295,8 +295,8 @@ to_view_func_common(struct ged *gedp,
 
 	ged_redraw(gedp, 1, (const char **)gr_av);
 
-	gdvp->x_samples = dm_get_width((struct dm *)gdvp->dmp);
-	gdvp->y_samples = dm_get_height((struct dm *)gdvp->dmp);
+	gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
     }
 
     if (ret == GED_OK) {

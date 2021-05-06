@@ -36,7 +36,7 @@ view_avg_size(struct bview *gvp)
 {
     fastf_t view_aspect, x_size, y_size;
 
-    view_aspect = (fastf_t)gvp->x_samples / gvp->y_samples;
+    view_aspect = (fastf_t)gvp->gv_width / gvp->gv_height;
     x_size = gvp->gv_size;
     y_size = x_size / view_aspect;
 
@@ -49,7 +49,7 @@ view_avg_sample_spacing(struct bview *gvp)
     fastf_t avg_view_size, avg_view_samples;
 
     avg_view_size = view_avg_size(gvp);
-    avg_view_samples = (gvp->x_samples + gvp->y_samples) / 2.0;
+    avg_view_samples = (gvp->gv_width + gvp->gv_height) / 2.0;
 
     return avg_view_size / avg_view_samples;
 }

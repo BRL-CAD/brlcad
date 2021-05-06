@@ -423,8 +423,6 @@ bview_hash(struct bview *v)
     XXH64_update(state, &v->curve_scale, sizeof(fastf_t));
     XXH64_update(state, &v->point_scale, sizeof(fastf_t));
     XXH64_update(state, &v->redraw_on_zoom, sizeof(int));
-    XXH64_update(state, &v->x_samples, sizeof(int));
-    XXH64_update(state, &v->y_samples, sizeof(int));
 
    _bview_settings_hash(state, &v->gvs);
     XXH64_update(state, &v->gv_zclip, sizeof(int));

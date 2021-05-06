@@ -133,8 +133,6 @@ bview_init(struct bview *gvp)
 
     gvp->adaptive_plot = 0;
     gvp->redraw_on_zoom = 0;
-    gvp->x_samples = 0;
-    gvp->y_samples = 0;
     gvp->point_scale = 1;
     gvp->curve_scale = 1;
     gvp->bot_threshold = 0;

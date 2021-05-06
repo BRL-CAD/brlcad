@@ -51,13 +51,31 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc < 2) {
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], "-h")) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
 	return GED_HELP;
     }
 
     gvp = gedp->ged_gvp;
     if (gvp == NULL) {
+	return GED_OK;
+    }
+
+    /* Print current state if no args are supplied */
+    if (argc == 1) {
+	if (gvp->adaptive_plot) {
+	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: disabled\n");
+	}
+	if (gvp->redraw_on_zoom) {
+	    bu_vls_printf(gedp->ged_result_str, "Redraw on zoom: enabled\n");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "Redraw on zoom: disabled\n");
+	}
+	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", gvp->point_scale);
+	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", gvp->curve_scale);
+	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", gvp->bot_threshold);
 	return GED_OK;
     }
 
