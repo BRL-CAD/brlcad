@@ -587,7 +587,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[4],   "", "shaded",        "",                 NULL, &drawing_modes[2],  "Shade bots and polysolids (mode = 1)");
     BU_OPT(d[5],   "", "shaded-all",    "",                 NULL, &drawing_modes[3],  "Shade all solids, not evaluated (mode = 2)");
     BU_OPT(d[6],  "E", "evaluate",      "",                 NULL, &drawing_modes[4],  "Shade and evaluate booleans (mode = 3)");
-    BU_OPT(d[7],  "t", "transparency", "#",      &bu_opt_fastf_t,  &vs.transparency,  "Set transparency level in drawing");
+    BU_OPT(d[7],  "t", "transparency", "#",      &bu_opt_fastf_t,  &vs.transparency,  "Set transparency level in drawing: range 0 (clear) to 1 (opaque)");
     BU_OPT(d[8],   "", "hidden-line",   "",                 NULL, &drawing_modes[5],  "Draw using hidden lines (TODO - is this a drawing mode?)");
     BU_OPT(d[9],  "L", "lod",           "",                 NULL, &vs.adaptive_plot,  "Enable view adaptive Level of Detail plotting");
     BU_OPT(d[10],  "", "adaptive",      "",                 NULL, &vs.adaptive_plot,  "");
