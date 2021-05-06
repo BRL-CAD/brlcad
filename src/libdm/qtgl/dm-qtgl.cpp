@@ -326,9 +326,6 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 	// Fontstash does not work in OpenGL raster coordinates,
 	// so we need the view and the coordinates in window
 	// XY coordinates.
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
 	glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
 	GLfloat pos[4];
 	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
@@ -342,11 +339,6 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
 	fonsSetColor(privars->fs, color);
 	fonsDrawText(privars->fs, coord_x, coord_y, str, NULL);
-
-	// Done with text, put matrices back
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
 
 	if (!blend_state) glDisable(GL_BLEND);
 
