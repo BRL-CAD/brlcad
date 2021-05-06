@@ -1,4 +1,4 @@
-/*                          M 3 . C
+/*                 W I R E F R A M E _ E V A L . C
  * BRL-CAD
  *
  * Copyright (c) 1997-2021 United States Government as represented by
@@ -19,10 +19,12 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file libged/draw/m3.c
+/** @file libged/draw/wireframe_eval.c
  *
- * This module implements "evaluated" drawing - a.k.a drawing mode 3 and the
- * "bigE" mode originally exposed by the "E" command.
+ * This module implements "evaluated" wireframe drawing: it takes seed nmg
+ * primitive wireframes and evaluates the CSG booleans to produce more minimal
+ * wireframes - a.k.a drawing mode 3, a.k.a the "bigE" mode originally exposed
+ * by the "E" command.
  *
  */
 /** @} */
