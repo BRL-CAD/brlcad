@@ -39,9 +39,6 @@
     } \
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
-#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
-
 /*
  * Erase all currently displayed geometry
  *
@@ -69,7 +66,6 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
 	    bview_scene_obj_free(cg->g, gedp->free_scene_obj);
-	    FREE_BVIEW_SCENE_OBJ(cg->g, &gedp->free_scene_obj->l);
 	    BU_PUT(cg, struct bview_scene_group);
 	}
 	bu_ptbl_reset(sg);
@@ -81,7 +77,6 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
 	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
 	    bview_scene_obj_free(s, gedp->free_scene_obj);
-	    FREE_BVIEW_SCENE_OBJ(s, &gedp->free_scene_obj->l);
 	}
     }
 

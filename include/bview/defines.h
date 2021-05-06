@@ -163,6 +163,7 @@ struct bview_settings {
     int           x_samples;
     int           y_samples;
 };
+#define BVIEW_SETTINGS_INIT {1, 0.0, 0.0, 1.0, 0, 0, {255, 0, 0}, 0, 0, 0, 0, 0.0, 0.0, 1, 0, 0}
 
 
 /* Note that it is possible for a view object to be view-only (not

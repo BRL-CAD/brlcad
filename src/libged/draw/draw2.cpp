@@ -51,9 +51,6 @@
         } \
         BU_LIST_INIT( &((p)->s_vlist) ); }
 
-#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
-        BU_LIST_APPEND(fp, &((p)->l)); }
-
 static int
 _prim_tess(struct bview_scene_obj *s, struct rt_db_internal *ip)
 {
@@ -571,7 +568,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    struct bview_settings vs;
+    struct bview_settings vs = BVIEW_SETTINGS_INIT;
+
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[16];
     BU_OPT(d[0],  "h", "help",          "",                 NULL,       &print_help,  "Print help and exit");
@@ -744,7 +742,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 		struct bview_scene_obj *s = *s_it;
 		bu_ptbl_rm(&g->g->children, (long *)s);
 		bview_scene_obj_free(s, free_scene_obj);
-		FREE_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
 	    }
 	} else {
 	    // Create new group
@@ -763,7 +760,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 		struct bview_scene_group *cg = *g_it;
 		bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
 		bview_scene_obj_free(cg->g, free_scene_obj);
-		FREE_BVIEW_SCENE_OBJ(cg->g, &free_scene_obj->l);
 		BU_PUT(cg, struct bview_scene_group);
 	    }
 	}

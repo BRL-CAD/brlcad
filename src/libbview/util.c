@@ -43,6 +43,9 @@ bview_init(struct bview *gvp)
 
     gvp->magic = BVIEW_MAGIC;
 
+    struct bview_settings defaults = BVIEW_SETTINGS_INIT;
+    bview_settings_sync(&gvp->gvs, &defaults);
+
     gvp->gv_scale = 500.0;
     gvp->gv_i_scale = gvp->gv_scale;
     gvp->gv_a_scale = 1.0 - gvp->gv_scale / gvp->gv_i_scale;
@@ -407,20 +410,35 @@ bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf
 void
 bview_scene_obj_init(struct bview_scene_obj *s, struct bview_scene_obj *free_scene_obj)
 {
+    s->s_type_flags = 0;
     BU_LIST_INIT(&(s->s_vlist));
-    BU_PTBL_INIT(&s->children);
     BU_VLS_INIT(&s->s_name);
     bu_vls_trunc(&s->s_name, 0);
     BU_VLS_INIT(&s->s_uuid);
     bu_vls_trunc(&s->s_uuid, 0);
-    s->s_arrow = 0;
-    s->s_flag = UP;
-    s->s_iflag = DOWN;
-    s->s_soldash = 0;
-    s->free_scene_obj = free_scene_obj;
+    MAT_IDN(s->s_mat);
 
+    s->s_v = NULL;
+
+    s->s_i_data = NULL;
     s->s_update_callback = NULL;
     s->s_free_callback = NULL;
+
+    s->s_flag = UP;
+    s->s_iflag = DOWN;
+    VSET(s->s_color, 255, 0, 0);
+    s->s_soldash = 0;
+    s->s_arrow = 0;
+
+    struct bview_settings defaults = BVIEW_SETTINGS_INIT;
+    bview_settings_sync(&s->s_os, &defaults);
+
+    if (!BU_PTBL_IS_INITIALIZED(&s->children)) {
+	BU_PTBL_INIT(&s->children);
+    }
+    bu_ptbl_reset(&s->children);
+
+    s->free_scene_obj = free_scene_obj;
 }
 
 #define FREE_BVIEW_SCENE_OBJ(p, fp) { \
@@ -434,8 +452,8 @@ bview_scene_obj_free(struct bview_scene_obj *s, struct bview_scene_obj *free_sce
 	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
 	    bview_scene_obj_free(s_c, free_scene_obj);
-	    FREE_BVIEW_SCENE_OBJ(s_c, &free_scene_obj->l);
 	}
+	bu_ptbl_reset(&s->children);
     }
 
     // If we have a callback for the internal data, use it
@@ -447,10 +465,8 @@ bview_scene_obj_free(struct bview_scene_obj *s, struct bview_scene_obj *free_sce
 	BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
     }
 
-    // free child table
-    if (BU_PTBL_IS_INITIALIZED(&s->children)) {
-	bu_ptbl_free(&s->children);
-    }
+    bview_scene_obj_init(s, free_scene_obj);
+    FREE_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
 }
 
 void

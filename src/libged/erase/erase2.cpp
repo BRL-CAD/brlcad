@@ -45,9 +45,6 @@
     } \
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
-#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
-
 // Need to process shallowest to deepest, so we properly split new scene groups
 // generated from higher level paths that are in turn split by other deeper
 // paths.
@@ -205,7 +202,6 @@ new_scene_grps(std::set<struct bview_scene_group *> *all, struct db_i *dbip, str
 	    struct bview_scene_group *ng = *g_it;
 	    ngrps.erase(ng);
 	    bview_scene_obj_free(ng->g, free_scene_obj);
-	    FREE_BVIEW_SCENE_OBJ(ng->g, &free_scene_obj->l);
 	    BU_PUT(ng, struct bview_scene_group);
 	}
 
@@ -358,7 +354,6 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	struct bview_scene_group *cg = *c_it;
 	bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
 	bview_scene_obj_free(cg->g, free_scene_obj);
-	FREE_BVIEW_SCENE_OBJ(cg->g, &free_scene_obj->l);
 	BU_PUT(cg, struct bview_scene_group);
     }
 
@@ -396,7 +391,6 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	    struct bview_scene_obj *s = *s_it;
 	    bu_ptbl_rm(&cg->g->children, (long *)s);
 	    bview_scene_obj_free(s, free_scene_obj);
-	    FREE_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
 	}
     }
 

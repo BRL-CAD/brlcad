@@ -47,10 +47,6 @@
     } \
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
-#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
-
-
 int
 _objs_cmd_draw(void *bs, int argc, const char **argv)
 {
@@ -120,7 +116,6 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
     }
     bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
     bview_scene_obj_free(s, gedp->free_scene_obj);
-    FREE_BVIEW_SCENE_OBJ(s, &gedp->free_scene_obj->l);
 
     return GED_OK;
 }
