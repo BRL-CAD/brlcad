@@ -872,7 +872,7 @@ curve_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V
 
 
 int
-rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_sketch_internal *sketch_ip;
     int ret;

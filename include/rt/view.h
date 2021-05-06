@@ -36,48 +36,11 @@
 __BEGIN_DECLS
 
 /**
- * Normally, librt doesn't have a concept of a "display" of the
- * geometry.  However for at least the plotting routines, view
- * information is sometimes needed to produce more intelligent output.
- * In those situations, the application should populate and pass an
- * rt_view_info struct.
- *
- * **TODO** this structure is NOT in final form and should not be
- * relied upon.
- *
- * **TODO** see if we can fold into struct bview, which is a better
- * conceptual fit.  bview.h, despite being in the dm directory, is
- * intended to be a library independent definition of a view.
+ * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.
+ * However for at least the plotting routines, view information is sometimes
+ * needed to produce more intelligent output.  In those situations, the
+ * application will generally pass in a bview structure.
  */
-struct rt_view_info {
-    struct bu_list *vhead;
-    const struct bn_tol *tol;
-
-    /**
-     * Inputs and settings to calculate point spacing - the average distance
-     * between the segment points of plotted curves.  Smaller spacing means
-     * more points per curve, and thus smoother (more accurate) plot curves.
-     *
-     * Individual primitives may need to use primitive specific information
-     * to calculate the final spacing, hence these inputs are passed to the
-     * adaptive plot routines.
-     */
-    struct bview *v;
-    fastf_t s_size;
-    fastf_t point_scale; // v->point_scale
-
-
-    /** The average distance between plotted surface curves.
-     * Smaller spacing means more curves are drawn, increasing the overall
-     * density of the plot.
-     */
-    //fastf_t curve_spacing;
-    fastf_t curve_scale; // v->curve_scale
-
-    /** Face count beyond which the BoT primitive should return
-     * a bbox plot rather than the full vlist */
-    size_t bot_threshold; // v->bot_threshold
-};
 
 /**
  * Specifies a subset of a primitive's geometry as the target for an

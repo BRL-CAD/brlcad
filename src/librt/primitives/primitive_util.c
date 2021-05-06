@@ -102,16 +102,18 @@ primitive_get_absolute_tolerance(
 fastf_t
 primitive_diagonal_samples(
 	struct rt_db_internal *ip,
-	const struct rt_view_info *info)
+	const struct bview *v,
+	const struct bn_tol *tol,
+	fastf_t s_size)
 {
     point_t bbox_min, bbox_max;
     fastf_t primitive_diagonal_mm, samples_per_mm;
     fastf_t diagonal_samples;
 
-    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
+    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, tol);
     primitive_diagonal_mm = DIST_PNT_PNT(bbox_min, bbox_max);
 
-    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
     samples_per_mm = 1.0 / point_spacing;
     diagonal_samples = samples_per_mm * primitive_diagonal_mm;
 

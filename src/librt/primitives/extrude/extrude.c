@@ -1387,7 +1387,7 @@ rt_extrude_free(struct soltab *stp)
 
 
 int
-rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_curve *crv = NULL;

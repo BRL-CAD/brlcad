@@ -818,7 +818,7 @@ rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 }
 
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register int i;
     struct rt_ell_internal *eip;

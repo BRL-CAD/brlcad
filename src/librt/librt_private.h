@@ -175,7 +175,9 @@ extern fastf_t primitive_get_absolute_tolerance(
 
 extern fastf_t primitive_diagonal_samples(
 	struct rt_db_internal *ip,
-	const struct rt_view_info *info);
+	const struct bview *v,
+	const struct bn_tol *tol,
+	fastf_t s_size);
 
 extern int approximate_parabolic_curve(
 	struct rt_pnt_node *pts,

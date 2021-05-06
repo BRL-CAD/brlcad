@@ -90,13 +90,10 @@ _wireframe_plot(struct bview_scene_obj *s, struct rt_db_internal *ip)
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
 
-    struct rt_view_info info;
-    info.bot_threshold = (s->s_v) ? s->s_v->bot_threshold : 0;
-
     if (s->s_v->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
     } else if (ip->idb_meth->ft_plot) {
-	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
     }
 }
 

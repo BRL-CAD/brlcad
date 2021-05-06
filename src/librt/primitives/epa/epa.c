@@ -909,7 +909,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 }
 
 int
-rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;

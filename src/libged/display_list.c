@@ -744,7 +744,6 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
     struct bu_list vhead;
     struct rt_db_internal dbintern;
     struct rt_db_internal *ip = &dbintern;
-    struct rt_view_info info;
 
     BU_LIST_INIT(&vhead);
     if (!sp->s_u_data)
@@ -761,8 +760,7 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
     if (gvp && gvp->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	ret = ip->idb_meth->ft_adaptive_plot(&vhead, ip, tol, gvp, sp->s_size);
     } else if (ip->idb_meth->ft_plot) {
-	info.bot_threshold = (gvp) ? gvp->bot_threshold : 0;
-	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, &info);
+	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, gvp);
     }
 
     rt_db_free_internal(ip);

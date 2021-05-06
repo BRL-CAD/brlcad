@@ -2354,7 +2354,7 @@ rt_pipe_plot(
     struct rt_db_internal *ip,
     const struct bg_tess_tol *UNUSED(ttol),
     const struct bn_tol *UNUSED(tol),
-    const struct rt_view_info *UNUSED(info))
+    const struct bview *UNUSED(info))
 {
     struct rt_pipe_internal *pip;
     struct pipe_segment *cur_seg;
