@@ -59,7 +59,7 @@ dmSW::dmSW(QWidget *parent)
     dm_set_pathname(dmp, "SWDM");
     dm_set_zbuffer(dmp, 1);
 
-    fastf_t windowbounds[6] = { -1, 1, -1, 1, (int)GED_MIN, (int)GED_MAX };
+    fastf_t windowbounds[6] = { -1, 1, -1, 1, -1, 1 };
     dm_set_win_bounds(dmp, windowbounds);
 
     v->dmp = dmp;
