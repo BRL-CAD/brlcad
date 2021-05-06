@@ -99,10 +99,6 @@ _wireframe_plot(struct bview_scene_obj *s, struct rt_db_internal *ip)
 	info.vhead = &s->s_vlist;
 	info.tol = d->tol;
 	info.point_scale = s->s_os.point_scale;
-
-	info.point_spacing = rt_solid_point_spacing_for_view(ip, &info);
-	info.point_spacing /= s->s_os.point_scale;
-
 	info.curve_spacing = s->s_size / 2.0;
 	info.curve_spacing /= s->s_os.curve_scale;
 

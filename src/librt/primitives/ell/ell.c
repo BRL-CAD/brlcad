@@ -757,7 +757,7 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
 static int
 ell_ellipse_points(
 	const struct rt_ell_internal *ell,
-	const struct rt_view_info *info)
+	fastf_t point_spacing)
 {
     fastf_t avg_radius, avg_circumference;
     fastf_t ell_mag_a, ell_mag_b, ell_mag_c;
@@ -769,7 +769,7 @@ ell_ellipse_points(
     avg_radius = (ell_mag_a + ell_mag_b + ell_mag_c) / 3.0;
     avg_circumference = M_2PI * avg_radius;
 
-    return avg_circumference / info->point_spacing;
+    return avg_circumference / point_spacing;
 }
 
 int
@@ -783,10 +783,12 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
+    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+
     config.vhead = info->vhead;
     VMOVE(config.ell_center, eip->v);
 
-    config.points_per_section = ell_ellipse_points(eip, info);
+    config.points_per_section = ell_ellipse_points(eip, point_spacing);
 
     if (config.points_per_section < 4) {
 	RT_ADD_VLIST(info->vhead, eip->v, BN_VLIST_POINT_DRAW);

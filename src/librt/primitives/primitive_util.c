@@ -111,7 +111,8 @@ primitive_diagonal_samples(
     ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
     primitive_diagonal_mm = DIST_PNT_PNT(bbox_min, bbox_max);
 
-    samples_per_mm = 1.0 / info->point_spacing;
+    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+    samples_per_mm = 1.0 / point_spacing;
     diagonal_samples = samples_per_mm * primitive_diagonal_mm;
 
     return diagonal_samples;

@@ -1931,7 +1931,7 @@ draw_lines_between_ellipses(
 
 
 static int
-tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_info *info)
+tgc_points_per_ellipse(const struct rt_db_internal *ip, fastf_t point_spacing)
 {
     struct rt_tgc_internal *tgc;
     fastf_t avg_radius, avg_circumference;
@@ -1949,7 +1949,7 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     avg_radius = (tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d) / 4.0;
     avg_circumference = M_2PI * avg_radius;
 
-    return avg_circumference / info->point_spacing;
+    return avg_circumference / point_spacing;
 }
 
 
@@ -1988,13 +1988,24 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     int points_per_ellipse, connecting_lines;
     struct rt_tgc_internal *tip;
     struct ellipse ellipse1, ellipse2;
+    fastf_t point_spacing;
+    fastf_t avg_diameter;
+    fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
-    points_per_ellipse = tgc_points_per_ellipse(ip, info);
+    tgc_mag_a = MAGNITUDE(tip->a);
+    tgc_mag_b = MAGNITUDE(tip->b);
+    tgc_mag_c = MAGNITUDE(tip->c);
+    tgc_mag_d = MAGNITUDE(tip->d);
+    avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
+    avg_diameter /= 2.0;
+    point_spacing = solid_point_spacing(info->v, avg_diameter);
+
+    points_per_ellipse = tgc_points_per_ellipse(ip, point_spacing);
 
     if (points_per_ellipse < 6) {
 	point_t p;

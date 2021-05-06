@@ -795,7 +795,7 @@ epa_plot_parabola(
 static int
 epa_curve_points(
     const struct rt_epa_internal *epa,
-    const struct rt_view_info *info)
+    fastf_t point_spacing)
 {
     fastf_t avg_r, approx_curve_len;
     point_t p1, p2;
@@ -807,20 +807,20 @@ epa_curve_points(
 
     approx_curve_len = 2.0 * DIST_PNT_PNT(p1, p2);
 
-    return approx_curve_len / info->point_spacing;
+    return approx_curve_len / point_spacing;
 }
 
 static int
 epa_ellipse_points(
 	struct rt_epa_internal *epa,
-	const struct rt_view_info *info)
+	fastf_t point_spacing)
 {
     fastf_t avg_radius, avg_circumference;
 
     avg_radius = (epa->epa_r1 + epa->epa_r2) / 2.0;
     avg_circumference = M_2PI * avg_radius;
 
-    return avg_circumference / info->point_spacing;
+    return avg_circumference / point_spacing;
 }
 
 int
@@ -840,13 +840,15 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -2;
     }
 
-    num_curve_points = epa_curve_points(epa, info);
+    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+
+    num_curve_points = epa_curve_points(epa, point_spacing);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;
     }
 
-    num_ellipse_points = epa_ellipse_points(epa, info);
+    num_ellipse_points = epa_ellipse_points(epa, point_spacing);
 
     if (num_ellipse_points < 6) {
 	num_ellipse_points = 6;

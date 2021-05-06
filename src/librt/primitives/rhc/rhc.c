@@ -926,7 +926,7 @@ rhc_plot_curve_connections(
 static int
 rhc_curve_points(
     struct rt_rhc_internal *rhc,
-    const struct rt_view_info *info)
+    fastf_t point_spacing)
 {
     fastf_t height, halfwidth, est_curve_length;
     point_t p0, p1;
@@ -939,7 +939,7 @@ rhc_curve_points(
 
     est_curve_length = 2.0 * DIST_PNT_PNT(p0, p1);
 
-    return est_curve_length / info->point_spacing;
+    return est_curve_length / point_spacing;
 }
 
 
@@ -960,7 +960,9 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -2;
     }
 
-    num_curve_points = rhc_curve_points(rhc, info);
+    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+
+    num_curve_points = rhc_curve_points(rhc, point_spacing);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;

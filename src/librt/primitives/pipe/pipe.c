@@ -1822,11 +1822,11 @@ rt_pipe_free(struct soltab *stp)
 
 
 static int
-pipe_circle_segments(const struct rt_view_info *info, fastf_t radius)
+pipe_circle_segments(fastf_t point_spacing, fastf_t radius)
 {
     int num_segments;
 
-    num_segments = M_2PI * radius / info->point_spacing;
+    num_segments = M_2PI * radius / point_spacing;
 
     if (num_segments < 5) {
 	num_segments = 5;
@@ -1838,14 +1838,14 @@ pipe_circle_segments(const struct rt_view_info *info, fastf_t radius)
 
 static int
 pipe_bend_segments(
-    const struct rt_view_info *info,
+    fastf_t point_spacing,
     const struct pipe_bend *bend)
 {
     int num_segments;
     fastf_t arc_length;
 
     arc_length = (bend->bend_angle * M_1_2PI) * bend->bend_circle.radius;
-    num_segments = arc_length / info->point_spacing;
+    num_segments = arc_length / point_spacing;
 
     if (num_segments < 3) {
 	num_segments = 3;
@@ -2206,7 +2206,7 @@ static void
 draw_pipe_circular_seg_adaptive(
     struct bu_list *vhead,
     struct pipe_segment *seg,
-    const struct rt_view_info *info)
+    fastf_t point_spacing)
 {
     int num_segments;
     struct pipe_bend bend;
@@ -2230,13 +2230,13 @@ draw_pipe_circular_seg_adaptive(
 
     /* draw circular bend */
     bend.pipe_circle.radius = curpt->pp_od / 2.0;
-    num_segments = pipe_bend_segments(info, &bend);
+    num_segments = pipe_bend_segments(point_spacing, &bend);
     seg->orient = draw_pipe_connect_circular_segs(vhead, &bend,
 						  seg->connecting_arcs, num_segments);
 
     if (prevpt->pp_id > 0.0 && curpt->pp_id > 0.0) {
 	bend.pipe_circle.radius = curpt->pp_id / 2.0;
-	num_segments = pipe_bend_segments(info, &bend);
+	num_segments = pipe_bend_segments(point_spacing, &bend);
 	seg->orient = draw_pipe_connect_circular_segs(vhead, &bend,
 						      seg->connecting_arcs, num_segments);
     }
@@ -2274,7 +2274,7 @@ static void
 draw_pipe_end_adaptive(
     struct bu_list *vhead,
     struct pipe_segment *seg,
-    const struct rt_view_info *info)
+    fastf_t point_spacing)
 {
     int num_segments;
     struct wdb_pipe_pnt *endpt;
@@ -2287,13 +2287,13 @@ draw_pipe_end_adaptive(
 
     /* draw outer circle */
     pipe_circle.radius = endpt->pp_od / 2.0;
-    num_segments = pipe_circle_segments(info, pipe_circle.radius);
+    num_segments = pipe_circle_segments(point_spacing, pipe_circle.radius);
     draw_pipe_circle(vhead, &pipe_circle, num_segments);
 
     /* draw inner circle */
     if (endpt->pp_id > 0.0) {
 	pipe_circle.radius = endpt->pp_id / 2.0;
-	num_segments = pipe_circle_segments(info, pipe_circle.radius);
+	num_segments = pipe_circle_segments(point_spacing, pipe_circle.radius);
 	draw_pipe_circle(vhead, &pipe_circle, num_segments);
     }
 
@@ -2319,14 +2319,16 @@ rt_pipe_adaptive_plot(
 	return 0;
     }
 
+    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+
     cur_seg->connecting_arcs = pipe_connecting_arcs(pipeobj, info);
 
-    draw_pipe_end_adaptive(info->vhead, cur_seg, info);
+    draw_pipe_end_adaptive(info->vhead, cur_seg, point_spacing);
     pipe_seg_advance(cur_seg);
 
     while (!pipe_seg_is_last(cur_seg)) {
 	if (pipe_seg_is_bend(cur_seg)) {
-	    draw_pipe_circular_seg_adaptive(info->vhead, cur_seg, info);
+	    draw_pipe_circular_seg_adaptive(info->vhead, cur_seg, point_spacing);
 	} else {
 	    draw_pipe_linear_seg(info->vhead, cur_seg);
 	}
@@ -2335,7 +2337,7 @@ rt_pipe_adaptive_plot(
     }
 
     draw_pipe_linear_seg(info->vhead, cur_seg);
-    draw_pipe_end_adaptive(info->vhead, cur_seg, info);
+    draw_pipe_end_adaptive(info->vhead, cur_seg, point_spacing);
 
     BU_PUT(cur_seg, struct pipe_segment);
 

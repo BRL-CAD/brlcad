@@ -1009,14 +1009,14 @@ static int
 tor_ellipse_points(
 	vect_t ellipse_A,
 	vect_t ellipse_B,
-	const struct rt_view_info *info)
+	fastf_t point_spacing)
 {
     fastf_t avg_radius, circumference;
 
     avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
     circumference = M_2PI * avg_radius;
 
-    return circumference / info->point_spacing;
+    return circumference / point_spacing;
 }
 
 int
@@ -1033,6 +1033,8 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
+    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+
     VMOVE(tor_a, tor->a);
     mag_a = tor->r_a;
 
@@ -1048,7 +1050,7 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VJOIN1(a, tor_a, mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, mag_h / mag_b, tor_b);
 
-    points_per_ellipse = tor_ellipse_points(a, b, info);
+    points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
     }
@@ -1059,7 +1061,7 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
 
-    points_per_ellipse = tor_ellipse_points(a, b, info);
+    points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
     }
@@ -1069,7 +1071,7 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     /* Draw parallel circles to show the primitive's most extreme points along
      * +h/-h.
      */
-    points_per_ellipse = tor_ellipse_points(tor_a, tor_b, info);
+    points_per_ellipse = tor_ellipse_points(tor_a, tor_b, point_spacing);
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
     }

@@ -895,14 +895,14 @@ static int
 eto_ellipse_points(
 	vect_t ellipse_A,
 	vect_t ellipse_B,
-	const struct rt_view_info *info)
+	fastf_t point_spacing)
 {
     fastf_t avg_radius, circumference;
 
     avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
     circumference = M_2PI * avg_radius;
 
-    return circumference / info->point_spacing;
+    return circumference / point_spacing;
 }
 
 int
@@ -922,6 +922,8 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     if (!eto_is_valid(eto)) {
 	return -1;
     }
+
+    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
 
     VMOVE(eto_V, eto->eto_V);
 
@@ -973,7 +975,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     /* plot elliptical contour showing extent of ellipse +A/-A */
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, mag_ai);
 
-    points_per_ellipse = eto_ellipse_points(contour_A, contour_B, info);
+    points_per_ellipse = eto_ellipse_points(contour_A, contour_B, point_spacing);
 
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
@@ -989,7 +991,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     /* plot elliptical contour showing extent of ellipse +B/-B */
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, mag_bi);
 
-    points_per_ellipse = eto_ellipse_points(contour_A, contour_B, info);
+    points_per_ellipse = eto_ellipse_points(contour_A, contour_B, point_spacing);
 
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
@@ -1009,7 +1011,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	num_cross_sections = 3;
     }
 
-    points_per_ellipse = eto_ellipse_points(eto_A, eto_B, info);
+    points_per_ellipse = eto_ellipse_points(eto_A, eto_B, point_spacing);
 
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;

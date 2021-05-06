@@ -34,6 +34,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bview.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 
@@ -208,6 +209,10 @@ extern void plot_ellipse(
 
 extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
 extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
+
+/* view.c */
+extern fastf_t solid_point_spacing(struct bview *gvp, fastf_t solid_width);
+extern fastf_t view_avg_sample_spacing(struct bview *gvp);
 
 #ifdef USE_OPENCL
 extern cl_device_id clt_get_cl_device(void);

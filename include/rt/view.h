@@ -54,11 +54,14 @@ struct rt_view_info {
     const struct bn_tol *tol;
 
     /**
-     * The average distance between the segment points of plotted
-     * curves.  Smaller spacing means more points per curve, and thus
-     * smoother (more accurate) plot curves.
+     * Inputs and settings to calculate point spacing - the average distance
+     * between the segment points of plotted curves.  Smaller spacing means
+     * more points per curve, and thus smoother (more accurate) plot curves.
+     *
+     * Individual primitives may need to use primitive specific information
+     * to calculate the final spacing, hence these inputs are passed to the
+     * adaptive plot routines.
      */
-    fastf_t point_spacing;
     struct bview *v;
     fastf_t s_size;
     fastf_t point_scale;
@@ -156,19 +159,6 @@ struct rt_selection_operation {
 	struct rt_selection_translation tran;
     } parameters;
 };
-
-/* Choose a point spacing for the given solid (sp, ip) s.t. solid
- * curves plotted with that spacing will look smooth when rasterized
- * in the given view (gvp).
- *
- * TODO: view_avg_sample_spacing() might be sufficient if we can
- * develop a general decimation routine for the resulting plots, in
- * which case, this function could be removed. */
-RT_EXPORT extern fastf_t
-rt_solid_point_spacing_for_view(
-          struct rt_db_internal *ip,
-          struct rt_view_info *vi);
-
 
 __END_DECLS
 

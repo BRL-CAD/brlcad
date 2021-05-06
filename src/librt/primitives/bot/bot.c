@@ -875,7 +875,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     vertex_tree = build_vertex_tree(bot);
 
     fold_data.root = vertex_tree;
-    fold_data.point_spacing = info->point_spacing;
+    fold_data.point_spacing = view_avg_sample_spacing(info->v);
     (void)rt_bot_bbox(ip, &min, &max, NULL);
     d1 = max[0] - min[0];
     d2 = max[1] - min[1];

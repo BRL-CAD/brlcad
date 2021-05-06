@@ -28,47 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "brep.h"
 #include "bview.h"
-
-#include "rt/db5.h"
-#include "rt/db_internal.h"
-#include "rt/geom.h"
-#include "rt/view.h"
-
-static fastf_t
-brep_avg_curve_bbox_diagonal_len(ON_Brep *brep)
-{
-    fastf_t avg_curve_len = 0.0;
-    int i, num_curves = 0;
-
-    for (i = 0; i < brep->m_E.Count(); ++i) {
-	ON_BrepEdge &e = brep->m_E[i];
-	const ON_Curve *crv = e.EdgeCurveOf();
-
-	if (!crv->IsLinear()) {
-	    ++num_curves;
-
-	    ON_BoundingBox bbox;
-	    if (crv->GetTightBoundingBox(bbox)) {
-		avg_curve_len += bbox.Diagonal().Length();
-	    } else {
-		ON_3dVector linear_approx =
-		    crv->PointAtEnd() - crv->PointAtStart();
-		avg_curve_len += linear_approx.Length();
-	    }
-	}
-    }
-    avg_curve_len /= num_curves;
-
-    return avg_curve_len;
-}
-
-static fastf_t
-brep_est_avg_curve_len(struct rt_brep_internal *bi)
-{
-    return brep_avg_curve_bbox_diagonal_len(bi->brep) * 2.0;
-}
+#include "librt_private.h"
 
 static fastf_t
 view_avg_size(struct bview *gvp)
@@ -82,7 +43,7 @@ view_avg_size(struct bview *gvp)
     return (x_size + y_size) / 2.0;
 }
 
-static fastf_t
+fastf_t
 view_avg_sample_spacing(struct bview *gvp)
 {
     fastf_t avg_view_size, avg_view_samples;
@@ -93,14 +54,14 @@ view_avg_sample_spacing(struct bview *gvp)
     return avg_view_size / avg_view_samples;
 }
 
-static fastf_t
+fastf_t
 solid_point_spacing(struct bview *gvp, fastf_t solid_width)
 {
     fastf_t radius, avg_view_size, avg_sample_spacing;
     point2d_t p1, p2;
 
     if (solid_width < SQRT_SMALL_FASTF)
-        solid_width = SQRT_SMALL_FASTF;
+	solid_width = SQRT_SMALL_FASTF;
 
     avg_view_size = view_avg_size(gvp);
 
@@ -112,12 +73,12 @@ solid_point_spacing(struct bview *gvp, fastf_t solid_width)
      */
     radius = solid_width / 4.0;
     if (avg_view_size < solid_width) {
-        /* If the solid is larger than the view, it is
-         * probably only partly visible and likely isn't the
-         * primary focus of the user. We'll cap the point
-         * spacing and avoid wasting effort.
-         */
-        radius = avg_view_size / 4.0;
+	/* If the solid is larger than the view, it is
+	 * probably only partly visible and likely isn't the
+	 * primary focus of the user. We'll cap the point
+	 * spacing and avoid wasting effort.
+	 */
+	radius = avg_view_size / 4.0;
     }
 
     /* We imagine our representative circular curve lying in
@@ -145,18 +106,18 @@ solid_point_spacing(struct bview *gvp, fastf_t solid_width)
      * curve which will give a perfect rasterization, i.e.
      * the same rasterization as if we chose a point distance
      * of 0.
-    */
+     */
     p1[Y] = radius;
     p1[X] = 0.0;
 
     avg_sample_spacing = view_avg_sample_spacing(gvp);
     if (avg_sample_spacing < radius) {
-        p2[Y] = radius - (avg_sample_spacing);
+	p2[Y] = radius - (avg_sample_spacing);
     } else {
-        /* no particular reason other than symmetry, just need
-         * to prevent sqrt(negative).
-         */
-        p2[Y] = radius;
+	/* no particular reason other than symmetry, just need
+	 * to prevent sqrt(negative).
+	 */
+	p2[Y] = radius;
     }
     p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
 
@@ -164,70 +125,12 @@ solid_point_spacing(struct bview *gvp, fastf_t solid_width)
 }
 
 
-/* TODO: view_avg_sample_spacing() might be sufficient if we can
- * develop a general decimation routine for the resulting plots, in
- * which case, this function could be removed.
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
  */
-extern "C" fastf_t
-rt_solid_point_spacing_for_view(
-        struct rt_db_internal *ip,
-	struct rt_view_info *vi
-	)
-{
-    fastf_t point_spacing = 0.0;
-
-    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
-        switch (ip->idb_minor_type) {
-            case DB5_MINORTYPE_BRLCAD_TGC: {
-                struct rt_tgc_internal *tgc;
-                fastf_t avg_diameter;
-                fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
-
-                RT_CK_DB_INTERNAL(ip);
-                tgc = (struct rt_tgc_internal *)ip->idb_ptr;
-                RT_TGC_CK_MAGIC(tgc);
-
-                tgc_mag_a = MAGNITUDE(tgc->a);
-                tgc_mag_b = MAGNITUDE(tgc->b);
-                tgc_mag_c = MAGNITUDE(tgc->c);
-                tgc_mag_d = MAGNITUDE(tgc->d);
-
-                avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
-                avg_diameter /= 2.0;
-                point_spacing = solid_point_spacing(vi->v, avg_diameter);
-            }
-                break;
-            case DB5_MINORTYPE_BRLCAD_BOT:
-                point_spacing = view_avg_sample_spacing(vi->v);
-                break;
-            case DB5_MINORTYPE_BRLCAD_BREP: {
-                struct rt_brep_internal *bi;
-
-                RT_CK_DB_INTERNAL(ip);
-                bi = (struct rt_brep_internal *)ip->idb_ptr;
-                RT_BREP_CK_MAGIC(bi);
-
-                point_spacing = solid_point_spacing(vi->v,
-                        brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
-            }
-                break;
-            default:
-                point_spacing = solid_point_spacing(vi->v, vi->s_size);
-        }
-    } else {
-        point_spacing = solid_point_spacing(vi->v, vi->s_size);
-    }
-
-    return point_spacing;
-}
-
-
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
-

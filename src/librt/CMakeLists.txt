@@ -223,7 +223,7 @@ set(LIBRT_SOURCES
   uv.c
   vds/vds.c
   vers.c
-  view.cpp
+  view.c
   vlist.c
   vshoot.c
   wdb.c

@@ -51,6 +51,7 @@
 
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "../../librt_private.h"
 
 #include "./brep_local.h"
 #include "./brep_debug.h"
@@ -1848,6 +1849,39 @@ plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st, int isocurve
     plot_BBNode(vhead, st, root, isocurveres, gridres);
 }
 
+static fastf_t
+brep_avg_curve_bbox_diagonal_len(ON_Brep *brep)
+{
+    fastf_t avg_curve_len = 0.0;
+    int i, num_curves = 0;
+
+    for (i = 0; i < brep->m_E.Count(); ++i) {
+	ON_BrepEdge &e = brep->m_E[i];
+	const ON_Curve *crv = e.EdgeCurveOf();
+
+	if (!crv->IsLinear()) {
+	    ++num_curves;
+
+	    ON_BoundingBox bbox;
+	    if (crv->GetTightBoundingBox(bbox)) {
+		avg_curve_len += bbox.Diagonal().Length();
+	    } else {
+		ON_3dVector linear_approx =
+		    crv->PointAtEnd() - crv->PointAtStart();
+		avg_curve_len += linear_approx.Length();
+	    }
+	}
+    }
+    avg_curve_len /= num_curves;
+
+    return avg_curve_len;
+}
+
+static fastf_t
+brep_est_avg_curve_len(struct rt_brep_internal *bi)
+{
+    return brep_avg_curve_bbox_diagonal_len(bi->brep) * 2.0;
+}
 
 int
 rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
@@ -1861,6 +1895,8 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
+
+    fastf_t point_spacing = solid_point_spacing(info->v, brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
 
     ON_Brep* brep = bi->brep;
     int gridres = 10;
@@ -1918,14 +1954,14 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    // achieved and the distance between the end of the last
 	    // segment and the endpoint is within point spacing
 	    for (int nsegs = 0; (nsegs < min_linear_seg_count) ||
-		     (DIST_PNT_PNT(pt1, endpt) > info->point_spacing); ++nsegs) {
+		     (DIST_PNT_PNT(pt1, endpt) > point_spacing); ++nsegs) {
 		p = crv->PointAt(dom.ParameterAt(t2));
 		VMOVE(pt2, p);
 
 		// bring t2 increasingly closer to t1 until target
 		// point spacing is achieved
 		double step = t2 - t1;
-		while (DIST_PNT_PNT(pt1, pt2) > info->point_spacing) {
+		while (DIST_PNT_PNT(pt1, pt2) > point_spacing) {
 		    step /= 2.0;
 		    t2 = t1 + step;
 		    p = crv->PointAt(dom.ParameterAt(t2));
