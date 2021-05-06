@@ -766,9 +766,7 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
 	info.v = gvp;
 	info.s_size = sp->s_size;
 	info.point_scale = gvp->gvs.point_scale;
-	info.curve_spacing = sp->s_size / 2.0;
-	info.curve_spacing /= gvp->gvs.curve_scale;
-
+	info.curve_scale = gvp->gvs.curve_scale;
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
 	info.bot_threshold = (gvp) ? gvp->gvs.bot_threshold : 0;

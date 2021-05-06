@@ -1,4 +1,4 @@
-/*                  V I E W . C P P
+/*                  V I E W . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/view.cpp
+/** @file rt/view.c
  *
  * Information routines to support adaptive plotting.
  *

@@ -142,7 +142,9 @@ primitive_curve_count(
 
     avg_len = (x_len + y_len + z_len) / 3.0;
 
-    return avg_len / info->curve_spacing;
+    fastf_t curve_spacing = info->s_size / 2.0;
+    curve_spacing /= info->curve_scale;
+    return avg_len / curve_spacing;
 }
 
 /* Calculate the length of the shortest distance between a point and a line in

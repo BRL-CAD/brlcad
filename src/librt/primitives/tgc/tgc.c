@@ -1978,7 +1978,9 @@ tgc_connecting_lines(
     avg_circumference += ramanujan_approx_circumference(mag_c, mag_d);
     avg_circumference /= 2.0;
 
-    return avg_circumference / info->curve_spacing;
+    fastf_t curve_spacing = info->s_size / 2.0;
+    curve_spacing /= info->curve_scale;
+    return avg_circumference / curve_spacing;
 }
 
 

@@ -910,7 +910,9 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -1;
     }
 
-    num_curves = mag_H / info->curve_spacing;
+    fastf_t curve_spacing = info->s_size / 2.0;
+    curve_spacing /= info->curve_scale;
+    num_curves = mag_H / curve_spacing;
     if (num_curves < 2) {
 	num_curves = 2;
     }

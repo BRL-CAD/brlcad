@@ -71,7 +71,8 @@ struct rt_view_info {
      * Smaller spacing means more curves are drawn, increasing the overall
      * density of the plot.
      */
-    fastf_t curve_spacing;
+    //fastf_t curve_spacing;
+    fastf_t curve_scale;
 
     /** Face count beyond which the BoT primitive should return
      * a bbox plot rather than the full vlist */

@@ -1899,7 +1899,9 @@ pipe_connecting_arcs(
     BU_PUT(cur_seg, struct pipe_segment);
 
     avg_circumference = M_PI * avg_diameter;
-    num_arcs = avg_circumference / info->curve_spacing;
+    fastf_t curve_spacing = info->s_size / 2.0;
+    curve_spacing /= info->curve_scale;
+    num_arcs = avg_circumference / curve_spacing;
 
     if (num_arcs < 4) {
 	num_arcs = 4;
