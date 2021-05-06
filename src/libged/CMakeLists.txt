@@ -29,7 +29,6 @@ set(LIBGED_SOURCES
   ged_init.cpp
   columns.c
   display_list.c
-  draw_calc.cpp
   facedef.c
   ged.c
   ged_util.c

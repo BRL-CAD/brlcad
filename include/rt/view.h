@@ -31,6 +31,7 @@
 #include "bu/ptbl.h"
 #include "bn/tol.h"
 #include "bview/defines.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 
@@ -151,6 +152,19 @@ struct rt_selection_operation {
 	struct rt_selection_translation tran;
     } parameters;
 };
+
+/* Choose a point spacing for the given solid (sp, ip) s.t. solid
+ * curves plotted with that spacing will look smooth when rasterized
+ * in the given view (gvp).
+ *
+ * TODO: view_avg_sample_spacing() might be sufficient if we can
+ * develop a general decimation routine for the resulting plots, in
+ * which case, this function could be removed. */
+RT_EXPORT extern fastf_t
+rt_solid_point_spacing_for_view(
+          struct bview_scene_obj *sp,
+          struct rt_db_internal *ip,
+          struct bview *gvp);
 
 
 __END_DECLS

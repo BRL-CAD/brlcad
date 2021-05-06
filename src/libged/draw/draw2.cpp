@@ -37,6 +37,7 @@
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "nmg.h"
+#include "rt/view.h"
 
 #include "ged/view/state.h"
 #include "../alphanum.h"
@@ -81,6 +82,39 @@ _prim_tess(struct bview_scene_obj *s, struct rt_db_internal *ip)
     return 0;
 }
 
+/* Wrapper to handle adaptive vs non-adaptive wireframes */
+static void
+_wireframe_plot(struct bview_scene_obj *s, struct rt_db_internal *ip)
+{
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    const struct bn_tol *tol = d->tol;
+    const struct bg_tess_tol *ttol = d->ttol;
+
+    struct rt_view_info info;
+    info.bot_threshold = (s->s_v) ? s->s_v->gvs.bot_threshold : 0;
+
+    if (s->s_os.adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+
+          info.vhead = &s->s_vlist;
+	  info.tol = d->tol;
+
+          info.point_spacing = rt_solid_point_spacing_for_view(s, ip, s->s_v);
+
+          info.curve_spacing = s->s_size / 2.0;
+
+          info.point_spacing /= s->s_os.point_scale;
+          info.curve_spacing /= s->s_os.curve_scale;
+
+          ip->idb_meth->ft_adaptive_plot(ip, &info);
+
+      } else if (ip->idb_meth->ft_plot) {
+
+          ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+
+      }
+}
+
+
 extern "C" int draw_m3(struct bview_scene_obj *s);
 
 static void
@@ -91,8 +125,6 @@ _scene_obj_geom(struct bview_scene_obj *s)
     struct db_full_path *fp = &d->fp;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
-    struct rt_view_info info;
-    info.bot_threshold = s->s_v->gvs.bot_threshold;
 
     /* Mode 3 is unique - it evaluates an object rather than visualizing
      * its solids */
@@ -111,18 +143,13 @@ _scene_obj_geom(struct bview_scene_obj *s)
 
     // If we don't have a BRL-CAD type, see if we've got a plot routine
     if (ip->idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	if (ip->idb_meth->ft_plot) {
-	    ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
-	}
+	_wireframe_plot(s, ip);
 	goto geom_done;
     }
 
     // At least for the moment, we don't try anything fancy with pipes
     if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_PIPE) {
-	if (ip->idb_meth->ft_plot) {
-	    ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
-	    s->s_os.s_dmode = 0;
-	}
+	_wireframe_plot(s, ip);
 	goto geom_done;
     }
 
@@ -153,16 +180,14 @@ _scene_obj_geom(struct bview_scene_obj *s)
 	case 1:
 	    // Get wireframe (for mode 1, all the non-wireframes are handled
 	    // by the above BOT/POLY/BREP cases
-	    if (ip->idb_meth->ft_plot) {
-		ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
-		s->s_os.s_dmode = 0;
-	    }
+	    _wireframe_plot(s, ip);
+	    s->s_os.s_dmode = 0;
 	    break;
 	case 2:
 	    // Shade everything except pipe, don't evaluate, fall
 	    // back to wireframe in case of failure
-	    if (_prim_tess(s, ip) < 0 && ip->idb_meth->ft_plot) {
-		ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+	    if (_prim_tess(s, ip) < 0) {
+		_wireframe_plot(s, ip);
 		s->s_os.s_dmode = 0;
 	    }
 	    break;
@@ -174,23 +199,21 @@ _scene_obj_geom(struct bview_scene_obj *s)
 	case 4:
 	    // Hidden line - generate polygonal forms, fall back to
 	    // un-hidden wireframe in case of failure
-	    if (_prim_tess(s, ip) < 0 && ip->idb_meth->ft_plot) {
-		ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
+	    if (_prim_tess(s, ip) < 0) {
+		_wireframe_plot(s, ip);
 		s->s_os.s_dmode = 0;
 	    }
 	    break;
 	default:
 	    // Default to wireframe
-	    if (ip->idb_meth->ft_plot) {
-		ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
-	    }
+	    _wireframe_plot(s, ip);
 	    break;
     }
 
+geom_done:
+
     // Update s_size and s_center
     bview_scene_obj_bound(s);
-
-geom_done:
 
     rt_db_free_internal(&dbintern);
 }
@@ -201,9 +224,13 @@ geom_done:
 // we'll need primitive specific callbacks (which really will almost certainly
 // belong (like the labels logic) in the rt functab...)
 //
-// Note that this function shouldn't be called when doing tree walks, since
-// it does extra work to determine the current matrix and the tree walk will
-// already be tracking that.
+// Note that this function shouldn't be called when doing tree walks.  It
+// operates locally on the solid wireframe using s_mat, and won't take into
+// account higher level hierarchy level changes.  If such higher level changes
+// are made, the subtrees should be redrawn to properly repopulate the scene
+// objects.
+//
+// Typically this will be 
 static int
 _ged_update_db_path(struct bview_scene_obj *s)
 {
@@ -211,24 +238,12 @@ _ged_update_db_path(struct bview_scene_obj *s)
     if (!s)
 	return 0;
 
-    /* Set up drawing info */
-    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    struct db_i *dbip = d->dbip;
-    struct db_full_path *fp = &d->fp;
-
     // Clear out existing vlist, if there is one...
     BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
         struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
         BN_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
         // TODO - free child bview_scene_obj itself (ptbls, etc.)
-    }
-
-    // Get the matrix
-    mat_t mat;
-    MAT_IDN(mat);
-    if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, d->res)) {
-	return 0;
     }
 
     // Get the correct geometry for the mode
