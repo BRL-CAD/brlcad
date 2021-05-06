@@ -284,7 +284,7 @@ struct draw_data_t {
 static void
 _tree_color(struct directory *dp, struct draw_data_t *dd)
 {
-    struct bu_attribute_value_set c_avs;
+    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
 
     // Easy answer - if we're overridden, dd color is already set.
     if (dd->g->g->s_os.color_override)
