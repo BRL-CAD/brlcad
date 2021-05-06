@@ -125,7 +125,9 @@ primitive_diagonal_samples(
 fastf_t
 primitive_curve_count(
 	struct rt_db_internal *ip,
-	const struct rt_view_info *info)
+	const struct bn_tol *tol,
+	fastf_t curve_scale,
+	fastf_t s_size)
 {
     point_t bbox_min, bbox_max;
     fastf_t x_len, y_len, z_len, avg_len;
@@ -134,7 +136,7 @@ primitive_curve_count(
 	return 0.0;
     }
 
-    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
+    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, tol);
 
     x_len = fabs(bbox_max[X] - bbox_min[X]);
     y_len = fabs(bbox_max[Y] - bbox_min[Y]);
@@ -142,8 +144,8 @@ primitive_curve_count(
 
     avg_len = (x_len + y_len + z_len) / 3.0;
 
-    fastf_t curve_spacing = info->s_size / 2.0;
-    curve_spacing /= info->curve_scale;
+    fastf_t curve_spacing = s_size / 2.0;
+    curve_spacing /= curve_scale;
     return avg_len / curve_spacing;
 }
 

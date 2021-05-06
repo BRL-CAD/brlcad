@@ -64,7 +64,7 @@ struct rt_view_info {
      */
     struct bview *v;
     fastf_t s_size;
-    fastf_t point_scale;
+    fastf_t point_scale; // v->point_scale
 
 
     /** The average distance between plotted surface curves.
@@ -72,11 +72,11 @@ struct rt_view_info {
      * density of the plot.
      */
     //fastf_t curve_spacing;
-    fastf_t curve_scale;
+    fastf_t curve_scale; // v->curve_scale
 
     /** Face count beyond which the BoT primitive should return
      * a bbox plot rather than the full vlist */
-    size_t bot_threshold;
+    size_t bot_threshold; // v->bot_threshold
 };
 
 /**

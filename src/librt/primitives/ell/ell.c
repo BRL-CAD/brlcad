@@ -773,29 +773,29 @@ ell_ellipse_points(
 }
 
 int
-rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     struct ell_draw_configuration config;
     struct rt_ell_internal *eip;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
-    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
-    config.vhead = info->vhead;
+    config.vhead = vhead;
     VMOVE(config.ell_center, eip->v);
 
     config.points_per_section = ell_ellipse_points(eip, point_spacing);
 
     if (config.points_per_section < 4) {
-	RT_ADD_VLIST(info->vhead, eip->v, BN_VLIST_POINT_DRAW);
+	RT_ADD_VLIST(vhead, eip->v, BN_VLIST_POINT_DRAW);
 	return 0;
     }
 
-    config.num_cross_sections = primitive_curve_count(ip, info);
+    config.num_cross_sections = primitive_curve_count(ip, tol, v->curve_scale, s_size);
 
     VMOVE(config.ell_travel_vector, eip->a);
     VMOVE(config.ell_axis_vector_a, eip->b);

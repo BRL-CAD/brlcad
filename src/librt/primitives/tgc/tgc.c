@@ -1965,7 +1965,8 @@ ramanujan_approx_circumference(fastf_t major_len, fastf_t minor_len)
 static int
 tgc_connecting_lines(
     const struct rt_tgc_internal *tgc,
-    const struct rt_view_info *info)
+    fastf_t curve_scale,
+    fastf_t s_size)
 {
     fastf_t mag_a, mag_b, mag_c, mag_d, avg_circumference;
 
@@ -1978,14 +1979,15 @@ tgc_connecting_lines(
     avg_circumference += ramanujan_approx_circumference(mag_c, mag_d);
     avg_circumference /= 2.0;
 
-    fastf_t curve_spacing = info->s_size / 2.0;
-    curve_spacing /= info->curve_scale;
+    fastf_t curve_spacing = s_size / 2.0;
+    curve_spacing /= curve_scale;
     return avg_circumference / curve_spacing;
 }
 
 
+
 int
-rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     int points_per_ellipse, connecting_lines;
     struct rt_tgc_internal *tip;
@@ -1994,7 +1996,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t avg_diameter;
     fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
@@ -2005,7 +2007,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     tgc_mag_d = MAGNITUDE(tip->d);
     avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
     avg_diameter /= 2.0;
-    point_spacing = solid_point_spacing(info->v, avg_diameter);
+    point_spacing = solid_point_spacing(v, avg_diameter);
 
     points_per_ellipse = tgc_points_per_ellipse(ip, point_spacing);
 
@@ -2013,13 +2015,13 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	point_t p;
 
 	VADD2(p, tip->v, tip->h);
-	RT_ADD_VLIST(info->vhead, tip->v, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, tip->v, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
 
 	return 0;
     }
 
-    connecting_lines = tgc_connecting_lines(tip, info);
+    connecting_lines = tgc_connecting_lines(tip, v->curve_scale, s_size);
 
     if (connecting_lines < 4) {
 	connecting_lines = 4;
@@ -2034,8 +2036,8 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VMOVE(ellipse2.axis_b, tip->d);
 
     /* looks like a right elliptical cylinder */
-    if (VNEAR_EQUAL(tip->a, tip->c, info->tol->dist) &&
-	VNEAR_EQUAL(tip->b, tip->d, info->tol->dist))
+    if (VNEAR_EQUAL(tip->a, tip->c, tol->dist) &&
+	VNEAR_EQUAL(tip->b, tip->d, tol->dist))
     {
 	int i;
 	point_t *pts;
@@ -2049,12 +2051,12 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	/* calculate and plot first ellipse */
 	ellipse_point_at_radian(pts[0], tip->v, tip->a, tip->b,
 				radian_step * (points_per_ellipse - 1));
-	RT_ADD_VLIST(info->vhead, pts[0], BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pts[0], BN_VLIST_LINE_MOVE);
 
 	radian = 0;
 	for (i = 0; i < points_per_ellipse; ++i) {
 	    ellipse_point_at_radian(pts[i], tip->v, tip->a, tip->b, radian);
-	    RT_ADD_VLIST(info->vhead, pts[i], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, pts[i], BN_VLIST_LINE_DRAW);
 
 	    radian += radian_step;
 	}
@@ -2064,23 +2066,23 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	    VADD2(pts[i], tip->h, pts[i]);
 	}
 
-	RT_ADD_VLIST(info->vhead, pts[points_per_ellipse - 1], BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pts[points_per_ellipse - 1], BN_VLIST_LINE_MOVE);
 	for (i = 0; i < points_per_ellipse; ++i) {
-	    RT_ADD_VLIST(info->vhead, pts[i], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, pts[i], BN_VLIST_LINE_DRAW);
 	}
 
 	bu_free(pts, "tgc points");
 
-	draw_lines_between_rec_ellipses(info->vhead, ellipse1, tip->h,
+	draw_lines_between_rec_ellipses(vhead, ellipse1, tip->h,
 					connecting_lines);
     } else {
-	plot_ellipse(info->vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
+	plot_ellipse(vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
 		     points_per_ellipse);
 
-	plot_ellipse(info->vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
+	plot_ellipse(vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
 		     points_per_ellipse);
 
-	draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2,
+	draw_lines_between_ellipses(vhead, ellipse1, ellipse2,
 				    connecting_lines);
     }
 

@@ -944,7 +944,7 @@ rhc_curve_points(
 
 
 int
-rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     point_t p;
     vect_t rhc_R;
@@ -952,7 +952,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_rhc_internal *rhc;
     struct rt_pnt_node *pts, *node, *tmp;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
     rhc = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -960,7 +960,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -2;
     }
 
-    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
     num_curve_points = rhc_curve_points(rhc, point_spacing);
 
@@ -973,7 +973,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VSCALE(rhc_R, rhc_R, rhc->rhc_r);
 
     pts = rhc_hyperbolic_curve(MAGNITUDE(rhc->rhc_B), rhc->rhc_c, rhc->rhc_r, num_curve_points);
-    rhc_plot_hyperbolas(info->vhead, rhc, pts);
+    rhc_plot_hyperbolas(vhead, rhc, pts);
 
     node = pts;
     while (node != NULL) {
@@ -984,28 +984,28 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
 
     /* connect both halves of the hyperbolic contours of the opposing faces */
-    num_connections = primitive_curve_count(ip, info);
+    num_connections = primitive_curve_count(ip, tol, v->curve_scale, s_size);
     if (num_connections < 2) {
 	num_connections = 2;
     }
 
-    rhc_plot_curve_connections(info->vhead, rhc, num_connections);
+    rhc_plot_curve_connections(vhead, rhc, num_connections);
 
     /* plot rectangular face */
     VADD2(p, rhc->rhc_V, rhc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
 
     VADD2(p, p, rhc->rhc_H);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -2.0, rhc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -1.0, rhc->rhc_H);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, 2.0, rhc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
 
     return 0;
 }

@@ -906,7 +906,7 @@ eto_ellipse_points(
 }
 
 int
-rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     struct rt_eto_internal *eto;
     fastf_t radian, radian_step;
@@ -915,7 +915,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t mag_N, mag_ai, mag_aj, mag_bi, mag_bj;
     int i, num_cross_sections, points_per_ellipse;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
     eto = (struct rt_eto_internal *)ip->idb_ptr;
@@ -923,7 +923,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -1;
     }
 
-    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
     VMOVE(eto_V, eto->eto_V);
 
@@ -982,11 +982,11 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
 
     VJOIN1(center, eto_V, mag_aj / mag_N, eto_N);
-    plot_ellipse(info->vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vhead, center, contour_A, contour_B, points_per_ellipse);
 
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, -mag_ai);
     VJOIN1(center, eto_V, -mag_aj / mag_N, eto_N);
-    plot_ellipse(info->vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vhead, center, contour_A, contour_B, points_per_ellipse);
 
     /* plot elliptical contour showing extent of ellipse +B/-B */
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, mag_bi);
@@ -998,14 +998,14 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
 
     VJOIN1(center, eto_V, mag_bj / mag_N, eto_N);
-    plot_ellipse(info->vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vhead, center, contour_A, contour_B, points_per_ellipse);
 
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, -mag_bi);
     VJOIN1(center, eto_V, -mag_bj / mag_N, eto_N);
-    plot_ellipse(info->vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vhead, center, contour_A, contour_B, points_per_ellipse);
 
     /* draw elliptical radial cross sections */
-    num_cross_sections = primitive_curve_count(ip, info);
+    num_cross_sections = primitive_curve_count(ip, tol, v->curve_scale, s_size);
 
     if (num_cross_sections < 3) {
 	num_cross_sections = 3;
@@ -1029,7 +1029,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	VCOMB2(ellipse_A, mag_ai, I, mag_aj, J);
 	VCOMB2(ellipse_B, mag_bi, I, mag_bj, J);
 
-	plot_ellipse(info->vhead, center, ellipse_A, ellipse_B, points_per_ellipse);
+	plot_ellipse(vhead, center, ellipse_A, ellipse_B, points_per_ellipse);
 
 	radian += radian_step;
     }

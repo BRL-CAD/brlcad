@@ -130,9 +130,12 @@ struct rt_functab {
 		   const struct rt_view_info * /*view info*/);
 #define RTFUNCTAB_FUNC_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct rt_view_info *))((void (*)(void))_func))
 
-    int (*ft_adaptive_plot)(struct rt_db_internal * /*ip*/,
-			    const struct rt_view_info * /*view info*/);
-#define RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(_func) ((int (*)(struct rt_db_internal *, const struct rt_view_info *))((void (*)(void))_func))
+    int (*ft_adaptive_plot)(struct bu_list * /*vhead*/,
+	                    struct rt_db_internal * /*ip*/,
+			    const struct bn_tol * /*tol*/,
+			    const struct bview * /* view info */,
+			    fastf_t /* s_size */);
+#define RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bn_tol *, const struct bview *, fastf_t))((void (*)(void))_func))
 
     void (*ft_vshot)(struct soltab * /*stp*/[],
 		     struct xray *[] /*rp*/,

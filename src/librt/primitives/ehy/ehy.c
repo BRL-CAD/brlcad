@@ -864,7 +864,7 @@ ehy_ellipse_points(
 
 
 int
-rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
     vect_t ehy_H, Hu, Au, Bu;
     fastf_t mag_H, z, z_step, c, r1, r2;
@@ -872,9 +872,9 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_ehy_internal *ehy;
     struct rt_pnt_node *pts_r1, *pts_r2, *node, *node1, *node2;
 
-    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(ehy);
@@ -910,8 +910,8 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -1;
     }
 
-    fastf_t curve_spacing = info->s_size / 2.0;
-    curve_spacing /= info->curve_scale;
+    fastf_t curve_spacing = s_size / 2.0;
+    curve_spacing /= v->curve_scale;
     num_curves = mag_H / curve_spacing;
     if (num_curves < 2) {
 	num_curves = 2;
@@ -920,14 +920,14 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     z_step = mag_H / num_curves;
     z = 0.0;
     for (i = 0; i < num_curves; ++i) {
-	ehy_plot_ellipse(info->vhead, ehy, z, num_ellipse_points);
+	ehy_plot_ellipse(vhead, ehy, z, num_ellipse_points);
 	z += z_step;
     }
 
-    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Au, r1);
-    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Au, -r1);
-    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Bu, r2);
-    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Bu, -r2);
+    ehy_plot_hyperbola(vhead, ehy, pts_r1, Au, r1);
+    ehy_plot_hyperbola(vhead, ehy, pts_r1, Au, -r1);
+    ehy_plot_hyperbola(vhead, ehy, pts_r1, Bu, r2);
+    ehy_plot_hyperbola(vhead, ehy, pts_r1, Bu, -r2);
 
     node1 = pts_r1;
     node2 = pts_r2;

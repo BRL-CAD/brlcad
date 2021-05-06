@@ -824,7 +824,7 @@ epa_ellipse_points(
 }
 
 int
-rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
     vect_t epa_H, Hu, Au, Bu;
     fastf_t mag_H, z, z_step, r1, r2;
@@ -832,7 +832,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_epa_internal *epa;
     struct rt_pnt_node *pts_r1, *pts_r2, *node, *node1, *node2;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
     epa = (struct rt_epa_internal *)ip->idb_ptr;
@@ -840,7 +840,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -2;
     }
 
-    fastf_t point_spacing = solid_point_spacing(info->v, info->s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
     num_curve_points = epa_curve_points(epa, point_spacing);
 
@@ -873,8 +873,8 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -1;
     }
 
-    fastf_t curve_spacing = info->s_size / 2.0;
-    curve_spacing /= info->curve_scale;
+    fastf_t curve_spacing = s_size / 2.0;
+    curve_spacing /= v->curve_scale;
     num_curves = mag_H / curve_spacing;
     if (num_curves < 2) {
 	num_curves = 2;
@@ -883,15 +883,15 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     z_step = mag_H / num_curves;
     z = 0.0;
     for (i = 0; i < num_curves; ++i) {
-	epa_plot_ellipse(info->vhead, epa, z, num_ellipse_points);
+	epa_plot_ellipse(vhead, epa, z, num_ellipse_points);
 
 	z += z_step;
     }
 
-    epa_plot_parabola(info->vhead, epa, pts_r1, Au, r1);
-    epa_plot_parabola(info->vhead, epa, pts_r1, Au, -r1);
-    epa_plot_parabola(info->vhead, epa, pts_r1, Bu, r2);
-    epa_plot_parabola(info->vhead, epa, pts_r1, Bu, -r2);
+    epa_plot_parabola(vhead, epa, pts_r1, Au, r1);
+    epa_plot_parabola(vhead, epa, pts_r1, Au, -r1);
+    epa_plot_parabola(vhead, epa, pts_r1, Bu, r2);
+    epa_plot_parabola(vhead, epa, pts_r1, Bu, -r2);
 
     node1 = pts_r1;
     node2 = pts_r2;

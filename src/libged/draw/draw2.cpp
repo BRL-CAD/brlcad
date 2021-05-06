@@ -94,19 +94,9 @@ _wireframe_plot(struct bview_scene_obj *s, struct rt_db_internal *ip)
     info.bot_threshold = (s->s_v) ? s->s_v->bot_threshold : 0;
 
     if (s->s_v->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
-
-	info.v = s->s_v;
-	info.s_size = s->s_size;
-	info.vhead = &s->s_vlist;
-	info.tol = d->tol;
-	info.point_scale = s->s_v->point_scale;
-	info.curve_scale = s->s_v->curve_scale;
-	ip->idb_meth->ft_adaptive_plot(ip, &info);
-
+	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
     } else if (ip->idb_meth->ft_plot) {
-
 	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, &info);
-
     }
 }
 

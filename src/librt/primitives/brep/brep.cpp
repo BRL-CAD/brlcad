@@ -72,7 +72,7 @@ extern "C" {
     void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     void rt_brep_free(struct soltab *stp);
-    int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
+    int rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size);
     int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
     int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
     int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
@@ -1884,19 +1884,19 @@ brep_est_avg_curve_len(struct rt_brep_internal *bi)
 }
 
 int
-rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t UNUSED(s_size))
 {
     TRACE1("rt_brep_adaptive_plot");
     struct rt_brep_internal* bi;
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    fastf_t point_spacing = solid_point_spacing(info->v, brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
+    fastf_t point_spacing = solid_point_spacing(v, brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
 
     ON_Brep* brep = bi->brep;
     int gridres = 10;
@@ -1910,13 +1910,13 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    ON_SumSurface *sumsurf = const_cast<ON_SumSurface *>(ON_SumSurface::Cast(surf));
 	    if (sumsurf != NULL) {
 		SurfaceTree st(&face, true, 2);
-		plot_face_from_surface_tree(info->vhead, &st, isocurveres, gridres);
+		plot_face_from_surface_tree(vhead, &st, isocurveres, gridres);
 	    } else {
 		ON_RevSurface *revsurf = const_cast<ON_RevSurface *>(ON_RevSurface::Cast(surf));
 
 		if (revsurf != NULL) {
 		    SurfaceTree st(&face, true, 0);
-		    plot_face_from_surface_tree(info->vhead, &st, isocurveres, gridres);
+		    plot_face_from_surface_tree(vhead, &st, isocurveres, gridres);
 		}
 	    }
 	}
@@ -1931,8 +1931,8 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    const ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
 	    VMOVE(pt1, v1.Point());
 	    VMOVE(pt2, v2.Point());
-	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(info->vhead, pt2, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
 	} else {
 	    point_t endpt;
 	    ON_Interval dom = crv->Domain();
@@ -1948,7 +1948,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    double t1 = 0.0;
 	    p = crv->PointAt(dom.ParameterAt(t1));
 	    VMOVE(pt1, p);
-	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 
 	    // add segments until the minimum segment count is
 	    // achieved and the distance between the end of the last
@@ -1967,7 +1967,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 		    p = crv->PointAt(dom.ParameterAt(t2));
 		    VMOVE(pt2, p);
 		}
-		RT_ADD_VLIST(info->vhead, pt2, BN_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
 
 		// advance to next segment
 		t1 = t2;
@@ -1978,7 +1978,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 		    t2 = 1.0;
 		}
 	    }
-	    RT_ADD_VLIST(info->vhead, endpt, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
 	}
     }
 

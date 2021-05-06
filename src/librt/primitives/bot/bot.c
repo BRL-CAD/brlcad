@@ -856,7 +856,7 @@ plot_node(const vdsNode *node, void *udata)
 
 
 int
-rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t UNUSED(s_size))
 {
     double d1, d2, d3;
     point_t min;
@@ -866,7 +866,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_bot_internal *bot;
     struct bot_fold_data fold_data;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -875,7 +875,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     vertex_tree = build_vertex_tree(bot);
 
     fold_data.root = vertex_tree;
-    fold_data.point_spacing = view_avg_sample_spacing(info->v);
+    fold_data.point_spacing = view_avg_sample_spacing(v);
     (void)rt_bot_bbox(ip, &min, &max, NULL);
     d1 = max[0] - min[0];
     d2 = max[1] - min[1];
@@ -888,7 +888,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     if (d3 > fold_data.dmax) fold_data.dmax = d3;
 
     vdsAdjustTreeTopDown(vertex_tree, should_fold, (void *)&fold_data);
-    vdsRenderTree(vertex_tree, plot_node, NULL, (void *)info->vhead);
+    vdsRenderTree(vertex_tree, plot_node, NULL, (void *)vhead);
     vdsFreeTree(vertex_tree);
 
     return 0;
