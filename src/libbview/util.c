@@ -131,6 +131,14 @@ bview_init(struct bview *gvp)
     gvp->gv_data_vZ = 0.0;
     gvp->gv_autoview = 1;
 
+    gvp->adaptive_plot = 0;
+    gvp->redraw_on_zoom = 0;
+    gvp->x_samples = 0;
+    gvp->y_samples = 0;
+    gvp->point_scale = 1;
+    gvp->curve_scale = 1;
+    gvp->bot_threshold = 0;
+
     /* FIXME: this causes the shaders.sh regression to fail */
     /* _ged_mat_aet(gvp); */
 
@@ -255,13 +263,6 @@ bview_settings_sync(struct bview_settings *dest, struct bview_settings *src)
     VMOVE(dest->color, src->color);
     dest->draw_solid_lines_only = src->draw_solid_lines_only;
     dest->draw_non_subtract_only = src->draw_non_subtract_only;
-    dest->adaptive_plot = src->adaptive_plot;
-    dest->redraw_on_zoom = src->redraw_on_zoom;
-    dest->x_samples = src->x_samples;
-    dest->y_samples = src->y_samples;
-    dest->point_scale = src->point_scale;
-    dest->curve_scale = src->curve_scale;
-    dest->bot_threshold = src->bot_threshold;
 }
 
 int

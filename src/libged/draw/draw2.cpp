@@ -91,16 +91,16 @@ _wireframe_plot(struct bview_scene_obj *s, struct rt_db_internal *ip)
     const struct bg_tess_tol *ttol = d->ttol;
 
     struct rt_view_info info;
-    info.bot_threshold = (s->s_v) ? s->s_v->gvs.bot_threshold : 0;
+    info.bot_threshold = (s->s_v) ? s->s_v->bot_threshold : 0;
 
-    if (s->s_os.adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+    if (s->s_v->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 
 	info.v = s->s_v;
 	info.s_size = s->s_size;
 	info.vhead = &s->s_vlist;
 	info.tol = d->tol;
-	info.point_scale = s->s_os.point_scale;
-	info.curve_scale = s->s_os.curve_scale;
+	info.point_scale = s->s_v->point_scale;
+	info.curve_scale = s->s_v->curve_scale;
 	ip->idb_meth->ft_adaptive_plot(ip, &info);
 
     } else if (ip->idb_meth->ft_plot) {
@@ -562,6 +562,8 @@ extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
     int print_help = 0;
+    int bot_threshold = -1;
+    int cached_bot_threshold = -1;
     static const char *usage = "[options] path1 [path2 ...]";
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -592,8 +594,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[6],  "E", "evaluate",      "",                 NULL, &drawing_modes[4],  "Wireframe with evaluate booleans (mode = 3)");
     BU_OPT(d[7],   "", "hidden-line",   "",                 NULL, &drawing_modes[5],  "Hidden line wireframes");
     BU_OPT(d[8],  "t", "transparency", "#",      &bu_opt_fastf_t,  &vs.transparency,  "Set transparency level in drawing: range 0 (clear) to 1 (opaque)");
-    BU_OPT(d[9],  "L", "lod",           "",                 NULL, &vs.adaptive_plot,  "Enable view adaptive Level of Detail plotting");
-    BU_OPT(d[10],  "", "adaptive",      "",                 NULL, &vs.adaptive_plot,  "");
+    BU_OPT(d[9],  "x", "",             "#",       &bu_opt_fastf_t,  &vs.transparency,  "");
+    BU_OPT(d[10], "L", "",             "#",           &bu_opt_int,    &bot_threshold,  "Set face count level for drawing bounding boxes instead of BoT triangles.");
     BU_OPT(d[11], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
     BU_OPT(d[12],  "", "no-dash",       "",                 NULL, &vs.draw_solid_lines_only,  "Use solid lines rather than dashed for subtraction solids");
     BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                 "Override object colors");
@@ -675,6 +677,13 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    BU_PUT(fp, struct db_full_path);
 	}
 	return GED_ERROR;
+    }
+
+    /* Bot threshold is normally a per-view setting - if the drawing command
+     * is overriding it locally, cache and restore the global version. */
+    cached_bot_threshold = gedp->ged_gvp->bot_threshold;
+    if (bot_threshold >= 0) {
+	gedp->ged_gvp->bot_threshold = bot_threshold;
     }
 
     // Check the already drawn paths to see if the proposed new path impacts them.
@@ -831,6 +840,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Sort
     bu_sort(BU_PTBL_BASEADDR(gedp->ged_gvp->gv_db_grps), BU_PTBL_LEN(gedp->ged_gvp->gv_db_grps), sizeof(struct bview_scene_group *), alphanum_cmp, NULL);
+
+    // Put bot threshold back
+    gedp->ged_gvp->bot_threshold = cached_bot_threshold;
 
     // Scene objects are created and stored in gv_db_grps. The application
     // may now call each object's update callback to generate wireframes,

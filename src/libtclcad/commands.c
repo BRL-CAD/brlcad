@@ -3185,8 +3185,8 @@ to_dplot(struct ged *gedp,
 	for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	    gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	    if (to_is_viewable(gdvp)) {
-		gedp->ged_gvp->gvs.x_samples = dm_get_width((struct dm *)gdvp->dmp);
-		gedp->ged_gvp->gvs.y_samples = dm_get_height((struct dm *)gdvp->dmp);
+		gedp->ged_gvp->x_samples = dm_get_width((struct dm *)gdvp->dmp);
+		gedp->ged_gvp->y_samples = dm_get_height((struct dm *)gdvp->dmp);
 	    }
 	}
 
@@ -3257,8 +3257,8 @@ to_dplot(struct ged *gedp,
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (to_is_viewable(gdvp)) {
-	    gedp->ged_gvp->gvs.x_samples = dm_get_width((struct dm *)gdvp->dmp);
-	    gedp->ged_gvp->gvs.y_samples = dm_get_height((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->x_samples = dm_get_width((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->y_samples = dm_get_height((struct dm *)gdvp->dmp);
 	}
     }
     to_refresh_all_views(current_top);
@@ -3704,8 +3704,8 @@ to_idle_mode(struct ged *gedp,
 
     mode = gdvp->gv_polygon_mode;
 
-    if (gdvp->gvs.adaptive_plot &&
-	    gdvp->gvs.redraw_on_zoom &&
+    if (gdvp->adaptive_plot &&
+	    gdvp->redraw_on_zoom &&
 	    mode == TCLCAD_SCALE_MODE)
     {
 	const char *av[] = {"redraw", NULL};
@@ -4589,8 +4589,8 @@ to_new_view(struct ged *gedp,
     bview_init(new_gdvp);
     bu_ptbl_ins(&current_top->to_gedp->ged_views, (long *)new_gdvp);
 
-    new_gdvp->gvs.point_scale = 1.0;
-    new_gdvp->gvs.curve_scale = 1.0;
+    new_gdvp->point_scale = 1.0;
+    new_gdvp->curve_scale = 1.0;
 
     tvd->gdv_fbs.fbs_listener.fbsl_fbsp = &tvd->gdv_fbs;
     tvd->gdv_fbs.fbs_listener.fbsl_fd = -1;

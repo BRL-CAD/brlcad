@@ -758,18 +758,18 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
 	return -1;
     }
 
-    if (gvp && gvp->gvs.adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+    if (gvp && gvp->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 
 	info.vhead = &vhead;
 	info.tol = tol;
-	info.bot_threshold = (gvp) ? gvp->gvs.bot_threshold : 0;
+	info.bot_threshold = (gvp) ? gvp->bot_threshold : 0;
 	info.v = gvp;
 	info.s_size = sp->s_size;
-	info.point_scale = gvp->gvs.point_scale;
-	info.curve_scale = gvp->gvs.curve_scale;
+	info.point_scale = gvp->point_scale;
+	info.curve_scale = gvp->curve_scale;
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
-	info.bot_threshold = (gvp) ? gvp->gvs.bot_threshold : 0;
+	info.bot_threshold = (gvp) ? gvp->bot_threshold : 0;
 	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, &info);
     }
 

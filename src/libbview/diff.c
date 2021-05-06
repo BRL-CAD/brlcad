@@ -396,15 +396,6 @@ _bview_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
 	return -1;
     if ((v1 && !v2) || (!v1 && v2))
 	return -1;
-
-    BVIEW_NDIFF(1,adaptive_plot);
-    BVIEW_NDIFF(1,redraw_on_zoom);
-    BVIEW_NDIFF(1,x_samples);
-    BVIEW_NDIFF(1,y_samples);
-    BVIEW_NDIFF(1,point_scale);
-    BVIEW_NDIFF(1,curve_scale);
-    BVIEW_NDIFF(1,bot_threshold);
-
     return 0;
 }
 int
@@ -473,6 +464,14 @@ bview_differ(struct bview *v1, struct bview *v2)
     BVIEW_NDIFF(1,gv_cleared);
     BVIEW_NDIFF(1,gv_zclip);
     BVIEW_NDIFF(1,gv_data_vZ);
+
+    BVIEW_NDIFF(1,adaptive_plot);
+    BVIEW_NDIFF(1,redraw_on_zoom);
+    BVIEW_NDIFF(1,x_samples);
+    BVIEW_NDIFF(1,y_samples);
+    BVIEW_NDIFF(1,point_scale);
+    BVIEW_NDIFF(1,curve_scale);
+    BVIEW_NDIFF(1,bot_threshold);
 
     BVIEW_DIFF(3,gv_callback);
     BVIEW_DIFF(3,gv_clientData);

@@ -1913,8 +1913,8 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
 	gvp = GEDP->ged_gvp;
 
     if (gvp && DMP) {
-	gvp->gvs.x_samples = dm_get_width(DMP);
-	gvp->gvs.y_samples = dm_get_height(DMP);
+	gvp->x_samples = dm_get_width(DMP);
+	gvp->y_samples = dm_get_height(DMP);
     }
 
     return edit_com(argc, argv, 1);
