@@ -59,7 +59,11 @@ dmSW::dmSW(QWidget *parent)
     dm_set_pathname(dmp, "SWDM");
     dm_set_zbuffer(dmp, 1);
 
-    fastf_t windowbounds[6] = { -1, 1, -1, 1, -1, 1 };
+    // Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss
+    // in shaded mode, but -1,1 clips geometry quickly as we start to zoom in.
+    // -100,100 seems to work, but may need a better long term solution to
+    // this... maybe basing it on the currently visible object bounds?
+    fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };
     dm_set_win_bounds(dmp, windowbounds);
 
     v->dmp = dmp;
