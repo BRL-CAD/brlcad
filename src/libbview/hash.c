@@ -458,11 +458,23 @@ bview_hash(struct bview *v)
 
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	if (BU_PTBL_IS_INITIALIZED(&g->g->children)) {
+	    for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
+		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&g->g->children, j);
+		bview_scene_obj_hash(state, s_c);
+	    }
+	}
 	bview_scene_obj_hash(state, g->g);
     }
 
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
 	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	if (BU_PTBL_IS_INITIALIZED(&s->children)) {
+	    for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
+		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
+		bview_scene_obj_hash(state, s_c);
+	    }
+	}
 	bview_scene_obj_hash(state, s);
     }
 
