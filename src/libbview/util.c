@@ -404,6 +404,25 @@ bview_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf
     return 0;
 }
 
+void
+bview_scene_obj_init(struct bview_scene_obj *s, struct bview_scene_obj *free_scene_obj)
+{
+    BU_LIST_INIT(&(s->s_vlist));
+    BU_PTBL_INIT(&s->children);
+    BU_VLS_INIT(&s->s_name);
+    bu_vls_trunc(&s->s_name, 0);
+    BU_VLS_INIT(&s->s_uuid);
+    bu_vls_trunc(&s->s_uuid, 0);
+    s->s_arrow = 0;
+    s->s_flag = UP;
+    s->s_iflag = DOWN;
+    s->s_soldash = 0;
+    s->free_scene_obj = free_scene_obj;
+
+    s->s_update_callback = NULL;
+    s->s_free_callback = NULL;
+}
+
 #define FREE_BVIEW_SCENE_OBJ(p, fp) { \
     BU_LIST_APPEND(fp, &((p)->l)); }
 

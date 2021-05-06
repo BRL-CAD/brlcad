@@ -301,17 +301,19 @@ _bview_settings_hash(XXH64_state_t *state, struct bview_settings *v)
 	return;
 
     XXH64_update(state, &v->adaptive_plot, sizeof(int));
-    XXH64_update(state, &v->redraw_on_zoom, sizeof(int));
-    XXH64_update(state, &v->x_samples, sizeof(int));
-    XXH64_update(state, &v->y_samples, sizeof(int));
-    XXH64_update(state, &v->point_scale, sizeof(fastf_t));
-    XXH64_update(state, &v->curve_scale, sizeof(fastf_t));
     XXH64_update(state, &v->bot_threshold, sizeof(size_t));
-    XXH64_update(state, &v->s_line_width, sizeof(int));
+    XXH64_update(state, &v->curve_scale, sizeof(fastf_t));
+    XXH64_update(state, &v->draw_non_subtract_only, sizeof(int));
+    XXH64_update(state, &v->draw_solid_lines_only, sizeof(int));
+    XXH64_update(state, &v->point_scale, sizeof(fastf_t));
+    XXH64_update(state, &v->redraw_on_zoom, sizeof(int));
     XXH64_update(state, &v->s_arrow_tip_length, sizeof(fastf_t));
     XXH64_update(state, &v->s_arrow_tip_width, sizeof(fastf_t));
-    XXH64_update(state, &v->transparency, sizeof(fastf_t));
     XXH64_update(state, &v->s_dmode, sizeof(int));
+    XXH64_update(state, &v->s_line_width, sizeof(int));
+    XXH64_update(state, &v->transparency, sizeof(fastf_t));
+    XXH64_update(state, &v->x_samples, sizeof(int));
+    XXH64_update(state, &v->y_samples, sizeof(int));
 }
 
 void

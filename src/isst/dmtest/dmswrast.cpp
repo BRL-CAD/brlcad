@@ -59,8 +59,11 @@ dmSW::dmSW(QWidget *parent)
     dm_set_pathname(dmp, "SWDM");
     dm_set_zbuffer(dmp, 1);
 
-    // Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss
-    // in shaded mode, but -1,1 clips geometry quickly as we start to zoom in.
+    // Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss I
+    // in shaded mode (I think I was seeing the "Z-fighting" problem:
+    // https://www.sjbaker.org/steve/omniv/love_your_z_buffer.html )
+    //
+    // Setting to (-1,1) clips geometry too quickly as we start to zoom in.
     // -100,100 seems to work, but may need a better long term solution to
     // this... maybe basing it on the currently visible object bounds?
     fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };

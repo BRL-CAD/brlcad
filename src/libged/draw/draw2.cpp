@@ -278,7 +278,7 @@ struct draw_data_t {
     struct bview_scene_obj *free_scene_obj;
     struct bu_color c;
     int color_inherit;
-    int curr_op;
+    int bool_op;
 };
 
 static void
@@ -351,14 +351,14 @@ _tree_color(struct directory *dp, struct draw_data_t *dd)
 }
 
 static void
-db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *tp, mat_t *curr_mat,
+db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 	void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
 	void *client_data)
 {
     mat_t om, nm;
     struct directory *dp;
     struct draw_data_t *dd= (struct draw_data_t *)client_data;
-    int bool_val = curr_bool;
+    int prev_bool_op = dd->bool_op;
 
     if (!tp)
 	return;
@@ -372,21 +372,15 @@ db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *t
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    if (tp->tr_op == OP_UNION)
-		bool_val = 2;
-	    if (tp->tr_op == OP_INTERSECT)
-		bool_val = 3;
-	    if (tp->tr_op == OP_SUBTRACT) {
-		bool_val = 4;
-		// TODO - check if we're skipping subtractions.  If we are,
-		// there's no point in going further.
-	    }
-	    db_fullpath_draw_subtree(path, bool_val, tp->tr_b.tb_right, curr_mat, traverse_func, client_data);
+	    if (tp->tr_op == OP_SUBTRACT)
+		dd->bool_op = 4;
+	    db_fullpath_draw_subtree(path, tp->tr_b.tb_right, curr_mat, traverse_func, client_data);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    db_fullpath_draw_subtree(path, OP_UNION, tp->tr_b.tb_left, curr_mat, traverse_func, client_data);
+	    dd->bool_op = prev_bool_op;
+	    db_fullpath_draw_subtree(path, tp->tr_b.tb_left, curr_mat, traverse_func, client_data);
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -404,10 +398,6 @@ db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		}
 		bn_mat_mul(*curr_mat, om, nm);
 
-
-		/* Drawing may be impacted by boolean status */
-		dd->curr_op = bool_val;
-
 		// Stash current color settings and see if we're getting new ones
 		int inherit_old = dd->color_inherit;
 		struct bu_color oc;
@@ -420,7 +410,6 @@ db_fullpath_draw_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		// duplicated in all traverse functions.
 		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
 		    db_add_node_to_full_path(path, dp);
-		    DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
 		    if (!db_full_path_cyclic(path, NULL, 0)) {
 			/* Keep going */
 			traverse_func(path, curr_mat, client_data);
@@ -479,9 +468,15 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 
-	db_fullpath_draw_subtree(path, OP_UNION, comb->tree, curr_mat, db_fullpath_draw, client_data);
+	db_fullpath_draw_subtree(path, comb->tree, curr_mat, db_fullpath_draw, client_data);
 	rt_db_free_internal(&in);
     } else {
+	// If we're skipping subtractions there's no
+	// point in going further.
+	if (dd->g->g->s_os.draw_non_subtract_only && dd->bool_op == 4) {
+	    return;
+	}
+
 	// If we've got a solid, things get interesting.  There are a lot of
 	// potentially relevant options to sort through.  It may be that most
 	// will end up getting handled by the object update callbacks, and the
@@ -497,19 +492,18 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Have database object, make scene object
 	struct bview_scene_obj *s;
 	GET_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
-	s->free_scene_obj = free_scene_obj;
-	BU_LIST_INIT(&(s->s_vlist));
-	BU_PTBL_INIT(&s->children);
-	BU_VLS_INIT(&s->s_name);
+	bview_scene_obj_init(s, free_scene_obj);
 	db_path_to_vls(&s->s_name, path);
-	BU_VLS_INIT(&s->s_uuid);
 	db_path_to_vls(&s->s_uuid, path);
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
 	MAT_COPY(s->s_mat, *curr_mat);
 	bview_settings_sync(&s->s_os, &dd->g->g->s_os);
-	s->s_soldash = (dd->curr_op == 4) ? 1 : 0;
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
+	s->s_type_flags = BVIEW_DBOBJ_BASED;
+	s->s_changed++;
+	if (!s->s_os.draw_solid_lines_only) {
+	    s->s_soldash = (dd->bool_op == 4) ? 1 : 0;
+	}
 	bu_color_to_rgb_chars(&dd->c, s->s_color);
 
 	// Stash the information needed for a draw update callback
@@ -579,7 +573,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     struct bview_settings vs;
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
-    struct bu_opt_desc d[15];
+    struct bu_opt_desc d[16];
     BU_OPT(d[0],  "h", "help",          "",                 NULL,       &print_help,  "Print help and exit");
     BU_OPT(d[1],  "?", "",              "",                 NULL,       &print_help,  "");
     BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
@@ -592,9 +586,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[9],  "L", "lod",           "",                 NULL, &vs.adaptive_plot,  "Enable view adaptive Level of Detail plotting");
     BU_OPT(d[10],  "", "adaptive",      "",                 NULL, &vs.adaptive_plot,  "");
     BU_OPT(d[11], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
-    BU_OPT(d[12], "C", "color",         "r/g/b", &draw_opt_color, &vs,                 "Override object colors");
-    BU_OPT(d[13],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
-    BU_OPT_NULL(d[14]);
+    BU_OPT(d[12],  "", "no-dash",       "",                 NULL, &vs.draw_solid_lines_only,  "Use solid lines rather than dashed for subtraction solids");
+    BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                 "Override object colors");
+    BU_OPT(d[14],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
+    BU_OPT_NULL(d[15]);
 
     /* If no args, must be wanting help */
     if (!argc) {
@@ -755,12 +750,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    // Create new group
 	    BU_GET(g, struct bview_scene_group);
 	    GET_BVIEW_SCENE_OBJ(g->g, &free_scene_obj->l);
-	    g->g->free_scene_obj = free_scene_obj;
-	    BU_LIST_INIT(&(g->g->s_vlist));
-	    BU_PTBL_INIT(&g->g->children);
-	    BU_VLS_INIT(&g->g->s_name);
+	    bview_scene_obj_init(g->g, free_scene_obj);
 	    db_path_to_vls(&g->g->s_name, fp);
-	    BU_VLS_INIT(&g->g->s_uuid);
 	    db_path_to_vls(&g->g->s_uuid, fp);
 	    bview_settings_sync(&g->g->s_os, &vs);
 	    bu_ptbl_ins(gedp->ged_gvp->gv_db_grps, (long *)g);
@@ -786,7 +777,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
 	dd.free_scene_obj = gedp->free_scene_obj;
 	dd.color_inherit = 0;
-	dd.curr_op = 2; // Default to union
+	dd.bool_op = 2; // Default to union
 	if (vs.color_override) {
 	    bu_color_from_rgb_chars(&dd.c, vs.color);
 	} else {
