@@ -145,165 +145,6 @@ function(FILE_LANG sfile outvar)
 
 endfunction(FILE_LANG)
 
-
-# Assemble the targets and compilation flags needed by the target
-function(GET_FLAGS_AND_DEFINITIONS targetname target_libs)
-
-  cmake_parse_arguments(G "" "CFLAGS;CXXFLAGS;DEFINES" "" ${ARGN})
-
-  #####################################################################
-  # Compile flags - note that targets may have separate C and C++ flags
-
-  if(G_CFLAGS OR G_CXXFLAGS)
-
-    set(FLAG_LANGUAGES C CXX)
-    foreach(slang ${FLAG_LANGUAGES})
-
-      # If we've already got some flags assigned to this target, pull them in
-      get_property(T_FLAGS GLOBAL PROPERTY ${targetname}_${lang}_FLAGS)
-
-      # Get all the flags from all the associated libraries
-      foreach(libitem ${target_libs})
-	get_property(ITEM_FLAGS GLOBAL PROPERTY ${libitem}_${lang}_FLAGS)
-	list(APPEND T_FLAGS ${${libitem}_${lang}_FLAGS})
-      endforeach(libitem ${target_libs})
-
-      # If we've got anything, scrub down to unique entries
-      if(T_FLAGS)
-	list(REMOVE_DUPLICATES T_FLAGS)
-      endif(T_FLAGS)
-
-      # Put the results back into the global target
-      set_property(GLOBAL PROPERTY ${targetname}_${lang}_FLAGS "${T_FLAGS}")
-
-      # Set the language specific flag variables
-      if("${slang}" STREQUAL "C")
-	set(T_C_FLAGS "${T_FLAGS}")
-      endif("${slang}" STREQUAL "C")
-      if("${slang}" STREQUAL "CXX")
-	set(T_CXX_FLAGS "${T_FLAGS}")
-      endif("${slang}" STREQUAL "CXX")
-
-    endforeach(slang ${FLAG_LANGUAGES})
-
-    if(G_CFLAGS)
-      set(${G_CFLAGS} ${T_C_FLAGS} PARENT_SCOPE)
-    endif(G_CFLAGS)
-    if(G_CXXFLAGS)
-      set(${G_CXXFLAGS} ${T_CXX_FLAGS} PARENT_SCOPE)
-    endif(G_CXXFLAGS)
-
-  endif(G_CFLAGS OR G_CXXFLAGS)
-
-  #############################################################
-  # Compilation definitions (common to all source files)
-
-  if(G_DEFINES)
-
-    get_property(T_DEFINES GLOBAL PROPERTY ${targetname}_DEFINES)
-    foreach(libitem ${target_libs})
-      get_property(${libitem}_DEFINES GLOBAL PROPERTY ${libitem}_DEFINES)
-      list(APPEND T_DEFINES ${${libitem}_DEFINES})
-    endforeach(libitem ${target_libs})
-
-    # No duplicate definitions needed
-    if(T_DEFINES)
-      list(REMOVE_DUPLICATES T_DEFINES)
-    endif(T_DEFINES)
-
-    # Send the finalized list back to the parent
-    set(${G_DEFINES} ${T_DEFINES} PARENT_SCOPE)
-
-  endif(G_DEFINES)
-
-endfunction(GET_FLAGS_AND_DEFINITIONS)
-
-# Determine the language for a target
-
-# For simplicity, always set compile definitions and compile flags on
-# files rather than build targets (less logic, simplifies dealing with
-# OBJECT libraries.)
-function(SET_FLAGS_AND_DEFINITIONS srcslist)
-
-  cmake_parse_arguments(S "NO_STRICT_CXX" "TARGET" "CFLAGS;CXXFLAGS;DEFINES" ${ARGN})
-
-  foreach(srcfile ${srcslist})
-
-    # Find existing definitions so we aren't adding duplicates
-    get_property(E_DEFINES SOURCE ${srcfile} PROPERTY COMPILE_DEFINITIONS)
-    set(W_DEFINES ${S_DEFINES})
-    if(W_DEFINES)
-      foreach(df ${E_DEFINES})
-	list(REMOVE_ITEM W_DEFINES ${df})
-      endforeach(df ${E_DEFINES})
-    endif(W_DEFINES)
-
-    # Defines apply across C/C++
-    foreach(tdef ${W_DEFINES})
-      set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "${tdef}")
-    endforeach(tdef ${W_DEFINES})
-
-    # C or C++?
-    FILE_LANG("${srcfile}" file_language)
-
-    # Handle C files
-    if("${file_language}" STREQUAL "C")
-
-      # Find existing flags so we aren't adding duplicates
-      get_property(E_CFLAGS SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
-      set(W_CFLAGS ${S_CFLAGS})
-      if(W_CFLAGS)
-	foreach(df ${E_CFLAGS})
-	  list(REMOVE_ITEM W_CFLAGS ${df})
-	endforeach(df ${E_CFLAGS})
-      endif(W_CFLAGS)
-
-      foreach(tflag ${W_CFLAGS})
-	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${tflag}")
-      endforeach(tflag ${W_CFLAGS})
-
-      # Handle inline definition for C files only
-      if(NOT "${C_INLINE}" STREQUAL "inline")
-	list(FIND E_DEFINES "inline=${C_INLINE}" HAVE_INLINE_DEF)
-	if("${HAVE_INLINE_DEF}" EQUAL -1)
-	  set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
-	endif("${HAVE_INLINE_DEF}" EQUAL -1)
-      endif(NOT "${C_INLINE}" STREQUAL "inline")
-
-      # Handle disabling of strict compilation if target requires that
-      if(S_NO_STRICT AND NOERROR_FLAG AND BRLCAD_ENABLE_STRICT)
-	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-      endif(S_NO_STRICT AND NOERROR_FLAG AND BRLCAD_ENABLE_STRICT)
-
-    endif("${file_language}" STREQUAL "C")
-
-    # Handle C++ files
-    if("${file_language}" STREQUAL "C++")
-
-      # Find existing flags so we aren't adding duplicates
-      get_property(E_CXXFLAGS SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
-      set(W_CXXFLAGS ${S_CXXFLAGS})
-      if(W_CXXFLAGS)
-	foreach(df ${E_CXXFLAGS})
-	  list(REMOVE_ITEM W_CXXFLAGS ${df})
-	endforeach(df ${E_CXXFLAGS})
-      endif(W_CXXFLAGS)
-
-      foreach(tflag ${W_CXXFLAGS})
-	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${tflag}")
-      endforeach(tflag ${W_CXXFLAGS})
-
-      # Handle disabling of strict compilation if target requires that
-      if( (S_NO_STRICT OR _S_NO_STRICT_CXX) AND NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
-	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-      endif( (S_NO_STRICT OR _S_NO_STRICT_CXX) AND NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
-
-    endif("${file_language}" STREQUAL "C++")
-
-  endforeach(srcfile ${srcslist})
-
-endfunction(SET_FLAGS_AND_DEFINITIONS)
-
 define_property(GLOBAL PROPERTY BRLCAD_EXEC_FILES BRIEF_DOCS "BRL-CAD binaries" FULL_DOCS "List of installed BRL-CAD binary programs")
 
 #-----------------------------------------------------------------------------
@@ -338,13 +179,6 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Check at compile time the standard BRL-CAD style rules
   VALIDATE_STYLE("${execname}" "${srcslist}")
-
-  # Use the list of libraries to be linked into this target to
-  # accumulate the necessary definitions and compilation flags.
-  GET_FLAGS_AND_DEFINITIONS(${execname} "${libslist}" CFLAGS E_C_FLAGS CXXFLAGS E_CXX_FLAGS DEFINES E_DEFINES)
-
-  # Having built up the necessary sets, apply them
-  SET_FLAGS_AND_DEFINITIONS("${srcslist}" TARGET ${execname} CFLAGS "${E_C_FLAGS}" CXXFLAGS "${E_CXX_FLAGS}" DEFINES "${E_DEFINES}")
 
   # If we have libraries to link, link them.
   if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
@@ -416,13 +250,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}")
-
-  # Retrieve the build flags and definitions
-  GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}"
-    CFLAGS L_C_FLAGS
-    CXXFLAGS L_CXX_FLAGS
-    DEFINES L_DEFINES
-    )
 
   # Local copy of srcslist in case manipulation is needed
   set(lsrcslist ${srcslist})
@@ -519,15 +346,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set_target_properties(${pt} PROPERTIES PREFIX "")
     endif(TARGET ${pt} AND ${pt} MATCHES "^lib*")
   endforeach(pt ${possible_targets})
-
-  # Now that we have both the sources lists and the build targets,
-  # assign flags
-  SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}"
-    TARGET ${libname}
-    CFLAGS "${L_C_FLAGS}"
-    CXXFLAGS "${L_CXX_FLAGS}"
-    DEFINES "${L_DEFINES}"
-    )
 
   # Extra static lib specific work
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
