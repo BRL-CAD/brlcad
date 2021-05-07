@@ -48,7 +48,7 @@ struct draw_update_data_t {
 
 
 /* Defined in view.cpp */
-GED_EXPORT extern int ged_view_update(struct ged *gedp, size_t prev_scene_cnt);
+GED_EXPORT extern int ged_view_update(struct ged *gedp);
 
 /**
  * Erase all currently displayed geometry and draw the specified object(s)

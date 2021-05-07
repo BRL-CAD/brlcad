@@ -152,20 +152,10 @@ void dmGL::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    }
 	}
 
-	size_t scene_cnt = BU_PTBL_LEN(v->gv_db_grps) + BU_PTBL_LEN(v->gv_view_objs);
-
 	ged_exec(gedp, argc, argv);
 	if (msg)
 	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
 
-	if (v->gv_cleared && (!v->gv_view_objs || !BU_PTBL_LEN(v->gv_view_objs))) {
-	    const char *aav[2];
-	    aav[0] = "autoview";
-	    aav[1] = NULL;
-	    ged_autoview(gedp, 1, (const char **)aav);
-	    v->gv_cleared = 0;
-	    bview_update(v);
-	}
 	unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
 	if (dhash != prev_dhash) {
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
@@ -192,7 +182,7 @@ void dmGL::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	// For db obj view list objects, check the dp edit flags and do any necessary
 	// redrawing.
-	if (ged_view_update(gedp, scene_cnt) > 0) {
+	if (ged_view_update(gedp) > 0) {
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
 

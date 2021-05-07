@@ -716,6 +716,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
     int print_help = 0;
     int bot_threshold = -1;
+    int no_autoview = 0;
     static const char *usage = "[options] path1 [path2 ...]";
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -737,21 +738,22 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[16];
-    BU_OPT(d[0],  "h", "help",          "",                 NULL,       &print_help,  "Print help and exit");
-    BU_OPT(d[1],  "?", "",              "",                 NULL,       &print_help,  "");
+    BU_OPT(d[0],  "h", "help",          "",                 NULL, &print_help,         "Print help and exit");
+    BU_OPT(d[1],  "?", "",              "",                 NULL, &print_help,         "");
     BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
     BU_OPT(d[3],   "", "wireframe",     "",                 NULL, &drawing_modes[1],  "Draw using only wireframes (mode = 0)");
     BU_OPT(d[4],   "", "shaded",        "",                 NULL, &drawing_modes[2],  "Shade bots and polysolids (mode = 1)");
     BU_OPT(d[5],   "", "shaded-all",    "",                 NULL, &drawing_modes[3],  "Shade all solids, not evaluated (mode = 2)");
     BU_OPT(d[6],  "E", "evaluate",      "",                 NULL, &drawing_modes[4],  "Wireframe with evaluate booleans (mode = 3)");
     BU_OPT(d[7],   "", "hidden-line",   "",                 NULL, &drawing_modes[5],  "Hidden line wireframes");
-    BU_OPT(d[8],  "t", "transparency", "#",      &bu_opt_fastf_t,  &vs.transparency,  "Set transparency level in drawing: range 0 (clear) to 1 (opaque)");
-    BU_OPT(d[9],  "x", "",             "#",       &bu_opt_fastf_t,  &vs.transparency,  "");
-    BU_OPT(d[10], "L", "",             "#",           &bu_opt_int,    &bot_threshold,  "Set face count level for drawing bounding boxes instead of BoT triangles (NOTE: passing this updates the global view setting - bot_threshold is a view property).");
+    BU_OPT(d[8],  "t", "transparency", "#",      &bu_opt_fastf_t, &vs.transparency,   "Set transparency level in drawing: range 0 (clear) to 1 (opaque)");
+    BU_OPT(d[9],  "x", "",             "#",      &bu_opt_fastf_t, &vs.transparency,   "");
+    BU_OPT(d[10], "L", "",             "#",          &bu_opt_int, &bot_threshold,     "Set face count level for drawing bounding boxes instead of BoT triangles (NOTE: passing this updates the global view setting - bot_threshold is a view property).");
     BU_OPT(d[11], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
     BU_OPT(d[12],  "", "no-dash",       "",                 NULL, &vs.draw_solid_lines_only,  "Use solid lines rather than dashed for subtraction solids");
-    BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                 "Override object colors");
+    BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
     BU_OPT(d[14],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
+    BU_OPT(d[14], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
     BU_OPT_NULL(d[15]);
 
     /* If no args, must be wanting help */
@@ -957,7 +959,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    // for each group we're going to be using mat and walking the tree
 	    // of fp (or getting its box directly if fp is a solid with no
 	    // parents) to build up bounding info.
-	    if (blank_slate && gedp->ged_gvp->adaptive_plot) {
+	    if (blank_slate && gedp->ged_gvp->adaptive_plot && !no_autoview) {
 		mat_t cmat;
 		MAT_COPY(cmat, mat);
 		_bound_fp(fp, &cmat, (void *)&bounds_data);
@@ -976,7 +978,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (blank_slate && gedp->ged_gvp->adaptive_plot) {
+    if (blank_slate && gedp->ged_gvp->adaptive_plot && !no_autoview) {
 	// We've checked the paths for bounding info - now set up the
 	// view
 	struct bview *v = gedp->ged_gvp;
@@ -1096,6 +1098,17 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Sort
     bu_sort(BU_PTBL_BASEADDR(gedp->ged_gvp->gv_db_grps), BU_PTBL_LEN(gedp->ged_gvp->gv_db_grps), sizeof(struct bview_scene_group *), alphanum_cmp, NULL);
+
+
+    // If we're starting from scratch and we're not being told to leave the
+    // view alone, make sure what we've drawn is visible.
+    if (blank_slate && !no_autoview) {
+	int ac = 1;
+	const char *av[2];
+	av[0] = "autoview2";
+	av[1] = NULL;
+	return ged_exec(gedp, ac, (const char **)av);
+    }
 
     // Scene objects are created and stored in gv_db_grps. The application
     // may now call each object's update callback to generate wireframes,
