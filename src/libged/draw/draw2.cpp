@@ -100,8 +100,63 @@ _wireframe_plot(struct bview_scene_obj *s, struct rt_db_internal *ip)
 
 extern "C" int draw_m3(struct bview_scene_obj *s);
 
+static int
+_fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
+	struct db_full_path *fp,
+	struct db_i *dbip,
+	const struct bg_tess_tol *ttol,
+	const struct bn_tol *tol,
+	mat_t *s_mat,
+	struct resource *res,
+	struct bview *v
+	)
+{
+    VSET(*bmin, INFINITY, INFINITY, INFINITY);
+    VSET(*bmax, -INFINITY, -INFINITY, -INFINITY);
+    *s_size = 1;
+
+    struct rt_db_internal dbintern;
+    RT_DB_INTERNAL_INIT(&dbintern);
+    struct rt_db_internal *ip = &dbintern;
+    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, *s_mat, res);
+    if (ret < 0)
+	return -1;
+
+    int bbret = -1;
+    if (ip->idb_meth->ft_bbox) {
+	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
+    }
+    if (bbret < 0 && ip->idb_meth->ft_plot) {
+	/* As a fallback for primitives that don't have a bbox function,
+	 * (there are still some as of 2021) use the old bounding method of
+	 * calculating the default (non-adaptive) plot for the primitive
+	 * and using the extent of the plotted segments as the bounds.
+	 */
+	struct bu_list vhead;
+	BU_LIST_INIT(&(vhead));
+	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, v) >= 0) {
+	    if (bn_vlist_bbox(&vhead, bmin, bmax, NULL)) {
+		BN_FREE_VLIST(&v->gv_vlfree, &vhead);
+		rt_db_free_internal(&dbintern);
+		return -1;
+	    }
+	    BN_FREE_VLIST(&v->gv_vlfree, &vhead);
+	    bbret = 0;
+	}
+    }
+    if (bbret >= 0) {
+	// Got bounding box, use it to update sizing
+	*s_size = (*bmax)[X] - (*bmin)[X];
+	V_MAX(*s_size, (*bmax)[Y] - (*bmin)[Y]);
+	V_MAX(*s_size, (*bmax)[Z] - (*bmin)[Z]);
+    }
+
+    rt_db_free_internal(&dbintern);
+    return bbret;
+}
+
 static void
-_scene_obj_geom(struct bview_scene_obj *s)
+_scene_obj_geom(struct bview_scene_obj *s, std::map<struct directory *, fastf_t> *s_size)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_i *dbip = d->dbip;
@@ -124,41 +179,19 @@ _scene_obj_geom(struct bview_scene_obj *s)
     if (ret < 0)
 	return;
 
-    // On initialization we don't have any wireframes to establish sizes, and if
-    // we're adaptive we need some idea of object size to get a reasonable result.
-    // Try for a bounding box, if the method is available.  Otherwise try the
-    // bounding the default plot.
-    if (!bu_list_len(&s->s_vlist) && s->s_v->adaptive_plot) {
-	int bbret = -1;
-	point_t min, max;
-	if (ip->idb_meth->ft_bbox) {
-	    bbret = ip->idb_meth->ft_bbox(ip, &min, &max, tol);
-	}
-	if (bbret >= 0) {
-	    // Got bounding box, use it to set up sizing
-	    s->s_center[X] = (min[X] + max[X]) * 0.5;
-	    s->s_center[Y] = (min[Y] + max[Y]) * 0.5;
-	    s->s_center[Z] = (min[Z] + max[Z]) * 0.5;
-	    s->s_size = max[X] - min[X];
-	    V_MAX(s->s_size, max[Y] - min[Y]);
-	    V_MAX(s->s_size, max[Z] - min[Z]);
-	} else if (s->s_v->adaptive_plot && ip->idb_meth->ft_plot) {
-	    /* As a fallback for primitives that don't have a bbox function,
-	     * (yes there are still some as of 2021) use the old bounding
-	     * method of calculating the default (non-adaptive) plot for the
-	     * primitive and using the extent of the plotted segments as the
-	     * bounds.
-	     *
-	     * TODO - this really should be turned into a generic fallback
-	     * method for librt and hooked up to the calltable for primitives
-	     * that don't otherwise have one, so we don't have to wedge this
-	     * into the drawing code...
-	     */
-	    if (ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v) >= 0) {
-		bview_scene_obj_bound(s);
-		// This isn't the vlist we want since the primitive has an
-		// adaptive plot defined, so clear it once we have the bounds.
-		BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    // When we're adaptive plotting, we need some information about object size
+    // before we generate the wireframe.  (And view as well, but we can't do
+    // much about that here if the caller doesn't have a view set up...)
+    if (s->s_v->adaptive_plot) {
+	// If the caller has a size for us, use it.
+	if (s_size && s_size->find(DB_FULL_PATH_CUR_DIR(fp)) != s_size->end()) {
+	    s->s_size = (*s_size)[DB_FULL_PATH_CUR_DIR(fp)];
+	} else {
+	    // No caller info - can we calculate it?
+	    mat_t mat;
+	    if (db_path_to_mat(dbip, fp, mat, fp->fp_len-1, d->res)) {
+		point_t bmin, bmax;
+		_fp_bbox(&s->s_size, &bmin, &bmax, fp, dbip, ttol, tol, &mat, d->res, s->s_v);
 	    }
 	}
     }
@@ -269,7 +302,7 @@ _ged_update_db_path(struct bview_scene_obj *s)
     }
 
     // Get the correct geometry for the mode
-    _scene_obj_geom(s);
+    _scene_obj_geom(s, NULL);
 
     // TODO - confirm color
 
@@ -301,6 +334,7 @@ _ged_free_draw_data(struct bview_scene_obj *s)
     s->s_i_data = NULL;
 }
 
+
 /* Data for tree walk */
 struct draw_data_t {
     struct db_i *dbip;
@@ -313,6 +347,17 @@ struct draw_data_t {
     struct bu_color c;
     int color_inherit;
     int bool_op;
+    struct resource *res;
+
+    /* To avoid the need for multiple subtree walking
+     * functions, we also set up to support a bounding
+     * only walk. */
+    int bound_only;
+    int skip_subtractions;
+    int have_bbox;
+    point_t min;
+    point_t max;
+    std::map<struct directory *, fastf_t> *s_size;
 };
 
 static void
@@ -384,6 +429,17 @@ _tree_color(struct directory *dp, struct draw_data_t *dd)
     bu_avs_free(&c_avs);
 }
 
+/*****************************************************************************
+
+  The primary drawing subtree walk.
+
+  To get an initial idea of scene size and center for adaptive plotting (i.e.
+  before we have wireframes drawn) we also have a need to check ft_bbox ahead
+  of the vlist generation.  It can be thought of as a "preliminary autoview"
+  step.  That mode is also supported by this subtree walk.
+
+******************************************************************************/
+
 static void
 db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 	void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
@@ -433,10 +489,13 @@ db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_
 		bn_mat_mul(*curr_mat, om, nm);
 
 		// Stash current color settings and see if we're getting new ones
-		int inherit_old = dd->color_inherit;
 		struct bu_color oc;
-		HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
-		_tree_color(dp, dd);
+		int inherit_old;
+		if (!dd->bound_only) {
+		    inherit_old = dd->color_inherit;
+		    HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
+		    _tree_color(dp, dd);
+		}
 
 		// Two things may prevent further processing - a hidden dp, or
 		// a cyclic path.  Can check either here or in traverse_func -
@@ -454,9 +513,10 @@ db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_
 		 * and restore previous color settings */
 		DB_FULL_PATH_POP(path);
 		MAT_COPY(*curr_mat, om);
-		dd->color_inherit = inherit_old;
-		HSET(dd->c.buc_rgb, oc.buc_rgb[0], oc.buc_rgb[1], oc.buc_rgb[2], oc.buc_rgb[3]);
-
+		if (!dd->bound_only) {
+		    dd->color_inherit = inherit_old;
+		    HSET(dd->c.buc_rgb, oc.buc_rgb[0], oc.buc_rgb[1], oc.buc_rgb[2], oc.buc_rgb[3]);
+		}
 		return;
 	    }
 
@@ -488,12 +548,6 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	return;
     if (dp->d_flags & RT_DIR_COMB) {
 
-	// If we have a comb, there are a couple possible actions based
-	// on draw settings.  If we're supposed to generate an evaluated
-	// shape, we need to check for a region flag and if we have one
-	// do the evaluation to make the scene object.  In most other
-	// cases, continue down the tree looking for solids.
-
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
@@ -504,7 +558,9 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
 	db_fullpath_draw_subtree(path, comb->tree, curr_mat, db_fullpath_draw, client_data);
 	rt_db_free_internal(&in);
+
     } else {
+
 	// If we're skipping subtractions there's no
 	// point in going further.
 	if (dd->g->g->s_os.draw_non_subtract_only && dd->bool_op == 4) {
@@ -556,10 +612,56 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	s->s_free_callback = &_ged_free_draw_data;
 
 	// Call correct vlist method based on mode
-	_scene_obj_geom(s);
+	_scene_obj_geom(s, dd->s_size);
 
 	// Add object to scene group
 	bu_ptbl_ins(&dd->g->g->children, (long *)s);
+    }
+}
+
+/**
+ * This walker builds up scene size and bounding information.
+ */
+static void
+_bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
+{
+    struct directory *dp;
+    struct draw_data_t *dd= (struct draw_data_t *)client_data;
+    RT_CK_FULL_PATH(path);
+    RT_CK_DBI(dd->dbip);
+
+    dp = DB_FULL_PATH_CUR_DIR(path);
+    if (!dp)
+	return;
+    if (dp->d_flags & RT_DIR_COMB) {
+	// Have a comb - keep going
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+	db_fullpath_draw_subtree(path, comb->tree, curr_mat, _bound_fp, client_data);
+	rt_db_free_internal(&in);
+    } else {
+	// If we're skipping subtractions there's no
+	// point in going further.
+	if (dd->skip_subtractions && dd->bool_op == 4) {
+	    return;
+	}
+
+	// On initialization we don't have any wireframes to establish sizes, and if
+	// we're adaptive we need some idea of object size to get a reasonable result.
+	// Try for a bounding box, if the method is available.  Otherwise try the
+	// bounding the default plot.
+	point_t bmin, bmax;
+	fastf_t s_size;
+	int bbret = _fp_bbox(&s_size, &bmin, &bmax, path, dd->dbip, dd->ttol, dd->tol, curr_mat, dd->res, dd->v);
+	if (bbret >= 0) {
+	    // Got bounding box, use it to update sizing
+	    (*dd->s_size)[dp] = s_size;
+	    VMINMAX(dd->min, dd->max, bmin);
+	    VMINMAX(dd->min, dd->max, bmax);
+	}
     }
 }
 
@@ -646,6 +748,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
+    // Whatever is left after argument processing are the potential draw paths
+    argc = opt_ret;
+
     // Drawing modes may be set either by -m or by the more verbose options,
     // with the latter taking precedence if both are set.
     int have_override = 0;
@@ -670,14 +775,30 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	vs.s_dmode = drawing_modes[0];
     }
 
-
     // Abbreviations for convenience
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
     struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
 
-    // Whatever is left after argument processing are the potential draw paths
-    argc = opt_ret;
+
+    // If we have no active groups and no view objects, we are drawing into a
+    // blank canvas - unless options specifically disable it, if we are doing
+    // adaptive plotting we need to do a preliminary view characterization.
+    int blank_slate = 0;
+    struct draw_data_t bounds_data;
+    std::map<struct directory *, fastf_t> s_size;
+    bounds_data.bound_only = 1;
+    bounds_data.res = &rt_uniresource;
+    bounds_data.have_bbox = 0;
+    bounds_data.skip_subtractions = vs.draw_non_subtract_only;
+    VSET(bounds_data.min, INFINITY, INFINITY, INFINITY);
+    VSET(bounds_data.max, -INFINITY, -INFINITY, -INFINITY);
+    bounds_data.s_size = &s_size;
+    // Before we start doing anything with sg, record if things are starting
+    // out empty.
+    if (!BU_PTBL_LEN(sg) && !BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs)) {
+	blank_slate = 1;
+    }
 
     /* Validate that the supplied args are current, valid paths in the
      * database.  If one or more are not, bail */
@@ -712,13 +833,21 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_gvp->bot_threshold = bot_threshold;
     }
 
-    // Check the already drawn paths to see if the proposed new path impacts them.
+
+    // As a preliminary step, dheck the already drawn paths to see if the
+    // proposed new path impacts them.  If we need to set up for adaptive
+    // plotting, do initial bounds calculations to pave the way for an
+    // initial view setup.
+    std::map<struct db_full_path *, struct bview_scene_group *> fp_g;
     for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
 	struct bview_scene_group *g = NULL;
 	struct db_full_path *fp = *f_it;
 
-	// Get the "seed" matrix from the path - everything we draw at or below the path
-	// will be positioned using it
+	// Get the "seed" matrix from the path - everything we draw at or below
+	// the path will be positioned using it.  We don't need the matrix
+	// itself in this stage unless we're doing adaptive plotting, but if we
+	// can't get it the path isn't going to be workable anyway so we may
+	// as well check now and yank it if there is a problem.
 	mat_t mat;
 	MAT_IDN(mat);
 	// TODO - get resource from somewhere other than rt_uniresource
@@ -728,26 +857,23 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	// Similarly, get an initial color from the path, if we're not overridden
-	struct bu_color c;
-	if (!vs.color_override) {
-	    unsigned char dc[3];
-	    dc[0] = 255;
-	    dc[1] = 0;
-	    dc[2] = 0;
-	    bu_color_from_rgb_chars(&c, dc);
-	    db_full_path_color(&c, fp, dbip, &rt_uniresource);
-	}
-
+	// Check all the current groups against the candidate.
 	std::set<struct bview_scene_group *> clear;
 	std::set<struct bview_scene_group *>::iterator g_it;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
+	    // If we already know we're clearing this one, don't check
+	    // again
+	    if (clear.find(cg) != clear.end()) {
+		continue;
+	    }
+
+	    // Not already clearing, need to check
 	    struct db_full_path gfp;
 	    db_full_path_init(&gfp);
 	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g->s_name));
 	    if (ret < 0) {
-		// If this fails eliminate the invalid path from sg...
+		// If we can't get a db_fullpath, it's invalid
 		clear.insert(cg);
 		db_free_full_path(&gfp);
 		continue;
@@ -766,6 +892,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 		// path to update their contents
 		g = cg;
 		db_free_full_path(&gfp);
+		// We continue to weed out any other invalid paths in sg, even
+		// though cg should be the only path in sg that matches in this
+		// condition...
 		continue;
 	    }
 	}
@@ -798,7 +927,20 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    db_path_to_vls(&g->g->s_uuid, fp);
 	    bview_settings_sync(&g->g->s_os, &vs);
 	    bu_ptbl_ins(gedp->ged_gvp->gv_db_grps, (long *)g);
+
+	    // If we're a blank slate, we're adaptive, and autoview isn't off
+	    // we need to be building up some sense of the view and object
+	    // sizes as we go, ahead of trying to draw anything.  That means
+	    // for each group we're going to be using mat and walking the tree
+	    // of fp (or getting its box directly if fp is a solid with no
+	    // parents) to build up bounding info.
+	    if (blank_slate && gedp->ged_gvp->adaptive_plot) {
+		mat_t cmat;
+		MAT_COPY(cmat, mat);
+		_bound_fp(fp, &cmat, (void *)&bounds_data);
+	    }
 	}
+	fp_g[fp] = g;
 
 	if (clear.size()) {
 	    // Clear anything superseded by the new path
@@ -809,7 +951,65 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 		BU_PUT(cg, struct bview_scene_group);
 	    }
 	}
+    }
 
+    if (blank_slate && gedp->ged_gvp->adaptive_plot) {
+	// We've checked the paths for bounding info - now set up the
+	// view
+	struct bview *v = gedp->ged_gvp;
+	point_t center, radial;
+	if (bounds_data.have_bbox) {
+	    VADD2SCALE(center, bounds_data.max, bounds_data.min, 0.5);
+	    VSUB2(radial, bounds_data.max, center);
+	} else {
+	    // No bboxes at all??
+	    VSETALL(radial, 1000.0);
+	}
+	vect_t sqrt_small;
+	VSETALL(sqrt_small, SQRT_SMALL_FASTF);
+	VMAX(radial, sqrt_small);
+	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
+	    VSETALL(radial, 1.0);
+	MAT_IDN(v->gv_center);
+	MAT_DELTAS_VEC_NEG(v->gv_center, center);
+	v->gv_scale = radial[X];
+	V_MAX(v->gv_scale, radial[Y]);
+	V_MAX(v->gv_scale, radial[Z]);
+	v->gv_isize = 1.0 / v->gv_size;
+	bview_update(v);
+    }
+
+    // Initial setup is done, we now have the set of paths to walk to do the
+    // actual scene population as well as (if necessary) our preliminary size
+    // and autoview estimates.
+    //
+    // This stage is where the vector lists or triangles that constitute the view
+    // information are actually created.
+    std::map<struct db_full_path *, struct bview_scene_group *>::iterator fpg_it;
+    for (fpg_it = fp_g.begin(); fpg_it != fp_g.end(); fpg_it++) {
+	struct db_full_path *fp = fpg_it->first;
+	struct bview_scene_group *g = fpg_it->second;
+
+	// Seed initial matrix from the path
+	mat_t mat;
+	MAT_IDN(mat);
+	// TODO - get resource from somewhere other than rt_uniresource
+	if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+	    db_free_full_path(fp);
+	    BU_PUT(fp, struct db_full_path);
+	    continue;
+	}
+
+	// Get an initial color from the path, if we're not overridden
+	struct bu_color c;
+	if (!vs.color_override) {
+	    unsigned char dc[3];
+	    dc[0] = 255;
+	    dc[1] = 0;
+	    dc[2] = 0;
+	    bu_color_from_rgb_chars(&c, dc);
+	    db_full_path_color(&c, fp, dbip, &rt_uniresource);
+	}
 
 	// Prepare tree walking data container
 	struct draw_data_t dd;
@@ -819,6 +1019,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
 	dd.free_scene_obj = gedp->free_scene_obj;
 	dd.color_inherit = 0;
+	dd.bound_only = 0;
+	bounds_data.res = &rt_uniresource;
 	dd.bool_op = 2; // Default to union
 	if (vs.color_override) {
 	    bu_color_from_rgb_chars(&dd.c, vs.color);
@@ -849,7 +1051,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    g->g->s_free_callback = &_ged_free_draw_data;
 	    g->g->s_v = dd.v;
 
-	    _scene_obj_geom(g->g);
+	    _scene_obj_geom(g->g, &s_size);
 
 	    // Done with path
 	    db_free_full_path(fp);
