@@ -124,6 +124,45 @@ _scene_obj_geom(struct bview_scene_obj *s)
     if (ret < 0)
 	return;
 
+    // On initialization we don't have any wireframes to establish sizes, and if
+    // we're adaptive we need some idea of object size to get a reasonable result.
+    // Try for a bounding box, if the method is available.  Otherwise try the
+    // bounding the default plot.
+    if (!bu_list_len(&s->s_vlist) && s->s_v->adaptive_plot) {
+	int bbret = -1;
+	point_t min, max;
+	if (ip->idb_meth->ft_bbox) {
+	    bbret = ip->idb_meth->ft_bbox(ip, &min, &max, tol);
+	}
+	if (bbret >= 0) {
+	    // Got bounding box, use it to set up sizing
+	    s->s_center[X] = (min[X] + max[X]) * 0.5;
+	    s->s_center[Y] = (min[Y] + max[Y]) * 0.5;
+	    s->s_center[Z] = (min[Z] + max[Z]) * 0.5;
+	    s->s_size = max[X] - min[X];
+	    V_MAX(s->s_size, max[Y] - min[Y]);
+	    V_MAX(s->s_size, max[Z] - min[Z]);
+	} else if (s->s_v->adaptive_plot && ip->idb_meth->ft_plot) {
+	    /* As a fallback for primitives that don't have a bbox function,
+	     * (yes there are still some as of 2021) use the old bounding
+	     * method of calculating the default (non-adaptive) plot for the
+	     * primitive and using the extent of the plotted segments as the
+	     * bounds.
+	     *
+	     * TODO - this really should be turned into a generic fallback
+	     * method for librt and hooked up to the calltable for primitives
+	     * that don't otherwise have one, so we don't have to wedge this
+	     * into the drawing code...
+	     */
+	    if (ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v) >= 0) {
+		bview_scene_obj_bound(s);
+		// This isn't the vlist we want since the primitive has an
+		// adaptive plot defined, so clear it once we have the bounds.
+		BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+	    }
+	}
+    }
+
     // If we don't have a BRL-CAD type, see if we've got a plot routine
     if (ip->idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	_wireframe_plot(s, ip);
