@@ -19,16 +19,19 @@
  */
 /** @file dmswrast.cpp
  *
- * Brief description
+ * This defines a Qt widget for displaying the software rasterized results of
+ * the bundled libosmesa OpenGL software rasterizer.
  *
+ * Unlike the standard Qt widget, this can display OpenGL rendered graphics
+ * even if the OpenGL stack on the host operating system is non-functional (it
+ * will be a great deal slower of course, but since it does not rely on any
+ * system capabilities to produce its images it should work in any environment
+ * where a basic Qt gui can load.)
  */
-
-/* TODO - support gv_db_grps */
 
 #define USE_MGL_NAMESPACE 1
 
 #include <QKeyEvent>
-#include <QGuiApplication> // for qGuiApp
 
 extern "C" {
 #include "bu/env.h"
@@ -49,9 +52,8 @@ dmSW::dmSW(QWidget *parent)
     v->gv_width = width();
     v->gv_height = height();
 
-    // Since this isn't a "proper" OpenGL context,
-    // we don't have to wait until after things are
-    // initialized to set up
+    // Since this isn't a "proper" OpenGL context, we don't have to wait until
+    // after things are initialized by the application to do the set up.
     const char *acmd = "attach";
     dmp = dm_open((void *)v, NULL, "swrast", 1, &acmd);
     if (!dmp)
@@ -80,6 +82,7 @@ dmSW::dmSW(QWidget *parent)
 
 dmSW::~dmSW()
 {
+    dm_close(dmp);
     BU_PUT(v, struct bview);
 }
 
@@ -103,17 +106,11 @@ void dmSW::paintEvent(QPaintEvent *e)
 	    m_init = true;
 	}
 
+	struct db_i *dbip = gedp->ged_wdbp->dbip;
 	matp_t mat = gedp->ged_gvp->gv_model2view;
 	dm_loadmatrix(dmp, mat, 0);
-	unsigned char geometry_default_color[] = { 255, 0, 0 };
 	dm_draw_begin(dmp);
-	dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay,
-		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
-		0, 0, geometry_default_color, 1, 0);
-
-	// Faceplate drawing
-	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip->dbi_local2base);
-
+	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, dbip->dbi_base2local, dbip->dbi_local2base);
 	dm_draw_end(dmp);
     }
 
@@ -162,7 +159,8 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	prev_vhash = bview_hash(v);
 	prev_lhash = dl_name_hash(gedp);
 
-	// Clear the edit flags
+	// Clear the edit flags ahead of the ged_exec call, so we can tell if
+	// any geometry changed.
 	struct directory *dp;
 	for (int i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
@@ -174,36 +172,22 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (msg)
 	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
 
-	unsigned long long dhash = dm_hash((struct dm *)gedp->ged_dmp);
-	if (dhash != prev_dhash) {
+	/* Check if the ged_exec call changed either the display manager or
+	 * the view settings - in either case we'll need to redraw */
+	if (prev_dhash != dm_hash((struct dm *)gedp->ged_dmp)) {
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
-	unsigned long long vhash = bview_hash(v);
-	if (vhash != prev_vhash) {
-	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	}
-
-	/* Note - these are for the display_list drawing list, which isn't
-	 * being used for the newer command forms.  It is needed, however,
-	 * for the older draw command changes to show up */
-	unsigned long long lhash = dl_name_hash(gedp);
-	unsigned long long lhash_edit = lhash;
-	lhash_edit += dl_update(gedp);
-	if (lhash_edit != prev_lhash) {
-	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	}
-	unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-	if (ghash != prev_ghash) {
-	    prev_ghash = ghash;
+	if (prev_vhash != bview_hash(v)) {
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
 
-	// For db obj view list objects, check the dp edit flags and do any necessary
-	// redrawing.
+	// Checks the dp edit flags and does any necessary redrawing.  If
+	// anything changed with the geometry, we also need to redraw
 	if (ged_view_update(gedp) > 0) {
 	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	}
 
+	// If anybody set the flag, trigger an update
 	if (dm_get_dirty((struct dm *)gedp->ged_dmp))
 	    update();
     }
