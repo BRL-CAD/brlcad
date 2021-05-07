@@ -28,6 +28,7 @@
 #include <QGuiApplication> // for qGuiApp
 
 extern "C" {
+#include "bu/env.h"
 #include "bu/parallel.h"
 #include "bu/ptbl.h"
 #include "bview/util.h"
@@ -128,6 +129,8 @@ void dmGL::resizeGL(int, int)
 
 void dmGL::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+
     if (ged_cmd_valid(argv[0], NULL)) {
 	const char *ccmd = NULL;
 	int edist = ged_cmd_lookup(&ccmd, argv[0]);

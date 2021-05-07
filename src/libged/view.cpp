@@ -64,12 +64,20 @@ ged_view_update(struct ged *gedp)
 	}
     }
 
+    // Edit flags have done their job - reset
+    struct directory *dp;
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    dp->edit_flag = 0;
+	}
+    }
+
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
 	struct bview_scene_group *cg = *r_it;
 	struct bu_vls opath = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
 	const char *av[4];
-	av[0] = "draw2";
+	av[0] = "draw";
 	av[1] = "-R";
 	av[2] = bu_vls_cstr(&opath);
 	av[3] = NULL;

@@ -1105,7 +1105,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     if (blank_slate && !no_autoview) {
 	int ac = 1;
 	const char *av[2];
-	av[0] = "autoview2";
+	av[0] = "autoview";
 	av[1] = NULL;
 	return ged_exec(gedp, ac, (const char **)av);
     }

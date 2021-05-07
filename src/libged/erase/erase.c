@@ -31,6 +31,7 @@
 
 #include "../ged_private.h"
 
+extern int ged_erase2_core(struct ged *gedp, int argc, const char **argv);
 /*
  * Erase objects from the display.
  *
@@ -38,6 +39,10 @@
 int
 ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_erase2_core(gedp, argc, argv);
+
     size_t i;
     int flag_A_attr=0;
     int flag_o_nonunique=1;
@@ -185,13 +190,9 @@ const struct ged_cmd erase_cmd = { &erase_cmd_impl };
 struct ged_cmd_impl d_cmd_impl = {"d", ged_erase_core, GED_CMD_DEFAULT};
 const struct ged_cmd d_cmd = { &d_cmd_impl };
 
-extern int ged_erase2_core(struct ged *gedp, int argc, const char **argv);
-struct ged_cmd_impl erase2_cmd_impl = {"erase2", ged_erase2_core, GED_CMD_DEFAULT};
-const struct ged_cmd erase2_cmd = { &erase2_cmd_impl };
+const struct ged_cmd *erase_cmds[] = { &erase_cmd, &d_cmd, NULL };
 
-const struct ged_cmd *erase_cmds[] = { &erase_cmd, &d_cmd, &erase2_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  erase_cmds, 3 };
+static const struct ged_plugin pinfo = { GED_API,  erase_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

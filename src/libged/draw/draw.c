@@ -1226,9 +1226,14 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 }
 
 
+extern int ged_draw2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_draw_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_draw2_core(gedp, argc, argv);
+
     return ged_draw_guts(gedp, argc, argv, _GED_DRAW_WIREFRAME);
 }
 
@@ -1339,13 +1344,9 @@ extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
 struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
 const struct ged_cmd preview_cmd = { &preview_cmd_impl };
 
-extern int ged_draw2_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl draw2_cmd_impl = {"draw2", ged_draw2_core, GED_CMD_DEFAULT};
-const struct ged_cmd draw2_cmd = { &draw2_cmd_impl };
+const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
 
-const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, &draw2_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 7 };
+static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 6 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

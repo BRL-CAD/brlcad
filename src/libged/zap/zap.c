@@ -30,6 +30,7 @@
 
 #include "../ged_private.h"
 
+extern int ged_zap2_core(struct ged *gedp, int argc, const char *argv[]);
 
 /*
  * Erase all currently displayed geometry
@@ -41,6 +42,11 @@
 int
 ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 {
+
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_zap2_core(gedp, argc, argv);
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -67,16 +73,12 @@ const struct ged_cmd clear_cmd = { &clear_cmd_impl };
 struct ged_cmd_impl zap_cmd_impl = {"zap", ged_zap_core, GED_CMD_DEFAULT};
 const struct ged_cmd zap_cmd = { &zap_cmd_impl };
 
-extern int ged_zap2_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl zap2_cmd_impl = {"zap2", ged_zap2_core, GED_CMD_DEFAULT};
-const struct ged_cmd zap2_cmd = { &zap2_cmd_impl };
-
 struct ged_cmd_impl Z_cmd_impl = {"Z", ged_zap_core, GED_CMD_DEFAULT};
 const struct ged_cmd Z_cmd = { &Z_cmd_impl };
 
-const struct ged_cmd *zap_cmds[] = { &clear_cmd, &zap_cmd, &zap2_cmd, &Z_cmd, NULL };
+const struct ged_cmd *zap_cmds[] = { &clear_cmd, &zap_cmd, &Z_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  zap_cmds, 4 };
+static const struct ged_plugin pinfo = { GED_API,  zap_cmds, 3 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

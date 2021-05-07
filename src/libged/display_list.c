@@ -2435,6 +2435,8 @@ dl_name_hash(struct ged *gedp)
     return (unsigned long long)hash_val;
 }
 
+
+// NOTE - for new setup this is replaced by ged_view_update
 unsigned long long
 dl_update(struct ged *gedp)
 {

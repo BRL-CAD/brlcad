@@ -31,6 +31,7 @@
 #include <QGuiApplication> // for qGuiApp
 
 extern "C" {
+#include "bu/env.h"
 #include "bu/parallel.h"
 #include "bview/util.h"
 #include "dm.h"
@@ -144,6 +145,8 @@ void dmSW::resizeEvent(QResizeEvent *e)
 
 void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+
     if (ged_cmd_valid(argv[0], NULL)) {
 	const char *ccmd = NULL;
 	int edist = ged_cmd_lookup(&ccmd, argv[0]);
@@ -159,8 +162,7 @@ void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	prev_vhash = bview_hash(v);
 	prev_lhash = dl_name_hash(gedp);
 
-	// Clear the edit flags (TODO - really should only do this for objects active in
-	// the scene...)
+	// Clear the edit flags
 	struct directory *dp;
 	for (int i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {

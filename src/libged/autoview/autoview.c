@@ -27,6 +27,7 @@
 #include "dm.h"
 #include "../ged_private.h"
 
+extern int ged_autoview2_core(struct ged *gedp, int argc, const char *argv[]);
 /*
  * Auto-adjust the view so that all displayed geometry is in view
  *
@@ -37,6 +38,10 @@
 int
 ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+       return ged_autoview2_core(gedp, argc, argv);
+
     int is_empty = 1;
     vect_t min, max;
     vect_t center = VINIT_ZERO;
@@ -115,13 +120,9 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 struct ged_cmd_impl autoview_cmd_impl = { "autoview", ged_autoview_core, GED_CMD_DEFAULT };
 const struct ged_cmd autoview_cmd = { &autoview_cmd_impl };
 
-extern int ged_autoview2_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl autoview2_cmd_impl = { "autoview2", ged_autoview2_core, GED_CMD_DEFAULT };
-const struct ged_cmd autoview2_cmd = { &autoview2_cmd_impl };
+const struct ged_cmd *autoview_cmds[] = { &autoview_cmd, NULL };
 
-const struct ged_cmd *autoview_cmds[] = { &autoview_cmd, &autoview2_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  autoview_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  autoview_cmds, 1 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

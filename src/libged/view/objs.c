@@ -111,7 +111,7 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
     if (!(s->s_type_flags & BVIEW_VIEWONLY)) {
-	bu_vls_printf(gedp->ged_result_str, "View object %s is associated with a database object - use 'erase2' cmd to clear\n", gd->vobj);
+	bu_vls_printf(gedp->ged_result_str, "View object %s is associated with a database object - use 'erase' cmd to clear\n", gd->vobj);
 	return GED_ERROR;
     }
     bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
