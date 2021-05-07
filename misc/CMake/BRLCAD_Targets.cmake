@@ -266,7 +266,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     if(${libname} MATCHES "^lib*")
       set_target_properties(${libname}-obj PROPERTIES PREFIX "")
     endif(${libname} MATCHES "^lib*")
-
     set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
 
@@ -274,7 +273,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     target_compile_definitions(${libname}-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 
     if(HIDE_INTERNAL_SYMBOLS)
-
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
 
@@ -349,7 +347,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   # Extra static lib specific work
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
-    # We need to make sure the target depends on any targets in the libslist
+    # Make sure the target depends on any targets in the libslist
     foreach(ll ${libslist})
       if (TARGET ${ll})
 	add_dependencies(${libstatic} ${ll})
@@ -357,6 +355,14 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     endforeach(ll ${libslist})
     set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
     VALIDATE_STYLE("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
+
+    # We still need the target_link_libraries link in case we have imported targets in
+    # the libraries list - they can carry include directories, compile definitions, etc.
+    # that are also necessary for static compilation
+    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+      target_link_libraries(${libstatic} ${libslist})
+    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+
     if(NOT L_NO_INSTALL)
       install(TARGETS ${libstatic}
 	RUNTIME DESTINATION ${BIN_DIR}
