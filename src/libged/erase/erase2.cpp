@@ -352,7 +352,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // Do the straight-up removals
     for (c_it = clear.begin(); c_it != clear.end(); c_it++) {
 	struct bview_scene_group *cg = *c_it;
-	bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
+	all.erase(cg);
 	bview_scene_obj_free(cg->g, free_scene_obj);
 	BU_PUT(cg, struct bview_scene_group);
     }
