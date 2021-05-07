@@ -119,6 +119,7 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
 
     return GED_OK;
 }
+
 int
 _objs_cmd_color(void *bs, int argc, const char **argv)
 {
@@ -220,6 +221,30 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
 }
 
 int
+_objs_cmd_lcnt(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj name lcnt";
+    const char *purpose_string = "print the number of vlist entities";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bview_scene_obj *s = gd->s;
+    if (!gd->s) {
+	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
+	return GED_ERROR;
+    }
+    bu_vls_printf(gedp->ged_result_str, "%d\n", bu_list_len(&s->s_vlist));
+    return GED_OK;
+}
+
+int
 _objs_cmd_update(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -277,6 +302,7 @@ const struct bu_cmdtab _obj_cmds[] = {
     { "axes",       _view_cmd_axes},
     { "arrow",      _objs_cmd_arrow},
     { "label",      _view_cmd_labels},
+    { "lcnt",       _objs_cmd_lcnt},
     { "line",       _view_cmd_lines},
     { "polygon",    _view_cmd_polygons},
     { (char *)NULL,      NULL}
@@ -286,6 +312,8 @@ int
 _view_cmd_objs(void *bs, int argc, const char **argv)
 {
     int help = 0;
+    int list_view = 0;
+    int list_db = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
 
@@ -300,9 +328,11 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     }
 
     // See if we have any high level options set
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h", "help",  "",  NULL,  &help,      "Print help");
-    BU_OPT_NULL(d[1]);
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help",        "",  NULL,  &help,      "Print help");
+    BU_OPT(d[1], "G", "gobjs",       "",  NULL,  &list_db,   "List geometry-object-based view scene objects");
+    BU_OPT(d[2],  "", "view_only",   "",  NULL,  &list_view, "List view-only scene objects (default)");
+    BU_OPT_NULL(d[3]);
 
     gd->gopts = d;
 
@@ -321,12 +351,30 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
     int ac = bu_opt_parse(NULL, acnt, argv, d);
 
+    if (!list_db && !list_view)
+	list_view = 1;
+
     // If we're not wanting help and we have no subcommand, list defined view objects
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
-	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+	if (list_db) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
+		struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+		if (bu_list_len(&cg->g->s_vlist)) {
+		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->g->s_name));
+		} else {
+		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
+			struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+			bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
+		    }
+		}
+	    }
+	}
+	if (list_view) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+	    }
 	}
 	return GED_OK;
     }
@@ -340,11 +388,35 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     gd->vobj = argv[0];
     gd->s = NULL;
     argc--; argv++;
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
-	if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
-	    gd->s = s;
-	    break;
+
+    // View-only objects come first, unless we're explicitly excluding them by only specifying -G
+    if (list_view) {
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
+		gd->s = s;
+		break;
+	    }
+	}
+    }
+
+    if (!gd->s) {
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
+	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	    if (bu_list_len(&cg->g->s_vlist)) {
+		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&cg->g->s_name))) {
+		    gd->s = cg->g;
+		    break;
+		}
+	    } else {
+		for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
+		    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+		    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
+			gd->s = s;
+			break;
+		    }
+		}
+	    }
 	}
     }
 
