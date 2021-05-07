@@ -513,10 +513,9 @@ db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_
 
 		// Stash current color settings and see if we're getting new ones
 		struct bu_color oc;
-		int inherit_old;
+		int inherit_old = dd->color_inherit;
+		HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
 		if (!dd->bound_only) {
-		    inherit_old = dd->color_inherit;
-		    HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
 		    _tree_color(dp, dd);
 		}
 
@@ -980,7 +979,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	// We've checked the paths for bounding info - now set up the
 	// view
 	struct bview *v = gedp->ged_gvp;
-	point_t center, radial;
+	point_t center = VINIT_ZERO;
+	point_t radial;
 	if (bounds_data.have_bbox) {
 	    VADD2SCALE(center, bounds_data.max, bounds_data.min, 0.5);
 	    VSUB2(radial, bounds_data.max, center);
