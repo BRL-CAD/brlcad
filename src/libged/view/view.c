@@ -103,6 +103,149 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
 }
 
 int
+_view_cmd_lod(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] lod [subcommand] [vals]";
+    const char *purpose_string = "manage Level of Detail drawing settings";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct ged *gedp = gd->gedp;
+    struct bview *gvp;
+    int print_help = 0;
+    static const char *usage = "view lod enabled [0|1]\n"
+			       "view lod redraw_on_zoom [0|1]>\n"
+			       "view lod point_scale [factor]\n"
+			       "view lod curve_scale [factor]\n"
+			       "view lod bot_threshold [face_cnt]\n";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "h", "help",        "",  NULL,  &print_help,      "Print help");
+    BU_OPT_NULL(d[1]);
+
+    // We know we're the lod command - start processing args
+    argc--; argv++;
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    argc = ac;
+
+    if (print_help) {
+	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
+	return GED_HELP;
+    }
+
+    if (argc > 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
+	return GED_ERROR;
+    }
+
+    gvp = gedp->ged_gvp;
+    if (gvp == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "no current view defined\n");
+	return GED_ERROR;
+    }
+
+    /* Print current state if no args are supplied */
+    if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "enabled: %d\n", gvp->adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "redraw_on_zoom: %d\n", gvp->redraw_on_zoom);
+	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->point_scale);
+	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->curve_scale);
+	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->bot_threshold);
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "enabled")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->adaptive_plot);
+	    return GED_OK;
+	}
+	if (bu_str_true(argv[1])) {
+	    gvp->adaptive_plot = 1;
+	    return GED_OK;
+	}
+	if (bu_str_false(argv[1])) {
+	    gvp->adaptive_plot = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "unknown argument to enabled: %s\n", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "redraw_on_zoom")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->redraw_on_zoom);
+	    return GED_OK;
+	}
+	if (bu_str_true(argv[1])) {
+	    gvp->redraw_on_zoom = 1;
+	    return GED_OK;
+	}
+	if (bu_str_false(argv[1])) {
+	    gvp->redraw_on_zoom = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "unknown argument to redraw_on_zoom: %s\n", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "point_scale")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->point_scale);
+	    return GED_OK;
+	}
+	fastf_t scale = 1.0;
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
+	    return GED_ERROR;
+	}
+	gvp->point_scale = scale;
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "curve_scale")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->curve_scale);
+	    return GED_OK;
+	}
+	fastf_t scale = 1.0;
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "unknown argument to curve_scale: %s\n", argv[1]);
+	    return GED_ERROR;
+	}
+	gvp->curve_scale = scale;
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "bot_threshold")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%zd\n", gvp->bot_threshold);
+	    return GED_OK;
+	}
+	int bcnt = 0;
+	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&bcnt) != 1 || bcnt < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "unknown argument to bot_threshold: %s\n", argv[1]);
+	    return GED_ERROR;
+	}
+	gvp->bot_threshold = bcnt;
+	return GED_OK;
+
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
+    return GED_ERROR;
+}
+
+int
 _view_cmd_quat(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -183,6 +326,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "center",     _view_cmd_center},
     { "eye",        _view_cmd_eye},
     { "faceplate",  _view_cmd_faceplate},
+    { "lod",        _view_cmd_lod},
     { "obj",        _view_cmd_objs},
     { "quat",       _view_cmd_quat},
     { "selections", _view_cmd_selections},
