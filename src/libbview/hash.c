@@ -337,6 +337,12 @@ bview_scene_obj_hash(XXH64_state_t *state, struct bview_scene_obj *s)
     XXH64_update(state, &s->s_old.s_regionid, sizeof(short));
     XXH64_update(state, &s->s_dlist, sizeof(unsigned int));
     XXH64_update(state, &s->s_mat, sizeof(mat_t));
+    XXH64_update(state, &s->adaptive_wireframe, sizeof(int));
+    XXH64_update(state, &s->view_scale, sizeof(fastf_t));
+    XXH64_update(state, &s->bot_threshold, sizeof(size_t));
+    XXH64_update(state, &s->curve_scale, sizeof(fastf_t));
+    XXH64_update(state, &s->point_scale, sizeof(fastf_t));
+
     _bview_settings_hash(state, &s->s_os);
 }
 

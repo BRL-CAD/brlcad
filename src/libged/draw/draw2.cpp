@@ -156,7 +156,7 @@ _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
 }
 
 static void
-_scene_obj_geom(struct bview_scene_obj *s, std::map<struct directory *, fastf_t> *s_size)
+_scene_obj_geom(struct bview_scene_obj *s)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_i *dbip = d->dbip;
@@ -178,23 +178,6 @@ _scene_obj_geom(struct bview_scene_obj *s, std::map<struct directory *, fastf_t>
     int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, s->s_mat, d->res);
     if (ret < 0)
 	return;
-
-    // When we're adaptive plotting, we need some information about object size
-    // before we generate the wireframe.  (And view as well, but we can't do
-    // much about that here if the caller doesn't have a view set up...)
-    if (s->s_v->adaptive_plot) {
-	// If the caller has a size for us, use it.
-	if (s_size && s_size->find(DB_FULL_PATH_CUR_DIR(fp)) != s_size->end()) {
-	    s->s_size = (*s_size)[DB_FULL_PATH_CUR_DIR(fp)];
-	} else {
-	    // No caller info - can we calculate it?
-	    mat_t mat;
-	    if (db_path_to_mat(dbip, fp, mat, fp->fp_len-1, d->res)) {
-		point_t bmin, bmax;
-		_fp_bbox(&s->s_size, &bmin, &bmax, fp, dbip, ttol, tol, &mat, d->res, s->s_v);
-	    }
-	}
-    }
 
     // If we don't have a BRL-CAD type, see if we've got a plot routine
     if (ip->idb_major_type != DB5_MAJORTYPE_BRLCAD) {
@@ -270,6 +253,13 @@ geom_done:
     // Update s_size and s_center
     bview_scene_obj_bound(s);
 
+    // Store current view info, in case of adaptive plotting
+    s->adaptive_wireframe = s->s_v->adaptive_plot;
+    s->view_scale = s->s_v->gv_scale;
+    s->bot_threshold= s->s_v->bot_threshold;
+    s->curve_scale = s->s_v->curve_scale;
+    s->point_scale = s->s_v->point_scale;
+
     rt_db_free_internal(&dbintern);
 }
 
@@ -284,8 +274,6 @@ geom_done:
 // account higher level hierarchy level changes.  If such higher level changes
 // are made, the subtrees should be redrawn to properly repopulate the scene
 // objects.
-//
-// Typically this will be 
 static int
 _ged_update_db_path(struct bview_scene_obj *s)
 {
@@ -293,21 +281,56 @@ _ged_update_db_path(struct bview_scene_obj *s)
     if (!s)
 	return 0;
 
-    // Clear out existing vlist, if there is one...
-    BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-        struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
-        BN_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
-        // TODO - free child bview_scene_obj itself (ptbls, etc.)
+    // Normally this is a no-op, but there is one case where
+    // we do potentially change.  If the view indicates adaptive
+    // plotting, the current view scale does not match the
+    // scale documented in s for its vlist generation, we need
+    // a new vlist for the current conditions.
+
+    bool rework = false;
+    if (s->s_v->adaptive_plot != s->adaptive_wireframe) {
+	rework = true;
+    }
+    if (!rework && s->s_v->adaptive_plot) {
+	// Check bot threshold
+	if (s->bot_threshold != s->s_v->bot_threshold) {
+	    rework = true;
+	}
+	// Check point scale
+	if (!rework && !NEAR_EQUAL(s->curve_scale, s->s_v->curve_scale, SMALL_FASTF)) {
+	    rework = true;
+	}
+	// Check point scale
+	if (!rework && !NEAR_EQUAL(s->point_scale, s->s_v->point_scale, SMALL_FASTF)) {
+	    rework = true;
+	}
     }
 
-    // Get the correct geometry for the mode
-    _scene_obj_geom(s, NULL);
+    // If redraw-on-zoom is set, check the scale
+    if (!rework && s->s_v->adaptive_plot && s->s_v->redraw_on_zoom) {
+	// Check view scale
+	fastf_t delta = s->view_scale * 0.1/s->view_scale;
+	if (!rework && !NEAR_EQUAL(s->view_scale, s->s_v->gv_scale, delta)) {
+	    rework = true;
+	} 
+    }
 
-    // TODO - confirm color
+    if (!rework)
+	return 0;
 
-    // Update s_size and s_center
-    bview_scene_obj_bound(s);
+    // Process children - right now we have no view dependent child
+    // drawing, but in principle we could...
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+        struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+	if (s_c->s_update_callback)
+	    (*s_c->s_update_callback)(s_c);
+    }
+
+    // Clear out existing vlist, if any...
+    BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+
+    // Get the new geometry
+    _scene_obj_geom(s);
 
 #if 0
     // Draw label
@@ -611,8 +634,11 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	s->s_update_callback = &_ged_update_db_path;
 	s->s_free_callback = &_ged_free_draw_data;
 
+	if (dd->s_size && dd->s_size->find(DB_FULL_PATH_CUR_DIR(path)) != dd->s_size->end()) {
+	    s->s_size = (*dd->s_size)[DB_FULL_PATH_CUR_DIR(path)];
+	}
 	// Call correct vlist method based on mode
-	_scene_obj_geom(s, dd->s_size);
+	_scene_obj_geom(s);
 
 	// Add object to scene group
 	bu_ptbl_ins(&dd->g->g->children, (long *)s);
@@ -691,7 +717,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
     int print_help = 0;
     int bot_threshold = -1;
-    int cached_bot_threshold = -1;
     static const char *usage = "[options] path1 [path2 ...]";
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -723,7 +748,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[7],   "", "hidden-line",   "",                 NULL, &drawing_modes[5],  "Hidden line wireframes");
     BU_OPT(d[8],  "t", "transparency", "#",      &bu_opt_fastf_t,  &vs.transparency,  "Set transparency level in drawing: range 0 (clear) to 1 (opaque)");
     BU_OPT(d[9],  "x", "",             "#",       &bu_opt_fastf_t,  &vs.transparency,  "");
-    BU_OPT(d[10], "L", "",             "#",           &bu_opt_int,    &bot_threshold,  "Set face count level for drawing bounding boxes instead of BoT triangles.");
+    BU_OPT(d[10], "L", "",             "#",           &bu_opt_int,    &bot_threshold,  "Set face count level for drawing bounding boxes instead of BoT triangles (NOTE: passing this updates the global view setting - bot_threshold is a view property).");
     BU_OPT(d[11], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
     BU_OPT(d[12],  "", "no-dash",       "",                 NULL, &vs.draw_solid_lines_only,  "Use solid lines rather than dashed for subtraction solids");
     BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                 "Override object colors");
@@ -826,9 +851,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* Bot threshold is normally a per-view setting - if the drawing command
-     * is overriding it locally, cache and restore the global version. */
-    cached_bot_threshold = gedp->ged_gvp->bot_threshold;
+    /* Bot threshold a per-view setting. */
     if (bot_threshold >= 0) {
 	gedp->ged_gvp->bot_threshold = bot_threshold;
     }
@@ -1020,13 +1043,14 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	dd.free_scene_obj = gedp->free_scene_obj;
 	dd.color_inherit = 0;
 	dd.bound_only = 0;
-	bounds_data.res = &rt_uniresource;
+	dd.res = &rt_uniresource;
 	dd.bool_op = 2; // Default to union
 	if (vs.color_override) {
 	    bu_color_from_rgb_chars(&dd.c, vs.color);
 	} else {
 	    HSET(dd.c.buc_rgb, c.buc_rgb[0], c.buc_rgb[1], c.buc_rgb[2], c.buc_rgb[3]);
 	}
+	dd.s_size = &s_size;
 	dd.vs = &vs;
 	dd.g = g;
 
@@ -1045,13 +1069,16 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    ud->dbip = dd.dbip;
 	    ud->tol = dd.tol;
 	    ud->ttol = dd.ttol;
-	    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view...
+	    ud->res = dd.res;
 	    g->g->s_i_data = (void *)ud;
 	    g->g->s_update_callback = &_ged_update_db_path;
 	    g->g->s_free_callback = &_ged_free_draw_data;
 	    g->g->s_v = dd.v;
 
-	    _scene_obj_geom(g->g, &s_size);
+	    if (bounds_data.s_size && bounds_data.s_size->find(DB_FULL_PATH_CUR_DIR(fp)) != bounds_data.s_size->end()) {
+		g->g->s_size = (*bounds_data.s_size)[DB_FULL_PATH_CUR_DIR(fp)];
+	    }
+	    _scene_obj_geom(g->g);
 
 	    // Done with path
 	    db_free_full_path(fp);
@@ -1068,9 +1095,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Sort
     bu_sort(BU_PTBL_BASEADDR(gedp->ged_gvp->gv_db_grps), BU_PTBL_LEN(gedp->ged_gvp->gv_db_grps), sizeof(struct bview_scene_group *), alphanum_cmp, NULL);
-
-    // Put bot threshold back
-    gedp->ged_gvp->bot_threshold = cached_bot_threshold;
 
     // Scene objects are created and stored in gv_db_grps. The application
     // may now call each object's update callback to generate wireframes,

@@ -134,27 +134,24 @@ struct bview_axes {
 // for value setting
 struct bview_settings {
 
-    // scene_obj settings
-    int s_line_width;		/**< @brief  current line width */
-    fastf_t s_arrow_tip_length; /**< @brief  arrow tip length */
-    fastf_t s_arrow_tip_width;  /**< @brief  arrow tip width */
-    fastf_t transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] */
-    int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
+   int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
 				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 				 *	      2 - shaded (booleans NOT evaluated)
 				 *	      3 - shaded (booleans evaluated)
 				 *	      4 - hidden line
 				 */
+    fastf_t transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] - 1 is opaque */
 
-    // draw command opts in _ged_client_data
     int color_override;
     unsigned char color[3];	/**< @brief  color to draw as */
 
+    int s_line_width;		/**< @brief  current line width */
+    fastf_t s_arrow_tip_length; /**< @brief  arrow tip length */
+    fastf_t s_arrow_tip_width;  /**< @brief  arrow tip width */
     int draw_solid_lines_only;   /**< @brief do not use dashed lines for subtraction solids */
     int draw_non_subtract_only;  /**< @brief do not visualize subtraction solids */
-
 };
-#define BVIEW_SETTINGS_INIT {1, 0.0, 0.0, 1.0, 0, 0, {255, 0, 0}, 0, 0}
+#define BVIEW_SETTINGS_INIT {0, 1.0, 0, {255, 0, 0}, 1, 0.0, 0.0, 0, 0}
 
 
 /* Note that it is possible for a view object to be view-only (not
@@ -235,6 +232,22 @@ struct bview_scene_obj  {
     int s_soldash;		/**< @brief  solid/dashed line flag: 0 = solid, 1 = dashed*/
     int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
     int s_changed;		/**< @brief  changed flag - set by s_update_callback if a change occurred */
+
+    /* Adaptive plotting info.
+     *
+     * The adaptive wireframe flag is set if the wireframe was created while
+     * adaptive mode is on - this is to allow reversion to non-adaptive
+     * wireframes if the mode is switched off without the view scale changing.
+     *
+     * NOTE: We store the following NOT for controlling the drawing, but so we
+     * can determine if the vlist is current with respect to the parent view
+     * settings.  These values SHOULD NOT be directly manipulated by any user
+     * facing commands (such as view obj). */
+    int     adaptive_wireframe;
+    fastf_t view_scale;
+    size_t  bot_threshold;
+    fastf_t curve_scale;
+    fastf_t point_scale;
 
     /* Scene object settings which also (potentially) have global defaults but
      * may be overridden locally */

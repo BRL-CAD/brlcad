@@ -423,6 +423,9 @@ bview_scene_obj_init(struct bview_scene_obj *s, struct bview_scene_obj *free_sce
     s->s_update_callback = NULL;
     s->s_free_callback = NULL;
 
+    s->adaptive_wireframe = 0;
+    s->view_scale = 0.0;
+
     s->s_flag = UP;
     s->s_iflag = DOWN;
     VSET(s->s_color, 255, 0, 0);

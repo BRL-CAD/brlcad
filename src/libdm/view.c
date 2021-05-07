@@ -550,6 +550,13 @@ dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
     if (s->s_flag == DOWN)
 	return;
 
+    // If this is a database object, it may have a view dependent
+    // update to do.
+    if (s->s_type_flags & BVIEW_DBOBJ_BASED) {
+	if (s->s_update_callback)
+	    (*s->s_update_callback)(s);
+    }
+
     // Draw children. TODO - drawing children first may not
     // always be the desired behavior - might need interior and exterior
     // children tables to provide some control
