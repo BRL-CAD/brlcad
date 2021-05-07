@@ -814,6 +814,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     bounds_data.bound_only = 1;
     bounds_data.res = &rt_uniresource;
     bounds_data.have_bbox = 0;
+    bounds_data.dbip = dbip;
     bounds_data.skip_subtractions = vs.draw_non_subtract_only;
     VSET(bounds_data.min, INFINITY, INFINITY, INFINITY);
     VSET(bounds_data.max, -INFINITY, -INFINITY, -INFINITY);
