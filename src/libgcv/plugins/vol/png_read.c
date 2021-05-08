@@ -24,12 +24,21 @@
  */
 
 #include "common.h"
-
+#include "icv.h"
+#include "bu.h"
 #include "gcv/api.h"
 #include "bu/mime.h"
 #include "wdb.h"
 
+typedef unsigned char uchar; // Get a short form of unsigned char
+typedef struct vol_db        // Struct which stores the VOL's BW data in "vol_data" and the amount of data in "data"
+{
+    uchar *vol_data;
+    int data;
+} vol_db;
+
 struct png_read_opts{
+    icv_image_t **pngs;
     int coloured;
 };
 
@@ -60,19 +69,101 @@ static void free_opts(void *options_data)
 }
 
 
-static int png_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *options_data, const char *source_path)
+HIDDEN void make_vol(struct gcv_context *context, int num_of_files, icv_image_t **images, vol_db data)
 {
-    const point_t center = {0.0, 0.0, 0.0};
-    const fastf_t radius = 1.0;
+    /* Some variables which have to be initialized after the for loops */                     // BRLCAD database object
+    //int num_of_files = 1;
+    vect_t h = {1.0, 1.0, 5.0};                                          // Cell size variable of VOL
+    mat_t l = {1.0, 0.0, 0.0, 0.0, 0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}; // matrix of VOL
 
-    const struct png_read_opts *opts = (struct png_read_opts *)options_data;
+    /* Make the VOL inside the database */
+    mk_binunif(context->dbip->dbi_wdbp, "dbobj", data.vol_data, WDB_BINUNIF_UCHAR, data.data); // Make binary object in the database containing VOL data
+    mk_vol(context->dbip->dbi_wdbp, "vol", RT_VOL_SRC_OBJ, "dbobj",                            // Make the VOL
+           images[0]->width,                                                                   // in the database using
+           images[0]->height,                                                                  // the data from
+           num_of_files, 1, 255, h,                                                            // the binary object
+           (matp_t)l);
+}
 
-    bu_log("importing from PNG file '%s'\n", source_path);
-    bu_log("image is coloured: %s\n", opts->coloured ? "True" : "False");
+
+HIDDEN uchar *cat(unsigned char *dest, const unsigned char *src, int l1, int l2)
+{
+    unsigned char *str = (uchar *)bu_malloc(l1 + l2, "vol_data");
+    for (int i = 0; i < l1; i++)
+    {
+        str[i] = dest[i];
+    }
+
+    for (int i = 0; i < l2; i++)
+    {
+        str[l1 + i] = src[i];
+    }
+    return str;
+}
+
+
+static int png_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *options_data, const char *source_paths)
+{
+    size_t num_png = 1;
+    struct bu_vls fmt_prefix = BU_VLS_INIT_ZERO;
+    size_t argc = 0;
+    const char **argv = (const char **)bu_malloc(sizeof(argv), "arguments");
+
+    struct png_read_opts *opts = (struct png_read_opts *)options_data;
+    const char **files = (const char **)bu_malloc(sizeof(files) * (argc + 1), "the filenames");
+    files[0] = source_paths;
+    for (size_t j=0; j < argc; j++){
+        bu_path_component(&fmt_prefix, argv[j], BU_PATH_EXT);
+        if (bu_file_mime(bu_vls_cstr(&fmt_prefix), BU_MIME_IMAGE) != -1){
+        files[num_png] = argv[j];
+        bu_log("%ld %ld %ld\n", num_png, j, argc);
+        num_png++;
+        }
+    }
+
+    vol_db *ret = (vol_db *)bu_malloc(sizeof(ret), "data for making the vol"); // The struct variable which will store the required information for making the VOL afterwards.
+    int imgs_data[num_png]; // array of the amount of data per ICV images object.
+    opts->pngs = (icv_image_t **)bu_malloc(sizeof(opts->pngs) * num_png, "png files");
+    uchar *data[num_png];
+    for (size_t i = 0; i < num_png; i++){
+        opts->pngs[i] = icv_read(files[i], BU_MIME_IMAGE_PNG, 0, 0);
+    }
+    for (size_t i = 0; i < num_png; i++)
+    {
+        icv_rgb2gray(opts->pngs[i], (ICV_COLOR)0, 0, 0, 0);
+    }
+
+    /* Save the BW data to an array of uchar variables  */
+    for (size_t i = 0; i < num_png; i++)
+    {
+        data[i] = icv_data2uchar(opts->pngs[i]);
+    }
+    //data[0] = icv_data2uchar(opts->pngs);
+
+    /* Get the amount of BW data */
+    for (size_t i = 0; i < num_png; i++)
+    {
+        imgs_data[i] = opts->pngs[i]->width * opts->pngs[i]->height;
+    }
+
+    ret->data = imgs_data[0]; // Amount of VOL data
+    ret->vol_data = data[0];
+    //ret->vol_data = icv_data2uchar(opts->pngs); // Concatenated BW data of the provided PNG files
+
+    /* Concatenate the BW data of all the files */
+    for (size_t i = 1; i < num_png; i++)
+    {
+        ret->vol_data = cat(ret->vol_data, data[i], ret->data, imgs_data[i]);
+        ret->data += imgs_data[i];
+    }
+    make_vol(context, num_png, opts->pngs, *ret);
+    bu_log("importing from PNG file '%s'\n", source_paths);
 
     mk_id(context->dbip->dbi_wdbp, "GCV plugin test");
-
-    mk_sph(context->dbip->dbi_wdbp, "test", center, radius);
+    //bu_log("%ld\n", gcv_options->unknown_argc);
+    //for(size_t i = 0; i< gcv_options->unknown_argc; i++){
+      //  bu_log("%s\n", gcv_options->unknown_argv[i]);
+    //}
 
     return 1;
 }
