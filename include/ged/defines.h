@@ -198,10 +198,6 @@ struct ged {
     /* The current view */
     struct bview		*ged_gvp;
 
-    // If the caller is managing bview memory, set this so ged_free won't
-    // remove it.
-    int                         using_app_views;
-
     void                        *u_data; /**< @brief User data associated with this ged instance */
 
     /** for catching log messages */

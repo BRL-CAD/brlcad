@@ -124,38 +124,52 @@ DM_MainWindow::run_cmd(const QString &command)
     int ac = bu_argv_from_string(av, strlen(input), input);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    struct ged *gedp = ((DMApp *)qApp)->gedp;
+    struct ged **gedpp = &(((DMApp *)qApp)->gedp);
 
     /* The "open" and close commands require a bit of
      * awareness at this level, since the gedp pointer
-     * must respond to them. */
+     * must respond to them and the canvas widget needs
+     * some info from the current gedp. */
     int cmd_run = 0;
     if (BU_STR_EQUAL(av[0], "open")) {
 	if (ac > 1) {
-	    if (gedp) ged_close(gedp);
-	    gedp = ged_open("db", av[1], 0);
-	    if (!gedp) {
+	    if (*gedpp) {
+		ged_close(*gedpp);
+	    }
+	    (*gedpp) = ged_open("db", av[1], 0);
+	    if (!*gedpp) {
 		bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", av[1]) ;
 		console->printString(bu_vls_cstr(&msg));
 	    } else {
 		if (canvas) {
-		    gedp->ged_dmp = canvas->dmp;
-		    gedp->ged_gvp = canvas->v;
-		    canvas->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
-		    canvas->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
-		    if (canvas->dmp)
-			dm_set_vp(canvas->dmp, &gedp->ged_gvp->gv_scale);
+		    canvas->v = (*gedpp)->ged_gvp;
+		    canvas->dm_set = (*gedpp)->ged_all_dmp;
+		    canvas->dm_current = (struct dm **)&((*gedpp)->ged_dmp);
+		    canvas->base2local = &(*gedpp)->ged_wdbp->dbip->dbi_base2local;
+		    canvas->local2base = &(*gedpp)->ged_wdbp->dbip->dbi_local2base;
+		    if (canvas->dmp) {
+			// canvas may already be initialized, so set these here
+			canvas->v->dmp = canvas->dmp;
+			(*canvas->dm_current) = canvas->dmp;
+			dm_set_vp(canvas->dmp, &canvas->v->gv_scale);
+		    }
 		}
 		if (canvas_sw) {
-		    gedp->ged_dmp = canvas_sw->dmp;
-		    gedp->ged_gvp = canvas_sw->v;
-		    canvas_sw->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
-		    canvas_sw->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
-		    if (canvas_sw->dmp)
-			dm_set_vp(canvas_sw->dmp, &gedp->ged_gvp->gv_scale);
+		    canvas_sw->v = (*gedpp)->ged_gvp;
+		    canvas_sw->dm_set = (*gedpp)->ged_all_dmp;
+		    canvas_sw->dm_current = (struct dm **)&((*gedpp)->ged_dmp);
+		    canvas_sw->base2local = &(*gedpp)->ged_wdbp->dbip->dbi_base2local;
+		    canvas_sw->local2base = &(*gedpp)->ged_wdbp->dbip->dbi_local2base;
+		    if (canvas_sw->dmp) {
+			// canvas_sw may already be initialized, so set these here
+			canvas_sw->v->dmp = canvas_sw->dmp;
+			(*canvas_sw->dm_current) = canvas_sw->dmp;
+			dm_set_vp(canvas_sw->dmp, &canvas_sw->v->gv_scale);
+		    }
 		}
-		bu_ptbl_ins(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
-		((DMApp *)qApp)->gedp = gedp;
+		if ((*gedpp)->ged_dmp)
+		    bu_ptbl_ins((*gedpp)->ged_all_dmp, (long int *)(*gedpp)->ged_dmp);
+
 		bu_vls_sprintf(&msg, "Opened file %s\n", av[1]);
 		console->printString(bu_vls_cstr(&msg));
 	    }
@@ -166,9 +180,22 @@ DM_MainWindow::run_cmd(const QString &command)
     }
 
     if (BU_STR_EQUAL(av[0], "close")) {
-	ged_close(gedp);
-	gedp = NULL;
-	((DMApp *)qApp)->gedp = NULL;
+	ged_close(*gedpp);
+	(*gedpp) = NULL;
+	if (canvas) {
+	    canvas->v = NULL;
+	    canvas->dm_set = NULL;
+	    canvas->dm_current = NULL;
+	    canvas->base2local = NULL;
+	    canvas->local2base = NULL;
+	}
+	if (canvas_sw) {
+	    canvas_sw->v = NULL;
+	    canvas_sw->dm_set = NULL;
+	    canvas_sw->dm_current = NULL;
+	    canvas_sw->base2local = NULL;
+	    canvas_sw->local2base = NULL;
+	}
 	console->printString("closed database\n");
 	cmd_run = 1;
     }
@@ -179,7 +206,7 @@ DM_MainWindow::run_cmd(const QString &command)
 	    console->printString(bu_vls_cstr(&msg));
 	}
     }
-    if (((DMApp *)qApp)->gedp) {
+    if (*gedpp) {
 	bu_vls_trunc(((DMApp *)qApp)->gedp->ged_result_str, 0);
     }
 

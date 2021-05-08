@@ -38,12 +38,10 @@ extern "C" {
 QtGL::QtGL(QWidget *parent)
     : QOpenGLWidget(parent)
 {
-    BU_GET(v, struct bview);
-    bview_init(v);
+    // View is provided from the GED structure (usually gedp->ged_gvp)
+    v = NULL;
 
-    // Note: unlike swrast, we can't dm_open yet since the OpenGL context
-    // usually isn't realized yet.  We have to do the dm_open work in paintGL,
-    // once we're sure we have the context to refer to.
+    // Don't dm_open until we have the view.
     dmp = NULL;
 
     // This is an important Qt setting for interactivity - it allowing key
@@ -69,25 +67,52 @@ void QtGL::paintGL()
 	return;
 
     if (!m_init) {
-	initializeOpenGLFunctions();
-	m_init = true;
+	if (!v)
+	    return;
+
 	if (!dmp) {
+
+	    // This is needed so we can work with Qt's OpenGL widget
+	    // using standard OpenGL functions.
+	    initializeOpenGLFunctions();
+
+	    // Do the standard libdm attach to get our rendering backend.
 	    const char *acmd = "attach";
 	    dmp = dm_open((void *)this, NULL, "qtgl", 1, &acmd);
 	    if (!dmp)
 		return;
-	    dm_configure_win(dmp, 0);
-	    dm_set_pathname(dmp, "QTDM");
-	    dm_set_zbuffer(dmp, 1);
-
-	    fastf_t windowbounds[6] = { -1, 1, -1, 1, QTGL_ZMIN, QTGL_ZMAX };
-	    dm_set_win_bounds(dmp, windowbounds);
-
-	    // Let the view know it now has an associated display manager
-	    v->dmp = dmp;
 	}
+
+	dm_configure_win(dmp, 0);
+	dm_set_pathname(dmp, "QTDM");
+	dm_set_zbuffer(dmp, 1);
+
+	// QTGL_ZMIN and QTGL_ZMAX are historical - need better
+	// documentation on why those specific values are used.
+	fastf_t windowbounds[6] = { -1, 1, -1, 1, QTGL_ZMIN, QTGL_ZMAX };
+	dm_set_win_bounds(dmp, windowbounds);
+
+	// Associate the view scale with the dmp
+	dm_set_vp(dmp, &v->gv_scale);
+
+	// Let the view know it now has an associated display manager
+	v->dmp = dmp;
+
+	// If we have a ptbl defining the current dm set and/or an unset
+	// pointer to indicate the current dm, go ahead and set them.
+	if (dm_set)
+	    bu_ptbl_ins_unique(dm_set, (long int *)dmp);
+	if (dm_current && !(*dm_current))
+	    (*dm_current) = dmp;
+
+	// Ready to go
+	m_init = true;
     }
 
+    if (!m_init || !v || !dmp)
+	return;
+
+    // TODO - this clear color probably shouldn't be hardcoded...
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -96,12 +121,14 @@ void QtGL::paintGL()
     // we end up with unrendered frames.
     dm_set_dirty(dmp, 0);
 
-    if (v && dmp) {
-	matp_t mat = v->gv_model2view;
-	dm_loadmatrix(dmp, mat, 0);
-	dm_draw_objs(v, base2local, local2base);
-	dm_draw_end(dmp);
+    matp_t mat = v->gv_model2view;
+    dm_loadmatrix(dmp, mat, 0);
+    if (base2local && local2base) {
+	v->gv_local2base = *local2base;
+	v->gv_base2local = *base2local;
     }
+    dm_draw_objs(v, v->gv_base2local, v->gv_local2base);
+    dm_draw_end(dmp);
 }
 
 void QtGL::resizeGL(int, int)

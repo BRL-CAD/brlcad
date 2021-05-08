@@ -36,35 +36,11 @@ extern "C" {
 QtSW::QtSW(QWidget *parent)
     : QWidget(parent)
 {
-    BU_GET(v, struct bview);
-    bview_init(v);
+    // View is provided from the GED structure (usually gedp->ged_gvp)
+    v = NULL;
 
-    // swrast will need to know the window size
-    v->gv_width = width();
-    v->gv_height = height();
-
-    // Since this isn't a "proper" OpenGL context, we don't have to wait until
-    // after things are initialized by the application to do the set up.
-    const char *acmd = "attach";
-    dmp = dm_open((void *)v, NULL, "swrast", 1, &acmd);
-    if (!dmp)
-	return;
-    dm_configure_win(dmp, 0);
-    dm_set_pathname(dmp, "SWDM");
-    dm_set_zbuffer(dmp, 1);
-
-    // Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss I
-    // in shaded mode (I think I was seeing the "Z-fighting" problem:
-    // https://www.sjbaker.org/steve/omniv/love_your_z_buffer.html )
-    //
-    // Setting to (-1,1) clips geometry too quickly as we start to zoom in.
-    // -100,100 seems to work, but may need a better long term solution to
-    // this... maybe basing it on the currently visible object bounds?
-    fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };
-    dm_set_win_bounds(dmp, windowbounds);
-
-    // Let the view know it has an associated dm.
-    v->dmp = dmp;
+    // Don't dm_open until we have the view.
+    dmp = NULL;
 
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
@@ -86,18 +62,62 @@ void QtSW::paintEvent(QPaintEvent *e)
     dm_set_dirty(dmp, 0);
 
     if (!m_init) {
-	dm_set_width(dmp, width());
-	dm_set_height(dmp, height());
-	v->gv_width = dm_get_width(dmp);
-	v->gv_height = dm_get_height(dmp);
+	if (!v)
+	    return;
+	if (!dmp) {
+	    // swrast will need to know the window size
+	    v->gv_width = width();
+	    v->gv_height = height();
+
+	    // Do the standard libdm attach to get our rendering backend.
+	    const char *acmd = "attach";
+	    dmp = dm_open((void *)v, NULL, "swrast", 1, &acmd);
+	    if (!dmp)
+		return;
+	}
+
 	dm_configure_win(dmp, 0);
+	dm_set_pathname(dmp, "SWDM");
+	dm_set_zbuffer(dmp, 1);
+
+	// Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss I
+	// in shaded mode (I think I was seeing the "Z-fighting" problem:
+	// https://www.sjbaker.org/steve/omniv/love_your_z_buffer.html )
+	//
+	// Setting to (-1,1) clips geometry too quickly as we start to zoom in.
+	// -100,100 seems to work, but may need a better long term solution to
+	// this... maybe basing it on the currently visible object bounds?
+	fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };
+	dm_set_win_bounds(dmp, windowbounds);
+
+	// Associate the view scale with the dmp
+	dm_set_vp(dmp, &v->gv_scale);
+
+	// Let the view know it has an associated dm.
+	v->dmp = dmp;
+
+	// If we have a ptbl defining the current dm set and/or an unset
+	// pointer to indicate the current dm, go ahead and set them.
+	if (dm_set)
+	    bu_ptbl_ins_unique(dm_set, (long int *)dmp);
+	if (dm_current && !(*dm_current))
+	    (*dm_current) = dmp;
+
+	// Ready to go
 	m_init = true;
     }
+
+    if (!m_init || !v || !dmp)
+	return;
 
     matp_t mat = v->gv_model2view;
     dm_loadmatrix(dmp, mat, 0);
     dm_draw_begin(dmp);
-    dm_draw_objs(v, base2local, local2base);
+    if (base2local && local2base) {
+	v->gv_local2base = *local2base;
+	v->gv_base2local = *base2local;
+    }
+    dm_draw_objs(v, v->gv_base2local, v->gv_local2base);
     dm_draw_end(dmp);
 
     // Set up a QImage with the rendered output..
@@ -205,8 +225,8 @@ void QtSW::wheelEvent(QWheelEvent *e) {
     v->gv_height = height();
 
     if (CADwheelEvent(v, e)) {
-	 dm_set_dirty(dmp, 1);
-	 update();
+	dm_set_dirty(dmp, 1);
+	update();
     }
 
     QWidget::wheelEvent(e);

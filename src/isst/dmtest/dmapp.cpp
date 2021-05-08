@@ -39,12 +39,6 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
 	return -1;
     }
 
-    // Let the GED commands know what bview to use
-    if (w->canvas)
-	gedp->ged_gvp = w->canvas->v;
-    if (w->canvas_sw)
-	gedp->ged_gvp = w->canvas_sw->v;
-
     return 0;
 }
 
@@ -92,7 +86,6 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	// It's possible that a ged_exec will introduce a new gedp - set up accordingly
 	if (gedp && prev_gedp != gedp) {
-	    gedp->using_app_views = 1;
 	    bu_ptbl_reset(gedp->ged_all_dmp);
 	    if (w->canvas) {
 		gedp->ged_dmp = w->canvas->dmp;
@@ -108,11 +101,11 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
 
 	if (gedp) {
-	    if (w->canvas) {
+	    if (w->canvas && w->canvas->v) {
 		w->canvas->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 		w->canvas->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
 	    }
-	    if (w->canvas_sw) {
+	    if (w->canvas_sw && w->canvas_sw->v) {
 		w->canvas_sw->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 		w->canvas_sw->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
 	    }

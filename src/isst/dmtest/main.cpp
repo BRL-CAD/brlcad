@@ -68,8 +68,6 @@ int main(int argc, char *argv[])
 	    const char *filename = argv[0];
 	    argc--; argv++;
 	    app.load_g(filename, argc, (const char **)argv);
-	    // Make sure libged knows not to nuke our view
-	    app.gedp->using_app_views = 1;
 	}
     }
 
@@ -124,22 +122,19 @@ int main(int argc, char *argv[])
     // If we have a GED structure, connect the wires
     if (app.gedp) {
 	if (app.w->canvas) {
-	    app.gedp->ged_dmp = app.w->canvas->dmp;
-	    app.gedp->ged_gvp = app.w->canvas->v;
-	    app.w->canvas->v->gv_base2local = app.gedp->ged_wdbp->dbip->dbi_base2local;
-	    app.w->canvas->v->gv_local2base = app.gedp->ged_wdbp->dbip->dbi_local2base;
-	    if (app.w->canvas->dmp)
-		dm_set_vp(app.w->canvas->dmp, &app.gedp->ged_gvp->gv_scale);
+	    app.w->canvas->v = app.gedp->ged_gvp;
+	    app.w->canvas->dm_set = app.gedp->ged_all_dmp;
+	    app.w->canvas->dm_current = (struct dm **)&app.gedp->ged_dmp;
+	    app.w->canvas->base2local = &app.gedp->ged_wdbp->dbip->dbi_base2local;
+	    app.w->canvas->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
 	}
 	if (app.w->canvas_sw) {
-	    app.gedp->ged_dmp = app.w->canvas_sw->dmp;
-	    app.gedp->ged_gvp = app.w->canvas_sw->v;
-	    app.w->canvas_sw->v->gv_base2local = app.gedp->ged_wdbp->dbip->dbi_base2local;
-	    app.w->canvas_sw->v->gv_local2base = app.gedp->ged_wdbp->dbip->dbi_local2base;
-	    if (app.w->canvas_sw->dmp)
-		dm_set_vp(app.w->canvas_sw->dmp, &app.gedp->ged_gvp->gv_scale);
+	    app.w->canvas_sw->v = app.gedp->ged_gvp;
+	    app.w->canvas_sw->dm_set = app.gedp->ged_all_dmp;
+	    app.w->canvas_sw->dm_current = (struct dm **)&app.gedp->ged_dmp;
+	    app.w->canvas_sw->base2local = &app.gedp->ged_wdbp->dbip->dbi_base2local;
+	    app.w->canvas_sw->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
 	}
-	bu_ptbl_ins(app.gedp->ged_all_dmp, (long int *)app.gedp->ged_dmp);
     }
 
     return app.exec();

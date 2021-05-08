@@ -42,6 +42,7 @@
 #include <QWidget>
 
 extern "C" {
+#include "bu/ptbl.h"
 #include "bview.h"
 #include "dm.h"
 }
@@ -60,11 +61,10 @@ class QTCAD_EXPORT QtSW : public QWidget
 
 	struct bview *v = NULL;
 	struct dm *dmp = NULL;
-
-	double base2local = 1.0;
-	double local2base = 1.0;
-
-	bool m_init = false;
+	struct bu_ptbl *dm_set = NULL;
+	struct dm **dm_current = NULL;
+	double *base2local = NULL;
+	double *local2base = NULL;
 
     protected:
 	void paintEvent(QPaintEvent *e) override;
@@ -77,6 +77,7 @@ class QTCAD_EXPORT QtSW : public QWidget
 	void wheelEvent(QWheelEvent *e) override;
 
     private:
+	bool m_init = false;
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
 };
