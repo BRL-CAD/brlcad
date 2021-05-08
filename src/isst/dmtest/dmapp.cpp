@@ -23,6 +23,8 @@
  *
  */
 
+#include "bu/env.h"
+#include "bu/ptbl.h"
 #include "dmapp.h"
 
 int
@@ -44,6 +46,113 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
 	gedp->ged_gvp = w->canvas_sw->v;
 
     return 0;
+}
+
+void
+DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
+{
+    struct ged *prev_gedp = gedp;
+
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+
+    if (ged_cmd_valid(argv[0], NULL)) {
+	const char *ccmd = NULL;
+	int edist = ged_cmd_lookup(&ccmd, argv[0]);
+	if (edist) {
+	    if (msg)
+		bu_vls_sprintf(msg, "Command %s not found, did you mean %s (edit distance %d)?\n", argv[0],   ccmd, edist);
+	    return;
+	}
+    } else {
+
+	prev_dhash = 0;
+	prev_vhash = 0;
+
+	if (gedp) {
+
+	    // TODO - need to add hashing to check the dm variables as well (i.e. if lighting
+	    // was turned on/off by the dm command...)
+	    prev_dhash = dm_hash((struct dm *)gedp->ged_dmp);
+	    prev_vhash = bview_hash(gedp->ged_gvp);
+
+	    // Clear the edit flags ahead of the ged_exec call, so we can tell if
+	    // any geometry changed.
+	    struct directory *dp;
+	    for (int i = 0; i < RT_DBNHASH; i++) {
+		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    dp->edit_flag = 0;
+		}
+	    }
+	}
+
+	ged_exec(gedp, argc, argv);
+	if (msg && gedp)
+	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
+
+
+	// It's possible that a ged_exec will introduce a new gedp - set up accordingly
+	if (gedp && prev_gedp != gedp) {
+	    gedp->using_app_views = 1;
+	    bu_ptbl_reset(gedp->ged_all_dmp);
+	    if (w->canvas) {
+		gedp->ged_dmp = w->canvas->dmp;
+		gedp->ged_gvp = w->canvas->v;
+		dm_set_vp(w->canvas->dmp, &gedp->ged_gvp->gv_scale);
+	    }
+	    if (w->canvas_sw) {
+		gedp->ged_dmp = w->canvas_sw->dmp;
+		gedp->ged_gvp = w->canvas_sw->v;
+		dm_set_vp(w->canvas_sw->dmp, &gedp->ged_gvp->gv_scale);
+	    }
+	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
+	}
+
+	if (gedp) {
+	    if (w->canvas) {
+		w->canvas->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
+		w->canvas->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
+	    }
+	    if (w->canvas_sw) {
+		w->canvas_sw->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
+		w->canvas_sw->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
+	    }
+
+	    /* Check if the ged_exec call changed either the display manager or
+	     * the view settings - in either case we'll need to redraw */
+	    if (prev_dhash != dm_hash((struct dm *)gedp->ged_dmp)) {
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+	    if (prev_vhash != bview_hash(gedp->ged_gvp)) {
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+
+	    // Checks the dp edit flags and does any necessary redrawing.  If
+	    // anything changed with the geometry, we also need to redraw
+	    if (ged_view_update(gedp) > 0) {
+		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	    }
+
+	    // If anybody set the flag, trigger an update
+	    if (dm_get_dirty((struct dm *)gedp->ged_dmp)) {
+		if (w->canvas)
+		    w->canvas->update();
+		if (w->canvas_sw)
+		    w->canvas_sw->update();
+	    }
+	} else {
+	    // gedp == NULL - can't cheat and use the gedp pointer
+	    if (prev_gedp != gedp) {
+		if (w->canvas) {
+		    dm_set_dirty(w->canvas->dmp, 1);
+		    w->canvas->update();
+		}
+		if (w->canvas_sw) {
+		    dm_set_dirty(w->canvas_sw->dmp, 1);
+		    w->canvas_sw->update();
+		}
+	    }
+	}
+    }
 }
 
 

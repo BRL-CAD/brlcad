@@ -68,11 +68,8 @@ int main(int argc, char *argv[])
 	    const char *filename = argv[0];
 	    argc--; argv++;
 	    app.load_g(filename, argc, (const char **)argv);
-	    app.w->gedp = app.gedp;
-	    if (app.w->canvas)
-		app.w->canvas->gedp = app.gedp;
-	    if (app.w->canvas_sw)
-		app.w->canvas_sw->gedp = app.gedp;
+	    // Make sure libged knows not to nuke our view
+	    app.gedp->using_app_views = 1;
 	}
     }
 
@@ -102,11 +99,12 @@ int main(int argc, char *argv[])
     // back on the software option
     if (app.w->canvas && !app.w->canvas->isValid()) {
 	bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
-	app.w->canvas_sw = new dmSW(app.w);
+	app.w->canvas_sw = new QtSW(app.w);
 	app.w->canvas_sw->setMinimumSize(512,512);
-	app.w->canvas_sw->gedp = app.w->canvas->gedp;
+	// We should get the same size as before...
 	app.w->wgrp->replaceWidget(0, app.w->canvas_sw);
-	app.gedp->ged_gvp = app.w->canvas_sw->v;
+	if (app.gedp)
+	    app.gedp->ged_gvp = app.w->canvas_sw->v;
 	delete app.w->canvas;
 	app.w->canvas = NULL;
     }
@@ -121,6 +119,27 @@ int main(int argc, char *argv[])
     if (app.w->canvas_sw) {
 	app.w->canvas_sw->setMinimumSize(cminsize);
 	app.w->canvas_sw->setMaximumSize(cmaxsize);
+    }
+
+    // If we have a GED structure, connect the wires
+    if (app.gedp) {
+	if (app.w->canvas) {
+	    app.gedp->ged_dmp = app.w->canvas->dmp;
+	    app.gedp->ged_gvp = app.w->canvas->v;
+	    app.w->canvas->v->gv_base2local = app.gedp->ged_wdbp->dbip->dbi_base2local;
+	    app.w->canvas->v->gv_local2base = app.gedp->ged_wdbp->dbip->dbi_local2base;
+	    if (app.w->canvas->dmp)
+		dm_set_vp(app.w->canvas->dmp, &app.gedp->ged_gvp->gv_scale);
+	}
+	if (app.w->canvas_sw) {
+	    app.gedp->ged_dmp = app.w->canvas_sw->dmp;
+	    app.gedp->ged_gvp = app.w->canvas_sw->v;
+	    app.w->canvas_sw->v->gv_base2local = app.gedp->ged_wdbp->dbip->dbi_base2local;
+	    app.w->canvas_sw->v->gv_local2base = app.gedp->ged_wdbp->dbip->dbi_local2base;
+	    if (app.w->canvas_sw->dmp)
+		dm_set_vp(app.w->canvas_sw->dmp, &app.gedp->ged_gvp->gv_scale);
+	}
+	bu_ptbl_ins(app.gedp->ged_all_dmp, (long int *)app.gedp->ged_dmp);
     }
 
     return app.exec();

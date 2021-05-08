@@ -50,8 +50,14 @@ class DMApp : public QApplication
 
 	int load_g(const char *filename, int argc, const char **argv);
 
-	DM_MainWindow *w;
-	struct ged *gedp;
+	void ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
+
+
+	unsigned long long prev_dhash = 0;
+	unsigned long long prev_vhash = 0;
+
+	DM_MainWindow *w = NULL;
+	struct ged *gedp = NULL;
 };
 
 #endif // DMAPP_H

@@ -38,8 +38,8 @@
 #include <QFileDialog>
 #include <QSettings>
 #include "pqConsoleWidget.h"
-#include "dmgl.h"
-#include "dmswrast.h"
+#include "qtcad/QtGL.h"
+#include "qtcad/QtSW.h"
 
 class DM_MainWindow : public QMainWindow
 {
@@ -50,10 +50,8 @@ class DM_MainWindow : public QMainWindow
 	void readSettings();
 
 	pqConsoleWidget *console = NULL;
-	dmGL *canvas = NULL;
-	dmSW *canvas_sw = NULL;
-
-	struct ged *gedp = NULL;
+	QtGL *canvas = NULL;
+	QtSW *canvas_sw = NULL;
 
 	QSplitter *wgrp;
 

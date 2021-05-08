@@ -475,6 +475,7 @@ struct bview {
     int		  gv_width;
     int		  gv_height;
     fastf_t       gv_base2local;
+    fastf_t       gv_local2base;
     fastf_t       gv_rscale;
     fastf_t       gv_sscale;
 

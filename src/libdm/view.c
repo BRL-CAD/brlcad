@@ -669,6 +669,41 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 
 }
 
+void
+dm_draw_objs(struct bview *v, double base2local, double local2base)
+{
+    struct dm *dmp = (struct dm *)v->dmp;
+
+#if 0
+    // Update selections (if any)
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_selected, i);
+	// TODO - set illum flag or otherwise visually indicate what is selected
+    }
+#endif
+
+    // Draw geometry view objects
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
+	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	bu_log("Draw %s\n", bu_vls_cstr(&g->g->s_name));
+	dm_draw_scene_obj(dmp, g->g);
+    }
+
+    // Draw view-only objects
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	dm_draw_scene_obj(dmp, s);
+    }
+
+    /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
+    (void)dm_hud_begin(dmp);
+
+    dm_draw_faceplate(v, base2local, local2base);
+
+    /* Restore non-HUD settings. */
+    (void)dm_hud_end(dmp);
+
+}
 /*
  * Local Variables:
  * tab-width: 8

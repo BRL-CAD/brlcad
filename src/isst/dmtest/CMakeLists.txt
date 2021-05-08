@@ -18,21 +18,15 @@ endif(BRLCAD_ENABLE_QT)
 # want to run the automatic moc logic for all of them.
 
 set(dm_srcs
-  bindings.cpp
   main.cpp
   main_window.cpp
   dmapp.cpp
-  dmgl.cpp
-  dmswrast.cpp
   ../../qged/pqConsoleWidget.cpp
   )
 
 set(dm_moc_headers
-  bindings.h
   main_window.h
   dmapp.h
-  dmgl.h
-  dmswrast.h
   ../../qged/pqConsoleWidget.h
   )
 
@@ -46,7 +40,7 @@ if(BRLCAD_ENABLE_QT)
   endif (OPENGL_gl_LIBRARY)
 
   QT5_WRAP_CPP(dm_moc_srcs ${dm_moc_headers})
-  BRLCAD_ADDEXEC(qdm "${dm_srcs};${dm_moc_srcs}" "libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;Qt5::OpenGL;${OPENGL_LIBS}")
+  BRLCAD_ADDEXEC(qdm "${dm_srcs};${dm_moc_srcs}" "libqtcad;libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;Qt5::OpenGL;${OPENGL_LIBS}")
   add_dependencies(qdm dm-qtgl)
 endif(BRLCAD_ENABLE_QT)
 

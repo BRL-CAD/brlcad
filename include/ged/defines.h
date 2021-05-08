@@ -195,6 +195,12 @@ struct ged {
 
     // The full set of bviews associated with this ged object
     struct bu_ptbl              ged_views;
+    /* The current view */
+    struct bview		*ged_gvp;
+
+    // If the caller is managing bview memory, set this so ged_free won't
+    // remove it.
+    int                         using_app_views;
 
     void                        *u_data; /**< @brief User data associated with this ged instance */
 
@@ -218,7 +224,6 @@ struct ged {
     struct ged_results          *ged_results;
 
     struct ged_drawable		*ged_gdp;
-    struct bview		*ged_gvp;
     struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */

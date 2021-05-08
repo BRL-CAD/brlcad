@@ -1,4 +1,4 @@
-/*                      D M S W R A S T . C P P
+/*                          Q T S W . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,32 +17,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmswrast.cpp
+/** @file QtSW.cpp
  *
- * This defines a Qt widget for displaying the software rasterized results of
- * the bundled libosmesa OpenGL software rasterizer.
- *
- * Unlike the standard Qt widget, this can display OpenGL rendered graphics
- * even if the OpenGL stack on the host operating system is non-functional (it
- * will be a great deal slower of course, but since it does not rely on any
- * system capabilities to produce its images it should work in any environment
- * where a basic Qt gui can load.)
+ * Qt widget for visualizing libosmesa OpenGL software rasterizer output.
  */
 
 #define USE_MGL_NAMESPACE 1
 
-#include <QKeyEvent>
+#include <QImage>
+#include <QPainter>
 
 extern "C" {
-#include "bu/env.h"
-#include "bu/parallel.h"
-#include "bview/util.h"
-#include "dm.h"
-#include "ged.h"
+#include "bu/malloc.h"
 }
-#include "dmswrast.h"
+#include "bindings.h"
+#include "qtcad/QtSW.h"
 
-dmSW::dmSW(QWidget *parent)
+QtSW::QtSW(QWidget *parent)
     : QWidget(parent)
 {
     BU_GET(v, struct bview);
@@ -72,6 +63,7 @@ dmSW::dmSW(QWidget *parent)
     fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };
     dm_set_win_bounds(dmp, windowbounds);
 
+    // Let the view know it has an associated dm.
     v->dmp = dmp;
 
     // This is an important Qt setting for interactivity - it allowing key
@@ -80,39 +72,33 @@ dmSW::dmSW(QWidget *parent)
     setFocusPolicy(Qt::WheelFocus);
 }
 
-dmSW::~dmSW()
+QtSW::~QtSW()
 {
     dm_close(dmp);
     BU_PUT(v, struct bview);
 }
 
-void dmSW::paintEvent(QPaintEvent *e)
+void QtSW::paintEvent(QPaintEvent *e)
 {
     // Go ahead and set the flag, but (unlike the rendering thread
     // implementation) we need to do the draw routine every time in paintGL, or
     // we end up with unrendered frames.
     dm_set_dirty(dmp, 0);
 
-    if (gedp) {
-	if (!m_init) {
-	    gedp->ged_dmp = (void *)dmp;
-	    bu_ptbl_ins(gedp->ged_all_dmp, (long int *)dmp);
-	    dm_set_vp(dmp, &gedp->ged_gvp->gv_scale);
-	    dm_set_width((struct dm *)gedp->ged_dmp, width());
-	    dm_set_height((struct dm *)gedp->ged_dmp, height());
-	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gedp->ged_dmp);
-	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gedp->ged_dmp);
-	    dm_configure_win((struct dm *)gedp->ged_dmp, 0);
-	    m_init = true;
-	}
-
-	struct db_i *dbip = gedp->ged_wdbp->dbip;
-	matp_t mat = gedp->ged_gvp->gv_model2view;
-	dm_loadmatrix(dmp, mat, 0);
-	dm_draw_begin(dmp);
-	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, dbip->dbi_base2local, dbip->dbi_local2base);
-	dm_draw_end(dmp);
+    if (!m_init) {
+	dm_set_width(dmp, width());
+	dm_set_height(dmp, height());
+	v->gv_width = dm_get_width(dmp);
+	v->gv_height = dm_get_height(dmp);
+	dm_configure_win(dmp, 0);
+	m_init = true;
     }
+
+    matp_t mat = v->gv_model2view;
+    dm_loadmatrix(dmp, mat, 0);
+    dm_draw_begin(dmp);
+    dm_draw_objs(v, base2local, local2base);
+    dm_draw_end(dmp);
 
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;
@@ -127,76 +113,22 @@ void dmSW::paintEvent(QPaintEvent *e)
     QWidget::paintEvent(e);
 }
 
-void dmSW::resizeEvent(QResizeEvent *e)
+void QtSW::resizeEvent(QResizeEvent *e)
 {
     QWidget::resizeEvent(e);
-    if (gedp && gedp->ged_dmp) {
-	dm_set_width((struct dm *)gedp->ged_dmp, width());
-	dm_set_height((struct dm *)gedp->ged_dmp, height());
-	gedp->ged_gvp->gv_width = width();
-	gedp->ged_gvp->gv_height = height();
-	dm_configure_win((struct dm *)gedp->ged_dmp, 0);
-	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+    if (dmp && v) {
+	dm_set_width(dmp, width());
+	dm_set_height(dmp, height());
+	v->gv_width = width();
+	v->gv_height = height();
+	dm_configure_win(dmp, 0);
+	dm_set_dirty(dmp, 1);
     }
 }
 
-void dmSW::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
-{
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+void QtSW::keyPressEvent(QKeyEvent *k) {
 
-    if (ged_cmd_valid(argv[0], NULL)) {
-	const char *ccmd = NULL;
-	int edist = ged_cmd_lookup(&ccmd, argv[0]);
-	if (edist) {
-	    if (msg)
-		bu_vls_sprintf(msg, "Command %s not found, did you mean %s (edit distance %d)?\n", argv[0], ccmd, edist);
-	    return;
-	}
-    } else {
-	// TODO - need to add hashing to check the dm variables as well (i.e. if lighting
-	// was turned on/off by the dm command...)
-	prev_dhash = dm_hash(dmp);
-	prev_vhash = bview_hash(v);
-	prev_lhash = dl_name_hash(gedp);
-
-	// Clear the edit flags ahead of the ged_exec call, so we can tell if
-	// any geometry changed.
-	struct directory *dp;
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		dp->edit_flag = 0;
-	    }
-	}
-
-	ged_exec(gedp, argc, argv);
-	if (msg)
-	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
-
-	/* Check if the ged_exec call changed either the display manager or
-	 * the view settings - in either case we'll need to redraw */
-	if (prev_dhash != dm_hash((struct dm *)gedp->ged_dmp)) {
-	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	}
-	if (prev_vhash != bview_hash(v)) {
-	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	}
-
-	// Checks the dp edit flags and does any necessary redrawing.  If
-	// anything changed with the geometry, we also need to redraw
-	if (ged_view_update(gedp) > 0) {
-	    dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	}
-
-	// If anybody set the flag, trigger an update
-	if (dm_get_dirty((struct dm *)gedp->ged_dmp))
-	    update();
-    }
-}
-
-
-void dmSW::keyPressEvent(QKeyEvent *k) {
-
-    if (!gedp || !gedp->ged_dmp) {
+    if (!dmp || !v) {
 	QWidget::keyPressEvent(k);
 	return;
     }
@@ -205,19 +137,18 @@ void dmSW::keyPressEvent(QKeyEvent *k) {
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
-    v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (CADkeyPressEvent(v, x_prev, y_prev, k)) {
-	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	dm_set_dirty(dmp, 1);
 	update();
     }
 
     QWidget::keyPressEvent(k);
 }
 
-void dmSW::mousePressEvent(QMouseEvent *e) {
+void QtSW::mousePressEvent(QMouseEvent *e) {
 
-    if (!gedp || !gedp->ged_dmp) {
+    if (!dmp || !v) {
 	QWidget::mousePressEvent(e);
 	return;
     }
@@ -226,10 +157,9 @@ void dmSW::mousePressEvent(QMouseEvent *e) {
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
-    v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (CADmousePressEvent(v, x_prev, y_prev, e)) {
-	dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	dm_set_dirty(dmp, 1);
 	update();
     }
 
@@ -238,9 +168,9 @@ void dmSW::mousePressEvent(QMouseEvent *e) {
     QWidget::mousePressEvent(e);
 }
 
-void dmSW::mouseMoveEvent(QMouseEvent *e)
+void QtSW::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!gedp || !gedp->ged_dmp) {
+    if (!dmp || !v) {
 	QWidget::mouseMoveEvent(e);
 	return;
     }
@@ -249,11 +179,10 @@ void dmSW::mouseMoveEvent(QMouseEvent *e)
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
-    v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (CADmouseMoveEvent(v, x_prev, y_prev, e)) {
-	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	 update();
+	dm_set_dirty(dmp, 1);
+	update();
     }
 
     // Current positions are the new previous positions
@@ -263,9 +192,9 @@ void dmSW::mouseMoveEvent(QMouseEvent *e)
     QWidget::mouseMoveEvent(e);
 }
 
-void dmSW::wheelEvent(QWheelEvent *e) {
+void QtSW::wheelEvent(QWheelEvent *e) {
 
-    if (!gedp || !gedp->ged_dmp) {
+    if (!dmp || !v) {
 	QWidget::wheelEvent(e);
 	return;
     }
@@ -274,17 +203,16 @@ void dmSW::wheelEvent(QWheelEvent *e) {
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
-    v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (CADwheelEvent(v, e)) {
-	 dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
+	 dm_set_dirty(dmp, 1);
 	 update();
     }
 
     QWidget::wheelEvent(e);
 }
 
-void dmSW::mouseReleaseEvent(QMouseEvent *e) {
+void QtSW::mouseReleaseEvent(QMouseEvent *e) {
 
     // To avoid an abrupt jump in scene motion the next time movement is
     // started with the mouse, after we release we return to the default state.
@@ -294,7 +222,7 @@ void dmSW::mouseReleaseEvent(QMouseEvent *e) {
     QWidget::mouseReleaseEvent(e);
 }
 
-void dmSW::save_image() {
+void QtSW::save_image() {
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;
     if (dm_get_display_image(dmp, &dm_image, 1, 1)) {

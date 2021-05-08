@@ -10,6 +10,7 @@ add_subdirectory(ged)
 add_subdirectory(icv)
 add_subdirectory(nmg)
 add_subdirectory(optical)
+add_subdirectory(qtcad)
 add_subdirectory(rt)
 
 set(public_hdrs

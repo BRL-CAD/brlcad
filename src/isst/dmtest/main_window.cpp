@@ -24,6 +24,8 @@
 #include <QSplitter>
 #include "bview/util.h"
 #include "main_window.h"
+#include "qtcad/QtGL.h"
+#include "qtcad/QtSW.h"
 #include "dmapp.h"
 
 DM_MainWindow::DM_MainWindow(int canvas_type)
@@ -54,11 +56,11 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
 
     // Set up Display canvas
     if (canvas_type == 0) {
-	canvas = new dmGL();
+	canvas = new QtGL(this);
 	canvas->setMinimumSize(512,512);
     }
     if (canvas_type == 1) {
-	canvas_sw = new dmSW(this);
+	canvas_sw = new QtSW(this);
 	canvas_sw->setMinimumSize(512,512);
     }
 
@@ -113,12 +115,6 @@ DM_MainWindow::run_cmd(const QString &command)
 	return;
     }
 
-    if (!gedp) {
-	console->printString("No database open");
-	console->prompt("$ ");
-	return;
-    }
-
     // make an argv array
     struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&ged_prefixed, "%s", command.toStdString().c_str());
@@ -127,14 +123,13 @@ DM_MainWindow::run_cmd(const QString &command)
     char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
     int ac = bu_argv_from_string(av, strlen(input), input);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    if (canvas)
-	canvas->ged_run_cmd(&msg, ac, (const char **)av);
-    if (canvas_sw)
-	canvas_sw->ged_run_cmd(&msg, ac, (const char **)av);
+    ((DMApp *)qApp)->ged_run_cmd(&msg, ac, (const char **)av);
     if (bu_vls_strlen(&msg) > 0) {
 	console->printString(bu_vls_cstr(&msg));
     }
-    bu_vls_trunc(gedp->ged_result_str, 0);
+    if (((DMApp *)qApp)->gedp) {
+	bu_vls_trunc(((DMApp *)qApp)->gedp->ged_result_str, 0);
+    }
     bu_vls_free(&msg);
     bu_free(input, "input copy");
     bu_free(av, "input argv");
@@ -162,8 +157,8 @@ void DM_MainWindow::write_settings()
 
 void DM_MainWindow::save_image()
 {
-    if (canvas)
-	canvas->save_image();
+    //if (canvas)
+	//canvas->save_image();
 }
 
 

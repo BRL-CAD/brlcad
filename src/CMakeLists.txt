@@ -44,6 +44,7 @@ set(level_2_dirs
   libfft
   libicv
   libpc
+  libqtcad
   libtclcad
   libtermio
   )

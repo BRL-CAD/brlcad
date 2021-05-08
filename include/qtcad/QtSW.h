@@ -1,4 +1,4 @@
-/*                        D M S W R A S T . H
+/*                           Q T S W . H
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,46 +17,52 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmswrast.h
+/** @file qtcad/QtSW.h
  *
+ * This defines a Qt widget for displaying the visualization results of the
+ * bundled libosmesa OpenGL software rasterizer, using the swrast libdm
+ * backend.
+ *
+ * Unlike the standard QtGL widget, this can display OpenGL rendered graphics
+ * even if the OpenGL stack on the host operating system is non-functional (it
+ * will be a great deal slower, but since it does not rely on any system
+ * capabilities to produce its images it should work in any environment where a
+ * basic Qt gui can load.)
  */
 
-#ifndef DMSWRAST_H
-#define DMSWRAST_H
+#ifndef QTCAD_QTSW_H
+#define QTCAD_QTSW_H
 
-#define USE_MGL_NAMESPACE 1
-
-#include <QImage>
-#include <QPainter>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QPaintEvent>
+#include <QResizeEvent>
+#include <QResizeEvent>
+#include <QWheelEvent>
 #include <QWidget>
 
 extern "C" {
+#include "bview.h"
 #include "dm.h"
-#include "ged.h"
 }
 
-#include "bindings.h"
+#include "qtcad/defines.h"
 
-class dmSW : public QWidget
+class QTCAD_EXPORT QtSW : public QWidget
 {
     Q_OBJECT
 
     public:
-	explicit dmSW(QWidget *parent = nullptr);
-	~dmSW();
+	explicit QtSW(QWidget *parent = nullptr);
+	~QtSW();
 
 	void save_image();
 
 	struct bview *v = NULL;
-	struct ged *gedp = NULL;
 	struct dm *dmp = NULL;
 
-	unsigned long long prev_dhash = 0;
-	unsigned long long prev_vhash = 0;
-	unsigned long long prev_lhash = 0;
-	unsigned long long prev_ghash = 0;
-
-	void ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	double base2local = 1.0;
+	double local2base = 1.0;
 
 	bool m_init = false;
 
@@ -75,7 +81,7 @@ class dmSW : public QWidget
 	int y_prev = -INT_MAX;
 };
 
-#endif /* DMSWRAST_H */
+#endif /* QTCAD_QTSW_H */
 
 // Local Variables:
 // tab-width: 8

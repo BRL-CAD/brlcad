@@ -1,4 +1,4 @@
-/*                        D M G L S . H
+/*                        Q T G L . H
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,49 +17,48 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dmgl.h
+/** @file qtgl.h
  *
  */
 
-#ifndef DMGL_H
-#define DMGL_H
+#ifndef QTGL_H
+#define QTGL_H
 
-#include <QOpenGLWidget>
-#include <QOpenGLFunctions>
-#include <QPainter>
 #include <QImage>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QObject>
+#include <QOpenGLFunctions>
+#include <QOpenGLWidget>
+#include <QPainter>
+#include <QWheelEvent>
+#include <QWidget>
 
 extern "C" {
-#include "bu/vls.h"
+#include "bview.h"
 #include "dm.h"
-#include "ged.h"
 }
 
-#include "bindings.h"
+#include "qtcad/defines.h"
 
 // Use QOpenGLFunctions so we don't have to prefix all OpenGL calls with "f->"
-class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
+class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
 
     public:
-	explicit dmGL(QWidget *parent = nullptr);
-	~dmGL();
+	explicit QtGL(QWidget *parent = nullptr);
+	~QtGL();
 
 	void save_image();
 
 	struct bview *v = NULL;
-	struct ged *gedp = NULL;
 	struct dm *dmp = NULL;
 
-	unsigned long long prev_dhash = 0;
-	unsigned long long prev_vhash = 0;
-	unsigned long long prev_lhash = 0;
-	unsigned long long prev_ghash = 0;
+	double base2local = 1.0;
+	double local2base = 1.0;
 
 	bool m_init = false;
-
-	void ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
     protected:
 	void paintGL() override;
@@ -76,7 +75,7 @@ class dmGL : public QOpenGLWidget, protected QOpenGLFunctions
 	int y_prev = -INT_MAX;
 };
 
-#endif /* DMGL_H */
+#endif /* QTGL_H */
 
 // Local Variables:
 // tab-width: 8
