@@ -1,4 +1,5 @@
 set(qtcad_headers
+  QtConsole.h
   QtGL.h
   QtSW.h
   )

@@ -64,7 +64,7 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
 	canvas_sw->setMinimumSize(512,512);
     }
 
-    console = new pqConsoleWidget(this);
+    console = new QtConsole(this);
     console->prompt("$ ");
     wgrp = new QSplitter(Qt::Vertical, this);
     // With the drawing window we do better not to trigger continual redrawing
@@ -80,7 +80,11 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
     }
     wgrp->addWidget(console);
 
-    QObject::connect(this->console, &pqConsoleWidget::executeCommand, this, &DM_MainWindow::run_cmd);
+    // The console's run of a command has implications for the entire
+    // application, so rather than embedding the command execution logic in the
+    // widget we use a signal/slot connection to have the main window's slot
+    // execute the command.
+    QObject::connect(this->console, &QtConsole::executeCommand, this, &DM_MainWindow::run_cmd);
 }
 
 void

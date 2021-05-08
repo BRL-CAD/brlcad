@@ -4,7 +4,6 @@ if(BRLCAD_ENABLE_QT)
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
     ${BRLCAD_SOURCE_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/src/qged
     ${GED_INCLUDE_DIRS}
     ${DM_INCLUDE_DIRS}
     ${RT_INCLUDE_DIRS}
@@ -21,13 +20,11 @@ set(dm_srcs
   main.cpp
   main_window.cpp
   dmapp.cpp
-  ../../qged/pqConsoleWidget.cpp
   )
 
 set(dm_moc_headers
   main_window.h
   dmapp.h
-  ../../qged/pqConsoleWidget.h
   )
 
 if(BRLCAD_ENABLE_QT)

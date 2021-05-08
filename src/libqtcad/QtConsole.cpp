@@ -1,87 +1,66 @@
-/*=========================================================================
-
-   Program: ParaView
-   Module:    pqConsoleWidget.cxx
-
-   Copyright (c) 2005-2008 Sandia Corporation, Kitware Inc.
+/*
+ * Copyright (c) 2005-2008 Sandia Corporation, Kitware Inc.
    All rights reserved.
+ *
+ * Sandia National Laboratories, New Mexico PO Box 5800 Albuquerque, NM 87185
+ *
+ * Kitware Inc.
+ * 28 Corporate Drive
+ * Clifton Park, NY 12065
+ * USA
+ *
+ * Under the terms of Contract DE-AC04-94AL85000, there is a non-exclusive license
+ * for use of this work by or on behalf of the U.S. Government.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    * Redistributions of source code must retain the above copyright notice,
+ *      this list of conditions and the following disclaimer.
+ *
+ *    * Redistributions in binary form must reproduce the above copyright notice,
+ *      this list of conditions and the following disclaimer in the documentation
+ *      and/or other materials provided with the distribution.
+ *
+ *    * Neither the name of Kitware nor the names of any contributors may be used
+ *      to endorse or promote products derived from this software without specific
+ *      prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-   ParaView is a free software; you can redistribute it and/or modify it
-   under the terms of the ParaView license version 1.2.
+ * This widget is based off of ParaView's QtConsole
+ */
 
-   See License_v1.2.txt for the full ParaView license.
-   A copy of this license can be obtained by contacting
-   Kitware Inc.
-   28 Corporate Drive
-   Clifton Park, NY 12065
-   USA
+#include "qtcad/QtConsole.h"
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-=========================================================================*/
-
-#include "pqConsoleWidget.h"
-
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
-#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#undef Success
 #include <QAbstractItemView>
-#undef Success
 #include <QApplication>
-#undef Success
 #include <QClipboard>
-#undef Success
 #include <QKeyEvent>
-#undef Success
 #include <QMimeData>
-#undef Success
 #include <QPointer>
-#undef Success
 #include <QTextCursor>
-#undef Success
 #include <QPlainTextEdit>
-#undef Success
 #include <QVBoxLayout>
-#undef Success
 #include <QScrollBar>
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
 
 /////////////////////////////////////////////////////////////////////////
-// pqConsoleWidget::pqImplementation
+// QtConsole::pqImplementation
 
-class pqConsoleWidget::pqImplementation :
+class QtConsole::pqImplementation :
   public QPlainTextEdit
 {
 public:
-  pqImplementation(pqConsoleWidget& p) :
+  pqImplementation(QtConsole& p) :
     QPlainTextEdit(&p),
     Parent(p),
     InteractivePosition(documentEnd())
@@ -335,7 +314,7 @@ public:
     }
 
   /// Stores a back-reference to our owner
-  pqConsoleWidget& Parent;
+  QtConsole& Parent;
 
   /** Stores the beginning of the area of interactive input, outside which
   changes can't be made to the text edit contents */
@@ -347,9 +326,9 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////
-// pqConsoleWidget
+// QtConsole
 
-pqConsoleWidget::pqConsoleWidget(QWidget* Parent) :
+QtConsole::QtConsole(QWidget* Parent) :
   QWidget(Parent),
   Implementation(new pqImplementation(*this))
 {
@@ -359,25 +338,25 @@ pqConsoleWidget::pqConsoleWidget(QWidget* Parent) :
 }
 
 //-----------------------------------------------------------------------------
-pqConsoleWidget::~pqConsoleWidget()
+QtConsole::~QtConsole()
 {
   delete this->Implementation;
 }
 
 //-----------------------------------------------------------------------------
-QFont pqConsoleWidget::getFont()
+QFont QtConsole::getFont()
 {
   return this->Implementation->getFont();
 }
 
 //-----------------------------------------------------------------------------
-void pqConsoleWidget::setFont(const QFont& i_font)
+void QtConsole::setFont(const QFont& i_font)
 {
   this->Implementation->setFont(i_font);
 }
 
 //-----------------------------------------------------------------------------
-QPoint pqConsoleWidget::getCursorPosition()
+QPoint QtConsole::getCursorPosition()
 {
   QTextCursor tc = this->Implementation->textCursor();
 
@@ -385,7 +364,7 @@ QPoint pqConsoleWidget::getCursorPosition()
 }
 
 //-----------------------------------------------------------------------------
-void pqConsoleWidget::printString(const QString& Text)
+void QtConsole::printString(const QString& Text)
 {
   QTextCursor text_cursor = this->Implementation->textCursor();
   text_cursor.setPosition(this->Implementation->documentEnd());
@@ -397,14 +376,14 @@ void pqConsoleWidget::printString(const QString& Text)
 }
 
 //-----------------------------------------------------------------------------
-void pqConsoleWidget::printCommand(const QString& cmd)
+void QtConsole::printCommand(const QString& cmd)
 {
   this->Implementation->textCursor().insertText(cmd);
   this->Implementation->updateCommandBuffer();
 }
 
 //-----------------------------------------------------------------------------
-void pqConsoleWidget::prompt(const QString& text)
+void QtConsole::prompt(const QString& text)
 {
   QTextCursor text_cursor = this->Implementation->textCursor();
 
@@ -425,7 +404,7 @@ void pqConsoleWidget::prompt(const QString& text)
 }
 
 //-----------------------------------------------------------------------------
-void pqConsoleWidget::clear()
+void QtConsole::clear()
 {
   this->Implementation->clear();
 
@@ -435,7 +414,7 @@ void pqConsoleWidget::clear()
 }
 
 //-----------------------------------------------------------------------------
-void pqConsoleWidget::internalExecuteCommand(const QString& Command)
+void QtConsole::internalExecuteCommand(const QString& Command)
 {
   emit this->executeCommand(Command);
 }

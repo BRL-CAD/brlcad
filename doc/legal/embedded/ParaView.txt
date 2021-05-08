@@ -37,6 +37,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 file:/src/qged/pqConsoleWidget.cpp
 file:/src/qged/pqConsoleWidget.h
+file:/src/libqtcad/QtConsole.cpp
+file:/include/qtcad/QtConsole.h
+
 
 
 

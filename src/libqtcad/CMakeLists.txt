@@ -1,11 +1,13 @@
 if(BRLCAD_ENABLE_QT)
 
-  if (OPENGL_opengl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-  endif (OPENGL_opengl_LIBRARY)
-  if (OPENGL_gl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-  endif (OPENGL_gl_LIBRARY)
+  if (BRLCAD_ENABLE_OPENGL)
+    if (OPENGL_opengl_LIBRARY)
+      set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
+    endif (OPENGL_opengl_LIBRARY)
+    if (OPENGL_gl_LIBRARY)
+      set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
+    endif (OPENGL_gl_LIBRARY)
+  endif (BRLCAD_ENABLE_OPENGL)
   if (OPENGL_LIBS)
     find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL)
     set(OPENGL_LIBS "Qt5::OpenGL;${OPENGL_LIBS}")
@@ -22,7 +24,7 @@ if(BRLCAD_ENABLE_QT)
     ${DM_INCLUDE_DIRS}
     ${RT_INCLUDE_DIRS}
     ${BU_INCLUDE_DIRS}
-k   ${OPENGL_INCLUDE_DIR_GL}
+    ${OPENGL_INCLUDE_DIR_GL}
     )
 
 endif(BRLCAD_ENABLE_QT)
@@ -33,17 +35,23 @@ endif(BRLCAD_ENABLE_QT)
 
 set(qtcad_srcs
   bindings.cpp
-  QtGL.cpp
   QtSW.cpp
-  pqConsoleWidget.cpp
+  QtConsole.cpp
   )
-
 set(qtcad_moc_headers
   bindings.h
-  ${BRLCAD_SOURCE_DIR}/include/qtcad/QtGL.h
   ${BRLCAD_SOURCE_DIR}/include/qtcad/QtSW.h
-  pqConsoleWidget.h
+  ${BRLCAD_SOURCE_DIR}/include/qtcad/QtConsole.h
   )
+
+if (OPENGL_LIBS)
+  set(qtcad_srcs ${qtcad_srcs} QtGL.cpp)
+  set(qtcad_moc_headers
+    ${qtcad_moc_headers}
+    ${BRLCAD_SOURCE_DIR}/include/qtcad/QtGL.h
+    )
+endif (OPENGL_LIBS)
+
 
 if(BRLCAD_ENABLE_QT)
 
@@ -62,6 +70,7 @@ set(qtcad_ignore_srcs
   CMakeLists.txt
   ${qtcad_srcs}
   ${qtcad_moc_headers}
+  QtGL.cpp
   )
 
 CMAKEFILES(${qtcad_ignore_srcs})

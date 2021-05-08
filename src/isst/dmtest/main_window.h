@@ -37,7 +37,7 @@
 #include <QStatusBar>
 #include <QFileDialog>
 #include <QSettings>
-#include "pqConsoleWidget.h"
+#include "qtcad/QtConsole.h"
 #include "qtcad/QtGL.h"
 #include "qtcad/QtSW.h"
 
@@ -49,7 +49,7 @@ class DM_MainWindow : public QMainWindow
 
 	void readSettings();
 
-	pqConsoleWidget *console = NULL;
+	QtConsole *console = NULL;
 	QtGL *canvas = NULL;
 	QtSW *canvas_sw = NULL;
 

@@ -30,7 +30,6 @@
 #include <QApplication>
 #include <QObject>
 #include <QString>
-#include "pqConsoleWidget.h"
 #include "ged.h"
 #include "main_window.h"
 
@@ -51,7 +50,6 @@ class DMApp : public QApplication
 	int load_g(const char *filename, int argc, const char **argv);
 
 	void ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
-
 
 	unsigned long long prev_dhash = 0;
 	unsigned long long prev_vhash = 0;
