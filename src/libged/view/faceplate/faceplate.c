@@ -296,7 +296,7 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 
 const struct bu_cmdtab _fp_cmds[] = {
     { "center_dot",      _fp_cmd_center_dot},
-    //{ "grid",            _fp_cmd_grid},
+    { "grid",            _fp_cmd_grid},
     { "fps",             _fp_cmd_fps},
     { "model_axes",      _fp_cmd_model_axes},
     { "params",          _fp_cmd_params},

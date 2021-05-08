@@ -13,6 +13,7 @@ set(VIEW_SRCS
   eye.c
   faceplate/axes.c
   faceplate/faceplate.c
+  faceplate/grid.c
   labels.c
   lines.c
   objs.c
