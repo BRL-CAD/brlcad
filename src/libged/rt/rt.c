@@ -59,6 +59,10 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    if (!ged_who_argc(gedp)) {
+	return GED_ERROR;
+    }
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
