@@ -123,13 +123,66 @@ DM_MainWindow::run_cmd(const QString &command)
     char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
     int ac = bu_argv_from_string(av, strlen(input), input);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    ((DMApp *)qApp)->ged_run_cmd(&msg, ac, (const char **)av);
-    if (bu_vls_strlen(&msg) > 0) {
-	console->printString(bu_vls_cstr(&msg));
+
+    struct ged *gedp = ((DMApp *)qApp)->gedp;
+
+    /* The "open" and close commands require a bit of
+     * awareness at this level, since the gedp pointer
+     * must respond to them. */
+    int cmd_run = 0;
+    if (BU_STR_EQUAL(av[0], "open")) {
+	if (ac > 1) {
+	    if (gedp) ged_close(gedp);
+	    gedp = ged_open("db", av[1], 0);
+	    if (!gedp) {
+		bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", av[1]) ;
+		console->printString(bu_vls_cstr(&msg));
+	    } else {
+		if (canvas) {
+		    gedp->ged_dmp = canvas->dmp;
+		    gedp->ged_gvp = canvas->v;
+		    canvas->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
+		    canvas->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
+		    if (canvas->dmp)
+			dm_set_vp(canvas->dmp, &gedp->ged_gvp->gv_scale);
+		}
+		if (canvas_sw) {
+		    gedp->ged_dmp = canvas_sw->dmp;
+		    gedp->ged_gvp = canvas_sw->v;
+		    canvas_sw->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
+		    canvas_sw->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
+		    if (canvas_sw->dmp)
+			dm_set_vp(canvas_sw->dmp, &gedp->ged_gvp->gv_scale);
+		}
+		bu_ptbl_ins(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
+		((DMApp *)qApp)->gedp = gedp;
+		bu_vls_sprintf(&msg, "Opened file %s\n", av[1]);
+		console->printString(bu_vls_cstr(&msg));
+	    }
+	} else {
+	    console->printString("Error: invalid ged_open call\n");
+	}
+	cmd_run = 1;
+    }
+
+    if (BU_STR_EQUAL(av[0], "close")) {
+	ged_close(gedp);
+	gedp = NULL;
+	((DMApp *)qApp)->gedp = NULL;
+	console->printString("closed database\n");
+	cmd_run = 1;
+    }
+
+    if (!cmd_run) {
+	((DMApp *)qApp)->ged_run_cmd(&msg, ac, (const char **)av);
+	if (bu_vls_strlen(&msg) > 0) {
+	    console->printString(bu_vls_cstr(&msg));
+	}
     }
     if (((DMApp *)qApp)->gedp) {
 	bu_vls_trunc(((DMApp *)qApp)->gedp->ged_result_str, 0);
     }
+
     bu_vls_free(&msg);
     bu_free(input, "input copy");
     bu_free(av, "input argv");
