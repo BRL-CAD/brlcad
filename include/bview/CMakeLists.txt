@@ -1,6 +1,8 @@
 set(bview_headers
+  data.h
   defines.h
   events.h
+  faceplate.h
   polygons.h
   util.h
   )
