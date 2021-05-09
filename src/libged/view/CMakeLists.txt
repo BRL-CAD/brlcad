@@ -14,6 +14,7 @@ set(VIEW_SRCS
   faceplate/axes.c
   faceplate/faceplate.c
   faceplate/grid.c
+  faceplate/interactive_rect.c
   labels.c
   lines.c
   objs.c

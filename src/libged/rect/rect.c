@@ -301,6 +301,18 @@ ged_rect_core(struct ged *gedp,
 	return GED_ERROR;
     }
 
+#if 0
+    // Archer has at least one selection mode (Modes->Comp Select Mode->List)
+    // that uses rect - uncomment this to follow along with the commands it
+    // issues as the GUI works.
+    struct bu_vls rcmd = BU_VLS_INIT_ZERO;
+    for (i = 0; i < argc; i++) {
+	bu_vls_printf(&rcmd, "%s " , argv[i]);
+    }
+    bu_log("%s\n", bu_vls_cstr(&rcmd));
+    bu_vls_free(&rcmd);
+#endif
+
     command = (char *)argv[0];
     parameter = (char *)argv[1];
     argc -= 2;
