@@ -306,10 +306,9 @@ ged_init(struct ged *gedp)
     gedp->ged_delete_io_handler = NULL;
     gedp->ged_io_data = NULL;
 
-    /* We need at least one view */
-    BU_GET(gedp->ged_gvp, struct bview);
-    bview_init(gedp->ged_gvp);
-    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)gedp->ged_gvp);
+    /* In principle we should be establishing an initial view here,
+     * but Archer won't tolerate it. */
+    gedp->ged_gvp = GED_VIEW_NULL;
 
     /* Out of the gate we don't have display managers*/
     gedp->ged_dmp = NULL;
