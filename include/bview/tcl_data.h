@@ -1,4 +1,4 @@
-/*                     B V I E W / D A T A . H
+/*                     B V I E W / T C L _ D A T A . H
  * BRL-CAD
  *
  * Copyright (c) 1993-2021 United States Government as represented by
@@ -23,8 +23,8 @@
  *
  * Definitions specific to the non-view-obj drawing logic in libtclcad
  */
-#ifndef DM_BVIEW_DATA_H
-#define DM_BVIEW_DATA_H
+#ifndef DM_BVIEW_TCL_DATA_H
+#define DM_BVIEW_TCL_DATA_H
 
 #include "common.h"
 #include "bu/list.h"
@@ -35,7 +35,7 @@
 #include "vmath.h"
 
 /** @{ */
-/** @file bview/data.h */
+/** @file bview/tcl_data.h */
 
 #define BVIEW_POLY_CIRCLE_MODE 15
 #define BVIEW_POLY_CONTOUR_MODE 16
@@ -123,6 +123,8 @@ typedef struct {
 
 
 struct bview_data_tclcad {
+    int           gv_polygon_mode;  // libtclcad polygon modes
+    int		  gv_hide;          // libtclcad setting for hiding view - unused?
     struct bview_data_arrow_state       gv_data_arrows;
     struct bview_data_axes_state        gv_data_axes;
     struct bview_data_label_state       gv_data_labels;
@@ -136,7 +138,7 @@ struct bview_data_tclcad {
     struct bview_other_state            gv_prim_labels;
 };
 
-#endif /* DM_BVIEW_DATA_H */
+#endif /* DM_BVIEW_TCL_DATA_H */
 
 /** @} */
 /*

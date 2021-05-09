@@ -1,9 +1,9 @@
 set(bview_headers
-  data.h
   defines.h
   events.h
   faceplate.h
   polygons.h
+  tcl_data.h
   util.h
   )
 BRLCAD_MANAGE_FILES(bview_headers ${INCLUDE_DIR}/brlcad/bview)

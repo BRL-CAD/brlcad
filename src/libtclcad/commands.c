@@ -1568,7 +1568,7 @@ to_constrain_rmode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -1633,7 +1633,7 @@ to_constrain_tmode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_CONSTRAINED_TRANSLATE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_CONSTRAINED_TRANSLATE_MODE;
 
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_trans %s %s %%x %%y}; break",
@@ -1895,7 +1895,7 @@ to_data_move_func(struct ged *gedp,
 	    return GED_OK;
 
 	/* This section is for moving more than a single point on a contour */
-	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
 
@@ -1947,7 +1947,7 @@ to_data_move_func(struct ged *gedp,
 	    return GED_OK;
 
 	/* This section is for moving the entire arrow */
-	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -1988,7 +1988,7 @@ to_data_move_func(struct ged *gedp,
 	    return GED_OK;
 
 	/* This section is for moving the entire arrow */
-	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2098,7 +2098,7 @@ to_data_move_func(struct ged *gedp,
 	    return GED_OK;
 
 	/* This section is for moving the entire line */
-	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2139,7 +2139,7 @@ to_data_move_func(struct ged *gedp,
 	    return GED_OK;
 
 	/* This section is for moving the entire line */
-	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2261,10 +2261,10 @@ to_data_move_object_mode_func(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    /* At the moment, only gv_polygon_mode is being used. */
+    /* At the moment, only gv_tcl.gv_polygon_mode is being used. */
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_DATA_MOVE_OBJECT_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_DATA_MOVE_OBJECT_MODE;
 
     return GED_OK;
 }
@@ -2353,10 +2353,10 @@ to_data_move_point_mode_func(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    /* At the moment, only gv_polygon_mode is being used. */
+    /* At the moment, only gv_tcl.gv_polygon_mode is being used. */
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_DATA_MOVE_POINT_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_DATA_MOVE_POINT_MODE;
 
     return GED_OK;
 }
@@ -3565,7 +3565,7 @@ to_hide_view(struct ged *gedp,
 
     /* return the hide view setting */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_hide);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_tcl.gv_hide);
 	return GED_OK;
     }
 
@@ -3702,7 +3702,7 @@ to_idle_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    mode = gdvp->gv_polygon_mode;
+    mode = gdvp->gv_tcl.gv_polygon_mode;
 
     if (gdvp->adaptive_plot &&
 	    gdvp->redraw_on_zoom &&
@@ -3773,7 +3773,7 @@ to_idle_mode(struct ged *gedp,
 	to_refresh_all_views(current_top);
     }
 
-    gdvp->gv_polygon_mode = TCLCAD_IDLE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_IDLE_MODE;
     gdvp->gv_tcl.gv_sdata_polygons.gdps_cflag = 0;
 
     return GED_OK;
@@ -4069,7 +4069,7 @@ to_move_arb_edge_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname) {
@@ -4128,7 +4128,7 @@ to_move_arb_face_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_MOVE_ARB_FACE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_ARB_FACE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4243,7 +4243,7 @@ to_bot_move_pnt_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_MOVE_BOT_POINT_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_BOT_POINT_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4303,7 +4303,7 @@ to_bot_move_pnts_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4365,7 +4365,7 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_MOVE_METABALL_POINT_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_METABALL_POINT_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4424,7 +4424,7 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4670,7 +4670,7 @@ to_orotate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_OROTATE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_OROTATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4728,7 +4728,7 @@ to_oscale_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_OSCALE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_OSCALE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4787,7 +4787,7 @@ to_otranslate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_OTRANSLATE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_OTRANSLATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5079,7 +5079,7 @@ to_rect_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = dm_get_height((struct dm *)gdvp->dmp) - y;
-    gdvp->gv_polygon_mode = TCLCAD_RECTANGLE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_RECTANGLE_MODE;
 
     ac = 4;
     av[0] = "rect";
@@ -5162,7 +5162,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5222,7 +5222,7 @@ to_rotate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_ROTATE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_ROTATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5385,7 +5385,7 @@ to_protate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_PROTATE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_PROTATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5444,7 +5444,7 @@ to_pscale_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_PSCALE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_PSCALE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5503,7 +5503,7 @@ to_ptranslate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_PTRANSLATE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_PTRANSLATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5562,7 +5562,7 @@ to_data_scale_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_DATA_SCALE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_DATA_SCALE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5619,7 +5619,7 @@ to_scale_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_SCALE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_SCALE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5953,7 +5953,7 @@ to_translate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_TRANSLATE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_TRANSLATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {

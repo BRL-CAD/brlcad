@@ -615,10 +615,10 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	dm_draw_lines(dmp, &v->gv_tcl.gv_sdata_lines);
 
     if (v->gv_tcl.gv_data_polygons.gdps_draw)
-	dm_draw_polys(dmp, &v->gv_tcl.gv_data_polygons, v->gv_polygon_mode);
+	dm_draw_polys(dmp, &v->gv_tcl.gv_data_polygons, v->gv_tcl.gv_polygon_mode);
 
     if (v->gv_tcl.gv_sdata_polygons.gdps_draw)
-	dm_draw_polys(dmp, &v->gv_tcl.gv_sdata_polygons, v->gv_polygon_mode);
+	dm_draw_polys(dmp, &v->gv_tcl.gv_sdata_polygons, v->gv_tcl.gv_polygon_mode);
 
 #if 0
     // Update selections (if any)

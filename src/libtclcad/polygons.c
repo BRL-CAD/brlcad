@@ -534,7 +534,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 									  "realloc polygon");
 
 	    if (to_extract_contours_av(interp, gedp, gdvp, &gdpsp->gdps_polygons.polygon[i],
-				       contour_ac, contour_av, gdvp->gv_polygon_mode, 0) != GED_OK) {
+				       contour_ac, contour_av, gdvp->gv_tcl.gv_polygon_mode, 0) != GED_OK) {
 		Tcl_Free((char *)contour_av);
 		return GED_ERROR;
 	    }
@@ -808,7 +808,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 		return GED_OK;
 	    }
 
-	    if (to_extract_polygons_av(interp, gedp, gdvp, gdpsp, polygon_ac, polygon_av, gdvp->gv_polygon_mode, vflag) != GED_OK) {
+	    if (to_extract_polygons_av(interp, gedp, gdvp, gdpsp, polygon_ac, polygon_av, gdvp->gv_tcl.gv_polygon_mode, vflag) != GED_OK) {
 		Tcl_Free((char *)polygon_av);
 		return GED_ERROR;
 	    }
@@ -845,7 +845,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	}
 	contour_ac = ac;
 
-	if (to_extract_contours_av(interp, gedp, gdvp, &gp, contour_ac, contour_av, gdvp->gv_polygon_mode, 0) != GED_OK) {
+	if (to_extract_contours_av(interp, gedp, gdvp, &gp, contour_ac, contour_av, gdvp->gv_tcl.gv_polygon_mode, 0) != GED_OK) {
 	    Tcl_Free((char *)contour_av);
 	    return GED_ERROR;
 	}
@@ -1157,7 +1157,7 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = BVIEW_POLY_CIRCLE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = BVIEW_POLY_CIRCLE_MODE;
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
@@ -1231,7 +1231,7 @@ to_poly_cont_build_func(Tcl_Interp *interp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = BVIEW_POLY_CONTOUR_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = BVIEW_POLY_CONTOUR_MODE;
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
@@ -1592,7 +1592,7 @@ to_poly_ell_mode_func(Tcl_Interp *interp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_polygon_mode = TCLCAD_POLY_ELLIPSE_MODE;
+    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_POLY_ELLIPSE_MODE;
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
@@ -1761,9 +1761,9 @@ to_poly_rect_mode_func(Tcl_Interp *interp,
     gdvp->gv_prevMouseY = y;
 
     if (sflag)
-	gdvp->gv_polygon_mode = TCLCAD_POLY_SQUARE_MODE;
+	gdvp->gv_tcl.gv_polygon_mode = TCLCAD_POLY_SQUARE_MODE;
     else
-	gdvp->gv_polygon_mode = TCLCAD_POLY_RECTANGLE_MODE;
+	gdvp->gv_tcl.gv_polygon_mode = TCLCAD_POLY_RECTANGLE_MODE;
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
