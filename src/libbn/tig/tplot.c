@@ -54,6 +54,7 @@
 /* interface headers */
 #include "vmath.h"
 #include "bn/plot3.h"
+#include "bn/tig.h"
 
 
 #define TIC		100

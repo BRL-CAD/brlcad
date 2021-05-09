@@ -50,9 +50,10 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "bn/plot3.h"
-#include "bn/vectfont.h"
 #include "bu/malloc.h"
+#include "bn/plot3.h"
+#include "bn/tig.h"
+#include "bn/vectfont.h"
 
 #define NUM_SYMBOLS	8
 

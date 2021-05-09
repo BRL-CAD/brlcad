@@ -13,13 +13,10 @@ BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS BN_LOCAL_INCLUDE_DIRS)
 
 set(LIBBN_SOURCES
   anim.c
-  axis.c
-  complex.c
   clip.c
+  complex.c
   font.c
   globals.c
-  list.c
-  marker.c
   mat.c
   msr.c
   mt19937ar.c
@@ -31,16 +28,19 @@ set(LIBBN_SOURCES
   qmath.c
   rand.c
   randsph.c
-  scale.c
   sobol.c
   sphmap.c
   str.c
-  symbol.c
   tabdata.c
-  tplot.c
+  tig/axis.c
+  tig/list.c
+  tig/marker.c
+  tig/scale.c
+  tig/symbol.c
+  tig/tplot.c
+  tig/vectfont.c
+  tig/vector.c
   ulp.c
-  vectfont.c
-  vector.c
   vers.c
   vert_tree.c
   vlist.c

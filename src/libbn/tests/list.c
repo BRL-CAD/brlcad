@@ -28,6 +28,7 @@
 #include "bn.h"
 #include "bu.h"
 #include "bn/plot3.h"
+#include "bn/tig.h"
 
 #define BUFFER_SIZE 2000
 #define MAX_POINTS 30

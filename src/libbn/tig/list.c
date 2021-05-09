@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include "vmath.h"
 #include "bn/plot3.h"
+#include "bn/tig.h"
 
 /* Modes for internal flag */
 #define TP_MARK 1 /* Draw marks */

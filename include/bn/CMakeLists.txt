@@ -19,6 +19,7 @@ set(bn_headers
   tabdata.h
   sobol.h
   str.h
+  tig.h
   tol.h
   vectfont.h
   version.h
