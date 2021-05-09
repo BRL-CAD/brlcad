@@ -96,6 +96,10 @@ void QtSW::paintEvent(QPaintEvent *e)
 	// Let the view know it has an associated dm.
 	v->dmp = dmp;
 
+	// Set the view width and height to match the dm
+	v->gv_width = dm_get_width(dmp);
+	v->gv_height = dm_get_height(dmp);
+
 	// If we have a ptbl defining the current dm set and/or an unset
 	// pointer to indicate the current dm, go ahead and set them.
 	if (dm_set)
