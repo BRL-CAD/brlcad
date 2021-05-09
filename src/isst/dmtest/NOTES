@@ -1,3 +1,25 @@
+TODO:
+
+1.  embedded framebuffer (need to see if we can refactor OpenGL code for fb into libdmgl...)
+
+2.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
+
+3.  output of bu_subprocess commands back to QtConsole prompt
+
+4.  color controls (background in particular) settable in MGED...
+
+5.  primitive editing MGED style.
+
+6.  Fix fps meter drawing - should either be lower left, or appended to status line if that's enabled
+
+7.  MGED faceplate GUI - needed?  Does (for example) pipe editing need it...
+
+8.  Predictor - is it useful, or can we remove it?
+
+9.  Qt dialogues for color setting and fonts
+
+10. Parse and interpret .mgedrc files...
+
 Even if we can get a Tcl/Tk free stack working fully, users will need an option
 for a Tcl prompt if we are going to support .mgedrc customizations.
 
@@ -19,3 +41,52 @@ Would need to be tested, but if it can provide a MGED-style Tcl prompt that is
 sufficient for scripting purposes and loading .mgedrc files it would be a far
 simpler integration than the all-up libtcl build...
 
+11.  Man page viewer as libqtcad widget
+
+12.  Qt .g tree hierarchy widget into libqtcad
+
+13.  Qt palette widget - get plugin design finalized, into libqtcad
+
+14.  Finish accordion widget, into libqtcad
+
+15.  Implement more key bindings for dm widgets.
+
+16.  Come up with a way to configure key bindings - ideally command line supported
+     in a portable way via dm libged command.
+     Probably bindings subcommand will use a callback function to implement changes
+     that is registered by the application
+
+17.  Implement Qt quad view widget
+
+18.  Editing callbacks, probably per-primitive with a librt functab entry.
+
+19.  Raytrace control panel equivalent in Qt.
+
+20.  Dedication dialog as Qt libqtcad widget
+
+21.  Look over editor widgets, tools and panels to translate as Qt widgets - at least
+     Combination Editor, Bot Edit, Build Pattern and Overlap tool need to be studied,
+     and probably others.
+
+22.  Figure out how to do a button bar in Qt
+
+23.  See if we can switch the text label for a Qt dock widget to be a menu when it is
+     floating...
+
+24.  Archer help browser as a Qt widget.
+
+25.  Translate sketch editor to Qt.
+
+
+
+Other nice to haves:
+
+0.  Smarter, view aware wireframes for BoTs (RTree may be useful?  Can we do
+    points with normals to represent small triangles?  Incorporate bounding box
+    drawing in some fashion...)
+
+1.  gl2ps based vector output option for screengrab (may be able to replace postscript dm backend)
+
+2.  Might be fun to see if we could combine https://github.com/ioppermann/ezMPEG and
+    https://github.com/phoboslab/pl_mpeg to get a minimal video recording and playback going for
+    the display mangers...
