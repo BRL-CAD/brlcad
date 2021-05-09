@@ -98,7 +98,8 @@ DM_MainWindow::open_file()
 	    NULL,
 	    QFileDialog::DontUseNativeDialog);
     if (!fileName.isEmpty()) {
-	int ret = ((DMApp *)qApp)->load_g(fileName.toLocal8Bit(), 0, NULL);
+	DMApp *dmApp = qobject_cast<DMApp *>(qApp);
+	int ret = dmApp->load_g(fileName.toLocal8Bit(), 0, NULL);
 	if (ret) {
 	    statusBar()->showMessage("open failed");
 	} else {
@@ -128,7 +129,8 @@ DM_MainWindow::run_cmd(const QString &command)
     int ac = bu_argv_from_string(av, strlen(input), input);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    struct ged **gedpp = &(((DMApp *)qApp)->gedp);
+    DMApp *dmApp = qobject_cast<DMApp *>(qApp);
+    struct ged **gedpp = &(dmApp->gedp);
 
     /* The "open" and close commands require a bit of
      * awareness at this level, since the gedp pointer
@@ -209,13 +211,13 @@ DM_MainWindow::run_cmd(const QString &command)
     }
 
     if (!cmd_run) {
-	((DMApp *)qApp)->ged_run_cmd(&msg, ac, (const char **)av);
+	dmApp->ged_run_cmd(&msg, ac, (const char **)av);
 	if (bu_vls_strlen(&msg) > 0) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
     }
     if (*gedpp) {
-	bu_vls_trunc(((DMApp *)qApp)->gedp->ged_result_str, 0);
+	bu_vls_trunc(dmApp->gedp->ged_result_str, 0);
     }
 
     bu_vls_free(&msg);
