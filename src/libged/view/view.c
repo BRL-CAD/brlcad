@@ -320,18 +320,57 @@ _view_cmd_ypr(void *bs, int argc, const char **argv)
     return ged_ypr_core(gd->gedp, argc, argv);
 }
 
+int
+_view_cmd_width(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] width";
+    const char *purpose_string = "report current width in pixels of view.";
+    if (_view_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_view_info *gd = (struct _ged_view_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
+    bu_vls_printf(gd->gedp->ged_result_str, "%d\n", v->gv_width);
+    return GED_OK;
+}
+
+int
+_view_cmd_height(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] height";
+    const char *purpose_string = "report current height in pixels of view.";
+    if (_view_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_view_info *gd = (struct _ged_view_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
+    bu_vls_printf(gd->gedp->ged_result_str, "%d\n", v->gv_height);
+    return GED_OK;
+}
+
+
 const struct bu_cmdtab _view_cmds[] = {
     { "ae",         _view_cmd_aet},
     { "aet",        _view_cmd_aet},
     { "center",     _view_cmd_center},
     { "eye",        _view_cmd_eye},
     { "faceplate",  _view_cmd_faceplate},
+    { "height",     _view_cmd_height},
     { "lod",        _view_cmd_lod},
     { "obj",        _view_cmd_objs},
     { "quat",       _view_cmd_quat},
     { "selections", _view_cmd_selections},
     { "size",       _view_cmd_size},
     { "snap",       _view_cmd_snap},
+    { "width",      _view_cmd_width},
     { "ypr",        _view_cmd_ypr},
     { (char *)NULL,      NULL}
 };

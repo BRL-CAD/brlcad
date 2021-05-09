@@ -435,14 +435,62 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     return GED_OK;
 }
 
+int
+_dm_cmd_width(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "dm [options] width [name]";
+    const char *purpose_string = "report current width in pixels of display manager.";
+    if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    if (!cdmp) {
+	cdmp = _dm_name_lookup(gd, argv[0]);
+	if (!cdmp) {
+	    return GED_ERROR;
+	}
+    }
+    bu_vls_printf(gd->gedp->ged_result_str, "%d\n", dm_get_width(cdmp));
+    return GED_OK;
+}
+
+int
+_dm_cmd_height(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "dm [options] height [name]";
+    const char *purpose_string = "report current height in pixels of display manager.";
+    if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    if (!cdmp) {
+	cdmp = _dm_name_lookup(gd, argv[0]);
+	if (!cdmp) {
+	    return GED_ERROR;
+	}
+    }
+    bu_vls_printf(gd->gedp->ged_result_str, "%d\n", dm_get_height(cdmp));
+    return GED_OK;
+}
+
 const struct bu_cmdtab _dm_cmds[] = {
+    { "attach",          _dm_cmd_attach},
+    { "get",             _dm_cmd_get},
+    { "height",          _dm_cmd_height},
     { "initmsg",         _dm_cmd_initmsg},
+    { "list",            _dm_cmd_list},
+    { "set",             _dm_cmd_set},
     { "type",            _dm_cmd_type},
     { "types",           _dm_cmd_types},
-    { "list",            _dm_cmd_list},
-    { "get",             _dm_cmd_get},
-    { "set",             _dm_cmd_set},
-    { "attach",          _dm_cmd_attach},
+    { "width",           _dm_cmd_width},
     { (char *)NULL,      NULL}
 };
 
