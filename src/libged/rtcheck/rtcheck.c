@@ -222,14 +222,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gd_rt_cmd_len = vp - gd_rt_cmd;
-	int cmd_prev_len = gd_rt_cmd_len;
 	gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
-	if (gd_rt_cmd_len == cmd_prev_len) {
-	    // Nothing specified, nothing displayed
-	    bu_vls_printf(gedp->ged_result_str, "no objects displayed\n");
-	    bu_free(gd_rt_cmd, "free gd_rt_cmd");
-	    return GED_ERROR;
-	}
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];

@@ -122,9 +122,9 @@ to_data_labels_func(Tcl_Interp *interp,
     struct bview_data_label_state *gdlsp;
 
     if (argv[0][0] == 's')
-	gdlsp = &gdvp->gv_tcl.gv_sdata_labels;
+	gdlsp = &gdvp->gv_sdata_labels;
     else
-	gdlsp = &gdvp->gv_tcl.gv_data_labels;
+	gdlsp = &gdvp->gv_data_labels;
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {

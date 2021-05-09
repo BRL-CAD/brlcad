@@ -1568,7 +1568,7 @@ to_constrain_rmode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -1633,7 +1633,7 @@ to_constrain_tmode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_CONSTRAINED_TRANSLATE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_CONSTRAINED_TRANSLATE_MODE;
 
     if (dm_get_pathname((struct dm *)gdvp->dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_trans %s %s %%x %%y}; break",
@@ -1883,7 +1883,7 @@ to_data_move_func(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[1], "data_polygons")) {
 	size_t i, j, k;
-	bview_data_polygon_state *gdpsp = &gdvp->gv_tcl.gv_data_polygons;
+	bview_data_polygon_state *gdpsp = &gdvp->gv_data_polygons;
 
 	if (bu_sscanf(argv[2], "%zu %zu %zu", &i, &j, &k) != 3)
 	    goto bad;
@@ -1895,7 +1895,7 @@ to_data_move_func(struct ged *gedp,
 	    return GED_OK;
 
 	/* This section is for moving more than a single point on a contour */
-	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
 
@@ -1940,14 +1940,14 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_arrows")) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_data_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_data_arrows;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_tcl.gv_data_arrows.gdas_num_points)
+	if (dindex >= gdvp->gv_data_arrows.gdas_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire arrow */
-	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -1981,14 +1981,14 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_arrows")) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_sdata_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_sdata_arrows;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_tcl.gv_sdata_arrows.gdas_num_points)
+	if (dindex >= gdvp->gv_sdata_arrows.gdas_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire arrow */
-	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2022,10 +2022,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_axes")) {
-	struct bview_data_axes_state *gdasp = &gdvp->gv_tcl.gv_data_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gv_data_axes;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_tcl.gv_data_axes.num_points)
+	if (dindex >= gdvp->gv_data_axes.num_points)
 	    return GED_OK;
 
 	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->points[dindex]);
@@ -2039,10 +2039,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_axes")) {
-	struct bview_data_axes_state *gdasp = &gdvp->gv_tcl.gv_sdata_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gv_sdata_axes;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_tcl.gv_sdata_axes.num_points)
+	if (dindex >= gdvp->gv_sdata_axes.num_points)
 	    return GED_OK;
 
 	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->points[dindex]);
@@ -2057,10 +2057,10 @@ to_data_move_func(struct ged *gedp,
 
 
     if (BU_STR_EQUAL(argv[1], "data_labels")) {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_data_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gv_data_labels;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_tcl.gv_data_labels.gdls_num_labels)
+	if (dindex >= gdvp->gv_data_labels.gdls_num_labels)
 	    return GED_OK;
 
 	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindex]);
@@ -2074,10 +2074,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_labels")) {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_sdata_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gv_sdata_labels;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_tcl.gv_sdata_labels.gdls_num_labels)
+	if (dindex >= gdvp->gv_sdata_labels.gdls_num_labels)
 	    return GED_OK;
 
 	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindex]);
@@ -2091,14 +2091,14 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_lines")) {
-	struct bview_data_line_state *gdlsp = &gdvp->gv_tcl.gv_data_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gv_data_lines;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_tcl.gv_data_lines.gdls_num_points)
+	if (dindex >= gdvp->gv_data_lines.gdls_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire line */
-	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2132,14 +2132,14 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_lines")) {
-	struct bview_data_line_state *gdlsp = &gdvp->gv_tcl.gv_sdata_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gv_sdata_lines;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_tcl.gv_sdata_lines.gdls_num_points)
+	if (dindex >= gdvp->gv_sdata_lines.gdls_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire line */
-	if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	if (gdvp->gv_polygon_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
 	    int dindexA, dindexB;
 	    point_t old_mpoint, new_mpoint;
 	    vect_t diff;
@@ -2261,10 +2261,10 @@ to_data_move_object_mode_func(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    /* At the moment, only gv_tcl.gv_polygon_mode is being used. */
+    /* At the moment, only gv_polygon_mode is being used. */
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_DATA_MOVE_OBJECT_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_DATA_MOVE_OBJECT_MODE;
 
     return GED_OK;
 }
@@ -2353,10 +2353,10 @@ to_data_move_point_mode_func(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    /* At the moment, only gv_tcl.gv_polygon_mode is being used. */
+    /* At the moment, only gv_polygon_mode is being used. */
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_DATA_MOVE_POINT_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_DATA_MOVE_POINT_MODE;
 
     return GED_OK;
 }
@@ -2479,11 +2479,11 @@ to_data_pick_func(struct ged *gedp,
     vy = (cy - my) * sf;
 
     /* check for polygon points */
-    if (gdvp->gv_tcl.gv_data_polygons.gdps_draw &&
-	    gdvp->gv_tcl.gv_data_polygons.gdps_polygons.num_polygons) {
+    if (gdvp->gv_data_polygons.gdps_draw &&
+	    gdvp->gv_data_polygons.gdps_polygons.num_polygons) {
 	size_t si, sj, sk;
 
-	bview_data_polygon_state *gdpsp = &gdvp->gv_tcl.gv_data_polygons;
+	bview_data_polygon_state *gdpsp = &gdvp->gv_data_polygons;
 
 	for (si = 0; si < gdpsp->gdps_polygons.num_polygons; ++si)
 	    for (sj = 0; sj < gdpsp->gdps_polygons.polygon[si].num_contours; ++sj)
@@ -2519,9 +2519,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for label points */
-    if (gdvp->gv_tcl.gv_data_labels.gdls_draw &&
-	    gdvp->gv_tcl.gv_data_labels.gdls_num_labels) {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_data_labels;
+    if (gdvp->gv_data_labels.gdls_draw &&
+	    gdvp->gv_data_labels.gdls_num_labels) {
+	struct bview_data_label_state *gdlsp = &gdvp->gv_data_labels;
 
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    fastf_t minX, maxX;
@@ -2550,9 +2550,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected label points */
-    if (gdvp->gv_tcl.gv_sdata_labels.gdls_draw &&
-	    gdvp->gv_tcl.gv_sdata_labels.gdls_num_labels) {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_sdata_labels;
+    if (gdvp->gv_sdata_labels.gdls_draw &&
+	    gdvp->gv_sdata_labels.gdls_num_labels) {
+	struct bview_data_label_state *gdlsp = &gdvp->gv_sdata_labels;
 
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    fastf_t minX, maxX;
@@ -2587,9 +2587,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for line points */
-    if (gdvp->gv_tcl.gv_data_lines.gdls_draw &&
-	    gdvp->gv_tcl.gv_data_lines.gdls_num_points) {
-	struct bview_data_line_state *gdlsp = &gdvp->gv_tcl.gv_data_lines;
+    if (gdvp->gv_data_lines.gdls_draw &&
+	    gdvp->gv_data_lines.gdls_num_points) {
+	struct bview_data_line_state *gdlsp = &gdvp->gv_data_lines;
 
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2618,9 +2618,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected line points */
-    if (gdvp->gv_tcl.gv_sdata_lines.gdls_draw &&
-	    gdvp->gv_tcl.gv_sdata_lines.gdls_num_points) {
-	struct bview_data_line_state *gdlsp = &gdvp->gv_tcl.gv_sdata_lines;
+    if (gdvp->gv_sdata_lines.gdls_draw &&
+	    gdvp->gv_sdata_lines.gdls_num_points) {
+	struct bview_data_line_state *gdlsp = &gdvp->gv_sdata_lines;
 
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2653,9 +2653,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for arrow points */
-    if (gdvp->gv_tcl.gv_data_arrows.gdas_draw &&
-	    gdvp->gv_tcl.gv_data_arrows.gdas_num_points) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_data_arrows;
+    if (gdvp->gv_data_arrows.gdas_draw &&
+	    gdvp->gv_data_arrows.gdas_num_points) {
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_data_arrows;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2682,9 +2682,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected arrow points */
-    if (gdvp->gv_tcl.gv_sdata_arrows.gdas_draw &&
-	    gdvp->gv_tcl.gv_sdata_arrows.gdas_num_points) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_sdata_arrows;
+    if (gdvp->gv_sdata_arrows.gdas_draw &&
+	    gdvp->gv_sdata_arrows.gdas_num_points) {
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_sdata_arrows;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2717,9 +2717,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for axes points */
-    if (gdvp->gv_tcl.gv_data_axes.draw &&
-	    gdvp->gv_tcl.gv_data_axes.num_points) {
-	struct bview_data_axes_state *gdasp = &gdvp->gv_tcl.gv_data_axes;
+    if (gdvp->gv_data_axes.draw &&
+	    gdvp->gv_data_axes.num_points) {
+	struct bview_data_axes_state *gdasp = &gdvp->gv_data_axes;
 
 	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2746,9 +2746,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected axes points */
-    if (gdvp->gv_tcl.gv_sdata_axes.draw &&
-	    gdvp->gv_tcl.gv_sdata_axes.num_points) {
-	struct bview_data_axes_state *gdasp = &gdvp->gv_tcl.gv_sdata_axes;
+    if (gdvp->gv_sdata_axes.draw &&
+	    gdvp->gv_sdata_axes.num_points) {
+	struct bview_data_axes_state *gdasp = &gdvp->gv_sdata_axes;
 
 	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -3565,7 +3565,7 @@ to_hide_view(struct ged *gedp,
 
     /* return the hide view setting */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_tcl.gv_hide);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_hide);
 	return GED_OK;
     }
 
@@ -3702,7 +3702,7 @@ to_idle_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    mode = gdvp->gv_tcl.gv_polygon_mode;
+    mode = gdvp->gv_polygon_mode;
 
     if (gdvp->adaptive_plot &&
 	    gdvp->redraw_on_zoom &&
@@ -3716,7 +3716,7 @@ to_idle_mode(struct ged *gedp,
     }
 
     if (mode != BVIEW_POLY_CONTOUR_MODE ||
-	    gdvp->gv_tcl.gv_data_polygons.gdps_cflag == 0)
+	    gdvp->gv_data_polygons.gdps_cflag == 0)
     {
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
@@ -3773,8 +3773,8 @@ to_idle_mode(struct ged *gedp,
 	to_refresh_all_views(current_top);
     }
 
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_IDLE_MODE;
-    gdvp->gv_tcl.gv_sdata_polygons.gdps_cflag = 0;
+    gdvp->gv_polygon_mode = TCLCAD_IDLE_MODE;
+    gdvp->gv_sdata_polygons.gdps_cflag = 0;
 
     return GED_OK;
 }
@@ -4069,7 +4069,7 @@ to_move_arb_edge_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname) {
@@ -4128,7 +4128,7 @@ to_move_arb_face_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_ARB_FACE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_MOVE_ARB_FACE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4243,7 +4243,7 @@ to_bot_move_pnt_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_BOT_POINT_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_MOVE_BOT_POINT_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4303,7 +4303,7 @@ to_bot_move_pnts_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4365,7 +4365,7 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_METABALL_POINT_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_MOVE_METABALL_POINT_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4424,7 +4424,7 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4670,7 +4670,7 @@ to_orotate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_OROTATE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_OROTATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4728,7 +4728,7 @@ to_oscale_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_OSCALE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_OSCALE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -4787,7 +4787,7 @@ to_otranslate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_OTRANSLATE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_OTRANSLATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5079,7 +5079,7 @@ to_rect_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = dm_get_height((struct dm *)gdvp->dmp) - y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_RECTANGLE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_RECTANGLE_MODE;
 
     ac = 4;
     av[0] = "rect";
@@ -5162,7 +5162,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5222,7 +5222,7 @@ to_rotate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_ROTATE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_ROTATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5385,7 +5385,7 @@ to_protate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_PROTATE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_PROTATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5444,7 +5444,7 @@ to_pscale_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_PSCALE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_PSCALE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5503,7 +5503,7 @@ to_ptranslate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_PTRANSLATE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_PTRANSLATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5562,7 +5562,7 @@ to_data_scale_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_DATA_SCALE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_DATA_SCALE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5619,7 +5619,7 @@ to_scale_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_SCALE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_SCALE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5953,7 +5953,7 @@ to_translate_mode(struct ged *gedp,
 
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    gdvp->gv_tcl.gv_polygon_mode = TCLCAD_TRANSLATE_MODE;
+    gdvp->gv_polygon_mode = TCLCAD_TRANSLATE_MODE;
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {

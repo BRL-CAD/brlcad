@@ -1274,14 +1274,14 @@ write_data_lines(struct bview_data_line_state *gdlsp, FILE *fp, int sflag)
 static void
 obj_write_data(struct ged *gedp, FILE *fp)
 {
-    write_data_arrows(&gedp->ged_gvp->gv_tcl.gv_data_arrows, fp, 0);
-    write_data_arrows(&gedp->ged_gvp->gv_tcl.gv_sdata_arrows, fp, 1);
+    write_data_arrows(&gedp->ged_gvp->gv_data_arrows, fp, 0);
+    write_data_arrows(&gedp->ged_gvp->gv_sdata_arrows, fp, 1);
 
-    write_data_axes(&gedp->ged_gvp->gv_tcl.gv_data_axes, fp, 0);
-    write_data_axes(&gedp->ged_gvp->gv_tcl.gv_sdata_axes, fp, 1);
+    write_data_axes(&gedp->ged_gvp->gv_data_axes, fp, 0);
+    write_data_axes(&gedp->ged_gvp->gv_sdata_axes, fp, 1);
 
-    write_data_lines(&gedp->ged_gvp->gv_tcl.gv_data_lines, fp, 0);
-    write_data_lines(&gedp->ged_gvp->gv_tcl.gv_sdata_lines, fp, 1);
+    write_data_lines(&gedp->ged_gvp->gv_data_lines, fp, 0);
+    write_data_lines(&gedp->ged_gvp->gv_sdata_lines, fp, 1);
 }
 
 

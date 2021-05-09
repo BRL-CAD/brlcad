@@ -122,9 +122,9 @@ to_data_arrows_func(Tcl_Interp *interp,
     struct bview_data_arrow_state *gdasp;
 
     if (argv[0][0] == 's')
-	gdasp = &gdvp->gv_tcl.gv_sdata_arrows;
+	gdasp = &gdvp->gv_sdata_arrows;
     else
-	gdasp = &gdvp->gv_tcl.gv_data_arrows;
+	gdasp = &gdvp->gv_data_arrows;
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {

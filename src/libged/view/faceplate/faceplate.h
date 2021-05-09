@@ -33,6 +33,7 @@
 __BEGIN_DECLS
 GED_EXPORT extern int _fp_cmd_model_axes(void *bs, int argc, const char **argv);
 GED_EXPORT extern int _fp_cmd_view_axes(void *bs, int argc, const char **argv);
+GED_EXPORT extern int _fp_cmd_grid(void *bs, int argc, const char **argv);
 __END_DECLS
 
 #endif /* GED_FACEPLATE_H */

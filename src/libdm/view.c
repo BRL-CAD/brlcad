@@ -596,29 +596,29 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     int width = dm_get_width(dmp);
     fastf_t sf = (fastf_t)(v->gv_size) / (fastf_t)width;
 
-    if (v->gv_tcl.gv_data_arrows.gdas_draw)
-	dm_draw_arrows(dmp, &v->gv_tcl.gv_data_arrows, sf);
+    if (v->gv_data_arrows.gdas_draw)
+	dm_draw_arrows(dmp, &v->gv_data_arrows, sf);
 
-    if (v->gv_tcl.gv_sdata_arrows.gdas_draw)
-	dm_draw_arrows(dmp, &v->gv_tcl.gv_sdata_arrows, sf);
+    if (v->gv_sdata_arrows.gdas_draw)
+	dm_draw_arrows(dmp, &v->gv_sdata_arrows, sf);
 
-    if (v->gv_tcl.gv_data_axes.draw)
-	dm_draw_data_axes(dmp, sf, &v->gv_tcl.gv_data_axes);
+    if (v->gv_data_axes.draw)
+	dm_draw_data_axes(dmp, sf, &v->gv_data_axes);
 
-    if (v->gv_tcl.gv_sdata_axes.draw)
-	dm_draw_data_axes(dmp, sf, &v->gv_tcl.gv_sdata_axes);
+    if (v->gv_sdata_axes.draw)
+	dm_draw_data_axes(dmp, sf, &v->gv_sdata_axes);
 
-    if (v->gv_tcl.gv_data_lines.gdls_draw)
-	dm_draw_lines(dmp, &v->gv_tcl.gv_data_lines);
+    if (v->gv_data_lines.gdls_draw)
+	dm_draw_lines(dmp, &v->gv_data_lines);
 
-    if (v->gv_tcl.gv_sdata_lines.gdls_draw)
-	dm_draw_lines(dmp, &v->gv_tcl.gv_sdata_lines);
+    if (v->gv_sdata_lines.gdls_draw)
+	dm_draw_lines(dmp, &v->gv_sdata_lines);
 
-    if (v->gv_tcl.gv_data_polygons.gdps_draw)
-	dm_draw_polys(dmp, &v->gv_tcl.gv_data_polygons, v->gv_tcl.gv_polygon_mode);
+    if (v->gv_data_polygons.gdps_draw)
+	dm_draw_polys(dmp, &v->gv_data_polygons, v->gv_polygon_mode);
 
-    if (v->gv_tcl.gv_sdata_polygons.gdps_draw)
-	dm_draw_polys(dmp, &v->gv_tcl.gv_sdata_polygons, v->gv_tcl.gv_polygon_mode);
+    if (v->gv_sdata_polygons.gdps_draw)
+	dm_draw_polys(dmp, &v->gv_sdata_polygons, v->gv_polygon_mode);
 
 #if 0
     // Update selections (if any)
@@ -646,20 +646,20 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 
     dm_draw_faceplate(v, base2local, local2base);
 
-    if (v->gv_tcl.gv_data_labels.gdls_draw)
-	dm_draw_labels(dmp, &v->gv_tcl.gv_data_labels, v->gv_model2view);
+    if (v->gv_data_labels.gdls_draw)
+	dm_draw_labels(dmp, &v->gv_data_labels, v->gv_model2view);
 
-    if (v->gv_tcl.gv_sdata_labels.gdls_draw)
-	dm_draw_labels(dmp, &v->gv_tcl.gv_sdata_labels, v->gv_model2view);
+    if (v->gv_sdata_labels.gdls_draw)
+	dm_draw_labels(dmp, &v->gv_sdata_labels, v->gv_model2view);
 
     /* Draw labels */
-    if (wdbp && vd && v->gv_tcl.gv_prim_labels.gos_draw) {
+    if (wdbp && vd && v->gv_prim_labels.gos_draw) {
 	for (int i = 0; i < vd->prim_label_list_size; ++i) {
 	    dm_draw_prim_labels(dmp,
 			   wdbp,
 			   bu_vls_cstr(&vd->prim_label_list[i]),
 			   v->gv_model2view,
-			   v->gv_tcl.gv_prim_labels.gos_text_color,
+			   v->gv_prim_labels.gos_text_color,
 			   NULL, NULL);
 	}
     }

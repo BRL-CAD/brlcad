@@ -528,9 +528,9 @@ to_data_axes_func(Tcl_Interp *interp,
     struct bview_data_axes_state *gdasp;
 
     if (argv[0][0] == 's')
-	gdasp = &gdvp->gv_tcl.gv_sdata_axes;
+	gdasp = &gdvp->gv_sdata_axes;
     else
-	gdasp = &gdvp->gv_tcl.gv_data_axes;
+	gdasp = &gdvp->gv_data_axes;
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {

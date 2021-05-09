@@ -284,9 +284,9 @@ ged_view_data_lines(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argv[0][0] == 's') {
-	vs.gdlsp = &gedp->ged_gvp->gv_tcl.gv_sdata_lines;
+	vs.gdlsp = &gedp->ged_gvp->gv_sdata_lines;
     } else {
-	vs.gdlsp = &gedp->ged_gvp->gv_tcl.gv_data_lines;
+	vs.gdlsp = &gedp->ged_gvp->gv_data_lines;
     }
 
     argc--;argv++;

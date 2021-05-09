@@ -46,9 +46,6 @@ bview_init(struct bview *gvp)
     struct bview_settings defaults = BVIEW_SETTINGS_INIT;
     bview_settings_sync(&gvp->gvs, &defaults);
 
-    bu_vls_init(&gvp->gv_name);
-    gvp->callbacks = NULL;
-
     gvp->gv_scale = 500.0;
     gvp->gv_i_scale = gvp->gv_scale;
     gvp->gv_a_scale = 1.0 - gvp->gv_scale / gvp->gv_i_scale;
@@ -118,8 +115,8 @@ bview_init(struct bview *gvp)
     gvp->gv_center_dot.gos_draw = 0;
     VSET(gvp->gv_center_dot.gos_line_color, 255, 255, 0);
 
-    gvp->gv_tcl.gv_prim_labels.gos_draw = 0;
-    VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
+    gvp->gv_prim_labels.gos_draw = 0;
+    VSET(gvp->gv_prim_labels.gos_text_color, 255, 255, 0);
 
     gvp->gv_view_params.gos_draw = 0;
     VSET(gvp->gv_view_params.gos_text_color, 255, 255, 0);

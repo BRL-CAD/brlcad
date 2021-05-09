@@ -33,10 +33,19 @@ main(int ac, char *av[]) {
 
     bu_setprogname(av[0]);
 
-    if (ac != 2) {
+    if (ac < 2) {
 	printf("Usage: %s file.g\n", av[0]);
 	return 1;
     }
+
+    ac--; av++;
+
+    if (BU_STR_EQUAL(av[0], "-l")) {
+	const char *imsgs = ged_init_msgs();
+	bu_log("%s\n", ged_init_msgs());
+	return (strlen(imsgs) > 0) ? BRLCAD_ERROR : BRLCAD_OK;
+    }
+
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;

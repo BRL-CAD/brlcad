@@ -105,16 +105,16 @@ to_faceplate(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "prim_labels")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_tcl.gv_prim_labels.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_prim_labels.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
-		    gdvp->gv_tcl.gv_prim_labels.gos_draw = 1;
+		    gdvp->gv_prim_labels.gos_draw = 1;
 		else
-		    gdvp->gv_tcl.gv_prim_labels.gos_draw = 0;
+		    gdvp->gv_prim_labels.gos_draw = 0;
 
 		to_refresh_view(gdvp);
 		return GED_OK;
@@ -123,7 +123,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_tcl.gv_prim_labels.gos_text_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_prim_labels.gos_text_color));
 		return GED_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -133,7 +133,7 @@ to_faceplate(struct ged *gedp,
 		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
-		VSET(gdvp->gv_tcl.gv_prim_labels.gos_text_color, r, g, b);
+		VSET(gdvp->gv_prim_labels.gos_text_color, r, g, b);
 		to_refresh_view(gdvp);
 		return GED_OK;
 	    }
