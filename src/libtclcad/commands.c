@@ -1883,7 +1883,7 @@ to_data_move_func(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[1], "data_polygons")) {
 	size_t i, j, k;
-	bview_data_polygon_state *gdpsp = &gdvp->gv_data_polygons;
+	bview_data_polygon_state *gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
 	if (bu_sscanf(argv[2], "%zu %zu %zu", &i, &j, &k) != 3)
 	    goto bad;
@@ -1940,10 +1940,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_arrows")) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_data_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_data_arrows;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_data_arrows.gdas_num_points)
+	if (dindex >= gdvp->gv_tcl.gv_data_arrows.gdas_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire arrow */
@@ -1981,10 +1981,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_arrows")) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_sdata_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_sdata_arrows;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_sdata_arrows.gdas_num_points)
+	if (dindex >= gdvp->gv_tcl.gv_sdata_arrows.gdas_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire arrow */
@@ -2022,10 +2022,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_axes")) {
-	struct bview_data_axes_state *gdasp = &gdvp->gv_data_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gv_tcl.gv_data_axes;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_data_axes.num_points)
+	if (dindex >= gdvp->gv_tcl.gv_data_axes.num_points)
 	    return GED_OK;
 
 	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->points[dindex]);
@@ -2039,10 +2039,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_axes")) {
-	struct bview_data_axes_state *gdasp = &gdvp->gv_sdata_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gv_tcl.gv_sdata_axes;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_sdata_axes.num_points)
+	if (dindex >= gdvp->gv_tcl.gv_sdata_axes.num_points)
 	    return GED_OK;
 
 	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdasp->points[dindex]);
@@ -2057,10 +2057,10 @@ to_data_move_func(struct ged *gedp,
 
 
     if (BU_STR_EQUAL(argv[1], "data_labels")) {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_data_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_data_labels;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_data_labels.gdls_num_labels)
+	if (dindex >= gdvp->gv_tcl.gv_data_labels.gdls_num_labels)
 	    return GED_OK;
 
 	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindex]);
@@ -2074,10 +2074,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_labels")) {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_sdata_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_sdata_labels;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_sdata_labels.gdls_num_labels)
+	if (dindex >= gdvp->gv_tcl.gv_sdata_labels.gdls_num_labels)
 	    return GED_OK;
 
 	MAT4X3PNT(vpoint, gdvp->gv_model2view, gdlsp->gdls_points[dindex]);
@@ -2091,10 +2091,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "data_lines")) {
-	struct bview_data_line_state *gdlsp = &gdvp->gv_data_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gv_tcl.gv_data_lines;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_data_lines.gdls_num_points)
+	if (dindex >= gdvp->gv_tcl.gv_data_lines.gdls_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire line */
@@ -2132,10 +2132,10 @@ to_data_move_func(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "sdata_lines")) {
-	struct bview_data_line_state *gdlsp = &gdvp->gv_sdata_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gv_tcl.gv_sdata_lines;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gv_sdata_lines.gdls_num_points)
+	if (dindex >= gdvp->gv_tcl.gv_sdata_lines.gdls_num_points)
 	    return GED_OK;
 
 	/* This section is for moving the entire line */
@@ -2479,11 +2479,11 @@ to_data_pick_func(struct ged *gedp,
     vy = (cy - my) * sf;
 
     /* check for polygon points */
-    if (gdvp->gv_data_polygons.gdps_draw &&
-	    gdvp->gv_data_polygons.gdps_polygons.num_polygons) {
+    if (gdvp->gv_tcl.gv_data_polygons.gdps_draw &&
+	    gdvp->gv_tcl.gv_data_polygons.gdps_polygons.num_polygons) {
 	size_t si, sj, sk;
 
-	bview_data_polygon_state *gdpsp = &gdvp->gv_data_polygons;
+	bview_data_polygon_state *gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
 	for (si = 0; si < gdpsp->gdps_polygons.num_polygons; ++si)
 	    for (sj = 0; sj < gdpsp->gdps_polygons.polygon[si].num_contours; ++sj)
@@ -2519,9 +2519,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for label points */
-    if (gdvp->gv_data_labels.gdls_draw &&
-	    gdvp->gv_data_labels.gdls_num_labels) {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_data_labels;
+    if (gdvp->gv_tcl.gv_data_labels.gdls_draw &&
+	    gdvp->gv_tcl.gv_data_labels.gdls_num_labels) {
+	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_data_labels;
 
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    fastf_t minX, maxX;
@@ -2550,9 +2550,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected label points */
-    if (gdvp->gv_sdata_labels.gdls_draw &&
-	    gdvp->gv_sdata_labels.gdls_num_labels) {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_sdata_labels;
+    if (gdvp->gv_tcl.gv_sdata_labels.gdls_draw &&
+	    gdvp->gv_tcl.gv_sdata_labels.gdls_num_labels) {
+	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_sdata_labels;
 
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    fastf_t minX, maxX;
@@ -2587,9 +2587,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for line points */
-    if (gdvp->gv_data_lines.gdls_draw &&
-	    gdvp->gv_data_lines.gdls_num_points) {
-	struct bview_data_line_state *gdlsp = &gdvp->gv_data_lines;
+    if (gdvp->gv_tcl.gv_data_lines.gdls_draw &&
+	    gdvp->gv_tcl.gv_data_lines.gdls_num_points) {
+	struct bview_data_line_state *gdlsp = &gdvp->gv_tcl.gv_data_lines;
 
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2618,9 +2618,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected line points */
-    if (gdvp->gv_sdata_lines.gdls_draw &&
-	    gdvp->gv_sdata_lines.gdls_num_points) {
-	struct bview_data_line_state *gdlsp = &gdvp->gv_sdata_lines;
+    if (gdvp->gv_tcl.gv_sdata_lines.gdls_draw &&
+	    gdvp->gv_tcl.gv_sdata_lines.gdls_num_points) {
+	struct bview_data_line_state *gdlsp = &gdvp->gv_tcl.gv_sdata_lines;
 
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2653,9 +2653,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for arrow points */
-    if (gdvp->gv_data_arrows.gdas_draw &&
-	    gdvp->gv_data_arrows.gdas_num_points) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_data_arrows;
+    if (gdvp->gv_tcl.gv_data_arrows.gdas_draw &&
+	    gdvp->gv_tcl.gv_data_arrows.gdas_num_points) {
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_data_arrows;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2682,9 +2682,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected arrow points */
-    if (gdvp->gv_sdata_arrows.gdas_draw &&
-	    gdvp->gv_sdata_arrows.gdas_num_points) {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_sdata_arrows;
+    if (gdvp->gv_tcl.gv_sdata_arrows.gdas_draw &&
+	    gdvp->gv_tcl.gv_sdata_arrows.gdas_num_points) {
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_sdata_arrows;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2717,9 +2717,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for axes points */
-    if (gdvp->gv_data_axes.draw &&
-	    gdvp->gv_data_axes.num_points) {
-	struct bview_data_axes_state *gdasp = &gdvp->gv_data_axes;
+    if (gdvp->gv_tcl.gv_data_axes.draw &&
+	    gdvp->gv_tcl.gv_data_axes.num_points) {
+	struct bview_data_axes_state *gdasp = &gdvp->gv_tcl.gv_data_axes;
 
 	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -2746,9 +2746,9 @@ to_data_pick_func(struct ged *gedp,
     }
 
     /* check for selected axes points */
-    if (gdvp->gv_sdata_axes.draw &&
-	    gdvp->gv_sdata_axes.num_points) {
-	struct bview_data_axes_state *gdasp = &gdvp->gv_sdata_axes;
+    if (gdvp->gv_tcl.gv_sdata_axes.draw &&
+	    gdvp->gv_tcl.gv_sdata_axes.num_points) {
+	struct bview_data_axes_state *gdasp = &gdvp->gv_tcl.gv_sdata_axes;
 
 	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -3716,7 +3716,7 @@ to_idle_mode(struct ged *gedp,
     }
 
     if (mode != BVIEW_POLY_CONTOUR_MODE ||
-	    gdvp->gv_data_polygons.gdps_cflag == 0)
+	    gdvp->gv_tcl.gv_data_polygons.gdps_cflag == 0)
     {
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
@@ -3774,7 +3774,7 @@ to_idle_mode(struct ged *gedp,
     }
 
     gdvp->gv_polygon_mode = TCLCAD_IDLE_MODE;
-    gdvp->gv_sdata_polygons.gdps_cflag = 0;
+    gdvp->gv_tcl.gv_sdata_polygons.gdps_cflag = 0;
 
     return GED_OK;
 }

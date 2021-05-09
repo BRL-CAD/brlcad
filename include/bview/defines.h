@@ -386,6 +386,13 @@ struct bview {
     int                         gv_fps; // Display Frames-Per-Second metric
     double                      gv_frametime;
 
+    // More complex are the faceplate view elements not corresponding to
+    // geometry objects but editable by the user.  These aren't managed as
+    // gv_view_objs (they are HUD visuals and thus not part of the scene) so
+    // they have some unique requirements.
+    struct bview_adc_state              gv_adc;
+    struct bview_interactive_rect_state gv_rect;
+
     // Container for db object groups (may come from GED)
     struct bu_ptbl                      *gv_db_grps;
     // Container for storing bview_scene_obj elements unique to this
@@ -395,24 +402,12 @@ struct bview {
     // Available bn_vlist entities to recycle before allocating new.
     struct bu_list      gv_vlfree;     /**< @brief  head of bn_vlist freelist */
 
-    // More complex are the view elements not corresponding to geometry objects
-    // but editable by the user.  These are selectable, but because they are
-    // not view objects which elements are part of the current selection set
-    // must be handled differently.
+    // Not yet implemented - mechanism for defining a set of selected view
+    // objects
     struct bu_ptbl                      *gv_selected;
-    struct bview_adc_state              gv_adc;
-    struct bview_data_arrow_state       gv_data_arrows;
-    struct bview_data_axes_state        gv_data_axes;
-    struct bview_data_label_state       gv_data_labels;
-    struct bview_data_line_state        gv_data_lines;
-    bview_data_polygon_state            gv_data_polygons;
-    struct bview_data_arrow_state       gv_sdata_arrows;
-    struct bview_data_axes_state        gv_sdata_axes;
-    struct bview_data_label_state       gv_sdata_labels;
-    struct bview_data_line_state        gv_sdata_lines;
-    bview_data_polygon_state            gv_sdata_polygons;
-    struct bview_other_state            gv_prim_labels;
-    struct bview_interactive_rect_state gv_rect;
+
+    // libtclcad data
+    struct bview_data_tclcad gv_tcl;
 
     /* Callback, external data */
     void          (*gv_callback)();  /**< @brief  called in ged_view_update with gvp and gv_clientData */

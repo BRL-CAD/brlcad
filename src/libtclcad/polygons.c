@@ -158,9 +158,9 @@ to_data_polygons_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     gdpsp->gdps_scale = gdvp->gv_scale;
     gdpsp->gdps_data_vZ = gdvp->gv_data_vZ;
@@ -1137,9 +1137,9 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     gdpsp->gdps_scale = gdvp->gv_scale;
     VMOVE(gdpsp->gdps_origin, gdvp->gv_center);
@@ -1211,9 +1211,9 @@ to_poly_cont_build_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     gdpsp->gdps_scale = gdvp->gv_scale;
     VMOVE(gdpsp->gdps_origin, gdvp->gv_center);
@@ -1463,9 +1463,9 @@ to_poly_cont_build_end_func(struct bview *gdvp,
 			    const char *argv[])
 {
     if (argv[0][0] == 's')
-	gdvp->gv_sdata_polygons.gdps_cflag = 0;
+	gdvp->gv_tcl.gv_sdata_polygons.gdps_cflag = 0;
     else
-	gdvp->gv_data_polygons.gdps_cflag = 0;
+	gdvp->gv_tcl.gv_data_polygons.gdps_cflag = 0;
 
     return GED_OK;
 }
@@ -1572,9 +1572,9 @@ to_poly_ell_mode_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     gdpsp->gdps_scale = gdvp->gv_scale;
     VMOVE(gdpsp->gdps_origin, gdvp->gv_center);
@@ -1731,9 +1731,9 @@ to_poly_rect_mode_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     gdpsp->gdps_scale = gdvp->gv_scale;
     VMOVE(gdpsp->gdps_origin, gdvp->gv_center);

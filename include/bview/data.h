@@ -31,6 +31,7 @@
 #include "bu/vls.h"
 #include "bu/ptbl.h"
 #include "bg/polygon_types.h"
+#include "bview/faceplate.h"
 #include "vmath.h"
 
 /** @{ */
@@ -119,6 +120,21 @@ typedef struct {
     struct bg_polygons  gdps_polygons;
     fastf_t             gdps_data_vZ;
 } bview_data_polygon_state;
+
+
+struct bview_data_tclcad {
+    struct bview_data_arrow_state       gv_data_arrows;
+    struct bview_data_axes_state        gv_data_axes;
+    struct bview_data_label_state       gv_data_labels;
+    struct bview_data_line_state        gv_data_lines;
+    bview_data_polygon_state            gv_data_polygons;
+    struct bview_data_arrow_state       gv_sdata_arrows;
+    struct bview_data_axes_state        gv_sdata_axes;
+    struct bview_data_label_state       gv_sdata_labels;
+    struct bview_data_line_state        gv_sdata_lines;
+    bview_data_polygon_state            gv_sdata_polygons;
+    struct bview_other_state            gv_prim_labels;
+};
 
 #endif /* DM_BVIEW_DATA_H */
 

@@ -118,8 +118,8 @@ bview_init(struct bview *gvp)
     gvp->gv_center_dot.gos_draw = 0;
     VSET(gvp->gv_center_dot.gos_line_color, 255, 255, 0);
 
-    gvp->gv_prim_labels.gos_draw = 0;
-    VSET(gvp->gv_prim_labels.gos_text_color, 255, 255, 0);
+    gvp->gv_tcl.gv_prim_labels.gos_draw = 0;
+    VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
 
     gvp->gv_view_params.gos_draw = 0;
     VSET(gvp->gv_view_params.gos_text_color, 255, 255, 0);
