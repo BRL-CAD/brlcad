@@ -412,6 +412,11 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 int
 ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_view_core(gedp, argc, argv);
+
+
     static const char *usage = "quat|ypr|aet|center|eye|size [args]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
