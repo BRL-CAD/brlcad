@@ -404,21 +404,8 @@ struct bview {
     // objects
     struct bu_ptbl                      *gv_selected;
 
-
-    // libtclcad
-    int           gv_polygon_mode;  // libtclcad polygon modes
-    int		  gv_hide;          // libtclcad setting for hiding view - unused?
-    struct bview_data_arrow_state       gv_data_arrows;
-    struct bview_data_axes_state        gv_data_axes;
-    struct bview_data_label_state       gv_data_labels;
-    struct bview_data_line_state        gv_data_lines;
-    bview_data_polygon_state            gv_data_polygons;
-    struct bview_data_arrow_state       gv_sdata_arrows;
-    struct bview_data_axes_state        gv_sdata_axes;
-    struct bview_data_label_state       gv_sdata_labels;
-    struct bview_data_line_state        gv_sdata_lines;
-    bview_data_polygon_state            gv_sdata_polygons;
-    struct bview_other_state            gv_prim_labels;
+    // libtclcad data
+    struct bview_data_tclcad gv_tcl;
 
     /* Callback, external data */
     void          (*gv_callback)();  /**< @brief  called in ged_view_update with gvp and gv_clientData */

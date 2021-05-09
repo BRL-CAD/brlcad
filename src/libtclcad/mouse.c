@@ -2018,7 +2018,7 @@ to_mouse_otranslate(struct ged *gedp,
 
 	if (!params) {
 	    BU_GET(params, struct dm_path_edit_params);
-	    params->edit_mode = gdvp->gv_polygon_mode;
+	    params->edit_mode = gdvp->gv_tcl.gv_polygon_mode;
 	    params->dx = params->dy = 0.0;
 	    (void)bu_hash_set(tgd->go_dmv.edited_paths,
 			      (uint8_t *)path_string,
@@ -2157,9 +2157,9 @@ to_mouse_poly_circ_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
@@ -2330,9 +2330,9 @@ to_mouse_poly_cont_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
@@ -2473,9 +2473,9 @@ to_mouse_poly_ell_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
@@ -2658,9 +2658,9 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
     bview_data_polygon_state *gdpsp;
 
     if (argv[0][0] == 's')
-	gdpsp = &gdvp->gv_sdata_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_sdata_polygons;
     else
-	gdpsp = &gdvp->gv_data_polygons;
+	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
@@ -2684,7 +2684,7 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
     }
 
 
-    if (gdvp->gv_polygon_mode == TCLCAD_POLY_SQUARE_MODE) {
+    if (gdvp->gv_tcl.gv_polygon_mode == TCLCAD_POLY_SQUARE_MODE) {
 	fastf_t dx, dy;
 
 	dx = fx - gdpsp->gdps_prev_point[X];
@@ -3098,7 +3098,7 @@ to_data_scale(struct ged *gedp,
 
     /* scale data arrows */
     {
-	struct bview_data_arrow_state *gdasp = &gdvp->gv_data_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gv_tcl.gv_data_arrows;
 	point_t vcenter = {0, 0, 0};
 
 	/* Scale the length of each arrow */
@@ -3117,7 +3117,7 @@ to_data_scale(struct ged *gedp,
 
     /* scale data labels */
     {
-	struct bview_data_label_state *gdlsp = &gdvp->gv_data_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gv_tcl.gv_data_labels;
 	point_t vcenter = {0, 0, 0};
 	point_t vpoint;
 

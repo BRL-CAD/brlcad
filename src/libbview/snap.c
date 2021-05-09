@@ -188,10 +188,10 @@ bview_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
     // probably want to prefer intersections between lines to closest line
     // point if we are close to multiple lines...
     int ret = 0;
-    cpinfo.ctol_sq = line_tol_sq(v, &v->gv_data_lines);
-    ret += _find_closest_point(&cpinfo, p, &v->gv_data_lines);
-    cpinfo.ctol_sq = line_tol_sq(v, &v->gv_sdata_lines);
-    ret += _find_closest_point(&cpinfo, p, &v->gv_sdata_lines);
+    cpinfo.ctol_sq = line_tol_sq(v, &v->gv_tcl.gv_data_lines);
+    ret += _find_closest_point(&cpinfo, p, &v->gv_tcl.gv_data_lines);
+    cpinfo.ctol_sq = line_tol_sq(v, &v->gv_tcl.gv_sdata_lines);
+    ret += _find_closest_point(&cpinfo, p, &v->gv_tcl.gv_sdata_lines);
 
     // Check if we are close enough to two line segments to warrant using the
     // closest approach point.  The intersection may not be close enough to
