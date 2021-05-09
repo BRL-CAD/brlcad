@@ -46,8 +46,9 @@ bview_init(struct bview *gvp)
     struct bview_settings defaults = BVIEW_SETTINGS_INIT;
     bview_settings_sync(&gvp->gvs, &defaults);
 
-    //bu_vls_init(&gvp->gv_name);
-    gvp->callbacks = NULL;
+    if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
+	bu_vls_init(&gvp->gv_name);
+    }
 
     gvp->gv_scale = 500.0;
     gvp->gv_i_scale = gvp->gv_scale;
