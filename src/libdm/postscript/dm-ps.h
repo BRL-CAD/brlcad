@@ -22,6 +22,10 @@
 /** @{ */
 /** @file dm-ps.h
  *
+ * TODO:  See if we can use https://gitlab.onelab.info/gl2ps/gl2ps
+ * to replace this with nicer output based on the swrast OpenGL
+ * generation...
+ *
  */
 
 #ifndef DM_PS_H
