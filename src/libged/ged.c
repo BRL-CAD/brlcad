@@ -170,11 +170,14 @@ ged_free(struct ged *gedp)
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
 	bu_vls_free(&gdvp->gv_name);
-	bu_ptbl_free(gdvp->callbacks);
-	BU_PUT(gdvp->callbacks, struct bu_ptbl);
+	if (gdvp->callbacks) {
+	    bu_ptbl_free(gdvp->callbacks);
+	    BU_PUT(gdvp->callbacks, struct bu_ptbl);
+	}
 	bu_free((void *)gdvp, "bview");
     }
     bu_ptbl_free(&gedp->ged_views);
+    gedp->ged_gvp = NULL;
 
     /* Since libged does not link libdm, it's also the responsibility of the
      * caller to close any display managers.  Client also frees the display
@@ -303,8 +306,11 @@ ged_init(struct ged *gedp)
     gedp->ged_delete_io_handler = NULL;
     gedp->ged_io_data = NULL;
 
-    /* Out of the gate we don't have display managers or views */
+    /* In principle we should be establishing an initial view here,
+     * but Archer won't tolerate it. */
     gedp->ged_gvp = GED_VIEW_NULL;
+
+    /* Out of the gate we don't have display managers*/
     gedp->ged_dmp = NULL;
     gedp->ged_all_dmp = NULL;
     BU_GET(gedp->ged_all_dmp, struct bu_ptbl);
