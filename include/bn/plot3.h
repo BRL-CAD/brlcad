@@ -26,6 +26,15 @@
  * the original Bell Labs routines, with the exception of the pl_
  * prefix on the name.
  *
+ * Of interest:  the Plan 9 sources (recently MIT licensed) appear
+ * to be related to the original code that would have formed the
+ * conceptual basis for these routines:
+ *
+ * https://plan9.io/sources/plan9/sys/src/cmd/plot/libplot/
+ *
+ * Don't know if there would be any improvements that could be retrofitted
+ * onto this version, but might be worth looking.  In particular, curious
+ * if the spline routine might be useful...
  */
 /** @{ */
 /** @file plot3.h */
