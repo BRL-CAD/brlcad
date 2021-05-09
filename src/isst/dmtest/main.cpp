@@ -24,6 +24,7 @@
  */
 
 #include <iostream>
+#include <string>
 #include <QSettings>
 
 #include "main_window.h"
@@ -139,6 +140,24 @@ int main(int argc, char *argv[])
 	    app.w->canvas_sw->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
 	}
     }
+
+    int have_msg = 0;
+    std::string ged_msgs(ged_init_msgs());
+    if (ged_msgs.size()) {
+	app.w->console->printString(ged_msgs.c_str());
+	app.w->console->printString("\n");
+	have_msg = 1;
+    }
+    std::string dm_msgs(dm_init_msgs());
+    if (dm_msgs.size()) {
+	if (dm_msgs.find("qtgl") != std::string::npos || dm_msgs.find("swrast") != std::string::npos) {
+	    app.w->console->printString(dm_msgs.c_str());
+	    app.w->console->printString("\n");
+	    have_msg = 1;
+	}
+    }
+    if (have_msg)
+	app.w->console->prompt("$ ");
 
     return app.exec();
 }
