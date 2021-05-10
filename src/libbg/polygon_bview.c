@@ -1,4 +1,4 @@
-/*                    P O L Y G O N S . C
+/*                P O L Y G O N _ B V I E W . C
  * BRL-CAD
  *
  * Copyright (c) 2020-2021 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @file polygons.c
  *
- * Utility functions for working with libbview polygons
+ * Utility functions for working with polygons in a bview context.
  *
  */
 
@@ -32,10 +32,10 @@
 #include "bn/mat.h"
 #include "bn/tol.h"
 #include "bview/vlist.h"
-#include "bg/polygon.h"
 #include "bview/defines.h"
 #include "bview/util.h"
-#include "bview/polygons.h"
+#include "bg/lseg.h"
+#include "bg/polygon.h"
 
 #define GET_BVIEW_SCENE_OBJ(p, fp) { \
     if (BU_LIST_IS_EMPTY(fp)) { \

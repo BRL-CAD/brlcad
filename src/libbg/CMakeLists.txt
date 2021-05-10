@@ -67,10 +67,12 @@ set(LIBBG_SOURCES
   obr.c
   plane.cpp
   polygon.c
+  polygon_bview.c
   polygon_fill.cpp
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
+  snap.c
   spsr.c
   ${SPSR_srcs}
   tri_pt.c
@@ -81,7 +83,7 @@ set(LIBBG_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;${POLY2TRI_LIBRARIES}")
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbview;libbn;libbu;${POLY2TRI_LIBRARIES}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)

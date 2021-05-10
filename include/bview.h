@@ -41,7 +41,6 @@
 
 #include "./bview/defines.h"
 #include "./bview/adc.h"
-#include "./bview/polygons.h"
 #include "./bview/util.h"
 #include "./bview/vlist.h"
 

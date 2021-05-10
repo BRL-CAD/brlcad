@@ -31,6 +31,7 @@
 
 #include "vmath.h"
 #include "bview.h"
+#include "bg/lseg.h"
 
 #include "../ged_private.h"
 

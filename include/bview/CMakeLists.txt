@@ -3,7 +3,6 @@ set(bview_headers
   defines.h
   events.h
   faceplate.h
-  polygons.h
   tcl_data.h
   util.h
   vlist.h

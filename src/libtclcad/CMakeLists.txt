@@ -62,6 +62,8 @@ if (BRLCAD_ENABLE_TCL)
     libged
     libdm
     libnmg
+    libbg
+    libbview
     libbn
     libbu
     ${TCL_LIBRARY}

@@ -33,6 +33,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bn/tol.h"
+#include "bview/defines.h"
 #include "bg/defines.h"
 #include "bg/polygon_types.h"
 
@@ -300,6 +301,45 @@ BG_EXPORT extern int bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts,
 BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b);
 BG_EXPORT extern void bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int g, int b);
 BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b);
+
+
+/* BVIEW related polygon logic and types */
+
+#define BVIEW_POLYGON_GENERAL 0
+#define BVIEW_POLYGON_CIRCLE 1
+#define BVIEW_POLYGON_ELLIPSE 2
+#define BVIEW_POLYGON_RECTANGLE 3
+#define BVIEW_POLYGON_SQUARE 4
+struct bview_polygon {
+    int                 type;
+    int                 cflag;             /* contour flag */
+    int                 sflag;             /* point select flag */
+    int                 mflag;             /* point move flag */
+    int                 aflag;             /* point append flag */
+    int                 fill_flag;         /* set to shade the interior */
+    vect2d_t            fill_dir;
+    fastf_t             fill_delta;
+    long                curr_contour_i;
+    long                curr_point_i;
+    point_t             prev_point;
+
+    /* We stash the view state on creation, so we know how to return
+     * to it for future 2D alterations */
+    struct bview v;
+
+    /* Actual polygon info */
+    struct bg_polygon   polygon;
+};
+
+// Note - for these functions it is important that the bview
+// gv_width and gv_height values are current!  I.e.:
+//
+//  v->gv_width  = dm_get_width((struct dm *)v->dmp);
+//  v->gv_height = dm_get_height((struct dm *)v->dmp);
+BG_EXPORT extern struct bview_scene_obj *bview_create_polygon(struct bview *v, int type, int x, int y, struct bview_scene_obj *free_scene_obj);
+BG_EXPORT extern int bview_update_polygon(struct bview_scene_obj *s);
+
+
 
 __END_DECLS
 

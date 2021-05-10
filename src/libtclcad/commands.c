@@ -63,6 +63,7 @@
 #include "bview/defines.h"
 #include "dm.h"
 #include "bview/util.h"
+#include "bg/lseg.h"
 
 #include "icv/io.h"
 #include "icv/ops.h"

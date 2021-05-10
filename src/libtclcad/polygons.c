@@ -33,6 +33,7 @@
 
 #include "bg/polygon.h"
 #include "bview.h"
+#include "bg/lseg.h"
 #include "tclcad.h"
 
 /* Private headers */

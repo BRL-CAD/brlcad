@@ -19,12 +19,10 @@ set(LIBBVIEW_SRCS
   diff.c
   font.c
   hash.c
-  polygons.c
-  snap.c
   util.c
   vlist.c
   )
-BRLCAD_ADDLIB(libbview "${LIBBVIEW_SRCS}" "libbg;libbn;libbu")
+BRLCAD_ADDLIB(libbview "${LIBBVIEW_SRCS}" "libbn;libbu")
 set_target_properties(libbview PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
