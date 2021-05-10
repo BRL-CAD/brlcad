@@ -1,5 +1,4 @@
 set(bn_headers
-  adc.h
   anim.h
   complex.h
   defines.h

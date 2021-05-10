@@ -13,7 +13,6 @@ BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS BN_LOCAL_INCLUDE_DIRS)
 
 set(LIBBN_SOURCES
   anim.c
-  clip.c
   complex.c
   font.c
   globals.c

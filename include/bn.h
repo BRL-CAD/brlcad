@@ -63,7 +63,6 @@
 #include "bn/vert_tree.h"
 #include "bn/vectfont.h"
 #include "bn/plane.h"
-#include "bn/adc.h"
 
 #endif /* BN_H */
 

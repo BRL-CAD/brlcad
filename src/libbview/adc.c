@@ -1,4 +1,4 @@
-/*                          C L I P . C
+/*                          A D C . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2021 United States Government as represented by
@@ -26,10 +26,7 @@
 
 #include "bu/str.h"
 #include "vmath.h"
-#include "bn/adc.h"
-#include "bg/clip.h"
-
-/* TODO - need a proper place for these... */
+#include "bview/adc.h"
 
 void
 adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax)

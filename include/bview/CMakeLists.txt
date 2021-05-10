@@ -1,4 +1,5 @@
 set(bview_headers
+  adc.h
   defines.h
   events.h
   faceplate.h

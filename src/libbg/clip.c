@@ -26,7 +26,6 @@
 
 #include "bu/str.h"
 #include "vmath.h"
-#include "bn/adc.h"
 #include "bg/clip.h"
 
 /* XXX need to test more thoroughly

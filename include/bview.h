@@ -40,6 +40,7 @@
 #include "bn.h"
 
 #include "./bview/defines.h"
+#include "./bview/adc.h"
 #include "./bview/polygons.h"
 #include "./bview/util.h"
 

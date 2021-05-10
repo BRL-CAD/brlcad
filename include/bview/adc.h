@@ -18,26 +18,23 @@
  * information.
  */
 
-#ifndef BN_ADC_H
-#define BN_ADC_H
+#ifndef BG_ADC_H
+#define BG_ADC_H
 
 #include "common.h"
 #include "vmath.h"
-#include "bn/defines.h"
+#include "bview/defines.h"
 
 __BEGIN_DECLS
 
-/* TODO - find another, more appropriate home for these... may just have to
- * duplicate the logic in libdm and libged */
-#include "bview/defines.h"
-BN_EXPORT void adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
-BN_EXPORT void adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
-BN_EXPORT void adc_view_to_adc_grid(struct bview_adc_state *adcs, mat_t model2view);
-BN_EXPORT void adc_reset(struct bview_adc_state *adcs, mat_t view2model, mat_t model2view);
+BVIEW_EXPORT void adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
+BVIEW_EXPORT void adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
+BVIEW_EXPORT void adc_view_to_adc_grid(struct bview_adc_state *adcs, mat_t model2view);
+BVIEW_EXPORT void adc_reset(struct bview_adc_state *adcs, mat_t view2model, mat_t model2view);
 
 __END_DECLS
 
-#endif  /* BN_ADC_H */
+#endif  /* BG_ADC_H */
 
 /*
  * Local Variables:

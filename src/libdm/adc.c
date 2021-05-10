@@ -29,8 +29,9 @@
 
 #include "vmath.h"
 #include "bg/clip.h"
-#include "dm.h"
 #include "bview/defines.h"
+#include "bview/adc.h"
+#include "dm.h"
 #include "./include/private.h"
 
 static void
