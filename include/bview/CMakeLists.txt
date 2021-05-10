@@ -7,6 +7,7 @@ set(bview_headers
   tcl_data.h
   tig.h
   util.h
+  vectfont.h
   vlist.h
   )
 BRLCAD_MANAGE_FILES(bview_headers ${INCLUDE_DIR}/brlcad/bview)

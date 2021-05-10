@@ -60,7 +60,7 @@
 #include "bn/str.h"
 #include "bn/tabdata.h"
 #include "bg/vert_tree.h"
-#include "bn/vectfont.h"
+#include "bview/vectfont.h"
 
 #endif /* BN_H */
 

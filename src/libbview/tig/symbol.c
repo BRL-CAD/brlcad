@@ -46,7 +46,7 @@
 #include "vmath.h"
 #include "bn/mat.h"
 #include "bview/plot3.h"
-#include "bn/vectfont.h"
+#include "bview/vectfont.h"
 #include "bview/tig.h"
 
 void

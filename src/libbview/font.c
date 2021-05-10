@@ -29,7 +29,7 @@
 #include "bu/log.h"
 #include "vmath.h"
 #include "bn/mat.h"
-#include "bn/vectfont.h"
+#include "bview/vectfont.h"
 #include "bview/vlist.h"
 
 void

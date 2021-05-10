@@ -18,11 +18,11 @@
  * information.
  */
 
-#ifndef BN_VECTFONT_H
-#define BN_VECTFONT_H
+#ifndef BVIEW_VECTFONT_H
+#define BVIEW_VECTFONT_H
 
 #include "common.h"
-#include "bn/defines.h"
+#include "bview/defines.h"
 
 __BEGIN_DECLS
 
@@ -54,7 +54,7 @@ __BEGIN_DECLS
  *  Vector font definitions, for TIG-PACK fonts.
  */
 /** @{ */
-/** @file bn/vectfont.h */
+/** @file bview/vectfont.h */
 
 /*
  *	Motion encoding macros
@@ -68,20 +68,20 @@ __BEGIN_DECLS
 #define bneg(x, y)	NEGY, brt(x, y)
 #define dneg(x, y)	NEGY, drk(x, y)
 
-BN_EXPORT extern int *tp_getchar(const unsigned char *c);
+BVIEW_EXPORT extern int *tp_getchar(const unsigned char *c);
 
 /*
  *  Once-only setup routine
  *  Used by libplot3/symbol.c, so it can't be static.
  *  DEPRECATED: libplot3 has been merged into libbn, so this no longer needs to be public.
  */
-BN_EXPORT extern void tp_setup(void);
+BVIEW_EXPORT extern void tp_setup(void);
 
 /** @} */
 
 __END_DECLS
 
-#endif  /* BN_VECTFONT_H */
+#endif  /* BVIEW_VECTFONT_H */
 
 /*
  * Local Variables:

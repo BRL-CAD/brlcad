@@ -16,7 +16,6 @@ set(bn_headers
   sobol.h
   str.h
   tol.h
-  vectfont.h
   version.h
   wavelet.h
   )

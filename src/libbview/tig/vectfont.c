@@ -53,7 +53,7 @@
 #include "bu/malloc.h"
 #include "bview/plot3.h"
 #include "bview/tig.h"
-#include "bn/vectfont.h"
+#include "bview/vectfont.h"
 
 #define NUM_SYMBOLS	8
 
