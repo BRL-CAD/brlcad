@@ -1,7 +1,6 @@
 set(bn_headers
   adc.h
   anim.h
-  clip.h
   complex.h
   defines.h
   dvec.h

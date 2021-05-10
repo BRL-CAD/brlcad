@@ -32,6 +32,7 @@
 #include "bu/str.h"
 #include "bu/color.h"
 #include "bn/plot3.h"
+#include "bg/clip.h"
 
 #include "ged.h"
 #include "./ged_private.h"
@@ -1368,7 +1369,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
                             VMOVE(last, fin);
                             break;
                     }
-                    if (bn_ray_vclip(start, fin, clipmin, clipmax) == 0)
+                    if (bg_ray_vclip(start, fin, clipmin, clipmax) == 0)
                         continue;
 
                     if (Three_D) {
@@ -1610,7 +1611,7 @@ draw_png_solid(fastf_t perspective, unsigned char **image, struct bview_scene_ob
                     break;
             }
 
-            if (bn_ray_vclip(start, fin, clipmin, clipmax) == 0)
+            if (bg_ray_vclip(start, fin, clipmin, clipmax) == 0)
                 continue;
 
             coord1.x = start[0] * half_size + half_size;
@@ -1834,7 +1835,7 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct bview_scene_obj *sp, matp_t 
                     break;
             }
 
-            if (bn_ray_vclip(start, fin, clipmin, clipmax) == 0)
+            if (bg_ray_vclip(start, fin, clipmin, clipmax) == 0)
                 continue;
 
             fprintf(fp,

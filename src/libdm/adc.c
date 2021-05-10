@@ -27,8 +27,8 @@
 #include <math.h>
 #include <string.h>
 
-#include "bn.h"
 #include "vmath.h"
+#include "bg/clip.h"
 #include "dm.h"
 #include "bview/defines.h"
 #include "./include/private.h"
@@ -59,7 +59,7 @@ dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     Y1 = adcp->dv_y + d2 - t2;
     x2 = adcp->dv_x + d1 -t1;
     y2 = adcp->dv_y + d2 + t2;
-    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
+    if (bg_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
 			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
@@ -70,7 +70,7 @@ dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     Y1 = adcp->dv_y + d1 + t1;
     x2 = adcp->dv_x - d2 - t2;
     y2 = adcp->dv_y + d1 - t1;
-    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
+    if (bg_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
 			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
@@ -81,7 +81,7 @@ dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     Y1 = adcp->dv_y - d2 + t2;
     x2 = adcp->dv_x - d1 + t1;
     y2 = adcp->dv_y - d2 - t2;
-    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
+    if (bg_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
 			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
@@ -92,7 +92,7 @@ dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     Y1 = adcp->dv_y - d1 - t1;
     x2 = adcp->dv_x + d2 + t2;
     y2 = adcp->dv_y - d1 + t1;
-    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
+    if (bg_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
 			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);

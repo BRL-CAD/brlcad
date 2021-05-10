@@ -1565,3 +1565,8 @@ s/facetall.sh/mged -c facetize/g
 s/pixcmp -s/pixcmp -q/g
 s/pixcmp -l/pixcmp -d/g
 	changed pixcmp options for consistency with new options [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/clip\.h/\1bg\/clip.h/g
+        moved clip.h header [7.32]
+s/bn_ray_vclip/bg_ray_vclip/g
+s/bn_lseg_clip/bg_lseg_clip/g
+        functions moved and renamed [7.32]
