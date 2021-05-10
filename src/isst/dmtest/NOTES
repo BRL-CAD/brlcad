@@ -90,3 +90,9 @@ Other nice to haves:
 2.  Might be fun to see if we could combine https://github.com/ioppermann/ezMPEG and
     https://github.com/phoboslab/pl_mpeg to get a minimal video recording and playback going for
     the display mangers...
+
+    For straight up capture this might be even simpler:  https://github.com/charlietangora/gif-h
+
+    (Note the idea here is a very simple, straightforward, unoptimized ability with minimal code complexity
+     Any use of output for something real would want to re-encode for sane file sizes...)
+
